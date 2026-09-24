@@ -24,7 +24,7 @@ use jope_policy::{
     producer::{QualifiedContextBundle, RequestPlan},
 };
 use serde::{Deserialize, Serialize};
-use std::{fs, path::Path, sync::atomic::AtomicBool};
+use std::{collections::BTreeMap, fs, path::Path, sync::atomic::AtomicBool};
 
 pub const SCHEMA: &str = "jope.asm-configuration/v1";
 pub const CONFIG_RUNTIME: &str = "asm-configuration";
@@ -32,7 +32,7 @@ pub const NEURAL_METHOD: &str = "asm.neural";
 pub const GENERIC_METHOD: &str = "asm.generic";
 pub const VARIATION: &str = "feat-math.canonical-mutate-crossover/task-grammar/max-transforms4/v1";
 pub const GENERIC_POLICY: &str = "jope-policy.grammar-uniform-token-chacha8/v1";
-pub const CLASSIFICATION_GENERIC_POLICY:&str="asm.classification-generic/v1:head=logit_ridge|multiclass_ridge:l2=10^(-4+5*low16/65535):transform=(seed>>16)%4:none|standardize|winsor|both:q=.005+.24*((seed>>18)&255)/255";
+pub const CLASSIFICATION_GENERIC_POLICY: &str = "asm.classification-generic/v1:head=logit_ridge|multiclass_ridge:l2=10^(-4+5*low16/65535):transform=(seed>>16)%4:none|standardize|winsor|both:q=.005+.24*((seed>>18)&255)/255";
 pub const CLASSIFICATION_VARIATION: &str =
     "feat-math.v3-head-preserving/mutate-crossover/max-transforms4/v1";
 pub fn generic_policy(task: Task) -> &'static str {
@@ -97,6 +97,9 @@ fn bounded_classification_child(candidate: feat_math::advanced_v3::V3Candidate) 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Configuration {
+    /// Separate Python exports by task; omission preserves accepted configuration bytes.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub experimental: BTreeMap<String, super::experimental_proposal::ExperimentalConfiguration>,
     pub schema: String,
     pub source_sha40: String,
     /// A jope.asm-worker-build-inventory/v1, not the CLI installer receipt.
@@ -119,9 +122,14 @@ pub struct Configuration {
     pub dataset_wave_width: usize,
     pub scheduling_policy: String,
     pub inner_fold_policy: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub teaching: Option<super::teaching::Settings>,
 }
 impl Configuration {
     pub fn validate(&self) -> Result<()> {
+        if let Some(settings) = &self.teaching {
+            settings.validate()?;
+        }
         ensure!(
             self.schema == SCHEMA
                 && self.source_sha40.len() == 40
@@ -152,6 +160,13 @@ impl Configuration {
                 a.path.is_absolute() && jope_pipeline::experiment::sha256(&a.sha256),
                 "malformed dependency pin"
             );
+        }
+        for (task, config) in &self.experimental {
+            ensure!(
+                task == config.task.as_str(),
+                "experimental task inventory key changed"
+            );
+            config.validate()?;
         }
         self.vocabulary.verify()?;
         jope_policy::grammar::bind_vocabulary(
@@ -184,6 +199,34 @@ impl Configuration {
             serde_json::from_slice(&fs::read(&self.release_manifest.path)?)?;
         inventory.verify(self)
     }
+    /// Check a prepared runtime without fitting or admitting an execution window.
+    pub fn verify_prepared(&self) -> Result<bool> {
+        self.validate()?;
+        self.verify_worker_builds()?;
+        for dependency in self.dependencies() {
+            dependency.verify()?;
+        }
+        if let Some(qualification) = &self.qualification {
+            qualification.verify(&self.source_sha40, &self.encoder.program)?;
+            for proof in &qualification.case_executions {
+                for asset in std::iter::once(&self.encoder_assets.configuration)
+                    .chain(&self.encoder_assets.files)
+                {
+                    ensure!(
+                        proof
+                            .job
+                            .command
+                            .inputs
+                            .iter()
+                            .any(|a| a.sha256 == asset.sha256),
+                        "qualification encoder assets differ from configuration"
+                    );
+                }
+            }
+            return Ok(true);
+        }
+        Ok(false)
+    }
     pub fn dependencies(&self) -> Vec<&Artifact> {
         let mut files = vec![
             &self.release_manifest,
@@ -204,6 +247,9 @@ impl Configuration {
         if let Some(q) = &self.qualification {
             files.extend([&q.qualification, &q.reference_manifest]);
             files.extend(q.case_outputs.iter());
+        }
+        for config in self.experimental.values() {
+            files.extend(config.dependencies());
         }
         files
     }
@@ -238,9 +284,9 @@ impl Configuration {
     }
 }
 
-struct TaskVariation<'a> {
-    vocabulary: &'a jope_policy::grammar::BoundVocabulary,
-    task: Task,
+pub(crate) struct TaskVariation<'a> {
+    pub(crate) vocabulary: &'a jope_policy::grammar::BoundVocabulary,
+    pub(crate) task: Task,
 }
 impl Variation for TaskVariation<'_> {
     fn identity(&self) -> &str {
@@ -296,6 +342,10 @@ pub struct DatasetSearch {
     pub neural_unavailable: Option<String>,
     pub neural_retryable_inventory: bool,
     pub final_test_targets_used: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub teaching_admission: Option<Artifact>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub teaching_error: Option<String>,
 }
 
 /// Reconstruct every pair identity from exact authenticated train values and configuration.
@@ -304,7 +354,7 @@ pub fn build_pair_input(
     campaign: &CampaignPlan,
     configuration: &Configuration,
     dataset: &DevelopmentData,
-) -> Result<(TrainingInput, PairInputPlan)> {
+) -> Result<(super::experimental_proposal::ContextInput, PairInputPlan)> {
     let cut = dataset.cut(0)?;
     let mut outer = super::campaign::request(
         dataset,
@@ -400,7 +450,8 @@ pub fn build_pair_input(
             sampling_rounds: configuration.sampling_rounds,
             sampling_batch: configuration.sampling_batch,
             sampling_temperature: configuration.sampling_temperature,
-        },
+        }
+        .into(),
         encoding: EncodingPlan {
             input_sha256,
             source_sha40: configuration.source_sha40.clone(),
@@ -438,7 +489,28 @@ pub fn build_pair_input(
         max_evaluations: configuration.max_evaluations,
         random_seed: seed,
     };
-    Ok((input, plan))
+    if let Some(experimental) = configuration
+        .experimental
+        .get(dataset.dataset.task.as_str())
+    {
+        let vocabulary = jope_policy::grammar::bind_vocabulary(
+            &fs::read(&configuration.vocabulary.path)?,
+            jope_policy::CHECKPOINT_VOCABULARY_SHA256,
+        )?;
+        let mut variation = TaskVariation {
+            vocabulary: &vocabulary,
+            task: dataset.dataset.task,
+        };
+        return super::experimental_proposal::bind_pair(
+            configuration,
+            experimental,
+            dataset,
+            input,
+            plan,
+            &mut variation,
+        );
+    }
+    Ok((input.into(), plan))
 }
 
 /// Used by the shared-wave controller, and by standalone optimize on one frozen
@@ -489,34 +561,70 @@ pub fn search_dataset<P: PoolAccess>(
         },
     };
     neural_search::begin_pair(&mut backend, &plan, &variation)?;
-    let neural_input = if dataset.dataset.task != Task::Regression {
-        Err(anyhow::anyhow!("accepted policy is regression-only; no qualified experimental classification checkpoint producer"))
-    } else {
-        prepare_neural(
+    let (pair, unavailable, neural_retryable_inventory) = if matches!(
+        plan.proposal,
+        neural_search::ProposalPlan::Experimental(_)
+    ) {
+        let neural_input = super::experimental_proposal::prepare(
             &mut backend,
             &plan,
-            &variation,
+            &mut variation,
             configuration,
             &input,
             &input_file,
             &campaign.experiment,
             journal,
-        )
+        );
+        let unavailable = neural_input.as_ref().err().map(|e| format!("{e:#}"));
+        let retryable = neural_input.is_err()
+            && configuration.qualification.is_some()
+            && configuration.encoder.unavailable.is_none()
+            && !terminal_encoding_failure(journal, &plan)?;
+        let pair = neural_search::run_experimental_pair(
+            &mut backend,
+            &plan,
+            &mut variation,
+            neural_input
+                .as_ref()
+                .ok()
+                .map(|(worker, context)| (worker, context)),
+        )?;
+        (pair, unavailable, retryable)
+    } else {
+        let neural_input = if dataset.dataset.task != Task::Regression {
+            Err(anyhow::anyhow!(
+                "accepted policy is regression-only; no configured qualified experimental classifier producer"
+            ))
+        } else {
+            prepare_neural(
+                &mut backend,
+                &plan,
+                &variation,
+                configuration,
+                input.accepted()?,
+                &input_file,
+                &campaign.experiment,
+                journal,
+            )
+        };
+        let unavailable = neural_input.as_ref().err().map(|e| format!("{e:#}"));
+        let retryable = neural_input.is_err()
+            && dataset.dataset.task == Task::Regression
+            && configuration.qualification.is_some()
+            && configuration.policy.unavailable.is_none()
+            && configuration.encoder.unavailable.is_none()
+            && !terminal_encoding_failure(journal, &plan)?;
+        let pair = neural_search::run_pair(
+            &mut backend,
+            &plan,
+            &mut variation,
+            neural_input
+                .as_ref()
+                .ok()
+                .map(|(comparison, worker)| (comparison, worker)),
+        )?;
+        (pair, unavailable, retryable)
     };
-    let unavailable = neural_input.as_ref().err().map(|e| format!("{e:#}"));
-    let neural_retryable_inventory = neural_input.is_err()
-        && dataset.dataset.task == Task::Regression
-        && configuration.qualification.is_some()
-        && configuration.policy.unavailable.is_none()
-        && configuration.encoder.unavailable.is_none()
-        && !terminal_encoding_failure(journal, &plan)?;
-
-    let pair = neural_search::run_pair(
-        &mut backend,
-        &plan,
-        &mut variation,
-        neural_input.as_ref().ok().map(|(c, w)| (c, w)),
-    )?;
     let neural = pair
         .neural
         .as_ref()
@@ -532,7 +640,7 @@ pub fn search_dataset<P: PoolAccess>(
         .map(|r| neural_search::freeze_winner(&mut backend, &plan, r))
         .transpose()?
         .flatten();
-    let result = DatasetSearch {
+    let mut result = DatasetSearch {
         dataset: dataset.dataset.id.clone(),
         task: dataset.dataset.task,
         pair: plan,
@@ -542,7 +650,13 @@ pub fn search_dataset<P: PoolAccess>(
         neural_unavailable: unavailable,
         neural_retryable_inventory,
         final_test_targets_used: false,
+        teaching_admission: None,
+        teaching_error: None,
     };
+    match super::teaching::admit_dataset(campaign, configuration, dataset, &result, journal) {
+        Ok(value) => result.teaching_admission = value,
+        Err(error) => result.teaching_error = Some(format!("{error:#}")),
+    }
     let value = serde_json::to_value(&result)?;
     immutable(
         &journal
@@ -554,18 +668,18 @@ pub fn search_dataset<P: PoolAccess>(
     Ok(result)
 }
 
-fn diagnostic(plan: &PairInputPlan, purpose: &str, pin: &str) -> Result<EvaluationRequest> {
-    let mut request = plan.selection.outer().clone();
-    request.stage = EvaluationStage::Diagnostic;
-    request.recipe_sha256 = digest(&(purpose, pin))?;
-    request.seed =
-        jope_pipeline::search_plan::candidate_seed(request.seed, &request.recipe_sha256)?;
-    request.scoring_rows = 1;
-    request.scoring_rows_sha256 = digest(&(purpose, "output-coordinate-not-a-predictor-score"))?;
-    request.validate()?;
-    Ok(request)
+pub(crate) fn diagnostic(
+    plan: &PairInputPlan,
+    purpose: &str,
+    pin: &str,
+) -> Result<EvaluationRequest> {
+    neural_search::diagnostic_request(plan, purpose, pin)
 }
-fn proof(experiment: &Experiment, journal: &Path, job: WorkerJob) -> Result<ExecutionProof> {
+pub(crate) fn proof(
+    experiment: &Experiment,
+    journal: &Path,
+    job: WorkerJob,
+) -> Result<ExecutionProof> {
     let id = job.identity()?;
     Ok(ExecutionProof {
         outcome: artifact(journal.join("finished").join(format!("{id}.json")))?,
@@ -591,7 +705,7 @@ fn prepare_neural<B: Backend, V: Variation>(
     experiment: &Experiment,
     journal: &Path,
 ) -> Result<(Comparison, PolicyWorker)> {
-    let qualification = config.qualification.as_ref().context(
+    config.qualification.as_ref().context(
         "CPU encoder qualification absent; accepted native-component parity remains unmeasured",
     )?;
     ensure!(
@@ -610,125 +724,20 @@ fn prepare_neural<B: Backend, V: Variation>(
         checkpoint.policy_safetensors_sha256() == config.policy_weights.sha256,
         "policy checksum differs from accepted receipt"
     );
-    let request = diagnostic(plan, "asm.fresh-training-context/v1", &input_file.sha256)?;
-    let directory = journal.join("jobs").join(request.identity()?);
-    let invocation = context_producer::worker::WorkerInvocation {
-        mode: context_producer::worker::WorkerMode::Produce,
-        input: context_producer::AssetFile {
-            path: input_file.path.clone(),
-            sha256: input_file.sha256.clone(),
-        },
-        assets: context_producer::AssetFile {
-            path: config.encoder_assets.configuration.path.clone(),
-            sha256: config.encoder_assets.configuration.sha256.clone(),
-        },
-        source_sha40: config.source_sha40.clone(),
-        producer_sha256: config.encoder.program.sha256.clone(),
-        output: directory.join("output.json"),
-    };
-    let mut inputs = config.encoder.inputs.clone();
-    inputs.extend(worker_builds.clone());
-    inputs.push(config.release_manifest.clone());
-    inputs.extend(config.encoder_assets.files.clone());
-    inputs.extend([
-        input_file.clone(),
-        config.encoder_assets.configuration.clone(),
-        config.source_manifest.clone(),
-    ]);
-    let job = WorkerJob {
-        request,
-        command: WorkerCommand {
-            program: config.encoder.program.clone(),
-            args: invocation.arguments(),
-            inputs,
-            environment: config.encoder.environment.clone(),
-        },
-        directory,
-        outputs: vec!["output.json".into()],
-        arm: Some(plan.arm(true)?),
-    };
-    let outcome = neural_search::encode_for_pair(backend, plan, variation, job.clone())?;
-    ensure!(
-        outcome.command_status == EvaluationStatus::Completed,
-        "fresh encoding did not complete: {:?}: {:?}",
-        outcome.command_status,
-        outcome.reason
-    );
-    let output = outcome
-        .outputs
-        .iter()
-        .find(|a| a.path == job.directory.join("output.json"))
-        .context("fresh context output absent")?
-        .clone();
-    let context_proof = proof(experiment, journal, job)?;
-    let context_execution = serde_json::to_vec(&context_proof.attest(input_file, &output)?)?;
-    let manifest = fs::read(&qualification.reference_manifest.path)?;
-    let cases = context_producer::case_inputs(&manifest, &qualification.reference_manifest.sha256)?;
-    let mut executions = Vec::new();
-    for (i, case) in qualification.case_executions.iter().enumerate() {
-        let pin = jope_pipeline::sha256_hex(&cases[i]);
-        let case_input = case
-            .job
-            .command
-            .inputs
-            .iter()
-            .find(|a| a.sha256 == pin)
-            .context("qualification case input absent")?;
-        executions.push(serde_json::to_vec(
-            &case.attest(case_input, &qualification.case_outputs[i])?,
-        )?);
-    }
-    let bundle = QualifiedContextBundle {
-        artifact: fs::read(&output.path)?,
-        qualification: fs::read(&qualification.qualification.path)?,
-        reference_manifest: manifest,
-        pins: context_producer::AdmissionPins {
-            source_sha256: config.source_sha40.clone(),
-            producer_sha256: config.encoder.program.sha256.clone(),
-            artifact_sha256: output.sha256.clone(),
-            qualification_sha256: qualification.qualification.sha256.clone(),
-            reference_manifest_sha256: qualification.reference_manifest.sha256.clone(),
-            context_execution_sha256: jope_pipeline::sha256_hex(&context_execution),
-            qualification_execution_sha256: executions
-                .iter()
-                .map(|b| jope_pipeline::sha256_hex(b))
-                .collect(),
-            verification_policy_sha256: context_producer::verification_policy_sha256(),
-            training: input.identity.clone(),
-            input_sha256: input_file.sha256.clone(),
-            preprocessing_sha256: plan.preprocessing_sha256.clone(),
-        },
-        context_execution,
-        case_executions: executions,
-    };
-    let admitted = bundle.verify()?;
-    let context_directory = journal.join("asm-contexts").join(plan.arm(true)?.id_sha256);
-    let vector = immutable_bytes(
-        &context_directory.join("context.f32"),
-        &admitted
-            .context()
-            .iter()
-            .flat_map(|v| v.to_le_bytes())
-            .collect::<Vec<_>>(),
+    let (files, outcome) = prepare_regression_context(
+        backend,
+        plan,
+        variation,
+        config,
+        input,
+        input_file,
+        experiment,
+        journal,
+        &worker_builds,
     )?;
-    let context_sha256 = jope_policy::context_sha256(admitted.context());
-    let bundle_file = immutable(&context_directory.join("bundle.json"), &bundle)?;
-    let files = CpuContextFiles {
-        vector,
-        artifact: output,
-        frozen_transforms: config.frozen_transforms.clone(),
-        bundle: bundle_file,
-        context_execution: context_proof,
-        case_executions: qualification.case_executions.clone(),
-        training: TrainingIdentity {
-            prepared_sha256: plan.prepared_sha256.clone(),
-            training_sha256: plan.training_sha256.clone(),
-            selected_training_rows_sha256: plan.selection.outer().fitting_rows_sha256.clone(),
-            preprocessing_sha256: plan.preprocessing_sha256.clone(),
-            cut: plan.cut,
-        },
-    };
-    let producer_request = plan.proposal.request(context_sha256);
+    let context_directory = journal.join("asm-contexts").join(plan.arm(true)?.id_sha256);
+    let context_sha256 = files.vector.sha256.clone();
+    let producer_request = plan.proposal.accepted()?.request(context_sha256);
     let request_file = immutable(
         &context_directory.join("proposal-request.json"),
         &producer_request,
@@ -871,4 +880,144 @@ mod tests {
         }
         Ok(())
     }
+}
+
+/// Shared native regression producer; this returns qualified context files only.
+/// Accepted and experimental policy consumers retain separate admission routes.
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn prepare_regression_context<B: Backend, V: Variation>(
+    backend: &mut B,
+    plan: &PairInputPlan,
+    variation: &V,
+    config: &Configuration,
+    input: &TrainingInput,
+    input_file: &Artifact,
+    experiment: &Experiment,
+    journal: &Path,
+    worker_builds: &[Artifact],
+) -> Result<(CpuContextFiles, WorkerOutcome)> {
+    let qualification = config
+        .qualification
+        .as_ref()
+        .context("native regression qualification absent")?;
+    let request = diagnostic(plan, "asm.fresh-training-context/v1", &input_file.sha256)?;
+    let directory = journal.join("jobs").join(request.identity()?);
+    let invocation = context_producer::worker::WorkerInvocation {
+        mode: context_producer::worker::WorkerMode::Produce,
+        input: context_producer::AssetFile {
+            path: input_file.path.clone(),
+            sha256: input_file.sha256.clone(),
+        },
+        assets: context_producer::AssetFile {
+            path: config.encoder_assets.configuration.path.clone(),
+            sha256: config.encoder_assets.configuration.sha256.clone(),
+        },
+        source_sha40: config.source_sha40.clone(),
+        producer_sha256: config.encoder.program.sha256.clone(),
+        output: directory.join("output.json"),
+    };
+    let mut inputs = config.encoder.inputs.clone();
+    inputs.extend_from_slice(worker_builds);
+    inputs.push(config.release_manifest.clone());
+    inputs.extend(config.encoder_assets.files.clone());
+    inputs.extend([
+        input_file.clone(),
+        config.encoder_assets.configuration.clone(),
+        config.source_manifest.clone(),
+    ]);
+    let job = WorkerJob {
+        request,
+        command: WorkerCommand {
+            program: config.encoder.program.clone(),
+            args: invocation.arguments(),
+            inputs,
+            environment: config.encoder.environment.clone(),
+        },
+        directory,
+        outputs: vec!["output.json".into()],
+        arm: Some(plan.arm(true)?),
+    };
+    let outcome = neural_search::encode_for_pair(backend, plan, variation, job.clone())?;
+    ensure!(
+        outcome.command_status == EvaluationStatus::Completed,
+        "fresh encoding did not complete: {:?}: {:?}",
+        outcome.command_status,
+        outcome.reason
+    );
+    let output = outcome
+        .outputs
+        .iter()
+        .find(|a| a.path == job.directory.join("output.json"))
+        .context("fresh context output absent")?
+        .clone();
+    let context_proof = proof(experiment, journal, job)?;
+    let context_execution = serde_json::to_vec(&context_proof.attest(input_file, &output)?)?;
+    let manifest = fs::read(&qualification.reference_manifest.path)?;
+    let cases = context_producer::case_inputs(&manifest, &qualification.reference_manifest.sha256)?;
+    let mut executions = Vec::new();
+    for (i, case) in qualification.case_executions.iter().enumerate() {
+        let pin = jope_pipeline::sha256_hex(&cases[i]);
+        let case_input = case
+            .job
+            .command
+            .inputs
+            .iter()
+            .find(|a| a.sha256 == pin)
+            .context("qualification case input absent")?;
+        executions.push(serde_json::to_vec(
+            &case.attest(case_input, &qualification.case_outputs[i])?,
+        )?);
+    }
+    let bundle = QualifiedContextBundle {
+        artifact: fs::read(&output.path)?,
+        qualification: fs::read(&qualification.qualification.path)?,
+        reference_manifest: manifest,
+        pins: context_producer::AdmissionPins {
+            source_sha256: config.source_sha40.clone(),
+            producer_sha256: config.encoder.program.sha256.clone(),
+            artifact_sha256: output.sha256.clone(),
+            qualification_sha256: qualification.qualification.sha256.clone(),
+            reference_manifest_sha256: qualification.reference_manifest.sha256.clone(),
+            context_execution_sha256: jope_pipeline::sha256_hex(&context_execution),
+            qualification_execution_sha256: executions
+                .iter()
+                .map(|b| jope_pipeline::sha256_hex(b))
+                .collect(),
+            verification_policy_sha256: context_producer::verification_policy_sha256(),
+            training: input.identity.clone(),
+            input_sha256: input_file.sha256.clone(),
+            preprocessing_sha256: plan.preprocessing_sha256.clone(),
+        },
+        context_execution,
+        case_executions: executions,
+    };
+    let admitted = bundle.verify()?;
+    let context_directory = journal.join("asm-contexts").join(plan.arm(true)?.id_sha256);
+    let vector = immutable_bytes(
+        &context_directory.join("context.f32"),
+        &admitted
+            .context()
+            .iter()
+            .flat_map(|v| v.to_le_bytes())
+            .collect::<Vec<_>>(),
+    )?;
+    let bundle_file = immutable(&context_directory.join("bundle.json"), &bundle)?;
+    let files = CpuContextFiles {
+        vector,
+        artifact: output,
+        frozen_transforms: config.frozen_transforms.clone(),
+        bundle: bundle_file,
+        context_execution: context_proof,
+        case_executions: qualification.case_executions.clone(),
+        training: TrainingIdentity {
+            prepared_sha256: plan.prepared_sha256.clone(),
+            training_sha256: plan.training_sha256.clone(),
+            selected_training_rows_sha256: plan.selection.outer().fitting_rows_sha256.clone(),
+            preprocessing_sha256: plan.preprocessing_sha256.clone(),
+            cut: plan.cut,
+        },
+    };
+    // Durable input to train prepare-request; callers need not reconstruct opaque proof pins.
+    immutable(&context_directory.join("context-files.json"), &files)?;
+    Ok((files, outcome))
 }

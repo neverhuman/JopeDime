@@ -14,6 +14,9 @@ pub struct PointerKey {
     pub task: String,
     pub dataset_hash: String,
     pub cut_id: String,
+    /// Absent only for historical diagnostic pointers/events.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub identity_sha256: Option<String>,
 }
 
 impl PointerKey {
@@ -22,14 +25,26 @@ impl PointerKey {
             task: record.identity.task.clone(),
             dataset_hash: record.identity.dataset_hash.clone(),
             cut_id: record.identity.cut_id.clone(),
+            identity_sha256: Some(record.identity_sha256.clone()),
         }
     }
 
     pub fn rel(&self) -> String {
-        format!(
-            "hwm/{}/{}/{}/current.json",
-            self.task, self.dataset_hash, self.cut_id
-        )
+        let root = format!("hwm/{}/{}/{}", self.task, self.dataset_hash, self.cut_id);
+        match &self.identity_sha256 {
+            Some(identity) => format!("{root}/{identity}/current.json"),
+            None => format!("{root}/current.json"),
+        }
+    }
+
+    pub fn matches(&self, record: &HwmRecord) -> bool {
+        self.task == record.identity.task
+            && self.dataset_hash == record.identity.dataset_hash
+            && self.cut_id == record.identity.cut_id
+            && self
+                .identity_sha256
+                .as_ref()
+                .is_none_or(|sha| sha == &record.identity_sha256)
     }
 }
 
@@ -192,7 +207,13 @@ impl State {
 
     pub fn pointer_path(&self, key: &PointerKey) -> Result<PathBuf> {
         ensure!(
-            safe_segment(&key.task) && safe_segment(&key.dataset_hash) && safe_segment(&key.cut_id),
+            safe_segment(&key.task)
+                && safe_segment(&key.dataset_hash)
+                && safe_segment(&key.cut_id)
+                && key
+                    .identity_sha256
+                    .as_ref()
+                    .is_none_or(|sha| crate::canon::is_hex64(sha)),
             "unsafe pointer key {key:?}"
         );
         Ok(self.root.join(key.rel()))
@@ -216,6 +237,11 @@ impl State {
         record: &HwmRecord,
         expected_prev: Option<&str>,
     ) -> Result<()> {
+        ensure!(
+            key == &PointerKey::of(record),
+            "new writes require the full comparison identity"
+        );
+        record.validate()?;
         let path = self.pointer_path(key)?;
         let on_disk = self.read_pointer(key)?;
         let on_disk_sha = on_disk
@@ -233,6 +259,61 @@ impl State {
     }
 
     /// Every pointer on disk, sorted by key.
+    pub fn pointers_readable(
+        &self,
+    ) -> Result<(Vec<(PointerKey, HwmRecord)>, Vec<(String, String)>)> {
+        let directory = self.root.join("hwm");
+        let mut records = Vec::new();
+        let mut errors = Vec::new();
+        if !directory.exists() {
+            return Ok((records, errors));
+        }
+        for entry in walkdir::WalkDir::new(&directory)
+            .min_depth(1)
+            .max_depth(5)
+            .follow_links(false)
+        {
+            let entry = match entry {
+                Ok(entry) => entry,
+                Err(error) => {
+                    errors.push((directory.display().to_string(), error.to_string()));
+                    continue;
+                }
+            };
+            if entry.file_name() != "current.json" {
+                continue;
+            }
+            let relative = entry
+                .path()
+                .strip_prefix(&directory)?
+                .to_string_lossy()
+                .into_owned();
+            let parts = relative.split('/').collect::<Vec<_>>();
+            let result = (|| -> Result<(PointerKey, HwmRecord)> {
+                ensure!(
+                    parts.len() == 4 || parts.len() == 5,
+                    "invalid pointer depth"
+                );
+                let key = PointerKey {
+                    task: parts[0].into(),
+                    dataset_hash: parts[1].into(),
+                    cut_id: parts[2].into(),
+                    identity_sha256: (parts.len() == 5).then(|| parts[3].into()),
+                };
+                Ok((
+                    key.clone(),
+                    self.read_pointer(&key)?.context("pointer disappeared")?,
+                ))
+            })();
+            match result {
+                Ok(value) => records.push(value),
+                Err(error) => errors.push((relative, format!("{error:#}"))),
+            }
+        }
+        records.sort_by(|a, b| a.0.cmp(&b.0));
+        Ok((records, errors))
+    }
+
     pub fn pointers(&self) -> Result<Vec<(PointerKey, HwmRecord)>> {
         let hwm = self.root.join("hwm");
         let mut out = Vec::new();
@@ -256,9 +337,28 @@ impl State {
                         task: task_name.clone(),
                         dataset_hash: ds.file_name().to_string_lossy().into_owned(),
                         cut_id: cut.file_name().to_string_lossy().into_owned(),
+                        identity_sha256: None,
                     };
                     if let Some(r) = self.read_pointer(&key)? {
-                        out.push((key, r));
+                        out.push((key.clone(), r));
+                    }
+                    if cut.file_type()?.is_dir() {
+                        for identity in fs::read_dir(cut.path())? {
+                            let identity = identity?;
+                            if !identity.file_type()?.is_dir() {
+                                continue;
+                            }
+                            let sha = identity.file_name().to_string_lossy().into_owned();
+                            ensure!(
+                                crate::canon::is_hex64(&sha),
+                                "invalid comparison pointer directory"
+                            );
+                            let mut exact = key.clone();
+                            exact.identity_sha256 = Some(sha);
+                            if let Some(r) = self.read_pointer(&exact)? {
+                                out.push((exact, r));
+                            }
+                        }
                     }
                 }
             }

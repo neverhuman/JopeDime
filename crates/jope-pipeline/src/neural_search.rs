@@ -29,6 +29,75 @@ pub const INITIAL_SIZE: usize = 80;
 pub const NEURAL_SLOTS: usize = 64;
 const ELITES: usize = 4;
 
+/// Accepted serialization is unchanged. The experimental variant has a distinct
+/// schema and cannot be passed to the accepted checkpoint/context loader.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum ProposalPlan {
+    Accepted(Box<jope_policy::producer::RequestPlan>),
+    #[cfg(feature = "qualified-context")]
+    Experimental(Box<crate::experimental_producer::RequestPlan>),
+}
+impl ProposalPlan {
+    pub fn accepted(&self) -> Result<&jope_policy::producer::RequestPlan> {
+        match self {
+            Self::Accepted(value) => Ok(value),
+            #[cfg(feature = "qualified-context")]
+            Self::Experimental(_) => {
+                anyhow::bail!("experimental proposal cannot enter accepted policy loader")
+            }
+        }
+    }
+    pub fn checkpoint_sha256(&self) -> &str {
+        match self {
+            Self::Accepted(value) => &value.checkpoint_sha256,
+            #[cfg(feature = "qualified-context")]
+            Self::Experimental(value) => &value.checkpoint.sha256,
+        }
+    }
+    fn validate_pair(&self, pair: &PairInputPlan) -> Result<()> {
+        match self {
+            Self::Accepted(value) => {
+                value.validate()?;
+                ensure!(
+                    value.prepared_sha256 == pair.prepared_sha256
+                        && value.training_sha256 == pair.training_sha256
+                        && value.cut == pair.cut
+                        && value.vocabulary_sha256 == pair.vocabulary_sha256
+                        && value.worker_source_sha256 == pair.installation.source_manifest_sha256,
+                    "accepted producer differs from pair plan"
+                );
+            }
+            #[cfg(feature = "qualified-context")]
+            Self::Experimental(value) => {
+                value.validate()?;
+                ensure!(
+                    value.task == pair.selection.outer().task
+                        && value.training.prepared_sha256 == pair.prepared_sha256
+                        && value.training.training_sha256 == pair.training_sha256
+                        && value.training.cut == pair.cut
+                        && value.training.selected_training_rows_sha256
+                            == pair.selection.outer().fitting_rows_sha256
+                        && value.training.preprocessing_sha256 == pair.preprocessing_sha256
+                        && value.vocabulary.sha256 == pair.vocabulary_sha256
+                        && value.runtime.program.sha256 == pair.installation.policy_program_sha256
+                        && value.export_manifest.sha256
+                            == pair.installation.checkpoint_receipt_sha256
+                        && value.worker_source_sha256 == pair.installation.source_manifest_sha256
+                        && value.generic_policy == pair.generic_sampling_policy,
+                    "experimental producer differs from pair task/rows/installation"
+                );
+            }
+        }
+        Ok(())
+    }
+}
+impl From<jope_policy::producer::RequestPlan> for ProposalPlan {
+    fn from(value: jope_policy::producer::RequestPlan) -> Self {
+        Self::Accepted(Box::new(value))
+    }
+}
+
 /// The controller supplies the full comparison identity (task, dataset, cut,
 /// evaluator, vocabulary, preprocessing and protocol), not just a dataset name.
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -39,7 +108,7 @@ pub struct PairInputPlan {
     pub raw_input_policy: String,
     pub fit_randomness_policy: String,
     pub installation: InstallationPins,
-    pub proposal: jope_policy::producer::RequestPlan,
+    pub proposal: ProposalPlan,
     pub encoding: EncodingPlan,
     pub variation_identity: String,
     pub generic_sampling_policy: String,
@@ -78,15 +147,7 @@ impl PairInputPlan {
         );
         self.installation.validate()?;
         self.encoding.validate()?;
-        self.proposal.validate()?;
-        ensure!(
-            self.proposal.prepared_sha256 == self.prepared_sha256
-                && self.proposal.training_sha256 == self.training_sha256
-                && self.proposal.cut == self.cut
-                && self.proposal.vocabulary_sha256 == self.vocabulary_sha256
-                && self.proposal.worker_source_sha256 == self.installation.source_manifest_sha256,
-            "producer request differs from pair plan"
-        );
+        self.proposal.validate_pair(self)?;
         ensure!(
             !self.variation_identity.is_empty() && !self.generic_sampling_policy.is_empty(),
             "missing frozen variation/generic policy"
@@ -186,7 +247,7 @@ pub struct ContextCost {
     pub amortization_uses: Option<u64>,
 }
 impl ContextCost {
-    fn validate(&self) -> Result<()> {
+    pub(crate) fn validate(&self) -> Result<()> {
         self.production_receipt.verify()?;
         ensure!(
             [
@@ -229,6 +290,7 @@ impl Comparison {
             self.producer_request
                 == self
                     .proposal
+                    .accepted()?
                     .request(self.producer_request.context_sha256.clone())
                 && jope_policy::is_sha256_hex(&self.context_receipt_sha256),
             "context outputs changed preregistered producer inputs"
@@ -289,6 +351,31 @@ pub struct Candidate {
     pub rank_log_weight: Option<f64>,
 }
 impl Candidate {
+    pub fn validate_initial(&self, arm: &ArmBudget) -> Result<()> {
+        ensure!(
+            self.generation == 0 && self.parents.is_empty(),
+            "not an initial candidate"
+        );
+        let slot = self.initial_slot.context("initial candidate slot absent")?;
+        ensure!(
+            slot < INITIAL_SIZE,
+            "initial candidate slot outside population"
+        );
+        let expected = Self::new(
+            arm,
+            self.genome.clone(),
+            0,
+            slot,
+            self.origin.clone(),
+            vec![],
+            self.rank_log_weight,
+        )?;
+        ensure!(
+            serde_json::to_value(self)? == serde_json::to_value(expected)?,
+            "initial candidate identity changed"
+        );
+        Ok(())
+    }
     fn new(
         arm: &ArmBudget,
         genome: String,
@@ -589,7 +676,7 @@ impl SearchReceipt {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct ProposalEvidence {
+pub struct AcceptedProposalEvidence {
     pub request: jope_policy::producer::Request,
     pub context_cost: ContextCost,
     pub producer_job_sha256: String,
@@ -600,6 +687,32 @@ pub struct ProposalEvidence {
     pub ranking_backend: String,
     /// Accepted checkpoint bytes do not qualify this CPU implementation numerically.
     pub native_cuda_parity_qualified: bool,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum ProposalEvidence {
+    Accepted(Box<AcceptedProposalEvidence>),
+    #[cfg(feature = "qualified-context")]
+    Experimental(Box<crate::experimental_producer::Evidence>),
+}
+impl ProposalEvidence {
+    pub fn accepted(&self) -> Result<&AcceptedProposalEvidence> {
+        match self {
+            Self::Accepted(value) => Ok(value),
+            #[cfg(feature = "qualified-context")]
+            Self::Experimental(_) => {
+                anyhow::bail!("experimental evidence cannot enter accepted receipt verifier")
+            }
+        }
+    }
+    pub fn checkpoint_sha256(&self) -> &str {
+        match self {
+            Self::Accepted(value) => &value.checkpoint_sha256,
+            #[cfg(feature = "qualified-context")]
+            Self::Experimental(value) => &value.checkpoint_sha256,
+        }
+    }
 }
 
 /// Narrow test seam. Production uses `PoolBackend` below. Implementations must
@@ -817,6 +930,201 @@ pub fn run_pair<B: Backend, V: Variation>(
     Ok(receipt)
 }
 
+/// Experimental typed admission reuses the exact population/OOF/evolution path.
+/// Context production and Python proposal execution spend the original neural
+/// allowance; the generic arm keeps the same120second maximum and80 slots.
+#[cfg(feature = "qualified-context")]
+pub fn run_experimental_pair<B: Backend, V: Variation>(
+    backend: &mut B,
+    plan: &PairInputPlan,
+    variation: &mut V,
+    neural_input: Option<(
+        &crate::experimental_producer::Worker,
+        &crate::experimental_producer::VerifiedProposalContext,
+    )>,
+) -> Result<PairedReceipt> {
+    begin_pair(backend, plan, variation)?;
+    ensure!(
+        matches!(plan.proposal, ProposalPlan::Experimental(_)),
+        "experimental arm requires its separate input plan"
+    );
+    let (neural, neural_error) = match neural_input {
+        Some((worker, context)) => {
+            match run_experimental(backend, plan, variation, worker, context) {
+                Ok(value) => (Some(value), None),
+                Err(error) => (None, Some(format!("{error:#}"))),
+            }
+        }
+        None => (
+            None,
+            Some("qualified experimental context or Python proposal input unavailable".into()),
+        ),
+    };
+    let (generic, generic_error) = match run_generic(backend, plan, variation) {
+        Ok(value) => (Some(value), None),
+        Err(error) => (None, Some(format!("{error:#}"))),
+    };
+    let receipt = PairedReceipt {
+        comparison_sha256: sha256_hex(&serde_json::to_vec(plan)?),
+        neural,
+        neural_error,
+        generic,
+        generic_error,
+    };
+    let value = serde_json::to_value(&receipt)?;
+    backend.persist(
+        &plan.arm(true)?,
+        &format!(
+            "pair-inventory-{}",
+            sha256_hex(&serde_json::to_vec(&value)?)
+        ),
+        &value,
+    )?;
+    Ok(receipt)
+}
+
+#[cfg(feature = "qualified-context")]
+fn run_experimental<B: Backend, V: Variation>(
+    backend: &mut B,
+    plan: &PairInputPlan,
+    variation: &mut V,
+    worker: &crate::experimental_producer::Worker,
+    context: &crate::experimental_producer::VerifiedProposalContext,
+) -> Result<NeuralRun> {
+    use crate::{cpu_context_bridge::ExecutionProof, execution::Artifact, experimental_producer};
+    plan.validate()?;
+    let ProposalPlan::Experimental(request_plan) = &plan.proposal else {
+        anyhow::bail!("accepted plan cannot enter experimental producer")
+    };
+    let arm = plan.arm(true)?;
+    let deadline = backend.begin_arm(&arm)?;
+    ensure!(
+        worker
+            .job
+            .arm
+            .as_ref()
+            .is_some_and(|a| a.id_sha256 == arm.id_sha256 && a.seconds == arm.seconds),
+        "Python worker lacks original paired arm"
+    );
+    experimental_producer::verify_inputs(request_plan, worker, context, variation)?;
+    let outcome = backend.produce(worker.job.clone())?;
+    ensure!(
+        outcome.job_sha256 == worker.job.identity()?
+            && outcome.request_sha256 == worker.job.request.identity()?,
+        "experimental process identity differs"
+    );
+    let value = serde_json::to_value(&outcome)?;
+    let name = if retryable_inventory(&outcome) {
+        format!(
+            "proposal-inventory-{}",
+            sha256_hex(&serde_json::to_vec(&value)?)
+        )
+    } else {
+        "proposal-execution".into()
+    };
+    backend.persist(&arm, &name, &value)?;
+    if outcome.command_status != EvaluationStatus::Completed {
+        return Ok(NeuralRun {
+            proposal_execution: outcome,
+            search: None,
+        });
+    }
+    // Reconstruct original pool locations; no caller-provided completion boolean.
+    let journal = worker
+        .job
+        .directory
+        .parent()
+        .and_then(Path::parent)
+        .context("proposal job outside journal/jobs")?;
+    let artifact = |path: PathBuf| -> Result<Artifact> {
+        let a = Artifact {
+            sha256: crate::sha256_file(&path)?,
+            path,
+        };
+        a.verify()?;
+        Ok(a)
+    };
+    let proof = ExecutionProof {
+        job: worker.job.clone(),
+        outcome: artifact(
+            journal
+                .join("finished")
+                .join(format!("{}.json", worker.job.identity()?)),
+        )?,
+        started: artifact(
+            journal
+                .join("started")
+                .join(format!("{}.json", worker.job.identity()?)),
+        )?,
+        experiment: serde_json::from_slice(&std::fs::read(journal.join("experiment.json"))?)?,
+        window: artifact(journal.join("window.json"))?,
+        arm_window: Some(artifact(
+            journal.join("arms").join(format!("{}.json", arm.id_sha256)),
+        )?),
+    };
+    let admitted = experimental_producer::admit(plan, worker, context, &proof, variation)?;
+    let candidates = admitted
+        .candidates()
+        .iter()
+        .map(|seed| {
+            let origin = match seed.origin.as_str() {
+                "neural_policy" => Origin::NeuralPolicy,
+                "neural_rejection_fallback" => Origin::NeuralRejectionFallback,
+                "random_exploration" => Origin::RandomExploration,
+                _ => anyhow::bail!("invalid admitted origin"),
+            };
+            let candidate = Candidate::new(
+                &arm,
+                seed.recipe.original_proposal.clone(),
+                0,
+                seed.slot,
+                origin,
+                vec![],
+                seed.rank_log_weight,
+            )?;
+            ensure!(
+                candidate.program_sha256 == seed.recipe.executable_sha256,
+                "admitted recipe canonicalization changed"
+            );
+            Ok(candidate)
+        })
+        .collect::<Result<Vec<_>>>()?;
+    let search = run_population(
+        backend,
+        plan,
+        variation,
+        arm,
+        deadline,
+        candidates,
+        Some(ProposalEvidence::Experimental(Box::new(
+            admitted.evidence().clone(),
+        ))),
+    )?;
+    Ok(NeuralRun {
+        proposal_execution: outcome,
+        search: Some(search),
+    })
+}
+
+/// Identity of a non-predictor component/proposal job inside a frozen pair.
+pub fn diagnostic_request(
+    plan: &PairInputPlan,
+    purpose: &str,
+    pin: &str,
+) -> Result<EvaluationRequest> {
+    let mut request = plan.selection.outer().clone();
+    request.stage = crate::experiment::EvaluationStage::Diagnostic;
+    request.recipe_sha256 = sha256_hex(&serde_json::to_vec(&(purpose, pin))?);
+    request.seed = crate::search_plan::candidate_seed(request.seed, &request.recipe_sha256)?;
+    request.scoring_rows = 1;
+    request.scoring_rows_sha256 = sha256_hex(&serde_json::to_vec(&(
+        purpose,
+        "output-coordinate-not-a-predictor-score",
+    ))?);
+    request.validate()?;
+    Ok(request)
+}
+
 /// Private fitted-recipe identity frozen before the controller opens the outer
 /// development scoring labels. It is selection evidence, not an outer win.
 #[derive(Debug, Serialize, Deserialize)]
@@ -865,7 +1173,7 @@ pub fn freeze_winner<B: Backend>(
     refit_request.checkpoint_sha256 = receipt
         .proposal
         .as_ref()
-        .map(|p| p.checkpoint_sha256.clone());
+        .map(|p| p.checkpoint_sha256().to_owned());
     refit_request.validate()?;
     let frozen = FrozenRecipe {
         candidate: winner.candidate.clone(),
@@ -1100,7 +1408,7 @@ fn run_neural<B: Backend, V: Variation>(
             )
         })
         .collect::<Result<Vec<_>>>()?;
-    let evidence = ProposalEvidence {
+    let evidence = AcceptedProposalEvidence {
         request: worker.request.clone(),
         context_cost: comparison.context_cost.clone(),
         producer_job_sha256: outcome.job_sha256.clone(),
@@ -1118,7 +1426,7 @@ fn run_neural<B: Backend, V: Variation>(
         arm,
         deadline,
         candidates,
-        Some(evidence),
+        Some(ProposalEvidence::Accepted(Box::new(evidence))),
     )?;
     Ok(NeuralRun {
         proposal_execution: outcome,
@@ -2072,7 +2380,8 @@ mod tests {
                 sampling_rounds: 1,
                 sampling_batch: 8,
                 sampling_temperature: 1.,
-            },
+            }
+            .into(),
             variation_identity: "synthetic variation/v1".into(),
             generic_sampling_policy: "synthetic uniform/v1".into(),
             checkpoint_training_exposure: "unknown".into(),
@@ -2107,6 +2416,74 @@ mod tests {
                 .unwrap()
             })
             .collect()
+    }
+
+    #[test]
+    fn accepted_envelope_preserves_serialized_checkpoint_plan_and_evidence() -> Result<()> {
+        let pair = comparison(80);
+        let accepted = pair.proposal.accepted()?;
+        let before = serde_json::to_vec(accepted)?;
+        assert_eq!(serde_json::to_vec(&pair.proposal)?, before);
+        let decoded: ProposalPlan = serde_json::from_slice(&before)?;
+        assert_eq!(serde_json::to_vec(decoded.accepted()?)?, before);
+        let evidence = AcceptedProposalEvidence {
+            request: accepted.request(sha256_hex(b"context")),
+            context_cost: ContextCost {
+                cached: false,
+                production_receipt: crate::execution::Artifact {
+                    path: "/private/fixture".into(),
+                    sha256: sha256_hex(b"receipt"),
+                },
+                original_wall_seconds: Some(1.),
+                original_cpu_seconds: Some(1.),
+                original_gpu_seconds: Some(0.),
+                amortization_uses: Some(1),
+            },
+            producer_job_sha256: sha256_hex(b"job"),
+            producer_output_sha256: sha256_hex(b"output"),
+            population_sha256: sha256_hex(b"population"),
+            context_sha256: sha256_hex(b"context"),
+            checkpoint_sha256: accepted.checkpoint_sha256.clone(),
+            ranking_backend: "fixture".into(),
+            native_cuda_parity_qualified: false,
+        };
+        let before = serde_json::to_vec(&evidence)?;
+        let wrapped = ProposalEvidence::Accepted(Box::new(evidence));
+        assert_eq!(serde_json::to_vec(&wrapped)?, before);
+        let decoded: ProposalEvidence = serde_json::from_slice(&before)?;
+        assert_eq!(serde_json::to_vec(decoded.accepted()?)?, before);
+        Ok(())
+    }
+    #[test]
+    fn initial_candidate_identity_rejects_slot_origin_and_genome_relabeling() -> Result<()> {
+        let arm = comparison(80).arm(true)?;
+        let candidate = synthetic_initial(&arm).remove(0);
+        candidate.validate_initial(&arm)?;
+        for changed in [
+            {
+                let mut c = candidate.clone();
+                c.initial_slot = Some(1);
+                c
+            },
+            {
+                let mut c = candidate.clone();
+                c.origin = Origin::Generic;
+                c
+            },
+            {
+                let mut c = candidate.clone();
+                c.genome = "(pipe X (ridge lambda=99))".into();
+                c
+            },
+        ] {
+            assert!(changed.validate_initial(&arm).is_err());
+        }
+        let different = ArmBudget {
+            id_sha256: sha256_hex(b"different"),
+            seconds: arm.seconds,
+        };
+        assert!(candidate.validate_initial(&different).is_err());
+        Ok(())
     }
 
     // Metadata-only fixtures: callback counters/hashes are explicitly synthetic,
@@ -2575,7 +2952,11 @@ mod tests {
         let mut changed = comparison(84);
         assert!(freeze_pair(&mut backend, &changed, &variation).is_err());
         changed = comparison(80);
-        changed.proposal.sampling_seed += 1;
+        match &mut changed.proposal {
+            ProposalPlan::Accepted(value) => value.sampling_seed += 1,
+            #[cfg(feature = "qualified-context")]
+            ProposalPlan::Experimental(_) => unreachable!(),
+        }
         assert!(freeze_pair(&mut backend, &changed, &variation).is_err());
         Ok(())
     }

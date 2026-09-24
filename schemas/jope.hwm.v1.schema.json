@@ -1,9 +1,56 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://veox.ai/schemas/jope.hwm.v1.schema.json",
-  "title": "jope.hwm/v1",
-  "description": "One high-water mark: the best program known for an exact cut under an evaluator identity. identity_sha256 = sha256 of the canonical JSON (sorted keys, compact) of {task, dataset_hash, cut_id, evaluator_sha256, vocabulary_sha256, protocol}. Strict improvement only under the metric's direction (r2/oof_r2/auc/macro_f1/negative_mase higher; rmse/logloss/mase lower); ties keep the older record; an unbound evaluator never displaces a bound one. Written to hwm/<task>/<dataset_hash>/<cut_id>/current.json and, as an event, to hwm/ledger/<yyyy>/<mm>/<ulid>.jsonl.",
   "$defs": {
+    "ComparisonContext": {
+      "additionalProperties": false,
+      "description": "Numerical and class semantics required by new measured teaching admission.\nHistorical identities omit this field and retain their original hashes.",
+      "properties": {
+        "aggregation": {
+          "type": "string"
+        },
+        "benchmark_valid": {
+          "type": "boolean"
+        },
+        "checkpoint_sha256": {
+          "description": "Proposal/checkpoint lineage when applicable; None when no proposal checkpoint applies.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "class_order": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "label_role": {
+          "type": "string"
+        },
+        "numerical_policy": {
+          "type": "string"
+        },
+        "recipe_encoding": {
+          "type": "string"
+        },
+        "sealed": {
+          "type": "boolean"
+        },
+        "stage": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "numerical_policy",
+        "stage",
+        "aggregation",
+        "label_role",
+        "sealed",
+        "benchmark_valid",
+        "recipe_encoding",
+        "class_order"
+      ],
+      "type": "object"
+    },
     "Cost": {
       "additionalProperties": false,
       "properties": {
@@ -83,8 +130,18 @@
     },
     "HwmIdentity": {
       "additionalProperties": false,
-      "description": "What `identity_sha256` hashes: the canonical JSON of exactly these six fields.",
+      "description": "What `identity_sha256` hashes: all comparison fields, including optional context.",
       "properties": {
+        "comparison": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ComparisonContext"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "cut_id": {
           "description": "Split/fold identity: sha256 of the canonical JSON that names the cut (see docs/learning.md).",
           "pattern": "^[0-9a-f]{64}$",
@@ -198,7 +255,9 @@
       "type": "object"
     }
   },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
+  "description": "One high-water mark: the best program known for an exact cut under an evaluator identity. identity_sha256 = sha256 of the canonical JSON (sorted keys, compact) of {task, dataset_hash, cut_id, evaluator_sha256, vocabulary_sha256, protocol}. Strict improvement only under the metric's direction (r2/oof_r2/auc/macro_f1/negative_mase higher; rmse/logloss/mase lower); ties keep the older record; an unbound evaluator never displaces a bound one. Written to hwm/<task>/<dataset_hash>/<cut_id>/current.json and, as an event, to hwm/ledger/<yyyy>/<mm>/<ulid>.jsonl.",
   "properties": {
     "benchmark_valid": {
       "description": "True only for scores measured under a benchmark protocol (never for HWM search scores).",
@@ -284,5 +343,7 @@
     "improvement_number",
     "ts_unix"
   ],
-  "type": "object"
+  "title": "jope.hwm/v1",
+  "type": "object",
+  "$id": "https://veox.ai/schemas/jope.hwm.v1.schema.json"
 }

@@ -385,6 +385,78 @@ pub fn verify_qualified(
         qualification_sha256: pins.qualification_sha256.clone(),
     })
 }
+/// Independently pinned inputs for reusing native-regression component
+/// qualification in an explicitly experimental feature-only classification route.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ComponentQualificationPins {
+    pub source_sha40: String,
+    pub producer_sha256: String,
+    pub qualification_sha256: String,
+    pub reference_manifest_sha256: String,
+    pub execution_sha256: Vec<String>,
+}
+/// Numerical component qualification only; this is not classification parity,
+/// accepted-regression context admission, or proof of execution by itself.
+pub struct VerifiedComponentQualification {
+    encoder: EncoderIdentity,
+}
+impl VerifiedComponentQualification {
+    pub fn encoder(&self) -> &EncoderIdentity {
+        &self.encoder
+    }
+}
+/// The parent must first rederive all execution attestations from original pool
+/// job/started/finished/window files. No caller-supplied passed boolean is used.
+pub fn verify_component_qualification(
+    qualification_bytes: &[u8],
+    manifest_bytes: &[u8],
+    executions: &[Vec<u8>],
+    pins: &ComponentQualificationPins,
+) -> Result<VerifiedComponentQualification> {
+    validate_hex(&pins.source_sha40, 40)?;
+    validate_hex(&pins.producer_sha256, 64)?;
+    ensure!(
+        qualification_bytes.len() <= 16 << 20
+            && sha(qualification_bytes) == pins.qualification_sha256
+            && manifest_bytes.len() <= 128 << 20
+            && sha(manifest_bytes) == pins.reference_manifest_sha256,
+        "component qualification bytes changed"
+    );
+    let qualification: Qualification = serde_json::from_slice(qualification_bytes)?;
+    ensure!(
+        qualification.schema == "jope.cpu-context-qualification/v1"
+            && qualification.verification_policy_sha256 == verification_policy_sha256()
+            && qualification.reference_manifest_sha256 == pins.reference_manifest_sha256
+            && qualification.source_sha256 == pins.source_sha40
+            && qualification.producer_sha256 == pins.producer_sha256,
+        "component qualification lineage changed"
+    );
+    let manifest = read_manifest(manifest_bytes)?;
+    verify_case_outputs(&manifest, &qualification)?;
+    ensure!(
+        executions.len() == 8 && pins.execution_sha256.len() == 8,
+        "component qualification requires all8 bounded executions"
+    );
+    for (index, reference) in manifest.cases.iter().enumerate() {
+        let evidence = &executions[index];
+        ensure!(
+            evidence.len() <= 1 << 20 && sha(evidence) == pins.execution_sha256[index],
+            "component execution differs from independent pin"
+        );
+        verify_execution(
+            evidence,
+            &pins.producer_sha256,
+            &sha(&serde_json::to_vec(reference)?),
+            &sha(&qualification.case_outputs[index]),
+            30.,
+        )?;
+    }
+    Ok(VerifiedComponentQualification {
+        encoder: qualification.encoder,
+    })
+}
+
 fn verify_execution(
     bytes: &[u8],
     program: &str,

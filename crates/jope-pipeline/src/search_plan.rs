@@ -8,6 +8,33 @@ use anyhow::{ensure, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
 
+pub const INNER_GROUP_POLICY: &str = "asm.inner-groups/largest-first-lexicographic-balance-five/v1";
+/// Deterministic group-preserving assignment, without target values.
+pub fn grouped_inner_folds(rows: &[(String, String)]) -> Result<Vec<Vec<String>>> {
+    let mut groups = std::collections::BTreeMap::<&str, usize>::new();
+    for (_, group) in rows {
+        *groups.entry(group).or_default() += 1;
+    }
+    ensure!(
+        groups.len() >= 5,
+        "fewer than five training groups for OOF selection"
+    );
+    let mut groups = groups.into_iter().collect::<Vec<_>>();
+    groups.sort_by(|(a, an), (b, bn)| bn.cmp(an).then(a.cmp(b)));
+    let mut sizes = [0usize; 5];
+    let mut assignment = std::collections::BTreeMap::new();
+    for (group, n) in groups {
+        let fold = (0..5).min_by_key(|&i| (sizes[i], i)).expect("five folds");
+        sizes[fold] += n;
+        assignment.insert(group, fold);
+    }
+    let mut folds = vec![vec![]; 5];
+    for (id, group) in rows {
+        folds[assignment[group.as_str()]].push(id.clone());
+    }
+    Ok(folds)
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct SelectionPlan {
@@ -366,5 +393,25 @@ mod tests {
         assert_eq!(a.identity()?, b.identity()?);
         assert_eq!(a.recipe_sha256, recipe);
         Ok(())
+    }
+    #[test]
+    fn grouped_assignment_keeps_whole_groups_and_input_order() {
+        let rows = [
+            ("a1", "a"),
+            ("b1", "b"),
+            ("a2", "a"),
+            ("c1", "c"),
+            ("d1", "d"),
+            ("e1", "e"),
+            ("f1", "f"),
+        ]
+        .into_iter()
+        .map(|(id, group)| (id.to_string(), group.to_string()))
+        .collect::<Vec<_>>();
+        let folds = grouped_inner_folds(&rows).unwrap();
+        assert_eq!(folds[0], vec!["a1", "a2"]);
+        assert_eq!(folds.iter().map(Vec::len).sum::<usize>(), rows.len());
+        assert_eq!(folds, grouped_inner_folds(&rows).unwrap());
+        assert!(grouped_inner_folds(&rows[..3]).is_err());
     }
 }

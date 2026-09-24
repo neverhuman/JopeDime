@@ -865,9 +865,14 @@ pub fn run(
             &expected,
             &observations,
         )?;
+        #[cfg(feature = "asm")]
+        let fitted_inference = super::fitted_export::report(journal, &confirmed, &observations)?;
+        #[cfg(not(feature = "asm"))]
+        let fitted_inference = json!({"status":"unavailable_build_requires_asm_feature"});
         datasets_report.push(
             json!({"dataset":dataset.dataset.id,"task":dataset.dataset.task,
             "screen":screen_data,"frozen":frozen,"confirmation":observations,"recipes":confirmed,
+            "fitted_inference":fitted_inference,
             "selection_exposure":super::selection_exposure::report(dataset,frozen,&roster[&dataset.dataset.id])?,
             "asm":asm_inventory.get(&dataset.dataset.id).cloned().unwrap_or_else(||json!("not_run_comparator_qualification_only"))}),
         );
@@ -1190,9 +1195,22 @@ pub fn report(
                 )?)?;
             }
         }
+        #[cfg(feature = "asm")]
+        let fitted_inference = if qualified.is_null() {
+            json!({"winner":null,"status":"unattempted_confirmation_incomplete","ranking_changed":false})
+        } else {
+            super::fitted_export::report(
+                journal,
+                &serde_json::from_value::<Vec<protocol::ConfirmedRecipe>>(qualified.clone())?,
+                &confirmations,
+            )?
+        };
+        #[cfg(not(feature = "asm"))]
+        let fitted_inference = json!({"status":"unavailable_build_requires_asm_feature"});
         report.push(
             json!({"dataset":dataset.dataset.id,"task":dataset.dataset.task,
             "inventory":inventory,"screen":screen,"confirmation":confirmations,"recipes":qualified,
+            "fitted_inference":fitted_inference,
             "selection_exposure":selection_exposure,
             "asm":asm_inventory.get(&dataset.dataset.id)}),
         );
@@ -1218,7 +1236,7 @@ pub fn report(
         "window":window,"datasets":report,"cost":accounting,
         "sealed_inputs_opened":false,"fits_started":0,"clock_started":false,
         "optimization_visible_labels":"development","confirmation_role":"adaptive_development",
-        "five_fold_summary_is_unbiased_generalization_estimate":false,
+        "five_fold_summary_is_unbiased_generalization_estimate":false,"test_headline_eligible":false,
         "complete_asm_demonstration":false}),
     )
 }

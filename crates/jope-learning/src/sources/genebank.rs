@@ -50,6 +50,7 @@ pub fn map_row(row: &Row, bundle_id: &str) -> Result<Candidate> {
     let metric = Metric::parse(&row.metric)
         .with_context(|| format!("unknown genebank metric {}", row.metric))?;
     let identity = HwmIdentity {
+        comparison: None,
         task: row.task.clone(),
         dataset_hash: row.dataset_hash.clone(),
         cut_id: cut_id(&row.score_tier)?,

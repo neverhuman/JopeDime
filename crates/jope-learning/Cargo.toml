@@ -19,6 +19,8 @@ anyhow.workspace = true
 clap.workspace = true
 hex.workspace = true
 jope-datasets = { path = "../jope-datasets" }
+# Share the exact frozen-panel numerical policy and task scorer.
+jope-pipeline = { path = "../jope-pipeline" }
 # ADR-0003 state resolution lives in exactly one place; see State::resolve.
 jope-paths = { path = "../jope-paths" }
 rusqlite = { version = "0.32", features = ["bundled"] }

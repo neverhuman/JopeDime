@@ -78,6 +78,7 @@ pub fn map_champion(
         .context("evaluation_bias absent")?
         .to_string();
     let identity = HwmIdentity {
+        comparison: None,
         task: "regression".into(),
         dataset_hash: ch.identity.dataset.clone(),
         cut_id: cut_id(&ch.identity)?,

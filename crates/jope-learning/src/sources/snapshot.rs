@@ -217,6 +217,7 @@ pub fn map_best(
 ) -> Result<Candidate> {
     let metric = Metric::parse(&row.metric).context("metric")?;
     let identity = HwmIdentity {
+        comparison: None,
         task: row.metadata.task_type.clone(),
         dataset_hash: row.metadata.dataset_hash.clone(),
         cut_id: cut_id(protocol)?,

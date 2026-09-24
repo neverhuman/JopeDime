@@ -12,6 +12,7 @@ Architecture (per the approved plan):
 
 from __future__ import annotations
 
+import copy
 import math
 from collections.abc import Sequence
 from dataclasses import dataclass, field
@@ -163,6 +164,8 @@ class JopePolicyModelV3(nn.Module):
     ) -> None:
         super().__init__()
         self.vocab = vocab
+        # Experimental full-table lineage; absent for historical grammar snapshots.
+        self.frozen_action_vocab: dict[str, Any] | None = None
         self.dataset_dim = dataset_dim
         self.target_dim = target_dim
         # v3.4: live width of the target block. None keeps all 512 dims (the v3.3 shape), so
@@ -635,6 +638,11 @@ class JopePolicyModelV3(nn.Module):
             "model_version": MODEL_VERSION,
             "model": self.state_dict(),
             "action_vocab": {"tokens": self.vocab.tokens, "version": self.vocab.version},
+            **(
+                {"frozen_action_vocab": copy.deepcopy(self.frozen_action_vocab)}
+                if self.frozen_action_vocab is not None
+                else {}
+            ),
             "d_model": self.d_model,
             "n_layers": self.n_layers,
             "n_heads": self.n_heads,
@@ -985,7 +993,16 @@ def load_policy_v3(state: dict[str, Any]) -> JopePolicyModelV3:
     from .tokens import build_action_vocab, build_prime_action_vocab
 
     specs_json = state.get("grammar_specs")
-    if specs_json:
+    frozen_action_vocab = state.get("frozen_action_vocab")
+    if frozen_action_vocab is not None:
+        from .training_corpus_contract import load_frozen_action_vocab
+
+        specs, vocab = load_frozen_action_vocab(frozen_action_vocab)
+        if specs_json != [spec.to_json() for spec in specs]:
+            raise ValueError("frozen action table parsing views changed")
+        if state.get("action_vocab") != vocab.to_json():
+            raise ValueError("frozen action table token IDs/version changed")
+    elif specs_json:
         specs = [GrammarSpec.from_json(s) for s in specs_json]
         vocab = (
             build_prime_action_vocab()
@@ -1032,6 +1049,7 @@ def load_policy_v3(state: dict[str, Any]) -> JopePolicyModelV3:
         dataset_block_rms=float(state.get("dataset_block_rms", DATASET_BLOCK_RMS)),
         target_block_rms=float(state.get("target_block_rms", TARGET_BLOCK_RMS)),
     )
+    model.frozen_action_vocab = copy.deepcopy(frozen_action_vocab)
     # strict=False: checkpoints predating the stability head still load (its params
     # stay at init and retrain on the next fit). v3.1 changed reward/stability head
     # SHAPES (conditional 3d inputs) — shape-mismatched tensors from older checkpoints

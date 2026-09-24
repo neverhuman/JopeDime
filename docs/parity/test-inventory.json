@@ -5,9 +5,9 @@
   "python": 214
  },
  "rust": {
-  "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 8",
-  "count": 2641,
-  "ignored": 37,
+  "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 4",
+  "count": 2838,
+  "ignored": 38,
   "packages": {
    "battle-gpu": {
     "count": 6,
@@ -29,18 +29,19 @@
     }
    },
    "feat-math": {
-    "count": 424,
+    "count": 435,
     "ignored": 4,
     "binaries": {
      "feat-math": {
       "kind": "lib",
-      "count": 281,
+      "count": 291,
       "ignored": 2,
       "tests": [
        "advanced_v3::csv::tests::empty_record_and_one_empty_field_are_distinct",
        "advanced_v3::csv::tests::malformed_quotes_are_rejected",
        "advanced_v3::csv::tests::raw_tables_reject_invalid_headers_and_ragged_rows",
        "advanced_v3::csv::tests::strict_parser_accepts_supported_quoted_csv",
+       "advanced_v3::emit::quotation_regression_tests::bound_python_control_unicode_json_is_valid_and_preserves_fitted_bits",
        "advanced_v3::emit::tests::emitted_lag_and_roll_use_fitted_group_tails",
        "advanced_v3::evolution::tests::initial_population_is_complete_unique_and_reproducible",
        "advanced_v3::evolution::tests::one_hundred_thousand_typed_children_compile_without_retry",
@@ -55,6 +56,10 @@
        "advanced_v3::fitted_cpp_runtime::tests::runtime_c_abi_is_sanitizer_clean_and_fail_closed",
        "advanced_v3::fitted_cpp_runtime::tests::runtime_rejects_malformed_shapes_without_entering_model_code",
        "advanced_v3::fitted_cpp_runtime::tests::safe_runtime_matches_bound_predictions",
+       "advanced_v3::fitted_portable::tests::branch_heads_preserve_missing_routes_in_python_and_rust",
+       "advanced_v3::fitted_portable::tests::fitted_portable_refuses_unimplemented_effective_state",
+       "advanced_v3::fitted_portable::tests::fitted_portable_template_bytes_are_pinned_for_version_three",
+       "advanced_v3::fitted_portable::tests::public_onehot_state_excludes_unused_categories_and_label_statistics",
        "advanced_v3::grammar::tests::aliases_canonicalize_before_hashing",
        "advanced_v3::grammar::tests::explicit_input_uses_its_distinct_defaults",
        "advanced_v3::grammar::tests::misplaced_and_task_incompatible_stages_are_rejected",
@@ -99,15 +104,20 @@
        "advanced_v3::tests::emitted_target_transforms_match_runtime_bitwise",
        "advanced_v3::tests::every_new_head_fits_its_declared_task",
        "advanced_v3::tests::imbalanced_binary_calibration_and_threshold_selection_are_safe",
+       "advanced_v3::tests::legacy_transform_wide_bound_model_predicts_identically_after_reload",
        "advanced_v3::tests::logit_table_model_emits_finite_probabilities_and_handles_unknowns",
        "advanced_v3::tests::ordered_training_values_do_not_reveal_unique_targets",
        "advanced_v3::tests::quoted_csv_parser_handles_commas_quotes_and_newlines",
        "advanced_v3::tests::schema_mismatch_and_iid_row_ops_are_rejected",
+       "advanced_v3::tests::synthesis_width_overflow_is_explicit_not_a_mask_dimension_failure",
        "advanced_v3::tests::wide_raw_input_is_not_truncated",
        "advanced_v3::transforms::tests::append_preserves_original_metadata_and_generated_missing_mask",
        "advanced_v3::transforms::tests::fitted_row_tails_reject_corrupt_serialized_key_state",
        "advanced_v3::transforms::tests::fitted_row_tails_reject_earlier_and_equal_prediction_orders",
        "advanced_v3::transforms::tests::lag_and_roll_are_group_order_aware_and_restore_caller_order",
+       "advanced_v3::transforms::tests::legacy_append_v3_keeps_raw_plus_allowed_generated_width_on_reload",
+       "advanced_v3::transforms::tests::legacy_append_v3_rejects_dense_overflow_before_losing_feature_columns",
+       "advanced_v3::transforms::tests::legacy_one_to_one_v3_preserves_wide_raw_columns_and_masks",
        "advanced_v3::transforms::tests::one_to_one_v3_transform_never_truncates_wide_raw_block",
        "advanced_v3::transforms::tests::prediction_uses_fitted_group_tails_and_unseen_groups_have_no_history",
        "advanced_v3::transforms::tests::rolling_all_missing_window_stays_missing",
@@ -493,11 +503,12 @@
      },
      "feat-math::ip_scrub": {
       "kind": "test",
-      "count": 5,
+      "count": 6,
       "ignored": 0,
       "tests": [
        "bound_and_fitted_cpp_emitters_are_clean",
        "every_emitter_is_clean_on_every_fixture",
+       "fitted_portable_and_public_scalar_cpp_are_clean_on_every_supported_head",
        "the_closed_form_docstring_no_longer_cites_the_method_literature",
        "the_phrase_lint_trips_on_what_it_must_and_nothing_ordinary",
        "user_supplied_names_do_not_trip_the_bound_and_fitted_lints"
@@ -585,12 +596,12 @@
     }
    },
    "hyperion": {
-    "count": 54,
+    "count": 57,
     "ignored": 1,
     "binaries": {
      "hyperion": {
       "kind": "lib",
-      "count": 51,
+      "count": 54,
       "ignored": 0,
       "tests": [
        "battle_gpu::control::tests::cancellation_and_deadline_are_typed",
@@ -634,6 +645,9 @@
        "hyperion_v7::sweep::orig_v2::tests::orig_v2_returns_raw_all_sweep_mean_and_exact_cell_coverage",
        "hyperion_v7::sweep::tests::batch_size_does_not_change_output",
        "hyperion_v7::sweep::tests::confidence_in_unit_interval_and_vector_is_row_mean",
+       "hyperion_v7::sweep::tests::embedding_only_matches_full_scatter_and_exact_patch_order",
+       "hyperion_v7::sweep::tests::embedding_only_preserves_cooperative_stopping",
+       "hyperion_v7::sweep::tests::embedding_only_refuses_invalid_embedding_shape",
        "hyperion_v7::sweep::tests::frames_identity_vs_binned_and_caps",
        "hyperion_v7::sweep::tests::invalid_plan_errors",
        "hyperion_v7::sweep::tests::raw_dataset_vector_matches_weighted_patch_mean",
@@ -1215,12 +1229,12 @@
     }
    },
    "jope-bench": {
-    "count": 21,
+    "count": 63,
     "ignored": 0,
     "binaries": {
      "jope-bench": {
       "kind": "lib",
-      "count": 15,
+      "count": 57,
       "ignored": 0,
       "tests": [
        "adapter::tests::adapter_failures_are_rejections_with_the_cause",
@@ -1233,6 +1247,48 @@
        "load::tests::numeric_csv_is_strict",
        "load::tests::targets_are_checked_against_the_task",
        "methods::tests::baselines_are_valid_single_head_programs_for_their_task",
+       "panel::campaign::tests::interrupted_measurements_stay_unknown_and_evidence_is_immutable",
+       "panel::campaign::tests::parent_scores_original_labels_and_refuses_changed_fitted_bytes",
+       "panel::campaign::tests::reuse_keeps_same_cut_and_counts_physical_cost_once",
+       "panel::campaign::tests::stale_worker_request_and_runtime_version_cannot_publish_scores",
+       "panel::campaign::tests::successful_command_with_bad_prediction_shape_has_no_score",
+       "panel::cli::tests::manifest_is_the_approved_bytes_not_merely_a_valid_shape",
+       "panel::demo::tests::asm_demo_requires_authenticated_plan_and_refuses_generic_overrides",
+       "panel::demo::tests::demo_cli_refuses_implicit_or_mixed_input",
+       "panel::demo::tests::demo_evidence_refuses_temporary_and_checkout_paths_before_creation",
+       "panel::demo::tests::demo_plan_pins_the_task_recipe_and_limits",
+       "panel::demo::tests::synthetic_demo_is_explicit_and_baseline_uses_training_only",
+       "panel::inference::tests::all_matrix_heads_and_scalar_boundaries_compile_and_replay_synthetic_fitted_state",
+       "panel::inference::tests::complete_registry_has_explicit_pre_fit_inference_coverage",
+       "panel::inference::tests::extended_scalar_export_keeps_auxiliary_backends_explicitly_unsupported",
+       "panel::inference::tests::fitted_boundary_template_bytes_are_pinned_for_version_one",
+       "panel::inference::tests::generated_winners_preserve_raw_boundary_and_private_provenance_on_export",
+       "panel::inference::tests::invalid_fitted_coefficients_fail_instead_of_becoming_unsupported",
+       "panel::inference::tests::public_files_are_allowlisted_and_never_contain_private_recipe_or_envelope",
+       "panel::inference::tests::unsupported_backend_keeps_the_fitted_winner_unchanged",
+       "panel::methods::tests::fitted_state_reloads_with_prediction_and_original_class_order_parity",
+       "panel::methods::tests::raw_prediction_refuses_changed_feature_kind_and_empty_class_labels",
+       "panel::methods::tests::roster_covers_heads_and_records_aliases_without_duplicate_algorithms",
+       "panel::methods::tests::worker_request_rejects_missing_class_and_has_no_scoring_labels",
+       "panel::optimize_cli::tests::capabilities_are_metadata_only_and_never_qualification",
+       "panel::proposal_validation::tests::preserves_invalid_slots_and_rejects_unknown_label_fields",
+       "panel::proposal_validation::tests::validates_all_three_tasks_without_fitting_or_replacing_heads",
+       "panel::protocol::tests::auroc_is_converted_to_loss_and_stale_results_are_rejected",
+       "panel::protocol::tests::confirmation_requires_all_folds_and_an_unchanged_freeze",
+       "panel::protocol::tests::smaller_rmse_wins_ties_are_stable_and_asm_is_additional",
+       "panel::protocol::tests::top_five_deduplicates_recipes_and_retains_required_asm_alias",
+       "panel::score::tests::binary_auc_uses_manifest_positive_class_and_midrank_ties",
+       "panel::score::tests::classification_refuses_missing_classes_invalid_shapes_and_bad_probabilities",
+       "panel::score::tests::f32_probability_roundoff_is_bounded_without_renormalization",
+       "panel::score::tests::fitted_reload_preserves_null_unseen_category_and_probability_columns",
+       "panel::score::tests::multiclass_requires_a_matrix_and_scores_the_declared_column",
+       "panel::score::tests::regression_uses_rmse_and_refuses_truncated_or_nonfinite_data",
+       "panel::selection_exposure::tests::fixed_recipe_still_records_adaptive_screen_exposure",
+       "panel::selection_exposure::tests::overlap_digest_preserves_scoring_order_and_refuses_duplicates",
+       "panel::selection_exposure::tests::synthesized_exposure_distinguishes_learning_from_screen_selection",
+       "panel::synthesized::tests::generated_classification_reuses_complete_probability_class_order",
+       "panel::synthesized::tests::generated_recipe_is_fitted_saved_reloaded_with_missing_and_unseen_categories",
+       "panel::worker::tests::worker_retains_fitted_state_and_never_overwrites_a_previous_result",
        "protocol::tests::binary_and_multiclass_run_through_the_protocol",
        "protocol::tests::far_below_zero_still_orders_and_unscored_ranks_last",
        "protocol::tests::resampled_search_produces_a_program_per_cut",
@@ -1276,7 +1332,7 @@
     }
    },
    "jope-cli": {
-    "count": 29,
+    "count": 41,
     "ignored": 0,
     "binaries": {
      "jope-cli": {
@@ -1302,11 +1358,23 @@
      },
      "jope-cli::bin/jope": {
       "kind": "bin",
-      "count": 2,
+      "count": 14,
       "ignored": 0,
       "tests": [
        "tests::umbrella_keeps_every_verb_and_lists_models_and_datasets",
-       "tests::version_is_semver"
+       "tests::version_is_semver",
+       "train::corpus::tests::absent_one_family_and_impossible_cross_task_partitions_fail",
+       "train::corpus::tests::exact_bins_refuse_snapping_unknown_params_and_wrong_tasks",
+       "train::corpus::tests::f32_identity_is_little_endian_and_preserves_signed_zero",
+       "train::corpus::tests::partition_is_family_disjoint_and_deterministic",
+       "train::qualified_cpu::selection_tests::inner_comparison_and_original_split_are_distinct_and_both_bound",
+       "train::tests::context_booleans_cannot_replace_native_admission",
+       "train::tests::controller_preparation_binds_projected_inputs_and_request_bytes",
+       "train::tests::experiment_identity_matches_python_fixture",
+       "train::tests::explicit_environment_omits_credentials_and_caps_threads",
+       "train::tests::immutable_receipts_reject_changed_bytes",
+       "train::tests::supervisor_uuid_and_subgroup_are_exact",
+       "train::tests::virtualenv_invocation_retains_link_but_pins_physical_binary"
       ]
      },
      "jope-cli::offline_cli": {
@@ -2889,12 +2957,12 @@
     }
    },
    "jope-learning": {
-    "count": 55,
+    "count": 70,
     "ignored": 0,
     "binaries": {
      "jope-learning": {
       "kind": "lib",
-      "count": 14,
+      "count": 29,
       "ignored": 0,
       "tests": [
        "canon::tests::sha256_vector",
@@ -2902,8 +2970,23 @@
        "champion::tests::key_and_event_hash_follow_the_engine_canonicalisation",
        "civil::tests::parses_rfc3339",
        "civil::tests::round_trips_dates",
+       "eligibility::tests::all_tasks_require_measured_aggregate_and_four_of_five_fold_gains",
+       "eligibility::tests::burns_rejections_guard_margin_and_unqualified_incumbents_are_durable",
+       "eligibility::tests::freeze_is_independent_and_cannot_be_recreated_from_a_candidate",
+       "eligibility::tests::inner_admission_refuses_retrofitted_unpinned_experiment",
+       "eligibility::tests::inner_fit_binding_rejects_seed_deadline_memory_and_late_freeze_changes",
+       "eligibility::tests::inner_partition_excludes_outer_hold_and_pins_comparison_not_candidate",
+       "eligibility::tests::old_execution_cannot_be_attached_after_freeze_and_pruning_keeps_measured_evidence",
+       "eligibility::tests::replay_requires_accepted_history_and_recomputes_retained_measurements",
+       "eligibility::tests::stale_identity_missing_fold_and_reordered_rows_cannot_teach",
+       "eligibility::tests::structural_receipt_without_actual_predictions_or_complete_execution_is_ineligible",
+       "eligibility::tests::tampered_prediction_blob_fails_closed",
+       "eligibility::tests::unknown_accounting_and_unbound_fitted_outputs_cannot_be_substituted",
        "hwm::tests::admission_rules",
+       "hwm::tests::comparison_identity_never_collides_across_evaluator_vocabulary_protocol_or_context",
        "hwm::tests::ingest_moves_pointers_only_on_strict_improvement_and_logs_rejects",
+       "hwm::tests::legacy_pointer_remains_diagnostic_without_fallback_or_rewrite",
+       "hwm::tests::raw_negative_r2_gains_are_not_clipped",
        "ledger::tests::a_batch_id_is_always_greater_than_the_one_it_chains_onto",
        "ledger::tests::batches_sealed_within_one_millisecond_still_verify",
        "ledger::tests::chain_appends_and_verifies_and_detects_tampering",
@@ -3059,12 +3142,12 @@
     }
    },
    "jope-parallel": {
-    "count": 505,
+    "count": 506,
     "ignored": 9,
     "binaries": {
      "jope-parallel": {
       "kind": "lib",
-      "count": 334,
+      "count": 335,
       "ignored": 4,
       "tests": [
        "build_receipt::tests::bounds_are_numeric_and_fail_closed",
@@ -3307,6 +3390,7 @@
        "native_input_cache::tests::root_replacement_and_descriptor_mutation_are_detected",
        "native_input_cache::tests::same_size_mutation_restored_mtime_and_rename_invalidate",
        "native_input_cache::tests::symlinks_and_fifo_refuse_before_read",
+       "native_input_cache::tests::unqualified_filesystem_keeps_full_hashing_for_old_read_only_inputs",
        "native_input_cache::tests::writable_files_never_cache_and_wrong_expected_hash_never_enters",
        "native_loop::materialize::tests::previous_generation_targets_are_not_relabelled_as_fresh",
        "native_loop::run_approval::tests::run_review_binds_entire_config_epoch_census_and_original_deadline",
@@ -3861,28 +3945,99 @@
     }
    },
    "jope-pipeline": {
-    "count": 51,
-    "ignored": 0,
+    "count": 133,
+    "ignored": 1,
     "binaries": {
      "jope-pipeline": {
       "kind": "lib",
-      "count": 41,
-      "ignored": 0,
+      "count": 123,
+      "ignored": 1,
       "tests": [
+       "classification_bridge::tests::experimental_context_has_bitwise_label_renaming_invariance_for_both_tasks",
+       "context_qualification::materialize::tests::indices_refuse_negative_and_fractional",
+       "context_qualification::materialize::tests::numeric_csv_matches_native_float_display",
+       "context_qualification::materialize::tests::parent_selects_only_original_fitting_rows_after_full_hash_verification",
+       "cpu_context_bridge::tests::synthetic_attestation_rejects_unknown_counters_and_unread_memory_limit",
+       "cpu_context_bridge::tests::synthetic_attestation_requires_exit_zero_and_original_deadline",
        "emit::tests::a_head_the_cpp_and_js_emitters_do_not_cover_is_recorded_not_dropped",
        "emit::tests::a_manifest_that_disagrees_with_the_file_it_names_is_refused",
        "emit::tests::language_lists_parse_into_a_fixed_order",
        "emit::tests::the_bootstrap_genome_emits_every_language_and_shares_one_cpp_source",
        "emit::tests::the_reported_identity_follows_the_artifacts_not_the_request",
+       "execution::tests::arm_window_cannot_reset_or_change_allowance",
+       "execution::tests::async_setup_failure_preserves_original_expiry_without_gate",
+       "execution::tests::batch_preflight_deduplicates_only_identical_successful_pins",
+       "execution::tests::bounded_watchers_enter_setup_concurrently_before_either_finishes",
+       "execution::tests::cancelled_and_missing_dependency_inventory_does_not_poison_resume",
+       "execution::tests::capture_drains_after_retention_bound",
+       "execution::tests::cgroup_and_systemd_parsers_reject_unbounded_allowances",
+       "execution::tests::changed_output_cannot_be_a_cached_success",
+       "execution::tests::datasets_get_round_robin_admission",
+       "execution::tests::dropping_setup_slot_signals_and_joins_its_watcher",
+       "execution::tests::finished_receipt_cannot_hide_live_group_from_later_batch",
+       "execution::tests::fit_memory_is_equal_pinned_and_leaves_controller_headroom",
+       "execution::tests::fit_memory_policy_is_immutable_and_not_applied_to_open_only_training",
+       "execution::tests::foreign_asm_crash_gap_blocks_without_drain",
+       "execution::tests::full_gate_hash_rejects_mutation_despite_preflight_and_restored_mtime",
+       "execution::tests::full_gate_hash_rejects_program_replacement_after_preflight",
+       "execution::tests::immutable_journal_refuses_deadline_reset_and_changed_identity",
+       "execution::tests::job_identity_binds_argv_inputs_environment_and_arm",
+       "execution::tests::missing_accounting_serializes_as_null_and_not_started_is_explicit_zero",
+       "execution::tests::per_fit_allowance_cannot_exceed_thirty_seconds",
+       "execution::tests::pre_gate_expiry_is_terminal_with_unknown_setup_cost_and_no_fit_claim",
+       "execution::tests::pre_gate_setup_cancellation_does_not_reset_or_override_expired_cutoff",
+       "execution::tests::real_supervisor_resources_and_descendant_cleanup",
+       "execution::tests::refuses_output_escape_and_thread_override",
+       "execution::tests::resumed_prior_unit_is_unknown_and_foreign_live_group_is_not_drained",
+       "execution::tests::unavailable_inventory_does_not_start_the_clock",
        "experiment::tests::budgets_fail_closed_and_resume_keeps_original_deadline",
        "experiment::tests::frozen_panel_has_ten_of_each_original_task_and_valid_identities",
        "experiment::tests::identity_binds_fold_classes_checkpoint_and_all_evaluation_inputs",
        "experiment::tests::zero_nonfinite_incomplete_and_wrong_task_results_cannot_pass",
+       "experiment_v2::tests::reuse_cannot_duplicate_original_cost_or_point_to_itself",
+       "experiment_v2::tests::stale_worker_identity_and_partial_scoring_refuse",
+       "experiment_v2::tests::unknown_consumption_roundtrips_as_null_and_cannot_be_a_score",
+       "experimental_producer::tests::experimental_plan_cannot_deserialize_as_accepted_or_change_task",
+       "experimental_producer::tests::experimental_regression_requires_matching_task_and_executable_head",
+       "experimental_producer::tests::generic_bank_preserves_each_seed_and_never_claims_neural_origin",
+       "experimental_producer::tests::initial_claims_reject_reordering_duplicates_wrong_head_and_native_tampering",
+       "experimental_producer::tests::physical_python_argv_ignores_ambient_import_paths_and_pins_request",
+       "experimental_producer::tests::runtime_inventory_detects_source_and_package_drift_before_launch",
+       "neural_search::tests::accepted_envelope_preserves_serialized_checkpoint_plan_and_evidence",
+       "neural_search::tests::cancellation_at_cutoff_preserves_observed_generation_on_resume",
+       "neural_search::tests::canonical_alias_slot_keeps_origin_without_duplicate_fit",
+       "neural_search::tests::crash_after_observed_generation_preserves_completed_fits_on_resume",
+       "neural_search::tests::expired_nonattempt_preserves_completed_winner_and_resume_integrity",
+       "neural_search::tests::generic_has_80_slots_and_identical_limits_clock_precedes_generation",
+       "neural_search::tests::initial_candidate_identity_rejects_slot_origin_and_genome_relabeling",
+       "neural_search::tests::nonattempt_at_original_arm_cutoff_finalizes_without_new_deadline",
+       "neural_search::tests::nonfinite_scores_never_rank",
+       "neural_search::tests::offspring_from_exploration_or_fallback_does_not_prove_neural_evolution",
+       "neural_search::tests::original_expired_window_admits_no_fits_and_does_not_reset",
+       "neural_search::tests::outer_score_cannot_rank_and_refit_requires_frozen_oof",
+       "neural_search::tests::pair_plan_is_frozen_before_clocks_and_rejects_changed_budget_or_sampling",
+       "neural_search::tests::partial_fold_replay_authenticates_every_measured_outcome",
+       "neural_search::tests::partial_resume_replays_scheduled_generation_without_new_deadline",
+       "neural_search::tests::population_replay_preserves_neural_duplicates_but_rejects_generic_duplicates",
+       "neural_search::tests::population_replay_rejects_forged_identity_and_duplicate_or_missing_slots",
+       "neural_search::tests::population_replay_requires_completed_parents_from_earlier_generations",
+       "neural_search::tests::resume_rechecks_cached_artifacts_and_keeps_original_window",
+       "neural_search::tests::resume_rejects_forged_offspring_metadata_before_cached_fit_replay",
+       "neural_search::tests::synthetic_neural_slots_reach_callbacks_and_evolution_with_origins_intact",
+       "neural_search::tests::unavailable_neural_context_still_runs_generic_and_preserves_early_clock",
+       "neural_search::tests::unavailable_nonattempt_does_not_poison_resume",
+       "neural_search::tests::unknown_physical_fit_is_not_a_win_or_an_evolution_parent",
        "prepare::tests::a_constant_held_out_target_is_refused_rather_than_scored_as_nan",
        "prepare::tests::a_cut_never_shares_a_row_between_its_fit_and_its_score",
        "prepare::tests::cut_counts_are_bounded_by_the_partition",
        "prepare::tests::the_held_out_folds_are_disjoint_and_cover_the_dataset",
        "prepare::tests::the_partition_is_a_function_of_the_dataset_and_the_seed_only",
+       "prepared_data::tests::authenticated_metadata_still_must_match_the_frozen_descriptor",
+       "prepared_data::tests::cuts_preserve_original_order_labels_nulls_and_declared_class_order",
+       "prepared_data::tests::invalid_numeric_cells_and_targets_are_not_imputed_or_dropped",
+       "prepared_data::tests::raw_encoding_distinguishes_missing_from_every_literal_category",
+       "prepared_data::tests::rows_groups_and_actual_fold_membership_are_checked",
+       "prepared_data::tests::tampered_bytes_are_rejected_before_parsing",
        "run::tests::classification_is_refused_before_writing_a_regression_run",
        "run::tests::policies_parse",
        "run::tests::require_fails_closed_before_the_output_directory_is_touched",
@@ -3904,13 +4059,30 @@
        "search::tests::the_same_seed_replays_the_same_search",
        "search::tests::the_search_measures_and_records_per_candidate_evidence",
        "search::tests::the_seconds_bound_stops_the_search_and_is_recorded",
+       "search_context::tests::accepted_receipt_refuses_wrong_rows_old128_and_classification_aliases",
+       "search_context::tests::experimental_binary_and_multiclass_contexts_are_bitwise_label_rename_invariant",
+       "search_context::tests::experimental_pool_rejects_changed_training_selection_and_missing_classes",
+       "search_plan::tests::exact_inner_closure_and_arm_seeds_are_bound",
+       "search_plan::tests::frozen_refit_uses_common_outer_seed_and_canonical_recipe",
+       "search_plan::tests::grouped_assignment_keeps_whole_groups_and_input_order",
+       "search_plan::tests::heldout_or_repeated_or_missing_rows_are_rejected",
        "select::tests::a_failed_observation_never_contributes_a_score",
        "select::tests::an_unmeasured_search_fails_closed",
        "select::tests::complete_cover_still_ranks_above_a_better_partial_cover",
        "select::tests::different_partial_cut_sets_are_never_compared",
        "select::tests::the_lowest_mean_wins_among_programs_measured_on_the_same_cuts",
-       "select::tests::ties_break_deterministically_on_the_genome"
+       "select::tests::ties_break_deterministically_on_the_genome",
+       "supervisor::tests::resume_runtime_uses_original_global_deadline_preserving_fit_cutoff",
+       "supervisor::tests::supervisor_paths_cannot_escape_system_slice",
+       "supervisor::tests::uses_allowed_cpu_ids_and_rejects_insufficient_capacity",
+       "synthesized_recipe::tests::lossless_original_and_explicit_input_derivation"
       ]
+     },
+     "jope-pipeline::bin/jope-context-proof": {
+      "kind": "bin",
+      "count": 0,
+      "ignored": 0,
+      "tests": []
      },
      "jope-pipeline::schema_agreement": {
       "kind": "test",
@@ -3932,19 +4104,53 @@
     }
    },
    "jope-policy": {
-    "count": 4,
+    "count": 26,
     "ignored": 2,
     "binaries": {
      "jope-policy": {
       "kind": "lib",
-      "count": 4,
+      "count": 26,
       "ignored": 2,
       "tests": [
+       "context_producer::admission::tests::cpu_manifest_never_accepts_unpinned_registry_or_fewer_cases",
+       "context_producer::admission::tests::execution_requires_completion_limits_and_matching_outputs",
+       "context_producer::admission::tests::finite_component_gate_refuses_wrong_values_shapes_and_nan",
+       "context_producer::classification::tests::classification_input_cannot_enter_accepted_regression_parser",
+       "context_producer::classification::tests::classification_rejects_changed_labels_ids_or_declared_task",
+       "context_producer::classification::tests::label_renaming_never_changes_feature_or_neutral_conditioning_bytes",
+       "context_producer::input::tests::refuses_heldout_fields_and_classification",
+       "context_producer::input::tests::rejects_nonfinite_numeric_without_reclassifying",
+       "context_producer::input::tests::retains_original_missing_categories_and_exact_ids",
+       "context_producer::tests::accepted_manifest_uses_sha256_bytes_not_legacy_identifier",
+       "context_producer::tests::assembly_uses_all_three_frozen_normalizers_including_target",
+       "context_producer::tests::hyperion_pool_keeps_512_component_contract",
+       "context_producer::worker::tests::bundle_relative_paths_refuse_escape",
+       "context_producer::worker::tests::classification_is_a_distinct_explicit_worker_mode",
+       "context_producer::worker::tests::invocation_roundtrip_and_extra_paths_refused",
+       "decode::cache_tests::cached_sampling_preserves_tokens_grammar_finished_rows_and_rng_tail",
        "jope_embed::tests::embedding_matches_python_reference",
        "jope_embed::tests::reviewed_preprocessing_bundle_loads_with_exact_v1_shapes",
        "jope_embed::tests::versioned_encoder_assembles_blocks_deterministically",
-       "jope_embed::tests::versioned_encoder_rejects_missing_target_sidecar"
+       "jope_embed::tests::versioned_encoder_rejects_missing_target_sidecar",
+       "model::cached::tests::cached_decoder_gathers_original_rows_and_refuses_revival_or_reorder",
+       "model::cached::tests::cached_decoder_keeps_pad_keys_hidden_after_nonpad_steps",
+       "model::cached::tests::cached_decoder_matches_full_prefix_across_positions_and_pad_history",
+       "model::cached::tests::cached_step_linear_and_tied_projection_match_full_for_active_batch_shapes",
+       "producer::tests::producer_reader_preserves_80_typed_recipes_but_is_only_claims",
+       "producer::tests::producer_transport_rejects_seed_request_recipe_and_context_tampering"
       ]
+     },
+     "jope-policy::bin/jope-context-worker": {
+      "kind": "bin",
+      "count": 0,
+      "ignored": 0,
+      "tests": []
+     },
+     "jope-policy::bin/jope-policy-producer": {
+      "kind": "bin",
+      "count": 0,
+      "ignored": 0,
+      "tests": []
      }
     }
    },
@@ -4022,14 +4228,15 @@
     }
    },
    "starforge": {
-    "count": 48,
+    "count": 57,
     "ignored": 1,
     "binaries": {
      "starforge": {
       "kind": "lib",
-      "count": 36,
+      "count": 45,
       "ignored": 1,
       "tests": [
+       "bundle::tests::canonical_json_keeps_roundtrip_precision",
        "bundle::tests::canonical_policy_identities_are_reproducible",
        "bundle::tests::committed_manifest_is_the_reviewed_identity",
        "bundle::tests::descriptor_relative_reads_enforce_the_byte_bound",
@@ -4046,6 +4253,8 @@
        "data::tests::load_dataset_reports_loading_shape_errors",
        "data::tests::report_scores_reads_completed_finite_auc_reports",
        "data::tests::row_selection_and_splits_are_deterministic_and_stratified",
+       "foundation::support::tests::foundation_percentiles_match_retained_torch27_f32_positions",
+       "foundation::support::tests::ordinary_foundation_pooling_retains_legacy_percentiles",
        "metrics::tests::binary_auc_handles_ordering_and_ties",
        "metrics::tests::binary_auc_returns_nan_for_invalid_inputs",
        "metrics::tests::regression_metrics_handle_basic_cases",
@@ -4056,11 +4265,17 @@
        "model::proptests::regression_query_chunk_is_bounded_and_lossless_when_fitting",
        "model::proptests::softmax_last_rows_are_shift_invariant_probability_distributions",
        "model::proptests::split_then_merge_heads_round_trips_bit_exactly",
+       "model::tensor_ops::stable_feature_tests::foundation_moments_and_query_output_are_row_permutation_stable",
+       "model::tensor_ops::stable_feature_tests::foundation_moments_keep_constant_missing_and_scale_floor_semantics",
+       "model::tensor_ops::stable_feature_tests::foundation_moments_preserve_imputation_population_and_indicators",
+       "model::tensor_ops::stable_feature_tests::foundation_moments_preserve_small_variance_at_large_offset",
        "model::tests::loads_plain_and_zstd_safetensors_identically",
        "model::tests::loads_zstd_cli_compressed_safetensors",
        "model::tests::median_of_views_is_row_stable_single_vs_batch",
        "model::tests::rank_aggregate_uses_average_one_based_ranks",
        "model::tests::roundtrips_real_starforge_weights_if_present",
+       "target_encoder::frozen_window_tests::frozen_windows_reject_out_of_range_and_wrong_view_counts",
+       "target_encoder::frozen_window_tests::native_sampling_windows_match_retained_export_recipes",
        "target_encoder::tests::classical_signature_matches_frozen_binary_and_regression_oracle",
        "target_encoder::tests::numpy_sampling_matches_frozen_oracle",
        "target_encoder::tests::numpy_seed_sequence_and_pcg64_match_frozen_stream",
@@ -4133,11 +4348,11 @@
  },
  "python": {
   "mode": "static-scan",
-  "command": "stdlib AST scan of python/tests/**/test_*.py for def test_* (python/uv.lock not committed or --static-python)",
-  "count": 214,
+  "command": "explicit --static-python: stdlib AST scan of python/tests/**/test_*.py; not collection or execution",
+  "count": 272,
   "packages": {
    "jope": {
-    "count": 214,
+    "count": 272,
     "files": {
      "tests/engine/test_experiment_scheduler.py": {
       "count": 3,
@@ -4276,6 +4491,27 @@
        "tests/test_expanded_gp_protected_screen.py::test_treatment_rejects_budget_or_identity_drift"
       ]
      },
+     "tests/test_experimental_proposal.py": {
+      "count": 8,
+      "tests": [
+       "tests/test_experimental_proposal.py::test_actual_trained_classifier_reload_sampling_uses_task_head",
+       "tests/test_experimental_proposal.py::test_all_rejected_samples_never_gain_neural_origin",
+       "tests/test_experimental_proposal.py::test_context_requires_exact_train_identity_lineage_width_and_f32_bytes",
+       "tests/test_experimental_proposal.py::test_experimental_architecture_refuses_implicit_defaults_and_reinterpretation",
+       "tests/test_experimental_proposal.py::test_export_binds_exact_checkpoint_vocabulary_and_continuation_proof",
+       "tests/test_experimental_proposal.py::test_origins_slots_dedup_and_bank_draw_identity_remain_honest",
+       "tests/test_experimental_proposal.py::test_regression_context_refuses_classifier_lineage_or_classes",
+       "tests/test_experimental_proposal.py::test_request_refuses_labels_unknown_task_and_unbounded_sampling"
+      ]
+     },
+     "tests/test_experimental_runtime.py": {
+      "count": 3,
+      "tests": [
+       "tests/test_experimental_runtime.py::test_runtime_captures_exact_source_and_distribution_bytes",
+       "tests/test_experimental_runtime.py::test_runtime_receipts_are_immutable_and_nonfinite_values_refused",
+       "tests/test_experimental_runtime.py::test_runtime_requires_isolation_and_new_durable_output"
+      ]
+     },
      "tests/test_external_fixture_index.py": {
       "count": 6,
       "tests": [
@@ -4303,6 +4539,13 @@
        "tests/test_freeze_hyperion_precomputed_cell_coverage.py::test_cell_shape_range_and_mutation_are_rejected",
        "tests/test_freeze_hyperion_precomputed_cell_coverage.py::test_immutable_freeze_and_verify_bytes",
        "tests/test_freeze_hyperion_precomputed_cell_coverage.py::test_inspection_is_exact_train_only_and_groups_duplicate_features"
+      ]
+     },
+     "tests/test_frozen_vocabulary_training.py": {
+      "count": 2,
+      "tests": [
+       "tests/test_frozen_vocabulary_training.py::test_actual_full_table_optimizer_reload_and_continuation",
+       "tests/test_frozen_vocabulary_training.py::test_frozen_table_never_rebuilds_token_ids_from_parsing_views"
       ]
      },
      "tests/test_genome_boost_cluster_campaign.py": {
@@ -4404,6 +4647,22 @@
        "tests/test_optional_task_readiness.py::test_eight_slot_weights_redistribute_absent_optional_shares_evenly",
        "tests/test_optional_task_readiness.py::test_optional_admission_is_shadow_evidence_gated",
        "tests/test_optional_task_readiness.py::test_optional_tasks_require_fresh_v2_readiness_not_one_generic_floor"
+      ]
+     },
+     "tests/test_policy_training_contract.py": {
+      "count": 11,
+      "tests": [
+       "tests/test_policy_training_contract.py::test_amp_overflow_loop_skips_then_updates",
+       "tests/test_policy_training_contract.py::test_amp_skipped_step_is_not_counted_as_an_update",
+       "tests/test_policy_training_contract.py::test_classification_only_corpus_selects_classification_lane",
+       "tests/test_policy_training_contract.py::test_cuda_request_never_silently_becomes_cpu",
+       "tests/test_policy_training_contract.py::test_historical_publication_explicitly_marks_inherited_state",
+       "tests/test_policy_training_contract.py::test_interrupted_update_resume_matches_uninterrupted_state",
+       "tests/test_policy_training_contract.py::test_invalid_training_budget_rejected_before_distributed_init",
+       "tests/test_policy_training_contract.py::test_real_synthetic_update_reload_and_continuation",
+       "tests/test_policy_training_contract.py::test_resume_execution_drift_refuses",
+       "tests/test_policy_training_contract.py::test_strict_resume_refuses_optimizer_fallback_before_updates",
+       "tests/test_policy_training_contract.py::test_zero_update_or_unchanged_run_cannot_publish_success"
       ]
      },
      "tests/test_raw_floor_train_audit.py": {
@@ -4537,6 +4796,65 @@
        "tests/test_test_exact_campaign.py::test_task_valid_rejects_cross_task_heads"
       ]
      },
+     "tests/test_training_campaign.py": {
+      "count": 22,
+      "tests": [
+       "tests/test_training_campaign.py::test_campaign_recovers_committed_update_in_original_window",
+       "tests/test_training_campaign.py::test_checkpoint_hashing_cannot_extend_category_deadline",
+       "tests/test_training_campaign.py::test_context_missing_dimensions_and_cross_split_family_are_refused",
+       "tests/test_training_campaign.py::test_cpu_requires_explicit_fixture_and_tmp_state_is_always_rejected",
+       "tests/test_training_campaign.py::test_cuda_requires_exact_experiment_uuid_unit_and_membership",
+       "tests/test_training_campaign.py::test_cuda_unavailable_never_falls_back_to_cpu",
+       "tests/test_training_campaign.py::test_execution_timing_rejects_late_exit_unknown_wall_and_late_validation",
+       "tests/test_training_campaign.py::test_global_reserve_caps_last_category",
+       "tests/test_training_campaign.py::test_original_windows_never_reset_on_resume_or_verification",
+       "tests/test_training_campaign.py::test_parent_observed_late_zero_exit_is_budget_exhausted",
+       "tests/test_training_campaign.py::test_plan_has_no_clock_and_pins_each_category",
+       "tests/test_training_campaign.py::test_real_classification_refusal_is_labelled_synthetic_not_renamed_regression",
+       "tests/test_training_campaign.py::test_real_cpu_optimizer_reload_continuation_and_export",
+       "tests/test_training_campaign.py::test_real_f32_context_identity_refuses_lossy_numbers_and_changed_bytes",
+       "tests/test_training_campaign.py::test_requested_coverage_exposes_missing_regression_and_classifier_fallbacks",
+       "tests/test_training_campaign.py::test_runtime_and_corpus_drift_refuse_resume",
+       "tests/test_training_campaign.py::test_runtime_pins_cuda_bindings_and_preprocessing_dependencies",
+       "tests/test_training_campaign.py::test_runtime_pins_installed_bytes_not_only_version",
+       "tests/test_training_campaign.py::test_synthetic_classifier_target_width_is512_without_changing_regression",
+       "tests/test_training_campaign.py::test_unselected_task_cannot_hide_forbidden_authority",
+       "tests/test_training_campaign.py::test_unused_context_is_rejected_before_training",
+       "tests/test_training_campaign.py::test_worker_failures_cancel_group_and_preserve_accounting"
+      ]
+     },
+     "tests/test_training_comparison.py": {
+      "count": 3,
+      "tests": [
+       "tests/test_training_comparison.py::test_actual_siblings_share_parent_and_cutoff",
+       "tests/test_training_comparison.py::test_comparison_cannot_open_a_window",
+       "tests/test_training_comparison.py::test_sampler_exact_exposure_and_no_fresh_control"
+      ]
+     },
+     "tests/test_training_corpus_contract.py": {
+      "count": 5,
+      "tests": [
+       "tests/test_training_corpus_contract.py::test_binding_and_frozen_policy_are_required",
+       "tests/test_training_corpus_contract.py::test_exact_original_is_preserved",
+       "tests/test_training_corpus_contract.py::test_full_action_table_preserves_every_token_id",
+       "tests/test_training_corpus_contract.py::test_full_action_table_rejects_changed_bindings",
+       "tests/test_training_corpus_contract.py::test_oov_or_dropped_parameter_is_refused"
+      ]
+     },
+     "tests/test_training_input_closure.py": {
+      "count": 3,
+      "tests": [
+       "tests/test_training_input_closure.py::test_projected_closure_is_invariant_to_excluded_artifact_mutation",
+       "tests/test_training_input_closure.py::test_projection_rejects_forbidden_or_changed_closure",
+       "tests/test_training_input_closure.py::test_unlisted_reachable_artifact_is_refused_before_open"
+      ]
+     },
+     "tests/test_training_transition.py": {
+      "count": 1,
+      "tests": [
+       "tests/test_training_transition.py::test_explicit_transition_preserves_moments_and_rejects_invariant_drift"
+      ]
+     },
      "tests/test_verify_old_hyperion_vs_replays.py": {
       "count": 1,
       "tests": [
@@ -4548,7 +4866,7 @@
   }
  },
  "totals": {
-  "rust": 2641,
-  "python": 214
+  "rust": 2838,
+  "python": 272
  }
 }

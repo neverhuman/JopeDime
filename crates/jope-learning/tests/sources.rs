@@ -6,9 +6,29 @@ mod common;
 use common::jl;
 use jope_learning::canon::sha256_hex;
 use jope_learning::sources::{genebank, snapshot, sotarena};
-use jope_learning::state::{PointerKey, State};
+use jope_learning::state::State;
 use serde_json::json;
 use std::fs;
+
+fn exact_current(
+    state: &State,
+    task: &str,
+    dataset: &str,
+    cut: &str,
+) -> jope_learning::record::HwmRecord {
+    let mut records = state.pointers().unwrap().into_iter().filter(|(key, _)| {
+        key.task == task
+            && key.dataset_hash == dataset
+            && key.cut_id == cut
+            && key.identity_sha256.is_some()
+    });
+    let record = records.next().unwrap().1;
+    assert!(
+        records.next().is_none(),
+        "fixture must name one full comparison identity"
+    );
+    record
+}
 
 fn build_genebank(path: &std::path::Path) {
     let conn = rusqlite::Connection::open(path).unwrap();
@@ -167,12 +187,12 @@ fn genebank_rows_become_unbound_records() {
         ),
         (Some(1), Some(19), Some(1))
     );
-    let key = PointerKey {
-        task: "regression".into(),
-        dataset_hash: "0259e0b6af043f58".into(),
-        cut_id: genebank::cut_id("test_exact").unwrap(),
-    };
-    let cur = state.read_pointer(&key).unwrap().unwrap();
+    let cur = exact_current(
+        &state,
+        "regression",
+        "0259e0b6af043f58",
+        &genebank::cut_id("test_exact").unwrap(),
+    );
     assert_eq!((cur.score.value, cur.improvement_number), (0.99, 1));
     assert!(cur.prev_event_sha256.is_some());
     let v = jl(&state_dir, &["hwm", "verify"]).ok().json();
@@ -350,27 +370,13 @@ fn snapshot_maxima_are_bound_to_the_manifest_hashes() {
     assert_eq!(rep["accepted"], 2);
     let state = State::at(&state_dir);
     let cut = snapshot::cut_id("test-exact-reused").unwrap();
-    let a = state
-        .read_pointer(&PointerKey {
-            task: "regression".into(),
-            dataset_hash: "aaaaaaaaaaaaaaaa".into(),
-            cut_id: cut.clone(),
-        })
-        .unwrap()
-        .unwrap();
+    let a = exact_current(&state, "regression", "aaaaaaaaaaaaaaaa", &cut);
     assert_eq!(a.score.value, 0.7);
     assert_eq!(a.provenance.run_id, "strict-wave-000003/train");
     assert_eq!(a.provenance.source, "snapshot-4754860");
     assert_eq!(a.evaluator.sha256, "unbound");
     assert_eq!(a.ts_unix, 1_785_000_001);
-    let b = state
-        .read_pointer(&PointerKey {
-            task: "binary".into(),
-            dataset_hash: "bbbbbbbbbbbbbbbb".into(),
-            cut_id: cut,
-        })
-        .unwrap()
-        .unwrap();
+    let b = exact_current(&state, "binary", "bbbbbbbbbbbbbbbb", &cut);
     assert_eq!(
         (b.score.value, b.provenance.run_id.as_str()),
         (0.8, "strict-wave-000003/validation")

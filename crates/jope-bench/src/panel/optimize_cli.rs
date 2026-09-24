@@ -13,6 +13,13 @@ pub struct OptimizeCli {
 pub enum OptimizeCommand {
     /// Read compiled support without loading any model or admitting a budget.
     Capabilities,
+    /// Authenticate prepared workers and retained qualification without execution.
+    ValidateConfiguration {
+        #[arg(long)]
+        configuration: PathBuf,
+        #[arg(long)]
+        configuration_sha256: String,
+    },
     /// Prepare a separately budgeted single-regression operational proof.
     ProofPlan {
         #[arg(long)]
@@ -61,6 +68,23 @@ fn run_enabled(cli: OptimizeCli) -> anyhow::Result<Value> {
     use anyhow::{ensure, Context};
     match cli.command {
         OptimizeCommand::Capabilities => unreachable!("capabilities dispatch precedes resources"),
+        OptimizeCommand::ValidateConfiguration {
+            configuration,
+            configuration_sha256,
+        } => {
+            let artifact = jope_pipeline::execution::Artifact {
+                path: std::fs::canonicalize(configuration)?,
+                sha256: configuration_sha256,
+            };
+            artifact.verify()?;
+            let config: Configuration = serde_json::from_slice(&std::fs::read(&artifact.path)?)?;
+            let qualified = config.verify_prepared()?;
+            Ok(
+                json!({"schema":"jope.asm-configuration-validation/v1","ok":true,
+                "configuration":artifact,"source_sha40":config.source_sha40,
+                "context_qualified":qualified,"fits":0,"execution_budget_started":false}),
+            )
+        }
         OptimizeCommand::ProofPlan {
             base_plan,
             base_plan_sha256,
@@ -119,13 +143,28 @@ fn run_enabled(cli: OptimizeCli) -> anyhow::Result<Value> {
                 "asm.accepted-policy-state".into(),
                 jope_policy::ACCEPTED_STATE_SHA256.into(),
             );
+            for (task, experimental) in &config.experimental {
+                plan.experiment.checkpoints.insert(
+                    format!("asm.experimental-policy/{task}"),
+                    experimental.checkpoint.sha256.clone(),
+                );
+                plan.experiment.checkpoints.insert(
+                    format!("asm.experimental-export/{task}"),
+                    experimental.export_manifest.sha256.clone(),
+                );
+                plan.experiment.checkpoints.insert(
+                    format!("asm.experimental-runtime/{task}"),
+                    experimental.runtime.runtime_sha256.clone(),
+                );
+            }
             plan.scope = "asm-panel".into();
+            super::teaching::preregister(&mut plan, &config)?;
             let id = plan.identity()?;
             super::worker::write_private(&output, &plan)?;
             Ok(
                 json!({"ok":true,"plan":output,"plan_sha256":id,"scope":plan.scope,"fits":0,"execution_budget_started":false,
                 "neural_slots":64,"exploration_slots":16,"generic_slots":80,"maximum_evaluations_per_arm":config.max_evaluations,"seconds_per_arm":config.seconds,
-                "dependencies":config.dependency_inventory(),"classification_neural":"unavailable_until_qualified_experimental_checkpoint_producer","checkpoint_training_exposure":"unknown",
+                "dependencies":config.dependency_inventory(),"classification_neural":"requires_configured_experimental_export_and_verified_classification_producer","checkpoint_training_exposure":"unknown",
                 "claim":"Algorithm Synthesis Model (ASM): learns to generate and optimize executable algorithms from data."}),
             )
         }

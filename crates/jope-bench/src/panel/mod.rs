@@ -10,6 +10,16 @@ pub mod campaign;
 pub mod campaign_cli;
 pub mod cli;
 pub mod data;
+pub mod demo;
+#[cfg(all(feature = "asm", target_os = "linux"))]
+pub mod demo_asm;
+#[cfg(all(feature = "asm", target_os = "linux"))]
+pub mod experimental_proposal;
+#[cfg(all(feature = "asm", target_os = "linux"))]
+pub mod fitted_export;
+#[cfg(all(feature = "asm", target_os = "linux"))]
+pub mod fitted_export_run;
+pub mod inference;
 pub mod methods;
 #[cfg(all(feature = "asm", target_os = "linux"))]
 pub mod optimize;
@@ -20,6 +30,7 @@ pub mod optimize_fit;
 pub mod optimize_schedule;
 #[cfg(all(feature = "asm", target_os = "linux"))]
 pub mod origin_proof;
+pub mod proposal_validation;
 pub mod protocol;
 #[cfg(all(feature = "asm", target_os = "linux"))]
 pub mod receipt_timing;
@@ -27,6 +38,8 @@ pub mod score;
 #[cfg(target_os = "linux")]
 pub mod selection_exposure;
 pub mod synthesized;
+#[cfg(all(feature = "asm", target_os = "linux"))]
+pub mod teaching;
 pub mod worker;
 #[cfg(all(feature = "asm", target_os = "linux"))]
 pub mod worker_build;

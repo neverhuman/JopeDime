@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 import math
@@ -42,6 +43,7 @@ from .model_v3 import (
     DATASET_BLOCK_RMS,
     MODEL_VERSION,
     TARGET_BLOCK_RMS,
+    TASK_LANE,
     JopePolicyModelV3,
     precompute_row_artifacts,
     rows_to_policy_v3_batch,
@@ -55,6 +57,8 @@ from .tokens import (
 
 PRIME_ROUTING_CLASSES = 14
 TRAINER_RESUME_V1 = "PrimePolicyTrainerResume.v1"
+TRAINING_CONTRACT_V1 = "PolicyV3TrainingContract.v1"
+TRAINING_PROOF_V1 = "PolicyV3TrainingProof.v1"
 ROW_ARTIFACT_CACHE_V1 = "PolicyRowArtifactCache.v1"
 _ROW_ARTIFACT_CACHE_MEMORY: dict[str, dict[str, Any]] = {}
 CUDA_BATCH_CANDIDATES = (256, 512, 1024)
@@ -1309,6 +1313,11 @@ def resolve_grammars(corpus: Path, rows: list[TrainingRow]) -> list[GrammarSpec]
             data = json.loads(vocab_path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
             data = {}
+        if isinstance(data, dict) and data.get("schema") == "parallel.action_vocab.v1":
+            from .training_corpus_contract import load_frozen_action_vocab
+
+            # Parsing views only. Training consumes the original table below.
+            return load_frozen_action_vocab(data)[0]
         if isinstance(data, dict) and data.get("engines"):
             from ..data.migrate_vocab_v4 import check_vocab_drift
 
@@ -1326,6 +1335,116 @@ def resolve_grammars(corpus: Path, rows: list[TrainingRow]) -> list[GrammarSpec]
         observed = observed_param_tokens(rows, spec)
         specs.append(merge_learned_bins(spec, observed))
     return specs
+
+
+def _training_task_types(rows: Iterable[TrainingRow]) -> list[str]:
+    tasks = sorted({str((row.metadata or {}).get("task_type") or "regression") for row in rows})
+    unknown = set(tasks) - set(TASK_LANE)
+    if unknown:
+        raise ValueError(f"unsupported training tasks: {sorted(unknown)}")
+    return tasks
+
+
+def _training_contract(model, specs: list[GrammarSpec], tasks: list[str]) -> dict[str, Any]:
+    # This is the Python policy-v3 architecture, not the accepted native 2048d lineage.
+    # Store every model/context field, including normalisation constants and lane aliases.
+    metadata = {key: value for key, value in model.checkpoint_payload().items() if key != "model"}
+    return {
+        "schema": TRAINING_CONTRACT_V1,
+        "tasks": tasks,
+        "model_metadata": metadata,
+        "grammar_specs": [spec.to_json() for spec in specs],
+    }
+
+
+def _validate_resume_contract(saved: Mapping[str, Any], expected: Mapping[str, Any]) -> None:
+    contract = saved.get("training_contract")
+    if contract is None:
+        raise ValueError(
+            "resume checkpoint lacks a training contract; use an explicit warm start "
+            "for legacy weights, not continuation"
+        )
+    if contract != expected:
+        raise ValueError("resume training task, vocabulary, grammar or context contract differs")
+    for key, value in expected["model_metadata"].items():
+        if saved.get(key) != value:
+            raise ValueError(f"resume metadata contradicts its training contract: {key}")
+    if saved.get("grammar_specs") != expected["grammar_specs"]:
+        raise ValueError("resume grammar specs contradict their training contract")
+
+
+def policy_parameter_sha256(model: torch.nn.Module) -> str:
+    """Hash all named parameter bytes, dtypes and shapes, independent of device."""
+    digest = hashlib.sha256(b"PolicyParameterBytes.v1\0")
+    for name, parameter in sorted(model.named_parameters()):
+        value = parameter.detach().cpu().contiguous()
+        header = json.dumps([name, str(value.dtype), list(value.shape)], separators=(",", ":")).encode()
+        digest.update(len(header).to_bytes(8, "little"))
+        digest.update(header)
+        digest.update(value.reshape(-1).view(torch.uint8).numpy().tobytes())
+    return digest.hexdigest()
+
+
+def verify_training_proof(model: torch.nn.Module, proof: Mapping[str, Any]) -> None:
+    """Verify an exported/reloaded model against actual update and parameter evidence."""
+    if proof.get("schema") != TRAINING_PROOF_V1:
+        raise ValueError("unsupported training proof schema")
+    updates = proof.get("optimizer_updates_this_run")
+    total = proof.get("optimizer_updates_total")
+    if type(updates) is not int or updates < 1 or type(total) is not int or total < updates:
+        raise ValueError("training proof must record positive optimizer updates")
+    for key in ("initial_parameter_sha256", "trained_parameter_sha256", "parameter_sha256"):
+        if not isinstance(proof.get(key), str) or re.fullmatch(r"[0-9a-f]{64}", proof[key]) is None:
+            raise ValueError(f"training proof has an invalid {key}")
+    if proof["initial_parameter_sha256"] == proof["trained_parameter_sha256"]:
+        raise ValueError("training proof records unchanged parameters")
+    published_changed = proof["parameter_sha256"] != proof["initial_parameter_sha256"]
+    if proof.get("published_changed_from_initial") is not published_changed:
+        raise ValueError("published-change marker contradicts parameter evidence")
+    if proof.get("published_inherited") is not (not published_changed):
+        raise ValueError("unchanged publication must be explicitly marked inherited")
+    if proof.get("published_state_kind") not in {
+        "current",
+        "current_best",
+        "historical_best",
+        "ema_current",
+        "ema_best",
+    }:
+        raise ValueError("published state kind is not recorded")
+    if policy_parameter_sha256(model) != proof["parameter_sha256"]:
+        raise ValueError("training proof parameter hash does not match the loaded model")
+
+
+def _step_optimizer(optimizer, scaler) -> bool:
+    if not scaler.is_enabled():
+        optimizer.step()
+        return True
+    # GradScaler.step returns the optimizer's return value (usually None), even
+    # when it executed. Scale reduction is its overflow/skip signal, including
+    # fused AdamW, whose step hook may fire even when found_inf prevents updates.
+    previous_scale = scaler.get_scale()
+    scaler.step(optimizer)
+    scaler.update()
+    return scaler.get_scale() >= previous_scale
+
+
+def resolve_training_vocabulary(corpus: Path, rows: list[TrainingRow], *, force_prime: bool = False):
+    """Preserve original token IDs when the corpus pins a full action table."""
+    path = corpus.parent / "active_vocab.json"
+    if path.is_file():
+        data = json.loads(path.read_text(encoding="utf-8"))
+        if isinstance(data, dict) and data.get("schema") == "parallel.action_vocab.v1":
+            from .training_corpus_contract import load_frozen_action_vocab
+
+            specs, vocab = load_frozen_action_vocab(data)
+            if force_prime and "prime" not in vocab.engines:
+                raise ValueError("Prime cannot be appended to a frozen action table")
+            if any(row.engine not in vocab.engines for row in rows):
+                raise ValueError("training row engine is absent from frozen action table")
+            return specs, vocab, data
+    specs = resolve_grammars(corpus, rows)
+    specs, vocab = _vocab_for_training_rows(specs, rows, force_prime=force_prime)
+    return specs, vocab, None
 
 
 def train_policy_v3_from_jsonl(
@@ -1368,6 +1487,12 @@ def train_policy_v3_from_jsonl(
     family_held_early_stopping: bool = False,
     branch_from_accepted_resume: bool = False,
     early_stopping_patience: int | None = None,
+    training_scope: str = "inferred",
+    max_consecutive_amp_skips: int = 32,
+    strict_resume: bool = False,
+    checkpoint_metadata: dict[str, Any] | None = None,
+    corpus_transition: dict[str, Any] | None = None,
+    batch_schedule: list[list[int]] | None = None,
 ) -> dict[str, Any]:
     """Train policy v3 from JSONL, or directly from already-built ``TrainingRow`` objects.
 
@@ -1390,8 +1515,34 @@ def train_policy_v3_from_jsonl(
         wrap_ddp,
     )
 
+    if type(epochs) is not int or epochs < 1:
+        raise ValueError("epochs must be a positive integer")
+    if type(batch_size) is not int or batch_size < 1:
+        raise ValueError("batch_size must be a positive integer")
+    if not math.isfinite(lr) or lr <= 0:
+        raise ValueError("learning rate must be finite and positive")
+    if type(max_consecutive_amp_skips) is not int or max_consecutive_amp_skips < 1:
+        raise ValueError("max_consecutive_amp_skips must be positive")
+    if type(strict_resume) is not bool:
+        raise ValueError("strict_resume must be boolean")
+    if strict_resume and (
+        checkpoint_state != "current"
+        or anti_overfit_experiment
+        or training_schedule is not None
+        or branch_from_accepted_resume
+        or autotune_batch_size
+        or family_held_early_stopping
+    ):
+        raise ValueError("strict resume requires current state and a fixed training schedule/batch size")
+    if (corpus_transition is not None or batch_schedule is not None) and not strict_resume:
+        raise ValueError("corpus transitions and fixed batches require strict resume")
+    if corpus_transition is not None and (resume_from is None or training_rows is not None):
+        raise ValueError("corpus transition requires a pinned parent and file corpus")
     dist_ctx = init_distributed(device)
-    configure_cuda_fast_math()
+    if strict_resume and dist_ctx.world_size != 1:
+        raise ValueError("strict update-boundary resume currently requires one worker")
+    if device.startswith("cuda"):
+        configure_cuda_fast_math()
     if init_from and resume_from:
         raise ValueError("init_from and resume_from are mutually exclusive")
     if branch_from_accepted_resume and resume_from is None:
@@ -1456,6 +1607,15 @@ def train_policy_v3_from_jsonl(
         resume_payload = torch.load(str(resume_from), map_location="cpu", weights_only=False)
         if resume_payload.get("schema") != TRAINER_RESUME_V1:
             raise ValueError(f"unsupported trainer resume schema {resume_payload.get('schema')!r}")
+        if strict_resume:
+            if (
+                resume_payload.get("optimizer_state_compatible_with_model") is not True
+                or not isinstance(resume_payload.get("optimizer"), dict)
+                or not resume_payload["optimizer"].get("state")
+            ):
+                raise ValueError(
+                    "strict resume requires compatible nonempty optimizer state; use init_from for warm start"
+                )
         if not branch_from_accepted_resume:
             _validate_training_schedule_resume(resume_payload, training_schedule_identity)
         saved_experiment = resume_payload.get("anti_overfit_experiment")
@@ -1465,6 +1625,9 @@ def train_policy_v3_from_jsonl(
                 raise ValueError("anti-overfit resume requires anti_overfit_experiment=True")
             if saved_experiment != expected:
                 raise ValueError("anti-overfit resume configuration has drifted")
+
+    if strict_resume and resume_checkpoint is None:
+        raise ValueError("strict resume requires a durable resume_checkpoint")
 
     corpus = Path(corpus)
     input_mode = "in_memory" if training_rows is not None else "jsonl"
@@ -1530,23 +1693,21 @@ def train_policy_v3_from_jsonl(
         validation_rows=len(val_rows),
         report_only_rows=len(report_only_rows),
     )
-    specs = resolve_grammars(corpus, rows)
-    specs, vocab = _vocab_for_training_rows(specs, rows, force_prime=prime_vocab)
+    specs, vocab, frozen_action_vocab = resolve_training_vocabulary(corpus, rows, force_prime=prime_vocab)
     if resume_payload is not None:
+        if resume_payload.get("frozen_action_vocab") != frozen_action_vocab:
+            raise ValueError("resume full action table differs from frozen corpus vocabulary")
         saved_tokens = (resume_payload.get("action_vocab") or {}).get("tokens")
         if saved_tokens != vocab.tokens:
             raise ValueError("resume action vocabulary does not match the current Prime bundle")
-    resolved_device = (
-        dist_ctx.device
-        if dist_ctx.enabled
-        else (device if (not device.startswith("cuda") or torch.cuda.is_available()) else "cpu")
-    )
+    resolved_device = dist_ctx.device
 
     # BUG-B fix (all 7 external reviews): the reward/listwise losses read ONLY
     # metadata.oof_delta_to_incumbent, which self-play/miner/GP rows never set —
     # so every fresh evaluated row trained imitation but NEVER the selector.
     # Recompute canonical within-dataset labels for ALL provenances here.
-    _recompute_reward_targets(rows)
+    _recompute_reward_targets(train_rows)
+    _recompute_reward_targets(val_rows)
     finite_by_source: dict[str, list[int]] = {}
     for r in rows:
         md = r.metadata if r.metadata is not None else {}
@@ -1592,7 +1753,7 @@ def train_policy_v3_from_jsonl(
         return m[-1] if len(m) > 1 else None
 
     winner: dict[str, tuple[float, str]] = {}
-    for r in rows:
+    for r in train_rows:
         md = r.metadata or {}
         s = _score_label(r)
         head = _head_of(r)
@@ -1641,19 +1802,30 @@ def train_policy_v3_from_jsonl(
         random.seed(seed)
         np.random.seed(seed)
         torch.manual_seed(seed)
-        if torch.cuda.is_available():
+        if resolved_device.startswith("cuda"):
             torch.cuda.manual_seed_all(seed)
+    if initial_payload is not None and (
+        frozen_action_vocab is not None or initial_payload.get("frozen_action_vocab") is not None
+    ):
+        if initial_payload.get("frozen_action_vocab") != frozen_action_vocab:
+            raise ValueError("warm start requires the exact frozen action table; explicit migration required")
     embedding_rows = _embedding_rows_for_warm_start(vocab, initial_payload)
-    corpus_has_binary = any(
-        str((row.metadata or {}).get("task_type") or "regression") == "binary" for row in rows
-    )
+    task_types = _training_task_types(train_rows)
+    if set(_training_task_types(val_rows)) - set(task_types):
+        raise ValueError("development tasks must have training rows")
+    if training_scope not in ("inferred", "all_admitted"):
+        if training_scope != "category:" + task_types[0] or len(task_types) != 1:
+            raise ValueError("training scope differs from admitted training tasks")
+    corpus_has_classification = any(TASK_LANE[task] == "binary" for task in task_types)
     fused_task_heads = (
-        bool(resume_payload.get("fused_task_heads", False))
+        resume_payload.get("fused_task_heads", False)
         if resume_payload is not None
-        else corpus_has_binary
+        else corpus_has_classification
     )
-    if corpus_has_binary and not fused_task_heads:
-        raise ValueError("binary rows require a fused-task-head shadow checkpoint")
+    if type(fused_task_heads) is not bool:
+        raise ValueError("resume fused_task_heads must be a boolean")
+    if corpus_has_classification and not fused_task_heads:
+        raise ValueError("classification rows require a fused-task-head shadow checkpoint")
     emit_progress(
         "model_restore",
         input_mode=input_mode,
@@ -1689,8 +1861,67 @@ def train_policy_v3_from_jsonl(
     # fresh random init — fresh-init-per-generation made generation quality a lottery
     # (gen-3 regressed −97 Elo). Other shape changes stay filtered; append-only
     # token tables retain their exact legacy prefix.
+    base_model.frozen_action_vocab = copy.deepcopy(frozen_action_vocab)
+    training_contract = _training_contract(base_model, specs, task_types)
+
+    def rows_digest(selected):
+        encoded = json.dumps(
+            [row.to_json() for row in selected], sort_keys=True, separators=(",", ":"), allow_nan=False
+        ).encode()
+        return hashlib.sha256(encoded).hexdigest()
+
+    training_contract["input_provenance"] = {
+        "split_manifest_sha256": split_partition["split_manifest_sha256"],
+        "split_compatibility": split_partition["compatibility"],
+        "train_rows_sha256": rows_digest(train_rows),
+        "development_rows_sha256": rows_digest(val_rows),
+        "training_scope": training_scope,
+        "trainer_extra": dict(resume_extra or {}),
+    }
+    training_contract["execution"] = {
+        "seed": seed,
+        "lr": lr,
+        "requested_batch_size": batch_size,
+        "autotune_batch_size": autotune_batch_size,
+        "amp": amp,
+        "epochs_per_invocation": epochs,
+        "phase_a_fraction": phase_a_fraction,
+        "schedule": training_schedule_identity,
+        "anti_overfit_experiment": anti_overfit_experiment,
+        "max_consecutive_amp_skips": max_consecutive_amp_skips,
+        "strict_resume": strict_resume,
+        "torch_version": str(torch.__version__),
+        "cuda_version": torch.version.cuda,
+        "deterministic_algorithms": torch.are_deterministic_algorithms_enabled(),
+        "cudnn_deterministic": torch.backends.cudnn.deterministic,
+        "cudnn_benchmark": torch.backends.cudnn.benchmark,
+        "cuda_matmul_tf32": torch.backends.cuda.matmul.allow_tf32,
+        "cudnn_tf32": torch.backends.cudnn.allow_tf32,
+    }
+    if batch_schedule is not None:
+        from .training_transition import digest
+
+        if (
+            epochs != 1
+            or not batch_schedule
+            or any(not batch or len(batch) > batch_size for batch in batch_schedule)
+            or any(
+                type(i) is not int or not 0 <= i < len(train_rows) for batch in batch_schedule for i in batch
+            )
+        ):
+            raise ValueError("invalid fixed batch schedule")
+        training_contract["execution"]["batch_schedule_sha256"] = digest(batch_schedule)
     if resume_payload is not None:
+        contract_payload = resume_payload
+        if corpus_transition is not None:
+            from .training_transition import validate
+
+            contract_payload = validate(
+                corpus_transition, resume_payload, training_contract, resume_from, corpus, batch_schedule
+            )
+        _validate_resume_contract(contract_payload, training_contract)
         base_model.load_state_dict(resume_payload["model"], strict=True)
+        verify_training_proof(base_model, resume_payload.get("training_proof") or {})
     elif initial_payload is not None:
         prev_state = initial_payload.get("model", initial_payload)
         loaded_count, prefix_copied = _warm_start_model(
@@ -1915,22 +2146,24 @@ def train_policy_v3_from_jsonl(
         if anti_overfit_experiment:
             scheduler_lambdas.append(lambda _: 1.0)
     scheduler = torch.optim.lr_scheduler.LambdaLR(opt, lr_lambda=scheduler_lambdas)
+    optimizer_state_resumed = False
     if resume_payload is not None and not branch_from_accepted_resume:
         optimizer_state_compatible = resume_payload.get("optimizer_state_compatible_with_model", True)
         if type(optimizer_state_compatible) is not bool:
             raise ValueError("resume optimizer/model compatibility marker must be a boolean")
         saved_optimizer = resume_payload["optimizer"]
         optimizer_layout_matches = len(saved_optimizer.get("param_groups", [])) == len(opt.param_groups)
-        if optimizer_state_compatible and optimizer_layout_matches:
+        if optimizer_state_compatible and not optimizer_layout_matches:
+            raise ValueError("resume optimizer parameter-group layout differs")
+        if optimizer_state_compatible:
             opt.load_state_dict(saved_optimizer)
             scheduler.load_state_dict(resume_payload["scheduler"])
+            optimizer_state_resumed = True
         elif is_main(dist_ctx) and not optimizer_state_compatible:
             print(
                 "resume model is an arena-selectable historical/EMA state: "
                 "starting fresh optimizer, scheduler, and scaler state"
             )
-        elif is_main(dist_ctx):
-            print("anti-overfit optimizer layout changed: starting fresh optimizer moments")
         # A checkpoint written while AMP was disabled stores an EMPTY GradScaler
         # state dict; loading that into an enabled scaler raises "source state
         # dict is empty". When enabling AMP on resume, skip the empty state and
@@ -2020,8 +2253,63 @@ def train_policy_v3_from_jsonl(
     )
     macro_validation_early_stopped = False
     completed_local_epochs = 0
+    initial_parameter_sha256 = policy_parameter_sha256(unwrap(model))
+    current_parameter_sha256 = initial_parameter_sha256
+    optimizer_updates_this_run = 0
+    prior_optimizer_updates = (
+        resume_payload["training_proof"]["optimizer_updates_total"] if resume_payload else 0
+    )
+    training_proof: dict[str, Any] = {}
+    amp_skipped_steps = 0
+    consecutive_amp_skips = 0
+    prior_amp_skips = (
+        resume_payload.get("training_proof", {}).get("amp_skipped_steps_total", 0) if resume_payload else 0
+    )
 
-    for local_epoch in range(1, max(1, epochs) + 1):
+    progress = resume_payload.get("strict_progress") if resume_payload else None
+    consumed_batches = list(progress.get("consumed_batches", [])) if progress else []
+    target_epoch = start_epoch + epochs
+    if progress is not None:
+        if not strict_resume or progress.get("schema") != "jope.strict-training-progress/v1":
+            raise ValueError("in-progress checkpoint requires strict resume")
+        target_epoch = progress["target_epoch"]
+        if type(target_epoch) is not int or not start_epoch < target_epoch <= start_epoch + epochs:
+            raise ValueError("strict resume target epoch changed")
+        initial_parameter_sha256 = progress["initial_parameter_sha256"]
+        optimizer_updates_this_run = progress["optimizer_updates_this_run"]
+        prior_optimizer_updates = progress["prior_optimizer_updates"]
+        amp_skipped_steps = progress["amp_skipped_steps"]
+        prior_amp_skips = progress["prior_amp_skips"]
+        consecutive_amp_skips = progress["consecutive_amp_skips"]
+        if (
+            prior_optimizer_updates + optimizer_updates_this_run
+            != resume_payload["training_proof"]["optimizer_updates_total"]
+        ):
+            raise ValueError("strict resume update counters differ")
+
+    def update_proof(epoch, updates, parameter_hash):
+        return {
+            "schema": TRAINING_PROOF_V1,
+            "initial_parameter_sha256": initial_parameter_sha256,
+            "trained_parameter_sha256": parameter_hash,
+            "parameter_sha256": parameter_hash,
+            "optimizer_updates_this_run": updates,
+            "optimizer_updates_total": prior_optimizer_updates + updates,
+            "optimizer_state_resumed": optimizer_state_resumed,
+            "amp_skipped_steps_this_run": amp_skipped_steps,
+            "amp_skipped_steps_total": prior_amp_skips + amp_skipped_steps,
+            "published_state_kind": "current",
+            "published_epoch": epoch,
+            "published_changed_from_initial": parameter_hash != initial_parameter_sha256,
+            "published_inherited": False,
+            "training_scope": training_scope,
+            "actual_batch_size": batch_size,
+            "requested_device": device,
+            "resolved_device": resolved_device,
+            "world_size": dist_ctx.world_size,
+        }
+
+    for local_epoch in range(1, target_epoch - start_epoch + 1):
         epoch = start_epoch + local_epoch
         completed_local_epochs = local_epoch
         nonfinite_batches = 0
@@ -2041,9 +2329,49 @@ def train_policy_v3_from_jsonl(
             for name in POLICY_V3_LOSS_COMPONENTS + POLICY_V3_DIAGNOSTIC_COMPONENTS
         }
         steps = 0
-        shuffled = train_rows[:]
-        rng.shuffle(shuffled)
-        all_batches = _grouped_batches(shuffled, batch_size, rng)
+        resumed_steps = 0
+        batch_offset = 0
+        if progress is not None:
+            sampler = progress["sampler"]
+            indices = sampler["batches"]
+            flattened = [index for batch in indices for index in batch]
+            if (
+                sampler["epoch"] != epoch
+                or not indices
+                or any(not batch for batch in indices)
+                or any(type(index) is not int for index in flattened)
+                or (
+                    indices != batch_schedule
+                    if batch_schedule is not None
+                    else sorted(flattened) != list(range(len(train_rows)))
+                )
+                or type(sampler["next_batch"]) is not int
+                or not 0 < sampler["next_batch"] <= len(indices)
+            ):
+                raise ValueError("strict resume sampler/cursor differs")
+            all_batches = [[train_rows[index] for index in batch] for batch in indices]
+            batch_offset = sampler["next_batch"]
+            steps = resumed_steps = progress["epoch_steps"]
+            if type(steps) is not int or not 0 < steps <= batch_offset:
+                raise ValueError("strict resume epoch update count differs")
+            total_t.fill_(progress["loss_sum"])
+            for name, tensor in component_totals_t.items():
+                tensor.fill_(progress["component_sums"][name])
+            nonfinite_batches = progress["nonfinite_batches"]
+            progress = None
+        elif batch_schedule is not None:
+            all_batches = [[train_rows[index] for index in batch] for batch in batch_schedule]
+            sampler = {"epoch": epoch, "batches": batch_schedule, "next_batch": 0}
+        else:
+            shuffled = train_rows[:]
+            rng.shuffle(shuffled)
+            all_batches = _grouped_batches(shuffled, batch_size, rng)
+            row_indices = {id(row): index for index, row in enumerate(train_rows)}
+            sampler = {
+                "epoch": epoch,
+                "batches": [[row_indices[id(row)] for row in batch] for batch in all_batches],
+                "next_batch": 0,
+            }
         # DDP: each rank trains a disjoint stride of the grouped batches (grouping preserved).
         # CRITICAL: every rank must run the SAME number of steps — with manual gradient
         # all-reduce, an uneven split lets one rank exit early and its next collective
@@ -2055,7 +2383,9 @@ def train_policy_v3_from_jsonl(
         if dist_ctx.enabled and dist_ctx.world_size > 1:
             min_len = min(len(all_batches[r :: dist_ctx.world_size]) for r in range(dist_ctx.world_size))
             my_batches = my_batches[:min_len]
-        n_batches = max(1, len(my_batches))
+        if not all_ranks_true(bool(my_batches), dist_ctx):
+            raise RuntimeError(f"epoch {epoch}: no training batches on at least one rank")
+        n_batches = len(my_batches)
         emit_progress(
             "cuda_train" if dev_is_cuda else "cpu_train",
             epoch=epoch,
@@ -2069,12 +2399,12 @@ def train_policy_v3_from_jsonl(
         )
         last_progress = 0.0
         prepared_batches = _iter_policy_batches(
-            my_batches,
+            my_batches[batch_offset:],
             vocab,
             device=resolved_device,
             artifact_cache=artifact_cache,
         )
-        for bi, batch in enumerate(prepared_batches):
+        for bi, batch in enumerate(prepared_batches, start=batch_offset):
             opt.zero_grad()
             with torch.autocast(device_type="cuda", enabled=scaler.is_enabled()):
                 components = unwrap(model).loss_components(batch, phase=phase)
@@ -2091,16 +2421,31 @@ def train_policy_v3_from_jsonl(
                 continue
             if scaler.is_enabled():
                 scaler.scale(loss).backward()
-                scaler.unscale_(opt)
-                all_reduce_gradients(unwrap(model), dist_ctx)  # average grads across ranks
-                torch.nn.utils.clip_grad_norm_(model.parameters(), 5.0)
-                scaler.step(opt)
-                scaler.update()
             else:
                 loss.backward()
-                all_reduce_gradients(unwrap(model), dist_ctx)  # average grads across ranks
-                torch.nn.utils.clip_grad_norm_(model.parameters(), 5.0)
-                opt.step()
+            # Reduce scaled gradients first so all ranks observe the same overflow.
+            all_reduce_gradients(unwrap(model), dist_ctx)
+            if scaler.is_enabled():
+                scaler.unscale_(opt)
+            gradient_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), 5.0)
+            finite_gradients = all_ranks_true(bool(torch.isfinite(gradient_norm).item()), dist_ctx)
+            if not finite_gradients:
+                if not scaler.is_enabled():
+                    raise RuntimeError(f"epoch {epoch}: nonfinite gradients; no optimizer update performed")
+                # Do not call the optimizer: clipping can itself overflow after unscale.
+                # An explicit reduction also resets GradScaler's per-optimizer stage.
+                scaler.update(new_scale=scaler.get_scale() / 2.0)
+                updated = False
+            else:
+                updated = _step_optimizer(opt, scaler)
+            if not all_ranks_true(updated, dist_ctx):
+                amp_skipped_steps += 1
+                consecutive_amp_skips += 1
+                if not scaler.is_enabled() or consecutive_amp_skips > max_consecutive_amp_skips:
+                    raise RuntimeError(f"epoch {epoch}: consecutive AMP skips exceeded the declared bound")
+                del loss, components, batch
+                continue
+            consecutive_amp_skips = 0
             clamp_log_vars(unwrap(model).loss_log_vars)
             if ema_state is not None:
                 _update_ema_state(ema_state, unwrap(model).state_dict())
@@ -2109,6 +2454,85 @@ def train_policy_v3_from_jsonl(
                 if name in component_totals_t:
                     component_totals_t[name] += value.detach()
             steps += 1
+            sampler["next_batch"] = bi + 1
+            if strict_resume:
+                consumed_batches.append(
+                    {
+                        "epoch": epoch,
+                        "batch": bi,
+                        "row_indices": sampler["batches"][bi],
+                        "nonpadding_tokens": int(batch.pad_mask.sum().detach().cpu()),
+                    }
+                )
+            if strict_resume:
+                # Commit one complete update together with the remaining sampler,
+                # all moments/RNG and loss accumulators. Interrupted file writes
+                # leave the preceding atomic checkpoint intact.
+                parameter_hash = policy_parameter_sha256(unwrap(model))
+                updates = optimizer_updates_this_run + steps - resumed_steps
+                partial = {
+                    **training_contract["model_metadata"],
+                    "training_contract": training_contract,
+                    "training_proof": update_proof(epoch, updates, parameter_hash),
+                    "schema": TRAINER_RESUME_V1,
+                    "artifact_role": "training_resume",
+                    "global_epoch": epoch - 1,
+                    "model": {
+                        key: value.detach().cpu().clone() for key, value in unwrap(model).state_dict().items()
+                    },
+                    "optimizer": opt.state_dict(),
+                    "scheduler": scheduler.state_dict(),
+                    "scaler": scaler.state_dict(),
+                    "rng": _capture_rng_state(rng),
+                    "loss_history": history,
+                    "best_value": best_value,
+                    "best_payload": best_payload,
+                    "imitation_payload": imitation_payload,
+                    "phase_a_epochs": phase_a_epochs,
+                    "routing_classes": n_routing,
+                    "routing_families": routing_families,
+                    "action_vocab": {"tokens": vocab.tokens, "version": vocab.version},
+                    "grammar_specs": grammar_specs_json,
+                    "embedding_rows": unwrap(model).embedding_rows,
+                    "batch_size": batch_size,
+                    "batch_autotune": False,
+                    "batch_benchmark": [],
+                    "last_checkpoint_state": "current",
+                    "resume_model_state_kind": "current",
+                    "optimizer_state_compatible_with_model": True,
+                    "architecture": {
+                        "d_model": d_model,
+                        "n_layers": n_layers,
+                        "n_heads": n_heads,
+                        "ffn_dim": ffn_dim,
+                        "dataset_dim": row_dataset_dim,
+                    },
+                    "trainer_extra": dict(resume_extra or {}),
+                    "run_binding": dict(checkpoint_metadata or {}),
+                    "consumed_batches": consumed_batches,
+                    "macro_validation_best": macro_validation_best,
+                    "macro_validation_bad_passes": macro_validation_bad_passes,
+                    "sampler": sampler,
+                    "strict_progress": {
+                        "schema": "jope.strict-training-progress/v1",
+                        "sampler": sampler,
+                        "consumed_batches": consumed_batches,
+                        "target_epoch": target_epoch,
+                        "initial_parameter_sha256": initial_parameter_sha256,
+                        "optimizer_updates_this_run": updates,
+                        "prior_optimizer_updates": prior_optimizer_updates,
+                        "epoch_steps": steps,
+                        "loss_sum": float(total_t.detach().cpu()),
+                        "component_sums": {
+                            name: float(value.detach().cpu()) for name, value in component_totals_t.items()
+                        },
+                        "amp_skipped_steps": amp_skipped_steps,
+                        "prior_amp_skips": prior_amp_skips,
+                        "consecutive_amp_skips": consecutive_amp_skips,
+                        "nonfinite_batches": nonfinite_batches,
+                    },
+                }
+                _atomic_torch_save(partial, Path(resume_checkpoint))
             # Part D: sub-100ms in-epoch % progress (rank 0), throttled to ~50ms
             if progress_path is not None and is_main(dist_ctx):
                 now = time.time()
@@ -2133,7 +2557,17 @@ def train_policy_v3_from_jsonl(
         for name, t in component_totals_t.items():
             local[name] = float(t.detach().cpu())
         agg = aggregate_scalars(local, dist_ctx)
-        steps_all = max(1.0, agg["__steps__"])
+        if not all_ranks_true(steps > 0, dist_ctx):
+            raise RuntimeError(f"epoch {epoch}: zero optimizer updates; refusing a successful checkpoint")
+        steps_all = agg["__steps__"]
+        epoch_parameter_sha256 = policy_parameter_sha256(unwrap(model))
+        if not all_ranks_true(
+            epoch_parameter_sha256 != current_parameter_sha256 or resumed_steps > 0, dist_ctx
+        ):
+            raise RuntimeError(f"epoch {epoch}: optimizer updates left parameters unchanged")
+        current_parameter_sha256 = epoch_parameter_sha256
+        optimizer_updates_this_run += steps - resumed_steps
+        training_proof = update_proof(epoch, optimizer_updates_this_run, current_parameter_sha256)
         train_loss = agg["__loss__"] / steps_all
         component_avgs = {
             k: agg[k] / steps_all for k in POLICY_V3_LOSS_COMPONENTS + POLICY_V3_DIAGNOSTIC_COMPONENTS
@@ -2326,6 +2760,7 @@ def train_policy_v3_from_jsonl(
             "lr": lr,
             "device": str(resolved_device),
             "model_version": MODEL_VERSION,
+            "training_proof": dict(training_proof),
             "epoch_sec": time.time() - epoch_started,
             "elapsed_sec": time.time() - started,
             "loss_weights": {
@@ -2497,7 +2932,11 @@ def train_policy_v3_from_jsonl(
         )
         if resume_checkpoint is not None and is_main(dist_ctx):
             resume_state = {
+                **training_contract["model_metadata"],
+                "training_contract": training_contract,
+                "training_proof": dict(training_proof),
                 "schema": TRAINER_RESUME_V1,
+                "artifact_role": "training_resume",
                 "global_epoch": epoch,
                 "model": {
                     key: value.detach().cpu().clone() for key, value in unwrap(model).state_dict().items()
@@ -2530,8 +2969,11 @@ def train_policy_v3_from_jsonl(
                     "dataset_dim": row_dataset_dim,
                 },
                 "trainer_extra": dict(resume_extra or {}),
+                "run_binding": dict(checkpoint_metadata or {}),
+                "consumed_batches": consumed_batches,
                 "macro_validation_best": macro_validation_best,
                 "macro_validation_bad_passes": macro_validation_bad_passes,
+                **({"sampler": sampler, "strict_progress": None} if strict_resume else {}),
             }
             if family_held_early_stopping:
                 resume_state.update(
@@ -2557,6 +2999,15 @@ def train_policy_v3_from_jsonl(
                     }
                 )
             latest_resume_state = resume_state
+            if strict_resume:
+                # Retain the last update boundary while publishing the completed
+                # epoch. A crash before the controller commits a pass can finish
+                # validation from this same state without repeating its updates.
+                update_path = Path(resume_checkpoint).with_suffix(".updates.pt")
+                temporary = update_path.with_name(update_path.name + f".{os.getpid()}.pending")
+                boundary = resume_checkpoint if Path(resume_checkpoint).exists() else resume_from
+                os.link(boundary, temporary)
+                os.replace(temporary, update_path)
             _atomic_torch_save(resume_state, Path(resume_checkpoint))
         barrier(dist_ctx)
         if stop_after_pass:
@@ -2618,8 +3069,19 @@ def train_policy_v3_from_jsonl(
             core.load_state_dict(checkpoint_selected_payload["state"])
         elif ema_state is not None:
             core.load_state_dict(ema_state)
+        training_proof["parameter_sha256"] = policy_parameter_sha256(core)
+        training_proof["published_state_kind"] = published_model_state_kind
+        training_proof["published_epoch"] = checkpoint_state_epoch
+        training_proof["published_changed_from_initial"] = (
+            training_proof["parameter_sha256"] != initial_parameter_sha256
+        )
+        training_proof["published_inherited"] = not training_proof["published_changed_from_initial"]
+        verify_training_proof(core, training_proof)
         _atomic_torch_save(
             core.checkpoint_payload(
+                artifact_role="experimental_policy_export",
+                training_contract=training_contract,
+                training_proof=dict(training_proof),
                 grammar_specs=grammar_specs_json,
                 loss_history=history,
                 epochs=continuation_epoch,
@@ -2708,6 +3170,7 @@ def train_policy_v3_from_jsonl(
             latest_resume_state["model"] = {
                 key: value.detach().cpu().clone() for key, value in core.state_dict().items()
             }
+            latest_resume_state["training_proof"] = dict(training_proof)
             latest_resume_state["last_checkpoint_state"] = checkpoint_state
             latest_resume_state["resume_model_state_kind"] = published_model_state_kind
             latest_resume_state["optimizer_state_compatible_with_model"] = (
@@ -2717,6 +3180,8 @@ def train_policy_v3_from_jsonl(
     barrier(dist_ctx)
     shutdown_distributed(dist_ctx)
     summary = {
+        "training_contract": training_contract,
+        "training_proof": training_proof,
         "rows": len(rows),
         "input_rows": input_rows,
         "train_rows": len(train_rows),

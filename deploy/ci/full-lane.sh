@@ -42,7 +42,8 @@ PY
     )
     ((${#families[@]} > 0)) || { echo 'no maintained Python families selected'; exit 1; }
     printf '%s\n' "${families[@]}" > "$EVIDENCE/families.txt"
-    (cd python && uv run --no-sync pytest -q -m 'not xbabe2' -p no:cacheprovider --junitxml="$EVIDENCE/junit.xml" "${families[@]}")
+    (cd python && uv run --no-sync pytest -q -m 'not xbabe2' -p no:cacheprovider --basetemp="$EVIDENCE/pytest-tmp" --junitxml="$EVIDENCE/junit.xml" "${families[@]}")
+    python3 deploy/ci/training-proof.py python --junit "$EVIDENCE/junit.xml"
     ;;
   full-inputs|full-e2e|full-emitters)
     case $lane in
@@ -54,7 +55,7 @@ PY
     ;;
   full-default|full-scratch|full-policy|full-s3-offline|full-neural)
     case $lane in
-      full-default) selection=(--workspace --features jope-cli/asm) ;;
+      full-default) selection=(--workspace --features "jope-cli/asm,jope-cli/qualified-training-context") ;;
       full-scratch) selection=(-p feat-math -p jope-parallel -p jope-dime-regressor --features "feat-math/gpr-scratch-reuse,jope-parallel/gpr-scratch-reuse,jope-dime-regressor/gpr-scratch-reuse") ;;
       full-policy) selection=(-p jope-policy --features "testing,context-producer") ;;
       full-s3-offline) selection=(-p jope-arena --features s3) ;;
@@ -80,6 +81,10 @@ PY
     cargo nextest list --config-file "$EVIDENCE/nextest.toml" -P main --locked "${selection[@]}" --message-format json > "$EVIDENCE/collection.json"
     touch "$EVIDENCE/nextest-started"
     cargo nextest run --config-file "$EVIDENCE/nextest.toml" -P main --locked --test-threads 16 "${selection[@]}"
+    case $lane in
+      full-default) python3 deploy/ci/training-proof.py rust --collection "$EVIDENCE/collection.json" --junit "$EVIDENCE/junit.xml" ;;
+      full-policy) python3 deploy/ci/training-proof.py policy --collection "$EVIDENCE/collection.json" --junit "$EVIDENCE/junit.xml" ;;
+    esac
     ;;
   *) echo "unknown full CPU family: $lane" >&2; exit 2 ;;
 esac

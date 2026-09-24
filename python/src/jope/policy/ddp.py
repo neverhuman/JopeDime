@@ -8,6 +8,7 @@ the working v2 infra in ``jope/train.py`` but without the v2-model coupling.
 from __future__ import annotations
 
 import os
+import re
 from dataclasses import dataclass
 
 import torch
@@ -23,15 +24,13 @@ class DistContext:
 
 
 def init_distributed(requested_device: str) -> DistContext:
+    if requested_device != "cpu" and re.fullmatch(r"cuda(?::[0-9]+)?", requested_device) is None:
+        raise ValueError("supported training devices are cpu and cuda[:index]")
+    if requested_device.startswith("cuda") and not torch.cuda.is_available():
+        raise RuntimeError("CUDA was requested but is unavailable; select device='cpu' explicitly")
     world_size = int(os.environ.get("WORLD_SIZE", "1"))
     if world_size <= 1:
-        # single process: honor the requested device (cuda→cpu if unavailable)
-        dev = (
-            requested_device
-            if (not requested_device.startswith("cuda") or torch.cuda.is_available())
-            else "cpu"
-        )
-        return DistContext(enabled=False, device=dev)
+        return DistContext(enabled=False, device=requested_device)
     import torch.distributed as dist
 
     rank = int(os.environ.get("RANK", "0"))

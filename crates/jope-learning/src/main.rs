@@ -111,7 +111,7 @@ enum HwmCmd {
         #[arg(long = "events")]
         events: Vec<PathBuf>,
     },
-    /// Snapshot restricted to HWM winners (sealed excluded; unbound excluded unless asked).
+    /// Diagnostic HWM archive; this command does not admit teaching records.
     Freeze {
         #[arg(long)]
         out: PathBuf,
@@ -308,6 +308,8 @@ fn run_hwm(state: &State, common: &Common, cmd: HwmCmd) -> Result<bool> {
             let m = hwm::freeze(state, &out, include_unbound)?;
             print_json(&json!({
                 "out": out,
+                "scope": m.scope,
+                "teaching_eligible": m.teaching_eligible,
                 "pointers": m.pointers,
                 "included": m.included,
                 "excluded_sealed": m.excluded_sealed,

@@ -29,6 +29,10 @@ python3 deploy/ci/test-aggregate.py
 python3 deploy/ci/test-status.py
 python3 deploy/ci/test-runner.py
 python3 deploy/ci/test-full-main.py
+python3 deploy/ci/test-training-proof.py
+python3 deploy/ci/test-install-private.py
+python3 deploy/ci/test-qualify-demo.py
+python3 deploy/ci/test-prepare-asm-runtime.py
     # Hygiene
 bash deploy/ci/check.sh
     # cargo-deny
@@ -118,8 +122,9 @@ uv run --no-sync ruff format --check .
     # Pytest (xbabe2-only tests deselected)
 (
 cd python
-uv run --no-sync pytest -q tests ../benchmarks/test_prepare.py ../crates/jope-bench/adapters/test_panel.py -m "not xbabe2" -p no:cacheprovider --junitxml="$EVIDENCE/junit.xml"
+uv run --no-sync pytest -q tests ../benchmarks/test_prepare.py ../crates/jope-bench/adapters/test_panel.py -m "not xbabe2" -p no:cacheprovider --basetemp="$EVIDENCE/pytest-tmp" --junitxml="$EVIDENCE/junit.xml"
 )
+python3 deploy/ci/training-proof.py python --junit "$EVIDENCE/junit.xml"
     ;;
   rust-test)
     status=0
@@ -160,9 +165,10 @@ junit="$target/nextest/pr/junit.xml"
 # upload it as this run's test result from the persistent target.
 if [ -f "$junit" ]; then mv "$junit" "$EVIDENCE"/prior-junit.xml; fi
 python3 deploy/ci/cargo-artifact.py nextest-config --output "$EVIDENCE"/nextest.toml
-cargo nextest list --config-file "$EVIDENCE"/nextest.toml -P pr --locked "${pkgs[@]}" --features jope-cli/asm --message-format json > "$EVIDENCE/collection.json"
+cargo nextest list --config-file "$EVIDENCE"/nextest.toml -P pr --locked "${pkgs[@]}" --features "jope-cli/asm,jope-cli/qualified-training-context" --message-format json > "$EVIDENCE/collection.json"
 touch "$EVIDENCE"/nextest-started
-cargo nextest run --config-file "$EVIDENCE"/nextest.toml -P pr --locked "${pkgs[@]}" --features jope-cli/asm
+cargo nextest run --config-file "$EVIDENCE"/nextest.toml -P pr --locked "${pkgs[@]}" --features "jope-cli/asm,jope-cli/qualified-training-context"
+python3 deploy/ci/training-proof.py rust --collection "$EVIDENCE/collection.json" --junit "$junit"
     ;;
   e2e-smoke)
     # Toolchain (from rust-toolchain.toml)

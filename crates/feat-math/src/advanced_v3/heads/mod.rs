@@ -746,11 +746,11 @@ impl PlsHeadModel {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub(super) struct MulticlassRidgeModel {
-    classes: Vec<i64>,
-    feature_count: usize,
-    means: Vec<f64>,
-    scales: Vec<f64>,
-    weights: Vec<Vec<f64>>,
+    pub(super) classes: Vec<i64>,
+    pub(super) feature_count: usize,
+    pub(super) means: Vec<f64>,
+    pub(super) scales: Vec<f64>,
+    pub(super) weights: Vec<Vec<f64>>,
 }
 
 impl MulticlassRidgeModel {
@@ -897,8 +897,8 @@ fn multiclass_feature_budget(stage: &Stage) -> Result<usize> {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub(super) struct MulticlassOvrLogisticModel {
-    classes: Vec<i64>,
-    models: Vec<LogitRidgeModel>,
+    pub(super) classes: Vec<i64>,
+    pub(super) models: Vec<LogitRidgeModel>,
 }
 
 impl MulticlassOvrLogisticModel {
@@ -952,11 +952,11 @@ impl MulticlassOvrLogisticModel {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub(super) struct MulticlassDiagonalLdaModel {
-    classes: Vec<i64>,
-    feature_count: usize,
-    means: Vec<Vec<f64>>,
-    variances: Vec<f64>,
-    log_priors: Vec<f64>,
+    pub(super) classes: Vec<i64>,
+    pub(super) feature_count: usize,
+    pub(super) means: Vec<Vec<f64>>,
+    pub(super) variances: Vec<f64>,
+    pub(super) log_priors: Vec<f64>,
 }
 
 impl MulticlassDiagonalLdaModel {
@@ -1036,10 +1036,10 @@ impl MulticlassDiagonalLdaModel {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub(super) struct MulticlassNearestCentroidModel {
-    classes: Vec<i64>,
-    feature_count: usize,
-    centroids: Vec<Vec<f64>>,
-    scales: Vec<f64>,
+    pub(super) classes: Vec<i64>,
+    pub(super) feature_count: usize,
+    pub(super) centroids: Vec<Vec<f64>>,
+    pub(super) scales: Vec<f64>,
 }
 
 impl MulticlassNearestCentroidModel {
