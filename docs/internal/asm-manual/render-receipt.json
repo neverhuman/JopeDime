@@ -12,15 +12,15 @@
   "aliases": 284,
   "warnings": [],
   "pages": 146,
-  "pdf_sha256": "4570e9e0ccdbda3e3b96feb823f6730f8bac8832b6d64a5b9f6340ce2bc720fa",
-  "pdf_bytes": 1239961,
+  "pdf_sha256": "b64cc70dbab3265c551e97dbe1a79eaeef95959723a4026076c0a2f70b625612",
+  "pdf_bytes": 1240019,
   "volumes": [
     {
       "volume": "main",
       "pdf": "asm-maintainer-manual.pdf",
       "pages": 146,
-      "pdf_sha256": "4570e9e0ccdbda3e3b96feb823f6730f8bac8832b6d64a5b9f6340ce2bc720fa",
-      "pdf_bytes": 1239961,
+      "pdf_sha256": "b64cc70dbab3265c551e97dbe1a79eaeef95959723a4026076c0a2f70b625612",
+      "pdf_bytes": 1240019,
       "rewritten_links": {
         "cross_volume": 272,
         "local_relative": 0
@@ -30,8 +30,8 @@
       "volume": "evidence",
       "pdf": "asm-evidence-reference.pdf",
       "pages": 132,
-      "pdf_sha256": "2c3f755161f2381421e088f907272b8f7b1be18d67a50a023ceba0feaf0efe0b",
-      "pdf_bytes": 4593008,
+      "pdf_sha256": "0c6511896471af6cbbce4f8e0d29504c0492636ed74cee3ad2fd49b93b0140e8",
+      "pdf_bytes": 4593132,
       "rewritten_links": {
         "cross_volume": 91,
         "local_relative": 0
@@ -83,11 +83,11 @@
   "inputs": [
     {
       "path": "internal/asm-manual/aliases.json",
-      "sha256": "7b2e22a4a91b9fcc0c08b803d9c9d47323c41487afb3e9172d335c0cb6e555a0"
+      "sha256": "08ccfd85eea87f5d909f4bc6cfc7fd00c8e03d1a36ec981dac09644645d772df"
     },
     {
       "path": "internal/asm-manual/book.json",
-      "sha256": "94262ec89a4230c8bb9985cc5c3ff8f80ed689c09ad3cff1a0814f0dc58e0551"
+      "sha256": "00394452f81dc26a95232feb802e3d6f8551d128a8d46ab97ffdeeb64907a40f"
     },
     {
       "path": "internal/asm-manual/data/architecture-training-evidence.json",
@@ -343,7 +343,7 @@
     },
     {
       "path": "internal/asm-manual/data/roadmap.json",
-      "sha256": "cf25d6caefdb413ffcd40b176f37d93d9833973a90ecc66b97f07823672d8192"
+      "sha256": "8fd826b845e94c87e70b79b98350690d0d66d5e16412d222de17e13488b0aff0"
     },
     {
       "path": "internal/asm-manual/data/s3-estate.json",
@@ -647,11 +647,11 @@
     },
     {
       "path": "internal/asm-manual/sections/benchmark.md",
-      "sha256": "980ad8fe4e6584f8f786542baab20c229119292228cc0197f3d83acab44a422d"
+      "sha256": "b150b625477824592028f9201b9f2f625357649f1aebd23ad843108c4ecb1bd7"
     },
     {
       "path": "internal/asm-manual/sections/catalogue.md",
-      "sha256": "967ecb85be35dbc1f9ba8fa0e52c9edd10c3bb8422eee3913b3553cb5f185217"
+      "sha256": "ec93533cfb4d7e6281d816fd8b5403d41a0291e7eb8dfd8ddcfb3f2e6b9327e6"
     },
     {
       "path": "internal/asm-manual/sections/data-estate.md",
@@ -663,11 +663,7 @@
     },
     {
       "path": "internal/asm-manual/sections/datasets.md",
-      "sha256": "a7feb9b98546bee3efa6167ec2e16d75d660f2e26d7d83b584d55a7fd1ae03fd"
-    },
-    {
-      "path": "internal/asm-manual/sections/gp-targets.md",
-      "sha256": "ae47351d05415d890562890f4f5e6a296986d4412b2aea995762312274ebd79b"
+      "sha256": "7103239a0f3991ae580ff7f59d9bda2d82dbee42f71e20449bef610ab470c073"
     },
     {
       "path": "internal/asm-manual/sections/inference.md",
@@ -675,11 +671,11 @@
     },
     {
       "path": "internal/asm-manual/sections/installation.md",
-      "sha256": "bb199381c4564cd40ea6c0ba2395557454e06f1a4542e1eda90fc871455a6452"
+      "sha256": "7eca139e7c1cc2d7f8272accd46615184d4b0970c3639c4f900b1dbb9c3abb4f"
     },
     {
       "path": "internal/asm-manual/sections/learning.md",
-      "sha256": "ea9140d3bee12bbc7195092c1c7d9469b4ab4aff53dc01d090ba219a79eedde2"
+      "sha256": "2e674550017dc9f44558a3f89c7ae383caf2f803ff428460454160c55a7899e8"
     },
     {
       "path": "internal/asm-manual/sections/maintenance.md",
@@ -699,7 +695,11 @@
     },
     {
       "path": "internal/asm-manual/sections/status.md",
-      "sha256": "df1c30cccbcecfca501ca9706c3355653f883f7a4cf6f5bdbcdf09a5b97af24f"
+      "sha256": "c3cf3af627f17a123b243da5c2e8ef899679e6c8df54a1b2d96982fb2235a9fc"
+    },
+    {
+      "path": "internal/asm-manual/sections/targets.md",
+      "sha256": "ae47351d05415d890562890f4f5e6a296986d4412b2aea995762312274ebd79b"
     },
     {
       "path": "internal/asm-manual/sections/teachers.md",
@@ -707,7 +707,7 @@
     },
     {
       "path": "internal/asm-manual/sections/training-history.md",
-      "sha256": "0dade342a70791a5d52da2d823639386ac90478dcd680576a77624b497ee6d52"
+      "sha256": "b6c5517e600a393fcd722af588469beb3d3f8635a28d1cc7dc9148a34127ad06"
     },
     {
       "path": "internal/asm-manual/sections/training.md",
@@ -759,11 +759,11 @@
     },
     {
       "path": "asm-maintainer-status.plist",
-      "sha256": "cbbba6b224d7a8d08069f09abfe3a183b3655416a5549ada3460ff16a33bf78d"
+      "sha256": "f175e1656dc3e7b323b750d96b5c4927569bf1b03067ff4666a0e85264395781"
     },
     {
       "path": "asm-maintainer-manual.md",
-      "sha256": "91313a32aebb9129765809e2cf09e0152adc9ca99b1bd8b5c8e93c217eb6a4d5"
+      "sha256": "51c4136bffacb45807c295d9b405187cf41c6e4b401b724aaffb3b7b29631fde"
     }
   ]
 }

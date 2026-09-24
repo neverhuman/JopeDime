@@ -19,7 +19,7 @@ The retained recovery history includes all 63,000 reported steps from 6,001 thro
 | Section | Volume |
 | --- | --- |
 | [1 — Current status, versions, north star and measured limitations](internal/asm-manual/sections/status.md) | 1 |
-| [2 — Architecture, encodings, GP representation and model lineages](internal/asm-manual/sections/architecture.md) | 1 |
+| [2 — Architecture, encodings, program representation and model lineages](internal/asm-manual/sections/architecture.md) | 1 |
 | [3 — Installation, preparation, assets, workers and doctor](internal/asm-manual/sections/installation.md) | 1 |
 | [4 — Data, splits, groups, families and permitted input boundaries](internal/asm-manual/sections/data.md) | 1 |
 | [5 — Regression search, fitting, prediction and focused optimization](internal/asm-manual/sections/search.md) | 1 |
@@ -33,7 +33,7 @@ The retained recovery history includes all 63,000 reported steps from 6,001 thro
 | [13 — Prioritized implementation plan and extension interfaces](internal/asm-manual/sections/plan.md) | 1 |
 | [A — All thirty datasets and all 522 feature records](internal/asm-manual/sections/datasets.md) | 2 |
 | [B — Historical training, checkpoint lineage and original loss trajectories](internal/asm-manual/sections/training-history.md) | 2 |
-| [C — Historical GP targets, rankings, Elo and attribution limits](internal/asm-manual/sections/gp-targets.md) | 2 |
+| [C — Historical targets, rankings, Elo and attribution limits](internal/asm-manual/sections/targets.md) | 2 |
 | [D — Dated data estate, recovery evidence and binary formats](internal/asm-manual/sections/data-estate.md) | 2 |
 | [E — Full task catalogue, source/schema index, receipts and glossary](internal/asm-manual/sections/catalogue.md) | 2 |
 

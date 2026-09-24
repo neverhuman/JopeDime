@@ -250,7 +250,7 @@
 			<key>source_refs</key>
 			<array>
 				<string>sections/datasets.md#frozen-dataset-coverage</string>
-				<string>sections/gp-targets.md#ranking-figures-interpretation-contract</string>
+				<string>sections/targets.md#ranking-figures-interpretation-contract</string>
 				<string>dataset-inventory.json</string>
 				<string>performance-evidence.json.gz</string>
 			</array>

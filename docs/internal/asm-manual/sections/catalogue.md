@@ -95,7 +95,7 @@ OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/
 
 **Resources:** Read-only/static custody work; no fitting, models, GPU or campaign admission.
 
-**Source/evidence references:** [§](datasets.md#frozen-dataset-coverage), [§](gp-targets.md#ranking-figures-interpretation-contract), `dataset-inventory.json`, `performance-evidence.json.gz`.
+**Source/evidence references:** [§](datasets.md#frozen-dataset-coverage), [§](targets.md#ranking-figures-interpretation-contract), `dataset-inventory.json`, `performance-evidence.json.gz`.
 
 **Qualification limit:** Historical Elo belongs to its original ladder/pool/protocol; the current one-dataset proof is not a new Elo ladder. Source and figure checks are retained; authored architecture SVG is a repository source artifact.
 
