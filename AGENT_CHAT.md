@@ -1679,3 +1679,11 @@ Final303pages visual PASS by root/fidelity/statistics, receipt chapter-review/vi
 ## 2026-09-24T17:35:45.841988+00:00 — Codex corrected publication freeze
 
 Public-label scrub PASS41files. Rebuilt bothPDFs:170pages/1782994bytes/80cb3767e87c716a27eaa4c962a7706995791e3ac2b96494e863463de21dc0a6 and133pages/4597528bytes/76777a54cfa4f807c91517da611f738d373b61c8f216c1647007ed5e702c0730. Publication PASS192inputs/43tasks/30datasets/522features; actual266legacy destinations/376crosslinks PASS. All303pages visual qualification retained:302pages exactly match previously inspected text+coordinates, final publication page3 rendered and inspected. Custody final-review/{pdf-semantic-check.json,visual-rebind.json,asm-maintainer-manual-3.png}. Commit/push next, repeat exact-head CI/native review.
+
+## 2026-09-24T17:36:40.628115+00:00 — Codex independent review correction
+
+Independent Claude review of ce1264483 refused approval: public GP label fixed by4764d1be; full-branch diff-check also caught CRLF in three newCSV files, missed by root unstaged-only diffcheck. Preserve review findings chapter-review/claude-review.log. Root fixes extractor to LF, regenerates evidence/receipts/PDFs and checks full origin/main diff. Also clarify experimental phase_a_fraction=0 RWR from first step and exact ranking accuracy maximum. No altered numeric history. Prior candidate CI/review superseded; sole writer retained.
+
+## 2026-09-24T17:38:55.535389+00:00 — Codex full-diff and final rebuild verified
+
+LF extraction preserves every CSV value/identity; all six figures unchanged. Full git diff --check origin/main PASS, Python syntax checks PASS, publication192inputs/43tasks/30datasets/522features PASS. Latest PDFs170pages/1783303bytes/72f2c01c5d3331e18a9ca9e0af95287f1f5f2a4f91dd597c2a7cc2e805a5a692 and133pages/4597507bytes/08bb754d6356db9fb3345c0e629c18fdcc7a3c38228ae6d142f969b102eba237. All303pages inspected:300exactly unchanged from complete prior review, root inspected final3,47,52. Actual266legacy destinations/376crosslinks verified. Final custody release-review/{pdf-semantic-check.json,visual-rebind.json}; CI36035446618/36035416852 cancelled as superseded. Ready final follow-up commit and exact-head CI/review; no new claims or execution budget.

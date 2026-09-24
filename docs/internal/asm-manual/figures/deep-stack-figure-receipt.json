@@ -67,8 +67,8 @@
   "/home/ubuntu/JopeDime/crates/jope-policy/src/context_producer.rs": "f9a166fa4feb71f4f55a0e3f40c5783b2a9ea40c4f8c95b261d25b2e3f69d4af",
   "/home/ubuntu/JopeDime/crates/jope-policy/src/decode.rs": "032083033044c4470b299f17a41d6a165118c90b8eeb409087f5d94aeb579274",
   "/home/ubuntu/JopeDime/crates/jope-policy/src/model.rs": "7d0f464fe4bd51ec4b2afa2257678565f959760c74bc347a7d1cebff3efe1e25",
-  "/home/ubuntu/JopeDime/docs/internal/asm-manual/data/deep-stack/a100-fixed-monitor.csv": "d6de475ecd64f33c790dd8a6bd0d61462ec8c0eb58ea49a65c8b7b226ad9c56e",
-  "/home/ubuntu/JopeDime/docs/internal/asm-manual/data/deep-stack/a100-throughput-bins.csv": "b9347c32d0907a1a35e813e026b4fc108b2321e448af212909348b206b335c8f",
+  "/home/ubuntu/JopeDime/docs/internal/asm-manual/data/deep-stack/a100-fixed-monitor.csv": "bb3d5566654880b09e0e3bba8f1581e1059f44aa5e6b030329b116adf7bfda38",
+  "/home/ubuntu/JopeDime/docs/internal/asm-manual/data/deep-stack/a100-throughput-bins.csv": "21b515aa4e6ea0bda578304bf77b7dd9f33769c9b18ecde4b87e3d991c7dcb0c",
   "/home/ubuntu/JopeDime/docs/internal/asm-manual/data/per-step-history/a100-step-bins.csv": "446399c4088fe7e86fea7038a37acde8704d9cd185f2b9eeffe5b93c29a2ad14",
   "/home/ubuntu/JopeDime/docs/internal/asm-manual/data/training-history/gen31-epoch-metrics.csv": "1efedc9c5eb14fdb8398fd8646b0eea9b87e6264a648e709c6ed290674b7b34e"
  },

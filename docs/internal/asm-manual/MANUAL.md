@@ -896,7 +896,7 @@ The legacy emitters (`crates/jope-pipeline/src/emit.rs`) write Python and Rust, 
 **The Python v3 objective** (`python/src/jope/policy/losses.py`):
 
 - Kendall–Gal uncertainty weights on `seq_nll` and `runtime_huber`, and fixed weights on the ranking, stability, ablation and routing terms.
-- After phase A, the imitation loss is reward-weighted (RWR).
+- In the default trainer, the imitation loss becomes reward-weighted (RWR) after phase A. The experimental 256×2 campaign sets `phase_a_fraction=0.0`, so it applies RWR from the first step.
 - The experimental lineage v1 (256×2) campaign in `training_campaign.py` has run only on CPU fixtures.
 
 **Continuation modes:** cold initialization, weight warm start, explicit new-corpus transition, and exact interrupted resume ([§](#c-training--the-four-continuation-names-and-their-commands)).
@@ -1003,7 +1003,7 @@ gen31 is the clearest example in the retained data of training loss improving wh
 - The recorded overfit gap grew from 4.11 to 4.90.
 - Training sequence NLL dropped sharply at epoch 7, from 1.474 to 1.008. That is where phase B starts and reward weighting is applied to the imitation loss, so the drop reflects a **change of objective**, not a sudden gain.
 - The 0.05-smoothed validation sequence-loss component (`val_loss_components.seq_nll`) rose from 2.175 to 2.283. This differs from the unsmoothed `val_seq_nll` reported in the historical chapter (2.055572 to 2.182772).
-- Validation pairwise ranking accuracy stayed between 0.527 and 0.539.
+- Validation pairwise ranking accuracy stayed between 0.527 and 0.53850.
 
 [§](#c-training-history--gen31-fitting-the-objectives-versus-using-the-context) gives the context-advantage diagnostics.
 
