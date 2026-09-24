@@ -15,9 +15,9 @@ This table is the bottom line on 23 September 2026 at about 22:00 UTC. Each row 
 | Area | Current state | Evidence |
 | --- | --- | --- |
 | **Works** | One bounded regression proof on one frozen-panel dataset, `230_machine_cpu`: verified context → 64 policy proposals and 16 exploration proposals → five-fold fits on 20 bounded workers → 16 offspring (8 mutation, 8 crossover) → an independently recovered report. Genuine neural-origin fits and fitted descendants are verified. | [§](#c-status--summary-of-the-one-dataset-proof), [§](#c-status--canonical-proof-record-and-per-arm-facts) |
-| **Not better yet** | On that dataset the neural arm (policy-seeded search) had 1.071 times the development-hold RMSE of the generic arm (grammar-uniform search): 166.3 against 155.3 on 34 held rows, under equal declared allowances but unequal fit time. In retained historical final searches, whose arms shared their seed pools, the two arms tied exactly on 3,227 of 3,268 paired comparisons (98.7%). Parity of the product's CPU policy port with the trained model is not established. | [§](#c-scheduling--arm-order-and-clocks), [§](#c-gp-targets--paired-final-search-outcomes-within-the-admitted-development-inventory), [§](#c-status--what-works-now) |
+| **Not better yet** | On that dataset the neural arm (policy-seeded search) had 1.071 times the development-hold RMSE of the generic arm (grammar-uniform search): 166.3 against 155.3 on 34 held rows, under equal declared allowances but unequal fit time. In retained historical final searches, whose arms shared their seed pools, the two arms tied exactly on 3,227 of 3,268 paired comparisons (98.7%). Parity of the product's CPU policy port with the trained model is not established. | [§](#c-scheduling--arm-order-and-clocks), [§](#c-targets--paired-final-search-outcomes-within-the-admitted-development-inventory), [§](#c-status--what-works-now) |
 | **Not run** | The frozen thirty-dataset panel (0 of 30 datasets); teacher admission under the new contract (0 teachers); new training (no newly trained checkpoint); consumption of a newly trained checkpoint; exact fitted-winner export; installer and warm demonstration. | [§](#c-status--pending-acceptance), [§](#c-training--what-can-be-claimed-now) |
-| **Historical standing** | On the corrected, benchmark-valid historical SOTArena ladder the fixed-seed `jope-dime-regressor` entrant ranks 31 of 304 methods (Elo 1687.0; rank 1 is TabFM Ensemble at 1934.9). The published ladder's rank 1 for `jope-dime` rests on test-selected rows and is not a held-out claim. | [§](#c-gp-targets--why-the-two-historical-ladders-differ) |
+| **Historical standing** | On the corrected, benchmark-valid historical SOTArena ladder the fixed-seed `jope-dime-regressor` entrant ranks 31 of 304 methods (Elo 1687.0; rank 1 is TabFM Ensemble at 1934.9). The published ladder's rank 1 for `jope-dime` rests on test-selected rows and is not a held-out claim. | [§](#c-targets--why-the-two-historical-ladders-differ) |
 | **Next** | The critical order, in short: integrate the guarded follow-on source; run the actual tests, host qualification and packaging; produce fresh qualified contexts and admit preregistered real teachers; build the all-eligible family-disjoint corpus; one GPU-hour of training with continuation; consume the new checkpoint; run the real fitted warm demonstration; then run the unchanged thirty-dataset campaign. Under the current coordination rule, source integration waits until the manual's pull-request lifecycle closes. | [§](#c-plan--critical-order), [§](#c-plan--proposed-owner-decisions-and-external-dependencies) |
 | **Risks** | Cross-region protection of the current learning objects is not established: the surveyed learning replica is empty and the `staging/` prefix is not replicated. Several large data classes have no established remote copy, and the disk was 87% used at the dated readback. | [§](#c-data-estate--recorded-copy-and-retention-gaps) |
 
@@ -57,7 +57,7 @@ Measure progress against both the generic search control and the previous accept
 
 Compare each challenger against both a matched generic search and the previous checkpoint, with the same grammar, task, rows, class ordering, preparation, seeds, resources, scoring policy and exposure rules. When the challenger belongs to a different model family, compare it with the previous checkpoint only through such matched downstream fits, never through loss values: the pending bounded campaign trains a width-256, two-layer Python `JopePolicyModelV3` ([§](#c-training--what-the-pending-campaign-trains)), not a continuation of the accepted width-512, six-layer step-60,000 model ([§](#c-architecture--the-accepted-regression-model-lineage-b-step-60000)). A lower imitation loss alone is insufficient: the generated programs must compile or interpret, fit, survive the resource limits, and improve predictions. Conversely, an honestly measured optimizer update is training progress even when the downstream candidate does not win.
 
-The frozen thirty-dataset panel (asm-private-30-v1; not yet executed) defines an adaptive **development** comparison whose protocol records selection and confirmation exposure. It cannot establish the previously-unseen-family part of the north star merely because a dataset appears in that panel. That requires independently frozen family/exposure evidence and a separately authorized evaluation; this manual grants no access to sealed labels. Historical exposure that cannot be reconstructed stays unknown. See [§](#c-learning--what-the-historical-training-and-target-evidence-establishes), [§](#c-gp-targets--did-gp-targets-get-better) and [§](#c-learning--the-closure-ledger).
+The frozen thirty-dataset panel (asm-private-30-v1; not yet executed) defines an adaptive **development** comparison whose protocol records selection and confirmation exposure. It cannot establish the previously-unseen-family part of the north star merely because a dataset appears in that panel. That requires independently frozen family/exposure evidence and a separately authorized evaluation; this manual grants no access to sealed labels. Historical exposure that cannot be reconstructed stays unknown. See [§](#c-learning--what-the-historical-training-and-target-evidence-establishes), [§](#c-targets--did-gp-targets-get-better) and [§](#c-learning--the-closure-ledger).
 
 <a id="c-status--where-the-current-evidence-stands"></a>
 
@@ -65,7 +65,7 @@ The frozen thirty-dataset panel (asm-private-30-v1; not yet executed) defines an
 
 The latest retained origin proof at source `68f56404` is a useful concrete boundary: it executed actual neural proposals, fitted generation zero, and fitted neural descendants, with an authenticated recovered report. Its neural development-hold RMSE (n = 34) was 166.3181717454848 versus generic 155.25909998168862 on one regression dataset, under equal declared arm allowances but unequal fit time; the neural arm's selected recipe descends only from random-exploration candidates, not from a `neural_policy` proposal. This demonstrates consumption, not a quality win, a quality loss or a thirty-dataset result. The fourteen private language-example commands establish recipe-refit prediction parity across five language configurations; they run no GP evolution and are not exact-state fitted-winner export. Historical trained corpora also must not be confused with the zero newly demonstrated teachers under the pending ASM admission contract. The measured origin report SHA is `6e0c20720256b0735a6969c45032f44082c92abacadf2c4eb21ef5c390f249dd`; see [§](#c-status--canonical-proof-record-and-per-arm-facts) and [§](#c-inference--measured-execution-of-the-private-examples).
 
-There **has been real historical policy training**. The accepted serving model is the recovered lineage-B step-60000 checkpoint. Retained logs cover 63,000 optimizer steps of that lineage (steps 6,001–69,000, in 21 blocks, each on a different corpus). Loss falls inside every block and jumps upward at every corpus change. The descriptive linear fit over steps 6,001–60,000 changes by −0.018284 in total, while the tabulated block losses lie between 0.785951 and 0.855045 ([§](#c-training-history--within-block-and-boundary-patterns)). The 78 retained checkpoint observations of that lineage use changing evaluation populations. The retained fixed-monitor comparison covers three earlier checkpoints (recovery, cycle 25 and cycle 107), and there sequence and reward-ranking losses did not improve over recovery ([§](#c-training-history--fixed-monitoring-and-actual-promotion-evidence)). In retained paired final searches, whose arms shared their seed pools, the neural arm tied the generic arm exactly on 3,227 of 3,268 comparisons ([§](#c-gp-targets--paired-final-search-outcomes-within-the-admitted-development-inventory)). Across all 26,357 historical search receipts, an external seed audit reports that 98.84% of reported winners were already in their search's seed population ([§](#c-gp-targets--first-to-last-comparison-at-1000-evaluations)). The optimizer fitted its objective; better proposals have not been demonstrated.
+There **has been real historical policy training**. The accepted serving model is the recovered lineage-B step-60000 checkpoint. Retained logs cover 63,000 optimizer steps of that lineage (steps 6,001–69,000, in 21 blocks, each on a different corpus). Loss falls inside every block and jumps upward at every corpus change. The descriptive linear fit over steps 6,001–60,000 changes by −0.018284 in total, while the tabulated block losses lie between 0.785951 and 0.855045 ([§](#c-training-history--within-block-and-boundary-patterns)). The 78 retained checkpoint observations of that lineage use changing evaluation populations. The retained fixed-monitor comparison covers three earlier checkpoints (recovery, cycle 25 and cycle 107), and there sequence and reward-ranking losses did not improve over recovery ([§](#c-training-history--fixed-monitoring-and-actual-promotion-evidence)). In retained paired final searches, whose arms shared their seed pools, the neural arm tied the generic arm exactly on 3,227 of 3,268 comparisons ([§](#c-targets--paired-final-search-outcomes-within-the-admitted-development-inventory)). Across all 26,357 historical search receipts, an external seed audit reports that 98.84% of reported winners were already in their search's seed population ([§](#c-targets--first-to-last-comparison-at-1000-evaluations)). The optimizer fitted its objective; better proposals have not been demonstrated.
 
 Historical optimizer evidence for the serving lineage: 21 original A100-recovery logs retain all 63,000 steps from 6,001 through 69,000, with 378,000 selected loss/component/gradient values preserved exactly. All 21 blocks show declining within-block composite loss, while each uses a different corpus. This is historical fitting evidence only, separate from better downstream GP targets or proposal quality, and it implies no new training or promotion. Accepted serving remains step 60,000; later A100 step 69,000 is explicitly refused, and the separately retained world-1 step 60,100 is hardware qualification. The source-bound CSV, corpus boundaries and explicit averaging are in [§](#c-training-history--the-complete-a100-loss-series-steps-600169000).
 
@@ -613,7 +613,7 @@ Preparation must preserve actual frozen row assignments, original labels, catego
 
 ### 3.4.2 Native roster and external comparator runtimes
 
-The native roster has 17 regression recipes, five binary recipes and four multiclass recipes. Aliases do not create extra screening slots. The second GPR configuration is distinct because it has a distinct fitted implementation. Every task also includes four external adapters, each run at library defaults with seed 0 and one thread: XGBoost, LightGBM, CatBoost and a scikit-learn random forest. Native recipes are fixed before the dataset screen and the external adapters keep those defaults, so the campaign performs no per-dataset hyperparameter search for any non-ASM comparator (a head's own internal fitting, such as `ridge_gcv`'s generalized cross-validation, is part of its fixed recipe; [§](#c-benchmark--minimum-complete-future-campaign-report)), while each ASM arm searches within its declared allowance. The highest-rated methods on the historical benchmark-valid ladder, such as TabFM Ensemble, are not panel comparators ([§](#c-gp-targets--sotarena-published-and-corrected-ladders)); panel wins against this roster would therefore not show that ASM beats those methods. Sources: `crates/jope-bench/src/panel/campaign_cli.rs:67`; `crates/jope-bench/adapters/sklearn_rf_adapter.py:2`; `crates/jope-bench/src/panel/selection_exposure.rs:91`; `crates/feat-math/src/heads.rs:65-67`. External library versions, entry points, environment and package bytes must be authenticated before admission.
+The native roster has 17 regression recipes, five binary recipes and four multiclass recipes. Aliases do not create extra screening slots. The second GPR configuration is distinct because it has a distinct fitted implementation. Every task also includes four external adapters, each run at library defaults with seed 0 and one thread: XGBoost, LightGBM, CatBoost and a scikit-learn random forest. Native recipes are fixed before the dataset screen and the external adapters keep those defaults, so the campaign performs no per-dataset hyperparameter search for any non-ASM comparator (a head's own internal fitting, such as `ridge_gcv`'s generalized cross-validation, is part of its fixed recipe; [§](#c-benchmark--minimum-complete-future-campaign-report)), while each ASM arm searches within its declared allowance. The highest-rated methods on the historical benchmark-valid ladder, such as TabFM Ensemble, are not panel comparators ([§](#c-targets--sotarena-published-and-corrected-ladders)); panel wins against this roster would therefore not show that ASM beats those methods. Sources: `crates/jope-bench/src/panel/campaign_cli.rs:67`; `crates/jope-bench/adapters/sklearn_rf_adapter.py:2`; `crates/jope-bench/src/panel/selection_exposure.rs:91`; `crates/feat-math/src/heads.rs:65-67`. External library versions, entry points, environment and package bytes must be authenticated before admission.
 
 ```sh
 python3 "$R/deploy/prepare-panel-runtime.py" \
@@ -1937,7 +1937,7 @@ The learned route is a conditional distribution over executable program tokens g
 
 Measure the policy before GP recovery as well as after it. A long search can find the same winner despite poor neural proposals, while a short search may reveal useful initialization that disappears at a larger budget. Shared incumbents can create many ties. Equal time caps do not imply equal completed fit counts, especially when candidate runtimes differ.
 
-The admitted historical evidence in [§](#c-gp-targets--did-gp-targets-get-better) illustrates this limit: at 1,000 completed evaluations, 3,268 paired neural/generic final-search observations contain 24 lower neural scores, 17 higher scores and 3,227 exact ties. Their geometric mean neural/generic RMSE is 1.0001869094. They repeat families and generations, consume unequal reported wall time and measure adaptive final winners. The historical arms also share incumbent, retained-teacher and exploration seed pools; a winner can seed every arm in the next generation. In the separate first-to-last table, 64 lower arm groups collapse to 23 distinct dataset/cut pairs out of 55, with identical available-arm final scores in 22 of those 23. Those are dependent carried-forward outcomes, not 64 independent discoveries or wins. They neither establish initial routing quality nor show that later training caused better search. A larger external extract is kept outside this claim where its rows have not joined the admitted inventory.
+The admitted historical evidence in [§](#c-targets--did-gp-targets-get-better) illustrates this limit: at 1,000 completed evaluations, 3,268 paired neural/generic final-search observations contain 24 lower neural scores, 17 higher scores and 3,227 exact ties. Their geometric mean neural/generic RMSE is 1.0001869094. They repeat families and generations, consume unequal reported wall time and measure adaptive final winners. The historical arms also share incumbent, retained-teacher and exploration seed pools; a winner can seed every arm in the next generation. In the separate first-to-last table, 64 lower arm groups collapse to 23 distinct dataset/cut pairs out of 55, with identical available-arm final scores in 22 of those 23. Those are dependent carried-forward outcomes, not 64 independent discoveries or wins. They neither establish initial routing quality nor show that later training caused better search. A larger external extract is kept outside this claim where its rows have not joined the admitted inventory.
 
 Useful controls answer different questions: generic grammar sampling tests end-to-end benefit over the non-neural search; the previous accepted checkpoint tests whether training helped; shuffled contexts test conditional information; and random ranking on the same candidate pool tests ranking utility. These additional controls are proposed experiments, not extra runs hidden inside the approved panel. Declare their budget and scope before execution.
 
@@ -2034,7 +2034,7 @@ Retain the receipt path and content hash for each populated quantity, plus its u
 
 ## 8.10 What is still needed to demonstrate the learning flywheel
 
-The desired loop is concrete: a dataset and split produce verified encodings; conditioned policy proposals become real generation-zero fits; bounded GP/evolution produces eligible improved programs; the full comparison identity admits those programs as teaching targets; optimizer updates produce a new checkpoint; matched downstream fits show whether that new checkpoint proposes and searches better algorithms. Only then can a promotion change the serving pointer. [§](#c-teachers--a-dataset-is-not-one-training-example) and [§](#c-data-estate--binary-format-the-exact-packed-teaching-record) trace the historical input-to-target representation, and [§](#c-gp-targets--did-gp-targets-get-better) separately reports observed adaptive target improvements in repeated searches with matching recorded comparison fields, including improvements in generic and shuffled arms. Those observations are largely carried-forward development scores from seed pools the arms share; they do not establish neural causality. [§](#c-learning--what-better-and-better-must-mean) defines the remaining current acceptance work.
+The desired loop is concrete: a dataset and split produce verified encodings; conditioned policy proposals become real generation-zero fits; bounded GP/evolution produces eligible improved programs; the full comparison identity admits those programs as teaching targets; optimizer updates produce a new checkpoint; matched downstream fits show whether that new checkpoint proposes and searches better algorithms. Only then can a promotion change the serving pointer. [§](#c-teachers--a-dataset-is-not-one-training-example) and [§](#c-data-estate--binary-format-the-exact-packed-teaching-record) trace the historical input-to-target representation, and [§](#c-targets--did-gp-targets-get-better) separately reports observed adaptive target improvements in repeated searches with matching recorded comparison fields, including improvements in generic and shuffled arms. Those observations are largely carried-forward development scores from seed pools the arms share; they do not establish neural causality. [§](#c-learning--what-better-and-better-must-mean) defines the remaining current acceptance work.
 
 For every cycle, preserve both sides of the feedback: target improvement under the same task/dataset/split/evaluator/vocabulary/protocol identity, and policy improvement in fitted performance, failure rate and cost under a frozen comparison. Report cold/warm preparation and unique fitted predictors separately from recipe counts. Keep a context-free control, generic proposal control and unchanged accepted policy. A lower teacher-forced NLL can accompany memorization, degraded ranking, or no better executable search, as the historical measurements demonstrate.
 
@@ -2537,7 +2537,7 @@ For every one of the thirty immutable datasets, retain the input and cut identit
 
 The owner's target of ten wins per task category is not yet a countable definition. The estimate that counts, the eligible comparator set, whether `asm.generic` is a comparator or an ASM control, the tie rule and whether an incomplete or unconfirmed dataset can count as a win are not fixed, and no code at merged main `a75e543d2` counts wins against the best non-ASM comparator. A review proposal, pending owner ratification and not adopted, defines PANEL-WINS(asm-panel-v1) as, per task, the number of the ten frozen datasets on which `asm.neural`'s confirmed five-fold mean development loss is strictly below the minimum over all eligible frozen non-ASM comparators (every `rust.*` and `external.*` recipe). Under that proposal, `asm.generic` is reported in its own column as an ASM control, ties and incomplete, failed or unconfirmed datasets count as not won, and the result is reported as (regression, binary, multiclass). The separate win columns are described in [§](#c-learning--win-counting-and-a-proposed-acceptance-record). With exactly ten frozen datasets per task, ten wins per category would be a 30/30 sweep. It remains a measured target; the current evidence does not promise that result. The full-panel report, newly trained policy consumption, selected fitted-winner parity and serving promotion remain separate acceptance milestones.
 
-Panel comparators are fixed configurations. Each native `rust.*` recipe keeps its registered configuration, and the four external engines (XGBoost, LightGBM, CatBoost and scikit-learn) run as `external.{engine}.default`; the campaign performs no per-dataset hyperparameter search for any comparator (a head's own internal fitting, such as `ridge_gcv`'s generalized cross-validation, is part of its fixed recipe). Each ASM arm, by contrast, searches for up to 120 seconds and up to 1,000 evaluations. Sources: `crates/jope-bench/src/panel/methods.rs:60-63`, `crates/jope-bench/src/panel/campaign_cli.rs:67-72`, `crates/jope-bench/src/panel/optimize.rs:132-133`. The strongest historical benchmark-valid method, TabFM Ensemble (rank 1, Elo 1934.9), is not a panel comparator; on that historical ladder the `jope-dime-regressor` entry is rank 31 at Elo 1687.0 ([§](#c-gp-targets--why-the-two-historical-ladders-differ)). Ten panel wins per category against these default comparators would therefore not show that ASM beats the strongest known tabular methods. Tuned or foundation-model comparator tiers for a future `asm-panel-v2`, never retroactive to v1, are a review proposal pending owner decision.
+Panel comparators are fixed configurations. Each native `rust.*` recipe keeps its registered configuration, and the four external engines (XGBoost, LightGBM, CatBoost and scikit-learn) run as `external.{engine}.default`; the campaign performs no per-dataset hyperparameter search for any comparator (a head's own internal fitting, such as `ridge_gcv`'s generalized cross-validation, is part of its fixed recipe). Each ASM arm, by contrast, searches for up to 120 seconds and up to 1,000 evaluations. Sources: `crates/jope-bench/src/panel/methods.rs:60-63`, `crates/jope-bench/src/panel/campaign_cli.rs:67-72`, `crates/jope-bench/src/panel/optimize.rs:132-133`. The strongest historical benchmark-valid method, TabFM Ensemble (rank 1, Elo 1934.9), is not a panel comparator; on that historical ladder the `jope-dime-regressor` entry is rank 31 at Elo 1687.0 ([§](#c-targets--why-the-two-historical-ladders-differ)). Ten panel wins per category against these default comparators would therefore not show that ASM beats the strongest known tabular methods. Tuned or foundation-model comparator tiers for a future `asm-panel-v2`, never retroactive to v1, are a review proposal pending owner decision.
 
 Classification search is also narrower than its comparators. At merged main `a75e543d2`, binary and multiclass datasets have no neural arm, because the accepted policy is regression-only, and their `asm.generic` search samples only ridge heads (`logit_ridge` for binary, `multiclass_ridge` for multiclass). Their comparators are five binary or four multiclass native recipes plus the four external engines. Sources: `crates/jope-bench/src/panel/optimize.rs:35`, `:492-493`; `crates/jope-bench/src/panel/methods.rs:90-104`; [§](#c-architecture--experimental-classification-context).
 
@@ -4364,7 +4364,7 @@ Exact development category frequencies:
 
 ## A.5 Explicitly omitted or unknown statistics
 
-Sealed target values, target distributions, class balance, feature distributions, missingness and category cardinalities are deliberately unread. Their row counts and expected file identities come from frozen metadata only. Raw full-dataset distribution statistics are therefore unavailable; development summaries must not be labeled full-dataset summaries. Checkpoint dataset exposure, unrecorded subject/time identifiers and original licenses marked unknown remain unknown. The broad S3 catalog is a stored metadata inventory, not fresh payload validation, admissible-teacher inventory or a count of trained models. Exact current panel ranks, per-category wins and Elo await the unchanged panel, whose matrix has no completed cells as of 2026-09-23 about 23:55 UTC ([§](#c-gp-targets--retained-snapshots-and-plot-data)). Final cold installation, final warm target performance, actual GPU training hours and trained-checkpoint consumption await their own receipts. Under the owner's family-level domains (teacher/train, adaptive development, and evaluation outside training and selection), these thirty datasets remain adaptive-development data ([§](#c-benchmark--adaptive-development-exposure)); whether a pretrained encoder was exposed to them also remains unknown.
+Sealed target values, target distributions, class balance, feature distributions, missingness and category cardinalities are deliberately unread. Their row counts and expected file identities come from frozen metadata only. Raw full-dataset distribution statistics are therefore unavailable; development summaries must not be labeled full-dataset summaries. Checkpoint dataset exposure, unrecorded subject/time identifiers and original licenses marked unknown remain unknown. The broad S3 catalog is a stored metadata inventory, not fresh payload validation, admissible-teacher inventory or a count of trained models. Exact current panel ranks, per-category wins and Elo await the unchanged panel, whose matrix has no completed cells as of 2026-09-23 about 23:55 UTC ([§](#c-targets--retained-snapshots-and-plot-data)). Final cold installation, final warm target performance, actual GPU training hours and trained-checkpoint consumption await their own receipts. Under the owner's family-level domains (teacher/train, adaptive development, and evaluation outside training and selection), these thirty datasets remain adaptive-development data ([§](#c-benchmark--adaptive-development-exposure)); whether a pretrained encoder was exposed to them also remains unknown.
 
 
 ---
@@ -4469,7 +4469,7 @@ A separate gate receipt dated **2026-07-25 10:24:49.812 UTC** compares 557 valid
 
 The two lower panels retain the **reported paper CSV summaries** from `/home/ubuntu/jope-prime/docs/paper/data/`, rather than replaying their historical tournaments. The loss table has generations 1–31; the internal self-play Elo table has generations 1–30. Across the loss summaries, validation sequence NLL changes from 1.783587 to 2.084099, and pairwise accuracy from 0.594856 to 0.529146. Internal top-1 Elo changes from 1,073.2 to 1,119.2. Over their thirty common generations, the descriptive Pearson correlation between Elo and sequence NLL is +0.728336: higher internal Elo coexists with worse likelihood. Correlation across this evolving history is not a causal result, and the underlying populations/objectives have not been frozen for a new matched evaluation.
 
-The generation-31 summary exactly matches **epoch 3**, not epoch 14, on validation sequence NLL, validation pairwise accuracy and the training sequence component. That explains why a generation-level table and the final gen31 log row can disagree without either number being fabricated. There is no generation-31 Elo row in this retained table. Neither the internal ladder nor its `shipped` column establishes a current release or the benchmark-valid Elo described in [§](#c-gp-targets--historical-benchmark-valid-elo). Full source-to-tournament provenance and exposure qualification remain separate from this arithmetic/source-file check.
+The generation-31 summary exactly matches **epoch 3**, not epoch 14, on validation sequence NLL, validation pairwise accuracy and the training sequence component. That explains why a generation-level table and the final gen31 log row can disagree without either number being fabricated. There is no generation-31 Elo row in this retained table. Neither the internal ladder nor its `shipped` column establishes a current release or the benchmark-valid Elo described in [§](#c-targets--historical-benchmark-valid-elo). Full source-to-tournament provenance and exposure qualification remain separate from this arithmetic/source-file check.
 
 The companion `data/legacy-training/` retains all four original files byte-for-byte, a hash-pinned recomputation receipt and the plot input/output hashes. Their source paths are `/home/ubuntu/jope-flywheel/training/round1/{round1.train_metrics.jsonl,gate-result.v1.json}` and `/home/ubuntu/jope-prime/docs/paper/data/{loss_components_by_generation.csv,elo_trajectory.csv}`. No model or dataset payload was opened to assemble this supplement.
 
@@ -4602,11 +4602,11 @@ The receipt commits 204,800 program presentations and zero fresh programs. Its p
 
 This chapter answers two questions: which historical corpora and target records survive, and how the historical target collections and their observed scores changed. What one training example contains is described in [§](#c-teachers--a-dataset-is-not-one-training-example), and how the implementation stores and loads packed records in [§](#c-data-estate--record-layout). This manual's audit read metadata, manifests and development-score receipts. It did not read sealed labels, model tensors, packed target-record bodies or the large audit-label sidecars, and it ran no training or fits. External packing, inventory and seed audits report results that depend on payloads this audit did not open; those results are attributed separately below and were checked here through retained metadata, scripts and arithmetic, without replaying the payload reads. File-metadata observations, externally reported payload checks and source-derived calculations remain distinct evidence levels.
 
-<a id="c-gp-targets--did-gp-targets-get-better"></a>
+<a id="c-targets--did-gp-targets-get-better"></a>
 
 ## C.1 Did GP targets get better?
 
-<a id="c-gp-targets--carried-forward-scores-and-the-admitted-receipt-inventory"></a>
+<a id="c-targets--carried-forward-scores-and-the-admitted-receipt-inventory"></a>
 
 ### C.1.1 Carried-forward scores and the admitted receipt inventory
 
@@ -4616,7 +4616,7 @@ The audit enumerated 29,744 `search.json` paths under `/home/ubuntu/jope-node-mi
 
 Only 3,530 of the 26,357 permitted receipts are also present in the separately preserved `accepted60000-restored` tree, all byte-identical; the other 22,827 receipts, including every permitted generation 10–70 receipt, are absent from that tree. A custody archive preserves all **26,357 original search receipts**, totaling **62,271,855 uncompressed bytes**. A separate streaming verification checked every member name, size and original SHA256 without reopening the source bodies. `original-target-receipts-custody.json` pins the archive and verification. The archive is a second local copy on the same filesystem, not an off-host backup. The separate seed bodies used by the external carry-forward analysis are outside that archive.
 
-<a id="c-gp-targets--first-to-last-comparison-at-1000-evaluations"></a>
+<a id="c-targets--first-to-last-comparison-at-1000-evaluations"></a>
 
 ### C.1.2 First-to-last comparison at 1,000 evaluations
 
@@ -4636,7 +4636,7 @@ The separately released external seed audit reports `seed_population_supplied=tr
 
 This table is therefore not a paired policy-ranking result. Random seeds change between generations, elapsed time varies, and this audit did not requalify the actual CPU/memory/hardware enforcement or complete build closure of the historical searches. Matching these recorded fields is narrower than the complete current experiment identity. The recorded generation manifests declare 600 seconds and 1,000 evaluations for the illustrative example; those declarations do not establish equal consumed wall time. Checkpoint association is available by generation, but exact exposure of each improved target to later optimizer batches remains unjoined.
 
-<a id="c-gp-targets--the-pine-chromium-example-attribution-limits-and-published-data"></a>
+<a id="c-targets--the-pine-chromium-example-attribution-limits-and-published-data"></a>
 
 ### C.1.3 The pine-chromium example, attribution limits and published data
 
@@ -4648,7 +4648,7 @@ Relative improvement is `(first_RMSE - last_RMSE) / first_RMSE`. The percentage 
 
 The small publication files are `target-quality-1000-summary.csv`, `target-quality-1000-comparisons.csv` and `target-quality-pine-chromium-cut1.csv`. Full 26,357-row extracted evidence stays in custody, with its hash in `historical-target-quality-summary.json`; the manual need not embed the 19.5 MB full extraction. This analysis reads development scores only and creates no new teacher eligibility, promotion or benchmark-valid result.
 
-<a id="c-gp-targets--paired-final-search-outcomes-within-the-admitted-development-inventory"></a>
+<a id="c-targets--paired-final-search-outcomes-within-the-admitted-development-inventory"></a>
 
 ### C.1.4 Paired final-search outcomes within the admitted development inventory
 
@@ -4663,11 +4663,11 @@ These are repeated adaptive **final-search** observations across generations 0�
 
 The external report's broader routing extract has 42,863 rows. Only 3,530 match this chapter's admitted receipt inventory by retained path and all checked score, prepared-data, vocabulary, evaluator, protocol, completed-evaluation and wall-time fields. The other 39,333 are outside that existing inventory; their eligibility remains unqualified here, **not classified as all sealed**. No original score path was reopened for this join. The broader campaign ratios and p-values are therefore not imported. The compact `packing-routing-audit.json` pins inputs, matching fields, arithmetic and exclusions.
 
-<a id="c-gp-targets--existing-historical-rankings-and-elo"></a>
+<a id="c-targets--existing-historical-rankings-and-elo"></a>
 
 ## C.2 Existing historical rankings and Elo
 
-<a id="c-gp-targets--retained-snapshots-and-plot-data"></a>
+<a id="c-targets--retained-snapshots-and-plot-data"></a>
 
 ### C.2.1 Retained snapshots and plot data
 
@@ -4684,7 +4684,7 @@ Six committed snapshots are available and their ladder and score SHA-256 values 
 
 For plots, use `performance-evidence.json.gz`: 6 complete ladder row sets; 520 same-cut score cells, including missing/rejected statuses; 20 per-dataset reports with exact cut identities, source heads and screen/deep timings; 8,763 historical SOTArena score rows; and the 2 current-origin refit loss rows. Do not blend these into one chart without explicit separate protocol panels. The frozen panel (asm-private-30-v1) matrix had no completed cells as of 2026-09-23 about 23:55 UTC; represent it as pending, not a fabricated ranking.
 
-<a id="c-gp-targets--ranking-figures-interpretation-contract"></a>
+<a id="c-targets--ranking-figures-interpretation-contract"></a>
 
 ### C.2.2 Ranking figures: interpretation contract
 
@@ -4694,11 +4694,11 @@ The historical ranking plots that follow use their separately pinned snapshots. 
 
 All machine-readable rows are retained in `data/performance-evidence.json.gz` and `data/plot-historical-elo.csv`. A displayed top-method subset does not remove the other methods from those inventories. Dataset selection and historical protocol caveats travel with each figure.
 
-<a id="c-gp-targets--sotarena-published-and-corrected-ladders"></a>
+<a id="c-targets--sotarena-published-and-corrected-ladders"></a>
 
 ### C.2.3 SOTArena published and corrected ladders
 
-<a id="c-gp-targets--historical-benchmark-valid-elo"></a>
+<a id="c-targets--historical-benchmark-valid-elo"></a>
 
 #### C.2.3.1 Historical benchmark-valid Elo
 
@@ -4708,7 +4708,7 @@ This view retains 304 methods and the historical corrected eligibility filter. T
 
 The top-method view is paired with the distribution of the full method universe. Dataset coverage and the identity of the historical entrant remain visible. These numbers describe the retained historical ladder, not the current accepted step-60000 model's thirty-dataset performance.
 
-<a id="c-gp-targets--why-the-two-historical-ladders-differ"></a>
+<a id="c-targets--why-the-two-historical-ladders-differ"></a>
 
 #### C.2.3.2 Why the two historical ladders differ
 
@@ -4718,11 +4718,11 @@ The published view includes 45 test-selected `jope-dime` rows; the corrected ben
 
 ![Historical published and benchmark-valid ladders with their distinct eligibility](figures/fig02-ladders-valid-vs-adaptive.png)
 
-<a id="c-gp-targets--historical-same-cut-screening-and-deepening"></a>
+<a id="c-targets--historical-same-cut-screening-and-deepening"></a>
 
 ### C.2.4 Historical same-cut screening and deepening
 
-<a id="c-gp-targets--same-cut-v1-and-v2-snapshots-with-screen-and-deep-elo"></a>
+<a id="c-targets--same-cut-v1-and-v2-snapshots-with-screen-and-deep-elo"></a>
 
 #### C.2.4.1 Same-cut v1 and v2 snapshots with screen and deep Elo
 
@@ -4734,7 +4734,7 @@ Same-cut v2 compares all fifteen methods during screening on ten regression data
 
 The ten historical datasets were a favorable selection for the earlier engine. Their ranking cannot establish performance on a broader corpus or substitute for the frozen panel (asm-private-30-v1). External engine versions printed in these plots are the historical run versions, not a claim about currently installed adapter versions.
 
-<a id="c-gp-targets--historical-relative-loss-and-per-dataset-rank"></a>
+<a id="c-targets--historical-relative-loss-and-per-dataset-rank"></a>
 
 #### C.2.4.2 Historical relative loss and per-dataset rank
 
@@ -4746,7 +4746,7 @@ The rank-distribution plot shows all ten per-dataset screening ranks for each me
 
 ![Historical same-cut per-dataset rank distribution](figures/fig05-samecut-rank-distribution.png)
 
-<a id="c-gp-targets--historical-production-time-and-the-supplied-reference-scenario"></a>
+<a id="c-targets--historical-production-time-and-the-supplied-reference-scenario"></a>
 
 ### C.2.5 Historical production time and the supplied reference scenario
 
@@ -5159,7 +5159,7 @@ OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/
 
 **Resources:** Read-only/static custody work; no fitting, models, GPU or campaign admission.
 
-**Source/evidence references:** [§](#c-datasets--frozen-dataset-coverage), [§](#c-gp-targets--ranking-figures-interpretation-contract), `dataset-inventory.json`, `performance-evidence.json.gz`.
+**Source/evidence references:** [§](#c-datasets--frozen-dataset-coverage), [§](#c-targets--ranking-figures-interpretation-contract), `dataset-inventory.json`, `performance-evidence.json.gz`.
 
 **Qualification limit:** Historical Elo belongs to its original ladder/pool/protocol; the current one-dataset proof is not a new Elo ladder. Source and figure checks are retained; authored architecture SVG is a repository source artifact.
 

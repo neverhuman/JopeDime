@@ -154,7 +154,7 @@
       "resource_budget": "Read-only/static custody work; no fitting, models, GPU or campaign admission.",
       "source_refs": [
         "sections/datasets.md#frozen-dataset-coverage",
-        "sections/gp-targets.md#ranking-figures-interpretation-contract",
+        "sections/targets.md#ranking-figures-interpretation-contract",
         "dataset-inventory.json",
         "performance-evidence.json.gz"
       ],

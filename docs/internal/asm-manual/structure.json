@@ -2815,8 +2815,8 @@
    "level": 1,
    "kind": "chapter",
    "title": "Historical GP targets, rankings, Elo and attribution limits",
-   "id": "c-gp-targets",
-   "file": "gp-targets.md",
+   "id": "c-targets",
+   "file": "targets.md",
    "volume": "evidence"
   },
   {
@@ -2824,8 +2824,8 @@
    "level": 2,
    "kind": "section",
    "title": "Did GP targets get better?",
-   "id": "c-gp-targets--did-gp-targets-get-better",
-   "file": "gp-targets.md",
+   "id": "c-targets--did-gp-targets-get-better",
+   "file": "targets.md",
    "volume": "evidence"
   },
   {
@@ -2833,8 +2833,8 @@
    "level": 3,
    "kind": "subsection",
    "title": "Carried-forward scores and the admitted receipt inventory",
-   "id": "c-gp-targets--carried-forward-scores-and-the-admitted-receipt-inventory",
-   "file": "gp-targets.md",
+   "id": "c-targets--carried-forward-scores-and-the-admitted-receipt-inventory",
+   "file": "targets.md",
    "volume": "evidence"
   },
   {
@@ -2842,8 +2842,8 @@
    "level": 3,
    "kind": "subsection",
    "title": "First-to-last comparison at 1,000 evaluations",
-   "id": "c-gp-targets--first-to-last-comparison-at-1000-evaluations",
-   "file": "gp-targets.md",
+   "id": "c-targets--first-to-last-comparison-at-1000-evaluations",
+   "file": "targets.md",
    "volume": "evidence"
   },
   {
@@ -2851,8 +2851,8 @@
    "level": 3,
    "kind": "subsection",
    "title": "The pine-chromium example, attribution limits and published data",
-   "id": "c-gp-targets--the-pine-chromium-example-attribution-limits-and-published-data",
-   "file": "gp-targets.md",
+   "id": "c-targets--the-pine-chromium-example-attribution-limits-and-published-data",
+   "file": "targets.md",
    "volume": "evidence"
   },
   {
@@ -2860,8 +2860,8 @@
    "level": 3,
    "kind": "subsection",
    "title": "Paired final-search outcomes within the admitted development inventory",
-   "id": "c-gp-targets--paired-final-search-outcomes-within-the-admitted-development-inventory",
-   "file": "gp-targets.md",
+   "id": "c-targets--paired-final-search-outcomes-within-the-admitted-development-inventory",
+   "file": "targets.md",
    "volume": "evidence"
   },
   {
@@ -2869,8 +2869,8 @@
    "level": 2,
    "kind": "section",
    "title": "Existing historical rankings and Elo",
-   "id": "c-gp-targets--existing-historical-rankings-and-elo",
-   "file": "gp-targets.md",
+   "id": "c-targets--existing-historical-rankings-and-elo",
+   "file": "targets.md",
    "volume": "evidence"
   },
   {
@@ -2878,8 +2878,8 @@
    "level": 3,
    "kind": "subsection",
    "title": "Retained snapshots and plot data",
-   "id": "c-gp-targets--retained-snapshots-and-plot-data",
-   "file": "gp-targets.md",
+   "id": "c-targets--retained-snapshots-and-plot-data",
+   "file": "targets.md",
    "volume": "evidence"
   },
   {
@@ -2887,8 +2887,8 @@
    "level": 3,
    "kind": "subsection",
    "title": "Ranking figures: interpretation contract",
-   "id": "c-gp-targets--ranking-figures-interpretation-contract",
-   "file": "gp-targets.md",
+   "id": "c-targets--ranking-figures-interpretation-contract",
+   "file": "targets.md",
    "volume": "evidence"
   },
   {
@@ -2896,8 +2896,8 @@
    "level": 3,
    "kind": "subsection",
    "title": "SOTArena published and corrected ladders",
-   "id": "c-gp-targets--sotarena-published-and-corrected-ladders",
-   "file": "gp-targets.md",
+   "id": "c-targets--sotarena-published-and-corrected-ladders",
+   "file": "targets.md",
    "volume": "evidence"
   },
   {
@@ -2905,8 +2905,8 @@
    "level": 4,
    "kind": "sub-subsection",
    "title": "Historical benchmark-valid Elo",
-   "id": "c-gp-targets--historical-benchmark-valid-elo",
-   "file": "gp-targets.md",
+   "id": "c-targets--historical-benchmark-valid-elo",
+   "file": "targets.md",
    "volume": "evidence"
   },
   {
@@ -2914,8 +2914,8 @@
    "level": 4,
    "kind": "sub-subsection",
    "title": "Why the two historical ladders differ",
-   "id": "c-gp-targets--why-the-two-historical-ladders-differ",
-   "file": "gp-targets.md",
+   "id": "c-targets--why-the-two-historical-ladders-differ",
+   "file": "targets.md",
    "volume": "evidence"
   },
   {
@@ -2923,8 +2923,8 @@
    "level": 3,
    "kind": "subsection",
    "title": "Historical same-cut screening and deepening",
-   "id": "c-gp-targets--historical-same-cut-screening-and-deepening",
-   "file": "gp-targets.md",
+   "id": "c-targets--historical-same-cut-screening-and-deepening",
+   "file": "targets.md",
    "volume": "evidence"
   },
   {
@@ -2932,8 +2932,8 @@
    "level": 4,
    "kind": "sub-subsection",
    "title": "Same-cut v1 and v2 snapshots with screen and deep Elo",
-   "id": "c-gp-targets--same-cut-v1-and-v2-snapshots-with-screen-and-deep-elo",
-   "file": "gp-targets.md",
+   "id": "c-targets--same-cut-v1-and-v2-snapshots-with-screen-and-deep-elo",
+   "file": "targets.md",
    "volume": "evidence"
   },
   {
@@ -2941,8 +2941,8 @@
    "level": 4,
    "kind": "sub-subsection",
    "title": "Historical relative loss and per-dataset rank",
-   "id": "c-gp-targets--historical-relative-loss-and-per-dataset-rank",
-   "file": "gp-targets.md",
+   "id": "c-targets--historical-relative-loss-and-per-dataset-rank",
+   "file": "targets.md",
    "volume": "evidence"
   },
   {
@@ -2950,8 +2950,8 @@
    "level": 3,
    "kind": "subsection",
    "title": "Historical production time and the supplied reference scenario",
-   "id": "c-gp-targets--historical-production-time-and-the-supplied-reference-scenario",
-   "file": "gp-targets.md",
+   "id": "c-targets--historical-production-time-and-the-supplied-reference-scenario",
+   "file": "targets.md",
    "volume": "evidence"
   },
   {
@@ -4152,49 +4152,49 @@
   },
   {
    "number": "Figure C.1",
-   "file": "gp-targets.md",
+   "file": "targets.md",
    "src": "figures/target-quality-progress-counts.png",
    "caption": "First-to-last carried-forward best scores at 1,000 evaluations; the arms share seeds. The 64 lower arm groups cover 23 distinct dataset/cuts. No arm group ended higher, so the \u201cLast higher\u201d legend entry has no bar."
   },
   {
    "number": "Figure C.2",
-   "file": "gp-targets.md",
+   "file": "targets.md",
    "src": "figures/target-quality-pine-example.png",
    "caption": "Post-hoc pine-chromium cut 1 history with shared teachers: generic/shuffled record the final program outside their seeds at generation 42; all arms inherit it at generation 43."
   },
   {
    "number": "Figure C.3",
-   "file": "gp-targets.md",
+   "file": "targets.md",
    "src": "figures/fig01-elo-benchmark-valid.png",
    "caption": "Historical benchmark-valid Elo ladder and complete rank distribution"
   },
   {
    "number": "Figure C.4",
-   "file": "gp-targets.md",
+   "file": "targets.md",
    "src": "figures/fig02-ladders-valid-vs-adaptive.png",
    "caption": "Historical published and benchmark-valid ladders with their distinct eligibility"
   },
   {
    "number": "Figure C.5",
-   "file": "gp-targets.md",
+   "file": "targets.md",
    "src": "figures/fig03-samecut-deep-elo.png",
    "caption": "Historical same-cut screen and deep Elo with coverage"
   },
   {
    "number": "Figure C.6",
-   "file": "gp-targets.md",
+   "file": "targets.md",
    "src": "figures/fig04-samecut-rmse-heatmap.png",
    "caption": "Historical same-cut relative RMSE heatmap"
   },
   {
    "number": "Figure C.7",
-   "file": "gp-targets.md",
+   "file": "targets.md",
    "src": "figures/fig05-samecut-rank-distribution.png",
    "caption": "Historical same-cut per-dataset rank distribution"
   },
   {
    "number": "Figure C.8",
-   "file": "gp-targets.md",
+   "file": "targets.md",
    "src": "figures/fig06-seconds-per-program.png",
    "caption": "Historical program-production times on the favorable same-cut v2 test-10 selection; the one-hour/ten-million-token reference line is not measured"
   }
@@ -4215,7 +4215,7 @@
   "c-plan--prioritized-implementation-plan-and-extension-interfaces": "c-plan",
   "c-datasets--all-thirty-datasets-and-all-522-feature-records": "c-datasets",
   "c-training-history--historical-training-checkpoint-lineage-and-original-loss-trajectories": "c-training-history",
-  "c-gp-targets--historical-gp-targets-rankings-elo-and-attribution-limits": "c-gp-targets",
+  "c-targets--historical-gp-targets-rankings-elo-and-attribution-limits": "c-targets",
   "c-data-estate--dated-data-estate-recovery-evidence-and-binary-formats": "c-data-estate",
   "c-catalogue--full-task-catalogue-sourceschema-index-receipts-and-glossary": "c-catalogue",
   "chapter-01": "c-status--reading-this-manual-audience-evidence-levels-and-figures",
@@ -4280,7 +4280,7 @@
   "chapter-06-2": "c-data--the-frozen-thirty-dataset-panel-identity-totals-groups-and-immutability",
   "chapter-06-3": "c-benchmark--metrics-and-class-order",
   "chapter-06-4": "c-benchmark--the-bradleyterry-model-tie-rule-and-defaults",
-  "chapter-06-5": "c-gp-targets--ranking-figures-interpretation-contract",
+  "chapter-06-5": "c-targets--ranking-figures-interpretation-contract",
   "chapter-06-6": "c-scheduling--twenty-bounded-workers-resource-limits-and-supervision",
   "chapter-06-7": "c-teachers--from-optimization-to-reusable-knowledge",
   "chapter-07": "c-data",
@@ -4293,18 +4293,18 @@
   "chapter-07-7": "c-data-estate--material-without-an-established-remote-copy",
   "chapter-07-8": "c-data--catalog-composition-by-task",
   "chapter-07-9": "c-scheduling--worked-example-cpu-wall-time-and-per-predictor-cost-of-the-one-dataset-proof",
-  "chapter-07-10": "c-gp-targets--retained-snapshots-and-plot-data",
+  "chapter-07-10": "c-targets--retained-snapshots-and-plot-data",
   "chapter-07-11": "c-benchmark--how-the-retained-elo-scale-is-constructed",
   "chapter-08": "c-datasets--frozen-dataset-coverage",
   "chapter-08-1": "c-datasets--frozen-dataset-coverage",
   "chapter-08-2": "c-datasets--frozen-dataset-coverage",
   "chapter-08-3": "c-data--licence-metadata-anomalies-and-the-corpus-figure",
-  "chapter-08-4": "c-gp-targets--ranking-figures-interpretation-contract",
-  "chapter-08-5": "c-gp-targets--historical-benchmark-valid-elo",
-  "chapter-08-6": "c-gp-targets--why-the-two-historical-ladders-differ",
-  "chapter-08-7": "c-gp-targets--same-cut-v1-and-v2-snapshots-with-screen-and-deep-elo",
-  "chapter-08-8": "c-gp-targets--historical-relative-loss-and-per-dataset-rank",
-  "chapter-08-9": "c-gp-targets--historical-production-time-and-the-supplied-reference-scenario",
+  "chapter-08-4": "c-targets--ranking-figures-interpretation-contract",
+  "chapter-08-5": "c-targets--historical-benchmark-valid-elo",
+  "chapter-08-6": "c-targets--why-the-two-historical-ladders-differ",
+  "chapter-08-7": "c-targets--same-cut-v1-and-v2-snapshots-with-screen-and-deep-elo",
+  "chapter-08-8": "c-targets--historical-relative-loss-and-per-dataset-rank",
+  "chapter-08-9": "c-targets--historical-production-time-and-the-supplied-reference-scenario",
   "chapter-09": "c-maintenance--repository-authority-and-coordination",
   "chapter-09-1": "c-maintenance--repository-authority-and-coordination",
   "chapter-09-2": "c-maintenance--worktrees-and-builds",
@@ -4450,8 +4450,8 @@
   "chapter-15-1": "c-teachers--accounting-units",
   "chapter-15-2": "c-data-estate--lineages-a-and-b-and-the-staging-store",
   "chapter-15-3": "c-data-estate--six-retained-corpora",
-  "chapter-15-4": "c-gp-targets--carried-forward-scores-and-the-admitted-receipt-inventory",
-  "chapter-15-5": "c-gp-targets--paired-final-search-outcomes-within-the-admitted-development-inventory",
+  "chapter-15-4": "c-targets--carried-forward-scores-and-the-admitted-receipt-inventory",
+  "chapter-15-5": "c-targets--paired-final-search-outcomes-within-the-admitted-development-inventory",
   "chapter-15-6": "c-data-estate--record-layout",
   "chapter-15-7": "c-data-estate--occupancy-padding-and-index-size",
   "chapter-15-8": "c-teachers--the-two-device-caches-in-the-native-trainer",
