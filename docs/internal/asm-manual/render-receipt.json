@@ -12,15 +12,15 @@
   "aliases": 284,
   "warnings": [],
   "pages": 146,
-  "pdf_sha256": "d6e414695dacfdaeba7f6173f62469a06efd1c465a493b20d8fdd165bb1b850b",
-  "pdf_bytes": 1238246,
+  "pdf_sha256": "4570e9e0ccdbda3e3b96feb823f6730f8bac8832b6d64a5b9f6340ce2bc720fa",
+  "pdf_bytes": 1239961,
   "volumes": [
     {
       "volume": "main",
       "pdf": "asm-maintainer-manual.pdf",
       "pages": 146,
-      "pdf_sha256": "d6e414695dacfdaeba7f6173f62469a06efd1c465a493b20d8fdd165bb1b850b",
-      "pdf_bytes": 1238246,
+      "pdf_sha256": "4570e9e0ccdbda3e3b96feb823f6730f8bac8832b6d64a5b9f6340ce2bc720fa",
+      "pdf_bytes": 1239961,
       "rewritten_links": {
         "cross_volume": 272,
         "local_relative": 0
@@ -30,8 +30,8 @@
       "volume": "evidence",
       "pdf": "asm-evidence-reference.pdf",
       "pages": 132,
-      "pdf_sha256": "bdeec804539cecbb3d0d663994eeaba547dbd6bc5690797d5ad0acd2a03ca8d5",
-      "pdf_bytes": 4593060,
+      "pdf_sha256": "2c3f755161f2381421e088f907272b8f7b1be18d67a50a023ceba0feaf0efe0b",
+      "pdf_bytes": 4593008,
       "rewritten_links": {
         "cross_volume": 91,
         "local_relative": 0
@@ -41,7 +41,7 @@
   "network_resources": false,
   "runtime": {
     "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
-    "source_date_epoch": "1790215755",
+    "source_date_epoch": "1790217548",
     "libraries": {
       "weasyprint": "68.1",
       "Markdown": "3.5.2",
@@ -343,7 +343,7 @@
     },
     {
       "path": "internal/asm-manual/data/roadmap.json",
-      "sha256": "c1c80a96bb84dcd9132e4885deb27980e2751e76a2ed03aa3c2562b11be3c060"
+      "sha256": "cf25d6caefdb413ffcd40b176f37d93d9833973a90ecc66b97f07823672d8192"
     },
     {
       "path": "internal/asm-manual/data/s3-estate.json",
@@ -639,7 +639,7 @@
     },
     {
       "path": "internal/asm-manual/publication.json",
-      "sha256": "2e8ee2108210c8853005e9fc0951e3fcb5c8960de56b760199307cb412d55e61"
+      "sha256": "bd30c96736ada4acf1c0d98c3b0b81147e9021183e24f99e83368045ffc95e3b"
     },
     {
       "path": "internal/asm-manual/sections/architecture.md",
@@ -651,7 +651,7 @@
     },
     {
       "path": "internal/asm-manual/sections/catalogue.md",
-      "sha256": "6b166ec2b5239a312921a3b4d92459c479040ad93d9e59efaf73276d895b0cb6"
+      "sha256": "967ecb85be35dbc1f9ba8fa0e52c9edd10c3bb8422eee3913b3553cb5f185217"
     },
     {
       "path": "internal/asm-manual/sections/data-estate.md",
@@ -683,11 +683,11 @@
     },
     {
       "path": "internal/asm-manual/sections/maintenance.md",
-      "sha256": "02595cd49528a14cfb337cea5bd0963a221c179667c7e575a9c13fda757ea197"
+      "sha256": "5f73d90242adb89f41cbfa1e7da811d22209a43f5b893b78b197f33389592023"
     },
     {
       "path": "internal/asm-manual/sections/plan.md",
-      "sha256": "4855cb8173a83cfd4a9dc1fd1cfb9ce4424a06be6715a3a466ade29a1ccf43b4"
+      "sha256": "86b27f3ace01442f2ddc9234143b5f93cfb9d9d32828ac05bc34667b73748f8b"
     },
     {
       "path": "internal/asm-manual/sections/scheduling.md",
@@ -715,7 +715,7 @@
     },
     {
       "path": "internal/asm-manual/tools/build_manual.py",
-      "sha256": "70b499fd4b7a71a2dd4fb10417c8bb86eb6f1a4f7df764ba3cf211cfca9a99a1"
+      "sha256": "dc976a44e401b403ec0072840daf967afdc19b65811f68d8f9659ac8a3ca771c"
     },
     {
       "path": "internal/asm-manual/tools/extract_per_step.py",
@@ -755,11 +755,15 @@
     },
     {
       "path": "internal/asm-manual/tools/verify_publication.py",
-      "sha256": "34096395a25d7e0de76c09450f52a7c719b6ecdb058a4d677ada1d52800f4a54"
+      "sha256": "edc5b893036896a34c50da6f05e0a3231344bcbd303267609903304c84e9f1e0"
     },
     {
       "path": "asm-maintainer-status.plist",
-      "sha256": "9b3bdc00349d67bcb532d94c8a8772e98db396209c14707bc1270a63e85a0d83"
+      "sha256": "cbbba6b224d7a8d08069f09abfe3a183b3655416a5549ada3460ff16a33bf78d"
+    },
+    {
+      "path": "asm-maintainer-manual.md",
+      "sha256": "91313a32aebb9129765809e2cf09e0152adc9ca99b1bd8b5c8e93c217eb6a4d5"
     }
   ]
 }

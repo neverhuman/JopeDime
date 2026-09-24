@@ -110,7 +110,7 @@
 			<key>severity</key>
 			<string>required acceptance before completed delivery</string>
 			<key>current_evidence_level</key>
-			<string>assembled seventeen chapters with source-audited training and target histories</string>
+			<string>assembled thirteen operating chapters and five evidence appendices with source-audited training and target histories</string>
 			<key>status</key>
 			<string>canonical private manual assembled</string>
 			<key>pending_action</key>
@@ -220,7 +220,7 @@
 			<key>current_evidence_level</key>
 			<string>twenty-one local figure artifacts; original metrics, complete recovered per-step series and generation points retained</string>
 			<key>status</key>
-			<string>figures rendered; final PDF inspection pending</string>
+			<string>figures rendered; local PDF inspection completed; publication pending</string>
 			<key>pending_action</key>
 			<string>Retain historical/current labels, complete source CSVs and final PDF visual checks.</string>
 			<key>dependencies</key>
@@ -276,7 +276,7 @@
 			<key>severity</key>
 			<string>required acceptance before completed delivery</string>
 			<key>current_evidence_level</key>
-			<string>first edition rendered; expanded seventeen-chapter final checks required</string>
+			<string>edition 2 rendered in two volumes; local content, navigation and visual checks completed</string>
 			<key>status</key>
 			<string>rendered; final publication gates pending</string>
 			<key>pending_action</key>

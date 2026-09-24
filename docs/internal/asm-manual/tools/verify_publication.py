@@ -18,11 +18,17 @@ def verify():
     receipt = json.loads((ROOT / "render-receipt.json").read_text())
     expected = {str(p.relative_to(DOCS)) for p in ROOT.rglob("*")
                 if p.is_file() and p.suffix in {".md", ".json", ".jsonl", ".csv", ".py", ".css", ".png", ".svg", ".plist", ".gz", ".txt"}
-                and p.name not in GENERATED} | {"asm-maintainer-status.plist"}
+                and p.name not in GENERATED} | {"asm-maintainer-status.plist", "asm-maintainer-manual.md"}
     assert {i["path"] for i in receipt["inputs"]} == expected, "Incomplete render input inventory"
     assert len(receipt["inputs"]) == len(expected), "Duplicate render input"
     for item in receipt["inputs"]:
         assert sha(DOCS / item["path"]) == item["sha256"], f"Stale input: {item['path']}"
+    landing = (DOCS / "asm-maintainer-manual.md").read_text()
+    for target in re.findall(r"\]\(([^)]+)\)", landing):
+        assert (DOCS / target.split("#")[0]).is_file(), f"Broken manual entrypoint link: {target}"
+    book = json.loads((ROOT / "book.json").read_text())
+    for chapter in book["chapters"] + book["appendices"]:
+        assert f"(internal/asm-manual/sections/{chapter['file']})" in landing, "Missing manual entrypoint chapter"
     assert set(pub["pdfs"]) == {str(p.relative_to(DOCS)) for p in DOCS.rglob("*.pdf")}, "Undeclared PDF"
     assert set(pub["pdfs"]) == {v["pdf"] for v in receipt["volumes"]}, "Missing volume receipt"
     for volume in receipt["volumes"]:
