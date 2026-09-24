@@ -25,10 +25,8 @@ this documentation correction; no new release build or fitted prediction is clai
 
 # Quickstart (laptop, CPU only)
 
-For what the head of `main` actually does — every `jope` subcommand (`jope --help` lists them;
-besides the fixture, encode, fit/emit, champion and router verbs there are `models`, `datasets`,
-`pipeline`, `benchmark` and `doctor`) and the install/check commands for them — read the
-[README](../README.md). This page keeps the feat-math quickstart from the WP9 docs pass; every
+For what the head of `main` actually does — every `jope` subcommand (`jope --help` lists them)
+and the install/check commands for them — read the [README](../README.md). This page keeps the feat-math quickstart from the WP9 docs pass; every
 timing below was measured at `4235db6`, not at the head of `main`.
 
 Requirements: Rust 1.97.1 via `rustup` (`rust-toolchain.toml` selects it; MSRV 1.96), `g++`
