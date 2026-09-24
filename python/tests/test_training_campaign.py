@@ -157,7 +157,7 @@ def test_cuda_requires_exact_experiment_uuid_unit_and_membership(state, monkeypa
         campaign.original_window(state, value, unit)
 
 
-def test_real_classification_refusal_is_labelled_synthetic_not_renamed_regression(
+def test_integrity_failure_is_not_a_classification_fallback(
     state,
 ):
     inputs = campaign.synthetic_inputs(state / "source", ["regression"])
@@ -177,14 +177,8 @@ def test_real_classification_refusal_is_labelled_synthetic_not_renamed_regressio
         },
         immutable=True,
     )
-    value = campaign.make_plan(state / "campaign", manifest=manifest, task="binary", source_sha="a" * 40)
-    assert value["device"] == "cuda:0" and value["qualification_only"] is False
-    assert value["fallbacks"]["binary"]
-    assert value["category_inputs"]["binary"]["data_kind"] == "synthetic_fixture"
-    rows = campaign.verify_plan(state / "campaign")[1]
-    assert {row["metadata"]["task_type"] for row in rows} == {"binary"}
-    assert {row["source"] for row in rows} == {"asm-synthetic-training-fixture"}
-    assert all("logit_ridge" in row["genome"] for row in rows)
+    with pytest.raises(ValueError, match="projected input closure"):
+        campaign.make_plan(state / "campaign", manifest=manifest, task="binary", source_sha="a" * 40)
 
 
 def test_unused_context_is_rejected_before_training(state):
@@ -326,7 +320,8 @@ def test_real_cpu_optimizer_reload_continuation_and_export(state, monkeypatch, t
         torch.set_num_threads(before_threads)
 
 
-def test_campaign_recovers_committed_update_in_original_window(state, monkeypatch):
+@pytest.mark.parametrize("missing_outcome", [False, True])
+def test_campaign_recovers_committed_update_in_original_window(state, monkeypatch, missing_outcome):
     import torch
 
     from jope.policy import train_v3
@@ -339,6 +334,19 @@ def test_campaign_recovers_committed_update_in_original_window(state, monkeypatc
         lambda *args, **kwargs: {"pairwise_win_accuracy": 0.5, "seq_nll": 1.0},
     )
     plan(state, task="regression")
+    native_request = state / "native-invocations/fixture/request.json"
+    if missing_outcome:
+        campaign.write(state / "native-plan.json", {"fixture": True})
+        campaign.write(
+            native_request,
+            {
+                "schema": "jope.training-child/v1",
+                "state": str(state),
+                "native_plan_sha256": campaign.sha(state / "native-plan.json"),
+                "nonce": "fixture",
+            },
+        )
+        monkeypatch.setenv("JOPE_NATIVE_INVOCATION", str(native_request))
     original_save = train_v3._atomic_torch_save
     interrupted = False
 
@@ -356,6 +364,18 @@ def test_campaign_recovers_committed_update_in_original_window(state, monkeypatc
             campaign.worker(state, "regression", attempt)
         except InterruptedError:
             status = "cancelled"
+        if missing_outcome and status == "cancelled":
+            campaign.write(
+                native_request.parent / "drained.json",
+                {
+                    "schema": "jope.training-drained/v1",
+                    "request_sha256": campaign.sha(native_request),
+                    "populated": False,
+                    "ended_unix_ms": int(campaign.time.time() * 1000),
+                    "fixture": "controller died before outcome",
+                },
+            )
+            return status
         campaign.write(
             attempt / "outcome.json",
             {
@@ -599,3 +619,57 @@ def test_real_f32_context_identity_refuses_lossy_numbers_and_changed_bytes(state
     changed["embedding"][0] = 0.5
     with pytest.raises(ValueError, match="f32 bytes changed"):
         campaign.validate_context(changed, record, "e" * 64, "admitted")
+
+
+def test_missing_category_fallback_does_not_claim_requested_real_coverage(state, monkeypatch):
+    original = campaign.admitted_rows
+
+    def unavailable(inputs, kind, task=None):
+        if kind == "admitted":
+            raise campaign.CategoryUnavailable("fixture: intact input has no classification rows")
+        return original(inputs, kind, task)
+
+    monkeypatch.setattr(campaign, "admitted_rows", unavailable)
+    manifest = state / "inputs.json"
+    campaign.write(manifest, {"schema": "jope.experimental-training-inputs/v1"})
+    value = campaign.make_plan(state / "campaign", manifest=manifest, task="binary", source_sha="a" * 40)
+    coverage = campaign.requested_coverage(value, [])
+    assert coverage["execution_success"] and not coverage["requested_coverage_complete"]
+    assert value["category_inputs"]["binary"]["data_kind"] == "synthetic_fixture"
+
+
+def test_stopped_recovery_refuses_unproven_and_rejected_attempts(state):
+    native = state / "native-invocations/fixture/request.json"
+    campaign.write(state / "native-plan.json", {"fixture": True})
+    campaign.write(
+        native,
+        {
+            "schema": "jope.training-child/v1",
+            "state": str(state),
+            "nonce": "fixture",
+            "native_plan_sha256": campaign.sha(state / "native-plan.json"),
+        },
+    )
+    attempt = state / "regression/attempt-000001"
+    attempt.mkdir(parents=True)
+    started = {"started_unix_ms": 1000, "native_invocation": campaign.artifact(native)}
+    with pytest.raises(FileNotFoundError):
+        campaign.stopped_attempt(state, attempt, started)
+    observed = {
+        "schema": "jope.training-drained/v1",
+        "populated": False,
+        "request_sha256": campaign.sha(native),
+        "ended_unix_ms": 1100,
+    }
+    for change in ({"populated": True}, {"request_sha256": "b" * 64}, {"ended_unix_ms": 999}):
+        campaign.write(native.parent / "drained.json", {**observed, **change})
+        with pytest.raises(ValueError, match="native stopped proof differs"):
+            campaign.stopped_attempt(state, attempt, started)
+    campaign.write(native.parent / "drained.json", observed)
+    stop = campaign.read(campaign.checked(campaign.stopped_attempt(state, attempt, started)))
+    assert stop["wall_seconds"] is None and stop["gpu_seconds"] is None
+    campaign.write(attempt / "outcome.json", {"status": "proof_rejected"})
+    with pytest.raises(ValueError, match="recoverable stopped outcome"):
+        campaign.stopped_attempt(state, attempt, started)
+    campaign.write(attempt / "rejection.json", {"status": "proof_rejected"})
+    assert campaign.stopped_attempt(state, attempt, started) is None

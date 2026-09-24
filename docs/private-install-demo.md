@@ -187,14 +187,14 @@ preparation and remain separately measured. The supervisor retains its original 
 window; report/reload work gets no extra fit or reporting allowance.
 
 Success requires two full equal preregistered arm allowances, authenticated genuine
-neural-origin fits and evolution, both exact selected outer refits, saved complete private fitted artifacts, unchanged reload predictions and finite
+neural-origin fits and bounded refinement, both exact selected outer refits, saved complete private fitted artifacts, unchanged reload predictions and finite
 controller comparisons. The result retains `asm-fitted.json`, `generic-fitted.json`, their
 predictions, `baseline.json`, the complete original `origin-proof.json`, `asm-demo-result.json`
 and `invocation-receipt.json`. Selection uses only train-side OOF; the controller reports ASM
 versus generic and train-mean development losses without replacing a winner. Optional exports
 remain emitted-unqualified or explicitly unsupported; fitted state is preserved either way.
 
-A timed-out policy, missing qualification, absent refit or incomplete evolved fit produces no
+A timed-out policy, missing qualification, absent refit or incomplete refinement fit produces no
 successful neural demonstration. Partial actual consumption stays visible in the original
 journal. `under_60_seconds` is true only after a successful full invocation measures below 60
 seconds; the source implementation alone establishes no speed claim. A fresh demonstration

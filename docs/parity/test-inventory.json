@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 4",
-  "count": 2838,
+  "count": 2839,
   "ignored": 38,
   "packages": {
    "battle-gpu": {
@@ -1332,7 +1332,7 @@
     }
    },
    "jope-cli": {
-    "count": 41,
+    "count": 42,
     "ignored": 0,
     "binaries": {
      "jope-cli": {
@@ -1358,7 +1358,7 @@
      },
      "jope-cli::bin/jope": {
       "kind": "bin",
-      "count": 14,
+      "count": 15,
       "ignored": 0,
       "tests": [
        "tests::umbrella_keeps_every_verb_and_lists_models_and_datasets",
@@ -1373,6 +1373,7 @@
        "train::tests::experiment_identity_matches_python_fixture",
        "train::tests::explicit_environment_omits_credentials_and_caps_threads",
        "train::tests::immutable_receipts_reject_changed_bytes",
+       "train::tests::recovery_requires_inactive_unit_and_absent_owned_subgroup",
        "train::tests::supervisor_uuid_and_subgroup_are_exact",
        "train::tests::virtualenv_invocation_retains_link_but_pins_physical_binary"
       ]
@@ -4349,10 +4350,10 @@
  "python": {
   "mode": "static-scan",
   "command": "explicit --static-python: stdlib AST scan of python/tests/**/test_*.py; not collection or execution",
-  "count": 272,
+  "count": 276,
   "packages": {
    "jope": {
-    "count": 272,
+    "count": 276,
     "files": {
      "tests/engine/test_experiment_scheduler.py": {
       "count": 3,
@@ -4797,7 +4798,7 @@
       ]
      },
      "tests/test_training_campaign.py": {
-      "count": 22,
+      "count": 24,
       "tests": [
        "tests/test_training_campaign.py::test_campaign_recovers_committed_update_in_original_window",
        "tests/test_training_campaign.py::test_checkpoint_hashing_cannot_extend_category_deadline",
@@ -4807,16 +4808,18 @@
        "tests/test_training_campaign.py::test_cuda_unavailable_never_falls_back_to_cpu",
        "tests/test_training_campaign.py::test_execution_timing_rejects_late_exit_unknown_wall_and_late_validation",
        "tests/test_training_campaign.py::test_global_reserve_caps_last_category",
+       "tests/test_training_campaign.py::test_integrity_failure_is_not_a_classification_fallback",
+       "tests/test_training_campaign.py::test_missing_category_fallback_does_not_claim_requested_real_coverage",
        "tests/test_training_campaign.py::test_original_windows_never_reset_on_resume_or_verification",
        "tests/test_training_campaign.py::test_parent_observed_late_zero_exit_is_budget_exhausted",
        "tests/test_training_campaign.py::test_plan_has_no_clock_and_pins_each_category",
-       "tests/test_training_campaign.py::test_real_classification_refusal_is_labelled_synthetic_not_renamed_regression",
        "tests/test_training_campaign.py::test_real_cpu_optimizer_reload_continuation_and_export",
        "tests/test_training_campaign.py::test_real_f32_context_identity_refuses_lossy_numbers_and_changed_bytes",
        "tests/test_training_campaign.py::test_requested_coverage_exposes_missing_regression_and_classifier_fallbacks",
        "tests/test_training_campaign.py::test_runtime_and_corpus_drift_refuse_resume",
        "tests/test_training_campaign.py::test_runtime_pins_cuda_bindings_and_preprocessing_dependencies",
        "tests/test_training_campaign.py::test_runtime_pins_installed_bytes_not_only_version",
+       "tests/test_training_campaign.py::test_stopped_recovery_refuses_unproven_and_rejected_attempts",
        "tests/test_training_campaign.py::test_synthetic_classifier_target_width_is512_without_changing_regression",
        "tests/test_training_campaign.py::test_unselected_task_cannot_hide_forbidden_authority",
        "tests/test_training_campaign.py::test_unused_context_is_rejected_before_training",
@@ -4842,17 +4845,19 @@
       ]
      },
      "tests/test_training_input_closure.py": {
-      "count": 3,
+      "count": 4,
       "tests": [
        "tests/test_training_input_closure.py::test_projected_closure_is_invariant_to_excluded_artifact_mutation",
        "tests/test_training_input_closure.py::test_projection_rejects_forbidden_or_changed_closure",
-       "tests/test_training_input_closure.py::test_unlisted_reachable_artifact_is_refused_before_open"
+       "tests/test_training_input_closure.py::test_unlisted_reachable_artifact_is_refused_before_open",
+       "tests/test_training_input_closure.py::test_unused_declared_artifact_is_refused_without_opening"
       ]
      },
      "tests/test_training_transition.py": {
-      "count": 1,
+      "count": 2,
       "tests": [
-       "tests/test_training_transition.py::test_explicit_transition_preserves_moments_and_rejects_invariant_drift"
+       "tests/test_training_transition.py::test_explicit_transition_preserves_moments_and_rejects_invariant_drift",
+       "tests/test_training_transition.py::test_fresh_teacher_does_not_relabel_replay_or_routing"
       ]
      },
      "tests/test_verify_old_hyperion_vs_replays.py": {
@@ -4866,7 +4871,7 @@
   }
  },
  "totals": {
-  "rust": 2838,
-  "python": 272
+  "rust": 2839,
+  "python": 276
  }
 }

@@ -28,7 +28,22 @@ def test_actual_siblings_share_parent_and_cutoff(state, small_trainer, monkeypat
     def launch(arguments, env, attempt, deadline):
         started = int(c.time.time() * 1000)
         if "jope.policy.training_comparison" in arguments:
-            comparison.worker(state, arguments[arguments.index("--branch") + 1], attempt)
+            name = arguments[arguments.index("--branch") + 1]
+            checked = c.checked
+
+            def guarded(ref, *args, **kwargs):
+                path = Path(ref["path"])
+                assert (
+                    path != state / "fresh.json"
+                    and not path.is_relative_to(state / "fresh")
+                    and not path.is_relative_to(state / "comparison/fresh_replay")
+                ), "replay worker opened fresh data"
+                return checked(ref, *args, **kwargs)
+
+            with monkeypatch.context() as guard:
+                if name == "replay_only":
+                    guard.setattr(c, "checked", guarded)
+                comparison.worker(state, name, attempt)
         else:
             c.worker(state, "regression", attempt)
         c.write(
@@ -76,6 +91,17 @@ def test_actual_siblings_share_parent_and_cutoff(state, small_trainer, monkeypat
         assert branch["parent_optimizer_sha256"] == frozen["parent_optimizer_sha256"]
         assert branch["fresh_examples"] == (2 if name == "fresh_replay" else 0)
         assert len(branch["examples"]) == 8 and branch["nonpadding_tokens"] > 0
+    import torch
+
+    snapshots = {
+        name: torch.load(c.checked(branch["resume"]), weights_only=False)["derived_supervision"]
+        for name, branch in result["branches"].items()
+    }
+    assert snapshots["fresh_replay"][: len(snapshots["replay_only"])] == snapshots["replay_only"]
+    corrupted = dict(result["branches"]["fresh_replay"])
+    corrupted["fresh_examples"] += 1
+    with pytest.raises(ValueError, match="consumption receipt differs"):
+        comparison.verify_sibling(frozen, "fresh_replay", corrupted, c.sha(state / "comparison.json"))
     assert (state / "regression/head.json").read_bytes() == head
     assert comparison.run(state)["branches"] == result["branches"]
     # Completed work remains verifiable after expiry; no second allocation opens.

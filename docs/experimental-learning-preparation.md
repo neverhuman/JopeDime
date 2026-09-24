@@ -42,7 +42,7 @@ controller preparation receipt. Pass both to `jope train plan` using `--inputs` 
 `--preparation-receipt`, alongside the existing state, Python, source and learning-store
 arguments. Controller proof bundles never enter the projected worker directory. The worker
 allowlist binds every corpus, context, recipe, fitting-input, encoder, vocabulary and optional
-checkpoint file. It rejects unused contexts, undeclared transitive references, cross-split
+checkpoint file. It rejects unused contexts and declared-but-unreachable artifacts, undeclared transitive references, cross-split
 families, forbidden authority and extra files before model loading. Outer test, sealed
 meta-test and outside-selection evaluation are excluded domains. The historical engine
 training route is not admitted by this experimental interface.
@@ -52,7 +52,11 @@ training route is not admitted by this experimental interface.
 Campaign workers use strict resume: compatible nonempty optimizer state is required before
 updates. Each successful update atomically commits model, moments, scheduler, scaler, RNG,
 sampler cursor, counters and loss accumulators. Recovery uses a stopped attempt with the same
-plan, parent and original global/category windows. A retained last-update checkpoint also
+plan, parent and original global/category windows. If the controller died before recording
+its outcome, recovery requires the native invocation’s authenticated drained-subgroup
+observation. A later native invocation can record that observation only after the old unit
+is inactive and its owned subgroup is absent. Unmeasured elapsed usage stays unknown;
+rejected attempts cannot seed recovery. A retained last-update checkpoint also
 covers interruption after the final batch but before epoch/controller completion. Warm start
 remains the separate `init_from` operation; it is not optimizer continuation.
 
@@ -74,13 +78,19 @@ Both siblings start from one immutable parent model **and optimizer**. The expli
 transition permits changed input provenance and sampler only; architecture, objective,
 vocabulary and numerical execution settings must agree. Both commit the declared update
 count. The mixed branch samples exactly 25% fresh and 75% replay examples with replacement;
-the control reads replay examples only. The count times parent batch size must be divisible
+the control reads replay examples only, including during worker metadata validation. The count times parent batch size must be divisible
 by four. Family roles must remain disjoint. Both retain the parent's development rows;
-fresh development rows are not used to train or choose a sibling.
+fresh development rows are not used to train or choose a sibling. A common replay reference
+freezes replay reward targets, ranks and routing winners before either branch trains. Its
+derived train/development hashes must match the parent’s provenance. Fresh scores on the
+same comparison are measured against that frozen incumbent; replay targets do not change.
+Independent verification rederives exposure and supervision from retained corpora and
+update checkpoints.
 
 Receipts record consumed example identities, unique/duplicate examples and families,
 nonpadding token counts, optimizer updates, parent identities and subprocess wall cost.
-CPU/GPU active seconds remain explicitly unknown when unmeasured. Skipped updates, exhausted
+CPU/GPU active seconds remain explicitly unknown when unmeasured. Per-update checkpoint
+I/O is charged to the same category window; its real-model cost is not yet measured. Skipped updates, exhausted
 time, missing branches and failed workers produce an inconclusive comparison. Partial work
 resumes its branch checkpoint under the same cutoff; neither branch advances the campaign's
 parent head. Consumption equality is not evidence of quality improvement. The result makes
@@ -101,3 +111,7 @@ qualification and bounded trained-proposal-to-fit consumption evidence. Historic
 failures remain diagnostics, separately from exact-head CI. Insufficient eligible data or an
 exhausted original allocation is **inconclusive**; this continuation does not authorize a new
 GPU allowance, a replacement dataset chosen after results, a new deadline or promotion.
+
+An integrity failure is always a refusal. Only an intact input manifest with an unavailable
+classification category can use the explicit labelled synthetic fallback, and that fallback
+does not count as complete requested real-data coverage.

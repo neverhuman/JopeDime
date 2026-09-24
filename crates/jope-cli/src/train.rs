@@ -808,6 +808,62 @@ fn drain(path: &Path, receipt: &Path) -> Result<()> {
     }
 }
 
+fn stopped_observation(success: bool, active: &str, subgroup_exists: bool) -> Result<()> {
+    ensure!(
+        success && ["inactive", "failed"].contains(&active.trim()) && !subgroup_exists,
+        "prior invocation has no stopped proof; live/unknown state retained"
+    );
+    Ok(())
+}
+
+/// Recover an absent controller outcome only after its original unit is inactive
+/// and its owned subgroup is absent. Never drain or borrow a live invocation.
+fn reconcile_stopped(
+    state: &Path,
+    native_sha: &str,
+    experiment: &Experiment,
+    supervisor: &Supervisor,
+) -> Result<()> {
+    let directory = state.join("native-invocations");
+    if !directory.exists() {
+        return Ok(());
+    }
+    for entry in fs::read_dir(directory)? {
+        let root = entry?.path();
+        if !root.join("request.json").is_file() || root.join("drained.json").exists() {
+            continue;
+        }
+        let pin = artifact(&root.join("request.json"))?;
+        let request: LaunchRequest = read(&pin.path)?;
+        ensure!(
+            request.state == state
+                && request.native_plan_sha256 == native_sha
+                && root.file_name().and_then(|n| n.to_str()) == Some(request.nonce.as_str()),
+            "orphan invocation identity differs"
+        );
+        valid_unit(&request.unit, experiment)?;
+        ensure!(uuid(&request.nonce), "orphan invocation nonce differs");
+        let group = supervisor
+            .cgroup_root
+            .parent()
+            .context("system slice absent")?
+            .join(&request.unit)
+            .join(format!("training-{}", request.nonce));
+        let output = Command::new("systemctl")
+            .args(["show", "--property=ActiveState", "--value", &request.unit])
+            .output()?;
+        let active = String::from_utf8(output.stdout)?;
+        stopped_observation(output.status.success(), &active, group.exists())?;
+        immutable(
+            &root.join("drained.json"),
+            &json!({"schema":"jope.training-drained/v1", "subgroup":group,
+            "request_sha256":pin.sha256, "ended_unix_ms":now_ms()?, "populated":false,
+            "observation":"prior unit inactive and owned subgroup absent; usage unknown"}),
+        )?;
+    }
+    Ok(())
+}
+
 fn supervised(args: RunArgs, operation: &str, verifier: &dyn ContextVerifier) -> Result<Value> {
     let state = directory(&args.state, false)?;
     let (native, plan, experiment) =
@@ -845,6 +901,7 @@ fn supervised(args: RunArgs, operation: &str, verifier: &dyn ContextVerifier) ->
     let mut pool = ExecutionPool::open(&experiment, &state, supervisor.clone())?;
     pool.reserve()?;
     let window = pool.admit()?.clone();
+    reconcile_stopped(&state, &native_sha, &experiment, &supervisor)?;
     let root = state.join("native-invocations").join(nonce()?);
     fs::create_dir_all(&root)?;
     let started = now_ms()?;
@@ -910,12 +967,12 @@ fn launch_python(
     root: &Path,
     supervisor: &Supervisor,
 ) -> Result<Value> {
+    immutable(&root.join("request.json"), request)?;
+    let pin = artifact(&root.join("request.json"))?;
     let group = subgroup(supervisor, &request.nonce)?;
     fs::create_dir(&group)?;
     let mut child = None;
     let operation = (|| -> Result<Value> {
-        immutable(&root.join("request.json"), request)?;
-        let pin = artifact(&root.join("request.json"))?;
         let stdout = OpenOptions::new()
             .write(true)
             .create_new(true)
@@ -999,7 +1056,7 @@ fn launch_python(
     immutable(
         &root.join("drained.json"),
         &json!({"schema":"jope.training-drained/v1","subgroup":group,
-        "ended_unix_ms":now_ms()?,"populated":false}),
+        "ended_unix_ms":now_ms()?,"populated":false,"request_sha256":pin.sha256}),
     )?;
     let mut outcome = operation?;
     outcome["subgroup_drained"] = json!(true);
@@ -1127,6 +1184,7 @@ fn python_worker(path: &Path, expected: &str) -> Result<Value> {
     }
     let error = python_command(&native, &state, &request.operation)
         .args(["--supervisor-unit", &request.unit])
+        .env("JOPE_NATIVE_INVOCATION", &pin.path)
         .exec();
     Err(error).context("exec pinned Python training controller")
 }
@@ -1809,6 +1867,18 @@ mod tests {
         immutable(&path, &json!({"value":1})).unwrap();
         immutable(&path, &json!({"value":1})).unwrap();
         assert!(immutable(&path, &json!({"value":2})).is_err());
+    }
+
+    #[test]
+    fn recovery_requires_inactive_unit_and_absent_owned_subgroup() {
+        for state in ["inactive", "failed"] {
+            assert!(stopped_observation(true, state, false).is_ok());
+            assert!(stopped_observation(true, state, true).is_err());
+        }
+        for state in ["active", "activating", "deactivating", "", "unknown"] {
+            assert!(stopped_observation(true, state, false).is_err());
+        }
+        assert!(stopped_observation(false, "inactive", false).is_err());
     }
 
     #[test]

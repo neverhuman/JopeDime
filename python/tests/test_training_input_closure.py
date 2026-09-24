@@ -90,3 +90,20 @@ def test_projection_rejects_forbidden_or_changed_closure(projected, corruption):
     rebind(inputs, manifest)
     with pytest.raises(ValueError):
         closure.admit(inputs)
+
+
+def test_unused_declared_artifact_is_refused_without_opening(projected, monkeypatch):
+    inputs, manifest = projected
+    path = Path(manifest["root"]) / "unused.json"
+    path.write_text('{"fixture_label":99}')
+    manifest["artifacts"].append({"artifact": campaign.artifact(path), "role": "family-partition"})
+    rebind(inputs, manifest)
+    original = Path.open
+
+    def guarded(candidate, *args, **kwargs):
+        assert candidate != path, "opened unused declared input"
+        return original(candidate, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "open", guarded)
+    with pytest.raises(ValueError, match="unused declared artifact"):
+        closure.admit(inputs)

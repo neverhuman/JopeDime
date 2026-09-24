@@ -35,7 +35,7 @@ class TrainingProofTests(unittest.TestCase):
         self.collection.write_text(json.dumps(collection))
 
     def test_all_three_tasks_and_native_features_are_required(self):
-        for mode, count in (("python", 32), ("rust", 28), ("policy", 10)):
+        for mode, count in (("python", 38), ("rust", 29), ("policy", 10)):
             with self.subTest(mode=mode):
                 self.save(*self.fixture(mode))
                 result = proof.verify(mode, self.junit, self.collection)
@@ -120,7 +120,7 @@ class TrainingProofTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "actual nextest collection"):
             proof.verify("rust", self.junit)
         self.save(*self.fixture("python"))
-        self.assertEqual(proof.verify("python", self.junit)["required_executed"], 32)
+        self.assertEqual(proof.verify("python", self.junit)["required_executed"], 38)
 
 
 if __name__ == "__main__":

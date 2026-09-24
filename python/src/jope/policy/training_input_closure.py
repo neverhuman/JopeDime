@@ -94,12 +94,16 @@ def admit(inputs):
     expected = set(inventory) | {str(manifest_path), str(root / "inputs.json")}
     require({str(p) for p in root.iterdir()} <= expected, "undeclared file in worker input root")
 
+    pending = [ref["path"] for name, ref in inputs.items() if name != "input_closure"]
+    visited = set()
+
     def scan(value):
         if isinstance(value, dict):
             if "path" in value:
                 require(set(value) == {"path", "sha256"}, "unlisted path-bearing metadata")
                 item = inventory.get(value["path"])
                 require(item is not None and item["artifact"] == value, "unlisted transitive artifact")
+                pending.append(value["path"])
             else:
                 for child in value.values():
                     scan(child)
@@ -109,7 +113,12 @@ def admit(inputs):
 
     # Establish the entire allowlist before opening its data, and never follow a
     # metadata reference merely because it supplies a matching checksum.
-    for item in inventory.values():
+    while pending:
+        name = pending.pop()
+        if name in visited:
+            continue
+        visited.add(name)
+        item = inventory[name]
         path = reference(item["artifact"])
         if item["role"] == "checkpoint":
             continue
@@ -120,4 +129,5 @@ def admit(inputs):
                         scan(json.loads(line))
         else:
             scan(json.loads(path.read_bytes()))
+    require(visited == set(inventory), "unused declared artifact in worker closure")
     return manifest

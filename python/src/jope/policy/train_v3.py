@@ -462,6 +462,31 @@ def _score_label(row: TrainingRow) -> float | None:
     return None
 
 
+def _head_of(r):
+    a = (r.metadata or {}).get("actions") or {}
+    h = a.get("head", {}).get("op") if isinstance(a.get("head"), dict) else None
+    if h:
+        return str(h)
+    # rows from self-play/miner/GP lack `actions`: parse the head op from the
+    # canonical genome (last parenthesized group) so routing labels track the
+    # CURRENT champions, not just the original corpus winners.
+    g = r.canonical_genome or r.genome or ""
+    m = re.findall(r"\(([a-z0-9_]+)", g)
+    return m[-1] if len(m) > 1 else None
+
+
+def _routing_winners(rows):
+    winner = {}
+    for r in rows:
+        md = r.metadata or {}
+        score, head = _score_label(r), _head_of(r)
+        did = md.get("dataset_hash") or r.dataset_id
+        if score is not None and head is not None and did is not None:
+            if did not in winner or score > winner[did][0]:
+                winner[did] = (float(score), str(head))
+    return winner
+
+
 def _recompute_reward_targets(rows: list[TrainingRow]) -> None:
     """Stamp ranking targets only among rows sharing one evidence authority."""
 
@@ -1493,6 +1518,7 @@ def train_policy_v3_from_jsonl(
     checkpoint_metadata: dict[str, Any] | None = None,
     corpus_transition: dict[str, Any] | None = None,
     batch_schedule: list[list[int]] | None = None,
+    supervision_reference: str | Path | None = None,
 ) -> dict[str, Any]:
     """Train policy v3 from JSONL, or directly from already-built ``TrainingRow`` objects.
 
@@ -1706,8 +1732,17 @@ def train_policy_v3_from_jsonl(
     # metadata.oof_delta_to_incumbent, which self-play/miner/GP rows never set —
     # so every fresh evaluated row trained imitation but NEVER the selector.
     # Recompute canonical within-dataset labels for ALL provenances here.
-    _recompute_reward_targets(train_rows)
-    _recompute_reward_targets(val_rows)
+    reference_partition = None
+    if supervision_reference is not None:
+        if not strict_resume or resume_payload is None or batch_schedule is None:
+            raise ValueError("frozen supervision requires a strict fixed-batch continuation")
+        from .training_transition import freeze_supervision
+
+        reference_rows = [TrainingRow.from_json(r) for r in read_jsonl(Path(supervision_reference))]
+        reference_partition = freeze_supervision(rows, reference_rows, resume_payload)
+    else:
+        _recompute_reward_targets(train_rows)
+        _recompute_reward_targets(val_rows)
     finite_by_source: dict[str, list[int]] = {}
     for r in rows:
         md = r.metadata if r.metadata is not None else {}
@@ -1740,28 +1775,7 @@ def train_policy_v3_from_jsonl(
 
     # v3.2 routing supervision: stamp each row with its dataset's winner-head-family
     # class so the encoder is FORCED to preserve routing signal (see routing_ce).
-    def _head_of(r):
-        a = (r.metadata or {}).get("actions") or {}
-        h = a.get("head", {}).get("op") if isinstance(a.get("head"), dict) else None
-        if h:
-            return str(h)
-        # rows from self-play/miner/GP lack `actions`: parse the head op from the
-        # canonical genome (last parenthesized group) so routing labels track the
-        # CURRENT champions, not just the original corpus winners.
-        g = r.canonical_genome or r.genome or ""
-        m = re.findall(r"\(([a-z0-9_]+)", g)
-        return m[-1] if len(m) > 1 else None
-
-    winner: dict[str, tuple[float, str]] = {}
-    for r in train_rows:
-        md = r.metadata or {}
-        s = _score_label(r)
-        head = _head_of(r)
-        did = md.get("dataset_hash") or r.dataset_id
-        if s is None or head is None or did is None:
-            continue
-        if did not in winner or s > winner[did][0]:
-            winner[did] = (float(s), str(head))
+    winner = _routing_winners(reference_partition["train"] if reference_partition else train_rows)
     from collections import Counter
 
     fam_counts = Counter(h for _, h in winner.values())
@@ -1878,6 +1892,20 @@ def train_policy_v3_from_jsonl(
         "training_scope": training_scope,
         "trainer_extra": dict(resume_extra or {}),
     }
+    derived_supervision = None
+    if reference_partition is not None:
+        from .training_transition import supervision_snapshot
+
+        original = resume_payload["training_contract"]["input_provenance"]
+        for split, key in (("train", "train_rows_sha256"), ("development", "development_rows_sha256")):
+            expected = original.get("supervision_reference_" + key, original[key])
+            if rows_digest(reference_partition[split]) != expected:
+                raise ValueError("supervision reference differs from frozen parent replay targets")
+            training_contract["input_provenance"]["supervision_reference_" + key] = expected
+        training_contract["input_provenance"]["supervision_reference_sha256"] = hashlib.sha256(
+            Path(supervision_reference).read_bytes()
+        ).hexdigest()
+        derived_supervision = supervision_snapshot(train_rows)
     training_contract["execution"] = {
         "seed": seed,
         "lr": lr,
@@ -2510,6 +2538,7 @@ def train_policy_v3_from_jsonl(
                     "trainer_extra": dict(resume_extra or {}),
                     "run_binding": dict(checkpoint_metadata or {}),
                     "consumed_batches": consumed_batches,
+                    "derived_supervision": derived_supervision,
                     "macro_validation_best": macro_validation_best,
                     "macro_validation_bad_passes": macro_validation_bad_passes,
                     "sampler": sampler,
@@ -2517,6 +2546,7 @@ def train_policy_v3_from_jsonl(
                         "schema": "jope.strict-training-progress/v1",
                         "sampler": sampler,
                         "consumed_batches": consumed_batches,
+                        "derived_supervision": derived_supervision,
                         "target_epoch": target_epoch,
                         "initial_parameter_sha256": initial_parameter_sha256,
                         "optimizer_updates_this_run": updates,
@@ -2971,6 +3001,7 @@ def train_policy_v3_from_jsonl(
                 "trainer_extra": dict(resume_extra or {}),
                 "run_binding": dict(checkpoint_metadata or {}),
                 "consumed_batches": consumed_batches,
+                "derived_supervision": derived_supervision,
                 "macro_validation_best": macro_validation_best,
                 "macro_validation_bad_passes": macro_validation_bad_passes,
                 **({"sampler": sampler, "strict_progress": None} if strict_resume else {}),

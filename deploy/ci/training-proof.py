@@ -40,13 +40,18 @@ PYTHON += [("tests.test_policy_training_contract", "test_interrupted_update_resu
 PYTHON += [("tests.test_policy_training_contract", f"test_strict_resume_refuses_optimizer_fallback_before_updates[{case}]")
            for case in ("incompatible", "missing_optimizer", "empty_optimizer")]
 PYTHON += [("tests.test_training_campaign", name) for name in (
-    "test_campaign_recovers_committed_update_in_original_window",
+    "test_campaign_recovers_committed_update_in_original_window[False]",
+    "test_campaign_recovers_committed_update_in_original_window[True]",
+    "test_integrity_failure_is_not_a_classification_fallback",
+    "test_missing_category_fallback_does_not_claim_requested_real_coverage",
+    "test_stopped_recovery_refuses_unproven_and_rejected_attempts",
     "test_unused_context_is_rejected_before_training",
     "test_unselected_task_cannot_hide_forbidden_authority",
 )]
 PYTHON += [("tests.test_training_input_closure", name) for name in (
     "test_projected_closure_is_invariant_to_excluded_artifact_mutation",
     "test_unlisted_reachable_artifact_is_refused_before_open",
+    "test_unused_declared_artifact_is_refused_without_opening",
 )]
 PYTHON += [("tests.test_training_transition", "test_explicit_transition_preserves_moments_and_rejects_invariant_drift")]
 PYTHON += [("tests.test_training_comparison", name) for name in (
@@ -54,6 +59,7 @@ PYTHON += [("tests.test_training_comparison", name) for name in (
     "test_actual_siblings_share_parent_and_cutoff",
     "test_comparison_cannot_open_a_window",
 )]
+PYTHON += [("tests.test_training_transition", "test_fresh_teacher_does_not_relabel_replay_or_routing")]
 NATIVE = [
     ("jope-cli::bin/jope", "train::tests::" + name)
     for name in (
@@ -64,6 +70,7 @@ NATIVE = [
         "immutable_receipts_reject_changed_bytes",
         "context_booleans_cannot_replace_native_admission",
         "controller_preparation_binds_projected_inputs_and_request_bytes",
+        "recovery_requires_inactive_unit_and_absent_owned_subgroup",
     )
 ]
 NATIVE += [("jope-cli::bin/jope", "train::qualified_cpu::selection_tests::inner_comparison_and_original_split_are_distinct_and_both_bound")]

@@ -295,6 +295,10 @@ def validate_context(row, record, encoder_sha, data_kind):
     )
 
 
+class CategoryUnavailable(ValueError):
+    """An intact admitted manifest has no usable rows for this category."""
+
+
 def admitted_rows(inputs, data_kind, selected_task=None):
     projected = None
     if data_kind == "admitted":
@@ -426,7 +430,8 @@ def admitted_rows(inputs, data_kind, selected_task=None):
         require(used_eligibility == set(eligibility), "unused teaching entries in projected admission")
     if selected_task is not None:
         rows = [row for row in rows if row["metadata"]["task_type"] == selected_task]
-    require(rows, "no admitted training rows")
+    if not rows:
+        raise CategoryUnavailable("no admitted training rows")
     for task in {row["metadata"]["task_type"] for row in rows}:
         require(
             len({len(row["embedding"]) for row in rows if row["metadata"]["task_type"] == task}) == 1,
@@ -568,11 +573,9 @@ def make_plan(
                 split: sum(row["metadata"]["split"] == split for row in rows)
                 for split in ("train", "development")
             }
-            require(
-                all(count.values()),
-                "category lacks disjoint train and development rows",
-            )
-        except (ValueError, KeyError) as error:
+            if not all(count.values()):
+                raise CategoryUnavailable("category lacks disjoint train and development rows")
+        except CategoryUnavailable as error:
             if not synthetic and category == "regression" and task == "all-admitted":
                 unavailable[category] = str(error)
                 continue
@@ -795,12 +798,70 @@ def verify_checkpoint(ref, plan, task, previous=None):
     return proof
 
 
+def native_invocation():
+    path = os.environ.get("JOPE_NATIVE_INVOCATION")
+    return artifact(path) if path else None
+
+
+def stopped_attempt(state, attempt, started):
+    """A missing controller outcome needs an authenticated native drain observation."""
+    if (attempt / "rejection.json").exists():
+        return None
+    path = attempt / "outcome.json"
+    if path.exists():
+        outcome = read(path)
+        require(
+            outcome.get("status") in {"completed", "cancelled", "failed", "budget_exhausted"},
+            "prior attempt has no recoverable stopped outcome",
+        )
+        return artifact(path)
+    invocation = started.get("native_invocation")
+    require(invocation is not None, "prior worker has no stopped outcome or native invocation")
+    request_path = checked(invocation)
+    request = read(request_path)
+    require(
+        request.get("schema") == "jope.training-child/v1"
+        and request["state"] == str(Path(state).resolve())
+        and request["native_plan_sha256"] == sha(Path(state) / "native-plan.json"),
+        "recovery native invocation differs",
+    )
+    require(
+        request_path == Path(state) / "native-invocations" / request["nonce"] / "request.json",
+        "recovery invocation is outside controller custody",
+    )
+    drain = artifact(request_path.parent / "drained.json")
+    observed = read(checked(drain))
+    require(
+        observed.get("schema") == "jope.training-drained/v1"
+        and observed.get("populated") is False
+        and observed.get("request_sha256") == invocation["sha256"]
+        and observed["ended_unix_ms"] >= started["started_unix_ms"],
+        "native stopped proof differs",
+    )
+    recovery = {
+        "schema": "jope.training-recovery-stop/v1",
+        "status": "interrupted",
+        "native_invocation": invocation,
+        "native_drain": drain,
+        "stopped_observed_unix_ms": observed["ended_unix_ms"],
+        "wall_seconds": None,
+        "cpu_seconds": None,
+        "gpu_seconds": None,
+        "accounting_reason": "controller outcome missing; native drain proves stopped, elapsed usage unknown",
+    }
+    path = attempt / "recovery-stop.json"
+    write(path, recovery, immutable=True)
+    return artifact(path)
+
+
 def interrupted_resume(state, task, attempt, binding, expected_epoch):
     """Recover only a stopped attempt of this exact pass and original window."""
     import torch
 
     for prior in sorted((Path(state) / task).glob("attempt-*"), reverse=True):
         if prior >= Path(attempt) or not (prior / "started.json").is_file():
+            continue
+        if (prior / "rejection.json").exists():
             continue
         started = read(prior / "started.json")
         require(
@@ -818,7 +879,9 @@ def interrupted_resume(state, task, attempt, binding, expected_epoch):
             if progress is None:
                 continue
             require(progress["sampler"]["epoch"] == expected_epoch, "interrupted pass epoch changed")
-            require((prior / "outcome.json").is_file(), "prior worker has no stopped outcome")
+            stopped = stopped_attempt(state, prior, started)
+            if stopped is None:
+                continue
             require(
                 started["window_sha256"] == binding["window_sha256"]
                 and started["category_window_sha256"] == binding["category_window_sha256"],
@@ -827,7 +890,7 @@ def interrupted_resume(state, task, attempt, binding, expected_epoch):
             return {
                 "checkpoint": ref,
                 "started": artifact(prior / "started.json"),
-                "outcome": artifact(prior / "outcome.json"),
+                "outcome": stopped,
             }
     return None
 
@@ -1095,7 +1158,7 @@ def requested_coverage(plan, failures):
         for task in plan["unavailable_tasks"]
     )
     execution_success = not failures
-    complete_requested = execution_success and not plan["unavailable_tasks"]
+    complete_requested = execution_success and not plan["unavailable_tasks"] and not plan["fallbacks"]
     return {
         "scope": plan["scope"],
         "requested_tasks": requested,
@@ -1150,6 +1213,7 @@ def run(state, *, resume=False, supervisor_unit=None):
                         "window_sha256": digest(window),
                         "category_window_sha256": digest(category),
                         "started_unix_ms": int(time.time() * 1000),
+                        "native_invocation": native_invocation(),
                     },
                     immutable=True,
                 )
@@ -1294,6 +1358,10 @@ def verify(state):
                 )
                 for ref in receipt["recovered_from"].values():
                     checked(ref)
+                recovery = read(checked(receipt["recovered_from"]["outcome"]))
+                if recovery.get("schema") == "jope.training-recovery-stop/v1":
+                    checked(recovery["native_invocation"])
+                    checked(recovery["native_drain"])
             execution = {key: read(checked(ref)) for key, ref in receipt["execution"].items()}
             require(
                 set(execution) == {"started", "outcome", "complete"},
