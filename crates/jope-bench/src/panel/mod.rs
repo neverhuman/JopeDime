@@ -40,6 +40,7 @@ pub mod selection_exposure;
 pub mod synthesized;
 #[cfg(all(feature = "asm", target_os = "linux"))]
 pub mod teaching;
+pub mod transfer;
 pub mod worker;
 #[cfg(all(feature = "asm", target_os = "linux"))]
 pub mod worker_build;
