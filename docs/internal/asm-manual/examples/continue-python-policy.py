@@ -31,6 +31,18 @@ def checked(path: Path, expected: str) -> Path:
     return resolved
 
 
+def durable_output(path: Path) -> Path:
+    """Refuse outputs that /tmp loses at boot or that a Git working tree could capture."""
+    resolved = path.resolve()
+    for scratch in {Path("/tmp"), Path("/tmp").resolve()}:
+        if resolved == scratch or scratch in resolved.parents:
+            raise ValueError(f"--output must not be under /tmp: {resolved}")
+    for directory in (resolved, *resolved.parents):
+        if os.path.lexists(directory / ".git"):
+            raise ValueError(f"--output must be outside the Git working tree at {directory}")
+    return resolved
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--settings", type=Path, required=True)
@@ -39,9 +51,11 @@ def main() -> None:
     parser.add_argument("--corpus-sha256", required=True)
     parser.add_argument("--resume", type=Path, required=True)
     parser.add_argument("--resume-sha256", required=True)
-    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--output", type=Path, required=True,
+                        help="new directory outside /tmp and outside any Git working tree")
     parser.add_argument("--execute-diagnostic", action="store_true")
     args = parser.parse_args()
+    output = durable_output(args.output)  # refused before any input is hashed
     settings_file = checked(args.settings, args.settings_sha256)
     settings = json.loads(settings_file.read_text())
     if settings.get("example_schema") != "manual.python-resume-settings/v1":
@@ -60,7 +74,6 @@ def main() -> None:
         raise ValueError("supply a separately audited full input closure")
     for artifact in closure:
         checked(Path(artifact["path"]), artifact["sha256"])
-    output = args.output.resolve()
     call = {
         "corpus": str(corpus), "checkpoint": str(output / "policy.pt"),
         "resume_from": str(resume), "resume_checkpoint": str(output / "resume.pt"),

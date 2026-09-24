@@ -45,8 +45,8 @@
       "resource_budget": "Read-only/static custody work; no fitting, models, GPU or campaign admission.",
       "source_refs": [
         "AGENTS.md:Pull requests",
-        "status.md:Scope",
-        "maintenance.md:Coverage and reviewed lifecycle",
+        "sections/status.md#implementation-snapshot-and-this-manuals-own-identity",
+        "sections/maintenance.md#coverage-and-reviewed-lifecycle",
         "neural-integration/lifecycle-68f56404c3e199e06413bfd645d3fe0803d7b96f/remote-main-verification.json"
       ],
       "notes": "This task is complete; subsequent implementation remains pending. Keep the measured 68 source identity distinct from the rebase-merge commit identity.",
@@ -116,8 +116,8 @@
       "source_refs": [
         "examples/commands.json",
         "examples/validate-outputs.py",
-        "languages-examples.md:Example A",
-        "languages-examples.md:Example B"
+        "sections/inference.md#example-a-a-tiny-private-recipe-fit-and-predictions",
+        "sections/inference.md#example-b-actual-legacy-pipelinesearch-shape"
       ],
       "notes": "Actual acceptance: data/example-acceptance/audit.json. Five recipe refits each predict eight synthetic rows; separate legacy pmlb229 pipeline has four successful measurements. No fitted-export, ASM demo, training or full-panel qualification. Resource-readback race retained.",
       "planned_owner": {
@@ -153,7 +153,8 @@
       },
       "resource_budget": "Read-only/static custody work; no fitting, models, GPU or campaign admission.",
       "source_refs": [
-        "data-evidence.md",
+        "sections/datasets.md#frozen-dataset-coverage",
+        "sections/gp-targets.md#ranking-figures-interpretation-contract",
         "dataset-inventory.json",
         "performance-evidence.json.gz"
       ],
@@ -188,7 +189,7 @@
       },
       "resource_budget": "Read-only/static custody work; no fitting, models, GPU or campaign admission.",
       "source_refs": [
-        "maintenance.md:Updating the book"
+        "sections/maintenance.md#updating-the-book"
       ],
       "notes": "A successful renderer exit is insufficient: the PDF must remain readable and complete.",
       "planned_owner": {
@@ -633,7 +634,7 @@
       "resource_budget": "Separate explicit resource manifest and approved allowance required before admission;20 CPUs/workers maximum,64 GiB maximum,zero swap,one thread,30 seconds per fit,120 seconds per arm maximum. No new allowance granted by this checklist.",
       "source_refs": [
         "agent-training-readiness/readiness-v3.json",
-        "operations-training.md:Present teacher readiness",
+        "sections/teachers.md#present-teacher-readiness-and-the-smallest-real-path",
         "crates/jope-bench/src/panel/teaching.rs (pending)"
       ],
       "notes": "Execute separately for 230_machine_cpu and 712_chscase_geyser1; the prospective choice predates losses. Old 55e9, 3fd and 68 operational receipts cannot be retrofitted. The older queue suggested 300 seconds per family without admitting that allowance.",
@@ -666,7 +667,7 @@
       "resource_budget": "Read-only/static custody work; no fitting, models, GPU or campaign admission.",
       "source_refs": [
         "crates/jope-cli/src/train/corpus.rs (pending)",
-        "operations-training.md:Build the real corpus"
+        "sections/training.md#build-the-real-corpus-from-admitted-evidence"
       ],
       "notes": "Only if exactly two families qualify does the recorded machineCPU-development/geyser-training assignment apply. More eligible families must all remain admitted.",
       "planned_owner": {
@@ -769,7 +770,7 @@
       "resource_budget": "One original 3600 seconds total window;\u22641200 seconds per category including both passes;one RTX 3090,20CPU,64 GiB,zero swap,1Torch thread;no exclusiveCPU CI overlap. Resume never resets.",
       "source_refs": [
         "python/src/jope/policy/training_campaign.py:780 (pending)",
-        "operations-training.md:Plan, run, resume, verify and export"
+        "sections/training.md#plan-run-resume-verify-and-export"
       ],
       "notes": "NEURAL-02 gates source and fixture readiness before the GPU hour. It does not depend on a newly trained live export, avoiding a circular prerequisite.",
       "planned_owner": {
@@ -908,7 +909,7 @@
       "source_refs": [
         "crates/feat-math/src/advanced_v3/fitted_portable.rs (pending)",
         "crates/jope-bench/src/panel/inference.rs (pending)",
-        "languages-examples.md:State restrictions"
+        "sections/inference.md#state-restrictions-beyond-the-head-table"
       ],
       "notes": "The private C++ head gate is broader than the public gate. Python/Rust 14 of 26, C++ 2 of 26 and JavaScript 6 of 26 are static head counts, not runtime qualification rates.",
       "planned_owner": {
@@ -944,7 +945,7 @@
       "source_refs": [
         "crates/jope-bench/src/panel/fitted_export.rs (pending)",
         "crates/jope-bench/src/panel/fitted_export_run.rs (pending)",
-        "languages-examples.md:Example C"
+        "sections/inference.md#example-c-exact-fitted-winner-export-after-pending-integration"
       ],
       "notes": "Library fixtures precede the panel. Actual selected winners require complete confirmations from PANEL-01 and qualification before the original execution cutoff. No separately bounded post-panel qualification front door exists. One fitted fold does not qualify the other four states.",
       "planned_owner": {
@@ -978,7 +979,7 @@
       "resource_budget": "Existing exclusive CPU CI allocation; one reused lane target, jobs4 unless lane policy sets otherwise; no concurrent numerical campaign.",
       "source_refs": [
         "deploy/install-private.py (pending)",
-        "product.md:Build and install"
+        "sections/installation.md#build-and-install"
       ],
       "notes": "An installer receipt is not policy/context-worker build authority. Do not include training credentials or model bodies in the public inference bundle.",
       "planned_owner": {
@@ -1012,7 +1013,7 @@
       },
       "resource_budget": "Read-only/static custody work; no fitting, models, GPU or campaign admission.",
       "source_refs": [
-        "product.md:Prepare the panel",
+        "sections/installation.md#prepare-the-panel-and-external-runtimes",
         "agent-acceptance-queue/QUEUE.md"
       ],
       "notes": "Packaging commands depend on final reviewed artifacts and the actual virtual environment. Preserve versions and file identities; changing the environment invalidates a pinned campaign.",
@@ -1048,7 +1049,7 @@
       "source_refs": [
         "crates/jope-bench/src/panel/demo_asm.rs (pending)",
         "docs/private-warm-target.md (pending)",
-        "product.md:Warm fitted demonstration"
+        "sections/search.md#warm-fitted-demonstration-after-integration"
       ],
       "notes": "Under sixty seconds is a measured target. The existing twenty-second-arm example is unqualified. An explicitly admitted longer proof may satisfy execution while missing the target. This checklist grants no implicit 300-second allowance.",
       "planned_owner": {
@@ -1120,8 +1121,8 @@
       },
       "resource_budget": "Original 300 secondsreportingreserve forpanel; laterreadonlyauditopensnofitbudget.",
       "source_refs": [
-        "status.md:Cost",
-        "data-evidence.md",
+        "sections/scheduling.md#worked-example-cpu-wall-time-and-per-predictor-cost-of-the-one-dataset-proof",
+        "sections/status.md#canonical-proof-record-and-per-arm-facts",
         "crates/jope-bench/src/panel/asm_campaign.rs (pending)"
       ],
       "notes": "The one-hour comparison supplies wall-duration context, not a matched speedup. Unique artifact hashes do not establish behavioral uniqueness. Never add aggregate service CPU to worker CPU already included in it.",
@@ -1156,7 +1157,7 @@
       },
       "resource_budget": "Read-only/static custody work; no fitting, models, GPU or campaign admission.",
       "source_refs": [
-        "status.md:Pending acceptance",
+        "sections/status.md#pending-acceptance",
         "agent-acceptance-queue/QUEUE.md:motifs"
       ],
       "notes": "These help commands are currently unavailable at 68 and are acceptance targets. No truthful exact mine invocation exists yet; record it after implementation.",
@@ -1217,7 +1218,7 @@
       "resource_budget": "Separatelypreregistered ablationbudget; noneadmitted here.",
       "source_refs": [
         "user approval plan:Eligible optimization and reuse",
-        "languages-examples.md:Future work"
+        "sections/inference.md#future-work-and-acceptance-boundaries"
       ],
       "notes": "Typed reusable macros may stay within existing operators. Fragment frequency alone does not justify adding an operator.",
       "planned_owner": {
@@ -1285,7 +1286,7 @@
       "resource_budget": "Existing exclusive CPU CI allocation; one reused lane target, jobs4 unless lane policy sets otherwise; no concurrent numerical campaign.",
       "source_refs": [
         "deploy/ci/full-lane.sh",
-        "maintenance.md:Coverage and reviewed lifecycle",
+        "sections/maintenance.md#coverage-and-reviewed-lifecycle",
         "AGENT_CHAT.md:full-default failures"
       ],
       "notes": "Check lane environment requirements before invocation. The owning qualification supplies allocation and budget; this manual does not admit them.",
@@ -1317,7 +1318,8 @@
       "resource_budget": "NoCUDAinference/promotionbudgetadmitted bythisroadmap.",
       "source_refs": [
         "docs/adr/ADR-0005-canonical-learning-loop.md",
-        "architecture.md:Experimental trained models"
+        "sections/training.md#what-the-pending-campaign-trains",
+        "sections/training.md#compatibility-checks-and-fail-closed-rules"
       ],
       "notes": "Training GPU availability does not prove CUDA inference parity. Export is not serving promotion.",
       "planned_owner": {
@@ -1351,8 +1353,8 @@
       },
       "resource_budget": "No new fits, training or model loads; plotting retained metrics only.",
       "source_refs": [
-        "sections/14-training-history.md",
-        "sections/15-target-history-packing.md"
+        "sections/training-history.md#dated-lineage-and-evidence-coverage",
+        "sections/learning.md#what-the-historical-training-and-target-evidence-establishes"
       ],
       "notes": "Added for the user\u2019s explicit training-history, continuation, flywheel and packing questions. No numerical work was launched to write this manual. Recovered 63,000 rows preserve 378,000 exact metric tokens; all 21 corpus blocks, 20 intervening boundaries and legacy internal-ladder limitations remain explicit.",
       "planned_owner": "Codex integration; Claude independent source/data cross-check"
@@ -1378,8 +1380,10 @@
       },
       "resource_budget": "Documentation and metadata validation only; commands do not admit a new training window.",
       "source_refs": [
-        "sections/16-version-kpis-continuation.md",
-        "sections/17-flywheel-focused-search.md"
+        "sections/status.md#what-version-are-we-running",
+        "sections/plan.md#the-continuation-interfaces-that-exist-today",
+        "sections/learning.md#what-better-and-better-must-mean",
+        "sections/search.md#focused-single-dataset-search"
       ],
       "notes": "Added for the user\u2019s explicit training-history, continuation, flywheel and packing questions. No numerical work was launched to write this manual.",
       "planned_owner": "Codex integration; Claude independent source/data cross-check"
@@ -1406,7 +1410,7 @@
       },
       "resource_budget": "Source/fixture planning first; any measured training remains inside a separately declared remaining authorized window.",
       "source_refs": [
-        "sections/15-target-history-packing.md",
+        "sections/data-estate.md#record-layout",
         "python/src/jope/policy/train_v3.py",
         "crates/jope-engine/src/teaching_store.rs"
       ],
@@ -1436,7 +1440,7 @@
       },
       "resource_budget": "No indefinite loop or additional allowance implied; whole focused experiment has one predeclared finite budget.",
       "source_refs": [
-        "sections/17-flywheel-focused-search.md",
+        "sections/search.md#focused-single-dataset-search",
         "crates/jope-bench/src/panel/origin_proof.rs",
         "crates/jope-pipeline/src/neural_search.rs"
       ],
@@ -1446,12 +1450,12 @@
     {
       "id": "LOOP-01",
       "original_plan_stage": 3,
-      "workstream": "repeatable measured learning flywheel",
-      "priority": "P2",
-      "severity": "explicit follow-on; not permission to expand campaign budgets",
+      "workstream": "central regression product milestone: repeatable measured learning",
+      "priority": "P1",
+      "severity": "central regression product milestone; an unfunded or inconclusive round is reported as such, and this item is not permission to expand campaign budgets",
       "current_evidence_level": "New complete improved-target-to-improved-search cycle not yet qualified",
       "status": "New complete improved-target-to-improved-search cycle not yet qualified",
-      "pending_action": "Demonstrate linked cycles in which newly eligible target improvements are actually sampled, change parameters, and yield measured next-search benefit against both parent checkpoint and generic search.",
+      "pending_action": "Demonstrate the regression chain new eligible target \u2192 actual exposure \u2192 changed parameters \u2192 compatible reload \u2192 improved fitted search \u2192 another new generation, over linked generations; two passes through one corpus are continuation, not two generations. Measure next-search benefit against both the parent checkpoint and generic search, keep the accepted 512\u00d76 step-60000 model separate from experimental regression lineage v1 (256\u00d72, new initialization), and never promote serving automatically.",
       "dependencies": [
         "NEURAL-03",
         "TEACH-04",
@@ -1460,27 +1464,28 @@
       "acceptance": {
         "commands": [],
         "evidence": [
-          "Per-cycle target deltas, actual fresh exposures, component losses on fixed monitors, optimizer/parent/checkpoint hashes, full failures/cost and matched fitted-program outcomes; promotion separately decided."
+          "Per-cycle target deltas, actual fresh exposures, component losses on fixed monitors, optimizer/parent/checkpoint hashes, full failures/cost and matched fitted-program outcomes; promotion separately decided.",
+          "Decision: the proposed preregistered regression decision rule in learning.md, a proposal and not an achieved result: family-normalized gain versus the parent on at least 10 independent monitor families per round, with sibling fresh-versus-replay-only branches from one immutable parent. Unfunded or insufficient data yields mechanical proof and descriptive results with the causal verdict inconclusive, not an invented success."
         ],
         "command_status": "no complete executable front door; source/API details in linked chapters"
       },
-      "resource_budget": "Original one GPU-hour cap remains binding. Further campaigns require their own explicit allocation; this item grants none.",
+      "resource_budget": "Original one GPU-hour cap remains binding, with at most 20 minutes per category. Its two controlled rounds may remain unfunded or inconclusive within that existing 20-minute regression GPU cap; this item grants no new allocation. Further campaigns require their own explicit allocation.",
       "source_refs": [
-        "sections/14-training-history.md",
-        "sections/16-version-kpis-continuation.md",
-        "sections/17-flywheel-focused-search.md"
+        "sections/training-history.md#dated-lineage-and-evidence-coverage",
+        "sections/plan.md#the-continuation-interfaces-that-exist-today",
+        "sections/learning.md#what-better-and-better-must-mean"
       ],
-      "notes": "Added for the user\u2019s explicit training-history, continuation, flywheel and packing questions. No numerical work was launched to write this manual.",
+      "notes": "Added for the user\u2019s explicit training-history, continuation, flywheel and packing questions. No numerical work was launched to write this manual. The owner\u2019s edition-2 direction (relayed 2026-09-23T22:22:38Z) makes this the central regression product milestone and raises it from P2 to P1 without changing its evidence level. The sibling fresh/replay allocation (25/75 fresh/replay versus replay-only, equal committed updates) is proposed, with no serving promotion.",
       "planned_owner": "Codex integration; Claude independent source/data cross-check"
     }
   ],
   "validation": {
-    "unique_ids": 38,
+    "unique_ids": 43,
     "dependency_graph_acyclic": true,
     "all_six_original_stages_covered": true,
     "all_items_have_evidence_budget_refs": true
   },
-  "documentation_update": "PR83 main guard passed; named example qualification completed. Rendering/publication evidence remains pending until its own verification.",
+  "documentation_update": "PR83 main guard passed; named example qualification completed. Edition 1 of the manual merged through PR85 at 2026-09-23T22:33:36Z as main bdfc95c63d905c647e41175e79dc30cdc8600287 (exact-head CI 35927921851 attempt 1 and main-guard 35929010658 succeeded). Edition 2 is a local candidate; its rendering/publication evidence remains pending until its own exact-head CI and independent review.",
   "coordinated_proposals": {
     "source_sha256": "334ae97446ef29963bce47582f1550c7d369f0b329ef143c128685991422ffd4",
     "status": "proposed follow-ons reconciled with the primary task list; not additional execution authorization",
@@ -1958,7 +1963,7 @@
       }
     }
   },
-  "updated_utc": "2026-09-23T18:48:37.364927+00:00",
+  "updated_utc": "2026-09-24T00:08:48.233990+00:00",
   "primary_item_count": 43,
   "coordinated_proposal_count": 24
 }

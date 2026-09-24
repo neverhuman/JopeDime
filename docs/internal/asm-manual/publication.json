@@ -1,0 +1,31 @@
+{
+  "schema": "asm-manual.publication/v1",
+  "edition": 2,
+  "edition_date": "2026-09-24",
+  "build_utc": "2026-09-24T02:09:15+00:00",
+  "pdfs": [
+    "asm-maintainer-manual.pdf",
+    "asm-evidence-reference.pdf"
+  ],
+  "implementation_snapshot": {
+    "source": "0079ceddbaba739d736e80f6fe9b999955c4ad3a",
+    "main": "2b375ef11fc9298ffa67d4d03e0bb83053201802",
+    "tree": "01ecd51afc77e753ee4fe1f3fbe3c130803bbf43",
+    "merged_utc": "2026-09-24T00:04:12Z",
+    "note": "PR86 documentation corrections atop PR85 manual and PR83 implementation; this edition does not qualify a new learning run."
+  },
+  "qualification_observations": [
+    {
+      "observation": "PR86 exact-head manual CI: eight lanes and aggregate passed.",
+      "observed_utc": "2026-09-24T00:02:23Z",
+      "receipt": "https://github.com/veox-ai/JopeDime/actions/runs/35930124993"
+    },
+    {
+      "observation": "Full-main diagnostic failed: eight families passed, two failed, one unavailable; retained separately from fast CI and learning qualification.",
+      "observed_utc": "2026-09-24T00:31:10Z",
+      "receipt": "https://github.com/veox-ai/JopeDime/actions/runs/35936673628"
+    }
+  ],
+  "observations_note": "Dated observations; a configured command, implemented source and live qualification are separate states.",
+  "build_note": "Build time is fixed by this manifest; render receipts bind all publication inputs and both output PDFs."
+}

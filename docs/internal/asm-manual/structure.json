@@ -1,0 +1,4488 @@
+{
+ "schema": "asm-manual.structure/v2",
+ "warnings": [],
+ "headings": [
+  {
+   "number": "1",
+   "level": 1,
+   "kind": "chapter",
+   "title": "Current status, versions, north star and measured limitations",
+   "id": "c-status",
+   "file": "status.md",
+   "volume": "main"
+  },
+  {
+   "number": "1.1",
+   "level": 2,
+   "kind": "section",
+   "title": "ASM at a glance",
+   "id": "c-status--asm-at-a-glance",
+   "file": "status.md",
+   "volume": "main"
+  },
+  {
+   "number": "1.2",
+   "level": 2,
+   "kind": "section",
+   "title": "Reading this manual: audience, evidence levels and figures",
+   "id": "c-status--reading-this-manual-audience-evidence-levels-and-figures",
+   "file": "status.md",
+   "volume": "main"
+  },
+  {
+   "number": "1.3",
+   "level": 2,
+   "kind": "section",
+   "title": "North star: better algorithms from accumulated experience",
+   "id": "c-status--north-star-better-algorithms-from-accumulated-experience",
+   "file": "status.md",
+   "volume": "main"
+  },
+  {
+   "number": "1.3.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "The proposed north star and matched comparisons",
+   "id": "c-status--the-proposed-north-star-and-matched-comparisons",
+   "file": "status.md",
+   "volume": "main"
+  },
+  {
+   "number": "1.3.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Where the current evidence stands",
+   "id": "c-status--where-the-current-evidence-stands",
+   "file": "status.md",
+   "volume": "main"
+  },
+  {
+   "number": "1.4",
+   "level": 2,
+   "kind": "section",
+   "title": "What works now",
+   "id": "c-status--what-works-now",
+   "file": "status.md",
+   "volume": "main"
+  },
+  {
+   "number": "1.5",
+   "level": 2,
+   "kind": "section",
+   "title": "Latest measured operational proof",
+   "id": "c-status--latest-measured-operational-proof",
+   "file": "status.md",
+   "volume": "main"
+  },
+  {
+   "number": "1.5.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Summary of the one-dataset proof",
+   "id": "c-status--summary-of-the-one-dataset-proof",
+   "file": "status.md",
+   "volume": "main"
+  },
+  {
+   "number": "1.5.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Canonical proof record and per-arm facts",
+   "id": "c-status--canonical-proof-record-and-per-arm-facts",
+   "file": "status.md",
+   "volume": "main"
+  },
+  {
+   "number": "1.5.3",
+   "level": 3,
+   "kind": "subsection",
+   "title": "The outcome figure and its limits",
+   "id": "c-status--the-outcome-figure-and-its-limits",
+   "file": "status.md",
+   "volume": "main"
+  },
+  {
+   "number": "1.5.4",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Failures: dense-width refusals and the earlier failed reproducer",
+   "id": "c-status--failures-dense-width-refusals-and-the-earlier-failed-reproducer",
+   "file": "status.md",
+   "volume": "main"
+  },
+  {
+   "number": "1.6",
+   "level": 2,
+   "kind": "section",
+   "title": "Failure records are retained",
+   "id": "c-status--failure-records-are-retained",
+   "file": "status.md",
+   "volume": "main"
+  },
+  {
+   "number": "1.7",
+   "level": 2,
+   "kind": "section",
+   "title": "Pending acceptance",
+   "id": "c-status--pending-acceptance",
+   "file": "status.md",
+   "volume": "main"
+  },
+  {
+   "number": "1.8",
+   "level": 2,
+   "kind": "section",
+   "title": "What version are we running?",
+   "id": "c-status--what-version-are-we-running",
+   "file": "status.md",
+   "volume": "main"
+  },
+  {
+   "number": "1.8.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Implementation snapshot and this manual's own identity",
+   "id": "c-status--implementation-snapshot-and-this-manuals-own-identity",
+   "file": "status.md",
+   "volume": "main"
+  },
+  {
+   "number": "1.8.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "The identity tuple",
+   "id": "c-status--the-identity-tuple",
+   "file": "status.md",
+   "volume": "main"
+  },
+  {
+   "number": "2",
+   "level": 1,
+   "kind": "chapter",
+   "title": "Architecture, encodings, GP representation and model lineages",
+   "id": "c-architecture",
+   "file": "architecture.md",
+   "volume": "main"
+  },
+  {
+   "number": "2.1",
+   "level": 2,
+   "kind": "section",
+   "title": "System at a glance: flow diagram and component map",
+   "id": "c-architecture--system-at-a-glance-flow-diagram-and-component-map",
+   "file": "architecture.md",
+   "volume": "main"
+  },
+  {
+   "number": "2.2",
+   "level": 2,
+   "kind": "section",
+   "title": "The learning cycle: what is proven and what remains",
+   "id": "c-architecture--the-learning-cycle-what-is-proven-and-what-remains",
+   "file": "architecture.md",
+   "volume": "main"
+  },
+  {
+   "number": "2.3",
+   "level": 2,
+   "kind": "section",
+   "title": "GP representation: recipes, fitted predictors and the four artifact types",
+   "id": "c-architecture--gp-representation-recipes-fitted-predictors-and-the-four-artifact-types",
+   "file": "architecture.md",
+   "volume": "main"
+  },
+  {
+   "number": "2.4",
+   "level": 2,
+   "kind": "section",
+   "title": "Encodings and the proposal context",
+   "id": "c-architecture--encodings-and-the-proposal-context",
+   "file": "architecture.md",
+   "volume": "main"
+  },
+  {
+   "number": "2.4.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Regression context production",
+   "id": "c-architecture--regression-context-production",
+   "file": "architecture.md",
+   "volume": "main"
+  },
+  {
+   "number": "2.4.1.1",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Original data and preprocessing",
+   "id": "c-architecture--original-data-and-preprocessing",
+   "file": "architecture.md",
+   "volume": "main"
+  },
+  {
+   "number": "2.4.1.2",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Component dimensions and assembly",
+   "id": "c-architecture--component-dimensions-and-assembly",
+   "file": "architecture.md",
+   "volume": "main"
+  },
+  {
+   "number": "2.4.1.3",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Qualification and admission",
+   "id": "c-architecture--qualification-and-admission",
+   "file": "architecture.md",
+   "volume": "main"
+  },
+  {
+   "number": "2.4.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Experimental classification context",
+   "id": "c-architecture--experimental-classification-context",
+   "file": "architecture.md",
+   "volume": "main"
+  },
+  {
+   "number": "2.5",
+   "level": 2,
+   "kind": "section",
+   "title": "The accepted regression model: lineage B, step 60,000",
+   "id": "c-architecture--the-accepted-regression-model-lineage-b-step-60000",
+   "file": "architecture.md",
+   "volume": "main"
+  },
+  {
+   "number": "2.5.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Checkpoint binding and configuration",
+   "id": "c-architecture--checkpoint-binding-and-configuration",
+   "file": "architecture.md",
+   "volume": "main"
+  },
+  {
+   "number": "2.5.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Decoder and reward architecture",
+   "id": "c-architecture--decoder-and-reward-architecture",
+   "file": "architecture.md",
+   "volume": "main"
+  },
+  {
+   "number": "2.5.3",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Accepted identities and the product restriction",
+   "id": "c-architecture--accepted-identities-and-the-product-restriction",
+   "file": "architecture.md",
+   "volume": "main"
+  },
+  {
+   "number": "2.6",
+   "level": 2,
+   "kind": "section",
+   "title": "Model lineages",
+   "id": "c-architecture--model-lineages",
+   "file": "architecture.md",
+   "volume": "main"
+  },
+  {
+   "number": "3",
+   "level": 1,
+   "kind": "chapter",
+   "title": "Installation, preparation, assets, workers and doctor",
+   "id": "c-installation",
+   "file": "installation.md",
+   "volume": "main"
+  },
+  {
+   "number": "3.1",
+   "level": 2,
+   "kind": "section",
+   "title": "Scope and command surface",
+   "id": "c-installation--scope-and-command-surface",
+   "file": "installation.md",
+   "volume": "main"
+  },
+  {
+   "number": "3.1.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Product, checkout and CLI evidence",
+   "id": "c-installation--product-checkout-and-cli-evidence",
+   "file": "installation.md",
+   "volume": "main"
+  },
+  {
+   "number": "3.1.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Command surfaces and the stopped integration order",
+   "id": "c-installation--command-surfaces-and-the-stopped-integration-order",
+   "file": "installation.md",
+   "volume": "main"
+  },
+  {
+   "number": "3.2",
+   "level": 2,
+   "kind": "section",
+   "title": "Physical layout and identities",
+   "id": "c-installation--physical-layout-and-identities",
+   "file": "installation.md",
+   "volume": "main"
+  },
+  {
+   "number": "3.3",
+   "level": 2,
+   "kind": "section",
+   "title": "Build and install",
+   "id": "c-installation--build-and-install",
+   "file": "installation.md",
+   "volume": "main"
+  },
+  {
+   "number": "3.3.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Development build of the CLI",
+   "id": "c-installation--development-build-of-the-cli",
+   "file": "installation.md",
+   "volume": "main"
+  },
+  {
+   "number": "3.3.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Private installer after integration",
+   "id": "c-installation--private-installer-after-integration",
+   "file": "installation.md",
+   "volume": "main"
+  },
+  {
+   "number": "3.4",
+   "level": 2,
+   "kind": "section",
+   "title": "Prepare the panel and external runtimes",
+   "id": "c-installation--prepare-the-panel-and-external-runtimes",
+   "file": "installation.md",
+   "volume": "main"
+  },
+  {
+   "number": "3.4.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Prepare and verify the panel",
+   "id": "c-installation--prepare-and-verify-the-panel",
+   "file": "installation.md",
+   "volume": "main"
+  },
+  {
+   "number": "3.4.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Native roster and external comparator runtimes",
+   "id": "c-installation--native-roster-and-external-comparator-runtimes",
+   "file": "installation.md",
+   "volume": "main"
+  },
+  {
+   "number": "3.5",
+   "level": 2,
+   "kind": "section",
+   "title": "Stored model assets and the active encoder distinction",
+   "id": "c-installation--stored-model-assets-and-the-active-encoder-distinction",
+   "file": "installation.md",
+   "volume": "main"
+  },
+  {
+   "number": "3.5.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Bundle manifests and declared asset sizes",
+   "id": "c-installation--bundle-manifests-and-declared-asset-sizes",
+   "file": "installation.md",
+   "volume": "main"
+  },
+  {
+   "number": "3.5.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Encoder identity pitfalls and provenance declarations",
+   "id": "c-installation--encoder-identity-pitfalls-and-provenance-declarations",
+   "file": "installation.md",
+   "volume": "main"
+  },
+  {
+   "number": "3.6",
+   "level": 2,
+   "kind": "section",
+   "title": "Bounded workers: the context worker and the policy producer",
+   "id": "c-installation--bounded-workers-the-context-worker-and-the-policy-producer",
+   "file": "installation.md",
+   "volume": "main"
+  },
+  {
+   "number": "3.6.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Context worker contract",
+   "id": "c-installation--context-worker-contract",
+   "file": "installation.md",
+   "volume": "main"
+  },
+  {
+   "number": "3.6.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Policy producer contract",
+   "id": "c-installation--policy-producer-contract",
+   "file": "installation.md",
+   "volume": "main"
+  },
+  {
+   "number": "3.7",
+   "level": 2,
+   "kind": "section",
+   "title": "Doctor checks and troubleshooting",
+   "id": "c-installation--doctor-checks-and-troubleshooting",
+   "file": "installation.md",
+   "volume": "main"
+  },
+  {
+   "number": "3.7.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Reading identities from the immutable CLI",
+   "id": "c-installation--reading-identities-from-the-immutable-cli",
+   "file": "installation.md",
+   "volume": "main"
+  },
+  {
+   "number": "3.7.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Troubleshooting and safe recovery",
+   "id": "c-installation--troubleshooting-and-safe-recovery",
+   "file": "installation.md",
+   "volume": "main"
+  },
+  {
+   "number": "4",
+   "level": 1,
+   "kind": "chapter",
+   "title": "Data, splits, groups, families and permitted input boundaries",
+   "id": "c-data",
+   "file": "data.md",
+   "volume": "main"
+  },
+  {
+   "number": "4.1",
+   "level": 2,
+   "kind": "section",
+   "title": "The frozen thirty-dataset panel: identity, totals, groups and immutability",
+   "id": "c-data--the-frozen-thirty-dataset-panel-identity-totals-groups-and-immutability",
+   "file": "data.md",
+   "volume": "main"
+  },
+  {
+   "number": "4.2",
+   "level": 2,
+   "kind": "section",
+   "title": "Local preparation and panel storage",
+   "id": "c-data--local-preparation-and-panel-storage",
+   "file": "data.md",
+   "volume": "main"
+  },
+  {
+   "number": "4.3",
+   "level": 2,
+   "kind": "section",
+   "title": "The broader S3 corpus catalog",
+   "id": "c-data--the-broader-s3-corpus-catalog",
+   "file": "data.md",
+   "volume": "main"
+  },
+  {
+   "number": "4.3.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Catalog composition by task",
+   "id": "c-data--catalog-composition-by-task",
+   "file": "data.md",
+   "volume": "main"
+  },
+  {
+   "number": "4.3.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Licence metadata, anomalies and the corpus figure",
+   "id": "c-data--licence-metadata-anomalies-and-the-corpus-figure",
+   "file": "data.md",
+   "volume": "main"
+  },
+  {
+   "number": "4.4",
+   "level": 2,
+   "kind": "section",
+   "title": "The historical input closure and the meta-test question",
+   "id": "c-data--the-historical-input-closure-and-the-meta-test-question",
+   "file": "data.md",
+   "volume": "main"
+  },
+  {
+   "number": "4.4.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Record split and the meta-test closure question",
+   "id": "c-data--record-split-and-the-meta-test-closure-question",
+   "file": "data.md",
+   "volume": "main"
+  },
+  {
+   "number": "4.4.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Audit the entire input closure before continuation",
+   "id": "c-data--audit-the-entire-input-closure-before-continuation",
+   "file": "data.md",
+   "volume": "main"
+  },
+  {
+   "number": "4.5",
+   "level": 2,
+   "kind": "section",
+   "title": "Family-level domains and the permitted input closure",
+   "id": "c-data--family-level-domains-and-the-permitted-input-closure",
+   "file": "data.md",
+   "volume": "main"
+  },
+  {
+   "number": "4.5.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Three family-level domains",
+   "id": "c-data--three-family-level-domains",
+   "file": "data.md",
+   "volume": "main"
+  },
+  {
+   "number": "4.5.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Hashes, eligibility and the complete input closure",
+   "id": "c-data--hashes-eligibility-and-the-complete-input-closure",
+   "file": "data.md",
+   "volume": "main"
+  },
+  {
+   "number": "4.5.3",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Datasets outside the frozen panel",
+   "id": "c-data--datasets-outside-the-frozen-panel",
+   "file": "data.md",
+   "volume": "main"
+  },
+  {
+   "number": "5",
+   "level": 1,
+   "kind": "chapter",
+   "title": "Regression search, fitting, prediction and focused optimization",
+   "id": "c-search",
+   "file": "search.md",
+   "volume": "main"
+  },
+  {
+   "number": "5.1",
+   "level": 2,
+   "kind": "section",
+   "title": "Proposal generation and ranking",
+   "id": "c-search--proposal-generation-and-ranking",
+   "file": "search.md",
+   "volume": "main"
+  },
+  {
+   "number": "5.2",
+   "level": 2,
+   "kind": "section",
+   "title": "Paired arms, generation zero and evolution",
+   "id": "c-search--paired-arms-generation-zero-and-evolution",
+   "file": "search.md",
+   "volume": "main"
+  },
+  {
+   "number": "5.3",
+   "level": 2,
+   "kind": "section",
+   "title": "Dense-width refusals and the proposed feasibility preflight",
+   "id": "c-search--dense-width-refusals-and-the-proposed-feasibility-preflight",
+   "file": "search.md",
+   "volume": "main"
+  },
+  {
+   "number": "5.4",
+   "level": 2,
+   "kind": "section",
+   "title": "Warm fitted demonstration after integration",
+   "id": "c-search--warm-fitted-demonstration-after-integration",
+   "file": "search.md",
+   "volume": "main"
+  },
+  {
+   "number": "5.4.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Generic and ASM demonstration commands",
+   "id": "c-search--generic-and-asm-demonstration-commands",
+   "file": "search.md",
+   "volume": "main"
+  },
+  {
+   "number": "5.4.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "The under-sixty-second target and historical timing",
+   "id": "c-search--the-under-sixty-second-target-and-historical-timing",
+   "file": "search.md",
+   "volume": "main"
+  },
+  {
+   "number": "5.5",
+   "level": 2,
+   "kind": "section",
+   "title": "Focused single-dataset search",
+   "id": "c-search--focused-single-dataset-search",
+   "file": "search.md",
+   "volume": "main"
+  },
+  {
+   "number": "5.5.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Commands that exist today for one dataset",
+   "id": "c-search--commands-that-exist-today-for-one-dataset",
+   "file": "search.md",
+   "volume": "main"
+  },
+  {
+   "number": "5.5.1.1",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Front door and safe metadata checks",
+   "id": "c-search--front-door-and-safe-metadata-checks",
+   "file": "search.md",
+   "volume": "main"
+  },
+  {
+   "number": "5.5.1.2",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Required inputs",
+   "id": "c-search--required-inputs",
+   "file": "search.md",
+   "volume": "main"
+  },
+  {
+   "number": "5.5.1.3",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Plan, run and report a focused proof",
+   "id": "c-search--plan-run-and-report-a-focused-proof",
+   "file": "search.md",
+   "volume": "main"
+  },
+  {
+   "number": "5.5.1.4",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Other current search surfaces",
+   "id": "c-search--other-current-search-surfaces",
+   "file": "search.md",
+   "volume": "main"
+  },
+  {
+   "number": "5.5.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "What is missing for a sustained, incumbent-seeded dataset attack",
+   "id": "c-search--what-is-missing-for-a-sustained-incumbent-seeded-dataset-attack",
+   "file": "search.md",
+   "volume": "main"
+  },
+  {
+   "number": "6",
+   "level": 1,
+   "kind": "chapter",
+   "title": "Teacher admission, HWM identities and corpus updates",
+   "id": "c-teachers",
+   "file": "teachers.md",
+   "volume": "main"
+  },
+  {
+   "number": "6.1",
+   "level": 2,
+   "kind": "section",
+   "title": "A dataset is not one training example",
+   "id": "c-teachers--a-dataset-is-not-one-training-example",
+   "file": "teachers.md",
+   "volume": "main"
+  },
+  {
+   "number": "6.1.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Accounting units",
+   "id": "c-teachers--accounting-units",
+   "file": "teachers.md",
+   "volume": "main"
+  },
+  {
+   "number": "6.1.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Context vectors and program targets",
+   "id": "c-teachers--context-vectors-and-program-targets",
+   "file": "teachers.md",
+   "volume": "main"
+  },
+  {
+   "number": "6.1.3",
+   "level": 3,
+   "kind": "subsection",
+   "title": "The learning chain",
+   "id": "c-teachers--the-learning-chain",
+   "file": "teachers.md",
+   "volume": "main"
+  },
+  {
+   "number": "6.2",
+   "level": 2,
+   "kind": "section",
+   "title": "How a fitted recipe becomes an eligible teacher",
+   "id": "c-teachers--how-a-fitted-recipe-becomes-an-eligible-teacher",
+   "file": "teachers.md",
+   "volume": "main"
+  },
+  {
+   "number": "6.2.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "The preregistered freeze and train-side inner split",
+   "id": "c-teachers--the-preregistered-freeze-and-train-side-inner-split",
+   "file": "teachers.md",
+   "volume": "main"
+  },
+  {
+   "number": "6.2.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "The admission guard, label exposure and HWM identity",
+   "id": "c-teachers--the-admission-guard-label-exposure-and-hwm-identity",
+   "file": "teachers.md",
+   "volume": "main"
+  },
+  {
+   "number": "6.3",
+   "level": 2,
+   "kind": "section",
+   "title": "From optimization to reusable knowledge",
+   "id": "c-teachers--from-optimization-to-reusable-knowledge",
+   "file": "teachers.md",
+   "volume": "main"
+  },
+  {
+   "number": "6.4",
+   "level": 2,
+   "kind": "section",
+   "title": "Present teacher readiness and the smallest real path",
+   "id": "c-teachers--present-teacher-readiness-and-the-smallest-real-path",
+   "file": "teachers.md",
+   "volume": "main"
+  },
+  {
+   "number": "6.5",
+   "level": 2,
+   "kind": "section",
+   "title": "Prepare a teaching campaign before it starts",
+   "id": "c-teachers--prepare-a-teaching-campaign-before-it-starts",
+   "file": "teachers.md",
+   "volume": "main"
+  },
+  {
+   "number": "6.5.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Final build and the teaching configuration",
+   "id": "c-teachers--final-build-and-the-teaching-configuration",
+   "file": "teachers.md",
+   "volume": "main"
+  },
+  {
+   "number": "6.5.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Plan, run and recover a teaching campaign",
+   "id": "c-teachers--plan-run-and-recover-a-teaching-campaign",
+   "file": "teachers.md",
+   "volume": "main"
+  },
+  {
+   "number": "6.6",
+   "level": 2,
+   "kind": "section",
+   "title": "Corpus updates: reuse, device caches and loading",
+   "id": "c-teachers--corpus-updates-reuse-device-caches-and-loading",
+   "file": "teachers.md",
+   "volume": "main"
+  },
+  {
+   "number": "6.6.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "On-disk shard reuse",
+   "id": "c-teachers--on-disk-shard-reuse",
+   "file": "teachers.md",
+   "volume": "main"
+  },
+  {
+   "number": "6.6.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "The two device caches in the native trainer",
+   "id": "c-teachers--the-two-device-caches-in-the-native-trainer",
+   "file": "teachers.md",
+   "volume": "main"
+  },
+  {
+   "number": "6.6.3",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Identifier memory and whole-corpus cache invalidation",
+   "id": "c-teachers--identifier-memory-and-whole-corpus-cache-invalidation",
+   "file": "teachers.md",
+   "volume": "main"
+  },
+  {
+   "number": "6.6.4",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Python training input and the pending bounded campaign",
+   "id": "c-teachers--python-training-input-and-the-pending-bounded-campaign",
+   "file": "teachers.md",
+   "volume": "main"
+  },
+  {
+   "number": "6.7",
+   "level": 2,
+   "kind": "section",
+   "title": "Concrete corpus improvements, with acceptance criteria",
+   "id": "c-teachers--concrete-corpus-improvements-with-acceptance-criteria",
+   "file": "teachers.md",
+   "volume": "main"
+  },
+  {
+   "number": "7",
+   "level": 1,
+   "kind": "chapter",
+   "title": "Training, continuation, export and compatibility",
+   "id": "c-training",
+   "file": "training.md",
+   "volume": "main"
+  },
+  {
+   "number": "7.1",
+   "level": 2,
+   "kind": "section",
+   "title": "What can be claimed now",
+   "id": "c-training--what-can-be-claimed-now",
+   "file": "training.md",
+   "volume": "main"
+  },
+  {
+   "number": "7.2",
+   "level": 2,
+   "kind": "section",
+   "title": "The four continuation names and their commands",
+   "id": "c-training--the-four-continuation-names-and-their-commands",
+   "file": "training.md",
+   "volume": "main"
+  },
+  {
+   "number": "7.2.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Names, runbooks and status",
+   "id": "c-training--names-runbooks-and-status",
+   "file": "training.md",
+   "volume": "main"
+  },
+  {
+   "number": "7.2.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Rules for exact interrupted resume",
+   "id": "c-training--rules-for-exact-interrupted-resume",
+   "file": "training.md",
+   "volume": "main"
+  },
+  {
+   "number": "7.2.3",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Variables used in the continuation examples",
+   "id": "c-training--variables-used-in-the-continuation-examples",
+   "file": "training.md",
+   "volume": "main"
+  },
+  {
+   "number": "7.2.4",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Native lineage B: the held command and its blockers",
+   "id": "c-training--native-lineage-b-the-held-command-and-its-blockers",
+   "file": "training.md",
+   "volume": "main"
+  },
+  {
+   "number": "7.2.4.1",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "The implemented command shape",
+   "id": "c-training--the-implemented-command-shape",
+   "file": "training.md",
+   "volume": "main"
+  },
+  {
+   "number": "7.2.4.2",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "The dispatch hold, resource incompatibility and valid topologies",
+   "id": "c-training--the-dispatch-hold-resource-incompatibility-and-valid-topologies",
+   "file": "training.md",
+   "volume": "main"
+  },
+  {
+   "number": "7.2.5",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Current Python training and a concrete continuation call",
+   "id": "c-training--current-python-training-and-a-concrete-continuation-call",
+   "file": "training.md",
+   "volume": "main"
+  },
+  {
+   "number": "7.2.5.1",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Weight warm start with the existing CLI",
+   "id": "c-training--weight-warm-start-with-the-existing-cli",
+   "file": "training.md",
+   "volume": "main"
+  },
+  {
+   "number": "7.2.5.2",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Exact optimizer continuation through the Python API",
+   "id": "c-training--exact-optimizer-continuation-through-the-python-api",
+   "file": "training.md",
+   "volume": "main"
+  },
+  {
+   "number": "7.2.5.3",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "The companion continuation helper and the resume artifact",
+   "id": "c-training--the-companion-continuation-helper-and-the-resume-artifact",
+   "file": "training.md",
+   "volume": "main"
+  },
+  {
+   "number": "7.2.5.4",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Limits of the current Python route",
+   "id": "c-training--limits-of-the-current-python-route",
+   "file": "training.md",
+   "volume": "main"
+  },
+  {
+   "number": "7.3",
+   "level": 2,
+   "kind": "section",
+   "title": "Evidence and identity before a bounded campaign",
+   "id": "c-training--evidence-and-identity-before-a-bounded-campaign",
+   "file": "training.md",
+   "volume": "main"
+  },
+  {
+   "number": "7.4",
+   "level": 2,
+   "kind": "section",
+   "title": "The bounded training campaign chain",
+   "id": "c-training--the-bounded-training-campaign-chain",
+   "file": "training.md",
+   "volume": "main"
+  },
+  {
+   "number": "7.4.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "What the pending campaign trains",
+   "id": "c-training--what-the-pending-campaign-trains",
+   "file": "training.md",
+   "volume": "main"
+  },
+  {
+   "number": "7.4.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Build the real corpus from admitted evidence",
+   "id": "c-training--build-the-real-corpus-from-admitted-evidence",
+   "file": "training.md",
+   "volume": "main"
+  },
+  {
+   "number": "7.4.3",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Plan, run, resume, verify and export",
+   "id": "c-training--plan-run-resume-verify-and-export",
+   "file": "training.md",
+   "volume": "main"
+  },
+  {
+   "number": "7.4.4",
+   "level": 3,
+   "kind": "subsection",
+   "title": "The pending bounded extension path: sequence and limits",
+   "id": "c-training--the-pending-bounded-extension-path-sequence-and-limits",
+   "file": "training.md",
+   "volume": "main"
+  },
+  {
+   "number": "7.4.5",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Proposed sibling fresh and replay branches",
+   "id": "c-training--proposed-sibling-fresh-and-replay-branches",
+   "file": "training.md",
+   "volume": "main"
+  },
+  {
+   "number": "7.4.6",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Training input packing and the learning store",
+   "id": "c-training--training-input-packing-and-the-learning-store",
+   "file": "training.md",
+   "volume": "main"
+  },
+  {
+   "number": "7.5",
+   "level": 2,
+   "kind": "section",
+   "title": "Consuming a newly trained checkpoint",
+   "id": "c-training--consuming-a-newly-trained-checkpoint",
+   "file": "training.md",
+   "volume": "main"
+  },
+  {
+   "number": "7.5.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "The experimental.regression configuration entry",
+   "id": "c-training--the-experimentalregression-configuration-entry",
+   "file": "training.md",
+   "volume": "main"
+  },
+  {
+   "number": "7.5.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Compatibility checks and fail-closed rules",
+   "id": "c-training--compatibility-checks-and-fail-closed-rules",
+   "file": "training.md",
+   "volume": "main"
+  },
+  {
+   "number": "7.5.3",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Proving consumption in a new operational proof",
+   "id": "c-training--proving-consumption-in-a-new-operational-proof",
+   "file": "training.md",
+   "volume": "main"
+  },
+  {
+   "number": "7.6",
+   "level": 2,
+   "kind": "section",
+   "title": "Remaining acceptance queue and maintenance risks",
+   "id": "c-training--remaining-acceptance-queue-and-maintenance-risks",
+   "file": "training.md",
+   "volume": "main"
+  },
+  {
+   "number": "8",
+   "level": 1,
+   "kind": "chapter",
+   "title": "Measuring repeated learning and deciding improvement",
+   "id": "c-learning",
+   "file": "learning.md",
+   "volume": "main"
+  },
+  {
+   "number": "8.1",
+   "level": 2,
+   "kind": "section",
+   "title": "What \u201cbetter and better\u201d must mean",
+   "id": "c-learning--what-better-and-better-must-mean",
+   "file": "learning.md",
+   "volume": "main"
+  },
+  {
+   "number": "8.2",
+   "level": 2,
+   "kind": "section",
+   "title": "What the historical training and target evidence establishes",
+   "id": "c-learning--what-the-historical-training-and-target-evidence-establishes",
+   "file": "learning.md",
+   "volume": "main"
+  },
+  {
+   "number": "8.3",
+   "level": 2,
+   "kind": "section",
+   "title": "LOOP-01: the central regression milestone",
+   "id": "c-learning--loop-01-the-central-regression-milestone",
+   "file": "learning.md",
+   "volume": "main"
+  },
+  {
+   "number": "8.3.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Lineages, continuation names and generations",
+   "id": "c-learning--lineages-continuation-names-and-generations",
+   "file": "learning.md",
+   "volume": "main"
+  },
+  {
+   "number": "8.3.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Two controlled rounds within the existing GPU cap",
+   "id": "c-learning--two-controlled-rounds-within-the-existing-gpu-cap",
+   "file": "learning.md",
+   "volume": "main"
+  },
+  {
+   "number": "8.4",
+   "level": 2,
+   "kind": "section",
+   "title": "The closure ledger",
+   "id": "c-learning--the-closure-ledger",
+   "file": "learning.md",
+   "volume": "main"
+  },
+  {
+   "number": "8.5",
+   "level": 2,
+   "kind": "section",
+   "title": "A minimal experiment that can establish learning",
+   "id": "c-learning--a-minimal-experiment-that-can-establish-learning",
+   "file": "learning.md",
+   "volume": "main"
+  },
+  {
+   "number": "8.5.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Freezing the experiment and choosing families",
+   "id": "c-learning--freezing-the-experiment-and-choosing-families",
+   "file": "learning.md",
+   "volume": "main"
+  },
+  {
+   "number": "8.5.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "What to retain for each cycle",
+   "id": "c-learning--what-to-retain-for-each-cycle",
+   "file": "learning.md",
+   "volume": "main"
+  },
+  {
+   "number": "8.5.3",
+   "level": 3,
+   "kind": "subsection",
+   "title": "The proposed preregistered regression decision",
+   "id": "c-learning--the-proposed-preregistered-regression-decision",
+   "file": "learning.md",
+   "volume": "main"
+  },
+  {
+   "number": "8.5.3.1",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Family-normalized gain",
+   "id": "c-learning--family-normalized-gain",
+   "file": "learning.md",
+   "volume": "main"
+  },
+  {
+   "number": "8.5.3.2",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Round thresholds",
+   "id": "c-learning--round-thresholds",
+   "file": "learning.md",
+   "volume": "main"
+  },
+  {
+   "number": "8.5.3.3",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Baselines, stopping and reporting",
+   "id": "c-learning--baselines-stopping-and-reporting",
+   "file": "learning.md",
+   "volume": "main"
+  },
+  {
+   "number": "8.6",
+   "level": 2,
+   "kind": "section",
+   "title": "Distinguish routing, ranking and search recovery",
+   "id": "c-learning--distinguish-routing-ranking-and-search-recovery",
+   "file": "learning.md",
+   "volume": "main"
+  },
+  {
+   "number": "8.7",
+   "level": 2,
+   "kind": "section",
+   "title": "Conditioning diagnostics before the first causal experiment",
+   "id": "c-learning--conditioning-diagnostics-before-the-first-causal-experiment",
+   "file": "learning.md",
+   "volume": "main"
+  },
+  {
+   "number": "8.8",
+   "level": 2,
+   "kind": "section",
+   "title": "Specialization without starving the general learner",
+   "id": "c-learning--specialization-without-starving-the-general-learner",
+   "file": "learning.md",
+   "volume": "main"
+  },
+  {
+   "number": "8.9",
+   "level": 2,
+   "kind": "section",
+   "title": "A KPI ledger with defined denominators",
+   "id": "c-learning--a-kpi-ledger-with-defined-denominators",
+   "file": "learning.md",
+   "volume": "main"
+  },
+  {
+   "number": "8.9.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "KPI definitions",
+   "id": "c-learning--kpi-definitions",
+   "file": "learning.md",
+   "volume": "main"
+  },
+  {
+   "number": "8.9.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Win counting and a proposed acceptance record",
+   "id": "c-learning--win-counting-and-a-proposed-acceptance-record",
+   "file": "learning.md",
+   "volume": "main"
+  },
+  {
+   "number": "8.10",
+   "level": 2,
+   "kind": "section",
+   "title": "What is still needed to demonstrate the learning flywheel",
+   "id": "c-learning--what-is-still-needed-to-demonstrate-the-learning-flywheel",
+   "file": "learning.md",
+   "volume": "main"
+  },
+  {
+   "number": "9",
+   "level": 1,
+   "kind": "chapter",
+   "title": "Complete fitted inference and language support",
+   "id": "c-inference",
+   "file": "inference.md",
+   "volume": "main"
+  },
+  {
+   "number": "9.1",
+   "level": 2,
+   "kind": "section",
+   "title": "Deployment support: definition, priority and status",
+   "id": "c-inference--deployment-support-definition-priority-and-status",
+   "file": "inference.md",
+   "volume": "main"
+  },
+  {
+   "number": "9.2",
+   "level": 2,
+   "kind": "section",
+   "title": "Language interfaces at the frozen source",
+   "id": "c-inference--language-interfaces-at-the-frozen-source",
+   "file": "inference.md",
+   "volume": "main"
+  },
+  {
+   "number": "9.3",
+   "level": 2,
+   "kind": "section",
+   "title": "Complete registered-recipe matrix",
+   "id": "c-inference--complete-registered-recipe-matrix",
+   "file": "inference.md",
+   "volume": "main"
+  },
+  {
+   "number": "9.3.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Coverage by recipe and backend",
+   "id": "c-inference--coverage-by-recipe-and-backend",
+   "file": "inference.md",
+   "volume": "main"
+  },
+  {
+   "number": "9.3.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "State restrictions beyond the head table",
+   "id": "c-inference--state-restrictions-beyond-the-head-table",
+   "file": "inference.md",
+   "volume": "main"
+  },
+  {
+   "number": "9.3.3",
+   "level": 3,
+   "kind": "subsection",
+   "title": "External winners",
+   "id": "c-inference--external-winners",
+   "file": "inference.md",
+   "volume": "main"
+  },
+  {
+   "number": "9.4",
+   "level": 2,
+   "kind": "section",
+   "title": "Private worked examples and their measured execution",
+   "id": "c-inference--private-worked-examples-and-their-measured-execution",
+   "file": "inference.md",
+   "volume": "main"
+  },
+  {
+   "number": "9.4.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Example A: a tiny private recipe, fit and predictions",
+   "id": "c-inference--example-a-a-tiny-private-recipe-fit-and-predictions",
+   "file": "inference.md",
+   "volume": "main"
+  },
+  {
+   "number": "9.4.1.1",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "The synthetic fixture",
+   "id": "c-inference--the-synthetic-fixture",
+   "file": "inference.md",
+   "volume": "main"
+  },
+  {
+   "number": "9.4.1.2",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Fit and emit the recipe",
+   "id": "c-inference--fit-and-emit-the-recipe",
+   "file": "inference.md",
+   "volume": "main"
+  },
+  {
+   "number": "9.4.1.3",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Run and compare the emitted programs",
+   "id": "c-inference--run-and-compare-the-emitted-programs",
+   "file": "inference.md",
+   "volume": "main"
+  },
+  {
+   "number": "9.4.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Example B: actual legacy pipeline/search shape",
+   "id": "c-inference--example-b-actual-legacy-pipelinesearch-shape",
+   "file": "inference.md",
+   "volume": "main"
+  },
+  {
+   "number": "9.4.3",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Measured execution of the private examples",
+   "id": "c-inference--measured-execution-of-the-private-examples",
+   "file": "inference.md",
+   "volume": "main"
+  },
+  {
+   "number": "9.4.3.1",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "What passed and what was measured",
+   "id": "c-inference--what-passed-and-what-was-measured",
+   "file": "inference.md",
+   "volume": "main"
+  },
+  {
+   "number": "9.4.3.2",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Resources, accounting and scope limits",
+   "id": "c-inference--resources-accounting-and-scope-limits",
+   "file": "inference.md",
+   "volume": "main"
+  },
+  {
+   "number": "9.5",
+   "level": 2,
+   "kind": "section",
+   "title": "Example C: exact fitted winner export after pending integration",
+   "id": "c-inference--example-c-exact-fitted-winner-export-after-pending-integration",
+   "file": "inference.md",
+   "volume": "main"
+  },
+  {
+   "number": "9.5.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Export commands and winner selection",
+   "id": "c-inference--export-commands-and-winner-selection",
+   "file": "inference.md",
+   "volume": "main"
+  },
+  {
+   "number": "9.5.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Tool inventory, qualification order and isolation",
+   "id": "c-inference--tool-inventory-qualification-order-and-isolation",
+   "file": "inference.md",
+   "volume": "main"
+  },
+  {
+   "number": "9.5.3",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Backend numerical policies, public metadata and the export clock",
+   "id": "c-inference--backend-numerical-policies-public-metadata-and-the-export-clock",
+   "file": "inference.md",
+   "volume": "main"
+  },
+  {
+   "number": "9.6",
+   "level": 2,
+   "kind": "section",
+   "title": "Future work and acceptance boundaries",
+   "id": "c-inference--future-work-and-acceptance-boundaries",
+   "file": "inference.md",
+   "volume": "main"
+  },
+  {
+   "number": "10",
+   "level": 1,
+   "kind": "chapter",
+   "title": "Benchmark execution, ranking, Elo and interpretation",
+   "id": "c-benchmark",
+   "file": "benchmark.md",
+   "volume": "main"
+  },
+  {
+   "number": "10.1",
+   "level": 2,
+   "kind": "section",
+   "title": "Three evidence collections with different purposes",
+   "id": "c-benchmark--three-evidence-collections-with-different-purposes",
+   "file": "benchmark.md",
+   "volume": "main"
+  },
+  {
+   "number": "10.2",
+   "level": 2,
+   "kind": "section",
+   "title": "Frozen-panel execution contract",
+   "id": "c-benchmark--frozen-panel-execution-contract",
+   "file": "benchmark.md",
+   "volume": "main"
+  },
+  {
+   "number": "10.2.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "The screen, freeze and confirm procedure",
+   "id": "c-benchmark--the-screen-freeze-and-confirm-procedure",
+   "file": "benchmark.md",
+   "volume": "main"
+  },
+  {
+   "number": "10.2.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Adaptive development exposure",
+   "id": "c-benchmark--adaptive-development-exposure",
+   "file": "benchmark.md",
+   "volume": "main"
+  },
+  {
+   "number": "10.3",
+   "level": 2,
+   "kind": "section",
+   "title": "Running the frozen-panel campaign: plan, execute and report",
+   "id": "c-benchmark--running-the-frozen-panel-campaign-plan-execute-and-report",
+   "file": "benchmark.md",
+   "volume": "main"
+  },
+  {
+   "number": "10.3.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Purpose, status and prerequisites",
+   "id": "c-benchmark--purpose-status-and-prerequisites",
+   "file": "benchmark.md",
+   "volume": "main"
+  },
+  {
+   "number": "10.3.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Preregistered arms and per-task scope",
+   "id": "c-benchmark--preregistered-arms-and-per-task-scope",
+   "file": "benchmark.md",
+   "volume": "main"
+  },
+  {
+   "number": "10.3.3",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Execution, artifacts and success",
+   "id": "c-benchmark--execution-artifacts-and-success",
+   "file": "benchmark.md",
+   "volume": "main"
+  },
+  {
+   "number": "10.3.4",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Failure, resume and limitations",
+   "id": "c-benchmark--failure-resume-and-limitations",
+   "file": "benchmark.md",
+   "volume": "main"
+  },
+  {
+   "number": "10.4",
+   "level": 2,
+   "kind": "section",
+   "title": "Metrics and class order",
+   "id": "c-benchmark--metrics-and-class-order",
+   "file": "benchmark.md",
+   "volume": "main"
+  },
+  {
+   "number": "10.5",
+   "level": 2,
+   "kind": "section",
+   "title": "What Elo means here",
+   "id": "c-benchmark--what-elo-means-here",
+   "file": "benchmark.md",
+   "volume": "main"
+  },
+  {
+   "number": "10.5.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "The Bradley\u2013Terry model, tie rule and defaults",
+   "id": "c-benchmark--the-bradleyterry-model-tie-rule-and-defaults",
+   "file": "benchmark.md",
+   "volume": "main"
+  },
+  {
+   "number": "10.5.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Interpreting a rating",
+   "id": "c-benchmark--interpreting-a-rating",
+   "file": "benchmark.md",
+   "volume": "main"
+  },
+  {
+   "number": "10.5.3",
+   "level": 3,
+   "kind": "subsection",
+   "title": "How the retained Elo scale is constructed",
+   "id": "c-benchmark--how-the-retained-elo-scale-is-constructed",
+   "file": "benchmark.md",
+   "volume": "main"
+  },
+  {
+   "number": "10.6",
+   "level": 2,
+   "kind": "section",
+   "title": "Minimum complete future campaign report",
+   "id": "c-benchmark--minimum-complete-future-campaign-report",
+   "file": "benchmark.md",
+   "volume": "main"
+  },
+  {
+   "number": "11",
+   "level": 1,
+   "kind": "chapter",
+   "title": "Scheduling, cancellation, recovery and accounting",
+   "id": "c-scheduling",
+   "file": "scheduling.md",
+   "volume": "main"
+  },
+  {
+   "number": "11.1",
+   "level": 2,
+   "kind": "section",
+   "title": "Arm order and clocks",
+   "id": "c-scheduling--arm-order-and-clocks",
+   "file": "scheduling.md",
+   "volume": "main"
+  },
+  {
+   "number": "11.2",
+   "level": 2,
+   "kind": "section",
+   "title": "Resource limits, shared compute and supervision",
+   "id": "c-scheduling--resource-limits-shared-compute-and-supervision",
+   "file": "scheduling.md",
+   "volume": "main"
+  },
+  {
+   "number": "11.2.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Twenty bounded workers: resource limits and supervision",
+   "id": "c-scheduling--twenty-bounded-workers-resource-limits-and-supervision",
+   "file": "scheduling.md",
+   "volume": "main"
+  },
+  {
+   "number": "11.2.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Resource policy and the training clock",
+   "id": "c-scheduling--resource-policy-and-the-training-clock",
+   "file": "scheduling.md",
+   "volume": "main"
+  },
+  {
+   "number": "11.2.3",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Shared compute",
+   "id": "c-scheduling--shared-compute",
+   "file": "scheduling.md",
+   "volume": "main"
+  },
+  {
+   "number": "11.3",
+   "level": 2,
+   "kind": "section",
+   "title": "Cancellation, resume and recovery",
+   "id": "c-scheduling--cancellation-resume-and-recovery",
+   "file": "scheduling.md",
+   "volume": "main"
+  },
+  {
+   "number": "11.3.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Reading stop reasons and resuming",
+   "id": "c-scheduling--reading-stop-reasons-and-resuming",
+   "file": "scheduling.md",
+   "volume": "main"
+  },
+  {
+   "number": "11.3.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Interrupted attempts and proof interpretation",
+   "id": "c-scheduling--interrupted-attempts-and-proof-interpretation",
+   "file": "scheduling.md",
+   "volume": "main"
+  },
+  {
+   "number": "11.3.3",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Recovery phases",
+   "id": "c-scheduling--recovery-phases",
+   "file": "scheduling.md",
+   "volume": "main"
+  },
+  {
+   "number": "11.4",
+   "level": 2,
+   "kind": "section",
+   "title": "Artifacts: what evidence to retain",
+   "id": "c-scheduling--artifacts-what-evidence-to-retain",
+   "file": "scheduling.md",
+   "volume": "main"
+  },
+  {
+   "number": "11.5",
+   "level": 2,
+   "kind": "section",
+   "title": "Cost accounting",
+   "id": "c-scheduling--cost-accounting",
+   "file": "scheduling.md",
+   "volume": "main"
+  },
+  {
+   "number": "11.5.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Counting predictors, recipes, commands and export cost",
+   "id": "c-scheduling--counting-predictors-recipes-commands-and-export-cost",
+   "file": "scheduling.md",
+   "volume": "main"
+  },
+  {
+   "number": "11.5.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Worked example: CPU, wall time and per-predictor cost of the one-dataset proof",
+   "id": "c-scheduling--worked-example-cpu-wall-time-and-per-predictor-cost-of-the-one-dataset-proof",
+   "file": "scheduling.md",
+   "volume": "main"
+  },
+  {
+   "number": "11.5.3",
+   "level": 3,
+   "kind": "subsection",
+   "title": "The one-hour, ten-million-token reference scenario",
+   "id": "c-scheduling--the-one-hour-ten-million-token-reference-scenario",
+   "file": "scheduling.md",
+   "volume": "main"
+  },
+  {
+   "number": "12",
+   "level": 1,
+   "kind": "chapter",
+   "title": "Maintenance, privacy, release and preservation",
+   "id": "c-maintenance",
+   "file": "maintenance.md",
+   "volume": "main"
+  },
+  {
+   "number": "12.1",
+   "level": 2,
+   "kind": "section",
+   "title": "Questions that should remain answerable after a maintainer handoff",
+   "id": "c-maintenance--questions-that-should-remain-answerable-after-a-maintainer-handoff",
+   "file": "maintenance.md",
+   "volume": "main"
+  },
+  {
+   "number": "12.2",
+   "level": 2,
+   "kind": "section",
+   "title": "Repository authority and coordination",
+   "id": "c-maintenance--repository-authority-and-coordination",
+   "file": "maintenance.md",
+   "volume": "main"
+  },
+  {
+   "number": "12.3",
+   "level": 2,
+   "kind": "section",
+   "title": "Worktrees and builds",
+   "id": "c-maintenance--worktrees-and-builds",
+   "file": "maintenance.md",
+   "volume": "main"
+  },
+  {
+   "number": "12.4",
+   "level": 2,
+   "kind": "section",
+   "title": "Coverage and reviewed lifecycle",
+   "id": "c-maintenance--coverage-and-reviewed-lifecycle",
+   "file": "maintenance.md",
+   "volume": "main"
+  },
+  {
+   "number": "12.4.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Coverage inventories and CI lanes",
+   "id": "c-maintenance--coverage-inventories-and-ci-lanes",
+   "file": "maintenance.md",
+   "volume": "main"
+  },
+  {
+   "number": "12.4.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Writer and reviewer identities",
+   "id": "c-maintenance--writer-and-reviewer-identities",
+   "file": "maintenance.md",
+   "volume": "main"
+  },
+  {
+   "number": "12.4.3",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Freeze, review and merge",
+   "id": "c-maintenance--freeze-review-and-merge",
+   "file": "maintenance.md",
+   "volume": "main"
+  },
+  {
+   "number": "12.4.4",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Main-guard and full-main scheduling",
+   "id": "c-maintenance--main-guard-and-full-main-scheduling",
+   "file": "maintenance.md",
+   "volume": "main"
+  },
+  {
+   "number": "12.5",
+   "level": 2,
+   "kind": "section",
+   "title": "Privacy boundaries: the private manual and public fitted bundles",
+   "id": "c-maintenance--privacy-boundaries-the-private-manual-and-public-fitted-bundles",
+   "file": "maintenance.md",
+   "volume": "main"
+  },
+  {
+   "number": "12.6",
+   "level": 2,
+   "kind": "section",
+   "title": "Release and installation are independent from model promotion",
+   "id": "c-maintenance--release-and-installation-are-independent-from-model-promotion",
+   "file": "maintenance.md",
+   "volume": "main"
+  },
+  {
+   "number": "12.7",
+   "level": 2,
+   "kind": "section",
+   "title": "Preservation and lane closure",
+   "id": "c-maintenance--preservation-and-lane-closure",
+   "file": "maintenance.md",
+   "volume": "main"
+  },
+  {
+   "number": "12.8",
+   "level": 2,
+   "kind": "section",
+   "title": "Rebuilding and updating this manual",
+   "id": "c-maintenance--rebuilding-and-updating-this-manual",
+   "file": "maintenance.md",
+   "volume": "main"
+  },
+  {
+   "number": "12.8.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Rebuilding the book",
+   "id": "c-maintenance--rebuilding-the-book",
+   "file": "maintenance.md",
+   "volume": "main"
+  },
+  {
+   "number": "12.8.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "What the renderer reads, checks and writes",
+   "id": "c-maintenance--what-the-renderer-reads-checks-and-writes",
+   "file": "maintenance.md",
+   "volume": "main"
+  },
+  {
+   "number": "12.8.3",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Regenerating the training and target figures",
+   "id": "c-maintenance--regenerating-the-training-and-target-figures",
+   "file": "maintenance.md",
+   "volume": "main"
+  },
+  {
+   "number": "12.8.4",
+   "level": 3,
+   "kind": "subsection",
+   "title": "The publication record and its three identities",
+   "id": "c-maintenance--the-publication-record-and-its-three-identities",
+   "file": "maintenance.md",
+   "volume": "main"
+  },
+  {
+   "number": "12.8.5",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Updating the book",
+   "id": "c-maintenance--updating-the-book",
+   "file": "maintenance.md",
+   "volume": "main"
+  },
+  {
+   "number": "13",
+   "level": 1,
+   "kind": "chapter",
+   "title": "Prioritized implementation plan and extension interfaces",
+   "id": "c-plan",
+   "file": "plan.md",
+   "volume": "main"
+  },
+  {
+   "number": "13.1",
+   "level": 2,
+   "kind": "section",
+   "title": "Prioritized implementation plan",
+   "id": "c-plan--prioritized-implementation-plan",
+   "file": "plan.md",
+   "volume": "main"
+  },
+  {
+   "number": "13.1.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Purpose and scope",
+   "id": "c-plan--purpose-and-scope",
+   "file": "plan.md",
+   "volume": "main"
+  },
+  {
+   "number": "13.1.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Critical order",
+   "id": "c-plan--critical-order",
+   "file": "plan.md",
+   "volume": "main"
+  },
+  {
+   "number": "13.1.3",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Compact task index",
+   "id": "c-plan--compact-task-index",
+   "file": "plan.md",
+   "volume": "main"
+  },
+  {
+   "number": "13.1.4",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Proposed owner decisions and external dependencies",
+   "id": "c-plan--proposed-owner-decisions-and-external-dependencies",
+   "file": "plan.md",
+   "volume": "main"
+  },
+  {
+   "number": "13.1.5",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Stopping and completion rules",
+   "id": "c-plan--stopping-and-completion-rules",
+   "file": "plan.md",
+   "volume": "main"
+  },
+  {
+   "number": "13.2",
+   "level": 2,
+   "kind": "section",
+   "title": "Extension interfaces",
+   "id": "c-plan--extension-interfaces",
+   "file": "plan.md",
+   "volume": "main"
+  },
+  {
+   "number": "13.2.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "The continuation interfaces that exist today",
+   "id": "c-plan--the-continuation-interfaces-that-exist-today",
+   "file": "plan.md",
+   "volume": "main"
+  },
+  {
+   "number": "13.2.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Code to extend",
+   "id": "c-plan--code-to-extend",
+   "file": "plan.md",
+   "volume": "main"
+  },
+  {
+   "number": "13.2.3",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Extending this version without losing comparability",
+   "id": "c-plan--extending-this-version-without-losing-comparability",
+   "file": "plan.md",
+   "volume": "main"
+  },
+  {
+   "number": "A",
+   "level": 1,
+   "kind": "chapter",
+   "title": "All thirty datasets and all 522 feature records",
+   "id": "c-datasets",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.1",
+   "level": 2,
+   "kind": "section",
+   "title": "All thirty datasets at a glance",
+   "id": "c-datasets--all-thirty-datasets-at-a-glance",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.1.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Per-dataset summary",
+   "id": "c-datasets--per-dataset-summary",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.1.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Frozen dataset coverage",
+   "id": "c-datasets--frozen-dataset-coverage",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.2",
+   "level": 2,
+   "kind": "section",
+   "title": "Regression datasets",
+   "id": "c-datasets--regression-datasets",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.2.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "197_cpu_act",
+   "id": "c-datasets--197_cpu_act",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.2.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "225_puma8NH",
+   "id": "c-datasets--225_puma8nh",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.2.3",
+   "level": 3,
+   "kind": "subsection",
+   "title": "230_machine_cpu",
+   "id": "c-datasets--230_machine_cpu",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.2.4",
+   "level": 3,
+   "kind": "subsection",
+   "title": "522_pm10",
+   "id": "c-datasets--522_pm10",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.2.5",
+   "level": 3,
+   "kind": "subsection",
+   "title": "529_pollen",
+   "id": "c-datasets--529_pollen",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.2.6",
+   "level": 3,
+   "kind": "subsection",
+   "title": "579_fri_c0_250_5",
+   "id": "c-datasets--579_fri_c0_250_5",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.2.7",
+   "level": 3,
+   "kind": "subsection",
+   "title": "auto_insurance_price",
+   "id": "c-datasets--auto_insurance_price",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.2.7.1",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Summary and feature statistics",
+   "id": "c-datasets--summary-and-feature-statistics",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.2.7.2",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Category frequencies",
+   "id": "c-datasets--category-frequencies",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.2.8",
+   "level": 3,
+   "kind": "subsection",
+   "title": "690_visualizing_galaxy",
+   "id": "c-datasets--690_visualizing_galaxy",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.2.9",
+   "level": 3,
+   "kind": "subsection",
+   "title": "712_chscase_geyser1",
+   "id": "c-datasets--712_chscase_geyser1",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.2.10",
+   "level": 3,
+   "kind": "subsection",
+   "title": "503_wind",
+   "id": "c-datasets--503_wind",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.3",
+   "level": 2,
+   "kind": "section",
+   "title": "Binary classification datasets",
+   "id": "c-datasets--binary-classification-datasets",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.3.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "breast_cancer_wisconsin_diagnostic",
+   "id": "c-datasets--breast_cancer_wisconsin_diagnostic",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.3.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "credit_approval_germany",
+   "id": "c-datasets--credit_approval_germany",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.3.2.1",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Summary and feature statistics",
+   "id": "c-datasets--summary-and-feature-statistics-1",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.3.2.2",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Category frequencies",
+   "id": "c-datasets--category-frequencies-1",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.3.3",
+   "level": 3,
+   "kind": "subsection",
+   "title": "congressional_voting_records",
+   "id": "c-datasets--congressional_voting_records",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.3.3.1",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Summary and feature statistics",
+   "id": "c-datasets--summary-and-feature-statistics-2",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.3.3.2",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Category frequencies",
+   "id": "c-datasets--category-frequencies-2",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.3.4",
+   "level": 3,
+   "kind": "subsection",
+   "title": "haberman",
+   "id": "c-datasets--haberman",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.3.5",
+   "level": 3,
+   "kind": "subsection",
+   "title": "ionosphere",
+   "id": "c-datasets--ionosphere",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.3.6",
+   "level": 3,
+   "kind": "subsection",
+   "title": "sonar",
+   "id": "c-datasets--sonar",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.3.6.1",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Summary, identities and class counts",
+   "id": "c-datasets--summary-identities-and-class-counts",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.3.6.2",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Feature statistics",
+   "id": "c-datasets--feature-statistics",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.3.7",
+   "level": 3,
+   "kind": "subsection",
+   "title": "spambase",
+   "id": "c-datasets--spambase",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.3.7.1",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Summary, identities and class counts",
+   "id": "c-datasets--summary-identities-and-class-counts-1",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.3.7.2",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Feature statistics",
+   "id": "c-datasets--feature-statistics-1",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.3.8",
+   "level": 3,
+   "kind": "subsection",
+   "title": "phoneme",
+   "id": "c-datasets--phoneme",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.3.9",
+   "level": 3,
+   "kind": "subsection",
+   "title": "tic_tac_toe",
+   "id": "c-datasets--tic_tac_toe",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.3.9.1",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Summary and feature statistics",
+   "id": "c-datasets--summary-and-feature-statistics-3",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.3.9.2",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Category frequencies",
+   "id": "c-datasets--category-frequencies-3",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.3.10",
+   "level": 3,
+   "kind": "subsection",
+   "title": "horse_colic_surgery",
+   "id": "c-datasets--horse_colic_surgery",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.3.10.1",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Summary and feature statistics",
+   "id": "c-datasets--summary-and-feature-statistics-4",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.3.10.2",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Category frequencies",
+   "id": "c-datasets--category-frequencies-4",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.4",
+   "level": 2,
+   "kind": "section",
+   "title": "Multiclass classification datasets",
+   "id": "c-datasets--multiclass-classification-datasets",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.4.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "iris",
+   "id": "c-datasets--iris",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.4.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "wine_recognition",
+   "id": "c-datasets--wine_recognition",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.4.3",
+   "level": 3,
+   "kind": "subsection",
+   "title": "car_evaluation",
+   "id": "c-datasets--car_evaluation",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.4.3.1",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Summary and feature statistics",
+   "id": "c-datasets--summary-and-feature-statistics-5",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.4.3.2",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Category frequencies",
+   "id": "c-datasets--category-frequencies-5",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.4.4",
+   "level": 3,
+   "kind": "subsection",
+   "title": "balance_scale",
+   "id": "c-datasets--balance_scale",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.4.4.1",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Summary and feature statistics",
+   "id": "c-datasets--summary-and-feature-statistics-6",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.4.4.2",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Category frequencies",
+   "id": "c-datasets--category-frequencies-6",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.4.5",
+   "level": 3,
+   "kind": "subsection",
+   "title": "dermatology",
+   "id": "c-datasets--dermatology",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.4.5.1",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Summary, identities and class counts",
+   "id": "c-datasets--summary-identities-and-class-counts-2",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.4.5.2",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Feature statistics",
+   "id": "c-datasets--feature-statistics-2",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.4.5.3",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Category frequencies",
+   "id": "c-datasets--category-frequencies-7",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.4.6",
+   "level": 3,
+   "kind": "subsection",
+   "title": "segmentation",
+   "id": "c-datasets--segmentation",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.4.7",
+   "level": 3,
+   "kind": "subsection",
+   "title": "vehicle",
+   "id": "c-datasets--vehicle",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.4.8",
+   "level": 3,
+   "kind": "subsection",
+   "title": "optdigits",
+   "id": "c-datasets--optdigits",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.4.8.1",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Summary, identities and class counts",
+   "id": "c-datasets--summary-identities-and-class-counts-3",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.4.8.2",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Feature statistics",
+   "id": "c-datasets--feature-statistics-3",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.4.8.3",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Category frequencies",
+   "id": "c-datasets--category-frequencies-8",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.4.9",
+   "level": 3,
+   "kind": "subsection",
+   "title": "penguins",
+   "id": "c-datasets--penguins",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.4.10",
+   "level": 3,
+   "kind": "subsection",
+   "title": "tae",
+   "id": "c-datasets--tae",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "A.5",
+   "level": 2,
+   "kind": "section",
+   "title": "Explicitly omitted or unknown statistics",
+   "id": "c-datasets--explicitly-omitted-or-unknown-statistics",
+   "file": "datasets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "B",
+   "level": 1,
+   "kind": "chapter",
+   "title": "Historical training, checkpoint lineage and original loss trajectories",
+   "id": "c-training-history",
+   "file": "training-history.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "B.1",
+   "level": 2,
+   "kind": "section",
+   "title": "Dated lineage and evidence coverage",
+   "id": "c-training-history--dated-lineage-and-evidence-coverage",
+   "file": "training-history.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "B.2",
+   "level": 2,
+   "kind": "section",
+   "title": "Legacy Python training: gen31 and round 1",
+   "id": "c-training-history--legacy-python-training-gen31-and-round-1",
+   "file": "training-history.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "B.2.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Gen31: fitting the objectives versus using the context",
+   "id": "c-training-history--gen31-fitting-the-objectives-versus-using-the-context",
+   "file": "training-history.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "B.2.1.1",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Epoch losses and the routing warning",
+   "id": "c-training-history--epoch-losses-and-the-routing-warning",
+   "file": "training-history.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "B.2.1.2",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Context advantage and ranking diagnostics",
+   "id": "c-training-history--context-advantage-and-ranking-diagnostics",
+   "file": "training-history.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "B.2.1.3",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Metric definitions and the v3.2 objective",
+   "id": "c-training-history--metric-definitions-and-the-v32-objective",
+   "file": "training-history.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "B.2.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Round 1 and the reported self-play ladder",
+   "id": "c-training-history--round-1-and-the-reported-self-play-ladder",
+   "file": "training-history.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "B.2.2.1",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Round-1 epochs and the gate receipt",
+   "id": "c-training-history--round-1-epochs-and-the-gate-receipt",
+   "file": "training-history.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "B.2.2.2",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "The reported generation-level loss and internal Elo",
+   "id": "c-training-history--the-reported-generation-level-loss-and-internal-elo",
+   "file": "training-history.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "B.3",
+   "level": 2,
+   "kind": "section",
+   "title": "Native training: the 108-block audit and the A100 recovery lineage",
+   "id": "c-training-history--native-training-the-108-block-audit-and-the-a100-recovery-lineage",
+   "file": "training-history.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "B.3.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "The September 11 native objective and 108 reset blocks",
+   "id": "c-training-history--the-september-11-native-objective-and-108-reset-blocks",
+   "file": "training-history.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "B.3.1.1",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Native architecture and objective",
+   "id": "c-training-history--native-architecture-and-objective",
+   "file": "training-history.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "B.3.1.2",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Endpoint measurements and parent regimes",
+   "id": "c-training-history--endpoint-measurements-and-parent-regimes",
+   "file": "training-history.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "B.3.1.3",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Adaptive validation observations",
+   "id": "c-training-history--adaptive-validation-observations",
+   "file": "training-history.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "B.3.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Fixed monitoring and actual promotion evidence",
+   "id": "c-training-history--fixed-monitoring-and-actual-promotion-evidence",
+   "file": "training-history.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "B.3.3",
+   "level": 3,
+   "kind": "subsection",
+   "title": "The complete A100 loss series: steps 6,001\u201369,000",
+   "id": "c-training-history--the-complete-a100-loss-series-steps-600169000",
+   "file": "training-history.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "B.3.3.1",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Source and extraction",
+   "id": "c-training-history--source-and-extraction",
+   "file": "training-history.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "B.3.3.2",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Within-block and boundary patterns",
+   "id": "c-training-history--within-block-and-boundary-patterns",
+   "file": "training-history.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "B.3.3.3",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Telemetry limits and the recovery boundary",
+   "id": "c-training-history--telemetry-limits-and-the-recovery-boundary",
+   "file": "training-history.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "B.3.4",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Carried state, accepted step 60,000 and RTX step 60,100",
+   "id": "c-training-history--carried-state-accepted-step-60000-and-rtx-step-60100",
+   "file": "training-history.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "B.3.4.1",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "A100 checkpoints and the accepted step 60,000",
+   "id": "c-training-history--a100-checkpoints-and-the-accepted-step-60000",
+   "file": "training-history.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "B.3.4.2",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "The RTX step 60,100 qualification run",
+   "id": "c-training-history--the-rtx-step-60100-qualification-run",
+   "file": "training-history.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "C",
+   "level": 1,
+   "kind": "chapter",
+   "title": "Historical GP targets, rankings, Elo and attribution limits",
+   "id": "c-gp-targets",
+   "file": "gp-targets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "C.1",
+   "level": 2,
+   "kind": "section",
+   "title": "Did GP targets get better?",
+   "id": "c-gp-targets--did-gp-targets-get-better",
+   "file": "gp-targets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "C.1.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Carried-forward scores and the admitted receipt inventory",
+   "id": "c-gp-targets--carried-forward-scores-and-the-admitted-receipt-inventory",
+   "file": "gp-targets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "C.1.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "First-to-last comparison at 1,000 evaluations",
+   "id": "c-gp-targets--first-to-last-comparison-at-1000-evaluations",
+   "file": "gp-targets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "C.1.3",
+   "level": 3,
+   "kind": "subsection",
+   "title": "The pine-chromium example, attribution limits and published data",
+   "id": "c-gp-targets--the-pine-chromium-example-attribution-limits-and-published-data",
+   "file": "gp-targets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "C.1.4",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Paired final-search outcomes within the admitted development inventory",
+   "id": "c-gp-targets--paired-final-search-outcomes-within-the-admitted-development-inventory",
+   "file": "gp-targets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "C.2",
+   "level": 2,
+   "kind": "section",
+   "title": "Existing historical rankings and Elo",
+   "id": "c-gp-targets--existing-historical-rankings-and-elo",
+   "file": "gp-targets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "C.2.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Retained snapshots and plot data",
+   "id": "c-gp-targets--retained-snapshots-and-plot-data",
+   "file": "gp-targets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "C.2.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Ranking figures: interpretation contract",
+   "id": "c-gp-targets--ranking-figures-interpretation-contract",
+   "file": "gp-targets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "C.2.3",
+   "level": 3,
+   "kind": "subsection",
+   "title": "SOTArena published and corrected ladders",
+   "id": "c-gp-targets--sotarena-published-and-corrected-ladders",
+   "file": "gp-targets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "C.2.3.1",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Historical benchmark-valid Elo",
+   "id": "c-gp-targets--historical-benchmark-valid-elo",
+   "file": "gp-targets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "C.2.3.2",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Why the two historical ladders differ",
+   "id": "c-gp-targets--why-the-two-historical-ladders-differ",
+   "file": "gp-targets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "C.2.4",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Historical same-cut screening and deepening",
+   "id": "c-gp-targets--historical-same-cut-screening-and-deepening",
+   "file": "gp-targets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "C.2.4.1",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Same-cut v1 and v2 snapshots with screen and deep Elo",
+   "id": "c-gp-targets--same-cut-v1-and-v2-snapshots-with-screen-and-deep-elo",
+   "file": "gp-targets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "C.2.4.2",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Historical relative loss and per-dataset rank",
+   "id": "c-gp-targets--historical-relative-loss-and-per-dataset-rank",
+   "file": "gp-targets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "C.2.5",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Historical production time and the supplied reference scenario",
+   "id": "c-gp-targets--historical-production-time-and-the-supplied-reference-scenario",
+   "file": "gp-targets.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "D",
+   "level": 1,
+   "kind": "chapter",
+   "title": "Dated data estate, recovery evidence and binary formats",
+   "id": "c-data-estate",
+   "file": "data-estate.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "D.1",
+   "level": 2,
+   "kind": "section",
+   "title": "Configured product stores and local roots",
+   "id": "c-data-estate--configured-product-stores-and-local-roots",
+   "file": "data-estate.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "D.1.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Access method, store defaults and path conventions",
+   "id": "c-data-estate--access-method-store-defaults-and-path-conventions",
+   "file": "data-estate.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "D.1.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Product S3 buckets",
+   "id": "c-data-estate--product-s3-buckets",
+   "file": "data-estate.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "D.1.3",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Product local roots and the local dataset cache",
+   "id": "c-data-estate--product-local-roots-and-the-local-dataset-cache",
+   "file": "data-estate.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "D.2",
+   "level": 2,
+   "kind": "section",
+   "title": "Additional archive, replica and custody metadata",
+   "id": "c-data-estate--additional-archive-replica-and-custody-metadata",
+   "file": "data-estate.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "D.2.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Additional and replica buckets",
+   "id": "c-data-estate--additional-and-replica-buckets",
+   "file": "data-estate.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "D.2.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Learning-store prefixes",
+   "id": "c-data-estate--learning-store-prefixes",
+   "file": "data-estate.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "D.2.3",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Versioning and Object Lock",
+   "id": "c-data-estate--versioning-and-object-lock",
+   "file": "data-estate.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "D.3",
+   "level": 2,
+   "kind": "section",
+   "title": "Additional host data roots",
+   "id": "c-data-estate--additional-host-data-roots",
+   "file": "data-estate.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "D.3.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Root inventory and totals",
+   "id": "c-data-estate--root-inventory-and-totals",
+   "file": "data-estate.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "D.3.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Filesystem capacity and dataset-shaped directories",
+   "id": "c-data-estate--filesystem-capacity-and-dataset-shaped-directories",
+   "file": "data-estate.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "D.4",
+   "level": 2,
+   "kind": "section",
+   "title": "Recorded copy and retention gaps",
+   "id": "c-data-estate--recorded-copy-and-retention-gaps",
+   "file": "data-estate.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "D.4.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Material without an established remote copy",
+   "id": "c-data-estate--material-without-an-established-remote-copy",
+   "file": "data-estate.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "D.4.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Recorded custody risks and disk capacity",
+   "id": "c-data-estate--recorded-custody-risks-and-disk-capacity",
+   "file": "data-estate.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "D.5",
+   "level": 2,
+   "kind": "section",
+   "title": "Recovery evidence: what is preserved, and what was lost",
+   "id": "c-data-estate--recovery-evidence-what-is-preserved-and-what-was-lost",
+   "file": "data-estate.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "D.5.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Lineages A and B and the staging store",
+   "id": "c-data-estate--lineages-a-and-b-and-the-staging-store",
+   "file": "data-estate.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "D.5.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Lineage-A selections, archives, lost records and exposed score tiers",
+   "id": "c-data-estate--lineage-a-selections-archives-lost-records-and-exposed-score-tiers",
+   "file": "data-estate.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "D.6",
+   "level": 2,
+   "kind": "section",
+   "title": "Retained corpus sizes",
+   "id": "c-data-estate--retained-corpus-sizes",
+   "file": "data-estate.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "D.6.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Six retained corpora",
+   "id": "c-data-estate--six-retained-corpora",
+   "file": "data-estate.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "D.6.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Snapshot 421 and snapshot 97 accounting",
+   "id": "c-data-estate--snapshot-421-and-snapshot-97-accounting",
+   "file": "data-estate.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "D.7",
+   "level": 2,
+   "kind": "section",
+   "title": "Binary format: the exact packed teaching record",
+   "id": "c-data-estate--binary-format-the-exact-packed-teaching-record",
+   "file": "data-estate.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "D.7.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Record layout",
+   "id": "c-data-estate--record-layout",
+   "file": "data-estate.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "D.7.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Packing semantics, legal sets and label policies",
+   "id": "c-data-estate--packing-semantics-legal-sets-and-label-policies",
+   "file": "data-estate.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "D.7.3",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Verified loading into seal-protected shared memory",
+   "id": "c-data-estate--verified-loading-into-seal-protected-shared-memory",
+   "file": "data-estate.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "D.7.4",
+   "level": 3,
+   "kind": "subsection",
+   "title": "What the accepted-corpus packing audit measured",
+   "id": "c-data-estate--what-the-accepted-corpus-packing-audit-measured",
+   "file": "data-estate.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "D.7.4.1",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Occupancy, padding and index size",
+   "id": "c-data-estate--occupancy-padding-and-index-size",
+   "file": "data-estate.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "D.7.4.2",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Compression, the proposed 180-byte layout and label precision",
+   "id": "c-data-estate--compression-the-proposed-180-byte-layout-and-label-precision",
+   "file": "data-estate.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E",
+   "level": 1,
+   "kind": "chapter",
+   "title": "Full task catalogue, source/schema index, receipts and glossary",
+   "id": "c-catalogue",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1",
+   "level": 2,
+   "kind": "section",
+   "title": "Primary acceptance items by stage",
+   "id": "c-catalogue--primary-acceptance-items-by-stage",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Stage 0: coordination, documentation and cross-cutting work",
+   "id": "c-catalogue--stage-0-coordination-documentation-and-cross-cutting-work",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1.1.1",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "LIFE-01 \u2014 coordination",
+   "id": "c-catalogue--life-01--coordination",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1.1.2",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "DOC-01 \u2014 manual",
+   "id": "c-catalogue--doc-01--manual",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1.1.3",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "DOC-02 \u2014 manual examples",
+   "id": "c-catalogue--doc-02--manual-examples",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1.1.4",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "DOC-03 \u2014 manual figures",
+   "id": "c-catalogue--doc-03--manual-figures",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1.1.5",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "DOC-04 \u2014 manual quality",
+   "id": "c-catalogue--doc-04--manual-quality",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1.1.6",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "DOC-05 \u2014 real training and target history",
+   "id": "c-catalogue--doc-05--real-training-and-target-history",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1.1.7",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "DOC-06 \u2014 versions, KPIs and continuation runbook",
+   "id": "c-catalogue--doc-06--versions-kpis-and-continuation-runbook",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1.1.8",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "INT-01 \u2014 serial integration",
+   "id": "c-catalogue--int-01--serial-integration",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1.1.9",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "INT-02 \u2014 integration qualification",
+   "id": "c-catalogue--int-02--integration-qualification",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1.1.10",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "IP-01 \u2014 public privacy boundaries",
+   "id": "c-catalogue--ip-01--public-privacy-boundaries",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1.1.11",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "MAINT-01 \u2014 broad diagnostic qualification",
+   "id": "c-catalogue--maint-01--broad-diagnostic-qualification",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Stage 1: correct benchmark integration",
+   "id": "c-catalogue--stage-1-correct-benchmark-integration",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1.2.1",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "BENCH-01 \u2014 frozen benchmark foundation",
+   "id": "c-catalogue--bench-01--frozen-benchmark-foundation",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1.2.2",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "BENCH-02 \u2014 external comparators",
+   "id": "c-catalogue--bench-02--external-comparators",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1.3",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Stage 2: shared execution and accounting",
+   "id": "c-catalogue--stage-2-shared-execution-and-accounting",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1.3.1",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "EXEC-01 \u2014 bounded workers",
+   "id": "c-catalogue--exec-01--bounded-workers",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1.3.2",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "EXEC-02 \u2014 fault regression tests",
+   "id": "c-catalogue--exec-02--fault-regression-tests",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1.3.3",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "EXEC-03 \u2014 receipt replay regression tests",
+   "id": "c-catalogue--exec-03--receipt-replay-regression-tests",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1.3.4",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "EXEC-04 \u2014 cutoff semantics regression",
+   "id": "c-catalogue--exec-04--cutoff-semantics-regression",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1.3.5",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "EXEC-05 \u2014 accounting and unknown outcomes",
+   "id": "c-catalogue--exec-05--accounting-and-unknown-outcomes",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1.4",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Stage 3: neural consumption and training",
+   "id": "c-catalogue--stage-3-neural-consumption-and-training",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1.4.1",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "NEURAL-01 \u2014 context qualification",
+   "id": "c-catalogue--neural-01--context-qualification",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1.4.2",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "TEACH-03 \u2014 real teacher collection",
+   "id": "c-catalogue--teach-03--real-teacher-collection",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1.4.3",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "TEACH-04 \u2014 real corpus materialization",
+   "id": "c-catalogue--teach-04--real-corpus-materialization",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1.4.4",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "TRAIN-01 \u2014 actual trainer tests",
+   "id": "c-catalogue--train-01--actual-trainer-tests",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1.4.5",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "TRAIN-02 \u2014 native supervised training",
+   "id": "c-catalogue--train-02--native-supervised-training",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1.4.6",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "TRAIN-03 \u2014 bounded real GPU training",
+   "id": "c-catalogue--train-03--bounded-real-gpu-training",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1.4.7",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "TRAIN-04 \u2014 checkpoint continuation and export",
+   "id": "c-catalogue--train-04--checkpoint-continuation-and-export",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1.4.8",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "NEURAL-02 \u2014 trained-checkpoint consumer readiness",
+   "id": "c-catalogue--neural-02--trained-checkpoint-consumer-readiness",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1.4.9",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "NEURAL-03 \u2014 live newly trained consumption",
+   "id": "c-catalogue--neural-03--live-newly-trained-consumption",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1.4.10",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "PACK-01 \u2014 packed training consumer and incremental loading",
+   "id": "c-catalogue--pack-01--packed-training-consumer-and-incremental-loading",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1.4.11",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "LOOP-01 \u2014 repeatable measured learning flywheel",
+   "id": "c-catalogue--loop-01--repeatable-measured-learning-flywheel",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1.5",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Stage 4: portable fitted inference",
+   "id": "c-catalogue--stage-4-portable-fitted-inference",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1.5.1",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "INFER-01 \u2014 fitted state and privacy",
+   "id": "c-catalogue--infer-01--fitted-state-and-privacy",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1.5.2",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "INFER-02 \u2014 exact selected-winner portability",
+   "id": "c-catalogue--infer-02--exact-selected-winner-portability",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1.5.3",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "FUTURE-01 \u2014 CUDA inference and serving promotion",
+   "id": "c-catalogue--future-01--cuda-inference-and-serving-promotion",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1.6",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Stage 5: installation and measured demonstration",
+   "id": "c-catalogue--stage-5-installation-and-measured-demonstration",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1.6.1",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "INSTALL-01 \u2014 private installation",
+   "id": "c-catalogue--install-01--private-installation",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1.6.2",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "INSTALL-02 \u2014 final input/runtime preparation",
+   "id": "c-catalogue--install-02--final-inputruntime-preparation",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1.6.3",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "DEMO-01 \u2014 measured warm fitted demonstration",
+   "id": "c-catalogue--demo-01--measured-warm-fitted-demonstration",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1.6.4",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "PANEL-01 \u2014 unchanged thirty-dataset campaign",
+   "id": "c-catalogue--panel-01--unchanged-thirty-dataset-campaign",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1.6.5",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "REPORT-01 \u2014 complete measured report",
+   "id": "c-catalogue--report-01--complete-measured-report",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1.7",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Stage 6: eligible optimization and reuse",
+   "id": "c-catalogue--stage-6-eligible-optimization-and-reuse",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1.7.1",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "TEACH-01 \u2014 HWM comparison identity",
+   "id": "c-catalogue--teach-01--hwm-comparison-identity",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1.7.2",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "TEACH-02 \u2014 label exposure readers",
+   "id": "c-catalogue--teach-02--label-exposure-readers",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1.7.3",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "MOTIF-01 \u2014 eligible reusable fragments",
+   "id": "c-catalogue--motif-01--eligible-reusable-fragments",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1.7.4",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "MOTIF-02 \u2014 reuse validation",
+   "id": "c-catalogue--motif-02--reuse-validation",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1.7.5",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "MOTIF-03 \u2014 new operators",
+   "id": "c-catalogue--motif-03--new-operators",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.1.7.6",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "FOCUS-01 \u2014 sustained single-dataset improvement",
+   "id": "c-catalogue--focus-01--sustained-single-dataset-improvement",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.2",
+   "level": 2,
+   "kind": "section",
+   "title": "Coordinated future backlog: 24 proposals",
+   "id": "c-catalogue--coordinated-future-backlog-24-proposals",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.2.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Documentation, onboarding and repository hygiene",
+   "id": "c-catalogue--documentation-onboarding-and-repository-hygiene",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.2.1.1",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Proposal HANDOFF-01",
+   "id": "c-catalogue--proposal-handoff-01",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.2.1.2",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Proposal HYG-01",
+   "id": "c-catalogue--proposal-hyg-01",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.2.1.3",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Proposal HELLO-01",
+   "id": "c-catalogue--proposal-hello-01",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.2.1.4",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Proposal B6-01",
+   "id": "c-catalogue--proposal-b6-01",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.2.1.5",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Proposal DOCFIX-01",
+   "id": "c-catalogue--proposal-docfix-01",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.2.1.6",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Proposal LAYOUT-01",
+   "id": "c-catalogue--proposal-layout-01",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.2.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Privacy and naming",
+   "id": "c-catalogue--privacy-and-naming",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.2.2.1",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Proposal IP-Q1",
+   "id": "c-catalogue--proposal-ip-q1",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.2.2.2",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Proposal IP-Q2",
+   "id": "c-catalogue--proposal-ip-q2",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.2.2.3",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Proposal IP-Q3",
+   "id": "c-catalogue--proposal-ip-q3",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.2.2.4",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Proposal IP-Q4",
+   "id": "c-catalogue--proposal-ip-q4",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.2.2.5",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Proposal IP-Q5",
+   "id": "c-catalogue--proposal-ip-q5",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.2.2.6",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Proposal NAME-01",
+   "id": "c-catalogue--proposal-name-01",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.2.3",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Data, teachers and training",
+   "id": "c-catalogue--data-teachers-and-training",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.2.3.1",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Proposal DATA-01",
+   "id": "c-catalogue--proposal-data-01",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.2.3.2",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Proposal DATA-02",
+   "id": "c-catalogue--proposal-data-02",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.2.3.3",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Proposal DATA-03",
+   "id": "c-catalogue--proposal-data-03",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.2.3.4",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Proposal TEACH-05",
+   "id": "c-catalogue--proposal-teach-05",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.2.3.5",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Proposal TRAIN-05",
+   "id": "c-catalogue--proposal-train-05",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.2.3.6",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Proposal HWM-01",
+   "id": "c-catalogue--proposal-hwm-01",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.2.4",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Evaluation, export, reuse and cost",
+   "id": "c-catalogue--evaluation-export-reuse-and-cost",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.2.4.1",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Proposal SEALED-01",
+   "id": "c-catalogue--proposal-sealed-01",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.2.4.2",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Proposal EMIT-01",
+   "id": "c-catalogue--proposal-emit-01",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.2.4.3",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Proposal INFER-03",
+   "id": "c-catalogue--proposal-infer-03",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.2.4.4",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Proposal EMIT-03",
+   "id": "c-catalogue--proposal-emit-03",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.2.4.5",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Proposal MOTIF-00",
+   "id": "c-catalogue--proposal-motif-00",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.2.4.6",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Proposal COST-01",
+   "id": "c-catalogue--proposal-cost-01",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.3",
+   "level": 2,
+   "kind": "section",
+   "title": "Planned execution and review ownership",
+   "id": "c-catalogue--planned-execution-and-review-ownership",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.4",
+   "level": 2,
+   "kind": "section",
+   "title": "Source index",
+   "id": "c-catalogue--source-index",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.4.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Current implementation references",
+   "id": "c-catalogue--current-implementation-references",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.4.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Pending source references",
+   "id": "c-catalogue--pending-source-references",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.5",
+   "level": 2,
+   "kind": "section",
+   "title": "Machine-readable companions",
+   "id": "c-catalogue--machine-readable-companions",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.5.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Companion files",
+   "id": "c-catalogue--companion-files",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.5.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Lossless evidence packaging",
+   "id": "c-catalogue--lossless-evidence-packaging",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.5.3",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Training-history and continuation companions",
+   "id": "c-catalogue--training-history-and-continuation-companions",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.5.3.1",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Companion inventory",
+   "id": "c-catalogue--companion-inventory",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.5.3.2",
+   "level": 4,
+   "kind": "sub-subsection",
+   "title": "Reusing the evidence",
+   "id": "c-catalogue--reusing-the-evidence",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.6",
+   "level": 2,
+   "kind": "section",
+   "title": "Receipts",
+   "id": "c-catalogue--receipts",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.6.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Important local receipts",
+   "id": "c-catalogue--important-local-receipts",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.6.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "The PR83 lifecycle record",
+   "id": "c-catalogue--the-pr83-lifecycle-record",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.7",
+   "level": 2,
+   "kind": "section",
+   "title": "Reproduction boundaries",
+   "id": "c-catalogue--reproduction-boundaries",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  },
+  {
+   "number": "E.8",
+   "level": 2,
+   "kind": "section",
+   "title": "Names and glossary",
+   "id": "c-catalogue--names-and-glossary",
+   "file": "catalogue.md",
+   "volume": "evidence"
+  }
+ ],
+ "figures": [
+  {
+   "number": "Figure 1.1",
+   "file": "status.md",
+   "src": "figures/current-origin-loss.png",
+   "caption": "Current operational proof: neural and generic development-hold RMSE (n = 34)"
+  },
+  {
+   "number": "Figure 2.1",
+   "file": "architecture.md",
+   "src": "figures/architecture-flow.svg",
+   "caption": "ASM implementation and pending learning loop"
+  },
+  {
+   "number": "Figure 4.1",
+   "file": "data.md",
+   "src": "figures/inventory-corpus.png",
+   "caption": "Corpus task counts and license metadata completeness"
+  },
+  {
+   "number": "Figure A.1",
+   "file": "datasets.md",
+   "src": "figures/inventory-frozen30.png",
+   "caption": "All thirty datasets: frozen rows and feature types"
+  },
+  {
+   "number": "Figure B.1",
+   "file": "training-history.md",
+   "src": "figures/training-gen31-loss.png",
+   "caption": "Fourteen original gen31 epoch summaries, including training and validation components"
+  },
+  {
+   "number": "Figure B.2",
+   "file": "training-history.md",
+   "src": "figures/training-gen31-quality.png",
+   "caption": "Gen31 recorded context advantage and ranking diagnostics"
+  },
+  {
+   "number": "Figure B.3",
+   "file": "training-history.md",
+   "src": "figures/training-legacy-round1-generations.svg",
+   "caption": "Legacy round-1 epoch measurements and reported generation-level loss and internal Elo; the generation panels reproduce reported paper summaries, not a replayed tournament"
+  },
+  {
+   "number": "Figure B.4",
+   "file": "training-history.md",
+   "src": "figures/training-historical-endpoints.png",
+   "caption": "First and last sampled minibatch measurements for each of 108 reset training blocks"
+  },
+  {
+   "number": "Figure B.5",
+   "file": "training-history.md",
+   "src": "figures/training-adaptive-validation.png",
+   "caption": "Adaptive validation observations from changing corpus and panel identities"
+  },
+  {
+   "number": "Figure B.6",
+   "file": "training-history.md",
+   "src": "figures/training-fixed-monitor.png",
+   "caption": "Fixed-corpus and fixed-panel historical checkpoint comparison"
+  },
+  {
+   "number": "Figure B.7",
+   "file": "training-history.md",
+   "src": "figures/training-a100-per-step.svg",
+   "caption": "Complete retained A100 history: 100-step training averages (upper) and adaptive checkpoint validation on changing panels (lower); the lower panel's decline mixes learning with panel changes and is not a generalization curve"
+  },
+  {
+   "number": "Figure B.8",
+   "file": "training-history.md",
+   "src": "figures/training-a100-checkpoints.png",
+   "caption": "Original A100 checkpoint validation measurements, with accepted step 60000 marked"
+  },
+  {
+   "number": "Figure B.9",
+   "file": "training-history.md",
+   "src": "figures/training-rtx60100-steps.png",
+   "caption": "All 100 original step measurements of the world-1 qualification run, a historical hardware continuation rather than a promotion, with the recorded resume boundary; the RTX 3090 attribution comes from ADR-0005, not from the run metadata"
+  },
+  {
+   "number": "Figure C.1",
+   "file": "gp-targets.md",
+   "src": "figures/target-quality-progress-counts.png",
+   "caption": "First-to-last carried-forward best scores at 1,000 evaluations; the arms share seeds. The 64 lower arm groups cover 23 distinct dataset/cuts. No arm group ended higher, so the \u201cLast higher\u201d legend entry has no bar."
+  },
+  {
+   "number": "Figure C.2",
+   "file": "gp-targets.md",
+   "src": "figures/target-quality-pine-example.png",
+   "caption": "Post-hoc pine-chromium cut 1 history with shared teachers: generic/shuffled record the final program outside their seeds at generation 42; all arms inherit it at generation 43."
+  },
+  {
+   "number": "Figure C.3",
+   "file": "gp-targets.md",
+   "src": "figures/fig01-elo-benchmark-valid.png",
+   "caption": "Historical benchmark-valid Elo ladder and complete rank distribution"
+  },
+  {
+   "number": "Figure C.4",
+   "file": "gp-targets.md",
+   "src": "figures/fig02-ladders-valid-vs-adaptive.png",
+   "caption": "Historical published and benchmark-valid ladders with their distinct eligibility"
+  },
+  {
+   "number": "Figure C.5",
+   "file": "gp-targets.md",
+   "src": "figures/fig03-samecut-deep-elo.png",
+   "caption": "Historical same-cut screen and deep Elo with coverage"
+  },
+  {
+   "number": "Figure C.6",
+   "file": "gp-targets.md",
+   "src": "figures/fig04-samecut-rmse-heatmap.png",
+   "caption": "Historical same-cut relative RMSE heatmap"
+  },
+  {
+   "number": "Figure C.7",
+   "file": "gp-targets.md",
+   "src": "figures/fig05-samecut-rank-distribution.png",
+   "caption": "Historical same-cut per-dataset rank distribution"
+  },
+  {
+   "number": "Figure C.8",
+   "file": "gp-targets.md",
+   "src": "figures/fig06-seconds-per-program.png",
+   "caption": "Historical program-production times on the favorable same-cut v2 test-10 selection; the one-hour/ten-million-token reference line is not measured"
+  }
+ ],
+ "aliases": {
+  "c-status--current-status-versions-north-star-and-measured-limitations": "c-status",
+  "c-architecture--architecture-encodings-gp-representation-and-model-lineages": "c-architecture",
+  "c-installation--installation-preparation-assets-workers-and-doctor": "c-installation",
+  "c-data--data-splits-groups-families-and-permitted-input-boundaries": "c-data",
+  "c-search--regression-search-fitting-prediction-and-focused-optimization": "c-search",
+  "c-teachers--teacher-admission-hwm-identities-and-corpus-updates": "c-teachers",
+  "c-training--training-continuation-export-and-compatibility": "c-training",
+  "c-learning--measuring-repeated-learning-and-deciding-improvement": "c-learning",
+  "c-inference--complete-fitted-inference-and-language-support": "c-inference",
+  "c-benchmark--benchmark-execution-ranking-elo-and-interpretation": "c-benchmark",
+  "c-scheduling--scheduling-cancellation-recovery-and-accounting": "c-scheduling",
+  "c-maintenance--maintenance-privacy-release-and-preservation": "c-maintenance",
+  "c-plan--prioritized-implementation-plan-and-extension-interfaces": "c-plan",
+  "c-datasets--all-thirty-datasets-and-all-522-feature-records": "c-datasets",
+  "c-training-history--historical-training-checkpoint-lineage-and-original-loss-trajectories": "c-training-history",
+  "c-gp-targets--historical-gp-targets-rankings-elo-and-attribution-limits": "c-gp-targets",
+  "c-data-estate--dated-data-estate-recovery-evidence-and-binary-formats": "c-data-estate",
+  "c-catalogue--full-task-catalogue-sourceschema-index-receipts-and-glossary": "c-catalogue",
+  "chapter-01": "c-status--reading-this-manual-audience-evidence-levels-and-figures",
+  "chapter-01-1": "c-status--reading-this-manual-audience-evidence-levels-and-figures",
+  "chapter-01-2": "c-status--the-proposed-north-star-and-matched-comparisons",
+  "chapter-01-3": "c-status--reading-this-manual-audience-evidence-levels-and-figures",
+  "chapter-01-4": "c-status--what-works-now",
+  "chapter-01-5": "c-scheduling--worked-example-cpu-wall-time-and-per-predictor-cost-of-the-one-dataset-proof",
+  "chapter-01-6": "c-scheduling--worked-example-cpu-wall-time-and-per-predictor-cost-of-the-one-dataset-proof",
+  "chapter-02": "c-architecture",
+  "chapter-02-1": "c-architecture",
+  "chapter-02-2": "c-architecture--system-at-a-glance-flow-diagram-and-component-map",
+  "chapter-02-3": "c-architecture--system-at-a-glance-flow-diagram-and-component-map",
+  "chapter-02-4": "c-architecture--the-learning-cycle-what-is-proven-and-what-remains",
+  "chapter-02-5": "c-architecture--checkpoint-binding-and-configuration",
+  "chapter-02-6": "c-architecture--original-data-and-preprocessing",
+  "chapter-02-7": "c-architecture--original-data-and-preprocessing",
+  "chapter-02-8": "c-architecture--component-dimensions-and-assembly",
+  "chapter-02-9": "c-architecture--qualification-and-admission",
+  "chapter-02-10": "c-installation--bundle-manifests-and-declared-asset-sizes",
+  "chapter-02-11": "c-architecture--experimental-classification-context",
+  "chapter-02-12": "c-search--proposal-generation-and-ranking",
+  "chapter-02-13": "c-training--compatibility-checks-and-fail-closed-rules",
+  "chapter-03": "c-installation--product-checkout-and-cli-evidence",
+  "chapter-03-1": "c-installation--product-checkout-and-cli-evidence",
+  "chapter-03-2": "c-installation--context-worker-contract",
+  "chapter-03-3": "c-installation--policy-producer-contract",
+  "chapter-03-4": "c-installation--physical-layout-and-identities",
+  "chapter-03-5": "c-installation--development-build-of-the-cli",
+  "chapter-03-6": "c-installation--prepare-and-verify-the-panel",
+  "chapter-03-7": "c-benchmark--preregistered-arms-and-per-task-scope",
+  "chapter-03-8": "c-scheduling--reading-stop-reasons-and-resuming",
+  "chapter-03-9": "c-search--generic-and-asm-demonstration-commands",
+  "chapter-03-10": "c-scheduling--counting-predictors-recipes-commands-and-export-cost",
+  "chapter-03-11": "c-maintenance--repository-authority-and-coordination",
+  "chapter-03-12": "c-catalogue--current-implementation-references",
+  "chapter-04": "c-training--what-can-be-claimed-now",
+  "chapter-04-1": "c-training--what-can-be-claimed-now",
+  "chapter-04-2": "c-training--evidence-and-identity-before-a-bounded-campaign",
+  "chapter-04-3": "c-scheduling--resource-policy-and-the-training-clock",
+  "chapter-04-4": "c-teachers--the-preregistered-freeze-and-train-side-inner-split",
+  "chapter-04-5": "c-teachers--present-teacher-readiness-and-the-smallest-real-path",
+  "chapter-04-6": "c-teachers--final-build-and-the-teaching-configuration",
+  "chapter-04-7": "c-training--build-the-real-corpus-from-admitted-evidence",
+  "chapter-04-8": "c-training--plan-run-resume-verify-and-export",
+  "chapter-04-9": "c-training--the-experimentalregression-configuration-entry",
+  "chapter-04-10": "c-scheduling--interrupted-attempts-and-proof-interpretation",
+  "chapter-04-11": "c-training--remaining-acceptance-queue-and-maintenance-risks",
+  "chapter-05": "c-architecture--gp-representation-recipes-fitted-predictors-and-the-four-artifact-types",
+  "chapter-05-1": "c-architecture--gp-representation-recipes-fitted-predictors-and-the-four-artifact-types",
+  "chapter-05-2": "c-inference--coverage-by-recipe-and-backend",
+  "chapter-05-3": "c-inference--coverage-by-recipe-and-backend",
+  "chapter-05-4": "c-inference--state-restrictions-beyond-the-head-table",
+  "chapter-05-5": "c-inference--external-winners",
+  "chapter-05-6": "c-inference--the-synthetic-fixture",
+  "chapter-05-7": "c-inference--example-b-actual-legacy-pipelinesearch-shape",
+  "chapter-05-8": "c-inference--export-commands-and-winner-selection",
+  "chapter-05-9": "c-inference--future-work-and-acceptance-boundaries",
+  "chapter-05-10": "c-inference--what-passed-and-what-was-measured",
+  "chapter-06": "c-benchmark--three-evidence-collections-with-different-purposes",
+  "chapter-06-1": "c-benchmark--three-evidence-collections-with-different-purposes",
+  "chapter-06-2": "c-data--the-frozen-thirty-dataset-panel-identity-totals-groups-and-immutability",
+  "chapter-06-3": "c-benchmark--metrics-and-class-order",
+  "chapter-06-4": "c-benchmark--the-bradleyterry-model-tie-rule-and-defaults",
+  "chapter-06-5": "c-gp-targets--ranking-figures-interpretation-contract",
+  "chapter-06-6": "c-scheduling--twenty-bounded-workers-resource-limits-and-supervision",
+  "chapter-06-7": "c-teachers--from-optimization-to-reusable-knowledge",
+  "chapter-07": "c-data",
+  "chapter-07-1": "c-data",
+  "chapter-07-2": "c-data--the-frozen-thirty-dataset-panel-identity-totals-groups-and-immutability",
+  "chapter-07-3": "c-data--local-preparation-and-panel-storage",
+  "chapter-07-4": "c-data-estate--access-method-store-defaults-and-path-conventions",
+  "chapter-07-5": "c-data-estate--additional-and-replica-buckets",
+  "chapter-07-6": "c-data-estate--root-inventory-and-totals",
+  "chapter-07-7": "c-data-estate--material-without-an-established-remote-copy",
+  "chapter-07-8": "c-data--catalog-composition-by-task",
+  "chapter-07-9": "c-scheduling--worked-example-cpu-wall-time-and-per-predictor-cost-of-the-one-dataset-proof",
+  "chapter-07-10": "c-gp-targets--retained-snapshots-and-plot-data",
+  "chapter-07-11": "c-benchmark--how-the-retained-elo-scale-is-constructed",
+  "chapter-08": "c-datasets--frozen-dataset-coverage",
+  "chapter-08-1": "c-datasets--frozen-dataset-coverage",
+  "chapter-08-2": "c-datasets--frozen-dataset-coverage",
+  "chapter-08-3": "c-data--licence-metadata-anomalies-and-the-corpus-figure",
+  "chapter-08-4": "c-gp-targets--ranking-figures-interpretation-contract",
+  "chapter-08-5": "c-gp-targets--historical-benchmark-valid-elo",
+  "chapter-08-6": "c-gp-targets--why-the-two-historical-ladders-differ",
+  "chapter-08-7": "c-gp-targets--same-cut-v1-and-v2-snapshots-with-screen-and-deep-elo",
+  "chapter-08-8": "c-gp-targets--historical-relative-loss-and-per-dataset-rank",
+  "chapter-08-9": "c-gp-targets--historical-production-time-and-the-supplied-reference-scenario",
+  "chapter-09": "c-maintenance--repository-authority-and-coordination",
+  "chapter-09-1": "c-maintenance--repository-authority-and-coordination",
+  "chapter-09-2": "c-maintenance--worktrees-and-builds",
+  "chapter-09-3": "c-scheduling--artifacts-what-evidence-to-retain",
+  "chapter-09-4": "c-maintenance--coverage-inventories-and-ci-lanes",
+  "chapter-09-5": "c-scheduling--shared-compute",
+  "chapter-09-6": "c-scheduling--recovery-phases",
+  "chapter-09-7": "c-maintenance--preservation-and-lane-closure",
+  "chapter-09-8": "c-maintenance--updating-the-book",
+  "chapter-10": "c-plan--purpose-and-scope",
+  "chapter-10-1": "c-plan--purpose-and-scope",
+  "chapter-10-2": "c-plan--critical-order",
+  "chapter-10-3": "c-catalogue--life-01--coordination",
+  "chapter-10-4": "c-catalogue--life-01--coordination",
+  "chapter-10-5": "c-catalogue--life-01--coordination",
+  "chapter-10-6": "c-catalogue--doc-01--manual",
+  "chapter-10-7": "c-catalogue--doc-02--manual-examples",
+  "chapter-10-8": "c-catalogue--doc-03--manual-figures",
+  "chapter-10-9": "c-catalogue--doc-04--manual-quality",
+  "chapter-10-10": "c-catalogue--int-01--serial-integration",
+  "chapter-10-11": "c-catalogue--int-02--integration-qualification",
+  "chapter-10-12": "c-catalogue--bench-01--frozen-benchmark-foundation",
+  "chapter-10-13": "c-catalogue--bench-02--external-comparators",
+  "chapter-10-14": "c-catalogue--exec-01--bounded-workers",
+  "chapter-10-15": "c-catalogue--exec-02--fault-regression-tests",
+  "chapter-10-16": "c-catalogue--exec-03--receipt-replay-regression-tests",
+  "chapter-10-17": "c-catalogue--exec-04--cutoff-semantics-regression",
+  "chapter-10-18": "c-catalogue--exec-05--accounting-and-unknown-outcomes",
+  "chapter-10-19": "c-catalogue--neural-01--context-qualification",
+  "chapter-10-20": "c-catalogue--teach-01--hwm-comparison-identity",
+  "chapter-10-21": "c-catalogue--teach-02--label-exposure-readers",
+  "chapter-10-22": "c-catalogue--teach-03--real-teacher-collection",
+  "chapter-10-23": "c-catalogue--teach-04--real-corpus-materialization",
+  "chapter-10-24": "c-catalogue--train-01--actual-trainer-tests",
+  "chapter-10-25": "c-catalogue--train-02--native-supervised-training",
+  "chapter-10-26": "c-catalogue--train-03--bounded-real-gpu-training",
+  "chapter-10-27": "c-catalogue--train-04--checkpoint-continuation-and-export",
+  "chapter-10-28": "c-catalogue--neural-02--trained-checkpoint-consumer-readiness",
+  "chapter-10-29": "c-catalogue--neural-03--live-newly-trained-consumption",
+  "chapter-10-30": "c-catalogue--infer-01--fitted-state-and-privacy",
+  "chapter-10-31": "c-catalogue--infer-02--exact-selected-winner-portability",
+  "chapter-10-32": "c-catalogue--install-01--private-installation",
+  "chapter-10-33": "c-catalogue--install-02--final-inputruntime-preparation",
+  "chapter-10-34": "c-catalogue--demo-01--measured-warm-fitted-demonstration",
+  "chapter-10-35": "c-catalogue--panel-01--unchanged-thirty-dataset-campaign",
+  "chapter-10-36": "c-catalogue--report-01--complete-measured-report",
+  "chapter-10-37": "c-catalogue--motif-01--eligible-reusable-fragments",
+  "chapter-10-38": "c-catalogue--motif-02--reuse-validation",
+  "chapter-10-39": "c-catalogue--motif-03--new-operators",
+  "chapter-10-40": "c-catalogue--ip-01--public-privacy-boundaries",
+  "chapter-10-41": "c-catalogue--maint-01--broad-diagnostic-qualification",
+  "chapter-10-42": "c-catalogue--future-01--cuda-inference-and-serving-promotion",
+  "chapter-10-43": "c-plan--stopping-and-completion-rules",
+  "chapter-10-44": "c-catalogue--doc-05--real-training-and-target-history",
+  "chapter-10-45": "c-catalogue--doc-05--real-training-and-target-history",
+  "chapter-10-46": "c-catalogue--doc-06--versions-kpis-and-continuation-runbook",
+  "chapter-10-47": "c-catalogue--pack-01--packed-training-consumer-and-incremental-loading",
+  "chapter-10-48": "c-catalogue--focus-01--sustained-single-dataset-improvement",
+  "chapter-10-49": "c-catalogue--loop-01--repeatable-measured-learning-flywheel",
+  "chapter-10-50": "c-catalogue--coordinated-future-backlog-24-proposals",
+  "chapter-10-51": "c-catalogue--proposal-handoff-01",
+  "chapter-10-52": "c-catalogue--proposal-hyg-01",
+  "chapter-10-53": "c-catalogue--proposal-hello-01",
+  "chapter-10-54": "c-catalogue--proposal-b6-01",
+  "chapter-10-55": "c-catalogue--proposal-ip-q1",
+  "chapter-10-56": "c-catalogue--proposal-ip-q1",
+  "chapter-10-57": "c-catalogue--proposal-ip-q3",
+  "chapter-10-58": "c-catalogue--proposal-ip-q4",
+  "chapter-10-59": "c-catalogue--proposal-ip-q3",
+  "chapter-10-60": "c-catalogue--proposal-ip-q1",
+  "chapter-10-61": "c-catalogue--proposal-handoff-01",
+  "chapter-10-62": "c-catalogue--proposal-docfix-01",
+  "chapter-10-63": "c-catalogue--proposal-data-02",
+  "chapter-10-64": "c-catalogue--proposal-data-03",
+  "chapter-10-65": "c-catalogue--proposal-teach-05",
+  "chapter-10-66": "c-catalogue--proposal-train-05",
+  "chapter-10-67": "c-catalogue--proposal-hwm-01",
+  "chapter-10-68": "c-catalogue--proposal-sealed-01",
+  "chapter-10-69": "c-catalogue--proposal-emit-01",
+  "chapter-10-70": "c-catalogue--proposal-infer-03",
+  "chapter-10-71": "c-catalogue--proposal-emit-03",
+  "chapter-10-72": "c-catalogue--proposal-motif-00",
+  "chapter-10-73": "c-catalogue--proposal-cost-01",
+  "chapter-10-74": "c-catalogue--proposal-layout-01",
+  "chapter-10-75": "c-plan--proposed-owner-decisions-and-external-dependencies",
+  "chapter-10-76": "c-catalogue--planned-execution-and-review-ownership",
+  "chapter-11": "c-status--implementation-snapshot-and-this-manuals-own-identity",
+  "chapter-11-1": "c-status--implementation-snapshot-and-this-manuals-own-identity",
+  "chapter-11-2": "c-catalogue--important-local-receipts",
+  "chapter-11-3": "c-catalogue--reproduction-boundaries",
+  "chapter-11-4": "c-maintenance--questions-that-should-remain-answerable-after-a-maintainer-handoff",
+  "chapter-11-5": "c-maintenance--questions-that-should-remain-answerable-after-a-maintainer-handoff",
+  "chapter-12": "c-datasets",
+  "chapter-12-1": "c-datasets--197_cpu_act",
+  "chapter-12-2": "c-datasets--225_puma8nh",
+  "chapter-12-3": "c-datasets--230_machine_cpu",
+  "chapter-12-4": "c-datasets--522_pm10",
+  "chapter-12-5": "c-datasets--529_pollen",
+  "chapter-12-6": "c-datasets--579_fri_c0_250_5",
+  "chapter-12-7": "c-datasets--summary-and-feature-statistics",
+  "chapter-12-8": "c-datasets--690_visualizing_galaxy",
+  "chapter-12-9": "c-datasets--712_chscase_geyser1",
+  "chapter-12-10": "c-datasets--503_wind",
+  "chapter-12-11": "c-datasets--breast_cancer_wisconsin_diagnostic",
+  "chapter-12-12": "c-datasets--summary-and-feature-statistics-1",
+  "chapter-12-13": "c-datasets--summary-and-feature-statistics-2",
+  "chapter-12-14": "c-datasets--haberman",
+  "chapter-12-15": "c-datasets--ionosphere",
+  "chapter-12-16": "c-datasets--summary-identities-and-class-counts",
+  "chapter-12-17": "c-datasets--summary-identities-and-class-counts-1",
+  "chapter-12-18": "c-datasets--phoneme",
+  "chapter-12-19": "c-datasets--summary-and-feature-statistics-3",
+  "chapter-12-20": "c-datasets--summary-and-feature-statistics-4",
+  "chapter-12-21": "c-datasets--iris",
+  "chapter-12-22": "c-datasets--wine_recognition",
+  "chapter-12-23": "c-datasets--summary-and-feature-statistics-5",
+  "chapter-12-24": "c-datasets--summary-and-feature-statistics-6",
+  "chapter-12-25": "c-datasets--summary-identities-and-class-counts-2",
+  "chapter-12-26": "c-datasets--segmentation",
+  "chapter-12-27": "c-datasets--vehicle",
+  "chapter-12-28": "c-datasets--summary-identities-and-class-counts-3",
+  "chapter-12-29": "c-datasets--penguins",
+  "chapter-12-30": "c-datasets--tae",
+  "chapter-13": "c-catalogue--current-implementation-references",
+  "chapter-13-1": "c-catalogue--current-implementation-references",
+  "chapter-13-2": "c-catalogue--pending-source-references",
+  "chapter-13-3": "c-catalogue--companion-files",
+  "chapter-13-4": "c-catalogue--lossless-evidence-packaging",
+  "chapter-13-5": "c-maintenance--rebuilding-the-book",
+  "chapter-13-6": "c-catalogue--companion-inventory",
+  "chapter-14": "c-learning--what-the-historical-training-and-target-evidence-establishes",
+  "chapter-14-1": "c-learning--what-the-historical-training-and-target-evidence-establishes",
+  "chapter-14-2": "c-training-history--epoch-losses-and-the-routing-warning",
+  "chapter-14-3": "c-training-history--epoch-losses-and-the-routing-warning",
+  "chapter-14-4": "c-training-history--round-1-epochs-and-the-gate-receipt",
+  "chapter-14-5": "c-training-history--native-architecture-and-objective",
+  "chapter-14-6": "c-training-history--fixed-monitoring-and-actual-promotion-evidence",
+  "chapter-14-7": "c-training-history--source-and-extraction",
+  "chapter-14-8": "c-training-history--a100-checkpoints-and-the-accepted-step-60000",
+  "chapter-14-9": "c-learning--what-is-still-needed-to-demonstrate-the-learning-flywheel",
+  "chapter-14-10": "c-catalogue--reusing-the-evidence",
+  "chapter-15": "c-learning--what-the-historical-training-and-target-evidence-establishes",
+  "chapter-15-1": "c-teachers--accounting-units",
+  "chapter-15-2": "c-data-estate--lineages-a-and-b-and-the-staging-store",
+  "chapter-15-3": "c-data-estate--six-retained-corpora",
+  "chapter-15-4": "c-gp-targets--carried-forward-scores-and-the-admitted-receipt-inventory",
+  "chapter-15-5": "c-gp-targets--paired-final-search-outcomes-within-the-admitted-development-inventory",
+  "chapter-15-6": "c-data-estate--record-layout",
+  "chapter-15-7": "c-data-estate--occupancy-padding-and-index-size",
+  "chapter-15-8": "c-teachers--the-two-device-caches-in-the-native-trainer",
+  "chapter-15-9": "c-teachers--python-training-input-and-the-pending-bounded-campaign",
+  "chapter-15-10": "c-teachers--concrete-corpus-improvements-with-acceptance-criteria",
+  "chapter-16": "c-status--the-identity-tuple",
+  "chapter-16-1": "c-status--the-identity-tuple",
+  "chapter-16-2": "c-status--the-identity-tuple",
+  "chapter-16-3": "c-plan--the-continuation-interfaces-that-exist-today",
+  "chapter-16-4": "c-plan--the-continuation-interfaces-that-exist-today",
+  "chapter-16-5": "c-training--variables-used-in-the-continuation-examples",
+  "chapter-16-6": "c-training--the-implemented-command-shape",
+  "chapter-16-7": "c-training--weight-warm-start-with-the-existing-cli",
+  "chapter-16-8": "c-training--the-pending-bounded-extension-path-sequence-and-limits",
+  "chapter-16-9": "c-learning--kpi-definitions",
+  "chapter-17": "c-learning--what-better-and-better-must-mean",
+  "chapter-17-1": "c-learning--what-better-and-better-must-mean",
+  "chapter-17-2": "c-learning--the-closure-ledger",
+  "chapter-17-3": "c-learning--freezing-the-experiment-and-choosing-families",
+  "chapter-17-4": "c-learning--distinguish-routing-ranking-and-search-recovery",
+  "chapter-17-5": "c-search--front-door-and-safe-metadata-checks",
+  "chapter-17-6": "c-search--required-inputs",
+  "chapter-17-7": "c-search--other-current-search-surfaces",
+  "chapter-17-8": "c-search--what-is-missing-for-a-sustained-incumbent-seeded-dataset-attack",
+  "chapter-17-9": "c-plan--code-to-extend",
+  "chapter-17-10": "c-learning--specialization-without-starving-the-general-learner",
+  "chapter-01-7": "c-status--pending-acceptance",
+  "chapter-01-8": "c-status--failure-records-are-retained",
+  "chapter-02-14": "c-benchmark--adaptive-development-exposure",
+  "chapter-06-8": "c-benchmark--minimum-complete-future-campaign-report",
+  "chapter-12-31": "c-datasets--explicitly-omitted-or-unknown-statistics",
+  "chapter-16-10": "c-plan--extending-this-version-without-losing-comparability"
+ }
+}

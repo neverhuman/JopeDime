@@ -19,6 +19,7 @@ publication.json supplies the publication record printed in the front matter.
 from __future__ import annotations
 
 import hashlib
+from datetime import datetime
 from html import escape
 import importlib.metadata
 import json
@@ -31,6 +32,7 @@ from urllib.parse import unquote, urlparse
 
 from bs4 import BeautifulSoup
 import markdown
+import pydyf
 from weasyprint import CSS, HTML, default_url_fetcher
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -61,6 +63,35 @@ def local_only(url: str, *args, **kwargs):
         # WeasyPrint logs and swallows fetch errors; retain them for the final gate.
         FETCH_FAILURES.append(str(error))
         raise
+
+
+def relative_links(pdf_names: list[str], counts: dict[str, int]):
+    """A write_pdf finisher. WeasyPrint writes every non-internal link as an absolute file:// URI,
+    which names the build directory and breaks once the PDFs move. A link into another volume
+    becomes a GoToR action naming that file and its named destination; any other local file link
+    becomes a URI relative to docs/, where the PDFs are published."""
+    def finish(document, pdf):
+        for obj in pdf.objects:
+            if not isinstance(obj, pydyf.Dictionary) or not isinstance(obj.get("A"), pydyf.Dictionary):
+                continue
+            action = obj["A"]
+            if action.get("S") != "/URI" or not action["URI"].string.startswith("file:"):
+                continue
+            parsed = urlparse(action["URI"].string)
+            path, fragment = Path(unquote(parsed.path)), parsed.fragment
+            if path.name in pdf_names and fragment:
+                obj["A"] = pydyf.Dictionary({"Type": "/Action", "S": "/GoToR", "F": pydyf.String(path.name), "D": pydyf.String(fragment), "NewWindow": "false"})
+                label = f"{path.name}#{fragment}"
+                counts["cross_volume"] += 1
+            else:
+                if not path.resolve().is_relative_to(DOCS):
+                    raise SystemExit(f"A link leaves the published docs directory: {path}")
+                label = os.path.relpath(path, DOCS) + (f"#{fragment}" if fragment else "")
+                action["URI"] = pydyf.String(label)
+                counts["local_relative"] += 1
+            if "Contents" in obj:
+                obj["Contents"] = pydyf.String(label)
+    return finish
 
 
 def github_slug(text: str, seen: dict[str, int]) -> str:
@@ -99,8 +130,28 @@ def load_book() -> dict:
 
 def main() -> None:
     FETCH_FAILURES.clear()
-    # fontTools otherwise stamps subset fonts with the rendering clock.
-    os.environ.setdefault("SOURCE_DATE_EPOCH", "1790121600")  # 2026-09-23 UTC
+    pub = json.loads((ROOT / "publication.json").read_text())
+    if pub.get("schema") != "asm-manual.publication/v1":
+        raise SystemExit("Invalid publication schema")
+    def timestamp(value):
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        if parsed.utcoffset() is None or parsed.utcoffset().total_seconds() != 0:
+            raise SystemExit("Publication timestamps must include UTC")
+        return parsed
+    build = timestamp(pub["build_utc"])
+    if pub["edition_date"] != build.date().isoformat():
+        raise SystemExit("Publication date differs from build timestamp")
+    imp = pub["implementation_snapshot"]
+    for key in ("source", "main", "tree"):
+        if not re.fullmatch(r"[0-9a-f]{40}", imp[key]):
+            raise SystemExit(f"Invalid implementation {key}")
+    if timestamp(imp["merged_utc"]) > build or not pub["qualification_observations"]:
+        raise SystemExit("Invalid publication observations")
+    for observation in pub["qualification_observations"]:
+        if timestamp(observation["observed_utc"]) > build or not observation["receipt"] or not observation["observation"]:
+            raise SystemExit("Invalid dated qualification observation")
+    # fontTools uses the declared build clock, not an inherited or hardcoded date.
+    os.environ["SOURCE_DATE_EPOCH"] = str(int(build.timestamp()))
 
     def inputs():
         paths = [p for p in sorted(ROOT.rglob("*")) if p.is_file() and p.suffix in {".md", ".json", ".jsonl", ".csv", ".py", ".css", ".png", ".svg", ".plist", ".gz", ".txt"} and p.name not in GENERATED]
@@ -116,6 +167,19 @@ def main() -> None:
     stems = {c["file"]: Path(c["file"]).stem for c in chapters}
     volume_specs = {"main": {"pdf": book.get("pdf", "asm-maintainer-manual.pdf"), "title": book["title"]}} | book.get("volumes", {})
     pdf_names = {key: spec["pdf"] for key, spec in volume_specs.items()}
+    if sorted(pub["pdfs"]) != sorted(pdf_names.values()) or len(set(pub["pdfs"])) != len(pub["pdfs"]):
+        raise SystemExit("Publication PDF inventory differs from book")
+    if any(Path(name).name != name or not name.endswith(".pdf") for name in pub["pdfs"]):
+        raise SystemExit("Publication PDF names must be local basenames")
+    if any(str(p.relative_to(DOCS)) not in pub["pdfs"] for p in DOCS.rglob("*.pdf")):
+        raise SystemExit("Undeclared PDF under docs/")
+    roadmap = json.loads((ROOT / "data/roadmap.json").read_text())
+    import plistlib
+    if roadmap != plistlib.loads((DOCS / "asm-maintainer-status.plist").read_bytes()):
+        raise SystemExit("Roadmap JSON and plist differ")
+    book["edition_line"] = f'Edition {pub["edition"]} · {pub["edition_date"]} · implementation {imp["main"][:12]}'
+    book["cover"]["bottom_lines"] = [book["edition_line"], f'{len(roadmap["items"])} primary acceptance items',
+        "Qualification observations and pending acceptance are recorded separately.", "See ASM at a glance in chapter 1."]
     volume_of = {c["file"]: c["volume"] for c in chapters}
 
     # Pass 1: parse, validate the hierarchy, number every heading and assign stable anchors.
@@ -188,7 +252,10 @@ def main() -> None:
 
     # Older destinations (edition-1 PDF anchors, earlier file names) keep resolving.
     alias_path = ROOT / "aliases.json"
-    published_aliases = json.loads(alias_path.read_text())["aliases"] if alias_path.exists() else {}
+    alias_record = json.loads(alias_path.read_text())
+    published_aliases = alias_record["aliases"]
+    if alias_record.get("unmapped") or len(published_aliases) != 266:
+        raise SystemExit("Expected all 266 published legacy destinations")
     for old, new in published_aliases.items():
         new = aliases.get(new, new)
         if new not in anchors:
@@ -226,7 +293,13 @@ def main() -> None:
                 if name in stems:
                     target = f"c-{stems[name]}" + (f"--{fragment}" if fragment else "")
             if target is None:
-                continue  # a local data or figure path, as in the chapter files
+                # A local data or figure path. Chapter files sit in sections/, so their links start
+                # with ../; the book resolves paths from the manual root, as it does for images.
+                if stem is not None and href.startswith("../"):
+                    link["href"] = href[3:]
+                if not (ROOT / unquote(link["href"].partition("#")[0])).resolve().exists():
+                    unresolved.append(f"{where}: {href} (no such local file)")
+                continue
             target = aliases.get(target, target)
             if target not in anchors:
                 unresolved.append(f"{where}: {href}")
@@ -331,6 +404,15 @@ def main() -> None:
         content.append(f'<section class="chapter companion" id="volume-{key}"><h1 class="volume-title" data-running="{escape(spec["label"])} · {escape(spec["title"])}"><span class="eyebrow">{escape(spec["label"])}</span>{escape(spec["title"])}</h1>'
                        f'<p class="companion-note">These appendices are published as <code>docs/{spec["pdf"]}</code>, with the same numbering and anchors; the entries link into that file. '
                        f'{escape(spec.get("note", ""))}</p>{rows}</section>')
+        # Keep every old Volume-1 URL reachable after content moves to Volume 2.
+        # Each landing has an explicit link to the exact semantic destination.
+        forwards = []
+        for old, target in sorted(published_aliases.items()):
+            if volume_of[anchors[target]["file"]] == key:
+                entry = anchors[target]
+                forwards.append(f'<li id="{escape(old)}"><a href="{spec["pdf"]}#{target}">{escape(old)} → {entry["number"]} {escape(entry["title"])}</a></li>')
+        if forwards:
+            content.append('<section class="chapter"><h1>Legacy destination index</h1><p>Published edition-1 links to evidence now land here. Follow the entry to Volume 2.</p><ul>' + ''.join(forwards) + '</ul></section>')
 
     # The publication record separates the three identities a reader must not conflate.
     record = ""
@@ -404,7 +486,7 @@ def main() -> None:
             text = re.sub(r"\]\(#([^)]+)\)", lambda m: f"](#{aliases.get(m.group(1), m.group(1)) if m.group(1) in aliases or m.group(1) in anchors else aliases.get(f'c-{stem}--{m.group(1)}', f'c-{stem}--{m.group(1)}')})", text)
             text = re.sub(r"\]\(([^)/#]+\.md)(#[^)]*)?\)", lambda m: f"](#{aliases.get(t := f'c-{stems[m.group(1)]}' + ('--' + m.group(2)[1:] if m.group(2) else ''), t)})" if m.group(1) in stems else m.group(0), text)
             combined.append(text)
-    (ROOT / "MANUAL.md").write_text(f"# {book['title']}\n\n{book['edition_line']}\n\n" + "\n\n---\n\n".join(combined) + "\n")
+    (ROOT / "MANUAL.md").write_text((f"# {book['title']}\n\n{book['edition_line']}\n\n" + "\n\n---\n\n".join(combined)).rstrip() + "\n")
     (ROOT / "structure.json").write_text(json.dumps({"schema": "asm-manual.structure/v2", "warnings": warnings, "headings": structure, "figures": figures, "aliases": aliases}, indent=1) + "\n")
 
     footer = CSS(string='@page { @bottom-left { content: "' + book["edition_line"].replace('"', "'") + '"; } }', url_fetcher=local_only)
@@ -415,12 +497,13 @@ def main() -> None:
         if FETCH_FAILURES:
             raise SystemExit(f"Incomplete rendering: {FETCH_FAILURES}")
         pdf = DOCS / pdf_names[key]
-        document.write_pdf(pdf, pdf_tags=True)
+        links = {"cross_volume": 0, "local_relative": 0}
+        document.write_pdf(pdf, pdf_tags=True, finisher=relative_links(list(pdf_names.values()), links))
         if FETCH_FAILURES:
             raise SystemExit(f"Incomplete PDF output: {FETCH_FAILURES}")
         if pdf.stat().st_size > PDF_LIMIT:
             raise SystemExit(f"{pdf.name} is {pdf.stat().st_size} bytes, above the repository's 5 MiB file limit")
-        written.append({"volume": key, "pdf": pdf.name, "pages": len(document.pages), "pdf_sha256": hashlib.sha256(pdf.read_bytes()).hexdigest(), "pdf_bytes": pdf.stat().st_size})
+        written.append({"volume": key, "pdf": pdf.name, "pages": len(document.pages), "pdf_sha256": hashlib.sha256(pdf.read_bytes()).hexdigest(), "pdf_bytes": pdf.stat().st_size, "rewritten_links": links})
     if before != inputs():
         raise SystemExit("Manual inputs changed during rendering; PDF is not qualified")
     fonts = []
