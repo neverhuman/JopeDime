@@ -179,3 +179,22 @@ The RTX run retains every metric record at steps 60,001–60,100. The exact 100-
 The final state records **world 1 × microbatch 256 × accumulation 8 = global batch 2,048**. ADR-0005 at `a75e543d2` describes this run as microbatch 32 × accumulation 8; the retained state corrects that. Documentation-correction PR86 (head `0079ceddb`), merged at 2026-09-24T00:04:12Z as main `2b375ef11`, appended the same correction to ADR-0005 as its “Implementation correction — 2026-09-23” section without rewriting its historical decision. Model digest changes from `053df4f5…` to `1f202cce…`; parameter digest changes from `9c7057e7…` to `762094a0…`; optimizer identity also changes. The final state is `745be4b5e998bce85615349a5b03b901cd8ad2cf605e6dce3b86fbf777cc7388`. These are retained training-update and continuation evidence, not a fresh numerical replay performed for this manual.
 
 The receipt commits 204,800 program presentations and zero fresh programs. Its purpose is explicitly “isolated unchanged-corpus hardware qualification, not production continuation outcomes.” Final adaptive validation NLL is 1.409792 and Bradley–Terry 0.475421, on 256 examples. Step 60,000's retained validation used a different panel and 2,048 examples; comparing those numbers as a paired improvement would be invalid. The checkpoint is not promoted by being 100 steps newer. Training further on one unchanged corpus is continuation, not a new generation. The recorded interruption and recovery after step 60,006 is also not evidence of an exact interrupted resume as the owner now defines it: that must reject optimizer fallback before any update and prove that the interrupted and uninterrupted runs reach the same state, and this manual has no such parity comparison for this run.
+
+
+## Current publication regeneration and provenance
+
+Edition 3 regenerated the seven retained-history figures and the 63,000-step SVG from the
+same authenticated observations. `data/historical-plot-provenance.json` records each figure’s
+source hashes, extraction/replay and plotting commands, coverage, units and interpretation
+limits. `tools/reextract_training_metrics.py --output NEW_CUSTODY_DIRECTORY` reproduces the
+3,218 original metric values and 78 checkpoint lineage rows using frozen row-selection metadata;
+it does not overwrite original records or invent missing observations. The A100 per-step
+extraction command remains in `data/per-step-history/README.md`. This rebuild rechecked all
+21 original A100 logs and all 82 retained historical sources. For the 108-block history,
+the original remote logs are represented only by their retained endpoint capture and recorded
+hashes; this is not a new independent recovery of those remote logs.
+
+All 63,000 step rows and 378,000 six-metric tokens matched their retained original logs.
+These are metadata reconstruction and plotting checks, not optimizer execution or new
+measurements. The new observed-transferable-lift KPI remains **not yet measured**
+([§](learning.md#observed-transferable-lift-reporting-contract-not-yet-measured)).

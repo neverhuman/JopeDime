@@ -1,18 +1,18 @@
 {
   "schema": "asm-manual.publication/v1",
-  "edition": 2,
+  "edition": 3,
   "edition_date": "2026-09-24",
-  "build_utc": "2026-09-24T05:38:41.158643+00:00",
+  "build_utc": "2026-09-24T17:12:56.946733+00:00",
   "pdfs": [
     "asm-maintainer-manual.pdf",
     "asm-evidence-reference.pdf"
   ],
   "implementation_snapshot": {
-    "source": "68f56404c3e199e06413bfd645d3fe0803d7b96f",
-    "main": "a75e543d2166017cb0139e0a251d51d9a0c98e08",
-    "tree": "176b75bc36d76c7ce4eaeb7234677ec013468889",
-    "merged_utc": "2026-09-23T16:34:47Z",
-    "note": "PR83 application snapshot retained by the historical chapters and roadmap. PR87 publication and PR88 source integration are separate later observations; this rebuild does not qualify a new learning run."
+    "source": "bce4791a8b2a67431da62f27da367b53bb9c48f9",
+    "main": "7f2b2bf860e4b1ac8815c8da55e507143570a905",
+    "tree": "870fa7d594997d21dc3dd5254ca5b1bc03f3afa6",
+    "merged_utc": "2026-09-24T17:10:23Z",
+    "note": "Current core-technology and transfer-reporting additions bind this merged source. Preserved historical chapters retain their explicitly dated PR83 snapshot; source and CPU fixture support do not establish live learning qualification."
   },
   "qualification_observations": [
     {
@@ -34,8 +34,27 @@
       "observation": "Later PR88 source integration: all eight exact-head manual CI lanes and aggregate passed; independent native approval and main-guard passed. This is outside the retained PR83 application snapshot and does not establish live learning qualification.",
       "observed_utc": "2026-09-24T05:12:05Z",
       "receipt": "https://github.com/veox-ai/JopeDime/actions/runs/35957350158"
+    },
+    {
+      "observation": "PR90 zero-fit transfer planning/reporting merged after all eight exact-head manual CI lanes and independent native approval. Global transferable lift remains not yet measured.",
+      "observed_utc": "2026-09-24T17:10:23Z",
+      "receipt": "https://github.com/veox-ai/JopeDime/pull/90"
+    },
+    {
+      "observation": "Latest retained completed full-main diagnostic at 5de90b1cc failed; preserved separately from exact-head fast CI. This rebuild does not relabel it passed.",
+      "observed_utc": "2026-09-24T06:23:44Z",
+      "receipt": "https://github.com/veox-ai/JopeDime/actions/runs/35962317775"
     }
   ],
   "observations_note": "Dated observations; a configured command, implemented source and live qualification are separate states.",
-  "build_note": "Build time is fixed by this manifest; render receipts bind all publication inputs and both output PDFs."
+  "build_note": "Build time is fixed by this manifest; render receipts bind all publication inputs and both output PDFs.",
+  "historical_implementation_snapshots": [
+    {
+      "source": "68f56404c3e199e06413bfd645d3fe0803d7b96f",
+      "main": "a75e543d2166017cb0139e0a251d51d9a0c98e08",
+      "tree": "176b75bc36d76c7ce4eaeb7234677ec013468889",
+      "merged_utc": "2026-09-23T16:34:47Z",
+      "note": "PR83 application snapshot retained by the historical chapters and roadmap. PR87 publication and PR88 source integration are separate later observations; this rebuild does not qualify a new learning run."
+    }
+  ]
 }

@@ -1,6 +1,6 @@
 # ASM — Maintainer and User Manual
 
-Edition 2 · 2026-09-24 · implementation a75e543d2166
+Edition 3 · 2026-09-24 · implementation 7f2b2bf860e4
 
 # Chapter 1 — Current status, versions, north star and measured limitations
 
@@ -281,13 +281,155 @@ Source: [workspace version](https://github.com/veox-ai/JopeDime/blob/68f56404c3e
 
 # Chapter 2 — Architecture, encodings, GP representation and model lineages
 
+<a id="c-architecture--explain-it-like-im-5-learning-to-suggest-better-recipes"></a>
+
+## 2.1 Explain it like I’m 5: learning to suggest better recipes
+
+Imagine a child learning to choose recipes for unfamiliar ingredients. The table of data is
+the ingredients. A small description says what those ingredients look like. The neural
+model reads that description and suggests recipes: perhaps clean the numbers, combine some
+columns, then fit a predictor. It suggests instructions; it does not already know the fitted
+answer for this table.
+
+We cook the recipes by actually fitting them. We test them on examples whose answers were
+withheld from that fit. Genetic programming (GP) changes promising recipes, or combines
+parts of them, and cooks the new versions too. A learned reward score helps choose what to
+try; only the real fitting and scoring tells us how a recipe performed.
+
+Some recipes become teaching examples, but only after the training-side admission rules
+check them. Neural training changes the model’s numerical weights so it can imitate useful
+recipes and rank candidates. We then ask the new model to suggest recipes for another
+measured search. A lower loss on the same objective and examples means a better fit to that lesson; it does not
+by itself mean it will cook better on a new table.
+
+Think of withheld answers as an exam. Practice answers may guide study. The exam answer key
+must stay outside every decision that chooses the recipe being tested. If we look at an exam
+score and change the recipe, that exam has become practice. The nested transfer audit gives
+each practice-side audit its own full search, then separately tests a full-training search
+on the outer exam. All predictions must be committed before anyone sees the round’s audit or outer scores.
+
+![Data, search, teaching and measurement boundaries](figures/ip-pipeline.svg)
+
+The diagram describes executable source responsibilities and the required measurement
+boundary. It does not claim that a new live learning loop has been qualified. Red paths are
+prohibited dependencies: outer answers must not reach context construction, search,
+teaching or optimizer updates; released results must not adapt unfinished folds.
+
+<a id="c-architecture--current-executable-pipeline-and-the-historical-snapshot"></a>
+
+## 2.2 Current executable pipeline and the historical snapshot
+
+This addition is pinned to merged measurement source `7f2b2bf860e4b1ac8815c8da55e507143570a905` (PR90).
+It refreshes the executable path while preserving the older sections and their anchors.
+The PR83 source narrative below is a **historical snapshot**: its “pending overlay” language
+is dated to that snapshot. Several of those source components have since merged, as the
+following map records. Implemented source, CPU fixtures, historical runs, live qualification
+and serving promotion remain separate claims.
+
+<a id="c-architecture--from-original-rows-to-a-conditional-program"></a>
+
+### 2.2.1 From original rows to a conditional program
+
+The native regression context producer uses only permitted fitting rows. Hyperion embeds
+feature rows into 128 values per row, then pools mean, population standard deviation and
+10th/90th percentiles into 512 values. Foundation consumes features **and permitted training
+labels**, producing 2048 values projected to 1024. The target encoder contributes 512.
+Frozen normalizations and clipping assemble a 2048-vector. Thus the configuration name
+`dataset_dim=1536` does not mean label-free: its Foundation block is target-conditioned.
+The source and numerical qualification details remain in [§](#c-architecture--component-dimensions-and-assembly).
+
+The accepted native model has width 512, six causal decoder layers, four attention heads
+and feed-forward width 2048. Its vocabulary projects to 401 output tokens from 657 embedding
+rows. Separate context MLPs map 2048→512→512 for decoding and reward. Decoding prepends a
+context token to program embeddings and adds positions; causal and padding-key masks prevent
+future-token/padding attention. A grammar mask limits each sampled token to legal continuations.
+A valid token sequence still needs executable-schema validation and an actual bounded fit.
+
+The reward path has a different representation: it averages non-padding program-token
+embeddings, without positions. For one context, reordering the same token multiset cannot
+create a different semantic reward representation. It combines that pooled vector with a
+context-gated product and an absolute-difference block, giving 3×width features to four
+reward heads. This learned ranking signal is not a measured RMSE. The runtime head applies
+softplus to predict a positive cost. The autoregressive decoder remains order-sensitive.
+
+![Accepted and experimental neural dimensions, attention and objectives](figures/policy-network.svg)
+
+<a id="c-architecture--from-program-candidates-to-eligible-teachers"></a>
+
+### 2.2.2 From program candidates to eligible teachers
+
+`crates/jope-policy/src/decode.rs` and `ranking.rs` produce and rank a grammar-constrained candidate
+pool. `crates/jope-pipeline/src/neural_search.rs` and the `jope-bench::panel` orchestration retain
+origin, ancestry, selection and resource identities. `feat-math` supplies typed variation
+and fitted preprocessing/predictors. Mutation and crossover operate on executable recipes;
+scoring evaluates retained predictions against the appropriate labels. A neural proposal,
+a mutated descendant and a generic candidate are distinct origins.
+
+`crates/jope-bench/src/panel/teaching.rs` now implements preregistration, admission and verification;
+`crates/jope-learning/src/eligibility.rs` supplies the guard. Admission uses the fixed candidate’s
+complete train-side OOF comparison, including the trivial baseline and immutable comparison
+identity. Failed, incomplete or ineligible observations are not quietly relabeled teachers.
+That fixed-program evidence serves teaching. The new transfer procedure audit instead
+repeats selection independently inside each fold; these receipts are not interchangeable.
+
+<a id="c-architecture--from-teachers-to-changed-parameters-and-another-measured-search"></a>
+
+### 2.2.3 From teachers to changed parameters and another measured search
+
+`crates/jope-cli/src/train.rs` now exposes preparation/materialization, planning, run, resume,
+comparison and export. `python/src/jope/policy/training_campaign.py` supervises the bounded
+Python path. Its normal experimental configuration is width 256, two layers, four heads and
+feed-forward width 1024. Its input width is corpus/checkpoint-bound `dataset_dim + target_keep_dim`,
+including any permitted zero-tail pruning; it is not universally the native 2048. This is a newly initialized lineage, not a continuation of native
+512×6 step 60,000. Tiny 8×1 CPU smoke fixtures are a third configuration, not historical
+training evidence.
+
+`model_v3.py::loss_components` and `losses.py::kg_combine` implement supervised sequence
+negative log-likelihood, reward pairwise Bradley–Terry and listwise ranking terms, runtime
+Huber, stability BCE, a program-only ablation term and routing cross-entropy, subject to the
+selected profile and available supervision. Diagnostic listwise entropy is a baseline for
+interpreting cross-entropy, not a new measure of generalization. These are imitation and
+reward/ranking objectives; the implemented training path is not PPO or GRPO.
+
+`train_v3.py` runs backward passes and AdamW updates, retaining model/optimizer state,
+sampler/exposure information and proofs of actual update counts and parameter changes.
+`training_transition.py` binds corpus, optimizer and schedule invariants. The comparison
+path implements declared fresh/replay siblings and a replay-only control within their
+original windows; actual sampled exposure must be verified, not inferred from the nominal
+mixture. Resume is not permission to reset a deadline or silently replace replay supervision.
+
+A checkpoint file alone proves none of this. Verify committed updates, changed parameters,
+lineage and reload first; then compare the challenger with its parent by actual downstream
+fitting under one frozen protocol. `training_campaign.py` export verifies the campaign and
+marks the experimental bundle `serving_eligible: false`. It does not promote the accepted
+serving pointer. Native Candle-versus-tch policy numerical parity remains limited as recorded
+in [§](#c-architecture--decoder-and-reward-architecture); the source map is not a new parity qualification.
+
+<a id="c-architecture--from-a-fitted-predictor-to-deployable-code"></a>
+
+### 2.2.4 From a fitted predictor to deployable code
+
+The private recipe, fitted native state, emitted refitting recipe and fitted inference
+bundle remain four different artifacts ([§](#c-architecture--gp-representation-recipes-fitted-predictors-and-the-four-artifact-types)).
+`fitted_export.rs` prepares an allowlisted bundle and `fitted_export_run.rs` qualifies emitted
+predictions under the original limits. Match the raw input boundary, saved preprocessing and
+native predictions across supported backends. Successful source generation is not numerical
+qualification, and a qualified export is not evidence that training improved the policy.
+
+
+<a id="c-architecture--preserved-historical-chapter-snapshot"></a>
+
+## 2.3 Preserved historical chapter snapshot
+
+The following sections retain the original dated source narrative and evidence. The current-source additions above supersede implementation-status descriptions where explicitly stated.
+
 **Algorithm Synthesis Model (ASM) learns to generate and optimize executable algorithms from data.** The implementation combines a learned proposal policy with actual fitted evaluation and genetic variation. A generated program is a candidate recipe; a fitted predictor is that recipe plus the state learned from a specific training partition. A checkpoint is the proposal model. Those three artifacts have different identities and different evidence requirements.
 
 This chapter describes source commit `68f56404c3e199e06413bfd645d3fe0803d7b96f`, the reviewed PR83 head. PR83 merged on 2026-09-23 at 16:34:47Z as `main` commit `a75e543d2166017cb0139e0a251d51d9a0c98e08`, which has the same tree (`176b75bc36d76c7ce4eaeb7234677ec013468889`), so the current-source references below also describe `main`. As of 2026-09-23 about 23:55 UTC, the only later merge to `main` was PR85, edition 1 of this manual, which produced `main` `bdfc95c63d905c647e41175e79dc30cdc8600287` at 22:33:36 UTC. PR85 changed only files under `docs/` plus `README.md` and `AGENT_CHAT.md`, and no file under `crates/` or `python/`, so the source references below still describe `main`. Changes described as **pending training overlay** refer to the stopped 64-file custody patch `595824ef6eb8e15872be058668503cedad1dd9a5ff98ac4700c6f713251d384c`. That patch includes experimental regression consumption; it is not in this source commit. Current-source references below are repository paths with source line numbers. Overlay references are explicitly marked and use the stopped overlay's line numbers.
 
 <a id="c-architecture--system-at-a-glance-flow-diagram-and-component-map"></a>
 
-## 2.1 System at a glance: flow diagram and component map
+## 2.4 System at a glance: flow diagram and component map
 
 ![ASM implementation and pending learning loop](figures/architecture-flow.svg)
 
@@ -308,7 +450,7 @@ The ordinary CLI and `asm` feature graphs in the stopped follow-on were inspecte
 
 <a id="c-architecture--the-learning-cycle-what-is-proven-and-what-remains"></a>
 
-## 2.2 The learning cycle: what is proven and what remains
+## 2.5 The learning cycle: what is proven and what remains
 
 The most recent bounded origin proof at this source completed its run command in 239.143 seconds; independent report replay took 18.719 seconds. It demonstrated neural-origin fitting and evolution on one regression dataset, `230_machine_cpu`. On the same 34 held development rows the neural arm's refit scored an RMSE of 166.32 against 155.26 for the generic arm (`neural_win: false`). The arms had equal declared allowances, not equal fit time: context encoding and policy production ran inside the neural arm's clock, the neural arm stopped at its original deadline and the generic arm at its evaluation limit ([§](#c-scheduling--arm-order-and-clocks)). This one-dataset result is therefore not a matched quality comparison. It did not execute the complete thirty-dataset demonstration, create current eligible teachers, train a new policy, or qualify a newly trained policy for serving. [§](#c-status--canonical-proof-record-and-per-arm-facts) gives its exact receipts and denominators.
 
@@ -342,7 +484,7 @@ Remaining architectural acceptance includes real eligible-teacher collection, ac
 
 <a id="c-architecture--gp-representation-recipes-fitted-predictors-and-the-four-artifact-types"></a>
 
-## 2.3 GP representation: recipes, fitted predictors and the four artifact types
+## 2.6 GP representation: recipes, fitted predictors and the four artifact types
 
 The private program `(pipe X (standardize) (ridge))` is a small executable algorithm description. It takes a feature table, fits standardization from training rows, then fits a ridge-regression head. It is an ordered typed recipe, rather than an already fitted set of coefficients. A different transform or head changes the algorithm. GP search works within its admitted grammar and task constraints; the presence of a code emitter does not grant arbitrary-language or arbitrary-operator coverage.
 
@@ -355,15 +497,15 @@ Keep these artifact types distinct:
 
 <a id="c-architecture--encodings-and-the-proposal-context"></a>
 
-## 2.4 Encodings and the proposal context
+## 2.7 Encodings and the proposal context
 
 <a id="c-architecture--regression-context-production"></a>
 
-### 2.4.1 Regression context production
+### 2.7.1 Regression context production
 
 <a id="c-architecture--original-data-and-preprocessing"></a>
 
-#### 2.4.1.1 Original data and preprocessing
+#### 2.7.1.1 Original data and preprocessing
 
 The context input binds prepared-data hash, exact training-content hash, ordered fitting-row hash, cut identity and preprocessing hash. It requires at least eight training rows and a nonempty declared feature schema. Numeric versus categorical kinds come from the schema rather than guesses based on strings. Numeric nulls are imputed using training-only medians, with a zero fallback for an entirely missing column; the recorded training transform contains its fitted location/scale. For categories, every present string is a value, including empty text or strings spelling `NA` or `null`. Only an absent value is missing. Original target strings remain separately authenticated before numerical regression parsing.
 
@@ -371,7 +513,7 @@ This context preprocessing is for the proposal encoder. It does not authorize di
 
 <a id="c-architecture--component-dimensions-and-assembly"></a>
 
-#### 2.4.1.2 Component dimensions and assembly
+#### 2.7.1.2 Component dimensions and assembly
 
 The current CPU producer uses three components with fixed pretrained assets and fixed transforms:
 
@@ -389,7 +531,7 @@ The frozen numerical qualification contract is unchanged, but the implementation
 
 <a id="c-architecture--qualification-and-admission"></a>
 
-#### 2.4.1.3 Qualification and admission
+#### 2.7.1.3 Qualification and admission
 
 The CPU regression encoder has a stronger boundary than “the vector has 2048 values.” Eight fixed native-reference cases span two families and cuts 0–3. Qualification checks finite FP32 component and final-context values with maximum absolute difference at most 0.0003, exact asset/source/program identities, and actual bounded executions. Consumption binds those eight jobs plus the actual dataset context job: nine independently authenticated process proofs. The reference registry/index and transform hashes are pinned in source.
 
@@ -399,7 +541,7 @@ The eight retained reference outputs at source `68f56404` have final-context max
 
 <a id="c-architecture--experimental-classification-context"></a>
 
-### 2.4.2 Experimental classification context
+### 2.7.2 Experimental classification context
 
 Current source contains the pure class-partition context representation. The pending training overlay adds the bounded feature producer, process admission and operational proposal wiring. Classification does not parse class names as numbers or reuse the regression target encoder by ordinal coding.
 
@@ -411,11 +553,11 @@ At source `68f56404`, classification has no neural arm: planning records the acc
 
 <a id="c-architecture--the-accepted-regression-model-lineage-b-step-60000"></a>
 
-## 2.5 The accepted regression model: lineage B, step 60,000
+## 2.8 The accepted regression model: lineage B, step 60,000
 
 <a id="c-architecture--checkpoint-binding-and-configuration"></a>
 
-### 2.5.1 Checkpoint binding and configuration
+### 2.8.1 Checkpoint binding and configuration
 
 The accepted lineage is the recovered lineage-B step-60000 checkpoint. The binding verifies the state, original model, exported tensors, configuration, parameter digest and vocabulary. The rejected step-69000 identity is explicitly refused. A self-consistent receipt around unrelated weights cannot impersonate the accepted model. The model loader rejects missing, extra, incorrectly shaped or non-FP32 tensors.
 
@@ -441,7 +583,7 @@ Sources: `crates/jope-policy/src/config.rs:21`, `config.rs:39`, `crates/jope-pol
 
 <a id="c-architecture--decoder-and-reward-architecture"></a>
 
-### 2.5.2 Decoder and reward architecture
+### 2.8.2 Decoder and reward architecture
 
 The decoder and reward paths each encode context with a two-layer MLP: 2048→512, GELU, LayerNorm, 512→512, GELU, LayerNorm. The decoder prepends a projected context token to the token embeddings, adds positional embeddings, applies causal self-attention with padding-key masking through pre-normalized layers, normalizes the result and projects through the tied token embedding table narrowed to the output vocabulary.
 
@@ -455,7 +597,7 @@ Native source also contains an isolated experimental `OrderAwareRewardEncoder` (
 
 <a id="c-architecture--accepted-identities-and-the-product-restriction"></a>
 
-### 2.5.3 Accepted identities and the product restriction
+### 2.8.3 Accepted identities and the product restriction
 
 The source records these accepted identities:
 
@@ -472,7 +614,7 @@ The product restriction preserves the 401-token table while limiting executable 
 
 <a id="c-architecture--model-lineages"></a>
 
-## 2.6 Model lineages
+## 2.9 Model lineages
 
 A lineage is a chain of checkpoints sharing one architecture and parameter ancestry. A higher step number, a newer file or a shared vocabulary does not place a checkpoint in the accepted line. The table covers three lineage-B checkpoints and the planned experimental line, as of 2026-09-23 about 23:55 UTC.
 
@@ -1786,9 +1928,102 @@ The current source-only regression follow-on has an independent review with no c
 
 # Chapter 8 — Measuring repeated learning and deciding improvement
 
+<a id="c-learning--observed-transferable-lift-reporting-contract-not-yet-measured"></a>
+
+## 8.1 Observed transferable lift: reporting contract, not yet measured
+
+**Current global KPI: not yet measured.** Merged PR90 adds private zero-fit planning and
+retained-prediction reporting. This publication contains no new training campaign or
+untouched nested evaluation. Existing acceptance thresholds, LOOP-01 definitions and serving
+decisions remain unchanged. The older proposal sections below retain their dated scope.
+
+<a id="c-learning--what-the-two-measurements-mean"></a>
+
+### 8.1.1 What the two measurements mean
+
+For each dataset, outer fold and seed, compare the challenger with its parent. The audit
+component averages five gains, each measured by an independently repeated complete search
+using only that audit fold’s training complement, with inner selection confined there, before
+scoring its held-out audit rows. The outer component measures a separate complete search
+selected and fitted using the full outer training partition. Each gain is
+`(parent RMSE − challenger RMSE) / training-mean baseline RMSE`; the baseline is fitted only
+on that score’s permitted training rows. Average the five separately normalized audit gains,
+not their raw RMSEs divided by one pooled denominator.
+
+Take `q = min(audit gain, outer gain)` **before aggregation**. Average folds/seeds within each
+dataset, datasets within each family, then families equally. Display `100 × result`, in
+percentage points of baseline RMSE. A holdout-only gain receives no positive contribution;
+audit-only improvement also receives none. For units `(audit, outer) = (0.3, −0.1)` and
+`(−0.1, 0.3)`, the contribution remains −0.1, rather than becoming +0.1 by taking the minimum
+after pooling. These numbers illustrate the definition and are not experimental results.
+
+The headline is accompanied by both gains, parent/challenger absolute skill against the
+trivial predictor, worst-family degradation, three-way sign agreement, planned/valid
+coverage, family distributions and an audit-versus-outer scatter plot. If relative improvement
+exists without positive mean absolute skill on both components, it says **no absolute skill
+demonstrated**. Generic-search and fresh-versus-replay controls remain separate contrasts.
+
+<a id="c-learning--why-this-needs-a-new-frozen-evaluation"></a>
+
+### 8.1.2 Why this needs a new frozen evaluation
+
+Five outer folds and five training-side audit folds require **30 complete searches per
+arm/dataset/seed**, each with its own inner selection and final refit. Different folds may
+select different recipes. Re-scoring a previously selected winner, or selecting from an
+adaptively generated pool after the fact, does not satisfy this contract.
+
+The planner freezes checkpoints, procedure, controls, families, ordered rows/groups, folds,
+seeds, assets, source and resource estimates. Insufficient groups/resources remain explicit
+failures. Every planned prediction or terminal failure is committed before any audit or outer evaluation score
+is released. Inner candidate-selection scores remain available within their permitted search. Missing comparisons, contaminated exposure, invalid identities and zero/nonfinite
+baselines block a complete global score; they never disappear from the denominator.
+
+The existing thirty-dataset panel is adaptive development. It cannot become untouched by
+changing its label in a manifest. Checkpoint and encoder exposure are tracked separately;
+unknown historical exposure prevents an unseen-family claim. A trusted external release
+receipt must attest the admitted executor’s isolation and chronology. Hash verification
+checks bytes and declared dependencies; this reporting implementation does not establish
+the truth of an executor’s isolation claims or admit that future executor.
+
+<a id="c-learning--what-the-score-does-and-does-not-establish"></a>
+
+### 8.1.3 What the score does and does not establish
+
+This is a conservative descriptive score, not a confidence bound or proof of causality.
+Folds and seeds share data and are not independent statistical samples. Released outcomes
+become exposed development evidence when used to design subsequent work. The selection-bias
+problem is described by [Cawley and Talbot](https://www.jmlr.org/papers/v11/cawley10a.html),
+fold-dependence by [Bengio and Grandvalet](https://www.jmlr.org/papers/v5/grandvalet04a.html),
+and adaptive reuse by [Dwork et al.](https://arxiv.org/abs/1506.02629). These references motivate
+the precautions; they do not prove a special statistical guarantee for this minimum score.
+
+The CPU tests exercise arithmetic, evidence validation, coverage and a deterministic toy
+selection boundary. Changing its own scoring labels leaves the fixture’s frozen recipe and
+predictions unchanged. That test is not production executor qualification. See the private
+contract `docs/internal/transfer-measurement.md` and merged source `7f2b2bf860e4b1ac8815c8da55e507143570a905`.
+
+<a id="c-learning--reading-the-real-historical-plots-alongside-this-kpi"></a>
+
+### 8.1.4 Reading the real historical plots alongside this KPI
+
+The figures in [§](#c-training-history) retain the original observations and their hashes:
+63,000 A100 steps (6001–69000, not invented steps 1–6000), the separate 100-step RTX
+continuation, fixed-monitor comparisons and available conditional ranking/regret diagnostics.
+Training corpus, objective, lineage and validation-population boundaries stay visible.
+The fixed monitor is adaptive teaching evidence; decreasing training loss or ranking regret
+cannot substitute for the unmeasured nested transfer KPI. Raw histories remain intact; plotted
+bins are declared within-corpus summaries, with no interpolation across missing history.
+
+
+<a id="c-learning--preserved-historical-chapter-snapshot"></a>
+
+## 8.2 Preserved historical chapter snapshot
+
+The following sections retain the original dated source narrative and evidence. The current-source additions above supersede implementation-status descriptions where explicitly stated.
+
 <a id="c-learning--what-better-and-better-must-mean"></a>
 
-## 8.1 What “better and better” must mean
+## 8.3 What “better and better” must mean
 
 A genuine flywheel joins four measured improvements. GP finds a better executable teacher for an unchanged comparison. Training actually consumes that new information. The policy becomes better at proposing or ranking programs for the relevant dataset-and-split context. Finally, the next bounded GP search improves because of that policy. Each arrow needs its own evidence; a growing corpus, a saved checkpoint or a completed search cannot stand in for the whole chain.
 
@@ -1800,7 +2035,7 @@ An incumbent can improve monotonically under a fixed development objective while
 
 <a id="c-learning--what-the-historical-training-and-target-evidence-establishes"></a>
 
-## 8.2 What the historical training and target evidence establishes
+## 8.4 What the historical training and target evidence establishes
 
 ASM means **Algorithm Synthesis Model: learns to generate and optimize executable algorithms from data**. The repository has real historical neural training and real retained GP teaching corpora. It also has substantial uncompleted work before a newly bounded ASM learning campaign can establish useful improvement. These facts must be stated together. “Zero freshly admitted teachers under the new ASM admission guard” describes the new campaign's inspected readiness; it does **not** mean that JopeDime has never trained on real data, that the accepted policy is untrained, or that its historical ten-million-record corpora are synthetic.
 
@@ -1810,7 +2045,7 @@ The retained evidence shows both substantial historical training corpora and som
 
 <a id="c-learning--loop-01-the-central-regression-milestone"></a>
 
-## 8.3 LOOP-01: the central regression milestone
+## 8.5 LOOP-01: the central regression milestone
 
 LOOP-01 is the central regression product milestone. One LOOP-01 generation is the complete chain:
 
@@ -1833,7 +2068,7 @@ The current one-dataset origin proof, which closes context → proposal → fit 
 
 <a id="c-learning--lineages-continuation-names-and-generations"></a>
 
-### 8.3.1 Lineages, continuation names and generations
+### 8.5.1 Lineages, continuation names and generations
 
 The accepted **512×6 step-60,000** model of lineage B (width 512, six layers) remains the serving model and a report baseline. The pending campaign would start a separate line, **experimental regression lineage v1 (256×2, new initialization)**, planned and not yet trained: the width-256, two-layer Python model described in [§](#c-training--what-the-pending-campaign-trains). Its newly initialized model, `M_init`, is called `M0` only after it has actually trained on the first admitted corpus, `C0`. Step 60,100 is historical hardware continuation of step 60,000, and step 69,000 remains unaccepted ([§](#c-architecture--checkpoint-binding-and-configuration)); neither is a LOOP-01 generation. The two lines are compared only through matched downstream fits, never through loss values.
 
@@ -1841,7 +2076,7 @@ Every training attempt must declare one of four continuation names (proposed nam
 
 <a id="c-learning--two-controlled-rounds-within-the-existing-gpu-cap"></a>
 
-### 8.3.2 Two controlled rounds within the existing GPU cap
+### 8.5.2 Two controlled rounds within the existing GPU cap
 
 LOOP-01 calls for two linked controlled rounds. Each round (proposed) trains two sibling branches from one immutable parent model and optimizer state, under the round's original deadline:
 
@@ -1854,7 +2089,7 @@ The existing allocation gives the regression category at most 20 minutes of GPU 
 
 <a id="c-learning--the-closure-ledger"></a>
 
-## 8.4 The closure ledger
+## 8.6 The closure ledger
 
 | Link in the loop | Existing evidence | Remaining proof | Roadmap connection |
 | --- | --- | --- | --- |
@@ -1872,11 +2107,11 @@ The prefixes above refer to the detailed roadmap's existing workstreams; they ar
 
 <a id="c-learning--a-minimal-experiment-that-can-establish-learning"></a>
 
-## 8.5 A minimal experiment that can establish learning
+## 8.7 A minimal experiment that can establish learning
 
 <a id="c-learning--freezing-the-experiment-and-choosing-families"></a>
 
-### 8.5.1 Freezing the experiment and choosing families
+### 8.7.1 Freezing the experiment and choosing families
 
 Freeze the experiment before opening the run window: source and binaries, exact parent checkpoint, corpus membership, encoder and vocabulary, objective weights, optimizer carry policy, sampler, random streams, fit/search budgets and comparison metrics. Keep the accepted parent available as a control. A new objective, new encoding or incompatible optimizer state starts a new lineage; it must not inherit a misleading uninterrupted-step counter.
 
@@ -1884,7 +2119,7 @@ Use eligible teachers from independently identified training families. Keep fami
 
 <a id="c-learning--what-to-retain-for-each-cycle"></a>
 
-### 8.5.2 What to retain for each cycle
+### 8.7.2 What to retain for each cycle
 
 For each cycle, retain all of the following:
 
@@ -1900,13 +2135,13 @@ Two linked successful cycles are a practical demonstration of repeatability. The
 
 <a id="c-learning--the-proposed-preregistered-regression-decision"></a>
 
-### 8.5.3 The proposed preregistered regression decision
+### 8.7.3 The proposed preregistered regression decision
 
 This is the owner's proposed decision rule for LOOP-01 regression rounds. It is a proposal, not an achievement: no round has been judged by it. Preregister it, together with the monitor families, seeds, folds and trivial predictor, before any challenger is compared, and do not change it after seeing results.
 
 <a id="c-learning--family-normalized-gain"></a>
 
-#### 8.5.3.1 Family-normalized gain
+#### 8.7.3.1 Family-normalized gain
 
 For each monitor family, the gain is `g = (L_control − L_challenger) / L_trivial`.
 
@@ -1914,7 +2149,7 @@ For each monitor family, the gain is `g = (L_control − L_challenger) / L_trivi
 
 <a id="c-learning--round-thresholds"></a>
 
-#### 8.5.3.2 Round thresholds
+#### 8.7.3.2 Round thresholds
 
 A round shows a gain only if all of the following hold:
 
@@ -1928,13 +2163,13 @@ Round 2 uses monitor families separate from those of round 1.
 
 <a id="c-learning--baselines-stopping-and-reporting"></a>
 
-#### 8.5.3.3 Baselines, stopping and reporting
+#### 8.7.3.3 Baselines, stopping and reporting
 
 Generic search and the accepted step-60,000 model remain report baselines. A gain over the parent is a different claim from an advantage over generic search or over the product's accepted model. Stop the loop when there are no eligible discoveries, on an incompatibility, when there is no material gain, when the evidence is insufficient, or when the budget is exhausted. Preserve the best checkpoint and never promote to serving automatically. An unfunded round, or one with insufficient data, yields mechanical proof and descriptive results; its causal conclusion is "inconclusive", never an invented success.
 
 <a id="c-learning--distinguish-routing-ranking-and-search-recovery"></a>
 
-## 8.6 Distinguish routing, ranking and search recovery
+## 8.8 Distinguish routing, ranking and search recovery
 
 The learned route is a conditional distribution over executable program tokens given the dataset-and-target context. It is richer than selecting a fixed named estimator. The same model also supplies learned ranking signals. Its reward representation mean-pools independent token embeddings, a bag of actions, with no positional term: at `a75e543d2` both the Python model (`python/src/jope/policy/model_v3.py:399-404`) and the product's Rust port (`crates/jope-policy/src/model.rs:555-567`) compute a padding-masked mean. It has no learned representation of token order: for the same context, programs with the same token multiset have the same pooled representation in exact arithmetic. This limits ranking distinctions between programs whose execution differs only through token order; it does not remove order from the autoregressive proposal decoder. See [§](#c-architecture--decoder-and-reward-architecture); [§](#c-learning--conditioning-diagnostics-before-the-first-causal-experiment) proposes measuring its collisions before any architecture change.
 
@@ -1946,7 +2181,7 @@ Useful controls answer different questions: generic grammar sampling tests end-t
 
 <a id="c-learning--conditioning-diagnostics-before-the-first-causal-experiment"></a>
 
-## 8.7 Conditioning diagnostics before the first causal experiment
+## 8.9 Conditioning diagnostics before the first causal experiment
 
 These diagnostics ask whether the policy actually uses its dataset-and-split context. All are proposed and none has been measured. This manual proposes running them before the first causal LOOP-01 experiment, and keep every diagnostic substitution outside teacher admission: a program proposed or ranked under a substituted context never becomes a teacher.
 
@@ -1964,7 +2199,7 @@ Dense-width feasibility checks must use only permitted fitting information, keep
 
 <a id="c-learning--specialization-without-starving-the-general-learner"></a>
 
-## 8.8 Specialization without starving the general learner
+## 8.10 Specialization without starving the general learner
 
 One difficult dataset can produce many near-duplicate teachers. Count unique canonical programs, meaningful improvements and distinct contexts, not only serialized rows. Retain broader replay and family balance so a successful focused attack does not make the policy forget other problems. [§](#c-data-estate--packing-semantics-legal-sets-and-label-policies) describes how to share repeated contexts and immutable shards without losing original provenance.
 
@@ -1974,11 +2209,11 @@ If the target ratchet moves but fixed-monitor policy quality deteriorates, inves
 
 <a id="c-learning--a-kpi-ledger-with-defined-denominators"></a>
 
-## 8.9 A KPI ledger with defined denominators
+## 8.11 A KPI ledger with defined denominators
 
 <a id="c-learning--kpi-definitions"></a>
 
-### 8.9.1 KPI definitions
+### 8.11.1 KPI definitions
 
 These are proposed reporting definitions for acceptance, not a claim that every current report already emits every field. Preserve the fixed protocol where it already specifies a quantity. Additions must be preregistered before comparing challengers; do not change a definition after seeing results.
 
@@ -2002,7 +2237,7 @@ These are proposed reporting definitions for acceptance, not a claim that every 
 
 <a id="c-learning--win-counting-and-a-proposed-acceptance-record"></a>
 
-### 8.9.2 Win counting and a proposed acceptance record
+### 8.11.2 Win counting and a proposed acceptance record
 
 Define a dataset-level comparison using the protocol's frozen fold summary; retain fold-level results separately. Keep separate win columns for generic search, the previous checkpoint, and the best eligible frozen non-ASM comparator; the last column is PANEL-WINS as proposed in [§](#c-learning--kpi-definitions). A win against one reference is not automatically a win against the others. For the owner's goal of ten wins per task on the 30-dataset panel, each reference's denominator remains ten per task and all thirty outcomes are listed, including unavailable ones; meeting it in every task is a 30/30 sweep. It is a declared goal, not a promise. As of 2026-09-23 there is no completed full-panel result establishing those counts.
 
@@ -2035,7 +2270,7 @@ Retain the receipt path and content hash for each populated quantity, plus its u
 
 <a id="c-learning--what-is-still-needed-to-demonstrate-the-learning-flywheel"></a>
 
-## 8.10 What is still needed to demonstrate the learning flywheel
+## 8.12 What is still needed to demonstrate the learning flywheel
 
 The desired loop is concrete: a dataset and split produce verified encodings; conditioned policy proposals become real generation-zero fits; bounded GP/evolution produces eligible improved programs; the full comparison identity admits those programs as teaching targets; optimizer updates produce a new checkpoint; matched downstream fits show whether that new checkpoint proposes and searches better algorithms. Only then can a promotion change the serving pointer. [§](#c-teachers--a-dataset-is-not-one-training-example) and [§](#c-data-estate--binary-format-the-exact-packed-teaching-record) trace the historical input-to-target representation, and [§](#c-targets--did-gp-targets-get-better) separately reports observed adaptive target improvements in repeated searches with matching recorded comparison fields, including improvements in generic and shuffled arms. Those observations are largely carried-forward development scores from seed pools the arms share; they do not establish neural causality. [§](#c-learning--what-better-and-better-must-mean) defines the remaining current acceptance work.
 
@@ -4372,6 +4607,8 @@ Sealed target values, target distributions, class balance, feature distributions
 
 ---
 
+<a id="c-training-history"></a>
+
 # Appendix B — Historical training, checkpoint lineage and original loss trajectories
 
 The supplied CSVs retain original values, source file SHA-256, source path and line, and JSON Pointer where appropriate. There is no interpolation. Separate figures show different populations; joining them into one curve would erase changes in architecture, objective, corpus, sampler and validation protocol. The later recovery lineage has an independently audited, complete retained series of 63,000 per-step observations; the older 108-block capture retains only block endpoints.
@@ -4597,6 +4834,27 @@ The RTX run retains every metric record at steps 60,001–60,100. The exact 100-
 The final state records **world 1 × microbatch 256 × accumulation 8 = global batch 2,048**. ADR-0005 at `a75e543d2` describes this run as microbatch 32 × accumulation 8; the retained state corrects that. Documentation-correction PR86 (head `0079ceddb`), merged at 2026-09-24T00:04:12Z as main `2b375ef11`, appended the same correction to ADR-0005 as its “Implementation correction — 2026-09-23” section without rewriting its historical decision. Model digest changes from `053df4f5…` to `1f202cce…`; parameter digest changes from `9c7057e7…` to `762094a0…`; optimizer identity also changes. The final state is `745be4b5e998bce85615349a5b03b901cd8ad2cf605e6dce3b86fbf777cc7388`. These are retained training-update and continuation evidence, not a fresh numerical replay performed for this manual.
 
 The receipt commits 204,800 program presentations and zero fresh programs. Its purpose is explicitly “isolated unchanged-corpus hardware qualification, not production continuation outcomes.” Final adaptive validation NLL is 1.409792 and Bradley–Terry 0.475421, on 256 examples. Step 60,000's retained validation used a different panel and 2,048 examples; comparing those numbers as a paired improvement would be invalid. The checkpoint is not promoted by being 100 steps newer. Training further on one unchanged corpus is continuation, not a new generation. The recorded interruption and recovery after step 60,006 is also not evidence of an exact interrupted resume as the owner now defines it: that must reject optimizer fallback before any update and prove that the interrupted and uninterrupted runs reach the same state, and this manual has no such parity comparison for this run.
+
+
+<a id="c-training-history--current-publication-regeneration-and-provenance"></a>
+
+## B.4 Current publication regeneration and provenance
+
+Edition 3 regenerated the seven retained-history figures and the 63,000-step SVG from the
+same authenticated observations. `data/historical-plot-provenance.json` records each figure’s
+source hashes, extraction/replay and plotting commands, coverage, units and interpretation
+limits. `tools/reextract_training_metrics.py --output NEW_CUSTODY_DIRECTORY` reproduces the
+3,218 original metric values and 78 checkpoint lineage rows using frozen row-selection metadata;
+it does not overwrite original records or invent missing observations. The A100 per-step
+extraction command remains in `data/per-step-history/README.md`. This rebuild rechecked all
+21 original A100 logs and all 82 retained historical sources. For the 108-block history,
+the original remote logs are represented only by their retained endpoint capture and recorded
+hashes; this is not a new independent recovery of those remote logs.
+
+All 63,000 step rows and 378,000 six-metric tokens matched their retained original logs.
+These are metadata reconstruction and plotting checks, not optimizer execution or new
+measurements. The new observed-transferable-lift KPI remains **not yet measured**
+([§](#c-learning--observed-transferable-lift-reporting-contract-not-yet-measured)).
 
 
 ---
