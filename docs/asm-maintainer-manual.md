@@ -22,7 +22,7 @@ The retained recovery history includes all 63,000 reported steps from 6,001 thro
 | --- | --- |
 | [1 — Current status, versions, north star and measured limitations](internal/asm-manual/sections/status.md) | 1 |
 | [2 — Architecture, encodings, program representation and model lineages](internal/asm-manual/sections/architecture.md) | 1 |
-| [3 — How ASM works: data, encoding, model, GP, code, training and learning](internal/asm-manual/sections/deep-stack.md) | 1 |
+| [3 — How ASM works: the complete technical pipeline](internal/asm-manual/sections/deep-stack.md) | 1 |
 | [4 — Installation, preparation, assets, workers and doctor](internal/asm-manual/sections/installation.md) | 1 |
 | [5 — Data, splits, groups, families and permitted input boundaries](internal/asm-manual/sections/data.md) | 1 |
 | [6 — Regression search, fitting, prediction and focused optimization](internal/asm-manual/sections/search.md) | 1 |
