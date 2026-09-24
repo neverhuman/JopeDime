@@ -1,6 +1,8 @@
 # ASM maintainer and user manual
 
-**Private maintainer edition 2.** This manual distinguishes implemented behavior, measured qualification, historical results and pending acceptance. The [publication manifest](internal/asm-manual/publication.json) records the implementation snapshot, dated observations and document build independently.
+**Private maintainer edition 2, corrected after publication.** The core book preserves the PR83 implementation and dated follow-on observations. PR88 subsequently integrated the learning and delivery interfaces; see the [current integration runbook](experimental-learning-preparation.md). Source and CPU fixture support do not establish live learning qualification.
+
+**Publication record.** This manual distinguishes implemented behavior, measured qualification, historical results and pending acceptance. The [publication manifest](internal/asm-manual/publication.json) records the implementation snapshot, dated observations and document build independently.
 
 - [Read Volume 1: maintainer manual](asm-maintainer-manual.pdf).
 - [Read Volume 2: evidence reference](asm-evidence-reference.pdf).

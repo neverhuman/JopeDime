@@ -291,7 +291,7 @@
           "\"$J\" benchmark methods"
         ],
         "evidence": [
-          "Original panel SHA ba7dace4\u2026, 30 datasets, 10 per task, exact input-byte verification, native 17/5/4 recipes and 4 external families; alias/configuration inventory and unavailable reasons."
+          "Original panel SHA ba7dace4…, 30 datasets, 10 per task, exact input-byte verification, native 17/5/4 recipes and 4 external families; alias/configuration inventory and unavailable reasons."
         ],
         "command_status": "exact existing interfaces with declared placeholders"
       },
@@ -767,7 +767,7 @@
         ],
         "command_status": "exact existing interfaces with declared placeholders"
       },
-      "resource_budget": "One original 3600 seconds total window;\u22641200 seconds per category including both passes;one RTX 3090,20CPU,64 GiB,zero swap,1Torch thread;no exclusiveCPU CI overlap. Resume never resets.",
+      "resource_budget": "One original 3600 seconds total window;≤1200 seconds per category including both passes;one RTX 3090,20CPU,64 GiB,zero swap,1Torch thread;no exclusiveCPU CI overlap. Resume never resets.",
       "source_refs": [
         "python/src/jope/policy/training_campaign.py:780 (pending)",
         "sections/training.md#plan-run-resume-verify-and-export"
@@ -801,7 +801,7 @@
         ],
         "command_status": "exact existing interfaces with declared placeholders"
       },
-      "resource_budget": "One original 3600 seconds total window;\u22641200 seconds per category including both passes;one RTX 3090,20CPU,64 GiB,zero swap,1Torch thread;no exclusiveCPU CI overlap. Resume never resets.",
+      "resource_budget": "One original 3600 seconds total window;≤1200 seconds per category including both passes;one RTX 3090,20CPU,64 GiB,zero swap,1Torch thread;no exclusiveCPU CI overlap. Resume never resets.",
       "source_refs": [
         "python/src/jope/policy/training_campaign.py:1203 (pending)",
         "python/src/jope/policy/training_campaign.py:1303 (pending)"
@@ -1028,7 +1028,7 @@
       "workstream": "measured warm fitted demonstration",
       "priority": "P1",
       "severity": "required acceptance before completed delivery",
-      "current_evidence_level": "warmtargetadd-onprepared;historicalfirstfit\u224850.4s",
+      "current_evidence_level": "warmtargetadd-onprepared;historicalfirstfit≈50.4s",
       "status": "real trained warm proof pending",
       "pending_action": "Produce actual trained-neural and generic fitted artifacts, reloaded predictions, baseline/comparison and truthful target_met. Do not clip arm budgets to pass sixty seconds.",
       "dependencies": [
@@ -1356,7 +1356,7 @@
         "sections/training-history.md#dated-lineage-and-evidence-coverage",
         "sections/learning.md#what-the-historical-training-and-target-evidence-establishes"
       ],
-      "notes": "Added for the user\u2019s explicit training-history, continuation, flywheel and packing questions. No numerical work was launched to write this manual. Recovered 63,000 rows preserve 378,000 exact metric tokens; all 21 corpus blocks, 20 intervening boundaries and legacy internal-ladder limitations remain explicit.",
+      "notes": "Added for the user’s explicit training-history, continuation, flywheel and packing questions. No numerical work was launched to write this manual. Recovered 63,000 rows preserve 378,000 exact metric tokens; all 21 corpus blocks, 20 intervening boundaries and legacy internal-ladder limitations remain explicit.",
       "planned_owner": "Codex integration; Claude independent source/data cross-check"
     },
     {
@@ -1385,7 +1385,7 @@
         "sections/learning.md#what-better-and-better-must-mean",
         "sections/search.md#focused-single-dataset-search"
       ],
-      "notes": "Added for the user\u2019s explicit training-history, continuation, flywheel and packing questions. No numerical work was launched to write this manual.",
+      "notes": "Added for the user’s explicit training-history, continuation, flywheel and packing questions. No numerical work was launched to write this manual.",
       "planned_owner": "Codex integration; Claude independent source/data cross-check"
     },
     {
@@ -1414,7 +1414,7 @@
         "python/src/jope/policy/train_v3.py",
         "crates/jope-engine/src/teaching_store.rs"
       ],
-      "notes": "Added for the user\u2019s explicit training-history, continuation, flywheel and packing questions. No numerical work was launched to write this manual. Accepted-corpus metadata exposes 84.2701% token padding. A proposed 180-byte record must preserve the 128-token grammar via extension/fallback and qualify complete optimizer-input/RNG/continuation parity; compressed disk size is not host or GPU memory.",
+      "notes": "Added for the user’s explicit training-history, continuation, flywheel and packing questions. No numerical work was launched to write this manual. Accepted-corpus metadata exposes 84.2701% token padding. A proposed 180-byte record must preserve the 128-token grammar via extension/fallback and qualify complete optimizer-input/RNG/continuation parity; compressed disk size is not host or GPU memory.",
       "planned_owner": "Codex integration; Claude independent source/data cross-check"
     },
     {
@@ -1444,7 +1444,7 @@
         "crates/jope-bench/src/panel/origin_proof.rs",
         "crates/jope-pipeline/src/neural_search.rs"
       ],
-      "notes": "Added for the user\u2019s explicit training-history, continuation, flywheel and packing questions. No numerical work was launched to write this manual.",
+      "notes": "Added for the user’s explicit training-history, continuation, flywheel and packing questions. No numerical work was launched to write this manual.",
       "planned_owner": "Codex integration; Claude independent source/data cross-check"
     },
     {
@@ -1455,7 +1455,7 @@
       "severity": "central regression product milestone; an unfunded or inconclusive round is reported as such, and this item is not permission to expand campaign budgets",
       "current_evidence_level": "New complete improved-target-to-improved-search cycle not yet qualified",
       "status": "New complete improved-target-to-improved-search cycle not yet qualified",
-      "pending_action": "Demonstrate the regression chain new eligible target \u2192 actual exposure \u2192 changed parameters \u2192 compatible reload \u2192 improved fitted search \u2192 another new generation, over linked generations; two passes through one corpus are continuation, not two generations. Measure next-search benefit against both the parent checkpoint and generic search, keep the accepted 512\u00d76 step-60000 model separate from experimental regression lineage v1 (256\u00d72, new initialization), and never promote serving automatically.",
+      "pending_action": "Demonstrate the regression chain new eligible target → actual exposure → changed parameters → compatible reload → improved fitted search → another new generation, over linked generations; two passes through one corpus are continuation, not two generations. Measure next-search benefit against both the parent checkpoint and generic search, keep the accepted 512×6 step-60000 model separate from experimental regression lineage v1 (256×2, new initialization), and never promote serving automatically.",
       "dependencies": [
         "NEURAL-03",
         "TEACH-04",
@@ -1475,7 +1475,7 @@
         "sections/plan.md#the-continuation-interfaces-that-exist-today",
         "sections/learning.md#what-better-and-better-must-mean"
       ],
-      "notes": "Added for the user\u2019s explicit training-history, continuation, flywheel and packing questions. No numerical work was launched to write this manual. The owner\u2019s edition-2 direction (relayed 2026-09-23T22:22:38Z) makes this the central regression product milestone and raises it from P2 to P1 without changing its evidence level. The sibling fresh/replay allocation (25/75 fresh/replay versus replay-only, equal committed updates) is proposed, with no serving promotion.",
+      "notes": "Added for the user’s explicit training-history, continuation, flywheel and packing questions. No numerical work was launched to write this manual. The owner’s edition-2 direction (relayed 2026-09-23T22:22:38Z) makes this the central regression product milestone; to reflect that, this roadmap raises it from P2 to P1 without changing its evidence level. The sibling fresh/replay allocation (25/75 fresh/replay versus replay-only, equal committed updates) is proposed, with no serving promotion.",
       "planned_owner": "Codex integration; Claude independent source/data cross-check"
     }
   ],
@@ -1485,7 +1485,7 @@
     "all_six_original_stages_covered": true,
     "all_items_have_evidence_budget_refs": true
   },
-  "documentation_update": "PR83 main guard passed; named example qualification completed. Edition 1 of the manual merged through PR85 at 2026-09-23T22:33:36Z as main bdfc95c63d905c647e41175e79dc30cdc8600287 (exact-head CI 35927921851 attempt 1 and main-guard 35929010658 succeeded). Edition 2 is a local candidate; its rendering/publication evidence remains pending until its own exact-head CI and independent review.",
+  "documentation_update": "PR83 main guard passed; named example qualification completed. Edition 1 of the manual merged through PR85 at 2026-09-23T22:33:36Z as main bdfc95c63d905c647e41175e79dc30cdc8600287 (exact-head CI 35927921851 attempt 1 and main-guard 35929010658 succeeded). The documentation-correction PR86 (head 0079ceddb) merged at 2026-09-24T00:04:12Z as main 2b375ef11fc9298ffa67d4d03e0bb83053201802; main-guard 35936673729 passed. Edition 2 merged through PR87 at 2026-09-24T02:58:00Z as main 02c0bef6c81ab17e034daea308c1a0b5a7940467, after exact-head CI 35948653955 attempt 1 and independent native approval 5299139743. PR87 main-guard 35949456287 passed. PR88 later integrated the learning/delivery source at 2026-09-24T05:11:50Z as main 0fa1841834d1fc67535f021a91a1911a321e6363, with main-guard 35958877242 passed. Item evidence levels and pending labels below retain the explicitly pinned PR83/stopped-overlay snapshot; they are not a current-main capability inventory.",
   "coordinated_proposals": {
     "source_sha256": "334ae97446ef29963bce47582f1550c7d369f0b329ef143c128685991422ffd4",
     "status": "proposed follow-ons reconciled with the primary task list; not additional execution authorization",
@@ -1731,7 +1731,7 @@
         "overlap_with": [
           "FOCUS-01"
         ],
-        "disposition": "FOCUS-01 covers the user\u2019s focused-search need. Extra incumbent four-of-five-fold rule is a proposed policy, separate from required baseline admission."
+        "disposition": "FOCUS-01 covers the user’s focused-search need. Extra incumbent four-of-five-fold rule is a proposed policy, separate from required baseline admission."
       },
       {
         "id": "SEALED-01",
@@ -1963,7 +1963,7 @@
       }
     }
   },
-  "updated_utc": "2026-09-24T00:08:48.233990+00:00",
+  "updated_utc": "2026-09-24T05:16:02.695652+00:00",
   "primary_item_count": 43,
   "coordinated_proposal_count": 24
 }

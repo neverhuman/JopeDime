@@ -26,7 +26,7 @@ A concrete metadata binding in the accepted step-60000 corpus connects dataset `
 The learning chain is:
 
 1. Pin the raw dataset, family partition and actual fitting/development row assignments.
-2. Fit preprocessing and encoding only within the permitted input closure; pin their bytes and versions. The closure covers records, contexts, transforms and every asset; a forbidden descriptor is rejected before loading even when it would not be used ([§](data.md#audit-the-entire-input-closure-before-continuation)).
+2. Fit preprocessing and encoding only within the permitted input closure; pin their bytes and versions. The closure covers records, contexts, transforms and every asset, and a forbidden descriptor must be rejected before loading even when no admitted row uses it. At the retained PR83/stopped-overlay snapshot, that rejection is **proposed**: neither source rejects extra context-index entries, and the legacy trainer at `a75e543d2` stages every indexed context after only a digest and size check ([§](data.md#hashes-eligibility-and-the-complete-input-closure)).
 3. Generate a concrete executable program, fit it and retain its outcome, measurement, resource use and evaluator identity.
 4. Apply the declared admission policy; reject failed, incompatible, exposed or unsupported targets.
 5. Tokenize the exact program and retain original observations beside the training representation.
@@ -35,16 +35,16 @@ The learning chain is:
 
 A file at step 5 does not prove steps 6–7. Conversely, a lower optimizer loss does not establish better executable proposals.
 
-The chain yields four distinct claims, and the owner requires them to stay separate (relayed 2026-09-23T22:27:11Z). Each needs its own evidence; none implies another:
+The chain yields four distinct claims, and the owner requires them to stay separate (relayed 2026-09-23T22:27:11Z). Each needs its own evidence; none implies the next:
 
 | Claim | Established by | Not established by |
 | --- | --- | --- |
 | Eligible teacher | A record that passed the preregistered `jope.teaching-guard/v1` admission under its complete comparison identity (step 4) | A content hash, a saved recipe, a completed run or a historical HWM entry |
-| New discovery | An eligible program absent from the authenticated initial seed population, with its discovering arm, generation and first measurement retained ([§](learning.md#what-to-retain-for-each-cycle)) | A carried incumbent, a re-measured seed or a duplicate of an existing record |
-| Actually consumed information | Sampler and optimizer receipts showing the record in committed updates that changed parameters (step 6) | Corpus membership or a manifest row |
+| New discovery | A program absent from the authenticated initial seed population of the search that found it, with its discovering arm, generation and first measurement retained ([§](learning.md#what-to-retain-for-each-cycle)) | A carried incumbent, a re-measured seed or a duplicate of an existing record |
+| Actually consumed information | Sampler and optimizer receipts showing the record sampled in committed optimizer updates (step 6); changed parameters are a separate LOOP-01 link ([§](learning.md#loop-01-the-central-regression-milestone)) | Corpus membership or a manifest row |
 | Improved policy | A matched comparison of parent and challenger checkpoints with actually fitted proposals under the same protocol and budget (step 7; [§](learning.md#the-closure-ledger)) | A lower training loss, a new checkpoint file or the teacher's own development score |
 
-For the new ASM path none of the four is established yet: zero teachers have been admitted under the new contract ([§](#present-teacher-readiness-and-the-smallest-real-path)). Reporting the four separately is a **proposed** rule.
+For the new ASM path none of the four is established yet: zero teachers have been admitted under the new contract ([§](#present-teacher-readiness-and-the-smallest-real-path)), and the pending campaign records no initial-population or discovery identity. Reporting the four separately is a **proposed** rule.
 
 ## How a fitted recipe becomes an eligible teacher
 

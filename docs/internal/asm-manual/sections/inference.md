@@ -210,7 +210,7 @@ Evidence pins: `HANDOFF.json` SHA256 `a05e8a0e9f9430b0c71ff23c57e5e29532a61bbe11
 
 ## Example C: exact fitted winner export after pending integration
 
-This runbook is the route intended to meet the rule of [§](#deployment-support-definition-priority-and-status). Its commands exist only in stopped custody patch views, and none of it has been executed. Its runbook summary:
+This runbook is the route intended to meet the rule of [§](#deployment-support-definition-priority-and-status). At the PR83 snapshot, its two export commands, `benchmark export-winner` and `benchmark qualify-export`, existed only in stopped custody patch views; `benchmark report` existed at `a75e543d2`, but the `fitted_inference` section through which it reports export results existed only in those views. PR88 later integrated these interfaces and passed CPU fixture checks ([§](status.md#implementation-snapshot-and-this-manuals-own-identity)); real campaign winner export remains unqualified. Its runbook summary:
 
 | Runbook part | Example C: exact fitted winner export |
 |---|---|

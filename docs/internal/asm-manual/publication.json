@@ -2,17 +2,17 @@
   "schema": "asm-manual.publication/v1",
   "edition": 2,
   "edition_date": "2026-09-24",
-  "build_utc": "2026-09-24T02:39:08+00:00",
+  "build_utc": "2026-09-24T05:38:41.158643+00:00",
   "pdfs": [
     "asm-maintainer-manual.pdf",
     "asm-evidence-reference.pdf"
   ],
   "implementation_snapshot": {
-    "source": "0079ceddbaba739d736e80f6fe9b999955c4ad3a",
-    "main": "2b375ef11fc9298ffa67d4d03e0bb83053201802",
-    "tree": "01ecd51afc77e753ee4fe1f3fbe3c130803bbf43",
-    "merged_utc": "2026-09-24T00:04:12Z",
-    "note": "PR86 documentation corrections atop PR85 manual and PR83 implementation; this edition does not qualify a new learning run."
+    "source": "68f56404c3e199e06413bfd645d3fe0803d7b96f",
+    "main": "a75e543d2166017cb0139e0a251d51d9a0c98e08",
+    "tree": "176b75bc36d76c7ce4eaeb7234677ec013468889",
+    "merged_utc": "2026-09-23T16:34:47Z",
+    "note": "PR83 application snapshot retained by the historical chapters and roadmap. PR87 publication and PR88 source integration are separate later observations; this rebuild does not qualify a new learning run."
   },
   "qualification_observations": [
     {
@@ -24,6 +24,16 @@
       "observation": "Full-main diagnostic failed: eight families passed, two failed, one unavailable; retained separately from fast CI and learning qualification.",
       "observed_utc": "2026-09-24T00:31:10Z",
       "receipt": "https://github.com/veox-ai/JopeDime/actions/runs/35936673628"
+    },
+    {
+      "observation": "Edition 2 published through PR87 with exact-head CI and independent native approval; its main-guard passed.",
+      "observed_utc": "2026-09-24T02:58:17Z",
+      "receipt": "https://github.com/veox-ai/JopeDime/pull/87"
+    },
+    {
+      "observation": "Later PR88 source integration: all eight exact-head manual CI lanes and aggregate passed; independent native approval and main-guard passed. This is outside the retained PR83 application snapshot and does not establish live learning qualification.",
+      "observed_utc": "2026-09-24T05:12:05Z",
+      "receipt": "https://github.com/veox-ai/JopeDime/actions/runs/35957350158"
     }
   ],
   "observations_note": "Dated observations; a configured command, implemented source and live qualification are separate states.",
