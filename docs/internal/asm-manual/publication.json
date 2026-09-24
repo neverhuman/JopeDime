@@ -2,7 +2,7 @@
   "schema": "asm-manual.publication/v1",
   "edition": 3,
   "edition_date": "2026-09-24",
-  "build_utc": "2026-09-24T17:12:56.946733+00:00",
+  "build_utc": "2026-09-24T17:25:56.254571+00:00",
   "pdfs": [
     "asm-maintainer-manual.pdf",
     "asm-evidence-reference.pdf"

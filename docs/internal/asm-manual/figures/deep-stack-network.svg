@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 640" width="1000" height="640" font-family="DejaVu Sans, sans-serif">
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#333"/></marker></defs>
+<rect width="1000" height="640" fill="white"/>
+<text x="500" y="18" text-anchor="middle" font-size="12.5" font-weight="bold">Policy network (accepted lineage B, step 60,000): 27,796,494 parameters in 136 tensors</text>
+<rect x="250" y="32" width="500" height="58" rx="6" fill="#eaf0fa" stroke="#333" stroke-width="1.1"/>
+<text x="500.0" y="47" text-anchor="middle" font-weight="bold" font-size="11">Context vector: 2048 float32 (clipped to ±32)</text>
+<text x="500.0" y="62.0" text-anchor="middle" font-size="9.2">Hyperion 512 (features only) | Foundation 1024 (features + training targets) | Target 512</text>
+<text x="500.0" y="74.5" text-anchor="middle" font-size="9.2">config: dataset_dim 1536 + target_dim 512</text>
+<line x1="390" y1="90" x2="250" y2="118" stroke="#333" stroke-width="1.3" marker-end="url(#arrow)"/>
+<line x1="610" y1="90" x2="750" y2="118" stroke="#333" stroke-width="1.3" marker-end="url(#arrow)"/>
+<rect x="40" y="120" width="420" height="58" rx="6" fill="#e3f1e6" stroke="#333" stroke-width="1.1"/>
+<text x="250.0" y="135" text-anchor="middle" font-weight="bold" font-size="11">Context MLP (proposal)</text>
+<text x="250.0" y="150.0" text-anchor="middle" font-size="9.2">2048→512, GELU, LayerNorm, dropout, 512→512, GELU, LayerNorm</text>
+<text x="250.0" y="162.5" text-anchor="middle" font-size="9.2">then ctx_proj 512→512: the context becomes token 0</text>
+<line x1="250" y1="178" x2="250" y2="198" stroke="#333" stroke-width="1.3" marker-end="url(#arrow)"/>
+<rect x="40" y="200" width="420" height="58" rx="6" fill="#e3f1e6" stroke="#333" stroke-width="1.1"/>
+<text x="250.0" y="215" text-anchor="middle" font-weight="bold" font-size="11">Token + position embeddings</text>
+<text x="250.0" y="230.0" text-anchor="middle" font-size="9.2">token_emb 657×512 (vocab 401 + 256 spare rows)</text>
+<text x="250.0" y="242.5" text-anchor="middle" font-size="9.2">pos_emb 129×512 (context position + 128 tokens)</text>
+<line x1="250" y1="258" x2="250" y2="278" stroke="#333" stroke-width="1.3" marker-end="url(#arrow)"/>
+<rect x="40" y="280" width="420" height="86" rx="6" fill="#e3f1e6" stroke="#333" stroke-width="1.1"/>
+<text x="250.0" y="295" text-anchor="middle" font-weight="bold" font-size="11">6 × pre-norm decoder block</text>
+<text x="250.0" y="310.0" text-anchor="middle" font-size="9.2">LayerNorm → causal self-attention, 4 heads × 128 (packed QKV)</text>
+<text x="250.0" y="322.5" text-anchor="middle" font-size="9.2">mask: future positions and PAD keys hidden</text>
+<text x="250.0" y="335.0" text-anchor="middle" font-size="9.2">LayerNorm → feed-forward 512→2048→512</text>
+<text x="250.0" y="347.5" text-anchor="middle" font-size="9.2">residual connections; no cross-attention</text>
+<line x1="250" y1="366" x2="250" y2="386" stroke="#333" stroke-width="1.3" marker-end="url(#arrow)"/>
+<rect x="40" y="388" width="420" height="58" rx="6" fill="#e3f1e6" stroke="#333" stroke-width="1.1"/>
+<text x="250.0" y="403" text-anchor="middle" font-weight="bold" font-size="11">Output</text>
+<text x="250.0" y="418.0" text-anchor="middle" font-size="9.2">out_norm → logits = hidden · token_embᵀ (tied weights)</text>
+<text x="250.0" y="430.5" text-anchor="middle" font-size="9.2">narrowed to the 401 grammar tokens</text>
+<line x1="250" y1="446" x2="250" y2="466" stroke="#333" stroke-width="1.3" marker-end="url(#arrow)"/>
+<rect x="40" y="468" width="420" height="72" rx="6" fill="#e3f1e6" stroke="#333" stroke-width="1.1"/>
+<text x="250.0" y="483" text-anchor="middle" font-weight="bold" font-size="11">Grammar-constrained sampling</text>
+<text x="250.0" y="498.0" text-anchor="middle" font-size="9.2">illegal tokens masked; softmax(logits / T), default T = 1</text>
+<text x="250.0" y="510.5" text-anchor="middle" font-size="9.2">default 8 rounds × 128 rows (the origin proof ran 4 × 64)</text>
+<text x="250.0" y="523.0" text-anchor="middle" font-size="9.2">first 64 distinct valid programs + 16 exploration</text>
+<rect x="540" y="120" width="420" height="58" rx="6" fill="#e3f1e6" stroke="#333" stroke-width="1.1"/>
+<text x="750.0" y="135" text-anchor="middle" font-weight="bold" font-size="11">Context MLP (reward)</text>
+<text x="750.0" y="150.0" text-anchor="middle" font-size="9.2">same shape, separate weights → rz (512)</text>
+<text x="750.0" y="162.5" text-anchor="middle" font-size="9.2">used only for ranking, never for sampling</text>
+<rect x="540" y="200" width="420" height="72" rx="6" fill="#e3f1e6" stroke="#333" stroke-width="1.1"/>
+<text x="750.0" y="215" text-anchor="middle" font-weight="bold" font-size="11">Program summary g</text>
+<text x="750.0" y="230.0" text-anchor="middle" font-size="9.2">reward_token_emb 657×512, mean over non-PAD tokens</text>
+<text x="750.0" y="242.5" text-anchor="middle" font-size="9.2">no position term: order-blind (same token multiset,</text>
+<text x="750.0" y="255.0" text-anchor="middle" font-size="9.2">same score) → LayerNorm</text>
+<line x1="750" y1="178" x2="750" y2="198" stroke="#333" stroke-width="1.3" marker-end="url(#arrow)"/>
+<line x1="750" y1="272" x2="750" y2="292" stroke="#333" stroke-width="1.3" marker-end="url(#arrow)"/>
+<rect x="540" y="294" width="420" height="58" rx="6" fill="#e3f1e6" stroke="#333" stroke-width="1.1"/>
+<text x="750.0" y="309" text-anchor="middle" font-weight="bold" font-size="11">Interaction features φ (1536)</text>
+<text x="750.0" y="324.0" text-anchor="middle" font-size="9.2">[ g,  g ⊙ tanh(z_gamma(rz)),  |g − z_proj(rz)| ]</text>
+<text x="750.0" y="336.5" text-anchor="middle" font-size="9.2">three blocks of 512</text>
+<line x1="750" y1="352" x2="750" y2="372" stroke="#333" stroke-width="1.3" marker-end="url(#arrow)"/>
+<rect x="540" y="374" width="420" height="72" rx="6" fill="#e3f1e6" stroke="#333" stroke-width="1.1"/>
+<text x="750.0" y="389" text-anchor="middle" font-weight="bold" font-size="11">Heads</text>
+<text x="750.0" y="404.0" text-anchor="middle" font-size="9.2">4 reward heads: 1536→512→1; their mean ranks the 64 slots</text>
+<text x="750.0" y="416.5" text-anchor="middle" font-size="9.2">runtime head: softplus([rz, g] 1024→512→1)</text>
+<text x="750.0" y="429.0" text-anchor="middle" font-size="9.2">stability and ablation heads: trained, unused at inference</text>
+<rect x="540" y="468" width="420" height="72" rx="6" fill="#f1f1f1" stroke="#333" stroke-width="1.1"/>
+<text x="750.0" y="483" text-anchor="middle" font-weight="bold" font-size="11">What the scores are</text>
+<text x="750.0" y="498.0" text-anchor="middle" font-size="9.2">within-context ranking logits, not calibrated RMSE</text>
+<text x="750.0" y="510.5" text-anchor="middle" font-size="9.2">they order slots and record rank_log_weight;</text>
+<text x="750.0" y="523.0" text-anchor="middle" font-size="9.2">measured fits, not the model, pick GP parents</text>
+<text x="40" y="566" font-size="10" font-weight="bold">Parameters by group (computed from the tensor inventory in crates/jope-policy/src/model.rs)</text>
+<text x="40" y="582" font-size="9">context MLP (proposal): 1,313,792</text>
+<text x="40" y="595" font-size="9">context MLP (reward): 1,313,792</text>
+<text x="40" y="608" font-size="9">context prefix projection: 262,656</text>
+<text x="40" y="621" font-size="9">token + position embeddings: 402,432</text>
+<text x="40" y="634" font-size="9">decoder blocks (6): 18,914,304</text>
+<text x="370" y="582" font-size="9">output norm: 1,024</text>
+<text x="370" y="595" font-size="9">reward program embedding + norm: 337,408</text>
+<text x="370" y="608" font-size="9">context gate and projection: 525,312</text>
+<text x="370" y="621" font-size="9">4 reward heads: 3,149,828</text>
+<text x="370" y="634" font-size="9">runtime head: 525,313</text>
+<text x="700" y="582" font-size="9">unused at inference: stability, ablation, loss weights: 1,050,633</text>
+</svg>
