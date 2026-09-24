@@ -122,7 +122,15 @@ uv run --no-sync ruff format --check .
     # Pytest (xbabe2-only tests deselected)
 (
 cd python
-uv run --no-sync pytest -q tests ../benchmarks/test_prepare.py ../crates/jope-bench/adapters/test_panel.py -m "not xbabe2" -p no:cacheprovider --basetemp="$EVIDENCE/pytest-tmp" --junitxml="$EVIDENCE/junit.xml"
+# Upload expands pytest's directory symlinks, whereas receipt inventory does not.
+# Preserve the complete fixture tree in an archive without dereferencing links.
+pytest_fixtures="${EVIDENCE}-pytest-fixtures"
+pytest_status=0
+uv run --no-sync pytest -q tests ../benchmarks/test_prepare.py ../crates/jope-bench/adapters/test_panel.py -m "not xbabe2" -p no:cacheprovider --basetemp="$pytest_fixtures" --junitxml="$EVIDENCE/junit.xml" || pytest_status=$?
+if [ -d "$pytest_fixtures" ]; then
+    tar -czf "$EVIDENCE/pytest-fixtures.tar.gz" -C "$pytest_fixtures" .
+fi
+exit "$pytest_status"
 )
 python3 deploy/ci/training-proof.py python --junit "$EVIDENCE/junit.xml"
     ;;
