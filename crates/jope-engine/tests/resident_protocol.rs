@@ -1,5 +1,6 @@
 //! Synthetic process/socket tests; these do not initialize CUDA or qualify NCCL.
 use jope_parallel::checkpoint_recovery;
+use jope_parallel::corpus_projection;
 use jope_parallel::manifest;
 use jope_parallel::sealed_storage;
 use jope_parallel::task_contract;
@@ -224,6 +225,62 @@ fn proposal_run_seed_champion_and_teacher_labels_are_required_inputs() {
     )
     .unwrap();
     assert!(verify_request_inputs(&saved).is_err());
+}
+
+#[test]
+fn train_refuses_excluded_contexts_before_touching_them_while_proposal_is_unaffected() {
+    let d = tempfile::tempdir().unwrap();
+    let mut q = manifest_request(d.path());
+    let index_path = d.path().join("corpus/index.json");
+    let mut index: Value = read_json(&index_path).unwrap();
+    index["contexts"] = json!([{"partition":"meta_test","path":"excluded/context.json",
+        "sha256":"0".repeat(64),"prepared":"excluded","prepared_sha256":"0".repeat(64)}]);
+    write_json(&index_path, &index).unwrap();
+    let frozen = d.path().join("request.json");
+    let deadline = now_ms().unwrap() + 60_000;
+    std::os::unix::fs::symlink("missing-target", d.path().join("excluded")).unwrap();
+    let error = freeze_request(&frozen, q.clone(), deadline).unwrap_err();
+    assert!(error.to_string().contains("non-admitted context"));
+    assert!(error.to_string().ends_with("0: \"meta_test\""));
+    assert!(!frozen.exists());
+    fs::remove_file(d.path().join("excluded")).unwrap();
+    fs::create_dir_all(d.path().join("excluded")).unwrap();
+    fs::write(d.path().join("excluded/context.json"), b"context").unwrap();
+    fs::write(d.path().join("excluded/prepared.json"), b"prepared").unwrap();
+    let context = manifest::file_hash(&d.path().join("excluded/context.json")).unwrap();
+    let prepared = manifest::file_hash(&d.path().join("excluded/prepared.json")).unwrap();
+    index["contexts"][0]["sha256"] = json!(context);
+    index["contexts"][0]["prepared_sha256"] = json!(prepared);
+    write_json(&index_path, &index).unwrap();
+    assert!(freeze_request(&frozen, q.clone(), deadline)
+        .unwrap_err()
+        .to_string()
+        .contains("non-admitted context"));
+    checkpoint_fixture(d.path(), "checkpoint");
+    fs::write(d.path().join("corpus/labels.jsonl"), b"teacher labels").unwrap();
+    write_json(
+        &d.path().join("corpus/provenance.json"),
+        &json!({
+        "labels_sha256":manifest::file_hash(&d.path().join("corpus/labels.jsonl")).unwrap()}),
+    )
+    .unwrap();
+    fs::create_dir_all(d.path().join("proposal")).unwrap();
+    write_json(
+        &d.path().join("champions.json"),
+        &json!({"metadata":"same","genome":"first"}),
+    )
+    .unwrap();
+    let spec = json!({"proposal_seed":17,
+        "champion_snapshot_sha256":manifest::file_hash(&d.path().join("champions.json")).unwrap()});
+    write_json(&d.path().join("proposal/run.json"), &spec).unwrap();
+    q["task"] = json!({"kind":"Proposal","corpus":d.path().join("corpus"),
+        "checkpoint":"checkpoint","output":"proposal"});
+    q["env"] = json!({"JOPE_CHAMPION_SNAPSHOT":"champions.json"});
+    let saved = freeze_request(&frozen, q, deadline).unwrap();
+    for path in ["excluded/context.json", "excluded/prepared.json"] {
+        assert!(saved["input_artifacts"].get(path).is_some());
+    }
+    verify_request_inputs(&saved).unwrap();
 }
 
 #[test]
