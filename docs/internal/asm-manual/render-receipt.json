@@ -12,15 +12,15 @@
   "aliases": 285,
   "warnings": [],
   "pages": 170,
-  "pdf_sha256": "80cb3767e87c716a27eaa4c962a7706995791e3ac2b96494e863463de21dc0a6",
-  "pdf_bytes": 1782994,
+  "pdf_sha256": "72f2c01c5d3331e18a9ca9e0af95287f1f5f2a4f91dd597c2a7cc2e805a5a692",
+  "pdf_bytes": 1783303,
   "volumes": [
     {
       "volume": "main",
       "pdf": "asm-maintainer-manual.pdf",
       "pages": 170,
-      "pdf_sha256": "80cb3767e87c716a27eaa4c962a7706995791e3ac2b96494e863463de21dc0a6",
-      "pdf_bytes": 1782994,
+      "pdf_sha256": "72f2c01c5d3331e18a9ca9e0af95287f1f5f2a4f91dd597c2a7cc2e805a5a692",
+      "pdf_bytes": 1783303,
       "rewritten_links": {
         "cross_volume": 280,
         "local_relative": 0
@@ -30,8 +30,8 @@
       "volume": "evidence",
       "pdf": "asm-evidence-reference.pdf",
       "pages": 133,
-      "pdf_sha256": "76777a54cfa4f807c91517da611f738d373b61c8f216c1647007ed5e702c0730",
-      "pdf_bytes": 4597528,
+      "pdf_sha256": "08bb754d6356db9fb3345c0e629c18fdcc7a3c38228ae6d142f969b102eba237",
+      "pdf_bytes": 4597507,
       "rewritten_links": {
         "cross_volume": 96,
         "local_relative": 0
@@ -127,15 +127,15 @@
     },
     {
       "path": "internal/asm-manual/data/deep-stack/a100-fixed-monitor.csv",
-      "sha256": "d6de475ecd64f33c790dd8a6bd0d61462ec8c0eb58ea49a65c8b7b226ad9c56e"
+      "sha256": "bb3d5566654880b09e0e3bba8f1581e1059f44aa5e6b030329b116adf7bfda38"
     },
     {
       "path": "internal/asm-manual/data/deep-stack/a100-throughput-bins.csv",
-      "sha256": "b9347c32d0907a1a35e813e026b4fc108b2321e448af212909348b206b335c8f"
+      "sha256": "21b515aa4e6ea0bda578304bf77b7dd9f33769c9b18ecde4b87e3d991c7dcb0c"
     },
     {
       "path": "internal/asm-manual/data/deep-stack/a100-throughput-blocks.csv",
-      "sha256": "fe87b5424dad35cdb938a51cc50f024ae2a7104a553eff9d4ab6e292c0b3804d"
+      "sha256": "47aab59ad9c22725a44c84bb0f1bf55ea8666a1f9dcf7cdef48881cd289143fe"
     },
     {
       "path": "internal/asm-manual/data/deep-stack/extraction-manifest.json",
@@ -575,7 +575,7 @@
     },
     {
       "path": "internal/asm-manual/figures/deep-stack-figure-receipt.json",
-      "sha256": "a7c06f990a695d4c0f78e61f4e7cfcfb791bb973ab03793c0f5229815616d183"
+      "sha256": "0ee0d5042bfd489b7e84ae4ea05ad37cd3d157a7415fe149ca2c6e9d321a7e9a"
     },
     {
       "path": "internal/asm-manual/figures/deep-stack-network.svg",
@@ -727,7 +727,7 @@
     },
     {
       "path": "internal/asm-manual/sections/deep-stack.md",
-      "sha256": "b92fa63cf16d54f99df5bb99e4129d467e91d1644bf541e90aad5ba6bdbc8dc5"
+      "sha256": "c87d572442bbb6afb52cbe96d4e6d78d1c08cdab78e54f5e9f180d74f1a7bd33"
     },
     {
       "path": "internal/asm-manual/sections/inference.md",
@@ -783,7 +783,7 @@
     },
     {
       "path": "internal/asm-manual/tools/extract_deep_stack_data.py",
-      "sha256": "9cca1656c50ab0856ded4bdb17a80162d4f1dc87097273ca09714f2dfc95d0ac"
+      "sha256": "68dba1ca4b0553f05a786fbfe626093be81881e3118ad57f14411be8195ace59"
     },
     {
       "path": "internal/asm-manual/tools/extract_per_step.py",

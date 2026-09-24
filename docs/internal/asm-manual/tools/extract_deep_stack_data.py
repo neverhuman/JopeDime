@@ -66,7 +66,7 @@ def main():
     rows.sort(key=lambda r: (r["evaluated_step"], r["executable_sha256"]))
     assert len({r["panel_sha256"] for r in rows}) == 1 and len({r["corpus_sha256"] for r in rows}) == 1
     with open(out / "a100-fixed-monitor.csv", "w", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=list(rows[0]))
+        w = csv.DictWriter(f, fieldnames=list(rows[0]), lineterminator="\n")
         w.writeheader()
         w.writerows(rows)
     manifest["f1"] = {"records": len(rows), "steps": sorted({r["evaluated_step"] for r in rows}),
@@ -99,7 +99,7 @@ def main():
         blocks.append(block)
     for name, data in (("a100-throughput-bins.csv", bins), ("a100-throughput-blocks.csv", blocks)):
         with open(out / name, "w", newline="") as f:
-            w = csv.DictWriter(f, fieldnames=list(data[0]))
+            w = csv.DictWriter(f, fieldnames=list(data[0]), lineterminator="\n")
             w.writeheader()
             w.writerows(data)
     manifest["f3"] = {"bins": len(bins), "blocks": len(blocks),
