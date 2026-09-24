@@ -2,7 +2,7 @@
 
 Start with the status chapter to distinguish what has shipped, what has been demonstrated, and what remains pending. Operators can then use installation and training procedures; maintainers can follow the architecture, language matrix, benchmark contract, detailed roadmap and evidence index.
 
-For actual learning progress, start with chapters 7–8 and 13, then appendices B–D in Volume 2: historical optimizer and target trajectories, binary packing, model versions, measurable KPIs, continuation commands and the remaining flywheel gaps. The plots distinguish real step logs, sampled endpoints and changing evaluation populations.
+For actual learning progress, start with chapters 3, 8–9 and 14, then appendices B–D in Volume 2: historical optimizer and target trajectories, binary packing, model versions, measurable KPIs, continuation commands and the remaining flywheel gaps. The plots distinguish real step logs, sampled endpoints and changing evaluation populations.
 
 [§](sections/datasets.md) gives development statistics for all thirty frozen datasets. The adjacent data directory supplies complete machine-readable statistics, historical ranking inputs, metadata inventories and source pins. The property list supplies the primary acceptance inventory and separately marked coordinated proposals; [§](sections/catalogue.md#life-01--coordination) prints them as acceptance cards.
 

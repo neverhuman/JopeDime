@@ -12,15 +12,15 @@
   "aliases": 285,
   "warnings": [],
   "pages": 170,
-  "pdf_sha256": "72f2c01c5d3331e18a9ca9e0af95287f1f5f2a4f91dd597c2a7cc2e805a5a692",
-  "pdf_bytes": 1783303,
+  "pdf_sha256": "807a225eb9455160453a1eb967bf0cd0edcf7fb31778ac3b29cb643875d6445e",
+  "pdf_bytes": 1783618,
   "volumes": [
     {
       "volume": "main",
       "pdf": "asm-maintainer-manual.pdf",
       "pages": 170,
-      "pdf_sha256": "72f2c01c5d3331e18a9ca9e0af95287f1f5f2a4f91dd597c2a7cc2e805a5a692",
-      "pdf_bytes": 1783303,
+      "pdf_sha256": "807a225eb9455160453a1eb967bf0cd0edcf7fb31778ac3b29cb643875d6445e",
+      "pdf_bytes": 1783618,
       "rewritten_links": {
         "cross_volume": 280,
         "local_relative": 0
@@ -30,8 +30,8 @@
       "volume": "evidence",
       "pdf": "asm-evidence-reference.pdf",
       "pages": 133,
-      "pdf_sha256": "08bb754d6356db9fb3345c0e629c18fdcc7a3c38228ae6d142f969b102eba237",
-      "pdf_bytes": 4597507,
+      "pdf_sha256": "46d727c294d0576dfdfff5d8c716f3abf57d028d9c0556cfad2acb131c5f54ce",
+      "pdf_bytes": 4597534,
       "rewritten_links": {
         "cross_volume": 96,
         "local_relative": 0
@@ -695,11 +695,11 @@
     },
     {
       "path": "internal/asm-manual/front.md",
-      "sha256": "5062438eeea7f5969374b8f154c6038488394bd961d1daf64750eb48b30d3db7"
+      "sha256": "2fd746060900aae247a5663a02e461683d133c6ee46ed6d39de39e57217caf5f"
     },
     {
       "path": "internal/asm-manual/publication.json",
-      "sha256": "7fa363b320aeadc3e5bb3c3664e22e8e1a63f6c008df4d845870a885fe0c10cd"
+      "sha256": "daeb496bb4290d0966ccd0c7f12e7f48862021932736bf4abd205117ef198d5d"
     },
     {
       "path": "internal/asm-manual/sections/architecture.md",
