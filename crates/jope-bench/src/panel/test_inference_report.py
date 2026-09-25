@@ -30,9 +30,19 @@ class Reporting(unittest.TestCase):
         summary,_=report.summarize(self.plan,self.root)
         self.assertFalse(summary['qualified'])
 
-if __name__=='__main__':unittest.main()
-
 class ArtifactValidation(unittest.TestCase):
+    def test_exact_parity_requires_matching_bundle(self):
+        import hashlib
+        with tempfile.TemporaryDirectory() as root:
+            bundle={'manifest':{'backend':'python'},'files':{'model.py':'content'}}
+            identity=hashlib.sha256(json.dumps(bundle,separators=(',',':')).encode()).hexdigest()
+            values={'kind':'values','data':[1.0]}
+            pins={}
+            for name,value in [('bundle',bundle),('qualification_plan',{'expected':values,'backend':'python','bundle_sha256':identity}),('prediction',values)]:
+                p=Path(root)/name;p.write_text(json.dumps(value));pins[name]={'path':str(p),'sha256':hashlib.sha256(p.read_bytes()).hexdigest()}
+            self.assertTrue(report.parity_verified(pins))
+            p=Path(pins['prediction']['path']);p.write_text(json.dumps({'kind':'values','data':[2.0]}));pins['prediction']['sha256']=hashlib.sha256(p.read_bytes()).hexdigest()
+            self.assertFalse(report.parity_verified(pins))
     def test_corruption_is_rejected(self):
         import hashlib
         with tempfile.TemporaryDirectory() as root:
@@ -54,3 +64,5 @@ class ArtifactValidation(unittest.TestCase):
             for name,value in [('qualification_plan',{'expected':{'kind':'values','data':[0.0]}}),('prediction',{'kind':'values','data':[-0.0]})]:
                 p=Path(root)/name;p.write_text(json.dumps(value));pins[name]={'path':str(p),'sha256':hashlib.sha256(p.read_bytes()).hexdigest()}
             self.assertFalse(report.parity_verified(pins))
+
+if __name__=='__main__':unittest.main()

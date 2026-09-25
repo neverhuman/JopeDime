@@ -22,6 +22,10 @@ def parity_verified(b):
     if not verified(b.get('qualification_plan',{})) or not verified(b.get('prediction',{})):return False
     q=read(Path(b['qualification_plan']['path']));actual=read(Path(b['prediction']['path']))
     expected=q.get('expected',{})
+    if not verified(b.get('bundle',{})):return False
+    bundle=read(Path(b['bundle']['path']))
+    identity=hashlib.sha256(json.dumps(bundle,ensure_ascii=False,separators=(',',':')).encode()).hexdigest()
+    if q.get('bundle_sha256')!=identity or q.get('backend')!=bundle.get('manifest',{}).get('backend'):return False
     try:return actual['kind']==expected['kind']=='values' and len(actual['data'])==len(expected['data']) and len(actual['data'])>0 and all(struct.pack('>d',a)==struct.pack('>d',e) for a,e in zip(actual['data'],expected['data']))
     except (KeyError,TypeError):return False
 def read(path):
@@ -41,6 +45,8 @@ def summarize(plan,journal):
                     missing.append({'dataset':d['id'],'mode':mode,'seed':seed,'status':'unexecuted_or_interrupted' if p.parent.exists() else 'unexecuted'});continue
                 r=read(p)
                 valid=(r.get('schema')==SCHEMA and r.get('plan_identity')==plan['experiment']['methods_sha256'] and r.get('binary_sha256')==plan['binary']['sha256'] and r.get('source_sha')==plan['experiment']['source_sha'] and r.get('dataset')==d['id'] and r.get('seed')==seed and r.get('mode')==mode and r.get('input_sha256')==d['raw']['sha256'] and r.get('selected_origin')=='neural_policy' and r.get('ranking_backend')=='candle_cuda_float32' and len(r.get('devices',[]))==3 and all('Cuda' in x for x in r['devices']) and 'Cuda' in r.get('policy_device','') and r.get('export',{}).get('validation_in_timer') is True)
+                elapsed=r.get('elapsed_seconds')
+                valid=valid and isinstance(elapsed,(int,float)) and math.isfinite(elapsed) and elapsed>=0
                 export=r.get('export',{}); recipe=export.get('recipe',{})
                 valid=valid and recipe.get('original_proposal')==r.get('selected_program') and verified(export.get('fitted_output',{}))
                 completions=[]
@@ -68,11 +74,25 @@ def summarize(plan,journal):
     for path in sorted(journal.glob('prediction-*/receipt.json')):
         r=read(path);d=next((d for d in plan['inputs'] if d['id']==r.get('dataset')),None)
         valid=qualification and d is not None and r.get('source_sha')==plan['experiment']['source_sha'] and r.get('plan_identity')==plan['experiment']['methods_sha256'] and r.get('binary_sha256')==plan['binary']['sha256'] and r.get('input_sha256')==d['raw']['sha256'] and verified(r.get('source_qualification',{})) and verified(r.get('prediction',{})) and r.get('parity')=='exact_bits'
+        source=read(journal/f"warm-{r.get('dataset')}-0"/'receipt.json')
+        entry=next((b for b in source.get('export',{}).get('backends',[]) if b.get('backend')==r.get('backend')), {})
+        valid=valid and parity_verified(entry) and r.get('bundle_sha256')==entry.get('bundle',{}).get('sha256') and r.get('source_qualification')==entry.get('qualification_plan')
         if valid:
-            q=read(Path(r['source_qualification']['path']));a=read(Path(r['prediction']['path']))
-            try:valid=len(a['data'])==r['batch_rows'] and all(struct.pack('>d',x)==struct.pack('>d',q['expected']['data'][0]) for x in a['data'])
+            prediction_plan=read(Path(r['source_qualification']['path']));a=read(Path(r['prediction']['path']))
+            try:valid=len(a['data'])==r['batch_rows'] and all(struct.pack('>d',x)==struct.pack('>d',prediction_plan['expected']['data'][0]) for x in a['data'])
             except (KeyError,TypeError):valid=False
+        # Timing and backend membership are part of receipt validity.
+        valid=valid and r.get('backend') in ('python','rust','cpp17') and r.get('batch_rows') in (1,32,1024) and len(r.get('samples_seconds',[]))==10 and all(isinstance(x,(int,float)) and math.isfinite(x) and x>=0 for x in r.get('samples_seconds',[]))
         r['accepted']=bool(valid and r.get('status')=='completed');prediction.append(r)
+    seen={(r.get('dataset'),r.get('backend'),r.get('batch_rows')) for r in prediction}
+    for d in plan['inputs']:
+        source=read(journal/f"warm-{d['id']}-0"/'receipt.json')
+        entries={r.get('backend'):r for r in source.get('export',{}).get('backends',[])}
+        for backend in ('python','rust','cpp17'):
+            for size in (1,32,1024):
+                if (d['id'],backend,size) in seen:continue
+                status='unsupported' if entries.get(backend,{}).get('status')=='unsupported' else 'interrupted' if (journal/f"prediction-{d['id']}-{backend}-{size}").exists() else 'unexecuted'
+                prediction.append({'dataset':d['id'],'backend':backend,'batch_rows':size,'status':status,'accepted':False})
     summary={'schema':SCHEMA,'qualified':qualification,'qualification':q,'publication_headline':qualification and len(warm)==100,'completed_successfully':len(warm),'expected':100,'missing':missing,'failures':failures,'warm_cumulative_backend_milestones':[{'dataset':d,'backend':b,**distribution(v)} for (d,b),v in sorted(backend_times.items())],'cold_observations':[read(p) for p in sorted(journal.glob('cold-process-*.json'))],'full_gp':gp,'prediction':prediction,'window':read(journal/'window.json'),'warm_complete_request_distribution':distribution([r['elapsed_seconds'] for r in warm]),'boundary':'Fitting data to first prediction, including preprocessing, encoders, policy, fitting, emission and compilation. Backends emitted sequentially; later milestones include earlier backend work. No LLM speed comparison.'}
     return summary,records
 

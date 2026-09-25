@@ -372,14 +372,23 @@ fn full_gp(m: &Models, d: &Dataset, root: &Path, cutoff: u64) -> Result<Value> {
                     &raw.identity.training_sha256,
                     &jope_policy::context_sha256(&context),
                 )?;
-                let options = SamplingOptions::default();
+                let request = input.pair.proposal.accepted()?;
+                let options = SamplingOptions {
+                    rounds: request.sampling_rounds,
+                    batch: request.sampling_batch,
+                    temperature: request.sampling_temperature,
+                };
                 Some(seeds::propose(
                     &m.policy,
                     &m.checkpoint,
                     &m.vocab,
                     &context,
                     &binding,
-                    &ProposalSeeds::derive(input.pair.random_seed),
+                    &ProposalSeeds {
+                        sampling: request.sampling_seed,
+                        fallback: request.fallback_seed,
+                        exploration: request.exploration_seed,
+                    },
                     &options,
                 )?)
             } else {
@@ -575,8 +584,12 @@ pub fn run(args: RunArgs) -> Result<Value> {
                 .status()?;
             let elapsed = start.elapsed().as_secs_f64();
             let directory = journal.join(format!("cold-{}-0", p.inputs[index].id));
-            let receipt: Value =
-                serde_json::from_slice(&fs::read(directory.join("receipt.json"))?)?;
+            let receipt: Value = match fs::read(directory.join("receipt.json")) {
+                Ok(bytes) => serde_json::from_slice(&bytes)?,
+                Err(error) => {
+                    json!({"schema":SCHEMA,"success":false,"dataset":p.inputs[index].id,"mode":"cold","seed":0,"failure":format!("fresh process exit {:?}, no request receipt: {error}",status.code())})
+                }
+            };
 
             write(
                 &journal.join(format!("cold-process-{index}.json")),
