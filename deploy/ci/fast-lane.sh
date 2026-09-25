@@ -105,7 +105,7 @@ cargo run --locked --bin jope -- verify-inputs --offline --json --root datasets/
 cargo run --locked --bin jope -- generate-fixtures --check --json --output datasets/synthetic
     # Check both migrated renderer trees and the Python policy copy against Rust.
     # Keep the narrow library harness separate from deferred campaign execution.
-python3 deploy/ci/receipt.py --lane campaign-spec-policy --backend rust --output "$EVIDENCE/campaign-spec-policy" -- cargo test --locked -p jope-dime-regressor --lib spec_drift::tests -- --test-threads=1
+python3 deploy/ci/receipt.py --lane inputs --backend rust --output "$EVIDENCE/campaign-spec-policy" -- cargo test --locked -p jope-dime-regressor --lib spec_drift::tests -- --test-threads=1
 python3 -c 'import json,sys; r=json.load(open(sys.argv[1])); assert r["counts"]["executed"] > 0, "campaign policy collected no tests"' "$EVIDENCE/campaign-spec-policy/receipt.json"
     ;;
   python)
