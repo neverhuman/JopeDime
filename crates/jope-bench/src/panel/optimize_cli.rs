@@ -124,6 +124,10 @@ fn run_enabled(cli: OptimizeCli) -> anyhow::Result<Value> {
             let config: Configuration =
                 serde_json::from_slice(&std::fs::read(&configuration.path)?)?;
             config.validate()?;
+            ensure!(
+                config.incumbents.is_none(),
+                "incumbent seeding requires a single-dataset proof plan"
+            );
             let native = plan.runtimes.get("rust").context("native runtime absent")?;
             plan.runtimes.insert(
                 super::optimize::CONFIG_RUNTIME.into(),

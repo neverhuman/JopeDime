@@ -28,6 +28,8 @@ use std::{collections::BTreeMap, fs, path::Path, sync::atomic::AtomicBool};
 
 pub const SCHEMA: &str = "jope.asm-configuration/v1";
 pub const CONFIG_RUNTIME: &str = "asm-configuration";
+/// Largest accepted round nonce. The S2 series preregisters at most 12 rounds.
+pub const MAX_SEARCH_ROUND: u32 = 64;
 pub const NEURAL_METHOD: &str = "asm.neural";
 pub const GENERIC_METHOD: &str = "asm.generic";
 pub const VARIATION: &str = "feat-math.canonical-mutate-crossover/task-grammar/max-transforms4/v1";
@@ -124,6 +126,22 @@ pub struct Configuration {
     pub inner_fold_policy: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub teaching: Option<super::teaching::Settings>,
+    /// Reseeds proposal and generic sampling for a repeated round on one frozen
+    /// comparison; omission preserves accepted configuration bytes.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub search_round: Option<u32>,
+    /// Earlier arm winners seeded into generation zero of their own arm; omission
+    /// preserves accepted configuration bytes.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub incumbents: Option<Incumbents>,
+}
+/// Pinned arm winners from earlier rounds on the same dataset. Each artifact is a
+/// frozen-recipe blob in the teaching state; each list seeds only its own arm.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Incumbents {
+    pub neural: Vec<Artifact>,
+    pub generic: Vec<Artifact>,
 }
 impl Configuration {
     pub fn validate(&self) -> Result<()> {
@@ -142,6 +160,35 @@ impl Configuration {
                 && (1..=20).contains(&self.dataset_wave_width),
             "ASM budget/wave outside approved bounds"
         );
+        ensure!(
+            self.search_round
+                .is_none_or(|round| round <= MAX_SEARCH_ROUND),
+            "search round outside approved bounds"
+        );
+        if let Some(incumbents) = &self.incumbents {
+            let settings = self
+                .teaching
+                .as_ref()
+                .context("incumbent seeding requires a teaching state")?;
+            ensure!(
+                self.experimental.is_empty(),
+                "incumbent seeding requires the accepted proposal plan"
+            );
+            ensure!(
+                !(incumbents.neural.is_empty() && incumbents.generic.is_empty())
+                    && incumbents.neural.len() <= neural_search::MAX_INCUMBENTS
+                    && incumbents.generic.len() <= neural_search::MAX_INCUMBENTS,
+                "incumbent count outside approved bounds"
+            );
+            let state = jope_learning::state::State::at(&settings.state_root);
+            for pin in incumbents.neural.iter().chain(&incumbents.generic) {
+                ensure!(
+                    jope_pipeline::experiment::sha256(&pin.sha256)
+                        && pin.path == state.blob_path(&pin.sha256),
+                    "incumbent must pin a frozen-recipe blob in the teaching state"
+                );
+            }
+        }
         ensure!(
             self.scheduling_policy == super::optimize_schedule::POLICY
                 && self.inner_fold_policy == optimize_fit::INNER_FOLD_POLICY,
@@ -348,6 +395,60 @@ pub struct DatasetSearch {
     pub teaching_error: Option<String>,
 }
 
+/// Pair sampling seed. An absent round and round 0 keep the historical seed, so
+/// accepted plans and K0 draw exactly the proposals they always drew.
+pub(crate) fn pair_seed(root: u64, dataset_sha256: &str, round: Option<u32>) -> Result<u64> {
+    let seed = jope_pipeline::search_plan::candidate_seed(root, dataset_sha256)?;
+    match round {
+        None | Some(0) => Ok(seed),
+        Some(round) => jope_pipeline::search_plan::candidate_seed(
+            seed,
+            &digest(&("asm.search-round/v1", round))?,
+        ),
+    }
+}
+
+/// Read-only: verifies the pinned blob in the teaching state without creating it.
+pub(crate) fn incumbent_seed(
+    state_root: &Path,
+    pin: &Artifact,
+    selection: &jope_pipeline::search_plan::SelectionPlan,
+    neural: bool,
+) -> Result<neural_search::IncumbentSeed> {
+    let state = jope_learning::state::State::at(state_root);
+    ensure!(
+        jope_pipeline::experiment::sha256(&pin.sha256) && pin.path == state.blob_path(&pin.sha256),
+        "incumbent must pin a frozen-recipe blob in the teaching state"
+    );
+    // read_blob re-hashes the stored bytes and refuses a corrupt blob.
+    let bytes = state
+        .read_blob(&pin.sha256)?
+        .context("incumbent frozen recipe is absent from the teaching state")?;
+    neural_search::IncumbentSeed::from_frozen_recipe(&bytes, &pin.sha256, selection, neural)
+}
+
+fn resolve_incumbents(
+    configuration: &Configuration,
+    selection: &jope_pipeline::search_plan::SelectionPlan,
+) -> Result<Option<neural_search::ArmIncumbents>> {
+    let Some(pins) = &configuration.incumbents else {
+        return Ok(None);
+    };
+    let settings = configuration
+        .teaching
+        .as_ref()
+        .context("incumbent seeding requires a teaching state")?;
+    let resolve = |pins: &[Artifact], neural: bool| {
+        pins.iter()
+            .map(|pin| incumbent_seed(&settings.state_root, pin, selection, neural))
+            .collect::<Result<Vec<_>>>()
+    };
+    Ok(Some(neural_search::ArmIncumbents {
+        neural: resolve(&pins.neural, true)?,
+        generic: resolve(&pins.generic, false)?,
+    }))
+}
+
 /// Reconstruct every pair identity from exact authenticated train values and configuration.
 /// This is shared by execution and read-only report admission; no artifact is written.
 pub fn build_pair_input(
@@ -421,10 +522,12 @@ pub fn build_pair_input(
     // Classification keeps original labels in its content identity. It is never
     // sent through the regression encoder or ordinal target context.
     let input_sha256 = digest(&input)?;
-    let seed = jope_pipeline::search_plan::candidate_seed(
+    let seed = pair_seed(
         campaign.experiment.seed,
         &dataset.dataset.source.sha256,
+        configuration.search_round,
     )?;
+    let incumbents = resolve_incumbents(configuration, &selection)?;
     let plan = PairInputPlan {
         selection,
         preprocessing_sha256,
@@ -488,6 +591,7 @@ pub fn build_pair_input(
         seconds: configuration.seconds,
         max_evaluations: configuration.max_evaluations,
         random_seed: seed,
+        incumbents,
     };
     if let Some(experimental) = configuration
         .experimental

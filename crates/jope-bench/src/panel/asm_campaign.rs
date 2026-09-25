@@ -81,6 +81,28 @@ fn exhausted(pool: &ExecutionPool, plan: &CampaignPlan) -> Result<bool> {
             .saturating_sub(plan.experiment.resources.reporting_seconds * 1000)
     }))
 }
+/// Development hold rows are scored only for a settled attachment whose caller
+/// asked for screen scores. A journal that defers scoring to `report` is refused
+/// here, before any hold label is read, whatever the caller passed.
+pub(crate) fn screen_observations(
+    ready: bool,
+    score_screen: bool,
+    fits: &[campaign::PendingFit],
+    outcomes: Vec<WorkerOutcome>,
+    data: &[DevelopmentData],
+    journal: &Path,
+) -> Result<Vec<Observation>> {
+    if !(ready && score_screen) {
+        return Ok(vec![]);
+    }
+    ensure!(
+        !journal
+            .join(super::campaign_cli::DEFERRAL_MARKER)
+            .try_exists()?,
+        "journal defers development hold scoring to report"
+    );
+    campaign::score_batch(fits, outcomes, data, journal)
+}
 pub fn attach(
     plan: &CampaignPlan,
     data: &[DevelopmentData],
@@ -88,6 +110,19 @@ pub fn attach(
     pool: &mut ExecutionPool,
     cancel: &AtomicBool,
     baseline: &[Observation],
+) -> Result<Attachment> {
+    attach_with(plan, data, journal, pool, cancel, baseline, true)
+}
+/// With `score_screen` false the refits still run and retain their `finished/`
+/// receipts, but no development hold row is scored and no observation is written.
+pub fn attach_with(
+    plan: &CampaignPlan,
+    data: &[DevelopmentData],
+    journal: &Path,
+    pool: &mut ExecutionPool,
+    cancel: &AtomicBool,
+    baseline: &[Observation],
+    score_screen: bool,
 ) -> Result<Attachment> {
     let config = Configuration::from_campaign(plan)?;
     let order = super::optimize_schedule::dataset_order(
@@ -245,9 +280,14 @@ pub fn attach(
     }) {
         ready = false;
     }
-    if ready {
-        screen.extend(campaign::score_batch(&fits, outcomes, data, journal)?);
-    }
+    screen.extend(screen_observations(
+        ready,
+        score_screen,
+        &fits,
+        outcomes,
+        data,
+        journal,
+    )?);
     Ok(Attachment {
         methods: generated,
         screen,
@@ -612,6 +652,14 @@ fn verify_producer(journal: &Path, search: &DatasetSearch, receipt: &SearchRecei
             .candidates()
             .get(slot)
             .context("proposal slot out of range")?;
+        let first_incumbent = neural_search::INITIAL_SIZE - search.pair.arm_incumbents(true).len();
+        if slot >= first_incumbent {
+            ensure!(
+                seed.origin() == jope_policy::seeds::ORIGIN_RANDOM,
+                "incumbent displaced a policy proposal slot"
+            );
+            continue; // validate_population already bound this slot to its pinned incumbent
+        }
         let origin = match seed.origin() {
             jope_policy::seeds::ORIGIN_NEURAL => Origin::NeuralPolicy,
             jope_policy::seeds::ORIGIN_NEURAL_FALLBACK => Origin::NeuralRejectionFallback,
