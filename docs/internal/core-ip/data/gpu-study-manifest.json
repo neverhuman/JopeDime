@@ -1,0 +1,260 @@
+{
+  "schema": "jope.core-ip-gpu-evidence/v1",
+  "plan": {
+    "path": "/home/ubuntu/jope-rescue-20260921/core-ip-20260925/study-final/plan.json",
+    "sha256": "e1741164953426f7bfab3bd801f29d7dee4a9da89cd27cab54ac134d71c7e91a"
+  },
+  "source_sha": "802fb464c8a30eb7aeb05296313300e737a96044",
+  "binary": {
+    "path": "/home/ubuntu/jope-rescue-20260921/core-ip-20260925/study-final/jope",
+    "sha256": "fe5589017819e78420d423a4acf525487d848e1e7c119e6c8865bcd8f42cf9ff"
+  },
+  "configuration": {
+    "path": "/home/ubuntu/jope-evidence/asm-demo-20260925/b0/config/configuration.json",
+    "sha256": "142f410d463ef90e6c9c16183a4adc7a9c6a77edd70bd5f7c1b14eb273918d3a"
+  },
+  "references": {
+    "path": "/home/ubuntu/jope-evidence/asm-demo-20260925/b0/context-proof/references/reference-manifest.json",
+    "sha256": "0f66fd0ddf2e649f9bbb21ebb7dbcffabe267fdede2eda92b8f5940c98605021"
+  },
+  "settings": {
+    "batch": 128,
+    "candidate_attempts": 96,
+    "cold_seed": 0,
+    "cross_request_context_cache": false,
+    "cut": 0,
+    "exploration": 16,
+    "fitting_folds": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "full_gp_datasets": [
+      "230_machine_cpu",
+      "auto_insurance_price",
+      "197_cpu_act"
+    ],
+    "gpu": "NVIDIA GeForce RTX 3090",
+    "gpu_memory_mib": 24576,
+    "max_tokens": 128,
+    "measured_seeds": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "profile_seed": 0,
+    "ranked": 64,
+    "rounds": 8,
+    "search_seconds_per_arm": 120,
+    "serving_promotion": false,
+    "temperature": 1,
+    "timer": "synchronized wall clock before raw read through fitted export, compilation and first verified prediction",
+    "tolerance": 0.0003000000142492354,
+    "warmups_per_dataset": 2
+  },
+  "resources": {
+    "workers": 1,
+    "cpus": 4,
+    "memory_bytes": 17179869184,
+    "swap_bytes": 0,
+    "gpu_tasks": 1,
+    "threads_per_worker": 1,
+    "total_seconds": 3600,
+    "reporting_seconds": 300,
+    "per_fit_seconds": 3300
+  },
+  "toolchain": {
+    "g++": {
+      "path": "/usr/bin/x86_64-linux-gnu-g++-13",
+      "sha256": "1353e9bdd29a7295c7226bf6c63abccce056d8cac31f112e5cdbecc3f28c2769"
+    },
+    "python3": {
+      "path": "/usr/bin/python3.12",
+      "sha256": "e50d468e8b0adfb05733f5b87b3cff34829c4a8c1aea50c865aa8bdfe4bb150f"
+    },
+    "rustc": {
+      "path": "/home/ubuntu/.rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin/rustc",
+      "sha256": "d3a664c970a9fd8361b64194861bebc1ae37b9054e5ee3400dc1c9e691797eea"
+    }
+  },
+  "hardware": {
+    "gpu": "NVIDIA GeForce RTX 3090, 24576, GPU-44c63d19-492a-ab46-cc6a-56e12a2ef51b, 595.99.02\n",
+    "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)\n",
+    "kernel": "Linux xbabe2 6.8.0-139-generic #139-Ubuntu SMP PREEMPT_DYNAMIC Sat Aug  1 03:52:05 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n",
+    "cpu_model": "model name\t: AMD Ryzen Threadripper PRO 3995WX 64-Cores"
+  },
+  "inputs": [
+    {
+      "dataset": "197_cpu_act",
+      "raw": {
+        "path": "/home/ubuntu/jope-rescue-20260921/core-ip-20260925/study-final/raw-197_cpu_act.json",
+        "sha256": "645953580547c4f586f5c297728b1f4cb2c4e2679f854c337e60ddc19eb9c009"
+      },
+      "rows": 5242,
+      "gp": true,
+      "paired_sampling": {
+        "worker_source_sha256": "f872dfb2dec9ff1550aeb4dbbe55eb9ed75eebe510ca3d9706cb9189dc450607",
+        "prepared_sha256": "c987b431681784b87f12f3c98e660fd0aa76f08d01fe005695f41470b3750019",
+        "training_sha256": "002c2cbbb168f17ec8bbfe071dde32b3242bc0ab47e1bc26e0a281fbf9c7fbd6",
+        "cut": 0,
+        "checkpoint_sha256": "8ac80c269cc47c253b6f53fa3bc1eb75bb2fcda0bdace3ff8554be0175c400d6",
+        "policy_safetensors_sha256": "4b4b5a40f03c9226b4b15856fd35b90127c8b6a4d1435b815484cdd050744f1e",
+        "vocabulary_sha256": "570b2e5e8d859a73b888f5d0bee27f59da0e2376536babce24c241604f818e81",
+        "sampling_seed": 10267406633156911129,
+        "fallback_seed": 10267406633156911130,
+        "exploration_seed": 10267406633156911131,
+        "sampling_rounds": 4,
+        "sampling_batch": 64,
+        "sampling_temperature": 1.0
+      }
+    },
+    {
+      "dataset": "225_puma8NH",
+      "raw": {
+        "path": "/home/ubuntu/jope-rescue-20260921/core-ip-20260925/study-final/raw-225_puma8NH.json",
+        "sha256": "5d825b48c95dc81907fb4f63147c79f9c92b5f4625f3feb4ce01a917bff725e5"
+      },
+      "rows": 5242,
+      "gp": false,
+      "paired_sampling": null
+    },
+    {
+      "dataset": "230_machine_cpu",
+      "raw": {
+        "path": "/home/ubuntu/jope-rescue-20260921/core-ip-20260925/study-final/raw-230_machine_cpu.json",
+        "sha256": "778fc48bbec76637b27fa8375bc1702acde64c82ae929350c089ee50b283fcb2"
+      },
+      "rows": 135,
+      "gp": true,
+      "paired_sampling": {
+        "worker_source_sha256": "f872dfb2dec9ff1550aeb4dbbe55eb9ed75eebe510ca3d9706cb9189dc450607",
+        "prepared_sha256": "07c9b448d18c0479cb817235efff5ec242fd3723329dcd69582d39043d150c87",
+        "training_sha256": "72486d5466f9a8e2b2fb97050f46cf8dba11e06d76fcb2f25d0b7f2be747b0c1",
+        "cut": 0,
+        "checkpoint_sha256": "8ac80c269cc47c253b6f53fa3bc1eb75bb2fcda0bdace3ff8554be0175c400d6",
+        "policy_safetensors_sha256": "4b4b5a40f03c9226b4b15856fd35b90127c8b6a4d1435b815484cdd050744f1e",
+        "vocabulary_sha256": "570b2e5e8d859a73b888f5d0bee27f59da0e2376536babce24c241604f818e81",
+        "sampling_seed": 14978413051429648982,
+        "fallback_seed": 14978413051429648983,
+        "exploration_seed": 14978413051429648984,
+        "sampling_rounds": 4,
+        "sampling_batch": 64,
+        "sampling_temperature": 1.0
+      }
+    },
+    {
+      "dataset": "503_wind",
+      "raw": {
+        "path": "/home/ubuntu/jope-rescue-20260921/core-ip-20260925/study-final/raw-503_wind.json",
+        "sha256": "6f670f5a9f7cede9940e287f79f2222bb5f16e1254a29193f14bed39a973cf9e"
+      },
+      "rows": 4172,
+      "gp": false,
+      "paired_sampling": null
+    },
+    {
+      "dataset": "522_pm10",
+      "raw": {
+        "path": "/home/ubuntu/jope-rescue-20260921/core-ip-20260925/study-final/raw-522_pm10.json",
+        "sha256": "b4e5d7e6455887dcdb36da82799b56f32e1b89abe4cc36094bc03ab80862f7eb"
+      },
+      "rows": 321,
+      "gp": false,
+      "paired_sampling": null
+    },
+    {
+      "dataset": "529_pollen",
+      "raw": {
+        "path": "/home/ubuntu/jope-rescue-20260921/core-ip-20260925/study-final/raw-529_pollen.json",
+        "sha256": "d2408512d743a2b53a923c4b5ea0781afc7cbc741bc51166ef69a92197930acd"
+      },
+      "rows": 2462,
+      "gp": false,
+      "paired_sampling": null
+    },
+    {
+      "dataset": "579_fri_c0_250_5",
+      "raw": {
+        "path": "/home/ubuntu/jope-rescue-20260921/core-ip-20260925/study-final/raw-579_fri_c0_250_5.json",
+        "sha256": "abf76c62b3f55b3437a66358ae9b2502c2863b2518b2817086b0143fcb4d30c1"
+      },
+      "rows": 160,
+      "gp": false,
+      "paired_sampling": null
+    },
+    {
+      "dataset": "690_visualizing_galaxy",
+      "raw": {
+        "path": "/home/ubuntu/jope-rescue-20260921/core-ip-20260925/study-final/raw-690_visualizing_galaxy.json",
+        "sha256": "bc34b0267ea77ad27b267d6d2fbd84ef6cd03edcc679b9d5fcf1fc7a9eb6edb5"
+      },
+      "rows": 206,
+      "gp": false,
+      "paired_sampling": null
+    },
+    {
+      "dataset": "712_chscase_geyser1",
+      "raw": {
+        "path": "/home/ubuntu/jope-rescue-20260921/core-ip-20260925/study-final/raw-712_chscase_geyser1.json",
+        "sha256": "bfe4e61f3e4122b4dc7c3bd5cd4a27d004b02d2fc54ec7fa88959a71be09d1f7"
+      },
+      "rows": 140,
+      "gp": false,
+      "paired_sampling": null
+    },
+    {
+      "dataset": "auto_insurance_price",
+      "raw": {
+        "path": "/home/ubuntu/jope-rescue-20260921/core-ip-20260925/study-final/raw-auto_insurance_price.json",
+        "sha256": "8ee7674debe3c6de5859ad3f1eb865474979e2e8e2b7babbcf80fd61ca8bab1d"
+      },
+      "rows": 127,
+      "gp": true,
+      "paired_sampling": {
+        "worker_source_sha256": "f872dfb2dec9ff1550aeb4dbbe55eb9ed75eebe510ca3d9706cb9189dc450607",
+        "prepared_sha256": "6c0719a5e4433e653e8997fc1f19842fd3aae044531e7639484d24d879d7f971",
+        "training_sha256": "402c548195d2e3e0ef2c6912d5159c1f1b3807ee1dfa95d491d70b69da28b920",
+        "cut": 0,
+        "checkpoint_sha256": "8ac80c269cc47c253b6f53fa3bc1eb75bb2fcda0bdace3ff8554be0175c400d6",
+        "policy_safetensors_sha256": "4b4b5a40f03c9226b4b15856fd35b90127c8b6a4d1435b815484cdd050744f1e",
+        "vocabulary_sha256": "570b2e5e8d859a73b888f5d0bee27f59da0e2376536babce24c241604f818e81",
+        "sampling_seed": 5025395842302806602,
+        "fallback_seed": 5025395842302806603,
+        "exploration_seed": 5025395842302806604,
+        "sampling_rounds": 4,
+        "sampling_batch": 64,
+        "sampling_temperature": 1.0
+      }
+    }
+  ],
+  "receipt_files": [
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/core-ip-20260925/study-final/journal/window.json",
+      "sha256": "327be689ec2da53232475fd225b068558656b3e3550872d8b6afb11d85deef77"
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/core-ip-20260925/study-final/journal/launch.json",
+      "sha256": "7e23fe374e2a09ff211552ea2900c077f67ef365cf47065aba9e7719680149ba"
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/core-ip-20260925/study-final/journal/hardware.json",
+      "sha256": "145e32afc83705e4aa84c30a27244b81f0aa9400bf7cb8f7ccb978fe930dc4ee"
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/core-ip-20260925/study-final/run.stderr",
+      "sha256": "7d584a4ba0245ee51bcc2c66da852eec3d89dc65cfcebbaf8fa53a18ba5f6e29"
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/core-ip-20260925/study-final/closeout.json",
+      "sha256": "10b085af8fb5f797535b49acc7760a6e97e4796e5eaa91069a337b699f691932"
+    }
+  ]
+}

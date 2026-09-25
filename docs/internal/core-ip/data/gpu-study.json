@@ -1,0 +1,1555 @@
+{
+  "schema": "jope.inference-benchmark/v2",
+  "controller": {
+    "status": "failed",
+    "launch": {
+      "unit": "jope-asm-8c0591997dc3cd19ba597ad4e3e39eb97cf4692157337cb66b0a44353d5b6515-dccbe41c-7ca8-4170-8ddb-8c1295067924.service",
+      "exit_code": 1,
+      "original_window": {
+        "experiment_sha256": "8c0591997dc3cd19ba597ad4e3e39eb97cf4692157337cb66b0a44353d5b6515",
+        "started_unix_ms": 1790363494939,
+        "deadline_unix_ms": 1790367094939
+      },
+      "reason": "bounded service exited with exit status: 1"
+    },
+    "qualification_status": "not_executed_or_interrupted"
+  },
+  "qualified": false,
+  "qualification": {},
+  "publication_headline": false,
+  "completed_successfully": 0,
+  "expected": 100,
+  "missing": [
+    {
+      "dataset": "197_cpu_act",
+      "mode": "warm",
+      "seed": 0,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "197_cpu_act",
+      "mode": "warm",
+      "seed": 1,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "197_cpu_act",
+      "mode": "warm",
+      "seed": 2,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "197_cpu_act",
+      "mode": "warm",
+      "seed": 3,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "197_cpu_act",
+      "mode": "warm",
+      "seed": 4,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "197_cpu_act",
+      "mode": "warm",
+      "seed": 5,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "197_cpu_act",
+      "mode": "warm",
+      "seed": 6,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "197_cpu_act",
+      "mode": "warm",
+      "seed": 7,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "197_cpu_act",
+      "mode": "warm",
+      "seed": 8,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "197_cpu_act",
+      "mode": "warm",
+      "seed": 9,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "197_cpu_act",
+      "mode": "cold",
+      "seed": 0,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "197_cpu_act",
+      "mode": "warmup",
+      "seed": 0,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "197_cpu_act",
+      "mode": "warmup",
+      "seed": 1,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "197_cpu_act",
+      "mode": "profile",
+      "seed": 0,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "225_puma8NH",
+      "mode": "warm",
+      "seed": 0,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "225_puma8NH",
+      "mode": "warm",
+      "seed": 1,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "225_puma8NH",
+      "mode": "warm",
+      "seed": 2,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "225_puma8NH",
+      "mode": "warm",
+      "seed": 3,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "225_puma8NH",
+      "mode": "warm",
+      "seed": 4,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "225_puma8NH",
+      "mode": "warm",
+      "seed": 5,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "225_puma8NH",
+      "mode": "warm",
+      "seed": 6,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "225_puma8NH",
+      "mode": "warm",
+      "seed": 7,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "225_puma8NH",
+      "mode": "warm",
+      "seed": 8,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "225_puma8NH",
+      "mode": "warm",
+      "seed": 9,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "225_puma8NH",
+      "mode": "cold",
+      "seed": 0,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "225_puma8NH",
+      "mode": "warmup",
+      "seed": 0,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "225_puma8NH",
+      "mode": "warmup",
+      "seed": 1,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "225_puma8NH",
+      "mode": "profile",
+      "seed": 0,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "230_machine_cpu",
+      "mode": "warm",
+      "seed": 0,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "230_machine_cpu",
+      "mode": "warm",
+      "seed": 1,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "230_machine_cpu",
+      "mode": "warm",
+      "seed": 2,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "230_machine_cpu",
+      "mode": "warm",
+      "seed": 3,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "230_machine_cpu",
+      "mode": "warm",
+      "seed": 4,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "230_machine_cpu",
+      "mode": "warm",
+      "seed": 5,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "230_machine_cpu",
+      "mode": "warm",
+      "seed": 6,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "230_machine_cpu",
+      "mode": "warm",
+      "seed": 7,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "230_machine_cpu",
+      "mode": "warm",
+      "seed": 8,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "230_machine_cpu",
+      "mode": "warm",
+      "seed": 9,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "230_machine_cpu",
+      "mode": "cold",
+      "seed": 0,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "230_machine_cpu",
+      "mode": "warmup",
+      "seed": 0,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "230_machine_cpu",
+      "mode": "warmup",
+      "seed": 1,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "230_machine_cpu",
+      "mode": "profile",
+      "seed": 0,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "503_wind",
+      "mode": "warm",
+      "seed": 0,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "503_wind",
+      "mode": "warm",
+      "seed": 1,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "503_wind",
+      "mode": "warm",
+      "seed": 2,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "503_wind",
+      "mode": "warm",
+      "seed": 3,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "503_wind",
+      "mode": "warm",
+      "seed": 4,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "503_wind",
+      "mode": "warm",
+      "seed": 5,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "503_wind",
+      "mode": "warm",
+      "seed": 6,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "503_wind",
+      "mode": "warm",
+      "seed": 7,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "503_wind",
+      "mode": "warm",
+      "seed": 8,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "503_wind",
+      "mode": "warm",
+      "seed": 9,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "503_wind",
+      "mode": "cold",
+      "seed": 0,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "503_wind",
+      "mode": "warmup",
+      "seed": 0,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "503_wind",
+      "mode": "warmup",
+      "seed": 1,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "503_wind",
+      "mode": "profile",
+      "seed": 0,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "522_pm10",
+      "mode": "warm",
+      "seed": 0,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "522_pm10",
+      "mode": "warm",
+      "seed": 1,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "522_pm10",
+      "mode": "warm",
+      "seed": 2,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "522_pm10",
+      "mode": "warm",
+      "seed": 3,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "522_pm10",
+      "mode": "warm",
+      "seed": 4,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "522_pm10",
+      "mode": "warm",
+      "seed": 5,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "522_pm10",
+      "mode": "warm",
+      "seed": 6,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "522_pm10",
+      "mode": "warm",
+      "seed": 7,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "522_pm10",
+      "mode": "warm",
+      "seed": 8,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "522_pm10",
+      "mode": "warm",
+      "seed": 9,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "522_pm10",
+      "mode": "cold",
+      "seed": 0,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "522_pm10",
+      "mode": "warmup",
+      "seed": 0,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "522_pm10",
+      "mode": "warmup",
+      "seed": 1,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "522_pm10",
+      "mode": "profile",
+      "seed": 0,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "529_pollen",
+      "mode": "warm",
+      "seed": 0,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "529_pollen",
+      "mode": "warm",
+      "seed": 1,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "529_pollen",
+      "mode": "warm",
+      "seed": 2,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "529_pollen",
+      "mode": "warm",
+      "seed": 3,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "529_pollen",
+      "mode": "warm",
+      "seed": 4,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "529_pollen",
+      "mode": "warm",
+      "seed": 5,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "529_pollen",
+      "mode": "warm",
+      "seed": 6,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "529_pollen",
+      "mode": "warm",
+      "seed": 7,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "529_pollen",
+      "mode": "warm",
+      "seed": 8,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "529_pollen",
+      "mode": "warm",
+      "seed": 9,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "529_pollen",
+      "mode": "cold",
+      "seed": 0,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "529_pollen",
+      "mode": "warmup",
+      "seed": 0,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "529_pollen",
+      "mode": "warmup",
+      "seed": 1,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "529_pollen",
+      "mode": "profile",
+      "seed": 0,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "579_fri_c0_250_5",
+      "mode": "warm",
+      "seed": 0,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "579_fri_c0_250_5",
+      "mode": "warm",
+      "seed": 1,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "579_fri_c0_250_5",
+      "mode": "warm",
+      "seed": 2,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "579_fri_c0_250_5",
+      "mode": "warm",
+      "seed": 3,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "579_fri_c0_250_5",
+      "mode": "warm",
+      "seed": 4,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "579_fri_c0_250_5",
+      "mode": "warm",
+      "seed": 5,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "579_fri_c0_250_5",
+      "mode": "warm",
+      "seed": 6,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "579_fri_c0_250_5",
+      "mode": "warm",
+      "seed": 7,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "579_fri_c0_250_5",
+      "mode": "warm",
+      "seed": 8,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "579_fri_c0_250_5",
+      "mode": "warm",
+      "seed": 9,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "579_fri_c0_250_5",
+      "mode": "cold",
+      "seed": 0,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "579_fri_c0_250_5",
+      "mode": "warmup",
+      "seed": 0,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "579_fri_c0_250_5",
+      "mode": "warmup",
+      "seed": 1,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "579_fri_c0_250_5",
+      "mode": "profile",
+      "seed": 0,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "690_visualizing_galaxy",
+      "mode": "warm",
+      "seed": 0,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "690_visualizing_galaxy",
+      "mode": "warm",
+      "seed": 1,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "690_visualizing_galaxy",
+      "mode": "warm",
+      "seed": 2,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "690_visualizing_galaxy",
+      "mode": "warm",
+      "seed": 3,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "690_visualizing_galaxy",
+      "mode": "warm",
+      "seed": 4,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "690_visualizing_galaxy",
+      "mode": "warm",
+      "seed": 5,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "690_visualizing_galaxy",
+      "mode": "warm",
+      "seed": 6,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "690_visualizing_galaxy",
+      "mode": "warm",
+      "seed": 7,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "690_visualizing_galaxy",
+      "mode": "warm",
+      "seed": 8,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "690_visualizing_galaxy",
+      "mode": "warm",
+      "seed": 9,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "690_visualizing_galaxy",
+      "mode": "cold",
+      "seed": 0,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "690_visualizing_galaxy",
+      "mode": "warmup",
+      "seed": 0,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "690_visualizing_galaxy",
+      "mode": "warmup",
+      "seed": 1,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "690_visualizing_galaxy",
+      "mode": "profile",
+      "seed": 0,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "712_chscase_geyser1",
+      "mode": "warm",
+      "seed": 0,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "712_chscase_geyser1",
+      "mode": "warm",
+      "seed": 1,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "712_chscase_geyser1",
+      "mode": "warm",
+      "seed": 2,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "712_chscase_geyser1",
+      "mode": "warm",
+      "seed": 3,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "712_chscase_geyser1",
+      "mode": "warm",
+      "seed": 4,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "712_chscase_geyser1",
+      "mode": "warm",
+      "seed": 5,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "712_chscase_geyser1",
+      "mode": "warm",
+      "seed": 6,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "712_chscase_geyser1",
+      "mode": "warm",
+      "seed": 7,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "712_chscase_geyser1",
+      "mode": "warm",
+      "seed": 8,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "712_chscase_geyser1",
+      "mode": "warm",
+      "seed": 9,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "712_chscase_geyser1",
+      "mode": "cold",
+      "seed": 0,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "712_chscase_geyser1",
+      "mode": "warmup",
+      "seed": 0,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "712_chscase_geyser1",
+      "mode": "warmup",
+      "seed": 1,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "712_chscase_geyser1",
+      "mode": "profile",
+      "seed": 0,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "auto_insurance_price",
+      "mode": "warm",
+      "seed": 0,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "auto_insurance_price",
+      "mode": "warm",
+      "seed": 1,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "auto_insurance_price",
+      "mode": "warm",
+      "seed": 2,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "auto_insurance_price",
+      "mode": "warm",
+      "seed": 3,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "auto_insurance_price",
+      "mode": "warm",
+      "seed": 4,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "auto_insurance_price",
+      "mode": "warm",
+      "seed": 5,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "auto_insurance_price",
+      "mode": "warm",
+      "seed": 6,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "auto_insurance_price",
+      "mode": "warm",
+      "seed": 7,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "auto_insurance_price",
+      "mode": "warm",
+      "seed": 8,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "auto_insurance_price",
+      "mode": "warm",
+      "seed": 9,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "auto_insurance_price",
+      "mode": "cold",
+      "seed": 0,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "auto_insurance_price",
+      "mode": "warmup",
+      "seed": 0,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "auto_insurance_price",
+      "mode": "warmup",
+      "seed": 1,
+      "status": "unexecuted"
+    },
+    {
+      "dataset": "auto_insurance_price",
+      "mode": "profile",
+      "seed": 0,
+      "status": "unexecuted"
+    }
+  ],
+  "failures": [],
+  "warm_cumulative_backend_milestones": [],
+  "cold_observations": [],
+  "full_gp": [
+    {
+      "dataset": "197_cpu_act",
+      "arm": "neural",
+      "status": "unexecuted",
+      "accepted": false,
+      "export_qualified": false
+    },
+    {
+      "dataset": "197_cpu_act",
+      "arm": "generic",
+      "status": "unexecuted",
+      "accepted": false,
+      "export_qualified": false
+    },
+    {
+      "dataset": "230_machine_cpu",
+      "arm": "neural",
+      "status": "unexecuted",
+      "accepted": false,
+      "export_qualified": false
+    },
+    {
+      "dataset": "230_machine_cpu",
+      "arm": "generic",
+      "status": "unexecuted",
+      "accepted": false,
+      "export_qualified": false
+    },
+    {
+      "dataset": "auto_insurance_price",
+      "arm": "neural",
+      "status": "unexecuted",
+      "accepted": false,
+      "export_qualified": false
+    },
+    {
+      "dataset": "auto_insurance_price",
+      "arm": "generic",
+      "status": "unexecuted",
+      "accepted": false,
+      "export_qualified": false
+    }
+  ],
+  "prediction": [
+    {
+      "dataset": "197_cpu_act",
+      "backend": "python",
+      "batch_rows": 1,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "197_cpu_act",
+      "backend": "python",
+      "batch_rows": 32,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "197_cpu_act",
+      "backend": "python",
+      "batch_rows": 1024,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "197_cpu_act",
+      "backend": "rust",
+      "batch_rows": 1,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "197_cpu_act",
+      "backend": "rust",
+      "batch_rows": 32,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "197_cpu_act",
+      "backend": "rust",
+      "batch_rows": 1024,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "197_cpu_act",
+      "backend": "cpp17",
+      "batch_rows": 1,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "197_cpu_act",
+      "backend": "cpp17",
+      "batch_rows": 32,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "197_cpu_act",
+      "backend": "cpp17",
+      "batch_rows": 1024,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "225_puma8NH",
+      "backend": "python",
+      "batch_rows": 1,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "225_puma8NH",
+      "backend": "python",
+      "batch_rows": 32,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "225_puma8NH",
+      "backend": "python",
+      "batch_rows": 1024,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "225_puma8NH",
+      "backend": "rust",
+      "batch_rows": 1,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "225_puma8NH",
+      "backend": "rust",
+      "batch_rows": 32,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "225_puma8NH",
+      "backend": "rust",
+      "batch_rows": 1024,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "225_puma8NH",
+      "backend": "cpp17",
+      "batch_rows": 1,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "225_puma8NH",
+      "backend": "cpp17",
+      "batch_rows": 32,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "225_puma8NH",
+      "backend": "cpp17",
+      "batch_rows": 1024,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "230_machine_cpu",
+      "backend": "python",
+      "batch_rows": 1,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "230_machine_cpu",
+      "backend": "python",
+      "batch_rows": 32,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "230_machine_cpu",
+      "backend": "python",
+      "batch_rows": 1024,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "230_machine_cpu",
+      "backend": "rust",
+      "batch_rows": 1,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "230_machine_cpu",
+      "backend": "rust",
+      "batch_rows": 32,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "230_machine_cpu",
+      "backend": "rust",
+      "batch_rows": 1024,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "230_machine_cpu",
+      "backend": "cpp17",
+      "batch_rows": 1,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "230_machine_cpu",
+      "backend": "cpp17",
+      "batch_rows": 32,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "230_machine_cpu",
+      "backend": "cpp17",
+      "batch_rows": 1024,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "503_wind",
+      "backend": "python",
+      "batch_rows": 1,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "503_wind",
+      "backend": "python",
+      "batch_rows": 32,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "503_wind",
+      "backend": "python",
+      "batch_rows": 1024,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "503_wind",
+      "backend": "rust",
+      "batch_rows": 1,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "503_wind",
+      "backend": "rust",
+      "batch_rows": 32,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "503_wind",
+      "backend": "rust",
+      "batch_rows": 1024,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "503_wind",
+      "backend": "cpp17",
+      "batch_rows": 1,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "503_wind",
+      "backend": "cpp17",
+      "batch_rows": 32,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "503_wind",
+      "backend": "cpp17",
+      "batch_rows": 1024,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "522_pm10",
+      "backend": "python",
+      "batch_rows": 1,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "522_pm10",
+      "backend": "python",
+      "batch_rows": 32,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "522_pm10",
+      "backend": "python",
+      "batch_rows": 1024,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "522_pm10",
+      "backend": "rust",
+      "batch_rows": 1,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "522_pm10",
+      "backend": "rust",
+      "batch_rows": 32,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "522_pm10",
+      "backend": "rust",
+      "batch_rows": 1024,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "522_pm10",
+      "backend": "cpp17",
+      "batch_rows": 1,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "522_pm10",
+      "backend": "cpp17",
+      "batch_rows": 32,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "522_pm10",
+      "backend": "cpp17",
+      "batch_rows": 1024,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "529_pollen",
+      "backend": "python",
+      "batch_rows": 1,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "529_pollen",
+      "backend": "python",
+      "batch_rows": 32,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "529_pollen",
+      "backend": "python",
+      "batch_rows": 1024,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "529_pollen",
+      "backend": "rust",
+      "batch_rows": 1,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "529_pollen",
+      "backend": "rust",
+      "batch_rows": 32,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "529_pollen",
+      "backend": "rust",
+      "batch_rows": 1024,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "529_pollen",
+      "backend": "cpp17",
+      "batch_rows": 1,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "529_pollen",
+      "backend": "cpp17",
+      "batch_rows": 32,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "529_pollen",
+      "backend": "cpp17",
+      "batch_rows": 1024,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "579_fri_c0_250_5",
+      "backend": "python",
+      "batch_rows": 1,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "579_fri_c0_250_5",
+      "backend": "python",
+      "batch_rows": 32,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "579_fri_c0_250_5",
+      "backend": "python",
+      "batch_rows": 1024,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "579_fri_c0_250_5",
+      "backend": "rust",
+      "batch_rows": 1,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "579_fri_c0_250_5",
+      "backend": "rust",
+      "batch_rows": 32,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "579_fri_c0_250_5",
+      "backend": "rust",
+      "batch_rows": 1024,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "579_fri_c0_250_5",
+      "backend": "cpp17",
+      "batch_rows": 1,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "579_fri_c0_250_5",
+      "backend": "cpp17",
+      "batch_rows": 32,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "579_fri_c0_250_5",
+      "backend": "cpp17",
+      "batch_rows": 1024,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "690_visualizing_galaxy",
+      "backend": "python",
+      "batch_rows": 1,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "690_visualizing_galaxy",
+      "backend": "python",
+      "batch_rows": 32,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "690_visualizing_galaxy",
+      "backend": "python",
+      "batch_rows": 1024,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "690_visualizing_galaxy",
+      "backend": "rust",
+      "batch_rows": 1,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "690_visualizing_galaxy",
+      "backend": "rust",
+      "batch_rows": 32,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "690_visualizing_galaxy",
+      "backend": "rust",
+      "batch_rows": 1024,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "690_visualizing_galaxy",
+      "backend": "cpp17",
+      "batch_rows": 1,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "690_visualizing_galaxy",
+      "backend": "cpp17",
+      "batch_rows": 32,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "690_visualizing_galaxy",
+      "backend": "cpp17",
+      "batch_rows": 1024,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "712_chscase_geyser1",
+      "backend": "python",
+      "batch_rows": 1,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "712_chscase_geyser1",
+      "backend": "python",
+      "batch_rows": 32,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "712_chscase_geyser1",
+      "backend": "python",
+      "batch_rows": 1024,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "712_chscase_geyser1",
+      "backend": "rust",
+      "batch_rows": 1,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "712_chscase_geyser1",
+      "backend": "rust",
+      "batch_rows": 32,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "712_chscase_geyser1",
+      "backend": "rust",
+      "batch_rows": 1024,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "712_chscase_geyser1",
+      "backend": "cpp17",
+      "batch_rows": 1,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "712_chscase_geyser1",
+      "backend": "cpp17",
+      "batch_rows": 32,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "712_chscase_geyser1",
+      "backend": "cpp17",
+      "batch_rows": 1024,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "auto_insurance_price",
+      "backend": "python",
+      "batch_rows": 1,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "auto_insurance_price",
+      "backend": "python",
+      "batch_rows": 32,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "auto_insurance_price",
+      "backend": "python",
+      "batch_rows": 1024,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "auto_insurance_price",
+      "backend": "rust",
+      "batch_rows": 1,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "auto_insurance_price",
+      "backend": "rust",
+      "batch_rows": 32,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "auto_insurance_price",
+      "backend": "rust",
+      "batch_rows": 1024,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "auto_insurance_price",
+      "backend": "cpp17",
+      "batch_rows": 1,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "auto_insurance_price",
+      "backend": "cpp17",
+      "batch_rows": 32,
+      "status": "unexecuted",
+      "accepted": false
+    },
+    {
+      "dataset": "auto_insurance_price",
+      "backend": "cpp17",
+      "batch_rows": 1024,
+      "status": "unexecuted",
+      "accepted": false
+    }
+  ],
+  "window": {
+    "experiment_sha256": "8c0591997dc3cd19ba597ad4e3e39eb97cf4692157337cb66b0a44353d5b6515",
+    "started_unix_ms": 1790363494939,
+    "deadline_unix_ms": 1790367094939
+  },
+  "warm_complete_request_distribution": {
+    "n": 0,
+    "median_seconds": null,
+    "p95_seconds": null,
+    "mean_seconds": null
+  },
+  "boundary": "Fitting data to first prediction, including preprocessing, encoders, policy, fitting, emission and compilation. Backends emitted sequentially; later milestones include earlier backend work. No LLM speed comparison."
+}

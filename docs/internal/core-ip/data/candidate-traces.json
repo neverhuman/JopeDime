@@ -1,0 +1,330 @@
+[
+  {
+    "source_sha": "68f56404c3e199e06413bfd645d3fe0803d7b96f",
+    "receipt_path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/neural-integration/origin-proof-68f56404c3e199e06413bfd645d3fe0803d7b96f/journal/asm-search/ba932d949cc40470b21c1e56cb5b24a91af96c96ef783710f622716fce8597f1/search-receipt.json",
+    "receipt_sha256": "7d7805cb98ff3040d4faa6bebd1a7d10c46ff4a3a0a97c4dc5faf6338e61487a",
+    "arm": {
+      "id_sha256": "ba932d949cc40470b21c1e56cb5b24a91af96c96ef783710f622716fce8597f1",
+      "seconds": 120
+    },
+    "stop_reason": "evaluation_limit",
+    "winner": {
+      "candidate": {
+        "generation": 1,
+        "genome": "(pipe X (poly_interact append=true) (histgbm2 bags=3 col_subsample=0.6 leaves=255 lr=0.08 min_leaf=1 rounds=500 row_subsample=0.85 val_pct=15))",
+        "id_sha256": "c806c3be9d9b63d880338ae4bc35c874cb9acbedd6a8da0ddbc1503349dcdbf0",
+        "initial_slot": null,
+        "origin": "mutation",
+        "parents": [
+          "0657fabaab3d994eb37e58555cb19c5c8e0bb24b9d2e5faa3b46e3760e38842d"
+        ],
+        "program_sha256": "06c984e94d54ad444e06c3b60e3f7201dca5122bfa3dfdf8bdd442770241e614",
+        "rank_log_weight": null,
+        "recipe": {
+          "executable_canonical": "(pipe X (input categorical=onehot max_onehot=256 min_count=1 missing=indicator numeric=median) (poly_interact append=true) (histgbm2 bags=3 col_subsample=0.6 leaves=255 lr=0.08 min_leaf=1 rounds=500 row_subsample=0.85 val_pct=15))",
+          "executable_sha256": "06c984e94d54ad444e06c3b60e3f7201dca5122bfa3dfdf8bdd442770241e614",
+          "input_policy": "asm.generated-raw-input/median-onehot256-indicator/v1",
+          "inserted_input_stage": true,
+          "original_bytes_sha256": "fe30417a1e9abec15995214da2b11f7ad7b1d580f20cc36336faa1c219cecce4",
+          "original_proposal": "(pipe X (poly_interact append=true) (histgbm2 bags=3 col_subsample=0.6 leaves=255 lr=0.08 min_leaf=1 rounds=500 row_subsample=0.85 val_pct=15))",
+          "proposal_canonical": "(pipe X (poly_interact append=true) (histgbm2 bags=3 col_subsample=0.6 leaves=255 lr=0.08 min_leaf=1 rounds=500 row_subsample=0.85 val_pct=15))",
+          "proposal_canonical_sha256": "fe30417a1e9abec15995214da2b11f7ad7b1d580f20cc36336faa1c219cecce4",
+          "randomness_policy": "dsl-seeds-and-engine-fixed-defaults/request-seed-scheduling-only/v1"
+        }
+      },
+      "feedback": {
+        "candidate_sha256": "c806c3be9d9b63d880338ae4bc35c874cb9acbedd6a8da0ddbc1503349dcdbf0",
+        "fitted_artifact_sha256": "5846d5d9604312bc175d79343c31be0a4d0ab0b141ff33ec4de55b617a36b9b6",
+        "loss": 65.361874210481,
+        "oof": {
+          "fitted_artifact_sha256": [
+            "7159214b808738a83ca579521980c5c364d3ac74bf8b749a86f376c4e388a8ed",
+            "d28e333d5cace7c50d535290ffcccc45e36e1fd633fda68dd67b847d67f1053b",
+            "76e464cc019b4d1ed16ef5b3852f0b0d0008b277a7282a0da0bbfa38f5615b89",
+            "7e75f6a7c0a28f5d6ca8f320c2036c728acb8988a23522ab4a2346fb5579de44",
+            "524443534ff4adb3fc96510585a4f94a6bcd3b46f2c5a3f45a706d791292ca52"
+          ],
+          "physical_fit_starts": [
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "request_sha256": [
+            "ba37e3b9da1111b7f3ae7c65aeb269b034de91f01abfaa2e4e76c730952281a9",
+            "2d8861b011541d89cbb9f7aa5bff3aa7e22bb5b1e32258885cc83c183cf1a904",
+            "c67f2f4c2a5dcbd36e8cbd5e69e552a4b5fd4765bf8954a49af34928a9420b5c",
+            "c04bef53c6a8f068b3a799aa74d483e8b6ec9a17aebd6f25001b38134d46045d",
+            "a13a752a89f4f55e3c69203dabe5ae94242dc42e2c6740b48607d34806d7d9d7"
+          ],
+          "scored_rows_sha256": "073710e8127572a5a446fbbd16652fd79586de4bfcbb18daafd89eb2967d873f",
+          "selection_sha256": "b3bed0148687ef794b8d9fba5ef059782e876a36399ef9a144761dca74e2585e"
+        },
+        "physical_fit_starts": 5,
+        "reason": null,
+        "replay_evidence_sha256": "d4404371c3ed402ae6e5a5473c6df51896999369089973810fdd96a64269a21c",
+        "retryable_inventory": false,
+        "status": "completed",
+        "worker_receipt_sha256": "00cac64d0a1c13f5b30a9d0a0dc1abf4f271319b6dd5534c02916e748c151e8b"
+      }
+    },
+    "parents": [
+      {
+        "candidate": {
+          "generation": 0,
+          "genome": "(pipe X (poly_interact append=true) (stack))",
+          "id_sha256": "0657fabaab3d994eb37e58555cb19c5c8e0bb24b9d2e5faa3b46e3760e38842d",
+          "initial_slot": 77,
+          "origin": "generic",
+          "parents": [],
+          "program_sha256": "c02fecfa897456597a5edcd9dd0682f7f461c0fdddea086726a8b71df5c27371",
+          "rank_log_weight": null,
+          "recipe": {
+            "executable_canonical": "(pipe X (input categorical=onehot max_onehot=256 min_count=1 missing=indicator numeric=median) (poly_interact append=true) (stack))",
+            "executable_sha256": "c02fecfa897456597a5edcd9dd0682f7f461c0fdddea086726a8b71df5c27371",
+            "input_policy": "asm.generated-raw-input/median-onehot256-indicator/v1",
+            "inserted_input_stage": true,
+            "original_bytes_sha256": "385ae0780f1f329ce714c852fee28783182ab119d4747dbcdd750246964e364b",
+            "original_proposal": "(pipe X (poly_interact append=true) (stack))",
+            "proposal_canonical": "(pipe X (poly_interact append=true) (stack))",
+            "proposal_canonical_sha256": "385ae0780f1f329ce714c852fee28783182ab119d4747dbcdd750246964e364b",
+            "randomness_policy": "dsl-seeds-and-engine-fixed-defaults/request-seed-scheduling-only/v1"
+          }
+        },
+        "feedback": {
+          "candidate_sha256": "0657fabaab3d994eb37e58555cb19c5c8e0bb24b9d2e5faa3b46e3760e38842d",
+          "fitted_artifact_sha256": "7b857c0aa2b26fb72537ce513c56ab4dc5b05100c0ebbe0240cf63ca4563689c",
+          "loss": 70.40795547129997,
+          "oof": {
+            "fitted_artifact_sha256": [
+              "cef627326bbe0143fdddc006d4377082478c88e9b7d7fb5083c079c010e992ee",
+              "405b41442d5fadc3515c157f38c4dc39b6d367522043a8bf4970361875412278",
+              "fb9c7931c43cd4f611481e504817965557792b279c964d1710718413c6368cea",
+              "76165af4bbaa738ed4ea3e18e3c955b2c6fe3f9074a025f240893ef2e18b49ad",
+              "59d778d7c7238da0cc17b5d18277f5e4d7e33b1c0e5ba91fac7296b050e9e34f"
+            ],
+            "physical_fit_starts": [
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            "request_sha256": [
+              "ac3c80537bbd599c370c4fafd34d79fda67fc3874b64dba6f08581a0c07e0f91",
+              "a18e632249379490dc5d1e40b45f9c8abac7c42f9f8352d0f6388f2a3a9055b4",
+              "c2d1e725ef787a912593140209eae95cc1946f04f9c642203bd8e001984d7208",
+              "223fb706f47e583ac94f8f20a51ab716bc687446c50f24675f724cdab4e5f31d",
+              "ea992d3c7b26ca69140bc60a60283b849656f809bc971063e23b7e9740aa25f2"
+            ],
+            "scored_rows_sha256": "073710e8127572a5a446fbbd16652fd79586de4bfcbb18daafd89eb2967d873f",
+            "selection_sha256": "b3bed0148687ef794b8d9fba5ef059782e876a36399ef9a144761dca74e2585e"
+          },
+          "physical_fit_starts": 5,
+          "reason": null,
+          "replay_evidence_sha256": "e80a7b3a88d09570efa34f05adfb5fe74cf7ede7d1764365d56dcf863b366035",
+          "retryable_inventory": false,
+          "status": "completed",
+          "worker_receipt_sha256": "76a6e2427d3323bf6e848136c9ebe41ce93bb4e5a40e0f7d1b58ef721db92735"
+        }
+      }
+    ],
+    "attempted": 96,
+    "completed": 89
+  },
+  {
+    "source_sha": "68f56404c3e199e06413bfd645d3fe0803d7b96f",
+    "receipt_path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/neural-integration/origin-proof-68f56404c3e199e06413bfd645d3fe0803d7b96f/journal/asm-search/ec2b7ba96c18a7fe3d5f4e65aa0a17a50eec6e4070735f4579fe252616224e00/search-receipt.json",
+    "receipt_sha256": "5eae7243b5442635eacb326e0a1ce0b7a4e43ba413ed68e281e1ff33dcd6e069",
+    "arm": {
+      "id_sha256": "ec2b7ba96c18a7fe3d5f4e65aa0a17a50eec6e4070735f4579fe252616224e00",
+      "seconds": 120
+    },
+    "stop_reason": "original_deadline",
+    "winner": {
+      "candidate": {
+        "generation": 1,
+        "genome": "(pipe X (row_diff_stats append=true) (winsor_clip append=true) (winsor_moments append=false q=0.1) (histgbm rounds=180))",
+        "id_sha256": "ad665e5b4e2d8c579485de2d45296aece7a5731d9fe4c81e28446cdeecec7225",
+        "initial_slot": null,
+        "origin": "crossover",
+        "parents": [
+          "5ea512cf89cd642ef2bbbcb54884280afce336442eccf8e4e77ba3153b83d640",
+          "07c24808259ebe9445b6234226c500c8d00ae9609fc09b50c57324c4111868e3"
+        ],
+        "program_sha256": "ea667ffcef2fd802dd4b304b201564d9cd9bf1aa4ed183b6f44eeb8abcec7118",
+        "rank_log_weight": null,
+        "recipe": {
+          "executable_canonical": "(pipe X (input categorical=onehot max_onehot=256 min_count=1 missing=indicator numeric=median) (row_diff_stats append=true) (winsor_clip append=true) (winsor_moments append=false q=0.1) (histgbm rounds=180))",
+          "executable_sha256": "ea667ffcef2fd802dd4b304b201564d9cd9bf1aa4ed183b6f44eeb8abcec7118",
+          "input_policy": "asm.generated-raw-input/median-onehot256-indicator/v1",
+          "inserted_input_stage": true,
+          "original_bytes_sha256": "cb6f258dcc20b8696a8f9ec4a2080475648638ae3d8a5c096653408b845e0d8e",
+          "original_proposal": "(pipe X (row_diff_stats append=true) (winsor_clip append=true) (winsor_moments append=false q=0.1) (histgbm rounds=180))",
+          "proposal_canonical": "(pipe X (row_diff_stats append=true) (winsor_clip append=true) (winsor_moments append=false q=0.1) (histgbm rounds=180))",
+          "proposal_canonical_sha256": "cb6f258dcc20b8696a8f9ec4a2080475648638ae3d8a5c096653408b845e0d8e",
+          "randomness_policy": "dsl-seeds-and-engine-fixed-defaults/request-seed-scheduling-only/v1"
+        }
+      },
+      "feedback": {
+        "candidate_sha256": "ad665e5b4e2d8c579485de2d45296aece7a5731d9fe4c81e28446cdeecec7225",
+        "fitted_artifact_sha256": "2ea5495030293d14a943016744d9ee5ce3b32e5d240792725ac1e0fb710f19dc",
+        "loss": 61.77628798848921,
+        "oof": {
+          "fitted_artifact_sha256": [
+            "1106a8cd62695c830a2e87f6235e00a1dbbe774aa0183c31676be22a98829cfc",
+            "d296df0499e12f239ebef21667db9a30f4d1c960eb04662d79d5760c05fc7535",
+            "33bd8c5927d1b545bfece6969e9cb0615a622fea9da984924d1334498460b625",
+            "ee947275f6696c26eb3cff78de07edf62e5f7550b01866dc89136e4959a42572",
+            "7ac3b170f20eb5a26c06a81fe3482ae7725d4f3c16d330fa0b57c65db38047de"
+          ],
+          "physical_fit_starts": [
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "request_sha256": [
+            "009575b0332b481f3b619e75b225478503b2160dc1ea4f86e6692ddd8170accd",
+            "f992b2538780b992054f14427afdefe13fc4d6d34c455e4f6a94daea8f9db168",
+            "0cd8736efd80ecc0c790432a2cbe5a846c1155e3063c039b5196f13180236fff",
+            "010139d1e70eff5259553686cf701bc15fc38a0730f3cec11800049587027aa4",
+            "6950921a3985913a60b178c8d4319a1d491975985aeade0db468396fae98fbab"
+          ],
+          "scored_rows_sha256": "073710e8127572a5a446fbbd16652fd79586de4bfcbb18daafd89eb2967d873f",
+          "selection_sha256": "b3bed0148687ef794b8d9fba5ef059782e876a36399ef9a144761dca74e2585e"
+        },
+        "physical_fit_starts": 5,
+        "reason": null,
+        "replay_evidence_sha256": "58aa9de825030f8c51e16c09218af0daa29d073a1a7358299e40ae7fedfbb932",
+        "retryable_inventory": false,
+        "status": "completed",
+        "worker_receipt_sha256": "9dbed6f504786c47923fa42e8cb112d6a20921279568e4a9b9e0f86d861b6106"
+      }
+    },
+    "parents": [
+      {
+        "candidate": {
+          "generation": 0,
+          "genome": "(pipe X (row_diff_stats append=true) (winsor_clip append=true) (row_spectral append=false) (row_stats append=true) (stack))",
+          "id_sha256": "5ea512cf89cd642ef2bbbcb54884280afce336442eccf8e4e77ba3153b83d640",
+          "initial_slot": 78,
+          "origin": "random_exploration",
+          "parents": [],
+          "program_sha256": "99711583de957dee2cf8aa9617e2a88d75ab7e77e0ca9c945ebeb14b8ab8369a",
+          "rank_log_weight": null,
+          "recipe": {
+            "executable_canonical": "(pipe X (input categorical=onehot max_onehot=256 min_count=1 missing=indicator numeric=median) (row_diff_stats append=true) (winsor_clip append=true) (row_spectral append=false) (row_stats append=true) (stack))",
+            "executable_sha256": "99711583de957dee2cf8aa9617e2a88d75ab7e77e0ca9c945ebeb14b8ab8369a",
+            "input_policy": "asm.generated-raw-input/median-onehot256-indicator/v1",
+            "inserted_input_stage": true,
+            "original_bytes_sha256": "c9e3c780e5ebd5b68e2694995c548d6b85df4616b8fbe3210b1622145eaf3a95",
+            "original_proposal": "(pipe X (row_diff_stats append=true) (winsor_clip append=true) (row_spectral append=false) (row_stats append=true) (stack))",
+            "proposal_canonical": "(pipe X (row_diff_stats append=true) (winsor_clip append=true) (row_spectral append=false) (row_stats append=true) (stack))",
+            "proposal_canonical_sha256": "c9e3c780e5ebd5b68e2694995c548d6b85df4616b8fbe3210b1622145eaf3a95",
+            "randomness_policy": "dsl-seeds-and-engine-fixed-defaults/request-seed-scheduling-only/v1"
+          }
+        },
+        "feedback": {
+          "candidate_sha256": "5ea512cf89cd642ef2bbbcb54884280afce336442eccf8e4e77ba3153b83d640",
+          "fitted_artifact_sha256": "6cca16b7c5bddeb7c02e7fdebbed3ebd0d59089865b917acaa8079885e0a0fbc",
+          "loss": 68.9676543813366,
+          "oof": {
+            "fitted_artifact_sha256": [
+              "3e23bccb3fad63dcaf6607b17955e4429a92cc6fae916326d976b06e2d879d7c",
+              "22c8d4b92ac30c8dd02e6cc681fbe6602da793e9ae2d302d4cb8be93ff0c4b93",
+              "a17e4cb9cb1d5a9a103c97cbf42237348c3fa83b6306e22e83fd7d08d28cfea3",
+              "fcb4c0ceb4138567ef799c92b867f277c0005acde400fa8bcbcdee49f35268a2",
+              "1d3f260498cdf5a0304fe678ec97ceaab1df08134cfd4a464d6311ee12d62319"
+            ],
+            "physical_fit_starts": [
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            "request_sha256": [
+              "1e52f23046608085993fa063062ea21911fcbf9f196cdcdc354618e900ff7378",
+              "d987023f57e7cda6e48cc7ee8b0a429b0d5bf1c06c5dc391b0fea0b5b1a94268",
+              "79f1c1e86e232a9c11ba8dc44d4fec4602bd8a2bac22ce481a7e8570f40501d6",
+              "841b797677f1eae81f68b613cf67bc8b7b2a3c2af89ba52e87223339c38f34bf",
+              "80f25412778fb6806b587cd16a4ee3564c8b55696395af881f0a6d65fff3e5a3"
+            ],
+            "scored_rows_sha256": "073710e8127572a5a446fbbd16652fd79586de4bfcbb18daafd89eb2967d873f",
+            "selection_sha256": "b3bed0148687ef794b8d9fba5ef059782e876a36399ef9a144761dca74e2585e"
+          },
+          "physical_fit_starts": 5,
+          "reason": null,
+          "replay_evidence_sha256": "da2a3b72e76ced80488613ef72eca5da9a016ef208a6d21d4bb11148491ce696",
+          "retryable_inventory": false,
+          "status": "completed",
+          "worker_receipt_sha256": "2a26d6a80cd66980eda9485087638024fe40f3b4144f4898b1e00d1a9d306286"
+        }
+      },
+      {
+        "candidate": {
+          "generation": 0,
+          "genome": "(pipe X (rff_cos append=true) (standardize) (winsor_moments append=false q=0.1) (histgbm rounds=180))",
+          "id_sha256": "07c24808259ebe9445b6234226c500c8d00ae9609fc09b50c57324c4111868e3",
+          "initial_slot": 65,
+          "origin": "random_exploration",
+          "parents": [],
+          "program_sha256": "03a46812d63bfb29cf3ef0b11d3c92ebd81c533536966def21a6a563c5fef584",
+          "rank_log_weight": null,
+          "recipe": {
+            "executable_canonical": "(pipe X (input categorical=onehot max_onehot=256 min_count=1 missing=indicator numeric=median) (rff_cos append=true) (standardize) (winsor_moments append=false q=0.1) (histgbm rounds=180))",
+            "executable_sha256": "03a46812d63bfb29cf3ef0b11d3c92ebd81c533536966def21a6a563c5fef584",
+            "input_policy": "asm.generated-raw-input/median-onehot256-indicator/v1",
+            "inserted_input_stage": true,
+            "original_bytes_sha256": "e4eb6f0a45be3bf16c6bc00ead505ae53e4e4b96b2bb1d9070bee530c27a65ac",
+            "original_proposal": "(pipe X (rff_cos append=true) (standardize) (winsor_moments append=false q=0.1) (histgbm rounds=180))",
+            "proposal_canonical": "(pipe X (rff_cos append=true) (standardize) (winsor_moments append=false q=0.1) (histgbm rounds=180))",
+            "proposal_canonical_sha256": "e4eb6f0a45be3bf16c6bc00ead505ae53e4e4b96b2bb1d9070bee530c27a65ac",
+            "randomness_policy": "dsl-seeds-and-engine-fixed-defaults/request-seed-scheduling-only/v1"
+          }
+        },
+        "feedback": {
+          "candidate_sha256": "07c24808259ebe9445b6234226c500c8d00ae9609fc09b50c57324c4111868e3",
+          "fitted_artifact_sha256": "7e99b463acca97fec6df92b4c11889951e85ce2581f290d68e497cc532d1c3a4",
+          "loss": 64.39694750123445,
+          "oof": {
+            "fitted_artifact_sha256": [
+              "56a4e8830a098a79f86b1210251c6df27aac05b22a505b26943cd1ff3cd71c32",
+              "fb26482e851a3924ce8aa7f40241cace393f871f680419f2442acf0506e72ea5",
+              "ef2f94f33dfae7dbffe4e46e9ecc84fedb12f1e0898b598b37ba511b18b13f0e",
+              "594076ff600d3db2669e6cd186e5eb33bd85e68dd460ab4475e8d7ce9df0be40",
+              "84cf75d3ac54b0b62224e1f5671f790e8d7b8ce5de09343cfc24de87bc7937a3"
+            ],
+            "physical_fit_starts": [
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            "request_sha256": [
+              "83822bd49e96a58e86dcdd74c23e62e7d9d162542ed05533e45fcf5520730aa8",
+              "520868cbf0941c6daa7608c20a903edda038fa08e9f1a978f4302baa728a8951",
+              "e5e26e9cc83b9589d797cca07f51814628d2ff9a55d28188af5d005d052d1b3a",
+              "2ef91346863f3e9f86d0e885a8f10122e549bc43a572951fa34900c218d6c729",
+              "e4250f94df2719ab6572f1111e53586ea871428c314f396c798f2aaf908e9ab5"
+            ],
+            "scored_rows_sha256": "073710e8127572a5a446fbbd16652fd79586de4bfcbb18daafd89eb2967d873f",
+            "selection_sha256": "b3bed0148687ef794b8d9fba5ef059782e876a36399ef9a144761dca74e2585e"
+          },
+          "physical_fit_starts": 5,
+          "reason": null,
+          "replay_evidence_sha256": "3d8b11e1d021412d51ce6a43aea17512dbd88b47852216e14a3c14d076da924a",
+          "retryable_inventory": false,
+          "status": "completed",
+          "worker_receipt_sha256": "4ac89e5ecc96fad31aa422bc45cb8591444eb1727dcce0e14a7c15eb6e477781"
+        }
+      }
+    ],
+    "attempted": 96,
+    "completed": 77
+  }
+]

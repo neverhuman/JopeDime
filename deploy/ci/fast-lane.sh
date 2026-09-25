@@ -126,7 +126,7 @@ cd python
 # Preserve the complete fixture tree in an archive without dereferencing links.
 pytest_fixtures="${EVIDENCE}-pytest-fixtures"
 pytest_status=0
-uv run --no-sync pytest -q tests ../benchmarks/test_prepare.py ../crates/jope-bench/adapters/test_panel.py -m "not xbabe2" -p no:cacheprovider --basetemp="$pytest_fixtures" --junitxml="$EVIDENCE/junit.xml" || pytest_status=$?
+uv run --no-sync pytest -q tests ../benchmarks/test_prepare.py ../crates/jope-bench/adapters/test_panel.py ../crates/jope-bench/src/panel/test_inference_report.py -m "not xbabe2" -p no:cacheprovider --basetemp="$pytest_fixtures" --junitxml="$EVIDENCE/junit.xml" || pytest_status=$?
 if [ -d "$pytest_fixtures" ]; then
     tar -czf "$EVIDENCE/pytest-fixtures.tar.gz" -C "$pytest_fixtures" .
 fi

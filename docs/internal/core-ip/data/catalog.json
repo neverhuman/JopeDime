@@ -1,0 +1,14 @@
+{
+  "observed_utc": "2026-09-25T18:41:59.025353+00:00",
+  "sha256": "ab9fda8d2dea46067b70a42812e9d3c1d9dc6ba025780100df34377e81aa1120",
+  "rows": 3859,
+  "unique_ids": 3859,
+  "tasks": {
+    "regression": 2611,
+    "binary": 843,
+    "multi_label": 322,
+    "timeseries": 83
+  },
+  "scope": "catalog metadata only; not training exposure",
+  "custody": "/home/ubuntu/jope-rescue-20260921/core-ip-20260925/catalog.jsonl"
+}

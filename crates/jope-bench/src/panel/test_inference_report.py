@@ -26,6 +26,15 @@ class Reporting(unittest.TestCase):
         self.assertEqual(summary['controller']['qualification_status'],'not_executed_or_interrupted')
         self.assertEqual(len(summary['prediction']),90)
         self.assertFalse(summary['publication_headline'])
+    def test_interrupted_direct_and_prediction_attempts_remain_missing(self):
+        (self.root/'warm-0-0').mkdir()
+        (self.root/'prediction-0-rust-32').mkdir()
+        summary,_=report.summarize(self.plan,self.root)
+        request=next(r for r in summary['missing'] if r['dataset']=='0' and r['mode']=='warm' and r['seed']==0)
+        self.assertEqual(request['status'],'unexecuted_or_interrupted')
+        prediction=next(r for r in summary['prediction'] if r['dataset']=='0' and r['backend']=='rust' and r['batch_rows']==32)
+        self.assertEqual(prediction['status'],'interrupted')
+        self.assertFalse(prediction['accepted'])
     def test_failed_and_wrong_device_remain_failures(self):
         d=self.root/'warm-0-0';d.mkdir()
         (d/'receipt.json').write_text(json.dumps({'schema':self.plan['schema'],'dataset':'0','seed':0,'mode':'warm','success':True,'elapsed_seconds':1,'devices':['Cpu']*3}))

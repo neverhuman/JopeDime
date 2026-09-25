@@ -1,0 +1,122 @@
+{
+  "encoder_files": {
+    "hyperion_weights": {
+      "path": "/home/ubuntu/jain-split/jain-starforge/artifacts/model-bundle/hyperion_v5_arm_b.safetensors",
+      "sha256": "88b9e8345e44d3ea609a8286215618a762f14e607fcdada6d27447b1f74668be"
+    },
+    "hyperion_manifest": {
+      "path": "/home/ubuntu/jain-split/jain-starforge/artifacts/model-bundle/hyperion_v5_arm_b.manifest.json",
+      "sha256": "ebb745f6a0aa6398b1c3d3c9e26585e0536326b65e2083401391203fa37d21ef"
+    },
+    "frozen_transforms": {
+      "path": "/mnt/fast-scratch/jope-migration-qualification/claude-impl-20260917/ot-export-out/step-60000/context_transforms.safetensors",
+      "sha256": "1b779c6ff7a1a812e3001342d663353d3c7ff54eb93392a600f01813f4c66e22"
+    },
+    "component_bundle": "/home/ubuntu/jain-split/jain-starforge"
+  },
+  "configuration": {
+    "path": "/home/ubuntu/jope-evidence/asm-demo-20260925/b0/context-proof/encoder-files.json",
+    "sha256": "2df1110dc24db5393af83ef754a9481a6e891508bccd9ae96cd2165c9ffa4a7b"
+  },
+  "assets": [
+    {
+      "path": "/home/ubuntu/jain-split/jain-starforge/artifacts/foundation/tabicl-classifier-v2-chimera-shuffled.safetensors",
+      "sha256": "6006f3818f675e6b734a74321987800cef130be19b53267c039453ea9b57a4d3"
+    },
+    {
+      "path": "/home/ubuntu/jain-split/jain-starforge/artifacts/foundation/tabicl-regressor-v2-20260212.safetensors",
+      "sha256": "90c5952b4e201c265b4444a3694f3d1fc07df3864157ed6361b6c31723413d30"
+    },
+    {
+      "path": "/home/ubuntu/jain-split/jain-starforge/artifacts/model-bundle.v1.json",
+      "sha256": "5e7884ec1c0e0b955a2381d5b69c54beddad9ec66a1980c94ad279d974486d05"
+    },
+    {
+      "path": "/home/ubuntu/jain-split/jain-starforge/artifacts/model-bundle/hyperion_v5_arm_b.manifest.json",
+      "sha256": "ebb745f6a0aa6398b1c3d3c9e26585e0536326b65e2083401391203fa37d21ef"
+    },
+    {
+      "path": "/home/ubuntu/jain-split/jain-starforge/artifacts/model-bundle/hyperion_v5_arm_b.safetensors",
+      "sha256": "88b9e8345e44d3ea609a8286215618a762f14e607fcdada6d27447b1f74668be"
+    },
+    {
+      "path": "/home/ubuntu/jain-split/jain-starforge/artifacts/model-bundle/jope_policy.meta.json",
+      "sha256": "fdc79784c3cf217925bfae3d9fd748ded0afa086466230f4a469e17b39eff069"
+    },
+    {
+      "path": "/home/ubuntu/jain-split/jain-starforge/artifacts/model-bundle/jope_policy.safetensors",
+      "sha256": "2c4c5531c5f1d834653fb1fef8b2b51cfd9d90044ff15cc98b67cd1b5aaae871"
+    },
+    {
+      "path": "/home/ubuntu/jain-split/jain-starforge/artifacts/model-bundle/operator_registry.json",
+      "sha256": "62c7ab26dfcf0f6c0047fe6c9eec192b0440a7080bac92d772c08eed9279c8cb"
+    },
+    {
+      "path": "/home/ubuntu/jain-split/jain-starforge/artifacts/model-bundle/preprocessing.safetensors",
+      "sha256": "dccf526132dc1713f36cae4a0c88058fd73a19df7b349edeb73aef3158788c39"
+    },
+    {
+      "path": "/home/ubuntu/jain-split/jain-starforge/artifacts/model-bundle/target_encoder_fused_v1.be96adc6549a478c6a1759e40ce8c403fa529694b54a74a7d93a6dd56d35a40f.safetensors",
+      "sha256": "be96adc6549a478c6a1759e40ce8c403fa529694b54a74a7d93a6dd56d35a40f"
+    },
+    {
+      "path": "/home/ubuntu/jain-split/jain-starforge/artifacts/model-bundle/target_encoder_fused_v1.meta.json",
+      "sha256": "3849615a7c8f9e750d543eb07e02eceb167e648775fe1dd5c041f8cdecfe7043"
+    },
+    {
+      "path": "/home/ubuntu/jain-split/jain-starforge/artifacts/starforge/chimera_classification_attnfusion.safetensors",
+      "sha256": "1a6d8b008d1b69c4725bb6e5bf094a68c1246073e6f71fa15e1b5e32ae19a488"
+    },
+    {
+      "path": "/home/ubuntu/jain-split/jain-starforge/artifacts/starforge/chimera_classification_expert_a.safetensors",
+      "sha256": "1a48f7fc920c235c412ebf8dff176e0016e18b02554d8bd339380ea501eb4d7b"
+    },
+    {
+      "path": "/home/ubuntu/jain-split/jain-starforge/artifacts/starforge/chimera_stackfusionreg.safetensors",
+      "sha256": "57cdb53ae732a705e6aee7381a6a11e7e82cf357bcd67c46ccfa47b789c7d5d2"
+    },
+    {
+      "path": "/home/ubuntu/jain-split/jain-starforge/artifacts/starforge/starlight_core_regressor.safetensors",
+      "sha256": "f663ae49cc0f1504f07800a69dd6c31ca22fc473f26bbc0684eac25129a04128"
+    },
+    {
+      "path": "/home/ubuntu/jain-split/jain-starforge/docs/notices/jain-governed-models.txt",
+      "sha256": "18769bbb5c4d1ab9b9cbae5f280a9761f5e251662c3e1dae01131c8c61e4023e"
+    },
+    {
+      "path": "/home/ubuntu/jain-split/jain-starforge/docs/notices/target-hyperion-redistribution.txt",
+      "sha256": "51160d05fc5dccaf19802f29431b601426b862a5b50e8f6bd7a5095356cc98cf"
+    },
+    {
+      "path": "/home/ubuntu/jain-split/jain-starforge/docs/notices/third-party-provenance-pending.txt",
+      "sha256": "7e59ea51a2d6936190c640d8bccb887f660910716415384feeb63366c3997316"
+    },
+    {
+      "path": "/mnt/fast-scratch/jope-migration-qualification/claude-impl-20260917/ot-export-out/step-60000/context_transforms.safetensors",
+      "sha256": "1b779c6ff7a1a812e3001342d663353d3c7ff54eb93392a600f01813f4c66e22"
+    }
+  ],
+  "hyperion_manifest": {
+    "version": "v7",
+    "step": 0,
+    "dim": 128,
+    "heads": 4,
+    "layers": 4,
+    "emb_dim": 128,
+    "min_patch": 2,
+    "max_patch": 16,
+    "n_bands": 4,
+    "q_low": 1.0,
+    "q_high": 99.0,
+    "quant_scale": 3.0,
+    "pad_u8": 128,
+    "ws_list": [
+      4,
+      7,
+      11,
+      15
+    ],
+    "seed": 0
+  },
+  "hyperion_manifest_observed_sha256": "ebb745f6a0aa6398b1c3d3c9e26585e0536326b65e2083401391203fa37d21ef"
+}
