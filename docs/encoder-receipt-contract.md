@@ -117,8 +117,8 @@ The tests cover a matching receipt; missing/unknown provenance; recomputed forge
 receipts; dataset/task/vocabulary/fold/order substitution; same-width product swaps;
 row and group leakage; retained state/output/program/pin substitution; nonfinite
 outputs; and label-free membership. The in-memory reference encoder compares
-projected-input and fitted-transform digests after forbidden feature/label mutation
-and removal, then proves sensitivity to an allowed-row mutation. This establishes
+projected-input and fitted-transform digests after forbidden feature/label changes
+and removal, then proves sensitivity to an allowed-row change. This establishes
 the helper's limited row-isolation behavior, **not** production encoder invariance.
 
 The existing jope-learning library target runs in PR `rust-test` and `full-default`
