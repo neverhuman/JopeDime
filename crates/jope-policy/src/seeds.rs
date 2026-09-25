@@ -135,8 +135,8 @@ macro_rules! population_accessors {
     };
 }
 
-/// A population produced in this process by [`propose`]. It has no public constructor and no
-/// `Deserialize` implementation.
+/// A population produced in this process by [`propose`] or [`propose_challenger`]. It has no
+/// public constructor and no `Deserialize` implementation.
 #[derive(Clone, Debug, PartialEq, Serialize)]
 #[serde(transparent)]
 pub struct SeedPopulation(PopulationFields);
@@ -162,7 +162,8 @@ impl PartialEq<SeedPopulation> for SeedFile {
 }
 
 /// The run identity a seed file is bound to. The checkpoint state is not part of it: it is taken
-/// from the [`CheckpointBinding`] that [`propose`] verifies against the loaded policy.
+/// from the [`CheckpointBinding`] that [`propose`] or [`propose_challenger`] verifies against the
+/// loaded policy.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SeedBinding {
     prepared_sha256: String,
