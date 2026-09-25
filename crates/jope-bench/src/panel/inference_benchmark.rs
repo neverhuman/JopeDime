@@ -5,9 +5,7 @@ use jope_pipeline::{
     execution::Artifact,
     experiment::{Experiment, Resources, EXPERIMENT_SCHEMA},
 };
-use jope_policy::context_producer::{
-    self, Feature, FeatureKind, TrainingIdentity, TrainingInput, TrainingRow,
-};
+use jope_policy::context_producer::{self, FeatureKind, TrainingInput};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::{
@@ -17,18 +15,18 @@ use std::{
     path::{Path, PathBuf},
 };
 
-pub const SCHEMA: &str = "jope.inference-benchmark/v2";
+pub const SCHEMA: &str = "jope.inference-benchmark/v3";
 pub const TOLERANCE: f32 = 3e-4;
 #[derive(Args)]
 pub struct PlanArgs {
     #[arg(long)]
     pub manifest: PathBuf,
     #[arg(long)]
-    pub datasets: PathBuf,
+    pub fitting_inputs: PathBuf,
+    #[arg(long)]
+    pub fitting_inputs_sha256: String,
     #[arg(long)]
     pub configuration: PathBuf,
-    #[arg(long)]
-    pub campaign_plan: PathBuf,
     #[arg(long)]
     pub configuration_sha256: String,
     #[arg(long)]
@@ -83,6 +81,7 @@ pub struct Plan {
     pub toolchain: BTreeMap<String, Artifact>,
     pub configuration: Artifact,
     pub references: Artifact,
+    pub fitting_manifest: Artifact,
     pub inputs: Vec<Dataset>,
     pub settings: Value,
 }
@@ -137,7 +136,7 @@ pub fn plan(args: PlanArgs) -> Result<Value> {
         option_env!("JOPE_SOURCE_SHA") == Some(args.source_sha.as_str()),
         "source pin differs from compiled JOPE_SOURCE_SHA"
     );
-    let directory = custody(args.output.parent().context("output parent")?)?;
+    custody(args.output.parent().context("output parent")?)?;
     let mut toolchain = BTreeMap::new();
     for name in ["rustc", "python3", "g++"] {
         let output = if name == "rustc" {
@@ -182,101 +181,19 @@ pub fn plan(args: PlanArgs) -> Result<Value> {
         context_producer::case_inputs(&fs::read(&references.path)?, &references.sha256)?.len() == 8,
         "need eight native cases"
     );
-    let campaign: super::campaign::CampaignPlan =
-        serde_json::from_slice(&fs::read(&args.campaign_plan)?)?;
-    campaign.validate()?;
-    ensure!(
-        campaign.experiment.seed == 0,
-        "timing study requires campaign seed zero"
-    );
     let (panel, panel_sha) = super::cli::read_panel(&args.manifest)?;
-    let mut inputs = Vec::new();
-    for dataset in panel
-        .datasets
-        .iter()
-        .filter(|d| d.task == jope_datasets::catalog::Task::Regression)
-    {
-        let data = super::data::load_development(&args.datasets, dataset)?;
-        let rows = data
-            .rows
-            .iter()
-            .filter(|r| r.fold != 0)
-            .map(|r| TrainingRow {
-                id: r.id.clone(),
-                values: r.values.clone(),
-                label: r.target.clone(),
-            })
-            .collect::<Vec<_>>();
-        let fitting_rows_sha256 = digest(&serde_json::to_vec(
-            &rows.iter().map(|r| &r.id).collect::<Vec<_>>(),
-        )?);
-        let input = TrainingInput {
-            schema: "jope.cpu-context-training/regression-v1".into(),
-            identity: TrainingIdentity {
-                dataset_sha256: dataset.source.sha256.clone(),
-                prepared_sha256: dataset.split.development_sha256.clone(),
-                training_sha256: context_producer::training_rows_sha256(&rows)?,
-                fitting_rows_sha256,
-                cut: 0,
-            },
-            features: dataset
-                .features
-                .iter()
-                .map(|f| Feature {
-                    name: f.name.clone(),
-                    kind: match f.kind {
-                        jope_pipeline::experiment::ColumnKind::Numeric => FeatureKind::Numeric,
-                        _ => FeatureKind::Categorical,
-                    },
-                })
-                .collect(),
-            rows,
-        };
-        let path = directory.join(format!("raw-{}.json", dataset.id));
-        write(&path, &input)?;
-        let gp = if ["230_machine_cpu", "auto_insurance_price", "197_cpu_act"]
-            .contains(&dataset.id.as_str())
-        {
-            let (_, mut pair) = super::optimize::build_pair_input(&campaign, &config, &data)?;
-            pair.seconds = 120;
-            pair.max_evaluations = 96;
-            pair.incumbents = None;
-            let cut = data.cut(0)?;
-            let mut folds = Vec::new();
-            for fold in 0..5 {
-                let (fit_ids, predict_ids) = pair.selection.inner_rows(fold)?;
-                let fit = cut
-                    .train
-                    .rows
-                    .iter()
-                    .filter(|r| fit_ids.contains(&r.id))
-                    .collect::<Vec<_>>();
-                let predict = cut
-                    .train
-                    .rows
-                    .iter()
-                    .filter(|r| predict_ids.contains(&r.id))
-                    .collect::<Vec<_>>();
-                let value = super::optimize_fit::fold_input(&data, &fit, &predict)?;
-                let path = directory.join(format!("gp-{}-fold-{fold}.json", dataset.id));
-                write(&path, &value)?;
-                folds.push((
-                    artifact(&path)?,
-                    predict.iter().map(|r| r.target.clone()).collect(),
-                ));
-            }
-            Some(GpInput { pair, folds })
-        } else {
-            None
-        };
-        inputs.push(Dataset {
-            id: dataset.id.clone(),
-            raw: artifact(&path)?,
-            gp,
-        });
-    }
-    inputs.sort_by(|a, b| a.id.cmp(&b.id));
-    ensure!(inputs.len() == 10, "need ten regression datasets");
+    let fitting_manifest = artifact(&args.fitting_inputs)?;
+    ensure!(
+        fitting_manifest.sha256 == args.fitting_inputs_sha256,
+        "fitting input manifest changed"
+    );
+    let inputs = inputs::load(
+        &fitting_manifest,
+        &panel,
+        &panel_sha,
+        &configuration.sha256,
+        &config,
+    )?;
     let settings = settings();
     let experiment = Experiment {
         schema: EXPERIMENT_SCHEMA.into(),
@@ -287,6 +204,7 @@ pub fn plan(args: PlanArgs) -> Result<Value> {
             &inputs,
             &settings,
             &toolchain,
+            &fitting_manifest,
         ))?),
         source_sha: args.source_sha,
         checkpoints: BTreeMap::from([("policy".into(), jope_policy::ACCEPTED_STATE_SHA256.into())]),
@@ -314,6 +232,7 @@ pub fn plan(args: PlanArgs) -> Result<Value> {
         toolchain,
         configuration,
         references,
+        fitting_manifest,
         inputs,
         settings,
     };
@@ -355,7 +274,8 @@ pub fn read(path: &Path, sha: &str) -> Result<Plan> {
                 &p.references,
                 &p.inputs,
                 &p.settings,
-                &p.toolchain
+                &p.toolchain,
+                &p.fitting_manifest
             ))?),
         "plan input identity changed"
     );
@@ -374,6 +294,8 @@ mod export;
 #[cfg(feature = "inference-cuda")]
 #[path = "inference_gp.rs"]
 mod gp;
+#[path = "inference_inputs.rs"]
+mod inputs;
 pub fn run(args: RunArgs) -> Result<Value> {
     #[cfg(feature = "inference-cuda")]
     {
@@ -390,7 +312,21 @@ pub fn cold(plan: &Path, sha: &str, journal: &Path, index: usize) -> Result<Valu
     cuda::cold(plan, sha, journal, index)
 }
 pub fn report(args: ReportArgs) -> Result<Value> {
-    let _ = read(&args.plan, &args.plan_sha256)?;
+    let bytes = fs::read(&args.plan)?;
+    ensure!(
+        digest(&bytes) == args.plan_sha256,
+        "report plan pin changed"
+    );
+    let header: Value = serde_json::from_slice(&bytes)?;
+    if header["schema"] == SCHEMA {
+        read(&args.plan, &args.plan_sha256)?;
+    } else {
+        // Archival report only. Legacy v2 cannot enter current execution admission.
+        ensure!(
+            header["schema"] == "jope.inference-benchmark/v2",
+            "unknown report contract"
+        );
+    }
     custody(&args.output)?;
     let status = std::process::Command::new("python3")
         .arg("-c")
