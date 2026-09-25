@@ -2,7 +2,8 @@
 import csv, hashlib, json, math, statistics, sys, struct
 from pathlib import Path
 
-SCHEMA='jope.inference-benchmark/v2'
+SCHEMA='jope.inference-benchmark/v3'
+SUPPORTED={SCHEMA,'jope.inference-benchmark/v2'}
 def sha(path):return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 def verified(pin):
     try:return sha(pin['path'])==pin['sha256']
@@ -11,7 +12,7 @@ def verified(pin):
 def qualified(plan,q):
     keys={'hyperion','foundation','target','context','policy_logits','reward_and_runtime','cache_full_prefix'}
     cases=q.get('cases',[])
-    return (q.get('schema')==SCHEMA and q.get('passed') is True
+    return (q.get('schema')==plan['schema'] and q.get('passed') is True
         and q.get('plan_identity')==plan['experiment']['methods_sha256']
         and q.get('binary_sha256')==plan['binary']['sha256']
         and q.get('source_sha')==plan['experiment']['source_sha']
@@ -36,6 +37,8 @@ def distribution(values):
     return {'n':len(values),'median_seconds':statistics.median(values) if values else None,'p95_seconds':values[math.ceil(.95*len(values))-1] if values else None,'mean_seconds':statistics.mean(values) if values else None}
 def summarize(plan,journal):
     q=read(journal/'qualification.json');qualification=qualified(plan,q)
+    launch=read(journal/'launch.json')
+    controller={'status':'completed' if launch.get('exit_code')==0 else 'failed' if launch.get('exit_code') is not None else 'unknown','launch':launch,'qualification_status':'passed' if qualification else 'failed' if q else 'not_executed_or_interrupted'}
     records=[];missing=[];backend_times={};failures=[]
     for d in plan['inputs']:
         for mode,count in [('warm',10),('cold',1),('warmup',2),('profile',1)]:
@@ -44,7 +47,7 @@ def summarize(plan,journal):
                 if not p.exists():
                     missing.append({'dataset':d['id'],'mode':mode,'seed':seed,'status':'unexecuted_or_interrupted' if p.parent.exists() else 'unexecuted'});continue
                 r=read(p)
-                valid=(r.get('schema')==SCHEMA and r.get('plan_identity')==plan['experiment']['methods_sha256'] and r.get('binary_sha256')==plan['binary']['sha256'] and r.get('source_sha')==plan['experiment']['source_sha'] and r.get('dataset')==d['id'] and r.get('seed')==seed and r.get('mode')==mode and r.get('input_sha256')==d['raw']['sha256'] and r.get('selected_origin')=='neural_policy' and r.get('ranking_backend')=='candle_cuda_float32' and len(r.get('devices',[]))==3 and all('Cuda' in x for x in r['devices']) and 'Cuda' in r.get('policy_device','') and r.get('export',{}).get('validation_in_timer') is True)
+                valid=(r.get('schema')==plan['schema'] and r.get('plan_identity')==plan['experiment']['methods_sha256'] and r.get('binary_sha256')==plan['binary']['sha256'] and r.get('source_sha')==plan['experiment']['source_sha'] and r.get('dataset')==d['id'] and r.get('seed')==seed and r.get('mode')==mode and r.get('input_sha256')==d['raw']['sha256'] and r.get('selected_origin')=='neural_policy' and r.get('ranking_backend')=='candle_cuda_float32' and len(r.get('devices',[]))==3 and all('Cuda' in x for x in r['devices']) and 'Cuda' in r.get('policy_device','') and r.get('export',{}).get('validation_in_timer') is True)
                 elapsed=r.get('elapsed_seconds')
                 valid=valid and isinstance(elapsed,(int,float)) and math.isfinite(elapsed) and elapsed>=0
                 export=r.get('export',{}); recipe=export.get('recipe',{})
@@ -93,14 +96,14 @@ def summarize(plan,journal):
                 if (d['id'],backend,size) in seen:continue
                 status='unsupported' if entries.get(backend,{}).get('status')=='unsupported' else 'interrupted' if (journal/f"prediction-{d['id']}-{backend}-{size}").exists() else 'unexecuted'
                 prediction.append({'dataset':d['id'],'backend':backend,'batch_rows':size,'status':status,'accepted':False})
-    summary={'schema':SCHEMA,'qualified':qualification,'qualification':q,'publication_headline':qualification and len(warm)==100,'completed_successfully':len(warm),'expected':100,'missing':missing,'failures':failures,'warm_cumulative_backend_milestones':[{'dataset':d,'backend':b,**distribution(v)} for (d,b),v in sorted(backend_times.items())],'cold_observations':[read(p) for p in sorted(journal.glob('cold-process-*.json'))],'full_gp':gp,'prediction':prediction,'window':read(journal/'window.json'),'warm_complete_request_distribution':distribution([r['elapsed_seconds'] for r in warm]),'boundary':'Fitting data to first prediction, including preprocessing, encoders, policy, fitting, emission and compilation. Backends emitted sequentially; later milestones include earlier backend work. No LLM speed comparison.'}
+    summary={'schema':plan['schema'],'controller':controller,'qualified':qualification,'qualification':q,'publication_headline':qualification and len(warm)==100,'completed_successfully':len(warm),'expected':100,'missing':missing,'failures':failures,'warm_cumulative_backend_milestones':[{'dataset':d,'backend':b,**distribution(v)} for (d,b),v in sorted(backend_times.items())],'cold_observations':[read(p) for p in sorted(journal.glob('cold-process-*.json'))],'full_gp':gp,'prediction':prediction,'window':read(journal/'window.json'),'warm_complete_request_distribution':distribution([r['elapsed_seconds'] for r in warm]),'boundary':'Fitting data to first prediction, including preprocessing, encoders, policy, fitting, emission and compilation. Backends emitted sequentially; later milestones include earlier backend work. No LLM speed comparison.'}
     return summary,records
 
 def main():
     filename,expected,journal,output=sys.argv[1:];filename=Path(filename);journal=Path(journal);output=Path(output)
     if sha(filename)!=expected:raise ValueError('plan identity changed')
     plan=json.loads(filename.read_text())
-    if plan['schema']!=SCHEMA:raise ValueError('receipt version unsupported')
+    if plan['schema'] not in SUPPORTED:raise ValueError('receipt version unsupported')
     summary,records=summarize(plan,journal);output.mkdir(parents=True,exist_ok=True)
     (output/'summary.json').write_text(json.dumps(summary,indent=2,allow_nan=False)+'\n')
     with (output/'requests.csv').open('w',newline='') as f:

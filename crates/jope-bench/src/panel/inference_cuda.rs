@@ -316,6 +316,22 @@ fn phase(root: &Path, name: &str, seconds: u64, cutoff: u64) -> Result<u64> {
     )?;
     Ok(deadline)
 }
+fn record_timing_window(
+    root: &Path,
+    identity: &str,
+    window: &jope_pipeline::experiment::ExecutionWindow,
+) -> Result<u64> {
+    let cutoff = window
+        .deadline_unix_ms
+        .checked_sub(300_000)
+        .context("invalid execution cutoff")?;
+    // window.json belongs exclusively to ExecutionPool; never replace its contract.
+    write(
+        &root.join("timing-window.json"),
+        &json!({"schema":SCHEMA,"plan_identity":identity,"started_unix_ms":window.started_unix_ms,"deadline_unix_ms":window.deadline_unix_ms,"compute_cutoff_ms":cutoff}),
+    )?;
+    Ok(cutoff)
+}
 fn inventory(path: &Path) -> Result<Vec<Artifact>> {
     let mut pins = Vec::new();
     for entry in fs::read_dir(path)? {
@@ -483,11 +499,7 @@ pub fn run(args: RunArgs) -> Result<Value> {
             d.raw.verify()?;
         }
         let window = pool.admit()?;
-        let cutoff = window.deadline_unix_ms - 300_000;
-        write(
-            &journal.join("window.json"),
-            &json!({"schema":SCHEMA,"plan_identity":p.experiment.methods_sha256,"started_unix_ms":window.started_unix_ms,"deadline_unix_ms":window.deadline_unix_ms,"compute_cutoff_ms":cutoff}),
-        )?;
+        let cutoff = record_timing_window(&journal, &p.experiment.methods_sha256, &window)?;
         let deadline_journal = journal.clone();
         std::thread::spawn(move || {
             std::thread::sleep(Duration::from_millis(cutoff.saturating_sub(now())));
@@ -666,12 +678,42 @@ pub fn run(args: RunArgs) -> Result<Value> {
         Some(&paths.join(":")),
     )?;
     write(&journal.join("launch.json"), &launched)?;
+    ensure!(
+        launched.exit_code == Some(0),
+        "timing controller did not complete; retain launch.json and run inference-report"
+    );
     Ok(json!({"launch":launched,"report_required":true}))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn admitted_window_is_preserved_when_timing_receipt_is_written() {
+        let root = tempfile::tempdir().unwrap();
+        let window = jope_pipeline::experiment::ExecutionWindow {
+            experiment_sha256: "a".repeat(64),
+            started_unix_ms: 1000,
+            deadline_unix_ms: 3_601_000,
+        };
+        let path = root.path().join("window.json");
+        write(&path, &window).unwrap();
+        let original = fs::read(&path).unwrap();
+        assert_eq!(
+            record_timing_window(root.path(), "identity", &window).unwrap(),
+            3_301_000
+        );
+        assert_eq!(fs::read(&path).unwrap(), original);
+        assert_eq!(
+            record_timing_window(root.path(), "identity", &window).unwrap(),
+            3_301_000
+        );
+        let changed = jope_pipeline::experiment::ExecutionWindow {
+            deadline_unix_ms: 7_201_000,
+            ..window
+        };
+        assert!(record_timing_window(root.path(), "identity", &changed).is_err());
+    }
     #[test]
     fn phase_resume_preserves_cutoff_and_refuses_new_write() {
         let root = tempfile::tempdir().unwrap();

@@ -19,6 +19,13 @@ class Reporting(unittest.TestCase):
         self.assertFalse(summary['publication_headline'])
         self.assertEqual(sum(r['mode']=='warm' for r in summary['missing']),100)
         self.assertNotIn('speedup',summary)
+    def test_controller_failure_before_qualification_is_explicit(self):
+        (self.root/'launch.json').write_text(json.dumps({'exit_code':1,'reason':'bounded service failed'}))
+        summary,_=report.summarize(self.plan,self.root)
+        self.assertEqual(summary['controller']['status'],'failed')
+        self.assertEqual(summary['controller']['qualification_status'],'not_executed_or_interrupted')
+        self.assertEqual(len(summary['prediction']),90)
+        self.assertFalse(summary['publication_headline'])
     def test_failed_and_wrong_device_remain_failures(self):
         d=self.root/'warm-0-0';d.mkdir()
         (d/'receipt.json').write_text(json.dumps({'schema':self.plan['schema'],'dataset':'0','seed':0,'mode':'warm','success':True,'elapsed_seconds':1,'devices':['Cpu']*3}))
