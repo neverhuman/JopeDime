@@ -5,6 +5,8 @@ import json
 import os
 from pathlib import Path
 import sys
+import subprocess
+import tarfile
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -75,6 +77,89 @@ class FullMainTests(unittest.TestCase):
             self.assertEqual('failed',self.report(root,data)['status'])
             (root/'full-one/command.log').unlink()
             self.assertEqual('failed',self.report(root,data)['status'])
+
+    def test_loose_fixture_symlink_is_rejected(self):
+        with tempfile.TemporaryDirectory() as scratch:
+            root = Path(scratch)
+            data = self.fixture(root)
+            link = root / 'full-one' / 'fixture-link'
+            link.symlink_to('command.log')
+            data['evidence']['fixture-link'] = receipt.digest(link)
+            report = self.report(root, data)
+            self.assertEqual('failed', report['status'])
+            self.assertIn('unsafe or changed evidence', report['errors'][0])
+
+    def test_pytest_archive_retains_links_and_failure_status(self):
+        scratch_root = ROOT / 'target' / 'tmp'
+        scratch_root.mkdir(parents=True, exist_ok=True)
+        # A small command fixture stands in for pytest, exercising the actual shell
+        # wrapper and inventory without requiring Python's optional dependencies.
+        command = '''import argparse, pathlib, sys
+p = argparse.ArgumentParser()
+p.add_argument('--basetemp'); p.add_argument('--junitxml'); p.add_argument('--status')
+a = p.parse_args()
+root = pathlib.Path(a.basetemp); root.mkdir()
+(root/'payload.txt').write_text('retained fixture')
+(root/'file-link').symlink_to('payload.txt')
+(root/'dir-link').symlink_to('..', target_is_directory=True)
+(root/'dangling-link').symlink_to('absent')
+pathlib.Path(a.junitxml).write_text('<testsuites/>')
+sys.exit(int(a.status))
+'''
+        for status in (0, 7):
+            with self.subTest(status=status), tempfile.TemporaryDirectory(prefix='pytest evidence ', dir=scratch_root) as scratch:
+                root = Path(scratch)
+                data = self.fixture(root)
+                folder = root / 'full-one'
+                result = subprocess.run(['bash', str(ROOT/'deploy/ci/pytest-evidence.sh'),
+                                         sys.executable, '-c', command, '--status', str(status)],
+                                        env=dict(os.environ, JOPE_LANE_EVIDENCE=str(folder)),
+                                        capture_output=True, text=True)
+                self.assertEqual(status, result.returncode, result.stderr)
+                archive = folder / 'pytest-fixtures.tar.gz'
+                with tarfile.open(archive) as retained:
+                    self.assertEqual(b'retained fixture', retained.extractfile('./payload.txt').read())
+                    for name, target in [('file-link', 'payload.txt'), ('dir-link', '..'), ('dangling-link', 'absent')]:
+                        member = retained.getmember('./' + name)
+                        self.assertTrue(member.issym())
+                        self.assertEqual(target, member.linkname)
+                    self.assertEqual(5, len(retained.getmembers()))
+                self.assertFalse(any(p.is_symlink() for p in folder.rglob('*')))
+                data.update(status='passed' if status == 0 else 'failed', exit_status=status)
+                data['evidence'] = {str(p.relative_to(folder)): receipt.digest(p) for p in folder.rglob('*') if p.is_file()}
+                report = self.report(root, data)
+                self.assertEqual('passed' if status == 0 else 'failed', report['status'])
+                self.assertEqual(status, report['families']['full-one']['exit_status'])
+                if status == 0:
+                    archive.write_bytes(archive.read_bytes() + b'tampered')
+                    self.assertEqual('failed', self.report(root, data)['status'])
+                # Reusing a pytest basetemp would delete retained fixtures. Refuse
+                # before invoking the command, preserving its existing payload.
+                again = subprocess.run(['bash', str(ROOT/'deploy/ci/pytest-evidence.sh'), 'false'],
+                                       env=dict(os.environ, JOPE_LANE_EVIDENCE=str(folder)),
+                                       capture_output=True, text=True)
+                self.assertEqual(2, again.returncode)
+                self.assertEqual('retained fixture', Path(str(folder)+'-pytest-fixtures/payload.txt').read_text())
+
+    def test_archive_failure_never_passes_or_hides_pytest_failure(self):
+        scratch_root = ROOT / 'target' / 'tmp'
+        scratch_root.mkdir(parents=True, exist_ok=True)
+        for status, expected in [(0, 1), (7, 7)]:
+            with self.subTest(status=status), tempfile.TemporaryDirectory(dir=scratch_root) as scratch:
+                root = Path(scratch)
+                folder = root / 'evidence'
+                folder.mkdir()
+                fake_tar = root / 'tar'
+                fake_tar.write_text('#!/bin/sh\nexit 23\n')
+                fake_tar.chmod(0o755)
+                command = "import pathlib,sys; pathlib.Path(sys.argv[2].split('=',1)[1]).mkdir(); sys.exit(int(sys.argv[1]))"
+                result = subprocess.run(['bash', str(ROOT/'deploy/ci/pytest-evidence.sh'),
+                                         sys.executable, '-c', command, str(status)],
+                                        env=dict(os.environ, JOPE_LANE_EVIDENCE=str(folder),
+                                                 PATH=str(root)+os.pathsep+os.environ['PATH']),
+                                        capture_output=True, text=True)
+                self.assertEqual(expected, result.returncode, result.stderr)
+                self.assertIn('failed to retain pytest fixtures', result.stderr)
 
     def test_declared_family_budgets_fit_job_with_upload_reserve(self):
         mapping = json.loads((ROOT/'deploy/ci/coverage.json').read_text())

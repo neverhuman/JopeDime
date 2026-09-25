@@ -144,6 +144,11 @@ class AggregateTests(unittest.TestCase):
             lanes, _ = aggregate.plan_module.classify([path], 'pull_request')
             self.assertFalse(lanes['inputs'])
 
+    def test_pytest_evidence_helper_selects_shared_lanes(self):
+        lanes, _ = aggregate.plan_module.classify(
+            ['deploy/ci/pytest-evidence.sh'], 'pull_request')
+        self.assertTrue(all(lanes.values()), lanes)
+
     def test_duplicate_receipt_and_missing_dependency_fail(self):
         self.receipts['python'].append(copy.deepcopy(self.receipts['python'][0]))
         del self.needs['rust-check']
