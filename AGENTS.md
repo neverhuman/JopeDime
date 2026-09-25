@@ -300,9 +300,16 @@ checked at use time; `GH_TOKEN`/`GITHUB_TOKEN` can override the stored CLI accou
 | Runner registration PAT | `/etc/jope-runner/github-pat` (root:root, 0600 on runner hosts) | Host launcher only, for single-use JIT registration. Never mount into a job or use as the PR review credential. |
 | GitHub identity helper | `/home/ubuntu/.local/bin/gh-role` (0700) | `gh-role writer` → `jepsontaylor`, `gh-role reviewer` → `neverhuman`. The supported way to select an identity; see the approval procedure above. xbabe2 only. |
 | GitHub writer token file | `/home/ubuntu/.config/jopedime/secrets/gh.env` (0600) | A **bare token on one line with no `KEY=`**, despite the suffix. Sourcing it attempts to execute the token as a command and can expose it in shell diagnostics. Never source it; prefer the CLI credential store through the helper. |
-| AWS credential for JopeDime S3 | profile `veox-jepson-prod` in `/home/ubuntu/.aws/config`, resolved by `credential_process` `/home/ubuntu/.aws/veox-jepson-new-cred.sh` (0700) | Account `714044927654`; verify the permissions needed for each operation at use time. `veox-jepson` and `veox-jepson-new` are the *same credential* under other names, not a dev/prod pair. `veox-alton` (`/home/ubuntu/.aws/veox-alton-cred.sh`, 0700) also reaches the same account. |
+| AWS credential for JopeDime S3 | profile `veox-jepson-prod` in `/home/ubuntu/.aws/config` (0600), resolved by `credential_process` `/home/ubuntu/.aws/veox-jepson-new-cred.sh` (0700) | Verified 2026-09-25: principal `arn:aws:iam::714044927654:user/jepson`, with `AdministratorAccess` through group `admin`. **Administrator access, not an append-only writer.** `veox-jepson`, `veox-jepson-new`, and `veox-jepson-prod` share this provider; they are not separate dev/prod credentials. Verify permissions at use time. `veox-alton` (`/home/ubuntu/.aws/veox-alton-cred.sh`, 0700) also reaches the same account. |
 | AWS sandbox credential | profile `veox-jepson-sandbox` → `/home/ubuntu/.aws/veox-jepson-cred.sh` (0700) | A **different account** (`228886154691`) holding different buckets. The prior datasets-bucket probe returned `AccessDenied`; it is not the selected product profile. |
 | `aws.env` | `/home/ubuntu/.config/jopedime/secrets/aws.env` (0600) | **A human-readable note, not an env file**: the earlier inspection found no assignments. Never source it. Use the profile above. |
+
+As of 2026-09-25, append-only dev/prod writer credentials and separate dataset-curator
+credentials are **not provisioned—no verified path available**. Claude's credential design
+is a draft; illustrative profile names are not installed credentials. The shared administrator
+provider above does not supply those restricted roles. This inventory documents current facts
+only; it does not authorize credential provisioning, AWS permission changes, storage rollout
+or campaign compute.
 
 The following launcher fragment illustrates credential delivery to a separate review process.
 It is not the helper's full validation implementation. On another host, verify account and
