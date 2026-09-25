@@ -13,7 +13,8 @@
 //!
 //! Pieces:
 //! - [`config`]: the policy configuration (`deny_unknown_fields`) and the export-receipt binding
-//!   (accepted step-60000 identity; the rejected step-69000 state is refused).
+//!   (accepted step-60000 identity, or exactly a pinned native challenger; the rejected
+//!   step-69000 state is refused).
 //! - [`grammar`]: the 401-token vocabulary file format, the masking automaton, `encode`,
 //!   `decode`, `project_proposal`, plus the vocabulary binding (checkpoint vocabulary or the
 //!   documented token-compatible product restriction `featmath-jain-v1`).
@@ -26,16 +27,21 @@
 //!
 //! # Provenance boundary
 //!
-//! In a product build (no `testing` feature) the only way to obtain a seed population is
+//! In a product build (no `testing` feature) the only ways to obtain a seed population are
 //! [`seeds::propose`], which requires a model from `PolicyModel::load_bound` whose recomputed
 //! parameter hash is the accepted step-60000 hash, a receipt whose claimed and recomputed config
 //! hash is [`ACCEPTED_CONFIG_SHA256`] and whose vocabulary is [`CHECKPOINT_VOCABULARY_SHA256`],
 //! and a [`grammar::BoundVocabulary`] (private fields; only `bind_vocabulary` builds it from the
-//! bytes it hashes) that is that vocabulary or [`PRODUCT_VOCABULARY_SHA256`].
+//! bytes it hashes) that is that vocabulary or [`PRODUCT_VOCABULARY_SHA256`], and
+//! [`seeds::propose_challenger`], which requires a model from `PolicyModel::load_bound` whose
+//! receipt names exactly a pinned [`config::ChallengerIdentity`] (never the accepted state,
+//! parameters or weights) and stamps that challenger's state.
 //! [`seeds::Proposal`], [`seeds::SeedPopulation`], [`seeds::SeedBinding`], [`ranking::Ranking`]
 //! and [`ranking::Bindings`] have private fields;
 //! the population assembler is private and the writer takes a [`seeds::Proposal`], so no code
-//! outside this crate can put the accepted state or a `neural_policy` origin into a seed file.
+//! outside this crate can put the accepted state or a `neural_policy` origin into a seed file;
+//! a `neural_policy` origin comes only from a bound checkpoint, identified by the file's
+//! `checkpoint_sha256`.
 //! [`ranking::score_pool`] and [`decode::pure_pool`] refuse to label output with the accepted
 //! state (or as neural samples) unless the policy is that bound model. Untrained weights and the
 //! unbound helpers exist only behind the `testing` feature, and even those refuse the
@@ -102,6 +108,8 @@
 //!   of the same grammar. Those candidates carry their own origin labels
 //!   (`neural_rejection_fallback`, `random_exploration`) and are never labelled `neural_policy`.
 
+#[cfg(test)]
+mod challenger_tests;
 pub mod config;
 #[cfg(feature = "context-producer")]
 pub mod context_producer;

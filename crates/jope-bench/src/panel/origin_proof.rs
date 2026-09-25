@@ -131,21 +131,7 @@ pub fn prepare(
     plan.experiment.resources = limits;
     plan.experiment.methods_sha256 = campaign::digest(&(&plan.methods, &plan.runtimes))?;
     plan.experiment.protocol = PROTOCOL.into();
-    plan.experiment.checkpoints.insert(
-        "asm.accepted-policy-state".into(),
-        jope_policy::ACCEPTED_STATE_SHA256.into(),
-    );
-    for (task, experimental) in &config.experimental {
-        for (kind, sha) in [
-            ("policy", &experimental.checkpoint.sha256),
-            ("export", &experimental.export_manifest.sha256),
-            ("runtime", &experimental.runtime.runtime_sha256),
-        ] {
-            plan.experiment
-                .checkpoints
-                .insert(format!("asm.experimental-{kind}/{task}"), sha.clone());
-        }
-    }
+    record_checkpoints(&mut plan, &config);
     plan.scope = SCOPE.into();
     super::teaching::preregister(&mut plan, &config)?;
     // A bad incumbent pin is refused here, before any execution window is burned.
@@ -166,6 +152,10 @@ pub fn prepare(
         let (_, pair) = super::optimize::build_pair_input(&plan, &config, &data)?;
         pair.arm(true)?;
     }
+    // A challenger receipt that does not bind its pins is refused before any window is admitted.
+    if let Some(challenger) = &config.native_challenger {
+        super::optimize::challenger_checkpoint(challenger)?;
+    }
     let identity = plan.identity()?;
     super::worker::write_private(output, &plan)?;
     let (kn, kg) = config
@@ -175,6 +165,31 @@ pub fn prepare(
     Ok(
         json!({"ok":true,"plan":output,"plan_sha256":identity,"scope":SCOPE,"dataset":dataset,"resources":plan.experiment.resources,"neural_slots":64,"exploration_slots":16 - kn,"generic_slots":80 - kg,"incumbent_slots":{"neural":kn,"generic":kg},"search_round":config.search_round,"seconds_per_arm":config.seconds,"maximum_evaluations_per_arm":config.max_evaluations,"fits":0,"execution_budget_started":false,"complete_panel_demonstration":false,"dependencies":config.dependency_inventory()}),
     )
+}
+/// Checkpoint identities an origin proof preregisters. A native challenger adds its state;
+/// the accepted state stays, because the configuration still pins and verifies it.
+fn record_checkpoints(plan: &mut CampaignPlan, config: &Configuration) {
+    plan.experiment.checkpoints.insert(
+        "asm.accepted-policy-state".into(),
+        jope_policy::ACCEPTED_STATE_SHA256.into(),
+    );
+    for (task, experimental) in &config.experimental {
+        for (kind, sha) in [
+            ("policy", &experimental.checkpoint.sha256),
+            ("export", &experimental.export_manifest.sha256),
+            ("runtime", &experimental.runtime.runtime_sha256),
+        ] {
+            plan.experiment
+                .checkpoints
+                .insert(format!("asm.experimental-{kind}/{task}"), sha.clone());
+        }
+    }
+    if let Some(challenger) = &config.native_challenger {
+        plan.experiment.checkpoints.insert(
+            "asm.native-challenger-state".into(),
+            challenger.identity.state_sha256.clone(),
+        );
+    }
 }
 fn input(
     plan: &CampaignPlan,
@@ -518,6 +533,42 @@ mod tests {
         config
     }
 
+    /// `policy.safetensors` sha256 of the accepted step-60000 export.
+    const ACCEPTED_WEIGHTS: &str =
+        "4b4b5a40f03c9226b4b15856fd35b90127c8b6a4d1435b815484cdd050744f1e";
+
+    /// A native challenger fixture: pins only, no file is read.
+    fn challenger() -> optimize::NativeChallenger {
+        let weights = sha256_hex(b"challenger weights");
+        optimize::NativeChallenger {
+            checkpoint_receipt: Artifact {
+                path: "/fixture/challenger_receipt".into(),
+                sha256: sha256_hex(b"challenger receipt"),
+            },
+            policy_weights: Artifact {
+                path: "/fixture/challenger_weights".into(),
+                sha256: weights.clone(),
+            },
+            identity: jope_policy::config::ChallengerIdentity {
+                state_sha256: sha256_hex(b"challenger state"),
+                parameter_sha256: sha256_hex(b"challenger parameters"),
+                config_sha256: jope_policy::ACCEPTED_CONFIG_SHA256.into(),
+                policy_safetensors_sha256: weights,
+            },
+        }
+    }
+
+    /// The accepted configuration plus exactly one key.
+    fn challenger_configuration() -> Configuration {
+        let mut config = configuration(None);
+        config.native_challenger = Some(challenger());
+        config
+    }
+
+    fn pinned(config: &mut Configuration) -> &mut optimize::NativeChallenger {
+        config.native_challenger.as_mut().unwrap()
+    }
+
     /// Synthetic regression development partition: 25 rows, one group per row,
     /// five folds of five. Copied from the prepared-data fixture pattern.
     fn development() -> Result<DevelopmentData> {
@@ -660,7 +711,11 @@ mod tests {
         let config: Configuration = serde_json::from_slice(&bytes)?;
         assert_eq!(serde_json::to_vec(&config)?, bytes);
         let text = String::from_utf8(bytes.clone())?;
-        assert!(!text.contains("search_round") && !text.contains("incumbents"));
+        assert!(
+            !text.contains("search_round")
+                && !text.contains("incumbents")
+                && !text.contains("native_challenger")
+        );
         let mut round = config;
         round.search_round = Some(1);
         let mut expected = bytes[..bytes.len() - 1].to_vec();
@@ -668,6 +723,315 @@ mod tests {
         assert_eq!(serde_json::to_vec(&round)?, expected);
         let unknown = format!(r#"{},"search_rounds":1}}"#, &text[..text.len() - 1]);
         assert!(serde_json::from_str::<Configuration>(&unknown).is_err());
+        // A native challenger is exactly one appended key, fields in declaration order.
+        let c = challenger();
+        let mut expected = bytes[..bytes.len() - 1].to_vec();
+        expected.extend_from_slice(
+            format!(
+                r#","native_challenger":{{"checkpoint_receipt":{},"policy_weights":{},"identity":{{"state_sha256":"{}","parameter_sha256":"{}","config_sha256":"{}","policy_safetensors_sha256":"{}"}}}}}}"#,
+                pin("challenger_receipt", &c.checkpoint_receipt.sha256),
+                pin("challenger_weights", &c.policy_weights.sha256),
+                c.identity.state_sha256,
+                c.identity.parameter_sha256,
+                c.identity.config_sha256,
+                c.identity.policy_safetensors_sha256,
+            )
+            .as_bytes(),
+        );
+        assert_eq!(serde_json::to_vec(&challenger_configuration())?, expected);
+        let decoded: Configuration = serde_json::from_slice(&expected)?;
+        assert_eq!(serde_json::to_vec(&decoded)?, expected);
+        // Unknown keys are refused inside the challenger and inside its identity.
+        let mut extra = serde_json::to_value(challenger_configuration())?;
+        extra["native_challenger"]["extra"] = json!(1);
+        assert!(serde_json::from_value::<Configuration>(extra).is_err());
+        let mut extra = serde_json::to_value(challenger_configuration())?;
+        extra["native_challenger"]["identity"]["extra"] = json!(1);
+        assert!(serde_json::from_value::<Configuration>(extra).is_err());
+        // The accepted pair carries no challenger key.
+        let (plan, data) = (plan()?, development()?);
+        let (_, pair) = optimize::build_pair_input(&plan, &configuration(None), &data)?;
+        assert!(!serde_json::to_string(&pair)?.contains("\"challenger\""));
+        Ok(())
+    }
+
+    #[test]
+    fn native_challenger_refusals_precede_file_checks() {
+        let settings: teaching::Settings = serde_json::from_value(json!({
+            "state_root": "/fixture/state",
+            "prepared_root": "/fixture/prepared",
+            "panel": {"path": "/fixture/panel.json", "sha256": crate::panel::FROZEN_PANEL_SHA256},
+            "original_label_role": "development",
+        }))
+        .unwrap();
+        let cases: [(&dyn Fn(&mut Configuration), &str); 9] = [
+            (
+                &|c: &mut Configuration| {
+                    pinned(c).identity.state_sha256 = jope_policy::ACCEPTED_STATE_SHA256.into();
+                },
+                "challenger names the accepted identity",
+            ),
+            (
+                &|c: &mut Configuration| {
+                    pinned(c).identity.parameter_sha256 =
+                        jope_policy::ACCEPTED_PARAMETER_SHA256.into();
+                },
+                "challenger names the accepted identity",
+            ),
+            (
+                &|c: &mut Configuration| {
+                    let challenger = pinned(c);
+                    challenger.identity.policy_safetensors_sha256 = ACCEPTED_WEIGHTS.into();
+                    challenger.policy_weights.sha256 = ACCEPTED_WEIGHTS.into();
+                },
+                "challenger names the accepted identity",
+            ),
+            (
+                &|c: &mut Configuration| {
+                    pinned(c).identity.state_sha256 = jope_policy::REJECTED_STATE_SHA256.into();
+                },
+                "rejected step-69000",
+            ),
+            (
+                &|c: &mut Configuration| pinned(c).identity.config_sha256 = sha256_hex(b"x"),
+                "must keep the accepted architecture",
+            ),
+            (
+                &|c: &mut Configuration| {
+                    pinned(c).policy_weights.sha256 = sha256_hex(b"other weights");
+                },
+                "weights differ from its identity",
+            ),
+            (
+                &|c: &mut Configuration| pinned(c).checkpoint_receipt.sha256 = "3".repeat(64),
+                "repeats the accepted checkpoint receipt",
+            ),
+            (
+                // Its values are irrelevant: this check runs before the teaching settings'.
+                &|c: &mut Configuration| c.teaching = Some(settings.clone()),
+                "without teaching, incumbents or experimental",
+            ),
+            (
+                &|c: &mut Configuration| {
+                    c.incumbents = Some(Incumbents {
+                        neural: vec![],
+                        generic: vec![],
+                    });
+                },
+                "without teaching, incumbents or experimental",
+            ),
+        ];
+        for (edit, needle) in cases {
+            let mut config = challenger_configuration();
+            edit(&mut config);
+            let error = format!("{:#}", config.validate().unwrap_err());
+            assert!(error.contains(needle), "{error}");
+        }
+        // Control: a well-formed challenger passes every challenger check and fails later, at the
+        // absent vocabulary file, for a reason that is not about the challenger.
+        let error = format!("{:#}", challenger_configuration().validate().unwrap_err());
+        assert!(!error.contains("challenger"), "{error}");
+        // Both challenger pins are dependencies: form-checked here, verified with the rest.
+        let pins = challenger();
+        let challenged = challenger_configuration();
+        let dependencies = challenged.dependencies();
+        assert_eq!(
+            dependencies.len(),
+            configuration(None).dependencies().len() + 2
+        );
+        for pin in [&pins.checkpoint_receipt, &pins.policy_weights] {
+            assert!(dependencies
+                .iter()
+                .any(|a| a.path == pin.path && a.sha256 == pin.sha256));
+        }
+        // The dependency loop runs before the vocabulary read, so these fail there, not later.
+        let malformed: [&dyn Fn(&mut Configuration); 3] = [
+            &|c: &mut Configuration| pinned(c).policy_weights.path = "relative".into(),
+            &|c: &mut Configuration| pinned(c).checkpoint_receipt.path = "relative".into(),
+            // Only the dependency loop checks the receipt pin's format.
+            &|c: &mut Configuration| {
+                pinned(c).checkpoint_receipt.sha256 =
+                    sha256_hex(b"challenger receipt").to_uppercase();
+            },
+        ];
+        for edit in malformed {
+            let mut config = challenger_configuration();
+            edit(&mut config);
+            let error = format!("{:#}", config.validate().unwrap_err());
+            assert!(error.contains("malformed dependency pin"), "{error}");
+        }
+    }
+
+    #[test]
+    fn native_challenger_changes_only_its_pins_in_the_pair() -> Result<()> {
+        let plan = plan()?;
+        let data = development()?;
+        // `arm()` runs `Request::validate`, which requires a checkpoint vocabulary pin;
+        // `build_pair_input` never reads the vocabulary file.
+        let mut accepted = configuration(None);
+        accepted.vocabulary.sha256 = jope_policy::CHECKPOINT_VOCABULARY_SHA256.into();
+        let mut challenged = challenger_configuration();
+        challenged.vocabulary.sha256 = jope_policy::CHECKPOINT_VOCABULARY_SHA256.into();
+        let (_, a) = optimize::build_pair_input(&plan, &accepted, &data)?;
+        let (_, c) = optimize::build_pair_input(&plan, &challenged, &data)?;
+        assert_ne!(optimize_fit::digest(&a)?, optimize_fit::digest(&c)?);
+        for neural in [true, false] {
+            assert_ne!(a.arm(neural)?.id_sha256, c.arm(neural)?.id_sha256);
+        }
+        let pins = challenger();
+        let proposal = c.proposal.accepted()?;
+        assert_eq!(proposal.checkpoint_sha256, pins.identity.state_sha256);
+        assert_eq!(
+            proposal.policy_safetensors_sha256,
+            pins.identity.policy_safetensors_sha256
+        );
+        assert_eq!(proposal.challenger, Some(pins.identity.clone()));
+        assert_eq!(
+            c.installation.checkpoint_receipt_sha256,
+            sha256_hex(b"challenger receipt")
+        );
+        // Everything else (selection, encoding, seeds, preprocessing) is identical.
+        let strip = |pair: &neural_search::PairInputPlan| -> Result<Value> {
+            let mut value = serde_json::to_value(pair)?;
+            let proposal = value["proposal"]
+                .as_object_mut()
+                .context("accepted proposal object")?;
+            for key in [
+                "checkpoint_sha256",
+                "policy_safetensors_sha256",
+                "challenger",
+            ] {
+                proposal.remove(key);
+            }
+            value["installation"]
+                .as_object_mut()
+                .context("installation object")?
+                .remove("checkpoint_receipt_sha256");
+            Ok(value)
+        };
+        assert_eq!(strip(&a)?, strip(&c)?);
+        // The teaching comparison ignores the checkpoint, which is why teaching is refused.
+        let comparison = |config: &Configuration| {
+            teaching::comparison_identity(&plan.experiment, config, &data.dataset, "e".repeat(64))
+                .sha256()
+        };
+        assert_eq!(comparison(&accepted)?, comparison(&challenged)?);
+        let (receipt, weights) = optimize::proposal_files(&challenged);
+        assert_eq!(receipt.sha256, pins.checkpoint_receipt.sha256);
+        assert_eq!(weights.sha256, pins.policy_weights.sha256);
+        let (receipt, weights) = optimize::proposal_files(&accepted);
+        assert_eq!(receipt.sha256, "3".repeat(64));
+        assert_eq!(weights.sha256, ACCEPTED_WEIGHTS);
+        Ok(())
+    }
+
+    #[test]
+    fn origin_proof_records_the_native_challenger_state() -> Result<()> {
+        let keys = |plan: &CampaignPlan| {
+            plan.experiment
+                .checkpoints
+                .keys()
+                .cloned()
+                .collect::<BTreeSet<_>>()
+        };
+        let mut accepted = plan()?;
+        record_checkpoints(&mut accepted, &configuration(None));
+        assert_eq!(
+            keys(&accepted),
+            BTreeSet::from(["asm.accepted-policy-state".to_owned()])
+        );
+        let mut challenged = plan()?;
+        record_checkpoints(&mut challenged, &challenger_configuration());
+        assert_eq!(
+            keys(&challenged),
+            BTreeSet::from([
+                "asm.accepted-policy-state".to_owned(),
+                "asm.native-challenger-state".to_owned(),
+            ])
+        );
+        assert_eq!(
+            challenged.experiment.checkpoints["asm.native-challenger-state"],
+            challenger().identity.state_sha256
+        );
+        // The fixture plan is not a complete admitted plan; the experiment identity is what
+        // binds the preregistered checkpoints.
+        assert_ne!(
+            accepted.experiment.identity()?,
+            challenged.experiment.identity()?
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn warm_demo_refuses_a_native_challenger_plan() {
+        crate::panel::demo_asm::refuse_native_challenger(&configuration(None)).unwrap();
+        let error = format!(
+            "{:#}",
+            crate::panel::demo_asm::refuse_native_challenger(&challenger_configuration())
+                .unwrap_err()
+        );
+        assert!(error.contains("not a demo route"), "{error}");
+    }
+
+    #[test]
+    fn challenger_receipt_must_bind_its_pins() -> Result<()> {
+        let scratch = scratch()?;
+        let mut challenger = challenger();
+        let identity = challenger.identity.clone();
+        let receipt = |accepted: bool, output: &str| {
+            json!({
+                "schema": jope_policy::config::EXPORT_RECEIPT_SCHEMA,
+                "checkpoint": {
+                    "accepted_identity": accepted,
+                    "carried_bindings": {
+                        "corpus_sha256": sha256_hex(b"corpus"),
+                        "vocabulary_sha256": jope_policy::CHECKPOINT_VOCABULARY_SHA256,
+                    },
+                    "config": jope_policy::config::PolicyConfig::regression(401),
+                    "config_sha256": jope_policy::ACCEPTED_CONFIG_SHA256,
+                    "expected_state_sha256": identity.state_sha256,
+                    "model_sha256": sha256_hex(b"challenger model"),
+                    "parameter_sha256": identity.parameter_sha256,
+                    "parameter_sha256_recomputed": identity.parameter_sha256,
+                    "state_sha256": identity.state_sha256,
+                    "step": 61600,
+                    "verified_bindings": ["model_sha256", "config_sha256", "autocast_cache_lifetime", "parameter_sha256"],
+                },
+                "policy": {"output": {"sha256": output}, "tensor_count": 0, "tensors": []},
+            })
+        };
+        let write = |name: &str, value: &Value| -> Result<Artifact> {
+            let path = scratch.path().join(name);
+            let bytes = serde_json::to_vec(value)?;
+            fs::write(&path, &bytes)?;
+            Ok(Artifact {
+                path,
+                sha256: sha256_hex(&bytes),
+            })
+        };
+        let weights = identity.policy_safetensors_sha256.clone();
+        challenger.checkpoint_receipt = write("receipt.json", &receipt(false, &weights))?;
+        let binding = optimize::challenger_checkpoint(&challenger)?;
+        assert_eq!(binding.state_sha256(), identity.state_sha256);
+        // The pin must match the file's bytes.
+        let mut stale = challenger.clone();
+        stale.checkpoint_receipt.sha256 = sha256_hex(b"other receipt");
+        assert!(optimize::challenger_checkpoint(&stale).is_err());
+        // The receipt must name the pinned weights.
+        let mut other = challenger.clone();
+        other.checkpoint_receipt = write(
+            "other-weights.json",
+            &receipt(false, &sha256_hex(b"other weights")),
+        )?;
+        let error = optimize::challenger_checkpoint(&other).unwrap_err();
+        assert!(
+            format!("{error:#}").contains("names other challenger weights"),
+            "{error:#}"
+        );
+        // A receipt that claims the accepted identity is refused.
+        let mut claimed = challenger.clone();
+        claimed.checkpoint_receipt = write("accepted.json", &receipt(true, &weights))?;
+        assert!(optimize::challenger_checkpoint(&claimed).is_err());
         Ok(())
     }
 

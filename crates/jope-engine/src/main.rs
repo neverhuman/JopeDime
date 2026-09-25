@@ -827,6 +827,22 @@ enum Cmd {
         #[arg(long)]
         directory: PathBuf,
     },
+    /// Export a verified checkpoint's policy weights to safetensors on the CPU, with a receipt.
+    #[cfg(feature = "neural")]
+    ExportPolicy {
+        #[arg(long)]
+        checkpoint: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+        #[arg(long)]
+        receipt: PathBuf,
+        /// state.json sha256 the operator preregistered for this checkpoint.
+        #[arg(long)]
+        expect_state_sha256: String,
+        /// Optional parent checkpoint for the per-tensor relative change diagnostic.
+        #[arg(long)]
+        parent: Option<PathBuf>,
+    },
     #[cfg(feature = "neural")]
     LossOptimizerParity {
         #[arg(long)]
@@ -1926,6 +1942,23 @@ fn main() -> Result<()> {
         ),
         #[cfg(feature = "neural")]
         Cmd::PolicyParity { directory } => jope_parallel::neural::parity(&directory)?,
+        #[cfg(feature = "neural")]
+        Cmd::ExportPolicy {
+            checkpoint,
+            output,
+            receipt,
+            expect_state_sha256,
+            parent,
+        } => println!(
+            "{}",
+            jope_parallel::policy_export::export(&jope_parallel::policy_export::ExportRequest {
+                checkpoint,
+                output,
+                receipt,
+                expect_state_sha256,
+                parent,
+            })?
+        ),
         #[cfg(feature = "neural")]
         Cmd::LossOptimizerParity { directory } => {
             jope_parallel::neural::loss_optimizer_parity(&directory)?

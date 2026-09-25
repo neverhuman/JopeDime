@@ -163,7 +163,7 @@ pub fn validation_panel(index: &Index, world: usize, seed: u64) -> Result<Vec<Ve
         .collect())
 }
 
-fn parameter_hash(vs: &nn::VarStore) -> Result<String> {
+pub(crate) fn parameter_hash(vs: &nn::VarStore) -> Result<String> {
     use sha2::{Digest, Sha256};
     let mut h = Sha256::new();
     for (name, p) in vs.variables().into_iter().collect::<BTreeMap<_, _>>() {

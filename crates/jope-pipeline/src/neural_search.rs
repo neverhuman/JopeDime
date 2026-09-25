@@ -181,8 +181,12 @@ impl PairInputPlan {
             "search must admit 80 initial slots and at most 1000 evaluations"
         );
         if let Some(incumbents) = &self.incumbents {
+            // Incumbents come from the accepted parent's teaching ledger; a native challenger
+            // comparison has none.
             ensure!(
-                self.proposal.accepted().is_ok(),
+                self.proposal
+                    .accepted()
+                    .is_ok_and(|p| p.challenger.is_none()),
                 "incumbent seeding requires the accepted proposal plan"
             );
             ensure!(
@@ -1403,10 +1407,11 @@ pub fn verify_policy_inputs(
         "policy executable differs from installation pin"
     );
     worker.checkpoint_receipt.verify()?;
-    let checkpoint = jope_policy::config::CheckpointBinding::from_receipt_bytes(&std::fs::read(
-        &worker.checkpoint_receipt.path,
-    )?)?;
-    checkpoint.require_accepted_identity()?;
+    // The accepted identity, or exactly the native challenger the request pins.
+    let checkpoint = jope_policy::config::CheckpointBinding::for_proposal(
+        &std::fs::read(&worker.checkpoint_receipt.path)?,
+        worker.request.challenger.as_ref(),
+    )?;
     ensure!(
         checkpoint.state_sha256() == worker.request.checkpoint_sha256
             && checkpoint.policy_safetensors_sha256() == worker.request.policy_safetensors_sha256,
@@ -2563,6 +2568,7 @@ mod tests {
                 sampling_rounds: 1,
                 sampling_batch: 8,
                 sampling_temperature: 1.,
+                challenger: None,
             }
             .into(),
             variation_identity: "synthetic variation/v1".into(),
@@ -3654,6 +3660,54 @@ mod tests {
             candidate,
         };
         changed
+    }
+
+    fn challenger() -> jope_policy::config::ChallengerIdentity {
+        jope_policy::config::ChallengerIdentity {
+            state_sha256: sha256_hex(b"challenger state"),
+            parameter_sha256: sha256_hex(b"challenger parameters"),
+            config_sha256: jope_policy::ACCEPTED_CONFIG_SHA256.into(),
+            policy_safetensors_sha256: sha256_hex(b"challenger weights"),
+        }
+    }
+
+    #[test]
+    fn challenger_proposal_changes_arms_and_refuses_incumbents() -> Result<()> {
+        let p = comparison(80);
+        assert!(!String::from_utf8(serde_json::to_vec(&p)?)?.contains("\"challenger\""));
+        let c = challenger();
+        let mut q = comparison(80);
+        match &mut q.proposal {
+            ProposalPlan::Accepted(value) => {
+                value.checkpoint_sha256 = c.state_sha256.clone();
+                value.policy_safetensors_sha256 = c.policy_safetensors_sha256.clone();
+                value.challenger = Some(c.clone());
+            }
+            #[cfg(feature = "qualified-context")]
+            ProposalPlan::Experimental(_) => unreachable!(),
+        }
+        for neural in [true, false] {
+            assert_ne!(q.arm(neural)?.id_sha256, p.arm(neural)?.id_sha256);
+        }
+        // The untagged plan still decodes as the accepted variant, carrying the identity.
+        let decoded: PairInputPlan = serde_json::from_slice(&serde_json::to_vec(&q)?)?;
+        assert_eq!(decoded.proposal.accepted()?.challenger, Some(c.clone()));
+        assert_eq!(
+            decoded.proposal.checkpoint_sha256(),
+            c.state_sha256.as_str()
+        );
+        assert_eq!(serde_json::to_vec(&decoded)?, serde_json::to_vec(&q)?);
+        // A challenger comparison seeds no incumbents.
+        q.incumbents = Some(ArmIncumbents {
+            neural: vec![generic_incumbent()?],
+            generic: vec![],
+        });
+        let error = q.arm(true).unwrap_err();
+        assert!(
+            format!("{error:#}").contains("incumbent seeding requires the accepted proposal plan"),
+            "{error:#}"
+        );
+        Ok(())
     }
 
     #[test]

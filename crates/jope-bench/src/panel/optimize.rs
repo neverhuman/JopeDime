@@ -134,6 +134,10 @@ pub struct Configuration {
     /// preserves accepted configuration bytes.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub incumbents: Option<Incumbents>,
+    /// A native challenger checkpoint for the policy worker; omission preserves
+    /// accepted configuration bytes.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub native_challenger: Option<NativeChallenger>,
 }
 /// Pinned arm winners from earlier rounds on the same dataset. Each artifact is a
 /// frozen-recipe blob in the teaching state; each list seeds only its own arm.
@@ -143,8 +147,40 @@ pub struct Incumbents {
     pub neural: Vec<Artifact>,
     pub generic: Vec<Artifact>,
 }
+/// A preregistered native challenger checkpoint (plan §4.5 DEMO-3): its export receipt, its
+/// exported weights and the identity both must bind. The accepted pins stay mandatory and
+/// verified; only the policy worker loads these files instead.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct NativeChallenger {
+    pub checkpoint_receipt: Artifact,
+    pub policy_weights: Artifact,
+    pub identity: jope_policy::config::ChallengerIdentity,
+}
 impl Configuration {
     pub fn validate(&self) -> Result<()> {
+        // Every challenger refusal precedes every other check and every file read.
+        if let Some(challenger) = &self.native_challenger {
+            ensure!(
+                self.teaching.is_none()
+                    && self.incumbents.is_none()
+                    && self.experimental.is_empty(),
+                "native challenger runs without teaching, incumbents or experimental proposals"
+            );
+            challenger.identity.validate()?;
+            ensure!(
+                challenger.identity.config_sha256 == jope_policy::ACCEPTED_CONFIG_SHA256,
+                "native challenger must keep the accepted architecture"
+            );
+            ensure!(
+                challenger.policy_weights.sha256 == challenger.identity.policy_safetensors_sha256,
+                "native challenger weights differ from its identity"
+            );
+            ensure!(
+                challenger.checkpoint_receipt.sha256 != self.checkpoint_receipt.sha256,
+                "native challenger repeats the accepted checkpoint receipt"
+            );
+        }
         if let Some(settings) = &self.teaching {
             settings.validate()?;
         }
@@ -298,6 +334,9 @@ impl Configuration {
         for config in self.experimental.values() {
             files.extend(config.dependencies());
         }
+        if let Some(challenger) = &self.native_challenger {
+            files.extend([&challenger.checkpoint_receipt, &challenger.policy_weights]);
+        }
         files
     }
     pub fn dependency_inventory(&self) -> Vec<serde_json::Value> {
@@ -449,6 +488,32 @@ fn resolve_incumbents(
     }))
 }
 
+/// Receipt and weights the policy worker loads: the native challenger's, else the accepted pins.
+pub(crate) fn proposal_files(configuration: &Configuration) -> (&Artifact, &Artifact) {
+    configuration.native_challenger.as_ref().map_or(
+        (
+            &configuration.checkpoint_receipt,
+            &configuration.policy_weights,
+        ),
+        |c| (&c.checkpoint_receipt, &c.policy_weights),
+    )
+}
+/// Read-only: the challenger's export receipt must bind its pinned identity and weights.
+pub(crate) fn challenger_checkpoint(
+    challenger: &NativeChallenger,
+) -> Result<jope_policy::config::CheckpointBinding> {
+    challenger.checkpoint_receipt.verify()?;
+    let binding = jope_policy::config::CheckpointBinding::for_proposal(
+        &fs::read(&challenger.checkpoint_receipt.path)?,
+        Some(&challenger.identity),
+    )?;
+    ensure!(
+        binding.policy_safetensors_sha256() == challenger.policy_weights.sha256,
+        "native challenger weights differ from its export receipt"
+    );
+    Ok(binding)
+}
+
 /// Reconstruct every pair identity from exact authenticated train values and configuration.
 /// This is shared by execution and read-only report admission; no artifact is written.
 pub fn build_pair_input(
@@ -528,6 +593,9 @@ pub fn build_pair_input(
         configuration.search_round,
     )?;
     let incumbents = resolve_incumbents(configuration, &selection)?;
+    // A native challenger changes only the receipt, weights, state and identity the policy
+    // worker is pinned to; selection, encoding, seeds and variation are unchanged.
+    let (proposal_receipt, proposal_weights) = proposal_files(configuration);
     let plan = PairInputPlan {
         selection,
         preprocessing_sha256,
@@ -537,15 +605,21 @@ pub fn build_pair_input(
             release_manifest_sha256: configuration.release_manifest.sha256.clone(),
             policy_program_sha256: configuration.policy.program.sha256.clone(),
             source_manifest_sha256: configuration.source_manifest.sha256.clone(),
-            checkpoint_receipt_sha256: configuration.checkpoint_receipt.sha256.clone(),
+            checkpoint_receipt_sha256: proposal_receipt.sha256.clone(),
         },
         proposal: RequestPlan {
             worker_source_sha256: configuration.source_manifest.sha256.clone(),
             prepared_sha256: input.identity.prepared_sha256.clone(),
             training_sha256: training_sha256.clone(),
             cut: 0,
-            checkpoint_sha256: jope_policy::ACCEPTED_STATE_SHA256.into(),
-            policy_safetensors_sha256: configuration.policy_weights.sha256.clone(),
+            checkpoint_sha256: configuration
+                .native_challenger
+                .as_ref()
+                .map_or(jope_policy::ACCEPTED_STATE_SHA256, |c| {
+                    c.identity.state_sha256.as_str()
+                })
+                .into(),
+            policy_safetensors_sha256: proposal_weights.sha256.clone(),
             vocabulary_sha256: configuration.vocabulary.sha256.clone(),
             sampling_seed: seed,
             fallback_seed: seed.wrapping_add(1),
@@ -553,6 +627,10 @@ pub fn build_pair_input(
             sampling_rounds: configuration.sampling_rounds,
             sampling_batch: configuration.sampling_batch,
             sampling_temperature: configuration.sampling_temperature,
+            challenger: configuration
+                .native_challenger
+                .as_ref()
+                .map(|c| c.identity.clone()),
         }
         .into(),
         encoding: EncodingPlan {
@@ -820,14 +898,22 @@ fn prepare_neural<B: Backend, V: Variation>(
         file.verify()?;
     }
     let worker_builds = config.verify_worker_builds()?;
-    let checkpoint = jope_policy::config::CheckpointBinding::from_receipt_bytes(&fs::read(
-        &config.checkpoint_receipt.path,
-    )?)?;
-    checkpoint.require_accepted_identity()?;
-    ensure!(
-        checkpoint.policy_safetensors_sha256() == config.policy_weights.sha256,
-        "policy checksum differs from accepted receipt"
-    );
+    let (proposal_receipt, proposal_weights) = proposal_files(config);
+    match &config.native_challenger {
+        Some(challenger) => {
+            challenger_checkpoint(challenger)?;
+        }
+        None => {
+            let checkpoint = jope_policy::config::CheckpointBinding::for_proposal(
+                &fs::read(&config.checkpoint_receipt.path)?,
+                None,
+            )?;
+            ensure!(
+                checkpoint.policy_safetensors_sha256() == config.policy_weights.sha256,
+                "policy checksum differs from accepted receipt"
+            );
+        }
+    }
     let (files, outcome) = prepare_regression_context(
         backend,
         plan,
@@ -859,8 +945,8 @@ fn prepare_neural<B: Backend, V: Variation>(
         ("--context-receipt", &files.artifact),
         ("--context-bundle", &files.bundle),
         ("--transforms", &config.frozen_transforms),
-        ("--checkpoint-receipt", &config.checkpoint_receipt),
-        ("--policy", &config.policy_weights),
+        ("--checkpoint-receipt", proposal_receipt),
+        ("--policy", proposal_weights),
         ("--vocabulary", &config.vocabulary),
     ];
     let mut args = Vec::new();
@@ -905,7 +991,7 @@ fn prepare_neural<B: Backend, V: Variation>(
         release_manifest: config.release_manifest.clone(),
         source_manifest: config.source_manifest.clone(),
         request_artifact: request_file,
-        checkpoint_receipt: config.checkpoint_receipt.clone(),
+        checkpoint_receipt: proposal_receipt.clone(),
         request: producer_request,
         context: ContextFiles::QualifiedCpu(Box::new(files)),
         output_name: "output.json".into(),

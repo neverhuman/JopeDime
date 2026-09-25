@@ -7,8 +7,8 @@
 //! `neural_policy` for sampled programs, `neural_rejection_fallback` for pool slots the policy
 //! did not fill, `random_exploration` for the tail.
 //!
-//! Provenance: a [`SeedPopulation`] is only built inside [`propose`] (or the
-//! `testing` helpers, which refuse the accepted state), and [`write_population`] only
+//! Provenance: a [`SeedPopulation`] is only built inside [`propose`] and [`propose_challenger`]
+//! (or the `testing` helpers, which refuse the accepted state), and [`write_population`] only
 //! writes the population of a [`Proposal`], which has private fields. A file read back by
 //! [`validate_for_search`] is a [`SeedFile`], which no writer accepts.
 use anyhow::{ensure, Context, Result};
@@ -17,7 +17,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::io::Write;
 use std::path::Path;
 
-use super::config::CheckpointBinding;
+use super::config::{ChallengerIdentity, CheckpointBinding};
 use super::decode::{self, PurePool, SamplingOptions, EXPLORATION_SIZE, POOL_SIZE};
 use super::grammar::BoundVocabulary;
 use super::model::PolicyModel;
@@ -411,7 +411,7 @@ pub fn validate_for_search(
 }
 
 /// Everything a proposal run produced, for the caller's receipt. Fields are private: only
-/// [`propose`] (and the `testing` [`propose_unbound`]) construct it.
+/// [`propose`] and [`propose_challenger`] (and the `testing` [`propose_unbound`]) construct it.
 #[derive(Clone, Debug)]
 pub struct Proposal {
     population: SeedPopulation,
@@ -486,6 +486,38 @@ pub fn propose(
     )
 }
 
+/// Sample, rank and assemble the 80 seeds with a pinned native challenger: a checkpoint that
+/// is not the accepted one, loaded through [`PolicyModel::load_bound`] with the challenger's
+/// export receipt. The population is stamped with the challenger state. Everything after the
+/// identity check is shared with [`propose`], so both arms of a comparison differ only in weights.
+#[allow(clippy::too_many_arguments)]
+pub fn propose_challenger(
+    model: &PolicyModel,
+    checkpoint: &CheckpointBinding,
+    challenger: &ChallengerIdentity,
+    vocabulary: &BoundVocabulary,
+    context: &[f32],
+    binding: &SeedBinding,
+    seeds: &ProposalSeeds,
+    sampling: &SamplingOptions,
+) -> Result<Proposal> {
+    refuse_rejected_checkpoint(checkpoint.state_sha256(), checkpoint.model_sha256())?;
+    checkpoint.require_challenger_identity(challenger)?;
+    let bound = model
+        .bound_identity()
+        .context("refused: policy was not loaded through PolicyModel::load_bound")?;
+    ensure!(
+        bound.state_sha256() == checkpoint.state_sha256()
+            && bound.parameter_sha256() == checkpoint.parameter_sha256()
+            && bound.policy_safetensors_sha256() == checkpoint.policy_safetensors_sha256()
+            && bound.config_sha256() == checkpoint.config_sha256(),
+        "refused: loaded policy was bound to a different checkpoint"
+    );
+    propose_checked(
+        model, checkpoint, vocabulary, context, binding, seeds, sampling,
+    )
+}
+
 /// Test support (`testing`): [`propose`] for untrained weights. Refuses any bound
 /// model and any checkpoint other than
 /// [`CheckpointBinding::unbound_for_testing`]'s, so its files are stamped with
@@ -510,7 +542,7 @@ pub fn propose_unbound(
     )
 }
 
-/// Everything after the model identity check.
+/// Everything after the model identity check (accepted or challenger).
 fn propose_checked(
     model: &PolicyModel,
     checkpoint: &CheckpointBinding,

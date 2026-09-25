@@ -128,8 +128,8 @@ impl Bindings {
     }
 
     /// `policy` may be scored under these bindings: a claim of the accepted state needs the bound
-    /// accepted model and the bound accepted vocabulary table, and a bound model is never scored
-    /// under another state.
+    /// accepted model and the bound accepted vocabulary table, and a bound model is scored only
+    /// under its own state.
     fn check_policy(&self, policy: &PolicyModel, vocabulary: &Vocab) -> Result<()> {
         if let Some(bound) = &self.vocabulary {
             ensure!(
@@ -147,7 +147,8 @@ impl Bindings {
                 "refused: the accepted state needs the bound step-60000 vocabulary or its product restriction"
             );
         } else if let Some(bound) = policy.bound_identity() {
-            anyhow::bail!(
+            ensure!(
+                bound.state_sha256() == self.checkpoint_sha256,
                 "refused: policy bound to {} scored under checkpoint {}",
                 bound.state_sha256(),
                 self.checkpoint_sha256
@@ -334,7 +335,7 @@ pub fn pool_sha256(programs: &[String]) -> Result<String> {
 ///
 /// Bindings that name the accepted state are refused unless `policy` came from
 /// `PolicyModel::load_bound` with the accepted state and parameter hash, and a bound policy is
-/// refused under any other state.
+/// refused under any state other than its own.
 pub fn score_pool(
     policy: &PolicyModel,
     vocabulary: &Vocab,

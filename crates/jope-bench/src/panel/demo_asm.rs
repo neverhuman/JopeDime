@@ -147,6 +147,16 @@ fn pair_availability(plan: &CampaignPlan, journal: &Path, proof: &Value) -> Resu
     }))
 }
 
+/// The warm demo presents and exports the accepted system only. A native challenger
+/// proof plan is a preregistered comparison arm; it has no presentation or export route.
+pub(super) fn refuse_native_challenger(config: &Configuration) -> Result<()> {
+    ensure!(
+        config.native_challenger.is_none(),
+        "a native challenger proof plan is a comparison arm, not a demo route"
+    );
+    Ok(())
+}
+
 fn read_plan(cli: &DemoCli) -> Result<CampaignPlan> {
     let path = cli.asm_plan.as_ref().context("ASM plan required")?;
     let expected = cli
@@ -167,6 +177,7 @@ fn read_plan(cli: &DemoCli) -> Result<CampaignPlan> {
         );
     }
     let config = Configuration::from_campaign(&plan)?;
+    refuse_native_challenger(&config)?;
     warm_pair_limits(&plan.experiment.resources, config.seconds)?;
     config.verify_worker_builds()?;
     for dependency in config.dependencies() {

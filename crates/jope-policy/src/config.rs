@@ -115,10 +115,62 @@ pub struct TensorEntry {
     pub sha256: String,
 }
 
+/// `policy.safetensors` sha256 of the accepted step-60000 export
+/// (`models/bundles/policy-step-60000.json:41-44`). Private: no public `ACCEPTED_*` item changes,
+/// and the existing literals (`producer.rs`, jope-bench `optimize.rs`) stay as they are.
+const ACCEPTED_WEIGHTS_SHA256: &str =
+    "4b4b5a40f03c9226b4b15856fd35b90127c8b6a4d1435b815484cdd050744f1e";
+
+/// A preregistered native challenger checkpoint: pins only. Deserializing one proves nothing;
+/// [`CheckpointBinding::from_challenger_receipt_bytes`] and `PolicyModel::load_bound` prove the
+/// bytes. It never names the accepted identity, so a challenger never satisfies
+/// `require_accepted_policy`.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ChallengerIdentity {
+    /// `state.json` sha256 of the challenger checkpoint.
+    pub state_sha256: String,
+    /// Parameter hash its `state.json` records (sorted names + little-endian f32 values).
+    pub parameter_sha256: String,
+    /// `config.json` sha256 its `state.json` records.
+    pub config_sha256: String,
+    /// sha256 of the exported `policy.safetensors`.
+    pub policy_safetensors_sha256: String,
+}
+
+impl ChallengerIdentity {
+    /// Structural checks only, before any file is read: four lowercase sha256 pins, never the
+    /// rejected step-69000 state, and never the accepted state, parameters or weights.
+    pub fn validate(&self) -> Result<()> {
+        for pin in [
+            &self.state_sha256,
+            &self.parameter_sha256,
+            &self.config_sha256,
+            &self.policy_safetensors_sha256,
+        ] {
+            // is_sha256_hex accepts uppercase; identities compare exactly.
+            ensure!(
+                is_sha256_hex(pin) && !pin.bytes().any(|b| b.is_ascii_uppercase()),
+                "challenger identity pins must be lowercase sha256"
+            );
+        }
+        refuse_rejected_checkpoint(&self.state_sha256, "")?;
+        ensure!(
+            !super::is_accepted_state(&self.state_sha256)
+                && self.parameter_sha256 != ACCEPTED_PARAMETER_SHA256
+                && self.policy_safetensors_sha256 != ACCEPTED_WEIGHTS_SHA256,
+            "refused: challenger names the accepted identity"
+        );
+        Ok(())
+    }
+}
+
 /// The checkpoint identity carried by a `jope.checkpoint_export.v1` receipt, checked.
 ///
-/// The fields are private: outside this crate's test support, the only constructor is
-/// [`CheckpointBinding::from_receipt_bytes`], so a binding always names the accepted state.
+/// The fields are private: outside this crate's test support, the only constructors are
+/// [`CheckpointBinding::from_receipt_bytes`], which always names the accepted state, and
+/// [`CheckpointBinding::from_challenger_receipt_bytes`], which names exactly a pinned
+/// non-accepted challenger.
 #[derive(Debug, Clone)]
 pub struct CheckpointBinding {
     receipt_sha256: String,
@@ -160,6 +212,32 @@ impl CheckpointBinding {
     /// identity other than the accepted step-60000 state, unverified bindings, and a
     /// configuration with unknown fields.
     pub fn from_receipt_bytes(bytes: &[u8]) -> Result<Self> {
+        Self::parse(bytes, None)
+    }
+
+    /// Parse a receipt written for a pinned native challenger. Refuses the rejected checkpoint
+    /// first, the accepted identity, and any pin the receipt does not reproduce.
+    pub fn from_challenger_receipt_bytes(
+        bytes: &[u8],
+        identity: &ChallengerIdentity,
+    ) -> Result<Self> {
+        Self::parse(bytes, Some(identity))
+    }
+
+    /// The binding a proposal request names: the complete accepted identity, or exactly its
+    /// pinned native challenger. Every policy-worker entry point parses through here.
+    pub fn for_proposal(bytes: &[u8], challenger: Option<&ChallengerIdentity>) -> Result<Self> {
+        match challenger {
+            None => {
+                let binding = Self::from_receipt_bytes(bytes)?;
+                binding.require_accepted_identity()?;
+                Ok(binding)
+            }
+            Some(identity) => Self::from_challenger_receipt_bytes(bytes, identity),
+        }
+    }
+
+    fn parse(bytes: &[u8], challenger: Option<&ChallengerIdentity>) -> Result<Self> {
         let receipt: Value = serde_json::from_slice(bytes).context("export receipt")?;
         ensure!(
             receipt.get("schema").and_then(Value::as_str) == Some(EXPORT_RECEIPT_SCHEMA),
@@ -180,13 +258,26 @@ impl CheckpointBinding {
             step != REJECTED_STEP,
             "refused: rejected step-{REJECTED_STEP} checkpoint"
         );
-        ensure!(
-            checkpoint.get("accepted_identity").and_then(Value::as_bool) == Some(true)
-                && digest(checkpoint, &["expected_state_sha256"])? == state_sha256,
-            "export receipt does not carry a verified accepted identity"
-        );
-        if state_sha256 != ACCEPTED_STATE_SHA256 {
-            bail!("checkpoint {state_sha256} is not the accepted step-60000 state");
+        match challenger {
+            None => {
+                ensure!(
+                    checkpoint.get("accepted_identity").and_then(Value::as_bool) == Some(true)
+                        && digest(checkpoint, &["expected_state_sha256"])? == state_sha256,
+                    "export receipt does not carry a verified accepted identity"
+                );
+                if state_sha256 != ACCEPTED_STATE_SHA256 {
+                    bail!("checkpoint {state_sha256} is not the accepted step-60000 state");
+                }
+            }
+            Some(identity) => {
+                identity.validate()?;
+                ensure!(
+                    checkpoint.get("accepted_identity").and_then(Value::as_bool) == Some(false)
+                        && digest(checkpoint, &["expected_state_sha256"])? == state_sha256
+                        && state_sha256 == identity.state_sha256,
+                    "export receipt does not carry the pinned challenger identity"
+                );
+            }
         }
         let parameter_sha256 = digest(checkpoint, &["parameter_sha256"])?;
         ensure!(
@@ -225,7 +316,7 @@ impl CheckpointBinding {
             policy.get("tensor_count").and_then(Value::as_u64) == Some(tensors.len() as u64),
             "export receipt tensor_count disagrees with its inventory"
         );
-        Ok(Self {
+        let binding = Self {
             receipt_sha256: sha256_hex(bytes),
             step,
             state_sha256,
@@ -237,7 +328,48 @@ impl CheckpointBinding {
             policy_safetensors_sha256: digest(policy, &["output", "sha256"])?,
             config,
             tensors,
-        })
+        };
+        if let Some(identity) = challenger {
+            binding.require_challenger_identity(identity)?;
+        }
+        Ok(binding)
+    }
+
+    /// Refuse unless this receipt names exactly the pinned challenger: its state, parameters,
+    /// claimed and recomputed configuration, exported weights, the step-60000 vocabulary and a
+    /// step after the accepted one; never the accepted or rejected model.
+    pub fn require_challenger_identity(&self, identity: &ChallengerIdentity) -> Result<()> {
+        identity.validate()?;
+        refuse_rejected_checkpoint(&self.state_sha256, &self.model_sha256)?;
+        ensure!(
+            self.step > ACCEPTED_STEP && self.step != REJECTED_STEP,
+            "refused: challenger step {} does not continue the accepted step-{ACCEPTED_STEP} checkpoint",
+            self.step
+        );
+        ensure!(
+            self.state_sha256 == identity.state_sha256
+                && self.model_sha256 != ACCEPTED_MODEL_SHA256,
+            "refused: checkpoint is not the pinned challenger"
+        );
+        ensure!(
+            self.parameter_sha256 == identity.parameter_sha256,
+            "refused: checkpoint parameters are not the pinned challenger parameters"
+        );
+        ensure!(
+            self.config_sha256 == identity.config_sha256
+                && self.config.sha256()? == identity.config_sha256,
+            "refused: checkpoint config is not the pinned challenger config"
+        );
+        ensure!(
+            self.policy_safetensors_sha256 == identity.policy_safetensors_sha256,
+            "refused: export receipt names other challenger weights"
+        );
+        ensure!(
+            self.vocabulary_sha256 == CHECKPOINT_VOCABULARY_SHA256,
+            "refused: checkpoint vocabulary {} is not the step-60000 vocabulary",
+            self.vocabulary_sha256
+        );
+        Ok(())
     }
 }
 
@@ -250,7 +382,7 @@ impl CheckpointBinding {
         self.step
     }
 
-    /// `state.json` sha256; always [`ACCEPTED_STATE_SHA256`] for a parsed receipt.
+    /// `state.json` sha256: the accepted state, or the pinned challenger's.
     pub fn state_sha256(&self) -> &str {
         &self.state_sha256
     }
