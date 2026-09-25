@@ -6162,11 +6162,12 @@
       },
       "lanes": [
         "rust-check",
+        "inputs",
         "full-default",
         "full-doctests"
       ],
       "dispositions": [],
-      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+      "scope": "Default-feature build/check. The inputs lane executes only the spec_drift::tests library harness, with a nested Rust receipt and nonzero execution guard; other campaign tests remain outside PR selection. Default tests execute under the main nextest profile; declared doctests execute separately."
     },
     "target:jope-dime-regressor/test/dlgp_best5": {
       "discovery": {
