@@ -564,7 +564,8 @@ fn verify_round_trip(tensors: &[Named], path: &Path) -> Result<()> {
 
 /// Write `tensors` to `output` (refusing to overwrite), re-read it through tch and through
 /// `parse_safetensors`, requiring a bit-exact match of every tensor, then publish it with no
-/// replacement (ot-export `lib.rs:255-294`). An error always means `output` is not published.
+/// replacement (ot-export `lib.rs:255-294`). An error means `output` is not published, unless it
+/// carries [`StillPublished`] naming it.
 fn write_and_verify(tensors: &[Named], output: &Path) -> Result<Value> {
     ensure!(absent(output), "refusing to overwrite {}", output.display());
     let parent = output.parent().context("output has no parent")?;
@@ -628,7 +629,7 @@ fn write_and_verify(tensors: &[Named], output: &Path) -> Result<Value> {
 
 /// Pretty JSON plus a newline, published with no replacement and its directory fsynced, as
 /// `write_and_verify` does for the weights; returns its sha256 (ot-export `lib.rs:541-550`).
-/// An error always means no receipt exists at `path`.
+/// An error means no receipt exists at `path`, unless it carries [`StillPublished`] naming it.
 fn write_receipt(path: &Path, receipt: &Value) -> Result<String> {
     ensure!(absent(path), "refusing to overwrite {}", path.display());
     let parent = path.parent().context("receipt has no parent")?;
@@ -708,7 +709,8 @@ fn require_durable_path(path: &Path) -> Result<()> {
 }
 
 /// [`export`] after the CPU-only check. Every refusal precedes the first write, and a receipt
-/// that still fails to be written removes the just-published policy file again.
+/// that still fails to be written removes the just-published policy file again, unless the
+/// receipt itself remains published ([`StillPublished`]), in which case both stay.
 fn export_on_cpu(request: &ExportRequest) -> Result<Value> {
     for path in [&request.output, &request.receipt] {
         require_durable_path(path)?;
@@ -726,27 +728,33 @@ fn export_on_cpu(request: &ExportRequest) -> Result<Value> {
         "receipt must not name the policy output: {}",
         request.receipt.display()
     );
-    // The same check through symlinks, for an output directory that already exists (the receipt
-    // directory exists, checked above; a new output directory cannot alias it).
-    if request.output.exists() {
-        let parent = request.receipt.parent().context("receipt has no parent")?;
-        let resolved_receipt = fs::canonicalize(parent)
-            .with_context(|| format!("resolve {}", parent.display()))?
-            .join(
-                request
-                    .receipt
-                    .file_name()
-                    .context("receipt has no file name")?,
-            );
-        let resolved_output = fs::canonicalize(&request.output)
-            .with_context(|| format!("resolve {}", request.output.display()))?;
-        ensure!(
-            resolved_receipt != resolved_output
-                && resolved_receipt != resolved_output.join(POLICY_OUTPUT),
-            "receipt must not name the policy output: {}",
-            request.receipt.display()
+    // The same check on resolved paths: through symlinks, and for an output directory not created
+    // yet (resolved from its nearest existing ancestor; `..` was refused above). The receipt may be
+    // neither the output directory, nor a directory that would be created above it, nor the
+    // policy file. The receipt directory exists (checked above).
+    let receipt_parent = request.receipt.parent().context("receipt has no parent")?;
+    let resolved_receipt = fs::canonicalize(receipt_parent)
+        .with_context(|| format!("resolve {}", receipt_parent.display()))?
+        .join(
+            request
+                .receipt
+                .file_name()
+                .context("receipt has no file name")?,
         );
-    }
+    let base = request
+        .output
+        .ancestors()
+        .find(|a| a.exists())
+        .context("output has no existing ancestor")?;
+    let resolved_output = fs::canonicalize(base)
+        .with_context(|| format!("resolve {}", base.display()))?
+        .join(request.output.strip_prefix(base)?);
+    ensure!(
+        !resolved_output.starts_with(&resolved_receipt)
+            && resolved_receipt != resolved_output.join(POLICY_OUTPUT),
+        "receipt must not name the policy output: {}",
+        request.receipt.display()
+    );
     for path in [&request.receipt, &output] {
         ensure!(absent(path), "refusing to overwrite {}", path.display());
     }
@@ -831,18 +839,24 @@ fn export_on_cpu(request: &ExportRequest) -> Result<Value> {
                 )));
             }
             // Never leave weights without their binding receipt: a retry would be refused.
-            let removed =
-                fs::remove_file(&output).and_then(|()| fs::File::open(&request.output)?.sync_all());
-            return Err(err.context(match removed {
-                Ok(()) => format!(
-                    "receipt not written; removed the unreceipted {}",
-                    output.display()
-                ),
+            let message = match fs::remove_file(&output) {
                 Err(e) => format!(
                     "receipt not written; could not remove the unreceipted {}: {e}",
                     output.display()
                 ),
-            }));
+                Ok(()) => match fs::File::open(&request.output).and_then(|d| d.sync_all()) {
+                    Ok(()) => format!(
+                        "receipt not written; removed the unreceipted {}",
+                        output.display()
+                    ),
+                    Err(e) => format!(
+                        "receipt not written; removed the unreceipted {} but could not fsync {}: {e}",
+                        output.display(),
+                        request.output.display()
+                    ),
+                },
+            };
+            return Err(err.context(message));
         }
     };
     Ok(json!({
@@ -1415,6 +1429,14 @@ mod tests {
         }
         assert!(!real.join(POLICY_OUTPUT).exists());
         assert_no_partials(&real);
+        // A receipt naming a directory the export would create above its output is refused
+        // before that directory is created.
+        let new = scratch.path().join("new");
+        refused(
+            export_on_cpu(&request(&dir, &new.join("deeper"), &new, &wrong)),
+            "receipt must not name the policy output",
+        );
+        assert!(!new.exists());
     }
 
     #[test]
