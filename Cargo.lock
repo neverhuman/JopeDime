@@ -2282,6 +2282,7 @@ dependencies = [
  "jope-datasets",
  "jope-learning",
  "jope-models",
+ "jope-motifs",
  "jope-pipeline",
  "jope-policy",
  "nix 0.29.0",
@@ -2370,6 +2371,22 @@ dependencies = [
  "serde_json",
  "tempfile",
  "tokio",
+]
+
+[[package]]
+name = "jope-motifs"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "feat-math",
+ "jope-learning",
+ "jope-paths",
+ "jope-pipeline",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tempfile",
 ]
 
 [[package]]
