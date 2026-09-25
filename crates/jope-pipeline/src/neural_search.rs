@@ -27,6 +27,9 @@ use crate::{
 pub const PROTOCOL: &str = "asm.bounded-neural-search/v1";
 pub const INITIAL_SIZE: usize = 80;
 pub const NEURAL_SLOTS: usize = 64;
+/// Incumbents occupy the final generation-zero slots of their own arm. In the
+/// neural arm this is the exploration tail, so all 64 policy slots remain.
+pub const MAX_INCUMBENTS: usize = INITIAL_SIZE - NEURAL_SLOTS;
 const ELITES: usize = 4;
 
 /// Accepted serialization is unchanged. The experimental variant has a distinct
@@ -121,6 +124,10 @@ pub struct PairInputPlan {
     pub seconds: u64,
     pub max_evaluations: usize,
     pub random_seed: u64,
+    /// Earlier arm winners seeded into generation zero of their own arm. Omitted
+    /// when absent, so historical arm identities and comparison digests are unchanged.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub incumbents: Option<ArmIncumbents>,
 }
 impl PairInputPlan {
     fn validate(&self) -> Result<()> {
@@ -173,7 +180,36 @@ impl PairInputPlan {
             (INITIAL_SIZE..=1000).contains(&self.max_evaluations),
             "search must admit 80 initial slots and at most 1000 evaluations"
         );
+        if let Some(incumbents) = &self.incumbents {
+            ensure!(
+                self.proposal.accepted().is_ok(),
+                "incumbent seeding requires the accepted proposal plan"
+            );
+            ensure!(
+                !(incumbents.neural.is_empty() && incumbents.generic.is_empty())
+                    && incumbents.neural.len() <= MAX_INCUMBENTS
+                    && incumbents.generic.len() <= MAX_INCUMBENTS,
+                "incumbent count outside approved bounds"
+            );
+            for seeds in [&incumbents.neural, &incumbents.generic] {
+                let mut programs = BTreeSet::new();
+                for seed in seeds {
+                    seed.validate()?;
+                    ensure!(
+                        programs.insert(&seed.program_sha256),
+                        "incumbent recipe repeated within an arm"
+                    );
+                }
+            }
+        }
         Ok(())
+    }
+    pub fn arm_incumbents(&self, neural: bool) -> &[IncumbentSeed] {
+        match &self.incumbents {
+            Some(seeds) if neural => &seeds.neural,
+            Some(seeds) => &seeds.generic,
+            None => &[],
+        }
     }
     pub fn arm(&self, neural: bool) -> Result<ArmBudget> {
         self.validate()?;
@@ -334,6 +370,86 @@ pub enum Origin {
     Generic,
     Mutation,
     Crossover,
+    /// A prior round's arm winner, measured again in this arm. Never a new proposal.
+    Incumbent,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+pub struct IncumbentSeed {
+    /// Content address of the retained FrozenRecipe in the teaching state.
+    pub frozen_recipe_sha256: String,
+    pub original_proposal: String,
+    pub program_sha256: String,
+}
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+pub struct ArmIncumbents {
+    pub neural: Vec<IncumbentSeed>,
+    pub generic: Vec<IncumbentSeed>,
+}
+impl IncumbentSeed {
+    fn validate(&self) -> Result<()> {
+        ensure!(
+            jope_policy::is_sha256_hex(&self.frozen_recipe_sha256)
+                && SynthesizedRecipe::new(self.original_proposal.clone())?.executable_sha256
+                    == self.program_sha256,
+            "incumbent identity changed"
+        );
+        Ok(())
+    }
+    /// Verify one retained arm winner for this exact pair selection. The winner may
+    /// come from an earlier round (another experiment) on the same dataset, split,
+    /// rows, evaluator and evaluation seed; `neural` names the arm that produced it.
+    pub fn from_frozen_recipe(
+        bytes: &[u8],
+        pinned_sha256: &str,
+        selection: &SelectionPlan,
+        neural: bool,
+    ) -> Result<Self> {
+        ensure!(
+            sha256_hex(bytes) == pinned_sha256,
+            "incumbent bytes differ from pinned digest"
+        );
+        let frozen: FrozenRecipe = serde_json::from_slice(bytes)?;
+        let candidate = &frozen.candidate;
+        candidate.recipe.validate()?;
+        ensure!(
+            candidate.recipe == SynthesizedRecipe::new(candidate.genome.clone())?
+                && candidate.program_sha256 == candidate.recipe.executable_sha256,
+            "incumbent recipe derivation changed"
+        );
+        let feedback = &frozen.selection_feedback;
+        ensure!(
+            feedback.status == EvaluationStatus::Completed
+                && feedback.candidate_sha256 == candidate.id_sha256
+                && feedback.loss.is_some_and(f64::is_finite),
+            "incumbent lacks a completed train-side selection"
+        );
+        let mut expected =
+            selection.refit_request(&candidate.program_sha256, &candidate.id_sha256)?;
+        expected
+            .experiment_sha256
+            .clone_from(&frozen.refit_request.experiment_sha256);
+        expected
+            .checkpoint_sha256
+            .clone_from(&frozen.refit_request.checkpoint_sha256);
+        ensure!(
+            expected.identity()? == frozen.refit_request.identity()?,
+            "incumbent belongs to another dataset, split, rows or evaluator"
+        );
+        ensure!(
+            frozen.refit_request.checkpoint_sha256.is_some() == neural,
+            "incumbent was not produced by this arm"
+        );
+        let seed = Self {
+            frozen_recipe_sha256: pinned_sha256.into(),
+            original_proposal: candidate.genome.clone(),
+            program_sha256: candidate.program_sha256.clone(),
+        };
+        seed.validate()?;
+        Ok(seed)
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -513,6 +629,8 @@ impl SearchReceipt {
         let neural_arm = plan.arm(true)?;
         let generic_arm = plan.arm(false)?;
         let neural = self.arm.id_sha256 == neural_arm.id_sha256;
+        let seeds = plan.arm_incumbents(neural);
+        let first_incumbent = INITIAL_SIZE - seeds.len();
         ensure!(
             self.schema == PROTOCOL
                 && self.comparison_sha256 == sha256_hex(&serde_json::to_vec(plan)?)
@@ -544,7 +662,10 @@ impl SearchReceipt {
             for (slot, observation) in group.iter().enumerate() {
                 let c = &observation.candidate;
                 if generation == 0 {
-                    let expected_origin = if !neural {
+                    let expected_origin = if slot >= first_incumbent {
+                        c.origin == Origin::Incumbent
+                            && c.genome == seeds[slot - first_incumbent].original_proposal
+                    } else if !neural {
                         c.origin == Origin::Generic
                     } else if slot < NEURAL_SLOTS {
                         matches!(
@@ -559,8 +680,8 @@ impl SearchReceipt {
                         "initial origin/parents changed"
                     );
                     ensure!(
-                        neural || c.rank_log_weight.is_none(),
-                        "generic slot has policy rank"
+                        (neural && c.origin != Origin::Incumbent) || c.rank_log_weight.is_none(),
+                        "generic or incumbent slot has policy rank"
                     );
                 } else {
                     ensure!(
@@ -617,10 +738,10 @@ impl SearchReceipt {
         Ok(())
     }
 
-    /// After population and execution replay, prove an actual completed path
-    /// from a generation-zero NeuralPolicy candidate to a completed offspring.
-    /// Exploration and rejection fallback roots never establish neural ancestry.
-    pub fn has_fitted_neural_descendant(&self) -> bool {
+    /// Completed candidates keyed by id: (generation, on a completed path from a
+    /// generation-zero NeuralPolicy root). Exploration, fallback and incumbent
+    /// roots are never on such a path.
+    fn neural_paths(&self) -> BTreeMap<&str, (usize, bool)> {
         let mut completed = BTreeMap::<&str, (usize, bool)>::new();
         for o in &self.observations {
             if o.feedback.status != EvaluationStatus::Completed {
@@ -643,12 +764,24 @@ impl SearchReceipt {
                         .is_some_and(|(_, neural)| *neural)
                 })
             };
-            if c.generation > 0 && neural_path {
-                return true;
-            }
             completed.insert(c.id_sha256.as_str(), (c.generation, neural_path));
         }
-        false
+        completed
+    }
+    /// After population and execution replay, prove an actual completed path
+    /// from a generation-zero NeuralPolicy candidate to a completed offspring.
+    /// Exploration and rejection fallback roots never establish neural ancestry.
+    pub fn has_fitted_neural_descendant(&self) -> bool {
+        self.neural_paths()
+            .values()
+            .any(|(generation, neural)| *generation > 0 && *neural)
+    }
+    /// Whether a completed candidate descends, through completed parents only,
+    /// from a generation-zero NeuralPolicy root (or is such a root).
+    pub fn neural_policy_lineage(&self, candidate_sha256: &str) -> bool {
+        self.neural_paths()
+            .get(candidate_sha256)
+            .is_some_and(|(_, neural)| *neural)
     }
     pub fn winner(&self) -> Option<&Observation> {
         self.observations
@@ -1331,6 +1464,46 @@ pub fn verify_policy_inputs(
     Ok(context)
 }
 
+fn incumbent_candidate(arm: &ArmBudget, seed: &IncumbentSeed, slot: usize) -> Result<Candidate> {
+    let candidate = Candidate::new(
+        arm,
+        seed.original_proposal.clone(),
+        0,
+        slot,
+        Origin::Incumbent,
+        vec![],
+        None,
+    )?;
+    ensure!(
+        candidate.program_sha256 == seed.program_sha256,
+        "incumbent recipe changed"
+    );
+    Ok(candidate)
+}
+/// Seat the neural arm's incumbents in the final slots. They may displace only
+/// exploration slots; all 64 policy slots and the producer's slots stay bound.
+fn seat_incumbents(
+    arm: &ArmBudget,
+    plan: &PairInputPlan,
+    candidates: &mut [Candidate],
+) -> Result<()> {
+    let seeds = plan.arm_incumbents(true);
+    ensure!(
+        candidates.len() == INITIAL_SIZE,
+        "initial slot count is not 80"
+    );
+    let first = INITIAL_SIZE - seeds.len();
+    for (offset, seed) in seeds.iter().enumerate() {
+        let slot = first + offset;
+        ensure!(
+            candidates[slot].origin == Origin::RandomExploration,
+            "incumbent may displace only an exploration slot"
+        );
+        candidates[slot] = incumbent_candidate(arm, seed, slot)?;
+    }
+    Ok(())
+}
+
 fn run_neural<B: Backend, V: Variation>(
     backend: &mut B,
     comparison: &Comparison,
@@ -1386,7 +1559,7 @@ fn run_neural<B: Backend, V: Variation>(
         population.candidates().len() == INITIAL_SIZE,
         "policy must provide80 initial slots"
     );
-    let candidates = population
+    let mut candidates = population
         .candidates()
         .iter()
         .enumerate()
@@ -1408,6 +1581,7 @@ fn run_neural<B: Backend, V: Variation>(
             )
         })
         .collect::<Result<Vec<_>>>()?;
+    seat_incumbents(&arm, comparison, &mut candidates)?;
     let evidence = AcceptedProposalEvidence {
         request: worker.request.clone(),
         context_cost: comparison.context_cost.clone(),
@@ -1452,8 +1626,14 @@ fn run_generic<B: Backend, V: Variation>(
             backend, comparison, variation, arm, deadline, candidates, None,
         );
     }
+    let incumbents = comparison.arm_incumbents(false);
+    let draws = INITIAL_SIZE - incumbents.len();
     let mut candidates = Vec::with_capacity(INITIAL_SIZE);
-    let mut seen = BTreeSet::new();
+    // Incumbent programs are pre-seeded so no generic draw duplicates them.
+    let mut seen: BTreeSet<String> = incumbents
+        .iter()
+        .map(|s| s.program_sha256.clone())
+        .collect();
     for attempt in 0..INITIAL_SIZE * 128 {
         if backend.now_ms() >= deadline {
             anyhow::bail!("generic generation exhausted original arm before initial population");
@@ -1474,14 +1654,17 @@ fn run_generic<B: Backend, V: Variation>(
                 None,
             )?);
         }
-        if candidates.len() == INITIAL_SIZE {
+        if candidates.len() == draws {
             break;
         }
     }
     ensure!(
-        candidates.len() == INITIAL_SIZE,
+        candidates.len() == draws,
         "generic grammar cannot supply 80 distinct initial candidates"
     );
+    for seed in incumbents {
+        candidates.push(incumbent_candidate(&arm, seed, candidates.len())?);
+    }
     run_population(
         backend, comparison, variation, arm, deadline, candidates, None,
     )
@@ -2393,6 +2576,7 @@ mod tests {
             seconds: 120,
             max_evaluations,
             random_seed: 71,
+            incumbents: None,
         }
     }
     fn synthetic_initial(arm: &ArmBudget) -> Vec<Candidate> {
@@ -3434,6 +3618,345 @@ mod tests {
         let generic = result.generic.unwrap();
         assert_eq!(generic.observations.len(), 80);
         assert_eq!(generic.arm.seconds, arm.seconds);
+        Ok(())
+    }
+
+    fn generic_frozen() -> Result<(PairInputPlan, FrozenRecipe)> {
+        // Generation zero only: offspring tie slot 0 on the fixture loss, and the
+        // generic sampler never draws an offspring recipe, so an offspring seed
+        // could not exercise the generic pre-seeding.
+        let plan = comparison(80);
+        let mut backend = FixtureBackend::default();
+        let mut variation = FixtureVariation {
+            started: backend.started.clone(),
+        };
+        let receipt = run_generic(&mut backend, &plan, &mut variation)?;
+        let frozen = freeze_winner(&mut backend, &plan, &receipt)?.context("generic winner")?;
+        Ok((plan, frozen))
+    }
+    fn repinned_seed(
+        value: &serde_json::Value,
+        selection: &SelectionPlan,
+        neural: bool,
+    ) -> Result<IncumbentSeed> {
+        let bytes = serde_json::to_vec(value)?;
+        IncumbentSeed::from_frozen_recipe(&bytes, &sha256_hex(&bytes), selection, neural)
+    }
+    fn generic_incumbent() -> Result<IncumbentSeed> {
+        let (plan, frozen) = generic_frozen()?;
+        let bytes = serde_json::to_vec(&frozen)?;
+        IncumbentSeed::from_frozen_recipe(&bytes, &sha256_hex(&bytes), &plan.selection, false)
+    }
+    fn with_initial(receipt: &SearchReceipt, slot: usize, candidate: Candidate) -> SearchReceipt {
+        let mut changed = copy_receipt(receipt);
+        changed.observations[slot] = Observation {
+            feedback: Feedback::exhausted(&candidate),
+            candidate,
+        };
+        changed
+    }
+
+    #[test]
+    fn absent_incumbents_keep_pair_bytes() -> Result<()> {
+        let plan = comparison(80);
+        let bytes = serde_json::to_vec(&plan)?;
+        assert!(!String::from_utf8_lossy(&bytes).contains("\"incumbents\""));
+        let decoded: PairInputPlan = serde_json::from_slice(&bytes)?;
+        assert_eq!(serde_json::to_vec(&decoded)?, bytes);
+        for neural in [true, false] {
+            assert_eq!(decoded.arm(neural)?.id_sha256, plan.arm(neural)?.id_sha256);
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn incumbent_blob_is_verified_for_digest_arm_and_rows() -> Result<()> {
+        let (plan, frozen) = generic_frozen()?;
+        let bytes = serde_json::to_vec(&frozen)?;
+        let pin = sha256_hex(&bytes);
+        let seed = IncumbentSeed::from_frozen_recipe(&bytes, &pin, &plan.selection, false)?;
+        assert_eq!(seed.original_proposal, frozen.candidate.genome);
+        assert_eq!(seed.program_sha256, frozen.candidate.program_sha256);
+        assert_eq!(seed.frozen_recipe_sha256, pin);
+        let admits = |bytes: &[u8], pin: &str, selection: &SelectionPlan, neural: bool| {
+            IncumbentSeed::from_frozen_recipe(bytes, pin, selection, neural).is_ok()
+        };
+        // Bytes that do not hash to the pin.
+        assert!(!admits(
+            &bytes,
+            &sha256_hex(b"other"),
+            &plan.selection,
+            false
+        ));
+        // A changed proposal, re-pinned, no longer derives its recorded recipe.
+        let original = serde_json::to_value(&frozen)?;
+        let mut tampered = original.clone();
+        tampered["candidate"]["genome"] = serde_json::json!("(pipe X (ridge lambda=999))");
+        let error = repinned_seed(&tampered, &plan.selection, false).unwrap_err();
+        assert!(format!("{error:#}").contains("recipe derivation"));
+        // The checkpoint pin names the arm, in both directions.
+        assert!(!admits(&bytes, &pin, &plan.selection, true));
+        let mut neural = original.clone();
+        neural["refit_request"]["checkpoint_sha256"] =
+            serde_json::json!(jope_policy::ACCEPTED_STATE_SHA256);
+        repinned_seed(&neural, &plan.selection, true)?;
+        assert!(repinned_seed(&neural, &plan.selection, false).is_err());
+        // Another dataset or another evaluation seed.
+        for (key, value) in [
+            (
+                "dataset_sha256",
+                serde_json::json!(sha256_hex(b"other dataset")),
+            ),
+            ("seed", serde_json::json!(plan.selection.outer().seed + 1)),
+        ] {
+            let mut selection = serde_json::to_value(&plan.selection)?;
+            selection["outer"][key] = value;
+            let other: SelectionPlan = serde_json::from_value(selection)?;
+            other.validate()?;
+            assert!(!admits(&bytes, &pin, &other, false));
+        }
+        // A failed train-side selection.
+        let mut failed = original;
+        failed["selection_feedback"]["status"] = serde_json::json!("failed");
+        assert!(repinned_seed(&failed, &plan.selection, false).is_err());
+        Ok(())
+    }
+
+    #[test]
+    fn generic_incumbent_takes_final_slot_without_duplicate() -> Result<()> {
+        let seed = generic_incumbent()?;
+        // Precondition: unseeded, the first generic draw is the incumbent itself.
+        let mut fresh = FixtureBackend::default();
+        let mut fresh_variation = FixtureVariation {
+            started: fresh.started.clone(),
+        };
+        let unseeded = run_generic(&mut fresh, &comparison(84), &mut fresh_variation)?;
+        assert_eq!(
+            unseeded.observations[0].candidate.program_sha256,
+            seed.program_sha256
+        );
+        let mut plan = comparison(84);
+        plan.incumbents = Some(ArmIncumbents {
+            neural: vec![],
+            generic: vec![seed.clone()],
+        });
+        let mut backend = FixtureBackend::default();
+        let mut variation = FixtureVariation {
+            started: backend.started.clone(),
+        };
+        let receipt = run_generic(&mut backend, &plan, &mut variation)?;
+        assert_eq!(receipt.observations.len(), 84);
+        assert_eq!(
+            receipt
+                .observations
+                .iter()
+                .filter(|o| o.candidate.generation == 0)
+                .count(),
+            80
+        );
+        let incumbent = &receipt.observations[79].candidate;
+        assert_eq!(incumbent.origin, Origin::Incumbent);
+        assert_eq!(incumbent.genome, seed.original_proposal);
+        assert_eq!(incumbent.initial_slot, Some(79));
+        assert!(incumbent.rank_log_weight.is_none());
+        let initial = &receipt.observations[..79];
+        assert!(initial
+            .iter()
+            .all(|o| o.candidate.origin == Origin::Generic));
+        assert!(!initial
+            .iter()
+            .any(|o| o.candidate.program_sha256 == seed.program_sha256));
+        receipt.validate_population(&plan)?;
+        let resumed = run_generic(&mut backend, &plan, &mut variation)?;
+        assert_eq!(
+            serde_json::to_value(&receipt)?,
+            serde_json::to_value(&resumed)?
+        );
+        assert_eq!(backend.dispatched.len(), 84);
+        Ok(())
+    }
+
+    #[test]
+    fn neural_incumbent_replaces_exploration_tail_only_in_its_own_arm() -> Result<()> {
+        // A generic-arm blob is enough here: seating and replay never reread it.
+        let seed = generic_incumbent()?;
+        let mut plan = comparison(84);
+        plan.incumbents = Some(ArmIncumbents {
+            neural: vec![seed.clone()],
+            generic: vec![],
+        });
+        let arm = plan.arm(true)?;
+        let mut initial = synthetic_initial(&arm);
+        seat_incumbents(&arm, &plan, &mut initial)?;
+        assert_eq!(initial[79].origin, Origin::Incumbent);
+        assert_eq!(initial[79].genome, seed.original_proposal);
+        assert_eq!(
+            serde_json::to_value(&initial[..79])?,
+            serde_json::to_value(&synthetic_initial(&arm)[..79])?
+        );
+        let mut backend = FixtureBackend::default();
+        let mut variation = FixtureVariation {
+            started: backend.started.clone(),
+        };
+        let deadline = backend.begin_arm(&arm)?;
+        let receipt = run_population(
+            &mut backend,
+            &plan,
+            &mut variation,
+            arm.clone(),
+            deadline,
+            initial,
+            None,
+        )?;
+        receipt.validate_population(&plan)?;
+        let dispatched_initial = backend
+            .dispatched
+            .iter()
+            .filter(|c| c.generation == 0)
+            .count();
+        assert!(dispatched_initial <= INITIAL_SIZE);
+        let mut generation_zero = copy_receipt(&receipt);
+        generation_zero.observations.truncate(INITIAL_SIZE);
+        generation_zero.validate_population(&plan)?;
+        let incumbent = |slot: usize, genome: &str, rank: Option<f64>| {
+            Candidate::new(
+                &arm,
+                genome.into(),
+                0,
+                slot,
+                Origin::Incumbent,
+                vec![],
+                rank,
+            )
+        };
+        // An undesignated slot, a changed proposal and a policy rank are refused.
+        for (slot, candidate) in [
+            (0, incumbent(0, &seed.original_proposal, None)?),
+            (79, incumbent(79, "(pipe X (ridge lambda=4242))", None)?),
+            (79, incumbent(79, &seed.original_proposal, Some(0.))?),
+        ] {
+            assert!(with_initial(&generation_zero, slot, candidate)
+                .validate_population(&plan)
+                .is_err());
+        }
+        // The generic arm of this plan has no seeds.
+        let generic = metadata_receipt(&plan, false)?;
+        let foreign = Candidate::new(
+            &generic.arm,
+            seed.original_proposal.clone(),
+            0,
+            79,
+            Origin::Incumbent,
+            vec![],
+            None,
+        )?;
+        assert!(with_initial(&generic, 79, foreign)
+            .validate_population(&plan)
+            .is_err());
+        // A plan without incumbents admits none in either arm.
+        let unseeded = comparison(84);
+        let plain = metadata_receipt(&unseeded, true)?;
+        let foreign = Candidate::new(
+            &plain.arm,
+            seed.original_proposal.clone(),
+            0,
+            79,
+            Origin::Incumbent,
+            vec![],
+            None,
+        )?;
+        assert!(with_initial(&plain, 79, foreign)
+            .validate_population(&unseeded)
+            .is_err());
+        // A policy slot is never displaced.
+        let mut policy_tail = synthetic_initial(&arm);
+        policy_tail[79] = Candidate::new(
+            &arm,
+            policy_tail[79].genome.clone(),
+            0,
+            79,
+            Origin::NeuralPolicy,
+            vec![],
+            None,
+        )?;
+        assert!(seat_incumbents(&arm, &plan, &mut policy_tail).is_err());
+        // Count and per-arm uniqueness bounds. Distinct recipes isolate the count bound.
+        let distinct = |count: usize| {
+            (1..=count)
+                .map(|i| -> Result<IncumbentSeed> {
+                    let proposal = format!("(pipe X (ridge lambda={i}))");
+                    let program_sha256 =
+                        SynthesizedRecipe::new(proposal.clone())?.executable_sha256;
+                    Ok(IncumbentSeed {
+                        frozen_recipe_sha256: sha256_hex(proposal.as_bytes()),
+                        original_proposal: proposal,
+                        program_sha256,
+                    })
+                })
+                .collect::<Result<Vec<_>>>()
+        };
+        let refusal = |incumbents: ArmIncumbents| -> String {
+            let mut bounded = comparison(84);
+            bounded.incumbents = Some(incumbents);
+            bounded
+                .arm(true)
+                .err()
+                .map(|e| format!("{e:#}"))
+                .unwrap_or_default()
+        };
+        let mut at_bound = comparison(84);
+        at_bound.incumbents = Some(ArmIncumbents {
+            neural: distinct(MAX_INCUMBENTS)?,
+            generic: distinct(MAX_INCUMBENTS)?,
+        });
+        at_bound.arm(true)?;
+        for incumbents in [
+            ArmIncumbents {
+                neural: distinct(MAX_INCUMBENTS + 1)?,
+                generic: vec![],
+            },
+            ArmIncumbents {
+                neural: vec![],
+                generic: distinct(MAX_INCUMBENTS + 1)?,
+            },
+            ArmIncumbents {
+                neural: vec![],
+                generic: vec![],
+            },
+        ] {
+            assert!(refusal(incumbents).contains("count outside approved bounds"));
+        }
+        assert!(refusal(ArmIncumbents {
+            neural: vec![seed.clone(), seed.clone()],
+            generic: vec![],
+        })
+        .contains("repeated within an arm"));
+        // An incumbent root never establishes neural-policy lineage.
+        let mut descendant = copy_receipt(&generation_zero);
+        append_metadata_child(&mut descendant, &plan, 1, 0, Origin::Mutation, &[79])?;
+        descendant.validate_population(&plan)?;
+        assert!(!descendant.has_fitted_neural_descendant());
+        Ok(())
+    }
+
+    #[test]
+    fn winner_lineage_marks_policy_roots_and_descendants_only() -> Result<()> {
+        let plan = comparison(84);
+        let mut receipt = metadata_receipt(&plan, true)?;
+        let id = |receipt: &SearchReceipt, index: usize| {
+            receipt.observations[index].candidate.id_sha256.clone()
+        };
+        assert!(receipt.neural_policy_lineage(&id(&receipt, 0)));
+        assert!(!receipt.neural_policy_lineage(&id(&receipt, 62)));
+        assert!(!receipt.neural_policy_lineage(&id(&receipt, 64)));
+        append_metadata_child(&mut receipt, &plan, 1, 0, Origin::Mutation, &[64])?;
+        append_metadata_child(&mut receipt, &plan, 1, 1, Origin::Crossover, &[60, 65])?;
+        append_metadata_child(&mut receipt, &plan, 2, 0, Origin::Mutation, &[80])?;
+        assert!(!receipt.neural_policy_lineage(&id(&receipt, 80)));
+        assert!(!receipt.has_fitted_neural_descendant());
+        append_metadata_child(&mut receipt, &plan, 2, 1, Origin::Crossover, &[81, 0])?;
+        assert!(receipt.neural_policy_lineage(&id(&receipt, 83)));
+        assert!(receipt.has_fitted_neural_descendant());
         Ok(())
     }
 }

@@ -626,6 +626,27 @@ pub(crate) fn score_batch(
     Ok(observations)
 }
 
+/// `defer_report` is honoured only by the single-dataset origin proof.
+pub fn run_with(
+    plan: &CampaignPlan,
+    manifest: &Path,
+    datasets: &Path,
+    journal: &Path,
+    pool: &mut ExecutionPool,
+    cancel: &AtomicBool,
+    defer_report: bool,
+) -> Result<Value> {
+    #[cfg(feature = "asm")]
+    if defer_report && plan.scope == super::origin_proof::SCOPE {
+        return super::origin_proof::run_deferred(plan, manifest, datasets, journal, pool, cancel);
+    }
+    ensure!(
+        !defer_report,
+        "deferred reporting requires a single-dataset origin proof plan"
+    );
+    run(plan, manifest, datasets, journal, pool, cancel)
+}
+
 /// One pool owns both stages. Re-entering this function authenticates original
 /// inputs and receipts and uses the pool's existing absolute deadline.
 pub fn run(

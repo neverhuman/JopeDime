@@ -26,6 +26,10 @@ pub struct RunArgs {
     pub datasets: PathBuf,
     #[arg(long)]
     pub journal: PathBuf,
+    /// Run and retain every fit, but leave development hold scoring to `report`.
+    /// Applies only to a single-dataset origin proof plan.
+    #[arg(long)]
+    pub defer_report: bool,
     #[arg(long, hide = true)]
     pub supervisor_unit: Option<String>,
 }
@@ -148,7 +152,14 @@ fn journal(path: &Path) -> Result<PathBuf> {
 
 pub fn run(args: RunArgs) -> Result<Value> {
     let plan = read_plan(&args.plan, &args.plan_sha256)?;
+    let defer = args.defer_report;
+    // Literal scope: this module also compiles without the asm feature.
+    ensure!(
+        !defer || plan.scope == "asm-origin-proof",
+        "--defer-report applies only to a single-dataset origin proof plan"
+    );
     let journal = journal(&args.journal)?;
+    bind_deferral(&journal, &args.plan_sha256, defer)?;
     let manifest = fs::canonicalize(&args.manifest)?;
     let datasets = fs::canonicalize(&args.datasets)?;
     if let Some(unit) = args.supervisor_unit {
@@ -158,13 +169,14 @@ pub fn run(args: RunArgs) -> Result<Value> {
             jope_pipeline::supervisor::for_unit(&unit)?,
         )?;
         let cancellation = jope_pipeline::supervisor::cancellation()?;
-        return super::campaign::run(
+        return super::campaign::run_with(
             &plan,
             &manifest,
             &datasets,
             &journal,
             &mut pool,
             &cancellation,
+            defer,
         );
     }
     let program_path = fs::canonicalize(std::env::current_exe()?)?;
@@ -196,8 +208,17 @@ pub fn run(args: RunArgs) -> Result<Value> {
         "--journal".into(),
         journal.display().to_string(),
     ]);
+    if defer {
+        arguments.push("--defer-report".into());
+    }
     let launched =
         jope_pipeline::supervisor::launch(&plan.experiment, &journal, &program, &arguments)?;
+    if defer {
+        return Ok(deferred_run(
+            serde_json::to_value(&launched)?,
+            launched.exit_code,
+        ));
+    }
     let report = if journal.join("campaign.json").try_exists()? {
         Some(super::campaign::report(
             &plan, &manifest, &datasets, &journal,
@@ -208,6 +229,36 @@ pub fn run(args: RunArgs) -> Result<Value> {
     Ok(json!({"ok":launched.exit_code==Some(0),"launch":launched,"report":report}))
 }
 
+/// Parent output for a deferred run: launch evidence only; `report` is the reveal.
+fn deferred_run(launch: Value, exit_code: Option<i32>) -> Value {
+    let complete = exit_code == Some(0);
+    json!({"ok":complete,"state":if complete {"complete_report_deferred"} else {"incomplete_report_deferred"},"launch":launch})
+}
+
+pub(crate) const DEFERRAL_MARKER: &str = "report-deferred.json";
+
+/// Deferral belongs to the journal, not to one invocation. Without this, a
+/// resume that omits the flag would score the development hold rows.
+fn bind_deferral(journal: &Path, plan_sha256: &str, defer: bool) -> Result<()> {
+    let marker = journal.join(DEFERRAL_MARKER);
+    if defer {
+        ensure!(
+            marker.try_exists()? || !journal.join("campaign.json").try_exists()?,
+            "journal was started without --defer-report; its hold rows may already be scored"
+        );
+        super::campaign::immutable(
+            &marker,
+            &json!({"schema":"jope.report-deferred/v1","plan_sha256":plan_sha256}),
+        )
+    } else {
+        ensure!(
+            !marker.try_exists()?,
+            "journal was started with --defer-report; resume with the flag or run optimize report"
+        );
+        Ok(())
+    }
+}
+
 pub fn report(args: ReportArgs) -> Result<Value> {
     let plan = read_plan(&args.plan, &args.plan_sha256)?;
     super::campaign::report(
@@ -216,4 +267,75 @@ pub fn report(args: ReportArgs) -> Result<Value> {
         &args.datasets,
         &fs::canonicalize(args.journal)?,
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use clap::Parser;
+
+    #[derive(Parser)]
+    struct Wrapper {
+        #[command(flatten)]
+        run: RunArgs,
+    }
+
+    #[test]
+    fn defer_report_flag_and_parent_output() {
+        let required = [
+            "wrapper",
+            "--plan",
+            "/private/plan.json",
+            "--plan-sha256",
+            "synthetic",
+            "--manifest",
+            "/private/panel.json",
+            "--datasets",
+            "/private/prepared",
+            "--journal",
+            "/private/journal",
+        ];
+        assert!(!Wrapper::try_parse_from(required).unwrap().run.defer_report);
+        let deferred = required.iter().copied().chain(["--defer-report"]);
+        assert!(Wrapper::try_parse_from(deferred).unwrap().run.defer_report);
+        let complete = deferred_run(json!({}), Some(0));
+        assert_eq!(complete["ok"], true);
+        assert_eq!(complete["state"], "complete_report_deferred");
+        assert!(complete.get("report").is_none());
+        let incomplete = deferred_run(json!({}), None);
+        assert_eq!(incomplete["ok"], false);
+        assert_eq!(incomplete["state"], "incomplete_report_deferred");
+        assert!(incomplete.get("report").is_none());
+    }
+
+    fn scratch() -> Result<tempfile::TempDir> {
+        let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../target/tmp");
+        fs::create_dir_all(&root)?;
+        Ok(tempfile::Builder::new()
+            .prefix("campaign-cli-")
+            .tempdir_in(fs::canonicalize(root)?)?)
+    }
+
+    #[test]
+    fn deferral_is_bound_to_the_journal() -> Result<()> {
+        let plan = "a".repeat(64);
+        let deferred = scratch()?;
+        bind_deferral(deferred.path(), &plan, true)?;
+        assert!(deferred.path().join("report-deferred.json").try_exists()?);
+        bind_deferral(deferred.path(), &plan, true)?;
+        // A resume that omits the flag is refused.
+        let error = bind_deferral(deferred.path(), &plan, false).unwrap_err();
+        assert!(format!("{error:#}").contains("started with --defer-report"));
+        // Another plan cannot reuse the deferred journal.
+        let error = bind_deferral(deferred.path(), &"b".repeat(64), true).unwrap_err();
+        assert!(format!("{error:#}").contains("stale evidence"));
+        // A journal started without deferral cannot become deferred.
+        let started = scratch()?;
+        fs::write(started.path().join("campaign.json"), b"{}")?;
+        let error = bind_deferral(started.path(), &plan, true).unwrap_err();
+        assert!(format!("{error:#}").contains("started without --defer-report"));
+        assert!(!started.path().join("report-deferred.json").try_exists()?);
+        bind_deferral(started.path(), &plan, false)?;
+        Ok(())
+    }
 }

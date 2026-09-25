@@ -120,6 +120,39 @@ fn registry(plan: &CampaignPlan) -> Result<Registry> {
     );
     Ok(registry)
 }
+/// Frozen high-water-mark comparison for one dataset. Configuration contributes
+/// only its vocabulary pin; proposal knobs and `search_round` cannot change it.
+pub(crate) fn comparison_identity(
+    experiment: &jope_pipeline::experiment::Experiment,
+    config: &Configuration,
+    dataset: &jope_pipeline::experiment::PanelDataset,
+    cut_id: String,
+) -> HwmIdentity {
+    HwmIdentity {
+        task: dataset.task.as_str().into(),
+        dataset_hash: dataset.source.sha256.clone(),
+        cut_id,
+        evaluator_sha256: jope_pipeline::sha256_hex(super::EVALUATOR.as_bytes()),
+        vocabulary_sha256: config
+            .experimental
+            .get(dataset.task.as_str())
+            .map_or(&config.vocabulary, |c| &c.vocabulary)
+            .sha256
+            .clone(),
+        protocol: experiment.protocol.clone(),
+        comparison: Some(ComparisonContext {
+            numerical_policy: experiment.numerical_policy.clone(),
+            stage: "train_oof".into(),
+            aggregation: "mean_fold_loss".into(),
+            label_role: "development".into(),
+            sealed: false,
+            benchmark_valid: false,
+            recipe_encoding: "native-canonical-dsl-sha256/v1".into(),
+            class_order: dataset.classes.clone(),
+            checkpoint_sha256: None,
+        }),
+    }
+}
 /// Called only by clock-free plan construction, before final Experiment identity.
 /// Unavailable baseline/fold eligibility remains an explicit dataset inventory.
 pub fn preregister(plan: &mut CampaignPlan, config: &Configuration) -> Result<()> {
@@ -172,30 +205,8 @@ pub fn preregister(plan: &mut CampaignPlan, config: &Configuration) -> Result<()
                 &runtime.program.sha256,
                 &runtime_sha,
             )?;
-            let comparison = HwmIdentity {
-                task: dataset.task.as_str().into(),
-                dataset_hash: dataset.source.sha256.clone(),
-                cut_id: partition.identity()?,
-                evaluator_sha256: jope_pipeline::sha256_hex(super::EVALUATOR.as_bytes()),
-                vocabulary_sha256: config
-                    .experimental
-                    .get(dataset.task.as_str())
-                    .map_or(&config.vocabulary, |c| &c.vocabulary)
-                    .sha256
-                    .clone(),
-                protocol: plan.experiment.protocol.clone(),
-                comparison: Some(ComparisonContext {
-                    numerical_policy: plan.experiment.numerical_policy.clone(),
-                    stage: "train_oof".into(),
-                    aggregation: "mean_fold_loss".into(),
-                    label_role: "development".into(),
-                    sealed: false,
-                    benchmark_valid: false,
-                    recipe_encoding: "native-canonical-dsl-sha256/v1".into(),
-                    class_order: dataset.classes.clone(),
-                    checkpoint_sha256: None,
-                }),
-            };
+            let comparison =
+                comparison_identity(&plan.experiment, config, dataset, partition.identity()?);
             let freeze = eligibility::freeze_inner_optimization(
                 &state,
                 &FreezePlan {
