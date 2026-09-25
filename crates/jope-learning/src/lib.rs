@@ -17,6 +17,7 @@ pub mod canon;
 pub mod champion;
 pub mod civil;
 pub mod eligibility;
+pub mod encoder_receipt;
 pub mod hwm;
 pub mod ledger;
 pub mod metric;

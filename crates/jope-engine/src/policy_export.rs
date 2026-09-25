@@ -503,7 +503,7 @@ fn publish_no_replace(partial: &Path, target: &Path) -> Result<()> {
             if let Err(err) = fs::remove_file(partial) {
                 return Err(unpublish(
                     err,
-                    format!("remove {}", partial.display()),
+                    format!("remove {}; that temporary remains", partial.display()),
                     target,
                 ));
             }
@@ -572,13 +572,9 @@ fn write_and_verify(tensors: &[Named], output: &Path) -> Result<Value> {
     fs::create_dir_all(parent)?;
     // Opened before the partial is written, so its fsync cannot be refused after publication.
     let directory = fs::File::open(parent).with_context(|| format!("open {}", parent.display()))?;
-    let file_name = output
-        .file_name()
-        .context("output has no file name")?
-        .to_string_lossy();
-    // tch picks the writer by extension, so keep `.safetensors` on the temporary name.
-    let partial = parent.join(format!(".partial-{}-{file_name}", std::process::id()));
-    // Never remove or write through an entry this call did not create.
+    let partial = weights_partial(output)?;
+    // Never remove or write through an entry this call did not create (also pre-checked by
+    // `export_on_cpu` before any write).
     ensure!(
         absent(&partial),
         "refusing to replace an existing temporary {}",
@@ -637,9 +633,10 @@ fn write_receipt(path: &Path, receipt: &Value) -> Result<String> {
     let directory = fs::File::open(parent).with_context(|| format!("open {}", parent.display()))?;
     let mut bytes = serde_json::to_vec_pretty(receipt)?;
     bytes.push(b'\n');
-    let partial = path.with_extension(format!("partial-{}", std::process::id()));
+    let partial = receipt_partial(path);
     // Created exclusively: an existing entry (a stale file, a symlink) is neither followed,
-    // truncated nor removed; only what this call created is cleaned up.
+    // truncated nor removed; only what this call created is cleaned up. `export_on_cpu` also
+    // refuses such an entry before any write.
     let mut file = fs::OpenOptions::new()
         .write(true)
         .create_new(true)
@@ -681,6 +678,84 @@ pub fn export(request: &ExportRequest) -> Result<Value> {
     export_on_cpu(request)
 }
 
+/// The nearest ancestor of `path` (itself included) that exists, found without following links.
+/// A dangling link above `path` is refused: whatever it points at could be created later, under
+/// `/tmp` or anywhere else, and `create_dir_all` would then write through it. A dangling link at
+/// `path` itself is skipped here; the overwrite checks refuse it as an existing entry.
+fn nearest_existing(path: &Path) -> Result<&Path> {
+    for ancestor in path.ancestors() {
+        match fs::symlink_metadata(ancestor) {
+            Ok(meta) if meta.file_type().is_symlink() && !ancestor.exists() => ensure!(
+                ancestor == path,
+                "export-policy writes only to durable absolute paths, never /tmp: {} passes \
+                 through the dangling link {}",
+                path.display(),
+                ancestor.display()
+            ),
+            Ok(_) => return Ok(ancestor),
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+            Err(e) => return Err(e).with_context(|| format!("inspect {}", ancestor.display())),
+        }
+    }
+    bail!("{} has no existing ancestor", path.display())
+}
+
+/// The temporary name `write_and_verify` writes the weights to, beside the published name.
+fn weights_partial(output: &Path) -> Result<PathBuf> {
+    let parent = output.parent().context("output has no parent")?;
+    let file_name = output
+        .file_name()
+        .context("output has no file name")?
+        .to_string_lossy();
+    // tch picks the writer by extension, so keep `.safetensors` on the temporary name.
+    Ok(parent.join(format!(".partial-{}-{file_name}", std::process::id())))
+}
+
+/// The temporary name `write_receipt` writes the receipt to.
+fn receipt_partial(path: &Path) -> PathBuf {
+    path.with_extension(format!("partial-{}", std::process::id()))
+}
+
+/// After `write_receipt` failed for `receipt`: keep the published `weights` only when this
+/// call's own receipt could not be undone ([`StillPublished`] naming `receipt`); otherwise remove
+/// them, since weights without their binding receipt would refuse every retry.
+fn after_receipt_failure(err: anyhow::Error, receipt: &Path, weights: &Path) -> anyhow::Error {
+    if err
+        .downcast_ref::<StillPublished>()
+        .is_some_and(|s| s.path == receipt)
+    {
+        return err.context(format!(
+            "receipt {} is still published after a failed write; kept {}",
+            receipt.display(),
+            weights.display()
+        ));
+    }
+    let message = match fs::remove_file(weights) {
+        Err(e) => format!(
+            "receipt not written; could not remove the unreceipted {}: {e}",
+            weights.display()
+        ),
+        Ok(()) => {
+            let synced = weights
+                .parent()
+                .context("weights have no parent")
+                .and_then(|d| Ok(fs::File::open(d)?.sync_all()?));
+            match synced {
+                Ok(()) => format!(
+                    "receipt not written; removed the unreceipted {}",
+                    weights.display()
+                ),
+                Err(e) => format!(
+                    "receipt not written; removed the unreceipted {} but could not fsync its \
+                     directory: {e:#}",
+                    weights.display()
+                ),
+            }
+        }
+    };
+    err.context(message)
+}
+
 /// Refuse a relative path, a `..` component, or a path under `/tmp`, lexically or once the
 /// symlinks of its nearest existing ancestor are resolved.
 fn require_durable_path(path: &Path) -> Result<()> {
@@ -691,10 +766,7 @@ fn require_durable_path(path: &Path) -> Result<()> {
         "export-policy writes only to durable absolute paths, never /tmp: {}",
         path.display()
     );
-    let existing = path
-        .ancestors()
-        .find(|a| a.exists())
-        .context("path has no existing ancestor")?;
+    let existing = nearest_existing(path)?;
     let resolved =
         fs::canonicalize(existing).with_context(|| format!("resolve {}", existing.display()))?;
     // `/tmp` itself may be a link on some hosts; compare with what it resolves to as well.
@@ -715,6 +787,13 @@ fn export_on_cpu(request: &ExportRequest) -> Result<Value> {
     for path in [&request.output, &request.receipt] {
         require_durable_path(path)?;
     }
+    // An output directory that is itself a dangling link would be written through by
+    // `create_dir_all`; refuse it before any write.
+    ensure!(
+        request.output.exists() || absent(&request.output),
+        "export-policy writes only to durable absolute paths, never /tmp: {} is a dangling link",
+        request.output.display()
+    );
     let output = request.output.join(POLICY_OUTPUT);
     // The receipt is written after the policy file, so every way it could fail to be written
     // that can be seen without writing is refused here, before the policy file exists.
@@ -741,11 +820,7 @@ fn export_on_cpu(request: &ExportRequest) -> Result<Value> {
                 .file_name()
                 .context("receipt has no file name")?,
         );
-    let base = request
-        .output
-        .ancestors()
-        .find(|a| a.exists())
-        .context("output has no existing ancestor")?;
+    let base = nearest_existing(&request.output)?;
     let resolved_output = fs::canonicalize(base)
         .with_context(|| format!("resolve {}", base.display()))?
         .join(request.output.strip_prefix(base)?);
@@ -757,6 +832,14 @@ fn export_on_cpu(request: &ExportRequest) -> Result<Value> {
     );
     for path in [&request.receipt, &output] {
         ensure!(absent(path), "refusing to overwrite {}", path.display());
+    }
+    // A stale temporary at either name would stop the export part way; refuse it now instead.
+    for partial in [weights_partial(&output)?, receipt_partial(&request.receipt)] {
+        ensure!(
+            absent(&partial),
+            "refusing to replace an existing temporary {}",
+            partial.display()
+        );
     }
     // Each directory must open for its fsync after publication; an existing one is checked here.
     for directory in [request.receipt.parent(), Some(request.output.as_path())]
@@ -823,42 +906,8 @@ fn export_on_cpu(request: &ExportRequest) -> Result<Value> {
         },
         "relative_change": relative,
     });
-    let receipt_sha256 = match write_receipt(&request.receipt, &receipt) {
-        Ok(sha256) => sha256,
-        Err(err) => {
-            // Keep the weights only when this call's own receipt could not be undone; anything
-            // else at the receipt path is not a receipt that binds them.
-            if err
-                .downcast_ref::<StillPublished>()
-                .is_some_and(|s| s.path == request.receipt)
-            {
-                return Err(err.context(format!(
-                    "receipt {} is still published after a failed write; kept {}",
-                    request.receipt.display(),
-                    output.display()
-                )));
-            }
-            // Never leave weights without their binding receipt: a retry would be refused.
-            let message = match fs::remove_file(&output) {
-                Err(e) => format!(
-                    "receipt not written; could not remove the unreceipted {}: {e}",
-                    output.display()
-                ),
-                Ok(()) => match fs::File::open(&request.output).and_then(|d| d.sync_all()) {
-                    Ok(()) => format!(
-                        "receipt not written; removed the unreceipted {}",
-                        output.display()
-                    ),
-                    Err(e) => format!(
-                        "receipt not written; removed the unreceipted {} but could not fsync {}: {e}",
-                        output.display(),
-                        request.output.display()
-                    ),
-                },
-            };
-            return Err(err.context(message));
-        }
-    };
+    let receipt_sha256 = write_receipt(&request.receipt, &receipt)
+        .map_err(|err| after_receipt_failure(err, &request.receipt, &output))?;
     Ok(json!({
         "receipt": request.receipt,
         "receipt_sha256": receipt_sha256,
@@ -1338,37 +1387,85 @@ mod tests {
     #[test]
     fn export_removes_the_weights_when_the_receipt_cannot_be_written() {
         let scratch = scratch();
+        let out = scratch.path().join("out");
+        fs::create_dir(&out).unwrap();
+        let weights = out.join(POLICY_OUTPUT);
+        let receipt = scratch.path().join("receipt.json");
+        // A receipt write that left no receipt: the weights it would bind are removed.
+        fs::write(&weights, b"weights").unwrap();
+        let removed = after_receipt_failure(anyhow::anyhow!("write failed"), &receipt, &weights);
+        assert!(
+            format!("{removed:#}").contains("removed the unreceipted"),
+            "{removed:#}"
+        );
+        assert!(!weights.exists());
+        // This call's own receipt could not be undone: the weights it binds are kept.
+        fs::write(&weights, b"weights").unwrap();
+        let kept = after_receipt_failure(
+            unpublish(
+                std::io::Error::other("sync failed"),
+                "sync".into(),
+                &receipt,
+            ),
+            &receipt,
+            &weights,
+        );
+        assert!(
+            format!("{kept:#}").contains("is still published after a failed write; kept"),
+            "{kept:#}"
+        );
+        assert!(weights.exists());
+        // A marker for another path is not this receipt: the weights are removed.
+        let other = unpublish(
+            std::io::Error::other("sync failed"),
+            "sync".into(),
+            &scratch.path().join("elsewhere"),
+        );
+        let removed = after_receipt_failure(other, &receipt, &weights);
+        assert!(
+            format!("{removed:#}").contains("removed the unreceipted"),
+            "{removed:#}"
+        );
+        assert!(!weights.exists());
+    }
+
+    #[test]
+    fn export_refuses_stale_temporaries_before_any_write() {
+        let scratch = scratch();
         let config = tiny();
         let store = policy_store(&config);
         let dir = scratch.path().join("checkpoint");
         let state_sha256 = write_checkpoint(&dir, &named(&store), &config, 61600);
         let output = scratch.path().join("out");
-        let receipts = scratch.path().join("receipts");
-        fs::create_dir(&receipts).unwrap();
-        let receipt = receipts.join("receipt.json");
-        // A directory at the receipt's temporary name makes writing it fail after the weights
-        // are published, for any user (a superuser included).
-        let blocker = receipt.with_extension(format!("partial-{}", std::process::id()));
-        fs::create_dir(&blocker).unwrap();
+        let receipt = scratch.path().join("receipt.json");
+        // A wrong pinned identity: only the pre-check can refuse with the temporary message;
+        // any later refusal (write_and_verify's own check) would name the identity instead.
+        let wrong = hash(b"other state");
+        // A stale receipt temporary (here a directory) is refused before the weights exist.
+        let stale_receipt = receipt_partial(&receipt);
+        fs::create_dir(&stale_receipt).unwrap();
         refused(
-            export_on_cpu(&request(&dir, &output, &receipt, &state_sha256)),
-            "removed the unreceipted",
+            export_on_cpu(&request(&dir, &output, &receipt, &wrong)),
+            "refusing to replace an existing temporary",
         );
-        assert!(!output.join(POLICY_OUTPUT).exists());
-        assert!(!receipt.exists());
-        assert_no_partials(&output);
-        // The cleanup never removes what the export did not create.
-        let left = fs::read_dir(&receipts)
-            .unwrap()
-            .map(|e| e.unwrap().path())
-            .collect::<Vec<_>>();
-        assert_eq!(left, [blocker.clone()]);
-        // Nothing is left to refuse a retry.
-        fs::remove_dir(&blocker).unwrap();
+        assert!(!output.exists() && stale_receipt.is_dir());
+        fs::remove_dir(&stale_receipt).unwrap();
+        // So is a stale weights temporary in an existing output directory, left untouched.
+        fs::create_dir(&output).unwrap();
+        let stale_weights = weights_partial(&output.join(POLICY_OUTPUT)).unwrap();
+        fs::write(&stale_weights, b"stale").unwrap();
+        refused(
+            export_on_cpu(&request(&dir, &output, &receipt, &wrong)),
+            "refusing to replace an existing temporary",
+        );
+        assert_eq!(fs::read(&stale_weights).unwrap(), b"stale");
+        assert!(!output.join(POLICY_OUTPUT).exists() && !receipt.exists());
+        // Without them the export succeeds and leaves no temporary behind.
+        fs::remove_file(&stale_weights).unwrap();
         export_on_cpu(&request(&dir, &output, &receipt, &state_sha256)).unwrap();
         assert!(output.join(POLICY_OUTPUT).exists() && receipt.exists());
         assert_no_partials(&output);
-        assert_no_partials(&receipts);
+        assert_no_partials(scratch.path());
     }
 
     #[test]
@@ -1461,11 +1558,19 @@ mod tests {
         // A `..` across a directory that does not exist yet resolves only when written: refused
         // by the component rule alone.
         let crossing = scratch.path().join("absent").join("..").join("out2");
+        // A dangling link to a /tmp directory that does not exist (it is never created), above
+        // the output or as the output directory itself.
+        let nowhere = format!("/tmp/jope-export-test-absent-{}", std::process::id());
+        let dangling = scratch.path().join("dangling-link");
+        std::os::unix::fs::symlink(&nowhere, &dangling).unwrap();
+        let below_dangling = dangling.join("out");
         for (out, rcpt) in [
             (&dotted, &receipt),
             (&link_output, &receipt),
             (&output, &link_receipt),
             (&crossing, &receipt),
+            (&below_dangling, &receipt),
+            (&dangling, &receipt),
         ] {
             refused(
                 export_on_cpu(&request(&dir, out, rcpt, &state_sha256)),
@@ -1474,6 +1579,7 @@ mod tests {
         }
         assert!(!output.exists() && !receipt.exists());
         assert!(!scratch.path().join("absent").exists() && !scratch.path().join("out2").exists());
+        assert!(!Path::new(&nowhere).exists());
         assert_no_partials(scratch.path());
     }
 
