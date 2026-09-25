@@ -292,7 +292,8 @@ fn challenger_receipt_binds_every_pin() {
         }),
         "checkpoint is not the pinned challenger",
     );
-    let cases: [(&dyn Fn(&mut Value), &str); 16] = [
+    type ReceiptEdit<'a> = &'a dyn Fn(&mut Value);
+    let cases: [(ReceiptEdit<'_>, &str); 16] = [
         (
             &|r: &mut Value| r["checkpoint"]["accepted_identity"] = json!(true),
             "does not carry the pinned challenger identity",
