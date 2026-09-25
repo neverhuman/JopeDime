@@ -514,8 +514,8 @@ fn push_mirror(m: &Mirror, state: &State, ledger: &Ledger) -> Result<MirrorRepor
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => continue,
             Err(e) => return Err(e).with_context(|| format!("read {}", key.rel())),
         };
-        let observed = m.get(&key.rel())?;
-        if observed.as_deref() == Some(local_bytes.as_slice()) {
+        let observed = m.get_observed(&key.rel())?;
+        if observed.as_ref().map(|object| object.bytes.as_slice()) == Some(local_bytes.as_slice()) {
             continue;
         }
         if let Some(theirs) = &observed {
@@ -523,9 +523,9 @@ fn push_mirror(m: &Mirror, state: &State, ledger: &Ledger) -> Result<MirrorRepor
                 Some(h) => h,
                 None => history.insert(accepted_history(ledger)?),
             };
-            check_pointer_ancestor(m, key, theirs, &local_bytes, hist.get(key))?;
+            check_pointer_ancestor(m, key, &theirs.bytes, &local_bytes, hist.get(key))?;
         }
-        m.put_pointer(&key.rel(), &local_bytes, observed.as_deref())?;
+        m.put_pointer(&key.rel(), &local_bytes, observed.as_ref())?;
         report.pointers += 1;
     }
     Ok(report)

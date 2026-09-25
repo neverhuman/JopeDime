@@ -1,11 +1,12 @@
 //! One transport for every backend through `object_store`: `s3://` (native AWS providers or selected CLI profile, anonymous
 //! with `JOPE_DATASETS_ANON=1`), `file://` (tests, local mirrors) and `memory://`.
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{anyhow, ensure, Context, Result};
 use futures_util::StreamExt;
 use object_store::path::Path as ObjPath;
 use object_store::{
     GetOptions, GetRange, ObjectStore, ObjectStoreExt, PutMode, PutOptions, PutPayload,
+    UpdateVersion,
 };
 use sha2::{Digest, Sha256};
 use std::io::{Read, Write};
@@ -16,6 +17,16 @@ pub struct Store {
     inner: Box<dyn ObjectStore>,
     prefix: ObjPath,
     pub url: String,
+    local_root: Option<std::path::PathBuf>,
+}
+
+/// Bytes and their precondition from the same GET. Keep this observation until
+/// the conditional write; a second GET would discard the original precondition.
+#[derive(Debug)]
+pub struct ObservedObject {
+    pub bytes: Vec<u8>,
+    version: UpdateVersion,
+    key: ObjPath,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -54,6 +65,15 @@ impl Store {
             format!("file://{}", abs.display())
         };
         let parsed = Url::parse(&url_string).with_context(|| format!("parse {url_string}"))?;
+        let local_root = if parsed.scheme() == "file" {
+            Some(
+                parsed
+                    .to_file_path()
+                    .map_err(|()| anyhow!("invalid file URL"))?,
+            )
+        } else {
+            None
+        };
         let (inner, prefix): (Box<dyn ObjectStore>, ObjPath) = match parsed.scheme() {
             "s3" | "s3a" => {
                 // object_store's default request timeout is 30 s, which a 200–250 MB blob GET
@@ -89,6 +109,7 @@ impl Store {
             inner,
             prefix,
             url: url_string,
+            local_root,
         })
     }
 
@@ -102,13 +123,28 @@ impl Store {
 
     /// `None` when the key does not exist.
     pub async fn get_bytes(&self, rel: &str) -> Result<Option<Vec<u8>>> {
+        Ok(self.get_observed(rel).await?.map(|object| object.bytes))
+    }
+
+    /// Read a pointer and the version belonging to those exact bytes.
+    pub async fn get_observed(&self, rel: &str) -> Result<Option<ObservedObject>> {
         match self.inner.get(&self.key(rel)).await {
-            Ok(r) => Ok(Some(
-                r.bytes()
+            Ok(r) => {
+                let version = UpdateVersion {
+                    e_tag: r.meta.e_tag.clone(),
+                    version: r.meta.version.clone(),
+                };
+                let bytes = r
+                    .bytes()
                     .await
                     .with_context(|| format!("read {rel}"))?
-                    .to_vec(),
-            )),
+                    .to_vec();
+                Ok(Some(ObservedObject {
+                    bytes,
+                    version,
+                    key: self.key(rel),
+                }))
+            }
             Err(object_store::Error::NotFound { .. }) => Ok(None),
             Err(e) => Err(anyhow!("get {rel}: {e}")),
         }
@@ -151,6 +187,65 @@ impl Store {
             .put(&self.key(rel), PutPayload::from(bytes))
             .await
             .map_err(|e| anyhow!("put {rel}: {e}"))?;
+        Ok(())
+    }
+
+    /// Create when the observed pointer was absent, otherwise replace only the
+    /// observed version. Unsupported remote preconditions fail without fallback.
+    /// Local mirrors serialize cooperating pointer publishers on the root directory
+    /// inode, then revalidate under that lock: object_store's local backend does
+    /// not implement Update. Raw filesystem writers do not participate in this lock.
+    pub async fn put_conditional(
+        &self,
+        rel: &str,
+        bytes: Vec<u8>,
+        observed: Option<&ObservedObject>,
+    ) -> Result<()> {
+        if let Some(object) = observed {
+            ensure!(
+                object.key == self.key(rel),
+                "pointer observation belongs to another key"
+            );
+            ensure!(
+                object.version.e_tag.is_some() || object.version.version.is_some(),
+                "{rel}: backend returned no pointer version"
+            );
+        }
+        if let Some(root) = &self.local_root {
+            let root = root.clone();
+            // Never block the async executor while another writer holds the lock.
+            // Opening the directory separately makes independent Store instances
+            // and processes coordinate without polluting the object namespace.
+            let _lock = tokio::task::spawn_blocking(move || -> Result<std::fs::File> {
+                std::fs::create_dir_all(&root)?;
+                let lock = std::fs::File::open(&root)?;
+                lock.lock()?;
+                Ok(lock)
+            })
+            .await
+            .context("pointer lock task")??;
+            let current = self.get_observed(rel).await?;
+            ensure!(
+                match (&current, observed) {
+                    (None, None) => true,
+                    (Some(current), Some(expected)) =>
+                        current.version == expected.version && current.bytes == expected.bytes,
+                    _ => false,
+                },
+                "{rel}: mirror pointer changed since observation"
+            );
+            return self.put(rel, bytes).await;
+        }
+        let opts = PutOptions {
+            mode: observed.map_or(PutMode::Create, |object| {
+                PutMode::Update(object.version.clone())
+            }),
+            ..Default::default()
+        };
+        self.inner
+            .put_opts(&self.key(rel), PutPayload::from(bytes), opts)
+            .await
+            .with_context(|| format!("{rel}: conditional pointer write failed"))?;
         Ok(())
     }
 
@@ -300,3 +395,6 @@ fn digest_file_hex(path: &Path) -> Result<String> {
     }
     Ok(hex::encode(hasher.finalize()))
 }
+
+#[cfg(test)]
+mod tests;

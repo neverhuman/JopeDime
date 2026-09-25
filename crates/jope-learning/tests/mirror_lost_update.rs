@@ -211,3 +211,75 @@ fn the_score_ledger_tip_is_guarded_the_same_way() {
             .is_empty()
     );
 }
+
+mod atomic {
+    //! Observations survive ancestry validation and upload: a later publisher must
+    //! not replace a pointer using a fresh, self-satisfying read.
+    use jope_learning::{
+        ledger::Ledger,
+        mirror::{Mirror, MirrorReport},
+        sync,
+    };
+    use serde_json::json;
+    use std::fs;
+
+    #[test]
+    fn competing_plans_cannot_orphan_the_winning_ledger_tip() {
+        let dir = tempfile::tempdir().unwrap();
+        let url = dir.path().join("mirror");
+        fs::create_dir(&url).unwrap();
+        let first = Mirror::open(url.to_str().unwrap()).unwrap();
+        let second = Mirror::open(url.to_str().unwrap()).unwrap();
+        for name in ["hwm", "scores"] {
+            let a = Ledger::open(&dir.path().join("a"), name);
+            let b = Ledger::open(&dir.path().join("b"), name);
+            a.append(&[json!({"writer":"a"})], json!({})).unwrap();
+            b.append(&[json!({"writer":"b"})], json!({})).unwrap();
+            // Both valid local chains observed an absent mirror before either push.
+            let plan_a = sync::plan(&first, &a).unwrap();
+            let plan_b = sync::plan(&second, &b).unwrap();
+            sync::push(&first, &a, plan_a, &mut MirrorReport::default(), |_, _| {
+                Ok(())
+            })
+            .unwrap();
+            let winner = first.get(&sync::head_rel(&a)).unwrap().unwrap();
+            assert!(sync::push(
+                &second,
+                &b,
+                plan_b,
+                &mut MirrorReport::default(),
+                |_, _| Ok(())
+            )
+            .is_err());
+            assert_eq!(second.get(&sync::head_rel(&b)).unwrap().unwrap(), winner);
+            // The winning writer can still advance; a conflict does not wedge it.
+            a.append(&[json!({"writer":"a-next"})], json!({})).unwrap();
+            let next = sync::plan(&first, &a).unwrap();
+            sync::push(
+                &first,
+                &a,
+                next,
+                &mut MirrorReport::default(),
+                |_, _| Ok(()),
+            )
+            .unwrap();
+            assert_eq!(
+                first.get(&sync::head_rel(&a)).unwrap().unwrap(),
+                fs::read(a.root().join("HEAD.json")).unwrap()
+            );
+        }
+    }
+
+    #[test]
+    fn a_pointer_observation_cannot_overwrite_a_later_winner() {
+        let dir = tempfile::tempdir().unwrap();
+        let mirror = Mirror::open(dir.path().to_str().unwrap()).unwrap();
+        let key = "hwm/regression/dataset/cut/current.json";
+        mirror.put_pointer(key, b"parent", None).unwrap();
+        let a = mirror.get_observed(key).unwrap().unwrap();
+        let b = mirror.get_observed(key).unwrap().unwrap();
+        mirror.put_pointer(key, b"winner", Some(&a)).unwrap();
+        assert!(mirror.put_pointer(key, b"stale", Some(&b)).is_err());
+        assert_eq!(mirror.get(key).unwrap().unwrap(), b"winner");
+    }
+}

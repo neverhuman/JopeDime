@@ -18,15 +18,14 @@
 //! mirror that is merely behind catches up; a mirror whose tip this host cannot produce is
 //! refused, untouched.
 //!
-//! A true server-side conditional PUT (`PutMode::Update` with the expected version) is not
-//! reachable through the `Store` API today and `object_store`'s local filesystem backend does not
-//! implement it either, so the compare-then-put is still TOCTOU between the GET and the PUT, and
-//! is serialised only by the local `$JOPE_STATE` lock that every writer takes first — a lock that
-//! does not reach across hosts. What the precondition does buy is that a *diverged* mirror is
-//! detected and refused rather than overwritten.
+//! The observation also retains the version returned with those bytes. Remote pointer
+//! writes use that version as a server-side precondition; local mirrors revalidate it
+//! under a shared directory lock. A competing publisher fails rather than losing the
+//! winner's update. This protects individual pointers, not a transaction across the
+//! ledger head and every derived index. Live S3 qualification remains separate.
 
 use anyhow::{bail, Result};
-use jope_datasets::store::{PutOutcome, Store};
+use jope_datasets::store::{ObservedObject, PutOutcome, Store};
 use serde::Serialize;
 
 pub struct Mirror {
@@ -88,17 +87,20 @@ impl Mirror {
         Ok(outcome)
     }
 
-    /// Replace a pointer only if the mirror still holds `expected_prev` (None = absent).
-    pub fn put_pointer(&self, rel: &str, bytes: &[u8], expected_prev: Option<&[u8]>) -> Result<()> {
-        let existing = self.rt.block_on(self.store.get_bytes(rel))?;
-        if existing.as_deref() != expected_prev {
-            bail!(
-                "{rel}: mirror pointer changed (expected {} bytes, found {})",
-                expected_prev.map_or("no".to_string(), |b| b.len().to_string()),
-                existing.map_or("none".to_string(), |b| format!("{} bytes", b.len()))
-            );
-        }
-        self.rt.block_on(self.store.put(rel, bytes.to_vec()))
+    /// Replace only the version whose bytes the caller checked against its history.
+    /// `None` means the pointer was absent; it must still be absent at creation.
+    pub fn put_pointer(
+        &self,
+        rel: &str,
+        bytes: &[u8],
+        observed: Option<&ObservedObject>,
+    ) -> Result<()> {
+        self.rt
+            .block_on(self.store.put_conditional(rel, bytes.to_vec(), observed))
+    }
+
+    pub fn get_observed(&self, rel: &str) -> Result<Option<ObservedObject>> {
+        self.rt.block_on(self.store.get_observed(rel))
     }
 
     pub fn get(&self, rel: &str) -> Result<Option<Vec<u8>>> {

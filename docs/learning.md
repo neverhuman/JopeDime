@@ -188,8 +188,7 @@ Being explicit about what that costs, because the earlier wording was not: `hwm 
 that mirror **reports the mismatch** — `pointer-stale`, or `pointer-missing` for a cut it has never
 held — and keeps reporting it while every later push exits 0. That is the verifier working, not a
 verifier that is "unaffected": the ledger is authoritative and complete, the derived index is
-behind it, and both facts are visible. It is an accepted limitation of a single-publisher,
-compare-then-put mirror; moving the pointer writes ahead of the `HEAD.json` move would trade it for
+behind it, and both facts are visible. It is a remaining limitation of publishing the derived index after the ledger; moving the pointer writes ahead of the `HEAD.json` move would trade it for
 something worse, because `check_pointer_ancestor` refuses a pointer another host owns and that
 refusal would then wedge the ledger push itself. Blobs cannot be left in this category at all,
 because nothing re-derives them: a later batch names its own records, never the ones already
@@ -242,12 +241,19 @@ push on that made the one command an operator would re-run to repair a lagging m
 command that skipped it. `mirror` is `Some` exactly when a mirror was configured; a push with
 nothing to do says so in its own counts (`"batches": 0`) instead of reporting `null`.
 
-A server-side conditional PUT with an expected version (`PutMode::Update`) is not exposed by
-`Store` yet and the local-filesystem backend of `object_store` does not implement it; until it is,
-the compare-then-put is still TOCTOU between the GET and the PUT and is serialised only by the
-local lock, which does not reach across hosts. What the precondition buys is that a *diverged*
-mirror is refused rather than overwritten. `s3://` is configured through the environment and was
-not exercised in this step.
+Pointer reads retain both bytes and the backend version from the same GET. The ancestry
+check validates those bytes; the write uses the retained version through `PutMode::Update`
+(or `PutMode::Create` for an absent pointer). A competing update fails without an
+unconditional fallback. Local filesystem mirrors use a shared root-directory lock and
+revalidate the observation while holding it because the backend lacks `Update` support.
+All local pointer publishers must use this API; raw filesystem writes bypass its advisory
+lock. Unsupported locking or remote preconditions fail closed.
+
+These are atomic **individual pointer** writes, not a distributed ledger transaction or
+automatic merging of divergent chains. Losing publishers may leave immutable objects and
+local ledger batches pending reconciliation. The derived-index limitation above remains.
+Offline memory, local concurrent-publisher and loopback S3 protocol tests cover the
+preconditions; production S3 permissions and live multi-host qualification remain untested.
 
 ## Mapping table (as implemented in `sources/`)
 

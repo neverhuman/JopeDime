@@ -20,12 +20,13 @@
 //! `mirror_position` just proved to be an ancestor of the local chain. That is *not* the
 //! self-satisfying precondition the mirror module warns about: the read is used as the CAS witness
 //! only after it has been checked against local history, and a tip that fails that check is
-//! refused rather than overwritten. The compare-then-put is still TOCTOU (the `Store` API has no
-//! server-side conditional PUT), exactly as before.
+//! refused rather than overwritten. The version from that same read remains the write precondition; a
+//! concurrent pointer change fails even after the ancestor proof and uploads.
 
 use crate::ledger::{Ledger, MirrorPosition};
 use crate::mirror::{Mirror, MirrorReport};
 use anyhow::{anyhow, Result};
+use jope_datasets::store::ObservedObject;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -35,7 +36,7 @@ pub struct Plan {
     pub head_rel: String,
     /// The mirror's `HEAD.json` exactly as read, already proved to be an ancestor of the local
     /// chain (or `None` when the mirror has none). This is the CAS witness for the pointer move.
-    pub observed_head: Option<Vec<u8>>,
+    pub observed_head: Option<ObservedObject>,
     /// Local batches the mirror is missing, oldest first.
     pub missing: Vec<(String, PathBuf)>,
 }
@@ -63,8 +64,8 @@ fn diverged(m: &Mirror, rel: &str, detail: &str) -> anyhow::Error {
 /// produces the [`Plan`] the push executes.
 pub fn plan(m: &Mirror, ledger: &Ledger) -> Result<Plan> {
     let head_rel = head_rel(ledger);
-    let observed_head = m.get(&head_rel)?;
-    match ledger.mirror_position(observed_head.as_deref())? {
+    let observed_head = m.get_observed(&head_rel)?;
+    match ledger.mirror_position(observed_head.as_ref().map(|object| object.bytes.as_slice()))? {
         MirrorPosition::UpToDate => Ok(Plan {
             head_rel,
             observed_head,
@@ -122,7 +123,7 @@ pub fn push(
         return Ok(());
     }
     let head_bytes = fs::read(ledger.root().join("HEAD.json"))?;
-    m.put_pointer(&plan.head_rel, &head_bytes, plan.observed_head.as_deref())?;
+    m.put_pointer(&plan.head_rel, &head_bytes, plan.observed_head.as_ref())?;
     report.pointers += 1;
     Ok(())
 }

@@ -29,7 +29,7 @@ later batch *accepts* a record at that pointer. A duplicate-only retry does not 
 seals a batch of rejects, which moves no pointer — so the verifier keeps reporting the mismatch
 while every push reports success.
 
-That is an accepted limitation of a single-publisher, compare-then-put mirror, not a bug to work
+That remains a limitation of publishing the derived index after the ledger, not a bug to work
 around here: the ledger stays authoritative and the stale entry is a derived index. Do not try to
 repair it by hand-editing the mirror's `current.json`.
 
@@ -159,3 +159,15 @@ on an otherwise-intact chain shows up there and not in `freeze`. And a removed t
 | exit 2 `refusing to freeze into … chain broken: N break(s)` | `hwm freeze` verifies the chain before exporting, and this one does not walk | nothing was written — no blobs copied, no `manifest.json`. Run `hwm verify` for the full report and repair the ledger; a corpus must not carry a `ledger_head` nobody checked. To pull individual records out of a damaged store, use `hwm blob` / `hwm show --raw`, which make no provenance claim |
 | `rows hash to … but the manifest binds …` | the streamed split is not the archived one | check the archive against `SHA256SUMS`; do not pass `--rows` from any other copy |
 | `scan.rejects` non-empty for champions | a file is not a valid `parallel.cut_champion.v1` or its name is not its identity key | inspect; never edit the file — rejected files are a preservation finding |
+
+## Concurrent pointer updates
+
+Pointer publication uses the version returned with the ancestry-checked read. S3 updates
+use conditional PUT; missing pointers use create-only PUT. A conflict fails the push rather
+than overwriting the winner. Reconcile the local chain against the winning remote tip before
+retrying; a failed push may already have appended locally and uploaded immutable objects.
+Local filesystem mirrors serialize cooperating pointer writers on the mirror root directory
+and revalidate the version under that lock. Direct filesystem writes are outside this guard.
+The ledger head and derived indexes are still separate writes; atomic pointer updates do not
+remove the stale-index limitation described above. Live S3 qualification is separate from
+the offline tests.
