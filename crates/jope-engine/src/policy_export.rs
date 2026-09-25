@@ -678,8 +678,6 @@ pub fn export(request: &ExportRequest) -> Result<Value> {
     export_on_cpu(request)
 }
 
-/// Refuse a relative path, a `..` component, or a path under `/tmp`, lexically or once the
-/// symlinks of its nearest existing ancestor are resolved.
 /// The nearest ancestor of `path` (itself included) that exists, found without following links.
 /// A dangling link above `path` is refused: whatever it points at could be created later, under
 /// `/tmp` or anywhere else, and `create_dir_all` would then write through it. A dangling link at
@@ -758,6 +756,8 @@ fn after_receipt_failure(err: anyhow::Error, receipt: &Path, weights: &Path) -> 
     err.context(message)
 }
 
+/// Refuse a relative path, a `..` component, or a path under `/tmp`, lexically or once the
+/// symlinks of its nearest existing ancestor are resolved.
 fn require_durable_path(path: &Path) -> Result<()> {
     ensure!(
         path.is_absolute()
@@ -1438,11 +1438,14 @@ mod tests {
         let state_sha256 = write_checkpoint(&dir, &named(&store), &config, 61600);
         let output = scratch.path().join("out");
         let receipt = scratch.path().join("receipt.json");
+        // A wrong pinned identity: only the pre-check can refuse with the temporary message;
+        // any later refusal (write_and_verify's own check) would name the identity instead.
+        let wrong = hash(b"other state");
         // A stale receipt temporary (here a directory) is refused before the weights exist.
         let stale_receipt = receipt_partial(&receipt);
         fs::create_dir(&stale_receipt).unwrap();
         refused(
-            export_on_cpu(&request(&dir, &output, &receipt, &state_sha256)),
+            export_on_cpu(&request(&dir, &output, &receipt, &wrong)),
             "refusing to replace an existing temporary",
         );
         assert!(!output.exists() && stale_receipt.is_dir());
@@ -1452,7 +1455,7 @@ mod tests {
         let stale_weights = weights_partial(&output.join(POLICY_OUTPUT)).unwrap();
         fs::write(&stale_weights, b"stale").unwrap();
         refused(
-            export_on_cpu(&request(&dir, &output, &receipt, &state_sha256)),
+            export_on_cpu(&request(&dir, &output, &receipt, &wrong)),
             "refusing to replace an existing temporary",
         );
         assert_eq!(fs::read(&stale_weights).unwrap(), b"stale");
