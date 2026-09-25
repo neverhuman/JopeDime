@@ -11,9 +11,10 @@ and nonpositive WORLD_SIZE silently selected single-process training. Missing or
 invalid rendezvous information could reach the collective initializer. The helper
 now validates those values before joining; verifies rank/world/backend against an
 existing process group; refuses unavailable local CUDA indexes and conflicting
-explicit CUDA device selection; and gives initialization/collectives an explicit
+explicit CUDA device selection; and gives newly created groups an explicit initialization/collective
 120-second timeout (callers can supply a finite positive timeout_seconds).
 
+Matching preinitialized groups retain their existing timeout.
 This timeout is a process-group communication limit, not a resource grant, overall
 training deadline, or multi-host cancellation controller. Process-local validation
 cannot prove host identity, unique ranks across machines, consistent source/input
@@ -26,11 +27,15 @@ repository with its Python dependencies installed. The maintained suite launches
 real two- and three-process Gloo groups on one host. It checks initial parameter
 broadcast, an actual optimizer update against a serial gradient reference, unused
 parameter reduction, scalar aggregation, uneven disjoint shard coverage and clean
-shutdown. Child process groups are killed on the test's 90-second timeout.
+shutdown. The harness directly owns each rank process and supplies the env:// variables,
+without a torchrun supervisor that detaches workers. Cleanup kills each owned
+session on completion, failure or interruption, with bounded output draining.
+Forced-timeout cases check cleanup with both living and exited session leaders.
 Both process-count cases are required by `deploy/ci/training-proof.py`.
 
 The initial refusal reproduction had 12 failures and one pass before the fix;
-120 local training tests passed after the fix, including both real process groups;
+The initial 120-test local training run passed; after review, all 49 policy
+training tests passed, including real process groups and both cleanup cases;
 40 required training proofs and six proof-gate unit tests passed. Hosted results
 belong in the PR's exact-head evidence. Custody is
 `/home/ubuntu/jope-rescue-20260921/training-distributed-20260925/`.
@@ -68,3 +73,9 @@ The experimental campaign still explicitly selects WORLD_SIZE=1 and one RTX3090.
 This patch does not turn that controller into a multi-host launcher or grant it
 resources. It establishes validated startup and real local collective correctness
 as prerequisites for that later integration.
+
+Read-only AWS metadata refreshed during this follow-up: the selected profile resolves
+to user jepson in group admin with the attached AdministratorAccess policy. Learning
+bucket versioning is Enabled. That confirms access and versioning, not restricted
+writer permissions, conditional-write enforcement, replication recovery or safe
+production multi-writer operation. Metadata receipts are retained in custody.
