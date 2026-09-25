@@ -113,7 +113,8 @@ pub struct SmokeProbe {
 /// One probe argument: a literal, or a path relative to the lineage-A
 /// self-play tree (`crate::paths::flywheel_root()`), resolved when the spec is
 /// rendered so the policy tables stay `const`.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum ProbeArg {
     Literal(&'static str),
     UnderFlywheelRoot(&'static str),
@@ -192,7 +193,7 @@ impl FamilyPolicy {
             let args = p
                 .args
                 .iter()
-                .map(|a| format!("\"{}\"", a.render()))
+                .map(|a| serde_json::to_string(&a.render()).expect("serialize probe argument"))
                 .collect::<Vec<_>>()
                 .join(", ");
             let _ = write!(
@@ -387,7 +388,7 @@ pub fn policy_json() -> String {
                 let args = s
                     .args
                     .iter()
-                    .map(|a| format!("\"{}\"", a.render()))
+                    .map(|a| serde_json::to_string(a).expect("serialize typed probe argument"))
                     .collect::<Vec<_>>()
                     .join(", ");
                 format!(
@@ -430,7 +431,7 @@ pub fn policy_json() -> String {
         );
     }
     format!(
-        "{{\n  \"schema\": \"JopeSpecPolicy.v1\",\n  \
+        "{{\n  \"schema\": \"JopeSpecPolicy.v2\",\n  \
          \"generated_by\": \"jope_spec_drift --emit-json (src/spec_policy.rs)\",\n  \
          \"scq_safety_floor_mb\": {SCQ_SAFETY_FLOOR_MB},\n  \
          \"cohort_schema\": \"{COHORT_SCHEMA}\",\n  \
@@ -602,7 +603,7 @@ mod tests {
                 f.as_str()
             );
         }
-        assert!(j.contains("JopeSpecPolicy.v1"));
+        assert!(j.contains("JopeSpecPolicy.v2"));
         // balanced braces == well-formed enough to catch a truncated writer
         let opens = j.chars().filter(|c| *c == '{').count();
         let closes = j.chars().filter(|c| *c == '}').count();

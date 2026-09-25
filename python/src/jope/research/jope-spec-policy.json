@@ -1,5 +1,5 @@
 {
-  "schema": "JopeSpecPolicy.v1",
+  "schema": "JopeSpecPolicy.v2",
   "generated_by": "jope_spec_drift --emit-json (src/spec_policy.rs)",
   "scq_safety_floor_mb": 8192,
   "cohort_schema": "JopeMicroCohort.v2",
@@ -17,7 +17,7 @@
       "max_runtime_hours": 168,
       "preemptible": false,
       "smoke": [
-        {"name": "runtime bundle JOPE policy present", "command": "/usr/bin/test", "args": ["-f", "/home/ubuntu/.local/state/jope/legacy/test_exact_gen0/runtime-bundles/current/pytorch/jope/policy/model_v3.py"], "timeout_secs": 5}
+        {"name": "runtime bundle JOPE policy present", "command": "/usr/bin/test", "args": [{"literal":"-f"}, {"under_flywheel_root":"runtime-bundles/current/pytorch/jope/policy/model_v3.py"}], "timeout_secs": 5}
       ]
     },
     "propose": {
@@ -32,7 +32,7 @@
       "max_runtime_hours": 24,
       "preemptible": true,
       "smoke": [
-        {"name": "runtime bundle JOPE policy present", "command": "/usr/bin/test", "args": ["-f", "/home/ubuntu/.local/state/jope/legacy/test_exact_gen0/runtime-bundles/current/pytorch/jope/policy/model_v3.py"], "timeout_secs": 5}
+        {"name": "runtime bundle JOPE policy present", "command": "/usr/bin/test", "args": [{"literal":"-f"}, {"under_flywheel_root":"runtime-bundles/current/pytorch/jope/policy/model_v3.py"}], "timeout_secs": 5}
       ]
     },
     "eval": {
@@ -62,7 +62,7 @@
       "max_runtime_hours": 12,
       "preemptible": true,
       "smoke": [
-        {"name": "runtime bundle JOPE policy present", "command": "/usr/bin/test", "args": ["-f", "/home/ubuntu/.local/state/jope/legacy/test_exact_gen0/runtime-bundles/current/pytorch/jope/policy/model_v3.py"], "timeout_secs": 5}
+        {"name": "runtime bundle JOPE policy present", "command": "/usr/bin/test", "args": [{"literal":"-f"}, {"under_flywheel_root":"runtime-bundles/current/pytorch/jope/policy/model_v3.py"}], "timeout_secs": 5}
       ]
     }
   }
