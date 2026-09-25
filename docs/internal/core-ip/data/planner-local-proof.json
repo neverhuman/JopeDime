@@ -1,0 +1,11 @@
+{
+  "schema": "jope.inference-planner-local-proof/v1",
+  "source_sha": "5d769819efce46fd3f0d834ec9086fc8f5aef1cd",
+  "positive_plan_exit": 0,
+  "outer_identity_injection_exit": 1,
+  "historical_v2_report_exit": 0,
+  "execution_started": false,
+  "input_closure": "retained fitting-only projections and label-free split assignments; no general development or sealed target table reads",
+  "binary_sha256": "d6f238108bcc9769cf68931b808b2f6719783ab7ba417a525e7b8fc6e0c2753f",
+  "binary_path": "/home/ubuntu/jope-rescue-20260921/core-ip-20260925/repaired-planner-local/jope"
+}

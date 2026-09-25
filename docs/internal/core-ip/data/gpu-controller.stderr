@@ -1,0 +1,8 @@
+Running as unit: jope-asm-8c0591997dc3cd19ba597ad4e3e39eb97cf4692157337cb66b0a44353d5b6515-dccbe41c-7ca8-4170-8ddb-8c1295067924.service
+jope benchmark: immutable output changed: /home/ubuntu/jope-rescue-20260921/core-ip-20260925/study-final/journal/window.json
+Finished with result: exit-code
+Main processes terminated with: code=exited/status=1
+Service runtime: 428ms
+CPU time consumed: 294ms
+Memory peak: 131.9M
+Memory swap peak: 0B

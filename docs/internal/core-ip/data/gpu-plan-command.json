@@ -1,0 +1,23 @@
+[
+  "/home/ubuntu/jope-rescue-20260921/core-ip-20260925/study-final/jope",
+  "benchmark",
+  "inference-plan",
+  "--manifest",
+  "benchmarks/panel.json",
+  "--datasets",
+  "/home/ubuntu/.cache/jope/asm-private-30-v1",
+  "--configuration",
+  "/home/ubuntu/jope-evidence/asm-demo-20260925/b0/config/configuration.json",
+  "--configuration-sha256",
+  "142f410d463ef90e6c9c16183a4adc7a9c6a77edd70bd5f7c1b14eb273918d3a",
+  "--campaign-plan",
+  "/home/ubuntu/jope-rescue-20260921/core-ip-20260925/study/selection-reference-seed0.json",
+  "--references",
+  "/home/ubuntu/jope-evidence/asm-demo-20260925/b0/context-proof/references/reference-manifest.json",
+  "--references-sha256",
+  "0f66fd0ddf2e649f9bbb21ebb7dbcffabe267fdede2eda92b8f5940c98605021",
+  "--source-sha",
+  "802fb464c8a30eb7aeb05296313300e737a96044",
+  "--output",
+  "/home/ubuntu/jope-rescue-20260921/core-ip-20260925/study-final/plan.json"
+]

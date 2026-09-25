@@ -1,0 +1,26 @@
+{
+  "schema": "jope.core-ip-study-closeout/v1",
+  "observed_utc": "2026-09-25T19:13:45.591043+00:00",
+  "source_sha": "802fb464c8a30eb7aeb05296313300e737a96044",
+  "window": {
+    "experiment_sha256": "8c0591997dc3cd19ba597ad4e3e39eb97cf4692157337cb66b0a44353d5b6515",
+    "started_unix_ms": 1790363494939,
+    "deadline_unix_ms": 1790367094939
+  },
+  "status": "controller_failed_before_cuda_qualification",
+  "failure": "timing metadata collided with immutable ExecutionPool window.json",
+  "gpu_qualification_executed": false,
+  "direct_requests": 0,
+  "full_gp_arms": 0,
+  "prediction_batches": 0,
+  "rerun": false,
+  "no_fresh_window": true,
+  "timer_restored": "active",
+  "files": {
+    "/home/ubuntu/jope-rescue-20260921/core-ip-20260925/study-final/plan.json": "e1741164953426f7bfab3bd801f29d7dee4a9da89cd27cab54ac134d71c7e91a",
+    "/home/ubuntu/jope-rescue-20260921/core-ip-20260925/study-final/journal/window.json": "327be689ec2da53232475fd225b068558656b3e3550872d8b6afb11d85deef77",
+    "/home/ubuntu/jope-rescue-20260921/core-ip-20260925/study-final/journal/launch.json": "7e23fe374e2a09ff211552ea2900c077f67ef365cf47065aba9e7719680149ba",
+    "/home/ubuntu/jope-rescue-20260921/core-ip-20260925/study-final/journal/hardware.json": "145e32afc83705e4aa84c30a27244b81f0aa9400bf7cb8f7ccb978fe930dc4ee",
+    "/home/ubuntu/jope-rescue-20260921/core-ip-20260925/study-final/run.stderr": "7d584a4ba0245ee51bcc2c66da852eec3d89dc65cfcebbaf8fa53a18ba5f6e29"
+  }
+}

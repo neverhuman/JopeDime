@@ -1,0 +1,15 @@
+{
+  "schema": "jope.core-ip-protocol-deviation/v1",
+  "observed_utc": "2026-09-25T19:19:11.635137+00:00",
+  "stage": "pre-window input staging",
+  "source_sha": "802fb464c8a30eb7aeb05296313300e737a96044",
+  "finding": "load_development parsed all development targets, including cut0 outer scoring labels, before filtering fitting rows; build_pair_input also constructed the hold partition",
+  "outer_scoring_labels_parsed": true,
+  "sealed_target_tables_opened": false,
+  "outer_scoring_executed": false,
+  "campaign_held_looks_consumed": false,
+  "worker_payload_contains_outer_targets": false,
+  "remediation": "planner now requires pinned pre-projected fitting-only inputs and label-free split membership; no development/sealed target table access",
+  "original_result_reclassified": false,
+  "original_run_status": "failed before CUDA qualification; no qualified latency"
+}

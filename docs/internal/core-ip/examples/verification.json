@@ -1,0 +1,123 @@
+{
+  "schema": "jope.core-ip-worked-examples/v1",
+  "subject": "legacy recipe refit; synthetic16 training rows,8 prediction feature rows; not exact fitted export or GPU measurement",
+  "binary": {
+    "path": "/home/ubuntu/jope-rescue-20260921/core-ip-20260925/study/jope",
+    "sha256": "aafc17c023391acc71d350f808534963ad2c70ae73a9f976d623fe049005044f"
+  },
+  "commands": [
+    {
+      "argv": [
+        "/home/ubuntu/jope-rescue-20260921/core-ip-20260925/study/jope",
+        "emit",
+        "--genome",
+        "(pipe X (standardize) (ridge))",
+        "--lang",
+        "all",
+        "--output",
+        "/home/ubuntu/jope-rescue-20260921/core-ip-20260925/worked-examples",
+        "--json"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.09377043601125479
+    },
+    {
+      "argv": [
+        "python3",
+        "/home/ubuntu/jope-rescue-20260921/core-ip-20260925/worked-examples/model.py",
+        "/home/ubuntu/JopeDime/docs/internal/asm-manual/examples/train.csv",
+        "/home/ubuntu/JopeDime/docs/internal/asm-manual/examples/predict.csv",
+        "/home/ubuntu/jope-rescue-20260921/core-ip-20260925/worked-examples/python.txt"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.024009864078834653
+    },
+    {
+      "argv": [
+        "rustc",
+        "-O",
+        "/home/ubuntu/jope-rescue-20260921/core-ip-20260925/worked-examples/model.rs",
+        "-o",
+        "/home/ubuntu/jope-rescue-20260921/core-ip-20260925/worked-examples/model-rs"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.3758179568685591
+    },
+    {
+      "argv": [
+        "/home/ubuntu/jope-rescue-20260921/core-ip-20260925/worked-examples/model-rs",
+        "/home/ubuntu/JopeDime/docs/internal/asm-manual/examples/train.csv",
+        "/home/ubuntu/JopeDime/docs/internal/asm-manual/examples/predict.csv",
+        "/home/ubuntu/jope-rescue-20260921/core-ip-20260925/worked-examples/rust.txt"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0013086569961160421
+    },
+    {
+      "argv": [
+        "g++",
+        "-std=c++17",
+        "-O3",
+        "-ffp-contract=off",
+        "-fno-fast-math",
+        "/home/ubuntu/jope-rescue-20260921/core-ip-20260925/worked-examples/program.cpp",
+        "-o",
+        "/home/ubuntu/jope-rescue-20260921/core-ip-20260925/worked-examples/model-cpp"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.8838636029977351
+    },
+    {
+      "argv": [
+        "/home/ubuntu/jope-rescue-20260921/core-ip-20260925/worked-examples/model-cpp",
+        "/home/ubuntu/JopeDime/docs/internal/asm-manual/examples/train.csv",
+        "/home/ubuntu/JopeDime/docs/internal/asm-manual/examples/predict.csv",
+        "/home/ubuntu/jope-rescue-20260921/core-ip-20260925/worked-examples/cpp17.txt"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0024884988088160753
+    }
+  ],
+  "exact_bit_parity": true,
+  "predictions": {
+    "python": [
+      22.305156380809166,
+      11.597405207491747,
+      22.330716250263507,
+      33.06402729303528,
+      22.35627611971785,
+      33.08958716248962,
+      43.82289820526138,
+      33.11514703194396
+    ],
+    "rust": [
+      22.305156380809166,
+      11.597405207491747,
+      22.330716250263507,
+      33.06402729303528,
+      22.35627611971785,
+      33.08958716248962,
+      43.82289820526138,
+      33.11514703194396
+    ],
+    "cpp17": [
+      22.305156380809166,
+      11.597405207491747,
+      22.330716250263507,
+      33.06402729303528,
+      22.35627611971785,
+      33.08958716248962,
+      43.82289820526138,
+      33.11514703194396
+    ]
+  },
+  "files": {
+    "/home/ubuntu/JopeDime/docs/internal/asm-manual/examples/train.csv": "f4c44392e68f87fa1a799f856c9d692652e425669e28e7c34914c06ef91ff61d",
+    "/home/ubuntu/JopeDime/docs/internal/asm-manual/examples/predict.csv": "7f4cb0800541aaa12df854544ef0364c44a19f3d197e2ffcb9a6e1e02ad42dab",
+    "/home/ubuntu/JopeDime/deploy/ci/emitters/driver.cpp": "899ad86994c93ac37312a66acde6900948948b22bfae1dd0be1516c7e99ca416",
+    "/home/ubuntu/jope-rescue-20260921/core-ip-20260925/worked-examples/model.js": "513524f1c0879bc1ae947accc750741388ef3e5a1130886add474e822f22f1dc",
+    "/home/ubuntu/jope-rescue-20260921/core-ip-20260925/worked-examples/model.cpp": "39b7e5fee4c38c9be1e7be022fc579650cc6beb148b1543be7d3dff45a058532",
+    "/home/ubuntu/jope-rescue-20260921/core-ip-20260925/worked-examples/model.rs": "d66a0addd90e7fdab9de288440ad4cb868892b6880dd806319f1b1ccb966bd64",
+    "/home/ubuntu/jope-rescue-20260921/core-ip-20260925/worked-examples/model.py": "e3c78937b4d7ed44063d23ac2645c1dc0a148ae94fa63e63eefe664a418f34d6"
+  }
+}

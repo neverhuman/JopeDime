@@ -1,0 +1,1131 @@
+{
+  "observed_utc": "2026-09-25T18:41:59.025353+00:00",
+  "path": "/mnt/fast-scratch/jope-migration-qualification/claude-impl-20260917/ot-export-out/step-60000/policy.safetensors",
+  "sha256": "4b4b5a40f03c9226b4b15856fd35b90127c8b6a4d1435b815484cdd050744f1e",
+  "tensors": [
+    {
+      "name": "ctx_proj.bias",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "ctx_proj.weight",
+      "shape": [
+        512,
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 262144
+    },
+    {
+      "name": "decoder.layers.0.linear1.bias",
+      "shape": [
+        2048
+      ],
+      "dtype": "F32",
+      "parameters": 2048
+    },
+    {
+      "name": "decoder.layers.0.linear1.weight",
+      "shape": [
+        2048,
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 1048576
+    },
+    {
+      "name": "decoder.layers.0.linear2.bias",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "decoder.layers.0.linear2.weight",
+      "shape": [
+        512,
+        2048
+      ],
+      "dtype": "F32",
+      "parameters": 1048576
+    },
+    {
+      "name": "decoder.layers.0.norm1.bias",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "decoder.layers.0.norm1.weight",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "decoder.layers.0.norm2.bias",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "decoder.layers.0.norm2.weight",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "decoder.layers.0.self_attn.in_proj_bias",
+      "shape": [
+        1536
+      ],
+      "dtype": "F32",
+      "parameters": 1536
+    },
+    {
+      "name": "decoder.layers.0.self_attn.in_proj_weight",
+      "shape": [
+        1536,
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 786432
+    },
+    {
+      "name": "decoder.layers.0.self_attn.out_proj.bias",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "decoder.layers.0.self_attn.out_proj.weight",
+      "shape": [
+        512,
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 262144
+    },
+    {
+      "name": "decoder.layers.1.linear1.bias",
+      "shape": [
+        2048
+      ],
+      "dtype": "F32",
+      "parameters": 2048
+    },
+    {
+      "name": "decoder.layers.1.linear1.weight",
+      "shape": [
+        2048,
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 1048576
+    },
+    {
+      "name": "decoder.layers.1.linear2.bias",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "decoder.layers.1.linear2.weight",
+      "shape": [
+        512,
+        2048
+      ],
+      "dtype": "F32",
+      "parameters": 1048576
+    },
+    {
+      "name": "decoder.layers.1.norm1.bias",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "decoder.layers.1.norm1.weight",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "decoder.layers.1.norm2.bias",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "decoder.layers.1.norm2.weight",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "decoder.layers.1.self_attn.in_proj_bias",
+      "shape": [
+        1536
+      ],
+      "dtype": "F32",
+      "parameters": 1536
+    },
+    {
+      "name": "decoder.layers.1.self_attn.in_proj_weight",
+      "shape": [
+        1536,
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 786432
+    },
+    {
+      "name": "decoder.layers.1.self_attn.out_proj.bias",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "decoder.layers.1.self_attn.out_proj.weight",
+      "shape": [
+        512,
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 262144
+    },
+    {
+      "name": "decoder.layers.2.linear1.bias",
+      "shape": [
+        2048
+      ],
+      "dtype": "F32",
+      "parameters": 2048
+    },
+    {
+      "name": "decoder.layers.2.linear1.weight",
+      "shape": [
+        2048,
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 1048576
+    },
+    {
+      "name": "decoder.layers.2.linear2.bias",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "decoder.layers.2.linear2.weight",
+      "shape": [
+        512,
+        2048
+      ],
+      "dtype": "F32",
+      "parameters": 1048576
+    },
+    {
+      "name": "decoder.layers.2.norm1.bias",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "decoder.layers.2.norm1.weight",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "decoder.layers.2.norm2.bias",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "decoder.layers.2.norm2.weight",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "decoder.layers.2.self_attn.in_proj_bias",
+      "shape": [
+        1536
+      ],
+      "dtype": "F32",
+      "parameters": 1536
+    },
+    {
+      "name": "decoder.layers.2.self_attn.in_proj_weight",
+      "shape": [
+        1536,
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 786432
+    },
+    {
+      "name": "decoder.layers.2.self_attn.out_proj.bias",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "decoder.layers.2.self_attn.out_proj.weight",
+      "shape": [
+        512,
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 262144
+    },
+    {
+      "name": "decoder.layers.3.linear1.bias",
+      "shape": [
+        2048
+      ],
+      "dtype": "F32",
+      "parameters": 2048
+    },
+    {
+      "name": "decoder.layers.3.linear1.weight",
+      "shape": [
+        2048,
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 1048576
+    },
+    {
+      "name": "decoder.layers.3.linear2.bias",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "decoder.layers.3.linear2.weight",
+      "shape": [
+        512,
+        2048
+      ],
+      "dtype": "F32",
+      "parameters": 1048576
+    },
+    {
+      "name": "decoder.layers.3.norm1.bias",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "decoder.layers.3.norm1.weight",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "decoder.layers.3.norm2.bias",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "decoder.layers.3.norm2.weight",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "decoder.layers.3.self_attn.in_proj_bias",
+      "shape": [
+        1536
+      ],
+      "dtype": "F32",
+      "parameters": 1536
+    },
+    {
+      "name": "decoder.layers.3.self_attn.in_proj_weight",
+      "shape": [
+        1536,
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 786432
+    },
+    {
+      "name": "decoder.layers.3.self_attn.out_proj.bias",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "decoder.layers.3.self_attn.out_proj.weight",
+      "shape": [
+        512,
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 262144
+    },
+    {
+      "name": "decoder.layers.4.linear1.bias",
+      "shape": [
+        2048
+      ],
+      "dtype": "F32",
+      "parameters": 2048
+    },
+    {
+      "name": "decoder.layers.4.linear1.weight",
+      "shape": [
+        2048,
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 1048576
+    },
+    {
+      "name": "decoder.layers.4.linear2.bias",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "decoder.layers.4.linear2.weight",
+      "shape": [
+        512,
+        2048
+      ],
+      "dtype": "F32",
+      "parameters": 1048576
+    },
+    {
+      "name": "decoder.layers.4.norm1.bias",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "decoder.layers.4.norm1.weight",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "decoder.layers.4.norm2.bias",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "decoder.layers.4.norm2.weight",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "decoder.layers.4.self_attn.in_proj_bias",
+      "shape": [
+        1536
+      ],
+      "dtype": "F32",
+      "parameters": 1536
+    },
+    {
+      "name": "decoder.layers.4.self_attn.in_proj_weight",
+      "shape": [
+        1536,
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 786432
+    },
+    {
+      "name": "decoder.layers.4.self_attn.out_proj.bias",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "decoder.layers.4.self_attn.out_proj.weight",
+      "shape": [
+        512,
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 262144
+    },
+    {
+      "name": "decoder.layers.5.linear1.bias",
+      "shape": [
+        2048
+      ],
+      "dtype": "F32",
+      "parameters": 2048
+    },
+    {
+      "name": "decoder.layers.5.linear1.weight",
+      "shape": [
+        2048,
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 1048576
+    },
+    {
+      "name": "decoder.layers.5.linear2.bias",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "decoder.layers.5.linear2.weight",
+      "shape": [
+        512,
+        2048
+      ],
+      "dtype": "F32",
+      "parameters": 1048576
+    },
+    {
+      "name": "decoder.layers.5.norm1.bias",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "decoder.layers.5.norm1.weight",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "decoder.layers.5.norm2.bias",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "decoder.layers.5.norm2.weight",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "decoder.layers.5.self_attn.in_proj_bias",
+      "shape": [
+        1536
+      ],
+      "dtype": "F32",
+      "parameters": 1536
+    },
+    {
+      "name": "decoder.layers.5.self_attn.in_proj_weight",
+      "shape": [
+        1536,
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 786432
+    },
+    {
+      "name": "decoder.layers.5.self_attn.out_proj.bias",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "decoder.layers.5.self_attn.out_proj.weight",
+      "shape": [
+        512,
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 262144
+    },
+    {
+      "name": "encoder.0.bias",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "encoder.0.weight",
+      "shape": [
+        512,
+        2048
+      ],
+      "dtype": "F32",
+      "parameters": 1048576
+    },
+    {
+      "name": "encoder.2.bias",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "encoder.2.weight",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "encoder.4.bias",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "encoder.4.weight",
+      "shape": [
+        512,
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 262144
+    },
+    {
+      "name": "encoder.6.bias",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "encoder.6.weight",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "loss_log_vars.ablation_bt",
+      "shape": [],
+      "dtype": "F32",
+      "parameters": 1
+    },
+    {
+      "name": "loss_log_vars.reward_bt",
+      "shape": [],
+      "dtype": "F32",
+      "parameters": 1
+    },
+    {
+      "name": "loss_log_vars.reward_listwise",
+      "shape": [],
+      "dtype": "F32",
+      "parameters": 1
+    },
+    {
+      "name": "loss_log_vars.routing_ce",
+      "shape": [],
+      "dtype": "F32",
+      "parameters": 1
+    },
+    {
+      "name": "loss_log_vars.runtime_huber",
+      "shape": [],
+      "dtype": "F32",
+      "parameters": 1
+    },
+    {
+      "name": "loss_log_vars.seq_nll",
+      "shape": [],
+      "dtype": "F32",
+      "parameters": 1
+    },
+    {
+      "name": "loss_log_vars.stability_bce",
+      "shape": [],
+      "dtype": "F32",
+      "parameters": 1
+    },
+    {
+      "name": "out_norm.bias",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "out_norm.weight",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "pos_emb.weight",
+      "shape": [
+        129,
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 66048
+    },
+    {
+      "name": "reward_encoder.0.bias",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "reward_encoder.0.weight",
+      "shape": [
+        512,
+        2048
+      ],
+      "dtype": "F32",
+      "parameters": 1048576
+    },
+    {
+      "name": "reward_encoder.2.bias",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "reward_encoder.2.weight",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "reward_encoder.4.bias",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "reward_encoder.4.weight",
+      "shape": [
+        512,
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 262144
+    },
+    {
+      "name": "reward_encoder.6.bias",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "reward_encoder.6.weight",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "reward_head_ablation.0.bias",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "reward_head_ablation.0.weight",
+      "shape": [
+        512,
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 262144
+    },
+    {
+      "name": "reward_head_ablation.3.bias",
+      "shape": [
+        1
+      ],
+      "dtype": "F32",
+      "parameters": 1
+    },
+    {
+      "name": "reward_head_ablation.3.weight",
+      "shape": [
+        1,
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "reward_heads.0.0.bias",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "reward_heads.0.0.weight",
+      "shape": [
+        512,
+        1536
+      ],
+      "dtype": "F32",
+      "parameters": 786432
+    },
+    {
+      "name": "reward_heads.0.3.bias",
+      "shape": [
+        1
+      ],
+      "dtype": "F32",
+      "parameters": 1
+    },
+    {
+      "name": "reward_heads.0.3.weight",
+      "shape": [
+        1,
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "reward_heads.1.0.bias",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "reward_heads.1.0.weight",
+      "shape": [
+        512,
+        1536
+      ],
+      "dtype": "F32",
+      "parameters": 786432
+    },
+    {
+      "name": "reward_heads.1.3.bias",
+      "shape": [
+        1
+      ],
+      "dtype": "F32",
+      "parameters": 1
+    },
+    {
+      "name": "reward_heads.1.3.weight",
+      "shape": [
+        1,
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "reward_heads.2.0.bias",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "reward_heads.2.0.weight",
+      "shape": [
+        512,
+        1536
+      ],
+      "dtype": "F32",
+      "parameters": 786432
+    },
+    {
+      "name": "reward_heads.2.3.bias",
+      "shape": [
+        1
+      ],
+      "dtype": "F32",
+      "parameters": 1
+    },
+    {
+      "name": "reward_heads.2.3.weight",
+      "shape": [
+        1,
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "reward_heads.3.0.bias",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "reward_heads.3.0.weight",
+      "shape": [
+        512,
+        1536
+      ],
+      "dtype": "F32",
+      "parameters": 786432
+    },
+    {
+      "name": "reward_heads.3.3.bias",
+      "shape": [
+        1
+      ],
+      "dtype": "F32",
+      "parameters": 1
+    },
+    {
+      "name": "reward_heads.3.3.weight",
+      "shape": [
+        1,
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "reward_norm.bias",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "reward_norm.weight",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "reward_token_emb.weight",
+      "shape": [
+        657,
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 336384
+    },
+    {
+      "name": "runtime_head.0.bias",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "runtime_head.0.weight",
+      "shape": [
+        512,
+        1024
+      ],
+      "dtype": "F32",
+      "parameters": 524288
+    },
+    {
+      "name": "runtime_head.2.bias",
+      "shape": [
+        1
+      ],
+      "dtype": "F32",
+      "parameters": 1
+    },
+    {
+      "name": "runtime_head.2.weight",
+      "shape": [
+        1,
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "stability_head.0.bias",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "stability_head.0.weight",
+      "shape": [
+        512,
+        1536
+      ],
+      "dtype": "F32",
+      "parameters": 786432
+    },
+    {
+      "name": "stability_head.2.bias",
+      "shape": [
+        1
+      ],
+      "dtype": "F32",
+      "parameters": 1
+    },
+    {
+      "name": "stability_head.2.weight",
+      "shape": [
+        1,
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "token_emb.weight",
+      "shape": [
+        657,
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 336384
+    },
+    {
+      "name": "z_gamma.0.bias",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "z_gamma.0.weight",
+      "shape": [
+        512,
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 262144
+    },
+    {
+      "name": "z_proj.bias",
+      "shape": [
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 512
+    },
+    {
+      "name": "z_proj.weight",
+      "shape": [
+        512,
+        512
+      ],
+      "dtype": "F32",
+      "parameters": 262144
+    }
+  ],
+  "tensor_count": 136,
+  "parameters": 27796494
+}

@@ -1,0 +1,1 @@
+{"tensor_count": 136, "parameters": 27796494, "dtype": "F32", "asset_sha256": "4b4b5a40f03c9226b4b15856fd35b90127c8b6a4d1435b815484cdd050744f1e", "all_names_and_shapes_match": true, "scope": "documented mirror of model.rs expected_inventory, not a forward-pass qualification"}
