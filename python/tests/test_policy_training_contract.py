@@ -445,7 +445,7 @@ def test_distributed_environment_refused_before_collectives(monkeypatch, updates
 def test_real_distributed_cpu_updates_and_shards(tmp_path, world_size):
     """Exercise env:// startup and actual collectives, with a serial gradient reference."""
     import os
-    import signal
+    import socket
     import subprocess
     import sys
     import textwrap
@@ -503,30 +503,38 @@ def test_real_distributed_cpu_updates_and_shards(tmp_path, world_size):
         OPENBLAS_NUM_THREADS="1",
         PYTHONPATH=str(Path(__file__).resolve().parents[1] / "src"),
     )
-    child = subprocess.Popen(
-        [
-            sys.executable,
-            "-m",
-            "torch.distributed.run",
-            "--standalone",
-            f"--nproc-per-node={world_size}",
-            str(worker),
-        ],
-        env=env,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        text=True,
-        start_new_session=True,
-    )
+    # Own every worker directly rather than relying on torchrun's detached
+    # grandchildren. These are the same env:// values supplied by torchrun.
+    with socket.socket() as reservation:
+        reservation.bind(("127.0.0.1", 0))
+        port = reservation.getsockname()[1]
+    children = []
     try:
-        output, _ = child.communicate(timeout=90)
+        for rank in range(world_size):
+            rank_env = {
+                **env,
+                "WORLD_SIZE": str(world_size),
+                "RANK": str(rank),
+                "LOCAL_RANK": str(rank),
+                "MASTER_ADDR": "127.0.0.1",
+                "MASTER_PORT": str(port),
+            }
+            children.append(
+                subprocess.Popen(
+                    [sys.executable, str(worker)],
+                    env=rank_env,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    text=True,
+                    start_new_session=True,
+                )
+            )
+        outputs = _finish_distributed_workers(children, timeout=90)
+        for rank, (child, output) in enumerate(zip(children, outputs)):
+            assert child.returncode == 0, output
+            assert f"rank={rank} updates=1" in output
     finally:
-        if child.poll() is None:
-            os.killpg(child.pid, signal.SIGKILL)
-            child.communicate()
-    assert child.returncode == 0, output
-    for rank in range(world_size):
-        assert f"rank={rank} updates=1" in output
+        _stop_distributed_workers(children)
 
 
 def test_distributed_existing_group_mismatch_refused(monkeypatch):
@@ -588,3 +596,65 @@ def test_distributed_cuda_mapping_refused_before_device_selection(monkeypatch, r
     monkeypatch.setattr(torch.cuda, "set_device", lambda _: pytest.fail("invalid CUDA mapping selected"))
     with pytest.raises(ValueError, match="LOCAL_RANK"):
         ddp.init_distributed(requested)
+
+
+def _stop_distributed_workers(children):
+    import os
+    import signal
+
+    # The test owns each worker session, including descendants if its leader
+    # exits first. No torchrun launcher can orphan independently detached ranks.
+    for child in children:
+        try:
+            os.killpg(child.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+    for child in children:
+        child.communicate(timeout=5)
+
+
+def _finish_distributed_workers(children, *, timeout):
+    import time
+
+    deadline = time.monotonic() + timeout
+    return [child.communicate(timeout=max(0.01, deadline - time.monotonic()))[0] for child in children]
+
+
+@pytest.mark.parametrize("parent_exits", [False, True])
+def test_distributed_probe_timeout_reaps_owned_worker_group(tmp_path, parent_exits):
+    import subprocess
+    import sys
+    import time
+
+    import psutil
+
+    pid_file = tmp_path / "worker.pid"
+    # Worker descendants inherit the directly owned session. Retain the pipe
+    # after the leader exits to prove cleanup does not depend on a live leader.
+    script = (
+        "import subprocess,sys,time; from pathlib import Path; "
+        "p=subprocess.Popen([sys.executable,'-c','import time; time.sleep(300)']); "
+        "Path(sys.argv[1]).write_text(str(p.pid)); " + ("sys.exit(0)" if parent_exits else "time.sleep(300)")
+    )
+    children = [
+        subprocess.Popen(
+            [sys.executable, "-c", script, str(pid_file)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            start_new_session=True,
+        )
+    ]
+    start = time.monotonic()
+    try:
+        with pytest.raises(subprocess.TimeoutExpired):
+            _finish_distributed_workers(children, timeout=2)
+    finally:
+        _stop_distributed_workers(children)
+    assert time.monotonic() - start < 15
+    assert children[0].poll() is not None
+    worker_pid = int(pid_file.read_text())
+    try:
+        assert psutil.Process(worker_pid).status() == psutil.STATUS_ZOMBIE
+    except psutil.NoSuchProcess:
+        pass
