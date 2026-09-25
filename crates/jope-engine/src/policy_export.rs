@@ -461,15 +461,36 @@ fn absent(path: &Path) -> bool {
     matches!(fs::symlink_metadata(path), Err(e) if e.kind() == std::io::ErrorKind::NotFound)
 }
 
-/// Remove `published`, which this call's hard link created, after `err`; the error states when
-/// the file could not be removed and so is still published.
+/// Error context: a file this call published could not be removed again after a later failure.
+#[derive(Debug)]
+struct StillPublished {
+    path: PathBuf,
+    what: String,
+    cause: String,
+}
+
+impl std::fmt::Display for StillPublished {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}; {} is still published (could not remove it: {})",
+            self.what,
+            self.path.display(),
+            self.cause
+        )
+    }
+}
+
+/// Remove `published`, which this call's hard link created, after `err`. When it cannot be
+/// removed the error carries [`StillPublished`], so callers know the file is theirs and remains.
 fn unpublish(err: std::io::Error, what: String, published: &Path) -> anyhow::Error {
     match fs::remove_file(published) {
         Ok(()) => anyhow::Error::new(err).context(what),
-        Err(e) => anyhow::Error::new(err).context(format!(
-            "{what}; {} is still published (could not remove it: {e})",
-            published.display()
-        )),
+        Err(e) => anyhow::Error::new(err).context(StillPublished {
+            path: published.to_path_buf(),
+            what,
+            cause: e.to_string(),
+        }),
     }
 }
 
@@ -705,6 +726,27 @@ fn export_on_cpu(request: &ExportRequest) -> Result<Value> {
         "receipt must not name the policy output: {}",
         request.receipt.display()
     );
+    // The same check through symlinks, for an output directory that already exists (the receipt
+    // directory exists, checked above; a new output directory cannot alias it).
+    if request.output.exists() {
+        let parent = request.receipt.parent().context("receipt has no parent")?;
+        let resolved_receipt = fs::canonicalize(parent)
+            .with_context(|| format!("resolve {}", parent.display()))?
+            .join(
+                request
+                    .receipt
+                    .file_name()
+                    .context("receipt has no file name")?,
+            );
+        let resolved_output = fs::canonicalize(&request.output)
+            .with_context(|| format!("resolve {}", request.output.display()))?;
+        ensure!(
+            resolved_receipt != resolved_output
+                && resolved_receipt != resolved_output.join(POLICY_OUTPUT),
+            "receipt must not name the policy output: {}",
+            request.receipt.display()
+        );
+    }
     for path in [&request.receipt, &output] {
         ensure!(absent(path), "refusing to overwrite {}", path.display());
     }
@@ -776,9 +818,12 @@ fn export_on_cpu(request: &ExportRequest) -> Result<Value> {
     let receipt_sha256 = match write_receipt(&request.receipt, &receipt) {
         Ok(sha256) => sha256,
         Err(err) => {
-            // The pre-checks proved the receipt absent, so anything there now is this call's: if
-            // it could not be undone, keep the weights it binds.
-            if !absent(&request.receipt) {
+            // Keep the weights only when this call's own receipt could not be undone; anything
+            // else at the receipt path is not a receipt that binds them.
+            if err
+                .downcast_ref::<StillPublished>()
+                .is_some_and(|s| s.path == request.receipt)
+            {
                 return Err(err.context(format!(
                     "receipt {} is still published after a failed write; kept {}",
                     request.receipt.display(),
@@ -1344,6 +1389,32 @@ mod tests {
         assert!(!fresh.exists() && !nowhere.exists());
         assert_no_partials(&other);
         assert_no_partials(scratch.path());
+    }
+
+    #[test]
+    fn export_refuses_a_receipt_that_aliases_the_policy_file_through_a_symlink() {
+        let scratch = scratch();
+        let config = tiny();
+        let store = policy_store(&config);
+        let dir = scratch.path().join("checkpoint");
+        write_checkpoint(&dir, &named(&store), &config, 61600);
+        // A wrong pinned identity: only the pre-check can refuse with the alias message.
+        let wrong = hash(b"other state");
+        let real = scratch.path().join("real");
+        fs::create_dir(&real).unwrap();
+        let alias = scratch.path().join("alias");
+        std::os::unix::fs::symlink(&real, &alias).unwrap();
+        for (output, receipt) in [
+            (&real, alias.join(POLICY_OUTPUT)),
+            (&alias, real.join(POLICY_OUTPUT)),
+        ] {
+            refused(
+                export_on_cpu(&request(&dir, output, &receipt, &wrong)),
+                "receipt must not name the policy output",
+            );
+        }
+        assert!(!real.join(POLICY_OUTPUT).exists());
+        assert_no_partials(&real);
     }
 
     #[test]
