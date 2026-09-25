@@ -1,14 +1,17 @@
 """WS-2: the scripts/ lane's binding to the ONE scq spec policy.
 
-The policy itself lives in Rust (`src/spec_policy.rs`). This module reads the
-generated projection `scripts/jope-spec-policy.json` so a Python renderer emits
+Version2 retains typed literal/root-relative probe arguments, resolving the
+state root at render time rather than embedding the generator host’s home.
+
+The policy itself lives in Rust (`crates/jope-campaigns/src/spec_policy.rs`). This module reads the
+generated projection `python/src/jope/research/jope-spec-policy.json` so a Python renderer emits
 byte-identical `[resource]` text to its Rust counterpart instead of keeping its
 own copy of the numbers.
 
 Regenerate the JSON after changing the Rust policy:
 
     cargo run --release --bin jope_spec_drift -- --emit-json \\
-        > scripts/jope-spec-policy.json
+        > python/src/jope/research/jope-spec-policy.json
 
 `cargo test --lib spec_drift` fails if the checked-in JSON goes stale, and
 `jope_spec_drift` fails if any renderer disagrees with it.
@@ -22,10 +25,12 @@ cluster stall that day was that one bug class.
 from __future__ import annotations
 
 import json
+import os
+import sys
 from pathlib import Path
 
 POLICY_PATH = Path(__file__).resolve().parent / "jope-spec-policy.json"
-SCHEMA = "JopeSpecPolicy.v1"
+SCHEMA = "JopeSpecPolicy.v2"
 
 FAMILIES = ("trainer", "propose", "eval", "encode")
 
@@ -41,13 +46,11 @@ def _load() -> dict:
         raise SpecPolicyError(
             f"{POLICY_PATH} is unreadable ({exc}). Regenerate with: "
             "cargo run --release --bin jope_spec_drift -- --emit-json "
-            "> scripts/jope-spec-policy.json"
+            "> python/src/jope/research/jope-spec-policy.json"
         ) from exc
     doc = json.loads(raw)
     if doc.get("schema") != SCHEMA:
-        raise SpecPolicyError(
-            f"{POLICY_PATH} declares schema {doc.get('schema')!r}, expected {SCHEMA!r}"
-        )
+        raise SpecPolicyError(f"{POLICY_PATH} declares schema {doc.get('schema')!r}, expected {SCHEMA!r}")
     return doc
 
 
@@ -71,9 +74,7 @@ def policy(family: str) -> dict:
     try:
         return _DOC["families"][family]
     except KeyError:
-        raise SpecPolicyError(
-            f"unknown job family {family!r}; known: {sorted(_DOC['families'])}"
-        ) from None
+        raise SpecPolicyError(f"unknown job family {family!r}; known: {sorted(_DOC['families'])}") from None
 
 
 def ram_mb(family: str) -> int:
@@ -120,7 +121,7 @@ def render_placement_block(family: str) -> str:
     """
     out = []
     for probe in policy(family)["smoke"]:
-        args = ", ".join(json.dumps(a) for a in probe["args"])
+        args = ", ".join(json.dumps(_render_arg(a), ensure_ascii=False) for a in probe["args"])
         out.append(
             "[[dependencies.smoke]]\n"
             f'name = "{probe["name"]}"\n'
@@ -129,6 +130,38 @@ def render_placement_block(family: str) -> str:
             f"timeout_secs = {probe['timeout_secs']}\n"
         )
     return "".join(out)
+
+
+def _state_root() -> str:
+    """Match jope_paths::jope_state, including its XDG absolute-path rule."""
+    if value := os.environ.get("JOPE_STATE"):
+        return value
+    for name, suffix in (("XDG_STATE_HOME", "jope"), ("HOME", ".local/state/jope")):
+        if (value := os.environ.get(name)) and Path(value).is_absolute():
+            return os.path.join(value, suffix)
+    if value := os.environ.get("JOPE_HOME"):
+        return os.path.join(value, "state")
+    for start in (Path.cwd(), Path(sys.executable).parent):
+        for root in (start, *start.parents):
+            if (root / ".jope-home").is_file():
+                return str(root / "state")
+    return str(Path.cwd() / "state")
+
+
+def _render_arg(arg: dict) -> str:
+    if not isinstance(arg, dict) or len(arg) != 1:
+        raise SpecPolicyError("probe argument must have exactly one typed binding")
+    if "literal" in arg and isinstance(arg["literal"], str):
+        return arg["literal"]
+    relative = arg.get("under_flywheel_root")
+    if (
+        isinstance(relative, str)
+        and relative
+        and not Path(relative).is_absolute()
+        and ".." not in Path(relative).parts
+    ):
+        return os.path.join(_state_root(), "legacy", "test_exact_gen0", relative)
+    raise SpecPolicyError("invalid probe argument binding")
 
 
 def render_env_block(family: str, pythonpath: str) -> str:

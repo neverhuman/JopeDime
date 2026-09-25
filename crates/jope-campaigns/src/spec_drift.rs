@@ -1049,6 +1049,55 @@ mod tests {
         );
     }
 
+    #[test]
+    fn python_projection_matches_rust_rendering() {
+        let output = std::process::Command::new("python3")
+            .arg("-c")
+            .arg(
+                r#"
+import os, sys
+from unittest.mock import patch
+sys.path.insert(0, sys.argv[1])
+import jope_spec_policy as p
+for settings, expected in [
+    ({'JOPE_STATE': '/state//./explicit/', 'XDG_STATE_HOME': '/xdg'}, '/state//./explicit/'),
+    ({'JOPE_STATE': '', 'XDG_STATE_HOME': '/xdg/state'}, '/xdg/state/jope'),
+    ({'JOPE_STATE': '', 'XDG_STATE_HOME': 'relative/ignored', 'JOPE_HOME': '/source'},
+     os.path.join(os.environ['HOME'], '.local/state/jope')
+     if os.environ.get('HOME', '').startswith('/') else '/source/state'),
+]:
+    with patch.dict(os.environ, settings):
+        assert p._state_root() == expected, (settings, p._state_root(), expected)
+for invalid in ({'unknown': 'x'}, {'literal': 3}, {'under_flywheel_root': '../x'},
+                {'under_flywheel_root': '/x'}, {'literal': 'x', 'extra': 'y'}):
+    try:
+        p._render_arg(invalid)
+    except p.SpecPolicyError:
+        pass
+    else:
+        raise AssertionError(f'accepted invalid argument: {invalid}')
+for family in p.FAMILIES:
+    print(p.render_resource_block(family) + p.render_placement_block(family), end='')
+"#,
+            )
+            .arg(repo_root().join("python/src/jope/research"))
+            .output()
+            .expect("python3 is required for cross-language policy verification");
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        let expected: String = Family::all()
+            .iter()
+            .map(|family| {
+                let p = spec_policy::policy(*family);
+                p.render_resource_block() + &p.render_placement_block()
+            })
+            .collect();
+        assert_eq!(String::from_utf8(output.stdout).unwrap(), expected);
+    }
+
     /// Both spellings of a smoke dependency are enforced by scq and must both be
     /// recognised. The live canary now probes an immutable bundle capability;
     /// a synthetic legacy renderer keeps coverage for the inline spelling and

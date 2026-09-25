@@ -14,12 +14,18 @@ missing path. A focused local reproduction produced four failures and seven pass
 Correcting the root, scan directories and registry exposed a second defect: the
 Python JSON copy retained the old runtime-bundle path, while the Rust policy had
 migrated to `.local/state/jope/legacy`. The intermediate result was one failure and
-ten passes. Regenerating the JSON through `jope_spec_drift --emit-json` corrected
-that copy without changing resource reservations or executing capability probes.
+ten passes. Regenerating the JSON initially corrected the local copy, but inspection exposed
+another portability defect: JSON emission resolved paths against the generator
+host’s state directory. Version2 now retains typed literal/root-relative arguments;
+Rust and Python resolve those arguments at render time using the same state-root
+precedence. The generated JSON is invariant under `JOPE_STATE` changes. Resource
+reservations are unchanged, and capability probes are not executed.
 
-The corrected local library harness passes all 12 tests, with 201 other tests
+The corrected local library harness passes all 13 tests, with 201 other tests
 filtered out. A new filesystem fixture verifies discovery and rejection of new
-Rust and Python renderers in the migrated directories. Existing negative cases
+Rust and Python renderers in the migrated directories. A cross-language test compares every family’s resource and placement blocks,
+including runtime path resolution; malformed relative bindings are refused.
+Existing negative cases
 cover disagreement, forbidden placement forms, and conflicting RAM units. The CLI
 also succeeds from outside the checkout: 28 registered sites, no drift findings.
 The `inputs` CI lane now runs only this library harness, retains a nested Rust
