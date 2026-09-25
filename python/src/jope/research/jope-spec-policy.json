@@ -17,7 +17,7 @@
       "max_runtime_hours": 168,
       "preemptible": false,
       "smoke": [
-        {"name": "runtime bundle JOPE policy present", "command": "/usr/bin/test", "args": ["-f", "/home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/pytorch/jope/policy/model_v3.py"], "timeout_secs": 5}
+        {"name": "runtime bundle JOPE policy present", "command": "/usr/bin/test", "args": ["-f", "/home/ubuntu/.local/state/jope/legacy/test_exact_gen0/runtime-bundles/current/pytorch/jope/policy/model_v3.py"], "timeout_secs": 5}
       ]
     },
     "propose": {
@@ -32,7 +32,7 @@
       "max_runtime_hours": 24,
       "preemptible": true,
       "smoke": [
-        {"name": "runtime bundle JOPE policy present", "command": "/usr/bin/test", "args": ["-f", "/home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/pytorch/jope/policy/model_v3.py"], "timeout_secs": 5}
+        {"name": "runtime bundle JOPE policy present", "command": "/usr/bin/test", "args": ["-f", "/home/ubuntu/.local/state/jope/legacy/test_exact_gen0/runtime-bundles/current/pytorch/jope/policy/model_v3.py"], "timeout_secs": 5}
       ]
     },
     "eval": {
@@ -62,7 +62,7 @@
       "max_runtime_hours": 12,
       "preemptible": true,
       "smoke": [
-        {"name": "runtime bundle JOPE policy present", "command": "/usr/bin/test", "args": ["-f", "/home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/pytorch/jope/policy/model_v3.py"], "timeout_secs": 5}
+        {"name": "runtime bundle JOPE policy present", "command": "/usr/bin/test", "args": ["-f", "/home/ubuntu/.local/state/jope/legacy/test_exact_gen0/runtime-bundles/current/pytorch/jope/policy/model_v3.py"], "timeout_secs": 5}
       ]
     }
   }

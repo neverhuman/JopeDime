@@ -126,6 +126,22 @@ class AggregateTests(unittest.TestCase):
             ['crates/jope-bench/src/task.rs'], 'pull_request')
         self.assertFalse(lanes['python'])
 
+    def test_campaign_policy_and_renderer_changes_require_inputs(self):
+        for path in (
+            'crates/jope-campaigns/src/spec_drift.rs',
+            'crates/jope-campaigns/src/spec_policy.rs',
+            'crates/jope-campaigns/src/bin/new_renderer.rs',
+            'crates/jope-campaigns/src/test_adaptive/scq_batch.rs',
+            'python/src/jope/research/new_renderer.py',
+            'python/src/jope/research/jope-spec-policy.json',
+        ):
+            with self.subTest(path=path):
+                lanes, _ = aggregate.plan_module.classify([path], 'pull_request')
+                self.assertTrue(lanes['inputs'])
+        for path in ('docs/README.md', 'python/src/jope/policy/model.py'):
+            lanes, _ = aggregate.plan_module.classify([path], 'pull_request')
+            self.assertFalse(lanes['inputs'])
+
     def test_duplicate_receipt_and_missing_dependency_fail(self):
         self.receipts['python'].append(copy.deepcopy(self.receipts['python'][0]))
         del self.needs['rust-check']
