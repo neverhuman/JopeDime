@@ -764,7 +764,8 @@ mod tests {
             "original_label_role": "development",
         }))
         .unwrap();
-        let cases: [(&dyn Fn(&mut Configuration), &str); 9] = [
+        type ConfigurationEdit<'a> = &'a dyn Fn(&mut Configuration);
+        let cases: [(ConfigurationEdit<'_>, &str); 9] = [
             (
                 &|c: &mut Configuration| {
                     pinned(c).identity.state_sha256 = jope_policy::ACCEPTED_STATE_SHA256.into();

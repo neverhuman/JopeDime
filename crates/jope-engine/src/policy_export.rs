@@ -964,7 +964,8 @@ mod tests {
         refused(attempt(&state_sha256.to_ascii_uppercase()), "lowercase");
         nothing_written();
         // (d)-(i): one state.json field at a time, re-pinned so only that property fails.
-        let cases: [(&dyn Fn(&mut Value), &str); 6] = [
+        type StateEdit<'a> = &'a dyn Fn(&mut Value);
+        let cases: [(StateEdit<'_>, &str); 6] = [
             (
                 &|s: &mut Value| s["step"] = json!(REJECTED_STEP),
                 "rejected checkpoint step",
