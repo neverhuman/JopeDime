@@ -172,7 +172,7 @@ pub fn observe_families(
     ids: &[usize],
 ) -> Result<()> {
     ensure!(
-        ids.len() % 8 == 0,
+        ids.len().is_multiple_of(8),
         "exposure requires complete comparison groups"
     );
     let mut batch = FamilyGroups::new();
