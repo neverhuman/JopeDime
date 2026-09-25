@@ -128,6 +128,10 @@ fn run_enabled(cli: OptimizeCli) -> anyhow::Result<Value> {
                 config.incumbents.is_none(),
                 "incumbent seeding requires a single-dataset proof plan"
             );
+            ensure!(
+                config.native_challenger.is_none(),
+                "a native challenger requires a single-dataset proof plan"
+            );
             let native = plan.runtimes.get("rust").context("native runtime absent")?;
             plan.runtimes.insert(
                 super::optimize::CONFIG_RUNTIME.into(),

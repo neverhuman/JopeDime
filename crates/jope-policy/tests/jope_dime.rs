@@ -5,13 +5,16 @@
 //! - `JOPE_DIME_POLICY_SAFETENSORS`: the exported `policy.safetensors` (receipt from
 //!   `JOPE_DIME_EXPORT_RECEIPT`, default `<dir>/../step-60000.receipt.json`);
 //! - `JOPE_DIME_GENERATION_000011`: a jope-dime `generation-000011` results directory;
-//! - `JOPE_DIME_CONTEXTS`: a `contexts-assembly-v2` directory (`<dataset>/cut-N.f32`).
+//! - `JOPE_DIME_CONTEXTS`: a `contexts-assembly-v2` directory (`<dataset>/cut-N.f32`);
+//! - `JOPE_DIME_CHALLENGER_SAFETENSORS`, `JOPE_DIME_CHALLENGER_RECEIPT` and
+//!   `JOPE_DIME_CHALLENGER_STATE`: a native challenger export, its export receipt and the
+//!   challenger checkpoint's `state.json`.
 //!
 //! Run the ignored tests with an optimized profile, e.g.
 //! `cargo test --release -p jope-policy --features testing --test jope_dime -- --include-ignored`.
 #![cfg(feature = "testing")]
 
-use jope_policy::config::{CheckpointBinding, PolicyConfig};
+use jope_policy::config::{ChallengerIdentity, CheckpointBinding, PolicyConfig};
 use jope_policy::decode::{self, SamplingOptions};
 use jope_policy::grammar::{bind_vocabulary, verify_restriction, VocabularyIdentity};
 use jope_policy::grammar::{Vocab, BOS, EOS, PAD};
@@ -1650,6 +1653,48 @@ fn exported_policy_matches_its_export_receipt() {
         score_pool(&model, base.vocab(), &ctx, &programs, claimed, &four),
         "bound step-60000 vocabulary",
     );
+}
+
+/// A native challenger export (plan §4.5 DEMO-3) loads only as a challenger. The identity is
+/// taken from independent sources, never from the export receipt: the `state.json` file hash,
+/// the parameter and config hashes that `state.json` records, and the weights' file hash.
+#[test]
+#[ignore = "needs JOPE_DIME_CHALLENGER_SAFETENSORS, JOPE_DIME_CHALLENGER_RECEIPT and JOPE_DIME_CHALLENGER_STATE"]
+fn native_challenger_export_loads_as_a_challenger() {
+    let policy = env_path("JOPE_DIME_CHALLENGER_SAFETENSORS");
+    let receipt = std::fs::read(env_path("JOPE_DIME_CHALLENGER_RECEIPT")).unwrap();
+    let state_bytes = std::fs::read(env_path("JOPE_DIME_CHALLENGER_STATE")).unwrap();
+    let state: Value = serde_json::from_slice(&state_bytes).unwrap();
+    let identity = ChallengerIdentity {
+        state_sha256: sha256_hex(&state_bytes),
+        parameter_sha256: state["parameter_sha256"].as_str().unwrap().into(),
+        config_sha256: state["config_sha256"].as_str().unwrap().into(),
+        policy_safetensors_sha256: sha256_hex(&std::fs::read(&policy).unwrap()),
+    };
+    let binding = CheckpointBinding::from_challenger_receipt_bytes(&receipt, &identity).unwrap();
+    // Name/shape/dtype set of the receipt equals the port's step-60000 inventory.
+    let receipt_set = binding
+        .tensors()
+        .iter()
+        .map(|t| (t.name.clone(), t.shape.clone(), t.dtype.clone()))
+        .collect::<BTreeSet<_>>();
+    let port_set = expected_inventory(&PolicyConfig::regression(401))
+        .into_iter()
+        .map(|(n, s)| (n, s, "F32".to_string()))
+        .collect::<BTreeSet<_>>();
+    assert_eq!(receipt_set, port_set);
+    // The Candle recomputation equals the training writer's parameter hash at this step.
+    let model = PolicyModel::load_bound(&policy, &binding, cpu()).unwrap();
+    let bound = model.bound_identity().unwrap();
+    assert_eq!(bound.state_sha256(), identity.state_sha256);
+    assert_eq!(
+        bound.parameter_sha256(),
+        state["parameter_sha256"].as_str().unwrap()
+    );
+    // It never passes for the accepted policy, and the accepted parser refuses its receipt.
+    let vocab = bind_vocabulary(&base_bytes(), CHECKPOINT_VOCABULARY_SHA256).unwrap();
+    assert!(Bindings::for_accepted_policy(&model, &context_sha256(&context()), &vocab).is_err());
+    assert!(CheckpointBinding::from_receipt_bytes(&receipt).is_err());
 }
 
 #[test]

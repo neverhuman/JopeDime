@@ -20,7 +20,7 @@ you saw.
 |---|---:|---:|---:|---:|---:|---:|
 | engine-binary | 12 | 11 | 0 | 1 | 0 | 0 |
 | engine-example | 12 | 12 | 0 | 0 | 0 | 0 |
-| engine-subcommand | 89 | 88 | 1 | 0 | 0 | 0 |
+| engine-subcommand | 90 | 88 | 2 | 0 | 0 | 0 |
 | jope-prime-command | 49 | 49 | 0 | 0 | 0 | 0 |
 | justfile-recipe | 6 | 6 | 0 | 0 | 0 | 0 |
 | new-bin | 12 | 0 | 12 | 0 | 0 | 0 |
@@ -40,9 +40,9 @@ you saw.
 | vendored-bin | 6 | 6 | 0 | 0 | 0 | 0 |
 | vendored-example | 6 | 6 | 0 | 0 | 0 | 0 |
 | wire | 5 | 0 | 0 | 0 | 5 | 0 |
-| **total** | **777** | **735** | **14** | **1** | **20** | **7** |
+| **total** | **778** | **735** | **15** | **1** | **20** | **7** |
 
-`moved`/`new` rows without a covering test: 657.
+`moved`/`new` rows without a covering test: 658.
 
 ## Rows
 
@@ -137,7 +137,7 @@ you saw.
 | engine-subcommand | jope-parallel pilot-gate | crates/jope-engine/src/main.rs (jope-parallel pilot-gate) | none | moved | `jope engine <sub>` umbrella is WP5 |
 | engine-subcommand | jope-parallel campaign | crates/jope-engine/src/main.rs (jope-parallel campaign) | none | moved | `neural` feature (self-hosted only); `jope engine <sub>` umbrella is WP5 |
 | engine-subcommand | jope-parallel cycle | crates/jope-engine/src/main.rs (jope-parallel cycle) | none | moved | `neural` feature (self-hosted only); `jope engine <sub>` umbrella is WP5 |
-| engine-binary | parallel/src/main.rs (jope-parallel) | crates/jope-engine/src/main.rs (jope-parallel) | jope-parallel::corpus_incremental (21 tests); jope-parallel::experiment_cli (1 tests); jope-parallel::fit_boundary (12 tests) | moved | 88 subcommands, one row each above |
+| engine-binary | parallel/src/main.rs (jope-parallel) | crates/jope-engine/src/main.rs (jope-parallel) | jope-parallel::corpus_incremental (21 tests); jope-parallel::experiment_cli (1 tests); jope-parallel::fit_boundary (12 tests) | moved | 90 subcommands, one engine-subcommand row each |
 | engine-binary | parallel/src/bin/jope-build-receipt.rs | crates/jope-engine/src/bin/jope-build-receipt.rs | none | moved |  |
 | engine-binary | parallel/src/bin/jope-continuation-corpus.rs | crates/jope-engine/src/bin/jope-continuation-corpus.rs | none | moved |  |
 | engine-binary | parallel/src/bin/jope-gp-population.rs | crates/jope-engine/src/bin/jope-gp-population.rs | none | moved |  |
@@ -824,4 +824,5 @@ you saw.
 | new-example | (new) pipeline receipt schema | crates/jope-pipeline/examples/receipt_schema.rs (receipt_schema) | jope-pipeline::schema_agreement committed_schema_is_generated_from_code_exactly | new | Regenerate v2 receipt schema from the Rust contract; v1 retained for reading. |
 | new-bin | (new) bounded CPU context proof | crates/jope-pipeline/src/bin/jope-context-proof.rs (jope-context-proof) | none | new | Private controller behind qualified-context; authentic bounded reference execution and numerical qualification remain separate host evidence. |
 | new-bin | (new) CPU context worker | crates/jope-policy/src/bin/jope-context-worker.rs (jope-context-worker) | none | new | Private context-producer feature worker; accepted assets, fixed numerical policy, no GPU hold bypass. Library contracts do not establish model parity. |
-| new-bin | (new) policy proposal worker | crates/jope-policy/src/bin/jope-policy-producer.rs (jope-policy-producer) | none | new | Private accepted regression proposal worker; source implementation is distinct from actual bounded model/proposal/fit qualification. |
+| new-bin | (new) policy proposal worker | crates/jope-policy/src/bin/jope-policy-producer.rs (jope-policy-producer) | none | new | Private regression proposal worker for the accepted checkpoint or exactly one pinned native challenger (DEMO-3); source implementation is distinct from actual bounded model/proposal/fit qualification. |
+| engine-subcommand | (new) native challenger export | crates/jope-engine/src/main.rs (jope-parallel export-policy) | none | new | `neural` feature (self-hosted only); CPU-only export of a verified checkpoint to policy.safetensors with a jope.checkpoint_export.v1 receipt (DEMO-3); not a serving or promotion path |
