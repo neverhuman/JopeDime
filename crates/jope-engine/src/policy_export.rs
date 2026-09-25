@@ -561,8 +561,8 @@ fn write_and_verify(tensors: &[Named], output: &Path) -> Result<Value> {
     }))
 }
 
-/// Pretty JSON plus a newline, published with no replacement; returns its sha256
-/// (ot-export `lib.rs:541-550`).
+/// Pretty JSON plus a newline, published with no replacement and its directory fsynced, as
+/// `write_and_verify` does for the weights; returns its sha256 (ot-export `lib.rs:541-550`).
 fn write_receipt(path: &Path, receipt: &Value) -> Result<String> {
     ensure!(!path.exists(), "refusing to overwrite {}", path.display());
     let mut bytes = serde_json::to_vec_pretty(receipt)?;
@@ -571,6 +571,7 @@ fn write_receipt(path: &Path, receipt: &Value) -> Result<String> {
     fs::write(&partial, &bytes)?;
     fs::File::open(&partial)?.sync_all()?;
     publish_no_replace(&partial, path)?;
+    fs::File::open(path.parent().context("receipt has no parent")?)?.sync_all()?;
     Ok(hash(&bytes))
 }
 
