@@ -132,6 +132,18 @@ pub fn launch(
     program: &Artifact,
     arguments: &[String],
 ) -> Result<LaunchResult> {
+    launch_with_path(experiment, journal, program, arguments, None)
+}
+
+/// Optional explicitly pinned tool PATH for timing studies. Ordinary callers keep
+/// the system manager environment unchanged.
+pub fn launch_with_path(
+    experiment: &Experiment,
+    journal: &Path,
+    program: &Artifact,
+    arguments: &[String],
+    tool_path: Option<&str>,
+) -> Result<LaunchResult> {
     experiment.validate()?;
     program.verify()?;
     ensure!(
@@ -204,6 +216,13 @@ pub fn launch(
         command.arg(format!("--property={property}"));
     }
     command.arg(format!("--setenv=TMPDIR={}", tmp.display()));
+    if let Some(path) = tool_path {
+        ensure!(
+            !path.contains('\n') && !path.contains('\0'),
+            "invalid tool PATH"
+        );
+        command.arg(format!("--setenv=PATH={path}"));
+    }
     command
         .arg("--setenv=OMP_NUM_THREADS=1")
         .arg("--setenv=OPENBLAS_NUM_THREADS=1")

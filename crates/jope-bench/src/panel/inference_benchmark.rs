@@ -80,6 +80,7 @@ pub struct Plan {
     pub schema: String,
     pub experiment: Experiment,
     pub binary: Artifact,
+    pub toolchain: BTreeMap<String, Artifact>,
     pub configuration: Artifact,
     pub references: Artifact,
     pub inputs: Vec<Dataset>,
@@ -137,6 +138,21 @@ pub fn plan(args: PlanArgs) -> Result<Value> {
         "source pin differs from compiled JOPE_SOURCE_SHA"
     );
     let directory = custody(args.output.parent().context("output parent")?)?;
+    let mut toolchain = BTreeMap::new();
+    for name in ["rustc", "python3", "g++"] {
+        let output = if name == "rustc" {
+            std::process::Command::new("rustup")
+                .args(["which", "rustc"])
+                .output()?
+        } else {
+            std::process::Command::new("which").arg(name).output()?
+        };
+        ensure!(output.status.success(), "missing tool {name}");
+        toolchain.insert(
+            name.to_string(),
+            artifact(Path::new(String::from_utf8(output.stdout)?.trim()))?,
+        );
+    }
     let configuration = artifact(&args.configuration)?;
     ensure!(
         configuration.sha256 == args.configuration_sha256,
@@ -270,6 +286,7 @@ pub fn plan(args: PlanArgs) -> Result<Value> {
             &references,
             &inputs,
             &settings,
+            &toolchain,
         ))?),
         source_sha: args.source_sha,
         checkpoints: BTreeMap::from([("policy".into(), jope_policy::ACCEPTED_STATE_SHA256.into())]),
@@ -294,6 +311,7 @@ pub fn plan(args: PlanArgs) -> Result<Value> {
         schema: SCHEMA.into(),
         experiment,
         binary: artifact(&std::env::current_exe()?)?,
+        toolchain,
         configuration,
         references,
         inputs,
@@ -332,7 +350,8 @@ pub fn read(path: &Path, sha: &str) -> Result<Plan> {
                 &p.configuration,
                 &p.references,
                 &p.inputs,
-                &p.settings
+                &p.settings,
+                &p.toolchain
             ))?),
         "plan input identity changed"
     );

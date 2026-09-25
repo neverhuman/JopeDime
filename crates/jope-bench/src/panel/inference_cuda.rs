@@ -638,8 +638,25 @@ pub fn run(args: RunArgs) -> Result<Value> {
         "--journal".into(),
         journal.display().to_string(),
     ];
-    let launched =
-        jope_pipeline::supervisor::launch(&p.experiment, &journal, &p.binary, &arguments)?;
+    let mut paths = Vec::new();
+    for tool in p.toolchain.values() {
+        tool.verify()?;
+        paths.push(
+            tool.path
+                .parent()
+                .context("tool parent")?
+                .display()
+                .to_string(),
+        );
+    }
+    paths.push("/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/snap/bin".into());
+    let launched = jope_pipeline::supervisor::launch_with_path(
+        &p.experiment,
+        &journal,
+        &p.binary,
+        &arguments,
+        Some(&paths.join(":")),
+    )?;
     write(&journal.join("launch.json"), &launched)?;
     Ok(json!({"launch":launched,"report_required":true}))
 }
