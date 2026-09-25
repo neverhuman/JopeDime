@@ -435,7 +435,12 @@ pub fn score_pool(
         chosen_count: options.keep,
         scoring_batches: batches,
         batch_size: options.batch_size,
-        backend: BACKEND_CPU.into(),
+        backend: if policy.device().is_cuda() {
+            "candle_cuda_float32"
+        } else {
+            BACKEND_CPU
+        }
+        .into(),
         quality_units: "within_context_ranking_logit_not_calibrated_rmse".into(),
         ordering: ORDERING.into(),
         training_context_only: true,

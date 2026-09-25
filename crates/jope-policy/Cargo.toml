@@ -17,6 +17,8 @@ context-producer = ["dep:hyperion", "dep:starforge"]
 # feat-core `jope-dime-cuda`: declared for the GPU lane, build-unverified (see lib.rs).
 cuda = ["candle-core/cuda", "candle-nn/cuda"]
 
+inference-cuda = ["context-producer", "cuda", "hyperion/hyperion-cuda", "starforge/cuda"]
+
 [dependencies]
 anyhow.workspace = true
 hyperion = { path = "../hyperion", default-features = false, features = ["hyperion-cpu"], optional = true }

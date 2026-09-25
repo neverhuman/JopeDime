@@ -99,3 +99,6 @@ pub fn evaluation_input(
     input.validate()?;
     Ok((request, input))
 }
+
+#[cfg(all(feature = "asm", target_os = "linux"))]
+pub mod inference_benchmark;

@@ -303,6 +303,10 @@ pub struct StarlightFoundationEncoder {
 }
 
 impl StarlightFoundationEncoder {
+    pub fn device(&self) -> &Device {
+        self.model.device()
+    }
+
     pub fn load(path: &Path, device: Device, dtype: DType) -> Result<Self> {
         Ok(Self {
             model: StarforgeModel::load_dtype(path, device, dtype)?,

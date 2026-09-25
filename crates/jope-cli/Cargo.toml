@@ -41,5 +41,7 @@ default = ["qualified-training-context"]
 qualified-training-context = ["jope-pipeline/qualified-context", "dep:jope-policy"]
 asm = ["jope-bench/asm"]
 
+inference-cuda = ["jope-bench/inference-cuda"]
+
 [lints]
 workspace = true
