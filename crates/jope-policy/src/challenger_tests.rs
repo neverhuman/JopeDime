@@ -101,7 +101,10 @@ fn run_binding(ctx: &[f32]) -> SeedBinding {
 fn scratch(tag: &str) -> PathBuf {
     let dir = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("../../target/tmp")
-        .join(format!("jope-policy-challenger-{}-{tag}", std::process::id()));
+        .join(format!(
+            "jope-policy-challenger-{}-{tag}",
+            std::process::id()
+        ));
     let _ = std::fs::remove_dir_all(&dir);
     std::fs::create_dir_all(&dir).unwrap();
     dir
