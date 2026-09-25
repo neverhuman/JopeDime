@@ -5244,12 +5244,13 @@
       },
       "lanes": [
         "rust-check",
+        "inputs",
         "full-default"
       ],
       "dispositions": [
         "runtime-tools"
       ],
-      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately. Binary/example runtime behavior is not claimed by build or its unit-test harness."
+      "scope": "The inputs lane additionally executes only commands::train_only_redteam::tests::bradley_terry, with a counted nested receipt and nonzero guard. Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately. Binary/example runtime behavior is not claimed by build or its unit-test harness."
     },
     "target:jope-dime-regressor/bin/jope_canary_executor": {
       "discovery": {

@@ -107,6 +107,9 @@ cargo run --locked --bin jope -- generate-fixtures --check --json --output datas
     # Keep the narrow library harness separate from deferred campaign execution.
 python3 deploy/ci/receipt.py --lane inputs --backend rust --output "$EVIDENCE/campaign-spec-policy" -- cargo test --locked -p jope-dime-regressor --lib spec_drift::tests -- --test-threads=1
 python3 -c 'import json,sys; r=json.load(open(sys.argv[1])); assert r["counts"]["executed"] > 0, "campaign policy collected no tests"' "$EVIDENCE/campaign-spec-policy/receipt.json"
+    # Data-free campaign ranking parity against the maintained arena reference.
+python3 deploy/ci/receipt.py --lane inputs --backend rust --output "$EVIDENCE/campaign-elo" -- cargo test --locked -p jope-dime-regressor --bin jope-dime-regressor commands::train_only_redteam::tests::bradley_terry -- --test-threads=1
+python3 -c 'import json,sys; r=json.load(open(sys.argv[1])); assert r["counts"]["executed"] > 0, "campaign Elo collected no tests"' "$EVIDENCE/campaign-elo/receipt.json"
     ;;
   python)
     # uv from the image

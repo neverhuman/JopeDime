@@ -130,6 +130,8 @@ class AggregateTests(unittest.TestCase):
         for path in (
             'crates/jope-campaigns/src/spec_drift.rs',
             'crates/jope-campaigns/src/spec_policy.rs',
+            'crates/jope-campaigns/src/commands/train_only_redteam.rs',
+            'crates/jope-arena/src/elo.rs',
             'crates/jope-campaigns/src/bin/new_renderer.rs',
             'crates/jope-campaigns/src/test_adaptive/scq_batch.rs',
             'python/src/jope/research/new_renderer.py',

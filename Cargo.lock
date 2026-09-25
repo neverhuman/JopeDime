@@ -2325,6 +2325,7 @@ dependencies = [
  "crossterm 0.28.1",
  "feat-math",
  "hex",
+ "jope-arena",
  "jope-paths",
  "libc",
  "memmap2",
