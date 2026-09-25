@@ -130,3 +130,18 @@ Cancel the probe after both denials are retained if GitHub still waits on the te
 Workers. Listener admission consumes a slot briefly; this remains a possible denial-of-service
 vector. Main-guard can queue behind a full run. PR caches remain shared across PRs within each
 fast slot; cross-PR isolation and enforced main protection are not claimed here.
+
+## Repository transfer observation — 2026-09-25 UTC
+
+During PR107 verification, GitHub's API reported the same repository ID
+`1376159324` under `neverhuman/JopeDime`. The old `veox-ai/JopeDime` JIT
+registration endpoint returned HTTP301, and the installed launchers failed before
+starting a container. The policy also pinned the former namespace.
+
+The launcher and status command now use the current canonical name. Admission
+requires both `neverhuman/JopeDime` and `GITHUB_REPOSITORY_ID=1376159324`, preserving
+the workflow, event, branch and storage-domain restrictions. A missing or changed
+ID, foreign repository or former namespace is rejected. This is a repository
+identity migration, not additional runner roles or resources. Deployment still
+requires independent review, installed-file preservation, drain and fresh CI with
+matching provenance; changing GitHub ownership alone does not qualify the hosts.

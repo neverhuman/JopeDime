@@ -9,8 +9,8 @@ import sys
 
 
 def authorize(policy, env):
-    repo = "veox-ai/JopeDime"
-    if env.get("GITHUB_REPOSITORY") != repo:
+    repo = "neverhuman/JopeDime"
+    if env.get("GITHUB_REPOSITORY") != repo or env.get("GITHUB_REPOSITORY_ID") != "1376159324":
         raise ValueError("foreign repository")
     workflow = env.get("GITHUB_WORKFLOW_REF", "")
     event = env.get("GITHUB_EVENT_NAME")
