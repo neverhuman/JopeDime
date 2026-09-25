@@ -7,9 +7,11 @@ the working v2 infra in ``jope/train.py`` but without the v2-model coupling.
 
 from __future__ import annotations
 
+import math
 import os
 import re
 from dataclasses import dataclass
+from datetime import timedelta
 
 import torch
 
@@ -23,28 +25,53 @@ class DistContext:
     device: str = "cpu"
 
 
-def init_distributed(requested_device: str) -> DistContext:
+def init_distributed(requested_device: str, *, timeout_seconds: float = 120) -> DistContext:
     if requested_device != "cpu" and re.fullmatch(r"cuda(?::[0-9]+)?", requested_device) is None:
         raise ValueError("supported training devices are cpu and cuda[:index]")
     if requested_device.startswith("cuda") and not torch.cuda.is_available():
         raise RuntimeError("CUDA was requested but is unavailable; select device='cpu' explicitly")
+    if not math.isfinite(timeout_seconds) or timeout_seconds <= 0:
+        raise ValueError("distributed timeout must be finite and positive")
     world_size = int(os.environ.get("WORLD_SIZE", "1"))
-    if world_size <= 1:
-        return DistContext(enabled=False, device=requested_device)
-    import torch.distributed as dist
-
+    if world_size < 1:
+        raise ValueError("WORLD_SIZE must be positive")
+    if world_size > 1:
+        for name in ("RANK", "LOCAL_RANK", "MASTER_ADDR", "MASTER_PORT"):
+            if not os.environ.get(name, "").strip():
+                raise ValueError(f"distributed training requires {name}")
+        if not 1 <= int(os.environ["MASTER_PORT"]) <= 65535:
+            raise ValueError("MASTER_PORT must be in 1..65535")
     rank = int(os.environ.get("RANK", "0"))
     local_rank = int(os.environ.get("LOCAL_RANK", "0"))
-    use_cuda = requested_device.startswith("cuda") and torch.cuda.is_available()
+    if not 0 <= rank < world_size or local_rank < 0:
+        raise ValueError("RANK must be in WORLD_SIZE and LOCAL_RANK must be nonnegative")
+    import torch.distributed as dist
+
+    use_cuda = requested_device.startswith("cuda")
+    backend = "nccl" if use_cuda else "gloo"
+    if dist.is_initialized() and (
+        dist.get_rank() != rank or dist.get_world_size() != world_size or dist.get_backend() != backend
+    ):
+        raise ValueError("existing process group differs from requested training topology")
+    if world_size == 1:
+        return DistContext(enabled=False, device=requested_device)
     if use_cuda:
+        if local_rank >= torch.cuda.device_count():
+            raise ValueError("LOCAL_RANK does not select a visible CUDA device")
+        if ":" in requested_device and int(requested_device.split(":")[1]) != local_rank:
+            raise ValueError("explicit CUDA device differs from LOCAL_RANK")
         torch.cuda.set_device(local_rank)
         device = f"cuda:{local_rank}"
-        backend = "nccl"
     else:
         device = "cpu"
-        backend = "gloo"
     if not dist.is_initialized():
-        dist.init_process_group(backend=backend, init_method="env://")
+        dist.init_process_group(
+            backend=backend,
+            init_method="env://",
+            rank=rank,
+            world_size=world_size,
+            timeout=timedelta(seconds=timeout_seconds),
+        )
     return DistContext(enabled=True, rank=rank, world_size=world_size, local_rank=local_rank, device=device)
 
 
