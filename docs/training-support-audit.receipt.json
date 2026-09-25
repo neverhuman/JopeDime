@@ -1,0 +1,34 @@
+{
+  "generated_utc": "2026-09-25T03:06:49.483926+00:00",
+  "source_sha": "1216b79cba73594b3d1c3a6d9b21011dee7daf5c",
+  "branch": "feat/training-support-multinode",
+  "renderer": "WeasyPrint 68.1",
+  "pages": 5,
+  "page_words": [
+    410,
+    447,
+    479,
+    569,
+    587
+  ],
+  "checks": {
+    "source_paths": "pass",
+    "markdown_parity": "pass",
+    "page_markers": "pass",
+    "visual_contact_sheet": "pass",
+    "diff_check": "pass"
+  },
+  "training_tests_executed": 0,
+  "optimizer_updates": 0,
+  "s3_mutations": 0,
+  "files": {
+    "/home/ubuntu/xbabe2_kicker/docs/JOPEDIME_TRAINING_SUPPORT_AUDIT.md": "db721f17732909215d0d7ae368d2cea050a74e1cc24c2d593a8409b770fb0215",
+    "/home/ubuntu/xbabe2_kicker/docs/JOPEDIME_TRAINING_SUPPORT_AUDIT.pdf": "164cd3f3168129256d3ee5679cb68e2e04560692fc7784f0c52dc6be3b4340df",
+    "/home/ubuntu/xbabe2_kicker/docs/JOPEDIME_TRAINING_SUPPORT_AUDIT.html": "84839a4b1cafc184f8d2edb55da0a2b9adf643b981d7c99bbae66591d200ac2a"
+  },
+  "limits": [
+    "No live S3/IAM inventory",
+    "No distributed runtime qualification",
+    "Architecture and selected-path audit, not exhaustive research-trainer correctness review"
+  ]
+}
