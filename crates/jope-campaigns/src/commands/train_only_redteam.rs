@@ -2032,10 +2032,8 @@ mod tests {
         // The maintained port of sotarena/elo.py is qualified separately by
         // jope-arena/tests/elo_regression.rs against retained ladder fixtures.
         // This is cross-implementation Rust parity, not a Python execution.
-        let reference = jope_arena::elo::fit_elo(&jope_arena::elo::matches_from_scores(
-            &scores,
-            1e-12,
-        ));
+        let reference =
+            jope_arena::elo::fit_elo(&jope_arena::elo::matches_from_scores(&scores, 1e-12));
         assert_eq!(
             rust.keys().collect::<Vec<_>>(),
             reference.keys().collect::<Vec<_>>()
