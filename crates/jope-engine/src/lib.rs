@@ -17,6 +17,8 @@ pub mod native_graph;
 #[cfg(feature = "neural")]
 pub mod neural;
 pub mod operations;
+#[cfg(feature = "neural")]
+pub mod policy_export;
 pub mod prepare;
 pub mod proposal_population;
 pub mod qualification_slots;

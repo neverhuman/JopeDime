@@ -148,11 +148,10 @@ fn run() -> Result<()> {
         &paths["--transforms"],
         Some("1b779c6ff7a1a812e3001342d663353d3c7ff54eb93392a600f01813f4c66e22"),
     )?;
-    let checkpoint = CheckpointBinding::from_receipt_bytes(&checked_bytes(
-        &paths["--checkpoint-receipt"],
-        None,
-    )?)?;
-    checkpoint.require_accepted_identity()?;
+    let checkpoint = CheckpointBinding::for_proposal(
+        &checked_bytes(&paths["--checkpoint-receipt"], None)?,
+        request.challenger.as_ref(),
+    )?;
     let vocabulary = bind_vocabulary(
         &checked_bytes(&paths["--vocabulary"], Some(&request.vocabulary_sha256))?,
         checkpoint.vocabulary_sha256(),

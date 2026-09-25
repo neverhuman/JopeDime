@@ -1,6 +1,6 @@
 # Campaigns
 
-> **Status on `main` (2026-09-21):** this page describes the target design from the port plan. Verbs marked WP7/WP11 (`jope models|datasets|learn|hwm|scores`) are not on `main` yet; `jope encode|fit|emit|search|champions|train-step|route` and `verify-inputs|generate-fixtures` are (see the README's "What this SHA actually does").
+> **Status on `main`:** this page describes the target design from the port plan. Run `jope --help` on `main` for the verbs that exist today. There is no `jope learn`, `jope hwm`, `jope scores` or `jope arena`; the learning store is the separate `jope-learning` binary, with `hwm` and `scores` subcommands, and the arena is the separate `jope-arena` binary. See the README's "What this SHA actually does".
 
 `crates/jope-campaigns` (package `jope-dime-regressor` until the WP5 rename) is the benchmark
 side of the repository: the programs that run jope-dime against fixed panels, keep their receipts

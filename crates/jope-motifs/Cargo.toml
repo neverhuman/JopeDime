@@ -1,0 +1,29 @@
+[package]
+name = "jope-motifs"
+publish = false
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "JOPE-Dime reusable program fragments: private tables, exact expansion and compatibility checks"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+anyhow.workspace = true
+clap.workspace = true
+feat-math = { path = "../feat-math" }
+jope-learning = { path = "../jope-learning" }
+jope-paths = { path = "../jope-paths" }
+# The scorer's numerical policy, shared with jope-learning rather than copied.
+jope-pipeline = { path = "../jope-pipeline" }
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[lints]
+workspace = true

@@ -3,9 +3,6 @@ that section is regenerated from committed evidence by `deploy/ci/readme-benchma
 SHA it was generated at. The timings on *this* page are historical: measured 2026-09-18 at `4235db6`,
 never re-measured at the head of `main`.
 
-The `wp7/models-cli` and `wp11/learning-store` work this page described as unlanded has since merged
-(#33, #34); run `jope --help` on current `main` for the verbs that exist today.
-
 ## Build the ASM-enabled CLI
 
 The ASM feature is opt-in. The historical default workspace build below does not enable it.
@@ -28,10 +25,8 @@ this documentation correction; no new release build or fitted prediction is clai
 
 # Quickstart (laptop, CPU only)
 
-For what the head of `main` actually does — the `jope` subcommands that exist today
-(`verify-inputs`, `generate-fixtures`, `encode`, `fit`, `emit`, `search`, `champions`,
-`train-step`, `route`) and the install/check commands for them — read the
-[README](../README.md). This page keeps the feat-math quickstart from the WP9 docs pass; every
+For what the head of `main` actually does — every `jope` subcommand (`jope --help` lists them)
+and the install/check commands for them — read the [README](../README.md). This page keeps the feat-math quickstart from the WP9 docs pass; every
 timing below was measured at `4235db6`, not at the head of `main`.
 
 Requirements: Rust 1.97.1 via `rustup` (`rust-toolchain.toml` selects it; MSRV 1.96), `g++`
@@ -54,7 +49,8 @@ cargo test -p feat-math --locked
 #    and byte-identical sources pinned in crates/feat-math/tests/fixtures/emitted/  (20 s at 4235db6)
 bash deploy/ci/emitters.sh
 
-# 4. emit one program yourself: model.py, model.rs, model.cpp, model.js + manifest.json (0.2 s at 4235db6)
+# 4. emit one program yourself: model.py, model.rs, model.cpp, model.js + manifest.json,
+#    targets.txt                                                       (0.2 s at 4235db6)
 cargo run -p feat-math --example emit -- crates/feat-math/tests/fixtures/emitted/portable-4lang.dsl /tmp/out
 ```
 
@@ -75,31 +71,34 @@ program takes `train.csv test_features.csv predictions` (headerless CSV, last tr
 target); the C++ and JavaScript artefacts are libraries, and `deploy/ci/emitters/driver.{cpp,js}`
 are the CSV drivers the matrix appends to them.
 
-## Models and datasets (as planned at `4235db6`)
+## Models, datasets and the learning store
 
-The `jope models`, `jope datasets`, `jope learn`, `jope hwm` and `jope scores` verbs named here
-are **not** on `main`; the bucket layout is the plan they implement.
+`jope models` and `jope datasets` are on `main` (crates `jope-models` and `jope-datasets`; `jope`
+runs them in process). There is no `jope learn`, `jope hwm` or `jope scores`: the learning store
+is the separate `jope-learning` binary, with `hwm` and `scores` subcommands.
 
 Nothing large is in git. Both stores are content-addressed and manifest-pinned:
 
 - **Models** — `s3://veox-jopedime-models-use2`: `blobs/sha256/<sha>` + `bundles/<id>/manifest.json`.
   Bundles today: `policy-step-60000`, `hyperion-v7`, `jope-prime-gen31-v2`; the repo commits their
   manifests under `models/` and the lanes that need weights read `models/PINNED`.
-  `jope models fetch <bundle-id>` (crate `jope-models`, landing with WP7) downloads by hash into
-  `$JOPE_HOME/models/`, prints each file's licence block and refuses `redistribution: prohibited`
-  without `--accept-restricted`; `jope models verify` re-hashes a cache. Pull-request lanes never
-  download weights.
+  `jope models fetch <bundle-id>` (store `JOPE_MODELS_URL`, default the bucket above) downloads by
+  hash into `$JOPE_HOME/models/`, prints the bundle's notices and each file's licence line, and
+  refuses `redistribution: prohibited` without `--accept-restricted`; `jope models verify`
+  re-hashes a cache. Pull-request lanes never download weights (`jope-models verify --manifests-only`).
 - **Datasets** — `s3://veox-jopedime-datasets-use2`: `blobs/sha256/<sha>`, `datasets/<hash>/manifest.json`,
   `collections/<name>/v<N>.json`, `catalog/`. The ten committed test datasets under `datasets/test/`
-  are the public collection `test-10`; `jope datasets fetch <collection|id>` (crate
-  `jope-datasets`, PR [#11](https://github.com/veox-ai/JopeDime/pull/11)) populates
+  are the public collection `test-10`; `jope datasets fetch <collection|id>` (store
+  `JOPE_DATASETS_URL`, default the bucket above) populates
   `$JOPE_HOME/datasets/{blobs,by-id}` with `.partial` + rename on hash match, and
   `JOPE_OFFLINE=1` serves the cache only. `JOPE_REGISTRY` (default `$JOPE_HOME/datasets/by-id`) is
   the directory of `<hash>/{train.csv,test.csv,meta.json}` the engine reads.
-- **Learning store** — `s3://veox-jopedime-learning-use2`: the HWM ledger and scores layout that
-  `jope-learning` writes when a `--store` / `JOPE_LEARNING_URL` mirror is configured
-  (`jope-learning hwm` / `jope-learning scores`, WP11). On 2026-09-23 the bucket held only `staging/` second
-  copies and none of that layout ([docs/learning.md](learning.md)).
+- **Learning store** — `jope-learning` keeps the hash-chained high-water-mark ledger and pointers
+  and the score ledger in the local state directory (`JOPE_STATE`, ADR-0003) and mirrors every
+  write to `--store` or `JOPE_LEARNING_URL` when one is set; with neither it stays local. The
+  binary has no built-in bucket; `s3://veox-jopedime-learning-use2` is the one this page names.
+  On 2026-09-23 that bucket held only `staging/` second copies and none of the mirror layout
+  ([docs/learning.md](learning.md)).
 - **Archive** — `s3://veox-jopedime-archive-use2`: the unfiltered git bundles
   (`git/20260916-…`, `git/20260918-jope-dime-all-refs.bundle`, with the filter-repo commit-map and
   ref-map beside them), `git-bundles/20260921/` and the `staging/node-high-value/` second copy.
@@ -108,4 +107,4 @@ Nothing large is in git. Both stores are content-addressed and manifest-pinned:
 
 Runtime roots (`JOPE_HOME`, `JOPE_STATE`, `JOPE_REGISTRY`, `SOTARENA_ROOT`,
 `SOTARENA_REPORTER_ROOT`) are resolved once by `jope-paths`
-([ADR-0003](adr/ADR-0003-runtime-roots.md), PR [#13](https://github.com/veox-ai/JopeDime/pull/13)).
+([ADR-0003](adr/ADR-0003-runtime-roots.md)).

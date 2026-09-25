@@ -147,6 +147,16 @@ fn pair_availability(plan: &CampaignPlan, journal: &Path, proof: &Value) -> Resu
     }))
 }
 
+/// The warm demo presents and exports the accepted system only. A native challenger
+/// proof plan is a preregistered comparison arm; it has no presentation or export route.
+pub(super) fn refuse_native_challenger(config: &Configuration) -> Result<()> {
+    ensure!(
+        config.native_challenger.is_none(),
+        "a native challenger proof plan is a comparison arm, not a demo route"
+    );
+    Ok(())
+}
+
 fn read_plan(cli: &DemoCli) -> Result<CampaignPlan> {
     let path = cli.asm_plan.as_ref().context("ASM plan required")?;
     let expected = cli
@@ -167,6 +177,7 @@ fn read_plan(cli: &DemoCli) -> Result<CampaignPlan> {
         );
     }
     let config = Configuration::from_campaign(&plan)?;
+    refuse_native_challenger(&config)?;
     warm_pair_limits(&plan.experiment.resources, config.seconds)?;
     config.verify_worker_builds()?;
     for dependency in config.dependencies() {
@@ -336,6 +347,10 @@ fn fitted_results(
 
 fn supervised(cli: &DemoCli, plan: &CampaignPlan, output: &Path, unit: &str) -> Result<Value> {
     let started = Instant::now();
+    let (kn, kg) = Configuration::from_campaign(plan)?
+        .incumbents
+        .as_ref()
+        .map_or((0, 0), |i| (i.neural.len(), i.generic.len()));
     let mut pool = ExecutionPool::open(
         &plan.experiment,
         &output.join("journal"),
@@ -368,7 +383,7 @@ fn supervised(cli: &DemoCli, plan: &CampaignPlan, output: &Path, unit: &str) -> 
     let report = json!({"schema":"jope.warm-asm-demo/v1","ok":ok,"reason":reason,"plan_sha256":plan.identity()?,
         "source_sha":plan.experiment.source_sha,"neural_consumed":proof["genuine_neural_origin_fit_proved"] == true,"matched_comparison":matched,"paired_budget":budgets,"result":result,"origin_proof":proof,
         "limits":plan.experiment.resources,"supervised_seconds":started.elapsed().as_secs_f64(),
-        "slots":{"neural":64,"exploration":16,"generic":80},"sealed_inputs_opened":false,"complete_panel_demonstration":false});
+        "slots":{"neural":64,"exploration":16 - kn,"generic":80 - kg,"incumbent":{"neural":kn,"generic":kg}},"sealed_inputs_opened":false,"complete_panel_demonstration":false});
     super::worker::write_private(&output.join("asm-demo-result.json"), &report)?;
     Ok(report)
 }

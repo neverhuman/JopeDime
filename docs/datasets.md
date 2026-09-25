@@ -1,9 +1,9 @@
 # Datasets
 
-> **Status on `main` (2026-09-21):** this page describes the target design from the port plan. Verbs marked WP7/WP11 (`jope models|datasets|learn|hwm|scores`) are not on `main` yet; `jope encode|fit|emit|search|champions|train-step|route` and `verify-inputs|generate-fixtures` are (see the README's "What this SHA actually does").
+> **Status on `main`:** this page describes the target design from the port plan. Run `jope --help` on `main` for the verbs that exist today. There is no `jope learn`, `jope hwm` or `jope scores`; the learning store is the separate `jope-learning` binary, with `hwm` and `scores` subcommands. See the README's "What this SHA actually does".
 
 Plan section: "Datasets: S3 organisation, de-duplication, the 10 test datasets, downloader".
-Implementation: crate `jope-datasets` (PR [#11](https://github.com/veox-ai/JopeDime/pull/11),
+Implementation: crate `jope-datasets` (landed by PR [#27](https://github.com/veox-ai/JopeDime/pull/27),
 WP-D1/D5). This page is the contract a contributor needs; the crate's rustdoc has the code-level
 detail.
 

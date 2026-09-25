@@ -28,6 +28,10 @@ pub struct Request {
     pub sampling_rounds: usize,
     pub sampling_batch: usize,
     pub sampling_temperature: f32,
+    /// The native challenger this request loads instead of the accepted checkpoint.
+    /// Omitted when absent, so accepted request bytes and identities are unchanged.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub challenger: Option<crate::config::ChallengerIdentity>,
 }
 /// All producer inputs known before encoding. The context output digest is
 /// attached later and cannot change the search arm's identity or clock.
@@ -47,6 +51,10 @@ pub struct RequestPlan {
     pub sampling_rounds: usize,
     pub sampling_batch: usize,
     pub sampling_temperature: f32,
+    /// The native challenger this request loads instead of the accepted checkpoint.
+    /// Omitted when absent, so accepted request bytes and identities are unchanged.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub challenger: Option<crate::config::ChallengerIdentity>,
 }
 impl RequestPlan {
     pub fn request(&self, context_sha256: String) -> Request {
@@ -64,6 +72,7 @@ impl RequestPlan {
             sampling_rounds: self.sampling_rounds,
             sampling_batch: self.sampling_batch,
             sampling_temperature: self.sampling_temperature,
+            challenger: self.challenger.clone(),
             context_sha256,
         }
     }
@@ -88,15 +97,27 @@ impl Request {
                 "invalid producer request digest"
             );
         }
-        ensure!(
-            self.policy_safetensors_sha256
-                == "4b4b5a40f03c9226b4b15856fd35b90127c8b6a4d1435b815484cdd050744f1e",
-            "unbound policy safetensors"
-        );
-        ensure!(
-            self.checkpoint_sha256 == crate::ACCEPTED_STATE_SHA256,
-            "producer requires accepted checkpoint state"
-        );
+        match &self.challenger {
+            None => {
+                ensure!(
+                    self.policy_safetensors_sha256
+                        == "4b4b5a40f03c9226b4b15856fd35b90127c8b6a4d1435b815484cdd050744f1e",
+                    "unbound policy safetensors"
+                );
+                ensure!(
+                    self.checkpoint_sha256 == crate::ACCEPTED_STATE_SHA256,
+                    "producer requires accepted checkpoint state"
+                );
+            }
+            Some(challenger) => {
+                challenger.validate()?;
+                ensure!(
+                    self.checkpoint_sha256 == challenger.state_sha256
+                        && self.policy_safetensors_sha256 == challenger.policy_safetensors_sha256,
+                    "producer request differs from its challenger identity"
+                );
+            }
+        }
         ensure!(
             [
                 crate::CHECKPOINT_VOCABULARY_SHA256,
@@ -132,9 +153,10 @@ struct Envelope {
     ranking_backend: String,
 }
 
-/// Called only by the pinned policy worker after `seeds::propose`. Request seed
-/// and sampling fields must be used by that worker when invoking propose; their
-/// binding is audited executable behavior, not inferable from sampled programs.
+/// Called only by the pinned policy worker after `seeds::propose` or
+/// `seeds::propose_challenger`. Request seed and sampling fields must be used by that
+/// worker when invoking either; their binding is audited executable behavior, not
+/// inferable from sampled programs.
 fn artifact_bytes(request: &Request, proposal: &Proposal) -> Result<Vec<u8>> {
     let request_sha256 = request.identity()?;
     let population = proposal.population();
@@ -195,23 +217,37 @@ pub fn produce(
         &request.training_sha256,
         &request.context_sha256,
     )?;
-    let proposal = seeds::propose(
-        model,
-        checkpoint,
-        vocabulary,
-        context,
-        &binding,
-        &seeds::ProposalSeeds {
-            sampling: request.sampling_seed,
-            fallback: request.fallback_seed,
-            exploration: request.exploration_seed,
-        },
-        &crate::decode::SamplingOptions {
-            rounds: request.sampling_rounds,
-            batch: request.sampling_batch,
-            temperature: request.sampling_temperature,
-        },
-    )?;
+    let proposal_seeds = seeds::ProposalSeeds {
+        sampling: request.sampling_seed,
+        fallback: request.fallback_seed,
+        exploration: request.exploration_seed,
+    };
+    let sampling = crate::decode::SamplingOptions {
+        rounds: request.sampling_rounds,
+        batch: request.sampling_batch,
+        temperature: request.sampling_temperature,
+    };
+    let proposal = match &request.challenger {
+        None => seeds::propose(
+            model,
+            checkpoint,
+            vocabulary,
+            context,
+            &binding,
+            &proposal_seeds,
+            &sampling,
+        )?,
+        Some(challenger) => seeds::propose_challenger(
+            model,
+            checkpoint,
+            challenger,
+            vocabulary,
+            context,
+            &binding,
+            &proposal_seeds,
+            &sampling,
+        )?,
+    };
     artifact_bytes(request, &proposal)
 }
 
@@ -297,11 +333,14 @@ mod tests {
             sampling_rounds: 8,
             sampling_batch: 128,
             sampling_temperature: 1.,
+            challenger: None,
         }
     }
     // Deliberately forgeable file claims, never a Proposal or execution proof.
     fn claims() -> Envelope {
-        let request = request();
+        claims_for(request())
+    }
+    fn claims_for(request: Request) -> Envelope {
         let genomes = (0..80)
             .map(|i| format!("(pipe X (ridge lambda={}))", i + 1))
             .collect::<Vec<_>>();
@@ -342,6 +381,113 @@ mod tests {
         let mut different = expected.clone();
         different.context_sha256 = sha256_hex(b"another context");
         assert!(read_claims(&serde_json::to_vec(&claims())?, &different).is_err());
+        Ok(())
+    }
+
+    fn challenger() -> crate::config::ChallengerIdentity {
+        crate::config::ChallengerIdentity {
+            state_sha256: sha256_hex(b"challenger state"),
+            parameter_sha256: sha256_hex(b"challenger parameters"),
+            config_sha256: crate::ACCEPTED_CONFIG_SHA256.into(),
+            policy_safetensors_sha256: sha256_hex(b"challenger weights"),
+        }
+    }
+    fn challenger_request() -> Request {
+        let c = challenger();
+        Request {
+            checkpoint_sha256: c.state_sha256.clone(),
+            policy_safetensors_sha256: c.policy_safetensors_sha256.clone(),
+            challenger: Some(c),
+            ..request()
+        }
+    }
+    fn refused(request: Request, needle: &str) {
+        let error = request.validate().unwrap_err();
+        assert!(format!("{error:#}").contains(needle), "{error:#}");
+    }
+    #[test]
+    fn challenger_request_is_optional_and_bound() -> Result<()> {
+        // Absent: accepted request bytes, parse and identity are unchanged.
+        let accepted = request();
+        let bytes = serde_json::to_vec(&accepted)?;
+        assert!(!String::from_utf8(bytes.clone())?.contains("\"challenger\""));
+        let parsed: Request = serde_json::from_slice(&bytes)?;
+        assert_eq!(parsed.challenger, None);
+        assert_eq!(serde_json::to_vec(&parsed)?, bytes);
+        assert_eq!(parsed.identity()?, accepted.identity()?);
+        // Present: bound to its own state and weights, and a different request identity.
+        let c = challenger();
+        let bound = challenger_request();
+        bound.validate()?;
+        assert_ne!(bound.identity()?, accepted.identity()?);
+        refused(
+            Request {
+                checkpoint_sha256: sha256_hex(b"other state"),
+                ..challenger_request()
+            },
+            "differs from its challenger identity",
+        );
+        refused(
+            Request {
+                policy_safetensors_sha256: sha256_hex(b"other weights"),
+                ..challenger_request()
+            },
+            "differs from its challenger identity",
+        );
+        let mut named_accepted = c.clone();
+        named_accepted.state_sha256 = crate::ACCEPTED_STATE_SHA256.into();
+        refused(
+            Request {
+                checkpoint_sha256: crate::ACCEPTED_STATE_SHA256.into(),
+                challenger: Some(named_accepted),
+                ..challenger_request()
+            },
+            "names the accepted identity",
+        );
+        // An accepted-shaped request cannot carry a challenger.
+        assert!(Request {
+            challenger: Some(c.clone()),
+            ..request()
+        }
+        .validate()
+        .is_err());
+        // The plan carries the identity into the request.
+        let r = challenger_request();
+        let plan = RequestPlan {
+            worker_source_sha256: r.worker_source_sha256.clone(),
+            prepared_sha256: r.prepared_sha256.clone(),
+            training_sha256: r.training_sha256.clone(),
+            cut: r.cut,
+            checkpoint_sha256: r.checkpoint_sha256.clone(),
+            policy_safetensors_sha256: r.policy_safetensors_sha256.clone(),
+            vocabulary_sha256: r.vocabulary_sha256.clone(),
+            sampling_seed: r.sampling_seed,
+            fallback_seed: r.fallback_seed,
+            exploration_seed: r.exploration_seed,
+            sampling_rounds: r.sampling_rounds,
+            sampling_batch: r.sampling_batch,
+            sampling_temperature: r.sampling_temperature,
+            challenger: Some(c.clone()),
+        };
+        plan.validate()?;
+        assert_eq!(plan.request(r.context_sha256.clone()), r);
+        assert_eq!(plan.request(r.context_sha256.clone()).challenger, Some(c));
+        // The reader binds the population to the challenger state, never the accepted one.
+        let file = read_claims(
+            &serde_json::to_vec(&claims_for(challenger_request()))?,
+            &challenger_request(),
+        )?;
+        assert_eq!(
+            file.population().checkpoint_sha256(),
+            challenger_request().checkpoint_sha256
+        );
+        let mut relabelled = claims_for(challenger_request());
+        let mut population: serde_json::Value = serde_json::from_str(&relabelled.population_json)?;
+        population["checkpoint_sha256"] = serde_json::json!(crate::ACCEPTED_STATE_SHA256);
+        let population = serde_json::to_vec(&population)?;
+        relabelled.population_sha256 = sha256_hex(&population);
+        relabelled.population_json = String::from_utf8(population)?;
+        assert!(read_claims(&serde_json::to_vec(&relabelled)?, &challenger_request()).is_err());
         Ok(())
     }
 }

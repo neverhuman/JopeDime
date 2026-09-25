@@ -1803,6 +1803,20 @@
       "dispositions": [],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "package:jope-motifs": {
+      "discovery": {
+        "kind": "package",
+        "manifest": "crates/jope-motifs/Cargo.toml"
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default",
+        "full-doctests"
+      ],
+      "dispositions": [],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
     "package:jope-parallel": {
       "discovery": {
         "kind": "package",
@@ -6545,6 +6559,23 @@
         "rust-check",
         "rust-test",
         "full-default"
+      ],
+      "dispositions": [],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:jope-motifs/lib/jope_motifs": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-motifs/src/lib.rs",
+        "test": true,
+        "doctest": true,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default",
+        "full-doctests"
       ],
       "dispositions": [],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
