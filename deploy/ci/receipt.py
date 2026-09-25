@@ -15,7 +15,7 @@ ENV_KEYS = ("CARGO_BUILD_JOBS", "CARGO_INCREMENTAL", "CARGO_PROFILE_DEV_DEBUG", 
             "OMP_NUM_THREADS", "RAYON_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS",
             "JOPE_PARITY_STRICT", "JOPE_RUNNER_LANE", "JOPE_CPU_CLASS")
 
-INPUTS = ("Cargo.lock", "rust-toolchain.toml", "python/uv.lock", "deploy/ci/coverage.json", "deploy/ci/fast-lane.sh", "deploy/ci/receipt.py", "deploy/ci/results.py", "deploy/ci/ci-plan.py", "deploy/ci/full-lane.sh", "deploy/ci/full-main.py")
+INPUTS = ("Cargo.lock", "rust-toolchain.toml", "python/uv.lock", "deploy/ci/coverage.json", "deploy/ci/fast-lane.sh", "deploy/ci/receipt.py", "deploy/ci/results.py", "deploy/ci/ci-plan.py", "deploy/ci/full-lane.sh", "deploy/ci/full-main.py", "deploy/ci/pytest-evidence.sh")
 
 
 def digest(path):

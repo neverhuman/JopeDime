@@ -42,7 +42,7 @@ PY
     )
     ((${#families[@]} > 0)) || { echo 'no maintained Python families selected'; exit 1; }
     printf '%s\n' "${families[@]}" > "$EVIDENCE/families.txt"
-    (cd python && uv run --no-sync pytest -q -m 'not xbabe2' -p no:cacheprovider --basetemp="$EVIDENCE/pytest-tmp" --junitxml="$EVIDENCE/junit.xml" "${families[@]}")
+    (cd python && bash ../deploy/ci/pytest-evidence.sh uv run --no-sync pytest -q -m 'not xbabe2' -p no:cacheprovider "${families[@]}")
     python3 deploy/ci/training-proof.py python --junit "$EVIDENCE/junit.xml"
     ;;
   full-inputs|full-e2e|full-emitters)
