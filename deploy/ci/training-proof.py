@@ -60,6 +60,8 @@ PYTHON += [("tests.test_training_comparison", name) for name in (
     "test_comparison_cannot_open_a_window",
 )]
 PYTHON += [("tests.test_training_transition", "test_fresh_teacher_does_not_relabel_replay_or_routing")]
+PYTHON += [("tests.test_policy_training_contract", f"test_real_distributed_cpu_updates_and_shards[{world}]")
+           for world in (2, 3)]
 NATIVE = [
     ("jope-cli::bin/jope", "train::tests::" + name)
     for name in (
