@@ -921,16 +921,6 @@
       ],
       "scope": "Test harness correctness under PR filter; fresh performance measurements deferred."
     },
-    "benchmark:crates/jope-bench/src/panel/inference_benchmark.rs": {
-      "discovery": {
-        "kind": "benchmark-source"
-      },
-      "lanes": [],
-      "dispositions": [
-        "benchmark"
-      ],
-      "scope": "Bounded timing study implementation. Local CUDA build and failure receipt retained; no CI performance or GPU qualification claim."
-    },
     "benchmark:crates/jope-engine/examples/gpr_cuda_bench.rs": {
       "discovery": {
         "kind": "benchmark-source"
@@ -1344,115 +1334,6 @@
       "dispositions": [],
       "scope": "Explicit CPU feature invocation; runtime/SDK failure remains an observed diagnostic failure. No GPU or live S3 qualification."
     },
-    "feature:jope-bench/asm": {
-      "discovery": {
-        "kind": "feature",
-        "dependencies": [
-          "dep:jope-learning",
-          "dep:jope-policy",
-          "jope-pipeline/qualified-context"
-        ]
-      },
-      "lanes": [
-        "rust-test",
-        "full-default"
-      ],
-      "dispositions": [],
-      "scope": "Explicit CLI asm feature collects paired optimization, typed generic sampler, scheduling, report and build receipt contracts; live model proof separate. Includes authenticated teaching admission through jope-learning; no live training qualification implied."
-    },
-    "feature:jope-bench/default": {
-      "discovery": {
-        "kind": "feature",
-        "dependencies": []
-      },
-      "lanes": [
-        "rust-test",
-        "full-default"
-      ],
-      "dispositions": [],
-      "scope": "Empty package-default marker; optional ASM explicitly selected."
-    },
-    "feature:jope-bench/inference-cuda": {
-      "discovery": {
-        "kind": "feature",
-        "dependencies": [
-          "asm",
-          "candle-core/cuda",
-          "dep:candle-core",
-          "jope-pipeline/timing-study",
-          "jope-policy/inference-cuda"
-        ]
-      },
-      "lanes": [],
-      "dispositions": [
-        "gpu"
-      ],
-      "scope": "Explicit optional timing-study feature, not selected by CPU CI. Local build/boundary proof is separate from operational GPU qualification."
-    },
-    "feature:jope-cli/asm": {
-      "discovery": {
-        "kind": "feature",
-        "dependencies": [
-          "jope-bench/asm"
-        ]
-      },
-      "lanes": [
-        "rust-test",
-        "full-default"
-      ],
-      "dispositions": [],
-      "scope": "Explicit optional CLI command and benchmark integration; CPU-only dependency graph, no GPU/model qualification implied."
-    },
-    "feature:jope-cli/default": {
-      "discovery": {
-        "kind": "feature",
-        "dependencies": [
-          "qualified-training-context"
-        ]
-      },
-      "lanes": [
-        "rust-check",
-        "rust-test",
-        "inputs",
-        "full-default"
-      ],
-      "dispositions": [
-        "runtime-tools"
-      ],
-      "scope": "Default CPU-only native training/context admission feature. Hosted nextest explicitly enables qualified-training-context and requires named training/context tests; actual supervised training and GPU execution need separate bounded qualification."
-    },
-    "feature:jope-cli/inference-cuda": {
-      "discovery": {
-        "kind": "feature",
-        "dependencies": [
-          "jope-bench/inference-cuda"
-        ]
-      },
-      "lanes": [],
-      "dispositions": [
-        "gpu"
-      ],
-      "scope": "Explicit optional timing-study feature, not selected by CPU CI. Local build/boundary proof is separate from operational GPU qualification."
-    },
-    "feature:jope-cli/qualified-training-context": {
-      "discovery": {
-        "kind": "feature",
-        "dependencies": [
-          "dep:jope-policy",
-          "jope-pipeline/qualified-context"
-        ]
-      },
-      "lanes": [
-        "rust-check",
-        "rust-test",
-        "inputs",
-        "full-default"
-      ],
-      "dispositions": [
-        "runtime-tools"
-      ],
-      "scope": "Default CPU-only native training/context admission feature. Hosted nextest explicitly enables qualified-training-context and requires named training/context tests; actual supervised training and GPU execution need separate bounded qualification."
-    },
     "feature:jope-dime-regressor/gpr-scratch-reuse": {
       "discovery": {
         "kind": "feature",
@@ -1517,77 +1398,6 @@
       "dispositions": [],
       "scope": "Explicit CPU feature invocation; runtime/SDK failure remains an observed diagnostic failure. No GPU or live S3 qualification."
     },
-    "feature:jope-pipeline/default": {
-      "discovery": {
-        "kind": "feature",
-        "dependencies": []
-      },
-      "lanes": [
-        "rust-check",
-        "rust-test",
-        "full-default"
-      ],
-      "dispositions": [],
-      "scope": "Empty package-default marker; qualified-context separately selected."
-    },
-    "feature:jope-pipeline/neural-search": {
-      "discovery": {
-        "kind": "feature",
-        "dependencies": [
-          "dep:jope-policy"
-        ]
-      },
-      "lanes": [
-        "rust-test",
-        "full-default"
-      ],
-      "dispositions": [],
-      "scope": "Explicit qualified-context enables neural proposal/OOF/evolution contract tests; real model qualification is separate."
-    },
-    "feature:jope-pipeline/qualified-context": {
-      "discovery": {
-        "kind": "feature",
-        "dependencies": [
-          "jope-policy/context-producer",
-          "neural-search"
-        ]
-      },
-      "lanes": [
-        "rust-test",
-        "full-default"
-      ],
-      "dispositions": [],
-      "scope": "Explicit CPU context/receipt feature tests, not a live numerical parity claim."
-    },
-    "feature:jope-pipeline/timing-study": {
-      "discovery": {
-        "kind": "feature",
-        "dependencies": [
-          "neural-search"
-        ]
-      },
-      "lanes": [],
-      "dispositions": [
-        "benchmark"
-      ],
-      "scope": "Explicit optional timing-study feature, not selected by CPU CI. Local build/boundary proof is separate from operational GPU qualification."
-    },
-    "feature:jope-policy/context-producer": {
-      "discovery": {
-        "kind": "feature",
-        "dependencies": [
-          "dep:hyperion",
-          "dep:starforge"
-        ]
-      },
-      "lanes": [
-        "rust-test",
-        "full-default",
-        "full-policy"
-      ],
-      "dispositions": [],
-      "scope": "Explicit CPU-only producer contract tests; no GPU or reference-model qualification implied."
-    },
     "feature:jope-policy/cuda": {
       "discovery": {
         "kind": "feature",
@@ -1614,22 +1424,6 @@
       ],
       "dispositions": [],
       "scope": "Default feature graph in PR selection and the full workspace main profile."
-    },
-    "feature:jope-policy/inference-cuda": {
-      "discovery": {
-        "kind": "feature",
-        "dependencies": [
-          "context-producer",
-          "cuda",
-          "hyperion/hyperion-cuda",
-          "starforge/cuda"
-        ]
-      },
-      "lanes": [],
-      "dispositions": [
-        "gpu"
-      ],
-      "scope": "Explicit optional timing-study feature, not selected by CPU CI. Local build/boundary proof is separate from operational GPU qualification."
     },
     "feature:jope-policy/testing": {
       "discovery": {
@@ -1668,16 +1462,6 @@
       ],
       "dispositions": [],
       "scope": "Default feature graph in PR selection and the full workspace main profile."
-    },
-    "job:.github/workflows/ci.yml/aggregate": {
-      "discovery": {
-        "kind": "workflow-job"
-      },
-      "lanes": [
-        "aggregate"
-      ],
-      "dispositions": [],
-      "scope": "Always aggregate current run/attempt receipts; reject failures, cancellations, missing/unknown/zero results. Path skips require declared exclusion."
     },
     "job:.github/workflows/ci.yml/changes": {
       "discovery": {
@@ -1759,28 +1543,6 @@
       "dispositions": [],
       "scope": "Configured fast PR/manual lane; path-excluded jobs are not passes."
     },
-    "job:.github/workflows/full-main.yml/cpu": {
-      "discovery": {
-        "kind": "workflow-job"
-      },
-      "lanes": [
-        "full-build-reuse",
-        "full-python",
-        "full-default",
-        "full-doctests",
-        "full-scratch",
-        "full-policy",
-        "full-s3-offline",
-        "full-neural",
-        "full-inputs",
-        "full-e2e",
-        "full-emitters"
-      ],
-      "dispositions": [
-        "cpu-qualification"
-      ],
-      "scope": "Push/main-manual diagnostic CPU families, independent outcomes within120minutes; no merge gate or qualification claim."
-    },
     "job:.github/workflows/main-guard.yml/guard": {
       "discovery": {
         "kind": "workflow-job"
@@ -1800,26 +1562,6 @@
         "release"
       ],
       "scope": "Configured workflow/job; current execution unqualified."
-    },
-    "job:.github/workflows/runner-admission-probe.yml/reject-fast": {
-      "discovery": {
-        "kind": "workflow-job"
-      },
-      "lanes": [
-        "runner-admission-probe"
-      ],
-      "dispositions": [],
-      "scope": "Deliberately rejected job in each storage domain. Failure alone is insufficient: require real Worker denial, no always-step execution and container termination. Not functional test coverage."
-    },
-    "job:.github/workflows/runner-admission-probe.yml/reject-main": {
-      "discovery": {
-        "kind": "workflow-job"
-      },
-      "lanes": [
-        "runner-admission-probe"
-      ],
-      "dispositions": [],
-      "scope": "Deliberately rejected job in each storage domain. Failure alone is insufficient: require real Worker denial, no always-step execution and container termination. Not functional test coverage."
     },
     "job:.github/workflows/weekly.yml/regression-suite": {
       "discovery": {
@@ -1962,10 +1704,10 @@
       "dispositions": [],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
-    "package:jope-arena": {
+    "package:jope-bench": {
       "discovery": {
         "kind": "package",
-        "manifest": "crates/jope-arena/Cargo.toml"
+        "manifest": "crates/jope-bench/Cargo.toml"
       },
       "lanes": [
         "rust-check",
@@ -1976,10 +1718,10 @@
       "dispositions": [],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
-    "package:jope-bench": {
+    "package:jope-arena": {
       "discovery": {
         "kind": "package",
-        "manifest": "crates/jope-bench/Cargo.toml"
+        "manifest": "crates/jope-arena/Cargo.toml"
       },
       "lanes": [
         "rust-check",
@@ -2171,46 +1913,6 @@
       "dispositions": [],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
-    "python:benchmarks/test_prepare.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "lanes": [
-        "python"
-      ],
-      "dispositions": [],
-      "scope": "Existing fast Python lane explicitly collects benchmarks/test_prepare.py with the optional benchmark dependencies: grouped/stratified preparation, sealed partition isolation, immutable bytes, label preservation and frozen selection. Synthetic local fixtures; no network or fitting. Not assigned to full-main."
-    },
-    "python:crates/jope-bench/adapters/test_panel.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "lanes": [
-        "python"
-      ],
-      "dispositions": [],
-      "scope": "Fast Python lane explicitly collects this adapter contract suite in the benchmark environment and includes it in the lane JUnit report. Synthetic estimators verify nullable raw cells, train-only preprocessing, declared probability columns, complete fitted reload, immutable private outputs and leakage refusal. No external-engine or real-panel qualification; not assigned to full-main."
-    },
-    "python:crates/jope-bench/src/panel/test_inference_report.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "lanes": [
-        "python"
-      ],
-      "dispositions": [],
-      "scope": "Explicitly collected timing receipt/report contract tests in Python lane JUnit; no CUDA execution."
-    },
-    "python:deploy/ci/test-aggregate.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "lanes": [
-        "hygiene"
-      ],
-      "dispositions": [],
-      "scope": "Direct stdlib unittest execution of CI result reconciliation, aggregate failure handling or exact-run operator reporting."
-    },
     "python:deploy/ci/test-cargo-artifact.py": {
       "discovery": {
         "kind": "python-family"
@@ -2230,96 +1932,6 @@
       ],
       "dispositions": [],
       "scope": "Direct stdlib unittest execution."
-    },
-    "python:deploy/ci/test-full-main.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "lanes": [
-        "hygiene"
-      ],
-      "dispositions": [],
-      "scope": "Direct stdlib unittest execution of CPU runner admission/resources or independent family failure retention."
-    },
-    "python:deploy/ci/test-install-private.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "lanes": [
-        "hygiene"
-      ],
-      "dispositions": [],
-      "scope": "Direct stdlib unittest execution of checksum-pinned private CLI installation and source-build custody boundaries. Compiler, ELF and binary probes are explicitly mocked; no actual source build, installation or model fit."
-    },
-    "python:deploy/ci/test-prepare-asm-runtime.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "lanes": [
-        "hygiene"
-      ],
-      "dispositions": [],
-      "scope": "Metadata fixture validation of source/build/worker/configuration pins, custody paths and lock refusal. Compiler and native validator are mocked; no numerical worker or model qualification."
-    },
-    "python:deploy/ci/test-qualify-demo.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "lanes": [
-        "hygiene"
-      ],
-      "dispositions": [],
-      "scope": "Direct stdlib unittest execution of synthetic retained demo scoring, identity and tamper validation. No actual model fit, installation or neural demo."
-    },
-    "python:deploy/ci/test-receipt.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "lanes": [
-        "hygiene"
-      ],
-      "dispositions": [],
-      "scope": "Direct stdlib unittest execution of receipt identity, failure retention and evidence integrity."
-    },
-    "python:deploy/ci/test-results.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "lanes": [
-        "hygiene"
-      ],
-      "dispositions": [],
-      "scope": "Direct stdlib unittest execution of CI result reconciliation, aggregate failure handling or exact-run operator reporting."
-    },
-    "python:deploy/ci/test-runner.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "lanes": [
-        "hygiene"
-      ],
-      "dispositions": [],
-      "scope": "Direct stdlib unittest execution of CPU runner admission/resources or independent family failure retention."
-    },
-    "python:deploy/ci/test-status.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "lanes": [
-        "hygiene"
-      ],
-      "dispositions": [],
-      "scope": "Direct stdlib unittest execution of CI result reconciliation, aggregate failure handling or exact-run operator reporting."
-    },
-    "python:deploy/ci/test-training-proof.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "lanes": [
-        "hygiene"
-      ],
-      "dispositions": [],
-      "scope": "Direct stdlib unittest execution verifies required-training collection/JUnit gates reject missing, skipped, failed, stale or renamed cases."
     },
     "python:deploy/kernel-v1/source/tests/test_experiment_scheduler.py": {
       "discovery": {
@@ -4185,28 +3797,6 @@
       "dispositions": [],
       "scope": "Maintained pytest family: PR execution selects not xbabe2; full-main CPU uses this explicit file list and reports excluded host-only cases. Full-main selects this maintained file explicitly; xbabe2-marked tests remain deselected."
     },
-    "python:python/tests/test_experimental_proposal.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "lanes": [
-        "python",
-        "full-python"
-      ],
-      "dispositions": [],
-      "scope": "Maintained CPU training/context contract family; actual optimizer/update/reload/proposal cases execute in isolated synthetic fixtures. Required cases are checked against current JUnit by training-proof.py; this does not qualify real-corpus or CUDA training."
-    },
-    "python:python/tests/test_experimental_runtime.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "lanes": [
-        "python",
-        "full-python"
-      ],
-      "dispositions": [],
-      "scope": "Maintained CPU training/context contract family; actual optimizer/update/reload/proposal cases execute in isolated synthetic fixtures. Required cases are checked against current JUnit by training-proof.py; this does not qualify real-corpus or CUDA training."
-    },
     "python:python/tests/test_external_fixture_index.py": {
       "discovery": {
         "kind": "python-family"
@@ -4242,17 +3832,6 @@
       ],
       "dispositions": [],
       "scope": "Maintained pytest family: PR execution selects not xbabe2; full-main CPU uses this explicit file list and reports excluded host-only cases. Full-main selects this maintained file explicitly; xbabe2-marked tests remain deselected."
-    },
-    "python:python/tests/test_frozen_vocabulary_training.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "lanes": [
-        "python",
-        "full-python"
-      ],
-      "dispositions": [],
-      "scope": "Maintained CPU training/context contract family; actual optimizer/update/reload/proposal cases execute in isolated synthetic fixtures. Required cases are checked against current JUnit by training-proof.py; this does not qualify real-corpus or CUDA training."
     },
     "python:python/tests/test_genome_boost_cluster_campaign.py": {
       "discovery": {
@@ -4398,17 +3977,6 @@
       "dispositions": [],
       "scope": "Maintained pytest family: PR execution selects not xbabe2; full-main CPU uses this explicit file list and reports excluded host-only cases. Full-main selects this maintained file explicitly; xbabe2-marked tests remain deselected."
     },
-    "python:python/tests/test_policy_training_contract.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "lanes": [
-        "python",
-        "full-python"
-      ],
-      "dispositions": [],
-      "scope": "Maintained CPU training/context contract family; actual optimizer/update/reload/proposal cases execute in isolated synthetic fixtures. Required cases are checked against current JUnit by training-proof.py; this does not qualify real-corpus or CUDA training."
-    },
     "python:python/tests/test_raw_floor_train_audit.py": {
       "discovery": {
         "kind": "python-family"
@@ -4528,61 +4096,6 @@
       ],
       "dispositions": [],
       "scope": "Maintained pytest family: PR execution selects not xbabe2; full-main CPU uses this explicit file list and reports excluded host-only cases. Full-main selects this maintained file explicitly; xbabe2-marked tests remain deselected."
-    },
-    "python:python/tests/test_training_campaign.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "lanes": [
-        "python",
-        "full-python"
-      ],
-      "dispositions": [],
-      "scope": "Maintained CPU training/context contract family; actual optimizer/update/reload/proposal cases execute in isolated synthetic fixtures. Required cases are checked against current JUnit by training-proof.py; this does not qualify real-corpus or CUDA training."
-    },
-    "python:python/tests/test_training_comparison.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "lanes": [
-        "python",
-        "full-python"
-      ],
-      "dispositions": [],
-      "scope": "Tiny CPU fixtures for explicit optimizer-preserving corpus transitions and equal-update siblings; no real-corpus quality or serving qualification."
-    },
-    "python:python/tests/test_training_corpus_contract.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "lanes": [
-        "python",
-        "full-python"
-      ],
-      "dispositions": [],
-      "scope": "Maintained CPU training/context contract family; actual optimizer/update/reload/proposal cases execute in isolated synthetic fixtures. Required cases are checked against current JUnit by training-proof.py; this does not qualify real-corpus or CUDA training."
-    },
-    "python:python/tests/test_training_input_closure.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "lanes": [
-        "python",
-        "full-python"
-      ],
-      "dispositions": [],
-      "scope": "Projected input allowlist metadata fixtures: forbidden/extra/unlisted artifacts and excluded-data mutation invariance, with no model load or numerical qualification."
-    },
-    "python:python/tests/test_training_transition.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "lanes": [
-        "python",
-        "full-python"
-      ],
-      "dispositions": [],
-      "scope": "Tiny CPU fixtures for explicit optimizer-preserving corpus transitions and equal-update siblings; no real-corpus quality or serving qualification."
     },
     "python:python/tests/test_verify_old_hyperion_vs_replays.py": {
       "discovery": {
@@ -7948,23 +7461,6 @@
       "dispositions": [],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
-    "target:jope-pipeline/bin/jope-context-proof": {
-      "discovery": {
-        "kind": "target",
-        "source": "crates/jope-pipeline/src/bin/jope-context-proof.rs",
-        "test": true,
-        "doctest": false,
-        "required_features": [
-          "qualified-context"
-        ]
-      },
-      "lanes": [
-        "rust-test",
-        "full-default"
-      ],
-      "dispositions": [],
-      "scope": "Feature-selected controller compilation. Real systemd reference proof remains a separate allocated host run."
-    },
     "target:jope-pipeline/example/receipt_schema": {
       "discovery": {
         "kind": "target",
@@ -8014,41 +7510,6 @@
       ],
       "dispositions": [],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
-    },
-    "target:jope-policy/bin/jope-context-worker": {
-      "discovery": {
-        "kind": "target",
-        "source": "crates/jope-policy/src/bin/jope-context-worker.rs",
-        "test": true,
-        "doctest": false,
-        "required_features": [
-          "context-producer"
-        ]
-      },
-      "lanes": [
-        "rust-test",
-        "full-default",
-        "full-policy"
-      ],
-      "dispositions": [],
-      "scope": "Feature-selected worker compilation; library contracts execute in these lanes, no model load implied."
-    },
-    "target:jope-policy/bin/jope-policy-producer": {
-      "discovery": {
-        "kind": "target",
-        "source": "crates/jope-policy/src/bin/jope-policy-producer.rs",
-        "test": true,
-        "doctest": false,
-        "required_features": []
-      },
-      "lanes": [
-        "rust-check",
-        "rust-test",
-        "full-default",
-        "full-policy"
-      ],
-      "dispositions": [],
-      "scope": "Private producer binary compilation; unit/library contracts are separate from accepted-model execution."
     },
     "target:jope-policy/lib/jope_policy": {
       "discovery": {
@@ -8316,6 +7777,106 @@
       "dispositions": [],
       "scope": "Configured fast PR/manual lane; path-excluded jobs are not passes."
     },
+    "workflow:.github/workflows/main-guard.yml": {
+      "discovery": {
+        "kind": "workflow"
+      },
+      "lanes": [
+        "main-guard"
+      ],
+      "dispositions": [],
+      "scope": "Push-to-main provenance gate."
+    },
+    "workflow:.github/workflows/release.yml": {
+      "discovery": {
+        "kind": "workflow"
+      },
+      "lanes": [],
+      "dispositions": [
+        "release"
+      ],
+      "scope": "Configured workflow/job; current execution unqualified."
+    },
+    "workflow:.github/workflows/weekly.yml": {
+      "discovery": {
+        "kind": "workflow"
+      },
+      "lanes": [],
+      "dispositions": [
+        "weekly"
+      ],
+      "scope": "Configured workflow/job; current execution unqualified."
+    },
+    "python:deploy/ci/test-receipt.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "hygiene"
+      ],
+      "dispositions": [],
+      "scope": "Direct stdlib unittest execution of receipt identity, failure retention and evidence integrity."
+    },
+    "python:deploy/ci/test-results.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "hygiene"
+      ],
+      "dispositions": [],
+      "scope": "Direct stdlib unittest execution of CI result reconciliation, aggregate failure handling or exact-run operator reporting."
+    },
+    "python:deploy/ci/test-aggregate.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "hygiene"
+      ],
+      "dispositions": [],
+      "scope": "Direct stdlib unittest execution of CI result reconciliation, aggregate failure handling or exact-run operator reporting."
+    },
+    "python:deploy/ci/test-status.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "hygiene"
+      ],
+      "dispositions": [],
+      "scope": "Direct stdlib unittest execution of CI result reconciliation, aggregate failure handling or exact-run operator reporting."
+    },
+    "job:.github/workflows/ci.yml/aggregate": {
+      "discovery": {
+        "kind": "workflow-job"
+      },
+      "lanes": [
+        "aggregate"
+      ],
+      "dispositions": [],
+      "scope": "Always aggregate current run/attempt receipts; reject failures, cancellations, missing/unknown/zero results. Path skips require declared exclusion."
+    },
+    "python:deploy/ci/test-runner.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "hygiene"
+      ],
+      "dispositions": [],
+      "scope": "Direct stdlib unittest execution of CPU runner admission/resources or independent family failure retention."
+    },
+    "python:deploy/ci/test-full-main.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "hygiene"
+      ],
+      "dispositions": [],
+      "scope": "Direct stdlib unittest execution of CPU runner admission/resources or independent family failure retention."
+    },
     "workflow:.github/workflows/full-main.yml": {
       "discovery": {
         "kind": "workflow"
@@ -8338,25 +7899,27 @@
       ],
       "scope": "Push/main-manual diagnostic CPU families, independent outcomes within120minutes; no merge gate or qualification claim."
     },
-    "workflow:.github/workflows/main-guard.yml": {
+    "job:.github/workflows/full-main.yml/cpu": {
       "discovery": {
-        "kind": "workflow"
+        "kind": "workflow-job"
       },
       "lanes": [
-        "main-guard"
+        "full-build-reuse",
+        "full-python",
+        "full-default",
+        "full-doctests",
+        "full-scratch",
+        "full-policy",
+        "full-s3-offline",
+        "full-neural",
+        "full-inputs",
+        "full-e2e",
+        "full-emitters"
       ],
-      "dispositions": [],
-      "scope": "Push-to-main provenance gate."
-    },
-    "workflow:.github/workflows/release.yml": {
-      "discovery": {
-        "kind": "workflow"
-      },
-      "lanes": [],
       "dispositions": [
-        "release"
+        "cpu-qualification"
       ],
-      "scope": "Configured workflow/job; current execution unqualified."
+      "scope": "Push/main-manual diagnostic CPU families, independent outcomes within120minutes; no merge gate or qualification claim."
     },
     "workflow:.github/workflows/runner-admission-probe.yml": {
       "discovery": {
@@ -8368,15 +7931,452 @@
       "dispositions": [],
       "scope": "Deliberately rejected job in each storage domain. Failure alone is insufficient: require real Worker denial, no always-step execution and container termination. Not functional test coverage."
     },
-    "workflow:.github/workflows/weekly.yml": {
+    "job:.github/workflows/runner-admission-probe.yml/reject-fast": {
       "discovery": {
-        "kind": "workflow"
+        "kind": "workflow-job"
+      },
+      "lanes": [
+        "runner-admission-probe"
+      ],
+      "dispositions": [],
+      "scope": "Deliberately rejected job in each storage domain. Failure alone is insufficient: require real Worker denial, no always-step execution and container termination. Not functional test coverage."
+    },
+    "job:.github/workflows/runner-admission-probe.yml/reject-main": {
+      "discovery": {
+        "kind": "workflow-job"
+      },
+      "lanes": [
+        "runner-admission-probe"
+      ],
+      "dispositions": [],
+      "scope": "Deliberately rejected job in each storage domain. Failure alone is insufficient: require real Worker denial, no always-step execution and container termination. Not functional test coverage."
+    },
+    "python:benchmarks/test_prepare.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "Existing fast Python lane explicitly collects benchmarks/test_prepare.py with the optional benchmark dependencies: grouped/stratified preparation, sealed partition isolation, immutable bytes, label preservation and frozen selection. Synthetic local fixtures; no network or fitting. Not assigned to full-main."
+    },
+    "python:crates/jope-bench/adapters/test_panel.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "Fast Python lane explicitly collects this adapter contract suite in the benchmark environment and includes it in the lane JUnit report. Synthetic estimators verify nullable raw cells, train-only preprocessing, declared probability columns, complete fitted reload, immutable private outputs and leakage refusal. No external-engine or real-panel qualification; not assigned to full-main."
+    },
+    "feature:jope-pipeline/default": {
+      "discovery": {
+        "kind": "feature",
+        "dependencies": []
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "Empty package-default marker; qualified-context separately selected."
+    },
+    "feature:jope-pipeline/neural-search": {
+      "discovery": {
+        "kind": "feature",
+        "dependencies": [
+          "dep:jope-policy"
+        ]
+      },
+      "lanes": [
+        "rust-test",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "Explicit qualified-context enables neural proposal/OOF/evolution contract tests; real model qualification is separate."
+    },
+    "feature:jope-pipeline/qualified-context": {
+      "discovery": {
+        "kind": "feature",
+        "dependencies": [
+          "jope-policy/context-producer",
+          "neural-search"
+        ]
+      },
+      "lanes": [
+        "rust-test",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "Explicit CPU context/receipt feature tests, not a live numerical parity claim."
+    },
+    "feature:jope-policy/context-producer": {
+      "discovery": {
+        "kind": "feature",
+        "dependencies": [
+          "dep:hyperion",
+          "dep:starforge"
+        ]
+      },
+      "lanes": [
+        "rust-test",
+        "full-default",
+        "full-policy"
+      ],
+      "dispositions": [],
+      "scope": "Explicit CPU-only producer contract tests; no GPU or reference-model qualification implied."
+    },
+    "target:jope-pipeline/bin/jope-context-proof": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-pipeline/src/bin/jope-context-proof.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": [
+          "qualified-context"
+        ]
+      },
+      "lanes": [
+        "rust-test",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "Feature-selected controller compilation. Real systemd reference proof remains a separate allocated host run."
+    },
+    "target:jope-policy/bin/jope-context-worker": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-policy/src/bin/jope-context-worker.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": [
+          "context-producer"
+        ]
+      },
+      "lanes": [
+        "rust-test",
+        "full-default",
+        "full-policy"
+      ],
+      "dispositions": [],
+      "scope": "Feature-selected worker compilation; library contracts execute in these lanes, no model load implied."
+    },
+    "target:jope-policy/bin/jope-policy-producer": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-policy/src/bin/jope-policy-producer.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default",
+        "full-policy"
+      ],
+      "dispositions": [],
+      "scope": "Private producer binary compilation; unit/library contracts are separate from accepted-model execution."
+    },
+    "feature:jope-bench/asm": {
+      "discovery": {
+        "kind": "feature",
+        "dependencies": [
+          "dep:jope-learning",
+          "dep:jope-policy",
+          "jope-pipeline/qualified-context"
+        ]
+      },
+      "lanes": [
+        "rust-test",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "Explicit CLI asm feature collects paired optimization, typed generic sampler, scheduling, report and build receipt contracts; live model proof separate. Includes authenticated teaching admission through jope-learning; no live training qualification implied."
+    },
+    "feature:jope-bench/default": {
+      "discovery": {
+        "kind": "feature",
+        "dependencies": []
+      },
+      "lanes": [
+        "rust-test",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "Empty package-default marker; optional ASM explicitly selected."
+    },
+    "feature:jope-cli/asm": {
+      "discovery": {
+        "kind": "feature",
+        "dependencies": [
+          "jope-bench/asm"
+        ]
+      },
+      "lanes": [
+        "rust-test",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "Explicit optional CLI command and benchmark integration; CPU-only dependency graph, no GPU/model qualification implied."
+    },
+    "python:deploy/ci/test-training-proof.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "hygiene"
+      ],
+      "dispositions": [],
+      "scope": "Direct stdlib unittest execution verifies required-training collection/JUnit gates reject missing, skipped, failed, stale or renamed cases."
+    },
+    "python:python/tests/test_experimental_proposal.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python",
+        "full-python"
+      ],
+      "dispositions": [],
+      "scope": "Maintained CPU training/context contract family; actual optimizer/update/reload/proposal cases execute in isolated synthetic fixtures. Required cases are checked against current JUnit by training-proof.py; this does not qualify real-corpus or CUDA training."
+    },
+    "python:python/tests/test_experimental_runtime.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python",
+        "full-python"
+      ],
+      "dispositions": [],
+      "scope": "Maintained CPU training/context contract family; actual optimizer/update/reload/proposal cases execute in isolated synthetic fixtures. Required cases are checked against current JUnit by training-proof.py; this does not qualify real-corpus or CUDA training."
+    },
+    "python:python/tests/test_frozen_vocabulary_training.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python",
+        "full-python"
+      ],
+      "dispositions": [],
+      "scope": "Maintained CPU training/context contract family; actual optimizer/update/reload/proposal cases execute in isolated synthetic fixtures. Required cases are checked against current JUnit by training-proof.py; this does not qualify real-corpus or CUDA training."
+    },
+    "python:python/tests/test_policy_training_contract.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python",
+        "full-python"
+      ],
+      "dispositions": [],
+      "scope": "Maintained CPU training/context contract family; actual optimizer/update/reload/proposal cases execute in isolated synthetic fixtures. Required cases are checked against current JUnit by training-proof.py; this does not qualify real-corpus or CUDA training."
+    },
+    "python:python/tests/test_training_campaign.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python",
+        "full-python"
+      ],
+      "dispositions": [],
+      "scope": "Maintained CPU training/context contract family; actual optimizer/update/reload/proposal cases execute in isolated synthetic fixtures. Required cases are checked against current JUnit by training-proof.py; this does not qualify real-corpus or CUDA training."
+    },
+    "python:python/tests/test_training_corpus_contract.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python",
+        "full-python"
+      ],
+      "dispositions": [],
+      "scope": "Maintained CPU training/context contract family; actual optimizer/update/reload/proposal cases execute in isolated synthetic fixtures. Required cases are checked against current JUnit by training-proof.py; this does not qualify real-corpus or CUDA training."
+    },
+    "feature:jope-cli/default": {
+      "discovery": {
+        "kind": "feature",
+        "dependencies": [
+          "qualified-training-context"
+        ]
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "inputs",
+        "full-default"
+      ],
+      "dispositions": [
+        "runtime-tools"
+      ],
+      "scope": "Default CPU-only native training/context admission feature. Hosted nextest explicitly enables qualified-training-context and requires named training/context tests; actual supervised training and GPU execution need separate bounded qualification."
+    },
+    "feature:jope-cli/qualified-training-context": {
+      "discovery": {
+        "kind": "feature",
+        "dependencies": [
+          "dep:jope-policy",
+          "jope-pipeline/qualified-context"
+        ]
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "inputs",
+        "full-default"
+      ],
+      "dispositions": [
+        "runtime-tools"
+      ],
+      "scope": "Default CPU-only native training/context admission feature. Hosted nextest explicitly enables qualified-training-context and requires named training/context tests; actual supervised training and GPU execution need separate bounded qualification."
+    },
+    "python:deploy/ci/test-install-private.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "hygiene"
+      ],
+      "dispositions": [],
+      "scope": "Direct stdlib unittest execution of checksum-pinned private CLI installation and source-build custody boundaries. Compiler, ELF and binary probes are explicitly mocked; no actual source build, installation or model fit."
+    },
+    "python:deploy/ci/test-qualify-demo.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "hygiene"
+      ],
+      "dispositions": [],
+      "scope": "Direct stdlib unittest execution of synthetic retained demo scoring, identity and tamper validation. No actual model fit, installation or neural demo."
+    },
+    "python:deploy/ci/test-prepare-asm-runtime.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "hygiene"
+      ],
+      "dispositions": [],
+      "scope": "Metadata fixture validation of source/build/worker/configuration pins, custody paths and lock refusal. Compiler and native validator are mocked; no numerical worker or model qualification."
+    },
+    "python:python/tests/test_training_input_closure.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python",
+        "full-python"
+      ],
+      "dispositions": [],
+      "scope": "Projected input allowlist metadata fixtures: forbidden/extra/unlisted artifacts and excluded-data mutation invariance, with no model load or numerical qualification."
+    },
+    "python:python/tests/test_training_transition.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python",
+        "full-python"
+      ],
+      "dispositions": [],
+      "scope": "Tiny CPU fixtures for explicit optimizer-preserving corpus transitions and equal-update siblings; no real-corpus quality or serving qualification."
+    },
+    "python:python/tests/test_training_comparison.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python",
+        "full-python"
+      ],
+      "dispositions": [],
+      "scope": "Tiny CPU fixtures for explicit optimizer-preserving corpus transitions and equal-update siblings; no real-corpus quality or serving qualification."
+    },
+    "benchmark:crates/jope-bench/src/panel/inference_benchmark.rs": {
+      "discovery": {
+        "kind": "benchmark-source"
       },
       "lanes": [],
       "dispositions": [
-        "weekly"
+        "benchmark"
       ],
-      "scope": "Configured workflow/job; current execution unqualified."
+      "scope": "Bounded timing study implementation. Local CUDA build and failure receipt retained; no CI performance or GPU qualification claim."
+    },
+    "feature:jope-bench/inference-cuda": {
+      "discovery": {
+        "kind": "feature",
+        "dependencies": [
+          "asm",
+          "candle-core/cuda",
+          "dep:candle-core",
+          "jope-pipeline/timing-study",
+          "jope-policy/inference-cuda"
+        ]
+      },
+      "lanes": [],
+      "dispositions": [
+        "gpu"
+      ],
+      "scope": "Explicit optional timing-study feature, not selected by CPU CI. Local build/boundary proof is separate from operational GPU qualification."
+    },
+    "feature:jope-cli/inference-cuda": {
+      "discovery": {
+        "kind": "feature",
+        "dependencies": [
+          "jope-bench/inference-cuda"
+        ]
+      },
+      "lanes": [],
+      "dispositions": [
+        "gpu"
+      ],
+      "scope": "Explicit optional timing-study feature, not selected by CPU CI. Local build/boundary proof is separate from operational GPU qualification."
+    },
+    "feature:jope-pipeline/timing-study": {
+      "discovery": {
+        "kind": "feature",
+        "dependencies": [
+          "neural-search"
+        ]
+      },
+      "lanes": [],
+      "dispositions": [
+        "benchmark"
+      ],
+      "scope": "Explicit optional timing-study feature, not selected by CPU CI. Local build/boundary proof is separate from operational GPU qualification."
+    },
+    "feature:jope-policy/inference-cuda": {
+      "discovery": {
+        "kind": "feature",
+        "dependencies": [
+          "context-producer",
+          "cuda",
+          "hyperion/hyperion-cuda",
+          "starforge/cuda"
+        ]
+      },
+      "lanes": [],
+      "dispositions": [
+        "gpu"
+      ],
+      "scope": "Explicit optional timing-study feature, not selected by CPU CI. Local build/boundary proof is separate from operational GPU qualification."
+    },
+    "python:crates/jope-bench/src/panel/test_inference_report.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "Explicitly collected timing receipt/report contract tests in Python lane JUnit; no CUDA execution."
     }
   }
 }
