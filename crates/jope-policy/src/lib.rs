@@ -64,7 +64,7 @@
 //! ```
 //!
 //! ```compile_fail,E0308
-//! // The writer only takes a `Proposal`, which only `propose` constructs.
+//! // The writer only takes a `Proposal`, which only `propose` or `propose_challenger` constructs.
 //! fn write(population: &jope_policy::seeds::SeedPopulation) {
 //!     let _ = jope_policy::seeds::write_population(std::path::Path::new("s.json"), population);
 //! }

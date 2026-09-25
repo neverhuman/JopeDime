@@ -153,9 +153,10 @@ struct Envelope {
     ranking_backend: String,
 }
 
-/// Called only by the pinned policy worker after `seeds::propose`. Request seed
-/// and sampling fields must be used by that worker when invoking propose; their
-/// binding is audited executable behavior, not inferable from sampled programs.
+/// Called only by the pinned policy worker after `seeds::propose` or
+/// `seeds::propose_challenger`. Request seed and sampling fields must be used by that
+/// worker when invoking either; their binding is audited executable behavior, not
+/// inferable from sampled programs.
 fn artifact_bytes(request: &Request, proposal: &Proposal) -> Result<Vec<u8>> {
     let request_sha256 = request.identity()?;
     let population = proposal.population();
