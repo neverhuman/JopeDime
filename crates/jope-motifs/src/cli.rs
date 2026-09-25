@@ -749,7 +749,12 @@ mod tests {
     fn help_for_every_subcommand_passes_shipped_text_lint_and_owner_ban() {
         let mut command = Cli::command();
         command.build();
-        let verbs: Vec<&str> = command.get_subcommands().map(|c| c.get_name()).collect();
+        // `build` adds clap's own `help` subcommand; its text is still linted below.
+        let verbs: Vec<&str> = command
+            .get_subcommands()
+            .map(|c| c.get_name())
+            .filter(|name| *name != "help")
+            .collect();
         assert_eq!(verbs, ["mine", "validate"]);
         let mut texts = vec![
             command.render_long_help().to_string(),
@@ -1353,7 +1358,10 @@ mod tests {
         let root = directory.path().join("state");
         std::fs::create_dir(&root).expect("state root");
         let out = directory.path().join("mined");
-        let env = env_with(Policy::for_test(Vec::new(), false), Env::standard().open_state);
+        let env = env_with(
+            Policy::for_test(Vec::new(), false),
+            Env::standard().open_state,
+        );
         let run = invoke_in(
             &env,
             &[
