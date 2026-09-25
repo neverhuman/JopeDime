@@ -21,7 +21,23 @@ container = load('verify-container')
 
 class RunnerTests(unittest.TestCase):
     def env(self, workflow='full-main', event='push', ref='refs/heads/main'):
-        return dict(GITHUB_REPOSITORY='veox-ai/JopeDime', GITHUB_WORKFLOW_REF=f'veox-ai/JopeDime/.github/workflows/{workflow}.yml@{ref}', GITHUB_EVENT_NAME=event, GITHUB_REF=ref, GITHUB_SHA='a'*40)
+        return dict(GITHUB_REPOSITORY_ID='1376159324', GITHUB_REPOSITORY='neverhuman/JopeDime', GITHUB_WORKFLOW_REF=f'neverhuman/JopeDime/.github/workflows/{workflow}.yml@{ref}', GITHUB_EVENT_NAME=event, GITHUB_REF=ref, GITHUB_SHA='a'*40)
+
+    def test_repository_transfer_identity_is_pinned(self):
+        for domain, workflow, event in [('main', 'full-main', 'push'), ('pr', 'ci', 'pull_request')]:
+            for repo, repository_id in [('veox-ai/JopeDime', '1376159324'),
+                                        ('foreign/repo', '1376159324'),
+                                        ('neverhuman/JopeDime', '1'),
+                                        ('neverhuman/JopeDime', None)]:
+                with self.subTest(domain=domain, repo=repo, repository_id=repository_id):
+                    env = self.env(workflow, event)
+                    env['GITHUB_REPOSITORY'] = repo
+                    if repository_id is None:
+                        env.pop('GITHUB_REPOSITORY_ID')
+                    else:
+                        env['GITHUB_REPOSITORY_ID'] = repository_id
+                    with self.assertRaises(ValueError):
+                        policy.authorize({'domain': domain}, env)
 
     def test_trusted_events(self):
         for workflow, event in [('full-main', 'push'), ('full-main', 'workflow_dispatch'), ('main-guard', 'push')]:

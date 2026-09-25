@@ -7,7 +7,7 @@
 # shellcheck disable=SC2034 # Shared settings are consumed by the sourcing scripts.
 
 JOPE_RUNNER_IMAGE=${JOPE_RUNNER_IMAGE:-jope-runner:current}          # deploy/docker/runner.Dockerfile, tagged by provision.sh
-JOPE_RUNNER_REPO=${JOPE_RUNNER_REPO:-veox-ai/JopeDime}
+JOPE_RUNNER_REPO=${JOPE_RUNNER_REPO:-neverhuman/JopeDime}
 JOPE_RUNNER_PAT_FILE=${JOPE_RUNNER_PAT_FILE:-/etc/jope-runner/github-pat}
 JOPE_RUNNER_STATE=${JOPE_RUNNER_STATE:-/var/lib/jope-runner}          # receipts, last-prune stamp (root-owned)
 JOPE_RUNNER_MIN_FREE_GB=50                # disk guard: refuse to start under this

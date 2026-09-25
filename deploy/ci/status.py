@@ -70,7 +70,7 @@ print(json.dumps(rows))
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("run_id", type=int)
-    parser.add_argument("--repo", default="veox-ai/JopeDime")
+    parser.add_argument("--repo", default="neverhuman/JopeDime")
     parser.add_argument("--expected-sha")
     parser.add_argument("--host", action="append", help="SSH host to observe after ten minutes queued; default xbabe1 and xbabe2")
     parser.add_argument("--no-host-probes", action="store_true")
