@@ -1993,9 +1993,7 @@ mod tests {
     }
 
     #[test]
-    fn bradley_terry_matches_sotarena_python_implementation() {
-        use std::process::Command;
-
+    fn bradley_terry_matches_canonical_arena_reference() {
         let config = TrainOnlyRedteamConfig::sealed(DEFAULT_RUN_ID, DEFAULT_PARENT_RUN, false);
         let scores = BTreeMap::from([
             (
@@ -2031,38 +2029,22 @@ mod tests {
             .into_iter()
             .map(|rating| (rating.method_id, rating.rating))
             .collect::<BTreeMap<_, _>>();
-        let fixture = serde_json::to_string(&scores).unwrap();
-        let script = r#"
-import json, sys
-from sotarena.elo import fit_elo, matches_from_scores
-scores = json.loads(sys.argv[1])
-print(json.dumps(fit_elo(matches_from_scores(scores, 1e-12), center=1500.0, iterations=250, regularization=1e-4), sort_keys=True))
-"#;
-        let output = Command::new("python3")
-            .arg("-c")
-            .arg(script)
-            .arg(fixture)
-            .env(
-                "PYTHONPATH",
-                Path::new(env!("CARGO_MANIFEST_DIR")).join("sotarena"),
-            )
-            .output()
-            .unwrap();
-        assert!(
-            output.status.success(),
-            "{}",
-            String::from_utf8_lossy(&output.stderr)
-        );
-        let python: BTreeMap<String, f64> = serde_json::from_slice(&output.stdout).unwrap();
+        // The maintained port of sotarena/elo.py is qualified separately by
+        // jope-arena/tests/elo_regression.rs against retained ladder fixtures.
+        // This is cross-implementation Rust parity, not a Python execution.
+        let reference = jope_arena::elo::fit_elo(&jope_arena::elo::matches_from_scores(
+            &scores,
+            1e-12,
+        ));
         assert_eq!(
             rust.keys().collect::<Vec<_>>(),
-            python.keys().collect::<Vec<_>>()
+            reference.keys().collect::<Vec<_>>()
         );
         for (method, rating) in rust {
             assert!(
-                (rating - python[&method]).abs() < 1e-9,
-                "{method}: Rust={rating}, Python={}",
-                python[&method]
+                (rating - reference[&method]).abs() < 1e-9,
+                "{method}: campaign={rating}, arena reference={}",
+                reference[&method]
             );
         }
     }

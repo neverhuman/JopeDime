@@ -14,7 +14,7 @@ COMMON = rf"Cargo\.(toml|lock)$|rust-toolchain\.toml$|{IMAGE}|\.github/workflows
 FILTERS = {
     "rust": rf"^(crates/|benchmarks/|schemas/|{COMMON}|\.config/nextest\.toml$|deny\.toml$|deploy/ci/|deploy/systemd/)",
     "emitters": rf"^(crates/feat-math/|datasets/test/|deploy/ci/emitters|{COMMON})",
-    "inputs": rf"^(datasets/synthetic/|crates/(jope-cli|jope-campaigns)/|python/src/jope/research/|{COMMON})",
+    "inputs": rf"^(datasets/synthetic/|crates/(jope-cli|jope-campaigns|jope-arena)/|python/src/jope/research/|{COMMON})",
     "python": rf"^(python/|benchmarks/|crates/jope-bench/adapters/|deploy/systemd/|{IMAGE}|\.github/workflows/ci\.yml$)",
     "e2e": rf"^(crates/(jope-pipeline|jope-cli|jope-engine|jope-datasets|feat-math)/|datasets/test/|schemas/|deploy/ci/(e2e-smoke|emitters)|{COMMON})",
 }
