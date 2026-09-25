@@ -20,7 +20,7 @@ use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::{Component, Path, PathBuf};
 use tch::{nn, Device, Kind, Tensor};
 
 /// Receipt schema; the same tag jope-policy `config::EXPORT_RECEIPT_SCHEMA` parses.
@@ -542,7 +542,10 @@ fn write_and_verify(tensors: &[Named], output: &Path) -> Result<Value> {
         let _ = fs::remove_file(&partial);
         return Err(err).with_context(|| format!("write {}", partial.display()));
     }
-    fs::File::open(&partial)?.sync_all()?;
+    if let Err(err) = fs::File::open(&partial).and_then(|f| f.sync_all()) {
+        let _ = fs::remove_file(&partial);
+        return Err(err).with_context(|| format!("sync {}", partial.display()));
+    }
     if let Err(err) = verify_round_trip(tensors, &partial) {
         let _ = fs::remove_file(&partial);
         return Err(err);
@@ -568,8 +571,12 @@ fn write_receipt(path: &Path, receipt: &Value) -> Result<String> {
     let mut bytes = serde_json::to_vec_pretty(receipt)?;
     bytes.push(b'\n');
     let partial = path.with_extension(format!("partial-{}", std::process::id()));
-    fs::write(&partial, &bytes)?;
-    fs::File::open(&partial)?.sync_all()?;
+    if let Err(err) =
+        fs::write(&partial, &bytes).and_then(|()| fs::File::open(&partial)?.sync_all())
+    {
+        let _ = fs::remove_file(&partial);
+        return Err(err).with_context(|| format!("write {}", partial.display()));
+    }
     publish_no_replace(&partial, path)?;
     fs::File::open(path.parent().context("receipt has no parent")?)?.sync_all()?;
     Ok(hash(&bytes))
@@ -598,18 +605,39 @@ pub fn export(request: &ExportRequest) -> Result<Value> {
     export_on_cpu(request)
 }
 
-/// [`export`] after the CPU-only check. Every refusal precedes the first write.
+/// Refuse a relative path, a `..` component, or a path under `/tmp`, lexically or once the
+/// symlinks of its nearest existing ancestor are resolved.
+fn require_durable_path(path: &Path) -> Result<()> {
+    ensure!(
+        path.is_absolute()
+            && !path.components().any(|c| c == Component::ParentDir)
+            && !path.starts_with("/tmp"),
+        "export-policy writes only to durable absolute paths, never /tmp: {}",
+        path.display()
+    );
+    let existing = path
+        .ancestors()
+        .find(|a| a.exists())
+        .context("path has no existing ancestor")?;
+    let resolved = fs::canonicalize(existing)?;
+    ensure!(
+        !resolved.starts_with("/tmp"),
+        "export-policy writes only to durable absolute paths, never /tmp: {} resolves to {}",
+        path.display(),
+        resolved.display()
+    );
+    Ok(())
+}
+
+/// [`export`] after the CPU-only check. Every refusal precedes the first write, and a receipt
+/// that still fails to be written removes the just-published policy file again.
 fn export_on_cpu(request: &ExportRequest) -> Result<Value> {
     for path in [&request.output, &request.receipt] {
-        ensure!(
-            path.is_absolute() && !path.starts_with("/tmp"),
-            "export-policy writes only to durable absolute paths, never /tmp: {}",
-            path.display()
-        );
+        require_durable_path(path)?;
     }
     let output = request.output.join(POLICY_OUTPUT);
     // The receipt is written after the policy file, so every way it could fail to be written
-    // is refused here, before the policy file exists.
+    // that can be seen without writing is refused here, before the policy file exists.
     ensure!(
         request.receipt.parent().is_some_and(Path::is_dir),
         "receipt directory does not exist: {}",
@@ -675,7 +703,24 @@ fn export_on_cpu(request: &ExportRequest) -> Result<Value> {
         },
         "relative_change": relative,
     });
-    let receipt_sha256 = write_receipt(&request.receipt, &receipt)?;
+    let receipt_sha256 = match write_receipt(&request.receipt, &receipt) {
+        Ok(sha256) => sha256,
+        Err(err) => {
+            // Never leave weights without their binding receipt: a retry would be refused.
+            let removed =
+                fs::remove_file(&output).and_then(|()| fs::File::open(&request.output)?.sync_all());
+            return Err(err.context(match removed {
+                Ok(()) => format!(
+                    "receipt not written; removed the unreceipted {}",
+                    output.display()
+                ),
+                Err(e) => format!(
+                    "receipt not written; could not remove the unreceipted {}: {e}",
+                    output.display()
+                ),
+            }));
+        }
+    };
     Ok(json!({
         "receipt": request.receipt,
         "receipt_sha256": receipt_sha256,
@@ -1149,6 +1194,72 @@ mod tests {
         assert!(!unwritten.join(POLICY_OUTPUT).exists());
         assert_no_partials(&unwritten);
         assert!(!fresh.exists());
+        assert_no_partials(scratch.path());
+    }
+
+    #[test]
+    fn export_removes_the_weights_when_the_receipt_cannot_be_written() {
+        use std::os::unix::fs::PermissionsExt;
+        let scratch = scratch();
+        let config = tiny();
+        let store = policy_store(&config);
+        let dir = scratch.path().join("checkpoint");
+        let state_sha256 = write_checkpoint(&dir, &named(&store), &config, 61600);
+        let output = scratch.path().join("out");
+        let locked = scratch.path().join("receipts");
+        fs::create_dir(&locked).unwrap();
+        fs::set_permissions(&locked, fs::Permissions::from_mode(0o500)).unwrap();
+        // A superuser ignores the mode, so the failure cannot be provoked this way there.
+        let provokable = fs::File::create(locked.join("probe")).is_err();
+        if provokable {
+            let receipt = locked.join("receipt.json");
+            refused(
+                export_on_cpu(&request(&dir, &output, &receipt, &state_sha256)),
+                "removed the unreceipted",
+            );
+            assert!(!output.join(POLICY_OUTPUT).exists());
+            assert!(!receipt.exists());
+            assert_no_partials(&output);
+            assert_no_partials(&locked);
+            // Nothing is left to refuse a retry with a writable receipt directory.
+            let retry = scratch.path().join("receipt.json");
+            export_on_cpu(&request(&dir, &output, &retry, &state_sha256)).unwrap();
+            assert!(output.join(POLICY_OUTPUT).exists() && retry.exists());
+            assert_no_partials(&output);
+        }
+        fs::set_permissions(&locked, fs::Permissions::from_mode(0o700)).unwrap();
+    }
+
+    #[test]
+    fn export_refuses_tmp_through_parent_components_and_symlinks() {
+        let scratch = scratch();
+        let config = tiny();
+        let store = policy_store(&config);
+        let dir = scratch.path().join("checkpoint");
+        let state_sha256 = write_checkpoint(&dir, &named(&store), &config, 61600);
+        let output = scratch.path().join("out");
+        let receipt = scratch.path().join("receipt.json");
+        // Only a link is created here; nothing is ever written under /tmp.
+        let link = scratch.path().join("tmp-link");
+        std::os::unix::fs::symlink("/tmp", &link).unwrap();
+        let (link_output, link_receipt) = (link.join("out"), link.join("receipt.json"));
+        // `<scratch>/../../…/tmp/policy-export`, which resolves to /tmp/policy-export.
+        let mut dotted = scratch.path().to_path_buf();
+        for _ in scratch.path().components() {
+            dotted.push("..");
+        }
+        dotted.push("tmp/policy-export");
+        for (out, rcpt) in [
+            (&dotted, &receipt),
+            (&link_output, &receipt),
+            (&output, &link_receipt),
+        ] {
+            refused(
+                export_on_cpu(&request(&dir, out, rcpt, &state_sha256)),
+                "never /tmp",
+            );
+        }
+        assert!(!output.exists() && !receipt.exists());
         assert_no_partials(scratch.path());
     }
 
