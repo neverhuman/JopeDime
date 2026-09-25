@@ -432,6 +432,14 @@ pub fn run(args: RunArgs) -> Result<Value> {
     );
     let journal = custody(&args.journal)?;
     if let Some(unit) = args.supervisor_unit {
+        for (name, expected) in &p.toolchain {
+            expected.verify()?;
+            let resolved = artifact(Path::new(command_text("which", &[name])?.trim()))?;
+            ensure!(
+                resolved.path == expected.path && resolved.sha256 == expected.sha256,
+                "supervised tool identity changed: {name}"
+            );
+        }
         let mut pool = jope_pipeline::execution::ExecutionPool::open(
             &p.experiment,
             &journal,

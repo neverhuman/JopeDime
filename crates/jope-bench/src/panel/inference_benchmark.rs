@@ -327,6 +327,10 @@ pub fn read(path: &Path, sha: &str) -> Result<Plan> {
     ensure!(digest(&bytes) == sha, "plan pin mismatch");
     let p: Plan = serde_json::from_slice(&bytes)?;
     ensure!(
+        p.toolchain.keys().map(String::as_str).collect::<Vec<_>>() == ["g++", "python3", "rustc"],
+        "toolchain key inventory changed"
+    );
+    ensure!(
         p.schema == SCHEMA && p.settings == settings() && p.inputs.len() == 10,
         "benchmark protocol changed"
     );
