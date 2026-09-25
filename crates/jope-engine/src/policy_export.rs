@@ -20,6 +20,7 @@ use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
 use std::fs;
+use std::io::Write;
 use std::path::{Component, Path, PathBuf};
 use tch::{nn, Device, Kind, Tensor};
 
@@ -460,15 +461,30 @@ fn absent(path: &Path) -> bool {
     matches!(fs::symlink_metadata(path), Err(e) if e.kind() == std::io::ErrorKind::NotFound)
 }
 
+/// Remove `published`, which this call's hard link created, after `err`; the error states when
+/// the file could not be removed and so is still published.
+fn unpublish(err: std::io::Error, what: String, published: &Path) -> anyhow::Error {
+    match fs::remove_file(published) {
+        Ok(()) => anyhow::Error::new(err).context(what),
+        Err(e) => anyhow::Error::new(err).context(format!(
+            "{what}; {} is still published (could not remove it: {e})",
+            published.display()
+        )),
+    }
+}
+
 /// Move `partial` to `target` without ever replacing an existing file: hard-link (which fails
 /// with `AlreadyExists` if `target` appeared meanwhile), then drop the temporary name. An error
-/// always means `target` was not published by this call.
+/// means `target` was not published by this call, unless the error says it is still published.
 fn publish_no_replace(partial: &Path, target: &Path) -> Result<()> {
     match fs::hard_link(partial, target) {
         Ok(()) => {
             if let Err(err) = fs::remove_file(partial) {
-                let _ = fs::remove_file(target);
-                return Err(err).with_context(|| format!("remove {}", partial.display()));
+                return Err(unpublish(
+                    err,
+                    format!("remove {}", partial.display()),
+                    target,
+                ));
             }
             Ok(())
         }
@@ -540,7 +556,12 @@ fn write_and_verify(tensors: &[Named], output: &Path) -> Result<Value> {
         .to_string_lossy();
     // tch picks the writer by extension, so keep `.safetensors` on the temporary name.
     let partial = parent.join(format!(".partial-{}-{file_name}", std::process::id()));
-    let _ = fs::remove_file(&partial);
+    // Never remove or write through an entry this call did not create.
+    ensure!(
+        absent(&partial),
+        "refusing to replace an existing temporary {}",
+        partial.display()
+    );
     let named: Vec<(&str, &Tensor)> = tensors
         .iter()
         .map(|t| (t.name.as_str(), &t.tensor))
@@ -570,8 +591,7 @@ fn write_and_verify(tensors: &[Named], output: &Path) -> Result<Value> {
     publish_no_replace(&partial, output)?;
     if let Err(err) = directory.sync_all() {
         // This call's hard link created `output`: never leave it published without a receipt.
-        let _ = fs::remove_file(output);
-        return Err(err).with_context(|| format!("sync {}", parent.display()));
+        return Err(unpublish(err, format!("sync {}", parent.display()), output));
     }
     Ok(json!({
         "path": output,
@@ -596,17 +616,22 @@ fn write_receipt(path: &Path, receipt: &Value) -> Result<String> {
     let mut bytes = serde_json::to_vec_pretty(receipt)?;
     bytes.push(b'\n');
     let partial = path.with_extension(format!("partial-{}", std::process::id()));
-    if let Err(err) =
-        fs::write(&partial, &bytes).and_then(|()| fs::File::open(&partial)?.sync_all())
-    {
+    // Created exclusively: an existing entry (a stale file, a symlink) is neither followed,
+    // truncated nor removed; only what this call created is cleaned up.
+    let mut file = fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&partial)
+        .with_context(|| format!("write {}", partial.display()))?;
+    if let Err(err) = file.write_all(&bytes).and_then(|()| file.sync_all()) {
         let _ = fs::remove_file(&partial);
         return Err(err).with_context(|| format!("write {}", partial.display()));
     }
+    drop(file);
     publish_no_replace(&partial, path)?;
     if let Err(err) = directory.sync_all() {
         // This call's hard link created `path`.
-        let _ = fs::remove_file(path);
-        return Err(err).with_context(|| format!("sync {}", parent.display()));
+        return Err(unpublish(err, format!("sync {}", parent.display()), path));
     }
     Ok(hash(&bytes))
 }
@@ -751,6 +776,15 @@ fn export_on_cpu(request: &ExportRequest) -> Result<Value> {
     let receipt_sha256 = match write_receipt(&request.receipt, &receipt) {
         Ok(sha256) => sha256,
         Err(err) => {
+            // The pre-checks proved the receipt absent, so anything there now is this call's: if
+            // it could not be undone, keep the weights it binds.
+            if !absent(&request.receipt) {
+                return Err(err.context(format!(
+                    "receipt {} is still published after a failed write; kept {}",
+                    request.receipt.display(),
+                    output.display()
+                )));
+            }
             // Never leave weights without their binding receipt: a retry would be refused.
             let removed =
                 fs::remove_file(&output).and_then(|()| fs::File::open(&request.output)?.sync_all());
@@ -1284,14 +1318,17 @@ mod tests {
         let config = tiny();
         let store = policy_store(&config);
         let dir = scratch.path().join("checkpoint");
-        let state_sha256 = write_checkpoint(&dir, &named(&store), &config, 61600);
+        write_checkpoint(&dir, &named(&store), &config, 61600);
+        // A wrong pinned identity: only the pre-check can refuse with "refusing to overwrite";
+        // any later refusal would name the identity instead.
+        let wrong = hash(b"other state");
         let nowhere = scratch.path().join("nowhere").join("target");
         // A dangling link at the receipt path is refused before the weights are written.
         let output = scratch.path().join("out");
         let receipt = scratch.path().join("receipt.json");
         std::os::unix::fs::symlink(&nowhere, &receipt).unwrap();
         refused(
-            export_on_cpu(&request(&dir, &output, &receipt, &state_sha256)),
+            export_on_cpu(&request(&dir, &output, &receipt, &wrong)),
             "refusing to overwrite",
         );
         assert!(!output.exists());
@@ -1301,7 +1338,7 @@ mod tests {
         std::os::unix::fs::symlink(&nowhere, other.join(POLICY_OUTPUT)).unwrap();
         let fresh = scratch.path().join("fresh.receipt.json");
         refused(
-            export_on_cpu(&request(&dir, &other, &fresh, &state_sha256)),
+            export_on_cpu(&request(&dir, &other, &fresh, &wrong)),
             "refusing to overwrite",
         );
         assert!(!fresh.exists() && !nowhere.exists());
