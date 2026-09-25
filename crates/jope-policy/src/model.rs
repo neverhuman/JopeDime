@@ -607,3 +607,34 @@ impl PolicyModel {
         Ok((rewards, runtime))
     }
 }
+
+#[cfg(feature = "inference-cuda")]
+impl PolicyModel {
+    /// Qualification only: fresh batch-local cache versus full-prefix logits.
+    pub fn cache_max_error(&self, context: &[f32], tokens: &[usize]) -> Result<f32> {
+        ensure!(tokens.len() >= 2, "qualification needs a token sequence");
+        let mut rows = vec![vec![tokens[0]]];
+        let (mut cache, first) = cached::DecodeCache::new(self, context, &rows)?;
+        let mut maximum = 0f32;
+        let mut compare = |a: &[Vec<f32>], b: &[Vec<f32>]| -> Result<()> {
+            ensure!(a.len() == b.len(), "cache batch changed");
+            for (a, b) in a.iter().zip(b) {
+                ensure!(a.len() == b.len(), "cache shape changed");
+                for (&x, &y) in a.iter().zip(b) {
+                    ensure!(x.is_finite() && y.is_finite(), "nonfinite cache output");
+                    maximum = maximum.max((x - y).abs());
+                }
+            }
+            Ok(())
+        };
+        compare(&first, &self.next_token_logits(context, &rows)?)?;
+        for &token in &tokens[1..] {
+            rows[0].push(token);
+            compare(
+                &cache.advance(&[0], &[token])?,
+                &self.next_token_logits(context, &rows)?,
+            )?;
+        }
+        Ok(maximum)
+    }
+}

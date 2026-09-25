@@ -25,6 +25,7 @@ jope-datasets = { path = "../jope-datasets" }
 jope-pipeline = { path = "../jope-pipeline" }
 jope-learning = { path = "../jope-learning", optional = true }
 jope-policy = { path = "../jope-policy", optional = true, features = ["context-producer"] }
+candle-core = { version = "0.11.0", default-features = false, optional = true }
 rayon.workspace = true
 serde.workspace = true
 serde_json = { workspace = true, features = ["float_roundtrip"] }
@@ -39,6 +40,8 @@ nix = { workspace = true, features = ["time"] }
 [features]
 default = []
 asm = ["jope-pipeline/qualified-context", "dep:jope-policy", "dep:jope-learning"]
+
+inference-cuda = ["jope-pipeline/timing-study", "asm", "jope-policy/inference-cuda", "dep:candle-core", "candle-core/cuda"]
 
 [lints]
 workspace = true

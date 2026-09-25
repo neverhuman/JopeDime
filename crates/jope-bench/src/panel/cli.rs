@@ -19,6 +19,24 @@ pub struct BenchmarkCli {
 
 #[derive(Subcommand)]
 pub enum BenchmarkCommand {
+    #[cfg(all(feature = "asm", target_os = "linux"))]
+    InferencePlan(super::inference_benchmark::PlanArgs),
+    #[cfg(all(feature = "asm", target_os = "linux"))]
+    InferenceRun(super::inference_benchmark::RunArgs),
+    #[cfg(all(feature = "asm", target_os = "linux"))]
+    InferenceReport(super::inference_benchmark::ReportArgs),
+    #[cfg(all(feature = "inference-cuda", target_os = "linux"))]
+    #[command(hide = true)]
+    InferenceCold {
+        #[arg(long)]
+        plan: PathBuf,
+        #[arg(long)]
+        plan_sha256: String,
+        #[arg(long)]
+        journal: PathBuf,
+        #[arg(long)]
+        index: usize,
+    },
     /// Private nested transfer audit plan; zero fits and no execution admission.
     #[command(hide = true)]
     TransferPlan {
@@ -161,6 +179,19 @@ pub fn verify_inputs(panel: &Panel, root: &Path) -> Value {
 
 fn run(cli: BenchmarkCli) -> Result<Value> {
     match cli.command {
+        #[cfg(all(feature = "asm", target_os = "linux"))]
+        BenchmarkCommand::InferencePlan(args) => super::inference_benchmark::plan(args),
+        #[cfg(all(feature = "asm", target_os = "linux"))]
+        BenchmarkCommand::InferenceRun(args) => super::inference_benchmark::run(args),
+        #[cfg(all(feature = "asm", target_os = "linux"))]
+        BenchmarkCommand::InferenceReport(args) => super::inference_benchmark::report(args),
+        #[cfg(all(feature = "inference-cuda", target_os = "linux"))]
+        BenchmarkCommand::InferenceCold {
+            plan,
+            plan_sha256,
+            journal,
+            index,
+        } => super::inference_benchmark::cold(&plan, &plan_sha256, &journal, index),
         BenchmarkCommand::TransferPlan { input, output } => super::transfer::plan(&input, &output),
         BenchmarkCommand::TransferReport {
             plan,

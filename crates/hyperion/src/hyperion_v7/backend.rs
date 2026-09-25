@@ -59,6 +59,22 @@ impl V7Model {
         .map(|model| model.with_full_canvas(false))
     }
 
+    /// Explicit CUDA placement with the same canvas settings as CPU qualification.
+    #[cfg(feature = "hyperion-cuda")]
+    pub fn load_cuda(
+        weights_path: &Path,
+        settings: &HyperionSweepSettings,
+        device: Device,
+    ) -> Result<Self> {
+        anyhow::ensure!(device.is_cuda(), "Hyperion requires CUDA");
+        Self::load_on_device(weights_path, settings, device, None)
+            .map(|model| model.with_full_canvas(false))
+    }
+
+    pub fn device(&self) -> &Device {
+        &self.device
+    }
+
     pub fn load(weights_path: &Path, settings: &HyperionSweepSettings) -> Result<Self> {
         #[cfg(feature = "hyperion-cuda")]
         let mut cuda_error: Option<anyhow::Error> = None;

@@ -112,6 +112,15 @@ pub struct FusedTargetEncoder {
 
 impl FusedTargetEncoder {
     pub fn load(bundle: &LoadedModelBundle) -> Result<Self> {
+        Self::load_on_device(bundle, Device::Cpu)
+    }
+
+    pub fn device(&self) -> &Device {
+        &self.device
+    }
+
+    /// Explicit placement; errors never fall back to another device.
+    pub fn load_on_device(bundle: &LoadedModelBundle, device: Device) -> Result<Self> {
         let identity = bundle
             .manifest
             .encoders
@@ -120,7 +129,6 @@ impl FusedTargetEncoder {
         let bytes = bundle
             .read_verified(&identity.artifact)
             .context("read and re-verify target encoder")?;
-        let device = Device::Cpu;
         let tensors = candle_core::safetensors::load_buffer(&bytes, &device)
             .context("load verified target encoder")?;
         if tensors.len() != 171 {

@@ -100,6 +100,10 @@ pub struct CpuProducer {
 }
 impl CpuProducer {
     pub fn load(files: &EncoderFiles) -> Result<Self> {
+        Self::load_on_device(files, Device::Cpu)
+    }
+
+    fn load_on_device(files: &EncoderFiles, device: Device) -> Result<Self> {
         ensure!(
             files.hyperion_weights.sha256 == HYPERION_WEIGHTS
                 && files.hyperion_manifest.sha256 == HYPERION_MANIFEST
@@ -108,7 +112,18 @@ impl CpuProducer {
         );
         files.hyperion_weights.read(512 << 20)?;
         let settings = verified_hyperion_settings(&files.hyperion_manifest)?;
-        let hyperion = V7Model::load_cpu(&files.hyperion_weights.path, &settings)?;
+        let hyperion = if device.is_cpu() {
+            V7Model::load_cpu(&files.hyperion_weights.path, &settings)?
+        } else {
+            #[cfg(feature = "inference-cuda")]
+            {
+                V7Model::load_cuda(&files.hyperion_weights.path, &settings, device.clone())?
+            }
+            #[cfg(not(feature = "inference-cuda"))]
+            {
+                anyhow::bail!("CUDA inference feature required")
+            }
+        };
         // Loaders use paths internally: rehash after load as well as before it.
         files.hyperion_weights.read(512 << 20)?;
         ensure!(
@@ -129,8 +144,12 @@ impl CpuProducer {
         Ok(Self {
             hyperion,
             settings,
-            foundation: StarlightFoundationEncoder::load_bundle(&bundle, Device::Cpu, DType::F32)?,
-            target: FusedTargetEncoder::load(&bundle)?,
+            foundation: StarlightFoundationEncoder::load_bundle(
+                &bundle,
+                device.clone(),
+                DType::F32,
+            )?,
+            target: FusedTargetEncoder::load_on_device(&bundle, device)?,
             transforms: FrozenTransforms::load(&files.frozen_transforms)?,
             identity,
         })
@@ -187,6 +206,18 @@ impl CpuProducer {
     /// result (features followed by one regression target), never a corpus root.
     /// This returns components, not an admitted context or policy binding.
     pub fn encode_prepared(&self, rows: &[Vec<f64>]) -> Result<Components> {
+        self.encode_timed(rows, false).map(|v| v.0)
+    }
+
+    fn encode_timed(
+        &self,
+        rows: &[Vec<f64>],
+        profile: bool,
+    ) -> Result<(Components, BTreeMap<String, f64>, serde_json::Value)> {
+        let mut times = BTreeMap::new();
+        if profile {
+            self.hyperion.device().synchronize()?;
+        }
         let started = std::time::Instant::now();
         let width = validate_rows(rows)? - 1;
         let n = rows.len();
@@ -224,10 +255,11 @@ impl CpuProducer {
             "incomplete Hyperion sweep"
         );
         let hyperion = pool_hyperion(&sweep.row_emb)?;
-        eprintln!(
-            "context stage=hyperion elapsed_seconds={:.6}",
-            started.elapsed().as_secs_f64()
-        );
+        if profile {
+            self.hyperion.device().synchronize()?;
+        }
+        times.insert("hyperion".into(), started.elapsed().as_secs_f64());
+        let started = std::time::Instant::now();
         let mut foundation = prepare_jope_foundation_rows(rows)?;
         // Native component builder casts to f32, normalizes in f64, then casts back.
         let y = &foundation.input.context_y;
@@ -240,10 +272,11 @@ impl CpuProducer {
             .foundation
             .encode_standardized(&foundation.input)?
             .vector;
-        eprintln!(
-            "context stage=foundation elapsed_seconds={:.6}",
-            started.elapsed().as_secs_f64()
-        );
+        if profile {
+            self.foundation.device().synchronize()?;
+        }
+        times.insert("foundation".into(), started.elapsed().as_secs_f64());
+        let started = std::time::Instant::now();
         let targets = rows.iter().map(|r| r[width]).collect::<Vec<_>>();
         let low = targets.iter().copied().fold(f64::INFINITY, f64::min);
         let high = targets.iter().copied().fold(f64::NEG_INFINITY, f64::max);
@@ -253,21 +286,24 @@ impl CpuProducer {
             .map(|v| ((v - low) / span) as f32)
             .collect::<Vec<_>>();
         let windows = FrozenTargetWindows::native(n, TargetTask::Regression, 17)?;
+        let sampling = serde_json::json!({"hyperion_rows":n,"hyperion_features":width,"hyperion_sweeps":3,"hyperion_scales":[4,7,11,15],"hyperion_batch":1024,"target_chunks_per_sweep":1,
+            "foundation_context_rows":foundation.context_indices.len(),"foundation_query_rows":foundation.query_indices.len(),
+            "target_neural_windows":windows.neural.iter().map(Vec::len).collect::<Vec<_>>(),"target_classical_windows":windows.classical.iter().map(Vec::len).collect::<Vec<_>>()});
         let target = self
             .target
             .encode_with_windows(&targets, TargetTask::Regression, &windows)?
             .vector;
-        eprintln!(
-            "context stage=target elapsed_seconds={:.6}",
-            started.elapsed().as_secs_f64()
-        );
+        if profile {
+            self.target.device().synchronize()?;
+        }
+        times.insert("target".into(), started.elapsed().as_secs_f64());
         let result = Components {
             hyperion,
             foundation: foundation_vector,
             target,
         };
         result.validate()?;
-        Ok(result)
+        Ok((result, times, sampling))
     }
     pub fn assemble(&self, components: &Components) -> Result<Vec<f32>> {
         self.transforms.assemble(components)
@@ -549,5 +585,49 @@ mod tests {
         assert_eq!(&pooled[128..256], &vec![1.0; 128]);
         assert_eq!(pooled[256], 1.2);
         assert_eq!(pooled[384], 2.8);
+    }
+}
+
+/// Benchmark-only CUDA encoder. Cannot produce a CPU admission artifact.
+#[cfg(feature = "inference-cuda")]
+pub struct CudaProducer(CpuProducer);
+#[cfg(feature = "inference-cuda")]
+impl CudaProducer {
+    pub fn load(files: &EncoderFiles, device: Device) -> Result<Self> {
+        ensure!(device.is_cuda(), "benchmark requires CUDA");
+        let inner = CpuProducer::load_on_device(files, device)?;
+        ensure!(
+            inner.hyperion.device().is_cuda()
+                && inner.foundation.device().is_cuda()
+                && inner.target.device().is_cuda(),
+            "encoder CPU fallback refused"
+        );
+        Ok(Self(inner))
+    }
+    pub fn identity(&self) -> &EncoderIdentity {
+        self.0.identity()
+    }
+    pub fn devices(&self) -> Vec<String> {
+        [
+            &self.0.hyperion.device(),
+            &self.0.foundation.device(),
+            &self.0.target.device(),
+        ]
+        .iter()
+        .map(|d| format!("{:?}", d.location()))
+        .collect()
+    }
+    pub fn encode_prepared(&self, rows: &[Vec<f64>]) -> Result<Components> {
+        self.0.encode_prepared(rows)
+    }
+    pub fn encode_request(
+        &self,
+        rows: &[Vec<f64>],
+        profile: bool,
+    ) -> Result<(Components, BTreeMap<String, f64>, serde_json::Value)> {
+        self.0.encode_timed(rows, profile)
+    }
+    pub fn assemble(&self, components: &Components) -> Result<Vec<f32>> {
+        self.0.assemble(components)
     }
 }

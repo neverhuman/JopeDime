@@ -12,6 +12,7 @@ path = "src/lib.rs"
 
 [features]
 default = []
+timing-study = ["neural-search"]
 neural-search = ["dep:jope-policy"]
 qualified-context = ["neural-search", "jope-policy/context-producer"]
 
