@@ -106,6 +106,17 @@ impl Binding {
         })
     }
 
+    /// The CUDA device this worker owns.
+    pub fn cuda_device(&self) -> tch::Device {
+        tch::Device::Cuda(self.device_index)
+    }
+
+    /// Whether this worker owns job `index` of a round-robin job list. Jobs
+    /// are sharded by communicator rank, never by device index.
+    pub fn owns(&self, index: usize) -> bool {
+        index % self.world == self.global_rank
+    }
+
     pub fn receipt(&self) -> Value {
         json!({"schema":SCHEMA,
             "binding":if self.gpu_uuid.is_some() {"assigned"} else {"legacy_single_host"},
@@ -263,6 +274,22 @@ pub fn bind(
         gpu_uuid: Some(me.gpu_uuid.clone()),
         plan_sha256: Some(assignment.plan_sha256.clone()),
     })
+}
+
+/// This worker's binding: [`bind`] against the frozen assignment when one
+/// exists, otherwise the labelled [`Binding::legacy_single_host`] mapping.
+/// `local` is read only for an assignment, so the legacy path enumerates no
+/// device. Used by training and by the proposal workers.
+pub fn resolve(
+    assignment: Option<&Assignment>,
+    global_rank: usize,
+    world: usize,
+    local: impl FnOnce() -> Result<LocalDevices>,
+) -> Result<Binding> {
+    match assignment {
+        Some(assignment) => bind(assignment, global_rank, world, &local()?),
+        None => Binding::legacy_single_host(global_rank, world),
+    }
 }
 
 /// Host and boot identity as the assignment names them.

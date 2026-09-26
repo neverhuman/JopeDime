@@ -1169,12 +1169,7 @@ fn rank_impl(
     };
     // The communicator rank is not the CUDA ordinal: bind this worker to its
     // owned device and check visibility before the communicator exists.
-    let binding = match assignment {
-        Some(assignment) => {
-            topology::bind(assignment, rank, world, &crate::neural::local_devices()?)?
-        }
-        None => topology::Binding::legacy_single_host(rank, world)?,
-    };
+    let binding = topology::resolve(assignment, rank, world, crate::neural::local_devices)?;
     let comm = Nccl::init(&binding, &launch.join("nccl.id"))?;
     let device = Device::Cuda(binding.device_index());
     tch::manual_seed(seed as i64);

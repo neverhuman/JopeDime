@@ -59,7 +59,7 @@ File `crates/jope-engine/tests/trainer_topology.rs` (feature `neural`, CPU; no d
 ### Open for W7-T03
 - **Delivery of the assignment** to `rank_impl` from the W7-T02 plan, and the controller spawning workers with the assigned `CUDA_VISIBLE_DEVICES`.
 - **World sizes.** `rank_impl` still accepts only v1 world sizes (1, 2, 4, 8). A three-rank run needs the W7-T06 partition.
-- **Other rank-as-device uses.** `proposals.rs` and `ranked_proposals.rs` still use `Device::Cuda(rank)`. They are not training and are recorded as follow-ups.
+- **Other rank-as-device uses.** `proposals.rs` and `ranked_proposals.rs` used `Device::Cuda(rank)`. Resolved in the follow-up section at the end of this record.
 - **Not executed.** No native path ran; that is W7-T08.
 
 ---
@@ -166,3 +166,44 @@ The v1 objective, identity digest and `check_parent` behavior are unchanged. `ob
 - **Launch dependencies.** A three-host run also needs the W7-T02 assignment delivery (W7-T03) and a W7-T04 rendezvous.
 - **Load imbalance.** Uneven shards give rank 0 one extra comparison per step (86/85/85). Not measured.
 - **Not executed.** No training step, device or communicator ran.
+
+---
+
+## W7-T03 follow-up — proposal workers select their device through a binding
+
+### Defect (source trace)
+- **`proposals::rank_impl`.** It used `Device::Cuda(rank)`.
+- **`ranked_proposals::run`.** It used `Device::Cuda(rank)` unless `JOPE_RANKED_DEVICE=cpu`.
+- **Consequence.** The same rank-as-ordinal assumption W7-T03 removed from training: global rank 2 on a one-GPU host selects a nonexistent CUDA index 2.
+- **Not reproduced as a failing test.** Both paths create a CUDA device, so they cannot run here.
+
+### Change
+| Location | Change |
+|---|---|
+| `training/topology.rs` | `resolve(assignment, rank, world, local)`: `bind` against a frozen assignment, otherwise the labelled `legacy_single_host` mapping. The local device view is read only for an assignment, so the legacy path enumerates no device. `Binding::cuda_device()` is the owned device, and `Binding::owns(j)` is round-robin job sharding by communicator rank. `training::rank_impl` now uses `resolve` too, with the same behavior |
+| `proposals.rs` | `rank_impl` takes an optional assignment; both callers pass none. It resolves the binding right after the topology check and before any input is read. The device is `binding.cuda_device()` and jobs go through `binding.owns(j)`. `complete-{rank}.json` records `topology` (the binding receipt, `legacy_single_host` today) |
+| `ranked_proposals.rs` | `worker_device(binding, requested)`: CPU only when `JOPE_RANKED_DEVICE` is exactly `cpu`, otherwise the bound device. `run` shards views with `binding.owns(j)` and records `topology` in `parallel.ranked_proposals_complete.v1` |
+
+Behavior without an assignment is unchanged: the same ordinal, the same shards, and the receipt now says so. The proposal completion that `native_graph` verifies checks only `rank`, `world` and equality with the numerical receipt, so the added field is compatible.
+
+### Fixtures
+File `crates/jope-engine/tests/trainer_topology.rs` (feature `neural`, CPU).
+
+| Acceptance item | Test |
+|---|---|
+| Without an assignment, the legacy mapping is labelled and no device view is read; an out-of-world rank is refused. With an assignment, rank 2 on three one-GPU hosts gets CUDA 0; a failing or mismatched local view is refused, never replaced by the legacy mapping | `resolve_binds_an_assignment_or_labels_the_legacy_mapping` |
+| Ten jobs on three ranks each have exactly one owner, by global rank. The ranked worker uses CUDA 0 on every one-GPU host, and CPU only for exactly `cpu` (not `CPU` or `cuda`). The legacy rank 5 of 8 keeps CUDA 5 and jobs 5 and 13 | `proposal_workers_shard_by_communicator_rank_and_use_the_bound_device` |
+
+### Runs
+| Evidence directory | Command | Result |
+|---|---|---|
+| `w6-post-w7t03fu-a-20260926T103159Z` | `trainer_topology`, `lossless_partition`, `gpu_entry_guards`, `ranked_proposals` (neural) | 18/19. The failure is `ranked_proposals` (below) |
+| `w6-post-w7t03fu-default-check-20260926T103249Z` | `cargo check --locked -p jope-parallel --all-targets` | exit 0 |
+| `w6-post-w7t03fu-ranked-default-20260926T103410Z` | `ranked_proposals`, `gpu_entry_guards` without `neural` | exit 4, 0 tests: both files are `neural`-only, so the coverage lanes (`rust-check`, `full-default`) run no test from them |
+| `w6-post-w7t03fu-b-20260926T103523Z` | neural suite with the `--lib` filter widened to `proposals`, `ranked_proposals`, `smartcluster_worker` and `native_graph` | 140/140 |
+
+**`ranked_proposals` failure is pre-existing and unrelated.** It fails with `propose-ranked: original native GPU grant verifier unavailable; numerical dispatch is held`. That error comes from `task_contract::require_qualified_gpu_experiment`, the first statement of `ranked_proposals::run`, before any changed line. Only a `neural` run can reach it, and it is outside this slice.
+
+### Open
+- **Assignment delivery.** Same join as W7-T03, owned by the controller lane.
+- **Other fixed `Device::Cuda(0)` users** (`contexts.rs`, `monitoring.rs`, `components.rs`) and `encoding.rs` `Device::Cuda(gpu)` are single-device services, not rank-indexed, and were not changed.

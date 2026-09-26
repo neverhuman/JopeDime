@@ -6,10 +6,14 @@
 //! one-GPU host selected a nonexistent CUDA index 2. That call is native and
 //! needs a device, so it is recorded by source trace, not as a failing test.
 
-use jope_parallel::training::topology::{
-    bind, validate, Assignment, Binding, LocalDevices, Participant, SCHEMA,
+use jope_parallel::{
+    ranked_proposals::worker_device,
+    training::topology::{
+        bind, resolve, validate, Assignment, Binding, LocalDevices, Participant, SCHEMA,
+    },
 };
 use serde_json::json;
+use tch::Device;
 
 const PLAN: &str = "5555555555555555555555555555555555555555555555555555555555555555";
 
@@ -231,4 +235,68 @@ fn the_legacy_single_host_mapping_is_explicit_and_labelled() {
     let mut extra = value;
     extra["participants"][0]["cuda_index"] = json!(0);
     assert!(serde_json::from_value::<Assignment>(extra).is_err());
+}
+
+// W7-T03 follow-up: the proposal workers (`proposals::rank_impl`,
+// `ranked_proposals::run`) formerly used `Device::Cuda(rank)`. They now
+// resolve a binding, shard jobs by communicator rank and take the device
+// from the binding. Only the selection logic runs here; the device paths are
+// compile-checked.
+
+#[test]
+fn resolve_binds_an_assignment_or_labels_the_legacy_mapping() {
+    // Without an assignment no device is enumerated: the local view is
+    // never read.
+    let legacy = resolve(None, 2, 3, || -> anyhow::Result<LocalDevices> {
+        panic!("the legacy mapping must not enumerate devices")
+    })
+    .unwrap();
+    assert_eq!(legacy, Binding::legacy_single_host(2, 3).unwrap());
+    assert_eq!(legacy.receipt()["binding"], "legacy_single_host");
+    assert_eq!(legacy.cuda_device(), Device::Cuda(2));
+    assert!(resolve(None, 3, 3, || unreachable!()).is_err());
+    // With an assignment the worker's view is checked by `bind`.
+    let a = three_hosts();
+    let bound = resolve(Some(&a), 2, 3, || Ok(view("xbabe1", &[1]))).unwrap();
+    assert_eq!(bound, bind(&a, 2, 3, &view("xbabe1", &[1])).unwrap());
+    assert_eq!(bound.cuda_device(), Device::Cuda(0), "rank 2 is not CUDA 2");
+    assert_eq!(bound.receipt()["binding"], "assigned");
+    // A failing or mismatched local view is refused, never replaced by the
+    // legacy mapping.
+    assert!(resolve(Some(&a), 2, 3, || anyhow::bail!("no driver")).is_err());
+    assert!(resolve(Some(&a), 2, 3, || Ok(view("xbabe2", &[2]))).is_err());
+}
+
+#[test]
+fn proposal_workers_shard_by_communicator_rank_and_use_the_bound_device() {
+    let a = three_hosts();
+    let hosts = [("xbabe2", 2), ("xbabe3", 3), ("xbabe1", 1)];
+    let mut owners = vec![Vec::new(); 10];
+    for (rank, (host, gpu)) in hosts.into_iter().enumerate() {
+        let b = resolve(Some(&a), rank, 3, || Ok(view(host, &[gpu]))).unwrap();
+        for (job, owner) in owners.iter_mut().enumerate() {
+            if b.owns(job) {
+                owner.push(rank);
+            }
+        }
+        // The ranked worker's device: CUDA 0 on every one-GPU host, CPU
+        // only on the exact opt-in.
+        assert_eq!(worker_device(&b, None), Device::Cuda(0));
+        assert_eq!(worker_device(&b, Some("cuda")), Device::Cuda(0));
+        assert_eq!(worker_device(&b, Some("CPU")), Device::Cuda(0));
+        assert_eq!(worker_device(&b, Some("cpu")), Device::Cpu);
+    }
+    // Every job has exactly one owner, round-robin by communicator rank.
+    assert_eq!(
+        owners,
+        (0..10).map(|j| vec![j % 3]).collect::<Vec<_>>(),
+        "jobs are sharded once each by global rank"
+    );
+    // The legacy mapping keeps the previous behavior, labelled.
+    let legacy = resolve(None, 5, 8, || unreachable!()).unwrap();
+    assert_eq!(worker_device(&legacy, None), Device::Cuda(5));
+    assert_eq!(
+        (0..16usize).filter(|&j| legacy.owns(j)).collect::<Vec<_>>(),
+        [5, 13]
+    );
 }
