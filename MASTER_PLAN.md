@@ -1,16 +1,19 @@
 # JopeDime current direction
 
 **2026-09-26 core-IP regression remediation.** [PR #111](https://github.com/neverhuman/JopeDime/pull/111)
-delivered W0 and every source-implementable W1–W12 slice of `docs/internal/core-ip/work-orders`.
+delivered W0 and the recorded source- and fixture-scope slices across W1–W12 of
+`docs/internal/core-ip/work-orders`. Source integration items and live gates remain open;
+`STATUS.md` records them per task.
 It merged as squash `7b86622ea694bc069338c268f23e17c29f76e8eb` at 2026-09-26T15:12:59Z. The tree is
 byte-identical to the reviewed head `bddb8fed16e4c73cb0277998f37ab4a8871e6a3e`, and main-guard
 36251156798 passed.
 
 It was squashed, not rebased, because GitHub refuses rebase merges of more than 100 commits (121
-here, `canBeRebased=false`). The squash body lists every commit, and branch
-`feat/regression-remediation` keeps the full history.
+here, `canBeRebased=false`). The squash body lists every commit. The remote head branch was
+deleted on merge (`delete_branch_on_merge`), but the full history stays reachable at GitHub's
+`refs/pull/111/head` (= `bddb8fed1`) and in the local branch `feat/regression-remediation`.
 
-Review was by independent Codex processes acting as neverhuman, against `jepsontaylor` as author
+Review was by independent Codex processes acting as `neverhumanbot` (219957145), against `jepsontaylor` as author
 and committer of all 121 commits:
 - Review 5326209256 requested changes at `0b303b293` with two P1 defects: grant expiry bypassed
   during coordinator recovery, and an outer-score grant that re-read its preparation after
@@ -22,8 +25,9 @@ and committer of all 121 commits:
 PR run 36250125057 and manual run 36250695256 passed all eight jobs and aggregate at that head.
 
 Task status is 70 implemented, 66 fixture-proven, 22 blocked and 0 planned. None is CI-verified or
-live-qualified, and all 195 findings remain open. The blocked tasks are the live gates: three-host
-W7, live S3 W8, loop/transfer W10 and GPU timing W11. Per-task state and open items are in
+live-qualified, and all 195 findings remain open. The blocked tasks are live or dependent release
+gates, for example three-host W7, live S3 W8, W9-T07, loop/transfer W10, GPU timing W11 and
+W12-T06/T08. Per-task state and open items are in
 `docs/internal/core-ip/work-orders/STATUS.md`.
 
 The PR added no Python and deleted seven files. The core-IP verifiers now live in the Rust crate
