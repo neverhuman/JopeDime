@@ -311,6 +311,11 @@ impl ProducerFile {
     pub fn ledger(&self) -> Option<&crate::proposal_ledger::ProposalLedger> {
         self.envelope.proposal_ledger.as_ref()
     }
+    /// Every draw's terminal outcome for the controller's candidate ledger (W4-T03); `None`
+    /// for a historical artifact.
+    pub fn draw_outcomes(&self) -> Result<Option<crate::proposal_ledger::DrawOutcomes>> {
+        self.ledger().map(|l| l.draw_outcomes()).transpose()
+    }
 }
 pub fn read_claims(bytes: &[u8], expected: &Request) -> Result<ProducerFile> {
     let envelope: Envelope = serde_json::from_slice(bytes)?;
@@ -369,6 +374,15 @@ pub fn read_claims(bytes: &[u8], expected: &Request) -> Result<ProducerFile> {
                 && s.batch == expected.sampling_batch
                 && s.temperature == expected.sampling_temperature,
             "proposal ledger belongs to another request"
+        );
+    } else {
+        // A historical artifact has nothing to join a seed slot to.
+        ensure!(
+            population
+                .candidates()
+                .iter()
+                .all(|c| c.proposal_record_sha256().is_none()),
+            "seed population names proposal records without a proposal ledger"
         );
     }
     Ok(ProducerFile {
@@ -470,32 +484,54 @@ mod tests {
         batch: usize,
         temperature: f32,
     ) -> (Request, crate::seeds::Proposal) {
-        let vocabulary = crate::grammar::bind_vocabulary(
+        let config = tiny_config(128);
+        let model = crate::model::PolicyModel::random_weights(config, 5).unwrap();
+        fixture_proposal(&model, &accepted_vocabulary(), rounds, batch, temperature).unwrap()
+    }
+
+    fn accepted_vocabulary() -> crate::grammar::BoundVocabulary {
+        crate::grammar::bind_vocabulary(
             include_bytes!("../../jope-engine/assets/grammar/featmath.json"),
             crate::CHECKPOINT_VOCABULARY_SHA256,
         )
-        .unwrap();
+        .unwrap()
+    }
+
+    fn tiny_config(max_seq: usize) -> crate::config::PolicyConfig {
         let mut config = crate::config::PolicyConfig::regression(401);
         config.width = 16;
         config.heads = 4;
         config.ffn = 32;
         config.layers = 1;
         config.dropout = 0.0;
-        let model = crate::model::PolicyModel::random_weights(config.clone(), 5).unwrap();
+        config.max_seq = max_seq;
+        config
+    }
+
+    /// A real proposal by untrained `model` (the test state, a challenger-shaped request naming
+    /// it), so the producer transport can be exercised end to end in a unit test. The accepted
+    /// vocabulary goes through `propose_unbound`; any other only through the unit-test entry.
+    fn fixture_proposal(
+        model: &crate::model::PolicyModel,
+        vocabulary: &crate::grammar::BoundVocabulary,
+        rounds: usize,
+        batch: usize,
+        temperature: f32,
+    ) -> Result<(Request, crate::seeds::Proposal)> {
         let checkpoint = crate::config::CheckpointBinding::unbound_for_testing(
-            config,
+            model.config().clone(),
             crate::CHECKPOINT_VOCABULARY_SHA256,
         );
         let context = PolicyContext::from_frozen_values(
             (0..2048).map(|i| (i % 13) as f32 / 13.0 - 0.4).collect(),
-        )
-        .unwrap();
+        )?;
         let state = crate::testing::UNBOUND_TEST_STATE_SHA256.to_string();
         let weights = sha256_hex(b"unbound test weights");
         let request = Request {
             checkpoint_sha256: state.clone(),
             policy_safetensors_sha256: weights.clone(),
             context_sha256: crate::context_sha256(&context),
+            vocabulary_sha256: vocabulary.sha256().into(),
             sampling_rounds: rounds,
             sampling_batch: batch,
             sampling_temperature: temperature,
@@ -512,27 +548,38 @@ mod tests {
             request.cut,
             &request.training_sha256,
             &request.context_sha256,
-        )
-        .unwrap();
-        let proposal = seeds::propose_unbound(
-            &model,
-            &checkpoint,
-            &vocabulary,
-            &context,
-            &binding,
-            &seeds::ProposalSeeds {
-                sampling: request.sampling_seed,
-                fallback: request.fallback_seed,
-                exploration: request.exploration_seed,
-            },
-            &crate::decode::SamplingOptions {
-                rounds: request.sampling_rounds,
-                batch: request.sampling_batch,
-                temperature: request.sampling_temperature,
-            },
-        )
-        .unwrap();
-        (request, proposal)
+        )?;
+        let proposal_seeds = seeds::ProposalSeeds {
+            sampling: request.sampling_seed,
+            fallback: request.fallback_seed,
+            exploration: request.exploration_seed,
+        };
+        let sampling = crate::decode::SamplingOptions {
+            rounds: request.sampling_rounds,
+            batch: request.sampling_batch,
+            temperature: request.sampling_temperature,
+        };
+        let proposal = if vocabulary.sha256() == crate::CHECKPOINT_VOCABULARY_SHA256 {
+            seeds::propose_unbound(
+                model,
+                &checkpoint,
+                vocabulary,
+                &context,
+                &binding,
+                &proposal_seeds,
+                &sampling,
+            )?
+        } else {
+            seeds::propose_with_vocabulary_for_test(
+                model,
+                vocabulary,
+                &context,
+                &binding,
+                &proposal_seeds,
+                &sampling,
+            )?
+        };
+        Ok((request, proposal))
     }
 
     /// W4-T07: the artifact handed to the controller carries every candidate's original tokens,
@@ -859,6 +906,292 @@ mod tests {
     fn historical_producer_artifact_has_no_ledger_evidence() -> Result<()> {
         let file = read_claims(&serde_json::to_vec(&claims())?, &request())?;
         assert!(file.ledger().is_none());
+        Ok(())
+    }
+
+    /// Rewrite the seed population inside a producer artifact (and its pinned digest).
+    fn with_population(bytes: &[u8], edit: impl FnOnce(&mut serde_json::Value)) -> Vec<u8> {
+        let mut envelope: serde_json::Value = serde_json::from_slice(bytes).unwrap();
+        let mut population: serde_json::Value =
+            serde_json::from_str(envelope["population_json"].as_str().unwrap()).unwrap();
+        edit(&mut population);
+        let json = serde_json::to_string_pretty(&population).unwrap();
+        envelope["population_sha256"] = serde_json::json!(sha256_hex(json.as_bytes()));
+        envelope["population_json"] = serde_json::json!(json);
+        serde_json::to_vec(&envelope).unwrap()
+    }
+
+    /// W4-T07 join (the W5-T01 side): every seed slot names its proposal-ledger record, so a
+    /// candidate ledger seeded by the population joins the draw, tokens, scores and parser result
+    /// of each candidate. Reproduction: before the join the population carried only genome,
+    /// origin and rank weight.
+    #[test]
+    fn seed_slots_name_their_proposal_records() -> Result<()> {
+        let (fixture, proposal) = unbound_proposal();
+        let bytes = artifact_bytes(&fixture, &proposal)?;
+        let file = read_claims(&bytes, &fixture)?;
+        let ledger = file.ledger().expect("the producer writes a ledger");
+        let population: serde_json::Value =
+            serde_json::from_str(&serde_json::from_slice::<Envelope>(&bytes)?.population_json)?;
+        for slot in 0..seeds::SEED_COUNT {
+            assert_eq!(
+                population["candidates"][slot]["proposal_record_sha256"],
+                serde_json::json!(ledger.slot_record_sha256(slot)?),
+                "seed slot {slot} does not name its proposal record"
+            );
+        }
+        let refused = |bytes: Vec<u8>, request: &Request, needle: &str| {
+            let error = match read_claims(&bytes, request) {
+                Ok(_) => panic!("{needle}: admitted"),
+                Err(error) => format!("{error:#}"),
+            };
+            assert!(error.contains(needle), "{needle}: {error}");
+        };
+        // A slot naming another slot's record.
+        refused(
+            with_population(&bytes, |p| {
+                let first = p["candidates"][0]["proposal_record_sha256"].take();
+                p["candidates"][0]["proposal_record_sha256"] =
+                    p["candidates"][1]["proposal_record_sha256"].clone();
+                p["candidates"][1]["proposal_record_sha256"] = first;
+            }),
+            &fixture,
+            "names another proposal record",
+        );
+        // A population that joins only some of its slots.
+        refused(
+            with_population(&bytes, |p| {
+                p["candidates"][3]
+                    .as_object_mut()
+                    .unwrap()
+                    .remove("proposal_record_sha256");
+            }),
+            &fixture,
+            "joins only some slots",
+        );
+        // A historical artifact (no ledger) cannot name records it has nothing to join to.
+        let historical = serde_json::to_vec(&claims())?;
+        refused(
+            with_population(&historical, |p| {
+                for c in p["candidates"].as_array_mut().unwrap() {
+                    c["proposal_record_sha256"] = serde_json::json!(sha256_hex(b"record"));
+                }
+            }),
+            &request(),
+            "without a proposal ledger",
+        );
+        // Positive control: a population without any record keeps its old meaning.
+        read_claims(&with_population(&historical, |_| {}), &request())?;
+        Ok(())
+    }
+
+    /// W4-T03: every draw's terminal outcome, as the controller's candidate ledger records it.
+    #[test]
+    fn draw_outcomes_record_every_draw_once() -> Result<()> {
+        use crate::proposal_ledger::SlotSource;
+        for (request, proposal) in [unbound_proposal(), filled_proposal()] {
+            let file = read_claims(&artifact_bytes(&request, &proposal)?, &request)?;
+            let ledger = file.ledger().expect("the producer writes a ledger");
+            let outcomes = file.draw_outcomes()?.expect("a ledger has draw outcomes");
+            assert_eq!(outcomes.ledger_sha256, ledger.sha256()?);
+            assert_eq!(outcomes.denominators, ledger.denominators);
+            assert_eq!(
+                outcomes.draws.len(),
+                ledger.neural_draws.len()
+                    + ledger.fallback_draws.len()
+                    + ledger.exploration_draws.len()
+            );
+            let d = &ledger.denominators;
+            let neural = |label: &str| {
+                outcomes
+                    .draws
+                    .iter()
+                    .filter(|o| {
+                        matches!(o.draw, SlotSource::NeuralDraw { .. }) && o.outcome == label
+                    })
+                    .count()
+            };
+            assert_eq!(
+                [
+                    neural("completed"),
+                    neural("surplus"),
+                    neural("duplicate"),
+                    neural("parser_rejected"),
+                    neural("incomplete")
+                ],
+                [
+                    d.completed,
+                    d.surplus,
+                    d.duplicate,
+                    d.parser_rejected,
+                    d.incomplete
+                ]
+            );
+            // Each handed-off draw names its slot and that slot's record, which the seed slot
+            // names too; no other draw names one.
+            let mut handed = 0;
+            for o in &outcomes.draws {
+                match o.slot {
+                    Some(slot) => {
+                        handed += 1;
+                        let record = ledger.slot_record_sha256(slot)?;
+                        assert_eq!(o.slot_record_sha256.as_deref(), Some(record.as_str()));
+                        assert_eq!(
+                            proposal.population().candidates()[slot].proposal_record_sha256(),
+                            Some(record.as_str())
+                        );
+                        assert_eq!(ledger.candidates[slot].source, o.draw);
+                        let admitted = match o.draw {
+                            SlotSource::NeuralDraw { .. } => "completed",
+                            _ => "admitted",
+                        };
+                        assert_eq!(o.outcome, admitted);
+                    }
+                    None => assert!(o.slot_record_sha256.is_none()),
+                }
+            }
+            assert_eq!(
+                (handed, outcomes.draws.len() - handed),
+                (seeds::SEED_COUNT, d.shadow)
+            );
+        }
+        // A historical artifact records no draws.
+        let file = read_claims(&serde_json::to_vec(&claims())?, &request())?;
+        assert!(file.draw_outcomes()?.is_none());
+        Ok(())
+    }
+
+    /// A policy whose next-token logit for token `t` is exactly `logit(t)` at every step (the
+    /// `tests/decode_outcomes.rs` fixture).
+    fn fixed_logit_model(
+        config: crate::config::PolicyConfig,
+        logit: impl Fn(usize) -> f32,
+    ) -> crate::model::PolicyModel {
+        use candle_core::{Device, Tensor};
+        let width = config.width;
+        let tensors = crate::model::expected_inventory(&config)
+            .into_iter()
+            .enumerate()
+            .map(|(i, (name, shape))| {
+                let numel = shape.iter().product::<usize>();
+                let values = match name.as_str() {
+                    "out_norm.weight" => vec![0.0; numel],
+                    "out_norm.bias" => vec![1.0; numel],
+                    "token_emb.weight" => (0..numel)
+                        .map(|j| {
+                            if j % width == 0 {
+                                logit(j / width)
+                            } else {
+                                0.0
+                            }
+                        })
+                        .collect(),
+                    _ => (0..numel)
+                        .map(|j| ((i * 131 + j) as f32 * 0.37).sin() * 0.2)
+                        .collect::<Vec<f32>>(),
+                };
+                let tensor = if shape.is_empty() {
+                    Tensor::new(values[0], &Device::Cpu)
+                } else {
+                    Tensor::from_vec(values, shape, &Device::Cpu)
+                }
+                .unwrap();
+                (name, tensor)
+            })
+            .collect::<Vec<_>>();
+        crate::model::PolicyModel::from_tensors(config, tensors, Device::Cpu).unwrap()
+    }
+
+    /// W4-T07: real parser refusals (not relabelled records) through a whole proposal and its
+    /// ledger. Under the frozen grammar every accepting walk parses, so the product path never
+    /// refuses one; a vocabulary whose `stack` head renders as `stack)` makes every neural draw's
+    /// preferred walk `(stack)` a refusal, and grammar-uniform walks through that head refusals
+    /// in the fills. The product path and the producer transport refuse that vocabulary ("unbound
+    /// producer vocabulary"), so the ledger is checked directly.
+    #[test]
+    fn real_parser_refusals_reconcile_and_forgeries_are_refused() -> Result<()> {
+        use crate::decode::{DrawOutcome, UniformOutcome};
+        use crate::grammar::EOS;
+        const STACK: usize = 372;
+        let mut vocab = accepted_vocabulary().vocab().clone();
+        vocab.ops.get_mut(&STACK).unwrap().name = "stack)".into();
+        let vocabulary = crate::grammar::BoundVocabulary::for_unit_test(vocab.clone());
+        // Every token preferred by descending id: the walk is `(stack)`.
+        let model = fixed_logit_model(tiny_config(128), |t| -1000.0 * (401 - t.min(401)) as f32);
+        let (request, proposal) = fixture_proposal(&model, &vocabulary, 1, 4, 1.0)?;
+        let refused = artifact_bytes(&request, &proposal).map(drop).unwrap_err();
+        assert!(format!("{refused:#}").contains("unbound producer vocabulary"));
+        let ledger = proposal.ledger();
+        ledger.reconcile()?;
+        ledger.reconcile_with_vocabulary(&vocab)?;
+        ledger.matches_population(proposal.population().candidates())?;
+        let d = &ledger.denominators;
+        assert_eq!(
+            (
+                d.scheduled_neural_draws,
+                d.parser_rejected,
+                d.complete_sequences,
+                d.valid_programs
+            ),
+            (4, 4, 4, 0)
+        );
+        assert_eq!(d.fallback_admitted, crate::decode::POOL_SIZE);
+        for draw in &ledger.neural_draws {
+            assert_eq!(draw.outcome, DrawOutcome::ParserRejected);
+            assert_eq!(draw.tokens, [1, 3, 397, STACK, EOS]);
+        }
+        let uniform = ledger
+            .fallback_draws
+            .iter()
+            .chain(&ledger.exploration_draws)
+            .position(|d| d.outcome == UniformOutcome::ParserRejected)
+            .expect("a grammar-uniform walk through the refused head");
+        // The candidate ledger records each refusal as a draw without a slot.
+        let outcomes = ledger.draw_outcomes()?;
+        assert_eq!(
+            outcomes
+                .draws
+                .iter()
+                .filter(|o| o.outcome == "parser_rejected" && o.slot.is_none())
+                .count(),
+            4 + ledger
+                .fallback_draws
+                .iter()
+                .chain(&ledger.exploration_draws)
+                .filter(|d| d.outcome == UniformOutcome::ParserRejected)
+                .count()
+        );
+        // Under the frozen vocabulary the same tokens parse: the refusal is not re-derivable.
+        assert!(ledger
+            .reconcile_with_vocabulary(accepted_vocabulary().vocab())
+            .is_err());
+        // A refusal relabelled incomplete (its EOS dropped), with consistent denominators.
+        let mut forged = ledger.clone();
+        forged.neural_draws[0].tokens.pop();
+        forged.neural_draws[0].outcome = DrawOutcome::Incomplete;
+        forged.denominators.parser_rejected -= 1;
+        forged.denominators.incomplete += 1;
+        forged.denominators.complete_sequences -= 1;
+        let error = format!("{:#}", forged.reconcile().unwrap_err());
+        assert!(
+            error.contains("did not exhaust its token budget"),
+            "{error}"
+        );
+        // The same for a grammar-uniform refusal.
+        let mut forged = ledger.clone();
+        let fallback = uniform < forged.fallback_draws.len();
+        let draw = if fallback {
+            &mut forged.fallback_draws[uniform]
+        } else {
+            &mut forged.exploration_draws[uniform - ledger.fallback_draws.len()]
+        };
+        draw.tokens.pop();
+        draw.outcome = UniformOutcome::Incomplete;
+        let error = format!("{:#}", forged.reconcile().unwrap_err());
+        assert!(
+            error.contains("did not exhaust its token budget"),
+            "{error}"
+        );
         Ok(())
     }
 

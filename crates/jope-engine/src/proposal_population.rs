@@ -21,6 +21,7 @@ pub fn push_pure(
             genome,
             origin: "neural_policy".into(),
             policy_logprob: None,
+            proposal_record_sha256: None,
         });
     }
     true
@@ -45,6 +46,7 @@ pub fn fill_pure(
                 genome,
                 origin: "neural_rejection_fallback".into(),
                 policy_logprob: None,
+                proposal_record_sha256: None,
             });
         }
     }
@@ -164,6 +166,7 @@ pub fn assemble(
                 genome,
                 origin,
                 policy_logprob: None,
+                proposal_record_sha256: None,
             });
         }
     }
@@ -212,6 +215,7 @@ mod tests {
                 }
                 .into(),
                 policy_logprob: None,
+                proposal_record_sha256: None,
             })
             .collect::<Vec<_>>();
         let assembled = assemble(&first, &tail, &vocab, 888).unwrap();
@@ -301,6 +305,7 @@ mod tests {
                 }
                 .into(),
                 policy_logprob: None,
+                proposal_record_sha256: None,
             })
             .collect::<Vec<_>>();
         let original = assemble(&pure_ranked, &tail, &vocab, 303).unwrap();
@@ -362,6 +367,7 @@ mod tests {
                 }
                 .into(),
                 policy_logprob: None,
+                proposal_record_sha256: None,
             })
             .collect::<Vec<_>>();
         let a = assemble(&pure, &tail, &vocab, 555).unwrap();
@@ -371,6 +377,7 @@ mod tests {
             genome: winner.clone(),
             origin: "incumbent_cut_teacher".into(),
             policy_logprob: None,
+            proposal_record_sha256: None,
         };
         let b = assemble(&pure, &changed, &vocab, 555).unwrap();
         assert_eq!(before, serde_json::to_vec(&pure).unwrap());

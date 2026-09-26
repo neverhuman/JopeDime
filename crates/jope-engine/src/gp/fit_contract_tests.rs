@@ -1112,6 +1112,7 @@ fn one_evaluation_budget_runs_the_incumbent_before_neural_candidates() {
                     }
                     .into(),
                     policy_logprob: None,
+                    proposal_record_sha256: None,
                 })
                 .collect(),
         },
@@ -1272,6 +1273,7 @@ fn seed_population(
                     genome,
                     origin: "neural_policy".into(),
                     policy_logprob: weight(i),
+                    proposal_record_sha256: None,
                 })
                 .collect(),
         },

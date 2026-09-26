@@ -831,6 +831,10 @@ pub struct SeedCandidate {
         skip_serializing_if = "Option::is_none"
     )]
     pub policy_logprob: Option<f64>,
+    /// W4-T07: identity of this slot's proposal-ledger record (the draw, original tokens,
+    /// scores and parser result it came from). Absent in older seed files.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub proposal_record_sha256: Option<String>,
 }
 #[derive(Clone, Serialize, Deserialize)]
 pub struct SeedPopulation {
@@ -1022,6 +1026,7 @@ mod parent_selection_tests {
                     genome: "g".into(),
                     origin: "neural_policy".into(),
                     policy_logprob: *p,
+                    proposal_record_sha256: None,
                 })
                 .collect(),
         }
@@ -1207,11 +1212,13 @@ mod parent_selection_tests {
                 genome: "worse".into(),
                 origin: "neural_policy".into(),
                 policy_logprob: None,
+                proposal_record_sha256: None,
             },
             SeedCandidate {
                 genome: "best".into(),
                 origin: "neural_policy".into(),
                 policy_logprob: None,
+                proposal_record_sha256: None,
             },
         ];
         super::attach_policy_logprobs(&mut candidates, &[0.1, 2.0]).unwrap();
@@ -1839,13 +1846,15 @@ fn search_inner(
                 .iter()
                 .enumerate()
                 .map(|(slot, c)| {
-                    (
-                        c.genome.clone(),
-                        json!({"kind":"seed_population_slot","slot":slot,
-                            "seeds_sha256":seeds_sha256,"origin":c.origin,
-                            "rank_log_weight":c.policy_logprob,
-                            "score_subject":"original_proposal"}),
-                    )
+                    let mut source = json!({"kind":"seed_population_slot","slot":slot,
+                        "seeds_sha256":seeds_sha256,"origin":c.origin,
+                        "rank_log_weight":c.policy_logprob,
+                        "score_subject":"original_proposal"});
+                    // W4-T07 join: the slot's proposal-ledger record, when the file names it.
+                    if let Some(record) = &c.proposal_record_sha256 {
+                        source["proposal_record_sha256"] = json!(record);
+                    }
+                    (c.genome.clone(), source)
                 })
                 .collect()
         } else {

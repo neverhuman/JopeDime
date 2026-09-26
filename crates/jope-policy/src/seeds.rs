@@ -50,6 +50,12 @@ pub struct SeedCandidate {
         skip_serializing_if = "Option::is_none"
     )]
     rank_log_weight: Option<f64>,
+    /// W4-T07: identity of this slot's record in the proposal ledger
+    /// ([`ProposalLedger::slot_record_sha256`]): the draw it came from, its original tokens,
+    /// scores, parser result and adaptations. Absent in files written before the join; a
+    /// population names it for every slot or for none.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    proposal_record_sha256: Option<String>,
 }
 
 impl SeedCandidate {
@@ -58,7 +64,13 @@ impl SeedCandidate {
             genome: genome.into(),
             origin: origin.into(),
             rank_log_weight: None,
+            proposal_record_sha256: None,
         }
+    }
+
+    /// The proposal-ledger record this slot joins (W4-T07); `None` for an older file.
+    pub fn proposal_record_sha256(&self) -> Option<&str> {
+        self.proposal_record_sha256.as_deref()
     }
 
     pub fn genome(&self) -> &str {
@@ -357,7 +369,23 @@ fn check_population(population: &PopulationFields) -> Result<()> {
             candidate.rank_log_weight.is_none_or(f64::is_finite),
             "nonfinite seed rank weight"
         );
+        ensure!(
+            candidate
+                .proposal_record_sha256
+                .as_deref()
+                .is_none_or(is_sha256_hex),
+            "seed proposal record is not a sha256"
+        );
     }
+    let joined = population
+        .candidates
+        .iter()
+        .filter(|c| c.proposal_record_sha256.is_some())
+        .count();
+    ensure!(
+        joined == 0 || joined == population.candidates.len(),
+        "seed population joins only some slots to proposal records"
+    );
     Ok(())
 }
 
@@ -586,6 +614,54 @@ fn propose_checked(
         context_sha256(context) == binding.context_sha256,
         "context bytes differ from the seed binding"
     );
+    sample_rank_assemble(
+        model,
+        checkpoint.state_sha256(),
+        vocabulary,
+        context,
+        binding,
+        seeds,
+        sampling,
+    )
+}
+
+/// Test support (unit tests only): the sampling, ranking and assembly of [`propose`] under a
+/// vocabulary the product path refuses, so the ledger's parser-refusal branch is exercised by
+/// draws that were really refused. Untrained, unbound weights and the test state only.
+#[cfg(test)]
+pub(crate) fn propose_with_vocabulary_for_test(
+    model: &PolicyModel,
+    vocabulary: &BoundVocabulary,
+    context: &PolicyContext,
+    binding: &SeedBinding,
+    seeds: &ProposalSeeds,
+    sampling: &SamplingOptions,
+) -> Result<Proposal> {
+    ensure!(
+        model.bound_identity().is_none(),
+        "refused: the unbound test path only accepts untrained weights"
+    );
+    sample_rank_assemble(
+        model,
+        super::testing::UNBOUND_TEST_STATE_SHA256,
+        vocabulary,
+        context,
+        binding,
+        seeds,
+        sampling,
+    )
+}
+
+/// Sample, rank, assemble and record, after every identity check of the callers above.
+fn sample_rank_assemble(
+    model: &PolicyModel,
+    state_sha256: &str,
+    vocabulary: &BoundVocabulary,
+    context: &PolicyContext,
+    binding: &SeedBinding,
+    seeds: &ProposalSeeds,
+    sampling: &SamplingOptions,
+) -> Result<Proposal> {
     let task = "regression";
     let vocab = vocabulary.vocab();
     let (pool, mut seen) = decode::pure_pool_checked(
@@ -608,19 +684,15 @@ fn propose_checked(
         vocab,
         context,
         &programs,
-        Bindings::unchecked(
-            checkpoint.state_sha256(),
-            &binding.context_sha256,
-            vocabulary.sha256(),
-        )
-        .with_vocabulary(vocabulary),
+        Bindings::unchecked(state_sha256, &binding.context_sha256, vocabulary.sha256())
+            .with_vocabulary(vocabulary),
         &ranking::Options::default(),
     )?;
     let (exploration, exploration_draws) =
         decode::random_exploration_recorded(vocab, task, seeds.exploration, &mut seen)?;
-    let population = assemble_population(
+    let mut population = assemble_population(
         binding,
-        checkpoint.state_sha256(),
+        state_sha256,
         &ranking,
         pool.candidates(),
         &exploration,
@@ -629,7 +701,7 @@ fn propose_checked(
     // origins or their weights; it is reconciled against the vocabulary before it is returned.
     let ledger = proposal_ledger::build(&proposal_ledger::ProposalRun {
         task,
-        checkpoint_sha256: checkpoint.state_sha256(),
+        checkpoint_sha256: state_sha256,
         context_sha256: &binding.context_sha256,
         vocabulary_sha256: vocabulary.sha256(),
         pool: &pool,
@@ -639,6 +711,14 @@ fn propose_checked(
         population: population.candidates(),
         vocab,
     })?;
+    // W4-T07 join: every seed slot names its proposal record, so the candidate ledgers the
+    // population seeds (the GP lineage envelope, the controller's candidates) join the draw,
+    // tokens, scores and parser result each candidate came from.
+    for (slot, candidate) in population.0.candidates.iter_mut().enumerate() {
+        candidate.proposal_record_sha256 = Some(ledger.slot_record_sha256(slot)?);
+    }
+    check_population(&population.0)?;
+    ledger.matches_population(population.candidates())?;
     Ok(Proposal {
         population,
         pool,

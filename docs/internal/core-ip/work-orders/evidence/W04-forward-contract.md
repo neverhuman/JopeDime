@@ -553,3 +553,110 @@ and the post-commit runs at `d5312392d`: `w2b-w4-commit-policy-20260926T072208Z`
 - **jope-bench `panel/asm_campaign.rs:629`** reads producer claims without requiring the ledger;
   it should require `ProducerFile::ledger()` like `run_neural`.
 - **W10 shadow studies** consume `ProposalLedger::shadow()`; no fitting path reads it.
+
+## 12. Appended 2026-09-26: W4-T03 per-draw outcomes in the candidate ledger; W4-T07 lineage join and real refusal coverage (branch `rr2/integration-c`)
+
+Runs `w4c-*`. This section closes three follow-ups recorded in §11.4 and the W4-T03 status row.
+
+**Reproduction** `w4c-pre-20260926T205805Z`: HEAD source plus the reproduction tests only (`pre-tree.patch` in the
+run). 3/3 FAIL.
+
+| Gap | Test | Pre-fix outcome |
+|---|---|---|
+| W4-T07 / W5-T01 join | `jope-parallel gp::lineage::tests::a_seed_slot_joins_its_proposal_record_and_refuses_any_other` | A `seed_population_slot` source that omitted, changed or invented the slot's proposal record was **accepted**. The engine read the seed file and ignored any record digest. |
+| W4-T07 join, producer side | `jope-policy producer::tests::seed_slots_name_their_proposal_records` | The seed population named no proposal record, so nothing downstream could join a candidate to its draw. |
+| W4-T07 incomplete branch, real draws | `jope-policy decode_outcomes::real_incomplete_draws_reconcile_and_forgeries_are_refused` | Real incomplete draws (below) went through `propose_unbound`. A draw truncated below its token budget and still recorded as incomplete **reconciled**. So did an incomplete draw forged into a parser refusal (its last token replaced by EOS, denominators adjusted), under both `reconcile` and `reconcile_with_vocabulary`. |
+
+**Fixes.**
+- `proposal_ledger` (claims-only `reconcile`):
+  - an incomplete neural draw must have exhausted the recorded token budget ("an incomplete draw
+    did not exhaust its token budget");
+  - an incomplete grammar-uniform draw must be `MAX_PROGRAM_TOKENS` long;
+  - the recorded budget must lie within `1..=MAX_PROGRAM_TOKENS`.
+- `reconcile_with_vocabulary` replays every draw through the sampling grammar. Each drawn token
+  must be legal where it was drawn. The walk must accept (reach EOS) exactly when the outcome is
+  not incomplete, and a neural draw's final phase must equal its recorded `grammar_phase`
+  ("... is not a legal grammar walk ending in its recorded outcome").
+- W4-T07 join, jope-policy:
+  - every seed slot now names `proposal_record_sha256`, which equals
+    `ProposalLedger::slot_record_sha256(slot)`;
+  - `sample_rank_assemble` stamps it after the ledger is built. The record does not include
+    the digest, so there is no cycle;
+  - `check_population` requires every slot or none to name a record;
+  - `matches_population` requires each named record to be the ledger's for that slot;
+  - `read_claims` refuses records in an artifact without a ledger.
+  Older populations without records keep their meaning (unjoined).
+- W4-T07 join, jope-engine:
+  - `gp::SeedCandidate` reads the optional `proposal_record_sha256`;
+  - `search` copies it into the `seed_population_slot` lineage source when present;
+  - `lineage::verify_row` requires the source's record to equal the frozen population's. A
+    missing record on both sides (older files) still verifies, and a source may not invent one.
+  - The 22 struct literals in the engine (product and tests) gain `proposal_record_sha256:
+    None`. No assertion changed.
+- W4-T03, per-draw outcomes in the candidate ledger:
+  - `ProposalLedger::draw_outcomes()` / `ProducerFile::draw_outcomes()` return every draw in
+    ledger order: neural `(round,row)`, fallback and exploration stream seed, snake-case terminal
+    outcome, tokens and program digests. A handed-off draw also carries its slot and slot record
+    digest. The result includes the ledger digest and the denominators.
+  - `neural_search::run_neural` writes them to `AcceptedProposalEvidence.proposal_draws`.
+  - Each generation-zero policy candidate carries `Candidate.proposal_record_sha256` from its
+    seed slot. It is optional, omitted when absent and not part of `id_sha256`.
+  - `validate_initial` and `validate_population` allow the record only on a generation-zero
+    policy slot of the neural arm ("proposal record outside a generation-zero policy slot").
+  - jope-bench `asm_campaign::verify_producer` requires the evidence's draw outcomes to equal
+    the re-read ledger's, and each generation-zero candidate's record to equal its seed slot's.
+  - Evidence and candidates written before this change carry neither field, and their
+    serialized bytes are unchanged.
+- Step 0 (behavior-preserving): `seeds::propose_checked`'s sampling, ranking and assembly body
+  becomes `sample_rank_assemble`. A unit-test-only entry, `propose_with_vocabulary_for_test`
+  (`#[cfg(test)]`, untrained unbound weights only), runs it under a vocabulary the product path
+  refuses. `grammar::BoundVocabulary::for_unit_test` is also `#[cfg(test)]` only.
+
+**Real coverage of the refusal branches** (formerly relabelled records only):
+- Incomplete: a fixed-logit policy prefers the longest walk the sampling grammar admits (78
+  tokens) under a 77-token budget. All 4 neural draws end incomplete for real, the fallback
+  fill tops the pool up, and the ledger builds and reconciles with the vocabulary. Shadow
+  records keep the draws.
+- Parser refusal: under the frozen grammar every accepting walk parses, so the product path
+  never produces one (`grammar_differential`). The unit test
+  `producer::tests::real_parser_refusals_reconcile_and_forgeries_are_refused` renders the
+  `stack` head as `stack)`. Result: 4/4 neural draws `(stack)` are refused for real, and
+  grammar-uniform walks through that head are refused in the fills. The ledger passes
+  `reconcile`, `reconcile_with_vocabulary` and `matches_population`, and `draw_outcomes`
+  records each refusal without a slot. The producer transport refuses that vocabulary ("unbound
+  producer vocabulary", `Request::validate`), so this fixture never becomes an artifact. Under
+  the frozen vocabulary the same ledger is refused, because the tokens parse. A refusal
+  relabelled incomplete (EOS dropped) is refused for both neural and grammar-uniform draws.
+- `jope_dime::seed_writer_produces_the_population_search_accepts` checks that the seed file's
+  candidates carry only keys the search deserializes. It now admits `proposal_record_sha256`,
+  and requires it to be a 64-character digest, because this commit adds that key to the search's
+  own `gp::SeedCandidate`.
+
+**Controls.**
+- Positive: the three existing proposal fixtures, and the new ones, reconcile with their
+  vocabulary. The lineage join verifies for a joined population, and for an unjoined
+  (older) one. Older candidates and evidence serialize to the same bytes.
+- Negative:
+  - swapped records, a partially joined population and records without a ledger (producer);
+  - an omitted, changed or invented record (lineage);
+  - a record on an offspring, on a generic candidate, or malformed (pipeline);
+  - the two incomplete forgeries and the two refusal forgeries (policy).
+  Each is refused with the receiver's wording.
+
+**Recorded, not changed.**
+- The LibTorch proposal sampler in jope-engine (`neural` feature) is still untouched (W4-T03's
+  other remainder).
+- `run_neural` still needs a producer artifact from a real policy worker. The pipeline tests
+  cover its placement and serialization rules. The end-to-end write of `proposal_draws` in
+  `run_neural` and the jope-bench check are compile-checked only.
+
+**Runs.**
+- Pre `w4c-pre-20260926T205805Z`: 3/3 FAIL as above. The first attempt, `w4c-pre-20260926T205656Z`, is kept; its incomplete-draw test stopped at the first forgery, so the test was changed to evaluate both forgeries before asserting.
+- Post `w4c-post-20260926T210101Z`:
+  - jope-parallel `gp::lineage` 5/5;
+  - jope-policy (`testing`: `producer`, `proposal_ledger`, `seeds`, `decode_outcomes`, `jope_dime`, `grammar_differential`) 50/50;
+  - jope-pipeline (`neural-search`) `neural_search` 33/33;
+  - jope-bench (`asm`) all-targets check exit 0.
+
+  The earlier run `w4c-post-20260926T205852Z` is kept. It failed twice, and both failures are corrected above: the unit-test vocabulary cannot cross the producer transport, and the seed-shape key list needed the new key.
+- Pre-commit `w4c-c-20260926T210202Z`: fence suites, `gp::fit_contract_tests` and `gp::lineage` 87/87; workspace all-targets check, coverage (0 unassigned), verify-test-inventory, fmt and diff-check exit 0.

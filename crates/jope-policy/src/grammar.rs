@@ -910,6 +910,17 @@ impl BoundVocabulary {
     pub(crate) fn shared_vocab(&self) -> Arc<Vocab> {
         Arc::clone(&self.vocab)
     }
+
+    /// Unit tests only: an arbitrary (for example adversarial) vocabulary under a label digest,
+    /// which [`bind_vocabulary`] and every product path refuse.
+    #[cfg(test)]
+    pub(crate) fn for_unit_test(vocab: Vocab) -> Self {
+        Self {
+            vocab: Arc::new(vocab),
+            sha256: sha256_hex(b"jope-policy unit-test vocabulary"),
+            identity: VocabularyIdentity::Checkpoint,
+        }
+    }
 }
 
 /// Bind vocabulary bytes to a checkpoint. Accepts the checkpoint's own vocabulary, or a
