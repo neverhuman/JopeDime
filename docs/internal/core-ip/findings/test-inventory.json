@@ -2032,6 +2032,12 @@
         "orchestration"
       ]
     },
+    "target:jope-parallel/test/bounded_run_recovery": {
+      "role": "regression",
+      "subsystems": [
+        "orchestration"
+      ]
+    },
     "target:jope-parallel/test/checkpoint_commit": {
       "role": "regression",
       "subsystems": [
