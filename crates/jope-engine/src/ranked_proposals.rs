@@ -384,7 +384,13 @@ fn load(
     let config: Config = read_json(&checkpoint.join("config.json"))?;
     let mut vs = nn::VarStore::new(device);
     let model = Policy::new(vs.root(), config)?;
-    vs.load(checkpoint.join("model.ot"))?;
+    // W2-T04 (G-10c): exactly the model bytes the checkpoint state binds.
+    crate::neural::load_bound_model(
+        &mut vs,
+        &checkpoint.join("model.ot"),
+        &state["model_sha256"],
+        "frozen checkpoint identity mismatch",
+    )?;
     Ok((vs, model, file_hash(&checkpoint.join("state.json"))?, state))
 }
 

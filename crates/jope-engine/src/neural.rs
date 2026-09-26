@@ -839,6 +839,74 @@ pub struct AdamW {
     pub moments: BTreeMap<String, (Tensor, Tensor)>,
     backend: String,
 }
+
+/// W2-T04 (G-10c): load a checkpoint's `model.ot` whose digest the checkpoint
+/// binds (`expected`); `refusal` is the receiver's own refusal wording. The
+/// file is read once and the VarStore is loaded from exactly the verified
+/// bytes; the path is never reopened.
+pub(crate) fn load_bound_model(
+    vs: &mut nn::VarStore,
+    path: &Path,
+    expected: &serde_json::Value,
+    refusal: &str,
+) -> Result<()> {
+    let bytes = crate::manifest::read_bound(path, expected, refusal)?;
+    vs.load_from_stream(std::io::Cursor::new(bytes))?;
+    Ok(())
+}
+
+impl AdamW {
+    /// W2-T04 (G-10c): load an optimizer whose `optimizer.ot` and
+    /// `optimizer.json` digests the checkpoint binds. Each file is read once;
+    /// the metadata and the moments come from exactly the verified bytes.
+    pub(crate) fn load_bound(
+        path: &Path,
+        expected: &serde_json::Value,
+        expected_metadata: &serde_json::Value,
+        device: Device,
+        refusal: &str,
+    ) -> Result<Self> {
+        let metadata =
+            crate::manifest::read_bound(&path.with_extension("json"), expected_metadata, refusal)?;
+        let bytes = crate::manifest::read_bound(path, expected, refusal)?;
+        Self::from_verified(serde_json::from_slice(&metadata)?, bytes, device)
+    }
+
+    /// The optimizer of `bytes` (an `optimizer.ot`), which its metadata `m`
+    /// must name by digest.
+    fn from_verified(m: serde_json::Value, bytes: Vec<u8>, device: Device) -> Result<Self> {
+        ensure!(hash(&bytes) == m["sha256"], "optimizer artifact changed");
+        let mut tensors =
+            Tensor::load_multi_from_stream_with_device(std::io::Cursor::new(bytes), device)?
+                .into_iter()
+                .collect::<BTreeMap<_, _>>();
+        let names = tensors
+            .keys()
+            .filter_map(|n| n.strip_prefix("m/").map(String::from))
+            .collect::<Vec<_>>();
+        let mut moments = BTreeMap::new();
+        for n in names {
+            moments.insert(
+                n.clone(),
+                (
+                    tensors.remove(&format!("m/{n}")).unwrap(),
+                    tensors
+                        .remove(&format!("v/{n}"))
+                        .context("missing second moment")?,
+                ),
+            );
+        }
+        ensure!(tensors.is_empty(), "unpaired optimizer moments");
+        Ok(Self {
+            step: m["step"].as_u64().context("optimizer step")?,
+            lr: m["lr"].as_f64().context("optimizer learning rate")?,
+            decay: m["decay"].as_f64().context("optimizer weight decay")?,
+            moments,
+            backend: m["backend"].as_str().unwrap_or("scalar_fp32_v1").into(),
+        })
+    }
+}
+
 impl AdamW {
     pub fn validate_parameters(&self, vs: &nn::VarStore) -> Result<()> {
         let parameters = vs
@@ -1012,37 +1080,9 @@ impl AdamW {
     }
     pub fn load(path: &Path, device: Device) -> Result<Self> {
         let m: serde_json::Value = read_json(&path.with_extension("json"))?;
-        ensure!(
-            file_hash(path)? == m["sha256"],
-            "optimizer artifact changed"
-        );
-        let mut tensors = Tensor::load_multi_with_device(path, device)?
-            .into_iter()
-            .collect::<BTreeMap<_, _>>();
-        let names = tensors
-            .keys()
-            .filter_map(|n| n.strip_prefix("m/").map(String::from))
-            .collect::<Vec<_>>();
-        let mut moments = BTreeMap::new();
-        for n in names {
-            moments.insert(
-                n.clone(),
-                (
-                    tensors.remove(&format!("m/{n}")).unwrap(),
-                    tensors
-                        .remove(&format!("v/{n}"))
-                        .context("missing second moment")?,
-                ),
-            );
-        }
-        ensure!(tensors.is_empty(), "unpaired optimizer moments");
-        Ok(Self {
-            step: m["step"].as_u64().context("optimizer step")?,
-            lr: m["lr"].as_f64().context("optimizer learning rate")?,
-            decay: m["decay"].as_f64().context("optimizer weight decay")?,
-            moments,
-            backend: m["backend"].as_str().unwrap_or("scalar_fp32_v1").into(),
-        })
+        // W2-T04 (G-10c): the moments are loaded from exactly the bytes whose
+        // digest the metadata names; the path is read once.
+        Self::from_verified(m, fs::read(path)?, device)
     }
 }
 
@@ -1489,6 +1529,141 @@ mod native_runtime_qualification {
         corrupt[0] ^= 1;
         fs::write(dir.path().join("optimizer.ot"), corrupt)?;
         assert!(AdamW::load(&dir.path().join("optimizer.ot"), Device::Cpu).is_err());
+        Ok(())
+    }
+}
+
+/// W2-T04 (G-10c): a warm-start or resume consumes exactly the checkpoint
+/// bytes its state binds. The instrumentation point
+/// `manifest::after_verification` replaces the files between their check and
+/// their load; the load must still be of the verified bytes.
+#[cfg(test)]
+mod bound_load_tests {
+    use super::*;
+    use crate::manifest::verification_hook;
+
+    fn store(value: f64) -> nn::VarStore {
+        let vs = nn::VarStore::new(Device::Cpu);
+        let _ = vs.root().var("weight", &[4], nn::Init::Const(value));
+        vs
+    }
+
+    fn weight(vs: &nn::VarStore) -> Vec<f32> {
+        Vec::<f32>::try_from(vs.variables()["weight"].flatten(0, -1)).unwrap()
+    }
+
+    /// Replace each `(target, bytes)` (new inodes, via rename) the first time
+    /// a receiver reports `trigger` verified.
+    fn replace_on_verification(
+        trigger: &Path,
+        replacements: Vec<(std::path::PathBuf, Vec<u8>)>,
+    ) -> verification_hook::Guard {
+        let trigger = fs::canonicalize(trigger).unwrap();
+        let mut done = false;
+        verification_hook::install(move |path| {
+            if !done && fs::canonicalize(path).ok().as_deref() == Some(trigger.as_path()) {
+                done = true;
+                for (target, bytes) in &replacements {
+                    let staged = target.with_extension("replacement");
+                    fs::write(&staged, bytes).unwrap();
+                    fs::rename(&staged, target).unwrap();
+                }
+            }
+        })
+    }
+
+    #[test]
+    fn a_checkpoint_model_replaced_after_its_check_is_never_loaded() -> Result<()> {
+        tch::set_num_threads(1);
+        let dir = tempfile::tempdir()?;
+        let path = dir.path().join("model.ot");
+        store(1.0).save(&path)?;
+        let expected = serde_json::json!(file_hash(&path)?);
+        let other = dir.path().join("other.ot");
+        store(2.0).save(&other)?;
+        // Positive control.
+        let mut vs = store(0.0);
+        load_bound_model(&mut vs, &path, &expected, "initialization model changed")?;
+        assert_eq!(weight(&vs), [1.0; 4]);
+        // Replaced after its check.
+        let mut raced = store(0.0);
+        let result = {
+            let _hook = replace_on_verification(&path, vec![(path.clone(), fs::read(&other)?)]);
+            load_bound_model(&mut raced, &path, &expected, "initialization model changed")
+        };
+        assert!(
+            result.is_ok() && weight(&raced) == [1.0; 4],
+            "a model other than the bound bytes was loaded: {result:?} {:?}",
+            weight(&raced)
+        );
+        // Negative control: other bytes at the path are refused with the receiver's wording.
+        let mut refused = store(0.0);
+        let error = load_bound_model(
+            &mut refused,
+            &path,
+            &expected,
+            "initialization model changed",
+        )
+        .unwrap_err()
+        .to_string();
+        assert!(error.contains("initialization model changed"), "{error}");
+        assert_eq!(weight(&refused), [0.0; 4]);
+        Ok(())
+    }
+
+    #[test]
+    fn a_checkpoint_optimizer_replaced_after_its_check_is_never_loaded() -> Result<()> {
+        tch::set_num_threads(1);
+        let dir = tempfile::tempdir()?;
+        let optimizer = |step: u64, value: f64| AdamW {
+            step,
+            lr: 1e-4,
+            decay: 0.01,
+            moments: BTreeMap::from([(
+                "weight".to_string(),
+                (
+                    Tensor::full([4], value, (Kind::Float, Device::Cpu)),
+                    Tensor::full([4], value * 2.0, (Kind::Float, Device::Cpu)),
+                ),
+            )]),
+            backend: "scalar_fp32_v1".into(),
+        };
+        let path = dir.path().join("optimizer.ot");
+        optimizer(3, 1.0).save(&path)?;
+        let expected = serde_json::json!(file_hash(&path)?);
+        let expected_metadata = serde_json::json!(file_hash(&path.with_extension("json"))?);
+        // A consistent replacement pair: another optimizer and the metadata naming it.
+        let other = dir.path().join("other").join("optimizer.ot");
+        fs::create_dir_all(other.parent().unwrap())?;
+        optimizer(9, 5.0).save(&other)?;
+        let replacements = vec![
+            (path.clone(), fs::read(&other)?),
+            (
+                path.with_extension("json"),
+                fs::read(other.with_extension("json"))?,
+            ),
+        ];
+        let refusal = "warm-start optimizer missing or changed";
+        // Positive control.
+        let loaded = AdamW::load_bound(&path, &expected, &expected_metadata, Device::Cpu, refusal)?;
+        assert_eq!(loaded.step, 3);
+        // Replaced after its check.
+        let result = {
+            let _hook = replace_on_verification(&path, replacements);
+            AdamW::load_bound(&path, &expected, &expected_metadata, Device::Cpu, refusal)
+        };
+        assert!(
+            matches!(&result, Ok(raced) if raced.step == 3
+                && raced.moments["weight"].0.equal(&Tensor::full([4], 1.0, (Kind::Float, Device::Cpu)))),
+            "an optimizer other than the bound bytes was loaded: {:?}",
+            result.as_ref().map(|o| o.step)
+        );
+        // Negative control: the replaced pair is refused with the receiver's wording.
+        let error = AdamW::load_bound(&path, &expected, &expected_metadata, Device::Cpu, refusal)
+            .err()
+            .map(|e| e.to_string())
+            .unwrap_or_default();
+        assert!(error.contains(refusal), "{error}");
         Ok(())
     }
 }

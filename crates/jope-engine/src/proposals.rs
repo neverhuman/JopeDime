@@ -161,7 +161,13 @@ fn rank_impl(
     let device = binding.cuda_device();
     let mut vs = nn::VarStore::new(device);
     let model = Policy::new(vs.root(), config)?;
-    vs.load(checkpoint.join("model.ot"))?;
+    // W2-T04 (G-10c): exactly the model bytes the checkpoint state binds.
+    crate::neural::load_bound_model(
+        &mut vs,
+        &checkpoint.join("model.ot"),
+        &state["model_sha256"],
+        "proposal checkpoint identity mismatch",
+    )?;
     let programs = crate::teaching_store::teacher_programs(root, corpus, &index, 10)?;
     let selection_path = output
         .parent()

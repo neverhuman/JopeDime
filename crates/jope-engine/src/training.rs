@@ -1296,11 +1296,12 @@ fn rank_impl(
             serde_json::to_value(previous)? == serde_json::to_value(&config)?,
             "warm-start architecture mismatch"
         );
-        ensure!(
-            file_hash(&checkpoint.join("model.ot"))? == state["model_sha256"],
-            "initialization model changed"
-        );
-        vs.load(checkpoint.join("model.ot"))?;
+        crate::neural::load_bound_model(
+            &mut vs,
+            &checkpoint.join("model.ot"),
+            &state["model_sha256"],
+            "initialization model changed",
+        )?;
         initialization = json!({"kind":"warm_start","checkpoint":checkpoint.strip_prefix(root)?,
             "state_sha256":file_hash(&checkpoint.join("state.json"))?,"model_sha256":state["model_sha256"],
             "parent_step":state["step"],"parent_corpus_sha256":state["corpus_sha256"],
@@ -1318,13 +1319,13 @@ fn rank_impl(
                         && state["runtime_objective"] == "huber_log1p_seconds_v2",
                     "optimizer warm-start requires compatible objective identity"
                 );
-                ensure!(
-                    file_hash(&checkpoint.join("optimizer.ot"))? == state["optimizer_sha256"]
-                        && file_hash(&checkpoint.join("optimizer.json"))?
-                            == state["optimizer_metadata_sha256"],
-                    "warm-start optimizer missing or changed"
-                );
-                optimizer = AdamW::load(&checkpoint.join("optimizer.ot"), device)?;
+                optimizer = AdamW::load_bound(
+                    &checkpoint.join("optimizer.ot"),
+                    &state["optimizer_sha256"],
+                    &state["optimizer_metadata_sha256"],
+                    device,
+                    "warm-start optimizer missing or changed",
+                )?;
                 ensure!(
                     optimizer.step == state["step"].as_u64().context("parent optimizer step")?,
                     "warm-start optimizer/model step mismatch"
@@ -1385,13 +1386,30 @@ fn rank_impl(
                 && file_hash(&cp.join("config.json"))? == state["config_sha256"],
             "checkpoint optimizer or configuration changed"
         );
-        let previous: Config = read_json(&cp.join("config.json"))?;
+        // W2-T04 (G-10c): the configuration, model and optimizer consumed are
+        // exactly the bytes this checkpoint's state binds, each read once.
+        let previous: Config = serde_json::from_slice(&crate::manifest::read_bound(
+            &cp.join("config.json"),
+            &state["config_sha256"],
+            "checkpoint optimizer or configuration changed",
+        )?)?;
         ensure!(
             serde_json::to_value(previous)? == serde_json::to_value(&config)?,
             "resume architecture mismatch"
         );
-        vs.load(cp.join("model.ot"))?;
-        optimizer = AdamW::load(&cp.join("optimizer.ot"), device)?;
+        crate::neural::load_bound_model(
+            &mut vs,
+            &cp.join("model.ot"),
+            &state["model_sha256"],
+            "checkpoint model changed",
+        )?;
+        optimizer = AdamW::load_bound(
+            &cp.join("optimizer.ot"),
+            &state["optimizer_sha256"],
+            &state["optimizer_metadata_sha256"],
+            device,
+            "checkpoint optimizer or configuration changed",
+        )?;
         ensure!(
             optimizer.step == state["step"].as_u64().context("checkpoint step")?,
             "optimizer/model step mismatch"
@@ -1443,7 +1461,9 @@ fn rank_impl(
     );
     // W6-T01: cached device staging is keyed by the content it was built
     // from; a cold load verifies every byte through the same functions.
-    let context_key = inputs::context_identity(index)?;
+    // W2-T04 (G-11a/b): a staged tensor lives on one device; the device is part
+    // of every resident key.
+    let context_key = format!("{device:?}:{}", inputs::context_identity(index)?);
     let context_tensor = RESIDENT_CONTEXT.with(|cache| -> Result<Tensor> {
         if let Some((identity, tensor)) = cache.borrow().as_ref() {
             if *identity == context_key {
@@ -1462,7 +1482,7 @@ fn rank_impl(
         *cache.borrow_mut() = Some((context_key.clone(), tensor.shallow_clone()));
         Ok(tensor)
     })?;
-    let tensor_key = format!("{corpus_hash}:{frozen_inputs_sha}");
+    let tensor_key = format!("{device:?}:{corpus_hash}:{frozen_inputs_sha}");
     let (resident_cache_hit, tensors) =
         RESIDENT_TENSORS.with(|cache| -> Result<(bool, Vec<Tensor>)> {
             if let Some((identity, tensors)) = cache.borrow().as_ref() {

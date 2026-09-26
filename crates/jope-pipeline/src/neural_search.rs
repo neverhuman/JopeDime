@@ -289,6 +289,13 @@ pub struct ContextCost {
 impl ContextCost {
     pub(crate) fn validate(&self) -> Result<()> {
         self.production_receipt.verify()?;
+        // W2-T04 G-11e: every producer charges its context to the original
+        // arm (`cached: false`); a cached cost has no issuer and would relax
+        // the arm-charge check of the qualified CPU context.
+        ensure!(
+            !self.cached,
+            "a cached context cost has no issuer: the context must be charged to its original arm"
+        );
         ensure!(
             [
                 self.original_wall_seconds,
@@ -2372,6 +2379,35 @@ fn persist_immutable(directory: &Path, name: &str, value: &serde_json::Value) ->
 mod tests {
     use super::*;
     use std::{cell::Cell, rc::Rc};
+
+    /// W2-T04 G-11e: `context_cost.cached` relaxes the arm-charge check of a
+    /// qualified CPU context (`search_context::load_for_comparison`), yet no
+    /// producer issues a cached cost; only deserialized comparison JSON can
+    /// carry `true`. A cost claiming a cache is refused at its receiver.
+    #[test]
+    fn a_context_cost_cannot_claim_a_cache_nothing_issued() {
+        let dir = tempfile::tempdir().unwrap();
+        let receipt = dir.path().join("production-receipt.json");
+        std::fs::write(&receipt, b"{}").unwrap();
+        let cost = |cached: bool| ContextCost {
+            cached,
+            production_receipt: crate::execution::Artifact {
+                path: receipt.clone(),
+                sha256: sha256_hex(b"{}"),
+            },
+            original_wall_seconds: Some(1.),
+            original_cpu_seconds: Some(1.),
+            original_gpu_seconds: Some(0.),
+            amortization_uses: None,
+        };
+        // Positive control: an uncached cost charged to its original arm.
+        cost(false).validate().unwrap();
+        let refused = cost(true).validate();
+        assert!(
+            matches!(&refused, Err(e) if e.to_string().contains("cached context cost")),
+            "a cached context cost was admitted without an issuer: {refused:?}"
+        );
+    }
 
     struct FixtureBackend {
         time: u64,

@@ -163,6 +163,21 @@ impl ContextFiles {
     }
 }
 
+/// The native context receipt of `files`, validated against its training
+/// closure and the pinned vector (W2-T04 G-10e): parsed from exactly the
+/// bytes its pin verified, read once.
+fn native_receipt(files: &NativeContextFiles) -> Result<serde_json::Value> {
+    let meta: serde_json::Value = serde_json::from_slice(&files.receipt.read_verified()?)?;
+    validate_native_receipt(&meta, &files.training, &files.vector.sha256)?;
+    Ok(meta)
+}
+
+/// The native context vector bytes of `files` (W2-T04 G-10e): exactly the
+/// bytes its pin verified, read once.
+fn native_vector(files: &NativeContextFiles) -> Result<Vec<u8>> {
+    files.vector.read_verified()
+}
+
 pub struct VerifiedRegressionContext {
     values: Vec<f32>,
     sha256: String,
@@ -174,16 +189,13 @@ pub struct VerifiedRegressionContext {
 impl VerifiedRegressionContext {
     pub fn load(files: &NativeContextFiles) -> Result<Self> {
         files.training.validate()?;
-        files.receipt.verify()?;
-        let meta: serde_json::Value = serde_json::from_slice(&std::fs::read(&files.receipt.path)?)?;
-        validate_native_receipt(&meta, &files.training, &files.vector.sha256)?;
+        native_receipt(files)?;
         ensure!(
             files.frozen_transforms.sha256 == TRANSFORMS_SHA256,
             "wrong frozen transform lineage"
         );
         files.frozen_transforms.verify()?;
-        files.vector.verify()?;
-        let bytes = std::fs::read(&files.vector.path)?;
+        let bytes = native_vector(files)?;
         ensure!(
             bytes.len() == 2048 * 4,
             "accepted context must contain exactly2048 float32 values"
@@ -198,7 +210,9 @@ impl VerifiedRegressionContext {
         );
         Ok(Self {
             values,
-            sha256: files.vector.sha256.clone(),
+            // The digest of the bytes consumed (equal to the pin, which
+            // `native_vector` required of exactly these bytes).
+            sha256: sha256_hex(&bytes),
             training: files.training.clone(),
             admission_pins_sha256: None,
         })
@@ -401,6 +415,86 @@ mod tests {
     use super::*;
     /// W2-T02: the controller's duplicated lineage constants are the accepted semantic
     /// manifest's values (the release decision).
+    /// Replace `target` (new inode, via rename) with `bytes` the first time a
+    /// receiver reports it verified.
+    fn replace_on_verification(
+        target: &std::path::Path,
+        bytes: Vec<u8>,
+    ) -> crate::execution::verification_hook::Guard {
+        let target = std::fs::canonicalize(target).unwrap();
+        let mut done = false;
+        crate::execution::verification_hook::install(move |path| {
+            if !done && std::fs::canonicalize(path).ok().as_deref() == Some(target.as_path()) {
+                done = true;
+                let staged = target.with_extension("replacement");
+                std::fs::write(&staged, &bytes).unwrap();
+                std::fs::rename(&staged, &target).unwrap();
+            }
+        })
+    }
+
+    /// W2-T04 G-10e: the native context receipt and vector consumed are the
+    /// bytes their pins verified; a file replaced after its check is never
+    /// consumed.
+    #[test]
+    fn a_native_context_replaced_after_its_check_is_never_consumed() {
+        let dir = tempfile::tempdir().unwrap();
+        let vector: Vec<u8> = (0..2048)
+            .flat_map(|i| ((i % 7) as f32 * 0.1).to_le_bytes())
+            .collect();
+        let mut meta = native_meta();
+        meta["output_sha256"] = serde_json::json!(sha256_hex(&vector));
+        let meta_bytes = serde_json::to_vec(&meta).unwrap();
+        let pin = |name: &str, bytes: &[u8]| {
+            let path = dir.path().join(name);
+            std::fs::write(&path, bytes).unwrap();
+            Artifact {
+                path,
+                sha256: sha256_hex(bytes),
+            }
+        };
+        let files = NativeContextFiles {
+            vector: pin("context.bin", &vector),
+            receipt: pin("receipt.json", &meta_bytes),
+            frozen_transforms: Artifact {
+                path: dir.path().join("absent-transforms"),
+                sha256: TRANSFORMS_SHA256.into(),
+            },
+            training: training(),
+        };
+        // Positive controls.
+        assert_eq!(native_vector(&files).unwrap(), vector);
+        assert_eq!(native_receipt(&files).unwrap(), meta);
+        // A context vector replaced after its check (another finite, clipped context).
+        let other: Vec<u8> = (0..2048).flat_map(|_| 0.5f32.to_le_bytes()).collect();
+        {
+            let _hook = replace_on_verification(&files.vector.path, other);
+            assert_eq!(
+                native_vector(&files).unwrap(),
+                vector,
+                "a context vector other than the pinned bytes was consumed"
+            );
+        }
+        std::fs::write(&files.vector.path, &vector).unwrap();
+        // A receipt replaced after its check (still a valid receipt).
+        let mut replaced = meta.clone();
+        replaced["note"] = serde_json::json!("replaced after its check");
+        {
+            let _hook = replace_on_verification(
+                &files.receipt.path,
+                serde_json::to_vec(&replaced).unwrap(),
+            );
+            assert_eq!(
+                native_receipt(&files).unwrap(),
+                meta,
+                "a context receipt other than the pinned bytes was consumed"
+            );
+        }
+        // Negative control: bytes other than the pin are refused outright.
+        std::fs::write(&files.vector.path, [0u8; 8192]).unwrap();
+        assert!(native_vector(&files).is_err());
+    }
+
     #[test]
     fn duplicated_lineage_constants_are_the_accepted_semantic_manifests() {
         let release = jope_policy::semantic::accepted().unwrap();
