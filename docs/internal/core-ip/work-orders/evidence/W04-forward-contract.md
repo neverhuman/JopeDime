@@ -444,3 +444,112 @@ Each item below blocks a Candle↔native numeric-parity claim, or a claim of ide
 ---
 
 Could not verify: the linked LibTorch version, SDPA kernel selection, per-op autocast dtypes, ATen and Candle-CUDA kernel arithmetic, the accepted PAD-row and `pos_emb` row-128 values, or any actual numeric agreement, because nothing was built or run.
+
+---
+
+## 11. Appended 2026-09-26: W4-T07 proposal identity and denominators (implementation record)
+
+**Appended section.** Sections 0–10 above are the unchanged W4-T01 trace. This section records
+one implementation slice on branch `rr/w2-semantics` (base `feat/regression-remediation`
+`40babe407`, code commit `d5312392d`); it does not change any task state. Evidence runs live
+under `/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/`.
+Fixture-proven with an untrained tiny policy only; no accepted-weight proposal was run.
+
+### 11.1 Reproduction before the change
+
+Run `w2b-w4-repro-prefix-20260926T071411Z` (exit 100, expected): a real (untrained, unbound)
+proposal went through `artifact_bytes`/`read_claims`, and the artifact handed to the controller
+carried, per candidate, only the genome, origin and rank weight. The original tokens, the draw it
+came from, the predicted scores of that program, the parser's canonical identity and any
+adaptation edge were absent, and the grammar-uniform draws left no terminal records: only the
+fallback attempt count survived, and exploration attempts were discarded.
+
+### 11.2 What the slice records
+
+- `decode`: every grammar-uniform draw (fallback and exploration fills) now ends in one
+  `UniformDrawRecord` (stream seed, `UniformOutcome` admitted / duplicate / incomplete /
+  parser-rejected / re-encoding-mismatch, tokens, program sha256). The random streams, the
+  admitted programs, their order and origins are unchanged; `grammar_uniform_program` returns
+  exactly what it returned before.
+- `proposal_ledger` (`jope.proposal-ledger/v1`), built inside `propose_checked` for accepted,
+  challenger and test proposals alike and attached to `seeds::Proposal`:
+  - every scheduled neural draw's terminal record (the existing `DrawRecord`s);
+  - every fallback and exploration draw's terminal record;
+  - one `SlotRecord` per handed-off candidate: slot, origin, `SlotSource` (neural draw
+    `(round,row)`, fallback stream seed or exploration stream seed), the drawn tokens (the
+    original proposal), program text and sha256, canonical recipe sha256 (the parser result),
+    the explicit proposal-stage adaptation edges (`decode_tokens`; for the 64 ranked slots also
+    `score_encoding`, flagged `changed` when the scored token sequence differs from the drawn
+    one), and for ranked slots the predicted quality, four reward heads, runtime, rank and rank
+    weight of exactly that program;
+  - `Denominators`: scheduled neural draws; completed / surplus / duplicate / parser-rejected /
+    incomplete; complete sequences; valid and unique programs; fallback draws and admissions;
+    exploration draws and admissions; scored, rank survivors and handed off; canonical-unique
+    handed-off candidates; shadow records.
+- `ProposalLedger::reconcile` re-derives every count and link from the records alone: one
+  terminal record per scheduled draw in draw order, pool-fill and round-stop rules, consecutive
+  fresh fallback/exploration streams, one admitting draw per handed-off candidate and every
+  admitting draw handed off exactly once, origin/source/slot-range agreement (no fallback counted
+  as neural), exactly one decode edge (and one scoring encoding for ranked slots), predictions
+  attached to their own program in the documented ranking order, rank weights recomputed from
+  the predictions, and denominators equal to the recount. `reconcile_with_vocabulary` adds the
+  vocabulary-dependent checks: every draw starts from the task prefix and its recorded outcome
+  is what its tokens decode, parse and re-encode to (so a valid program cannot be recorded as a
+  refusal, nor the reverse), candidate tokens decode to the program, the scoring encoding is the
+  vocabulary's, and the canonical recipe is the parser's. The producer runs it before writing;
+  `read_claims` has no vocabulary and runs the claims-only `reconcile`.
+- `shadow()` exposes every draw that was not handed off with `fitting_authority: false`; nothing
+  turns one into a seed. Canonical duplicates among handed-off candidates are visible through
+  `canonical_groups()`/`unique_canonical_handed_off` rather than counted as independent. The
+  proposal policy itself is unchanged (the pool still de-duplicates by genome text, as the
+  reference does).
+- Transport: the producer envelope carries the ledger as optional `proposal_ledger`
+  (`asm.private-policy-producer/v1`; older artifacts without it stay readable but carry no
+  identity or denominator evidence). `read_claims` reconciles it and binds it to the population,
+  the canonical recipe list and the request's identities and sampling configuration.
+  `neural_search::run_neural` refuses a producer artifact without a ledger and records its
+  sha256 in `AcceptedProposalEvidence.proposal_ledger_sha256` (optional, omitted when absent).
+- Join with W5-T01: `ProposalLedger::slot_record_sha256(slot)` is the identity of a seed slot's
+  proposal record. The GP lineage envelope (`jope-engine/src/gp/lineage.rs`,
+  `seed_population_slot`) still records only `{slot, seeds_sha256, origin, rank_log_weight,
+  score_subject}`; binding it to the slot record needs a jope-engine change (follow-up below).
+
+### 11.3 Tests
+
+Two untrained fixtures: 1 round × 8 rows at temperature 1 (all neural draws completed, 56
+fallback admissions after 57 fallback draws, 74 exploration draws) and 2 rounds × 64 rows at
+temperature 25 (pool filled in round 2: 64 completed, 58 surplus, 6 duplicates, no fallback).
+Neither produces parser refusals or incomplete neural draws; those branches are covered by
+record relabelling in the tests, not by a model that emits them.
+
+- `producer::tests::producer_artifact_carries_a_reconciled_proposal_ledger`: both fixtures
+  through `artifact_bytes`/`read_claims`; denominator identities, slot/draw links, predictions,
+  canonical identities, shadow records without fitting authority, slot-record identities.
+- `tampered_proposal_ledgers_are_refused`: score moved to another program, fallback relabelled
+  neural, dropped fallback / exploration / surplus / duplicate records, an inconsistent terminal
+  record, a duplicate relabelled as a new program, one draw handed off twice, a second
+  adaptation, inflated denominators, a ledger from another request and an unknown schema are
+  each refused by `read_claims`, so no producer file is returned.
+- `recorded_outcomes_are_rederived_from_tokens`: count-consistent relabellings (a valid
+  duplicate recorded as a parser refusal; a refused grammar-uniform draw recorded as another
+  refusal) pass the claims-only `reconcile` and are refused by `reconcile_with_vocabulary`.
+- `historical_producer_artifact_has_no_ledger_evidence`.
+- The existing proposal tests (`jope_dime.rs`, `decode_outcomes.rs`, `grammar_differential.rs`)
+  build and vocabulary-reconcile a ledger on every proposal they run.
+
+Runs: reproduction `w2b-w4-repro-prefix-20260926T071411Z`; `w2b-w4-post-policy-*`,
+`w2b-w4-pre-commit-check-workspace-*` (`cargo check --workspace --all-targets`),
+`w2b-w4-pre-commit-check-full-default-*` (`jope-cli/asm,jope-cli/qualified-training-context`)
+and the post-commit runs at `d5312392d`: `w2b-w4-commit-policy-20260926T072208Z` (91 passed,
+7 skipped), `w2b-w4-commit-doctests-20260926T072237Z` (16 passed) and
+`w2b-w4-commit-pipeline-20260926T072238Z` (139 passed, 1 skipped).
+
+### 11.4 Follow-ups outside this slice's partition
+
+- **jope-engine `gp/lineage.rs`**: accept the producer's ledger next to the seed file and add
+  `proposal_record_sha256` to the `seed_population_slot` source, verified against
+  `ProposalLedger::slot_record_sha256` and the slot's origin/rank weight; the GP-side vocabulary
+  projection remains the envelope's single adaptation.
+- **jope-bench `panel/asm_campaign.rs:629`** reads producer claims without requiring the ledger;
+  it should require `ProducerFile::ledger()` like `run_neural`.
+- **W10 shadow studies** consume `ProposalLedger::shadow()`; no fitting path reads it.

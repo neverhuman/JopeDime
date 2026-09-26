@@ -269,3 +269,85 @@ A reference design for a complete key: Encoder V2 binds the encoder and input id
 ---
 
 **Could not verify** (nothing was built, tested or hashed): whether the resident-cache collision can happen, whether `teaching_store::load_impl` re-checks the index bytes, where `context_cost.cached` gets set, how the bench journal path is derived, and what `ASSEMBLY_SHA256` covers.
+
+---
+
+## 8. Appended 2026-09-26: W2-T03 / W2-T02 (G-03, G-04, G-08) / W2-T07 implementation record
+
+**Appended section.** Sections 1–7 above are the unchanged W2-T01 trace. This section records
+one implementation slice; it does not change any task state (the lead records states).
+
+**Source.** Branch `rr/w2-semantics`, cut from `feat/regression-remediation` at
+`40babe407e1843507ed1f459bd6c7f8a19e199c4`. Code commit `46e97ff89` ("context producer: opaque
+products, pinned encoder, request-issued admission"). Evidence root:
+`/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/`, one
+directory per run (`head.txt`, `status.txt`, `diff.patch`, `argv.txt`, `log.txt`, `exit.txt`).
+
+**Observation level.** Fixture-proven and CI-shaped local runs only. No accepted-weight
+inference, native reference replay, CUDA run or live controller execution was performed.
+
+### 8.1 Reproductions before the fix
+
+Run `w2b-repro-prefix-20260926T065217Z` (exit 100, three failing tests, all expected):
+
+| Gap | What the old code accepted |
+|---|---|
+| G-09 / T03 | An in-process Hyperion/Target swap (`Components` validated and assembled); a serialized Target/signature swap and a serialized Foundation/final-context swap (`CpuContextArtifact::validate` passed). |
+| G-04 | An artifact whose `component_bundle`, `foundation_weights`, `target_weights` and `recipe` were arbitrary (only four of eight fields were pinned). |
+| G-03 | A `QualifiedContextBundle` whose pins it chose itself passed the verification-policy check and all four byte-pin gates of `verify`; the first refusal came later, while parsing the artifact. |
+| G-08 | An accepted export receipt with unknown top-level, `checkpoint` and `policy.output` fields parsed and bound. |
+
+### 8.2 State after commit `46e97ff89`
+
+| Item | Change | Proving tests |
+|---|---|---|
+| G-09 / W2-T03 | New `context_producer/products.rs`: `RowEmbeddings` (rows×128), `HyperionSignature` (512), `RawFoundation` (2048), `ProjectedFoundation` (1024), `TargetBlock` (512), `FinalContext` (2048, ±32). Private fields, crate-internal named constructors, no `Deserialize`; each records its input scope (sha256 of the prepared rows' JSON = the artifact's `prepared_rows_sha256`). `Components` holds the three typed products and refuses mixed scopes. Serialized blocks are `ComponentVectors` claims (JSON unchanged; widths, finiteness and unknown fields refused at parse). `FrozenTransforms::replay` is the only receiver route to a `FinalContext`: it replays the frozen assembly and allows `ASSEMBLY_REPLAY_MAX_ABS = 1e-4` (a new declared intermediate tolerance; the 3e-4 parity gate is unchanged). | Compile-fail doctests in `products.rs` (E0308 ×3, E0451, E0624, E0277); `serialized_swaps_padding_and_truncation_fail_at_the_receiver`; `products_are_scoped_to_one_encode_and_serialize_in_the_historical_layout`; the W2-T05 goldens pass with their original expected values. |
+| G-04 | `EncoderIdentity::accepted()` issues all eight fields from reviewed constants. `component_bundle` keeps the value every earlier producer recorded, the `ModelBundleV1` re-serialization digest `985074846ccfe92c818e920e5268ea5269a9e35f1fa2057ddae662266c6c7f9f` of the pinned manifest `5e7884ec…`; foundation `f663ae49…`, target `be96adc6…`. The producer (`CpuProducer::load`), `CpuContextArtifact::validate`, qualification case verification (both admission routes) and `ClassificationArtifact::validate_for_input` refuse any other identity. | `every_encoder_identity_field_is_pinned_to_the_release_decision`; ignored evidence test `accepted_encoder_identity_rederives_from_the_pinned_component_bundle`, run against the local pinned manifest `/home/ubuntu/jain-split/jain-starforge/artifacts/model-bundle.v1.json` (first derivation: `w2b-probe-bundle-identity-20260926T065422Z`). |
+| G-03 | `producer::Request.context_admission_sha256` (optional; omitted when absent, so native request bytes and identities are unchanged) carries `AdmissionPins::sha256()` issued by the controller. The worker admits a bundle only through `QualifiedContextBundle::admit_for_request`: pins must hash to the issued admission before verification, the final context must replay from the qualified components and equal the policy-input bytes, and the handoff must fit the request. Native mode refuses a request that names an admission. `verify_policy_inputs` requires the request to issue exactly the admission `load_qualified` verified; `Comparison::validate` attaches only encoding outputs to the preregistered plan. | `worker_admission_requires_the_request_issued_pins`; `context_admission_pin_is_optional_and_bound`; `comparison_attaches_only_encoding_outputs_including_the_issued_admission` (jope-pipeline). |
+| W2-T07 | `VerifiedCpuContext::handoff` → `ContextHandoff` (schema `jope.cpu-context-handoff/v1`): release identity (encoder, source, producer, verification policy, reference manifest), the six-step typed transformation chain, input scope (training identity, input, preprocessing, prepared rows), artifact/qualification/admission digests, final-context digest and consumer. `deliver_to_policy` refuses another consumer, an admission the request did not issue, another cut/training/preparation/context, a stale encoder release, and unknown chains or protocols. No conversion from an unqualified artifact exists. | `handoff_reaches_only_the_intended_consumer_for_the_issued_scope`; compile-fail doctests on `VerifiedCpuContext`/`ContextHandoff`. |
+| G-08 | **Not changed.** The accepted `jope.checkpoint_export.v1` receipt is written by jain-datasets `tools/ot-export`; its field set is not in this repository and bounded host searches did not find the receipt. The in-repo exporter (`jope-engine/src/policy_export.rs:875-908`) writes fields the test fixture lacks (`runtime`, `checkpoint.directory`, `state_bytes`, `refused_identities`, `refused_steps`, `policy.source`, `total_tensor_bytes`, `inventory_sha256`, `architecture`, `relative_change`). An allowlist from either would be a guess that could refuse the real accepted receipt. | Reproduction only (8.1). |
+
+### 8.3 Wire and identity changes
+
+- `CpuContextArtifact`, `ProducedCase` and `QualificationCaseResult` JSON is unchanged; parsing is
+  stricter (padded, truncated or nonfinite blocks and unknown component fields are refused).
+- `producer::Request` gains an optional field; absent, the bytes and `identity()` are unchanged.
+  Present, it is part of the request identity.
+- `CpuProducer::assemble`/`CudaProducer::assemble` return `FinalContext` (derefs to `[f32]`);
+  `encode_prepared` returns typed `Components`.
+- Receivers now refuse any encoder identity other than `EncoderIdentity::accepted()`. Historical
+  artifacts produced from the pinned bundle carry exactly these values; an artifact from any other
+  bundle or recipe is refused.
+
+### 8.4 Runs
+
+Baseline `w2b-baseline-policy-20260926T064735Z` (81 passed, 6 skipped) and
+`w2b-baseline-pipeline-20260926T064951Z` (138 passed, 1 skipped). Post-change:
+`w2b-t03-doctests-20260926T070724Z` (16 doctests incl. 9 new compile-fail),
+`w2b-w2-post-pipeline-20260926T070736Z` (139 passed), `w2b-w2-post-check-workspace-*`
+(`cargo check --workspace --all-targets`), `w2b-w2-post-check-full-default-*` (the full-default
+feature selection `jope-cli/asm,jope-cli/qualified-training-context`), and the post-commit
+`w2b-w2-commit-*` runs at `46e97ff89` (jope-policy 87 passed / 7 skipped; 16 doctests; the
+ignored encoder-identity evidence test passed against the local pinned manifest; jope-pipeline
+139 passed / 1 skipped). The compile-fail doctests live in the `context-producer` module. The
+`full-doctests` lane (`cargo test --workspace --doc`) should collect them, because jope-cli's
+default `qualified-training-context` feature enables `jope-policy/context-producer` in a
+workspace build; that is read from the manifests, not verified by running the lane.
+
+### 8.5 Follow-ups outside this slice's partition
+
+- **jope-bench `panel/optimize.rs:930`** builds the qualified-context request with
+  `RequestPlan::request`, so no admission is issued; the worker and `verify_policy_inputs` now
+  refuse that bundle. It must call `RequestPlan::qualified_request(context_sha256,
+  bundle.pins.sha256()?)` with the pins it verified (`:1161-1184`).
+- **jope-bench `panel/inference_cuda.rs:115-119`** (feature `inference-cuda`, no CI lane) puts
+  `&c.hyperion`, `&c.foundation`, `&c.target` in one array; with typed products it should use
+  `c.hyperion.values()` etc.
+- **Teacher admission (W3, jope-learning / jope-cli corpus)** should consume `ContextHandoff`
+  (consumer `TeacherAdmission`) and record its digest; `load_qualified` already replays the
+  assembly for the jope-cli corpus route.
+- **`AdmissionPins` controller-issued encoder pin**: adding a field needs a coordinated change of
+  the jope-bench struct literal (`optimize.rs:1165`); the release decision is C-issued meanwhile.
+- **PolicyModel / score_pool / `context_from_bytes`** still take `&[f32]`; `FinalContext` derefs
+  to it. Typing those APIs touches jope-bench and many tests.
+- **Cell surfaces** (the Hyperion u8 grid) do not cross an API and were not typed.
