@@ -11,11 +11,14 @@
 //! *not* a CUDA ordinal (CUDA's default enumeration order need not match `nvidia-smi`),
 //! so it never becomes `device_index`.
 //!
-//! Not wired here: how the Assignment reaches `training::rank_impl`, and the launcher
-//! that actually sets the per-worker environment. Both need the live SmartCluster path
-//! (W7-T07).
-use super::contract::BoundedRunContract;
-use crate::training::topology::{self, Assignment, Participant, SCHEMA};
+//! **Delivery.** A launched worker takes its topology from the frozen plan artifact and its
+//! launch record only ([`bound_worker`]); the launcher that sets the per-worker environment is
+//! [`super::launch::worker_command`].
+use super::{
+    contract::BoundedRunContract,
+    launch::{self, LaunchRecord},
+};
+use crate::training::topology::{self, Assignment, Binding, LocalDevices, Participant, SCHEMA};
 use anyhow::{anyhow, ensure, Context, Result};
 
 /// The CUDA ordinal of a worker restricted to its own GPU.
@@ -82,6 +85,46 @@ pub fn verify_trainer_assignment(
         );
     }
     Ok(())
+}
+
+/// The trainer topology of one launched worker, read only from the frozen plan and that
+/// worker's launch record, never from flags. Everything is refused before any communicator
+/// exists:
+/// - a launch record the plan does not derive (another plan, attempt, rank or host);
+/// - a `CUDA_VISIBLE_DEVICES` that is not exactly the planned UUID (unset, a local index, a
+///   duplicated, additional or foreign device);
+/// - a local device view that is not exactly that one device at ordinal 0;
+/// - everything [`topology::bind`] refuses (another host or boot, a UUID mismatch).
+///
+/// `local` is read only after the environment check has passed.
+pub fn bound_worker(
+    contract: &BoundedRunContract,
+    plan_sha256: &str,
+    record: &LaunchRecord,
+    observed_visibility: Option<&std::ffi::OsStr>,
+    local: impl FnOnce() -> Result<LocalDevices>,
+) -> Result<(Assignment, Binding)> {
+    launch::verify_launch_record(contract, plan_sha256, record)?;
+    launch::verify_worker_visibility(record, observed_visibility)?;
+    let assignment = trainer_assignment(contract)?;
+    ensure!(
+        assignment.plan_sha256 == plan_sha256,
+        "trainer assignment names another plan"
+    );
+    let local = local()?;
+    ensure!(
+        local.visible.len() == 1 && local.visible[0] == record.cuda_visible_devices,
+        "a bounded worker must see exactly its planned device {} at CUDA ordinal {RESTRICTED_DEVICE_INDEX}; it sees {:?}",
+        record.cuda_visible_devices,
+        local.visible
+    );
+    let binding = topology::bind(
+        &assignment,
+        record.global_rank as usize,
+        assignment.world,
+        &local,
+    )?;
+    Ok((assignment, binding))
 }
 
 /// The exact `CUDA_VISIBLE_DEVICES` value for one worker: its planned GPU UUID only.
