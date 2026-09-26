@@ -1420,6 +1420,27 @@ fn search_inner(
         request["native_genome_task"] = serde_json::to_value(reference)?;
         request["native_genome_stage"] = serde_json::to_value(task.stage)?;
     }
+    // Check the recorded resume identity before comparing or recording the request.
+    // Legacy outputs predate search-request.json: recording a refused request first
+    // would make the refusal permanent and block the original identity's resume.
+    let saved_progress: Option<serde_json::Value> = if resuming {
+        let progress: serde_json::Value = read_json(&output.join("progress.json"))?;
+        ensure!(
+            progress["prepared_sha256"] == prepared_sha && progress["cut"] == cut,
+            "resume identity mismatch"
+        );
+        ensure!(
+            progress["seeds_sha256"] == json!(seeds_sha256),
+            "resume neural seed identity mismatch"
+        );
+        ensure!(
+            progress["rng_seed"].as_u64().unwrap_or(SEED) == rng_seed,
+            "resume RNG seed mismatch"
+        );
+        Some(progress)
+    } else {
+        None
+    };
     if request_path.exists() {
         ensure!(
             read_json::<serde_json::Value>(&request_path)? == request,
@@ -1496,10 +1517,9 @@ fn search_inner(
     let mut rejected_proposals = 0u64;
     // Existing journals retain their original slot order on recovery. New
     // searches protect known teachers from being starved by 64 slow neural fits.
-    let teacher_first = !resuming
-        || read_json::<serde_json::Value>(&output.join("progress.json"))?
-            ["execution_order_protocol"]
-            == "teacher_first_v1";
+    let teacher_first = saved_progress
+        .as_ref()
+        .is_none_or(|progress| progress["execution_order_protocol"] == "teacher_first_v1");
     let execution_order =
         initial_execution_order(supplied.as_ref(), population.len(), teacher_first);
     let execution_protocol = if teacher_first {
@@ -1507,20 +1527,7 @@ fn search_inner(
     } else {
         "legacy_seed_order_v1"
     };
-    let previous_seconds = if resuming {
-        let progress: serde_json::Value = read_json(&output.join("progress.json"))?;
-        ensure!(
-            progress["prepared_sha256"] == prepared_sha && progress["cut"] == cut,
-            "resume identity mismatch"
-        );
-        ensure!(
-            progress["seeds_sha256"] == json!(seeds_sha256),
-            "resume neural seed identity mismatch"
-        );
-        ensure!(
-            progress["rng_seed"].as_u64().unwrap_or(SEED) == rng_seed,
-            "resume RNG seed mismatch"
-        );
+    let previous_seconds = if let Some(progress) = &saved_progress {
         proposal_attempts = progress["proposal_attempts"]
             .as_u64()
             .unwrap_or(observations.len() as u64);

@@ -688,12 +688,20 @@ fn projected_gp_candidates_are_exactly_representable_unique_and_durable() {
         file_hash(&vocabulary).unwrap()
     );
     assert_eq!(progress["evaluations"], 100);
-    assert!(!output.join("observations.jsonl").exists());
-    assert!(fs::read_dir(output).unwrap().all(|entry| !entry
-        .unwrap()
-        .file_name()
-        .to_string_lossy()
-        .starts_with("candidate-")));
+    // The journal and each candidate's attempt, program and completion are retained
+    // recovery/admission evidence after publication; artifact eviction never permits refits.
+    assert_eq!(
+        jope_parallel::gp::read_journal(&output.join("observations.jsonl")).unwrap(),
+        observations
+    );
+    for index in 0..observations.len() {
+        for suffix in ["attempt.json", "dsl", "completion.json"] {
+            assert!(
+                output.join(format!("candidate-{index}.{suffix}")).exists(),
+                "candidate-{index}.{suffix} was not retained"
+            );
+        }
+    }
 }
 
 #[test]
@@ -868,34 +876,41 @@ fn experiment_crashes_at_durable_boundaries_recover_without_repeating_committed_
     }
 }
 
+fn seeded_search(
+    root: &std::path::Path,
+    prepared: &std::path::Path,
+    output: &std::path::Path,
+    seed: &str,
+) -> std::process::Output {
+    Command::new(env!("CARGO_BIN_EXE_jope-parallel"))
+        .env("JOPE_CPU_EVALUATOR", env!("CARGO_BIN_EXE_jope-parallel"))
+        .arg("--root")
+        .arg(root)
+        .args([
+            "search",
+            "--cut",
+            "0",
+            "--evaluations",
+            "2",
+            "--seconds",
+            "180",
+            "--qualification",
+            "--rng-seed",
+            seed,
+        ])
+        .arg("--prepared")
+        .arg(prepared)
+        .arg("--output")
+        .arg(output)
+        .output()
+        .unwrap()
+}
+
 #[test]
 fn matched_search_seed_is_recorded_and_cannot_change_on_resume() {
     let (temp, prepared) = fixture();
     let output = temp.path().join("seeded");
-    let run = |seed: &str| {
-        Command::new(env!("CARGO_BIN_EXE_jope-parallel"))
-            .env("JOPE_CPU_EVALUATOR", env!("CARGO_BIN_EXE_jope-parallel"))
-            .arg("--root")
-            .arg(temp.path())
-            .args([
-                "search",
-                "--cut",
-                "0",
-                "--evaluations",
-                "2",
-                "--seconds",
-                "180",
-                "--qualification",
-                "--rng-seed",
-                seed,
-            ])
-            .arg("--prepared")
-            .arg(&prepared)
-            .arg("--output")
-            .arg(&output)
-            .output()
-            .unwrap()
-    };
+    let run = |seed: &str| seeded_search(temp.path(), &prepared, &output, seed);
     let initial = run("20260908");
     assert!(
         initial.status.success(),
@@ -906,8 +921,64 @@ fn matched_search_seed_is_recorded_and_cannot_change_on_resume() {
     assert_eq!(search["rng_seed"], 20260908);
     let rows: Vec<serde_json::Value> = read_json(&output.join("observations.json")).unwrap();
     assert!(rows.iter().all(|row| row["rng_seed"] == 20260908));
+    let request: serde_json::Value = read_json(&output.join("search-request.json")).unwrap();
+    assert_eq!(request["rng_seed"], 20260908);
     fs::remove_file(output.join("search.json")).unwrap();
     let changed = run("20260909");
     assert!(!changed.status.success());
-    assert!(String::from_utf8_lossy(&changed.stderr).contains("RNG seed mismatch"));
+    assert!(
+        String::from_utf8_lossy(&changed.stderr).contains("RNG seed mismatch"),
+        "{}",
+        String::from_utf8_lossy(&changed.stderr)
+    );
+    assert_eq!(
+        read_json::<serde_json::Value>(&output.join("search-request.json")).unwrap(),
+        request
+    );
+    assert_eq!(
+        read_json::<Vec<serde_json::Value>>(&output.join("observations.json")).unwrap(),
+        rows
+    );
+}
+
+#[test]
+fn legacy_resume_refuses_a_changed_seed_before_recording_its_request() {
+    // Outputs written before search-request.json existed resume from progress.json
+    // alone. A refused resume must not record its changed request, or the original
+    // identity could never resume again.
+    let (temp, prepared) = fixture();
+    let output = temp.path().join("legacy-seeded");
+    let run = |seed: &str| seeded_search(temp.path(), &prepared, &output, seed);
+    let initial = run("20260908");
+    assert!(
+        initial.status.success(),
+        "{}",
+        String::from_utf8_lossy(&initial.stderr)
+    );
+    let rows: Vec<serde_json::Value> = read_json(&output.join("observations.json")).unwrap();
+    fs::remove_file(output.join("search.json")).unwrap();
+    fs::remove_file(output.join("search-request.json")).unwrap();
+    let changed = run("20260909");
+    assert!(!changed.status.success());
+    assert!(
+        String::from_utf8_lossy(&changed.stderr).contains("resume RNG seed mismatch"),
+        "{}",
+        String::from_utf8_lossy(&changed.stderr)
+    );
+    assert!(
+        !output.join("search-request.json").exists(),
+        "a refused resume recorded its changed request"
+    );
+    let resumed = run("20260908");
+    assert!(
+        resumed.status.success(),
+        "{}",
+        String::from_utf8_lossy(&resumed.stderr)
+    );
+    let request: serde_json::Value = read_json(&output.join("search-request.json")).unwrap();
+    assert_eq!(request["rng_seed"], 20260908);
+    assert_eq!(
+        read_json::<Vec<serde_json::Value>>(&output.join("observations.json")).unwrap(),
+        rows
+    );
 }
