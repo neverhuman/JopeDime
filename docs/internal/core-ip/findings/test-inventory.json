@@ -127,10 +127,6 @@
       "role": "infrastructure",
       "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
     },
-    "python:deploy/ci/test-neural-env.py": {
-      "role": "infrastructure",
-      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
-    },
     "python:deploy/ci/test-prepare-asm-runtime.py": {
       "role": "infrastructure",
       "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"

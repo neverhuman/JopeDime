@@ -2,7 +2,7 @@
 # Environment for building the `neural` feature (crates/jope-engine, package jope-parallel:
 # tch 0.26.0 + native/runtime.cpp).
 #
-# The pinned expectations below mirror deploy/receipts/libtorch.json (deploy/ci/test-neural-env.py
+# The pinned expectations below mirror deploy/receipts/libtorch.json (deploy/ci/test-neural-env.sh
 # asserts it); regenerate both together (docs/runbooks/neural-sdk.md). The SDK volume layout is:
 #   $JOPE_NEURAL_SDK_ROOT/libtorch                    LibTorch 2.13.0+cu126 (build-version checked)
 #   $JOPE_NEURAL_SDK_ROOT/nvidia/<pkg>/{lib,include}  cudnn, cusparselt, cufile, nccl, nvshmem from the
@@ -17,7 +17,7 @@
 #
 # DISCOVERY ONLY. It qualifies files, versions and SONAMEs, and that $CXX resolves the discovered
 # headers with build.rs's include order. It does not compile runtime.cpp, link, load CUDA or use a
-# GPU; none of those is claimed. With JOPE_NEURAL_ENV_RECEIPT=<new file> it also writes a
+# GPU; none of those is claimed. With JOPE_NEURAL_ENV_RECEIPT=<new file> it also writes (with jq) a
 # jope.neural-discovery/v1 receipt, on failure as well as on success.
 #
 # Usage:
@@ -156,7 +156,7 @@ jope_neural_env_discover() {
 }
 
 jope_neural_env_receipt() { # <status>: write the discovery receipt when one was requested
-  local path=${JOPE_NEURAL_ENV_RECEIPT:-} name
+  local path=${JOPE_NEURAL_ENV_RECEIPT:-} name json
   [[ -n $path ]] || return 0
   local -a exported=()
   if [[ $1 == discovered ]]; then
@@ -165,53 +165,53 @@ jope_neural_env_receipt() { # <status>: write the discovery receipt when one was
       exported+=("$name=${!name}")
     done
   fi
-  {
-    printf 'fact\0%s\0' "${facts[@]}"
-    printf 'passed\0%s\0' "${passed[@]}"
-    printf 'exported\0%s\0' "${exported[@]}"
-  } | python3 -c '
-import json, sys
-path, status, failed, detail, sdk, cuda_home, source, libtorch, cudart, nccl = sys.argv[1:]
-fields = sys.stdin.buffer.read().decode().split("\0")
-observed, passed, exported = {}, [], {}
-for kind, item in zip(fields[0::2], fields[1::2]):
-    if not item:
-        continue
-    key, _, value = item.partition("=")
-    if kind == "fact":
-        node = observed
-        *parents, leaf = key.split("/")
-        for parent in parents:
-            node = node.setdefault(parent, {})
-        node[leaf] = value
-    elif kind == "passed":
-        passed.append(item)
-    else:
-        exported[key] = value
-not_attempted = "not-attempted"
-receipt = {
-    "schema": "jope.neural-discovery/v1",
-    "status": status,
-    "failed_check": failed or None,
-    "diagnostic": detail or None,
-    "scope": "discovery only: SDK files, LibTorch build-version, header versions, library SONAMEs and "
-             "compiler header resolution; nothing was compiled, linked, loaded or run on a GPU",
-    "qualification": {"discovery": "passed" if status == "discovered" else "failed",
-                      "native_build": not_attempted, "native_link": not_attempted,
-                      "native_runtime": not_attempted, "gpu": not_attempted},
-    "expected": {"libtorch_build_version": libtorch, "cudart_version": cudart, "nccl_version": nccl},
-    "sdk_root": sdk,
-    "cuda_home": {"path": cuda_home, "source": source},
-    "checks_passed": passed,
-    "observed": observed,
-    "environment": exported or None,
-}
-with open(path, "x") as stream:
-    json.dump(receipt, stream, indent=2)
-    stream.write("\n")
-' "$path" "$1" "$failed_check" "$failed_detail" "$sdk" "$cuda_home" "$cuda_home_source" \
-    "$expected_libtorch" "$expected_cudart" "$expected_nccl" \
-    || jope_neural_env_fail "could not write the discovery receipt $path"
+  # The jope.neural-discovery/v1 document. Positional arguments are $nf facts ("a/b/c=value",
+  # nested into `observed` in insertion order), $np passed checks, then the exported "NAME=value"
+  # lines; each item splits at its first '='. Empty failed_check, diagnostic and environment are null.
+  # jq turns bytes that are not UTF-8 into U+FFFD; such input fails the write rather than being
+  # recorded wrongly.
+  # shellcheck disable=SC2016 # jq variables, not shell expansions
+  local program='
+def pair: split("=") | [.[0], (.[1:] | join("="))];
+$ARGS.positional as $items
+| if any($items[], $status, $failed, $detail, $sdk, $cuda_home, $source, $libtorch, $cudart, $nccl;
+         contains("�"))
+  then error("receipt input is not valid UTF-8") else . end
+| {
+    schema: "jope.neural-discovery/v1",
+    status: $status,
+    failed_check: (if $failed == "" then null else $failed end),
+    diagnostic: (if $detail == "" then null else $detail end),
+    scope: ("discovery only: SDK files, LibTorch build-version, header versions, library SONAMEs and "
+            + "compiler header resolution; nothing was compiled, linked, loaded or run on a GPU"),
+    qualification: {
+      discovery: (if $status == "discovered" then "passed" else "failed" end),
+      native_build: "not-attempted", native_link: "not-attempted",
+      native_runtime: "not-attempted", gpu: "not-attempted"
+    },
+    expected: {libtorch_build_version: $libtorch, cudart_version: $cudart, nccl_version: $nccl},
+    sdk_root: $sdk,
+    cuda_home: {path: $cuda_home, source: $source},
+    checks_passed: [$items[$nf:$nf + $np][] | select(. != "")],
+    observed: (reduce ($items[:$nf][] | select(. != "") | pair) as [$key, $value]
+                 ({}; setpath($key | split("/"); $value))),
+    environment: (reduce ($items[$nf + $np:][] | select(. != "") | pair) as [$key, $value]
+                    ({}; .[$key] = $value)
+                  | if . == {} then null else . end)
+  }'
+  # Rendered first, then created exclusively: an existing path of any type is never written
+  # (noclobber alone would still write into an existing FIFO or device). --ascii-output escapes
+  # non-ASCII as \uXXXX, as the receipt always has.
+  if ! json=$(jq -n --ascii-output --indent 2 --args \
+                --arg status "$1" --arg failed "$failed_check" --arg detail "$failed_detail" \
+                --arg sdk "$sdk" --arg cuda_home "$cuda_home" --arg source "$cuda_home_source" \
+                --arg libtorch "$expected_libtorch" --arg cudart "$expected_cudart" \
+                --arg nccl "$expected_nccl" --argjson nf "${#facts[@]}" --argjson np "${#passed[@]}" \
+                "$program" -- "${facts[@]}" "${passed[@]}" "${exported[@]}") \
+     || [[ -e $path || -L $path ]] \
+     || ! (set -C && printf '%s\n' "$json" > "$path"); then
+    jope_neural_env_fail "could not write the discovery receipt $path"
+  fi
 }
 
 jope_neural_env_main() {

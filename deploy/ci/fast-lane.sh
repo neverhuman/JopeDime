@@ -33,7 +33,7 @@ python3 deploy/ci/test-training-proof.py
 python3 deploy/ci/test-install-private.py
 python3 deploy/ci/test-qualify-demo.py
 python3 deploy/ci/test-prepare-asm-runtime.py
-python3 deploy/ci/test-neural-env.py
+bash deploy/ci/test-neural-env.sh
 cargo run -q --locked -p jope-records -- verify-findings
 cargo run -q --locked -p jope-records -- verify-dispositions
 cargo run -q --locked -p jope-records -- verify-test-inventory
