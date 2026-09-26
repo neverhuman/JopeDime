@@ -745,3 +745,58 @@ passes `--root`. `fit_boundary`'s fixture is a contained view and is unchanged. 
 root-less `load_view` (pinned, not touched). The other `load_view` callers (neural-gated
 `encoding.rs`, `components.rs`, `hyperion.rs`, `hyperion-batch-worker`, examples and test
 fixtures) are unchanged; `load_view` itself keeps its behavior.
+
+## Round 8 — `vocabulary.json` readers after `load` (same branch)
+
+Evidence: `runs/w1c-vocab-*`.
+
+**Defect.** Readers that hold a corpus index reopened `vocabulary.json` by path and parsed it
+with no binding:
+- `native_loop::candidates` (was `:1130-1140`): `teaching_store::read_index`, then
+  `read_json(vocabulary.json)`. For a sharded store, `load` had hashed the file by path first
+  (hash, then reread); for a legacy `parallel.teaching_corpus.v1` index, `load` never opens
+  the vocabulary at all, so any vocabulary was consumed.
+- `pipeline::run` (was `:457`, neural): `read_json(vocabulary.json)` after an unhashed index
+  read.
+- `monitoring::evaluate` (was `:52`, neural): the vocabulary parsed before
+  `corpus_publication::verify` hashed the file by path; the index likewise parsed, then hashed
+  separately twice.
+- Same class, found while closing these (neural): `proposals::rank_impl` hashed the vocabulary
+  against the checkpoint's `vocabulary_sha256`, then reread it; `ranked_proposals` (two sites)
+  parsed it, then hashed it separately.
+
+**Step 0.** The native loop's index and vocabulary reads moved, unchanged, into
+`teaching_store::read_index_and_vocabulary`, so the receiver is testable without a native-graph
+fixture. For the reproduction only, test-only instrumentation (`manifest::after_verification`)
+sat between `read_index` and the vocabulary read, as in rounds 6 and 7.
+
+**Reproduction.** `w1c-vocab-pre-20260926T194802Z`: 2/2 FAIL.
+
+| Test | Pre-fix outcome |
+|---|---|
+| `teaching_store::read_once_tests::the_corpus_vocabulary_is_the_bytes_its_index_binds_even_if_replaced_after_its_check` | A sharded store's vocabulary replaced after its check (two tokens swapped) was **consumed**. |
+| `…::a_legacy_corpus_vocabulary_other_than_its_index_binding_is_refused` | A legacy index's substituted vocabulary was **consumed** (no check at all). |
+
+**Fix.** New `corpus::read_bound_vocabulary(corpus, vocabulary_sha256)`: `read_verified`
+against the digest the index (or checkpoint) binds, then parse those bytes ("corpus vocabulary
+changed: its bytes differ from the bound identity").
+- `teaching_store::read_index_and_vocabulary` (the native loop), `pipeline::run` and
+  `monitoring::evaluate` use it with the index's `vocabulary_sha256`; `proposals::rank_impl` with
+  the checkpoint's.
+- `monitoring::evaluate` reads `index.json` once (`read_hashed`); the panel's `corpus_sha256`
+  check and the recorded binding use that digest.
+- `ranked_proposals` (both sites) reads the vocabulary once (`read_hashed`); its recorded
+  `vocab_sha` is the digest of the parsed bytes.
+
+**Controls.** Positive: the honest vocabulary is returned for both a sharded store and a
+legacy index. Negative: a replacement after the check is never consumed; a legacy index's
+substituted vocabulary is refused.
+
+**Results.**
+- Post-fix `w1c-vocab-post-20260926T194935Z`: 54/54 (the two tests plus every
+  `teaching_store`, `native_genome`, `corpus` and `native_loop` unit test and
+  `corpus_incremental`).
+- `w1c-vocab-neural-check-20260926T195150Z`: `cargo check -p jope-parallel --features neural
+  --all-targets` (CPU, `neural-env.sh`), exit 0. `pipeline`, `monitoring`, `proposals` and
+  `ranked_proposals` are compile-checked only: they need a GPU grant to run.
+- Pre-commit `w1c-vocab-c-20260926T195243Z`: fence suites, `gp::fit_contract_tests`, `teaching_store` and `corpus` unit tests, 98/98; workspace all-targets check, coverage (0 unassigned, 261 targets), verify-test-inventory, fmt and diff-check exit 0.

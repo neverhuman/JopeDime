@@ -145,7 +145,14 @@ fn rank_impl(
             && file_hash(&corpus.join("vocabulary.json"))? == state["vocabulary_sha256"],
         "proposal checkpoint identity mismatch"
     );
-    let vocab: Vocab = read_json(&corpus.join("vocabulary.json"))?;
+    // W1 route R8: the vocabulary consumed is the one the checkpoint binds,
+    // read once (the check above hashed it by path).
+    let vocab: Vocab = crate::corpus::read_bound_vocabulary(
+        corpus,
+        state["vocabulary_sha256"]
+            .as_str()
+            .context("proposal checkpoint vocabulary absent")?,
+    )?;
     let config: Config = read_json(&checkpoint.join("config.json"))?;
     ensure!(
         config.vocab_size == vocab.tokens.len() as i64,

@@ -1135,9 +1135,10 @@ impl Loop {
         };
         let jobs: crate::service::GpJobs = native_genome::load(&self.root, &jobs_file)?;
         let corpus_root = corpus.path.parent().context("corpus directory")?;
-        let index = crate::teaching_store::read_index(&self.root, &self.root.join(corpus_root))?;
-        let vocab: crate::grammar::Vocab =
-            crate::manifest::read_json(&self.root.join(corpus_root).join("vocabulary.json"))?;
+        let (index, vocab) = crate::teaching_store::read_index_and_vocabulary(
+            &self.root,
+            &self.root.join(corpus_root),
+        )?;
         let mut result_refs = Vec::new();
         for job in jobs.jobs {
             let c = index

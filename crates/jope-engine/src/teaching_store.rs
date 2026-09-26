@@ -1093,6 +1093,19 @@ pub fn read_index(root: &Path, corpus: &Path) -> Result<Index> {
     Ok(load_impl(root, corpus, false, None)?.0)
 }
 
+/// The verified corpus index and the corpus vocabulary (the native loop's
+/// candidate expansion reads both). The vocabulary is read once against the
+/// digest this index binds and parsed from those bytes (W1 route R8); a legacy
+/// index, whose `load` never opens the vocabulary, gets the same check.
+pub fn read_index_and_vocabulary(
+    root: &Path,
+    corpus: &Path,
+) -> Result<(Index, crate::grammar::Vocab)> {
+    let index = read_index(root, corpus)?;
+    let vocab = crate::corpus::read_bound_vocabulary(corpus, &index.vocabulary_sha256)?;
+    Ok((index, vocab))
+}
+
 fn load_impl(
     root: &Path,
     corpus: &Path,
