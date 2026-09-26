@@ -1124,6 +1124,104 @@ mod handoff_tests {
         refused(&unknown_schema, &request, "another consumer");
     }
 
+    /// W2-T07 / W3-T02: teacher admission (`jope_learning::eligibility`) parses a retained
+    /// handoff field for field and refuses unknown fields. This pins the record it parses, so a
+    /// change on either side fails a test on that side.
+    #[test]
+    fn a_teacher_admission_handoff_serializes_as_the_record_its_consumer_parses() {
+        let transforms = FrozenTransforms::synthetic_for_testing(1.0);
+        let artifact = synthetic_artifact(&transforms);
+        let pins = pins(&artifact);
+        let verified = VerifiedCpuContext::for_testing(artifact, &pins);
+        let context = verified.replay_assembly(&transforms).unwrap();
+        let handoff = verified
+            .handoff(&context, ContextConsumer::TeacherAdmission)
+            .unwrap();
+        let json = serde_json::to_value(&handoff).unwrap();
+        let keys = |v: &serde_json::Value| {
+            let mut keys = v.as_object().unwrap().keys().cloned().collect::<Vec<_>>();
+            keys.sort();
+            keys
+        };
+        assert_eq!(
+            keys(&json),
+            [
+                "admission_pins_sha256",
+                "artifact_sha256",
+                "consumer",
+                "context_sha256",
+                "qualification_sha256",
+                "release",
+                "schema",
+                "scope",
+                "transformations"
+            ]
+        );
+        assert_eq!(
+            keys(&json["release"]),
+            [
+                "encoder",
+                "producer_sha256",
+                "reference_manifest_sha256",
+                "source_sha256",
+                "verification_policy_sha256"
+            ]
+        );
+        assert_eq!(
+            keys(&json["release"]["encoder"]),
+            [
+                "assembly",
+                "component_bundle",
+                "foundation_weights",
+                "frozen_transforms",
+                "hyperion_manifest",
+                "hyperion_weights",
+                "recipe",
+                "target_weights"
+            ]
+        );
+        assert!(json["release"]["encoder"]
+            .as_object()
+            .unwrap()
+            .values()
+            .all(serde_json::Value::is_string));
+        assert_eq!(
+            keys(&json["scope"]),
+            [
+                "input_sha256",
+                "prepared_rows_sha256",
+                "preprocessing_sha256",
+                "training"
+            ]
+        );
+        assert_eq!(
+            keys(&json["scope"]["training"]),
+            [
+                "cut",
+                "dataset_sha256",
+                "fitting_rows_sha256",
+                "prepared_sha256",
+                "training_sha256"
+            ]
+        );
+        assert!(json["scope"]["training"]["cut"].is_u64());
+        assert!(json["transformations"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .all(serde_json::Value::is_string));
+        assert_eq!(json["schema"], HANDOFF_SCHEMA);
+        assert_eq!(json["consumer"], "teacher_admission");
+        // The handed-off context digest is the sha256 of the context's little-endian f32 bytes:
+        // the bytes a teacher's encoder receipt retains as its output.
+        assert_eq!(handoff.context_sha256(), sha(&context.to_le_bytes()));
+        // The retained bytes of a handoff hash to its own digest.
+        assert_eq!(
+            sha(&serde_json::to_vec(&handoff).unwrap()),
+            handoff.sha256().unwrap()
+        );
+    }
+
     fn test_support_context(transforms: &FrozenTransforms, value: f32) -> FinalContext {
         transforms
             .assemble(&super::super::test_support::components(

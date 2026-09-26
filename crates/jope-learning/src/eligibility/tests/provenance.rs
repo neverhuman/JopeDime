@@ -480,15 +480,30 @@ fn inner_partition_scope_forbids_outer_hold_rows() {
     evidence.freeze = freeze;
     // The whole-development receipt is not a receipt for the inner comparison.
     assert!(context::verify(&f.state, &policy, &record, &evidence, &Default::default()).is_err());
-    evidence.context = Some(produce_context(
+    // The inner comparison's context, handed off by the preregistered producer in a window that
+    // opened with the inner freeze.
+    let window = ExecutionWindow {
+        experiment_sha256: f.window.experiment_sha256.clone(),
+        started_unix_ms: policy.created_at_unix * 1000,
+        deadline_unix_ms: policy.created_at_unix * 1000 + 60_000,
+    };
+    evidence.context = Some(handed_off(
         &f.state,
-        scope,
-        context_plan().encoder,
-        vec![],
-        &context_output(2048, 0.5),
+        produce_context(
+            &f.state,
+            scope,
+            context_plan().encoder,
+            vec![],
+            &context_output(2048, 0.5),
+        ),
+        &plan.comparison,
+        &f.experiment,
+        &window,
     ));
     assert_eq!(
-        context::verify(&f.state, &policy, &record, &evidence, &Default::default()).unwrap(),
+        context::verify(&f.state, &policy, &record, &evidence, &Default::default())
+            .unwrap()
+            .0,
         evidence.context.unwrap().receipt_sha256
     );
 }

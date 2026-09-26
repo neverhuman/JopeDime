@@ -352,6 +352,26 @@ workspace build; that is read from the manifests, not verified by running the la
   to it. Typing those APIs touches jope-bench and many tests.
 - **Cell surfaces** (the Hyperion u8 grid) do not cross an API and were not typed.
 
+### 8.6 Appended 2026-09-26 (`rr2/integration-a`): teacher admission consumes the handoff
+
+The §8.5 follow-up "Teacher admission should consume `ContextHandoff`" is implemented in
+`jope-learning` (`eligibility::context::verify_handoff`). Details and evidence are in
+W03-ingress-map.md, "W3-T02 / W2-T07 at teacher admission".
+
+A teaching context now qualifies only with a retained `jope.cpu-context-handoff/v1` record for
+consumer `teacher_admission` that meets all of these:
+
+- its release identity, transformation chain and W2 qualification equal the producer the freeze
+  preregistered;
+- its `context_sha256` is the teacher receipt's output digest;
+- its artifact was written by a completed execution of the preregistered producer executable,
+  proven from retained pool receipts.
+
+The qualification records the handoff digest. On this side,
+`handoff_tests::a_teacher_admission_handoff_serializes_as_the_record_its_consumer_parses` pins
+the record format teacher admission parses. `ContextHandoff` and the other W2 types are
+unchanged.
+
 ## 9. Appended 2026-09-26: W2-T02 versioned semantic manifest (branch `rr2/integration-c`)
 
 Evidence root as in section 8; runs `w2c-*`.
