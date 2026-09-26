@@ -587,8 +587,29 @@
     },
     "W8-T01": {
       "states": [
-        "planned"
-      ]
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "64e56b410af39897c62bc887574ad53f421861b2"
+      ],
+      "tests": [
+        "planned_census_reconciles_to_terminal_dispositions",
+        "a_failed_or_retried_attempt_cannot_disappear",
+        "a_retried_attempt_cannot_become_a_second_logical_improvement",
+        "transport_replay_has_no_effect_but_a_new_attempt_counts",
+        "empty_denominators_are_unavailable_not_rates",
+        "logical_work_identity_is_separate_from_attempt_and_delivery_identity",
+        "canonical_encoding_is_unique_and_bounded",
+        "hash_domains_separate_kinds_and_blobs",
+        "every_kind_round_trips_and_names_its_dependencies",
+        "hwm_decision_link_is_checked_against_the_real_hwm_ledger"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w8-t01-mutations-20260926T063358Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w8-t01-postfix-20260926T063508Z"
+      ],
+      "remaining": "New capability (no prior path). Nothing in the product emits these objects yet; engine-side mapping (native_persistence, corpus_publication, checkpoint_recovery) and consecutive update-index enforcement remain."
     },
     "W8-T02": {
       "states": [
@@ -629,33 +650,109 @@
     },
     "W9-T01": {
       "states": [
-        "planned"
-      ]
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "40babe407e1843507ed1f459bd6c7f8a19e199c4"
+      ],
+      "tests": [
+        "registered_inference_inventory_matches_actual_export_outcomes"
+      ],
+      "evidence": [
+        "docs/internal/core-ip/work-orders/evidence/W09-support-matrix.md",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w9-commitE-default-20260926T063905Z"
+      ],
+      "remaining": "Support matrix for 26 recipes x 5 backends matches actual export outcomes (0 mismatches) on synthetic fits; positional input only (no named-column mode)."
     },
     "W9-T02": {
       "states": [
-        "planned"
-      ]
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "1259d91840703bd070c5f616b0327589748f9bea"
+      ],
+      "tests": [
+        "same_recipe_state_swaps_and_missing_stages_fail_even_with_equal_predictions"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w9-t02-repro-20260926T062146Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w9-t02-fixed-20260926T062434Z"
+      ],
+      "remaining": "Report-path verify now re-emits and binds the fitted state (6 of 9 tampered entries were accepted before). An old prepared.json whose emitter output differs now fails verify(). The exported subject is a fold fit; no final whole-data refit identity to bind yet."
     },
     "W9-T03": {
       "states": [
-        "planned"
-      ]
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "885bddb603b5273d4ecd5b9adb2aa24fa3012447"
+      ],
+      "tests": [
+        "hostile_fitted_strings_never_reach_command_arguments"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w9-commitB-default-20260926T063328Z"
+      ],
+      "remaining": "Verified safeguard for hostile strings. Builder isolation from credentials, network and private canaries was not run."
     },
     "W9-T04": {
       "states": [
-        "planned"
-      ]
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "885bddb603b5273d4ecd5b9adb2aa24fa3012447"
+      ],
+      "tests": [
+        "emitted_backends_match_native_on_raw_edge_inputs_and_refuse_malformed_rows",
+        "raw_input_comparator_detects_changed_constants_and_truncated_outputs",
+        "missing_learned_state_is_refused_never_defaulted"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w9-commitB-default-20260926T063328Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w9-commitB-asm-20260926T063354Z"
+      ],
+      "remaining": "Verified safeguard: 42 raw cases across Python, Rust, JS and C++17/20 on five heads, 0 divergences. Swapped categorical columns are accepted as data (positional input)."
     },
     "W9-T05": {
       "states": [
-        "planned"
-      ]
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "5b3808e6665ed7596143d71c0ebe1ef0dfa4bc2e"
+      ],
+      "tests": [
+        "public_manifest_alone_cannot_see_a_substituted_native_library",
+        "intact_packages_load_and_tampered_installations_refuse_before_serving",
+        "changed_serving_dependency_refuses_and_required_failures_block"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w9-commitC-default-20260926T063442Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w9-commitC-asm-20260926T063509Z"
+      ],
+      "remaining": "Package seal/install/load exists but is not wired into qualify-export and has no install command; load trusts the identity it is given, which must come from an authenticated release record."
     },
     "W9-T06": {
       "states": [
-        "planned"
-      ]
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "885bddb603b5273d4ecd5b9adb2aa24fa3012447"
+      ],
+      "tests": [
+        "re_emission_of_an_identical_capsule_is_source_deterministic"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w9-commitB-default-20260926T063328Z"
+      ],
+      "remaining": "Source determinism only (10 backend/head pairs), not reproducible binaries; the C++ plan identity depends on the host CXX and JOPE_CXX_MARCH."
     },
     "W9-T07": {
       "states": [

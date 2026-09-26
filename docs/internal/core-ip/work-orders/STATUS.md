@@ -6,10 +6,10 @@ not CI verification, and neither is live qualification. No finding closes throug
 
 | State | Tasks |
 |---|---:|
-| planned | 35 |
-| reproduced | 13 |
-| implemented | 35 |
-| fixture-proven | 30 |
+| planned | 28 |
+| reproduced | 15 |
+| implemented | 42 |
+| fixture-proven | 37 |
 | CI-verified | 0 |
 | live-qualified | 0 |
 | measurement-complete | 0 |
@@ -105,7 +105,7 @@ not CI verification, and neither is live qualification. No finding closes throug
 
 | Task | States | Evidence | Remaining or blocker |
 |---|---|---|---|
-| W8-T01 Define the durable artifact and event inventory | planned | — | — |
+| W8-T01 Define the durable artifact and event inventory | implemented, fixture-proven | 64e56b410af3; planned_census_reconciles_to_terminal_dispositions; a_failed_or_retried_attempt_cannot_disappear; a_retried_attempt_cannot_become_a_second_logical_improvement; +7 tests | New capability (no prior path). Nothing in the product emits these objects yet; engine-side mapping (native_persistence, corpus_publication, checkpoint_recovery) and consecutive update-index enforcement remain. |
 | W8-T02 Persist locally before acknowledging completion | planned | — | — |
 | W8-T03 Implement dependency-first conditional publication | planned | — | — |
 | W8-T04 Make retries and summaries rebuildable | planned | — | — |
@@ -118,12 +118,12 @@ not CI verification, and neither is live qualification. No finding closes throug
 
 | Task | States | Evidence | Remaining or blocker |
 |---|---|---|---|
-| W9-T01 Inventory fitted operations and dependency profiles | planned | — | — |
-| W9-T02 Freeze a complete inference capsule | planned | — | — |
-| W9-T03 Emit and build in a bounded credential-free environment | planned | — | — |
-| W9-T04 Qualify raw-input and exact-bit behavior | planned | — | — |
-| W9-T05 Bind qualification to installation/load | planned | — | — |
-| W9-T06 Separate determinism and bounded translation checks | planned | — | — |
+| W9-T01 Inventory fitted operations and dependency profiles | implemented, fixture-proven | 40babe407e18; registered_inference_inventory_matches_actual_export_outcomes | Support matrix for 26 recipes x 5 backends matches actual export outcomes (0 mismatches) on synthetic fits; positional input only (no named-column mode). |
+| W9-T02 Freeze a complete inference capsule | reproduced, implemented, fixture-proven | 1259d9184070; same_recipe_state_swaps_and_missing_stages_fail_even_with_equal_predictions | Report-path verify now re-emits and binds the fitted state (6 of 9 tampered entries were accepted before). An old prepared.json whose emitter output differs now fails verify(). The exported subject is a fold fit; no final whole-data refit identity to bind yet. |
+| W9-T03 Emit and build in a bounded credential-free environment | implemented, fixture-proven | 885bddb603b5; hostile_fitted_strings_never_reach_command_arguments | Verified safeguard for hostile strings. Builder isolation from credentials, network and private canaries was not run. |
+| W9-T04 Qualify raw-input and exact-bit behavior | implemented, fixture-proven | 885bddb603b5; emitted_backends_match_native_on_raw_edge_inputs_and_refuse_malformed_rows; raw_input_comparator_detects_changed_constants_and_truncated_outputs; missing_learned_state_is_refused_never_defaulted | Verified safeguard: 42 raw cases across Python, Rust, JS and C++17/20 on five heads, 0 divergences. Swapped categorical columns are accepted as data (positional input). |
+| W9-T05 Bind qualification to installation/load | reproduced, implemented, fixture-proven | 5b3808e6665e; public_manifest_alone_cannot_see_a_substituted_native_library; intact_packages_load_and_tampered_installations_refuse_before_serving; changed_serving_dependency_refuses_and_required_failures_block | Package seal/install/load exists but is not wired into qualify-export and has no install command; load trusts the identity it is given, which must come from an authenticated release record. |
+| W9-T06 Separate determinism and bounded translation checks | implemented, fixture-proven | 885bddb603b5; re_emission_of_an_identical_capsule_is_source_deterministic | Source determinism only (10 backend/head pairs), not reproducible binaries; the C++ plan identity depends on the host CXX and JOPE_CXX_MARCH. |
 | W9-T07 Release one supported real selected subject | blocked | — | Needs the W1-W9 live gates and an admitted real-loop window; no execution is authorized in this change. |
 
 ## W10
