@@ -2462,6 +2462,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "jope-records"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "regex",
+ "sha2",
+ "tempfile",
+]
+
+[[package]]
 name = "js-sys"
 version = "0.3.105"
 source = "registry+https://github.com/rust-lang/crates.io-index"

@@ -78,19 +78,13 @@
         "python3 deploy/ci/test-qualify-demo.py",
         "python3 deploy/ci/test-prepare-asm-runtime.py",
         "python3 deploy/ci/test-neural-env.py",
-        "python3 docs/internal/core-ip/tools/verify_findings.py",
-        "python3 -m unittest discover -s docs/internal/core-ip/tools -p test_verify_findings.py -v",
-        "python3 docs/internal/core-ip/tools/verify_dispositions.py",
-        "python3 -m unittest discover -s docs/internal/core-ip/tools -p test_verify_dispositions.py -v",
-        "python3 docs/internal/core-ip/tools/verify_test_inventory.py",
-        "python3 -m unittest discover -s docs/internal/core-ip/tools -p test_verify_test_inventory.py -v",
+        "cargo run -q --locked -p jope-records -- verify-findings",
+        "cargo run -q --locked -p jope-records -- verify-dispositions",
+        "cargo run -q --locked -p jope-records -- verify-test-inventory",
         "python3 -m unittest discover -s docs/internal/core-ip/tools -p test_verify_inventory.py -v",
-        "python3 docs/internal/core-ip/tools/verify_claims.py",
-        "python3 -m unittest discover -s docs/internal/core-ip/tools -p test_verify_claims.py -v",
-        "python3 docs/internal/core-ip/tools/task_status.py",
-        "python3 -m unittest discover -s docs/internal/core-ip/tools -p test_task_status.py -v",
-        "python3 docs/internal/core-ip/tools/progress_view.py",
-        "python3 -m unittest discover -s docs/internal/core-ip/tools -p test_progress_view.py -v",
+        "cargo run -q --locked -p jope-records -- verify-claims",
+        "cargo run -q --locked -p jope-records -- task-status",
+        "cargo run -q --locked -p jope-records -- progress-view",
         "python3 docs/internal/core-ip/tools/elo_history.py",
         "python3 -m unittest discover -s docs/internal/core-ip/tools -p test_elo_history.py -v"
       ]
@@ -1889,6 +1883,20 @@
       "dispositions": [],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "package:jope-records": {
+      "discovery": {
+        "kind": "package",
+        "manifest": "crates/jope-records/Cargo.toml"
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default",
+        "full-doctests"
+      ],
+      "dispositions": [],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
     "package:numpy-pcg64": {
       "discovery": {
         "kind": "package",
@@ -2190,46 +2198,6 @@
       "dispositions": [],
       "scope": "Independent replay of the retained historical Elo ladders from digest-pinned inputs (every committed cell must match; only likelihood-exchangeable methods may trade places), refusal of duplicate score deliveries, substituted or re-pinned inputs and disposition upgrades, historical-ranking-only consumer enforcement, lineage parent-edge recomputation with continuity and exposure refusals, and derived plot-table consistency. The two Golden45 ladders replay only where zstd is available and are otherwise reported as not replayed."
     },
-    "python:docs/internal/core-ip/tools/test_progress_view.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "lanes": [
-        "hygiene"
-      ],
-      "dispositions": [],
-      "scope": "Composed progress view (findings, dispositions, tasks, claims): every input is accepted by its own verifier first; counts come from record fields only, so key order and notes cannot change them; task states cannot close a finding; invalid records are refused before rendering; deterministic PROGRESS.md with bound input digests and stale-view detection. Records status only; it qualifies nothing."
-    },
-    "python:docs/internal/core-ip/tools/test_task_status.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "lanes": [
-        "hygiene"
-      ],
-      "dispositions": [],
-      "scope": "Task-status record completeness against the W1-W12 task headings, state/evidence rules (planned alone, SHAs, proving tests, CI run binding, live evidence, blockers), deterministic STATUS.md rendering and stale-view detection. Records states only; it qualifies nothing."
-    },
-    "python:docs/internal/core-ip/tools/test_verify_claims.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "lanes": [
-        "hygiene"
-      ],
-      "dispositions": [],
-      "scope": "Claim-to-evidence binding and dependency revocation closure with repository fixtures: subject/scope/source must match cited evidence, stage-appropriate evidence kinds, synthetic evidence never backs live/measurement/promotion claims, revocation reaches exactly the descendants, append-only history. Committed claims are checked structurally; custody bytes only when present."
-    },
-    "python:docs/internal/core-ip/tools/test_verify_dispositions.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "lanes": [
-        "hygiene"
-      ],
-      "dispositions": [],
-      "scope": "Finding-disposition evidence binding and adversarial closure mutations with synthetic evidence only. Validates hash/finding/stage/commit binding and closure rules; it closes no product finding and establishes no live qualification."
-    },
     "python:docs/internal/core-ip/tools/test_verify_inventory.py": {
       "discovery": {
         "kind": "python-family"
@@ -2239,16 +2207,6 @@
       ],
       "dispositions": [],
       "scope": "Synthetic safetensors fixtures for the accepted tensor inventory verifier: payload layout, per-tensor digests (bit flip, same-shape substitution), dtype/field closure, role accounting, Candle forward references and optimizer moment coverage. The real accepted asset is verified on the host, not in CI."
-    },
-    "python:docs/internal/core-ip/tools/test_verify_test_inventory.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "lanes": [
-        "hygiene"
-      ],
-      "dispositions": [],
-      "scope": "Static completeness of the maintained regression test inventory against coverage.json, required-subsystem executing coverage and one triage record per preserved baseline failure, with adversarial mutations. Neither collects nor executes the classified tests."
     },
     "python:python/src/jope/research/test_absolute_path_audit.py": {
       "discovery": {
@@ -7842,6 +7800,57 @@
       "dispositions": [],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile. Structural scorer dependency and token-multiset collision fixture on synthetic CPU weights; no accepted-weight, GPU or ranking-utility claim."
     },
+    "target:jope-records/bin/jope-records": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-records/src/main.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "dispositions": [
+        "runtime-tools"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately. Binary/example runtime behavior is not claimed by build or its unit-test harness."
+    },
+    "target:jope-records/lib/jope_records": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-records/src/lib.rs",
+        "test": true,
+        "doctest": true,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default",
+        "full-doctests"
+      ],
+      "dispositions": [],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:jope-records/test/records": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-records/tests/records/main.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "Core-IP record verifiers and STATUS/PROGRESS renderers against the committed records and adversarial fixtures: findings inventory integrity, disposition evidence binding, claim-to-evidence binding and revocation closure (synthetic evidence never backs live, measurement or promotion claims), test-inventory completeness against this map, task-state evidence rules, and byte-identical STATUS.md/PROGRESS.md renders with stale-view detection. Records status only; it qualifies nothing."
+    },
     "target:numpy-pcg64/lib/numpy_pcg64": {
       "discovery": {
         "kind": "target",
@@ -8563,16 +8572,6 @@
       ],
       "dispositions": [],
       "scope": "Metadata fixture validation of source/build/worker/configuration pins, custody paths and lock refusal. Compiler and native validator are mocked; no numerical worker or model qualification."
-    },
-    "python:docs/internal/core-ip/tools/test_verify_findings.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "lanes": [
-        "hygiene"
-      ],
-      "dispositions": [],
-      "scope": "Audit-source inventory integrity and adversarial register mutations only. No product finding, regression behavior, training or live qualification is established."
     },
     "python:python/tests/test_training_input_closure.py": {
       "discovery": {

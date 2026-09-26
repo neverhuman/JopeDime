@@ -34,19 +34,13 @@ python3 deploy/ci/test-install-private.py
 python3 deploy/ci/test-qualify-demo.py
 python3 deploy/ci/test-prepare-asm-runtime.py
 python3 deploy/ci/test-neural-env.py
-python3 docs/internal/core-ip/tools/verify_findings.py
-python3 -m unittest discover -s docs/internal/core-ip/tools -p test_verify_findings.py -v
-python3 docs/internal/core-ip/tools/verify_dispositions.py
-python3 -m unittest discover -s docs/internal/core-ip/tools -p test_verify_dispositions.py -v
-python3 docs/internal/core-ip/tools/verify_test_inventory.py
-python3 -m unittest discover -s docs/internal/core-ip/tools -p test_verify_test_inventory.py -v
+cargo run -q --locked -p jope-records -- verify-findings
+cargo run -q --locked -p jope-records -- verify-dispositions
+cargo run -q --locked -p jope-records -- verify-test-inventory
 python3 -m unittest discover -s docs/internal/core-ip/tools -p test_verify_inventory.py -v
-python3 docs/internal/core-ip/tools/verify_claims.py
-python3 -m unittest discover -s docs/internal/core-ip/tools -p test_verify_claims.py -v
-python3 docs/internal/core-ip/tools/task_status.py
-python3 -m unittest discover -s docs/internal/core-ip/tools -p test_task_status.py -v
-python3 docs/internal/core-ip/tools/progress_view.py
-python3 -m unittest discover -s docs/internal/core-ip/tools -p test_progress_view.py -v
+cargo run -q --locked -p jope-records -- verify-claims
+cargo run -q --locked -p jope-records -- task-status
+cargo run -q --locked -p jope-records -- progress-view
 python3 docs/internal/core-ip/tools/elo_history.py
 python3 -m unittest discover -s docs/internal/core-ip/tools -p test_elo_history.py -v
     # Hygiene

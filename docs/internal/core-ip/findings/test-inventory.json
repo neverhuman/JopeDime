@@ -255,47 +255,11 @@
         "evidence"
       ]
     },
-    "python:docs/internal/core-ip/tools/test_progress_view.py": {
-      "role": "regression",
-      "subsystems": [
-        "evidence"
-      ]
-    },
-    "python:docs/internal/core-ip/tools/test_task_status.py": {
-      "role": "regression",
-      "subsystems": [
-        "evidence"
-      ]
-    },
-    "python:docs/internal/core-ip/tools/test_verify_claims.py": {
-      "role": "regression",
-      "subsystems": [
-        "evidence"
-      ]
-    },
-    "python:docs/internal/core-ip/tools/test_verify_dispositions.py": {
-      "role": "regression",
-      "subsystems": [
-        "evidence"
-      ]
-    },
-    "python:docs/internal/core-ip/tools/test_verify_findings.py": {
-      "role": "regression",
-      "subsystems": [
-        "evidence"
-      ]
-    },
     "python:docs/internal/core-ip/tools/test_verify_inventory.py": {
       "role": "regression",
       "subsystems": [
         "encoders",
         "policy"
-      ]
-    },
-    "python:docs/internal/core-ip/tools/test_verify_test_inventory.py": {
-      "role": "regression",
-      "subsystems": [
-        "evidence"
       ]
     },
     "python:python/src/jope/research/test_absolute_path_audit.py": {
@@ -2343,6 +2307,24 @@
       "subsystems": [
         "policy",
         "encoders"
+      ]
+    },
+    "target:jope-records/bin/jope-records": {
+      "role": "regression",
+      "subsystems": [
+        "evidence"
+      ]
+    },
+    "target:jope-records/lib/jope_records": {
+      "role": "regression",
+      "subsystems": [
+        "evidence"
+      ]
+    },
+    "target:jope-records/test/records": {
+      "role": "regression",
+      "subsystems": [
+        "evidence"
       ]
     },
     "target:numpy-pcg64/lib/numpy_pcg64": {

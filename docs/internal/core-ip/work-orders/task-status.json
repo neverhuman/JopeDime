@@ -1082,7 +1082,7 @@
         "9e31ad12e3d71efd055e6737f8665fece40a2734"
       ],
       "tests": [
-        "test_verify_claims.py (5 methods, 18 mutations)"
+        "jope-records tests/records/claims.rs (9; Rust port of test_verify_claims.py's 5 methods and 18 mutations)"
       ],
       "remaining": "Capability/KPI sentence inventory across the monograph is not yet generated from claims."
     },
@@ -1095,7 +1095,7 @@
         "354962c5c659e44e26f8e8365cb059f00a9abe9a"
       ],
       "tests": [
-        "test_verify_dispositions.py (29 adversarial cases)"
+        "jope-records tests/records/dispositions.rs (9; Rust port of the 29 adversarial cases)"
       ],
       "remaining": "No finding has a closing disposition; hosted CI and live stages must precede any closure."
     },
@@ -1108,8 +1108,8 @@
         "17fee4cb4b8225a3577aece12d5c34c3f47ad36a"
       ],
       "tests": [
-        "test_progress_view.py (5)",
-        "test_task_status.py (3)"
+        "jope-records tests/records/progress_view.rs (5)",
+        "jope-records tests/records/task_status.rs (3)"
       ],
       "evidence": [
         "docs/internal/core-ip/work-orders/PROGRESS.md",
