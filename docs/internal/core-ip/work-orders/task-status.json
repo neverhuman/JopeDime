@@ -667,17 +667,19 @@
         "fixture-proven"
       ],
       "commits": [
-        "2dfe124e81e1922ccd91190eaca36274a7327137"
+        "2dfe124e81e1922ccd91190eaca36274a7327137",
+        "b5052f8d6d78590bbcd00a042dcf5c553906b2c5"
       ],
       "tests": [
-        "tests/frozen_inputs.rs (5, neural feature, CPU)"
+        "tests/frozen_inputs.rs (5, neural feature, CPU)",
+        "tests/request_integrity.rs verified resident loading"
       ],
       "evidence": [
         "docs/internal/core-ip/work-orders/evidence/W06-training-boundary.md",
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w6-pre-t01-20260926T092505Z",
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w6-post-t01-20260926T092551Z"
       ],
-      "remaining": "Cached context staging is keyed by content; resolved inputs are frozen into launch/training-inputs.json and bound into checkpoints; a substituted index or vocabulary is refused. The teaching store still re-reads the index path (detected, not prevented); programs, prepared cuts and label ledgers are bound only through the corpus build; no revocation authority exists in this source; rank_impl wiring is compile-checked only."
+      "remaining": "Cached context staging is keyed by content; resolved inputs are frozen into launch/training-inputs.json and bound into checkpoints; a substituted index or vocabulary is refused. The resident corpus is loaded from the verified index bytes (substitution prevented, not only detected); programs, prepared cuts and label ledgers are bound only through the corpus build; no revocation authority exists in this source; rank_impl wiring is compile-checked only."
     },
     "W6-T02": {
       "states": [
@@ -747,17 +749,20 @@
         "fixture-proven"
       ],
       "commits": [
-        "787a7b27a047c940223fe994ecbeddc75a54ecd7"
+        "787a7b27a047c940223fe994ecbeddc75a54ecd7",
+        "b5052f8d6d78590bbcd00a042dcf5c553906b2c5"
       ],
       "tests": [
-        "tests/checkpoint_commit.rs (5, neural feature, CPU)"
+        "tests/checkpoint_commit.rs (5, neural feature, CPU)",
+        "tests/atomic_write.rs"
       ],
       "evidence": [
         "docs/internal/core-ip/work-orders/evidence/W06-training-boundary.md",
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w6-pre-t05-20260926T072543Z",
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w6-post-t05-20260926T072645Z"
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w6-post-t05-20260926T072645Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w6-pre-fu-atomic-20260926T095224Z"
       ],
-      "remaining": "Atomic checkpoint publication with a verifying loader; the same-pid stale temporary no longer blocks commits. Trainer-side wiring is compile-checked only; manifest::atomic_write keeps the fixed temp name for its other callers; multi-host receipts are W7 and remote publication W8."
+      "remaining": "Atomic checkpoint publication with a verifying loader; the same-pid stale temporary no longer blocks commits. Trainer-side wiring is compile-checked only; manifest::atomic_write now uses unique temporaries for every write_json caller; multi-host receipts are W7 and remote publication W8."
     },
     "W6-T06": {
       "states": [
@@ -765,17 +770,24 @@
         "fixture-proven"
       ],
       "commits": [
-        "7906af67cc258ea1f4651b73d215d0e1bfb99292"
+        "7906af67cc258ea1f4651b73d215d0e1bfb99292",
+        "b5052f8d6d78590bbcd00a042dcf5c553906b2c5",
+        "e6a66c16af2bd386c7cfc63b79c5cb4389d0443b"
       ],
       "tests": [
         "tests/continuation_modes.rs (7, neural feature, CPU)",
-        "tests/checkpoint_commit.rs objective cases"
+        "tests/checkpoint_commit.rs objective cases",
+        "tests/request_integrity.rs declared continuation modes",
+        "tests/native_loop_continuation.rs (4)"
       ],
       "evidence": [
         "docs/internal/core-ip/work-orders/evidence/W06-training-boundary.md",
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w6-post-t06-20260926T091744Z"
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w6-post-t06-20260926T091744Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w6-post-fu-neural-20260926T095616Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w6-pre-nlcont-20260926T110004Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w6-post-nlcont-b-20260926T141432Z"
       ],
-      "remaining": "Four continuation modes classified and enforced before CUDA; full objective identity bound into checkpoints (G1). Legacy parents are accepted with matching legacy IDs and recorded as legacy_ids_only (owner decision). Launch request objects still express the mode implicitly; rank_impl wiring compile-checked only."
+      "remaining": "Four continuation modes classified and enforced before CUDA; full objective identity bound into checkpoints (G1). Train requests (gpu_worker, smartcluster, controller run.json) and native-loop materialized inputs (jope.smartcluster_input.v2) declare the mode; older requests and inputs frozen as v1 keep their implicit meaning byte for byte. Legacy parents are accepted with matching legacy IDs and recorded as legacy_ids_only (owner decision); rank_impl wiring compile-checked only."
     },
     "W6-T07": {
       "states": [
