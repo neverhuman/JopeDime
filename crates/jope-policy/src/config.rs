@@ -210,16 +210,222 @@ fn digest(value: &Value, path: &[&str]) -> Result<String> {
     Ok(found.to_ascii_lowercase())
 }
 
+/// A pinned receipt field set: each row is an object path (`*` is every element of an array) and
+/// the keys an object at that path may carry. Arrays of scalars and scalar values need no row.
+type FieldSet = &'static [(&'static str, &'static [&'static str])];
+
+const CONFIG_FIELDS: &[&str] = &[
+    "dataset_dim",
+    "target_dim",
+    "target_keep_dim",
+    "width",
+    "layers",
+    "heads",
+    "ffn",
+    "vocab_size",
+    "embedding_rows",
+    "max_seq",
+    "dropout",
+    "dataset_rms",
+    "target_rms",
+];
+const RUNTIME_FIELDS: &[&str] = &[
+    "tool",
+    "tool_version",
+    "tch",
+    "libtorch",
+    "libtorch_build_version",
+    "device",
+    "cuda_visible_devices",
+];
+const CHECKPOINT_FIELDS: &[&str] = &[
+    "directory",
+    "state_sha256",
+    "state_bytes",
+    "expected_state_sha256",
+    "accepted_identity",
+    "refused_identities",
+    "refused_steps",
+    "step",
+    "model_sha256",
+    "config_sha256",
+    "config",
+    "verified_bindings",
+    "carried_bindings",
+    "parameter_sha256",
+    "parameter_sha256_recomputed",
+];
+const CARRIED_FIELDS: &[&str] = &["corpus_sha256", "vocabulary_sha256"];
+const EXPORT_FIELDS: &[&str] = &[
+    "source",
+    "output",
+    "tensor_count",
+    "total_tensor_bytes",
+    "inventory_sha256",
+    "tensors",
+];
+const SOURCE_FIELDS: &[&str] = &["path", "sha256", "file_bytes"];
+const OUTPUT_FIELDS: &[&str] = &["path", "sha256", "file_bytes", "round_trip"];
+const ROUND_TRIP_FIELDS: &[&str] = &["readers", "compared", "bit_exact"];
+const TENSOR_FIELDS: &[&str] = &["name", "dtype", "shape", "numel", "bytes", "sha256"];
+
+/// W2 G-08, owner decision 2026-09-26 (`docs/internal/core-ip/work-orders/OWNER-DECISIONS.md`
+/// D13): the complete field set of the accepted receipt. That receipt is the
+/// `step-60000.receipt.json` jain-datasets `tools/ot-export` 0.1.0 wrote for the released weights
+/// ([`ACCEPTED_WEIGHTS_SHA256`] is its `policy.output.sha256`). A receipt offered as the accepted
+/// identity that carries any other field is refused.
+const ACCEPTED_RECEIPT_FIELDS: FieldSet = &[
+    (
+        "",
+        &[
+            "schema",
+            "runtime",
+            "checkpoint",
+            "policy",
+            "context_transforms",
+        ],
+    ),
+    ("runtime", RUNTIME_FIELDS),
+    ("checkpoint", CHECKPOINT_FIELDS),
+    ("checkpoint.carried_bindings", CARRIED_FIELDS),
+    ("checkpoint.config", CONFIG_FIELDS),
+    ("policy", EXPORT_FIELDS),
+    ("policy.source", SOURCE_FIELDS),
+    ("policy.output", OUTPUT_FIELDS),
+    ("policy.output.round_trip", ROUND_TRIP_FIELDS),
+    ("policy.tensors.*", TENSOR_FIELDS),
+    (
+        "context_transforms",
+        &[
+            "source",
+            "output",
+            "tensor_count",
+            "total_tensor_bytes",
+            "inventory_sha256",
+            "tensors",
+            "assembly",
+        ],
+    ),
+    ("context_transforms.source", SOURCE_FIELDS),
+    ("context_transforms.output", OUTPUT_FIELDS),
+    ("context_transforms.output.round_trip", ROUND_TRIP_FIELDS),
+    ("context_transforms.tensors.*", TENSOR_FIELDS),
+    (
+        "context_transforms.assembly",
+        &["path", "sha256", "binding", "clip_abs"],
+    ),
+];
+
+/// The complete field set of a challenger receipt: what this repository's native challenger
+/// exporter (`jope-parallel export-policy`, `jope-engine/src/policy_export.rs`) writes. It is the
+/// accepted set without `context_transforms`, plus `policy.architecture` and `relative_change`.
+const CHALLENGER_RECEIPT_FIELDS: FieldSet = &[
+    (
+        "",
+        &[
+            "schema",
+            "runtime",
+            "checkpoint",
+            "policy",
+            "relative_change",
+        ],
+    ),
+    ("runtime", RUNTIME_FIELDS),
+    ("checkpoint", CHECKPOINT_FIELDS),
+    ("checkpoint.carried_bindings", CARRIED_FIELDS),
+    ("checkpoint.config", CONFIG_FIELDS),
+    (
+        "policy",
+        &[
+            "source",
+            "output",
+            "tensor_count",
+            "total_tensor_bytes",
+            "inventory_sha256",
+            "tensors",
+            "architecture",
+        ],
+    ),
+    ("policy.source", SOURCE_FIELDS),
+    ("policy.output", OUTPUT_FIELDS),
+    ("policy.output.round_trip", ROUND_TRIP_FIELDS),
+    ("policy.tensors.*", TENSOR_FIELDS),
+    ("relative_change", &["parent", "norm", "tensors", "total"]),
+    (
+        "relative_change.parent",
+        &[
+            "directory",
+            "state_sha256",
+            "step",
+            "model_sha256",
+            "parameter_sha256",
+        ],
+    ),
+    (
+        "relative_change.tensors.*",
+        &[
+            "name",
+            "parent_norm",
+            "change_norm",
+            "relative_change",
+            "changed_values",
+        ],
+    ),
+    (
+        "relative_change.total",
+        &["parent_norm", "change_norm", "relative_change"],
+    ),
+];
+
+/// Refuse any object key, at any depth, outside `pinned`, and any object at a path `pinned` does
+/// not name.
+fn refuse_unpinned_fields(value: &Value, path: &str, pinned: FieldSet, kind: &str) -> Result<()> {
+    let child = |key: &str| {
+        if path.is_empty() {
+            key.to_owned()
+        } else {
+            format!("{path}.{key}")
+        }
+    };
+    match value {
+        Value::Object(fields) => {
+            let allowed = pinned
+                .iter()
+                .find(|(at, _)| *at == path)
+                .map(|(_, keys)| *keys)
+                .with_context(|| {
+                    format!("export receipt carries an object at {path} outside the pinned {kind} receipt field set")
+                })?;
+            for (key, inner) in fields {
+                ensure!(
+                    allowed.contains(&key.as_str()),
+                    "export receipt carries {} outside the pinned {kind} receipt field set",
+                    child(key)
+                );
+                refuse_unpinned_fields(inner, &child(key), pinned, kind)?;
+            }
+        }
+        Value::Array(items) => {
+            for item in items {
+                refuse_unpinned_fields(item, &child("*"), pinned, kind)?;
+            }
+        }
+        _ => {}
+    }
+    Ok(())
+}
+
 impl CheckpointBinding {
-    /// Parse and check an export receipt. Refuses the rejected step-69000 checkpoint, any
-    /// identity other than the accepted step-60000 state, unverified bindings, and a
-    /// configuration with unknown fields.
+    /// Parse and check an export receipt. Refuses the rejected step-69000 checkpoint, any field
+    /// outside the accepted receipt's pinned field set, any identity other than the accepted
+    /// step-60000 state, unverified bindings, and a configuration with unknown fields.
     pub fn from_receipt_bytes(bytes: &[u8]) -> Result<Self> {
         Self::parse(bytes, None)
     }
 
     /// Parse a receipt written for a pinned native challenger. Refuses the rejected checkpoint
-    /// first, the accepted identity, and any pin the receipt does not reproduce.
+    /// first, any field outside the challenger receipt's pinned field set, the accepted identity,
+    /// and any pin the receipt does not reproduce.
     pub fn from_challenger_receipt_bytes(
         bytes: &[u8],
         identity: &ChallengerIdentity,
@@ -261,6 +467,13 @@ impl CheckpointBinding {
             step != REJECTED_STEP,
             "refused: rejected step-{REJECTED_STEP} checkpoint"
         );
+        // W2 G-08 (OWNER-DECISIONS.md D13): after the rejected-checkpoint refusal, and before any
+        // identity is read, every field must belong to the pinned field set of its receipt kind.
+        let (pinned, kind) = match challenger {
+            None => (ACCEPTED_RECEIPT_FIELDS, "accepted"),
+            Some(_) => (CHALLENGER_RECEIPT_FIELDS, "challenger"),
+        };
+        refuse_unpinned_fields(&receipt, "", pinned, kind)?;
         match challenger {
             None => {
                 ensure!(
