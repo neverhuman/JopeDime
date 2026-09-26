@@ -53,7 +53,11 @@ def check_bytes(root, node_id, node, require_custody):
         require(node.get("location") == "custody" and PurePosixPath(reference).is_absolute(),
                 f"{node_id}: custody evidence needs an absolute path")
         path = Path(reference)
-        if not path.exists():
+        try:
+            present = path.exists() or path.is_symlink()
+        except OSError:  # an inaccessible custody root, e.g. another user's home on a CI runner
+            present = False
+        if not present:
             require(not require_custody, f"{node_id}: custody evidence unavailable")
             return False
     require(path.is_file() and not path.is_symlink(), f"{node_id}: evidence file missing")

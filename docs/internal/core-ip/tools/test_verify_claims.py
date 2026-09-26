@@ -1,6 +1,7 @@
 import copy
 import hashlib
 import json
+import os
 from pathlib import Path
 import tempfile
 import unittest
@@ -120,6 +121,29 @@ class ClaimTests(unittest.TestCase):
             fixture.path.write_text(json.dumps(document))
             with self.assertRaisesRegex(ValueError, "custody evidence unavailable"):
                 verify(fixture.path, root=fixture.root, require_custody=True)
+
+    @unittest.skipIf(os.geteuid() == 0, "root can traverse a mode-000 directory")
+    def test_inaccessible_custody_root_is_unavailable_not_a_crash(self):
+        # A CI runner is another user: stat() on a path under /home/ubuntu raises EACCES rather
+        # than reporting absence. That is unavailable custody, never a verifier crash.
+        with tempfile.TemporaryDirectory() as directory:
+            fixture = Fixture(directory)
+            sealed = fixture.root / "sealed"
+            sealed.mkdir()
+            evidence = sealed / "custody.json"
+            evidence.write_text("{}")
+            document = fixture.document()
+            document["evidence"]["E-other"].update(
+                location="custody", path=str(evidence),
+                sha256=hashlib.sha256(evidence.read_bytes()).hexdigest())
+            self.assertEqual(fixture.verify(document)["custody_unverified"], 0)
+            sealed.chmod(0)
+            try:
+                self.assertEqual(fixture.verify(document)["custody_unverified"], 1)
+                with self.assertRaisesRegex(ValueError, "custody evidence unavailable"):
+                    verify(fixture.path, root=fixture.root, require_custody=True)
+            finally:
+                sealed.chmod(0o700)
 
 
 if __name__ == "__main__":
