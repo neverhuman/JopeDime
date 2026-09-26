@@ -2182,6 +2182,13 @@
         "training"
       ]
     },
+    "target:jope-parallel/test/outer_release_cli": {
+      "role": "regression",
+      "subsystems": [
+        "fitting",
+        "preparation"
+      ]
+    },
     "target:jope-parallel/test/preparation_semantics": {
       "role": "regression",
       "subsystems": [

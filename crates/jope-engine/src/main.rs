@@ -701,6 +701,13 @@ enum Cmd {
         #[arg(long)]
         output: PathBuf,
     },
+    /// Outer (sealed final-test) score release authority: init, grant, score,
+    /// release and events. Sealed labels reach only a granted outer scorer; the
+    /// score is withheld until released, once.
+    OuterRelease {
+        #[command(subcommand)]
+        command: jope_parallel::gp::outer_release_cli::OuterReleaseCommand,
+    },
     Bootstrap {
         #[arg(long)]
         prepared: PathBuf,
@@ -1813,6 +1820,9 @@ fn main() -> Result<()> {
             receipt,
             output,
         } => jope_parallel::gp::score(&model, &test, &receipt, &output)?,
+        Cmd::OuterRelease { command } => {
+            println!("{}", jope_parallel::gp::outer_release_cli::run(command)?)
+        }
         Cmd::Bootstrap {
             prepared,
             cut,

@@ -7598,6 +7598,21 @@
       "dispositions": [],
       "scope": "Default-feature build/check compiles an empty neural-gated target; under the neural feature, CPU-only independent f64 fixtures for the lineage-B objective terms, gradients, partition dependence and inactive tensors. No GPU, BF16 or training qualification."
     },
+    "target:jope-parallel/test/outer_release_cli": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-engine/tests/outer_release_cli.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
     "target:jope-parallel/test/preparation_semantics": {
       "discovery": {
         "kind": "target",

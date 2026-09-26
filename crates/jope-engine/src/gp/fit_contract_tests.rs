@@ -3249,3 +3249,130 @@ fn outer_scores_need_a_grant_read_only_the_granted_labels_and_release_once() {
     Release::open(&outer_dir).unwrap();
     authority.stop_service();
 }
+
+/// The shipped `outer-release` clap command, parsed from argv and run by the
+/// same `outer_release_cli::run` the binary calls. The shipped binary cannot
+/// produce an exported subject (every fit is fenced), so its positive path is
+/// proven here; `tests/outer_release_cli.rs` proves the binary's wiring.
+#[derive(clap::Parser)]
+#[command(name = "jope-parallel")]
+struct OuterReleaseArgv {
+    #[command(subcommand)]
+    command: OuterReleaseVerb,
+}
+#[derive(clap::Subcommand)]
+enum OuterReleaseVerb {
+    OuterRelease {
+        #[command(subcommand)]
+        command: outer_release_cli::OuterReleaseCommand,
+    },
+}
+fn outer_release_cli_run(argv: &[&str]) -> Result<Value> {
+    use clap::Parser;
+    let OuterReleaseVerb::OuterRelease { command } = OuterReleaseArgv::try_parse_from(
+        std::iter::once("jope-parallel").chain(argv.iter().copied()),
+    )?
+    .command;
+    outer_release_cli::run(command)
+}
+
+/// W1 follow-up 2b: init, grant, score, release and events through the CLI
+/// verbs, with the same one-grant, one-attempt, one-release rules.
+#[test]
+fn the_outer_release_cli_grants_scores_and_releases_once() {
+    let (temp, prepared) = view_fixture();
+    let root = temp.path().canonicalize().unwrap();
+    let prepared = root.join(prepared.strip_prefix(temp.path()).unwrap());
+    let mut p: Value = read_json(&prepared.join("prepared.json")).unwrap();
+    p["original_test_sha256"] = json!(hash(SEALED_TEST.as_bytes()));
+    write_json(&prepared.join("prepared.json"), &p).unwrap();
+    let mut authority = Fixture::activated(&root, vec![cut_training_hash(&prepared)]);
+    authority.start();
+    let (output, seeds, predictor) = exported_subject(&authority, &root, &prepared);
+    authority.stop_service();
+    let sealed = root.join("data/originals/sealed-test.csv");
+    fs::write(&sealed, SEALED_TEST).unwrap();
+    let dir = root.join("outer-cli-authority");
+    let s = |p: &Path| p.to_str().unwrap().to_owned();
+    let (a, r) = (s(&dir), s(&root));
+    let init = outer_release_cli_run(&["outer-release", "init", "--authority", &a]).unwrap();
+    assert_eq!(init["instance"].as_str().map(str::len), Some(64));
+    let grant_args = [
+        "outer-release",
+        "grant",
+        "--authority",
+        &a,
+        "--root",
+        &r,
+        "--search-output",
+        &s(&output),
+        "--seeds",
+        &s(&seeds),
+        "--predictor",
+        &s(&predictor),
+        "--test",
+        &s(&sealed),
+    ];
+    let granted = outer_release_cli_run(&grant_args).unwrap();
+    let grant_id = granted["grant_id"].as_str().unwrap().to_owned();
+    let error = format!("{:#}", outer_release_cli_run(&grant_args).unwrap_err());
+    assert!(error.contains("already granted"), "{error}");
+    let receipt = root.join("cli-scored.json");
+    let score = |receipt: &Path| {
+        outer_release_cli_run(&[
+            "outer-release",
+            "score",
+            "--authority",
+            &a,
+            "--grant",
+            granted["grant"].as_str().unwrap(),
+            "--model",
+            &s(&predictor),
+            "--test",
+            &s(&sealed),
+            "--receipt",
+            &s(receipt),
+        ])
+    };
+    let scored = score(&receipt).unwrap();
+    assert_eq!(scored["status"], "scored_withheld");
+    assert!(!fs::read_to_string(&receipt).unwrap().contains("rmse"));
+    assert!(score(&root.join("cli-retry.json")).is_err());
+    let visible = root.join("cli-released.json");
+    let release = [
+        "outer-release",
+        "release",
+        "--authority",
+        &a,
+        "--grant-id",
+        &grant_id,
+        "--output",
+        &s(&visible),
+    ];
+    outer_release_cli_run(&release).unwrap();
+    let released: Value = read_json(&visible).unwrap();
+    assert!(released["metrics"]["rmse"].as_f64().unwrap().is_finite());
+    assert!(outer_release_cli_run(&release).is_err());
+    let events = outer_release_cli_run(&["outer-release", "events", "--authority", &a]).unwrap();
+    let kinds: Vec<&str> = events["events"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|e| e["event"].as_str().unwrap())
+        .collect();
+    assert_eq!(
+        kinds,
+        [
+            "granted",
+            "grant_refused",
+            "score_started",
+            "scored",
+            "score_refused",
+            "released",
+            "release_refused"
+        ]
+    );
+    // An unknown verb or a missing required flag is a parse refusal, not a call.
+    assert!(outer_release_cli_run(&["outer-release", "publish", "--authority", &a]).is_err());
+    assert!(outer_release_cli_run(&["outer-release", "grant", "--authority", &a]).is_err());
+}
