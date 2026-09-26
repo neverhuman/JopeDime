@@ -280,7 +280,7 @@
   - `CheckpointBinding::derived_reexport` verifies that a re-export reproduces the accepted export, and returns a `DerivedReexport` that can never become a `CheckpointBinding`.
   - The `export-policy` capability-matrix row carries that label.
   - jope-bench's proposal-route receipt check is extracted as `optimize::pinned_checkpoint`, so the demo path is tested through it.
-- **Consumers.** 19 were inventoried; the full list is in `evidence/W02-asset-dependency-table.md` §13.
+- **Consumers.** 21 were inventoried; the full list is in `evidence/W02-asset-dependency-table.md` §13.
   - Every consumer that needs acceptance authority, including the demo path's pinned inputs (`cfg-k0.json`, `b0/config/configuration.json`, the K0 plans), pins the accepted `b50150ea…`. None pins the anchor.
   - The only runtime consumers of the anchor are the host scripts `anchor_a0.sh` and `pr100_validate.sh` (step `anchor-a0`). They feed it to the accepted-receipt test and now fail loudly. They were not edited, because they are custody tooling outside the repository; the repointed command is recorded and was verified.
 - **Tests.**
