@@ -161,7 +161,49 @@ pub fn fit(train: &Path, genome: &str, output: &Path) -> Result<()> {
 }
 /// Fit a selected program directly from the immutable cut pointers. The
 /// predictor stores the cut's training-only preprocessing for later raw inputs.
+/// Without a declared root only a contained view (the cut's own tables) is
+/// projected; a pointer view is refused, never resolved from the view's
+/// ancestors (W1 route R2). The public `fit-view` verb is [`fit_view_in_root`].
 pub fn fit_view(prepared: &Path, cut: usize, genome: &str, output: &Path) -> Result<()> {
+    fit_view_with_root(None, prepared, cut, genome, output)
+}
+
+/// The public `fit-view` verb (W1 route R2): the cut's fitting rows are
+/// projected once, from the preparation it read, under the declared `root`;
+/// only that projection and the verified preparation state reach the fit
+/// authority. No ancestor of the view is searched for its backing table.
+pub fn fit_view_in_root(
+    root: &Path,
+    prepared: &Path,
+    cut: usize,
+    genome: &str,
+    output: &Path,
+) -> Result<()> {
+    fit_view_with_root(Some(root), prepared, cut, genome, output)
+}
+
+/// The fitting-only projection of one cut (W1 route R2): under the declared
+/// `root`, or with none only from a contained view's own tables. `p` is the
+/// preparation the caller read; `prepared.json` is not reopened.
+fn project_fitting_view(
+    root: Option<&Path>,
+    prepared: &Path,
+    p: &Prepared,
+    cut: usize,
+) -> Result<Vec<Vec<f64>>> {
+    match root {
+        Some(root) => crate::prepare::load_bound_view_in_root(root, prepared, p, cut, true),
+        None => crate::prepare::load_bound_contained_view(prepared, p, cut, true),
+    }
+}
+
+fn fit_view_with_root(
+    root: Option<&Path>,
+    prepared: &Path,
+    cut: usize,
+    genome: &str,
+    output: &Path,
+) -> Result<()> {
     ensure!(!output.exists(), "fitted predictor already exists");
     let p: Prepared = read_json(&prepared.join("prepared.json"))?;
     ensure!(
@@ -182,7 +224,7 @@ pub fn fit_view(prepared: &Path, cut: usize, genome: &str, output: &Path) -> Res
         "preprocessing",
     )
     .context("preprocessing changed")?;
-    let table = crate::prepare::load_view(prepared, cut, true)?;
+    let table = project_fitting_view(root, prepared, &p, cut)?;
     fit_projected(
         &table,
         &c.training_sha256,
@@ -347,10 +389,12 @@ pub fn fit_memory(
 
 /// Export a fitted predictor under the same CPU, memory and time limits as a
 /// teacher candidate. A failed export must not strand the neural cycle.
-/// Legacy callers without a declared root: the parent projects through
-/// [`crate::prepare::load_view`] (the view's workspace ancestor). The
-/// selected-export handoff declares its root ([`fit_view_isolated_in_root`]).
-/// Either way the worker receives only the sealed projection.
+/// Legacy callers without a declared root: the parent projects only a
+/// contained view (the cut's own tables); a pointer view is a receipted
+/// refusal before any worker starts, never resolved from the view's
+/// ancestors (W1 route R2). The selected-export handoff declares its root
+/// ([`fit_view_isolated_in_root`]). Either way the worker receives only the
+/// sealed projection.
 pub fn fit_view_isolated(
     executable: &Path,
     prepared: &Path,
@@ -412,12 +456,10 @@ fn isolated_export(
             .iter()
             .find(|c| c.index == cut)
             .context("unknown cut")?;
-        // The fitting-only projection, made here: under the declared root, or
-        // for a legacy caller through the view's own resolution.
-        let rows = match root {
-            Some(root) => crate::prepare::load_view_in_root(root, prepared, cut, true)?,
-            None => crate::prepare::load_view(prepared, cut, true)?,
-        };
+        // The fitting-only projection, made here from the preparation read
+        // above: under the declared root, or for a legacy caller only from a
+        // contained view's own tables (W1 route R2).
+        let rows = project_fitting_view(root, prepared, &p, cut)?;
         let preprocessing = read_verified(
             &prepared.join(format!("cut-{cut}/preprocessing.json")),
             &c.preprocessing_sha256,
@@ -516,7 +558,7 @@ fn isolated_export(
             "wall_seconds":started.elapsed().as_secs_f64(), "timeout_seconds":30,
             "memory_limit_gib":8, "threads":1, "cut_csv_copies":0,
             "artifact_root":root,
-            "view_resolution":if root.is_some(){"declared_root"}else{"legacy_view_resolution"},
+            "view_resolution":if root.is_some(){"declared_root"}else{"contained_view"},
             "worker_input":projection, "worker_argv":worker_argv,
             "worker_opens_prepared":false,
             "failure":result.as_ref().err().map(|e|format!("{e:#}")),

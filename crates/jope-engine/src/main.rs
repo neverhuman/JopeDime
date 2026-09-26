@@ -1823,7 +1823,7 @@ fn main() -> Result<()> {
             cut,
             genome,
             output,
-        } => jope_parallel::gp::fit_view(&prepared, cut, &genome, &output)?,
+        } => jope_parallel::gp::fit_view_in_root(&cli.root, &prepared, cut, &genome, &output)?,
         Cmd::FitMemory {
             fd,
             training_sha256,

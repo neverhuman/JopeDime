@@ -17,7 +17,7 @@ use jope_parallel::{
     champions::Champion,
     gp,
     manifest::{file_hash, hash, read_json, resolve, write_json},
-    prepare::{load_view, Prepared},
+    prepare::{load_view_in_root, Prepared},
 };
 use serde_json::json;
 use std::{fs, path::PathBuf, process::Command, time::Instant};
@@ -183,10 +183,10 @@ fn main() -> Result<()> {
 
     // 2. Native replay: re-fit the genome on the bound training view and reproduce the observation.
     let model_path = output.join("predictor.json");
-    gp::fit_view(&prepared, cut, &genome, &model_path)?;
+    gp::fit_view_in_root(&root, &prepared, cut, &genome, &model_path)?;
     let model: gp::Predictor = read_json(&model_path)?;
-    let train = load_view(&prepared, cut, true)?;
-    let validation = load_view(&prepared, cut, false)?;
+    let train = load_view_in_root(&root, &prepared, cut, true)?;
+    let validation = load_view_in_root(&root, &prepared, cut, false)?;
     let x_val: Vec<Vec<f64>> = validation
         .iter()
         .map(|r| r[..r.len() - 1].to_vec())

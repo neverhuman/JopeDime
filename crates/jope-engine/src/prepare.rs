@@ -1433,6 +1433,23 @@ pub fn load_bound_view_in_root(
 ) -> Result<Vec<Vec<f64>>> {
     view_of(Some(root), prepared, p, cut, training)
 }
+/// [`load_bound_view_in_root`] without any root: only a contained view, whose
+/// rows are the cut's own tables, is resolved. A pointer view names its
+/// backing table relative to a data root, which must be declared; it is never
+/// discovered by walking the view's ancestors (W1 route R2).
+pub fn load_bound_contained_view(
+    prepared: &Path,
+    p: &Prepared,
+    cut: usize,
+    training: bool,
+) -> Result<Vec<Vec<f64>>> {
+    ensure!(
+        p.storage.is_none(),
+        "pointer view needs its declared data root: its backing table is never \
+         resolved from the view's ancestors"
+    );
+    view_of(None, prepared, p, cut, training)
+}
 fn load_view_with_root(
     root: Option<&Path>,
     prepared: &Path,
