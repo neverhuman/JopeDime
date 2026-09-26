@@ -11,6 +11,8 @@
 //! hwm/<task>/<dataset_hash>/<cut_id>/<identity>/current.json    exact-comparison current record
 //! scores/ledger/<yyyy>/<mm>/<ulid>.jsonl            every score row, sealed, hash-chained
 //! scores/ledger/HEAD.json
+//! revocations/ledger/<yyyy>/<mm>/<ulid>.jsonl       revoked evidence imported from the claims graph
+//! progress/outbox/...                               the W8 progress outbox
 //! ```
 
 pub mod canon;
@@ -24,6 +26,7 @@ pub mod metric;
 pub mod mirror;
 pub mod progress;
 pub mod record;
+pub mod revocation;
 pub mod scores;
 pub mod sources;
 pub mod state;

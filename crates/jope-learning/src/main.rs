@@ -11,6 +11,7 @@ use jope_learning::progress::publish::{reusable, Publication};
 use jope_learning::progress::rebuild::{read_summary, summarize};
 use jope_learning::progress::reconcile;
 use jope_learning::progress::remote::open_publishing_store;
+use jope_learning::revocation;
 use jope_learning::scores;
 use jope_learning::sources::{champions, genebank, snapshot, sotarena};
 use jope_learning::state::State;
@@ -72,6 +73,31 @@ enum Cmd {
         #[command(subcommand)]
         cmd: ProgressCmd,
     },
+    /// W12-T05: the revocations this host's consumers refuse, imported from the claims and
+    /// revocation graph.
+    Revocations {
+        #[command(subcommand)]
+        cmd: RevocationsCmd,
+    },
+}
+
+#[derive(Subcommand)]
+enum RevocationsCmd {
+    /// Import the revocation closure of a verified claims record into this host's append-only
+    /// revocation ledger. Read-only unless --apply. Nothing is ever un-revoked.
+    Import {
+        /// The claims record (jope.core-ip-claims/v1).
+        #[arg(long)]
+        claims: PathBuf,
+        /// The repository root its evidence paths are relative to (default: the record's fifth
+        /// ancestor, as for `jope-records verify-claims`).
+        #[arg(long)]
+        root: Option<PathBuf>,
+        #[arg(long)]
+        apply: bool,
+    },
+    /// Read-only: how many revoked digests this host holds, and the ledger head.
+    Status,
 }
 
 /// The run a progress verb acts for, and who publishes it.
@@ -377,6 +403,22 @@ fn run(cli: Cli) -> Result<bool> {
         Cmd::Hwm { cmd } => run_hwm(&state, &cli.common, cmd),
         Cmd::Scores { cmd } => run_scores(&state, &cli.common, cmd),
         Cmd::Progress { cmd } => run_progress(&state, &cli.common, cmd),
+        Cmd::Revocations { cmd } => match cmd {
+            RevocationsCmd::Import {
+                claims,
+                root,
+                apply,
+            } => {
+                let report = revocation::import(&state, &claims, root.as_deref(), apply)?;
+                print_json(&report)?;
+                Ok(true)
+            }
+            RevocationsCmd::Status => {
+                let revocations = revocation::Revocations::load(&state)?;
+                print_json(&json!({"state": state.root(), "status": revocations.status()}))?;
+                Ok(true)
+            }
+        },
     }
 }
 

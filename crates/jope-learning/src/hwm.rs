@@ -50,6 +50,8 @@ pub enum RejectReason {
     TeachingIneligible,
     /// The record failed its structural checks.
     Invalid,
+    /// The record is revoked evidence (W12-T05): it can neither initialize nor improve.
+    Revoked,
 }
 
 impl RejectReason {
@@ -62,6 +64,7 @@ impl RejectReason {
             RejectReason::IdentityMismatch => "identity-mismatch",
             RejectReason::TeachingIneligible => "teaching-ineligible",
             RejectReason::Invalid => "invalid",
+            RejectReason::Revoked => "revoked",
         }
     }
 }
@@ -85,6 +88,8 @@ pub enum Transition {
     Invalid,
     /// A record this pointer already accepted, delivered again: never another improvement.
     Duplicate,
+    /// A record that is revoked evidence (W12-T05).
+    Revoked,
 }
 
 impl Transition {
@@ -101,6 +106,7 @@ impl Transition {
             ) => Self::Noncomparable,
             Decision::Rejected(RejectReason::TeachingIneligible) => Self::Ineligible,
             Decision::Rejected(RejectReason::Invalid) => Self::Invalid,
+            Decision::Rejected(RejectReason::Revoked) => Self::Revoked,
         }
     }
 
@@ -114,6 +120,7 @@ impl Transition {
             Self::Ineligible => "ineligible",
             Self::Invalid => "invalid",
             Self::Duplicate => "duplicate",
+            Self::Revoked => "revoked",
         }
     }
 }
@@ -289,6 +296,7 @@ pub fn ingest(
     // Records each pointer already rejected. A record rejected again is a redelivery (W3-T06):
     // counted as a duplicate delivery, never as a second decision.
     let mut refused: Rejected = BTreeMap::new();
+    let revocations = crate::revocation::Revocations::load(state)?;
     let mut lagging = BTreeSet::new();
     for c in &candidates {
         let key = PointerKey::of(&c.record);
@@ -358,7 +366,10 @@ pub fn ingest(
             .comparison
             .as_ref()
             .is_some_and(|context| context.stage == "train_oof");
-        let qualification_sha256 = if train_oof {
+        // W12-T05: a revoked record is refused before any comparison. A revoked piece of a
+        // train-side teacher's deeper closure is refused by its qualification below.
+        let revoked = revocations.revoked(&blob_sha).is_some();
+        let qualification_sha256 = if train_oof && !revoked {
             if decisions.is_none() {
                 decisions = Some(crate::eligibility::Decisions::load(state)?);
             }
@@ -367,7 +378,9 @@ pub fn ingest(
         } else {
             None
         };
-        let decision = if train_oof && qualification_sha256.is_none() {
+        let decision = if revoked {
+            Decision::Rejected(RejectReason::Revoked)
+        } else if train_oof && qualification_sha256.is_none() {
             Decision::Rejected(RejectReason::TeachingIneligible)
         } else {
             match decide(incumbent, &c.record) {
@@ -2158,6 +2171,50 @@ mod tests {
             v.breaks
         );
         assert_eq!((v.accepted, v.rejected), (1, 7));
+    }
+
+    #[test]
+    fn a_revoked_record_is_rejected_and_never_initializes_or_improves() {
+        let dir = tempfile::tempdir().unwrap();
+        let state = State::at(dir.path());
+        let repo = tempfile::tempdir().unwrap();
+        let revoked = delivery(0.9, 1);
+        crate::revocation::testing::revoke(
+            &state,
+            repo.path(),
+            &[
+                ("record", &revoked.blob, &[]),
+                ("unrelated", b"unrelated", &[]),
+            ],
+            &["record"],
+        );
+        let key = PointerKey::of(&delivery(0.0, 0).record);
+        // Rejected as `revoked`, before any comparison, and the pointer never exists.
+        let report = ingest(&state, None, vec![revoked], json!({"k": 1})).unwrap();
+        assert_eq!((report.accepted, report.rejected), (0, 1));
+        assert_eq!(report.rejects[0].reason, "revoked");
+        assert!(state.read_pointer(&key).unwrap().is_none());
+        // Positive control: an unrevoked record initializes the same pointer.
+        let report = ingest(&state, None, vec![delivery(0.5, 2)], json!({"k": 2})).unwrap();
+        assert_eq!(report.accepted, 1);
+        // The revoked record never improves on it either; its redelivery is a duplicate.
+        let report = ingest(&state, None, vec![delivery(0.9, 1)], json!({"k": 3})).unwrap();
+        assert_eq!(
+            (report.accepted, report.rejects[0].reason.as_str()),
+            (0, "revoked")
+        );
+        assert_eq!(
+            outcomes(&state),
+            [
+                (json!("revoked"), json!("revoked")),
+                (json!("initialized"), Value::Null),
+                (json!("duplicate"), json!("revoked")),
+            ]
+        );
+        let current = state.read_pointer(&key).unwrap().unwrap();
+        assert_eq!(current.score.value, 0.5);
+        let v = verify(&state, &[]).unwrap();
+        assert!(v.ok(), "{:?}", v.breaks);
     }
 
     #[test]

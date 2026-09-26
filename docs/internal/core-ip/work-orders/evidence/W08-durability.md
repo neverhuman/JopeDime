@@ -979,3 +979,17 @@ can reach it. It shows:
 - that a well-formed `s3://` store passes the checks and stops at the credential step.
 
 The live phase itself (W8-T07/T08) is not run here.
+
+## W12-T05 at W8 publication (rr2/integration-a)
+
+A commit whose closure, ancestors included, names revoked evidence never moves the run pointer,
+and nothing of it is delivered. The product driver refuses to append a revoked engine
+publication at all. Revocations are imported from the claims and revocation graph into the
+state tree's `revocations` ledger (`jope-learning revocations import`).
+
+Evidence of revoked items committed earlier stays on the remote: nothing is deleted. Every
+later commit of that run is then refused, because it names the revoked evidence through its
+ancestors. Continuing needs a new run whose closure excludes it.
+
+The reproduction, source, tests, evidence and mutation controls are in `W03-ingress-map.md`,
+"W12-T05 at the live consumers".

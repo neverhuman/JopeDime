@@ -23,6 +23,9 @@ jope-datasets = { path = "../jope-datasets" }
 jope-pipeline = { path = "../jope-pipeline" }
 # ADR-0003 state resolution lives in exactly one place; see State::resolve.
 jope-paths = { path = "../jope-paths" }
+# The claims/revocation graph verifier (W12-T05): live consumers import its revocation closure
+# instead of re-implementing the claim rules.
+jope-records = { path = "../jope-records" }
 rusqlite = { version = "0.32", features = ["bundled"] }
 schemars = "1"
 serde.workspace = true

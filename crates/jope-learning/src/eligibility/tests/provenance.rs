@@ -479,7 +479,7 @@ fn inner_partition_scope_forbids_outer_hold_rows() {
     let mut evidence = f.evidence.clone();
     evidence.freeze = freeze;
     // The whole-development receipt is not a receipt for the inner comparison.
-    assert!(context::verify(&f.state, &policy, &record, &evidence).is_err());
+    assert!(context::verify(&f.state, &policy, &record, &evidence, &Default::default()).is_err());
     evidence.context = Some(produce_context(
         &f.state,
         scope,
@@ -488,7 +488,7 @@ fn inner_partition_scope_forbids_outer_hold_rows() {
         &context_output(2048, 0.5),
     ));
     assert_eq!(
-        context::verify(&f.state, &policy, &record, &evidence).unwrap(),
+        context::verify(&f.state, &policy, &record, &evidence, &Default::default()).unwrap(),
         evidence.context.unwrap().receipt_sha256
     );
 }

@@ -988,3 +988,32 @@ fn hwm_decisions_link_through_this_hosts_ledger_and_flush_at_once() {
         crate::hwm::Transition::Initialized
     );
 }
+
+#[test]
+fn a_revoked_engine_publication_is_never_appended() {
+    let engine = Engine::new();
+    let h = host();
+    let clock = TestClock::at(1_000);
+    let mut d = Driver::init(
+        &h.state,
+        &h.remote,
+        Config::adopted(),
+        manifest(),
+        PUBLISHER,
+        clock.now_ms(),
+    )
+    .unwrap();
+    let records = fs::read(engine.corpus().join("records.bin")).unwrap();
+    let repo = tempfile::tempdir().unwrap();
+    crate::revocation::testing::revoke(
+        &h.state,
+        repo.path(),
+        &[("records", &records, &[])],
+        &["records"],
+    );
+    let before = durable(&h);
+    let error = format!("{:#}", d.corpus(&engine.corpus(), &clock).unwrap_err());
+    assert!(error.contains("RevokedEvidence"), "{error}");
+    assert_eq!(durable(&h), before, "a revoked publication was appended");
+    assert_eq!(d.staged(), 0);
+}

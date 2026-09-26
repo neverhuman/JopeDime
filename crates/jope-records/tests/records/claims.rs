@@ -3,7 +3,7 @@
 use std::os::unix::fs::{MetadataExt, PermissionsExt};
 use std::path::{Path, PathBuf};
 
-use jope_records::claims::{verify, Summary, SCHEMA};
+use jope_records::claims::{revoked_evidence, verify, Summary, SCHEMA};
 use jope_records::layout;
 use jope_records::pyjson::{Dict, Value};
 
@@ -544,4 +544,62 @@ fn synthetic_identity_keeps_fixture_hosted_and_implementation_stages() {
     );
     let summary = fixture.verify(&document).expect("unavailable custody");
     assert_eq!(summary.custody_unverified, 1);
+}
+
+#[test]
+fn revoked_evidence_gives_consumers_digests_attributed_to_their_revocation() {
+    let fixture = Fixture::new();
+    let mut document = fixture.document();
+    // Two revocations reach E-grandchild: E-root's (sequence 1) and its parent E-child's
+    // (sequence 2). A node is attributed to the lowest sequence that reaches it.
+    set(
+        &mut document,
+        "revocations",
+        json(
+            r#"[{"node": "E-root", "issuer": "reviewer", "cause": "leak",
+                "effective_utc": "2026-09-26T01:00:00Z", "sequence": 1},
+               {"node": "E-child", "issuer": "owner", "cause": "rerun",
+                "effective_utc": "2026-09-26T02:00:00Z", "sequence": 2}]"#,
+        ),
+    );
+    set(claim_at(&mut document, 0), "status", "revoked".into());
+    dump(&fixture.path, &document);
+    let closure =
+        revoked_evidence(&fixture.path, Some(&fixture.root), false).expect("verified record");
+    assert_eq!(closure.claims_sha256, digest(&fixture.path));
+    let got: Vec<(&str, &str, i64, bool)> = closure
+        .revoked
+        .iter()
+        .map(|r| {
+            (
+                r.node.as_str(),
+                r.revoked_node.as_str(),
+                r.sequence,
+                r.sha256 == digest(&fixture.root.join(format!("evidence/{}.json", r.node))),
+            )
+        })
+        .collect();
+    assert_eq!(
+        got,
+        [
+            ("E-child", "E-root", 1, true),
+            ("E-grandchild", "E-root", 1, true),
+            ("E-root", "E-root", 1, true),
+        ]
+    );
+    // The unrelated node is not revoked.
+    assert!(closure.revoked.iter().all(|r| r.node != "E-other"));
+    // A record verify refuses yields no revocations at all.
+    set(claim_at(&mut document, 0), "status", "active".into());
+    dump(&fixture.path, &document);
+    assert_refused(
+        revoked_evidence(&fixture.path, Some(&fixture.root), false),
+        "C-live: cites revoked evidence",
+    );
+    // No revocation: nothing revoked.
+    dump(&fixture.path, &fixture.document());
+    assert!(revoked_evidence(&fixture.path, Some(&fixture.root), false)
+        .expect("verified record")
+        .revoked
+        .is_empty());
 }

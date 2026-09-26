@@ -33,6 +33,7 @@
 //! engine checkpoint twice; re-mapping the same bytes yields the same objects, which the outbox
 //! reports as existing.
 
+use crate::canon::sha256_hex;
 use crate::hwm::{parse_event, Transition};
 use crate::ledger::Ledger;
 use crate::progress::cadence::{
@@ -445,6 +446,16 @@ impl<'r> Driver<'r> {
     /// A mapping is admitted whole or not at all: if its new items would pass the outbox maximum,
     /// it is refused ([`Refused::Full`]) before any of them is written.
     fn append(&mut self, mapped: &Mapped, step: &mut Step) -> Result<()> {
+        // W12-T05: revoked evidence is never appended, let alone published.
+        let revocations = crate::revocation::Revocations::load(self.outbox.state())?;
+        if !revocations.is_empty() {
+            let mut digests: Vec<String> = mapped.blobs.iter().map(|b| sha256_hex(b)).collect();
+            for o in &mapped.objects {
+                digests.push(o.digest.clone());
+                digests.push(sha256_hex(&o.bytes));
+            }
+            revocations.refuse("an engine publication", digests.iter().map(String::as_str))?;
+        }
         let (mut entries, mut bytes) = (0u64, 0u64);
         for blob in &mapped.blobs {
             if self

@@ -2350,6 +2350,7 @@ dependencies = [
  "jope-parallel",
  "jope-paths",
  "jope-pipeline",
+ "jope-records",
  "rusqlite",
  "schemars",
  "serde",
