@@ -6,12 +6,13 @@ implementation subagent, lane `.agent/worktrees/demo`. Inputs:
 - its appended route status;
 - [W01-label-release-counterfactuals-staging.md](W01-label-release-counterfactuals-staging.md).
 
-Every state below is fixture scope, local only and not CI-verified. No register entry is
-closed.
+Every state below is local only and not CI-verified. Most is fixture scope. Two sections
+also name local evidence runs on real inputs: 2d replays retained custody evidence, and
+the 2e encoder proof runs on the accepted encoder assets. No register entry is closed.
 
 Evidence lives under
-`~/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1b-r3-*` and
-`w1b-c<N>-*`. Each directory holds `HEAD`, `diff.patch`, `untracked.patch`, `status.txt`,
+`~/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1b-r3-*`,
+`w1b-r4-*`, `w1b-r5-*` and `w1b-c<N>-*`. Each directory holds `HEAD`, `diff.patch`, `untracked.patch`, `status.txt`,
 `source.txt`, `nextest.log` and `summary.txt`.
 
 ## 2a — Consumer-map routes
@@ -296,3 +297,85 @@ The same result on `21d7073e7` is in `w1b-r4-2d-prefix-*`.
 - The producer's projection attestation (`verify_corrected_run`) is not required by the
   planner, because no producer emits a corrected run document yet.
 - Report admission of an archival v2 plan is unchanged.
+
+**Commit and pre-commit.** Commit `2ae401b9a`. Pre-commit `w1b-c6-2d-*`: engine W1 set plus
+fence suites 160/160, jope-datasets 69/69, jope-bench (asm) 163/163. The workspace
+all-targets check and the asm (full-default feature) check, parity-matrix, coverage
+(0 unassigned), inventory, fmt and diff-check all exit 0.
+
+## 2e — the counterfactual harness extended to the context producer, encoders and teacher
+
+This is a new verification capability, not a defect fix. No production code changes. Each
+proof freezes the permitted inputs, perturbs one thing, and compares SHA-256 digests with
+zero tolerance. Authorized controls show that each receiver is sensitive to its permitted
+inputs, so a pass is not vacuous. One receipt per mutation goes to
+`$JOPE_W1_RECEIPTS/counterfactual/`.
+
+**Context producer** (CI; jope-bench, asm):
+`origin_proof::tests::the_context_producer_receives_identical_bytes_under_every_outer_mutation`.
+- Receiver: `optimize::build_pair_input` builds the `TrainingInput`, then
+  `TrainingInput::prepare`. Those are the bytes the CPU encoders consume.
+- The fixture is the synthetic regression table with numeric and categorical columns.
+- Forbidden: cut 0's outer scoring partition (fold 0). Its labels changed or shuffled,
+  values changed or missing, categories changed, and rows reordered all leave the
+  producer input, preparation state, prepared rows and context identical.
+- The pair input is identical too, except under reordering: the outer request binds the
+  hold rows' identities and order, never their labels, values or categories.
+- Authorized controls: a fitting-row label, value or category changes the input, context
+  and prepared rows. The category control also changes the preparation state.
+- Run `w1b-r5-2e-harness-20260926T104720Z`: 9 receipts. Its receipts showed that only
+  reordering moves the pair input, so the assertion was then tightened. The tightened
+  test is re-run, with receipts, in the pre-commit bench step `w1b-c8-2e-bench-*`.
+
+**CPU encoders** (local evidence; `#[ignore]`, because the accepted assets are not in
+the repository):
+`origin_proof::tests::the_cpu_encoders_produce_identical_context_under_every_outer_mutation`.
+- It runs `CpuProducer::produce` (preparation, Hyperion, foundation and target encoders,
+  frozen assembly) on each mutation's producer input. Run it with
+  `JOPE_W1_ENCODER_FILES=<encoder-files.json>` and `--run-ignored only`.
+- Determinism control: the same input twice gives byte-identical artifacts.
+- All 6 forbidden mutations give a byte-identical serialized context artifact.
+- Every authorized control changes the final context. The receipts record which products
+  moved:
+  - feature value or category: Hyperion and foundation;
+  - label: foundation and target.
+
+  Each encoder is therefore shown to respond to its own authorized inputs.
+- Run `w1b-r5-2e-encoders-20260926T104735Z`: 183 s, 9 receipts, with the accepted asm-demo
+  encoder files.
+- Re-run on the final pre-committed tree `w1b-r5-2e-encoders-final-20260926T110038Z`: 191 s,
+  9 receipts, identical outcomes.
+
+**Teacher input admission** (CI; engine, default features):
+`tests/teacher_counterfactuals.rs`.
+- Receiver: `label_admission::verify_inputs`, which binds an admitted teacher label to the
+  cut's training identity.
+- Fixture: the W1-T06 legacy registry fixture, unchanged. A single-family audit always
+  places its one family in `meta_test`, which the teacher never admits. The proofs
+  therefore add a distinct, approved, never-prepared companion dataset of a family that
+  ranks after the example's, which puts the example's family in `meta_train`.
+- The tests:
+  - `sealed_split_mutations_never_reach_the_teachers_admitted_inputs`: sealed labels
+    changed or shuffled, rows reordered, categories changed. Every cut's admitted
+    identity is identical, while `prepared.json` differs, which shows each mutation is
+    real.
+  - `the_teachers_input_admission_never_opens_the_sealed_split`: identical with the
+    sealed split moved away (denied read). The default single-family fixture
+    (`meta_test`) is refused ("admission sealed").
+  - `a_cuts_held_out_rows_never_reach_its_admitted_training_identity`: cut 0's held-out
+    labels leave cut 0's identity unchanged. Authorized: they change cuts 1–4.
+  - `a_training_label_changes_the_admitted_identity_and_stale_bytes_are_refused`:
+    authorized control, plus refusal of a teacher label that names the earlier
+    preparation bytes.
+- Run `w1b-r5-2e-teacher3-20260926T105307Z`: 4/4, 7 receipts. The first two runs
+  (`teacher`, `teacher2`) stopped at the fixture's `meta_test` family. They are kept.
+  `teacher2` renamed the family, which cannot help, because the audit assigns partitions
+  by rank among families.
+
+**Recorded, not source-provable here.**
+
+| Receiver | Why |
+|---|---|
+| Trainer | `jope-learning` and the engine's `training*` and `neural*` modules are outside this lane's partition. Training needs LibTorch/CUDA (W6/W7). |
+| Teacher: parse versus hash | `native_genome.rs:347-349` parses `prepared.json` with `read_json`. `verify_inputs` then hashes the file separately and checks provenance (partition, family, clean evaluation) against that caller-supplied parse, not against the hashed bytes. This is the same R8 pattern as `label_admission.rs:477-481`, and as `teaching_store.rs:551,572`, where `search.json` is hashed, then re-read by path. All are in the teacher partition, which is outside this lane, and are recorded for its owner. |
+| Encoders in CI | The accepted encoder assets are outside the repository, so the encoder proof is an ignored local-evidence test. |

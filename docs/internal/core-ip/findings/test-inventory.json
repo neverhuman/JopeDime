@@ -2289,6 +2289,13 @@
         "orchestration"
       ]
     },
+    "target:jope-parallel/test/teacher_counterfactuals": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "teaching"
+      ]
+    },
     "target:jope-parallel/test/trainer_topology": {
       "role": "regression",
       "subsystems": [
