@@ -6,10 +6,10 @@ not CI verification, and neither is live qualification. No finding closes throug
 
 | State | Tasks |
 |---|---:|
-| planned | 27 |
+| planned | 26 |
 | reproduced | 16 |
-| implemented | 43 |
-| fixture-proven | 39 |
+| implemented | 44 |
+| fixture-proven | 40 |
 | CI-verified | 0 |
 | live-qualified | 0 |
 | measurement-complete | 0 |
@@ -161,7 +161,7 @@ not CI verification, and neither is live qualification. No finding closes throug
 | W12-T01 Define the claim-to-evidence schema | implemented, fixture-proven | 9e31ad12e3d7; test_verify_claims.py (5 methods, 18 mutations) | Capability/KPI sentence inventory across the monograph is not yet generated from claims. |
 | W12-T02 Extend findings closure with validated evidence | implemented, fixture-proven | 354962c5c659; test_verify_dispositions.py (29 adversarial cases) | No finding has a closing disposition; hosted CI and live stages must precede any closure. |
 | W12-T03 Generate status and KPI views from committed records | implemented, fixture-proven | 17fee4cb4b82; test_progress_view.py (5); test_task_status.py (3) | Status and findings views are generated from validated records. KPI score cards (HWM improvement, eligible teachers, corpus availability, exposure, committed updates, matched search, transfer) wait on W8 publication verification and real measurements. |
-| W12-T04 Reconcile historical Elo and genealogy honestly | planned | — | — |
+| W12-T04 Reconcile historical Elo and genealogy honestly | implemented, fixture-proven | 4b56141a3bfc; test_elo_history.py (18) | Six ladders replay from pinned inputs; two scorer-parity-only and six irrecoverable histories are excluded from exact totals. S08-G09/S08-K09 stay open; Golden45 replay needs zstd on the runner; jope-arena duplicate-cell replacement noted, not changed; exposure edges not retained. |
 | W12-T05 Implement dependency-based revocation and quarantine | implemented, fixture-proven | 9e31ad12e3d7; test_revocation_invalidates_exactly_the_descendants | Live consumers do not yet query revocations (W3/W8 receiving paths). |
 | W12-T06 Assemble an independently replayable private evidence package | blocked | — | Depends on qualified W8-W11 records and live restoration. |
 | W12-T07 Publish synthetic conformance fixtures safely | planned | — | — |

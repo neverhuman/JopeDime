@@ -11,7 +11,7 @@ neither is live qualification.
 |---|---|
 | `findings/register.json` | `33146b77ca2bd8769d8a2b869fe4844755df86a0a8dccdd41609c2d1080e5e6a` |
 | `findings/dispositions.json` | `e097ca511964e584ed81dfa44c8f43dbaf072981fb666747eb9a3e821210cca1` |
-| `work-orders/task-status.json` | `99d644e5fff3cbafe79bef130f2aa8b9bd9e8a816f00b77c6c6a010afbb0eaa9` |
+| `work-orders/task-status.json` | `3329517d261dfc34642aa1c7f31df2a3dd0299eb08ee0150cddd5a59bfc3306d` |
 | `claims/claims.json` | `380ec2ffc72fd1e41bcde9f8897f485d5c0605549cad52165a07fecb0874a011` |
 
 ## Findings and tasks by primary work order
@@ -32,8 +32,8 @@ Task columns count tasks holding each state; a task can hold several.
 | W9 | 11 | 11 | 22 | 0 | 7 | 0 | 2 | 6 | 6 | 0 | 0 | 0 | 1 |
 | W10 | 12 | 13 | 25 | 0 | 10 | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 9 |
 | W11 | 6 | 6 | 12 | 0 | 8 | 0 | 1 | 3 | 3 | 0 | 0 | 0 | 5 |
-| W12 | 9 | 11 | 20 | 0 | 8 | 2 | 0 | 4 | 4 | 0 | 0 | 0 | 2 |
-| **Total** | **97** | **98** | **195** | **0** | **92** | **27** | **16** | **43** | **39** | **0** | **0** | **0** | **22** |
+| W12 | 9 | 11 | 20 | 0 | 8 | 1 | 0 | 5 | 5 | 0 | 0 | 0 | 2 |
+| **Total** | **97** | **98** | **195** | **0** | **92** | **26** | **16** | **44** | **40** | **0** | **0** | **0** | **22** |
 
 ## Pending gates
 
@@ -74,6 +74,6 @@ verified by `verify_claims.py --require-custody` where custody is readable.
 
 ## Not progress
 
-- Tasks still only planned (no commits or evidence): 27 of 92.
+- Tasks still only planned (no commits or evidence): 26 of 92.
 - Findings without any disposition record: 195 of 195.
 - Findings closed: 0 of 195.
