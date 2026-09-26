@@ -216,23 +216,34 @@ impl Supervisor for ProcessSupervisor {
         let r = self.record(handle)?;
         anyhow::ensure!(r.boot == boot_id(), "record from another boot");
         let mut status = 0;
-        let reaped = unsafe { libc::waitpid(r.pid, &mut status, libc::WNOHANG) };
-        if reaped == r.pid {
-            let (code, signal) = if libc::WIFEXITED(status) {
-                (Some(libc::WEXITSTATUS(status)), None)
-            } else {
-                (None, Some(libc::WTERMSIG(status)))
-            };
-            fs::write(
-                self.dir(handle).join("exit.json"),
-                serde_json::to_vec(&serde_json::json!({"code": code, "signal": signal}))?,
-            )?;
-            return Ok(Liveness::Exited { code, signal });
+        let mut reaped = unsafe { libc::waitpid(r.pid, &mut status, libc::WNOHANG) };
+        if reaped != r.pid {
+            match proc_stat(r.pid) {
+                Some((state, birth)) if birth == r.birth && state != 'Z' => {
+                    return Ok(Liveness::Running)
+                }
+                // The rank became a zombie between the non-blocking wait and the /proc
+                // read: reap it now (returns immediately), never report it as gone while
+                // it is still unreaped.
+                Some((_, birth)) if birth == r.birth => {
+                    reaped = unsafe { libc::waitpid(r.pid, &mut status, 0) };
+                }
+                _ => {}
+            }
         }
-        Ok(match proc_stat(r.pid) {
-            Some((state, birth)) if birth == r.birth && state != 'Z' => Liveness::Running,
-            _ => Liveness::Gone,
-        })
+        if reaped != r.pid {
+            return Ok(Liveness::Gone);
+        }
+        let (code, signal) = if libc::WIFEXITED(status) {
+            (Some(libc::WEXITSTATUS(status)), None)
+        } else {
+            (None, Some(libc::WTERMSIG(status)))
+        };
+        fs::write(
+            self.dir(handle).join("exit.json"),
+            serde_json::to_vec(&serde_json::json!({"code": code, "signal": signal}))?,
+        )?;
+        Ok(Liveness::Exited { code, signal })
     }
     fn terminate(&mut self, handle: &SupervisorHandle) -> Result<Liveness> {
         let r = self.record(handle)?;
@@ -317,7 +328,38 @@ impl Harness {
         }
     }
     fn open(&self) -> Coordinator<ProcessSupervisor> {
-        Coordinator::open(&self.dir, &self.sha, self.supervisor(), now_ms()).unwrap()
+        self.open_at(now_ms())
+    }
+    fn open_at(&self, now: u64) -> Coordinator<ProcessSupervisor> {
+        Coordinator::open(&self.dir, &self.sha, self.supervisor(), now).unwrap()
+    }
+    /// The earliest participant grant expiry; the whole group's window closes there.
+    fn first_expiry(&self) -> u64 {
+        self.contract
+            .participants
+            .iter()
+            .map(|p| p.grant.body.expires_unix_ms)
+            .min()
+            .unwrap()
+    }
+    /// Every rank completes with a retained authenticated result, then the coordinator
+    /// crashes before acknowledging any of them. Returns the still-open control streams.
+    fn completed_then_crashed(&self) -> Vec<Connected> {
+        let mut c = self.open();
+        let mut connected = self.start(&mut c);
+        self.wait_admitted();
+        for id in 1..=3 {
+            heartbeat(&mut connected, id);
+        }
+        let pids = self.pids();
+        wait(|| pids.iter().all(|p| exited(*p)));
+        drop(c);
+        let pending = controller::status(&self.dir).unwrap();
+        assert_eq!(
+            (pending.outcome, pending.committed_updates_total),
+            (None, 60_000)
+        );
+        connected
     }
     /// Preflight, launch every rank, authenticate the full group, persist the admission
     /// and only then deliver it.
@@ -447,6 +489,35 @@ fn journal_contains(dir: &Path, needle: &str) -> bool {
                 .unwrap_or_default()
                 .contains(needle)
         })
+}
+fn journal_count(dir: &Path, needle: &str) -> usize {
+    fs::read_dir(dir.join("journal"))
+        .unwrap()
+        .flatten()
+        .filter(|e| {
+            fs::read_to_string(e.path())
+                .unwrap_or_default()
+                .contains(needle)
+        })
+        .count()
+}
+/// Simulate a coordinator crash right after the record containing `needle` was published:
+/// the journal is append-only, one record at a time, so a crash leaves exactly a prefix.
+fn truncate_journal_after(dir: &Path, needle: &str) -> usize {
+    let jdir = dir.join("journal");
+    let mut records: Vec<PathBuf> = fs::read_dir(&jdir)
+        .unwrap()
+        .map(|e| e.unwrap().path())
+        .collect();
+    records.sort();
+    let at = records
+        .iter()
+        .position(|p| fs::read_to_string(p).unwrap().contains(needle))
+        .expect("record present");
+    for later in &records[at + 1..] {
+        fs::remove_file(later).unwrap();
+    }
+    records.len() - at - 1
 }
 fn exited(pid: i32) -> bool {
     proc_stat(pid).is_none_or(|(state, _)| state == 'Z')
@@ -800,4 +871,125 @@ fn cancellation_and_grant_expiry_drain_the_whole_group() {
     drop(connected);
     h.assert_no_orphans();
     controller::verify(&h.dir, Some(&h.sha)).unwrap();
+}
+
+// ------------------------------------- review of #111: grant expiry during recovery
+
+/// Regression (independent review of #111, P1). `poll` drains the group once any
+/// participant grant has expired, but `reconcile` adopted and committed retained results
+/// after a restart without that gate: poll gave Drained/60 000 at expiry while reopen +
+/// reconcile gave Committed/60 003. A restart must not widen the grant window.
+#[test]
+fn restart_at_grant_expiry_drains_retained_results_instead_of_committing() {
+    let h = Harness::new(["complete"; 3]);
+    let connected = h.completed_then_crashed();
+    let expiry = h.first_expiry();
+    assert!(expiry < h.contract.original_deadline_unix_ms);
+    let mut c = h.open_at(expiry);
+    assert!(c.needs_reconcile());
+    let s = c.reconcile(expiry).unwrap();
+    assert_eq!(
+        (s.outcome, s.committed_updates_total),
+        (Some(Outcome::Drained), 60_000),
+        "recovery bypassed grant expiry"
+    );
+    assert!(s
+        .ranks
+        .iter()
+        .all(|r| r.disposition == Some(Disposition::CompletedUnacknowledged)));
+    assert!(journal_contains(&h.dir, "\"cause\":\"grant_expired\""));
+    assert_eq!(journal_count(&h.dir, "\"event\":\"group_committed\""), 0);
+    assert_eq!(
+        journal_count(&h.dir, "\"event\":\"result_acknowledged\""),
+        0
+    );
+    assert!(!h.dir.join("results").exists(), "no result was adopted");
+    // Reopening the terminal attempt later changes nothing.
+    let journal = s.journal_records;
+    drop(c);
+    let mut again = h.open_at(expiry + 1);
+    assert!(!again.needs_reconcile());
+    let s = again.reconcile(expiry + 1).unwrap();
+    assert_eq!(
+        (s.journal_records, s.committed_updates_total),
+        (journal, 60_000)
+    );
+    drop(again);
+    drop(connected);
+    h.assert_no_orphans();
+    controller::verify(&h.dir, Some(&h.sha)).unwrap();
+}
+
+/// Positive control: the same crash reconciled one millisecond before the first grant
+/// expiry commits the complete group exactly once.
+#[test]
+fn restart_just_before_grant_expiry_commits_exactly_once() {
+    let h = Harness::new(["complete"; 3]);
+    let connected = h.completed_then_crashed();
+    let before = h.first_expiry() - 1;
+    let mut c = h.open_at(before);
+    let s = c.reconcile(before).unwrap();
+    assert_eq!(
+        (s.outcome, s.committed_updates_total),
+        (Some(Outcome::Committed), 60_003)
+    );
+    let journal = s.journal_records;
+    drop(c);
+    let mut again = h.open_at(h.first_expiry() + 1);
+    let s = again.reconcile(h.first_expiry() + 1).unwrap();
+    assert_eq!(
+        (s.outcome, s.journal_records, s.committed_updates_total),
+        (Some(Outcome::Committed), journal, 60_003)
+    );
+    drop(again);
+    drop(connected);
+    assert_eq!(journal_count(&h.dir, "\"event\":\"group_committed\""), 1);
+    h.assert_no_orphans();
+    assert_eq!(
+        controller::verify(&h.dir, Some(&h.sha))
+            .unwrap()
+            .results_verified,
+        3
+    );
+}
+
+/// Positive control: a commit already journaled before the crash is finished after the
+/// grant window has closed, never drained, and never journaled a second time.
+#[test]
+fn an_already_journaled_commit_is_finished_not_drained_after_expiry() {
+    let h = Harness::new(["complete"; 3]);
+    let mut c = h.open();
+    let mut connected = h.start(&mut c);
+    let mut next = 0;
+    let s = supervise(&mut c, &mut connected, &mut next);
+    assert_eq!(s.outcome, Some(Outcome::Committed));
+    drop(c);
+    // Crash immediately after the group_committed record was published.
+    let removed = truncate_journal_after(&h.dir, "\"event\":\"group_committed\"");
+    assert_eq!(removed, 4, "three dispositions and the terminal record");
+    let s = controller::status(&h.dir).unwrap();
+    assert_eq!((s.outcome, s.committed_updates_total), (None, 60_003));
+    let later = h.first_expiry() + 1;
+    let mut c = h.open_at(later);
+    assert!(c.needs_reconcile());
+    let s = c.reconcile(later).unwrap();
+    assert_eq!(
+        (s.outcome, s.committed_updates_total),
+        (Some(Outcome::Committed), 60_003)
+    );
+    assert!(s
+        .ranks
+        .iter()
+        .all(|r| r.disposition == Some(Disposition::Committed)));
+    assert_eq!(journal_count(&h.dir, "\"event\":\"group_committed\""), 1);
+    assert_eq!(journal_count(&h.dir, "\"event\":\"drain_started\""), 0);
+    drop(c);
+    drop(connected);
+    h.assert_no_orphans();
+    assert_eq!(
+        controller::verify(&h.dir, Some(&h.sha))
+            .unwrap()
+            .results_verified,
+        3
+    );
 }

@@ -374,8 +374,13 @@ restart. Every rank ends with exactly one disposition:
 
 **Restart.** A restarted coordinator refuses dispatch and polling until it reconciles.
 
-- If the whole group completed with authenticated results inside the original deadline, it
-  acknowledges them and commits once.
+- A commit already journaled before the crash is finished exactly once, at any time, and is
+  never drained.
+- Otherwise a new recovery commit passes the same gates as `poll`: no pending cancellation,
+  and the group window still open. The window closes at the original deadline or the first
+  participant grant expiry. If the whole group completed with authenticated results inside
+  it, the coordinator acknowledges them and commits once. (This bullet was corrected after
+  review of #111; see below.)
 - Otherwise it drains. Work that was launched but whose launch was never journaled is found
   by dispatch id, stopped and labelled as such.
 - Reopening a terminal run changes nothing.
@@ -413,6 +418,106 @@ point, which is a no-op outside a rank process).
 
 **Open.** A SmartCluster-backed `Supervisor` and the cross-host drain are W7-T07. The
 fixture supervisor keeps its records on disk like a daemon but reaps as the parent process.
+
+### Review of #111 — grant expiry during coordinator recovery (P1, fixed)
+
+**Finding.** The independent review of PR #111 (neverhumanbot, CHANGES_REQUESTED at
+`0b303b293`) found a real defect in the W7-T05 recovery path. `poll()` drains the group once
+any participant grant has expired. `reconcile()` checked only cancellation, a delivered
+admission and the original deadline before it acknowledged and committed retained results.
+So a coordinator restart between rank completion and acknowledgement bypassed the
+grant-expiry gate. The reviewer's reproduction
+(`independent-review-pr111/recovery-expiry.rs` and `.log`, under the custody root) showed
+the difference at the same instant, the first grant expiry:
+
+- poll gave `Drained` with 60 000 committed updates;
+- reopen + reconcile gave `Committed` with 60 003.
+
+**Audit of the other paths.** Before the fix, each authority-bearing step checked its own
+subset of the window:
+
+| Path | Before the fix | Gap |
+|---|---|---|
+| `poll` | cancellation, deadline, every grant | none |
+| `reconcile` (new recovery commit) | cancellation, delivery, deadline | every grant |
+| `acknowledge` (adopting a retained result) | none of its own; relied on callers | every gate, if reached by a new caller |
+| `commit` (new group commit) | deadline | every grant |
+| dispatch (`require_dispatchable`) | deadline and *this rank's* grant | another participant's grant |
+| `record_admission` | deadline | every grant |
+| `deliver_admission` (ranks may start) | none | deadline and every grant |
+| journal replay / Verify | no time gate | a late acknowledgement or commit verified clean |
+
+**Fix** (`bounded/controller.rs`). One gate, `group_window_closed(contract, now)`, closes at
+the original deadline or the first participant grant expiry, whichever is earlier. It is
+applied everywhere:
+
+- `poll` and `reconcile` drain with the gate's cause (`grant_expired` or
+  `deadline_elapsed`). `reconcile` applies it before any retained result is adopted, right
+  after the cancellation check.
+- Dispatch, launch, admission journaling, acknowledgement and any new group commit refuse
+  after the window closes.
+- `deliver_admission` drains the group instead of delivering.
+- Journal replay (so Status, Verify and every reopen) refuses a dispatch intent, launch,
+  admission, delivery, acknowledgement or commit whose `recorded_unix_ms` falls after the
+  window.
+
+Finishing an already-journaled commit stays distinct. It completes the dispositions and the
+terminal record exactly once, at any time, and is never drained. Drain, disposition and
+terminal records may still be journaled after the window, as a drain must be.
+
+**Tests** — all pre-fix failures were observed first:
+
+- `bounded_run_recovery.rs` (real rank processes, same host):
+  - `restart_at_grant_expiry_drains_retained_results_instead_of_committing` — the
+    reviewer's scenario. It now ends `Drained` with 60 000 updates, every rank
+    `completed_unacknowledged`, no acknowledgement, commit or `results/`, and no orphans.
+    Pre-fix it was `Committed` with 60 003.
+  - Positive control `restart_just_before_grant_expiry_commits_exactly_once` — reconcile
+    one millisecond before the first grant expiry commits once, and a later reopen changes
+    nothing.
+  - Positive control `an_already_journaled_commit_is_finished_not_drained_after_expiry` —
+    the journal is truncated right after `group_committed` (the exact prefix a crash
+    leaves). Reconcile after expiry finishes it as `Committed` with 60 003, one
+    `group_committed`, no `drain_started`, and Verify passes.
+- `bounded_run.rs` (in-process):
+  - `dispatch_stops_when_any_participant_grant_expires` — rank 2's grant closes the window
+    while rank 0's own grant and the deadline are open. Pre-fix, rank 0 was still
+    dispatched.
+  - `admission_and_delivery_stop_when_any_participant_grant_expires` — journaling the
+    admission, and delivering it, at the window close. Pre-fix the admission was journaled
+    at the close, and the test stopped there; delivery had no time gate at all. Now the
+    admission is refused, delivery drains with `grant_expired`, and no peer receives a
+    frame.
+  - `verify_refuses_acknowledgements_or_commits_journaled_after_the_window_closed` — the
+    journal is re-chained with one record re-stamped at the expiry. Acknowledgement,
+    commit, dispatch intent, admission and delivery are refused; dispositions and the
+    terminal record are accepted. Pre-fix, Verify accepted a late acknowledgement.
+
+**Fixture flake found while repeating (and fixed).** Repeating the process fixture exposed
+a race in the test-only `ProcessSupervisor::probe`, not in the controller. A rank could
+become a zombie between `waitpid(WNOHANG) == 0` and the `/proc` stat read. The probe then
+reported it `Gone` without reaping it, so `terminate` returned and `assert_no_orphans` found
+the unreaped pid ("rank process N survives (or is unreaped)"). It appeared in 1 of 3 and 1
+of 10 repeats under host load, in `cancellation_and_grant_expiry_drain_the_whole_group` and
+`restart_distinguishes_unacknowledged_completion_from_running_work`. This race predates the
+review fix. The probe now reaps a zombie of its own child immediately, so a rank is only
+ever reported `Gone` once it has been reaped.
+
+Records (all under the custody runs root):
+
+- `w7c-review-expiry-pre-20260926T143503Z` — pre-fix. 42 run, 38 passed, 4 failed: the
+  reviewer's scenario and the three other gaps. Both positive controls passed.
+- `w7c-review-expiry-post-20260926T143709Z` — post-fix, `bounded_run` +
+  `bounded_run_recovery`: 42 passed.
+- `w7c-review-expiry-repeat-post-20260926T143714Z` — 3× repeat: 41/42, 42/42, 42/42. The
+  one failure is the fixture zombie race above.
+- `w7c-review-zombie-pre-20260926T144235Z` — the observed zombie-race failures (10×
+  repeat, 1 failure), with the full failing log.
+- `w7c-review-zombie-post-20260926T144235Z` — 20× repeat of `bounded_run_recovery` after
+  the fixture fix: 20 of 20 runs passed all 12 tests.
+- `w7c-review-expiry-neural-post-20260926T143919Z` — `neural` build, `CUDA_VISIBLE_DEVICES=""`:
+  `bounded_assignment` 3 and `trainer_topology` 7, all passed. Run alone, never alongside
+  the fence suites.
 
 ## Join — frozen plan → trainer assignment (W7-T02 × W7-T03)
 

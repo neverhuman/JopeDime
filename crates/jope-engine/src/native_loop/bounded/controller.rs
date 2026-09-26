@@ -71,6 +71,22 @@ pub enum DrainCause {
     Cancelled,
     CoordinatorRestart,
 }
+/// The one execution window of the synchronous group: it closes at the original deadline
+/// or at the first participant grant expiry, whichever comes first. Supervision, restart
+/// recovery, dispatch, admission, delivery, acknowledgement and every new commit use this
+/// single gate; only finishing an already-journaled commit or drain may happen later.
+pub fn group_window_closed(contract: &BoundedRunContract, now: u64) -> Option<DrainCause> {
+    if now >= contract.original_deadline_unix_ms {
+        return Some(DrainCause::DeadlineElapsed);
+    }
+    contract
+        .participants
+        .iter()
+        .find(|p| now >= p.grant.body.expires_unix_ms)
+        .map(|p| DrainCause::GrantExpired {
+            global_rank: p.global_rank,
+        })
+}
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum Disposition {
@@ -447,6 +463,23 @@ fn replay(
             );
             Ok(())
         };
+        // Every step that starts work or confers authority falls inside the group
+        // window. Finishing records (drain, dispositions, terminal) may come later.
+        if matches!(
+            r.event,
+            Event::DispatchIntent { .. }
+                | Event::Launched { .. }
+                | Event::GroupAdmitted { .. }
+                | Event::AdmissionDelivered { .. }
+                | Event::ResultAcknowledged { .. }
+                | Event::GroupCommitted { .. }
+        ) {
+            if let Some(cause) = group_window_closed(contract, r.recorded_unix_ms) {
+                bail!(
+                    "journal record {at} was journaled after the group window closed ({cause:?})"
+                );
+            }
+        }
         match &r.event {
             Event::Planned {
                 original_deadline_unix_ms,
@@ -1159,6 +1192,9 @@ impl<S: Supervisor> Coordinator<S> {
     fn state(&self) -> Result<Replay> {
         replay(&self.contract, &self.plan_sha256, &self.records)
     }
+    fn window_closed(&self, now: u64) -> Option<DrainCause> {
+        group_window_closed(&self.contract, now)
+    }
     pub fn status(&self) -> Result<StatusReport> {
         build_status(
             &self.dir,
@@ -1257,10 +1293,9 @@ impl<S: Supervisor> Coordinator<S> {
             s.launched.len() == self.contract.world_size(),
             "ownership of every rank must be persisted before admission"
         );
-        ensure!(
-            now < self.contract.original_deadline_unix_ms,
-            "original deadline elapsed"
-        );
+        if let Some(cause) = self.window_closed(now) {
+            bail!("no admission is journaled after the group window closed ({cause:?})");
+        }
         rendezvous::verify_group_admission(&self.contract, &self.plan_sha256, &admission)?;
         let admission_sha256 = rendezvous::admission_sha256(&admission)?;
         self.append(
@@ -1291,6 +1326,11 @@ impl<S: Supervisor> Coordinator<S> {
                 && s.drain.is_none(),
             "admission is not the journaled, undelivered admission"
         );
+        // Delivery is when ranks may start work: after the window closed, drain instead.
+        if let Some(cause) = self.window_closed(now) {
+            self.drain(cause.clone(), now)?;
+            bail!("admission not delivered: the group window closed ({cause:?}); group drained");
+        }
         let ranks: BTreeSet<u32> = connected.iter().map(|c| c.global_rank).collect();
         if !ranks
             .iter()
@@ -1373,8 +1413,9 @@ impl<S: Supervisor> Coordinator<S> {
         )
     }
     /// Dispatch is permitted only after a fresh admitted preflight, before admission, while
-    /// no cancellation, drain or restart is pending, inside the original deadline and the
-    /// rank's grant.
+    /// no cancellation, drain or restart is pending, and inside the group window: the
+    /// original deadline and every participant's grant, not only this rank's. A group that
+    /// can no longer run as a whole starts nothing more.
     fn require_dispatchable(&mut self, rank: u32, now: u64) -> Result<Replay> {
         ensure!(
             !self.needs_reconcile,
@@ -1397,14 +1438,12 @@ impl<S: Supervisor> Coordinator<S> {
             now.saturating_sub(receipt.checked_unix_ms) <= self.contract.telemetry.max_age_ms,
             "preflight receipt is stale; preflight a fresh census before dispatch"
         );
-        let p = self
-            .contract
+        self.contract
             .participant(rank)
             .context("rank outside the plan")?;
-        ensure!(
-            now < self.contract.original_deadline_unix_ms && now < p.grant.body.expires_unix_ms,
-            "original deadline or grant for rank {rank} elapsed"
-        );
+        if let Some(cause) = self.window_closed(now) {
+            bail!("rank {rank} is not dispatched: the group window closed ({cause:?})");
+        }
         Ok(s)
     }
     /// Persist the dispatch intent (idempotent) before any launch side effect.
@@ -1494,6 +1533,11 @@ impl<S: Supervisor> Coordinator<S> {
             );
             return Ok(());
         }
+        // Adopting a retained result is authority-bearing: the same gate as poll and
+        // recovery, whichever path reaches it.
+        if let Some(cause) = self.window_closed(now) {
+            bail!("rank {rank} result not acknowledged: the group window closed ({cause:?})");
+        }
         let p = self.contract.participant(rank).context("rank")?.clone();
         publish_immutable(
             &self.dir.join(RESULTS),
@@ -1516,15 +1560,18 @@ impl<S: Supervisor> Coordinator<S> {
             now,
         )
     }
+    /// Journal the single group commit (inside the group window only), or finish a commit
+    /// that is already journaled (at any time, exactly once, never drained).
     fn commit(&mut self, now: u64) -> Result<()> {
         let s = self.state()?;
         if s.committed.is_none() {
             ensure!(
-                s.drain.is_none()
-                    && s.acked.len() == self.contract.world_size()
-                    && now < self.contract.original_deadline_unix_ms,
-                "group commit requires every authenticated result within the original deadline"
+                s.drain.is_none() && s.acked.len() == self.contract.world_size(),
+                "group commit requires every authenticated result"
             );
+            if let Some(cause) = self.window_closed(now) {
+                bail!("no group commit after the group window closed ({cause:?})");
+            }
             self.append(
                 Event::GroupCommitted {
                     committed_updates_total: self.contract.counters.committed_updates_at_start
@@ -1711,17 +1758,8 @@ impl<S: Supervisor> Coordinator<S> {
         if self.cancel_pending(now)? {
             return self.drain(DrainCause::Cancelled, now);
         }
-        if now >= self.contract.original_deadline_unix_ms {
-            return self.drain(DrainCause::DeadlineElapsed, now);
-        }
-        if let Some(p) = self
-            .contract
-            .participants
-            .iter()
-            .find(|p| now >= p.grant.body.expires_unix_ms)
-        {
-            let rank = p.global_rank;
-            return self.drain(DrainCause::GrantExpired { global_rank: rank }, now);
+        if let Some(cause) = self.window_closed(now) {
+            return self.drain(cause, now);
         }
         for rank in 0..self.contract.world_size() as u32 {
             let s = self.state()?;
@@ -1784,10 +1822,20 @@ impl<S: Supervisor> Coordinator<S> {
         }
         self.status()
     }
-    /// Settle every owned rank after a coordinator restart. Complete, authenticated,
-    /// unacknowledged results for the *whole* group are acknowledged and committed exactly
-    /// once (within the original deadline); otherwise the whole group is drained and each
-    /// rank is marked never-started, completed-unacknowledged or drained.
+    /// Settle every owned rank after a coordinator restart.
+    ///
+    /// * A commit already journaled before the crash is finished (dispositions and the
+    ///   terminal record), exactly once and at any time; it is never drained.
+    /// * A drain already journaled is resumed with its original cause.
+    /// * Otherwise a *new* recovery commit is possible only through the same gates as
+    ///   [`Coordinator::poll`]: no pending cancellation, and the group window (original
+    ///   deadline and every participant grant) still open. If either fails, the group is
+    ///   drained with that cause before any retained result is adopted.
+    /// * Inside the window, complete, authenticated, unacknowledged results for the
+    ///   *whole* group are acknowledged and committed once; anything less drains, and each
+    ///   rank is marked never-started, completed-unacknowledged or drained.
+    ///
+    /// A restart therefore never widens the window `poll` enforces (review of #111).
     pub fn reconcile(&mut self, now: u64) -> Result<StatusReport> {
         let s = self.state()?;
         if s.terminal.is_none() && s.intents.is_empty() {
@@ -1805,12 +1853,15 @@ impl<S: Supervisor> Coordinator<S> {
                 self.commit(now)?;
             } else if let Some(cause) = s.drain.clone() {
                 self.drain(cause, now)?;
+            } else if self.cancel_pending(now)? {
+                self.drain(DrainCause::Cancelled, now)?;
+            } else if let Some(cause) = self.window_closed(now) {
+                // Poll's gate, applied before any retained result is adopted.
+                self.drain(cause, now)?;
             } else {
                 // Unacknowledged completion is committed only when the *whole* group
                 // completed with authenticated results; anything less drains.
-                let cancelled = self.cancel_pending(now)?;
-                let mut complete =
-                    !cancelled && s.delivered && now < self.contract.original_deadline_unix_ms;
+                let mut complete = s.delivered;
                 let mut found = Vec::new();
                 for rank in 0..self.contract.world_size() as u32 {
                     if s.acked.contains_key(&rank) {
@@ -1839,13 +1890,7 @@ impl<S: Supervisor> Coordinator<S> {
                     }
                     self.commit(now)?;
                 } else {
-                    let s = self.state()?;
-                    let cause = if s.cancel {
-                        DrainCause::Cancelled
-                    } else {
-                        DrainCause::CoordinatorRestart
-                    };
-                    self.drain(cause, now)?;
+                    self.drain(DrainCause::CoordinatorRestart, now)?;
                 }
             }
         }
