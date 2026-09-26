@@ -476,3 +476,58 @@ bar.
 - **Live driver.** The `jope-bench` live driver can no longer admit teachers until a context
   producer runs before admission.
 - **Live evidence.** No live, three-node or remote (W8) evidence exists.
+
+## W3-T06 follow-ups (rr2/integration-a): the `hwm recover` verb and rejected redeliveries
+
+Lane `.agent/worktrees/bench`, branch `rr2/integration-a`.
+
+**Reproduced first** in `w3w8-verbs-pre-20260926T201229Z/`, HEAD `532fc81b0` plus the new
+tests:
+
+- `hwm::tests::redelivery_of_a_rejected_record_is_a_duplicate_not_a_second_decision` fails:
+  a worse record delivered a second time was decided again as `not-improved` (expected
+  `duplicate`).
+- `recovery_cli::hwm_recover_is_read_only_by_default_and_rolls_forward_only_with_apply` fails
+  with `error: unrecognized subcommand 'recover'`. `hwm::recover` had no product verb, although
+  `freeze_teaching`'s refusals tell the operator to "run hwm recovery".
+
+### Rejected redeliveries (`hwm::ingest`)
+
+The ledger history now also yields, for each pointer, the records it rejected there
+(`decided_events`).
+
+- A record rejected at a pointer before, and rejected again, is recorded with transition
+  `duplicate` and its current reason. It is not a second `not-improved`, `tie`, `invalid` or
+  `ineligible` decision. This applies in a later batch and twice in one batch.
+- A redelivery that the ledger now *accepts* is a new decision and is unaffected. The case is
+  a train-side OOF record rejected as `teaching-ineligible` before its qualification was
+  durable. The existing
+  `eligibility::tests::linkage::qualification_without_a_durable_decision_is_not_eligible_until_qualify_resumes`
+  is the positive control and still passes.
+- Another record with the same worse score is still its own decision (the positive control in
+  the new test).
+- Old ledgers keep their meaning. Events already written are never reinterpreted, and
+  `hwm verify` accepts the new events.
+
+### `hwm recover` (read-only by default)
+
+- **Library.** `hwm::recover_plan` reports, without writing anything or taking any lock:
+  - the ledger batch a lagging `HEAD.json` would roll forward to;
+  - the pointers that lag their ledger tip;
+  - the pointers it would refuse.
+
+  A chain broken in any other way is refused, as `require_intact` refuses it. `hwm::recover`
+  now also rolls a lagging ledger head forward, and reports it (`ledger_head`, `applied`).
+- **CLI.** `jope-learning hwm recover [--apply]` exits 1 when a pointer holds a record the
+  ledger never accepted there; neither the plan nor apply touches that pointer. It has a
+  capability-matrix row.
+- **Test.** `recovery_cli::hwm_recover_is_read_only_by_default_and_rolls_forward_only_with_apply`
+  (new target) covers:
+  - a crash that left both `HEAD.json` and a pointer lagging;
+  - the plan is exit 0 with the whole state tree byte-identical, and no lock file;
+  - apply rolls both forward, after which `hwm verify` passes;
+  - a second plan finds nothing to do;
+  - a forged pointer gives exit 1 and stays byte-identical under both the plan and apply.
+
+**Post-change run.** `w3w8-verbs-post-20260926T201520Z/` holds the full `jope-learning` run:
+166 of 166 pass, 0 skipped.

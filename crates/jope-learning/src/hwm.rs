@@ -282,10 +282,13 @@ pub fn ingest(
     });
     // Every touched pointer is resolved against the ledger before a single byte moves: the
     // incumbent is the ledger's tip, never a pointer that lags it or that it never accepted.
-    let history = accepted_events(&ledger)?;
+    let (history, rejected_history) = decided_events(&ledger)?;
     let mut on_disk: BTreeMap<PointerKey, Option<HwmRecord>> = BTreeMap::new();
     let mut current: BTreeMap<PointerKey, HwmRecord> = BTreeMap::new();
     let mut seen: BTreeMap<PointerKey, BTreeSet<String>> = BTreeMap::new();
+    // Records each pointer already rejected. A record rejected again is a redelivery (W3-T06):
+    // counted as a duplicate delivery, never as a second decision.
+    let mut refused: Rejected = BTreeMap::new();
     let mut lagging = BTreeSet::new();
     for c in &candidates {
         let key = PointerKey::of(&c.record);
@@ -306,6 +309,10 @@ pub fn ingest(
                 .iter()
                 .map(|e| e.record.provenance.record_sha256.clone())
                 .collect(),
+        );
+        refused.insert(
+            key.clone(),
+            rejected_history.get(&key).cloned().unwrap_or_default(),
         );
         on_disk.insert(key, disk);
     }
@@ -329,6 +336,9 @@ pub fn ingest(
         state.put_blob(&c.blob)?;
         let key = PointerKey::of(&c.record);
         let duplicate = seen[&key].contains(&c.record.provenance.record_sha256);
+        // Rejected before at this pointer. A redelivery the ledger now accepts (a teaching
+        // qualification that has since become durable) is a new decision and is unaffected.
+        let redelivered = refused[&key].contains(&c.record.provenance.record_sha256);
         let incumbent = current.get(&key);
         if !c.chain_from_source {
             match incumbent {
@@ -369,6 +379,7 @@ pub fn ingest(
             Decision::Rejected(RejectReason::Tie | RejectReason::NotBetter) if duplicate => {
                 Transition::Duplicate
             }
+            Decision::Rejected(_) if redelivered => Transition::Duplicate,
             _ => Transition::of(incumbent, &decision),
         };
         *transitions.entry(transition.as_str().into()).or_default() += 1;
@@ -403,6 +414,11 @@ pub fn ingest(
             qualification_sha256,
         };
         events.push(serde_json::to_value(&event)?);
+        if decision != Decision::Accepted {
+            if let Some(refused) = refused.get_mut(&key) {
+                refused.insert(c.record.provenance.record_sha256.clone());
+            }
+        }
         if decision == Decision::Accepted {
             if let Some(seen) = seen.get_mut(&key) {
                 seen.insert(c.record.provenance.record_sha256.clone());
@@ -513,16 +529,32 @@ fn accepted_history(ledger: &Ledger) -> Result<BTreeMap<PointerKey, Vec<String>>
         .collect())
 }
 
+/// Accepted events at each pointer, oldest first.
+type Accepted = BTreeMap<PointerKey, Vec<HwmEvent>>;
+/// The records each pointer rejected.
+type Rejected = BTreeMap<PointerKey, BTreeSet<String>>;
+
 /// Every accepted event at each pointer, oldest first: the ledger's own HWM history.
-fn accepted_events(ledger: &Ledger) -> Result<BTreeMap<PointerKey, Vec<HwmEvent>>> {
-    let mut out: BTreeMap<PointerKey, Vec<HwmEvent>> = BTreeMap::new();
+fn accepted_events(ledger: &Ledger) -> Result<Accepted> {
+    Ok(decided_events(ledger)?.0)
+}
+
+/// The ledger's accepted history and, at each pointer, every record it rejected there.
+fn decided_events(ledger: &Ledger) -> Result<(Accepted, Rejected)> {
+    let mut accepted: Accepted = BTreeMap::new();
+    let mut rejected: Rejected = BTreeMap::new();
     for (i, v) in ledger.events()?.iter().enumerate() {
         let e = parse_event(i, v)?;
         if e.outcome == "accepted" {
-            out.entry(e.pointer.clone()).or_default().push(e);
+            accepted.entry(e.pointer.clone()).or_default().push(e);
+        } else {
+            rejected
+                .entry(e.pointer.clone())
+                .or_default()
+                .insert(e.record.provenance.record_sha256.clone());
         }
     }
-    Ok(out)
+    Ok((accepted, rejected))
 }
 
 /// The ledger tip at every pointer (its last accepted event).
@@ -556,8 +588,12 @@ fn resolve<'a>(
 
 #[derive(Clone, Debug, Default, Serialize)]
 pub struct RecoverReport {
+    /// False for a plan ([`recover_plan`]): nothing was written and no lock was taken.
+    pub applied: bool,
+    /// The ledger batch a lagging `HEAD.json` was (or would be) rolled forward to.
+    pub ledger_head: Option<String>,
     pub pointers: u64,
-    /// Pointers rolled forward to their ledger tip.
+    /// Pointers rolled forward (or, in a plan, that would be) to their ledger tip.
     pub recovered: Vec<String>,
     /// Pointers holding a record the ledger never accepted there; left untouched.
     pub refused: Vec<(String, String)>,
@@ -567,11 +603,51 @@ pub struct RecoverReport {
 /// batch append and its pointer writes. Legacy pointer keys are not rewritten, and a pointer
 /// the ledger never accepted is reported rather than overwritten.
 pub fn recover(state: &State) -> Result<RecoverReport> {
-    let _lock = state.lock("hwm")?;
+    recover_with(state, true)
+}
+
+/// What [`recover`] would do, without writing anything or taking any lock: a ledger head that
+/// lags a sealed continuation of its chain, the pointers that lag their ledger tip, and the
+/// pointers it would refuse. A chain that is broken in any other way is refused, exactly as
+/// [`recover`] refuses it.
+pub fn recover_plan(state: &State) -> Result<RecoverReport> {
+    recover_with(state, false)
+}
+
+fn recover_with(state: &State, apply: bool) -> Result<RecoverReport> {
+    let _lock = if apply {
+        Some(state.lock("hwm")?)
+    } else {
+        None
+    };
     let ledger = Ledger::open(state.root(), "hwm");
-    ledger.require_intact()?;
+    let mut report = RecoverReport {
+        applied: apply,
+        ..RecoverReport::default()
+    };
+    if apply {
+        report.ledger_head = ledger.recover()?.map(|h| h.path);
+        ledger.require_intact()?;
+    } else {
+        let lagging = ledger.lagging_head()?;
+        // A lagging head shows up as `head-*` breaks, which rolling forward repairs; any other
+        // break refuses, as `require_intact` would.
+        let verified = ledger.verify()?;
+        let breaks: Vec<String> = verified
+            .breaks
+            .iter()
+            .filter(|b| !(lagging.is_some() && b.kind.starts_with("head-")))
+            .map(|b| format!("{}:{}:{}", b.batch, b.kind, b.detail))
+            .collect();
+        ensure!(
+            breaks.is_empty(),
+            "hwm ledger chain broken: {} break(s): {}",
+            breaks.len(),
+            breaks.join("; ")
+        );
+        report.ledger_head = lagging.map(|h| h.path);
+    }
     let history = accepted_events(&ledger)?;
-    let mut report = RecoverReport::default();
     for (key, accepted) in &history {
         let Some(tip) = accepted.last().map(|e| &e.record) else {
             continue;
@@ -585,11 +661,13 @@ pub fn recover(state: &State) -> Result<RecoverReport> {
             Err(error) => report.refused.push((key.rel(), format!("{error:#}"))),
             Ok(_) if disk.as_ref() == Some(tip) => {}
             Ok(_) => {
-                state.write_pointer(
-                    key,
-                    tip,
-                    disk.as_ref().map(|r| r.provenance.record_sha256.as_str()),
-                )?;
+                if apply {
+                    state.write_pointer(
+                        key,
+                        tip,
+                        disk.as_ref().map(|r| r.provenance.record_sha256.as_str()),
+                    )?;
+                }
                 report.recovered.push(key.rel());
             }
         }
@@ -2008,6 +2086,78 @@ mod tests {
                 (json!("tie"), json!("tie")),
             ]
         );
+    }
+
+    #[test]
+    fn redelivery_of_a_rejected_record_is_a_duplicate_not_a_second_decision() {
+        let dir = tempfile::tempdir().unwrap();
+        let state = State::at(dir.path());
+        let counts = |pairs: &[(&str, u64)]| {
+            pairs
+                .iter()
+                .map(|(k, v)| (k.to_string(), *v))
+                .collect::<BTreeMap<_, _>>()
+        };
+        ingest(&state, None, vec![delivery(0.5, 1)], json!({"k": 1})).unwrap();
+        // A worse record is decided once; delivered again, in a later batch or twice in one
+        // batch, it is a duplicate delivery, never a second not-improved decision.
+        let first = ingest(&state, None, vec![delivery(0.4, 2)], json!({"k": 2})).unwrap();
+        let again = ingest(&state, None, vec![delivery(0.4, 2)], json!({"k": 3})).unwrap();
+        let twice = ingest(
+            &state,
+            None,
+            vec![delivery(0.3, 3), delivery(0.3, 3)],
+            json!({"k": 4}),
+        )
+        .unwrap();
+        assert_eq!(first.transitions, counts(&[("not-improved", 1)]));
+        assert_eq!(again.transitions, counts(&[("duplicate", 1)]));
+        assert_eq!(
+            twice.transitions,
+            counts(&[("not-improved", 1), ("duplicate", 1)])
+        );
+        // An invalid record redelivered is a duplicate too.
+        let mut invalid = delivery(0.2, 4);
+        invalid.record.score.direction = crate::metric::Direction::Lower;
+        let mut invalid_again = delivery(0.2, 4);
+        invalid_again.record.score.direction = crate::metric::Direction::Lower;
+        ingest(&state, None, vec![invalid], json!({"k": 5})).unwrap();
+        let report = ingest(&state, None, vec![invalid_again], json!({"k": 6})).unwrap();
+        assert_eq!(report.transitions, counts(&[("duplicate", 1)]));
+        // Positive control: another record with the same worse score is its own decision.
+        let mut other = delivery(0.4, 7);
+        other.blob = b"another record, the same worse score".to_vec();
+        other.record.provenance.record_sha256 = crate::canon::sha256_hex(&other.blob);
+        let report = ingest(&state, None, vec![other], json!({"k": 7})).unwrap();
+        assert_eq!(report.transitions, counts(&[("not-improved", 1)]));
+        assert_eq!(
+            outcomes(&state),
+            [
+                (json!("initialized"), Value::Null),
+                (json!("not-improved"), json!("not-better")),
+                (json!("duplicate"), json!("not-better")),
+                (json!("not-improved"), json!("not-better")),
+                (json!("duplicate"), json!("not-better")),
+                (json!("invalid"), json!("invalid")),
+                (json!("duplicate"), json!("invalid")),
+                (json!("not-improved"), json!("not-better")),
+            ]
+        );
+        // The pointer is untouched by every rejection, and the ledger verifies.
+        let current = state
+            .read_pointer(&PointerKey::of(&delivery(0.0, 0).record))
+            .unwrap()
+            .unwrap();
+        assert_eq!((current.score.value, current.improvement_number), (0.5, 0));
+        // The chain verifies; the only breaks are the invalid record's own, as before.
+        let v = verify(&state, &[]).unwrap();
+        assert!(v.ledger.ok(), "{:?}", v.ledger.breaks);
+        assert!(
+            v.breaks.iter().all(|b| b.kind == "record-invalid"),
+            "{:?}",
+            v.breaks
+        );
+        assert_eq!((v.accepted, v.rejected), (1, 7));
     }
 
     #[test]

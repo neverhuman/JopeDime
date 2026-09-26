@@ -848,3 +848,66 @@ checked):
 - **Approval.** The configuration values are owner-pending.
 - **Live stores.** There is no live proof: `file://` and `memory:///` only. Live S3 is W8-T07/T08
   and needs a scoped credential and an approved budget.
+
+## W8-T04 follow-up (rr2/integration-a): the `progress reconcile` verb
+
+**Reproduced first** (`w3w8-verbs-pre-20260926T201229Z/`):
+`recovery_cli::progress_reconcile_is_read_only_by_default_and_rebases_only_with_apply` fails,
+because no reconcile verb existed. Before this change, a publisher that lost a race, or that
+found the run committed at a commit it never recorded, was stuck:
+
+- its next commit named a stale parent (a conflict for ever), or named a commit its outbox had
+  not recorded (an error for ever);
+- the only way out was the test procedure in the fault matrix.
+
+The driver now refuses that second case up front, with a message naming the verb and nothing
+written.
+
+**`progress::reconcile`.**
+
+- `plan` is read-only. It refuses when there is no local outbox rather than create one, and it
+  requires the run's named publisher. It reports:
+  - the committed head (the winner);
+  - this host's commits outside the committed chain (the races it lost);
+  - the committed items to adopt;
+  - this host's work outside the committed closure (`recommit`);
+  - whether the rebased commit would pass `check_rules` (one consecutive update chain included)
+    and the HWM-ledger check, and why not.
+- `apply` performs an admissible plan, and only that. It runs `rebuild::restore` to adopt the
+  winner's closure (every item re-verified), then commits the remaining work through
+  `Driver::commit` and the ordinary receiving path. An inadmissible plan is returned unapplied,
+  with nothing written.
+
+**CLI.** `jope-learning progress reconcile [--apply]`. Exit 0 when admissible (or there is
+nothing to do) and, with `--apply`, when the pointer advanced; exit 1 otherwise. It has a
+capability-matrix row.
+
+**Tests.**
+
+- `progress::tests::reconcile::a_lost_race_is_rebased_onto_the_winner_only_on_apply`: a true
+  conditional-write race.
+  - The loser's driver cannot commit.
+  - The plan writes nothing (remote and local snapshots unchanged) and names the winner, the
+    one losing commit, the one event to re-commit and the two items to adopt.
+  - Apply advances to height 1 from the winner, and both events are committed exactly once.
+  - The losing commit stays on the remote as divergent history.
+  - A second plan has nothing to do, and a second apply writes nothing.
+- `progress::tests::reconcile::a_rebase_the_receiving_checks_would_refuse_writes_nothing`:
+  both hosts trained update 0 on different corpora. The plan refuses (`update 0` is already
+  committed), and apply leaves remote and local byte-identical.
+- `recovery_cli::progress_reconcile_is_read_only_by_default_and_rebases_only_with_apply`: the
+  shipped verbs on a `file://` store. It covers:
+  - host B's flushes refuse, naming the verb;
+  - the plan leaves the store and B's state byte-identical;
+  - apply advances from A's commit;
+  - status shows both units in flight;
+  - a third host that froze another census for the run is refused by both the plan and apply
+    (exit 1, graph rules), with nothing written.
+
+**Post-change run.** `w3w8-verbs-post-20260926T201520Z/`: the full `jope-learning` run, 166 of
+166 passing, 0 skipped.
+
+**Not established here (open).** Reconciliation adopts the winner and carries this host's own
+work. It does not merge two diverged histories whose work conflicts (for example, two
+update-0 checkpoints), which it refuses with the reason. Publisher identity is still
+unauthenticated. Live S3 conditional writes are W8-T07/T08.

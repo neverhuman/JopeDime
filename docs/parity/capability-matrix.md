@@ -23,7 +23,7 @@ you saw.
 | engine-subcommand | 96 | 88 | 8 | 0 | 0 | 0 |
 | jope-prime-command | 49 | 49 | 0 | 0 | 0 | 0 |
 | justfile-recipe | 6 | 6 | 0 | 0 | 0 | 0 |
-| learning-subcommand | 12 | 0 | 12 | 0 | 0 | 0 |
+| learning-subcommand | 14 | 0 | 14 | 0 | 0 | 0 |
 | new-bin | 14 | 0 | 14 | 0 | 0 | 0 |
 | new-example | 1 | 0 | 1 | 0 | 0 | 0 |
 | ops-sh | 1 | 1 | 0 | 0 | 0 | 0 |
@@ -41,7 +41,7 @@ you saw.
 | vendored-bin | 6 | 6 | 0 | 0 | 0 | 0 |
 | vendored-example | 6 | 6 | 0 | 0 | 0 | 0 |
 | wire | 5 | 0 | 0 | 0 | 5 | 0 |
-| **total** | **798** | **735** | **35** | **1** | **20** | **7** |
+| **total** | **800** | **735** | **37** | **1** | **20** | **7** |
 
 `moved`/`new` rows without a covering test: 659.
 
@@ -847,3 +847,5 @@ you saw.
 | learning-subcommand | (new) jope-learning progress flush | crates/jope-learning/src/main.rs (jope-learning progress flush) | jope-learning::progress_cli progress_verbs_publish_engine_events_to_an_explicit_store_only; jope-learning progress::tests::product::a_failed_flush_keeps_progress_owed_and_claims_nothing | new | W8: commits and delivers what is owed when the cadence says so; a new process flushes whatever it finds owed |
 | learning-subcommand | (new) jope-learning progress status | crates/jope-learning/src/main.rs (jope-learning progress status) | jope-learning::progress_cli progress_verbs_publish_engine_events_to_an_explicit_store_only | new | W8: read-only; the committed head, and the census and summary derived from the verified committed closure |
 | learning-subcommand | (new) jope-learning progress follow | crates/jope-learning/src/main.rs (jope-learning progress follow) | jope-learning::progress_cli follow_drives_the_cadence_until_the_run_completes | new | W8: follows an engine training run on the wall clock, counting and mapping its published checkpoints under the checkpoint cadence and flushing under the flush cadence, until `complete.json` (then a controlled shutdown) or `--max-polls` |
+| learning-subcommand | (new) jope-learning hwm recover | crates/jope-learning/src/main.rs (jope-learning hwm recover) | jope-learning::recovery_cli hwm_recover_is_read_only_by_default_and_rolls_forward_only_with_apply | new | W3-T06: rolls a lagging HWM ledger head and lagging pointers forward to the ledger tip; read-only plan unless `--apply` (no write, no lock); exit 1 when a pointer holds a record the ledger never accepted, which is left untouched |
+| learning-subcommand | (new) jope-learning progress reconcile | crates/jope-learning/src/main.rs (jope-learning progress reconcile) | jope-learning::recovery_cli progress_reconcile_is_read_only_by_default_and_rebases_only_with_apply; jope-learning progress::tests::reconcile::a_lost_race_is_rebased_onto_the_winner_only_on_apply | new | W8-T04: reconciles a publication that lost a race or found the run advanced elsewhere; read-only plan (winner, losing commits, work to re-commit, whether the rebase passes the graph rules and the HWM-ledger check) unless `--apply`, which adopts the winner's committed closure and commits this host's remaining work on top; the winner is never displaced |

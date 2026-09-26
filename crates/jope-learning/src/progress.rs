@@ -66,6 +66,7 @@ pub mod outbox;
 pub mod product;
 pub mod publish;
 pub mod rebuild;
+pub mod reconcile;
 pub mod remote;
 
 #[cfg(test)]
@@ -80,4 +81,5 @@ mod tests {
     mod publish;
     mod rebuild;
     mod receiving;
+    mod reconcile;
 }
