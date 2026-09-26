@@ -3,17 +3,114 @@
 use crate::canon::sha256_hex;
 use crate::hwm::Transition;
 use crate::metric::Metric;
+use crate::mirror::Mirror;
 use crate::progress::inventory::*;
+use crate::progress::outbox::{Appended, Limits, Outbox};
 use crate::progress::remote::Remote;
 use crate::record::*;
+use crate::state::State;
 use anyhow::{bail, Result};
 use jope_datasets::store::{ObservedObject, PutOutcome};
 use std::cell::RefCell;
-use std::collections::BTreeMap;
-use std::path::Path;
+use std::collections::{BTreeMap, BTreeSet};
+use std::path::{Path, PathBuf};
 
 pub const SOURCE_COMMIT: &str = "c4f60b4c7a2e27a31fc41f875650c89900dc32ed";
 pub const PUBLISHER: &str = "xbabe2";
+
+/// One thing a producer appends to the outbox.
+#[derive(Clone)]
+pub enum Item {
+    Object(Encoded),
+    Blob(Vec<u8>),
+}
+
+impl Item {
+    pub fn key(&self) -> String {
+        match self {
+            Item::Object(e) => e.key(),
+            Item::Blob(b) => blob_key(&BlobRef::of(b).sha256),
+        }
+    }
+
+    pub fn deps(&self) -> Vec<String> {
+        match self {
+            Item::Object(e) => e.dependencies.iter().map(Dependency::key).collect(),
+            Item::Blob(_) => Vec::new(),
+        }
+    }
+
+    pub fn append(&self, o: &mut Outbox) -> Result<Appended> {
+        match self {
+            Item::Object(e) => o.append_object(e),
+            Item::Blob(b) => o.append_result(b, &BlobRef::of(b)),
+        }
+    }
+
+    pub fn encoded(&self) -> &Encoded {
+        match self {
+            Item::Object(e) => e,
+            Item::Blob(_) => panic!("a blob has no encoding"),
+        }
+    }
+}
+
+pub fn obj(e: Decoded<Event>) -> Item {
+    Item::Object(e.encoded().unwrap())
+}
+
+/// What a producer appends for a two-unit run, in the order it produces it: unit 0 completes on
+/// its first attempt; unit 1 times out, is retried and completes on attempt 2.
+pub fn producer(r: &Run) -> Vec<Item> {
+    let f = r.failed(1, 1, FailureClass::Timeout, true);
+    vec![
+        Item::Object(r.manifest.encoded().unwrap()),
+        obj(r.scheduled(0)),
+        obj(r.started(0, 1)),
+        Item::Blob(Run::result(0, 1)),
+        obj(r.completed(0, 1)),
+        obj(r.scheduled(1)),
+        obj(f.clone()),
+        obj(r.retry(1, 2, &f)),
+        Item::Blob(Run::result(1, 2)),
+        obj(r.completed(1, 2)),
+    ]
+}
+
+pub const BIG: Limits = Limits {
+    pause_entries: 1000,
+    pause_bytes: 1 << 30,
+    max_entries: 1000,
+    max_bytes: 1 << 30,
+};
+
+/// A local state tree and a `file://` remote in one temporary directory.
+pub struct Env {
+    /// Owns the temporary directory; dropped last.
+    pub _dir: tempfile::TempDir,
+    pub state: State,
+    pub remote: Mirror,
+    pub remote_dir: PathBuf,
+}
+
+pub fn env() -> Env {
+    let dir = tempfile::tempdir().unwrap();
+    let remote_dir = dir.path().join("remote");
+    std::fs::create_dir_all(&remote_dir).unwrap();
+    Env {
+        state: State::at(&dir.path().join("state")),
+        remote: Mirror::open(remote_dir.to_str().unwrap()).unwrap(),
+        remote_dir,
+        _dir: dir,
+    }
+}
+
+/// Every key the remote holds under the W8 prefixes.
+pub fn remote_keys(remote: &dyn Remote) -> BTreeSet<String> {
+    let mut keys: BTreeSet<String> = remote.list("progress/").unwrap().into_iter().collect();
+    keys.extend(remote.list("blobs/").unwrap());
+    keys
+}
 
 /// Every regular file under `root`, relative path to sha256: "nothing was written" is
 /// `snapshot(before) == snapshot(after)`.
@@ -72,6 +169,11 @@ impl<'a> Faulty<'a> {
 
     pub fn fault_put(self, call: usize, fault: Fault) -> Self {
         self.put_faults.borrow_mut().insert(call, fault);
+        self
+    }
+
+    pub fn fault_pointer(self, call: usize, fault: Fault) -> Self {
+        self.pointer_faults.borrow_mut().insert(call, fault);
         self
     }
 

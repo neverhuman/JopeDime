@@ -764,6 +764,27 @@ impl Outbox {
         Ok(Appended::Added { seq })
     }
 
+    /// Upload an already acknowledged item again, create-only, from its verified local payload:
+    /// the repair when the remote lost an object after acknowledging it. `Ok(false)` when this
+    /// outbox cannot back the key (never recorded, not yet acknowledged, or its local payload is
+    /// missing or no longer verifies); nothing is written then. The existing ack is kept.
+    pub fn redeliver(&self, remote: &dyn Remote, key: &str) -> Result<bool> {
+        let Some(entry) = self.by_key.get(key).and_then(|&seq| self.entry(seq)) else {
+            return Ok(false);
+        };
+        if entry.ack.is_none() {
+            return Ok(false);
+        }
+        let Ok(bytes) = self.read_payload(&entry.record.item) else {
+            return Ok(false);
+        };
+        if sha256_hex(&bytes) != entry.record.bytes_sha256 {
+            return Ok(false);
+        }
+        remote.put_immutable(key, &bytes)?;
+        Ok(true)
+    }
+
     /// Deliver up to `limit` pending entries in sequence order: re-verify the payload, write it
     /// create-only, then acknowledge it. Stops at the first entry the remote does not accept,
     /// which stays pending, as does everything after it. A local integrity failure is an error.

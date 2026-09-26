@@ -25,6 +25,14 @@
 //! growing. [`remote`] is the store interface delivery uses: create-only immutable writes and
 //! conditional pointer writes, with no unconditional fallback.
 //!
+//! [`publish`] advances a run's committed pointer (W8-T03), in this order:
+//! 1. deliver the dependencies, then the manifests, then the commit;
+//! 2. verify the commit's whole remote closure;
+//! 3. move the pointer conditionally from its expected predecessor.
+//!
+//! Two publishers racing the same predecessor produce one winner and one explicit conflict.
+//! Corpora and checkpoints are reusable only from a verified closure.
+//!
 //! Logical work identity ([`inventory::WorkSpec::work_id`]) is derived from the run and the
 //! work's own specification and never from an attempt; `(work_id, attempt)` is the attempt
 //! identity; an object's digest is its delivery identity. Nothing here is authority for teaching
@@ -35,6 +43,7 @@
 pub mod census;
 pub mod inventory;
 pub mod outbox;
+pub mod publish;
 pub mod remote;
 
 #[cfg(test)]
@@ -43,4 +52,5 @@ mod tests {
     mod encoding;
     pub mod fixture;
     mod outbox;
+    mod publish;
 }

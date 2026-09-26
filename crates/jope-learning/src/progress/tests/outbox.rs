@@ -2,99 +2,18 @@
 //! delivery recovers exactly once logically, a full outbox pauses instead of dropping or growing,
 //! and only verified content-addressed items enter it.
 
-use super::fixture::{run, snapshot, Fault, Faulty, Run};
+use super::fixture::{
+    env, obj, producer, remote_keys, run, snapshot, Fault, Faulty, Item, Run, BIG,
+};
 use crate::mirror::Mirror;
 use crate::progress::census::{reconcile, Disposition};
 use crate::progress::inventory::*;
 use crate::progress::outbox::{Admission, Appended, Boundary, Limits, Outbox, Outcome, Refused};
-use crate::progress::remote::Remote;
 use crate::state::State;
 use anyhow::Result;
 use std::collections::BTreeSet;
 use std::fs;
 use std::path::Path;
-
-#[derive(Clone)]
-enum Item {
-    Object(Encoded),
-    Blob(Vec<u8>),
-}
-
-impl Item {
-    fn key(&self) -> String {
-        match self {
-            Item::Object(e) => e.key(),
-            Item::Blob(b) => blob_key(&BlobRef::of(b).sha256),
-        }
-    }
-
-    fn deps(&self) -> Vec<String> {
-        match self {
-            Item::Object(e) => e.dependencies.iter().map(Dependency::key).collect(),
-            Item::Blob(_) => Vec::new(),
-        }
-    }
-
-    fn append(&self, o: &mut Outbox) -> Result<Appended> {
-        match self {
-            Item::Object(e) => o.append_object(e),
-            Item::Blob(b) => o.append_result(b, &BlobRef::of(b)),
-        }
-    }
-}
-
-fn obj(e: Decoded<Event>) -> Item {
-    Item::Object(e.encoded().unwrap())
-}
-
-/// What a producer appends for a two-unit run, in the order it produces it: unit 0 completes on
-/// its first attempt; unit 1 times out, is retried and completes on attempt 2.
-fn producer(r: &Run) -> Vec<Item> {
-    let f = r.failed(1, 1, FailureClass::Timeout, true);
-    vec![
-        Item::Object(r.manifest.encoded().unwrap()),
-        obj(r.scheduled(0)),
-        obj(r.started(0, 1)),
-        Item::Blob(Run::result(0, 1)),
-        obj(r.completed(0, 1)),
-        obj(r.scheduled(1)),
-        obj(f.clone()),
-        obj(r.retry(1, 2, &f)),
-        Item::Blob(Run::result(1, 2)),
-        obj(r.completed(1, 2)),
-    ]
-}
-
-const BIG: Limits = Limits {
-    pause_entries: 1000,
-    pause_bytes: 1 << 30,
-    max_entries: 1000,
-    max_bytes: 1 << 30,
-};
-
-struct Env {
-    _dir: tempfile::TempDir,
-    state: State,
-    remote: Mirror,
-}
-
-fn env() -> Env {
-    let dir = tempfile::tempdir().unwrap();
-    let remote_dir = dir.path().join("remote");
-    fs::create_dir_all(&remote_dir).unwrap();
-    Env {
-        state: State::at(&dir.path().join("state")),
-        remote: Mirror::open(remote_dir.to_str().unwrap()).unwrap(),
-        _dir: dir,
-    }
-}
-
-/// Every key the remote holds under the W8 prefixes.
-fn remote_keys(remote: &dyn Remote) -> BTreeSet<String> {
-    let mut keys: BTreeSet<String> = remote.list("progress/").unwrap().into_iter().collect();
-    keys.extend(remote.list("blobs/").unwrap());
-    keys
-}
 
 fn refusal(result: Result<Appended>) -> Refused {
     result

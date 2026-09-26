@@ -198,3 +198,146 @@ The evidence root is
 - **Durability.** Directory fsync is best-effort, as in `atomic_write`. A newly created
   parent directory's own entry is not fsynced.
 - **Limits.** The `Limits` defaults are proposals, not approved high-water values.
+
+## W8-T03 — Dependency-first conditional publication
+
+This is a **new capability**. The existing mirror push already orders content-addressed
+objects before a conditional `HEAD.json` move, for the `hwm`/`scores` ledgers (`sync.rs`,
+`mirror_lost_update`). No run-level committed graph or publisher existed, so there was no
+receiving path to reproduce a defect against. The existing `put_immutable` and
+`put_conditional` primitives are reused through `Remote`, not duplicated.
+
+**Source.**
+
+- `crates/jope-learning/src/progress/publish.rs`.
+- `Outbox::redeliver` in `outbox.rs`.
+
+### Publication order
+
+`prepare` then `advance` (together, `publish`):
+
+1. **Deliver.**
+   - Refuse, writing nothing, when the caller is not the run manifest's `publisher`, or when
+     the commit belongs to another run or manifest.
+   - Append the commit to the outbox. It is refused if it names anything unrecorded.
+   - Deliver: dependencies first, then the objects naming them, then the commit. All writes
+     are create-only.
+   - A delivery failure gives `Publication::Blocked`.
+2. **Verify.** `verify_closure` reads the commit's whole closure back from the remote.
+   - Every object must be present, canonical and match its domain digest. Every blob must be
+     present and match its sha256.
+   - `check_rules` must then hold:
+     - one run;
+     - commit heights count up by one on a single manifest;
+     - exposure update `n` starts from the checkpoint of update `n−1` (or from nothing at 0);
+     - checkpoints commit exactly their exposure and corpus, contiguous with their parent;
+     - HWM decisions and candidate evidence come only from the unit's `completed` attempt.
+   - Every failure is a typed `Defect` (`missing`, `corrupt` or `invalid`).
+   - A missing object the local outbox can back is re-uploaded, create-only, from its verified
+     payload (`Plan.reuploaded`). Anything else gives `Blocked`.
+3. **Advance.** Read `progress/runs/<run>/HEAD.json` once, with its version.
+   - It names this commit: `AlreadyPublished`.
+   - It is not the commit's parent: `Conflict`, and nothing is written.
+   - It is invalid, belongs to another run, or misstates the parent's height: `Blocked`, and
+     the pointer is left as it is.
+   - Otherwise `advance` writes the new `Head` with `put_pointer`, conditional on that
+     version.
+4. **After a failed pointer write**, the pointer is re-read. Only the pointer can say what
+   happened:
+   - it names this commit: `Advanced` (the response was lost);
+   - it still names the parent: an error, since nothing was written and the publication can be
+     retried;
+   - anything else: `Conflict`.
+
+   There is no unconditional fallback.
+
+**Losing commits** stay on the remote as unreferenced immutable objects, and in the outbox,
+for reconciliation. The winner is never displaced.
+
+**`reusable(remote, run)`** is the only route to reusable corpora and checkpoints. It
+verifies the pointer, then its commit's height and run, then the whole closure. Any missing
+or corrupt object, broken rule or dangling pointer is an error, never a partial result.
+
+### Tests (`progress::tests::publish`)
+
+- **`racing_publishers_at_one_predecessor_get_one_winner_and_one_conflict`.** It runs on both
+  `memory:///`, which exercises the server-side version precondition, and `file://`, which
+  exercises the lock-and-revalidate path.
+  1. Two hosts, each with its own outbox, prepare against the absent pointer: one `Advanced`,
+     one `Conflict{expected: None, found: winner}`. The loser's commit object remains.
+  2. Two commits prepared on the same parent: one winner at height 1, one explicit conflict.
+  3. The winner then advances to height 2. A retry gives `AlreadyPublished`.
+  4. The stale loser retried later is still a `Conflict`, and the pointer stays at height 2.
+- **`a_missing_or_corrupt_dependency_blocks_the_pointer`.**
+  - A partial or foreign object under a dependency's immutable key blocks delivery. The
+    pointer is absent, the object is untouched, and no dependent was uploaded.
+  - An object lost remotely after acknowledgement is re-uploaded from the verified local
+    payload, and `prepare` itself never writes the pointer.
+  - A remotely corrupted object gives `Blocked Corrupt`: not overwritten, pointer unchanged.
+  - A blob lost both remotely and locally gives `Blocked Missing`, pointer unchanged.
+- **`graph_rules_are_checked_before_the_pointer_moves`.** Each of these gives `Blocked
+  Invalid` with the pointer unchanged:
+  - a commit height that skips;
+  - an HWM decision drawn from a failed attempt;
+  - a checkpoint at update 1 with no parent.
+
+  A commit naming an unrecorded object is refused before any remote write (remote snapshot
+  unchanged). A contiguous checkpoint is the positive control and advances.
+- **`the_pointer_moves_only_from_its_expected_predecessor`.**
+  - The wrong publisher and the wrong run are refused with no local or remote write.
+  - An injected pointer disconnect gives an error: exactly one conditional pointer request,
+    no unconditional write of the key, and the pointer unchanged.
+  - An injected pointer response loss gives `Advanced`, from one request.
+  - A stale parent gives `Conflict`, with nothing written.
+  - A garbage pointer, another run's pointer and a wrong-height pointer are each left
+    byte-identical.
+  - Once the pointer is restored, publication advances to height 2.
+- **`only_a_verified_closure_is_reusable`.**
+  - Two commits add a corpus, two exposures of the same corpus (repeated consumption stays
+    visible as two exposures) and two contiguous checkpoints.
+  - `reusable` returns the height-2 head, 1 corpus, 2 checkpoints and 2 exposures.
+  - Each of these makes `reusable` fail; each restore makes it succeed again:
+    - checkpoint state corrupted;
+    - a corpus member lost;
+    - the parent checkpoint lost;
+    - the first commit lost;
+    - a dangling pointer.
+
+### Evidence
+
+- **`w8-t03-mutations-20260926T070146Z/`** holds the mutation controls (`mutations.txt`,
+  plus `rerun/` for two first spellings that did not compile). Each mutation is restored
+  byte-identically afterwards and is caught:
+
+  | Mutation | What it breaks | Caught by |
+  |---|---|---|
+  | `no-predecessor-check` | The pointer moves from whatever it holds | race and pointer tests |
+  | `skip-verify` | No closure verification | missing/corrupt and rules tests |
+  | `rules-off` | No graph rules | rules test |
+  | `corrupt-accepted` | A corrupt object is accepted | missing/corrupt and reusable tests |
+  | `lost-response-is-failure` | A lost response is not resolved from the pointer | pointer test |
+  | `no-reupload` | A lost object is never re-uploaded | missing/corrupt test |
+- **`w8-t03-postfix-20260926T070525Z/`** holds the full run:
+  - `nextest.log` — the full `jope-learning` run;
+  - `doctest.log` — 1 of 1;
+  - `check.log` — jope-motifs, jope-cli and jope-bench, all targets;
+  - `diff-check.txt`, which is empty.
+
+  Clippy reported one test-only `manual_inspect` lint in `tests/publish.rs`, which was fixed
+  afterwards. The `recheck-*` logs hold fmt-check, clippy and the `progress` tests on the
+  final tree, and `diff-final.patch` is that final tree.
+
+### Not established here (open)
+
+- **No product caller.** Nothing creates commits yet: no CLI verb, and no engine publisher
+  wiring. `native_persistence.rs`, `corpus_publication.rs` and `checkpoint_recovery.rs` are
+  unchanged and are follow-ups.
+- **HWM decisions are not re-checked against the ledger.** A decision's link is checked for
+  graph consistency only, not against the local HWM ledger (`HwmDecision::verify_against`).
+  Wiring that into publication needs the publisher's ledger.
+- **Conflicts are detected, not reconciled.** Losing commits are kept, but there is no
+  reconciliation or rebase procedure.
+- **One publisher per run.** The run manifest's `publisher` names it; the publisher's
+  identity is a local string, not an authenticated credential.
+- **No live proof.** Live S3 conditional-write behaviour (`If-Match` on the real bucket) is
+  W8-T07/T08 and needs a scoped credential.
