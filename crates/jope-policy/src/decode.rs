@@ -36,6 +36,8 @@ use super::model::PolicyModel;
 use super::seeds::{SeedCandidate, ORIGIN_NEURAL, ORIGIN_NEURAL_FALLBACK, ORIGIN_RANDOM};
 use super::sha256_hex;
 
+pub mod replay;
+
 /// jope-dime's pure pool protocol identifier.
 pub const PURE_PROTOCOL: &str = "training_context_neural_pool_v1";
 /// Number of pure (neural-arm) programs.
@@ -283,6 +285,17 @@ fn draw_legal<R: Rng>(
     temperature: f32,
     rng: &mut R,
 ) -> Result<usize, DecodeFailure> {
+    let weights = legal_weights(logits, legal, temperature)?;
+    Ok(choose(legal, &weights, rng.gen::<f64>()))
+}
+
+/// The unnormalized sampling weights `exp(logit / temperature - max)` of the legal tokens, or
+/// the request's typed failure. Reads no random stream.
+fn legal_weights(
+    logits: &[f32],
+    legal: &[usize],
+    temperature: f32,
+) -> Result<Vec<f64>, DecodeFailure> {
     if legal.is_empty() {
         return Err(FailureKind::EmptySupport.into());
     }
@@ -302,17 +315,21 @@ fn draw_legal<R: Rng>(
     if !max.is_finite() {
         return Err(FailureKind::EmptySupport.into());
     }
-    let weights = scaled.iter().map(|v| (v - max).exp()).collect::<Vec<_>>();
+    Ok(scaled.iter().map(|v| (v - max).exp()).collect())
+}
+
+/// The legal token a uniform draw in `[0, 1)` selects under `weights` (inverse CDF).
+fn choose(legal: &[usize], weights: &[f64], uniform: f64) -> usize {
     let total = weights.iter().sum::<f64>();
-    let mut draw = rng.gen::<f64>() * total;
+    let mut draw = uniform * total;
     for (i, w) in weights.iter().enumerate() {
         if draw < *w {
-            return Ok(legal[i]);
+            return legal[i];
         }
         draw -= w;
     }
     // Rounding left a remainder: take the last token with positive weight.
-    Ok(legal[weights.iter().rposition(|w| *w > 0.0).unwrap_or(0)])
+    legal[weights.iter().rposition(|w| *w > 0.0).unwrap_or(0)]
 }
 
 /// Sample `batch` (`1..=MAX_BATCH`) rows under the grammar mask, as sampling round 0.
@@ -333,6 +350,36 @@ pub fn sample_batch<R: Rng>(
         temperature,
         rng,
         false,
+        None,
+    )
+}
+
+/// [`sample_batch`] (full-prefix, or the cached production route when `cached`) that also
+/// records every sampling step in `trace`, including the failing step of a request that fails.
+/// Each step holds the sampler's complete input and output: the logits row it read, the legal
+/// set, the uniform draw it consumed and the token or failure. [`replay::replay`] re-derives the
+/// decisions from those records alone, with no model or random stream.
+#[allow(clippy::too_many_arguments)]
+pub fn sample_batch_traced<R: Rng>(
+    model: &PolicyModel,
+    vocab: &Vocab,
+    context: &[f32],
+    task: &str,
+    batch: usize,
+    temperature: f32,
+    cached: bool,
+    rng: &mut R,
+    trace: &mut Vec<replay::SamplingStep>,
+) -> Result<Vec<SampledRow>> {
+    sample_batch_impl(
+        (model, context),
+        vocab,
+        task,
+        (0, batch),
+        temperature,
+        rng,
+        cached,
+        Some(trace),
     )
 }
 
@@ -357,10 +404,12 @@ pub(crate) fn sample_batch_cached<R: Rng>(
         temperature,
         rng,
         true,
+        None,
     )
 }
 
 /// `shape` is `(round, batch)`: the round only names the draws in a failure.
+#[allow(clippy::too_many_arguments)]
 fn sample_batch_impl<R: Rng>(
     policy: (&PolicyModel, &[f32]),
     vocab: &Vocab,
@@ -369,6 +418,7 @@ fn sample_batch_impl<R: Rng>(
     temperature: f32,
     rng: &mut R,
     cached: bool,
+    mut trace: Option<&mut Vec<replay::SamplingStep>>,
 ) -> Result<Vec<SampledRow>> {
     let (model, context) = policy;
     let (round, batch) = shape;
@@ -432,13 +482,30 @@ fn sample_batch_impl<R: Rng>(
         let mut next = vec![PAD; batch];
         for (row, &i) in logits.iter().zip(&active) {
             let legal = states[i].legal(vocab);
-            let token =
-                draw_legal(row, &legal, temperature, rng).map_err(|failure| DecodeFailure {
-                    draw: Some(DrawId { round, row: i }),
-                    tokens: sequences[i].clone(),
-                    grammar_phase: Some(states[i].phase_name()),
-                    ..failure
-                })?;
+            // Same order as `draw_legal`: one uniform draw, only after the weights are valid.
+            let drawn = legal_weights(row, &legal, temperature).map(|weights| {
+                let uniform = rng.gen::<f64>();
+                (choose(&legal, &weights, uniform), uniform)
+            });
+            if let Some(trace) = trace.as_mut() {
+                trace.push(replay::SamplingStep {
+                    row: i,
+                    position: sequences[i].len(),
+                    grammar_phase: states[i].phase_name(),
+                    legal: legal.clone(),
+                    logits: row.clone(),
+                    temperature,
+                    uniform: drawn.as_ref().ok().map(|d| d.1),
+                    token: drawn.as_ref().ok().map(|d| d.0),
+                    failure: drawn.as_ref().err().map(|f| f.kind.to_string()),
+                });
+            }
+            let (token, _) = drawn.map_err(|failure| DecodeFailure {
+                draw: Some(DrawId { round, row: i }),
+                tokens: sequences[i].clone(),
+                grammar_phase: Some(states[i].phase_name()),
+                ..failure
+            })?;
             states[i].advance(vocab, token)?;
             next[i] = token;
         }
