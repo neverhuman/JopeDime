@@ -62,6 +62,13 @@ pub enum Cmd {
         /// Print the registry directory (JOPE_REGISTRY) after fetching.
         #[arg(long)]
         print_registry: bool,
+        /// Resolve against exactly this published catalog version (`v<N>`);
+        /// `LATEST`, cached rows and cached manifests are never consulted.
+        #[arg(long, requires = "catalog_sha256")]
+        catalog_version: Option<String>,
+        /// SHA-256 of the pinned version's `catalog.jsonl` bytes.
+        #[arg(long, requires = "catalog_version")]
+        catalog_sha256: Option<String>,
     },
     /// Re-hash cached blobs and check links; or check a committed dataset repository.
     Verify {
@@ -436,7 +443,15 @@ pub fn run(cli: Cli) -> Result<ExitCode> {
             selector,
             offline,
             print_registry,
+            catalog_version,
+            catalog_sha256,
         } => {
+            let pin = match (catalog_version, catalog_sha256) {
+                (Some(version), Some(sha256)) => {
+                    Some(crate::cache::CatalogPin::new(&version, &sha256)?)
+                }
+                _ => None,
+            };
             let cache = Cache::from_env();
             let offline = offline || offline_env();
             let store = if offline {
@@ -451,7 +466,13 @@ pub fn run(cli: Cli) -> Result<ExitCode> {
                 cache: &cache,
                 store: store.as_ref(),
             };
-            let report = rt.block_on(fetcher.fetch(&selector))?;
+            let report = match &pin {
+                Some(pin) => rt.block_on(fetcher.fetch_pinned(&selector, pin))?,
+                None => rt.block_on(fetcher.fetch(&selector))?,
+            };
+            if let Some(pin) = &report.catalog {
+                eprintln!("catalog pinned: {} sha256 {}", pin.version, pin.sha256);
+            }
             eprintln!(
                 "fetched {} datasets: {} files downloaded, {} already cached, {} errors",
                 report.datasets,

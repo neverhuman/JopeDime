@@ -1410,6 +1410,13 @@
         "storage"
       ]
     },
+    "target:jope-datasets/test/pinned_catalog": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "storage"
+      ]
+    },
     "target:jope-datasets/test/regression_release": {
       "role": "regression",
       "subsystems": [

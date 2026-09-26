@@ -19,6 +19,57 @@ pub struct FetchReport {
     pub files_fetched: usize,
     pub files_cached: usize,
     pub errors: Vec<String>,
+    /// The exact catalog the rows were resolved from, for a pinned fetch.
+    pub catalog: Option<CatalogPin>,
+}
+
+/// An exact published catalog version and the SHA-256 of its
+/// `catalog.jsonl` bytes (W1 route R4). A pinned resolution never reads
+/// `LATEST`, never substitutes cached rows or cached manifests, and serves a
+/// cached catalog copy only when its bytes match the pin.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct CatalogPin {
+    pub version: String,
+    pub sha256: String,
+}
+
+impl CatalogPin {
+    pub fn new(version: &str, sha256: &str) -> Result<Self> {
+        let numbered = version
+            .strip_prefix('v')
+            .is_some_and(|n| !n.is_empty() && n.bytes().all(|b| b.is_ascii_digit()));
+        if !numbered {
+            return Err(anyhow!("catalog version {version:?} is not v<N>"));
+        }
+        if sha256.len() != 64
+            || !sha256
+                .bytes()
+                .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
+        {
+            return Err(anyhow!("catalog digest {sha256:?} is not a sha256"));
+        }
+        Ok(Self {
+            version: version.to_string(),
+            sha256: sha256.to_string(),
+        })
+    }
+}
+
+fn parse_catalog(text: &str) -> Result<Vec<CatalogRow>> {
+    let mut rows = Vec::new();
+    for (i, line) in text
+        .lines()
+        .enumerate()
+        .filter(|(_, l)| !l.trim().is_empty())
+    {
+        let value: serde_json::Value =
+            serde_json::from_str(line).with_context(|| format!("catalog line {}", i + 1))?;
+        rows.push(
+            CatalogRow::validate_value(&value)
+                .map_err(|e| anyhow!("catalog line {}: {}", i + 1, e.join("; ")))?,
+        );
+    }
+    Ok(rows)
 }
 
 #[derive(Clone, Debug, Default)]
@@ -95,22 +146,111 @@ impl Fetcher<'_> {
         }
     }
 
-    /// The manifest for one dataset: cache first, then the store.
+    /// The manifest for one dataset. While the store is reachable its manifest
+    /// is authoritative: a cached manifest that differs from it is stale and is
+    /// not served (W1 route R4). Offline, or for a dataset the store does not
+    /// publish (seeded by `link`), the cached manifest is what exists; pin a
+    /// catalog ([`Fetcher::fetch_pinned`]) to exclude that path.
     pub async fn manifest(&self, dataset_hash: &str) -> Result<CatalogRow> {
         let cached = self.cache.by_id_dir(dataset_hash).join("manifest.json");
-        if cached.is_file() {
-            return read_manifest(&cached);
-        }
         let rel = format!("datasets/{dataset_hash}/manifest.json");
-        let text = self.remote_text(&rel).await?.ok_or_else(|| {
-            if self.offline() {
+        let remote = self.remote_text(&rel).await?;
+        let Some(text) = remote else {
+            if cached.is_file() {
+                return read_manifest(&cached);
+            }
+            return Err(if self.offline() {
                 anyhow!("{dataset_hash}: not in the cache and offline")
             } else {
                 anyhow!("{dataset_hash}: no manifest at {rel}")
-            }
-        })?;
+            });
+        };
         let value: serde_json::Value = serde_json::from_str(&text)?;
-        CatalogRow::validate_value(&value).map_err(|e| anyhow!("{rel}: {}", e.join("; ")))
+        let row =
+            CatalogRow::validate_value(&value).map_err(|e| anyhow!("{rel}: {}", e.join("; ")))?;
+        if row.dataset_hash != dataset_hash {
+            return Err(anyhow!("{rel} names dataset {}", row.dataset_hash));
+        }
+        Ok(row)
+    }
+
+    /// The rows of exactly the pinned catalog version (W1 route R4). `LATEST`
+    /// is never read and cached rows are never substituted. A cached copy is
+    /// served only when its bytes match the pin; otherwise the store's copy is
+    /// verified against the pin and installed, or, offline, the request fails.
+    pub async fn pinned_catalog(&self, pin: &CatalogPin) -> Result<Vec<CatalogRow>> {
+        let local = self
+            .cache
+            .catalog_dir()
+            .join(&pin.version)
+            .join("catalog.jsonl");
+        let bytes = match std::fs::read(&local) {
+            Ok(bytes) if crate::hash::sha256_hex(&bytes) == pin.sha256 => bytes,
+            cached => {
+                let rel = format!("catalog/{}/catalog.jsonl", pin.version);
+                let remote = match self.store {
+                    Some(store) => store.get_bytes(&rel).await?,
+                    None => None,
+                };
+                match remote {
+                    Some(bytes) if crate::hash::sha256_hex(&bytes) == pin.sha256 => {
+                        let dir = local.parent().context("catalog directory")?;
+                        std::fs::create_dir_all(dir)?;
+                        let partial = local.with_extension("jsonl.partial");
+                        std::fs::write(&partial, &bytes)?;
+                        std::fs::rename(&partial, &local)?;
+                        bytes
+                    }
+                    Some(_) => {
+                        return Err(anyhow!(
+                            "catalog {} in the store differs from the pinned digest",
+                            pin.version
+                        ))
+                    }
+                    None => {
+                        return Err(anyhow!(
+                            "catalog {} with the pinned digest is {}{}",
+                            pin.version,
+                            if cached.is_ok() {
+                                "not the cached copy (it differs)"
+                            } else {
+                                "not cached"
+                            },
+                            if self.offline() {
+                                " and the fetch is offline"
+                            } else {
+                                " and absent from the store"
+                            }
+                        ))
+                    }
+                }
+            }
+        };
+        let text = String::from_utf8(bytes).context("catalog is not UTF-8")?;
+        parse_catalog(&text)
+    }
+
+    /// Resolve a dataset id or task against exactly the pinned catalog and
+    /// fetch it. Cached manifests are never consulted; a cached manifest that
+    /// differs from its pinned row is replaced by materialization.
+    /// Collections are refused: they carry their own versions.
+    pub async fn fetch_pinned(&self, selector: &str, pin: &CatalogPin) -> Result<FetchReport> {
+        let catalog = self.pinned_catalog(pin).await?;
+        let rows = if let Some(hash) = crate::dataset_dir_hash(selector) {
+            vec![catalog
+                .into_iter()
+                .find(|r| r.dataset_hash == hash)
+                .ok_or_else(|| anyhow!("{selector} is not in pinned catalog {}", pin.version))?]
+        } else if let Some(task) = Task::parse(selector) {
+            catalog.into_iter().filter(|r| r.task == task).collect()
+        } else {
+            return Err(anyhow!(
+                "a pinned fetch resolves dataset ids and tasks; collection {selector} has its own versions"
+            ));
+        };
+        let mut report = self.fetch_rows(rows).await?;
+        report.catalog = Some(pin.clone());
+        Ok(report)
     }
 
     /// The latest catalog (`catalog/LATEST` -> `catalog/v<N>/catalog.jsonl`), cache first.
@@ -144,20 +284,7 @@ impl Fetcher<'_> {
                 t
             }
         };
-        let mut rows = Vec::new();
-        for (i, line) in text
-            .lines()
-            .enumerate()
-            .filter(|(_, l)| !l.trim().is_empty())
-        {
-            let value: serde_json::Value =
-                serde_json::from_str(line).with_context(|| format!("catalog line {}", i + 1))?;
-            rows.push(
-                CatalogRow::validate_value(&value)
-                    .map_err(|e| anyhow!("catalog line {}: {}", i + 1, e.join("; ")))?,
-            );
-        }
-        Ok(rows)
+        parse_catalog(&text)
     }
 
     /// A collection document by name, cache first.
@@ -229,8 +356,28 @@ impl Fetcher<'_> {
 
     /// Fetch every file of every resolved row into the cache and materialize `by-id/`.
     pub async fn fetch(&self, selector: &str) -> Result<FetchReport> {
-        use futures_util::stream::{self, StreamExt};
         let rows = self.resolve(selector).await?;
+        self.fetch_rows(rows).await
+    }
+
+    async fn fetch_rows(&self, rows: Vec<CatalogRow>) -> Result<FetchReport> {
+        use futures_util::stream::{self, StreamExt};
+        // A cached manifest that is not the resolved row is stale: its consumer
+        // copies are withdrawn before anything is served, and materialization
+        // below replaces them from the resolved row.
+        for row in &rows {
+            let dir = self.cache.by_id_dir(&row.dataset_hash);
+            let cached = dir.join("manifest.json");
+            if cached.is_file() && read_manifest(&cached).ok().as_ref() != Some(row) {
+                for name in ["manifest.json", "train.csv", "test.csv", "meta.json"] {
+                    match std::fs::remove_file(dir.join(name)) {
+                        Ok(()) => {}
+                        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+                        Err(e) => return Err(e).context("withdraw stale consumer copy"),
+                    }
+                }
+            }
+        }
         let mut report = FetchReport {
             datasets: rows.len(),
             ..Default::default()
