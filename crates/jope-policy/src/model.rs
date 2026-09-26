@@ -643,3 +643,29 @@ impl PolicyModel {
         Ok(maximum)
     }
 }
+
+#[cfg(test)]
+mod identity_tests {
+    use super::*;
+
+    /// A bound identity labels output with the accepted state only for the released weights
+    /// file: the accepted state, parameters and configuration around any other
+    /// `policy.safetensors` (for example a re-serialized copy of the same tensors) are refused.
+    #[test]
+    fn accepted_policy_requires_the_released_weights_file() {
+        let mut model = PolicyModel::random_weights(PolicyConfig::regression(401), 3).unwrap();
+        let bind = |file: &str| BoundIdentity {
+            state_sha256: crate::ACCEPTED_STATE_SHA256.into(),
+            parameter_sha256: crate::ACCEPTED_PARAMETER_SHA256.into(),
+            policy_safetensors_sha256: file.into(),
+            config_sha256: crate::ACCEPTED_CONFIG_SHA256.into(),
+        };
+        model.bound = Some(bind(
+            "4b4b5a40f03c9226b4b15856fd35b90127c8b6a4d1435b815484cdd050744f1e",
+        ));
+        crate::require_accepted_policy(&model).unwrap();
+        model.bound = Some(bind(&sha256_hex(b"re-serialized accepted tensors")));
+        let err = crate::require_accepted_policy(&model).unwrap_err();
+        assert!(format!("{err:#}").contains("policy.safetensors"), "{err:#}");
+    }
+}

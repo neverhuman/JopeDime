@@ -205,11 +205,17 @@ fn synthetic_receipt(state: &str, model: &str, step: u64) -> Value {
     })
 }
 
+/// `policy.safetensors` of the published step-60000 bundle
+/// (`models/bundles/policy-step-60000.json`); checked against that file below.
+const RELEASED_WEIGHTS_SHA256: &str =
+    "4b4b5a40f03c9226b4b15856fd35b90127c8b6a4d1435b815484cdd050744f1e";
+
 fn accepted_receipt() -> Value {
     let mut receipt =
         synthetic_receipt(ACCEPTED_STATE_SHA256, ACCEPTED_MODEL_SHA256, ACCEPTED_STEP);
     receipt["checkpoint"]["parameter_sha256"] = json!(ACCEPTED_PARAMETER_SHA256);
     receipt["checkpoint"]["parameter_sha256_recomputed"] = json!(ACCEPTED_PARAMETER_SHA256);
+    receipt["policy"]["output"]["sha256"] = json!(RELEASED_WEIGHTS_SHA256);
     receipt
 }
 
@@ -407,6 +413,46 @@ fn accepted_config_is_pinned() {
             .require_accepted_identity(),
         "vocabulary",
     );
+}
+
+/// The released `policy.safetensors` hash is the release decision; the receipt's own
+/// `policy.output.sha256` is only the exporter's claim. Every other accepted binding (state,
+/// step, model, parameters, config, vocabulary) is present in the relabelled receipts.
+#[test]
+fn accepted_identity_requires_the_released_weights_file() {
+    let manifest: Value = serde_json::from_slice(
+        &std::fs::read(
+            Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("../../models/bundles/policy-step-60000.json"),
+        )
+        .unwrap(),
+    )
+    .unwrap();
+    let released = manifest["files"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|f| f["path"] == "policy.safetensors")
+        .unwrap();
+    assert_eq!(released["sha256"], RELEASED_WEIGHTS_SHA256);
+
+    let receipt = accepted_receipt();
+    parse_receipt(&receipt)
+        .unwrap()
+        .require_accepted_identity()
+        .unwrap();
+    CheckpointBinding::for_proposal(&serde_json::to_vec(&receipt).unwrap(), None).unwrap();
+    for other in [digest("re-serialized accepted tensors"), digest("policy")] {
+        let mut relabelled = receipt.clone();
+        relabelled["policy"]["output"]["sha256"] = json!(other);
+        let binding = parse_receipt(&relabelled).unwrap();
+        assert_eq!(binding.parameter_sha256(), ACCEPTED_PARAMETER_SHA256);
+        assert_refused(binding.require_accepted_identity(), "policy.safetensors");
+        assert_refused(
+            CheckpointBinding::for_proposal(&serde_json::to_vec(&relabelled).unwrap(), None),
+            "policy.safetensors",
+        );
+    }
 }
 
 #[test]

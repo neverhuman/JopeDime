@@ -152,7 +152,7 @@ fn accepted_receipt() -> Value {
             "verified_bindings": VERIFIED,
         },
         "policy": {
-            "output": {"sha256": digest("policy")},
+            "output": {"sha256": ACCEPTED_WEIGHTS},
             "tensor_count": tensors.len(),
             "tensors": tensors,
         },

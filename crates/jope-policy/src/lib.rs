@@ -193,8 +193,9 @@ pub fn is_sha256_hex(value: &str) -> bool {
 
 /// The identity of a policy that may label output with the accepted state: loaded through
 /// `PolicyModel::load_bound`, bound to [`ACCEPTED_STATE_SHA256`], with the recomputed parameter
-/// hash equal to [`ACCEPTED_PARAMETER_SHA256`], and with the receipt's `config_sha256` and the
-/// loaded configuration's recomputed hash both equal to [`ACCEPTED_CONFIG_SHA256`].
+/// hash equal to [`ACCEPTED_PARAMETER_SHA256`], the loaded file equal to the released
+/// `policy.safetensors`, and with the receipt's `config_sha256` and the loaded configuration's
+/// recomputed hash both equal to [`ACCEPTED_CONFIG_SHA256`].
 pub(crate) fn require_accepted_policy(
     model: &model::PolicyModel,
 ) -> anyhow::Result<&model::BoundIdentity> {
@@ -210,6 +211,11 @@ pub(crate) fn require_accepted_policy(
     anyhow::ensure!(
         bound.parameter_sha256() == ACCEPTED_PARAMETER_SHA256,
         "refused: loaded weights are not the accepted step-60000 parameters"
+    );
+    anyhow::ensure!(
+        bound.policy_safetensors_sha256() == config::ACCEPTED_WEIGHTS_SHA256,
+        "refused: loaded file {} is not the released step-60000 policy.safetensors",
+        bound.policy_safetensors_sha256()
     );
     anyhow::ensure!(
         bound.config_sha256() == ACCEPTED_CONFIG_SHA256,
