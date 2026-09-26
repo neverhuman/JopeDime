@@ -226,47 +226,6 @@ mod corpus_cache_tests {
     }
 }
 
-fn export_predictor(
-    executable: &Path,
-    executable_sha: &str,
-    prepared: &Path,
-    cut: usize,
-    genome: &str,
-    output: &Path,
-) -> Result<Value> {
-    ensure!(
-        file_hash(executable)? == executable_sha,
-        "pinned predictor evaluator changed"
-    );
-    let receipt_path = output.with_extension("fit.json");
-    if !receipt_path.exists() {
-        // The isolated worker writes a failure receipt on timeout or memory failure.
-        // Pre-spawn errors are captured by the campaign's export summary below.
-        crate::gp::fit_view_isolated(executable, prepared, cut, genome, output)?;
-    }
-    let receipt: Value = read_json(&receipt_path)?;
-    ensure!(
-        receipt["schema"] == "parallel.fitted_view_export.v1"
-            && receipt["executable_sha256"] == executable_sha
-            && receipt["prepared_sha256"] == file_hash(&prepared.join("prepared.json"))?
-            && receipt["cut"] == cut
-            && receipt["program_sha256"] == hash(genome.as_bytes()),
-        "fitted predictor receipt identity mismatch"
-    );
-    ensure!(
-        receipt["passed"] == true,
-        "fitted predictor export failed: {}",
-        receipt["failure"]
-    );
-    ensure!(
-        file_hash(output)? == receipt["predictor_sha256"],
-        "fitted predictor payload changed"
-    );
-    Ok(
-        json!({"passed":true,"predictor":output,"predictor_sha256":receipt["predictor_sha256"],"receipt":receipt_path,"receipt_sha256":file_hash(&receipt_path)?,"executable_sha256":executable_sha}),
-    )
-}
-
 pub(crate) fn latest(root: &Path, run: &Path) -> Result<PathBuf> {
     let v: Value = read_json(&run.join("latest.json"))?;
     let cp = resolve(
@@ -618,26 +577,34 @@ pub fn run(
             }
         }
         comparisons.push(json!({"dataset":prepared.dataset,"family":prepared.family,"partition":prepared.meta_partition,"cut":neural.jobs[i].cut,"neural":n,"generic_retained":g,"shuffled_context":s}));
-        if let Some(genome) = n["best_program"].as_str() {
-            let predictor = output
-                .join("predictors")
-                .join(&prepared.dataset)
-                .join(format!("cut-{}.json", neural.jobs[i].cut));
-            let result = export_predictor(
-                &executable,
-                &executable_sha,
-                &root.join(&neural.jobs[i].prepared),
-                neural.jobs[i].cut,
-                genome,
-                &predictor,
-            );
-            predictor_exports.push(match result {
-                Ok(receipt) => receipt,
-                Err(error) => json!({"passed":false,"dataset":prepared.dataset,"cut":neural.jobs[i].cut,"predictor":predictor,"prepared_sha256":neural.jobs[i].prepared_sha256,"program_sha256":hash(genome.as_bytes()),"executable_sha256":executable_sha,"failure":format!("{error:#}"),"receipt":predictor.with_extension("fit.json"),"receipt_sha256":file_hash(&predictor.with_extension("fit.json")).ok()}),
-            });
-        } else {
-            predictor_exports.push(json!({"passed":false,"dataset":prepared.dataset,"cut":neural.jobs[i].cut,"failure":"No successful GP program to fit","executable_sha256":executable_sha}));
-        }
+        let job = &neural.jobs[i];
+        let predictor = output
+            .join("predictors")
+            .join(&prepared.dataset)
+            .join(format!("cut-{}.json", job.cut));
+        let result = (|| {
+            let seeds = job.seeds.as_ref().map(|p| resolve(root, p)).transpose()?;
+            let vocabulary = neural
+                .vocabulary
+                .as_ref()
+                .map(|p| resolve(root, p))
+                .transpose()?;
+            crate::gp::handoff::export_selected(&crate::gp::handoff::SelectedExport {
+                root,
+                search_output: &root.join(&job.output),
+                prepared: &root.join(&job.prepared),
+                cut: job.cut,
+                seeds: seeds.as_deref(),
+                vocabulary: vocabulary.as_deref(),
+                executable: &executable,
+                executable_sha: &executable_sha,
+                predictor: &predictor,
+            })
+        })();
+        predictor_exports.push(match result {
+            Ok(receipt) => receipt,
+            Err(error) => json!({"passed":false,"dataset":prepared.dataset,"cut":job.cut,"predictor":predictor,"prepared_sha256":job.prepared_sha256,"executable_sha256":executable_sha,"failure":format!("{error:#}"),"receipt":predictor.with_extension("fit.json"),"receipt_sha256":file_hash(&predictor.with_extension("fit.json")).ok()}),
+        });
         write_json(
             &output.join("predictor-exports.json"),
             &json!({"schema":"parallel.predictor_exports.v1","exports":predictor_exports,"completed":predictor_exports.len(),"total":neural.jobs.len(),"evaluator_sha256":executable_sha,"final_tests_opened":false,"qualification":true,"failures_block_retraining":false}),

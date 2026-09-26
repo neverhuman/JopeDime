@@ -178,11 +178,38 @@ on a search client, inherited by its evaluator children): `block`, `fork_block`,
   start any today. Service-side worker custody is the authority service's
   (unchanged). Distributed reservation is W7.
 
-## Not started in this branch
+## W5-T07 — sealed selection, final refit and export handoff
 
-- W5-T07 (sealed handoff): `lineage::verify_final_refit` covers wrong fit-state
-  references and same-recipe other-state swaps for the fitted-view export; the
-  unsupported-export path and serving packages remain with W9.
+- **Defect reproduced and fixed** (`runs/w5-t07-handoff-repro-20260926T065444Z`):
+  the cycle pipeline's predictor handoff exported `search.json`'s `best_program`
+  as the selected predictor without replaying the selection. With the summary
+  forged to name another evaluated program, it exported `(pipe X (ridge))` instead
+  of the replayed winner. The handoff now lives in `gp::handoff::export_selected`
+  (not feature-gated, so the harness can run it; the `neural`-gated pipeline only
+  calls it) and exports only the sealed selection.
+- **Seal** (`parallel.gp_selection_seal.v1`, `*.seal.json` beside the predictor):
+  status (`selected`, `inherited_incumbent`, `no_measured_candidate`), the replayed
+  winner's executable recipe and original, source, ancestry and objective, its
+  fold fit completion and model, the replay's stop reason, and the authorised
+  final-fit scope `selected_cut_training_rows` (training rows only; the cut's
+  validation labels and the original final test are recorded as outside every
+  fit). A recorded seal is valid only while it equals the seal recomputed from the
+  search's evidence (independent replay plus verified lineage).
+- **Handoff** (`parallel.gp_export_handoff.v1`, `*.handoff.json`): fits exactly the
+  sealed recipe on exactly that scope, requires the export's fitted identity to be
+  the selected fold fit (`lineage::verify_final_refit`), and records the result.
+  A failed or mismatched export records `export_failed`, keeps the sealed recipe
+  and fold model as the selected fitted state and exports nothing else; recorded
+  outcomes are terminal and re-verified on resume.
+- **Tests:** `the_predictor_handoff_exports_only_the_sealed_replayed_selection`
+  (forged summary refused, honest path exports the winner on its training rows,
+  resume reuses the recorded handoff) and
+  `a_sealed_selection_refuses_swaps_and_keeps_the_selection_when_export_fails`
+  (another candidate's fold model or fit completion, another recipe, another
+  scope, held-out labels in the fit, another status; a missing lineage event;
+  a fixture export failure keeps the selection and attempts no other program).
+- Serving packages (Python/Rust/C++) and their unsupported-export statuses remain
+  W9; the fitted-view export is the only export this handoff performs.
 
 ## Open items and risks
 

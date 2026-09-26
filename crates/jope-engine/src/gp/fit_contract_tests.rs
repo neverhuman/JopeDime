@@ -117,6 +117,9 @@ fn run_cli(argv: &[String]) -> Result<()> {
     let path = |key: &str| text(key).map(PathBuf::from);
     match operation.as_str() {
         "fit" => fit(&path("train")?, &text("genome")?, &path("output")?),
+        "fit-view" if std::env::var(FAULT).as_deref() == Ok("fail_export") => {
+            anyhow::bail!("fixture: fitted-view export unavailable")
+        }
         "fit-view" => fit_view(
             &path("prepared")?,
             text("cut")?.parse()?,
@@ -172,6 +175,27 @@ fn run_cli(argv: &[String]) -> Result<()> {
                 .transpose()?
                 .unwrap_or(SEED),
         ),
+        // The cycle pipeline's predictor handoff for one completed search.
+        "export-selected" => {
+            let root = path("root")?;
+            let executable = path("executable")?;
+            let executable_sha = file_hash(&executable)?;
+            let seeds = values.get("seeds").map(PathBuf::from);
+            let vocabulary = values.get("vocabulary").map(PathBuf::from);
+            let receipt = handoff::export_selected(&handoff::SelectedExport {
+                root: &root,
+                search_output: &path("output")?,
+                prepared: &path("prepared")?,
+                cut: text("cut")?.parse()?,
+                seeds: seeds.as_deref(),
+                vocabulary: vocabulary.as_deref(),
+                executable: &executable,
+                executable_sha: &executable_sha,
+                predictor: &path("predictor")?,
+            })?;
+            println!("{receipt}");
+            Ok(())
+        }
         other => anyhow::bail!("unsupported fixture CLI operation {other}"),
     }
 }
@@ -2172,4 +2196,242 @@ fn an_evaluator_allocation_failure_is_a_contained_failed_row() {
     );
     authority.stop_service();
     assert_eq!(authority.entries().0, 0);
+}
+
+/// A completed three-candidate search whose seed population leads with two
+/// fittable programs and one deterministic fit failure.
+fn handoff_search(authority: &Fixture, root: &Path, prepared: &Path) -> (PathBuf, PathBuf) {
+    let seeds = root.join("handoff-seeds.json");
+    seed_population(
+        prepared,
+        &seeds,
+        &["(pipe X (standardize) (ridge))", UNFITTABLE, PROGRAM],
+        |_| None,
+    );
+    let output = root.join("handoff-search");
+    success(
+        search_client(authority, root, prepared, &output, 3)
+            .arg("--seeds")
+            .arg(&seeds)
+            .output()
+            .unwrap(),
+    );
+    (output, seeds)
+}
+
+/// The cycle pipeline's handoff, run as a configured client.
+fn export_selected(
+    authority: &Fixture,
+    root: &Path,
+    prepared: &Path,
+    output: &Path,
+    seeds: &Path,
+    predictor: &Path,
+) -> Command {
+    let mut command = authority.command();
+    command
+        .args(["export-selected", "--root"])
+        .arg(root)
+        .arg("--output")
+        .arg(output)
+        .arg("--prepared")
+        .arg(prepared)
+        .args(["--cut", "0", "--seeds"])
+        .arg(seeds)
+        .arg("--executable")
+        .arg(std::env::current_exe().unwrap())
+        .arg("--predictor")
+        .arg(predictor);
+    command
+}
+
+#[test]
+fn the_predictor_handoff_exports_only_the_sealed_replayed_selection() {
+    let (temp, prepared) = view_fixture();
+    let root = temp.path().canonicalize().unwrap();
+    let mut authority = Fixture::activated(&root, vec![cut_training_hash(&prepared)]);
+    authority.start();
+    let (output, seeds) = handoff_search(&authority, &root, &prepared);
+    let winner = selection_replay::verify_search(&root, &output)
+        .unwrap()
+        .replay
+        .winner
+        .unwrap();
+    let rows: Vec<Value> = read_json(&output.join("observations.json")).unwrap();
+    let other = rows
+        .iter()
+        .find(|row| row["failure"].is_null() && row["genome"] != winner.genome.as_str())
+        .expect("a second measured program")["genome"]
+        .clone();
+    // A summary naming another evaluated program is not the selection.
+    let search_path = output.join("search.json");
+    let original = fs::read(&search_path).unwrap();
+    let mut forged: Value = serde_json::from_slice(&original).unwrap();
+    forged["best_program"] = other.clone();
+    write_json(&search_path, &forged).unwrap();
+    let tampered = root.join("tampered.json");
+    let refused = export_selected(&authority, &root, &prepared, &output, &seeds, &tampered)
+        .output()
+        .unwrap();
+    assert!(
+        !refused.status.success(),
+        "the handoff exported the summary's program {other}"
+    );
+    assert!(!tampered.exists(), "a predictor was published for {other}");
+    fs::write(&search_path, &original).unwrap();
+    // The honest path exports exactly the replayed winner on its training rows.
+    let predictor = root.join("selected.json");
+    success(
+        export_selected(&authority, &root, &prepared, &output, &seeds, &predictor)
+            .output()
+            .unwrap(),
+    );
+    let exported: Predictor = read_json(&predictor).unwrap();
+    assert_eq!(
+        exported.canonical,
+        GenomeIr::parse(&winner.genome).unwrap().canonical()
+    );
+    let seal: Value = read_json(&predictor.with_extension("seal.json")).unwrap();
+    assert_eq!(seal["status"], "selected");
+    assert_eq!(seal["selected"]["executable_program"], winner.genome);
+    let scope = &seal["final_fit_scope"];
+    assert_eq!(scope["kind"], handoff::FINAL_FIT_SCOPE);
+    assert_eq!(scope["held_out_labels_in_fit"], false);
+    assert_eq!(exported.training_sha256, scope["training_sha256"]);
+    assert_ne!(
+        scope["training_sha256"],
+        scope["held_out_validation_sha256"]
+    );
+    let handoff: Value = read_json(&predictor.with_extension("handoff.json")).unwrap();
+    assert_eq!(handoff["status"], "exported");
+    assert_eq!(
+        handoff["final_refit"]["transformation"],
+        "selected_cut_training_refit_reuses_fold_fit"
+    );
+    assert_eq!(
+        handoff["final_refit"]["model_sha256"],
+        seal["selected"]["fold_model"]["sha256"]
+    );
+    // A resumed cycle re-verifies and reuses the recorded handoff.
+    success(
+        export_selected(&authority, &root, &prepared, &output, &seeds, &predictor)
+            .output()
+            .unwrap(),
+    );
+    authority.stop_service();
+}
+
+#[test]
+fn a_sealed_selection_refuses_swaps_and_keeps_the_selection_when_export_fails() {
+    let (temp, prepared) = view_fixture();
+    let root = temp.path().canonicalize().unwrap();
+    let mut authority = Fixture::activated(&root, vec![cut_training_hash(&prepared)]);
+    authority.start();
+    let (output, seeds) = handoff_search(&authority, &root, &prepared);
+    let inputs = handoff::Inputs {
+        root: &root,
+        output: &output,
+        seeds: Some(&seeds),
+        vocabulary: None,
+    };
+    let seal_path = root.join("selection.seal.json");
+    let seal = handoff::write_seal(&inputs, &seal_path).unwrap();
+    assert_eq!(seal["status"], "selected");
+    handoff::verify_seal(&inputs, &seal_path).unwrap();
+    // Each swap is refused by identity, whatever the predictions would be:
+    // another candidate's fitted state or recipe, another scope, another status.
+    let rows: Vec<Value> = read_json(&output.join("observations.json")).unwrap();
+    let position = seal["selected"]["position"].as_u64().unwrap() as usize;
+    let other = rows
+        .iter()
+        .enumerate()
+        .find(|(i, row)| *i != position && row["failure"].is_null())
+        .expect("a second measured candidate")
+        .1;
+    let other_completion = completion(&root, other);
+    for (pointer, value) in [
+        ("/selected/fold_model", other_completion["model"].clone()),
+        (
+            "/selected/fold_fit_completion",
+            other_completion["fit_completion"].clone(),
+        ),
+        ("/selected/executable_program", other["genome"].clone()),
+        ("/final_fit_scope/training_sha256", json!("0".repeat(64))),
+        ("/final_fit_scope/held_out_labels_in_fit", json!(true)),
+        ("/status", json!("no_measured_candidate")),
+    ] {
+        let mut swapped = seal.clone();
+        *swapped.pointer_mut(pointer).unwrap() = value;
+        write_json(&seal_path, &swapped).unwrap();
+        let error = format!(
+            "{:#}",
+            handoff::verify_seal(&inputs, &seal_path).unwrap_err()
+        );
+        assert!(
+            error.contains("differs from the replayed selection"),
+            "{pointer}: {error}"
+        );
+    }
+    write_json(&seal_path, &seal).unwrap();
+    // A ledger row missing its lineage event cannot be sealed at all.
+    let files = ["observations.jsonl", "observations.json", "search.json"];
+    let original: Vec<Vec<u8>> = files
+        .iter()
+        .map(|name| fs::read(output.join(name)).unwrap())
+        .collect();
+    let mut missing = rows.clone();
+    missing[position].as_object_mut().unwrap().remove("lineage");
+    republish_ledger(&output, &missing);
+    let error = format!("{:#}", handoff::seal(&inputs).unwrap_err());
+    assert!(error.contains("lineage"), "{error}");
+    for (name, bytes) in files.iter().zip(&original) {
+        fs::write(output.join(name), bytes).unwrap();
+    }
+    handoff::verify_seal(&inputs, &seal_path).unwrap();
+    // A failed export keeps the sealed selection and substitutes nothing.
+    let predictor = root.join("failed.json");
+    let failed = export_selected(&authority, &root, &prepared, &output, &seeds, &predictor)
+        .env(FAULT, "fail_export")
+        .output()
+        .unwrap();
+    assert!(!failed.status.success());
+    let recorded: Value = read_json(&predictor.with_extension("handoff.json")).unwrap();
+    assert_eq!(recorded["status"], "export_failed");
+    assert!(
+        recorded["failure"]
+            .as_str()
+            .unwrap()
+            .contains("worker exited"),
+        "{recorded}"
+    );
+    assert!(recorded["predictor"].is_null() && !predictor.exists());
+    assert_eq!(
+        recorded["selected_fitted_state"],
+        seal["selected"]["fold_model"]
+    );
+    assert_eq!(
+        recorded["program_sha256"],
+        seal["selected"]["program_sha256"]
+    );
+    // Only the sealed recipe was attempted.
+    let receipt: Value = read_json(&predictor.with_extension("fit.json")).unwrap();
+    assert_eq!(receipt["passed"], false);
+    assert_eq!(
+        receipt["program_sha256"],
+        hash(
+            seal["selected"]["executable_program"]
+                .as_str()
+                .unwrap()
+                .as_bytes()
+        )
+    );
+    // The recorded failure is terminal: a retry re-verifies and reports it.
+    assert!(
+        !export_selected(&authority, &root, &prepared, &output, &seeds, &predictor)
+            .output()
+            .unwrap()
+            .status
+            .success()
+    );
+    authority.stop_service();
 }
