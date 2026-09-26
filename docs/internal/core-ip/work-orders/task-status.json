@@ -4,18 +4,51 @@
   "tasks": {
     "W1-T01": {
       "states": [
-        "planned"
-      ]
+        "implemented"
+      ],
+      "commits": [
+        "93a8a8c5dec7a76d78f6e7e51b073e0dd6148e04"
+      ],
+      "evidence": [
+        "docs/internal/core-ip/work-orders/evidence/W01-consumer-map.md",
+        "docs/internal/core-ip/work-orders/evidence/W01-release-and-preparation.md"
+      ],
+      "remaining": "Consumer map is from source reading; anchors not marked (read) are leads. Nothing consumes the frozen release yet (ASM development loader and context producer input are open)."
     },
     "W1-T02": {
       "states": [
-        "planned"
-      ]
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "0b695b3d2619603dc2013b3aef1a248448443975"
+      ],
+      "tests": [
+        "tests/regression_release.rs (8, including the mutation table)"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1-t02-release-20260926T055003Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1-release-verify-20260926T060255Z"
+      ],
+      "remaining": "New contract (no pre-existing receiver to reproduce). All ten members have unknown exposure, so never-seen-family claims stay blocked; 14 catalog-name relations are unresolved and need independent review."
     },
     "W1-T03": {
       "states": [
-        "planned"
-      ]
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "cbdb4c3123d52ee1f886202fde44db06a466e698"
+      ],
+      "tests": [
+        "tests/preparation_semantics.rs (13)"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1-t03-prefix-20260926T054952Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1-t03-postfix-20260926T055311Z"
+      ],
+      "remaining": "Fails closed on legacy pointer views whose stored preprocessing differs from a refit, and on exact identity features, with no declared exception mechanism yet."
     },
     "W1-T04": {
       "states": [
@@ -24,8 +57,21 @@
     },
     "W1-T05": {
       "states": [
-        "planned"
-      ]
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "8b4e51f1eb716aed52b902a424ff3e8e2a0dc136"
+      ],
+      "tests": [
+        "tests/input_closure.rs (5)"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1-t05-prefix-20260926T060016Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1-t05-postfix-final-20260926T060134Z"
+      ],
+      "remaining": "Fixture scope only (stale cached blobs). Worker isolation is W7; environment re-rooting, upward root search, jope_home cwd fallback and store_file early return are mapped, not fixed."
     },
     "W1-T06": {
       "states": [
@@ -51,8 +97,22 @@
     },
     "W2-T02": {
       "states": [
-        "planned"
-      ]
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "ce4aea8ec112ce49515190e4eaed4b55285bccc8"
+      ],
+      "tests": [
+        "accepted_identity_requires_the_released_weights_file",
+        "accepted_policy_requires_the_released_weights_file"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w2-weights-pin-prefix-20260926T060042Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w2-weights-pin-postfix-20260926T060125Z"
+      ],
+      "remaining": "One slice (G-02). The versioned semantic manifest, independent worker context-bundle pins (G-03), encoder identity pins at admission (G-04) and receipt unknown-field rejection (G-08) remain."
     },
     "W2-T03": {
       "states": [
@@ -61,8 +121,20 @@
     },
     "W2-T04": {
       "states": [
-        "planned"
-      ]
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "c3f60f0c7f1ae6628d4cc3e529c18a6f42a949e7"
+      ],
+      "tests": [
+        "bytes_and_path_loaders_keep_the_same_inference_tensors",
+        "accepted_manifest_uses_sha256_bytes_not_legacy_identifier"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w2-hyperion-bytes-20260926T060626Z"
+      ],
+      "remaining": "Hyperion weights and manifest now consume authenticated bytes (G-10a/b). Training warm-start/resume, native context and corpus-index re-reads (G-10c,e,g) and cache-key closure (G-11) remain; real-weights parity runs only where the asset exists."
     },
     "W2-T05": {
       "states": [
@@ -170,12 +242,31 @@
         "transitions_separate_initialization_ties_non_improvement_and_improvement",
         "eligibility_alone_and_redelivery_never_count_as_improvement"
       ],
-      "remaining": "Per-fold tail diagnostics and an explicit duplicate outcome remain."
+      "remaining": "Per-fold tail diagnostics landed in W3-T04 and the explicit duplicate outcome in W3-T06."
     },
     "W3-T06": {
       "states": [
-        "planned"
-      ]
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "6be3fd4597e77355da33813f2ba43ce7ca77cc4d"
+      ],
+      "tests": [
+        "qualification_without_a_durable_decision_is_not_eligible_until_qualify_resumes",
+        "crash_between_hwm_append_and_pointer_advance_never_lists_a_superseded_teacher",
+        "first_acceptance_lost_before_its_pointer_is_visible_not_silently_absent",
+        "a_pointer_behind_the_ledger_is_rolled_forward_before_any_decision",
+        "a_pointer_the_ledger_never_accepted_is_refused_before_any_write",
+        "redelivery_of_an_accepted_record_is_a_duplicate_not_a_tie",
+        "stronger_and_weaker_teachers_race_in_both_orders_to_the_same_state"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w3-t06-prefix-linkage-20260926T060249Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w3-t06-postfix-linkage-20260926T060641Z"
+      ],
+      "remaining": "No CLI verb for hwm::recover; rejected redeliveries are not deduplicated; mirror-side lagging pointers are W8; corpus-writer linkage is outside jope-learning."
     },
     "W3-T07": {
       "states": [

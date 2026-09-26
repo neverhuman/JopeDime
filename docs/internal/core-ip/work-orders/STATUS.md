@@ -6,10 +6,10 @@ not CI verification, and neither is live qualification. No finding closes throug
 
 | State | Tasks |
 |---|---:|
-| planned | 51 |
-| reproduced | 7 |
-| implemented | 19 |
-| fixture-proven | 15 |
+| planned | 44 |
+| reproduced | 11 |
+| implemented | 26 |
+| fixture-proven | 21 |
 | CI-verified | 0 |
 | live-qualified | 0 |
 | measurement-complete | 0 |
@@ -19,11 +19,11 @@ not CI verification, and neither is live qualification. No finding closes throug
 
 | Task | States | Evidence | Remaining or blocker |
 |---|---|---|---|
-| W1-T01 Inventory input consumers and release sources | planned | — | — |
-| W1-T02 Freeze the regression release and family registry | planned | — | — |
-| W1-T03 Define preparation semantics explicitly | planned | — | — |
+| W1-T01 Inventory input consumers and release sources | implemented | 93a8a8c5dec7 | Consumer map is from source reading; anchors not marked (read) are leads. Nothing consumes the frozen release yet (ASM development loader and context producer input are open). |
+| W1-T02 Freeze the regression release and family registry | implemented, fixture-proven | 0b695b3d2619; tests/regression_release.rs (8, including the mutation table) | New contract (no pre-existing receiver to reproduce). All ten members have unknown exposure, so never-seen-family claims stay blocked; 14 catalog-name relations are unresolved and need independent review. |
+| W1-T03 Define preparation semantics explicitly | reproduced, implemented, fixture-proven | cbdb4c3123d5; tests/preparation_semantics.rs (13) | Fails closed on legacy pointer views whose stored preprocessing differs from a refit, and on exact identity features, with no declared exception mechanism yet. |
 | W1-T04 Separate fit inputs, scoring labels and result release | planned | — | — |
-| W1-T05 Enforce an immutable worker input closure | planned | — | — |
+| W1-T05 Enforce an immutable worker input closure | reproduced, implemented, fixture-proven | 8b4e51f1eb71; tests/input_closure.rs (5) | Fixture scope only (stale cached blobs). Worker isolation is W7; environment re-rooting, upward root search, jope_home cwd fallback and store_file early return are mapped, not fixed. |
 | W1-T06 Build counterfactual receiving-path proofs | planned | — | — |
 | W1-T07 Resolve historical staging without rewriting it | planned | — | — |
 
@@ -32,9 +32,9 @@ not CI verification, and neither is live qualification. No finding closes throug
 | Task | States | Evidence | Remaining or blocker |
 |---|---|---|---|
 | W2-T01 Trace accepted assets and consumers | implemented | ccfb00e5f195 | Source trace only; nothing was hashed or run. Section 7 lists the unverified items; gaps G-01..G-12 feed T02..T04. |
-| W2-T02 Extend the release-controlled semantic bundle | planned | — | — |
+| W2-T02 Extend the release-controlled semantic bundle | reproduced, implemented, fixture-proven | ce4aea8ec112; accepted_identity_requires_the_released_weights_file; accepted_policy_requires_the_released_weights_file | One slice (G-02). The versioned semantic manifest, independent worker context-bundle pins (G-03), encoder identity pins at admission (G-04) and receipt unknown-field rejection (G-08) remain. |
 | W2-T03 Make semantic products opaque | planned | — | — |
-| W2-T04 Consume validated bytes without reopening by path | planned | — | — |
+| W2-T04 Consume validated bytes without reopening by path | implemented, fixture-proven | c3f60f0c7f1a; bytes_and_path_loaders_keep_the_same_inference_tensors; accepted_manifest_uses_sha256_bytes_not_legacy_identifier | Hyperion weights and manifest now consume authenticated bytes (G-10a/b). Training warm-start/resume, native context and corpus-index re-reads (G-10c,e,g) and cache-key closure (G-11) remain; real-weights parity runs only where the asset exists. |
 | W2-T05 Produce golden intermediate calculations | planned | — | — |
 | W2-T06 Verify complete tensor inventory and roles | implemented, fixture-proven | 742553666022; test_verify_inventory.py (8); host proof verify-real.json; host proof tamper.json | Hosted CI runs the synthetic fixtures only; the real asset is verified on the host. |
 | W2-T07 Qualify producer-to-consumer handoff | planned | — | — |
@@ -47,8 +47,8 @@ not CI verification, and neither is live qualification. No finding closes throug
 | W3-T02 Resolve trusted transitive provenance | reproduced, implemented, fixture-proven | cff5ead8a066; missing_context_provenance_is_refused_at_real_teaching_ingress; wrong_scope_consumer_encoder_or_altered_context_is_refused_before_authority; retained_context_is_revalidated_by_every_receiving_gate | Producer authentication, revocation lookup and W2 execution-proof linkage remain; jope-bench's live teaching driver now fails closed until a W2 context producer runs before admission. |
 | W3-T03 Version records and enforce every receiving gate | reproduced, implemented, fixture-proven | cff5ead8a066; legacy_qualification_without_provenance_stays_quarantined_and_is_not_upgraded; freeze_without_preregistered_context_encoder_is_diagnostic_only | Versioned requalification procedure and jope-engine ingress routes remain. |
 | W3-T04 Recompute metrics from exact authenticated predictions | reproduced, implemented, fixture-proven | 170cb384d86f; forged_units_cannot_relabel_a_measured_score; pooled_rmse_r2_and_tail_are_separately_named_diagnostics; independent_evaluator_agrees_with_mean_fold_admission_on_uneven_folds; +1 tests | Fitted artifacts are not bound to their own fold's training rows (no row identity in either artifact schema); classification metric validity is deferred. |
-| W3-T05 Separate eligibility from HWM transition outcomes | reproduced, implemented, fixture-proven | 2db85243df5a; 7216cad2168b; transitions_separate_initialization_ties_non_improvement_and_improvement; eligibility_alone_and_redelivery_never_count_as_improvement | Per-fold tail diagnostics and an explicit duplicate outcome remain. |
-| W3-T06 Make decisions recoverably link to corpus eligibility | planned | — | — |
+| W3-T05 Separate eligibility from HWM transition outcomes | reproduced, implemented, fixture-proven | 2db85243df5a; 7216cad2168b; transitions_separate_initialization_ties_non_improvement_and_improvement; eligibility_alone_and_redelivery_never_count_as_improvement | Per-fold tail diagnostics landed in W3-T04 and the explicit duplicate outcome in W3-T06. |
+| W3-T06 Make decisions recoverably link to corpus eligibility | reproduced, implemented, fixture-proven | 6be3fd4597e7; qualification_without_a_durable_decision_is_not_eligible_until_qualify_resumes; crash_between_hwm_append_and_pointer_advance_never_lists_a_superseded_teacher; first_acceptance_lost_before_its_pointer_is_visible_not_silently_absent; +4 tests | No CLI verb for hwm::recover; rejected redeliveries are not deduplicated; mirror-side lagging pointers are W8; corpus-writer linkage is outside jope-learning. |
 | W3-T07 Run the full ingress adversarial matrix | planned | — | — |
 
 ## W04

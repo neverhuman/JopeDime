@@ -1450,6 +1450,20 @@
         "preparation"
       ]
     },
+    "target:jope-datasets/test/input_closure": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "storage"
+      ]
+    },
+    "target:jope-datasets/test/regression_release": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "evidence"
+      ]
+    },
     "target:jope-datasets/test/repo_verify": {
       "role": "regression",
       "subsystems": [
@@ -2119,6 +2133,12 @@
       "role": "regression",
       "subsystems": [
         "teaching"
+      ]
+    },
+    "target:jope-parallel/test/preparation_semantics": {
+      "role": "regression",
+      "subsystems": [
+        "preparation"
       ]
     },
     "target:jope-parallel/test/proposal_ranking": {
