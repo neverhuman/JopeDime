@@ -2361,6 +2361,7 @@ mod tests {
     }
 
     mod linkage;
+    mod matrix;
     mod metrics;
     mod provenance;
     mod transitions;

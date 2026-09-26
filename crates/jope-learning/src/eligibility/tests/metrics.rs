@@ -6,12 +6,12 @@ use super::provenance::{
 };
 use super::*;
 
-fn stored<T: for<'de> Deserialize<'de>>(f: &Fixture, sha: &str) -> T {
+pub(super) fn stored<T: for<'de> Deserialize<'de>>(f: &Fixture, sha: &str) -> T {
     blob(&f.state, sha).unwrap()
 }
 
 /// Re-store one fold's evidence chain after `mutate`, keeping every digest link coherent.
-fn rebind(
+pub(super) fn rebind(
     f: &Fixture,
     evidence: &OofEvidence,
     fold: usize,

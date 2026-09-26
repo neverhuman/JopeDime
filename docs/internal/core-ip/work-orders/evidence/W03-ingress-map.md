@@ -368,6 +368,101 @@ Not done:
 - **Corpus linkage beyond `freeze_teaching` is not covered.** That includes the jope-cli
   corpus writer and the jope-engine teaching store; both are outside this crate.
 
+## W3-T07 ingress adversarial matrix (fixture-proven, test-only)
+
+`crates/jope-learning/src/eligibility/tests/matrix.rs` crosses the five jope-learning teaching
+ingresses with 16 submission mutation classes. Each class gets its own fresh fixture.
+
+**Routes.** `qualify`, `revalidate_qualification`, `hwm::ingest`, `freeze_teaching` and
+`revalidate_replay`.
+
+**Stored-route attack.** The stored routes are attacked with a forged but internally
+consistent success claim, appended through the real ledger API:
+
+- the mutated evidence, stored with the valid submission's own measurement;
+- a `qualified` decision bound to that file's digest;
+- an accepted HWM event carrying that digest, plus its pointer.
+
+Every route must recompute and refuse without trusting those recorded flags.
+
+**Checks per class.**
+
+- `qualify` refuses with the class's expected reason. The rejection is inventoried, and no
+  qualification, pointer, accepted event or teaching entry changes.
+- `revalidate_qualification` refuses the forged claim.
+- `hwm::ingest` rejects it as `teaching-ineligible`, with no authority change.
+- `freeze_teaching` excludes the forged pointer and ledger tip.
+- `revalidate_replay` refuses the forged claim.
+- The independent replay returns nothing, even though the forged flags stand in both ledgers
+  and on disk.
+
+**Mutation classes.**
+
+| # | Class | What is mutated |
+|---|---|---|
+| 1 | `missing-context` | context receipt omitted |
+| 2 | `wrong-consumer-context` | receipt bound to another consumer dataset |
+| 3 | `altered-context` | context output bytes changed |
+| 4 | `unresolved-parent` | parent receipt missing; this stands in for revocation, since no revocation source exists |
+| 5 | `missing-fold` | one fold's predictions absent |
+| 6 | `repeated-fold` | one fold's predictions duplicated |
+| 7 | `wrong-fold-order` | folds out of order |
+| 8 | `duplicated-row` | a row ID repeated |
+| 9 | `nonfinite-prediction` | a `null` prediction |
+| 10 | `wrong-fitted-subject` | another fold's fitted state, coherently rebound |
+| 11 | `forged-fold-score` | a fold score forged |
+| 12 | `forged-aggregate-score` | the aggregate score forged |
+| 13 | `relabelled-units` | score units relabelled |
+| 14 | `wrong-comparison-identity` | the record's comparison identity changed |
+| 15 | `substituted-freeze` | a different optimization freeze substituted |
+| 16 | `wrong-program` | the record's program changed |
+
+**Counts.** 16 classes × 5 routes = 80 refusals.
+`every_mutation_class_is_run_through_every_route` asserts that every declared class has a
+test and that class names are unique, so nothing is skipped silently.
+
+**Positive controls.** `authorized_submission_passes_every_route_for_every_task` admits the
+authorized submission through all five routes for regression, binary and multiclass (15 route
+executions).
+
+**Independent replay.** It is written apart from `hwm::decide`, `hwm::verify` and
+`freeze_teaching`. It replays the original HWM events in ledger order and ignores every
+recorded outcome, transition, displaced link, improvement counter and pointer. For each
+comparison it keeps the earliest record with the lowest recomputed mean fold loss. It agrees
+with the manifest:
+
+- on each authorized control;
+- in `independent_replay_reproduces_the_winner_in_either_arrival_order`, which delivers a
+  weaker teacher, a stronger teacher and an unqualified candidate in both arrival orders;
+- in every attack, where both return nothing.
+
+Evidence is in `w3-t07-matrix-20260926T061453Z/`, run at HEAD `0f4d3a253`. Only test code
+changed, so this run is both the pre-change observation of unchanged source and the
+post-change proof:
+
+- `matrix.log` holds 19 of 19 passing tests, run with `--no-capture`. It prints one refusal
+  reason per cell: 80 lines, 16 per route. It also prints three authorized-task lines and the
+  matrix summary. The diff it ran against is `diff-matrix-run.patch`, which is before
+  rustfmt.
+- `nextest.log` holds the full `jope-learning` run after formatting: 118 of 118 pass with
+  0 skipped. `diff.patch` is byte-identical to the working tree.
+
+No route defect was found.
+
+Finding (policy decision, not changed here): an ineligible ledger tip still defines the HWM
+bar.
+
+- `freeze_teaching` excludes it, so it grants no authority.
+- `hwm::ingest` still compares later candidates against it. An eligible teacher that does
+  not strictly beat it is `not-improved`, and that comparison then has no teacher.
+- An ineligible tip can arise from:
+  - a legacy pre-provenance acceptance;
+  - later loss or corruption of retained evidence;
+  - forged ledger state.
+- The independent replay's eligibility-first rule would pick the best eligible teacher
+  instead. This is exactly the open item "whether a quarantined legacy incumbent should stop
+  defining the bar". It needs an owner decision and, if changed, a new policy version.
+
 ## Not established here (open)
 
 - **Producer authentication.** The receipt is a producer claim: nothing executes or signs
