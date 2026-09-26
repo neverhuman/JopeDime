@@ -6,6 +6,8 @@
 //! A same-host fixture exercising these types is a fixture, not the three-host proof (W7-T07).
 //!
 //! * [`census`] — typed host census and admission preflight refusals (W7-T01, source half).
+//! * [`collect`] — local-host census collection and pinned per-host census merge (W7-T01).
+//!   The collector reads only the host it runs on and never allocates or reserves anything.
 //! * [`contract`] — the versioned bounded-run contract and its plan validation (W7-T02).
 //! * [`controller`] — Plan, read-only Status/Verify, idempotent Cancel, the durable journal,
 //!   whole-group drain and coordinator recovery (W7-T02, W7-T05).
@@ -16,6 +18,7 @@
 #[cfg(feature = "neural")]
 pub mod assignment;
 pub mod census;
+pub mod collect;
 pub mod contract;
 pub mod controller;
 pub mod rendezvous;

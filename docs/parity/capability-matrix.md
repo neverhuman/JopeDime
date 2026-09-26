@@ -20,7 +20,7 @@ you saw.
 |---|---:|---:|---:|---:|---:|---:|
 | engine-binary | 12 | 11 | 0 | 1 | 0 | 0 |
 | engine-example | 12 | 12 | 0 | 0 | 0 | 0 |
-| engine-subcommand | 96 | 88 | 8 | 0 | 0 | 0 |
+| engine-subcommand | 98 | 88 | 10 | 0 | 0 | 0 |
 | jope-prime-command | 49 | 49 | 0 | 0 | 0 | 0 |
 | justfile-recipe | 6 | 6 | 0 | 0 | 0 | 0 |
 | new-bin | 14 | 0 | 14 | 0 | 0 | 0 |
@@ -40,7 +40,7 @@ you saw.
 | vendored-bin | 6 | 6 | 0 | 0 | 0 | 0 |
 | vendored-example | 6 | 6 | 0 | 0 | 0 | 0 |
 | wire | 5 | 0 | 0 | 0 | 5 | 0 |
-| **total** | **786** | **735** | **23** | **1** | **20** | **7** |
+| **total** | **788** | **735** | **25** | **1** | **20** | **7** |
 
 `moved`/`new` rows without a covering test: 659.
 
@@ -67,6 +67,8 @@ you saw.
 | engine-subcommand | (new) jope-native-loop status | crates/jope-engine/src/bin/jope-native-loop.rs (jope-native-loop status) | jope-parallel::bounded_run status_and_verify_are_read_only_and_start_nothing | new | W7-T02: read-only; reports scheduled, admitted, running, committed, failed, drained or unknown per rank |
 | engine-subcommand | (new) jope-native-loop verify | crates/jope-engine/src/bin/jope-native-loop.rs (jope-native-loop verify) | jope-parallel::bounded_run status_and_verify_are_read_only_and_start_nothing | new | W7-T02: read-only plan, journal and committed-result verification; never starts numerical work |
 | engine-subcommand | (new) jope-native-loop cancel | crates/jope-engine/src/bin/jope-native-loop.rs (jope-native-loop cancel) | jope-parallel::bounded_run cli_plan_status_verify_cancel_round_trip | new | W7-T02: idempotent cancellation bound to the reviewed plan digest; a live coordinator drains the whole group |
+| engine-subcommand | (new) jope-native-loop census collect | crates/jope-engine/src/bin/jope-native-loop.rs (jope-native-loop census collect) | jope-parallel::bounded_census cli_collect_merge_and_preflight_round_trip_without_side_effects | new | W7-T01: observes the local host only (machine/boot id, host name, local address, certificate, pinned executable/runtime/policy digests, CPU/RAM, GPUs and device owners via `nvidia-smi`, none when `CUDA_VISIBLE_DEVICES=""` or absent) and writes one `jope.native_host_census.v1` document; never allocates or reserves. Fixture-proven; no live census taken |
+| engine-subcommand | (new) jope-native-loop census merge | crates/jope-engine/src/bin/jope-native-loop.rs (jope-native-loop census merge) | jope-parallel::bounded_census merge_refuses_tampered_stale_future_duplicate_and_mixed_documents | new | W7-T01: combines per-host documents pinned by their collector digests; refuses altered, stale, future, duplicate and mixed-schema documents |
 | engine-subcommand | jope-parallel comparison-baseline | crates/jope-engine/src/main.rs (jope-parallel comparison-baseline) | none | moved | `jope engine <sub>` umbrella is WP5 |
 | engine-subcommand | jope-parallel enqueue | crates/jope-engine/src/main.rs (jope-parallel enqueue) | jope-parallel::queue command_line_admission_uses_the_exact_campaign_binding | moved | `jope engine <sub>` umbrella is WP5 |
 | engine-subcommand | jope-parallel campaign-coverage | crates/jope-engine/src/main.rs (jope-parallel campaign-coverage) | none | moved | hidden from --help; `jope engine <sub>` umbrella is WP5 |

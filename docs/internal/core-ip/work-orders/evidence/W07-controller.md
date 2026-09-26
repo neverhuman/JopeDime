@@ -562,3 +562,101 @@ sequential, never alongside the fence suites.
 **Open.** Two pieces need the live path (W7-T07/T08). One is how the Assignment reaches
 `training::rank_impl`, which today uses the legacy single-host binding. The other is the
 launcher that actually sets each worker's `CUDA_VISIBLE_DEVICES` to its planned UUID.
+
+## W7 Batch B — live-path source integration (`rr2/w7-live`)
+
+Owner: Claude implementation subagent in `.agent/worktrees/demo`, branch `rr2/w7-live` from
+`main` `8a55c4fef`. It builds on Codex's read-only `jope-native-loop preflight` (PR113) and
+does not change it. Every result below is **fixture-proven** on one host. No other host was
+contacted, no GPU was used, `nvidia-smi` was never run by a test (injected command runner),
+and nothing is live-qualified. Evidence runs use the `w7b-<item>` prefix under the custody
+runs root.
+
+### Item A — W7-T01 census collector and pinned merge
+
+**New capability.** Before this change the CLI refused `census` as an unrecognized subcommand
+(exit 2) and no source read a host's identity for the census (`w7b-A-pre-20260926T232754Z`).
+There was no receiving path to reproduce a defect in.
+
+Source: `bounded/collect.rs` and the `census` verbs of `jope-native-loop`.
+
+```text
+jope-native-loop census collect --out FILE --address IP --certificate FILE
+    --source-commit HEX --executable FILE --runtime-library FILE... --compiler FILE
+    [--cuda-library FILE...] [--nccl-library FILE...] --installed-policy FILE...
+jope-native-loop census merge --out FILE --max-age-ms N --clock-skew-ms N
+    --document PATH=SHA256...
+```
+
+`collect` reads the local host only and writes exactly one `jope.native_host_census.v1`
+document, which it validates first. It never replaces an existing file and prints a
+`jope.native_host_census_collection.v1` report with the document digest and
+`allocation_held: false`. Nothing is opened, allocated or reserved.
+
+| Field | Source |
+|---|---|
+| host, machine id, boot id | `/proc/sys/kernel/hostname`, `/etc/machine-id`, `/proc/sys/kernel/random/boot_id` |
+| address | `--address`, refused unless assigned to a local interface (`getifaddrs`) |
+| certificate | SHA-256 of the DER certificate (DER, or PEM with exactly one certificate); only the DER framing is checked here |
+| executable, compiler | SHA-256 of the installed file (symlinks resolved; size and inode re-checked after hashing) |
+| runtime, CUDA, NCCL, installed policy | `jope.native_file_closure.v1` digest of the sorted (canonical path, SHA-256, bytes) of the named files; CUDA/NCCL absent when none are named |
+| source commit | `--source-commit`: the installer-declared commit; the executable digest binds the bytes |
+| CPU, RAM | online CPUs × 1000; `MemAvailable` (available now, not total) |
+| GPUs, driver | `nvidia-smi --query-gpu=index,uuid,name,driver_version,memory.total,memory.free` |
+| device owners | `nvidia-smi --query-compute-apps=gpu_uuid,pid,process_name`; each process is a non-managed (`user`) owner named `gpu-process-<pid>` |
+
+**Nothing is invented.** `CUDA_VISIBLE_DEVICES=""` records no GPU and runs no probe.
+An absent `nvidia-smi` records no GPU. A failing probe, an `[N/A]` value, a malformed
+record, differing driver versions or a process on an unreported GPU refuses the whole
+collection. So does a partial `CUDA_VISIBLE_DEVICES`, since the census is host-wide.
+
+`merge` pins every document to the SHA-256 its collector printed, before interpreting it.
+It then refuses:
+
+- an altered document or a malformed pin, and the same document given twice;
+- mixed or unsupported schema versions;
+- a document that is not exactly one host;
+- stale or future-dated telemetry, under the freshness bounds a plan's telemetry policy
+  allows;
+- two documents sharing a host, machine id, boot id, address or certificate.
+
+The output is the merged census, hosts sorted by name and `captured_unix_ms` set to the
+latest document's. It is written without replacement, with a
+`jope.native_host_census_merge.v1` report listing every document's digest.
+
+Tests in `tests/bounded_census.rs` (8) and the `collect` unit test (1):
+
+- `collected_census_round_trips_through_preflight` — positive control: the collected
+  document is the typed census the validator reads, and a plan built from its identity
+  passes `preflight_dry_run`. A substituted executable is refused as `executable_mismatch`.
+- `cpu_only_or_absent_nvidia_smi_records_no_gpu` — with `CUDA_VISIBLE_DEVICES=""` no probe
+  runs (0 calls). With `nvidia-smi` absent, no GPU is recorded. A CPU plan is admitted, and
+  a GPU plan on that census is refused as `gpu_missing`.
+- `failing_malformed_or_unavailable_gpu_probes_refuse_the_collection` (7 cases)
+- `device_processes_are_owners_that_preflight_refuses` — a compute process on the planned
+  GPU refuses the preflight as `conflicting_ownership`; a CPU plan on the same host is
+  admitted.
+- `unverifiable_identity_inputs_refuse_the_collection` — a non-local or non-IP address, a
+  bad source commit, missing, garbage or non-certificate DER, relative, missing or
+  duplicated files, and no runtime library or policy.
+- `merge_combines_pinned_documents_into_a_preflight_census` and
+  `merge_refuses_tampered_stale_future_duplicate_and_mixed_documents`.
+- `cli_collect_merge_and_preflight_round_trip_without_side_effects` — the real binary. The
+  collector writes its one file and nothing else, refuses to replace it and refuses loop
+  flags. A wrong pin refuses the merge and writes nothing. The merged census passes the
+  operator `preflight` for a three-participant plan.
+
+Post-fix record: `w7b-A-post-20260926T233650Z`, the full per-commit gate. It covers
+`bounded_census` 8, `bounded_preflight_cli` 3, `bounded_run` 30, `bounded_run_recovery` 12,
+the native lib tests 30, the fence suites (16, 8, 17 and `gp::fit_contract_tests` 39),
+workspace check, fmt, diff check, coverage, test inventory and the parity matrix.
+
+**Open (W7-T01).**
+
+- No live census has been taken on xbabe1, xbabe2 or xbabe3; that is an operator runbook
+  step (item G), executed only after separate admission.
+- CI, runner and SmartCluster reservations are not read. Device processes are the only
+  owners the collector observes. Reservations still have to be recorded by an admitted
+  operator or a SmartCluster-aware collector.
+- The source commit is declared, not observed. The certificate is verified by the
+  transport (item D), not by the collector.

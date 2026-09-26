@@ -7193,6 +7193,21 @@
       "dispositions": [],
       "scope": "Read-only operator CLI fixtures: pinned host census preflight, unchanged run files, no dispatch authority, lifecycle and unsafe input refusals. Synthetic identities; no live host allocation or GPU training."
     },
+    "target:jope-parallel/test/bounded_census": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-engine/tests/bounded_census.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "W7-T01 local host census collector and pinned per-host merge: collected documents round-trip through preflight, no GPU when CUDA_VISIBLE_DEVICES is empty or nvidia-smi is absent (injected command runner, never a real GPU), refusal of failing/unavailable probes and unverifiable identity inputs, device processes as conflicting owners, and tampered, stale, future, duplicate and mixed-schema documents refused. Collects this host's own identity only; merged multi-host documents are synthetic, not a live census."
+    },
     "target:jope-parallel/test/bounded_run": {
       "discovery": {
         "kind": "target",
