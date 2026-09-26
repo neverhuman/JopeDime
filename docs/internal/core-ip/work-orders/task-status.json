@@ -112,12 +112,27 @@
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w2-weights-pin-prefix-20260926T060042Z",
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w2-weights-pin-postfix-20260926T060125Z"
       ],
-      "remaining": "One slice (G-02). The versioned semantic manifest, independent worker context-bundle pins (G-03), encoder identity pins at admission (G-04) and receipt unknown-field rejection (G-08) remain."
+      "remaining": "G-02 (ce4aea8ec), G-03 request-issued context admission and G-04 pinned encoder identity (e8cf2c70e) are fixed. G-08 (unknown receipt fields) stays open: the accepted receipt comes from the external exporter and its field set is not available here. No versioned semantic manifest yet."
     },
     "W2-T03": {
       "states": [
-        "planned"
-      ]
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "e8cf2c70ebebf3f420f2f24afe44bdb191faa749"
+      ],
+      "tests": [
+        "products.rs compile_fail doctests (same-width swaps)",
+        "serialized_swaps_padding_and_truncation_fail_at_the_receiver",
+        "products_are_scoped_to_one_encode_and_serialize_in_the_historical_layout"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w2b-repro-prefix-20260926T065217Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w2b-w4-commit-policy-20260926T072208Z"
+      ],
+      "remaining": "Distinct product types with named constructors; receivers replay the assembly (declared 1e-4 tolerance, not yet exercised on accepted assets). PolicyModel/score_pool inputs and cell surfaces are still untyped."
     },
     "W2-T04": {
       "states": [
@@ -174,8 +189,19 @@
     },
     "W2-T07": {
       "states": [
-        "planned"
-      ]
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "e8cf2c70ebebf3f420f2f24afe44bdb191faa749"
+      ],
+      "tests": [
+        "handoff_reaches_only_the_intended_consumer_for_the_issued_scope"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w2b-w4-commit-policy-20260926T072208Z"
+      ],
+      "remaining": "ContextHandoff binds release identity, transformation chain, scope and consumer. W3 teacher admission does not consume it yet; accepted-weight/native qualification not run."
     },
     "W3-T01": {
       "states": [
@@ -392,8 +418,24 @@
     },
     "W4-T07": {
       "states": [
-        "planned"
-      ]
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "eceb241f52c7472c56685b9d70434098dd7c5223"
+      ],
+      "tests": [
+        "producer_artifact_carries_a_reconciled_proposal_ledger",
+        "tampered_proposal_ledgers_are_refused",
+        "recorded_outcomes_are_rederived_from_tokens",
+        "historical_producer_artifact_has_no_ledger_evidence"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w2b-w4-repro-prefix-20260926T071411Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w2b-w4-commit-policy-20260926T072208Z"
+      ],
+      "remaining": "Proposal ledger with per-slot identity and reconciled denominators; run_neural requires it. The jope-engine W5-T01 lineage join (slot_record_sha256) is a follow-up; parser-refusal/incomplete branches are covered only by record edits."
     },
     "W5-T01": {
       "states": [
@@ -417,19 +459,27 @@
     },
     "W5-T02": {
       "states": [
+        "reproduced",
         "implemented",
         "fixture-proven"
       ],
       "commits": [
-        "e41f1541501a10180352a9feb2005840728e0d42"
+        "e41f1541501a10180352a9feb2005840728e0d42",
+        "7c76b5850aedb89da05fc0a738120a867250f0f3",
+        "38f83f47c98e1efb6d8c9a9a9bda9bc18a49bf4c"
       ],
       "tests": [
-        "a_resume_under_other_selection_rules_is_refused_not_restarted"
+        "a_resume_under_other_selection_rules_is_refused_not_restarted",
+        "a_paired_comparison_names_its_sole_arm_difference_and_refuses_any_other",
+        "a_refused_proposal_in_one_slot_does_not_shift_another_slots_random_streams"
       ],
       "evidence": [
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w5-t02-frozen-contract-20260926T063504Z"
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w5-t02-frozen-contract-20260926T063504Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w5-t02-paired-20260926T070443Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w5-t02-streams-repro-20260926T071153Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w5-t02-streams-final-20260926T071834Z"
       ],
-      "remaining": "Selection contract and proposal cap are frozen in the search request; paired-arm manifests and differences remain."
+      "remaining": "Frozen selection contract, paired-arm manifest and slot-keyed random streams (a new stream protocol: new searches at the same seed differ from old ones; old searches cannot be resumed by this build). Order-balanced paired receipts from real runs are W10."
     },
     "W5-T03": {
       "states": [
@@ -467,8 +517,24 @@
     },
     "W5-T05": {
       "states": [
-        "planned"
-      ]
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "596de04ac326628eee6ec69130b5e10363e9bfc5"
+      ],
+      "tests": [
+        "a_blocked_fitter_and_its_helpers_are_killed_at_the_original_deadline",
+        "helpers_left_by_a_finished_evaluator_are_drained_before_the_next_dispatch",
+        "a_second_searcher_cannot_dispatch_into_a_live_search",
+        "an_evaluator_allocation_failure_is_a_contained_failed_row"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w5-t05-supervision-repro-20260926T064427Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w5-t05-supervision-20260926T065125Z"
+      ],
+      "remaining": "Search output reservation and evaluator process-group supervision. Processes started by an evaluator can survive if the search controller itself is killed (the product evaluator starts none today)."
     },
     "W5-T06": {
       "states": [
@@ -492,8 +558,22 @@
     },
     "W5-T07": {
       "states": [
-        "planned"
-      ]
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "3ffdfe81384fe8ec5f290088e764095543e7728c"
+      ],
+      "tests": [
+        "the_predictor_handoff_exports_only_the_sealed_replayed_selection",
+        "a_sealed_selection_refuses_swaps_and_keeps_the_selection_when_export_fails"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w5-t07-handoff-repro-20260926T065444Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w5-t07-handoff-20260926T065918Z"
+      ],
+      "remaining": "Export now takes only the sealed, replayed selection (a forged search.json exported the wrong program before). Production activation verifiers remain unimplemented (owner/security decision); serving packages are W9."
     },
     "W6-T01": {
       "states": [
@@ -522,18 +602,63 @@
     },
     "W6-T03": {
       "states": [
-        "planned"
-      ]
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "aff807bec62f6db102d8df57a97df531a7beeb7f",
+        "1eb9ca666a181697c0094bbac804358326fb841e"
+      ],
+      "tests": [
+        "tests/training_inputs.rs (8)",
+        "ungranted_valid_policy_is_still_refused_by_the_dispatch_hold",
+        "cli_policy_rejects_legacy_or_mismatched_labels_before_gpu_admission"
+      ],
+      "evidence": [
+        "docs/internal/core-ip/work-orders/evidence/W06-training-boundary.md",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w6-pre-t03-20260926T070050Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w6-post-t03-20260926T070301Z"
+      ],
+      "remaining": "Comparison, label and censored-runtime checks at the boundary. Per-comparison evaluator/task/fitted-subject binding needs a corpus schema change; typed runtime scope and censoring (G11) and label-policy binding into the objective identity (T06) remain; the rank_impl call site is compile-checked only."
     },
     "W6-T04": {
       "states": [
-        "planned"
-      ]
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "ad0b31daf13a10fbbba8fa1776ae85dcdca10a57"
+      ],
+      "tests": [
+        "tests/committed_updates.rs (6, neural feature, CPU)"
+      ],
+      "evidence": [
+        "docs/internal/core-ip/work-orders/evidence/W06-training-boundary.md",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w6-pre-t04-20260926T071526Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w6-post-t04-20260926T071632Z"
+      ],
+      "remaining": "Rejected reference-optimizer updates are atomic; per-rank consumption journal bound into checkpoints. The rank_impl journal path is compile-checked only (CUDA/NCCL and the held grant); cross-rank aggregation is W7; historical runs have no journal (T07)."
     },
     "W6-T05": {
       "states": [
-        "planned"
-      ]
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "787a7b27a047c940223fe994ecbeddc75a54ecd7"
+      ],
+      "tests": [
+        "tests/checkpoint_commit.rs (5, neural feature, CPU)"
+      ],
+      "evidence": [
+        "docs/internal/core-ip/work-orders/evidence/W06-training-boundary.md",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w6-pre-t05-20260926T072543Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w6-post-t05-20260926T072645Z"
+      ],
+      "remaining": "Atomic checkpoint publication with a verifying loader; the same-pid stale temporary no longer blocks commits. Trainer-side wiring is compile-checked only; manifest::atomic_write keeps the fixed temp name for its other callers; multi-host receipts are W7 and remote publication W8."
     },
     "W6-T06": {
       "states": [
@@ -621,13 +746,47 @@
     },
     "W8-T02": {
       "states": [
-        "planned"
-      ]
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "212ce68d767586d30f8ece6f722e11e59cfbb8b3"
+      ],
+      "tests": [
+        "crash_after_local_append_before_delivery_recovers_exactly_once",
+        "a_full_outbox_pauses_new_work_and_never_drops_or_grows",
+        "a_failed_delivery_stays_pending_and_is_never_acknowledged",
+        "dependencies_are_recorded_and_delivered_first",
+        "only_verified_content_addressed_items_enter",
+        "committed_state_is_verified_on_reopen"
+      ],
+      "evidence": [
+        "docs/internal/core-ip/work-orders/evidence/W08-durability.md",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w8-t02-mutations-20260926T064748Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w8-t02-postfix-20260926T065338Z"
+      ],
+      "remaining": "New capability on offline stores. Proposed outbox limits need owner approval; nothing in the product appends to the outbox yet; acknowledged entries are never compacted (retention is T05)."
     },
     "W8-T03": {
       "states": [
-        "planned"
-      ]
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "b3374aea8c43c42f2b751f3149539e56f3029707"
+      ],
+      "tests": [
+        "racing_publishers_at_one_predecessor_get_one_winner_and_one_conflict",
+        "a_missing_or_corrupt_dependency_blocks_the_pointer",
+        "graph_rules_are_checked_before_the_pointer_moves",
+        "the_pointer_moves_only_from_its_expected_predecessor",
+        "only_a_verified_closure_is_reusable"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w8-t03-mutations-20260926T070146Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w8-t03-postfix-20260926T070525Z"
+      ],
+      "remaining": "New capability on offline stores. HWM decisions are graph-checked only (not against the local ledger at publication); no reconciliation/rebase; publisher identity unauthenticated; nothing in the product creates commits yet; live S3 If-Match is T07/T08."
     },
     "W8-T04": {
       "states": [

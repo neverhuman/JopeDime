@@ -6,10 +6,10 @@ not CI verification, and neither is live qualification. No finding closes throug
 
 | State | Tasks |
 |---|---:|
-| planned | 26 |
-| reproduced | 16 |
-| implemented | 44 |
-| fixture-proven | 40 |
+| planned | 16 |
+| reproduced | 24 |
+| implemented | 54 |
+| fixture-proven | 50 |
 | CI-verified | 0 |
 | live-qualified | 0 |
 | measurement-complete | 0 |
@@ -32,12 +32,12 @@ not CI verification, and neither is live qualification. No finding closes throug
 | Task | States | Evidence | Remaining or blocker |
 |---|---|---|---|
 | W2-T01 Trace accepted assets and consumers | implemented | ccfb00e5f195 | Source trace only; nothing was hashed or run. Section 7 lists the unverified items; gaps G-01..G-12 feed T02..T04. |
-| W2-T02 Extend the release-controlled semantic bundle | reproduced, implemented, fixture-proven | ce4aea8ec112; accepted_identity_requires_the_released_weights_file; accepted_policy_requires_the_released_weights_file | One slice (G-02). The versioned semantic manifest, independent worker context-bundle pins (G-03), encoder identity pins at admission (G-04) and receipt unknown-field rejection (G-08) remain. |
-| W2-T03 Make semantic products opaque | planned | — | — |
+| W2-T02 Extend the release-controlled semantic bundle | reproduced, implemented, fixture-proven | ce4aea8ec112; accepted_identity_requires_the_released_weights_file; accepted_policy_requires_the_released_weights_file | G-02 (ce4aea8ec), G-03 request-issued context admission and G-04 pinned encoder identity (e8cf2c70e) are fixed. G-08 (unknown receipt fields) stays open: the accepted receipt comes from the external exporter and its field set is not available here. No versioned semantic manifest yet. |
+| W2-T03 Make semantic products opaque | reproduced, implemented, fixture-proven | e8cf2c70ebeb; products.rs compile_fail doctests (same-width swaps); serialized_swaps_padding_and_truncation_fail_at_the_receiver; products_are_scoped_to_one_encode_and_serialize_in_the_historical_layout | Distinct product types with named constructors; receivers replay the assembly (declared 1e-4 tolerance, not yet exercised on accepted assets). PolicyModel/score_pool inputs and cell surfaces are still untyped. |
 | W2-T04 Consume validated bytes without reopening by path | implemented, fixture-proven | c3f60f0c7f1a; bytes_and_path_loaders_keep_the_same_inference_tensors; accepted_manifest_uses_sha256_bytes_not_legacy_identifier | Hyperion weights and manifest now consume authenticated bytes (G-10a/b). Training warm-start/resume, native context and corpus-index re-reads (G-10c,e,g) and cache-key closure (G-11) remain; real-weights parity runs only where the asset exists. |
 | W2-T05 Produce golden intermediate calculations | implemented, fixture-proven | 633191d81901; golden_hyperion_pooling_uses_population_std_and_interpolated_percentiles; golden_assembly_order_projection_normalization_and_clip; golden_label_normalizations | Pooling, assembly and label normalizations are pinned by independent arithmetic. Target window membership (seed-17 PCG64 inside starforge) and encoder forward passes on real assets remain. |
 | W2-T06 Verify complete tensor inventory and roles | implemented, fixture-proven | 742553666022; test_verify_inventory.py (8); host proof verify-real.json; host proof tamper.json | Hosted CI runs the synthetic fixtures only; the real asset is verified on the host. |
-| W2-T07 Qualify producer-to-consumer handoff | planned | — | — |
+| W2-T07 Qualify producer-to-consumer handoff | implemented, fixture-proven | e8cf2c70ebeb; handoff_reaches_only_the_intended_consumer_for_the_issued_scope | ContextHandoff binds release identity, transformation chain, scope and consumer. W3 teacher admission does not consume it yet; accepted-weight/native qualification not run. |
 
 ## W03
 
@@ -61,19 +61,19 @@ not CI verification, and neither is live qualification. No finding closes throug
 | W4-T04 Differentially test grammar and typed parser | implemented, fixture-proven | 663880fa69b7; tests/grammar_differential.rs | Verified safeguard: no dead-end legal prefix or parser disagreement found over 6,430 enumerated states and 17,036 programs/expressions. |
 | W4-T05 Establish scorer dependencies and architectural limits | implemented, fixture-proven | de747c363357; tests/scorer_dependencies.rs | Characterized on synthetic weights only; the order-aware challenger is W10. |
 | W4-T06 Freeze sampler replay separately from backend parity | implemented, fixture-proven | 376e712e7bab; tracing_changes_nothing_and_fixed_logit_replay_reproduces_every_token; cached_and_full_routes_share_draws_and_decisions_within_tensor_parity; a_decision_near_a_boundary_diverges_inside_the_tensor_threshold; +1 tests | Fixed-logit replay and separate decision-divergence measurement exist. Native (LibTorch) versus Candle traces on accepted weights need the CUDA benchmark (W11); the jope-engine LibTorch proposal sampler is not traced. |
-| W4-T07 Preserve proposal identity and complete denominators | planned | — | — |
+| W4-T07 Preserve proposal identity and complete denominators | reproduced, implemented, fixture-proven | eceb241f52c7; producer_artifact_carries_a_reconciled_proposal_ledger; tampered_proposal_ledgers_are_refused; recorded_outcomes_are_rederived_from_tokens; +1 tests | Proposal ledger with per-slot identity and reconciled denominators; run_neural requires it. The jope-engine W5-T01 lineage join (slot_record_sha256) is a follow-up; parser-refusal/incomplete branches are covered only by record edits. |
 
 ## W05
 
 | Task | States | Evidence | Remaining or blocker |
 |---|---|---|---|
 | W5-T01 Define the immutable candidate lineage envelope | reproduced, implemented, fixture-proven | 943e3a6926d6; generic_bootstrap_candidates_retain_their_original_proposal_and_one_adaptation; variation_children_record_parents_and_cannot_alter_parent_fitted_state; gp::lineage::tests (4 tamper tests) | The lineage verifier refuses rows without an envelope (older ledgers) and needs seed/vocabulary paths; native-continuation paths are unit-tested only. |
-| W5-T02 Freeze request objectives and paired-arm differences | implemented, fixture-proven | e41f1541501a; a_resume_under_other_selection_rules_is_refused_not_restarted | Selection contract and proposal cap are frozen in the search request; paired-arm manifests and differences remain. |
+| W5-T02 Freeze request objectives and paired-arm differences | reproduced, implemented, fixture-proven | e41f1541501a; 7c76b5850aed; 38f83f47c98e; a_resume_under_other_selection_rules_is_refused_not_restarted; a_paired_comparison_names_its_sole_arm_difference_and_refuses_any_other; a_refused_proposal_in_one_slot_does_not_shift_another_slots_random_streams | Frozen selection contract, paired-arm manifest and slot-keyed random streams (a new stream protocol: new searches at the same seed differ from old ones; old searches cannot be resumed by this build). Order-balanced paired receipts from real runs are W10. |
 | W5-T03 Separate fit caches from score caches | implemented, fixture-proven | 4311120b70b6; reused_fits_are_rescored_on_their_own_rows_and_never_inherit_scores; score_identities_bind_the_fold_protocol_and_predictions | Verified safeguard (scores were already recomputed on reuse); each score now carries an identity bound to its fitted subject and scored rows. |
 | W5-T04 Implement conservative feasibility classification | implemented, fixture-proven | 6e4e38f4016c; feasibility::tests (4, with a counting allocator bounding peak allocation); feasibility_estimates_are_recorded_beside_observed_outcomes_under_one_rule | Memory feasibility only (not time); recorded as a diagnostic, dispatch unchanged. Refusing candidates would change search policy and needs a new protocol identity. |
-| W5-T05 Reserve work before dispatch and supervise termination | planned | — | — |
+| W5-T05 Reserve work before dispatch and supervise termination | reproduced, implemented, fixture-proven | 596de04ac326; a_blocked_fitter_and_its_helpers_are_killed_at_the_original_deadline; helpers_left_by_a_finished_evaluator_are_drained_before_the_next_dispatch; a_second_searcher_cannot_dispatch_into_a_live_search; +1 tests | Search output reservation and evaluator process-group supervision. Processes started by an evaluator can survive if the search controller itself is killed (the product evaluator starts none today). |
 | W5-T06 Build an independent selector and stopping replay | reproduced, implemented, fixture-proven | ec99c76ade7d; independent_replay_reproduces_real_search_winners_and_refuses_tampered_ledgers; resumed_search_refuses_journaled_measurements_its_original_completion_does_not_support; gp::selection_replay::tests (9 adversarial) | Replay refuses older ledgers without the search clock; production activation verifiers remain unimplemented (owner/security decision). |
-| W5-T07 Seal selection, final refit and export handoff | planned | — | — |
+| W5-T07 Seal selection, final refit and export handoff | reproduced, implemented, fixture-proven | 3ffdfe81384f; the_predictor_handoff_exports_only_the_sealed_replayed_selection; a_sealed_selection_refuses_swaps_and_keeps_the_selection_when_export_fails | Export now takes only the sealed, replayed selection (a forged search.json exported the wrong program before). Production activation verifiers remain unimplemented (owner/security decision); serving packages are W9. |
 
 ## W06
 
@@ -81,9 +81,9 @@ not CI verification, and neither is live qualification. No finding closes throug
 |---|---|---|---|
 | W6-T01 Freeze resolved training inputs | planned | — | — |
 | W6-T02 Specify the complete objective by term | reproduced, implemented, fixture-proven | ccfb00e5f195; 2668de0589ca; tests/objective_fixtures.rs (14, neural feature, CPU) | Specification plus CPU f64 fixtures for every term, gradient and partition dependence; G8 and G12 fixed fail-closed. G1 (objective identity in checkpoints and resume guards) is T06; G11 runtime-label typing is T03; GPU/BF16/fused-AdamW numerics and the accepted step-60000 binding (G2/G3) remain. |
-| W6-T03 Validate comparisons and runtime observations | planned | — | — |
-| W6-T04 Record actual consumption and committed updates | planned | — | — |
-| W6-T05 Commit complete checkpoints atomically | planned | — | — |
+| W6-T03 Validate comparisons and runtime observations | reproduced, implemented, fixture-proven | aff807bec62f; 1eb9ca666a18; tests/training_inputs.rs (8); ungranted_valid_policy_is_still_refused_by_the_dispatch_hold; cli_policy_rejects_legacy_or_mismatched_labels_before_gpu_admission | Comparison, label and censored-runtime checks at the boundary. Per-comparison evaluator/task/fitted-subject binding needs a corpus schema change; typed runtime scope and censoring (G11) and label-policy binding into the objective identity (T06) remain; the rank_impl call site is compile-checked only. |
+| W6-T04 Record actual consumption and committed updates | reproduced, implemented, fixture-proven | ad0b31daf13a; tests/committed_updates.rs (6, neural feature, CPU) | Rejected reference-optimizer updates are atomic; per-rank consumption journal bound into checkpoints. The rank_impl journal path is compile-checked only (CUDA/NCCL and the held grant); cross-rank aggregation is W7; historical runs have no journal (T07). |
+| W6-T05 Commit complete checkpoints atomically | reproduced, implemented, fixture-proven | 787a7b27a047; tests/checkpoint_commit.rs (5, neural feature, CPU) | Atomic checkpoint publication with a verifying loader; the same-pid stale temporary no longer blocks commits. Trainer-side wiring is compile-checked only; manifest::atomic_write keeps the fixed temp name for its other callers; multi-host receipts are W7 and remote publication W8. |
 | W6-T06 Enforce all four continuation modes | planned | — | — |
 | W6-T07 Reconcile accepted ancestry and exposure limits | planned | — | — |
 
@@ -106,8 +106,8 @@ not CI verification, and neither is live qualification. No finding closes throug
 | Task | States | Evidence | Remaining or blocker |
 |---|---|---|---|
 | W8-T01 Define the durable artifact and event inventory | implemented, fixture-proven | 64e56b410af3; planned_census_reconciles_to_terminal_dispositions; a_failed_or_retried_attempt_cannot_disappear; a_retried_attempt_cannot_become_a_second_logical_improvement; +7 tests | New capability (no prior path). Nothing in the product emits these objects yet; engine-side mapping (native_persistence, corpus_publication, checkpoint_recovery) and consecutive update-index enforcement remain. |
-| W8-T02 Persist locally before acknowledging completion | planned | — | — |
-| W8-T03 Implement dependency-first conditional publication | planned | — | — |
+| W8-T02 Persist locally before acknowledging completion | implemented, fixture-proven | 212ce68d7675; crash_after_local_append_before_delivery_recovers_exactly_once; a_full_outbox_pauses_new_work_and_never_drops_or_grows; a_failed_delivery_stays_pending_and_is_never_acknowledged; +3 tests | New capability on offline stores. Proposed outbox limits need owner approval; nothing in the product appends to the outbox yet; acknowledged entries are never compacted (retention is T05). |
+| W8-T03 Implement dependency-first conditional publication | implemented, fixture-proven | b3374aea8c43; racing_publishers_at_one_predecessor_get_one_winner_and_one_conflict; a_missing_or_corrupt_dependency_blocks_the_pointer; graph_rules_are_checked_before_the_pointer_moves; +2 tests | New capability on offline stores. HWM decisions are graph-checked only (not against the local ledger at publication); no reconciliation/rebase; publisher identity unauthenticated; nothing in the product creates commits yet; live S3 If-Match is T07/T08. |
 | W8-T04 Make retries and summaries rebuildable | planned | — | — |
 | W8-T05 Apply cadence and retention classes | planned | — | — |
 | W8-T06 Execute offline fault-injection matrix | planned | — | — |
