@@ -117,10 +117,20 @@ enum Command {
         #[arg(long, default_value = "jope-same-cut-v1")]
         track: String,
     },
+    /// The dependency-free constant adapter (jope.bench-adapter/v1) the adapter-contract tests
+    /// run: `--version`, or `<train.csv> <predict.csv> <out.csv> <task>`.
+    #[command(hide = true, disable_help_flag = true)]
+    MeanAdapter {
+        #[arg(num_args = 0.., trailing_var_arg = true, allow_hyphen_values = true)]
+        args: Vec<String>,
+    },
 }
 
 fn main() -> Result<()> {
     match Cli::parse().command {
+        Command::MeanAdapter { args } => {
+            std::process::exit(jope_bench::adapter::mean_adapter(&args));
+        }
         Command::Panel(cli) => {
             if jope_bench::panel::cli::execute(cli) != std::process::ExitCode::SUCCESS {
                 bail!("panel command failed");

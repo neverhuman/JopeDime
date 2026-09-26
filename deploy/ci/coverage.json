@@ -5080,6 +5080,22 @@
       "dispositions": [],
       "scope": "Independent transfer KPI oracle on synthetic plans, reading only the plan, freeze, report and hash-pinned assets and never panel::transfer's scoring code: exact gains by construction, per-unit minimum, equal family weighting, missing pairs and zero baselines never becoming zero gains, tamper and unplanned-prediction refusal, and unit/family/loss/headline drift detection against the Rust reporter. No transfer measurement is established."
     },
+    "target:jope-bench/test/adapter_contract": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-bench/tests/adapter_contract.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
     "target:jope-cli/bin/jope": {
       "discovery": {
         "kind": "target",

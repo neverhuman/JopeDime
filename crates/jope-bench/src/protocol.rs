@@ -214,7 +214,7 @@ pub fn run(
 mod tests {
     use super::*;
     use crate::cuts::{build, FoldPlan};
-    use crate::methods::{baselines, default_baselines, MethodKind, SearchConfig};
+    use crate::methods::{default_baselines, SearchConfig};
 
     fn toy() -> (Rows, Vec<f64>) {
         let mut x = Vec::new();
@@ -229,82 +229,8 @@ mod tests {
         (x, y)
     }
 
-    #[test]
-    fn screen_ranks_everyone_and_deepens_the_top() {
-        let (x, y) = toy();
-        let cuts = build(&FoldPlan::new("p", 1, 4), "p", "s", x.len()).unwrap();
-        let mut methods = baselines(
-            &[
-                "ridge".to_owned(),
-                "histgbm".to_owned(),
-                "ksmooth".to_owned(),
-            ],
-            Task::Regression,
-        )
-        .unwrap();
-        methods.push(Method {
-            id: "program.broken".to_owned(),
-            kind: MethodKind::Program,
-            dsl: "(pipe X (no_such_head_ever))".to_owned(),
-            produce_seconds: 0.0,
-            resample: None,
-            adapter: None,
-        });
-        // An adapter goes through the same screen and deep stages as a program.
-        methods.push(crate::methods::adapter(
-            crate::adapter::parse_spec(
-                &format!(
-                    "mean=python3 {}",
-                    concat!(env!("CARGO_MANIFEST_DIR"), "/adapters/mean_adapter.py")
-                ),
-                30.0,
-            )
-            .unwrap(),
-        ));
-        let protocol = Protocol {
-            screen_fold: 0,
-            top: 2,
-        };
-        let results = run(&x, &y, &cuts, methods.clone(), &protocol, Task::Regression).unwrap();
-        assert_eq!(results.len(), 5);
-        assert_eq!(
-            results.iter().map(|r| r.screen_rank).collect::<Vec<_>>(),
-            [1, 2, 3, 4, 5]
-        );
-        assert_eq!(
-            results[4].method.id, "program.broken",
-            "rejected ranks last"
-        );
-        assert!(results[4].deep.is_none());
-        let mean = results
-            .iter()
-            .find(|r| r.method.id == "adapter.mean")
-            .expect("the adapter was screened");
-        assert!(mean.screen.is_ok(), "{:?}", mean.screen);
-        assert_eq!(
-            mean.screen_rank, 4,
-            "a constant prediction ranks below every fitted head"
-        );
-        assert_eq!(results.iter().filter(|r| r.deep.is_some()).count(), 2);
-        assert!(results[0].deep_rank.is_some());
-        let deep = results[0].deep.as_ref().unwrap();
-        assert_eq!(deep.folds.len(), 4);
-        assert!(results[0].screen.predictions.is_empty());
-        for r in &results {
-            assert_eq!(r.screen_cut_id, cuts[0].cut_id);
-        }
-        // Screen fitness is the raw held-out R², so ranks follow it strictly.
-        let fits: Vec<f64> = results[..4]
-            .iter()
-            .map(|r| r.screen_fitness.unwrap())
-            .collect();
-        assert!(fits.windows(2).all(|w| w[0] >= w[1]), "{fits:?}");
-
-        // Duplicate ids are refused.
-        methods.push(methods[0].clone());
-        let error = run(&x, &y, &cuts, methods, &protocol, Task::Regression).unwrap_err();
-        assert!(error.to_string().contains("duplicate method id"), "{error}");
-    }
+    // `screen_ranks_everyone_and_deepens_the_top` runs the constant adapter process, so it lives
+    // in tests/adapter_contract.rs, where the package binary is available.
 
     #[test]
     fn far_below_zero_still_orders_and_unscored_ranks_last() {

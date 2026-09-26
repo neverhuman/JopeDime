@@ -14,9 +14,10 @@
 //! regression, the probability of the positive class for binary, an integer class code for
 //! multiclass); exit code 0 on success. `<command...> --version` must print one line naming the
 //! engine and its version; it is recorded on the method. Reference adapters for XGBoost,
-//! LightGBM, CatBoost, a scikit-learn random forest and a dependency-free mean live under
-//! `crates/jope-bench/adapters/` (named `<engine>_adapter.py` so they never shadow the library
-//! they import).
+//! LightGBM, CatBoost and a scikit-learn random forest live under `crates/jope-bench/adapters/`
+//! (named `<engine>_adapter.py` so they never shadow the library they import). The
+//! dependency-free constant adapter the contract tests run is [`mean_adapter`], reached as the
+//! hidden `jope-bench mean-adapter` subcommand.
 
 use std::path::Path;
 use std::process::{Command, Stdio};
@@ -300,135 +301,101 @@ pub fn evaluate_deep_adapter(
     pool(cuts, &labels, outcomes, y, task)
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::cuts::{build, FoldPlan};
+const MEAN_USAGE: &str =
+    "jope-bench adapter (contract jope.bench-adapter/v1): the constant baseline.
 
-    fn mean_adapter(timeout: f64) -> AdapterSpec {
-        let script = concat!(env!("CARGO_MANIFEST_DIR"), "/adapters/mean_adapter.py");
-        parse_spec(&format!("mean=python3 {script}"), timeout).unwrap()
-    }
+Regression predicts the training mean, binary the training positive rate, multiclass the majority
+training class (the earliest on a tie). It exercises the adapter contract in tests and is the floor
+every other adapter must clear.
 
-    fn toy() -> (Rows, Vec<f64>) {
-        let mut x = Vec::new();
-        let mut y = Vec::new();
-        let mut rng = feat_math::Pcg32::new(9, 2);
-        for _ in 0..80 {
-            let a = rng.next_f64();
-            let b = rng.next_f64();
-            x.push(vec![a, b]);
-            y.push(a + 0.5 * b);
+    jope-bench mean-adapter --version
+    jope-bench mean-adapter <train.csv> <predict.csv> <out.csv> <task>
+";
+
+/// The constant adapter process: prints `mean 1` for `--version`, else fits and predicts per the
+/// contract. Returns the exit code: 0 on success, 1 on unusable input, 2 on a usage error.
+pub fn mean_adapter(args: &[String]) -> i32 {
+    if let [flag] = args {
+        if flag == "--version" {
+            println!("mean 1");
+            return 0;
         }
-        (x, y)
     }
-
-    #[test]
-    fn specs_parse_and_the_mean_adapter_answers_the_contract() {
-        assert!(parse_spec("x", 1.0).is_err());
-        assert!(parse_spec("bad name=cmd", 1.0).is_err());
-        assert!(parse_spec("ok=", 1.0).is_err());
-        assert!(parse_spec("ok=cmd", 0.0).is_err());
-        let spec = parse_spec("rf=python3 adapters/x.py --trees 10", 5.0).unwrap();
-        assert_eq!(spec.id(), "adapter.rf");
-        assert_eq!(spec.command, ["python3", "adapters/x.py", "--trees", "10"]);
-
-        let mut spec = mean_adapter(30.0);
-        spec.probe().unwrap();
-        assert_eq!(spec.version.as_deref(), Some("mean 1"));
-
-        let (x, y) = toy();
-        let cuts = build(&FoldPlan::new("m", 1, 4), "m", "s", x.len()).unwrap();
-        let outcome = evaluate_adapter(&spec, &x, &y, &cuts[0], Task::Regression);
-        assert!(outcome.is_ok(), "{outcome:?}");
-        let (_, y_train) = take(&x, &y, &cuts[0].train);
-        let mean = y_train.iter().sum::<f64>() / y_train.len() as f64;
-        assert!(outcome.predictions.iter().all(|p| (p - mean).abs() < 1e-12));
-        assert!(
-            outcome.score.unwrap() <= 0.0,
-            "a constant predicts no variance"
-        );
-        assert!(outcome.fit_seconds > 0.0 && outcome.predict_seconds == 0.0);
-
-        let deep = evaluate_deep_adapter(&spec, &x, &y, &cuts, Task::Regression);
-        assert_eq!(deep.status, "ok", "{deep:?}");
-        assert_eq!(deep.folds.len(), 4);
-        assert!(deep.folds.iter().all(|f| f.dsl.is_empty()));
-
-        // Binary: the positive rate; multiclass: the majority class.
-        let yb: Vec<f64> = y
-            .iter()
-            .map(|v| if *v > 0.75 { 1.0 } else { 0.0 })
-            .collect();
-        let binary = evaluate_adapter(&spec, &x, &yb, &cuts[0], Task::Binary);
-        assert!(binary.is_ok(), "{binary:?}");
-        assert!(binary.predictions.iter().all(|p| (0.0..=1.0).contains(p)));
-        let ym: Vec<f64> = y
-            .iter()
-            .map(|v| (v * 2.0).floor().clamp(0.0, 2.0))
-            .collect();
-        let multi = evaluate_adapter(&spec, &x, &ym, &cuts[0], Task::Multiclass);
-        assert!(multi.is_ok(), "{multi:?}");
-        assert!(multi.predictions.iter().all(|p| p.fract() == 0.0));
+    let [train, predict, out, task] = args else {
+        eprint!("{MEAN_USAGE}");
+        return 2;
+    };
+    match constant_predictions(Path::new(train), Path::new(predict), task) {
+        Ok(Some((value, rows))) => {
+            let text: String = (0..rows).map(|_| format!("{value:?}\n")).collect();
+            match std::fs::write(out, text) {
+                Ok(()) => 0,
+                Err(error) => {
+                    eprintln!("write {out}: {error}");
+                    1
+                }
+            }
+        }
+        Ok(None) => {
+            eprintln!("unknown task '{task}'");
+            2
+        }
+        Err(error) => {
+            eprintln!("{error:#}");
+            1
+        }
     }
+}
 
-    #[test]
-    fn adapter_failures_are_rejections_with_the_cause() {
-        let (x, y) = toy();
-        let cuts = build(&FoldPlan::new("f", 1, 3), "f", "s", x.len()).unwrap();
-        // Specs have no quoting, so a command with spaces inside one argument is built directly.
-        assert!(
-            parse_spec("huge=python3 x.py", 1e30).is_err(),
-            "timeout must fit a Duration"
-        );
-        let failing = AdapterSpec {
-            name: "fail".to_owned(),
-            command: vec![
-                "python3".to_owned(),
-                "-c".to_owned(),
-                "import sys; sys.stderr.write('boom'); sys.exit(3)".to_owned(),
-            ],
-            version: None,
-            timeout_seconds: 30.0,
-        };
-        let outcome = evaluate_adapter(&failing, &x, &y, &cuts[0], Task::Regression);
-        assert_eq!(outcome.status, "rejected");
-        let reason = outcome.reason.as_deref().unwrap_or("");
-        assert!(
-            reason.contains("exit") && reason.contains("boom"),
-            "{reason}"
-        );
-
-        let silent = AdapterSpec {
-            command: vec!["python3".to_owned(), "-c".to_owned(), "pass".to_owned()],
-            ..failing.clone()
-        };
-        let outcome = evaluate_adapter(&silent, &x, &y, &cuts[0], Task::Regression);
-        assert!(outcome
-            .reason
-            .as_deref()
-            .unwrap_or("")
-            .contains("no out.csv"));
-
-        let slow = AdapterSpec {
-            command: vec![
-                "python3".to_owned(),
-                "-c".to_owned(),
-                "import time; time.sleep(5)".to_owned(),
-            ],
-            timeout_seconds: 0.3,
-            ..failing.clone()
-        };
-        let started = Instant::now();
-        let outcome = evaluate_adapter(&slow, &x, &y, &cuts[0], Task::Regression);
-        assert!(started.elapsed() < Duration::from_secs(4));
-        assert!(outcome
-            .reason
-            .as_deref()
-            .unwrap_or("")
-            .contains("timed out"));
-
-        let mut unprobeable = silent;
-        assert!(unprobeable.probe().is_err(), "prints nothing for --version");
+/// The constant and the number of rows to predict, or `None` for an unknown task.
+fn constant_predictions(train: &Path, predict: &Path, task: &str) -> Result<Option<(f64, usize)>> {
+    let text =
+        std::fs::read_to_string(train).with_context(|| format!("read {}", train.display()))?;
+    let targets = text
+        .lines()
+        .filter(|line| !line.trim().is_empty())
+        .map(|line| {
+            let (_, last) = line
+                .rsplit_once(',')
+                .with_context(|| format!("training row without a target: {line:?}"))?;
+            last.trim()
+                .parse::<f64>()
+                .with_context(|| format!("training target {last:?} is not a number"))
+        })
+        .collect::<Result<Vec<f64>>>()?;
+    let rows = std::fs::read_to_string(predict)
+        .with_context(|| format!("read {}", predict.display()))?
+        .lines()
+        .filter(|line| !line.trim().is_empty())
+        .count();
+    if targets.is_empty() {
+        bail!("no training rows");
     }
+    let n = targets.len() as f64;
+    let value = match task {
+        "regression" => targets.iter().sum::<f64>() / n,
+        "binary" => targets.iter().filter(|t| **t == 1.0).count() as f64 / n,
+        "multiclass" => {
+            // Class counts in first-seen order; the earliest class wins a tie.
+            let mut counts: Vec<(i64, usize)> = Vec::new();
+            for target in &targets {
+                if !target.is_finite() {
+                    bail!("class code {target} is not finite");
+                }
+                let class = target.trunc() as i64;
+                match counts.iter_mut().find(|(c, _)| *c == class) {
+                    Some((_, count)) => *count += 1,
+                    None => counts.push((class, 1)),
+                }
+            }
+            let best = counts.iter().map(|(_, count)| *count).max().unwrap_or(0);
+            let (class, _) = counts
+                .iter()
+                .find(|(_, count)| *count == best)
+                .context("no class")?;
+            *class as f64
+        }
+        _ => return Ok(None),
+    };
+    Ok(Some((value, rows)))
 }

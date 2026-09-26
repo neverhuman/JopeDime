@@ -128,8 +128,8 @@ or search budget is a new evidence directory, not an edit.
   runs and recorded.
   Reference adapters under `crates/jope-bench/adapters/` (`<engine>_adapter.py`) wrap XGBoost,
   LightGBM, CatBoost and a scikit-learn random forest with library defaults, a fixed seed and one
-  thread (no tuning, no early stopping), plus a dependency-free constant (`mean_adapter.py`) that
-  the tests use. Adapters are
+  thread (no tuning, no early stopping). The dependency-free constant the tests use is the hidden
+  `jope-bench mean-adapter` subcommand (training mean, positive rate or majority class). Adapters are
   processes, not dependencies: the crate builds and its tests run without any of those libraries
   installed, and a run that names an adapter whose library is missing fails at the probe. An
   adapter's wall time is recorded as its fit time; its rows are as deterministic as the engine

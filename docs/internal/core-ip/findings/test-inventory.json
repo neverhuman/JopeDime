@@ -1339,6 +1339,12 @@
         "performance"
       ]
     },
+    "target:jope-bench/test/adapter_contract": {
+      "role": "regression",
+      "subsystems": [
+        "evaluation"
+      ]
+    },
     "target:jope-bench/test/classification": {
       "role": "deferred-classification",
       "reason": "binary/multiclass/time-series specialized scope deferred by the regression plan"
