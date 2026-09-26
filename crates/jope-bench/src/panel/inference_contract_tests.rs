@@ -78,7 +78,7 @@ pub(crate) fn fit_method(
     let mut index = 0usize;
     for (position, category) in categories.iter().enumerate() {
         for _ in 0..repeats(position) {
-            let amount = if amount_missing_everywhere || index % 5 == 0 {
+            let amount = if amount_missing_everywhere || index.is_multiple_of(5) {
                 None
             } else {
                 Some(format!("{}", index as f64 * 0.75 - 4.0))
