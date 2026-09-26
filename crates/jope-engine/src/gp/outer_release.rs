@@ -333,7 +333,7 @@ impl Authority {
             "subject":{"predictor":subject,"handoff":handoff_artifact,
                 "seal":recorded["seal"],"program_sha256":seal["selected"]["program_sha256"],
                 "training_sha256":scope["training_sha256"],"fit_key":refit.fit_key,
-                "model_sha256":recorded["final_refit"]["model_sha256"]},
+                "model_sha256":refit.model_sha256},
             "preparation":{"prepared":scope["prepared"],"prepared_sha256":scope["prepared_sha256"],
                 "dataset":p.dataset,"family":p.family,"partition":p.meta_partition,"cut":scope["cut"],
                 "clean_status":p.clean_status,"evaluation_limitations":p.evaluation_limitations},

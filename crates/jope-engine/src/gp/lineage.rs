@@ -575,7 +575,8 @@ fn native_receipt(
 
 /// Link an exported predictor to the selected subject. The only final-fit scope
 /// the fitted-view export implements is the selected cut's training rows, so a
-/// valid final refit carries the selected fold fit's exact fitted identity.
+/// valid final refit carries the selected fold fit's exact fitted identity and
+/// serves exactly the model that fit retained.
 /// Anything else is a different subject requiring its own qualification.
 pub fn verify_final_refit(
     root: &Path,
@@ -633,13 +634,29 @@ pub fn verify_final_refit_bytes(
             && refit.training_sha256 == fold.training_sha256,
         "final refit fitted state is not the selected fold fit"
     );
+    let model_sha256 = refit.model_sha256.context("final refit model absent")?;
+    // The model parameters the predictor serves, taken from its verified
+    // bytes, are the model that completion retained (review of #111).
+    ensure!(
+        retained_model_sha256(predictor_bytes)? == model_sha256,
+        "final refit model parameters are not the verified completion's model"
+    );
     Ok(FinalRefit {
         transformation: "selected_cut_training_refit_reuses_fold_fit",
         predictor: predictor.to_path_buf(),
         predictor_sha256: hash(predictor_bytes),
         fit_key: refit.fit_key,
-        model_sha256: refit.model_sha256.context("final refit model absent")?,
+        model_sha256,
     })
+}
+
+/// The fit authority's identity of the model carried in `bytes`, by its own
+/// definition of a completion's `model_sha256` (`eval_registry::service`): the
+/// SHA-256 of the `serde_json::to_vec` encoding of the `model` member of the
+/// bytes parsed as a JSON value. Never a re-serialization of the typed model.
+fn retained_model_sha256(bytes: &[u8]) -> Result<String> {
+    let carrier: Value = serde_json::from_slice(bytes)?;
+    Ok(hash(&serde_json::to_vec(&carrier["model"])?))
 }
 
 #[cfg(test)]

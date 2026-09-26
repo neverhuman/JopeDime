@@ -614,3 +614,71 @@ exported predictor's recipe, training scope and fit-completion reference. It doe
 bind the predictor's own `model` parameters to the verified completion's `model_sha256`.
 A predictor with the same recipe and references but other model parameters would pass
 the refit check. This is not reproduced here; it needs its own owner decision.
+
+### Second commit — the exported predictor's model parameters are bound to the verified final refit
+
+The gap recorded above ("Different class") is closed on the same branch, after `74ffdf9df`.
+
+**Finding.**
+- `lineage::verify_final_refit` bound the exported predictor's recipe, training scope and
+  fit-completion reference, and checked that completion against the selected fold fit.
+- It never bound the predictor's own `model` member to that completion's `model_sha256`.
+  A predictor with the same recipe and references but other model parameters passed the
+  check, and `grant_body` issued a grant for it.
+- `grant_body` also copied the grant's `subject.model_sha256` from the handoff's
+  unverified `final_refit` record rather than from the refit it had just verified.
+
+**Reproduction.** `w1b-review-refit-pre-20260926T144858Z`: 2/2 FAIL. The positive
+controls held in both tests before the negative assertions failed.
+
+| Test | Pre-fix outcome |
+|---|---|
+| `an_exported_predictors_model_parameters_are_those_of_its_verified_final_refit` | One model parameter was changed; the recipe, training scope and completion reference were not, and the handoff recorded the changed predictor. `verify_final_refit` returned `Ok` with the honest `model_sha256` (`236ff2…`), and **a grant was issued** naming that `model_sha256` for the changed predictor. |
+| `an_outer_grant_names_the_model_its_final_refit_verified` | A handoff misrecorded `final_refit.model_sha256` as `eee…e`. The grant named `eee…e`, not the verified `236ff2…`. |
+
+**Definition used.** The fit authority records a successful fit's model as follows
+(`eval_registry::service`, pinned, unchanged):
+- it parses the worker output as a JSON value;
+- it takes the value's `model` member and encodes it with `serde_json::to_vec`;
+- it stores those bytes, and `model_sha256` is their SHA-256.
+
+That is a canonical encoding. The check therefore applies exactly that definition to the
+exact verified predictor bytes: parse, take `model`, `serde_json::to_vec`, SHA-256. It does
+not re-serialize the typed `Model`. The positive control shows that the honest predictor's
+`model`, encoded this way, is byte-identical to the retained model object in the
+authority's store.
+
+**Fix.**
+- `lineage::verify_final_refit_bytes` checks the predictor's model parameters. This runs
+  after the fold-fit check, so the existing refusals and their order are unchanged. The
+  model digest must equal the verified completion's `model_sha256`. Otherwise the check
+  refuses with "final refit model parameters are not the verified completion's model"
+  (new; no refusal existed for this).
+- `handoff::export_sealed` and its resume path share this check, through
+  `verify_final_refit`.
+- `grant_body` records `subject.model_sha256` from the verified refit, never from the
+  handoff.
+- Every existing error message is unchanged.
+
+**Controls.**
+- Positive: the honest final refit passes `verify_final_refit`, and its model is
+  byte-identical to the retained model object. A grant is issued, and it names the
+  verified model identity.
+- Negative: one model parameter is changed; the recipe, training scope and completion
+  reference are not. The handoff records the changed predictor. `verify_final_refit`
+  refuses it, the grant is refused, and no grant file is written.
+
+**Results.**
+- Post-fix `w1b-review-refit-post-20260926T144954Z`: 18/18. It covers the two new tests,
+  the outer-release swap tests of `74ffdf9df`, `outer_release_cli`, the export and
+  handoff tests, and the lineage unit tests. No warning is reported in a changed file.
+- Pre-commit `w1b-review-refit-c-*`:
+  - engine: the W1 set, the fence suites, `outer_release_cli`, `projected_export` and
+    `teacher_counterfactuals`, 173/173. This includes the existing final-refit refusals
+    in `generic_bootstrap_candidates_retain_their_original_proposal_and_one_adaptation`;
+  - jope-datasets 69/69;
+  - workspace all-targets check, parity-matrix, coverage (0 unassigned, 261 targets),
+    verify-test-inventory, fmt and diff-check all exit 0.
+- Not touched: the pinned `eval_registry` files (including the `service.rs` definition
+  used above), `fit_boundary`, jope-learning, `native_loop/materialize.rs` and the
+  request schema.

@@ -3838,3 +3838,94 @@ fn the_release_ledger_binds_the_bytes_the_authority_wrote() {
     );
     assert!(!visible.exists());
 }
+
+// ---------------------------------------------------------------------------
+// Review of #111, second finding: the exported predictor's own model
+// parameters are bound to the verified final refit.
+// ---------------------------------------------------------------------------
+
+/// Add one to the first floating-point parameter of `value` (depth first).
+fn change_one_parameter(value: &mut Value) -> bool {
+    if value.is_f64() {
+        *value = json!(value.as_f64().unwrap() + 1.0);
+        return true;
+    }
+    match value {
+        Value::Array(items) => items.iter_mut().any(change_one_parameter),
+        Value::Object(members) => members.values_mut().any(change_one_parameter),
+        _ => false,
+    }
+}
+
+/// `lineage::verify_final_refit` bound the exported predictor's recipe,
+/// training scope and fit-completion reference, but not the model parameters
+/// the predictor serves. Those must be the model the verified completion
+/// retained (its `model_sha256`, as the fit authority defines it).
+#[test]
+fn an_exported_predictors_model_parameters_are_those_of_its_verified_final_refit() {
+    let case = outer_case();
+    let inputs = handoff::Inputs {
+        root: &case.root,
+        output: &case.output,
+        seeds: Some(&case.seeds),
+        vocabulary: None,
+    };
+    let (_, verified) = handoff::seal(&inputs).unwrap();
+    let exported: Value = read_json(&case.predictor).unwrap();
+    // Positive control: the honest final refit passes, its model parameters
+    // encode to exactly the retained model bytes, and a grant is issued.
+    let refit = lineage::verify_final_refit(&case.root, &verified, &case.predictor).unwrap();
+    let retained = case
+        ._authority
+        .authority
+        .join("objects")
+        .join(&refit.model_sha256);
+    assert_eq!(
+        serde_json::to_vec(&exported["model"]).unwrap(),
+        fs::read(retained).unwrap()
+    );
+    case.grant("honest", &case.sealed).unwrap();
+    // One model parameter changed; recipe, training scope and completion
+    // reference unchanged, and the handoff records the changed predictor.
+    let mut forged = exported.clone();
+    assert!(change_one_parameter(&mut forged["model"]), "{exported}");
+    let forged = serde_json::to_vec_pretty(&forged).unwrap();
+    fs::write(&case.predictor, &forged).unwrap();
+    let mut handoff: Value = read_json(&case.handoff()).unwrap();
+    handoff["predictor"]["sha256"] = json!(hash(&forged));
+    write_json(&case.handoff(), &handoff).unwrap();
+    let checked = lineage::verify_final_refit(&case.root, &verified, &case.predictor)
+        .map(|r| r.model_sha256)
+        .map_err(|e| format!("{e:#}"));
+    let granted = case
+        .grant("forged", &case.sealed)
+        .map(|g| g["subject"].clone())
+        .map_err(|e| format!("{e:#}"));
+    let refused = "final refit model parameters are not the verified completion's model";
+    assert!(
+        matches!(&checked, Err(e) if e.contains(refused))
+            && matches!(&granted, Err(e) if e.contains(refused)),
+        "other model parameters passed as the verified final refit: \
+         refit check {checked:?}; grant {granted:?}"
+    );
+    let grants = case.root.join("forged/grants");
+    assert_eq!(fs::read_dir(grants).map(|d| d.count()).unwrap_or(0), 0);
+}
+
+/// The grant names the model identity its final-refit check verified, never
+/// the handoff's unverified record of it.
+#[test]
+fn an_outer_grant_names_the_model_its_final_refit_verified() {
+    let case = outer_case();
+    let honest = case.grant("honest", &case.sealed).unwrap();
+    let mut handoff: Value = read_json(&case.handoff()).unwrap();
+    let verified = handoff["final_refit"]["model_sha256"].clone();
+    assert_eq!(honest["subject"]["model_sha256"], verified);
+    handoff["final_refit"]["model_sha256"] = json!("e".repeat(64));
+    write_json(&case.handoff(), &handoff).unwrap();
+    let granted = case.grant("misrecorded", &case.sealed).unwrap();
+    assert_eq!(
+        granted["subject"]["model_sha256"], verified,
+        "the grant names a model identity its final refit never verified: {granted}"
+    );
+}
