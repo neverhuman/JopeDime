@@ -924,6 +924,9 @@ pub fn registered_inference_inventory() -> Result<Vec<serde_json::Value>> {
     Ok(result)
 }
 
+#[path = "inference_package.rs"]
+pub mod package;
+
 #[cfg(test)]
 #[path = "inference_contract_tests.rs"]
 mod contract_tests;
