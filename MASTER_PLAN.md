@@ -1,5 +1,43 @@
 # JopeDime current direction
 
+**2026-09-26 core-IP regression remediation.** [PR #111](https://github.com/neverhuman/JopeDime/pull/111)
+delivered W0 and every source-implementable W1–W12 slice of `docs/internal/core-ip/work-orders`.
+It merged as squash `7b86622ea694bc069338c268f23e17c29f76e8eb` at 2026-09-26T15:12:59Z. The tree is
+byte-identical to the reviewed head `bddb8fed16e4c73cb0277998f37ab4a8871e6a3e`, and main-guard
+36251156798 passed.
+
+It was squashed, not rebased, because GitHub refuses rebase merges of more than 100 commits (121
+here, `canBeRebased=false`). The squash body lists every commit, and branch
+`feat/regression-remediation` keeps the full history.
+
+Review was by independent Codex processes acting as neverhuman, against `jepsontaylor` as author
+and committer of all 121 commits:
+- Review 5326209256 requested changes at `0b303b293` with two P1 defects: grant expiry bypassed
+  during coordinator recovery, and an outer-score grant that re-read its preparation after
+  verifying it.
+- Both were reproduced and fixed, together with sibling gaps, in `4ac185bb7`, `5ad932450` and
+  `bddb8fed1`.
+- Review 5326304313 approved `bddb8fed1`.
+
+PR run 36250125057 and manual run 36250695256 passed all eight jobs and aggregate at that head.
+
+Task status is 70 implemented, 66 fixture-proven, 22 blocked and 0 planned. None is CI-verified or
+live-qualified, and all 195 findings remain open. The blocked tasks are the live gates: three-host
+W7, live S3 W8, loop/transfer W10 and GPU timing W11. Per-task state and open items are in
+`docs/internal/core-ip/work-orders/STATUS.md`.
+
+The PR added no Python and deleted seven files. The core-IP verifiers now live in the Rust crate
+`jope-records`. The owner's repo-wide Python migration go-ahead is pending (owner decision 10 on the
+PR).
+
+Custody for the landing:
+`/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/`, specifically
+`pr111-lifecycle/`, `independent-review-pr111*/` and `runs/`.
+
+Next allowed action: close the lanes that served this PR (`bench`, `demo`, `honesty`) under the
+custody rules. Then take the recorded owner decisions and the live-gate prerequisites; this record
+does not start them.
+
 **2026-09-22 CPU foundation delivery.** Publication repo: private `veox-ai/JopeDime`.
 Issue #52 is closed by [PR #55](https://github.com/veox-ai/JopeDime/pull/55).
 Its source head `c5a5b1138b4e878327eb2f429ac75be9b8a9374c` received independent
