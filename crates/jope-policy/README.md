@@ -28,7 +28,8 @@ Weight-bound tests are `#[ignore]`d and read their inputs from the environment
 
 | Test | Variables |
 |---|---|
-| `tests/jope_dime.rs` `exported_policy_*` | `JOPE_DIME_POLICY_SAFETENSORS` (exported `policy.safetensors`), `JOPE_DIME_EXPORT_RECEIPT` (default `<dir>/../step-60000.receipt.json`) |
+| `tests/jope_dime.rs` `exported_policy_*` | `JOPE_DIME_POLICY_SAFETENSORS` (exported `policy.safetensors`), `JOPE_DIME_EXPORT_RECEIPT` (default `<dir>/../step-60000.receipt.json`). This must be the accepted `tools/ot-export` receipt (`b50150ea…` on the qualification host). A `jope-parallel export-policy` re-export of the accepted checkpoint, such as the ASM-demo anchor, is refused as a derived re-export with no acceptance authority (OWNER-DECISIONS.md D13) |
+| `tests/jope_dime.rs` `the_real_accepted_receipt_carries_only_pinned_fields` | `JOPE_DIME_EXPORT_RECEIPT` (the accepted receipt), optional `JOPE_DIME_REEXPORT_RECEIPT` (a re-export, verified only as non-authoritative derived evidence) |
 | `tests/jope_dime.rs` generation replay | `JOPE_DIME_GENERATION_000011` (a jope-dime `generation-000011` results directory) |
 | `tests/jope_dime.rs` end-to-end | the two above + `JOPE_DIME_CONTEXTS` (`contexts-assembly-v2` directory) |
 | `src/jope_embed.rs::reviewed_preprocessing_bundle_loads_with_exact_v1_shapes` | `JAIN_TEST_MODEL_BUNDLE_ROOT` (directory with `preprocessing.safetensors`) |

@@ -607,3 +607,63 @@ The existing ignored host test `exported_policy_matches_its_export_receipt` also
 | `pd-w2g08-consumers-post-20260926T224022Z` | `-p jope-pipeline --features neural-search` (`verify_policy_inputs` consumer) | 127/127 |
 | `pd-w2g08-bench-asm-post-20260926T224224Z` | `-p jope-bench --features asm`, receipt/challenger/checkpoint/policy/origin_proof/optimize tests | 25/25 |
 | `pd-w2g08-host-real-asset-20260926T224254Z` | release; the real `policy.safetensors` and `step-60000.receipt.json`, plus the `8f006133…` re-export | 2/2: `exported_policy_matches_its_export_receipt` (the host `config.json` matches `ACCEPTED_CONFIG_SHA256`) and `the_real_accepted_receipt_carries_only_pinned_fields` (the re-export is refused) |
+
+## 13. Appended 2026-09-26: consumers of the ASM-demo anchor and of the export receipt (D13 follow-up)
+
+**The anchor.** `/home/ubuntu/jope-evidence/asm-demo-20260925/demo3/anchor-4e11f765f05d.receipt.json` (SHA-256 `8f006133…`) and its `policy.safetensors` (`4b4b5a40…`, byte-identical to the released weights).
+- **Writer.** It was written on 2026-09-25 by this repository's exporter, `jope-parallel export-policy`, at head `4e11f765f05d` (`pr100_validate.sh` step `anchor-export`), not by `tools/ot-export`.
+- **What it is.** A re-export of the accepted step-60000 checkpoint. Since §12 it is refused as the accepted receipt.
+- **Disposition.** It is kept as a **non-authoritative derived re-export**, and it is neither modified nor moved.
+
+**What changed** (commit on `rr2/policy-defaults`; runs below).
+- `CheckpointBinding::parse` refuses a receipt written by `jope-parallel export-policy` offered as the accepted receipt, with the plain reason "a derived re-export carries no acceptance authority; bind the accepted tools/ot-export receipt".
+  - This is checked after the rejected-checkpoint refusal and before the field-set check.
+  - Before, the same receipt was refused only through the first unpinned field (`policy.architecture`).
+- `CheckpointBinding::derived_reexport` (on the accepted binding only) verifies that such a receipt reproduces the accepted export: exporter, pinned fields, state, step, model, configuration, recomputed parameters, vocabulary and every tensor entry.
+  - It returns a `DerivedReexport`, and no `CheckpointBinding` can be made from it, so no loader, proposal or scoring path accepts it.
+  - A different weights file is recorded (`byte_identical`), not refused, as in anchor rule A2.
+- jope-bench `optimize::pinned_checkpoint` is extracted unchanged from `prepare_neural`: the proposal route's receipt check, run before any worker. It now also re-verifies the receipt pin. The demo-path tests call it.
+
+**Consumer inventory.** Searches: the repository for `8f006133`, `anchor-4e11f765f05d`, the `demo3` path, the export receipt schema and its receipt/environment names; and the host custody roots `jope-evidence`, `jope-rescue-20260921`, the checkouts and the memory notes.
+
+| # | Consumer | Kind | Needs acceptance authority? | Disposition |
+|---|---|---|---|---|
+| 1 | `jope-policy/src/config.rs` `CheckpointBinding::parse` / `for_proposal` / `from_receipt_bytes` / `from_challenger_receipt_bytes` | the receiving rule | — | Accepted: the `tools/ot-export` field set only; a re-export is refused with the plain reason. Challenger: the exporter's set. New `derived_reexport` consumes a re-export as evidence only |
+| 2 | `jope-policy/src/bin/jope-policy-producer.rs` (`for_proposal` on the request's receipt) | policy worker | yes | Uses the installation-pinned receipt, which is `b50150ea…` in every demo plan. Unchanged, and refuses the anchor plainly |
+| 3 | `jope-pipeline/src/neural_search.rs` `verify_policy_inputs` (`for_proposal`, pinned by `installation.checkpoint_receipt_sha256`) | controller | yes | K0 `paired-plan.json` and `paired-registration.json` pin `b50150ea…`. Unchanged |
+| 4 | `jope-bench/src/panel/optimize.rs` `prepare_neural` → `pinned_checkpoint` | ASM demo route | yes | `cfg-k0.json` and `b0/config/configuration.json` pin `b50150ea…`, verified on the host (run below) |
+| 5 | `jope-bench/src/panel/optimize.rs` `challenger_checkpoint` | native challenger | no (challenger) | Challenger rules. A re-export of the accepted checkpoint is refused as a challenger (accepted identity). Unchanged |
+| 6 | `jope-bench/src/panel/inference_cuda.rs` (`from_receipt_bytes`) and `inference_benchmark.rs` (receipt pin) | inference benchmark | yes | No host plan pins the anchor (host search). Unchanged; would refuse it plainly |
+| 7 | `jope-bench/src/panel/experimental_proposal.rs` (`checkpoint_receipt_sha256` = experimental export manifest) | experimental proposal | — | Not a `jope.checkpoint_export.v1` receipt. Not affected |
+| 8 | `jope-engine/src/policy_export.rs` (`jope-parallel export-policy`) and its ignored test `anchor_step_60000_reproduces_the_accepted_export` (E6) | the exporter | no | Producer of derived re-exports. E6 compares tensors with the accepted receipt (`JOPE_EXPORT_ACCEPTED_RECEIPT`), not through the accepted parser. Unchanged |
+| 9 | `jope-policy/tests/jope_dime.rs` `exported_policy_matches_its_export_receipt` and `generation_000011_rewards_agree_with_bf16_records` (ignored, `JOPE_DIME_EXPORT_RECEIPT`) | host evidence tests | yes | **Repointed**: `JOPE_DIME_EXPORT_RECEIPT` must be the accepted `b50150ea…`, documented in the README table. The anchor's weights still verify against it (run below) |
+| 10 | `jope-policy/tests/jope_dime.rs` `the_real_accepted_receipt_carries_only_pinned_fields` (`JOPE_DIME_REEXPORT_RECEIPT`) | host evidence test | no | Takes the anchor as a derived re-export: refused as accepted, verified by `derived_reexport` |
+| 11 | `jope-policy/tests/jope_dime.rs` `native_challenger_export_loads_as_a_challenger` | host evidence test | no | Challenger receipts. Unchanged |
+| 12 | `jope-policy/README.md` host test table | docs | — | States the accepted-receipt requirement and the re-export variable |
+| 13 | `docs/parity/capability-matrix.md` `jope-parallel export-policy` row | catalog | — | **Label**: a re-export of the accepted checkpoint is a derived re-export with no acceptance authority |
+| 14 | this record §12 and `OWNER-DECISIONS.md` D13 | docs | — | Record the anchor as derived |
+| 15 | host `asm-demo-20260925/kpi/cfg-k0.json`, `b0/config/configuration.json`, K0 `plan-out.json`, `asm-search/*/paired-plan.json` and `paired-registration.json`, `asm-final`, `asm-inventory` (197_cpu_act, 225_puma8NH) | the demo path's pinned inputs | yes | Pin the accepted `b50150ea…` (none pins the anchor). Verified under the rule by `the_asm_demo_configurations_bind_the_accepted_receipt` |
+| 16 | host `asm-demo-20260925/demo3/anchor-4e11f765f05d{,.receipt.json}` | the anchor itself | no | Derived re-export. Content-addressed evidence, not modified; verified only through `derived_reexport` |
+| 17 | host `receipts/pr100/4e11f765f05d/anchor-export.json` (the export step's stdout: receipt path, `8f006133…`, `accepted_identity: true` = the checkpoint's identity) | historical record | no | Historical evidence of the reproduction (A1/A2). Unchanged; its `accepted_identity` names the checkpoint, not an acceptance authority |
+| 18 | host `receipts/anchor-a0/4e11f765f05d/` (`env.txt`, `inputs.sha256`, `anchor-a0.log`: the 2026-09-25 A0 pass under the pre-D13 rule) | historical record | — | Historical. Unchanged; superseded by the repointed A0 run below |
+| 19 | host `…/deep-stack-20260924/demo-tools/anchor_a0.sh` and `pr100_validate.sh` (step `anchor-a0`, `JOPE_DIME_EXPORT_RECEIPT="$AOUT.receipt.json"`) | runtime scripts | yes (they call the accepted-receipt test) | **Not edited.** They are custody tooling outside the repository and this lane. Re-run as they are, they now fail loudly (exit 101, "a derived re-export carries no acceptance authority"), never silently. The repointed command they need: `JOPE_DIME_EXPORT_RECEIPT=<accepted b50150ea… receipt> JOPE_DIME_POLICY_SAFETENSORS="$AOUT/policy.safetensors" JOPE_DIME_REEXPORT_RECEIPT="$AOUT.receipt.json"`, selecting `exported_policy_matches_its_export_receipt` and `the_real_accepted_receipt_carries_only_pinned_fields` (verified below) |
+
+**Tests.**
+- `jope-policy` `tests/jope_dime.rs` `a_derived_reexport_reproduces_the_accepted_receipt_without_authority`:
+  - the anchor's shape is refused by the accepted parser, the proposal path and the challenger path;
+  - it verifies as a derived re-export, with different weights recorded;
+  - 7 non-reproducing edits are refused;
+  - a non-accepted binding cannot vouch for a re-export.
+- `jope-bench` `origin_proof::tests::the_proposal_route_binds_only_the_accepted_receipt`: the proposal route admits the accepted shape and refuses the anchor's shape plainly, a stale pin, and other weights.
+- The host (ignored) tests `the_asm_demo_configurations_bind_the_accepted_receipt` and `the_real_accepted_receipt_carries_only_pinned_fields`, run on the real files below.
+
+**Runs**
+
+| Evidence directory | Command | Result |
+|---|---|---|
+| `d13-anchor-consumers-pre-20260926T231008Z` | the A0 consumer as scripted: `exported_policy_matches_its_export_receipt` with the anchor as `JOPE_DIME_EXPORT_RECEIPT` | exit 101: "export receipt carries policy.architecture outside the pinned accepted receipt field set" |
+| `d13-anchor-consumers-post-20260926T231240Z` | `-p jope-policy --features testing` | 71/71 (7 ignored) |
+| `d13-anchor-consumers-post-bench-20260926T231310Z` | `-p jope-bench --features asm`, origin_proof/optimize/receipt/challenger/policy tests | 26/26 |
+| `d13-anchor-consumers-post-pipeline-20260926T231339Z` | `-p jope-pipeline --features neural-search` (`verify_policy_inputs`) | 127/127 |
+| `d13-anchor-consumers-host-a0-20260926T231433Z` | release. **The repointed A0**: `JOPE_DIME_EXPORT_RECEIPT` = accepted `b50150ea…`, `JOPE_DIME_POLICY_SAFETENSORS` = the anchor's weights, `JOPE_DIME_REEXPORT_RECEIPT` = the anchor `8f006133…` | 2/2. `exported_policy_matches_its_export_receipt` passes with the anchor's weights under the accepted receipt (host `config.json` matches). The anchor is refused as accepted and verifies as a derived re-export, `byte_identical=true`, with no acceptance authority |
+| `d13-anchor-consumers-host-demo-20260926T231522Z` | `-p jope-bench --features asm`, `the_asm_demo_configurations_bind_the_accepted_receipt` with `JOPE_ASM_DEMO_CONFIGURATIONS` = `kpi/cfg-k0.json:b0/config/configuration.json` | 1/1. Both configurations: receipt `b50150ea…` binds state `8ac80c26…` and weights `4b4b5a40…` |

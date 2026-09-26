@@ -415,6 +415,25 @@ fn refuse_unpinned_fields(value: &Value, path: &str, pinned: FieldSet, kind: &st
     Ok(())
 }
 
+/// This repository's exporter. Its receipts are challenger receipts or, for the accepted
+/// checkpoint, derived re-exports (OWNER-DECISIONS.md D13).
+pub const REEXPORT_TOOL: &str = "jope-parallel export-policy";
+
+/// A re-export of the accepted checkpoint by this repository's exporter ([`REEXPORT_TOOL`]):
+/// evidence that the exporter reproduces the accepted export, never an acceptance authority
+/// (W2 G-08, OWNER-DECISIONS.md D13). No [`CheckpointBinding`] can be made from it, so no
+/// loader, proposal or scoring path accepts it. The accepted receipt stays the
+/// `tools/ot-export` one the release binds.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DerivedReexport {
+    /// sha256 of the re-export receipt's bytes.
+    pub receipt_sha256: String,
+    /// The re-exported `policy.safetensors` sha256.
+    pub policy_safetensors_sha256: String,
+    /// Whether that file is byte-identical to the accepted one (recorded, not required).
+    pub byte_identical: bool,
+}
+
 impl CheckpointBinding {
     /// Parse and check an export receipt. Refuses the rejected step-69000 checkpoint, any field
     /// outside the accepted receipt's pinned field set, any identity other than the accepted
@@ -467,6 +486,14 @@ impl CheckpointBinding {
             step != REJECTED_STEP,
             "refused: rejected step-{REJECTED_STEP} checkpoint"
         );
+        // A re-export by this repository's exporter is never the accepted receipt; say so
+        // plainly rather than through the field it happens to add (D13).
+        if challenger.is_none() && receipt["runtime"]["tool"] == REEXPORT_TOOL {
+            bail!(
+                "export receipt was written by {REEXPORT_TOOL}: a derived re-export carries no \
+                 acceptance authority; bind the accepted tools/ot-export receipt (OWNER-DECISIONS.md D13)"
+            );
+        }
         // W2 G-08 (OWNER-DECISIONS.md D13): after the rejected-checkpoint refusal, and before any
         // identity is read, every field must belong to the pinned field set of its receipt kind.
         let (pinned, kind) = match challenger {
@@ -695,6 +722,52 @@ impl CheckpointBinding {
 
     pub fn tensors(&self) -> &[TensorEntry] {
         &self.tensors
+    }
+
+    /// Verify that `bytes`, a receipt this repository's exporter wrote for the accepted
+    /// checkpoint, reproduces this accepted binding tensor for tensor, as non-authoritative
+    /// evidence (D13). Refuses unless:
+    /// - `self` is the complete accepted identity;
+    /// - the receipt carries only the exporter's pinned fields and names the exporter;
+    /// - its checkpoint state, step, model, configuration, recomputed parameters, vocabulary
+    ///   and tensor inventory equal this binding's.
+    pub fn derived_reexport(&self, bytes: &[u8]) -> Result<DerivedReexport> {
+        self.require_accepted_identity()?;
+        let receipt: Value = serde_json::from_slice(bytes).context("re-export receipt")?;
+        ensure!(
+            receipt.get("schema").and_then(Value::as_str) == Some(EXPORT_RECEIPT_SCHEMA),
+            "re-export receipt schema is not {EXPORT_RECEIPT_SCHEMA}"
+        );
+        refuse_unpinned_fields(&receipt, "", CHALLENGER_RECEIPT_FIELDS, "re-export")?;
+        ensure!(
+            receipt["runtime"]["tool"] == REEXPORT_TOOL,
+            "a derived re-export is written by {REEXPORT_TOOL}"
+        );
+        let checkpoint = &receipt["checkpoint"];
+        ensure!(
+            digest(checkpoint, &["state_sha256"])? == self.state_sha256
+                && checkpoint["step"].as_u64() == Some(self.step)
+                && digest(checkpoint, &["model_sha256"])? == self.model_sha256
+                && digest(checkpoint, &["config_sha256"])? == self.config_sha256
+                && digest(checkpoint, &["parameter_sha256"])? == self.parameter_sha256
+                && digest(checkpoint, &["parameter_sha256_recomputed"])? == self.parameter_sha256
+                && digest(checkpoint, &["carried_bindings", "vocabulary_sha256"])?
+                    == self.vocabulary_sha256,
+            "re-export does not reproduce the accepted checkpoint identity"
+        );
+        let tensors: Vec<TensorEntry> =
+            serde_json::from_value(receipt["policy"]["tensors"].clone())
+                .context("re-export policy.tensors")?;
+        ensure!(
+            tensors == self.tensors,
+            "re-export tensors differ from the accepted export"
+        );
+        let weights = digest(&receipt["policy"], &["output", "sha256"])?;
+        Ok(DerivedReexport {
+            receipt_sha256: sha256_hex(bytes),
+            byte_identical: weights == self.policy_safetensors_sha256,
+            policy_safetensors_sha256: weights,
+        })
     }
 
     /// Test support only (`testing`): a binding for untrained weights. Its state is

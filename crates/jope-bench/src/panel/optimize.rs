@@ -498,6 +498,28 @@ pub(crate) fn proposal_files(configuration: &Configuration) -> (&Artifact, &Arti
         |c| (&c.checkpoint_receipt, &c.policy_weights),
     )
 }
+/// Read-only: the checkpoint the policy worker will bind, from the configuration's pins. The
+/// native challenger's receipt is held to the challenger rules; otherwise the pinned receipt must
+/// be the accepted `tools/ot-export` receipt naming the pinned weights. A re-export of the
+/// accepted checkpoint by this repository's exporter carries no acceptance authority and is
+/// refused here, before any worker starts (W2 G-08, OWNER-DECISIONS.md D13).
+pub(crate) fn pinned_checkpoint(
+    config: &Configuration,
+) -> Result<jope_policy::config::CheckpointBinding> {
+    if let Some(challenger) = &config.native_challenger {
+        return challenger_checkpoint(challenger);
+    }
+    config.checkpoint_receipt.verify()?;
+    let checkpoint = jope_policy::config::CheckpointBinding::for_proposal(
+        &fs::read(&config.checkpoint_receipt.path)?,
+        None,
+    )?;
+    ensure!(
+        checkpoint.policy_safetensors_sha256() == config.policy_weights.sha256,
+        "policy checksum differs from accepted receipt"
+    );
+    Ok(checkpoint)
+}
 /// Read-only: the challenger's export receipt must bind its pinned identity and weights.
 pub(crate) fn challenger_checkpoint(
     challenger: &NativeChallenger,
@@ -911,21 +933,7 @@ fn prepare_neural<B: Backend, V: Variation>(
     }
     let worker_builds = config.verify_worker_builds()?;
     let (proposal_receipt, proposal_weights) = proposal_files(config);
-    match &config.native_challenger {
-        Some(challenger) => {
-            challenger_checkpoint(challenger)?;
-        }
-        None => {
-            let checkpoint = jope_policy::config::CheckpointBinding::for_proposal(
-                &fs::read(&config.checkpoint_receipt.path)?,
-                None,
-            )?;
-            ensure!(
-                checkpoint.policy_safetensors_sha256() == config.policy_weights.sha256,
-                "policy checksum differs from accepted receipt"
-            );
-        }
-    }
+    pinned_checkpoint(config)?;
     let (files, outcome) = prepare_regression_context(
         backend,
         plan,

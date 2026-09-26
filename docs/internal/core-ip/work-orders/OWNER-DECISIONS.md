@@ -36,8 +36,8 @@
 | D9 | W6: dispatch hold after read-only validation | Keep the current order | unchanged |
 | D10 | Python migration | Port live tools; archive unused legacy/research Python | executed separately |
 | D11 | W8-T04: a divergent mirror pointer | Keep failing every push until reconciled | unchanged |
-| D12 | W6-T06: legacy parents | Warm start only; no exact resume or optimizer carry | **changed** (`84ebe917f`) |
-| D13 | W2 G-08: unknown receipt fields | Pin the receipt field set; refuse anything else | **changed** (`48c89cc0b`) |
+| D12 | W6-T06: legacy parents | Warm start only; no exact resume or optimizer carry | **changed** (`84ebe917f`; native loop `jope.native_loop.v2`, `95779fc62`) |
+| D13 | W2 G-08: unknown receipt fields | Pin the receipt field set; refuse anything else | **changed** (`48c89cc0b`; ASM-demo anchor as a derived re-export, this follow-up) |
 | D14 | W2: `component_bundle` value derived from the local asset | Keep the single pinned value; refuse any other | unchanged |
 | D15 | Policy-worker rebuild and re-pin | The producer path keeps refusing until a rebuilt, re-pinned worker exists | unchanged; refusal verified |
 | D16 | W7: `machine_id` added in place to the v1 schemas | Keep in place; a v1 document without it is refused | unchanged |
@@ -225,7 +225,7 @@
 - **Consequence.** The native loop still freezes an optimizer-carry policy for its training blocks, so a native-loop block from the step-60000 checkpoint is now refused at the trainer. Continuing from step 60000 works as a weight warm start. A native-loop warm-start window needs a new native-loop protocol identity, because the loop's window accounting assumes a carried optimizer. **Closed 2026-09-26 by native-loop protocol `jope.native_loop.v2`; see below.**
 - **Reverse.** Remove the `legacy_ids_only` refusal in `check_parent_partition`, and restore the two updated assertions and the two new tests to their accepting form. A `jope.native_loop.v2` run would then be unnecessary but still valid; stop creating v2 configurations rather than removing the protocol, so frozen v2 runs keep verifying.
 
-**D12 follow-up, 2026-09-26: native-loop protocol `jope.native_loop.v2` (the legacy-parent weight warm start).**
+**D12 follow-up, 2026-09-26: native-loop protocol `jope.native_loop.v2` (the legacy-parent weight warm start), commit `95779fc62`.**
 - **What changed.** A native-loop configuration with `schema: "jope.native_loop.v2"` starts the accepted step-60000 parent as a weight warm start instead of an optimizer carry.
   - Its first block's request declares `optimizer: reset` and `parent_step: 60000`.
   - The block's replay policy has `optimizer: reset` and a `jope.native_weight_warm_start.v1` binding. The binding names the parent checkpoint, the parent weights digest (`model_sha256`, `053df4f5…` for the accepted parent), the parent step, and an optimizer step base of 0.
@@ -272,6 +272,21 @@
     - the ignored host test `the_real_accepted_receipt_carries_only_pinned_fields`.
   - Record: `evidence/W02-asset-dependency-table.md` §12.
 - **Reverse.** Extend or remove the pinned field set in `config.rs`. Adding a field for a new exporter version should come with a new receipt schema version, rather than widening v1.
+
+**D13 follow-up, 2026-09-26: the ASM-demo anchor is a derived re-export.**
+- **The anchor.** `…/asm-demo-20260925/demo3/anchor-4e11f765f05d.receipt.json` (`8f006133…`). It was written by this repository's `jope-parallel export-policy`, not by `tools/ot-export`, and it re-exports the accepted checkpoint. It is refused as the accepted receipt, and is kept, unmodified, as a **non-authoritative derived re-export**.
+- **What changed.**
+  - A receipt written by `jope-parallel export-policy` and offered as the accepted receipt is refused with a plain reason: "a derived re-export carries no acceptance authority; bind the accepted tools/ot-export receipt".
+  - `CheckpointBinding::derived_reexport` verifies that a re-export reproduces the accepted export, and returns a `DerivedReexport` that can never become a `CheckpointBinding`.
+  - The `export-policy` capability-matrix row carries that label.
+  - jope-bench's proposal-route receipt check is extracted as `optimize::pinned_checkpoint`, so the demo path is tested through it.
+- **Consumers.** 19 were inventoried; the full list is in `evidence/W02-asset-dependency-table.md` §13.
+  - Every consumer that needs acceptance authority, including the demo path's pinned inputs (`cfg-k0.json`, `b0/config/configuration.json`, the K0 plans), pins the accepted `b50150ea…`. None pins the anchor.
+  - The only runtime consumers of the anchor are the host scripts `anchor_a0.sh` and `pr100_validate.sh` (step `anchor-a0`). They feed it to the accepted-receipt test and now fail loudly. They were not edited, because they are custody tooling outside the repository; the repointed command is recorded and was verified.
+- **Tests.**
+  - `jope_dime::a_derived_reexport_reproduces_the_accepted_receipt_without_authority`;
+  - `origin_proof::tests::the_proposal_route_binds_only_the_accepted_receipt`;
+  - host: `origin_proof::tests::the_asm_demo_configurations_bind_the_accepted_receipt` and `jope_dime::the_real_accepted_receipt_carries_only_pinned_fields`.
 
 ## D14 — W2: the encoder `component_bundle` value
 
