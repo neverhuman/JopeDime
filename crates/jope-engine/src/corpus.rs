@@ -18,6 +18,18 @@ use std::{
 pub const SEQUENCE: usize = 128;
 pub const RECORD_BYTES: usize = 532;
 
+/// Read a corpus's `vocabulary.json` once, require exactly those bytes to be
+/// the digest its index binds (`vocabulary_sha256`), and parse them (W1 route
+/// R8). A reader holding the index never reopens the vocabulary by path.
+pub fn read_bound_vocabulary(corpus: &Path, vocabulary_sha256: &str) -> Result<Vocab> {
+    let bytes = read_verified(
+        &corpus.join("vocabulary.json"),
+        vocabulary_sha256,
+        "corpus vocabulary",
+    )?;
+    serde_json::from_slice(&bytes).context("parse corpus vocabulary")
+}
+
 /// A vocabulary is frozen for the whole build, so exact-genome tokenization
 /// and its rejection reason can be reused across cuts. Limit both entry count
 /// and retained payload; cache exhaustion affects speed only, never labels.

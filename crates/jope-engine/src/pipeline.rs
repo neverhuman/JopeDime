@@ -454,7 +454,8 @@ pub fn run(
     }
     let neural: GpJobs = read_json(&proposal_dir.join("jobs.json"))?;
     let generic_dir = output.join("generic");
-    let vocab: Vocab = read_json(&corpus_path.join("vocabulary.json"))?;
+    // The vocabulary this index binds, read once (W1 route R8).
+    let vocab: Vocab = corpus::read_bound_vocabulary(corpus_path, &index.vocabulary_sha256)?;
     let generic = if generic_dir.join("jobs.json").exists() {
         read_json(&generic_dir.join("jobs.json"))?
     } else {

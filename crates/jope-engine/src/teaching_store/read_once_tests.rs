@@ -534,3 +534,72 @@ fn teacher_labels_are_those_of_the_callers_verified_index() {
         "labels were read for an index other than the caller's verified index: {refused:?}"
     );
 }
+
+// ---------------------------------------------------------------------------
+// W1 route R8 at the corpus vocabulary readers after `load` (round 8): the
+// native loop's candidate expansion consumes exactly the vocabulary bytes the
+// verified corpus index binds; `vocabulary.json` is never reopened unbound.
+// ---------------------------------------------------------------------------
+
+/// Another well-formed vocabulary: the given one with two tokens swapped.
+fn permuted_vocabulary(path: &Path) -> Vec<u8> {
+    let mut v: Value = read_json(path).unwrap();
+    v["tokens"].as_array_mut().unwrap().swap(0, 1);
+    serde_json::to_vec_pretty(&v).unwrap()
+}
+
+fn vocabulary_tokens(root: &Path, corpus: &Path) -> Result<Vec<String>, String> {
+    store::read_index_and_vocabulary(root, corpus)
+        .map(|(_, vocab)| vocab.tokens)
+        .map_err(|e| format!("{e:#}"))
+}
+
+#[test]
+fn the_corpus_vocabulary_is_the_bytes_its_index_binds_even_if_replaced_after_its_check() {
+    let (s, corpus) = published("vocabulary-raced");
+    let root = s.f.root();
+    let path = corpus.join("vocabulary.json");
+    let honest: crate::grammar::Vocab = read_json(&path).unwrap();
+    let replacement = permuted_vocabulary(&path);
+    assert_ne!(replacement, fs::read(&path).unwrap());
+    // Positive control.
+    assert_eq!(vocabulary_tokens(root, &corpus).unwrap(), honest.tokens);
+    let _hook = replace_on_verification(&path, replacement);
+    let raced = vocabulary_tokens(root, &corpus);
+    assert!(
+        matches!(&raced, Ok(tokens) if *tokens == honest.tokens),
+        "the vocabulary consumed is not the one the corpus index binds: {raced:?}"
+    );
+}
+
+/// A legacy (`parallel.teaching_corpus.v1`) index binds its vocabulary by
+/// digest only; `load` never opens the file, so the reader must check it.
+#[test]
+fn a_legacy_corpus_vocabulary_other_than_its_index_binding_is_refused() {
+    let f = Fixture::new();
+    let corpus = f.root().join("legacy-corpus");
+    fs::create_dir_all(&corpus).unwrap();
+    fs::copy(f.vocab(), corpus.join("vocabulary.json")).unwrap();
+    write_json(
+        &corpus.join("index.json"),
+        &json!({"schema":"parallel.teaching_corpus.v1","qualification":true,
+            "vocabulary_sha256":file_hash(&corpus.join("vocabulary.json")).unwrap(),
+            "context_index_sha256":"0".repeat(64),"records_sha256":"0".repeat(64),
+            "record_bytes":crate::corpus::RECORD_BYTES,"records":0,"legal_sets":[],
+            "contexts":[],"groups":[]}),
+    )
+    .unwrap();
+    // Positive control.
+    let honest: crate::grammar::Vocab = read_json(&f.vocab()).unwrap();
+    assert_eq!(vocabulary_tokens(f.root(), &corpus).unwrap(), honest.tokens);
+    fs::write(
+        corpus.join("vocabulary.json"),
+        permuted_vocabulary(&f.vocab()),
+    )
+    .unwrap();
+    let refused = vocabulary_tokens(f.root(), &corpus);
+    assert!(
+        matches!(&refused, Err(e) if e.contains("vocabulary changed")),
+        "a vocabulary the legacy index does not bind was consumed: {refused:?}"
+    );
+}

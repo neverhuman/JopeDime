@@ -48,8 +48,11 @@ pub fn evaluate(
         },
     )?;
     let _inherited_lease = crate::gpu_worker::inherited_task_lease(root)?;
-    let index: Index = read_json(&corpus.join("index.json"))?;
-    let vocabulary: Vocab = read_json(&corpus.join("vocabulary.json"))?;
+    // W1 route R8: the index is read once (its digest below is of the parsed
+    // bytes), and the vocabulary consumed is the one that index binds.
+    let (index_bytes, index_sha256) = read_hashed(&corpus.join("index.json"), "corpus index")?;
+    let index: Index = serde_json::from_slice(&index_bytes)?;
+    let vocabulary: Vocab = crate::corpus::read_bound_vocabulary(corpus, &index.vocabulary_sha256)?;
     crate::corpus_publication::verify(
         corpus,
         &index.context_index_sha256,
@@ -58,7 +61,7 @@ pub fn evaluate(
     let frozen: Value = read_json(panel)?;
     let ids: Vec<Vec<usize>> = serde_json::from_value(frozen["records"].clone())?;
     ensure!(
-        frozen["corpus_sha256"] == file_hash(&corpus.join("index.json"))?
+        frozen["corpus_sha256"] == index_sha256
             && frozen["panel_sha256"] == hash(&serde_json::to_vec(&ids)?)
             && ids.len() == 8
             && ids.iter().all(|row| row.len() == 256),
@@ -95,7 +98,7 @@ pub fn evaluate(
         "monitor checkpoint changed"
     );
     let binding = json!({"checkpoint_sha256":file_hash(&checkpoint.join("state.json"))?,
-        "corpus_sha256":file_hash(&corpus.join("index.json"))?,"panel_sha256":frozen["panel_sha256"],
+        "corpus_sha256":index_sha256,"panel_sha256":frozen["panel_sha256"],
         "executable_sha256":file_hash(&std::env::current_exe()?)?});
     if output.exists() {
         ensure!(

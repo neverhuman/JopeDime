@@ -3,7 +3,7 @@
 use crate::{
     corpus::{ContextRow, Index},
     grammar::{State, Vocab},
-    manifest::{file_hash, hash, read_json, write_json, SEED},
+    manifest::{file_hash, hash, read_hashed, read_json, write_json, SEED},
     neural::{Bf16, Config, Policy},
     proposal_ranking::{score_pool, Bindings, Options, Ranking},
     training::mix,
@@ -513,8 +513,10 @@ pub fn assemble(root: &Path, manifest_path: &Path) -> Result<()> {
             "frozen assembly input changed"
         );
     }
-    let vocab: Vocab = read_json(&corpus.join("vocabulary.json"))?;
-    let vocab_sha = file_hash(&corpus.join("vocabulary.json"))?;
+    // W1 route R8: the vocabulary is read once; its digest is of the parsed bytes.
+    let (vocab_bytes, vocab_sha) =
+        read_hashed(&corpus.join("vocabulary.json"), "corpus vocabulary")?;
+    let vocab: Vocab = serde_json::from_slice(&vocab_bytes)?;
     let index: Index = read_json(&corpus.join("index.json"))?;
     let champions = if let Some(snapshot) = &m.champion_snapshot {
         let snapshot = path(root, snapshot);
@@ -798,8 +800,10 @@ pub fn run(root: &Path, manifest_path: &Path, rank: usize, world: usize) -> Resu
         }
     }
     let index: Index = read_json(&corpus.join("index.json"))?;
-    let vocab: Vocab = read_json(&corpus.join("vocabulary.json"))?;
-    let vocab_sha = file_hash(&corpus.join("vocabulary.json"))?;
+    // W1 route R8: the vocabulary is read once; its digest is of the parsed bytes.
+    let (vocab_bytes, vocab_sha) =
+        read_hashed(&corpus.join("vocabulary.json"), "corpus vocabulary")?;
+    let vocab: Vocab = serde_json::from_slice(&vocab_bytes)?;
     ensure!(
         index.vocabulary_sha256 == vocab_sha,
         "corpus vocabulary mismatch"
