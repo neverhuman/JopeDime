@@ -592,6 +592,7 @@ fn index() -> (Index, BTreeMap<String, Vec<usize>>) {
             records: 72,
             legal_sets: vec![],
             contexts: vec![],
+            labels_sha256: None,
             groups,
         },
         families,

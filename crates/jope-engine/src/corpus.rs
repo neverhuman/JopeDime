@@ -145,6 +145,14 @@ pub struct Index {
     pub legal_sets: Vec<Vec<usize>>,
     pub contexts: Vec<ContextRow>,
     pub groups: Vec<Group>,
+    /// W1 round 8: digest of a legacy (`parallel.teaching_corpus.v1`) corpus's
+    /// `labels.jsonl`, bound by the index itself, so teacher labels are
+    /// authenticated by the index a caller verified. `provenance.json` is
+    /// bound only by its own back-reference to this index and never supplies
+    /// it. Absent in corpora written before the binding: their labels are
+    /// unbound (and the serialized index is unchanged when absent).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub labels_sha256: Option<String>,
 }
 #[derive(Clone, Debug)]
 pub struct Record {
@@ -994,6 +1002,7 @@ fn build_impl(
         legal_sets,
         contexts,
         groups,
+        labels_sha256: Some(file_hash(&output.join("labels.jsonl"))?),
     };
     write_json(&output.join("index.json"), &index)?;
     write_json(

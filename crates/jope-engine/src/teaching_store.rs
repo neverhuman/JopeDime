@@ -1231,6 +1231,8 @@ fn load_impl(
             legal_sets,
             contexts: m.contexts,
             groups,
+            // Sharded labels are bound per shard by the manifest.
+            labels_sha256: None,
         },
         TeachingRecords {
             parts,
@@ -1283,17 +1285,24 @@ pub fn teacher_programs(
     } else {
         let legacy: Index = serde_json::from_value(value)?;
         ensure!(
-            legacy.records_sha256 == index.records_sha256,
+            legacy.records_sha256 == index.records_sha256
+                && legacy.labels_sha256 == index.labels_sha256,
             "label index changed"
         );
-        vec![(
-            corpus.join("labels.jsonl"),
+        // W1 round 8: the labels digest is the one the verified index binds.
+        // provenance.json is bound only by its back-reference to the index, so
+        // it never supplies the digest, and a disagreeing one is refused.
+        let bound = legacy.labels_sha256.context(
+            "legacy teaching corpus labels are unbound: the index binds no labels digest and \
+             provenance.json is bound only by its back-reference to the index",
+        )?;
+        ensure!(
             provenance["labels_sha256"]
                 .as_str()
-                .context("labels digest absent")?
-                .into(),
-            index.records,
-        )]
+                .is_none_or(|named| named == bound),
+            "teacher labels changed"
+        );
+        vec![(corpus.join("labels.jsonl"), bound, index.records)]
     };
     let mut result = BTreeMap::<usize, Vec<String>>::new();
     let mut offset = 0;
@@ -1364,6 +1373,8 @@ pub fn export(root: &Path, corpus: &Path, output: &Path) -> Result<()> {
     ensure!(count == index.records, "shard label count changed");
     index.schema = "parallel.teaching_corpus.v1".into();
     index.records_sha256 = file_hash(&staging.join("records.bin"))?;
+    // W1 round 8: the legacy index binds its labels (provenance.json does not).
+    index.labels_sha256 = Some(file_hash(&staging.join("labels.jsonl"))?);
     fs::copy(
         corpus.join("vocabulary.json"),
         staging.join("vocabulary.json"),

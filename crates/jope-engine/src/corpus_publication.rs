@@ -26,6 +26,11 @@ pub fn verify(path: &Path, contexts_sha: &str, vocabulary_sha: &str) -> Result<(
         file_hash(&path.join("index.json"))? == provenance["index_sha256"]
             && file_hash(&path.join("records.bin"))? == index.records_sha256
             && file_hash(&path.join("labels.jsonl"))? == provenance["labels_sha256"]
+            // W1 round 8: an index that binds its labels must bind these ones.
+            && index
+                .labels_sha256
+                .as_ref()
+                .is_none_or(|bound| provenance["labels_sha256"] == bound.as_str())
             && file_hash(&path.join("vocabulary.json"))? == vocabulary_sha,
         "corpus payload or receipt hash changed"
     );

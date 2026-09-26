@@ -88,6 +88,7 @@ fn isolated_manifest_run_freezes_six_controls_resumes_and_assembles_shared_tail(
                 prepared_sha256: prepared_sha.clone(),
             },
         ],
+        labels_sha256: None,
         groups: vec![
             Group {
                 context: 0,

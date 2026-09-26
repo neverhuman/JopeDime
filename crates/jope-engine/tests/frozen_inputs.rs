@@ -79,6 +79,7 @@ fn build_index(corpus: &Path, root: &Path, contexts: usize) -> Index {
         records: 16,
         legal_sets: vec![vec![0], (3..11).collect(), vec![2]],
         contexts: rows,
+        labels_sha256: None,
         groups: (0..2)
             .map(|g| Group {
                 context: g,

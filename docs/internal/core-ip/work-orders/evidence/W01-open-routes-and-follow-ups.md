@@ -800,3 +800,55 @@ substituted vocabulary is refused.
   --all-targets` (CPU, `neural-env.sh`), exit 0. `pipeline`, `monitoring`, `proposals` and
   `ranked_proposals` are compile-checked only: they need a GPU grant to run.
 - Pre-commit `w1c-vocab-c-20260926T195243Z`: fence suites, `gp::fit_contract_tests`, `teaching_store` and `corpus` unit tests, 98/98; workspace all-targets check, coverage (0 unassigned, 261 targets), verify-test-inventory, fmt and diff-check exit 0.
+
+## Round 8 — the legacy `provenance.json` is no longer trusted for labels (same branch)
+
+Evidence: `runs/w1c-provenance-*`.
+
+**Defect (recorded in round 7, not changed there).** A legacy (`parallel.teaching_corpus.v1`)
+corpus's `provenance.json` is bound only by its own back-reference to the index (the index
+cannot carry the provenance's digest). `teaching_store::teacher_programs`' legacy branch took
+the expected `labels_sha256` from that file, so a legacy corpus's teacher labels were
+authenticated only by an unbound file.
+
+**Reproduction.** `w1c-provenance-pre-20260926T195610Z`: 2/2 FAIL. Both tests export a published
+store to the legacy layout (`teaching_store::export`).
+
+| Test | Pre-fix outcome |
+|---|---|
+| `teaching_store::read_once_tests::legacy_teacher_labels_are_authenticated_by_the_verified_index_never_by_provenance` | Forged `labels.jsonl` plus a `provenance.json` naming its digest (back-reference intact): the **forged programs were returned**. |
+| `…::legacy_teacher_labels_without_an_index_binding_are_unbound_and_refused` | A legacy index with no labels binding: its labels were **trusted** on the provenance's word. |
+
+**Fix.** The binding is a digest the index records (the index is what callers verify: the
+checkpoint's `corpus_sha256`, `read_index`, `load_resident_verified`).
+- `corpus::Index` gains `labels_sha256: Option<String>` (`serde(default)`, omitted when absent,
+  so every index written before this change parses and re-serializes to the same bytes).
+- Writers that produce a legacy index with labels bind them: `corpus::build_observed*` and
+  `teaching_store::export`. Sharded stores bind labels per shard (`None` here).
+- `teacher_programs`' legacy branch requires the index's binding (and that the bytes it read
+  bind the same as the caller's index). Without one it refuses: "legacy teaching corpus labels
+  are unbound: the index binds no labels digest and provenance.json is bound only by its
+  back-reference to the index". A provenance naming another digest is refused ("teacher labels
+  changed"). The provenance is still read, and its back-reference still checked.
+- Legacy meaning is kept where the binding is absent: such a corpus still opens (`read_index`,
+  `load`, training, projection); only its labels are refused as teacher labels.
+- `corpus_publication::verify` requires a bound index's digest to agree with its provenance.
+  `resident_protocol` stages `labels.jsonl` under the index's binding when there is one, and
+  under the provenance's for an unbound legacy index (whose labels `teacher_programs` refuses).
+
+**Deliberately unchanged.** `continuation_corpus::render` still writes an index without the
+binding: its rendering is re-derived byte for byte by native Graph verification, so binding
+there would make every existing continuation corpus fail verification. Its labels stay unbound
+for `teacher_programs`; continuation corpora are training inputs, and no product path reads
+their teacher programs. Every struct-literal `Index` in tests and `auxiliary_training` gains
+`labels_sha256: None` (unchanged bytes).
+
+**Controls.** Positive: an exported (bound) legacy corpus returns its honest programs, and
+`corpus_incremental::sharded_export_matches_reference_and_only_changed_groups_are_rebuilt` still
+finds the built reference and the export byte-identical, with equal teacher programs.
+Negative: forged labels named by the provenance, and an unbound index, are refused.
+
+**Results.**
+- `w1c-provenance-neural-check-20260926T200058Z`: `cargo check -p jope-parallel --features neural --all-targets`, exit 0 (the
+  neural test literals are compile-checked only).
+- Post-fix and pre-commit `w1c-provenance-c-20260926T200127Z`: the two tests, the fence suites, `gp::fit_contract_tests`, every `teaching_store`, `corpus*` and `campaign` unit test, and `corpus_incremental`, `native_loop_continuation`, `corpus_projection` and `resident_protocol`: 157/157. Workspace all-targets check, coverage (0 unassigned, 261 targets), verify-test-inventory, fmt and diff-check exit 0. (A first attempt, `w1c-provenance-c-20260926T195908Z`, stopped at compilation: two `cfg(test)` literals in `campaign.rs` lacked the new field.)
