@@ -168,15 +168,13 @@ pub(super) fn verify(
     evidence: &OofEvidence,
     revocations: &Revocations,
 ) -> Result<(String, String)> {
-    let plan = policy
-        .context
-        .as_ref()
-        .context("MissingEncoderProvenance: freeze preregistered no teaching context encoder")?;
+    let plan = policy.context.as_ref().with_context(|| {
+        quarantined("MissingEncoderProvenance: freeze preregistered no teaching context encoder")
+    })?;
     plan.validate()?;
-    let context = evidence
-        .context
-        .as_ref()
-        .context("MissingEncoderProvenance: submission carries no context receipt")?;
+    let context = evidence.context.as_ref().with_context(|| {
+        quarantined("MissingEncoderProvenance: submission carries no context receipt")
+    })?;
     revocations.refuse(
         "the teaching context",
         [

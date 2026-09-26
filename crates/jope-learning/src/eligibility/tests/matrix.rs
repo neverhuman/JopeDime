@@ -1,4 +1,5 @@
-//! W3-T07: every jope-learning teaching ingress crossed with every submission mutation class.
+//! W3-T07: every jope-learning teaching ingress crossed with every submission mutation class,
+//! for every teaching task (regression RMSE, binary AUROC, multiclass log-loss).
 //! `qualify` receives the mutated submission directly. The stored routes are then attacked
 //! with a forged but internally consistent success claim: the mutated evidence stored with
 //! the valid measurement, its `qualified` decision, an accepted HWM event and a pointer.
@@ -10,6 +11,7 @@ use super::provenance::{authority, rejected_decisions};
 use super::*;
 
 const ROUTES: [&str; 5] = ["qualify", "revalidate", "ingest", "freeze", "replay"];
+const TASKS: [Task; 3] = [Task::Regression, Task::Binary, Task::Multiclass];
 
 struct Mutation {
     class: &'static str,
@@ -120,10 +122,16 @@ const MUTATIONS: [Mutation; 18] = [
             let prediction: FoldPredictions = stored(f, &f.evidence.fold_predictions_sha256[0]);
             let result: EvaluationResult = stored(f, &prediction.execution_receipt_sha256);
             let worker: WorkerOutcome = stored(f, &result.worker_receipt_sha256);
-            // JSON has no NaN: a nonfinite prediction reaches the receiver only as `null`.
-            let nonfinite = br#"{"kind":"values","data":[null,1.0]}"#;
-            fs::write(&worker.outputs[0].path, nonfinite).unwrap();
-            let nulls = f.state.put_blob(nonfinite).unwrap();
+            // JSON has no NaN: a nonfinite prediction reaches the receiver only as `null`, in
+            // the first value of whatever the task stores (a value or a class probability).
+            let mut json: serde_json::Value = stored(f, &prediction.predictions_sha256);
+            match json["kind"].as_str().unwrap() {
+                "values" => json["data"][0] = serde_json::Value::Null,
+                _ => json["data"]["values"][0][0] = serde_json::Value::Null,
+            }
+            let nonfinite = serde_json::to_vec(&json).unwrap();
+            fs::write(&worker.outputs[0].path, &nonfinite).unwrap();
+            let nulls = f.state.put_blob(&nonfinite).unwrap();
             let evidence = rebind(f, &f.evidence, 0, |p, r, w| {
                 p.predictions_sha256 = nulls.clone();
                 r.predictions_sha256 = Some(nulls.clone());
@@ -149,8 +157,16 @@ const MUTATIONS: [Mutation; 18] = [
         class: "forged-fold-score",
         expected: "execution score differs from stored predictions",
         apply: |f| {
+            // Forged within the metric's range for every task (RMSE and log-loss are at least 0,
+            // AUROC at most 1), so the refusal is the recomputation, not a range check.
             let evidence = rebind(f, &f.evidence, 3, |_, r, _| {
-                r.primary = r.primary.map(|value| value + 0.1)
+                r.primary = r.primary.map(|value| {
+                    if value >= 0.5 {
+                        value - 0.1
+                    } else {
+                        value + 0.1
+                    }
+                })
             });
             (f.record.clone(), evidence)
         },
@@ -325,9 +341,10 @@ fn deliver(f: &Fixture, record: &HwmRecord, tag: &str) -> hwm::IngestReport {
     .unwrap()
 }
 
-/// One mutation class through all five routes; returns each route's refusal.
-fn attack(m: &Mutation) -> Vec<(&'static str, String)> {
-    let f = fixture(Task::Regression, 5);
+/// One mutation class through all five routes for one task; returns each route's refusal.
+fn attack(m: &Mutation, task: Task) -> Vec<(&'static str, String)> {
+    let f = fixture(task, 5);
+    let class = format!("{} ({})", m.class, task.as_str());
     // The success a forger would claim: the valid submission's measurement.
     let claim = measured(&f.state, &f.record, &f.evidence, false).unwrap();
     let (record, evidence) = (m.apply)(&f);
@@ -337,17 +354,17 @@ fn attack(m: &Mutation) -> Vec<(&'static str, String)> {
     let inventoried = rejected_decisions(&f.state).len();
     let error = format!(
         "{:#}",
-        qualify(&f.state, &record, &evidence).expect_err(m.class)
+        qualify(&f.state, &record, &evidence).expect_err(&class)
     );
-    assert!(error.contains(m.expected), "{}: {error}", m.class);
-    assert_eq!(before, authority(&f.state), "{} qualify", m.class);
+    assert!(error.contains(m.expected), "{class}: {error}");
+    assert_eq!(before, authority(&f.state), "{class} qualify");
     assert_eq!(rejected_decisions(&f.state).len(), inventoried + 1);
     refusals.push(("qualify", error));
 
     let sha = forge_qualification(&f, &record, &evidence, &claim);
     let error = format!(
         "{:#}",
-        revalidate_qualification(&f.state, &record).expect_err(m.class)
+        revalidate_qualification(&f.state, &record).expect_err(&class)
     );
     refusals.push(("revalidate", error));
 
@@ -356,10 +373,9 @@ fn attack(m: &Mutation) -> Vec<(&'static str, String)> {
     assert_eq!(
         (report.accepted, report.rejects[0].reason.as_str()),
         (0, "teaching-ineligible"),
-        "{} ingest",
-        m.class
+        "{class} ingest"
     );
-    assert_eq!(before, authority(&f.state), "{} ingest", m.class);
+    assert_eq!(before, authority(&f.state), "{class} ingest");
     refusals.push(("ingest", report.rejects[0].reason.clone()));
 
     forge_acceptance(&f, &record, &sha);
@@ -371,19 +387,18 @@ fn attack(m: &Mutation) -> Vec<(&'static str, String)> {
     let frozen = freeze_teaching(&f.state).unwrap();
     assert!(
         frozen.entries.is_empty() && frozen.excluded_diagnostic == 1,
-        "{} freeze",
-        m.class
+        "{class} freeze"
     );
     refusals.push(("freeze", frozen.exclusions[0].1.clone()));
 
     let error = format!(
         "{:#}",
-        revalidate_replay(&f.state, std::slice::from_ref(&claim)).expect_err(m.class)
+        revalidate_replay(&f.state, std::slice::from_ref(&claim)).expect_err(&class)
     );
     refusals.push(("replay", error));
 
     // The forged flags stand in both ledgers and on disk; neither replay trusts them.
-    assert!(independent_replay(&f.state).is_empty(), "{}", m.class);
+    assert!(independent_replay(&f.state).is_empty(), "{class}");
     assert!(manifest(&f.state).is_empty());
     assert_eq!(
         refusals.iter().map(|(route, _)| *route).collect::<Vec<_>>(),
@@ -391,7 +406,7 @@ fn attack(m: &Mutation) -> Vec<(&'static str, String)> {
     );
     for (route, reason) in &refusals {
         assert!(!reason.is_empty());
-        eprintln!("W3-T07 {} {route}: refused: {reason}", m.class);
+        eprintln!("W3-T07 {class} {route}: refused: {reason}");
     }
     refusals
 }
@@ -401,7 +416,9 @@ macro_rules! cells {
         $(
             #[test]
             fn $test() {
-                assert_eq!(attack(&MUTATIONS[$index]).len(), ROUTES.len());
+                for task in TASKS {
+                    assert_eq!(attack(&MUTATIONS[$index], task).len(), ROUTES.len());
+                }
             }
         )*
         #[test]
@@ -412,10 +429,11 @@ macro_rules! cells {
             let classes: BTreeSet<_> = MUTATIONS.iter().map(|m| m.class).collect();
             assert_eq!(classes.len(), MUTATIONS.len());
             eprintln!(
-                "W3-T07 matrix: {} classes x {} routes = {} refusals",
+                "W3-T07 matrix: {} classes x {} tasks x {} routes = {} refusals",
                 MUTATIONS.len(),
+                TASKS.len(),
                 ROUTES.len(),
-                MUTATIONS.len() * ROUTES.len()
+                MUTATIONS.len() * TASKS.len() * ROUTES.len()
             );
         }
     };

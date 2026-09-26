@@ -42,14 +42,26 @@ const QUALIFICATION: &str = "jope.measured-teaching/v1";
 const DIAGNOSTICS: &str = "jope.teaching-diagnostics/v1";
 
 /// Owner decision (d), 2026-09-26: evidence made before a provenance requirement existed stays
-/// quarantined. Nothing upgrades it in place, and no route re-admits it; requalification happens
-/// only by producing a new, fully provenanced qualification.
+/// quarantined. Nothing upgrades it in place, and no route re-admits it; requalification is a
+/// refusal with this message, not a procedure, and happens only by producing a new, fully
+/// provenanced qualification.
 pub(crate) fn quarantined(reason: &str) -> String {
     format!(
-        "{reason}. Quarantined: a qualification without this provenance is never upgraded in \
-         place; requalification happens only by producing a new, fully provenanced qualification \
-         (a freeze that preregisters the provenance, new evidence carrying it, and a new qualify)"
+        "{reason}. Quarantined: nothing upgrades it in place, and no route re-admits it. \
+         Requalification happens only by producing a new, fully provenanced qualification: a new \
+         record, qualified with evidence carrying this provenance under a freeze that \
+         preregisters it (freezes are immutable, so a comparison frozen without it needs a new \
+         comparison identity)"
     )
+}
+
+/// `qualify` of a record whose retained qualification differs from the new measurement.
+fn requalification_refused(record: &HwmRecord) -> String {
+    quarantined(&format!(
+        "RequalificationRefused: record {} already has a different retained qualification for \
+         comparison {}, and retained qualifications are immutable",
+        record.provenance.record_sha256, record.identity_sha256
+    ))
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -1248,7 +1260,14 @@ pub fn qualify(state: &State, record: &HwmRecord, evidence: &OofEvidence) -> Res
             evidence: evidence.clone(),
             qualification: qualification.clone(),
         })?;
-        immutable_write(&qualification_path(state, record), &stored)?;
+        let path = qualification_path(state, record);
+        // A byte-identical redelivery stays idempotent; anything else is requalification.
+        ensure!(
+            !path.exists() || fs::read(&path)? == stored,
+            "{}",
+            requalification_refused(record)
+        );
+        immutable_write(&path, &stored)?;
         Ok((qualification, sha256_hex(&stored)))
     })();
     // Redelivering a durable decision is idempotent; a pending file gains its event here.
