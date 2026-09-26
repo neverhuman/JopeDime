@@ -8,6 +8,10 @@ The [regression remediation register](findings/README.md) preserves all ten audi
 shards and their 195 individual entries. Inventory verification does not close
 the findings or qualify the learning loop.
 
+The [W1–W12 work orders](work-orders/README.md) expand the remediation plan into
+numbered implementation tasks, dependencies, acceptance cases, evidence requirements
+and gated execution phases. They are plans, not completed capability claims.
+
 ```sh
 python3 docs/internal/core-ip/tools/build.py \
   --output /home/ubuntu/xbabe2_kicker/docs \
