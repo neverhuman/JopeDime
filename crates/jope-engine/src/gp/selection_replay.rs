@@ -47,8 +47,18 @@ use std::{
 };
 
 pub const CONTRACT: &str = "parallel.gp_selection_contract.v1";
-/// The only random-stream protocol whose ledgers this contract replays.
-const RANDOM_PROTOCOL: &str = "parallel.gp_random_streams.v2";
+/// Random-stream protocols whose ledgers this contract replays. Selection does
+/// not depend on the stream words, so historical v2 (search-wide counter)
+/// ledgers stay replayable; v3 (slot-keyed, W5-T02) is what new searches write.
+/// Lineage verification re-derives the words and accepts v3 only.
+const RANDOM_PROTOCOLS: [&str; 2] = [
+    "parallel.gp_random_streams.v2",
+    super::lineage::RANDOM_PROTOCOL,
+];
+
+fn replayable_protocol(protocol: &Value) -> bool {
+    RANDOM_PROTOCOLS.iter().any(|p| protocol == p)
+}
 const OBSERVATION_SCHEMA: &str = "parallel.gp_observation.v1";
 const SEARCH_CLOCK: &str = "parallel.gp_search_clock.v1";
 const SCORE_IDENTITY_SCHEMA: &str = "parallel.gp_score_identity.v1";
@@ -94,7 +104,7 @@ impl Frozen {
             "unsupported search request"
         );
         ensure!(
-            request["random_protocol"] == RANDOM_PROTOCOL,
+            replayable_protocol(&request["random_protocol"]),
             "search request random protocol is outside the replay contract"
         );
         // Requests that froze their selection rules must have frozen these;
@@ -605,7 +615,7 @@ pub fn verify_search(root: &Path, output: &Path) -> Result<SearchReplay> {
             && search["terminal"] == true
             && search["final_tests_opened"] == false
             && search["search_id"] == search_id
-            && search["random_protocol"] == RANDOM_PROTOCOL,
+            && search["random_protocol"] == request["random_protocol"],
         "search publication is not a terminal search of this request"
     );
     ensure!(
@@ -740,7 +750,7 @@ mod tests {
     const SCALE: f64 = 2.0;
 
     fn request() -> Value {
-        json!({"schema":"parallel.search_request.v1","random_protocol":RANDOM_PROTOCOL,
+        json!({"schema":"parallel.search_request.v1","random_protocol":super::super::lineage::RANDOM_PROTOCOL,
             "evaluations":6,"seconds":60,"prepared_sha256":"a".repeat(64),"cut":0,
             "evaluator_sha256":"b".repeat(64),"training_sha256":"c".repeat(64),
             "validation_sha256":"d".repeat(64),"preprocessing_sha256":"e".repeat(64),
@@ -1145,6 +1155,10 @@ mod tests {
         let mut other = request();
         other["random_protocol"] = json!("parallel.gp_random_streams.v1");
         assert!(Frozen::from_request(&other, SCALE).is_err());
+        // Historical counter-keyed ledgers remain replayable for selection.
+        let mut historical = request();
+        historical["random_protocol"] = json!("parallel.gp_random_streams.v2");
+        assert!(Frozen::from_request(&historical, SCALE).is_ok());
         let mut frozen = request();
         frozen["selection_contract"] = json!(CONTRACT);
         frozen["proposal_cap_per_slot"] = json!(PROPOSAL_CAP_PER_SLOT);

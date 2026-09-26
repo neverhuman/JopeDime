@@ -637,14 +637,18 @@ fn initial_execution_order(
 
 // Version every new search and attempt. Historical requests without this
 // protocol remain retained and cannot be resumed under different random draws.
-const RANDOM_PROTOCOL: &str = "parallel.gp_random_streams.v2";
+// v3 (W5-T02) keys every stream by evaluation slot and the draw number within
+// that slot, so a refused proposal in one slot never shifts another slot's
+// draws; v2 keyed them by the search-wide proposal counter.
+const RANDOM_PROTOCOL: &str = "parallel.gp_random_streams.v3";
 
-fn random_word(seed: u64, attempt: u64, stream: &str) -> u64 {
+fn random_word(seed: u64, slot: u64, draw: u64, stream: &str) -> u64 {
     use sha2::{Digest, Sha256};
     let mut digest = Sha256::new();
     digest.update(RANDOM_PROTOCOL.as_bytes());
     digest.update(seed.to_le_bytes());
-    digest.update(attempt.to_le_bytes());
+    digest.update(slot.to_le_bytes());
+    digest.update(draw.to_le_bytes());
     digest.update(stream.as_bytes());
     u64::from_le_bytes(digest.finalize()[..8].try_into().unwrap())
 }
@@ -848,7 +852,7 @@ mod parent_selection_tests {
         for bad in [Some(f64::NAN), Some(f64::INFINITY), Some(f64::NEG_INFINITY)] {
             pop.candidates[2].policy_logprob = bad;
             for attempt in 0..1000 {
-                let draw = super::random_word(8129661450841087504, attempt, "left_parent");
+                let draw = super::random_word(8129661450841087504, 0, attempt, "left_parent");
                 assert_eq!(
                     policy_weighted_parent(3, draw, Some(&pop), Some(&genomes)),
                     policy_weighted_parent(3, draw, None, None)
@@ -871,7 +875,7 @@ mod parent_selection_tests {
         let mut counts = [0usize; 3];
         let mut differs_from_uniform = 0;
         for attempt in 0..5000 {
-            let draw = super::random_word(8129661450841087504, attempt, "left_parent");
+            let draw = super::random_word(8129661450841087504, 0, attempt, "left_parent");
             let parent = policy_weighted_parent(3, draw, Some(&pop), Some(&genomes));
             counts[parent] += 1;
             if parent != policy_weighted_parent(3, draw, None, None) {
@@ -900,20 +904,20 @@ mod parent_selection_tests {
             candidate.genome = genome.clone();
         }
         for attempt in 0..10000 {
-            let draw = super::random_word(8129661450841087504, attempt, "left_parent");
+            let draw = super::random_word(8129661450841087504, 0, attempt, "left_parent");
             assert_eq!(
                 draw,
-                super::random_word(8129661450841087504, attempt, "left_parent")
+                super::random_word(8129661450841087504, 0, attempt, "left_parent")
             );
             assert_ne!(
                 draw,
-                super::random_word(8129661450841087504, attempt, "right_parent")
+                super::random_word(8129661450841087504, 0, attempt, "right_parent")
             );
             let quantile = super::unit_quantile(draw);
             assert!((0.0..1.0).contains(&quantile));
             quantiles.insert(quantile.to_bits());
             let parent = policy_weighted_parent(10, draw, Some(&pop), Some(&genomes));
-            let operator = super::random_word(8129661450841087504, attempt, "operator") % 16;
+            let operator = super::random_word(8129661450841087504, 0, attempt, "operator") % 16;
             counts[parent][if operator < 2 {
                 0
             } else if operator < 9 {
@@ -1861,20 +1865,24 @@ fn search_inner(
         } else {
             None
         };
-        let (raw_genome, genome, initial_proposal, lineage) = if let Some(a) = &saved_attempt {
+        let slot = i as u64;
+        let (raw_genome, genome, initial_proposal, lineage, slot_draw) = if let Some(a) =
+            &saved_attempt
+        {
             proposal_attempts = a["proposal_attempts"]
                 .as_u64()
                 .context("missing proposal counter")?;
             rejected_proposals = a["rejected_proposals"]
                 .as_u64()
                 .context("missing rejection counter")?;
+            let slot_draw = a["slot_draw"].as_u64().context("missing slot draw")?;
             ensure!(
                 a["random_streams"]
                     == json!({
-                "operator":random_word(rng_seed,proposal_attempts,"operator"),
-                "left_parent":random_word(rng_seed,proposal_attempts,"left_parent"),
-                "right_parent":random_word(rng_seed,proposal_attempts,"right_parent"),
-                "variation":random_word(rng_seed,proposal_attempts,"variation")}),
+                "operator":random_word(rng_seed,slot,slot_draw,"operator"),
+                "left_parent":random_word(rng_seed,slot,slot_draw,"left_parent"),
+                "right_parent":random_word(rng_seed,slot,slot_draw,"right_parent"),
+                "variation":random_word(rng_seed,slot,slot_draw,"variation")}),
                 "original candidate random streams changed"
             );
             let genome = a["genome"]
@@ -1896,6 +1904,7 @@ fn search_inner(
                     .context("missing candidate origin")?,
                 // Attempts recorded before the lineage envelope keep null.
                 a.get("lineage").cloned().unwrap_or(serde_json::Value::Null),
+                slot_draw,
             )
         } else {
             let mut selected = None;
@@ -1907,11 +1916,14 @@ fn search_inner(
                 }
                 proposal_attempts += 1;
                 let initial = attempt == 0 && i < population.len();
-                let proposal_seed = random_word(rng_seed, proposal_attempts, "variation");
-                let operator = random_word(rng_seed, proposal_attempts, "operator") % 16;
+                // Streams are keyed by (slot, draw within the slot), never by
+                // the search-wide counter (W5-T02).
+                let proposal_seed = random_word(rng_seed, slot, attempt, "variation");
+                let operator = random_word(rng_seed, slot, attempt, "operator") % 16;
                 // An explicit variation event: operator, parents and stream words.
                 let variation = |kind: &str, parents: Vec<serde_json::Value>| {
                     json!({"kind":"variation","operator":kind,"parents":parents,
+                        "slot":slot,"slot_draw":attempt,
                         "proposal_attempt":proposal_attempts,"variation_seed":proposal_seed,
                         "operator_word":operator})
                 };
@@ -1950,7 +1962,7 @@ fn search_inner(
                             .collect();
                         let left = &ranked[policy_weighted_parent(
                             keep,
-                            random_word(rng_seed, proposal_attempts, "left_parent"),
+                            random_word(rng_seed, slot, attempt, "left_parent"),
                             supplied.as_ref(),
                             Some(ranked_genomes.as_slice()),
                         )];
@@ -1966,7 +1978,7 @@ fn search_inner(
                             )
                         } else {
                             let right =
-                                &ranked[(random_word(rng_seed, proposal_attempts, "right_parent")
+                                &ranked[(random_word(rng_seed, slot, attempt, "right_parent")
                                     % keep as u64)
                                     as usize];
                             (
@@ -2004,7 +2016,7 @@ fn search_inner(
                                 json!({"kind":"none","applications":0})
                             },
                             "executable":{"program":genome,"program_sha256":hash(genome.as_bytes())}});
-                        selected = Some((raw, genome, initial, lineage));
+                        selected = Some((raw, genome, initial, lineage, attempt));
                         break;
                     }
                 }
@@ -2060,10 +2072,11 @@ fn search_inner(
                 "evaluations":evaluations,"seconds":seconds,"raw_genome":raw_genome,"genome":genome,
                 "program_sha256":candidate_identity["program_sha256"],"evaluation_identity_sha256":candidate_identity["evaluation_identity_sha256"],
                 "initial_proposal":initial_proposal,"rng_seed":rng_seed,"random_protocol":RANDOM_PROTOCOL,
-                "random_streams":{"operator":random_word(rng_seed,proposal_attempts,"operator"),
-                    "left_parent":random_word(rng_seed,proposal_attempts,"left_parent"),
-                    "right_parent":random_word(rng_seed,proposal_attempts,"right_parent"),
-                    "variation":random_word(rng_seed,proposal_attempts,"variation")},
+                "slot_draw":slot_draw,
+                "random_streams":{"operator":random_word(rng_seed,slot,slot_draw,"operator"),
+                    "left_parent":random_word(rng_seed,slot,slot_draw,"left_parent"),
+                    "right_parent":random_word(rng_seed,slot,slot_draw,"right_parent"),
+                    "variation":random_word(rng_seed,slot,slot_draw,"variation")},
                 "proposal_attempts":proposal_attempts,"rejected_proposals":rejected_proposals,
                 "lineage":lineage,"feasibility":feasibility}),
             )?;

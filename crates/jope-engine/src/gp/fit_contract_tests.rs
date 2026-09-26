@@ -2598,3 +2598,82 @@ fn a_paired_comparison_names_its_sole_arm_difference_and_refuses_any_other() {
     }
     authority.stop_service();
 }
+
+#[test]
+fn a_refused_proposal_in_one_slot_does_not_shift_another_slots_random_streams() {
+    let (temp, prepared) = view_fixture();
+    let root = temp.path().canonicalize().unwrap();
+    let mut authority = Fixture::activated(&root, vec![cut_training_hash(&prepared)]);
+    authority.start();
+    let run = |seeds: &Path, name: &str| -> Vec<Value> {
+        let output = root.join(name);
+        success(
+            search_client(&authority, &root, &prepared, &output, 3)
+                .arg("--seeds")
+                .arg(seeds)
+                .output()
+                .unwrap(),
+        );
+        read_json(&output.join("observations.json")).unwrap()
+    };
+    // Arm B: slot 1's initial proposal duplicates slot 0 and is refused, so
+    // slot 1 is filled by a variation draw. In both arms slot 2's initial
+    // proposal is a duplicate too, so slot 2 is filled by variation.
+    let b = root.join("streams-b.json");
+    seed_population(
+        &prepared,
+        &b,
+        &[PROGRAM, "(pipe X   (ridge))", "(pipe X  (ridge))"],
+        |_| None,
+    );
+    let rows_b = run(&b, "streams-arm-b");
+    assert_eq!(rows_b[1]["lineage"]["source"]["kind"], "variation");
+    // Arm A seeds slot 1 with exactly the program arm B's variation produced:
+    // both arms enter slot 2 with the same ledger, parent pool and evaluated
+    // set, and differ only by one refused draw in slot 1.
+    let a = root.join("streams-a.json");
+    let slot_one = rows_b[1]["genome"].as_str().unwrap();
+    seed_population(
+        &prepared,
+        &a,
+        &[PROGRAM, slot_one, "(pipe X  (ridge))"],
+        |_| None,
+    );
+    let rows_a = run(&a, "streams-arm-a");
+    assert_eq!(
+        rows_a[1]["lineage"]["source"]["kind"],
+        "seed_population_slot"
+    );
+    for row in 0..2 {
+        assert_eq!(rows_a[row]["genome"], rows_b[row]["genome"]);
+        for key in ["rmse", "semantic_sha256"] {
+            assert_eq!(rows_a[row]["metrics"][key], rows_b[row]["metrics"][key]);
+        }
+    }
+    let counter = |row: &Value| row["proposal_attempts"].as_u64().unwrap();
+    assert!(
+        counter(&rows_b[1]) > counter(&rows_a[1]),
+        "arm B drew more proposals before slot 2"
+    );
+    // Slot 2 walks the same keyed stream sequence in both arms: the same
+    // accepted draw, words, operator, parents and program.
+    let slot_two = |rows: &[Value]| {
+        let source = &rows[2]["lineage"]["source"];
+        json!({"draw":counter(&rows[2]) - counter(&rows[1]) - 1,
+            "kind":source["kind"],"operator":source["operator"],"parents":source["parents"],
+            "variation_seed":source["variation_seed"],"operator_word":source["operator_word"],
+            "genome":rows[2]["genome"]})
+    };
+    assert_eq!(
+        slot_two(&rows_a),
+        slot_two(&rows_b),
+        "a refused proposal in slot 1 shifted slot 2's random streams"
+    );
+    for rows in [&rows_a, &rows_b] {
+        let source = &rows[2]["lineage"]["source"];
+        assert_eq!(source["kind"], "variation", "{source}");
+        assert_eq!(source["slot"], 2, "{source}");
+        assert_eq!(source["slot_draw"], slot_two(rows)["draw"], "{source}");
+    }
+    authority.stop_service();
+}

@@ -35,17 +35,20 @@ pub const LINEAGE_SCHEMA: &str = "parallel.gp_candidate_lineage.v1";
 /// The only reference program a generic search starts from.
 pub const FIXED_REFERENCE: &str = "(pipe X (ridge))";
 const GENERATOR: &str = "feat_math.random_canonical_pipeline.depth6";
-const RANDOM_PROTOCOL: &str = "parallel.gp_random_streams.v2";
+/// The only stream protocol whose variation events this verifier re-derives.
+pub const RANDOM_PROTOCOL: &str = "parallel.gp_random_streams.v3";
 /// Variation parents are drawn from at most this many best measured entries.
 const PARENT_POOL: usize = 10;
 
-/// Independent re-derivation of the searcher's keyed random words.
-fn random_word(seed: u64, attempt: u64, stream: &str) -> u64 {
+/// Independent re-derivation of the searcher's keyed random words: keyed by
+/// evaluation slot and the draw within that slot (W5-T02).
+fn random_word(seed: u64, slot: u64, draw: u64, stream: &str) -> u64 {
     use sha2::{Digest, Sha256};
     let mut digest = Sha256::new();
     digest.update(RANDOM_PROTOCOL.as_bytes());
     digest.update(seed.to_le_bytes());
-    digest.update(attempt.to_le_bytes());
+    digest.update(slot.to_le_bytes());
+    digest.update(draw.to_le_bytes());
     digest.update(stream.as_bytes());
     u64::from_le_bytes(digest.finalize()[..8].try_into().unwrap())
 }
@@ -105,9 +108,14 @@ pub fn verify_rows(context: &LineageContext, rows: &[Value]) -> Result<Lineage> 
     let mut signatures = BTreeSet::new();
     let mut bootstrap_seeds = Vec::<(u64, u64)>::new();
     let mut chains = Vec::with_capacity(rows.len());
+    // The search-wide proposal counter before each slot began.
+    let mut counter = 0u64;
     for (position, row) in rows.iter().enumerate() {
-        let chain = verify_row(context, position, row, &pool, &mut bootstrap_seeds)
+        let chain = verify_row(context, position, row, counter, &pool, &mut bootstrap_seeds)
             .with_context(|| format!("candidate {position} lineage"))?;
+        counter = row["proposal_attempts"]
+            .as_u64()
+            .with_context(|| format!("candidate {position} proposal counter absent"))?;
         if row["failure"].is_null() {
             let signature = row["metrics"]["semantic_sha256"]
                 .as_str()
@@ -141,6 +149,7 @@ fn verify_row(
     context: &LineageContext,
     position: usize,
     row: &Value,
+    counter_before: u64,
     pool: &[(f64, i64, String)],
     bootstrap_seeds: &mut Vec<(u64, u64)>,
 ) -> Result<Chain> {
@@ -271,12 +280,25 @@ fn verify_row(
             let attempt = source["proposal_attempt"]
                 .as_u64()
                 .context("variation attempt absent")?;
-            let seed = random_word(context.rng_seed, attempt, "variation");
-            let word = random_word(context.rng_seed, attempt, "operator") % 16;
+            let draw = source["slot_draw"]
+                .as_u64()
+                .context("variation slot draw absent")?;
+            // The event is this slot's, and its draw is the one the ledger's
+            // search-wide counters say this slot accepted.
             ensure!(
-                row["proposal_attempts"] == attempt
-                    && source["variation_seed"] == seed
-                    && source["operator_word"] == word,
+                source["slot"] == position as u64
+                    && row["proposal_attempts"] == attempt
+                    && Some(attempt)
+                        == draw
+                            .checked_add(1)
+                            .and_then(|draws| counter_before.checked_add(draws)),
+                "variation slot or draw differs from the ledger counters"
+            );
+            let slot = position as u64;
+            let seed = random_word(context.rng_seed, slot, draw, "variation");
+            let word = random_word(context.rng_seed, slot, draw, "operator") % 16;
+            ensure!(
+                source["variation_seed"] == seed && source["operator_word"] == word,
                 "variation random streams differ from the frozen seed"
             );
             let keep = pool.len().min(PARENT_POOL);
@@ -308,7 +330,7 @@ fn verify_row(
             let uniform = context
                 .seeds
                 .is_none_or(|s| s.candidates.iter().all(|c| c.policy_logprob.is_none()));
-            let left_word = random_word(context.rng_seed, attempt, "left_parent");
+            let left_word = random_word(context.rng_seed, slot, draw, "left_parent");
             let operator = source["operator"]
                 .as_str()
                 .context("variation operator omitted")?;
@@ -358,7 +380,7 @@ fn verify_row(
                     );
                     let left = parent(0)?;
                     let right = parent(1)?;
-                    let right_word = random_word(context.rng_seed, attempt, "right_parent");
+                    let right_word = random_word(context.rng_seed, slot, draw, "right_parent");
                     ensure!(
                         recorded[1].0 == pool[(right_word % keep as u64) as usize].1,
                         "crossover right parent is not the stream draw"
@@ -427,6 +449,10 @@ pub fn verify_search(
     let root = root.canonicalize()?;
     let output = output.canonicalize()?;
     let request: Value = read_json(&output.join("search-request.json"))?;
+    ensure!(
+        request["random_protocol"] == RANDOM_PROTOCOL,
+        "lineage is verified under the slot-keyed random stream protocol only"
+    );
     ensure!(
         request["seeds_sha256"] == json!(seeds.map(file_hash).transpose()?),
         "seed population differs from the frozen request"
@@ -651,28 +677,36 @@ mod tests {
                 "adaptation":{"kind":"none","applications":0},"executable":part(original)}})
     }
 
-    fn variation(attempt: u64, operator: &str, parents: &[(i64, &str)]) -> Value {
-        json!({"kind":"variation","operator":operator,"proposal_attempt":attempt,
-            "variation_seed":random_word(SEED, attempt, "variation"),
-            "operator_word":random_word(SEED, attempt, "operator") % 16,
+    /// Slot `slot`'s variation accepted at `draw`, after a counter of `before`.
+    fn variation(
+        slot: u64,
+        draw: u64,
+        before: u64,
+        operator: &str,
+        parents: &[(i64, &str)],
+    ) -> Value {
+        json!({"kind":"variation","operator":operator,"slot":slot,"slot_draw":draw,
+            "proposal_attempt":before + draw + 1,
+            "variation_seed":random_word(SEED, slot, draw, "variation"),
+            "operator_word":random_word(SEED, slot, draw, "operator") % 16,
             "parents":parents.iter().map(|(at, program)| json!({"position":at,
                 "program_sha256":hash(program.as_bytes())})).collect::<Vec<_>>()})
     }
 
-    /// First attempt after `from` whose operator word satisfies `accept` and
+    /// First draw within `slot` whose operator word satisfies `accept` and
     /// whose operator output exists.
-    fn attempt_where(
-        from: u64,
+    fn draw_where(
+        slot: u64,
         accept: impl Fn(u64) -> bool,
         child: impl Fn(u64, u64) -> Option<String>,
     ) -> (u64, String) {
-        (from + 1..from + 10_000)
-            .find_map(|a| {
-                let word = random_word(SEED, a, "operator") % 16;
+        (0..10_000)
+            .find_map(|d| {
+                let word = random_word(SEED, slot, d, "operator") % 16;
                 accept(word)
-                    .then(|| child(a, random_word(SEED, a, "variation")))
+                    .then(|| child(d, random_word(SEED, slot, d, "variation")))
                     .flatten()
-                    .map(|c| (a, c))
+                    .map(|c| (d, c))
             })
             .expect("a matching operator draw")
     }
@@ -701,20 +735,21 @@ mod tests {
         ];
         // Pool order by objective: bootstrap (0.4), reference (0.5).
         let pool2 = [(1i64, bootstrap.clone()), (0, reference.clone())];
-        let (a, child) = attempt_where(
+        let (a, child) = draw_where(
             2,
             |w| (2..9).contains(&w),
-            |a, seed| {
-                let left = &pool2[(random_word(SEED, a, "left_parent") % 2) as usize].1;
+            |d, seed| {
+                let left = &pool2[(random_word(SEED, 2, d, "left_parent") % 2) as usize].1;
                 mutate_canonical_pipeline(left, seed, 6).ok()
             },
         );
-        let left = pool2[(random_word(SEED, a, "left_parent") % 2) as usize].clone();
+        let left = pool2[(random_word(SEED, 2, a, "left_parent") % 2) as usize].clone();
+        let after_mutation = 2 + a + 1;
         rows.push(row(
             &child,
-            variation(a, "mutate", &[(left.0, left.1.as_str())]),
+            variation(2, a, 2, "mutate", &[(left.0, left.1.as_str())]),
             None,
-            a,
+            after_mutation,
             Some(0.3),
         ));
         let pool3 = [
@@ -722,36 +757,43 @@ mod tests {
             (1, bootstrap.clone()),
             (0, reference.clone()),
         ];
-        let (b, cross) = attempt_where(
-            a,
+        let (b, cross) = draw_where(
+            3,
             |w| w >= 9,
-            |b, seed| {
-                let l = &pool3[(random_word(SEED, b, "left_parent") % 3) as usize].1;
-                let r = &pool3[(random_word(SEED, b, "right_parent") % 3) as usize].1;
+            |d, seed| {
+                let l = &pool3[(random_word(SEED, 3, d, "left_parent") % 3) as usize].1;
+                let r = &pool3[(random_word(SEED, 3, d, "right_parent") % 3) as usize].1;
                 crossover_canonical_pipelines(l, r, seed, 6)
                     .ok()
                     .filter(|c| c != &child && c != &bootstrap && c != &reference)
             },
         );
-        let l = pool3[(random_word(SEED, b, "left_parent") % 3) as usize].clone();
-        let r = pool3[(random_word(SEED, b, "right_parent") % 3) as usize].clone();
+        let l = pool3[(random_word(SEED, 3, b, "left_parent") % 3) as usize].clone();
+        let r = pool3[(random_word(SEED, 3, b, "right_parent") % 3) as usize].clone();
+        let after_crossover = after_mutation + b + 1;
         rows.push(row(
             &cross,
-            variation(b, "crossover", &[(l.0, l.1.as_str()), (r.0, r.1.as_str())]),
+            variation(
+                3,
+                b,
+                after_mutation,
+                "crossover",
+                &[(l.0, l.1.as_str()), (r.0, r.1.as_str())],
+            ),
             None,
-            b,
+            after_crossover,
             None,
         ));
-        let (c, fresh) = attempt_where(
-            b,
+        let (c, fresh) = draw_where(
+            4,
             |w| w < 2,
             |_, seed| Some(random_canonical_pipeline(seed, 6)),
         );
         rows.push(row(
             &fresh,
-            variation(c, "fresh_random", &[]),
+            variation(4, c, after_crossover, "fresh_random", &[]),
             None,
-            c,
+            after_crossover + c + 1,
             Some(0.9),
         ));
         rows
@@ -836,6 +878,24 @@ mod tests {
         let mut streams = rows.clone();
         streams[4]["lineage"]["source"]["variation_seed"] = json!(1);
         refused(&streams, "random streams");
+        // Streams belong to one slot and one draw the ledger counters confirm:
+        // an event cannot claim another slot, another draw, or reuse another
+        // slot's words (W5-T02).
+        let mut slot = rows.clone();
+        slot[4]["lineage"]["source"]["slot"] = json!(3);
+        refused(&slot, "slot or draw differs");
+        let mut draw = rows.clone();
+        let recorded = draw[4]["lineage"]["source"]["slot_draw"].as_u64().unwrap();
+        draw[4]["lineage"]["source"]["slot_draw"] = json!(recorded + 1);
+        refused(&draw, "slot or draw differs");
+        draw[4]["lineage"]["source"]["slot_draw"] = json!(u64::MAX);
+        refused(&draw, "slot or draw differs");
+        let mut borrowed = rows.clone();
+        let from_slot_three = rows[3]["lineage"]["source"].clone();
+        for key in ["variation_seed", "operator_word"] {
+            borrowed[4]["lineage"]["source"][key] = from_slot_three[key].clone();
+        }
+        refused(&borrowed, "random streams");
         let mut missing = rows.clone();
         missing[0]["lineage"] = Value::Null;
         refused(&missing, "envelope absent");

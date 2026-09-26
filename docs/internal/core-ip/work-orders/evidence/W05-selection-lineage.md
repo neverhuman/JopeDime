@@ -138,6 +138,29 @@ Receipts (full source SHA, diff, nextest logs) are retained outside the tree und
   swapping only origin labels leaves every shared measurement, winner and budget
   counter identical (the second arm's fits are recorded as reuse, not new starts);
   undeclared, overdeclared, empty and duplicate-label comparisons refuse.
+- **Slot-keyed random streams (`parallel.gp_random_streams.v3`, branch
+  `rr/w5-selection-2`).** *Defect reproduced*
+  (`runs/w5-t02-streams-repro-20260926T071153Z`): v2 keyed every stream word by the
+  search-wide proposal counter, so a refused proposal in one slot shifted every later
+  slot's draws. Two arms entered slot 2 with the identical ledger, parent pool and
+  evaluated set and differed only by one refused draw in slot 1; slot 2 accepted the
+  same words and program at draw 10 in one arm and draw 9 in the other (the whole
+  walk shifted by one). v3 keys the operator, parent and variation words by
+  `(rng_seed, slot, draw within the slot)`; the search-wide counter is kept as an
+  accounting counter only. Attempts record `slot_draw`, variation events record
+  `slot` and `slot_draw`, and resume re-derives the recorded words from them. The
+  lineage verifier re-derives the words from the event's slot and draw, requires
+  the slot to be the row's own and the draw to be the one the ledger counters
+  imply (`proposal_attempts = previous + slot_draw + 1`), refuses words borrowed
+  from another slot, and verifies v3 ledgers only. The selection replay (which does
+  not use the words) still replays historical v2 ledgers. Test
+  `a_refused_proposal_in_one_slot_does_not_shift_another_slots_random_streams`
+  (arm A is seeded with the exact program arm B's slot-1 variation produced) and
+  lineage refusals for another slot, another draw (including `u64::MAX`, refused
+  without overflow) and borrowed words (gates:
+  `runs/w5-t02-streams-final-20260926T071834Z`). Two earlier reproduction runs and
+  one earlier gate run are marked `SUPERSEDED.txt` (a vacuous assertion; unequal
+  parent pools; a gate run taken before the overflow-safe counter check).
 - Not done: order-balanced paired receipts from real runs (W10).
 - The same commit hardens the replay's proposal-accounting check against an
   adversarial rejection counter at `u64::MAX` (saturating arithmetic, no overflow).
@@ -235,7 +258,11 @@ on a search client, inherited by its evaluator children): `block`, `fork_block`,
   fourth entry for the inventory owner.
 - The searcher's internal parent pool keeps an inherited incumbent outside semantic
   de-duplication; the published winner is unaffected and the lineage verifier mirrors
-  it. W5-T02/T05/T07 remain largely planned (see the task file).
+  it.
+- v3 changes the evolution draws of every new search relative to v2 at the same
+  seed (same seed, different variation sequence); searches are not comparable across
+  protocols, and a v2 search cannot be resumed by this binary (the request's
+  random protocol is part of resume identity).
 - Scope limits: the replay refuses legacy ledgers without the durable search clock,
   and the lineage verifier refuses rows without envelopes (searches started before
   these commits); the lineage verifier takes the seed population and vocabulary as
