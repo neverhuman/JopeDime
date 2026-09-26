@@ -376,6 +376,21 @@ mod tests {
     }
 
     #[test]
+    fn cache_qualification_compares_every_position_of_a_sequence() {
+        // The CUDA timing study's qualification helper must measure cached-versus-full
+        // agreement from a valid prefix through the whole sequence, not fail on its setup.
+        let model = model(19);
+        let context = vec![0.2f32; 12];
+        let tokens = (0..24).map(|j| j % 16 + 1).collect::<Vec<_>>();
+        let error = model.cache_max_error(&context, &tokens).unwrap();
+        assert!(error.is_finite() && error < 1e-4, "{error}");
+        assert!(model.cache_max_error(&context, &tokens[..2]).is_err());
+        // The timing study's qualification sequence shape: BOS, six program tokens, EOS.
+        let program = [1, 3, 4, 5, 6, 7, 8, 2];
+        assert!(model.cache_max_error(&context, &program).unwrap() < 1e-4);
+    }
+
+    #[test]
     fn cached_decoder_gathers_original_rows_and_refuses_revival_or_reorder() {
         let model = model(12);
         let context = vec![-0.1f32; 12];
