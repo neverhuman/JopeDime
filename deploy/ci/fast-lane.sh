@@ -33,6 +33,7 @@ python3 deploy/ci/test-training-proof.py
 python3 deploy/ci/test-install-private.py
 python3 deploy/ci/test-qualify-demo.py
 python3 deploy/ci/test-prepare-asm-runtime.py
+python3 deploy/ci/test-neural-env.py
 python3 docs/internal/core-ip/tools/verify_findings.py
 python3 -m unittest discover -s docs/internal/core-ip/tools -p test_verify_findings.py -v
 python3 docs/internal/core-ip/tools/verify_dispositions.py

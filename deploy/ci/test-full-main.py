@@ -173,6 +173,17 @@ sys.exit(int(a.status))
             total += int(command[3][:-1]) + 15
         self.assertLessEqual(total,115*60)
 
+    def test_family_budget_covers_its_slowest_recorded_golden_test(self):
+        # A family shorter than one of its own tests can never pass: full-scratch was
+        # killed at 600 s inside feat-math::golden fast_profile_portfolio_head (~580-619 s).
+        mapping = json.loads((ROOT/'deploy/ci/coverage.json').read_text())
+        lanes = full.families(mapping)
+        timings = json.loads((ROOT/'docs/parity/test-timings.json').read_text())
+        slowest = max(t['seconds'] for t in timings['tests'] if t['binary'] == 'feat-math::golden')
+        for name in ('full-default','full-scratch'):
+            budget = int(lanes[name]['command'][3][:-1])
+            self.assertGreaterEqual(budget, 1.25*slowest + 120, name)
+
 
 if __name__ == '__main__':
     unittest.main()

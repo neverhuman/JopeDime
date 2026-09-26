@@ -77,6 +77,7 @@
         "python3 deploy/ci/test-install-private.py",
         "python3 deploy/ci/test-qualify-demo.py",
         "python3 deploy/ci/test-prepare-asm-runtime.py",
+        "python3 deploy/ci/test-neural-env.py",
         "python3 docs/internal/core-ip/tools/verify_findings.py",
         "python3 -m unittest discover -s docs/internal/core-ip/tools -p test_verify_findings.py -v",
         "python3 docs/internal/core-ip/tools/verify_dispositions.py",
@@ -424,7 +425,7 @@
         "timeout",
         "--signal=TERM",
         "--kill-after=15s",
-        "1800s",
+        "1500s",
         "bash",
         "deploy/ci/full-lane.sh",
         "full-default"
@@ -509,7 +510,7 @@
         "timeout",
         "--signal=TERM",
         "--kill-after=15s",
-        "600s",
+        "900s",
         "bash",
         "deploy/ci/full-lane.sh",
         "full-scratch"
@@ -668,7 +669,8 @@
         "counts or explicit unknown/unavailable",
         "evidence hashes",
         "collection.json",
-        "junit.xml"
+        "junit.xml",
+        "neural-discovery.json"
       ],
       "requires_nonzero_tests": true,
       "stage": "execution",
@@ -1938,6 +1940,16 @@
       ],
       "dispositions": [],
       "scope": "Direct stdlib unittest execution."
+    },
+    "python:deploy/ci/test-neural-env.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "hygiene"
+      ],
+      "dispositions": [],
+      "scope": "Offline neural SDK/CUDA discovery against fixture trees: layouts, versions, SONAMEs, compiler header resolution and the never-overwritten discovery receipt. Discovery only; no native build, link, runtime or GPU qualification."
     },
     "python:deploy/kernel-v1/source/tests/test_experiment_scheduler.py": {
       "discovery": {

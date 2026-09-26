@@ -127,6 +127,10 @@
       "role": "infrastructure",
       "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
     },
+    "python:deploy/ci/test-neural-env.py": {
+      "role": "infrastructure",
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+    },
     "python:deploy/ci/test-prepare-asm-runtime.py": {
       "role": "infrastructure",
       "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
@@ -2483,9 +2487,13 @@
       "class": "feat-math::golden",
       "test": "fast_profile_portfolio_head",
       "item": "target:feat-math/test/golden",
-      "triage": "untriaged",
-      "status": "open",
-      "note": "Scratch-lane golden test; exceeds the lane window under gpr-scratch-reuse. Root cause pending."
+      "triage": "lane-timeout",
+      "status": "fixed-locally",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/w0-repro/baseline-20260926T045654Z/scratch-golden.log",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-budget-prefix/test-full-main.txt"
+      ],
+      "note": "No assertion failed: the 600 s full-scratch budget was shorter than this test (576-619 s), so timeout(1) killed the lane. Passes bit-exactly with gpr-scratch-reuse in 582.5 s locally; budget now 900 s (full-default 1500 s, total unchanged). CI re-execution pending."
     },
     {
       "lane": "full-scratch",
