@@ -8,7 +8,7 @@ use anyhow::{ensure, Context, Result};
 use candle_core::{DType, Device, Tensor};
 use hyperion::{
     data::Matrix,
-    hyperion::{fit_quantile_bounds, load_settings, HyperionSweepSettings},
+    hyperion::{fit_quantile_bounds, parse_settings, HyperionSweepSettings},
     hyperion_v7::{
         backend::V7Model, config::SweepPlan, grid::quantize_u8_with_bounds,
         sweep::run_composite_embedding_sweep,
@@ -110,22 +110,23 @@ impl CpuProducer {
                 && files.frozen_transforms.sha256 == TRANSFORMS_SHA256,
             "encoder lineage differs from accepted component assets"
         );
-        files.hyperion_weights.read(512 << 20)?;
+        // The model is parsed from exactly the authenticated bytes; the weights path is not
+        // reopened, so a replacement after authentication (A->B->A) cannot reach inference.
+        let weights = files.hyperion_weights.read(512 << 20)?;
         let settings = verified_hyperion_settings(&files.hyperion_manifest)?;
         let hyperion = if device.is_cpu() {
-            V7Model::load_cpu(&files.hyperion_weights.path, &settings)?
+            V7Model::load_cpu_from_bytes(&weights, &settings)?
         } else {
             #[cfg(feature = "inference-cuda")]
             {
-                V7Model::load_cuda(&files.hyperion_weights.path, &settings, device.clone())?
+                V7Model::load_cuda_from_bytes(&weights, &settings, device.clone())?
             }
             #[cfg(not(feature = "inference-cuda"))]
             {
                 anyhow::bail!("CUDA inference feature required")
             }
         };
-        // Loaders use paths internally: rehash after load as well as before it.
-        files.hyperion_weights.read(512 << 20)?;
+        drop(weights);
         ensure!(
             files.component_bundle.is_absolute()
                 && files.component_bundle.canonicalize()? == files.component_bundle,
@@ -496,11 +497,11 @@ fn verified_hyperion_settings(manifest: &AssetFile) -> Result<HyperionSweepSetti
         manifest.sha256 == HYPERION_MANIFEST,
         "Hyperion manifest pin changed"
     );
-    manifest.read(1 << 20)?;
-    // load_settings returns a legacy 64-bit identifier, not a SHA-256 digest.
-    // Authenticate the original file bytes before and after its path-based read.
-    let (settings, _) = load_settings(&manifest.path, HYPERION_SEED)?;
-    manifest.read(1 << 20)?;
+    // Parse exactly the authenticated bytes; the manifest path is not reopened. The legacy
+    // 64-bit identifier parse_settings also returns is not a SHA-256 digest and is ignored.
+    let bytes = manifest.read(1 << 20)?;
+    let text = std::str::from_utf8(&bytes).context("Hyperion manifest is not UTF-8")?;
+    let (settings, _) = parse_settings(text, HYPERION_SEED, "accepted Hyperion manifest")?;
     ensure!(settings.emb_dim == 128, "Hyperion embedding width changed");
     Ok(settings)
 }
@@ -535,12 +536,15 @@ mod tests {
                 .join("tests/fixtures/accepted-hyperion-manifest.json"),
             sha256: HYPERION_MANIFEST.into(),
         };
-        let (_, legacy_id) = load_settings(&manifest.path, HYPERION_SEED).unwrap();
+        let (by_path, legacy_id) =
+            hyperion::hyperion::load_settings(&manifest.path, HYPERION_SEED).unwrap();
         assert_eq!(legacy_id.len(), 16);
         assert_ne!(legacy_id, manifest.sha256);
         let settings = verified_hyperion_settings(&manifest).unwrap();
         assert_eq!(settings.emb_dim, 128);
         assert_eq!(settings.seed, HYPERION_SEED);
+        // Parsing the authenticated bytes yields exactly the path loader's settings.
+        assert_eq!(settings, by_path);
         manifest.sha256 = "0".repeat(64);
         assert!(verified_hyperion_settings(&manifest).is_err());
     }

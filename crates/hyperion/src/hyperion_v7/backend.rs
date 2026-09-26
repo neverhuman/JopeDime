@@ -17,7 +17,7 @@ use super::model::{BlockWeights, HgeWeights, MguWeights};
 use super::ops::LinearWeights;
 use super::pooling::MpsWeights;
 use super::sweep::{PatchModel, PatchOutputs};
-use super::weights::load_tensor_map;
+use super::weights::{load_tensor_map, tensor_map_from_bytes};
 use crate::hyperion::{hyperion_device, hyperion_device_candidates, hyperion_device_label_for};
 
 /// Rough activation-memory cap per forward: the confidence head materializes ~22.5 KB/cell of
@@ -69,6 +69,37 @@ impl V7Model {
         anyhow::ensure!(device.is_cuda(), "Hyperion requires CUDA");
         Self::load_on_device(weights_path, settings, device, None)
             .map(|model| model.with_full_canvas(false))
+    }
+
+    /// [`Self::load_cpu`] from weights bytes the caller has already authenticated. The model is
+    /// built from exactly that buffer and no file is reopened, so a replacement of the weights
+    /// file after authentication cannot reach it.
+    pub fn load_cpu_from_bytes(weights: &[u8], settings: &HyperionSweepSettings) -> Result<Self> {
+        Self::from_tensor_map(
+            tensor_map_from_bytes(weights, &Device::Cpu)?,
+            settings,
+            Device::Cpu,
+            #[cfg(feature = "hyperion-cuda")]
+            None,
+        )
+        .map(|model| model.with_full_canvas(false))
+    }
+
+    /// [`Self::load_cuda`] from weights bytes the caller has already authenticated.
+    #[cfg(feature = "hyperion-cuda")]
+    pub fn load_cuda_from_bytes(
+        weights: &[u8],
+        settings: &HyperionSweepSettings,
+        device: Device,
+    ) -> Result<Self> {
+        anyhow::ensure!(device.is_cuda(), "Hyperion requires CUDA");
+        Self::from_tensor_map(
+            tensor_map_from_bytes(weights, &device)?,
+            settings,
+            device,
+            None,
+        )
+        .map(|model| model.with_full_canvas(false))
     }
 
     pub fn device(&self) -> &Device {
@@ -135,7 +166,21 @@ impl V7Model {
         device: Device,
         #[cfg(feature = "hyperion-cuda")] gpu_queue_lease: Option<GpuQueueLease>,
     ) -> Result<Self> {
-        let tensors = load_tensor_map(weights_path, &device)?;
+        Self::from_tensor_map(
+            load_tensor_map(weights_path, &device)?,
+            settings,
+            device,
+            #[cfg(feature = "hyperion-cuda")]
+            gpu_queue_lease,
+        )
+    }
+
+    fn from_tensor_map(
+        tensors: std::collections::HashMap<String, Tensor>,
+        settings: &HyperionSweepSettings,
+        device: Device,
+        #[cfg(feature = "hyperion-cuda")] gpu_queue_lease: Option<GpuQueueLease>,
+    ) -> Result<Self> {
         let get = |k: &str| -> Result<Tensor> {
             tensors
                 .get(k)

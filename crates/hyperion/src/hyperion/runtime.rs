@@ -225,9 +225,19 @@ fn load_runtime(cfg: &HyperionConfig, output_dim: usize) -> Result<Runtime> {
 pub fn load_settings(path: &Path, seed: u64) -> Result<(HyperionSweepSettings, String)> {
     let text =
         std::fs::read_to_string(path).with_context(|| format!("reading {}", path.display()))?;
+    parse_settings(&text, seed, &path.display().to_string())
+}
+
+/// [`load_settings`] over manifest text the caller already holds, for example bytes it has just
+/// authenticated: nothing is reopened by path. `label` names the source in parse errors.
+pub fn parse_settings(
+    text: &str,
+    seed: u64,
+    label: &str,
+) -> Result<(HyperionSweepSettings, String)> {
     let hash = hash_bytes(text.as_bytes());
-    let raw: ManifestFile = serde_json::from_str(&text)
-        .with_context(|| format!("parsing Hyperion manifest {}", path.display()))?;
+    let raw: ManifestFile =
+        serde_json::from_str(text).with_context(|| format!("parsing Hyperion manifest {label}"))?;
     if raw.version != HYPERION_VERSION {
         bail!(
             "unsupported Hyperion manifest version '{}' (expected {HYPERION_VERSION})",
