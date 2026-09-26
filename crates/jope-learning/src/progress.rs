@@ -44,13 +44,16 @@ pub mod census;
 pub mod inventory;
 pub mod outbox;
 pub mod publish;
+pub mod rebuild;
 pub mod remote;
 
 #[cfg(test)]
 mod tests {
     mod census;
     mod encoding;
+    mod faults;
     pub mod fixture;
     mod outbox;
     mod publish;
+    mod rebuild;
 }

@@ -468,6 +468,29 @@ pub fn verify_object(kind: Kind, digest: &str, bytes: &[u8]) -> Result<Vec<Depen
     }
 }
 
+impl Encoded {
+    /// The encoding of an object read back from a store: `bytes` must be the canonical object of
+    /// `kind` with `digest`.
+    pub fn from_bytes(kind: Kind, digest: &str, bytes: &[u8]) -> Result<Encoded> {
+        fn enc<T: Inventoried>(bytes: &[u8], digest: &str) -> Result<Encoded> {
+            decode_as::<T>(bytes, digest)?.encoded()
+        }
+        let encoded = match kind {
+            Kind::RunManifest => enc::<RunManifest>(bytes, digest),
+            Kind::Event => enc::<Event>(bytes, digest),
+            Kind::CandidateEvidence => enc::<CandidateEvidence>(bytes, digest),
+            Kind::HwmDecision => enc::<HwmDecision>(bytes, digest),
+            Kind::CorpusManifest => enc::<CorpusManifest>(bytes, digest),
+            Kind::Exposure => enc::<Exposure>(bytes, digest),
+            Kind::Checkpoint => enc::<Checkpoint>(bytes, digest),
+            Kind::Commit => enc::<Commit>(bytes, digest),
+            Kind::Summary => enc::<Summary>(bytes, digest),
+        }?;
+        ensure!(encoded.bytes == bytes, "re-encoding changed the bytes");
+        Ok(encoded)
+    }
+}
+
 // ------------------------------------------------------------------------------------------
 // Run manifest: the complete planned census, frozen before execution
 // ------------------------------------------------------------------------------------------
@@ -1182,7 +1205,22 @@ pub struct Summary {
     /// The commit (and its height) the view was derived from: its freshness.
     pub derived_from: String,
     pub height: u64,
+    /// The census of the committed events and decisions: coverage, completion, failures by
+    /// class, exclusions, decisions (refusals included) by transition, improvements, duplicate
+    /// deliveries and violations.
     pub counts: crate::progress::census::Counts,
+    /// Committed candidate evidence over completed units.
+    pub candidate_yield: Fraction,
+    /// Optimizer exposure: committed exposures, and the rows they consumed. Repeated
+    /// consumption of one corpus counts every time.
+    pub exposures: u64,
+    pub consumed_rows: u64,
+    pub corpora: u64,
+    /// Distinct corpus member blobs across every committed corpus.
+    pub unique_teachers: u64,
+    pub checkpoints: u64,
+    /// The committed checkpoint with the highest update index.
+    pub latest_checkpoint: Option<String>,
 }
 
 impl Inventoried for Summary {
@@ -1190,7 +1228,16 @@ impl Inventoried for Summary {
     header!();
 
     fn check(&self) -> Result<()> {
-        check_hex("derived_from", &self.derived_from)
+        check_hex("derived_from", &self.derived_from)?;
+        if let Some(c) = &self.latest_checkpoint {
+            check_hex("latest_checkpoint", c)?;
+        }
+        ensure!(
+            self.candidate_yield.numerator <= self.candidate_yield.denominator
+                && (self.latest_checkpoint.is_some() == (self.checkpoints > 0)),
+            "summary counts are inconsistent"
+        );
+        Ok(())
     }
 
     fn dependencies(&self) -> Vec<Dependency> {

@@ -341,3 +341,198 @@ or corrupt object, broken rule or dangling pointer is an error, never a partial 
   identity is a local string, not an authenticated credential.
 - **No live proof.** Live S3 conditional-write behaviour (`If-Match` on the real bucket) is
   W8-T07/T08 and needs a scoped credential.
+
+## W8-T04/T06 — Rebuildable views, crash boundaries and the offline fault matrix
+
+### Two defects in existing code, reproduced first
+
+**1. A crash between a ledger batch and its `HEAD.json` wedged the ledger permanently.**
+
+- **Mechanism.** `Ledger::append` renames the batch, then renames `HEAD.json`. A crash between
+  the two leaves a sealed batch that the head does not name. Readers (`events()`) already
+  count it.
+- **Consequences.**
+  - `require_intact` reported `head-mismatch` and refused for ever. Every later
+    `hwm ingest`, `scores append`, eligibility decision and `freeze` failed until the tree was
+    repaired by hand.
+  - An `append` that skipped `require_intact` chained onto the stale head and **forked** the
+    chain, producing a permanent `prev-link` break.
+- **Fix** (`ledger.rs`).
+  - `Ledger::lagging_head` is read-only. It finds the head that an exact, sealed continuation
+    of the chain implies. It refuses in each of these cases:
+    - a suffix that is not readable, not sealed under its own name, or not for this ledger;
+    - a suffix whose event count or hash is wrong, or that is not linked by id and file hash;
+    - a head that does not match the batch it names.
+  - `Ledger::recover` rolls such a head forward under the ledger lock. It writes nothing, and
+    takes no lock, when the head does not lag.
+  - `append` and `require_intact` both recover first.
+  - The documented limitation stands: a removed tail with `HEAD.json` rewritten to match is
+    still undetectable locally. There is no suffix to adopt, and the `ledger_tamper` test for
+    it is unchanged.
+
+**2. A mirror `current.json` that failed after the mirror's `HEAD.json` moved was never recorded
+as owed.**
+
+- **Mechanism.** `sync::plan` derives the push window from the mirror's `HEAD.json` alone.
+  Once `HEAD.json` names a batch, the pointers that batch moved were never offered again.
+- **Consequence.** Every later push reported success while the mirror's ledger accepted a
+  record at a pointer the mirror did not hold. This lasted until a later batch happened to
+  accept at that exact pointer. The old doc comment described this as tolerable staleness.
+- **Fix** (`hwm.rs`, `mirror.rs`).
+  - `push_mirror` records the pointers moved by the batches about to be published in
+    `<state>/progress/mirror-owed/hwm-<sha256(url)>.json` (`jope.hwm-mirror-owed/v1`). It does
+    so durably, *before* anything goes up.
+  - Every push, including one with nothing new, settles the owed set under the unchanged
+    ancestor rule. A pointer leaves the set only once the mirror holds exactly the local
+    bytes.
+  - Unsettled pointers stay owed and are counted in `MirrorReport.pointers_owed`.
+  - A divergent mirror pointer still fails the push, as before. It now keeps failing until it
+    is reconciled, instead of being forgotten after one attempt.
+
+**Reproductions.** Each was run pre-fix on unchanged `ledger.rs` and `hwm.rs`, and fails for
+the defect's reason:
+
+- `ledger::tests::a_crash_between_a_batch_and_its_head_is_rolled_forward_not_a_wedge` —
+  `hwm ledger chain broken … head-mismatch`.
+- `ledger::tests::an_append_after_a_lagging_head_never_forks_the_chain` — a `prev-link` fork.
+- `ledger::tests::only_a_sealed_continuation_of_the_head_is_rolled_forward` — pre-fix, only
+  its positive control fails (a first append that died before any head). Its three negative
+  controls already refused and still refuse, writing nothing:
+  - an altered batch;
+  - a gapped suffix;
+  - a forged head.
+- `progress::tests::faults::a_crash_between_an_hwm_batch_and_its_head_does_not_wedge_ingest`
+  — `hwm::ingest` was wedged. Post-fix, the durable 0.4 acceptance is the HWM, a 0.45
+  candidate is `not-improved`, and the pointer rolls forward.
+- `mirror_reconcile::a_pointer_write_lost_after_the_head_moved_is_still_owed` — pre-fix the
+  owed pointer was `None` after a push with nothing new. The test also covers a push of an
+  unrelated cut, and then requires every local pointer to be on the mirror byte for byte.
+
+### Derived views (T04)
+
+This is a **new capability**, in `progress/rebuild.rs`.
+
+- **`summarize`** rebuilds `Summary` from the verified committed closure. `Summary` is now
+  extended with:
+  - candidate yield (evidenced completions over completions);
+  - exposures and consumed rows, with repeated consumption counted each time;
+  - corpora and unique teachers;
+  - checkpoints and the latest checkpoint;
+  - the census counts it already carried, including coverage, failures by class, decisions
+    (refusals included) and duplicates.
+- **`publish_summary`** stores the summary object create-only. It points the disposable index
+  `progress/runs/<run>/summary.json` at it, replacing the index conditionally.
+- **`read_summary`** returns `Fresh`, `Stale{derived vs head}` or `Missing`. A corrupt,
+  non-canonical or inconsistent index, or a missing summary object, is an error.
+
+Tests (`progress::tests::rebuild`):
+
+- **`a_deleted_derived_index_rebuilds_to_the_same_view`.**
+  - Expected values: coverage 2/3 (an unscheduled unit is visible, not hidden), yield 1/2,
+    2 exposures of one corpus (6 rows), 3 unique teachers, 2 checkpoints.
+  - Deleting the index gives `Missing`; rebuilding gives a byte-identical index.
+  - Deleting the summary object as well rebuilds byte-identical bytes.
+  - An index whose object is gone is an error until rebuilt.
+  - A snapshot of all source evidence is unchanged throughout.
+- **`stale_corrupt_or_dangling_state_is_a_visible_failure`.**
+  - Covers stale after a new commit, then `Fresh` after a rebuild.
+  - Garbage, inconsistent and non-canonical indexes are refused. The rebuild replaces only
+    the index.
+  - A dangling pointer makes both rebuild and reconstruct fail, and leaves the index
+    untouched.
+  - A divergent losing commit is visible in the reconstruction and absent from the view.
+- **`retries_and_lost_responses_never_duplicate_committed_events`.** Every third immutable
+  write loses its response, and the pointer write loses its response. Plain retries converge
+  to a summary byte-identical to a clean run, with 0 duplicate deliveries and the same number
+  of event objects.
+
+### Reconstruction, restore and the fault matrix (T06)
+
+- **`reconstruct`** classifies a run's keys into these sets:
+  - `committed`: the verified closure of the pointer;
+  - `uncommitted`, with `divergent` commits;
+  - `quarantined`: objects that do not verify;
+  - `local_only`: the remote does not hold these exact bytes;
+  - `unacknowledged`;
+  - `acknowledged_missing`.
+
+  A present-but-invalid pointer, or a closure that does not verify, is an error.
+- **`restore`** rebuilds a fresh outbox from the committed closure alone, in dependency
+  order. It re-verifies everything and acknowledges it all against the remote.
+
+`progress::tests::faults::every_fault_leaves_committed_state_restorable_and_every_delivery_accounted_for`
+runs 18 cases. Each starts from committed c0 and a pending c1, as follows:
+
+1. It injects the fault.
+2. It reconstructs, checking that every outbox entry is accounted for (pending = local-only +
+   unacknowledged; local-only is never committed).
+3. It restores two fresh hosts. They must be identical (deterministic), hold exactly the
+   committed closure and none of the local-only items, and a second restore appends nothing.
+4. It recovers.
+5. It requires a clean reconstruction.
+6. A freshly restored host then **resumes the computation**: it publishes unit 2's work on
+   the tip at height + 1.
+
+Faults: disconnect before and mid delivery; response loss mid delivery; partial upload
+(quarantined, never overwritten); duplicate delivery; conditional conflict (reconciled by
+adopting the winner through `restore` and re-committing); missing dependency (remote only, and
+everywhere); corrupt blob; stale (rolled-back) pointer; dangling pointer; crash after the
+commit's payload, its record, a remote put, or an ack; crash before the pointer write; pointer
+disconnect; and pointer response loss. Nextest discards the output of passing tests, so the
+per-case lines are recorded separately, by a `--no-capture` run, in `matrix.log` in the final
+evidence directory.
+
+### Evidence
+
+- **`w8-t04-prefix-ledger-mirror-20260926T071309Z/`** — the pre-fix run on unchanged
+  `ledger.rs` and `hwm.rs`: 5 of 8 selected tests failed, each for the defect's reason
+  (`nextest.log`, `diff.patch`, `argv.txt`).
+- **`w8-t04-postfix-ledger-mirror-20260926T071515Z/`** — the same reproductions plus the
+  existing ledger, hwm, mirror, ledger_tamper, champions_fixture and score_import tests after
+  the fixes: 21 of 21 pass.
+- **`w8-t04-mutations-20260926T072657Z/`** — 7 mutations of the finished source, each caught
+  and restored byte-identically:
+
+  | Mutation | What it breaks | Caught by |
+  |---|---|---|
+  | `no-rollforward-in-append` | `append` does not recover | the fork test |
+  | `no-recover-in-require-intact` | `require_intact` does not recover | 3 wedge tests |
+  | `adopt-unlinked-suffix` | An unlinked suffix is adopted | the sealed-continuation test |
+  | `owed-not-recorded` | Owed pointers are not recorded | the mirror test |
+  | `latest-is-earliest` | The wrong latest checkpoint | the rebuild test |
+  | `shadowed-counts-as-delivered` | A partial upload counts as delivered | the fault matrix |
+  | `no-divergence` | Divergence is not detected | the matrix and the stale-state test |
+
+  `owed-record/` holds one more mutation, `owed-record-stale`: a stale on-disk owed record
+  after a clean push. It is caught by the mirror test's final assertion.
+- **`w8-t04-postfix-20260926T073522Z/`** — the full `jope-learning` run: 148 of 148 pass
+  with 0 skipped, doctest 1 of 1, and `cargo check -p jope-motifs -p jope-cli -p jope-bench
+  --all-targets` passes. The public API changed: `MirrorReport.pointers_owed`, the new
+  `Ledger` methods, the `Summary` fields, and `Encoded::from_bytes`. Its `diff-check.txt`
+  flagged one trailing blank line at the end of this document, fixed afterwards.
+- **`w8-t04-final-20260926T091302Z/`** — the same checks, repeated at lane HEAD `6004e829a`
+  (recorded in `HEAD.txt`) on the final tree:
+  - fmt-check is clean, and clippy reports no warnings in W8 files;
+  - `nextest.log`: 148 of 148 pass with 0 skipped;
+  - doctest 1 of 1;
+  - `check.log`: jope-motifs, jope-cli and jope-bench, all targets;
+  - `diff-check.txt` is empty;
+  - `matrix.log` holds the `--no-capture` run of the fault-matrix and rebuild tests, with
+    one line per fault case, and `matrix-argv.txt` holds its command line.
+
+### Not established here (open)
+
+- **Best-RMSE views are not derived.** Progress objects deliberately carry no floating-point
+  scores. The authoritative best per comparison remains the W3 HWM pointer and ledger
+  (`hwm::show`). Joining a summary to it needs the publisher's ledger and is left open.
+- **The owed-pointer record is local.** Losing `<state>/progress/mirror-owed/` loses the
+  debt list. Rebuilding it needs one GET per accepted pointer: the cost the design avoids.
+  `hwm verify` against the mirror would show the disagreement.
+- **A divergent mirror `current.json` now fails every push until it is reconciled.** It is
+  no longer forgotten after one failed attempt. This is consistent with the existing
+  `HEAD.json` divergence rule, but it is a behaviour change operators need to know about.
+- **Reconciliation of conflicts is a test procedure only.** The procedure is: adopt the
+  winner with `restore`, then re-commit the same content-addressed work on top. There is no
+  CLI verb for it.
+- **No live proof.** Everything here uses `file://` and `memory:///` stores with injected
+  faults. Live S3 (T07/T08) needs a scoped credential and an approved budget.

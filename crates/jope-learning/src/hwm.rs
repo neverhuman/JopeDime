@@ -628,19 +628,37 @@ pub fn recover(state: &State) -> Result<RecoverReport> {
 /// point at which stopping still leaves the mirror repairable.
 ///
 /// The `current.json` pointers stay *after* the `HEAD.json` move, and are deliberately *not* every
-/// pointer: the real corpus has ~12k of them and each would cost a GET per push. A pointer whose
-/// own write failed after `HEAD.json` moved therefore stays stale on the mirror — or absent, for a
-/// cut the mirror has never held — until some later batch accepts a record at it. That is staleness, not a wedge — the next accepted event at that
-/// pointer catches it up under the same ancestor rule — and it is visible, because the mirror's
-/// pointer and the mirror's ledger disagree. Blobs cannot be left that way because nothing
-/// re-derives them: a later batch names its *own* records, never the ones already committed.
+/// pointer: the real corpus has ~12k of them and each would cost a GET per push. Only the pointers
+/// that the backfilled batches moved are pushed. Once `HEAD.json` names those batches, no later
+/// `plan` offers them again, so each such pointer is recorded as **owed** to this mirror
+/// ([`owed_path`]) durably, *before* anything goes up. A pointer leaves the owed set only once
+/// the mirror holds exactly the local bytes. So a pointer write that fails, or never happens
+/// because the process died after `HEAD.json` moved, is retried on every later push, including a
+/// push with nothing new. Before W8-T06 it stayed stale on the mirror, or absent, until some
+/// later batch happened to accept a record at that exact pointer. Blobs cannot be left that way
+/// either, which is why they go up ahead of the batch that names them.
 fn push_mirror(m: &Mirror, state: &State, ledger: &Ledger) -> Result<MirrorReport> {
     let mut report = MirrorReport {
         url: m.url.clone(),
         ..Default::default()
     };
     let plan = crate::sync::plan(m, ledger)?;
-    let mut keys: BTreeSet<PointerKey> = BTreeSet::new();
+    let mut owed = Owed::load(state, &m.url)?;
+    // What the owed record on disk says; it is rewritten whenever that would be wrong.
+    let mut on_disk = owed.pointers.clone();
+    for (_, path) in &plan.missing {
+        let (events, _, _, _) = Ledger::read_batch(path)?;
+        for (i, v) in events.iter().enumerate() {
+            let e = parse_event(i, v)?;
+            if e.outcome == "accepted" {
+                owed.pointers.insert(e.pointer);
+            }
+        }
+    }
+    if owed.pointers != on_disk {
+        owed.save(state)?;
+        on_disk = owed.pointers.clone();
+    }
     crate::sync::push(m, ledger, plan, &mut report, |path, report| {
         let (events, _, _, _) = Ledger::read_batch(path)?;
         for (i, v) in events.iter().enumerate() {
@@ -701,36 +719,112 @@ fn push_mirror(m: &Mirror, state: &State, ledger: &Ledger) -> Result<MirrorRepor
                     }
                 }
             }
-            if e.outcome == "accepted" {
-                keys.insert(e.pointer.clone());
-            }
         }
         Ok(())
     })?;
+    // Settle every owed pointer. Whatever does not settle stays owed, durably, including when the
+    // push stops at an error.
+    let settled = settle_owed(m, state, ledger, &mut owed, &mut report);
+    if owed.pointers != on_disk {
+        owed.save(state)?;
+    }
+    report.pointers_owed = owed.pointers.len() as u64;
+    settled.map(|()| report)
+}
+
+/// Push each owed pointer whose local bytes differ from the mirror's, under the ancestor rule, and
+/// drop it from `owed` once the mirror holds exactly the local bytes. A pointer absent locally (a
+/// local break `hwm verify` reports as `pointer-missing`) cannot be settled and stays owed. The
+/// first failed write stops the settlement, and everything not yet settled stays owed.
+fn settle_owed(
+    m: &Mirror,
+    state: &State,
+    ledger: &Ledger,
+    owed: &mut Owed,
+    report: &mut MirrorReport,
+) -> Result<()> {
     let mut history: Option<BTreeMap<PointerKey, Vec<String>>> = None;
-    for key in &keys {
-        let local_bytes = match fs::read(state.pointer_path(key)?) {
+    for key in owed.pointers.clone() {
+        let local_bytes = match fs::read(state.pointer_path(&key)?) {
             Ok(b) => b,
-            // A pointer named by an accepted event but absent on disk is a local break, which
-            // `hwm verify` reports as `pointer-missing`; the push has nothing to copy.
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => continue,
             Err(e) => return Err(e).with_context(|| format!("read {}", key.rel())),
         };
         let observed = m.get_observed(&key.rel())?;
-        if observed.as_ref().map(|object| object.bytes.as_slice()) == Some(local_bytes.as_slice()) {
-            continue;
+        if observed.as_ref().map(|object| object.bytes.as_slice()) != Some(local_bytes.as_slice()) {
+            if let Some(theirs) = &observed {
+                let hist = match &history {
+                    Some(h) => h,
+                    None => history.insert(accepted_history(ledger)?),
+                };
+                check_pointer_ancestor(m, &key, &theirs.bytes, &local_bytes, hist.get(&key))?;
+            }
+            m.put_pointer(&key.rel(), &local_bytes, observed.as_ref())?;
+            report.pointers += 1;
         }
-        if let Some(theirs) = &observed {
-            let hist = match &history {
-                Some(h) => h,
-                None => history.insert(accepted_history(ledger)?),
-            };
-            check_pointer_ancestor(m, key, &theirs.bytes, &local_bytes, hist.get(key))?;
-        }
-        m.put_pointer(&key.rel(), &local_bytes, observed.as_ref())?;
-        report.pointers += 1;
+        owed.pointers.remove(&key);
     }
-    Ok(report)
+    Ok(())
+}
+
+pub const OWED_SCHEMA: &str = "jope.hwm-mirror-owed/v1";
+
+/// `<state>/progress/mirror-owed/hwm-<sha256(url)>.json`: the `current.json` pointers this host
+/// owes the mirror at `url`.
+pub fn owed_path(state: &State, url: &str) -> PathBuf {
+    state
+        .root()
+        .join("progress")
+        .join("mirror-owed")
+        .join(format!("hwm-{}.json", sha256_hex(url.as_bytes())))
+}
+
+/// Pointers whose batches the mirror's `HEAD.json` may already name, but whose `current.json`
+/// the mirror is not yet known to hold.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Owed {
+    pub schema: String,
+    pub url: String,
+    pub pointers: BTreeSet<PointerKey>,
+}
+
+impl Owed {
+    pub fn load(state: &State, url: &str) -> Result<Owed> {
+        let path = owed_path(state, url);
+        let bytes = match fs::read(&path) {
+            Ok(bytes) => bytes,
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+                return Ok(Owed {
+                    schema: OWED_SCHEMA.into(),
+                    url: url.into(),
+                    pointers: BTreeSet::new(),
+                })
+            }
+            Err(e) => return Err(e).with_context(|| format!("read {}", path.display())),
+        };
+        let owed: Owed = serde_json::from_slice(&bytes).with_context(|| {
+            format!(
+                "{} does not parse. It is the record of mirror pointers still owed; refusing to \
+                 push without it, because a push that forgets a debt reports success over a \
+                 stale mirror",
+                path.display()
+            )
+        })?;
+        ensure!(
+            owed.schema == OWED_SCHEMA && owed.url == url,
+            "{} is not the owed-pointer record for {url}",
+            path.display()
+        );
+        Ok(owed)
+    }
+
+    pub fn save(&self, state: &State) -> Result<()> {
+        atomic_write(
+            &owed_path(state, &self.url),
+            &crate::canon::canonical_json(self)?,
+        )
+    }
 }
 
 /// The mirror's copy of a pointer may only be replaced when it is an *earlier* state of that

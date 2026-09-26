@@ -2,7 +2,10 @@
 //! one winner and one explicit conflict; a missing or corrupt dependency prevents the pointer
 //! from moving and prevents reuse; the pointer only ever moves from its expected predecessor.
 
-use super::fixture::{env, producer, run, snapshot, Env, Fault, Faulty, Item, Run, BIG, PUBLISHER};
+use super::fixture::{
+    append, commit, env, head, head_bytes, producer, published, run, snapshot, training, Fault,
+    Faulty, Run, BIG, PUBLISHER,
+};
 use crate::hwm::Transition;
 use crate::mirror::Mirror;
 use crate::progress::inventory::*;
@@ -12,56 +15,11 @@ use crate::progress::remote::Remote;
 use crate::state::State;
 use std::fs;
 
-fn commit(r: &Run, parent: Option<&Encoded>, objects: &[&Encoded]) -> Encoded {
-    let (parent, height) = match parent {
-        Some(p) => (
-            Some(p.digest.clone()),
-            decode::<Commit>(&p.bytes).unwrap().value().height + 1,
-        ),
-        None => (None, 0),
-    };
-    let mut objects: Vec<ObjectRef> = objects.iter().map(|e| e.reference()).collect();
-    objects.sort();
-    objects.dedup();
-    encode(&Commit {
-        schema: Kind::Commit.schema().into(),
-        run_id: r.id().into(),
-        run_manifest: r.manifest.digest().into(),
-        parent,
-        height,
-        objects,
-    })
-    .unwrap()
-}
-
 fn ready(p: Prepared) -> Plan {
     match p {
         Prepared::Ready(plan) => plan,
         Prepared::Done(done) => panic!("expected a plan, got {done:?}"),
     }
-}
-
-fn head(remote: &dyn Remote, r: &Run) -> Option<Head> {
-    remote
-        .get(&head_key(r.id()).unwrap())
-        .unwrap()
-        .map(|b| Head::decode(&b).unwrap())
-}
-
-fn head_bytes(remote: &dyn Remote, r: &Run) -> Option<Vec<u8>> {
-    remote.get(&head_key(r.id()).unwrap()).unwrap()
-}
-
-/// Append `items` and return the encoded objects among them, in order.
-fn append(o: &mut Outbox, items: &[Item]) -> Vec<Encoded> {
-    let mut objects = Vec::new();
-    for item in items {
-        item.append(o).unwrap();
-        if let Item::Object(e) = item {
-            objects.push(e.clone());
-        }
-    }
-    objects
 }
 
 fn race(remote: &dyn Remote) {
@@ -156,19 +114,6 @@ fn racing_publishers_at_one_predecessor_get_one_winner_and_one_conflict() {
     // The file backend exercises the local lock-and-revalidate path.
     let dir = tempfile::tempdir().unwrap();
     race(&Mirror::open(dir.path().to_str().unwrap()).unwrap());
-}
-
-/// A published first commit for `producer(r)`, plus the objects it holds.
-fn published(e: &Env, r: &Run) -> (Outbox, Vec<Encoded>, Encoded) {
-    let mut o = Outbox::open(&e.state, BIG).unwrap();
-    let objects = append(&mut o, &producer(r)[..5]);
-    let refs: Vec<&Encoded> = objects[1..].iter().collect();
-    let c0 = commit(r, None, &refs);
-    assert!(matches!(
-        publish(&mut o, &e.remote, PUBLISHER, &r.manifest, &c0).unwrap(),
-        Publication::Advanced { .. }
-    ));
-    (o, objects, c0)
 }
 
 fn blocked(p: Publication) -> String {
@@ -319,46 +264,6 @@ fn graph_rules_are_checked_before_the_pointer_moves() {
         publish(&mut o, &e.remote, PUBLISHER, &r.manifest, &c).unwrap(),
         Publication::Advanced { height: 1, .. }
     ));
-}
-
-/// Append a corpus of `rows` members plus the exposure for `update` from `before`; returns
-/// (corpus, exposure, member bytes).
-fn training(
-    o: &mut Outbox,
-    r: &Run,
-    update: u64,
-    before: Option<&Encoded>,
-    rows: usize,
-) -> (Encoded, Encoded, Vec<Vec<u8>>) {
-    let members: Vec<Vec<u8>> = (0..rows)
-        .map(|i| format!("teacher {update} {i}").into_bytes())
-        .collect();
-    for m in &members {
-        o.append_blob(m).unwrap();
-    }
-    let mut refs: Vec<BlobRef> = members.iter().map(|m| BlobRef::of(m)).collect();
-    refs.sort();
-    let corpus = encode(&CorpusManifest {
-        schema: Kind::CorpusManifest.schema().into(),
-        run_id: r.id().into(),
-        corpus_id: format!("corpus-{update}"),
-        parent: None,
-        members: refs,
-        decisions: vec![],
-    })
-    .unwrap();
-    o.append_object(&corpus).unwrap();
-    let exposure = encode(&Exposure {
-        schema: Kind::Exposure.schema().into(),
-        run_id: r.id().into(),
-        update_index: update,
-        corpus: corpus.digest.clone(),
-        checkpoint_before: before.map(|b| b.digest.clone()),
-        consumed_rows: rows as u64,
-    })
-    .unwrap();
-    o.append_object(&exposure).unwrap();
-    (corpus, exposure, members)
 }
 
 #[test]

@@ -442,6 +442,13 @@ fn every_kind_round_trips_and_names_its_dependencies() {
         derived_from: encode(&commit).unwrap().digest,
         height: 0,
         counts: Counts::default(),
+        candidate_yield: Fraction::default(),
+        exposures: 1,
+        consumed_rows: 1,
+        corpora: 1,
+        unique_teachers: 1,
+        checkpoints: 1,
+        latest_checkpoint: Some(encode(&checkpoint).unwrap().digest),
     };
     let all = [
         r.manifest.encoded().unwrap(),
