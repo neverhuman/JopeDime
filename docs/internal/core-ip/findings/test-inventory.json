@@ -107,12 +107,6 @@
         "performance"
       ]
     },
-    "python:crates/jope-bench/src/panel/test_transfer_score.py": {
-      "role": "regression",
-      "subsystems": [
-        "evaluation"
-      ]
-    },
     "python:deploy/ci/test-aggregate.py": {
       "role": "infrastructure",
       "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
@@ -1383,6 +1377,12 @@
       "role": "regression",
       "subsystems": [
         "fitting"
+      ]
+    },
+    "target:jope-bench/test/transfer_independent": {
+      "role": "regression",
+      "subsystems": [
+        "evaluation"
       ]
     },
     "target:jope-cli/bin/jope": {

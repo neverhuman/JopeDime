@@ -138,7 +138,7 @@ not CI verification, and neither is live qualification. No finding closes throug
 | W10-T06 Measure reward architecture, search and curriculum hypotheses | blocked | — | Needs a separately costed, preregistered study manifest and budget. |
 | W10-T07 Admit complete transfer coverage and exposure evidence | blocked | — | Needs a separately costed, preregistered study manifest and budget. |
 | W10-T08 Commit the full round before score release | blocked | — | Needs a separately costed, preregistered study manifest and budget. |
-| W10-T09 Independently calculate transfer and uncertainty | implemented, fixture-proven | 361fb112af9f; independent_python_scorer_reproduces_the_report; test_transfer_score.py (5) | No transfer round has been measured; complete scoring stays blocked on T07/T08. |
+| W10-T09 Independently calculate transfer and uncertainty | implemented, fixture-proven | 361fb112af9f; independent_scorer_reproduces_the_report; jope-bench tests/transfer_independent.rs (7) | No transfer round has been measured; complete scoring stays blocked on T07/T08. |
 | W10-T10 Record measurement and promotion decisions separately | blocked | — | Needs a separately costed, preregistered study manifest and budget. |
 
 ## W11

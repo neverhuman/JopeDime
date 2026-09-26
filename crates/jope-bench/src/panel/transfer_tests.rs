@@ -204,35 +204,9 @@ fn min_is_per_unit_and_keeps_negative_and_one_sided_gains() {
     ];
     assert!((gains(&a, (2.0, 1.0, 1.0)).unwrap().audit - 0.41).abs() < 1e-12);
 }
-#[test]
-fn independent_python_scorer_reproduces_the_report() {
-    // W10-T09: a separate implementation recomputes baselines, losses, per-unit minima and the
-    // family-weighted headline from the plan, labels and frozen predictions, and agrees exactly
-    // with the reporter for a complete round and for an incomplete zero-baseline round.
-    for constant in [None, Some(3.0)] {
-        let f = fixture_with_labels(constant);
-        let reported = run(&f).unwrap();
-        let output = std::process::Command::new("python3")
-            .arg(Path::new(env!("CARGO_MANIFEST_DIR")).join("src/panel/transfer_score.py"))
-            .arg("--plan")
-            .arg(&f.plan)
-            .arg("--freeze")
-            .arg(&f.freeze)
-            .arg("--report")
-            .arg(&f.output)
-            .output()
-            .unwrap();
-        assert!(
-            output.status.success(),
-            "{}{}",
-            String::from_utf8_lossy(&output.stdout),
-            String::from_utf8_lossy(&output.stderr)
-        );
-        let independent: Value = serde_json::from_slice(&output.stdout).unwrap();
-        assert_eq!(independent["disagreements"], json!([]));
-        assert_eq!(independent["complete"], reported["ok"]);
-    }
-}
+// W10-T09's independent recomputation and its agreement with this reporter live in
+// tests/transfer_independent.rs, which reads only plan, freeze and report files and cannot link
+// this module's scoring code.
 #[test]
 fn plan_is_thirty_searches_per_arm_and_label_free_searches() {
     let root = tempfile::tempdir().unwrap();

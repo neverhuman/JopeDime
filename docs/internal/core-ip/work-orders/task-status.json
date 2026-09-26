@@ -984,8 +984,8 @@
         "361fb112af9fd5f3ea4f33c14abefd4a2b6b6523"
       ],
       "tests": [
-        "independent_python_scorer_reproduces_the_report",
-        "test_transfer_score.py (5)"
+        "independent_scorer_reproduces_the_report",
+        "jope-bench tests/transfer_independent.rs (7)"
       ],
       "remaining": "No transfer round has been measured; complete scoring stays blocked on T07/T08."
     },
