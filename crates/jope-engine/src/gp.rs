@@ -836,6 +836,28 @@ pub struct SeedCandidate {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub proposal_record_sha256: Option<String>,
 }
+/// W5-T01: directory of a search output holding the exact seed population and vocabulary
+/// bytes its request pins, read by [`lineage::verify_search_recorded`].
+pub const SEARCH_INPUTS: &str = "search-inputs";
+/// The frozen seed population inside [`SEARCH_INPUTS`].
+pub const SEARCH_SEEDS: &str = "seeds.json";
+/// The frozen vocabulary inside [`SEARCH_INPUTS`].
+pub const SEARCH_VOCABULARY: &str = "vocabulary.json";
+
+/// Freeze `bytes` at `path` once; a resumed search must find exactly the same bytes.
+fn freeze_search_input(path: &Path, bytes: &[u8]) -> Result<()> {
+    match fs::read(path) {
+        Ok(frozen) => ensure!(
+            frozen == bytes,
+            "frozen search input {} differs from the request",
+            path.display()
+        ),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => atomic_write(path, bytes)?,
+        Err(error) => return Err(error.into()),
+    }
+    Ok(())
+}
+
 #[derive(Clone, Serialize, Deserialize)]
 pub struct SeedPopulation {
     pub schema: String,
@@ -1784,10 +1806,25 @@ fn search_inner(
         )
         .context("preprocessing changed")?,
     )?;
-    let vocab: Option<crate::grammar::Vocab> = vocabulary.map(read_json).transpose()?;
-    let vocabulary_sha256 = vocabulary.map(file_hash).transpose()?;
-    let supplied: Option<SeedPopulation> = seeds.map(read_json).transpose()?;
-    let seeds_sha256 = seeds.map(file_hash).transpose()?;
+    // W5-T01: the seed population and vocabulary are read once each; the search parses and
+    // pins exactly those bytes, and freezes them beside its request (below).
+    let read_input =
+        |path: &Path| fs::read(path).with_context(|| format!("open {}", path.display()));
+    let vocabulary_bytes = vocabulary.map(read_input).transpose()?;
+    let seeds_bytes = seeds.map(read_input).transpose()?;
+    let parse = |path: Option<&Path>| format!("parse {}", path.unwrap_or(Path::new("")).display());
+    let vocab: Option<crate::grammar::Vocab> = vocabulary_bytes
+        .as_deref()
+        .map(serde_json::from_slice)
+        .transpose()
+        .with_context(|| parse(vocabulary))?;
+    let vocabulary_sha256 = vocabulary_bytes.as_deref().map(hash);
+    let supplied: Option<SeedPopulation> = seeds_bytes
+        .as_deref()
+        .map(serde_json::from_slice)
+        .transpose()
+        .with_context(|| parse(seeds))?;
+    let seeds_sha256 = seeds_bytes.as_deref().map(hash);
     let neural_seeded = supplied
         .as_ref()
         .is_some_and(|s| s.candidates.iter().any(|c| c.origin == "neural_policy"));
@@ -1934,6 +1971,16 @@ fn search_inner(
         );
     } else {
         write_json(&request_path, &request)?;
+    }
+    // W5-T01: the exact bytes the request pins, frozen beside it, so the lineage verifies
+    // from the output alone (`lineage::verify_search_recorded`).
+    for (name, bytes) in [
+        (SEARCH_SEEDS, &seeds_bytes),
+        (SEARCH_VOCABULARY, &vocabulary_bytes),
+    ] {
+        if let Some(bytes) = bytes {
+            freeze_search_input(&output.join(SEARCH_INPUTS).join(name), bytes)?;
+        }
     }
     let journal_path = output.join("observations.jsonl");
     let mut observations: Vec<serde_json::Value> = if journal_path.exists() {

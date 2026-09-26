@@ -277,3 +277,53 @@ on a search client, inherited by its evaluator children): `block`, `fork_block`,
   unresumable because the evaluator digest is part of the request.
 - The feat-math `cfg(test)` counting allocator applies to the whole feat-math
   lib-test binary (accounting only; the full `-p feat-math` run is retained).
+
+## W5-T01 follow-up — frozen search inputs for the lineage verifier (branch `rr2/integration-c`, 2026-09-26)
+
+Runs `w5c-t01-*`.
+
+- **Reproduction** `w5c-t01-pre-20260926T210441Z` (1/1 FAIL):
+  - `gp::fit_contract_tests::a_seeded_search_freezes_the_inputs_its_lineage_is_verified_against`
+    runs a seeded, vocabulary-adapted search whose seed slots name proposal records (W4-T07).
+    It then removes the caller's seed and vocabulary files.
+  - The output held only the inputs' digests ("the search did not freeze the inputs its
+    request pins"), so a verifier holding only the search output could not check its lineage.
+- **Fix.**
+  - `search` reads the seed population and the vocabulary once each. Before, it parsed each
+    file and then read the same path again for its digest. It now parses and pins exactly the
+    bytes it read.
+  - After the request is recorded, the search freezes those bytes as
+    `search-inputs/seeds.json` and `search-inputs/vocabulary.json` (`gp::SEARCH_INPUTS`). A
+    resumed search must find exactly the same bytes ("frozen search input ... differs from the
+    request").
+  - `lineage::verify_search` reads each supplied path once and checks the digest of the bytes
+    it parses (route R8).
+  - The new `lineage::verify_search_recorded(root, output)` verifies against the frozen
+    copies. It reads nothing the request does not pin, and refuses a frozen input that is
+    absent ("is absent") or no longer carries the request digest (the unchanged wording "seed
+    population differs from the frozen request" / "vocabulary differs from the frozen request").
+- **Kept meaning.**
+  - `verify_search(root, output, None, None)` still means "no inputs". The existing fence
+    assertion that a missing vocabulary is refused is unchanged.
+  - Outputs written before this change have no `search-inputs/`, so they still need the
+    original files.
+  - `selection_replay` scans only `candidate-*` entries, so the new directory changes no
+    replay.
+- **Controls.**
+  - Positive: the lineage of the joined seed population verifies from the frozen copies
+    alone. The ledger's `seed_population_slot` source carries the slot's W4-T07 proposal
+    record. An unseeded, unadapted search freezes nothing, and `verify_search_recorded` still
+    verifies it.
+  - Negative (`recorded_search_inputs_verify_without_caller_paths_and_refuse_substitution`):
+    a frozen population naming another proposal record is refused, and so is an absent frozen
+    input. The restored copy verifies again.
+- **Runs.**
+  - Pre `w5c-t01-pre-20260926T210441Z`: 1/1 FAIL as above.
+  - Post `w5c-t01-post-20260926T210558Z`: 12/12. The two new tests, `variation_children_...`, `generic_bootstrap_...`, `feasibility_...` (which verify with explicit paths), `gp::lineage`, and the handoff/seal tests all pass.
+  - Pre-commit `w5c-t01-c-20260926T210644Z`: fence suites, `gp::fit_contract_tests` and `gp::lineage` 89/89; workspace all-targets check, coverage (0 unassigned), verify-test-inventory, fmt and diff-check exit 0.
+- **Open.**
+  - The handoff/export entry (`gp::handoff::SelectedExport`) still takes explicit
+    seed/vocabulary paths; callers can now pass the frozen copies.
+  - The refusal of a resume whose frozen input was altered is not exercised by a crash-resume
+    fixture here.
+  - Native-continuation lineage paths remain unit-tested only.
