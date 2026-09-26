@@ -645,3 +645,51 @@ policy.
   evidence is `full`.
 - **No compaction.** Acknowledged outbox entries are kept indefinitely. Any future compaction
   must preserve the committed graph and is not implemented.
+
+## W8 integration (rr2/integration-a) — receiving-path rules at publication
+
+Lane `.agent/worktrees/bench`, branch `rr2/integration-a` from `main` `e4f1b6c62`. Two gaps the
+T01/T03 records left open are closed at the receiving path, `publish::prepare`, before the run
+pointer moves. Both were reproduced first through real publication.
+
+**1. Consecutive update indexes.** `check_rules` checked every exposure and checkpoint against
+the checkpoint before it, but not that the updates form one chain. Pre-fix, each of these
+reached the pointer (`Advanced`):
+
+- a second update 0 committed later (a fork from nothing);
+- two updates 1 from the same checkpoint in one commit;
+- update 1 committed again after update 1 was committed;
+- a second checkpoint of update 0 committing the same exposure.
+
+**Fix.** `check_rules` now requires exactly one exposure and at most one checkpoint per update
+index, with the indexes 0, 1, 2, … and no gap. Each case above is now `Blocked Invalid` with the
+pointer byte-identical. The positive control publishes updates 1 and 2 on top of update 0.
+
+**2. HWM decisions against the local ledger.** A decision's link was graph-checked only. Pre-fix,
+each of these reached the pointer:
+
+- a decision naming a batch this host never wrote;
+- an initialization claimed as an improvement;
+- a decision only another host's ledger holds.
+
+**Fix.** After the closure verifies, every `HwmDecision` the commit *adds* must pass
+`HwmDecision::verify_against` on the HWM ledger of the publishing host (the state tree of its
+outbox: `Outbox::state`). Otherwise the result is `Blocked` and the pointer is unchanged.
+Decisions an ancestor commit already added are not re-checked, so a host restored from the
+remote publishes on top of them; a new decision that host cannot back is refused. The positive
+control is a decision built from a real `hwm::ingest` batch.
+
+**Tests.** `progress::tests::receiving` (lib target; no new test target):
+`a_forked_or_repeated_update_index_never_reaches_the_pointer` and
+`hwm_decisions_are_checked_against_the_local_hwm_ledger_at_publication`.
+
+**Evidence** (under the evidence root):
+
+- `w8-integ-receiving-pre-20260926T194140Z/` — pre-fix, with the two tests only: both fail. The
+  log lists all seven accepted defect cases.
+- `w8-integ-receiving-post-20260926T194229Z/` — post-fix, the full `jope-learning` run: 154 of
+  154 pass, 0 skipped. The existing `graph_rules_are_checked_before_the_pointer_moves` still
+  reports its failed-attempt decision as `Invalid`, because the graph rules run first.
+
+**Not established here.** Offline `file://` and `memory:///` stores only. Publisher identity is
+still a local string (T03).

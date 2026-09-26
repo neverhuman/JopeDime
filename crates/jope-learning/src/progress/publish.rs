@@ -13,8 +13,11 @@
 //!    - every object is present, canonical and hashes to its digest;
 //!    - every blob is present and hashes to its sha256;
 //!    - the graph rules hold ([`check_rules`]). These cover run membership, commit height and
-//!      lineage, checkpoint and exposure contiguity, and that decisions and evidence come only
-//!      from completed attempts.
+//!      lineage, checkpoint and exposure contiguity, one consecutive chain of update indexes
+//!      (no forked or repeated update), and that decisions and evidence come only from
+//!      completed attempts;
+//!    - every HWM decision the commit adds is one this host's own HWM ledger recorded
+//!      ([`HwmDecision::verify_against`]).
 //!
 //!    If an object is missing remotely but the local outbox holds it, it is uploaded again
 //!    create-only from its verified payload. Any other defect blocks publication.
@@ -32,6 +35,7 @@
 //! Corpora and checkpoints become reusable only through [`reusable`]. It verifies the pointer,
 //! the commit it names and that commit's whole closure before returning anything.
 
+use crate::ledger::Ledger;
 use crate::progress::inventory::{
     decode_as, head_key, object_key, BlobRef, CandidateEvidence, Checkpoint, Commit, Decoded,
     Dependency, Encoded, Event, EventBody, Exposure, Head, HwmDecision, Inventoried, Kind,
@@ -265,6 +269,41 @@ pub fn check_rules(graph: &Graph, root: &ObjectRef) -> Result<()> {
         }
     }
 
+    // Updates form one consecutive chain. The rules above make every exposure and checkpoint
+    // follow the checkpoint before it; this makes the chain single: exactly one exposure and at
+    // most one checkpoint per update index, and the indexes 0, 1, 2, ... without a gap. A forked
+    // update (a second update 0 from nothing, or two updates from one checkpoint) or a repeated
+    // one (an update index committed again later) is therefore never committed.
+    fn consecutive<T: Inventoried>(
+        graph: &Graph,
+        index: impl Fn(&T) -> u64,
+        invalid: &dyn Fn(String, String) -> anyhow::Error,
+    ) -> Result<()> {
+        let mut seen: BTreeMap<u64, String> = BTreeMap::new();
+        for item in graph.all::<T>() {
+            let i = index(item.value());
+            if let Some(other) = seen.insert(i, item.digest().to_string()) {
+                return Err(invalid(
+                    object_key(T::KIND, item.digest()),
+                    format!(
+                        "update {i} is already committed by {} {other}: updates form one \
+                         consecutive chain, so a forked or repeated update index is refused",
+                        T::KIND.dir()
+                    ),
+                ));
+            }
+        }
+        if let Some((gap, _)) = seen.keys().enumerate().find(|(n, i)| *n as u64 != **i) {
+            return Err(invalid(
+                object_key(T::KIND, &seen[&(gap as u64)]),
+                format!("update indexes {:?} are not consecutive", seen.keys()),
+            ));
+        }
+        Ok(())
+    }
+    consecutive::<Exposure>(graph, |e| e.update_index, &invalid)?;
+    consecutive::<Checkpoint>(graph, |k| k.update_index, &invalid)?;
+
     // Decisions and candidate evidence come only from a unit's completed attempt.
     let completed = |digest: &str, work_id: &str, attempt: u32| -> bool {
         graph.get::<Event>(digest).is_some_and(|e| {
@@ -398,9 +437,9 @@ pub fn prepare(
         digest: commit.digest.clone(),
     });
     let mut reuploaded: Vec<String> = Vec::new();
-    let reads = loop {
+    let graph = loop {
         let error = match verify_closure(remote, &root) {
-            Ok(graph) => break graph.reads,
+            Ok(graph) => break graph,
             Err(error) => error,
         };
         let Some(d) = error.downcast_ref::<Defect>() else {
@@ -422,6 +461,26 @@ pub fn prepare(
             Err(e) => return blocked(format!("re-uploading {} failed: {e:#}", d.key)),
         }
     };
+    let reads = graph.reads;
+
+    // An HWM decision is a link to the W3 HWM ledger, which stays the authority. Every decision
+    // this commit adds must be one this host's own HWM ledger (the state tree of its outbox)
+    // recorded, with that record, identity, transition and qualification. Decisions already
+    // committed by an ancestor were checked by the host that added them, so a host restored from
+    // the remote can publish on top of them without their batches.
+    let ledger = Ledger::open(outbox.state().root(), "hwm");
+    for o in c.objects.iter().filter(|o| o.kind == Kind::HwmDecision) {
+        let key = object_key(o.kind, &o.digest);
+        let Some(decision) = graph.get::<HwmDecision>(&o.digest) else {
+            return blocked(format!("{key} is not in the verified closure"));
+        };
+        if let Err(e) = decision.value().verify_against(&ledger) {
+            return blocked(format!(
+                "{key} is not a decision this host's HWM ledger ({}) recorded: {e:#}",
+                ledger.root().display()
+            ));
+        }
+    }
 
     let head_key = head_key(&c.run_id)?;
     let observed = remote.get_observed(&head_key)?;
