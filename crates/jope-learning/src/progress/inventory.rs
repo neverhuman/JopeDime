@@ -193,8 +193,10 @@ pub struct ObjectRef {
     pub digest: String,
 }
 
-/// Something an object names and that must therefore be durable before it is.
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+/// A content-addressed item: something an object names, which must therefore be durable before
+/// it is, and the unit the outbox (W8-T02) holds and delivers.
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case", deny_unknown_fields)]
 pub enum Dependency {
     Blob(BlobRef),
     Object(ObjectRef),
@@ -213,6 +215,32 @@ impl Dependency {
         match self {
             Dependency::Blob(b) => blob_key(&b.sha256),
             Dependency::Object(o) => object_key(o.kind, &o.digest),
+        }
+    }
+
+    /// Well-formed: a lowercase sha256 digest.
+    pub fn check(&self) -> Result<()> {
+        match self {
+            Dependency::Blob(b) => check_blob("blob", b),
+            Dependency::Object(o) => check_hex("object digest", &o.digest),
+        }
+    }
+
+    /// Verify that `bytes` are exactly this item, and return what they name.
+    pub fn verify(&self, bytes: &[u8]) -> Result<Vec<Dependency>> {
+        match self {
+            Dependency::Blob(b) => {
+                ensure!(
+                    BlobRef::of(bytes) == *b,
+                    "blob bytes hash to {} ({} bytes), not {} ({} bytes)",
+                    crate::canon::sha256_hex(bytes),
+                    bytes.len(),
+                    b.sha256,
+                    b.bytes
+                );
+                Ok(Vec::new())
+            }
+            Dependency::Object(o) => verify_object(o.kind, &o.digest, bytes),
         }
     }
 }

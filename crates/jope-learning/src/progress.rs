@@ -19,18 +19,28 @@
 //! counted after it is retried, a transport replay has no effect, and a retry can never become a
 //! second logical completion or a second improvement.
 //!
+//! [`outbox`] persists every item locally before anything is acknowledged (W8-T02). It is a
+//! bounded, fsynced, hash-chained append log with sequence numbers, dependency references and
+//! delivery acknowledgements. It pauses new work at its high-water mark instead of dropping or
+//! growing. [`remote`] is the store interface delivery uses: create-only immutable writes and
+//! conditional pointer writes, with no unconditional fallback.
+//!
 //! Logical work identity ([`inventory::WorkSpec::work_id`]) is derived from the run and the
 //! work's own specification and never from an attempt; `(work_id, attempt)` is the attempt
 //! identity; an object's digest is its delivery identity. Nothing here is authority for teaching
-//! or HWM admission — those stay in [`crate::eligibility`] and [`crate::hwm`] — and nothing here
-//! talks to a remote store.
+//! or HWM admission — those stay in [`crate::eligibility`] and [`crate::hwm`]. The remote store
+//! is only ever the one named explicitly by `--store`/`JOPE_LEARNING_URL`; the tests use local
+//! and in-memory stores only.
 
 pub mod census;
 pub mod inventory;
+pub mod outbox;
+pub mod remote;
 
 #[cfg(test)]
 mod tests {
     mod census;
     mod encoding;
     pub mod fixture;
+    mod outbox;
 }
