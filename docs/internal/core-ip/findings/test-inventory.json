@@ -2059,6 +2059,12 @@
       "role": "deferred-classification",
       "reason": "binary/multiclass/time-series specialized scope deferred by the regression plan"
     },
+    "target:jope-parallel/test/committed_updates": {
+      "role": "regression",
+      "subsystems": [
+        "training"
+      ]
+    },
     "target:jope-parallel/test/corpus": {
       "role": "regression",
       "subsystems": [

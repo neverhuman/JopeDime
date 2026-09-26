@@ -148,6 +148,61 @@ pub fn validate_rows(rows: &[RowLabels]) -> Result<()> {
     Ok(())
 }
 
+/// The supervision one microbatch actually delivers after masking, derived
+/// from the same labels and record lengths [`composite`] consumes. Journaled
+/// per microbatch so consumption is reported in supervised units, not rows.
+#[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Supervision {
+    pub rows: usize,
+    /// Padded decoder width `T` of the microbatch.
+    pub width: usize,
+    /// Supervised target positions: `Σ (length − 1)`; BOS is never a target.
+    pub supervised_positions: usize,
+    /// Sequence-term denominator `Σ (0.05 + p⁴)`, summed in f64 from f32 weights.
+    pub row_weight_sum: f64,
+    /// Bradley–Terry pairs with distinct values (shared by `ablation_bt`).
+    pub ranking_pairs: usize,
+    /// Pairs skipped as exact value ties.
+    pub tied_pairs: usize,
+    /// Listwise groups (every validated comparison is eligible).
+    pub listwise_groups: usize,
+}
+
+pub fn supervision(rows: &[RowLabels], lengths: &[usize]) -> Result<Supervision> {
+    validate_rows(rows)?;
+    let sequence = crate::corpus::SEQUENCE;
+    ensure!(
+        lengths.len() == rows.len() && lengths.iter().all(|&l| (2..=sequence).contains(&l)),
+        "record lengths must cover BOS, at least one target and at most {sequence} tokens"
+    );
+    let longest = *lengths.iter().max().expect("validated rows are non-empty");
+    let (mut ranking_pairs, mut tied_pairs) = (0, 0);
+    for comparison in rows.chunks(COMPARISON_ROWS) {
+        for (a, left) in comparison.iter().enumerate() {
+            for right in &comparison[a + 1..] {
+                if left.value == right.value {
+                    tied_pairs += 1;
+                } else {
+                    ranking_pairs += 1;
+                }
+            }
+        }
+    }
+    Ok(Supervision {
+        rows: rows.len(),
+        width: (longest.div_ceil(8) * 8).min(sequence),
+        supervised_positions: lengths.iter().map(|l| l - 1).sum(),
+        row_weight_sum: rows
+            .iter()
+            .map(|r| f64::from(row_weight(r.percentile)))
+            .sum(),
+        ranking_pairs,
+        tied_pairs,
+        listwise_groups: rows.len() / COMPARISON_ROWS,
+    })
+}
+
 /// Sampled comparisons checked against the frozen corpus index: every
 /// comparison is drawn from exactly one corpus group of the expected
 /// partition, starts with that group's champion (`records[0]`, the lowest

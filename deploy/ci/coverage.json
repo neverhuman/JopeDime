@@ -7196,6 +7196,21 @@
       "dispositions": [],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "target:jope-parallel/test/committed_updates": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-engine/tests/committed_updates.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "Neural-gated CPU fixtures: reference-optimizer rejection atomicity; consumption journal, commit semantics, interruption/recovery determinism and run reconciliation with the real sampler and CPU reference AdamW. No GPU, NCCL or training qualification."
+    },
     "target:jope-parallel/test/corpus": {
       "discovery": {
         "kind": "target",

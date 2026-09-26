@@ -16,6 +16,7 @@ use std::{
 };
 use tch::{nn, Device, Kind, Tensor};
 
+pub mod consumption;
 pub mod objective;
 
 pub const SAMPLER_ID: &str = "family_uniform_champion_plus_seven_quantiles_v2";
@@ -215,11 +216,13 @@ fn checkpoint(
     exposure: &Option<crate::training_exposure::Counts>,
     family_groups: &crate::training_exposure::FamilyGroups,
     family_groups_known: bool,
+    consumption: &Value,
 ) -> Result<()> {
     let step = opt.step;
     let receipt = launch.join(format!("checkpoint-{step}-rank-{rank}.json"));
     let mut rank_receipt = json!({"rank":rank,"step":step,"parameter_sha256":parameter_hash(vs)?,"exposure":exposure,
-        "committed_family_groups":family_groups,"attempt":launch.strip_prefix(root)?});
+        "committed_family_groups":family_groups,"attempt":launch.strip_prefix(root)?,
+        "consumption_journal":consumption});
     if !family_groups_known {
         rank_receipt["family_groups_baseline"] = json!("unknown");
     }
@@ -276,7 +279,8 @@ fn checkpoint(
             .iter()
             .map(|row| {
                 let mut committed = json!({"rank":row["rank"],"counts":row["exposure"],
-                    "committed_family_groups":row["committed_family_groups"],"attempt":row["attempt"]});
+                    "committed_family_groups":row["committed_family_groups"],"attempt":row["attempt"],
+                    "consumption_journal":row["consumption_journal"]});
                 if let Some(baseline) = row.get("family_groups_baseline") {
                     committed["family_groups_baseline"] = baseline.clone();
                 }
@@ -1393,16 +1397,50 @@ fn rank_impl(
         "initial_optimizer_step":initial_step,"corpus_sha256":corpus_hash,"timestamp":now(),
         "exposure":crate::training_exposure::attempt_snapshot(&observed_exposure,&committed_exposure,false)?}),
     )?;
+    // W6-T04: every consumed microbatch, attempted update and durable commit
+    // of this rank and attempt, bound into each checkpoint receipt.
+    let mut journal = consumption::Journal::create(
+        &launch.join(format!("consumption-rank-{rank}.jsonl")),
+        consumption::Header {
+            schema: consumption::SCHEMA.into(),
+            rank,
+            world,
+            microbatch: micro,
+            global_batch,
+            accumulation,
+            seed,
+            sampler_id: active_sampler_id(replay.as_ref()).into(),
+            rng: consumption::RNG_ID.into(),
+            sampling_offset: sampling_offset as u64,
+            initial_optimizer_step: initial_step as u64,
+            target_optimizer_step: steps as u64,
+            corpus_sha256: corpus_hash.clone(),
+            replay_policy_sha256: policy_sha.clone(),
+            resume_state_sha256: if resume {
+                Some(file_hash(
+                    &selected_checkpoint
+                        .as_ref()
+                        .context("resume selection absent")?
+                        .join("state.json"),
+                )?)
+            } else {
+                None
+            },
+        },
+    )?;
+    let journal_path = journal.path().strip_prefix(root)?.to_path_buf();
+    // The optimizer step whose update is in flight; cleared once applied.
+    let mut attempting: Option<usize> = None;
     let execution = (|| -> Result<()> {
         for step in optimizer.step as usize..steps {
+            attempting = Some(step);
             let begun = Instant::now();
             let mut values = [0.0; 5];
             let mut loss_value = 0.0;
             for mb in 0..accumulation {
-                tch::manual_seed(mix(seed
-                    ^ ((step - sampling_offset) as u64).wrapping_mul(65537)
-                    ^ (rank as u64).wrapping_mul(257)
-                    ^ mb as u64) as i64);
+                let dropout_seed =
+                    consumption::dropout_seed(seed, (step - sampling_offset) as u64, rank, mb);
+                tch::manual_seed(dropout_seed);
                 let serial = (step - sampling_offset) * global_batch
                     + rank * (global_batch / world)
                     + mb * micro;
@@ -1435,6 +1473,21 @@ fn rank_impl(
                     &mut observed_families,
                     &teacher_family,
                     &ids,
+                )?;
+                let consumed = ids.iter().map(|&i| records.get(i)).collect::<Vec<_>>();
+                journal.microbatch(
+                    step as u64,
+                    mb,
+                    serial as u64,
+                    dropout_seed,
+                    &ids,
+                    objective::supervision(
+                        &ids.iter()
+                            .zip(&consumed)
+                            .map(|(&id, r)| objective::RowLabels::from_record(id, r))
+                            .collect::<Vec<_>>(),
+                        &consumed.iter().map(|r| r.length).collect::<Vec<_>>(),
+                    )?,
                 )?;
             }
             let mut variables = vs.variables().into_iter().collect::<BTreeMap<_, _>>();
@@ -1469,7 +1522,16 @@ fn rank_impl(
                 offset += size;
             }
             optimizer.update(&vs)?;
+            // Parameters may now differ from the step's start: a later failure
+            // is not a rejected update. The journal then ends with this step's
+            // microbatches and no outcome, and recovery re-executes it.
+            attempting = None;
             tch::Cuda::synchronize(rank as i64);
+            ensure!(
+                optimizer.step as usize == step + 1,
+                "optimizer step did not advance by exactly one update"
+            );
+            journal.applied(step as u64, norm)?;
             let mut totals = Tensor::from_slice(
                 &[
                     loss_value, values[0], values[1], values[2], values[3], values[4],
@@ -1528,6 +1590,9 @@ fn rank_impl(
                     &observed_families,
                     &observed_exposure,
                 )?;
+                // Consumption through this update is durable before any
+                // checkpoint can reference it.
+                let consumed = journal.sync()?;
                 checkpoint(
                     root,
                     run,
@@ -1556,11 +1621,22 @@ fn rank_impl(
                         &observed_families,
                     )?,
                     family_baseline_known,
+                    &json!({"path":journal_path,"binding":consumed}),
                 )?;
                 committed_exposure = observed_exposure.clone();
                 checkpoint_seconds += checkpoint_started.elapsed().as_secs_f64();
                 last_checkpoint = Instant::now();
                 latest = read_json(&run.join("latest.json"))?;
+                ensure!(
+                    latest["step"].as_u64() == Some(optimizer.step),
+                    "published checkpoint does not cover the applied updates"
+                );
+                journal.commit(
+                    optimizer.step,
+                    latest["state_sha256"]
+                        .as_str()
+                        .context("published checkpoint state digest absent")?,
+                )?;
                 state["checkpoint"] = latest["checkpoint"].clone();
                 state["checkpoint_step"] = latest["step"].clone();
             }
@@ -1651,9 +1727,19 @@ fn rank_impl(
             complete["batch_qualification"] = json!(true);
             complete["eligible_checkpoint"] = json!(false);
         }
+        complete["consumption_journal"] = json!({"path":journal_path,"binding":journal.sync()?});
         write_json(&launch.join(format!("complete-{rank}.json")), &complete)?;
         Ok(())
     })();
+    if let Err(error) = &execution {
+        // An update that was attempted but not applied is recorded as
+        // rejected; the journal refuses anything after it. Best effort: the
+        // original error is what this rank returns.
+        if let Some(step) = attempting {
+            let _ = journal.rejected(step as u64, &format!("{error:#}"));
+        }
+        let _ = journal.sync();
+    }
     if execution.is_err() {
         // Normal error returns preserve all observed completed forwards. A
         // hard process death can leave an unreported tail and must remain

@@ -59,3 +59,61 @@ This fix was requested by the lead alongside T03.
 - **Loss direction.** Only the label ranges are checked. Value/percentile concordance and champion value dominance are not enforced, because `frozen_z_v1` deliberately keeps stale value/percentile labels. Binding the label policy into the objective identity belongs to T06 (G1/G9).
 - **Reachability.** Whether current producers can emit `failure: null` together with a non-successful `fit_outcome` is unverified. The strict admission path (`label_admission`) already requires a successful native outcome.
 - **Wiring not executed.** The `loss_for` wiring is compile-checked only. `rank_impl` requires CUDA/NCCL and the held grant.
+
+---
+
+## W6-T04 — actual consumption and committed updates
+
+### What was retained before this change
+- **Aggregate counters only.** `training_exposure::Counts` recorded presentations, comparison groups and fresh-program counts per rank, split into observed and checkpoint-committed. No sampled record identity, cursor, RNG seed, microbatch or update outcome was retained.
+- **The next sample sequence was not reconstructible from a receipt.** It followed only from the sampler arithmetic, never checked against what was consumed.
+- **Partial reference update.** `AdamW::update_reference`, the CPU reference path, incremented `step` and set its backend before its per-parameter loop. It rejected a nonfinite gradient inside that loop. A rejected update therefore advanced the step counter and could leave earlier parameters and moments updated.
+- **CUDA path.** `update_cuda` did not advance `step` on rejection. It did create zero moment entries before its finite check.
+
+### Commit semantics
+| Unit | Meaning | Where it advances |
+|---|---|---|
+| Computed microbatch | one completed forward/backward (physical work) | a `microbatch` event |
+| Attempted update | an optimizer update was attempted at step `s` | an `update` event, `applied` or `rejected` |
+| Applied update | the in-memory optimizer step advanced by exactly one | `update` with `outcome: applied`; requires every accumulation microbatch, a finite gradient norm and a consistent clip flag |
+| Rejected update | nothing changed; the attempt ends | `update` with `outcome: rejected` and a reason; every later event is refused |
+| Committed update | a durable checkpoint covers it | a `commit` event after `latest.json` is published, or `latest.json` itself (see below) |
+
+- **Accumulation.** Microbatches of one step are not an update until the `applied` event, and a commit inside an unfinished step is refused.
+- **Interruption.**
+  - An `applied` step with no later commit is lost. It is counted as computed and applied, never as committed exposure.
+  - A step with microbatches and no outcome is reported as `unfinished_step`.
+  - A torn final line is reported and not counted.
+- **Crash between checkpoint and commit event.** `reconcile(bytes, durable_step)` accepts a durable `latest.json` step ahead of the last commit event, up to the applied updates, and flags `commit_event_missing`. It refuses a journal commit beyond the durable step and a durable step beyond the applied updates.
+- **Update after the optimizer call.** In `rank_impl`, a failure after `optimizer.update` returns is not recorded as a rejection: parameters may already differ. The journal ends with that step's microbatches and no outcome, and recovery re-executes it from the committed cursor.
+
+### Changes
+| Location | Change | Kind |
+|---|---|---|
+| `neural.rs` `AdamW::update_reference` | Validates every gradient (finite, FP32) before the step counter, backend, moments or any parameter is touched. | behavior repair |
+| `neural.rs` `AdamW::update_cuda` | Validates before creating moment entries. Compile-checked only (CUDA). | hardening |
+| `training/consumption.rs` (new) | Per-rank, per-attempt append-only journal `consumption-rank-{rank}.jsonl` (`jope.training_consumption.v1`). One state machine validates both the writer and `reconcile`. Also: `verify_records` re-derives every microbatch from its cursor with the frozen sampler; `verify_binding` checks a checkpoint's byte-exact journal prefix; `reconcile_run` chains attempts only at the predecessor's durable commit with identical run constants. | new capability |
+| `training/objective.rs` `supervision` | Per-microbatch actual supervision: padded width, supervised positions `Σ(length−1)`, row-weight denominator, BT pairs, ties skipped, listwise groups. | new capability |
+| `training.rs` `rank_impl` | Writes the journal and makes it durable before every checkpoint. Binds `{path, binding}` into each rank checkpoint receipt and `state.json` `committed_exposure_by_rank`, and into `complete-{rank}.json`. Records `commit` after `latest.json` is read back at the applied step. Records `rejected` for an attempted update that errors before the optimizer applied it. The dropout seed now comes from `consumption::dropout_seed`, the same arithmetic as before. | wiring, compile-checked only |
+
+The journal is JSON Lines, like `metrics.jsonl`. Nothing reads a journal at training time, so it grants no authority.
+
+### Fixtures
+File `crates/jope-engine/tests/committed_updates.rs` (feature `neural`, CPU).
+- The trainer loop is simulated with the real sampler, the real CPU reference AdamW, the real journal and a tiny linear model.
+- It proves the accounting and the determinism of the CPU reference path, not the Policy, GPU, BF16 or NCCL.
+
+| Acceptance item | Test |
+|---|---|
+| A rejected update does not advance the step, change parameters or change moments; a rejected first update leaves the optimizer fresh | `reference_optimizer_rejects_a_nonfinite_update_without_partial_change` |
+| Supervision summary equals an independent count | `supervision_summary_matches_an_independent_count` |
+| Next records reconstructed from the receipt equal what recovery consumes and what an uninterrupted run consumed. Committed consumption and final parameters are identical to the uninterrupted run. Run totals keep computed (14), applied (7), lost (1) and committed (6) apart. Attempts chain only at the durable commit. Checkpoint journal bindings verify byte-exactly | `interrupted_and_uninterrupted_runs_consume_the_same_records_and_commit_the_same_state` |
+| A rejected update commits nothing and ends the attempt; a forged later `applied` is refused | `a_rejected_update_commits_nothing_and_ends_the_attempt` |
+| The writer refuses a wrong cursor, RNG identity or order; an update before every microbatch; a nonfinite norm; a commit of unapplied or unfinished work; a non-advancing or malformed commit; a second journal for one attempt | `the_writer_refuses_out_of_order_or_unsupported_accounting` |
+| Duplicate ingestion leaves totals unchanged; conflicting duplicates are refused. Torn tail, unfinished step, tampered cursor/RNG/records, unknown fields and a missing header are all handled. Durable versus commit ordering follows the rules above | `journal_ingestion_is_idempotent_and_refuses_inconsistent_history` |
+
+### Open for T04
+- **Not executed.** `rank_impl` journal wiring is compile-checked only (CUDA/NCCL, held grant). Rank-local journals are not yet reconciled into a cross-rank global committed update; that belongs to W7.
+- **Rejected versus unknown.** A native fused-kernel failure is recorded as `rejected`; the in-memory device state after such a failure is not verified. The attempt ends and nothing is committed, so no committed claim depends on it.
+- **Historical runs** have no journal. Their consumption stays unknown and is not reconstructed (T07).
+- **Size.** About 2.3 KB per microbatch at 256 rows: roughly 7 MB per rank per 3000 steps.

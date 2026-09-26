@@ -876,19 +876,27 @@ impl AdamW {
             self.step == 0 || self.backend == "scalar_fp32_v1",
             "optimizer backend changed; start a new run from model weights instead of resuming"
         );
-        self.backend = "scalar_fp32_v1".into();
-        self.step += 1;
-        let step = self.step as f64;
-        tch::no_grad(|| -> Result<()> {
-            for (name, mut p) in vs.variables().into_iter().collect::<BTreeMap<_, _>>() {
-                let g = p.grad();
-                if !g.defined() {
-                    continue;
-                }
+        let parameters = vs.variables().into_iter().collect::<BTreeMap<_, _>>();
+        // A rejected update changes nothing: validate every gradient before the
+        // step counter, backend, moments or any parameter is touched (W6-T04).
+        for p in parameters.values() {
+            let g = p.grad();
+            if g.defined() {
                 ensure!(
                     p.kind() == Kind::Float && g.isfinite().all().int64_value(&[]) != 0,
                     "nonfinite gradient or non-FP32 master parameter"
                 );
+            }
+        }
+        self.backend = "scalar_fp32_v1".into();
+        self.step += 1;
+        let step = self.step as f64;
+        tch::no_grad(|| -> Result<()> {
+            for (name, mut p) in parameters {
+                let g = p.grad();
+                if !g.defined() {
+                    continue;
+                }
                 let (m, v) = self
                     .moments
                     .entry(name)
@@ -908,11 +916,11 @@ impl AdamW {
             self.step == 0 || self.backend == "cuda_fused_fp32_v1",
             "optimizer backend changed; use warm-start with fresh optimizer state"
         );
-        let mut parameters = Vec::new();
-        let mut first = Vec::new();
-        let mut second = Vec::new();
+        let variables = vs.variables().into_iter().collect::<BTreeMap<_, _>>();
+        // Validate before creating any moment entry: a rejected update leaves
+        // the optimizer state exactly as it was (W6-T04).
         let mut gradients = Vec::new();
-        for (name, p) in vs.variables().into_iter().collect::<BTreeMap<_, _>>() {
+        for p in variables.values() {
             let g = p.grad();
             if !g.defined() {
                 continue;
@@ -921,20 +929,28 @@ impl AdamW {
                 p.kind() == Kind::Float && g.kind() == Kind::Float,
                 "fused AdamW requires FP32 master parameters and gradients"
             );
+            gradients.push(g.flatten(0, -1));
+        }
+        ensure!(!gradients.is_empty(), "no optimizer gradients");
+        ensure!(
+            Tensor::cat(&gradients, 0).isfinite().all().int64_value(&[]) != 0,
+            "nonfinite optimizer gradients"
+        );
+        let mut parameters = Vec::new();
+        let mut first = Vec::new();
+        let mut second = Vec::new();
+        for (name, p) in variables {
+            if !p.grad().defined() {
+                continue;
+            }
             let (m, v) = self
                 .moments
                 .entry(name)
                 .or_insert_with(|| (Tensor::zeros_like(&p), Tensor::zeros_like(&p)));
             first.push(m.shallow_clone());
             second.push(v.shallow_clone());
-            gradients.push(g.flatten(0, -1));
             parameters.push(p);
         }
-        ensure!(!parameters.is_empty(), "no optimizer gradients");
-        ensure!(
-            Tensor::cat(&gradients, 0).isfinite().all().int64_value(&[]) != 0,
-            "nonfinite optimizer gradients"
-        );
         let pointers = |tensors: &mut Vec<Tensor>| {
             tensors
                 .iter_mut()
