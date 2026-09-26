@@ -6,10 +6,10 @@ not CI verification, and neither is live qualification. No finding closes throug
 
 | State | Tasks |
 |---|---:|
-| planned | 56 |
-| reproduced | 5 |
-| implemented | 14 |
-| fixture-proven | 13 |
+| planned | 51 |
+| reproduced | 7 |
+| implemented | 19 |
+| fixture-proven | 15 |
 | CI-verified | 0 |
 | live-qualified | 0 |
 | measurement-complete | 0 |
@@ -31,7 +31,7 @@ not CI verification, and neither is live qualification. No finding closes throug
 
 | Task | States | Evidence | Remaining or blocker |
 |---|---|---|---|
-| W2-T01 Trace accepted assets and consumers | planned | — | — |
+| W2-T01 Trace accepted assets and consumers | implemented | ccfb00e5f195 | Source trace only; nothing was hashed or run. Section 7 lists the unverified items; gaps G-01..G-12 feed T02..T04. |
 | W2-T02 Extend the release-controlled semantic bundle | planned | — | — |
 | W2-T03 Make semantic products opaque | planned | — | — |
 | W2-T04 Consume validated bytes without reopening by path | planned | — | — |
@@ -46,7 +46,7 @@ not CI verification, and neither is live qualification. No finding closes throug
 | W3-T01 Map every authority-bearing ingress | implemented | 5cad30084b20 | jope-engine teaching-store/corpus routes are mapped, not reproduced. |
 | W3-T02 Resolve trusted transitive provenance | reproduced, implemented, fixture-proven | cff5ead8a066; missing_context_provenance_is_refused_at_real_teaching_ingress; wrong_scope_consumer_encoder_or_altered_context_is_refused_before_authority; retained_context_is_revalidated_by_every_receiving_gate | Producer authentication, revocation lookup and W2 execution-proof linkage remain; jope-bench's live teaching driver now fails closed until a W2 context producer runs before admission. |
 | W3-T03 Version records and enforce every receiving gate | reproduced, implemented, fixture-proven | cff5ead8a066; legacy_qualification_without_provenance_stays_quarantined_and_is_not_upgraded; freeze_without_preregistered_context_encoder_is_diagnostic_only | Versioned requalification procedure and jope-engine ingress routes remain. |
-| W3-T04 Recompute metrics from exact authenticated predictions | planned | — | — |
+| W3-T04 Recompute metrics from exact authenticated predictions | reproduced, implemented, fixture-proven | 170cb384d86f; forged_units_cannot_relabel_a_measured_score; pooled_rmse_r2_and_tail_are_separately_named_diagnostics; independent_evaluator_agrees_with_mean_fold_admission_on_uneven_folds; +1 tests | Fitted artifacts are not bound to their own fold's training rows (no row identity in either artifact schema); classification metric validity is deferred. |
 | W3-T05 Separate eligibility from HWM transition outcomes | reproduced, implemented, fixture-proven | 2db85243df5a; 7216cad2168b; transitions_separate_initialization_ties_non_improvement_and_improvement; eligibility_alone_and_redelivery_never_count_as_improvement | Per-fold tail diagnostics and an explicit duplicate outcome remain. |
 | W3-T06 Make decisions recoverably link to corpus eligibility | planned | — | — |
 | W3-T07 Run the full ingress adversarial matrix | planned | — | — |
@@ -55,8 +55,8 @@ not CI verification, and neither is live qualification. No finding closes throug
 
 | Task | States | Evidence | Remaining or blocker |
 |---|---|---|---|
-| W4-T01 Write the operation-level forward contract | planned | — | — |
-| W4-T02 Prove autoregressive and batching invariants | planned | — | — |
+| W4-T01 Write the operation-level forward contract | implemented | ccfb00e5f195 | Source contract only; its OBS-1 defect is fixed in W4-T02. Boundary items at accepted weights stay unqualified. |
+| W4-T02 Prove autoregressive and batching invariants | reproduced, implemented, fixture-proven | cd87271195a8; cache_qualification_compares_every_position_of_a_sequence | The cached-vs-full qualification now runs at every position, proven on random tiny weights only; agreement at accepted weights and on CUDA is W11-T02. |
 | W4-T03 Make decoding outcomes total and bounded | reproduced, implemented, fixture-proven | 319c4cd5f700; tests/decode_outcomes.rs (12) | The LibTorch proposal sampler in jope-engine (neural feature) is untouched; per-draw outcomes are not yet written to the candidate ledger (T07). |
 | W4-T04 Differentially test grammar and typed parser | implemented, fixture-proven | 663880fa69b7; tests/grammar_differential.rs | Verified safeguard: no dead-end legal prefix or parser disagreement found over 6,430 enumerated states and 17,036 programs/expressions. |
 | W4-T05 Establish scorer dependencies and architectural limits | implemented, fixture-proven | de747c363357; tests/scorer_dependencies.rs | Characterized on synthetic weights only; the order-aware challenger is W10. |
@@ -80,7 +80,7 @@ not CI verification, and neither is live qualification. No finding closes throug
 | Task | States | Evidence | Remaining or blocker |
 |---|---|---|---|
 | W6-T01 Freeze resolved training inputs | planned | — | — |
-| W6-T02 Specify the complete objective by term | planned | — | — |
+| W6-T02 Specify the complete objective by term | implemented | ccfb00e5f195 | Specification half only. Independently computed tiny fixtures reproducing each scalar loss and its gradients remain; gaps G1..G17 are open. |
 | W6-T03 Validate comparisons and runtime observations | planned | — | — |
 | W6-T04 Record actual consumption and committed updates | planned | — | — |
 | W6-T05 Commit complete checkpoints atomically | planned | — | — |

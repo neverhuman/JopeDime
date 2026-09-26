@@ -39,8 +39,15 @@
     },
     "W2-T01": {
       "states": [
-        "planned"
-      ]
+        "implemented"
+      ],
+      "commits": [
+        "ccfb00e5f195498bad0b6dab731612671d4792e3"
+      ],
+      "evidence": [
+        "docs/internal/core-ip/work-orders/evidence/W02-asset-dependency-table.md"
+      ],
+      "remaining": "Source trace only; nothing was hashed or run. Section 7 lists the unverified items; gaps G-01..G-12 feed T02..T04."
     },
     "W2-T02": {
       "states": [
@@ -130,8 +137,24 @@
     },
     "W3-T04": {
       "states": [
-        "planned"
-      ]
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "170cb384d86f9a22eadab1097a731bfdc3a3c112"
+      ],
+      "tests": [
+        "forged_units_cannot_relabel_a_measured_score",
+        "pooled_rmse_r2_and_tail_are_separately_named_diagnostics",
+        "independent_evaluator_agrees_with_mean_fold_admission_on_uneven_folds",
+        "prediction_evidence_substitutions_fail_before_authority"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w3-t04-prefix-metrics-20260926T054825Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w3-t04-postfix-metrics-20260926T055008Z"
+      ],
+      "remaining": "Fitted artifacts are not bound to their own fold's training rows (no row identity in either artifact schema); classification metric validity is deferred."
     },
     "W3-T05": {
       "states": [
@@ -161,13 +184,33 @@
     },
     "W4-T01": {
       "states": [
-        "planned"
-      ]
+        "implemented"
+      ],
+      "commits": [
+        "ccfb00e5f195498bad0b6dab731612671d4792e3"
+      ],
+      "evidence": [
+        "docs/internal/core-ip/work-orders/evidence/W04-forward-contract.md"
+      ],
+      "remaining": "Source contract only; its OBS-1 defect is fixed in W4-T02. Boundary items at accepted weights stay unqualified."
     },
     "W4-T02": {
       "states": [
-        "planned"
-      ]
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "cd87271195a8d2d87a0baed77816c0a41e85fca3"
+      ],
+      "tests": [
+        "cache_qualification_compares_every_position_of_a_sequence"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w4-cache-qualification-prefix-20260926T055034Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w4-cache-qualification-postfix-20260926T055108Z"
+      ],
+      "remaining": "The cached-vs-full qualification now runs at every position, proven on random tiny weights only; agreement at accepted weights and on CUDA is W11-T02."
     },
     "W4-T03": {
       "states": [
@@ -265,8 +308,15 @@
     },
     "W6-T02": {
       "states": [
-        "planned"
-      ]
+        "implemented"
+      ],
+      "commits": [
+        "ccfb00e5f195498bad0b6dab731612671d4792e3"
+      ],
+      "evidence": [
+        "docs/internal/core-ip/work-orders/evidence/W06-objective-specification.md"
+      ],
+      "remaining": "Specification half only. Independently computed tiny fixtures reproducing each scalar loss and its gradients remain; gaps G1..G17 are open."
     },
     "W6-T03": {
       "states": [
