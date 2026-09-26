@@ -1558,12 +1558,16 @@ fn main() -> Result<()> {
             output,
             prepared,
             cut,
-        } => jope_parallel::gp::evaluate_prepared_memory(
-            fd,
-            &genome,
-            &output,
-            prepared.as_deref().zip(cut),
-        )?,
+        } => {
+            // W5-T05: a guarded evaluator's process group dies with its search controller.
+            jope_parallel::gp::guard_evaluator_group()?;
+            jope_parallel::gp::evaluate_prepared_memory(
+                fd,
+                &genome,
+                &output,
+                prepared.as_deref().zip(cut),
+            )?
+        }
         #[cfg(feature = "neural")]
         Cmd::Train {
             corpus,
