@@ -187,7 +187,7 @@ pub fn plan(args: PlanArgs) -> Result<Value> {
         fitting_manifest.sha256 == args.fitting_inputs_sha256,
         "fitting input manifest changed"
     );
-    let inputs = inputs::load(
+    let (inputs, staging_closure) = inputs::load(
         &fitting_manifest,
         &panel,
         &panel_sha,
@@ -238,13 +238,17 @@ pub fn plan(args: PlanArgs) -> Result<Value> {
     };
     write(&args.output, &plan)?;
     Ok(
-        json!({"plan":args.output,"sha256":artifact(&args.output)?.sha256,"gpu_window_started":false,"datasets":10}),
+        json!({"plan":args.output,"sha256":artifact(&args.output)?.sha256,"gpu_window_started":false,"datasets":10,
+            "staging_closure":staging_closure}),
     )
 }
 pub fn read(path: &Path, sha: &str) -> Result<Plan> {
     let bytes = fs::read(path)?;
     ensure!(digest(&bytes) == sha, "plan pin mismatch");
     let p: Plan = serde_json::from_slice(&bytes)?;
+    // W1 follow-up 2d: no plan pinning an object of the historical staging
+    // closure is admitted, whichever planner built it.
+    inputs::refuse_historical_plan(&p.fitting_manifest, &p.inputs)?;
     ensure!(
         p.toolchain.keys().map(String::as_str).collect::<Vec<_>>() == ["g++", "python3", "rustc"],
         "toolchain key inventory changed"

@@ -27,9 +27,13 @@
 //! fields and a content identity, so one can never be opened as another and
 //! no field can change without changing the identity.
 //!
+//! [`committed`] opens the committed release pair embedded at build time; the
+//! jope-bench planner and plan admission use it with [`verify_closure`] and
+//! [`refuse_historical_objects`] (W1 follow-up 2d).
+//!
 //! Limits: a producer's projection attestation is recorded and required, not
-//! independently proven; wiring this verifier into the jope-bench planner is
-//! outside this crate.
+//! independently proven. The closure check is by digest: it authenticates
+//! bytes, so a re-encoded copy of a historical projection is a new object.
 
 use crate::hash::sha256_hex;
 use crate::regression_release::{canonical_json, is_sha256, read_exact_object};
@@ -515,6 +519,41 @@ pub fn verify_closure(protocol: &CorrectedProtocol, manifest_bytes: &[u8]) -> Re
         json!({"manifest_sha256":manifest_sha256,"projection_source_sha":source,
         "objects_checked":objects.len()}),
     )
+}
+
+const COMMITTED_DISPOSITION: &[u8] =
+    include_bytes!("../releases/staging-disposition/historical-gpu-staging-20260925.json");
+const COMMITTED_PROTOCOL: &[u8] =
+    include_bytes!("../releases/staging-disposition/fitting-only-staging-protocol-v1.json");
+
+/// The committed historical disposition and corrected protocol, embedded at
+/// build time and opened with every identity check, so a consumer cannot be
+/// pointed at another pair.
+pub fn committed() -> Result<(HistoricalDisposition, CorrectedProtocol)> {
+    let disposition = HistoricalDisposition::open(COMMITTED_DISPOSITION)?;
+    let protocol = CorrectedProtocol::open(COMMITTED_PROTOCOL, &disposition)?;
+    Ok((disposition, protocol))
+}
+
+/// Refuse every pinned object the historical staging path produced, for a
+/// consumer that holds pinned digests (a plan) rather than the manifest bytes.
+/// Returns the number of objects checked.
+pub fn refuse_historical_objects<'a>(
+    protocol: &CorrectedProtocol,
+    objects: impl IntoIterator<Item = (String, &'a str)>,
+) -> Result<usize> {
+    let mut checked = 0;
+    for (role, digest) in objects {
+        ensure!(
+            !protocol
+                .forbidden_closure_sha256
+                .iter()
+                .any(|f| f == digest),
+            "{role} {digest} was produced by the historical staging path"
+        );
+        checked += 1;
+    }
+    Ok(checked)
 }
 
 /// Accept a corrected run only under this protocol, with a non-historical

@@ -473,3 +473,38 @@ fn derivation_cross_checks_the_retained_evidence_and_is_deterministic() {
         );
     }
 }
+
+/// W1 follow-up 2d: consumers open the embedded pair, which is exactly the
+/// committed release; the digest-level refusal covers every staging product
+/// and nothing else.
+#[test]
+fn the_embedded_pair_is_the_committed_release_and_refuses_only_staging_products() {
+    let (d, p) = committed();
+    let (embedded_d, embedded_p) = jope_datasets::staging_disposition::committed().unwrap();
+    assert_eq!((&embedded_d, &embedded_p), (&d, &p));
+    assert_eq!(embedded_p.encode().unwrap(), PROTOCOL);
+    let products = d.staging_products();
+    for product in &products {
+        let error = refuse_historical_objects(&p, [("object".to_string(), product.as_str())])
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains("historical staging path"), "{error}");
+    }
+    // Label-free split memberships are panel inputs, not staging products.
+    let memberships = d
+        .input_closure
+        .members
+        .iter()
+        .map(|m| ("membership".to_string(), m.assignment_sha256.as_str()));
+    assert_eq!(
+        refuse_historical_objects(&p, memberships).unwrap(),
+        d.input_closure.members.len()
+    );
+    let fresh = fresh(3, "2d");
+    assert_eq!(
+        refuse_historical_objects(&p, fresh.iter().map(|f| ("fresh".to_string(), f.as_str())))
+            .unwrap(),
+        3
+    );
+    assert_eq!(products.len(), p.forbidden_closure_sha256.len());
+}

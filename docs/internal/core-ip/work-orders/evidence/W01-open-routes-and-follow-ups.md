@@ -235,4 +235,64 @@ records `view_resolution: legacy_view_resolution`.
 - The remaining `load_view` callers listed above.
 - The inherited memfd is sealed read-only and carries fitting rows only. It is created
   without close-on-exec so the worker can inherit it, so a child spawned concurrently by
-  another thread of the same parent could inherit it too.
+  another thread of the same parent could inherit it too. The coordinator accepted this
+  as disclosed.
+
+2b and 2c were integrated as `7835e79ff` and `1217bac14`. 2d and 2e are on
+`rr/w1-inputs-5`, cut from the integration head `a606bad2e`.
+
+## 2d — the W1-T07 replay verifier at `jope benchmark inference-plan`
+
+**Defect.** The v3 planner checked only the shape of the fitting-input manifest's
+`projection_source_sha` (40 hex). It re-read the manifest after verifying it. It never
+consulted the committed fitting-only staging protocol. Plan admission (`read`: `run`,
+`cold` and the v3 `report`) did not consult it either.
+
+**Reproduction.** `w1b-r5-2d-prefix-20260926T103830Z`, on the base's own build
+(`JOPE_SOURCE_SHA=a606bad2e`, asm), replaying retained custody evidence:
+- the retained v3 planner command on the retained historical closure
+  (`study-final/retained-fitting-inputs.json`, `e0256090…`): exit 0, plan written;
+- report admission of the retained local v3 plan built on that closure
+  (`repaired-planner-local/plan.json`, `acd1df4b…`): exit 0;
+- the retained manifest re-attributed to the current source with every object unchanged
+  (`39e1a8f8…`): exit 0, plan written.
+
+The same result on `21d7073e7` is in `w1b-r4-2d-prefix-*`.
+
+**Fix.**
+- `jope_datasets::staging_disposition::committed()` opens the committed disposition and
+  protocol, embedded at build time, with every identity check.
+- `refuse_historical_objects` refuses pinned digests of any staging product.
+- In `inference_inputs::load`, the manifest is read once as a regular file, and the
+  consumed bytes must be the pin. `verify_closure` admits the closure before any split
+  membership or projected input is opened. The planner's output records the closure
+  receipt (`staging_closure`, with `staging_protocol_id`).
+- `inference_benchmark::read` refuses a plan that pins the historical manifest, a
+  historical projected input or a historical inner-fold input, whichever planner built
+  it.
+- No `inference_report*` file is changed.
+
+**Post-fix.** `w1b-r5-2d-postfix-20260926T104151Z`, the same three replays:
+- planner, exit 1: "the historical input closure (manifest e0256090…) cannot be replayed
+  under the corrected fitting-only protocol";
+- report, exit 1: "fitting-input manifest e0256090… was produced by the historical
+  staging path";
+- re-attributed closure, exit 1: "197_cpu_act: projected fitting input 64595358… was
+  produced by the historical staging path".
+
+**Tests.**
+- `panel::inference_benchmark::inputs::tests` (jope-bench, asm):
+  - `the_planner_admits_only_closures_outside_the_historical_staging_path`. Positive
+    control: a fresh closure is admitted from exactly the pinned bytes, with the receipt.
+    Refusals: the historical projection source, a historical projected input and a
+    historical inner-fold input (each before any named object is opened); bytes replaced
+    after pinning; a symlinked manifest.
+  - `a_plan_pinning_any_historical_object_is_never_admitted`. Positive control, the
+    retained historical manifest, and a fresh manifest re-pinning one historical input.
+- jope-datasets `staging_disposition::the_embedded_pair_is_the_committed_release_and_refuses_only_staging_products`.
+
+**Limits.**
+- The check is by digest. A re-encoded copy of a historical projection is a new object.
+- The producer's projection attestation (`verify_corrected_run`) is not required by the
+  planner, because no producer emits a corrected run document yet.
+- Report admission of an archival v2 plan is unchanged.
