@@ -1460,6 +1460,13 @@
         "preparation"
       ]
     },
+    "target:jope-datasets/test/staging_disposition": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "evidence"
+      ]
+    },
     "target:jope-dime-regressor/bin/aspfm_recovery_evolve": {
       "role": "historical",
       "reason": "historical campaign tooling retained for replay; not a maintained regression control"
@@ -2070,6 +2077,12 @@
         "training"
       ]
     },
+    "target:jope-parallel/test/counterfactual_boundaries": {
+      "role": "regression",
+      "subsystems": [
+        "preparation"
+      ]
+    },
     "target:jope-parallel/test/dashboard": {
       "role": "regression",
       "subsystems": [
@@ -2141,6 +2154,12 @@
       "subsystems": [
         "policy",
         "gp"
+      ]
+    },
+    "target:jope-parallel/test/label_release": {
+      "role": "regression",
+      "subsystems": [
+        "preparation"
       ]
     },
     "target:jope-parallel/test/learning_history": {
