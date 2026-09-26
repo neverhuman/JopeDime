@@ -249,14 +249,44 @@ impl Fetcher<'_> {
             .buffer_unordered(PARALLEL_GETS)
             .collect()
             .await;
+        let mut failed = BTreeSet::new();
         for (sha, r) in results {
             match r {
                 Ok(true) => report.files_fetched += 1,
                 Ok(false) => report.files_cached += 1,
-                Err(e) => report.errors.push(format!("{sha}: {e:#}")),
+                Err(e) => {
+                    report.errors.push(format!("{sha}: {e:#}"));
+                    failed.insert(sha);
+                }
             }
         }
         for row in &rows {
+            let unverified: Vec<&str> = row
+                .files
+                .entries()
+                .into_iter()
+                .filter(|(_, f)| failed.contains(&f.sha256))
+                .map(|(name, _)| name)
+                .collect();
+            if !unverified.is_empty() {
+                // A consumer copy of an object that could not be verified is never left
+                // servable (it may be a hard link to the stale blob just removed).
+                let dir = self.cache.by_id_dir(&row.dataset_hash);
+                for name in &unverified {
+                    match std::fs::remove_file(dir.join(name)) {
+                        Ok(()) => {}
+                        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+                        Err(e) => report
+                            .errors
+                            .push(format!("{}: remove unverified {name}: {e}", row.id)),
+                    }
+                }
+                report.errors.push(format!(
+                    "{}: not materialized; required objects failed verification: {unverified:?}",
+                    row.id
+                ));
+                continue;
+            }
             if let Err(e) = materialize(self.cache, row) {
                 report.errors.push(format!("{}: {e:#}", row.id));
             }

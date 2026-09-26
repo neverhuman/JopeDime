@@ -405,7 +405,7 @@ fn changed_source_target_rows_schema_groups_folds_or_family_mapping_is_a_new_ide
     g.panel["datasets"][0]["split"]["sha256"] = json!(sha256_hex(&staged.split));
     g.staged.insert("reg0".into(), staged);
     assert!(err_text(g.derive()).contains("not in original source order"));
-    decisions.push(json!({"mutation":"reordered_rows","decision":"rejected"}));
+    decisions.push(json!({"mutation":"split_rows_out_of_source_order","decision":"rejected"}));
 
     // A family mapping or exposure change is a new release identity.
     for (label, change) in [
