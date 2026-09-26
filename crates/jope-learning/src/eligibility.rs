@@ -25,7 +25,9 @@ use std::{
     path::Path,
 };
 
+mod context;
 mod inner;
+pub use context::{ContextEvidence, ContextPlan};
 pub use inner::{
     derive_inner_partition, freeze_inner_optimization, register_inner_candidate, InnerEvidence,
     InnerPartition,
@@ -53,6 +55,9 @@ pub struct FreezePlan {
     pub panel_sha256: String,
     pub dataset_id: String,
     pub evaluation_seed: u64,
+    /// Required for teaching admission; a freeze without it is diagnostic only.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub context: Option<ContextPlan>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -82,6 +87,8 @@ struct FrozenPolicy {
     created_at_unix: u64,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     inner_partition: Option<InnerPartition>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    context: Option<ContextPlan>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -120,6 +127,9 @@ pub struct OofEvidence {
     pub fold_predictions_sha256: Vec<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub inner: Option<InnerEvidence>,
+    /// Mandatory for qualification; absent only on legacy/diagnostic submissions.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub context: Option<ContextEvidence>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -147,6 +157,9 @@ pub struct Qualification {
     pub context_fitting_rows_sha256: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub context_outer_fold: Option<u8>,
+    /// Verified context receipt; stored legacy qualifications without one never revalidate.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub context_receipt_sha256: Option<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -433,6 +446,9 @@ fn freeze_impl(
     inner_partition: Option<InnerPartition>,
 ) -> Result<FreezeReceipt> {
     let selected_task = task(&plan.comparison)?;
+    if let Some(context) = &plan.context {
+        context.validate()?;
+    }
     let classes = &plan.comparison.comparison.as_ref().unwrap().class_order;
     let label_role = effective_label_role(&plan.original_label_role, true)?;
     ensure!(
@@ -534,6 +550,7 @@ fn freeze_impl(
         folds,
         created_at_unix: now_unix(),
         inner_partition,
+        context: plan.context.clone(),
     };
     let bytes = canonical_json(&policy)?;
     immutable_write(&path, &bytes)?;
@@ -724,6 +741,7 @@ fn measured(
         policy.guard == GuardPolicy::current(),
         "unknown teaching guard"
     );
+    let context_receipt_sha256 = context::verify(state, &policy, record, evidence)?;
     let experiment: Experiment = blob(state, &evidence.experiment_blob_sha256)?;
     let window: ExecutionWindow = blob(state, &evidence.window_sha256)?;
     experiment.validate()?;
@@ -994,6 +1012,7 @@ fn measured(
         fold_losses,
         context_fitting_rows_sha256:policy.inner_partition.as_ref().map(|p|p.fitting_rows_sha256()).transpose()?,
         context_outer_fold:policy.inner_partition.as_ref().map(|p|p.outer_fold),
+        context_receipt_sha256: Some(context_receipt_sha256),
         measurement:
             "recomputed-from-pinned-targets-and-predictions; analytic-baseline-worker-fits=0; execution receipts retained separately"
                 .into(),
@@ -1177,6 +1196,7 @@ pub fn freeze_teaching(state: &State) -> Result<TeachingManifest> {
 mod tests {
     use super::*;
     use crate::{
+        encoder_receipt::{Encoder, EncoderCapability, Inputs, Member, Product, Scope},
         hwm::{self, Candidate},
         record::{ComparisonContext, Cost, Evaluator, Genome, Provenance, Score, HWM_SCHEMA},
     };
@@ -1193,11 +1213,103 @@ mod tests {
         plan: FreezePlan,
         record: HwmRecord,
         evidence: OofEvidence,
+        rows: Vec<TargetRow>,
+    }
+
+    fn context_plan() -> ContextPlan {
+        ContextPlan {
+            source_family: "synthetic-fixture-family".into(),
+            encoder: Encoder {
+                artifact_sha256: sha256_hex(b"fixture context encoder"),
+                configuration_sha256: sha256_hex(b"fixture context configuration"),
+                seed: 7,
+                product: Product::TeachingContext2048,
+            },
+        }
+    }
+
+    /// Producer-side scope, built from the fixture rows rather than the receiver's derivation.
+    fn context_scope(comparison: &HwmIdentity, rows: &[TargetRow]) -> Scope {
+        Scope {
+            comparison: comparison.clone(),
+            source_family: context_plan().source_family,
+            outer_fold: None,
+            inner_fold: None,
+            fitting: rows
+                .iter()
+                .map(|row| Member {
+                    row: row.id.clone(),
+                    group: row.group.clone(),
+                })
+                .collect(),
+            forbidden: vec![],
+        }
+    }
+
+    fn context_output(width: usize, offset: f32) -> Vec<u8> {
+        (0..width)
+            .flat_map(|index| (offset + index as f32 / 64.).to_le_bytes())
+            .collect()
+    }
+
+    /// Retain one synthetic producer's receipt, fitted state and output; nothing is encoded.
+    fn produce_context(
+        state: &State,
+        scope: Scope,
+        encoder: Encoder,
+        parent_receipts: Vec<String>,
+        output: &[u8],
+    ) -> ContextEvidence {
+        let capability = EncoderCapability::bind(
+            scope,
+            encoder,
+            Inputs {
+                features_sha256: sha256_hex(b"fixture projected features"),
+                labels_sha256: Some(sha256_hex(b"fixture projected labels")),
+                parent_receipts,
+            },
+        )
+        .unwrap();
+        let fitted = format!("synthetic fitted context state/{}", output.len()).into_bytes();
+        let receipt = capability.receipt(&fitted, output).unwrap();
+        ContextEvidence {
+            receipt_sha256: state.put_blob(&canonical_json(&receipt).unwrap()).unwrap(),
+            fitted_state_sha256: state.put_blob(&fitted).unwrap(),
+            output_sha256: state.put_blob(output).unwrap(),
+        }
+    }
+
+    fn valid_context(
+        state: &State,
+        comparison: &HwmIdentity,
+        rows: &[TargetRow],
+    ) -> ContextEvidence {
+        let parent = produce_context(
+            state,
+            context_scope(comparison, rows),
+            Encoder {
+                product: Product::DatasetSignature512,
+                ..context_plan().encoder
+            },
+            vec![],
+            &context_output(512, 0.25),
+        );
+        produce_context(
+            state,
+            context_scope(comparison, rows),
+            context_plan().encoder,
+            vec![parent.receipt_sha256],
+            &context_output(2048, 0.5),
+        )
+    }
+
+    fn fixture(selected_task: Task, improved: usize) -> Fixture {
+        fixture_with(selected_task, improved, Some(context_plan()))
     }
 
     // All inputs/predictions are synthetic; these tests establish admission mechanics,
     // not corpus admission, real fitted-model accuracy, or a completed live search.
-    fn fixture(selected_task: Task, improved: usize) -> Fixture {
+    fn fixture_with(selected_task: Task, improved: usize, context: Option<ContextPlan>) -> Fixture {
         let fixture_root =
             Path::new(env!("CARGO_MANIFEST_DIR")).join("../../target/tmp/teaching-fixtures");
         fs::create_dir_all(&fixture_root).unwrap();
@@ -1302,6 +1414,7 @@ mod tests {
             panel_sha256: state.put_blob(&canonical_json(&panel).unwrap()).unwrap(),
             dataset_id: "fixture".into(),
             evaluation_seed: 7,
+            context,
         };
         let freeze = freeze_optimization(&state, &plan).unwrap();
         let frozen = load_freeze(&state, &freeze).unwrap();
@@ -1334,6 +1447,7 @@ mod tests {
             window_sha256: state.put_blob(&canonical_json(&window).unwrap()).unwrap(),
             fold_predictions_sha256: Vec::new(),
             inner: None,
+            context: Some(valid_context(&state, &comparison, &rows)),
         };
         let mut all_targets = Vec::new();
         let mut all_predictions = Vec::new();
@@ -1545,6 +1659,7 @@ mod tests {
             plan,
             record,
             evidence,
+            rows,
         }
     }
 
@@ -1982,4 +2097,6 @@ mod tests {
         bad.consumption.observed_exit_unix_ms = Some(4101);
         assert!(verify(&request, &bad, 4100).is_err());
     }
+
+    mod provenance;
 }

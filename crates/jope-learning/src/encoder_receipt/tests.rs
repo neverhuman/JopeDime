@@ -34,7 +34,7 @@ fn scope() -> Scope {
             }),
         },
         source_family: "fixture".into(),
-        outer_fold: 0,
+        outer_fold: Some(0),
         inner_fold: Some(1),
         fitting: vec![member("b", "fit-b"), member("a", "fit-a")],
         forbidden: vec![member("held", "held-group")],
@@ -139,7 +139,11 @@ fn different_dataset_fold_task_vocabulary_or_membership_cannot_reuse_receipt() {
         |s| s.comparison.task = "binary".into(),
         |s| s.comparison.cut_id = digest("other cut"),
         |s| s.comparison.vocabulary_sha256 = digest("other vocabulary"),
-        |s| s.outer_fold = 1,
+        |s| s.outer_fold = Some(1),
+        |s| {
+            s.outer_fold = None;
+            s.inner_fold = None;
+        },
         |s| s.inner_fold = Some(2),
         |s| s.fitting.reverse(),
         |s| s.fitting[0].row = "new-fitting-row".into(),
@@ -162,7 +166,8 @@ fn membership_rejects_overlap_duplicate_group_leak_and_missing_fitting_payload()
         |s| s.forbidden.push(s.forbidden[0].clone()),
         |s| s.fitting.clear(),
         |s| s.fitting[0].group.clear(),
-        |s| s.outer_fold = 5,
+        |s| s.outer_fold = Some(5),
+        |s| s.outer_fold = None,
         |s| s.inner_fold = Some(5),
         |s| s.comparison.evaluator_sha256 = "unbound".into(),
         |s| s.comparison.comparison = None,
