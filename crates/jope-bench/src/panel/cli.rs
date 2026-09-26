@@ -99,6 +99,10 @@ pub enum BenchmarkCommand {
     /// Qualify emitted predictions under the original campaign deadline and resource limits.
     #[cfg(all(feature = "asm", target_os = "linux"))]
     QualifyExport(super::fitted_export_run::QualifyArgs),
+    /// Install a qualified export package into a new directory and load it under the
+    /// identity its authenticated qualification receipts re-derive.
+    #[cfg(all(feature = "asm", target_os = "linux"))]
+    InstallExport(super::fitted_export_run::InstallArgs),
     #[cfg(all(feature = "asm", target_os = "linux"))]
     #[command(hide = true)]
     FittedExportWorker {
@@ -303,6 +307,8 @@ fn run(cli: BenchmarkCli) -> Result<Value> {
         BenchmarkCommand::ExportWinner(args) => super::fitted_export::prepare(args),
         #[cfg(all(feature = "asm", target_os = "linux"))]
         BenchmarkCommand::QualifyExport(args) => super::fitted_export_run::run(args),
+        #[cfg(all(feature = "asm", target_os = "linux"))]
+        BenchmarkCommand::InstallExport(args) => super::fitted_export_run::install_export(args),
         #[cfg(all(feature = "asm", target_os = "linux"))]
         BenchmarkCommand::FittedExportWorker { input, output } => {
             super::fitted_export_run::worker(&input, &output)?;

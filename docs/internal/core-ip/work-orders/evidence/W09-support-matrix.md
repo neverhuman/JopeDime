@@ -191,3 +191,86 @@ Directories are under `/home/ubuntu/jope-rescue-20260921/regression-remediation-
 At every commit, the pass-name sets were compared with the baseline, and no previously passing test was lost. `python3 deploy/ci/coverage.py validate` reports 0 unassigned or invalid items. The new tests live in the existing `jope-bench` lib target, so no coverage key was needed.
 
 Clippy: `cargo clippy -p jope-bench --no-deps --all-targets --locked`, default and with `--features jope-bench/asm`, reports nothing in `fitted_export.rs`, `inference_contract_tests.rs` or `inference_package.rs`. The remaining jope-bench findings are pre-existing and on unchanged lines: six `needless_borrow` in `inference.rs`; under asm also `fitted_export_run.rs:116` (`needless_lifetimes`), `demo_asm.rs`, `experimental_proposal.rs` and `optimize.rs`. The workspace `just clippy` (`-D warnings`) already stops on pre-existing lints in `jope-pipeline` (`search_plan.rs:200`), `hyperion` and `jope-encoders` with the pinned 1.97.1 toolchain.
+
+## 10. Appended 2026-09-26: named-column input, package wiring and the fitted-subject binding (W9-T01, W9-T02, W9-T05; branch `rr2/integration-c`)
+
+Runs `w9c-*`. These close the open items 2 and 5 of section 8. Item 3 gets its source half;
+its remaining half needs an owner decision.
+
+**W9-T01, named-column input mode. New capability; there is no failing reproduction.** The
+positional interface is unchanged and correct. The gap was that no named mode existed at all
+(section 4).
+- `PublicManifest::positional_rows(records)` is a host-side adapter over the positional raw-row
+  interface that every backend ships. Emitted source, bundle identities and qualification plans
+  are unchanged, so no retained export changes meaning.
+- Records are a JSON array of objects. Each object names every manifest column exactly once
+  with a string or null, in any key order.
+- The adapter refuses:
+  - a missing, unknown (including case-changed) or repeated name;
+  - a non-string value;
+  - a positional row, or an object instead of an array;
+  - a manifest whose column names are not distinct.
+  Repeated names are kept while the document is parsed, so a duplicate key is refused rather
+  than silently collapsed.
+- The rows then go through the unchanged positional boundary and its validators. Two columns of
+  one kind can no longer be swapped silently, which section 4 records as a limit of the
+  positional mode.
+- Test `panel::inference::tests::named_column_records_follow_the_manifest_and_refuse_ambiguity`:
+  - Positive: for all five backends, reversed-key records produce the positional rows and a
+    qualification plan of identical identity, native reference included. An empty array
+    produces zero rows.
+  - Negative: 8 refusals.
+
+**W9-T05, package seal/install/load wired to `qualify-export`.**
+- The `qualify-export` run still performs qualification in the pool. Afterwards
+  (`fitted_export_run::record_packages`) it seals every `qualified` backend from its
+  authenticated receipts: the backend report, the execution receipt, the pinned tool inventory
+  as the dependency profile, and the qualified native outputs by their receipt digests.
+- It installs each package once into `<export>/packages/<backend>`. An existing installation
+  must load under the re-derived identity.
+- It writes an immutable `packages/<backend>.record.json` (`jope.fitted-package-record/v1`) and
+  assesses required and optional outcomes with `inference::package::assess`, always
+  `release: not-decided`.
+- `QualifyArgs --require <backend>` freezes the required set in `run.json`. The field is
+  omitted when empty, so an older `run.json` keeps its bytes and meaning.
+- New verb `jope-bench benchmark install-export --prepared --prepared-sha256 --backend
+  --destination` (`asm`, Linux). It re-authenticates the export and its frozen run, re-seals from
+  the receipts, and requires the record to be the one that seal derives. It installs into a new
+  directory and loads back under that identity.
+- Load now takes its identity from an authenticated record:
+  - `inference::package::load_authenticated(dir, recorded, expected)` refuses any record identity
+    other than that of the manifest re-derived from authenticated evidence, before it reads the
+    installation;
+  - `fitted_export_run::load_recorded` compares every other record field, then calls
+    `load_authenticated`;
+  - the caller never supplies the identity.
+- Test `panel::inference::package::tests::a_recorded_identity_must_be_the_authenticated_seal`:
+  - Positive: the recorded identity is `identity(manifest)` and equals what `install` returns;
+    the intact package loads.
+  - Negative, each refused:
+    - a record naming another fitted state's intact, loadable package;
+    - the right record over another installation;
+    - an optional seal presented for a required record.
+  - The intact package loads again afterwards.
+- No end-to-end `qualify-export` fixture exists in this tree; it needs a campaign journal and
+  the supervisor. The journal-integrated sealing (`sealed_package` from `backend_report`) and
+  the verb are therefore compile-checked (`--features asm`) and not run here.
+
+**W9-T02, fitted subject versus final refit. Source half only; owner decision pending.**
+- Every package record carries `fitted_subject`: `kind: selected_fold_fit`, method, fold,
+  original fit request identity and fitted digest. The seal must serve exactly that fitted
+  digest ("package serves another fitted state than the exported subject").
+- It also carries `final_refit_sha256: null`. Nothing can set it: no whole-data refit is defined
+  or authorized. A fold-fit package therefore cannot be presented as the final model, and
+  `install-export` reports both fields.
+- **Owner decision needed.** The owner must decide whether a final whole-data refit is
+  authorized for fitted exports, and on which rows (all development rows, or the selected
+  fold's training rows, as W5-T07 chose for GP searches). A decision to allow it also needs the
+  refit's fit job in the campaign budget, which the export path does not have today
+  (`export-winner` performs zero fits).
+- Binding a refit identity then needs an authenticated refit outcome: the same recipe, those
+  rows, and its own qualification.
+
+**Runs.**
+- Post `w9c-post-20260926T211808Z`: jope-bench `panel::inference` 20/20, including the package tests (Python, Rust, C++17 and JavaScript execution), the raw-input differential and the new named-column test; jope-bench (`asm`) `fitted_export` 7/7.
+- Pre-commit `w9c-c-20260926T211920Z`: fence suites and `gp::fit_contract_tests` 85/85; workspace all-targets check, coverage (0 unassigned), verify-test-inventory, fmt, diff-check and `parity-matrix.sh --no-build` exit 0. There was no pre-fix run: W9-T01 is a new capability, W9-T05 closes a documented trust limit (section 6) with a new receiving path, and W9-T02 adds a binding.
