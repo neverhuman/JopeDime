@@ -20,7 +20,7 @@ you saw.
 |---|---:|---:|---:|---:|---:|---:|
 | engine-binary | 12 | 11 | 0 | 1 | 0 | 0 |
 | engine-example | 12 | 12 | 0 | 0 | 0 | 0 |
-| engine-subcommand | 90 | 88 | 2 | 0 | 0 | 0 |
+| engine-subcommand | 94 | 88 | 6 | 0 | 0 | 0 |
 | jope-prime-command | 49 | 49 | 0 | 0 | 0 | 0 |
 | justfile-recipe | 6 | 6 | 0 | 0 | 0 | 0 |
 | new-bin | 14 | 0 | 14 | 0 | 0 | 0 |
@@ -40,7 +40,7 @@ you saw.
 | vendored-bin | 6 | 6 | 0 | 0 | 0 | 0 |
 | vendored-example | 6 | 6 | 0 | 0 | 0 | 0 |
 | wire | 5 | 0 | 0 | 0 | 5 | 0 |
-| **total** | **780** | **735** | **17** | **1** | **20** | **7** |
+| **total** | **784** | **735** | **21** | **1** | **20** | **7** |
 
 `moved`/`new` rows without a covering test: 659.
 
@@ -63,6 +63,10 @@ you saw.
 | engine-subcommand | jope-parallel build-corpus | crates/jope-engine/src/main.rs (jope-parallel build-corpus) | jope-parallel::corpus_incremental cpu_cli_marks_verified_publication_completed; jope-parallel::corpus_incremental independent_legacy_binary_has_identical_artifact_bytes | moved | `jope engine <sub>` umbrella is WP5 |
 | engine-subcommand | jope-parallel export-teaching-corpus | crates/jope-engine/src/main.rs (jope-parallel export-teaching-corpus) | none | moved | `jope engine <sub>` umbrella is WP5 |
 | engine-subcommand | (new) jope-parallel project-corpus | crates/jope-engine/src/main.rs (jope-parallel project-corpus) | jope-parallel::corpus_projection cli_projects_a_corpus_and_prints_its_receipt | new | ungated (default and `neural` builds); writes a self-contained corpus copy restricted to training and validation contexts; `jope engine <sub>` umbrella is WP5 |
+| engine-subcommand | (new) jope-native-loop plan | crates/jope-engine/src/bin/jope-native-loop.rs (jope-native-loop plan) | jope-parallel::bounded_run cli_plan_status_verify_cancel_round_trip | new | W7-T02: freezes a reviewed `jope.native_bounded_run.v1` contract; refuses invalid, underfunded and legacy `jope.native_loop.v1` manifests before creating state. Fixture-proven only; live three-host execution is W7-T07 |
+| engine-subcommand | (new) jope-native-loop status | crates/jope-engine/src/bin/jope-native-loop.rs (jope-native-loop status) | jope-parallel::bounded_run status_and_verify_are_read_only_and_start_nothing | new | W7-T02: read-only; reports scheduled, admitted, running, committed, failed, drained or unknown per rank |
+| engine-subcommand | (new) jope-native-loop verify | crates/jope-engine/src/bin/jope-native-loop.rs (jope-native-loop verify) | jope-parallel::bounded_run status_and_verify_are_read_only_and_start_nothing | new | W7-T02: read-only plan, journal and committed-result verification; never starts numerical work |
+| engine-subcommand | (new) jope-native-loop cancel | crates/jope-engine/src/bin/jope-native-loop.rs (jope-native-loop cancel) | jope-parallel::bounded_run cli_plan_status_verify_cancel_round_trip | new | W7-T02: idempotent cancellation bound to the reviewed plan digest; a live coordinator drains the whole group |
 | engine-subcommand | jope-parallel comparison-baseline | crates/jope-engine/src/main.rs (jope-parallel comparison-baseline) | none | moved | `jope engine <sub>` umbrella is WP5 |
 | engine-subcommand | jope-parallel enqueue | crates/jope-engine/src/main.rs (jope-parallel enqueue) | jope-parallel::queue command_line_admission_uses_the_exact_campaign_binding | moved | `jope engine <sub>` umbrella is WP5 |
 | engine-subcommand | jope-parallel campaign-coverage | crates/jope-engine/src/main.rs (jope-parallel campaign-coverage) | none | moved | hidden from --help; `jope engine <sub>` umbrella is WP5 |

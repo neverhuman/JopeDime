@@ -7162,6 +7162,21 @@
       "dispositions": [],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "target:jope-parallel/test/bounded_run": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-engine/tests/bounded_run.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "W7-T01/T02 in-process fixtures: typed host-census preflight refusals, the versioned bounded-run contract, Plan, read-only Status/Verify, idempotent Cancel and the controller CLI. Synthetic identities; no host, network, GPU or numerical work, and not the three-host proof."
+    },
     "target:jope-parallel/test/checkpoint_commit": {
       "discovery": {
         "kind": "target",

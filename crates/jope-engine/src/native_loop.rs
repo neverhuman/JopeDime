@@ -1,5 +1,6 @@
 //! Finite scientific eligibility controller. SmartCluster alone allocates and executes jobs.
 //! Frozen requests are reviewable artifacts. External signed authority grants remain mandatory.
+pub mod bounded;
 mod grant_proof;
 pub(crate) mod materialize;
 mod run_approval;
