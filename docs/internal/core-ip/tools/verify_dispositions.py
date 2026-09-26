@@ -222,6 +222,7 @@ def verify(root=FINDINGS_ROOT, require_git=False, repository=None):
         "with_disposition": len(effective),
         "closed": sum(closed for _, closed in effective.values()),
         "open": len(entries) - sum(closed for _, closed in effective.values()),
+        "closed_findings": sorted(finding for finding, (_, closed) in effective.items() if closed),
         "dispositions": dict(sorted(summary.items())),
         "scope": "evidence binding only; reviewed evidence, not this validator, carries truth",
     }

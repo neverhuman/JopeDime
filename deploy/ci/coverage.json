@@ -88,7 +88,9 @@
         "python3 docs/internal/core-ip/tools/verify_claims.py",
         "python3 -m unittest discover -s docs/internal/core-ip/tools -p test_verify_claims.py -v",
         "python3 docs/internal/core-ip/tools/task_status.py",
-        "python3 -m unittest discover -s docs/internal/core-ip/tools -p test_task_status.py -v"
+        "python3 -m unittest discover -s docs/internal/core-ip/tools -p test_task_status.py -v",
+        "python3 docs/internal/core-ip/tools/progress_view.py",
+        "python3 -m unittest discover -s docs/internal/core-ip/tools -p test_progress_view.py -v"
       ]
     },
     "rust-check": {
@@ -2175,6 +2177,16 @@
         "maintenance"
       ],
       "scope": "Standalone fixture runner; not pytest-collected."
+    },
+    "python:docs/internal/core-ip/tools/test_progress_view.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "hygiene"
+      ],
+      "dispositions": [],
+      "scope": "Composed progress view (findings, dispositions, tasks, claims): every input is accepted by its own verifier first; counts come from record fields only, so key order and notes cannot change them; task states cannot close a finding; invalid records are refused before rendering; deterministic PROGRESS.md with bound input digests and stale-view detection. Records status only; it qualifies nothing."
     },
     "python:docs/internal/core-ip/tools/test_task_status.py": {
       "discovery": {
