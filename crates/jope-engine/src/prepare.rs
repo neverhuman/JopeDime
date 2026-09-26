@@ -1041,10 +1041,12 @@ pub fn run_with_admission(
             .into(),
         original_training_row_map: serde_json::from_value(receipt["source_row_indices"].clone())?,
     };
+    validate_view_source(&storage)?;
     let rows = ti
         .iter()
         .map(|&i| train.rows[i].clone())
         .collect::<Vec<_>>();
+    reject_target_copies(&storage.feature_columns, &rows)?;
     let horizon = m
         .get("horizon")
         .and_then(Value::as_u64)
@@ -1061,6 +1063,13 @@ pub fn run_with_admission(
     };
     let entities = entity_values(&rows, &storage.feature_columns, &entity_columns)?;
     let indices = folds(&rows, &d.task, horizon, entities.as_deref())?;
+    for (tr, va) in &indices {
+        check_cut_membership(
+            &storage.original_training_row_map,
+            &tr.iter().map(|&i| ti[i]).collect::<Vec<_>>(),
+            &va.iter().map(|&i| ti[i]).collect::<Vec<_>>(),
+        )?;
+    }
     ensure!(
         !output.exists(),
         "prepared destination already exists; use a new immutable version"
@@ -1156,6 +1165,119 @@ pub struct ViewSource {
     pub target_column: String,
     pub original_training_row_map: Vec<usize>,
 }
+
+/// Receiving-side column semantics of a pointer view (W1-T03). Feature names
+/// must be distinct and non-empty, and the target column may never also be a
+/// feature: that would be an undocumented target-derived feature.
+pub fn validate_view_source(source: &ViewSource) -> Result<()> {
+    let mut names = BTreeSet::new();
+    ensure!(
+        !source.feature_columns.is_empty()
+            && source
+                .feature_columns
+                .iter()
+                .all(|name| !name.trim().is_empty() && names.insert(name.as_str())),
+        "view feature columns are empty or duplicated"
+    );
+    ensure!(
+        !source.target_column.trim().is_empty(),
+        "view target column absent"
+    );
+    ensure!(
+        !names.contains(source.target_column.as_str()),
+        "target column {} is also declared as a feature: undocumented target-derived feature",
+        source.target_column
+    );
+    Ok(())
+}
+
+/// A feature whose value equals the target on every fitting row is an
+/// undocumented target alias. Rows are raw `[features.., target]` strings.
+/// Checked only when the fitting target has at least three distinct values,
+/// so constant or two-valued targets cannot trigger a coincidental match.
+pub fn reject_target_copies(feature_columns: &[String], rows: &[Vec<String>]) -> Result<()> {
+    let width = feature_columns.len() + 1;
+    ensure!(
+        rows.iter().all(|row| row.len() == width),
+        "raw view row width differs from its feature columns"
+    );
+    let distinct = rows
+        .iter()
+        .map(|row| row[width - 1].as_str())
+        .collect::<BTreeSet<_>>();
+    if distinct.len() < 3 {
+        return Ok(());
+    }
+    let same = |value: &str, target: &str| {
+        value == target
+            || matches!(
+                (value.parse::<f64>(), target.parse::<f64>()),
+                (Ok(a), Ok(b)) if a == b
+            )
+    };
+    for (j, name) in feature_columns.iter().enumerate() {
+        ensure!(
+            !rows.iter().all(|row| same(&row[j], &row[width - 1])),
+            "feature {name} reproduces the target on every fitting row: undocumented target-derived feature"
+        );
+    }
+    Ok(())
+}
+
+/// Cut membership lists each original training row once, in original order,
+/// with validation disjoint from training both by row index and by backing-row
+/// pointer. Duplicate-expanding, reordered or overlapping memberships are
+/// refused before any preparation state is fitted or applied.
+pub fn check_cut_membership(
+    row_map: &[usize],
+    train: &[usize],
+    validation: &[usize],
+) -> Result<()> {
+    for (name, indices) in [("training", train), ("validation", validation)] {
+        ensure!(!indices.is_empty(), "empty {name} membership");
+        ensure!(
+            indices.windows(2).all(|pair| pair[0] < pair[1]),
+            "{name} rows are duplicated or reordered; a cut lists each original row once in original order"
+        );
+    }
+    let fitting = train.iter().collect::<BTreeSet<_>>();
+    ensure!(
+        validation.iter().all(|i| !fitting.contains(i)),
+        "validation rows overlap training rows"
+    );
+    let pointer = |i: &usize| {
+        row_map
+            .get(*i)
+            .copied()
+            .context("source row pointer outside mapping")
+    };
+    let backing = train.iter().map(pointer).collect::<Result<BTreeSet<_>>>()?;
+    for i in validation {
+        ensure!(
+            !backing.contains(&pointer(i)?),
+            "validation and training rows resolve to the same backing row"
+        );
+    }
+    Ok(())
+}
+
+/// Learned preparation state is bound to fitting membership: the stored state
+/// must equal the state fitted on exactly the cut's training rows. Recoded or
+/// reordered categories, changed scaling/imputation or state fitted on held
+/// rows are refused, never applied.
+pub fn ensure_fitted_on_membership(
+    stored: &Preprocessing,
+    training: &[Vec<String>],
+    task: &str,
+) -> Result<()> {
+    let refit = Preprocessing::fit(training, task)?;
+    ensure!(
+        serde_json::to_value(&refit)? == serde_json::to_value(stored)?,
+        "cut preprocessing is not the state learned from its training membership \
+         (recoded categories, changed scaling/imputation or non-training rows)"
+    );
+    Ok(())
+}
 pub fn workspace_root(prepared: &Path) -> Result<std::path::PathBuf> {
     let p = prepared.canonicalize()?;
     p.ancestors()
@@ -1195,17 +1317,26 @@ fn load_view_with_root(
         "view preprocessing changed"
     );
     let rows = if let Some(source) = &p.storage {
-        let indices = if training {
-            &c.train_indices
-        } else {
-            &c.validation_indices
-        };
+        // Semantics are checked on the fitting membership for both partitions,
+        // before any preparation state is applied or any row is returned.
+        check_cut_membership(
+            &source.original_training_row_map,
+            &c.train_indices,
+            &c.validation_indices,
+        )?;
+        let mut indices = c.train_indices.clone();
+        if !training {
+            indices.extend_from_slice(&c.validation_indices);
+        }
         let raw = match root {
-            Some(root) => load_raw_view_in_root(root, source, indices)?,
-            None => load_raw_view(prepared, source, indices)?,
+            Some(root) => load_raw_view_in_root(root, source, &indices)?,
+            None => load_raw_view(prepared, source, &indices)?,
         };
+        let (fitting, held) = raw.split_at(c.train_indices.len());
+        reject_target_copies(&source.feature_columns, fitting)?;
         let pp: Preprocessing = read_json(&pp_path)?;
-        pp.transform(&raw)?
+        ensure_fitted_on_membership(&pp, fitting, &p.task)?;
+        pp.transform(if training { fitting } else { held })?
     } else {
         Table::numeric(&dir.join(if training {
             "train.csv"
@@ -1236,6 +1367,7 @@ pub fn load_raw_view_in_root(
     source: &ViewSource,
     indices: &[usize],
 ) -> Result<Vec<Vec<String>>> {
+    validate_view_source(source)?;
     let path = resolve(root, &source.source)?;
     ensure!(
         file_hash(&path)? == source.source_sha256,
@@ -1243,20 +1375,23 @@ pub fn load_raw_view_in_root(
     );
     let mut reader = csv::Reader::from_path(path)?;
     let header = reader.headers()?.clone();
+    // A repeated header name makes the column mapping ambiguous: refuse it
+    // rather than silently binding the first occurrence.
+    let column = |name: &str, missing: &'static str| -> Result<usize> {
+        let mut hits = header.iter().enumerate().filter(|(_, h)| *h == name);
+        let (index, _) = hits.next().context(missing)?;
+        ensure!(
+            hits.next().is_none(),
+            "backing header names {name} more than once: ambiguous column"
+        );
+        Ok(index)
+    };
     let features = source
         .feature_columns
         .iter()
-        .map(|name| {
-            header
-                .iter()
-                .position(|h| h == name)
-                .context("backing feature missing")
-        })
+        .map(|name| column(name, "backing feature missing"))
         .collect::<Result<Vec<_>>>()?;
-    let target = header
-        .iter()
-        .position(|h| h == source.target_column)
-        .context("backing target missing")?;
+    let target = column(&source.target_column, "backing target missing")?;
     let selected = indices
         .iter()
         .map(|&i| {
@@ -1304,6 +1439,7 @@ pub fn expand_cuts(prepared: &Path, output: &Path, rounds: usize) -> Result<Prep
         .as_ref()
         .context("expansion requires pointer views")?;
     let raw = load_raw_view(prepared, source, &p.selected_train_indices)?;
+    reject_target_copies(&source.feature_columns, &raw)?;
     let entities = entity_values(&raw, &source.feature_columns, &p.entity_columns)?;
     fs::create_dir_all(output)?;
     let parent_sha = file_hash(&prepared.join("prepared.json"))?;
@@ -1330,6 +1466,15 @@ pub fn expand_cuts(prepared: &Path, output: &Path, rounds: usize) -> Result<Prep
                 continue;
             }
             let index = round * 5 + fold;
+            let train_indices: Vec<usize> =
+                tr.iter().map(|&i| p.selected_train_indices[i]).collect();
+            let validation_indices: Vec<usize> =
+                va.iter().map(|&i| p.selected_train_indices[i]).collect();
+            check_cut_membership(
+                &source.original_training_row_map,
+                &train_indices,
+                &validation_indices,
+            )?;
             let training = tr.iter().map(|&i| raw[i].clone()).collect::<Vec<_>>();
             let heldout = va.iter().map(|&i| raw[i].clone()).collect::<Vec<_>>();
             let pp = Preprocessing::fit(&training, &p.task)?;
@@ -1338,8 +1483,8 @@ pub fn expand_cuts(prepared: &Path, output: &Path, rounds: usize) -> Result<Prep
             write_json(&dir.join("preprocessing.json"), &pp)?;
             let cut = Cut {
                 index,
-                train_indices: tr.iter().map(|&i| p.selected_train_indices[i]).collect(),
-                validation_indices: va.iter().map(|&i| p.selected_train_indices[i]).collect(),
+                train_indices,
+                validation_indices,
                 training_sha256: hash(&csv_bytes(&pp.transform(&training)?)?),
                 validation_sha256: hash(&csv_bytes(&pp.transform(&heldout)?)?),
                 preprocessing_sha256: file_hash(&dir.join("preprocessing.json"))?,
@@ -1404,6 +1549,7 @@ pub fn index_existing(
             .into(),
         original_training_row_map: serde_json::from_value(receipt["source_row_indices"].clone())?,
     });
+    validate_view_source(p.storage.as_ref().context("indexed storage absent")?)?;
     fs::create_dir_all(output)?;
     for c in &p.cuts {
         let dir = output.join(format!("cut-{}", c.index));
