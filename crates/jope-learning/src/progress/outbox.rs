@@ -558,6 +558,12 @@ impl Outbox {
         &self.root
     }
 
+    /// The state tree this outbox belongs to: its blob store, and the host's own HWM ledger that
+    /// publication checks decisions against.
+    pub fn state(&self) -> &State {
+        &self.state
+    }
+
     pub fn limits(&self) -> Limits {
         self.limits
     }

@@ -69,4 +69,5 @@ mod tests {
     mod outbox;
     mod publish;
     mod rebuild;
+    mod receiving;
 }
