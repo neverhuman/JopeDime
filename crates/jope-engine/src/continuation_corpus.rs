@@ -504,6 +504,7 @@ pub(crate) fn render(root: &Path, manifest: &Artifact) -> Result<BTreeMap<String
         records: record_count,
         legal_sets,
         contexts,
+        labels_sha256: None,
         groups: index_groups,
     };
     let mut files = BTreeMap::from([

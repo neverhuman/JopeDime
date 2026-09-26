@@ -603,3 +603,75 @@ fn a_legacy_corpus_vocabulary_other_than_its_index_binding_is_refused() {
         "a vocabulary the legacy index does not bind was consumed: {refused:?}"
     );
 }
+
+// ---------------------------------------------------------------------------
+// W1 round 8: a legacy (`parallel.teaching_corpus.v1`) corpus's teacher labels
+// are authenticated by a labels digest the verified index binds.
+// `provenance.json` is bound only by its own back-reference to the index, so
+// it never supplies that digest; without the binding the labels are unbound.
+// ---------------------------------------------------------------------------
+
+/// A published corpus exported to the legacy layout (`teaching_store::export`).
+fn legacy_export(label: &str) -> (Strict, std::path::PathBuf) {
+    let (s, corpus) = published(label);
+    let legacy = s.f.root().join(format!("{label}-legacy"));
+    store::export(s.f.root(), &corpus, &legacy).unwrap();
+    (s, legacy)
+}
+
+fn legacy_programs(root: &Path, legacy: &Path) -> Result<Vec<String>, String> {
+    let index = store::read_index(root, legacy).map_err(|e| format!("{e:#}"))?;
+    store::teacher_programs(root, legacy, &index, 10)
+        .map(|p| p.into_values().flatten().collect())
+        .map_err(|e| format!("{e:#}"))
+}
+
+#[test]
+fn legacy_teacher_labels_are_authenticated_by_the_verified_index_never_by_provenance() {
+    let (s, legacy) = legacy_export("legacy-bound");
+    let root = s.f.root();
+    // Positive control.
+    let programs = legacy_programs(root, &legacy).unwrap();
+    assert!(!programs.is_empty() && !forged(&programs));
+    // Forged labels, and a provenance naming their digest; its back-reference
+    // to the index is unchanged.
+    let labels = fs::read_to_string(legacy.join("labels.jsonl")).unwrap();
+    let forged_labels = labels
+        .lines()
+        .map(|line| {
+            let mut row: Value = serde_json::from_str(line).unwrap();
+            row["program"] = json!("(pipe X (forged) (ridge))");
+            format!("{}\n", serde_json::to_string(&row).unwrap())
+        })
+        .collect::<String>();
+    fs::write(legacy.join("labels.jsonl"), &forged_labels).unwrap();
+    let mut provenance: Value = read_json(&legacy.join("provenance.json")).unwrap();
+    provenance["labels_sha256"] = json!(hash(forged_labels.as_bytes()));
+    write_json(&legacy.join("provenance.json"), &provenance).unwrap();
+    let refused = legacy_programs(root, &legacy);
+    assert!(
+        matches!(&refused, Err(e) if e.contains("teacher labels changed")),
+        "forged legacy labels were returned on provenance.json's word: {refused:?}"
+    );
+}
+
+#[test]
+fn legacy_teacher_labels_without_an_index_binding_are_unbound_and_refused() {
+    let (s, legacy) = legacy_export("legacy-unbound");
+    let root = s.f.root();
+    // An index written before the binding existed: no labels digest. Its
+    // provenance names it by back-reference, as legacy corpora always did.
+    let mut index: Value = read_json(&legacy.join("index.json")).unwrap();
+    index.as_object_mut().unwrap().remove("labels_sha256");
+    write_json(&legacy.join("index.json"), &index).unwrap();
+    let mut provenance: Value = read_json(&legacy.join("provenance.json")).unwrap();
+    provenance["index_sha256"] = json!(file_hash(&legacy.join("index.json")).unwrap());
+    write_json(&legacy.join("provenance.json"), &provenance).unwrap();
+    // The corpus itself still opens (its index is the legacy index).
+    assert!(store::read_index(root, &legacy).is_ok());
+    let refused = legacy_programs(root, &legacy);
+    assert!(
+        matches!(&refused, Err(e) if e.contains("unbound")),
+        "labels of a legacy corpus bound only by provenance.json were trusted: {refused:?}"
+    );
+}

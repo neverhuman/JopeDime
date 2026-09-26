@@ -69,6 +69,7 @@ fn corpus(dir: &Path) -> (std::path::PathBuf, std::path::PathBuf) {
         records: 16,
         legal_sets: vec![vec![0]],
         contexts,
+        labels_sha256: None,
         groups: (0..2)
             .map(|g| Group {
                 context: g,

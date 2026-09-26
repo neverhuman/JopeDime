@@ -16,6 +16,7 @@ fn index() -> Index {
         records: 40,
         legal_sets: vec![],
         contexts: vec![],
+        labels_sha256: None,
         groups: (0..5)
             .map(|i| Group {
                 context: i,

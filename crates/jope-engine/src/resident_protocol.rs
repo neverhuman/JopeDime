@@ -211,10 +211,14 @@ pub(crate) fn request_artifacts(
             let bytes = fs::read(corpus.join("provenance.json"))?;
             let provenance: Value = serde_json::from_slice(&bytes)?;
             paths.push((corpus.join("provenance.json"), Some(hash(&bytes))));
-            paths.push((
-                corpus.join("labels.jsonl"),
-                Some(digest(&provenance["labels_sha256"])?),
-            ));
+            // W1 round 8: the labels digest the index binds; a legacy index
+            // without one keeps the provenance's (its labels stay unbound, and
+            // teacher_programs refuses them).
+            let labels = match index.get("labels_sha256") {
+                Some(bound) => digest(bound)?,
+                None => digest(&provenance["labels_sha256"])?,
+            };
+            paths.push((corpus.join("labels.jsonl"), Some(labels)));
         }
     }
     for context in index["contexts"]

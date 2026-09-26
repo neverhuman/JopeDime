@@ -359,6 +359,7 @@ fn validation_index() -> Index {
         records: 72,
         legal_sets: vec![],
         contexts: vec![],
+        labels_sha256: None,
         groups,
     }
 }

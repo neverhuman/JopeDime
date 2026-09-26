@@ -599,6 +599,7 @@ mod tests {
                 context("train", "meta_train"),
                 context("validation", "meta_validation"),
             ],
+            labels_sha256: None,
             groups: vec![
                 corpus::Group {
                     context: 0,
@@ -686,6 +687,7 @@ mod tests {
                 row(7, "meta_validation"),
                 row(8, "meta_test"),
             ],
+            labels_sha256: None,
             groups: vec![],
         };
         assert_eq!(cut_starts(&index, 2), vec![0, 6]);

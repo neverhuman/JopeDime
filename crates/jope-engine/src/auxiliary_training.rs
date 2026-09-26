@@ -444,6 +444,7 @@ mod tests {
             records: 64,
             legal_sets: vec![],
             contexts: vec![],
+            labels_sha256: None,
             groups,
         };
         let panel = training::validation_panel(&index, 8, SEED).unwrap();

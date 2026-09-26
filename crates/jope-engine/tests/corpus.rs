@@ -64,6 +64,7 @@ fn sampler_balances_families_and_keeps_comparisons_on_rank() {
         records: count,
         legal_sets: vec![],
         contexts: vec![],
+        labels_sha256: None,
         groups,
     };
     let mut counts = BTreeMap::<String, usize>::new();
