@@ -58,13 +58,16 @@
       ],
       "commits": [
         "86697269e11c9d9623af4a8a2fc151e5234898f4",
-        "62c1327488c174e2716091b1d565bb2a0f31b637"
+        "62c1327488c174e2716091b1d565bb2a0f31b637",
+        "7835e79ffdd32b66f1533e33a3d8314a99b65966"
       ],
       "tests": [
         "label_release::audit_never_parses_or_publishes_sealed_test_labels",
         "qualification_search_of_a_sealed_meta_test_family_is_refused_before_any_view_or_fit",
         "a_selection_receipt_alone_neither_reads_caller_chosen_labels_nor_publishes_a_score",
-        "outer_scores_need_a_grant_read_only_the_granted_labels_and_release_once"
+        "outer_scores_need_a_grant_read_only_the_granted_labels_and_release_once",
+        "tests/outer_release_cli.rs",
+        "the_outer_release_cli_grants_scores_and_releases_once"
       ],
       "evidence": [
         "docs/internal/core-ip/work-orders/evidence/W01-label-release-counterfactuals-staging.md",
@@ -73,7 +76,7 @@
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1b-t04-postfix-audit-search-20260926T091627Z",
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1b-t04-postfix-score-20260926T092803Z"
       ],
-      "remaining": "The audit no longer parses sealed labels; sealed meta_test families are refused by search; outer scoring needs a one-attempt grant for an authenticated fitted subject, records exposure before any label byte is read, and releases once through a hash-chained ledger. Release is library-only (no CLI verb yet); the scorer is separated by component contract on one host, not OS isolation (W7)."
+      "remaining": "The audit no longer parses sealed labels; sealed meta_test families are refused by search; outer scoring needs a one-attempt grant for an authenticated fitted subject, records exposure before any label byte is read, and releases once through a hash-chained ledger. The outer-release CLI (init, grant, score, release, events) is in place; the scorer is separated by component contract on one host, not OS isolation (W7)."
     },
     "W1-T05": {
       "states": [
@@ -84,12 +87,15 @@
       "commits": [
         "8b4e51f1eb716aed52b902a424ff3e8e2a0dc136",
         "152b54f98747bb54c50f074ca28893da518c3c13",
-        "08a8ac5b3f4fbf15350cc7349fc1d2e97302b59b"
+        "08a8ac5b3f4fbf15350cc7349fc1d2e97302b59b",
+        "1217bac1481807408057647641374339ab26ddce"
       ],
       "tests": [
         "tests/input_closure.rs (5)",
         "tests/receiver_roots.rs",
-        "jope-datasets tests/pinned_catalog.rs"
+        "jope-datasets tests/pinned_catalog.rs",
+        "tests/projected_export.rs",
+        "the_export_worker_receives_its_projected_input_and_never_resolves_the_view_itself"
       ],
       "evidence": [
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1-t05-prefix-20260926T060016Z",
@@ -98,7 +104,9 @@
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1b-r3-2a-prefix-roots-bytes-20260926T095751Z",
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1b-r3-2a-prefix-r4-20260926T100302Z",
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1b-r3-2a-postfix-roots-bytes-20260926T100112Z",
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1b-r3-2a-postfix-r4-20260926T100449Z"
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1b-r3-2a-postfix-r4-20260926T100449Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1b-r4-2c-prefix-20260926T102350Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1b-r4-2c-postfix2-20260926T102732Z"
       ],
       "remaining": "Fixture scope. Stale cached blobs (R3) and consumer-map routes R1 (environment-derived backing root), R4 (authoritative online manifest, pinned catalog), R8 (engine hash-then-reopen sites), R9 (proof of the existing safeguard) and R11 (frozen family partition) are enforced at their receivers. Open: R2 remainder (ancestor-walking load_view in pinned and neural paths), R5/R10 (worker network and credential isolation, W7 live), R6 (Python prepare.py bound into the release), R12 (release v2 and W2 schema), and the label_admission and pinned eval_registry R8 sites."
     },
@@ -791,10 +799,12 @@
         "fixture-proven"
       ],
       "commits": [
-        "8d66723d317f09269ee0db036095dba2674d5f0c"
+        "8d66723d317f09269ee0db036095dba2674d5f0c",
+        "707dbfee5e911c3d1197fb5ba541395e09547c7c"
       ],
       "tests": [
-        "tests/bounded_run.rs (17)"
+        "tests/bounded_run.rs (17)",
+        "tests/bounded_assignment.rs (3, neural feature, CPU): plan -> trainer assignment join"
       ],
       "evidence": [
         "docs/internal/core-ip/work-orders/evidence/W07-controller.md",
@@ -809,7 +819,9 @@
         "fixture-proven"
       ],
       "commits": [
-        "fdbde7c3fc8364d1c4770f85bf1dd89ab1f395c6"
+        "fdbde7c3fc8364d1c4770f85bf1dd89ab1f395c6",
+        "a606bad2e4336da23605991576c8d86cd9ce528c",
+        "707dbfee5e911c3d1197fb5ba541395e09547c7c"
       ],
       "tests": [
         "tests/trainer_topology.rs (5, neural feature, CPU)"
@@ -818,22 +830,62 @@
         "docs/internal/core-ip/work-orders/evidence/W07-trainer-topology.md",
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w6-post-w7t03-b-20260926T100619Z"
       ],
-      "remaining": "Communicator rank is separated from the local CUDA device through a frozen, validated host/device assignment checked before NCCL init; native code is compile-checked only. Open: delivering the assignment from the W7-T02 plan, per-worker CUDA_VISIBLE_DEVICES from the controller, three-rank world sizes (T06) and the non-training Device::Cuda(rank) uses in the proposal paths."
+      "remaining": "Communicator rank is separated from the local CUDA device in the trainer and the proposal workers through a validated binding, and a frozen bounded-run plan now derives the trainer assignment (every worker device_index 0 under its planned CUDA_VISIBLE_DEVICES). Open: delivering that assignment to rank_impl and a launcher that sets per-worker CUDA_VISIBLE_DEVICES (live path); native code compile-checked only."
     },
     "W7-T04": {
       "states": [
-        "planned"
-      ]
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "ca141e52b5a58840685f0bfa91bc96b3492c7bbb"
+      ],
+      "tests": [
+        "tests/bounded_run.rs (27; 10 rendezvous acceptance cases)"
+      ],
+      "evidence": [
+        "docs/internal/core-ip/work-orders/evidence/W07-controller.md",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w7c-t04-pre-20260926T101544Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w7c-t04-post-20260926T103831Z"
+      ],
+      "remaining": "Authenticated rendezvous bound to run/attempt, participants, grants, boot, machine identity and original deadline: a missing participant, substituted source or input, forged peer, expired grant or stale/replayed rendezvous refuses the whole group with zero committed updates. Same-host socket fixture only; the cross-host transport (certificate identity, network timeouts) and the trainer consuming the admitted communicator bootstrap instead of nccl.id need the live path (T07)."
     },
     "W7-T05": {
       "states": [
-        "planned"
-      ]
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "bc1e0531b78f5d2d513c646e113df30e5ed29486"
+      ],
+      "tests": [
+        "tests/bounded_run_recovery.rs (9, same-host rank processes)"
+      ],
+      "evidence": [
+        "docs/internal/core-ip/work-orders/evidence/W07-controller.md",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w7c-t05-pre-20260926T101545Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w7c-t05-post-20260926T103906Z"
+      ],
+      "remaining": "Whole-group drain and coordinator recovery on a same-host fixture: a killed rank, severed control, cancellation or grant expiry drains the group; restart reconciles every rank with the original deadline and counters, commits a complete unacknowledged group exactly once and leaves no orphan. This is a fixture, not the three-host proof; a SmartCluster-backed supervisor is T07."
     },
     "W7-T06": {
       "states": [
-        "planned"
-      ]
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "251a9a608af088e4452a05da8762cbfeed10da94"
+      ],
+      "tests": [
+        "tests/lossless_partition.rs (10, neural feature, CPU)"
+      ],
+      "evidence": [
+        "docs/internal/core-ip/work-orders/evidence/W07-trainer-topology.md",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w6-pre-w7t06-20260926T101144Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w6-post-w7t06-a-20260926T102534Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w6-post-w7t06-b-20260926T102703Z"
+      ],
+      "remaining": "Partition v2 assigns whole comparisons losslessly for any world and reduces every term by its global numerator and denominator; CPU fixtures match the single-process reference (worst gradient error 2.24e-7 of the largest reference gradient, policy 1e-5). rank_impl still runs v1; wiring v2 into the trainer's checkpoint, journal, exposure and recovery guards is in progress; no multi-rank step has executed."
     },
     "W7-T07": {
       "states": [
