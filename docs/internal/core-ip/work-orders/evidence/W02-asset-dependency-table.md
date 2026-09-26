@@ -351,3 +351,75 @@ workspace build; that is read from the manifests, not verified by running the la
 - **PolicyModel / score_pool / `context_from_bytes`** still take `&[f32]`; `FinalContext` derefs
   to it. Typing those APIs touches jope-bench and many tests.
 - **Cell surfaces** (the Hyperion u8 grid) do not cross an API and were not typed.
+
+## 9. Appended 2026-09-26: W2-T02 versioned semantic manifest (branch `rr2/integration-c`)
+
+Evidence root as in section 8; runs `w2c-*`.
+
+**G-01 (the missing release-controlled semantic manifest).** This is a new capability, so there
+is no defect to reproduce first: before this change no receiver consumed a release document.
+The accepted identity was compile-time constants in six jope-policy files, duplicated as
+literals in `producer.rs` (weights), `jope-policy-producer.rs` (transforms, assembly) and
+jope-pipeline `search_context.rs` (assembly, transforms).
+
+**Manifest.** `crates/jope-policy/release/policy-step-60000.semantic-v1.json`, schema
+`jope.policy-semantic-manifest/v1`, identity `60f61cd8b58a1eaa72220a03e91af9be074793b60cd1a05df9c6cac1ac225935`
+(`semantic::ACCEPTED_SEMANTIC_MANIFEST_SHA256`). Canonical JSON (sorted keys, compact,
+integers and strings only, trailing newline). It binds:
+- policy: state, model, step, parameters, configuration and its layout, the released weights
+  file, 136 tensors / 27,796,494 parameters, the decode/rank/training-only head roots and the
+  ordering rule;
+- the rejected step-69000 checkpoint;
+- vocabulary: the checkpoint vocabulary, its 401 tokens and the `featmath-jain-v1` product
+  restriction with its base;
+- the context ABI: 2048 little-endian float32 values, 8192 bytes, clip 32, 1536/512 dataset and
+  target dimensions, blocks 512 + 1024 + 512;
+- the encoder closure: Hyperion weights, manifest and seed, the component bundle manifest and
+  identity, Foundation weights and seed, Target weights and window seed, frozen transforms,
+  assembly, recipe and label normalizations;
+- the native qualification: registry, index, the `3e-4` bound and the verification policy.
+
+**Receivers.** `semantic::accepted()` opens the embedded bytes and refuses any other identity
+(`open_accepted`), an unknown field or schema version, a non-canonical encoding or an internally
+inconsistent document. The accepted receivers now also compare with the manifest, after their
+existing checks so their refusal wording is unchanged:
+- `require_accepted_policy` (loaded weights);
+- `require_accepted_vocabulary`;
+- `CheckpointBinding::require_accepted_identity` (export receipt);
+- `EncoderIdentity::require_accepted` (every CPU context artifact, qualification and component
+  qualification).
+
+`producer::Request::validate` and `jope-policy-producer` take the weights, frozen transforms and
+assembly from the manifest instead of literals.
+
+**Tests.**
+- `semantic::tests::every_compiled_identity_is_the_manifests` checks every reviewed constant
+  against the manifest. It also checks the committed `featmath.json` digest and token count, the
+  `PolicyConfig::regression(401)` hash and dimensions, `expected_inventory`'s 136 tensors, and the
+  recorded tensor inventory (`docs/internal/core-ip/data/tensors.json`: weights digest, tensor
+  and parameter totals).
+- `semantic::tests::the_encoder_release_identity_is_the_manifests` (`context-producer`):
+  `EncoderIdentity::accepted()`, the transforms, assembly and component-bundle constants and the
+  admission constants.
+- `semantic::tests::only_the_accepted_manifest_bytes_are_the_release_decision`:
+  - positive: the embedded manifest re-encodes to its exact bytes;
+  - negative: a single substituted dependency (Foundation weights) is structurally valid but not
+    the release decision; an unknown field, a v2 schema, a pretty-printed encoding, a rejected
+    state named as accepted and an inconsistent ABI are refused.
+- jope-pipeline `search_context::tests::duplicated_lineage_constants_are_the_accepted_semantic_manifests`.
+
+**Runs.**
+- Post `w2c-t02-post-20260926T201854Z`: jope-policy (`testing,context-producer`) 94/94 and
+  jope-pipeline (`neural-search`) 119/119. The first attempt,
+  `w2c-t02-post-20260926T201749Z`, stopped at a compile error (a `&String` comparison), which was
+  fixed before this run.
+- Pre-commit `w2c-t02-c-20260926T202015Z`: fence suites and `gp::fit_contract_tests` 82/82; workspace all-targets check, coverage (0 unassigned), verify-test-inventory, fmt and diff-check exit 0.
+
+**Not done.**
+- G-08 (unknown export-receipt fields) stays open: the external exporter's field set is still
+  not available.
+- The published `models/bundles/policy-step-60000.json` (jope-models fetch, `jope.model-bundle/v2`)
+  is unchanged; the semantic manifest is a separate release record and names the weights digest
+  it lists.
+- The jope-bench literal (`optimize.rs:259-262`) and jope-engine `policy_export.rs` private copies
+  are not changed; jope-engine does not depend on jope-policy.

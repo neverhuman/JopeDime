@@ -462,6 +462,21 @@ impl CheckpointBinding {
             "refused: export receipt names weights {} that are not the released step-{ACCEPTED_STEP} policy.safetensors",
             self.policy_safetensors_sha256
         );
+        // W2-T02: the accepted semantic manifest is the release decision; the constants above
+        // are its values (`semantic::tests::every_compiled_identity_is_the_manifests`), so their
+        // refusal wording is kept and this check binds the whole identity to the manifest.
+        let release = crate::semantic::accepted()?;
+        ensure!(
+            self.step == release.policy.step
+                && self.state_sha256 == release.policy.state_sha256
+                && self.model_sha256 == release.policy.model_sha256
+                && self.parameter_sha256 == release.policy.parameter_sha256
+                && self.config_sha256 == release.policy.config_sha256
+                && self.vocabulary_sha256 == release.vocabulary.checkpoint_sha256
+                && self.policy_safetensors_sha256 == release.policy.weights_sha256,
+            "refused: checkpoint is not the accepted semantic release {}",
+            crate::semantic::ACCEPTED_SEMANTIC_MANIFEST_SHA256
+        );
         Ok(())
     }
 
