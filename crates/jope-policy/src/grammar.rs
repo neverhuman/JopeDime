@@ -131,6 +131,22 @@ impl State {
         self.phase == Phase::Done
     }
 
+    /// The automaton phase, for decode outcome records: `done` only after EOS was accepted, `eos`
+    /// when EOS is the one legal token.
+    pub fn phase_name(&self) -> &'static str {
+        match self.phase {
+            Phase::Engine => "engine",
+            Phase::Task => "task",
+            Phase::Stage => "stage",
+            Phase::Val => "value",
+            Phase::Append => "append",
+            Phase::Expr => "expression",
+            Phase::ExprEnd => "expression_end",
+            Phase::Eos => "eos",
+            Phase::Done => "done",
+        }
+    }
+
     fn expr_legal(&self, v: &Vocab, stack: &[(usize, usize)], nodes: usize) -> Vec<usize> {
         let table = &v.expr;
         let mut out = table.var_common_ids.clone();

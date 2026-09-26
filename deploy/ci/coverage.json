@@ -7629,6 +7629,22 @@
       "dispositions": [],
       "scope": "Explicit jope-policy --features testing under the main nextest profile."
     },
+    "target:jope-policy/test/decode_outcomes": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-policy/tests/decode_outcomes.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": [
+          "testing"
+        ]
+      },
+      "lanes": [
+        "full-policy"
+      ],
+      "dispositions": [],
+      "scope": "Explicit jope-policy --features testing under the main nextest profile: CPU fixed-logit and untrained-weight decode outcome fixtures; no accepted checkpoint, CUDA or LibTorch parity implied."
+    },
     "target:numpy-pcg64/lib/numpy_pcg64": {
       "discovery": {
         "kind": "target",

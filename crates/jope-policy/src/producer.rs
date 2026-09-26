@@ -126,9 +126,10 @@ impl Request {
             .contains(&self.vocabulary_sha256.as_str()),
             "unbound producer vocabulary"
         );
+        // The same bounds every decode entry enforces (`SamplingOptions::validate`).
         ensure!(
-            (1..=8).contains(&self.sampling_rounds)
-                && (1..=128).contains(&self.sampling_batch)
+            (1..=crate::decode::MAX_ROUNDS).contains(&self.sampling_rounds)
+                && (1..=crate::decode::MAX_BATCH).contains(&self.sampling_batch)
                 && self.sampling_temperature.is_finite()
                 && self.sampling_temperature > 0.,
             "invalid bounded sampling configuration"

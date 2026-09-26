@@ -40,6 +40,10 @@ zip = { version = "8.6", default-features = false, features = ["deflate"] }
 name = "jope_dime"
 required-features = ["testing"]
 
+[[test]]
+name = "decode_outcomes"
+required-features = ["testing"]
+
 [[bin]]
 name = "jope-context-worker"
 path = "src/bin/jope-context-worker.rs"
