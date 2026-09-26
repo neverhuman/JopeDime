@@ -376,7 +376,7 @@ fn freeze_without_preregistered_context_encoder_is_diagnostic_only() {
         "MissingEncoderProvenance: freeze preregistered no teaching context encoder",
         "legacy freeze",
     );
-    // The refusal names the quarantine and the only way back (owner decision (d)).
+    // The refusal names the quarantine and the only way back (owner decision D4).
     let error = format!(
         "{:#}",
         qualify(&f.state, &f.record, &f.evidence).unwrap_err()
@@ -517,10 +517,10 @@ fn inner_partition_scope_forbids_outer_hold_rows() {
 /// The rule every pre-provenance refusal and `RequalificationRefused` end with.
 const REQUALIFY: &str = "new, fully provenanced qualification";
 
-/// Owner decision (d), 2026-09-26: a pre-provenance qualification stays quarantined, and
+/// Owner decision D4, 2026-09-26: a pre-provenance qualification stays quarantined, and
 /// requalification is a refusal with a clear message, not a procedure. The only route back is a
 /// new, fully provenanced qualification of a new record, which then competes against the
-/// quarantined tip's bar (the adopted HWM-bar decision).
+/// quarantined tip's bar (the adopted HWM-bar decision, D1).
 #[test]
 fn requalification_is_refused_in_place_and_happens_only_through_a_new_qualification() {
     let f = fixture(Task::Regression, 4);

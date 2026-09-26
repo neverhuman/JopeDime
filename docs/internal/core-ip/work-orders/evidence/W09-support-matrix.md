@@ -270,6 +270,9 @@ positional interface is unchanged and correct. The gap was that no named mode ex
   (`export-winner` performs zero fits).
 - Binding a refit identity then needs an authenticated refit outcome: the same recipe, those
   rows, and its own qualification.
+- **Decided 2026-09-26** (OWNER-DECISIONS.md D19, adopted by owner delegation): no final
+  whole-data refit is authorized. Exports serve the selected fold fit, `final_refit_sha256`
+  stays `null`, and the package cannot be presented as the final model.
 
 **Runs.**
 - Post `w9c-post-20260926T211808Z`: jope-bench `panel::inference` 20/20, including the package tests (Python, Rust, C++17 and JavaScript execution), the raw-input differential and the new named-column test; jope-bench (`asm`) `fitted_export` 7/7.

@@ -26,7 +26,7 @@ pub struct ContextPlan {
     /// The W2 context producer a teaching context must be handed off by (W3-T02, W2-T07).
     /// Absent on freezes made before producer authentication existed: such a freeze keeps its
     /// bytes and identity, but no context under it can qualify a teacher (it stays quarantined;
-    /// owner decision (d), 2026-09-26).
+    /// owner decision D4, 2026-09-26).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub producer: Option<ProducerPlan>,
 }

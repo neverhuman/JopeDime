@@ -203,7 +203,7 @@ fn a_freeze_without_a_preregistered_producer_stays_quarantined() {
 
 /// Old formats keep their bytes and identities: a freeze plan with no producer, context evidence
 /// with no handoff and a qualification with no handoff digest parse and re-serialize unchanged.
-/// A stored pre-handoff qualification is quarantined (owner decision (d)), and presenting a
+/// A stored pre-handoff qualification is quarantined (owner decision D4), and presenting a
 /// handed-off context later cannot upgrade it in place.
 #[test]
 fn pre_handoff_formats_keep_their_meaning_and_stay_quarantined() {

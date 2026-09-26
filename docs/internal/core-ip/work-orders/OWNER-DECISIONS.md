@@ -5,6 +5,7 @@
 **Scope.**
 - D1–D16 are the sixteen decisions listed in the body of PR #111 ("Owner decisions surfaced (not decided here)"), with the same numbers.
 - D17–D19 surfaced after PR #111 merged. The W7 `machine_id` decision was raised in both places and is recorded once, as D16.
+- D20 (the live S3 phase of W8) was recorded on `rr2/integration-a` as owner decision (e) of 2026-09-26, and is added here so that this file is the one decision record. The other decisions that branch recorded on the same date are entries here with the same wording: the requalification refusal, its decision (d), is D4; the HWM bar is D1; the outbox limits and cadence are D6; one update per checkpoint window is D17; the `jope-learning` dev-dependency is D18.
 
 **How to read an entry.** Each entry gives:
 - the question;
@@ -14,7 +15,7 @@
 - where it is enforced (file, function, test);
 - how to reverse it.
 
-"On main" means `origin/main` at `8a55c4fef`. Entries that name `rr2/integration-a` (bench lane) or `rr2/integration-c` point at unmerged local branches; their enforcement lands with those branches.
+"On main" means `origin/main` at `8a55c4fef`. On `rr2/gap-closure` the work of `rr2/integration-c`, `rr2/integration-a` (bench lane) and `rr2/policy-defaults` is integrated onto that main. Entries that name `rr2/integration-a` or `rr2/integration-c` name the branch the enforcement was written on; it is on `rr2/gap-closure`. Commit SHAs here are the `rr2/gap-closure` ones; each of those commits names its original in a `cherry picked from commit` line.
 
 **Reversal rule.** Reversing a decision is an owner action, never an agent's. The reversal must:
 - be recorded here as a new dated line under the entry;
@@ -36,14 +37,15 @@
 | D9 | W6: dispatch hold after read-only validation | Keep the current order | unchanged |
 | D10 | Python migration | Port live tools; archive unused legacy/research Python | executed separately |
 | D11 | W8-T04: a divergent mirror pointer | Keep failing every push until reconciled | unchanged |
-| D12 | W6-T06: legacy parents | Warm start only; no exact resume or optimizer carry | **changed** (`84ebe917f`; native loop `jope.native_loop.v2`, `95779fc62`) |
-| D13 | W2 G-08: unknown receipt fields | Pin the receipt field set; refuse anything else | **changed** (`48c89cc0b`; ASM-demo anchor as a derived re-export, this follow-up) |
+| D12 | W6-T06: legacy parents | Warm start only; no exact resume or optimizer carry | **changed** (`f3dd24126`; native loop `jope.native_loop.v2`, `403ca0879`) |
+| D13 | W2 G-08: unknown receipt fields | Pin the receipt field set; refuse anything else | **changed** (`950d1bb5d`; ASM-demo anchor as a derived re-export, this follow-up) |
 | D14 | W2: `component_bundle` value derived from the local asset | Keep the single pinned value; refuse any other | unchanged |
 | D15 | Policy-worker rebuild and re-pin | The producer path keeps refusing until a rebuilt, re-pinned worker exists | unchanged; refusal verified |
 | D16 | W7: `machine_id` added in place to the v1 schemas | Keep in place; a v1 document without it is refused | unchanged |
 | D17 | W8: what one update is | One update = one checkpoint window | adopted on `rr2/integration-a` |
 | D18 | `jope-learning` dev-dependency on `jope-parallel` | Tests only; the library never links the engine | recorded on `rr2/integration-a` |
 | D19 | W9-T02: a final whole-data refit | Not authorized; exports serve the selected fold fit | enforced on `rr2/integration-c` |
+| D20 | W8-T07/T08: the live S3 phase | Authorized once the owner creates a scoped credential; configuration only, no credential used until then | no live write; misconfiguration refused first (`05aaf3ff5`) |
 
 ---
 
@@ -59,7 +61,7 @@
   - `crates/jope-learning/src/hwm.rs` `ingest` (compares with the tip) and `decide`;
   - `crates/jope-learning/src/eligibility.rs` `freeze_teaching` (excludes it);
   - test `eligibility::tests::matrix` (W3-T07).
-  - Recorded as adopted in `evidence/W03-ingress-map.md` on `rr2/integration-a` (`6252d7ef1`).
+  - Recorded as adopted in `evidence/W03-ingress-map.md` on `rr2/integration-a` (`05aaf3ff5`).
 - **Reverse.** Implement eligibility-first selection under a new HWM policy version, and replay existing ledgers under the version they were written with.
 
 ## D2 — W1-T03: no exception mechanism for preparation checks
@@ -92,7 +94,7 @@
   - (a) Only `jope-learning hwm recover --apply`. It rolls a lagging ledger head and lagging pointers forward from the ledger, and refuses (leaves untouched, exit 1) any pointer holding a record the ledger never accepted there.
   - (b) A procedure that can rewrite or adopt such pointers.
 - **Adopted.** (a), adopted by owner delegation 2026-09-26. A forged or hand-edited pointer is never adopted. It stays visible and refused.
-- **Behaviour.** Unchanged on main. The verb is on `rr2/integration-a` (`fc8dfb199`).
+- **Behaviour.** Unchanged on main. The verb is on `rr2/integration-a` (`3da480fe7`).
 - **Enforced.**
   - On main: `crates/jope-learning/src/hwm.rs` `resolve` (the refusal at ingest) and `recover`;
   - tests `hwm::tests::a_pointer_the_ledger_never_accepted_is_refused_before_any_write` and `hwm::tests::recovery_rolls_lagging_pointers_forward_and_leaves_unaccepted_ones`.
@@ -106,8 +108,10 @@
   - (a) None: they stay quarantined and are never upgraded.
   - (b) A versioned requalification procedure.
 - **Adopted.** (a), adopted by owner delegation 2026-09-26.
-- **Behaviour.** Unchanged on main. An explicit requalification refusal is being implemented on `rr2/integration-a` (bench lane).
-- **Enforced.** On main: `crates/jope-learning/src/eligibility/tests/provenance.rs` `legacy_qualification_without_provenance_stays_quarantined_and_is_not_upgraded` (W3-T03).
+- **Behaviour.** Unchanged on main. On `rr2/integration-a` (`2a2da98e5`, recorded there as owner decision (d)) requalification is a refusal with a clear message, not a procedure: pre-provenance qualifications stay quarantined, nothing upgrades or re-measures a retained qualification into eligibility, and requalification happens only by producing a new, fully provenanced qualification. The same rule quarantines what a pre-handoff freeze or submission admits (`7f010a8e8`).
+- **Enforced.**
+  - On main: `crates/jope-learning/src/eligibility/tests/provenance.rs` `legacy_qualification_without_provenance_stays_quarantined_and_is_not_upgraded` (W3-T03).
+  - On `rr2/integration-a`: `crates/jope-learning/src/eligibility.rs` `quarantined` (the rule every pre-provenance refusal names: `MissingEncoderProvenance`, `PreHandoffProvenance`, `MissingContextHandoff`) and `qualify`, which refuses in-place requalification before writing (`RequalificationRefused`); test `eligibility::tests::provenance::requalification_is_refused_in_place_and_happens_only_through_a_new_qualification`; recorded in `evidence/W03-ingress-map.md` "Requalification".
 - **Reverse.** A versioned requalification procedure that re-runs qualification with verified context provenance, and records a new qualification rather than upgrading the stored one.
 
 ## D5 — W1-T02: unresolved relations and unknown exposure
@@ -133,7 +137,7 @@
   - (a) Adopt the proposed values as explicit defaults.
   - (b) Keep them owner-pending, so that no product path uses them.
 - **Adopted.** (a), adopted by owner delegation 2026-09-26. They stay explicit configuration: a configuration file may set other values, and its reports then say they are not the adopted defaults.
-- **Behaviour.** Adopted on `rr2/integration-a` (`6252d7ef1`). On main the constants are still named `PROPOSED`, and no product path uses them.
+- **Behaviour.** Adopted on `rr2/integration-a` (`05aaf3ff5`). On main the constants are still named `PROPOSED`, and no product path uses them.
 - **Enforced.** On `rr2/integration-a`:
   - `crates/jope-learning/src/progress/` `Limits::ADOPTED`, `Policy::ADOPTED` and `Config::adopted()`, with the report marker `adopted-by-owner-delegation-2026-09-26`;
   - test `progress::tests::product::outbox_limits_and_cadence_are_explicit_adopted_configuration`;
@@ -204,7 +208,7 @@
 - **Enforced.**
   - `crates/jope-learning/src/hwm.rs` `push_mirror`, `settle_owed` and `check_pointer_ancestor`;
   - tests in `crates/jope-learning/tests/mirror_reconcile.rs`: `a_diverged_mirror_is_refused_and_nothing_is_written`, `a_pointer_from_a_chain_this_host_does_not_have_is_refused` and `a_pointer_write_lost_after_the_head_moved_is_still_owed`.
-  - The conflict-reconciliation verb `jope-learning progress reconcile [--apply]` is on `rr2/integration-a` (`fc8dfb199`).
+  - The conflict-reconciliation verb `jope-learning progress reconcile [--apply]` is on `rr2/integration-a` (`3da480fe7`).
 - **Reverse.** An owner-authorized reconciliation rule, applied through the ordinary receiving path and recorded here. Never a flag that skips the divergence check.
 
 ## D12 — W6-T06: legacy parents
@@ -214,7 +218,7 @@
   - (a) Keep accepting legacy parents for exact resume and optimizer carry.
   - (b) Refuse legacy parents for exact resume and optimizer carry. Allow them only as a weight warm start (optimizer reset, nothing carried), recorded as `legacy_ids_only`.
 - **Adopted.** (b), adopted by owner delegation 2026-09-26.
-- **Behaviour.** **Changed**, commit `84ebe917f` on `rr2/policy-defaults`. Reproduced first (`pd-w6t06-legacy-pre-20260926T223055Z`: 4 of 9 tests failed because a legacy parent was accepted). Post-fix: `pd-w6t06-legacy-post-20260926T223205Z`, 35/35.
+- **Behaviour.** **Changed**, commit `f3dd24126` on `rr2/policy-defaults`. Reproduced first (`pd-w6t06-legacy-pre-20260926T223055Z`: 4 of 9 tests failed because a legacy parent was accepted). Post-fix: `pd-w6t06-legacy-post-20260926T223205Z`, 35/35.
 - **Enforced.**
   - `crates/jope-engine/src/training/continuation.rs` `check_parent_partition`, the guard `rank_impl` runs before CUDA. The refusal reads: "a parent without an objective identity continues only as a weight warm start (optimizer reset); … is refused".
   - Tests in `crates/jope-engine/tests/continuation_modes.rs` (feature `neural`, CPU):
@@ -225,7 +229,7 @@
 - **Consequence.** The native loop still freezes an optimizer-carry policy for its training blocks, so a native-loop block from the step-60000 checkpoint is now refused at the trainer. Continuing from step 60000 works as a weight warm start. A native-loop warm-start window needs a new native-loop protocol identity, because the loop's window accounting assumes a carried optimizer. **Closed 2026-09-26 by native-loop protocol `jope.native_loop.v2`; see below.**
 - **Reverse.** Remove the `legacy_ids_only` refusal in `check_parent_partition`, and restore the two updated assertions and the two new tests to their accepting form. A `jope.native_loop.v2` run would then be unnecessary but still valid; stop creating v2 configurations rather than removing the protocol, so frozen v2 runs keep verifying.
 
-**D12 follow-up, 2026-09-26: native-loop protocol `jope.native_loop.v2` (the legacy-parent weight warm start), commit `95779fc62`.**
+**D12 follow-up, 2026-09-26: native-loop protocol `jope.native_loop.v2` (the legacy-parent weight warm start), commit `403ca0879`.**
 - **What changed.** A native-loop configuration with `schema: "jope.native_loop.v2"` starts the accepted step-60000 parent as a weight warm start instead of an optimizer carry.
   - Its first block's request declares `optimizer: reset` and `parent_step: 60000`.
   - The block's replay policy has `optimizer: reset` and a `jope.native_weight_warm_start.v1` binding. The binding names the parent checkpoint, the parent weights digest (`model_sha256`, `053df4f5…` for the accepted parent), the parent step, and an optimizer step base of 0.
@@ -259,7 +263,7 @@
 - **Challenger receipts.** These come from this repository's native challenger exporter (`jope-parallel export-policy`, DEMO-3). They are pinned to that exporter's exact field set, which is the accepted set without `context_transforms`, plus `policy.architecture` and `relative_change`.
   - Pinning challengers to the accepted set would refuse every real challenger export. The decision did not ask for that.
   - A re-export of the accepted checkpoint by `jope-parallel export-policy` carries those challenger fields, so it is refused *as the accepted receipt*.
-- **Behaviour.** **Changed**, commit `48c89cc0b` on `rr2/policy-defaults`. Reproduced first (`pd-w2g08-fields-pre-20260926T223836Z`: 0 of 3 tests passed because every unpinned field was accepted, including one added to the real accepted receipt). Post-fix:
+- **Behaviour.** **Changed**, commit `950d1bb5d` on `rr2/policy-defaults`. Reproduced first (`pd-w2g08-fields-pre-20260926T223836Z`: 0 of 3 tests passed because every unpinned field was accepted, including one added to the real accepted receipt). Post-fix:
   - jope-policy 70/70;
   - jope-pipeline `neural-search` 127/127;
   - the real receipt and weights, in a release build: 2/2 (`pd-w2g08-host-real-asset-20260926T224254Z`).
@@ -300,7 +304,7 @@
   - `crates/jope-policy/src/context_producer.rs` `EncoderIdentity::accepted()` and its receivers;
   - test `every_encoder_identity_field_is_pinned_to_the_release_decision`;
   - the ignored host test `accepted_encoder_identity_rederives_from_the_pinned_component_bundle`.
-  - `rr2/integration-c` (`e6c479ea5`) also binds it in the versioned semantic manifest.
+  - `rr2/integration-c` (`2f5738b08`) also binds it in the versioned semantic manifest.
 - **Reverse.** Publish the component bundle in a release record and pin that record, which is a new identity. Any other value needs a new release identity.
 
 ## D15 — Rebuilding and re-pinning the policy worker
@@ -340,7 +344,7 @@
   - (b) One optimizer step.
 - **Adopted.** (a), adopted by owner delegation 2026-09-26.
 - **Behaviour.** Defined on `rr2/integration-a` (bench lane).
-- **Enforced.** On `rr2/integration-a`: `update_index` in `crates/jope-learning/src/progress/`, recorded in `evidence/W08-durability.md` (`6252d7ef1`).
+- **Enforced.** On `rr2/integration-a`: `update_index` in `crates/jope-learning/src/progress/`, recorded in `evidence/W08-durability.md` (`05aaf3ff5`).
 - **Reverse.** Redefine the update under a new progress schema version, and never renumber published updates.
 
 ## D18 — The `jope-learning` dev-dependency on `jope-parallel`
@@ -351,7 +355,7 @@
   - (b) No dependency at all: independent fixtures only.
   - (c) A normal dependency.
 - **Adopted.** (a), adopted by owner delegation 2026-09-26. A normal (library) dependency stays refused.
-- **Behaviour.** Recorded on `rr2/integration-a`.
+- **Behaviour.** Recorded on `rr2/integration-a` (`05aaf3ff5`); the dev-dependency itself came with `4c86ea6dd`.
 - **Enforced.**
   - On `rr2/integration-a`: `crates/jope-learning/Cargo.toml` `[dev-dependencies]`, used only by `src/progress/tests/product.rs`; recorded in `evidence/W08-durability.md`.
   - Check: `cargo tree -p jope-learning -e normal -i jope-parallel` must find nothing.
@@ -364,9 +368,23 @@
   - (a) No. Exports serve the selected recipe's existing fold fit, `final_refit_sha256` is `null`, and the package cannot be presented as the final model.
   - (b) Define and authorize a whole-data refit identity that exports bind.
 - **Adopted.** (a), adopted by owner delegation 2026-09-26.
-- **Behaviour.** Enforced on `rr2/integration-c` (`a884631a4`). On main no refit identity exists, and W9-T02 records that the exported subject is a fold fit.
+- **Behaviour.** Enforced on `rr2/integration-c` (`42bb0f57f`). On main no refit identity exists, and W9-T02 records that the exported subject is a fold fit.
 - **Enforced.** On `rr2/integration-c`, `crates/jope-bench/src/panel/fitted_export_run.rs`:
   - `PackageRecord.final_refit_sha256` is always `None`;
   - `FittedSubject` has kind `selected_fold_fit`;
   - `release` is `not-decided`.
 - **Reverse.** Define a whole-data refit protocol and identity, authorize it, and bind it in a new package record version. Existing records keep `null`.
+
+## D20 — W8-T07/T08: the live S3 phase
+
+- **Question.** May the W8 product path publish to a live `s3://` store, and on what condition?
+- **Options.**
+  - (a) Authorize the live phase once the owner creates a scoped publisher credential. The product path reaches S3 by configuration alone; until that credential exists, nothing uses a credential, and misconfiguration is refused before any store is opened.
+  - (b) Keep the live phase unauthorized, with `file://` and `memory:///` stores only.
+- **Adopted.** (a), adopted by owner delegation 2026-09-26. Recorded on `rr2/integration-a` as owner decision (e). No credential was used, and the live phase itself (W8-T07/T08) was not run.
+- **Behaviour.** No live write. On `rr2/integration-a` (`05aaf3ff5`) the publishing store refuses, before any store is opened and with nothing written: a bare bucket (a run-scoped prefix is required), `JOPE_DATASETS_ANON=1`, and `AWS_CONDITIONAL_PUT` other than `etag`. With no credential source, opening fails fast and by name.
+- **Enforced.** On `rr2/integration-a`:
+  - `crates/jope-learning/src/progress/remote.rs` `S3_ENVIRONMENT` (the environment an `s3://` store reads, also in `jope-learning progress --help`), `preflight_publishing_store` and `open_publishing_store`;
+  - test `progress_cli::an_s3_store_is_configuration_only_and_misconfiguration_is_refused_first`, which runs the shipped binary with an empty environment and a temporary `HOME`, so no credential of the host can reach it;
+  - recorded in `evidence/W08-durability.md` "Owner decisions of 2026-09-26".
+- **Reverse.** Withdraw the authorization here. The preflight refusals stay: they are fail-closed checks, not the authorization.
