@@ -80,6 +80,7 @@ fn fenced_one_evaluation_budget_orders_the_incumbent_first_and_records_its_refus
                     }
                     .into(),
                     policy_logprob: None,
+                    proposal_record_sha256: None,
                 })
                 .collect(),
         },

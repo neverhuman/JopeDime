@@ -45,6 +45,7 @@ pub fn baseline(root: &Path, neural: &GpJobs, vocab: &Vocab, output: &Path) -> R
                     genome,
                     origin: "generic_comparison".into(),
                     policy_logprob: None,
+                    proposal_record_sha256: None,
                 });
             }
         }

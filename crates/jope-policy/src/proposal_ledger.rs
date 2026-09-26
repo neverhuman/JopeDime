@@ -37,7 +37,7 @@ use super::decode::{
     DrawOutcome, PurePool, UniformDrawRecord, UniformOutcome, EXPLORATION_SIZE, FALLBACK_ATTEMPTS,
     MAX_BATCH, MAX_ROUNDS, POOL_SIZE,
 };
-use super::grammar::{Vocab, EOS};
+use super::grammar::{Vocab, EOS, MAX_PROGRAM_TOKENS};
 use super::ranking::Ranking;
 use super::seeds::{
     logprob_from_scores, SeedCandidate, ORIGIN_NEURAL, ORIGIN_NEURAL_FALLBACK, ORIGIN_RANDOM,
@@ -185,6 +185,31 @@ pub struct ShadowRecord<'a> {
     pub program_sha256: Option<&'a str>,
     /// Always false: a shadow record has no fitting authority.
     pub fitting_authority: bool,
+}
+
+/// One draw's terminal outcome as a candidate ledger downstream records it (W4-T03).
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct DrawOutcomeRecord {
+    /// The draw: a scheduled neural draw, or a fallback or exploration stream.
+    pub draw: SlotSource,
+    /// Its terminal outcome, as the ledger spells it (`completed`, `parser_rejected`, ...).
+    pub outcome: String,
+    pub tokens_sha256: String,
+    pub program_sha256: Option<String>,
+    /// The seed slot the draw was handed off to, and that slot's proposal record identity.
+    pub slot: Option<usize>,
+    pub slot_record_sha256: Option<String>,
+}
+
+/// Every draw of one proposal with its terminal outcome, in ledger order (neural, fallback,
+/// exploration), and the reconciled denominators.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct DrawOutcomes {
+    pub ledger_sha256: String,
+    pub draws: Vec<DrawOutcomeRecord>,
+    pub denominators: Denominators,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -482,6 +507,57 @@ impl ProposalLedger {
         Ok(sha256_hex(&serde_json::to_vec(record)?))
     }
 
+    /// Every draw's terminal outcome, for the candidate ledger of the search the population
+    /// seeds (W4-T03): each record names the draw, its outcome, the digests of its tokens and
+    /// program and, when it was handed off, its slot and slot record identity.
+    pub fn draw_outcomes(&self) -> Result<DrawOutcomes> {
+        fn label<T: Serialize>(outcome: &T) -> Result<String> {
+            serde_json::to_value(outcome)?
+                .as_str()
+                .map(str::to_owned)
+                .context("draw outcome is not a label")
+        }
+        let mut entries = Vec::with_capacity(
+            self.neural_draws.len() + self.fallback_draws.len() + self.exploration_draws.len(),
+        );
+        for d in &self.neural_draws {
+            let draw = SlotSource::NeuralDraw {
+                round: d.round,
+                row: d.row,
+            };
+            entries.push((draw, label(&d.outcome)?, &d.tokens, &d.program_sha256));
+        }
+        for d in &self.fallback_draws {
+            let draw = SlotSource::FallbackDraw { seed: d.seed };
+            entries.push((draw, label(&d.outcome)?, &d.tokens, &d.program_sha256));
+        }
+        for d in &self.exploration_draws {
+            let draw = SlotSource::ExplorationDraw { seed: d.seed };
+            entries.push((draw, label(&d.outcome)?, &d.tokens, &d.program_sha256));
+        }
+        let mut draws = Vec::with_capacity(entries.len());
+        for (draw, outcome, tokens, program_sha256) in entries {
+            let slot = self
+                .candidates
+                .iter()
+                .find(|c| c.source == draw)
+                .map(|c| c.slot);
+            draws.push(DrawOutcomeRecord {
+                slot_record_sha256: slot.map(|s| self.slot_record_sha256(s)).transpose()?,
+                draw,
+                outcome,
+                tokens_sha256: tokens_sha256(tokens)?,
+                program_sha256: program_sha256.clone(),
+                slot,
+            });
+        }
+        Ok(DrawOutcomes {
+            ledger_sha256: self.sha256()?,
+            draws,
+            denominators: self.denominators.clone(),
+        })
+    }
+
     /// Every draw that did not become a handed-off candidate, without fitting authority.
     pub fn shadow(&self) -> Vec<ShadowRecord<'_>> {
         let neural = self
@@ -540,7 +616,8 @@ impl ProposalLedger {
                 && (1..=MAX_BATCH).contains(&s.batch)
                 && (1..=s.rounds_scheduled).contains(&s.rounds_run)
                 && s.temperature.is_finite()
-                && s.temperature > 0.0,
+                && s.temperature > 0.0
+                && (1..=MAX_PROGRAM_TOKENS).contains(&s.token_budget),
             "sampling record outside the bounded configuration"
         );
 
@@ -563,7 +640,12 @@ impl ProposalLedger {
             let finished = d.tokens.last() == Some(&EOS);
             match (d.outcome, d.program_sha256.as_deref()) {
                 (DrawOutcome::Incomplete, None) => {
-                    ensure!(!finished, "an incomplete draw reached EOS")
+                    ensure!(!finished, "an incomplete draw reached EOS");
+                    // The decoder ends a row only at EOS or at the token budget.
+                    ensure!(
+                        d.tokens.len() == s.token_budget,
+                        "an incomplete draw did not exhaust its token budget"
+                    )
                 }
                 (DrawOutcome::ParserRejected, None) => {
                     ensure!(finished, "a parser refusal did not reach EOS")
@@ -772,7 +854,12 @@ impl ProposalLedger {
                     ensure!(finished, "{stage} parser refusal did not reach EOS")
                 }
                 (UniformOutcome::Incomplete, None) => {
-                    ensure!(!finished, "{stage} incomplete draw reached EOS")
+                    ensure!(!finished, "{stage} incomplete draw reached EOS");
+                    // A grammar-uniform walk ends only at EOS or at MAX_PROGRAM_TOKENS.
+                    ensure!(
+                        d.tokens.len() == MAX_PROGRAM_TOKENS,
+                        "{stage} incomplete draw did not exhaust its token budget"
+                    )
                 }
                 _ => bail!("{stage} draw outcome and program identity disagree"),
             }
@@ -798,8 +885,32 @@ impl ProposalLedger {
                 .then(|| super::decode::valid_genome(vocab, tokens))
                 .flatten())
         };
+        // Replay a draw through the sampling grammar: every drawn token is legal where it was
+        // drawn; returns whether the walk accepted (reached EOS) and its final phase.
+        let walk = |tokens: &[usize]| -> Result<Option<(bool, &'static str)>> {
+            let mut state = vocab.prefix_state(&self.task)?;
+            for &token in tokens.get(prefix.len()..).unwrap_or_default() {
+                if !state.legal(vocab).contains(&token) {
+                    return Ok(None);
+                }
+                state.advance(vocab, token)?;
+            }
+            Ok(Some((state.done(), state.phase_name())))
+        };
         for d in &self.neural_draws {
             let program = program_of(&d.tokens)?;
+            // An incomplete draw stopped before the grammar accepted; every other draw ended at
+            // an accepting EOS. Both are legal walks ending in the recorded grammar phase.
+            ensure!(
+                walk(&d.tokens)?
+                    == Some((
+                        d.outcome != DrawOutcome::Incomplete,
+                        d.grammar_phase.as_str()
+                    )),
+                "neural draw ({}, {}) is not a legal grammar walk ending in its recorded outcome",
+                d.round,
+                d.row
+            );
             let valid = matches!(
                 d.outcome,
                 DrawOutcome::Completed | DrawOutcome::Surplus | DrawOutcome::Duplicate
@@ -814,6 +925,12 @@ impl ProposalLedger {
         }
         for d in self.fallback_draws.iter().chain(&self.exploration_draws) {
             let program = program_of(&d.tokens)?;
+            ensure!(
+                walk(&d.tokens)?.map(|(accepted, _)| accepted)
+                    == Some(d.outcome != UniformOutcome::Incomplete),
+                "grammar-uniform draw {} is not a legal grammar walk ending in its recorded outcome",
+                d.seed
+            );
             let exact = program.as_ref().map(|p| {
                 vocab.encode_for_task(p, &self.task).ok().as_deref() == Some(&d.tokens[..])
             });
@@ -864,6 +981,14 @@ impl ProposalLedger {
                 "ledger slot {} differs from the seed population",
                 c.slot
             );
+            // W4-T07 join: a seed slot that names a proposal record names exactly this slot's.
+            if let Some(record) = seed.proposal_record_sha256() {
+                ensure!(
+                    record == sha256_hex(&serde_json::to_vec(c)?),
+                    "seed slot {} names another proposal record",
+                    c.slot
+                );
+            }
         }
         Ok(())
     }

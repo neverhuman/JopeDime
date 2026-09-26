@@ -642,6 +642,14 @@ fn verify_producer(journal: &Path, search: &DatasetSearch, receipt: &SearchRecei
             && evidence.proposal_ledger_sha256 == ledger_sha256,
         "proposal provenance changed"
     );
+    // W4-T03: draw outcomes the candidate ledger records are exactly the reconciled ledger's
+    // (evidence recorded before the candidate ledger carried them has none).
+    if let Some(draws) = &evidence.proposal_draws {
+        ensure!(
+            Some(draws) == producer.draw_outcomes()?.as_ref(),
+            "proposal draw outcomes differ from the producer's ledger"
+        );
+    }
     for observation in receipt
         .observations
         .iter()
@@ -673,7 +681,9 @@ fn verify_producer(journal: &Path, search: &DatasetSearch, receipt: &SearchRecei
         ensure!(
             observation.candidate.genome == seed.genome()
                 && observation.candidate.origin == origin
-                && observation.candidate.rank_log_weight == seed.rank_log_weight(),
+                && observation.candidate.rank_log_weight == seed.rank_log_weight()
+                && observation.candidate.proposal_record_sha256.as_deref()
+                    == seed.proposal_record_sha256(),
             "generation-zero origin/genome/rank differs from actual producer output"
         );
     }

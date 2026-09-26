@@ -478,8 +478,24 @@ pub struct Candidate {
     pub origin: Origin,
     pub parents: Vec<String>,
     pub rank_log_weight: Option<f64>,
+    /// W4-T03/T07: the proposal-ledger record of the draw a policy slot came from (its original
+    /// tokens, terminal outcome, scores and parser result), as its seed slot names it. Absent
+    /// for generic, incumbent and offspring candidates and in older ledgers; not part of the
+    /// candidate identity.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub proposal_record_sha256: Option<String>,
 }
 impl Candidate {
+    /// The record identity may only join a generation-zero policy slot of the neural arm.
+    fn check_proposal_record(&self, neural_policy_slot: bool) -> Result<()> {
+        ensure!(
+            self.proposal_record_sha256
+                .as_deref()
+                .is_none_or(|r| neural_policy_slot && jope_policy::is_sha256_hex(r)),
+            "proposal record outside a generation-zero policy slot"
+        );
+        Ok(())
+    }
     pub fn validate_initial(&self, arm: &ArmBudget) -> Result<()> {
         ensure!(
             self.generation == 0 && self.parents.is_empty(),
@@ -490,7 +506,7 @@ impl Candidate {
             slot < INITIAL_SIZE,
             "initial candidate slot outside population"
         );
-        let expected = Self::new(
+        let mut expected = Self::new(
             arm,
             self.genome.clone(),
             0,
@@ -499,6 +515,13 @@ impl Candidate {
             vec![],
             self.rank_log_weight,
         )?;
+        self.check_proposal_record(matches!(
+            self.origin,
+            Origin::NeuralPolicy | Origin::NeuralRejectionFallback | Origin::RandomExploration
+        ))?;
+        expected
+            .proposal_record_sha256
+            .clone_from(&self.proposal_record_sha256);
         ensure!(
             serde_json::to_value(self)? == serde_json::to_value(expected)?,
             "initial candidate identity changed"
@@ -538,6 +561,7 @@ impl Candidate {
             origin,
             parents,
             rank_log_weight,
+            proposal_record_sha256: None,
         })
     }
 }
@@ -714,7 +738,7 @@ impl SearchReceipt {
                         "offspring lacks an earlier completed parent"
                     );
                 }
-                let expected = Candidate::new(
+                let mut expected = Candidate::new(
                     &self.arm,
                     c.genome.clone(),
                     generation,
@@ -723,6 +747,10 @@ impl SearchReceipt {
                     c.parents.clone(),
                     c.rank_log_weight,
                 )?;
+                c.check_proposal_record(neural && generation == 0 && slot < first_incumbent)?;
+                expected
+                    .proposal_record_sha256
+                    .clone_from(&c.proposal_record_sha256);
                 ensure!(
                     serde_json::to_value(c)? == serde_json::to_value(expected)?,
                     "candidate identity, recipe or slot changed"
@@ -838,6 +866,12 @@ pub struct AcceptedProposalEvidence {
     /// and adaptation edges. Absent in evidence recorded before the ledger existed.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub proposal_ledger_sha256: Option<String>,
+    /// W4-T03: every draw of that ledger with its terminal outcome (completed, surplus,
+    /// duplicate, parser refusal, incomplete; fallback and exploration admissions and refusals),
+    /// the slot each handed-off draw seeds, and the reconciled denominators. Absent in evidence
+    /// recorded before the candidate ledger carried them.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub proposal_draws: Option<jope_policy::proposal_ledger::DrawOutcomes>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -1590,6 +1624,9 @@ fn run_neural<B: Backend, V: Variation>(
         .ledger()
         .context("policy producer artifact lacks its proposal ledger")?
         .sha256()?;
+    // W4-T03: the candidate ledger records every draw's terminal outcome, and each policy slot
+    // names the record of the draw it came from (W4-T07 join).
+    let proposal_draws = producer.draw_outcomes()?;
     let mut candidates = population
         .candidates()
         .iter()
@@ -1601,7 +1638,7 @@ fn run_neural<B: Backend, V: Variation>(
                 (false, ORIGIN_RANDOM) => Origin::RandomExploration,
                 _ => anyhow::bail!("incorrect origin in proposal slot {slot}"),
             };
-            Candidate::new(
+            let mut candidate = Candidate::new(
                 &arm,
                 seed.genome().into(),
                 0,
@@ -1609,7 +1646,9 @@ fn run_neural<B: Backend, V: Variation>(
                 origin,
                 vec![],
                 seed.rank_log_weight(),
-            )
+            )?;
+            candidate.proposal_record_sha256 = seed.proposal_record_sha256().map(Into::into);
+            Ok(candidate)
         })
         .collect::<Result<Vec<_>>>()?;
     seat_incumbents(&arm, comparison, &mut candidates)?;
@@ -1624,6 +1663,7 @@ fn run_neural<B: Backend, V: Variation>(
         ranking_backend: producer.ranking_backend().into(),
         native_cuda_parity_qualified: false,
         proposal_ledger_sha256: Some(proposal_ledger_sha256),
+        proposal_draws,
     };
     let search = run_population(
         backend,
@@ -2693,10 +2733,12 @@ mod tests {
             ranking_backend: "fixture".into(),
             native_cuda_parity_qualified: false,
             proposal_ledger_sha256: None,
+            proposal_draws: None,
         };
         let before = serde_json::to_vec(&evidence)?;
         // Evidence recorded before the ledger existed keeps its bytes; new evidence names it.
         assert!(!String::from_utf8(before.clone())?.contains("proposal_ledger_sha256"));
+        assert!(!String::from_utf8(before.clone())?.contains("proposal_draws"));
         let wrapped = ProposalEvidence::Accepted(Box::new(evidence));
         assert_eq!(serde_json::to_vec(&wrapped)?, before);
         let decoded: ProposalEvidence = serde_json::from_slice(&before)?;
@@ -2732,6 +2774,57 @@ mod tests {
             seconds: arm.seconds,
         };
         assert!(candidate.validate_initial(&different).is_err());
+        Ok(())
+    }
+
+    /// W4-T03/T07: a generation-zero policy slot may name the proposal-ledger record of its
+    /// draw without changing its identity; no other candidate may name one, and a candidate
+    /// without one (an older ledger) keeps its meaning.
+    #[test]
+    fn only_policy_slots_name_their_proposal_records() -> Result<()> {
+        let plan = comparison(84);
+        let original = metadata_receipt(&plan, true)?;
+        let mut joined = copy_receipt(&original);
+        for (slot, o) in joined.observations.iter_mut().enumerate() {
+            o.candidate.proposal_record_sha256 =
+                Some(sha256_hex(format!("record {slot}").as_bytes()));
+        }
+        // The record is not part of the identity; older candidates without one keep theirs.
+        assert_eq!(
+            joined.observations[0].candidate.id_sha256,
+            original.observations[0].candidate.id_sha256
+        );
+        original.validate_population(&plan)?;
+        joined.validate_population(&plan)?;
+        joined.observations[0]
+            .candidate
+            .validate_initial(&joined.arm)?;
+        let refused = |receipt: &SearchReceipt, plan: &PairInputPlan| {
+            let error = format!("{:#}", receipt.validate_population(plan).unwrap_err());
+            assert!(
+                error.contains("outside a generation-zero policy slot"),
+                "{error}"
+            );
+        };
+        // An offspring claiming a proposal record.
+        let mut offspring = copy_receipt(&joined);
+        append_metadata_child(&mut offspring, &plan, 1, 0, Origin::Mutation, &[0])?;
+        offspring.validate_population(&plan)?;
+        offspring.observations[80].candidate.proposal_record_sha256 = Some(sha256_hex(b"record"));
+        refused(&offspring, &plan);
+        // A malformed record on a policy slot.
+        let mut malformed = copy_receipt(&joined);
+        malformed.observations[0].candidate.proposal_record_sha256 = Some("not a digest".into());
+        refused(&malformed, &plan);
+        assert!(malformed.observations[0]
+            .candidate
+            .validate_initial(&malformed.arm)
+            .is_err());
+        // A generic candidate claiming one.
+        let mut generic = metadata_receipt(&plan, false)?;
+        generic.validate_population(&plan)?;
+        generic.observations[0].candidate.proposal_record_sha256 = Some(sha256_hex(b"record"));
+        refused(&generic, &plan);
         Ok(())
     }
 

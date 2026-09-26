@@ -1063,10 +1063,19 @@ fn assert_gp_seed_shape(value: &Value) {
             .cloned()
             .collect::<BTreeSet<_>>();
         assert!(keys.contains("genome") && keys.contains("origin"));
-        assert!(keys
-            .iter()
-            .all(|k| ["genome", "origin", "rank_log_weight"].contains(&k.as_str())));
+        // W4-T07: `proposal_record_sha256` joins the slot to its proposal-ledger record; the
+        // search reads it (`gp::SeedCandidate`) into the slot's lineage source.
+        assert!(keys.iter().all(|k| [
+            "genome",
+            "origin",
+            "rank_log_weight",
+            "proposal_record_sha256"
+        ]
+        .contains(&k.as_str())));
         assert!(c["genome"].is_string() && c["origin"].is_string());
+        assert!(c
+            .get("proposal_record_sha256")
+            .is_none_or(|r| r.as_str().is_some_and(|r| r.len() == 64)));
     }
 }
 

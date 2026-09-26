@@ -602,6 +602,7 @@ pub fn assemble(root: &Path, manifest_path: &Path) -> Result<()> {
                     genome: champion.genome().into(),
                     origin: "incumbent_cut_teacher".into(),
                     policy_logprob: None,
+                    proposal_record_sha256: None,
                 });
             }
         }
@@ -627,6 +628,7 @@ pub fn assemble(root: &Path, manifest_path: &Path) -> Result<()> {
                         genome: genome.clone(),
                         origin: "retained_cut_teacher".into(),
                         policy_logprob: None,
+                        proposal_record_sha256: None,
                     });
                 }
             }
@@ -651,6 +653,7 @@ pub fn assemble(root: &Path, manifest_path: &Path) -> Result<()> {
                     }
                     .into(),
                     policy_logprob: None,
+                    proposal_record_sha256: None,
                 });
             }
         }
@@ -670,6 +673,7 @@ pub fn assemble(root: &Path, manifest_path: &Path) -> Result<()> {
                         genome: p.as_str().context("program text absent")?.into(),
                         origin: "neural_policy".into(),
                         policy_logprob: None,
+                        proposal_record_sha256: None,
                     })
                 })
                 .collect::<Result<Vec<_>>>()?;

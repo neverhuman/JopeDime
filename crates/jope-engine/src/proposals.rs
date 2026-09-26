@@ -512,6 +512,7 @@ fn rank_impl(
                         genome,
                         origin: origin.into(),
                         policy_logprob: None,
+                        proposal_record_sha256: None,
                     });
                     return Ok(());
                 }
@@ -543,6 +544,7 @@ fn rank_impl(
                     genome: champion.genome().into(),
                     origin: "incumbent_cut_teacher".into(),
                     policy_logprob: None,
+                    proposal_record_sha256: None,
                 });
                 incumbent_evidence.push(json!({"identity":champion.identity,"observation_sha256":champion.observation_sha256,
                     "source":champion.source,"evaluator_matches_current":champion.identity.evaluator_sha256 == champion_snapshot.evaluator_sha256,
@@ -559,6 +561,7 @@ fn rank_impl(
                         genome: genome.clone(),
                         origin: "retained_cut_teacher".into(),
                         policy_logprob: None,
+                        proposal_record_sha256: None,
                     });
                 }
             }
@@ -575,6 +578,7 @@ fn rank_impl(
                     genome: champion.genome().into(),
                     origin: "same_family_cross_cut_teacher".into(),
                     policy_logprob: None,
+                    proposal_record_sha256: None,
                 });
             }
         }

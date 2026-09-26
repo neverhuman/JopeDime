@@ -218,7 +218,10 @@ fn verify_row(
                     && source["origin"] == candidate.origin
                     && row["origin"] == candidate.origin
                     && source["rank_log_weight"] == json!(candidate.policy_logprob)
-                    && source["score_subject"] == "original_proposal",
+                    && source["score_subject"] == "original_proposal"
+                    // W4-T07 join: exactly the proposal record the slot names (none for an
+                    // older population, which a source may not invent).
+                    && source["proposal_record_sha256"] == json!(candidate.proposal_record_sha256),
                 "seed slot source differs from the frozen seed population"
             );
         }
@@ -828,6 +831,70 @@ mod tests {
     fn refused(rows: &[Value], expected: &str) {
         let error = format!("{:#}", verify_rows(&context(), rows).unwrap_err());
         assert!(error.contains(expected), "expected {expected:?}: {error}");
+    }
+
+    /// W4-T07 (the W5-T01 join): a seed slot's lineage source carries the
+    /// proposal-ledger slot record digest (`ProposalLedger::slot_record_sha256`)
+    /// its seed population binds. A source that omits, changes or invents it is
+    /// refused; a seed population without records keeps the old meaning.
+    #[test]
+    fn a_seed_slot_joins_its_proposal_record_and_refuses_any_other() {
+        let program = random_canonical_pipeline(SEED, 6);
+        let record = hash(b"proposal ledger slot record 0");
+        let population = |candidate: Value| -> crate::gp::SeedPopulation {
+            serde_json::from_value(json!({"schema":"parallel.seed_population.v1",
+                "prepared_sha256":"0".repeat(64),"cut":0,"training_sha256":"1".repeat(64),
+                "context_sha256":"2".repeat(64),"checkpoint_sha256":"3".repeat(64),
+                "candidates":[candidate]}))
+            .unwrap()
+        };
+        let joined = population(json!({"genome":program,"origin":"neural_policy",
+            "rank_log_weight":-0.5,"proposal_record_sha256":record}));
+        let unjoined =
+            population(json!({"genome":program,"origin":"neural_policy","rank_log_weight":-0.5}));
+        let seeds_sha256 = json!(hash(b"seed file"));
+        let seed_row = |source: Value| {
+            let mut r = row(&program, source, Some(0), 1, Some(0.5));
+            r["origin"] = json!("neural_policy");
+            vec![r]
+        };
+        let source = |record: Option<&str>| {
+            let mut s = json!({"kind":"seed_population_slot","slot":0,"seeds_sha256":seeds_sha256,
+                "origin":"neural_policy","rank_log_weight":-0.5,"score_subject":"original_proposal"});
+            if let Some(record) = record {
+                s["proposal_record_sha256"] = json!(record);
+            }
+            s
+        };
+        let verify = |seeds: &crate::gp::SeedPopulation, rows: &[Value]| {
+            verify_rows(
+                &LineageContext {
+                    seeds: Some(seeds),
+                    seeds_sha256: seeds_sha256.clone(),
+                    ..context()
+                },
+                rows,
+            )
+            .map(drop)
+            .map_err(|e| format!("{e:#}"))
+        };
+        // Positive controls: the joined record, and an unjoined (older) population.
+        verify(&joined, &seed_row(source(Some(&record)))).unwrap();
+        verify(&unjoined, &seed_row(source(None))).unwrap();
+        // The population binds a record: a source omitting or changing it is refused.
+        for bad in [source(None), source(Some(&hash(b"another slot record")))] {
+            let refused = verify(&joined, &seed_row(bad));
+            assert!(
+                matches!(&refused, Err(e) if e.contains("seed slot source differs")),
+                "a seed slot source that does not join its proposal record was accepted: {refused:?}"
+            );
+        }
+        // A source may not invent a record the population does not bind.
+        let refused = verify(&unjoined, &seed_row(source(Some(&record))));
+        assert!(
+            matches!(&refused, Err(e) if e.contains("seed slot source differs")),
+            "a seed slot source invented a proposal record: {refused:?}"
+        );
     }
 
     #[test]
