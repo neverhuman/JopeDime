@@ -79,3 +79,48 @@ to user jepson in group admin with the attached AdministratorAccess policy. Lear
 bucket versioning is Enabled. That confirms access and versioning, not restricted
 writer permissions, conditional-write enforcement, replication recovery or safe
 production multi-writer operation. Metadata receipts are retained in custody.
+
+## 26 September refresh: native bounded-run preflight
+
+Main `e4f1b6c625299388478b8c876f54935f7b8b171b` includes the subsequent W7
+bounded-run contracts, census validation, trainer assignment, authenticated
+rendezvous, group drain/recovery fixtures and lossless partition v2 with checkpoint
+state. These supersede the earlier source-gap list above, but remain fixture or
+compile evidence; they do not establish live multi-host training.
+
+The native controller now exposes a read-only operator check:
+
+```sh
+jope-native-loop preflight --run-dir /durable/run \
+  --plan-sha256 FULL_PLAN_SHA256 --census /durable/host-census.json
+```
+
+It verifies the pinned frozen plan and journal, original grant/deadline window,
+and typed host census. It refuses active, dispatched, cancelled or terminal runs,
+unsafe or oversized census files, and the existing census identity, freshness,
+ownership and resource mismatches. Success prints the native preflight receipt,
+including the exact census digest and `allocation_held: false`. It creates no
+files, contacts no host, and records no admission. The coordinator must obtain
+fresh telemetry and journal its own preflight before dispatch. A concurrent start
+can invalidate this observation immediately; this command is not a reservation.
+
+Acceptance: `cargo test --locked -p jope-parallel --test bounded_preflight_cli
+--test bounded_run --test bounded_run_recovery` (set `TMPDIR` to durable fixture
+storage outside `/tmp`). The new CLI fixtures check positive three-host matching,
+unchanged directory contents, no dispatch authority, pinned-plan and stale-host
+refusal, cancellation, expiry, symlinks and bounded reads.
+
+Read-only host probes on 26 September reached xbabe1 and xbabe3 by SSH and xbabe2
+locally. All returned machine/boot identities and GPU UUIDs. The default PATH did
+not resolve `jope-native-loop` or `jope-smartcluster-worker` on any host; that does
+not establish absence from service-specific installations. xbabe2 has active native
+observer and qualification services, and xbabe3 has a separate research runner.
+These observations are not a complete native census: installed certificates,
+executable/runtime/policy hashes and reservation ownership still need authoritative
+collection. No grant was issued and no GPU workload was launched by this check.
+
+Remaining integration: authoritative census collection; SmartCluster-backed group
+supervisor and authenticated cross-host transport; delivery of the frozen assignment
+and admitted communicator bootstrap; controller selection of partition v2 and
+shared checkpoint/result transport. Keep the staged CPU, individual-GPU, two-host
+and three-host qualification gates separate from these source changes.
