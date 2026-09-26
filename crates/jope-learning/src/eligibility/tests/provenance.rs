@@ -376,6 +376,12 @@ fn freeze_without_preregistered_context_encoder_is_diagnostic_only() {
         "MissingEncoderProvenance: freeze preregistered no teaching context encoder",
         "legacy freeze",
     );
+    // The refusal names the quarantine and the only way back (owner decision (d)).
+    let error = format!(
+        "{:#}",
+        qualify(&f.state, &f.record, &f.evidence).unwrap_err()
+    );
+    assert!(error.contains(REQUALIFY), "{error}");
 }
 
 #[test]
@@ -506,4 +512,86 @@ fn inner_partition_scope_forbids_outer_hold_rows() {
             .0,
         evidence.context.unwrap().receipt_sha256
     );
+}
+
+/// The rule every pre-provenance refusal and `RequalificationRefused` end with.
+const REQUALIFY: &str = "new, fully provenanced qualification";
+
+/// Owner decision (d), 2026-09-26: a pre-provenance qualification stays quarantined, and
+/// requalification is a refusal with a clear message, not a procedure. The only route back is a
+/// new, fully provenanced qualification of a new record, which then competes against the
+/// quarantined tip's bar (the adopted HWM-bar decision).
+#[test]
+fn requalification_is_refused_in_place_and_happens_only_through_a_new_qualification() {
+    let f = fixture(Task::Regression, 4);
+    let qualified = qualify(&f.state, &f.record, &f.evidence).unwrap();
+    assert_eq!(ingest(&f).accepted, 1);
+    // The same teacher's bytes as persisted before provenance was mandatory.
+    let mut legacy = qualified;
+    legacy.context_receipt_sha256 = None;
+    legacy.context_handoff_sha256 = None;
+    legacy.diagnostics = None;
+    let path = qualification_path(&f.state, &f.record);
+    let bytes = canonical_json(&StoredQualification {
+        evidence: with_context(&f, None),
+        qualification: legacy,
+    })
+    .unwrap();
+    fs::write(&path, &bytes).unwrap();
+
+    // Every gate names the quarantine and the only way back.
+    let manifest = freeze_teaching(&f.state).unwrap();
+    assert!(manifest.entries.is_empty());
+    let exclusion = &manifest.exclusions[0].1;
+    assert!(
+        exclusion.contains("MissingEncoderProvenance") && exclusion.contains(REQUALIFY),
+        "{exclusion}"
+    );
+    let error = format!(
+        "{:#}",
+        revalidate_qualification(&f.state, &f.record).unwrap_err()
+    );
+    assert!(error.contains(REQUALIFY), "{error}");
+
+    // Requalifying the same record in place is refused with a clear message, inventoried, and
+    // neither authority nor the retained bytes change.
+    let before = authority(&f.state);
+    let inventoried = rejected_decisions(&f.state).len();
+    let error = format!(
+        "{:#}",
+        qualify(&f.state, &f.record, &f.evidence).unwrap_err()
+    );
+    assert!(
+        error.contains("RequalificationRefused")
+            && error.contains(&f.record.provenance.record_sha256)
+            && error.contains(REQUALIFY),
+        "{error}"
+    );
+    assert_eq!(fs::read(&path).unwrap(), bytes);
+    assert_eq!(before, authority(&f.state));
+    let decisions = rejected_decisions(&f.state);
+    assert_eq!(decisions.len(), inventoried + 1);
+    assert!(decisions.last().unwrap().contains("RequalificationRefused"));
+
+    // Positive control: a new, fully provenanced qualification of a new record is admitted and,
+    // strictly beating the quarantined tip's bar, becomes the teacher. The quarantined bytes stay.
+    let (fresh, evidence) = f.candidate("requalified", &exact_on(5));
+    let requalified = qualify(&f.state, &fresh, &evidence).unwrap();
+    let report = hwm::ingest(
+        &f.state,
+        None,
+        vec![Candidate {
+            record: fresh.clone(),
+            blob: candidate_blob("requalified"),
+            chain_from_source: false,
+        }],
+        json!({"kind":"w3-requalification"}),
+    )
+    .unwrap();
+    assert_eq!((report.accepted, report.rejected), (1, 0));
+    assert_eq!(
+        freeze_teaching(&f.state).unwrap().entries,
+        vec![requalified]
+    );
+    assert_eq!(fs::read(&path).unwrap(), bytes);
 }

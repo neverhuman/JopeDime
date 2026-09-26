@@ -805,3 +805,123 @@ every route: `qualify`, `hwm::ingest`, `freeze_teaching`, `revalidate_qualificat
   admission.
 - **Controller.** No product controller issues `ProducerPlan` yet. It is supplied with the freeze
   plan, as `ContextPlan` already was.
+
+## W3-T03 / W3-T07 (rr2/integration-a): requalification is a refusal, the matrix covers every task, and the engine routes
+
+### Requalification (owner decision (d), 2026-09-26)
+
+**Adopted.** Pre-provenance qualifications stay quarantined. Requalification happens only by
+producing a new, fully provenanced qualification. It is a refusal with a clear message, not a
+procedure, and no route upgrades or re-measures a retained qualification into eligibility.
+This replaces "Requalification. Not implemented … open" in the T03 migration policy above.
+
+**Reproduced first** in `w3-t03-requalify-pre-20260926T230527Z/`. The new requalification
+test runs on the unchanged source (its source is in the run's `diff.patch`) and fails. The `freeze_teaching` exclusion of a
+pre-provenance qualification said only
+`MissingEncoderProvenance: submission carries no context receipt`. Requalifying that record in
+place was refused only as `immutable eligibility evidence already differs`. Neither message
+named the quarantine or the way back.
+
+**Source** (`eligibility.rs`, `eligibility/context.rs`):
+
+- `eligibility::quarantined(reason)` appends one rule to every pre-provenance refusal:
+  `MissingEncoderProvenance` (in both forms), and W3-T02's `PreHandoffProvenance` and
+  `MissingContextHandoff`. The rule reads: "Quarantined: nothing upgrades it in place, and no
+  route re-admits it. Requalification happens only by producing a new, fully provenanced
+  qualification: a new record, qualified with evidence carrying this provenance under a freeze
+  that preregisters it (freezes are immutable, so a comparison frozen without it needs a new
+  comparison identity)".
+- `qualify` refuses in-place requalification before writing, with `RequalificationRefused`. This
+  covers a record whose retained qualification differs from the new measurement. The refusal
+  names the record and comparison and carries the same rule. It is inventoried as a `rejected`
+  decision, and the retained file is untouched.
+- Unchanged: a byte-identical redelivery (a pending file gaining its decision event) is still
+  idempotent.
+
+**Tests.** `eligibility::tests::provenance::requalification_is_refused_in_place_and_happens_only_through_a_new_qualification`
+takes a teacher admitted with full provenance and rewrites its retained bytes as pre-provenance.
+Then:
+
+- the `freeze_teaching` exclusion and the revalidation refusal both carry the rule;
+- `qualify` of the same record with full evidence is `RequalificationRefused`: inventoried, with
+  authority and the retained bytes unchanged;
+- **positive control:** a new record with complete provenance qualifies. Because it strictly
+  beats the quarantined tip's bar (the adopted HWM-bar decision), it becomes the teacher. The
+  quarantined file stays byte-identical.
+
+### Adversarial ingress matrix for binary and multiclass (W3-T07)
+
+**Before:** `attack()` ran every mutation class on a regression fixture only.
+`authorized_submission_passes_every_route_for_every_task` was the only binary or multiclass
+coverage, and it was positive only.
+
+**Now** every class runs through all five routes (`qualify`, `revalidate`, `ingest`, `freeze`,
+`replay`) for regression, binary (AUROC) and multiclass (log-loss), each with forged success
+flags.
+
+- The `nonfinite-prediction` class writes a `null` into the first value of whatever the task
+  stores: `values[0]` for regression, `probabilities.values[0][0]` for classification.
+- Every other class is task-independent. Each must refuse with the same named reason for every
+  task.
+- The totals are 18 classes × 3 tasks × 5 routes = 270 refusals.
+
+**Finding from the pre-change run.** Every classification cell refused, and no admission gap was
+found. One cell refused for another reason than the class names. On a binary fixture with
+exact predictions (AUROC 1.0), `forged-fold-score` forged 1.1, which result validation refuses
+first (`AUROC exceeds one`), so the recomputation was never reached. The class now forges
+within the metric's range for every task (0.9 for AUROC; 0.1 for RMSE and log-loss at 0).
+Every task therefore reaches, and is refused by, the recomputation
+(`execution score differs from stored predictions`). The out-of-range forgery remains refused
+by result validation.
+
+Evidence:
+
+- `w3-t03-requalify-pre-20260926T230527Z/` — before the source change: the requalification
+  test fails (no rule in the message), and the all-task matrix has 17 of 18 classes passing.
+  The one failure is the binary `forged-fold-score` described above.
+- `w3-t03-requalify-post-20260926T230650Z/` — `jope-learning` and `jope-motifs`: 280 of 280
+  pass, 0 skipped.
+- `w3-t03-requalify-mutations-20260926T230840Z/` — four mutations of the finished source, each
+  caught and restored byte-identically:
+
+  | Mutation | What it breaks | Caught by |
+  |---|---|---|
+  | `requalification-message-dropped` | In-place requalification reverts to the bare `already differs` | the requalification test |
+  | `requalification-check-removed` | `qualify` no longer refuses before writing | the requalification test |
+  | `receipt-quarantine-rule-dropped` | A missing context receipt no longer names the rule | the requalification test (exclusion message) |
+  | `freeze-quarantine-rule-dropped` | A freeze without a context encoder no longer names the rule | `freeze_without_preregistered_context_encoder_is_diagnostic_only` |
+
+### jope-engine corpus and teaching-store routes (§C): not wired, and why
+
+These routes are not wired to the W3 checks: `teaching_store::publish`, `publish_admitted`,
+`load` / `load_resident` / `read_index`, `export`, `corpus::build_impl`,
+`corpus_publication::build` / `verify`, `training::rank_impl`, `champions`, and derived corpora.
+Wiring them in this lane is not containable, for three reasons:
+
+1. **There is no identity to join on.** The W3 checks key on a comparison (`HwmIdentity`) and
+   a record (`record_sha256`), resolved to a retained `StoredQualification`. None of the
+   engine's formats names either one. `ContextRow`, the `Encoding` sidecar, teaching shards,
+   the `parallel.teaching_corpus.v1` index and champion events carry only engine-local hashes
+   and a `qualification: bool`. The engine format needs a new version that names the W3
+   qualification, and every writer must supply it.
+2. **The dependency direction and the fence.** `jope-engine` (package `jope-parallel`) does not
+   depend on `jope-learning`. `jope-learning` has `jope-parallel` as a dev-dependency (the
+   owner-accepted W8 one), so the reverse edge would make a dev-dependency cycle. The fence
+   suites (`fit_boundary`, `view_contracts`, `gp_contracts`, `gp::fit_contract_tests`) pin that
+   crate.
+3. **Enforcement would stop engine training, which is the owner's call.** Every engine corpus
+   today is pre-provenance by construction (reason 1). Applying the requalification rule would
+   quarantine all of them and stop engine training until a W2 producer and new engine formats
+   exist.
+
+The CLI route is already covered. `jope-cli train corpus prepare` and `train admission` read
+`freeze_teaching` / `revalidate_replay`, which recompute `measured`. So they now also enforce
+the W2 handoff, W12 revocation and the requalification rule.
+
+Still open on that route:
+
+- The corpus `CpuProof`'s context is not joined to the admitted handoff's `context_sha256`. The
+  check itself is a few lines (`jope_policy::context_sha256(token.context())` against the
+  retained handoff). But it cannot be proven here: its positive path needs a fully admitted W3
+  state plus a qualified W2 `CpuProof` fixture (feature `qualified-context`), and neither
+  `jope-cli` nor `jope-learning` has one. It is recorded rather than added unproven.
