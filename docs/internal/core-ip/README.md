@@ -4,6 +4,10 @@ Maintained twelve-chapter monograph, evidence inventory and publication renderer
 The public PDF and Markdown are generated together; source is reviewed through the
 normal PR lifecycle. Historical data retain original dates and source identities.
 
+The [regression remediation register](findings/README.md) preserves all ten audit
+shards and their 195 individual entries. Inventory verification does not close
+the findings or qualify the learning loop.
+
 ```sh
 python3 docs/internal/core-ip/tools/build.py \
   --output /home/ubuntu/xbabe2_kicker/docs \

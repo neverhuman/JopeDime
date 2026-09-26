@@ -1,0 +1,2 @@
+# Immutable audit bytes include original Markdown hard breaks and blank lines.
+shard-*.md whitespace=-blank-at-eol,-blank-at-eof

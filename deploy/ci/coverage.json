@@ -76,7 +76,9 @@
         "python3 deploy/ci/test-training-proof.py",
         "python3 deploy/ci/test-install-private.py",
         "python3 deploy/ci/test-qualify-demo.py",
-        "python3 deploy/ci/test-prepare-asm-runtime.py"
+        "python3 deploy/ci/test-prepare-asm-runtime.py",
+        "python3 docs/internal/core-ip/tools/verify_findings.py",
+        "python3 -m unittest discover -s docs/internal/core-ip/tools -p test_verify_findings.py -v"
       ]
     },
     "rust-check": {
@@ -8267,6 +8269,16 @@
       ],
       "dispositions": [],
       "scope": "Metadata fixture validation of source/build/worker/configuration pins, custody paths and lock refusal. Compiler and native validator are mocked; no numerical worker or model qualification."
+    },
+    "python:docs/internal/core-ip/tools/test_verify_findings.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "hygiene"
+      ],
+      "dispositions": [],
+      "scope": "Audit-source inventory integrity and adversarial register mutations only. No product finding, regression behavior, training or live qualification is established."
     },
     "python:python/tests/test_training_input_closure.py": {
       "discovery": {
