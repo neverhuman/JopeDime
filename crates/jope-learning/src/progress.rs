@@ -33,6 +33,17 @@
 //! Two publishers racing the same predecessor produce one winner and one explicit conflict.
 //! Corpora and checkpoints are reusable only from a verified closure.
 //!
+//! [`rebuild`] rebuilds derived views from committed records (W8-T04). It also reconstructs
+//! and restores fresh local state from the remote committed graph (W8-T06).
+//!
+//! [`cadence`] decides when to flush and when to checkpoint, and what to retain (W8-T05):
+//! - a flush is due every 60 s, at 1 MiB, or immediately after an urgent event;
+//! - a checkpoint is due every 100 updates or 5 minutes, and at shutdown;
+//! - winners keep full artifacts and every other attempt keeps compact evidence.
+//!
+//! All of this runs against an injected clock. A failed flush never advances the durable
+//! watermark.
+//!
 //! Logical work identity ([`inventory::WorkSpec::work_id`]) is derived from the run and the
 //! work's own specification and never from an attempt; `(work_id, attempt)` is the attempt
 //! identity; an object's digest is its delivery identity. Nothing here is authority for teaching
@@ -40,6 +51,7 @@
 //! is only ever the one named explicitly by `--store`/`JOPE_LEARNING_URL`; the tests use local
 //! and in-memory stores only.
 
+pub mod cadence;
 pub mod census;
 pub mod inventory;
 pub mod outbox;
@@ -49,6 +61,7 @@ pub mod remote;
 
 #[cfg(test)]
 mod tests {
+    mod cadence;
     mod census;
     mod encoding;
     mod faults;

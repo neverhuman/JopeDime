@@ -536,3 +536,112 @@ evidence directory.
   CLI verb for it.
 - **No live proof.** Everything here uses `file://` and `memory:///` stores with injected
   faults. Live S3 (T07/T08) needs a scoped credential and an approved budget.
+
+## W8-T05 — Cadence and retention classes
+
+This is a **new capability**. `jope-learning` had no flush cadence, checkpoint cadence or
+retention class, so there was no receiving path to reproduce a defect against.
+
+**Source.** `crates/jope-learning/src/progress/cadence.rs`. All time comes from an injected
+`Clock`.
+
+### Flush cadence (`Cadence`)
+
+A flush is due when anything is pending and any of these holds:
+
+- an urgent request is outstanding:
+  - `hwm-change`;
+  - `corpus-freeze`;
+  - `checkpoint-commit`;
+  - `terminal-failure`;
+  - `shutdown`;
+  - `restart`: `Cadence::start` finds pending entries left in the outbox;
+- at least 1 MiB is pending;
+- at least 60 s have passed since the last flush that left nothing pending.
+
+Only such a complete flush clears urgency and restarts the interval. A failed, partial or
+response-lost flush keeps its entries pending and keeps its urgency.
+
+**Durable watermark.** `durable_through(&Outbox)` is the highest `n` such that records
+`1..=n` are acknowledged. It is derived only from durable acks, so it cannot be advanced by
+memory, by a failure, or by a restart.
+
+### Checkpoint cadence (`Checkpoints`)
+
+A checkpoint is due at a committed update:
+
+- when 100 updates are uncheckpointed;
+- or when 5 minutes have passed since the last checkpoint;
+- and at controlled shutdown, when any committed update is uncheckpointed.
+
+It is never due without an update to checkpoint.
+
+### Retention (`retention(Role)`)
+
+- **Full** (fitted artifacts retained): winners, admitted teachers and declared diagnostic
+  samples.
+- **Compact**: every other completed attempt.
+
+There is no class that retains nothing. Nothing here deletes anything or changes a retention
+policy.
+
+### Tests (`progress::tests::cadence`)
+
+- **`each_flush_trigger_fires_exactly_when_due`.**
+  - Nothing is due at 59.999 s; the interval fires at 60 s.
+  - Size does not fire at 1 MiB minus 1 byte and fires at 1 MiB. The interval then restarts.
+  - Each of the five urgent events flushes immediately.
+  - An urgent request with nothing pending is satisfied without a flush.
+- **`a_failed_flush_stays_pending_and_never_claims_durability`.**
+  - An outage keeps the watermark at 0, 4 entries pending, and the urgency set.
+  - A partial flush moves the watermark to exactly the acknowledged prefix (2). A lost
+    response does not move it.
+  - After a simulated crash and reopen, the watermark is still 2.
+  - `start` requests `restart` and flushes to 4.
+  - Every outbox file present before the outage is still present, with the same bytes.
+- **`each_checkpoint_trigger_fires_at_committed_updates_and_shutdown`.** Covers 100 updates,
+  5 minutes measured at the crossing update (299.999 s does not fire; 300 s does), shutdown
+  with 2 uncheckpointed, and no shutdown checkpoint with nothing uncheckpointed.
+- **`non_winner_outcomes_keep_compact_evidence_never_nothing`.**
+  - A winner's full evidence (with artifacts) and a non-winner's compact evidence (none) are
+    both delivered.
+  - The census still counts the non-winner's timeout and completion.
+
+### Evidence
+
+- **Pre-state.** `w8-baseline-20260926T062059Z/` is the pre-state of this new capability:
+  there is no cadence code.
+- **`w8-t05-mutations-20260926T091939Z/`** holds 7 mutations of the finished source, each
+  caught and restored byte-identically:
+
+  | Mutation | What it breaks | Caught by |
+  |---|---|---|
+  | `failed-flush-clears-urgency` | A failed flush counts as flushed | the outage test |
+  | `watermark-counts-attempts` | The watermark counts records, not acks | outage and trigger tests |
+  | `no-size-trigger` | The size trigger never fires | the trigger test |
+  | `interval-off-by-one` | The interval fires one tick late (`>` instead of `>=`) | the trigger test |
+  | `no-restart-urgency` | A restart does not flush pending entries | the outage test |
+  | `checkpoint-without-update` | Shutdown checkpoints with nothing uncheckpointed | the checkpoint test |
+  | `non-winner-dropped` | Non-winners are retained in full | the retention test |
+- **`w8-t05-postfix-20260926T092104Z/`** — at lane HEAD `7906af67c`:
+  - fmt-check is clean, and clippy reports no warnings in W8 files;
+  - `nextest.log`: 152 of 152 `jope-learning` tests pass with 0 skipped;
+  - doctest 1 of 1;
+  - `check.log`: jope-motifs, jope-cli and jope-bench, all targets, pass;
+  - `diff-check.txt` is empty;
+  - `diff-final.patch` is the final tree.
+
+### Not established here (open)
+
+- **Proposed values.** `Policy::PROPOSED` (60 s, 1 MiB, 100 updates, 5 min) and the outbox
+  `Limits` are proposals awaiting owner approval.
+- **No product scheduler.** Nothing calls `Cadence::tick` or `Checkpoints` yet.
+  - The engine's training loop (`checkpoint_recovery.rs`) and the corpus freeze
+    (`corpus_publication.rs`) would request `CheckpointCommit` and `CorpusFreeze`.
+  - `hwm::ingest` would request `HwmChange`.
+  - This wiring is engine-side and CLI follow-up work.
+- **Role is not recorded.** The role that decides retention is supplied by the caller;
+  `CandidateEvidence` does not record it. Nothing yet checks that an admitted teacher's
+  evidence is `full`.
+- **No compaction.** Acknowledged outbox entries are kept indefinitely. Any future compaction
+  must preserve the committed graph and is not implemented.
