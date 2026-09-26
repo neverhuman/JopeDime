@@ -7196,6 +7196,21 @@
       "dispositions": [],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "target:jope-parallel/test/checkpoint_commit": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-engine/tests/checkpoint_commit.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "Neural-gated CPU fixtures: atomic checkpoint publication with phase-by-phase stop injection, stale-temporary tolerance, commit-time and load-time refusal matrix, legacy classification and exact reload. No GPU, NCCL, multi-host or remote publication."
+    },
     "target:jope-parallel/test/committed_updates": {
       "discovery": {
         "kind": "target",

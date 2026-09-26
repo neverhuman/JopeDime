@@ -117,3 +117,80 @@ File `crates/jope-engine/tests/committed_updates.rs` (feature `neural`, CPU).
 - **Rejected versus unknown.** A native fused-kernel failure is recorded as `rejected`; the in-memory device state after such a failure is not verified. The attempt ends and nothing is committed, so no committed claim depends on it.
 - **Historical runs** have no journal. Their consumption stays unknown and is not reconstructed (T07).
 - **Size.** About 2.3 KB per microbatch at 256 rows: roughly 7 MB per rank per 3000 steps.
+
+---
+
+## W6-T05 — commit complete checkpoints atomically
+
+### Crash window reproduced
+- **Mechanism.** `training::checkpoint` published `latest.json` through `manifest::write_json`, i.e. `atomic_write`. That writes a temporary named `latest.partial.<pid>`, opened with `create_new`.
+- **Failure.** A writer killed between creating that temporary and renaming it leaves the file behind. Any later writer with the same process id then fails every checkpoint publication with `File exists (os error 17)`, and training can no longer commit. Same-pid writers occur on container restarts, in fixed-pid namespaces and after pid reuse.
+- **Evidence.** Reproduced on the extracted commit path, which still published through `write_json`: `w6-pre-t05-20260926T072543Z`. The stale-temporary test failed with that error.
+- **Also affected.** `initialization.json` had the same window.
+
+### Publication order (`training/checkpoint_commit.rs` `commit`)
+1. Write every required object (`model.ot`, `optimizer.ot`, `optimizer.json`, `config.json`) into a new, uniquely named staging directory `checkpoints/.step-N-<pid>-<nanos>-<serial>`.
+2. Write the manifest `state.json`, binding each object's digest.
+3. Verify the staged directory exactly as a loader would. An incomplete or inconsistent checkpoint is never renamed into place.
+4. fsync every object, the manifest and the staging directory.
+5. Rename staging to `checkpoints/step-N`; fsync `checkpoints/`. An existing `step-N` is never overwritten.
+6. Write `latest.json` through a uniquely named `.latest.json.tmp-<pid>-<nanos>-<serial>`, fsync, rename, fsync the run directory.
+
+A stop between any two steps leaves the previously published checkpoint as the only complete one. `checkpoint_recovery::reconcile` still quarantines unpublished staging and step directories without deleting them. Stale temporaries are inert: never read, never blocking, never deleted. `initialization.json` now uses the same unique-temporary replace (`replace_json`).
+
+### Complete manifest (`parallel.checkpoint_commit.v2`)
+The manifest stays `parallel.checkpoint.v1` and carries every field it carried before, plus:
+- `checkpoint_format`;
+- `required_objects`;
+- `rank_receipts`: each rank's checkpoint receipt path and digest;
+- the per-rank consumption-journal binding in `committed_exposure_by_rank`, added in T04.
+
+It binds together:
+- model, optimizer and optimizer metadata, configuration;
+- scheduler, seed, RNG and sampler identity, counters and exposure;
+- corpus and vocabulary, execution partition;
+- the objective identities that exist today (`ranking_backward`, `runtime_objective`; full objective identity is T06);
+- initialization parentage.
+
+### Loader (`verify_dir`, `load_latest`)
+Verification is read-only and happens before any model or optimizer load. Refused:
+- a symlinked or missing object;
+- an object whose digest differs from the manifest;
+- a torn or malformed manifest;
+- a schema or step mismatch;
+- a missing resume field;
+- optimizer metadata whose step, digest, lr, decay or backend disagrees with the manifest;
+- an invalid configuration;
+- an absent seed or sampler identity;
+- an execution partition inconsistent with world and global batch;
+- exposure counters inconsistent with the committed step window;
+- a caller-expected corpus, vocabulary, world or global batch that differs.
+
+For the complete format it also refuses:
+- a missing RNG, sampler or scheduler identity, parameter hash, rank receipts or required-object list;
+- a rank receipt changed, out of order, or disagreeing on step or parameter hash;
+- a consumption binding that differs from its receipt;
+- a journal prefix that no longer matches;
+- a journal that does not reach the committed step for that rank, world, batch, seed and corpus.
+
+`load_latest` additionally requires `latest.json` to name this run's `checkpoints/step-N` for its own step and the manifest digest.
+
+**Legacy checkpoints** have no `checkpoint_format`. They load as `Format::Legacy` when the caller does not require the complete format, and are refused when it does. Exact resume in `rank_impl` now runs `verify_dir` before CUDA with the corpus, vocabulary, world and global batch expected. It accepts legacy checkpoints that already satisfied the previous resume checks, so in-flight runs keep resuming. Warm start is unchanged; continuation modes are T06.
+
+### Fixtures
+File `crates/jope-engine/tests/checkpoint_commit.rs` (feature `neural`, CPU). The checkpoint objects are real: a tiny model, the CPU reference AdamW and the T04 journal.
+
+| Acceptance item | Test | Pre-fix |
+|---|---|---|
+| A stale `latest.partial.<pid>` or `initialization.partial.<pid>` from a killed same-pid writer does not block publication; stale temporaries are retained | `a_stale_latest_temporary_from_a_killed_writer_cannot_block_publication` | failed, `File exists` |
+| A stop after each of the six phases exposes only the previous checkpoint, except after `LatestPublished`, where the new one is complete. An unpublished directory is never overwritten. `reconcile` quarantines exactly one partial and nothing published; re-execution commits the same step. A stop after publication shows as `commit_event_missing` in the journal | `a_stop_between_any_two_publication_steps_never_exposes_a_partial_checkpoint` | failed at `LatestStaged`; the old publication had no staged phase |
+| Commit refuses, without exposing `step-N` or changing `latest.json`: a missing optimizer, an absent RNG identity, inconsistent counters, an unbound rank receipt, a parameter hash differing from the receipt, a manifest naming another step. Positive control commits | `commit_refuses_to_expose_an_incomplete_or_inconsistent_checkpoint` | passed; new capability |
+| Loader refusal matrix: missing optimizer or metadata; truncated model; torn manifest; `latest.json` naming another step or a stale digest; RNG or seed absent; optimizer step inconsistent; exposure counters inconsistent; partition inconsistent; rank receipt or journal prefix changed; unknown format; legacy where complete is required; symlinked object; stale corpus, vocabulary, world or batch. Legacy loads as `Legacy` when allowed | `the_loader_refuses_torn_incomplete_stale_or_inconsistent_checkpoints` | passed; new capability |
+| A complete checkpoint reloads identical parameters, moments and step, and the next update equals the uninterrupted one | `a_complete_checkpoint_reloads_the_committed_state` | passed |
+
+### Open for T05
+- **Not executed.** The `rank_impl` wiring (manifest fields, rank receipt digests, pre-CUDA resume verification) is compile-checked only.
+- **Multi-host.** Rank 0 verifies every rank's receipt and journal on the local filesystem. A multi-host topology needs W7 to deliver the rank-local objects, or to verify them where they are written.
+- **Software/runtime compatibility** is not yet bound into the manifest: executable digest, LibTorch/CUDA versions, and the optimizer backend per rank beyond `optimizer.json`. Nor is the full objective identity (G1, T06).
+- **Remote.** W8 supplies conditional remote publication and restoration.
+- **Follow-up outside this partition.** `manifest::atomic_write` itself still uses the fixed `.partial.<pid>` temporary. It affects every other `write_json` caller, for example `runs/neural-service.json`.
