@@ -37,7 +37,7 @@ fn record(f: &Fixture, mutate: fn(&mut HwmRecord)) -> (HwmRecord, OofEvidence) {
     (record, f.evidence.clone())
 }
 
-const MUTATIONS: [Mutation; 16] = [
+const MUTATIONS: [Mutation; 18] = [
     Mutation {
         class: "missing-context",
         expected: "MissingEncoderProvenance",
@@ -187,6 +187,39 @@ const MUTATIONS: [Mutation; 16] = [
                 r.genome.dsl = "(pipe X (another-program))".into();
                 r.genome.program_sha256 = sha256_hex(r.genome.dsl.as_bytes());
             })
+        },
+    },
+    Mutation {
+        class: "missing-handoff",
+        expected: "MissingContextHandoff",
+        apply: |f| {
+            let mut context_evidence = f.evidence.context.clone().unwrap();
+            context_evidence.handoff = None;
+            context(f, context_evidence)
+        },
+    },
+    Mutation {
+        class: "unauthenticated-producer",
+        expected: "ProducerNotAuthenticated",
+        apply: |f| {
+            let handed_off = f.evidence.context.clone().unwrap();
+            let mut parts = handoff_parts(
+                &f.state,
+                &handed_off.output_sha256,
+                &f.plan.comparison,
+                &f.experiment,
+                &f.window,
+            );
+            parts.job.command.program.sha256 = sha256_hex(b"an unregistered producer");
+            parts.reseal();
+            let handoff = Some(retain_handoff(&f.state, &parts, &f.experiment, &f.window));
+            context(
+                f,
+                ContextEvidence {
+                    handoff,
+                    ..handed_off
+                },
+            )
         },
     },
 ];
@@ -405,6 +438,8 @@ cells! {
     wrong_comparison_identity: 13,
     substituted_freeze: 14,
     wrong_program: 15,
+    missing_handoff: 16,
+    unauthenticated_producer: 17,
 }
 
 #[test]

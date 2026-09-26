@@ -659,3 +659,149 @@ node as revoked, and yet:
   imported by its pinned digest, unverified here, as `jope-records verify-claims` allows without
   `--require-custody`.
 - **Live stores.** Nothing here reaches a live store.
+
+## W3-T02 / W2-T07 at teacher admission (rr2/integration-a): producer authentication and the W2 handoff
+
+This closes the "Producer authentication" item under "Not established here (open)" above, to the
+extent stated below. Before this change, teacher admission trusted the encoder receipt's own
+claims. Nothing named a W2 producer, linked a W2 execution proof, or consumed the W2
+`ContextHandoff` (`jope.cpu-context-handoff/v1`, consumer `teacher_admission`), although W2 issues
+one for teacher admission (W02 §8.5).
+
+**Reproduced first** in `w3-t02-handoff-pre-20260926T224712Z/`. A temporary test, whose source is in that run's `diff.patch`,
+fails. It shows that the submission's context evidence was three digests the candidate chose
+(receipt, fitted state, output), and that `qualify` admitted it.
+
+**Source** (`crates/jope-learning/src/eligibility/context.rs`, `context::verify_handoff` and
+`verify_execution`, run by `eligibility::measured` after the receipt and parent checks, so by
+every route: `qualify`, `hwm::ingest`, `freeze_teaching`, `revalidate_qualification` and
+`revalidate_replay`):
+
+- **The freeze preregisters the producer.** `ContextPlan.producer` (`ProducerPlan`) holds:
+  - the W2 release identity, field for field as `ContextRelease` serializes: the eight-digest
+    encoder closure, source commit, producer executable, verification policy and reference
+    manifest;
+  - the typed transformation chain;
+  - the W2 qualification the producer passed.
+
+  A submission never supplies these.
+- **The submission carries the handoff.** `ContextEvidence.handoff` (`HandoffEvidence`) holds the
+  retained handoff record's digest and the retained pool receipts of the execution that produced
+  its artifact: the job, the supervisor outcome, and the context job's experiment and original
+  window.
+- **Teacher admission checks the handoff:**
+  - it parses field for field and refuses unknown fields;
+  - the schema is `jope.cpu-context-handoff/v1` and the consumer is `teacher_admission`;
+  - the release, chain and W2 qualification equal the preregistered ones
+    (`ProducerNotAuthenticated`, `ContextHandoffMismatch`);
+  - the handed-off `context_sha256` equals the receipt's retained output digest. This is the
+    sha256 of the context's little-endian f32 bytes, the same bytes, and it is pinned on the W2
+    side by a new `jope-policy` test;
+  - the training scope's dataset equals the comparison's, and every other scope digest is
+    well-formed;
+  - no revoked evidence (W12-T05) is named: the handoff, the job, outcome, experiment and
+    window, the artifact or the W2 qualification.
+- **Teacher admission re-verifies the execution** from the retained receipts, making the checks
+  `cpu_context_bridge::execution_attestation` makes on live files:
+  - the job ran the preregistered producer executable;
+  - it completed cleanly under its own job and request identity (exit 0, no signal);
+  - the handoff's input is a job input, and its artifact is a declared job output that is
+    retained;
+  - it ran inside its original window, which opened no earlier than the freeze that
+    preregistered the producer;
+  - its accounting is finite, within the pool fit limit, under the per-fit memory cap.
+- **The qualification records the handoff** it was admitted under
+  (`Qualification.context_handoff_sha256`).
+
+**Old formats keep their meaning.**
+
+- Every new field is optional and absent fields are not serialized. So a freeze plan with no
+  producer, context evidence with no handoff and a qualification with no handoff digest all parse,
+  and re-serialize byte-identically. Freeze and evidence digests are unchanged.
+- Following owner decision (d) of 2026-09-26, what they admit is quarantined:
+  - A freeze with a context encoder but no producer refuses with `PreHandoffProvenance`.
+  - A submission without a handoff refuses with `MissingContextHandoff`.
+  - Both messages end with the requalification rule: nothing is upgraded in place, and
+    requalification happens only by producing a new, fully provenanced qualification.
+- A stored qualification written before this change is excluded by `freeze_teaching` with that
+  message, and it is refused by both revalidations. Presenting handed-off evidence later cannot
+  upgrade it, because the stored file is immutable.
+
+**Tests.**
+
+- `eligibility::tests::handoff` (new):
+  - `teacher_admission_consumes_an_authenticated_w2_handoff`. It runs 16 negatives, each through
+    `qualify` and `hwm::ingest`, inventoried, with no authority change:
+    - another consumer;
+    - another producer executable, encoder closure or W2 qualification;
+    - another transformation chain;
+    - a handoff of another context, or scoped to another dataset;
+    - an unknown handoff field;
+    - an execution of another executable;
+    - a failed execution;
+    - an artifact the job never wrote, or an input it never read;
+    - no memory cap;
+    - an execution window opened before the freeze;
+    - no handoff;
+    - a revoked handoff.
+
+    It then runs the positive control for regression, binary and multiclass. The qualification
+    records the handoff digest.
+  - `a_freeze_without_a_preregistered_producer_stays_quarantined`.
+  - `pre_handoff_formats_keep_their_meaning_and_stay_quarantined`.
+- The W3-T07 matrix gains two classes, `missing-handoff` and `unauthenticated-producer`, each
+  through all five routes, with forged success flags.
+- `jope-policy`
+  `context_producer::admission::handoff_tests::a_teacher_admission_handoff_serializes_as_the_record_its_consumer_parses`
+  (feature `context-producer`) pins the handoff record the consumer parses: keys at every level,
+  the eight encoder fields, `cut` as an integer, the consumer spelling, and the context digest
+  over little-endian bytes.
+- Fixtures: every fixture context is now handed off by the preregistered synthetic producer.
+  Nothing is encoded or executed.
+
+**Evidence** (under the evidence root):
+
+- `w3-t02-handoff-pre-20260926T224712Z/` — the reproduction fails: the unauthenticated
+  context was admitted.
+- `w3-t02-handoff-post-20260926T225441Z/`:
+  - `jope-learning` and `jope-motifs`: 279 of 279 pass, 0 skipped;
+  - `jope-policy` `handoff_tests` (features `testing,context-producer`): 2 of 2 pass.
+- `w3-t02-handoff-mutations-20260926T225603Z/` — fifteen mutations of the finished source, each
+  caught and restored byte-identically:
+
+  | Mutation | What it breaks | Caught by |
+  |---|---|---|
+  | `gate-unwired` | The handoff check is not enforced | every handoff test and both new matrix classes |
+  | `consumer-unchecked` | Another consumer's handoff is accepted | the handoff test |
+  | `release-unchecked` | Another release identity is accepted | the handoff test |
+  | `w2-qualification-unchecked` | Another W2 qualification is accepted | the handoff test |
+  | `chain-unchecked` | Another transformation chain is accepted | the handoff test |
+  | `context-digest-unchecked` | A handoff of another context is accepted | the handoff test |
+  | `dataset-unchecked` | A handoff for another dataset is accepted | the handoff test |
+  | `executable-unchecked` | A job of another executable is accepted | the handoff test and the `unauthenticated-producer` matrix class |
+  | `exit-code-unchecked` | A failed execution is accepted | the handoff test |
+  | `input-unchecked` | An input the job never read is accepted | the handoff test |
+  | `artifact-unchecked` | An artifact the job never wrote is accepted | the handoff test |
+  | `window-unchecked` | A context executed before the freeze is accepted | the handoff test |
+  | `memory-unchecked` | An execution without the pool memory cap is accepted | the handoff test |
+  | `handoff-revocation-unchecked` | A revoked handoff is accepted | the handoff test |
+  | `handoff-not-recorded` | The qualification does not record the handoff | the handoff test's positive control |
+
+**Not established here (open).**
+
+- **No signature.** The handoff and the pool receipts are content-addressed consistency
+  evidence. This is the same trust level as the W3 fold worker receipts. Nothing in the product
+  signs a pool execution, so internally consistent receipts fabricated for the preregistered
+  producer are not detected.
+- **No W2 re-verification at W3.** Teacher admission does not re-run W2 artifact verification
+  (`cpu_context_bridge::load_qualified`, feature `qualified-context`, which needs `jope-policy`
+  and the native reference). It authenticates the handoff that verification issues, and the
+  execution behind it.
+- **Row scopes are not joined.** The handoff's training-row digests are over W2's prepared-row
+  encoding, not the W3 receipt's, so only the dataset is joined. A shared row-identity encoding
+  would be needed (see W3-T04 below).
+- **Live routes.** The live `jope-bench` driver (§B) still freezes with `context: None` and
+  preregisters no producer, so it cannot admit teachers. No live W2 producer has run for teacher
+  admission.
+- **Controller.** No product controller issues `ProducerPlan` yet. It is supplied with the freeze
+  plan, as `ContextPlan` already was.

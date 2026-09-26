@@ -27,7 +27,10 @@ use std::{
 
 mod context;
 mod inner;
-pub use context::{ContextEvidence, ContextPlan};
+pub use context::{
+    ContextEvidence, ContextExecution, ContextPlan, HandoffEncoder, HandoffEvidence,
+    HandoffRelease, ProducerPlan, HANDOFF_SCHEMA, TEACHER_ADMISSION,
+};
 pub use inner::{
     derive_inner_partition, freeze_inner_optimization, register_inner_candidate, InnerEvidence,
     InnerPartition,
@@ -37,6 +40,17 @@ const FREEZE: &str = "jope.optimization-freeze/v1";
 const PREDICTIONS: &str = "jope.train-oof-predictions/v1";
 const QUALIFICATION: &str = "jope.measured-teaching/v1";
 const DIAGNOSTICS: &str = "jope.teaching-diagnostics/v1";
+
+/// Owner decision (d), 2026-09-26: evidence made before a provenance requirement existed stays
+/// quarantined. Nothing upgrades it in place, and no route re-admits it; requalification happens
+/// only by producing a new, fully provenanced qualification.
+pub(crate) fn quarantined(reason: &str) -> String {
+    format!(
+        "{reason}. Quarantined: a qualification without this provenance is never upgraded in \
+         place; requalification happens only by producing a new, fully provenanced qualification \
+         (a freeze that preregisters the provenance, new evidence carrying it, and a new qualify)"
+    )
+}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -161,6 +175,10 @@ pub struct Qualification {
     /// Verified context receipt; stored legacy qualifications without one never revalidate.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub context_receipt_sha256: Option<String>,
+    /// The W2 handoff the context was admitted under (W3-T02, W2-T07); stored qualifications
+    /// without one never revalidate.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub context_handoff_sha256: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub diagnostics: Option<Diagnostics>,
 }
@@ -839,7 +857,8 @@ fn measured(
         ]);
     }
     revocations.refuse("the teaching candidate", closure)?;
-    let context_receipt_sha256 = context::verify(state, &policy, record, evidence, &revocations)?;
+    let (context_receipt_sha256, context_handoff_sha256) =
+        context::verify(state, &policy, record, evidence, &revocations)?;
     let experiment: Experiment = blob(state, &evidence.experiment_blob_sha256)?;
     let window: ExecutionWindow = blob(state, &evidence.window_sha256)?;
     experiment.validate()?;
@@ -1135,6 +1154,7 @@ fn measured(
         context_fitting_rows_sha256:policy.inner_partition.as_ref().map(|p|p.fitting_rows_sha256()).transpose()?,
         context_outer_fold:policy.inner_partition.as_ref().map(|p|p.outer_fold),
         context_receipt_sha256: Some(context_receipt_sha256),
+        context_handoff_sha256: Some(context_handoff_sha256),
         diagnostics: Some(summary),
         measurement:
             "recomputed-from-pinned-targets-and-predictions; analytic-baseline-worker-fits=0; execution receipts retained separately"
@@ -1462,7 +1482,209 @@ mod tests {
                 seed: 7,
                 product: Product::TeachingContext2048,
             },
+            producer: Some(producer_plan()),
         }
+    }
+
+    /// The synthetic W2 producer executable's bytes: never executed, only pinned.
+    const FIXTURE_PRODUCER: &[u8] = b"synthetic W2 context producer executable; never executed";
+
+    /// The W2 producer the fixture controller preregisters with every freeze.
+    pub(super) fn producer_plan() -> ProducerPlan {
+        let digest = |name: &str| sha256_hex(format!("fixture {name}").as_bytes());
+        ProducerPlan {
+            release: HandoffRelease {
+                encoder: HandoffEncoder {
+                    hyperion_weights: digest("hyperion_weights"),
+                    hyperion_manifest: digest("hyperion_manifest"),
+                    component_bundle: digest("component_bundle"),
+                    foundation_weights: digest("foundation_weights"),
+                    target_weights: digest("target_weights"),
+                    frozen_transforms: digest("frozen_transforms"),
+                    assembly: digest("assembly"),
+                    recipe: digest("recipe"),
+                },
+                source_sha256: "b".repeat(40),
+                producer_sha256: sha256_hex(FIXTURE_PRODUCER),
+                verification_policy_sha256: digest("verification policy"),
+                reference_manifest_sha256: digest("reference manifest"),
+            },
+            transformations: [
+                "fixture.row-embeddings/v1",
+                "fixture.signature/v1",
+                "fixture.foundation-raw/v1",
+                "fixture.target/v1",
+                "fixture.foundation-projected/v1",
+                "fixture.final-context/v1",
+            ]
+            .map(String::from)
+            .to_vec(),
+            qualification_sha256: digest("W2 producer qualification"),
+        }
+    }
+
+    /// One W2 context handoff to teacher admission and its execution receipts, before they are
+    /// retained, so a test can tamper with any part.
+    pub(super) struct HandoffParts {
+        pub(super) handoff: serde_json::Value,
+        pub(super) job: WorkerJob,
+        pub(super) outcome: WorkerOutcome,
+    }
+
+    impl HandoffParts {
+        /// Recompute the supervisor receipt's job identity after the job changed.
+        pub(super) fn reseal(&mut self) {
+            self.outcome.job_sha256 = self.job.identity().unwrap();
+            self.outcome.request_sha256 = self.job.request.identity().unwrap();
+        }
+    }
+
+    /// The handoff the preregistered producer makes of the context `output_sha256` for the
+    /// comparison's dataset, with a completed execution inside `window`. Nothing is executed.
+    pub(super) fn handoff_parts(
+        state: &State,
+        output_sha256: &str,
+        comparison: &HwmIdentity,
+        experiment: &Experiment,
+        window: &ExecutionWindow,
+    ) -> HandoffParts {
+        let plan = producer_plan();
+        let directory = state.root().join("fixture-context-worker");
+        let program = Artifact {
+            path: directory.join("producer"),
+            sha256: plan.release.producer_sha256.clone(),
+        };
+        let input = Artifact {
+            path: directory.join("input.json"),
+            sha256: sha256_hex(b"fixture context input"),
+        };
+        let artifact_bytes = canonical_json(&json!({"schema": "fixture cpu context artifact",
+            "context_sha256": output_sha256}))
+        .unwrap();
+        let artifact = Artifact {
+            path: directory.join("artifact.json"),
+            sha256: state.put_blob(&artifact_bytes).unwrap(),
+        };
+        let request = EvaluationRequest {
+            schema: REQUEST_SCHEMA.into(),
+            experiment_sha256: experiment.identity().unwrap(),
+            dataset_sha256: comparison.dataset_hash.clone(),
+            split_sha256: comparison.cut_id.clone(),
+            fitting_rows_sha256: sha256_hex(b"fixture context fitting rows"),
+            scoring_rows_sha256: sha256_hex(b"fixture context scoring rows"),
+            fitting_rows: 10,
+            scoring_rows: 1,
+            recipe_sha256: plan.release.producer_sha256.clone(),
+            evaluator_sha256: comparison.evaluator_sha256.clone(),
+            checkpoint_sha256: None,
+            task: Task::Regression,
+            metric: jope_pipeline::experiment::Metric::Rmse,
+            classes: vec![],
+            fold: 0,
+            stage: EvaluationStage::Diagnostic,
+            seed: 7,
+            numerical_policy: NUMERICAL_POLICY.into(),
+        };
+        let job = WorkerJob {
+            request: request.clone(),
+            command: WorkerCommand {
+                program,
+                args: vec![],
+                inputs: vec![input.clone()],
+                environment: BTreeMap::new(),
+            },
+            directory,
+            outputs: vec!["artifact.json".into()],
+            arm: None,
+        };
+        let allocation = jope_pipeline::execution::fit_memory_allocation(experiment).unwrap();
+        let outcome = WorkerOutcome {
+            schema: EXECUTION_SCHEMA.into(),
+            job_sha256: job.identity().unwrap(),
+            request_sha256: request.identity().unwrap(),
+            command_status: EvaluationStatus::Completed,
+            reason: None,
+            exit_code: Some(0),
+            signal: None,
+            outputs: vec![artifact.clone()],
+            stdout: None,
+            stderr: None,
+            consumption: ObservedConsumption {
+                fit_memory_limit_bytes: Some(allocation.per_fit_bytes),
+                gate_released_unix_ms: Some(window.started_unix_ms),
+                observed_exit_unix_ms: Some(window.started_unix_ms + 10),
+                wall_seconds: Some(0.01),
+                cpu_seconds: Some(0.01),
+                cgroup_peak_memory_bytes: Some(4096),
+                accounting_reason: "synthetic fixture, nothing executed".into(),
+                ..Default::default()
+            },
+        };
+        let handoff = json!({
+            "schema": HANDOFF_SCHEMA,
+            "consumer": TEACHER_ADMISSION,
+            "release": plan.release,
+            "transformations": plan.transformations,
+            "scope": {
+                "training": {
+                    "dataset_sha256": comparison.dataset_hash,
+                    "prepared_sha256": sha256_hex(b"fixture prepared"),
+                    "training_sha256": sha256_hex(b"fixture training"),
+                    "fitting_rows_sha256": sha256_hex(b"fixture fitting rows"),
+                    "cut": 0
+                },
+                "input_sha256": input.sha256,
+                "preprocessing_sha256": sha256_hex(b"fixture preprocessing"),
+                "prepared_rows_sha256": sha256_hex(b"fixture prepared rows")
+            },
+            "artifact_sha256": artifact.sha256,
+            "qualification_sha256": plan.qualification_sha256,
+            "admission_pins_sha256": sha256_hex(b"fixture admission pins"),
+            "context_sha256": output_sha256
+        });
+        HandoffParts {
+            handoff,
+            job,
+            outcome,
+        }
+    }
+
+    /// Retain `parts` as a submission would carry them.
+    pub(super) fn retain_handoff(
+        state: &State,
+        parts: &HandoffParts,
+        experiment: &Experiment,
+        window: &ExecutionWindow,
+    ) -> HandoffEvidence {
+        let put = |bytes: Vec<u8>| state.put_blob(&bytes).unwrap();
+        HandoffEvidence {
+            handoff_sha256: put(serde_json::to_vec(&parts.handoff).unwrap()),
+            execution: ContextExecution {
+                job_sha256: put(canonical_json(&parts.job).unwrap()),
+                outcome_sha256: put(canonical_json(&parts.outcome).unwrap()),
+                experiment_sha256: put(canonical_json(experiment).unwrap()),
+                window_sha256: put(canonical_json(window).unwrap()),
+            },
+        }
+    }
+
+    /// The preregistered producer's handoff of `context`, executed inside `window`.
+    pub(super) fn handed_off(
+        state: &State,
+        mut context: ContextEvidence,
+        comparison: &HwmIdentity,
+        experiment: &Experiment,
+        window: &ExecutionWindow,
+    ) -> ContextEvidence {
+        let parts = handoff_parts(
+            state,
+            &context.output_sha256,
+            comparison,
+            experiment,
+            window,
+        );
+        context.handoff = Some(retain_handoff(state, &parts, experiment, window));
+        context
     }
 
     /// Producer-side scope, built from the fixture rows rather than the receiver's derivation.
@@ -1513,6 +1735,7 @@ mod tests {
             receipt_sha256: state.put_blob(&canonical_json(&receipt).unwrap()).unwrap(),
             fitted_state_sha256: state.put_blob(&fitted).unwrap(),
             output_sha256: state.put_blob(output).unwrap(),
+            handoff: None,
         }
     }
 
@@ -1697,7 +1920,13 @@ mod tests {
             window_sha256: state.put_blob(&canonical_json(&window).unwrap()).unwrap(),
             fold_predictions_sha256: Vec::new(),
             inner: None,
-            context: Some(valid_context(&state, &comparison, &rows)),
+            context: Some(handed_off(
+                &state,
+                valid_context(&state, &comparison, &rows),
+                &comparison,
+                &experiment,
+                &window,
+            )),
         };
         let (record, evidence) = candidate_in(
             &state,
@@ -2397,6 +2626,7 @@ mod tests {
         assert!(verify(&request, &bad, 4100).is_err());
     }
 
+    mod handoff;
     mod linkage;
     mod matrix;
     mod metrics;
