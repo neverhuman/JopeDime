@@ -11,7 +11,7 @@ neither is live qualification.
 |---|---|
 | `findings/register.json` | `33146b77ca2bd8769d8a2b869fe4844755df86a0a8dccdd41609c2d1080e5e6a` |
 | `findings/dispositions.json` | `e097ca511964e584ed81dfa44c8f43dbaf072981fb666747eb9a3e821210cca1` |
-| `work-orders/task-status.json` | `54f5b515cb62a66c848c6c61a79da00afb6c8c7fbdcc0aab997a1f41b1536056` |
+| `work-orders/task-status.json` | `5f72e28347800757075fbad7ce301c6e9496bafe1ed92b529178ef68949029f9` |
 | `claims/claims.json` | `380ec2ffc72fd1e41bcde9f8897f485d5c0605549cad52165a07fecb0874a011` |
 
 ## Findings and tasks by primary work order
@@ -21,19 +21,19 @@ Task columns count tasks holding each state; a task can hold several.
 | Work order | Gaps | Improvements | Open | Closed | Tasks | planned | reproduced | implemented | fixture-proven | CI-verified | live-qualified | measurement-complete | blocked |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | W0 | 1 | 1 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| W1 | 9 | 8 | 17 | 0 | 7 | 3 | 2 | 4 | 3 | 0 | 0 | 0 | 0 |
+| W1 | 9 | 8 | 17 | 0 | 7 | 0 | 4 | 7 | 6 | 0 | 0 | 0 | 0 |
 | W2 | 12 | 11 | 23 | 0 | 7 | 0 | 2 | 7 | 6 | 0 | 0 | 0 | 0 |
 | W3 | 13 | 13 | 26 | 0 | 7 | 0 | 5 | 7 | 6 | 0 | 0 | 0 | 0 |
 | W4 | 5 | 5 | 10 | 0 | 7 | 0 | 3 | 7 | 6 | 0 | 0 | 0 | 0 |
 | W5 | 9 | 9 | 18 | 0 | 7 | 0 | 5 | 7 | 7 | 0 | 0 | 0 | 0 |
-| W6 | 8 | 8 | 16 | 0 | 7 | 1 | 5 | 6 | 6 | 0 | 0 | 0 | 0 |
+| W6 | 8 | 8 | 16 | 0 | 7 | 0 | 5 | 7 | 7 | 0 | 0 | 0 | 0 |
 | W7 | 0 | 0 | 0 | 0 | 9 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 3 |
 | W8 | 2 | 2 | 4 | 0 | 8 | 0 | 1 | 6 | 6 | 0 | 0 | 0 | 2 |
 | W9 | 11 | 11 | 22 | 0 | 7 | 0 | 2 | 6 | 6 | 0 | 0 | 0 | 1 |
 | W10 | 12 | 13 | 25 | 0 | 10 | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 9 |
 | W11 | 6 | 6 | 12 | 0 | 8 | 0 | 1 | 3 | 3 | 0 | 0 | 0 | 5 |
 | W12 | 9 | 11 | 20 | 0 | 8 | 0 | 1 | 6 | 6 | 0 | 0 | 0 | 2 |
-| **Total** | **97** | **98** | **195** | **0** | **92** | **10** | **27** | **60** | **56** | **0** | **0** | **0** | **22** |
+| **Total** | **97** | **98** | **195** | **0** | **92** | **6** | **29** | **64** | **60** | **0** | **0** | **0** | **22** |
 
 ## Pending gates
 
@@ -74,6 +74,6 @@ verified by `jope-records verify-claims --require-custody` where custody is read
 
 ## Not progress
 
-- Tasks still only planned (no commits or evidence): 10 of 92.
+- Tasks still only planned (no commits or evidence): 6 of 92.
 - Findings without any disposition record: 195 of 195.
 - Findings closed: 0 of 195.

@@ -52,8 +52,28 @@
     },
     "W1-T04": {
       "states": [
-        "planned"
-      ]
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "86697269e11c9d9623af4a8a2fc151e5234898f4",
+        "62c1327488c174e2716091b1d565bb2a0f31b637"
+      ],
+      "tests": [
+        "label_release::audit_never_parses_or_publishes_sealed_test_labels",
+        "qualification_search_of_a_sealed_meta_test_family_is_refused_before_any_view_or_fit",
+        "a_selection_receipt_alone_neither_reads_caller_chosen_labels_nor_publishes_a_score",
+        "outer_scores_need_a_grant_read_only_the_granted_labels_and_release_once"
+      ],
+      "evidence": [
+        "docs/internal/core-ip/work-orders/evidence/W01-label-release-counterfactuals-staging.md",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1b-t04-prefix-audit-search-20260926T073551Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1b-t04-prefix-score-20260926T092242Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1b-t04-postfix-audit-search-20260926T091627Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1b-t04-postfix-score-20260926T092803Z"
+      ],
+      "remaining": "The audit no longer parses sealed labels; sealed meta_test families are refused by search; outer scoring needs a one-attempt grant for an authenticated fitted subject, records exposure before any label byte is read, and releases once through a hash-chained ledger. Release is library-only (no CLI verb yet); the scorer is separated by component contract on one host, not OS isolation (W7)."
     },
     "W1-T05": {
       "states": [
@@ -75,13 +95,42 @@
     },
     "W1-T06": {
       "states": [
-        "planned"
-      ]
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "d21889a5f30c1b7f12bfb2fad7a4738aa71f34be"
+      ],
+      "tests": [
+        "tests/counterfactual_boundaries.rs (13 mutation receipts, exact SHA-256 equality)"
+      ],
+      "evidence": [
+        "docs/internal/core-ip/work-orders/evidence/W01-label-release-counterfactuals-staging.md",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1b-t06-prefix-20260926T092507Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1b-t06-postfix-20260926T093342Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1b-slice3-t06-regression-20260926T093641Z"
+      ],
+      "remaining": "Forbidden-only perturbations leave results bit-identical and authorized controls change them; duplicate-expanding joins, collapsed duplicate source rows and symlinked splits are now refused. The harness does not yet cover the context producer, encoders, teacher or trainer; consumer-map routes R1, R2, R4-R6, R9-R12 and the remaining R8 sites stay open."
     },
     "W1-T07": {
       "states": [
-        "planned"
-      ]
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "20da5a84ce3820f64fc8ad0f5577d93f5a95353e"
+      ],
+      "tests": [
+        "jope-datasets tests/staging_disposition.rs (6)"
+      ],
+      "evidence": [
+        "crates/jope-datasets/releases/staging-disposition/historical-gpu-staging-20260925.json",
+        "crates/jope-datasets/releases/staging-disposition/fitting-only-staging-protocol-v1.json",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1b-t07-derive-20260926T093903Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1b-t07-custody-replay-20260926T093927Z"
+      ],
+      "remaining": "The historical staging is dispositioned from retained custody (outer-label parsing, failure before CUDA qualification, 28 affected descendants, unknowns kept unknown; excluded from headline measurements) and the corrected protocol has a new identity. No corrected run exists yet; the verifier is not wired into jope benchmark inference-plan."
     },
     "W2-T01": {
       "states": [
@@ -694,8 +743,20 @@
     },
     "W6-T07": {
       "states": [
-        "planned"
-      ]
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "7ed7b2b97ba5397dfb688e2b3e9711e07d29e049"
+      ],
+      "tests": [
+        "tests/training_ancestry.rs (4, neural feature, CPU)"
+      ],
+      "evidence": [
+        "docs/internal/core-ip/work-orders/evidence/W06-training-boundary.md",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w6-post-t07-20260926T094323Z"
+      ],
+      "remaining": "New capability: genealogy and possible/exact/availability exposure from retained manifests and bound journals, unknown history kept unknown. Applying it to the historical step-60000 ancestry needs the retained historical objects (W12 genealogy); multi-host journal retention is W7/W8."
     },
     "W7-T01": {
       "states": [
@@ -966,7 +1027,8 @@
         "fixture-proven"
       ],
       "commits": [
-        "5b3808e6665ed7596143d71c0ebe1ef0dfa4bc2e"
+        "5b3808e6665ed7596143d71c0ebe1ef0dfa4bc2e",
+        "723cc035a406d6b63d31170304e17acbedabb99e"
       ],
       "tests": [
         "public_manifest_alone_cannot_see_a_substituted_native_library",

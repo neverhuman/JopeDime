@@ -6,10 +6,10 @@ not CI verification, and neither is live qualification. No finding closes throug
 
 | State | Tasks |
 |---|---:|
-| planned | 10 |
-| reproduced | 27 |
-| implemented | 60 |
-| fixture-proven | 56 |
+| planned | 6 |
+| reproduced | 29 |
+| implemented | 64 |
+| fixture-proven | 60 |
 | CI-verified | 0 |
 | live-qualified | 0 |
 | measurement-complete | 0 |
@@ -22,10 +22,10 @@ not CI verification, and neither is live qualification. No finding closes throug
 | W1-T01 Inventory input consumers and release sources | implemented | 93a8a8c5dec7 | Consumer map is from source reading; anchors not marked (read) are leads. Nothing consumes the frozen release yet (ASM development loader and context producer input are open). |
 | W1-T02 Freeze the regression release and family registry | implemented, fixture-proven | 0b695b3d2619; tests/regression_release.rs (8, including the mutation table) | New contract (no pre-existing receiver to reproduce). All ten members have unknown exposure, so never-seen-family claims stay blocked; 14 catalog-name relations are unresolved and need independent review. |
 | W1-T03 Define preparation semantics explicitly | reproduced, implemented, fixture-proven | cbdb4c3123d5; tests/preparation_semantics.rs (13) | Fails closed on legacy pointer views whose stored preprocessing differs from a refit, and on exact identity features, with no declared exception mechanism yet. |
-| W1-T04 Separate fit inputs, scoring labels and result release | planned | — | — |
+| W1-T04 Separate fit inputs, scoring labels and result release | reproduced, implemented, fixture-proven | 86697269e11c; 62c1327488c1; label_release::audit_never_parses_or_publishes_sealed_test_labels; qualification_search_of_a_sealed_meta_test_family_is_refused_before_any_view_or_fit; a_selection_receipt_alone_neither_reads_caller_chosen_labels_nor_publishes_a_score; +1 tests | The audit no longer parses sealed labels; sealed meta_test families are refused by search; outer scoring needs a one-attempt grant for an authenticated fitted subject, records exposure before any label byte is read, and releases once through a hash-chained ledger. Release is library-only (no CLI verb yet); the scorer is separated by component contract on one host, not OS isolation (W7). |
 | W1-T05 Enforce an immutable worker input closure | reproduced, implemented, fixture-proven | 8b4e51f1eb71; tests/input_closure.rs (5) | Fixture scope only (stale cached blobs). Worker isolation is W7; environment re-rooting, upward root search, jope_home cwd fallback and store_file early return are mapped, not fixed. |
-| W1-T06 Build counterfactual receiving-path proofs | planned | — | — |
-| W1-T07 Resolve historical staging without rewriting it | planned | — | — |
+| W1-T06 Build counterfactual receiving-path proofs | reproduced, implemented, fixture-proven | d21889a5f30c; tests/counterfactual_boundaries.rs (13 mutation receipts, exact SHA-256 equality) | Forbidden-only perturbations leave results bit-identical and authorized controls change them; duplicate-expanding joins, collapsed duplicate source rows and symlinked splits are now refused. The harness does not yet cover the context producer, encoders, teacher or trainer; consumer-map routes R1, R2, R4-R6, R9-R12 and the remaining R8 sites stay open. |
+| W1-T07 Resolve historical staging without rewriting it | implemented, fixture-proven | 20da5a84ce38; jope-datasets tests/staging_disposition.rs (6) | The historical staging is dispositioned from retained custody (outer-label parsing, failure before CUDA qualification, 28 affected descendants, unknowns kept unknown; excluded from headline measurements) and the corrected protocol has a new identity. No corrected run exists yet; the verifier is not wired into jope benchmark inference-plan. |
 
 ## W02
 
@@ -85,7 +85,7 @@ not CI verification, and neither is live qualification. No finding closes throug
 | W6-T04 Record actual consumption and committed updates | reproduced, implemented, fixture-proven | ad0b31daf13a; tests/committed_updates.rs (6, neural feature, CPU) | Rejected reference-optimizer updates are atomic; per-rank consumption journal bound into checkpoints. The rank_impl journal path is compile-checked only (CUDA/NCCL and the held grant); cross-rank aggregation is W7; historical runs have no journal (T07). |
 | W6-T05 Commit complete checkpoints atomically | reproduced, implemented, fixture-proven | 787a7b27a047; tests/checkpoint_commit.rs (5, neural feature, CPU) | Atomic checkpoint publication with a verifying loader; the same-pid stale temporary no longer blocks commits. Trainer-side wiring is compile-checked only; manifest::atomic_write keeps the fixed temp name for its other callers; multi-host receipts are W7 and remote publication W8. |
 | W6-T06 Enforce all four continuation modes | implemented, fixture-proven | 7906af67cc25; tests/continuation_modes.rs (7, neural feature, CPU); tests/checkpoint_commit.rs objective cases | Four continuation modes classified and enforced before CUDA; full objective identity bound into checkpoints (G1). Legacy parents are accepted with matching legacy IDs and recorded as legacy_ids_only (owner decision). Launch request objects still express the mode implicitly; rank_impl wiring compile-checked only. |
-| W6-T07 Reconcile accepted ancestry and exposure limits | planned | — | — |
+| W6-T07 Reconcile accepted ancestry and exposure limits | implemented, fixture-proven | 7ed7b2b97ba5; tests/training_ancestry.rs (4, neural feature, CPU) | New capability: genealogy and possible/exact/availability exposure from retained manifests and bound journals, unknown history kept unknown. Applying it to the historical step-60000 ancestry needs the retained historical objects (W12 genealogy); multi-host journal retention is W7/W8. |
 
 ## W07
 
@@ -122,7 +122,7 @@ not CI verification, and neither is live qualification. No finding closes throug
 | W9-T02 Freeze a complete inference capsule | reproduced, implemented, fixture-proven | 1259d9184070; same_recipe_state_swaps_and_missing_stages_fail_even_with_equal_predictions | Report-path verify now re-emits and binds the fitted state (6 of 9 tampered entries were accepted before). An old prepared.json whose emitter output differs now fails verify(). The exported subject is a fold fit; no final whole-data refit identity to bind yet. |
 | W9-T03 Emit and build in a bounded credential-free environment | implemented, fixture-proven | 885bddb603b5; hostile_fitted_strings_never_reach_command_arguments | Verified safeguard for hostile strings. Builder isolation from credentials, network and private canaries was not run. |
 | W9-T04 Qualify raw-input and exact-bit behavior | implemented, fixture-proven | 885bddb603b5; emitted_backends_match_native_on_raw_edge_inputs_and_refuse_malformed_rows; raw_input_comparator_detects_changed_constants_and_truncated_outputs; missing_learned_state_is_refused_never_defaulted | Verified safeguard: 42 raw cases across Python, Rust, JS and C++17/20 on five heads, 0 divergences. Swapped categorical columns are accepted as data (positional input). |
-| W9-T05 Bind qualification to installation/load | reproduced, implemented, fixture-proven | 5b3808e6665e; public_manifest_alone_cannot_see_a_substituted_native_library; intact_packages_load_and_tampered_installations_refuse_before_serving; changed_serving_dependency_refuses_and_required_failures_block | Package seal/install/load exists but is not wired into qualify-export and has no install command; load trusts the identity it is given, which must come from an authenticated release record. |
+| W9-T05 Bind qualification to installation/load | reproduced, implemented, fixture-proven | 5b3808e6665e; 723cc035a406; public_manifest_alone_cannot_see_a_substituted_native_library; intact_packages_load_and_tampered_installations_refuse_before_serving; changed_serving_dependency_refuses_and_required_failures_block | Package seal/install/load exists but is not wired into qualify-export and has no install command; load trusts the identity it is given, which must come from an authenticated release record. |
 | W9-T06 Separate determinism and bounded translation checks | implemented, fixture-proven | 885bddb603b5; re_emission_of_an_identical_capsule_is_source_deterministic | Source determinism only (10 backend/head pairs), not reproducible binaries; the C++ plan identity depends on the host CXX and JOPE_CXX_MARCH. |
 | W9-T07 Release one supported real selected subject | blocked | — | Needs the W1-W9 live gates and an admitted real-loop window; no execution is authorized in this change. |
 
