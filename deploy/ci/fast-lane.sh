@@ -47,6 +47,8 @@ python3 docs/internal/core-ip/tools/task_status.py
 python3 -m unittest discover -s docs/internal/core-ip/tools -p test_task_status.py -v
 python3 docs/internal/core-ip/tools/progress_view.py
 python3 -m unittest discover -s docs/internal/core-ip/tools -p test_progress_view.py -v
+python3 docs/internal/core-ip/tools/elo_history.py
+python3 -m unittest discover -s docs/internal/core-ip/tools -p test_elo_history.py -v
     # Hygiene
 bash deploy/ci/check.sh
     # cargo-deny

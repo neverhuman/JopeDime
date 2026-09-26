@@ -90,7 +90,9 @@
         "python3 docs/internal/core-ip/tools/task_status.py",
         "python3 -m unittest discover -s docs/internal/core-ip/tools -p test_task_status.py -v",
         "python3 docs/internal/core-ip/tools/progress_view.py",
-        "python3 -m unittest discover -s docs/internal/core-ip/tools -p test_progress_view.py -v"
+        "python3 -m unittest discover -s docs/internal/core-ip/tools -p test_progress_view.py -v",
+        "python3 docs/internal/core-ip/tools/elo_history.py",
+        "python3 -m unittest discover -s docs/internal/core-ip/tools -p test_elo_history.py -v"
       ]
     },
     "rust-check": {
@@ -2177,6 +2179,16 @@
         "maintenance"
       ],
       "scope": "Standalone fixture runner; not pytest-collected."
+    },
+    "python:docs/internal/core-ip/tools/test_elo_history.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "hygiene"
+      ],
+      "dispositions": [],
+      "scope": "Independent replay of the retained historical Elo ladders from digest-pinned inputs (every committed cell must match; only likelihood-exchangeable methods may trade places), refusal of duplicate score deliveries, substituted or re-pinned inputs and disposition upgrades, historical-ranking-only consumer enforcement, lineage parent-edge recomputation with continuity and exposure refusals, and derived plot-table consistency. The two Golden45 ladders replay only where zstd is available and are otherwise reported as not replayed."
     },
     "python:docs/internal/core-ip/tools/test_progress_view.py": {
       "discovery": {

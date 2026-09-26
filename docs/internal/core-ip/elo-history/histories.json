@@ -1,0 +1,656 @@
+{
+  "schema": "jope.core-ip-elo-histories/v1",
+  "note": "W12-T04 reconciliation of historical Elo ladders and checkpoint genealogy. Verified by docs/internal/core-ip/tools/elo_history.py; see work-orders/evidence/W12-elo-genealogy.md.",
+  "numerical_policy": "A reproducible history must be recomputed from its digest-pinned inputs by an independent implementation (aggregated pair statistics, plain Python floats) and match every committed leaderboard and snapshot cell, as Python round/repr write them, with one exception: methods that are exchangeable in the Bradley-Terry likelihood (equal match counts against every other method and equal total score) have equal ratings in exact arithmetic, so their relative order may differ; that order was set by floating-point accumulation and is reported, not treated as data. Unrounded historical ratings were never retained.",
+  "consumer": "historical-ranking-only",
+  "refused_consumers": [
+    "teaching",
+    "hwm",
+    "transfer",
+    "promotion"
+  ],
+  "histories": [
+    {
+      "id": "H-same-cut-v1-deep",
+      "disposition": "reproducible-with-receipts",
+      "subject": "same-cut v1 deep ladder (jope-same-cut-v1-deep), ten committed test-10 regression datasets",
+      "scope": "historical same-cut snapshot on a favourable ten-dataset selection; not the current ASM30 panel and not a held-out or transfer result",
+      "receipts": {
+        "original_execution": "jope-bench run/ladder and jope-arena elo at 97c4ea1daf7ed67ee34bc538f2b855ecab06a318 (the git_sha of all ten reports, observed 2026-09-23T06:08-06:10Z); commands in assets/same-cut/v1/SOURCES.md",
+        "algorithm": "regularized Bradley-Terry on the Elo scale (crates/jope-arena/src/elo.rs::fit_elo, the port of sotarena/elo.py): one equal-weight match per dataset and method pair, outcome 1/0.5/0 with the relative tie rule |a-b| <= 1e-12*max(|a|,|b|,1), start and centre 1500, L2 1e-4, at most 250 synchronous diagonal-Newton iterations, per-iteration clamp +-40, stop when the largest update is below 1e-8, final mean-centring; sorted dataset and method-pair accumulation order",
+        "independent_checks": [
+          "crates/jope-bench/tests/committed_evidence.rs::the_tracks_and_ladders_re_derive_byte_for_byte",
+          "docs/internal/core-ip/tools/elo_history.py (this replay)"
+        ]
+      },
+      "replay": {
+        "root": "assets/same-cut/v1/track",
+        "track_id": "jope-same-cut-v1-deep",
+        "ladder": "published",
+        "corrections": null,
+        "inputs": {
+          "track": {
+            "path": "assets/same-cut/v1/track/tracks/jope-same-cut-v1-deep/track.json",
+            "sha256": "ecf82cbcd22aaeb015eb07ebb635f3835d1f1e0cd9f2b72b9737ab51b42d11ef"
+          },
+          "datasets": {
+            "path": "assets/same-cut/v1/track/registry/datasets.jope-same-cut-v1-deep.json",
+            "sha256": "8263a066ed3fac905f98ec2feec01a07fbf32a04588034d85f74fa5893cb4806"
+          },
+          "methods": {
+            "path": "assets/same-cut/v1/track/registry/methods.json",
+            "sha256": "ccdf5fa2eec88a63a6954eca7f6ea3ddbb163663eed1e0c109b5e959f6dbc7f9"
+          },
+          "scores": {
+            "path": "assets/same-cut/v1/track/results/jope-same-cut-v1-deep/scores.csv",
+            "sha256": "f64380412e0ec4de435ad732392ce6fca01efee69d67543c5a40df20348054d7"
+          }
+        },
+        "outputs": {
+          "leaderboard": {
+            "path": "assets/same-cut/v1/leaderboard-jope-same-cut-v1-deep.csv",
+            "sha256": "b19314a57858325e410e8ccf32a24c57befc7b1ad1d42f2ca409702e2c622826"
+          },
+          "snapshot": {
+            "path": "assets/same-cut/v1/elo-jope-same-cut-v1-deep.json",
+            "sha256": "d5c7bbc8b94d7b51e943dccfb0ad9c99452a430992d97c572fb8857ad7bec682"
+          }
+        }
+      },
+      "anchors": [
+        "assets/same-cut/v1/SOURCES.md",
+        "crates/jope-arena/src/leaderboard.rs:294-435",
+        "docs/internal/core-ip/sections/07.md:54-78"
+      ],
+      "limitations": [
+        "The scores.csv track was written by jope-bench from the committed reports; the reports themselves are re-derived by committed_evidence.rs, not by this replay.",
+        "Ten datasets chosen where the historical engine ranked first; the ladder does not generalise to a broader panel.",
+        "Ratings are relative to this method universe and are displayed to 0.1 Elo; unrounded values were never retained."
+      ]
+    },
+    {
+      "id": "H-same-cut-v1-screen",
+      "disposition": "reproducible-with-receipts",
+      "subject": "same-cut v1 screen ladder (jope-same-cut-v1-screen), ten committed test-10 regression datasets",
+      "scope": "historical same-cut snapshot on a favourable ten-dataset selection; not the current ASM30 panel and not a held-out or transfer result",
+      "receipts": {
+        "original_execution": "jope-bench run/ladder and jope-arena elo at 97c4ea1daf7ed67ee34bc538f2b855ecab06a318 (the git_sha of all ten reports, observed 2026-09-23T06:08-06:10Z); commands in assets/same-cut/v1/SOURCES.md",
+        "algorithm": "regularized Bradley-Terry on the Elo scale (crates/jope-arena/src/elo.rs::fit_elo, the port of sotarena/elo.py): one equal-weight match per dataset and method pair, outcome 1/0.5/0 with the relative tie rule |a-b| <= 1e-12*max(|a|,|b|,1), start and centre 1500, L2 1e-4, at most 250 synchronous diagonal-Newton iterations, per-iteration clamp +-40, stop when the largest update is below 1e-8, final mean-centring; sorted dataset and method-pair accumulation order",
+        "independent_checks": [
+          "crates/jope-bench/tests/committed_evidence.rs::the_tracks_and_ladders_re_derive_byte_for_byte",
+          "docs/internal/core-ip/tools/elo_history.py (this replay)"
+        ]
+      },
+      "replay": {
+        "root": "assets/same-cut/v1/track",
+        "track_id": "jope-same-cut-v1-screen",
+        "ladder": "published",
+        "corrections": null,
+        "inputs": {
+          "track": {
+            "path": "assets/same-cut/v1/track/tracks/jope-same-cut-v1-screen/track.json",
+            "sha256": "da1d16c2ffb2df2fd5218ad1f4c33dc759517ec39d3de02a6061136d3f90e3cc"
+          },
+          "datasets": {
+            "path": "assets/same-cut/v1/track/registry/datasets.jope-same-cut-v1-screen.json",
+            "sha256": "8263a066ed3fac905f98ec2feec01a07fbf32a04588034d85f74fa5893cb4806"
+          },
+          "methods": {
+            "path": "assets/same-cut/v1/track/registry/methods.json",
+            "sha256": "ccdf5fa2eec88a63a6954eca7f6ea3ddbb163663eed1e0c109b5e959f6dbc7f9"
+          },
+          "scores": {
+            "path": "assets/same-cut/v1/track/results/jope-same-cut-v1-screen/scores.csv",
+            "sha256": "7d11173a92f87b45b421d3342ac788c2caa7cae1a09aaf29a99819cbc7163e7d"
+          }
+        },
+        "outputs": {
+          "leaderboard": {
+            "path": "assets/same-cut/v1/leaderboard-jope-same-cut-v1-screen.csv",
+            "sha256": "af5088eaf4c12f39cf9313a08797ce8b50f42fd7bcc18124ba1ffe714f140929"
+          },
+          "snapshot": {
+            "path": "assets/same-cut/v1/elo-jope-same-cut-v1-screen.json",
+            "sha256": "0b6b12656eb599d139c74c7a8265c615b4e2fc34c468c9f61a1b2b7e1b5e200d"
+          }
+        }
+      },
+      "anchors": [
+        "assets/same-cut/v1/SOURCES.md",
+        "crates/jope-arena/src/leaderboard.rs:294-435",
+        "docs/internal/core-ip/sections/07.md:54-78"
+      ],
+      "limitations": [
+        "The scores.csv track was written by jope-bench from the committed reports; the reports themselves are re-derived by committed_evidence.rs, not by this replay.",
+        "Ten datasets chosen where the historical engine ranked first; the ladder does not generalise to a broader panel.",
+        "Ratings are relative to this method universe and are displayed to 0.1 Elo; unrounded values were never retained."
+      ]
+    },
+    {
+      "id": "H-same-cut-v2-deep",
+      "disposition": "reproducible-with-receipts",
+      "subject": "same-cut v2 deep ladder (jope-same-cut-v1-deep), ten committed test-10 regression datasets",
+      "scope": "historical same-cut snapshot on a favourable ten-dataset selection; not the current ASM30 panel and not a held-out or transfer result",
+      "receipts": {
+        "original_execution": "jope-bench run/ladder and jope-arena elo at 8c90a32792af1be0435fc92b526d0cb2b890a48b (the git_sha of all ten reports, observed 2026-09-23T07:27-07:28Z); commands in assets/same-cut/v2/SOURCES.md",
+        "algorithm": "regularized Bradley-Terry on the Elo scale (crates/jope-arena/src/elo.rs::fit_elo, the port of sotarena/elo.py): one equal-weight match per dataset and method pair, outcome 1/0.5/0 with the relative tie rule |a-b| <= 1e-12*max(|a|,|b|,1), start and centre 1500, L2 1e-4, at most 250 synchronous diagonal-Newton iterations, per-iteration clamp +-40, stop when the largest update is below 1e-8, final mean-centring; sorted dataset and method-pair accumulation order",
+        "independent_checks": [
+          "crates/jope-bench/tests/committed_evidence.rs::the_tracks_and_ladders_re_derive_byte_for_byte",
+          "docs/internal/core-ip/tools/elo_history.py (this replay)"
+        ]
+      },
+      "replay": {
+        "root": "assets/same-cut/v2/track",
+        "track_id": "jope-same-cut-v1-deep",
+        "ladder": "published",
+        "corrections": null,
+        "inputs": {
+          "track": {
+            "path": "assets/same-cut/v2/track/tracks/jope-same-cut-v1-deep/track.json",
+            "sha256": "ecf82cbcd22aaeb015eb07ebb635f3835d1f1e0cd9f2b72b9737ab51b42d11ef"
+          },
+          "datasets": {
+            "path": "assets/same-cut/v2/track/registry/datasets.jope-same-cut-v1-deep.json",
+            "sha256": "8263a066ed3fac905f98ec2feec01a07fbf32a04588034d85f74fa5893cb4806"
+          },
+          "methods": {
+            "path": "assets/same-cut/v2/track/registry/methods.json",
+            "sha256": "3928e891ff604418f51b206cde543583512f846979b5831bbfa4b7c42f50dfbf"
+          },
+          "scores": {
+            "path": "assets/same-cut/v2/track/results/jope-same-cut-v1-deep/scores.csv",
+            "sha256": "f945ec481a19bbd44bf7b1daf5a26498c91397b842c5aad063eab07a21522968"
+          }
+        },
+        "outputs": {
+          "leaderboard": {
+            "path": "assets/same-cut/v2/leaderboard-jope-same-cut-v1-deep.csv",
+            "sha256": "bf2c6dc0e8267492e6dedcbaf680e80d00982ae0350c9d32a9f59d6e8cd8dcc9"
+          },
+          "snapshot": {
+            "path": "assets/same-cut/v2/elo-jope-same-cut-v1-deep.json",
+            "sha256": "cbc445f6a4aab54c9f02fa3149afc6a262296c13d4f2ddb191bfb364fa23c901"
+          }
+        }
+      },
+      "anchors": [
+        "assets/same-cut/v2/SOURCES.md",
+        "crates/jope-arena/src/leaderboard.rs:294-435",
+        "docs/internal/core-ip/sections/07.md:54-78"
+      ],
+      "limitations": [
+        "The scores.csv track was written by jope-bench from the committed reports; the reports themselves are re-derived by committed_evidence.rs, not by this replay.",
+        "Ten datasets chosen where the historical engine ranked first; the ladder does not generalise to a broader panel.",
+        "Ratings are relative to this method universe and are displayed to 0.1 Elo; unrounded values were never retained."
+      ]
+    },
+    {
+      "id": "H-same-cut-v2-screen",
+      "disposition": "reproducible-with-receipts",
+      "subject": "same-cut v2 screen ladder (jope-same-cut-v1-screen), ten committed test-10 regression datasets",
+      "scope": "historical same-cut snapshot on a favourable ten-dataset selection; not the current ASM30 panel and not a held-out or transfer result",
+      "receipts": {
+        "original_execution": "jope-bench run/ladder and jope-arena elo at 8c90a32792af1be0435fc92b526d0cb2b890a48b (the git_sha of all ten reports, observed 2026-09-23T07:27-07:28Z); commands in assets/same-cut/v2/SOURCES.md",
+        "algorithm": "regularized Bradley-Terry on the Elo scale (crates/jope-arena/src/elo.rs::fit_elo, the port of sotarena/elo.py): one equal-weight match per dataset and method pair, outcome 1/0.5/0 with the relative tie rule |a-b| <= 1e-12*max(|a|,|b|,1), start and centre 1500, L2 1e-4, at most 250 synchronous diagonal-Newton iterations, per-iteration clamp +-40, stop when the largest update is below 1e-8, final mean-centring; sorted dataset and method-pair accumulation order",
+        "independent_checks": [
+          "crates/jope-bench/tests/committed_evidence.rs::the_tracks_and_ladders_re_derive_byte_for_byte",
+          "docs/internal/core-ip/tools/elo_history.py (this replay)"
+        ]
+      },
+      "replay": {
+        "root": "assets/same-cut/v2/track",
+        "track_id": "jope-same-cut-v1-screen",
+        "ladder": "published",
+        "corrections": null,
+        "inputs": {
+          "track": {
+            "path": "assets/same-cut/v2/track/tracks/jope-same-cut-v1-screen/track.json",
+            "sha256": "da1d16c2ffb2df2fd5218ad1f4c33dc759517ec39d3de02a6061136d3f90e3cc"
+          },
+          "datasets": {
+            "path": "assets/same-cut/v2/track/registry/datasets.jope-same-cut-v1-screen.json",
+            "sha256": "8263a066ed3fac905f98ec2feec01a07fbf32a04588034d85f74fa5893cb4806"
+          },
+          "methods": {
+            "path": "assets/same-cut/v2/track/registry/methods.json",
+            "sha256": "3928e891ff604418f51b206cde543583512f846979b5831bbfa4b7c42f50dfbf"
+          },
+          "scores": {
+            "path": "assets/same-cut/v2/track/results/jope-same-cut-v1-screen/scores.csv",
+            "sha256": "5175ea1339c73d04c8e4ce9f6c51424cc3fa133856cde808c61cc8a02a275d61"
+          }
+        },
+        "outputs": {
+          "leaderboard": {
+            "path": "assets/same-cut/v2/leaderboard-jope-same-cut-v1-screen.csv",
+            "sha256": "03890d9cad8d8f6d58e5c7a34a3397e5ed82982ea880b98ced366899c2b6f8e8"
+          },
+          "snapshot": {
+            "path": "assets/same-cut/v2/elo-jope-same-cut-v1-screen.json",
+            "sha256": "1155e2d836b01e9fcb5be28f7a1ee74268cd69bafc365b7e99c54f07baef4cc4"
+          }
+        }
+      },
+      "anchors": [
+        "assets/same-cut/v2/SOURCES.md",
+        "crates/jope-arena/src/leaderboard.rs:294-435",
+        "docs/internal/core-ip/sections/07.md:54-78"
+      ],
+      "limitations": [
+        "The scores.csv track was written by jope-bench from the committed reports; the reports themselves are re-derived by committed_evidence.rs, not by this replay.",
+        "Ten datasets chosen where the historical engine ranked first; the ladder does not generalise to a broader panel.",
+        "Ratings are relative to this method universe and are displayed to 0.1 Elo; unrounded values were never retained."
+      ]
+    },
+    {
+      "id": "H-sotarena-golden45-published",
+      "disposition": "reproducible-with-receipts",
+      "subject": "SOTArena tabular-regression-v2 (Golden45) published ladder, 305 methods, 45 datasets",
+      "scope": "historical published ladder; its jope-dime rows are test-selected (best known per dataset), so rank 1 / Elo 2259.8 is not a benchmark-valid or held-out result",
+      "receipts": {
+        "original_execution": "sotarena/leaderboard.py + elo.py in the benchmark clone at commit e5db30a07c093661c8f6940d3e22192511f8388b (2026-07-25); copies and original digests in assets/regression/SOURCES.md",
+        "algorithm": "regularized Bradley-Terry on the Elo scale (crates/jope-arena/src/elo.rs::fit_elo, the port of sotarena/elo.py): one equal-weight match per dataset and method pair, outcome 1/0.5/0 with the relative tie rule |a-b| <= 1e-12*max(|a|,|b|,1), start and centre 1500, L2 1e-4, at most 250 synchronous diagonal-Newton iterations, per-iteration clamp +-40, stop when the largest update is below 1e-8, final mean-centring; sorted dataset and method-pair accumulation order",
+        "independent_checks": [
+          "crates/jope-arena/tests/elo_regression.rs::committed_fixture_reproduces_the_published_ladder",
+          "docs/internal/core-ip/tools/elo_history.py (this replay)"
+        ]
+      },
+      "replay": {
+        "root": "assets/regression/sotarena-tabular-regression-v2",
+        "track_id": "tabular-regression-v2",
+        "ladder": "published",
+        "corrections": null,
+        "inputs": {
+          "track": {
+            "path": "assets/regression/sotarena-tabular-regression-v2/tracks/tabular-regression-v2/track.json",
+            "sha256": "c6540865dbbd29e3b9163a3a6fa9aa941939683b5c0485b73826ce598ff1eb22"
+          },
+          "datasets": {
+            "path": "assets/regression/sotarena-tabular-regression-v2/registry/datasets.tabular-regression-v2.json",
+            "sha256": "5ec3d62df5900c3e91d64fa940775e4761ae8f68a346afc379723c249a3b0804"
+          },
+          "methods": {
+            "path": "assets/regression/sotarena-tabular-regression-v2/registry/methods.json",
+            "sha256": "69c88d86d9ab5c0923a4a272e4e07f68ae84f68a5e5b7addf28811594cbf6930"
+          },
+          "scores": {
+            "path": "assets/regression/sotarena-tabular-regression-v2/results/tabular-regression-v2/scores.csv.zst",
+            "sha256": "f393a1261c6cda0a60ffb7992d1953eaff3b0f93a6807b2b38f2b37d07588e78",
+            "decoded_sha256": "5ec868987c2f4286ae44728fde49215ec6e55e7d27e62100d3823744e2957db6"
+          },
+          "ledger": {
+            "path": "assets/regression/sotarena-tabular-regression-v2/results/tabular-regression-v2/resolution-ledger.jsonl.gz",
+            "sha256": "0b449226eaa0627522c124fc3c6d6b3ee5a38336dbd925e8ddc2b188393ea5cb",
+            "decoded_sha256": "d28833254eff6787b45c2280f46fc4db0d3dd14a944677c06565a903288d5cd3"
+          }
+        },
+        "outputs": {
+          "leaderboard": {
+            "path": "assets/regression/sotarena-tabular-regression-v2/results/tabular-regression-v2/leaderboard.csv",
+            "sha256": "2d28ffbd8b5830c6adc39874dfcf98498419ef8c1df6ac5eb135c660013fb24f"
+          },
+          "snapshot": {
+            "path": "assets/regression/elo-tabular-regression-v2.json",
+            "sha256": "e7f29959c8a298b0680125a3310bc6ee41b43d79109ae32b9f3c200da0c933a0"
+          }
+        }
+      },
+      "anchors": [
+        "assets/regression/SOURCES.md:189-220",
+        "crates/jope-arena/tests/elo_regression.rs:59-122",
+        "crates/jope-arena/src/elo.rs:1-17"
+      ],
+      "limitations": [
+        "scores.csv is itself an aggregation of per-report evidence; its evidence-manifest.json (397 files) was verified in place at port time and is not retained here, so the replay starts at the retained scores, not at the reports.",
+        "The fit stops at the 250-iteration cap before the 1e-8 tolerance; the retained ratings are that iterate, a setting-dependent result reproduced at display precision.",
+        "Three datasets are restricted and ZTS is excluded (track.json split); test labels are not public."
+      ]
+    },
+    {
+      "id": "H-sotarena-golden45-benchmark-valid",
+      "disposition": "reproducible-with-receipts",
+      "subject": "tabular-regression-v2 benchmark-valid ladder derived in this repository (304 methods)",
+      "scope": "this repository's 2026-09-23 correction of the published scores, not a benchmark publication; every remaining rated row is public-development",
+      "receipts": {
+        "original_execution": "jope-arena elo --ladder benchmark-valid --corrections protocol-corrections-tabular-regression-v2.json (assets/regression/SOURCES.md:242-254)",
+        "algorithm": "regularized Bradley-Terry on the Elo scale (crates/jope-arena/src/elo.rs::fit_elo, the port of sotarena/elo.py): one equal-weight match per dataset and method pair, outcome 1/0.5/0 with the relative tie rule |a-b| <= 1e-12*max(|a|,|b|,1), start and centre 1500, L2 1e-4, at most 250 synchronous diagonal-Newton iterations, per-iteration clamp +-40, stop when the largest update is below 1e-8, final mean-centring; sorted dataset and method-pair accumulation order; rows demoted by the digest-bound corrections file are left out of the fit",
+        "independent_checks": [
+          "crates/jope-arena/tests/elo_regression.rs::benchmark_valid_ladder_excludes_the_rows_the_campaign_code_labels_test_adaptive",
+          "docs/internal/core-ip/tools/elo_history.py (this replay)"
+        ]
+      },
+      "replay": {
+        "root": "assets/regression/sotarena-tabular-regression-v2",
+        "track_id": "tabular-regression-v2",
+        "ladder": "benchmark-valid",
+        "corrections": {
+          "path": "assets/regression/protocol-corrections-tabular-regression-v2.json",
+          "sha256": "6a831c4a97c2fc29627399809e1860f358a6c3ce69d864a0091463c6d860816d"
+        },
+        "inputs": {
+          "track": {
+            "path": "assets/regression/sotarena-tabular-regression-v2/tracks/tabular-regression-v2/track.json",
+            "sha256": "c6540865dbbd29e3b9163a3a6fa9aa941939683b5c0485b73826ce598ff1eb22"
+          },
+          "datasets": {
+            "path": "assets/regression/sotarena-tabular-regression-v2/registry/datasets.tabular-regression-v2.json",
+            "sha256": "5ec3d62df5900c3e91d64fa940775e4761ae8f68a346afc379723c249a3b0804"
+          },
+          "methods": {
+            "path": "assets/regression/sotarena-tabular-regression-v2/registry/methods.json",
+            "sha256": "69c88d86d9ab5c0923a4a272e4e07f68ae84f68a5e5b7addf28811594cbf6930"
+          },
+          "scores": {
+            "path": "assets/regression/sotarena-tabular-regression-v2/results/tabular-regression-v2/scores.csv.zst",
+            "sha256": "f393a1261c6cda0a60ffb7992d1953eaff3b0f93a6807b2b38f2b37d07588e78",
+            "decoded_sha256": "5ec868987c2f4286ae44728fde49215ec6e55e7d27e62100d3823744e2957db6"
+          },
+          "ledger": {
+            "path": "assets/regression/sotarena-tabular-regression-v2/results/tabular-regression-v2/resolution-ledger.jsonl.gz",
+            "sha256": "0b449226eaa0627522c124fc3c6d6b3ee5a38336dbd925e8ddc2b188393ea5cb",
+            "decoded_sha256": "d28833254eff6787b45c2280f46fc4db0d3dd14a944677c06565a903288d5cd3"
+          }
+        },
+        "outputs": {
+          "leaderboard": {
+            "path": "assets/regression/leaderboard-tabular-regression-v2.benchmark-valid.csv",
+            "sha256": "4c39f51c2e269114f7bbd32728c4627e9aba240518c8950cfb4facce540910fe"
+          },
+          "snapshot": {
+            "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+            "sha256": "e5eb1309d3dedb14a5d553b3c1c3fcb5047e1c74ea6d47d05546be595332f1bc"
+          }
+        }
+      },
+      "anchors": [
+        "assets/regression/SOURCES.md:222-254",
+        "crates/jope-arena/src/corrections.rs:94-213"
+      ],
+      "limitations": [
+        "scores.csv is itself an aggregation of per-report evidence; its evidence-manifest.json (397 files) was verified in place at port time and is not retained here, so the replay starts at the retained scores, not at the reports.",
+        "The fit stops at the 250-iteration cap before the 1e-8 tolerance; the retained ratings are that iterate, a setting-dependent result reproduced at display precision.",
+        "Three datasets are restricted and ZTS is excluded (track.json split); test labels are not public.",
+        "The corrections are this repository's reading of its own campaign code; they demote rows and cannot promote any."
+      ]
+    },
+    {
+      "id": "H-campaign-redteam-bradley-terry",
+      "disposition": "scorer-parity-only",
+      "subject": "train-only red-team campaign scorer bradley_terry_elo (crates/jope-campaigns/src/commands/train_only_redteam.rs:1661)",
+      "scope": "current Rust scorer agrees with jope-arena::elo on synthetic fixtures",
+      "parity": "jope-dime-regressor commands::train_only_redteam::tests::bradley_terry, run by the inputs CI lane (deploy/ci/fast-lane.sh:125-126): three synthetic datasets, four methods, a near-tie, 1e-9 Elo tolerance",
+      "missing": [
+        "historical campaign match events and their original red-team ladders are not retained here",
+        "the removed Python sotarena.elo reference that the test originally imported (elo-parity-followup.md)"
+      ],
+      "anchors": [
+        "docs/internal/core-ip/elo-parity-followup.md",
+        "crates/jope-campaigns/src/commands/train_only_redteam.rs:376-378,538-540"
+      ],
+      "limitations": [
+        "Rust-to-Rust implementation parity; no historical campaign ranking is reconstructed or implied."
+      ]
+    },
+    {
+      "id": "H-sotarena-reporter-aggregated",
+      "disposition": "scorer-parity-only",
+      "subject": "SOTArena Rust reporter ratings (aggregated pair statistics), ported as jope_arena::elo::ratings",
+      "scope": "port agrees with the per-match fit to 1e-6 Elo on a synthetic 30x12 fixture",
+      "parity": "crates/jope-arena/src/elo.rs::tests::aggregated_and_per_match_fits_agree",
+      "missing": [
+        "the reporter's own historical outputs and data directory were not copied (assets/regression/SOURCES.md:186)"
+      ],
+      "anchors": [
+        "crates/jope-arena/src/elo.rs:331-414"
+      ],
+      "limitations": [
+        "Implementation parity only; no reporter ladder is retained to replay."
+      ]
+    },
+    {
+      "id": "H-sotarena-golden42-v1",
+      "disposition": "irrecoverable",
+      "subject": "SOTArena tabular-regression-v1 (Golden42 development track) ladder, jope-dime 2259.9",
+      "scope": "a port-time --check statement only",
+      "retained": [],
+      "missing": [
+        "results/tabular-regression-v1/scores.csv (sha256 b943def7e3f4ac49047a46ebcbb3ce9f2fbeeb1b623cb1d73aedd90ce94a6167) is not in this repository",
+        "its track, registries and leaderboard.csv are not in this repository"
+      ],
+      "anchors": [
+        "assets/regression/SOURCES.md:217-219"
+      ],
+      "limitations": [
+        "The 2259.9 value is an attributable statement from the port, not a replayable rating; no rank or rating claim is supported from this repository."
+      ]
+    },
+    {
+      "id": "H-legacy-round1-internal-elo",
+      "disposition": "irrecoverable",
+      "subject": "legacy round-1 self-play internal Elo by generation (generations 1-30)",
+      "scope": "reported paper summaries copied byte-for-byte",
+      "retained": [
+        {
+          "path": "docs/internal/asm-manual/data/legacy-training/elo_trajectory.csv",
+          "sha256": "5d1cc168dc0d7abb02751122ceef86d44ceb2e3de5a40890daa100e90485068c"
+        },
+        {
+          "path": "docs/internal/asm-manual/data/legacy-training/verification.json",
+          "sha256": "8a8ecce13781ec54c5b1d4b0afc4928b6f57cfc08aff871c971974c781f37d50"
+        }
+      ],
+      "missing": [
+        "the tournament match events and participants per generation",
+        "the outcome conversion, rating algorithm, initial rating, K/rounds and update order",
+        "any generation-31 Elo row"
+      ],
+      "anchors": [
+        "docs/internal/core-ip/sections/09.md:96-104"
+      ],
+      "limitations": [
+        "The retained columns (elo_top1, elo_probe, elo_cv, ranks) are attributable historical observations; they are not replayed and cannot be compared with any other ladder."
+      ]
+    },
+    {
+      "id": "H-render-elo-ranking-static",
+      "disposition": "irrecoverable",
+      "subject": "matched regression Elo figures rendered by python/src/jope/research/render_elo_ranking.py",
+      "scope": "hard-coded rating literals in a figure script",
+      "retained": [
+        {
+          "path": "python/src/jope/research/render_elo_ranking.py",
+          "sha256": "478fdd58a6bacd1307beb0f864a0188f5a889f5629543983979ac7816ade63b9"
+        }
+      ],
+      "missing": [
+        "runs/test-adaptive-golden42-v1-extension-g20-g29-islands4x30/golden42-best-solutions.v1.json and the matched score inputs the literals came from"
+      ],
+      "anchors": [
+        "python/src/jope/research/render_elo_ranking.py:1-100",
+        "crates/jope-campaigns/src/bin/jope_task_elo.rs:3-6"
+      ],
+      "limitations": [
+        "The literals (for example 1260.94) come from a test-adaptive run by its own path name; they support no ranking claim."
+      ]
+    },
+    {
+      "id": "H-fable-official-ladder-replica",
+      "disposition": "irrecoverable",
+      "subject": "legacy fable-harness official ladder Elo and its dev-pool replica (60 sweeps, K=64, init 1000)",
+      "scope": "legacy Python scorers without retained outputs",
+      "retained": [
+        {
+          "path": "python/src/jope/elo_replica.py",
+          "sha256": "3272d2aa71a534139c33fd29b12cf22d2898f5c908d7ae539dfed63a2999014b"
+        },
+        {
+          "path": "python/src/jope/chimera/elo_finetune/elo_meter.py",
+          "sha256": "24db6318fb548063bb10c3e1944bf15312e1acfd34bbb34d33663a132f43de3c"
+        }
+      ],
+      "missing": [
+        "the official tools.elo reference and the recorded replica-vs-official comparisons (claimed diff 0.0000)",
+        "any dev-pool or fine-tuning ladder these scorers produced"
+      ],
+      "anchors": [
+        "python/src/jope/elo_replica.py:1-13",
+        "python/src/jope/chimera/elo_finetune/elo_meter.py:1-28"
+      ],
+      "limitations": [
+        "A different algorithm from the regularized Bradley-Terry ladders above; its values are not comparable with them."
+      ]
+    },
+    {
+      "id": "H-task-elo-strict-corpus",
+      "disposition": "irrecoverable",
+      "subject": "draw-controlled per-task Elo over the strict corpus (jope-task-elo, base 1200, shrinkage)",
+      "scope": "operational diagnostic written outside the repository",
+      "retained": [],
+      "missing": [
+        "the strict-corpus sqlite inputs and the ops/task-elo.v1.json outputs under the flywheel root"
+      ],
+      "anchors": [
+        "crates/jope-campaigns/src/bin/jope_task_elo.rs:1-64"
+      ],
+      "limitations": [
+        "Source exists; no retained history. The raw ~95% loss figure quoted in its header is not reproducible here."
+      ]
+    },
+    {
+      "id": "H-task-rating-snapshots",
+      "disposition": "irrecoverable",
+      "subject": "within-task adaptive/diagnostic rating snapshots (JopeTaskRatingSnapshot.v1)",
+      "scope": "promotion-ineligible operational diagnostics",
+      "retained": [],
+      "missing": [
+        "no JopeTaskRatingSnapshot.v1 file is committed"
+      ],
+      "anchors": [
+        "crates/jope-campaigns/src/task_rating.rs:1-5",
+        "crates/jope-campaigns/src/bin/jope_task_rating.rs:1-25"
+      ],
+      "limitations": [
+        "The builder is deterministic, but with no retained snapshot there is no history to reconcile."
+      ]
+    }
+  ],
+  "lineages": [
+    {
+      "id": "L-lineage-b-a100-recovery",
+      "disposition": "reproducible-with-receipts",
+      "table": {
+        "path": "docs/internal/asm-manual/data/training-history/a100-checkpoint-lineage.csv",
+        "sha256": "a141f3615eb5f9e12472becc015bb0b82e2758668b60353055a6ecb2841d486e"
+      },
+      "columns": {
+        "state": "state_sha256",
+        "parent": "parent_state_sha256",
+        "label": "step",
+        "parent_label": "parent_step",
+        "block": "cycle",
+        "corpus": "corpus_sha256"
+      },
+      "expected": {
+        "checkpoints": 78,
+        "blocks": 22,
+        "corpus_identities": 22,
+        "retained_parent_edges": 74,
+        "unretained_parent_edges": 4
+      },
+      "missing_edges": [
+        {
+          "parent_state_sha256": "20dca6708ebcffc433b7a63fea3df868c1003adefc19826637367bc4a2fa64fe",
+          "parent_label": "3000",
+          "children": 4
+        }
+      ],
+      "exposure_edges": "not-retained",
+      "limitations": [
+        "Parent edges are block-initialization edges: every checkpoint of a block names the state its block started from, so within-block order is not a recorded parent edge.",
+        "The block-0 parent (step 3000, 20dca670...) is named by digest but its own record is not in this table; ancestry above it, including steps 1-3000, is not retained here (sections/09.md:182).",
+        "Each block names one corpus digest; corpus-to-dataset membership is not retained, so exposure totals are refused and checkpoint exposure to the frozen panel stays unknown (sections/02.md:32)."
+      ]
+    },
+    {
+      "id": "L-native-audit-108-blocks",
+      "disposition": "reproducible-with-receipts",
+      "table": {
+        "path": "docs/internal/asm-manual/data/training-history/block-endpoint-metrics.csv",
+        "sha256": "5278b22f4115aaf94d4ef45c0dcdc18a3a4c32578a02be7887776af25d563ad6"
+      },
+      "columns": {
+        "state": "checkpoint_state_sha256",
+        "parent": "parent_state_sha256",
+        "label": "block_run",
+        "parent_label": "parent_checkpoint",
+        "block": "block_run",
+        "corpus": "corpus_sha256"
+      },
+      "expected": {
+        "checkpoints": 108,
+        "blocks": 108,
+        "corpus_identities": 108,
+        "retained_parent_edges": 73,
+        "unretained_parent_edges": 35
+      },
+      "missing_edges": [
+        {
+          "parent_state_sha256": "20dca6708ebcffc433b7a63fea3df868c1003adefc19826637367bc4a2fa64fe",
+          "parent_label": "runs/regression-campaign64-qualification-v1/expansion-20260909-source-reviewed/cycle-0001/train-2/checkpoints/step-3000",
+          "children": 1
+        },
+        {
+          "parent_state_sha256": "c2f229c9b8c582e11e0e62ec011a9ccb066820fbcee5e2da9d0ad5d63780160e",
+          "parent_label": "runs/regression-campaign64-qualification-v1/expansion-20260909-source-reviewed/cycle-0000/train-2/checkpoints/step-3000",
+          "children": 34
+        }
+      ],
+      "exposure_edges": "not-retained",
+      "limitations": [
+        "September 9-11 audit capture: first and last metric rows per block only; every block reset AdamW, so parent edges carry weights but not optimizer continuity.",
+        "Corpus-to-dataset membership is not retained; exposure totals are refused."
+      ]
+    },
+    {
+      "id": "L-lineage-a-xbabe2",
+      "disposition": "irrecoverable",
+      "exposure_edges": "not-retained",
+      "missing": [
+        "live control-plane state and later checkpoint descendants (declared lost)",
+        "the accepted-pointer and sealed-use history"
+      ],
+      "limitations": [
+        "Four frozen corpus snapshots and the original warm-start state survive outside this repository; no parent-edge table is retained here (sections/09.md:29)."
+      ]
+    },
+    {
+      "id": "L-legacy-round1-generations",
+      "disposition": "irrecoverable",
+      "exposure_edges": "not-retained",
+      "missing": [
+        "generation-to-generation checkpoint identities for generations 1-31",
+        "per-generation training corpora"
+      ],
+      "limitations": [
+        "Only per-generation summaries and four round-1 epoch rows are retained (sections/09.md:84,96-104); gen31 and the native lineages must not be joined into one trajectory."
+      ]
+    }
+  ],
+  "derived_views": [
+    {
+      "id": "V-plot-historical-elo",
+      "table": {
+        "path": "docs/internal/asm-manual/data/plot-historical-elo.csv",
+        "sha256": "abace496b0f1f54318264dd8f69537014e15b367e60c33243d8a1b28827ab695"
+      },
+      "snapshots": {
+        "same-cut-v1-screen": "H-same-cut-v1-screen",
+        "same-cut-v1-deep": "H-same-cut-v1-deep",
+        "same-cut-v2-screen": "H-same-cut-v2-screen",
+        "same-cut-v2-deep": "H-same-cut-v2-deep",
+        "historical-sotarena-published": "H-sotarena-golden45-published",
+        "historical-sotarena-benchmark-valid": "H-sotarena-golden45-benchmark-valid"
+      }
+    }
+  ]
+}
