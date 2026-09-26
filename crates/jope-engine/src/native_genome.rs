@@ -1,7 +1,7 @@
 //! Explicit per-genome evaluation and budgeted continuation. No standalone execution grant.
 use crate::{
     corpus::ContextRow,
-    manifest::{file_hash, hash, read_json, resolve},
+    manifest::{file_hash, hash, read_json, read_verified, resolve},
     native_graph::Artifact,
 };
 use anyhow::{ensure, Context, Result};
@@ -193,11 +193,12 @@ impl GenomeTask {
             "candidate identity, canonical program or sealed partition differs"
         );
         let prepared = resolve(root, &c.context.prepared)?;
-        ensure!(
-            file_hash(&prepared.join("prepared.json"))? == c.context.prepared_sha256,
-            "candidate preparation changed"
-        );
-        let p: crate::prepare::Prepared = read_json(&prepared.join("prepared.json"))?;
+        // Route R8: the boundary is decided on exactly the bound preparation bytes.
+        let p: crate::prepare::Prepared = serde_json::from_slice(&read_verified(
+            &prepared.join("prepared.json"),
+            &c.context.prepared_sha256,
+            "candidate preparation",
+        )?)?;
         ensure!(
             p.task == "regression"
                 && p.meta_partition == "meta_train"
@@ -344,8 +345,13 @@ pub(crate) fn verify_result(
         "original genome request budget changed"
     );
     let expected: Value = load(root, &task.admission_policy)?;
-    let prepared: crate::prepare::Prepared =
-        read_json(&resolve(root, &candidate.context.prepared)?.join("prepared.json"))?;
+    // Route R8: the preparation these observations are admitted against is the
+    // bound one; `verify_inputs` refuses any parse that is not those bytes.
+    let prepared: crate::prepare::Prepared = serde_json::from_slice(&read_verified(
+        &resolve(root, &candidate.context.prepared)?.join("prepared.json"),
+        &candidate.context.prepared_sha256,
+        "admission prepared artifact",
+    )?)?;
     let training = crate::label_admission::verify_inputs(root, &candidate.context, &prepared)?;
     let mut authority = crate::label_admission::approved_authority(root, &expected)?;
     for (i, row) in rows.iter().enumerate() {
@@ -767,6 +773,85 @@ mod tests {
             .unwrap()
             .to_string()
             .contains("sealed partition"));
+    }
+    fn preparation(clean: bool) -> Vec<u8> {
+        serde_json::to_vec(&json!({"schema":"parallel.prepared.v1","dataset":"d","family":"f",
+            "task":"regression","meta_partition":"meta_train","seed":1,"family_partition_frozen":true,
+            "clean_evaluation":clean,"clean_status":"fixture","original_train_sha256":"0".repeat(64),
+            "original_test_sha256":"1".repeat(64),"selected_train_indices":[0],
+            "selected_test_indices":[],"target_last":true,"rows_total":1,"cuts":[]}))
+        .unwrap()
+    }
+    /// A direct task whose candidate binds `prepared` by digest. Its
+    /// vocabulary is deliberately unbound, so a candidate that passes the
+    /// scientific boundary stops at the vocabulary.
+    fn task_binding(root: &Path, prepared: &[u8]) -> GenomeTask {
+        let mut t = task();
+        fs::create_dir_all(root.join("p")).unwrap();
+        fs::write(root.join("p/prepared.json"), prepared).unwrap();
+        let c = json!({"schema":"jope.native_candidate.v1","run":"r","generation":0,"arm":"model","matched_slot":0,"context":{"dataset":"d","family":"f","cut":0,"partition":"meta_train","path":"x","sha256":"a".repeat(64),"prepared":"p","prepared_sha256":hash(prepared)},"genome":"(pipe X (ridge))","genome_sha256":hash(b"(pipe X (ridge))"),"proposal":t.candidate,"parent_checkpoint":t.candidate,"sampling_seed":1,"origin_capture":t.candidate,"origin_row":0,"generic_draw":null});
+        let bytes = serde_json::to_vec(&c).unwrap();
+        fs::write(root.join("a.json"), &bytes).unwrap();
+        t.candidate.sha256 = hash(&bytes);
+        t
+    }
+    /// Replace `target` with `bytes` the first time a receiver reports it verified.
+    fn replace_on_verification(
+        target: &Path,
+        bytes: Vec<u8>,
+    ) -> crate::manifest::verification_hook::Guard {
+        let target = fs::canonicalize(target).unwrap();
+        let mut done = false;
+        crate::manifest::verification_hook::install(move |path| {
+            if !done && fs::canonicalize(path).ok().as_deref() == Some(target.as_path()) {
+                done = true;
+                let staged = target.with_extension("replacement");
+                fs::write(&staged, &bytes).unwrap();
+                fs::rename(&staged, &target).unwrap();
+            }
+        })
+    }
+    fn refusal(t: &GenomeTask, root: &Path) -> String {
+        match t.candidate(root) {
+            Ok(_) => "accepted".into(),
+            Err(e) => format!("{e:#}"),
+        }
+    }
+    /// W1 route R8 (native_genome.rs:195-200 before the fix): the candidate's
+    /// scientific boundary is decided on exactly the preparation bytes whose
+    /// digest the candidate binds.
+    #[test]
+    fn the_candidate_boundary_is_decided_on_the_verified_preparation() {
+        const BOUNDARY: &str = "candidate scientific boundary changed";
+        let tmp = tempfile::tempdir().unwrap();
+        let root = tmp.path();
+        let prepared = root.join("p/prepared.json");
+        // A bound preparation that is not a clean evaluation is refused, also
+        // when a clean preparation replaces it after its digest check.
+        let t = task_binding(root, &preparation(false));
+        assert!(refusal(&t, root).contains(BOUNDARY));
+        {
+            let _hook = replace_on_verification(&prepared, preparation(true));
+            let refused = refusal(&t, root);
+            assert!(
+                refused.contains(BOUNDARY),
+                "the boundary was decided on a preparation other than the verified one: {refused}"
+            );
+        }
+        // Positive control: a bound clean preparation passes the boundary (and
+        // stops at the unbound vocabulary), also when replaced after its check.
+        let t = task_binding(root, &preparation(true));
+        let stopped = refusal(&t, root);
+        assert!(
+            !stopped.contains(BOUNDARY) && stopped.contains("native genome artifact"),
+            "{stopped}"
+        );
+        let _hook = replace_on_verification(&prepared, preparation(false));
+        let stopped = refusal(&t, root);
+        assert!(
+            !stopped.contains(BOUNDARY),
+            "the boundary was decided on a preparation other than the verified one: {stopped}"
+        );
     }
     #[test]
     fn large_corpus_metadata_is_explicitly_typed_and_hash_bound() {

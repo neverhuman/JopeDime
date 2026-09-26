@@ -40,6 +40,16 @@ pub fn read_verified(path: &Path, expected: &str, what: &str) -> Result<Vec<u8>>
     after_verification(path);
     Ok(bytes)
 }
+/// Read `path` once and return its bytes with the SHA-256 of exactly those
+/// bytes, for a receiver that records the digest of what it consumes rather
+/// than checking a bound one (W1 route R8). Callers parse the returned bytes;
+/// they never reopen the path.
+pub fn read_hashed(path: &Path, what: &str) -> Result<(Vec<u8>, String)> {
+    let bytes = fs::read(path).with_context(|| format!("read {what} {}", path.display()))?;
+    let digest = hash(&bytes);
+    after_verification(path);
+    Ok((bytes, digest))
+}
 /// Test-only instrumentation point between a digest check and consumption of
 /// the checked object (W1 consumer-map route R8). Compiles to nothing outside
 /// this crate's own unit-test build; it grants and changes nothing.

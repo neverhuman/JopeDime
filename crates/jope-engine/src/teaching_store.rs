@@ -465,11 +465,12 @@ fn publish_impl(
         );
         if !prepared.contains_key(&c.prepared) {
             let p = resolve(&root, &c.prepared)?.join("prepared.json");
-            ensure!(
-                file_hash(&p)? == c.prepared_sha256,
-                "prepared identity changed"
+            // Route R8: the map holds exactly the verified preparation bytes.
+            let bytes = read_verified(&p, &c.prepared_sha256, "prepared identity")?;
+            prepared.insert(
+                c.prepared.clone(),
+                serde_json::from_slice::<Prepared>(&bytes)?,
             );
-            prepared.insert(c.prepared.clone(), read_json::<Prepared>(&p)?);
         }
         ensure!(
             by_cut.insert((c.dataset.clone(), c.cut), i).is_none(),
@@ -548,7 +549,10 @@ fn publish_impl(
         let relative = path.strip_prefix(&root)?.to_string_lossy().to_string();
         let bytes = fs::read(path)?;
         let digest = hash(&bytes);
-        let search_digest = file_hash(&path.with_file_name("search.json"))?;
+        // Route R8: the receipt validated below is the one whose digest the
+        // ledger commits; it is read once and never reopened.
+        let (search_bytes, search_digest) =
+            read_hashed(&path.with_file_name("search.json"), "search receipt")?;
         if ordinal < existing {
             let saved: (String, String, String) = db.query_row(
                 "SELECT path,digest,search_digest FROM sources WHERE ordinal=?",
@@ -569,7 +573,7 @@ fn publish_impl(
         let mut admissions = Vec::new();
         let mut reuses = Vec::new();
         if let Some(expected) = &expected {
-            let search: Value = read_json(&path.with_file_name("search.json"))?;
+            let search: Value = serde_json::from_slice(&search_bytes)?;
             ensure!(
                 search["observations_sha256"] == digest,
                 "completed search ledger digest changed"
@@ -1386,3 +1390,5 @@ mod frozen_z_tests {
 
 #[cfg(test)]
 mod admission_tests;
+#[cfg(test)]
+mod read_once_tests;

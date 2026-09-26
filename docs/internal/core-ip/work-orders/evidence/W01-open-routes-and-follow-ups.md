@@ -377,5 +377,86 @@ the repository):
 | Receiver | Why |
 |---|---|
 | Trainer | `jope-learning` and the engine's `training*` and `neural*` modules are outside this lane's partition. Training needs LibTorch/CUDA (W6/W7). |
-| Teacher: parse versus hash | `native_genome.rs:347-349` parses `prepared.json` with `read_json`. `verify_inputs` then hashes the file separately and checks provenance (partition, family, clean evaluation) against that caller-supplied parse, not against the hashed bytes. This is the same R8 pattern as `label_admission.rs:477-481`, and as `teaching_store.rs:551,572`, where `search.json` is hashed, then re-read by path. All are in the teacher partition, which is outside this lane, and are recorded for its owner. |
+| Teacher: parse versus hash | `native_genome.rs:347-349` parses `prepared.json` with `read_json`. `verify_inputs` then hashes the file separately and checks provenance (partition, family, clean evaluation) against that caller-supplied parse, not against the hashed bytes. This is the same R8 pattern as `label_admission.rs:477-481`, and as `teaching_store.rs:551,572`, where `search.json` is hashed, then re-read by path. **Closed in round 6 (below).** |
 | Encoders in CI | The accepted encoder assets are outside the repository, so the encoder proof is an ignored local-evidence test. |
+
+## Round 6 — R8 at the teacher's receivers (branch `rr/w1-inputs-6`, base `07bc7e60b`)
+
+2d and 2e were integrated as `4c3c7c806` and `07bc7e60b`. The teacher partition's owners
+have finished, so the R8 sites recorded above are closed here at their receivers. No
+authority state, schema or digest binding changes. The refusal messages keep their
+previous prefixes.
+
+**Reproduction.** `w1b-r6-prefix3-20260926T111518Z`: 6/6 FAIL. Test-only instrumentation
+(`manifest::after_verification`) was placed right after each pre-fix digest check. It
+replaces the file between the check and its consumption.
+
+| Test | Pre-fix outcome |
+|---|---|
+| `teaching_store::read_once_tests::a_forged_scale_is_refused_even_if_the_state_is_replaced_after_its_check` | A forged target scale, with its own committed completion, was **admitted**. |
+| `…::an_honest_scale_is_admitted_against_the_verified_state_even_if_replaced_after_its_check` | The honest row was refused on the replacement's scale. |
+| `…::the_teachers_input_admission_binds_the_callers_preparation_to_the_hashed_bytes` | A non-clean bound preparation was **accepted** on a caller's parse that said clean. |
+| `…::a_preparation_replaced_after_its_check_never_decides_the_admitted_views` | The admitted views were resolved from the replacement. |
+| `…::a_search_receipt_is_validated_from_the_bytes_its_ledger_commits` | **9 labels admitted** while the ledger committed a receipt with `final_tests_opened: true`. |
+| `native_genome::tests::the_candidate_boundary_is_decided_on_the_verified_preparation` | A non-clean bound preparation passed the scientific boundary on its replacement. |
+
+Earlier attempts are kept:
+- `w1b-r6-prefix-*`: the store fixture lacked the two extra programs per family, so no
+  family reached a shard. The other three tests reproduced.
+- `w1b-r6-prefix2-*`: INTERRUPTED by the operator during compilation; no test ran.
+
+**Fixes.**
+- `label_admission::validate_preverified` (was `:475-481`): the target scale is parsed
+  from `read_verified` bytes of the preparation state.
+- `label_admission::verify_inputs` (was `:240-266`), the receiver behind
+  `native_genome.rs:347-349` and the teaching store's preparation map:
+  - `prepared.json` is read once against the context's digest;
+  - the caller's parse must equal it ("admission prepared parse differs from the bound
+    preparation bytes");
+  - the views are resolved from it through the new `prepare::load_bound_view_in_root`,
+    which does not reopen `prepared.json`.
+
+  `load_view` and `load_view_in_root` are unchanged; they parse, then share the same view
+  code (`view_of`).
+- `native_genome::verify_result` (was `:347-349`) and `candidate()` (was `:195-200`, the
+  same object) read the bound preparation once.
+- Teaching-store ingestion (was `:551,572`): `search.json` is read once through the new
+  `manifest::read_hashed`, so the committed digest and the validated receipt are the same
+  bytes. The preparation map (was `:466-472`) holds `read_verified` bytes.
+
+Each test has a positive and a negative control. The store fixture reuses
+`admission_tests`' `Fixture` (made `pub(super)`; no existing test changed).
+
+**Results.**
+- Post-fix `w1b-r6-postfix-20260926T111709Z`: 25/25. This covers the six new tests plus the
+  existing `admission_tests`, `label_admission`, `teaching_store`, `native_genome`,
+  `preparation_overlay` and `prepare::verified_bytes_tests` unit tests.
+- Pre-commit `w1b-c9-r6-*`:
+  - engine: the W1 set, the fence suites and the teacher suites, 281/281. The teacher
+    suites are `gp_admission`, `corpus_incremental`, `corpus_projection`,
+    `frozen_inputs`, `request_integrity`, `bounded_run`, `teacher_counterfactuals` and the
+    `teaching_store`/`label_admission`/`native_genome`/`preparation_overlay`/
+    `native_graph`/`corpus*`/`champions`/`manifest` unit modules;
+  - jope-datasets 69/69;
+  - workspace all-targets check, parity-matrix, coverage (0 unassigned, 260 targets),
+    verify-test-inventory, fmt and diff-check all exit 0;
+  - no warnings in the changed files.
+- jope-learning is not touched. No coverage target or inventory entry is added: the tests
+  live in the engine library target.
+
+**Still open (recorded, not changed).**
+- The pinned `eval_registry` sites (`authority.rs`, `witness.rs`, `service.rs`) and
+  `native_scq*`.
+- Further hash-then-read sites found while closing these, not part of this assignment,
+  each needing its own reproduction:
+  - `native_genome::required_inputs` `:479-481`: an input is hashed, then re-read to
+    discover nested references.
+  - `native_genome::required_inputs` `:498`: the storage source comes from an unverified
+    parse of `prepared.json`, although its digest is recorded at `:494`.
+  - `teaching_store::verify_shard_metadata` `:103/106`: `shard.json`.
+  - `teaching_store::load_impl` `:1142-1145`: `provenance.json` is read unbound.
+  - `teaching_store::teacher_programs` `:1243-1246`: `index.json` is parsed, then hashed
+    separately.
+- The packer's `semantic_dependencies_sha256` covers `manifest.rs`, `prepare.rs`,
+  `label_admission.rs` and `teaching_store.rs`. Any changed implementation gets a new store
+  lineage, as designed.

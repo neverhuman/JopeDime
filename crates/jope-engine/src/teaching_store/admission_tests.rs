@@ -6,11 +6,11 @@ use std::{
     path::{Path, PathBuf},
 };
 
-struct Fixture {
+pub(super) struct Fixture {
     directory: tempfile::TempDir,
 }
 impl Fixture {
-    fn new() -> Self {
+    pub(super) fn new() -> Self {
         let this = Self {
             directory: tempfile::tempdir().unwrap(),
         };
@@ -98,25 +98,25 @@ impl Fixture {
         .unwrap();
         this
     }
-    fn root(&self) -> &Path {
+    pub(super) fn root(&self) -> &Path {
         self.directory.path()
     }
-    fn vocab(&self) -> PathBuf {
+    pub(super) fn vocab(&self) -> PathBuf {
         self.root().join("vocabulary.json")
     }
-    fn contexts(&self) -> PathBuf {
+    pub(super) fn contexts(&self) -> PathBuf {
         self.root().join("contexts.json")
     }
-    fn observations(&self) -> Vec<PathBuf> {
+    pub(super) fn observations(&self) -> Vec<PathBuf> {
         vec![self.root().join("observations")]
     }
-    fn ledger(&self, family: &str) -> PathBuf {
+    pub(super) fn ledger(&self, family: &str) -> PathBuf {
         self.root()
             .join("observations")
             .join(family)
             .join("observations.json")
     }
-    fn strict_receipt(&self, path: &Path, identity: &Value) {
+    pub(super) fn strict_receipt(&self, path: &Path, identity: &Value) {
         let mut rows: Vec<Value> = read_json(path).unwrap();
         for (n, row) in rows.iter_mut().enumerate() {
             if !row["failure"].is_null() {
@@ -133,7 +133,7 @@ impl Fixture {
     }
 }
 
-fn attach_completion(root: &Path, directory: &Path, index: usize, row: &mut Value) {
+pub(super) fn attach_completion(root: &Path, directory: &Path, index: usize, row: &mut Value) {
     let prepared = root
         .join(row["family"].as_str().unwrap())
         .join("cut-0/preprocessing.json");

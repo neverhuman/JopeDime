@@ -1421,6 +1421,18 @@ pub fn load_view_in_root(
 ) -> Result<Vec<Vec<f64>>> {
     load_view_with_root(Some(root), prepared, cut, training)
 }
+/// [`load_view_in_root`] for a preparation the caller has already verified
+/// and parsed (`p`): `prepared.json` is not reopened, so the view is resolved
+/// from exactly the verified preparation (W1 route R8).
+pub fn load_bound_view_in_root(
+    root: &Path,
+    prepared: &Path,
+    p: &Prepared,
+    cut: usize,
+    training: bool,
+) -> Result<Vec<Vec<f64>>> {
+    view_of(Some(root), prepared, p, cut, training)
+}
 fn load_view_with_root(
     root: Option<&Path>,
     prepared: &Path,
@@ -1428,6 +1440,15 @@ fn load_view_with_root(
     training: bool,
 ) -> Result<Vec<Vec<f64>>> {
     let p: Prepared = read_json(&prepared.join("prepared.json"))?;
+    view_of(root, prepared, &p, cut, training)
+}
+fn view_of(
+    root: Option<&Path>,
+    prepared: &Path,
+    p: &Prepared,
+    cut: usize,
+    training: bool,
+) -> Result<Vec<Vec<f64>>> {
     let c = p
         .cuts
         .iter()
