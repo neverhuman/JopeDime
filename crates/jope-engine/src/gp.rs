@@ -1034,6 +1034,26 @@ fn evaluate_tables(
     } else {
         m["baseline_status"] = json!("nonfinite baseline; ratios unavailable");
     }
+    // W5-T03: fit and score identities are distinct. The fit key is the
+    // authority's fitted identity (program, ordered training rows,
+    // preprocessing, feature view, numerical contract, seed) and may be reused.
+    // The score identity additionally binds the exact fitted subject and the
+    // scored rows and protocol, so a reused fit is always rescored on its own
+    // rows and a score never transfers to another subject or membership.
+    let receipt = crate::eval_registry::verify_completion_receipt(&fs::read(
+        fitted.completion["path"]
+            .as_str()
+            .context("fit completion path absent")?,
+    )?)?;
+    let score_identity = json!({"schema":"parallel.gp_score_identity.v1",
+        "fit_key":receipt.fit_key,"model_sha256":receipt.model_sha256,
+        "training_rows_sha256":hash(&csv_bytes(tr)?),"scoring_rows_sha256":hash(&csv_bytes(va)?),
+        "preprocessing_sha256":hash(preprocessing),"task":task,
+        "primary_metric":m["primary_metric"],"metric_units":m["units"],
+        "evaluator_protocol":crate::label_admission::PROTOCOL,
+        "predictions_sha256":m["semantic_sha256"]});
+    m["score_identity_sha256"] = json!(hash(&serde_json::to_vec(&score_identity)?));
+    m["score_identity"] = score_identity;
     m["fit_completion"] = fitted.completion;
     m["fitted_model"] = fitted.model_reference;
     m["evaluation_origin"] = json!(if fitted.reused { "reuse" } else { "execution" });

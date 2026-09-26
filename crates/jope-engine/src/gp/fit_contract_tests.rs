@@ -553,8 +553,15 @@ impl Drop for Fixture {
 /// The pointer-view preparation of `tests/view_contracts.rs`.
 fn view_fixture() -> (tempfile::TempDir, PathBuf) {
     let t = tempfile::tempdir().unwrap();
-    let root = t.path();
-    fs::create_dir(root.join("manifests")).unwrap();
+    let prepared = view_fixture_in(t.path(), "example", &[8, 9]);
+    (t, prepared)
+}
+
+/// A pointer-view preparation under `root`: cut 0 trains on raw rows 0..8 and
+/// validates on `validation`. Every variant shares the training rows and their
+/// preprocessing, so only the scored membership differs between variants.
+fn view_fixture_in(root: &Path, name: &str, validation: &[usize]) -> PathBuf {
+    fs::create_dir_all(root.join("manifests")).unwrap();
     fs::write(root.join("Cargo.toml"), "[workspace]\n").unwrap();
     fs::create_dir_all(root.join("data/originals")).unwrap();
     let raw = (0..12)
@@ -566,15 +573,17 @@ fn view_fixture() -> (tempfile::TempDir, PathBuf) {
     }
     fs::write(root.join("data/originals/raw.csv"), source).unwrap();
     let pp = Preprocessing::fit(&raw[..8], "regression").unwrap();
-    let prepared = root.join("data/prepared/example");
+    let prepared = root.join("data/prepared").join(name);
     let dir = prepared.join("cut-0");
     fs::create_dir_all(&dir).unwrap();
     write_json(&dir.join("preprocessing.json"), &pp).unwrap();
     let tr = csv_bytes(&pp.transform(&raw[..8]).unwrap()).unwrap();
-    let va = csv_bytes(&pp.transform(&raw[8..10]).unwrap()).unwrap();
-    let p = json!({"schema":"parallel.prepared.v1","dataset":"example","family":"example","task":"regression","meta_partition":"meta_train","seed":SEED,"family_partition_frozen":false,"clean_evaluation":true,"clean_status":"raw_reconstructed","original_train_sha256":"0".repeat(64),"original_test_sha256":"1".repeat(64),"selected_train_indices":(0..10).collect::<Vec<_>>(),"selected_test_indices":[0,1],"target_last":true,"rows_total":12,"cuts":[{"index":0,"train_indices":(0..8).collect::<Vec<_>>(),"validation_indices":[8,9],"training_sha256":hash(&tr),"validation_sha256":hash(&va),"preprocessing_sha256":file_hash(&dir.join("preprocessing.json")).unwrap()}],"storage":{"source":"data/originals/raw.csv","source_sha256":file_hash(&root.join("data/originals/raw.csv")).unwrap(),"feature_columns":["x"],"target_column":"target","original_training_row_map":(0..10).collect::<Vec<_>>()}});
+    let scored: Vec<Vec<String>> = validation.iter().map(|&i| raw[i].clone()).collect();
+    let va = csv_bytes(&pp.transform(&scored).unwrap()).unwrap();
+    let mapped = validation.iter().max().map_or(10, |&i| (i + 1).max(10));
+    let p = json!({"schema":"parallel.prepared.v1","dataset":name,"family":"example","task":"regression","meta_partition":"meta_train","seed":SEED,"family_partition_frozen":false,"clean_evaluation":true,"clean_status":"raw_reconstructed","original_train_sha256":"0".repeat(64),"original_test_sha256":"1".repeat(64),"selected_train_indices":(0..mapped).collect::<Vec<_>>(),"selected_test_indices":[0,1],"target_last":true,"rows_total":12,"cuts":[{"index":0,"train_indices":(0..8).collect::<Vec<_>>(),"validation_indices":validation,"training_sha256":hash(&tr),"validation_sha256":hash(&va),"preprocessing_sha256":file_hash(&dir.join("preprocessing.json")).unwrap()}],"storage":{"source":"data/originals/raw.csv","source_sha256":file_hash(&root.join("data/originals/raw.csv")).unwrap(),"feature_columns":["x"],"target_column":"target","original_training_row_map":(0..mapped).collect::<Vec<_>>()}});
     write_json(&prepared.join("prepared.json"), &p).unwrap();
-    (t, prepared)
+    prepared
 }
 
 /// The 40-row raw training file of the fitted predictor contract.
@@ -1620,5 +1629,126 @@ fn variation_children_record_parents_and_cannot_alter_parent_fitted_state() {
         Some(vocabulary.as_path())
     )
     .is_ok());
+    authority.stop_service();
+}
+
+#[test]
+fn reused_fits_are_rescored_on_their_own_rows_and_never_inherit_scores() {
+    let temp = tempfile::tempdir().unwrap();
+    let root = temp.path().canonicalize().unwrap();
+    // Same training rows and preprocessing; only the scored membership differs.
+    let first = view_fixture_in(&root, "example", &[8, 9]);
+    let second = view_fixture_in(&root, "example-b", &[10, 11]);
+    let a: Prepared = read_json(&first.join("prepared.json")).unwrap();
+    let b: Prepared = read_json(&second.join("prepared.json")).unwrap();
+    assert_eq!(a.cuts[0].training_sha256, b.cuts[0].training_sha256);
+    assert_eq!(
+        a.cuts[0].preprocessing_sha256,
+        b.cuts[0].preprocessing_sha256
+    );
+    assert_ne!(a.cuts[0].validation_sha256, b.cuts[0].validation_sha256);
+    let mut authority = Fixture::activated(&root, vec![cut_training_hash(&first)]);
+    authority.start();
+    let run = |prepared: &Path, name: &str| {
+        let output = root.join(name);
+        success(
+            search_client(&authority, &root, prepared, &output, 3)
+                .output()
+                .unwrap(),
+        );
+        let rows: Vec<Value> = read_json(&output.join("observations.json")).unwrap();
+        (output, rows)
+    };
+    let (_, cold) = run(&first, "cold");
+    let fitted = authority.entries().0;
+    let (warm_output, warm) = run(&second, "warm");
+    // Identical fitting work was reused: no new physical fit anywhere.
+    assert_eq!(authority.entries().0, fitted);
+    let search: Value = read_json(&warm_output.join("search.json")).unwrap();
+    let measured = warm.iter().filter(|row| row["failure"].is_null()).count();
+    assert!(measured > 0);
+    assert_eq!(search["execution_accounting"]["physical_fit_starts"], 0);
+    assert_eq!(
+        search["execution_accounting"]["reused_completions"],
+        measured
+    );
+    let validation = load_view(&second, 0, false).unwrap();
+    let x: Vec<Vec<f64>> = validation
+        .iter()
+        .map(|row| row[..row.len() - 1].to_vec())
+        .collect();
+    let mut fit_keys = BTreeSet::new();
+    for (old, new) in cold.iter().zip(&warm) {
+        assert_eq!(old["genome"], new["genome"]);
+        if !new["failure"].is_null() {
+            continue;
+        }
+        let (was, now) = (&old["metrics"], &new["metrics"]);
+        assert_eq!(now["evaluation_origin"], "reuse");
+        assert_eq!(now["physical_fit_starts"], 0);
+        // Same fitted subject (fit key and model) ...
+        assert_eq!(
+            was["score_identity"]["fit_key"],
+            now["score_identity"]["fit_key"]
+        );
+        assert_eq!(
+            was["score_identity"]["model_sha256"],
+            now["score_identity"]["model_sha256"]
+        );
+        fit_keys.insert(now["score_identity"]["fit_key"].to_string());
+        // ... but a distinct score identity measured on its own rows.
+        assert_eq!(
+            now["score_identity"]["scoring_rows_sha256"],
+            b.cuts[0].validation_sha256
+        );
+        assert_ne!(was["score_identity_sha256"], now["score_identity_sha256"]);
+        // The stored fitted state, applied to the new rows, reproduces the new
+        // predictions and RMSE: the score was measured, not carried over.
+        let completion = crate::label_admission::artifact(&root, &new["clean_completion"]).unwrap();
+        let model: feat_math::Model = serde_json::from_slice(
+            &crate::label_admission::artifact_bytes(&root, &completion["model"]).unwrap(),
+        )
+        .unwrap();
+        let predictions = model.predict(&x);
+        assert_eq!(
+            hash(&serde_json::to_vec(&predictions).unwrap()),
+            now["semantic_sha256"],
+            "the reused fit was not rescored on the new rows"
+        );
+        let squared = validation
+            .iter()
+            .zip(&predictions)
+            .map(|(row, p)| (row[row.len() - 1] - p).powi(2))
+            .sum::<f64>();
+        let rmse = (squared / predictions.len() as f64).sqrt();
+        let recorded = now["rmse"].as_f64().unwrap();
+        assert!(
+            (rmse - recorded).abs() <= 1e-12 * rmse.abs().max(1.0),
+            "recorded RMSE {recorded} is not the new rows' RMSE {rmse}"
+        );
+        assert_ne!(was["rmse"], now["rmse"], "a score carried over unchanged");
+    }
+    // Different recipes never share a fit key.
+    assert_eq!(fit_keys.len(), measured);
+    // Both searches replay; a score carried over from the other membership,
+    // even with its own consistent identity, is refused.
+    let cold_output = root.join("cold");
+    selection_replay::verify_search(&root, &cold_output).unwrap();
+    selection_replay::verify_search(&root, &warm_output).unwrap();
+    let position = warm
+        .iter()
+        .position(|row| row["failure"].is_null())
+        .unwrap();
+    let mut stale = warm.clone();
+    stale[position]["metrics"] = cold[position]["metrics"].clone();
+    republish_ledger(&warm_output, &stale);
+    let error = format!(
+        "{:#}",
+        selection_replay::verify_search(&root, &warm_output).unwrap_err()
+    );
+    assert!(
+        error.contains("another fold") || error.contains("outside the frozen fold"),
+        "{error}"
+    );
     authority.stop_service();
 }

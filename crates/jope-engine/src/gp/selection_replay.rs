@@ -51,6 +51,7 @@ pub const CONTRACT: &str = "parallel.gp_selection_contract.v1";
 const RANDOM_PROTOCOL: &str = "parallel.gp_random_streams.v2";
 const OBSERVATION_SCHEMA: &str = "parallel.gp_observation.v1";
 const SEARCH_CLOCK: &str = "parallel.gp_search_clock.v1";
+const SCORE_IDENTITY_SCHEMA: &str = "parallel.gp_score_identity.v1";
 /// Novel-program attempts a single slot may draw before the search stops.
 pub const PROPOSAL_CAP_PER_SLOT: u64 = 10_000;
 /// Request identity every ledger row must repeat exactly.
@@ -257,6 +258,24 @@ fn measurement(frozen: &Frozen, metrics: &Value) -> Result<(f64, String)> {
         .filter(|value| is_sha256(value))
         .and_then(Value::as_str)
         .context("measurement lacks a prediction signature")?;
+    // A score identity (W5-T03) binds the score to its fitted subject, scored
+    // rows and protocol; it must name this fold and these predictions.
+    if let Some(identity) = metrics.get("score_identity").filter(|v| !v.is_null()) {
+        ensure!(
+            metrics.get("score_identity_sha256")
+                == Some(&Value::String(hash(&serde_json::to_vec(identity)?))),
+            "score identity digest differs"
+        );
+        ensure!(
+            identity["schema"] == SCORE_IDENTITY_SCHEMA
+                && identity["scoring_rows_sha256"] == frozen.identity["validation_sha256"]
+                && identity["training_rows_sha256"] == frozen.identity["training_sha256"]
+                && identity["preprocessing_sha256"] == frozen.identity["preprocessing_sha256"]
+                && identity["evaluator_protocol"] == crate::label_admission::PROTOCOL
+                && identity["predictions_sha256"] == signature,
+            "score identity names another fold, protocol or prediction set"
+        );
+    }
     // Where the evaluator recorded its scoring membership, it must be the frozen
     // validation partition and training fold; a score from other rows is stale.
     if let Some(baseline) = metrics.get("baseline_evidence").filter(|v| !v.is_null()) {
@@ -623,7 +642,25 @@ pub fn verify_search(root: &Path, output: &Path) -> Result<SearchReplay> {
             hash(&program) == row["program_sha256"],
             "executed program bytes differ"
         );
-        crate::label_admission::validate_completion(&root, row)
+        crate::label_admission::validate_completion(&root, row)?;
+        // The score identity must name the fitted subject this row's original
+        // completion attests: its fit key and model, not another subject's.
+        if let Some(identity) = row["metrics"]
+            .get("score_identity")
+            .filter(|v| !v.is_null())
+        {
+            let completion = crate::label_admission::artifact(&root, &row["clean_completion"])?;
+            let receipt = crate::eval_registry::verify_completion_receipt(
+                &crate::label_admission::artifact_bytes(&root, &completion["fit_completion"])?,
+            )?;
+            ensure!(
+                identity["fit_key"] == receipt.fit_key
+                    && identity["model_sha256"] == serde_json::json!(receipt.model_sha256)
+                    && completion["model"]["sha256"] == identity["model_sha256"],
+                "score identity names another fitted subject"
+            );
+        }
+        Ok(())
     };
     let replay = replay_ledger(&frozen, inherited.as_ref(), &rows, &terminal, &mut evidence)?;
     let winner = replay.winner.as_ref();
@@ -1041,6 +1078,50 @@ mod tests {
         let mut negative = parent;
         negative["metrics"]["rmse"] = json!(-1.0);
         assert!(Incumbent::from_parent_row(&frozen(), &negative).is_err());
+    }
+
+    #[test]
+    fn score_identities_bind_the_fold_protocol_and_predictions() {
+        let rows = six();
+        let identity = json!({"schema":SCORE_IDENTITY_SCHEMA,"fit_key":"k","model_sha256":"m",
+            "training_rows_sha256":"c".repeat(64),"scoring_rows_sha256":"d".repeat(64),
+            "preprocessing_sha256":"e".repeat(64),
+            "evaluator_protocol":crate::label_admission::PROTOCOL,
+            "predictions_sha256":signature("p2")});
+        let with = |identity: &Value| {
+            let mut rows = rows.clone();
+            rows[2]["metrics"]["score_identity_sha256"] =
+                json!(hash(&serde_json::to_vec(identity).unwrap()));
+            rows[2]["metrics"]["score_identity"] = identity.clone();
+            rows
+        };
+        let valid = with(&identity);
+        assert_eq!(
+            replay(&valid, &budget(&valid))
+                .unwrap()
+                .winner
+                .unwrap()
+                .position,
+            2
+        );
+        for (key, value) in [
+            ("scoring_rows_sha256", json!("9".repeat(64))),
+            ("training_rows_sha256", json!("9".repeat(64))),
+            ("preprocessing_sha256", json!("9".repeat(64))),
+            ("evaluator_protocol", json!("another_protocol")),
+            ("predictions_sha256", json!(signature("p4"))),
+            ("schema", json!("parallel.gp_score_identity.v0")),
+        ] {
+            let mut stale = identity.clone();
+            stale[key] = value;
+            let rows = with(&stale);
+            let error = format!("{:#}", replay(&rows, &budget(&rows)).unwrap_err());
+            assert!(error.contains("another fold, protocol"), "{key}: {error}");
+        }
+        let mut digest = with(&identity);
+        digest[2]["metrics"]["score_identity"]["fit_key"] = json!("another fit");
+        let error = format!("{:#}", replay(&digest, &budget(&digest)).unwrap_err());
+        assert!(error.contains("digest differs"), "{error}");
     }
 
     #[test]
