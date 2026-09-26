@@ -1924,6 +1924,16 @@
       "dispositions": [],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "python:crates/jope-bench/src/panel/test_transfer_score.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "Independent transfer KPI scorer on synthetic plans: exact gains by construction, per-unit minimum, equal family weighting, missing pairs and zero baselines never becoming zero gains, tamper and unplanned-prediction refusal, and report comparison. Cross-implementation agreement with the Rust reporter runs in jope-bench's lib tests; no transfer measurement is established."
+    },
     "python:deploy/ci/test-cargo-artifact.py": {
       "discovery": {
         "kind": "python-family"
