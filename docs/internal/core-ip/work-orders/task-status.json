@@ -138,8 +138,21 @@
     },
     "W2-T05": {
       "states": [
-        "planned"
-      ]
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "633191d819012b3510ba1228a567e365fe15934b"
+      ],
+      "tests": [
+        "golden_hyperion_pooling_uses_population_std_and_interpolated_percentiles",
+        "golden_assembly_order_projection_normalization_and_clip",
+        "golden_label_normalizations"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w2-t05-golden-20260926T062546Z"
+      ],
+      "remaining": "Pooling, assembly and label normalizations are pinned by independent arithmetic. Target window membership (seed-17 PCG64 inside starforge) and encoder forward passes on real assets remain."
     },
     "W2-T06": {
       "states": [
@@ -360,8 +373,22 @@
     },
     "W4-T06": {
       "states": [
-        "planned"
-      ]
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "376e712e7bab2c11b0d45122eaaa1618746293ac"
+      ],
+      "tests": [
+        "tracing_changes_nothing_and_fixed_logit_replay_reproduces_every_token",
+        "cached_and_full_routes_share_draws_and_decisions_within_tensor_parity",
+        "a_decision_near_a_boundary_diverges_inside_the_tensor_threshold",
+        "altered_traces_are_refused_and_failures_replay_exactly"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w4-t06-replay-20260926T062837Z"
+      ],
+      "remaining": "Fixed-logit replay and separate decision-divergence measurement exist. Native (LibTorch) versus Candle traces on accepted weights need the CUDA benchmark (W11); the jope-engine LibTorch proposal sampler is not traced."
     },
     "W4-T07": {
       "states": [

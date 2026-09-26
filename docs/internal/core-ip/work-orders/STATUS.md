@@ -6,10 +6,10 @@ not CI verification, and neither is live qualification. No finding closes throug
 
 | State | Tasks |
 |---|---:|
-| planned | 42 |
+| planned | 40 |
 | reproduced | 11 |
-| implemented | 28 |
-| fixture-proven | 23 |
+| implemented | 30 |
+| fixture-proven | 25 |
 | CI-verified | 0 |
 | live-qualified | 0 |
 | measurement-complete | 0 |
@@ -35,7 +35,7 @@ not CI verification, and neither is live qualification. No finding closes throug
 | W2-T02 Extend the release-controlled semantic bundle | reproduced, implemented, fixture-proven | ce4aea8ec112; accepted_identity_requires_the_released_weights_file; accepted_policy_requires_the_released_weights_file | One slice (G-02). The versioned semantic manifest, independent worker context-bundle pins (G-03), encoder identity pins at admission (G-04) and receipt unknown-field rejection (G-08) remain. |
 | W2-T03 Make semantic products opaque | planned | — | — |
 | W2-T04 Consume validated bytes without reopening by path | implemented, fixture-proven | c3f60f0c7f1a; bytes_and_path_loaders_keep_the_same_inference_tensors; accepted_manifest_uses_sha256_bytes_not_legacy_identifier | Hyperion weights and manifest now consume authenticated bytes (G-10a/b). Training warm-start/resume, native context and corpus-index re-reads (G-10c,e,g) and cache-key closure (G-11) remain; real-weights parity runs only where the asset exists. |
-| W2-T05 Produce golden intermediate calculations | planned | — | — |
+| W2-T05 Produce golden intermediate calculations | implemented, fixture-proven | 633191d81901; golden_hyperion_pooling_uses_population_std_and_interpolated_percentiles; golden_assembly_order_projection_normalization_and_clip; golden_label_normalizations | Pooling, assembly and label normalizations are pinned by independent arithmetic. Target window membership (seed-17 PCG64 inside starforge) and encoder forward passes on real assets remain. |
 | W2-T06 Verify complete tensor inventory and roles | implemented, fixture-proven | 742553666022; test_verify_inventory.py (8); host proof verify-real.json; host proof tamper.json | Hosted CI runs the synthetic fixtures only; the real asset is verified on the host. |
 | W2-T07 Qualify producer-to-consumer handoff | planned | — | — |
 
@@ -60,7 +60,7 @@ not CI verification, and neither is live qualification. No finding closes throug
 | W4-T03 Make decoding outcomes total and bounded | reproduced, implemented, fixture-proven | 319c4cd5f700; tests/decode_outcomes.rs (12) | The LibTorch proposal sampler in jope-engine (neural feature) is untouched; per-draw outcomes are not yet written to the candidate ledger (T07). |
 | W4-T04 Differentially test grammar and typed parser | implemented, fixture-proven | 663880fa69b7; tests/grammar_differential.rs | Verified safeguard: no dead-end legal prefix or parser disagreement found over 6,430 enumerated states and 17,036 programs/expressions. |
 | W4-T05 Establish scorer dependencies and architectural limits | implemented, fixture-proven | de747c363357; tests/scorer_dependencies.rs | Characterized on synthetic weights only; the order-aware challenger is W10. |
-| W4-T06 Freeze sampler replay separately from backend parity | planned | — | — |
+| W4-T06 Freeze sampler replay separately from backend parity | implemented, fixture-proven | 376e712e7bab; tracing_changes_nothing_and_fixed_logit_replay_reproduces_every_token; cached_and_full_routes_share_draws_and_decisions_within_tensor_parity; a_decision_near_a_boundary_diverges_inside_the_tensor_threshold; +1 tests | Fixed-logit replay and separate decision-divergence measurement exist. Native (LibTorch) versus Candle traces on accepted weights need the CUDA benchmark (W11); the jope-engine LibTorch proposal sampler is not traced. |
 | W4-T07 Preserve proposal identity and complete denominators | planned | — | — |
 
 ## W05
