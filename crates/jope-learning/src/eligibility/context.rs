@@ -7,6 +7,7 @@ use crate::encoder_receipt::{
     check_teaching_binding, Encoder, EncoderCapability, EncoderReceipt, Member, Product, Scope,
     TeachingBinding, SCHEMA as RECEIPT_SCHEMA,
 };
+use crate::revocation::Revocations;
 
 const MAX_PARENT_DEPTH: usize = 8;
 const MAX_PARENTS: usize = 64;
@@ -93,8 +94,9 @@ fn retained(state: &State, sha: &str) -> Result<Vec<u8>> {
         .context("retained context artifact is missing")
 }
 
-/// Every parent is a retained receipt fitted in the same scope, with retained bytes.
-fn parents(state: &State, child: &EncoderReceipt) -> Result<()> {
+/// Every parent is a retained receipt fitted in the same scope, with retained bytes, and none of
+/// it is revoked evidence.
+fn parents(state: &State, child: &EncoderReceipt, revocations: &Revocations) -> Result<()> {
     let mut pending: Vec<_> = child
         .inputs
         .parent_receipts
@@ -110,7 +112,15 @@ fn parents(state: &State, child: &EncoderReceipt) -> Result<()> {
         if !seen.insert(sha.clone()) {
             continue;
         }
+        revocations.refuse("a teaching context parent receipt", [sha.as_str()])?;
         let parent = receipt(state, &sha).context("unresolved context parent receipt")?;
+        revocations.refuse(
+            "a teaching context parent",
+            [
+                parent.fitted_state_sha256.as_str(),
+                parent.output_sha256.as_str(),
+            ],
+        )?;
         ensure!(
             parent.scope_sha256 == child.scope_sha256
                 && parent.comparison_sha256 == child.comparison_sha256
@@ -136,6 +146,7 @@ pub(super) fn verify(
     policy: &FrozenPolicy,
     record: &HwmRecord,
     evidence: &OofEvidence,
+    revocations: &Revocations,
 ) -> Result<String> {
     let plan = policy
         .context
@@ -146,6 +157,14 @@ pub(super) fn verify(
         .context
         .as_ref()
         .context("MissingEncoderProvenance: submission carries no context receipt")?;
+    revocations.refuse(
+        "the teaching context",
+        [
+            context.receipt_sha256.as_str(),
+            context.fitted_state_sha256.as_str(),
+            context.output_sha256.as_str(),
+        ],
+    )?;
     let receipt = receipt(state, &context.receipt_sha256)?;
     let capability = EncoderCapability::bind(
         scope(state, policy, plan)?,
@@ -165,6 +184,6 @@ pub(super) fn verify(
         &retained(state, &context.fitted_state_sha256)?,
         &retained(state, &context.output_sha256)?,
     )?;
-    parents(state, &receipt)?;
+    parents(state, &receipt, revocations)?;
     Ok(context.receipt_sha256.clone())
 }

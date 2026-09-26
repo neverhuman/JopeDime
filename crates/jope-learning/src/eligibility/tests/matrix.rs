@@ -3,7 +3,8 @@
 //! with a forged but internally consistent success claim: the mutated evidence stored with
 //! the valid measurement, its `qualified` decision, an accepted HWM event and a pointer.
 //! Every route must recompute and refuse without trusting those flags. Synthetic fixtures
-//! only; this is not a live admission, and revocation lookup does not exist (W12).
+//! only; this is not a live admission. Revoked parents (W12-T05) are covered by
+//! `eligibility::tests::revocation`.
 use super::metrics::{rebind, stored};
 use super::provenance::{authority, rejected_decisions};
 use super::*;

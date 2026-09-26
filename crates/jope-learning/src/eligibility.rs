@@ -815,7 +815,31 @@ fn measured(
         policy.guard == GuardPolicy::current(),
         "unknown teaching guard"
     );
-    let context_receipt_sha256 = context::verify(state, &policy, record, evidence)?;
+    // W12-T05: nothing in the candidate's closure may be revoked evidence, and neither may any
+    // ancestor of it (the imported closure already contains every descendant of a revoked node).
+    let revocations = crate::revocation::Revocations::load(state)?;
+    let mut closure = vec![
+        record.provenance.record_sha256.as_str(),
+        evidence.freeze.freeze_sha256.as_str(),
+        evidence.experiment_blob_sha256.as_str(),
+        evidence.window_sha256.as_str(),
+        policy.targets_sha256.as_str(),
+        policy.panel_sha256.as_str(),
+    ];
+    closure.extend(evidence.fold_predictions_sha256.iter().map(String::as_str));
+    if let Some(inner) = &evidence.inner {
+        closure.extend([
+            inner.selection_sha256.as_str(),
+            inner.frozen_recipe_sha256.as_str(),
+            inner.search_receipt_sha256.as_str(),
+            inner.runtime_sha256.as_str(),
+            inner.arm_window_sha256.as_str(),
+            inner.memory_policy_sha256.as_str(),
+            inner.candidate_freeze_sha256.as_str(),
+        ]);
+    }
+    revocations.refuse("the teaching candidate", closure)?;
+    let context_receipt_sha256 = context::verify(state, &policy, record, evidence, &revocations)?;
     let experiment: Experiment = blob(state, &evidence.experiment_blob_sha256)?;
     let window: ExecutionWindow = blob(state, &evidence.window_sha256)?;
     experiment.validate()?;
@@ -890,6 +914,19 @@ fn measured(
         );
         let request: EvaluationRequest = blob(state, &candidate.evaluation_request_sha256)?;
         let result: EvaluationResult = blob(state, &candidate.execution_receipt_sha256)?;
+        revocations.refuse(
+            &format!("fold {fold} of the teaching candidate"),
+            [
+                candidate.predictions_sha256.as_str(),
+                candidate.fitted_artifact_sha256.as_str(),
+                candidate.evaluation_request_sha256.as_str(),
+                candidate.worker_job_sha256.as_str(),
+                candidate.execution_receipt_sha256.as_str(),
+                candidate.started_receipt_sha256.as_str(),
+                result.worker_receipt_sha256.as_str(),
+                frozen.baseline_predictions_sha256.as_str(),
+            ],
+        )?;
         request.validate()?;
         result.validate(&request)?;
         ensure!(
@@ -2364,5 +2401,6 @@ mod tests {
     mod matrix;
     mod metrics;
     mod provenance;
+    mod revocation;
     mod transitions;
 }

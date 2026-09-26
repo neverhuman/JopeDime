@@ -543,3 +543,119 @@ the W3-T07 finding above, and the behaviour is unchanged.
 - A comparison whose tip is ineligible therefore has no teacher until a qualified candidate
   strictly beats that tip.
 - Any stricter rule needs a new, versioned policy.
+
+## W12-T05 at the live consumers (rr2/integration-a): revocation lookup
+
+The revocation authority is the claims and revocation graph (`jope.core-ip-claims/v1`, verified
+by `jope-records verify-claims`). Revoking a node there revokes exactly its descendants. Before
+this change no consumer read it.
+
+**Reproduced first** in `w12-t05-consumers-pre-20260926T223206Z/`: three temporary tests, whose
+source is in that run's `diff.patch`, fail. In each, `jope_records::claims::verify` reports the
+node as revoked, and yet:
+
+- a teacher whose context parent receipt is revoked (the context receipt with it, as its
+  descendant) is admitted: `qualify` succeeds, the HWM initializes, and `freeze_teaching` lists
+  it;
+- a commit naming a revoked corpus member moves the W8 run pointer (`Advanced`, height 1);
+- a record revoked in the graph initializes its HWM pointer.
+
+**Source.**
+
+- `jope_records::claims::revoked_evidence` returns the revocation closure of a verified claims
+  record:
+  - every revoked node, with the digest its bytes were pinned at;
+  - the revocation that reaches it (the lowest sequence);
+  - the sha256 of the exact bytes verified. A record that changes while it is verified is
+    refused.
+
+  A record `verify` refuses yields nothing.
+- `jope_learning::revocation`:
+  - `import` appends newly revoked nodes to the state tree's append-only, hash-chained
+    `revocations` ledger. It is read-only unless applied.
+  - Nothing is ever un-revoked: a later document that no longer revokes a node is reported, and
+    the node stays revoked.
+  - A document that re-pins a revoked node under other bytes is refused, with nothing written.
+  - `Revocations::refuse` gives the `RevokedEvidence` error, naming the node, the revocation
+    (issuer, time, sequence, the ancestor that reaches it) and the requalification rule.
+- Consumers:
+  - **W3 teacher admission.** `eligibility::measured`, which `qualify`, `hwm::ingest`,
+    `freeze_teaching`, `revalidate_qualification` and `revalidate_replay` all recompute
+    through, refuses a candidate when any of these is revoked:
+    - the record, freeze, experiment, window, frozen targets or panel;
+    - the inner-partition evidence;
+    - any fold's predictions, fitted state, request, job, result, receipts or baseline;
+    - the context receipt, its fitted state or output;
+    - any parent receipt, or a parent's fitted state or output. The consumer walks the parents
+      itself, so a revoked parent refuses its descendant even when the graph does not name the
+      descendant.
+  - **HWM ingest.** A candidate whose record is revoked is rejected with the new reason and
+    transition `revoked`, before any comparison. It never initializes or improves, and a
+    redelivery of it is a `duplicate`. Consistent with the adopted HWM-bar decision, a tip
+    revoked after it was accepted still sets the bar, and every teaching gate excludes it.
+  - **W8 publication.** `publish::prepare` checks the commit's whole closure, ancestors
+    included, as the outbox recorded it: each item's reference digest and the sha256 of its
+    bytes. It does so before anything is appended or delivered, and a match is `Blocked` with
+    nothing delivered. The product driver refuses to append a revoked engine publication.
+- CLI: `jope-learning revocations import --claims <record> [--root <repo>] [--apply]` and
+  `revocations status`, with capability-matrix rows.
+
+**Tests.**
+
+- `eligibility::tests::revocation`, with `assert_refused` meaning "no authority changed":
+  - `a_revoked_parent_or_its_descendant_is_refused_at_teacher_admission` covers:
+    - a revoked parent (the graph also revokes the context receipt);
+    - the context receipt alone;
+    - the parent alone, with no descendant in the graph;
+    - one fold's fitted state;
+    - the frozen targets;
+    - an unrelated revocation as the positive control.
+  - `a_revocation_after_admission_withdraws_the_teacher_and_is_never_undone`:
+    - the teacher is admitted, then revoked;
+    - `freeze_teaching` excludes it and `revalidate_qualification` refuses it, with qualified
+      files, pointers and accepted events unchanged;
+    - a re-import appends nothing;
+    - an edited document un-revokes nothing;
+    - a re-pin is refused, with the ledger unchanged.
+- `hwm::tests::a_revoked_record_is_rejected_and_never_initializes_or_improves`.
+- `progress::tests::receiving::a_commit_whose_closure_names_revoked_evidence_never_moves_the_pointer`
+  covers:
+  - a new revoked corpus member: `Blocked`, with the remote byte-identical;
+  - evidence committed earlier and revoked later: the descendant commit is refused;
+  - an object matched by its bytes' sha256;
+  - an unrelated revocation as the positive control.
+- `progress::tests::product::a_revoked_engine_publication_is_never_appended`.
+- `recovery_cli::revocations_import_is_read_only_by_default_and_refuses_the_revoked_record_once_applied`:
+  the plan writes nothing; apply leads `hwm ingest` to reject the record as `revoked`; a
+  tampered evidence file (the claims verifier refuses it) imports nothing, with exit 2.
+- `jope-records` `claims::revoked_evidence_gives_consumers_digests_attributed_to_their_revocation`.
+
+**Evidence** (under the evidence root):
+
+- `w12-t05-consumers-pre-20260926T223206Z/` — the three reproductions fail. This is also the
+  run that adds the `jope-records` dependency; the diff is in the run.
+- `w12-t05-consumers-post-20260926T223745Z/` — `jope-learning` and `jope-records`: 258 of 258
+  pass, 0 skipped.
+- `w12-t05-consumers-mutations-20260926T223927Z/` — eight mutations of the finished source,
+  each caught and restored byte-identically:
+
+  | Mutation | What it breaks | Caught by |
+  |---|---|---|
+  | `candidate-closure-unchecked` | The candidate's record, freeze, targets, … are not checked | the teacher-admission test (revoked targets) |
+  | `fold-fitted-unchecked` | A fold's fitted state is not checked | the teacher-admission test (revoked fold output) |
+  | `context-receipt-unchecked` | The context receipt is not checked | the teacher-admission test (receipt alone) |
+  | `parents-unchecked` | The consumer does not walk the parents | the teacher-admission test (parent alone) |
+  | `hwm-unchecked` | HWM ingest ignores revocations | the HWM test |
+  | `publish-unchecked` | Publication ignores revocations | the publication test |
+  | `driver-unchecked` | The driver appends revoked publications | the product test (a later block is not enough: nothing may be appended) |
+  | `repin-accepted` | A re-pinned revoked node is imported | the after-admission test |
+
+**Not established here (open).**
+
+- **Revocation freshness.** A host sees only the revocations it imported. There is no
+  subscription, and nothing proves this host holds the latest claims record. `revocations
+  status` reports the ledger head and count, not completeness.
+- **Custody evidence.** An evidence node whose custody bytes are absent on this host is still
+  imported by its pinned digest, unverified here, as `jope-records verify-claims` allows without
+  `--require-custody`.
+- **Live stores.** Nothing here reaches a live store.

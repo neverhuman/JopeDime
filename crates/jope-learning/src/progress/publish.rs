@@ -17,7 +17,10 @@
 //!      (no forked or repeated update), and that decisions and evidence come only from
 //!      completed attempts;
 //!    - every HWM decision the commit adds is one this host's own HWM ledger recorded
-//!      ([`HwmDecision::verify_against`]).
+//!      ([`HwmDecision::verify_against`]);
+//!    - nothing in the closure, ancestors included, is revoked evidence
+//!      ([`crate::revocation`]). This is checked on the closure as the outbox recorded it,
+//!      before anything is delivered.
 //!
 //!    If an object is missing remotely but the local outbox holds it, it is uploaded again
 //!    create-only from its verified payload. Any other defect blocks publication.
@@ -35,6 +38,7 @@
 //! Corpora and checkpoints become reusable only through [`reusable`]. It verifies the pointer,
 //! the commit it names and that commit's whole closure before returning anything.
 
+use crate::canon::sha256_hex;
 use crate::ledger::Ledger;
 use crate::progress::inventory::{
     decode_as, head_key, object_key, BlobRef, CandidateEvidence, Checkpoint, Commit, Decoded,
@@ -43,6 +47,7 @@ use crate::progress::inventory::{
 };
 use crate::progress::outbox::Outbox;
 use crate::progress::remote::Remote;
+use crate::revocation::Revocations;
 use anyhow::{bail, ensure, Context, Result};
 use jope_datasets::store::ObservedObject;
 use serde::Serialize;
@@ -364,6 +369,28 @@ pub enum Publication {
     Blocked { commit: String, reason: String },
 }
 
+/// Every digest `commit`'s closure reaches through this outbox's records: each item's reference
+/// digest and the sha256 of its recorded bytes (an object's bytes and domain digest differ).
+fn local_closure_digests(outbox: &Outbox, commit: &Encoded) -> Vec<String> {
+    let mut digests = vec![commit.digest.clone(), sha256_hex(&commit.bytes)];
+    let mut seen = BTreeSet::new();
+    let mut pending: Vec<Dependency> = commit.dependencies.clone();
+    while let Some(item) = pending.pop() {
+        if !seen.insert(item.clone()) {
+            continue;
+        }
+        digests.push(match &item {
+            Dependency::Blob(b) => b.sha256.clone(),
+            Dependency::Object(o) => o.digest.clone(),
+        });
+        if let Some(record) = outbox.seq_of(&item).and_then(|seq| outbox.record(seq)) {
+            digests.push(record.bytes_sha256.clone());
+            pending.extend(record.dependencies.iter().cloned());
+        }
+    }
+    digests
+}
+
 /// A publication that has done everything except move the pointer.
 #[derive(Debug)]
 pub struct Plan {
@@ -422,6 +449,22 @@ pub fn prepare(
             reason,
         }))
     };
+
+    // W12-T05: nothing revoked is delivered or committed. The commit's whole closure, ancestors
+    // included, is checked as this outbox recorded it, before anything is appended or delivered.
+    // The outbox records every dependency before its dependent and delivery verifies that the
+    // remote holds exactly those bytes, so the verified remote closure is the same set.
+    let revocations = Revocations::load(outbox.state())?;
+    if !revocations.is_empty() {
+        if let Err(e) = revocations.refuse(
+            &format!("commit {}", commit.digest),
+            local_closure_digests(outbox, commit)
+                .iter()
+                .map(String::as_str),
+        ) {
+            return blocked(format!("{e:#}; nothing was delivered"));
+        }
+    }
 
     outbox.append_object(commit)?;
     let delivery = outbox.deliver(remote, None)?;

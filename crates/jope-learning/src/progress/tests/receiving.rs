@@ -8,8 +8,8 @@
 //! Every refusal leaves the pointer byte-identical; the positive controls advance it.
 
 use super::fixture::{
-    append, commit, env, head_bytes, hwm_record, producer, published, run, training, Env, Run, BIG,
-    PUBLISHER,
+    append, commit, env, head_bytes, hwm_record, producer, published, run, snapshot, training, Env,
+    Run, BIG, PUBLISHER,
 };
 use crate::hwm::{self, Candidate, Transition};
 use crate::progress::inventory::*;
@@ -346,4 +346,101 @@ fn hwm_decisions_are_checked_against_the_local_hwm_ledger_at_publication() {
         other => panic!("a decision the publishing host cannot back advanced: {other:?}"),
     }
     assert_eq!(head_bytes(&e.remote, &r).unwrap(), before);
+}
+
+#[test]
+fn a_commit_whose_closure_names_revoked_evidence_never_moves_the_pointer() {
+    use crate::revocation::testing::revoke;
+    let r = run("run-w8-revoked", 3, 3);
+
+    // A new commit naming a revoked blob (a corpus member) is refused before any delivery.
+    let e = env();
+    let (mut o, _, c0) = published(&e, &r);
+    let (corpus, exposure0, members) = training(&mut o, &r, 0, None, 3);
+    let repo = tempfile::tempdir().unwrap();
+    revoke(
+        &e.state,
+        repo.path(),
+        &[("member-0", &members[0], &[])],
+        &["member-0"],
+    );
+    let c1 = commit(&r, Some(&c0), &[&corpus, &exposure0]);
+    let (head, remote) = (head_bytes(&e.remote, &r).unwrap(), snapshot(&e.remote_dir));
+    match publish(&mut o, &e.remote, PUBLISHER, &r.manifest, &c1).unwrap() {
+        Publication::Blocked { reason, .. } => {
+            assert!(reason.contains("RevokedEvidence"), "{reason}")
+        }
+        other => panic!("a commit naming revoked evidence advanced: {other:?}"),
+    }
+    assert_eq!(head_bytes(&e.remote, &r).unwrap(), head);
+    assert_eq!(
+        snapshot(&e.remote_dir),
+        remote,
+        "revoked evidence was delivered"
+    );
+
+    // Evidence committed earlier and revoked later: every descendant commit is refused, whatever
+    // it adds, and the committed history is not touched.
+    let e = env();
+    let (mut o, _, c0) = published(&e, &r);
+    let (corpus, exposure0, members) = training(&mut o, &r, 0, None, 3);
+    let c1 = commit(&r, Some(&c0), &[&corpus, &exposure0]);
+    assert!(matches!(
+        publish(&mut o, &e.remote, PUBLISHER, &r.manifest, &c1).unwrap(),
+        Publication::Advanced { height: 1, .. }
+    ));
+    let repo = tempfile::tempdir().unwrap();
+    revoke(
+        &e.state,
+        repo.path(),
+        &[("member-1", &members[1], &[])],
+        &["member-1"],
+    );
+    let scheduled = r.scheduled(1).encoded().unwrap();
+    o.append_object(&scheduled).unwrap();
+    let c2 = commit(&r, Some(&c1), &[&scheduled]);
+    let (head, remote) = (head_bytes(&e.remote, &r).unwrap(), snapshot(&e.remote_dir));
+    match publish(&mut o, &e.remote, PUBLISHER, &r.manifest, &c2).unwrap() {
+        Publication::Blocked { reason, .. } => {
+            assert!(reason.contains("RevokedEvidence"), "{reason}")
+        }
+        other => panic!("a descendant of revoked evidence advanced: {other:?}"),
+    }
+    assert_eq!(head_bytes(&e.remote, &r).unwrap(), head);
+    assert_eq!(snapshot(&e.remote_dir), remote);
+
+    // A revoked object is matched by its domain digest and by its bytes' sha256.
+    let e = env();
+    let (mut o, _, c0) = published(&e, &r);
+    let scheduled = r.scheduled(1).encoded().unwrap();
+    o.append_object(&scheduled).unwrap();
+    let repo = tempfile::tempdir().unwrap();
+    revoke(
+        &e.state,
+        repo.path(),
+        &[("event", &scheduled.bytes, &[])],
+        &["event"],
+    );
+    let c1 = commit(&r, Some(&c0), &[&scheduled]);
+    assert!(matches!(
+        publish(&mut o, &e.remote, PUBLISHER, &r.manifest, &c1).unwrap(),
+        Publication::Blocked { .. }
+    ));
+
+    // Positive control: an unrelated revocation changes nothing.
+    let e = env();
+    let (mut o, _, c0) = published(&e, &r);
+    let (corpus, exposure0, _) = training(&mut o, &r, 0, None, 3);
+    let repo = tempfile::tempdir().unwrap();
+    revoke(
+        &e.state,
+        repo.path(),
+        &[("unrelated", b"unrelated evidence", &[])],
+        &["unrelated"],
+    );
+    let c1 = commit(&r, Some(&c0), &[&corpus, &exposure0]);
+    assert!(matches!(
+        publish(&mut o, &e.remote, PUBLISHER, &r.manifest, &c1).unwrap(),
+        Publication::Advanced { height: 1, .. }
+    ));
 }

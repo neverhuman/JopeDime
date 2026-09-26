@@ -7,6 +7,9 @@
 //!   committed closure, then commits this host's own remaining work on top of it. The plan
 //!   reports the winner, the losing commits, the work to re-commit and whether that commit would
 //!   pass the receiving checks, and writes nothing.
+//! * `revocations import` (W12-T05) imports a verified claims record's revocation closure into this
+//!   host's append-only revocation ledger. The plan reports what it would append and writes
+//!   nothing.
 
 mod common;
 
@@ -293,4 +296,75 @@ fn progress_reconcile_is_read_only_by_default_and_rebases_only_with_apply() {
         assert_eq!(tree(&store_dir), store_before);
         assert_eq!(tree(&c), c_before);
     }
+}
+
+/// A repository-local claims record under `root` pinning `bytes` as node `name`, revoked when
+/// `revoked`.
+fn claims_record(root: &Path, name: &str, bytes: &[u8], revoked: bool) -> std::path::PathBuf {
+    fs::create_dir_all(root.join("evidence")).unwrap();
+    fs::write(root.join(format!("evidence/{name}")), bytes).unwrap();
+    let revocations = if revoked {
+        json!([{"node": name, "issuer": "reviewer", "cause": "corrupt input",
+            "effective_utc": "2026-09-26T12:00:00Z", "sequence": 1}])
+    } else {
+        json!([])
+    };
+    let path = root.join("docs/internal/core-ip/claims/claims.json");
+    fs::create_dir_all(path.parent().unwrap()).unwrap();
+    fs::write(
+        &path,
+        serde_json::to_vec_pretty(&json!({"schema": "jope.core-ip-claims/v1",
+            "evidence": {name: {"kind": "synthetic-fixture", "location": "repository",
+                "path": format!("evidence/{name}"), "sha256": sha256_hex(bytes),
+                "source_commit": "a".repeat(40), "subject": "fixture", "scope": "fixture",
+                "depends_on": []}},
+            "revocations": revocations, "claims": []}))
+        .unwrap(),
+    )
+    .unwrap();
+    path
+}
+
+#[test]
+fn revocations_import_is_read_only_by_default_and_refuses_the_revoked_record_once_applied() {
+    let dir = tempfile::tempdir().unwrap();
+    let repo = tempfile::tempdir().unwrap();
+    let revoked = candidate("d0", 0.5, 1);
+    let path = claims_record(repo.path(), "record", &revoked.blob, true);
+    let (path, root) = (path.to_str().unwrap(), repo.path().to_str().unwrap());
+    let import = ["revocations", "import", "--claims", path, "--root", root];
+
+    // The plan names what would be appended and writes nothing.
+    let plan = jl(dir.path(), &import).ok().json();
+    assert_eq!(plan["applied"], false);
+    assert_eq!(plan["new"][0]["node"], "record");
+    assert_eq!(plan["new"][0]["sha256"], sha256_hex(&revoked.blob));
+    assert!(tree(dir.path()).is_empty(), "the plan wrote something");
+    let status = jl(dir.path(), &["revocations", "status"]).ok().json();
+    assert_eq!(status["status"]["revoked"], 0);
+
+    // Apply, then the revoked record is refused by the HWM ledger.
+    let applied = jl(dir.path(), &[&import[..], &["--apply"]].concat())
+        .ok()
+        .json();
+    assert_eq!(applied["applied"], true);
+    assert_eq!(
+        jl(dir.path(), &["revocations", "status"]).ok().json()["status"]["revoked"],
+        1
+    );
+    let state = State::at(dir.path());
+    let report = hwm::ingest(&state, None, vec![revoked], json!({"k": 1})).unwrap();
+    assert_eq!(report.rejects[0].reason, "revoked");
+
+    // A record the claims verifier refuses imports nothing: exit 2, the ledger unchanged.
+    let before = tree(dir.path());
+    fs::write(repo.path().join("evidence/record"), b"tampered").unwrap();
+    let out = jl(dir.path(), &[&import[..], &["--apply"]].concat());
+    assert_eq!(out.status, 2, "{}", out.stderr);
+    assert!(
+        out.stderr.contains("evidence digest mismatch"),
+        "{}",
+        out.stderr
+    );
+    assert_eq!(tree(dir.path()), before);
 }
