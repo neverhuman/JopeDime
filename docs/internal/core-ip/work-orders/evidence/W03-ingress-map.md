@@ -218,6 +218,77 @@ Not done:
 - race and crash reconciliation (T06);
 - whether a quarantined legacy incumbent should stop defining the bar.
 
+## W3-T04 recomputed metrics and diagnostics (fixture-proven)
+
+`measured()` already recomputed every fold loss and the train-only baseline from retained
+target and prediction bytes. It also already required exact row order, five frozen folds in
+fold order, and a clean bound worker execution whose predictions and fitted state are among
+its outputs. It refused a forged fold score (`result.primary`) and a forged aggregate
+(`record.score.value`).
+
+The pre-fix run established two missing pieces:
+
+- **Score units were not bound.** A regression record relabelled `normalized_rmse` or
+  `dimensionless` was qualified, and because the qualification is keyed only by record blob,
+  a relabelled record could ride a stored qualification into the HWM.
+  - Now `record.score.units` must be `original_target_units` for RMSE and `dimensionless`
+    otherwise, and it is re-checked on every revalidation.
+- **No separately named diagnostics existed.** `Qualification.diagnostics`
+  (`jope.teaching-diagnostics/v1`) now carries:
+  - per-fold scored rows;
+  - candidate minus baseline loss per fold, adverse-fold count and worst fold delta (the tail);
+  - for regression only: row-weighted pooled RMSE, pooled baseline RMSE, and pooled R² about
+    the pooled held-out mean. It is `None` when that mean has zero spread.
+
+  Admission still reads only `fold_losses` under the unchanged guard: five folds, four
+  improved, the same margins, and mean-fold loss.
+
+Evidence:
+
+- **Pre-fix** `w3-t04-prefix-metrics-20260926T054825Z/`: 46 of 48 lib tests passed and 2
+  failed:
+  - `forged_units_cannot_relabel_a_measured_score`: the relabelled record was qualified.
+  - `pooled_rmse_r2_and_tail_are_separately_named_diagnostics`: `diagnostics` was `Null`.
+
+  In the same run, `independent_evaluator_agrees_with_mean_fold_admission_on_uneven_folds` and
+  `prediction_evidence_substitutions_fail_before_authority` **passed**. They document existing
+  safeguards that are now under regression protection.
+- **Post-fix** `w3-t04-postfix-metrics-20260926T055008Z/`: `jope-learning` 91 of 91 pass with
+  0 skipped. It also holds `doctest.log` and a `check.log` for jope-motifs, jope-cli and
+  jope-bench across all targets.
+
+Test detail (`crates/jope-learning/src/eligibility/tests/metrics.rs`):
+
+- **Independent evaluator.** Written apart from `score_predictions`, `baseline` and
+  `feat_math`. On uneven folds (2/4/3/5/2 rows, heterogeneous residuals, one adverse fold) it
+  reproduces the per-fold losses, the mean-fold aggregates, the four-of-five count and the
+  pooled figures. It also shows that the pooled RMSE differs from the admitted mean-fold loss.
+- **Substitution suite.** Each case is refused with an exact reason and no change to
+  authority-bearing state, and the suite ends with a positive control. The cases are:
+  - swapped fold order;
+  - a duplicated fold;
+  - a missing fold and a sixth fold;
+  - a duplicated row ID;
+  - another fold's fitted state, both naming only and a coherent rebind;
+  - missing predictions;
+  - a forged fold score and a forged aggregate;
+  - a nonfinite (`null`) prediction.
+
+Fixture changes, which supply valid values rather than weaken any check:
+
+- Records carry correct units.
+- Each fold has its own fitted state.
+- `fixture_spec` adds uneven folds and custom predictions.
+
+Not done:
+
+- **Fold-specific fitted state.** A fitted artifact is not bound to its fold's training rows.
+  Both artifact schemas carry no row identity, and the worker envelope `input_sha256` is not
+  interpretable in jope-learning. A producer that reuses one all-row fit for every fold
+  cannot be detected here.
+- **Classification metrics.** Validity outcomes and class-permutation tests for binary and
+  multiclass are deferred with the register scope.
+
 ## Not established here (open)
 
 - **Producer authentication.** The receipt is a producer claim: nothing executes or signs

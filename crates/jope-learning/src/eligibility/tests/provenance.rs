@@ -5,14 +5,14 @@ use super::*;
 
 /// Authority-bearing state only. Rejected ledger events are submitted-record inventory.
 #[derive(Debug, PartialEq)]
-struct Authority {
-    qualified: Vec<String>,
-    pointers: Vec<(String, String)>,
-    accepted: Vec<String>,
-    teaching: Vec<String>,
+pub(super) struct Authority {
+    pub(super) qualified: Vec<String>,
+    pub(super) pointers: Vec<(String, String)>,
+    pub(super) accepted: Vec<String>,
+    pub(super) teaching: Vec<String>,
 }
 
-fn authority(state: &State) -> Authority {
+pub(super) fn authority(state: &State) -> Authority {
     let mut qualified = walkdir::WalkDir::new(state.root().join("eligibility/qualified"))
         .into_iter()
         .filter_map(Result::ok)
@@ -51,16 +51,28 @@ fn authority(state: &State) -> Authority {
 }
 
 fn submit(f: &Fixture, evidence: &OofEvidence) -> (Result<Qualification>, hwm::IngestReport) {
-    let qualified = qualify(&f.state, &f.record, evidence);
-    (qualified, ingest(f))
+    submit_record(f, &f.record, evidence)
+}
+
+fn submit_record(
+    f: &Fixture,
+    record: &HwmRecord,
+    evidence: &OofEvidence,
+) -> (Result<Qualification>, hwm::IngestReport) {
+    let qualified = qualify(&f.state, record, evidence);
+    (qualified, ingest_record(f, record))
 }
 
 fn ingest(f: &Fixture) -> hwm::IngestReport {
+    ingest_record(f, &f.record)
+}
+
+fn ingest_record(f: &Fixture, record: &HwmRecord) -> hwm::IngestReport {
     hwm::ingest(
         &f.state,
         None,
         vec![Candidate {
-            record: f.record.clone(),
+            record: record.clone(),
             blob: b"synthetic candidate".to_vec(),
             chain_from_source: false,
         }],
@@ -69,7 +81,7 @@ fn ingest(f: &Fixture) -> hwm::IngestReport {
     .unwrap()
 }
 
-fn rejected_decisions(state: &State) -> Vec<String> {
+pub(super) fn rejected_decisions(state: &State) -> Vec<String> {
     Ledger::open(state.root(), "eligibility")
         .events()
         .unwrap()
@@ -90,7 +102,7 @@ fn valid(f: &Fixture) -> ContextEvidence {
 }
 
 /// Authorized positive control: the same fixture then admits with valid provenance.
-fn assert_positive_control(f: &Fixture) {
+pub(super) fn assert_positive_control(f: &Fixture) {
     let (qualified, report) = submit(f, &f.evidence);
     let qualified = qualified.unwrap();
     assert_eq!((report.accepted, report.rejected), (1, 0));
@@ -112,10 +124,21 @@ fn assert_positive_control(f: &Fixture) {
     assert_eq!(freeze_teaching(&f.state).unwrap().entries, vec![qualified]);
 }
 
-fn assert_refused(f: &Fixture, evidence: &OofEvidence, expected: &str, label: &str) {
+pub(super) fn assert_refused(f: &Fixture, evidence: &OofEvidence, expected: &str, label: &str) {
+    assert_refused_record(f, &f.record, evidence, expected, label)
+}
+
+/// Refused through `qualify` and `hwm::ingest`, inventoried, and no authority changed.
+pub(super) fn assert_refused_record(
+    f: &Fixture,
+    record: &HwmRecord,
+    evidence: &OofEvidence,
+    expected: &str,
+    label: &str,
+) {
     let before = authority(&f.state);
     let inventoried = rejected_decisions(&f.state).len();
-    let (qualified, report) = submit(f, evidence);
+    let (qualified, report) = submit_record(f, record, evidence);
     let error = format!("{:#}", qualified.expect_err(label));
     assert!(error.contains(expected), "{label}: {error}");
     assert_eq!(report.rejects.len(), 1, "{label}");
@@ -387,6 +410,7 @@ fn legacy_qualification_without_provenance_stays_quarantined_and_is_not_upgraded
     // Simulate bytes persisted before provenance was mandatory: no context field at all.
     let mut legacy = qualified.clone();
     legacy.context_receipt_sha256 = None;
+    legacy.diagnostics = None;
     let stored = StoredQualification {
         evidence: with_context(&f, None),
         qualification: legacy.clone(),

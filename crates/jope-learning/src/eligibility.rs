@@ -36,6 +36,7 @@ pub use inner::{
 const FREEZE: &str = "jope.optimization-freeze/v1";
 const PREDICTIONS: &str = "jope.train-oof-predictions/v1";
 const QUALIFICATION: &str = "jope.measured-teaching/v1";
+const DIAGNOSTICS: &str = "jope.teaching-diagnostics/v1";
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -160,6 +161,70 @@ pub struct Qualification {
     /// Verified context receipt; stored legacy qualifications without one never revalidate.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub context_receipt_sha256: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub diagnostics: Option<Diagnostics>,
+}
+
+/// Descriptive statistics recomputed with the qualification. Admission reads only
+/// `fold_losses` under `guard` (mean-fold loss); nothing here can change a decision.
+/// Pooled figures weight rows rather than folds and exist only for regression.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Diagnostics {
+    pub schema: String,
+    pub fold_rows: Vec<usize>,
+    /// Candidate minus train-only baseline loss per fold; positive is worse.
+    pub fold_loss_deltas: Vec<f64>,
+    pub adverse_folds: usize,
+    pub worst_fold_loss_delta: f64,
+    pub pooled_rmse: Option<f64>,
+    pub pooled_baseline_rmse: Option<f64>,
+    /// `1 - SSE/SST` about the pooled held-out target mean; uses held labels, never admits.
+    pub pooled_r2: Option<f64>,
+}
+
+fn diagnostics(
+    fold_losses: &[(f64, f64)],
+    fold_rows: Vec<usize>,
+    pooled: &[(f64, f64, f64)],
+) -> Result<Diagnostics> {
+    let fold_loss_deltas: Vec<f64> = fold_losses.iter().map(|(c, b)| c - b).collect();
+    let n = pooled.len() as f64;
+    let squared = |f: fn(&(f64, f64, f64)) -> f64| pooled.iter().map(|p| f(p).powi(2)).sum::<f64>();
+    let (pooled_rmse, pooled_baseline_rmse, pooled_r2) = if pooled.is_empty() {
+        (None, None, None)
+    } else {
+        let mean = pooled.iter().map(|p| p.0).sum::<f64>() / n;
+        let sse = squared(|(t, c, _)| t - c);
+        let sst = pooled
+            .iter()
+            .map(|(t, _, _)| (t - mean).powi(2))
+            .sum::<f64>();
+        (
+            Some((sse / n).sqrt()),
+            Some((squared(|(t, _, b)| t - b) / n).sqrt()),
+            (sst > 0.0).then(|| 1.0 - sse / sst),
+        )
+    };
+    let value = Diagnostics {
+        schema: DIAGNOSTICS.into(),
+        fold_rows,
+        adverse_folds: fold_loss_deltas.iter().filter(|d| **d > 0.0).count(),
+        worst_fold_loss_delta: fold_loss_deltas.iter().copied().fold(f64::MIN, f64::max),
+        fold_loss_deltas,
+        pooled_rmse,
+        pooled_baseline_rmse,
+        pooled_r2,
+    };
+    ensure!(
+        value.fold_loss_deltas.iter().all(|d| d.is_finite())
+            && [pooled_rmse, pooled_baseline_rmse, pooled_r2]
+                .into_iter()
+                .flatten()
+                .all(f64::is_finite),
+        "nonfinite teaching diagnostic"
+    );
+    Ok(value)
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -736,6 +801,15 @@ fn measured(
         record.score.metric == expected_metric,
         "metric differs from measured task protocol"
     );
+    ensure!(
+        record.score.units
+            == if expected_metric == Metric::Rmse {
+                "original_target_units"
+            } else {
+                "dimensionless"
+            },
+        "score units differ from measured task protocol"
+    );
     let policy = load_freeze(state, &evidence.freeze)?;
     ensure!(
         policy.guard == GuardPolicy::current(),
@@ -772,6 +846,8 @@ fn measured(
     let classes = &record.identity.comparison.as_ref().unwrap().class_order;
     let rows: Vec<TargetRow> = blob(state, &policy.targets_sha256)?;
     let mut fold_losses = Vec::new();
+    let mut fold_rows_scored = Vec::new();
+    let mut pooled = Vec::new();
     let mut improved_folds = 0;
     for (fold, frozen) in policy.folds.iter().enumerate() {
         ensure!(frozen.fold as usize == fold, "frozen fold order changed");
@@ -969,6 +1045,14 @@ fn measured(
         );
         improved_folds += usize::from(policy.guard.improves(c.loss, b.loss));
         fold_losses.push((c.loss, b.loss));
+        fold_rows_scored.push(hold.len());
+        if let (Predictions::Values(c), Predictions::Values(b)) =
+            (&predictions, &baseline_predictions)
+        {
+            for ((row, c), b) in hold.iter().zip(c).zip(b) {
+                pooled.push((row.target.parse::<f64>()?, *c, *b));
+            }
+        }
     }
     let candidate_loss = fold_losses
         .iter()
@@ -989,6 +1073,7 @@ fn measured(
         candidate_value == record.score.value,
         "claimed HWM score differs from measured mean-fold predictions"
     );
+    let summary = diagnostics(&fold_losses, fold_rows_scored, &pooled)?;
     Ok(Qualification {
         schema: QUALIFICATION.into(),
         comparison: record.identity.clone(),
@@ -1013,6 +1098,7 @@ fn measured(
         context_fitting_rows_sha256:policy.inner_partition.as_ref().map(|p|p.fitting_rows_sha256()).transpose()?,
         context_outer_fold:policy.inner_partition.as_ref().map(|p|p.outer_fold),
         context_receipt_sha256: Some(context_receipt_sha256),
+        diagnostics: Some(summary),
         measurement:
             "recomputed-from-pinned-targets-and-predictions; analytic-baseline-worker-fits=0; execution receipts retained separately"
                 .into(),
@@ -1307,9 +1393,42 @@ mod tests {
         fixture_with(selected_task, improved, Some(context_plan()))
     }
 
+    fn fixture_with(selected_task: Task, improved: usize, context: Option<ContextPlan>) -> Fixture {
+        let exact = move |fold: u8, hold: &[&TargetRow], baseline: Predictions| {
+            if (fold as usize) >= improved {
+                return baseline;
+            }
+            match baseline {
+                Predictions::Values(_) => Predictions::Values(
+                    hold.iter().map(|row| row.target.parse().unwrap()).collect(),
+                ),
+                Predictions::Probabilities { classes, .. } => Predictions::Probabilities {
+                    values: hold
+                        .iter()
+                        .map(|row| {
+                            classes
+                                .iter()
+                                .map(|class| f64::from(class == &row.target))
+                                .collect()
+                        })
+                        .collect(),
+                    classes,
+                },
+            }
+        };
+        fixture_spec(selected_task, context, None, &exact)
+    }
+
     // All inputs/predictions are synthetic; these tests establish admission mechanics,
     // not corpus admission, real fitted-model accuracy, or a completed live search.
-    fn fixture_with(selected_task: Task, improved: usize, context: Option<ContextPlan>) -> Fixture {
+    // `fold_targets` overrides the balanced default; `predict` maps (fold, held rows,
+    // train-only baseline) to the candidate's retained predictions.
+    fn fixture_spec(
+        selected_task: Task,
+        context: Option<ContextPlan>,
+        fold_targets: Option<Vec<Vec<String>>>,
+        predict: &dyn Fn(u8, &[&TargetRow], Predictions) -> Predictions,
+    ) -> Fixture {
         let fixture_root =
             Path::new(env!("CARGO_MANIFEST_DIR")).join("../../target/tmp/teaching-fixtures");
         fs::create_dir_all(&fixture_root).unwrap();
@@ -1340,20 +1459,28 @@ mod tests {
                 checkpoint_sha256: None,
             }),
         };
-        let targets = if classes.is_empty() {
-            vec!["-1".to_string(), "1".to_string()]
-        } else {
-            classes.clone()
-        };
-        let rows = (0..5)
-            .flat_map(|fold| {
+        let fold_targets = fold_targets.unwrap_or_else(|| {
+            vec![
+                if classes.is_empty() {
+                    vec!["-1".to_string(), "1".to_string()]
+                } else {
+                    classes.clone()
+                };
+                5
+            ]
+        });
+        assert_eq!(fold_targets.len(), 5);
+        let rows = fold_targets
+            .iter()
+            .enumerate()
+            .flat_map(|(fold, targets)| {
                 targets
                     .iter()
                     .enumerate()
                     .map(move |(index, target)| TargetRow {
-                        id: format!("{:064x}", fold as usize * 100 + index),
-                        group: format!("{:064x}", 1000 + fold as usize * 100 + index),
-                        fold,
+                        id: format!("{:064x}", fold * 100 + index),
+                        group: format!("{:064x}", 1000 + fold * 100 + index),
+                        fold: fold as u8,
                         target: target.clone(),
                     })
             })
@@ -1379,7 +1506,8 @@ mod tests {
             "rows":rows.len()+1, "features":[{"name":"x", "kind":"numeric"}], "classes":classes,
             "group_columns":[], "split":{"protocol":"synthetic", "sha256":comparison.cut_id,
                 "development_sha256":development_sha, "sealed_sha256":"8".repeat(64),
-                "development_rows":rows.len(), "sealed_rows":1, "fold_rows":vec![targets.len();5]},
+                "development_rows":rows.len(), "sealed_rows":1,
+                "fold_rows":fold_targets.iter().map(Vec::len).collect::<Vec<_>>()},
             "license":{"original":"synthetic", "evidence_url":"synthetic", "repository":"synthetic", "note":"synthetic"},
             "checkpoint_exposure":"synthetic", "description":"synthetic", "group_limitations":"synthetic"});
         let mut datasets = Vec::new();
@@ -1421,11 +1549,6 @@ mod tests {
         assert_eq!(frozen.label_role, "development");
         let dsl = "(pipe X (synthetic-fixture))".to_string();
         let program = sha256_hex(dsl.as_bytes());
-        let fitted_bytes = canonical_json(&json!({"schema":"jope.panel-fitted-rust/v1",
-            "method":{"dsl":dsl}, "model":{"genome_sha256":program},
-            "fixture_note":"synthetic artifact consistency test, not a live fit"}))
-        .unwrap();
-        let fitted = state.put_blob(&fitted_bytes).unwrap();
         let experiment: Experiment = serde_json::from_value(json!({
             "schema":"jope.experiment/v1", "panel_sha256":plan.panel_sha256,
             "methods_sha256":"7".repeat(64), "source_sha":"a".repeat(40),
@@ -1454,27 +1577,17 @@ mod tests {
         let mut scores = Vec::new();
         for fold in 0..5 {
             let (train, hold) = fold_rows(&rows, fold);
-            let predictions = if (fold as usize) < improved {
-                match selected_task {
-                    Task::Regression => Predictions::Values(
-                        hold.iter().map(|row| row.target.parse().unwrap()).collect(),
-                    ),
-                    _ => Predictions::Probabilities {
-                        classes: classes.clone(),
-                        values: hold
-                            .iter()
-                            .map(|row| {
-                                classes
-                                    .iter()
-                                    .map(|class| f64::from(class == &row.target))
-                                    .collect()
-                            })
-                            .collect(),
-                    },
-                }
-            } else {
-                baseline(selected_task, &classes, &train, hold.len()).unwrap()
-            };
+            let predictions = predict(
+                fold,
+                &hold,
+                baseline(selected_task, &classes, &train, hold.len()).unwrap(),
+            );
+            // Each fold's fitted state is its own subject, never shared across folds.
+            let fitted_bytes = canonical_json(&json!({"schema":"jope.panel-fitted-rust/v1",
+                "method":{"dsl":dsl}, "model":{"genome_sha256":program}, "fold":fold,
+                "fixture_note":"synthetic artifact consistency test, not a live fit"}))
+            .unwrap();
+            let fitted = state.put_blob(&fitted_bytes).unwrap();
             let labels: Vec<_> = hold.iter().map(|row| row.target.clone()).collect();
             let score = score_predictions(selected_task, &classes, &labels, &predictions).unwrap();
             let predictions_sha256 = state
@@ -1632,7 +1745,12 @@ mod tests {
                 metric,
                 value: scores.iter().sum::<f64>() / 5.0,
                 direction: metric.direction(),
-                units: "synthetic".into(),
+                units: if metric == Metric::Rmse {
+                    "original_target_units"
+                } else {
+                    "dimensionless"
+                }
+                .into(),
             },
             cost: Cost::default(),
             evaluator: Evaluator {
@@ -2098,6 +2216,7 @@ mod tests {
         assert!(verify(&request, &bad, 4100).is_err());
     }
 
+    mod metrics;
     mod provenance;
     mod transitions;
 }
