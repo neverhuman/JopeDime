@@ -244,17 +244,17 @@ impl Loop {
             let prior_generation = request.generation - 1;
             let train_request = controller
                 .original_request(prior_generation, &format!("g{prior_generation}-train"))?;
+            // The whole parameter set: the v1 window, or a v2 weight warm start's reset window
+            // naming the accepted parent's step (`warm_start`, OWNER-DECISIONS.md D12).
             ensure!(
                 train_request.role == Role::Train
                     && prior_generation == 0
-                    && train_request.parameters["checkpoint"]
-                        == serde_json::to_value(&controller.config.accepted_checkpoint)?
-                    && train_request.parameters["initial_step"]
-                        == controller.config.initial_optimizer_step
-                    && train_request.parameters["requested_increment"] == 3000
-                    && train_request.parameters["target_step"]
-                        == controller.config.initial_optimizer_step + 3000
-                    && train_request.parameters["global_batch"] == 2048,
+                    && train_request.parameters
+                        == super::warm_start::train_parameters(
+                            &controller.config.accepted_checkpoint,
+                            &train_request.parameters["corpus"],
+                            &controller.config.train_window(0)?,
+                        )?,
                 "original parent training differs from frozen accepted optimizer window"
             );
             let pack_request = controller.original_request(
@@ -330,8 +330,7 @@ impl Loop {
             let state: Value = native_genome::load(&inputs.root, &candidate.parent_checkpoint)?;
             ensure!(
                 state["corpus_sha256"] == corpus.sha256
-                    && state["step"]
-                        == controller.config.initial_optimizer_step + request.generation * 3000,
+                    && state["step"] == controller.config.train_window(request.generation)?.initial,
                 "accepted proposal parent optimizer/corpus binding changed"
             );
         }

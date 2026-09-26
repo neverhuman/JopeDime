@@ -505,3 +505,65 @@ The trainer already validates a declaration against the classified request (`con
 - The native loop's training block from the accepted step-60000 checkpoint (`native_loop/materialize.rs` `training_eligibility` freezes `optimizer: carry`) is now refused at the trainer's pre-CUDA guard. Continuation from step-60000 works as a weight warm start (fixture above), but the native loop's own window accounting assumes a carried optimizer: `native_graph.rs` requires `initialization.optimizer_parent_step == initial_optimizer_step` and a checkpoint step equal to `target_optimizer_step`, and a warm start restarts the optimizer step at zero. A native-loop warm-start window needs a new native-loop protocol identity; it is not built here.
 - In-flight lineages written before the objective identity existed can no longer be resumed exactly; they continue as a weight warm start.
 - `rank_impl` wiring stays compile-checked only.
+
+### (f) Native-loop protocol `jope.native_loop.v2`: the legacy parent continues as a weight warm start
+
+**Why.** After (e), a `jope.native_loop.v1` run's first block is an optimizer carry from the legacy accepted step-60000 parent. `materialize::training_eligibility` freezes `optimizer: carry`, and the trainer's pre-CUDA guard refuses it. The native graph also accepted only an optimizer carry: `initialization.optimizer_parent_step == initial_optimizer_step` and a checkpoint at `parent_step + 3000`. So the native loop could not continue from the accepted checkpoint at all.
+
+**Reproduction.** `d12-native-warmstart-pre-20260926T230010Z`, before any source change: the new native-graph fixture failed.
+- **Carry control passed.** The first assertion (line 2810 at that head) is an optimizer-carry block from the real accepted `state.json`, and it passed.
+- **Warm start refused.** A genuine weight-warm-start block from the same parent was refused with "checkpoint original optimizer/corpus lineage changed" (line 2812). That block had a fresh optimizer, window 0 → 3000, the parent weights named, and no optimizer parent step.
+
+**Protocol `jope.native_loop.v2`** (`native_loop/warm_start.rs`).
+
+| Piece | v1 (unchanged) | v2 |
+|---|---|---|
+| `Config.schema` | `jope.native_loop.v1` | `jope.native_loop.v2`. Accepted step-60000 parent only; no predecessor, and no successor (`verify_successor` refuses a v2 previous run) |
+| Block windows | `60000 → 63000`, `63000 → 66000` | `0 → 3000` (weight warm start), `3000 → 6000` (optimizer carry from the warm start's own checkpoint) |
+| Train request parameters | the six historical fields, byte-identical | block 0 adds `optimizer: reset` and `parent_step: 60000`; block 1 has the six fields |
+| Replay policy | `optimizer: carry` | block 0: `optimizer: reset` plus `warm_start` = `jope.native_weight_warm_start.v1` {parent checkpoint, parent weights `model_sha256`, parent step, `optimizer: reset`, `optimizer_step_base: 0`} |
+| Declared input mode | `new_corpus_transition` (v2 input) or none (v1 input) | block 0: `weight_warm_start` |
+| Completion | `jope.native_loop_completion.v1` | `jope.native_loop_completion.v2` (fresh-optimizer window 0 → 6000) |
+
+**Receiving paths.**
+- **Request parsing.** `warm_start::request_mode` parses a Train request against its parent `state.json`. It refuses:
+  - a field outside the window;
+  - an explicit `optimizer: carry`, or an unknown mode;
+  - a `parent_step` without a mode, or a mode without one;
+  - another parent step;
+  - a warm start whose window is not `0 → 3000`: continuing the parent's step, or claiming a later window.
+- **Materialization and trainer reconstruction.** `materialize::training_eligibility` is used by materialization, by the loop's binding check and by the trainer's reconstruction. It freezes the warm-start policy from the carry policy it always built, via `warm_start_policy` and `binding`. For a carry, the policy is byte-identical to before.
+- **Grant proof.** `grant_proof` compares the whole block-0 parameter set and uses the protocol's windows.
+- **Native graph.** `native_graph::verify_numerical` (Train) reads the replay policy once and classifies it with `warm_start::policy_mode`, which refuses a carry that names a binding, a reset without one, a binding for other weights, step or checkpoint, and a policy frozen for a carry window. It then checks:
+  - the declared input mode matches the policy;
+  - for a carry, the historical checks, and no `warm_start` in the receipt;
+  - for a warm start: initial step 0; the receipt's `warm_start` equals the binding; and, via `warm_start::check_trained`, the checkpoint names the parent checkpoint, weights, step and policy, has `optimizer: fresh FP32 AdamW`, no `optimizer_parent_step`, and records `weight_warm_start` with continuity `optimizer: reset`.
+- **Trainer** (`training.rs` `smartcluster_rank`, neural, compile-checked). A reset policy is admitted only as a declared `weight_warm_start` over a verified native continuation corpus, with initial step 0. The trainer reconstructs the warm-start parameters for the exact-policy check and names the binding in the completion receipt.
+
+**Fixtures.**
+
+| Acceptance item | Test |
+|---|---|
+| v1 windows and request bytes unchanged (compared with the historical literal); unknown schema refused | `native_loop::warm_start::tests::v1_windows_and_request_bytes_are_unchanged` |
+| v2 block 0 is a warm start from the real accepted parent, and its binding names `053df4f5…`; block 1 carries 3000 → 6000; the policy classifies to `weight_warm_start` | `native_loop::warm_start::tests::v2_starts_a_fresh_optimizer_from_the_accepted_parent_then_carries_its_own` |
+| Mixed, forged or continuing requests refused (8 cases, including an extra field on a v1 request) | `native_loop::warm_start::tests::mixed_forged_or_continuing_warm_start_requests_are_refused` |
+| Mixed or forged policies refused (9 cases); a v1 carry policy stays valid | `native_loop::warm_start::tests::mixed_or_forged_warm_start_policies_are_refused` |
+| Positive path: a warm-start block from the real legacy parent verifies, its receipt names the parent weights digest, and no optimizer state is carried. Carry control verifies | `native_graph::tests::a_weight_warm_start_from_the_legacy_parent_verifies_and_names_the_parent_weights` |
+| Negatives: 13 warm-start edits and 4 carry mixtures refused, including an optimizer parent step, a carried optimizer, a 60000 → 63000 window under a reset policy, and a receipt without the binding. The checkpoint bytes are unchanged by each refusal, and a v1 input (no declaration) still verifies | `native_graph::tests::a_warm_start_claiming_continuation_or_a_mixed_policy_is_refused` |
+| v2 validates; v1 windows unchanged; a v2 run with a predecessor is refused; a successor of a v2 run is refused | `native_loop::tests::successor_requires_exact_completed_window_and_new_run_identity` |
+| Trainer guard (neural, CPU): the v1 block-0 policy is an optimizer carry the guard refuses; the v2 block-0 policy is a weight warm start it admits (`optimizer: reset`, `legacy_ids_only`, parent step 60000) | `continuation_modes::the_native_loop_v2_first_block_is_a_warm_start_the_trainer_admits` |
+
+**Runs**
+
+| Evidence directory | Command | Result |
+|---|---|---|
+| `d12-native-warmstart-pre-20260926T230010Z` | default, the native-graph fixture, before any source change | 0/1: the warm start was refused, and the carry control passed |
+| `d12-native-warmstart-post-20260926T230357Z` | default, `--lib` native_graph and native_loop plus `native_loop_continuation` and `bounded_run` | 63/63 |
+| `d12-native-warmstart-post-neural-20260926T230445Z` | neural CPU: `continuation_modes`, `checkpoint_commit`, `partition_wiring`, `lossless_partition`, `native_loop_continuation`, `request_integrity` | 43/43 |
+| `d12-native-warmstart-check-neural-20260926T230544Z` | `cargo check -p jope-parallel --features neural --all-targets` | exit 0 |
+
+**Open.**
+- No v2 run has been planned, materialized or executed, and the trainer path is compile-checked only.
+- A successor protocol for a warm-started lineage is not defined: v2 has no predecessor and no successor.
+- The native observer reports a v2 block's checkpoint step on the fresh optimizer axis (3000, 6000).
+- Nothing in the pinned `eval_registry` `authority`, `witness`, `service` or `native_scq` sources changed.

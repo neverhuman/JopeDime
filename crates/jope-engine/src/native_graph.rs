@@ -1454,6 +1454,7 @@ fn verify_numerical(root: &Path, operation: &Operation, result: &Value) -> Resul
             initial_optimizer_step,
             requested_step_increment,
             target_optimizer_step,
+            continuation_mode,
             ..
         } => {
             ensure!(
@@ -1479,18 +1480,75 @@ fn verify_numerical(root: &Path, operation: &Operation, result: &Value) -> Resul
                         .into(),
                 },
             )?)?;
-            let parent_hash = digest_file(&relative(root, initialize)?.join("state.json"))?;
+            let parent_path = relative(root, initialize)?.join("state.json");
+            let parent_hash = digest_file(&parent_path)?;
             let corpus_hash = digest_file(&relative(root, corpus)?.join("index.json"))?;
+            // The replay policy is read once: its digest and its optimizer mode come from the
+            // same bytes (`jope.native_loop.v2`, OWNER-DECISIONS.md D12).
+            let policy_bytes = read_limit(&relative(root, replay_policy)?, 256 << 20)?;
+            let policy_hash = hash(&policy_bytes);
+            let policy: Value =
+                serde_json::from_slice(&policy_bytes).context("training replay policy")?;
+            let warm_start = if policy["optimizer"] == "reset" {
+                let parent_bytes = read_limit(&parent_path, 16 << 20)?;
+                ensure!(
+                    hash(&parent_bytes) == parent_hash,
+                    "graph artifact changed: {}",
+                    parent_path.display()
+                );
+                crate::native_loop::warm_start::policy_mode(
+                    &policy,
+                    &parent_hash,
+                    &serde_json::from_slice(&parent_bytes)?,
+                )?
+            } else {
+                crate::native_loop::warm_start::policy_mode(&policy, &parent_hash, &Value::Null)?
+            };
             ensure!(
-                state["step"] == *target_optimizer_step
-                    && state["corpus_sha256"] == corpus_hash
-                    && result["numerical_receipt"]["corpus_sha256"] == corpus_hash
-                    && state["initialization"]["state_sha256"] == parent_hash
-                    && state["initialization"]["optimizer_parent_step"] == *initial_optimizer_step
-                    && state["initialization"]["replay_policy_sha256"]
-                        == digest_file(&relative(root, replay_policy)?)?,
-                "checkpoint original optimizer/corpus lineage changed"
+                continuation_mode.is_none_or(|declared| declared
+                    == if warm_start.is_some() {
+                        crate::task_contract::ContinuationMode::WeightWarmStart
+                    } else {
+                        crate::task_contract::ContinuationMode::NewCorpusTransition
+                    }),
+                "declared continuation mode differs from the replay policy"
             );
+            match &warm_start {
+                None => {
+                    ensure!(
+                        state["step"] == *target_optimizer_step
+                            && state["corpus_sha256"] == corpus_hash
+                            && result["numerical_receipt"]["corpus_sha256"] == corpus_hash
+                            && state["initialization"]["state_sha256"] == parent_hash
+                            && state["initialization"]["optimizer_parent_step"]
+                                == *initial_optimizer_step
+                            && state["initialization"]["replay_policy_sha256"] == policy_hash,
+                        "checkpoint original optimizer/corpus lineage changed"
+                    );
+                    ensure!(
+                        result.get("warm_start").is_none(),
+                        "an optimizer-carry completion names no weight warm start"
+                    );
+                }
+                // A weight warm start restarts the optimizer at step zero; the completion
+                // receipt and the checkpoint name the bound parent weights.
+                Some(binding) => {
+                    ensure!(
+                        *initial_optimizer_step == 0
+                            && state["step"] == *target_optimizer_step
+                            && state["corpus_sha256"] == corpus_hash
+                            && result["numerical_receipt"]["corpus_sha256"] == corpus_hash
+                            && result["warm_start"] == *binding,
+                        "a weight warm start restarts the optimizer at step zero and its receipt names the parent weights"
+                    );
+                    crate::native_loop::warm_start::check_trained(
+                        &state,
+                        binding,
+                        &parent_hash,
+                        &policy_hash,
+                    )?;
+                }
+            }
             let directory = relative(root, &checkpoint)?;
             ensure!(
                 digest_file(&directory.join("model.ot"))? == state["model_sha256"]
@@ -2674,5 +2732,279 @@ mod tests {
             });
         assert_eq!(fs::read_dir(&directory).unwrap().count(), 0);
         assert_eq!(fs::read_dir(&worker).unwrap().count(), 0);
+    }
+
+    // ------------------------------------------------ W6-T06 / D12: native Train results
+
+    /// The accepted step-60000 `state.json`, byte for byte: a legacy parent (no objective
+    /// identity).
+    const ACCEPTED_STATE: &[u8] = include_bytes!(
+        "../../../docs/internal/asm-manual/data/training-history/accepted60000-state.json"
+    );
+
+    /// One native Train block over the accepted parent, as its worker would leave it: the
+    /// input operation, the replay policy, the trained checkpoint and the completion receipt.
+    struct TrainFixture {
+        root: tempfile::TempDir,
+        operation: Operation,
+        policy: Value,
+        state: Value,
+        result: Value,
+    }
+
+    impl TrainFixture {
+        /// `warm`: a weight warm start (fresh optimizer, window 0 → 3000); otherwise an
+        /// optimizer carry (window 60000 → 63000).
+        fn new(warm: bool) -> Self {
+            let root = tempfile::tempdir().unwrap();
+            let at = |p: &str| root.path().join(p);
+            for dir in ["corpus", "parent", "out/checkpoints/latest"] {
+                fs::create_dir_all(at(dir)).unwrap();
+            }
+            fs::write(at("corpus/index.json"), b"{\"fixture\":\"corpus\"}").unwrap();
+            fs::write(at("parent/state.json"), ACCEPTED_STATE).unwrap();
+            let parent: Value = serde_json::from_slice(ACCEPTED_STATE).unwrap();
+            let parent_hash = hash(ACCEPTED_STATE);
+            let corpus_hash = hash(b"{\"fixture\":\"corpus\"}");
+            let (initial, target) = if warm { (0, 3000) } else { (60000, 63000) };
+            let mut policy = json!({"schema":"parallel.replay_policy.v2","eligible":true,
+                "optimizer":"carry","replay":"broad","parent_checkpoint_sha256":parent_hash,
+                "corpus_sha256":corpus_hash,"final_tests_opened":false,
+                "eligibility_evidence":{"schema":"jope.native_continuation_eligibility.v1",
+                    "original_window":{"initial_step":initial,"requested_increment":3000,
+                        "target_step":target,"global_batch":2048}}});
+            let mut initialization = json!({"kind":"warm_start","state_sha256":parent_hash,
+                "model_sha256":parent["model_sha256"],"parent_step":60000,
+                "optimizer":"carried FP32 AdamW with bias-correction step",
+                "optimizer_parent_step":60000,"continuation_mode":"new_corpus_transition",
+                "continuity":{"mode":"new_corpus_transition","optimizer":"carried"}});
+            let mut result = json!({"schema":"jope.smartcluster_training_completion.v1",
+                "window":{"initial_optimizer_step":initial,"requested_step_increment":3000,
+                    "target_optimizer_step":target},
+                "numerical_receipt":{"steps":target,"corpus_sha256":corpus_hash},
+                "latest":{"checkpoint":"out/checkpoints/latest"}});
+            if warm {
+                let binding = json!({"schema":"jope.native_weight_warm_start.v1",
+                    "parent_checkpoint_sha256":parent_hash,
+                    "parent_model_sha256":parent["model_sha256"],"parent_step":60000,
+                    "optimizer":"reset","optimizer_step_base":0});
+                policy["optimizer"] = json!("reset");
+                policy["warm_start"] = binding.clone();
+                let window = &mut policy["eligibility_evidence"]["original_window"];
+                window["optimizer"] = json!("reset");
+                window["parent_step"] = json!(60000);
+                initialization = json!({"kind":"warm_start","state_sha256":parent_hash,
+                    "model_sha256":parent["model_sha256"],"parent_step":60000,
+                    "optimizer":"fresh FP32 AdamW","continuation_mode":"weight_warm_start",
+                    "continuity":{"mode":"weight_warm_start","optimizer":"reset"}});
+                result["warm_start"] = binding;
+            }
+            let mut files = BTreeMap::new();
+            for name in ["model.ot", "optimizer.ot", "optimizer.json"] {
+                let bytes = format!("trained {name}");
+                fs::write(at("out/checkpoints/latest").join(name), &bytes).unwrap();
+                files.insert(name, hash(bytes.as_bytes()));
+            }
+            let state = json!({"schema":"parallel.checkpoint.v1","step":target,
+                "corpus_sha256":corpus_hash,"model_sha256":files["model.ot"],
+                "optimizer_sha256":files["optimizer.ot"],
+                "optimizer_metadata_sha256":files["optimizer.json"],
+                "initialization":initialization});
+            let operation = Operation::Train {
+                corpus: "corpus".into(),
+                run: "out".into(),
+                launch: "launch".into(),
+                micro: 256,
+                checkpoint_steps: 1000,
+                initialize: "parent".into(),
+                replay_policy: "policy.json".into(),
+                initial_optimizer_step: initial,
+                requested_step_increment: 3000,
+                target_optimizer_step: target,
+                continuation_mode: Some(if warm {
+                    crate::task_contract::ContinuationMode::WeightWarmStart
+                } else {
+                    crate::task_contract::ContinuationMode::NewCorpusTransition
+                }),
+            };
+            let mut fixture = Self {
+                root,
+                operation,
+                policy,
+                state,
+                result,
+            };
+            fixture.write();
+            fixture
+        }
+
+        /// Rewrite the policy, the checkpoint state and the receipt's state digest from the
+        /// current values, so each case differs only in what it edits.
+        fn write(&mut self) {
+            let policy = serde_json::to_vec(&self.policy).unwrap();
+            fs::write(self.root.path().join("policy.json"), &policy).unwrap();
+            self.state["initialization"]["replay_policy_sha256"] = json!(hash(&policy));
+            let state = serde_json::to_vec(&self.state).unwrap();
+            fs::write(
+                self.root.path().join("out/checkpoints/latest/state.json"),
+                &state,
+            )
+            .unwrap();
+            self.result["latest"]["state_sha256"] = json!(hash(&state));
+        }
+
+        fn verify(&self) -> Result<()> {
+            verify_numerical(self.root.path(), &self.operation, &self.result)
+        }
+    }
+
+    /// D12 reproduction and positive path: a weight warm start from the legacy accepted
+    /// parent (fresh optimizer from step zero, parent weights named, nothing carried) is a
+    /// valid native Train result. Before `jope.native_loop.v2` the verifier knew only an
+    /// optimizer carry and refused it. The optimizer-carry block is the control.
+    #[test]
+    fn a_weight_warm_start_from_the_legacy_parent_verifies_and_names_the_parent_weights() {
+        let carry = TrainFixture::new(false);
+        carry.verify().unwrap();
+        let warm = TrainFixture::new(true);
+        warm.verify().unwrap();
+        let parent: Value = serde_json::from_slice(ACCEPTED_STATE).unwrap();
+        assert_eq!(
+            parent["model_sha256"],
+            "053df4f53b84d2ebe7c14fbf907a149760af3d11de4a57b5ff89be8c2d3e8129"
+        );
+        assert_eq!(
+            warm.result["warm_start"]["parent_model_sha256"],
+            parent["model_sha256"]
+        );
+        let init = &warm.state["initialization"];
+        assert_eq!(init["model_sha256"], parent["model_sha256"]);
+        assert_eq!(init["optimizer"], "fresh FP32 AdamW");
+        assert!(init.get("optimizer_parent_step").is_none());
+        assert_eq!(warm.state["step"], 3000);
+        // The fixture's binding is exactly the one the loop derives for this parent.
+        assert_eq!(
+            warm.result["warm_start"],
+            crate::native_loop::warm_start::binding(&hash(ACCEPTED_STATE), &parent).unwrap()
+        );
+    }
+
+    /// D12 negatives: a warm start that claims an optimizer-step continuation, a mixed or
+    /// forged replay policy, and a receipt that does not name the bound parent weights are
+    /// refused. Each case edits one thing of an otherwise valid block, and a refusal leaves
+    /// every fixture file as it was.
+    #[test]
+    fn a_warm_start_claiming_continuation_or_a_mixed_policy_is_refused() {
+        type Edit = fn(&mut TrainFixture);
+        let warm_cases: Vec<(&str, Edit)> = vec![
+            ("checkpoint names an optimizer parent step", |f| {
+                f.state["initialization"]["optimizer_parent_step"] = json!(60000)
+            }),
+            ("checkpoint carried the optimizer", |f| {
+                f.state["initialization"]["optimizer"] =
+                    json!("carried FP32 AdamW with bias-correction step")
+            }),
+            ("continuity says carried", |f| {
+                f.state["initialization"]["continuity"]["optimizer"] = json!("carried")
+            }),
+            ("checkpoint lineage is a transition", |f| {
+                f.state["initialization"]["continuation_mode"] = json!("new_corpus_transition")
+            }),
+            ("checkpoint names other weights", |f| {
+                f.state["initialization"]["model_sha256"] = json!("b".repeat(64))
+            }),
+            ("window continues the parent's step", |f| {
+                if let Operation::Train {
+                    initial_optimizer_step,
+                    target_optimizer_step,
+                    ..
+                } = &mut f.operation
+                {
+                    *initial_optimizer_step = 60000;
+                    *target_optimizer_step = 63000;
+                }
+                f.result["window"]["initial_optimizer_step"] = json!(60000);
+                f.result["window"]["target_optimizer_step"] = json!(63000);
+                f.result["numerical_receipt"]["steps"] = json!(63000);
+                f.state["step"] = json!(63000);
+            }),
+            ("policy says carry but binds a warm start", |f| {
+                f.policy["optimizer"] = json!("carry")
+            }),
+            ("reset policy without a binding", |f| {
+                f.policy.as_object_mut().unwrap().remove("warm_start");
+            }),
+            ("binding names other weights", |f| {
+                f.policy["warm_start"]["parent_model_sha256"] = json!("b".repeat(64));
+                f.result["warm_start"] = f.policy["warm_start"].clone();
+            }),
+            ("binding continues an optimizer step", |f| {
+                f.policy["warm_start"]["optimizer_step_base"] = json!(60000);
+                f.result["warm_start"] = f.policy["warm_start"].clone();
+            }),
+            ("policy frozen for a carry window", |f| {
+                let w = &mut f.policy["eligibility_evidence"]["original_window"];
+                w.as_object_mut().unwrap().remove("optimizer");
+            }),
+            ("receipt does not name the parent weights", |f| {
+                f.result.as_object_mut().unwrap().remove("warm_start");
+            }),
+            ("declared as an optimizer carry", |f| {
+                if let Operation::Train {
+                    continuation_mode, ..
+                } = &mut f.operation
+                {
+                    *continuation_mode =
+                        Some(crate::task_contract::ContinuationMode::NewCorpusTransition);
+                }
+            }),
+        ];
+        for (case, edit) in warm_cases {
+            let mut f = TrainFixture::new(true);
+            edit(&mut f);
+            f.write();
+            let before = fs::read(f.root.path().join("out/checkpoints/latest/state.json")).unwrap();
+            assert!(f.verify().is_err(), "warm start admitted: {case}");
+            assert_eq!(
+                fs::read(f.root.path().join("out/checkpoints/latest/state.json")).unwrap(),
+                before
+            );
+        }
+        // An optimizer carry that names a warm start anywhere is a mixture.
+        let carry_cases: Vec<(&str, Edit)> = vec![
+            ("carry policy with a binding", |f| {
+                f.policy["warm_start"] = json!({"schema":"jope.native_weight_warm_start.v1"})
+            }),
+            ("carry receipt naming a warm start", |f| {
+                f.result["warm_start"] = json!({"schema":"jope.native_weight_warm_start.v1"})
+            }),
+            ("unknown optimizer mode", |f| {
+                f.policy["optimizer"] = json!("partial")
+            }),
+            ("carry declared as a warm start", |f| {
+                if let Operation::Train {
+                    continuation_mode, ..
+                } = &mut f.operation
+                {
+                    *continuation_mode =
+                        Some(crate::task_contract::ContinuationMode::WeightWarmStart);
+                }
+            }),
+        ];
+        for (case, edit) in carry_cases {
+            let mut f = TrainFixture::new(false);
+            edit(&mut f);
+            f.write();
+            assert!(f.verify().is_err(), "carry admitted: {case}");
+        }
+        // A v1 input (no declaration) keeps its implicit meaning.
+        let mut f = TrainFixture::new(false);
+        if let Operation::Train {
+            continuation_mode, ..
+        } = &mut f.operation
+        {
+            *continuation_mode = None;
+        }
+        f.verify().unwrap();
     }
 }
