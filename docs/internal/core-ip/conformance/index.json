@@ -1,0 +1,144 @@
+{
+  "fixtures": [
+    {
+      "boundary": "claims",
+      "expect": {
+        "outcome": "accepted"
+      },
+      "id": "accepted-fixture-claim",
+      "record": "claims/accepted-fixture-claim/claims.json",
+      "refusal_class": null,
+      "validator": "jope_records::claims::verify"
+    },
+    {
+      "boundary": "claims",
+      "expect": {
+        "message_contains": "synthetic identity cannot be live-host evidence",
+        "outcome": "refused"
+      },
+      "id": "synthetic-as-live-host",
+      "record": "claims/synthetic-as-live-host/claims.json",
+      "refusal_class": "synthetic identity as live evidence",
+      "validator": "jope_records::claims::verify"
+    },
+    {
+      "boundary": "claims",
+      "expect": {
+        "message_contains": "synthetic identity cannot be real-corpus-fixture evidence",
+        "outcome": "refused"
+      },
+      "id": "synthetic-as-real-corpus",
+      "record": "claims/synthetic-as-real-corpus/claims.json",
+      "refusal_class": "synthetic identity as real-corpus evidence",
+      "validator": "jope_records::claims::verify"
+    },
+    {
+      "boundary": "claims",
+      "expect": {
+        "message_contains": "synthetic identity cannot be measurement evidence",
+        "outcome": "refused"
+      },
+      "id": "synthetic-as-measurement",
+      "record": "claims/synthetic-as-measurement/claims.json",
+      "refusal_class": "synthetic identity as measurement evidence",
+      "validator": "jope_records::claims::verify"
+    },
+    {
+      "boundary": "claims",
+      "expect": {
+        "message_contains": "synthetic identity cannot be decision evidence",
+        "outcome": "refused"
+      },
+      "id": "synthetic-as-decision",
+      "record": "claims/synthetic-as-decision/claims.json",
+      "refusal_class": "synthetic identity as a promotion decision",
+      "validator": "jope_records::claims::verify"
+    },
+    {
+      "boundary": "claims",
+      "expect": {
+        "message_contains": "no live evidence",
+        "outcome": "refused"
+      },
+      "id": "live-claim-on-fixture-evidence",
+      "record": "claims/live-claim-on-fixture-evidence/claims.json",
+      "refusal_class": "stage without evidence of its kind",
+      "validator": "jope_records::claims::verify"
+    },
+    {
+      "boundary": "claims",
+      "expect": {
+        "message_contains": "evidence digest mismatch",
+        "outcome": "refused"
+      },
+      "id": "evidence-digest-mismatch",
+      "record": "claims/evidence-digest-mismatch/claims.json",
+      "refusal_class": "evidence bytes changed",
+      "validator": "jope_records::claims::verify"
+    },
+    {
+      "boundary": "claims",
+      "expect": {
+        "message_contains": "repository path traversal",
+        "outcome": "refused"
+      },
+      "id": "evidence-path-traversal",
+      "record": "claims/evidence-path-traversal/claims.json",
+      "refusal_class": "evidence outside the repository",
+      "validator": "jope_records::claims::verify"
+    },
+    {
+      "boundary": "claims",
+      "expect": {
+        "message_contains": "subject, scope or source differs from evidence",
+        "outcome": "refused"
+      },
+      "id": "claim-scope-drift",
+      "record": "claims/claim-scope-drift/claims.json",
+      "refusal_class": "claim scope differs from its evidence",
+      "validator": "jope_records::claims::verify"
+    },
+    {
+      "boundary": "claims",
+      "expect": {
+        "message_contains": "cites revoked evidence but is active",
+        "outcome": "refused"
+      },
+      "id": "revoked-evidence-active-claim",
+      "record": "claims/revoked-evidence-active-claim/claims.json",
+      "refusal_class": "revoked evidence still cited",
+      "validator": "jope_records::claims::verify"
+    },
+    {
+      "boundary": "claims",
+      "expect": {
+        "message_contains": "incomplete binding",
+        "outcome": "refused"
+      },
+      "id": "incomplete-binding",
+      "record": "claims/incomplete-binding/claims.json",
+      "refusal_class": "incomplete claim binding",
+      "validator": "jope_records::claims::verify"
+    },
+    {
+      "boundary": "claims",
+      "expect": {
+        "message_contains": "E-synthetic: kind",
+        "outcome": "refused"
+      },
+      "id": "unknown-evidence-kind",
+      "record": "claims/unknown-evidence-kind/claims.json",
+      "refusal_class": "unknown evidence kind",
+      "validator": "jope_records::claims::verify"
+    }
+  ],
+  "generator": "cargo run -q --locked -p jope-records -- conformance --write",
+  "limitations": [
+    "Synthetic fixtures only: they cannot back a real-corpus, hosted, live, measurement, promotion or historical claim.",
+    "The dispositions, fitted-package, proposal-ledger and lineage boundaries keep their synthetic cases in their own crates' tests.",
+    "Replaying the private evidence package (W12-T06) is not part of this pack."
+  ],
+  "schema": "jope.core-ip-conformance-pack/v1",
+  "scope": "claim-to-evidence boundary: one synthetic fixture per refusal class plus an accepted control",
+  "synthetic_identity": "jope.core-ip-conformance/v1"
+}

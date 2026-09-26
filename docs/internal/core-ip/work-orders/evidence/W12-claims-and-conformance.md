@@ -40,3 +40,64 @@ that no sentence inventory was generated from `claims.json`.
 - **Runs.**
   - Post `w12c-t01-post-20260926T212704Z`: `jope-records` 88/88; `verify-claims`, `claim-inventory`, `task-status` and `progress-view` exit 0.
   - Pre-commit `w12c-t01-c-20260926T212726Z`: fence suites and `gp::fit_contract_tests` 85/85; workspace all-targets check, coverage (0 unassigned), verify-test-inventory, fmt, diff-check and `parity-matrix.sh --no-build` exit 0.
+
+## 2. W12-T07: the public synthetic conformance pack and the private-canary scan (branch `rr2/integration-c`, 2026-09-26)
+
+**New capability; there is no failing reproduction.** The receiving rule already existed:
+evidence of synthetic identity cannot back a hosted, live, measurement, promotion or real-corpus
+claim (`c658d14891d3`). The fixture pack and the scan did not exist.
+
+- **Pack.** `docs/internal/core-ip/conformance/` has 25 files: 12 fixtures of the
+  claim-to-evidence boundary plus `index.json`.
+  - There is one fixture per refusal class, and each class is refused with the validator's own
+    message:
+    - synthetic identity as live-host, real-corpus, measurement or decision evidence;
+    - a live claim on fixture evidence;
+    - changed evidence bytes;
+    - an evidence path outside the repository;
+    - claim scope drifting from its evidence;
+    - revoked evidence still cited by an active claim;
+    - an incomplete binding;
+    - an unknown evidence kind.
+  - It also has an accepted fixture-stage control.
+  - `jope-records conformance` (module `conformance`) generates the pack deterministically.
+    Without `--write` it requires the committed bytes to equal the generator's, so the public
+    replay is reproducible and a stray, changed or missing file is refused. `--write` never
+    deletes a file.
+- **Synthetic identity.** Every pack file carries `synthetic_identity:
+  jope.core-ip-conformance/v1` and lives in the conformance tree. The claims verifier therefore
+  treats each fixture as synthetic by both location and bytes.
+- **Same receiving validator.** `replay` runs every fixture through `claims::verify`, the
+  verifier of the committed `claims.json`. It requires the recorded outcome: acceptance, or a
+  refusal of the rule class whose message contains the recorded text. A refusal for another
+  reason fails.
+- **Private-canary absence scan.** `scan` refuses any pack file without the synthetic identity,
+  or with a private canary:
+  - AWS access-key and secret-name shapes, private-key blocks and GitHub tokens;
+  - private home paths, the custody roots (`jope-rescue`, `jope-evidence`) and the private
+    hosts;
+  - `s3://` URIs.
+  The fast lane runs `conformance` (generator check, scan and replay) next to
+  `claim-inventory`.
+- **Tests** in `jope-records` `tests/records/conformance.rs` (4, in the existing `records`
+  target):
+  - `the_committed_pack_is_generated_and_replays_through_the_claims_validator`: 1 accepted,
+    11 refused, 11 distinct classes;
+  - `a_fixture_with_another_outcome_than_recorded_fails_the_replay`: both directions, plus the
+    drift check;
+  - `a_refusal_for_another_reason_fails_the_replay`;
+  - `private_canaries_and_unmarked_files_are_refused`: 6 canary classes, an unmarked stray
+    file, and `--write` not deleting it.
+- **Scope and what stays open.**
+  - The pack covers the claims boundary only. The dispositions, fitted-package,
+    proposal-ledger and lineage boundaries keep their synthetic cases in their own crates'
+    tests. A dispositions fixture would have to bind the live findings register. It would go
+    stale with every register change, so it was not built.
+  - Synthetic identity keeps the pack from establishing any real-corpus, hardware, live,
+    historical or operational claim.
+  - Replay of the private evidence package is W12-T06 and is not part of this pack.
+- **Runs.**
+  - Post `w12c-t07-post-20260926T213004Z`: `jope-records` 92/92.
+  - The fast-lane commands `verify-claims`, `claim-inventory`, `task-status`, `progress-view` and `conformance` exit 0. `conformance` scanned 25 files, and of its 12 fixtures 1 was accepted and 11 refused.
+  - The hygiene home-path grep over `crates/*/{src,tests}` found nothing.
+  - Pre-commit `w12c-t07-c-20260926T213031Z`: fence suites and `gp::fit_contract_tests` 85/85; workspace all-targets check, coverage (0 unassigned), verify-test-inventory, fmt, diff-check and `parity-matrix.sh --no-build` exit 0. `gitleaks detect --no-git` found nothing in `crates/jope-records`, the conformance and claims trees, or the other directories this branch changed.

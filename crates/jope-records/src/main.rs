@@ -10,8 +10,8 @@ use std::process::ExitCode;
 use clap::{Parser, Subcommand};
 use jope_records::pyjson::{self, Value};
 use jope_records::{
-    claim_inventory, claims, dispositions, elo_history, findings, inventory, layout, progress_view,
-    py, task_status, test_inventory,
+    claim_inventory, claims, conformance, dispositions, elo_history, findings, inventory, layout,
+    progress_view, py, task_status, test_inventory,
 };
 
 #[derive(Parser)]
@@ -62,6 +62,13 @@ enum Command {
         #[arg(long)]
         claims: Option<PathBuf>,
         /// Rewrite INVENTORY.md.
+        #[arg(long)]
+        write: bool,
+    },
+    /// Check (or regenerate) the public synthetic conformance pack, scan it for private
+    /// canaries and replay every fixture through its receiving validator (W12-T07).
+    Conformance {
+        /// Rewrite the generated pack files (never deletes a file).
         #[arg(long)]
         write: bool,
     },
@@ -160,6 +167,16 @@ fn run(cli: Cli) -> jope_records::Result<Value> {
             };
             let (text, summary) = claim_inventory::render(&path, None)?;
             claim_inventory::check_or_write(&claim_inventory::target(&path), &text, write)?;
+            summary
+        }
+        Command::Conformance { write } => {
+            let repo = repo()?;
+            conformance::check_or_write(&repo, write)?;
+            let scanned = conformance::scan(&repo)?;
+            let mut summary = conformance::replay(&repo)?;
+            if let Some(dict) = summary.as_dict_mut() {
+                dict.insert("files_scanned", scanned.into());
+            }
             summary
         }
         Command::VerifyTestInventory { inventory } => {

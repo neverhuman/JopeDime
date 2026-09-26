@@ -39,6 +39,7 @@ cargo run -q --locked -p jope-records -- verify-dispositions
 cargo run -q --locked -p jope-records -- verify-test-inventory
 cargo run -q --locked -p jope-records -- verify-claims
 cargo run -q --locked -p jope-records -- claim-inventory
+cargo run -q --locked -p jope-records -- conformance
 cargo run -q --locked -p jope-records -- task-status
 cargo run -q --locked -p jope-records -- progress-view
 cargo run -q --locked -p jope-records -- elo-history --require-all
