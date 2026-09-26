@@ -10,7 +10,9 @@
 //! The objective is partition dependent: every reduction below is a
 //! microbatch-local weighted mean, and the trainer averages microbatches and
 //! ranks (`task_contract::training_partition`,
-//! `microbatch_weighted_means_rank_mean_v1`).
+//! `microbatch_weighted_means_rank_mean_v1`). Partition v2
+//! (`training::partition`, W7-T06) reuses [`terms`] and reduces each term by
+//! its global numerator and denominator instead.
 use anyhow::{ensure, Result};
 use serde_json::{json, Value};
 use tch::{Kind, Tensor};
@@ -396,20 +398,26 @@ pub fn group_keys(rows: &[RowLabels]) -> Vec<String> {
         .collect()
 }
 
-/// The composite scalar objective of one microbatch and its five active raw
-/// term values `[sequence_nll, ranking_bt, ranking_listwise, runtime_huber,
-/// contextfree_bt]`.
+/// The five active terms of one microbatch as microbatch-local reductions, in
+/// [`TERM_NAMES`] order, and the inactive stability sum. Shared by
+/// [`composite`] (partition v1) and `training::partition::composite` (v2),
+/// so both partitions run the same term arithmetic.
+pub struct Terms {
+    pub active: [Tensor; 5],
+    pub stability: Tensor,
+}
+
+/// Validate one microbatch and form its [`Terms`].
 ///
 /// `tokens` and `pad` are `[B, T]`; `legal` is the `[B, T-1, V]` legal-token
 /// mask for targets `tokens[:, 1..T]` (BOS is never a target).
-pub fn composite<'a>(
+pub fn terms(
     outputs: &Outputs<'_>,
-    loss_log_vars: impl IntoIterator<Item = &'a Tensor>,
     tokens: &Tensor,
     pad: &Tensor,
     legal: &Tensor,
     rows: &[RowLabels],
-) -> Result<(Tensor, [f64; 5])> {
+) -> Result<Terms> {
     validate_rows(rows)?;
     let (batch, length) = tokens.size2()?;
     ensure!(
@@ -435,7 +443,6 @@ pub fn composite<'a>(
         "policy head outputs differ from the objective rows"
     );
     let device = tokens.device();
-    let c = COEFFICIENTS;
     let weights = Tensor::from_slice(
         &rows
             .iter()
@@ -463,12 +470,37 @@ pub fn composite<'a>(
         tch::Reduction::Mean,
         RUNTIME_HUBER_BETA,
     );
+    Ok(Terms {
+        active: [nll, bt, list, rt, abt],
+        stability: outputs.stability.sum(Kind::Float),
+    })
+}
+
+/// The composite scalar objective of one microbatch and its five active raw
+/// term values `[sequence_nll, ranking_bt, ranking_listwise, runtime_huber,
+/// contextfree_bt]`, reduced microbatch-locally (partition v1).
+///
+/// `tokens` and `pad` are `[B, T]`; `legal` is the `[B, T-1, V]` legal-token
+/// mask for targets `tokens[:, 1..T]` (BOS is never a target).
+pub fn composite<'a>(
+    outputs: &Outputs<'_>,
+    loss_log_vars: impl IntoIterator<Item = &'a Tensor>,
+    tokens: &Tensor,
+    pad: &Tensor,
+    legal: &Tensor,
+    rows: &[RowLabels],
+) -> Result<(Tensor, [f64; 5])> {
+    let Terms {
+        active: [nll, bt, list, rt, abt],
+        stability,
+    } = terms(outputs, tokens, pad, legal, rows)?;
+    let c = COEFFICIENTS;
     let mut loss = &nll * c.sequence_nll
         + &bt * c.ranking_bt
         + &list * c.ranking_listwise
         + &rt * c.runtime_huber
         + &abt * c.contextfree_bt
-        + outputs.stability.sum(Kind::Float) * c.stability;
+        + stability * c.stability;
     // Inactive optional objectives stay connected for identical packed gradient layouts.
     for x in loss_log_vars {
         loss += x * c.loss_log_vars;

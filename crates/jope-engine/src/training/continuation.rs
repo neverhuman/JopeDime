@@ -102,6 +102,32 @@ pub fn check_parent(
     current: &Current,
     policy: Option<&Value>,
 ) -> Result<Value> {
+    let partition = crate::task_contract::training_partition(
+        current.world,
+        current.microbatch,
+        current.global_batch,
+    )?;
+    check_parent_partition(mode, state, config, current, &partition, policy)
+}
+
+/// [`check_parent`] for an explicit execution-partition record, v1 or v2
+/// (`training::partition::Plan::record`, W7-T06). A different rank count or
+/// microbatch is a changed partition: exact resume refuses it, an
+/// optimizer-carry transition must declare it, and a weight warm start
+/// carries nothing.
+pub fn check_parent_partition(
+    mode: Mode,
+    state: &Value,
+    config: &Value,
+    current: &Current,
+    partition: &Value,
+    policy: Option<&Value>,
+) -> Result<Value> {
+    ensure!(
+        partition["world"].as_u64() == Some(current.world as u64)
+            && partition["global_batch"].as_u64() == Some(current.global_batch as u64),
+        "execution partition differs from the requested topology"
+    );
     ensure!(
         mode != Mode::ColdInitialization,
         "cold initialization has no parent"
@@ -135,17 +161,12 @@ pub fn check_parent(
         None if legacy_ids => "legacy_ids_only",
         None => "changed",
     };
-    let partition = crate::task_contract::training_partition(
-        current.world,
-        current.microbatch,
-        current.global_batch,
-    )?;
     let parent_partition = state
         .get("execution_partition")
         .filter(|v| !v.is_null())
         .cloned();
     let partition_continuity = match &parent_partition {
-        Some(p) if *p == partition => "identical",
+        Some(p) if p == partition => "identical",
         Some(_) => "changed",
         None => "unknown",
     };
@@ -162,7 +183,7 @@ pub fn check_parent(
     );
     let declared_partition = declared.get("execution_partition");
     ensure!(
-        declared_partition.is_none_or(|p| *p == partition),
+        declared_partition.is_none_or(|p| p == partition),
         "declared execution partition differs from the requested topology"
     );
     match mode {

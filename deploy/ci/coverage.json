@@ -7297,6 +7297,21 @@
       "dispositions": [],
       "scope": "Neural-gated CPU fixtures: frozen host/device assignment validation and communicator/device binding before NCCL; no device enumerated, no GPU."
     },
+    "target:jope-parallel/test/lossless_partition": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-engine/tests/lossless_partition.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "W7-T06 partition v2: lossless whole-comparison assignment for any world, global-denominator reduction matching the single-process reference within the frozen policy, explicit empty rank/term, persisted rank RNG/sampler state and committed update, rank-count change as an explicit transition; neural-gated CPU fixtures only."
+    },
     "target:jope-parallel/test/corpus": {
       "discovery": {
         "kind": "target",

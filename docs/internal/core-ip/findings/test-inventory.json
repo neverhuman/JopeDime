@@ -2164,6 +2164,12 @@
         "teaching"
       ]
     },
+    "target:jope-parallel/test/lossless_partition": {
+      "role": "regression",
+      "subsystems": [
+        "training"
+      ]
+    },
     "target:jope-parallel/test/objective_fixtures": {
       "role": "regression",
       "subsystems": [

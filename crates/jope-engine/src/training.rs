@@ -22,6 +22,7 @@ pub mod consumption;
 pub mod continuation;
 pub mod inputs;
 pub mod objective;
+pub mod partition;
 pub mod topology;
 
 pub const SAMPLER_ID: &str = "family_uniform_champion_plus_seven_quantiles_v2";
