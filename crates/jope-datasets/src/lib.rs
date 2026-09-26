@@ -13,8 +13,10 @@ pub mod hash;
 pub mod ingest;
 pub mod meta;
 pub mod paths;
+pub mod regression_release;
 pub mod repo;
 pub mod schema;
+pub mod staging_disposition;
 pub mod store;
 
 /// Version stamped into `ingest.tool_version`.

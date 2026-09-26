@@ -34,6 +34,7 @@ pub mod proposal_validation;
 pub mod protocol;
 #[cfg(all(feature = "asm", target_os = "linux"))]
 pub mod receipt_timing;
+pub mod request_timeline;
 pub mod score;
 #[cfg(target_os = "linux")]
 pub mod selection_exposure;

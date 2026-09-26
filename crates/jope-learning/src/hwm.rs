@@ -66,6 +66,58 @@ impl RejectReason {
     }
 }
 
+/// The explicit HWM outcome of one candidate. Teaching eligibility is decided before this and
+/// never counts as an improvement: only `Improved` advances an existing pointer's chain.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum Transition {
+    /// First accepted record of a pointer: a bootstrap, not an improvement.
+    Initialized,
+    /// Strictly better than the comparable incumbent it displaced.
+    Improved,
+    Tie,
+    /// Comparable with the incumbent and not better.
+    NotImproved,
+    /// Metric or evaluator semantics differ from the incumbent's.
+    Noncomparable,
+    /// Train-side OOF record without a recomputable measured qualification.
+    Ineligible,
+    Invalid,
+    /// A record this pointer already accepted, delivered again: never another improvement.
+    Duplicate,
+}
+
+impl Transition {
+    pub fn of(incumbent: Option<&HwmRecord>, decision: &Decision) -> Self {
+        match decision {
+            Decision::Accepted if incumbent.is_none() => Self::Initialized,
+            Decision::Accepted => Self::Improved,
+            Decision::Rejected(RejectReason::Tie) => Self::Tie,
+            Decision::Rejected(RejectReason::NotBetter) => Self::NotImproved,
+            Decision::Rejected(
+                RejectReason::UnboundCannotDisplaceBound
+                | RejectReason::MetricMismatch
+                | RejectReason::IdentityMismatch,
+            ) => Self::Noncomparable,
+            Decision::Rejected(RejectReason::TeachingIneligible) => Self::Ineligible,
+            Decision::Rejected(RejectReason::Invalid) => Self::Invalid,
+        }
+    }
+
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Initialized => "initialized",
+            Self::Improved => "improved",
+            Self::Tie => "tie",
+            Self::NotImproved => "not-improved",
+            Self::Noncomparable => "noncomparable",
+            Self::Ineligible => "ineligible",
+            Self::Invalid => "invalid",
+            Self::Duplicate => "duplicate",
+        }
+    }
+}
+
 /// The admission rule (`champions.rs:452` + the plan's unbound rule).
 pub fn decide(incumbent: Option<&HwmRecord>, candidate: &HwmRecord) -> Decision {
     if candidate.validate().is_err() {
@@ -107,6 +159,12 @@ pub struct HwmEvent {
     /// The record this one replaced at the pointer (accepted events only).
     pub displaced_record_sha256: Option<String>,
     pub ts_unix: u64,
+    /// Absent on events written before transitions were recorded; `verify` rederives it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub transition: Option<Transition>,
+    /// Digest of the stored teaching qualification a train-side OOF decision relied on.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub qualification_sha256: Option<String>,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -125,7 +183,12 @@ pub struct IngestReport {
     pub candidates: u64,
     pub accepted: u64,
     pub rejected: u64,
+    /// Every candidate's [`Transition`]; `accepted` = `initialized` + `improved`.
+    pub transitions: BTreeMap<String, u64>,
     pub pointers_written: u64,
+    /// Pointers that lagged their ledger tip (a crash before a pointer write) and were rolled
+    /// forward; included in `pointers_written`.
+    pub pointers_recovered: u64,
     pub blobs_written: u64,
     pub batch: Option<crate::ledger::BatchReceipt>,
     pub mirror: Option<MirrorReport>,
@@ -217,10 +280,39 @@ pub fn ingest(
         (a.record.ts_unix, &a.record.identity_sha256)
             .cmp(&(b.record.ts_unix, &b.record.identity_sha256))
     });
+    // Every touched pointer is resolved against the ledger before a single byte moves: the
+    // incumbent is the ledger's tip, never a pointer that lags it or that it never accepted.
+    let history = accepted_events(&ledger)?;
     let mut on_disk: BTreeMap<PointerKey, Option<HwmRecord>> = BTreeMap::new();
     let mut current: BTreeMap<PointerKey, HwmRecord> = BTreeMap::new();
+    let mut seen: BTreeMap<PointerKey, BTreeSet<String>> = BTreeMap::new();
+    let mut lagging = BTreeSet::new();
+    for c in &candidates {
+        let key = PointerKey::of(&c.record);
+        if on_disk.contains_key(&key) {
+            continue;
+        }
+        let disk = state.read_pointer(&key)?;
+        let accepted = history.get(&key).map_or(&[][..], Vec::as_slice);
+        if let Some(tip) = resolve(&key, disk.as_ref(), accepted)? {
+            if disk.as_ref() != Some(tip) {
+                lagging.insert(key.clone());
+            }
+            current.insert(key.clone(), tip.clone());
+        }
+        seen.insert(
+            key.clone(),
+            accepted
+                .iter()
+                .map(|e| e.record.provenance.record_sha256.clone())
+                .collect(),
+        );
+        on_disk.insert(key, disk);
+    }
+    let mut decisions = None;
     let mut events = Vec::with_capacity(candidates.len());
     let mut rejects = Vec::new();
+    let mut transitions = BTreeMap::<String, u64>::new();
     let mut blobs_written = 0u64;
     let ts = now_unix();
     for (seq, mut c) in candidates.into_iter().enumerate() {
@@ -236,13 +328,7 @@ pub fn ingest(
         }
         state.put_blob(&c.blob)?;
         let key = PointerKey::of(&c.record);
-        if !on_disk.contains_key(&key) {
-            let r = state.read_pointer(&key)?;
-            if let Some(r) = &r {
-                current.insert(key.clone(), r.clone());
-            }
-            on_disk.insert(key.clone(), r);
-        }
+        let duplicate = seen[&key].contains(&c.record.provenance.record_sha256);
         let incumbent = current.get(&key);
         if !c.chain_from_source {
             match incumbent {
@@ -256,18 +342,36 @@ pub fn ingest(
                 }
             }
         }
-        let decision = if c
+        let train_oof = c
             .record
             .identity
             .comparison
             .as_ref()
-            .is_some_and(|context| context.stage == "train_oof")
-            && crate::eligibility::require_qualified(state, &c.record).is_err()
-        {
+            .is_some_and(|context| context.stage == "train_oof");
+        let qualification_sha256 = if train_oof {
+            if decisions.is_none() {
+                decisions = Some(crate::eligibility::Decisions::load(state)?);
+            }
+            crate::eligibility::require_qualified(state, &c.record, decisions.as_ref().unwrap())
+                .ok()
+        } else {
+            None
+        };
+        let decision = if train_oof && qualification_sha256.is_none() {
             Decision::Rejected(RejectReason::TeachingIneligible)
         } else {
-            decide(incumbent, &c.record)
+            match decide(incumbent, &c.record) {
+                Decision::Accepted if duplicate => Decision::Rejected(RejectReason::NotBetter),
+                decision => decision,
+            }
         };
+        let transition = match decision {
+            Decision::Rejected(RejectReason::Tie | RejectReason::NotBetter) if duplicate => {
+                Transition::Duplicate
+            }
+            _ => Transition::of(incumbent, &decision),
+        };
+        *transitions.entry(transition.as_str().into()).or_default() += 1;
         let (outcome, reason, displaced) = match &decision {
             Decision::Accepted => (
                 "accepted",
@@ -295,9 +399,14 @@ pub fn ingest(
             record: c.record.clone(),
             displaced_record_sha256: displaced,
             ts_unix: ts,
+            transition: Some(transition),
+            qualification_sha256,
         };
         events.push(serde_json::to_value(&event)?);
         if decision == Decision::Accepted {
+            if let Some(seen) = seen.get_mut(&key) {
+                seen.insert(c.record.provenance.record_sha256.clone());
+            }
             current.insert(key, c.record);
         }
     }
@@ -310,11 +419,10 @@ pub fn ingest(
     };
     // Pointers move only after their events are durable.
     let mut pointers_written = 0u64;
+    let mut pointers_recovered = 0u64;
     for (key, record) in &current {
         let before = on_disk.get(key).cloned().flatten();
-        if before.as_ref().map(|r| &r.provenance.record_sha256)
-            == Some(&record.provenance.record_sha256)
-        {
+        if before.as_ref() == Some(record) {
             continue;
         }
         state.write_pointer(
@@ -323,6 +431,7 @@ pub fn ingest(
             before.as_ref().map(|r| r.provenance.record_sha256.as_str()),
         )?;
         pointers_written += 1;
+        pointers_recovered += u64::from(lagging.contains(key));
     }
     let mirror_report = match mirror {
         Some(m) => Some(push_mirror(m, state, &ledger)?),
@@ -333,7 +442,9 @@ pub fn ingest(
         candidates: events.len() as u64,
         accepted,
         rejected,
+        transitions,
         pointers_written,
+        pointers_recovered,
         blobs_written,
         batch,
         mirror: mirror_report,
@@ -390,16 +501,107 @@ pub fn parse_event(index: usize, v: &Value) -> Result<HwmEvent> {
 /// only evidence that a pointer the mirror holds is an *earlier state of ours* rather than another
 /// host's.
 fn accepted_history(ledger: &Ledger) -> Result<BTreeMap<PointerKey, Vec<String>>> {
-    let mut out: BTreeMap<PointerKey, Vec<String>> = BTreeMap::new();
+    Ok(accepted_events(ledger)?
+        .into_iter()
+        .map(|(key, events)| {
+            let shas = events
+                .into_iter()
+                .map(|e| e.record.provenance.record_sha256)
+                .collect();
+            (key, shas)
+        })
+        .collect())
+}
+
+/// Every accepted event at each pointer, oldest first: the ledger's own HWM history.
+fn accepted_events(ledger: &Ledger) -> Result<BTreeMap<PointerKey, Vec<HwmEvent>>> {
+    let mut out: BTreeMap<PointerKey, Vec<HwmEvent>> = BTreeMap::new();
     for (i, v) in ledger.events()?.iter().enumerate() {
         let e = parse_event(i, v)?;
         if e.outcome == "accepted" {
-            out.entry(e.pointer)
-                .or_default()
-                .push(e.record.provenance.record_sha256);
+            out.entry(e.pointer.clone()).or_default().push(e);
         }
     }
     Ok(out)
+}
+
+/// The ledger tip at every pointer (its last accepted event).
+pub(crate) fn accepted_tips(state: &State) -> Result<BTreeMap<PointerKey, HwmEvent>> {
+    Ok(accepted_events(&Ledger::open(state.root(), "hwm"))?
+        .into_iter()
+        .filter_map(|(key, mut events)| events.pop().map(|tip| (key, tip)))
+        .collect())
+}
+
+/// The ledger's tip at `key`. The pointer on disk may lag it (a crash after the batch append,
+/// before the pointer write) and is then rolled forward; it may never hold a record the ledger
+/// did not accept at that pointer.
+fn resolve<'a>(
+    key: &PointerKey,
+    disk: Option<&HwmRecord>,
+    accepted: &'a [HwmEvent],
+) -> Result<Option<&'a HwmRecord>> {
+    if let Some(disk) = disk {
+        ensure!(
+            accepted.iter().any(|e| e.record == *disk),
+            "{}: the pointer holds record {} that this host's HWM ledger never accepted there. \
+             Nothing was written. Run `hwm verify`, then restore the pointer from the ledger or \
+             re-ingest its source",
+            key.rel(),
+            disk.provenance.record_sha256
+        );
+    }
+    Ok(accepted.last().map(|e| &e.record))
+}
+
+#[derive(Clone, Debug, Default, Serialize)]
+pub struct RecoverReport {
+    pub pointers: u64,
+    /// Pointers rolled forward to their ledger tip.
+    pub recovered: Vec<String>,
+    /// Pointers holding a record the ledger never accepted there; left untouched.
+    pub refused: Vec<(String, String)>,
+}
+
+/// Roll every pointer that lags its ledger tip forward: the recovery for a crash between a
+/// batch append and its pointer writes. Legacy pointer keys are not rewritten, and a pointer
+/// the ledger never accepted is reported rather than overwritten.
+pub fn recover(state: &State) -> Result<RecoverReport> {
+    let _lock = state.lock("hwm")?;
+    let ledger = Ledger::open(state.root(), "hwm");
+    ledger.require_intact()?;
+    let history = accepted_events(&ledger)?;
+    let mut report = RecoverReport::default();
+    for (key, accepted) in &history {
+        let Some(tip) = accepted.last().map(|e| &e.record) else {
+            continue;
+        };
+        if *key != PointerKey::of(tip) {
+            continue;
+        }
+        report.pointers += 1;
+        let disk = state.read_pointer(key)?;
+        match resolve(key, disk.as_ref(), accepted) {
+            Err(error) => report.refused.push((key.rel(), format!("{error:#}"))),
+            Ok(_) if disk.as_ref() == Some(tip) => {}
+            Ok(_) => {
+                state.write_pointer(
+                    key,
+                    tip,
+                    disk.as_ref().map(|r| r.provenance.record_sha256.as_str()),
+                )?;
+                report.recovered.push(key.rel());
+            }
+        }
+    }
+    for (key, _) in state.pointers()? {
+        if key.identity_sha256.is_some() && !history.contains_key(&key) {
+            report
+                .refused
+                .push((key.rel(), "no accepted ledger event at this pointer".into()));
+        }
+    }
+    Ok(report)
 }
 
 /// Bring the mirror up to this host's tip: the ledger batches it is missing, the blobs those
@@ -426,19 +628,37 @@ fn accepted_history(ledger: &Ledger) -> Result<BTreeMap<PointerKey, Vec<String>>
 /// point at which stopping still leaves the mirror repairable.
 ///
 /// The `current.json` pointers stay *after* the `HEAD.json` move, and are deliberately *not* every
-/// pointer: the real corpus has ~12k of them and each would cost a GET per push. A pointer whose
-/// own write failed after `HEAD.json` moved therefore stays stale on the mirror — or absent, for a
-/// cut the mirror has never held — until some later batch accepts a record at it. That is staleness, not a wedge — the next accepted event at that
-/// pointer catches it up under the same ancestor rule — and it is visible, because the mirror's
-/// pointer and the mirror's ledger disagree. Blobs cannot be left that way because nothing
-/// re-derives them: a later batch names its *own* records, never the ones already committed.
+/// pointer: the real corpus has ~12k of them and each would cost a GET per push. Only the pointers
+/// that the backfilled batches moved are pushed. Once `HEAD.json` names those batches, no later
+/// `plan` offers them again, so each such pointer is recorded as **owed** to this mirror
+/// ([`owed_path`]) durably, *before* anything goes up. A pointer leaves the owed set only once
+/// the mirror holds exactly the local bytes. So a pointer write that fails, or never happens
+/// because the process died after `HEAD.json` moved, is retried on every later push, including a
+/// push with nothing new. Before W8-T06 it stayed stale on the mirror, or absent, until some
+/// later batch happened to accept a record at that exact pointer. Blobs cannot be left that way
+/// either, which is why they go up ahead of the batch that names them.
 fn push_mirror(m: &Mirror, state: &State, ledger: &Ledger) -> Result<MirrorReport> {
     let mut report = MirrorReport {
         url: m.url.clone(),
         ..Default::default()
     };
     let plan = crate::sync::plan(m, ledger)?;
-    let mut keys: BTreeSet<PointerKey> = BTreeSet::new();
+    let mut owed = Owed::load(state, &m.url)?;
+    // What the owed record on disk says; it is rewritten whenever that would be wrong.
+    let mut on_disk = owed.pointers.clone();
+    for (_, path) in &plan.missing {
+        let (events, _, _, _) = Ledger::read_batch(path)?;
+        for (i, v) in events.iter().enumerate() {
+            let e = parse_event(i, v)?;
+            if e.outcome == "accepted" {
+                owed.pointers.insert(e.pointer);
+            }
+        }
+    }
+    if owed.pointers != on_disk {
+        owed.save(state)?;
+        on_disk = owed.pointers.clone();
+    }
     crate::sync::push(m, ledger, plan, &mut report, |path, report| {
         let (events, _, _, _) = Ledger::read_batch(path)?;
         for (i, v) in events.iter().enumerate() {
@@ -499,36 +719,112 @@ fn push_mirror(m: &Mirror, state: &State, ledger: &Ledger) -> Result<MirrorRepor
                     }
                 }
             }
-            if e.outcome == "accepted" {
-                keys.insert(e.pointer.clone());
-            }
         }
         Ok(())
     })?;
+    // Settle every owed pointer. Whatever does not settle stays owed, durably, including when the
+    // push stops at an error.
+    let settled = settle_owed(m, state, ledger, &mut owed, &mut report);
+    if owed.pointers != on_disk {
+        owed.save(state)?;
+    }
+    report.pointers_owed = owed.pointers.len() as u64;
+    settled.map(|()| report)
+}
+
+/// Push each owed pointer whose local bytes differ from the mirror's, under the ancestor rule, and
+/// drop it from `owed` once the mirror holds exactly the local bytes. A pointer absent locally (a
+/// local break `hwm verify` reports as `pointer-missing`) cannot be settled and stays owed. The
+/// first failed write stops the settlement, and everything not yet settled stays owed.
+fn settle_owed(
+    m: &Mirror,
+    state: &State,
+    ledger: &Ledger,
+    owed: &mut Owed,
+    report: &mut MirrorReport,
+) -> Result<()> {
     let mut history: Option<BTreeMap<PointerKey, Vec<String>>> = None;
-    for key in &keys {
-        let local_bytes = match fs::read(state.pointer_path(key)?) {
+    for key in owed.pointers.clone() {
+        let local_bytes = match fs::read(state.pointer_path(&key)?) {
             Ok(b) => b,
-            // A pointer named by an accepted event but absent on disk is a local break, which
-            // `hwm verify` reports as `pointer-missing`; the push has nothing to copy.
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => continue,
             Err(e) => return Err(e).with_context(|| format!("read {}", key.rel())),
         };
         let observed = m.get_observed(&key.rel())?;
-        if observed.as_ref().map(|object| object.bytes.as_slice()) == Some(local_bytes.as_slice()) {
-            continue;
+        if observed.as_ref().map(|object| object.bytes.as_slice()) != Some(local_bytes.as_slice()) {
+            if let Some(theirs) = &observed {
+                let hist = match &history {
+                    Some(h) => h,
+                    None => history.insert(accepted_history(ledger)?),
+                };
+                check_pointer_ancestor(m, &key, &theirs.bytes, &local_bytes, hist.get(&key))?;
+            }
+            m.put_pointer(&key.rel(), &local_bytes, observed.as_ref())?;
+            report.pointers += 1;
         }
-        if let Some(theirs) = &observed {
-            let hist = match &history {
-                Some(h) => h,
-                None => history.insert(accepted_history(ledger)?),
-            };
-            check_pointer_ancestor(m, key, &theirs.bytes, &local_bytes, hist.get(key))?;
-        }
-        m.put_pointer(&key.rel(), &local_bytes, observed.as_ref())?;
-        report.pointers += 1;
+        owed.pointers.remove(&key);
     }
-    Ok(report)
+    Ok(())
+}
+
+pub const OWED_SCHEMA: &str = "jope.hwm-mirror-owed/v1";
+
+/// `<state>/progress/mirror-owed/hwm-<sha256(url)>.json`: the `current.json` pointers this host
+/// owes the mirror at `url`.
+pub fn owed_path(state: &State, url: &str) -> PathBuf {
+    state
+        .root()
+        .join("progress")
+        .join("mirror-owed")
+        .join(format!("hwm-{}.json", sha256_hex(url.as_bytes())))
+}
+
+/// Pointers whose batches the mirror's `HEAD.json` may already name, but whose `current.json`
+/// the mirror is not yet known to hold.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Owed {
+    pub schema: String,
+    pub url: String,
+    pub pointers: BTreeSet<PointerKey>,
+}
+
+impl Owed {
+    pub fn load(state: &State, url: &str) -> Result<Owed> {
+        let path = owed_path(state, url);
+        let bytes = match fs::read(&path) {
+            Ok(bytes) => bytes,
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+                return Ok(Owed {
+                    schema: OWED_SCHEMA.into(),
+                    url: url.into(),
+                    pointers: BTreeSet::new(),
+                })
+            }
+            Err(e) => return Err(e).with_context(|| format!("read {}", path.display())),
+        };
+        let owed: Owed = serde_json::from_slice(&bytes).with_context(|| {
+            format!(
+                "{} does not parse. It is the record of mirror pointers still owed; refusing to \
+                 push without it, because a push that forgets a debt reports success over a \
+                 stale mirror",
+                path.display()
+            )
+        })?;
+        ensure!(
+            owed.schema == OWED_SCHEMA && owed.url == url,
+            "{} is not the owed-pointer record for {url}",
+            path.display()
+        );
+        Ok(owed)
+    }
+
+    pub fn save(&self, state: &State) -> Result<()> {
+        atomic_write(
+            &owed_path(state, &self.url),
+            &crate::canon::canonical_json(self)?,
+        )
+    }
 }
 
 /// The mirror's copy of a pointer may only be replaced when it is an *earlier* state of that
@@ -637,6 +933,10 @@ pub struct VerifyReport {
     pub events: u64,
     pub accepted: u64,
     pub rejected: u64,
+    /// Rederived from ledger order, never from a recorded flag: `accepted` split into
+    /// pointer bootstraps and committed improvements.
+    pub initialized: u64,
+    pub improved: u64,
     pub identities: u64,
     pub pointers_on_disk: u64,
     pub blobs_checked: u64,
@@ -752,10 +1052,35 @@ pub fn verify(state: &State, event_dirs: &[PathBuf]) -> Result<VerifyReport> {
                 }
             }
         }
+        let derived = match (e.outcome.as_str(), expected.contains_key(&e.pointer)) {
+            ("accepted", false) => Some(Transition::Initialized),
+            ("accepted", true) => Some(Transition::Improved),
+            _ => None,
+        };
+        if let Some(recorded) = e.transition {
+            let committed = matches!(recorded, Transition::Initialized | Transition::Improved);
+            if derived.map_or(committed, |d| d != recorded) {
+                brk(
+                    "transition-mismatch",
+                    subject.clone(),
+                    format!(
+                        "{} event records {} at {}",
+                        e.outcome,
+                        recorded.as_str(),
+                        e.pointer.rel()
+                    ),
+                );
+            }
+        }
         match e.outcome.as_str() {
             "accepted" => {
                 report.accepted += 1;
                 let prev = expected.get(&e.pointer);
+                if prev.is_some() {
+                    report.improved += 1;
+                } else {
+                    report.initialized += 1;
+                }
                 let prev_sha = prev.map(|p| p.provenance.record_sha256.clone());
                 if e.displaced_record_sha256 != prev_sha {
                     brk(
@@ -1431,6 +1756,257 @@ mod tests {
         assert_eq!(
             decide(None, &bad),
             Decision::Rejected(RejectReason::Invalid)
+        );
+    }
+
+    #[test]
+    fn transitions_separate_initialization_ties_non_improvement_and_improvement() {
+        let dir = tempfile::tempdir().unwrap();
+        let state = State::at(dir.path());
+        let cand = |v: f64, ts: u64, variant: &str| {
+            let mut r = record("d", "c", UNBOUND, Metric::R2, v);
+            r.genome.dsl = format!("(pipe X (ridge alpha={v}) {variant})");
+            r.genome.program_sha256 = crate::canon::sha256_hex(r.genome.dsl.as_bytes());
+            r.ts_unix = ts;
+            let blob = format!("d/c/{v}/{variant}").into_bytes();
+            r.provenance.record_sha256 = crate::canon::sha256_hex(&blob);
+            Candidate {
+                record: r,
+                blob,
+                chain_from_source: false,
+            }
+        };
+        let mut noncomparable = cand(0.9, 4, "other-metric");
+        noncomparable.record.score.metric = Metric::Auc;
+        let mut invalid = cand(0.95, 5, "invalid");
+        invalid.record.score.direction = Direction::Lower;
+        let mut ineligible = cand(0.99, 6, "unqualified-train-oof");
+        ineligible.record.identity.comparison = Some(ComparisonContext {
+            numerical_policy: "strict-v1".into(),
+            stage: "train_oof".into(),
+            aggregation: "mean_fold_loss".into(),
+            label_role: "development".into(),
+            sealed: false,
+            benchmark_valid: false,
+            recipe_encoding: "native-canonical-dsl-sha256/v1".into(),
+            class_order: vec![],
+            checkpoint_sha256: None,
+        });
+        ineligible.record.identity_sha256 = ineligible.record.identity.sha256().unwrap();
+        let first = ingest(
+            &state,
+            None,
+            vec![
+                cand(0.5, 1, "first"),
+                cand(0.5, 2, "equal"),
+                cand(0.4, 3, "worse"),
+                noncomparable,
+                invalid,
+                ineligible,
+            ],
+            json!({"kind": "test"}),
+        )
+        .unwrap();
+        // The same improving record delivered twice is one improvement and one duplicate.
+        let second = ingest(
+            &state,
+            None,
+            vec![cand(0.7, 7, "better"), cand(0.7, 7, "better")],
+            json!({"kind": "test"}),
+        )
+        .unwrap();
+        let counts = |pairs: &[(&str, u64)]| {
+            pairs
+                .iter()
+                .map(|(k, v)| (k.to_string(), *v))
+                .collect::<BTreeMap<_, _>>()
+        };
+        assert_eq!(
+            first.transitions,
+            counts(&[
+                ("initialized", 1),
+                ("tie", 1),
+                ("not-improved", 1),
+                ("noncomparable", 1),
+                ("invalid", 1),
+                ("ineligible", 1)
+            ])
+        );
+        assert_eq!((first.accepted, first.rejected), (1, 5));
+        assert_eq!(
+            second.transitions,
+            counts(&[("improved", 1), ("duplicate", 1)])
+        );
+        let v = verify(&state, &[]).unwrap();
+        assert_eq!((v.accepted, v.initialized, v.improved), (2, 1, 1));
+        assert!(!v.breaks.iter().any(|b| b.kind == "transition-mismatch"));
+        let transitions: Vec<Value> = Ledger::open(state.root(), "hwm")
+            .events()
+            .unwrap()
+            .into_iter()
+            .map(|event| event["transition"].clone())
+            .collect();
+        assert_eq!(
+            transitions,
+            [
+                "initialized",
+                "tie",
+                "not-improved",
+                "noncomparable",
+                "invalid",
+                "ineligible",
+                "improved",
+                "duplicate"
+            ]
+            .map(|t| json!(t))
+        );
+        let key = PointerKey::of(&cand(0.7, 7, "better").record);
+        let current = state.read_pointer(&key).unwrap().unwrap();
+        assert_eq!((current.score.value, current.improvement_number), (0.7, 1));
+    }
+
+    fn delivery(v: f64, ts: u64) -> Candidate {
+        let mut record = record("d", "c", UNBOUND, Metric::R2, v);
+        record.ts_unix = ts;
+        Candidate {
+            blob: format!("d/c/unbound/{v}").into_bytes(),
+            record,
+            chain_from_source: false,
+        }
+    }
+
+    fn pointer_file(state: &State) -> PathBuf {
+        state
+            .pointer_path(&PointerKey::of(&delivery(0.0, 0).record))
+            .unwrap()
+    }
+
+    fn head(state: &State) -> Option<Vec<u8>> {
+        fs::read(Ledger::open(state.root(), "hwm").root().join("HEAD.json")).ok()
+    }
+
+    fn outcomes(state: &State) -> Vec<(Value, Value)> {
+        Ledger::open(state.root(), "hwm")
+            .events()
+            .unwrap()
+            .into_iter()
+            .map(|event| (event["transition"].clone(), event["reason"].clone()))
+            .collect()
+    }
+
+    #[test]
+    fn a_pointer_behind_the_ledger_is_rolled_forward_before_any_decision() {
+        let dir = tempfile::tempdir().unwrap();
+        let state = State::at(dir.path());
+        ingest(&state, None, vec![delivery(0.5, 1)], json!({"k": 1})).unwrap();
+        let lagging = fs::read(pointer_file(&state)).unwrap();
+        ingest(&state, None, vec![delivery(0.9, 2)], json!({"k": 2})).unwrap();
+        // Crash after the batch accepting 0.9 was durable, before its pointer moved.
+        fs::write(pointer_file(&state), &lagging).unwrap();
+        let report = ingest(&state, None, vec![delivery(0.7, 3)], json!({"k": 3})).unwrap();
+        assert_eq!(
+            report.accepted, 0,
+            "a candidate weaker than the ledger's HWM was accepted against a stale pointer"
+        );
+        assert_eq!((report.pointers_written, report.pointers_recovered), (1, 1));
+        let current = state
+            .read_pointer(&PointerKey::of(&delivery(0.0, 0).record))
+            .unwrap()
+            .unwrap();
+        assert_eq!((current.score.value, current.improvement_number), (0.9, 1));
+        let v = verify(&state, &[]).unwrap();
+        assert!(v.ok(), "{:?}", v.breaks);
+        assert_eq!((v.initialized, v.improved), (1, 1));
+        // The first acceptance of a pointer can be lost the same way.
+        fs::remove_file(pointer_file(&state)).unwrap();
+        let report = ingest(&state, None, vec![delivery(0.8, 4)], json!({"k": 4})).unwrap();
+        assert_eq!(report.accepted, 0);
+        assert!(verify(&state, &[]).unwrap().ok());
+    }
+
+    #[test]
+    fn a_pointer_the_ledger_never_accepted_is_refused_before_any_write() {
+        let dir = tempfile::tempdir().unwrap();
+        let state = State::at(dir.path());
+        ingest(&state, None, vec![delivery(0.5, 1)], json!({"k": 1})).unwrap();
+        let accepted = delivery(0.5, 1).record.provenance.record_sha256;
+        state
+            .write_pointer(
+                &PointerKey::of(&delivery(0.0, 0).record),
+                &delivery(0.95, 2).record,
+                Some(&accepted),
+            )
+            .unwrap();
+        let (forged, before) = (fs::read(pointer_file(&state)).unwrap(), head(&state));
+        let result = ingest(&state, None, vec![delivery(0.6, 3)], json!({"k": 3}));
+        assert!(
+            result.is_err(),
+            "decided against a pointer the ledger never accepted"
+        );
+        assert_eq!(head(&state), before);
+        assert_eq!(fs::read(pointer_file(&state)).unwrap(), forged);
+    }
+
+    #[test]
+    fn recovery_rolls_lagging_pointers_forward_and_leaves_unaccepted_ones() {
+        let dir = tempfile::tempdir().unwrap();
+        let state = State::at(dir.path());
+        ingest(&state, None, vec![delivery(0.5, 1)], json!({"k": 1})).unwrap();
+        let lagging = fs::read(pointer_file(&state)).unwrap();
+        ingest(&state, None, vec![delivery(0.9, 2)], json!({"k": 2})).unwrap();
+        fs::write(pointer_file(&state), &lagging).unwrap();
+        assert!(verify(&state, &[])
+            .unwrap()
+            .breaks
+            .iter()
+            .any(|b| b.kind == "pointer-stale"));
+        let report = recover(&state).unwrap();
+        assert_eq!(
+            (
+                report.pointers,
+                report.recovered.len(),
+                report.refused.len()
+            ),
+            (1, 1, 0)
+        );
+        let v = verify(&state, &[]).unwrap();
+        assert!(v.ok(), "{:?}", v.breaks);
+        assert!(recover(&state).unwrap().recovered.is_empty());
+        let tip = delivery(0.9, 2).record.provenance.record_sha256;
+        state
+            .write_pointer(
+                &PointerKey::of(&delivery(0.0, 0).record),
+                &delivery(0.95, 3).record,
+                Some(&tip),
+            )
+            .unwrap();
+        let forged = fs::read(pointer_file(&state)).unwrap();
+        let report = recover(&state).unwrap();
+        assert!(report.recovered.is_empty() && report.refused.len() == 1);
+        assert_eq!(fs::read(pointer_file(&state)).unwrap(), forged);
+    }
+
+    #[test]
+    fn redelivery_of_an_accepted_record_is_a_duplicate_not_a_tie() {
+        let dir = tempfile::tempdir().unwrap();
+        let state = State::at(dir.path());
+        ingest(&state, None, vec![delivery(0.5, 1)], json!({"k": 1})).unwrap();
+        ingest(&state, None, vec![delivery(0.5, 1)], json!({"k": 2})).unwrap();
+        ingest(&state, None, vec![delivery(0.9, 2)], json!({"k": 3})).unwrap();
+        ingest(&state, None, vec![delivery(0.5, 1)], json!({"k": 4})).unwrap();
+        let mut equal = delivery(0.9, 5);
+        equal.blob = b"another record with an equal score".to_vec();
+        equal.record.provenance.record_sha256 = crate::canon::sha256_hex(&equal.blob);
+        ingest(&state, None, vec![equal], json!({"k": 5})).unwrap();
+        assert_eq!(
+            outcomes(&state),
+            [
+                (json!("initialized"), Value::Null),
+                (json!("duplicate"), json!("tie")),
+                (json!("improved"), Value::Null),
+                (json!("duplicate"), json!("not-better")),
+                (json!("tie"), json!("tie")),
+            ]
         );
     }
 

@@ -394,6 +394,7 @@ impl LedgerCache {
                         "no_matching_context"
                             | "meta_test_withheld"
                             | "failed_program"
+                            | "runtime_not_completed"
                             | "sequence_too_long"
                             | "duplicate_program_cut"
                     ) || key.starts_with("unrepresentable:"),
@@ -552,6 +553,18 @@ pub(crate) fn scan_ledger(
             *contribution
                 .counts
                 .entry("failed_program".into())
+                .or_default() += 1;
+            continue;
+        }
+        // A recorded numerical fit that did not complete (timeout, failure,
+        // denial) has a censored or meaningless elapsed time. It is never a
+        // completed runtime label, even when the candidate reported no failure.
+        if o.get("fit_outcome")
+            .is_some_and(|outcome| !outcome.is_null() && outcome != "success")
+        {
+            *contribution
+                .counts
+                .entry("runtime_not_completed".into())
                 .or_default() += 1;
             continue;
         }

@@ -87,11 +87,21 @@ fn run() -> Result<()> {
         context.iter().all(|x| x.is_finite() && x.abs() <= 32.),
         "context is nonfinite or not frozen-clipped"
     );
+    let transforms_bytes = checked_bytes(
+        &paths["--transforms"],
+        Some("1b779c6ff7a1a812e3001342d663353d3c7ff54eb93392a600f01813f4c66e22"),
+    )?;
     if let Some(path) = paths.get("--context-bundle") {
         #[cfg(feature = "context-producer")]
         {
             let bundle: producer::QualifiedContextBundle =
                 serde_json::from_slice(&checked_bytes(path, None)?)?;
+            // The bundle is verified against the admission the controller issued in the
+            // request, its final context is replayed from its components under the accepted
+            // transforms, and it must be exactly this policy input for this request's scope.
+            let transforms =
+                jope_policy::context_producer::FrozenTransforms::from_bytes(&transforms_bytes)?;
+            bundle.admit_for_request(&request, &transforms, &context_bytes)?;
             ensure!(
                 bundle.artifact
                     == checked_bytes(
@@ -100,25 +110,17 @@ fn run() -> Result<()> {
                     )?,
                 "CPU context receipt differs from admitted bundle"
             );
-            let verified = bundle.verify()?;
-            ensure!(
-                verified.training().prepared_sha256 == request.prepared_sha256
-                    && verified.training().training_sha256 == request.training_sha256
-                    && verified.training().cut as usize == request.cut
-                    && jope_policy::context_sha256(verified.context()) == request.context_sha256,
-                "qualified CPU context differs from producer request"
-            );
-            ensure!(
-                verified.context() == context.as_slice(),
-                "qualified context vector differs from actual policy input"
-            );
         }
         #[cfg(not(feature = "context-producer"))]
         {
-            let _ = path;
+            let _ = (path, &transforms_bytes);
             anyhow::bail!("qualified CPU context support was not built");
         }
     } else {
+        ensure!(
+            request.context_admission_sha256.is_none(),
+            "request names a qualified CPU context admission, but no context bundle was supplied"
+        );
         let meta: serde_json::Value =
             serde_json::from_slice(&checked_bytes(&paths["--context-receipt"], None)?)?;
         ensure!(
@@ -144,10 +146,6 @@ fn run() -> Result<()> {
         "policy stage=context_verified elapsed_seconds={:.6}",
         started.elapsed().as_secs_f64()
     );
-    checked_bytes(
-        &paths["--transforms"],
-        Some("1b779c6ff7a1a812e3001342d663353d3c7ff54eb93392a600f01813f4c66e22"),
-    )?;
     let checkpoint = CheckpointBinding::for_proposal(
         &checked_bytes(&paths["--checkpoint-receipt"], None)?,
         request.challenger.as_ref(),

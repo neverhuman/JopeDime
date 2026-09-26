@@ -2516,7 +2516,7 @@ fn validate_dataset(
 }
 
 fn artifact_name(path: &Path) -> String {
-    path.strip_prefix(workspace_root())
+    path.strip_prefix(campaign_state_root())
         .unwrap_or(path)
         .to_string_lossy()
         .into_owned()
@@ -4262,6 +4262,17 @@ pub(crate) fn validate_champion_continuation(registry: &Path, base_run_id: &str)
 mod tests {
     use super::*;
 
+    /// Sealed historical runs are real inputs and are never synthesized here.
+    /// Their absence is reported as an unavailable input and remains a failure.
+    fn require_historical_run(run_id: &str) {
+        let root = run_root(run_id);
+        assert!(
+            root.is_dir(),
+            "unavailable: sealed historical run {} (set JOPE_STATE to a tree whose runs/ holds the preserved test-adaptive runs)",
+            root.display()
+        );
+    }
+
     fn test_spec() -> DatasetSpec {
         DatasetSpec {
             dataset_hash: "dataset".to_string(),
@@ -4865,6 +4876,8 @@ mod tests {
 
     #[test]
     fn prior_no_win_cohort_reconstructs_in_order() {
+        require_historical_run("test-adaptive-golden42-v1");
+        require_historical_run(&extension_run_id("test-adaptive-golden42-v1"));
         assert_eq!(
             prior_no_win_ids("test-adaptive-golden42-v1").unwrap(),
             vec![
@@ -4902,6 +4915,7 @@ mod tests {
 
     #[test]
     fn sealed_generation_29_artifacts_bind_seven_champion_continuations() {
+        require_historical_run(&island_run_id("test-adaptive-golden42-v1"));
         let bindings = champion_bindings("test-adaptive-golden42-v1").unwrap();
         assert_eq!(bindings.len(), 7);
         assert_eq!(
@@ -4924,6 +4938,13 @@ mod tests {
     #[test]
     fn generation_30_populations_reconstruct_deterministically() {
         let registry = paths::jope_registry();
+        assert!(
+            Path::new(panel_path_str()).is_file() && registry.is_dir(),
+            "unavailable: golden42 panel {} or dataset registry {} (set JOPE_STATE with legacy/golden42 and JOPE_REGISTRY)",
+            panel_path_str(),
+            registry.display()
+        );
+        require_historical_run(&island_run_id("test-adaptive-golden42-v1"));
         let (_, specs, _, _) = load_panel_specs(&registry).unwrap();
         let spec = specs
             .iter()

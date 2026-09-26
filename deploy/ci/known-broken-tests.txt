@@ -18,26 +18,34 @@
 # the next reader to distrust the whole list. This heading is kept because the relocation is the
 # kind of breakage that recurs; the entries are not.
 #
-# --- cause A: the fit authority refuses, permanently ---
-# eval_registry/authority.rs activation_block() reads the activations/coverage tables into
-# `active`, then does `let _ = active;` and returns "namespace capability inactive: explicit
-# verified activation required" UNCONDITIONALLY, with the comment "Production capabilities have no
-# verifier yet". The only bypass is #[cfg(test)] — which integration tests do not get, because they
-# link the library built without it, while the crate's own unit tests do. Upstream, fit_boundary.rs
-# bails first without $JOPE_FIT_SERVICE_SOCKET ("fitting is fenced"). So these cannot pass in any
-# shipped build until that verifier exists; it is not an environment problem.
-# Verified per-test below: only three actually emit those strings; the rest fail earlier or for
-# their own reasons, noted individually.
-gp_contracts fitted_predictor_roundtrip_matches_native_gp_and_restores_target_units # namespace capability inactive
-gp_contracts sealed_memory_view_matches_file_evaluation_and_rejects_writes # namespace capability inactive
-view_contracts fitted_view_predictor_uses_the_exact_cut_and_original_target_units # fit authority fenced
-view_contracts isolated_fitted_view_export_binds_success_and_preserves_worker_failures # fit authority fenced
-view_contracts experiment_crashes_at_durable_boundaries_recover_without_repeating_committed_fits # fit authority fenced
+# --- cause A: shipped builds refuse every fit — MOVED to unit tests, entries removed ---
+# A non-test build has three fence layers in front of every fit:
+#   L1 fit_boundary.rs fit() bails without $JOPE_FIT_SERVICE_SOCKET ("mandatory fit authority
+#      service unavailable: fitting is fenced"). The three view_contracts entries stopped here:
+#      they never configured an authority at all.
+#   L2 eval_registry/authority.rs activation_block() reads the activation row, then does
+#      `let _ = active;` and returns "namespace capability inactive: explicit verified activation
+#      required" unconditionally outside #[cfg(test)]; namespace_activate() has no verifier and
+#      always refuses. The two gp_contracts entries stopped here. It is checked at lookup/claim,
+#      authorize, supervised start and consume_start. Only a signed native SCQ admission
+#      (eval_registry/native_scq.rs verify_request) bypasses it — via `native.is_some() ||` at
+#      lookup, authorize and supervised start; consume_start has no such bypass and refuses
+#      unconditionally.
+#   L3 authorize also requires the independent event witness over pinned SSH outside #[cfg(test)]
+#      (authority.rs mutation_under_lock, service.rs Service::bind). The integration fixture's
+#      witness is deliberately unreachable, so it could not complete a fit in a shipped build even
+#      past L2.
+# W0 resolution: the positive contracts of those five entries, and of the fence-downstream
+# one_evaluation_budget_runs_the_incumbent_before_neural_candidates, now run in the library's
+# cfg(test) build as `gp::fit_contract_tests::*` (binary jope-parallel), behind the reviewed
+# test-only synthetic issuer. gp_contracts, view_contracts and fit_boundary now assert the
+# shipped refusals under new names. No product path gained test-only activation.
 #
-# --- cause B: behavioural assertions that do not hold on this tree (not environment) ---
-view_contracts matched_search_seed_is_recorded_and_cannot_change_on_resume # expects stderr "RNG seed mismatch"
-view_contracts one_evaluation_budget_runs_the_incumbent_before_neural_candidates # observations[0]["failure"] is not null
-view_contracts projected_gp_candidates_are_exactly_representable_unique_and_durable # left == right assertion
+# --- cause B: FIXED or MOVED, entries removed ---
+# matched_search_seed_is_recorded_and_cannot_change_on_resume and
+# projected_gp_candidates_are_exactly_representable_unique_and_durable were fixed in 576e82cf0.
+# one_evaluation_budget_runs_the_incumbent_before_neural_candidates failed because its fit was
+# refused (cause A), and moved with it.
 #
 # --- cause C: race-sensitive under parallel execution, not broken ---
 # Passes in isolation and as a serial module; 1 red in 3 full runs at high load. It is a lib test

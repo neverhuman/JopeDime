@@ -42,15 +42,60 @@ fn fitting_ids(assignments: &Assignments) -> Vec<&str> {
         .map(|r| r.id.as_str())
         .collect()
 }
+/// W1 follow-up 2d. The pinned manifest is read once and its bytes must be the
+/// pin. The committed fitting-only staging protocol's replay verifier then
+/// admits the closure before any split membership or projected input is
+/// opened. It refuses the historical closure, its projection source and every
+/// object that the historical staging path produced. Returns the consumed bytes
+/// and the closure receipt.
+fn admit_closure(pin: &Artifact) -> Result<(Vec<u8>, Value)> {
+    ensure!(
+        fs::symlink_metadata(&pin.path)?.file_type().is_file(),
+        "fitting input manifest must be a regular file"
+    );
+    let bytes = fs::read(&pin.path)?;
+    ensure!(
+        digest(&bytes) == pin.sha256,
+        "fitting input manifest changed"
+    );
+    let (_, protocol) = jope_datasets::staging_disposition::committed()?;
+    let mut receipt = jope_datasets::staging_disposition::verify_closure(&protocol, &bytes)?;
+    receipt["staging_protocol_id"] = json!(protocol.protocol_id);
+    Ok((bytes, receipt))
+}
+
+/// W1 follow-up 2d: whichever planner built a plan, a plan pinning any object
+/// of the historical staging closure is never admitted.
+pub fn refuse_historical_plan(fitting_manifest: &Artifact, inputs: &[Dataset]) -> Result<usize> {
+    let (_, protocol) = jope_datasets::staging_disposition::committed()?;
+    let mut objects = vec![(
+        "fitting-input manifest".to_string(),
+        fitting_manifest.sha256.as_str(),
+    )];
+    for d in inputs {
+        objects.push((
+            format!("{}: projected fitting input", d.id),
+            d.raw.sha256.as_str(),
+        ));
+        for (k, (fold, _)) in d.gp.iter().flat_map(|g| g.folds.iter()).enumerate() {
+            objects.push((
+                format!("{}: inner fold {k} input", d.id),
+                fold.sha256.as_str(),
+            ));
+        }
+    }
+    jope_datasets::staging_disposition::refuse_historical_objects(&protocol, objects)
+}
+
 pub fn load(
     pin: &Artifact,
     panel: &Panel,
     panel_sha: &str,
     config_sha: &str,
     config: &super::super::optimize::Configuration,
-) -> Result<Vec<Dataset>> {
-    pin.verify()?;
-    let manifest: FittingManifest = serde_json::from_slice(&fs::read(&pin.path)?)?;
+) -> Result<(Vec<Dataset>, Value)> {
+    let (bytes, closure) = admit_closure(pin)?;
+    let manifest: FittingManifest = serde_json::from_slice(&bytes)?;
     ensure!(
         manifest.schema == "jope.inference-fitting-inputs/v1"
             && manifest.panel_sha256 == panel_sha
@@ -248,7 +293,7 @@ pub fn load(
     }
     let mut inputs = manifest.inputs;
     inputs.sort_by(|a, b| a.id.cmp(&b.id));
-    Ok(inputs)
+    Ok((inputs, closure))
 }
 #[cfg(test)]
 mod tests {
@@ -261,5 +306,145 @@ mod tests {
         let mut injected = value;
         injected["rows"][0]["target"] = json!(123);
         assert!(serde_json::from_value::<Assignments>(injected).is_err());
+    }
+
+    use jope_datasets::staging_disposition::committed;
+
+    fn pinned(dir: &Path, name: &str, bytes: &[u8]) -> Artifact {
+        let path = dir.join(name);
+        fs::write(&path, bytes).unwrap();
+        Artifact {
+            path,
+            sha256: digest(bytes),
+        }
+    }
+
+    /// A fitting-input manifest naming `source`, one projected input per raw
+    /// digest, and the inner folds on the first. No named object exists.
+    fn closure(source: &str, raw: &[&str], folds: &[&str]) -> Vec<u8> {
+        let inputs = raw
+            .iter()
+            .enumerate()
+            .map(|(i, sha)| {
+                let gp = if i == 0 {
+                    json!({"folds":folds.iter().map(|f| json!([{"path":"/absent/fold.json","sha256":f},[]])).collect::<Vec<_>>()})
+                } else {
+                    Value::Null
+                };
+                json!({"id":format!("d{i}"),"raw":{"path":format!("/absent/raw-{i}.json"),"sha256":sha},"gp":gp})
+            })
+            .collect::<Vec<_>>();
+        serde_json::to_vec(&json!({"schema":"jope.inference-fitting-inputs/v1",
+            "projection_source_sha":source,"inputs":inputs}))
+        .unwrap()
+    }
+
+    /// W1 follow-up 2d at the planner's receiving path.
+    #[test]
+    fn the_planner_admits_only_closures_outside_the_historical_staging_path() {
+        let (d, p) = committed().unwrap();
+        let temp = tempfile::tempdir().unwrap();
+        let dir = temp.path();
+        let source = "0123456789abcdef0123456789abcdef01234567";
+        let (r0, r1, f0) = (
+            digest(b"fresh raw 0"),
+            digest(b"fresh raw 1"),
+            digest(b"fresh fold 0"),
+        );
+        // The historical member with inner folds (197_cpu_act).
+        let member = &d.input_closure.members[0];
+        assert!(!member.gp_fold_sha256.is_empty());
+
+        // Positive control: a fresh closure is admitted, from the pinned bytes.
+        let bytes = closure(source, &[&r0, &r1], &[&f0]);
+        let pin = pinned(dir, "fresh.json", &bytes);
+        let (consumed, receipt) = admit_closure(&pin).unwrap();
+        assert_eq!(consumed, bytes);
+        assert_eq!(receipt["objects_checked"], 3);
+        assert_eq!(receipt["projection_source_sha"], source);
+        assert_eq!(receipt["staging_protocol_id"], p.protocol_id.as_str());
+
+        // The historical projection source, one historical projected input or
+        // one historical inner-fold input: each is refused before any named
+        // object is opened (none exists).
+        for (name, bytes, expected) in [
+            (
+                "source",
+                closure(&d.study.source_sha, &[&r0, &r1], &[&f0]),
+                "historical staging source",
+            ),
+            (
+                "raw",
+                closure(source, &[&r0, &member.raw_sha256], &[&f0]),
+                "d1: projected fitting input",
+            ),
+            (
+                "fold",
+                closure(source, &[&r0, &r1], &[&f0, &member.gp_fold_sha256[2]]),
+                "d0: inner fold 1 input",
+            ),
+        ] {
+            let err = admit_closure(&pinned(dir, &format!("{name}.json"), &bytes))
+                .unwrap_err()
+                .to_string();
+            assert!(
+                err.contains(expected) && err.contains("historical"),
+                "{name}: {err}"
+            );
+        }
+
+        // Bytes replaced after pinning are never consumed.
+        fs::write(&pin.path, closure(source, &[&r1, &r0], &[&f0])).unwrap();
+        let err = admit_closure(&pin).unwrap_err().to_string();
+        assert!(err.contains("manifest changed"), "{err}");
+        // A symlink is refused even when it resolves to the pinned bytes.
+        let target = pinned(dir, "target.json", &bytes);
+        let link = dir.join("link.json");
+        std::os::unix::fs::symlink(&target.path, &link).unwrap();
+        let err = admit_closure(&Artifact {
+            path: link,
+            sha256: target.sha256,
+        })
+        .unwrap_err()
+        .to_string();
+        assert!(err.contains("regular file"), "{err}");
+    }
+
+    /// W1 follow-up 2d at plan admission (`read`: run, cold and v3 report).
+    #[test]
+    fn a_plan_pinning_any_historical_object_is_never_admitted() {
+        let (d, _) = committed().unwrap();
+        let fresh = |s: &str| Artifact {
+            path: PathBuf::from(format!("/absent/{s}")),
+            sha256: digest(s.as_bytes()),
+        };
+        let inputs = ["a", "b"]
+            .map(|id| Dataset {
+                id: id.into(),
+                raw: fresh(&format!("raw-{id}")),
+                gp: None,
+            })
+            .to_vec();
+        // Positive control.
+        assert_eq!(
+            refuse_historical_plan(&fresh("manifest"), &inputs).unwrap(),
+            3
+        );
+        // The retained historical manifest (the local v3 plan built on it).
+        let retained = Artifact {
+            path: PathBuf::from("/absent/retained-fitting-inputs.json"),
+            sha256: d.input_closure.manifest_sha256.clone(),
+        };
+        let err = refuse_historical_plan(&retained, &inputs)
+            .unwrap_err()
+            .to_string();
+        assert!(err.contains("fitting-input manifest"), "{err}");
+        // A fresh manifest re-pinning one historical projected input.
+        let mut reused = inputs.clone();
+        reused[1].raw.sha256 = d.input_closure.members[3].raw_sha256.clone();
+        let err = refuse_historical_plan(&fresh("manifest"), &reused)
+            .unwrap_err()
+            .to_string();
+        assert!(err.contains("b: projected fitting input"), "{err}");
     }
 }

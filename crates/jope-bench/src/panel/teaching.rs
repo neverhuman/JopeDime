@@ -215,6 +215,9 @@ pub fn preregister(plan: &mut CampaignPlan, config: &Configuration) -> Result<()
                     panel_sha256: settings.panel.sha256.clone(),
                     dataset_id: dataset.id.clone(),
                     evaluation_seed: plan.experiment.seed,
+                    // No preregistered context encoder exists on this route yet, so
+                    // its admissions are refused as MissingEncoderProvenance.
+                    context: None,
                 },
                 &partition,
             )?;
@@ -528,6 +531,7 @@ fn admit_one(
         window_sha256: retain(state, &journal.join("window.json"))?,
         fold_predictions_sha256: folds,
         inner: Some(inner),
+        context: None,
     };
     let result = eligibility::qualify(state, &record, &evidence);
     let (qualified, reason, qualification) = match result {

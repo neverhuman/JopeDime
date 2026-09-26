@@ -124,15 +124,29 @@ impl BlobDir {
         Ok(dest)
     }
 
-    /// Make sure `<dir>/<sha256>` exists with `bytes` bytes, downloading `blobs/sha256/<sha256>`
-    /// from `store` when it is absent or has the wrong size. `Ok(true)` when it was downloaded.
+    /// Make sure `<dir>/<sha256>` exists with exactly the named content, downloading
+    /// `blobs/sha256/<sha256>` from `store` when it is absent or stale. A cached entry is served
+    /// only after its bytes re-hash to `sha256`; a same-size stale or corrupted entry is removed
+    /// and, offline, the request fails rather than serving any substitute. `Ok(true)` when it was
+    /// downloaded.
     pub async fn ensure(&self, store: Option<&Store>, sha256: &str, bytes: u64) -> Result<bool> {
         let dest = self.path(sha256);
         if let Ok(m) = std::fs::metadata(&dest) {
-            if m.len() == bytes {
-                return Ok(false);
-            }
+            let found = if m.len() == bytes {
+                let got = digest_file(&dest)?.sha256;
+                if got == sha256 {
+                    return Ok(false);
+                }
+                format!("content hashes to {got}")
+            } else {
+                format!("size {} != {bytes}", m.len())
+            };
             std::fs::remove_file(&dest)?;
+            if store.is_none() {
+                return Err(anyhow!(
+                    "cached blob {sha256} is stale ({found}); removed, and offline: no substitute is served"
+                ));
+            }
         }
         let store = store.ok_or_else(|| anyhow!("blob {sha256} is not cached and offline"))?;
         store

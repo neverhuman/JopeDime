@@ -58,7 +58,7 @@ pub fn rank(
     }
     crate::gpu_worker::require_accepted_task(root, &task)?;
     rank_impl(
-        root, corpus, checkpoint, output, rank, world, cuts, cut_start, shuffled, None,
+        root, corpus, checkpoint, output, rank, world, cuts, cut_start, shuffled, None, None,
     )
 }
 
@@ -101,6 +101,7 @@ pub(crate) fn smartcluster_rank(
         preparation_overlay
             .as_ref()
             .map(|a| (a, task.manifest().run.as_str())),
+        None,
     )?;
     let result: Value = read_json(&output.join("complete-0.json"))?;
     write_json(
@@ -120,11 +121,17 @@ fn rank_impl(
     cut_start: usize,
     shuffled: bool,
     overlay: Option<(&crate::native_graph::Artifact, &str)>,
+    assignment: Option<&crate::training::topology::Assignment>,
 ) -> Result<()> {
     ensure!(
         rank < world && world <= 8 && cuts > 0,
         "invalid proposal worker topology"
     );
+    // W7-T03 follow-up: the communicator rank shards the jobs; the CUDA
+    // ordinal comes from the binding. No caller delivers an assignment yet,
+    // so the labelled legacy mapping applies and is recorded.
+    let binding =
+        crate::training::topology::resolve(assignment, rank, world, crate::neural::local_devices)?;
     crate::neural::configure_runtime();
     let index = crate::teaching_store::read_index(root, corpus)?;
     let run: Value = read_json(&output.join("run.json"))?;
@@ -144,7 +151,7 @@ fn rank_impl(
         config.vocab_size == vocab.tokens.len() as i64,
         "proposal vocabulary mismatch"
     );
-    let device = Device::Cuda(rank);
+    let device = binding.cuda_device();
     let mut vs = nn::VarStore::new(device);
     let model = Policy::new(vs.root(), config)?;
     vs.load(checkpoint.join("model.ot"))?;
@@ -241,7 +248,7 @@ fn rank_impl(
             && champion_snapshot.vocabulary_sha256 == state["vocabulary_sha256"],
         "proposal champion snapshot changed"
     );
-    for (j, (context_id, c)) in jobs.iter().enumerate().filter(|(j, _)| j % world == rank) {
+    for (j, (context_id, c)) in jobs.iter().enumerate().filter(|(j, _)| binding.owns(*j)) {
         let destination = output.join(&c.dataset).join(format!("cut-{}", c.cut));
         fs::create_dir_all(&destination)?;
         ensure!(
@@ -695,7 +702,8 @@ fn rank_impl(
     )?;
     write_json(
         &output.join(format!("complete-{rank}.json")),
-        &json!({"rank":rank,"world":world,"seconds":started.elapsed().as_secs_f64()}),
+        &json!({"rank":rank,"world":world,"seconds":started.elapsed().as_secs_f64(),
+            "topology":binding.receipt()}),
     )?;
     Ok(())
 }

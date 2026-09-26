@@ -101,16 +101,133 @@ fn stats(table: &Table) -> (TableStats, BTreeSet<String>) {
         features.into_keys().collect(),
     )
 }
+/// Label-derived statistics the audit never measures on the sealed split.
+const WITHHELD_SEALED_STATISTICS: [&str; 4] = [
+    "invalid_targets",
+    "duplicate_rows",
+    "conflicting_features",
+    "target_values",
+];
+
+/// How the audit read each dataset's sealed final-test split (W1-T04). It is
+/// published beside the report so a zero in a withheld field is never read as
+/// a measurement.
+fn sealed_test_access() -> Value {
+    json!({"schema":"parallel.audit_sealed_test_access.v1","split":"test.csv",
+        "columns_parsed":"features_only","labels_parsed":false,
+        "withheld_label_statistics":WITHHELD_SEALED_STATISTICS,
+        "withheld_value":"0 or [] without measurement",
+        "reason":"sealed final-test labels are released only to an authorized outer scorer"})
+}
+
+/// Feature-only projection of the sealed final-test split. The final (target)
+/// cell of every record is dropped as it is parsed: sealed labels are never
+/// decoded, retained, summarized or written, so no audit output can depend on
+/// them. Width, row count, header detection and missing features — what the
+/// preparation contract consumes — and the feature identities used for
+/// original-split overlap are reported; label-derived statistics are withheld.
+fn sealed_feature_stats(path: &Path, m: &Value) -> Result<(TableStats, BTreeSet<String>)> {
+    let bytes = fs::read(path)?;
+    let mut records = csv::ReaderBuilder::new()
+        .has_headers(false)
+        .flexible(false)
+        .from_reader(bytes.as_slice());
+    let names = m
+        .get("output_headers")
+        .or_else(|| m.get("original_headers"))
+        .and_then(Value::as_array);
+    let mut width = None;
+    let mut rows = Vec::new();
+    // `Table::read`'s header rule needs the first record's final cell compared
+    // with the declared target *name*; that one equality is the only use of a
+    // final cell, and its value is not retained.
+    let mut first_is_header = false;
+    for record in records.records() {
+        let record = record?;
+        let width = *width.get_or_insert(record.len());
+        anyhow::ensure!(width >= 2, "expected features and a target");
+        if rows.is_empty() {
+            first_is_header = names.is_some_and(|h| {
+                h.len() == width
+                    && h.iter()
+                        .zip(record.iter())
+                        .all(|(a, b)| a.as_str() == Some(b.trim()))
+            });
+        }
+        rows.push(
+            record
+                .iter()
+                .take(width - 1)
+                .map(|cell| cell.trim().to_string())
+                .collect::<Vec<_>>(),
+        );
+    }
+    anyhow::ensure!(!rows.is_empty(), "empty table");
+    let width = width.unwrap_or(0);
+    let header = first_is_header || m.get("headers_removed_from_csv") == Some(&Value::Bool(false));
+    if header {
+        rows.remove(0);
+    }
+    anyhow::ensure!(!rows.is_empty(), "no data rows");
+    if let Some(n) = m.get("n_features").and_then(Value::as_u64) {
+        anyhow::ensure!(n as usize + 1 == width, "feature count mismatch");
+    }
+    anyhow::ensure!(
+        m.get("target_is_final_column") != Some(&Value::Bool(false)),
+        "target must be explicitly relocated to final column"
+    );
+    let features = rows
+        .iter()
+        .map(|row| hash(&serde_json::to_vec(row).unwrap()))
+        .collect();
+    let missing = rows
+        .iter()
+        .flatten()
+        .filter(|cell| crate::prepare::missing(cell))
+        .count();
+    Ok((
+        TableStats {
+            rows: rows.len(),
+            columns: width,
+            target_index: width - 1,
+            header,
+            missing_features: missing,
+            invalid_targets: 0,
+            duplicate_rows: 0,
+            conflicting_features: 0,
+            target_values: Vec::new(),
+        },
+        features,
+    ))
+}
+/// A historical split is read only as a regular file inside the audited
+/// directory; a symlink would let bytes from outside the audited root stand
+/// in for the dataset (W1-T06), so it is refused, never followed.
+fn regular_split(dir: &Path, split: &str) -> Result<PathBuf> {
+    let path = dir.join(split);
+    let meta = fs::symlink_metadata(&path)?;
+    anyhow::ensure!(
+        !meta.file_type().is_symlink(),
+        "symlinked split refused: it may resolve outside the audited root"
+    );
+    anyhow::ensure!(meta.is_file(), "split is not a regular file");
+    Ok(path)
+}
 fn inspect(dir: &Path, m: &Value) -> (Option<TableStats>, Option<TableStats>, usize, Vec<String>) {
     let mut issues = Vec::new();
     let mut tables = Vec::new();
-    for split in ["train.csv", "test.csv"] {
-        match Table::read(&dir.join(split), m) {
-            Ok(t) => tables.push(Some(stats(&t))),
-            Err(e) => {
-                issues.push(format!("{split}: {e:#}"));
-                tables.push(None);
-            }
+    match regular_split(dir, "train.csv").and_then(|path| Table::read(&path, m)) {
+        Ok(t) => tables.push(Some(stats(&t))),
+        Err(e) => {
+            issues.push(format!("train.csv: {e:#}"));
+            tables.push(None);
+        }
+    }
+    match regular_split(dir, "test.csv").and_then(|path| sealed_feature_stats(&path, m)) {
+        Ok(t) => tables.push(Some(t)),
+        Err(e) => {
+            issues.push(format!("test.csv: {e:#}"));
+            tables.push(None);
         }
     }
     let overlap = match (&tables[0], &tables[1]) {
@@ -353,11 +470,8 @@ pub fn run(roots: &[PathBuf], decisions_path: &Path, output: &Path) -> Result<Au
         if !d.source_key.is_empty() {
             keys.push(format!("source:{}", d.source_key));
         }
-        if d.source_dir.join("train.csv").exists() {
-            keys.push(format!(
-                "train:{}",
-                file_hash(&d.source_dir.join("train.csv"))?
-            ));
+        if let Ok(train) = regular_split(&d.source_dir, "train.csv") {
+            keys.push(format!("train:{}", file_hash(&train)?));
         }
         for key in keys {
             if let Some(j) = family_keys.insert(key, i) {
@@ -538,6 +652,8 @@ pub fn run(roots: &[PathBuf], decisions_path: &Path, output: &Path) -> Result<Au
         missing_roots,
         complete,
     };
-    write_json(&output.join("audit.json"), &report)?;
+    let mut published = serde_json::to_value(&report)?;
+    published["sealed_test_access"] = sealed_test_access();
+    write_json(&output.join("audit.json"), &published)?;
     Ok(report)
 }

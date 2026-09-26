@@ -709,6 +709,20 @@ pub fn assemble(root: &Path, manifest_path: &Path) -> Result<()> {
     Ok(())
 }
 
+/// The device a ranked-proposal worker uses: CPU only when `JOPE_RANKED_DEVICE`
+/// is exactly `cpu`, otherwise the CUDA device its binding owns (W7-T03
+/// follow-up; formerly `Device::Cuda(rank)`).
+pub fn worker_device(
+    binding: &crate::training::topology::Binding,
+    requested: Option<&str>,
+) -> Device {
+    if requested == Some("cpu") {
+        Device::Cpu
+    } else {
+        binding.cuda_device()
+    }
+}
+
 pub fn run(root: &Path, manifest_path: &Path, rank: usize, world: usize) -> Result<()> {
     crate::task_contract::require_qualified_gpu_experiment("propose-ranked")?;
     let canonical_root = root.canonicalize()?;
@@ -717,6 +731,10 @@ pub fn run(root: &Path, manifest_path: &Path, rank: usize, world: usize) -> Resu
         world > 0 && world <= 8 && rank < world,
         "invalid proposal topology"
     );
+    // No caller delivers an assignment yet: the labelled legacy mapping
+    // applies and is recorded in the completion receipt.
+    let binding =
+        crate::training::topology::resolve(None, rank, world, crate::neural::local_devices)?;
     tch::set_num_threads(2);
     tch::set_num_interop_threads(1);
     tch::jit::set_graph_executor_optimize(false);
@@ -798,11 +816,10 @@ pub fn run(root: &Path, manifest_path: &Path, rank: usize, world: usize) -> Resu
     let bank_path = output.join("frozen-bank.json");
     immutable_json(&bank_path, &bank_value)?;
     let bank_sha = file_hash(&bank_path)?;
-    let device = if std::env::var("JOPE_RANKED_DEVICE").as_deref() == Ok("cpu") {
-        Device::Cpu
-    } else {
-        Device::Cuda(rank)
-    };
+    let device = worker_device(
+        &binding,
+        std::env::var("JOPE_RANKED_DEVICE").ok().as_deref(),
+    );
     let (_vs, model, checkpoint_sha, state) = load(root, &m.checkpoint, &vocab_sha, device)?;
     ensure!(
         state["corpus_sha256"] == file_hash(&corpus.join("index.json"))?,
@@ -820,12 +837,7 @@ pub fn run(root: &Path, manifest_path: &Path, rank: usize, world: usize) -> Resu
         "no training contexts for shuffle control"
     );
     let mut completed = Vec::new();
-    for (j, view) in m
-        .views
-        .iter()
-        .enumerate()
-        .filter(|(j, _)| j % world == rank)
-    {
+    for (j, view) in m.views.iter().enumerate().filter(|(j, _)| binding.owns(*j)) {
         crate::campaign::check_deadline()?;
         ensure!(
             !view.dataset.is_empty() && !view.dataset.contains('/') && view.dataset != "..",
@@ -1045,7 +1057,7 @@ pub fn run(root: &Path, manifest_path: &Path, rank: usize, world: usize) -> Resu
     }
     write_json(
         &output.join(format!("rank-{rank}-complete.json")),
-        &json!({"schema":"parallel.ranked_proposals_complete.v1","manifest_sha256":manifest_sha,"bank_sha256":bank_sha,"rank":rank,"world":world,"views":completed,"seconds":started.elapsed().as_secs_f64()}),
+        &json!({"schema":"parallel.ranked_proposals_complete.v1","manifest_sha256":manifest_sha,"bank_sha256":bank_sha,"rank":rank,"world":world,"views":completed,"seconds":started.elapsed().as_secs_f64(),"topology":binding.receipt()}),
     )?;
     Ok(())
 }

@@ -499,6 +499,67 @@ mod tests {
         std::fs::write(&p, b"original").unwrap();
         assert!(hash_if_bound(&p).unwrap().is_err());
     }
+    /// W1 route R9 through the receiver: `manifest::file_hash` is what the
+    /// worker's input verification calls inside its scope
+    /// (`smartcluster_worker`). Hit, miss and resume across scopes: a resumed
+    /// scope reuses a digest only for an unchanged identity, and an input
+    /// replaced between scopes is re-hashed and refused - never served from
+    /// the earlier scope's entry.
+    #[test]
+    fn receiver_hit_miss_and_resume_across_scopes_never_serve_a_replaced_input() {
+        reset();
+        let t = ext4_fixture();
+        let root = t.path().to_path_buf();
+        let p = root.join("a");
+        let len = 1024 * 1024;
+        std::fs::write(&p, vec![3u8; len]).unwrap();
+        std::fs::set_permissions(&p, std::fs::Permissions::from_mode(0o444)).unwrap();
+        let h = crate::manifest::file_hash(&p).unwrap();
+        std::thread::sleep(std::time::Duration::from_millis(2100));
+        let expected = BTreeMap::from([("a".into(), h.clone())]);
+        let counters = || CACHE.with(|c| (c.borrow().full_bytes, c.borrow().hits));
+        // Cold scope: miss (full hash) then hit.
+        {
+            let _s = enter(&root, &expected).unwrap();
+            assert_eq!(crate::manifest::file_hash(&p).unwrap(), h);
+            assert_eq!(counters(), (len as u64, 0), "first read is a full hash");
+            assert_eq!(crate::manifest::file_hash(&p).unwrap(), h);
+            assert_eq!(counters(), (len as u64, 1), "unchanged identity is a hit");
+        }
+        // Resume: a new scope over the unchanged input reuses the entry.
+        {
+            let _s = enter(&root, &expected).unwrap();
+            assert_eq!(crate::manifest::file_hash(&p).unwrap(), h);
+            assert_eq!(counters(), (len as u64, 2), "resumed scope reuses");
+        }
+        // Between scopes the input is replaced (new inode, same length, old
+        // enough to be eligible): the resumed scope must re-hash and refuse.
+        let staged = root.join("a.new");
+        std::fs::write(&staged, vec![4u8; len]).unwrap();
+        std::fs::set_permissions(&staged, std::fs::Permissions::from_mode(0o444)).unwrap();
+        std::fs::rename(&staged, &p).unwrap();
+        std::thread::sleep(std::time::Duration::from_millis(2100));
+        {
+            let _s = enter(&root, &expected).unwrap();
+            let refused = format!(
+                "{:#}",
+                crate::manifest::file_hash(&p)
+                    .expect_err("a replaced input was served from the cache")
+            );
+            // A cache-served answer would be the old, matching digest; the
+            // refusal comes from the full hash of the replacement.
+            assert!(
+                refused.contains("differs from exact manifest digest"),
+                "{refused}"
+            );
+            assert_eq!(counters().1, 2, "no cache hit was served");
+        }
+        // Positive control: re-bound to the replacement's digest, it is accepted.
+        let replaced = crate::manifest::file_hash(&p).unwrap();
+        assert_ne!(replaced, h);
+        let _s = enter(&root, &BTreeMap::from([("a".into(), replaced.clone())])).unwrap();
+        assert_eq!(crate::manifest::file_hash(&p).unwrap(), replaced);
+    }
     #[test]
     fn symlinks_and_fifo_refuse_before_read() {
         reset();

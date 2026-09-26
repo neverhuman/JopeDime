@@ -204,6 +204,9 @@ fn min_is_per_unit_and_keeps_negative_and_one_sided_gains() {
     ];
     assert!((gains(&a, (2.0, 1.0, 1.0)).unwrap().audit - 0.41).abs() < 1e-12);
 }
+// W10-T09's independent recomputation and its agreement with this reporter live in
+// tests/transfer_independent.rs, which reads only plan, freeze and report files and cannot link
+// this module's scoring code.
 #[test]
 fn plan_is_thirty_searches_per_arm_and_label_free_searches() {
     let root = tempfile::tempdir().unwrap();

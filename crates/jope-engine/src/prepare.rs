@@ -32,10 +32,15 @@ pub fn missing(s: &str) -> bool {
 impl Table {
     pub fn read(path: &Path, meta: &Value) -> Result<Self> {
         let bytes = fs::read(path).with_context(|| format!("read {}", path.display()))?;
+        Self::parse(&bytes, meta)
+    }
+    /// Parse already-read bytes, so a caller that verified their digest parses
+    /// exactly those bytes and never reopens the path.
+    pub fn parse(bytes: &[u8], meta: &Value) -> Result<Self> {
         let mut records = csv::ReaderBuilder::new()
             .has_headers(false)
             .flexible(false)
-            .from_reader(bytes.as_slice());
+            .from_reader(bytes);
         let mut rows = records
             .records()
             .map(|r| r.map(|r| r.iter().map(|s| s.trim().to_string()).collect::<Vec<_>>()))
@@ -484,12 +489,17 @@ pub struct Prepared {
 /// matching every original training row. Unknown recipes or ambiguous raw rows
 /// are withheld; reversing a scaler alone is never treated as reconstruction.
 pub fn reconstruct_numeric(train: &Table, m: &Value) -> Result<(Table, Value)> {
-    reconstruct_recorded(train, m, false)
+    reconstruct_recorded(train, m, false, None)
 }
 
 /// Classification reconstruction replays the recorded source-label encoding
 /// and class-to-code mapping before verifying every historical training row.
 pub fn reconstruct_classification(train: &Table, m: &Value) -> Result<(Table, Value)> {
+    check_classification_recipe(m)?;
+    reconstruct_recorded(train, m, true, None)
+}
+
+fn check_classification_recipe(m: &Value) -> Result<()> {
     ensure!(
         m["target_scaling"]["mode"] == "classification",
         "classification needs a recorded label mapping"
@@ -498,7 +508,18 @@ pub fn reconstruct_classification(train: &Table, m: &Value) -> Result<(Table, Va
         m["target_scaling"]["scaled_code_formula"] == "code / max(1, n_classes - 1)",
         "unsupported historical classification formula"
     );
-    reconstruct_recorded(train, m, true)
+    Ok(())
+}
+
+/// [`reconstruct_classification`] with the explicit backing allowlist that
+/// may relocate a missing recorded source (route R1).
+fn reconstruct_classification_with(
+    train: &Table,
+    m: &Value,
+    allowlist: &TransferManifest,
+) -> Result<(Table, Value)> {
+    check_classification_recipe(m)?;
+    reconstruct_recorded(train, m, true, Some(allowlist))
 }
 
 fn historical_class(target: &str, m: &Value) -> Result<f64> {
@@ -545,22 +566,61 @@ fn historical_class(target: &str, m: &Value) -> Result<f64> {
         / (count - 1) as f64)
 }
 
-/// Recorded backing sources predate ADR-0003: they name a retired host tree
-/// (`…/hyper/data/<rel>`). The mirror of that tree sits beside the dataset
-/// tree, `<quant_root>/../hyper/data` (historically `remote_super/hyper/data`
-/// next to `remote_super/quant`), so a recorded path that no longer exists is
-/// re-rooted there by the part after its `hyper/data` components.
-fn mirrored_backing_source(recorded: &std::path::Path) -> Option<std::path::PathBuf> {
-    let components: Vec<_> = recorded.components().collect();
+/// The part of a recorded backing path after its `hyper/data` components.
+/// Recorded backing sources predate ADR-0003 and name a retired host tree
+/// (`…/hyper/data/<rel>`); `<rel>` is their relative identity.
+fn hyper_data_relative(path: &Path) -> Option<std::path::PathBuf> {
+    let components: Vec<_> = path.components().collect();
     let index = components
         .windows(2)
         .position(|pair| pair[0].as_os_str() == "hyper" && pair[1].as_os_str() == "data")?;
     let relative: std::path::PathBuf = components[index + 2..].iter().collect();
-    let mirror = jope_paths::quant_root().parent()?.join("hyper/data");
-    Some(mirror.join(relative))
+    (!relative.as_os_str().is_empty()).then_some(relative)
 }
 
-fn reconstruct_recorded(train: &Table, m: &Value, classification: bool) -> Result<(Table, Value)> {
+/// Where a recorded backing source is read (W1 route R1). The recorded path
+/// itself when it exists. Otherwise only a location the explicit, digest-bound
+/// backing allowlist names as a `source` with the same `hyper/data`-relative
+/// identity, and exactly one such location. The process environment (and so
+/// `jope_paths::quant_root`) is never consulted.
+fn backing_source_location(
+    recorded: &Path,
+    allowlist: Option<&TransferManifest>,
+) -> Result<(std::path::PathBuf, Value)> {
+    if recorded.is_file() {
+        return Ok((recorded.into(), serde_json::json!({"kind":"recorded_path"})));
+    }
+    let relative = hyper_data_relative(recorded);
+    let allowlist =
+        allowlist.context("recorded backing source absent; no allowlist names a relocation")?;
+    let relative =
+        relative.context("recorded backing source absent and has no relocatable identity")?;
+    let candidates = allowlist
+        .files
+        .iter()
+        .filter(|f| hyper_data_relative(&f.source).as_deref() == Some(relative.as_path()))
+        .map(|f| f.source.clone())
+        .collect::<BTreeSet<_>>();
+    ensure!(
+        candidates.len() == 1,
+        "recorded backing source absent; the allowlist names {} relocations of {} (exactly one required)",
+        candidates.len(),
+        relative.display()
+    );
+    let location = candidates.into_iter().next().unwrap();
+    Ok((
+        location.clone(),
+        serde_json::json!({"kind":"allowlisted_relocation","recorded":recorded,
+            "allowlisted_source":location,"relative_identity":relative}),
+    ))
+}
+
+fn reconstruct_recorded(
+    train: &Table,
+    m: &Value,
+    classification: bool,
+    allowlist: Option<&TransferManifest>,
+) -> Result<(Table, Value)> {
     ensure!(
         classification || m["target_generation"] == "original_numeric_column",
         "target derivation needs its own reconstruction recipe"
@@ -569,16 +629,15 @@ fn reconstruct_recorded(train: &Table, m: &Value, classification: bool) -> Resul
         m["target_fix"]["changed"] != true,
         "changed legacy target requires a verified transformation recipe"
     );
-    let source = m["source_path"]
+    let recorded = m["source_path"]
         .as_str()
         .context("missing backing-source path")?;
-    let mut source = std::path::PathBuf::from(source);
-    if !source.is_file() {
-        if let Some(mirrored) = mirrored_backing_source(&source) {
-            source = mirrored;
-        }
-    }
-    let mut reader = csv::Reader::from_path(&source).context("backing source unavailable")?;
+    let (source, source_resolution) = backing_source_location(Path::new(recorded), allowlist)?;
+    // Read once: the parsed rows and the recorded source digest describe the
+    // same bytes (route R8).
+    let source_bytes = fs::read(&source).context("backing source unavailable")?;
+    let source_sha256 = hash(&source_bytes);
+    let mut reader = csv::Reader::from_reader(source_bytes.as_slice());
     let header = reader.headers()?.clone();
     let names = m["feature_columns"]
         .as_array()
@@ -720,6 +779,10 @@ fn reconstruct_recorded(train: &Table, m: &Value, classification: bool) -> Resul
     let mut mapping = Vec::new();
     let mut observed_match_error = 0.0f64;
     let mut equivalent_source_matches = 0usize;
+    // W1-T06: equal historical rows take distinct equal backing rows in source
+    // order. A historical row with no unused equal backing row left repeats a
+    // pointer, which every cut membership check refuses as a duplicate join.
+    let mut used = BTreeSet::new();
     for row in &train.rows {
         let numeric = row
             .iter()
@@ -744,8 +807,13 @@ fn reconstruct_recorded(train: &Table, m: &Value, classification: bool) -> Resul
                 maximum.max((a - b).abs())
             });
         equivalent_source_matches += usize::from(hits.len() > 1);
-        mapping.push(hits[0].0);
-        raw_rows.push(hits[0].1.clone());
+        let hit = hits
+            .iter()
+            .find(|hit| !used.contains(&hit.0))
+            .unwrap_or(&hits[0]);
+        used.insert(hit.0);
+        mapping.push(hit.0);
+        raw_rows.push(hit.1.clone());
     }
     Ok((
         Table {
@@ -753,7 +821,7 @@ fn reconstruct_recorded(train: &Table, m: &Value, classification: bool) -> Resul
             width: train.width,
             header: false,
         },
-        serde_json::json!({"schema":"parallel.raw_reconstruction.v1","source":source,"source_sha256":file_hash(&source)?,"source_row_indices":mapping,"target_column":header.get(target_index),"recipe":if classification {"replay_recorded_feature_encoding_minmax_and_classification_mapping"} else {"replay_recorded_numeric_or_categorical_encoding_named_minmax_and_original_target_minmax"},"classification_mapping":if classification {m["target_scaling"].clone()} else {Value::Null},"historical_scaler_feature_indices":scale_positions,"recipe_metadata_sha256":hash(&serde_json::to_vec(m)?),"max_match_abs_error":observed_match_error,"match_tolerance":1e-7,"equivalent_source_matches":equivalent_source_matches,"training_rows":train.rows.len()}),
+        serde_json::json!({"schema":"parallel.raw_reconstruction.v1","source":source,"source_sha256":source_sha256,"source_resolution":source_resolution,"source_row_indices":mapping,"target_column":header.get(target_index),"recipe":if classification {"replay_recorded_feature_encoding_minmax_and_classification_mapping"} else {"replay_recorded_numeric_or_categorical_encoding_named_minmax_and_original_target_minmax"},"classification_mapping":if classification {m["target_scaling"].clone()} else {Value::Null},"historical_scaler_feature_indices":scale_positions,"recipe_metadata_sha256":hash(&serde_json::to_vec(m)?),"max_match_abs_error":observed_match_error,"match_tolerance":1e-7,"equivalent_source_matches":equivalent_source_matches,"training_rows":train.rows.len()}),
     ))
 }
 
@@ -890,9 +958,15 @@ pub fn run(
         backing_manifest,
         None,
         None,
+        None,
     )
 }
 
+/// `authoritative_inventory_root`: the dataset tree the caller declares
+/// authoritative. Without a frozen family registry, the family partition is
+/// frozen only when the audit is complete and was taken over exactly that
+/// root; with neither, it is not frozen. No environment variable decides it.
+#[allow(clippy::too_many_arguments)]
 pub fn run_with_admission(
     audit: &Path,
     dataset: &str,
@@ -902,6 +976,7 @@ pub fn run_with_admission(
     backing_manifest: &Path,
     family_registry: Option<&Path>,
     entity_review: Option<&Path>,
+    authoritative_inventory_root: Option<&Path>,
 ) -> Result<Prepared> {
     let report: AuditReport = read_json(audit)?;
     let candidates = report
@@ -968,29 +1043,53 @@ pub fn run_with_admission(
             "entity review requires a frozen family registry"
         );
     }
-    let m: Value = read_json(&d.source_dir.join("meta.json"))?;
-    ensure!(
-        file_hash(&d.source_dir.join("meta.json"))? == d.metadata_sha256,
-        "metadata changed since audit"
-    );
+    // W1-T06: the audited files are read only as regular files of the audited
+    // directory, never through a symlink that may resolve elsewhere.
+    let audited = |name: &str| -> Result<std::path::PathBuf> {
+        let path = d.source_dir.join(name);
+        let meta = fs::symlink_metadata(&path).with_context(|| format!("audited {name} absent"))?;
+        ensure!(
+            !meta.file_type().is_symlink() && meta.is_file(),
+            "audited {name} is a symlink or not a regular file; it is not followed"
+        );
+        Ok(path)
+    };
+    let meta_path = audited("meta.json")?;
+    let train_path = audited("train.csv")?;
+    // Route R8: parse exactly the metadata bytes the audit bound.
+    let meta_bytes = read_verified(&meta_path, &d.metadata_sha256, "audited metadata")
+        .context("metadata changed since audit")?;
+    let m: Value = serde_json::from_slice(&meta_bytes)
+        .with_context(|| format!("parse {}", meta_path.display()))?;
     if let Some(binding) = &family_binding {
         ensure!(
             binding.metadata_sha256 == d.metadata_sha256,
             "metadata differs from frozen family registry"
         );
     }
-    let original = Table::read(&d.source_dir.join("train.csv"), &m)?;
-    let test = d
-        .test
-        .as_ref()
-        .context("audited final-test dimensions absent")?;
-    ensure!(original.width == test.columns, "split schema mismatch");
     let audited_transfer: TransferManifest = read_json(
         &audit
             .parent()
             .context("audit parent absent")?
             .join("transfer.json"),
     )?;
+    // Route R8: the historical training split is read once. When the audit
+    // bound its bytes, exactly those bytes are consumed; otherwise the digest
+    // of the consumed bytes is recorded as unaudited.
+    let train_identity = audited_transfer
+        .files
+        .iter()
+        .find(|f| f.source == d.source_dir.join("train.csv"));
+    let train_bytes = match train_identity {
+        Some(entry) => read_verified(&train_path, &entry.sha256, "audited training split")?,
+        None => fs::read(&train_path)?,
+    };
+    let original = Table::parse(&train_bytes, &m)?;
+    let test = d
+        .test
+        .as_ref()
+        .context("audited final-test dimensions absent")?;
+    ensure!(original.width == test.columns, "split schema mismatch");
     let test_identity = audited_transfer
         .files
         .iter()
@@ -999,10 +1098,13 @@ pub fn run_with_admission(
         test_identity.is_some() || (qualification && d.task == "binary"),
         "audited final-test hash absent; final targets remain sealed"
     );
+    // Route R1: a missing recorded backing path may be relocated only to a
+    // location the explicit backing allowlist names.
+    let transfer: TransferManifest = read_json(backing_manifest)?;
     let reconstruction = if matches!(d.task.as_str(), "binary" | "multiclass") {
-        reconstruct_classification(&original, &m)
+        reconstruct_classification_with(&original, &m, &transfer)
     } else {
-        reconstruct_numeric(&original, &m)
+        reconstruct_recorded(&original, &m, false, Some(&transfer))
     };
     let (train, reconstruction_receipt, reconstruction_error) = match reconstruction {
         Ok((table, receipt)) => (table, Some(receipt), None),
@@ -1012,12 +1114,15 @@ pub fn run_with_admission(
     // must be reconstructed and qualified separately before a score is claimed.
     let clean =
         reconstruction_receipt.is_some() && d.split_feature_overlap == 0 && test_identity.is_some();
-    ensure!(clean||allow_legacy||(qualification && reconstruction_receipt.is_some()),"backing-source row mapping/preprocessing reconstruction required; original-test overlap requires explicit qualification");
+    ensure!(
+        clean || allow_legacy || (qualification && reconstruction_receipt.is_some()),
+        "backing-source row mapping/preprocessing reconstruction required; original-test overlap requires explicit qualification (reconstruction: {})",
+        reconstruction_error.as_deref().unwrap_or("succeeded")
+    );
     let (ti, ei) = cap_indices(train.rows.len(), test.rows, &d.task, &train.rows)?;
     let receipt = reconstruction_receipt
         .as_ref()
         .context("pointer cuts require reconstructed source rows")?;
-    let transfer: TransferManifest = read_json(backing_manifest)?;
     let source_hash = receipt["source_sha256"]
         .as_str()
         .context("source hash absent")?;
@@ -1041,10 +1146,12 @@ pub fn run_with_admission(
             .into(),
         original_training_row_map: serde_json::from_value(receipt["source_row_indices"].clone())?,
     };
+    validate_view_source(&storage)?;
     let rows = ti
         .iter()
         .map(|&i| train.rows[i].clone())
         .collect::<Vec<_>>();
+    reject_target_copies(&storage.feature_columns, &rows)?;
     let horizon = m
         .get("horizon")
         .and_then(Value::as_u64)
@@ -1061,6 +1168,28 @@ pub fn run_with_admission(
     };
     let entities = entity_values(&rows, &storage.feature_columns, &entity_columns)?;
     let indices = folds(&rows, &d.task, horizon, entities.as_deref())?;
+    for (tr, va) in &indices {
+        check_cut_membership(
+            &storage.original_training_row_map,
+            &tr.iter().map(|&i| ti[i]).collect::<Vec<_>>(),
+            &va.iter().map(|&i| ti[i]).collect::<Vec<_>>(),
+        )?;
+    }
+    // Route R11: whether the family partition is frozen is decided only by an
+    // explicit authority - a frozen family registry, or an inventory root the
+    // caller declares - never by the environment (`JOPE_REGISTRY`).
+    let (frozen, frozen_authority) = match (&family_binding, authoritative_inventory_root) {
+        (Some(binding), _) => (
+            binding.full_inventory_complete,
+            serde_json::json!({"kind":"frozen_family_registry"}),
+        ),
+        (None, Some(root)) => (
+            report.complete && report.roots.iter().any(|r| r == root),
+            serde_json::json!({"kind":"declared_inventory_root","root":root,
+                "audit_complete":report.complete}),
+        ),
+        (None, None) => (false, serde_json::json!({"kind":"none"})),
+    };
     ensure!(
         !output.exists(),
         "prepared destination already exists; use a new immutable version"
@@ -1068,7 +1197,7 @@ pub fn run_with_admission(
     fs::create_dir_all(output)?;
     write_json(
         &output.join("reconstruction.json"),
-        &serde_json::json!({"receipt":reconstruction_receipt,"error":reconstruction_error,"sealed_test_reconstruction":"not_yet_qualified","original_test_feature_overlap":d.split_feature_overlap,"original_test_targets_opened":false,"test_identity_source":if test_identity.is_some(){"existing audited transfer manifest"}else{"unavailable_unopened_binary_qualification_only"},"entity_columns":entity_columns,"grouping_source_dataset_id":m["source_dataset_id"],"grouping_documentation":entity_documentation(&m),"grouping_binding":grouping_binding,"family_registry_binding":family_binding}),
+        &serde_json::json!({"receipt":reconstruction_receipt,"error":reconstruction_error,"sealed_test_reconstruction":"not_yet_qualified","original_test_feature_overlap":d.split_feature_overlap,"original_test_targets_opened":false,"test_identity_source":if test_identity.is_some(){"existing audited transfer manifest"}else{"unavailable_unopened_binary_qualification_only"},"training_split_identity_source":if train_identity.is_some(){"audited transfer manifest (consumed bytes verified)"}else{"unaudited: digest of the consumed bytes"},"family_partition_frozen_authority":frozen_authority,"entity_columns":entity_columns,"grouping_source_dataset_id":m["source_dataset_id"],"grouping_documentation":entity_documentation(&m),"grouping_binding":grouping_binding,"family_registry_binding":family_binding}),
     )?;
     let mut cuts = Vec::new();
     for (index, (tr, va)) in indices.into_iter().enumerate() {
@@ -1104,15 +1233,7 @@ pub fn run_with_admission(
             .or_else(|| d.meta_partition.clone())
             .context("missing family partition")?,
         seed: SEED,
-        family_partition_frozen: family_binding
-            .as_ref()
-            .map(|b| b.full_inventory_complete)
-            .unwrap_or_else(|| {
-                // The inventory is frozen only when it was taken over the
-                // authoritative dataset tree (JOPE_REGISTRY's parent).
-                let authoritative = jope_paths::quant_root();
-                report.complete && report.roots.iter().any(|r| *r == authoritative)
-            }),
+        family_partition_frozen: frozen,
         clean_evaluation: clean,
         clean_status: if clean {
             "raw_training_reconstructed_final_test_unqualified"
@@ -1133,7 +1254,7 @@ pub fn run_with_admission(
         },
         entity_columns,
         family_registry_binding: family_binding,
-        original_train_sha256: file_hash(&d.source_dir.join("train.csv"))?,
+        original_train_sha256: hash(&train_bytes),
         original_test_sha256: test_identity.map(|f| f.sha256.clone()).unwrap_or_default(),
         selected_train_indices: ti,
         selected_test_indices: ei.clone(),
@@ -1156,6 +1277,130 @@ pub struct ViewSource {
     pub target_column: String,
     pub original_training_row_map: Vec<usize>,
 }
+
+/// Receiving-side column semantics of a pointer view (W1-T03). Feature names
+/// must be distinct and non-empty, and the target column may never also be a
+/// feature: that would be an undocumented target-derived feature.
+pub fn validate_view_source(source: &ViewSource) -> Result<()> {
+    let mut names = BTreeSet::new();
+    ensure!(
+        !source.feature_columns.is_empty()
+            && source
+                .feature_columns
+                .iter()
+                .all(|name| !name.trim().is_empty() && names.insert(name.as_str())),
+        "view feature columns are empty or duplicated"
+    );
+    ensure!(
+        !source.target_column.trim().is_empty(),
+        "view target column absent"
+    );
+    ensure!(
+        !names.contains(source.target_column.as_str()),
+        "target column {} is also declared as a feature: undocumented target-derived feature",
+        source.target_column
+    );
+    Ok(())
+}
+
+/// A feature whose value equals the target on every fitting row is an
+/// undocumented target alias. Rows are raw `[features.., target]` strings.
+/// Checked only when the fitting target has at least three distinct values,
+/// so constant or two-valued targets cannot trigger a coincidental match.
+pub fn reject_target_copies(feature_columns: &[String], rows: &[Vec<String>]) -> Result<()> {
+    let width = feature_columns.len() + 1;
+    ensure!(
+        rows.iter().all(|row| row.len() == width),
+        "raw view row width differs from its feature columns"
+    );
+    let distinct = rows
+        .iter()
+        .map(|row| row[width - 1].as_str())
+        .collect::<BTreeSet<_>>();
+    if distinct.len() < 3 {
+        return Ok(());
+    }
+    let same = |value: &str, target: &str| {
+        value == target
+            || matches!(
+                (value.parse::<f64>(), target.parse::<f64>()),
+                (Ok(a), Ok(b)) if a == b
+            )
+    };
+    for (j, name) in feature_columns.iter().enumerate() {
+        ensure!(
+            !rows.iter().all(|row| same(&row[j], &row[width - 1])),
+            "feature {name} reproduces the target on every fitting row: undocumented target-derived feature"
+        );
+    }
+    Ok(())
+}
+
+/// Cut membership lists each original training row once, in original order,
+/// with validation disjoint from training both by row index and by backing-row
+/// pointer. Duplicate-expanding, reordered or overlapping memberships are
+/// refused before any preparation state is fitted or applied.
+pub fn check_cut_membership(
+    row_map: &[usize],
+    train: &[usize],
+    validation: &[usize],
+) -> Result<()> {
+    for (name, indices) in [("training", train), ("validation", validation)] {
+        ensure!(!indices.is_empty(), "empty {name} membership");
+        ensure!(
+            indices.windows(2).all(|pair| pair[0] < pair[1]),
+            "{name} rows are duplicated or reordered; a cut lists each original row once in original order"
+        );
+    }
+    let fitting = train.iter().collect::<BTreeSet<_>>();
+    ensure!(
+        validation.iter().all(|i| !fitting.contains(i)),
+        "validation rows overlap training rows"
+    );
+    let pointer = |i: &usize| {
+        row_map
+            .get(*i)
+            .copied()
+            .context("source row pointer outside mapping")
+    };
+    // W1-T06: two rows of one membership that resolve to one backing row are a
+    // duplicate-expanding join, however their indices differ.
+    for (name, indices) in [("training", train), ("validation", validation)] {
+        let mut seen = BTreeSet::new();
+        for i in indices {
+            ensure!(
+                seen.insert(pointer(i)?),
+                "duplicate-expanding join: two {name} rows resolve to one backing row"
+            );
+        }
+    }
+    let backing = train.iter().map(pointer).collect::<Result<BTreeSet<_>>>()?;
+    for i in validation {
+        ensure!(
+            !backing.contains(&pointer(i)?),
+            "validation and training rows resolve to the same backing row"
+        );
+    }
+    Ok(())
+}
+
+/// Learned preparation state is bound to fitting membership: the stored state
+/// must equal the state fitted on exactly the cut's training rows. Recoded or
+/// reordered categories, changed scaling/imputation or state fitted on held
+/// rows are refused, never applied.
+pub fn ensure_fitted_on_membership(
+    stored: &Preprocessing,
+    training: &[Vec<String>],
+    task: &str,
+) -> Result<()> {
+    let refit = Preprocessing::fit(training, task)?;
+    ensure!(
+        serde_json::to_value(&refit)? == serde_json::to_value(stored)?,
+        "cut preprocessing is not the state learned from its training membership \
+         (recoded categories, changed scaling/imputation or non-training rows)"
+    );
+    Ok(())
+}
 pub fn workspace_root(prepared: &Path) -> Result<std::path::PathBuf> {
     let p = prepared.canonicalize()?;
     p.ancestors()
@@ -1176,6 +1421,18 @@ pub fn load_view_in_root(
 ) -> Result<Vec<Vec<f64>>> {
     load_view_with_root(Some(root), prepared, cut, training)
 }
+/// [`load_view_in_root`] for a preparation the caller has already verified
+/// and parsed (`p`): `prepared.json` is not reopened, so the view is resolved
+/// from exactly the verified preparation (W1 route R8).
+pub fn load_bound_view_in_root(
+    root: &Path,
+    prepared: &Path,
+    p: &Prepared,
+    cut: usize,
+    training: bool,
+) -> Result<Vec<Vec<f64>>> {
+    view_of(Some(root), prepared, p, cut, training)
+}
 fn load_view_with_root(
     root: Option<&Path>,
     prepared: &Path,
@@ -1183,6 +1440,15 @@ fn load_view_with_root(
     training: bool,
 ) -> Result<Vec<Vec<f64>>> {
     let p: Prepared = read_json(&prepared.join("prepared.json"))?;
+    view_of(root, prepared, &p, cut, training)
+}
+fn view_of(
+    root: Option<&Path>,
+    prepared: &Path,
+    p: &Prepared,
+    cut: usize,
+    training: bool,
+) -> Result<Vec<Vec<f64>>> {
     let c = p
         .cuts
         .iter()
@@ -1190,22 +1456,30 @@ fn load_view_with_root(
         .context("unknown view")?;
     let dir = prepared.join(format!("cut-{cut}"));
     let pp_path = dir.join("preprocessing.json");
-    ensure!(
-        file_hash(&pp_path)? == c.preprocessing_sha256,
-        "view preprocessing changed"
-    );
+    // The verified preprocessing bytes are the ones applied (route R8).
+    let pp_bytes = read_verified(&pp_path, &c.preprocessing_sha256, "view preprocessing")?;
     let rows = if let Some(source) = &p.storage {
-        let indices = if training {
-            &c.train_indices
-        } else {
-            &c.validation_indices
-        };
+        // Semantics are checked on the fitting membership for both partitions,
+        // before any preparation state is applied or any row is returned.
+        check_cut_membership(
+            &source.original_training_row_map,
+            &c.train_indices,
+            &c.validation_indices,
+        )?;
+        let mut indices = c.train_indices.clone();
+        if !training {
+            indices.extend_from_slice(&c.validation_indices);
+        }
         let raw = match root {
-            Some(root) => load_raw_view_in_root(root, source, indices)?,
-            None => load_raw_view(prepared, source, indices)?,
+            Some(root) => load_raw_view_in_root(root, source, &indices)?,
+            None => load_raw_view(prepared, source, &indices)?,
         };
-        let pp: Preprocessing = read_json(&pp_path)?;
-        pp.transform(&raw)?
+        let (fitting, held) = raw.split_at(c.train_indices.len());
+        reject_target_copies(&source.feature_columns, fitting)?;
+        let pp: Preprocessing = serde_json::from_slice(&pp_bytes)
+            .with_context(|| format!("parse {}", pp_path.display()))?;
+        ensure_fitted_on_membership(&pp, fitting, &p.task)?;
+        pp.transform(if training { fitting } else { held })?
     } else {
         Table::numeric(&dir.join(if training {
             "train.csv"
@@ -1236,27 +1510,29 @@ pub fn load_raw_view_in_root(
     source: &ViewSource,
     indices: &[usize],
 ) -> Result<Vec<Vec<String>>> {
+    validate_view_source(source)?;
     let path = resolve(root, &source.source)?;
-    ensure!(
-        file_hash(&path)? == source.source_sha256,
-        "backing table changed"
-    );
-    let mut reader = csv::Reader::from_path(path)?;
+    // Parse exactly the verified bytes; the path is never reopened (route R8).
+    let bytes = read_verified(&path, &source.source_sha256, "backing table")?;
+    let mut reader = csv::Reader::from_reader(bytes.as_slice());
     let header = reader.headers()?.clone();
+    // A repeated header name makes the column mapping ambiguous: refuse it
+    // rather than silently binding the first occurrence.
+    let column = |name: &str, missing: &'static str| -> Result<usize> {
+        let mut hits = header.iter().enumerate().filter(|(_, h)| *h == name);
+        let (index, _) = hits.next().context(missing)?;
+        ensure!(
+            hits.next().is_none(),
+            "backing header names {name} more than once: ambiguous column"
+        );
+        Ok(index)
+    };
     let features = source
         .feature_columns
         .iter()
-        .map(|name| {
-            header
-                .iter()
-                .position(|h| h == name)
-                .context("backing feature missing")
-        })
+        .map(|name| column(name, "backing feature missing"))
         .collect::<Result<Vec<_>>>()?;
-    let target = header
-        .iter()
-        .position(|h| h == source.target_column)
-        .context("backing target missing")?;
+    let target = column(&source.target_column, "backing target missing")?;
     let selected = indices
         .iter()
         .map(|&i| {
@@ -1304,6 +1580,7 @@ pub fn expand_cuts(prepared: &Path, output: &Path, rounds: usize) -> Result<Prep
         .as_ref()
         .context("expansion requires pointer views")?;
     let raw = load_raw_view(prepared, source, &p.selected_train_indices)?;
+    reject_target_copies(&source.feature_columns, &raw)?;
     let entities = entity_values(&raw, &source.feature_columns, &p.entity_columns)?;
     fs::create_dir_all(output)?;
     let parent_sha = file_hash(&prepared.join("prepared.json"))?;
@@ -1330,6 +1607,15 @@ pub fn expand_cuts(prepared: &Path, output: &Path, rounds: usize) -> Result<Prep
                 continue;
             }
             let index = round * 5 + fold;
+            let train_indices: Vec<usize> =
+                tr.iter().map(|&i| p.selected_train_indices[i]).collect();
+            let validation_indices: Vec<usize> =
+                va.iter().map(|&i| p.selected_train_indices[i]).collect();
+            check_cut_membership(
+                &source.original_training_row_map,
+                &train_indices,
+                &validation_indices,
+            )?;
             let training = tr.iter().map(|&i| raw[i].clone()).collect::<Vec<_>>();
             let heldout = va.iter().map(|&i| raw[i].clone()).collect::<Vec<_>>();
             let pp = Preprocessing::fit(&training, &p.task)?;
@@ -1338,8 +1624,8 @@ pub fn expand_cuts(prepared: &Path, output: &Path, rounds: usize) -> Result<Prep
             write_json(&dir.join("preprocessing.json"), &pp)?;
             let cut = Cut {
                 index,
-                train_indices: tr.iter().map(|&i| p.selected_train_indices[i]).collect(),
-                validation_indices: va.iter().map(|&i| p.selected_train_indices[i]).collect(),
+                train_indices,
+                validation_indices,
                 training_sha256: hash(&csv_bytes(&pp.transform(&training)?)?),
                 validation_sha256: hash(&csv_bytes(&pp.transform(&heldout)?)?),
                 preprocessing_sha256: file_hash(&dir.join("preprocessing.json"))?,
@@ -1404,6 +1690,7 @@ pub fn index_existing(
             .into(),
         original_training_row_map: serde_json::from_value(receipt["source_row_indices"].clone())?,
     });
+    validate_view_source(p.storage.as_ref().context("indexed storage absent")?)?;
     fs::create_dir_all(output)?;
     for c in &p.cuts {
         let dir = output.join(format!("cut-{}", c.index));
@@ -1522,5 +1809,100 @@ mod grouping_review_tests {
         fs::remove_file(restored.join("table.csv")).unwrap();
         std::os::unix::fs::symlink(source.join("table.csv"), restored.join("table.csv")).unwrap();
         assert!(load_raw_view_in_root(&restored, &view, &[0]).is_err());
+    }
+}
+
+/// W1 consumer-map route R8: an object is consumed only as the bytes whose
+/// digest was verified. The instrumentation hook replaces the file on disk
+/// immediately after verification; a receiver that reopens the path would
+/// consume the replacement.
+#[cfg(test)]
+mod verified_bytes_tests {
+    use super::*;
+    use crate::manifest::verification_hook;
+    use serde_json::json;
+
+    /// Replace `path` (new inode, via rename) the first time the hook fires for it.
+    fn replace_after_verification(target: &Path, bytes: &'static [u8]) -> verification_hook::Guard {
+        let target = target.to_path_buf();
+        let mut done = false;
+        verification_hook::install(move |path| {
+            if !done && path == target {
+                done = true;
+                let staged = target.with_extension("replacement");
+                fs::write(&staged, bytes).unwrap();
+                fs::rename(&staged, &target).unwrap();
+            }
+        })
+    }
+
+    #[test]
+    fn backing_bytes_replaced_after_verification_are_never_consumed() {
+        let temp = tempfile::tempdir().unwrap();
+        let root = temp.path().canonicalize().unwrap();
+        let original: &[u8] = b"x,target\n1,10\n2,20\n3,30\n";
+        fs::write(root.join("table.csv"), original).unwrap();
+        let view = ViewSource {
+            source: "table.csv".into(),
+            source_sha256: hash(original),
+            feature_columns: vec!["x".into()],
+            target_column: "target".into(),
+            original_training_row_map: vec![0, 1, 2],
+        };
+        let expected = load_raw_view_in_root(&root, &view, &[0, 1, 2]).unwrap();
+        let _hook =
+            replace_after_verification(&root.join("table.csv"), b"x,target\n1,99\n2,98\n3,97\n");
+        let consumed = load_raw_view_in_root(&root, &view, &[0, 1, 2]);
+        assert_eq!(
+            consumed.ok(),
+            Some(expected),
+            "the receiver consumed bytes other than the verified backing table"
+        );
+    }
+
+    #[test]
+    fn preprocessing_replaced_after_verification_is_never_consumed() {
+        let temp = tempfile::tempdir().unwrap();
+        let root = temp.path().canonicalize().unwrap();
+        let raw = (0..10)
+            .map(|i| vec![i.to_string(), (100 + 3 * i).to_string()])
+            .collect::<Vec<_>>();
+        let mut csv = "x,target\n".to_string();
+        for row in &raw {
+            csv.push_str(&format!("{},{}\n", row[0], row[1]));
+        }
+        fs::write(root.join("raw.csv"), &csv).unwrap();
+        let pp = Preprocessing::fit(&raw[..8], "regression").unwrap();
+        let prepared = root.join("prepared");
+        fs::create_dir_all(prepared.join("cut-0")).unwrap();
+        let pp_path = prepared.join("cut-0/preprocessing.json");
+        write_json(&pp_path, &pp).unwrap();
+        let tr = csv_bytes(&pp.transform(&raw[..8]).unwrap()).unwrap();
+        let va = csv_bytes(&pp.transform(&raw[8..]).unwrap()).unwrap();
+        write_json(
+            &prepared.join("prepared.json"),
+            &json!({"schema":"parallel.prepared.v1","dataset":"d","family":"f","task":"regression",
+                "meta_partition":"meta_train","seed":SEED,"clean_evaluation":true,"clean_status":"raw_reconstructed",
+                "original_train_sha256":"0".repeat(64),"original_test_sha256":"1".repeat(64),
+                "selected_train_indices":(0..10).collect::<Vec<_>>(),"selected_test_indices":[],"target_last":true,
+                "rows_total":10,"cuts":[{"index":0,"train_indices":(0..8).collect::<Vec<_>>(),"validation_indices":[8,9],
+                    "training_sha256":hash(&tr),"validation_sha256":hash(&va),
+                    "preprocessing_sha256":file_hash(&pp_path).unwrap()}],
+                "storage":{"source":"raw.csv","source_sha256":hash(csv.as_bytes()),"feature_columns":["x"],
+                    "target_column":"target","original_training_row_map":(0..10).collect::<Vec<_>>()}}),
+        )
+        .unwrap();
+        let expected = load_view_in_root(&root, &prepared, 0, true).unwrap();
+        // A well-formed but different state (fitted on every row) replaces the
+        // verified file after its digest check.
+        let other =
+            serde_json::to_vec_pretty(&Preprocessing::fit(&raw, "regression").unwrap()).unwrap();
+        let _hook = replace_after_verification(&pp_path, Box::leak(other.into_boxed_slice()));
+        let consumed = load_view_in_root(&root, &prepared, 0, true);
+        assert_eq!(
+            consumed.map_err(|e| format!("{e:#}")),
+            Ok(expected),
+            "the view receiver consumed preprocessing other than the verified state"
+        );
     }
 }

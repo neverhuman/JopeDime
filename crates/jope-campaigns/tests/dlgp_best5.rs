@@ -31,6 +31,20 @@ fn genome(index: usize) -> GenomeV1 {
     GenomeV1::from_canonical(GpTaskV1::Regression, &canonical).unwrap()
 }
 
+/// The real-corpus fixture reads the pinned SOTArena benchmark clone (ADR-0003
+/// `SOTARENA_ROOT`). Absence is an unavailable input and remains a failure; it is
+/// never replaced with synthetic rows under this test's name.
+fn sotarena_fixture_root(dataset_id: &str) -> String {
+    let root = jope_dime_regressor::paths::sotarena_root();
+    let train = root.join(format!("data/tabular-regression-v1/{dataset_id}/train.csv"));
+    assert!(
+        train.is_file(),
+        "unavailable: real-corpus input {} (set SOTARENA_ROOT to the pinned sotarena benchmark clone)",
+        train.display()
+    );
+    root.display().to_string()
+}
+
 fn frozen_file(label: &str, sha256: String) -> FrozenFileV1 {
     FrozenFileV1 {
         path: format!("/frozen/{label}"),
@@ -900,7 +914,7 @@ fn residual_and_portfolio_predictors_round_trip_and_reconstruct() {
 #[test]
 fn training_staging_rebuilds_stable_rows_without_resolving_test() {
     let mut campaign = campaign();
-    campaign.sotarena_root = format!("{}/sotarena", env!("CARGO_MANIFEST_DIR"));
+    campaign.sotarena_root = sotarena_fixture_root(&campaign.datasets[0].dataset_id);
     let dataset = &mut campaign.datasets[0];
     dataset.train_relative_path = format!(
         "data/tabular-regression-v1/{}/train.csv",
@@ -1116,7 +1130,7 @@ for candidate in m['candidates']:
 fn all_six_arms_complete_eight_generation_synthetic_worker_with_exact_ledgers() {
     let directory = tempfile::tempdir().unwrap();
     let mut campaign = campaign();
-    campaign.sotarena_root = format!("{}/sotarena", env!("CARGO_MANIFEST_DIR"));
+    campaign.sotarena_root = sotarena_fixture_root(&campaign.datasets[0].dataset_id);
     let dataset_id = campaign.datasets[0].dataset_id.clone();
     campaign.datasets[0].train_relative_path =
         format!("data/tabular-regression-v1/{dataset_id}/train.csv");

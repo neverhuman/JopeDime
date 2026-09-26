@@ -238,6 +238,7 @@ impl ClassificationArtifact {
         );
         validate_hex(&self.source_sha40, 40)?;
         validate_hex(&self.producer_sha256, 64)?;
+        self.reference_encoder.require_accepted()?;
         ensure!(
             self.task == input.task
                 && self.classes == input.classes
@@ -306,6 +307,8 @@ impl CpuProducer {
             "classification input must be canonical typed JSON"
         );
         let prepared = input.prepare()?;
+        // Input scope of this encode's products: the feature rows' JSON digest.
+        let scope = input_scope(&prepared.rows)?;
         let n = prepared.rows.len();
         let width = input.features.len();
         let mut columns = vec![0f32; n * width];
@@ -338,37 +341,27 @@ impl CpuProducer {
             &NullSink,
         )?;
         ensure!(
-            !sweep.cancelled && sweep.row_emb.len() == n * 128,
+            !sweep.cancelled && sweep.row_emb.len() == n * RowEmbeddings::WIDTH,
             "incomplete classification feature sweep"
         );
-        let pooled = pool_hyperion(&sweep.row_emb)?;
-        let row_encodings = sweep
-            .row_emb
-            .chunks_exact(128)
-            .map(<[f32]>::to_vec)
-            .collect();
+        let row_embeddings = RowEmbeddings::from_hyperion_sweep(sweep.row_emb, n, &scope)?;
+        let pooled = HyperionSignature::pool(&row_embeddings)?;
+        let row_encodings = row_embeddings.rows().map(<[f32]>::to_vec).collect();
         let neutral = prepare_jope_foundation_rows(&neutral_foundation_rows(&prepared.rows))?;
         ensure!(
             neutral.input.context_y.iter().all(|v| *v == 0.),
             "neutral foundation labels changed"
         );
-        let foundation = self.foundation.encode_standardized(&neutral.input)?.vector;
-        let t = |v: &[f32]| Tensor::from_vec(v.to_vec(), (1, v.len()), &Device::Cpu);
-        let transforms = &self.transforms.tensors;
-        let hyperion = t(&pooled)?
-            .broadcast_sub(&transforms["hyperion_mean"])?
-            .broadcast_div(&transforms["hyperion_scale"])?
-            .clamp(-32f32, 32f32)?
-            .flatten_all()?
-            .to_vec1::<f32>()?;
-        let projected_foundation = t(&foundation)?
-            .broadcast_sub(&transforms["foundation_mean"])?
-            .matmul(&transforms["projection"].t()?)?
-            .broadcast_sub(&transforms["projected_mean"])?
-            .broadcast_div(&transforms["projected_scale"])?
-            .clamp(-32f32, 32f32)?
-            .flatten_all()?
-            .to_vec1::<f32>()?;
+        let foundation = RawFoundation::from_foundation_encoder(
+            self.foundation.encode_standardized(&neutral.input)?.vector,
+            &scope,
+        )?;
+        // Same frozen named transformations and arithmetic as the regression assembly's first
+        // two blocks; the Target block is not produced here.
+        let hyperion = self.transforms.signature_block(&pooled)?;
+        let projected_foundation = self
+            .transforms
+            .projection_block(&self.transforms.project(&foundation)?)?;
         let artifact = ClassificationArtifact {
             schema: CLASSIFICATION_SCHEMA.into(),
             feature_policy: CLASSIFICATION_FEATURE_POLICY.into(),

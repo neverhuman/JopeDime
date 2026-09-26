@@ -116,9 +116,12 @@ pub struct TensorEntry {
 }
 
 /// `policy.safetensors` sha256 of the accepted step-60000 export
-/// (`models/bundles/policy-step-60000.json:41-44`). Private: no public `ACCEPTED_*` item changes,
-/// and the existing literals (`producer.rs`, jope-bench `optimize.rs`) stay as they are.
-const ACCEPTED_WEIGHTS_SHA256: &str =
+/// (`models/bundles/policy-step-60000.json:41-44`): the release decision for the weights file,
+/// which [`CheckpointBinding::require_accepted_identity`] and `require_accepted_policy` compare
+/// with instead of the receipt's own `policy.output.sha256`. Crate-private: no public
+/// `ACCEPTED_*` item changes, and the existing literals (`producer.rs`, jope-bench
+/// `optimize.rs`) stay as they are.
+pub(crate) const ACCEPTED_WEIGHTS_SHA256: &str =
     "4b4b5a40f03c9226b4b15856fd35b90127c8b6a4d1435b815484cdd050744f1e";
 
 /// A preregistered native challenger checkpoint: pins only. Deserializing one proves nothing;
@@ -417,7 +420,8 @@ impl CheckpointBinding {
     }
 
     /// Refuse unless this receipt names the complete accepted step-60000 checkpoint identity:
-    /// step, state, source model, parameters, configuration, and vocabulary.
+    /// step, state, source model, parameters, configuration, vocabulary, and the released
+    /// `policy.safetensors` file (the receipt's own weights hash is only a claim).
     pub fn require_accepted_identity(&self) -> Result<()> {
         ensure!(
             self.step == ACCEPTED_STEP,
@@ -452,6 +456,11 @@ impl CheckpointBinding {
             self.vocabulary_sha256 == CHECKPOINT_VOCABULARY_SHA256,
             "refused: checkpoint vocabulary {} is not the step-60000 vocabulary",
             self.vocabulary_sha256
+        );
+        ensure!(
+            self.policy_safetensors_sha256 == ACCEPTED_WEIGHTS_SHA256,
+            "refused: export receipt names weights {} that are not the released step-{ACCEPTED_STEP} policy.safetensors",
+            self.policy_safetensors_sha256
         );
         Ok(())
     }

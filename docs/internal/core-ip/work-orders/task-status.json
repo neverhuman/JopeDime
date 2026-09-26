@@ -1,0 +1,1461 @@
+{
+  "schema": "jope.regression-task-status/v1",
+  "note": "Reviewed task states; evidence paths are custody receipts outside the tree.",
+  "tasks": {
+    "W1-T01": {
+      "states": [
+        "implemented"
+      ],
+      "commits": [
+        "93a8a8c5dec7a76d78f6e7e51b073e0dd6148e04"
+      ],
+      "evidence": [
+        "docs/internal/core-ip/work-orders/evidence/W01-consumer-map.md",
+        "docs/internal/core-ip/work-orders/evidence/W01-release-and-preparation.md"
+      ],
+      "remaining": "Consumer map is from source reading; anchors not marked (read) are leads. Nothing consumes the frozen release yet (ASM development loader and context producer input are open)."
+    },
+    "W1-T02": {
+      "states": [
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "0b695b3d2619603dc2013b3aef1a248448443975"
+      ],
+      "tests": [
+        "tests/regression_release.rs (8, including the mutation table)"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1-t02-release-20260926T055003Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1-release-verify-20260926T060255Z"
+      ],
+      "remaining": "New contract (no pre-existing receiver to reproduce). All ten members have unknown exposure, so never-seen-family claims stay blocked; 14 catalog-name relations are unresolved and need independent review."
+    },
+    "W1-T03": {
+      "states": [
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "cbdb4c3123d52ee1f886202fde44db06a466e698"
+      ],
+      "tests": [
+        "tests/preparation_semantics.rs (13)"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1-t03-prefix-20260926T054952Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1-t03-postfix-20260926T055311Z"
+      ],
+      "remaining": "Fails closed on legacy pointer views whose stored preprocessing differs from a refit, and on exact identity features, with no declared exception mechanism yet."
+    },
+    "W1-T04": {
+      "states": [
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "86697269e11c9d9623af4a8a2fc151e5234898f4",
+        "62c1327488c174e2716091b1d565bb2a0f31b637",
+        "7835e79ffdd32b66f1533e33a3d8314a99b65966"
+      ],
+      "tests": [
+        "label_release::audit_never_parses_or_publishes_sealed_test_labels",
+        "qualification_search_of_a_sealed_meta_test_family_is_refused_before_any_view_or_fit",
+        "a_selection_receipt_alone_neither_reads_caller_chosen_labels_nor_publishes_a_score",
+        "outer_scores_need_a_grant_read_only_the_granted_labels_and_release_once",
+        "tests/outer_release_cli.rs",
+        "the_outer_release_cli_grants_scores_and_releases_once"
+      ],
+      "evidence": [
+        "docs/internal/core-ip/work-orders/evidence/W01-label-release-counterfactuals-staging.md",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1b-t04-prefix-audit-search-20260926T073551Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1b-t04-prefix-score-20260926T092242Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1b-t04-postfix-audit-search-20260926T091627Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1b-t04-postfix-score-20260926T092803Z"
+      ],
+      "remaining": "The audit no longer parses sealed labels; sealed meta_test families are refused by search; outer scoring needs a one-attempt grant for an authenticated fitted subject, records exposure before any label byte is read, and releases once through a hash-chained ledger. The outer-release CLI (init, grant, score, release, events) is in place; the scorer is separated by component contract on one host, not OS isolation (W7)."
+    },
+    "W1-T05": {
+      "states": [
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "8b4e51f1eb716aed52b902a424ff3e8e2a0dc136",
+        "152b54f98747bb54c50f074ca28893da518c3c13",
+        "08a8ac5b3f4fbf15350cc7349fc1d2e97302b59b",
+        "1217bac1481807408057647641374339ab26ddce",
+        "fe4cdce08788628ab02c9a1fc35b0749acda816e",
+        "33fd09bfb0368e933e233cc9dc405fa78f4d1986"
+      ],
+      "tests": [
+        "tests/input_closure.rs (5)",
+        "tests/receiver_roots.rs",
+        "jope-datasets tests/pinned_catalog.rs",
+        "tests/projected_export.rs",
+        "the_export_worker_receives_its_projected_input_and_never_resolves_the_view_itself",
+        "teaching_store/read_once_tests.rs (6) and native_genome candidate boundary test"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1-t05-prefix-20260926T060016Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1-t05-postfix-final-20260926T060134Z",
+        "docs/internal/core-ip/work-orders/evidence/W01-open-routes-and-follow-ups.md",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1b-r3-2a-prefix-roots-bytes-20260926T095751Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1b-r3-2a-prefix-r4-20260926T100302Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1b-r3-2a-postfix-roots-bytes-20260926T100112Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1b-r3-2a-postfix-r4-20260926T100449Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1b-r4-2c-prefix-20260926T102350Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1b-r4-2c-postfix2-20260926T102732Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1b-r6-prefix3-20260926T111518Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1b-r6-postfix-20260926T111709Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1b-r7-prefix-20260926T113012Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1b-r7-postfix-20260926T113144Z"
+      ],
+      "remaining": "Fixture scope. Stale cached blobs (R3) and consumer-map routes R1, R4, R8, R9, R11 and R2 at the export receiver are enforced at their receivers. R8 read-once verified bytes now cover the preparation receivers, the GP fit/evaluate/search sites, and the teacher receivers (label_admission scale and verify_inputs, native_genome candidate/verify_result/required_inputs closure, teaching_store search.json, preparation map, shard metadata and teacher_programs index). Open: R2 remainder (public fit-view, legacy wrapper, pinned native_scq), R5/R10 (W7 live), R6 (Python prepare.py bound into the release), R12 (release v2 and W2 schema), the pinned eval_registry R8 sites, the legacy provenance.json bound only by its back-reference, and vocabulary.json readers after load (pipeline.rs, monitoring.rs, native_loop.rs)."
+    },
+    "W1-T06": {
+      "states": [
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "d21889a5f30c1b7f12bfb2fad7a4738aa71f34be",
+        "07bc7e60b29a3eaf3a134fd6a821b854523871ab"
+      ],
+      "tests": [
+        "tests/counterfactual_boundaries.rs (13 mutation receipts, exact SHA-256 equality)",
+        "origin_proof context-producer counterfactuals",
+        "tests/teacher_counterfactuals.rs",
+        "CPU encoder counterfactuals (#[ignore]; local accepted assets)"
+      ],
+      "evidence": [
+        "docs/internal/core-ip/work-orders/evidence/W01-label-release-counterfactuals-staging.md",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1b-t06-prefix-20260926T092507Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1b-t06-postfix-20260926T093342Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1b-slice3-t06-regression-20260926T093641Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1b-r5-2e-harness-20260926T104720Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1b-r5-2e-teacher3-20260926T105307Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1b-r5-2e-encoders-final-20260926T110038Z"
+      ],
+      "remaining": "Forbidden-only perturbations leave results bit-identical and authorized controls change them at preparation, search, the context producer, the CPU encoders (local accepted assets) and teacher input admission; duplicate-expanding joins, collapsed duplicate rows and symlinked splits are refused. The trainer is not covered (LibTorch/CUDA); consumer-map routes R5, R6, R10, R12 and the pinned R2/R8 sites stay open."
+    },
+    "W1-T07": {
+      "states": [
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "20da5a84ce3820f64fc8ad0f5577d93f5a95353e",
+        "4c3c7c8066c1da93b135392376544a73147677a1"
+      ],
+      "tests": [
+        "jope-datasets tests/staging_disposition.rs (6)",
+        "jope-bench inference_inputs historical-closure tests",
+        "jope-datasets committed disposition test"
+      ],
+      "evidence": [
+        "crates/jope-datasets/releases/staging-disposition/historical-gpu-staging-20260925.json",
+        "crates/jope-datasets/releases/staging-disposition/fitting-only-staging-protocol-v1.json",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1b-t07-derive-20260926T093903Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1b-t07-custody-replay-20260926T093927Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1b-r5-2d-prefix-20260926T103830Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1b-r5-2d-postfix-20260926T104151Z"
+      ],
+      "remaining": "The historical staging is dispositioned from retained custody and the corrected protocol has a new identity; the inference planner and plan admission now refuse any plan or input closure that pins a historical staging object (replayed on the retained custody evidence). No corrected run exists yet; the planner does not yet require the producer's corrected-run attestation; the closure check is by digest."
+    },
+    "W2-T01": {
+      "states": [
+        "implemented"
+      ],
+      "commits": [
+        "ccfb00e5f195498bad0b6dab731612671d4792e3"
+      ],
+      "evidence": [
+        "docs/internal/core-ip/work-orders/evidence/W02-asset-dependency-table.md"
+      ],
+      "remaining": "Source trace only; nothing was hashed or run. Section 7 lists the unverified items; gaps G-01..G-12 feed T02..T04."
+    },
+    "W2-T02": {
+      "states": [
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "ce4aea8ec112ce49515190e4eaed4b55285bccc8"
+      ],
+      "tests": [
+        "accepted_identity_requires_the_released_weights_file",
+        "accepted_policy_requires_the_released_weights_file"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w2-weights-pin-prefix-20260926T060042Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w2-weights-pin-postfix-20260926T060125Z"
+      ],
+      "remaining": "G-02 (ce4aea8ec), G-03 request-issued context admission and G-04 pinned encoder identity (e8cf2c70e) are fixed. G-08 (unknown receipt fields) stays open: the accepted receipt comes from the external exporter and its field set is not available here. No versioned semantic manifest yet."
+    },
+    "W2-T03": {
+      "states": [
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "e8cf2c70ebebf3f420f2f24afe44bdb191faa749"
+      ],
+      "tests": [
+        "products.rs compile_fail doctests (same-width swaps)",
+        "serialized_swaps_padding_and_truncation_fail_at_the_receiver",
+        "products_are_scoped_to_one_encode_and_serialize_in_the_historical_layout"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w2b-repro-prefix-20260926T065217Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w2b-w4-commit-policy-20260926T072208Z"
+      ],
+      "remaining": "Distinct product types with named constructors; receivers replay the assembly (declared 1e-4 tolerance, not yet exercised on accepted assets). PolicyModel/score_pool inputs and cell surfaces are still untyped."
+    },
+    "W2-T04": {
+      "states": [
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "c3f60f0c7f1ae6628d4cc3e529c18a6f42a949e7"
+      ],
+      "tests": [
+        "bytes_and_path_loaders_keep_the_same_inference_tensors",
+        "accepted_manifest_uses_sha256_bytes_not_legacy_identifier"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w2-hyperion-bytes-20260926T060626Z"
+      ],
+      "remaining": "Hyperion weights and manifest now consume authenticated bytes (G-10a/b). Training warm-start/resume, native context and corpus-index re-reads (G-10c,e,g) and cache-key closure (G-11) remain; real-weights parity runs only where the asset exists."
+    },
+    "W2-T05": {
+      "states": [
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "633191d819012b3510ba1228a567e365fe15934b"
+      ],
+      "tests": [
+        "golden_hyperion_pooling_uses_population_std_and_interpolated_percentiles",
+        "golden_assembly_order_projection_normalization_and_clip",
+        "golden_label_normalizations"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w2-t05-golden-20260926T062546Z"
+      ],
+      "remaining": "Pooling, assembly and label normalizations are pinned by independent arithmetic. Target window membership (seed-17 PCG64 inside starforge) and encoder forward passes on real assets remain."
+    },
+    "W2-T06": {
+      "states": [
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "7425536660221cc5877e59ef9dc3a1e4286e8826"
+      ],
+      "tests": [
+        "jope-records tests/records/inventory.rs (11; Rust port of test_verify_inventory.py's 8 plus 3 added)",
+        "host proof verify-real.json",
+        "host proof tamper.json"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w2t06-host-proof-20260926T052352Z"
+      ],
+      "remaining": "Hosted CI runs the synthetic fixtures only; the real asset is verified on the host."
+    },
+    "W2-T07": {
+      "states": [
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "e8cf2c70ebebf3f420f2f24afe44bdb191faa749"
+      ],
+      "tests": [
+        "handoff_reaches_only_the_intended_consumer_for_the_issued_scope"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w2b-w4-commit-policy-20260926T072208Z"
+      ],
+      "remaining": "ContextHandoff binds release identity, transformation chain, scope and consumer. W3 teacher admission does not consume it yet; accepted-weight/native qualification not run."
+    },
+    "W3-T01": {
+      "states": [
+        "implemented"
+      ],
+      "commits": [
+        "5cad30084b2012fc4d2d4a7717eb7e4c95e78f17"
+      ],
+      "evidence": [
+        "docs/internal/core-ip/work-orders/evidence/W03-ingress-map.md"
+      ],
+      "remaining": "jope-engine teaching-store/corpus routes are mapped, not reproduced."
+    },
+    "W3-T02": {
+      "states": [
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "cff5ead8a066851429ed78d8f715f9c25c1369aa"
+      ],
+      "tests": [
+        "missing_context_provenance_is_refused_at_real_teaching_ingress",
+        "wrong_scope_consumer_encoder_or_altered_context_is_refused_before_authority",
+        "retained_context_is_revalidated_by_every_receiving_gate"
+      ],
+      "remaining": "Producer authentication, revocation lookup and W2 execution-proof linkage remain; jope-bench's live teaching driver now fails closed until a W2 context producer runs before admission."
+    },
+    "W3-T03": {
+      "states": [
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "cff5ead8a066851429ed78d8f715f9c25c1369aa"
+      ],
+      "tests": [
+        "legacy_qualification_without_provenance_stays_quarantined_and_is_not_upgraded",
+        "freeze_without_preregistered_context_encoder_is_diagnostic_only"
+      ],
+      "remaining": "Versioned requalification procedure and jope-engine ingress routes remain."
+    },
+    "W3-T04": {
+      "states": [
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "170cb384d86f9a22eadab1097a731bfdc3a3c112"
+      ],
+      "tests": [
+        "forged_units_cannot_relabel_a_measured_score",
+        "pooled_rmse_r2_and_tail_are_separately_named_diagnostics",
+        "independent_evaluator_agrees_with_mean_fold_admission_on_uneven_folds",
+        "prediction_evidence_substitutions_fail_before_authority"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w3-t04-prefix-metrics-20260926T054825Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w3-t04-postfix-metrics-20260926T055008Z"
+      ],
+      "remaining": "Fitted artifacts are not bound to their own fold's training rows (no row identity in either artifact schema); classification metric validity is deferred."
+    },
+    "W3-T05": {
+      "states": [
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "2db85243df5a1e8f48e0f36aedd4158125f1225d",
+        "7216cad2168bdc62a5c41485410494112e19691d"
+      ],
+      "tests": [
+        "transitions_separate_initialization_ties_non_improvement_and_improvement",
+        "eligibility_alone_and_redelivery_never_count_as_improvement"
+      ],
+      "remaining": "Per-fold tail diagnostics landed in W3-T04 and the explicit duplicate outcome in W3-T06."
+    },
+    "W3-T06": {
+      "states": [
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "6be3fd4597e77355da33813f2ba43ce7ca77cc4d"
+      ],
+      "tests": [
+        "qualification_without_a_durable_decision_is_not_eligible_until_qualify_resumes",
+        "crash_between_hwm_append_and_pointer_advance_never_lists_a_superseded_teacher",
+        "first_acceptance_lost_before_its_pointer_is_visible_not_silently_absent",
+        "a_pointer_behind_the_ledger_is_rolled_forward_before_any_decision",
+        "a_pointer_the_ledger_never_accepted_is_refused_before_any_write",
+        "redelivery_of_an_accepted_record_is_a_duplicate_not_a_tie",
+        "stronger_and_weaker_teachers_race_in_both_orders_to_the_same_state"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w3-t06-prefix-linkage-20260926T060249Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w3-t06-postfix-linkage-20260926T060641Z"
+      ],
+      "remaining": "No CLI verb for hwm::recover; rejected redeliveries are not deduplicated; mirror-side lagging pointers are W8; corpus-writer linkage is outside jope-learning."
+    },
+    "W3-T07": {
+      "states": [
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "c4f60b4c7a2e27a31fc41f875650c89900dc32ed"
+      ],
+      "tests": [
+        "eligibility::tests::matrix (19: 16 classes x 5 routes = 80 refusals, positive controls for regression/binary/multiclass, independent replay)"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w3-t07-matrix-20260926T061453Z"
+      ],
+      "remaining": "No route defect found. Owner decision open: an ineligible ledger tip still sets the HWM bar. Revocation source (W12), engine/cli corpus routes and binary/multiclass mutation coverage remain."
+    },
+    "W4-T01": {
+      "states": [
+        "implemented"
+      ],
+      "commits": [
+        "ccfb00e5f195498bad0b6dab731612671d4792e3"
+      ],
+      "evidence": [
+        "docs/internal/core-ip/work-orders/evidence/W04-forward-contract.md"
+      ],
+      "remaining": "Source contract only; its OBS-1 defect is fixed in W4-T02. Boundary items at accepted weights stay unqualified."
+    },
+    "W4-T02": {
+      "states": [
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "cd87271195a8d2d87a0baed77816c0a41e85fca3"
+      ],
+      "tests": [
+        "cache_qualification_compares_every_position_of_a_sequence"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w4-cache-qualification-prefix-20260926T055034Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w4-cache-qualification-postfix-20260926T055108Z"
+      ],
+      "remaining": "The cached-vs-full qualification now runs at every position, proven on random tiny weights only; agreement at accepted weights and on CUDA is W11-T02."
+    },
+    "W4-T03": {
+      "states": [
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "319c4cd5f7009eac9cfe033234bb4575675ac145"
+      ],
+      "tests": [
+        "tests/decode_outcomes.rs (12)"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w4-t03-prefix-20260926T052354Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w4-t03-postfix-20260926T053604Z"
+      ],
+      "remaining": "The LibTorch proposal sampler in jope-engine (neural feature) is untouched; per-draw outcomes are not yet written to the candidate ledger (T07)."
+    },
+    "W4-T04": {
+      "states": [
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "663880fa69b712759a9c2e92668f30bb6e79520a"
+      ],
+      "tests": [
+        "tests/grammar_differential.rs"
+      ],
+      "remaining": "Verified safeguard: no dead-end legal prefix or parser disagreement found over 6,430 enumerated states and 17,036 programs/expressions."
+    },
+    "W4-T05": {
+      "states": [
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "de747c36335775d441f0abe0cd0a12ef1c366f0b"
+      ],
+      "tests": [
+        "tests/scorer_dependencies.rs"
+      ],
+      "remaining": "Characterized on synthetic weights only; the order-aware challenger is W10."
+    },
+    "W4-T06": {
+      "states": [
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "376e712e7bab2c11b0d45122eaaa1618746293ac"
+      ],
+      "tests": [
+        "tracing_changes_nothing_and_fixed_logit_replay_reproduces_every_token",
+        "cached_and_full_routes_share_draws_and_decisions_within_tensor_parity",
+        "a_decision_near_a_boundary_diverges_inside_the_tensor_threshold",
+        "altered_traces_are_refused_and_failures_replay_exactly"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w4-t06-replay-20260926T062837Z"
+      ],
+      "remaining": "Fixed-logit replay and separate decision-divergence measurement exist. Native (LibTorch) versus Candle traces on accepted weights need the CUDA benchmark (W11); the jope-engine LibTorch proposal sampler is not traced."
+    },
+    "W4-T07": {
+      "states": [
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "eceb241f52c7472c56685b9d70434098dd7c5223"
+      ],
+      "tests": [
+        "producer_artifact_carries_a_reconciled_proposal_ledger",
+        "tampered_proposal_ledgers_are_refused",
+        "recorded_outcomes_are_rederived_from_tokens",
+        "historical_producer_artifact_has_no_ledger_evidence"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w2b-w4-repro-prefix-20260926T071411Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w2b-w4-commit-policy-20260926T072208Z"
+      ],
+      "remaining": "Proposal ledger with per-slot identity and reconciled denominators; run_neural requires it. The jope-engine W5-T01 lineage join (slot_record_sha256) is a follow-up; parser-refusal/incomplete branches are covered only by record edits."
+    },
+    "W5-T01": {
+      "states": [
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "943e3a6926d6e1f39a5c78c1e29dfd5bf86bc797"
+      ],
+      "tests": [
+        "generic_bootstrap_candidates_retain_their_original_proposal_and_one_adaptation",
+        "variation_children_record_parents_and_cannot_alter_parent_fitted_state",
+        "gp::lineage::tests (4 tamper tests)"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w5-t01-bootstrap-repro-20260926T060448Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w5-t01-lineage-20260926T061401Z"
+      ],
+      "remaining": "The lineage verifier refuses rows without an envelope (older ledgers) and needs seed/vocabulary paths; native-continuation paths are unit-tested only."
+    },
+    "W5-T02": {
+      "states": [
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "e41f1541501a10180352a9feb2005840728e0d42",
+        "7c76b5850aedb89da05fc0a738120a867250f0f3",
+        "38f83f47c98e1efb6d8c9a9a9bda9bc18a49bf4c"
+      ],
+      "tests": [
+        "a_resume_under_other_selection_rules_is_refused_not_restarted",
+        "a_paired_comparison_names_its_sole_arm_difference_and_refuses_any_other",
+        "a_refused_proposal_in_one_slot_does_not_shift_another_slots_random_streams"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w5-t02-frozen-contract-20260926T063504Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w5-t02-paired-20260926T070443Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w5-t02-streams-repro-20260926T071153Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w5-t02-streams-final-20260926T071834Z"
+      ],
+      "remaining": "Frozen selection contract, paired-arm manifest and slot-keyed random streams (a new stream protocol: new searches at the same seed differ from old ones; old searches cannot be resumed by this build). Order-balanced paired receipts from real runs are W10."
+    },
+    "W5-T03": {
+      "states": [
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "4311120b70b663537a3769d345215ea13d2aecba"
+      ],
+      "tests": [
+        "reused_fits_are_rescored_on_their_own_rows_and_never_inherit_scores",
+        "score_identities_bind_the_fold_protocol_and_predictions"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w5-t03-score-identity-20260926T062250Z"
+      ],
+      "remaining": "Verified safeguard (scores were already recomputed on reuse); each score now carries an identity bound to its fitted subject and scored rows."
+    },
+    "W5-T04": {
+      "states": [
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "6e4e38f4016c2481d9717db45db8bc32f0799927"
+      ],
+      "tests": [
+        "feasibility::tests (4, with a counting allocator bounding peak allocation)",
+        "feasibility_estimates_are_recorded_beside_observed_outcomes_under_one_rule"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w5-t04-feasibility-20260926T062808Z"
+      ],
+      "remaining": "Memory feasibility only (not time); recorded as a diagnostic, dispatch unchanged. Refusing candidates would change search policy and needs a new protocol identity."
+    },
+    "W5-T05": {
+      "states": [
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "596de04ac326628eee6ec69130b5e10363e9bfc5"
+      ],
+      "tests": [
+        "a_blocked_fitter_and_its_helpers_are_killed_at_the_original_deadline",
+        "helpers_left_by_a_finished_evaluator_are_drained_before_the_next_dispatch",
+        "a_second_searcher_cannot_dispatch_into_a_live_search",
+        "an_evaluator_allocation_failure_is_a_contained_failed_row"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w5-t05-supervision-repro-20260926T064427Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w5-t05-supervision-20260926T065125Z"
+      ],
+      "remaining": "Search output reservation and evaluator process-group supervision. Processes started by an evaluator can survive if the search controller itself is killed (the product evaluator starts none today)."
+    },
+    "W5-T06": {
+      "states": [
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "ec99c76ade7dded846428f84ce01a9f903677763"
+      ],
+      "tests": [
+        "independent_replay_reproduces_real_search_winners_and_refuses_tampered_ledgers",
+        "resumed_search_refuses_journaled_measurements_its_original_completion_does_not_support",
+        "gp::selection_replay::tests (9 adversarial)"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w5-t06-resume-repro-20260926T055746Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w5-t06-selection-replay-20260926T060327Z"
+      ],
+      "remaining": "Replay refuses older ledgers without the search clock; production activation verifiers remain unimplemented (owner/security decision)."
+    },
+    "W5-T07": {
+      "states": [
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "3ffdfe81384fe8ec5f290088e764095543e7728c"
+      ],
+      "tests": [
+        "the_predictor_handoff_exports_only_the_sealed_replayed_selection",
+        "a_sealed_selection_refuses_swaps_and_keeps_the_selection_when_export_fails"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w5-t07-handoff-repro-20260926T065444Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w5-t07-handoff-20260926T065918Z"
+      ],
+      "remaining": "Export now takes only the sealed, replayed selection (a forged search.json exported the wrong program before). Production activation verifiers remain unimplemented (owner/security decision); serving packages are W9."
+    },
+    "W6-T01": {
+      "states": [
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "2dfe124e81e1922ccd91190eaca36274a7327137",
+        "b5052f8d6d78590bbcd00a042dcf5c553906b2c5"
+      ],
+      "tests": [
+        "tests/frozen_inputs.rs (5, neural feature, CPU)",
+        "tests/request_integrity.rs verified resident loading"
+      ],
+      "evidence": [
+        "docs/internal/core-ip/work-orders/evidence/W06-training-boundary.md",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w6-pre-t01-20260926T092505Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w6-post-t01-20260926T092551Z"
+      ],
+      "remaining": "Cached context staging is keyed by content; resolved inputs are frozen into launch/training-inputs.json and bound into checkpoints; a substituted index or vocabulary is refused. The resident corpus is loaded from the verified index bytes (substitution prevented, not only detected); programs, prepared cuts and label ledgers are bound only through the corpus build; no revocation authority exists in this source; rank_impl wiring is compile-checked only."
+    },
+    "W6-T02": {
+      "states": [
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "ccfb00e5f195498bad0b6dab731612671d4792e3",
+        "2668de0589ca2d75a3917df6fdd27f8749a0ceb3"
+      ],
+      "tests": [
+        "tests/objective_fixtures.rs (14, neural feature, CPU)"
+      ],
+      "evidence": [
+        "docs/internal/core-ip/work-orders/evidence/W06-objective-specification.md",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w6-pre-t02-20260926T064613Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w6-post-t02-20260926T064813Z"
+      ],
+      "remaining": "Specification plus CPU f64 fixtures for every term, gradient and partition dependence; G8 and G12 fixed fail-closed. G1 (objective identity in checkpoints and resume guards) is T06; G11 runtime-label typing is T03; GPU/BF16/fused-AdamW numerics and the accepted step-60000 binding (G2/G3) remain."
+    },
+    "W6-T03": {
+      "states": [
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "aff807bec62f6db102d8df57a97df531a7beeb7f",
+        "1eb9ca666a181697c0094bbac804358326fb841e"
+      ],
+      "tests": [
+        "tests/training_inputs.rs (8)",
+        "ungranted_valid_policy_is_still_refused_by_the_dispatch_hold",
+        "cli_policy_rejects_legacy_or_mismatched_labels_before_gpu_admission"
+      ],
+      "evidence": [
+        "docs/internal/core-ip/work-orders/evidence/W06-training-boundary.md",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w6-pre-t03-20260926T070050Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w6-post-t03-20260926T070301Z"
+      ],
+      "remaining": "Comparison, label and censored-runtime checks at the boundary. Per-comparison evaluator/task/fitted-subject binding needs a corpus schema change; typed runtime scope and censoring (G11) and label-policy binding into the objective identity (T06) remain; the rank_impl call site is compile-checked only."
+    },
+    "W6-T04": {
+      "states": [
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "ad0b31daf13a10fbbba8fa1776ae85dcdca10a57"
+      ],
+      "tests": [
+        "tests/committed_updates.rs (6, neural feature, CPU)"
+      ],
+      "evidence": [
+        "docs/internal/core-ip/work-orders/evidence/W06-training-boundary.md",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w6-pre-t04-20260926T071526Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w6-post-t04-20260926T071632Z"
+      ],
+      "remaining": "Rejected reference-optimizer updates are atomic; per-rank consumption journal bound into checkpoints. The rank_impl journal path is compile-checked only (CUDA/NCCL and the held grant); cross-rank aggregation is W7; historical runs have no journal (T07)."
+    },
+    "W6-T05": {
+      "states": [
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "787a7b27a047c940223fe994ecbeddc75a54ecd7",
+        "b5052f8d6d78590bbcd00a042dcf5c553906b2c5"
+      ],
+      "tests": [
+        "tests/checkpoint_commit.rs (5, neural feature, CPU)",
+        "tests/atomic_write.rs"
+      ],
+      "evidence": [
+        "docs/internal/core-ip/work-orders/evidence/W06-training-boundary.md",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w6-pre-t05-20260926T072543Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w6-post-t05-20260926T072645Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w6-pre-fu-atomic-20260926T095224Z"
+      ],
+      "remaining": "Atomic checkpoint publication with a verifying loader; the same-pid stale temporary no longer blocks commits. Trainer-side wiring is compile-checked only; manifest::atomic_write now uses unique temporaries for every write_json caller; multi-host receipts are W7 and remote publication W8."
+    },
+    "W6-T06": {
+      "states": [
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "7906af67cc258ea1f4651b73d215d0e1bfb99292",
+        "b5052f8d6d78590bbcd00a042dcf5c553906b2c5",
+        "e6a66c16af2bd386c7cfc63b79c5cb4389d0443b"
+      ],
+      "tests": [
+        "tests/continuation_modes.rs (7, neural feature, CPU)",
+        "tests/checkpoint_commit.rs objective cases",
+        "tests/request_integrity.rs declared continuation modes",
+        "tests/native_loop_continuation.rs (4)"
+      ],
+      "evidence": [
+        "docs/internal/core-ip/work-orders/evidence/W06-training-boundary.md",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w6-post-t06-20260926T091744Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w6-post-fu-neural-20260926T095616Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w6-pre-nlcont-20260926T110004Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w6-post-nlcont-b-20260926T141432Z"
+      ],
+      "remaining": "Four continuation modes classified and enforced before CUDA; full objective identity bound into checkpoints (G1). Train requests (gpu_worker, smartcluster, controller run.json) and native-loop materialized inputs (jope.smartcluster_input.v2) declare the mode; older requests and inputs frozen as v1 keep their implicit meaning byte for byte. Legacy parents are accepted with matching legacy IDs and recorded as legacy_ids_only (owner decision); rank_impl wiring compile-checked only."
+    },
+    "W6-T07": {
+      "states": [
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "7ed7b2b97ba5397dfb688e2b3e9711e07d29e049"
+      ],
+      "tests": [
+        "tests/training_ancestry.rs (4, neural feature, CPU)"
+      ],
+      "evidence": [
+        "docs/internal/core-ip/work-orders/evidence/W06-training-boundary.md",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w6-post-t07-20260926T094323Z"
+      ],
+      "remaining": "New capability: genealogy and possible/exact/availability exposure from retained manifests and bound journals, unknown history kept unknown. Applying it to the historical step-60000 ancestry needs the retained historical objects (W12 genealogy); multi-host journal retention is W7/W8."
+    },
+    "W7-T01": {
+      "states": [
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "8d66723d317f09269ee0db036095dba2674d5f0c",
+        "ca141e52b5a58840685f0bfa91bc96b3492c7bbb"
+      ],
+      "tests": [
+        "tests/bounded_run.rs preflight, census and execution-binding cases"
+      ],
+      "evidence": [
+        "docs/internal/core-ip/work-orders/evidence/W07-controller.md",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w7c-t01-pre-20260926T095726Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w7c-t01-post-20260926T102532Z"
+      ],
+      "remaining": "Source half: a typed, versioned census and a preflight that refuses stale or future telemetry, boot/address/certificate/source/executable/runtime/policy mismatch, missing or re-indexed GPU UUIDs, foreign device ownership and CPU/RAM/VRAM shortfall. No collector exists and no live three-host census has been taken. Machine identity (/etc/machine-id) is part of the census and refused on mismatch."
+    },
+    "W7-T02": {
+      "states": [
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "8d66723d317f09269ee0db036095dba2674d5f0c",
+        "707dbfee5e911c3d1197fb5ba541395e09547c7c"
+      ],
+      "tests": [
+        "tests/bounded_run.rs (17)",
+        "tests/bounded_assignment.rs (3, neural feature, CPU): plan -> trainer assignment join"
+      ],
+      "evidence": [
+        "docs/internal/core-ip/work-orders/evidence/W07-controller.md",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w7c-t02-pre-20260926T095725Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w7c-t02-post-20260926T102533Z"
+      ],
+      "remaining": "jope.native_bounded_run.v1 beside the unchanged old contract (old manifests are refused as legacy, never reinterpreted); jope-native-loop plan/status/verify/cancel with execution bound to the frozen plan; status and verify are read-only and start nothing. The SmartCluster-backed supervisor and cross-host transport belong to T07; the old verbs now report a missing loop argument with exit 1 instead of clap's exit 2."
+    },
+    "W7-T03": {
+      "states": [
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "fdbde7c3fc8364d1c4770f85bf1dd89ab1f395c6",
+        "a606bad2e4336da23605991576c8d86cd9ce528c",
+        "707dbfee5e911c3d1197fb5ba541395e09547c7c"
+      ],
+      "tests": [
+        "tests/trainer_topology.rs (5, neural feature, CPU)"
+      ],
+      "evidence": [
+        "docs/internal/core-ip/work-orders/evidence/W07-trainer-topology.md",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w6-post-w7t03-b-20260926T100619Z"
+      ],
+      "remaining": "Communicator rank is separated from the local CUDA device in the trainer and the proposal workers through a validated binding, and a frozen bounded-run plan now derives the trainer assignment (every worker device_index 0 under its planned CUDA_VISIBLE_DEVICES). Open: delivering that assignment to rank_impl and a launcher that sets per-worker CUDA_VISIBLE_DEVICES (live path); native code compile-checked only."
+    },
+    "W7-T04": {
+      "states": [
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "ca141e52b5a58840685f0bfa91bc96b3492c7bbb"
+      ],
+      "tests": [
+        "tests/bounded_run.rs (27; 10 rendezvous acceptance cases)"
+      ],
+      "evidence": [
+        "docs/internal/core-ip/work-orders/evidence/W07-controller.md",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w7c-t04-pre-20260926T101544Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w7c-t04-post-20260926T103831Z"
+      ],
+      "remaining": "Authenticated rendezvous bound to run/attempt, participants, grants, boot, machine identity and original deadline: a missing participant, substituted source or input, forged peer, expired grant or stale/replayed rendezvous refuses the whole group with zero committed updates. Same-host socket fixture only; the cross-host transport (certificate identity, network timeouts) and the trainer consuming the admitted communicator bootstrap instead of nccl.id need the live path (T07)."
+    },
+    "W7-T05": {
+      "states": [
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "bc1e0531b78f5d2d513c646e113df30e5ed29486"
+      ],
+      "tests": [
+        "tests/bounded_run_recovery.rs (9, same-host rank processes)"
+      ],
+      "evidence": [
+        "docs/internal/core-ip/work-orders/evidence/W07-controller.md",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w7c-t05-pre-20260926T101545Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w7c-t05-post-20260926T103906Z"
+      ],
+      "remaining": "Whole-group drain and coordinator recovery on a same-host fixture: a killed rank, severed control, cancellation or grant expiry drains the group; restart reconciles every rank with the original deadline and counters, commits a complete unacknowledged group exactly once and leaves no orphan. This is a fixture, not the three-host proof; a SmartCluster-backed supervisor is T07."
+    },
+    "W7-T06": {
+      "states": [
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "251a9a608af088e4452a05da8762cbfeed10da94",
+        "2f41dcec54f6d0a00f4a7784d75a44839b4fffd3"
+      ],
+      "tests": [
+        "tests/lossless_partition.rs (10, neural feature, CPU)",
+        "tests/partition_wiring.rs (7, neural feature, CPU)"
+      ],
+      "evidence": [
+        "docs/internal/core-ip/work-orders/evidence/W07-trainer-topology.md",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w6-pre-w7t06-20260926T101144Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w6-post-w7t06-a-20260926T102534Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w6-post-w7t06-b-20260926T102703Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w6-pre-w7t06wire-20260926T104229Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w6-post-w7t06wire-b-20260926T105432Z"
+      ],
+      "remaining": "Partition v2 is lossless for any world and matches the single-process reference; it is wired into the trainer's pre-device guards and records (checkpoint verification, journal shards, per-rank exposure, validation panel, continuation recovery) with v1 byte-for-byte unchanged. rank_impl runs the v2 step only when a frozen run selects it (compile-checked only); the controller still writes v1 run.json; no multi-rank step has executed."
+    },
+    "W7-T07": {
+      "states": [
+        "blocked"
+      ],
+      "blocker": "Needs admitted three-host CPU/GPU phases, managed worker installation and grants; not authorized in this change."
+    },
+    "W7-T08": {
+      "states": [
+        "blocked"
+      ],
+      "blocker": "Needs admitted three-host CPU/GPU phases, managed worker installation and grants; not authorized in this change."
+    },
+    "W7-T09": {
+      "states": [
+        "blocked"
+      ],
+      "blocker": "Needs admitted three-host CPU/GPU phases, managed worker installation and grants; not authorized in this change."
+    },
+    "W8-T01": {
+      "states": [
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "64e56b410af39897c62bc887574ad53f421861b2"
+      ],
+      "tests": [
+        "planned_census_reconciles_to_terminal_dispositions",
+        "a_failed_or_retried_attempt_cannot_disappear",
+        "a_retried_attempt_cannot_become_a_second_logical_improvement",
+        "transport_replay_has_no_effect_but_a_new_attempt_counts",
+        "empty_denominators_are_unavailable_not_rates",
+        "logical_work_identity_is_separate_from_attempt_and_delivery_identity",
+        "canonical_encoding_is_unique_and_bounded",
+        "hash_domains_separate_kinds_and_blobs",
+        "every_kind_round_trips_and_names_its_dependencies",
+        "hwm_decision_link_is_checked_against_the_real_hwm_ledger"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w8-t01-mutations-20260926T063358Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w8-t01-postfix-20260926T063508Z"
+      ],
+      "remaining": "New capability (no prior path). Nothing in the product emits these objects yet; engine-side mapping (native_persistence, corpus_publication, checkpoint_recovery) and consecutive update-index enforcement remain."
+    },
+    "W8-T02": {
+      "states": [
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "212ce68d767586d30f8ece6f722e11e59cfbb8b3"
+      ],
+      "tests": [
+        "crash_after_local_append_before_delivery_recovers_exactly_once",
+        "a_full_outbox_pauses_new_work_and_never_drops_or_grows",
+        "a_failed_delivery_stays_pending_and_is_never_acknowledged",
+        "dependencies_are_recorded_and_delivered_first",
+        "only_verified_content_addressed_items_enter",
+        "committed_state_is_verified_on_reopen"
+      ],
+      "evidence": [
+        "docs/internal/core-ip/work-orders/evidence/W08-durability.md",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w8-t02-mutations-20260926T064748Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w8-t02-postfix-20260926T065338Z"
+      ],
+      "remaining": "New capability on offline stores. Proposed outbox limits need owner approval; nothing in the product appends to the outbox yet; acknowledged entries are never compacted (retention is T05)."
+    },
+    "W8-T03": {
+      "states": [
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "b3374aea8c43c42f2b751f3149539e56f3029707"
+      ],
+      "tests": [
+        "racing_publishers_at_one_predecessor_get_one_winner_and_one_conflict",
+        "a_missing_or_corrupt_dependency_blocks_the_pointer",
+        "graph_rules_are_checked_before_the_pointer_moves",
+        "the_pointer_moves_only_from_its_expected_predecessor",
+        "only_a_verified_closure_is_reusable"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w8-t03-mutations-20260926T070146Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w8-t03-postfix-20260926T070525Z"
+      ],
+      "remaining": "New capability on offline stores. HWM decisions are graph-checked only (not against the local ledger at publication); no reconciliation/rebase; publisher identity unauthenticated; nothing in the product creates commits yet; live S3 If-Match is T07/T08."
+    },
+    "W8-T04": {
+      "states": [
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "5e745c45cdaa43ba3f69459c3609238dd176e72a"
+      ],
+      "tests": [
+        "a_crash_between_a_batch_and_its_head_is_rolled_forward_not_a_wedge",
+        "an_append_after_a_lagging_head_never_forks_the_chain",
+        "only_a_sealed_continuation_of_the_head_is_rolled_forward",
+        "a_crash_between_an_hwm_batch_and_its_head_does_not_wedge_ingest",
+        "a_pointer_write_lost_after_the_head_moved_is_still_owed",
+        "a_deleted_derived_index_rebuilds_to_the_same_view",
+        "stale_corrupt_or_dangling_state_is_a_visible_failure",
+        "retries_and_lost_responses_never_duplicate_committed_events"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w8-t04-prefix-ledger-mirror-20260926T071309Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w8-t04-final-20260926T091302Z"
+      ],
+      "remaining": "Ledger heads roll forward after a crash (was a permanent wedge); owed mirror pointers are retried; summaries rebuild from committed data. The owed list is local only; conflict reconciliation has no CLI verb; best-RMSE views stay on the HWM ledger."
+    },
+    "W8-T05": {
+      "states": [
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "3b0207d25251f062dd98cff3bdc7e57e0a8e377d"
+      ],
+      "tests": [
+        "each_flush_trigger_fires_exactly_when_due",
+        "a_failed_flush_stays_pending_and_never_claims_durability",
+        "each_checkpoint_trigger_fires_at_committed_updates_and_shutdown",
+        "non_winner_outcomes_keep_compact_evidence_never_nothing"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w8-t05-mutations-20260926T091939Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w8-t05-postfix-20260926T092104Z"
+      ],
+      "remaining": "New capability with an injected clock. Proposed cadence (60 s, 1 MiB, 100 updates, 5 min) and outbox limits need owner approval; nothing in the product calls the cadence yet; the retention role is not recorded in candidate evidence; no compaction."
+    },
+    "W8-T06": {
+      "states": [
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "5e745c45cdaa43ba3f69459c3609238dd176e72a"
+      ],
+      "tests": [
+        "every_fault_leaves_committed_state_restorable_and_every_delivery_accounted_for (18 cases)"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w8-t04-mutations-20260926T072657Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w8-t04-final-20260926T091302Z"
+      ],
+      "remaining": "Offline fault matrix on file:// and memory:/// stores only; live conflict, outage and restoration are W8-T08. reconstruct lists every object, which matters for S3 request counts."
+    },
+    "W8-T07": {
+      "states": [
+        "blocked"
+      ],
+      "blocker": "Needs a scoped publisher credential from its owner and an approved live storage budget; the administrator profile is not a substitute."
+    },
+    "W8-T08": {
+      "states": [
+        "blocked"
+      ],
+      "blocker": "Needs a scoped publisher credential from its owner and an approved live storage budget; the administrator profile is not a substitute."
+    },
+    "W9-T01": {
+      "states": [
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "40babe407e1843507ed1f459bd6c7f8a19e199c4"
+      ],
+      "tests": [
+        "registered_inference_inventory_matches_actual_export_outcomes"
+      ],
+      "evidence": [
+        "docs/internal/core-ip/work-orders/evidence/W09-support-matrix.md",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w9-commitE-default-20260926T063905Z"
+      ],
+      "remaining": "Support matrix for 26 recipes x 5 backends matches actual export outcomes (0 mismatches) on synthetic fits; positional input only (no named-column mode)."
+    },
+    "W9-T02": {
+      "states": [
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "1259d91840703bd070c5f616b0327589748f9bea"
+      ],
+      "tests": [
+        "same_recipe_state_swaps_and_missing_stages_fail_even_with_equal_predictions"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w9-t02-repro-20260926T062146Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w9-t02-fixed-20260926T062434Z"
+      ],
+      "remaining": "Report-path verify now re-emits and binds the fitted state (6 of 9 tampered entries were accepted before). An old prepared.json whose emitter output differs now fails verify(). The exported subject is a fold fit; no final whole-data refit identity to bind yet."
+    },
+    "W9-T03": {
+      "states": [
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "885bddb603b5273d4ecd5b9adb2aa24fa3012447"
+      ],
+      "tests": [
+        "hostile_fitted_strings_never_reach_command_arguments"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w9-commitB-default-20260926T063328Z"
+      ],
+      "remaining": "Verified safeguard for hostile strings. Builder isolation from credentials, network and private canaries was not run."
+    },
+    "W9-T04": {
+      "states": [
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "885bddb603b5273d4ecd5b9adb2aa24fa3012447"
+      ],
+      "tests": [
+        "emitted_backends_match_native_on_raw_edge_inputs_and_refuse_malformed_rows",
+        "raw_input_comparator_detects_changed_constants_and_truncated_outputs",
+        "missing_learned_state_is_refused_never_defaulted"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w9-commitB-default-20260926T063328Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w9-commitB-asm-20260926T063354Z"
+      ],
+      "remaining": "Verified safeguard: 42 raw cases across Python, Rust, JS and C++17/20 on five heads, 0 divergences. Swapped categorical columns are accepted as data (positional input)."
+    },
+    "W9-T05": {
+      "states": [
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "5b3808e6665ed7596143d71c0ebe1ef0dfa4bc2e",
+        "723cc035a406d6b63d31170304e17acbedabb99e"
+      ],
+      "tests": [
+        "public_manifest_alone_cannot_see_a_substituted_native_library",
+        "intact_packages_load_and_tampered_installations_refuse_before_serving",
+        "changed_serving_dependency_refuses_and_required_failures_block"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w9-commitC-default-20260926T063442Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w9-commitC-asm-20260926T063509Z"
+      ],
+      "remaining": "Package seal/install/load exists but is not wired into qualify-export and has no install command; load trusts the identity it is given, which must come from an authenticated release record."
+    },
+    "W9-T06": {
+      "states": [
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "885bddb603b5273d4ecd5b9adb2aa24fa3012447"
+      ],
+      "tests": [
+        "re_emission_of_an_identical_capsule_is_source_deterministic"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w9-commitB-default-20260926T063328Z"
+      ],
+      "remaining": "Source determinism only (10 backend/head pairs), not reproducible binaries; the C++ plan identity depends on the host CXX and JOPE_CXX_MARCH."
+    },
+    "W9-T07": {
+      "states": [
+        "blocked"
+      ],
+      "blocker": "Needs the W1-W9 live gates and an admitted real-loop window; no execution is authorized in this change."
+    },
+    "W10-T01": {
+      "states": [
+        "blocked"
+      ],
+      "blocker": "Needs the W1-W9 live gates and an admitted real-loop window; no execution is authorized in this change."
+    },
+    "W10-T02": {
+      "states": [
+        "blocked"
+      ],
+      "blocker": "Needs the W1-W9 live gates and an admitted real-loop window; no execution is authorized in this change."
+    },
+    "W10-T03": {
+      "states": [
+        "blocked"
+      ],
+      "blocker": "Needs the W1-W9 live gates and an admitted real-loop window; no execution is authorized in this change."
+    },
+    "W10-T04": {
+      "states": [
+        "blocked"
+      ],
+      "blocker": "Needs the W1-W9 live gates and an admitted real-loop window; no execution is authorized in this change."
+    },
+    "W10-T05": {
+      "states": [
+        "blocked"
+      ],
+      "blocker": "Needs a separately costed, preregistered study manifest and budget."
+    },
+    "W10-T06": {
+      "states": [
+        "blocked"
+      ],
+      "blocker": "Needs a separately costed, preregistered study manifest and budget."
+    },
+    "W10-T07": {
+      "states": [
+        "blocked"
+      ],
+      "blocker": "Needs a separately costed, preregistered study manifest and budget."
+    },
+    "W10-T08": {
+      "states": [
+        "blocked"
+      ],
+      "blocker": "Needs a separately costed, preregistered study manifest and budget."
+    },
+    "W10-T09": {
+      "states": [
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "361fb112af9fd5f3ea4f33c14abefd4a2b6b6523",
+        "5ddd56e76b393cede9b86750b44adb6cc1bff75b"
+      ],
+      "tests": [
+        "independent_scorer_reproduces_the_report",
+        "jope-bench tests/transfer_independent.rs (7)"
+      ],
+      "remaining": "No transfer round has been measured; complete scoring stays blocked on T07/T08."
+    },
+    "W10-T10": {
+      "states": [
+        "blocked"
+      ],
+      "blocker": "Needs a separately costed, preregistered study manifest and budget."
+    },
+    "W11-T01": {
+      "states": [
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "e9f270f38d0ead8555f197b4d698d2c5db3891a6"
+      ],
+      "tests": [
+        "test_census_comes_from_the_frozen_plan"
+      ],
+      "remaining": "The corrected study manifest itself is not frozen; that needs the GPU study approval."
+    },
+    "W11-T02": {
+      "states": [
+        "blocked"
+      ],
+      "blocker": "Needs an approved corrected GPU study manifest, runtime qualification and a new admitted window."
+    },
+    "W11-T03": {
+      "states": [
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "1aaec28a24f7b4bdd27a169a87733586784042ee"
+      ],
+      "tests": [
+        "injected_delays_land_in_their_enclosing_stage_and_the_whole_request",
+        "unsynchronized_stages_misattribute_queued_device_work",
+        "failed_stages_are_recorded_and_names_are_unique",
+        "warm_and_cold_states_are_part_of_the_record",
+        "production_clock_brackets_every_boundary_with_synchronization"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w11-t03-timeline-20260926T064506Z"
+      ],
+      "remaining": "Timing semantics are fixture-proven with an injected clock and device queue. inference_cuda::request is not yet wired to the timeline (inference-cuda build not exercised here); real timings need the admitted GPU window."
+    },
+    "W11-T04": {
+      "states": [
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "e9f270f38d0ead8555f197b4d698d2c5db3891a6"
+      ],
+      "tests": [
+        "test_every_planned_slot_reconciles_to_one_outcome",
+        "test_unplanned_receipts_are_listed_and_block_the_headline"
+      ],
+      "remaining": "Journal-to-controller allocation reconciliation needs an executed study."
+    },
+    "W11-T05": {
+      "states": [
+        "blocked"
+      ],
+      "blocker": "Needs an approved corrected GPU study manifest, runtime qualification and a new admitted window."
+    },
+    "W11-T06": {
+      "states": [
+        "blocked"
+      ],
+      "blocker": "Needs an approved corrected GPU study manifest, runtime qualification and a new admitted window."
+    },
+    "W11-T07": {
+      "states": [
+        "blocked"
+      ],
+      "blocker": "Needs an approved corrected GPU study manifest, runtime qualification and a new admitted window."
+    },
+    "W11-T08": {
+      "states": [
+        "blocked"
+      ],
+      "blocker": "Needs an approved corrected GPU study manifest, runtime qualification and a new admitted window."
+    },
+    "W12-T01": {
+      "states": [
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "9e31ad12e3d71efd055e6737f8665fece40a2734",
+        "c658d14891d310ea9c10476a6f6f1e002715fe20"
+      ],
+      "tests": [
+        "jope-records tests/records/claims.rs (9; Rust port of test_verify_claims.py's 5 methods and 18 mutations)"
+      ],
+      "remaining": "Capability/KPI sentence inventory across the monograph is not yet generated from claims."
+    },
+    "W12-T02": {
+      "states": [
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "354962c5c659e44e26f8e8365cb059f00a9abe9a",
+        "c658d14891d310ea9c10476a6f6f1e002715fe20"
+      ],
+      "tests": [
+        "jope-records tests/records/dispositions.rs (9; Rust port of the 29 adversarial cases)"
+      ],
+      "remaining": "No finding has a closing disposition; hosted CI and live stages must precede any closure."
+    },
+    "W12-T03": {
+      "states": [
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "17fee4cb4b8225a3577aece12d5c34c3f47ad36a",
+        "c658d14891d310ea9c10476a6f6f1e002715fe20"
+      ],
+      "tests": [
+        "jope-records tests/records/progress_view.rs (5)",
+        "jope-records tests/records/task_status.rs (3)"
+      ],
+      "evidence": [
+        "docs/internal/core-ip/work-orders/PROGRESS.md",
+        "docs/internal/core-ip/work-orders/STATUS.md"
+      ],
+      "remaining": "Status and findings views are generated from validated records. KPI score cards (HWM improvement, eligible teachers, corpus availability, exposure, committed updates, matched search, transfer) wait on W8 publication verification and real measurements."
+    },
+    "W12-T04": {
+      "states": [
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "4b56141a3bfc4d7a426ad90b71dcdc214945c549"
+      ],
+      "tests": [
+        "jope-records tests/records/elo_history.rs (22; Rust port of test_elo_history.py's 18 plus 4 added)"
+      ],
+      "evidence": [
+        "docs/internal/core-ip/work-orders/evidence/W12-elo-genealogy.md",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w12-t04-elo-history-20260926T065331Z"
+      ],
+      "remaining": "Six ladders replay from pinned inputs; two scorer-parity-only and six irrecoverable histories are excluded from exact totals. S08-G09/S08-K09 stay open; Golden45 now replays everywhere (zstd decoded in process); jope-arena duplicate-cell replacement noted, not changed; exposure edges not retained."
+    },
+    "W12-T05": {
+      "states": [
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "9e31ad12e3d71efd055e6737f8665fece40a2734"
+      ],
+      "tests": [
+        "test_revocation_invalidates_exactly_the_descendants"
+      ],
+      "remaining": "Live consumers do not yet query revocations (W3/W8 receiving paths)."
+    },
+    "W12-T06": {
+      "states": [
+        "blocked"
+      ],
+      "blocker": "Depends on qualified W8-W11 records and live restoration."
+    },
+    "W12-T07": {
+      "states": [
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "c658d14891d310ea9c10476a6f6f1e002715fe20"
+      ],
+      "tests": [
+        "synthetic_identity_cannot_acquire_real_or_live_attestation",
+        "synthetic_identity_through_a_symlinked_directory_is_still_located",
+        "synthetic_identity_keeps_fixture_hosted_and_implementation_stages",
+        "synthetic_identity_cannot_close_through_hosted_or_live_evidence",
+        "synthetic_identity_cannot_be_declared_real_corpus_evidence"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w12-t07-prefix-20260926T065947Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/rports-t07-pre-20260926T092320Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/rports-t07-post-20260926T092423Z"
+      ],
+      "remaining": "Only the receiving rule is done: evidence carrying the conformance synthetic_identity cannot back hosted-CI, live, measurement, promotion or real-corpus stages. The public conformance fixture pack (one fixture per contract boundary and refusal class), the private-canary absence scan and reproducible public replay depend on T06 and are not built."
+    },
+    "W12-T08": {
+      "states": [
+        "blocked"
+      ],
+      "blocker": "Final reconciliation depends on the applicable live gates; every finding remains open."
+    }
+  }
+}

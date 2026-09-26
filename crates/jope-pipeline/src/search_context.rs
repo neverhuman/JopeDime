@@ -154,6 +154,7 @@ impl ContextFiles {
                     values: verified.context().to_vec(),
                     sha256: jope_policy::context_sha256(verified.context()),
                     training: expected.training,
+                    admission_pins_sha256: Some(verified.admission_pins_sha256().into()),
                 }
             }
         };
@@ -166,6 +167,9 @@ pub struct VerifiedRegressionContext {
     values: Vec<f32>,
     sha256: String,
     training: TrainingIdentity,
+    /// Digest of the controller-verified CPU context admission pins; `None` for a native
+    /// context. The policy request must carry exactly this value.
+    admission_pins_sha256: Option<String>,
 }
 impl VerifiedRegressionContext {
     pub fn load(files: &NativeContextFiles) -> Result<Self> {
@@ -196,10 +200,15 @@ impl VerifiedRegressionContext {
             values,
             sha256: files.vector.sha256.clone(),
             training: files.training.clone(),
+            admission_pins_sha256: None,
         })
     }
     pub fn training(&self) -> &TrainingIdentity {
         &self.training
+    }
+    /// Digest of the controller-verified CPU admission pins (`None` for a native context).
+    pub fn admission_pins_sha256(&self) -> Option<&str> {
+        self.admission_pins_sha256.as_deref()
     }
     pub fn validate_training(&self, expected: &TrainingIdentity) -> Result<()> {
         expected.validate()?;

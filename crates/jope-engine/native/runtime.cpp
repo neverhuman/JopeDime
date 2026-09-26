@@ -5,7 +5,9 @@
 #include <c10/cuda/CUDAStream.h>
 #include <cuda_runtime.h>
 #include <nccl.h>
+#include <cstdio>
 #include <cstring>
+#include <string>
 #include <vector>
 
 // Each process owns exactly one device/communicator. Rust's controller terminates
@@ -17,8 +19,40 @@ extern "C" int jp_unique_id(unsigned char* bytes) {
   if(r!=ncclSuccess){last_error=ncclGetErrorString(r);return -1;}
   static_assert(sizeof(id)==128); std::memcpy(bytes,&id,128); return 0;
 }
-extern "C" void* jp_nccl_init(const unsigned char* bytes,int rank,int world) {
-  auto cr=cudaSetDevice(rank);if(cr!=cudaSuccess){last_error=cudaGetErrorString(cr);return nullptr;}
+// Devices visible to this process (after CUDA_VISIBLE_DEVICES), or -1.
+extern "C" int jp_device_count() {
+  int n=0; auto cr=cudaGetDeviceCount(&n);
+  if(cr!=cudaSuccess){last_error=cudaGetErrorString(cr);return -1;}
+  return n;
+}
+// The visible device's UUID in nvidia-smi form, GPU-8-4-4-4-12 (41 bytes with NUL).
+extern "C" int jp_device_uuid(int index,char* out) {
+  cudaDeviceProp p; auto cr=cudaGetDeviceProperties(&p,index);
+  if(cr!=cudaSuccess){last_error=cudaGetErrorString(cr);return -1;}
+  const unsigned char* u=reinterpret_cast<const unsigned char*>(p.uuid.bytes);
+  std::snprintf(out,41,"GPU-%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+    u[0],u[1],u[2],u[3],u[4],u[5],u[6],u[7],u[8],u[9],u[10],u[11],u[12],u[13],u[14],u[15]);
+  return 0;
+}
+// W7-T03: the communicator rank is not the CUDA ordinal. The caller passes the
+// validated local device index and, when assigned, its GPU UUID; both are checked
+// against what this process can see before the device is selected or NCCL starts.
+extern "C" void* jp_nccl_init(const unsigned char* bytes,int rank,int world,int device,
+                              const char* expected_uuid) {
+  int visible=jp_device_count(); if(visible<0) return nullptr;
+  if(device<0||device>=visible){
+    last_error="assigned CUDA device index "+std::to_string(device)+" is not visible ("
+      +std::to_string(visible)+" visible)";
+    return nullptr;
+  }
+  if(expected_uuid&&*expected_uuid){
+    char actual[41]; if(jp_device_uuid(device,actual)!=0) return nullptr;
+    if(std::strcmp(actual,expected_uuid)!=0){
+      last_error="CUDA device "+std::to_string(device)+" is "+actual+", not the assigned "+expected_uuid;
+      return nullptr;
+    }
+  }
+  auto cr=cudaSetDevice(device);if(cr!=cudaSuccess){last_error=cudaGetErrorString(cr);return nullptr;}
   ncclUniqueId id;std::memcpy(&id,bytes,128); ncclComm_t comm;
   auto r=ncclCommInitRank(&comm,world,id,rank);
   if(r!=ncclSuccess){last_error=ncclGetErrorString(r);return nullptr;}return comm;

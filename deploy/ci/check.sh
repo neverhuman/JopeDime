@@ -43,5 +43,11 @@ step "no absolute home paths in code"; abs=$(git grep -nE '/home/[a-z]+/' -- cra
 step "no absolute home paths in python (informational until WP6 lands)"; pyabs=$(git grep -nE '/home/[a-z]+/' -- python/src || true); if [ -n "$pyabs" ]; then echo "$(wc -l <<<"$pyabs") hits in python/src (informational until WP6 lands)"; else echo "ok"; fi
 step "rust-test scope partitions the workspace (deploy/ci/rust-test-scope.sh)"; if ! python3 deploy/ci/rust-test-scope-check.py; then fail=1; fi
 step "README benchmark blocks match committed evidence (deploy/ci/readme-benchmarks.py)"; if ! python3 deploy/ci/readme-benchmarks.py --check; then fail=1; fi
+# A family shorter than one of its own tests can never pass: full-scratch was killed at 600 s
+# inside feat-math::golden fast_profile_portfolio_head (~580-619 s). Budgets are argv[3] of each
+# family's `timeout ... <N>s` command in the coverage map.
+step "full-default/full-scratch budgets cover the slowest recorded feat-math::golden test"
+slowest=$(jq '[.tests[] | select(.binary == "feat-math::golden") | .seconds] | max' docs/parity/test-timings.json)
+if jq -e --argjson slowest "$slowest" '[.lanes["full-default", "full-scratch"].command[3] | rtrimstr("s") | tonumber] | length == 2 and all(. >= 1.25 * $slowest + 120)' deploy/ci/coverage.json > /dev/null; then echo "ok (slowest ${slowest}s)"; else echo "a full family budget is below 1.25 x ${slowest}s + 120s"; fail=1; fi
 step "size caps"; big=$(git ls-files -z | xargs -0 stat -c '%s %n' | awk '$1>5242880{print}' ); if [ -n "$big" ]; then echo "$big"; echo "files over 5 MiB"; fail=1; else echo "ok"; fi
 exit $fail

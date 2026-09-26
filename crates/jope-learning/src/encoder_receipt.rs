@@ -1,8 +1,10 @@
-//! Opt-in encoder/admission binding spike; not a production admission authority.
+//! Encoder/admission binding. Teaching admission (`eligibility::qualify` and every
+//! revalidating consumer) derives the scope and encoder pins from the preoptimization
+//! freeze and requires [`check_teaching_binding`] before any teaching decision.
 //!
-//! The issuer must authenticate the scope, encoder and input closure independently.
 //! Matching these bindings proves neither absence of undeclared reads nor measured
-//! teaching eligibility. No existing HWM/teaching ingress calls this module yet.
+//! teaching eligibility, and a receipt is a producer claim: nothing here executes or
+//! authenticates the encoder run itself.
 
 use crate::canon::{canonical_sha256, is_hex64, sha256_hex};
 use crate::record::HwmIdentity;
@@ -40,12 +42,13 @@ pub struct Member {
 
 /// Ordered fitting membership and explicit forbidden membership from a trusted split.
 /// Full comparison identity binds task, dataset, cut, vocabulary and evaluator.
+/// `outer_fold: None` scopes the whole development partition (no outer hold).
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Scope {
     pub comparison: HwmIdentity,
     pub source_family: String,
-    pub outer_fold: u8,
+    pub outer_fold: Option<u8>,
     pub inner_fold: Option<u8>,
     pub fitting: Vec<Member>,
     pub forbidden: Vec<Member>,
@@ -89,8 +92,10 @@ impl EncoderCapability {
             !scope.source_family.trim().is_empty()
                 && !scope.comparison.task.trim().is_empty()
                 && !scope.comparison.protocol.trim().is_empty()
-                && scope.outer_fold < 5
-                && scope.inner_fold.is_none_or(|f| f < 5),
+                && scope.outer_fold.is_none_or(|f| f < 5)
+                && scope
+                    .inner_fold
+                    .is_none_or(|f| f < 5 && scope.outer_fold.is_some()),
             "incomplete encoder scope"
         );
         let comparison = scope

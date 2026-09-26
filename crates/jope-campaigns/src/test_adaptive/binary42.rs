@@ -3539,13 +3539,13 @@ struct WinnerArtifactManifest {
 
 fn winner_seed_path(path: &Path) -> Result<String> {
     Ok(path
-        .strip_prefix(workspace_root())?
+        .strip_prefix(campaign_state_root())?
         .to_string_lossy()
         .into_owned())
 }
 
 fn winner_seed_file(path: &str) -> PathBuf {
-    workspace_root().join(path)
+    campaign_state_root().join(path)
 }
 
 fn matching_confirmation_file(dataset_root: &Path, expected_sha256: &str) -> Result<PathBuf> {
@@ -3675,7 +3675,7 @@ fn confirmed_winner_seed_sources(
     current_run_id: &str,
     cohort: &FrozenCohort,
 ) -> Result<Vec<WinnerSeedSource>> {
-    let runs_root = workspace_root().join("runs");
+    let runs_root = campaign_state_root().join("runs");
     let current_run = run_root(current_run_id);
     let mut run_roots = fs::read_dir(&runs_root)?
         .map(|entry| Ok(entry?.path()))
@@ -5846,6 +5846,17 @@ mod tests {
         spec
     }
 
+    /// Binary classification remains deferred. Its real-corpus inputs are named
+    /// when absent; the test still fails rather than skipping.
+    fn require_binary_input(spec: &FrozenDataset) {
+        for path in [&spec.train_path, &spec.test_path] {
+            assert!(
+                Path::new(path).is_file(),
+                "unavailable: binary42 real-corpus input {path} (set JOPE_BINARY42_TEST_DATA_ROOT)"
+            );
+        }
+    }
+
     #[test]
     fn confirmed_binary_winners_are_first_in_generation_zero() {
         let genomes = [
@@ -6125,6 +6136,7 @@ mod tests {
         assert_eq!(cohort.datasets.len(), 42);
         for frozen in cohort.datasets {
             let spec = qualified_dataset(frozen);
+            require_binary_input(&spec);
             verify_dataset_binding(&spec).unwrap();
             for path in [&spec.train_path, &spec.test_path] {
                 let data = read_binary_csv(Path::new(path)).unwrap();
@@ -6264,6 +6276,7 @@ mod tests {
                 .find(|dataset| dataset.id == ILPD)
                 .unwrap(),
         );
+        require_binary_input(&spec);
         let train = read_binary_csv(Path::new(&spec.train_path)).unwrap();
         let test = read_binary_csv(Path::new(&spec.test_path)).unwrap();
         let member = seed_population(spec.features).unwrap().remove(0);

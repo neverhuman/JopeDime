@@ -490,7 +490,10 @@ pub(crate) fn train_controlled(
     stop: Option<&AtomicBool>,
     policy: Option<&Path>,
 ) -> Result<()> {
-    crate::task_contract::require_original_gpu_grant("training-controller")?;
+    // Input validation below is read-only: it creates no GPU context, lease,
+    // lock, output directory or receipt. It precedes the dispatch hold so an
+    // invalid request is refused for its own reason, and the hold still
+    // refuses every valid request before any resource admission.
     ensure!(
         [1, 2, 4, 8].contains(&world)
             && [64, 128, 256].contains(&micro)
@@ -605,6 +608,7 @@ pub(crate) fn train_controlled(
         };
         training_step_window(initial, steps)?
     };
+    crate::task_contract::require_original_gpu_grant("training-controller")?;
     check_cancel(stop)?;
     let _lease = gpu_lease_controlled(root, "neural policy training", stop)?;
     let h: crate::telemetry::Hardware = read_json(&root.join("runs/hardware.json"))?;
@@ -655,7 +659,10 @@ pub(crate) fn train_controlled(
         .transpose()?
         .unwrap_or(serde_json::Value::Null);
     spec["step_window"] = step_window.clone();
-    if resume {
+    // W6 follow-up: the controller declares the run's lineage mode in
+    // run.json and on every rank request; each rank validates it. A resumed
+    // run whose run.json predates the field keeps its implicit meaning.
+    let lineage_mode = if resume {
         let old: serde_json::Value = read_json(&output.join("run.json"))?;
         ensure!(
             old["corpus_sha256"] == corpus_hash
@@ -669,9 +676,29 @@ pub(crate) fn train_controlled(
                     || old["initialization_sha256"] == serde_json::json!(initialization_sha)),
             "resume run identity mismatch"
         );
+        old.get("continuation_mode")
+            .filter(|mode| !mode.is_null())
+            .map(|mode| {
+                crate::task_contract::ContinuationMode::parse(
+                    mode.as_str().context("recorded continuation mode")?,
+                )
+            })
+            .transpose()?
     } else {
+        let mode = crate::task_contract::classify_continuation(
+            false,
+            initialize.is_some(),
+            policy
+                .as_ref()
+                .map(|path| read_json::<serde_json::Value>(path))
+                .transpose()?
+                .as_ref(),
+        )?;
+        spec["continuation_mode"] = serde_json::json!(mode.as_str());
+        spec["continuation_mode_declaration"] = serde_json::json!("controller");
         write_json(&output.join("run.json"), &spec)?;
-    }
+        Some(mode)
+    };
     let mut injected = false;
     let mut last_error = String::new();
     for attempt in 0..3 {
@@ -760,6 +787,9 @@ pub(crate) fn train_controlled(
             }
             if let Some(policy) = &policy {
                 cmd.arg("--replay-policy").arg(policy);
+            }
+            if let Some(mode) = lineage_mode {
+                cmd.arg("--continuation-mode").arg(mode.as_str());
             }
             #[cfg(feature = "neural")]
             crate::gpu_worker::inherit_lease(&mut cmd, &_lease)?;

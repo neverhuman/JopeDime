@@ -74,6 +74,101 @@ pub struct InputManifest {
     pub output_receipt: PathBuf,
 }
 
+/// Every input frozen before continuation declarations existed. It never
+/// carries a declaration.
+pub const INPUT_SCHEMA_V1: &str = "jope.smartcluster_input.v1";
+/// A training input that declares its lineage continuation mode
+/// (W6 follow-up). Only `Operation::Train` uses it, and it always declares.
+pub const INPUT_SCHEMA_V2: &str = "jope.smartcluster_input.v2";
+
+impl InputManifest {
+    /// The schema/declaration pairing:
+    /// - v1 carries no declaration;
+    /// - v2 is a training input declaring a lineage mode, never `exact_resume`,
+    ///   which is an attempt property.
+    pub fn validate_version(&self) -> Result<()> {
+        let declared = match &self.operation {
+            Operation::Train {
+                continuation_mode, ..
+            } => *continuation_mode,
+            _ => None,
+        };
+        match self.schema.as_str() {
+            INPUT_SCHEMA_V1 => ensure!(
+                declared.is_none(),
+                "a continuation declaration requires {INPUT_SCHEMA_V2}"
+            ),
+            INPUT_SCHEMA_V2 => {
+                ensure!(
+                    matches!(self.operation, Operation::Train { .. }),
+                    "{INPUT_SCHEMA_V2} is a training input"
+                );
+                let mode = declared.with_context(|| {
+                    format!("{INPUT_SCHEMA_V2} must declare its continuation mode")
+                })?;
+                ensure!(
+                    mode != crate::task_contract::ContinuationMode::ExactResume,
+                    "exact resume is an attempt property; declare the lineage mode"
+                );
+            }
+            other => anyhow::bail!("unknown input manifest schema {other}"),
+        }
+        Ok(())
+    }
+
+    /// The training input to freeze for a request, under the version it was
+    /// first frozen with. `existing` holds the bytes already frozen at this
+    /// input's path, if any:
+    /// - absent: a new input, frozen as v2 with the declared `mode`;
+    /// - a v1 input: re-materialized as v1, with no declaration, so its bytes
+    ///   are unchanged;
+    /// - a v2 input: re-materialized as v2 with the same declaration.
+    ///
+    /// `self` is the undeclared v1 form the materializer always built.
+    pub fn declare_training(
+        mut self,
+        existing: Option<&[u8]>,
+        mode: crate::task_contract::ContinuationMode,
+    ) -> Result<Self> {
+        ensure!(
+            self.schema == INPUT_SCHEMA_V1,
+            "a training input is declared from its undeclared form"
+        );
+        let Operation::Train {
+            continuation_mode, ..
+        } = &mut self.operation
+        else {
+            anyhow::bail!("only a training input declares a continuation mode")
+        };
+        ensure!(
+            continuation_mode.is_none(),
+            "a training input is declared from its undeclared form"
+        );
+        let version = match existing {
+            None => INPUT_SCHEMA_V2.to_string(),
+            Some(bytes) => {
+                #[derive(Deserialize)]
+                struct Version {
+                    schema: String,
+                }
+                serde_json::from_slice::<Version>(bytes)
+                    .context("frozen input manifest unreadable")?
+                    .schema
+            }
+        };
+        match version.as_str() {
+            INPUT_SCHEMA_V1 => {}
+            INPUT_SCHEMA_V2 => {
+                *continuation_mode = Some(mode);
+                self.schema = INPUT_SCHEMA_V2.into();
+            }
+            other => anyhow::bail!("unknown frozen input manifest schema {other}"),
+        }
+        self.validate_version()?;
+        Ok(self)
+    }
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ClosureManifest {
@@ -191,6 +286,10 @@ pub enum Operation {
         initial_optimizer_step: u64,
         requested_step_increment: u64,
         target_optimizer_step: u64,
+        /// Explicit lineage-mode declaration; absent on requests frozen before
+        /// it, which keep their implicit meaning (W6 follow-up).
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        continuation_mode: Option<crate::task_contract::ContinuationMode>,
     },
     Proposal {
         #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -463,10 +562,10 @@ pub(crate) fn verify_task_inputs(
         &input_path,
         Some(&task.input_manifest_sha256),
     )?)?;
-    ensure!(
-        input.schema == "jope.smartcluster_input.v1" && input.root == root,
-        "input root/schema changed"
-    );
+    ensure!(input.root == root, "input root/schema changed");
+    input
+        .validate_version()
+        .context("input root/schema changed")?;
     let dependencies: BTreeMap<String, String> = if let Some(closure) = &input.closure {
         ensure!(
             input.input_artifacts.is_empty(),
@@ -2002,6 +2101,7 @@ mod tests {
                 initial_optimizer_step: 60000,
                 requested_step_increment: 3000,
                 target_optimizer_step: 63000,
+                continuation_mode: None,
             },
             closure: None,
             input_artifacts: paths
@@ -2040,6 +2140,7 @@ mod tests {
                 initial_optimizer_step: 60000,
                 requested_step_increment: 3000,
                 target_optimizer_step: 63000,
+                continuation_mode: None,
             },
             closure: None,
             input_artifacts: BTreeMap::new(),

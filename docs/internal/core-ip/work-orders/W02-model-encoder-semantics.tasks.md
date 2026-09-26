@@ -110,7 +110,7 @@ Depends on T02–T06; W3 supplies authority-bearing admission integration.
 ```sh
 cargo test --locked -p jope-policy --features testing,context-producer -- --list
 cargo test --locked -p starforge --lib -- --list
-python3 docs/internal/core-ip/tools/verify_inventory.py
+cargo run -q -p jope-records -- verify-inventory
 ```
 
 The tensor verifier needs the exact pinned local asset; absence is a blocked proof,

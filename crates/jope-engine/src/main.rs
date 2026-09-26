@@ -151,6 +151,9 @@ enum Cmd {
         initialize: Option<PathBuf>,
         #[arg(long)]
         replay_policy: Option<PathBuf>,
+        /// Explicit lineage-mode declaration, validated by the trainer.
+        #[arg(long)]
+        continuation_mode: Option<String>,
     },
     #[cfg(feature = "neural")]
     #[command(hide = true)]
@@ -680,6 +683,21 @@ enum Cmd {
         #[arg(long)]
         output: PathBuf,
     },
+    /// Isolated export worker: fits exactly the sealed projected input
+    /// inherited as `--fd`; opens no prepared path (W1 follow-up 2c).
+    #[command(hide = true)]
+    FitMemory {
+        #[arg(long)]
+        fd: i32,
+        #[arg(long)]
+        training_sha256: String,
+        #[arg(long)]
+        preprocessing_sha256: String,
+        #[arg(long)]
+        genome: String,
+        #[arg(long)]
+        output: PathBuf,
+    },
     Predict {
         #[arg(long)]
         model: PathBuf,
@@ -697,6 +715,13 @@ enum Cmd {
         receipt: PathBuf,
         #[arg(long)]
         output: PathBuf,
+    },
+    /// Outer (sealed final-test) score release authority: init, grant, score,
+    /// release and events. Sealed labels reach only a granted outer scorer; the
+    /// score is withheld until released, once.
+    OuterRelease {
+        #[command(subcommand)]
+        command: jope_parallel::gp::outer_release_cli::OuterReleaseCommand,
     },
     Bootstrap {
         #[arg(long)]
@@ -797,6 +822,11 @@ enum Cmd {
         family_registry: Option<PathBuf>,
         #[arg(long)]
         entity_review: Option<PathBuf>,
+        /// The dataset tree declared authoritative for a frozen family
+        /// partition when no frozen family registry is given. Never taken
+        /// from the environment.
+        #[arg(long)]
+        authoritative_inventory_root: Option<PathBuf>,
     },
     Stage {
         #[arg(long)]
@@ -1572,6 +1602,7 @@ fn main() -> Result<()> {
             resume,
             initialize,
             replay_policy,
+            continuation_mode,
         } => jope_parallel::training::rank_with_policy(
             &cli.root,
             &corpus,
@@ -1585,6 +1616,10 @@ fn main() -> Result<()> {
             resume,
             initialize.as_deref(),
             replay_policy.as_deref(),
+            continuation_mode
+                .as_deref()
+                .map(jope_parallel::task_contract::ContinuationMode::parse)
+                .transpose()?,
         )?,
         #[cfg(feature = "neural")]
         Cmd::QualifyBatchRank {
@@ -1789,6 +1824,19 @@ fn main() -> Result<()> {
             genome,
             output,
         } => jope_parallel::gp::fit_view(&prepared, cut, &genome, &output)?,
+        Cmd::FitMemory {
+            fd,
+            training_sha256,
+            preprocessing_sha256,
+            genome,
+            output,
+        } => jope_parallel::gp::fit_memory(
+            fd,
+            &training_sha256,
+            &preprocessing_sha256,
+            &genome,
+            &output,
+        )?,
         Cmd::Predict {
             model,
             features,
@@ -1800,6 +1848,9 @@ fn main() -> Result<()> {
             receipt,
             output,
         } => jope_parallel::gp::score(&model, &test, &receipt, &output)?,
+        Cmd::OuterRelease { command } => {
+            println!("{}", jope_parallel::gp::outer_release_cli::run(command)?)
+        }
         Cmd::Bootstrap {
             prepared,
             cut,
@@ -1906,6 +1957,7 @@ fn main() -> Result<()> {
             backing_manifest,
             family_registry,
             entity_review,
+            authoritative_inventory_root,
         } => {
             let p = prepare::run_with_admission(
                 &audit,
@@ -1916,6 +1968,7 @@ fn main() -> Result<()> {
                 &backing_manifest,
                 family_registry.as_deref(),
                 entity_review.as_deref(),
+                authoritative_inventory_root.as_deref(),
             )?;
             println!(
                 "{}",

@@ -1,4 +1,4 @@
-use anyhow::{bail, Context, Result};
+use anyhow::{bail, ensure, Context, Result};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::{
@@ -28,6 +28,77 @@ pub fn file_hash(path: &Path) -> Result<String> {
     }
     Ok(hex::encode(state.finalize()))
 }
+/// Read `path` once, require the SHA-256 of exactly those bytes to be
+/// `expected`, and return them: the verified object is the consumed object
+/// (W1 route R8). Callers parse the returned bytes; they never reopen the path.
+pub fn read_verified(path: &Path, expected: &str, what: &str) -> Result<Vec<u8>> {
+    let bytes = fs::read(path).with_context(|| format!("read {what} {}", path.display()))?;
+    ensure!(
+        hash(&bytes) == expected,
+        "{what} changed: its bytes differ from the bound identity"
+    );
+    after_verification(path);
+    Ok(bytes)
+}
+/// Read `path` once and return its bytes with the SHA-256 of exactly those
+/// bytes, for a receiver that records the digest of what it consumes rather
+/// than checking a bound one (W1 route R8). Callers parse the returned bytes;
+/// they never reopen the path.
+pub fn read_hashed(path: &Path, what: &str) -> Result<(Vec<u8>, String)> {
+    let bytes = fs::read(path).with_context(|| format!("read {what} {}", path.display()))?;
+    let digest = hash(&bytes);
+    after_verification(path);
+    Ok((bytes, digest))
+}
+/// [`read_verified`] against a recorded binding (a JSON value, so a missing
+/// or malformed binding is refused the same way) and with the receiver's own
+/// refusal wording, for receivers whose error text is part of their contract.
+pub fn read_bound(path: &Path, expected: &serde_json::Value, refusal: &str) -> Result<Vec<u8>> {
+    let bytes = fs::read(path).with_context(|| format!("read {}", path.display()))?;
+    ensure!(
+        *expected == serde_json::Value::from(hash(&bytes)),
+        "{refusal}"
+    );
+    after_verification(path);
+    Ok(bytes)
+}
+/// Test-only instrumentation point between a digest check and consumption of
+/// the checked object (W1 consumer-map route R8). Compiles to nothing outside
+/// this crate's own unit-test build; it grants and changes nothing.
+#[inline]
+pub(crate) fn after_verification(_path: &Path) {
+    #[cfg(test)]
+    verification_hook::fire(_path);
+}
+#[cfg(test)]
+pub(crate) mod verification_hook {
+    use std::{cell::RefCell, path::Path};
+    type Hook = Box<dyn FnMut(&Path)>;
+    thread_local!(static HOOK: RefCell<Option<Hook>> = RefCell::new(None));
+    /// Install `hook` for this thread until the returned guard drops.
+    pub(crate) fn install(hook: impl FnMut(&Path) + 'static) -> Guard {
+        HOOK.with(|h| *h.borrow_mut() = Some(Box::new(hook)));
+        Guard
+    }
+    pub(crate) struct Guard;
+    impl Drop for Guard {
+        fn drop(&mut self) {
+            HOOK.with(|h| *h.borrow_mut() = None);
+        }
+    }
+    pub(super) fn fire(path: &Path) {
+        let hook = HOOK.with(|h| h.borrow_mut().take());
+        if let Some(mut hook) = hook {
+            hook(path);
+            HOOK.with(|h| {
+                let mut slot = h.borrow_mut();
+                if slot.is_none() {
+                    *slot = Some(hook);
+                }
+            });
+        }
+    }
+}
 pub fn read_json<T: serde::de::DeserializeOwned>(path: &Path) -> Result<T> {
     serde_json::from_reader(std::io::BufReader::with_capacity(
         64 * 1024,
@@ -36,12 +107,28 @@ pub fn read_json<T: serde::de::DeserializeOwned>(path: &Path) -> Result<T> {
     .with_context(|| format!("parse {}", path.display()))
 }
 /// A sibling temporary file plus fsync/rename prevents readers from seeing partial state.
+/// The temporary name is unique per call (process, time and a process-wide
+/// counter), so a temporary left by a killed writer, even one whose process id
+/// is later reused, and a concurrent writer of the same file never collide.
 pub fn atomic_write(path: &Path, bytes: &[u8]) -> Result<()> {
+    use std::sync::atomic::{AtomicU64, Ordering};
+    static SERIAL: AtomicU64 = AtomicU64::new(0);
     let parent = path
         .parent()
         .context("output requires a parent directory")?;
     fs::create_dir_all(parent)?;
-    let tmp = path.with_extension(format!("partial.{}", std::process::id()));
+    let name = path
+        .file_name()
+        .context("output requires a file name")?
+        .to_string_lossy();
+    let tmp = parent.join(format!(
+        ".{name}.tmp-{}-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)?
+            .as_nanos(),
+        SERIAL.fetch_add(1, Ordering::Relaxed)
+    ));
     let mut file = OpenOptions::new().create_new(true).write(true).open(&tmp)?;
     let result = (|| -> Result<()> {
         file.write_all(bytes)?;

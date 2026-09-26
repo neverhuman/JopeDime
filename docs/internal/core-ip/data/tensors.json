@@ -9,7 +9,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "decode",
+      "payload_sha256": "91e13cc3a6ac7df4876d85e37ca1a762bbfeb7d45bef56797595a422d74ce12c"
     },
     {
       "name": "ctx_proj.weight",
@@ -18,7 +20,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 262144
+      "parameters": 262144,
+      "role": "decode",
+      "payload_sha256": "859825125a0ee23b86bc8b95708ec4ef47bc27eeff1c5a4ad3c26aeaee92b55f"
     },
     {
       "name": "decoder.layers.0.linear1.bias",
@@ -26,7 +30,9 @@
         2048
       ],
       "dtype": "F32",
-      "parameters": 2048
+      "parameters": 2048,
+      "role": "decode",
+      "payload_sha256": "3225c7ae62b40fdbe30f8b11cae053c68d11fa9886a714cc1f4ccefb8c2bf732"
     },
     {
       "name": "decoder.layers.0.linear1.weight",
@@ -35,7 +41,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 1048576
+      "parameters": 1048576,
+      "role": "decode",
+      "payload_sha256": "c128dc334254387c33c643cb75ffc32b29fcc181d7ba81dbc6ab4bb5149c09be"
     },
     {
       "name": "decoder.layers.0.linear2.bias",
@@ -43,7 +51,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "decode",
+      "payload_sha256": "9caddeb2919ba6db420725936decb240fbb2271ea7834b4abceaf2833c4480b3"
     },
     {
       "name": "decoder.layers.0.linear2.weight",
@@ -52,7 +62,9 @@
         2048
       ],
       "dtype": "F32",
-      "parameters": 1048576
+      "parameters": 1048576,
+      "role": "decode",
+      "payload_sha256": "d10f54df60410fb2b3057868603e733c98090004d845a8f07ba2b5138c88e21c"
     },
     {
       "name": "decoder.layers.0.norm1.bias",
@@ -60,7 +72,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "decode",
+      "payload_sha256": "5db4845bff281282f5fb624f2f5bd65e730550ed169bef65057962d6c55b8e40"
     },
     {
       "name": "decoder.layers.0.norm1.weight",
@@ -68,7 +82,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "decode",
+      "payload_sha256": "2bf51cdc3f8b9453235963c90f775a417038c73c8a509a0147728efe8717c240"
     },
     {
       "name": "decoder.layers.0.norm2.bias",
@@ -76,7 +92,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "decode",
+      "payload_sha256": "e3a3523e4348ec2aa8cdde24f40cd5e6d6e19c5bab215fbdaf7bdbaf197e03e3"
     },
     {
       "name": "decoder.layers.0.norm2.weight",
@@ -84,7 +102,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "decode",
+      "payload_sha256": "376200eba0923601e199b88d90ad39b2411091b5cfa57065eac84f90159e6f77"
     },
     {
       "name": "decoder.layers.0.self_attn.in_proj_bias",
@@ -92,7 +112,9 @@
         1536
       ],
       "dtype": "F32",
-      "parameters": 1536
+      "parameters": 1536,
+      "role": "decode",
+      "payload_sha256": "93317469ce776b5d5c920c69aa77ca62817ecfcef16d229f2989e93b208f30a6"
     },
     {
       "name": "decoder.layers.0.self_attn.in_proj_weight",
@@ -101,7 +123,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 786432
+      "parameters": 786432,
+      "role": "decode",
+      "payload_sha256": "515a5581c9b7c339814de50ab392fd80f51bf93230751656664133609395fbba"
     },
     {
       "name": "decoder.layers.0.self_attn.out_proj.bias",
@@ -109,7 +133,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "decode",
+      "payload_sha256": "4bb50e652d8ef5fda1bfb79ab1ac9b7cf431f285659a5ddea9a103f0f282e017"
     },
     {
       "name": "decoder.layers.0.self_attn.out_proj.weight",
@@ -118,7 +144,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 262144
+      "parameters": 262144,
+      "role": "decode",
+      "payload_sha256": "9576a7f94a8f81b0985c3b85eef52b04e5d96c1a10cac264158d20f4cb06c06a"
     },
     {
       "name": "decoder.layers.1.linear1.bias",
@@ -126,7 +154,9 @@
         2048
       ],
       "dtype": "F32",
-      "parameters": 2048
+      "parameters": 2048,
+      "role": "decode",
+      "payload_sha256": "e809a6aec46c268ae39dd00b4b7e94dca7685d88b5f32f74d3fe7afeae807a7b"
     },
     {
       "name": "decoder.layers.1.linear1.weight",
@@ -135,7 +165,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 1048576
+      "parameters": 1048576,
+      "role": "decode",
+      "payload_sha256": "897bc6fe5f1b84c5e2747c9e29dc6ca8d2926b6a4dae408016c1d51182bed28c"
     },
     {
       "name": "decoder.layers.1.linear2.bias",
@@ -143,7 +175,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "decode",
+      "payload_sha256": "dac88aca32ae85ef71de961a9e69146285bd94787a9ac34fb8add0ada9a6ec27"
     },
     {
       "name": "decoder.layers.1.linear2.weight",
@@ -152,7 +186,9 @@
         2048
       ],
       "dtype": "F32",
-      "parameters": 1048576
+      "parameters": 1048576,
+      "role": "decode",
+      "payload_sha256": "d692b130db6369cefa72a7072550e6154e175a002eab30d645963bcd68a99774"
     },
     {
       "name": "decoder.layers.1.norm1.bias",
@@ -160,7 +196,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "decode",
+      "payload_sha256": "f27e02c1d3c4afa74d45564a8a3021c74e0825994e3c55f0b94f661ef7080cb7"
     },
     {
       "name": "decoder.layers.1.norm1.weight",
@@ -168,7 +206,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "decode",
+      "payload_sha256": "f9906ce21378f2574282d6179e617660d0b2b9c8417ffdc7fb1b9cdcf97b4d04"
     },
     {
       "name": "decoder.layers.1.norm2.bias",
@@ -176,7 +216,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "decode",
+      "payload_sha256": "a7374392e9e27477a336c25f426935a1ecb8d8a00d290691fa6f77e250bff1ba"
     },
     {
       "name": "decoder.layers.1.norm2.weight",
@@ -184,7 +226,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "decode",
+      "payload_sha256": "63b7d7e58d74b6b1876662f828d2c5b6b499f18fdf9600bcf65ce012a998303a"
     },
     {
       "name": "decoder.layers.1.self_attn.in_proj_bias",
@@ -192,7 +236,9 @@
         1536
       ],
       "dtype": "F32",
-      "parameters": 1536
+      "parameters": 1536,
+      "role": "decode",
+      "payload_sha256": "50f16ce98cf695202c09247ab76df410b80caef352dd5bd158d0c0880a9f236d"
     },
     {
       "name": "decoder.layers.1.self_attn.in_proj_weight",
@@ -201,7 +247,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 786432
+      "parameters": 786432,
+      "role": "decode",
+      "payload_sha256": "d935964a96dc715f302c7c5fc9f8454155bafee360b5af66ff580b1bc88d445b"
     },
     {
       "name": "decoder.layers.1.self_attn.out_proj.bias",
@@ -209,7 +257,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "decode",
+      "payload_sha256": "dd2505e0891d2cd7a057987cf4bf40369b24ccf915737407875b2e59e60acc9e"
     },
     {
       "name": "decoder.layers.1.self_attn.out_proj.weight",
@@ -218,7 +268,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 262144
+      "parameters": 262144,
+      "role": "decode",
+      "payload_sha256": "d7bca9a9ba2fba4cc5cb84c15711a6512af994360ca9580198fb8046dc0cd528"
     },
     {
       "name": "decoder.layers.2.linear1.bias",
@@ -226,7 +278,9 @@
         2048
       ],
       "dtype": "F32",
-      "parameters": 2048
+      "parameters": 2048,
+      "role": "decode",
+      "payload_sha256": "87c0dce1a144f10d12e7c66c957db551dd7dd419dd468e7ecfd303f93b72255c"
     },
     {
       "name": "decoder.layers.2.linear1.weight",
@@ -235,7 +289,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 1048576
+      "parameters": 1048576,
+      "role": "decode",
+      "payload_sha256": "2f5f5fe86c87cc0862ffbb1fda26aa0f2bb9071db26a620472330746253a1fed"
     },
     {
       "name": "decoder.layers.2.linear2.bias",
@@ -243,7 +299,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "decode",
+      "payload_sha256": "844b813f50fce1942efd33f4f274448fa72550ba986afaa10506830cf3ff0074"
     },
     {
       "name": "decoder.layers.2.linear2.weight",
@@ -252,7 +310,9 @@
         2048
       ],
       "dtype": "F32",
-      "parameters": 1048576
+      "parameters": 1048576,
+      "role": "decode",
+      "payload_sha256": "a707e91dd4f5c06be6608cc2434e515914bb0610c5c0361c51e0d4b4982af56c"
     },
     {
       "name": "decoder.layers.2.norm1.bias",
@@ -260,7 +320,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "decode",
+      "payload_sha256": "fc7a5bb8b53c4a3900a16deea447b17c3ae606300e9bb311a7e6ff95e247dbd9"
     },
     {
       "name": "decoder.layers.2.norm1.weight",
@@ -268,7 +330,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "decode",
+      "payload_sha256": "4649ae8d4ad48d9e465f47f6c3beca7a68a4dd778e5914eb0d50debf554a4eab"
     },
     {
       "name": "decoder.layers.2.norm2.bias",
@@ -276,7 +340,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "decode",
+      "payload_sha256": "028eb20282f1e01124bdb12d1293566d5d7ff5de2f65311d57d94ebde4ff7cc1"
     },
     {
       "name": "decoder.layers.2.norm2.weight",
@@ -284,7 +350,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "decode",
+      "payload_sha256": "31cc999a9067a54da2f54a665d4f5aad642f72389d81390a25e1097f8189f3fc"
     },
     {
       "name": "decoder.layers.2.self_attn.in_proj_bias",
@@ -292,7 +360,9 @@
         1536
       ],
       "dtype": "F32",
-      "parameters": 1536
+      "parameters": 1536,
+      "role": "decode",
+      "payload_sha256": "1a942d4f389ed19217152bccd86b221d3da9806b78435fa589733c719a52802d"
     },
     {
       "name": "decoder.layers.2.self_attn.in_proj_weight",
@@ -301,7 +371,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 786432
+      "parameters": 786432,
+      "role": "decode",
+      "payload_sha256": "6661c8d9ab7a5726e625633456096768ec1a0ae0daea0dc74f42f3b9b5f1dd81"
     },
     {
       "name": "decoder.layers.2.self_attn.out_proj.bias",
@@ -309,7 +381,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "decode",
+      "payload_sha256": "d6cce2bafed2001fea7d7b44903d04e3bfec800aeca4933a0827a84fd526a923"
     },
     {
       "name": "decoder.layers.2.self_attn.out_proj.weight",
@@ -318,7 +392,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 262144
+      "parameters": 262144,
+      "role": "decode",
+      "payload_sha256": "6fa1a044f2b6f393220cbfd1ae0c1609dfcab3dce7b09b94ade176f2436fcf13"
     },
     {
       "name": "decoder.layers.3.linear1.bias",
@@ -326,7 +402,9 @@
         2048
       ],
       "dtype": "F32",
-      "parameters": 2048
+      "parameters": 2048,
+      "role": "decode",
+      "payload_sha256": "759695d5c5bcd00f6074eac2a06a7aa6d3957537404851f08370ad8931d31a76"
     },
     {
       "name": "decoder.layers.3.linear1.weight",
@@ -335,7 +413,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 1048576
+      "parameters": 1048576,
+      "role": "decode",
+      "payload_sha256": "c2550222a1e92019903d74364306d5b473830b505c966e2f334189bfadaa0591"
     },
     {
       "name": "decoder.layers.3.linear2.bias",
@@ -343,7 +423,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "decode",
+      "payload_sha256": "8df620b9428f0fff4ec8338fb728eea894e1980180303304f0e0ff97f62b3486"
     },
     {
       "name": "decoder.layers.3.linear2.weight",
@@ -352,7 +434,9 @@
         2048
       ],
       "dtype": "F32",
-      "parameters": 1048576
+      "parameters": 1048576,
+      "role": "decode",
+      "payload_sha256": "d06da568f32bb8c2a38be7cf821e2aff6442c86acb8a964e82c625bd41181522"
     },
     {
       "name": "decoder.layers.3.norm1.bias",
@@ -360,7 +444,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "decode",
+      "payload_sha256": "39c044ed58cc888bdc3266c6955d1c2ec854d348549122f6c2ecaac51557b94e"
     },
     {
       "name": "decoder.layers.3.norm1.weight",
@@ -368,7 +454,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "decode",
+      "payload_sha256": "a1e153b65db541e3e28e6622a0223a09882277456071a2c527561c053102a1b8"
     },
     {
       "name": "decoder.layers.3.norm2.bias",
@@ -376,7 +464,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "decode",
+      "payload_sha256": "c8d9bdae720ef36ceda8c1d00491ec2dc1d996d1e89af1e552c35324ef1958a4"
     },
     {
       "name": "decoder.layers.3.norm2.weight",
@@ -384,7 +474,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "decode",
+      "payload_sha256": "fb2dd51a5c641bf64748db5a137e0afd0476770540aebf08d75adf3a5cae289d"
     },
     {
       "name": "decoder.layers.3.self_attn.in_proj_bias",
@@ -392,7 +484,9 @@
         1536
       ],
       "dtype": "F32",
-      "parameters": 1536
+      "parameters": 1536,
+      "role": "decode",
+      "payload_sha256": "f7c9f8c60f411912637aed4cbf35d981d986d26dd5e65c697e18224590c5c938"
     },
     {
       "name": "decoder.layers.3.self_attn.in_proj_weight",
@@ -401,7 +495,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 786432
+      "parameters": 786432,
+      "role": "decode",
+      "payload_sha256": "b9d8dd4836afa8d3fa62c5a456357c37d3cb62ca06062c9e2608354687c02a7f"
     },
     {
       "name": "decoder.layers.3.self_attn.out_proj.bias",
@@ -409,7 +505,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "decode",
+      "payload_sha256": "4a8434f55ef87a6079d482746199471f882b2816d18f59682db8b1b2a529b851"
     },
     {
       "name": "decoder.layers.3.self_attn.out_proj.weight",
@@ -418,7 +516,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 262144
+      "parameters": 262144,
+      "role": "decode",
+      "payload_sha256": "176267b732198921dd5885cc89c2e01dc277bf8e08e5d727894ea6e8632a25ed"
     },
     {
       "name": "decoder.layers.4.linear1.bias",
@@ -426,7 +526,9 @@
         2048
       ],
       "dtype": "F32",
-      "parameters": 2048
+      "parameters": 2048,
+      "role": "decode",
+      "payload_sha256": "92c27a4bc5b65bbbe3ccbadaca7c0bdd5fe5fe853485e0e0e09861882415229e"
     },
     {
       "name": "decoder.layers.4.linear1.weight",
@@ -435,7 +537,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 1048576
+      "parameters": 1048576,
+      "role": "decode",
+      "payload_sha256": "08ba59f2cac6ba7dd19184e91d03ff6a058edaf55e0e0d4f7469d3ba966fc59d"
     },
     {
       "name": "decoder.layers.4.linear2.bias",
@@ -443,7 +547,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "decode",
+      "payload_sha256": "a0ccc37072ca019c83cbe8770d94ef48aa6665d7f69984a61abc39fb1689cdb3"
     },
     {
       "name": "decoder.layers.4.linear2.weight",
@@ -452,7 +558,9 @@
         2048
       ],
       "dtype": "F32",
-      "parameters": 1048576
+      "parameters": 1048576,
+      "role": "decode",
+      "payload_sha256": "5114a4a6fcb3ea5c6a6086e78c5f28b2afb1d9e9f2d13f8cfc7ad2a3511cd21e"
     },
     {
       "name": "decoder.layers.4.norm1.bias",
@@ -460,7 +568,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "decode",
+      "payload_sha256": "813d6c678650bb44e5e4abf0c3226c36ae8be8abd66079dde135f6c3336c89dd"
     },
     {
       "name": "decoder.layers.4.norm1.weight",
@@ -468,7 +578,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "decode",
+      "payload_sha256": "bba75658c7652708dbd8aa40e21d5b46b039b0eda11b9dc84c9f6d4ef3159f3e"
     },
     {
       "name": "decoder.layers.4.norm2.bias",
@@ -476,7 +588,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "decode",
+      "payload_sha256": "91e724ea0fd951e504e4dbfec72bf1f68d9be71058f32fa29036686f3092a9b3"
     },
     {
       "name": "decoder.layers.4.norm2.weight",
@@ -484,7 +598,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "decode",
+      "payload_sha256": "d04c6235608ea93fd60ceedd1e21f6e1f6c5099e485dfb0356961120560a55d1"
     },
     {
       "name": "decoder.layers.4.self_attn.in_proj_bias",
@@ -492,7 +608,9 @@
         1536
       ],
       "dtype": "F32",
-      "parameters": 1536
+      "parameters": 1536,
+      "role": "decode",
+      "payload_sha256": "ef4e745ec92d8133003d98a5b33331842fe45fb8298c82bc6a9c389902316215"
     },
     {
       "name": "decoder.layers.4.self_attn.in_proj_weight",
@@ -501,7 +619,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 786432
+      "parameters": 786432,
+      "role": "decode",
+      "payload_sha256": "0edc918b673e98d5455b63882a1639dcfa096477013e0312fa03704cea26965e"
     },
     {
       "name": "decoder.layers.4.self_attn.out_proj.bias",
@@ -509,7 +629,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "decode",
+      "payload_sha256": "74e2ec7f3663bb8f3dff9eb9116cacaba32668b27f520e1fe5fec63207e63769"
     },
     {
       "name": "decoder.layers.4.self_attn.out_proj.weight",
@@ -518,7 +640,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 262144
+      "parameters": 262144,
+      "role": "decode",
+      "payload_sha256": "eab2d35b1fecf2213196b891bc1980b67b77c4ee556d4defb8e852bd0c994109"
     },
     {
       "name": "decoder.layers.5.linear1.bias",
@@ -526,7 +650,9 @@
         2048
       ],
       "dtype": "F32",
-      "parameters": 2048
+      "parameters": 2048,
+      "role": "decode",
+      "payload_sha256": "9b6e529cd697c0af7c75a5e95c5bc8881aae23ac561de349ad9f15fb3c8b629f"
     },
     {
       "name": "decoder.layers.5.linear1.weight",
@@ -535,7 +661,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 1048576
+      "parameters": 1048576,
+      "role": "decode",
+      "payload_sha256": "53f423ebe77649e386692a1c9d8d2c256d0c1f21104d14dd841b59c80659d074"
     },
     {
       "name": "decoder.layers.5.linear2.bias",
@@ -543,7 +671,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "decode",
+      "payload_sha256": "d52e29ccb92ff46b0ca3bb2a2655502975f1e3a37e6a9c4a0c920a800c5df159"
     },
     {
       "name": "decoder.layers.5.linear2.weight",
@@ -552,7 +682,9 @@
         2048
       ],
       "dtype": "F32",
-      "parameters": 1048576
+      "parameters": 1048576,
+      "role": "decode",
+      "payload_sha256": "12360fd1d5a704ce99fefe634efc1d1df01cbf734dbf9acff3809f250bd489a3"
     },
     {
       "name": "decoder.layers.5.norm1.bias",
@@ -560,7 +692,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "decode",
+      "payload_sha256": "c3ddef56ed904b0b06d5ec927b0a8ae2cce35d4c812399eed08748e4abc5b5c8"
     },
     {
       "name": "decoder.layers.5.norm1.weight",
@@ -568,7 +702,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "decode",
+      "payload_sha256": "69f16972a1de658ce17cdd10371f9207e411ed7a1bf40e01e40a4b295233dcfe"
     },
     {
       "name": "decoder.layers.5.norm2.bias",
@@ -576,7 +712,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "decode",
+      "payload_sha256": "50c2432a4e8ef73e576aa1c0b3f8d9c40e15b849c60d3dbf3d761675586ad817"
     },
     {
       "name": "decoder.layers.5.norm2.weight",
@@ -584,7 +722,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "decode",
+      "payload_sha256": "972da9b721f903debfe8fed58219e0ef4cb8e923dfc79e53d22bcb26311fc949"
     },
     {
       "name": "decoder.layers.5.self_attn.in_proj_bias",
@@ -592,7 +732,9 @@
         1536
       ],
       "dtype": "F32",
-      "parameters": 1536
+      "parameters": 1536,
+      "role": "decode",
+      "payload_sha256": "b67dc681e99a5d49b6ee7edcb80ac4e37366541b6e3c6035717e05f54a8513d0"
     },
     {
       "name": "decoder.layers.5.self_attn.in_proj_weight",
@@ -601,7 +743,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 786432
+      "parameters": 786432,
+      "role": "decode",
+      "payload_sha256": "68caec246e14d24ae0980a8c0d1cf6d8e9a1f9b01210cd08822e23938a44d615"
     },
     {
       "name": "decoder.layers.5.self_attn.out_proj.bias",
@@ -609,7 +753,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "decode",
+      "payload_sha256": "e85e3991d32ca45975adf601db5fc8aa99ef13114c60826ae1f262cc038d76fb"
     },
     {
       "name": "decoder.layers.5.self_attn.out_proj.weight",
@@ -618,7 +764,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 262144
+      "parameters": 262144,
+      "role": "decode",
+      "payload_sha256": "be1a8db426b34950b82ff0180f74426b902ddad5d8112842b8d6f2de23501575"
     },
     {
       "name": "encoder.0.bias",
@@ -626,7 +774,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "decode",
+      "payload_sha256": "f40307f55acd86e30ee132e1cfe94253b98934130fc6395f4bf2badb0dc1a33c"
     },
     {
       "name": "encoder.0.weight",
@@ -635,7 +785,9 @@
         2048
       ],
       "dtype": "F32",
-      "parameters": 1048576
+      "parameters": 1048576,
+      "role": "decode",
+      "payload_sha256": "71636d4c875d5064dabc426292c9ddb534a81969942d465133564698c2f72354"
     },
     {
       "name": "encoder.2.bias",
@@ -643,7 +795,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "decode",
+      "payload_sha256": "dd0fc2153152aace2c900ef43a16d9b67e57c97e42f5316dc62dd2f19a745a42"
     },
     {
       "name": "encoder.2.weight",
@@ -651,7 +805,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "decode",
+      "payload_sha256": "19a758193ad9990333ab65f7a15e5ed00d8cfc12ae9a6a31bafefbc7dc9e328b"
     },
     {
       "name": "encoder.4.bias",
@@ -659,7 +815,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "decode",
+      "payload_sha256": "d8a04f51d43ea9e5c58fe10c824dbae0cb95a06088d4ca4c183c3201a2adc95d"
     },
     {
       "name": "encoder.4.weight",
@@ -668,7 +826,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 262144
+      "parameters": 262144,
+      "role": "decode",
+      "payload_sha256": "1e509486c3edf2904fba83ecfcfcf7a714c459c5a629877dd53714e72cfa9877"
     },
     {
       "name": "encoder.6.bias",
@@ -676,7 +836,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "decode",
+      "payload_sha256": "459021f5e8e0939da1089c737bf7d5c0c01757e6be3a9d26e955b04ccb038022"
     },
     {
       "name": "encoder.6.weight",
@@ -684,49 +846,65 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "decode",
+      "payload_sha256": "7fcb5962d1afae53b86fd150c2b6d822734cda45e3e507fff123c53872772449"
     },
     {
       "name": "loss_log_vars.ablation_bt",
       "shape": [],
       "dtype": "F32",
-      "parameters": 1
+      "parameters": 1,
+      "role": "training_only",
+      "payload_sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119"
     },
     {
       "name": "loss_log_vars.reward_bt",
       "shape": [],
       "dtype": "F32",
-      "parameters": 1
+      "parameters": 1,
+      "role": "training_only",
+      "payload_sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119"
     },
     {
       "name": "loss_log_vars.reward_listwise",
       "shape": [],
       "dtype": "F32",
-      "parameters": 1
+      "parameters": 1,
+      "role": "training_only",
+      "payload_sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119"
     },
     {
       "name": "loss_log_vars.routing_ce",
       "shape": [],
       "dtype": "F32",
-      "parameters": 1
+      "parameters": 1,
+      "role": "training_only",
+      "payload_sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119"
     },
     {
       "name": "loss_log_vars.runtime_huber",
       "shape": [],
       "dtype": "F32",
-      "parameters": 1
+      "parameters": 1,
+      "role": "training_only",
+      "payload_sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119"
     },
     {
       "name": "loss_log_vars.seq_nll",
       "shape": [],
       "dtype": "F32",
-      "parameters": 1
+      "parameters": 1,
+      "role": "training_only",
+      "payload_sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119"
     },
     {
       "name": "loss_log_vars.stability_bce",
       "shape": [],
       "dtype": "F32",
-      "parameters": 1
+      "parameters": 1,
+      "role": "training_only",
+      "payload_sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119"
     },
     {
       "name": "out_norm.bias",
@@ -734,7 +912,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "decode",
+      "payload_sha256": "6e0c7d821cf92e6950cb373850d37a3013de970fc155ecc8f61379baa672663f"
     },
     {
       "name": "out_norm.weight",
@@ -742,7 +922,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "decode",
+      "payload_sha256": "27724f036b3b82967759cb2e645a40f23e45cea21f4fb49bcf4d9833869dbe90"
     },
     {
       "name": "pos_emb.weight",
@@ -751,7 +933,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 66048
+      "parameters": 66048,
+      "role": "decode",
+      "payload_sha256": "b996bf7befef407d20d740dc81e16ab3722108e36aa6de1117a663a27ebc10db"
     },
     {
       "name": "reward_encoder.0.bias",
@@ -759,7 +943,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "rank",
+      "payload_sha256": "cf8e0fc178c5d9fab0f41138a7458fb3cd41f6de5b2e902827b31b23191fac4e"
     },
     {
       "name": "reward_encoder.0.weight",
@@ -768,7 +954,9 @@
         2048
       ],
       "dtype": "F32",
-      "parameters": 1048576
+      "parameters": 1048576,
+      "role": "rank",
+      "payload_sha256": "580280332257cd19389e9fb2aea30051a74c6abe49e95b3f21f6d767f8145630"
     },
     {
       "name": "reward_encoder.2.bias",
@@ -776,7 +964,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "rank",
+      "payload_sha256": "6d177fc9f8fbe4f48ebad88df5331a98355f4290b8aa5935d6c2f6a0c5b4a8de"
     },
     {
       "name": "reward_encoder.2.weight",
@@ -784,7 +974,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "rank",
+      "payload_sha256": "273cf796af021d455e769021b674286a2fd156c4339b25da6ee321558faea141"
     },
     {
       "name": "reward_encoder.4.bias",
@@ -792,7 +984,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "rank",
+      "payload_sha256": "6fd47c8521731319c99ed965984b3167ceace883829f15f69043754968f3b316"
     },
     {
       "name": "reward_encoder.4.weight",
@@ -801,7 +995,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 262144
+      "parameters": 262144,
+      "role": "rank",
+      "payload_sha256": "e76f895ad501efc2861a0b9ccbba093478975a4c0acf366a1b0a84549841c215"
     },
     {
       "name": "reward_encoder.6.bias",
@@ -809,7 +1005,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "rank",
+      "payload_sha256": "c7cf938049de29a12c0d2ea0cdf5ab0f36c9e7abbeb6ded6e72660eeaee0ad6c"
     },
     {
       "name": "reward_encoder.6.weight",
@@ -817,7 +1015,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "rank",
+      "payload_sha256": "3300451b49cbc68bd9340d40c3766aafb36ae51b5ea4468184e1f6d5ba18ae07"
     },
     {
       "name": "reward_head_ablation.0.bias",
@@ -825,7 +1025,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "training_only",
+      "payload_sha256": "62bc23bdc3d93b7317ce7d720d2ffeb94142b6d965bb3f00b0ae62206fe3328c"
     },
     {
       "name": "reward_head_ablation.0.weight",
@@ -834,7 +1036,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 262144
+      "parameters": 262144,
+      "role": "training_only",
+      "payload_sha256": "72a06d364b4b4710c97690a5926fd77f1c3eb49347a8820b146c5bcb9d12a23b"
     },
     {
       "name": "reward_head_ablation.3.bias",
@@ -842,7 +1046,9 @@
         1
       ],
       "dtype": "F32",
-      "parameters": 1
+      "parameters": 1,
+      "role": "training_only",
+      "payload_sha256": "792fe4907d78c94aa18d43f6e81d01fb0dbb07dc70111ab37b9b6d301389fdbf"
     },
     {
       "name": "reward_head_ablation.3.weight",
@@ -851,7 +1057,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "training_only",
+      "payload_sha256": "aa83195fabe4f498c468eb1a6ce85889345b06150415b15327a004b5776ed286"
     },
     {
       "name": "reward_heads.0.0.bias",
@@ -859,7 +1067,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "rank",
+      "payload_sha256": "2458b1397a3407e89e4baa2677dbc5c1f7b9a7c3912e19b65b40c48ba45d90a5"
     },
     {
       "name": "reward_heads.0.0.weight",
@@ -868,7 +1078,9 @@
         1536
       ],
       "dtype": "F32",
-      "parameters": 786432
+      "parameters": 786432,
+      "role": "rank",
+      "payload_sha256": "12c19003491bfede126e6e237044b6b0bb39d327a7f9496f15eedd7377cc8c58"
     },
     {
       "name": "reward_heads.0.3.bias",
@@ -876,7 +1088,9 @@
         1
       ],
       "dtype": "F32",
-      "parameters": 1
+      "parameters": 1,
+      "role": "rank",
+      "payload_sha256": "c89efe61821fb09b72218256e3aeb74119ddfbaa97106c3188f91bd3907cdffc"
     },
     {
       "name": "reward_heads.0.3.weight",
@@ -885,7 +1099,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "rank",
+      "payload_sha256": "0cb76032f9cefd6e7f0d50a7fdf8825bb0909a270a4a0c1bb6be82b8ee4776f7"
     },
     {
       "name": "reward_heads.1.0.bias",
@@ -893,7 +1109,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "rank",
+      "payload_sha256": "345e80ec2cd53dbdc8bf303e45c8e6d7c747712a509461913946782c2d7bb91a"
     },
     {
       "name": "reward_heads.1.0.weight",
@@ -902,7 +1120,9 @@
         1536
       ],
       "dtype": "F32",
-      "parameters": 786432
+      "parameters": 786432,
+      "role": "rank",
+      "payload_sha256": "51193b012587cc532f5c6c2b96507356f1b0dedcf38bd92579232408ae94ffaf"
     },
     {
       "name": "reward_heads.1.3.bias",
@@ -910,7 +1130,9 @@
         1
       ],
       "dtype": "F32",
-      "parameters": 1
+      "parameters": 1,
+      "role": "rank",
+      "payload_sha256": "fadf762df897ac8267cdb08b20121cd9914f393af3eae7e5fce9745ca8e25aa7"
     },
     {
       "name": "reward_heads.1.3.weight",
@@ -919,7 +1141,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "rank",
+      "payload_sha256": "6c660f07fb8a421589dcf2eefeb638f4f78cec8241e4189ad7f9dce219a3a69b"
     },
     {
       "name": "reward_heads.2.0.bias",
@@ -927,7 +1151,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "rank",
+      "payload_sha256": "76d19a3725f5ef837ca8676f7f2ac8701ae381794c741b169f460576a2fd3bdc"
     },
     {
       "name": "reward_heads.2.0.weight",
@@ -936,7 +1162,9 @@
         1536
       ],
       "dtype": "F32",
-      "parameters": 786432
+      "parameters": 786432,
+      "role": "rank",
+      "payload_sha256": "2285eb3f7132085ec3e3b69db5a9bea90812aa28da5c4373df6a057cd604f977"
     },
     {
       "name": "reward_heads.2.3.bias",
@@ -944,7 +1172,9 @@
         1
       ],
       "dtype": "F32",
-      "parameters": 1
+      "parameters": 1,
+      "role": "rank",
+      "payload_sha256": "4b8f67bfa841a6a6ca6ff9e6b94005c937c7ea84ca67c52e64ad559171fdc086"
     },
     {
       "name": "reward_heads.2.3.weight",
@@ -953,7 +1183,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "rank",
+      "payload_sha256": "84573550a3e88269c1b696c7224de315be674b6baca4d7951bd0b005214af458"
     },
     {
       "name": "reward_heads.3.0.bias",
@@ -961,7 +1193,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "rank",
+      "payload_sha256": "fb284fc7bc71d146f9206d764412ab8ca594295407084c88f252702a4a9be627"
     },
     {
       "name": "reward_heads.3.0.weight",
@@ -970,7 +1204,9 @@
         1536
       ],
       "dtype": "F32",
-      "parameters": 786432
+      "parameters": 786432,
+      "role": "rank",
+      "payload_sha256": "896b73dc4bdc3765c657fe1282f2f6c67ae0698e1c0222e0a89d2b0bcfe4d718"
     },
     {
       "name": "reward_heads.3.3.bias",
@@ -978,7 +1214,9 @@
         1
       ],
       "dtype": "F32",
-      "parameters": 1
+      "parameters": 1,
+      "role": "rank",
+      "payload_sha256": "08d19f24f6bb38e31caf0ccc420dc06d8be33f1ea37c128be02a706efffd140a"
     },
     {
       "name": "reward_heads.3.3.weight",
@@ -987,7 +1225,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "rank",
+      "payload_sha256": "9a1e9bbb51f0c950532cf07196715d19daeaab8f4a253e3a535901b0d49f0017"
     },
     {
       "name": "reward_norm.bias",
@@ -995,7 +1235,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "rank",
+      "payload_sha256": "b9e2cf435e1b52048a0579c3f9512a5c844942abfc821ab47b9a4f4de64d591b"
     },
     {
       "name": "reward_norm.weight",
@@ -1003,7 +1245,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "rank",
+      "payload_sha256": "07517b9a22f37dc778c1a831d6312ec2db06ad16b1770218c722cc5f20b3e2d5"
     },
     {
       "name": "reward_token_emb.weight",
@@ -1012,7 +1256,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 336384
+      "parameters": 336384,
+      "role": "rank",
+      "payload_sha256": "1c7cd04d93c74d16661bbb8a8c15ca24cd4387905a53f60eb140942a66d7bcb6"
     },
     {
       "name": "runtime_head.0.bias",
@@ -1020,7 +1266,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "rank",
+      "payload_sha256": "224b6d961b3e236de21dfd5932df19a4defcaddc650e66b184ab66874bf613fd"
     },
     {
       "name": "runtime_head.0.weight",
@@ -1029,7 +1277,9 @@
         1024
       ],
       "dtype": "F32",
-      "parameters": 524288
+      "parameters": 524288,
+      "role": "rank",
+      "payload_sha256": "45115f5b785f4c2c797df21fbb58de9d82f15d064371a30ecdc8b7f12f09abcd"
     },
     {
       "name": "runtime_head.2.bias",
@@ -1037,7 +1287,9 @@
         1
       ],
       "dtype": "F32",
-      "parameters": 1
+      "parameters": 1,
+      "role": "rank",
+      "payload_sha256": "4cb8699147ad53ce65ab9cdb4a9c5c99ee5f64330988b40d9ec3f80a23087c9a"
     },
     {
       "name": "runtime_head.2.weight",
@@ -1046,7 +1298,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "rank",
+      "payload_sha256": "9c98040cb8cb75b1ac9e97c4149bc7a436fb6facb05e924699d92dcc25ea653b"
     },
     {
       "name": "stability_head.0.bias",
@@ -1054,7 +1308,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "training_only",
+      "payload_sha256": "232a4b56c2c5ef381b71bb446e4551999caf36b3869cfe88aa52da52f1bc9b2c"
     },
     {
       "name": "stability_head.0.weight",
@@ -1063,7 +1319,9 @@
         1536
       ],
       "dtype": "F32",
-      "parameters": 786432
+      "parameters": 786432,
+      "role": "training_only",
+      "payload_sha256": "60de2bcd81b8516fe8760b2dec9a215f7ee854f0a452bf9a89063bfa5b3f457b"
     },
     {
       "name": "stability_head.2.bias",
@@ -1071,7 +1329,9 @@
         1
       ],
       "dtype": "F32",
-      "parameters": 1
+      "parameters": 1,
+      "role": "training_only",
+      "payload_sha256": "14b57d1aaa8b06afa85b902d27b6b5a8b313f4edd1ea49c40af11f3a555bbdc8"
     },
     {
       "name": "stability_head.2.weight",
@@ -1080,7 +1340,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "training_only",
+      "payload_sha256": "27a502698352acb13631929e78271dd35cf9f0284f8cb261a997bf69e3fa7858"
     },
     {
       "name": "token_emb.weight",
@@ -1089,7 +1351,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 336384
+      "parameters": 336384,
+      "role": "decode",
+      "payload_sha256": "fd3480c6666d88c17077f4167e843584a96d852ebf86e9c006e8090984302848"
     },
     {
       "name": "z_gamma.0.bias",
@@ -1097,7 +1361,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "rank",
+      "payload_sha256": "379535a5f50766365a68dbace229eab99dcf91467780ec9d8a77401fa796d4ba"
     },
     {
       "name": "z_gamma.0.weight",
@@ -1106,7 +1372,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 262144
+      "parameters": 262144,
+      "role": "rank",
+      "payload_sha256": "607a17d950d6669ddf2cd2ca1c4f9ad9d0c1040a6361a2cd32b3859ebf475df6"
     },
     {
       "name": "z_proj.bias",
@@ -1114,7 +1382,9 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 512
+      "parameters": 512,
+      "role": "rank",
+      "payload_sha256": "e92a1b943e440ed751aaa0688161628dd9342ddac5bfae8b742e3e011ca7e221"
     },
     {
       "name": "z_proj.weight",
@@ -1123,9 +1393,17 @@
         512
       ],
       "dtype": "F32",
-      "parameters": 262144
+      "parameters": 262144,
+      "role": "rank",
+      "payload_sha256": "0d3207b40756c9915dec7c6c1b6d41a0c37d3357c11d81cf4299514b7e8a3add"
     }
   ],
   "tensor_count": 136,
-  "parameters": 27796494
+  "parameters": 27796494,
+  "role_parameters": {
+    "decode": 20894208,
+    "rank": 5851653,
+    "training_only": 1050633
+  },
+  "payload_digests_observed_utc": "2026-09-26T05:22:46.626192+00:00"
 }

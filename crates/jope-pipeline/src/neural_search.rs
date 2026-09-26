@@ -326,12 +326,14 @@ impl Comparison {
     fn validate(&self) -> Result<()> {
         self.input_plan.validate()?;
         self.producer_request.validate()?;
+        // Only the encoding outputs (context digest and, for a qualified CPU context, the
+        // controller-issued admission digest) are attached to the preregistered plan.
         ensure!(
             self.producer_request
-                == self
-                    .proposal
-                    .accepted()?
-                    .request(self.producer_request.context_sha256.clone())
+                == self.proposal.accepted()?.request_with_admission(
+                    self.producer_request.context_sha256.clone(),
+                    self.producer_request.context_admission_sha256.clone()
+                )
                 && jope_policy::is_sha256_hex(&self.context_receipt_sha256),
             "context outputs changed preregistered producer inputs"
         );
@@ -824,6 +826,11 @@ pub struct AcceptedProposalEvidence {
     pub ranking_backend: String,
     /// Accepted checkpoint bytes do not qualify this CPU implementation numerically.
     pub native_cuda_parity_qualified: bool,
+    /// sha256 of the reconciled `jope.proposal-ledger/v1` in the producer artifact: every
+    /// draw's terminal outcome and each seed slot's original tokens, scores, parser identity
+    /// and adaptation edges. Absent in evidence recorded before the ledger existed.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub proposal_ledger_sha256: Option<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -1401,6 +1408,12 @@ pub fn verify_policy_inputs(
             && worker.request.vocabulary_sha256 == comparison.vocabulary_sha256,
         "policy request differs from comparison/context"
     );
+    // The worker verifies a qualified CPU context against the admission this request issues;
+    // it must be exactly the admission the controller verified here (none for a native context).
+    ensure!(
+        worker.request.context_admission_sha256.as_deref() == context.admission_pins_sha256(),
+        "policy request does not issue the controller-verified context admission"
+    );
     ensure!(
         worker.job.command.program.sha256 == worker.expected_program_sha256
             && jope_policy::is_sha256_hex(&worker.expected_program_sha256),
@@ -1564,6 +1577,12 @@ fn run_neural<B: Backend, V: Variation>(
         population.candidates().len() == INITIAL_SIZE,
         "policy must provide80 initial slots"
     );
+    // The reader reconciled the ledger with this population and request; an artifact without
+    // one carries no candidate identity or denominators and is not admitted to the search.
+    let proposal_ledger_sha256 = producer
+        .ledger()
+        .context("policy producer artifact lacks its proposal ledger")?
+        .sha256()?;
     let mut candidates = population
         .candidates()
         .iter()
@@ -1597,6 +1616,7 @@ fn run_neural<B: Backend, V: Variation>(
         checkpoint_sha256: population.checkpoint_sha256().into(),
         ranking_backend: producer.ranking_backend().into(),
         native_cuda_parity_qualified: false,
+        proposal_ledger_sha256: Some(proposal_ledger_sha256),
     };
     let search = run_population(
         backend,
@@ -2636,8 +2656,11 @@ mod tests {
             checkpoint_sha256: accepted.checkpoint_sha256.clone(),
             ranking_backend: "fixture".into(),
             native_cuda_parity_qualified: false,
+            proposal_ledger_sha256: None,
         };
         let before = serde_json::to_vec(&evidence)?;
+        // Evidence recorded before the ledger existed keeps its bytes; new evidence names it.
+        assert!(!String::from_utf8(before.clone())?.contains("proposal_ledger_sha256"));
         let wrapped = ProposalEvidence::Accepted(Box::new(evidence));
         assert_eq!(serde_json::to_vec(&wrapped)?, before);
         let decoded: ProposalEvidence = serde_json::from_slice(&before)?;
@@ -4011,6 +4034,59 @@ mod tests {
         append_metadata_child(&mut receipt, &plan, 2, 1, Origin::Crossover, &[81, 0])?;
         assert!(receipt.neural_policy_lineage(&id(&receipt, 83)));
         assert!(receipt.has_fitted_neural_descendant());
+        Ok(())
+    }
+
+    /// W2-T02 G-03 / W2-T07: a comparison attaches only encoding outputs to its preregistered
+    /// plan: the context digest and, for a qualified CPU context, the controller-issued
+    /// admission digest the worker must verify against.
+    #[test]
+    fn comparison_attaches_only_encoding_outputs_including_the_issued_admission() -> Result<()> {
+        let target = std::env::var_os("CARGO_TARGET_DIR")
+            .map(PathBuf::from)
+            .unwrap_or_else(|| PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../target"));
+        let scratch = target.join("tmp");
+        std::fs::create_dir_all(&scratch)?;
+        let temp = tempfile::Builder::new()
+            .prefix("comparison-admission-fixture-")
+            .tempdir_in(scratch)?;
+        let path = std::fs::canonicalize(temp.path())?.join("receipt.json");
+        std::fs::write(&path, b"synthetic production receipt")?;
+        let receipt = crate::execution::Artifact {
+            sha256: sha256_hex(b"synthetic production receipt"),
+            path,
+        };
+        let plan = comparison(80);
+        let accepted = plan.proposal.accepted()?.clone();
+        let with = |request: jope_policy::producer::Request| Comparison {
+            input_plan: plan.clone(),
+            producer_request: request,
+            context_receipt_sha256: sha256_hex(b"context receipt"),
+            context_cost: ContextCost {
+                cached: false,
+                production_receipt: receipt.clone(),
+                original_wall_seconds: Some(1.),
+                original_cpu_seconds: Some(1.),
+                original_gpu_seconds: Some(0.),
+                amortization_uses: Some(1),
+            },
+        };
+        let context = sha256_hex(b"context");
+        let pins = sha256_hex(b"controller-issued admission pins");
+        with(accepted.request(context.clone())).validate()?;
+        let issued = accepted.qualified_request(context.clone(), pins.clone());
+        with(issued.clone()).validate()?;
+        assert_eq!(
+            issued.context_admission_sha256.as_deref(),
+            Some(pins.as_str())
+        );
+        // Anything else that differs from the plan is still refused, admission or not.
+        let mut changed = issued.clone();
+        changed.sampling_seed += 1;
+        assert!(with(changed).validate().is_err());
+        let mut malformed = issued;
+        malformed.context_admission_sha256 = Some(pins.to_ascii_uppercase());
+        assert!(with(malformed).validate().is_err());
         Ok(())
     }
 }

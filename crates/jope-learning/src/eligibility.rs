@@ -25,7 +25,9 @@ use std::{
     path::Path,
 };
 
+mod context;
 mod inner;
+pub use context::{ContextEvidence, ContextPlan};
 pub use inner::{
     derive_inner_partition, freeze_inner_optimization, register_inner_candidate, InnerEvidence,
     InnerPartition,
@@ -34,6 +36,7 @@ pub use inner::{
 const FREEZE: &str = "jope.optimization-freeze/v1";
 const PREDICTIONS: &str = "jope.train-oof-predictions/v1";
 const QUALIFICATION: &str = "jope.measured-teaching/v1";
+const DIAGNOSTICS: &str = "jope.teaching-diagnostics/v1";
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -53,6 +56,9 @@ pub struct FreezePlan {
     pub panel_sha256: String,
     pub dataset_id: String,
     pub evaluation_seed: u64,
+    /// Required for teaching admission; a freeze without it is diagnostic only.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub context: Option<ContextPlan>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -82,6 +88,8 @@ struct FrozenPolicy {
     created_at_unix: u64,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     inner_partition: Option<InnerPartition>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    context: Option<ContextPlan>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -120,6 +128,9 @@ pub struct OofEvidence {
     pub fold_predictions_sha256: Vec<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub inner: Option<InnerEvidence>,
+    /// Mandatory for qualification; absent only on legacy/diagnostic submissions.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub context: Option<ContextEvidence>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -147,6 +158,73 @@ pub struct Qualification {
     pub context_fitting_rows_sha256: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub context_outer_fold: Option<u8>,
+    /// Verified context receipt; stored legacy qualifications without one never revalidate.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub context_receipt_sha256: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub diagnostics: Option<Diagnostics>,
+}
+
+/// Descriptive statistics recomputed with the qualification. Admission reads only
+/// `fold_losses` under `guard` (mean-fold loss); nothing here can change a decision.
+/// Pooled figures weight rows rather than folds and exist only for regression.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Diagnostics {
+    pub schema: String,
+    pub fold_rows: Vec<usize>,
+    /// Candidate minus train-only baseline loss per fold; positive is worse.
+    pub fold_loss_deltas: Vec<f64>,
+    pub adverse_folds: usize,
+    pub worst_fold_loss_delta: f64,
+    pub pooled_rmse: Option<f64>,
+    pub pooled_baseline_rmse: Option<f64>,
+    /// `1 - SSE/SST` about the pooled held-out target mean; uses held labels, never admits.
+    pub pooled_r2: Option<f64>,
+}
+
+fn diagnostics(
+    fold_losses: &[(f64, f64)],
+    fold_rows: Vec<usize>,
+    pooled: &[(f64, f64, f64)],
+) -> Result<Diagnostics> {
+    let fold_loss_deltas: Vec<f64> = fold_losses.iter().map(|(c, b)| c - b).collect();
+    let n = pooled.len() as f64;
+    let squared = |f: fn(&(f64, f64, f64)) -> f64| pooled.iter().map(|p| f(p).powi(2)).sum::<f64>();
+    let (pooled_rmse, pooled_baseline_rmse, pooled_r2) = if pooled.is_empty() {
+        (None, None, None)
+    } else {
+        let mean = pooled.iter().map(|p| p.0).sum::<f64>() / n;
+        let sse = squared(|(t, c, _)| t - c);
+        let sst = pooled
+            .iter()
+            .map(|(t, _, _)| (t - mean).powi(2))
+            .sum::<f64>();
+        (
+            Some((sse / n).sqrt()),
+            Some((squared(|(t, _, b)| t - b) / n).sqrt()),
+            (sst > 0.0).then(|| 1.0 - sse / sst),
+        )
+    };
+    let value = Diagnostics {
+        schema: DIAGNOSTICS.into(),
+        fold_rows,
+        adverse_folds: fold_loss_deltas.iter().filter(|d| **d > 0.0).count(),
+        worst_fold_loss_delta: fold_loss_deltas.iter().copied().fold(f64::MIN, f64::max),
+        fold_loss_deltas,
+        pooled_rmse,
+        pooled_baseline_rmse,
+        pooled_r2,
+    };
+    ensure!(
+        value.fold_loss_deltas.iter().all(|d| d.is_finite())
+            && [pooled_rmse, pooled_baseline_rmse, pooled_r2]
+                .into_iter()
+                .flatten()
+                .all(f64::is_finite),
+        "nonfinite teaching diagnostic"
+    );
+    Ok(value)
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -433,6 +511,9 @@ fn freeze_impl(
     inner_partition: Option<InnerPartition>,
 ) -> Result<FreezeReceipt> {
     let selected_task = task(&plan.comparison)?;
+    if let Some(context) = &plan.context {
+        context.validate()?;
+    }
     let classes = &plan.comparison.comparison.as_ref().unwrap().class_order;
     let label_role = effective_label_role(&plan.original_label_role, true)?;
     ensure!(
@@ -534,6 +615,7 @@ fn freeze_impl(
         folds,
         created_at_unix: now_unix(),
         inner_partition,
+        context: plan.context.clone(),
     };
     let bytes = canonical_json(&policy)?;
     immutable_write(&path, &bytes)?;
@@ -719,11 +801,21 @@ fn measured(
         record.score.metric == expected_metric,
         "metric differs from measured task protocol"
     );
+    ensure!(
+        record.score.units
+            == if expected_metric == Metric::Rmse {
+                "original_target_units"
+            } else {
+                "dimensionless"
+            },
+        "score units differ from measured task protocol"
+    );
     let policy = load_freeze(state, &evidence.freeze)?;
     ensure!(
         policy.guard == GuardPolicy::current(),
         "unknown teaching guard"
     );
+    let context_receipt_sha256 = context::verify(state, &policy, record, evidence)?;
     let experiment: Experiment = blob(state, &evidence.experiment_blob_sha256)?;
     let window: ExecutionWindow = blob(state, &evidence.window_sha256)?;
     experiment.validate()?;
@@ -754,6 +846,8 @@ fn measured(
     let classes = &record.identity.comparison.as_ref().unwrap().class_order;
     let rows: Vec<TargetRow> = blob(state, &policy.targets_sha256)?;
     let mut fold_losses = Vec::new();
+    let mut fold_rows_scored = Vec::new();
+    let mut pooled = Vec::new();
     let mut improved_folds = 0;
     for (fold, frozen) in policy.folds.iter().enumerate() {
         ensure!(frozen.fold as usize == fold, "frozen fold order changed");
@@ -951,6 +1045,14 @@ fn measured(
         );
         improved_folds += usize::from(policy.guard.improves(c.loss, b.loss));
         fold_losses.push((c.loss, b.loss));
+        fold_rows_scored.push(hold.len());
+        if let (Predictions::Values(c), Predictions::Values(b)) =
+            (&predictions, &baseline_predictions)
+        {
+            for ((row, c), b) in hold.iter().zip(c).zip(b) {
+                pooled.push((row.target.parse::<f64>()?, *c, *b));
+            }
+        }
     }
     let candidate_loss = fold_losses
         .iter()
@@ -971,6 +1073,7 @@ fn measured(
         candidate_value == record.score.value,
         "claimed HWM score differs from measured mean-fold predictions"
     );
+    let summary = diagnostics(&fold_losses, fold_rows_scored, &pooled)?;
     Ok(Qualification {
         schema: QUALIFICATION.into(),
         comparison: record.identity.clone(),
@@ -994,22 +1097,73 @@ fn measured(
         fold_losses,
         context_fitting_rows_sha256:policy.inner_partition.as_ref().map(|p|p.fitting_rows_sha256()).transpose()?,
         context_outer_fold:policy.inner_partition.as_ref().map(|p|p.outer_fold),
+        context_receipt_sha256: Some(context_receipt_sha256),
+        diagnostics: Some(summary),
         measurement:
             "recomputed-from-pinned-targets-and-predictions; analytic-baseline-worker-fits=0; execution receipts retained separately"
                 .into(),
     })
 }
 
-/// Recompute a retained admission without opening mutable worker paths or changing ledgers.
-pub fn revalidate_qualification(state: &State, record: &HwmRecord) -> Result<Qualification> {
-    let stored: StoredQualification =
-        serde_json::from_slice(&fs::read(qualification_path(state, record))?)?;
+/// Durable `qualified` decisions: (comparison, record, stored qualification digest). A stored
+/// qualification is eligible only once its decision event is durable; a crash between the
+/// immutable file and the event leaves it pending until `qualify` is redelivered.
+pub(crate) struct Decisions(BTreeSet<(String, String, String)>);
+impl Decisions {
+    pub(crate) fn load(state: &State) -> Result<Self> {
+        let ledger = Ledger::open(state.root(), "eligibility");
+        ledger.require_intact()?;
+        Ok(Self::of(&ledger.events()?))
+    }
+    fn of(events: &[serde_json::Value]) -> Self {
+        Self(
+            events
+                .iter()
+                .filter(|event| event["outcome"] == "qualified")
+                .filter_map(|event| {
+                    Some((
+                        event["comparison_sha256"].as_str()?.to_owned(),
+                        event["record_sha256"].as_str()?.to_owned(),
+                        event["qualification_sha256"].as_str()?.to_owned(),
+                    ))
+                })
+                .collect(),
+        )
+    }
+    fn contains(&self, record: &HwmRecord, qualification_sha256: &str) -> bool {
+        self.0.contains(&(
+            record.identity_sha256.clone(),
+            record.provenance.record_sha256.clone(),
+            qualification_sha256.to_owned(),
+        ))
+    }
+}
+
+/// Recompute a stored qualification and require its durable decision; returns its digest.
+fn revalidate(
+    state: &State,
+    record: &HwmRecord,
+    decisions: &Decisions,
+) -> Result<(Qualification, String)> {
+    let bytes = fs::read(qualification_path(state, record))?;
+    let stored: StoredQualification = serde_json::from_slice(&bytes)?;
     let current = measured(state, record, &stored.evidence, false)?;
     ensure!(
         current == stored.qualification && current.guard.admits(&current),
         "retained teaching qualification changed"
     );
-    Ok(current)
+    let sha = sha256_hex(&bytes);
+    ensure!(
+        decisions.contains(record, &sha),
+        "incomplete teaching linkage: the stored qualification has no durable qualified \
+         decision; redeliver it through qualify"
+    );
+    Ok((current, sha))
+}
+
+/// Recompute a retained admission without opening mutable worker paths or changing ledgers.
+pub fn revalidate_qualification(state: &State, record: &HwmRecord) -> Result<Qualification> {
+    Ok(revalidate(state, record, &Decisions::load(state)?)?.0)
 }
 fn qualification_path(state: &State, record: &HwmRecord) -> std::path::PathBuf {
     state
@@ -1024,44 +1178,47 @@ pub fn qualify(state: &State, record: &HwmRecord, evidence: &OofEvidence) -> Res
     let _lock = state.lock("eligibility")?;
     let ledger = Ledger::open(state.root(), "eligibility");
     ledger.require_intact()?;
+    let decided = Decisions::of(&ledger.events()?);
     let measurement = measured(state, record, evidence, true);
-    let outcome = (|| -> Result<Qualification> {
+    let outcome = (|| -> Result<(Qualification, String)> {
         let qualification = measurement
             .as_ref()
             .map_err(|error| anyhow::anyhow!("{error:#}"))?
             .clone();
         ensure!(qualification.guard.admits(&qualification), "no eligible signal: mean-fold gain and four of five gains above the frozen numerical margin are required");
         require_blob(state, &record.provenance.record_sha256)?;
-        let stored = StoredQualification {
+        let stored = canonical_json(&StoredQualification {
             evidence: evidence.clone(),
             qualification: qualification.clone(),
-        };
-        immutable_write(
-            &qualification_path(state, record),
-            &canonical_json(&stored)?,
-        )?;
-        Ok(qualification)
+        })?;
+        immutable_write(&qualification_path(state, record), &stored)?;
+        Ok((qualification, sha256_hex(&stored)))
     })();
+    // Redelivering a durable decision is idempotent; a pending file gains its event here.
+    if let Ok((qualification, sha)) = &outcome {
+        if decided.contains(record, sha) {
+            return Ok(qualification.clone());
+        }
+    }
     ledger.append(&[serde_json::json!({"schema":"jope.teaching-decision/v1",
         "comparison_sha256":record.identity_sha256, "record_sha256":record.provenance.record_sha256,
         "evidence_sha256":canonical_sha256(evidence)?, "guard":GuardPolicy::current(),
         "outcome":if outcome.is_ok(){"qualified"}else{"rejected"},
+        "qualification_sha256":outcome.as_ref().ok().map(|(_, sha)| sha),
         "reason":outcome.as_ref().err().map(|error| format!("{error:#}")),
         "measurement":measurement.as_ref().ok()
     })], serde_json::json!({"source":"measured-teaching-scorer"}))?;
-    outcome
+    outcome.map(|(qualification, _)| qualification)
 }
 
-pub(crate) fn require_qualified(state: &State, record: &HwmRecord) -> Result<()> {
+/// The digest of the durable qualification an HWM decision relies on.
+pub(crate) fn require_qualified(
+    state: &State,
+    record: &HwmRecord,
+    decisions: &Decisions,
+) -> Result<String> {
     record.validate()?;
-    let stored: StoredQualification =
-        serde_json::from_slice(&fs::read(qualification_path(state, record))?)?;
-    let measured = measured(state, record, &stored.evidence, false)?;
-    ensure!(
-        measured == stored.qualification && measured.guard.admits(&measured),
-        "unqualified OOF candidate"
-    );
-    Ok(())
+    Ok(revalidate(state, record, decisions)?.1)
 }
 
 fn retain_artifact(state: &State, artifact: &Artifact, live: bool) -> Result<()> {
@@ -1085,6 +1242,7 @@ pub fn revalidate_replay(state: &State, entries: &[Qualification]) -> Result<Tea
     Ledger::open(state.root(), "eligibility").require_intact()?;
     ensure!(!entries.is_empty(), "empty replay admission");
     let events = crate::hwm::events(state)?;
+    let decisions = Decisions::load(state)?;
     for entry in entries {
         let mut found = false;
         for event in &events {
@@ -1096,7 +1254,7 @@ pub fn revalidate_replay(state: &State, entries: &[Qualification]) -> Result<Tea
                 continue;
             }
             event.record.validate()?;
-            if revalidate_qualification(state, &event.record)? == *entry {
+            if revalidate(state, &event.record, &decisions)?.0 == *entry {
                 found = true;
                 break;
             }
@@ -1114,51 +1272,44 @@ pub fn revalidate_replay(state: &State, entries: &[Qualification]) -> Result<Tea
     })
 }
 
-/// Only exact current pointers with recomputable measured admissions can enter a teaching manifest.
+/// Only exact current pointers that equal their ledger tip, with recomputable measured
+/// admissions bound to that HWM decision, can enter a teaching manifest. Incomplete linkage
+/// (a pointer behind its tip, or a tip with no pointer) is an exclusion, never an omission.
 pub fn freeze_teaching(state: &State) -> Result<TeachingManifest> {
     Ledger::open(state.root(), "hwm").require_intact()?;
-    Ledger::open(state.root(), "eligibility").require_intact()?;
-    let accepted: BTreeSet<_> = crate::hwm::events(state)?
-        .into_iter()
-        .filter(|event| {
-            event.outcome == "accepted" && event.pointer == PointerKey::of(&event.record)
-        })
-        .map(|event| {
-            (
-                event.record.identity_sha256,
-                event.record.provenance.record_sha256,
-            )
-        })
-        .collect();
+    let decisions = Decisions::load(state)?;
+    let tips = crate::hwm::accepted_tips(state)?;
+    let pointers = state.pointers()?;
     let mut manifest = TeachingManifest {
         schema: "jope.qualified-teaching-freeze/v1",
         excluded_diagnostic: 0,
         exclusions: Vec::new(),
         entries: Vec::new(),
     };
-    for (key, record) in state.pointers()? {
+    for (key, record) in &pointers {
         let candidate = (|| -> Result<Qualification> {
             record.validate()?;
             ensure!(
-                key == PointerKey::of(&record)
+                *key == PointerKey::of(record)
                     && record.identity.comparison.is_some()
                     && !record.sealed,
                 "legacy, mismatched or sealed diagnostic record"
             );
+            let tip = tips
+                .get(key)
+                .context("teaching pointer lacks an accepted exact-identity ledger event")?;
             ensure!(
-                accepted.contains(&(
-                    record.identity_sha256.clone(),
-                    record.provenance.record_sha256.clone()
-                )),
-                "teaching pointer lacks an accepted exact-identity ledger event"
+                tip.record == *record,
+                "incomplete teaching linkage: the pointer lags its HWM ledger tip {}; run hwm \
+                 recovery",
+                tip.record.provenance.record_sha256
             );
             require_blob(state, &record.provenance.record_sha256)?;
-            let stored: StoredQualification =
-                serde_json::from_slice(&fs::read(qualification_path(state, &record))?)?;
-            let qualified = measured(state, &record, &stored.evidence, false)?;
+            let (qualified, sha) = revalidate(state, record, &decisions)?;
             ensure!(
-                qualified == stored.qualification && qualified.guard.admits(&qualified),
-                "stored teaching qualification changed"
+                tip.qualification_sha256.as_deref() == Some(sha.as_str()),
+                "incomplete teaching linkage: the HWM decision is not bound to this stored \
+                 qualification"
             );
             Ok(qualified)
         })();
@@ -1170,6 +1321,20 @@ pub fn freeze_teaching(state: &State) -> Result<TeachingManifest> {
             }
         }
     }
+    for (key, tip) in &tips {
+        if tip.record.identity.comparison.is_some()
+            && *key == PointerKey::of(&tip.record)
+            && !pointers.iter().any(|(pointer, _)| pointer == key)
+        {
+            manifest.excluded_diagnostic += 1;
+            manifest.exclusions.push((
+                key.rel(),
+                "incomplete teaching linkage: the accepted HWM tip has no pointer; run hwm \
+                 recovery"
+                    .into(),
+            ));
+        }
+    }
     Ok(manifest)
 }
 
@@ -1177,6 +1342,7 @@ pub fn freeze_teaching(state: &State) -> Result<TeachingManifest> {
 mod tests {
     use super::*;
     use crate::{
+        encoder_receipt::{Encoder, EncoderCapability, Inputs, Member, Product, Scope},
         hwm::{self, Candidate},
         record::{ComparisonContext, Cost, Evaluator, Genome, Provenance, Score, HWM_SCHEMA},
     };
@@ -1193,11 +1359,168 @@ mod tests {
         plan: FreezePlan,
         record: HwmRecord,
         evidence: OofEvidence,
+        rows: Vec<TargetRow>,
+        task: Task,
+        classes: Vec<String>,
+        experiment: Experiment,
+        window: ExecutionWindow,
+        created_at: u64,
+    }
+
+    type Predict<'a> = &'a dyn Fn(u8, &[&TargetRow], Predictions) -> Predictions;
+
+    impl Fixture {
+        /// Another candidate for the same frozen comparison, context and execution window.
+        fn candidate(&self, tag: &str, predict: Predict) -> (HwmRecord, OofEvidence) {
+            let mut base = self.evidence.clone();
+            base.fold_predictions_sha256.clear();
+            candidate_in(
+                &self.state,
+                &self.plan.comparison,
+                &self.rows,
+                self.task,
+                &self.classes,
+                &self.experiment,
+                &self.window,
+                self.created_at,
+                base,
+                tag,
+                predict,
+            )
+        }
+    }
+
+    /// Predictions exact on the first `improved` folds, the train-only baseline elsewhere.
+    fn exact_on(improved: usize) -> impl Fn(u8, &[&TargetRow], Predictions) -> Predictions {
+        move |fold: u8, hold: &[&TargetRow], baseline: Predictions| {
+            if (fold as usize) >= improved {
+                return baseline;
+            }
+            match baseline {
+                Predictions::Values(_) => Predictions::Values(
+                    hold.iter().map(|row| row.target.parse().unwrap()).collect(),
+                ),
+                Predictions::Probabilities { classes, .. } => Predictions::Probabilities {
+                    values: hold
+                        .iter()
+                        .map(|row| {
+                            classes
+                                .iter()
+                                .map(|class| f64::from(class == &row.target))
+                                .collect()
+                        })
+                        .collect(),
+                    classes,
+                },
+            }
+        }
+    }
+
+    fn context_plan() -> ContextPlan {
+        ContextPlan {
+            source_family: "synthetic-fixture-family".into(),
+            encoder: Encoder {
+                artifact_sha256: sha256_hex(b"fixture context encoder"),
+                configuration_sha256: sha256_hex(b"fixture context configuration"),
+                seed: 7,
+                product: Product::TeachingContext2048,
+            },
+        }
+    }
+
+    /// Producer-side scope, built from the fixture rows rather than the receiver's derivation.
+    fn context_scope(comparison: &HwmIdentity, rows: &[TargetRow]) -> Scope {
+        Scope {
+            comparison: comparison.clone(),
+            source_family: context_plan().source_family,
+            outer_fold: None,
+            inner_fold: None,
+            fitting: rows
+                .iter()
+                .map(|row| Member {
+                    row: row.id.clone(),
+                    group: row.group.clone(),
+                })
+                .collect(),
+            forbidden: vec![],
+        }
+    }
+
+    fn context_output(width: usize, offset: f32) -> Vec<u8> {
+        (0..width)
+            .flat_map(|index| (offset + index as f32 / 64.).to_le_bytes())
+            .collect()
+    }
+
+    /// Retain one synthetic producer's receipt, fitted state and output; nothing is encoded.
+    fn produce_context(
+        state: &State,
+        scope: Scope,
+        encoder: Encoder,
+        parent_receipts: Vec<String>,
+        output: &[u8],
+    ) -> ContextEvidence {
+        let capability = EncoderCapability::bind(
+            scope,
+            encoder,
+            Inputs {
+                features_sha256: sha256_hex(b"fixture projected features"),
+                labels_sha256: Some(sha256_hex(b"fixture projected labels")),
+                parent_receipts,
+            },
+        )
+        .unwrap();
+        let fitted = format!("synthetic fitted context state/{}", output.len()).into_bytes();
+        let receipt = capability.receipt(&fitted, output).unwrap();
+        ContextEvidence {
+            receipt_sha256: state.put_blob(&canonical_json(&receipt).unwrap()).unwrap(),
+            fitted_state_sha256: state.put_blob(&fitted).unwrap(),
+            output_sha256: state.put_blob(output).unwrap(),
+        }
+    }
+
+    fn valid_context(
+        state: &State,
+        comparison: &HwmIdentity,
+        rows: &[TargetRow],
+    ) -> ContextEvidence {
+        let parent = produce_context(
+            state,
+            context_scope(comparison, rows),
+            Encoder {
+                product: Product::DatasetSignature512,
+                ..context_plan().encoder
+            },
+            vec![],
+            &context_output(512, 0.25),
+        );
+        produce_context(
+            state,
+            context_scope(comparison, rows),
+            context_plan().encoder,
+            vec![parent.receipt_sha256],
+            &context_output(2048, 0.5),
+        )
+    }
+
+    fn fixture(selected_task: Task, improved: usize) -> Fixture {
+        fixture_with(selected_task, improved, Some(context_plan()))
+    }
+
+    fn fixture_with(selected_task: Task, improved: usize, context: Option<ContextPlan>) -> Fixture {
+        fixture_spec(selected_task, context, None, &exact_on(improved))
     }
 
     // All inputs/predictions are synthetic; these tests establish admission mechanics,
     // not corpus admission, real fitted-model accuracy, or a completed live search.
-    fn fixture(selected_task: Task, improved: usize) -> Fixture {
+    // `fold_targets` overrides the balanced default; `predict` maps (fold, held rows,
+    // train-only baseline) to the candidate's retained predictions.
+    fn fixture_spec(
+        selected_task: Task,
+        context: Option<ContextPlan>,
+        fold_targets: Option<Vec<Vec<String>>>,
+        predict: Predict,
+    ) -> Fixture {
         let fixture_root =
             Path::new(env!("CARGO_MANIFEST_DIR")).join("../../target/tmp/teaching-fixtures");
         fs::create_dir_all(&fixture_root).unwrap();
@@ -1228,20 +1551,28 @@ mod tests {
                 checkpoint_sha256: None,
             }),
         };
-        let targets = if classes.is_empty() {
-            vec!["-1".to_string(), "1".to_string()]
-        } else {
-            classes.clone()
-        };
-        let rows = (0..5)
-            .flat_map(|fold| {
+        let fold_targets = fold_targets.unwrap_or_else(|| {
+            vec![
+                if classes.is_empty() {
+                    vec!["-1".to_string(), "1".to_string()]
+                } else {
+                    classes.clone()
+                };
+                5
+            ]
+        });
+        assert_eq!(fold_targets.len(), 5);
+        let rows = fold_targets
+            .iter()
+            .enumerate()
+            .flat_map(|(fold, targets)| {
                 targets
                     .iter()
                     .enumerate()
                     .map(move |(index, target)| TargetRow {
-                        id: format!("{:064x}", fold as usize * 100 + index),
-                        group: format!("{:064x}", 1000 + fold as usize * 100 + index),
-                        fold,
+                        id: format!("{:064x}", fold * 100 + index),
+                        group: format!("{:064x}", 1000 + fold * 100 + index),
+                        fold: fold as u8,
                         target: target.clone(),
                     })
             })
@@ -1267,7 +1598,8 @@ mod tests {
             "rows":rows.len()+1, "features":[{"name":"x", "kind":"numeric"}], "classes":classes,
             "group_columns":[], "split":{"protocol":"synthetic", "sha256":comparison.cut_id,
                 "development_sha256":development_sha, "sealed_sha256":"8".repeat(64),
-                "development_rows":rows.len(), "sealed_rows":1, "fold_rows":vec![targets.len();5]},
+                "development_rows":rows.len(), "sealed_rows":1,
+                "fold_rows":fold_targets.iter().map(Vec::len).collect::<Vec<_>>()},
             "license":{"original":"synthetic", "evidence_url":"synthetic", "repository":"synthetic", "note":"synthetic"},
             "checkpoint_exposure":"synthetic", "description":"synthetic", "group_limitations":"synthetic"});
         let mut datasets = Vec::new();
@@ -1302,17 +1634,11 @@ mod tests {
             panel_sha256: state.put_blob(&canonical_json(&panel).unwrap()).unwrap(),
             dataset_id: "fixture".into(),
             evaluation_seed: 7,
+            context,
         };
         let freeze = freeze_optimization(&state, &plan).unwrap();
         let frozen = load_freeze(&state, &freeze).unwrap();
         assert_eq!(frozen.label_role, "development");
-        let dsl = "(pipe X (synthetic-fixture))".to_string();
-        let program = sha256_hex(dsl.as_bytes());
-        let fitted_bytes = canonical_json(&json!({"schema":"jope.panel-fitted-rust/v1",
-            "method":{"dsl":dsl}, "model":{"genome_sha256":program},
-            "fixture_note":"synthetic artifact consistency test, not a live fit"}))
-        .unwrap();
-        let fitted = state.put_blob(&fitted_bytes).unwrap();
         let experiment: Experiment = serde_json::from_value(json!({
             "schema":"jope.experiment/v1", "panel_sha256":plan.panel_sha256,
             "methods_sha256":"7".repeat(64), "source_sha":"a".repeat(40),
@@ -1326,7 +1652,7 @@ mod tests {
             started_unix_ms: frozen.created_at_unix * 1000,
             deadline_unix_ms: frozen.created_at_unix * 1000 + 60000,
         };
-        let mut evidence = OofEvidence {
+        let base = OofEvidence {
             freeze,
             experiment_blob_sha256: state
                 .put_blob(&canonical_json(&experiment).unwrap())
@@ -1334,33 +1660,77 @@ mod tests {
             window_sha256: state.put_blob(&canonical_json(&window).unwrap()).unwrap(),
             fold_predictions_sha256: Vec::new(),
             inner: None,
+            context: Some(valid_context(&state, &comparison, &rows)),
         };
+        let (record, evidence) = candidate_in(
+            &state,
+            &comparison,
+            &rows,
+            selected_task,
+            &classes,
+            &experiment,
+            &window,
+            frozen.created_at_unix,
+            base,
+            "",
+            predict,
+        );
+        Fixture {
+            _directory: directory,
+            state,
+            plan,
+            record,
+            evidence,
+            rows,
+            task: selected_task,
+            classes,
+            experiment,
+            window,
+            created_at: frozen.created_at_unix,
+        }
+    }
+
+    /// One complete synthetic candidate: per-fold fitted state, request, job, worker receipt,
+    /// result and predictions, plus the record claiming their mean fold score. An empty `tag`
+    /// keeps the original fixture's program, job directories and record blob.
+    #[allow(clippy::too_many_arguments)]
+    fn candidate_in(
+        state: &State,
+        comparison: &HwmIdentity,
+        rows: &[TargetRow],
+        selected_task: Task,
+        classes: &[String],
+        experiment: &Experiment,
+        window: &ExecutionWindow,
+        created_at: u64,
+        mut evidence: OofEvidence,
+        tag: &str,
+        predict: Predict,
+    ) -> (HwmRecord, OofEvidence) {
+        let suffix = if tag.is_empty() {
+            String::new()
+        } else {
+            format!("-{tag}")
+        };
+        let dsl = format!("(pipe X (synthetic-fixture{suffix}))");
+        let program = sha256_hex(dsl.as_bytes());
+        let classes = classes.to_vec();
         let mut all_targets = Vec::new();
         let mut all_predictions = Vec::new();
         let mut scores = Vec::new();
         for fold in 0..5 {
-            let (train, hold) = fold_rows(&rows, fold);
-            let predictions = if (fold as usize) < improved {
-                match selected_task {
-                    Task::Regression => Predictions::Values(
-                        hold.iter().map(|row| row.target.parse().unwrap()).collect(),
-                    ),
-                    _ => Predictions::Probabilities {
-                        classes: classes.clone(),
-                        values: hold
-                            .iter()
-                            .map(|row| {
-                                classes
-                                    .iter()
-                                    .map(|class| f64::from(class == &row.target))
-                                    .collect()
-                            })
-                            .collect(),
-                    },
-                }
-            } else {
-                baseline(selected_task, &classes, &train, hold.len()).unwrap()
-            };
+            let (train, hold) = fold_rows(rows, fold);
+            let predictions = predict(
+                fold,
+                &hold,
+                baseline(selected_task, &classes, &train, hold.len()).unwrap(),
+            );
+            // Each fold's fitted state is its own subject, never shared across folds.
+            let fitted_bytes = canonical_json(&json!({"schema":"jope.panel-fitted-rust/v1",
+                "method":{"dsl":dsl}, "model":{"genome_sha256":program}, "fold":fold,
+                "fixture_note":"synthetic artifact consistency test, not a live fit"}))
+            .unwrap();
+            let fitted = state.put_blob(&fitted_bytes).unwrap();
             let labels: Vec<_> = hold.iter().map(|row| row.target.clone()).collect();
             let score = score_predictions(selected_task, &classes, &labels, &predictions).unwrap();
             let predictions_sha256 = state
@@ -1386,7 +1756,7 @@ mod tests {
                 seed: 7,
                 numerical_policy: NUMERICAL_POLICY.into(),
             };
-            let job_directory = state.root().join(format!("fixture-worker-{fold}"));
+            let job_directory = state.root().join(format!("fixture-worker{suffix}-{fold}"));
             fs::create_dir(&job_directory).unwrap();
             let input_path = job_directory.join("input.json");
             fs::write(&input_path, canonical_json(&request).unwrap()).unwrap();
@@ -1481,7 +1851,7 @@ mod tests {
                         .unwrap(),
                     )
                     .unwrap(),
-                fit_started_unix: frozen.created_at_unix,
+                fit_started_unix: created_at,
             };
             evidence.fold_predictions_sha256.push(
                 state
@@ -1507,7 +1877,7 @@ mod tests {
         let record = HwmRecord {
             schema: HWM_SCHEMA.into(),
             identity_sha256: comparison.sha256().unwrap(),
-            identity: comparison,
+            identity: comparison.clone(),
             legacy_identity_sha256: None,
             genome: Genome {
                 dsl,
@@ -1518,7 +1888,12 @@ mod tests {
                 metric,
                 value: scores.iter().sum::<f64>() / 5.0,
                 direction: metric.direction(),
-                units: "synthetic".into(),
+                units: if metric == Metric::Rmse {
+                    "original_target_units"
+                } else {
+                    "dimensionless"
+                }
+                .into(),
             },
             cost: Cost::default(),
             evaluator: Evaluator {
@@ -1533,18 +1908,20 @@ mod tests {
                 run_id: "fixture".into(),
                 git_sha: "unbound".into(),
                 bundle_id: "unbound".into(),
-                record_sha256: state.put_blob(b"synthetic candidate").unwrap(),
+                record_sha256: state.put_blob(&candidate_blob(tag)).unwrap(),
             },
             prev_event_sha256: None,
             improvement_number: 0,
             ts_unix: now_unix(),
         };
-        Fixture {
-            _directory: directory,
-            state,
-            plan,
-            record,
-            evidence,
+        (record, evidence)
+    }
+
+    fn candidate_blob(tag: &str) -> Vec<u8> {
+        if tag.is_empty() {
+            b"synthetic candidate".to_vec()
+        } else {
+            format!("synthetic candidate {tag}").into_bytes()
         }
     }
 
@@ -1774,7 +2151,7 @@ mod tests {
         for fold in 0..5 {
             fs::remove_dir_all(f.state.root().join(format!("fixture-worker-{fold}"))).unwrap();
         }
-        require_qualified(&f.state, &f.record).unwrap();
+        require_qualified(&f.state, &f.record, &Decisions::load(&f.state).unwrap()).unwrap();
         assert!(qualified.guard.admits(&qualified));
     }
 
@@ -1982,4 +2359,10 @@ mod tests {
         bad.consumption.observed_exit_unix_ms = Some(4101);
         assert!(verify(&request, &bad, 4100).is_err());
     }
+
+    mod linkage;
+    mod matrix;
+    mod metrics;
+    mod provenance;
+    mod transitions;
 }

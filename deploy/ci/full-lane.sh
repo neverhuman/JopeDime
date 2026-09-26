@@ -60,6 +60,8 @@ PY
       full-policy) selection=(-p jope-policy --features "testing,context-producer") ;;
       full-s3-offline) selection=(-p jope-arena --features s3) ;;
       full-neural)
+        # Discovery receipt (never overwritten) for the unavailable or discovered SDK state.
+        export JOPE_NEURAL_ENV_RECEIPT="$EVIDENCE/neural-discovery.json"
         # SDK/runtime availability is measured independently; no GPU device/credentials.
         # shellcheck disable=SC1091
         source deploy/ci/neural-env.sh || { echo 'unavailable: neural SDK environment'; exit 78; }

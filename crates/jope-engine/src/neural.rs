@@ -11,6 +11,18 @@ use std::{
 use tch::{nn, nn::Module, nn::ModuleT, Device, Kind, Tensor};
 
 pub const RANKING_BACKWARD_ID: &str = "dense_pairwise_v2";
+/// Objective literals bound into `training::objective::identity` (W6-T06).
+/// Uniform label smoothing over the grammar-legal set in `sequence_nll`.
+pub const LABEL_SMOOTHING: f64 = 0.05;
+/// Listwise target temperature: `softmax(percentile / T)`.
+pub const LISTWISE_TEMPERATURE: f64 = 0.25;
+/// Smallest comparison group that receives a listwise term.
+pub const LISTWISE_MIN_MEMBERS: usize = 3;
+/// A Bradley–Terry pair is up-weighted when either member's percentile reaches this.
+pub const BOOST_THRESHOLD: f32 = 0.9;
+pub const BOOST_FACTOR: f64 = 2.0;
+/// Dropout inside the reward and ablation heads.
+pub const REWARD_HEAD_DROPOUT: f64 = 0.05;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -326,13 +338,18 @@ impl Policy {
                         &p / "reward_heads" / i.to_string(),
                         3 * c.width,
                         c.width,
-                        Some(0.05),
+                        Some(REWARD_HEAD_DROPOUT),
                     )
                 })
                 .collect(),
             runtime: mlp(&p / "runtime_head", 2 * c.width, c.width, None),
             stability: mlp(&p / "stability_head", 3 * c.width, c.width, None),
-            ablation: mlp(&p / "reward_head_ablation", c.width, c.width, Some(0.05)),
+            ablation: mlp(
+                &p / "reward_head_ablation",
+                c.width,
+                c.width,
+                Some(REWARD_HEAD_DROPOUT),
+            ),
             loss_log_vars,
             config: c,
         };
@@ -542,6 +559,12 @@ pub fn sequence_nll(
         legal.any_dim(-1, false).all().int64_value(&[]) != 0,
         "empty legal token set"
     );
+    // A row without a supervised position would keep its weight in the
+    // denominator with a zero numerator and dilute every other row (W6 G8).
+    ensure!(
+        pad.any_dim(-1, false).all().int64_value(&[]) != 0,
+        "sequence row without supervised positions"
+    );
     ensure!(
         legal
             .gather(-1, &targets.unsqueeze(-1), false)
@@ -566,7 +589,7 @@ pub fn sequence_nll(
     ) / legal
         .sum_dim_intlist(&[-1i64][..], false, Kind::Float)
         .clamp_min(1.0);
-    let nll: Tensor = nll * 0.95 + smooth * 0.05;
+    let nll: Tensor = nll * (1.0 - LABEL_SMOOTHING) + smooth * LABEL_SMOOTHING;
     let nll = nll.masked_fill(&pad.logical_not(), 0.0);
     let per_row = nll.sum_dim_intlist(&[-1i64][..], false, Kind::Float)
         / pad
@@ -749,8 +772,9 @@ fn ranking_losses(
                 losers.push(l);
                 weights.push(
                     (va - vb).abs()
-                        * if percentiles[a as usize].max(percentiles[b as usize]) >= 0.9 {
-                            2.0
+                        * if percentiles[a as usize].max(percentiles[b as usize]) >= BOOST_THRESHOLD
+                        {
+                            BOOST_FACTOR
                         } else {
                             1.0
                         },
@@ -758,7 +782,7 @@ fn ranking_losses(
             }
         }
         if include_listwise
-            && ids.len() >= 3
+            && ids.len() >= LISTWISE_MIN_MEMBERS
             && ids.iter().all(|&i| percentiles[i as usize].is_finite())
         {
             let ps = Tensor::from_slice(
@@ -767,7 +791,7 @@ fn ranking_losses(
                     .collect::<Vec<_>>(),
             )
             .to_device(reward.device());
-            let target = (&ps / 0.25).softmax(0, Kind::Float);
+            let target = (&ps / LISTWISE_TEMPERATURE).softmax(0, Kind::Float);
             let pred = reward
                 .index_select(0, &Tensor::from_slice(ids).to_device(reward.device()))
                 .to_kind(Kind::Float)
@@ -870,19 +894,27 @@ impl AdamW {
             self.step == 0 || self.backend == "scalar_fp32_v1",
             "optimizer backend changed; start a new run from model weights instead of resuming"
         );
-        self.backend = "scalar_fp32_v1".into();
-        self.step += 1;
-        let step = self.step as f64;
-        tch::no_grad(|| -> Result<()> {
-            for (name, mut p) in vs.variables().into_iter().collect::<BTreeMap<_, _>>() {
-                let g = p.grad();
-                if !g.defined() {
-                    continue;
-                }
+        let parameters = vs.variables().into_iter().collect::<BTreeMap<_, _>>();
+        // A rejected update changes nothing: validate every gradient before the
+        // step counter, backend, moments or any parameter is touched (W6-T04).
+        for p in parameters.values() {
+            let g = p.grad();
+            if g.defined() {
                 ensure!(
                     p.kind() == Kind::Float && g.isfinite().all().int64_value(&[]) != 0,
                     "nonfinite gradient or non-FP32 master parameter"
                 );
+            }
+        }
+        self.backend = "scalar_fp32_v1".into();
+        self.step += 1;
+        let step = self.step as f64;
+        tch::no_grad(|| -> Result<()> {
+            for (name, mut p) in parameters {
+                let g = p.grad();
+                if !g.defined() {
+                    continue;
+                }
                 let (m, v) = self
                     .moments
                     .entry(name)
@@ -902,11 +934,11 @@ impl AdamW {
             self.step == 0 || self.backend == "cuda_fused_fp32_v1",
             "optimizer backend changed; use warm-start with fresh optimizer state"
         );
-        let mut parameters = Vec::new();
-        let mut first = Vec::new();
-        let mut second = Vec::new();
+        let variables = vs.variables().into_iter().collect::<BTreeMap<_, _>>();
+        // Validate before creating any moment entry: a rejected update leaves
+        // the optimizer state exactly as it was (W6-T04).
         let mut gradients = Vec::new();
-        for (name, p) in vs.variables().into_iter().collect::<BTreeMap<_, _>>() {
+        for p in variables.values() {
             let g = p.grad();
             if !g.defined() {
                 continue;
@@ -915,20 +947,28 @@ impl AdamW {
                 p.kind() == Kind::Float && g.kind() == Kind::Float,
                 "fused AdamW requires FP32 master parameters and gradients"
             );
+            gradients.push(g.flatten(0, -1));
+        }
+        ensure!(!gradients.is_empty(), "no optimizer gradients");
+        ensure!(
+            Tensor::cat(&gradients, 0).isfinite().all().int64_value(&[]) != 0,
+            "nonfinite optimizer gradients"
+        );
+        let mut parameters = Vec::new();
+        let mut first = Vec::new();
+        let mut second = Vec::new();
+        for (name, p) in variables {
+            if !p.grad().defined() {
+                continue;
+            }
             let (m, v) = self
                 .moments
                 .entry(name)
                 .or_insert_with(|| (Tensor::zeros_like(&p), Tensor::zeros_like(&p)));
             first.push(m.shallow_clone());
             second.push(v.shallow_clone());
-            gradients.push(g.flatten(0, -1));
             parameters.push(p);
         }
-        ensure!(!parameters.is_empty(), "no optimizer gradients");
-        ensure!(
-            Tensor::cat(&gradients, 0).isfinite().all().int64_value(&[]) != 0,
-            "nonfinite optimizer gradients"
-        );
         let pointers = |tensors: &mut Vec<Tensor>| {
             tensors
                 .iter_mut()
@@ -1009,7 +1049,15 @@ impl AdamW {
 extern "C" {
     fn jp_error() -> *const std::ffi::c_char;
     fn jp_unique_id(bytes: *mut u8) -> i32;
-    fn jp_nccl_init(bytes: *const u8, rank: i32, world: i32) -> *mut c_void;
+    fn jp_nccl_init(
+        bytes: *const u8,
+        rank: i32,
+        world: i32,
+        device: i32,
+        expected_uuid: *const std::ffi::c_char,
+    ) -> *mut c_void;
+    fn jp_device_count() -> i32;
+    fn jp_device_uuid(index: i32, out: *mut std::ffi::c_char) -> i32;
     fn jp_allreduce(comm: *mut c_void, tensor: *mut c_void) -> i32;
     fn jp_nccl_abort(comm: *mut c_void);
     fn jp_bf16(enabled: i32);
@@ -1030,9 +1078,40 @@ pub struct Nccl {
     comm: *mut c_void,
     pub world: usize,
 }
+/// What this process can see before any communicator exists (W7-T03): host
+/// and boot identity and the UUID of every visible CUDA ordinal.
+pub fn local_devices() -> Result<crate::training::topology::LocalDevices> {
+    let (host_id, boot_id) = crate::training::topology::host_identity()?;
+    let count = unsafe { jp_device_count() };
+    ensure!(count >= 0, "{}", native_error());
+    let visible = (0..count)
+        .map(|index| {
+            let mut out = [0 as std::ffi::c_char; 41];
+            ensure!(
+                unsafe { jp_device_uuid(index, out.as_mut_ptr()) } == 0,
+                "{}",
+                native_error()
+            );
+            Ok(unsafe { CStr::from_ptr(out.as_ptr()) }
+                .to_string_lossy()
+                .into_owned())
+        })
+        .collect::<Result<Vec<_>>>()?;
+    Ok(crate::training::topology::LocalDevices {
+        host_id,
+        boot_id,
+        visible,
+    })
+}
+
 impl Nccl {
-    pub fn init(rank: usize, world: usize, rendezvous: &Path) -> Result<Self> {
+    /// Create this worker's communicator from a validated binding: the
+    /// communicator rank is the binding's global rank, and the CUDA ordinal
+    /// is its local device index (checked against its GPU UUID natively).
+    pub fn init(binding: &crate::training::topology::Binding, rendezvous: &Path) -> Result<Self> {
+        let (rank, world) = (binding.global_rank(), binding.world());
         ensure!(rank < world && world <= 8, "invalid rank topology");
+        let expected = std::ffi::CString::new(binding.gpu_uuid().unwrap_or(""))?;
         let mut id = [0u8; 128];
         if rank == 0 {
             ensure!(
@@ -1056,7 +1135,15 @@ impl Nccl {
             }
             id.copy_from_slice(&fs::read(rendezvous)?[..128]);
         }
-        let comm = unsafe { jp_nccl_init(id.as_ptr(), rank as i32, world as i32) };
+        let comm = unsafe {
+            jp_nccl_init(
+                id.as_ptr(),
+                i32::try_from(rank)?,
+                i32::try_from(world)?,
+                i32::try_from(binding.device_index())?,
+                expected.as_ptr(),
+            )
+        };
         ensure!(!comm.is_null(), "{}", native_error());
         Ok(Self { comm, world })
     }
@@ -1099,8 +1186,14 @@ pub fn nccl_probe(rank: usize, world: usize, directory: &Path) -> Result<()> {
     crate::task_contract::require_qualified_gpu_experiment("nccl-probe")?;
     tch::set_num_threads(2);
     tch::set_num_interop_threads(1);
-    let comm = Nccl::init(rank, world, &directory.join("nccl.id"))?;
-    let mut tensor = Tensor::full([4096], rank as f64 + 1.0, (Kind::Float, Device::Cuda(rank)));
+    // Diagnostic probe on one host: the pre-W7 mapping, stated explicitly.
+    let binding = crate::training::topology::Binding::legacy_single_host(rank, world)?;
+    let comm = Nccl::init(&binding, &directory.join("nccl.id"))?;
+    let mut tensor = Tensor::full(
+        [4096],
+        rank as f64 + 1.0,
+        (Kind::Float, Device::Cuda(binding.device_index())),
+    );
     let start = Instant::now();
     comm.reduce(&mut tensor)?;
     let expected = (world + 1) as f64 / 2.0;
@@ -1229,8 +1322,10 @@ pub fn training_probe(
     tch::set_num_threads(2);
     tch::set_num_interop_threads(1);
     tch::manual_seed(SEED as i64);
-    let comm = Nccl::init(rank, world, &directory.join("nccl.id"))?;
-    let device = Device::Cuda(rank);
+    // Diagnostic probe on one host: the pre-W7 mapping, stated explicitly.
+    let binding = crate::training::topology::Binding::legacy_single_host(rank, world)?;
+    let comm = Nccl::init(&binding, &directory.join("nccl.id"))?;
+    let device = Device::Cuda(binding.device_index());
     let vs = nn::VarStore::new(device);
     let vocabulary: crate::grammar::Vocab = read_json(vocabulary_path)?;
     let vocabulary_sha256 = file_hash(vocabulary_path)?;
@@ -1310,7 +1405,7 @@ pub fn training_probe(
             offset += size;
         }
         optimizer.update(&vs)?;
-        tch::Cuda::synchronize(rank as i64);
+        tch::Cuda::synchronize(binding.device_index() as i64);
         let seconds = begun.elapsed().as_secs_f64();
         times.push(seconds);
         write_json(

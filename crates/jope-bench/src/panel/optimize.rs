@@ -927,7 +927,18 @@ fn prepare_neural<B: Backend, V: Variation>(
     )?;
     let context_directory = journal.join("asm-contexts").join(plan.arm(true)?.id_sha256);
     let context_sha256 = files.vector.sha256.clone();
-    let producer_request = plan.proposal.accepted()?.request(context_sha256);
+    // The worker admits the qualified bundle only against pins this request issues: exactly the
+    // admission prepare_regression_context built from the controller's own inputs and verified.
+    let bundle_bytes = fs::read(&files.bundle.path)?;
+    ensure!(
+        jope_pipeline::sha256_hex(&bundle_bytes) == files.bundle.sha256,
+        "qualified context bundle changed after admission"
+    );
+    let bundle: QualifiedContextBundle = serde_json::from_slice(&bundle_bytes)?;
+    let producer_request = plan
+        .proposal
+        .accepted()?
+        .qualified_request(context_sha256, bundle.pins.sha256()?);
     let request_file = immutable(
         &context_directory.join("proposal-request.json"),
         &producer_request,

@@ -8,6 +8,12 @@
 //! mid-chain-missing batch shows up as a break, as does a `HEAD.json` that disagrees with the tip
 //! it names in batch, file hash, path or counts.
 //!
+//! An append is two renames: the batch's, then `HEAD.json`'s. A crash between them leaves a
+//! sealed batch that the head does not name. [`Ledger::recover`] rolls such a head forward, and
+//! so do [`Ledger::append`] and [`Ledger::require_intact`]. It does so only onto an exact,
+//! sealed continuation of the chain the head names ([`Ledger::lagging_head`]). Anything else
+//! remains a break.
+//!
 //! What it does **not** detect is a tail that was removed *and* `HEAD.json` rewritten to match:
 //! delete the newest batches, point `HEAD.json` at the new last one with its real sha and
 //! corrected counts, and the remaining chain is internally consistent, because `HEAD.json` is the
@@ -167,9 +173,7 @@ impl Ledger {
         Ok(Some(head))
     }
 
-    /// Append one sealed batch. Serialises against a ledger-wide lock.
-    pub fn append(&self, events: &[Value], source: Value) -> Result<BatchReceipt> {
-        ensure!(!events.is_empty(), "refusing to seal an empty batch");
+    fn lock(&self) -> Result<fs::File> {
         fs::create_dir_all(&self.root)?;
         let lock = fs::OpenOptions::new()
             .create(true)
@@ -177,6 +181,125 @@ impl Ledger {
             .write(true)
             .open(self.root.join(".lock"))?;
         lock.lock()?;
+        Ok(lock)
+    }
+
+    /// The `HEAD.json` this ledger should have, when the one on disk lags a sealed continuation
+    /// of the chain it names. That is the only state an interrupted [`Ledger::append`] can leave:
+    /// the batch's atomic rename completed and `HEAD.json`'s did not. Otherwise `None`. Read-only.
+    ///
+    /// A head is rolled forward only when all of these hold:
+    /// - `HEAD.json` names a batch of this chain at the path, position, file hash and batch count
+    ///   it claims, or it is absent;
+    /// - at least one batch follows it;
+    /// - every following batch is readable, sealed for this ledger under its own name, carries
+    ///   the event count and hash its seal claims, and links to its predecessor's id and file
+    ///   hash.
+    ///
+    /// Anything else stays a break for [`Ledger::verify`] to report. A batch file exists only
+    /// once its rename has completed, and every reader ([`Ledger::events`]) already counts it as
+    /// part of the ledger. Rolling the head forward therefore makes the anchor agree with what is
+    /// already read; it admits nothing new. It cannot see a removed tail any better than before
+    /// (see the module docs).
+    pub fn lagging_head(&self) -> Result<Option<Head>> {
+        let batches = self.batches()?;
+        let Ok(head) = self.head() else {
+            return Ok(None);
+        };
+        let (start, mut prev, mut batch_count, mut event_count) = match &head {
+            None => (0, None, 0, 0),
+            Some(h) => {
+                let Some(i) = batches.iter().position(|(rel, _)| *rel == h.path) else {
+                    return Ok(None);
+                };
+                let sha = sha256_hex(&fs::read(&batches[i].1)?);
+                if sha != h.sha256
+                    || h.batches != (i + 1) as u64
+                    || h.path.rsplit('/').next() != Some(format!("{}.jsonl", h.batch).as_str())
+                {
+                    return Ok(None);
+                }
+                (
+                    i + 1,
+                    Some((h.batch.clone(), sha)),
+                    h.batches,
+                    h.events_total,
+                )
+            }
+        };
+        let mut tip = None;
+        for (rel, path) in batches.iter().skip(start) {
+            let Ok((events, seal, file_sha, events_sha)) = Ledger::read_batch(path) else {
+                return Ok(None);
+            };
+            let stem = rel
+                .rsplit('/')
+                .next()
+                .unwrap_or(rel)
+                .trim_end_matches(".jsonl");
+            let linked = match &prev {
+                None => seal.prev_batch.is_none() && seal.prev_batch_sha256.is_none(),
+                Some((b, s)) => {
+                    seal.prev_batch.as_ref() == Some(b)
+                        && seal.prev_batch_sha256.as_ref() == Some(s)
+                }
+            };
+            if !linked
+                || seal.batch != stem
+                || seal.ledger != self.name
+                || seal.events != events.len() as u64
+                || seal.events_sha256 != events_sha
+            {
+                return Ok(None);
+            }
+            batch_count += 1;
+            event_count += events.len() as u64;
+            tip = Some(Head {
+                schema: HEAD_SCHEMA.into(),
+                ledger: self.name.clone(),
+                batch: seal.batch.clone(),
+                path: rel.clone(),
+                sha256: file_sha.clone(),
+                batches: batch_count,
+                events_total: event_count,
+            });
+            prev = Some((seal.batch, file_sha));
+        }
+        Ok(tip)
+    }
+
+    /// Roll a lagging `HEAD.json` forward ([`Ledger::lagging_head`]). The caller holds the
+    /// ledger lock. Returns the head it wrote, if any.
+    fn roll_forward_locked(&self) -> Result<Option<Head>> {
+        let Some(head) = self.lagging_head()? else {
+            return Ok(None);
+        };
+        atomic_write(
+            &self.root.join("HEAD.json"),
+            &serde_json::to_vec_pretty(&head)?,
+        )?;
+        Ok(Some(head))
+    }
+
+    /// Recover from an interrupted append: roll a lagging `HEAD.json` forward under the ledger
+    /// lock. Writes nothing (and takes no lock) when the head does not lag.
+    pub fn recover(&self) -> Result<Option<Head>> {
+        if self.lagging_head()?.is_none() {
+            return Ok(None);
+        }
+        let _lock = self.lock()?;
+        self.roll_forward_locked()
+    }
+
+    /// Append one sealed batch. Serialises against a ledger-wide lock.
+    ///
+    /// Two durable steps: the batch's rename, then `HEAD.json`'s. A crash between them leaves a
+    /// sealed batch the head does not name; the next append (or [`Ledger::require_intact`])
+    /// rolls the head forward before chaining onto it, instead of forking the chain.
+    pub fn append(&self, events: &[Value], source: Value) -> Result<BatchReceipt> {
+        ensure!(!events.is_empty(), "refusing to seal an empty batch");
+        let lock = self.lock()?;
+        self.roll_forward_locked()?;
         let head_path = self.root.join("HEAD.json");
         let head = self.head()?;
         // ULIDs are lexicographically ordered only ACROSS milliseconds. Within one,
@@ -552,7 +675,12 @@ impl Ledger {
     }
 
     /// Fail unless the chain verifies (used before any append in strict mode).
+    ///
+    /// An interrupted append is recovered first ([`Ledger::recover`]): a head that lags a
+    /// sealed continuation of its own chain is crash residue, not tampering. Refusing it forever
+    /// wedged every later write of this ledger.
     pub fn require_intact(&self) -> Result<LedgerReport> {
+        self.recover()?;
         let r = self.verify()?;
         if !r.ok() {
             let mut kinds: Vec<&str> = r.breaks.iter().map(|b| b.kind.as_str()).collect();
@@ -703,6 +831,128 @@ mod tests {
 
     use super::*;
     use serde_json::json;
+
+    fn numbers(ledger: &Ledger) -> Vec<u64> {
+        ledger
+            .events()
+            .unwrap()
+            .iter()
+            .map(|e| e["n"].as_u64().unwrap())
+            .collect()
+    }
+
+    /// Append batches 1 and 2, then put back batch 1's `HEAD.json`. This is the state a process
+    /// leaves when it dies after batch 2's atomic rename but before `HEAD.json`'s: a complete,
+    /// sealed batch that the head does not name. Returns (ledger dir, head 1, head 2).
+    fn crashed_between_batch_and_head() -> (tempfile::TempDir, Vec<u8>, Vec<u8>) {
+        let dir = tempfile::tempdir().unwrap();
+        let ledger = Ledger::open(dir.path(), "hwm");
+        ledger.append(&[json!({"n": 1})], json!({"t": 1})).unwrap();
+        let head_1 = fs::read(ledger.root().join("HEAD.json")).unwrap();
+        ledger.append(&[json!({"n": 2})], json!({"t": 2})).unwrap();
+        let head_2 = fs::read(ledger.root().join("HEAD.json")).unwrap();
+        fs::write(ledger.root().join("HEAD.json"), &head_1).unwrap();
+        (dir, head_1, head_2)
+    }
+
+    /// W8-T06: a crash between a batch's rename and its `HEAD.json`'s must not wedge the ledger.
+    ///
+    /// Every reader already treats the batch as part of the ledger (`events()` walks batch
+    /// files). `require_intact`, the gate in front of every write, reported `head-mismatch` and
+    /// refused for ever, so each later `hwm ingest`, `scores append` and eligibility decision
+    /// failed until someone repaired the tree by hand.
+    #[test]
+    fn a_crash_between_a_batch_and_its_head_is_rolled_forward_not_a_wedge() {
+        let (dir, _, head_2) = crashed_between_batch_and_head();
+        let ledger = Ledger::open(dir.path(), "hwm");
+        assert_eq!(numbers(&ledger), [1, 2], "readers already see batch 2");
+        let report = ledger
+            .require_intact()
+            .expect("a crash-lagged HEAD.json wedged the ledger");
+        assert_eq!((report.batches, report.events), (2, 2));
+        assert_eq!(
+            fs::read(ledger.root().join("HEAD.json")).unwrap(),
+            head_2,
+            "the head rolled forward to exactly what the interrupted append would have written"
+        );
+        ledger.append(&[json!({"n": 3})], json!({"t": 3})).unwrap();
+        let report = ledger.verify().unwrap();
+        assert!(report.ok(), "{:?}", report.breaks);
+        assert_eq!(numbers(&ledger), [1, 2, 3]);
+    }
+
+    /// The same crash, followed directly by another append, must not fork the chain: the next
+    /// batch has to chain onto batch 2, not onto the stale head's batch 1.
+    #[test]
+    fn an_append_after_a_lagging_head_never_forks_the_chain() {
+        let (dir, _, _) = crashed_between_batch_and_head();
+        let ledger = Ledger::open(dir.path(), "hwm");
+        ledger.append(&[json!({"n": 3})], json!({"t": 3})).unwrap();
+        let report = ledger.verify().unwrap();
+        assert!(
+            report.ok(),
+            "an append chained onto a stale head and forked the ledger: {:?}",
+            report.breaks
+        );
+        assert_eq!((report.batches, report.events), (3, 3));
+        assert_eq!(numbers(&ledger), [1, 2, 3]);
+    }
+
+    /// Only a complete, sealed continuation of the head is rolled forward. Anything else is still
+    /// a break that refuses, and nothing is written.
+    #[test]
+    fn only_a_sealed_continuation_of_the_head_is_rolled_forward() {
+        // The unnamed batch was altered after its rename.
+        let (dir, head_1, _) = crashed_between_batch_and_head();
+        let ledger = Ledger::open(dir.path(), "hwm");
+        let (_, tip) = ledger.batches().unwrap().pop().unwrap();
+        let mut bytes = fs::read(&tip).unwrap();
+        let i = bytes.iter().position(|&b| b == b'2').unwrap();
+        bytes[i] = b'7';
+        fs::write(&tip, &bytes).unwrap();
+        assert!(
+            ledger.require_intact().is_err(),
+            "an altered batch was adopted"
+        );
+        assert_eq!(fs::read(ledger.root().join("HEAD.json")).unwrap(), head_1);
+
+        // A batch that does not chain onto the head: its predecessor is missing.
+        let dir = tempfile::tempdir().unwrap();
+        let ledger = Ledger::open(dir.path(), "hwm");
+        ledger.append(&[json!({"n": 1})], json!({})).unwrap();
+        let head_1 = fs::read(ledger.root().join("HEAD.json")).unwrap();
+        let second = ledger.append(&[json!({"n": 2})], json!({})).unwrap();
+        ledger.append(&[json!({"n": 3})], json!({})).unwrap();
+        fs::remove_file(ledger.root().join(&second.path)).unwrap();
+        fs::write(ledger.root().join("HEAD.json"), &head_1).unwrap();
+        assert!(
+            ledger.require_intact().is_err(),
+            "a gapped suffix was adopted"
+        );
+        assert_eq!(fs::read(ledger.root().join("HEAD.json")).unwrap(), head_1);
+
+        // A head that does not match the batch it names.
+        let (dir, head_1, _) = crashed_between_batch_and_head();
+        let ledger = Ledger::open(dir.path(), "hwm");
+        let mut forged: Head = serde_json::from_slice(&head_1).unwrap();
+        forged.sha256 = "0".repeat(64);
+        let forged = serde_json::to_vec_pretty(&forged).unwrap();
+        fs::write(ledger.root().join("HEAD.json"), &forged).unwrap();
+        assert!(
+            ledger.require_intact().is_err(),
+            "a forged head was rolled forward"
+        );
+        assert_eq!(fs::read(ledger.root().join("HEAD.json")).unwrap(), forged);
+
+        // Positive control: the very first append died before any HEAD.json was written.
+        let dir = tempfile::tempdir().unwrap();
+        let ledger = Ledger::open(dir.path(), "hwm");
+        ledger.append(&[json!({"n": 1})], json!({})).unwrap();
+        let head = fs::read(ledger.root().join("HEAD.json")).unwrap();
+        fs::remove_file(ledger.root().join("HEAD.json")).unwrap();
+        assert!(ledger.require_intact().is_ok());
+        assert_eq!(fs::read(ledger.root().join("HEAD.json")).unwrap(), head);
+    }
 
     #[test]
     fn chain_appends_and_verifies_and_detects_tampering() {

@@ -1,5 +1,6 @@
 //! Finite scientific eligibility controller. SmartCluster alone allocates and executes jobs.
 //! Frozen requests are reviewable artifacts. External signed authority grants remain mandatory.
+pub mod bounded;
 mod grant_proof;
 pub(crate) mod materialize;
 mod run_approval;
@@ -656,6 +657,7 @@ impl Loop {
                     target_optimizer_step,
                     micro,
                     replay_policy,
+                    continuation_mode,
                     ..
                 },
             ) => {
@@ -697,6 +699,15 @@ impl Loop {
                 ensure!(
                     replay == expected,
                     "external training replay differs from independently reconstructed eligibility"
+                );
+                // A v2 input's declaration is the mode its replay policy
+                // classifies to; a v1 input keeps its implicit meaning.
+                ensure!(
+                    continuation_mode.is_none_or(|declared| {
+                        crate::task_contract::classify_continuation(false, true, Some(&expected))
+                            .is_ok_and(|mode| mode == declared)
+                    }),
+                    "declared continuation mode differs from the frozen replay policy"
                 );
             }
             _ => anyhow::bail!("materialized operation differs from frozen scientific request"),

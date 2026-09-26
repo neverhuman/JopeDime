@@ -99,11 +99,12 @@ pub fn midranks(scores: &[f64]) -> Vec<f32> {
 
 fn verify_shard_metadata(root: &Path, shard: &Shard) -> Result<PathBuf> {
     let path = resolve(root, &shard.path)?;
-    ensure!(
-        file_hash(&path.join("shard.json"))? == shard.sha256,
-        "shard manifest changed"
-    );
-    let saved: Shard = read_json(&path.join("shard.json"))?;
+    // Route R8: the binding is checked on exactly the verified manifest bytes.
+    let saved: Shard = serde_json::from_slice(&read_verified(
+        &path.join("shard.json"),
+        &shard.sha256,
+        "shard manifest",
+    )?)?;
     // The manifest's own digest is carried by its parent, avoiding self-hashing.
     let mut expected = shard.clone();
     expected.sha256.clear();
@@ -465,11 +466,12 @@ fn publish_impl(
         );
         if !prepared.contains_key(&c.prepared) {
             let p = resolve(&root, &c.prepared)?.join("prepared.json");
-            ensure!(
-                file_hash(&p)? == c.prepared_sha256,
-                "prepared identity changed"
+            // Route R8: the map holds exactly the verified preparation bytes.
+            let bytes = read_verified(&p, &c.prepared_sha256, "prepared identity")?;
+            prepared.insert(
+                c.prepared.clone(),
+                serde_json::from_slice::<Prepared>(&bytes)?,
             );
-            prepared.insert(c.prepared.clone(), read_json::<Prepared>(&p)?);
         }
         ensure!(
             by_cut.insert((c.dataset.clone(), c.cut), i).is_none(),
@@ -548,7 +550,10 @@ fn publish_impl(
         let relative = path.strip_prefix(&root)?.to_string_lossy().to_string();
         let bytes = fs::read(path)?;
         let digest = hash(&bytes);
-        let search_digest = file_hash(&path.with_file_name("search.json"))?;
+        // Route R8: the receipt validated below is the one whose digest the
+        // ledger commits; it is read once and never reopened.
+        let (search_bytes, search_digest) =
+            read_hashed(&path.with_file_name("search.json"), "search receipt")?;
         if ordinal < existing {
             let saved: (String, String, String) = db.query_row(
                 "SELECT path,digest,search_digest FROM sources WHERE ordinal=?",
@@ -569,7 +574,7 @@ fn publish_impl(
         let mut admissions = Vec::new();
         let mut reuses = Vec::new();
         if let Some(expected) = &expected {
-            let search: Value = read_json(&path.with_file_name("search.json"))?;
+            let search: Value = serde_json::from_slice(&search_bytes)?;
             ensure!(
                 search["observations_sha256"] == digest,
                 "completed search ledger digest changed"
@@ -1038,18 +1043,26 @@ thread_local! {
 /// Retain the sealed view across tasks with the same immutable identity. Every
 /// worker restart clears this cache and verifies the source content again.
 pub fn load_resident(root: &Path, corpus: &Path) -> Result<std::rc::Rc<(Index, TeachingRecords)>> {
-    let key = format!(
-        "{}:{}",
-        root.display(),
-        file_hash(&corpus.join("index.json"))?
-    );
+    load_resident_verified(root, corpus, &fs::read(corpus.join("index.json"))?)
+}
+
+/// Load the resident view of exactly `index_bytes`, which the caller has
+/// already verified. The index path is never read again, so a file
+/// substituted after verification cannot become the resident view; every
+/// payload the bytes name is still verified by content (W6 follow-up).
+pub fn load_resident_verified(
+    root: &Path,
+    corpus: &Path,
+    index_bytes: &[u8],
+) -> Result<std::rc::Rc<(Index, TeachingRecords)>> {
+    let key = format!("{}:{}", root.display(), hash(index_bytes));
     RESIDENT.with(|saved| {
         if let Some((identity, view)) = saved.borrow().as_ref() {
             if *identity == key {
                 return Ok(std::rc::Rc::clone(view));
             }
         }
-        let view = std::rc::Rc::new(load(root, corpus)?);
+        let view = std::rc::Rc::new(load_impl(root, corpus, true, Some(index_bytes))?);
         *saved.borrow_mut() = Some((key, std::rc::Rc::clone(&view)));
         Ok(view)
     })
@@ -1072,20 +1085,32 @@ impl TeachingRecords {
 /// Every shard is content-verified on open. Local grammar IDs are explicitly
 /// remapped in first-appearance order, identical to the reference packer.
 pub fn load(root: &Path, corpus: &Path) -> Result<(Index, TeachingRecords)> {
-    load_impl(root, corpus, true)
+    load_impl(root, corpus, true, None)
 }
 
 /// Catalogue readers do not stage the training payload or initialize CUDA.
 pub fn read_index(root: &Path, corpus: &Path) -> Result<Index> {
-    Ok(load_impl(root, corpus, false)?.0)
+    Ok(load_impl(root, corpus, false, None)?.0)
 }
 
 fn load_impl(
     root: &Path,
     corpus: &Path,
     include_records: bool,
+    index_bytes: Option<&[u8]>,
 ) -> Result<(Index, TeachingRecords)> {
-    let value: Value = read_json(&corpus.join("index.json"))?;
+    // Read the index once; its digest and its parsed value come from the
+    // same bytes.
+    let read;
+    let index_bytes = match index_bytes {
+        Some(bytes) => bytes,
+        None => {
+            read = fs::read(corpus.join("index.json"))?;
+            &read[..]
+        }
+    };
+    let index_sha256 = hash(index_bytes);
+    let value: Value = serde_json::from_slice(index_bytes)?;
     if value["schema"] == "parallel.teaching_corpus.v1" {
         let index: Index = serde_json::from_value(value)?;
         let parts = if include_records {
@@ -1118,7 +1143,7 @@ fn load_impl(
         file_hash(&corpus.join("vocabulary.json"))? == m.vocabulary_sha256
             && file_hash(&corpus.join("groups.bin"))? == m.groups_sha256
             && read_json::<Value>(&corpus.join("provenance.json"))?["index_sha256"]
-                == file_hash(&corpus.join("index.json"))?,
+                == index_sha256.as_str(),
         "teaching manifest payload changed"
     );
     let mut sets = BTreeMap::from([(vec![0], 0)]);
@@ -1216,14 +1241,22 @@ pub fn teacher_programs(
         .iter()
         .flat_map(|g| g.records.iter().take(limit).map(move |r| (*r, g.context)))
         .collect::<BTreeMap<_, _>>();
-    let value: Value = read_json(&corpus.join("index.json"))?;
+    // Route R8: the index is read once. The digest the provenance must name
+    // and the label sources come from the same bytes, and those bytes must be
+    // the index the caller verified (`load_resident_verified`, `read_index`).
+    let (index_bytes, index_sha256) = read_hashed(&corpus.join("index.json"), "label index")?;
+    let value: Value = serde_json::from_slice(&index_bytes)?;
     let provenance: Value = read_json(&corpus.join("provenance.json"))?;
     ensure!(
-        provenance["index_sha256"] == file_hash(&corpus.join("index.json"))?,
+        provenance["index_sha256"] == index_sha256,
         "label index changed"
     );
     let sources = if value["schema"] == SCHEMA {
         let m: Manifest = serde_json::from_value(value)?;
+        ensure!(
+            hash(&serde_json::to_vec(&m.shards)?) == index.records_sha256,
+            "label index changed"
+        );
         m.shards
             .iter()
             .map(|s| {
@@ -1235,6 +1268,11 @@ pub fn teacher_programs(
             })
             .collect::<Result<Vec<_>>>()?
     } else {
+        let legacy: Index = serde_json::from_value(value)?;
+        ensure!(
+            legacy.records_sha256 == index.records_sha256,
+            "label index changed"
+        );
         vec![(
             corpus.join("labels.jsonl"),
             provenance["labels_sha256"]
@@ -1366,3 +1404,5 @@ mod frozen_z_tests {
 
 #[cfg(test)]
 mod admission_tests;
+#[cfg(test)]
+mod read_once_tests;

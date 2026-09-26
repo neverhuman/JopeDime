@@ -252,18 +252,29 @@ pub fn verify_inputs(root: &Path, context: &ContextRow, prepared: &Prepared) -> 
         "admission prepared/context provenance conflict"
     );
     let path = resolve(root, &context.prepared)?;
+    // Route R8: the preparation is read once and bound by its digest. The
+    // caller's parse (checked above) must be exactly that preparation, and the
+    // views are resolved from it; `prepared.json` is never reopened.
+    let bytes = read_verified(
+        &path.join("prepared.json"),
+        &context.prepared_sha256,
+        "admission prepared artifact",
+    )?;
+    let bound: Prepared =
+        serde_json::from_slice(&bytes).context("parse admission prepared artifact")?;
     ensure!(
-        file_hash(&path.join("prepared.json"))? == context.prepared_sha256,
-        "admission prepared artifact changed"
+        serde_json::to_value(&bound)? == serde_json::to_value(prepared)?,
+        "admission prepared parse differs from the bound preparation bytes"
     );
-    let mut training = crate::prepare::load_view_in_root(root, &path, context.cut, true)?;
+    let mut training =
+        crate::prepare::load_bound_view_in_root(root, &path, &bound, context.cut, true)?;
     let targets: Vec<_> = training
         .iter_mut()
         .map(|row| row.pop().context("admission target absent"))
         .collect::<Result<_>>()?;
     let digest = crate::eval_registry::ordered_training_sha256(&training, &targets)?;
     drop(training);
-    crate::prepare::load_view_in_root(root, &path, context.cut, false)?;
+    crate::prepare::load_bound_view_in_root(root, &path, &bound, context.cut, false)?;
     Ok(digest)
 }
 
@@ -474,11 +485,13 @@ pub(crate) fn validate_preverified(
     );
     let path =
         resolve(root, &context.prepared)?.join(format!("cut-{}/preprocessing.json", context.cut));
-    ensure!(
-        file_hash(&path)? == cut.preprocessing_sha256,
-        "admission preprocessing changed"
-    );
-    let preprocessing: Preprocessing = read_json(&path)?;
+    // Route R8: the scale is read from exactly the verified preparation state.
+    let preprocessing: Preprocessing = serde_json::from_slice(&read_verified(
+        &path,
+        &cut.preprocessing_sha256,
+        "admission preprocessing",
+    )?)
+    .context("parse admission preprocessing")?;
     ensure!(
         row["preprocessing_sha256"] == cut.preprocessing_sha256
             && row["target_scale"].as_f64() == Some(preprocessing.target_scale)

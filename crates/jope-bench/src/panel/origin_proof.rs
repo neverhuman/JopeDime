@@ -1325,6 +1325,282 @@ mod tests {
         Ok(())
     }
 
+    // W1 follow-up 2e: the counterfactual harness extended to the context
+    // producer's receiving path. `optimize::build_pair_input` builds the
+    // producer's `TrainingInput`; `TrainingInput::prepare` yields the
+    // preparation state and prepared rows that the CPU encoders consume.
+
+    /// `development()` with a categorical column beside the numeric one.
+    fn categorical_development() -> Result<DevelopmentData> {
+        let features = json!([{"name":"x","kind":"numeric"},{"name":"c","kind":"categorical"}]);
+        let source = "a".repeat(64);
+        let rows = (0..25usize)
+            .map(|i| json!({"id":format!("{i:064x}"),"source_index":i,"group":format!("{:064x}", i + 100),"fold":i % 5,"values":[i.to_string(),format!("k{}", i % 3)],"target":(3 * i + i % 4).to_string()}))
+            .collect::<Vec<_>>();
+        let table = json!({"schema":"jope.prepared-table/v1","dataset":"fixture","task":Task::Regression,"source_sha256":source,"partition":"development","features":features,"classes":[],"rows":rows});
+        let bytes = serde_json::to_vec(&table)?;
+        let dataset: PanelDataset = serde_json::from_value(json!({
+            "id":"fixture","task":Task::Regression,"metric":"rmse",
+            "source":{"url":"fixture","sha256":source,"bytes":1,"metadata_url":"fixture","metadata_sha256":"b".repeat(64)},
+            "rows":30,"features":features,"classes":[],"group_columns":[],
+            "split":{"protocol":"synthetic-fixture","sha256":"c".repeat(64),"development_sha256":sha256_hex(&bytes),"sealed_sha256":"d".repeat(64),"development_rows":25,"sealed_rows":5,"fold_rows":[5,5,5,5,5]},
+            "license":{"original":"synthetic","evidence_url":"fixture","repository":"synthetic","note":"synthetic fixture only"},
+            "checkpoint_exposure":"synthetic","description":"synthetic fixture","group_limitations":"synthetic groups"
+        }))?;
+        parse_development(&bytes, &dataset)
+    }
+
+    /// The context producer's input for one development table, taken at its
+    /// receiving path.
+    struct ProducerView {
+        input: Vec<u8>,
+        preprocessing: String,
+        prepared_rows: String,
+        context: String,
+        pair: String,
+    }
+    impl ProducerView {
+        fn of(plan: &CampaignPlan, config: &Configuration, data: &DevelopmentData) -> Result<Self> {
+            let (context, pair) = optimize::build_pair_input(plan, config, data)?;
+            let input = context.accepted()?;
+            let prepared = input.prepare()?;
+            Ok(Self {
+                input: serde_json::to_vec(input)?,
+                preprocessing: optimize_fit::digest(&prepared.preprocessing)?,
+                prepared_rows: optimize_fit::digest(&prepared.rows)?,
+                context: optimize_fit::digest(&context)?,
+                pair: optimize_fit::digest(&pair)?,
+            })
+        }
+        fn receipt(&self) -> Value {
+            json!({"input_sha256":sha256_hex(&self.input),"preprocessing_sha256":self.preprocessing,
+                "prepared_rows_sha256":self.prepared_rows,"context_sha256":self.context,
+                "pair_sha256":self.pair})
+        }
+    }
+
+    use jope_pipeline::prepared_data::PreparedRow;
+    type Mutation = (&'static str, fn(&mut DevelopmentData));
+
+    fn outer_rows(data: &mut DevelopmentData) -> Vec<&mut PreparedRow> {
+        data.rows.iter_mut().filter(|r| r.fold == 0).collect()
+    }
+
+    fn first_fitting_row(data: &mut DevelopmentData) -> &mut PreparedRow {
+        data.rows.iter_mut().find(|r| r.fold == 1).unwrap()
+    }
+
+    /// Forbidden at the context producer: cut 0's outer scoring partition
+    /// (fold 0), with its labels, values, missingness, categories and order.
+    fn outer_mutations() -> [Mutation; 6] {
+        [
+            ("outer_labels_changed", |d| {
+                for (i, row) in outer_rows(d).into_iter().enumerate() {
+                    row.target = (1000 + 7 * i).to_string();
+                }
+            }),
+            ("outer_labels_shuffled", |d| {
+                let mut rows = outer_rows(d);
+                let first = rows[0].target.clone();
+                for i in 1..rows.len() {
+                    rows[i - 1].target = rows[i].target.clone();
+                }
+                rows.last_mut().unwrap().target = first;
+            }),
+            ("outer_values_changed", |d| {
+                for row in outer_rows(d) {
+                    row.values[0] = Some("-12345.5".into());
+                }
+            }),
+            ("outer_values_missing", |d| {
+                for row in outer_rows(d) {
+                    row.values.iter_mut().for_each(|v| *v = None);
+                }
+            }),
+            ("outer_categories_changed", |d| {
+                for row in outer_rows(d) {
+                    row.values[1] = Some("outer-only".into());
+                }
+            }),
+            ("outer_rows_reordered", |d| {
+                let at = (0..d.rows.len())
+                    .filter(|&i| d.rows[i].fold == 0)
+                    .collect::<Vec<_>>();
+                let reversed = at
+                    .iter()
+                    .rev()
+                    .map(|&i| d.rows[i].clone())
+                    .collect::<Vec<_>>();
+                for (&i, row) in at.iter().zip(reversed) {
+                    d.rows[i] = row;
+                }
+            }),
+        ]
+    }
+
+    /// Authorized controls: one fitting row (fold 1) is the producer's input.
+    fn fitting_mutations() -> [Mutation; 3] {
+        [
+            ("fitting_label_changed", |d| {
+                first_fitting_row(d).target = "12345".into();
+            }),
+            ("fitting_value_changed", |d| {
+                first_fitting_row(d).values[0] = Some("-12345.5".into());
+            }),
+            ("fitting_category_changed", |d| {
+                first_fitting_row(d).values[1] = Some("fit-only".into());
+            }),
+        ]
+    }
+
+    fn context_receipt(mutation: &str, receipt: Value) {
+        if let Some(dir) = std::env::var_os("JOPE_W1_RECEIPTS") {
+            let dir = Path::new(&dir).join("counterfactual");
+            fs::create_dir_all(&dir).unwrap();
+            fs::write(
+                dir.join(format!("context-producer-{mutation}.json")),
+                serde_json::to_vec_pretty(&receipt).unwrap(),
+            )
+            .unwrap();
+        }
+    }
+
+    const CONTEXT_TOLERANCE: &str = "exact byte equality of SHA-256 digests (zero tolerance)";
+
+    /// Every outer-partition mutation leaves the producer's input, preparation
+    /// state and prepared rows byte-identical; every authorized fitting-row
+    /// control changes them.
+    #[test]
+    fn the_context_producer_receives_identical_bytes_under_every_outer_mutation() -> Result<()> {
+        let plan = plan()?;
+        let config = configuration(None);
+        let data = categorical_development()?;
+        let base = ProducerView::of(&plan, &config, &data)?;
+        let table = |d: &DevelopmentData| optimize_fit::digest(&d.rows);
+        for (mutation, apply) in outer_mutations() {
+            let mut mutated = data.clone();
+            apply(&mut mutated);
+            assert_ne!(
+                table(&data)?,
+                table(&mutated)?,
+                "{mutation} changed nothing"
+            );
+            let view = ProducerView::of(&plan, &config, &mutated)?;
+            let identical = view.input == base.input
+                && view.preprocessing == base.preprocessing
+                && view.prepared_rows == base.prepared_rows
+                && view.context == base.context;
+            assert!(identical, "{mutation} reached the context producer");
+            // The pair input binds the hold partition's row identities and
+            // order (the outer request), never its labels, values or categories.
+            if mutation != "outer_rows_reordered" {
+                assert_eq!(view.pair, base.pair, "{mutation} reached the pair input");
+            }
+            context_receipt(
+                mutation,
+                json!({"mutation":mutation,"class":"forbidden","expected":"identical",
+                    "observed_identical":identical,"pair_changed":view.pair != base.pair,
+                    "base":base.receipt(),"mutated":view.receipt(),"tolerance":CONTEXT_TOLERANCE,
+                    "receiver":"optimize::build_pair_input -> TrainingInput::prepare"}),
+            );
+        }
+        for (mutation, apply) in fitting_mutations() {
+            let mut mutated = data.clone();
+            apply(&mut mutated);
+            let view = ProducerView::of(&plan, &config, &mutated)?;
+            assert_ne!(view.input, base.input, "{mutation}");
+            assert_ne!(view.context, base.context, "{mutation}");
+            assert_ne!(view.prepared_rows, base.prepared_rows, "{mutation}");
+            if mutation == "fitting_category_changed" {
+                assert_ne!(view.preprocessing, base.preprocessing, "{mutation}");
+            }
+            context_receipt(
+                mutation,
+                json!({"mutation":mutation,"class":"authorized_control","expected":"changed",
+                    "observed_identical":false,"pair_changed":view.pair != base.pair,
+                    "base":base.receipt(),"mutated":view.receipt(),"tolerance":CONTEXT_TOLERANCE,
+                    "receiver":"optimize::build_pair_input -> TrainingInput::prepare"}),
+            );
+        }
+        Ok(())
+    }
+
+    /// The whole CPU producer (preparation, Hyperion, foundation and target
+    /// encoders, frozen assembly) on each mutation's producer input. It needs
+    /// the accepted encoder assets, which are not in the repository: run it
+    /// with `JOPE_W1_ENCODER_FILES=<encoder-files.json>` and `--run-ignored`.
+    #[test]
+    #[ignore = "needs the accepted CPU encoder assets named by JOPE_W1_ENCODER_FILES"]
+    fn the_cpu_encoders_produce_identical_context_under_every_outer_mutation() -> Result<()> {
+        use jope_policy::context_producer::{CpuContextArtifact, CpuProducer, EncoderFiles};
+        let files: EncoderFiles = serde_json::from_slice(&fs::read(
+            std::env::var_os("JOPE_W1_ENCODER_FILES")
+                .context("JOPE_W1_ENCODER_FILES names the accepted encoder-files.json")?,
+        )?)?;
+        let producer = CpuProducer::load(&files)?;
+        let plan = plan()?;
+        let config = configuration(None);
+        let data = categorical_development()?;
+        let produce = |d: &DevelopmentData| -> Result<(CpuContextArtifact, Vec<u8>)> {
+            let view = ProducerView::of(&plan, &config, d)?;
+            let artifact = producer.produce(&view.input, &"0".repeat(40), &"1".repeat(64))?;
+            let bytes = serde_json::to_vec(&artifact)?;
+            Ok((artifact, bytes))
+        };
+        let summary = |a: &CpuContextArtifact| -> Result<Value> {
+            let c = serde_json::to_value(&a.components)?;
+            Ok(
+                json!({"input_sha256":a.input_sha256,"prepared_rows_sha256":a.prepared_rows_sha256,
+                "hyperion_sha256":optimize_fit::digest(&c["hyperion"])?,
+                "foundation_sha256":optimize_fit::digest(&c["foundation"])?,
+                "target_sha256":optimize_fit::digest(&c["target"])?,
+                "context_sha256":optimize_fit::digest(&a.vector)?}),
+            )
+        };
+        let (base, base_bytes) = produce(&data)?;
+        // Determinism control: the same input twice gives the same bytes.
+        assert_eq!(
+            produce(&data)?.1,
+            base_bytes,
+            "CPU producer is not deterministic"
+        );
+        for (mutation, apply) in outer_mutations() {
+            let mut mutated = data.clone();
+            apply(&mut mutated);
+            let (artifact, bytes) = produce(&mutated)?;
+            assert_eq!(bytes, base_bytes, "{mutation} reached the CPU encoders");
+            context_receipt(
+                &format!("encoders-{mutation}"),
+                json!({"mutation":mutation,"class":"forbidden","expected":"identical",
+                    "observed_identical":true,"base":summary(&base)?,"mutated":summary(&artifact)?,
+                    "tolerance":"exact byte equality of the serialized CPU context artifact",
+                    "receiver":"CpuProducer::produce (prepare, encoders, frozen assembly)"}),
+            );
+        }
+        for (mutation, apply) in fitting_mutations() {
+            let mut mutated = data.clone();
+            apply(&mut mutated);
+            let (artifact, _) = produce(&mutated)?;
+            let a = summary(&artifact)?;
+            let b = summary(&base)?;
+            // The final context is sensitive to its fitting rows; which
+            // encoder products moved is recorded.
+            assert_ne!(a["context_sha256"], b["context_sha256"], "{mutation}");
+            let changed = ["hyperion_sha256", "foundation_sha256", "target_sha256"]
+                .into_iter()
+                .filter(|p| a[*p] != b[*p])
+                .collect::<Vec<_>>();
+            context_receipt(
+                &format!("encoders-{mutation}"),
+                json!({"mutation":mutation,"class":"authorized_control","expected":"changed",
+                    "observed_identical":false,"changed_products":changed,"base":b,"mutated":a,
+                    "tolerance":"exact byte equality of the serialized CPU context artifact",
+                    "receiver":"CpuProducer::produce (prepare, encoders, frozen assembly)"}),
+            );
+        }
+        Ok(())
+    }
+
     #[test]
     fn report_scoring_ignores_observations() -> Result<()> {
         let scratch = scratch()?;

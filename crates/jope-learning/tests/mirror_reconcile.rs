@@ -285,6 +285,121 @@ fn pointer_key() -> PointerKey {
     PointerKey::of(&candidate(1.0, 1).record)
 }
 
+/// [`candidate`] for another dataset, so it lands at another pointer.
+fn candidate_in(dataset: &str, value: f64, ts: u64) -> Candidate {
+    let mut c = candidate(value, ts);
+    c.record.identity.dataset_hash = dataset.into();
+    c.record.identity_sha256 = c.record.identity.sha256().unwrap();
+    c.blob = format!("{dataset}/cut-0/{value}").into_bytes();
+    c.record.provenance.record_sha256 = jope_learning::canon::sha256_hex(&c.blob);
+    c
+}
+
+/// Make every write under the mirror's `hwm/regression/<dataset>` fail: a regular file sits
+/// where that directory must be. Stands in for a transient store failure of exactly a pointer
+/// write, after the batch objects and `HEAD.json` went up. Returns the planted path.
+fn break_pointer_writes(mirror_dir: &Path, dataset: &str) -> PathBuf {
+    let blocked = mirror_dir.join("hwm/regression").join(dataset);
+    fs::create_dir_all(blocked.parent().unwrap()).unwrap();
+    fs::write(&blocked, b"an object store that cannot take this pointer\n").unwrap();
+    blocked
+}
+
+/// W8-T06: a `current.json` whose mirror write fails *after* the mirror's `HEAD.json` moved
+/// must stay owed until it is written.
+///
+/// `sync::plan` derives the push window from the mirror's `HEAD.json` alone. Once that names
+/// the batch, the pointers the batch moved were recorded as owed nowhere. So every later push
+/// reported success while the mirror's own ledger accepted a record at a pointer the mirror
+/// did not hold. It stayed that way until some later batch happened to accept at that exact
+/// pointer, which for a settled cut may be never.
+///
+/// Fails on the pre-fix code at the first catch-up assertion. A push with nothing new, and a
+/// push of an unrelated cut, both leave the pointer absent from the mirror.
+#[test]
+fn a_pointer_write_lost_after_the_head_moved_is_still_owed() {
+    let tmp = tempfile::tempdir().unwrap();
+    let mirror_dir = tmp.path().join("mirror");
+    fs::create_dir_all(&mirror_dir).unwrap();
+    let m = Mirror::open(&format!("file://{}", mirror_dir.display())).unwrap();
+    let state = State::at(&tmp.path().join("state"));
+    let mirror_head = mirror_dir.join("hwm/ledger/HEAD.json");
+    let local_head = || fs::read(Ledger::open(state.root(), "hwm").root().join("HEAD.json"));
+    let d0 = PointerKey::of(&candidate_in("d0", 0.5, 1).record);
+    let d1 = PointerKey::of(&candidate_in("d1", 0.6, 2).record);
+
+    // 1. The pointer write fails after the batch objects and HEAD.json went up.
+    let blocked = break_pointer_writes(&mirror_dir, "d0");
+    hwm::ingest(
+        &state,
+        Some(&m),
+        vec![candidate_in("d0", 0.5, 1)],
+        json!({"k": 1}),
+    )
+    .expect_err("the pointer write must fail the push");
+    assert_eq!(fs::read(&mirror_head).unwrap(), local_head().unwrap());
+    assert!(!mirror_dir.join(d0.rel()).is_file());
+
+    // 2. The store recovers, and a push with nothing new settles what is owed.
+    fs::remove_file(&blocked).unwrap();
+    hwm::ingest(&state, Some(&m), vec![], json!({"k": 2})).unwrap();
+    assert_eq!(
+        fs::read(mirror_dir.join(d0.rel())).ok(),
+        fs::read(state.pointer_path(&d0).unwrap()).ok(),
+        "the pointer owed since the failed push was never written"
+    );
+
+    // 3. The same failure on another cut, then a push that only touches a third cut.
+    let blocked = break_pointer_writes(&mirror_dir, "d1");
+    hwm::ingest(
+        &state,
+        Some(&m),
+        vec![candidate_in("d1", 0.6, 2)],
+        json!({"k": 3}),
+    )
+    .expect_err("the pointer write must fail the push");
+    fs::remove_file(&blocked).unwrap();
+    hwm::ingest(
+        &state,
+        Some(&m),
+        vec![candidate_in("d2", 0.7, 3)],
+        json!({"k": 4}),
+    )
+    .unwrap();
+    assert_eq!(
+        fs::read(mirror_dir.join(d1.rel())).ok(),
+        fs::read(state.pointer_path(&d1).unwrap()).ok(),
+        "a push of an unrelated cut left the owed pointer behind"
+    );
+    // Every pointer the local ledger accepted is now on the mirror, byte for byte.
+    for (key, _) in state.pointers().unwrap() {
+        assert_eq!(
+            fs::read(mirror_dir.join(key.rel())).ok(),
+            fs::read(state.pointer_path(&key).unwrap()).ok(),
+            "{}",
+            key.rel()
+        );
+    }
+    assert_eq!(fs::read(&mirror_head).unwrap(), local_head().unwrap());
+
+    // A clean push settles everything it adds, and the durable owed record says so: a stale
+    // record would cost one GET per listed pointer on the next push.
+    let rep = hwm::ingest(
+        &state,
+        Some(&m),
+        vec![candidate_in("d3", 0.8, 4)],
+        json!({"k": 5}),
+    )
+    .unwrap();
+    assert_eq!(rep.mirror.unwrap().pointers_owed, 0);
+    let owed = jope_learning::hwm::Owed::load(&state, &m.url).unwrap();
+    assert!(
+        owed.pointers.is_empty(),
+        "the owed record still lists settled pointers: {:?}",
+        owed.pointers
+    );
+}
+
 #[test]
 fn a_pointer_left_behind_by_a_local_only_ingest_catches_up() {
     let tmp = tempfile::tempdir().unwrap();

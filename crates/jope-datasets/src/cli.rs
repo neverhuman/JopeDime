@@ -5,6 +5,7 @@ use crate::cache::{link_from, verify_cache, Fetcher};
 use crate::catalog::Task;
 use crate::ingest::{self, Source};
 use crate::paths::{now_compact, offline_env, Cache};
+use crate::regression_release::{self, FamilyRegistry, RegressionRelease};
 use crate::repo::verify_repo;
 use crate::store::Store;
 use anyhow::Result;
@@ -61,6 +62,13 @@ pub enum Cmd {
         /// Print the registry directory (JOPE_REGISTRY) after fetching.
         #[arg(long)]
         print_registry: bool,
+        /// Resolve against exactly this published catalog version (`v<N>`);
+        /// `LATEST`, cached rows and cached manifests are never consulted.
+        #[arg(long, requires = "catalog_sha256")]
+        catalog_version: Option<String>,
+        /// SHA-256 of the pinned version's `catalog.jsonl` bytes.
+        #[arg(long, requires = "catalog_version")]
+        catalog_sha256: Option<String>,
     },
     /// Re-hash cached blobs and check links; or check a committed dataset repository.
     Verify {
@@ -90,6 +98,306 @@ pub enum Cmd {
     },
     /// Print the JSON Schema derived from the Rust types.
     Schema { which: Which },
+    /// Derive or verify the immutable ten-regression release. Reads only exact
+    /// pre-staged local objects; never fetches, never substitutes.
+    RegressionRelease {
+        #[command(subcommand)]
+        action: ReleaseAction,
+    },
+    /// Record the historical GPU-study staging from its retained evidence and
+    /// verify input closures against the corrected fitting-only protocol.
+    /// Local reads only; nothing is fetched or rewritten.
+    StagingDisposition {
+        #[command(subcommand)]
+        action: StagingAction,
+    },
+}
+
+#[derive(Subcommand)]
+pub enum StagingAction {
+    /// Derive the disposition and its corrected protocol; outputs must not exist.
+    Derive {
+        /// Retained study directory (plan, journal, manifests, projected inputs).
+        #[arg(long)]
+        study_root: PathBuf,
+        /// Repository root holding docs/internal/core-ip/data/.
+        #[arg(long)]
+        repository_root: PathBuf,
+        #[arg(long)]
+        disposition: PathBuf,
+        #[arg(long)]
+        protocol: PathBuf,
+    },
+    /// Reopen both documents; optionally re-derive them from the evidence and
+    /// replay-check an input closure, or a corrected run with its closure.
+    /// A rejected closure or run exits 1.
+    Verify {
+        #[arg(long)]
+        disposition: PathBuf,
+        #[arg(long)]
+        protocol: PathBuf,
+        #[arg(long, requires = "repository_root")]
+        study_root: Option<PathBuf>,
+        #[arg(long, requires = "study_root")]
+        repository_root: Option<PathBuf>,
+        /// A pinned fitting-input manifest to check against the corrected protocol.
+        #[arg(long)]
+        closure: Option<PathBuf>,
+        /// A corrected run document (requires --closure).
+        #[arg(long, requires = "closure")]
+        run: Option<PathBuf>,
+    },
+}
+
+fn create_new(path: &std::path::Path, bytes: &[u8]) -> Result<()> {
+    use std::io::Write;
+    let mut file = std::fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(path)
+        .map_err(|e| anyhow::anyhow!("{}: {e}; records are immutable", path.display()))?;
+    file.write_all(bytes)?;
+    file.sync_all()?;
+    Ok(())
+}
+
+fn run_staging(action: StagingAction) -> Result<ExitCode> {
+    use crate::staging_disposition::{
+        derive_disposition, verify_closure, verify_corrected_run, CorrectedProtocol,
+        HistoricalDisposition,
+    };
+    match action {
+        StagingAction::Derive {
+            study_root,
+            repository_root,
+            disposition,
+            protocol,
+        } => {
+            let derived = derive_disposition(&study_root, &repository_root)?;
+            let corrected = CorrectedProtocol::derive(&derived)?;
+            let (d, p) = (derived.encode()?, corrected.encode()?);
+            create_new(&disposition, &d)?;
+            create_new(&protocol, &p)?;
+            println!(
+                "{}",
+                serde_json::json!({"schema":"jope.staging-disposition-derivation/v1",
+                    "disposition_id":derived.disposition_id,"disposition_sha256":crate::hash::sha256_hex(&d),
+                    "protocol_id":corrected.protocol_id,"protocol_sha256":crate::hash::sha256_hex(&p),
+                    "historical_closure_manifest_sha256":derived.input_closure.manifest_sha256,
+                    "forbidden_closure_objects":corrected.forbidden_closure_sha256.len(),
+                    "contamination_inferred":derived.classification.contamination_inferred,
+                    "network_access":false})
+            );
+            Ok(ExitCode::SUCCESS)
+        }
+        StagingAction::Verify {
+            disposition,
+            protocol,
+            study_root,
+            repository_root,
+            closure,
+            run,
+        } => {
+            let d_bytes = std::fs::read(&disposition)?;
+            let d = HistoricalDisposition::open(&d_bytes)?;
+            let p = CorrectedProtocol::open(&std::fs::read(&protocol)?, &d)?;
+            let mut report = serde_json::json!({"schema":"jope.staging-disposition-verification/v1",
+                "disposition_id":d.disposition_id,"protocol_id":p.protocol_id,"network_access":false});
+            if let (Some(study), Some(repository)) = (study_root, repository_root) {
+                let rederived = derive_disposition(&study, &repository)?.encode()?;
+                anyhow::ensure!(
+                    rederived == d_bytes,
+                    "re-derivation from the retained evidence does not reproduce the disposition"
+                );
+                report["rederived_bytes_equal"] = serde_json::json!(true);
+            }
+            let mut accepted = true;
+            if let Some(closure) = closure {
+                let manifest = std::fs::read(&closure)?;
+                report["closure_sha256"] = serde_json::json!(crate::hash::sha256_hex(&manifest));
+                let decision = match &run {
+                    Some(run) => verify_corrected_run(&d, &p, &std::fs::read(run)?, &manifest),
+                    None => verify_closure(&p, &manifest),
+                };
+                match decision {
+                    Ok(value) => report["closure_decision"] = value,
+                    Err(e) => {
+                        accepted = false;
+                        report["closure_decision"] =
+                            serde_json::json!({"accepted":false,"reason":format!("{e:#}")});
+                    }
+                }
+            }
+            println!("{report}");
+            Ok(if accepted {
+                ExitCode::SUCCESS
+            } else {
+                ExitCode::FAILURE
+            })
+        }
+    }
+}
+
+#[derive(Subcommand)]
+pub enum ReleaseAction {
+    /// Derive a new release document; the output path must not exist.
+    Derive {
+        /// Frozen panel manifest (benchmarks/panel.json).
+        #[arg(long)]
+        panel: PathBuf,
+        /// Repository-relative preparation implementation (benchmarks/prepare.py).
+        #[arg(long)]
+        preparation_source: PathBuf,
+        /// Canonical family/exposure registry document.
+        #[arg(long)]
+        registry: PathBuf,
+        /// Preparation root holding downloads/, metadata/, development/, splits/, sealed/.
+        #[arg(long)]
+        staged_root: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    /// Reopen a release byte-exactly and re-derive it from the staged objects.
+    Verify {
+        #[arg(long)]
+        release: PathBuf,
+        #[arg(long)]
+        registry: PathBuf,
+        #[arg(long)]
+        panel: PathBuf,
+        #[arg(long)]
+        preparation_source: PathBuf,
+        #[arg(long)]
+        staged_root: PathBuf,
+    },
+}
+
+fn release_sources(
+    panel: &std::path::Path,
+    preparation_source: &std::path::Path,
+    registry: &std::path::Path,
+) -> Result<(Vec<u8>, String, Vec<u8>, FamilyRegistry)> {
+    let source_path = preparation_source
+        .to_str()
+        .ok_or_else(|| anyhow::anyhow!("preparation source path is not UTF-8"))?
+        .to_owned();
+    let registry = FamilyRegistry::open(&std::fs::read(registry)?)?;
+    Ok((
+        std::fs::read(panel)?,
+        source_path,
+        std::fs::read(preparation_source)?,
+        registry,
+    ))
+}
+
+fn run_release(action: ReleaseAction) -> Result<ExitCode> {
+    match action {
+        ReleaseAction::Derive {
+            panel,
+            preparation_source,
+            registry,
+            staged_root,
+            output,
+        } => {
+            let (panel, source_path, source, registry) =
+                release_sources(&panel, &preparation_source, &registry)?;
+            let staged = regression_release::load_staged(&staged_root, &panel)?;
+            let release = regression_release::derive(&regression_release::ReleaseSources {
+                panel: &panel,
+                preparation_source_path: &source_path,
+                preparation_source: &source,
+                registry: &registry,
+                staged: &staged,
+            })?;
+            let bytes = release.encode()?;
+            {
+                use std::io::Write;
+                let mut file = std::fs::OpenOptions::new()
+                    .write(true)
+                    .create_new(true)
+                    .open(&output)
+                    .map_err(|e| {
+                        anyhow::anyhow!(
+                            "{}: {e}; releases are immutable, choose a new path",
+                            output.display()
+                        )
+                    })?;
+                file.write_all(&bytes)?;
+                file.sync_all()?;
+            }
+            println!(
+                "{}",
+                serde_json::json!({
+                    "schema": "jope.regression-release-derivation/v1",
+                    "release_id": release.release_id,
+                    "release_sha256": crate::hash::sha256_hex(&bytes),
+                    "members": release.members.iter().map(|m| &m.dataset).collect::<Vec<_>>(),
+                    "exclusions": release.exclusions.len(),
+                    "family_registry_sha256": release.family_registry_sha256,
+                    "panel_sha256": release.derived_from.panel_sha256,
+                    "sealed_partitions_parsed": false,
+                    "network_access": false,
+                })
+            );
+            Ok(ExitCode::SUCCESS)
+        }
+        ReleaseAction::Verify {
+            release,
+            registry,
+            panel,
+            preparation_source,
+            staged_root,
+        } => {
+            let release_bytes = std::fs::read(&release)?;
+            let release = RegressionRelease::open(&release_bytes)?;
+            let (panel, source_path, source, registry) =
+                release_sources(&panel, &preparation_source, &registry)?;
+            anyhow::ensure!(
+                registry.sha256()? == release.family_registry_sha256,
+                "registry is not the one bound by the release"
+            );
+            regression_release::check_against_panel(&release, &panel)?;
+            let staged = regression_release::load_staged(&staged_root, &panel)?;
+            for member in &release.members {
+                let objects = staged
+                    .get(&member.dataset)
+                    .ok_or_else(|| anyhow::anyhow!("{}: staged objects absent", member.dataset))?;
+                release.verify_staged(&member.dataset, objects)?;
+            }
+            let rederived = regression_release::derive(&regression_release::ReleaseSources {
+                panel: &panel,
+                preparation_source_path: &source_path,
+                preparation_source: &source,
+                registry: &registry,
+                staged: &staged,
+            })?;
+            anyhow::ensure!(
+                rederived.encode()? == release_bytes,
+                "re-derivation does not reproduce the release bytes"
+            );
+            let mut blocked = serde_json::Map::new();
+            for member in &release.members {
+                blocked.insert(
+                    member.dataset.clone(),
+                    serde_json::json!(registry.never_seen_claim_blockers(&member.dataset)?.len()),
+                );
+            }
+            println!(
+                "{}",
+                serde_json::json!({
+                    "schema": "jope.regression-release-verification/v1",
+                    "release_id": release.release_id,
+                    "release_sha256": crate::hash::sha256_hex(&release_bytes),
+                    "members_verified": release.members.len(),
+                    "rederived_bytes_equal": true,
+                    "never_seen_claim_blockers": blocked,
+                    "sealed_partitions_parsed": false,
+                    "network_access": false,
+                })
+            );
+            Ok(ExitCode::SUCCESS)
+        }
+    }
 }
 
 /// Run a parsed command line; errors are printed as `error: …` and exit with status 2, a
@@ -135,7 +443,15 @@ pub fn run(cli: Cli) -> Result<ExitCode> {
             selector,
             offline,
             print_registry,
+            catalog_version,
+            catalog_sha256,
         } => {
+            let pin = match (catalog_version, catalog_sha256) {
+                (Some(version), Some(sha256)) => {
+                    Some(crate::cache::CatalogPin::new(&version, &sha256)?)
+                }
+                _ => None,
+            };
             let cache = Cache::from_env();
             let offline = offline || offline_env();
             let store = if offline {
@@ -150,7 +466,13 @@ pub fn run(cli: Cli) -> Result<ExitCode> {
                 cache: &cache,
                 store: store.as_ref(),
             };
-            let report = rt.block_on(fetcher.fetch(&selector))?;
+            let report = match &pin {
+                Some(pin) => rt.block_on(fetcher.fetch_pinned(&selector, pin))?,
+                None => rt.block_on(fetcher.fetch(&selector))?,
+            };
+            if let Some(pin) = &report.catalog {
+                eprintln!("catalog pinned: {} sha256 {}", pin.version, pin.sha256);
+            }
             eprintln!(
                 "fetched {} datasets: {} files downloaded, {} already cached, {} errors",
                 report.datasets,
@@ -262,5 +584,7 @@ pub fn run(cli: Cli) -> Result<ExitCode> {
             println!("{}", serde_json::to_string_pretty(&v)?);
             Ok(ExitCode::SUCCESS)
         }
+        Cmd::RegressionRelease { action } => run_release(action),
+        Cmd::StagingDisposition { action } => run_staging(action),
     }
 }

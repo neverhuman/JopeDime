@@ -608,12 +608,17 @@ impl PolicyModel {
     }
 }
 
-#[cfg(feature = "inference-cuda")]
+#[cfg(any(test, feature = "inference-cuda"))]
 impl PolicyModel {
-    /// Qualification only: fresh batch-local cache versus full-prefix logits.
+    /// Qualification only: fresh batch-local cache versus full-prefix logits. Both paths need
+    /// at least two tokens, so the cache is primed with the first two and every later token is
+    /// one compared cached step.
     pub fn cache_max_error(&self, context: &[f32], tokens: &[usize]) -> Result<f32> {
-        ensure!(tokens.len() >= 2, "qualification needs a token sequence");
-        let mut rows = vec![vec![tokens[0]]];
+        ensure!(
+            tokens.len() >= 3,
+            "qualification needs a two-token prefix and at least one cached step"
+        );
+        let mut rows = vec![tokens[..2].to_vec()];
         let (mut cache, first) = cached::DecodeCache::new(self, context, &rows)?;
         let mut maximum = 0f32;
         let mut compare = |a: &[Vec<f32>], b: &[Vec<f32>]| -> Result<()> {
@@ -628,7 +633,7 @@ impl PolicyModel {
             Ok(())
         };
         compare(&first, &self.next_token_logits(context, &rows)?)?;
-        for &token in &tokens[1..] {
+        for &token in &tokens[2..] {
             rows[0].push(token);
             compare(
                 &cache.advance(&[0], &[token])?,
@@ -636,5 +641,31 @@ impl PolicyModel {
             )?;
         }
         Ok(maximum)
+    }
+}
+
+#[cfg(test)]
+mod identity_tests {
+    use super::*;
+
+    /// A bound identity labels output with the accepted state only for the released weights
+    /// file: the accepted state, parameters and configuration around any other
+    /// `policy.safetensors` (for example a re-serialized copy of the same tensors) are refused.
+    #[test]
+    fn accepted_policy_requires_the_released_weights_file() {
+        let mut model = PolicyModel::random_weights(PolicyConfig::regression(401), 3).unwrap();
+        let bind = |file: &str| BoundIdentity {
+            state_sha256: crate::ACCEPTED_STATE_SHA256.into(),
+            parameter_sha256: crate::ACCEPTED_PARAMETER_SHA256.into(),
+            policy_safetensors_sha256: file.into(),
+            config_sha256: crate::ACCEPTED_CONFIG_SHA256.into(),
+        };
+        model.bound = Some(bind(
+            "4b4b5a40f03c9226b4b15856fd35b90127c8b6a4d1435b815484cdd050744f1e",
+        ));
+        crate::require_accepted_policy(&model).unwrap();
+        model.bound = Some(bind(&sha256_hex(b"re-serialized accepted tensors")));
+        let err = crate::require_accepted_policy(&model).unwrap_err();
+        assert!(format!("{err:#}").contains("policy.safetensors"), "{err:#}");
     }
 }

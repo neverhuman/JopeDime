@@ -15,6 +15,12 @@ use std::{
 
 pub const SCOPE: &str = "synthetic-cli-fixture";
 pub const PROGRAM: &str = "(pipe X (ridge))";
+/// A shipped build refuses every fit here: no production namespace verifier
+/// exists, so `activation_block` holds even a fully configured, in-scope
+/// request. Positive fit contracts live in the library's `cfg(test)` build
+/// (`gp::fit_contract_tests`), behind the test-only synthetic issuer.
+pub const UNVERIFIED_ACTIVATION: &str =
+    "namespace capability inactive: explicit verified activation required";
 
 pub fn contract() -> NumericalContract {
     NumericalContract {

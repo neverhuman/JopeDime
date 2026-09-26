@@ -6,7 +6,8 @@ claims cannot. Follow [the execution contract](EXECUTION-CONTRACT.md).
 
 ## Source anchors and claim boundaries
 
-Inspect `docs/internal/core-ip/tools/build.py`, `verify.py`, `verify_findings.py`,
+Inspect `docs/internal/core-ip/tools/build.py`, `verify.py`, `crates/jope-records` (the
+findings verifier, formerly `verify_findings.py`),
 `docs/internal/core-ip/findings/register.json`, `docs/parity/capability-matrix.md`,
 `docs/learning.md`, `MASTER_PLAN.md`, `crates/jope-learning/src/ledger.rs`, and the
 original scoring/replay paths behind each proposed KPI.
@@ -121,8 +122,8 @@ Depends on T02–T07 and completed applicable packages.
 ## Verification and delivery
 
 ```sh
-python3 docs/internal/core-ip/tools/verify_findings.py
-python3 -m unittest discover -s docs/internal/core-ip/tools -p test_verify_findings.py -v
+cargo run -q -p jope-records -- verify-findings
+cargo nextest run -p jope-records
 git diff --check
 ```
 

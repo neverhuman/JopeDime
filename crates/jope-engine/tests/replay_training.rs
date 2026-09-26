@@ -75,6 +75,65 @@ fn cli_policy_rejects_legacy_or_mismatched_labels_before_gpu_admission() {
 }
 
 #[test]
+fn ungranted_valid_policy_is_still_refused_by_the_dispatch_hold() {
+    // Positive input control for the test above: a replay policy that matches
+    // a strictly admitted corpus passes input validation and must then be
+    // refused by the original-GPU-grant hold before any lease, lock, run
+    // directory or rank process exists.
+    use jope_parallel::manifest::{file_hash, write_json};
+    use serde_json::json;
+    let directory = tempfile::tempdir().unwrap();
+    let root = directory.path();
+    let corpus = root.join("corpus");
+    std::fs::create_dir(&corpus).unwrap();
+    write_json(
+        &corpus.join("index.json"),
+        &json!({"label_policy":"strict_midrank_v4","admission_policy":{}}),
+    )
+    .unwrap();
+    let policy = root.join("policy.json");
+    write_json(
+        &policy,
+        &json!({"schema":"parallel.replay_policy.v2","eligible":true,"final_tests_opened":false,
+        "corpus_sha256":file_hash(&corpus.join("index.json")).unwrap()}),
+    )
+    .unwrap();
+    let run = root.join("run");
+    let before = std::fs::read_dir(root)
+        .unwrap()
+        .map(|entry| entry.unwrap().file_name())
+        .collect::<std::collections::BTreeSet<_>>();
+    let result = std::process::Command::new(env!("CARGO_BIN_EXE_jope-parallel"))
+        .arg("--root")
+        .arg(root)
+        .args(["train", "--corpus"])
+        .arg(&corpus)
+        .arg("--output")
+        .arg(&run)
+        .arg("--replay-policy")
+        .arg(&policy)
+        .output()
+        .unwrap();
+    let stderr = String::from_utf8_lossy(&result.stderr);
+    assert!(!result.status.success());
+    assert!(
+        stderr.contains("training-controller: original native GPU grant verifier unavailable"),
+        "{stderr}"
+    );
+    assert!(
+        !stderr.contains("matching strictly admitted corpus"),
+        "{stderr}"
+    );
+    assert!(!run.exists());
+    assert!(!root.join("runs/encoding-service.lock").exists());
+    let after = std::fs::read_dir(root)
+        .unwrap()
+        .map(|entry| entry.unwrap().file_name())
+        .collect::<std::collections::BTreeSet<_>>();
+    assert_eq!(before, after, "the refused request created workspace state");
+}
+
+#[test]
 fn balanced_portions_exact_resume_and_broad_fallback() {
     let index = index();
     let broad = BTreeMap::from([("a".into(), vec![0, 1]), ("b".into(), vec![2, 3])]);

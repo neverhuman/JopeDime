@@ -43,6 +43,9 @@ pub struct MirrorReport {
     /// Ledger batch objects this push uploaded. More than one means the mirror was behind and has
     /// been caught up; `created` vs `existed` says how many of them were genuinely new.
     pub batches: u64,
+    /// `current.json` pointers still owed to the mirror after this push: written locally, and
+    /// named by batches the mirror's `HEAD.json` may already reach, but not yet on the mirror.
+    pub pointers_owed: u64,
 }
 
 impl MirrorReport {

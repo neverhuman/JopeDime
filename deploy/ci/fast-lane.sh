@@ -33,8 +33,14 @@ python3 deploy/ci/test-training-proof.py
 python3 deploy/ci/test-install-private.py
 python3 deploy/ci/test-qualify-demo.py
 python3 deploy/ci/test-prepare-asm-runtime.py
-python3 docs/internal/core-ip/tools/verify_findings.py
-python3 -m unittest discover -s docs/internal/core-ip/tools -p test_verify_findings.py -v
+bash deploy/ci/test-neural-env.sh
+cargo run -q --locked -p jope-records -- verify-findings
+cargo run -q --locked -p jope-records -- verify-dispositions
+cargo run -q --locked -p jope-records -- verify-test-inventory
+cargo run -q --locked -p jope-records -- verify-claims
+cargo run -q --locked -p jope-records -- task-status
+cargo run -q --locked -p jope-records -- progress-view
+cargo run -q --locked -p jope-records -- elo-history --require-all
     # Hygiene
 bash deploy/ci/check.sh
     # cargo-deny
@@ -131,7 +137,7 @@ uv run --no-sync ruff format --check .
     # Pytest (xbabe2-only tests deselected)
 (
 cd python
-bash ../deploy/ci/pytest-evidence.sh uv run --no-sync pytest -q tests ../benchmarks/test_prepare.py ../crates/jope-bench/adapters/test_panel.py ../crates/jope-bench/src/panel/test_inference_report.py -m "not xbabe2" -p no:cacheprovider
+bash ../deploy/ci/pytest-evidence.sh uv run --no-sync pytest -q tests ../benchmarks/test_prepare.py ../crates/jope-bench/adapters/test_panel.py -m "not xbabe2" -p no:cacheprovider
 )
 python3 deploy/ci/training-proof.py python --junit "$EVIDENCE/junit.xml"
     ;;

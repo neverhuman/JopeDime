@@ -41,6 +41,30 @@ fn cpu_evaluator_binding(value: Option<std::ffi::OsString>) -> Result<std::path:
     Ok(path.canonicalize()?)
 }
 
+/// Shipped builds start the explicitly bound evaluator executable directly.
+#[cfg(not(test))]
+fn evaluator_command(executable: &Path) -> Command {
+    Command::new(executable)
+}
+/// A unit-test build has no product CLI: the same subcommand argv is handed to
+/// this test executable's ignored fixture entry. Launcher only; it grants no
+/// authority and changes no fit, witness or activation rule.
+#[cfg(test)]
+fn evaluator_command(executable: &Path) -> Command {
+    let mut command = Command::new(executable);
+    command.args(fit_contract_tests::CLI_ENTRY_ARGS);
+    command
+}
+
+#[cfg(test)]
+mod fit_contract_tests;
+pub mod handoff;
+pub mod lineage;
+pub mod outer_release;
+pub mod outer_release_cli;
+pub mod paired;
+pub mod selection_replay;
+
 #[cfg(test)]
 mod cpu_evaluator_tests {
     use super::*;
@@ -150,16 +174,41 @@ pub fn fit_view(prepared: &Path, cut: usize, genome: &str, output: &Path) -> Res
         .find(|c| c.index == cut)
         .context("unknown cut")?;
     let preprocessing_path = prepared.join(format!("cut-{cut}/preprocessing.json"));
-    ensure!(
-        file_hash(&preprocessing_path)? == c.preprocessing_sha256,
-        "preprocessing changed"
-    );
-    let preprocessing: Preprocessing = read_json(&preprocessing_path)?;
+    // Route R8: the stored state and the fitted feature view bind the same
+    // verified bytes; the path is read once.
+    let preprocessing_bytes = read_verified(
+        &preprocessing_path,
+        &c.preprocessing_sha256,
+        "preprocessing",
+    )
+    .context("preprocessing changed")?;
     let table = crate::prepare::load_view(prepared, cut, true)?;
-    let (x, y) = xy(&table);
+    fit_projected(
+        &table,
+        &c.training_sha256,
+        preprocessing_bytes,
+        genome,
+        output,
+    )
+}
+
+/// Fit exactly the given projected training rows (W1 follow-up 2c). Shared by
+/// the in-process fitted-view fit and the sealed-memory export worker.
+fn fit_projected(
+    rows: &[Vec<f64>],
+    training_sha256: &str,
+    preprocessing_bytes: Vec<u8>,
+    genome: &str,
+    output: &Path,
+) -> Result<()> {
+    ensure!(
+        hash(&csv_bytes(rows)?) == training_sha256,
+        "projected training rows differ from the cut's training identity"
+    );
+    let preprocessing: Preprocessing = serde_json::from_slice(&preprocessing_bytes)?;
+    let (x, y) = xy(rows);
     let g = GenomeIr::parse(genome)?;
-    let preprocessing_bytes = fs::read(&preprocessing_path)?;
-    let feature_view = raw_feature_view(&c.training_sha256, &preprocessing_bytes)?;
+    let feature_view = raw_feature_view(training_sha256, &preprocessing_bytes)?;
     let fitted = crate::fit_boundary::fit(
         &g.canonical(),
         x,
@@ -174,16 +223,134 @@ pub fn fit_view(prepared: &Path, cut: usize, genome: &str, output: &Path) -> Res
             schema: "parallel.predictor.v1".into(),
             task: "regression".into(),
             canonical: g.canonical(),
-            training_sha256: c.training_sha256.clone(),
-            feature_count: table[0].len() - 1,
+            training_sha256: training_sha256.into(),
+            feature_count: rows.first().context("empty projected training rows")?.len() - 1,
             preprocessing,
             model: fitted.model,
             fit_completion: Some(fitted.completion),
         },
     )
 }
+
+/// Largest preparation state a projected export input may carry.
+const FIT_MEMORY_MAX_PREPROCESSING: usize = 16 * 1024 * 1024;
+
+/// A sealed anonymous memory file holding exactly one cut's projected training
+/// rows and the verified bytes of its learned preparation state: the export
+/// worker's whole input (W1 follow-up 2c). Layout: three little-endian u64
+/// (rows, width, preparation length), the preparation bytes, then the rows as
+/// little-endian f64. Inheritable, so a spawned worker receives it by number.
+pub fn fit_memory_input(rows: &[Vec<f64>], preprocessing: &[u8]) -> Result<fs::File> {
+    use std::io::Write;
+    use std::os::fd::{AsRawFd, FromRawFd};
+    let width = rows.first().context("empty projected training rows")?.len();
+    ensure!(
+        width >= 2
+            && rows.len() <= ROW_LIMIT
+            && rows.iter().all(|r| r.len() == width)
+            && preprocessing.len() <= FIT_MEMORY_MAX_PREPROCESSING,
+        "invalid projected export input shape"
+    );
+    let name = std::ffi::CString::new("jope-fit-input").unwrap();
+    let fd = unsafe { libc::memfd_create(name.as_ptr(), libc::MFD_ALLOW_SEALING) };
+    ensure!(fd >= 0, "memfd_create failed");
+    let file = unsafe { fs::File::from_raw_fd(fd) };
+    {
+        let mut out = std::io::BufWriter::new(&file);
+        for n in [rows.len(), width, preprocessing.len()] {
+            out.write_all(&(n as u64).to_le_bytes())?;
+        }
+        out.write_all(preprocessing)?;
+        for row in rows {
+            for value in row {
+                out.write_all(&value.to_le_bytes())?;
+            }
+        }
+        out.flush()?;
+    }
+    ensure!(
+        unsafe {
+            libc::fcntl(
+                file.as_raw_fd(),
+                libc::F_ADD_SEALS,
+                libc::F_SEAL_WRITE | libc::F_SEAL_GROW | libc::F_SEAL_SHRINK | libc::F_SEAL_SEAL,
+            )
+        } == 0,
+        "sealing projected export input failed"
+    );
+    Ok(file)
+}
+
+/// The export worker (hidden `fit-memory` command): fits exactly the sealed
+/// projected input inherited as `fd`. It is handed no prepared path, root or
+/// backing table and opens none; the rows and preparation state must match the
+/// identities its parent read from the cut.
+pub fn fit_memory(
+    fd: i32,
+    training_sha256: &str,
+    preprocessing_sha256: &str,
+    genome: &str,
+    output: &Path,
+) -> Result<()> {
+    use std::io::{Read, Seek, SeekFrom};
+    use std::os::fd::FromRawFd;
+    ensure!(!output.exists(), "fitted predictor already exists");
+    ensure!(fd >= 3, "invalid inherited projected input descriptor");
+    let seals = unsafe { libc::fcntl(fd, libc::F_GET_SEALS) };
+    ensure!(
+        seals >= 0 && seals & libc::F_SEAL_WRITE != 0 && seals & libc::F_SEAL_SHRINK != 0,
+        "projected export input must be sealed memory"
+    );
+    let copy = unsafe { libc::dup(fd) };
+    ensure!(copy >= 0, "projected input descriptor missing");
+    let mut file = unsafe { fs::File::from_raw_fd(copy) };
+    file.seek(SeekFrom::Start(0))?;
+    let mut header = [0u8; 24];
+    file.read_exact(&mut header)?;
+    let dims = header
+        .chunks_exact(8)
+        .map(|b| u64::from_le_bytes(b.try_into().unwrap()) as usize)
+        .collect::<Vec<_>>();
+    ensure!(
+        dims[0] > 0
+            && dims[0] <= ROW_LIMIT
+            && dims[1] >= 2
+            && dims[2] <= FIT_MEMORY_MAX_PREPROCESSING,
+        "invalid projected export input header"
+    );
+    let mut preprocessing = vec![0u8; dims[2]];
+    file.read_exact(&mut preprocessing)?;
+    ensure!(
+        hash(&preprocessing) == preprocessing_sha256,
+        "projected preparation state differs from the cut's identity"
+    );
+    let cells = dims[0]
+        .checked_mul(dims[1])
+        .context("projected input dimensions overflow")?;
+    let mut bytes = vec![0u8; cells * 8];
+    file.read_exact(&mut bytes)?;
+    let mut rest = [0u8; 1];
+    ensure!(
+        file.read(&mut rest)? == 0,
+        "projected export input has trailing bytes"
+    );
+    let rows = bytes
+        .chunks_exact(dims[1] * 8)
+        .map(|row| {
+            row.chunks_exact(8)
+                .map(|b| f64::from_le_bytes(b.try_into().unwrap()))
+                .collect::<Vec<_>>()
+        })
+        .collect::<Vec<_>>();
+    fit_projected(&rows, training_sha256, preprocessing, genome, output)
+}
+
 /// Export a fitted predictor under the same CPU, memory and time limits as a
 /// teacher candidate. A failed export must not strand the neural cycle.
+/// Legacy callers without a declared root: the parent projects through
+/// [`crate::prepare::load_view`] (the view's workspace ancestor). The
+/// selected-export handoff declares its root ([`fit_view_isolated_in_root`]).
+/// Either way the worker receives only the sealed projection.
 pub fn fit_view_isolated(
     executable: &Path,
     prepared: &Path,
@@ -191,90 +358,154 @@ pub fn fit_view_isolated(
     genome: &str,
     output: &Path,
 ) -> Result<()> {
+    isolated_export(executable, None, prepared, cut, genome, output)
+}
+
+/// The isolated fitted-view export (W1 follow-up 2c): the parent projects the
+/// cut's fitting-only input under the declared `root` - digest-verified
+/// training rows and preparation state - and the worker (`fit-memory`)
+/// receives only that sealed projection; it is given no prepared path and
+/// resolves no view. The receipt records the root, the projection and the
+/// worker's exact argv. A projection that cannot be made under the root is a
+/// receipted failure before any worker starts.
+pub fn fit_view_isolated_in_root(
+    executable: &Path,
+    root: &Path,
+    prepared: &Path,
+    cut: usize,
+    genome: &str,
+    output: &Path,
+) -> Result<()> {
+    isolated_export(executable, Some(root), prepared, cut, genome, output)
+}
+
+fn isolated_export(
+    executable: &Path,
+    root: Option<&Path>,
+    prepared: &Path,
+    cut: usize,
+    genome: &str,
+    output: &Path,
+) -> Result<()> {
+    use std::os::fd::AsRawFd;
     use std::os::unix::process::CommandExt;
     ensure!(!output.exists(), "fitted predictor already exists");
     let executable_sha256 = file_hash(executable)?;
-    let prepared_sha256 = file_hash(&prepared.join("prepared.json"))?;
+    let prepared_bytes = fs::read(prepared.join("prepared.json"))?;
+    let prepared_sha256 = hash(&prepared_bytes);
     let program_sha256 = hash(genome.as_bytes());
     fs::create_dir_all(output.parent().context("predictor output parent absent")?)?;
     let log_path = output.with_extension("fit.log");
     let receipt_path = output.with_extension("fit.json");
     let log = fs::File::create(&log_path)?;
-    let mut command = Command::new(executable);
-    command
-        .args(["fit-view", "--prepared"])
-        .arg(prepared)
-        .arg("--cut")
-        .arg(cut.to_string())
-        .arg("--genome")
-        .arg(genome)
-        .arg("--output")
-        .arg(output)
-        .env("RAYON_NUM_THREADS", "1")
-        .env("OMP_NUM_THREADS", "1")
-        .env("OPENBLAS_NUM_THREADS", "1")
-        .env("MKL_NUM_THREADS", "1")
-        .env(
-            "JOPE_FIT_DEADLINE_MONOTONIC_NS",
-            crate::fit_boundary::deadline_after(Duration::from_secs(30))?.to_string(),
-        )
-        .stdout(Stdio::from(log.try_clone()?))
-        .stderr(Stdio::from(log));
-    unsafe {
-        command.pre_exec(|| {
-            let limit = libc::rlimit {
-                rlim_cur: 8 * 1024 * 1024 * 1024,
-                rlim_max: 8 * 1024 * 1024 * 1024,
-            };
-            if libc::setrlimit(libc::RLIMIT_AS, &limit) != 0 || libc::setpgid(0, 0) != 0 {
-                return Err(std::io::Error::last_os_error());
-            }
-            Ok(())
-        });
-    }
-    crate::campaign::check_deadline()?;
     let started = Instant::now();
-    let mut child = command.spawn()?;
+    let mut projection = serde_json::Value::Null;
+    let mut worker_argv: Vec<String> = Vec::new();
     let result = (|| -> Result<()> {
-        loop {
-            crate::campaign::check_deadline()?;
-            if let Some(status) = child.try_wait()? {
-                ensure!(status.success(), "fitted predictor worker exited: {status}");
-                break;
-            }
-            ensure!(
-                started.elapsed() < Duration::from_secs(30),
-                "fitted predictor worker timeout after 30 seconds"
-            );
-            std::thread::sleep(Duration::from_millis(10));
-        }
+        let p: Prepared = serde_json::from_slice(&prepared_bytes)?;
         ensure!(
-            output.is_file(),
-            "fitted predictor worker produced no predictor"
+            p.schema == "parallel.prepared.v1" && p.task == "regression",
+            "regression preparation required"
         );
-        let fitted: Predictor = read_json(output)?;
-        ensure!(
-            fitted.canonical == GenomeIr::parse(genome)?.canonical(),
-            "fitted predictor program changed"
-        );
-        let p: Prepared = read_json(&prepared.join("prepared.json"))?;
         let c = p
             .cuts
             .iter()
             .find(|c| c.index == cut)
-            .context("fitted cut absent")?;
-        ensure!(
-            fitted.training_sha256 == c.training_sha256,
-            "fitted predictor cut changed"
-        );
-        Ok(())
-    })();
-    if child.try_wait()?.is_none() {
+            .context("unknown cut")?;
+        // The fitting-only projection, made here: under the declared root, or
+        // for a legacy caller through the view's own resolution.
+        let rows = match root {
+            Some(root) => crate::prepare::load_view_in_root(root, prepared, cut, true)?,
+            None => crate::prepare::load_view(prepared, cut, true)?,
+        };
+        let preprocessing = read_verified(
+            &prepared.join(format!("cut-{cut}/preprocessing.json")),
+            &c.preprocessing_sha256,
+            "preprocessing",
+        )?;
+        let memory = fit_memory_input(&rows, &preprocessing)?;
+        projection = json!({"kind":"sealed_memory_projection","rows":rows.len(),
+            "training_sha256":c.training_sha256,"preprocessing_sha256":c.preprocessing_sha256});
+        worker_argv = [
+            "fit-memory",
+            "--fd",
+            &memory.as_raw_fd().to_string(),
+            "--training-sha256",
+            &c.training_sha256,
+            "--preprocessing-sha256",
+            &c.preprocessing_sha256,
+            "--genome",
+            genome,
+            "--output",
+        ]
+        .iter()
+        .map(|a| a.to_string())
+        .chain([output.display().to_string()])
+        .collect();
+        let mut command = evaluator_command(executable);
+        command
+            .args(&worker_argv)
+            .env("RAYON_NUM_THREADS", "1")
+            .env("OMP_NUM_THREADS", "1")
+            .env("OPENBLAS_NUM_THREADS", "1")
+            .env("MKL_NUM_THREADS", "1")
+            .env(
+                "JOPE_FIT_DEADLINE_MONOTONIC_NS",
+                crate::fit_boundary::deadline_after(Duration::from_secs(30))?.to_string(),
+            )
+            .stdout(Stdio::from(log.try_clone()?))
+            .stderr(Stdio::from(log.try_clone()?));
         unsafe {
-            libc::kill(-(child.id() as i32), libc::SIGKILL);
+            command.pre_exec(|| {
+                let limit = libc::rlimit {
+                    rlim_cur: 8 * 1024 * 1024 * 1024,
+                    rlim_max: 8 * 1024 * 1024 * 1024,
+                };
+                if libc::setrlimit(libc::RLIMIT_AS, &limit) != 0 || libc::setpgid(0, 0) != 0 {
+                    return Err(std::io::Error::last_os_error());
+                }
+                Ok(())
+            });
         }
-        let _ = child.wait();
-    }
+        crate::campaign::check_deadline()?;
+        let mut child = command.spawn()?;
+        let waited = (|| -> Result<()> {
+            loop {
+                crate::campaign::check_deadline()?;
+                if let Some(status) = child.try_wait()? {
+                    ensure!(status.success(), "fitted predictor worker exited: {status}");
+                    break;
+                }
+                ensure!(
+                    started.elapsed() < Duration::from_secs(30),
+                    "fitted predictor worker timeout after 30 seconds"
+                );
+                std::thread::sleep(Duration::from_millis(10));
+            }
+            ensure!(
+                output.is_file(),
+                "fitted predictor worker produced no predictor"
+            );
+            let fitted: Predictor = read_json(output)?;
+            ensure!(
+                fitted.canonical == GenomeIr::parse(genome)?.canonical(),
+                "fitted predictor program changed"
+            );
+            ensure!(
+                fitted.training_sha256 == c.training_sha256,
+                "fitted predictor cut changed"
+            );
+            Ok(())
+        })();
+        if child.try_wait()?.is_none() {
+            unsafe {
+                libc::kill(-(child.id() as i32), libc::SIGKILL);
+            }
+            let _ = child.wait();
+        }
+        drop(memory);
+        waited
+    })();
     write_json(
         &receipt_path,
         &json!({
@@ -284,6 +515,10 @@ pub fn fit_view_isolated(
             "predictor_sha256":if result.is_ok(){Some(file_hash(output)?)}else{None},
             "wall_seconds":started.elapsed().as_secs_f64(), "timeout_seconds":30,
             "memory_limit_gib":8, "threads":1, "cut_csv_copies":0,
+            "artifact_root":root,
+            "view_resolution":if root.is_some(){"declared_root"}else{"legacy_view_resolution"},
+            "worker_input":projection, "worker_argv":worker_argv,
+            "worker_opens_prepared":false,
             "failure":result.as_ref().err().map(|e|format!("{e:#}")),
             "log_sha256":file_hash(&log_path)?, "final_tests_opened":false
         }),
@@ -344,9 +579,23 @@ pub struct SelectionReceipt {
     pub selected_on: String,
     pub frozen: bool,
 }
+/// Outer (sealed final-test) scoring (W1-T04). `receipt` must be a grant from
+/// the separate outer release authority named by `JOPE_OUTER_RELEASE_AUTHORITY`;
+/// the grant binds the authenticated fitted subject and the preparation's own
+/// sealed-test identity. `output` receives the scorer's receipt, never the
+/// metrics: they stay withheld until the authority releases them. A frozen
+/// selection receipt alone is still validated, then refused before the test
+/// path is opened, even for hashing.
 pub fn score(model: &Path, test: &Path, receipt: &Path, output: &Path) -> Result<()> {
-    // Validate selection before opening the final test path, including for hashes.
-    let r: SelectionReceipt = read_json(receipt)?;
+    let document: serde_json::Value = read_json(receipt)?;
+    if document["schema"] == outer_release::GRANT_SCHEMA {
+        let authority = std::env::var_os(outer_release::AUTHORITY_ENV)
+            .context("an outer release grant needs its release authority")?;
+        outer_release::Authority::open(Path::new(&authority))?
+            .score(receipt, model, test, output)?;
+        return Ok(());
+    }
+    let r: SelectionReceipt = serde_json::from_value(document)?;
     ensure!(
         r.schema == "parallel.selection.v1" && r.frozen && r.selected_on == "meta_validation",
         "a frozen meta-validation selection receipt is required"
@@ -362,42 +611,11 @@ pub fn score(model: &Path, test: &Path, receipt: &Path, output: &Path) -> Result
             && evidence["partition"] == "meta_validation",
         "selection evidence does not bind this predictor/meta-validation"
     );
-    ensure!(
-        file_hash(test)? == r.final_test_sha256,
-        "sealed test identity mismatch"
-    );
-    let p: Predictor = read_json(model)?;
-    let t = Table::read(test, &serde_json::Value::Null)?;
-    ensure!(
-        p.schema == "parallel.predictor.v1"
-            && p.task == "regression"
-            && t.width == p.feature_count + 1,
-        "predictor/test schema mismatch"
-    );
-    let x = t
-        .rows
-        .iter()
-        .map(|r| p.preprocessing.features(&r[..r.len() - 1]))
-        .collect::<Result<Vec<_>>>()?;
-    let y = t
-        .rows
-        .iter()
-        .map(|r| {
-            r.last()
-                .unwrap()
-                .parse::<f64>()
-                .context("invalid test target")
-        })
-        .collect::<Result<Vec<_>>>()?;
-    let predictions = p
-        .model
-        .predict(&x)
-        .iter()
-        .map(|v| v * p.preprocessing.target_scale + p.preprocessing.target_mean)
-        .collect::<Vec<_>>();
-    let mut result = metrics(&y, &predictions)?;
-    result["selection_sha256"] = json!(file_hash(receipt)?);
-    write_json(output, &result)
+    anyhow::bail!(
+        "a selection receipt does not release sealed labels: an outer score needs a grant from \
+         the separate outer release authority ({}); the test path was not opened",
+        outer_release::AUTHORITY_ENV
+    )
 }
 
 /// Isolated worker: the parent enforces wall time and kills/reaps the process.
@@ -425,7 +643,17 @@ pub fn evaluate_view(prepared: &Path, cut: usize, genome: &Path, output: &Path) 
     } else {
         None
     };
-    let preprocessing = fs::read(prepared.join(format!("cut-{cut}/preprocessing.json")))?;
+    // Route R8: the preprocessing bound into the evaluation is the verified state.
+    let c = p
+        .cuts
+        .iter()
+        .find(|c| c.index == cut)
+        .context("unknown cut")?;
+    let preprocessing = read_verified(
+        &prepared.join(format!("cut-{cut}/preprocessing.json")),
+        &c.preprocessing_sha256,
+        "preprocessing",
+    )?;
     evaluate_tables(&tr, &va, genome, output, &p.task, mase, &preprocessing)
 }
 /// Sealed anonymous RAM file, shared with isolated candidate processes. No cut
@@ -615,14 +843,18 @@ fn initial_execution_order(
 
 // Version every new search and attempt. Historical requests without this
 // protocol remain retained and cannot be resumed under different random draws.
-const RANDOM_PROTOCOL: &str = "parallel.gp_random_streams.v2";
+// v3 (W5-T02) keys every stream by evaluation slot and the draw number within
+// that slot, so a refused proposal in one slot never shifts another slot's
+// draws; v2 keyed them by the search-wide proposal counter.
+const RANDOM_PROTOCOL: &str = "parallel.gp_random_streams.v3";
 
-fn random_word(seed: u64, attempt: u64, stream: &str) -> u64 {
+fn random_word(seed: u64, slot: u64, draw: u64, stream: &str) -> u64 {
     use sha2::{Digest, Sha256};
     let mut digest = Sha256::new();
     digest.update(RANDOM_PROTOCOL.as_bytes());
     digest.update(seed.to_le_bytes());
-    digest.update(attempt.to_le_bytes());
+    digest.update(slot.to_le_bytes());
+    digest.update(draw.to_le_bytes());
     digest.update(stream.as_bytes());
     u64::from_le_bytes(digest.finalize()[..8].try_into().unwrap())
 }
@@ -826,7 +1058,7 @@ mod parent_selection_tests {
         for bad in [Some(f64::NAN), Some(f64::INFINITY), Some(f64::NEG_INFINITY)] {
             pop.candidates[2].policy_logprob = bad;
             for attempt in 0..1000 {
-                let draw = super::random_word(8129661450841087504, attempt, "left_parent");
+                let draw = super::random_word(8129661450841087504, 0, attempt, "left_parent");
                 assert_eq!(
                     policy_weighted_parent(3, draw, Some(&pop), Some(&genomes)),
                     policy_weighted_parent(3, draw, None, None)
@@ -849,7 +1081,7 @@ mod parent_selection_tests {
         let mut counts = [0usize; 3];
         let mut differs_from_uniform = 0;
         for attempt in 0..5000 {
-            let draw = super::random_word(8129661450841087504, attempt, "left_parent");
+            let draw = super::random_word(8129661450841087504, 0, attempt, "left_parent");
             let parent = policy_weighted_parent(3, draw, Some(&pop), Some(&genomes));
             counts[parent] += 1;
             if parent != policy_weighted_parent(3, draw, None, None) {
@@ -878,20 +1110,20 @@ mod parent_selection_tests {
             candidate.genome = genome.clone();
         }
         for attempt in 0..10000 {
-            let draw = super::random_word(8129661450841087504, attempt, "left_parent");
+            let draw = super::random_word(8129661450841087504, 0, attempt, "left_parent");
             assert_eq!(
                 draw,
-                super::random_word(8129661450841087504, attempt, "left_parent")
+                super::random_word(8129661450841087504, 0, attempt, "left_parent")
             );
             assert_ne!(
                 draw,
-                super::random_word(8129661450841087504, attempt, "right_parent")
+                super::random_word(8129661450841087504, 0, attempt, "right_parent")
             );
             let quantile = super::unit_quantile(draw);
             assert!((0.0..1.0).contains(&quantile));
             quantiles.insert(quantile.to_bits());
             let parent = policy_weighted_parent(10, draw, Some(&pop), Some(&genomes));
-            let operator = super::random_word(8129661450841087504, attempt, "operator") % 16;
+            let operator = super::random_word(8129661450841087504, 0, attempt, "operator") % 16;
             counts[parent][if operator < 2 {
                 0
             } else if operator < 9 {
@@ -1014,6 +1246,26 @@ fn evaluate_tables(
     } else {
         m["baseline_status"] = json!("nonfinite baseline; ratios unavailable");
     }
+    // W5-T03: fit and score identities are distinct. The fit key is the
+    // authority's fitted identity (program, ordered training rows,
+    // preprocessing, feature view, numerical contract, seed) and may be reused.
+    // The score identity additionally binds the exact fitted subject and the
+    // scored rows and protocol, so a reused fit is always rescored on its own
+    // rows and a score never transfers to another subject or membership.
+    let receipt = crate::eval_registry::verify_completion_receipt(&fs::read(
+        fitted.completion["path"]
+            .as_str()
+            .context("fit completion path absent")?,
+    )?)?;
+    let score_identity = json!({"schema":"parallel.gp_score_identity.v1",
+        "fit_key":receipt.fit_key,"model_sha256":receipt.model_sha256,
+        "training_rows_sha256":hash(&csv_bytes(tr)?),"scoring_rows_sha256":hash(&csv_bytes(va)?),
+        "preprocessing_sha256":hash(preprocessing),"task":task,
+        "primary_metric":m["primary_metric"],"metric_units":m["units"],
+        "evaluator_protocol":crate::label_admission::PROTOCOL,
+        "predictions_sha256":m["semantic_sha256"]});
+    m["score_identity_sha256"] = json!(hash(&serde_json::to_vec(&score_identity)?));
+    m["score_identity"] = score_identity;
     m["fit_completion"] = fitted.completion;
     m["fitted_model"] = fitted.model_reference;
     m["evaluation_origin"] = json!(if fitted.reused { "reuse" } else { "execution" });
@@ -1046,6 +1298,106 @@ pub fn read_journal(path: &Path) -> Result<Vec<serde_json::Value>> {
         .map(serde_json::from_slice)
         .collect::<std::result::Result<Vec<_>, _>>()?;
     Ok(records)
+}
+
+/// A journaled success is resumable measured evidence only while its original
+/// completion attests exactly that output. Model eviction is not examined here;
+/// `selection_replay` authenticates the complete fitted evidence independently.
+fn journaled_measurement_attested(root: &Path, row: &serde_json::Value) -> Result<()> {
+    let completion = crate::label_admission::artifact(root, &row["clean_completion"])
+        .context("journaled measurement lacks its original completion")?;
+    ensure!(
+        completion["schema"] == crate::label_admission::COMPLETION_SCHEMA
+            && completion["outcome"] == "success"
+            && completion["failure"].is_null()
+            && completion["evaluation_identity_sha256"] == row["evaluation_identity_sha256"]
+            && completion["program_sha256"] == row["program_sha256"]
+            && crate::label_admission::artifact(root, &completion["output"])? == row["metrics"],
+        "journaled measurement differs from its original completion"
+    );
+    Ok(())
+}
+
+/// W5-T05: one live searcher per output directory. The exclusive advisory
+/// lease is held until the searcher returns and is released by the kernel if
+/// it dies, so crash recovery needs no manual cleanup. The descriptor is
+/// close-on-exec: evaluator children never hold it.
+fn search_lease(output: &Path) -> Result<fs::File> {
+    use std::os::fd::AsRawFd;
+    let lease = fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(output.join("search.lease"))?;
+    if unsafe { libc::flock(lease.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } != 0 {
+        let error = std::io::Error::last_os_error();
+        ensure!(
+            error.raw_os_error() != Some(libc::EWOULDBLOCK),
+            "search output is held by another live searcher; concurrent dispatch refused"
+        );
+        return Err(error.into());
+    }
+    Ok(lease)
+}
+
+/// Whether the evaluator has exited, without reaping it: an unreaped leader
+/// keeps its process-group id reserved while the group is drained.
+fn evaluator_exited(pid: i32) -> Result<bool> {
+    let mut info: libc::siginfo_t = unsafe { std::mem::zeroed() };
+    let status = unsafe {
+        libc::waitid(
+            libc::P_PID,
+            pid as libc::id_t,
+            &mut info,
+            libc::WEXITED | libc::WNOHANG | libc::WNOWAIT,
+        )
+    };
+    ensure!(
+        status == 0,
+        "evaluator wait failed: {}",
+        std::io::Error::last_os_error()
+    );
+    Ok(unsafe { info.si_pid() } != 0)
+}
+
+/// Live (non-zombie) members of a process group other than its leader.
+fn process_group_members(group: i32) -> usize {
+    let Ok(entries) = fs::read_dir("/proc") else {
+        return 0;
+    };
+    entries
+        .flatten()
+        .filter_map(|entry| entry.file_name().to_str()?.parse::<i32>().ok())
+        .filter(|&pid| pid != group)
+        .filter(|pid| {
+            let Ok(stat) = fs::read_to_string(format!("/proc/{pid}/stat")) else {
+                return false;
+            };
+            // Fields after the parenthesised command: state, ppid, pgrp.
+            let Some((_, rest)) = stat.rsplit_once(')') else {
+                return false;
+            };
+            let mut fields = rest.split_whitespace();
+            let state = fields.next();
+            let pgrp = fields.nth(1).and_then(|g| g.parse::<i32>().ok());
+            pgrp == Some(group) && state != Some("Z")
+        })
+        .count()
+}
+
+/// Kill the evaluator's whole process group and census what remains. Called
+/// while the leader is unreaped (running on expiry, a zombie after exit).
+fn drain_process_group(group: i32) -> serde_json::Value {
+    let members_at_exit = process_group_members(group);
+    unsafe {
+        libc::kill(-group, libc::SIGKILL);
+    }
+    let settle = Instant::now();
+    let mut remaining = process_group_members(group);
+    while remaining > 0 && settle.elapsed() < Duration::from_secs(2) {
+        std::thread::sleep(Duration::from_millis(5));
+        remaining = process_group_members(group);
+    }
+    json!({"isolated":true,"members_at_exit":members_at_exit,"members_after_drain":remaining})
 }
 
 fn experiment_failpoint(name: &str, isolated: bool) {
@@ -1225,14 +1577,19 @@ pub fn metadata_initial_population(rng_seed: u64) -> Result<Vec<String>> {
     fill_initial_population(&mut population, &mut seen, rng_seed, None)?;
     Ok(population)
 }
+/// Appends adapted bootstrap programs and returns, for each appended slot, its
+/// original generator draw and generator seed. The search executes the single
+/// adaptation of that original; it never adapts an already adapted program.
 fn fill_initial_population(
     population: &mut Vec<String>,
     seen: &mut BTreeSet<String>,
     rng_seed: u64,
     vocab: Option<&crate::grammar::Vocab>,
-) -> Result<()> {
+) -> Result<Vec<(String, u64)>> {
     let mut seed = rng_seed;
+    let mut originals = Vec::new();
     while population.len() < 80 {
+        let generator_seed = seed;
         let raw = feat_math::evolve::random_canonical_pipeline(seed, 6);
         seed = seed.wrapping_add(1);
         let g = if let Some(v) = vocab {
@@ -1241,7 +1598,7 @@ fn fill_initial_population(
                 Err(_) => continue,
             }
         } else {
-            raw
+            raw.clone()
         };
         ensure!(
             seed.wrapping_sub(rng_seed) < 100000,
@@ -1249,9 +1606,10 @@ fn fill_initial_population(
         );
         if seen.insert(g.clone()) {
             population.push(g);
+            originals.push((raw, generator_seed));
         }
     }
-    Ok(())
+    Ok(originals)
 }
 
 fn search_inner(
@@ -1319,6 +1677,13 @@ fn search_inner(
             && (p.family_partition_frozen || qualification || native_overlay),
         "reconstructed cut preparation is required; limited evaluation needs explicit qualification admission"
     );
+    // W1-T04: a search is task-level development search. Its observations are
+    // teacher/learning inputs, so a sealed meta_test family never reaches it,
+    // including under qualification admission; nothing has been loaded yet.
+    ensure!(
+        p.meta_partition != "meta_test",
+        "sealed meta_test families are not released to search, including qualification"
+    );
     ensure!(
         p.meta_partition == "meta_train" || qualification,
         "bootstrap/search training observations require meta-training families"
@@ -1335,25 +1700,41 @@ fn search_inner(
         .find(|c| c.index == cut)
         .context("unknown cut")?;
     let dir = prepared.join(format!("cut-{cut}"));
-    let memory = memory_view(
-        &crate::prepare::load_view_in_root(&completion_root, prepared, cut, true)?,
-        &crate::prepare::load_view_in_root(&completion_root, prepared, cut, false)?,
-    )?;
+    let training_view = crate::prepare::load_view_in_root(&completion_root, prepared, cut, true)?;
+    let validation_view =
+        crate::prepare::load_view_in_root(&completion_root, prepared, cut, false)?;
+    // W5-T04: the cut's declared shape for the pre-dispatch feasibility
+    // diagnostic (rows fitted or applied, raw feature width).
+    let feasibility_shape = feat_math::feasibility::Shape {
+        rows: training_view.len().max(validation_view.len()) as u64,
+        cols: training_view
+            .first()
+            .map_or(0, |row| row.len().saturating_sub(1)) as u64,
+    };
+    let memory = memory_view(&training_view, &validation_view)?;
+    drop((training_view, validation_view));
     ensure!(
         evaluations > 0 && evaluations <= 1000 && seconds > 0 && seconds <= 600,
         "pilot budget exceeds 1000 evaluations or 600 seconds"
     );
+    fs::create_dir_all(output)?;
+    // W5-T05: reserve the output before reading any resume state, so two
+    // searchers can never dispatch the same reservation or both publish.
+    let _lease = search_lease(output)?;
     ensure!(
         !output.join("search.json").exists(),
         "search is already complete"
     );
     let resuming = output.join("progress.json").exists();
-    fs::create_dir_all(output)?;
-    let pp: Preprocessing = read_json(&dir.join("preprocessing.json"))?;
-    ensure!(
-        file_hash(&dir.join("preprocessing.json"))? == c.preprocessing_sha256,
-        "preprocessing changed"
-    );
+    // Route R8: parse exactly the verified preprocessing bytes.
+    let pp: Preprocessing = serde_json::from_slice(
+        &read_verified(
+            &dir.join("preprocessing.json"),
+            &c.preprocessing_sha256,
+            "preprocessing",
+        )
+        .context("preprocessing changed")?,
+    )?;
     let vocab: Option<crate::grammar::Vocab> = vocabulary.map(read_json).transpose()?;
     let vocabulary_sha256 = vocabulary.map(file_hash).transpose()?;
     let supplied: Option<SeedPopulation> = seeds.map(read_json).transpose()?;
@@ -1397,9 +1778,59 @@ fn search_inner(
         seen.len() == population.len(),
         "duplicate initial proposals"
     );
+    // Original proposal and lineage source of every initial slot (W5-T01).
+    // A critic weight estimates the original proposal, never its adaptation.
+    let mut initial_sources: Vec<(String, serde_json::Value)> =
+        if let Some((_, task, _, _)) = native {
+            population
+                .iter()
+                .map(|genome| {
+                    Ok((
+                        genome.clone(),
+                        json!({"kind":"native_candidate","slot":0,
+                            "candidate":serde_json::to_value(&task.candidate)?}),
+                    ))
+                })
+                .collect::<Result<_>>()?
+        } else if let Some(s) = &supplied {
+            s.candidates
+                .iter()
+                .enumerate()
+                .map(|(slot, c)| {
+                    (
+                        c.genome.clone(),
+                        json!({"kind":"seed_population_slot","slot":slot,
+                            "seeds_sha256":seeds_sha256,"origin":c.origin,
+                            "rank_log_weight":c.policy_logprob,
+                            "score_subject":"original_proposal"}),
+                    )
+                })
+                .collect()
+        } else {
+            vec![(
+                population[0].clone(),
+                json!({"kind":"fixed_reference","slot":0}),
+            )]
+        };
     if native.is_none() {
-        fill_initial_population(&mut population, &mut seen, rng_seed, vocab.as_ref())?;
+        let first = initial_sources.len();
+        let originals =
+            fill_initial_population(&mut population, &mut seen, rng_seed, vocab.as_ref())?;
+        initial_sources.extend(originals.into_iter().enumerate().map(
+            |(offset, (raw, generator_seed))| {
+                (
+                    raw,
+                    json!({"kind":"generic_bootstrap","slot":first + offset,
+                        "generator":"feat_math.random_canonical_pipeline.depth6",
+                        "generator_seed":generator_seed}),
+                )
+            },
+        ));
     }
+    ensure!(
+        initial_sources.len() == population.len(),
+        "initial proposal sources are incomplete"
+    );
     let prepared_sha = file_hash(&prepared.join("prepared.json"))?;
     let evaluator_sha = file_hash(&executable)?;
     let champion_root = if p.storage.is_some() && experiment.is_none() {
@@ -1415,11 +1846,36 @@ fn search_inner(
         "training_sha256":c.training_sha256,"validation_sha256":c.validation_sha256,
         "preprocessing_sha256":c.preprocessing_sha256,"seeds_sha256":seeds_sha256,
         "vocabulary_sha256":vocabulary_sha256,"evaluations":evaluations,"seconds":seconds,
-        "qualification":qualification,"rng_seed":rng_seed,"random_protocol":RANDOM_PROTOCOL});
+        "qualification":qualification,"rng_seed":rng_seed,"random_protocol":RANDOM_PROTOCOL,
+        // W5-T02: the objective, evidence, tie and stop rules are frozen with
+        // the request, so a resume under other rules is refused, not restarted.
+        "selection_contract":selection_replay::CONTRACT,
+        "proposal_cap_per_slot":selection_replay::PROPOSAL_CAP_PER_SLOT});
     if let Some((reference, task, _, _)) = native {
         request["native_genome_task"] = serde_json::to_value(reference)?;
         request["native_genome_stage"] = serde_json::to_value(task.stage)?;
     }
+    // Check the recorded resume identity before comparing or recording the request.
+    // Legacy outputs predate search-request.json: recording a refused request first
+    // would make the refusal permanent and block the original identity's resume.
+    let saved_progress: Option<serde_json::Value> = if resuming {
+        let progress: serde_json::Value = read_json(&output.join("progress.json"))?;
+        ensure!(
+            progress["prepared_sha256"] == prepared_sha && progress["cut"] == cut,
+            "resume identity mismatch"
+        );
+        ensure!(
+            progress["seeds_sha256"] == json!(seeds_sha256),
+            "resume neural seed identity mismatch"
+        );
+        ensure!(
+            progress["rng_seed"].as_u64().unwrap_or(SEED) == rng_seed,
+            "resume RNG seed mismatch"
+        );
+        Some(progress)
+    } else {
+        None
+    };
     if request_path.exists() {
         ensure!(
             read_json::<serde_json::Value>(&request_path)? == request,
@@ -1474,7 +1930,8 @@ fn search_inner(
         atomic_write(&journal_path, &bytes)?;
     }
     let mut journal = fs::OpenOptions::new().append(true).open(&journal_path)?;
-    let mut ranked: Vec<(f64, String)> = Vec::new();
+    // (measured objective, executable program, ledger position; -1 = inherited).
+    let mut ranked: Vec<(f64, String, i64)> = Vec::new();
     if let Some((_, task, candidate, Some(parent))) = native {
         ensure!(
             task.stage == crate::native_genome::Stage::Continuation,
@@ -1488,7 +1945,7 @@ fn search_inner(
                 rmse.is_finite() && rmse >= 0.,
                 "original parent score invalid"
             );
-            ranked.push((rmse * pp.target_scale, candidate.genome.clone()));
+            ranked.push((rmse * pp.target_scale, candidate.genome.clone(), -1));
         }
     }
     let mut semantic = BTreeSet::new();
@@ -1496,10 +1953,9 @@ fn search_inner(
     let mut rejected_proposals = 0u64;
     // Existing journals retain their original slot order on recovery. New
     // searches protect known teachers from being starved by 64 slow neural fits.
-    let teacher_first = !resuming
-        || read_json::<serde_json::Value>(&output.join("progress.json"))?
-            ["execution_order_protocol"]
-            == "teacher_first_v1";
+    let teacher_first = saved_progress
+        .as_ref()
+        .is_none_or(|progress| progress["execution_order_protocol"] == "teacher_first_v1");
     let execution_order =
         initial_execution_order(supplied.as_ref(), population.len(), teacher_first);
     let execution_protocol = if teacher_first {
@@ -1507,20 +1963,7 @@ fn search_inner(
     } else {
         "legacy_seed_order_v1"
     };
-    let previous_seconds = if resuming {
-        let progress: serde_json::Value = read_json(&output.join("progress.json"))?;
-        ensure!(
-            progress["prepared_sha256"] == prepared_sha && progress["cut"] == cut,
-            "resume identity mismatch"
-        );
-        ensure!(
-            progress["seeds_sha256"] == json!(seeds_sha256),
-            "resume neural seed identity mismatch"
-        );
-        ensure!(
-            progress["rng_seed"].as_u64().unwrap_or(SEED) == rng_seed,
-            "resume RNG seed mismatch"
-        );
+    let previous_seconds = if let Some(progress) = &saved_progress {
         proposal_attempts = progress["proposal_attempts"]
             .as_u64()
             .unwrap_or(observations.len() as u64);
@@ -1575,6 +2018,16 @@ fn search_inner(
             .insert(GenomeIr::parse(o["genome"].as_str().context("missing genome")?)?.canonical());
         if o["failure"].is_null() {
             let r = &o["metrics"];
+            // Resumed rows obey the live admission rule and must still be the
+            // exact output their original completion attests (W5-T06).
+            let rmse = r["rmse"].as_f64().context("missing RMSE")? * pp.target_scale;
+            ensure!(
+                rmse.is_finite() && rmse >= 0.0,
+                "journaled evaluator score invalid"
+            );
+            if !o["search_clock"].is_null() {
+                journaled_measurement_attested(&completion_root, o)?;
+            }
             if semantic.insert(
                 r["semantic_sha256"]
                     .as_str()
@@ -1582,8 +2035,9 @@ fn search_inner(
                     .to_string(),
             ) {
                 ranked.push((
-                    r["rmse"].as_f64().context("missing RMSE")? * pp.target_scale,
+                    rmse,
                     o["genome"].as_str().context("missing genome")?.to_string(),
+                    index as i64,
                 ));
             }
         }
@@ -1599,8 +2053,11 @@ fn search_inner(
         &output.join("progress.json"),
         &json!({"prepared_sha256":prepared_sha,"cut":cut,"seeds_sha256":seeds_sha256,"vocabulary_sha256":vocabulary_sha256,"execution_order_protocol":execution_protocol,"execution_order":execution_order,"wall_seconds":start.elapsed().as_secs_f64()+previous_seconds,"lifecycle_seconds":lifecycle_start.elapsed().as_secs_f64(),"search_clock":clock,"evaluations":observations.len(),"rng_seed":rng_seed,"proposal_attempts":proposal_attempts,"rejected_proposals":rejected_proposals}),
     )?;
+    // W5-T05 terminal disposition, cross-checked by the independent replay.
+    let mut stop_reason = "evaluation_budget";
     for i in observations.len()..evaluations {
         if start.elapsed().as_secs_f64() + previous_seconds >= seconds as f64 {
+            stop_reason = "search_deadline";
             break;
         }
         // Projection can collapse distinct native mutations onto one legal
@@ -1625,20 +2082,24 @@ fn search_inner(
         } else {
             None
         };
-        let (raw_genome, genome, initial_proposal) = if let Some(a) = &saved_attempt {
+        let slot = i as u64;
+        let (raw_genome, genome, initial_proposal, lineage, slot_draw) = if let Some(a) =
+            &saved_attempt
+        {
             proposal_attempts = a["proposal_attempts"]
                 .as_u64()
                 .context("missing proposal counter")?;
             rejected_proposals = a["rejected_proposals"]
                 .as_u64()
                 .context("missing rejection counter")?;
+            let slot_draw = a["slot_draw"].as_u64().context("missing slot draw")?;
             ensure!(
                 a["random_streams"]
                     == json!({
-                "operator":random_word(rng_seed,proposal_attempts,"operator"),
-                "left_parent":random_word(rng_seed,proposal_attempts,"left_parent"),
-                "right_parent":random_word(rng_seed,proposal_attempts,"right_parent"),
-                "variation":random_word(rng_seed,proposal_attempts,"variation")}),
+                "operator":random_word(rng_seed,slot,slot_draw,"operator"),
+                "left_parent":random_word(rng_seed,slot,slot_draw,"left_parent"),
+                "right_parent":random_word(rng_seed,slot,slot_draw,"right_parent"),
+                "variation":random_word(rng_seed,slot,slot_draw,"variation")}),
                 "original candidate random streams changed"
             );
             let genome = a["genome"]
@@ -1658,59 +2119,96 @@ fn search_inner(
                 a["initial_proposal"]
                     .as_bool()
                     .context("missing candidate origin")?,
+                // Attempts recorded before the lineage envelope keep null.
+                a.get("lineage").cloned().unwrap_or(serde_json::Value::Null),
+                slot_draw,
             )
         } else {
             let mut selected = None;
-            for attempt in 0..10000 {
+            let mut out_of_time = false;
+            for attempt in 0..selection_replay::PROPOSAL_CAP_PER_SLOT {
                 if start.elapsed().as_secs_f64() + previous_seconds >= seconds as f64 {
+                    out_of_time = true;
                     break;
                 }
                 proposal_attempts += 1;
                 let initial = attempt == 0 && i < population.len();
-                let proposal_seed = random_word(rng_seed, proposal_attempts, "variation");
-                let operator = random_word(rng_seed, proposal_attempts, "operator") % 16;
-                let raw = if initial {
-                    population[execution_order[i]].clone()
+                // Streams are keyed by (slot, draw within the slot), never by
+                // the search-wide counter (W5-T02).
+                let proposal_seed = random_word(rng_seed, slot, attempt, "variation");
+                let operator = random_word(rng_seed, slot, attempt, "operator") % 16;
+                // An explicit variation event: operator, parents and stream words.
+                let variation = |kind: &str, parents: Vec<serde_json::Value>| {
+                    json!({"kind":"variation","operator":kind,"parents":parents,
+                        "slot":slot,"slot_draw":attempt,
+                        "proposal_attempt":proposal_attempts,"variation_seed":proposal_seed,
+                        "operator_word":operator})
+                };
+                let parent = |entry: &(f64, String, i64)| json!({"position":entry.2,"program_sha256":hash(entry.1.as_bytes())});
+                let (raw, source) = if initial {
+                    // The original proposal, never its already adapted form.
+                    initial_sources[execution_order[i]].clone()
                 } else {
                     let keep = ranked.len().min(10);
                     if keep == 0 && native.is_some() {
                         let (_, _, candidate, _) =
                             native.context("native continuation parent absent")?;
-                        feat_math::evolve::mutate_canonical_pipeline(
-                            &candidate.genome,
-                            proposal_seed,
-                            6,
+                        (
+                            feat_math::evolve::mutate_canonical_pipeline(
+                                &candidate.genome,
+                                proposal_seed,
+                                6,
+                            )
+                            .map_err(anyhow::Error::msg)?,
+                            variation(
+                                "continuation_mutate",
+                                vec![json!({"position":null,"source":"native_candidate",
+                                    "program_sha256":hash(candidate.genome.as_bytes())})],
+                            ),
                         )
-                        .map_err(anyhow::Error::msg)?
                     } else if keep == 0 || operator < 2 {
-                        feat_math::evolve::random_canonical_pipeline(proposal_seed, 6)
+                        (
+                            feat_math::evolve::random_canonical_pipeline(proposal_seed, 6),
+                            variation("fresh_random", Vec::new()),
+                        )
                     } else {
                         let ranked_genomes: Vec<String> = ranked
                             .iter()
                             .take(keep)
-                            .map(|(_, genome)| genome.clone())
+                            .map(|(_, genome, _)| genome.clone())
                             .collect();
                         let left = &ranked[policy_weighted_parent(
                             keep,
-                            random_word(rng_seed, proposal_attempts, "left_parent"),
+                            random_word(rng_seed, slot, attempt, "left_parent"),
                             supplied.as_ref(),
                             Some(ranked_genomes.as_slice()),
-                        )]
-                        .1;
-                        let child = if operator < 9 {
-                            feat_math::evolve::mutate_canonical_pipeline(left, proposal_seed, 6)
-                        } else {
-                            feat_math::evolve::crossover_canonical_pipelines(
-                                left,
-                                &ranked[(random_word(rng_seed, proposal_attempts, "right_parent")
-                                    % keep as u64)
-                                    as usize]
-                                    .1,
-                                proposal_seed,
-                                6,
+                        )];
+                        if operator < 9 {
+                            (
+                                feat_math::evolve::mutate_canonical_pipeline(
+                                    &left.1,
+                                    proposal_seed,
+                                    6,
+                                )
+                                .map_err(anyhow::Error::msg)?,
+                                variation("mutate", vec![parent(left)]),
                             )
-                        };
-                        child.map_err(anyhow::Error::msg)?
+                        } else {
+                            let right =
+                                &ranked[(random_word(rng_seed, slot, attempt, "right_parent")
+                                    % keep as u64)
+                                    as usize];
+                            (
+                                feat_math::evolve::crossover_canonical_pipelines(
+                                    &left.1,
+                                    &right.1,
+                                    proposal_seed,
+                                    6,
+                                )
+                                .map_err(anyhow::Error::msg)?,
+                                variation("crossover", vec![parent(left), parent(right)]),
+                            )
+                        }
                     }
                 };
                 let projected = if let Some(v) = &vocab {
@@ -1721,13 +2219,32 @@ fn search_inner(
                 if let Ok(genome) = projected {
                     let canonical = GenomeIr::parse(&genome)?.canonical();
                     if evaluated_programs.insert(canonical) {
-                        selected = Some((raw, genome, initial));
+                        // Original → one explicit adaptation → executable recipe.
+                        let lineage = json!({"schema":"parallel.gp_candidate_lineage.v1",
+                            "original":{"program":raw,"program_sha256":hash(raw.as_bytes())},
+                            "source":source,
+                            "adaptation":if vocab.is_some() {
+                                json!({"kind":"vocabulary_projection","applications":1,
+                                    "vocabulary_sha256":vocabulary_sha256,
+                                    "input_sha256":hash(raw.as_bytes()),
+                                    "output_sha256":hash(genome.as_bytes()),
+                                    "changed":raw != genome})
+                            } else {
+                                json!({"kind":"none","applications":0})
+                            },
+                            "executable":{"program":genome,"program_sha256":hash(genome.as_bytes())}});
+                        selected = Some((raw, genome, initial, lineage, attempt));
                         break;
                     }
                 }
                 rejected_proposals += 1;
             }
             let Some(selected) = selected else {
+                stop_reason = if out_of_time {
+                    "search_deadline"
+                } else {
+                    "proposal_space_exhausted"
+                };
                 break;
             };
             selected
@@ -1744,6 +2261,20 @@ fn search_inner(
         candidate_identity["evaluation_identity_sha256"] = json!(hash(&serde_json::to_vec(
             &crate::label_admission::identity(&candidate_identity)
         )?));
+        // W5-T04 pre-dispatch diagnostic under identical rules for every arm.
+        // It is an estimate recorded beside the observed outcome; it does not
+        // change dispatch (a refusal policy needs its own protocol identity).
+        let feasibility = if let Some(a) = &saved_attempt {
+            a.get("feasibility")
+                .cloned()
+                .unwrap_or(serde_json::Value::Null)
+        } else {
+            serde_json::to_value(feat_math::feasibility::classify(
+                &GenomeIr::parse(&genome)?,
+                feasibility_shape,
+                &feat_math::feasibility::Limits::default(),
+            ))?
+        };
         if saved_attempt.is_some() {
             ensure!(
                 fs::read(&genome_path)? == genome.as_bytes(),
@@ -1758,11 +2289,13 @@ fn search_inner(
                 "evaluations":evaluations,"seconds":seconds,"raw_genome":raw_genome,"genome":genome,
                 "program_sha256":candidate_identity["program_sha256"],"evaluation_identity_sha256":candidate_identity["evaluation_identity_sha256"],
                 "initial_proposal":initial_proposal,"rng_seed":rng_seed,"random_protocol":RANDOM_PROTOCOL,
-                "random_streams":{"operator":random_word(rng_seed,proposal_attempts,"operator"),
-                    "left_parent":random_word(rng_seed,proposal_attempts,"left_parent"),
-                    "right_parent":random_word(rng_seed,proposal_attempts,"right_parent"),
-                    "variation":random_word(rng_seed,proposal_attempts,"variation")},
-                "proposal_attempts":proposal_attempts,"rejected_proposals":rejected_proposals}),
+                "slot_draw":slot_draw,
+                "random_streams":{"operator":random_word(rng_seed,slot,slot_draw,"operator"),
+                    "left_parent":random_word(rng_seed,slot,slot_draw,"left_parent"),
+                    "right_parent":random_word(rng_seed,slot,slot_draw,"right_parent"),
+                    "variation":random_word(rng_seed,slot,slot_draw,"variation")},
+                "proposal_attempts":proposal_attempts,"rejected_proposals":rejected_proposals,
+                "lineage":lineage,"feasibility":feasibility}),
             )?;
         }
         let result_path = output.join(format!("candidate-{i}.json"));
@@ -1786,6 +2319,7 @@ fn search_inner(
         let mut exit_signal = None;
         let mut exit_observed = false;
         let mut deadline_exceeded = false;
+        let mut process_group = serde_json::Value::Null;
         if let Some(completion) = &saved_completion {
             failure = completion["failure"].as_str().map(String::from);
         } else if saved_attempt.is_some() {
@@ -1797,7 +2331,7 @@ fn search_inner(
                 .create(true)
                 .append(true)
                 .open(output.join(format!("candidate-{i}.log")))?;
-            let mut command = Command::new(&executable);
+            let mut command = evaluator_command(&executable);
             use std::os::fd::AsRawFd;
             command
                 .args(["evaluate-memory", "--fd"])
@@ -1839,36 +2373,34 @@ fn search_inner(
                         rlim_cur: 8 * 1024 * 1024 * 1024,
                         rlim_max: 8 * 1024 * 1024 * 1024,
                     };
-                    if libc::setrlimit(libc::RLIMIT_AS, &limit) != 0 {
+                    // W5-T05: the evaluator leads its own process group so that
+                    // every process it starts is drained with it.
+                    if libc::setrlimit(libc::RLIMIT_AS, &limit) != 0 || libc::setpgid(0, 0) != 0 {
                         return Err(std::io::Error::last_os_error());
                     }
                     Ok(())
                 });
             }
             let mut child = command.spawn()?;
+            let group = i32::try_from(child.id()).context("evaluator pid out of range")?;
             loop {
-                if let Some(status) = child.try_wait()? {
-                    use std::os::unix::process::ExitStatusExt;
-                    exit_observed = true;
-                    exit_code = status.code();
-                    exit_signal = status.signal();
-                    deadline_exceeded = begun.elapsed().as_secs_f64() > deadline_seconds;
-                    if deadline_exceeded {
-                        failure = Some("candidate_or_view_timeout".into());
-                    } else if !status.success() {
-                        failure = Some(format!("worker_exit:{status}"));
-                    }
-                    break;
-                }
-                if begun.elapsed().as_secs_f64() >= deadline_seconds {
-                    child.kill()?;
+                let exited = evaluator_exited(group)?;
+                let expired = !exited && begun.elapsed().as_secs_f64() >= deadline_seconds;
+                if exited || expired {
+                    // The leader is still unreaped (a zombie when it exited), so
+                    // its group id cannot be reused while the group is drained.
+                    process_group = drain_process_group(group);
                     let status = child.wait()?;
                     use std::os::unix::process::ExitStatusExt;
                     exit_observed = true;
                     exit_code = status.code();
                     exit_signal = status.signal();
-                    deadline_exceeded = true;
-                    failure = Some("candidate_or_view_timeout".into());
+                    deadline_exceeded = expired || begun.elapsed().as_secs_f64() > deadline_seconds;
+                    if deadline_exceeded {
+                        failure = Some("candidate_or_view_timeout".into());
+                    } else if !status.success() {
+                        failure = Some(format!("worker_exit:{status}"));
+                    }
                     break;
                 }
                 std::thread::sleep(Duration::from_millis(2));
@@ -1900,6 +2432,7 @@ fn search_inner(
             completion["deadline_exceeded"] = json!(deadline_exceeded);
             completion["runtime_seconds"] = json!(measured_runtime);
             completion["failure"] = json!(failure);
+            completion["process_group"] = process_group;
             let log_path = output.join(format!("candidate-{i}.log"));
             if log_path.exists() {
                 fs::File::open(&log_path)?.sync_all()?;
@@ -2003,7 +2536,7 @@ fn search_inner(
                 .as_str()
                 .context("missing prediction signature")?;
             if semantic.insert(signature.to_string()) {
-                ranked.push((rmse, genome.clone()));
+                ranked.push((rmse, genome.clone(), i as i64));
                 ranked.sort_by(|a, b| a.0.total_cmp(&b.0));
                 ranked.truncate(80);
                 if i + 1 == 200 {
@@ -2046,6 +2579,12 @@ fn search_inner(
             observation["continuation_parent"] = serde_json::to_value(&task.direct_parent)?;
         }
         observation["task"] = json!("regression");
+        // The pre-dispatch lineage envelope, repeated so the ledger is self-contained.
+        observation["lineage"] = lineage;
+        // The estimate beside its observed outcome (full stage bounds stay in
+        // the attempt): verdict and reasons only.
+        observation["feasibility"] = json!({"protocol":feasibility["protocol"],
+            "verdict":feasibility["verdict"],"reasons":feasibility["reasons"]});
         observation["clean_completion"] = json!(completion_reference);
         if let Some(reference) = &completion_reference {
             let completion = crate::label_admission::artifact(&completion_root, reference)?;
@@ -2106,7 +2645,7 @@ fn search_inner(
     let search_request = relative_artifact(&completion_root, &request_path)?;
     write_json(
         &output.join("search.json"),
-        &json!({"schema":"parallel.search.v1","search_request":search_request,"search_id":file_hash(&request_path)?,"random_protocol":RANDOM_PROTOCOL,"execution_accounting":execution_accounting(&observations),"terminal":true,"successful_measurements":successful_measurements,"failed_or_unavailable_measurements":observations.len()-successful_measurements,"observations_sha256":observations_sha256,"completed_at":crate::telemetry::now(),"evaluator_sha256":evaluator_sha,"evaluator_protocol":crate::label_admission::PROTOCOL,"vocabulary_sha256":vocabulary_sha256,"prepared_sha256":prepared_sha,"cut":cut,"completed_evaluations":observations.len(),"wall_seconds":start.elapsed().as_secs_f64()+previous_seconds,"lifecycle_seconds":lifecycle_start.elapsed().as_secs_f64(),"search_clock":clock,"execution_order_protocol":execution_protocol,"execution_order":execution_order,"resumed":resuming,"rng_seed":rng_seed,"proposal_attempts":proposal_attempts,"rejected_proposals":rejected_proposals,"unique_programs":evaluated_programs.len().saturating_sub(usize::from(native.is_some_and(|(_, task, _, _)| task.stage == crate::native_genome::Stage::Continuation))),"inherited_parent_excluded":native.is_some_and(|(_, task, _, _)| task.stage == crate::native_genome::Stage::Continuation),"best_validation_rmse":ranked.first().map(|x|x.0),"best_program":ranked.first().map(|x|&x.1),"seed_population_supplied":supplied.is_some(),"neural_seeded":neural_seeded,"seeds_sha256":seeds_sha256,"vocabulary_sha256":vocabulary_sha256,"final_tests_opened":false}),
+        &json!({"schema":"parallel.search.v1","search_request":search_request,"search_id":file_hash(&request_path)?,"random_protocol":RANDOM_PROTOCOL,"execution_accounting":execution_accounting(&observations),"terminal":true,"stop_reason":stop_reason,"successful_measurements":successful_measurements,"failed_or_unavailable_measurements":observations.len()-successful_measurements,"observations_sha256":observations_sha256,"completed_at":crate::telemetry::now(),"evaluator_sha256":evaluator_sha,"evaluator_protocol":crate::label_admission::PROTOCOL,"vocabulary_sha256":vocabulary_sha256,"prepared_sha256":prepared_sha,"cut":cut,"completed_evaluations":observations.len(),"wall_seconds":start.elapsed().as_secs_f64()+previous_seconds,"lifecycle_seconds":lifecycle_start.elapsed().as_secs_f64(),"search_clock":clock,"execution_order_protocol":execution_protocol,"execution_order":execution_order,"resumed":resuming,"rng_seed":rng_seed,"proposal_attempts":proposal_attempts,"rejected_proposals":rejected_proposals,"unique_programs":evaluated_programs.len().saturating_sub(usize::from(native.is_some_and(|(_, task, _, _)| task.stage == crate::native_genome::Stage::Continuation))),"inherited_parent_excluded":native.is_some_and(|(_, task, _, _)| task.stage == crate::native_genome::Stage::Continuation),"best_validation_rmse":ranked.first().map(|x|x.0),"best_program":ranked.first().map(|x|&x.1),"seed_population_supplied":supplied.is_some(),"neural_seeded":neural_seeded,"seeds_sha256":seeds_sha256,"vocabulary_sha256":vocabulary_sha256,"final_tests_opened":false}),
     )?;
     experiment_failpoint("search_summary", experiment.is_some());
     // Keep the original journal after publication for historical reconciliation.
