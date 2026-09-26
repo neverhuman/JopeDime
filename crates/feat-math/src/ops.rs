@@ -313,7 +313,7 @@ pub(crate) fn asinh_stable(v: f64) -> f64 {
     s * (a + (v * v + 1.0).sqrt()).ln()
 }
 
-fn get_append(stage: &Stage) -> bool {
+pub(crate) fn get_append(stage: &Stage) -> bool {
     matches!(
         stage.params.get("append"),
         Some(crate::dsl::ParamValue::Bool(true))

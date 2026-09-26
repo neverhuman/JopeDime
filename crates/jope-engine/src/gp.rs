@@ -1399,10 +1399,19 @@ fn search_inner(
         .find(|c| c.index == cut)
         .context("unknown cut")?;
     let dir = prepared.join(format!("cut-{cut}"));
-    let memory = memory_view(
-        &crate::prepare::load_view_in_root(&completion_root, prepared, cut, true)?,
-        &crate::prepare::load_view_in_root(&completion_root, prepared, cut, false)?,
-    )?;
+    let training_view = crate::prepare::load_view_in_root(&completion_root, prepared, cut, true)?;
+    let validation_view =
+        crate::prepare::load_view_in_root(&completion_root, prepared, cut, false)?;
+    // W5-T04: the cut's declared shape for the pre-dispatch feasibility
+    // diagnostic (rows fitted or applied, raw feature width).
+    let feasibility_shape = feat_math::feasibility::Shape {
+        rows: training_view.len().max(validation_view.len()) as u64,
+        cols: training_view
+            .first()
+            .map_or(0, |row| row.len().saturating_sub(1)) as u64,
+    };
+    let memory = memory_view(&training_view, &validation_view)?;
+    drop((training_view, validation_view));
     ensure!(
         evaluations > 0 && evaluations <= 1000 && seconds > 0 && seconds <= 600,
         "pilot budget exceeds 1000 evaluations or 600 seconds"
@@ -1922,6 +1931,20 @@ fn search_inner(
         candidate_identity["evaluation_identity_sha256"] = json!(hash(&serde_json::to_vec(
             &crate::label_admission::identity(&candidate_identity)
         )?));
+        // W5-T04 pre-dispatch diagnostic under identical rules for every arm.
+        // It is an estimate recorded beside the observed outcome; it does not
+        // change dispatch (a refusal policy needs its own protocol identity).
+        let feasibility = if let Some(a) = &saved_attempt {
+            a.get("feasibility")
+                .cloned()
+                .unwrap_or(serde_json::Value::Null)
+        } else {
+            serde_json::to_value(feat_math::feasibility::classify(
+                &GenomeIr::parse(&genome)?,
+                feasibility_shape,
+                &feat_math::feasibility::Limits::default(),
+            ))?
+        };
         if saved_attempt.is_some() {
             ensure!(
                 fs::read(&genome_path)? == genome.as_bytes(),
@@ -1941,7 +1964,7 @@ fn search_inner(
                     "right_parent":random_word(rng_seed,proposal_attempts,"right_parent"),
                     "variation":random_word(rng_seed,proposal_attempts,"variation")},
                 "proposal_attempts":proposal_attempts,"rejected_proposals":rejected_proposals,
-                "lineage":lineage}),
+                "lineage":lineage,"feasibility":feasibility}),
             )?;
         }
         let result_path = output.join(format!("candidate-{i}.json"));
@@ -2227,6 +2250,10 @@ fn search_inner(
         observation["task"] = json!("regression");
         // The pre-dispatch lineage envelope, repeated so the ledger is self-contained.
         observation["lineage"] = lineage;
+        // The estimate beside its observed outcome (full stage bounds stay in
+        // the attempt): verdict and reasons only.
+        observation["feasibility"] = json!({"protocol":feasibility["protocol"],
+            "verdict":feasibility["verdict"],"reasons":feasibility["reasons"]});
         observation["clean_completion"] = json!(completion_reference);
         if let Some(reference) = &completion_reference {
             let completion = crate::label_admission::artifact(&completion_root, reference)?;

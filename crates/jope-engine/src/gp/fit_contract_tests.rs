@@ -1752,3 +1752,58 @@ fn reused_fits_are_rescored_on_their_own_rows_and_never_inherit_scores() {
     );
     authority.stop_service();
 }
+
+#[test]
+fn feasibility_estimates_are_recorded_beside_observed_outcomes_under_one_rule() {
+    let (temp, prepared) = view_fixture();
+    let root = temp.path().canonicalize().unwrap();
+    let mut authority = Fixture::activated(&root, vec![cut_training_hash(&prepared)]);
+    authority.start();
+    // A covered recipe, one the fitter provably refuses (a misplaced target
+    // stage), and one with an uncovered head.
+    let refused = "(pipe X (standardize) (target) (ridge))";
+    let uncovered = "(pipe X (standardize) (gpr m=50 steps=5))";
+    let seeds = root.join("seeds.json");
+    seed_population(&prepared, &seeds, &[PROGRAM, refused, uncovered], |_| None);
+    let output = root.join("feasibility");
+    success(
+        search_client(&authority, &root, &prepared, &output, 3)
+            .arg("--seeds")
+            .arg(&seeds)
+            .output()
+            .unwrap(),
+    );
+    let rows: Vec<Value> = read_json(&output.join("observations.json")).unwrap();
+    let verdicts: Vec<&str> = rows
+        .iter()
+        .map(|row| row["feasibility"]["verdict"].as_str().unwrap())
+        .collect();
+    assert_eq!(
+        verdicts,
+        ["proven_feasible", "proven_outside_limits", "unknown"]
+    );
+    // Estimate beside observation: the proven-feasible recipe fitted, and the
+    // proven refusal was observed as a deterministic fit failure. Recording the
+    // estimate did not change dispatch: all three reached the fitter.
+    assert!(rows[0]["failure"].is_null());
+    assert!(!rows[1]["failure"].is_null());
+    assert_eq!(rows[1]["fit_outcome"], "deterministic_failure");
+    assert_eq!(authority.entries().0, 3);
+    // One rule for every arm: each recorded estimate is exactly the classifier
+    // applied to the program and the cut's declared shape (8 rows, 1 feature).
+    let shape = feat_math::feasibility::Shape { rows: 8, cols: 1 };
+    for (i, row) in rows.iter().enumerate() {
+        let attempt: Value =
+            read_json(&output.join(format!("candidate-{i}.attempt.json"))).unwrap();
+        let expected = serde_json::to_value(feat_math::feasibility::classify(
+            &GenomeIr::parse(row["genome"].as_str().unwrap()).unwrap(),
+            shape,
+            &feat_math::feasibility::Limits::default(),
+        ))
+        .unwrap();
+        assert_eq!(attempt["feasibility"], expected, "candidate {i}");
+    }
+    // Selection replay and lineage remain valid with the diagnostic present.
+    lineage::verify_search(&root, &output, Some(seeds.as_path()), None).unwrap();
+    authority.stop_service();
+}

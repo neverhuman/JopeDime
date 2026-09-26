@@ -224,7 +224,7 @@ impl Model {
 
 /// Split off the optional leading target pseudo-stage; a target stage
 /// anywhere else in the pipeline is an error.
-fn split_target(stages: &[Stage]) -> Result<(Option<&Stage>, &[Stage])> {
+pub(crate) fn split_target(stages: &[Stage]) -> Result<(Option<&Stage>, &[Stage])> {
     let (target, rest) = match stages.first() {
         Some(first) if is_target_op(&first.op) => (Some(first), &stages[1..]),
         _ => (None, stages),
@@ -237,7 +237,7 @@ fn split_target(stages: &[Stage]) -> Result<(Option<&Stage>, &[Stage])> {
 
 /// Split pipeline stages into transforms + terminal head; a missing head
 /// defaults to plain ridge.
-fn split_stages(stages: &[Stage]) -> (&[Stage], Stage) {
+pub(crate) fn split_stages(stages: &[Stage]) -> (&[Stage], Stage) {
     if let Some(last) = stages.last() {
         if is_head_op(&last.op) {
             return (&stages[..stages.len() - 1], last.clone());
