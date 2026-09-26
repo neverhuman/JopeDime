@@ -38,7 +38,7 @@ use crate::progress::inventory::Retention;
 use crate::progress::outbox::{Delivery, Outbox};
 use crate::progress::remote::Remote;
 use anyhow::Result;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
 
 /// Milliseconds on a monotonic, injected clock.
@@ -46,7 +46,8 @@ pub trait Clock {
     fn now_ms(&self) -> u64;
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct Policy {
     pub flush_interval_ms: u64,
     pub flush_bytes: u64,
@@ -117,15 +118,21 @@ impl Cadence {
     /// Start (or restart) the cadence. Pending entries found in the outbox are flushed
     /// immediately: they may be owed since before a crash.
     pub fn start(policy: Policy, now_ms: u64, outbox: &Outbox) -> Cadence {
-        let mut cadence = Cadence {
-            policy,
-            last_flush_ms: now_ms,
-            urgent: BTreeSet::new(),
-        };
+        let mut cadence = Cadence::new(policy, now_ms);
         if outbox.pending_entries() > 0 {
             cadence.request(Urgent::Restart);
         }
         cadence
+    }
+
+    /// A cadence for an outbox the caller knows owed nothing when it started: nothing is urgent
+    /// and the interval starts now.
+    pub fn new(policy: Policy, now_ms: u64) -> Cadence {
+        Cadence {
+            policy,
+            last_flush_ms: now_ms,
+            urgent: BTreeSet::new(),
+        }
     }
 
     pub fn request(&mut self, why: Urgent) {
@@ -138,7 +145,18 @@ impl Cadence {
 
     /// Whether a flush is due now, and why. Nothing is due while nothing is pending.
     pub fn due(&self, now_ms: u64, outbox: &Outbox) -> Option<FlushDue> {
-        if outbox.pending_entries() == 0 {
+        self.due_for(now_ms, outbox.pending_entries(), outbox.pending_bytes())
+    }
+
+    /// [`Cadence::due`] for a caller that owes more than the outbox's pending entries, such as
+    /// a publisher whose appended objects are delivered but not yet committed.
+    pub fn due_for(
+        &self,
+        now_ms: u64,
+        pending_entries: u64,
+        pending_bytes: u64,
+    ) -> Option<FlushDue> {
+        if pending_entries == 0 {
             return None;
         }
         if !self.urgent.is_empty() {
@@ -146,10 +164,8 @@ impl Cadence {
                 requests: self.pending_urgent(),
             });
         }
-        if outbox.pending_bytes() >= self.policy.flush_bytes {
-            return Some(FlushDue::Size {
-                pending_bytes: outbox.pending_bytes(),
-            });
+        if pending_bytes >= self.policy.flush_bytes {
+            return Some(FlushDue::Size { pending_bytes });
         }
         let waited_ms = now_ms.saturating_sub(self.last_flush_ms);
         (waited_ms >= self.policy.flush_interval_ms).then_some(FlushDue::Interval { waited_ms })
@@ -229,6 +245,18 @@ impl Checkpoints {
         let waited_ms = now_ms.saturating_sub(self.last_ms);
         (waited_ms >= self.policy.checkpoint_interval_ms)
             .then_some(CheckpointDue::Interval { waited_ms })
+    }
+
+    /// Record `n` committed updates observed at once (an engine checkpoint published after
+    /// several optimizer steps), and say whether a checkpoint is due at the last of them. The
+    /// update trigger fires as soon as the count reaches the policy, however many updates
+    /// arrived together; `n == 0` records nothing and is never due.
+    pub fn committed_updates(&mut self, n: u64, now_ms: u64) -> Option<CheckpointDue> {
+        if n == 0 {
+            return None;
+        }
+        self.uncheckpointed = self.uncheckpointed.saturating_add(n - 1);
+        self.committed_update(now_ms)
     }
 
     /// Controlled shutdown: due whenever any committed update is uncheckpointed.

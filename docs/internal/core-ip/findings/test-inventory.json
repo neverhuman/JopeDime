@@ -1777,6 +1777,12 @@
         "teaching"
       ]
     },
+    "target:jope-learning/test/progress_cli": {
+      "role": "regression",
+      "subsystems": [
+        "storage"
+      ]
+    },
     "target:jope-learning/test/schema_agreement": {
       "role": "regression",
       "subsystems": [

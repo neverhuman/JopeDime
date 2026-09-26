@@ -35,6 +35,10 @@ ulid.workspace = true
 walkdir = "2"
 
 [dev-dependencies]
+# The W8 product tests check their engine fixtures with the engine's own code
+# (corpus_publication::verify, checkpoint_recovery::reconcile). A dev-dependency only: the
+# library maps the engine's published bytes and does not link the engine.
+jope-parallel = { path = "../jope-engine" }
 tempfile.workspace = true
 
 [lints]

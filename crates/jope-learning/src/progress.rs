@@ -44,6 +44,13 @@
 //! All of this runs against an injected clock. A failed flush never advances the durable
 //! watermark.
 //!
+//! [`engine`] maps the engine's durable events to these objects at this crate's receiving path:
+//! a published corpus, a published checkpoint, a checkpoint recovery and a no-replace result
+//! publication. [`product::Driver`] is the product path that appends them to the outbox, commits
+//! them through the conditional publisher and drives the cadence; the `jope-learning progress`
+//! verbs expose it. Its outbox limits and cadence are explicit [`product::Config`] values whose
+//! defaults are the owner's proposals, not approved.
+//!
 //! Logical work identity ([`inventory::WorkSpec::work_id`]) is derived from the run and the
 //! work's own specification and never from an attempt; `(work_id, attempt)` is the attempt
 //! identity; an object's digest is its delivery identity. Nothing here is authority for teaching
@@ -53,8 +60,10 @@
 
 pub mod cadence;
 pub mod census;
+pub mod engine;
 pub mod inventory;
 pub mod outbox;
+pub mod product;
 pub mod publish;
 pub mod rebuild;
 pub mod remote;
@@ -67,6 +76,7 @@ mod tests {
     mod faults;
     pub mod fixture;
     mod outbox;
+    mod product;
     mod publish;
     mod rebuild;
     mod receiving;
