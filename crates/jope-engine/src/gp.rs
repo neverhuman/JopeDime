@@ -60,6 +60,7 @@ fn evaluator_command(executable: &Path) -> Command {
 mod fit_contract_tests;
 pub mod handoff;
 pub mod lineage;
+pub mod paired;
 pub mod selection_replay;
 
 #[cfg(test)]

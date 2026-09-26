@@ -122,8 +122,23 @@ Receipts (full source SHA, diff, nextest logs) are retained outside the tree und
 - Draws, unique programs, completed evaluations, physical fit starts and reused
   completions are already separate published counters (`proposal_attempts`,
   `unique_programs`, `completed_evaluations`, `execution_accounting`).
-- Not done: paired-arm manifests naming the sole intended arm difference,
-  generation-zero inventories and order-balanced paired receipts (S05-G3/I3).
+- **Paired-arm manifest (branch `rr/w5-selection-2`, new capability).**
+  `gp::paired::compare(root, arms, declared)` (`parallel.gp_paired_comparison.v1`)
+  replays every arm independently, requires the arms' frozen search requests to be
+  identical except for the declared arm difference (which must actually differ),
+  requires one feasibility rule across arms, and refuses a program whose
+  measurement differs between arms. Per arm it records the stop reason, replayed
+  winner, non-overlapping counters (proposal draws, rejected proposals, unique
+  programs, completed, measured, failed and semantically duplicate evaluations,
+  recorded physical fit starts, reused completions, unknown start outcomes) and a
+  generation-zero inventory (initial slots evaluated, by origin, and slots refilled
+  by variation); shared programs whose outcome diverged (for example a timeout in
+  one arm only) are listed, not averaged away. Test
+  `a_paired_comparison_names_its_sole_arm_difference_and_refuses_any_other`:
+  swapping only origin labels leaves every shared measurement, winner and budget
+  counter identical (the second arm's fits are recorded as reuse, not new starts);
+  undeclared, overdeclared, empty and duplicate-label comparisons refuse.
+- Not done: order-balanced paired receipts from real runs (W10).
 - The same commit hardens the replay's proposal-accounting check against an
   adversarial rejection counter at `u64::MAX` (saturating arithmetic, no overflow).
 

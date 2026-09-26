@@ -2435,3 +2435,166 @@ fn a_sealed_selection_refuses_swaps_and_keeps_the_selection_when_export_fails() 
     );
     authority.stop_service();
 }
+
+/// Seed population whose programs equal `base`'s but whose origin labels are
+/// all `origin`: only the labels differ.
+fn relabelled_population(base: &Path, path: &Path, origin: &str) {
+    let mut population: SeedPopulation = read_json(base).unwrap();
+    for candidate in &mut population.candidates {
+        candidate.origin = origin.into();
+    }
+    write_json(path, &population).unwrap();
+}
+
+#[test]
+fn a_paired_comparison_names_its_sole_arm_difference_and_refuses_any_other() {
+    let (temp, prepared) = view_fixture();
+    let root = temp.path().canonicalize().unwrap();
+    let mut authority = Fixture::activated(&root, vec![cut_training_hash(&prepared)]);
+    authority.start();
+    let neural = root.join("seeds-neural.json");
+    seed_population(
+        &prepared,
+        &neural,
+        &["(pipe X (standardize) (ridge))", UNFITTABLE, PROGRAM],
+        |_| None,
+    );
+    let shuffled = root.join("seeds-shuffled.json");
+    relabelled_population(&neural, &shuffled, "shuffled_context");
+    let run = |name: &str, extra: &[&std::ffi::OsStr]| {
+        let output = root.join(name);
+        success(
+            search_client(&authority, &root, &prepared, &output, 3)
+                .args(extra)
+                .output()
+                .unwrap(),
+        );
+        output
+    };
+    let flag = std::ffi::OsStr::new;
+    let model = run("arm-model", &[flag("--seeds"), neural.as_os_str()]);
+    let relabelled = run("arm-relabelled", &[flag("--seeds"), shuffled.as_os_str()]);
+    let generic = run("arm-generic", &[]);
+    let reseeded = run(
+        "arm-reseeded",
+        &[
+            flag("--seeds"),
+            shuffled.as_os_str(),
+            flag("--rng-seed"),
+            flag("7"),
+        ],
+    );
+    fn arm<'a>(label: &'a str, output: &'a Path) -> paired::Arm<'a> {
+        paired::Arm { label, output }
+    }
+    // Origin labels are the sole difference: every shared program carries the
+    // same measurement, admissibility and budget in both arms.
+    let manifest = paired::compare(
+        &root,
+        &[arm("model", &model), arm("relabelled", &relabelled)],
+        &["seeds_sha256"],
+    )
+    .unwrap();
+    assert_eq!(
+        manifest["observed_request_differences"],
+        json!(["seeds_sha256"])
+    );
+    assert_eq!(manifest["shared_programs"], 3);
+    assert_eq!(
+        manifest["shared_programs_with_divergent_outcomes"],
+        json!([])
+    );
+    let arms = manifest["arms"].as_array().unwrap();
+    assert_eq!(arms[0]["winner"]["program"], arms[1]["winner"]["program"]);
+    assert_eq!(
+        arms[0]["winner"]["objective_rmse_original_units"],
+        arms[1]["winner"]["objective_rmse_original_units"]
+    );
+    for key in [
+        "completed_evaluations",
+        "measured",
+        "failed",
+        "proposal_draws",
+    ] {
+        assert_eq!(arms[0]["counters"][key], arms[1]["counters"][key], "{key}");
+    }
+    assert_eq!(arms[0]["generation_zero"]["origins"]["neural_policy"], 3);
+    assert_eq!(arms[1]["generation_zero"]["origins"]["shuffled_context"], 3);
+    // The second arm reused the first arm's fits: counted apart, not hidden.
+    assert_eq!(arms[0]["counters"]["recorded_physical_fit_starts"], 2);
+    assert_eq!(arms[1]["counters"]["recorded_physical_fit_starts"], 0);
+    assert_eq!(arms[1]["counters"]["reused_completions"], 2);
+    // The deterministic fit failure has no recorded start outcome in either arm.
+    assert_eq!(arms[0]["counters"]["unknown_start_outcomes"], 1);
+    assert!(manifest["feasibility_protocol"].is_string());
+    // Seeded against generic: the seed population is the declared difference.
+    paired::compare(
+        &root,
+        &[arm("model", &model), arm("generic", &generic)],
+        &["seeds_sha256"],
+    )
+    .unwrap();
+    // Undeclared, overdeclared and empty declarations are refused.
+    for (arms, declared, expected) in [
+        (
+            vec![arm("model", &model), arm("reseeded", &reseeded)],
+            vec!["seeds_sha256"],
+            "not exactly the declared",
+        ),
+        (
+            vec![arm("model", &model), arm("relabelled", &relabelled)],
+            vec!["seeds_sha256", "rng_seed"],
+            "not exactly the declared",
+        ),
+        (
+            vec![arm("model", &model), arm("relabelled", &relabelled)],
+            vec![],
+            "must declare",
+        ),
+        (
+            vec![arm("model", &model), arm("model", &relabelled)],
+            vec!["seeds_sha256"],
+            "unique",
+        ),
+    ] {
+        let error = format!(
+            "{:#}",
+            paired::compare(&root, &arms, &declared).unwrap_err()
+        );
+        assert!(error.contains(expected), "{declared:?}: {error}");
+    }
+    let manifest = paired::compare(
+        &root,
+        &[arm("model", &model), arm("reseeded", &reseeded)],
+        &["seeds_sha256", "rng_seed"],
+    )
+    .unwrap();
+    assert_eq!(
+        manifest["observed_request_differences"],
+        json!(["rng_seed", "seeds_sha256"])
+    );
+    // A shared program whose measurement differs between arms is refused.
+    let rows: Vec<Value> = read_json(&relabelled.join("observations.json")).unwrap();
+    let files = ["observations.jsonl", "observations.json", "search.json"];
+    let original: Vec<Vec<u8>> = files
+        .iter()
+        .map(|name| fs::read(relabelled.join(name)).unwrap())
+        .collect();
+    let measured = rows
+        .iter()
+        .position(|row| row["failure"].is_null())
+        .unwrap();
+    let mut forged = rows.clone();
+    forged[measured]["metrics"]["rmse"] = json!(0.5);
+    republish_ledger(&relabelled, &forged);
+    assert!(paired::compare(
+        &root,
+        &[arm("model", &model), arm("relabelled", &relabelled)],
+        &["seeds_sha256"],
+    )
+    .is_err());
+    for (name, bytes) in files.iter().zip(&original) {
+        fs::write(relabelled.join(name), bytes).unwrap();
+    }
+    authority.stop_service();
+}
