@@ -4,6 +4,9 @@
 //! Ignored tests read external evidence in place:
 //! - `JOPE_DIME_POLICY_SAFETENSORS`: the exported `policy.safetensors` (receipt from
 //!   `JOPE_DIME_EXPORT_RECEIPT`, default `<dir>/../step-60000.receipt.json`);
+//! - `JOPE_DIME_EXPORT_RECEIPT` alone, optionally with `JOPE_DIME_REEXPORT_RECEIPT` (a
+//!   `jope-parallel export-policy` re-export of the accepted checkpoint): the pinned receipt
+//!   field set (W2 G-08);
 //! - `JOPE_DIME_GENERATION_000011`: a jope-dime `generation-000011` results directory;
 //! - `JOPE_DIME_CONTEXTS`: a `contexts-assembly-v2` directory (`<dataset>/cut-N.f32`);
 //! - `JOPE_DIME_CHALLENGER_SAFETENSORS`, `JOPE_DIME_CHALLENGER_RECEIPT` and
@@ -2030,4 +2033,238 @@ fn mean_token_logprob(
         }
     }
     total / count as f64
+}
+
+// ---------------------------------------------------------------- W2 G-08: pinned receipt fields
+
+/// Every object the accepted receipt carries: where the G-08 cases add one unpinned key.
+const ACCEPTED_OBJECTS: &[&[&str]] = &[
+    &[],
+    &["runtime"],
+    &["checkpoint"],
+    &["checkpoint", "carried_bindings"],
+    &["checkpoint", "config"],
+    &["policy"],
+    &["policy", "source"],
+    &["policy", "output"],
+    &["policy", "output", "round_trip"],
+    &["context_transforms"],
+    &["context_transforms", "source"],
+    &["context_transforms", "output"],
+    &["context_transforms", "output", "round_trip"],
+    &["context_transforms", "assembly"],
+];
+
+/// Every object a native challenger receipt carries (`jope-parallel export-policy`).
+const CHALLENGER_OBJECTS: &[&[&str]] = &[
+    &[],
+    &["runtime"],
+    &["checkpoint"],
+    &["checkpoint", "carried_bindings"],
+    &["checkpoint", "config"],
+    &["policy"],
+    &["policy", "source"],
+    &["policy", "output"],
+    &["policy", "output", "round_trip"],
+    &["relative_change"],
+    &["relative_change", "parent"],
+    &["relative_change", "total"],
+];
+
+const ACCEPTED_FIELD_REFUSAL: &str = "outside the pinned accepted receipt field set";
+const CHALLENGER_FIELD_REFUSAL: &str = "outside the pinned challenger receipt field set";
+
+fn at<'a>(value: &'a mut Value, path: &[&str]) -> &'a mut Value {
+    path.iter().fold(value, |v, key| &mut v[*key])
+}
+
+fn round_trip() -> Value {
+    json!({"readers": ["tch::Tensor::read_safetensors", "independent header parse"],
+           "compared": ["name set", "dtype", "shape", "raw bytes"], "bit_exact": true})
+}
+
+/// Every field the accepted receipt carries (jain-datasets `tools/ot-export` 0.1.0,
+/// `step-60000.receipt.json`), around the synthetic accepted identity.
+fn full_accepted_receipt() -> Value {
+    let mut receipt = accepted_receipt();
+    receipt["runtime"] = json!({"tool": "ot-export", "tool_version": "0.1.0", "tch": "0.26.0",
+        "libtorch": "/sdk/libtorch", "libtorch_build_version": "2.13.0+cu130", "device": "cpu",
+        "cuda_visible_devices": ""});
+    let checkpoint = &mut receipt["checkpoint"];
+    checkpoint["directory"] = json!("/runs/step-60000");
+    checkpoint["state_bytes"] = json!(403795);
+    checkpoint["refused_identities"] = json!([REJECTED_STATE_SHA256]);
+    checkpoint["refused_steps"] = json!([69000]);
+    let policy = &mut receipt["policy"];
+    policy["source"] = json!({"path": "/runs/step-60000/model.ot",
+        "sha256": ACCEPTED_MODEL_SHA256, "file_bytes": 111218463});
+    policy["output"]["path"] = json!("/out/step-60000/policy.safetensors");
+    policy["output"]["file_bytes"] = json!(111199088);
+    policy["output"]["round_trip"] = round_trip();
+    policy["total_tensor_bytes"] = json!(111185976);
+    policy["inventory_sha256"] = json!(digest("inventory"));
+    receipt["context_transforms"] = json!({
+        "source": {"path": "/encodings/transforms.ot", "sha256": digest("transforms.ot"),
+                   "file_bytes": 8413808},
+        "output": {"path": "/out/step-60000/context_transforms.safetensors",
+                   "sha256": digest("transforms"), "file_bytes": 8413808,
+                   "round_trip": round_trip()},
+        "tensor_count": 1,
+        "total_tensor_bytes": 4096,
+        "inventory_sha256": digest("transforms inventory"),
+        "tensors": [{"name": "projection_mean", "dtype": "F32", "shape": [1024], "numel": 1024,
+                     "bytes": 4096, "sha256": digest("projection_mean")}],
+        "assembly": {"path": null, "sha256": digest("assembly"),
+                     "binding": "pinned pair", "clip_abs": null},
+    });
+    receipt
+}
+
+/// W2 G-08, owner decision 2026-09-26 (`docs/internal/core-ip/work-orders/OWNER-DECISIONS.md`
+/// D13): the accepted receipt's field set is pinned. A receipt carrying every pinned field binds
+/// the accepted identity; the same receipt with one more field anywhere is refused, and so are
+/// the native challenger exporter's own fields.
+#[test]
+fn an_accepted_receipt_carrying_an_unpinned_field_is_refused() {
+    let receipt = full_accepted_receipt();
+    let bytes = serde_json::to_vec(&receipt).unwrap();
+    CheckpointBinding::for_proposal(&bytes, None).unwrap();
+    parse_receipt(&receipt)
+        .unwrap()
+        .require_accepted_identity()
+        .unwrap();
+    let mut cases = ACCEPTED_OBJECTS
+        .iter()
+        .map(|path| {
+            let mut extra = receipt.clone();
+            at(&mut extra, path)["unpinned"] = json!(true);
+            extra
+        })
+        .collect::<Vec<_>>();
+    // A tensor entry, and an object inside an array the pinned set holds only scalars in.
+    let mut entry = receipt.clone();
+    entry["context_transforms"]["tensors"][0]["role"] = json!("decode");
+    let mut nested = receipt.clone();
+    nested["checkpoint"]["verified_bindings"] = json!([{"model_sha256": true}]);
+    // The native challenger exporter's own fields are not part of the accepted receipt.
+    let mut architecture = receipt.clone();
+    architecture["policy"]["architecture"] = json!("neural::Policy::new names and shapes");
+    let mut relative = receipt.clone();
+    relative["relative_change"] = Value::Null;
+    cases.extend([entry, nested, architecture, relative]);
+    for case in cases {
+        let bytes = serde_json::to_vec(&case).unwrap();
+        assert_refused(
+            CheckpointBinding::from_receipt_bytes(&bytes),
+            ACCEPTED_FIELD_REFUSAL,
+        );
+        assert_refused(
+            CheckpointBinding::for_proposal(&bytes, None),
+            ACCEPTED_FIELD_REFUSAL,
+        );
+    }
+    // The rejected checkpoint is still refused first, whatever else the receipt carries.
+    let mut rejected = synthetic_receipt(REJECTED_STATE_SHA256, &digest("model"), 60000);
+    rejected["unpinned"] = json!(true);
+    assert_refused(parse_receipt(&rejected), "rejected");
+}
+
+/// The challenger path is pinned to the field set this repository's native challenger exporter
+/// (`jope-parallel export-policy`) writes; one more field, or the accepted exporter's
+/// `context_transforms`, is refused there.
+#[test]
+fn a_challenger_receipt_carrying_an_unpinned_field_is_refused() {
+    let identity = ChallengerIdentity {
+        state_sha256: digest("challenger state"),
+        parameter_sha256: digest("challenger parameters"),
+        config_sha256: ACCEPTED_CONFIG_SHA256.into(),
+        policy_safetensors_sha256: digest("challenger weights"),
+    };
+    let mut receipt = full_accepted_receipt();
+    receipt
+        .as_object_mut()
+        .unwrap()
+        .remove("context_transforms");
+    receipt["runtime"]["tool"] = json!("jope-parallel export-policy");
+    let checkpoint = &mut receipt["checkpoint"];
+    checkpoint["accepted_identity"] = json!(false);
+    checkpoint["state_sha256"] = json!(identity.state_sha256);
+    checkpoint["expected_state_sha256"] = json!(identity.state_sha256);
+    checkpoint["model_sha256"] = json!(digest("challenger model"));
+    checkpoint["step"] = json!(61600);
+    checkpoint["parameter_sha256"] = json!(identity.parameter_sha256);
+    checkpoint["parameter_sha256_recomputed"] = json!(identity.parameter_sha256);
+    receipt["policy"]["output"]["sha256"] = json!(identity.policy_safetensors_sha256);
+    receipt["policy"]["architecture"] = json!("neural::Policy::new names and shapes; F32; finite");
+    receipt["relative_change"] = json!({
+        "parent": {"directory": "/runs/step-60000", "state_sha256": ACCEPTED_STATE_SHA256,
+                   "step": 60000, "model_sha256": ACCEPTED_MODEL_SHA256,
+                   "parameter_sha256": ACCEPTED_PARAMETER_SHA256},
+        "norm": "l2 over float32 values, f64 accumulation in row-major order",
+        "tensors": [{"name": "ctx_proj.bias", "parent_norm": 1.0, "change_norm": 0.5,
+                     "relative_change": 0.5, "changed_values": 3}],
+        "total": {"parent_norm": 1.0, "change_norm": 0.5, "relative_change": 0.5},
+    });
+    let parse = |r: &Value| {
+        CheckpointBinding::from_challenger_receipt_bytes(&serde_json::to_vec(r).unwrap(), &identity)
+    };
+    parse(&receipt).unwrap();
+    CheckpointBinding::for_proposal(&serde_json::to_vec(&receipt).unwrap(), Some(&identity))
+        .unwrap();
+    // Without a parent the exporter writes `relative_change: null`.
+    let mut unparented = receipt.clone();
+    unparented["relative_change"] = Value::Null;
+    parse(&unparented).unwrap();
+    let mut cases = CHALLENGER_OBJECTS
+        .iter()
+        .map(|path| {
+            let mut extra = receipt.clone();
+            at(&mut extra, path)["unpinned"] = json!(true);
+            extra
+        })
+        .collect::<Vec<_>>();
+    let mut row = receipt.clone();
+    row["relative_change"]["tensors"][0]["unpinned"] = json!(true);
+    let mut transforms = receipt.clone();
+    transforms["context_transforms"] = full_accepted_receipt()["context_transforms"].clone();
+    cases.extend([row, transforms]);
+    for case in cases {
+        assert_refused(parse(&case), CHALLENGER_FIELD_REFUSAL);
+    }
+    // The accepted parser refuses it (it names no accepted identity and carries challenger fields).
+    assert!(parse_receipt(&receipt).is_err());
+}
+
+/// W2 G-08 on the real receipts (owner decision 2026-09-26, `OWNER-DECISIONS.md` D13).
+/// `JOPE_DIME_EXPORT_RECEIPT` is the accepted `step-60000.receipt.json` (`tools/ot-export`): it
+/// binds the accepted identity and the released weights under the pinned field set, and one added
+/// field in any of its objects is refused. With `JOPE_DIME_REEXPORT_RECEIPT` (a re-export of the
+/// accepted checkpoint by `jope-parallel export-policy`), that receipt is refused as the accepted
+/// receipt because it carries the challenger exporter's fields.
+#[test]
+#[ignore = "needs JOPE_DIME_EXPORT_RECEIPT (the accepted step-60000.receipt.json)"]
+fn the_real_accepted_receipt_carries_only_pinned_fields() {
+    let bytes = std::fs::read(env_path("JOPE_DIME_EXPORT_RECEIPT")).unwrap();
+    println!("accepted receipt sha256 {}", sha256_hex(&bytes));
+    let binding = CheckpointBinding::for_proposal(&bytes, None).unwrap();
+    assert_eq!(binding.state_sha256(), ACCEPTED_STATE_SHA256);
+    assert_eq!(binding.policy_safetensors_sha256(), RELEASED_WEIGHTS_SHA256);
+    let receipt: Value = serde_json::from_slice(&bytes).unwrap();
+    for path in ACCEPTED_OBJECTS {
+        assert!(at(&mut receipt.clone(), path).is_object(), "{path:?}");
+        let mut extra = receipt.clone();
+        at(&mut extra, path)["unpinned"] = json!(true);
+        assert_refused(
+            CheckpointBinding::for_proposal(&serde_json::to_vec(&extra).unwrap(), None),
+            ACCEPTED_FIELD_REFUSAL,
+        );
+    }
+    if let Some(path) = std::env::var_os("JOPE_DIME_REEXPORT_RECEIPT") {
+        let bytes = std::fs::read(path).unwrap();
+        println!("re-export receipt sha256 {}", sha256_hex(&bytes));
+        assert_refused(
+            CheckpointBinding::for_proposal(&bytes, None),
+            ACCEPTED_FIELD_REFUSAL,
+        );
+    }
 }

@@ -305,7 +305,7 @@ Run `w2b-repro-prefix-20260926T065217Z` (exit 100, three failing tests, all expe
 | G-04 | `EncoderIdentity::accepted()` issues all eight fields from reviewed constants. `component_bundle` keeps the value every earlier producer recorded, the `ModelBundleV1` re-serialization digest `985074846ccfe92c818e920e5268ea5269a9e35f1fa2057ddae662266c6c7f9f` of the pinned manifest `5e7884ec…`; foundation `f663ae49…`, target `be96adc6…`. The producer (`CpuProducer::load`), `CpuContextArtifact::validate`, qualification case verification (both admission routes) and `ClassificationArtifact::validate_for_input` refuse any other identity. | `every_encoder_identity_field_is_pinned_to_the_release_decision`; ignored evidence test `accepted_encoder_identity_rederives_from_the_pinned_component_bundle`, run against the local pinned manifest `/home/ubuntu/jain-split/jain-starforge/artifacts/model-bundle.v1.json` (first derivation: `w2b-probe-bundle-identity-20260926T065422Z`). |
 | G-03 | `producer::Request.context_admission_sha256` (optional; omitted when absent, so native request bytes and identities are unchanged) carries `AdmissionPins::sha256()` issued by the controller. The worker admits a bundle only through `QualifiedContextBundle::admit_for_request`: pins must hash to the issued admission before verification, the final context must replay from the qualified components and equal the policy-input bytes, and the handoff must fit the request. Native mode refuses a request that names an admission. `verify_policy_inputs` requires the request to issue exactly the admission `load_qualified` verified; `Comparison::validate` attaches only encoding outputs to the preregistered plan. | `worker_admission_requires_the_request_issued_pins`; `context_admission_pin_is_optional_and_bound`; `comparison_attaches_only_encoding_outputs_including_the_issued_admission` (jope-pipeline). |
 | W2-T07 | `VerifiedCpuContext::handoff` → `ContextHandoff` (schema `jope.cpu-context-handoff/v1`): release identity (encoder, source, producer, verification policy, reference manifest), the six-step typed transformation chain, input scope (training identity, input, preprocessing, prepared rows), artifact/qualification/admission digests, final-context digest and consumer. `deliver_to_policy` refuses another consumer, an admission the request did not issue, another cut/training/preparation/context, a stale encoder release, and unknown chains or protocols. No conversion from an unqualified artifact exists. | `handoff_reaches_only_the_intended_consumer_for_the_issued_scope`; compile-fail doctests on `VerifiedCpuContext`/`ContextHandoff`. |
-| G-08 | **Not changed.** The accepted `jope.checkpoint_export.v1` receipt is written by jain-datasets `tools/ot-export`; its field set is not in this repository and bounded host searches did not find the receipt. The in-repo exporter (`jope-engine/src/policy_export.rs:875-908`) writes fields the test fixture lacks (`runtime`, `checkpoint.directory`, `state_bytes`, `refused_identities`, `refused_steps`, `policy.source`, `total_tensor_bytes`, `inventory_sha256`, `architecture`, `relative_change`). An allowlist from either would be a guess that could refuse the real accepted receipt. | Reproduction only (8.1). |
+| G-08 | **Not changed.** The accepted `jope.checkpoint_export.v1` receipt is written by jain-datasets `tools/ot-export`; its field set is not in this repository and bounded host searches did not find the receipt. The in-repo exporter (`jope-engine/src/policy_export.rs:875-908`) writes fields the test fixture lacks (`runtime`, `checkpoint.directory`, `state_bytes`, `refused_identities`, `refused_steps`, `policy.source`, `total_tensor_bytes`, `inventory_sha256`, `architecture`, `relative_change`). An allowlist from either would be a guess that could refuse the real accepted receipt. **Superseded 2026-09-26:** the real receipt was found on this host and its field set is pinned (§12). | Reproduction only (8.1). |
 
 ### 8.3 Wire and identity changes
 
@@ -437,7 +437,7 @@ assembly from the manifest instead of literals.
 
 **Not done.**
 - G-08 (unknown export-receipt fields) stays open: the external exporter's field set is still
-  not available.
+  not available. **Superseded 2026-09-26:** closed by owner decision D13 in §12.
 - The published `models/bundles/policy-step-60000.json` (jope-models fetch, `jope.model-bundle/v2`)
   is unchanged; the semantic manifest is a separate release record and names the weights digest
   it lists.
@@ -554,3 +554,56 @@ store unchanged.
 **Runs.**
 - Post `w2c-t04-post-20260926T203511Z`: jope-pipeline (`neural-search`) read-once, context-cost and search_context cases 6/6; the resident-view case 1/1; the neural CPU `bound_load_tests` 3/3; the neural integration suites (`checkpoint_commit`, `continuation_modes`, `frozen_inputs`, `request_integrity`) 24/24; the neural all-targets check exit 0.
 - Pre-commit `w2c-t04-c-20260926T203811Z`: fence suites, `gp::fit_contract_tests` and `teaching_store::` 99/99; workspace all-targets check, coverage (0 unassigned), verify-test-inventory, fmt and diff-check exit 0.
+
+## 12. Appended 2026-09-26: G-08 closed by owner decision (pinned receipt field sets)
+
+**Decision.** `OWNER-DECISIONS.md` D13, adopted by owner delegation 2026-09-26: pin the accepted receipt's field set and refuse any receipt carrying fields outside it.
+
+**The accepted receipt was found.** §8.2 recorded that the field set was not available. It is on this host:
+- **Receipt.** `/mnt/fast-scratch/jope-migration-qualification/claude-impl-20260917/ot-export-out/step-60000.receipt.json`, 42,880 bytes, SHA-256 `b50150ea9c905fa35f018f0e208ae613e8d0fb1bbbcaf9c00aa34d48dde458fe`.
+- **Writer.** jain-datasets `tools/ot-export` 0.1.0; the source is `jain-datasets/tools/ot-export/src/{lib,main}.rs`, commit `9228322`.
+- **Binding.** `checkpoint.state_sha256` is the accepted `8ac80c26…`, and `policy.output.sha256` is `4b4b5a40…`, the released weights the W2-T02 pin binds.
+- **Field set.** Its complete field set, read from the file and matching the writer's source:
+  - top level: `schema`, `runtime`, `checkpoint`, `policy`, `context_transforms`;
+  - `runtime`: `tool`, `tool_version`, `tch`, `libtorch`, `libtorch_build_version`, `device`, `cuda_visible_devices`;
+  - `checkpoint`: `directory`, `state_sha256`, `state_bytes`, `expected_state_sha256`, `accepted_identity`, `refused_identities`, `refused_steps`, `step`, `model_sha256`, `config_sha256`, `config` (the thirteen `PolicyConfig` fields), `verified_bindings`, `carried_bindings` (`corpus_sha256`, `vocabulary_sha256`), `parameter_sha256`, `parameter_sha256_recomputed`;
+  - `policy` and `context_transforms`: `source` (`path`, `sha256`, `file_bytes`), `output` (`path`, `sha256`, `file_bytes`, `round_trip` with `readers`, `compared` and `bit_exact`), `tensor_count`, `total_tensor_bytes`, `inventory_sha256`, and `tensors` (entries `name`, `dtype`, `shape`, `numel`, `bytes`, `sha256`);
+  - `context_transforms` also has `assembly` (`path`, `sha256`, `binding`, `clip_abs`).
+
+**A second real receipt names the accepted identity.** `/home/ubuntu/jope-evidence/asm-demo-20260925/demo3/anchor-4e11f765f05d.receipt.json` (SHA-256 `8f006133…`) was written on 2026-09-25 by this repository's exporter (`jope-parallel export-policy`). It reproduces the same weights (`4b4b5a40…`). Its field set is the challenger exporter's: no `context_transforms`, plus `policy.architecture` and `relative_change` (`parent`, `norm`, `tensors[]`, `total`).
+
+**Reproduction.** `pd-w2g08-fields-pre-20260926T223836Z` ran the new tests against unchanged `config.rs`: 0/3 passed. Each failed at its first unpinned case, because the receipt was accepted:
+- `an_accepted_receipt_carrying_an_unpinned_field_is_refused`;
+- `a_challenger_receipt_carrying_an_unpinned_field_is_refused`;
+- `the_real_accepted_receipt_carries_only_pinned_fields`: the real `b50150ea…` receipt with one added field bound the accepted identity.
+
+**Change** (`crates/jope-policy/src/config.rs`).
+- `ACCEPTED_RECEIPT_FIELDS` is the field set above. `CHALLENGER_RECEIPT_FIELDS` is the in-repository exporter's (`jope-engine/src/policy_export.rs` `export_on_cpu` and `relative_change`).
+- `refuse_unpinned_fields` walks the whole receipt. It refuses any key outside its object's pinned set, and any object at a path the set does not name (`*` stands for array elements).
+- `CheckpointBinding::parse` calls it after the rejected-checkpoint refusal (which still comes first) and before any identity field is read. It uses the accepted set when no challenger is named and the challenger set otherwise. Every receiver therefore goes through it: `from_receipt_bytes`, `from_challenger_receipt_bytes` and `for_proposal`, as used by the policy worker, `verify_policy_inputs`, jope-bench `optimize` and `inference_cuda`.
+- Refusal wording: "export receipt carries {path} outside the pinned {accepted|challenger} receipt field set". Existing refusal wording is unchanged.
+
+**Why challengers have their own set.** Challenger receipts come from `jope-parallel export-policy` (DEMO-3). Holding them to the accepted set would refuse every real challenger export for `policy.architecture` and `relative_change`, which the decision did not ask for. A re-export of the accepted checkpoint by that exporter carries those fields, so it is refused *as the accepted receipt*: the accepted receipt is the `tools/ot-export` one that the release binds.
+
+**Fixtures** (`crates/jope-policy/tests/jope_dime.rs`, feature `testing`).
+
+| Acceptance item | Test |
+|---|---|
+| A synthetic receipt carrying every accepted field binds the accepted identity (positive control). One added key in each of its 14 objects, a tensor entry key, an object inside a scalar array, `policy.architecture` or `relative_change` is refused by `from_receipt_bytes` and `for_proposal`. The rejected checkpoint is still refused first | `an_accepted_receipt_carrying_an_unpinned_field_is_refused` |
+| A challenger receipt carrying the in-repository exporter's full field set parses, with or without a `relative_change` parent (positive control). One added key in each of its 12 objects or in a `relative_change` row, or the accepted exporter's `context_transforms`, is refused | `a_challenger_receipt_carrying_an_unpinned_field_is_refused` |
+| Host (ignored, `JOPE_DIME_EXPORT_RECEIPT`, optional `JOPE_DIME_REEXPORT_RECEIPT`): the real accepted receipt binds the accepted state and released weights under the pinned set; each of its 14 objects exists, and one added key in any is refused; the `jope-parallel export-policy` re-export is refused as the accepted receipt | `the_real_accepted_receipt_carries_only_pinned_fields` |
+
+The existing ignored host test `exported_policy_matches_its_export_receipt` also runs against the real receipt and the real `policy.safetensors`. It covers `load_bound`, `propose`, and the forged-config and forged-vocabulary refusals.
+
+**No authority state changes on refusal.** `CheckpointBinding::parse` is pure. Its callers read the receipt bytes and refuse before any weights are loaded or any output is written.
+
+**Runs**
+
+| Evidence directory | Command | Result |
+|---|---|---|
+| `pd-w2g08-fields-pre-20260926T223836Z` | the three G-08 tests (the host one with the real receipts) against unchanged `config.rs` | 0/3: each unpinned case was accepted |
+| `pd-w2g08-fields-post-20260926T223959Z` | `-p jope-policy --features testing --run-ignored all`, excluding the real-weights and generation-000011 tests | 71/73. The 2 failures are ignored `jope_embed` tests this flag also enabled; they need `JAIN_TEST_MODEL_BUNDLE_ROOT` and `target/jope-fixture`, and this change does not touch them. All G-08 tests pass, including the real receipt |
+| `pd-w2g08-policy-post-20260926T224432Z` | `-p jope-policy --features testing` | 70/70 (7 ignored) |
+| `pd-w2g08-consumers-post-20260926T224022Z` | `-p jope-pipeline --features neural-search` (`verify_policy_inputs` consumer) | 127/127 |
+| `pd-w2g08-bench-asm-post-20260926T224224Z` | `-p jope-bench --features asm`, receipt/challenger/checkpoint/policy/origin_proof/optimize tests | 25/25 |
+| `pd-w2g08-host-real-asset-20260926T224254Z` | release; the real `policy.safetensors` and `step-60000.receipt.json`, plus the `8f006133…` re-export | 2/2: `exported_policy_matches_its_export_receipt` (the host `config.json` matches `ACCEPTED_CONFIG_SHA256`) and `the_real_accepted_receipt_carries_only_pinned_fields` (the re-export is refused) |
