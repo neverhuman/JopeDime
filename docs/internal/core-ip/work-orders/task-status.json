@@ -730,8 +730,21 @@
     },
     "W12-T03": {
       "states": [
-        "planned"
-      ]
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "17fee4cb4b8225a3577aece12d5c34c3f47ad36a"
+      ],
+      "tests": [
+        "test_progress_view.py (5)",
+        "test_task_status.py (3)"
+      ],
+      "evidence": [
+        "docs/internal/core-ip/work-orders/PROGRESS.md",
+        "docs/internal/core-ip/work-orders/STATUS.md"
+      ],
+      "remaining": "Status and findings views are generated from validated records. KPI score cards (HWM improvement, eligible teachers, corpus availability, exposure, committed updates, matched search, transfer) wait on W8 publication verification and real measurements."
     },
     "W12-T04": {
       "states": [
