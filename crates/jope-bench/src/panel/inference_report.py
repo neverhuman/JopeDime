@@ -35,13 +35,25 @@ def read(path):
 def distribution(values):
     values=sorted(values)
     return {'n':len(values),'median_seconds':statistics.median(values) if values else None,'p95_seconds':values[math.ceil(.95*len(values))-1] if values else None,'mean_seconds':statistics.mean(values) if values else None}
+# Direct-request census of the v2 study when a plan predates an explicit census.
+DEFAULT_CENSUS={'warm':10,'cold':1,'warmup':2,'profile':1}
+def census(plan):
+    """Planned direct-request slots, frozen before execution; every slot needs one terminal outcome."""
+    counts=plan.get('census',DEFAULT_CENSUS)
+    if set(counts)!=set(DEFAULT_CENSUS) or not all(isinstance(v,int) and v>=0 for v in counts.values()):raise ValueError('census modes or counts invalid')
+    return counts,[(d['id'],mode,seed) for d in plan['inputs'] for mode,count in counts.items() for seed in range(count)]
+def unplanned(plan,journal,slots):
+    """Direct receipts outside the frozen census are never silently ignored."""
+    planned={f"{mode}-{dataset}-{seed}" for dataset,mode,seed in slots}
+    return sorted(p.parent.name for mode in DEFAULT_CENSUS for p in journal.glob(f'{mode}-*/receipt.json') if p.parent.name not in planned)
 def summarize(plan,journal):
     q=read(journal/'qualification.json');qualification=qualified(plan,q)
     launch=read(journal/'launch.json')
     controller={'status':'completed' if launch.get('exit_code')==0 else 'failed' if launch.get('exit_code') is not None else 'unknown','launch':launch,'qualification_status':'passed' if qualification else 'failed' if q else 'not_executed_or_interrupted'}
     records=[];missing=[];backend_times={};failures=[]
+    counts,slots=census(plan)
     for d in plan['inputs']:
-        for mode,count in [('warm',10),('cold',1),('warmup',2),('profile',1)]:
+        for mode,count in counts.items():
             for seed in range(count):
                 p=journal/f"{mode}-{d['id']}-{seed}"/'receipt.json'
                 if not p.exists():
@@ -96,7 +108,12 @@ def summarize(plan,journal):
                 if (d['id'],backend,size) in seen:continue
                 status='unsupported' if entries.get(backend,{}).get('status')=='unsupported' else 'interrupted' if (journal/f"prediction-{d['id']}-{backend}-{size}").exists() else 'unexecuted'
                 prediction.append({'dataset':d['id'],'backend':backend,'batch_rows':size,'status':status,'accepted':False})
-    summary={'schema':plan['schema'],'controller':controller,'qualified':qualification,'qualification':q,'publication_headline':qualification and len(warm)==100,'completed_successfully':len(warm),'expected':100,'missing':missing,'failures':failures,'warm_cumulative_backend_milestones':[{'dataset':d,'backend':b,**distribution(v)} for (d,b),v in sorted(backend_times.items())],'cold_observations':[read(p) for p in sorted(journal.glob('cold-process-*.json'))],'full_gp':gp,'prediction':prediction,'window':read(journal/'window.json'),'warm_complete_request_distribution':distribution([r['elapsed_seconds'] for r in warm]),'boundary':'Fitting data to first prediction, including preprocessing, encoders, policy, fitting, emission and compilation. Backends emitted sequentially; later milestones include earlier backend work. No LLM speed comparison.'}
+    extra=unplanned(plan,journal,slots)
+    planned_warm=counts['warm']*len(plan['inputs'])
+    accepted=sum(r['accepted'] for r in records)
+    reconciliation={'planned':len(slots),'receipts':len(records),'accepted':accepted,'rejected':len(records)-accepted,'missing':len(missing),'unplanned_receipts':extra,
+        'reconciled':len(records)+len(missing)==len(slots),'failure_or_missing_rate':(len(slots)-accepted)/len(slots) if slots else None}
+    summary={'schema':plan['schema'],'controller':controller,'qualified':qualification,'qualification':q,'publication_headline':bool(qualification and planned_warm>0 and len(warm)==planned_warm and not extra and reconciliation['reconciled']),'completed_successfully':len(warm),'expected':planned_warm,'census':{'modes':counts,'source':'plan' if 'census' in plan else 'default-v2'},'reconciliation':reconciliation,'missing':missing,'failures':failures,'warm_cumulative_backend_milestones':[{'dataset':d,'backend':b,**distribution(v)} for (d,b),v in sorted(backend_times.items())],'cold_observations':[read(p) for p in sorted(journal.glob('cold-process-*.json'))],'full_gp':gp,'prediction':prediction,'window':read(journal/'window.json'),'warm_complete_request_distribution':distribution([r['elapsed_seconds'] for r in warm]),'boundary':'Fitting data to first prediction, including preprocessing, encoders, policy, fitting, emission and compilation. Backends emitted sequentially; later milestones include earlier backend work. No LLM speed comparison.'}
     return summary,records
 
 def main():
@@ -109,5 +126,5 @@ def main():
     with (output/'requests.csv').open('w',newline='') as f:
         w=csv.writer(f);w.writerow(['dataset','mode','seed','elapsed_seconds','accepted','failure'])
         for r in records:w.writerow([r.get(k,'') for k in ['dataset','mode','seed','elapsed_seconds','accepted','failure']])
-    (output/'methodology.md').write_text('# GPU timing study\n\n'+summary['boundary']+'\n\nQualified: '+str(summary['qualified'])+'. Completed warm Python and Rust paths: '+str(summary['completed_successfully'])+'/100. Missing attempts are unexecuted, never zero latency. Cold observations are individual process wall times. Full GP uses five fitting-side OOF folds,96 candidate slots and120seconds per arm; exports occur after the winner freezes. Prediction API samples exclude process initialization, which is reported as a separate residual containing I/O and teardown.\n')
+    (output/'methodology.md').write_text('# GPU timing study\n\n'+summary['boundary']+'\n\nQualified: '+str(summary['qualified'])+'. Completed warm Python and Rust paths: '+str(summary['completed_successfully'])+'/'+str(summary['expected'])+'. Planned direct slots: '+str(summary['reconciliation']['planned'])+', accepted '+str(summary['reconciliation']['accepted'])+', missing '+str(summary['reconciliation']['missing'])+', unplanned receipts '+str(len(summary['reconciliation']['unplanned_receipts']))+'. Missing attempts are unexecuted, never zero latency. Cold observations are individual process wall times. Full GP uses five fitting-side OOF folds,96 candidate slots and120seconds per arm; exports occur after the winner freezes. Prediction API samples exclude process initialization, which is reported as a separate residual containing I/O and teardown.\n')
 if __name__=='__main__':main()

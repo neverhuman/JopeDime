@@ -45,6 +45,27 @@ class Reporting(unittest.TestCase):
         (self.root/'qualification.json').write_text(json.dumps({'passed':True,'cases':[{'pass':True}]*8}))
         summary,_=report.summarize(self.plan,self.root)
         self.assertFalse(summary['qualified'])
+    def test_every_planned_slot_reconciles_to_one_outcome(self):
+        summary,_=report.summarize(self.plan,self.root)
+        census=summary['reconciliation']
+        self.assertEqual((census['planned'],census['missing'],census['receipts']),(140,140,0))
+        self.assertTrue(census['reconciled'])
+        self.assertEqual(census['failure_or_missing_rate'],1.0)
+        self.assertEqual(summary['census']['source'],'default-v2')
+    def test_unplanned_receipts_are_listed_and_block_the_headline(self):
+        for name in ('warm-0-15','warm-ghost-0'):
+            d=self.root/name;d.mkdir()
+            (d/'receipt.json').write_text(json.dumps({'schema':self.plan['schema'],'success':True}))
+        summary,_=report.summarize(self.plan,self.root)
+        self.assertEqual(summary['reconciliation']['unplanned_receipts'],['warm-0-15','warm-ghost-0'])
+        self.assertFalse(summary['publication_headline'])
+    def test_census_comes_from_the_frozen_plan(self):
+        plan=dict(self.plan,inputs=self.plan['inputs'][:1],census={'warm':2,'cold':0,'warmup':0,'profile':0})
+        summary,_=report.summarize(plan,self.root)
+        self.assertEqual((summary['expected'],summary['reconciliation']['planned']),(2,2))
+        self.assertEqual(summary['census']['source'],'plan')
+        with self.assertRaisesRegex(ValueError,'census'):
+            report.summarize(dict(plan,census={'warm':2}),self.root)
 
 class ArtifactValidation(unittest.TestCase):
     def test_exact_parity_requires_matching_bundle(self):
