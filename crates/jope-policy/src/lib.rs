@@ -125,6 +125,7 @@ pub mod producer;
 pub mod proposal_ledger;
 pub mod ranking;
 pub mod seeds;
+pub mod semantic;
 
 /// Test support (`testing`, never enabled by a product build): untrained weights and
 /// unbound helpers. Every helper here refuses the accepted state, so even a test build cannot
@@ -231,6 +232,18 @@ pub(crate) fn require_accepted_policy(
         recomputed == ACCEPTED_CONFIG_SHA256,
         "refused: loaded policy config hashes to {recomputed}, not the accepted step-60000 config"
     );
+    // W2-T02: the release decision is the accepted semantic manifest; the reviewed constants
+    // above are its values (`semantic::tests::every_compiled_identity_is_the_manifests`).
+    let release = semantic::accepted()?.policy;
+    anyhow::ensure!(
+        bound.state_sha256() == release.state_sha256
+            && bound.parameter_sha256() == release.parameter_sha256
+            && bound.policy_safetensors_sha256() == release.weights_sha256
+            && bound.config_sha256() == release.config_sha256
+            && recomputed == release.config_sha256,
+        "refused: loaded policy is not the accepted semantic release {}",
+        semantic::ACCEPTED_SEMANTIC_MANIFEST_SHA256
+    );
     Ok(bound)
 }
 
@@ -241,13 +254,18 @@ pub(crate) fn require_accepted_policy(
 pub(crate) fn require_accepted_vocabulary(
     vocabulary: &grammar::BoundVocabulary,
 ) -> anyhow::Result<()> {
+    // W2-T02: judged against the accepted semantic manifest's vocabulary meanings.
+    let release = semantic::accepted()?.vocabulary;
     let accepted = match vocabulary.identity() {
         grammar::VocabularyIdentity::Checkpoint => {
             vocabulary.sha256() == CHECKPOINT_VOCABULARY_SHA256
+                && vocabulary.sha256() == release.checkpoint_sha256
         }
         grammar::VocabularyIdentity::ProductRestriction { base_sha256 } => {
             vocabulary.sha256() == PRODUCT_VOCABULARY_SHA256
                 && base_sha256 == CHECKPOINT_VOCABULARY_SHA256
+                && vocabulary.sha256() == release.product_restriction.sha256
+                && *base_sha256 == release.product_restriction.base_sha256
         }
     };
     anyhow::ensure!(

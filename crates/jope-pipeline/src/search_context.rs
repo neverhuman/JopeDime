@@ -399,6 +399,14 @@ pub fn classification_context(
 #[cfg(test)]
 mod tests {
     use super::*;
+    /// W2-T02: the controller's duplicated lineage constants are the accepted semantic
+    /// manifest's values (the release decision).
+    #[test]
+    fn duplicated_lineage_constants_are_the_accepted_semantic_manifests() {
+        let release = jope_policy::semantic::accepted().unwrap();
+        assert_eq!(ASSEMBLY_SHA256, release.encoders.assembly_sha256);
+        assert_eq!(TRANSFORMS_SHA256, release.encoders.frozen_transforms_sha256);
+    }
     fn row_ids() -> Vec<String> {
         [3usize, 5, 8, 12]
             .iter()

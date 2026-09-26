@@ -165,6 +165,21 @@ impl EncoderIdentity {
                 "encoder lineage changed: {field} is not the accepted release identity"
             );
         }
+        // W2-T02: the accepted semantic manifest is the release decision; the constants above
+        // are its values (`semantic::tests::the_encoder_release_identity_is_the_manifests`).
+        let release = crate::semantic::accepted()?.encoders;
+        ensure!(
+            self.hyperion_weights == release.hyperion_weights_sha256
+                && self.hyperion_manifest == release.hyperion_manifest_sha256
+                && self.component_bundle == release.component_bundle_identity
+                && self.foundation_weights == release.foundation_weights_sha256
+                && self.target_weights == release.target_weights_sha256
+                && self.frozen_transforms == release.frozen_transforms_sha256
+                && self.assembly == release.assembly_sha256
+                && self.recipe == release.recipe,
+            "encoder lineage changed: not the accepted semantic release {}",
+            crate::semantic::ACCEPTED_SEMANTIC_MANIFEST_SHA256
+        );
         Ok(())
     }
 }

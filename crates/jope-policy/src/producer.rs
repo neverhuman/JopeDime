@@ -131,9 +131,10 @@ impl Request {
         }
         match &self.challenger {
             None => {
+                // W2-T02: the released weights file of the accepted semantic manifest.
                 ensure!(
                     self.policy_safetensors_sha256
-                        == "4b4b5a40f03c9226b4b15856fd35b90127c8b6a4d1435b815484cdd050744f1e",
+                        == crate::semantic::accepted()?.policy.weights_sha256,
                     "unbound policy safetensors"
                 );
                 ensure!(

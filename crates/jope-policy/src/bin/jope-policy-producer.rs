@@ -87,9 +87,11 @@ fn run() -> Result<()> {
         context.iter().all(|x| x.is_finite() && x.abs() <= 32.),
         "context is nonfinite or not frozen-clipped"
     );
+    // W2-T02: the frozen transforms and assembly of the accepted semantic manifest.
+    let release = jope_policy::semantic::accepted()?;
     let transforms_bytes = checked_bytes(
         &paths["--transforms"],
-        Some("1b779c6ff7a1a812e3001342d663353d3c7ff54eb93392a600f01813f4c66e22"),
+        Some(&release.encoders.frozen_transforms_sha256),
     )?;
     if let Some(path) = paths.get("--context-bundle") {
         #[cfg(feature = "context-producer")]
@@ -134,8 +136,7 @@ fn run() -> Result<()> {
             "context receipt identity mismatch"
         );
         ensure!(
-            meta["encoder_spec_sha256"]
-                == "6582df23f5c1ee048d11040a5f2bd1447032932fc23f6c5a3aa9cb4f2d6896cb"
+            meta["encoder_spec_sha256"] == release.encoders.assembly_sha256.as_str()
                 && meta["numerical_backend"]
                     == "Rust/LibTorch 2.7 CUDA FP32; original frozen transforms",
             "unsupported context lineage"
