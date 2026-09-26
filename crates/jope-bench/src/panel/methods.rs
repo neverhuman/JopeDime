@@ -10,10 +10,15 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::BTreeSet;
 
-use super::data::{raw_table, RAW_CELL_ENCODING};
+use super::data::{fitting_input_sha256, raw_table, RAW_CELL_ENCODING};
 use super::score::{predict_bound, Predictions};
 
+/// Unbound: names no fitting input. Every artifact written before v2; still loadable.
 pub const RUST_ARTIFACT: &str = "jope.panel-fitted-rust/v1";
+/// W3-T04: also names the exact fitting input it was fitted on
+/// (`prepared_data::fitting_input_sha256` of its training table and targets), which the fit
+/// worker computes from its own input without receiving any row identity.
+pub const RUST_ARTIFACT_V2: &str = "jope.panel-fitted-rust/v2";
 pub const ADAPTER_CONTRACT: &str = "jope.bench-adapter/v2";
 pub const INPUT_POLICY: &str = "median-onehot256-indicator/v1";
 /// No target-aware encodings: groups cannot leak through ordered target statistics.
@@ -202,12 +207,20 @@ pub struct FittedRustArtifact {
     pub classes: Vec<String>,
     pub method: RustMethod,
     pub model: BoundModel,
+    /// Present exactly on `jope.panel-fitted-rust/v2`; absent (and unserialized) on v1.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub fitting_input_sha256: Option<String>,
 }
 
 impl FittedRustArtifact {
     pub fn validate(&self) -> Result<()> {
         ensure!(
-            self.schema == RUST_ARTIFACT,
+            (self.schema == RUST_ARTIFACT && self.fitting_input_sha256.is_none())
+                || (self.schema == RUST_ARTIFACT_V2
+                    && self.fitting_input_sha256.as_deref().is_some_and(|sha| {
+                        sha.len() == 64
+                            && sha.bytes().all(|b| matches!(b, b'0'..=b'9' | b'a'..=b'f'))
+                    })),
             "unsupported fitted Rust artifact"
         );
         ensure!(
@@ -301,13 +314,15 @@ pub fn fit_rust(request: &RustFitRequest) -> Result<RustFitResult> {
         &request.targets,
     )?;
     let artifact = FittedRustArtifact {
-        schema: RUST_ARTIFACT.to_owned(),
+        schema: RUST_ARTIFACT_V2.to_owned(),
         raw_cell_encoding: RAW_CELL_ENCODING.to_owned(),
         input_policy: INPUT_POLICY.to_owned(),
         task: request.task,
         classes: request.classes.clone(),
         method: request.method.clone(),
         model,
+        // The exact input fitted above, digested by the fitter itself.
+        fitting_input_sha256: Some(fitting_input_sha256(&request.train, &request.targets)?),
     };
     let predictions = artifact.predict(&request.predict)?;
     Ok(RustFitResult {
@@ -409,6 +424,61 @@ mod tests {
                 .into_iter()
                 .find(|m| m.family == head)
                 .unwrap(),
+        }
+    }
+
+    /// W3-T04: a fit names the exact fitting input it was fitted on (v2). A v1 artifact, as
+    /// every artifact before v2, names none and still loads and predicts unchanged. The two
+    /// forms cannot be mixed.
+    #[test]
+    fn fitted_artifacts_name_their_fitting_input_and_v1_stays_loadable() {
+        for (task, head) in [
+            (Task::Regression, "ridge"),
+            (Task::Binary, "logit_ridge"),
+            (Task::Multiclass, "multiclass_ridge"),
+        ] {
+            let request = request(task, head);
+            let fitted = fit_rust(&request).unwrap();
+            let artifact = fitted.artifact;
+            let named = fitting_input_sha256(&request.train, &request.targets).unwrap();
+            assert_eq!(artifact.schema, RUST_ARTIFACT_V2);
+            assert_eq!(
+                artifact.fitting_input_sha256.as_deref(),
+                Some(named.as_str())
+            );
+            // Another fitting input (the same rows' targets in another order) is another digest.
+            let mut targets = request.targets.clone();
+            targets.swap(0, 1);
+            assert_ne!(
+                fitting_input_sha256(&request.train, &targets).unwrap(),
+                named
+            );
+            let bytes = artifact.bytes().unwrap();
+            let restored = FittedRustArtifact::from_bytes(&bytes, &digest(&bytes)).unwrap();
+            assert_eq!(restored.fitting_input_sha256, artifact.fitting_input_sha256);
+
+            // v1: unbound, byte-compatible with artifacts written before v2.
+            let mut v1 = artifact.clone();
+            v1.schema = RUST_ARTIFACT.into();
+            v1.fitting_input_sha256 = None;
+            let v1_bytes = v1.bytes().unwrap();
+            assert!(!String::from_utf8_lossy(&v1_bytes).contains("fitting_input"));
+            let v1 = FittedRustArtifact::from_bytes(&v1_bytes, &digest(&v1_bytes)).unwrap();
+            assert_eq!(
+                serde_json::to_vec(&v1.predict(&request.predict).unwrap()).unwrap(),
+                serde_json::to_vec(&fitted.predictions).unwrap()
+            );
+
+            // Mixed forms are refused.
+            let mut named_v1 = v1.clone();
+            named_v1.fitting_input_sha256 = Some(named.clone());
+            assert!(named_v1.validate().is_err());
+            let mut unnamed_v2 = artifact.clone();
+            unnamed_v2.fitting_input_sha256 = None;
+            assert!(unnamed_v2.validate().is_err());
+            let mut malformed = artifact.clone();
+            malformed.fitting_input_sha256 = Some("../fitting-input".into());
+            assert!(malformed.validate().is_err());
         }
     }
 

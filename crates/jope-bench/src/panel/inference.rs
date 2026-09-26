@@ -1217,6 +1217,8 @@ pub(crate) mod tests {
                     &artifact.model.genome_sha256,
                     "genome_sha256",
                     "jope.panel-fitted-rust/v1",
+                    "jope.panel-fitted-rust/v2",
+                    "fitting_input_sha256",
                     "discovery_provenance",
                 ] {
                     assert!(

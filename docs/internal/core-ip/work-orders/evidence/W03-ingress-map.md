@@ -925,3 +925,110 @@ Still open on that route:
   retained handoff). But it cannot be proven here: its positive path needs a fully admitted W3
   state plus a qualified W2 `CpuProof` fixture (feature `qualified-context`), and neither
   `jope-cli` nor `jope-learning` has one. It is recorded rather than added unproven.
+
+## W3-T04 follow-up (rr2/integration-a): fitted artifacts bound to their fold's fitting input
+
+This closes the "Fold-specific fitted state" item under "Not done" in the W3-T04 section above,
+for the Rust fitted artifact on the train-side OOF route.
+
+**Reproduced first** in `w3-t04-fitted-pre-20260926T231509Z/`. A temporary test, whose source is in the run's `diff.patch`,
+fails. Fold 2's fitted artifact was re-stored stating that it was fitted on another input (one
+all-row fit, held-out rows included), with every digest link kept coherent. `qualify` admitted
+it: admission read only the artifact's schema, recipe and genome.
+
+**Design.** The fit worker is deliberately given no row identities ("Scoring labels, row
+identities … are deliberately absent", `RustFitRequest`), so it cannot state which rows it was
+fitted on. It can digest the exact input it fitted, and the receiver can recompute that input
+from the authenticated prepared development bytes.
+
+- **`jope-pipeline` `prepared_data::fitting_input_sha256(table, targets)`** is the digest of
+  `{schema: "jope.fitting-input/v1", table, targets}`: the training table and targets in row
+  order, exactly as the fit worker receives them. It is serialized as a struct, so the byte
+  order never depends on serde_json features. `DataPartition::fitting_input_sha256` applies it
+  to a fold's training partition.
+- **`jope-bench`**:
+  - New schema `jope.panel-fitted-rust/v2`: `FittedRustArtifact` gains `fitting_input_sha256`,
+    present exactly on v2.
+  - `fit_rust` now writes v2, with the digest of the request it fitted.
+  - v1 still validates, loads and predicts unchanged. The two forms cannot be mixed.
+  - The private/public export boundary test gains the v2 schema string and the field name as
+    canaries.
+- **`jope-learning` eligibility** (`measured`, so every route):
+  - Admission accepts Rust v1 or v2.
+  - An artifact names a fitting input exactly when it is v2 (`FittedInputMismatch` otherwise).
+  - On the train-side OOF route, a v2 artifact's input must equal
+    `DevelopmentData::cut(fold).train.fitting_input_sha256()`, recomputed from the frozen
+    dataset's authenticated development bytes (`FittedInputMismatch`). The bytes are parsed
+    only when a v2 artifact is present, so a v1-only qualification never needs them.
+  - `Qualification.fitted_inputs_bound` is `Some(true)` when all five folds are bound. It is
+    absent otherwise: for any v1 fold, and for the inner route.
+
+**Old formats keep their meaning.**
+
+- A v1 artifact is unbound, as every artifact before v2, and is admitted as before.
+- A v1 qualification serializes without the new field. Qualifications stored before this
+  change therefore recompute byte-identically and still revalidate.
+
+**Tests.**
+
+- `eligibility::tests::fitted` (new):
+  - `v2_fitted_artifacts_bind_every_fold_to_its_own_training_input`: for regression, binary and
+    multiclass, admitted, bound, revalidated.
+  - `a_fitted_artifact_naming_another_input_is_refused`. The negatives are:
+    - another fold's input;
+    - one all-row fit reused for a fold;
+    - v2 naming no input;
+    - v1 naming an input.
+
+    Each runs on its own fixture, because the cases rewrite worker outputs on disk. Each goes
+    through `qualify` and ingest, inventoried, with no authority change. Each is followed by a
+    positive control on the same state: its properly bound submission admits with
+    `fitted_inputs_bound == Some(true)`. The test ends with an unbound v1 control.
+  - `v1_artifacts_stay_unbound_and_their_qualifications_keep_their_bytes`, including a v1/v2
+    mix.
+- `jope-bench`
+  `panel::methods::tests::fitted_artifacts_name_their_fitting_input_and_v1_stays_loadable`
+  covers all three tasks. A fit names the digest of its own request, another input is another
+  digest, v1 round-trips and predicts identically, and mixed forms are refused.
+- `jope-pipeline` `prepared_data` unit test: the digest is the fold's training input and
+  changes with any row, order or target.
+
+**Evidence** (under the evidence root):
+
+- `w3-t04-fitted-pre-20260926T231509Z/` — the reproduction fails: the artifact naming an
+  all-row input was admitted.
+- `w3-t04-fitted-post-20260926T231923Z/`:
+  - `jope-learning`, `jope-motifs` and `jope-bench` (default features): 387 of 387 pass, 0
+    skipped;
+  - `jope-pipeline` `prepared_data`: 7 of 7 pass.
+- `w3-t04-fitted-mutations-20260926T232056Z/` — nine mutations of the finished source across
+  the three crates, each caught and restored byte-identically:
+
+  | Mutation | What it breaks | Caught by |
+  |---|---|---|
+  | `binding-unchecked` | A v2 artifact's input is not compared | the refusal test |
+  | `form-unchecked` | v2 without an input, or v1 with one, is accepted | the refusal test |
+  | `v2-not-accepted` | Admission accepts only v1 | all three `fitted` tests |
+  | `wrong-fold-input` | The input is recomputed for another fold | all three `fitted` tests |
+  | `bound-flag-forced` | `fitted_inputs_bound` is always set | the v1 test (old bytes must not change) |
+  | `bound-flag-never` | `fitted_inputs_bound` is never set | the v2 and refusal tests |
+  | `bench-v1-named-accepted` | A v1 artifact may name an input | the `jope-bench` methods test |
+  | `bench-fit-names-other-input` | `fit_rust` names an input it did not fit | the `jope-bench` methods test |
+  | `pipeline-digest-ignores-targets` | The digest omits the targets | the `prepared_data` test |
+
+**Not established here (open).**
+
+- **Producer claim.** The fitting-input digest is computed by the fit worker from its own
+  input. It is a producer attestation, not a re-execution: a fitter that fits one input and
+  names another is not detected here.
+- **Other routes.** The inner route (`jope.panel-fitted-synthesized/v1` and inner Rust fits) is
+  not bound, because its fitting input is the inner partition and not `cut(fold)`. It stays
+  unbound, as does any v1 artifact.
+- **Live producers.** Live producers now write v2 through `fit_rust`. Nothing requires v2 yet:
+  consumers can require `fitted_inputs_bound == Some(true)` once v2 artifacts are the norm.
+  That requirement is a policy change for the owner.
+- **W2 handoff scope.** The handoff's training-row digests (W3-T02 section above) remain
+  unjoined. That needs W2 to adopt the same fitting-input digest.
+- **`asm`-feature tests.** `jope-bench` code behind the `asm` feature (the live teaching driver)
+  compiles unchanged: no fitted-artifact literal or schema string lives there. Its tests were
+  not run here; the default-feature tests were.

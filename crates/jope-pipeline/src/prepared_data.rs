@@ -372,6 +372,39 @@ pub fn raw_table(features: &[Column], values: &[Vec<Option<String>>]) -> Result<
     Ok(table)
 }
 
+/// W3-T04: the schema of [`fitting_input_sha256`].
+pub const FITTING_INPUT: &str = "jope.fitting-input/v1";
+
+/// W3-T04: the digest a fitted artifact binds its fitting input by: the exact training table and
+/// targets, in row order, that a fit worker receives. A fit worker computes it from its own input
+/// without receiving any row identity; a receiver recomputes it from authenticated prepared
+/// development bytes ([`DataPartition::fitting_input_sha256`]). A struct rather than a JSON map,
+/// so the byte order never depends on serde_json features.
+pub fn fitting_input_sha256(table: &RawTable, targets: &[f64]) -> Result<String> {
+    #[derive(Serialize)]
+    struct FittingInput<'a> {
+        schema: &'static str,
+        table: &'a RawTable,
+        targets: &'a [f64],
+    }
+    ensure!(
+        table.rows.len() == targets.len() && targets.iter().all(|t| t.is_finite()),
+        "fitting input targets differ from its training rows"
+    );
+    Ok(sha256_hex(&serde_json::to_vec(&FittingInput {
+        schema: FITTING_INPUT,
+        table,
+        targets,
+    })?))
+}
+
+impl DataPartition {
+    /// [`fitting_input_sha256`] of this partition, as a fit worker receives it.
+    pub fn fitting_input_sha256(&self) -> Result<String> {
+        fitting_input_sha256(&self.table, &self.targets)
+    }
+}
+
 fn encode_target(task: Task, classes: &[String], label: &str) -> Result<f64> {
     if task == Task::Regression {
         let target: f64 = label.trim().parse().context("invalid regression target")?;
@@ -480,6 +513,68 @@ mod tests {
         let mut dataset = dataset.clone();
         dataset.split.development_sha256 = sha256_hex(&bytes);
         parse_development(&bytes, &dataset)
+    }
+
+    /// W3-T04: the fitting-input digest is exactly a fold's training table and targets, in row
+    /// order: it differs between folds, from an all-row input, and with any cell, order or
+    /// target, and agrees with the free function a fit worker applies to its own input.
+    #[test]
+    fn fitting_input_digest_is_exactly_the_fold_training_input() {
+        for task in [Task::Regression, Task::Binary, Task::Multiclass] {
+            let (dataset, table) = fixture(task);
+            let data = parse_changed(&dataset, &table).unwrap();
+            let digests = (0..5)
+                .map(|fold| {
+                    data.cut(fold)
+                        .unwrap()
+                        .train
+                        .fitting_input_sha256()
+                        .unwrap()
+                })
+                .collect::<BTreeSet<_>>();
+            assert_eq!(digests.len(), 5, "every fold has its own input");
+            let train = data.cut(1).unwrap().train;
+            let digest = train.fitting_input_sha256().unwrap();
+            assert_eq!(
+                fitting_input_sha256(&train.table, &train.targets).unwrap(),
+                digest
+            );
+            let all = raw_table(
+                &dataset.features,
+                &data
+                    .rows
+                    .iter()
+                    .map(|row| row.values.clone())
+                    .collect::<Vec<_>>(),
+            )
+            .unwrap();
+            let all_targets = data
+                .rows
+                .iter()
+                .map(|row| encode_target(task, &dataset.classes, &row.target).unwrap())
+                .collect::<Vec<_>>();
+            assert!(!digests.contains(&fitting_input_sha256(&all, &all_targets).unwrap()));
+            let mut reordered = train.targets.clone();
+            reordered.reverse();
+            assert_ne!(
+                fitting_input_sha256(&train.table, &reordered).unwrap(),
+                digest
+            );
+            // Row 0 is in fold 0, so it is part of fold 1's training input.
+            let mut changed = table.clone();
+            changed["rows"][0]["values"][0] = json!("999");
+            let changed = parse_changed(&dataset, &changed).unwrap();
+            assert_ne!(
+                changed
+                    .cut(1)
+                    .unwrap()
+                    .train
+                    .fitting_input_sha256()
+                    .unwrap(),
+                digest
+            );
+            assert!(fitting_input_sha256(&train.table, &train.targets[1..]).is_err());
+        }
     }
 
     #[test]

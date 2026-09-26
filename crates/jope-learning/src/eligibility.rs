@@ -16,7 +16,7 @@ use jope_pipeline::experiment::{
     PanelDataset,
 };
 use jope_pipeline::experiment_v2::EvaluationResult;
-use jope_pipeline::prepared_data::parse_development;
+use jope_pipeline::prepared_data::{parse_development, DevelopmentData};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -40,6 +40,10 @@ const FREEZE: &str = "jope.optimization-freeze/v1";
 const PREDICTIONS: &str = "jope.train-oof-predictions/v1";
 const QUALIFICATION: &str = "jope.measured-teaching/v1";
 const DIAGNOSTICS: &str = "jope.teaching-diagnostics/v1";
+/// Rust fitted artifacts: v1 names no fitting input (unbound, as every artifact before v2); v2
+/// names the exact fitting input it was fitted on (`prepared_data::fitting_input_sha256`), W3-T04.
+const RUST_FITTED: &str = "jope.panel-fitted-rust/v1";
+const RUST_FITTED_V2: &str = "jope.panel-fitted-rust/v2";
 
 /// Owner decision (d), 2026-09-26: evidence made before a provenance requirement existed stays
 /// quarantined. Nothing upgrades it in place, and no route re-admits it; requalification is a
@@ -191,6 +195,11 @@ pub struct Qualification {
     /// without one never revalidate.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub context_handoff_sha256: Option<String>,
+    /// W3-T04: `Some(true)` when every fold's fitted artifact names, and was checked against, its
+    /// fold's authenticated fitting input (`jope.panel-fitted-rust/v2`). Absent when any fold's
+    /// artifact is unbound (v1, or the inner route), as for every qualification before it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub fitted_inputs_bound: Option<bool>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub diagnostics: Option<Diagnostics>,
 }
@@ -664,6 +673,26 @@ fn freeze_impl(
     })
 }
 
+/// W3-T04: the fitting input a fit worker receives for `fold` of the frozen dataset, recomputed
+/// from its authenticated prepared development bytes (parsed once, and only when needed).
+fn fold_fitting_input(
+    state: &State,
+    dataset: &PanelDataset,
+    development: &mut Option<DevelopmentData>,
+    fold: u8,
+) -> Result<String> {
+    if development.is_none() {
+        let bytes = state
+            .read_blob(&dataset.split.development_sha256)?
+            .context("prepared development bytes unavailable")?;
+        *development = Some(parse_development(&bytes, dataset)?);
+    }
+    match development {
+        Some(data) => data.cut(fold)?.train.fitting_input_sha256(),
+        None => bail!("prepared development bytes unavailable"),
+    }
+}
+
 fn load_freeze(state: &State, receipt: &FreezeReceipt) -> Result<FrozenPolicy> {
     ensure!(is_hex64(&receipt.freeze_sha256), "invalid freeze receipt");
     let bytes = fs::read(freeze_path(state, &receipt.comparison_sha256)?)?;
@@ -904,6 +933,9 @@ fn measured(
     let mut fold_rows_scored = Vec::new();
     let mut pooled = Vec::new();
     let mut improved_folds = 0;
+    // Parsed only when a fold's fitted artifact names its fitting input (W3-T04).
+    let mut development: Option<DevelopmentData> = None;
+    let mut bound_folds = 0;
     for (fold, frozen) in policy.folds.iter().enumerate() {
         ensure!(frozen.fold as usize == fold, "frozen fold order changed");
         let (train, hold) = fold_rows(&rows, fold as u8);
@@ -926,13 +958,13 @@ fn measured(
         );
         require_blob(state, &candidate.fitted_artifact_sha256)?;
         let fitted: serde_json::Value = blob(state, &candidate.fitted_artifact_sha256)?;
+        let schema = fitted.get("schema").and_then(|v| v.as_str());
         ensure!(
-            ((fitted.get("schema").and_then(|v| v.as_str()) == Some("jope.panel-fitted-rust/v1")
+            (((schema == Some(RUST_FITTED) || schema == Some(RUST_FITTED_V2))
                 && fitted.pointer("/method/dsl").and_then(|v| v.as_str())
                     == Some(&record.genome.dsl))
                 || (inner_binding.is_some()
-                    && fitted.get("schema").and_then(|v| v.as_str())
-                        == Some("jope.panel-fitted-synthesized/v1")
+                    && schema == Some("jope.panel-fitted-synthesized/v1")
                     && fitted
                         .pointer("/recipe/executable_canonical")
                         .and_then(|v| v.as_str())
@@ -943,6 +975,25 @@ fn measured(
                     == Some(&record.genome.program_sha256),
             "native fitted recipe differs from teaching candidate"
         );
+        // W3-T04: a v2 artifact names the exact fitting input it was fitted on; on the train-side
+        // OOF route that must be this fold's authenticated training partition. A v1 artifact
+        // names none and is unbound, as every artifact before v2.
+        let named = fitted.get("fitting_input_sha256");
+        ensure!(
+            (schema == Some(RUST_FITTED_V2)) == named.is_some(),
+            "FittedInputMismatch: fold {fold}'s fitted artifact must name its fitting input \
+             exactly when it is {RUST_FITTED_V2}"
+        );
+        if let (Some(named), None) = (named, &inner_binding) {
+            let expected =
+                fold_fitting_input(state, &policy.dataset, &mut development, fold as u8)?;
+            ensure!(
+                named.as_str() == Some(expected.as_str()),
+                "FittedInputMismatch: fold {fold}'s fitted artifact was fitted on another input \
+                 than the fold's authenticated training partition"
+            );
+            bound_folds += 1;
+        }
         let request: EvaluationRequest = blob(state, &candidate.evaluation_request_sha256)?;
         let result: EvaluationResult = blob(state, &candidate.execution_receipt_sha256)?;
         revocations.refuse(
@@ -1142,6 +1193,7 @@ fn measured(
         "claimed HWM score differs from measured mean-fold predictions"
     );
     let summary = diagnostics(&fold_losses, fold_rows_scored, &pooled)?;
+    let fitted_inputs_bound = (bound_folds == policy.folds.len()).then_some(true);
     Ok(Qualification {
         schema: QUALIFICATION.into(),
         comparison: record.identity.clone(),
@@ -1167,6 +1219,7 @@ fn measured(
         context_outer_fold:policy.inner_partition.as_ref().map(|p|p.outer_fold),
         context_receipt_sha256: Some(context_receipt_sha256),
         context_handoff_sha256: Some(context_handoff_sha256),
+        fitted_inputs_bound,
         diagnostics: Some(summary),
         measurement:
             "recomputed-from-pinned-targets-and-predictions; analytic-baseline-worker-fits=0; execution receipts retained separately"
@@ -2645,6 +2698,7 @@ mod tests {
         assert!(verify(&request, &bad, 4100).is_err());
     }
 
+    mod fitted;
     mod handoff;
     mod linkage;
     mod matrix;
