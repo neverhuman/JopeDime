@@ -7191,7 +7191,7 @@
         "full-default"
       ],
       "dispositions": [],
-      "scope": "W7-T01/T02 in-process fixtures: typed host-census preflight refusals, the versioned bounded-run contract, Plan, read-only Status/Verify, idempotent Cancel and the controller CLI. Synthetic identities; no host, network, GPU or numerical work, and not the three-host proof."
+      "scope": "W7-T01/T02/T04 in-process fixtures: typed host-census preflight refusals, the versioned bounded-run contract, Plan, read-only Status/Verify, idempotent Cancel, the controller CLI, and authenticated rendezvous, full-group admission, bounded framing and result authentication with group refusal and zero commits. Synthetic identities; no host, network, GPU or numerical work, and not the three-host proof."
     },
     "target:jope-parallel/test/checkpoint_commit": {
       "discovery": {

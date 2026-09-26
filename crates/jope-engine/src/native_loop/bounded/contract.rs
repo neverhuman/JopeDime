@@ -5,11 +5,12 @@
 //! contract offered to the old loader fails its `deny_unknown_fields` parse. Nothing is
 //! inferred from mutable flags: the frozen plan bytes are the only execution input.
 //!
-//! **Trainer join point (W7-T03, owned by the trainer partition).** A participant freezes
-//! `global_rank`, `world_size` (= number of participants), `local_rank`, and the device
-//! `uuid`/`local_index`. The trainer-side assignment type that validates CUDA visibility
-//! before communicator creation is deliberately not defined here; it must be constructed
-//! from these frozen fields of the admitted plan, never from process flags or `rank` alone.
+//! **Trainer join point (W7-T03).** A participant freezes `global_rank`, `world_size`
+//! (= number of participants), `local_rank`, the host's `machine_id` and `boot_id`, and the
+//! device `uuid`. `training::topology::Assignment` is derived from exactly these fields by
+//! the pure `bounded::assignment::trainer_assignment` (`neural` builds), never from process
+//! flags or `rank` alone. `DeviceAssignment::local_index` is the host-wide index the census
+//! observed, not a CUDA ordinal: each worker sees only its own UUID, at ordinal 0.
 use super::{
     census::{validate_identity, HostIdentity},
     is_digest, is_name, is_relative, sign, verify, verifying_key,
@@ -381,6 +382,16 @@ impl BoundedRunContract {
                     *first == p.host,
                     Invalid,
                     "participants on host `{host}` disagree on its identity"
+                );
+            }
+            // One machine and one boot are one host: two host names cannot share them.
+            for (name, other) in &identities {
+                need!(
+                    *name == host
+                        || (other.machine_id != p.host.machine_id
+                            && other.boot_id != p.host.boot_id),
+                    Invalid,
+                    "hosts `{name}` and `{host}` share a machine or boot identity"
                 );
             }
             need!(

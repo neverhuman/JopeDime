@@ -67,6 +67,7 @@ pub fn identity(i: usize) -> HostIdentity {
     let tag = |s: &str| sha(format!("fixture-{s}-{i}").as_bytes());
     HostIdentity {
         host: format!("fixture-host-{i}"),
+        machine_id: tag("machine")[..32].to_string(),
         boot_id: format!("fixture-boot-{i}"),
         address: format!("fixture-host-{i}.invalid"),
         certificate_sha256: tag("certificate"),
@@ -309,6 +310,7 @@ pub fn hello_body(
         delivery_id: 1,
         sent_unix_ms: sent,
         host: p.host.host.clone(),
+        machine_id: p.host.machine_id.clone(),
         boot_id: p.host.boot_id.clone(),
         device_uuid: p.device.as_ref().map(|d| d.uuid.clone()),
         source_commit: p.host.source_commit.clone(),

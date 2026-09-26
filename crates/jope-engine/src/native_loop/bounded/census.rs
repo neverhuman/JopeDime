@@ -33,7 +33,11 @@ pub struct RuntimeIdentity {
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub struct HostIdentity {
+    /// Operator-facing host name used by grants, ownership and the census.
     pub host: String,
+    /// Stable host identity, `/etc/machine-id` (32 lowercase hex). The trainer
+    /// assignment's `host_id` is this value.
+    pub machine_id: String,
     pub boot_id: String,
     pub address: String,
     pub certificate_sha256: String,
@@ -103,6 +107,9 @@ pub enum RefusalReason {
         ahead_ms: u64,
     },
     MissingHost {
+        host: String,
+    },
+    MachineMismatch {
         host: String,
     },
     BootMismatch {
@@ -278,6 +285,14 @@ impl HostCensus {
 pub(crate) fn validate_identity(i: &HostIdentity) -> Result<()> {
     ensure!(is_name(&i.host), "host name");
     ensure!(
+        i.machine_id.len() == 32
+            && i.machine_id
+                .bytes()
+                .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b)),
+        "host `{}` machine id must be 32 lowercase hex (/etc/machine-id)",
+        i.host
+    );
+    ensure!(
         !i.boot_id.is_empty()
             && i.boot_id.len() <= 64
             && !i.address.is_empty()
@@ -310,8 +325,8 @@ pub(crate) fn validate_identity(i: &HostIdentity) -> Result<()> {
 
 /// Compare a census against the frozen plan at `now_unix_ms`.
 ///
-/// Refuses stale or future telemetry, any boot/address/certificate/source/executable/
-/// runtime/policy difference, a missing or re-indexed planned GPU, a device owned by
+/// Refuses stale or future telemetry, any machine/boot/address/certificate/source/
+/// executable/runtime/policy difference, a missing or re-indexed planned GPU, a device owned by
 /// anything other than this exact run attempt, and insufficient CPU, RAM or VRAM after
 /// existing reservations. It holds nothing: capacity can change after the receipt, which
 /// is why admission re-checks and SmartCluster remains the allocator.
@@ -354,6 +369,10 @@ pub fn preflight(
         }
         let seen = &obs.identity;
         let mismatch = [
+            (
+                seen.machine_id != expected.machine_id,
+                RefusalReason::MachineMismatch { host: host.clone() },
+            ),
             (
                 seen.boot_id != expected.boot_id,
                 RefusalReason::BootMismatch { host: host.clone() },

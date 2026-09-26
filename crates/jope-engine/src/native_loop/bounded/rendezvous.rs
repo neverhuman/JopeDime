@@ -76,6 +76,7 @@ pub struct HelloBody {
     pub sent_unix_ms: u64,
     /// Observed on the participant's own host, never copied from the plan.
     pub host: String,
+    pub machine_id: String,
     pub boot_id: String,
     pub device_uuid: Option<String>,
     pub source_commit: String,
@@ -474,7 +475,10 @@ impl Rendezvous {
         if b.boot_id != p.host.boot_id {
             return Err(RefusalCause::ReplayedBoot { rank });
         }
-        if b.host != p.host.host || b.device_uuid != p.device.as_ref().map(|d| d.uuid.clone()) {
+        if b.host != p.host.host
+            || b.machine_id != p.host.machine_id
+            || b.device_uuid != p.device.as_ref().map(|d| d.uuid.clone())
+        {
             return Err(RefusalCause::WrongParticipant { rank });
         }
         if b.source_commit != p.host.source_commit
