@@ -3,7 +3,9 @@
 //! `bind`, `bind-parent-decision`, `tick` and `serve` keep the fixed `jope.native_loop.v1`
 //! contract and require the loop arguments. `plan`, `status`, `verify` and `cancel` operate
 //! on the versioned `jope.native_bounded_run.v1` contract (W7-T02) and take none of them:
-//! status and verify are read-only and never start numerical work.
+//! status and verify are read-only and never start numerical work. `census collect` observes
+//! only the local host and `census merge` combines pinned per-host documents (W7-T01); neither
+//! allocates or reserves anything.
 use anyhow::{bail, ensure, Context, Result};
 use clap::{Args as ClapArgs, Parser, Subcommand};
 use jain_smartcluster::{Client, ProjectId, TenantId};
@@ -131,6 +133,142 @@ enum Command {
         #[arg(long)]
         reason: String,
     },
+    /// Host census collection and merge (W7-T01); observes, never allocates or reserves.
+    Census {
+        #[command(subcommand)]
+        op: CensusCommand,
+    },
+}
+#[derive(Subcommand)]
+enum CensusCommand {
+    /// Observe this host only and write one `jope.native_host_census.v1` document.
+    /// `CUDA_VISIBLE_DEVICES=""` records a CPU-only census; unset queries `nvidia-smi`.
+    Collect {
+        /// New file (never replaced) in an existing directory.
+        #[arg(long)]
+        out: PathBuf,
+        /// This host's address; must be assigned to a local interface.
+        #[arg(long)]
+        address: String,
+        /// This host's transport certificate (DER, or PEM with one certificate).
+        #[arg(long)]
+        certificate: PathBuf,
+        /// The installer-declared source commit of the pinned executable.
+        #[arg(long)]
+        source_commit: String,
+        /// The installed rank worker executable.
+        #[arg(long)]
+        executable: PathBuf,
+        #[arg(long = "runtime-library", required = true)]
+        runtime_libraries: Vec<PathBuf>,
+        #[arg(long)]
+        compiler: PathBuf,
+        #[arg(long = "cuda-library")]
+        cuda_libraries: Vec<PathBuf>,
+        #[arg(long = "nccl-library")]
+        nccl_libraries: Vec<PathBuf>,
+        #[arg(long = "installed-policy", required = true)]
+        installed_policies: Vec<PathBuf>,
+    },
+    /// Combine per-host documents, each pinned by the SHA-256 its collector printed.
+    Merge {
+        /// New file (never replaced) in an existing directory.
+        #[arg(long)]
+        out: PathBuf,
+        #[arg(long)]
+        max_age_ms: u64,
+        #[arg(long)]
+        clock_skew_ms: u64,
+        /// `PATH=SHA256`, one per host.
+        #[arg(long = "document", required = true)]
+        documents: Vec<String>,
+    },
+}
+fn read_census_document(path: &PathBuf) -> Result<Vec<u8>> {
+    let f = fs::OpenOptions::new()
+        .read(true)
+        .custom_flags(libc::O_NOFOLLOW | libc::O_NONBLOCK)
+        .open(path)
+        .with_context(|| format!("open census document {}", path.display()))?;
+    ensure!(f.metadata()?.is_file(), "regular census document required");
+    let limit = bounded::census::MAX_CENSUS_BYTES as u64;
+    let mut b = Vec::new();
+    f.take(limit + 1).read_to_end(&mut b)?;
+    ensure!(
+        b.len() as u64 <= limit,
+        "census document exceeds {limit} bytes"
+    );
+    Ok(b)
+}
+fn census_command(op: CensusCommand) -> Result<serde_json::Value> {
+    use bounded::collect;
+    match op {
+        CensusCommand::Collect {
+            out,
+            address,
+            certificate,
+            source_commit,
+            executable,
+            runtime_libraries,
+            compiler,
+            cuda_libraries,
+            nccl_libraries,
+            installed_policies,
+        } => {
+            let spec = collect::CollectSpec {
+                address,
+                certificate,
+                source_commit,
+                executable,
+                runtime_libraries,
+                compiler,
+                cuda_libraries,
+                nccl_libraries,
+                installed_policies,
+                cuda_visible_devices: std::env::var_os("CUDA_VISIBLE_DEVICES"),
+            };
+            let now = jope_parallel::resident_protocol::now_ms()?;
+            let (census, report) = collect::collect(&spec, &collect::SystemCommands, now)?;
+            let bytes = collect::write_census(&out, &census)?;
+            ensure!(
+                jope_parallel::manifest::hash(&bytes) == report.census_sha256,
+                "written census differs from the collected census"
+            );
+            Ok(serde_json::to_value(report)?)
+        }
+        CensusCommand::Merge {
+            out,
+            max_age_ms,
+            clock_skew_ms,
+            documents,
+        } => {
+            let mut pinned = Vec::new();
+            for d in documents {
+                let (path, sha256) = d.rsplit_once('=').context("--document takes PATH=SHA256")?;
+                let path = PathBuf::from(path);
+                pinned.push(collect::PinnedDocument {
+                    label: path.display().to_string(),
+                    bytes: read_census_document(&path)?,
+                    sha256: sha256.to_string(),
+                });
+            }
+            let now = jope_parallel::resident_protocol::now_ms()?;
+            let (census, report) = collect::merge(
+                &pinned,
+                collect::MergePolicy {
+                    max_age_ms,
+                    clock_skew_ms,
+                },
+                now,
+            )?;
+            let bytes = collect::write_census(&out, &census)?;
+            ensure!(
+                jope_parallel::manifest::hash(&bytes) == report.census_sha256,
+                "written census differs from the merged census"
+            );
+            Ok(serde_json::to_value(report)?)
+        }
+    }
 }
 fn read_contract(path: &PathBuf) -> Result<Vec<u8>> {
     let f = fs::OpenOptions::new()
@@ -188,6 +326,7 @@ fn bounded_command(command: Command) -> Result<()> {
             &reason,
             now,
         )?)?,
+        Command::Census { op } => census_command(op)?,
         _ => bail!("not a bounded-run operation"),
     };
     println!("{}", serde_json::to_string(&out)?);
@@ -202,6 +341,7 @@ fn main() -> Result<()> {
             | Command::Status { .. }
             | Command::Verify { .. }
             | Command::Cancel { .. }
+            | Command::Census { .. }
     ) {
         ensure!(
             !args.legacy.any(),
