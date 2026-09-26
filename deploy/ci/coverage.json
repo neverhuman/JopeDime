@@ -83,7 +83,8 @@
         "python3 docs/internal/core-ip/tools/verify_dispositions.py",
         "python3 -m unittest discover -s docs/internal/core-ip/tools -p test_verify_dispositions.py -v",
         "python3 docs/internal/core-ip/tools/verify_test_inventory.py",
-        "python3 -m unittest discover -s docs/internal/core-ip/tools -p test_verify_test_inventory.py -v"
+        "python3 -m unittest discover -s docs/internal/core-ip/tools -p test_verify_test_inventory.py -v",
+        "python3 -m unittest discover -s docs/internal/core-ip/tools -p test_verify_inventory.py -v"
       ]
     },
     "rust-check": {
@@ -2170,6 +2171,16 @@
       ],
       "dispositions": [],
       "scope": "Finding-disposition evidence binding and adversarial closure mutations with synthetic evidence only. Validates hash/finding/stage/commit binding and closure rules; it closes no product finding and establishes no live qualification."
+    },
+    "python:docs/internal/core-ip/tools/test_verify_inventory.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "hygiene"
+      ],
+      "dispositions": [],
+      "scope": "Synthetic safetensors fixtures for the accepted tensor inventory verifier: payload layout, per-tensor digests (bit flip, same-shape substitution), dtype/field closure, role accounting, Candle forward references and optimizer moment coverage. The real accepted asset is verified on the host, not in CI."
     },
     "python:docs/internal/core-ip/tools/test_verify_test_inventory.py": {
       "discovery": {

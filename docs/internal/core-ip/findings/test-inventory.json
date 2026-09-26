@@ -255,6 +255,13 @@
         "evidence"
       ]
     },
+    "python:docs/internal/core-ip/tools/test_verify_inventory.py": {
+      "role": "regression",
+      "subsystems": [
+        "encoders",
+        "policy"
+      ]
+    },
     "python:docs/internal/core-ip/tools/test_verify_test_inventory.py": {
       "role": "regression",
       "subsystems": [
