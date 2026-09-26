@@ -175,3 +175,35 @@ here, so the replay attests the ladder arithmetic, not the upstream scores.
   CI as well. Without a decoder they would be reported as not replayed, never as passed.
 - `S08-G09` and `S08-K09` stay open in `findings/dispositions.json`. Any disposition record there
   is a separate, reviewed step.
+
+## 7. Appended 2026-09-26: jope-arena refuses a duplicate cell delivery (W12-T04; branch `rr2/integration-c`)
+
+Section 6 recorded that the Rust port silently replaced a duplicate cell. This section fixes it
+in `jope-arena`.
+
+- **Reproduction** `w12c-t04-pre-20260926T212047Z` (1/1 FAIL):
+  - `jope-arena leaderboard::tests::a_duplicate_cell_delivery_is_refused_not_silently_replaced`
+    delivers `(d1, a)` twice. The second value turns a's win on `d1` into a loss.
+  - `build_leaderboard` accepted it. The map insert replaced the first value, and the ladder came
+    out `["b", "a"]` ("a duplicate (dataset, method) cell was silently replaced").
+  - `rankable_rows` also counted both deliveries.
+- **Fix.** `build_leaderboard` refuses a second rankable delivery of one `(dataset, method)`
+  cell with "duplicate delivery of {dataset}/{method} cannot add or replace a match". It does
+  so in both ladders, before the benchmark-valid filter, so a duplicate the valid ladder would
+  drop is still refused. This is the independent replay's rule
+  (`jope_records::elo_history::parse_scores`), so the port and the replay now agree.
+  Non-rankable rows (not `ok`) are unchanged.
+- **Controls.**
+  - Positive: one delivery per cell ranks as before.
+  - Every existing `jope-arena` test passes, including the reference-shape and maximize ladders
+    and the committed-asset snapshot tests.
+  - The `jope-records` Elo-history replays pass, so no retained ladder contained a duplicate.
+- **Negative controls** (all refused):
+  - the flipping duplicate, in the published ladder and in the benchmark-valid ladder;
+  - a benchmark-invalid duplicate under the benchmark-valid ladder.
+- **Runs.**
+  - Pre `w12c-t04-pre-20260926T212047Z`: 1/1 FAIL as above.
+  - Post `w12c-t04-post-20260926T212117Z`: `jope-arena` 41/41 (all targets) and the `jope-records` Elo-history replays 23/23.
+  - Pre-commit `w12c-t04-c-20260926T212412Z`: fence suites and `gp::fit_contract_tests` 85/85; workspace all-targets check, coverage (0 unassigned), verify-test-inventory, fmt and diff-check exit 0.
+  - The first gate, `w12c-t04-c-20260926T212221Z`, is kept. It failed one fence test unrelated to this change, `fit_boundary::isolated_model_export_obeys_the_same_authority_fence` (6.3 s under load). That test passed 3/3 in isolation (`w12c-t04-fence-rerun-20260926T212356Z`, 2.5 s each) and in the full rerun. It is a load-sensitive flake of the authority fence fixture, not a change in the fence.
+- Exposure edges are still not retained (section 5). `S08-G09` and `S08-K09` stay open.
