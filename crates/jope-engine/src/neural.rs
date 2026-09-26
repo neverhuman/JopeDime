@@ -1049,7 +1049,15 @@ impl AdamW {
 extern "C" {
     fn jp_error() -> *const std::ffi::c_char;
     fn jp_unique_id(bytes: *mut u8) -> i32;
-    fn jp_nccl_init(bytes: *const u8, rank: i32, world: i32) -> *mut c_void;
+    fn jp_nccl_init(
+        bytes: *const u8,
+        rank: i32,
+        world: i32,
+        device: i32,
+        expected_uuid: *const std::ffi::c_char,
+    ) -> *mut c_void;
+    fn jp_device_count() -> i32;
+    fn jp_device_uuid(index: i32, out: *mut std::ffi::c_char) -> i32;
     fn jp_allreduce(comm: *mut c_void, tensor: *mut c_void) -> i32;
     fn jp_nccl_abort(comm: *mut c_void);
     fn jp_bf16(enabled: i32);
@@ -1070,9 +1078,40 @@ pub struct Nccl {
     comm: *mut c_void,
     pub world: usize,
 }
+/// What this process can see before any communicator exists (W7-T03): host
+/// and boot identity and the UUID of every visible CUDA ordinal.
+pub fn local_devices() -> Result<crate::training::topology::LocalDevices> {
+    let (host_id, boot_id) = crate::training::topology::host_identity()?;
+    let count = unsafe { jp_device_count() };
+    ensure!(count >= 0, "{}", native_error());
+    let visible = (0..count)
+        .map(|index| {
+            let mut out = [0 as std::ffi::c_char; 41];
+            ensure!(
+                unsafe { jp_device_uuid(index, out.as_mut_ptr()) } == 0,
+                "{}",
+                native_error()
+            );
+            Ok(unsafe { CStr::from_ptr(out.as_ptr()) }
+                .to_string_lossy()
+                .into_owned())
+        })
+        .collect::<Result<Vec<_>>>()?;
+    Ok(crate::training::topology::LocalDevices {
+        host_id,
+        boot_id,
+        visible,
+    })
+}
+
 impl Nccl {
-    pub fn init(rank: usize, world: usize, rendezvous: &Path) -> Result<Self> {
+    /// Create this worker's communicator from a validated binding: the
+    /// communicator rank is the binding's global rank, and the CUDA ordinal
+    /// is its local device index (checked against its GPU UUID natively).
+    pub fn init(binding: &crate::training::topology::Binding, rendezvous: &Path) -> Result<Self> {
+        let (rank, world) = (binding.global_rank(), binding.world());
         ensure!(rank < world && world <= 8, "invalid rank topology");
+        let expected = std::ffi::CString::new(binding.gpu_uuid().unwrap_or(""))?;
         let mut id = [0u8; 128];
         if rank == 0 {
             ensure!(
@@ -1096,7 +1135,15 @@ impl Nccl {
             }
             id.copy_from_slice(&fs::read(rendezvous)?[..128]);
         }
-        let comm = unsafe { jp_nccl_init(id.as_ptr(), rank as i32, world as i32) };
+        let comm = unsafe {
+            jp_nccl_init(
+                id.as_ptr(),
+                i32::try_from(rank)?,
+                i32::try_from(world)?,
+                i32::try_from(binding.device_index())?,
+                expected.as_ptr(),
+            )
+        };
         ensure!(!comm.is_null(), "{}", native_error());
         Ok(Self { comm, world })
     }
@@ -1139,8 +1186,14 @@ pub fn nccl_probe(rank: usize, world: usize, directory: &Path) -> Result<()> {
     crate::task_contract::require_qualified_gpu_experiment("nccl-probe")?;
     tch::set_num_threads(2);
     tch::set_num_interop_threads(1);
-    let comm = Nccl::init(rank, world, &directory.join("nccl.id"))?;
-    let mut tensor = Tensor::full([4096], rank as f64 + 1.0, (Kind::Float, Device::Cuda(rank)));
+    // Diagnostic probe on one host: the pre-W7 mapping, stated explicitly.
+    let binding = crate::training::topology::Binding::legacy_single_host(rank, world)?;
+    let comm = Nccl::init(&binding, &directory.join("nccl.id"))?;
+    let mut tensor = Tensor::full(
+        [4096],
+        rank as f64 + 1.0,
+        (Kind::Float, Device::Cuda(binding.device_index())),
+    );
     let start = Instant::now();
     comm.reduce(&mut tensor)?;
     let expected = (world + 1) as f64 / 2.0;
@@ -1269,8 +1322,10 @@ pub fn training_probe(
     tch::set_num_threads(2);
     tch::set_num_interop_threads(1);
     tch::manual_seed(SEED as i64);
-    let comm = Nccl::init(rank, world, &directory.join("nccl.id"))?;
-    let device = Device::Cuda(rank);
+    // Diagnostic probe on one host: the pre-W7 mapping, stated explicitly.
+    let binding = crate::training::topology::Binding::legacy_single_host(rank, world)?;
+    let comm = Nccl::init(&binding, &directory.join("nccl.id"))?;
+    let device = Device::Cuda(binding.device_index());
     let vs = nn::VarStore::new(device);
     let vocabulary: crate::grammar::Vocab = read_json(vocabulary_path)?;
     let vocabulary_sha256 = file_hash(vocabulary_path)?;
@@ -1350,7 +1405,7 @@ pub fn training_probe(
             offset += size;
         }
         optimizer.update(&vs)?;
-        tch::Cuda::synchronize(rank as i64);
+        tch::Cuda::synchronize(binding.device_index() as i64);
         let seconds = begun.elapsed().as_secs_f64();
         times.push(seconds);
         write_json(

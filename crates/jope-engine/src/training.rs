@@ -22,6 +22,7 @@ pub mod consumption;
 pub mod continuation;
 pub mod inputs;
 pub mod objective;
+pub mod topology;
 
 pub const SAMPLER_ID: &str = "family_uniform_champion_plus_seven_quantiles_v2";
 pub const REPLAY_SAMPLER_ID: &str = "lineage_fresh_program_champion_plus_seven_v2";
@@ -222,17 +223,18 @@ fn checkpoint(
     family_groups_known: bool,
     consumption: &Value,
     training_inputs_sha256: &str,
+    binding: &topology::Binding,
 ) -> Result<()> {
     let step = opt.step;
     let receipt = launch.join(format!("checkpoint-{step}-rank-{rank}.json"));
     let mut rank_receipt = json!({"rank":rank,"step":step,"parameter_sha256":parameter_hash(vs)?,"exposure":exposure,
         "committed_family_groups":family_groups,"attempt":launch.strip_prefix(root)?,
-        "consumption_journal":consumption});
+        "consumption_journal":consumption,"topology":binding.receipt()});
     if !family_groups_known {
         rank_receipt["family_groups_baseline"] = json!("unknown");
     }
     write_json(&receipt, &rank_receipt)?;
-    let mut barrier = Tensor::ones([1], (Kind::Float, Device::Cuda(rank)));
+    let mut barrier = Tensor::ones([1], (Kind::Float, Device::Cuda(binding.device_index())));
     comm.reduce(&mut barrier)?;
     if rank == 0 {
         let receipts = (0..world)
@@ -483,6 +485,7 @@ pub fn rank_with_policy(
         None,
         false,
         continuation_mode,
+        None,
     )
 }
 
@@ -559,6 +562,7 @@ pub fn qualify_batch_rank(
         None,
         None,
         false,
+        None,
         None,
     )
 }
@@ -676,6 +680,7 @@ pub(crate) fn smartcluster_rank(
         Some(task.stop()),
         native_continuation,
         *continuation_mode,
+        None,
     )?;
     let complete: Value = read_json(&launch.join("complete-0.json"))?;
     ensure!(
@@ -807,7 +812,18 @@ fn rank_impl(
     native_stop: Option<&std::sync::atomic::AtomicBool>,
     verified_native_continuation: bool,
     declared_mode: Option<continuation::Mode>,
+    assignment: Option<&topology::Assignment>,
 ) -> Result<()> {
+    // W7-T03: a frozen host/device assignment is validated before any input,
+    // device or communicator work. Without one, the pre-W7 single-host
+    // mapping applies and is recorded as such.
+    if let Some(assignment) = assignment {
+        topology::validate(assignment)?;
+        ensure!(
+            assignment.world == world,
+            "requested world differs from the frozen assignment"
+        );
+    }
     ensure!(
         [1, 2, 4, 8].contains(&world)
             && rank < world
@@ -1150,8 +1166,16 @@ fn rank_impl(
     } else {
         (crate::training_exposure::FamilyGroups::new(), true)
     };
-    let comm = Nccl::init(rank, world, &launch.join("nccl.id"))?;
-    let device = Device::Cuda(rank);
+    // The communicator rank is not the CUDA ordinal: bind this worker to its
+    // owned device and check visibility before the communicator exists.
+    let binding = match assignment {
+        Some(assignment) => {
+            topology::bind(assignment, rank, world, &crate::neural::local_devices()?)?
+        }
+        None => topology::Binding::legacy_single_host(rank, world)?,
+    };
+    let comm = Nccl::init(&binding, &launch.join("nccl.id"))?;
+    let device = Device::Cuda(binding.device_index());
     tch::manual_seed(seed as i64);
     let mut vs = nn::VarStore::new(device);
     let model = Policy::new(vs.root(), config.clone())?;
@@ -1604,7 +1628,7 @@ fn rank_impl(
             // is not a rejected update. The journal then ends with this step's
             // microbatches and no outcome, and recovery re-executes it.
             attempting = None;
-            tch::Cuda::synchronize(rank as i64);
+            tch::Cuda::synchronize(binding.device_index() as i64);
             ensure!(
                 optimizer.step as usize == step + 1,
                 "optimizer step did not advance by exactly one update"
@@ -1701,6 +1725,7 @@ fn rank_impl(
                     family_baseline_known,
                     &json!({"path":journal_path,"binding":consumed}),
                     &frozen_inputs_sha,
+                    &binding,
                 )?;
                 committed_exposure = observed_exposure.clone();
                 checkpoint_seconds += checkpoint_started.elapsed().as_secs_f64();
@@ -1775,6 +1800,7 @@ fn rank_impl(
         complete["exact_same_experiment_resume"] =
             json!(resume && recovered_continuation.is_none());
         complete["training_inputs_sha256"] = json!(frozen_inputs_sha);
+        complete["topology"] = binding.receipt();
         complete["continuation_mode"] = json!(mode.as_str());
         complete["continuation_declaration"] = declaration.clone();
         complete["continuity"] = continuity.clone();

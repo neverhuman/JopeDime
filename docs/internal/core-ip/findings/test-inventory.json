@@ -2225,6 +2225,13 @@
         "orchestration"
       ]
     },
+    "target:jope-parallel/test/trainer_topology": {
+      "role": "regression",
+      "subsystems": [
+        "training",
+        "orchestration"
+      ]
+    },
     "target:jope-parallel/test/training": {
       "role": "regression",
       "subsystems": [

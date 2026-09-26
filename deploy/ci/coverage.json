@@ -7250,6 +7250,21 @@
       "dispositions": [],
       "scope": "Verified resident corpus loading and optional continuation-mode declarations on gpu_worker/smartcluster/controller requests; neural module covers declaration validation and a representative write_json caller. CPU only."
     },
+    "target:jope-parallel/test/trainer_topology": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-engine/tests/trainer_topology.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "Neural-gated CPU fixtures: frozen host/device assignment validation and communicator/device binding before NCCL; no device enumerated, no GPU."
+    },
     "target:jope-parallel/test/corpus": {
       "discovery": {
         "kind": "target",
