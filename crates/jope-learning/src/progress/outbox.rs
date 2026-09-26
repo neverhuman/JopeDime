@@ -611,6 +611,24 @@ impl Outbox {
         self.entry(seq).and_then(|e| e.ack.as_ref())
     }
 
+    /// The object recorded at `seq`, read back from its payload and verified against its record
+    /// and its digest. `None` for a blob record or an unknown sequence number.
+    pub fn object(&self, seq: u64) -> Result<Option<Encoded>> {
+        let Some(entry) = self.entry(seq) else {
+            return Ok(None);
+        };
+        let Dependency::Object(o) = &entry.record.item else {
+            return Ok(None);
+        };
+        let bytes = self.read_payload(&entry.record.item)?;
+        ensure!(
+            sha256_hex(&bytes) == entry.record.bytes_sha256,
+            "outbox payload of record {seq} ({}) changed after it was committed",
+            entry.key
+        );
+        Encoded::from_bytes(o.kind, &o.digest, &bytes).map(Some)
+    }
+
     fn entry(&self, seq: u64) -> Option<&Entry> {
         usize::try_from(seq)
             .ok()

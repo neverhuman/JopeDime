@@ -2347,6 +2347,7 @@ dependencies = [
  "clap",
  "hex",
  "jope-datasets",
+ "jope-parallel",
  "jope-paths",
  "jope-pipeline",
  "rusqlite",

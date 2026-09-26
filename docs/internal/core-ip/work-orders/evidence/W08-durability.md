@@ -693,3 +693,158 @@ control is a decision built from a real `hwm::ingest` batch.
 
 **Not established here.** Offline `file://` and `memory:///` stores only. Publisher identity is
 still a local string (T03).
+
+## W8 integration (rr2/integration-a) — the product path
+
+**Pre-state.** Nothing in the product appended to the outbox, published through the
+conditional publisher or called the cadence. `w8-integ-product-pre-20260926T194952Z/` records
+this: a source search at HEAD `65f69edce` for non-test callers of `Outbox::open`,
+`append_object`/`append_blob`, `Cadence::start`, `Checkpoints::new` and `publish` outside
+`progress/` finds only unrelated code (jope-arena and jope-models publication, the jainnode
+control outbox). No engine module names W8 progress, and `jope-learning --help` has no
+progress verb. This is a new capability, so there was no receiving path to reproduce a defect
+against.
+
+**Why the mapping lives in jope-learning.** As with the champion and genebank sources, the
+learning store maps the engine's *published bytes* at its own receiving path. The engine
+(`jope-parallel`) is unchanged and keeps no dependency on the learning store. No in-process
+producer claim is trusted: every mapping re-verifies the bytes it reads. `jope-parallel` is only
+a dev-dependency, so the tests can run the engine's own verifiers on their fixtures.
+`Cargo.lock` gains that one edge.
+
+### Mapping (`progress/engine.rs`)
+
+Each mapping reads each file once, checks those bytes and publishes the same bytes.
+
+| Engine event | Engine source | W8 objects |
+|---|---|---|
+| no-replace publication | `native_persistence::publish_staged` (`{path, sha256}`) | the verified result blob of a `completed` event |
+| published corpus | `corpus_publication::build` (`parallel.teaching_corpus.v1`) | a `CorpusManifest` whose six members are the payload files |
+| published checkpoint | `checkpoint_commit::commit`, named by `latest.json` (`parallel.checkpoint.v1`) | an `Exposure` and a `Checkpoint` at the next consecutive update index |
+| checkpoint recovery | `checkpoint_recovery::reconcile` (`parallel.checkpoint_recovery.v1`) | the attempt's retryable `worker-lost` failure, with the receipt sha256 in its detail |
+
+Refused, with nothing appended:
+
+- a corpus still in staging, a retired corpus, a diagnostic corpus (`qualification: false`), and
+  one whose payload, receipt, record length or publication request does not bind together as
+  `corpus_publication::verify` requires;
+- a checkpoint that `latest.json` does not name (unpublished or quarantined), and one whose
+  manifest or objects differ from their digests;
+- a checkpoint bound to another corpus (`corpus_sha256` is the corpus `index.json` sha256), and
+  one whose step does not advance past the last mapped checkpoint;
+- an incomplete recovery receipt, and events for unplanned work;
+- a symlink, a non-regular file or a `..` path anywhere on a path that is read.
+
+**The update index.** One W8 update is the window of optimizer steps between two published W8
+checkpoints: `update_index` counts those windows 0, 1, 2, …, and `consumed_rows` is
+`(step − previous step) × global_batch`. The graph rules need exactly one checkpoint per update,
+because an exposure starts from the checkpoint of the update before it. So an engine checkpoint
+the cadence does not select is not an update; its steps are counted in the next selected one.
+This is a mapping decision recorded for review.
+
+### Publisher (`progress/product.rs`, `Driver`)
+
+`Driver` is the one product path. For one run it:
+
+1. appends mapped items to the outbox, blobs first. A mapping is admitted whole or not at all:
+   if its new items would pass the outbox maximum, it is refused (`Refused::Full`) before
+   anything is written;
+2. commits staged objects on top of the committed tip through `publish`, which applies
+   commit 1's receiving rules;
+3. drives the cadence:
+   - a corpus freeze, a checkpoint commit, an initializing or improving HWM decision and a
+     shutdown request an urgent flush;
+   - otherwise the flush follows the size and interval triggers;
+   - the engine's newly committed optimizer steps are counted by `Checkpoints` (new:
+     `committed_updates(n)`). A W8 checkpoint is mapped only when that count says one is due,
+     or at controlled shutdown;
+   - the checkpoint cadence restarts only after its commit is durable.
+
+**Configuration.** The outbox limits and the cadence are explicit `Config` values
+(`jope.progress.config/v1`). An explicit file must name every value; unknown fields,
+missing values, zero cadence values and a pause above the maximum are refused. The defaults
+are `Limits::PROPOSED` and `Policy::PROPOSED`. Every report carries `approval:
+"owner-pending"`, and no file can change that.
+
+**Restart.** Everything is re-derived from the outbox and the remote's verified committed
+closure:
+
+- the manifest;
+- what is committed;
+- what is appended but not committed, which is flushed at once as a restart;
+- the last W8 checkpoint, and its engine step, read back from its own `state.json` blob.
+
+A new run's own manifest is not a restart (`Cadence::new`).
+
+**CLI.** `jope-learning progress config|init|corpus|checkpoint|schedule|retry|recovery|result|
+decision|flush|follow|status`, with one capability-matrix row each (`learning-subcommand`).
+
+- Every verb except `config` refuses without `--store`/`JOPE_LEARNING_URL`, and writes nothing
+  then.
+- `status` is read-only.
+- `follow` is the long-running product loop. It observes an engine training run's published
+  checkpoints and ticks the flush cadence on the wall clock, and it shuts down (checkpoint and
+  flush) when the run writes `complete.json`.
+
+**Tests.**
+
+- `progress::tests::product` (lib):
+  - `engine_events_reach_the_committed_graph_through_the_product_driver` — the positive
+    control, end to end. The engine's own `corpus_publication::verify` accepts the fixture, and
+    the engine's own `checkpoint_recovery::reconcile` writes the receipt. It covers:
+    - steps 40 and 80 are deferred;
+    - step 100 maps update 0 on the update trigger;
+    - an interval flush happens at exactly 60 s;
+    - step 150 maps update 1 on the 5-minute trigger;
+    - step 180 maps update 2 at shutdown;
+    - consumed rows are 800, 400 and 240;
+    - the census has one completed unit (attempt 2), one retry and one worker-lost failure;
+    - the quarantined step-130 checkpoint never reaches the remote;
+    - a restarted driver maps nothing twice.
+  - `engine_events_that_do_not_verify_append_nothing_and_move_nothing` — 17 refusals, each
+    with the local state tree and the remote byte-identical and the head unchanged. An
+    unpublished checkpoint maps to nothing, and the positive control then maps update 1.
+  - `a_failed_flush_keeps_progress_owed_and_claims_nothing` — a disconnect mid-delivery gives
+    `Blocked`, keeps the staged objects and the urgency, and the next tick commits. A restart
+    with uncommitted progress commits it at once.
+  - `outbox_limits_and_cadence_are_explicit_owner_pending_configuration`.
+  - `hwm_decisions_link_through_this_hosts_ledger_and_flush_at_once`.
+- `tests/progress_cli.rs` (new target; coverage.json and test-inventory.json updated):
+  - `progress_verbs_publish_engine_events_to_an_explicit_store_only` exercises the shipped verbs
+    against a `file://` store: the refusal without a store (no local state is created), the
+    configuration report, init, corpus, a deferred then a shutdown checkpoint, schedule and
+    flush, a read-only status (store byte-identical), and a wrong publisher;
+  - `follow_drives_the_cadence_until_the_run_completes`: a bounded follow of a running run
+    publishes nothing below the cadence, and the follow of the completed run maps the counted
+    steps at shutdown and exits with nothing owed.
+
+**Post-change run.** `w8-integ-product-post-20260926T200708Z/` holds the full `jope-learning`
+run: 161 of 161 pass, 0 skipped. That is 154 before, plus 5 product tests and the 2 CLI tests.
+The pre-commit gate re-ran them on the committed tree, with the same result.
+
+**Mutation controls.** `w8-integ-product-mutations-20260926T200052Z/` holds six mutations of
+the finished source. Each is caught, and each file is restored byte-identically (sha256
+checked):
+
+| Mutation | What it breaks | Caught by |
+|---|---|---|
+| `staging-accepted` | A staging or retired corpus directory is mapped | the refusal test |
+| `corpus-binding-unchecked` | A checkpoint of another corpus is mapped | the refusal test |
+| `update-index-not-consecutive` | Every W8 checkpoint is update 0 | the end-to-end and refusal tests |
+| `cadence-ignored` | Every published engine checkpoint is mapped | the end-to-end test |
+| `flush-not-due` | Every tick commits | the end-to-end test |
+| `partial-mapping-admitted` | A mapping past the outbox maximum is half-appended | the configuration test |
+
+**Not established here (open).**
+
+- **No engine-side trigger.** The engine is unchanged. The publisher reads what the engine
+  has durably published, through the verbs, or through `follow` running beside a training
+  run. No engine or W7 supervisor code invokes it, and the native loop's live path is W7-T07.
+- **One update per W8 checkpoint.** A W8 update is a checkpoint window, not an optimizer step
+  (see the update index above). Cadence "updates" count optimizer steps.
+- **Retention.** Retention is not applied to engine events: engine results are appended whole,
+  and nothing is compacted. The role is still not recorded (W8-T05).
+- **Publisher identity** is still a local string.
+- **Approval.** The configuration values are owner-pending.
+- **Live stores.** There is no live proof: `file://` and `memory:///` only. Live S3 is W8-T07/T08
+  and needs a scoped credential and an approved budget.
