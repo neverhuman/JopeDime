@@ -300,6 +300,7 @@ pub fn build_leaderboard(scores: &[ScoreRow], inputs: Inputs<'_>) -> Result<Lead
     let mut valid_by_method: BTreeMap<String, bool> = BTreeMap::new();
     let mut rankable_rows = 0;
     let mut excluded_rows = 0;
+    let mut delivered: BTreeSet<(&str, &str)> = BTreeSet::new();
     for row in scores {
         if !row.is_rankable() {
             continue;
@@ -308,6 +309,15 @@ pub fn build_leaderboard(scores: &[ScoreRow], inputs: Inputs<'_>) -> Result<Lead
             row.track_id == track_id,
             "score row for {} inside track {track_id}",
             row.track_id
+        );
+        // W12-T04: one delivery per rankable (dataset, method) cell, whatever its validity. A
+        // second delivery can neither add a match nor replace the first, and the independent
+        // replay (`jope_records::elo_history::parse_scores`) refuses it the same way.
+        ensure!(
+            delivered.insert((row.dataset_id.as_str(), row.method_id.as_str())),
+            "duplicate delivery of {}/{} cannot add or replace a match",
+            row.dataset_id,
+            row.method_id
         );
         let valid = match row.benchmark_valid.as_str() {
             "True" => true,
@@ -648,6 +658,60 @@ mod tests {
             total_datasets: 3,
             direction: Direction::Minimize,
         }
+    }
+
+    /// W12-T04: a second delivery of one rankable (dataset, method) cell
+    /// cannot replace the first or add a match; the ladder refuses it, as the
+    /// independent replay (`jope_records::elo_history::parse_scores`) does, and
+    /// before any validity filtering.
+    #[test]
+    fn a_duplicate_cell_delivery_is_refused_not_silently_replaced() {
+        let header = || {
+            let mut text = crate::scores::COLUMNS.join(",");
+            text.push('\n');
+            text
+        };
+        let names = BTreeMap::new();
+        let pending = BTreeMap::new();
+        // Positive control: one delivery per cell.
+        let mut single = header();
+        single += &row("d1", "a", "1.0", "ok");
+        single += &row("d1", "b", "2.0", "ok");
+        let board = build_leaderboard(
+            &parse_scores(&single).unwrap(),
+            inputs(Ladder::Published, &names, &pending),
+        )
+        .unwrap();
+        assert_eq!(board.rows[0].method_id, "a");
+        // A second delivery of (d1, a) that would flip the match.
+        let mut duplicate = single.clone();
+        duplicate += &row("d1", "a", "3.0", "ok");
+        for ladder in [Ladder::Published, Ladder::BenchmarkValid] {
+            let refused = build_leaderboard(
+                &parse_scores(&duplicate).unwrap(),
+                inputs(ladder, &names, &pending),
+            );
+            assert!(
+                matches!(&refused, Err(e) if e.to_string().contains("duplicate delivery")),
+                "a duplicate (dataset, method) cell was silently replaced: {:?}",
+                refused.map(|b| b
+                    .rows
+                    .iter()
+                    .map(|r| r.method_id.clone())
+                    .collect::<Vec<_>>())
+            );
+        }
+        // Also when the duplicate is a benchmark-invalid row the valid ladder would drop.
+        let mut invalid_duplicate = single;
+        invalid_duplicate += &valid_row("d1", "a", "3.0", "ok", "False");
+        let refused = build_leaderboard(
+            &parse_scores(&invalid_duplicate).unwrap(),
+            inputs(Ladder::BenchmarkValid, &names, &pending),
+        );
+        assert!(
+            matches!(&refused, Err(e) if e.to_string().contains("duplicate delivery")),
+            "a duplicate delivery hidden by the validity filter was accepted"
+        );
     }
 
     #[test]
