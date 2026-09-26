@@ -441,12 +441,46 @@ pub struct Selected {
 
 /// Verify a completed search's selection and every candidate's lineage. The
 /// seed population and vocabulary are the request's frozen inputs, supplied
-/// explicitly and authenticated by their request digests.
+/// explicitly and authenticated by their request digests. Each supplied input
+/// is read once, so the digest checked is of the bytes parsed (route R8).
 pub fn verify_search(
     root: &Path,
     output: &Path,
     seeds: Option<&Path>,
     vocabulary: Option<&Path>,
+) -> Result<SelectedLineage> {
+    let read =
+        |path: &Path| std::fs::read(path).with_context(|| format!("open {}", path.display()));
+    let seeds = seeds.map(read).transpose()?;
+    let vocabulary = vocabulary.map(read).transpose()?;
+    verify_search_inputs(root, output, seeds.as_deref(), vocabulary.as_deref())
+}
+
+/// W5-T01: [`verify_search`] against the seed population and vocabulary the search
+/// froze beside its request ([`super::SEARCH_INPUTS`]), so the verifier needs no
+/// caller paths. An input the request does not pin is not read. A search written
+/// before its inputs were frozen still needs [`verify_search`] with the original files.
+pub fn verify_search_recorded(root: &Path, output: &Path) -> Result<SelectedLineage> {
+    let request: Value = read_json(&output.join("search-request.json"))?;
+    let frozen = |key: &str, name: &str| -> Result<Option<Vec<u8>>> {
+        if request[key].is_null() {
+            return Ok(None);
+        }
+        let path = output.join(super::SEARCH_INPUTS).join(name);
+        std::fs::read(&path)
+            .map(Some)
+            .with_context(|| format!("frozen search input {} is absent", path.display()))
+    };
+    let seeds = frozen("seeds_sha256", super::SEARCH_SEEDS)?;
+    let vocabulary = frozen("vocabulary_sha256", super::SEARCH_VOCABULARY)?;
+    verify_search_inputs(root, output, seeds.as_deref(), vocabulary.as_deref())
+}
+
+fn verify_search_inputs(
+    root: &Path,
+    output: &Path,
+    seeds: Option<&[u8]>,
+    vocabulary: Option<&[u8]>,
 ) -> Result<SelectedLineage> {
     let selection = selection_replay::verify_search(root, output)?;
     let root = root.canonicalize()?;
@@ -457,15 +491,16 @@ pub fn verify_search(
         "lineage is verified under the slot-keyed random stream protocol only"
     );
     ensure!(
-        request["seeds_sha256"] == json!(seeds.map(file_hash).transpose()?),
+        request["seeds_sha256"] == json!(seeds.map(hash)),
         "seed population differs from the frozen request"
     );
     ensure!(
-        request["vocabulary_sha256"] == json!(vocabulary.map(file_hash).transpose()?),
+        request["vocabulary_sha256"] == json!(vocabulary.map(hash)),
         "vocabulary differs from the frozen request"
     );
-    let seeds: Option<SeedPopulation> = seeds.map(read_json).transpose()?;
-    let vocabulary: Option<crate::grammar::Vocab> = vocabulary.map(read_json).transpose()?;
+    let seeds: Option<SeedPopulation> = seeds.map(serde_json::from_slice).transpose()?;
+    let vocabulary: Option<crate::grammar::Vocab> =
+        vocabulary.map(serde_json::from_slice).transpose()?;
     let native = match request.get("native_genome_stage").and_then(Value::as_str) {
         None => None,
         Some(stage) => {
