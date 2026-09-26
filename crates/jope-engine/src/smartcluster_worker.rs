@@ -191,6 +191,10 @@ pub enum Operation {
         initial_optimizer_step: u64,
         requested_step_increment: u64,
         target_optimizer_step: u64,
+        /// Explicit lineage-mode declaration; absent on requests frozen before
+        /// it, which keep their implicit meaning (W6 follow-up).
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        continuation_mode: Option<crate::task_contract::ContinuationMode>,
     },
     Proposal {
         #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -2002,6 +2006,7 @@ mod tests {
                 initial_optimizer_step: 60000,
                 requested_step_increment: 3000,
                 target_optimizer_step: 63000,
+                continuation_mode: None,
             },
             closure: None,
             input_artifacts: paths
@@ -2040,6 +2045,7 @@ mod tests {
                 initial_optimizer_step: 60000,
                 requested_step_increment: 3000,
                 target_optimizer_step: 63000,
+                continuation_mode: None,
             },
             closure: None,
             input_artifacts: BTreeMap::new(),

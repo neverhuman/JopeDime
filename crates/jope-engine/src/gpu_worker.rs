@@ -112,6 +112,10 @@ pub enum Task {
         initialize: Option<PathBuf>,
         #[serde(default)]
         replay_policy: Option<PathBuf>,
+        /// Explicit lineage-mode declaration; absent on requests that predate
+        /// it, which keep their implicit meaning (W6 follow-up).
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        continuation_mode: Option<crate::task_contract::ContinuationMode>,
     },
     Proposal {
         corpus: PathBuf,
@@ -150,6 +154,7 @@ impl Task {
                 resume,
                 initialize,
                 replay_policy,
+                continuation_mode,
             } => crate::training::rank_with_policy(
                 root,
                 corpus,
@@ -163,6 +168,7 @@ impl Task {
                 *resume,
                 initialize.as_deref(),
                 replay_policy.as_deref(),
+                *continuation_mode,
             ),
             Self::Proposal {
                 corpus,

@@ -15,53 +15,65 @@
 //! when its two legacy objective identifiers match, and it is recorded as
 //! `legacy_ids_only`, never as `identical`.
 use super::objective::{identity_digest, RUNTIME_OBJECTIVE_ID};
-use anyhow::{bail, ensure, Result};
+use anyhow::{ensure, Context, Result};
 use serde_json::{json, Value};
+
+/// The mode vocabulary and classification are shared with request types
+/// outside the neural feature (`task_contract`).
+pub use crate::task_contract::{classify_continuation as classify, ContinuationMode as Mode};
 
 pub const SCHEMA: &str = "jope.continuation.v1";
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize)]
-#[serde(rename_all = "snake_case")]
-pub enum Mode {
-    ColdInitialization,
-    WeightWarmStart,
-    NewCorpusTransition,
-    ExactResume,
-}
-
-impl Mode {
-    pub fn as_str(self) -> &'static str {
-        match self {
-            Self::ColdInitialization => "cold_initialization",
-            Self::WeightWarmStart => "weight_warm_start",
-            Self::NewCorpusTransition => "new_corpus_transition",
-            Self::ExactResume => "exact_resume",
-        }
+/// Validate a request's optional lineage-mode declaration.
+///
+/// The lineage mode is how the run's lineage started: cold, warm or
+/// transition. For a fresh attempt it is the classified request. For a
+/// resume it is the mode recorded in the lineage's `initialization.json`,
+/// supplied as `lineage`.
+///
+/// - An explicit declaration must equal the lineage mode. `ExactResume` is
+///   never a lineage declaration, and a legacy lineage without a recorded mode
+///   cannot be declared into certainty.
+/// - A request without a declaration keeps its implicit meaning and is
+///   recorded as `implicit`.
+pub fn declared_lineage(
+    declared: Option<Mode>,
+    resume: bool,
+    parent: bool,
+    policy: Option<&Value>,
+    lineage: Option<&Value>,
+) -> Result<Value> {
+    let attempt = classify(resume, parent, policy)?;
+    let lineage_mode = if resume {
+        let record = lineage.context("a resume must bring its lineage record")?;
+        record
+            .get("continuation_mode")
+            .and_then(Value::as_str)
+            .map(Mode::parse)
+            .transpose()?
+    } else {
+        Some(attempt)
+    };
+    if let Some(declared) = declared {
+        ensure!(
+            declared != Mode::ExactResume,
+            "exact resume is an attempt property; declare the lineage mode"
+        );
+        let recorded =
+            lineage_mode.context("a declared mode cannot be verified against a legacy lineage")?;
+        ensure!(
+            declared == recorded,
+            "declared continuation mode {} differs from the request's {}",
+            declared.as_str(),
+            recorded.as_str()
+        );
     }
-}
-
-/// The mode a request asks for. Ambiguous or incomplete requests are
-/// refused rather than mapped to a nearby mode.
-pub fn classify(resume: bool, parent: bool, policy: Option<&Value>) -> Result<Mode> {
-    ensure!(
-        !(resume && parent),
-        "resume and initialize are mutually exclusive"
-    );
-    if resume {
-        return Ok(Mode::ExactResume);
-    }
-    match (parent, policy) {
-        (false, None) => Ok(Mode::ColdInitialization),
-        (false, Some(_)) => {
-            bail!("a training policy requires an explicit parent checkpoint or exact resume")
-        }
-        (true, None) => Ok(Mode::WeightWarmStart),
-        (true, Some(policy)) => match policy["optimizer"].as_str() {
-            Some("reset") => Ok(Mode::WeightWarmStart),
-            Some("carry") => Ok(Mode::NewCorpusTransition),
-            _ => bail!("a training policy must declare optimizer reset or carry"),
-        },
-    }
+    Ok(json!({
+        "attempt_mode": attempt.as_str(),
+        "lineage_mode": lineage_mode.map_or("unknown_legacy", Mode::as_str),
+        "declared": declared.map(Mode::as_str),
+        "declaration": if declared.is_some() { "explicit" } else { "implicit" },
+    }))
 }
 
 /// The attempt being started.

@@ -2022,6 +2022,12 @@
         "training"
       ]
     },
+    "target:jope-parallel/test/atomic_write": {
+      "role": "regression",
+      "subsystems": [
+        "training"
+      ]
+    },
     "target:jope-parallel/test/binary_preparation": {
       "role": "deferred-classification",
       "reason": "binary/multiclass/time-series specialized scope deferred by the regression plan"
@@ -2195,6 +2201,12 @@
       ]
     },
     "target:jope-parallel/test/replay_training": {
+      "role": "regression",
+      "subsystems": [
+        "training"
+      ]
+    },
+    "target:jope-parallel/test/request_integrity": {
       "role": "regression",
       "subsystems": [
         "training"

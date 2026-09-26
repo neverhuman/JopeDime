@@ -383,3 +383,54 @@ File `crates/jope-engine/tests/training_ancestry.rs` (feature `neural`, CPU). Th
   - Running it needs the retained historical objects and belongs to the W12 genealogy work. No historical totals are claimed here.
 - **Rank and topology.** Journals of every rank are read from the local filesystem. Multi-host retention is W7/W8.
 - **Unique programs.** Only corpus and record pairs are counted; unique programs across corpora (T01 `program_identity`) would need the corpora themselves.
+
+---
+
+## W6 source follow-ups (after T07)
+
+### (a) `manifest::atomic_write`: unique temporaries
+- **Defect, reproduced.** Every `write_json` / `atomic_write` caller published through `<name>.partial.<pid>`, opened with `create_new`.
+  - A writer killed between creating and renaming that file left it behind, and every later writer with the same process id failed with `File exists (os error 17)`.
+  - Two threads of one process writing the same file collided on the same name.
+  - Evidence `w6-pre-fu-atomic-20260926T095224Z`: 3 of 4 tests failed. 350 of 400 concurrent same-file writes in one process failed.
+- **Fix.** The temporary is `.<name>.tmp-<pid>-<nanos>-<serial>` in the same directory, the same pattern as `checkpoint_commit`. Semantics are unchanged: write, fsync, rename, fsync the directory, remove the temporary on failure. Stale temporaries are inert: never read, never deleted.
+- **Scanner safety.** The new name starts with `.` and does not end in `.json`. Directory scanners that match a prefix such as `rank-` or `checkpoint-`, or the `.json` suffix, therefore cannot pick up an in-flight temporary; the old `rank-0.partial.<pid>` could match a `rank-` prefix.
+- **Cache side effect.** `manifest.rs` is part of the teaching-store and corpus source digests, so their build caches rebuild once.
+
+### (b) `teaching_store::load_resident_verified`: prevention, not detection
+- **Before.** The trainer verified `index.json` bytes, then the store re-read the path. T01 made a substitution detectable (`bind_resident`) but not preventable.
+- **Now.**
+  - `load_resident_verified(root, corpus, index_bytes)` loads exactly the verified bytes.
+  - The resident cache is keyed by their digest, and the path is not read again.
+  - Every payload the bytes name (records, shards, vocabulary, groups, provenance) is still verified by content. The shard provenance check compares against the digest of those bytes instead of re-hashing the path.
+- **Other callers.** `load_resident`, `load` and `read_index` read the path once, and hash and parse from that one read.
+- **Trainer.** `rank_impl` passes its verified bytes and keeps `bind_resident` as a second check.
+
+### (c) Declared continuation modes on requests
+- **Shared vocabulary.** `task_contract::ContinuationMode` (snake_case, closed) and `classify_continuation` are now shared with request types outside the neural feature. `training::continuation` re-exports them as `Mode` / `classify`.
+- **Request fields.**
+  - `gpu_worker::Task::Train` and `smartcluster_worker::Operation::Train` gain an optional `continuation_mode`, with `serde(default, skip_serializing_if = "Option::is_none")`.
+  - A request frozen before the field deserializes and serializes back byte for byte, keeping its implicit meaning.
+  - Unknown modes and unknown fields are refused; `Operation` still has `deny_unknown_fields`.
+- **Controller.**
+  - `train_controlled` classifies the request when it creates `run.json`, after the dispatch hold. It records `continuation_mode` and `continuation_mode_declaration: "controller"`, and passes `--continuation-mode` to every `train-rank`.
+  - A resumed run whose `run.json` predates the field passes nothing and stays implicit.
+- **Trainer.**
+  - `rank_impl` validates any declaration with `continuation::declared_lineage`.
+  - A declared lineage mode must equal the classified request, or on resume the mode recorded in the lineage's `initialization.json`.
+  - `exact_resume` is an attempt property, never a lineage declaration.
+  - A legacy lineage without a recorded mode stays `unknown_legacy`, and a declaration cannot be checked against it, so it is refused.
+  - The result is recorded in `complete-{rank}.json` (`continuation_declaration`) and, for new lineages, in `initialization.json` (`continuation_mode_declaration`).
+- **Native loop.** The materializer still constructs `Operation::Train` without a declaration. Its `task.input.json` is frozen and compared byte for byte when a request is re-materialized, so declaring there needs a new request schema version. This is open.
+- **Classification.** Classifying a new run's lineage mode is new capability: the pre-existing behavior was implicit-only. Declaration validation is tested directly.
+
+### Fixtures
+| Test file | Tests |
+|---|---|
+| `crates/jope-engine/tests/atomic_write.rs` (default features) | stale same-pid temporary for `write_json` and for raw `atomic_write` (pre-fix failed); concurrent same-file writers in one process (pre-fix failed 350/400); a failed write leaves the other files intact and no temporary behind (positive control, passed pre-fix) |
+| `crates/jope-engine/tests/request_integrity.rs` (default features, plus a neural module) | a verified-bytes load returns the verified index while the path loader returns the substitute, and is cached by verified content; verified bytes naming a wrong records digest, or malformed bytes, are refused; the mode vocabulary round-trips and unknown modes are refused; old and declared `Operation::Train` round-trip byte for byte, and unknown modes or fields are refused; the same for `gpu_worker::Task::Train`; the declaration matrix (implicit, matching, mismatching, `exact_resume`, resume against the recorded lineage, legacy lineage); `AdamW::save` as a representative `write_json` caller is not blocked by a stale temporary |
+
+### Still open
+- **Corpus format change** (T03 / G11): typed runtime fields and evaluator, task and fitted-subject binding. Not started, by instruction.
+- **Native-loop declaration** at a new request schema version.
+- **Not executed.** The GPU launch paths (rank, controller spawn, smartcluster) are compile-checked only.

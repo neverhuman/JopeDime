@@ -402,9 +402,12 @@ pub fn rank(
         resume,
         initialize,
         None,
+        None,
     )
 }
 
+/// `continuation_mode` is the request's optional explicit lineage-mode
+/// declaration; `None` keeps the implicit meaning of older requests.
 pub fn rank_with_policy(
     root: &Path,
     corpus: &Path,
@@ -418,6 +421,7 @@ pub fn rank_with_policy(
     resume: bool,
     initialize: Option<&Path>,
     policy: Option<&Path>,
+    continuation_mode: Option<continuation::Mode>,
 ) -> Result<()> {
     crate::task_contract::require_original_gpu_grant("train-rank")?;
     let _deadline = crate::gpu_worker::deadline_watchdog()?;
@@ -435,6 +439,7 @@ pub fn rank_with_policy(
                 resume,
                 initialize: initialize.map(Into::into),
                 replay_policy: policy.map(Into::into),
+                continuation_mode,
             },
         )?;
     }
@@ -456,6 +461,7 @@ pub fn rank_with_policy(
                 resume,
                 initialize: initialize.map(Into::into),
                 replay_policy: policy.map(Into::into),
+                continuation_mode,
             },
         );
     }
@@ -476,6 +482,7 @@ pub fn rank_with_policy(
         policy,
         None,
         false,
+        continuation_mode,
     )
 }
 
@@ -505,6 +512,7 @@ pub fn rank_replay(
         resume,
         initialize,
         Some(policy),
+        None,
     )
 }
 
@@ -551,6 +559,7 @@ pub fn qualify_batch_rank(
         None,
         None,
         false,
+        None,
     )
 }
 
@@ -571,6 +580,7 @@ pub(crate) fn smartcluster_rank(
         initial_optimizer_step,
         requested_step_increment,
         target_optimizer_step,
+        continuation_mode,
     } = task.operation()
     else {
         anyhow::bail!("training operation required")
@@ -665,6 +675,7 @@ pub(crate) fn smartcluster_rank(
         Some(&policy_path),
         Some(task.stop()),
         native_continuation,
+        *continuation_mode,
     )?;
     let complete: Value = read_json(&launch.join("complete-0.json"))?;
     ensure!(
@@ -795,6 +806,7 @@ fn rank_impl(
     replay_policy: Option<&Path>,
     native_stop: Option<&std::sync::atomic::AtomicBool>,
     verified_native_continuation: bool,
+    declared_mode: Option<continuation::Mode>,
 ) -> Result<()> {
     ensure!(
         [1, 2, 4, 8].contains(&world)
@@ -825,17 +837,15 @@ fn rank_impl(
         None => SEED,
     };
     let corpus_hash = file_hash(&corpus.join("index.json"))?;
-    let verified_index: Value = {
-        let index_bytes = fs::read(corpus.join("index.json"))?;
-        ensure!(hash(&index_bytes) == corpus_hash, "corpus index changed");
-        let corpus_index: Value = serde_json::from_slice(&index_bytes)?;
-        crate::corpus_projection::verify_admitted_context_closure(&corpus_index)?;
-        corpus_index
-    };
-    let resident = crate::teaching_store::load_resident(root, corpus)?;
+    let index_bytes = fs::read(corpus.join("index.json"))?;
+    ensure!(hash(&index_bytes) == corpus_hash, "corpus index changed");
+    let verified_index: Value = serde_json::from_slice(&index_bytes)?;
+    crate::corpus_projection::verify_admitted_context_closure(&verified_index)?;
+    // W6 follow-up: the resident view is loaded from the verified bytes, so a
+    // file substituted after verification cannot be loaded; T01's binding
+    // stays as a second check.
+    let resident = crate::teaching_store::load_resident_verified(root, corpus, &index_bytes)?;
     let (index, records) = resident.as_ref();
-    // W6-T01: the resident view must be the verified index, not a file
-    // substituted after verification.
     inputs::bind_resident(&verified_index, index)?;
     ensure!(
         ["parallel.teaching_corpus.v1", crate::teaching_store::SCHEMA]
@@ -966,6 +976,20 @@ fn rank_impl(
     );
     // W6-T06: each attempt is exactly one of the four continuation modes.
     let mode = continuation::classify(resume, initialize.is_some(), policy.as_ref())?;
+    // W6 follow-up: an explicit lineage-mode declaration must match the
+    // request (or, on resume, the recorded lineage); none is recorded implicit.
+    let declaration = continuation::declared_lineage(
+        declared_mode,
+        resume,
+        initialize.is_some(),
+        policy.as_ref(),
+        if resume {
+            Some(read_json::<Value>(&run.join("initialization.json"))?)
+        } else {
+            None
+        }
+        .as_ref(),
+    )?;
     let objective_sha = objective::identity_sha256();
     let mut continuity = Value::Null;
     let selected_checkpoint = if resume {
@@ -1208,6 +1232,7 @@ fn rank_impl(
         // The lineage record names its mode; a new lineage never inherits an
         // exact-resume claim from its parent.
         initialization["continuation_mode"] = json!(mode.as_str());
+        initialization["continuation_mode_declaration"] = declaration["declaration"].clone();
         initialization["objective_sha256"] = json!(objective_sha);
         initialization["exact_same_experiment_resume"] = json!(false);
         if !continuity.is_null() {
@@ -1751,6 +1776,7 @@ fn rank_impl(
             json!(resume && recovered_continuation.is_none());
         complete["training_inputs_sha256"] = json!(frozen_inputs_sha);
         complete["continuation_mode"] = json!(mode.as_str());
+        complete["continuation_declaration"] = declaration.clone();
         complete["continuity"] = continuity.clone();
         complete["objective_sha256"] = json!(objective_sha);
         complete["resident_identifier_bytes"] = json!(index.records * SEQUENCE * 4);

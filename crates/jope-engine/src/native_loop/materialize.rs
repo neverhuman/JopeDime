@@ -194,6 +194,10 @@ impl Loop {
                     requested_step_increment: 3000,
                     target_optimizer_step: self.config.initial_optimizer_step
                         + (r.generation + 1) * 3000,
+                    // Frozen task inputs are compared byte for byte when a
+                    // request is re-materialized; declaring the mode here
+                    // needs a new request schema version (W6 follow-up, open).
+                    continuation_mode: None,
                 };
                 let inputs = crate::resident_protocol::input_artifacts(
                     &self.root,

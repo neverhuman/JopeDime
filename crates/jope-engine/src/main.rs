@@ -151,6 +151,9 @@ enum Cmd {
         initialize: Option<PathBuf>,
         #[arg(long)]
         replay_policy: Option<PathBuf>,
+        /// Explicit lineage-mode declaration, validated by the trainer.
+        #[arg(long)]
+        continuation_mode: Option<String>,
     },
     #[cfg(feature = "neural")]
     #[command(hide = true)]
@@ -1572,6 +1575,7 @@ fn main() -> Result<()> {
             resume,
             initialize,
             replay_policy,
+            continuation_mode,
         } => jope_parallel::training::rank_with_policy(
             &cli.root,
             &corpus,
@@ -1585,6 +1589,10 @@ fn main() -> Result<()> {
             resume,
             initialize.as_deref(),
             replay_policy.as_deref(),
+            continuation_mode
+                .as_deref()
+                .map(jope_parallel::task_contract::ContinuationMode::parse)
+                .transpose()?,
         )?,
         #[cfg(feature = "neural")]
         Cmd::QualifyBatchRank {

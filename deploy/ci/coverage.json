@@ -7242,6 +7242,36 @@
       "dispositions": [],
       "scope": "Neural-gated CPU fixtures: checkpoint genealogy from retained manifests and bound journals; possible/exact/availability exposure; unknown history stays unknown; unsupported continuity claims refused. No historical run read, no GPU."
     },
+    "target:jope-parallel/test/atomic_write": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-engine/tests/atomic_write.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "Default-feature fixtures: atomic_write/write_json unique temporaries, stale same-pid temporaries and concurrent same-file writers."
+    },
+    "target:jope-parallel/test/request_integrity": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-engine/tests/request_integrity.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "Verified resident corpus loading and optional continuation-mode declarations on gpu_worker/smartcluster/controller requests; neural module covers declaration validation and a representative write_json caller. CPU only."
+    },
     "target:jope-parallel/test/corpus": {
       "discovery": {
         "kind": "target",

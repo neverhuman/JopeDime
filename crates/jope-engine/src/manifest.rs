@@ -36,12 +36,28 @@ pub fn read_json<T: serde::de::DeserializeOwned>(path: &Path) -> Result<T> {
     .with_context(|| format!("parse {}", path.display()))
 }
 /// A sibling temporary file plus fsync/rename prevents readers from seeing partial state.
+/// The temporary name is unique per call (process, time and a process-wide
+/// counter), so a temporary left by a killed writer, even one whose process id
+/// is later reused, and a concurrent writer of the same file never collide.
 pub fn atomic_write(path: &Path, bytes: &[u8]) -> Result<()> {
+    use std::sync::atomic::{AtomicU64, Ordering};
+    static SERIAL: AtomicU64 = AtomicU64::new(0);
     let parent = path
         .parent()
         .context("output requires a parent directory")?;
     fs::create_dir_all(parent)?;
-    let tmp = path.with_extension(format!("partial.{}", std::process::id()));
+    let name = path
+        .file_name()
+        .context("output requires a file name")?
+        .to_string_lossy();
+    let tmp = parent.join(format!(
+        ".{name}.tmp-{}-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)?
+            .as_nanos(),
+        SERIAL.fetch_add(1, Ordering::Relaxed)
+    ));
     let mut file = OpenOptions::new().create_new(true).write(true).open(&tmp)?;
     let result = (|| -> Result<()> {
         file.write_all(bytes)?;

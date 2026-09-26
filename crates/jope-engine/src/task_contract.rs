@@ -19,6 +19,69 @@ pub struct CommonTaskDescriptor {
     pub deadline_unix_ms: u64,
 }
 
+/// The four continuation modes (W6-T06). A request may declare its lineage
+/// mode explicitly; `ExactResume` is an attempt property derived from the
+/// resume flag and is never a lineage declaration.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ContinuationMode {
+    ColdInitialization,
+    WeightWarmStart,
+    NewCorpusTransition,
+    ExactResume,
+}
+
+impl ContinuationMode {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::ColdInitialization => "cold_initialization",
+            Self::WeightWarmStart => "weight_warm_start",
+            Self::NewCorpusTransition => "new_corpus_transition",
+            Self::ExactResume => "exact_resume",
+        }
+    }
+
+    pub fn parse(text: &str) -> Result<Self> {
+        Ok(match text {
+            "cold_initialization" => Self::ColdInitialization,
+            "weight_warm_start" => Self::WeightWarmStart,
+            "new_corpus_transition" => Self::NewCorpusTransition,
+            "exact_resume" => Self::ExactResume,
+            other => anyhow::bail!("unknown continuation mode {other}"),
+        })
+    }
+}
+
+/// The mode a request asks for. Ambiguous or incomplete requests are refused
+/// rather than mapped to a nearby mode.
+pub fn classify_continuation(
+    resume: bool,
+    parent: bool,
+    policy: Option<&Value>,
+) -> Result<ContinuationMode> {
+    ensure!(
+        !(resume && parent),
+        "resume and initialize are mutually exclusive"
+    );
+    if resume {
+        return Ok(ContinuationMode::ExactResume);
+    }
+    match (parent, policy) {
+        (false, None) => Ok(ContinuationMode::ColdInitialization),
+        (false, Some(_)) => {
+            anyhow::bail!(
+                "a training policy requires an explicit parent checkpoint or exact resume"
+            )
+        }
+        (true, None) => Ok(ContinuationMode::WeightWarmStart),
+        (true, Some(policy)) => match policy["optimizer"].as_str() {
+            Some("reset") => Ok(ContinuationMode::WeightWarmStart),
+            Some("carry") => Ok(ContinuationMode::NewCorpusTransition),
+            _ => anyhow::bail!("a training policy must declare optimizer reset or carry"),
+        },
+    }
+}
+
 /// Version the existing partition-dependent objective; changing the partition
 /// is an explicit experiment, not an exact-resume optimization.
 pub fn training_partition(world: usize, micro: usize, global: usize) -> Result<Value> {

@@ -1038,18 +1038,26 @@ thread_local! {
 /// Retain the sealed view across tasks with the same immutable identity. Every
 /// worker restart clears this cache and verifies the source content again.
 pub fn load_resident(root: &Path, corpus: &Path) -> Result<std::rc::Rc<(Index, TeachingRecords)>> {
-    let key = format!(
-        "{}:{}",
-        root.display(),
-        file_hash(&corpus.join("index.json"))?
-    );
+    load_resident_verified(root, corpus, &fs::read(corpus.join("index.json"))?)
+}
+
+/// Load the resident view of exactly `index_bytes`, which the caller has
+/// already verified. The index path is never read again, so a file
+/// substituted after verification cannot become the resident view; every
+/// payload the bytes name is still verified by content (W6 follow-up).
+pub fn load_resident_verified(
+    root: &Path,
+    corpus: &Path,
+    index_bytes: &[u8],
+) -> Result<std::rc::Rc<(Index, TeachingRecords)>> {
+    let key = format!("{}:{}", root.display(), hash(index_bytes));
     RESIDENT.with(|saved| {
         if let Some((identity, view)) = saved.borrow().as_ref() {
             if *identity == key {
                 return Ok(std::rc::Rc::clone(view));
             }
         }
-        let view = std::rc::Rc::new(load(root, corpus)?);
+        let view = std::rc::Rc::new(load_impl(root, corpus, true, Some(index_bytes))?);
         *saved.borrow_mut() = Some((key, std::rc::Rc::clone(&view)));
         Ok(view)
     })
@@ -1072,20 +1080,32 @@ impl TeachingRecords {
 /// Every shard is content-verified on open. Local grammar IDs are explicitly
 /// remapped in first-appearance order, identical to the reference packer.
 pub fn load(root: &Path, corpus: &Path) -> Result<(Index, TeachingRecords)> {
-    load_impl(root, corpus, true)
+    load_impl(root, corpus, true, None)
 }
 
 /// Catalogue readers do not stage the training payload or initialize CUDA.
 pub fn read_index(root: &Path, corpus: &Path) -> Result<Index> {
-    Ok(load_impl(root, corpus, false)?.0)
+    Ok(load_impl(root, corpus, false, None)?.0)
 }
 
 fn load_impl(
     root: &Path,
     corpus: &Path,
     include_records: bool,
+    index_bytes: Option<&[u8]>,
 ) -> Result<(Index, TeachingRecords)> {
-    let value: Value = read_json(&corpus.join("index.json"))?;
+    // Read the index once; its digest and its parsed value come from the
+    // same bytes.
+    let read;
+    let index_bytes = match index_bytes {
+        Some(bytes) => bytes,
+        None => {
+            read = fs::read(corpus.join("index.json"))?;
+            &read[..]
+        }
+    };
+    let index_sha256 = hash(index_bytes);
+    let value: Value = serde_json::from_slice(index_bytes)?;
     if value["schema"] == "parallel.teaching_corpus.v1" {
         let index: Index = serde_json::from_value(value)?;
         let parts = if include_records {
@@ -1118,7 +1138,7 @@ fn load_impl(
         file_hash(&corpus.join("vocabulary.json"))? == m.vocabulary_sha256
             && file_hash(&corpus.join("groups.bin"))? == m.groups_sha256
             && read_json::<Value>(&corpus.join("provenance.json"))?["index_sha256"]
-                == file_hash(&corpus.join("index.json"))?,
+                == index_sha256.as_str(),
         "teaching manifest payload changed"
     );
     let mut sets = BTreeMap::from([(vec![0], 0)]);
