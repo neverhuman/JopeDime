@@ -78,7 +78,9 @@
         "python3 deploy/ci/test-qualify-demo.py",
         "python3 deploy/ci/test-prepare-asm-runtime.py",
         "python3 docs/internal/core-ip/tools/verify_findings.py",
-        "python3 -m unittest discover -s docs/internal/core-ip/tools -p test_verify_findings.py -v"
+        "python3 -m unittest discover -s docs/internal/core-ip/tools -p test_verify_findings.py -v",
+        "python3 docs/internal/core-ip/tools/verify_dispositions.py",
+        "python3 -m unittest discover -s docs/internal/core-ip/tools -p test_verify_dispositions.py -v"
       ]
     },
     "rust-check": {
@@ -2144,6 +2146,16 @@
         "maintenance"
       ],
       "scope": "Standalone fixture runner; not pytest-collected."
+    },
+    "python:docs/internal/core-ip/tools/test_verify_dispositions.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "hygiene"
+      ],
+      "dispositions": [],
+      "scope": "Finding-disposition evidence binding and adversarial closure mutations with synthetic evidence only. Validates hash/finding/stage/commit binding and closure rules; it closes no product finding and establishes no live qualification."
     },
     "python:python/src/jope/research/test_absolute_path_audit.py": {
       "discovery": {
