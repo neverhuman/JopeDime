@@ -7,9 +7,9 @@ not CI verification, and neither is live qualification. No finding closes throug
 | State | Tasks |
 |---|---:|
 | planned | 27 |
-| reproduced | 15 |
+| reproduced | 16 |
 | implemented | 43 |
-| fixture-proven | 38 |
+| fixture-proven | 39 |
 | CI-verified | 0 |
 | live-qualified | 0 |
 | measurement-complete | 0 |
@@ -80,7 +80,7 @@ not CI verification, and neither is live qualification. No finding closes throug
 | Task | States | Evidence | Remaining or blocker |
 |---|---|---|---|
 | W6-T01 Freeze resolved training inputs | planned | — | — |
-| W6-T02 Specify the complete objective by term | implemented | ccfb00e5f195 | Specification half only. Independently computed tiny fixtures reproducing each scalar loss and its gradients remain; gaps G1..G17 are open. |
+| W6-T02 Specify the complete objective by term | reproduced, implemented, fixture-proven | ccfb00e5f195; 2668de0589ca; tests/objective_fixtures.rs (14, neural feature, CPU) | Specification plus CPU f64 fixtures for every term, gradient and partition dependence; G8 and G12 fixed fail-closed. G1 (objective identity in checkpoints and resume guards) is T06; G11 runtime-label typing is T03; GPU/BF16/fused-AdamW numerics and the accepted step-60000 binding (G2/G3) remain. |
 | W6-T03 Validate comparisons and runtime observations | planned | — | — |
 | W6-T04 Record actual consumption and committed updates | planned | — | — |
 | W6-T05 Commit complete checkpoints atomically | planned | — | — |

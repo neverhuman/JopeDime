@@ -502,15 +502,23 @@
     },
     "W6-T02": {
       "states": [
-        "implemented"
+        "reproduced",
+        "implemented",
+        "fixture-proven"
       ],
       "commits": [
-        "ccfb00e5f195498bad0b6dab731612671d4792e3"
+        "ccfb00e5f195498bad0b6dab731612671d4792e3",
+        "2668de0589ca2d75a3917df6fdd27f8749a0ceb3"
+      ],
+      "tests": [
+        "tests/objective_fixtures.rs (14, neural feature, CPU)"
       ],
       "evidence": [
-        "docs/internal/core-ip/work-orders/evidence/W06-objective-specification.md"
+        "docs/internal/core-ip/work-orders/evidence/W06-objective-specification.md",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w6-pre-t02-20260926T064613Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w6-post-t02-20260926T064813Z"
       ],
-      "remaining": "Specification half only. Independently computed tiny fixtures reproducing each scalar loss and its gradients remain; gaps G1..G17 are open."
+      "remaining": "Specification plus CPU f64 fixtures for every term, gradient and partition dependence; G8 and G12 fixed fail-closed. G1 (objective identity in checkpoints and resume guards) is T06; G11 runtime-label typing is T03; GPU/BF16/fused-AdamW numerics and the accepted step-60000 binding (G2/G3) remain."
     },
     "W6-T03": {
       "states": [
