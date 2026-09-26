@@ -911,3 +911,71 @@ capability-matrix row.
 work. It does not merge two diverged histories whose work conflicts (for example, two
 update-0 checkpoints), which it refuses with the reason. Publisher identity is still
 unauthenticated. Live S3 conditional writes are W8-T07/T08.
+
+## Owner decisions of 2026-09-26 (recorded on rr2/integration-a)
+
+The owner delegated the pending W8 policy choices and adopted the conservative options. This
+section supersedes the "owner-pending" and "proposed" wording of the earlier sections, which
+stays as the history of what was reviewed.
+
+**Outbox limits and cadence: adopted.**
+
+- Values:
+  - pause new work at 7,500 entries or 768 MiB pending;
+  - refuse every append at 10,000 entries or 1 GiB;
+  - flush every 60 s or at 1 MiB pending;
+  - checkpoint every 100 updates or 5 minutes, and at controlled shutdown.
+- Source:
+  - `Limits::ADOPTED` and `Policy::ADOPTED` (renamed from `PROPOSED`);
+  - `Config::adopted()`;
+  - the report marker `APPROVAL = "adopted-by-owner-delegation-2026-09-26"` (was
+    `owner-pending`).
+- They stay explicit configuration. A `jope.progress.config/v1` file can set other values, and
+  every report then says `adopted_defaults: false` and
+  `approval: "operator-configured-not-the-adopted-defaults"`. A file cannot mark its own values
+  adopted.
+- Tests:
+  - `progress::tests::product::outbox_limits_and_cadence_are_explicit_adopted_configuration`;
+  - `progress_cli::progress_verbs_publish_engine_events_to_an_explicit_store_only`.
+
+**One W8 update is one checkpoint window: adopted.** `update_index` counts the windows of
+optimizer steps between two published W8 checkpoints, and `consumed_rows` is
+`(step − previous step) × global_batch`. See "The update index" above.
+
+**The `jope-parallel` dev-dependency of `jope-learning`: accepted.** It is used only by the
+tests, to check their engine fixtures with the engine's own `corpus_publication::verify` and
+`checkpoint_recovery::reconcile`. The library does not link the engine.
+
+**Live S3 phase: authorized once the owner creates a scoped credential.** No credential was
+used here. The product path reaches an `s3://` store by configuration alone, with no code
+change.
+
+The environment it reads (`progress::remote::S3_ENVIRONMENT`, and `jope-learning progress
+--help`):
+
+| Variable | Needed for |
+|---|---|
+| `JOPE_LEARNING_URL=s3://<bucket>/<run-scoped prefix>` (or `--store`) | the store. A bare bucket is refused |
+| `JOPE_AWS_PROFILE=<scoped publisher profile>` (or `AWS_PROFILE`) | the credential, evaluated through `aws configure export-credentials` (`jope_datasets::credentials`) |
+| instead: `AWS_ACCESS_KEY_ID` + `AWS_SECRET_ACCESS_KEY` (+ `AWS_SESSION_TOKEN`) | a static or STS key |
+| `AWS_REGION` | the bucket region; `us-east-2` when unset |
+| `AWS_CONDITIONAL_PUT` | unset or `etag`. object_store 0.14 defaults to `etag`: `If-None-Match: *` for immutable objects, `If-Match` for the run pointer |
+| `JOPE_STATE` (or `--state`) | the local state tree: outbox, HWM ledger and revocations |
+
+`progress::remote::preflight_publishing_store` refuses each of these before any store is
+opened, with nothing written:
+
+- a bare bucket;
+- `JOPE_DATASETS_ANON=1` (unsigned requests);
+- `AWS_CONDITIONAL_PUT` other than `etag`.
+
+With no credential source, opening fails fast and by name, before any request.
+
+`progress_cli::an_s3_store_is_configuration_only_and_misconfiguration_is_refused_first` runs the
+shipped binary with an empty environment and a temporary `HOME`, so no credential of this host
+can reach it. It shows:
+
+- the three refusals;
+- that a well-formed `s3://` store passes the checks and stops at the credential step.
+
+The live phase itself (W8-T07/T08) is not run here.

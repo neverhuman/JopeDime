@@ -31,8 +31,9 @@
 //!
 //! Nothing here deletes anything or changes a retention policy.
 //!
-//! All time comes from an injected [`Clock`]. The [`Policy::PROPOSED`] values, like the outbox
-//! limits, await owner approval.
+//! All time comes from an injected [`Clock`]. The [`Policy::ADOPTED`] values, like the outbox
+//! limits, were adopted by owner delegation on 2026-09-26 and remain configuration
+//! (`progress::product::Config`).
 
 use crate::progress::inventory::Retention;
 use crate::progress::outbox::{Delivery, Outbox};
@@ -56,8 +57,9 @@ pub struct Policy {
 }
 
 impl Policy {
-    /// Proposed: flush every 60 s or 1 MiB; checkpoint every 100 updates or 5 minutes.
-    pub const PROPOSED: Policy = Policy {
+    /// Adopted by owner delegation on 2026-09-26: flush every 60 s or 1 MiB; checkpoint every
+    /// 100 updates or 5 minutes.
+    pub const ADOPTED: Policy = Policy {
         flush_interval_ms: 60_000,
         flush_bytes: 1 << 20,
         checkpoint_updates: 100,

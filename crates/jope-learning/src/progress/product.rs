@@ -16,12 +16,15 @@
 //!    is due at the engine's committed optimizer steps, or at controlled shutdown.
 //!
 //! **Configuration.** The outbox limits and the cadence are explicit [`Config`] values. Their
-//! defaults are the owner's proposals ([`Limits::PROPOSED`], [`Policy::PROPOSED`]); nobody has
-//! approved them, and every report says so ([`APPROVAL`]).
+//! defaults ([`Limits::ADOPTED`], [`Policy::ADOPTED`]) were adopted by owner delegation on
+//! 2026-09-26, and every report says so ([`APPROVAL`]). They stay configuration: a
+//! `jope.progress.config/v1` file can set other values, and a report then says the values in
+//! effect are not the adopted ones ([`OVERRIDDEN`]).
 //!
 //! **Store.** The remote is whatever [`Remote`] the caller opened: the CLI opens only the store
 //! named explicitly by `--store`/`JOPE_LEARNING_URL`, and the tests use `file://` and
-//! `memory:///` stores. Nothing here reaches for a default bucket.
+//! `memory:///` stores. Nothing here reaches for a default bucket. An `s3://bucket/prefix` store
+//! needs no code change; see `jope-learning progress --help` for the environment it reads.
 //!
 //! **Restart.** Everything the driver needs is re-derived on open, from the outbox and the
 //! remote's committed closure: the run manifest, what is committed, what is appended but not yet
@@ -51,10 +54,14 @@ use std::path::Path;
 
 pub const CONFIG_SCHEMA: &str = "jope.progress.config/v1";
 
-/// The approval state of every [`Config`] value. The outbox limits (W8-T02) and the cadence
-/// (W8-T05) are owner proposals that have not been approved. This is reported beside them; it is
-/// not a setting, and no configuration file can change it.
-pub const APPROVAL: &str = "owner-pending";
+/// The approval state of the default [`Config`] values: the outbox limits (W8-T02) and the
+/// cadence (W8-T05) were adopted by owner delegation on 2026-09-26. This is reported beside them;
+/// it is not a setting, and no configuration file can change it.
+pub const APPROVAL: &str = "adopted-by-owner-delegation-2026-09-26";
+
+/// The approval state reported when a configuration file sets values other than the adopted
+/// defaults: they are the operator's, not the owner's.
+pub const OVERRIDDEN: &str = "operator-configured-not-the-adopted-defaults";
 
 /// The publisher's explicit configuration.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -68,17 +75,16 @@ pub struct Config {
 }
 
 impl Config {
-    /// The documented defaults, which are the owner's proposed values and are not approved
-    /// ([`APPROVAL`]):
+    /// The documented defaults, adopted by owner delegation on 2026-09-26 ([`APPROVAL`]):
     /// - outbox: pause new work at 7,500 entries or 768 MiB pending; refuse every append at
     ///   10,000 entries or 1 GiB;
     /// - cadence: flush every 60 s or at 1 MiB pending; checkpoint every 100 committed updates
     ///   or 5 minutes, and at controlled shutdown.
-    pub fn proposed() -> Config {
+    pub fn adopted() -> Config {
         Config {
             schema: CONFIG_SCHEMA.into(),
-            limits: Limits::PROPOSED,
-            cadence: Policy::PROPOSED,
+            limits: Limits::ADOPTED,
+            cadence: Policy::ADOPTED,
         }
     }
 
@@ -110,13 +116,18 @@ impl Config {
         Ok(config)
     }
 
-    /// The configuration as reported: its values, whether they are the proposed defaults, and
+    /// The configuration as reported: its values, whether they are the adopted defaults, and
     /// their approval state.
     pub fn report(&self) -> ConfigReport {
+        let adopted_defaults = *self == Config::adopted();
         ConfigReport {
             values: self.clone(),
-            proposed_defaults: *self == Config::proposed(),
-            approval: APPROVAL,
+            adopted_defaults,
+            approval: if adopted_defaults {
+                APPROVAL
+            } else {
+                OVERRIDDEN
+            },
         }
     }
 }
@@ -124,7 +135,7 @@ impl Config {
 #[derive(Clone, Debug, Serialize)]
 pub struct ConfigReport {
     pub values: Config,
-    pub proposed_defaults: bool,
+    pub adopted_defaults: bool,
     pub approval: &'static str,
 }
 
