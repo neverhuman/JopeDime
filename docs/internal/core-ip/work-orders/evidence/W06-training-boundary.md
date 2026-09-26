@@ -272,3 +272,51 @@ The checkpoint loader matrix (`checkpoint_commit.rs`) gains two cases: an incons
 - **Deterministic interrupted/uninterrupted equivalence.** Shown on CPU for the accounting path in T04. The Policy/GPU/NCCL topology is W7.
 - **Execution limits during recovery.** These remain the existing checks: step window, smartcluster original window and deadline. No new recovery-limit ledger was added.
 - **Not executed.** `rank_impl` wiring is compile-checked only.
+
+---
+
+## W6-T01 — freeze resolved training inputs
+
+### What the trainer resolved before this change
+- **Already in place.**
+  - `index.json` bytes were hashed and admission-checked.
+  - The resident teaching store verified record bytes, via a sealed copy for records and verified shards.
+  - Context artifacts were hashed on a cold load.
+- **Three gaps.**
+  1. **Stale cache (reproduced).** The resident context tensor was cached under the index's *declared* `context_index_sha256`. That value is a claim in the index, never checked against the listed rows. Two indexes declaring the same digest but listing different context artifacts shared one cached tensor, so a cached load could differ from a cold load. Evidence `w6-pre-t01-20260926T092505Z`: `cached_context_staging_is_keyed_by_content_not_by_a_declared_digest` failed, and the frozen digest did not move with the context rows.
+  2. **Mutable path substitution: index.** `rank_impl` verified the `index.json` bytes, then `teaching_store::load_resident` re-read the path. A different valid index written in between became the resident view.
+  3. **Mutable path substitution: vocabulary.** The vocabulary was hashed by path and then parsed from a second read.
+
+### Changes (`training/inputs.rs`, wired into `rank_impl`)
+| Change | Kind |
+|---|---|
+| `context_identity` = SHA-256 of the context rows actually listed (path, digest, partition, provenance), used as the resident context-tensor cache key | behavior repair |
+| The resident-tensor cache key also binds the frozen-input digest | hardening |
+| `bind_resident` requires the resident index to match the verified index bytes: schema, vocabulary, context index, records digest, record count, qualification and contexts; for `parallel.teaching_corpus.v1` also groups and legal sets. A substituted index is refused | behavior repair |
+| `read_verified` reads a file once, hashes and returns those bytes; the vocabulary is parsed from them | behavior repair |
+| `stage_contexts` / `stage_records` build the host tensors `rank_impl` moves to the device. They add refusals for a record naming a context or legal set outside the corpus and for a legal set naming a token outside the vocabulary; before, these failed on the device or not at all | extraction + hardening |
+| `freeze` writes the `jope.training_inputs.v1` manifest. It records corpus identity, vocabulary, declared and content context identities, legal-set and group digests, per-partition availability, unique programs (only when computed), explicit exposure units, and that revocation is unavailable. Rank 0 writes it to `launch/training-inputs.json`. Its digest goes into every checkpoint (`training_inputs_sha256`) and `complete-{rank}.json`. Exact resume refuses a different frozen-input digest | new capability |
+
+### Units
+| Unit | Meaning |
+|---|---|
+| Available records | Corpus records in admitted groups, per partition, with their groups and families |
+| Unique programs | Distinct supervised token sequences; `program_identity` is the SHA-256 of the u16 tokens. One program can appear in many contexts. It is not computed at launch (a full pass over about 10M records) and is never estimated: the manifest says `not_computed_at_launch` |
+| Presentations | Sampled rows. A record may be presented repeatedly across comparisons and steps; a repeat is exposure of the same record, never new data. Counted by the T04 consumption journal |
+
+### Fixtures
+File `crates/jope-engine/tests/frozen_inputs.rs` (feature `neural`, CPU). It uses a real `parallel.teaching_corpus.v1` directory loaded by the real teaching store.
+
+| Acceptance item | Test | Pre-fix |
+|---|---|---|
+| The context cache identity follows content, not the declared digest | `cached_context_staging_is_keyed_by_content_not_by_a_declared_digest` | failed |
+| Cold (twice) and resident-cached (twice) loads stage identical authorized tensors and identical frozen digests, equal to an independently expected layout | `cold_and_cached_loading_stage_identical_authorized_inputs` | passed |
+| Refused before training: context byte changed, missing, not admitted, or wrong length; records changed; vocabulary changed or missing; record names an out-of-corpus context; legal set names an out-of-vocabulary token. Positive control passes | `changed_missing_or_substituted_inputs_are_refused_before_training` | passed |
+| Index substituted after verification: the loader returns the substitute, `bind_resident` refuses it. Vocabulary substitution: a single verified read refuses it | `inputs_substituted_after_verification_are_refused` | passed; new capability |
+| Availability (16 records), unique programs (8), and the presentation unit and policy are kept apart. The launch manifest never estimates programs. The digest is stable and moves with context rows. A foreign vocabulary is refused | `the_frozen_manifest_separates_availability_programs_and_presentations` | failed; digest did not move |
+
+### Open for T01
+- **Revocation.** No revocation authority exists in this source; W12 supplies claims revocation. Qualification is checked through the existing `index.qualification`, or native continuation eligibility. The manifest records `revocation: not_available_in_this_source`; nothing is claimed.
+- **Transitive dependencies not loaded by the trainer are not re-verified at launch:** programs, prepared cut manifests (`prepared_sha256`), label ledgers and admission receipts. They are bound only through the corpus build that produced `index.json`. Programs, comparison groups and contexts are pinned through the index and records digests.
+- **Teaching-store reads.** `teaching_store::load_resident` still reads the index path itself; the substitution is detected, not prevented. Passing verified bytes into the store is outside this partition.
+- **Not executed.** `rank_impl` wiring is compile-checked only.

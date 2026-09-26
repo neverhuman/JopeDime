@@ -7205,6 +7205,21 @@
       "dispositions": [],
       "scope": "Neural-gated CPU checks of the four continuation modes and full objective identity: classification, parent guards, declared-change rules and lineage naming. No model, GPU or training qualification."
     },
+    "target:jope-parallel/test/frozen_inputs": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-engine/tests/frozen_inputs.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "Neural-gated CPU fixtures on a real teaching-corpus directory: verified single-read inputs, content-keyed staging, cold/cached equivalence, refusal of changed/missing/substituted inputs, frozen-input manifest. No device or training."
+    },
     "target:jope-parallel/test/corpus": {
       "discovery": {
         "kind": "target",

@@ -2108,6 +2108,12 @@
         "fitting"
       ]
     },
+    "target:jope-parallel/test/frozen_inputs": {
+      "role": "regression",
+      "subsystems": [
+        "training"
+      ]
+    },
     "target:jope-parallel/test/gp_admission": {
       "role": "regression",
       "subsystems": [

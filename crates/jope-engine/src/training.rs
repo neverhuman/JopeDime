@@ -19,6 +19,7 @@ use tch::{nn, Device, Kind, Tensor};
 pub mod checkpoint_commit;
 pub mod consumption;
 pub mod continuation;
+pub mod inputs;
 pub mod objective;
 
 pub const SAMPLER_ID: &str = "family_uniform_champion_plus_seven_quantiles_v2";
@@ -219,6 +220,7 @@ fn checkpoint(
     family_groups: &crate::training_exposure::FamilyGroups,
     family_groups_known: bool,
     consumption: &Value,
+    training_inputs_sha256: &str,
 ) -> Result<()> {
     let step = opt.step;
     let receipt = launch.join(format!("checkpoint-{step}-rank-{rank}.json"));
@@ -306,6 +308,7 @@ fn checkpoint(
                 committed
             })
             .collect::<Vec<_>>());
+                state["training_inputs_sha256"] = json!(training_inputs_sha256);
                 state["objective"] = objective::identity();
                 state["objective_sha256"] = json!(objective::identity_sha256());
                 state["checkpoint_format"] = json!(checkpoint_commit::FORMAT);
@@ -821,25 +824,31 @@ fn rank_impl(
         None => SEED,
     };
     let corpus_hash = file_hash(&corpus.join("index.json"))?;
-    {
+    let verified_index: Value = {
         let index_bytes = fs::read(corpus.join("index.json"))?;
         ensure!(hash(&index_bytes) == corpus_hash, "corpus index changed");
         let corpus_index: Value = serde_json::from_slice(&index_bytes)?;
         crate::corpus_projection::verify_admitted_context_closure(&corpus_index)?;
-    }
+        corpus_index
+    };
     let resident = crate::teaching_store::load_resident(root, corpus)?;
     let (index, records) = resident.as_ref();
+    // W6-T01: the resident view must be the verified index, not a file
+    // substituted after verification.
+    inputs::bind_resident(&verified_index, index)?;
     ensure!(
         ["parallel.teaching_corpus.v1", crate::teaching_store::SCHEMA]
             .contains(&index.schema.as_str())
             && (index.qualification || (native_stop.is_some() && verified_native_continuation)),
         "training currently requires explicitly qualified real corpus"
     );
-    ensure!(
-        file_hash(&corpus.join("vocabulary.json"))? == index.vocabulary_sha256,
-        "corpus changed"
-    );
-    let vocabulary: crate::grammar::Vocab = read_json(&corpus.join("vocabulary.json"))?;
+    // Parse the vocabulary from the bytes that were verified.
+    let vocabulary: crate::grammar::Vocab = serde_json::from_slice(&inputs::read_verified(
+        &corpus.join("vocabulary.json"),
+        &index.vocabulary_sha256,
+    )?)?;
+    let frozen_inputs = inputs::freeze(index, &corpus_hash, &index.vocabulary_sha256, None)?;
+    let frozen_inputs_sha = inputs::digest(&frozen_inputs)?;
     let mut families = BTreeMap::<String, Vec<usize>>::new();
     let mut validation = BTreeMap::<String, Vec<usize>>::new();
     let mut teacher_family = BTreeMap::<usize, String>::new();
@@ -994,6 +1003,12 @@ fn rank_impl(
                     require_complete: false,
                 },
             )?;
+            ensure!(
+                state
+                    .get("training_inputs_sha256")
+                    .is_none_or(|frozen| *frozen == frozen_inputs_sha.as_str()),
+                "exact resume requires the same frozen training inputs"
+            );
         }
         // Full objective identity, partition, vocabulary and architecture
         // against the requested mode; undeclared changes are refused.
@@ -1276,6 +1291,9 @@ fn rank_impl(
     if rank == 0 && !resume {
         checkpoint_commit::replace_json(&initialization_path, &initialization)?;
     }
+    if rank == 0 {
+        checkpoint_commit::replace_json(&launch.join("training-inputs.json"), &frozen_inputs)?;
+    }
     ensure!(
         index
             .contexts
@@ -1283,78 +1301,52 @@ fn rank_impl(
             .all(|c| crate::corpus_projection::admitted_partition(&c.partition)),
         "non-admitted context partition in training closure"
     );
+    // W6-T01: cached device staging is keyed by the content it was built
+    // from; a cold load verifies every byte through the same functions.
+    let context_key = inputs::context_identity(index)?;
     let context_tensor = RESIDENT_CONTEXT.with(|cache| -> Result<Tensor> {
         if let Some((identity, tensor)) = cache.borrow().as_ref() {
-            if *identity == index.context_index_sha256 {
+            if *identity == context_key {
                 return Ok(tensor.shallow_clone());
             }
         }
         // Release an obsolete epoch before allocating its replacement.
         cache.borrow_mut().take();
-        let mut contexts = Vec::with_capacity(index.contexts.len() * 2048);
-        for c in &index.contexts {
-            let bytes = fs::read(resolve(root, &c.path)?)?;
-            ensure!(
-                hash(&bytes) == c.sha256 && bytes.len() == 8192,
-                "context artifact changed"
-            );
-            contexts.extend(
-                bytes
-                    .chunks_exact(4)
-                    .map(|b| f32::from_le_bytes(b.try_into().unwrap())),
-            );
-        }
+        let contexts = inputs::stage_contexts(root, index)?;
         // Small immutable artifacts are staged once on each GPU; no CSV loading in training steps.
         let tensor = Tensor::from_slice(&contexts)
             .view([-1, 2048])
             .to_device(device);
         // Device tensors own their copied storage; release host staging before training.
         drop(contexts);
-        *cache.borrow_mut() = Some((index.context_index_sha256.clone(), tensor.shallow_clone()));
+        *cache.borrow_mut() = Some((context_key.clone(), tensor.shallow_clone()));
         Ok(tensor)
     })?;
+    let tensor_key = format!("{corpus_hash}:{frozen_inputs_sha}");
     let (resident_cache_hit, tensors) =
         RESIDENT_TENSORS.with(|cache| -> Result<(bool, Vec<Tensor>)> {
             if let Some((identity, tensors)) = cache.borrow().as_ref() {
-                if *identity == corpus_hash {
+                if *identity == tensor_key {
                     return Ok((true, tensors.iter().map(Tensor::shallow_clone).collect()));
                 }
             }
             cache.borrow_mut().take();
-            let mut tokens = Vec::with_capacity(index.records * SEQUENCE);
-            let mut legal_ids = Vec::with_capacity(index.records * SEQUENCE);
-            let mut context_ids = Vec::with_capacity(index.records);
-            for i in 0..index.records {
-                let r = records.get(i);
-                // LibTorch's short tensor is signed. Preserve all sixteen identifier
-                // bits and restore unsigned values only after gathering a minibatch.
-                tokens.extend(r.tokens.map(|id| id as u16 as i16));
-                legal_ids.extend(r.legal.map(|id| id as u16 as i16));
-                context_ids.push(r.context as i64);
-            }
-            let token_tensor = Tensor::from_slice(&tokens)
+            let staged = inputs::stage_records(index, vocabulary.tokens.len(), |i| records.get(i))?;
+            let token_tensor = Tensor::from_slice(&staged.tokens)
                 .view([-1, SEQUENCE as i64])
                 .to_device(device);
-            drop(tokens);
-            let legal_id_tensor = Tensor::from_slice(&legal_ids)
+            let legal_id_tensor = Tensor::from_slice(&staged.legal)
                 .view([-1, SEQUENCE as i64])
                 .to_device(device);
-            drop(legal_ids);
-            let context_id_tensor = Tensor::from_slice(&context_ids).to_device(device);
-            drop(context_ids);
-            let mut masks = vec![0u8; index.legal_sets.len() * vocabulary.tokens.len()];
-            for (i, set) in index.legal_sets.iter().enumerate() {
-                for &t in set {
-                    masks[i * vocabulary.tokens.len() + t] = 1;
-                }
-            }
-            let mask_table = Tensor::from_slice(&masks)
+            let context_id_tensor = Tensor::from_slice(&staged.context_ids).to_device(device);
+            let mask_table = Tensor::from_slice(&staged.masks)
                 .view([-1, vocabulary.tokens.len() as i64])
                 .to_kind(Kind::Bool)
                 .to_device(device);
+            drop(staged);
             let tensors = vec![token_tensor, legal_id_tensor, context_id_tensor, mask_table];
             *cache.borrow_mut() = Some((
-                corpus_hash.clone(),
+                tensor_key.clone(),
                 tensors.iter().map(Tensor::shallow_clone).collect(),
             ));
             Ok((false, tensors))
@@ -1682,6 +1674,7 @@ fn rank_impl(
                     )?,
                     family_baseline_known,
                     &json!({"path":journal_path,"binding":consumed}),
+                    &frozen_inputs_sha,
                 )?;
                 committed_exposure = observed_exposure.clone();
                 checkpoint_seconds += checkpoint_started.elapsed().as_secs_f64();
@@ -1755,6 +1748,7 @@ fn rank_impl(
             .unwrap_or(Value::Null);
         complete["exact_same_experiment_resume"] =
             json!(resume && recovered_continuation.is_none());
+        complete["training_inputs_sha256"] = json!(frozen_inputs_sha);
         complete["continuation_mode"] = json!(mode.as_str());
         complete["continuity"] = continuity.clone();
         complete["objective_sha256"] = json!(objective_sha);
