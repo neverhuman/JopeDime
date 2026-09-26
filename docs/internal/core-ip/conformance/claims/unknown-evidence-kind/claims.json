@@ -1,0 +1,41 @@
+{
+  "claims": [
+    {
+      "baseline": null,
+      "comparison": null,
+      "denominator": "one synthetic fixture",
+      "evidence": [
+        "E-synthetic"
+      ],
+      "id": "C-synthetic",
+      "limitations": [
+        "Synthetic conformance fixture; attests no real subject."
+      ],
+      "metric": "synthetic contract outcome",
+      "observed_utc": "2026-09-26T00:00:00Z",
+      "scope": "synthetic conformance fixture; public record-contract replay only",
+      "source_commit": "5e1f5e1f5e1f5e1f5e1f5e1f5e1f5e1f5e1f5e1f",
+      "stage": "fixture",
+      "statement": "A synthetic conformance subject satisfies a synthetic contract.",
+      "status": "active",
+      "subject": "synthetic conformance subject",
+      "uncertainty": "exact; synthetic",
+      "units": "outcomes"
+    }
+  ],
+  "evidence": {
+    "E-synthetic": {
+      "depends_on": [],
+      "kind": "unknown-kind",
+      "location": "repository",
+      "path": "docs/internal/core-ip/conformance/claims/unknown-evidence-kind/evidence/E-synthetic.json",
+      "scope": "synthetic conformance fixture; public record-contract replay only",
+      "sha256": "1d9dac15ab0b390d1704bf30be654fbedfc7eb1e27873a93fe060a7a22dbe3fd",
+      "source_commit": "5e1f5e1f5e1f5e1f5e1f5e1f5e1f5e1f5e1f5e1f",
+      "subject": "synthetic conformance subject"
+    }
+  },
+  "revocations": [],
+  "schema": "jope.core-ip-claims/v1",
+  "synthetic_identity": "jope.core-ip-conformance/v1"
+}

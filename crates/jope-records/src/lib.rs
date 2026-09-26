@@ -11,6 +11,7 @@
 //! | [`dispositions`] | `verify-dispositions` | `findings/dispositions.json` + `findings/evidence/` |
 //! | [`claims`] | `verify-claims` | `claims/claims.json` |
 //! | [`claim_inventory`] | `claim-inventory` | `claims/claims.json` → `claims/INVENTORY.md` |
+//! | [`conformance`] | `conformance` | `conformance/` (generated synthetic pack) |
 //! | [`test_inventory`] | `verify-test-inventory` | `findings/test-inventory.json` vs `deploy/ci/coverage.json` |
 //! | [`task_status`] | `task-status` | `work-orders/task-status.json` → `work-orders/STATUS.md` |
 //! | [`progress_view`] | `progress-view` | all of the above → `work-orders/PROGRESS.md` |
@@ -25,6 +26,7 @@
 
 pub mod claim_inventory;
 pub mod claims;
+pub mod conformance;
 pub mod dispositions;
 pub mod elo_history;
 mod error;

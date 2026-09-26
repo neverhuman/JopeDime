@@ -8,6 +8,7 @@
 mod claim_inventory;
 mod claims;
 mod cli;
+mod conformance;
 mod dispositions;
 mod elo_history;
 mod findings;
