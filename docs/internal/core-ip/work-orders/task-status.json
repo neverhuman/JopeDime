@@ -397,23 +397,73 @@
     },
     "W5-T01": {
       "states": [
-        "planned"
-      ]
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "943e3a6926d6e1f39a5c78c1e29dfd5bf86bc797"
+      ],
+      "tests": [
+        "generic_bootstrap_candidates_retain_their_original_proposal_and_one_adaptation",
+        "variation_children_record_parents_and_cannot_alter_parent_fitted_state",
+        "gp::lineage::tests (4 tamper tests)"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w5-t01-bootstrap-repro-20260926T060448Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w5-t01-lineage-20260926T061401Z"
+      ],
+      "remaining": "The lineage verifier refuses rows without an envelope (older ledgers) and needs seed/vocabulary paths; native-continuation paths are unit-tested only."
     },
     "W5-T02": {
       "states": [
-        "planned"
-      ]
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "e41f1541501a10180352a9feb2005840728e0d42"
+      ],
+      "tests": [
+        "a_resume_under_other_selection_rules_is_refused_not_restarted"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w5-t02-frozen-contract-20260926T063504Z"
+      ],
+      "remaining": "Selection contract and proposal cap are frozen in the search request; paired-arm manifests and differences remain."
     },
     "W5-T03": {
       "states": [
-        "planned"
-      ]
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "4311120b70b663537a3769d345215ea13d2aecba"
+      ],
+      "tests": [
+        "reused_fits_are_rescored_on_their_own_rows_and_never_inherit_scores",
+        "score_identities_bind_the_fold_protocol_and_predictions"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w5-t03-score-identity-20260926T062250Z"
+      ],
+      "remaining": "Verified safeguard (scores were already recomputed on reuse); each score now carries an identity bound to its fitted subject and scored rows."
     },
     "W5-T04": {
       "states": [
-        "planned"
-      ]
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "6e4e38f4016c2481d9717db45db8bc32f0799927"
+      ],
+      "tests": [
+        "feasibility::tests (4, with a counting allocator bounding peak allocation)",
+        "feasibility_estimates_are_recorded_beside_observed_outcomes_under_one_rule"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w5-t04-feasibility-20260926T062808Z"
+      ],
+      "remaining": "Memory feasibility only (not time); recorded as a diagnostic, dispatch unchanged. Refusing candidates would change search policy and needs a new protocol identity."
     },
     "W5-T05": {
       "states": [
@@ -422,8 +472,23 @@
     },
     "W5-T06": {
       "states": [
-        "planned"
-      ]
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "ec99c76ade7dded846428f84ce01a9f903677763"
+      ],
+      "tests": [
+        "independent_replay_reproduces_real_search_winners_and_refuses_tampered_ledgers",
+        "resumed_search_refuses_journaled_measurements_its_original_completion_does_not_support",
+        "gp::selection_replay::tests (9 adversarial)"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w5-t06-resume-repro-20260926T055746Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w5-t06-selection-replay-20260926T060327Z"
+      ],
+      "remaining": "Replay refuses older ledgers without the search clock; production activation verifiers remain unimplemented (owner/security decision)."
     },
     "W5-T07": {
       "states": [

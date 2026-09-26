@@ -11,7 +11,7 @@ neither is live qualification.
 |---|---|
 | `findings/register.json` | `33146b77ca2bd8769d8a2b869fe4844755df86a0a8dccdd41609c2d1080e5e6a` |
 | `findings/dispositions.json` | `e097ca511964e584ed81dfa44c8f43dbaf072981fb666747eb9a3e821210cca1` |
-| `work-orders/task-status.json` | `c0f596ee6bac9552834e5329a42cb21ac31ba4bcf4518cd98d4cdc688c7146b8` |
+| `work-orders/task-status.json` | `f4e2da8c19fcab0d4df9d2b8e7e91e0c885687514f198e37fd929041ccb0d919` |
 | `claims/claims.json` | `380ec2ffc72fd1e41bcde9f8897f485d5c0605549cad52165a07fecb0874a011` |
 
 ## Findings and tasks by primary work order
@@ -25,7 +25,7 @@ Task columns count tasks holding each state; a task can hold several.
 | W2 | 12 | 11 | 23 | 0 | 7 | 2 | 1 | 5 | 4 | 0 | 0 | 0 | 0 |
 | W3 | 13 | 13 | 26 | 0 | 7 | 0 | 5 | 7 | 6 | 0 | 0 | 0 | 0 |
 | W4 | 5 | 5 | 10 | 0 | 7 | 1 | 2 | 6 | 5 | 0 | 0 | 0 | 0 |
-| W5 | 9 | 9 | 18 | 0 | 7 | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| W5 | 9 | 9 | 18 | 0 | 7 | 2 | 2 | 5 | 5 | 0 | 0 | 0 | 0 |
 | W6 | 8 | 8 | 16 | 0 | 7 | 6 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
 | W7 | 0 | 0 | 0 | 0 | 9 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 3 |
 | W8 | 2 | 2 | 4 | 0 | 8 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 2 |
@@ -33,7 +33,7 @@ Task columns count tasks holding each state; a task can hold several.
 | W10 | 12 | 13 | 25 | 0 | 10 | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 9 |
 | W11 | 6 | 6 | 12 | 0 | 8 | 1 | 1 | 2 | 2 | 0 | 0 | 0 | 5 |
 | W12 | 9 | 11 | 20 | 0 | 8 | 2 | 0 | 4 | 4 | 0 | 0 | 0 | 2 |
-| **Total** | **97** | **98** | **195** | **0** | **92** | **40** | **11** | **30** | **25** | **0** | **0** | **0** | **22** |
+| **Total** | **97** | **98** | **195** | **0** | **92** | **35** | **13** | **35** | **30** | **0** | **0** | **0** | **22** |
 
 ## Pending gates
 
@@ -74,6 +74,6 @@ verified by `verify_claims.py --require-custody` where custody is readable.
 
 ## Not progress
 
-- Tasks still only planned (no commits or evidence): 40 of 92.
+- Tasks still only planned (no commits or evidence): 35 of 92.
 - Findings without any disposition record: 195 of 195.
 - Findings closed: 0 of 195.

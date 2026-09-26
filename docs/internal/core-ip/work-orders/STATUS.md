@@ -6,10 +6,10 @@ not CI verification, and neither is live qualification. No finding closes throug
 
 | State | Tasks |
 |---|---:|
-| planned | 40 |
-| reproduced | 11 |
-| implemented | 30 |
-| fixture-proven | 25 |
+| planned | 35 |
+| reproduced | 13 |
+| implemented | 35 |
+| fixture-proven | 30 |
 | CI-verified | 0 |
 | live-qualified | 0 |
 | measurement-complete | 0 |
@@ -67,12 +67,12 @@ not CI verification, and neither is live qualification. No finding closes throug
 
 | Task | States | Evidence | Remaining or blocker |
 |---|---|---|---|
-| W5-T01 Define the immutable candidate lineage envelope | planned | — | — |
-| W5-T02 Freeze request objectives and paired-arm differences | planned | — | — |
-| W5-T03 Separate fit caches from score caches | planned | — | — |
-| W5-T04 Implement conservative feasibility classification | planned | — | — |
+| W5-T01 Define the immutable candidate lineage envelope | reproduced, implemented, fixture-proven | 943e3a6926d6; generic_bootstrap_candidates_retain_their_original_proposal_and_one_adaptation; variation_children_record_parents_and_cannot_alter_parent_fitted_state; gp::lineage::tests (4 tamper tests) | The lineage verifier refuses rows without an envelope (older ledgers) and needs seed/vocabulary paths; native-continuation paths are unit-tested only. |
+| W5-T02 Freeze request objectives and paired-arm differences | implemented, fixture-proven | e41f1541501a; a_resume_under_other_selection_rules_is_refused_not_restarted | Selection contract and proposal cap are frozen in the search request; paired-arm manifests and differences remain. |
+| W5-T03 Separate fit caches from score caches | implemented, fixture-proven | 4311120b70b6; reused_fits_are_rescored_on_their_own_rows_and_never_inherit_scores; score_identities_bind_the_fold_protocol_and_predictions | Verified safeguard (scores were already recomputed on reuse); each score now carries an identity bound to its fitted subject and scored rows. |
+| W5-T04 Implement conservative feasibility classification | implemented, fixture-proven | 6e4e38f4016c; feasibility::tests (4, with a counting allocator bounding peak allocation); feasibility_estimates_are_recorded_beside_observed_outcomes_under_one_rule | Memory feasibility only (not time); recorded as a diagnostic, dispatch unchanged. Refusing candidates would change search policy and needs a new protocol identity. |
 | W5-T05 Reserve work before dispatch and supervise termination | planned | — | — |
-| W5-T06 Build an independent selector and stopping replay | planned | — | — |
+| W5-T06 Build an independent selector and stopping replay | reproduced, implemented, fixture-proven | ec99c76ade7d; independent_replay_reproduces_real_search_winners_and_refuses_tampered_ledgers; resumed_search_refuses_journaled_measurements_its_original_completion_does_not_support; gp::selection_replay::tests (9 adversarial) | Replay refuses older ledgers without the search clock; production activation verifiers remain unimplemented (owner/security decision). |
 | W5-T07 Seal selection, final refit and export handoff | planned | — | — |
 
 ## W06

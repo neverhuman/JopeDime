@@ -1899,6 +1899,19 @@
         "orchestration"
       ]
     },
+    "target:jope-parallel/bin/jope-gp-selection-replay": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "gp",
+        "fitting",
+        "teaching",
+        "training",
+        "storage",
+        "export",
+        "orchestration"
+      ]
+    },
     "target:jope-parallel/bin/jope-native-graph": {
       "role": "regression",
       "subsystems": [
