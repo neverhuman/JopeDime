@@ -849,8 +849,23 @@
     },
     "W11-T03": {
       "states": [
-        "planned"
-      ]
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "1aaec28a24f7b4bdd27a169a87733586784042ee"
+      ],
+      "tests": [
+        "injected_delays_land_in_their_enclosing_stage_and_the_whole_request",
+        "unsynchronized_stages_misattribute_queued_device_work",
+        "failed_stages_are_recorded_and_names_are_unique",
+        "warm_and_cold_states_are_part_of_the_record",
+        "production_clock_brackets_every_boundary_with_synchronization"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w11-t03-timeline-20260926T064506Z"
+      ],
+      "remaining": "Timing semantics are fixture-proven with an injected clock and device queue. inference_cuda::request is not yet wired to the timeline (inference-cuda build not exercised here); real timings need the admitted GPU window."
     },
     "W11-T04": {
       "states": [

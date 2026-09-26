@@ -6,10 +6,10 @@ not CI verification, and neither is live qualification. No finding closes throug
 
 | State | Tasks |
 |---|---:|
-| planned | 28 |
+| planned | 27 |
 | reproduced | 15 |
-| implemented | 42 |
-| fixture-proven | 37 |
+| implemented | 43 |
+| fixture-proven | 38 |
 | CI-verified | 0 |
 | live-qualified | 0 |
 | measurement-complete | 0 |
@@ -147,7 +147,7 @@ not CI verification, and neither is live qualification. No finding closes throug
 |---|---|---|---|
 | W11-T01 Reconcile prior study and freeze the corrected census | implemented, fixture-proven | e9f270f38d0e; test_census_comes_from_the_frozen_plan | The corrected study manifest itself is not frozen; that needs the GPU study approval. |
 | W11-T02 Qualify runtime/device/source profiles independently | blocked | — | Needs an approved corrected GPU study manifest, runtime qualification and a new admitted window. |
-| W11-T03 Instrument synchronized whole-request boundaries | planned | — | — |
+| W11-T03 Instrument synchronized whole-request boundaries | implemented, fixture-proven | 1aaec28a24f7; injected_delays_land_in_their_enclosing_stage_and_the_whole_request; unsynchronized_stages_misattribute_queued_device_work; failed_stages_are_recorded_and_names_are_unique; +2 tests | Timing semantics are fixture-proven with an injected clock and device queue. inference_cuda::request is not yet wired to the timeline (inference-cuda build not exercised here); real timings need the admitted GPU window. |
 | W11-T04 Retain complete measured and failed outcomes | reproduced, implemented, fixture-proven | e9f270f38d0e; test_every_planned_slot_reconciles_to_one_outcome; test_unplanned_receipts_are_listed_and_block_the_headline | Journal-to-controller allocation reconciliation needs an executed study. |
 | W11-T05 Profile separately and choose a measured bottleneck | blocked | — | Needs an approved corrected GPU study manifest, runtime qualification and a new admitted window. |
 | W11-T06 Replay identical work before adaptive scheduling experiments | blocked | — | Needs an approved corrected GPU study manifest, runtime qualification and a new admitted window. |
