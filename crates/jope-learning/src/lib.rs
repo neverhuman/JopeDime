@@ -22,6 +22,7 @@ pub mod hwm;
 pub mod ledger;
 pub mod metric;
 pub mod mirror;
+pub mod progress;
 pub mod record;
 pub mod scores;
 pub mod sources;
