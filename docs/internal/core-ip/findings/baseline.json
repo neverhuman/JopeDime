@@ -1,0 +1,463 @@
+{
+  "schema": "jope.regression-baseline-inventory/v1",
+  "source_sha": "418ef104c06a3a08b594cfcd6a5687dfeb882552",
+  "run_id": 36195898277,
+  "attempt": 1,
+  "run_url": "https://github.com/neverhuman/JopeDime/actions/runs/36195898277",
+  "scope": "historical full diagnostic; not a new regression-only execution",
+  "families": [
+    {
+      "lane": "full-build-reuse",
+      "receipt_path": "/home/ubuntu/jope-rescue-20260921/python-fixture-evidence-20260925/main108-diagnostic/full-cpu-36195898277-1/full-build-reuse/receipt.json",
+      "receipt_sha256": "650b549d608c2feb018cefec4b1550189bc06513eb6f4f737d56d9d777f63585",
+      "source_sha": "418ef104c06a3a08b594cfcd6a5687dfeb882552",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=15s",
+        "300s",
+        "bash",
+        "deploy/ci/full-lane.sh",
+        "full-build-reuse"
+      ],
+      "exit_status": 0,
+      "counts": {
+        "collected": null,
+        "executed": null,
+        "passed": null,
+        "failed": null,
+        "skipped": null,
+        "excluded": null
+      },
+      "status": "passed",
+      "failures": []
+    },
+    {
+      "lane": "full-default",
+      "receipt_path": "/home/ubuntu/jope-rescue-20260921/python-fixture-evidence-20260925/main108-diagnostic/full-cpu-36195898277-1/full-default/receipt.json",
+      "receipt_sha256": "ba8549c68ade79bf6fdca7c6f83726684f01dd164839869dab8e57911bc9bf55",
+      "source_sha": "418ef104c06a3a08b594cfcd6a5687dfeb882552",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=15s",
+        "1800s",
+        "bash",
+        "deploy/ci/full-lane.sh",
+        "full-default"
+      ],
+      "exit_status": 100,
+      "counts": {
+        "collected": 3040,
+        "executed": 3002,
+        "passed": 2986,
+        "failed": 16,
+        "skipped": 38,
+        "excluded": 0
+      },
+      "status": "failed",
+      "failures": [
+        {
+          "class": "jope-dime-regressor::dlgp_best5",
+          "test": "all_six_arms_complete_eight_generation_synthetic_worker_with_exact_ledgers",
+          "regression_disposition": "triage-required; do not silently exclude"
+        },
+        {
+          "class": "jope-dime-regressor::dlgp_best5",
+          "test": "training_staging_rebuilds_stable_rows_without_resolving_test",
+          "regression_disposition": "triage-required; do not silently exclude"
+        },
+        {
+          "class": "jope-dime-regressor::bin/jope-dime-regressor",
+          "test": "commands::train_only_study::tests::production_sotarena_registry_freezes_exact_37_to_requested_10",
+          "regression_disposition": "triage-required; do not silently exclude"
+        },
+        {
+          "class": "jope-dime-regressor::bin/jope-dime-regressor",
+          "test": "test_adaptive::binary42::tests::all_frozen_dataset_bindings_and_binary_labels_are_valid",
+          "regression_disposition": "triage-required; do not silently exclude"
+        },
+        {
+          "class": "jope-dime-regressor::bin/jope-dime-regressor",
+          "test": "test_adaptive::binary42::tests::binary42_fitted_cpp17_predictions_match_rust_bits",
+          "regression_disposition": "triage-required; do not silently exclude"
+        },
+        {
+          "class": "jope-dime-regressor::bin/jope-dime-regressor",
+          "test": "test_adaptive::island_extension::tests::generation_30_populations_reconstruct_deterministically",
+          "regression_disposition": "triage-required; do not silently exclude"
+        },
+        {
+          "class": "jope-dime-regressor::bin/jope-dime-regressor",
+          "test": "test_adaptive::island_extension::tests::prior_no_win_cohort_reconstructs_in_order",
+          "regression_disposition": "triage-required; do not silently exclude"
+        },
+        {
+          "class": "jope-dime-regressor::bin/jope-dime-regressor",
+          "test": "test_adaptive::island_extension::tests::sealed_generation_29_artifacts_bind_seven_champion_continuations",
+          "regression_disposition": "triage-required; do not silently exclude"
+        },
+        {
+          "class": "jope-parallel::gp_contracts",
+          "test": "fitted_predictor_roundtrip_matches_native_gp_and_restores_target_units",
+          "regression_disposition": "triage-required; do not silently exclude"
+        },
+        {
+          "class": "jope-parallel::gp_contracts",
+          "test": "sealed_memory_view_matches_file_evaluation_and_rejects_writes",
+          "regression_disposition": "triage-required; do not silently exclude"
+        },
+        {
+          "class": "jope-parallel::view_contracts",
+          "test": "fitted_view_predictor_uses_the_exact_cut_and_original_target_units",
+          "regression_disposition": "triage-required; do not silently exclude"
+        },
+        {
+          "class": "jope-parallel::view_contracts",
+          "test": "experiment_crashes_at_durable_boundaries_recover_without_repeating_committed_fits",
+          "regression_disposition": "triage-required; do not silently exclude"
+        },
+        {
+          "class": "jope-parallel::view_contracts",
+          "test": "isolated_fitted_view_export_binds_success_and_preserves_worker_failures",
+          "regression_disposition": "triage-required; do not silently exclude"
+        },
+        {
+          "class": "jope-parallel::view_contracts",
+          "test": "one_evaluation_budget_runs_the_incumbent_before_neural_candidates",
+          "regression_disposition": "triage-required; do not silently exclude"
+        },
+        {
+          "class": "jope-parallel::view_contracts",
+          "test": "matched_search_seed_is_recorded_and_cannot_change_on_resume",
+          "regression_disposition": "triage-required; do not silently exclude"
+        },
+        {
+          "class": "jope-parallel::view_contracts",
+          "test": "projected_gp_candidates_are_exactly_representable_unique_and_durable",
+          "regression_disposition": "triage-required; do not silently exclude"
+        }
+      ]
+    },
+    {
+      "lane": "full-doctests",
+      "receipt_path": "/home/ubuntu/jope-rescue-20260921/python-fixture-evidence-20260925/main108-diagnostic/full-cpu-36195898277-1/full-doctests/receipt.json",
+      "receipt_sha256": "e021f38f5365ad0b3b57b33de69158b7c72e4f36480340c01f7cd3b8d814dd0c",
+      "source_sha": "418ef104c06a3a08b594cfcd6a5687dfeb882552",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=15s",
+        "600s",
+        "bash",
+        "deploy/ci/full-lane.sh",
+        "full-doctests"
+      ],
+      "exit_status": 0,
+      "counts": {
+        "collected": 9,
+        "executed": 9,
+        "passed": 9,
+        "failed": 0,
+        "skipped": 0,
+        "excluded": 0
+      },
+      "status": "passed",
+      "failures": []
+    },
+    {
+      "lane": "full-e2e",
+      "receipt_path": "/home/ubuntu/jope-rescue-20260921/python-fixture-evidence-20260925/main108-diagnostic/full-cpu-36195898277-1/full-e2e/receipt.json",
+      "receipt_sha256": "304d5db9425add047fdaf59a9b2b30cd4d9905a217e74c59fbde1d1a2d7b972a",
+      "source_sha": "418ef104c06a3a08b594cfcd6a5687dfeb882552",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=15s",
+        "300s",
+        "bash",
+        "deploy/ci/full-lane.sh",
+        "full-e2e"
+      ],
+      "exit_status": 0,
+      "counts": {
+        "collected": null,
+        "executed": null,
+        "passed": null,
+        "failed": null,
+        "skipped": null,
+        "excluded": null
+      },
+      "status": "passed",
+      "failures": []
+    },
+    {
+      "lane": "full-emitters",
+      "receipt_path": "/home/ubuntu/jope-rescue-20260921/python-fixture-evidence-20260925/main108-diagnostic/full-cpu-36195898277-1/full-emitters/receipt.json",
+      "receipt_sha256": "26902f1882bb89e3fcbd1673ed897d2946d39dd82b9884b2e1ccb58c326dc089",
+      "source_sha": "418ef104c06a3a08b594cfcd6a5687dfeb882552",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=15s",
+        "300s",
+        "bash",
+        "deploy/ci/full-lane.sh",
+        "full-emitters"
+      ],
+      "exit_status": 0,
+      "counts": {
+        "collected": 292,
+        "executed": 4,
+        "passed": 4,
+        "failed": 0,
+        "skipped": 0,
+        "excluded": 288
+      },
+      "status": "passed",
+      "failures": []
+    },
+    {
+      "lane": "full-inputs",
+      "receipt_path": "/home/ubuntu/jope-rescue-20260921/python-fixture-evidence-20260925/main108-diagnostic/full-cpu-36195898277-1/full-inputs/receipt.json",
+      "receipt_sha256": "42ed63c78168cea767800e35b06f4986abd20bbe527616eddd04955a179908b9",
+      "source_sha": "418ef104c06a3a08b594cfcd6a5687dfeb882552",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=15s",
+        "300s",
+        "bash",
+        "deploy/ci/full-lane.sh",
+        "full-inputs"
+      ],
+      "exit_status": 0,
+      "counts": {
+        "collected": null,
+        "executed": null,
+        "passed": null,
+        "failed": null,
+        "skipped": null,
+        "excluded": null
+      },
+      "status": "passed",
+      "failures": []
+    },
+    {
+      "lane": "full-neural",
+      "receipt_path": "/home/ubuntu/jope-rescue-20260921/python-fixture-evidence-20260925/main108-diagnostic/full-cpu-36195898277-1/full-neural/receipt.json",
+      "receipt_sha256": "0645bbb636f5ba6cb5610923aa723e9d534c3c50cb1649f1f809dbc825148622",
+      "source_sha": "418ef104c06a3a08b594cfcd6a5687dfeb882552",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=15s",
+        "900s",
+        "bash",
+        "deploy/ci/full-lane.sh",
+        "full-neural"
+      ],
+      "exit_status": 78,
+      "counts": {
+        "collected": null,
+        "executed": null,
+        "passed": null,
+        "failed": null,
+        "skipped": null,
+        "excluded": null
+      },
+      "status": "failed",
+      "failures": []
+    },
+    {
+      "lane": "full-policy",
+      "receipt_path": "/home/ubuntu/jope-rescue-20260921/python-fixture-evidence-20260925/main108-diagnostic/full-cpu-36195898277-1/full-policy/receipt.json",
+      "receipt_sha256": "74f4fe563c9fca437b43790170baabb1e1bb30338d418ddade8ac933ec063d89",
+      "source_sha": "418ef104c06a3a08b594cfcd6a5687dfeb882552",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=15s",
+        "600s",
+        "bash",
+        "deploy/ci/full-lane.sh",
+        "full-policy"
+      ],
+      "exit_status": 0,
+      "counts": {
+        "collected": 58,
+        "executed": 52,
+        "passed": 52,
+        "failed": 0,
+        "skipped": 6,
+        "excluded": 0
+      },
+      "status": "passed",
+      "failures": []
+    },
+    {
+      "lane": "full-python",
+      "receipt_path": "/home/ubuntu/jope-rescue-20260921/python-fixture-evidence-20260925/main108-diagnostic/full-cpu-36195898277-1/full-python/receipt.json",
+      "receipt_sha256": "7ea37e324776e293e26f6080e8df12bfb3b3c28e5fc6b076cd66dcf0048f8da6",
+      "source_sha": "418ef104c06a3a08b594cfcd6a5687dfeb882552",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=15s",
+        "600s",
+        "bash",
+        "deploy/ci/full-lane.sh",
+        "full-python"
+      ],
+      "exit_status": 0,
+      "counts": {
+        "collected": 344,
+        "executed": 329,
+        "passed": 329,
+        "failed": 0,
+        "skipped": 0,
+        "excluded": 15
+      },
+      "status": "passed",
+      "failures": []
+    },
+    {
+      "lane": "full-s3-offline",
+      "receipt_path": "/home/ubuntu/jope-rescue-20260921/python-fixture-evidence-20260925/main108-diagnostic/full-cpu-36195898277-1/full-s3-offline/receipt.json",
+      "receipt_sha256": "e7798e8d97ea2eb64a6cc6b80fbca07b1e8b32f74fb7b4ebd42a9b0e6a11aa93",
+      "source_sha": "418ef104c06a3a08b594cfcd6a5687dfeb882552",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=15s",
+        "300s",
+        "bash",
+        "deploy/ci/full-lane.sh",
+        "full-s3-offline"
+      ],
+      "exit_status": 0,
+      "counts": {
+        "collected": 40,
+        "executed": 40,
+        "passed": 40,
+        "failed": 0,
+        "skipped": 0,
+        "excluded": 0
+      },
+      "status": "passed",
+      "failures": []
+    },
+    {
+      "lane": "full-scratch",
+      "receipt_path": "/home/ubuntu/jope-rescue-20260921/python-fixture-evidence-20260925/main108-diagnostic/full-cpu-36195898277-1/full-scratch/receipt.json",
+      "receipt_sha256": "d62adbff0c28735cae037a74a4010c29b92adb6dd095564ee7d9f5193bd518d2",
+      "source_sha": "418ef104c06a3a08b594cfcd6a5687dfeb882552",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=15s",
+        "600s",
+        "bash",
+        "deploy/ci/full-lane.sh",
+        "full-scratch"
+      ],
+      "exit_status": 124,
+      "counts": {
+        "collected": 1963,
+        "executed": 1947,
+        "passed": 1930,
+        "failed": 17,
+        "skipped": 16,
+        "excluded": 0
+      },
+      "status": "failed",
+      "failures": [
+        {
+          "class": "feat-math::golden",
+          "test": "fast_profile_portfolio_head",
+          "regression_disposition": "triage-required; do not silently exclude"
+        },
+        {
+          "class": "jope-dime-regressor::dlgp_best5",
+          "test": "all_six_arms_complete_eight_generation_synthetic_worker_with_exact_ledgers",
+          "regression_disposition": "triage-required; do not silently exclude"
+        },
+        {
+          "class": "jope-dime-regressor::dlgp_best5",
+          "test": "training_staging_rebuilds_stable_rows_without_resolving_test",
+          "regression_disposition": "triage-required; do not silently exclude"
+        },
+        {
+          "class": "jope-dime-regressor::bin/jope-dime-regressor",
+          "test": "commands::train_only_study::tests::production_sotarena_registry_freezes_exact_37_to_requested_10",
+          "regression_disposition": "triage-required; do not silently exclude"
+        },
+        {
+          "class": "jope-dime-regressor::bin/jope-dime-regressor",
+          "test": "test_adaptive::binary42::tests::all_frozen_dataset_bindings_and_binary_labels_are_valid",
+          "regression_disposition": "triage-required; do not silently exclude"
+        },
+        {
+          "class": "jope-dime-regressor::bin/jope-dime-regressor",
+          "test": "test_adaptive::binary42::tests::binary42_fitted_cpp17_predictions_match_rust_bits",
+          "regression_disposition": "triage-required; do not silently exclude"
+        },
+        {
+          "class": "jope-dime-regressor::bin/jope-dime-regressor",
+          "test": "test_adaptive::island_extension::tests::generation_30_populations_reconstruct_deterministically",
+          "regression_disposition": "triage-required; do not silently exclude"
+        },
+        {
+          "class": "jope-dime-regressor::bin/jope-dime-regressor",
+          "test": "test_adaptive::island_extension::tests::prior_no_win_cohort_reconstructs_in_order",
+          "regression_disposition": "triage-required; do not silently exclude"
+        },
+        {
+          "class": "jope-dime-regressor::bin/jope-dime-regressor",
+          "test": "test_adaptive::island_extension::tests::sealed_generation_29_artifacts_bind_seven_champion_continuations",
+          "regression_disposition": "triage-required; do not silently exclude"
+        },
+        {
+          "class": "jope-parallel::gp_contracts",
+          "test": "sealed_memory_view_matches_file_evaluation_and_rejects_writes",
+          "regression_disposition": "triage-required; do not silently exclude"
+        },
+        {
+          "class": "jope-parallel::gp_contracts",
+          "test": "fitted_predictor_roundtrip_matches_native_gp_and_restores_target_units",
+          "regression_disposition": "triage-required; do not silently exclude"
+        },
+        {
+          "class": "jope-parallel::view_contracts",
+          "test": "fitted_view_predictor_uses_the_exact_cut_and_original_target_units",
+          "regression_disposition": "triage-required; do not silently exclude"
+        },
+        {
+          "class": "jope-parallel::view_contracts",
+          "test": "experiment_crashes_at_durable_boundaries_recover_without_repeating_committed_fits",
+          "regression_disposition": "triage-required; do not silently exclude"
+        },
+        {
+          "class": "jope-parallel::view_contracts",
+          "test": "isolated_fitted_view_export_binds_success_and_preserves_worker_failures",
+          "regression_disposition": "triage-required; do not silently exclude"
+        },
+        {
+          "class": "jope-parallel::view_contracts",
+          "test": "one_evaluation_budget_runs_the_incumbent_before_neural_candidates",
+          "regression_disposition": "triage-required; do not silently exclude"
+        },
+        {
+          "class": "jope-parallel::view_contracts",
+          "test": "matched_search_seed_is_recorded_and_cannot_change_on_resume",
+          "regression_disposition": "triage-required; do not silently exclude"
+        },
+        {
+          "class": "jope-parallel::view_contracts",
+          "test": "projected_gp_candidates_are_exactly_representable_unique_and_durable",
+          "regression_disposition": "triage-required; do not silently exclude"
+        }
+      ]
+    }
+  ]
+}
