@@ -368,12 +368,17 @@ pub fn load_qualified(
             "case normalized attestation differs from actual pool receipt"
         );
     }
+    // The pins were checked against the caller's expectation above, so verifying the bundle
+    // against them is verification against controller inputs.
     let verified = bundle.verify()?;
-    let vector = verified
-        .context()
-        .iter()
-        .flat_map(|x| x.to_le_bytes())
-        .collect::<Vec<_>>();
+    // Receiver check of the serialized products: the final context must be the frozen assembly
+    // of the qualified components under the accepted transforms, parsed from the exact bytes
+    // whose digest is the accepted transforms pin.
+    let transforms = context_producer::FrozenTransforms::from_bytes(&std::fs::read(
+        &files.frozen_transforms.path,
+    )?)?;
+    let context = verified.replay_assembly(&transforms)?;
+    let vector = context.to_le_bytes();
     ensure!(
         sha256_hex(&vector) == files.vector.sha256 && vector == std::fs::read(&files.vector.path)?,
         "policy vector differs from qualified CPU output"

@@ -32,6 +32,12 @@ pub struct Request {
     /// Omitted when absent, so accepted request bytes and identities are unchanged.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub challenger: Option<crate::config::ChallengerIdentity>,
+    /// For a qualified CPU context: the digest of the controller-issued context admission pins
+    /// (`context_producer::AdmissionPins::sha256`). The worker verifies the context bundle
+    /// against these pins, never against pins the bundle chose. Omitted for a native context,
+    /// so native request bytes and identities are unchanged.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub context_admission_sha256: Option<String>,
 }
 /// All producer inputs known before encoding. The context output digest is
 /// attached later and cannot change the search arm's identity or clock.
@@ -57,7 +63,25 @@ pub struct RequestPlan {
     pub challenger: Option<crate::config::ChallengerIdentity>,
 }
 impl RequestPlan {
+    /// The request for a native context: only the context digest is attached.
     pub fn request(&self, context_sha256: String) -> Request {
+        self.request_with_admission(context_sha256, None)
+    }
+    /// The request for a qualified CPU context: the context digest and the digest of the
+    /// controller-issued admission pins are attached after encoding.
+    pub fn qualified_request(
+        &self,
+        context_sha256: String,
+        context_admission_sha256: String,
+    ) -> Request {
+        self.request_with_admission(context_sha256, Some(context_admission_sha256))
+    }
+    /// This plan with exactly the given encoding outputs attached; everything else is the plan.
+    pub fn request_with_admission(
+        &self,
+        context_sha256: String,
+        context_admission_sha256: Option<String>,
+    ) -> Request {
         Request {
             worker_source_sha256: self.worker_source_sha256.clone(),
             prepared_sha256: self.prepared_sha256.clone(),
@@ -74,6 +98,7 @@ impl RequestPlan {
             sampling_temperature: self.sampling_temperature,
             challenger: self.challenger.clone(),
             context_sha256,
+            context_admission_sha256,
         }
     }
     pub fn validate(&self) -> Result<()> {
@@ -95,6 +120,13 @@ impl Request {
             ensure!(
                 crate::is_sha256_hex(digest),
                 "invalid producer request digest"
+            );
+        }
+        if let Some(admission) = &self.context_admission_sha256 {
+            ensure!(
+                crate::is_sha256_hex(admission)
+                    && !admission.bytes().any(|b| b.is_ascii_uppercase()),
+                "invalid context admission digest"
             );
         }
         match &self.challenger {
@@ -317,7 +349,7 @@ fn recipe_hash(genome: &str) -> Result<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    fn request() -> Request {
+    pub(super) fn request() -> Request {
         Request {
             worker_source_sha256: sha256_hex(b"synthetic producer source"),
             prepared_sha256: sha256_hex(b"synthetic prepared"),
@@ -335,6 +367,7 @@ mod tests {
             sampling_batch: 128,
             sampling_temperature: 1.,
             challenger: None,
+            context_admission_sha256: None,
         }
     }
     // Deliberately forgeable file claims, never a Proposal or execution proof.
@@ -382,6 +415,69 @@ mod tests {
         let mut different = expected.clone();
         different.context_sha256 = sha256_hex(b"another context");
         assert!(read_claims(&serde_json::to_vec(&claims())?, &different).is_err());
+        Ok(())
+    }
+
+    fn plan_of(r: &Request) -> RequestPlan {
+        RequestPlan {
+            worker_source_sha256: r.worker_source_sha256.clone(),
+            prepared_sha256: r.prepared_sha256.clone(),
+            training_sha256: r.training_sha256.clone(),
+            cut: r.cut,
+            checkpoint_sha256: r.checkpoint_sha256.clone(),
+            policy_safetensors_sha256: r.policy_safetensors_sha256.clone(),
+            vocabulary_sha256: r.vocabulary_sha256.clone(),
+            sampling_seed: r.sampling_seed,
+            fallback_seed: r.fallback_seed,
+            exploration_seed: r.exploration_seed,
+            sampling_rounds: r.sampling_rounds,
+            sampling_batch: r.sampling_batch,
+            sampling_temperature: r.sampling_temperature,
+            challenger: r.challenger.clone(),
+        }
+    }
+    /// W2-T02 G-03: the controller-issued admission digest is optional (native request bytes and
+    /// identities are unchanged), strictly formatted, and part of the request identity.
+    #[test]
+    fn context_admission_pin_is_optional_and_bound() -> Result<()> {
+        let native = request();
+        let bytes = serde_json::to_vec(&native)?;
+        assert!(!String::from_utf8(bytes.clone())?.contains("context_admission_sha256"));
+        let parsed: Request = serde_json::from_slice(&bytes)?;
+        assert_eq!(parsed.context_admission_sha256, None);
+        assert_eq!(parsed.identity()?, native.identity()?);
+        let issued = Request {
+            context_admission_sha256: Some(sha256_hex(b"controller pins")),
+            ..request()
+        };
+        issued.validate()?;
+        assert_ne!(issued.identity()?, native.identity()?);
+        let parsed: Request = serde_json::from_slice(&serde_json::to_vec(&issued)?)?;
+        assert_eq!(parsed, issued);
+        for bad in [
+            "not hex".to_string(),
+            sha256_hex(b"controller pins").to_ascii_uppercase(),
+        ] {
+            assert!(Request {
+                context_admission_sha256: Some(bad),
+                ..request()
+            }
+            .validate()
+            .is_err());
+        }
+        // The plan attaches exactly the encoding outputs.
+        let plan = plan_of(&native);
+        assert_eq!(plan.request(native.context_sha256.clone()), native);
+        assert_eq!(
+            plan.qualified_request(
+                native.context_sha256.clone(),
+                sha256_hex(b"controller pins")
+            ),
+            issued
+        );
+        // Claims written for one request never satisfy the other.
+        assert!(read_claims(&serde_json::to_vec(&claims())?, &issued).is_err());
+        read_claims(&serde_json::to_vec(&claims_for(issued.clone()))?, &issued)?;
         Ok(())
     }
 
@@ -454,22 +550,7 @@ mod tests {
         .is_err());
         // The plan carries the identity into the request.
         let r = challenger_request();
-        let plan = RequestPlan {
-            worker_source_sha256: r.worker_source_sha256.clone(),
-            prepared_sha256: r.prepared_sha256.clone(),
-            training_sha256: r.training_sha256.clone(),
-            cut: r.cut,
-            checkpoint_sha256: r.checkpoint_sha256.clone(),
-            policy_safetensors_sha256: r.policy_safetensors_sha256.clone(),
-            vocabulary_sha256: r.vocabulary_sha256.clone(),
-            sampling_seed: r.sampling_seed,
-            fallback_seed: r.fallback_seed,
-            exploration_seed: r.exploration_seed,
-            sampling_rounds: r.sampling_rounds,
-            sampling_batch: r.sampling_batch,
-            sampling_temperature: r.sampling_temperature,
-            challenger: Some(c.clone()),
-        };
+        let plan = plan_of(&r);
         plan.validate()?;
         assert_eq!(plan.request(r.context_sha256.clone()), r);
         assert_eq!(plan.request(r.context_sha256.clone()).challenger, Some(c));
@@ -521,6 +602,10 @@ pub struct QualifiedContextBundle {
 }
 #[cfg(feature = "context-producer")]
 impl QualifiedContextBundle {
+    /// Verify the bundle against its carried pins. Those pins are only as trustworthy as the
+    /// channel that delivered the bundle: a controller that authenticated them independently
+    /// (for example `cpu_context_bridge::load_qualified`) may call this; a worker must use
+    /// [`Self::admit_for_request`].
     pub fn verify(&self) -> Result<crate::context_producer::VerifiedCpuContext> {
         crate::context_producer::verify_qualified(
             &self.artifact,
@@ -530,5 +615,135 @@ impl QualifiedContextBundle {
             &self.case_executions,
             &self.pins,
         )
+    }
+
+    /// Policy-worker admission of a qualified CPU context. The bundle's pins must be exactly the
+    /// admission the controller issued in the authenticated request
+    /// ([`Request::context_admission_sha256`]); only then is the bundle verified against them.
+    /// The final context must then be the frozen assembly of the qualified components under the
+    /// accepted transforms, bit-identical to the actual policy input, and deliverable to the
+    /// accepted policy for this request's scope.
+    pub fn admit_for_request(
+        &self,
+        request: &Request,
+        transforms: &crate::context_producer::FrozenTransforms,
+        policy_input: &[u8],
+    ) -> Result<crate::context_producer::ContextHandoff> {
+        request.validate()?;
+        let issued = request.context_admission_sha256.as_deref().ok_or_else(|| {
+            anyhow::anyhow!("request carries no controller-issued context admission pin")
+        })?;
+        ensure!(
+            self.pins.sha256()? == issued,
+            "context bundle pins are not the controller-issued admission of this request"
+        );
+        let verified = self.verify()?;
+        let context = verified.replay_assembly(transforms)?;
+        ensure!(
+            context.to_le_bytes() == policy_input,
+            "qualified context differs from the actual policy input"
+        );
+        let handoff = verified.handoff(
+            &context,
+            crate::context_producer::ContextConsumer::AcceptedPolicyProposal,
+        )?;
+        handoff.deliver_to_policy(request)?;
+        Ok(handoff)
+    }
+}
+
+#[cfg(all(test, feature = "context-producer"))]
+mod bundle_tests {
+    use super::*;
+    use crate::context_producer::*;
+    fn forged_bundle() -> QualifiedContextBundle {
+        let artifact = br#"{"not":"checked yet"}"#.to_vec();
+        let pins = AdmissionPins {
+            source_sha256: "e".repeat(40),
+            producer_sha256: "f".repeat(64),
+            artifact_sha256: sha256_hex(&artifact),
+            qualification_sha256: sha256_hex(b"q"),
+            reference_manifest_sha256: sha256_hex(b"m"),
+            context_execution_sha256: sha256_hex(b"x"),
+            qualification_execution_sha256: vec![sha256_hex(b"c"); 8],
+            verification_policy_sha256: verification_policy_sha256(),
+            training: TrainingIdentity {
+                dataset_sha256: "a".repeat(64),
+                prepared_sha256: "b".repeat(64),
+                training_sha256: "c".repeat(64),
+                fitting_rows_sha256: "d".repeat(64),
+                cut: 0,
+            },
+            input_sha256: "1".repeat(64),
+            preprocessing_sha256: "2".repeat(64),
+        };
+        QualifiedContextBundle {
+            artifact,
+            qualification: b"q".to_vec(),
+            reference_manifest: b"m".to_vec(),
+            context_execution: b"x".to_vec(),
+            case_executions: vec![b"c".to_vec(); 8],
+            pins,
+        }
+    }
+    fn refusal(
+        bundle: &QualifiedContextBundle,
+        request: &Request,
+        transforms: &FrozenTransforms,
+    ) -> String {
+        match bundle.admit_for_request(request, transforms, &[0; 8192]) {
+            Ok(_) => panic!("forged bundle admitted"),
+            Err(error) => format!("{error:#}"),
+        }
+    }
+
+    /// W2-T02 G-03: the worker verifies a bundle against the controller-issued admission in the
+    /// request, never against the pins the bundle carries. Pre-fix reproduction (retained in the
+    /// w2b-repro-prefix evidence): a bundle that chose its own pins passed every pin gate of
+    /// `verify` and was refused only later, while parsing its artifact.
+    #[test]
+    fn worker_admission_requires_the_request_issued_pins() {
+        let transforms = FrozenTransforms::synthetic_for_testing(1.0);
+        let bundle = forged_bundle();
+        let request = super::tests::request();
+        // No admission issued: refused before any verification.
+        let error = refusal(&bundle, &request, &transforms);
+        assert!(
+            error.contains("no controller-issued context admission"),
+            "{error}"
+        );
+        // The controller issued other pins: refused, whatever the bundle claims.
+        let mut other = bundle.pins.clone();
+        other.input_sha256 = "9".repeat(64);
+        let issued_other = Request {
+            context_admission_sha256: Some(other.sha256().unwrap()),
+            ..request.clone()
+        };
+        let error = refusal(&bundle, &issued_other, &transforms);
+        assert!(
+            error.contains("not the controller-issued admission"),
+            "{error}"
+        );
+        // Pins changed after issuance (for example to name a substituted artifact): refused.
+        let issued = Request {
+            context_admission_sha256: Some(bundle.pins.sha256().unwrap()),
+            ..request.clone()
+        };
+        let mut substituted = bundle.clone();
+        substituted.artifact = b"{}".to_vec();
+        substituted.pins.artifact_sha256 = sha256_hex(&substituted.artifact);
+        let error = refusal(&substituted, &issued, &transforms);
+        assert!(
+            error.contains("not the controller-issued admission"),
+            "{error}"
+        );
+        // Positive control for the gate: with the issued pins the bundle passes the pin gate and
+        // full verification runs (this synthetic bundle then fails on its artifact content, so
+        // nothing is admitted).
+        let error = refusal(&bundle, &issued, &transforms);
+        assert!(
+            !error.contains("controller-issued") && error.contains("unknown field"),
+            "{error}"
+        );
     }
 }

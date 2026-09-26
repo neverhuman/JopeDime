@@ -45,7 +45,8 @@ pub struct NativeComponent {
 pub struct ProducedCase {
     pub id: String,
     pub prepared_rows_sha256: String,
-    pub components: Components,
+    /// Serialized claims; compared with the native references by [`compare`].
+    pub components: ComponentVectors,
     pub vector: Vec<f32>,
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -112,6 +113,36 @@ pub struct AdmissionPins {
     pub input_sha256: String,
     pub preprocessing_sha256: String,
 }
+impl AdmissionPins {
+    /// sha256 of these pins' canonical JSON (field order is fixed by the struct). A controller
+    /// issues this digest in the policy request (`producer::Request::context_admission_sha256`)
+    /// so a worker never verifies a bundle against pins the bundle chose itself.
+    pub fn sha256(&self) -> Result<String> {
+        Ok(sha(&serde_json::to_vec(self)?))
+    }
+}
+
+/// A qualified CPU context: only [`verify_qualified`] constructs one (private fields, no
+/// `Deserialize`). An unqualified [`CpuContextArtifact`] never becomes one, so a diagnostic
+/// context cannot reach [`ContextHandoff`].
+///
+/// ```compile_fail,E0277
+/// // An unqualified (diagnostic) artifact does not convert into a qualified context.
+/// use jope_policy::context_producer::{CpuContextArtifact, VerifiedCpuContext};
+/// fn mint(artifact: CpuContextArtifact) -> VerifiedCpuContext {
+///     artifact.into()
+/// }
+/// ```
+///
+/// ```compile_fail
+/// // Fields are private: no struct literal outside `verify_qualified`.
+/// let _ = jope_policy::context_producer::VerifiedCpuContext { context: vec![0.0; 2048] };
+/// ```
+///
+/// ```compile_fail,E0277
+/// // A handoff cannot be deserialized into existence either.
+/// let _: jope_policy::context_producer::ContextHandoff = serde_json::from_slice(b"{}").unwrap();
+/// ```
 pub struct VerifiedCpuContext {
     context: Vec<f32>,
     training: TrainingIdentity,
@@ -120,10 +151,86 @@ pub struct VerifiedCpuContext {
     original_labels_sha256: String,
     artifact_sha256: String,
     qualification_sha256: String,
+    components: ComponentVectors,
+    prepared_rows_sha256: String,
+    encoder: EncoderIdentity,
+    source_sha256: String,
+    producer_sha256: String,
+    reference_manifest_sha256: String,
+    verification_policy_sha256: String,
+    admission_pins_sha256: String,
 }
 impl VerifiedCpuContext {
+    /// Unit-test support: the value `verify_qualified` returns for `artifact` under `pins`,
+    /// without the reference-manifest and execution checks (whose pinned native bytes are not
+    /// available to unit tests). Never compiled outside the crate's own tests.
+    #[cfg(test)]
+    pub(crate) fn for_testing(artifact: CpuContextArtifact, pins: &AdmissionPins) -> Self {
+        Self {
+            context: artifact.vector,
+            training: artifact.training,
+            input_sha256: artifact.input_sha256,
+            preprocessing_sha256: artifact.preprocessing_sha256,
+            original_labels_sha256: artifact.original_labels_sha256,
+            artifact_sha256: pins.artifact_sha256.clone(),
+            qualification_sha256: pins.qualification_sha256.clone(),
+            components: artifact.components,
+            prepared_rows_sha256: artifact.prepared_rows_sha256,
+            encoder: artifact.encoder,
+            source_sha256: pins.source_sha256.clone(),
+            producer_sha256: pins.producer_sha256.clone(),
+            reference_manifest_sha256: pins.reference_manifest_sha256.clone(),
+            verification_policy_sha256: pins.verification_policy_sha256.clone(),
+            admission_pins_sha256: pins.sha256().unwrap(),
+        }
+    }
     pub fn context(&self) -> &[f32] {
         &self.context
+    }
+    /// Digest of the controller pins this context was verified against.
+    pub fn admission_pins_sha256(&self) -> &str {
+        &self.admission_pins_sha256
+    }
+    /// Receiver replay of the frozen assembly over the qualified artifact's own components; the
+    /// typed context carries the artifact's input scope.
+    pub fn replay_assembly(&self, transforms: &FrozenTransforms) -> Result<FinalContext> {
+        transforms.replay(&self.components, &self.context, &self.prepared_rows_sha256)
+    }
+    /// The producer-to-consumer handoff for `consumer`: release identity, typed transformation
+    /// chain, input scope and final-context digest. `context` must be this context's replayed
+    /// assembly ([`Self::replay_assembly`]).
+    pub fn handoff(
+        &self,
+        context: &FinalContext,
+        consumer: ContextConsumer,
+    ) -> Result<ContextHandoff> {
+        ensure!(
+            context.values() == self.context.as_slice()
+                && context.scope() == self.prepared_rows_sha256,
+            "handoff context is not this qualified context"
+        );
+        Ok(ContextHandoff {
+            schema: HANDOFF_SCHEMA.into(),
+            consumer,
+            release: ContextRelease {
+                encoder: self.encoder.clone(),
+                source_sha256: self.source_sha256.clone(),
+                producer_sha256: self.producer_sha256.clone(),
+                verification_policy_sha256: self.verification_policy_sha256.clone(),
+                reference_manifest_sha256: self.reference_manifest_sha256.clone(),
+            },
+            transformations: transformation_chain(),
+            scope: ContextScope {
+                training: self.training.clone(),
+                input_sha256: self.input_sha256.clone(),
+                preprocessing_sha256: self.preprocessing_sha256.clone(),
+                prepared_rows_sha256: self.prepared_rows_sha256.clone(),
+            },
+            artifact_sha256: self.artifact_sha256.clone(),
+            qualification_sha256: self.qualification_sha256.clone(),
+            admission_pins_sha256: self.admission_pins_sha256.clone(),
+            context_sha256: context.sha256(),
+        })
     }
     pub fn training(&self) -> &TrainingIdentity {
         &self.training
@@ -142,6 +249,123 @@ impl VerifiedCpuContext {
     }
     pub fn qualification_sha256(&self) -> &str {
         &self.qualification_sha256
+    }
+}
+
+pub const HANDOFF_SCHEMA: &str = "jope.cpu-context-handoff/v1";
+
+/// The consumer a qualified context is handed to. A handoff names exactly one.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ContextConsumer {
+    /// The accepted step-60000 regression policy's proposal worker.
+    AcceptedPolicyProposal,
+    /// Teacher admission (W3 integrates the authority-bearing consumer).
+    TeacherAdmission,
+}
+
+/// Static release identity of a qualified context: the pinned encoder closure, the producer
+/// program and source, and the verification protocol it was qualified under.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+pub struct ContextRelease {
+    pub encoder: EncoderIdentity,
+    pub source_sha256: String,
+    pub producer_sha256: String,
+    pub verification_policy_sha256: String,
+    pub reference_manifest_sha256: String,
+}
+
+/// Request-specific input scope of a qualified context.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+pub struct ContextScope {
+    pub training: TrainingIdentity,
+    pub input_sha256: String,
+    pub preprocessing_sha256: String,
+    pub prepared_rows_sha256: String,
+}
+
+/// The typed transformation chain of a CPU context, in execution order.
+pub fn transformation_chain() -> Vec<String> {
+    [
+        RowEmbeddings::TRANSFORMATION,
+        HyperionSignature::TRANSFORMATION,
+        RawFoundation::TRANSFORMATION,
+        TargetBlock::TRANSFORMATION,
+        ProjectedFoundation::TRANSFORMATION,
+        FinalContext::TRANSFORMATION,
+    ]
+    .map(String::from)
+    .to_vec()
+}
+
+/// Producer-to-consumer handoff of one qualified CPU context (W2-T07): release identity, typed
+/// transformation chain, input scope, final-context digest and the admission it came through.
+/// Only [`VerifiedCpuContext::handoff`] constructs one; it serializes for receipts and cannot be
+/// deserialized.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+pub struct ContextHandoff {
+    schema: String,
+    consumer: ContextConsumer,
+    release: ContextRelease,
+    transformations: Vec<String>,
+    scope: ContextScope,
+    artifact_sha256: String,
+    qualification_sha256: String,
+    admission_pins_sha256: String,
+    context_sha256: String,
+}
+impl ContextHandoff {
+    pub fn consumer(&self) -> ContextConsumer {
+        self.consumer
+    }
+    pub fn release(&self) -> &ContextRelease {
+        &self.release
+    }
+    pub fn transformations(&self) -> &[String] {
+        &self.transformations
+    }
+    pub fn scope(&self) -> &ContextScope {
+        &self.scope
+    }
+    pub fn context_sha256(&self) -> &str {
+        &self.context_sha256
+    }
+    pub fn admission_pins_sha256(&self) -> &str {
+        &self.admission_pins_sha256
+    }
+    /// sha256 of this handoff's canonical JSON, for receipts that carry it onward.
+    pub fn sha256(&self) -> Result<String> {
+        Ok(sha(&serde_json::to_vec(self)?))
+    }
+    /// Deliver to the accepted policy proposal worker serving `request`. Refuses a handoff made
+    /// for another consumer, another release or transformation chain, an admission the request
+    /// did not issue, and another context, dataset, training cut or preprocessing.
+    pub fn deliver_to_policy(&self, request: &crate::producer::Request) -> Result<()> {
+        ensure!(
+            self.schema == HANDOFF_SCHEMA
+                && self.consumer == ContextConsumer::AcceptedPolicyProposal,
+            "context was handed off for another consumer ({:?})",
+            self.consumer
+        );
+        self.release.encoder.require_accepted()?;
+        ensure!(
+            self.release.verification_policy_sha256 == verification_policy_sha256()
+                && self.transformations == transformation_chain(),
+            "context release protocol or transformation chain is unknown"
+        );
+        ensure!(
+            request.context_admission_sha256.as_deref()
+                == Some(self.admission_pins_sha256.as_str()),
+            "context admission was not issued by this request's controller"
+        );
+        ensure!(
+            request.context_sha256 == self.context_sha256
+                && request.prepared_sha256 == self.scope.training.prepared_sha256
+                && request.training_sha256 == self.scope.training.training_sha256
+                && request.cut == self.scope.training.cut as usize,
+            "qualified context scope differs from the policy request"
+        );
+        Ok(())
     }
 }
 
@@ -187,12 +411,16 @@ impl CpuProducer {
             "qualification case numerical rows changed"
         );
         let components = self.encode_prepared(&reference.prepared_rows)?;
-        let vector = self.assemble(&components)?;
+        let context = self.assemble(&components)?;
+        ensure!(
+            context.scope() == reference.prepared_rows_sha256,
+            "qualification products belong to other prepared rows"
+        );
         let produced = ProducedCase {
             id: reference.id.clone(),
             prepared_rows_sha256: reference.prepared_rows_sha256.clone(),
-            components,
-            vector,
+            components: components.to_vectors(),
+            vector: context.values().to_vec(),
         };
         Ok(QualificationCaseResult {
             schema: "jope.cpu-context-case/v1".into(),
@@ -251,6 +479,7 @@ pub fn aggregate_qualification(
     );
     let first: QualificationCaseResult =
         serde_json::from_slice(case_outputs.first().context("no case outcomes")?)?;
+    first.encoder.require_accepted()?;
     let result = Qualification {
         schema: "jope.cpu-context-qualification/v1".into(),
         source_sha256: source_sha256.into(),
@@ -265,6 +494,8 @@ pub fn aggregate_qualification(
 }
 
 fn verify_case_outputs(manifest: &ReferenceManifest, qualification: &Qualification) -> Result<()> {
+    // The qualified encoder is the release decision, not whatever the first case reported.
+    qualification.encoder.require_accepted()?;
     ensure!(
         qualification.case_outputs.len() == manifest.cases.len(),
         "incomplete qualification cases"
@@ -383,6 +614,14 @@ pub fn verify_qualified(
         original_labels_sha256: artifact.original_labels_sha256,
         artifact_sha256: pins.artifact_sha256.clone(),
         qualification_sha256: pins.qualification_sha256.clone(),
+        components: artifact.components,
+        prepared_rows_sha256: artifact.prepared_rows_sha256,
+        encoder: artifact.encoder,
+        source_sha256: pins.source_sha256.clone(),
+        producer_sha256: pins.producer_sha256.clone(),
+        reference_manifest_sha256: pins.reference_manifest_sha256.clone(),
+        verification_policy_sha256: pins.verification_policy_sha256.clone(),
+        admission_pins_sha256: pins.sha256()?,
     })
 }
 /// Independently pinned inputs for reusing native-regression component
@@ -715,6 +954,187 @@ fn max_abs(actual: &[f32], expected: &[f32]) -> Result<f32> {
     );
     Ok(error)
 }
+#[cfg(test)]
+mod handoff_tests {
+    use super::super::test_support::synthetic_artifact;
+    use super::*;
+    use crate::producer::Request;
+
+    fn pins(artifact: &CpuContextArtifact) -> AdmissionPins {
+        AdmissionPins {
+            source_sha256: artifact.source_sha256.clone(),
+            producer_sha256: artifact.producer_sha256.clone(),
+            artifact_sha256: sha(&serde_json::to_vec(artifact).unwrap()),
+            qualification_sha256: sha(b"qualification"),
+            reference_manifest_sha256: sha(b"reference manifest"),
+            context_execution_sha256: sha(b"context execution"),
+            qualification_execution_sha256: vec![sha(b"case execution"); 8],
+            verification_policy_sha256: verification_policy_sha256(),
+            training: artifact.training.clone(),
+            input_sha256: artifact.input_sha256.clone(),
+            preprocessing_sha256: artifact.preprocessing_sha256.clone(),
+        }
+    }
+    fn request(pins: &AdmissionPins, context: &FinalContext) -> Request {
+        Request {
+            worker_source_sha256: sha(b"worker source"),
+            prepared_sha256: pins.training.prepared_sha256.clone(),
+            training_sha256: pins.training.training_sha256.clone(),
+            cut: pins.training.cut as usize,
+            context_sha256: context.sha256(),
+            checkpoint_sha256: crate::ACCEPTED_STATE_SHA256.into(),
+            policy_safetensors_sha256:
+                "4b4b5a40f03c9226b4b15856fd35b90127c8b6a4d1435b815484cdd050744f1e".into(),
+            vocabulary_sha256: crate::CHECKPOINT_VOCABULARY_SHA256.into(),
+            sampling_seed: 1,
+            fallback_seed: 2,
+            exploration_seed: 3,
+            sampling_rounds: 1,
+            sampling_batch: 8,
+            sampling_temperature: 1.0,
+            challenger: None,
+            context_admission_sha256: Some(pins.sha256().unwrap()),
+        }
+    }
+
+    /// W2-T07: a qualified context carries its release identity, typed transformation chain,
+    /// input scope and final-context digest to the intended consumer; the wrong consumer, scope
+    /// or admission, a stale cached context and unknown historical receipts are refused.
+    #[test]
+    fn handoff_reaches_only_the_intended_consumer_for_the_issued_scope() {
+        let transforms = FrozenTransforms::synthetic_for_testing(1.0);
+        let artifact = synthetic_artifact(&transforms);
+        let pins = pins(&artifact);
+        let verified = VerifiedCpuContext::for_testing(artifact.clone(), &pins);
+        let context = verified.replay_assembly(&transforms).unwrap();
+        let request = request(&pins, &context);
+
+        // Positive control: the correct assembly reaches the accepted policy consumer.
+        let handoff = verified
+            .handoff(&context, ContextConsumer::AcceptedPolicyProposal)
+            .unwrap();
+        handoff.deliver_to_policy(&request).unwrap();
+        assert_eq!(handoff.release().encoder, EncoderIdentity::accepted());
+        assert_eq!(handoff.transformations(), transformation_chain().as_slice());
+        assert_eq!(handoff.transformations().len(), 6);
+        assert_eq!(handoff.scope().training, artifact.training);
+        assert_eq!(handoff.scope().input_sha256, pins.input_sha256);
+        assert_eq!(
+            handoff.scope().prepared_rows_sha256,
+            artifact.prepared_rows_sha256
+        );
+        assert_eq!(
+            handoff.context_sha256(),
+            crate::context_sha256(&artifact.vector)
+        );
+        assert_eq!(handoff.admission_pins_sha256(), pins.sha256().unwrap());
+        let json = serde_json::to_value(&handoff).unwrap();
+        assert_eq!(json["schema"], HANDOFF_SCHEMA);
+        assert_eq!(json["consumer"], "accepted_policy_proposal");
+
+        let refused = |handoff: &ContextHandoff, request: &Request, needle: &str| {
+            let error = format!("{:#}", handoff.deliver_to_policy(request).unwrap_err());
+            assert!(error.contains(needle), "{needle}: {error}");
+        };
+        // Wrong consumer.
+        let teacher = verified
+            .handoff(&context, ContextConsumer::TeacherAdmission)
+            .unwrap();
+        refused(&teacher, &request, "another consumer");
+        // Admission the request did not issue (none, or other pins).
+        refused(
+            &handoff,
+            &Request {
+                context_admission_sha256: None,
+                ..request.clone()
+            },
+            "not issued by this request's controller",
+        );
+        let mut other = pins.clone();
+        other.qualification_sha256 = sha(b"other qualification");
+        refused(
+            &handoff,
+            &Request {
+                context_admission_sha256: Some(other.sha256().unwrap()),
+                ..request.clone()
+            },
+            "not issued by this request's controller",
+        );
+        // Wrong scope: another cut, training table, dataset preparation or context.
+        for wrong in [
+            Request {
+                cut: 1,
+                ..request.clone()
+            },
+            Request {
+                training_sha256: sha(b"other training"),
+                ..request.clone()
+            },
+            Request {
+                prepared_sha256: sha(b"other prepared"),
+                ..request.clone()
+            },
+            Request {
+                context_sha256: sha(b"other context"),
+                ..request.clone()
+            },
+        ] {
+            refused(&handoff, &wrong, "scope differs");
+        }
+        // A handoff is only made for this context's own replayed assembly.
+        let other_context = test_support_context(&transforms, 2.0);
+        assert!(verified
+            .handoff(&other_context, ContextConsumer::AcceptedPolicyProposal)
+            .is_err());
+
+        // Stale cache: a context cached under other frozen transforms does not replay, and a
+        // cached artifact from another encoder release is refused before any handoff.
+        assert!(verified
+            .replay_assembly(&FrozenTransforms::synthetic_for_testing(1.5))
+            .is_err());
+        let mut stale = artifact.clone();
+        stale.encoder.component_bundle = worker::COMPONENT_BUNDLE_MANIFEST_SHA256.into();
+        assert!(stale.validate().is_err());
+        let stale_verified = VerifiedCpuContext::for_testing(stale, &pins);
+        let stale_handoff = stale_verified
+            .handoff(&context, ContextConsumer::AcceptedPolicyProposal)
+            .unwrap();
+        refused(&stale_handoff, &request, "encoder lineage changed");
+
+        // Unknown historical receipts: unknown artifact schema/backend/qualification labels and
+        // an unknown transformation chain or verification protocol are refused.
+        for (field, value) in [
+            ("schema", "jope.cpu-context/v0"),
+            ("backend", "Rust/Candle 0.10 CPU FP32"),
+            ("qualification", "qualified"),
+        ] {
+            let mut json = serde_json::to_value(&artifact).unwrap();
+            json[field] = serde_json::json!(value);
+            let historical: CpuContextArtifact = serde_json::from_value(json).unwrap();
+            assert!(historical.validate().is_err(), "{field}");
+        }
+        let mut unknown_chain = handoff.clone();
+        unknown_chain.transformations.pop();
+        refused(&unknown_chain, &request, "transformation chain is unknown");
+        let mut unknown_protocol = handoff.clone();
+        unknown_protocol.release.verification_policy_sha256 = sha(b"older protocol");
+        refused(&unknown_protocol, &request, "release protocol");
+        let mut unknown_schema = handoff;
+        unknown_schema.schema = "jope.cpu-context-handoff/v0".into();
+        refused(&unknown_schema, &request, "another consumer");
+    }
+
+    fn test_support_context(transforms: &FrozenTransforms, value: f32) -> FinalContext {
+        transforms
+            .assemble(&super::super::test_support::components(
+                vec![value; 512],
+                vec![value; 2048],
+                vec![value; 512],
+            ))
+            .unwrap()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

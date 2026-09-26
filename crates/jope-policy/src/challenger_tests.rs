@@ -661,6 +661,7 @@ fn produce_sends_a_challenger_request_through_propose_challenger() {
         sampling_batch: 4,
         sampling_temperature: 1.0,
         challenger: Some(identity.clone()),
+        context_admission_sha256: None,
     };
     // `seeds::propose` refuses this model, so success means the request reached
     // `propose_challenger`.
