@@ -10,8 +10,8 @@ use std::process::ExitCode;
 use clap::{Parser, Subcommand};
 use jope_records::pyjson::{self, Value};
 use jope_records::{
-    claims, dispositions, elo_history, findings, inventory, layout, progress_view, py, task_status,
-    test_inventory,
+    claim_inventory, claims, dispositions, elo_history, findings, inventory, layout, progress_view,
+    py, task_status, test_inventory,
 };
 
 #[derive(Parser)]
@@ -54,6 +54,16 @@ enum Command {
         /// Fail when custody evidence is not present on this host.
         #[arg(long)]
         require_custody: bool,
+    },
+    /// Generate the capability/KPI sentence inventory from the verified claims and check (or
+    /// rewrite) claims/INVENTORY.md (W12-T01).
+    ClaimInventory {
+        /// The claims record (default: docs/internal/core-ip/claims/claims.json).
+        #[arg(long)]
+        claims: Option<PathBuf>,
+        /// Rewrite INVENTORY.md.
+        #[arg(long)]
+        write: bool,
     },
     /// Check the maintained regression test inventory against the CI coverage map (W0).
     VerifyTestInventory {
@@ -139,6 +149,18 @@ fn run(cli: Cli) -> jope_records::Result<Value> {
                 None => layout::claims(&repo()?),
             };
             claims::verify(&path, None, require_custody)?.to_json()
+        }
+        Command::ClaimInventory {
+            claims: path,
+            write,
+        } => {
+            let path = match path {
+                Some(path) => path,
+                None => layout::claims(&repo()?),
+            };
+            let (text, summary) = claim_inventory::render(&path, None)?;
+            claim_inventory::check_or_write(&claim_inventory::target(&path), &text, write)?;
+            summary
         }
         Command::VerifyTestInventory { inventory } => {
             let repo = repo()?;
