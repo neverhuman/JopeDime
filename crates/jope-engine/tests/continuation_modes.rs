@@ -18,6 +18,15 @@ const CORPUS: &str = "1111111111111111111111111111111111111111111111111111111111
 const NEW_CORPUS: &str = "2222222222222222222222222222222222222222222222222222222222222222";
 const VOCABULARY: &str = "3333333333333333333333333333333333333333333333333333333333333333";
 const SAMPLER: &str = "family_uniform_champion_plus_seven_quantiles_v2";
+/// The refusal a parent without an objective identity gets for exact resume and optimizer carry.
+const LEGACY_REFUSAL: &str = "continues only as a weight warm start";
+/// The accepted step-60000 `state.json`, byte for byte, as retained in the ASM manual's training
+/// history. Its SHA-256 is the accepted state that `models/bundles/policy-step-60000.json` names.
+const ACCEPTED_STEP_60000_STATE: &[u8] = include_bytes!(
+    "../../../docs/internal/asm-manual/data/training-history/accepted60000-state.json"
+);
+const ACCEPTED_STEP_60000_STATE_SHA256: &str =
+    "8ac80c269cc47c253b6f53fa3bc1eb75bb2fcda0bdace3ff8554be0175c400d6";
 
 fn config() -> Value {
     serde_json::to_value(Config::regression(401)).unwrap()
@@ -273,15 +282,15 @@ fn exact_resume_refuses_every_undeclared_change() {
             "exact resume accepted a {case} change"
         );
     }
-    // A legacy parent (no objective identity) with matching legacy IDs is
-    // accepted, but recorded as unverified rather than identical.
+    // A legacy parent (no objective identity) is refused even when both legacy
+    // IDs match: it continues only as a weight warm start (owner decision
+    // 2026-09-26, OWNER-DECISIONS.md D12).
     let mut state = parent();
     legacy(&mut state);
-    let record = Request::same()
+    let error = Request::same()
         .check(Mode::ExactResume, &state, None)
-        .unwrap();
-    assert_eq!(record["objective"]["continuity"], "legacy_ids_only");
-    assert!(record["objective"]["parent_sha256"].is_null());
+        .unwrap_err();
+    assert!(error.to_string().contains(LEGACY_REFUSAL), "{error}");
 }
 
 #[test]
@@ -343,15 +352,21 @@ fn a_carry_transition_allows_only_declared_changes() {
     assert!(other_vocabulary
         .check(Mode::NewCorpusTransition, &parent(), None)
         .is_err());
-    // A legacy parent without an execution partition: recorded unknown.
+    // A parent without an execution partition: recorded unknown.
     let mut state = parent();
-    legacy(&mut state);
     state.as_object_mut().unwrap().remove("execution_partition");
     let record = Request::same()
         .check(Mode::NewCorpusTransition, &state, None)
         .unwrap();
     assert_eq!(record["execution_partition"]["continuity"], "unknown");
-    assert_eq!(record["objective"]["continuity"], "legacy_ids_only");
+    assert_eq!(record["objective"]["continuity"], "identical");
+    // Without its objective identity the same parent never carries its
+    // optimizer (owner decision 2026-09-26, OWNER-DECISIONS.md D12).
+    legacy(&mut state);
+    let error = Request::same()
+        .check(Mode::NewCorpusTransition, &state, None)
+        .unwrap_err();
+    assert!(error.to_string().contains(LEGACY_REFUSAL), "{error}");
 }
 
 #[test]
@@ -384,6 +399,143 @@ fn a_weight_warm_start_resets_the_optimizer_and_declares_nothing() {
     assert!(Request::same()
         .check(Mode::ColdInitialization, &parent(), None)
         .is_err());
+}
+
+/// Owner decision 2026-09-26 (`docs/internal/core-ip/work-orders/OWNER-DECISIONS.md`, D12): a
+/// parent without an objective identity cannot prove its objective, so it is refused for exact
+/// resume and optimizer carry even when both legacy identifiers match. It continues only as a
+/// weight warm start (optimizer reset, nothing carried), recorded as `legacy_ids_only`.
+#[test]
+fn a_legacy_parent_continues_only_as_a_weight_warm_start() {
+    let mut state = parent();
+    legacy(&mut state);
+    let before = state.clone();
+    let mut new_corpus = Request::same();
+    new_corpus.corpus = NEW_CORPUS;
+    let declared = json!({"declared_changes":{
+        "execution_partition":training_partition(8, 256, 2048).unwrap()}});
+    for (mode, request, policy) in [
+        (Mode::ExactResume, Request::same(), None),
+        (Mode::NewCorpusTransition, Request::same(), None),
+        (Mode::NewCorpusTransition, new_corpus, None),
+        // A declared partition does not buy a legacy parent an optimizer carry.
+        (Mode::NewCorpusTransition, Request::same(), Some(&declared)),
+    ] {
+        let error = request.check(mode, &state, policy).unwrap_err();
+        assert!(
+            error.to_string().contains(LEGACY_REFUSAL),
+            "{mode:?}: {error}"
+        );
+        assert_eq!(state, before, "a refusal leaves the parent untouched");
+    }
+    // Weight warm start: the optimizer is reset, the sampler starts a new
+    // window, and the objective is recorded as unverified, never identical.
+    let record = Request::same()
+        .check(Mode::WeightWarmStart, &state, None)
+        .unwrap();
+    assert_eq!(record["mode"], "weight_warm_start");
+    assert_eq!(record["optimizer"], "reset");
+    assert_eq!(record["sampler"], "new_window_from_zero");
+    assert_eq!(record["exact_resume_claim"], false);
+    assert_eq!(record["objective"]["continuity"], "legacy_ids_only");
+    assert!(record["objective"]["parent_sha256"].is_null());
+    // Positive control: the same parent with its objective identity still
+    // resumes exactly and carries its optimizer.
+    for mode in [Mode::ExactResume, Mode::NewCorpusTransition] {
+        let record = Request::same().check(mode, &parent(), None).unwrap();
+        assert_eq!(record["objective"]["continuity"], "identical");
+    }
+    // A legacy parent whose legacy identifiers differ is a changed objective:
+    // refused for resume and carry with the existing wording, recorded
+    // `changed` by a warm start.
+    let mut other = state.clone();
+    other["runtime_objective"] = json!("huber_seconds_v1");
+    for mode in [Mode::ExactResume, Mode::NewCorpusTransition] {
+        let error = Request::same().check(mode, &other, None).unwrap_err();
+        assert!(error.to_string().contains("same objective"), "{error}");
+    }
+    let record = Request::same()
+        .check(Mode::WeightWarmStart, &other, None)
+        .unwrap();
+    assert_eq!(record["objective"]["continuity"], "changed");
+}
+
+/// The accepted step-60000 checkpoint is a legacy parent. The native loop's replay policy
+/// (`optimizer: carry`) classifies to an optimizer-carry transition, which the pre-CUDA guard now
+/// refuses; the same parent with the optimizer reset is a weight warm start and continues.
+#[test]
+fn the_accepted_step_60000_checkpoint_continues_as_a_weight_warm_start() {
+    assert_eq!(
+        hash(ACCEPTED_STEP_60000_STATE),
+        ACCEPTED_STEP_60000_STATE_SHA256
+    );
+    let state: Value = serde_json::from_slice(ACCEPTED_STEP_60000_STATE).unwrap();
+    assert_eq!(state["step"], 60000);
+    assert!(
+        state.get("objective").is_none() && state.get("objective_sha256").is_none(),
+        "the accepted checkpoint predates the objective identity"
+    );
+    assert_eq!(state["ranking_backward"], "dense_pairwise_v2");
+    assert_eq!(state["runtime_objective"], "huber_log1p_seconds_v2");
+    // Its config.json is Config::regression(401) in the file layout.
+    let config = config();
+    assert_eq!(
+        hash(&serde_json::to_vec_pretty(&Config::regression(401)).unwrap()),
+        state["config_sha256"]
+    );
+    let objective = objective::identity_sha256();
+    let vocabulary = state["vocabulary_sha256"].as_str().unwrap();
+    let sampler = state["sampler_id"].as_str().unwrap();
+    let seed = state["seed"].as_u64().unwrap();
+    let current = |corpus| Current {
+        corpus_sha256: corpus,
+        vocabulary_sha256: vocabulary,
+        world: 8,
+        microbatch: 256,
+        global_batch: 2048,
+        seed,
+        sampler_id: sampler,
+        config: &config,
+        objective_sha256: &objective,
+    };
+    let own_corpus = state["corpus_sha256"].as_str().unwrap();
+    // The native loop's next block: parent weights with a carried optimizer
+    // on a new corpus. Refused before CUDA.
+    let carry = json!({"optimizer":"carry"});
+    let mode = classify(false, true, Some(&carry)).unwrap();
+    assert_eq!(mode, Mode::NewCorpusTransition);
+    let error =
+        check_parent(mode, &state, &config, &current(NEW_CORPUS), Some(&carry)).unwrap_err();
+    assert!(error.to_string().contains(LEGACY_REFUSAL), "{error}");
+    // Exact resume of the accepted checkpoint: refused.
+    let error = check_parent(
+        Mode::ExactResume,
+        &state,
+        &config,
+        &current(own_corpus),
+        None,
+    )
+    .unwrap_err();
+    assert!(error.to_string().contains(LEGACY_REFUSAL), "{error}");
+    // The same parent with the optimizer reset: a weight warm start that
+    // continues from step 60000 with nothing carried.
+    let reset = json!({"optimizer":"reset"});
+    let mode = classify(false, true, Some(&reset)).unwrap();
+    assert_eq!(mode, Mode::WeightWarmStart);
+    let record = check_parent(mode, &state, &config, &current(NEW_CORPUS), Some(&reset)).unwrap();
+    assert_eq!(record["mode"], "weight_warm_start");
+    assert_eq!(record["optimizer"], "reset");
+    assert_eq!(record["sampler"], "new_window_from_zero");
+    assert_eq!(record["exact_resume_claim"], false);
+    assert_eq!(record["parent_step"], 60000);
+    assert_eq!(record["lineage_mode"], "unknown_legacy");
+    assert_eq!(record["objective"]["continuity"], "legacy_ids_only");
+    assert!(record["objective"]["parent_sha256"].is_null());
+    assert_eq!(record["execution_partition"]["continuity"], "unknown");
+    assert_eq!(
+        record["corpus"],
+        json!({"parent":own_corpus,"current":NEW_CORPUS})
+    );
 }
 
 #[test]
