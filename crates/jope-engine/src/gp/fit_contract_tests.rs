@@ -2677,3 +2677,52 @@ fn a_refused_proposal_in_one_slot_does_not_shift_another_slots_random_streams() 
     }
     authority.stop_service();
 }
+
+/// Rewrite the fixture preparation's family partition (identity recomputed by
+/// every consumer, as a producer of that partition would publish it).
+fn set_partition(prepared: &Path, partition: &str) {
+    let mut p: Value = read_json(&prepared.join("prepared.json")).unwrap();
+    p["meta_partition"] = json!(partition);
+    write_json(&prepared.join("prepared.json"), &p).unwrap();
+}
+
+/// W1-T04, consumer-map route R13: `--qualification` admitted a search of a
+/// sealed `meta_test` family. Its observations are teacher/learning inputs, so
+/// the sealed family would reach learning through the search. The refusal
+/// precedes every view load, output reservation and fit claim.
+#[test]
+fn qualification_search_of_a_sealed_meta_test_family_is_refused_before_any_view_or_fit() {
+    let (temp, prepared) = view_fixture();
+    let root = temp.path().canonicalize().unwrap();
+    let mut authority = Fixture::activated(&root, vec![cut_training_hash(&prepared)]);
+    authority.start();
+    set_partition(&prepared, "meta_test");
+    let sealed = root.join("search-sealed-family");
+    let refused = search_client(&authority, &root, &prepared, &sealed, 1)
+        .output()
+        .unwrap();
+    let error = String::from_utf8_lossy(&refused.stderr);
+    assert!(
+        !refused.status.success(),
+        "a sealed meta_test family was searched under --qualification"
+    );
+    assert!(error.contains("sealed meta_test"), "{error}");
+    assert!(
+        !sealed.exists(),
+        "a refused search left search state behind"
+    );
+    authority.assert_no_fit_starts();
+    // Positive control: the identical view as a meta-validation family is
+    // still admitted for qualification (adaptive development evidence).
+    set_partition(&prepared, "meta_validation");
+    let admitted = root.join("search-validation-family");
+    success(
+        search_client(&authority, &root, &prepared, &admitted, 1)
+            .output()
+            .unwrap(),
+    );
+    let search: Value = read_json(&admitted.join("search.json")).unwrap();
+    assert_eq!(search["final_tests_opened"], false);
+    assert_eq!(authority.entries(), (1, 1));
+    authority.stop_service();
+}

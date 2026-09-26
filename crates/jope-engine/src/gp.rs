@@ -1471,6 +1471,13 @@ fn search_inner(
             && (p.family_partition_frozen || qualification || native_overlay),
         "reconstructed cut preparation is required; limited evaluation needs explicit qualification admission"
     );
+    // W1-T04: a search is task-level development search. Its observations are
+    // teacher/learning inputs, so a sealed meta_test family never reaches it,
+    // including under qualification admission; nothing has been loaded yet.
+    ensure!(
+        p.meta_partition != "meta_test",
+        "sealed meta_test families are not released to search, including qualification"
+    );
     ensure!(
         p.meta_partition == "meta_train" || qualification,
         "bootstrap/search training observations require meta-training families"
