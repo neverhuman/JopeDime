@@ -6,10 +6,10 @@ not CI verification, and neither is live qualification. No finding closes throug
 
 | State | Tasks |
 |---|---:|
-| planned | 16 |
-| reproduced | 24 |
-| implemented | 54 |
-| fixture-proven | 50 |
+| planned | 10 |
+| reproduced | 27 |
+| implemented | 60 |
+| fixture-proven | 56 |
 | CI-verified | 0 |
 | live-qualified | 0 |
 | measurement-complete | 0 |
@@ -79,12 +79,12 @@ not CI verification, and neither is live qualification. No finding closes throug
 
 | Task | States | Evidence | Remaining or blocker |
 |---|---|---|---|
-| W6-T01 Freeze resolved training inputs | planned | — | — |
+| W6-T01 Freeze resolved training inputs | reproduced, implemented, fixture-proven | 2dfe124e81e1; tests/frozen_inputs.rs (5, neural feature, CPU) | Cached context staging is keyed by content; resolved inputs are frozen into launch/training-inputs.json and bound into checkpoints; a substituted index or vocabulary is refused. The teaching store still re-reads the index path (detected, not prevented); programs, prepared cuts and label ledgers are bound only through the corpus build; no revocation authority exists in this source; rank_impl wiring is compile-checked only. |
 | W6-T02 Specify the complete objective by term | reproduced, implemented, fixture-proven | ccfb00e5f195; 2668de0589ca; tests/objective_fixtures.rs (14, neural feature, CPU) | Specification plus CPU f64 fixtures for every term, gradient and partition dependence; G8 and G12 fixed fail-closed. G1 (objective identity in checkpoints and resume guards) is T06; G11 runtime-label typing is T03; GPU/BF16/fused-AdamW numerics and the accepted step-60000 binding (G2/G3) remain. |
 | W6-T03 Validate comparisons and runtime observations | reproduced, implemented, fixture-proven | aff807bec62f; 1eb9ca666a18; tests/training_inputs.rs (8); ungranted_valid_policy_is_still_refused_by_the_dispatch_hold; cli_policy_rejects_legacy_or_mismatched_labels_before_gpu_admission | Comparison, label and censored-runtime checks at the boundary. Per-comparison evaluator/task/fitted-subject binding needs a corpus schema change; typed runtime scope and censoring (G11) and label-policy binding into the objective identity (T06) remain; the rank_impl call site is compile-checked only. |
 | W6-T04 Record actual consumption and committed updates | reproduced, implemented, fixture-proven | ad0b31daf13a; tests/committed_updates.rs (6, neural feature, CPU) | Rejected reference-optimizer updates are atomic; per-rank consumption journal bound into checkpoints. The rank_impl journal path is compile-checked only (CUDA/NCCL and the held grant); cross-rank aggregation is W7; historical runs have no journal (T07). |
 | W6-T05 Commit complete checkpoints atomically | reproduced, implemented, fixture-proven | 787a7b27a047; tests/checkpoint_commit.rs (5, neural feature, CPU) | Atomic checkpoint publication with a verifying loader; the same-pid stale temporary no longer blocks commits. Trainer-side wiring is compile-checked only; manifest::atomic_write keeps the fixed temp name for its other callers; multi-host receipts are W7 and remote publication W8. |
-| W6-T06 Enforce all four continuation modes | planned | — | — |
+| W6-T06 Enforce all four continuation modes | implemented, fixture-proven | 7906af67cc25; tests/continuation_modes.rs (7, neural feature, CPU); tests/checkpoint_commit.rs objective cases | Four continuation modes classified and enforced before CUDA; full objective identity bound into checkpoints (G1). Legacy parents are accepted with matching legacy IDs and recorded as legacy_ids_only (owner decision). Launch request objects still express the mode implicitly; rank_impl wiring compile-checked only. |
 | W6-T07 Reconcile accepted ancestry and exposure limits | planned | — | — |
 
 ## W07
@@ -108,9 +108,9 @@ not CI verification, and neither is live qualification. No finding closes throug
 | W8-T01 Define the durable artifact and event inventory | implemented, fixture-proven | 64e56b410af3; planned_census_reconciles_to_terminal_dispositions; a_failed_or_retried_attempt_cannot_disappear; a_retried_attempt_cannot_become_a_second_logical_improvement; +7 tests | New capability (no prior path). Nothing in the product emits these objects yet; engine-side mapping (native_persistence, corpus_publication, checkpoint_recovery) and consecutive update-index enforcement remain. |
 | W8-T02 Persist locally before acknowledging completion | implemented, fixture-proven | 212ce68d7675; crash_after_local_append_before_delivery_recovers_exactly_once; a_full_outbox_pauses_new_work_and_never_drops_or_grows; a_failed_delivery_stays_pending_and_is_never_acknowledged; +3 tests | New capability on offline stores. Proposed outbox limits need owner approval; nothing in the product appends to the outbox yet; acknowledged entries are never compacted (retention is T05). |
 | W8-T03 Implement dependency-first conditional publication | implemented, fixture-proven | b3374aea8c43; racing_publishers_at_one_predecessor_get_one_winner_and_one_conflict; a_missing_or_corrupt_dependency_blocks_the_pointer; graph_rules_are_checked_before_the_pointer_moves; +2 tests | New capability on offline stores. HWM decisions are graph-checked only (not against the local ledger at publication); no reconciliation/rebase; publisher identity unauthenticated; nothing in the product creates commits yet; live S3 If-Match is T07/T08. |
-| W8-T04 Make retries and summaries rebuildable | planned | — | — |
-| W8-T05 Apply cadence and retention classes | planned | — | — |
-| W8-T06 Execute offline fault-injection matrix | planned | — | — |
+| W8-T04 Make retries and summaries rebuildable | reproduced, implemented, fixture-proven | 5e745c45cdaa; a_crash_between_a_batch_and_its_head_is_rolled_forward_not_a_wedge; an_append_after_a_lagging_head_never_forks_the_chain; only_a_sealed_continuation_of_the_head_is_rolled_forward; +5 tests | Ledger heads roll forward after a crash (was a permanent wedge); owed mirror pointers are retried; summaries rebuild from committed data. The owed list is local only; conflict reconciliation has no CLI verb; best-RMSE views stay on the HWM ledger. |
+| W8-T05 Apply cadence and retention classes | implemented, fixture-proven | 3b0207d25251; each_flush_trigger_fires_exactly_when_due; a_failed_flush_stays_pending_and_never_claims_durability; each_checkpoint_trigger_fires_at_committed_updates_and_shutdown; +1 tests | New capability with an injected clock. Proposed cadence (60 s, 1 MiB, 100 updates, 5 min) and outbox limits need owner approval; nothing in the product calls the cadence yet; the retention role is not recorded in candidate evidence; no compaction. |
+| W8-T06 Execute offline fault-injection matrix | implemented, fixture-proven | 5e745c45cdaa; every_fault_leaves_committed_state_restorable_and_every_delivery_accounted_for (18 cases) | Offline fault matrix on file:// and memory:/// stores only; live conflict, outage and restoration are W8-T08. reconstruct lists every object, which matters for S3 request counts. |
 | W8-T07 Admit scoped live publisher access and storage budget | blocked | — | Needs a scoped publisher credential from its owner and an approved live storage budget; the administrator profile is not a substitute. |
 | W8-T08 Qualify live conflict, outage and restoration | blocked | — | Needs a scoped publisher credential from its owner and an approved live storage budget; the administrator profile is not a substitute. |
 
@@ -138,7 +138,7 @@ not CI verification, and neither is live qualification. No finding closes throug
 | W10-T06 Measure reward architecture, search and curriculum hypotheses | blocked | — | Needs a separately costed, preregistered study manifest and budget. |
 | W10-T07 Admit complete transfer coverage and exposure evidence | blocked | — | Needs a separately costed, preregistered study manifest and budget. |
 | W10-T08 Commit the full round before score release | blocked | — | Needs a separately costed, preregistered study manifest and budget. |
-| W10-T09 Independently calculate transfer and uncertainty | implemented, fixture-proven | 361fb112af9f; independent_scorer_reproduces_the_report; jope-bench tests/transfer_independent.rs (7) | No transfer round has been measured; complete scoring stays blocked on T07/T08. |
+| W10-T09 Independently calculate transfer and uncertainty | implemented, fixture-proven | 361fb112af9f; 5ddd56e76b39; independent_scorer_reproduces_the_report; jope-bench tests/transfer_independent.rs (7) | No transfer round has been measured; complete scoring stays blocked on T07/T08. |
 | W10-T10 Record measurement and promotion decisions separately | blocked | — | Needs a separately costed, preregistered study manifest and budget. |
 
 ## W11
@@ -158,11 +158,11 @@ not CI verification, and neither is live qualification. No finding closes throug
 
 | Task | States | Evidence | Remaining or blocker |
 |---|---|---|---|
-| W12-T01 Define the claim-to-evidence schema | implemented, fixture-proven | 9e31ad12e3d7; jope-records tests/records/claims.rs (9; Rust port of test_verify_claims.py's 5 methods and 18 mutations) | Capability/KPI sentence inventory across the monograph is not yet generated from claims. |
-| W12-T02 Extend findings closure with validated evidence | implemented, fixture-proven | 354962c5c659; jope-records tests/records/dispositions.rs (9; Rust port of the 29 adversarial cases) | No finding has a closing disposition; hosted CI and live stages must precede any closure. |
-| W12-T03 Generate status and KPI views from committed records | implemented, fixture-proven | 17fee4cb4b82; jope-records tests/records/progress_view.rs (5); jope-records tests/records/task_status.rs (3) | Status and findings views are generated from validated records. KPI score cards (HWM improvement, eligible teachers, corpus availability, exposure, committed updates, matched search, transfer) wait on W8 publication verification and real measurements. |
+| W12-T01 Define the claim-to-evidence schema | implemented, fixture-proven | 9e31ad12e3d7; c658d14891d3; jope-records tests/records/claims.rs (9; Rust port of test_verify_claims.py's 5 methods and 18 mutations) | Capability/KPI sentence inventory across the monograph is not yet generated from claims. |
+| W12-T02 Extend findings closure with validated evidence | implemented, fixture-proven | 354962c5c659; c658d14891d3; jope-records tests/records/dispositions.rs (9; Rust port of the 29 adversarial cases) | No finding has a closing disposition; hosted CI and live stages must precede any closure. |
+| W12-T03 Generate status and KPI views from committed records | implemented, fixture-proven | 17fee4cb4b82; c658d14891d3; jope-records tests/records/progress_view.rs (5); jope-records tests/records/task_status.rs (3) | Status and findings views are generated from validated records. KPI score cards (HWM improvement, eligible teachers, corpus availability, exposure, committed updates, matched search, transfer) wait on W8 publication verification and real measurements. |
 | W12-T04 Reconcile historical Elo and genealogy honestly | implemented, fixture-proven | 4b56141a3bfc; test_elo_history.py (18) | Six ladders replay from pinned inputs; two scorer-parity-only and six irrecoverable histories are excluded from exact totals. S08-G09/S08-K09 stay open; Golden45 replay needs zstd on the runner; jope-arena duplicate-cell replacement noted, not changed; exposure edges not retained. |
 | W12-T05 Implement dependency-based revocation and quarantine | implemented, fixture-proven | 9e31ad12e3d7; test_revocation_invalidates_exactly_the_descendants | Live consumers do not yet query revocations (W3/W8 receiving paths). |
 | W12-T06 Assemble an independently replayable private evidence package | blocked | — | Depends on qualified W8-W11 records and live restoration. |
-| W12-T07 Publish synthetic conformance fixtures safely | planned | — | — |
+| W12-T07 Publish synthetic conformance fixtures safely | reproduced, implemented, fixture-proven | c658d14891d3; synthetic_identity_cannot_acquire_real_or_live_attestation; synthetic_identity_through_a_symlinked_directory_is_still_located; synthetic_identity_keeps_fixture_hosted_and_implementation_stages; +2 tests | Only the receiving rule is done: evidence carrying the conformance synthetic_identity cannot back hosted-CI, live, measurement, promotion or real-corpus stages. The public conformance fixture pack (one fixture per contract boundary and refusal class), the private-canary absence scan and reproducible public replay depend on T06 and are not built. |
 | W12-T08 Reconcile all findings and produce the release decision | blocked | — | Final reconciliation depends on the applicable live gates; every finding remains open. |

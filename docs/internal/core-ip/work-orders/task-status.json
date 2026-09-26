@@ -577,8 +577,22 @@
     },
     "W6-T01": {
       "states": [
-        "planned"
-      ]
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "2dfe124e81e1922ccd91190eaca36274a7327137"
+      ],
+      "tests": [
+        "tests/frozen_inputs.rs (5, neural feature, CPU)"
+      ],
+      "evidence": [
+        "docs/internal/core-ip/work-orders/evidence/W06-training-boundary.md",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w6-pre-t01-20260926T092505Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w6-post-t01-20260926T092551Z"
+      ],
+      "remaining": "Cached context staging is keyed by content; resolved inputs are frozen into launch/training-inputs.json and bound into checkpoints; a substituted index or vocabulary is refused. The teaching store still re-reads the index path (detected, not prevented); programs, prepared cuts and label ledgers are bound only through the corpus build; no revocation authority exists in this source; rank_impl wiring is compile-checked only."
     },
     "W6-T02": {
       "states": [
@@ -662,8 +676,21 @@
     },
     "W6-T06": {
       "states": [
-        "planned"
-      ]
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "7906af67cc258ea1f4651b73d215d0e1bfb99292"
+      ],
+      "tests": [
+        "tests/continuation_modes.rs (7, neural feature, CPU)",
+        "tests/checkpoint_commit.rs objective cases"
+      ],
+      "evidence": [
+        "docs/internal/core-ip/work-orders/evidence/W06-training-boundary.md",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w6-post-t06-20260926T091744Z"
+      ],
+      "remaining": "Four continuation modes classified and enforced before CUDA; full objective identity bound into checkpoints (G1). Legacy parents are accepted with matching legacy IDs and recorded as legacy_ids_only (owner decision). Launch request objects still express the mode implicitly; rank_impl wiring compile-checked only."
     },
     "W6-T07": {
       "states": [
@@ -790,18 +817,65 @@
     },
     "W8-T04": {
       "states": [
-        "planned"
-      ]
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "5e745c45cdaa43ba3f69459c3609238dd176e72a"
+      ],
+      "tests": [
+        "a_crash_between_a_batch_and_its_head_is_rolled_forward_not_a_wedge",
+        "an_append_after_a_lagging_head_never_forks_the_chain",
+        "only_a_sealed_continuation_of_the_head_is_rolled_forward",
+        "a_crash_between_an_hwm_batch_and_its_head_does_not_wedge_ingest",
+        "a_pointer_write_lost_after_the_head_moved_is_still_owed",
+        "a_deleted_derived_index_rebuilds_to_the_same_view",
+        "stale_corrupt_or_dangling_state_is_a_visible_failure",
+        "retries_and_lost_responses_never_duplicate_committed_events"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w8-t04-prefix-ledger-mirror-20260926T071309Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w8-t04-final-20260926T091302Z"
+      ],
+      "remaining": "Ledger heads roll forward after a crash (was a permanent wedge); owed mirror pointers are retried; summaries rebuild from committed data. The owed list is local only; conflict reconciliation has no CLI verb; best-RMSE views stay on the HWM ledger."
     },
     "W8-T05": {
       "states": [
-        "planned"
-      ]
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "3b0207d25251f062dd98cff3bdc7e57e0a8e377d"
+      ],
+      "tests": [
+        "each_flush_trigger_fires_exactly_when_due",
+        "a_failed_flush_stays_pending_and_never_claims_durability",
+        "each_checkpoint_trigger_fires_at_committed_updates_and_shutdown",
+        "non_winner_outcomes_keep_compact_evidence_never_nothing"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w8-t05-mutations-20260926T091939Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w8-t05-postfix-20260926T092104Z"
+      ],
+      "remaining": "New capability with an injected clock. Proposed cadence (60 s, 1 MiB, 100 updates, 5 min) and outbox limits need owner approval; nothing in the product calls the cadence yet; the retention role is not recorded in candidate evidence; no compaction."
     },
     "W8-T06": {
       "states": [
-        "planned"
-      ]
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "5e745c45cdaa43ba3f69459c3609238dd176e72a"
+      ],
+      "tests": [
+        "every_fault_leaves_committed_state_restorable_and_every_delivery_accounted_for (18 cases)"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w8-t04-mutations-20260926T072657Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w8-t04-final-20260926T091302Z"
+      ],
+      "remaining": "Offline fault matrix on file:// and memory:/// stores only; live conflict, outage and restoration are W8-T08. reconstruct lists every object, which matters for S3 request counts."
     },
     "W8-T07": {
       "states": [
@@ -981,7 +1055,8 @@
         "fixture-proven"
       ],
       "commits": [
-        "361fb112af9fd5f3ea4f33c14abefd4a2b6b6523"
+        "361fb112af9fd5f3ea4f33c14abefd4a2b6b6523",
+        "5ddd56e76b393cede9b86750b44adb6cc1bff75b"
       ],
       "tests": [
         "independent_scorer_reproduces_the_report",
@@ -1079,7 +1154,8 @@
         "fixture-proven"
       ],
       "commits": [
-        "9e31ad12e3d71efd055e6737f8665fece40a2734"
+        "9e31ad12e3d71efd055e6737f8665fece40a2734",
+        "c658d14891d310ea9c10476a6f6f1e002715fe20"
       ],
       "tests": [
         "jope-records tests/records/claims.rs (9; Rust port of test_verify_claims.py's 5 methods and 18 mutations)"
@@ -1092,7 +1168,8 @@
         "fixture-proven"
       ],
       "commits": [
-        "354962c5c659e44e26f8e8365cb059f00a9abe9a"
+        "354962c5c659e44e26f8e8365cb059f00a9abe9a",
+        "c658d14891d310ea9c10476a6f6f1e002715fe20"
       ],
       "tests": [
         "jope-records tests/records/dispositions.rs (9; Rust port of the 29 adversarial cases)"
@@ -1105,7 +1182,8 @@
         "fixture-proven"
       ],
       "commits": [
-        "17fee4cb4b8225a3577aece12d5c34c3f47ad36a"
+        "17fee4cb4b8225a3577aece12d5c34c3f47ad36a",
+        "c658d14891d310ea9c10476a6f6f1e002715fe20"
       ],
       "tests": [
         "jope-records tests/records/progress_view.rs (5)",
@@ -1155,8 +1233,26 @@
     },
     "W12-T07": {
       "states": [
-        "planned"
-      ]
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "c658d14891d310ea9c10476a6f6f1e002715fe20"
+      ],
+      "tests": [
+        "synthetic_identity_cannot_acquire_real_or_live_attestation",
+        "synthetic_identity_through_a_symlinked_directory_is_still_located",
+        "synthetic_identity_keeps_fixture_hosted_and_implementation_stages",
+        "synthetic_identity_cannot_close_through_hosted_or_live_evidence",
+        "synthetic_identity_cannot_be_declared_real_corpus_evidence"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w12-t07-prefix-20260926T065947Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/rports-t07-pre-20260926T092320Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/rports-t07-post-20260926T092423Z"
+      ],
+      "remaining": "Only the receiving rule is done: evidence carrying the conformance synthetic_identity cannot back hosted-CI, live, measurement, promotion or real-corpus stages. The public conformance fixture pack (one fixture per contract boundary and refusal class), the private-canary absence scan and reproducible public replay depend on T06 and are not built."
     },
     "W12-T08": {
       "states": [
