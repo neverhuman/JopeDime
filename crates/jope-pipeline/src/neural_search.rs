@@ -826,6 +826,11 @@ pub struct AcceptedProposalEvidence {
     pub ranking_backend: String,
     /// Accepted checkpoint bytes do not qualify this CPU implementation numerically.
     pub native_cuda_parity_qualified: bool,
+    /// sha256 of the reconciled `jope.proposal-ledger/v1` in the producer artifact: every
+    /// draw's terminal outcome and each seed slot's original tokens, scores, parser identity
+    /// and adaptation edges. Absent in evidence recorded before the ledger existed.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub proposal_ledger_sha256: Option<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -1572,6 +1577,12 @@ fn run_neural<B: Backend, V: Variation>(
         population.candidates().len() == INITIAL_SIZE,
         "policy must provide80 initial slots"
     );
+    // The reader reconciled the ledger with this population and request; an artifact without
+    // one carries no candidate identity or denominators and is not admitted to the search.
+    let proposal_ledger_sha256 = producer
+        .ledger()
+        .context("policy producer artifact lacks its proposal ledger")?
+        .sha256()?;
     let mut candidates = population
         .candidates()
         .iter()
@@ -1605,6 +1616,7 @@ fn run_neural<B: Backend, V: Variation>(
         checkpoint_sha256: population.checkpoint_sha256().into(),
         ranking_backend: producer.ranking_backend().into(),
         native_cuda_parity_qualified: false,
+        proposal_ledger_sha256: Some(proposal_ledger_sha256),
     };
     let search = run_population(
         backend,
@@ -2644,8 +2656,11 @@ mod tests {
             checkpoint_sha256: accepted.checkpoint_sha256.clone(),
             ranking_backend: "fixture".into(),
             native_cuda_parity_qualified: false,
+            proposal_ledger_sha256: None,
         };
         let before = serde_json::to_vec(&evidence)?;
+        // Evidence recorded before the ledger existed keeps its bytes; new evidence names it.
+        assert!(!String::from_utf8(before.clone())?.contains("proposal_ledger_sha256"));
         let wrapped = ProposalEvidence::Accepted(Box::new(evidence));
         assert_eq!(serde_json::to_vec(&wrapped)?, before);
         let decoded: ProposalEvidence = serde_json::from_slice(&before)?;

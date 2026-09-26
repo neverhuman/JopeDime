@@ -27,7 +27,7 @@
 use anyhow::{ensure, Result};
 use rand::{Rng, SeedableRng};
 use rand_chacha::{ChaCha20Rng, ChaCha8Rng};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
 use std::fmt;
 
@@ -88,7 +88,7 @@ pub struct DrawId {
 }
 
 /// How a scheduled neural draw ended.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum DrawOutcome {
     /// First occurrence of a valid program; admitted to the pool with origin `neural_policy`.
@@ -115,6 +115,34 @@ pub struct DrawRecord {
     /// Automaton phase when the draw ended (`done` after EOS).
     pub grammar_phase: &'static str,
     /// sha256 of the genome text, for valid draws (completed, surplus, duplicate).
+    pub program_sha256: Option<String>,
+}
+
+/// How one grammar-uniform draw of a fallback or exploration fill ended.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum UniformOutcome {
+    /// Parsed, encodes to exactly the drawn tokens, and new: admitted with the fill's origin.
+    Admitted,
+    /// Admissible, but the request had already produced this program.
+    Duplicate,
+    /// Did not reach EOS within `MAX_PROGRAM_TOKENS`.
+    Incomplete,
+    /// Reached EOS, but does not decode to a genome the pinned feat-math parses.
+    ParserRejected,
+    /// Parses, but its encoding is not exactly the drawn tokens.
+    ReencodingMismatch,
+}
+
+/// The terminal record of one grammar-uniform draw.
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub struct UniformDrawRecord {
+    /// The draw's own ChaCha8 stream seed (the fill seed plus the draw offset).
+    pub seed: u64,
+    pub outcome: UniformOutcome,
+    /// Proposal prefix and every drawn token.
+    pub tokens: Vec<usize>,
+    /// sha256 of the genome text, when the tokens decode to one that parses.
     pub program_sha256: Option<String>,
 }
 
@@ -563,6 +591,19 @@ pub fn grammar_uniform_program<R: Rng>(
     task: &str,
     rng: &mut R,
 ) -> Result<Option<String>> {
+    let (_, outcome, genome) = grammar_uniform_draw(vocab, task, rng)?;
+    Ok(genome.filter(|_| outcome == UniformOutcome::Admitted))
+}
+
+/// One grammar-uniform draw with its tokens and terminal outcome (never `Duplicate`: only the
+/// fill knows what the request already produced). It consumes exactly the random stream
+/// [`grammar_uniform_program`] consumes, and yields a genome whenever the tokens decode to one
+/// that parses.
+fn grammar_uniform_draw<R: Rng>(
+    vocab: &Vocab,
+    task: &str,
+    rng: &mut R,
+) -> Result<(Vec<usize>, UniformOutcome, Option<String>)> {
     let mut tokens = vocab.proposal_prefix(task)?;
     let mut state = vocab.prefix_state(task)?;
     while !state.done() && tokens.len() < MAX_PROGRAM_TOKENS {
@@ -580,41 +621,55 @@ pub fn grammar_uniform_program<R: Rng>(
         tokens.push(token);
     }
     if !state.done() {
-        return Ok(None);
+        return Ok((tokens, UniformOutcome::Incomplete, None));
     }
     let Some(genome) = valid_genome(vocab, &tokens) else {
-        return Ok(None);
+        return Ok((tokens, UniformOutcome::ParserRejected, None));
     };
-    Ok(match vocab.encode_for_task(&genome, task) {
-        Ok(encoded) if encoded == tokens => Some(genome),
-        _ => None,
-    })
+    let outcome = match vocab.encode_for_task(&genome, task) {
+        Ok(encoded) if encoded == tokens => UniformOutcome::Admitted,
+        _ => UniformOutcome::ReencodingMismatch,
+    };
+    Ok((tokens, outcome, Some(genome)))
 }
 
 /// Append distinct grammar-uniform programs with `origin` until `pool` holds `target`, spending
 /// at most [`FALLBACK_ATTEMPTS`] draws; returns the draws spent. Draw `offset` uses a fresh
-/// stream seeded with `seed + offset`.
+/// stream seeded with `seed + offset`. Every draw's terminal record is appended to `draws`.
 pub(crate) fn fill_grammar_uniform(
     pool: &mut Vec<SeedCandidate>,
     seen: &mut BTreeSet<String>,
     vocab: &Vocab,
     task: &str,
-    seed: u64,
-    target: usize,
-    origin: &str,
+    (seed, target, origin): (u64, usize, &str),
+    draws: &mut Vec<UniformDrawRecord>,
 ) -> Result<u64> {
     for offset in 0..FALLBACK_ATTEMPTS {
         if pool.len() >= target {
             return Ok(offset);
         }
-        let mut rng = ChaCha8Rng::seed_from_u64(seed.wrapping_add(offset));
-        let program = grammar_uniform_program(vocab, task, &mut rng)
-            .map_err(|error| with_seed(error, seed.wrapping_add(offset)))?;
-        if let Some(genome) = program {
-            if seen.insert(genome.clone()) {
-                pool.push(SeedCandidate::new(genome, origin));
+        let stream = seed.wrapping_add(offset);
+        let mut rng = ChaCha8Rng::seed_from_u64(stream);
+        let (tokens, outcome, genome) = grammar_uniform_draw(vocab, task, &mut rng)
+            .map_err(|error| with_seed(error, stream))?;
+        let program_sha256 = genome.as_ref().map(|g| sha256_hex(g.as_bytes()));
+        let outcome = match (outcome, genome) {
+            (UniformOutcome::Admitted, Some(genome)) => {
+                if seen.insert(genome.clone()) {
+                    pool.push(SeedCandidate::new(genome, origin));
+                    UniformOutcome::Admitted
+                } else {
+                    UniformOutcome::Duplicate
+                }
             }
-        }
+            (outcome, _) => outcome,
+        };
+        draws.push(UniformDrawRecord {
+            seed: stream,
+            outcome,
+            tokens,
+            program_sha256,
+        });
     }
     if pool.len() >= target {
         return Ok(FALLBACK_ATTEMPTS);
@@ -637,15 +692,15 @@ pub(crate) fn fill_pure(
     vocab: &Vocab,
     task: &str,
     seed: u64,
+    draws: &mut Vec<UniformDrawRecord>,
 ) -> Result<u64> {
     fill_grammar_uniform(
         pool,
         seen,
         vocab,
         task,
-        seed,
-        POOL_SIZE,
-        ORIGIN_NEURAL_FALLBACK,
+        (seed, POOL_SIZE, ORIGIN_NEURAL_FALLBACK),
+        draws,
     )
 }
 
@@ -658,7 +713,14 @@ pub fn uniform_programs(
     seen: &mut BTreeSet<String>,
 ) -> Result<Vec<String>> {
     let mut out = Vec::with_capacity(count);
-    fill_grammar_uniform(&mut out, seen, vocab, task, seed, count, ORIGIN_RANDOM)?;
+    fill_grammar_uniform(
+        &mut out,
+        seen,
+        vocab,
+        task,
+        (seed, count, ORIGIN_RANDOM),
+        &mut Vec::new(),
+    )?;
     Ok(out.into_iter().map(SeedCandidate::into_genome).collect())
 }
 
@@ -669,17 +731,27 @@ pub fn random_exploration(
     seed: u64,
     seen: &mut BTreeSet<String>,
 ) -> Result<Vec<SeedCandidate>> {
+    Ok(random_exploration_recorded(vocab, task, seed, seen)?.0)
+}
+
+/// [`random_exploration`] with the terminal record of every draw it spent.
+pub(crate) fn random_exploration_recorded(
+    vocab: &Vocab,
+    task: &str,
+    seed: u64,
+    seen: &mut BTreeSet<String>,
+) -> Result<(Vec<SeedCandidate>, Vec<UniformDrawRecord>)> {
     let mut out = Vec::with_capacity(EXPLORATION_SIZE);
+    let mut draws = Vec::new();
     fill_grammar_uniform(
         &mut out,
         seen,
         vocab,
         task,
-        seed,
-        EXPLORATION_SIZE,
-        ORIGIN_RANDOM,
+        (seed, EXPLORATION_SIZE, ORIGIN_RANDOM),
+        &mut draws,
     )?;
-    Ok(out)
+    Ok((out, draws))
 }
 
 /// The pure pool and its counters (jope-dime `pure_pool_impl` return tuple). The candidates are
@@ -707,6 +779,8 @@ pub struct PurePool {
     pub fallback_attempts: u64,
     /// One terminal record per scheduled draw, in draw order (`attempted` records).
     draws: Vec<DrawRecord>,
+    /// One terminal record per fallback draw, in draw order (`fallback_attempts` records).
+    fallback_draws: Vec<UniformDrawRecord>,
 }
 
 impl PurePool {
@@ -718,6 +792,11 @@ impl PurePool {
     /// The terminal record of every scheduled neural draw, in draw order.
     pub fn draws(&self) -> &[DrawRecord] {
         &self.draws
+    }
+
+    /// The terminal record of every grammar-uniform fallback draw, in draw order.
+    pub fn fallback_draws(&self) -> &[UniformDrawRecord] {
+        &self.fallback_draws
     }
 
     /// Number of draws that ended with `outcome`.
@@ -855,7 +934,15 @@ pub(crate) fn pure_pool_checked(
         }
     }
     let unique_neural = candidates.len();
-    let fallback_attempts = fill_pure(&mut candidates, &mut seen, vocab, task, fallback_seed)?;
+    let mut fallback_draws = Vec::new();
+    let fallback_attempts = fill_pure(
+        &mut candidates,
+        &mut seen,
+        vocab,
+        task,
+        fallback_seed,
+        &mut fallback_draws,
+    )?;
     Ok((
         PurePool {
             candidates,
@@ -870,6 +957,7 @@ pub(crate) fn pure_pool_checked(
             token_budget: token_budget(model),
             fallback_attempts,
             draws,
+            fallback_draws,
         },
         seen,
     ))

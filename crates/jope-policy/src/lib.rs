@@ -24,6 +24,9 @@
 //! - [`ranking`]: `score_pool` with `mean_reward_heads_desc_program_hash_v1`.
 //! - [`seeds`]: the 80-candidate `parallel.seed_population.v1` writer and the checks jope-dime's
 //!   `search --seeds` applies.
+//! - [`proposal_ledger`]: every draw's terminal outcome, each handed-off candidate's original
+//!   tokens, program, origin, scores, parser identity and adaptation edges, and the reconciled
+//!   denominators of one proposal.
 //!
 //! # Provenance boundary
 //!
@@ -119,6 +122,7 @@ mod hashing;
 pub mod jope_embed;
 pub mod model;
 pub mod producer;
+pub mod proposal_ledger;
 pub mod ranking;
 pub mod seeds;
 

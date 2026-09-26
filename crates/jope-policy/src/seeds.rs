@@ -21,6 +21,7 @@ use super::config::{ChallengerIdentity, CheckpointBinding};
 use super::decode::{self, PurePool, SamplingOptions, EXPLORATION_SIZE, POOL_SIZE};
 use super::grammar::BoundVocabulary;
 use super::model::PolicyModel;
+use super::proposal_ledger::{self, ProposalLedger};
 use super::ranking::{self, Bindings, Ranking, SELECTION_ID};
 use super::{
     context_sha256, is_sha256_hex, refuse_rejected_checkpoint, require_accepted_policy,
@@ -418,6 +419,7 @@ pub struct Proposal {
     population: SeedPopulation,
     pool: PurePool,
     ranking: Ranking,
+    ledger: ProposalLedger,
 }
 
 impl Proposal {
@@ -431,6 +433,11 @@ impl Proposal {
 
     pub fn ranking(&self) -> &Ranking {
         &self.ranking
+    }
+
+    /// Identity and reconciled denominators of this proposal (W4-T07), recorded while it ran.
+    pub fn ledger(&self) -> &ProposalLedger {
+        &self.ledger
     }
 }
 
@@ -608,7 +615,8 @@ fn propose_checked(
         .with_vocabulary(vocabulary),
         &ranking::Options::default(),
     )?;
-    let exploration = decode::random_exploration(vocab, task, seeds.exploration, &mut seen)?;
+    let (exploration, exploration_draws) =
+        decode::random_exploration_recorded(vocab, task, seeds.exploration, &mut seen)?;
     let population = assemble_population(
         binding,
         checkpoint.state_sha256(),
@@ -616,9 +624,24 @@ fn propose_checked(
         pool.candidates(),
         &exploration,
     )?;
+    // Records only: the ledger never changes which programs are proposed, their order, their
+    // origins or their weights; it is reconciled against the vocabulary before it is returned.
+    let ledger = proposal_ledger::build(&proposal_ledger::ProposalRun {
+        task,
+        checkpoint_sha256: checkpoint.state_sha256(),
+        context_sha256: &binding.context_sha256,
+        vocabulary_sha256: vocabulary.sha256(),
+        pool: &pool,
+        exploration_seed: seeds.exploration,
+        exploration_draws: &exploration_draws,
+        ranking: &ranking,
+        population: population.candidates(),
+        vocab,
+    })?;
     Ok(Proposal {
         population,
         pool,
         ranking,
+        ledger,
     })
 }
