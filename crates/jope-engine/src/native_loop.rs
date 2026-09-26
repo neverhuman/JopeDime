@@ -4,6 +4,7 @@ pub mod bounded;
 mod grant_proof;
 pub(crate) mod materialize;
 mod run_approval;
+pub mod warm_start;
 use crate::{
     manifest::hash,
     native_genome::{self, Arm, Candidate, GenomeTask, Stage},
@@ -79,6 +80,11 @@ pub struct RunCompletion {
 }
 fn verify_successor(next: &Config, previous: &Config, completion: &RunCompletion) -> Result<()> {
     previous.validate()?;
+    ensure!(
+        previous.schema == warm_start::LOOP_V1,
+        "a {} weight-warm-start run has no successor protocol",
+        warm_start::LOOP_V2
+    );
     ensure!(completion.schema == "jope.native_loop_completion.v1"
         && completion.run == previous.run && next.run != previous.run
         && completion.initial_optimizer_step == previous.initial_optimizer_step
@@ -266,14 +272,29 @@ pub fn generation_seed(run: &str, generation: u64, checkpoint: &str) -> Result<u
     Ok(u64::from_str_radix(&h[..16], 16)?)
 }
 impl Config {
+    /// The optimizer window of `generation`'s training block (`warm_start::window`).
+    pub(crate) fn train_window(&self, generation: u64) -> Result<warm_start::Window> {
+        warm_start::window(&self.schema, self.initial_optimizer_step, generation)
+    }
     fn validate(&self) -> Result<()> {
+        // v1: the original accepted step-60000 parent or an explicit completed predecessor.
+        // v2 (a weight warm start, OWNER-DECISIONS.md D12): the accepted step-60000 parent only.
+        let window = match self.schema.as_str() {
+            warm_start::LOOP_V1 => {
+                (self.predecessor_run.is_none() && self.initial_optimizer_step == 60000)
+                    || (self.predecessor_run.is_some()
+                        && self.initial_optimizer_step > 60000
+                        && (self.initial_optimizer_step - 60000) % 6000 == 0)
+            }
+            warm_start::LOOP_V2 => {
+                self.predecessor_run.is_none() && self.initial_optimizer_step == 60000
+            }
+            _ => false,
+        };
         ensure!(
-            self.schema == "jope.native_loop.v1"
+            window
                 && !self.run.is_empty()
                 && self.cycles == 2
-                && ((self.predecessor_run.is_none() && self.initial_optimizer_step == 60000)
-                    || (self.predecessor_run.is_some() && self.initial_optimizer_step > 60000
-                        && (self.initial_optimizer_step - 60000) % 6000 == 0))
                 && self.initial_optimizer_step.checked_add(6000).is_some()
                 && self.updates_per_block == 3000
                 && self.global_batch == 2048,
@@ -661,15 +682,15 @@ impl Loop {
                     ..
                 },
             ) => {
-                let initial = self.config.initial_optimizer_step + r.generation * 3000;
+                let window = self.config.train_window(r.generation)?;
                 ensure!(
                     b.admission.delivery
                         == Delivery::Resident {
                             job_id: self.config.resident_job
                         }
-                        && *initial_optimizer_step == initial
+                        && *initial_optimizer_step == window.initial
                         && *requested_step_increment == 3000
-                        && *target_optimizer_step == initial + 3000
+                        && *target_optimizer_step == window.target
                         && *micro == self.config.microbatch
                         && initialize.join("state.json")
                             == PathBuf::from(
@@ -1453,12 +1474,19 @@ impl Loop {
                 break;
             }
             if generation == self.config.cycles {
+                // A v2 run's window is its fresh optimizer's (`warm_start`), under its own
+                // completion schema, which no successor accepts.
                 let completed = RunCompletion {
-                    schema: "jope.native_loop_completion.v1".into(),
+                    schema: if self.config.schema == warm_start::LOOP_V2 {
+                        warm_start::COMPLETION_V2
+                    } else {
+                        "jope.native_loop_completion.v1"
+                    }
+                    .into(),
                     run: self.config.run.clone(),
                     config: artifact(&self.root, &self.state.join("config.json"))?,
-                    initial_optimizer_step: self.config.initial_optimizer_step,
-                    target_optimizer_step: self.config.initial_optimizer_step + 6000,
+                    initial_optimizer_step: self.config.train_window(0)?.initial,
+                    target_optimizer_step: self.config.train_window(1)?.target,
                     checkpoint: checkpoint.clone(),
                     corpus: corpus.clone(),
                     accepted_parent_decision: parent_acceptance.clone(),
@@ -1683,7 +1711,15 @@ impl Loop {
                 "training requires a changed committed corpus"
             );
             let predecessors = BTreeMap::from([(pack_result.task_id, pack_ref)]);
-            let (_,train)=self.request(generation,format!("g{generation}-train"),Role::Train,json!({"checkpoint":checkpoint,"corpus":next_corpus,"initial_step":self.config.initial_optimizer_step+generation*3000,"requested_increment":3000,"target_step":self.config.initial_optimizer_step+(generation+1)*3000,"global_batch":2048}),predecessors)?;
+            // v1 parameters keep their exact historical bytes; a v2 warm start adds its mode.
+            let window = self.config.train_window(generation)?;
+            let (_, train) = self.request(
+                generation,
+                format!("g{generation}-train"),
+                Role::Train,
+                warm_start::train_parameters(&checkpoint, &next_corpus, &window)?,
+                predecessors,
+            )?;
             let Some((train_ref, train_result)) = self.result(graph, client, &train).await? else {
                 self.offer(graph, client, &train, &mut p).await?;
                 p.waiting_execution += 1;
@@ -1699,8 +1735,7 @@ impl Loop {
                 artifact(&self.root, &self.root.join(cp).join("state.json"))?;
             let state: Value = native_genome::load(&self.root, &candidate_checkpoint)?;
             ensure!(
-                state["step"] == self.config.initial_optimizer_step + (generation + 1) * 3000
-                    && state["corpus_sha256"] == next_corpus.sha256,
+                state["step"] == window.target && state["corpus_sha256"] == next_corpus.sha256,
                 "optimizer window or changed corpus differs"
             );
             let decision_path = self
@@ -2200,5 +2235,55 @@ mod tests {
         next.predecessor_run = None;
         assert!(next.validate().is_err());
         assert_eq!(previous.initial_optimizer_step, 60000);
+
+        // D12: `jope.native_loop.v2` starts the accepted step-60000 parent as a weight warm
+        // start. It has no predecessor and no successor, and the v1 windows are unchanged.
+        let mut warm = previous.clone();
+        warm.schema = warm_start::LOOP_V2.into();
+        warm.validate().unwrap();
+        assert_eq!(
+            (
+                previous.train_window(0).unwrap(),
+                previous.train_window(1).unwrap()
+            ),
+            (
+                warm_start::Window {
+                    initial: 60000,
+                    target: 63000,
+                    warm_start_parent_step: None
+                },
+                warm_start::Window {
+                    initial: 63000,
+                    target: 66000,
+                    warm_start_parent_step: None
+                }
+            )
+        );
+        assert_eq!(
+            warm.train_window(0).unwrap(),
+            warm_start::Window {
+                initial: 0,
+                target: 3000,
+                warm_start_parent_step: Some(60000)
+            }
+        );
+        let mut warm_successor = warm.clone();
+        warm_successor.predecessor_run = Some(completed.config.clone());
+        warm_successor.initial_optimizer_step = 66000;
+        assert!(warm_successor.validate().is_err());
+        let mut from_warm = previous.clone();
+        from_warm.run = "successor".into();
+        from_warm.initial_optimizer_step = 66000;
+        from_warm.predecessor_run = Some(completed.config.clone());
+        let error = verify_successor(&from_warm, &warm, &completed).unwrap_err();
+        assert!(
+            error.to_string().contains("no successor protocol"),
+            "{error}"
+        );
+        for schema in ["jope.native_loop.v3", ""] {
+            let mut unknown = previous.clone();
+            unknown.schema = schema.into();
+            assert!(unknown.validate().is_err());
+        }
     }
 }

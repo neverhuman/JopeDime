@@ -173,7 +173,8 @@ impl Loop {
                     r,
                 )?;
                 // Parent weights with carried optimizer moments and a new
-                // sampling window: classified, never assumed.
+                // sampling window, or (v2) a weight warm start with the optimizer
+                // reset: classified from the frozen policy, never assumed.
                 training_declaration = Some(crate::task_contract::classify_continuation(
                     false,
                     true,
@@ -191,6 +192,7 @@ impl Loop {
                 )?;
                 let run = run.strip_prefix(&self.root)?.to_owned();
                 let launch = launch.strip_prefix(&self.root)?.to_owned();
+                let window = self.config.train_window(r.generation)?;
                 let operation = Operation::Train {
                     corpus: corpus_dir.clone(),
                     run: run.clone(),
@@ -199,11 +201,9 @@ impl Loop {
                     checkpoint_steps: settings.checkpoint_steps,
                     initialize: checkpoint_dir.clone(),
                     replay_policy: replay.path.clone(),
-                    initial_optimizer_step: self.config.initial_optimizer_step
-                        + r.generation * 3000,
+                    initial_optimizer_step: window.initial,
                     requested_step_increment: 3000,
-                    target_optimizer_step: self.config.initial_optimizer_step
-                        + (r.generation + 1) * 3000,
+                    target_optimizer_step: window.target,
                     // Declared below through `InputManifest::declare_training`,
                     // which keeps an input frozen as v1 undeclared.
                     continuation_mode: None,
@@ -403,12 +403,18 @@ pub(crate) fn training_eligibility(
         "metadata-only corpus change does not justify a new training block"
     );
     let state: Value = native_genome::load(root, parent)?;
+    // An optimizer carry continues the parent's optimizer step; a v2 weight warm start
+    // (`warm_start`, OWNER-DECISIONS.md D12) restarts it at zero from the parent's weights.
+    let warm_start = super::warm_start::request_mode(&request.parameters, &state)?;
     ensure!(
-        state["step"] == request.parameters["initial_step"]
-            && request.parameters["initial_step"]
-                .as_u64()
-                .and_then(|s| s.checked_add(3000))
-                == request.parameters["target_step"].as_u64()
+        (if warm_start.is_some() {
+            request.parameters["initial_step"] == 0
+        } else {
+            state["step"] == request.parameters["initial_step"]
+        }) && request.parameters["initial_step"]
+            .as_u64()
+            .and_then(|s| s.checked_add(3000))
+            == request.parameters["target_step"].as_u64()
             && request.parameters["requested_increment"] == 3000
             && request.parameters["global_batch"] == 2048
             && state["vocabulary_sha256"] == index["vocabulary_sha256"],
@@ -440,10 +446,15 @@ pub(crate) fn training_eligibility(
         .keys()
         .map(|key| key.parse::<usize>().map_err(anyhow::Error::from))
         .collect::<Result<Vec<_>>>()?;
-    Ok(
-        json!({"schema":"parallel.replay_policy.v2","eligible":true,"optimizer":"carry","replay":"broad","sampling_seed":generation_seed(&request.run,request.generation,&parent.sha256)?,"parent_checkpoint_sha256":parent.sha256,"corpus_sha256":corpus.sha256,"vocabulary_sha256":index["vocabulary_sha256"],"fresh_groups":fresh_groups,"fresh_records":fresh,"final_tests_opened":false,
-        "eligibility_evidence":{"schema":"jope.native_continuation_eligibility.v1","target_set":target,"scientific_policy":scientific,"verified_corpus_dependencies":request.predecessors,"original_window":request.parameters,"target_kind":"continuation_only_v1","new_records_required":true}}),
-    )
+    let carry = json!({"schema":"parallel.replay_policy.v2","eligible":true,"optimizer":"carry","replay":"broad","sampling_seed":generation_seed(&request.run,request.generation,&parent.sha256)?,"parent_checkpoint_sha256":parent.sha256,"corpus_sha256":corpus.sha256,"vocabulary_sha256":index["vocabulary_sha256"],"fresh_groups":fresh_groups,"fresh_records":fresh,"final_tests_opened":false,
+        "eligibility_evidence":{"schema":"jope.native_continuation_eligibility.v1","target_set":target,"scientific_policy":scientific,"verified_corpus_dependencies":request.predecessors,"original_window":request.parameters,"target_kind":"continuation_only_v1","new_records_required":true}});
+    Ok(match warm_start {
+        None => carry,
+        Some(_) => super::warm_start::warm_start_policy(
+            carry,
+            super::warm_start::binding(&parent.sha256, &state)?,
+        ),
+    })
 }
 
 fn fresh_record_groups(

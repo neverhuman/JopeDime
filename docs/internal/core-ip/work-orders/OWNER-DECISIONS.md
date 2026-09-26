@@ -222,8 +222,31 @@
     - `the_accepted_step_60000_checkpoint_continues_as_a_weight_warm_start`, which binds the real accepted `state.json` by its SHA-256;
     - the updated `exact_resume_refuses_every_undeclared_change` and `a_carry_transition_allows_only_declared_changes`.
   - Record: `evidence/W06-training-boundary.md` (e).
-- **Consequence.** The native loop still freezes an optimizer-carry policy for its training blocks, so a native-loop block from the step-60000 checkpoint is now refused at the trainer. Continuing from step 60000 works as a weight warm start. A native-loop warm-start window needs a new native-loop protocol identity, because the loop's window accounting assumes a carried optimizer.
-- **Reverse.** Remove the `legacy_ids_only` refusal in `check_parent_partition`, and restore the two updated assertions and the two new tests to their accepting form.
+- **Consequence.** The native loop still freezes an optimizer-carry policy for its training blocks, so a native-loop block from the step-60000 checkpoint is now refused at the trainer. Continuing from step 60000 works as a weight warm start. A native-loop warm-start window needs a new native-loop protocol identity, because the loop's window accounting assumes a carried optimizer. **Closed 2026-09-26 by native-loop protocol `jope.native_loop.v2`; see below.**
+- **Reverse.** Remove the `legacy_ids_only` refusal in `check_parent_partition`, and restore the two updated assertions and the two new tests to their accepting form. A `jope.native_loop.v2` run would then be unnecessary but still valid; stop creating v2 configurations rather than removing the protocol, so frozen v2 runs keep verifying.
+
+**D12 follow-up, 2026-09-26: native-loop protocol `jope.native_loop.v2` (the legacy-parent weight warm start).**
+- **What changed.** A native-loop configuration with `schema: "jope.native_loop.v2"` starts the accepted step-60000 parent as a weight warm start instead of an optimizer carry.
+  - Its first block's request declares `optimizer: reset` and `parent_step: 60000`.
+  - The block's replay policy has `optimizer: reset` and a `jope.native_weight_warm_start.v1` binding. The binding names the parent checkpoint, the parent weights digest (`model_sha256`, `053df4f5…` for the accepted parent), the parent step, and an optimizer step base of 0.
+  - The optimizer starts fresh, and its step counter restarts at zero. A v2 run's windows are `0 → 3000` (the warm start) and `3000 → 6000` (an ordinary optimizer carry from the warm start's own checkpoint, which has an objective identity). The parent's weight position stays explicit as `parent_step`.
+  - The trainer's completion receipt names the same binding, and the native graph verifies the trained checkpoint against it.
+  - A v2 run completes as `jope.native_loop_completion.v2`. It has no predecessor and no successor: a successor protocol for a warm-started lineage is not defined yet.
+- **What did not change.** `jope.native_loop.v1` configurations, requests, replay policies, inputs, run records and results keep their exact bytes and meaning. The v1 request parameters are byte-identical, pinned by test. A v1 first block from the legacy parent is still an optimizer carry, and the trainer's pre-CUDA guard still refuses it.
+- **Enforced.**
+  - `crates/jope-engine/src/native_loop/warm_start.rs`: `window`, `train_parameters`, `request_mode`, `binding`, `warm_start_policy`, `policy_mode`, `check_trained`.
+  - `native_loop.rs`: `Config::validate` and `train_window`, the Train binding check, the tick window, completion and `verify_successor`.
+  - `native_loop/materialize.rs` `training_eligibility` and `native_loop/grant_proof.rs`.
+  - `native_graph.rs` `verify_numerical` (Train).
+  - `training.rs` `smartcluster_rank` and `verify_native_training_eligibility`, neural and compile-checked only.
+- **Tests.**
+  - `native_loop::warm_start::tests` (4);
+  - `native_graph::tests::a_weight_warm_start_from_the_legacy_parent_verifies_and_names_the_parent_weights`;
+  - `native_graph::tests::a_warm_start_claiming_continuation_or_a_mixed_policy_is_refused`;
+  - `native_loop::tests::successor_requires_exact_completed_window_and_new_run_identity` (extended);
+  - neural: `continuation_modes::the_native_loop_v2_first_block_is_a_warm_start_the_trainer_admits`.
+  - Record: `evidence/W06-training-boundary.md` (f).
+- **Reverse.** Stop creating `jope.native_loop.v2` configurations. Frozen v2 runs keep their meaning, and removing the protocol would make them unverifiable, which is never done in place.
 
 ## D13 — W2 G-08: unknown receipt fields
 

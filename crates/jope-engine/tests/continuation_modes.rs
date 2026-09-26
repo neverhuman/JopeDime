@@ -538,6 +538,67 @@ fn the_accepted_step_60000_checkpoint_continues_as_a_weight_warm_start() {
     );
 }
 
+/// D12, native loop: the first training block from the accepted step-60000 checkpoint, as each
+/// native-loop protocol freezes it. Under `jope.native_loop.v1` it is an optimizer carry, and the
+/// pre-CUDA guard still refuses it. Under `jope.native_loop.v2` it is a weight warm start that
+/// binds the parent weights digest and that the guard admits with the optimizer reset.
+#[test]
+fn the_native_loop_v2_first_block_is_a_warm_start_the_trainer_admits() {
+    use jope_parallel::native_loop::warm_start;
+    let state: Value = serde_json::from_slice(ACCEPTED_STEP_60000_STATE).unwrap();
+    let config = config();
+    let objective = objective::identity_sha256();
+    let current = Current {
+        corpus_sha256: NEW_CORPUS,
+        vocabulary_sha256: state["vocabulary_sha256"].as_str().unwrap(),
+        world: 8,
+        microbatch: 256,
+        global_batch: 2048,
+        seed: state["seed"].as_u64().unwrap(),
+        sampler_id: state["sampler_id"].as_str().unwrap(),
+        config: &config,
+        objective_sha256: &objective,
+    };
+    let parent = json!({"path":"parent/state.json","sha256":ACCEPTED_STEP_60000_STATE_SHA256});
+    let corpus = json!({"path":"corpus/index.json","sha256":NEW_CORPUS});
+    for schema in [warm_start::LOOP_V1, warm_start::LOOP_V2] {
+        let window = warm_start::window(schema, 60000, 0).unwrap();
+        let parameters = warm_start::train_parameters(&parent, &corpus, &window).unwrap();
+        let carry = json!({"schema":"parallel.replay_policy.v2","optimizer":"carry",
+            "eligibility_evidence":{"original_window":parameters}});
+        // The policy the loop freezes for this request (`materialize::training_eligibility`).
+        let policy = match warm_start::request_mode(&parameters, &state).unwrap() {
+            None => carry,
+            Some(step) => {
+                assert_eq!(step, 60000);
+                warm_start::warm_start_policy(
+                    carry,
+                    warm_start::binding(ACCEPTED_STEP_60000_STATE_SHA256, &state).unwrap(),
+                )
+            }
+        };
+        let mode = classify(false, true, Some(&policy)).unwrap();
+        let checked = check_parent(mode, &state, &config, &current, Some(&policy));
+        if schema == warm_start::LOOP_V1 {
+            assert_eq!(mode, Mode::NewCorpusTransition);
+            let error = checked.unwrap_err();
+            assert!(error.to_string().contains(LEGACY_REFUSAL), "{error}");
+            continue;
+        }
+        assert_eq!(mode, Mode::WeightWarmStart);
+        let record = checked.unwrap();
+        assert_eq!(record["optimizer"], "reset");
+        assert_eq!(record["objective"]["continuity"], "legacy_ids_only");
+        assert_eq!(record["parent_step"], 60000);
+        let bound = warm_start::policy_mode(&policy, ACCEPTED_STEP_60000_STATE_SHA256, &state)
+            .unwrap()
+            .unwrap();
+        assert_eq!(bound["parent_model_sha256"], state["model_sha256"]);
+        assert_eq!(bound["optimizer_step_base"], 0);
+        assert_eq!((window.initial, window.target), (0, 3000));
+    }
+}
+
 #[test]
 fn a_transition_lineage_never_inherits_an_exact_resume_claim() {
     // A checkpoint written inside a carry transition names that lineage mode;

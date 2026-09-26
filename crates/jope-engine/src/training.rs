@@ -669,22 +669,44 @@ pub(crate) fn smartcluster_rank(
     let launch_root = resolve(root, launch)?;
     let initial = resolve(root, initialize)?;
     let policy_path = resolve(root, replay_policy)?;
-    let parent: Value = read_json(&initial.join("state.json"))?;
+    let parent_bytes = fs::read(initial.join("state.json"))?;
+    let parent: Value = serde_json::from_slice(&parent_bytes)?;
+    let policy: Value = read_json(&policy_path)?;
+    // An optimizer carry continues the parent's optimizer step. A `jope.native_loop.v2` weight
+    // warm start (OWNER-DECISIONS.md D12) restarts it at zero from the bound parent weights and
+    // is admitted only as a declared warm start over a verified native continuation corpus.
+    let warm_start =
+        crate::native_loop::warm_start::policy_mode(&policy, &hash(&parent_bytes), &parent)?;
     ensure!(
-        parent["step"] == *initial_optimizer_step
-            && file_hash(&initial.join("model.ot"))? == parent["model_sha256"]
+        (if warm_start.is_some() {
+            *initial_optimizer_step == 0
+        } else {
+            parent["step"] == *initial_optimizer_step
+        }) && file_hash(&initial.join("model.ot"))? == parent["model_sha256"]
             && file_hash(&initial.join("optimizer.ot"))? == parent["optimizer_sha256"],
         "original checkpoint model/optimizer changed"
     );
-    let policy: Value = read_json(&policy_path)?;
     ensure!(
-        policy["optimizer"] == "carry",
+        warm_start.is_some() || policy["optimizer"] == "carry",
         "native continuation must preserve optimizer bytes"
     );
     let corpus_index: Value = read_json(&corpus.join("index.json"))?;
     let native_continuation = corpus_index["qualification"] == false;
+    if warm_start.is_some() {
+        ensure!(
+            native_continuation && *continuation_mode == Some(continuation::Mode::WeightWarmStart),
+            "a weight warm start is admitted only as a declared native continuation"
+        );
+    }
     if native_continuation {
-        verify_native_training_eligibility(task, &policy)?;
+        verify_native_training_eligibility(
+            task,
+            &policy,
+            warm_start
+                .as_ref()
+                .map(|binding| binding["parent_step"].as_u64().context("parent step"))
+                .transpose()?,
+        )?;
     }
     let original = json!({"schema":"jope.smartcluster_optimizer_window.v1","initial_optimizer_step":initial_optimizer_step,"requested_step_increment":requested_step_increment,"target_optimizer_step":target_optimizer_step,"parent_state_sha256":file_hash(&initial.join("state.json"))?,"corpus_sha256":file_hash(&corpus.join("index.json"))?,"policy_sha256":file_hash(&policy_path)?,"microbatch":micro,"global_batch":2048});
     fs::create_dir_all(&run)?;
@@ -753,10 +775,12 @@ pub(crate) fn smartcluster_rank(
         complete["steps"] == *target_optimizer_step,
         "training did not finish original target"
     );
-    write_json(
-        receipt,
-        &json!({"schema":"jope.smartcluster_training_completion.v1","window":original,"numerical_receipt":complete,"latest":read_json::<Value>(&run.join("latest.json"))?}),
-    )
+    let mut completion = json!({"schema":"jope.smartcluster_training_completion.v1","window":original,"numerical_receipt":complete,"latest":read_json::<Value>(&run.join("latest.json"))?});
+    // A weight warm start's receipt names the parent weights it started from (D12).
+    if let Some(binding) = warm_start {
+        completion["warm_start"] = binding;
+    }
+    write_json(receipt, &completion)
 }
 
 /// NCCL rendezvous and rank receipts belong to one actual native allocation.
@@ -787,6 +811,7 @@ fn native_attempt_launch(
 fn verify_native_training_eligibility(
     task: &crate::smartcluster_worker::VerifiedTask,
     policy: &Value,
+    warm_start_parent_step: Option<u64>,
 ) -> Result<()> {
     use crate::{
         native_graph::Artifact,
@@ -830,8 +855,12 @@ fn verify_native_training_eligibility(
         evidence["schema"] == "jope.native_continuation_eligibility.v1",
         "native eligibility evidence absent"
     );
-    let parameters = json!({"checkpoint":parent,"corpus":corpus,"initial_step":initial_optimizer_step,
+    let mut parameters = json!({"checkpoint":parent,"corpus":corpus,"initial_step":initial_optimizer_step,
         "requested_increment":requested_step_increment,"target_step":target_optimizer_step,"global_batch":2048});
+    if let Some(step) = warm_start_parent_step {
+        parameters["optimizer"] = json!("reset");
+        parameters["parent_step"] = json!(step);
+    }
     ensure!(
         evidence["original_window"] == parameters,
         "native replay original window differs"
@@ -1305,7 +1334,7 @@ fn rank_impl(
         initialization = json!({"kind":"warm_start","checkpoint":checkpoint.strip_prefix(root)?,
             "state_sha256":file_hash(&checkpoint.join("state.json"))?,"model_sha256":state["model_sha256"],
             "parent_step":state["step"],"parent_corpus_sha256":state["corpus_sha256"],
-            "optimizer":"fresh FP32 AdamW", "sampler":"new corpus starts at step zero"});
+            "optimizer":crate::native_loop::warm_start::FRESH_OPTIMIZER, "sampler":"new corpus starts at step zero"});
         if let Some(p) = &policy {
             ensure!(
                 p["parent_checkpoint_sha256"] == file_hash(&checkpoint.join("state.json"))?,
