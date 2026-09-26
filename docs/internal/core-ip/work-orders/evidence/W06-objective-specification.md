@@ -368,3 +368,56 @@ Test names are from source; none were run.
 ---
 
 **Could not verify:** the exact source and executable that produced step 60000 (and so `ablation_bt` in that run), the external per-step logs behind "microbatch 256, accumulation 1", the ancestry of the inactive tensors' moments, the realized numerical bias gradients, the vocabulary's reserved and singleton legal sets, the timeout-to-label path, and the `loss_optimizer_parity` fixture file.
+
+---
+
+## 11. APPENDED 2026-09-26 — W6-T02 fixture half: implementation record
+
+*This section is appended; §§1–10 above are unchanged and remain the specification. Anchors in §§1–10 refer to the earlier head and have shifted in `training.rs`/`neural.rs`.*
+
+**Status under EXECUTION-CONTRACT:** `implemented` and `fixture-proven` for CPU source arithmetic only, on the `feat/regression-remediation` working tree (lane `.agent/worktrees/bench`, base `fc1f7ec4db04f379e537269db103e3b852dd3d3c`). Not `CI-verified` and not `live-qualified`. No GPU, BF16 autocast, fused AdamW, NCCL, multi-rank, real corpus or training run was used.
+
+### 11.1 The update path is one tested function
+- The per-microbatch objective formerly written inline in `rank_impl`'s `loss_for` closure is now `training::objective::composite` (`crates/jope-engine/src/training/objective.rs`). `loss_for` calls it for both training and fixed-panel validation microbatches.
+- The arithmetic and tensor-operation order are unchanged. The only addition is an explicit `× 1.0` on `sequence_nll`, which is bitwise neutral.
+- The coefficients are the named constant `objective::COEFFICIENTS`: 1.0, 0.25, 0.10, 0.10, 0.05, with stability 0.0 and log-vars 0.0. Telemetry `weighted_losses` (training and validation) now comes from the same constant. The f32 products are bitwise identical to the former literals; this is asserted.
+- Also named: the row weight `0.05 + p⁴` (f32), SmoothL1 β = 1, the 8-row comparison, the four reward heads, and `INACTIVE_PARAMETER_PREFIXES = ["stability_head.", "loss_log_vars."]`.
+- Still literals inside `neural::{sequence_nll, ranking_losses}`, unchanged: smoothing 0.05, listwise temperature 0.25, and the ×2 boost at p ≥ 0.9. The fixtures restate them independently.
+
+### 11.2 Fixtures
+File `crates/jope-engine/tests/objective_fixtures.rs` (feature `neural`, CPU, one thread for the Policy tests). Every expectation is formed in plain f64 from §3 without calling the code under test.
+
+| Property | Test |
+|---|---|
+| Coefficients; telemetry weights | `accepted_coefficients_and_telemetry_weights_are_the_declared_literals` |
+| §3.1 value and gradient. Masked/PAD logits get exact zeros. Forced singleton (G7) adds zero loss and counts in the denominator | `sequence_term_matches_independent_smoothed_masked_weighted_mean` |
+| Illegal target and empty legal set are errors; PAD may carry any legal set | `sequence_supervision_masks_fail_explicitly` |
+| §3.2 hand example (tie skipped, champion boost); pair reversal flips direction | `bradley_terry_hand_example_ties_boost_and_direction` |
+| §3.2/§3.3/§3.5 BT, listwise (T = 0.25, ≥ 3 members, NaN p ineligible) and ablation BT against references; nonfinite value skipped | `bradley_terry_and_listwise_match_independent_references` |
+| Permutation invariance; duplication influence; no cross-group pairs; empty support is a connected exact zero | `ranking_permutation_duplication_and_empty_support_follow_the_declared_objective` |
+| Composite: five raw terms, recombination, gradients for logits, rewards, runtime (§3.4 Huber) and ablation. Exact zeros for the context-slot and final positions, stability and log-vars. Same-context comparisons stay separate | `composite_matches_independent_terms_coefficients_and_gradients` |
+| Partition dependence `microbatch_weighted_means_rank_mean_v1`: 16 rows versus 2 × 8 accumulated | `composite_objective_depends_on_the_microbatch_partition` |
+| K05/G14 PAD-only extension, dropout 0, real tiny `Policy` | `pad_only_extension_leaves_the_objective_unchanged_with_dropout_off` |
+| §4 per-term reach on the real tiny `Policy`. §4.1: unused embedding rows and the PAD row get exact zeros. Inactive set equals `INACTIVE_PARAMETER_PREFIXES` | `each_term_reaches_exactly_its_declared_parameters` |
+| G5: inactive tensors are decayed, not frozen (CPU reference AdamW, zero moments) | `inactive_tensors_receive_decay_only_updates` |
+
+### 11.3 Gaps changed
+Each change has a failing reproduction first. Evidence is under `/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/`: pre-fix `w6-pre-t02-20260926T064613Z` (11 passed, the 3 below failed) and post-fix `w6-post-t02-20260926T064813Z`.
+- **G8 — fixed, fail closed.** `neural::sequence_nll` rejects a row with no supervised position (`sequence row without supervised positions`).
+  - `encode` always yields supervised positions, so no valid corpus row is affected.
+  - `monitoring.rs` shares the function and inherits the check.
+- **G12 — partly fixed.** `composite` rejects a nonfinite total or term (`nonfinite training objective`) before the trainer backpropagates or logs it. This applies to training and validation microbatches.
+  - The `× 0.0` inactive connection stays because of the layout requirement. An overflowing inactive head now fails the step instead of logging NaN.
+  - Unchanged: exact-resume re-validation of lr/decay, and gradient-norm overflow.
+- **New hardening: malformed outputs.** Logits must be `[B, T+1, V]` and legal `[B, T−1, V]`. Rewards must be `[B, 4]`; runtime, stability and ablation `[B]`. Before this, three reward heads were silently averaged.
+
+### 11.4 Recorded, unchanged
+- **G7** is the declared normalization, now pinned by a fixture.
+- **G5** holds on the CPU reference path: the moments stay exactly zero and each step multiplies the tensor by `(1 − lr·λ)`, to f32 rounding. The fused CUDA optimizer was not exercised.
+- **G6** was measured on CPU f32 at fixture scale (evidence `w6-post-t02-bias-report-20260926T065025Z`). The max |gradient| of each `reward_heads.k.3.bias` was 3.7e-9 from BT and 3.0e-8 from listwise. For `reward_head_ablation.3.bias` it was exactly 0.
+  - These are not negligible for the update. AdamW divides by `√v̂ + 1e-8`, so a sign-consistent gradient of that size moves the bias by about 0.27–0.75·η per step. This is analytical and not measured over steps.
+  - GPU/BF16 realized values remain UNVERIFIED.
+- **G1** (the full objective identity is not bound into checkpoints or resume/carry guards) remains for W6-T06.
+- G2, G3, G9–G11 and G13–G17 are unchanged.
+
+**Not proven here:** GPU or BF16 numerics, fused AdamW, NCCL averaging, the accepted step-60000 objective (G2/G3), and real-corpus label distributions.

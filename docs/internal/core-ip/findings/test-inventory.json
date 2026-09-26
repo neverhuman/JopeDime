@@ -2154,6 +2154,12 @@
         "teaching"
       ]
     },
+    "target:jope-parallel/test/objective_fixtures": {
+      "role": "regression",
+      "subsystems": [
+        "training"
+      ]
+    },
     "target:jope-parallel/test/preparation_semantics": {
       "role": "regression",
       "subsystems": [

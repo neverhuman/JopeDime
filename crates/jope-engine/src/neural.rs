@@ -542,6 +542,12 @@ pub fn sequence_nll(
         legal.any_dim(-1, false).all().int64_value(&[]) != 0,
         "empty legal token set"
     );
+    // A row without a supervised position would keep its weight in the
+    // denominator with a zero numerator and dilute every other row (W6 G8).
+    ensure!(
+        pad.any_dim(-1, false).all().int64_value(&[]) != 0,
+        "sequence row without supervised positions"
+    );
     ensure!(
         legal
             .gather(-1, &targets.unsqueeze(-1), false)

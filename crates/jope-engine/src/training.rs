@@ -16,6 +16,8 @@ use std::{
 };
 use tch::{nn, Device, Kind, Tensor};
 
+pub mod objective;
+
 pub const SAMPLER_ID: &str = "family_uniform_champion_plus_seven_quantiles_v2";
 pub const REPLAY_SAMPLER_ID: &str = "lineage_fresh_program_champion_plus_seven_v2";
 pub const SEARCH_BEATING_SAMPLER_ID: &str = "search_beating_champion_plus_seven_v1";
@@ -1326,57 +1328,24 @@ fn rank_impl(
                     .bitwise_and(0xffffi64),
             )
             .view([ids.len() as i64, length - 1, vocabulary.tokens.len() as i64]);
-        let weights = Tensor::from_slice(
-            &rows
-                .iter()
-                .map(|r| 0.05 + r.percentile.powi(4))
-                .collect::<Vec<_>>(),
-        )
-        .to_device(device);
-        let nll = crate::neural::sequence_nll(
-            &logits.narrow(1, 1, length - 1),
-            &tokens.narrow(1, 1, length - 1),
-            &legal,
-            &pad.narrow(1, 1, length - 1),
-            &weights,
-        )?;
-        let reward = rewards.mean_dim(&[1i64][..], false, Kind::Float);
-        let values = rows.iter().map(|r| r.value as f64).collect::<Vec<_>>();
-        let percentiles = rows.iter().map(|r| r.percentile).collect::<Vec<_>>();
-        let groups = rows
+        let labels = rows
             .iter()
-            .enumerate()
-            .map(|(i, r)| format!("{}:{}", r.context, i / 8))
+            .map(objective::RowLabels::from)
             .collect::<Vec<_>>();
-        let (bt, list) = crate::neural::ranking(&reward, &values, &percentiles, &groups)?;
-        let abt = crate::neural::ranking_pairwise(&ablation, &values, &percentiles, &groups)?;
-        let runtime_label = Tensor::from_slice(&rows.iter().map(|r| r.runtime).collect::<Vec<_>>())
-            .to_device(device);
-        let rt = runtime.to_kind(Kind::Float).log1p().smooth_l1_loss(
-            &runtime_label,
-            tch::Reduction::Mean,
-            1.0,
-        );
-        let mut loss = &nll
-            + &bt * 0.25
-            + &list * 0.1
-            + &rt * 0.1
-            + &abt * 0.05
-            + stability.sum(Kind::Float) * 0.0;
-        // Inactive optional objectives stay connected for identical packed gradient layouts.
-        for x in model.loss_log_vars.values() {
-            loss += x * 0.0;
-        }
-        Ok((
-            loss,
-            [
-                nll.double_value(&[]),
-                bt.double_value(&[]),
-                list.double_value(&[]),
-                rt.double_value(&[]),
-                abt.double_value(&[]),
-            ],
-        ))
+        objective::composite(
+            &objective::Outputs {
+                logits: &logits,
+                rewards: &rewards,
+                runtime: &runtime,
+                stability: &stability,
+                ablation: &ablation,
+            },
+            model.loss_log_vars.values(),
+            &tokens,
+            &pad,
+            &legal,
+            &labels,
+        )
     };
     let accumulation = global_batch / (world * micro);
     let started = Instant::now();
@@ -1522,11 +1491,11 @@ fn rank_impl(
                 let mut t = Tensor::from_slice(&v.map(|x| x as f32)).to_device(device);
                 comm.reduce(&mut t)?;
                 let v: Vec<f32> = Vec::try_from(t.to_device(Device::Cpu))?;
-                validation_metrics = json!({"sequence_nll":v[0],"ranking_bt":v[1],"ranking_listwise":v[2],"runtime_huber":v[3],"contextfree_bt":v[4],"weighted_losses":{"sequence_nll":v[0],"ranking_bt":v[1]*0.25,"ranking_listwise":v[2]*0.10,"runtime_huber":v[3]*0.10,"contextfree_bt":v[4]*0.05},"source_families":validation.len(),"evaluated_step":step+1,"panel_sha256":panel_sha256,"sampler_id":SAMPLER_ID,"sampled_examples":world*256,"family_balanced":true,"evaluation_bias":"adaptive_cut_heldout_teacher","independent_evaluation":false});
+                validation_metrics = json!({"sequence_nll":v[0],"ranking_bt":v[1],"ranking_listwise":v[2],"runtime_huber":v[3],"contextfree_bt":v[4],"weighted_losses":objective::weighted_losses(&v),"source_families":validation.len(),"evaluated_step":step+1,"panel_sha256":panel_sha256,"sampler_id":SAMPLER_ID,"sampled_examples":world*256,"family_balanced":true,"evaluation_bias":"adaptive_cut_heldout_teacher","independent_evaluation":false});
             }
             let seconds = begun.elapsed().as_secs_f64();
             measured_step_seconds += seconds;
-            let mut state = json!({"schema":"parallel.neural_training.v1","phase":"training on real GP teaching corpus","status":"active","run":run.strip_prefix(root)?,"latest_receipt":run.join("latest.json").strip_prefix(root)?,"checkpoint":latest["checkpoint"],"checkpoint_step":latest["step"],"rank":rank,"world":world,"step":step+1,"steps":steps,"epoch":(step+1) as f64/epoch_steps as f64,"microbatch":micro,"accumulation":accumulation,"global_batch":global_batch,"loss":totals[0],"sequence_nll":totals[1],"ranking_bt":totals[2],"ranking_listwise":totals[3],"runtime_huber":totals[4],"contextfree_bt":totals[5],"weighted_losses":{"sequence_nll":totals[1],"ranking_bt":totals[2]*0.25,"ranking_listwise":totals[3]*0.10,"runtime_huber":totals[4]*0.10,"contextfree_bt":totals[5]*0.05},"inactive_objectives":["stability","loss_log_vars"],"gradient_clipped":norm>1.0,"validation":validation_metrics,"gradient_norm":norm,"step_seconds":seconds,"communication_seconds":communication_seconds,"examples_per_second":global_batch as f64/seconds,"elapsed_seconds":started.elapsed().as_secs_f64(),"timestamp":now(),"corpus_sha256":corpus_hash,"training_families":families.len(),"sampler_id":SAMPLER_ID,"teacher_in_each_comparison":true,"qualification":true,"fresh_initialization":initialization["kind"] == "fresh","initialization":initialization,"autocast_cache_lifetime":"scoped_v2"});
+            let mut state = json!({"schema":"parallel.neural_training.v1","phase":"training on real GP teaching corpus","status":"active","run":run.strip_prefix(root)?,"latest_receipt":run.join("latest.json").strip_prefix(root)?,"checkpoint":latest["checkpoint"],"checkpoint_step":latest["step"],"rank":rank,"world":world,"step":step+1,"steps":steps,"epoch":(step+1) as f64/epoch_steps as f64,"microbatch":micro,"accumulation":accumulation,"global_batch":global_batch,"loss":totals[0],"sequence_nll":totals[1],"ranking_bt":totals[2],"ranking_listwise":totals[3],"runtime_huber":totals[4],"contextfree_bt":totals[5],"weighted_losses":objective::weighted_losses(&totals[1..]),"inactive_objectives":["stability","loss_log_vars"],"gradient_clipped":norm>1.0,"validation":validation_metrics,"gradient_norm":norm,"step_seconds":seconds,"communication_seconds":communication_seconds,"examples_per_second":global_batch as f64/seconds,"elapsed_seconds":started.elapsed().as_secs_f64(),"timestamp":now(),"corpus_sha256":corpus_hash,"training_families":families.len(),"sampler_id":SAMPLER_ID,"teacher_in_each_comparison":true,"qualification":true,"fresh_initialization":initialization["kind"] == "fresh","initialization":initialization,"autocast_cache_lifetime":"scoped_v2"});
             if policy.is_some() {
                 state["sampler_id"] = json!(active_sampler_id(replay.as_ref()));
                 state["replay_policy_sha256"] = json!(policy_sha);
