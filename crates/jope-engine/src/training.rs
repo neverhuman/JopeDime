@@ -16,6 +16,7 @@ use std::{
 };
 use tch::{nn, Device, Kind, Tensor};
 
+pub mod ancestry;
 pub mod checkpoint_commit;
 pub mod consumption;
 pub mod continuation;

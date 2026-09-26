@@ -7220,6 +7220,21 @@
       "dispositions": [],
       "scope": "Neural-gated CPU fixtures on a real teaching-corpus directory: verified single-read inputs, content-keyed staging, cold/cached equivalence, refusal of changed/missing/substituted inputs, frozen-input manifest. No device or training."
     },
+    "target:jope-parallel/test/training_ancestry": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-engine/tests/training_ancestry.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "Neural-gated CPU fixtures: checkpoint genealogy from retained manifests and bound journals; possible/exact/availability exposure; unknown history stays unknown; unsupported continuity claims refused. No historical run read, no GPU."
+    },
     "target:jope-parallel/test/corpus": {
       "discovery": {
         "kind": "target",

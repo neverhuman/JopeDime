@@ -2223,6 +2223,12 @@
         "training"
       ]
     },
+    "target:jope-parallel/test/training_ancestry": {
+      "role": "regression",
+      "subsystems": [
+        "training"
+      ]
+    },
     "target:jope-parallel/test/training_inputs": {
       "role": "regression",
       "subsystems": [

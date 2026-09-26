@@ -320,3 +320,66 @@ File `crates/jope-engine/tests/frozen_inputs.rs` (feature `neural`, CPU). It use
 - **Transitive dependencies not loaded by the trainer are not re-verified at launch:** programs, prepared cut manifests (`prepared_sha256`), label ledgers and admission receipts. They are bound only through the corpus build that produced `index.json`. Programs, comparison groups and contexts are pinned through the index and records digests.
 - **Teaching-store reads.** `teaching_store::load_resident` still reads the index path itself; the substitution is detected, not prevented. Passing verified bytes into the store is outside this partition.
 - **Not executed.** `rank_impl` wiring is compile-checked only.
+
+---
+
+## W6-T07 — reconcile accepted ancestry and exposure limits
+
+### Classification
+This is a new capability. No existing engine path reconstructs checkpoint genealogy or ancestry exposure:
+- `learning_history` and the dashboard display checkpoint history but make no parent or continuity claims;
+- the only continuity records are the per-lineage `initialization` values and the per-attempt receipts.
+
+There was therefore no misbehaving path to reproduce as failing. The module is tested with positive controls and negative cases. No historical checkpoint was read; this proves the reconstruction logic, not any historical run.
+
+### Genealogy (`training/ancestry.rs`)
+- **Nodes.**
+  - A node is a retained checkpoint identified by the SHA-256 of its `state.json`; directory names and step labels are not identities.
+  - Model and optimizer retention are reported per node: `weights_retained` means the object is present and matches its manifest digest.
+- **Lineages.**
+  - Checkpoints whose lineage record (`initialization`) is byte-identical form one lineage, ordered by step. Two different checkpoints at one lineage step are refused.
+  - A manifest with no lineage record is its own orphan lineage of unknown origin.
+- **Parents.** Weights and optimizer state are separate relationships:
+  - **Within a lineage:** the previous retained checkpoint is both parents. `optimizer_state` is `retained` or `not_retained`, according to that parent's retained bytes.
+  - **Cold start:** no parent.
+  - **Warm start:** the weight parent is named by state digest. It has an optimizer parent only when it carried the optimizer (`optimizer_parent_step`); otherwise the optimizer state is `reset`.
+- **Refusals.** A claim about a retained parent must agree with it. Refused: a parent step or carried optimizer step the parent does not have; a T06 continuity record whose parent step, objective or corpus contradicts the parent; a lineage record claiming exact resume.
+- **Unresolved parents.**
+  - A claimed parent that is not retained is `Unresolved { digest }`; a lineage record this source cannot interpret is `Unresolved { null }`.
+  - Unresolved links contribute no exposure and are never bridged by a later run.
+- **Cycles** are impossible between digest-addressed claims. They are refused defensively.
+
+### Exposure (`exposure(root, genealogy, targets)`)
+Every segment on a path from a target back to its roots is counted once, so a union of branches counts shared ancestors once and a sibling branch never enters. Three quantities are kept apart:
+
+| Quantity | Source | Unknown when |
+|---|---|---|
+| `possible_presentations` | committed steps × global batch per segment, from verified manifests | the segment origin is unknown |
+| `exact` (presentations, microbatches, supervised positions) and `unique_committed_records` (distinct corpus and record pairs) | byte-bound consumption journal prefixes (T04), split per segment by subtracting the parent's bound prefix of the same journal | the manifest binds no journal (`no_consumption_journal`), the journal is not retained (`journal_not_retained`), or the journal starts inside the segment (`journal_starts_after_segment`) |
+| `availability` | the segment's frozen training-input manifest (T01), verified by digest | not retained or not bound |
+
+- **Completeness.** `possible_complete` and `exact_complete` hold only when every segment is known and no ancestor is unresolved.
+- **Altered evidence is refused, not reported as unknown:** a bound journal whose prefix no longer verifies, or journal exposure that disagrees with committed steps × batch.
+- **Lost updates.** Applied updates never committed, such as one lost to an interruption, are not exposure.
+
+### Fixtures
+File `crates/jope-engine/tests/training_ancestry.rs` (feature `neural`, CPU). Three lineages are committed through the real T05 commit path, with real T04 journals, T01 frozen-input manifests and a tiny CPU model:
+- **A:** cold start, commits at 2 and 4, one applied update lost to an interruption, then an exact resume that commits 6;
+- **B:** optimizer-carry transition from A@4 on a new corpus, commits at 6 and 8;
+- **C:** weight warm start from A@6, commits at 2.
+
+| Acceptance item | Test |
+|---|---|
+| Every edge resolves as recorded: same lineage, exact resume, carry with retained optimizer, reset warm start. Shuffled and duplicated ingestion gives an identical description. Node digests equal the independent SHA-256 of each manifest | `the_genealogy_resolves_retained_edges_and_checks_independently` |
+| Branch exposure: 4 segments × 2 committed updates, exact equals possible, the lost update excluded, unique records equal an independent reading of the journals. A union of two branches counts the shared ancestors once. Sibling work is excluded. Availability and corpus per segment | `exposure_counts_each_committed_segment_once_and_excludes_siblings` |
+| Unknowns are never reconstructed: a removed middle checkpoint leaves B's parent unresolved and A6's window beyond its journal; a missing journal gives `journal_not_retained`; a journal-less historical manifest gives possible only; a new run from a parent that is not retained stays incomplete; an orphan has unknown origin | `unretained_or_journal_less_history_stays_unknown` |
+| Refused: contradictory same-step checkpoints; a wrong parent step; a wrong carried optimizer step; a contradicting continuity record; a lineage exact-resume claim. A consistent claim is accepted. An altered journal prefix, journal/step disagreement and an unknown target are errors | `unsupported_continuity_claims_and_altered_evidence_are_refused` |
+
+### Open for T07
+- **Historical application.**
+  - The accepted step-60000 ancestry: gen31, the 108-block chain, and the 57000→60000 carry.
+  - Its evidence is external and outside this repository; the manifests predate consumption journals.
+  - Applying this module to it can yield at most verified step windows (`possible`), and only for the manifests that are retained. Record-level exposure for those segments stays unknown.
+  - Running it needs the retained historical objects and belongs to the W12 genealogy work. No historical totals are claimed here.
+- **Rank and topology.** Journals of every rank are read from the local filesystem. Multi-host retention is W7/W8.
+- **Unique programs.** Only corpus and record pairs are counted; unique programs across corpora (T01 `program_identity`) would need the corpora themselves.
