@@ -348,10 +348,14 @@ impl CpuProducer {
         );
         let matrix = Matrix::new(columns, n, width);
         let bounds = fit_quantile_bounds(&matrix, self.settings.q_low, self.settings.q_high);
-        let grid = quantize_u8_with_bounds(&matrix, &bounds, self.settings.pad_u8);
+        let surface = CellSurface::from_quantized_rows(
+            quantize_u8_with_bounds(&matrix, &bounds, self.settings.pad_u8),
+            n,
+            &scope,
+        )?;
         let sweep = run_composite_embedding_sweep(
             &self.hyperion,
-            &grid,
+            surface.grid(),
             self.settings.pad_u8,
             self.settings.quant_scale,
             self.settings.max_patch,
@@ -369,7 +373,7 @@ impl CpuProducer {
             !sweep.cancelled && sweep.row_emb.len() == n * RowEmbeddings::WIDTH,
             "incomplete Hyperion sweep"
         );
-        let row_embeddings = RowEmbeddings::from_hyperion_sweep(sweep.row_emb, n, &scope)?;
+        let row_embeddings = RowEmbeddings::from_hyperion_sweep(sweep.row_emb, &surface)?;
         let hyperion = HyperionSignature::pool(&row_embeddings)?;
         if profile {
             self.hyperion.device().synchronize()?;

@@ -16,6 +16,7 @@
 
 use candle_core::{Device, Tensor};
 use jope_policy::config::PolicyConfig;
+use jope_policy::context::PolicyContext;
 use jope_policy::decode::{
     self, DecodeFailure, DrawId, DrawOutcome, FailureKind, SamplingOptions, FALLBACK_ATTEMPTS,
     MAX_BATCH, MAX_ROUNDS, POOL_SIZE,
@@ -45,8 +46,9 @@ fn vocab() -> Vocab {
         .clone()
 }
 
-fn context() -> Vec<f32> {
-    (0..2048).map(|i| (i % 13) as f32 / 13.0 - 0.4).collect()
+fn context() -> PolicyContext {
+    PolicyContext::from_frozen_values((0..2048).map(|i| (i % 13) as f32 / 13.0 - 0.4).collect())
+        .unwrap()
 }
 
 fn config(max_seq: usize) -> PolicyConfig {

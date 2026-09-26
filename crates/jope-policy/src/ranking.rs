@@ -5,6 +5,7 @@
 //! heads, descending; exact ties (including +0/-0) by program sha256 ascending, then by program
 //! text. Runtime is reported and never penalises quality. Reward outputs are within-context
 //! ranking logits, not calibrated RMSE estimates.
+use crate::context::PolicyContext;
 use anyhow::{ensure, Context, Result};
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
@@ -339,7 +340,7 @@ pub fn pool_sha256(programs: &[String]) -> Result<String> {
 pub fn score_pool(
     policy: &PolicyModel,
     vocabulary: &Vocab,
-    training_context: &[f32],
+    training_context: &PolicyContext,
     programs: &[String],
     bindings: Bindings,
     options: &Options,

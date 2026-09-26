@@ -2,6 +2,7 @@
 //! Reading this artifact proves consistency, not execution. The controller must
 //! authenticate the pinned producer and its completed bounded execution/output
 //! receipts before using the reader. `Proposal` remains non-deserializable.
+use crate::context::PolicyContext;
 use crate::{
     seeds::{self, Proposal, SeedFile},
     sha256_hex,
@@ -237,7 +238,7 @@ pub fn produce(
     model: &crate::model::PolicyModel,
     checkpoint: &crate::config::CheckpointBinding,
     vocabulary: &crate::grammar::BoundVocabulary,
-    context: &[f32],
+    context: &PolicyContext,
 ) -> Result<Vec<u8>> {
     request.validate()?;
     ensure!(
@@ -485,9 +486,10 @@ mod tests {
             config,
             crate::CHECKPOINT_VOCABULARY_SHA256,
         );
-        let context = (0..2048)
-            .map(|i| (i % 13) as f32 / 13.0 - 0.4)
-            .collect::<Vec<f32>>();
+        let context = PolicyContext::from_frozen_values(
+            (0..2048).map(|i| (i % 13) as f32 / 13.0 - 0.4).collect(),
+        )
+        .unwrap();
         let state = crate::testing::UNBOUND_TEST_STATE_SHA256.to_string();
         let weights = sha256_hex(b"unbound test weights");
         let request = Request {

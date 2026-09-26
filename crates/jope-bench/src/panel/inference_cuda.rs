@@ -110,7 +110,8 @@ fn qualify(m: &Models, p: &Plan) -> Result<Value> {
     for bytes in cases {
         let case: ReferenceCase = serde_json::from_slice(&bytes)?;
         let c = m.encoder.encode_prepared(&case.prepared_rows)?;
-        let context = m.encoder.assemble(&c)?.values().to_vec();
+        let context =
+            jope_policy::context::PolicyContext::from_final_context(&m.encoder.assemble(&c)?)?;
         let mut errors = BTreeMap::new();
         for (name, actual) in [
             ("hyperion", c.hyperion.values()),
@@ -194,7 +195,9 @@ fn request(m: &Models, d: &Dataset, seed: u64, mode: &str, root: &Path) -> Resul
             receipt["details"] = json!({"stages":stages});
         }
         let assembly = Instant::now();
-        let context = m.encoder.assemble(&components)?.values().to_vec();
+        let context = jope_policy::context::PolicyContext::from_final_context(
+            &m.encoder.assemble(&components)?,
+        )?;
         stages.insert("context_assembly".into(), assembly.elapsed().as_secs_f64());
         let binding = SeedBinding::new(
             &input.identity.prepared_sha256,
@@ -381,7 +384,9 @@ fn full_gp(m: &Models, d: &Dataset, root: &Path, cutoff: u64) -> Result<Value> {
             let proposal = if neural {
                 let prepared = raw.prepare()?;
                 let (components, _, _) = m.encoder.encode_request(&prepared.rows, false)?;
-                let context = m.encoder.assemble(&components)?.values().to_vec();
+                let context = jope_policy::context::PolicyContext::from_final_context(
+                    &m.encoder.assemble(&components)?,
+                )?;
                 let binding = SeedBinding::new(
                     &raw.identity.prepared_sha256,
                     0,

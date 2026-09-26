@@ -114,6 +114,7 @@
 #[cfg(test)]
 mod challenger_tests;
 pub mod config;
+pub mod context;
 #[cfg(feature = "context-producer")]
 pub mod context_producer;
 pub mod decode;
@@ -291,17 +292,10 @@ pub fn refuse_rejected_checkpoint(state_sha256: &str, model_sha256: &str) -> any
     Ok(())
 }
 
-/// The 2048 float32 values of an 8192-byte little-endian context file.
-pub fn context_from_bytes(bytes: &[u8]) -> anyhow::Result<Vec<f32>> {
-    anyhow::ensure!(
-        bytes.len() == 8192,
-        "context must be exactly 8192 bytes, got {}",
-        bytes.len()
-    );
-    Ok(bytes
-        .chunks_exact(4)
-        .map(|b| f32::from_le_bytes([b[0], b[1], b[2], b[3]]))
-        .collect())
+/// The policy context of an 8192-byte little-endian context file (W2-T03: the frozen context
+/// ABI, [`context::PolicyContext::from_le_bytes`]).
+pub fn context_from_bytes(bytes: &[u8]) -> anyhow::Result<context::PolicyContext> {
+    context::PolicyContext::from_le_bytes(bytes)
 }
 
 /// sha256 of a context's little-endian float32 bytes (jope-dime `conditioning_context_sha256`).

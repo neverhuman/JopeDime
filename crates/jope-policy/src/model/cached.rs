@@ -84,12 +84,12 @@ impl<'a> DecodeCache<'a> {
     /// existing full decoder implementation and operation order untouched.
     pub(crate) fn new(
         model: &'a PolicyModel,
-        context: &[f32],
+        context: &crate::context::PolicyContext,
         tokens: &[Vec<usize>],
     ) -> Result<(Self, Vec<Vec<f32>>)> {
         let (batch, length, ids) = model.token_tensor(tokens)?;
         let width = model.config.width;
-        let z = model.encode_context("encoder", context)?;
+        let z = model.encode_context("encoder", context.values())?;
         let ctx = linear(&z, model.g("ctx_proj.weight")?, model.g("ctx_proj.bias")?)?
             .reshape((1, 1, width))?
             .broadcast_as((batch, 1, width))?;
@@ -340,7 +340,7 @@ mod tests {
     #[test]
     fn cached_decoder_matches_full_prefix_across_positions_and_pad_history() {
         let model = model(11);
-        let context = vec![0.2f32; 12];
+        let context = crate::context::PolicyContext::for_testing(vec![0.2f32; 12]).unwrap();
         for prefix_len in [2, 3, 7] {
             let mut rows = (0..3)
                 .map(|row| {
@@ -380,7 +380,7 @@ mod tests {
         // The CUDA timing study's qualification helper must measure cached-versus-full
         // agreement from a valid prefix through the whole sequence, not fail on its setup.
         let model = model(19);
-        let context = vec![0.2f32; 12];
+        let context = crate::context::PolicyContext::for_testing(vec![0.2f32; 12]).unwrap();
         let tokens = (0..24).map(|j| j % 16 + 1).collect::<Vec<_>>();
         let error = model.cache_max_error(&context, &tokens).unwrap();
         assert!(error.is_finite() && error < 1e-4, "{error}");
@@ -393,7 +393,7 @@ mod tests {
     #[test]
     fn cached_decoder_gathers_original_rows_and_refuses_revival_or_reorder() {
         let model = model(12);
-        let context = vec![-0.1f32; 12];
+        let context = crate::context::PolicyContext::for_testing(vec![-0.1f32; 12]).unwrap();
         let mut rows = vec![vec![1, 2, 3], vec![1, 4, 5], vec![1, PAD, 7], vec![1, 8, 9]];
         let (mut cache, _) = DecodeCache::new(&model, &context, &rows).unwrap();
         for active in [&[0usize, 2, 3][..], &[2usize, 3][..], &[3usize][..]] {
@@ -441,7 +441,7 @@ mod tests {
         );
         let shifted =
             PolicyModel::from_tensors(plain.config.clone(), tensors, Device::Cpu).unwrap();
-        let context = vec![0.3f32; 12];
+        let context = crate::context::PolicyContext::for_testing(vec![0.3f32; 12]).unwrap();
         let rows = vec![vec![1, PAD, 2], vec![1, 3, PAD]];
         let (mut a, _) = DecodeCache::new(&plain, &context, &rows).unwrap();
         let (mut b, _) = DecodeCache::new(&shifted, &context, &rows).unwrap();

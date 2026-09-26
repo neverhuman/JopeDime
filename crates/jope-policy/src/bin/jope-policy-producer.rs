@@ -79,14 +79,9 @@ fn run() -> Result<()> {
         context_bytes.len() == 2048 * 4,
         "context must be exactly2048 float32 values"
     );
-    let context = context_bytes
-        .chunks_exact(4)
-        .map(|b| f32::from_le_bytes(b.try_into().expect("four bytes")))
-        .collect::<Vec<_>>();
-    ensure!(
-        context.iter().all(|x| x.is_finite() && x.abs() <= 32.),
-        "context is nonfinite or not frozen-clipped"
-    );
+    // W2-T03: the policy input is typed; the frozen context ABI (finite, clipped to +-32) is
+    // checked by its only constructor from the artifact bytes.
+    let context = jope_policy::context::PolicyContext::from_le_bytes(&context_bytes)?;
     // W2-T02: the frozen transforms and assembly of the accepted semantic manifest.
     let release = jope_policy::semantic::accepted()?;
     let transforms_bytes = checked_bytes(

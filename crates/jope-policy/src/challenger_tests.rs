@@ -4,6 +4,7 @@
 //! the lib test target, where `cfg(test)` enables the test helpers, so the hosted `rust-test`
 //! lane runs them. Scratch lives under the workspace `target/tmp`, never `/tmp`.
 use crate::config::{ChallengerIdentity, CheckpointBinding, PolicyConfig, EXPORT_RECEIPT_SCHEMA};
+use crate::context::PolicyContext;
 use crate::decode::{self, SamplingOptions};
 use crate::grammar::{bind_vocabulary, BoundVocabulary};
 use crate::model::{expected_inventory, PolicyModel};
@@ -77,8 +78,9 @@ fn tensors(pad_row_shift: f32) -> HashMap<String, candle_core::Tensor> {
         .collect()
 }
 
-fn context() -> Vec<f32> {
-    (0..2048).map(|i| (i % 13) as f32 / 13.0 - 0.4).collect()
+fn context() -> PolicyContext {
+    PolicyContext::from_frozen_values((0..2048).map(|i| (i % 13) as f32 / 13.0 - 0.4).collect())
+        .unwrap()
 }
 
 fn vocabulary() -> BoundVocabulary {

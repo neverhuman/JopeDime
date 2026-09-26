@@ -150,8 +150,10 @@ mod tests {
         PolicyModel::random_weights(config, 3).unwrap()
     }
 
-    fn context() -> Vec<f32> {
-        (0..2048).map(|i| (i % 13) as f32 / 13.0 - 0.4).collect()
+    use crate::context::PolicyContext;
+    fn context() -> PolicyContext {
+        PolicyContext::from_frozen_values((0..2048).map(|i| (i % 13) as f32 / 13.0 - 0.4).collect())
+            .unwrap()
     }
 
     fn traced(
