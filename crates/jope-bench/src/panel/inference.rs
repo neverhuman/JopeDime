@@ -925,6 +925,10 @@ pub fn registered_inference_inventory() -> Result<Vec<serde_json::Value>> {
 }
 
 #[cfg(test)]
+#[path = "inference_contract_tests.rs"]
+mod contract_tests;
+
+#[cfg(test)]
 pub(crate) mod tests {
     use super::super::data::raw_table;
     use super::super::methods::{fit_rust, rust_methods, RustFitRequest};
