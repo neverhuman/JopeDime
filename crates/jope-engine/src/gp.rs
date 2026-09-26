@@ -1106,6 +1106,88 @@ fn journaled_measurement_attested(root: &Path, row: &serde_json::Value) -> Resul
     Ok(())
 }
 
+/// W5-T05: one live searcher per output directory. The exclusive advisory
+/// lease is held until the searcher returns and is released by the kernel if
+/// it dies, so crash recovery needs no manual cleanup. The descriptor is
+/// close-on-exec: evaluator children never hold it.
+fn search_lease(output: &Path) -> Result<fs::File> {
+    use std::os::fd::AsRawFd;
+    let lease = fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(output.join("search.lease"))?;
+    if unsafe { libc::flock(lease.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } != 0 {
+        let error = std::io::Error::last_os_error();
+        ensure!(
+            error.raw_os_error() != Some(libc::EWOULDBLOCK),
+            "search output is held by another live searcher; concurrent dispatch refused"
+        );
+        return Err(error.into());
+    }
+    Ok(lease)
+}
+
+/// Whether the evaluator has exited, without reaping it: an unreaped leader
+/// keeps its process-group id reserved while the group is drained.
+fn evaluator_exited(pid: i32) -> Result<bool> {
+    let mut info: libc::siginfo_t = unsafe { std::mem::zeroed() };
+    let status = unsafe {
+        libc::waitid(
+            libc::P_PID,
+            pid as libc::id_t,
+            &mut info,
+            libc::WEXITED | libc::WNOHANG | libc::WNOWAIT,
+        )
+    };
+    ensure!(
+        status == 0,
+        "evaluator wait failed: {}",
+        std::io::Error::last_os_error()
+    );
+    Ok(unsafe { info.si_pid() } != 0)
+}
+
+/// Live (non-zombie) members of a process group other than its leader.
+fn process_group_members(group: i32) -> usize {
+    let Ok(entries) = fs::read_dir("/proc") else {
+        return 0;
+    };
+    entries
+        .flatten()
+        .filter_map(|entry| entry.file_name().to_str()?.parse::<i32>().ok())
+        .filter(|&pid| pid != group)
+        .filter(|pid| {
+            let Ok(stat) = fs::read_to_string(format!("/proc/{pid}/stat")) else {
+                return false;
+            };
+            // Fields after the parenthesised command: state, ppid, pgrp.
+            let Some((_, rest)) = stat.rsplit_once(')') else {
+                return false;
+            };
+            let mut fields = rest.split_whitespace();
+            let state = fields.next();
+            let pgrp = fields.nth(1).and_then(|g| g.parse::<i32>().ok());
+            pgrp == Some(group) && state != Some("Z")
+        })
+        .count()
+}
+
+/// Kill the evaluator's whole process group and census what remains. Called
+/// while the leader is unreaped (running on expiry, a zombie after exit).
+fn drain_process_group(group: i32) -> serde_json::Value {
+    let members_at_exit = process_group_members(group);
+    unsafe {
+        libc::kill(-group, libc::SIGKILL);
+    }
+    let settle = Instant::now();
+    let mut remaining = process_group_members(group);
+    while remaining > 0 && settle.elapsed() < Duration::from_secs(2) {
+        std::thread::sleep(Duration::from_millis(5));
+        remaining = process_group_members(group);
+    }
+    json!({"isolated":true,"members_at_exit":members_at_exit,"members_after_drain":remaining})
+}
+
 fn experiment_failpoint(name: &str, isolated: bool) {
     // Only explicitly isolated experiments can exercise crash recovery gates.
     if isolated && std::env::var("JOPE_EXPERIMENT_CRASH_AFTER").ok().as_deref() == Some(name) {
@@ -1416,12 +1498,15 @@ fn search_inner(
         evaluations > 0 && evaluations <= 1000 && seconds > 0 && seconds <= 600,
         "pilot budget exceeds 1000 evaluations or 600 seconds"
     );
+    fs::create_dir_all(output)?;
+    // W5-T05: reserve the output before reading any resume state, so two
+    // searchers can never dispatch the same reservation or both publish.
+    let _lease = search_lease(output)?;
     ensure!(
         !output.join("search.json").exists(),
         "search is already complete"
     );
     let resuming = output.join("progress.json").exists();
-    fs::create_dir_all(output)?;
     let pp: Preprocessing = read_json(&dir.join("preprocessing.json"))?;
     ensure!(
         file_hash(&dir.join("preprocessing.json"))? == c.preprocessing_sha256,
@@ -1745,8 +1830,11 @@ fn search_inner(
         &output.join("progress.json"),
         &json!({"prepared_sha256":prepared_sha,"cut":cut,"seeds_sha256":seeds_sha256,"vocabulary_sha256":vocabulary_sha256,"execution_order_protocol":execution_protocol,"execution_order":execution_order,"wall_seconds":start.elapsed().as_secs_f64()+previous_seconds,"lifecycle_seconds":lifecycle_start.elapsed().as_secs_f64(),"search_clock":clock,"evaluations":observations.len(),"rng_seed":rng_seed,"proposal_attempts":proposal_attempts,"rejected_proposals":rejected_proposals}),
     )?;
+    // W5-T05 terminal disposition, cross-checked by the independent replay.
+    let mut stop_reason = "evaluation_budget";
     for i in observations.len()..evaluations {
         if start.elapsed().as_secs_f64() + previous_seconds >= seconds as f64 {
+            stop_reason = "search_deadline";
             break;
         }
         // Projection can collapse distinct native mutations onto one legal
@@ -1809,8 +1897,10 @@ fn search_inner(
             )
         } else {
             let mut selected = None;
+            let mut out_of_time = false;
             for attempt in 0..selection_replay::PROPOSAL_CAP_PER_SLOT {
                 if start.elapsed().as_secs_f64() + previous_seconds >= seconds as f64 {
+                    out_of_time = true;
                     break;
                 }
                 proposal_attempts += 1;
@@ -1919,6 +2009,11 @@ fn search_inner(
                 rejected_proposals += 1;
             }
             let Some(selected) = selected else {
+                stop_reason = if out_of_time {
+                    "search_deadline"
+                } else {
+                    "proposal_space_exhausted"
+                };
                 break;
             };
             selected
@@ -1992,6 +2087,7 @@ fn search_inner(
         let mut exit_signal = None;
         let mut exit_observed = false;
         let mut deadline_exceeded = false;
+        let mut process_group = serde_json::Value::Null;
         if let Some(completion) = &saved_completion {
             failure = completion["failure"].as_str().map(String::from);
         } else if saved_attempt.is_some() {
@@ -2045,36 +2141,34 @@ fn search_inner(
                         rlim_cur: 8 * 1024 * 1024 * 1024,
                         rlim_max: 8 * 1024 * 1024 * 1024,
                     };
-                    if libc::setrlimit(libc::RLIMIT_AS, &limit) != 0 {
+                    // W5-T05: the evaluator leads its own process group so that
+                    // every process it starts is drained with it.
+                    if libc::setrlimit(libc::RLIMIT_AS, &limit) != 0 || libc::setpgid(0, 0) != 0 {
                         return Err(std::io::Error::last_os_error());
                     }
                     Ok(())
                 });
             }
             let mut child = command.spawn()?;
+            let group = i32::try_from(child.id()).context("evaluator pid out of range")?;
             loop {
-                if let Some(status) = child.try_wait()? {
-                    use std::os::unix::process::ExitStatusExt;
-                    exit_observed = true;
-                    exit_code = status.code();
-                    exit_signal = status.signal();
-                    deadline_exceeded = begun.elapsed().as_secs_f64() > deadline_seconds;
-                    if deadline_exceeded {
-                        failure = Some("candidate_or_view_timeout".into());
-                    } else if !status.success() {
-                        failure = Some(format!("worker_exit:{status}"));
-                    }
-                    break;
-                }
-                if begun.elapsed().as_secs_f64() >= deadline_seconds {
-                    child.kill()?;
+                let exited = evaluator_exited(group)?;
+                let expired = !exited && begun.elapsed().as_secs_f64() >= deadline_seconds;
+                if exited || expired {
+                    // The leader is still unreaped (a zombie when it exited), so
+                    // its group id cannot be reused while the group is drained.
+                    process_group = drain_process_group(group);
                     let status = child.wait()?;
                     use std::os::unix::process::ExitStatusExt;
                     exit_observed = true;
                     exit_code = status.code();
                     exit_signal = status.signal();
-                    deadline_exceeded = true;
-                    failure = Some("candidate_or_view_timeout".into());
+                    deadline_exceeded = expired || begun.elapsed().as_secs_f64() > deadline_seconds;
+                    if deadline_exceeded {
+                        failure = Some("candidate_or_view_timeout".into());
+                    } else if !status.success() {
+                        failure = Some(format!("worker_exit:{status}"));
+                    }
                     break;
                 }
                 std::thread::sleep(Duration::from_millis(2));
@@ -2106,6 +2200,7 @@ fn search_inner(
             completion["deadline_exceeded"] = json!(deadline_exceeded);
             completion["runtime_seconds"] = json!(measured_runtime);
             completion["failure"] = json!(failure);
+            completion["process_group"] = process_group;
             let log_path = output.join(format!("candidate-{i}.log"));
             if log_path.exists() {
                 fs::File::open(&log_path)?.sync_all()?;
@@ -2318,7 +2413,7 @@ fn search_inner(
     let search_request = relative_artifact(&completion_root, &request_path)?;
     write_json(
         &output.join("search.json"),
-        &json!({"schema":"parallel.search.v1","search_request":search_request,"search_id":file_hash(&request_path)?,"random_protocol":RANDOM_PROTOCOL,"execution_accounting":execution_accounting(&observations),"terminal":true,"successful_measurements":successful_measurements,"failed_or_unavailable_measurements":observations.len()-successful_measurements,"observations_sha256":observations_sha256,"completed_at":crate::telemetry::now(),"evaluator_sha256":evaluator_sha,"evaluator_protocol":crate::label_admission::PROTOCOL,"vocabulary_sha256":vocabulary_sha256,"prepared_sha256":prepared_sha,"cut":cut,"completed_evaluations":observations.len(),"wall_seconds":start.elapsed().as_secs_f64()+previous_seconds,"lifecycle_seconds":lifecycle_start.elapsed().as_secs_f64(),"search_clock":clock,"execution_order_protocol":execution_protocol,"execution_order":execution_order,"resumed":resuming,"rng_seed":rng_seed,"proposal_attempts":proposal_attempts,"rejected_proposals":rejected_proposals,"unique_programs":evaluated_programs.len().saturating_sub(usize::from(native.is_some_and(|(_, task, _, _)| task.stage == crate::native_genome::Stage::Continuation))),"inherited_parent_excluded":native.is_some_and(|(_, task, _, _)| task.stage == crate::native_genome::Stage::Continuation),"best_validation_rmse":ranked.first().map(|x|x.0),"best_program":ranked.first().map(|x|&x.1),"seed_population_supplied":supplied.is_some(),"neural_seeded":neural_seeded,"seeds_sha256":seeds_sha256,"vocabulary_sha256":vocabulary_sha256,"final_tests_opened":false}),
+        &json!({"schema":"parallel.search.v1","search_request":search_request,"search_id":file_hash(&request_path)?,"random_protocol":RANDOM_PROTOCOL,"execution_accounting":execution_accounting(&observations),"terminal":true,"stop_reason":stop_reason,"successful_measurements":successful_measurements,"failed_or_unavailable_measurements":observations.len()-successful_measurements,"observations_sha256":observations_sha256,"completed_at":crate::telemetry::now(),"evaluator_sha256":evaluator_sha,"evaluator_protocol":crate::label_admission::PROTOCOL,"vocabulary_sha256":vocabulary_sha256,"prepared_sha256":prepared_sha,"cut":cut,"completed_evaluations":observations.len(),"wall_seconds":start.elapsed().as_secs_f64()+previous_seconds,"lifecycle_seconds":lifecycle_start.elapsed().as_secs_f64(),"search_clock":clock,"execution_order_protocol":execution_protocol,"execution_order":execution_order,"resumed":resuming,"rng_seed":rng_seed,"proposal_attempts":proposal_attempts,"rejected_proposals":rejected_proposals,"unique_programs":evaluated_programs.len().saturating_sub(usize::from(native.is_some_and(|(_, task, _, _)| task.stage == crate::native_genome::Stage::Continuation))),"inherited_parent_excluded":native.is_some_and(|(_, task, _, _)| task.stage == crate::native_genome::Stage::Continuation),"best_validation_rmse":ranked.first().map(|x|x.0),"best_program":ranked.first().map(|x|&x.1),"seed_population_supplied":supplied.is_some(),"neural_seeded":neural_seeded,"seeds_sha256":seeds_sha256,"vocabulary_sha256":vocabulary_sha256,"final_tests_opened":false}),
     )?;
     experiment_failpoint("search_summary", experiment.is_some());
     // Keep the original journal after publication for historical reconciliation.

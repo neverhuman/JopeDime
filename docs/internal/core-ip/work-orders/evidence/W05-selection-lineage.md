@@ -137,12 +137,49 @@ gp_contracts --test fit_boundary` (41/41 at each step); `-p feat-math --lib -E
 test suites loaded the host (that integration binary does not contain the new
 `cfg(test)` allocator or use the new module).
 
+## W5-T05 — reservation and supervised termination (branch `rr/w5-selection-2`)
+
+Base `64e56b410` (the integrated `feat/regression-remediation` head). Fixture
+faults are injected by the `cfg(test)` harness only (`JOPE_FIXTURE_EVALUATOR_FAULT`
+on a search client, inherited by its evaluator children): `block`, `fork_block`,
+`fork_exit`, `oom`.
+
+- **Defects reproduced and fixed** (`runs/w5-t05-supervision-repro-20260926T064427Z`,
+  three failing reproductions):
+  1. *Dispatch race.* A second searcher on the same output, started while the first
+     had reserved and dispatched candidate 0, recorded that reservation as an
+     unknown outcome, journaled it and published `search.json`; the first then
+     appended a second row 0 and overwrote the publication. The search now takes an
+     exclusive, crash-released `flock` lease on `search.lease` in the output before
+     reading any resume state; a concurrent searcher is refused before any
+     dispatch, and a completed search stays closed.
+  2. *Blocked fitter with helpers.* A timed-out evaluator was killed alone; a
+     process it had started kept running after the search returned. Evaluators
+     now lead their own process group; on expiry the whole group is killed.
+  3. *Helpers after a normal exit.* Processes left by a successful evaluator
+     outlived it. The controller now observes the exit without reaping (`waitid`
+     with `WNOWAIT`, so the group id cannot be reused), kills the group, reaps,
+     and records a census.
+- **Terminal disposition.** `search.json` records `stop_reason`
+  (`evaluation_budget`, `search_deadline`, `proposal_space_exhausted`); the
+  independent replay refuses a publication whose stop reason differs from its own
+  stop decision. Each completion records
+  `process_group: {isolated, members_at_exit, members_after_drain}`.
+- **Safeguard demonstrated (no defect):** an evaluator exceeding its 8 GiB
+  address-space limit aborts into a contained `worker_exit` failure row, never a
+  measurement; with no measured candidate the search publishes a typed no-result.
+- **Tests:** `a_blocked_fitter_and_its_helpers_are_killed_at_the_original_deadline`,
+  `helpers_left_by_a_finished_evaluator_are_drained_before_the_next_dispatch`,
+  `a_second_searcher_cannot_dispatch_into_a_live_search`,
+  `an_evaluator_allocation_failure_is_a_contained_failed_row` (real service fits,
+  `/proc` no-orphan census).
+- **Residual risk:** if the controller itself is killed, `PR_SET_PDEATHSIG`
+  stops the evaluator but not processes it started; the product evaluator does not
+  start any today. Service-side worker custody is the authority service's
+  (unchanged). Distributed reservation is W7.
+
 ## Not started in this branch
 
-- W5-T05 (reservation and supervised termination): the searcher already writes the
-  pre-dispatch intent, never re-dispatches an intent without a completion, enforces
-  per-candidate deadlines with kill/reap and `PR_SET_PDEATHSIG`; blocked-fitter, OOM,
-  dispatch-race and no-orphan-census fixtures remain to be built (W7 joins).
 - W5-T07 (sealed handoff): `lineage::verify_final_refit` covers wrong fit-state
   references and same-recipe other-state swaps for the fitted-view export; the
   unsupported-export path and serving packages remain with W9.

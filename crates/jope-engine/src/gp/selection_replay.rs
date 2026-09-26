@@ -685,6 +685,14 @@ pub fn verify_search(root: &Path, output: &Path) -> Result<SearchReplay> {
             && search["inherited_parent_excluded"] == continuation,
         "published search counters differ from the ledger"
     );
+    // Searches that publish their terminal disposition must agree with the
+    // replayed stop decision; older publications predate the field.
+    if let Some(published) = search.get("stop_reason") {
+        ensure!(
+            *published == serde_json::to_value(replay.stop)?,
+            "published stop reason differs from the independent replay"
+        );
+    }
     let progress: Value = read_json(&output.join("progress.json"))?;
     ensure!(
         progress["evaluations"] == rows.len()

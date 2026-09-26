@@ -148,6 +148,7 @@ fn run_cli(argv: &[String]) -> Result<()> {
                 prepared.is_some() == cut.is_some(),
                 "--prepared and --cut go together"
             );
+            evaluator_fault()?;
             evaluate_prepared_memory(
                 text("fd")?.parse()?,
                 &path("genome")?,
@@ -173,6 +174,47 @@ fn run_cli(argv: &[String]) -> Result<()> {
         ),
         other => anyhow::bail!("unsupported fixture CLI operation {other}"),
     }
+}
+
+/// Fixture-only evaluator faults. A test sets them on a search client; its
+/// evaluator children inherit them. Nothing outside this harness reads them.
+const FAULT: &str = "JOPE_FIXTURE_EVALUATOR_FAULT";
+/// Directory where a faulting evaluator records the pids it leaves behind.
+const CENSUS: &str = "JOPE_FIXTURE_EVALUATOR_CENSUS";
+
+/// Inject the configured evaluator fault before any numerical work.
+fn evaluator_fault() -> Result<()> {
+    let Ok(fault) = std::env::var(FAULT) else {
+        return Ok(());
+    };
+    // A helper process the evaluator starts and never waits for.
+    let leave_behind = || -> Result<()> {
+        let helper = Command::new("sleep")
+            .arg("300")
+            .stdin(Stdio::null())
+            .spawn()?;
+        let census = PathBuf::from(std::env::var_os(CENSUS).context("fixture census absent")?);
+        fs::create_dir_all(&census)?;
+        fs::write(census.join(format!("{}.pid", helper.id())), b"")?;
+        std::mem::forget(helper);
+        Ok(())
+    };
+    let hang = || std::thread::sleep(Duration::from_secs(3600));
+    match fault.as_str() {
+        "block" => hang(),
+        "fork_block" => {
+            leave_behind()?;
+            hang();
+        }
+        "fork_exit" => leave_behind()?,
+        "oom" => {
+            // Twice the evaluator's 8 GiB address-space limit.
+            let buffer: Vec<u8> = Vec::with_capacity(16 << 30);
+            std::hint::black_box(&buffer);
+        }
+        other => anyhow::bail!("unknown fixture evaluator fault {other}"),
+    }
+    Ok(())
 }
 
 /// Fixture child: the long-lived synthetic authority service.
@@ -1178,6 +1220,18 @@ fn search_client(
     output: &Path,
     evaluations: usize,
 ) -> Command {
+    timed_search_client(authority, root, prepared, output, evaluations, 180)
+}
+
+/// A configured CLI search of cut 0 with an explicit search deadline.
+fn timed_search_client(
+    authority: &Fixture,
+    root: &Path,
+    prepared: &Path,
+    output: &Path,
+    evaluations: usize,
+    seconds: u64,
+) -> Command {
     let mut command = authority.command();
     command
         .args(["search", "--root"])
@@ -1186,7 +1240,8 @@ fn search_client(
         .arg(prepared)
         .arg("--output")
         .arg(output)
-        .args(["--cut", "0", "--seconds", "180", "--qualification"])
+        .args(["--cut", "0", "--qualification"])
+        .args(["--seconds", &seconds.to_string()])
         .args(["--evaluations", &evaluations.to_string()]);
     command
 }
@@ -1875,4 +1930,246 @@ fn a_resume_under_other_selection_rules_is_refused_not_restarted() {
     success(command().output().unwrap());
     selection_replay::verify_search(root, &output).unwrap();
     authority.stop_service();
+}
+
+/// Live (non-zombie) helper processes among those a faulting evaluator
+/// recorded. Only the fixture's own `sleep 300` helpers are counted, so a
+/// reused pid is never mistaken for one.
+fn live_left_behind(census: &Path) -> Vec<i32> {
+    let Ok(entries) = fs::read_dir(census) else {
+        return Vec::new();
+    };
+    let mut live = Vec::new();
+    for entry in entries.flatten() {
+        let name = entry.file_name().to_string_lossy().into_owned();
+        let Some(pid) = name
+            .strip_suffix(".pid")
+            .and_then(|pid| pid.parse::<i32>().ok())
+        else {
+            continue;
+        };
+        let Ok(stat) = fs::read_to_string(format!("/proc/{pid}/stat")) else {
+            continue;
+        };
+        let state = stat
+            .rsplit_once(')')
+            .and_then(|(_, rest)| rest.split_whitespace().next());
+        let helper = fs::read(format!("/proc/{pid}/cmdline"))
+            .is_ok_and(|cmdline| cmdline.starts_with(b"sleep\0300\0"));
+        if helper && state != Some("Z") {
+            live.push(pid);
+        }
+    }
+    live.sort_unstable();
+    live
+}
+
+/// A killed orphan is reaped by init asynchronously: poll briefly.
+fn settled_left_behind(census: &Path) -> Vec<i32> {
+    let deadline = Instant::now() + Duration::from_secs(5);
+    loop {
+        let live = live_left_behind(census);
+        if live.is_empty() || Instant::now() >= deadline {
+            return live;
+        }
+        std::thread::sleep(Duration::from_millis(50));
+    }
+}
+
+/// A failing test must not leak the helpers it provoked.
+struct CensusGuard(PathBuf);
+
+impl Drop for CensusGuard {
+    fn drop(&mut self) {
+        for pid in live_left_behind(&self.0) {
+            unsafe {
+                libc::kill(pid, libc::SIGKILL);
+            }
+        }
+    }
+}
+
+fn recorded(census: &Path) -> usize {
+    fs::read_dir(census).map_or(0, |entries| entries.count())
+}
+
+fn completion(root: &Path, row: &Value) -> Value {
+    crate::label_admission::artifact(root, &row["clean_completion"]).unwrap()
+}
+
+#[test]
+fn a_blocked_fitter_and_its_helpers_are_killed_at_the_original_deadline() {
+    let (temp, prepared) = view_fixture();
+    let root = temp.path();
+    let census = root.join("census");
+    let _guard = CensusGuard(census.clone());
+    let mut authority = Fixture::activated(root, vec![cut_training_hash(&prepared)]);
+    authority.start();
+    let output = root.join("blocked");
+    let started = Instant::now();
+    success(
+        timed_search_client(&authority, root, &prepared, &output, 2, 4)
+            .env(FAULT, "fork_block")
+            .env(CENSUS, &census)
+            .output()
+            .unwrap(),
+    );
+    assert!(started.elapsed() < Duration::from_secs(30));
+    assert_eq!(recorded(&census), 1, "the fault fixture did not run");
+    // No-orphan census: the helper dies with the killed evaluator.
+    assert_eq!(
+        settled_left_behind(&census),
+        Vec::<i32>::new(),
+        "a helper outlived its killed evaluator"
+    );
+    let rows: Vec<Value> = read_json(&output.join("observations.json")).unwrap();
+    assert_eq!(rows.len(), 1, "work was dispatched after the deadline");
+    assert_eq!(rows[0]["failure"], "candidate_or_view_timeout");
+    let dispatch = completion(root, &rows[0]);
+    assert_eq!(dispatch["deadline_exceeded"], true);
+    assert_eq!(dispatch["process_group"]["isolated"], true);
+    assert_eq!(dispatch["process_group"]["members_after_drain"], 0);
+    let search: Value = read_json(&output.join("search.json")).unwrap();
+    assert_eq!(search["stop_reason"], "search_deadline");
+    let replayed = selection_replay::verify_search(root, &output).unwrap();
+    assert_eq!(
+        replayed.replay.stop,
+        selection_replay::StopReason::SearchDeadline
+    );
+    assert!(replayed.replay.winner.is_none() && search["best_program"].is_null());
+    // A publication claiming another terminal disposition is refused.
+    let mut forged = search.clone();
+    forged["stop_reason"] = json!("evaluation_budget");
+    write_json(&output.join("search.json"), &forged).unwrap();
+    let error = format!(
+        "{:#}",
+        selection_replay::verify_search(root, &output).unwrap_err()
+    );
+    assert!(error.contains("stop reason"), "{error}");
+    // The blocked evaluator never reached the authority: nothing started.
+    authority.stop_service();
+    assert_eq!(authority.entries().0, 0);
+}
+
+#[test]
+fn helpers_left_by_a_finished_evaluator_are_drained_before_the_next_dispatch() {
+    let (temp, prepared) = view_fixture();
+    let root = temp.path();
+    let census = root.join("census");
+    let _guard = CensusGuard(census.clone());
+    let mut authority = Fixture::activated(root, vec![cut_training_hash(&prepared)]);
+    authority.start();
+    let output = root.join("leaky");
+    success(
+        search_client(&authority, root, &prepared, &output, 2)
+            .env(FAULT, "fork_exit")
+            .env(CENSUS, &census)
+            .output()
+            .unwrap(),
+    );
+    assert_eq!(recorded(&census), 2, "the fault fixture did not run");
+    assert_eq!(
+        settled_left_behind(&census),
+        Vec::<i32>::new(),
+        "a helper outlived its finished evaluator"
+    );
+    let rows: Vec<Value> = read_json(&output.join("observations.json")).unwrap();
+    assert_eq!(rows.len(), 2);
+    for row in &rows {
+        assert!(row["failure"].is_null(), "{row}");
+        let dispatch = completion(root, row);
+        // Each candidate's helper was found and killed before the next one ran.
+        assert_eq!(dispatch["process_group"]["members_at_exit"], 1);
+        assert_eq!(dispatch["process_group"]["members_after_drain"], 0);
+    }
+    selection_replay::verify_search(root, &output).unwrap();
+    authority.stop_service();
+}
+
+#[test]
+fn a_second_searcher_cannot_dispatch_into_a_live_search() {
+    let (temp, prepared) = view_fixture();
+    let root = temp.path();
+    let mut authority = Fixture::activated(root, vec![cut_training_hash(&prepared)]);
+    authority.start();
+    let output = root.join("contended");
+    let first = timed_search_client(&authority, root, &prepared, &output, 1, 6)
+        .env(FAULT, "block")
+        .stdout(Stdio::null())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap();
+    // Wait until the first searcher has reserved and dispatched candidate 0.
+    let intent = output.join("candidate-0.attempt.json");
+    let deadline = Instant::now() + Duration::from_secs(60);
+    while !intent.exists() {
+        assert!(Instant::now() < deadline, "first searcher never dispatched");
+        std::thread::sleep(Duration::from_millis(20));
+    }
+    // Identical request, second process, while candidate 0 is still in flight.
+    let second = timed_search_client(&authority, root, &prepared, &output, 1, 6)
+        .output()
+        .unwrap();
+    let first = first.wait_with_output().unwrap();
+    assert!(
+        first.status.success(),
+        "{}",
+        String::from_utf8_lossy(&first.stderr)
+    );
+    assert!(
+        !second.status.success(),
+        "a concurrent searcher dispatched into a live search"
+    );
+    assert!(
+        String::from_utf8_lossy(&second.stderr).contains("held by another live searcher"),
+        "{}",
+        String::from_utf8_lossy(&second.stderr)
+    );
+    // One reservation, one terminal outcome, one publication.
+    let journal = read_journal(&output.join("observations.jsonl")).unwrap();
+    assert_eq!(journal.len(), 1);
+    assert_eq!(journal[0]["failure"], "candidate_or_view_timeout");
+    selection_replay::verify_search(root, &output).unwrap();
+    // A completed search stays closed to any later searcher.
+    let late = timed_search_client(&authority, root, &prepared, &output, 1, 6)
+        .output()
+        .unwrap();
+    assert!(!late.status.success());
+    assert!(String::from_utf8_lossy(&late.stderr).contains("already complete"));
+    authority.stop_service();
+    assert_eq!(authority.entries().0, 0);
+}
+
+#[test]
+fn an_evaluator_allocation_failure_is_a_contained_failed_row() {
+    let (temp, prepared) = view_fixture();
+    let root = temp.path();
+    let mut authority = Fixture::activated(root, vec![cut_training_hash(&prepared)]);
+    authority.start();
+    let output = root.join("oom");
+    success(
+        search_client(&authority, root, &prepared, &output, 2)
+            .env(FAULT, "oom")
+            .output()
+            .unwrap(),
+    );
+    let rows: Vec<Value> = read_json(&output.join("observations.json")).unwrap();
+    assert_eq!(rows.len(), 2);
+    for row in &rows {
+        let failure = row["failure"].as_str().unwrap();
+        assert!(failure.starts_with("worker_exit:"), "{failure}");
+        assert!(row["metrics"].is_null());
+        assert_eq!(completion(root, row)["outcome"], "infrastructure_failure");
+    }
+    // No measured candidate: a typed no-result, never a substitute winner.
+    let search: Value = read_json(&output.join("search.json")).unwrap();
+    assert!(search["best_program"].is_null());
+    let replayed = selection_replay::verify_search(root, &output).unwrap();
+    assert!(replayed.replay.winner.is_none());
+    assert_eq!(
+        replayed.replay.stop,
+        selection_replay::StopReason::EvaluationBudget
+    );
+    authority.stop_service();
+    assert_eq!(authority.entries().0, 0);
 }
