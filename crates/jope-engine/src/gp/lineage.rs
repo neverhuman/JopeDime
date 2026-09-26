@@ -582,6 +582,17 @@ pub fn verify_final_refit(
     selected: &SelectedLineage,
     predictor: &Path,
 ) -> Result<FinalRefit> {
+    verify_final_refit_bytes(root, selected, predictor, &std::fs::read(predictor)?)
+}
+
+/// [`verify_final_refit`] of the exact predictor bytes a caller already read
+/// and bound (W1 route R8): the verified predictor is the recorded one.
+pub fn verify_final_refit_bytes(
+    root: &Path,
+    selected: &SelectedLineage,
+    predictor: &Path,
+    predictor_bytes: &[u8],
+) -> Result<FinalRefit> {
     let root = root.canonicalize()?;
     let chosen = selected
         .selected
@@ -593,7 +604,7 @@ pub fn verify_final_refit(
         .winner
         .as_ref()
         .context("no selected subject to refit")?;
-    let exported: Predictor = read_json(predictor)?;
+    let exported: Predictor = serde_json::from_slice(predictor_bytes)?;
     ensure!(
         exported.schema == "parallel.predictor.v1"
             && exported.task == "regression"
@@ -611,11 +622,9 @@ pub fn verify_final_refit(
         .as_ref()
         .context("final refit lacks its original fit completion")?;
     let path = Path::new(reference["path"].as_str().context("final fit path")?);
-    ensure!(
-        file_hash(path)? == reference["sha256"],
-        "final refit completion changed"
-    );
-    let bytes = std::fs::read(path)?;
+    // Route R8: the completion verified is the one whose digest the predictor records.
+    let bytes =
+        crate::manifest::read_bound(path, &reference["sha256"], "final refit completion changed")?;
     let refit = crate::eval_registry::verify_completion_receipt(&bytes)?;
     ensure!(
         refit.fit_key == fold.fit_key
@@ -627,7 +636,7 @@ pub fn verify_final_refit(
     Ok(FinalRefit {
         transformation: "selected_cut_training_refit_reuses_fold_fit",
         predictor: predictor.to_path_buf(),
-        predictor_sha256: file_hash(predictor)?,
+        predictor_sha256: hash(predictor_bytes),
         fit_key: refit.fit_key,
         model_sha256: refit.model_sha256.context("final refit model absent")?,
     })

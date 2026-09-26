@@ -50,6 +50,18 @@ pub fn read_hashed(path: &Path, what: &str) -> Result<(Vec<u8>, String)> {
     after_verification(path);
     Ok((bytes, digest))
 }
+/// [`read_verified`] against a recorded binding (a JSON value, so a missing
+/// or malformed binding is refused the same way) and with the receiver's own
+/// refusal wording, for receivers whose error text is part of their contract.
+pub fn read_bound(path: &Path, expected: &serde_json::Value, refusal: &str) -> Result<Vec<u8>> {
+    let bytes = fs::read(path).with_context(|| format!("read {}", path.display()))?;
+    ensure!(
+        *expected == serde_json::Value::from(hash(&bytes)),
+        "{refusal}"
+    );
+    after_verification(path);
+    Ok(bytes)
+}
 /// Test-only instrumentation point between a digest check and consumption of
 /// the checked object (W1 consumer-map route R8). Compiles to nothing outside
 /// this crate's own unit-test build; it grants and changes nothing.

@@ -539,3 +539,78 @@ without a full native-graph fixture.
   Readers that open the corpus vocabulary by path after `load` are outside this lane or
   neural-gated, and were not examined for this pattern: `pipeline.rs:457`,
   `monitoring.rs:52` and `native_loop.rs:1130`.
+
+## Review of #111 — the outer release authority reads each bound object once (W1-T04)
+
+The independent review (neverhumanbot, CHANGES_REQUESTED at `0b303b293`) found finding
+[P1] at `gp/outer_release.rs:284-289`. `grant_body()` hashed `prepared.json` against the
+sealed selection, then reopened it with `read_json`. A preparation substituted between
+the two reads supplied the grant's `original_test_sha256`, `clean_evaluation` and
+dataset/family metadata, while the grant still recorded the original preparation's
+digest. The scorer then checked the named label file against that substituted digest.
+
+The rest of `outer_release.rs` and `outer_release_cli.rs` was then checked for the same
+pattern. Branch `rr/w1-review-fix`, base `0b303b293`.
+
+**Reproduction.** `w1b-review-outer-pre-20260926T143705Z`: 6/6 FAIL.
+
+The tests are in `gp::fit_contract_tests`, over the fixture fit authority's exported
+selected subject. Test-only instrumentation (`manifest::after_verification`) was placed
+right after each check, or each authority write, before consumption. Each swap happens
+at the last reported verification of its path; an identical dry run counts those
+verifications first, and doubles as the positive control.
+
+| Test | Pre-fix outcome |
+|---|---|
+| `an_outer_grant_takes_its_labels_and_metadata_from_the_verified_preparation` | **[P1]** The grant bound the substituted preparation's label digest (`33c25f…`, another label file) and its metadata. |
+| `an_outer_grant_is_bound_to_the_seal_it_checked` | A grant was issued for a handoff whose recorded seal is not the replayed selection: the replay seal was swapped in after the handoff digest check. |
+| `an_outer_grant_is_for_the_predictor_it_verified` | A grant was issued for a subject (declaring another training scope) never verified as the final refit: the verified export was swapped in after the subject check. |
+| `an_outer_grant_records_the_handoff_it_checked` | The grant recorded the digest of a handoff other than the one whose content it checked and copied. |
+| `an_outer_grant_consumes_the_fit_completion_it_verified` | `lineage::verify_final_refit` hashed the final fit completion, then re-read it; an honest grant was refused on a replacement. |
+| `the_release_ledger_binds_the_bytes_the_authority_wrote` | The ledger recorded the digest of a grant reread after writing. A grant replaced after its write, naming another label file, was accepted by `score`, which **scored the other labels** (`33c25f…`). |
+
+**Fix.**
+- `grant_body`:
+  - the handoff, predictor, seal and `prepared.json` are each read once;
+  - each check, each recorded digest and every grant field come from those bytes:
+    - the seal through the new `handoff::verify_seal_bytes`;
+    - the predictor through the new `lineage::verify_final_refit_bytes`;
+    - `prepared.json` through the new `manifest::read_bound`.
+- `lineage::verify_final_refit` reads the fit completion once (`read_bound`), and
+  `predictor_sha256` is the digest of the verified bytes.
+- `grant()` and `score()` record the digest of the exact bytes they write (the grant and
+  the withheld result), never a reread.
+- The refusal wording is unchanged:
+  - "the preparation changed after its sealed selection";
+  - "the seal changed after its handoff";
+  - "the predictor is not the one its handoff exported";
+  - "final refit completion changed";
+  - "an outer score needs an exported handoff".
+- `manifest::read_bound` is `read_verified` with a JSON-valued binding and the receiver's
+  own refusal text.
+
+**Checked, unchanged.**
+- `score` already read the grant, the model and the labels once.
+- `release` already read the withheld score once.
+- `events` only reads the ledger, which is verified as a chain.
+- `outer_release_cli` rereads the grant only to print its `grant_id`. That is display;
+  the authority decides nothing from it.
+
+**Results.**
+- Post-fix `w1b-review-outer-post-20260926T143909Z`: 22/22. It covers the six new tests,
+  `outer_release_cli`, `projected_export` and the export, handoff and lineage tests. No
+  warning is reported in a changed file.
+- Pre-commit `w1b-review-outer-c-*`:
+  - engine: the W1 set, the fence suites, `outer_release_cli`, `projected_export` and
+    `teacher_counterfactuals`, 171/171;
+  - jope-datasets 69/69;
+  - workspace all-targets check, parity-matrix, coverage (0 unassigned, 261 targets),
+    verify-test-inventory, fmt and diff-check all exit 0.
+- The pinned `eval_registry` files, jope-learning, `native_loop/materialize.rs` and the
+  request schema are not touched.
+
+**Different class, recorded, not changed.** `lineage::verify_final_refit` binds the
+exported predictor's recipe, training scope and fit-completion reference. It does not
+bind the predictor's own `model` parameters to the verified completion's `model_sha256`.
+A predictor with the same recipe and references but other model parameters would pass
+the refit check. This is not reproduced here; it needs its own owner decision.

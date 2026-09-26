@@ -28,9 +28,11 @@
 //!
 //! Fixture scope: the separation is a component contract on one host, not OS
 //! isolation of the scorer; managed-worker isolation is W7.
-use super::{handoff, lineage, metrics, relative_artifact, Predictor};
+use super::{handoff, lineage, metrics, Predictor};
 use crate::{
-    manifest::{atomic_write, file_hash, hash, read_json, resolve, write_json},
+    manifest::{
+        after_verification, atomic_write, hash, read_bound, read_json, resolve, write_json,
+    },
     prepare::{Prepared, Table},
 };
 use anyhow::{ensure, Context, Result};
@@ -72,6 +74,18 @@ fn rooted(root: &Path, path: &Path) -> Result<(PathBuf, PathBuf)> {
         .context("sealed label file outside the granted root")?
         .to_path_buf();
     Ok((resolve(root, &relative)?, relative))
+}
+
+/// Read `path` once and record it as `relative_artifact` does (its path under
+/// the canonical `root` and the digest of exactly the bytes returned).
+fn read_artifact(root: &Path, path: &Path) -> Result<(Value, Vec<u8>)> {
+    let absolute = path.canonicalize()?;
+    let relative = absolute
+        .strip_prefix(root)
+        .context("original fit artifact outside workspace")?
+        .to_path_buf();
+    let bytes = fs::read(&absolute)?;
+    Ok((json!({"path":relative,"sha256":hash(&bytes)}), bytes))
 }
 
 /// Who the grant is for, and which completed search sealed its selection.
@@ -241,9 +255,12 @@ impl Authority {
         let mut grant = body;
         grant["grant_id"] = json!(grant_id);
         let path = self.dir.join("grants").join(format!("{grant_id}.json"));
-        write_json(&path, &grant)?;
+        // Route R8: the ledger binds exactly the bytes written, never a reread.
+        let bytes = serde_json::to_vec_pretty(&grant)?;
+        atomic_write(&path, &bytes)?;
+        after_verification(&path);
         ledger.append(json!({"event":"granted","grant_id":grant_id,
-            "grant_sha256":file_hash(&path)?,
+            "grant_sha256":hash(&bytes),
             "subject_sha256":grant["subject"]["predictor"]["sha256"],
             "labels_sha256":grant["scoring_labels"]["sha256"]}))?;
         Ok(path)
@@ -253,40 +270,48 @@ impl Authority {
         let root = request.search.root.canonicalize()?;
         let predictor = request.predictor;
         let handoff_path = predictor.with_extension("handoff.json");
-        let recorded: Value =
-            read_json(&handoff_path).context("an outer score needs an exported handoff")?;
+        // Route R8 (review of #111): every artifact the grant binds is read
+        // once; its checks, its recorded digest and the grant's fields all
+        // come from those bytes, never from a reopened path.
+        let (handoff_artifact, recorded) = read_artifact(&root, &handoff_path)
+            .and_then(|(artifact, bytes)| Ok((artifact, serde_json::from_slice::<Value>(&bytes)?)))
+            .context("an outer score needs an exported handoff")?;
+        after_verification(&handoff_path);
         ensure!(
             recorded["schema"] == handoff::HANDOFF_SCHEMA && recorded["status"] == "exported",
             "an outer score needs an exported sealed selection"
         );
-        let subject = relative_artifact(&root, predictor)?;
+        let (subject, predictor_bytes) = read_artifact(&root, predictor)?;
         ensure!(
             recorded["predictor"] == subject,
             "the predictor is not the one its handoff exported"
         );
+        after_verification(predictor);
         let seal_path = resolve(
             &root,
             Path::new(recorded["seal"]["path"].as_str().context("handoff seal")?),
         )?;
+        let (seal_artifact, seal_bytes) = read_artifact(&root, &seal_path)?;
         ensure!(
-            relative_artifact(&root, &seal_path)? == recorded["seal"],
+            seal_artifact == recorded["seal"],
             "the seal changed after its handoff"
         );
+        after_verification(&seal_path);
         // The fitted subject is authenticated by replaying its selection and
         // re-verifying its final refit, never by trusting a receipt field.
-        let (seal, verified) = handoff::verify_seal(&request.search, &seal_path)?;
-        let refit = lineage::verify_final_refit(&root, &verified, predictor)?;
+        let (seal, verified) = handoff::verify_seal_bytes(&request.search, &seal_bytes)?;
+        let refit =
+            lineage::verify_final_refit_bytes(&root, &verified, predictor, &predictor_bytes)?;
         let scope = &seal["final_fit_scope"];
         let prepared_dir = resolve(
             &root,
             Path::new(scope["prepared"].as_str().context("sealed preparation")?),
         )?;
-        let prepared_json = prepared_dir.join("prepared.json");
-        ensure!(
-            file_hash(&prepared_json)? == scope["prepared_sha256"],
-            "the preparation changed after its sealed selection"
-        );
-        let p: Prepared = read_json(&prepared_json)?;
+        let p: Prepared = serde_json::from_slice(&read_bound(
+            &prepared_dir.join("prepared.json"),
+            &scope["prepared_sha256"],
+            "the preparation changed after its sealed selection",
+        )?)?;
         ensure!(
             p.clean_evaluation,
             "an outer score needs a clean evaluation preparation"
@@ -305,7 +330,7 @@ impl Authority {
         Ok(
             json!({"schema":GRANT_SCHEMA,"authority_instance":self.instance,
             "sequence":ledger.events.len(),"root":root,
-            "subject":{"predictor":subject,"handoff":relative_artifact(&root, &handoff_path)?,
+            "subject":{"predictor":subject,"handoff":handoff_artifact,
                 "seal":recorded["seal"],"program_sha256":seal["selected"]["program_sha256"],
                 "training_sha256":scope["training_sha256"],"fit_key":refit.fit_key,
                 "model_sha256":recorded["final_refit"]["model_sha256"]},
@@ -453,11 +478,12 @@ impl Authority {
             "metrics":metrics(&y, &predictions)?,"per_row_values_included":false});
         let id = grant_id.as_str().context("grant id")?;
         let withheld = self.dir.join("withheld").join(format!("{id}.json"));
-        write_json(&withheld, &result)?;
-        Ok(
-            json!({"result_sha256":file_hash(&withheld)?,"rows":t.rows.len(),
-            "model_sha256":hash(&model_bytes),"labels_sha256":labels_sha256}),
-        )
+        // Route R8: the ledger binds exactly the bytes written, never a reread.
+        let bytes = serde_json::to_vec_pretty(&result)?;
+        atomic_write(&withheld, &bytes)?;
+        after_verification(&withheld);
+        Ok(json!({"result_sha256":hash(&bytes),"rows":t.rows.len(),
+            "model_sha256":hash(&model_bytes),"labels_sha256":labels_sha256}))
     }
 
     /// Make one withheld score visible at `output`, exactly once.

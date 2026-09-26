@@ -153,7 +153,16 @@ pub fn write_seal(inputs: &Inputs, destination: &Path) -> Result<Value> {
 /// A recorded seal is valid only while it equals the seal recomputed from the
 /// search's evidence: no field of it is trusted on its own.
 pub fn verify_seal(inputs: &Inputs, seal_path: &Path) -> Result<(Value, lineage::SelectedLineage)> {
-    let recorded: Value = read_json(seal_path)?;
+    verify_seal_bytes(inputs, &std::fs::read(seal_path)?)
+}
+
+/// [`verify_seal`] of the exact seal bytes a caller already read and bound
+/// (W1 route R8): the seal compared with the replay is the recorded one.
+pub fn verify_seal_bytes(
+    inputs: &Inputs,
+    recorded: &[u8],
+) -> Result<(Value, lineage::SelectedLineage)> {
+    let recorded: Value = serde_json::from_slice(recorded)?;
     let (seal, verified) = seal(inputs)?;
     ensure!(
         recorded == seal,
