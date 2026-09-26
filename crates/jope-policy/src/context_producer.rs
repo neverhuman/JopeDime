@@ -262,13 +262,7 @@ impl CpuProducer {
         times.insert("hyperion".into(), started.elapsed().as_secs_f64());
         let started = std::time::Instant::now();
         let mut foundation = prepare_jope_foundation_rows(rows)?;
-        // Native component builder casts to f32, normalizes in f64, then casts back.
-        let y = &foundation.input.context_y;
-        let mean = y.iter().map(|&v| v as f64).sum::<f64>() / y.len() as f64;
-        let sd = (y.iter().map(|&v| (v as f64 - mean).powi(2)).sum::<f64>() / y.len() as f64)
-            .sqrt()
-            + 1e-8;
-        foundation.input.context_y = y.iter().map(|&v| ((v as f64 - mean) / sd) as f32).collect();
+        foundation.input.context_y = standardize_context_labels(&foundation.input.context_y);
         let foundation_vector = self
             .foundation
             .encode_standardized(&foundation.input)?
@@ -278,14 +272,7 @@ impl CpuProducer {
         }
         times.insert("foundation".into(), started.elapsed().as_secs_f64());
         let started = std::time::Instant::now();
-        let targets = rows.iter().map(|r| r[width]).collect::<Vec<_>>();
-        let low = targets.iter().copied().fold(f64::INFINITY, f64::min);
-        let high = targets.iter().copied().fold(f64::NEG_INFINITY, f64::max);
-        let span = if high > low { high - low } else { 1.0 };
-        let targets = targets
-            .iter()
-            .map(|v| ((v - low) / span) as f32)
-            .collect::<Vec<_>>();
+        let targets = minmax_targets(&rows.iter().map(|r| r[width]).collect::<Vec<_>>());
         let windows = FrozenTargetWindows::native(n, TargetTask::Regression, 17)?;
         let sampling = serde_json::json!({"hyperion_rows":n,"hyperion_features":width,"hyperion_sweeps":3,"hyperion_scales":[4,7,11,15],"hyperion_batch":1024,"target_chunks_per_sweep":1,
             "foundation_context_rows":foundation.context_indices.len(),"foundation_query_rows":foundation.query_indices.len(),
@@ -457,6 +444,23 @@ impl FrozenTransforms {
         Ok(result)
     }
 }
+/// Foundation context labels: the native component builder casts to f32, standardizes in f64 with
+/// the population deviation plus 1e-8, then casts back.
+fn standardize_context_labels(y: &[f32]) -> Vec<f32> {
+    let mean = y.iter().map(|&v| v as f64).sum::<f64>() / y.len() as f64;
+    let sd =
+        (y.iter().map(|&v| (v as f64 - mean).powi(2)).sum::<f64>() / y.len() as f64).sqrt() + 1e-8;
+    y.iter().map(|&v| ((v as f64 - mean) / sd) as f32).collect()
+}
+
+/// Target-encoder labels: min-max over the training rows, with a unit span for constant targets.
+fn minmax_targets(targets: &[f64]) -> Vec<f32> {
+    let low = targets.iter().copied().fold(f64::INFINITY, f64::min);
+    let high = targets.iter().copied().fold(f64::NEG_INFINITY, f64::max);
+    let span = if high > low { high - low } else { 1.0 };
+    targets.iter().map(|v| ((v - low) / span) as f32).collect()
+}
+
 fn pool_hyperion(flat: &[f32]) -> Result<Vec<f32>> {
     ensure!(
         !flat.is_empty() && flat.len().is_multiple_of(128) && flat.iter().all(|v| v.is_finite()),
@@ -589,6 +593,132 @@ mod tests {
         assert_eq!(&pooled[128..256], &vec![1.0; 128]);
         assert_eq!(pooled[256], 1.2);
         assert_eq!(pooled[384], 2.8);
+    }
+
+    fn close(actual: f32, expected: f64, what: &str) {
+        assert!(
+            (actual as f64 - expected).abs() <= 1e-5 * expected.abs().max(1.0),
+            "{what}: {actual} vs {expected}"
+        );
+    }
+
+    /// W2-T05 golden: one column is computed by hand, and every other column by independent
+    /// f64 arithmetic below (not by `pool_hyperion`). Rows are given out of order, so the
+    /// percentiles only match if values are sorted first.
+    #[test]
+    fn golden_hyperion_pooling_uses_population_std_and_interpolated_percentiles() {
+        let rows = [10.0f32, 1.0, 3.0, 2.0, 4.0];
+        let value = |row: usize, j: usize| rows[row] * (1.0 + j as f32 / 64.0) - j as f32 / 8.0;
+        let flat = (0..rows.len())
+            .flat_map(|row| (0..128).map(move |j| value(row, j)))
+            .collect::<Vec<_>>();
+        let pooled = pool_hyperion(&flat).unwrap();
+        // Column 0 by hand, values {1, 2, 3, 4, 10}: mean 4; population variance 50/5 = 10
+        // (the sample variance would be 12.5); p10 at rank 0.4 is 1.4; p90 at rank 3.6 is 7.6.
+        close(pooled[0], 4.0, "mean");
+        close(pooled[128], 10f64.sqrt(), "population std");
+        assert!(
+            (pooled[128] as f64 - 12.5f64.sqrt()).abs() > 0.3,
+            "sample std would differ"
+        );
+        close(pooled[256], 1.4, "p10");
+        close(pooled[384], 7.6, "p90");
+        for j in 0..128 {
+            let mut v = (0..rows.len())
+                .map(|row| value(row, j) as f64)
+                .collect::<Vec<_>>();
+            v.sort_by(f64::total_cmp);
+            let mean = v.iter().sum::<f64>() / 5.0;
+            let var = v.iter().map(|x| (x - mean) * (x - mean)).sum::<f64>() / 5.0;
+            close(pooled[j], mean, "mean block");
+            close(pooled[128 + j], var.sqrt(), "std block");
+            close(pooled[256 + j], 0.6 * v[0] + 0.4 * v[1], "p10 block");
+            close(pooled[384 + j], 0.4 * v[3] + 0.6 * v[4], "p90 block");
+        }
+        // Row alignment: the same values laid out column-major pool differently.
+        let transposed = (0..128)
+            .flat_map(|j| (0..rows.len()).map(move |row| value(row, j)))
+            .collect::<Vec<_>>();
+        assert_ne!(pool_hyperion(&transposed).unwrap(), pooled);
+    }
+
+    /// W2-T05 golden: assembly order, projection orientation, per-block normalization and the
+    /// frozen clip, with every expected value written out independently of `assemble`.
+    #[test]
+    fn golden_assembly_order_projection_normalization_and_clip() {
+        let full = |n: usize, f: &dyn Fn(usize) -> f32| {
+            Tensor::from_vec((0..n).map(f).collect::<Vec<_>>(), n, &Device::Cpu).unwrap()
+        };
+        let mut tensors = BTreeMap::new();
+        tensors.insert("foundation_mean".to_string(), full(2048, &|_| 0.5));
+        tensors.insert("hyperion_mean".to_string(), full(512, &|_| 1.0));
+        tensors.insert("hyperion_scale".to_string(), full(512, &|_| 4.0));
+        tensors.insert("projected_mean".to_string(), full(1024, &|_| 0.1));
+        tensors.insert("projected_scale".to_string(), full(1024, &|_| 2.0));
+        tensors.insert("target_mean".to_string(), full(512, &|_| 0.0));
+        tensors.insert("target_scale".to_string(), full(512, &|_| 0.5));
+        // Row k of the 1024x2048 projection selects foundation coordinate 2k + 1.
+        let mut projection = vec![0f32; 1024 * 2048];
+        for k in 0..1024 {
+            projection[k * 2048 + 2 * k + 1] = 1.0;
+        }
+        tensors.insert(
+            "projection".to_string(),
+            Tensor::from_vec(projection, (1024, 2048), &Device::Cpu).unwrap(),
+        );
+        let transforms = FrozenTransforms { tensors };
+        let components = Components {
+            hyperion: (0..512).map(|j| j as f32).collect(),
+            foundation: (0..2048).map(|m| m as f32 * 0.01).collect(),
+            target: (0..512).map(|j| -(j as f32)).collect(),
+        };
+        let result = transforms.assemble(&components).unwrap();
+        let clip = |x: f64| x.clamp(-32.0, 32.0);
+        for j in 0..512 {
+            close(result[j], clip((j as f64 - 1.0) / 4.0), "hyperion block");
+            close(result[1536 + j], clip(-(j as f64) / 0.5), "target block");
+        }
+        for k in 0..1024 {
+            let z = (2 * k + 1) as f64 * 0.01 - 0.5;
+            close(
+                result[512 + k],
+                clip((z - 0.1) / 2.0),
+                "projected foundation block",
+            );
+        }
+        assert_eq!(
+            result[511], 32.0,
+            "hyperion values beyond the clip are clamped"
+        );
+        assert_eq!(
+            result[2047], -32.0,
+            "target values beyond the clip are clamped"
+        );
+        // Each of these changes is caught by the golden values above.
+        let mut swapped = components.clone();
+        std::mem::swap(&mut swapped.hyperion, &mut swapped.target);
+        assert_ne!(transforms.assemble(&swapped).unwrap(), result);
+        let mut reordered = components.clone();
+        reordered.hyperion.swap(2, 3);
+        assert_ne!(transforms.assemble(&reordered).unwrap(), result);
+        let mut shifted = components;
+        shifted.foundation.rotate_left(1);
+        assert_ne!(transforms.assemble(&shifted).unwrap(), result);
+    }
+
+    /// W2-T05 golden: the two label normalizations, including their constant-input conventions.
+    #[test]
+    fn golden_label_normalizations() {
+        // Population deviation of {1, 2, 3, 4} is sqrt(1.25); 1e-8 is added before dividing.
+        let sd = 1.25f64.sqrt() + 1e-8;
+        let standardized = standardize_context_labels(&[1.0, 2.0, 3.0, 4.0]);
+        for (value, raw) in standardized.iter().zip([1.0, 2.0, 3.0, 4.0]) {
+            close(*value, (raw - 2.5) / sd, "standardized label");
+        }
+        assert_eq!(standardize_context_labels(&[7.0, 7.0]), vec![0.0, 0.0]);
+        assert_eq!(minmax_targets(&[5.0, 7.0, 9.0]), vec![0.0, 0.5, 1.0]);
+        assert_eq!(minmax_targets(&[9.0, 5.0, 7.0]), vec![1.0, 0.0, 0.5]);
+        assert_eq!(minmax_targets(&[3.0, 3.0]), vec![0.0, 0.0]);
     }
 }
 
