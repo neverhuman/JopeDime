@@ -25,6 +25,12 @@ pub struct PlanArgs {
     pub fitting_inputs: PathBuf,
     #[arg(long)]
     pub fitting_inputs_sha256: String,
+    /// The producer's corrected-run attestation for the fitting inputs
+    /// (`jope-datasets staging-disposition attest`; W1-T07).
+    #[arg(long)]
+    pub corrected_run: PathBuf,
+    #[arg(long)]
+    pub corrected_run_sha256: String,
     #[arg(long)]
     pub configuration: PathBuf,
     #[arg(long)]
@@ -82,6 +88,11 @@ pub struct Plan {
     pub configuration: Artifact,
     pub references: Artifact,
     pub fitting_manifest: Artifact,
+    /// W1-T07: the producer's corrected-run attestation the planner verified
+    /// for `fitting_manifest`. Absent only in plans built before it was
+    /// required; plan admission refuses those.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub corrected_run: Option<Artifact>,
     pub inputs: Vec<Dataset>,
     pub settings: Value,
 }
@@ -187,8 +198,14 @@ pub fn plan(args: PlanArgs) -> Result<Value> {
         fitting_manifest.sha256 == args.fitting_inputs_sha256,
         "fitting input manifest changed"
     );
+    let corrected_run = artifact(&args.corrected_run)?;
+    ensure!(
+        corrected_run.sha256 == args.corrected_run_sha256,
+        "corrected-run attestation pin mismatch"
+    );
     let (inputs, staging_closure) = inputs::load(
         &fitting_manifest,
+        &corrected_run,
         &panel,
         &panel_sha,
         &configuration.sha256,
@@ -233,6 +250,7 @@ pub fn plan(args: PlanArgs) -> Result<Value> {
         configuration,
         references,
         fitting_manifest,
+        corrected_run: Some(corrected_run),
         inputs,
         settings,
     };
@@ -249,6 +267,12 @@ pub fn read(path: &Path, sha: &str) -> Result<Plan> {
     // W1 follow-up 2d: no plan pinning an object of the historical staging
     // closure is admitted, whichever planner built it.
     inputs::refuse_historical_plan(&p.fitting_manifest, &p.inputs)?;
+    // W1-T07: only a plan whose closure the planner admitted with the
+    // producer's corrected-run attestation (pinned by this plan's bytes).
+    ensure!(
+        p.corrected_run.is_some(),
+        "plan lacks the producer's corrected-run attestation for its fitting inputs"
+    );
     ensure!(
         p.toolchain.keys().map(String::as_str).collect::<Vec<_>>() == ["g++", "python3", "rustc"],
         "toolchain key inventory changed"

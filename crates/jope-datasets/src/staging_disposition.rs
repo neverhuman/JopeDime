@@ -556,6 +556,35 @@ pub fn refuse_historical_objects<'a>(
     Ok(checked)
 }
 
+/// The producer's corrected-run attestation (W1-T07): emitted by the component
+/// that projected a fitting-input closure, for exactly those manifest bytes and
+/// that manifest's projection source. The closure is checked against the
+/// protocol first, so a historical closure cannot be attested. The fitting-only
+/// declaration is the producer's: recorded and required, not independently
+/// proven. The returned run passes [`verify_corrected_run`] only if the
+/// declaration is a fitting-only projection.
+pub fn attest_corrected_run(
+    protocol: &CorrectedProtocol,
+    manifest_bytes: &[u8],
+    attestation: ProjectionAttestation,
+    window: Option<String>,
+) -> Result<CorrectedRun> {
+    let checked = verify_closure(protocol, manifest_bytes)?;
+    CorrectedRun::new(
+        protocol,
+        RunClosure {
+            manifest_sha256: sha256_hex(manifest_bytes),
+            projection_source_sha: checked["projection_source_sha"]
+                .as_str()
+                .context("projection source absent")?
+                .to_owned(),
+            projection_protocol: protocol.projection_protocol.clone(),
+            attestation,
+        },
+        window,
+    )
+}
+
 /// Accept a corrected run only under this protocol, with a non-historical
 /// closure, a fitting-only projection declaration and its own window.
 pub fn verify_corrected_run(

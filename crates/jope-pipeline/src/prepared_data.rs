@@ -44,6 +44,79 @@ pub struct DevelopmentData {
     /// Original row order, labels, nulls and group identities, unchanged.
     pub rows: Vec<PreparedRow>,
     pub schema: DataSchema,
+    /// W1-T01: the committed ten-regression release's admission of this
+    /// partition, present exactly when the release names the dataset. `None`
+    /// is a dataset outside the release (another task, or a fixture).
+    pub release: Option<ReleaseAdmission>,
+}
+
+/// The committed ten-regression release's admission of one development
+/// partition (W1-T01): the member identities its receivers bind.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+pub struct ReleaseAdmission {
+    pub release_id: String,
+    /// The member's acquired raw object (`raw.sha256`).
+    pub dataset_sha256: String,
+    /// The member's development partition bytes (`prepared.development_sha256`).
+    pub development_sha256: String,
+    /// The member's development row/target alignment digest.
+    pub development_alignment_sha256: String,
+}
+
+/// W1-T01: a dataset the committed ten-regression release names is admitted
+/// only as that member. Its panel entry must be the member's (task, raw
+/// source, split, development and sealed digests, row and fold counts, group
+/// columns and feature schema), and its development bytes must reproduce the
+/// member's exact digest and row/target alignment. A dataset the release does
+/// not name carries no release admission.
+fn admit_release_member(bytes: &[u8], dataset: &PanelDataset) -> Result<Option<ReleaseAdmission>> {
+    use jope_datasets::regression_release::{committed, FeatureKind};
+    let release = committed()?;
+    let Some(member) = release.members.iter().find(|m| m.dataset == dataset.id) else {
+        return Ok(None);
+    };
+    let features = member.schema.features.len() == dataset.features.len()
+        && member
+            .schema
+            .features
+            .iter()
+            .zip(&dataset.features)
+            .all(|(m, d)| {
+                m.name == d.name
+                    && matches!(
+                        (m.kind, d.kind),
+                        (FeatureKind::Numeric, ColumnKind::Numeric)
+                            | (FeatureKind::Categorical, ColumnKind::Categorical)
+                    )
+            });
+    ensure!(
+        dataset.task == Task::Regression
+            && member.raw.sha256 == dataset.source.sha256
+            && member.prepared.split_sha256 == dataset.split.sha256
+            && member.prepared.development_sha256 == dataset.split.development_sha256
+            && member.prepared.sealed_sha256 == dataset.split.sealed_sha256
+            && member.rows.total == dataset.rows as u64
+            && member.rows.development == dataset.split.development_rows as u64
+            && member.rows.sealed == dataset.split.sealed_rows as u64
+            && member
+                .folds
+                .fold_rows
+                .iter()
+                .map(|&rows| rows as usize)
+                .eq(dataset.split.fold_rows.iter().copied())
+            && member.groups.columns == dataset.group_columns
+            && features,
+        "{}: panel entry differs from its member of regression release {}",
+        dataset.id,
+        release.release_id
+    );
+    release.verify_development(&dataset.id, bytes)?;
+    Ok(Some(ReleaseAdmission {
+        release_id: release.release_id.clone(),
+        dataset_sha256: member.raw.sha256.clone(),
+        development_sha256: member.prepared.development_sha256.clone(),
+        development_alignment_sha256: member.rows.development_alignment_sha256.clone(),
+    }))
 }
 
 /// Parent-side partition. Worker requests must select only fitting targets and
@@ -117,6 +190,9 @@ pub fn parse_development(bytes: &[u8], dataset: &PanelDataset) -> Result<Develop
         dataset.id
     );
     ensure!(safe_id(&dataset.id), "unsafe dataset identifier");
+    // W1-T01: a release member is admitted only as that member, before any
+    // row, fold or label is interpreted.
+    let release = admit_release_member(bytes, dataset)?;
     ensure!(sha256(&dataset.source.sha256), "invalid source sha256");
     ensure!(
         Metric::for_task(dataset.task)? == dataset.metric,
@@ -214,6 +290,7 @@ pub fn parse_development(bytes: &[u8], dataset: &PanelDataset) -> Result<Develop
         dataset: dataset.clone(),
         rows: table.rows,
         schema,
+        release,
     })
 }
 
@@ -521,6 +598,79 @@ mod tests {
                 serde_json::from_str(row[0].strip_prefix(CATEGORY_PREFIX).unwrap()).unwrap();
             assert_eq!(Some(decoded.as_str()), *original);
         }
+    }
+
+    /// W1-T01 at the ASM development loader: a dataset the committed
+    /// ten-regression release names is admitted only as that member. An
+    /// ad-hoc partition with a self-consistent panel entry under a member's
+    /// name is refused before any row is interpreted.
+    #[test]
+    fn a_release_members_name_never_admits_other_development_bytes() {
+        let (mut dataset, mut table) = fixture(Task::Regression);
+        // Positive control: a dataset outside the release, with no release
+        // admission.
+        assert!(parse_changed(&dataset, &table).unwrap().release.is_none());
+        dataset.id = "197_cpu_act".into();
+        table["dataset"] = json!("197_cpu_act");
+        let refused = parse_changed(&dataset, &table);
+        assert!(
+            matches!(&refused, Err(e) if e.to_string().contains("regression release")),
+            "an ad-hoc development input was admitted under a release member's name"
+        );
+    }
+
+    /// Local evidence (the prepared ASM panel is not in the repository; run
+    /// with `JOPE_W1_DEVELOPMENT_ROOT=<prepared root>` and `--run-ignored
+    /// only`): every committed member's real development partition is admitted
+    /// as that member, no member's bytes pass under another member's entry,
+    /// and a dataset outside the release carries no admission.
+    #[test]
+    #[ignore = "needs the prepared ASM panel (JOPE_W1_DEVELOPMENT_ROOT)"]
+    fn the_real_development_partitions_are_admitted_as_their_release_members() {
+        use jope_datasets::regression_release::{committed, COMMITTED_RELEASE_ID};
+        let root = std::path::PathBuf::from(
+            std::env::var_os("JOPE_W1_DEVELOPMENT_ROOT").expect("JOPE_W1_DEVELOPMENT_ROOT"),
+        );
+        let panel: crate::experiment::Panel = serde_json::from_slice(
+            &std::fs::read(concat!(
+                env!("CARGO_MANIFEST_DIR"),
+                "/../../benchmarks/panel.json"
+            ))
+            .unwrap(),
+        )
+        .unwrap();
+        let release = committed().unwrap();
+        let members: Vec<_> = panel
+            .datasets
+            .iter()
+            .filter(|d| d.task == Task::Regression)
+            .collect();
+        assert_eq!(members.len(), release.members.len());
+        for d in &members {
+            let admission = load_development(&root, d).unwrap().release.unwrap();
+            let member = release.member(&d.id).unwrap();
+            assert_eq!(admission.release_id, COMMITTED_RELEASE_ID);
+            assert_eq!(admission.dataset_sha256, member.raw.sha256);
+            assert_eq!(
+                admission.development_alignment_sha256,
+                member.rows.development_alignment_sha256
+            );
+        }
+        let bytes = std::fs::read(
+            root.join("development")
+                .join(format!("{}.json", members[0].id)),
+        )
+        .unwrap();
+        let mut other = members[1].clone();
+        other.split.development_sha256 = sha256_hex(&bytes);
+        let refused = parse_development(&bytes, &other).unwrap_err().to_string();
+        assert!(refused.contains("regression release"), "{refused}");
+        let outside = panel
+            .datasets
+            .iter()
+            .find(|d| d.task != Task::Regression)
+            .unwrap();
+        assert!(load_development(&root, outside).unwrap().release.is_none());
     }
 
     #[test]

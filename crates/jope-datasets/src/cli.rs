@@ -147,6 +147,22 @@ pub enum StagingAction {
         #[arg(long, requires = "closure")]
         run: Option<PathBuf>,
     },
+    /// Emit the producer's corrected-run attestation for a fitting-input
+    /// manifest it projected (W1-T07), under the committed corrected protocol.
+    /// It declares a fitting-only projection: recorded and required by the
+    /// inference planner, not independently proven. The closure is checked
+    /// first, so a historical closure cannot be attested; the output must not
+    /// exist.
+    Attest {
+        /// The fitting-input manifest the producer projected.
+        #[arg(long)]
+        closure: PathBuf,
+        /// The run's own admitted execution window (experiment sha256), if any.
+        #[arg(long)]
+        window: Option<String>,
+        #[arg(long)]
+        output: PathBuf,
+    },
 }
 
 fn create_new(path: &std::path::Path, bytes: &[u8]) -> Result<()> {
@@ -163,10 +179,42 @@ fn create_new(path: &std::path::Path, bytes: &[u8]) -> Result<()> {
 
 fn run_staging(action: StagingAction) -> Result<ExitCode> {
     use crate::staging_disposition::{
-        derive_disposition, verify_closure, verify_corrected_run, CorrectedProtocol,
-        HistoricalDisposition,
+        attest_corrected_run, committed, derive_disposition, verify_closure, verify_corrected_run,
+        CorrectedProtocol, HistoricalDisposition, ProjectionAttestation,
     };
     match action {
+        StagingAction::Attest {
+            closure,
+            window,
+            output,
+        } => {
+            let (d, p) = committed()?;
+            let manifest = std::fs::read(&closure)?;
+            let run = attest_corrected_run(
+                &p,
+                &manifest,
+                ProjectionAttestation {
+                    inputs_pre_projected: true,
+                    outer_scoring_labels_parsed: false,
+                    development_targets_parsed_outside_fitting_rows: false,
+                    sealed_tables_opened: false,
+                },
+                window,
+            )?;
+            let bytes = run.encode()?;
+            let accepted = verify_corrected_run(&d, &p, &bytes, &manifest)?;
+            create_new(&output, &bytes)?;
+            println!(
+                "{}",
+                serde_json::json!({"schema":"jope.corrected-run-attestation/v1",
+                    "run_id":run.run_id,"run_sha256":crate::hash::sha256_hex(&bytes),
+                    "protocol_id":p.protocol_id,"manifest_sha256":accepted["manifest_sha256"],
+                    "objects_checked":accepted["objects_checked"],
+                    "attestation":"producer-declared; recorded and required, not independently proven",
+                    "network_access":false})
+            );
+            Ok(ExitCode::SUCCESS)
+        }
         StagingAction::Derive {
             study_root,
             repository_root,

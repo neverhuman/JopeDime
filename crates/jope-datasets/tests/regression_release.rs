@@ -671,6 +671,28 @@ const COMMITTED_REGISTRY: &[u8] =
 const FROZEN_PANEL: &[u8] = include_bytes!("../../../benchmarks/panel.json");
 const PREPARATION_IMPLEMENTATION: &[u8] = include_bytes!("../../../benchmarks/prepare.py");
 
+/// W1-T01: receivers consume the release embedded in the library, which is
+/// exactly the committed document and binds the committed registry.
+#[test]
+fn the_embedded_release_is_the_committed_document() {
+    let embedded = jope_datasets::regression_release::committed().unwrap();
+    assert_eq!(
+        embedded,
+        RegressionRelease::open(COMMITTED_RELEASE).unwrap()
+    );
+    assert_eq!(
+        embedded.release_id,
+        jope_datasets::regression_release::COMMITTED_RELEASE_ID
+    );
+    assert_eq!(
+        embedded.family_registry_sha256,
+        FamilyRegistry::open(COMMITTED_REGISTRY)
+            .unwrap()
+            .sha256()
+            .unwrap()
+    );
+}
+
 /// Membership proof for the committed release against the unchanged frozen
 /// panel. Byte-level re-derivation from the staged custody objects is the
 /// `jope-datasets regression-release verify` receipt, not this CI test.
