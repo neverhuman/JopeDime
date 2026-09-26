@@ -2433,8 +2433,12 @@
       "test": "fitted_predictor_roundtrip_matches_native_gp_and_restores_target_units",
       "item": "target:jope-parallel/test/gp_contracts",
       "triage": "fit-authority-fence",
-      "status": "open",
-      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness); cannot pass in a product build by design."
+      "status": "moved",
+      "moved_to": "target:jope-parallel/lib/jope_parallel gp::fit_contract_tests::fitted_predictor_roundtrip_matches_native_gp_and_restores_target_units",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-fence-postfix-20260926T054031Z"
+      ],
+      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness) by design. The positive contract runs in the cfg(test) library build behind the reviewed test-only issuer; integration tests now assert the shipped refusals. Production activation verifiers remain unimplemented (W5)."
     },
     {
       "lane": "full-default",
@@ -2442,8 +2446,12 @@
       "test": "sealed_memory_view_matches_file_evaluation_and_rejects_writes",
       "item": "target:jope-parallel/test/gp_contracts",
       "triage": "fit-authority-fence",
-      "status": "open",
-      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness); cannot pass in a product build by design."
+      "status": "moved",
+      "moved_to": "target:jope-parallel/lib/jope_parallel gp::fit_contract_tests::sealed_memory_view_matches_file_evaluation_and_rejects_writes",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-fence-postfix-20260926T054031Z"
+      ],
+      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness) by design. The positive contract runs in the cfg(test) library build behind the reviewed test-only issuer; integration tests now assert the shipped refusals. Production activation verifiers remain unimplemented (W5)."
     },
     {
       "lane": "full-default",
@@ -2451,8 +2459,12 @@
       "test": "fitted_view_predictor_uses_the_exact_cut_and_original_target_units",
       "item": "target:jope-parallel/test/view_contracts",
       "triage": "fit-authority-fence",
-      "status": "open",
-      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness); cannot pass in a product build by design."
+      "status": "moved",
+      "moved_to": "target:jope-parallel/lib/jope_parallel gp::fit_contract_tests::fitted_view_predictor_uses_the_exact_cut_and_original_target_units",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-fence-postfix-20260926T054031Z"
+      ],
+      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness) by design. The positive contract runs in the cfg(test) library build behind the reviewed test-only issuer; integration tests now assert the shipped refusals. Production activation verifiers remain unimplemented (W5)."
     },
     {
       "lane": "full-default",
@@ -2460,8 +2472,12 @@
       "test": "experiment_crashes_at_durable_boundaries_recover_without_repeating_committed_fits",
       "item": "target:jope-parallel/test/view_contracts",
       "triage": "fit-authority-fence",
-      "status": "open",
-      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness); cannot pass in a product build by design."
+      "status": "moved",
+      "moved_to": "target:jope-parallel/lib/jope_parallel gp::fit_contract_tests::experiment_crashes_at_durable_boundaries_recover_without_repeating_committed_fits",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-fence-postfix-20260926T054031Z"
+      ],
+      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness) by design. The positive contract runs in the cfg(test) library build behind the reviewed test-only issuer; integration tests now assert the shipped refusals. Production activation verifiers remain unimplemented (W5)."
     },
     {
       "lane": "full-default",
@@ -2469,8 +2485,12 @@
       "test": "isolated_fitted_view_export_binds_success_and_preserves_worker_failures",
       "item": "target:jope-parallel/test/view_contracts",
       "triage": "fit-authority-fence",
-      "status": "open",
-      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness); cannot pass in a product build by design."
+      "status": "moved",
+      "moved_to": "target:jope-parallel/lib/jope_parallel gp::fit_contract_tests::isolated_fitted_view_export_binds_success_and_preserves_worker_failures",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-fence-postfix-20260926T054031Z"
+      ],
+      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness) by design. The positive contract runs in the cfg(test) library build behind the reviewed test-only issuer; integration tests now assert the shipped refusals. Production activation verifiers remain unimplemented (W5)."
     },
     {
       "lane": "full-default",
@@ -2478,8 +2498,12 @@
       "test": "one_evaluation_budget_runs_the_incumbent_before_neural_candidates",
       "item": "target:jope-parallel/test/view_contracts",
       "triage": "fit-authority-fence",
-      "status": "open",
-      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness); cannot pass in a product build by design."
+      "status": "moved",
+      "moved_to": "target:jope-parallel/lib/jope_parallel gp::fit_contract_tests::one_evaluation_budget_runs_the_incumbent_before_neural_candidates",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-fence-postfix-20260926T054031Z"
+      ],
+      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness) by design. The positive contract runs in the cfg(test) library build behind the reviewed test-only issuer; integration tests now assert the shipped refusals. Production activation verifiers remain unimplemented (W5)."
     },
     {
       "lane": "full-default",
@@ -2628,8 +2652,12 @@
       "test": "sealed_memory_view_matches_file_evaluation_and_rejects_writes",
       "item": "target:jope-parallel/test/gp_contracts",
       "triage": "fit-authority-fence",
-      "status": "open",
-      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness); cannot pass in a product build by design."
+      "status": "moved",
+      "moved_to": "target:jope-parallel/lib/jope_parallel gp::fit_contract_tests::sealed_memory_view_matches_file_evaluation_and_rejects_writes",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-fence-postfix-20260926T054031Z"
+      ],
+      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness) by design. The positive contract runs in the cfg(test) library build behind the reviewed test-only issuer; integration tests now assert the shipped refusals. Production activation verifiers remain unimplemented (W5)."
     },
     {
       "lane": "full-scratch",
@@ -2637,8 +2665,12 @@
       "test": "fitted_predictor_roundtrip_matches_native_gp_and_restores_target_units",
       "item": "target:jope-parallel/test/gp_contracts",
       "triage": "fit-authority-fence",
-      "status": "open",
-      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness); cannot pass in a product build by design."
+      "status": "moved",
+      "moved_to": "target:jope-parallel/lib/jope_parallel gp::fit_contract_tests::fitted_predictor_roundtrip_matches_native_gp_and_restores_target_units",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-fence-postfix-20260926T054031Z"
+      ],
+      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness) by design. The positive contract runs in the cfg(test) library build behind the reviewed test-only issuer; integration tests now assert the shipped refusals. Production activation verifiers remain unimplemented (W5)."
     },
     {
       "lane": "full-scratch",
@@ -2646,8 +2678,12 @@
       "test": "fitted_view_predictor_uses_the_exact_cut_and_original_target_units",
       "item": "target:jope-parallel/test/view_contracts",
       "triage": "fit-authority-fence",
-      "status": "open",
-      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness); cannot pass in a product build by design."
+      "status": "moved",
+      "moved_to": "target:jope-parallel/lib/jope_parallel gp::fit_contract_tests::fitted_view_predictor_uses_the_exact_cut_and_original_target_units",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-fence-postfix-20260926T054031Z"
+      ],
+      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness) by design. The positive contract runs in the cfg(test) library build behind the reviewed test-only issuer; integration tests now assert the shipped refusals. Production activation verifiers remain unimplemented (W5)."
     },
     {
       "lane": "full-scratch",
@@ -2655,8 +2691,12 @@
       "test": "experiment_crashes_at_durable_boundaries_recover_without_repeating_committed_fits",
       "item": "target:jope-parallel/test/view_contracts",
       "triage": "fit-authority-fence",
-      "status": "open",
-      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness); cannot pass in a product build by design."
+      "status": "moved",
+      "moved_to": "target:jope-parallel/lib/jope_parallel gp::fit_contract_tests::experiment_crashes_at_durable_boundaries_recover_without_repeating_committed_fits",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-fence-postfix-20260926T054031Z"
+      ],
+      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness) by design. The positive contract runs in the cfg(test) library build behind the reviewed test-only issuer; integration tests now assert the shipped refusals. Production activation verifiers remain unimplemented (W5)."
     },
     {
       "lane": "full-scratch",
@@ -2664,8 +2704,12 @@
       "test": "isolated_fitted_view_export_binds_success_and_preserves_worker_failures",
       "item": "target:jope-parallel/test/view_contracts",
       "triage": "fit-authority-fence",
-      "status": "open",
-      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness); cannot pass in a product build by design."
+      "status": "moved",
+      "moved_to": "target:jope-parallel/lib/jope_parallel gp::fit_contract_tests::isolated_fitted_view_export_binds_success_and_preserves_worker_failures",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-fence-postfix-20260926T054031Z"
+      ],
+      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness) by design. The positive contract runs in the cfg(test) library build behind the reviewed test-only issuer; integration tests now assert the shipped refusals. Production activation verifiers remain unimplemented (W5)."
     },
     {
       "lane": "full-scratch",
@@ -2673,8 +2717,12 @@
       "test": "one_evaluation_budget_runs_the_incumbent_before_neural_candidates",
       "item": "target:jope-parallel/test/view_contracts",
       "triage": "fit-authority-fence",
-      "status": "open",
-      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness); cannot pass in a product build by design."
+      "status": "moved",
+      "moved_to": "target:jope-parallel/lib/jope_parallel gp::fit_contract_tests::one_evaluation_budget_runs_the_incumbent_before_neural_candidates",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-fence-postfix-20260926T054031Z"
+      ],
+      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness) by design. The positive contract runs in the cfg(test) library build behind the reviewed test-only issuer; integration tests now assert the shipped refusals. Production activation verifiers remain unimplemented (W5)."
     },
     {
       "lane": "full-scratch",

@@ -41,6 +41,24 @@ fn cpu_evaluator_binding(value: Option<std::ffi::OsString>) -> Result<std::path:
     Ok(path.canonicalize()?)
 }
 
+/// Shipped builds start the explicitly bound evaluator executable directly.
+#[cfg(not(test))]
+fn evaluator_command(executable: &Path) -> Command {
+    Command::new(executable)
+}
+/// A unit-test build has no product CLI: the same subcommand argv is handed to
+/// this test executable's ignored fixture entry. Launcher only; it grants no
+/// authority and changes no fit, witness or activation rule.
+#[cfg(test)]
+fn evaluator_command(executable: &Path) -> Command {
+    let mut command = Command::new(executable);
+    command.args(fit_contract_tests::CLI_ENTRY_ARGS);
+    command
+}
+
+#[cfg(test)]
+mod fit_contract_tests;
+
 #[cfg(test)]
 mod cpu_evaluator_tests {
     use super::*;
@@ -200,7 +218,7 @@ pub fn fit_view_isolated(
     let log_path = output.with_extension("fit.log");
     let receipt_path = output.with_extension("fit.json");
     let log = fs::File::create(&log_path)?;
-    let mut command = Command::new(executable);
+    let mut command = evaluator_command(executable);
     command
         .args(["fit-view", "--prepared"])
         .arg(prepared)
@@ -1804,7 +1822,7 @@ fn search_inner(
                 .create(true)
                 .append(true)
                 .open(output.join(format!("candidate-{i}.log")))?;
-            let mut command = Command::new(&executable);
+            let mut command = evaluator_command(&executable);
             use std::os::fd::AsRawFd;
             command
                 .args(["evaluate-memory", "--fd"])

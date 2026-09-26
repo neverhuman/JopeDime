@@ -1,6 +1,11 @@
 use jope_parallel::{manifest::*, prepare::*};
 use serde_json::json;
 use std::{fs, path::PathBuf, process::Command};
+#[path = "support/fit_authority.rs"]
+mod authority;
+
+const FENCED: &str = "mandatory fit authority service unavailable: fitting is fenced";
+
 fn fixture() -> (tempfile::TempDir, PathBuf) {
     let t = tempfile::tempdir().unwrap();
     let root = t.path();
@@ -27,8 +32,12 @@ fn fixture() -> (tempfile::TempDir, PathBuf) {
     (t, prepared)
 }
 
+/// Shipped build. Teacher-first ordering is a search property and holds even
+/// though every fit is refused without a verified activation; the fitted
+/// outcome of the same budget is proven by
+/// `gp::fit_contract_tests::one_evaluation_budget_runs_the_incumbent_before_neural_candidates`.
 #[test]
-fn one_evaluation_budget_runs_the_incumbent_before_neural_candidates() {
+fn fenced_one_evaluation_budget_orders_the_incumbent_first_and_records_its_refusal() {
     let (temp, prepared) = fixture();
     let vocabulary = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets/grammar/featmath.json");
     let vocab: jope_parallel::grammar::Vocab = read_json(&vocabulary).unwrap();
@@ -77,8 +86,14 @@ fn one_evaluation_budget_runs_the_incumbent_before_neural_candidates() {
     )
     .unwrap();
     let output = temp.path().join("teacher-first-search");
-    let result = std::process::Command::new(env!("CARGO_BIN_EXE_jope-parallel"))
-        .env("JOPE_CPU_EVALUATOR", env!("CARGO_BIN_EXE_jope-parallel"))
+    let mut authority = authority::Fixture::new(
+        temp.path(),
+        vec![authority::training_hash(
+            &load_view(&prepared, 0, true).unwrap(),
+        )],
+    );
+    let result = authority
+        .command()
         .arg("--root")
         .arg(temp.path())
         .args(["search", "--prepared"])
@@ -109,7 +124,22 @@ fn one_evaluation_budget_runs_the_incumbent_before_neural_candidates() {
     assert_eq!(observations[0]["origin"], "incumbent_cut_teacher");
     assert_eq!(observations[0]["initial_seed_slot"], 64);
     assert_eq!(observations[0]["genome"], champion);
-    assert!(observations[0]["failure"].is_null());
+    assert!(
+        !observations[0]["failure"].is_null(),
+        "shipped search fitted without a verified activation"
+    );
+    assert!(observations[0]["metrics"].is_null());
+    let diagnostic = observations[0]["worker_diagnostic"].as_str().unwrap();
+    assert!(
+        diagnostic.contains(authority::UNVERIFIED_ACTIVATION),
+        "{diagnostic}"
+    );
+    let summary: serde_json::Value = read_json(&output.join("search.json")).unwrap();
+    assert_eq!(summary["successful_measurements"], 0);
+    authority.assert_no_fit_starts();
+    let stats = authority.shutdown();
+    assert_eq!(stats["worker_spawns"], 0);
+    assert_eq!(stats["committed"], 0);
 }
 #[test]
 fn pointer_views_use_no_csv_copies_and_heldout_targets_do_not_enter_training() {
@@ -246,63 +276,77 @@ fn expanding_pointer_cuts_preserves_entity_groups_with_distinct_features() {
     }
 }
 
+/// Shipped build with no fit service binding: the boundary refuses before any
+/// output, both in-process and inside the isolated export worker, whose failure
+/// is still receipted. The positive fitted-view and isolated-export contracts
+/// are `gp::fit_contract_tests::{fitted_view_predictor_uses_the_exact_cut_and_original_target_units,
+/// isolated_fitted_view_export_binds_success_and_preserves_worker_failures}`.
 #[test]
-fn fitted_view_predictor_uses_the_exact_cut_and_original_target_units() {
+fn unbound_fitted_view_export_is_fenced_before_output_and_receipted() {
+    assert!(
+        std::env::var_os("JOPE_FIT_SERVICE_SOCKET").is_none(),
+        "this contract requires an environment without a fit service binding"
+    );
     let (temp, prepared) = fixture();
     let output = temp.path().join("predictor.json");
-    jope_parallel::gp::fit_view(&prepared, 0, "(pipe X (ridge))", &output).unwrap();
-    let predictor: jope_parallel::gp::Predictor = read_json(&output).unwrap();
-    let p: Prepared = read_json(&prepared.join("prepared.json")).unwrap();
-    assert_eq!(predictor.training_sha256, p.cuts[0].training_sha256);
-    let rows = load_view(&prepared, 0, true).unwrap();
-    let x = rows.iter().map(|r| r[..1].to_vec()).collect::<Vec<_>>();
-    let y = rows.iter().map(|r| r[1]).collect::<Vec<_>>();
-    let expected = feat_math::fit(
-        &feat_math::GenomeIr::parse("(pipe X (ridge))").unwrap(),
-        &x,
-        &y,
-    )
-    .unwrap();
-    assert_eq!(predictor.model.predict(&x), expected.predict(&x));
-    let features = temp.path().join("features.csv");
-    fs::write(&features, "3\n7\n").unwrap();
-    let predictions = temp.path().join("predictions.csv");
-    jope_parallel::gp::predict(&output, &features, &predictions).unwrap();
-    let predictions = fs::read_to_string(predictions).unwrap();
-    assert!(predictions
-        .lines()
-        .all(|r| r.parse::<f64>().unwrap() > 100.0));
-    assert!(!prepared.join("cut-0/train.csv").exists());
-}
-
-#[test]
-fn isolated_fitted_view_export_binds_success_and_preserves_worker_failures() {
-    let (temp, prepared) = fixture();
+    let error = jope_parallel::gp::fit_view(&prepared, 0, authority::PROGRAM, &output)
+        .unwrap_err()
+        .to_string();
+    assert!(error.contains(FENCED), "{error}");
+    assert!(!output.exists());
     let executable = PathBuf::from(env!("CARGO_BIN_EXE_jope-parallel"));
-    let output = temp.path().join("isolated.json");
-    jope_parallel::gp::fit_view_isolated(&executable, &prepared, 0, "(pipe X (ridge))", &output)
-        .unwrap();
-    let receipt: serde_json::Value = read_json(&output.with_extension("fit.json")).unwrap();
-    assert_eq!(receipt["passed"], true);
-    assert_eq!(receipt["predictor_sha256"], file_hash(&output).unwrap());
-    assert_eq!(receipt["threads"], 1);
-    assert_eq!(receipt["memory_limit_gib"], 8);
-    let failed = temp.path().join("failed.json");
+    let isolated = temp.path().join("isolated.json");
     assert!(jope_parallel::gp::fit_view_isolated(
         &executable,
         &prepared,
         0,
-        "(pipe X (unknown))",
-        &failed
+        authority::PROGRAM,
+        &isolated
     )
     .is_err());
-    let receipt: serde_json::Value = read_json(&failed.with_extension("fit.json")).unwrap();
+    let receipt: serde_json::Value = read_json(&isolated.with_extension("fit.json")).unwrap();
     assert_eq!(receipt["passed"], false);
-    assert!(!receipt["failure"].as_str().unwrap().is_empty());
-    assert!(!failed.exists());
-    assert!(!fs::read_to_string(failed.with_extension("fit.log"))
-        .unwrap()
-        .is_empty());
+    assert_eq!(
+        receipt["executable_sha256"],
+        file_hash(&executable).unwrap()
+    );
+    assert!(receipt["predictor_sha256"].is_null());
+    assert!(!isolated.exists());
+    let log = fs::read_to_string(isolated.with_extension("fit.log")).unwrap();
+    assert!(log.contains(FENCED), "{log}");
+}
+
+/// Shipped build: a fully configured, in-scope authority still refuses the cut
+/// fit at namespace activation; nothing is claimed, started or published.
+#[test]
+fn configured_authority_refuses_fit_view_without_verified_activation() {
+    let (temp, prepared) = fixture();
+    let output = temp.path().join("predictor.json");
+    let mut authority = authority::Fixture::new(
+        temp.path(),
+        vec![authority::training_hash(
+            &load_view(&prepared, 0, true).unwrap(),
+        )],
+    );
+    let result = authority
+        .command()
+        .args(["fit-view", "--prepared"])
+        .arg(&prepared)
+        .args(["--cut", "0", "--genome", authority::PROGRAM, "--output"])
+        .arg(&output)
+        .output()
+        .unwrap();
+    let error = String::from_utf8_lossy(&result.stderr);
+    assert!(
+        !result.status.success(),
+        "shipped fit-view ran without activation"
+    );
+    assert!(error.contains(authority::UNVERIFIED_ACTIVATION), "{error}");
+    assert!(!output.exists(), "refused fit-view published a predictor");
+    authority.assert_no_fit_starts();
+    let stats = authority.shutdown();
+    assert_eq!(stats["worker_spawns"], 0);
+    assert_eq!(stats["committed"], 0);
 }
 #[test]
 fn gp_resumes_its_ledger_without_repeating_completed_evaluations() {
@@ -783,97 +827,6 @@ fn gp_journal_preserves_a_torn_tail_and_requires_reconciliation() {
     fs::write(&p, b"{broken}\n").unwrap();
     assert!(jope_parallel::gp::read_journal(&p).is_err());
     assert_eq!(fs::read(&p).unwrap(), b"{broken}\n");
-}
-
-#[test]
-fn experiment_crashes_at_durable_boundaries_recover_without_repeating_committed_fits() {
-    for boundary in [
-        "candidate_intent",
-        "candidate_metric",
-        "observation_journal",
-        "observation_progress",
-        "observations_snapshot",
-        "search_summary",
-    ] {
-        let (temp, prepared) = fixture();
-        let experiment = temp.path().join("experiment");
-        fs::create_dir_all(&experiment).unwrap();
-        write_json(
-            &experiment.join("manifest.json"),
-            &json!({"schema":"parallel.seed_experiment.v2"}),
-        )
-        .unwrap();
-        let output = experiment.join("search");
-        let command = || {
-            let mut c = Command::new(env!("CARGO_BIN_EXE_jope-parallel"));
-            c.env("JOPE_CPU_EVALUATOR", env!("CARGO_BIN_EXE_jope-parallel"));
-            c.arg("--root")
-                .arg(temp.path())
-                .args([
-                    "search",
-                    "--cut",
-                    "0",
-                    "--evaluations",
-                    "3",
-                    "--seconds",
-                    "180",
-                    "--qualification",
-                ])
-                .arg("--prepared")
-                .arg(&prepared)
-                .arg("--output")
-                .arg(&output)
-                .env("JOPE_EXPERIMENT_DIR", &experiment)
-                .env("OMP_NUM_THREADS", "1")
-                .env("RAYON_NUM_THREADS", "1");
-            c
-        };
-        let failed = command()
-            .env("JOPE_EXPERIMENT_CRASH_AFTER", boundary)
-            .output()
-            .unwrap();
-        assert!(
-            !failed.status.success(),
-            "failpoint was not reached: {boundary}"
-        );
-        let before = if output.join("observations.jsonl").exists() {
-            jope_parallel::gp::read_journal(&output.join("observations.jsonl")).unwrap()
-        } else {
-            vec![]
-        };
-        let metric: Option<serde_json::Value> = if boundary == "candidate_metric" {
-            Some(read_json(&output.join("candidate-0.json")).unwrap())
-        } else {
-            None
-        };
-        if !output.join("search.json").exists() {
-            let resumed = command().output().unwrap();
-            assert!(
-                resumed.status.success(),
-                "{boundary}: {}",
-                String::from_utf8_lossy(&resumed.stderr)
-            );
-        }
-        let after: Vec<serde_json::Value> = read_json(&output.join("observations.json")).unwrap();
-        assert_eq!(after.len(), 3, "{boundary}");
-        assert_eq!(
-            after[..before.len()],
-            before,
-            "committed observations changed at {boundary}"
-        );
-        if let Some(metric) = metric {
-            assert_eq!(after[0]["metrics"], metric);
-            assert_eq!(after[0]["recovered_completed_artifact"], true);
-        }
-        let counters = after
-            .iter()
-            .map(|r| r["proposal_attempts"].as_u64().unwrap())
-            .collect::<Vec<_>>();
-        assert!(
-            counters.windows(2).all(|w| w[0] < w[1]),
-            "RNG counter did not advance: {boundary}"
-        );
-    }
 }
 
 fn seeded_search(

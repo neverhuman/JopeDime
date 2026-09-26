@@ -95,7 +95,14 @@ impl Data {
         let memory = gp::memory_view(&train, &validation).unwrap();
         let genome = root.join("program.dsl");
         fs::write(&genome, PROGRAM).unwrap();
-        let authority = Fixture::new(&root, vec![training_hash(&train)]);
+        // `fit --train raw.csv` fits its own preprocessing of the whole file, so
+        // both training identities are in scope: only activation can refuse.
+        let table = Table::read(&raw, &Value::Null).unwrap();
+        let whole = Preprocessing::fit(&table.rows, "regression")
+            .unwrap()
+            .transform(&table.rows)
+            .unwrap();
+        let authority = Fixture::new(&root, vec![training_hash(&train), training_hash(&whole)]);
         Self {
             _temp: temp,
             root,
@@ -596,4 +603,230 @@ fn self_hashed_but_uncommitted_completion_is_rejected_by_cli() {
     );
     assert!(result.stdout.is_empty());
     data.authority.assert_no_fit_starts();
+}
+
+const ENTRIES: [&str; 5] = [
+    "fit",
+    "fit-view",
+    "evaluate-view",
+    "evaluate-memory",
+    "evaluate-worker",
+];
+
+fn assert_every_entry_refused_without_verified_activation(data: &Data, label: &str) {
+    for entry in ENTRIES {
+        let output = data.root.join(format!("{label}-{entry}.json"));
+        let result = data.command(entry, &output).output().unwrap();
+        let error = String::from_utf8_lossy(&result.stderr);
+        assert!(
+            !result.status.success(),
+            "{entry} fitted without a verified activation"
+        );
+        assert!(error.contains(UNVERIFIED_ACTIVATION), "{entry}: {error}");
+        assert!(!output.exists(), "refused {entry} published a result");
+        data.authority.assert_no_fit_starts();
+    }
+}
+
+fn read_only(fixture: &Fixture) -> rusqlite::Connection {
+    rusqlite::Connection::open_with_flags(
+        fixture.authority.join("registry.sqlite"),
+        rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY,
+    )
+    .unwrap()
+}
+
+/// Shipped build, fully configured and in scope: authority, witness, scope,
+/// training identity and service are all valid, yet no public entry point can
+/// start a fit, because a shipped build has no verified namespace activation.
+#[test]
+fn configured_authority_refuses_every_public_fit_entry_without_verified_activation() {
+    let mut data = Data::new();
+    assert_every_entry_refused_without_verified_activation(&data, "configured");
+    let stats = data.authority.shutdown();
+    assert_eq!(stats["worker_spawns"], 0);
+    assert_eq!(stats["committed"], 0);
+}
+
+/// Shipped build: the isolated export worker inherits a fully configured
+/// authority, is refused at activation and still receipts its failure.
+#[test]
+fn isolated_model_export_is_refused_without_verified_activation() {
+    let data = Data::new();
+    let spec = data.root.join("export-configured.request.json");
+    write_json(
+        &spec,
+        &json!({"prepared":data.prepared,"output":data.root.join("export-configured.json"),
+        "expected_error":UNVERIFIED_ACTIVATION}),
+    )
+    .unwrap();
+    let mut command = Command::new(std::env::current_exe().unwrap());
+    command
+        .args(["--exact", "isolated_export_child_fixture", "--nocapture"])
+        .env("JOPE_SYNTHETIC_EXPORT_TEST", &spec);
+    data.authority.configure(&mut command);
+    fixture::success(command.output().unwrap());
+    data.authority.assert_no_fit_starts();
+}
+
+/// Shipped build: `namespace-activate` has no verifier for any capability, and
+/// refusing changes neither dispatch history nor activation state.
+#[test]
+fn namespace_activate_refuses_every_capability_without_changing_authority_state() {
+    let data = Data::new();
+    let journal = data.authority.authority.join("dispatch.jsonl");
+    let before = file_hash(&journal).unwrap();
+    for (scope, capability, message) in [
+        (
+            SCOPE,
+            "synthetic_qualification",
+            "namespace activation unavailable",
+        ),
+        (
+            SCOPE,
+            "regression_collection",
+            "namespace activation unavailable",
+        ),
+        (
+            SCOPE,
+            "regression_training",
+            "namespace activation unavailable",
+        ),
+        (
+            SCOPE,
+            "regression_promotion",
+            "namespace activation unavailable",
+        ),
+        (
+            SCOPE,
+            "arbitrary_execution",
+            "unsupported activation capability",
+        ),
+        (
+            "not-an-authorized-scope",
+            "synthetic_qualification",
+            "unknown activation scope",
+        ),
+    ] {
+        let result = data
+            .authority
+            .command()
+            .args(["namespace-activate", "--authority"])
+            .arg(&data.authority.authority)
+            .arg("--witness")
+            .arg(&data.authority.witness)
+            .args(["--scope", scope, "--capability", capability])
+            .output()
+            .unwrap();
+        let error = String::from_utf8_lossy(&result.stderr);
+        assert!(!result.status.success(), "{scope}/{capability} activated");
+        assert!(error.contains(message), "{scope}/{capability}: {error}");
+        assert!(result.stdout.is_empty());
+    }
+    assert_eq!(
+        file_hash(&journal).unwrap(),
+        before,
+        "refused activation changed dispatch history"
+    );
+    let rows: i64 = read_only(&data.authority)
+        .query_row("SELECT count(*) FROM activations", [], |r| r.get(0))
+        .unwrap();
+    assert_eq!(rows, 0);
+    assert_every_entry_refused_without_verified_activation(&data, "after-activate");
+}
+
+/// The state `activation_block` queries: an active synthetic-qualification row
+/// bound to the current recovery epoch and the scope's committed coverage.
+const ACTIVATION_SQL: &str = "SELECT EXISTS(SELECT 1 FROM activations a JOIN coverage c \
+    ON c.scope=a.scope WHERE a.scope=? AND a.state='active' AND a.coverage_sha=c.inventory_sha \
+    AND a.epoch=COALESCE((SELECT epoch FROM recovery_epochs WHERE id='current'),\
+    (SELECT instance FROM meta)) AND a.capability='synthetic_qualification')";
+
+/// Append an activation that no issuer produced, but that the authority's own
+/// integrity replay accepts: journal event, SQLite row, database checkpoint
+/// and retained witness checkpoint all agree.
+fn forge_journaled_activation(fixture: &Fixture) {
+    let root = &fixture.authority;
+    let lock = fs::OpenOptions::new()
+        .read(true)
+        .write(true)
+        .open(root.join("authority.lock"))
+        .unwrap();
+    assert_eq!(unsafe { libc::flock(lock.as_raw_fd(), libc::LOCK_EX) }, 0);
+    let checkpoint: Value = read_json(&fixture.witness).unwrap();
+    let db = rusqlite::Connection::open(root.join("registry.sqlite")).unwrap();
+    db.busy_timeout(Duration::from_secs(10)).unwrap();
+    let (epoch, coverage): (String, String) = db
+        .query_row(
+            "SELECT COALESCE((SELECT epoch FROM recovery_epochs WHERE id='current'),\
+             (SELECT instance FROM meta)),(SELECT inventory_sha FROM coverage WHERE scope=?)",
+            [SCOPE],
+            |r| Ok((r.get(0)?, r.get(1)?)),
+        )
+        .unwrap();
+    let evidence = hash(b"forged activation: no verifier issued this row");
+    // Column order of the activations table, exactly as the authority's postimage.
+    let row = json!({"scope":SCOPE,"capability":"synthetic_qualification","epoch":epoch,
+        "coverage_sha":coverage,"state":"active","evidence_sha":evidence});
+    let seq = checkpoint["seq"].as_u64().unwrap() + 1;
+    let line = serde_json::to_vec(&json!({"instance":checkpoint["instance"],"seq":seq,
+        "previous":checkpoint["tip"],"kind":"synthetic_test_activation",
+        "payload":{"scope":SCOPE,"evidence_sha":evidence},
+        "effects":[{"table":"activations","key":SCOPE,"row":row}]}))
+    .unwrap();
+    let tip = hash(&line);
+    let length = checkpoint["length"].as_u64().unwrap() + line.len() as u64 + 1;
+    let mut journal = fs::OpenOptions::new()
+        .append(true)
+        .open(root.join("dispatch.jsonl"))
+        .unwrap();
+    journal.write_all(&line).unwrap();
+    journal.write_all(b"\n").unwrap();
+    journal.sync_all().unwrap();
+    db.execute_batch("BEGIN IMMEDIATE").unwrap();
+    db.execute(
+        "INSERT INTO activations VALUES(?,?,?,?,?,?)",
+        rusqlite::params![
+            SCOPE,
+            "synthetic_qualification",
+            epoch,
+            coverage,
+            "active",
+            evidence
+        ],
+    )
+    .unwrap();
+    db.execute(
+        "UPDATE meta SET seq=?,tip=?,length=?",
+        rusqlite::params![seq as i64, tip, length as i64],
+    )
+    .unwrap();
+    db.execute_batch("COMMIT").unwrap();
+    let temporary = fixture.witness.with_extension("forged");
+    fs::write(
+        &temporary,
+        serde_json::to_vec(
+            &json!({"instance":checkpoint["instance"],"seq":seq,"tip":tip,"length":length}),
+        )
+        .unwrap(),
+    )
+    .unwrap();
+    fs::rename(&temporary, &fixture.witness).unwrap();
+    drop(lock);
+}
+
+/// Shipped build: even a consistent, journaled activation row bound to the
+/// current epoch and coverage (the state the unit-test issuer creates, in a
+/// `synthetic-` scope a `cfg(test)` build would admit) cannot enable fitting.
+/// The refusal is `activation_block` itself, not an integrity failure.
+#[test]
+fn journaled_activation_row_with_current_epoch_and_coverage_cannot_enable_shipped_fitting() {
+    let data = Data::new();
+    assert!(SCOPE.starts_with("synthetic-"));
+    forge_journaled_activation(&data.authority);
+    let active: bool = read_only(&data.authority)
+        .query_row(ACTIVATION_SQL, [SCOPE], |r| r.get(0))
+        .unwrap();
+    assert!(active, "forged row does not satisfy the activation query");
+    assert_every_entry_refused_without_verified_activation(&data, "forged");
 }

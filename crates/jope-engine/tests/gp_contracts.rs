@@ -2,8 +2,10 @@ use jope_parallel::{gp, manifest::*, prepare::*};
 use std::fs;
 #[path = "support/fit_authority.rs"]
 mod authority;
+/// Shipped build. The positive file/memory equivalence is proven by
+/// `gp::fit_contract_tests::sealed_memory_view_matches_file_evaluation_and_rejects_writes`.
 #[test]
-fn sealed_memory_view_matches_file_evaluation_and_rejects_writes() {
+fn sealed_memory_view_rejects_writes_and_configured_evaluations_are_refused_without_activation() {
     use std::io::Write;
     use std::os::fd::AsRawFd;
     let tmp = tempfile::tempdir().unwrap();
@@ -17,50 +19,47 @@ fn sealed_memory_view_matches_file_evaluation_and_rejects_writes() {
     let genome = tmp.path().join("p.dsl");
     fs::write(&train, csv_bytes(&rows[..24]).unwrap()).unwrap();
     fs::write(&heldout, csv_bytes(&rows[24..]).unwrap()).unwrap();
-    fs::write(&genome, "(pipe X (ridge))").unwrap();
+    fs::write(&genome, authority::PROGRAM).unwrap();
     let a = tmp.path().join("a.json");
     let b = tmp.path().join("b.json");
     let mut authority =
         authority::Fixture::new(tmp.path(), vec![authority::training_hash(&rows[..24])]);
-    authority::success(
-        authority
-            .command()
-            .args(["evaluate-worker", "--train"])
-            .arg(&train)
-            .arg("--validation")
-            .arg(&heldout)
-            .arg("--genome")
-            .arg(&genome)
-            .arg("--output")
-            .arg(&a)
-            .output()
-            .unwrap(),
-    );
-    authority::success(
-        authority
-            .command()
-            .args(["evaluate-memory", "--fd"])
-            .arg(memory.as_raw_fd().to_string())
-            .arg("--genome")
-            .arg(&genome)
-            .arg("--output")
-            .arg(&b)
-            .output()
-            .unwrap(),
-    );
-    let a: serde_json::Value = read_json(&a).unwrap();
-    let b: serde_json::Value = read_json(&b).unwrap();
-    assert_eq!(a["semantic_sha256"], b["semantic_sha256"]);
-    assert_eq!(a["rmse"], b["rmse"]);
-    assert_eq!(a["physical_fit_starts"], 1);
-    assert_eq!(b["physical_fit_starts"], 0);
-    assert_eq!(b["evaluation_origin"], "reuse");
-    authority.assert_one_original_fit();
+    let worker = authority
+        .command()
+        .args(["evaluate-worker", "--train"])
+        .arg(&train)
+        .arg("--validation")
+        .arg(&heldout)
+        .arg("--genome")
+        .arg(&genome)
+        .arg("--output")
+        .arg(&a)
+        .output()
+        .unwrap();
+    let memory_result = authority
+        .command()
+        .args(["evaluate-memory", "--fd"])
+        .arg(memory.as_raw_fd().to_string())
+        .arg("--genome")
+        .arg(&genome)
+        .arg("--output")
+        .arg(&b)
+        .output()
+        .unwrap();
+    for (result, output) in [(worker, &a), (memory_result, &b)] {
+        let error = String::from_utf8_lossy(&result.stderr);
+        assert!(
+            !result.status.success(),
+            "evaluation fitted without activation"
+        );
+        assert!(error.contains(authority::UNVERIFIED_ACTIVATION), "{error}");
+        assert!(!output.exists(), "refused evaluation published a result");
+    }
+    authority.assert_no_fit_starts();
     let stats = authority.shutdown();
-    assert_eq!(stats["worker_spawns"], 1);
-    assert_eq!(stats["committed"], 1);
-    assert_eq!(stats["reused"], 1);
-    assert_eq!(stats["authority_opens"], 1);
+    assert_eq!(stats["worker_spawns"], 0);
+    assert_eq!(stats["committed"], 0);
+    assert_eq!(stats["reused"], 0);
 }
 #[test]
 fn memory_evaluation_rejects_unsealed_regular_files() {
@@ -75,8 +74,11 @@ fn memory_evaluation_rejects_unsealed_regular_files() {
     .unwrap_err();
     assert!(error.to_string().contains("immutable"));
 }
+/// Shipped build: the complete, in-scope configuration of the fitted predictor
+/// roundtrip is refused at namespace activation. The positive roundtrip is
+/// `gp::fit_contract_tests::fitted_predictor_roundtrip_matches_native_gp_and_restores_target_units`.
 #[test]
-fn fitted_predictor_roundtrip_matches_native_gp_and_restores_target_units() {
+fn configured_fit_is_refused_without_verified_namespace_activation() {
     let tmp = tempfile::tempdir().unwrap();
     let train = tmp.path().join("train.csv");
     let rows = (0..40)
@@ -87,114 +89,29 @@ fn fitted_predictor_roundtrip_matches_native_gp_and_restores_target_units() {
     let raw = Table::read(&train, &serde_json::Value::Null).unwrap();
     let preprocessing = Preprocessing::fit(&raw.rows, "regression").unwrap();
     let transformed = preprocessing.transform(&raw.rows).unwrap();
-    let authority =
+    let mut authority =
         authority::Fixture::new(tmp.path(), vec![authority::training_hash(&transformed)]);
-    authority::success(
-        authority
-            .command()
-            .args(["fit", "--train"])
-            .arg(&train)
-            .arg("--genome")
-            .arg(authority::PROGRAM)
-            .arg("--output")
-            .arg(&model)
-            .output()
-            .unwrap(),
-    );
-    authority.assert_one_original_fit();
-    let features = tmp.path().join("features.csv");
-    let x = vec![vec![2.0, 4.0], vec![10.0, 100.0]];
-    fs::write(&features, csv_bytes(&x).unwrap()).unwrap();
-    let out = tmp.path().join("predictions.csv");
-    gp::predict(&model, &features, &out).unwrap();
-    let predicted = fs::read_to_string(out)
-        .unwrap()
-        .lines()
-        .map(|s| s.parse::<f64>().unwrap())
-        .collect::<Vec<_>>();
-    assert!(predicted.iter().all(|p| *p > 90.0 && *p < 190.0));
-    let p: gp::Predictor = read_json(&model).unwrap();
-    let decoded: feat_math::Model =
-        serde_json::from_slice(&serde_json::to_vec(&p.model).unwrap()).unwrap();
-    let tx = x
-        .iter()
-        .map(|r| {
-            p.preprocessing
-                .features(&r.iter().map(f64::to_string).collect::<Vec<_>>())
-                .unwrap()
-        })
-        .collect::<Vec<_>>();
-    assert_eq!(p.model.predict(&tx), decoded.predict(&tx));
-    let expected = p
-        .model
-        .predict(&tx)
-        .iter()
-        .map(|v| v * p.preprocessing.target_scale + p.preprocessing.target_mean)
-        .collect::<Vec<_>>();
-    assert_eq!(predicted, expected);
-    let completion_ref = p.fit_completion.as_ref().unwrap();
-    let completion: serde_json::Value = read_json(std::path::Path::new(
-        completion_ref["path"].as_str().unwrap(),
-    ))
-    .unwrap();
-    let verified = authority::success(
-        authority
-            .command()
-            .args(["verify-fit-completion", "--authority"])
-            .arg(&authority.authority)
-            .arg("--witness")
-            .arg(&authority.witness)
-            .arg("--completion-sha256")
-            .arg(completion_ref["sha256"].as_str().unwrap())
-            .arg("--authority-instance")
-            .arg(completion["authority_instance"].as_str().unwrap())
-            .output()
-            .unwrap(),
-    );
-    assert_eq!(
-        serde_json::from_slice::<serde_json::Value>(&verified.stdout).unwrap(),
-        completion
-    );
-    let unapproved = authority
-        .command()
-        .args(["verify-fit-completion", "--authority"])
-        .arg(&authority.authority)
-        .arg("--witness")
-        .arg(&authority.witness)
-        .arg("--completion-sha256")
-        .arg(completion_ref["sha256"].as_str().unwrap())
-        .arg("--authority-instance")
-        .arg("f".repeat(64))
-        .output()
-        .unwrap();
-    assert!(!unapproved.status.success());
-    assert!(
-        String::from_utf8_lossy(&unapproved.stderr).contains("unapproved fit authority instance")
-    );
-
-    // Evicting a retained model leaves the original exclusion intact. Exporting
-    // under a different destination cannot authorize replacement fitting.
-    fs::remove_file(
-        authority
-            .authority
-            .join("objects")
-            .join(completion["model_sha256"].as_str().unwrap()),
-    )
-    .unwrap();
-    let replacement = tmp.path().join("replacement-model.json");
-    let unavailable = authority
+    let refused = authority
         .command()
         .args(["fit", "--train"])
         .arg(&train)
         .arg("--genome")
         .arg(authority::PROGRAM)
         .arg("--output")
-        .arg(&replacement)
+        .arg(&model)
         .output()
         .unwrap();
-    assert!(!unavailable.status.success());
-    assert!(!replacement.exists());
-    authority.assert_one_original_fit();
+    let error = String::from_utf8_lossy(&refused.stderr);
+    assert!(
+        !refused.status.success(),
+        "shipped fit ran without activation"
+    );
+    assert!(error.contains(authority::UNVERIFIED_ACTIVATION), "{error}");
+    assert!(!model.exists(), "refused fit published a predictor");
+    authority.assert_no_fit_starts();
+    let stats = authority.shutdown();
+    assert_eq!(stats["worker_spawns"], 0);
+    assert_eq!(stats["committed"], 0);
 }
 #[test]
 fn score_rejects_unfrozen_receipt_before_opening_test() {
