@@ -15,7 +15,7 @@ use crate::state::State;
 fn config() -> Config {
     Config {
         limits: BIG,
-        ..Config::proposed()
+        ..Config::adopted()
     }
 }
 

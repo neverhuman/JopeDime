@@ -127,16 +127,19 @@ fn progress_verbs_publish_engine_events_to_an_explicit_store_only() {
     assert!(String::from_utf8_lossy(&out.stderr).contains("explicitly named store"));
     assert!(!state.exists(), "a refused verb wrote local state");
 
-    // The effective configuration is the owner-pending proposal.
+    // The effective configuration is the one adopted by owner delegation.
     let config = json_out(&cli(&state, None, &["progress", "config"]));
-    assert_eq!(config["approval"], "owner-pending");
-    assert_eq!(config["proposed_defaults"], true);
+    assert_eq!(config["approval"], "adopted-by-owner-delegation-2026-09-26");
+    assert_eq!(config["adopted_defaults"], true);
     assert_eq!(config["values"]["cadence"]["checkpoint_updates"], 100);
 
     // Init records the manifest and delivers it.
     let out = json_out(&cli(&state, Some(&store), &init));
     let unit = out["units"][0]["work_id"].as_str().unwrap().to_string();
-    assert_eq!(out["config"]["approval"], "owner-pending");
+    assert_eq!(
+        out["config"]["approval"],
+        "adopted-by-owner-delegation-2026-09-26"
+    );
 
     // The corpus freeze commits at once (exit 0 means flushed).
     let corpus = engine.join("corpora/teaching");
@@ -261,6 +264,65 @@ fn follow_drives_the_cadence_until_the_run_completes() {
     assert_eq!(mapped["decision"], "mapped");
     assert_eq!(mapped["consumed_rows"], 45 * 4);
     assert_eq!(mapped["due"]["reason"], "shutdown");
+}
+
+/// Run the binary with an empty environment (plus `vars`) and `HOME` in a temporary directory:
+/// no credential, profile or AWS configuration of this host can reach it.
+fn cli_clean_env(state: &Path, home: &Path, vars: &[(&str, &str)], args: &[&str]) -> Output {
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_jope-learning"));
+    cmd.env_clear().env("HOME", home);
+    for (k, v) in vars {
+        cmd.env(k, v);
+    }
+    cmd.arg("--state").arg(state).args(args).output().unwrap()
+}
+
+#[test]
+fn an_s3_store_is_configuration_only_and_misconfiguration_is_refused_first() {
+    let dir = tempfile::tempdir().unwrap();
+    let (state, home) = (dir.path().join("state"), dir.path().join("home"));
+    fs::create_dir_all(&home).unwrap();
+    let status = ["progress", "status", "--run", "run-s3"];
+    let refused = |vars: &[(&str, &str)], needle: &str| {
+        let out = cli_clean_env(&state, &home, vars, &status);
+        let stderr = String::from_utf8_lossy(&out.stderr).into_owned();
+        assert_eq!(out.status.code(), Some(2), "{stderr}");
+        assert!(stderr.contains(needle), "{needle}: {stderr}");
+        assert!(!state.exists(), "a refused store wrote local state");
+    };
+    // Refused before any store is opened: a bare bucket, unsigned requests, and conditional
+    // writes turned off.
+    refused(
+        &[("JOPE_LEARNING_URL", "s3://jope-learning-bucket")],
+        "bucket root is refused",
+    );
+    refused(
+        &[
+            ("JOPE_LEARNING_URL", "s3://jope-learning-bucket/runs/run-s3"),
+            ("JOPE_DATASETS_ANON", "1"),
+        ],
+        "unsigned",
+    );
+    refused(
+        &[
+            ("JOPE_LEARNING_URL", "s3://jope-learning-bucket/runs/run-s3"),
+            ("AWS_CONDITIONAL_PUT", "disabled"),
+        ],
+        "AWS_CONDITIONAL_PUT",
+    );
+    // A well-formed s3:// store passes the checks and reaches the credential step, which fails
+    // fast and by name with no credential source: the URL is configuration, not code, and no
+    // request was made.
+    for vars in [
+        &[("JOPE_LEARNING_URL", "s3://jope-learning-bucket/runs/run-s3")][..],
+        &[
+            ("JOPE_LEARNING_URL", "s3://jope-learning-bucket/runs/run-s3"),
+            ("AWS_CONDITIONAL_PUT", "etag"),
+            ("AWS_REGION", "us-east-2"),
+        ][..],
+    ] {
+        refused(vars, "no complete AWS credential source");
+    }
 }
 
 fn walk(root: &Path) -> Vec<(String, String)> {

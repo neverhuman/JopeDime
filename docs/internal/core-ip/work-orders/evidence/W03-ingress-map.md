@@ -531,3 +531,15 @@ The ledger history now also yields, for each pointer, the records it rejected th
 
 **Post-change run.** `w3w8-verbs-post-20260926T201520Z/` holds the full `jope-learning` run:
 166 of 166 pass, 0 skipped.
+
+## Owner decision of 2026-09-26: the HWM bar (recorded on rr2/integration-a)
+
+**Adopted: an ineligible ledger tip still sets the HWM bar.** This is the conservative option of
+the W3-T07 finding above, and the behaviour is unchanged.
+
+- `hwm::ingest` compares a later candidate against the ledger's tip even when that tip cannot
+  teach: a legacy pre-provenance acceptance, or a tip whose retained evidence is lost.
+- `freeze_teaching` still excludes such a tip, so it grants no authority.
+- A comparison whose tip is ineligible therefore has no teacher until a qualified candidate
+  strictly beats that tip.
+- Any stricter rule needs a new, versioned policy.

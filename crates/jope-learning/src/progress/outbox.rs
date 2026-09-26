@@ -83,9 +83,9 @@ pub struct Limits {
 }
 
 impl Limits {
-    /// Proposed defaults, pending owner approval of the high-water behaviour: pause new work at
-    /// 7,500 entries or 768 MiB pending, refuse every append at 10,000 entries or 1 GiB.
-    pub const PROPOSED: Limits = Limits {
+    /// The defaults adopted by owner delegation on 2026-09-26: pause new work at 7,500 entries
+    /// or 768 MiB pending, refuse every append at 10,000 entries or 1 GiB.
+    pub const ADOPTED: Limits = Limits {
         pause_entries: 7_500,
         pause_bytes: 768 << 20,
         max_entries: 10_000,

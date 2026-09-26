@@ -10,6 +10,7 @@ use jope_learning::progress::product::{Config, Driver, Step, SystemClock};
 use jope_learning::progress::publish::{reusable, Publication};
 use jope_learning::progress::rebuild::{read_summary, summarize};
 use jope_learning::progress::reconcile;
+use jope_learning::progress::remote::open_publishing_store;
 use jope_learning::scores;
 use jope_learning::sources::{champions, genebank, snapshot, sotarena};
 use jope_learning::state::State;
@@ -61,6 +62,12 @@ enum Cmd {
         which: Which,
     },
     /// W8 durable progress: the engine's published events, committed on an explicit store.
+    ///
+    /// An s3:// store needs no code change, only configuration:
+    /// JOPE_LEARNING_URL=s3://<bucket>/<run-scoped prefix> (or --store); JOPE_AWS_PROFILE=<scoped
+    /// publisher profile> (or AWS_PROFILE, or AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY
+    /// [+ AWS_SESSION_TOKEN]); AWS_REGION (us-east-2 when unset). A bare bucket, JOPE_DATASETS_ANON=1
+    /// and AWS_CONDITIONAL_PUT other than `etag` are refused before anything is written.
     Progress {
         #[command(subcommand)]
         cmd: ProgressCmd,
@@ -76,7 +83,7 @@ struct RunArgs {
     #[arg(long)]
     publisher: String,
     /// A jope.progress.config/v1 file naming every outbox limit and cadence value (default: the
-    /// owner-pending proposed values).
+    /// values adopted by owner delegation on 2026-09-26).
     #[arg(long)]
     config: Option<PathBuf>,
 }
@@ -375,8 +382,8 @@ fn run(cli: Cli) -> Result<bool> {
 
 /// The store progress is published to: only the one named by `--store`/`JOPE_LEARNING_URL`.
 fn progress_store(common: &Common) -> Result<Mirror> {
-    match open_mirror(common)? {
-        Some(m) => Ok(m),
+    match mirror_url(common.store.clone()) {
+        Some(url) => open_publishing_store(&url),
         None => bail!(
             "progress publishes only to an explicitly named store: pass --store or set \
              JOPE_LEARNING_URL. Nothing was written"
@@ -385,7 +392,7 @@ fn progress_store(common: &Common) -> Result<Mirror> {
 }
 
 fn progress_config(path: Option<&PathBuf>) -> Result<Config> {
-    path.map_or_else(|| Ok(Config::proposed()), |p| Config::load(p))
+    path.map_or_else(|| Ok(Config::adopted()), |p| Config::load(p))
 }
 
 fn parse_unit(spec: &str) -> Result<WorkSpec> {

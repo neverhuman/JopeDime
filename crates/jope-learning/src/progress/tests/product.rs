@@ -15,7 +15,9 @@ use crate::progress::census::Disposition;
 use crate::progress::engine::{self, CHECKPOINT_SCHEMA, CORPUS_PUBLICATION_SCHEMA, CORPUS_SCHEMA};
 use crate::progress::inventory::*;
 use crate::progress::outbox::Refused;
-use crate::progress::product::{CheckpointStep, Config, Driver, Step, APPROVAL, CONFIG_SCHEMA};
+use crate::progress::product::{
+    CheckpointStep, Config, Driver, Step, APPROVAL, CONFIG_SCHEMA, OVERRIDDEN,
+};
 use crate::progress::publish::{reusable, Publication};
 use crate::progress::rebuild::summarize;
 use crate::state::State;
@@ -245,7 +247,7 @@ fn engine_events_reach_the_committed_graph_through_the_product_driver() {
     let mut d = Driver::init(
         &h.state,
         &h.remote,
-        Config::proposed(),
+        Config::adopted(),
         manifest(),
         PUBLISHER,
         clock.now_ms(),
@@ -431,7 +433,7 @@ fn engine_events_reach_the_committed_graph_through_the_product_driver() {
     let mut d = Driver::open(
         &h.state,
         &h.remote,
-        Config::proposed(),
+        Config::adopted(),
         RUN,
         PUBLISHER,
         clock.now_ms(),
@@ -452,9 +454,9 @@ fn committed_update_zero<'h>(h: &'h Host, engine: &Engine, clock: &TestClock) ->
     let config = Config {
         cadence: Policy {
             checkpoint_updates: 1,
-            ..Policy::PROPOSED
+            ..Policy::ADOPTED
         },
-        ..Config::proposed()
+        ..Config::adopted()
     };
     let mut d = Driver::init(
         &h.state,
@@ -730,7 +732,7 @@ fn a_failed_flush_keeps_progress_owed_and_claims_nothing() {
     let mut d = Driver::init(
         &h.state,
         &faulty,
-        Config::proposed(),
+        Config::adopted(),
         manifest(),
         PUBLISHER,
         clock.now_ms(),
@@ -768,7 +770,7 @@ fn a_failed_flush_keeps_progress_owed_and_claims_nothing() {
     let mut d = Driver::open(
         &h.state,
         &h.remote,
-        Config::proposed(),
+        Config::adopted(),
         RUN,
         PUBLISHER,
         clock.now_ms(),
@@ -779,34 +781,38 @@ fn a_failed_flush_keeps_progress_owed_and_claims_nothing() {
 }
 
 #[test]
-fn outbox_limits_and_cadence_are_explicit_owner_pending_configuration() {
-    let proposed = Config::proposed();
+fn outbox_limits_and_cadence_are_explicit_adopted_configuration() {
+    let adopted = Config::adopted();
     assert_eq!(
         (
-            proposed.limits.pause_entries,
-            proposed.limits.pause_bytes,
-            proposed.limits.max_entries,
-            proposed.limits.max_bytes
+            adopted.limits.pause_entries,
+            adopted.limits.pause_bytes,
+            adopted.limits.max_entries,
+            adopted.limits.max_bytes
         ),
         (7_500, 768 << 20, 10_000, 1 << 30)
     );
     assert_eq!(
         (
-            proposed.cadence.flush_interval_ms,
-            proposed.cadence.flush_bytes,
-            proposed.cadence.checkpoint_updates,
-            proposed.cadence.checkpoint_interval_ms
+            adopted.cadence.flush_interval_ms,
+            adopted.cadence.flush_bytes,
+            adopted.cadence.checkpoint_updates,
+            adopted.cadence.checkpoint_interval_ms
         ),
         (60_000, 1 << 20, 100, 300_000)
     );
-    let report = proposed.report();
-    assert!(report.proposed_defaults);
+    let report = adopted.report();
+    assert!(report.adopted_defaults);
     assert_eq!(
         (report.approval, APPROVAL),
-        ("owner-pending", "owner-pending")
+        (
+            "adopted-by-owner-delegation-2026-09-26",
+            "adopted-by-owner-delegation-2026-09-26"
+        )
     );
 
-    // An explicit file names every value; nothing in it can mark the values approved.
+    // An explicit file names every value; other values are reported as the operator's, and
+    // nothing in the file can mark them adopted.
     let dir = tempfile::tempdir().unwrap();
     let file = dir.path().join("config.json");
     let explicit = json!({"schema": CONFIG_SCHEMA,
@@ -816,8 +822,8 @@ fn outbox_limits_and_cadence_are_explicit_owner_pending_configuration() {
     fs::write(&file, explicit.to_string()).unwrap();
     let config = Config::load(&file).unwrap();
     let report = config.report();
-    assert!(!report.proposed_defaults);
-    assert_eq!(report.approval, "owner-pending");
+    assert!(!report.adopted_defaults);
+    assert_eq!(report.approval, OVERRIDDEN);
     for (label, mutate) in [
         (
             "an approval field",
@@ -908,7 +914,7 @@ fn hwm_decisions_link_through_this_hosts_ledger_and_flush_at_once() {
     let mut d = Driver::init(
         &h.state,
         &h.remote,
-        Config::proposed(),
+        Config::adopted(),
         manifest(),
         PUBLISHER,
         clock.now_ms(),

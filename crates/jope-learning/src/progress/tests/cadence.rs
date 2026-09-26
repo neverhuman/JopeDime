@@ -41,7 +41,7 @@ fn each_flush_trigger_fires_exactly_when_due() {
     let r = run("run-w8-cadence", 3, 3);
     let clock = clock();
     let mut o = Outbox::open(&e.state, BIG).unwrap();
-    let mut cadence = Cadence::start(Policy::PROPOSED, clock.now_ms(), &o);
+    let mut cadence = Cadence::start(Policy::ADOPTED, clock.now_ms(), &o);
     assert!(
         cadence.pending_urgent().is_empty(),
         "a fresh outbox owes nothing"
@@ -116,7 +116,7 @@ fn a_failed_flush_stays_pending_and_never_claims_durability() {
     let r = run("run-w8-outage", 3, 3);
     let clock = clock();
     let mut o = Outbox::open(&e.state, BIG).unwrap();
-    let mut cadence = Cadence::start(Policy::PROPOSED, clock.now_ms(), &o);
+    let mut cadence = Cadence::start(Policy::ADOPTED, clock.now_ms(), &o);
     for item in &producer(&r)[..4] {
         item.append(&mut o).unwrap();
     }
@@ -162,7 +162,7 @@ fn a_failed_flush_stays_pending_and_never_claims_durability() {
     drop(o);
     let mut o = Outbox::open(&e.state, BIG).unwrap();
     assert_eq!(durable_through(&o), 2);
-    let mut cadence = Cadence::start(Policy::PROPOSED, clock.now_ms(), &o);
+    let mut cadence = Cadence::start(Policy::ADOPTED, clock.now_ms(), &o);
     assert_eq!(cadence.pending_urgent(), vec![Urgent::Restart]);
     let t = cadence.tick(&clock, &mut o, &e.remote).unwrap();
     assert!(t.flushed);
@@ -173,7 +173,7 @@ fn a_failed_flush_stays_pending_and_never_claims_durability() {
 #[test]
 fn each_checkpoint_trigger_fires_at_committed_updates_and_shutdown() {
     let clock = clock();
-    let mut k = Checkpoints::new(Policy::PROPOSED, clock.now_ms());
+    let mut k = Checkpoints::new(Policy::ADOPTED, clock.now_ms());
     assert_eq!(k.shutdown(), None, "nothing to checkpoint at shutdown");
 
     // 100 committed updates.
