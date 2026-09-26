@@ -42,13 +42,17 @@ fn fitting_ids(assignments: &Assignments) -> Vec<&str> {
         .map(|r| r.id.as_str())
         .collect()
 }
-/// W1 follow-up 2d. The pinned manifest is read once and its bytes must be the
-/// pin. The committed fitting-only staging protocol's replay verifier then
-/// admits the closure before any split membership or projected input is
-/// opened. It refuses the historical closure, its projection source and every
-/// object that the historical staging path produced. Returns the consumed bytes
-/// and the closure receipt.
-fn admit_closure(pin: &Artifact) -> Result<(Vec<u8>, Value)> {
+/// W1 follow-up 2d and W1-T07. The pinned manifest is read once and its bytes
+/// must be the pin. The committed fitting-only staging protocol's replay
+/// verifier then admits the closure before any split membership or projected
+/// input is opened. It refuses the historical closure, its projection source
+/// and every object that the historical staging path produced. The closure is
+/// admitted only with the producer's corrected-run attestation for exactly
+/// those bytes (`verify_corrected_run`): a run for other bytes, under another
+/// protocol, in the historical window or without a fitting-only declaration is
+/// refused. Returns the consumed bytes and the closure receipt.
+fn admit_closure(pin: &Artifact, run: Option<&Artifact>) -> Result<(Vec<u8>, Value)> {
+    use jope_datasets::staging_disposition::{committed, verify_closure, verify_corrected_run};
     ensure!(
         fs::symlink_metadata(&pin.path)?.file_type().is_file(),
         "fitting input manifest must be a regular file"
@@ -58,8 +62,22 @@ fn admit_closure(pin: &Artifact) -> Result<(Vec<u8>, Value)> {
         digest(&bytes) == pin.sha256,
         "fitting input manifest changed"
     );
-    let (_, protocol) = jope_datasets::staging_disposition::committed()?;
-    let mut receipt = jope_datasets::staging_disposition::verify_closure(&protocol, &bytes)?;
+    let (disposition, protocol) = committed()?;
+    let mut receipt = verify_closure(&protocol, &bytes)?;
+    let run = run.context(
+        "the fitting-input closure lacks the producer's corrected-run attestation \
+         (jope-datasets staging-disposition attest)",
+    )?;
+    ensure!(
+        fs::symlink_metadata(&run.path)?.file_type().is_file(),
+        "corrected-run attestation must be a regular file"
+    );
+    let run_bytes = fs::read(&run.path)?;
+    ensure!(
+        digest(&run_bytes) == run.sha256,
+        "corrected-run attestation changed"
+    );
+    receipt["corrected_run"] = verify_corrected_run(&disposition, &protocol, &run_bytes, &bytes)?;
     receipt["staging_protocol_id"] = json!(protocol.protocol_id);
     Ok((bytes, receipt))
 }
@@ -89,12 +107,20 @@ pub fn refuse_historical_plan(fitting_manifest: &Artifact, inputs: &[Dataset]) -
 
 pub fn load(
     pin: &Artifact,
+    corrected_run: &Artifact,
     panel: &Panel,
     panel_sha: &str,
     config_sha: &str,
     config: &super::super::optimize::Configuration,
 ) -> Result<(Vec<Dataset>, Value)> {
-    let (bytes, closure) = admit_closure(pin)?;
+    let (bytes, closure) = admit_closure(pin, Some(corrected_run))?;
+    // W1-T01: the ten fitting inputs are the committed regression release's
+    // members, and each context-producer input names its member's identities.
+    let release = jope_datasets::regression_release::committed()?;
+    ensure!(
+        release.derived_from.panel_sha256 == panel_sha,
+        "fitting inputs' panel is not the committed regression release's panel"
+    );
     let manifest: FittingManifest = serde_json::from_slice(&bytes)?;
     ensure!(
         manifest.schema == "jope.inference-fitting-inputs/v1"
@@ -108,12 +134,21 @@ pub fn load(
                 .all(|b| b.is_ascii_hexdigit()),
         "fitting manifest identity differs"
     );
-    let expected = panel
-        .datasets
+    let expected = release
+        .members
         .iter()
-        .filter(|d| d.task == jope_datasets::catalog::Task::Regression)
-        .map(|d| d.id.as_str())
+        .map(|m| m.dataset.as_str())
         .collect::<std::collections::BTreeSet<_>>();
+    ensure!(
+        panel
+            .datasets
+            .iter()
+            .filter(|d| d.task == jope_datasets::catalog::Task::Regression)
+            .map(|d| d.id.as_str())
+            .collect::<std::collections::BTreeSet<_>>()
+            == expected,
+        "panel regression datasets differ from the committed regression release"
+    );
     ensure!(
         expected.len() == 10
             && manifest.inputs.len() == 10
@@ -161,6 +196,16 @@ pub fn load(
                 && raw.identity.dataset_sha256 == dataset.source.sha256
                 && raw.identity.prepared_sha256 == dataset.split.development_sha256,
             "fitting source identity differs"
+        );
+        // W1-T01: the member's identities in the committed release.
+        let member = release.member(&entry.id)?;
+        ensure!(
+            raw.identity.dataset_sha256 == member.raw.sha256
+                && raw.identity.prepared_sha256 == member.prepared.development_sha256
+                && assignment_pin.sha256 == member.prepared.split_sha256,
+            "{}: fitting input differs from its member of regression release {}",
+            entry.id,
+            release.release_id
         );
         let features = dataset
             .features
@@ -255,6 +300,9 @@ pub fn load(
                     row_semantics: RowSemantics::Iid,
                 },
                 rows,
+                // Projected fitting rows, not a development partition: the
+                // release admission is the member check above.
+                release: None,
             };
             let grouped = jope_pipeline::search_plan::grouped_inner_folds(
                 &data
@@ -358,7 +406,9 @@ mod tests {
         // Positive control: a fresh closure is admitted, from the pinned bytes.
         let bytes = closure(source, &[&r0, &r1], &[&f0]);
         let pin = pinned(dir, "fresh.json", &bytes);
-        let (consumed, receipt) = admit_closure(&pin).unwrap();
+        let run = attestation(dir, &p, &bytes, false);
+        let (consumed, receipt) = admit_closure(&pin, Some(&run)).unwrap();
+        assert_eq!(receipt["corrected_run"]["accepted"], true);
         assert_eq!(consumed, bytes);
         assert_eq!(receipt["objects_checked"], 3);
         assert_eq!(receipt["projection_source_sha"], source);
@@ -384,7 +434,7 @@ mod tests {
                 "d0: inner fold 1 input",
             ),
         ] {
-            let err = admit_closure(&pinned(dir, &format!("{name}.json"), &bytes))
+            let err = admit_closure(&pinned(dir, &format!("{name}.json"), &bytes), Some(&run))
                 .unwrap_err()
                 .to_string();
             assert!(
@@ -395,19 +445,107 @@ mod tests {
 
         // Bytes replaced after pinning are never consumed.
         fs::write(&pin.path, closure(source, &[&r1, &r0], &[&f0])).unwrap();
-        let err = admit_closure(&pin).unwrap_err().to_string();
+        let err = admit_closure(&pin, Some(&run)).unwrap_err().to_string();
         assert!(err.contains("manifest changed"), "{err}");
         // A symlink is refused even when it resolves to the pinned bytes.
         let target = pinned(dir, "target.json", &bytes);
         let link = dir.join("link.json");
         std::os::unix::fs::symlink(&target.path, &link).unwrap();
-        let err = admit_closure(&Artifact {
-            path: link,
-            sha256: target.sha256,
-        })
+        let err = admit_closure(
+            &Artifact {
+                path: link,
+                sha256: target.sha256,
+            },
+            Some(&run),
+        )
         .unwrap_err()
         .to_string();
         assert!(err.contains("regular file"), "{err}");
+    }
+
+    /// The producer's attestation (`jope-datasets staging-disposition
+    /// attest`) for `bytes`, pinned; `outer_labels_parsed` is its declaration.
+    fn attestation(
+        dir: &Path,
+        protocol: &jope_datasets::staging_disposition::CorrectedProtocol,
+        bytes: &[u8],
+        outer_labels_parsed: bool,
+    ) -> Artifact {
+        use jope_datasets::staging_disposition::{attest_corrected_run, ProjectionAttestation};
+        let run = attest_corrected_run(
+            protocol,
+            bytes,
+            ProjectionAttestation {
+                inputs_pre_projected: true,
+                outer_scoring_labels_parsed: outer_labels_parsed,
+                development_targets_parsed_outside_fitting_rows: false,
+                sealed_tables_opened: false,
+            },
+            None,
+        )
+        .unwrap();
+        let encoded = run.encode().unwrap();
+        pinned(
+            dir,
+            &format!("run-{}.json", &digest(&encoded)[..12]),
+            &encoded,
+        )
+    }
+
+    /// W1-T07: a fresh closure alone is not admitted; the planner requires the
+    /// producer's corrected-run attestation for exactly those bytes.
+    #[test]
+    fn the_planner_requires_the_producers_corrected_run_attestation() {
+        let (_, p) = committed().unwrap();
+        let temp = tempfile::tempdir().unwrap();
+        let dir = temp.path();
+        let source = "0123456789abcdef0123456789abcdef01234567";
+        let bytes = closure(
+            source,
+            &[&digest(b"attested raw 0")],
+            &[&digest(b"attested fold 0")],
+        );
+        let pin = pinned(dir, "fresh.json", &bytes);
+        let refused = admit_closure(&pin, None);
+        assert!(
+            matches!(&refused, Err(e) if e.to_string().contains("corrected-run attestation")),
+            "a closure was admitted without the producer's corrected-run attestation"
+        );
+        // A run attesting other bytes, or declaring parsed outer labels.
+        let other = closure(
+            source,
+            &[&digest(b"other raw 0")],
+            &[&digest(b"other fold 0")],
+        );
+        for (run, expected) in [
+            (
+                attestation(dir, &p, &other, false),
+                "not the run's pinned manifest",
+            ),
+            (
+                attestation(dir, &p, &bytes, true),
+                "fitting-only projection",
+            ),
+        ] {
+            let err = format!("{:#}", admit_closure(&pin, Some(&run)).unwrap_err());
+            assert!(err.contains(expected), "{err}");
+        }
+        // A pinned run replaced after pinning is not consumed.
+        let honest = attestation(dir, &p, &bytes, false);
+        let swapped = Artifact {
+            path: attestation(dir, &p, &other, false).path,
+            sha256: honest.sha256.clone(),
+        };
+        let err = format!("{:#}", admit_closure(&pin, Some(&swapped)).unwrap_err());
+        assert!(err.contains("attestation changed"), "{err}");
+        // Positive control: the producer's attestation of exactly these bytes.
+        let (consumed, receipt) = admit_closure(&pin, Some(&honest)).unwrap();
+        assert_eq!(consumed, bytes);
+        assert_eq!(receipt["corrected_run"]["accepted"], true);
+        assert_eq!(
+            receipt["corrected_run"]["protocol_id"],
+            p.protocol_id.as_str()
+        );
     }
 
     /// W1 follow-up 2d at plan admission (`read`: run, cold and v3 report).

@@ -547,6 +547,18 @@ pub fn build_pair_input(
         })
         .collect::<Vec<_>>();
     let training_sha256 = context_producer::training_rows_sha256(&rows)?;
+    // W1-T01: a member of the committed regression release takes its source
+    // and prepared identities from the release admission its loader verified.
+    let (dataset_sha256, prepared_sha256) = match &dataset.release {
+        Some(release) => (
+            release.dataset_sha256.clone(),
+            release.development_sha256.clone(),
+        ),
+        None => (
+            dataset.dataset.source.sha256.clone(),
+            dataset.dataset.split.development_sha256.clone(),
+        ),
+    };
     let input = TrainingInput {
         schema: if dataset.dataset.task == Task::Regression {
             "jope.cpu-context-training/regression-v1"
@@ -555,8 +567,8 @@ pub fn build_pair_input(
         }
         .into(),
         identity: context_producer::TrainingIdentity {
-            dataset_sha256: dataset.dataset.source.sha256.clone(),
-            prepared_sha256: dataset.dataset.split.development_sha256.clone(),
+            dataset_sha256,
+            prepared_sha256,
             training_sha256: training_sha256.clone(),
             fitting_rows_sha256: cut.train.rows_sha256.clone(),
             cut: 0,

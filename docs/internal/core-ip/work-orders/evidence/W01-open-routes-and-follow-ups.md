@@ -852,3 +852,93 @@ Negative: forged labels named by the provenance, and an unbound index, are refus
 - `w1c-provenance-neural-check-20260926T200058Z`: `cargo check -p jope-parallel --features neural --all-targets`, exit 0 (the
   neural test literals are compile-checked only).
 - Post-fix and pre-commit `w1c-provenance-c-20260926T200127Z`: the two tests, the fence suites, `gp::fit_contract_tests`, every `teaching_store`, `corpus*` and `campaign` unit test, and `corpus_incremental`, `native_loop_continuation`, `corpus_projection` and `resident_protocol`: 157/157. Workspace all-targets check, coverage (0 unassigned, 261 targets), verify-test-inventory, fmt and diff-check exit 0. (A first attempt, `w1c-provenance-c-20260926T195908Z`, stopped at compilation: two `cfg(test)` literals in `campaign.rs` lacked the new field.)
+
+## Round 8 — W1-T01: the ASM development loader and the context-producer input consume the frozen release; W1-T07: the planner requires the producer's corrected-run attestation (same branch)
+
+Evidence: `runs/w1c-t01-t07-*`.
+
+### W1-T01
+
+**Defect.** Nothing consumed the committed ten-regression release
+(`crates/jope-datasets/releases/regression-10-v1/`, `release_id 859ce689…`). The ASM
+development loader (`jope_pipeline::prepared_data::{load_development, parse_development}`,
+re-exported to jope-bench) checked a partition only against the `PanelDataset` its caller
+handed it. An ad-hoc partition with a self-consistent panel entry under a release member's
+name was admitted as that dataset. The context-producer input (`optimize::build_pair_input`)
+and the inference planner's input admission (`inference_inputs::load`) took their identities
+from the panel entry alone.
+
+**Reproduction.** `w1c-t01-t07-pre-20260926T200458Z`:
+`jope-pipeline prepared_data::tests::a_release_members_name_never_admits_other_development_bytes`
+FAIL: a synthetic regression partition renamed `197_cpu_act`, with its panel entry's digest
+set to the synthetic bytes, was **admitted**.
+
+**Fix.**
+- `jope_datasets::regression_release::committed()` (new): the committed release embedded at
+  build time (`include_bytes!`), opened with every identity check, pinned to
+  `COMMITTED_RELEASE_ID`, and required to bind the committed family registry. Receivers cannot
+  be pointed at another release document.
+- `parse_development` (and so `load_development` and every caller: jope-bench campaign,
+  origin-proof, demo, teaching, fitted export, CLI input verification; jope-cli train/corpus;
+  jope-learning eligibility) admits a dataset the release names only as that member, before any
+  row is interpreted: task, raw source, split, development and sealed digests, row and fold
+  counts, group columns and feature schema must be the member's
+  ("<id>: panel entry differs from its member of regression release <id>"), and
+  `RegressionRelease::verify_development` must accept the bytes (exact digest and row/target
+  alignment). `DevelopmentData.release` records the admission (`release_id`, source and
+  development digests, alignment digest); it is `None` for a dataset outside the release
+  (classification members of the panel, fixtures).
+- `build_pair_input` takes the context-producer input's `dataset_sha256`/`prepared_sha256`
+  from that admission for a release member (the values equal the panel's; they now come from
+  the verified release).
+- `inference_inputs::load` requires the fitting inputs' panel to be the release's panel, the
+  input inventory to be the release's members, and each projected context-producer input and
+  its split membership to name the member's identities.
+
+**Scope and limits.** The panel and the release agree for every member (the local-evidence
+test checks all ten against the real partitions), so no retained valid input is newly refused.
+The release is a v1 release: it binds whole-partition alignment, not a per-cut fitting-row
+alignment digest, so route R12 (the context producer's self-certified training identity) still
+needs a release v2 and the W2 `TrainingIdentity` schema. The `TrainingInput` schema is
+unchanged (no release id in the producer input).
+
+### W1-T07
+
+**Defect.** The v3 planner admitted any fitting-input closure outside the historical staging
+path. It never required the producer's projection attestation (`verify_corrected_run`), and no
+component could emit one.
+
+**Reproduction.** Same run: `jope-bench panel::inference_benchmark::inputs::tests::the_planner_requires_the_producers_corrected_run_attestation`
+FAIL: a fresh closure was **admitted** with no attestation.
+
+**Fix.**
+- Producer side: `staging_disposition::attest_corrected_run(protocol, manifest_bytes,
+  attestation, window)` (new) checks the closure against the protocol, then emits the
+  `jope.fitting-only-staging-run/v1` document for exactly those bytes and that manifest's
+  projection source. New verb `jope-datasets staging-disposition attest --closure <manifest>
+  --output <run.json> [--window <sha256>]` emits it under the committed protocol, declaring a
+  fitting-only projection, and writes it once. No Rust component in this tree writes a
+  fitting-input manifest today (the historical v2 planner that did is gone), so the verb is the
+  emission point for whichever producer projects the inputs. The declaration is recorded and
+  required, not independently proven.
+- Planner side: `jope benchmark inference-plan` takes `--corrected-run` and
+  `--corrected-run-sha256` (required). `admit_closure` still runs `verify_closure` first (the
+  historical refusals and their wording are unchanged), then requires the pinned run and
+  `verify_corrected_run` for exactly the manifest bytes it consumed; the receipt records the run
+  decision under `staging_closure.corrected_run`. The plan pins the run (`Plan.corrected_run`,
+  serialized only when present), and plan admission (`read`: run, cold, v3 report) refuses a plan
+  without one.
+
+**Controls.** Negative: no run; a run for other manifest bytes; a run declaring parsed outer
+labels; a pinned run replaced after pinning; a historical closure cannot be attested (library
+and CLI). Positive: the producer's attestation of exactly the closure is admitted, and
+`staging-disposition verify --run` accepts the CLI's run.
+
+**Limits.** A corrected run still has no execution window (W11 admission) and no real
+projected closure exists; plans built before this change carry no attestation and are refused
+by plan admission.
+
+### Runs
+
+- Post-fix `w1c-t01-t07-post-20260926T200807Z`: jope-datasets 72/72 (with `the_embedded_release_is_the_committed_document`, `the_producer_attests_exactly_its_fitting_only_closure` and `the_attest_verb_emits_a_run_the_verifier_accepts`); jope-pipeline 84/84; the local-evidence test `the_real_development_partitions_are_admitted_as_their_release_members` 1/1 on the prepared panel (`~/.cache/jope/asm-private-30-v1`); jope-bench (asm) 146/146; jope-learning 152/152; the full-default workspace check (`jope-cli/asm,jope-cli/qualified-training-context`) exit 0.
+- Pre-commit `w1c-t01-t07-c-20260926T201132Z`: fence suites and `gp::fit_contract_tests` 82/82; workspace all-targets check, parity-matrix, coverage (0 unassigned, 261 targets), verify-test-inventory, fmt and diff-check exit 0. The capability matrix's jope-datasets row names the new `staging-disposition attest` verb (a binary-level row; counts unchanged).

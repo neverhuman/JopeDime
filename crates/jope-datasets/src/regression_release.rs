@@ -440,6 +440,30 @@ impl RegressionRelease {
     }
 }
 
+/// Identity of the committed ten-regression release (`releases/regression-10-v1/`).
+pub const COMMITTED_RELEASE_ID: &str =
+    "859ce6895f6ca2b016103465f44e4f84a3dd54dcce8b2c832ba15ec536454d4a";
+const COMMITTED_RELEASE: &[u8] = include_bytes!("../releases/regression-10-v1/release.json");
+const COMMITTED_REGISTRY: &[u8] =
+    include_bytes!("../releases/regression-10-v1/family-registry.json");
+
+/// The committed ten-regression release (W1-T01), embedded at build time and
+/// opened with every identity check, together with the family registry it
+/// binds. Receivers consume this release; they cannot be pointed at another
+/// release document or registry.
+pub fn committed() -> Result<RegressionRelease> {
+    let release = RegressionRelease::open(COMMITTED_RELEASE)?;
+    ensure!(
+        release.release_id == COMMITTED_RELEASE_ID,
+        "committed regression release identity changed"
+    );
+    ensure!(
+        FamilyRegistry::open(COMMITTED_REGISTRY)?.sha256()? == release.family_registry_sha256,
+        "committed family registry is not the one the release binds"
+    );
+    Ok(release)
+}
+
 fn exclusion_reason(task: &str) -> String {
     format!("task_not_regression:{task}")
 }

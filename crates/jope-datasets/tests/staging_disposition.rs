@@ -226,6 +226,140 @@ fn a_corrected_fitting_only_run_gets_a_new_identity_and_its_own_window() {
     }
 }
 
+/// W1-T07: the producer emits the corrected-run attestation for exactly the
+/// manifest bytes it projected. It cannot attest a historical closure, and a
+/// declaration of parsed outer labels yields a run that never verifies.
+#[test]
+fn the_producer_attests_exactly_its_fitting_only_closure() {
+    let (d, p) = committed();
+    let source = "d".repeat(40);
+    let bytes = manifest(&source, &fresh(10, "attest"), &fresh(5, "attest-fold"));
+    let fitting_only = attested(&bytes, &source).attestation;
+    let run = attest_corrected_run(&p, &bytes, fitting_only.clone(), None).unwrap();
+    assert_eq!(run.closure.manifest_sha256, sha256_hex(&bytes));
+    assert_eq!(run.closure.projection_source_sha, source);
+    assert_eq!(run.protocol_id, p.protocol_id);
+    let encoded = run.encode().unwrap();
+    assert_eq!(
+        verify_corrected_run(&d, &p, &encoded, &bytes).unwrap()["accepted"],
+        true
+    );
+    // Another manifest is not the attested one.
+    let other = manifest(&source, &fresh(10, "other"), &fresh(5, "other-fold"));
+    rejected(
+        verify_corrected_run(&d, &p, &encoded, &other),
+        "not the run's pinned manifest",
+    );
+    // A historical closure cannot be attested.
+    let historical = manifest(
+        HISTORICAL_SOURCE,
+        &fresh(10, "hist"),
+        &fresh(5, "hist-fold"),
+    );
+    rejected(
+        attest_corrected_run(&p, &historical, fitting_only.clone(), None).map(|_| Value::Null),
+        "historical staging source",
+    );
+    // A producer that declares parsed outer labels gets a run that never verifies.
+    let mut parsed = fitting_only;
+    parsed.outer_scoring_labels_parsed = true;
+    let declared = attest_corrected_run(&p, &bytes, parsed, None).unwrap();
+    rejected(
+        verify_corrected_run(&d, &p, &declared.encode().unwrap(), &bytes),
+        "fitting-only projection",
+    );
+}
+
+/// The producer-side CLI (`staging-disposition attest`) writes the run once;
+/// `staging-disposition verify --run` accepts it for exactly that closure.
+#[test]
+fn the_attest_verb_emits_a_run_the_verifier_accepts() {
+    let temp = tempfile::tempdir().unwrap();
+    let dir = temp.path();
+    let source = "e".repeat(40);
+    let closure = dir.join("fitting-inputs.json");
+    fs::write(
+        &closure,
+        manifest(&source, &fresh(10, "cli"), &fresh(5, "cli-fold")),
+    )
+    .unwrap();
+    let run = dir.join("run.json");
+    let cli = |args: &[&std::ffi::OsStr]| {
+        std::process::Command::new(env!("CARGO_BIN_EXE_jope-datasets"))
+            .arg("staging-disposition")
+            .args(args)
+            .output()
+            .unwrap()
+    };
+    let attest = |output: &Path| {
+        cli(&[
+            "attest".as_ref(),
+            "--closure".as_ref(),
+            closure.as_os_str(),
+            "--output".as_ref(),
+            output.as_os_str(),
+        ])
+    };
+    let emitted = attest(&run);
+    assert!(
+        emitted.status.success(),
+        "{}",
+        String::from_utf8_lossy(&emitted.stderr)
+    );
+    let receipt: Value = serde_json::from_slice(&emitted.stdout).unwrap();
+    let written = fs::read(&run).unwrap();
+    assert_eq!(receipt["run_sha256"], sha256_hex(&written));
+    assert_eq!(
+        CorrectedRun::open(&written)
+            .unwrap()
+            .closure
+            .manifest_sha256,
+        sha256_hex(&fs::read(&closure).unwrap())
+    );
+    // The run is immutable: a second emission is refused.
+    assert!(!attest(&run).status.success());
+    let root = repository_root();
+    let disposition = root.join(
+        "crates/jope-datasets/releases/staging-disposition/historical-gpu-staging-20260925.json",
+    );
+    let protocol = root.join(
+        "crates/jope-datasets/releases/staging-disposition/fitting-only-staging-protocol-v1.json",
+    );
+    let verified = cli(&[
+        "verify".as_ref(),
+        "--disposition".as_ref(),
+        disposition.as_os_str(),
+        "--protocol".as_ref(),
+        protocol.as_os_str(),
+        "--closure".as_ref(),
+        closure.as_os_str(),
+        "--run".as_ref(),
+        run.as_os_str(),
+    ]);
+    assert!(
+        verified.status.success(),
+        "{}",
+        String::from_utf8_lossy(&verified.stdout)
+    );
+    // A historical closure is refused before anything is written.
+    let historical = dir.join("historical.json");
+    fs::write(
+        &historical,
+        manifest(HISTORICAL_SOURCE, &fresh(10, "h"), &fresh(5, "h-fold")),
+    )
+    .unwrap();
+    let refused_run = dir.join("refused.json");
+    let refused = cli(&[
+        "attest".as_ref(),
+        "--closure".as_ref(),
+        historical.as_os_str(),
+        "--output".as_ref(),
+        refused_run.as_os_str(),
+    ]);
+    assert!(!refused.status.success());
+    assert!(!refused_run.exists());
+}
+
 #[test]
 fn historical_and_corrected_documents_cannot_be_substituted() {
     let (d, p) = committed();
