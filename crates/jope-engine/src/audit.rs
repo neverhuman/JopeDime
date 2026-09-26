@@ -200,17 +200,30 @@ fn sealed_feature_stats(path: &Path, m: &Value) -> Result<(TableStats, BTreeSet<
         features,
     ))
 }
+/// A historical split is read only as a regular file inside the audited
+/// directory; a symlink would let bytes from outside the audited root stand
+/// in for the dataset (W1-T06), so it is refused, never followed.
+fn regular_split(dir: &Path, split: &str) -> Result<PathBuf> {
+    let path = dir.join(split);
+    let meta = fs::symlink_metadata(&path)?;
+    anyhow::ensure!(
+        !meta.file_type().is_symlink(),
+        "symlinked split refused: it may resolve outside the audited root"
+    );
+    anyhow::ensure!(meta.is_file(), "split is not a regular file");
+    Ok(path)
+}
 fn inspect(dir: &Path, m: &Value) -> (Option<TableStats>, Option<TableStats>, usize, Vec<String>) {
     let mut issues = Vec::new();
     let mut tables = Vec::new();
-    match Table::read(&dir.join("train.csv"), m) {
+    match regular_split(dir, "train.csv").and_then(|path| Table::read(&path, m)) {
         Ok(t) => tables.push(Some(stats(&t))),
         Err(e) => {
             issues.push(format!("train.csv: {e:#}"));
             tables.push(None);
         }
     }
-    match sealed_feature_stats(&dir.join("test.csv"), m) {
+    match regular_split(dir, "test.csv").and_then(|path| sealed_feature_stats(&path, m)) {
         Ok(t) => tables.push(Some(t)),
         Err(e) => {
             issues.push(format!("test.csv: {e:#}"));
@@ -457,11 +470,8 @@ pub fn run(roots: &[PathBuf], decisions_path: &Path, output: &Path) -> Result<Au
         if !d.source_key.is_empty() {
             keys.push(format!("source:{}", d.source_key));
         }
-        if d.source_dir.join("train.csv").exists() {
-            keys.push(format!(
-                "train:{}",
-                file_hash(&d.source_dir.join("train.csv"))?
-            ));
+        if let Ok(train) = regular_split(&d.source_dir, "train.csv") {
+            keys.push(format!("train:{}", file_hash(&train)?));
         }
         for key in keys {
             if let Some(j) = family_keys.insert(key, i) {

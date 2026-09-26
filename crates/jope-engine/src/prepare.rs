@@ -725,6 +725,10 @@ fn reconstruct_recorded(train: &Table, m: &Value, classification: bool) -> Resul
     let mut mapping = Vec::new();
     let mut observed_match_error = 0.0f64;
     let mut equivalent_source_matches = 0usize;
+    // W1-T06: equal historical rows take distinct equal backing rows in source
+    // order. A historical row with no unused equal backing row left repeats a
+    // pointer, which every cut membership check refuses as a duplicate join.
+    let mut used = BTreeSet::new();
     for row in &train.rows {
         let numeric = row
             .iter()
@@ -749,8 +753,13 @@ fn reconstruct_recorded(train: &Table, m: &Value, classification: bool) -> Resul
                 maximum.max((a - b).abs())
             });
         equivalent_source_matches += usize::from(hits.len() > 1);
-        mapping.push(hits[0].0);
-        raw_rows.push(hits[0].1.clone());
+        let hit = hits
+            .iter()
+            .find(|hit| !used.contains(&hit.0))
+            .unwrap_or(&hits[0]);
+        used.insert(hit.0);
+        mapping.push(hit.0);
+        raw_rows.push(hit.1.clone());
     }
     Ok((
         Table {
@@ -973,9 +982,22 @@ pub fn run_with_admission(
             "entity review requires a frozen family registry"
         );
     }
-    let m: Value = read_json(&d.source_dir.join("meta.json"))?;
+    // W1-T06: the audited files are read only as regular files of the audited
+    // directory, never through a symlink that may resolve elsewhere.
+    let audited = |name: &str| -> Result<std::path::PathBuf> {
+        let path = d.source_dir.join(name);
+        let meta = fs::symlink_metadata(&path).with_context(|| format!("audited {name} absent"))?;
+        ensure!(
+            !meta.file_type().is_symlink() && meta.is_file(),
+            "audited {name} is a symlink or not a regular file; it is not followed"
+        );
+        Ok(path)
+    };
+    let meta_path = audited("meta.json")?;
+    let train_path = audited("train.csv")?;
+    let m: Value = read_json(&meta_path)?;
     ensure!(
-        file_hash(&d.source_dir.join("meta.json"))? == d.metadata_sha256,
+        file_hash(&meta_path)? == d.metadata_sha256,
         "metadata changed since audit"
     );
     if let Some(binding) = &family_binding {
@@ -984,7 +1006,7 @@ pub fn run_with_admission(
             "metadata differs from frozen family registry"
         );
     }
-    let original = Table::read(&d.source_dir.join("train.csv"), &m)?;
+    let original = Table::read(&train_path, &m)?;
     let test = d
         .test
         .as_ref()
@@ -1147,7 +1169,7 @@ pub fn run_with_admission(
         },
         entity_columns,
         family_registry_binding: family_binding,
-        original_train_sha256: file_hash(&d.source_dir.join("train.csv"))?,
+        original_train_sha256: file_hash(&train_path)?,
         original_test_sha256: test_identity.map(|f| f.sha256.clone()).unwrap_or_default(),
         selected_train_indices: ti,
         selected_test_indices: ei.clone(),
@@ -1256,6 +1278,17 @@ pub fn check_cut_membership(
             .copied()
             .context("source row pointer outside mapping")
     };
+    // W1-T06: two rows of one membership that resolve to one backing row are a
+    // duplicate-expanding join, however their indices differ.
+    for (name, indices) in [("training", train), ("validation", validation)] {
+        let mut seen = BTreeSet::new();
+        for i in indices {
+            ensure!(
+                seen.insert(pointer(i)?),
+                "duplicate-expanding join: two {name} rows resolve to one backing row"
+            );
+        }
+    }
     let backing = train.iter().map(pointer).collect::<Result<BTreeSet<_>>>()?;
     for i in validation {
         ensure!(
