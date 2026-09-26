@@ -632,10 +632,14 @@ fn verify_producer(journal: &Path, search: &DatasetSearch, receipt: &SearchRecei
         .as_ref()
         .context("neural provenance absent")?
         .accepted()?;
+    // Evidence that names a proposal ledger binds exactly that reconciled ledger; evidence
+    // recorded before the ledger existed must come from an artifact that has none.
+    let ledger_sha256 = producer.ledger().map(|l| l.sha256()).transpose()?;
     ensure!(
         evidence.producer_job_sha256 == outcome.job_sha256
             && evidence.producer_output_sha256 == output.sha256
-            && evidence.population_sha256 == producer.population_sha256(),
+            && evidence.population_sha256 == producer.population_sha256()
+            && evidence.proposal_ledger_sha256 == ledger_sha256,
         "proposal provenance changed"
     );
     for observation in receipt
