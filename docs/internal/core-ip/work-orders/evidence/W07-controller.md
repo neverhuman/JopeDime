@@ -660,3 +660,86 @@ workspace check, fmt, diff check, coverage, test inventory and the parity matrix
   operator or a SmartCluster-aware collector.
 - The source commit is declared, not observed. The certificate is verified by the
   transport (item D), not by the collector.
+
+### Item B — W7-T03 assignment delivery and launcher
+
+**Pre-fix record** (`w7b-B-pre-20260926T234107Z`, source trace). Every `rank_impl` caller
+passed `None` for the assignment. Nothing applied the plan's device to a worker: the only
+launchers that set `CUDA_VISIBLE_DEVICES` (`hyperion.rs`, `components.rs`) set it to the
+rank number, which is the rank-as-device pattern W7-T03 removed. There was no launch record
+and no worker-side visibility check. This is a delivery gap, not a reproducible failing call,
+so the record is a source trace.
+
+Source: `bounded/launch.rs` (default features) and `bounded/assignment.rs::bound_worker`
+(`neural`).
+
+- **Launch record** `jope.native_bounded_launch.v1`, one per rank. It holds the run, attempt,
+  plan digest, rank, world, dispatch id, the planned host, machine and boot, and the exact
+  visibility: the planned GPU UUID, or empty for a CPU rank. `launch_record` derives it from
+  the frozen plan. `verify_launch_record` refuses any record that differs in any field.
+  `load_launch` reads the plan bytes, which must hash to the admitted digest and be
+  canonical, and the record (bounded, no symlink, no unknown field).
+- **Launcher.** `worker_command` clears the environment and sets only
+  `CUDA_VISIBLE_DEVICES` to the frozen value before exec. The plan never becomes argv.
+- **Worker check.** `verify_worker_visibility` runs before any input, device or
+  communicator work. A GPU rank must see exactly its planned UUID. It refuses an unset
+  value, a local index such as `0` or `-1`, a duplicated or additional device, another
+  rank's device and an empty value. A CPU rank accepts exactly the two hide-all values: the
+  empty string (this launcher) and `-1`, which SmartCluster's executor sets for a job with no
+  GPU.
+- **Trainer side.** `bound_worker(contract, plan_sha256, record, CUDA_VISIBLE_DEVICES,
+  local_devices)` checks the record and the visibility first. Only then does it read the
+  device view, which must be exactly the one planned device at ordinal 0. It then derives
+  the assignment from the plan and binds with `topology::bind`. It returns the assignment
+  and binding for `rank_impl`. The call from a bounded rank into `rank_impl` lands with item
+  C, because a bounded rank also needs the admitted communicator bootstrap.
+
+Tests:
+
+- `tests/bounded_launch.rs` (default features, 4):
+  - `launch_records_are_exactly_what_the_plan_derives` — 11 single-field edits, a foreign
+    plan, a wrong digest and an unplanned rank are all refused.
+  - `load_launch_reads_only_the_frozen_plan_and_record` — non-canonical plan bytes,
+    another digest, and a forged, extended, symlinked or oversized record are refused.
+  - `the_launcher_environment_is_exactly_the_frozen_visibility` — `/usr/bin/env` exec'd
+    through the launcher prints exactly `CUDA_VISIBLE_DEVICES=<planned UUID>`, or
+    `CUDA_VISIBLE_DEVICES=` for the CPU rank, and nothing else.
+  - `a_worker_refuses_any_other_visibility_before_starting` — 12 cases.
+- `tests/bounded_assignment.rs` (`neural`, CPU): the new
+  `a_worker_binds_only_from_its_frozen_launch_and_visibility`.
+  - Every rank binds on a one-GPU-per-host layout and on a two-workers-per-host layout.
+  - Six environment refusals happen without the device view being read.
+  - The device view is refused when it shows another rank's GPU, a duplicated UUID, the
+    planned UUID at ordinal 1 (a wrong local index), an extra or foreign device, or nothing.
+  - Also refused: a rebooted host, a failing device view, edited or foreign launch records,
+    and a genuine launch record on another host's view.
+
+Post-fix records:
+
+- `w7b-B-post-20260926T235111Z` — the full gate, including `bounded_launch` 4.
+- `w7b-B-post-neural-20260926T235031Z` — `neural` build, `CUDA_VISIBLE_DEVICES=""`, run
+  alone: `bounded_assignment` 4 and `trainer_topology` 7.
+
+Two earlier records are marked `SUPERSEDED`. They predate the `-1` hide-all acceptance:
+`w7b-B-post-neural-20260926T234636Z` passed, and `w7b-B-post-20260926T234709Z` was stopped
+mid-run.
+
+**Open (W7-T03) — a SmartCluster decision for the GPU phase.**
+
+- SmartCluster's executor owns `CUDA_VISIBLE_DEVICES` for its jobs, and a job may not set
+  it (`reserved_environment_name`).
+- For a non-MIG GPU it exports the device's physical index, not its UUID (`gpu.rs`: the
+  device `id` is `physical_index` unless MIG).
+- `GpuRequest` cannot pin a device UUID.
+
+So a GPU rank launched through SmartCluster sees `CUDA_VISIBLE_DEVICES=0`, and
+`verify_worker_visibility` refuses it by design. The frozen assignment cannot be satisfied
+through the scheduler as it stands. The options are for the owner:
+
+1. SmartCluster accepts an exact UUID pin in `GpuRequest` and exports UUIDs.
+2. The worker translates SmartCluster's index to a UUID through NVML under
+   `CUDA_DEVICE_ORDER=PCI_BUS_ID`, and verifies that against the plan.
+3. Bounded GPU ranks bypass SmartCluster's GPU allocation.
+
+CPU ranks (W7-T07) are unaffected. Native code is compile-checked only; no device was
+enumerated.

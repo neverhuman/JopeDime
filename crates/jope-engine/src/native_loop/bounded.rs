@@ -11,6 +11,8 @@
 //! * [`contract`] — the versioned bounded-run contract and its plan validation (W7-T02).
 //! * [`controller`] — Plan, read-only Status/Verify, idempotent Cancel, the durable journal,
 //!   whole-group drain and coordinator recovery (W7-T02, W7-T05).
+//! * [`launch`] — the frozen per-rank launch record, the launcher's exact worker environment
+//!   and the worker's own visibility check (W7-T03 delivery half).
 //! * [`rendezvous`] — authenticated rendezvous, group admission, bounded framing and
 //!   authenticated results (W7-T04).
 //! * `assignment` (`neural` only) — the pure plan → trainer assignment join (W7-T03).
@@ -21,6 +23,7 @@ pub mod census;
 pub mod collect;
 pub mod contract;
 pub mod controller;
+pub mod launch;
 pub mod rendezvous;
 
 use anyhow::{ensure, Result};

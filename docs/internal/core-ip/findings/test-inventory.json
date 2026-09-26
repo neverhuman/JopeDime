@@ -1395,6 +1395,13 @@
         "orchestration"
       ]
     },
+    "target:jope-parallel/test/bounded_launch": {
+      "role": "regression",
+      "subsystems": [
+        "orchestration",
+        "training"
+      ]
+    },
     "target:jope-parallel/test/bounded_preflight_cli": {
       "role": "regression",
       "subsystems": [
