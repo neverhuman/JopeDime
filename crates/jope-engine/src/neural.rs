@@ -11,6 +11,18 @@ use std::{
 use tch::{nn, nn::Module, nn::ModuleT, Device, Kind, Tensor};
 
 pub const RANKING_BACKWARD_ID: &str = "dense_pairwise_v2";
+/// Objective literals bound into `training::objective::identity` (W6-T06).
+/// Uniform label smoothing over the grammar-legal set in `sequence_nll`.
+pub const LABEL_SMOOTHING: f64 = 0.05;
+/// Listwise target temperature: `softmax(percentile / T)`.
+pub const LISTWISE_TEMPERATURE: f64 = 0.25;
+/// Smallest comparison group that receives a listwise term.
+pub const LISTWISE_MIN_MEMBERS: usize = 3;
+/// A Bradley–Terry pair is up-weighted when either member's percentile reaches this.
+pub const BOOST_THRESHOLD: f32 = 0.9;
+pub const BOOST_FACTOR: f64 = 2.0;
+/// Dropout inside the reward and ablation heads.
+pub const REWARD_HEAD_DROPOUT: f64 = 0.05;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -326,13 +338,18 @@ impl Policy {
                         &p / "reward_heads" / i.to_string(),
                         3 * c.width,
                         c.width,
-                        Some(0.05),
+                        Some(REWARD_HEAD_DROPOUT),
                     )
                 })
                 .collect(),
             runtime: mlp(&p / "runtime_head", 2 * c.width, c.width, None),
             stability: mlp(&p / "stability_head", 3 * c.width, c.width, None),
-            ablation: mlp(&p / "reward_head_ablation", c.width, c.width, Some(0.05)),
+            ablation: mlp(
+                &p / "reward_head_ablation",
+                c.width,
+                c.width,
+                Some(REWARD_HEAD_DROPOUT),
+            ),
             loss_log_vars,
             config: c,
         };
@@ -572,7 +589,7 @@ pub fn sequence_nll(
     ) / legal
         .sum_dim_intlist(&[-1i64][..], false, Kind::Float)
         .clamp_min(1.0);
-    let nll: Tensor = nll * 0.95 + smooth * 0.05;
+    let nll: Tensor = nll * (1.0 - LABEL_SMOOTHING) + smooth * LABEL_SMOOTHING;
     let nll = nll.masked_fill(&pad.logical_not(), 0.0);
     let per_row = nll.sum_dim_intlist(&[-1i64][..], false, Kind::Float)
         / pad
@@ -755,8 +772,9 @@ fn ranking_losses(
                 losers.push(l);
                 weights.push(
                     (va - vb).abs()
-                        * if percentiles[a as usize].max(percentiles[b as usize]) >= 0.9 {
-                            2.0
+                        * if percentiles[a as usize].max(percentiles[b as usize]) >= BOOST_THRESHOLD
+                        {
+                            BOOST_FACTOR
                         } else {
                             1.0
                         },
@@ -764,7 +782,7 @@ fn ranking_losses(
             }
         }
         if include_listwise
-            && ids.len() >= 3
+            && ids.len() >= LISTWISE_MIN_MEMBERS
             && ids.iter().all(|&i| percentiles[i as usize].is_finite())
         {
             let ps = Tensor::from_slice(
@@ -773,7 +791,7 @@ fn ranking_losses(
                     .collect::<Vec<_>>(),
             )
             .to_device(reward.device());
-            let target = (&ps / 0.25).softmax(0, Kind::Float);
+            let target = (&ps / LISTWISE_TEMPERATURE).softmax(0, Kind::Float);
             let pred = reward
                 .index_select(0, &Tensor::from_slice(ids).to_device(reward.device()))
                 .to_kind(Kind::Float)

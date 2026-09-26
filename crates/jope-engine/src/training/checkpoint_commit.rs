@@ -54,7 +54,9 @@ const RESUME_FIELDS: [&str; 13] = [
     "optimizer_metadata_sha256",
 ];
 /// Additionally required by the complete format.
-const COMPLETE_FIELDS: [&str; 8] = [
+const COMPLETE_FIELDS: [&str; 10] = [
+    "objective",
+    "objective_sha256",
     "parameter_sha256",
     "rng",
     "sampler",
@@ -343,6 +345,13 @@ pub fn verify_dir(root: &Path, dir: &Path, step: u64, expect: &Expectation) -> R
         expect.world.is_none_or(|w| w == world) && expect.global_batch.is_none_or(|g| g == global),
         "checkpoint topology differs from the expected run"
     );
+    if field_present(&state, "objective_sha256") {
+        ensure!(
+            state["objective_sha256"].as_str()
+                == Some(super::objective::identity_digest(&state["objective"]).as_str()),
+            "checkpoint objective identity does not match its digest"
+        );
+    }
     if state.get("committed_exposure_by_rank").is_some() {
         for rank in 0..world {
             crate::training_exposure::checkpoint_baseline(&state, rank, world, global / world)?;

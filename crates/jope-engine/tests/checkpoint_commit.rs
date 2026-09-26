@@ -205,6 +205,8 @@ impl Fixture {
                         "consumption_journal":consumption}],
                     "checkpoint_format":checkpoint_commit::FORMAT,
                     "required_objects":checkpoint_commit::required_object_names(),
+                    "objective":objective::identity(),
+                    "objective_sha256":objective::identity_sha256(),
                     "rank_receipts":receipt_entry});
                 edit(&mut state);
                 Ok(state)
@@ -503,6 +505,24 @@ fn the_loader_refuses_torn_incomplete_stale_or_inconsistent_checkpoints() {
         (
             "unknown format",
             Box::new(|f| rewrite_state(f, |s| s["checkpoint_format"] = json!("v3"))),
+        ),
+        (
+            "objective digest inconsistent",
+            Box::new(|f| {
+                rewrite_state(f, |s| {
+                    s["objective"]["coefficients"]["ranking_bt"] = json!(0.5)
+                })
+            }),
+        ),
+        (
+            "objective identity absent",
+            Box::new(|f| {
+                rewrite_state(f, |s| {
+                    let fields = s.as_object_mut().unwrap();
+                    fields.remove("objective");
+                    fields.remove("objective_sha256");
+                })
+            }),
         ),
         (
             "legacy where complete is required",

@@ -18,6 +18,7 @@ use tch::{nn, Device, Kind, Tensor};
 
 pub mod checkpoint_commit;
 pub mod consumption;
+pub mod continuation;
 pub mod objective;
 
 pub const SAMPLER_ID: &str = "family_uniform_champion_plus_seven_quantiles_v2";
@@ -305,6 +306,8 @@ fn checkpoint(
                 committed
             })
             .collect::<Vec<_>>());
+                state["objective"] = objective::identity();
+                state["objective_sha256"] = json!(objective::identity_sha256());
                 state["checkpoint_format"] = json!(checkpoint_commit::FORMAT);
                 state["required_objects"] = json!(checkpoint_commit::required_object_names());
                 state["rank_receipts"] = json!(rank_receipts);
@@ -951,6 +954,10 @@ fn rank_impl(
         !(resume && initialize.is_some()),
         "resume and initialize are mutually exclusive"
     );
+    // W6-T06: each attempt is exactly one of the four continuation modes.
+    let mode = continuation::classify(resume, initialize.is_some(), policy.as_ref())?;
+    let objective_sha = objective::identity_sha256();
+    let mut continuity = Value::Null;
     let selected_checkpoint = if resume {
         let latest: Value = read_json(&launch.join("resume-input.json"))?;
         let cp = resolve(
@@ -988,6 +995,25 @@ fn rank_impl(
                 },
             )?;
         }
+        // Full objective identity, partition, vocabulary and architecture
+        // against the requested mode; undeclared changes are refused.
+        continuity = continuation::check_parent(
+            mode,
+            state,
+            &read_json::<Value>(&cp.join("config.json"))?,
+            &continuation::Current {
+                corpus_sha256: &corpus_hash,
+                vocabulary_sha256: &index.vocabulary_sha256,
+                world,
+                microbatch: micro,
+                global_batch,
+                seed,
+                sampler_id: active_sampler_id(replay.as_ref()),
+                config: &serde_json::to_value(&config)?,
+                objective_sha256: &objective_sha,
+            },
+            policy.as_ref(),
+        )?;
         ensure!(
             state["autocast_cache_lifetime"] == "scoped_v2"
                 && state["vocabulary_sha256"] == index.vocabulary_sha256,
@@ -1160,6 +1186,16 @@ fn rank_impl(
                 initialization["continuation"] = recovered.clone();
                 initialization["exact_same_experiment_resume"] = json!(false);
             }
+        }
+    }
+    if !resume {
+        // The lineage record names its mode; a new lineage never inherits an
+        // exact-resume claim from its parent.
+        initialization["continuation_mode"] = json!(mode.as_str());
+        initialization["objective_sha256"] = json!(objective_sha);
+        initialization["exact_same_experiment_resume"] = json!(false);
+        if !continuity.is_null() {
+            initialization["continuity"] = continuity.clone();
         }
     }
     if resume {
@@ -1719,6 +1755,9 @@ fn rank_impl(
             .unwrap_or(Value::Null);
         complete["exact_same_experiment_resume"] =
             json!(resume && recovered_continuation.is_none());
+        complete["continuation_mode"] = json!(mode.as_str());
+        complete["continuity"] = continuity.clone();
+        complete["objective_sha256"] = json!(objective_sha);
         complete["resident_identifier_bytes"] = json!(index.records * SEQUENCE * 4);
         complete["exposure"] = crate::training_exposure::attempt_snapshot(
             &observed_exposure,

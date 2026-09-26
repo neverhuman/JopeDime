@@ -2072,6 +2072,12 @@
         "training"
       ]
     },
+    "target:jope-parallel/test/continuation_modes": {
+      "role": "regression",
+      "subsystems": [
+        "training"
+      ]
+    },
     "target:jope-parallel/test/corpus": {
       "role": "regression",
       "subsystems": [

@@ -7226,6 +7226,21 @@
       "dispositions": [],
       "scope": "Neural-gated CPU fixtures: reference-optimizer rejection atomicity; consumption journal, commit semantics, interruption/recovery determinism and run reconciliation with the real sampler and CPU reference AdamW. No GPU, NCCL or training qualification."
     },
+    "target:jope-parallel/test/continuation_modes": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-engine/tests/continuation_modes.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "Neural-gated CPU checks of the four continuation modes and full objective identity: classification, parent guards, declared-change rules and lineage naming. No model, GPU or training qualification."
+    },
     "target:jope-parallel/test/corpus": {
       "discovery": {
         "kind": "target",

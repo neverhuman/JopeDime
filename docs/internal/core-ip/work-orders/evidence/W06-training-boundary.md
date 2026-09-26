@@ -194,3 +194,81 @@ File `crates/jope-engine/tests/checkpoint_commit.rs` (feature `neural`, CPU). Th
 - **Software/runtime compatibility** is not yet bound into the manifest: executable digest, LibTorch/CUDA versions, and the optimizer backend per rank beyond `optimizer.json`. Nor is the full objective identity (G1, T06).
 - **Remote.** W8 supplies conditional remote publication and restoration.
 - **Follow-up outside this partition.** `manifest::atomic_write` itself still uses the fixed `.partial.<pid>` temporary. It affects every other `write_json` caller, for example `runs/neural-service.json`.
+
+---
+
+## W6-T06 — enforce all four continuation modes
+
+### G1 reproduced
+- **Old guards.** The carry and resume guards in `rank_impl` compared only `ranking_backward` and `runtime_objective`; the carry guard applies them through `task_contract::verify_resume_metadata`.
+- **Missed change.** A parent trained with a different coefficient, but carrying the same two identifiers, passes that guard unchanged.
+- **Test.** `the_two_identifier_guard_accepted_an_objective_change_that_the_full_identity_refuses` asserts the old guard's acceptance, a demonstration of existing behavior, not a failing test. It then shows the full identity refusing the same parent for carry and exact resume. The legacy guard stays in place as an additional check.
+
+### Objective identity (`training::objective::identity`, `jope.training_objective.v1`)
+- **Content.** One canonical value built from the constants the arithmetic uses:
+  - all seven coefficients;
+  - targets, legal mask and label smoothing with its support;
+  - row and batch reductions and the row-weight floor and exponent;
+  - the empty-row rule;
+  - the ranking backward, score, groups, pairs, pair weight, boost threshold and factor;
+  - ties, pair reduction and empty support;
+  - listwise temperature, minimum members and reduction;
+  - the runtime objective, Huber β and reduction;
+  - ablation inclusion, inactive terms, reward-head dropout;
+  - supervision validation, the nonfinite rule and the partition normalization.
+- **Digest.** `identity_sha256` is the SHA-256 of its sorted-key serialization.
+- **Named constants.** The literals that remained in `neural.rs` are now named constants: `LABEL_SMOOTHING`, `LISTWISE_TEMPERATURE`, `LISTWISE_MIN_MEMBERS`, `BOOST_THRESHOLD`, `BOOST_FACTOR`, `REWARD_HEAD_DROPOUT`. The arithmetic is unchanged; the T02 fixtures still pass against independently restated literals.
+- **Where it is bound.**
+  - Every new checkpoint manifest records `objective` and `objective_sha256`.
+  - The complete format requires both.
+  - The loader refuses a digest that does not match its recorded objective.
+
+### Modes (`training::continuation`)
+`classify(resume, parent, policy)` maps each request to exactly one mode:
+- No parent and no policy → cold initialization.
+- A parent with no policy, or with policy `optimizer: reset` → weight warm start.
+- A parent with `optimizer: carry` → new-corpus transition.
+- `resume` → exact resume.
+
+It refuses resume together with a parent, a policy without a parent, and a policy whose optimizer is missing or unknown.
+
+`check_parent` runs in `rank_impl` before CUDA for every parented mode. It refuses in all modes:
+- a vocabulary or architecture change;
+- a recorded objective digest that does not match its objective.
+
+| Mode | Objective | Execution partition | Corpus, sampler, seed | Declared changes |
+|---|---|---|---|---|
+| exact resume | identical, or legacy IDs only | identical | identical, same world and batch | none |
+| new-corpus transition (optimizer carried) | identical, or legacy IDs only | identical, unknown for a legacy parent, or changed only when declared exactly | may change | `execution_partition` only |
+| weight warm start (optimizer reset) | may change; recorded `changed` | may change; recorded | may change | none |
+
+The continuity record says which mode ran and what the parent's lineage mode was (`unknown_legacy` when absent). It records:
+- whether the attempt is an exact resume (`exact_resume_claim`);
+- whether the optimizer was reset or carried, and whether the sampler continued or started a new window;
+- the objective, partition and corpus of the parent and of the current run, with their continuity, including declared changes;
+- the parent step.
+
+It is written into `initialization.json` for new lineages, which also record `continuation_mode`, `objective_sha256` and `exact_same_experiment_resume: false`, and into each `complete-{rank}.json`. Transition and warm-start lineages therefore name their mode and never claim exact resume. An exact resume of a transition lineage is recorded with `lineage_mode: new_corpus_transition`.
+
+**Legacy parents.** A parent written before the identity existed is accepted only when both legacy identifiers match, and is recorded as `legacy_ids_only`, not `identical`. The accepted step-60000 parent is such a checkpoint, and so is any in-flight run. Whether legacy carry and resume should instead be refused outright is an owner decision; refusing would stop the native continuation route from the accepted checkpoint.
+
+### Fixtures
+File `crates/jope-engine/tests/continuation_modes.rs` (feature `neural`, CPU, no model). It exercises the same guard functions `rank_impl` calls.
+
+| Acceptance item | Test |
+|---|---|
+| Identity equals an independently restated literal; digest and named constants pinned | `the_objective_identity_restates_every_declared_literal` |
+| Every request is exactly one mode; ambiguity refused | `every_request_is_exactly_one_mode_and_ambiguity_is_refused` |
+| G1: the legacy two-identifier guard accepts an objective change; the full identity refuses it for carry and resume; warm start records it | `the_two_identifier_guard_accepted_an_objective_change_that_the_full_identity_refuses` |
+| Exact resume refuses objective, digest, microbatch, world, corpus, vocabulary, seed, sampler, architecture, declared-change, absent-partition and legacy-runtime changes; legacy recorded as `legacy_ids_only` | `exact_resume_refuses_every_undeclared_change` |
+| Carry accepts a new corpus, seed and sampler; refuses an undeclared, mis-declared or unsupported declared change and any objective or vocabulary change; a legacy partition is recorded unknown | `a_carry_transition_allows_only_declared_changes` |
+| Warm start resets the optimizer, may change the objective and partition, declares nothing; refuses a vocabulary change; cold initialization has no parent | `a_weight_warm_start_resets_the_optimizer_and_declares_nothing` |
+| Transition lineages keep their name; an unrecorded lineage mode stays unknown | `a_transition_lineage_never_inherits_an_exact_resume_claim` |
+
+The checkpoint loader matrix (`checkpoint_commit.rs`) gains two cases: an inconsistent objective digest, and an absent objective identity in the complete format.
+
+### Open for T06
+- **Request-level declaration.** The request objects `gpu_worker::Task::Train`, `smartcluster_worker::Operation::Train` and the controller's `run.json` still express the mode implicitly: resume flag, parent, policy. The mode is classified and recorded at the trainer boundary only. Adding it to those requests is outside this partition.
+- **Deterministic interrupted/uninterrupted equivalence.** Shown on CPU for the accounting path in T04. The Policy/GPU/NCCL topology is W7.
+- **Execution limits during recovery.** These remain the existing checks: step window, smartcluster original window and deadline. No new recovery-limit ledger was added.
+- **Not executed.** `rank_impl` wiring is compile-checked only.
