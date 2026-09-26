@@ -7,19 +7,24 @@ run. It addresses the source/fixture part of findings `S08-G09` and `S08-K09`
 (`findings/sources/shard-08.md:74-79`, `:146-151`). Both findings remain open.
 
 The machine record is [`elo-history/histories.json`](../../elo-history/histories.json). The
-verifier is [`tools/elo_history.py`](../../tools/elo_history.py), tested by
-`tools/test_elo_history.py` (18 tests):
+verifier was first written as `tools/elo_history.py` (18 tests) and has since been ported,
+operation for operation, to Rust: [`crates/jope-records/src/elo_history.rs`](../../../../../crates/jope-records/src/elo_history.rs),
+tested by `crates/jope-records/tests/records/elo_history.rs` (the 18 cases plus additions). The
+port reproduces the Python replay's outputs exactly on the committed record, including the
+2,000-iteration `--sensitivity` fits, and like it never calls `jope-arena`:
 
 ```sh
-python3 docs/internal/core-ip/tools/elo_history.py                  # verify the record, replay every ladder
-python3 docs/internal/core-ip/tools/elo_history.py --require-all    # also fail if a ladder cannot be replayed here
-python3 docs/internal/core-ip/tools/elo_history.py --sensitivity H-sotarena-golden45-published
-python3 -m unittest discover -s docs/internal/core-ip/tools -p test_elo_history.py -v
+cargo run -q -p jope-records -- elo-history                  # verify the record, replay every ladder
+cargo run -q -p jope-records -- elo-history --require-all    # also fail if a ladder cannot be replayed here
+cargo run -q -p jope-records -- elo-history --sensitivity H-sotarena-golden45-published
+cargo nextest run -p jope-records -E 'test(/elo_history/)'
 ```
 
-Two ladders read `scores.csv.zst`. Replaying them needs a `zstd` binary on `PATH`. Without one,
-the verifier lists them under `not_replayed_here`, does not count them as replayed and leaves them
-out of the exact totals. `--require-all` turns that condition into a failure.
+Two ladders read `scores.csv.zst`. The Python replay needed a `zstd` binary on `PATH`; the Rust
+port decodes zstd in process (`ruzstd`), so these ladders replay wherever the repository is
+checked out. A build without a decoder would still list them under `not_replayed_here`, never
+count them as replayed and leave them out of the exact totals, and `--require-all` turns that
+condition into a failure.
 
 ## 1. The recovered construction
 
@@ -36,10 +41,11 @@ which aggregates pair statistics first (`crates/jope-arena/src/elo.rs:1-17`).
 | Update | Synchronous diagonal Newton steps, L2 `1e−4` toward 1500, each iteration's step clamped to ±40, at most 250 iterations, stop when the largest step is below `1e−8` | `elo.rs:155-228` |
 | Ordering | Sorted datasets and upper-triangle method pairs, added sequentially; the ladder sorts by (−rating, method id) | `elo.rs:1-17`, `leaderboard.rs:370-371` |
 | Algorithm version | Golden45 published ladder: `sotarena/elo.py` in the benchmark clone at `e5db30a0…` (2026-07-25). Same-cut and benchmark-valid ladders: the `jope-arena` port at each report's `git_sha` | `assets/regression/SOURCES.md:180-220`, `assets/same-cut/v*/SOURCES.md` |
-| Duplicate delivery | The Rust port inserts into a map, so a second delivery of one (dataset, method) cell silently replaces the first. The independent replay refuses it instead. No retained ladder contains a duplicate, because all six replay under the refusing parser | `leaderboard.rs:331-334`, `elo_history.parse_scores` |
+| Duplicate delivery | The Rust port inserts into a map, so a second delivery of one (dataset, method) cell silently replaces the first. The independent replay refuses it instead. No retained ladder contains a duplicate, because all six replay under the refusing parser | `leaderboard.rs:331-334`, `jope_records::elo_history::parse_scores` |
 
-The independent replay is written from this specification in plain Python. It uses aggregated pair
-statistics (match count and outcome sum), not a copy of the per-match port.
+The independent replay was written from this specification in plain Python and is now its Rust
+port with the same accumulation order. It uses aggregated pair statistics (match count and
+outcome sum), not a copy of the per-match port.
 
 ## 2. Disposition of each history
 
@@ -60,7 +66,7 @@ statistics (match count and outcome sum), not a copy of the per-match port.
 | `H-task-elo-strict-corpus` | irrecoverable | none | Source only; the SQLite inputs and `ops/task-elo.v1.json` live outside the repository |
 | `H-task-rating-snapshots` | irrecoverable | none | No `JopeTaskRatingSnapshot.v1` file is committed |
 
-`tools/elo_history.authorize` enforces these dispositions:
+`jope_records::elo_history::authorize` enforces these dispositions:
 
 - Ranking and rating claims are allowed only for `reproducible-with-receipts` histories, and only
   for the `historical-ranking-only` consumer.
@@ -147,7 +153,7 @@ here, so the replay attests the ladder arithmetic, not the upstream scores.
 
 - **What a parent edge records.** A parent edge links a block to the state it started from, so
   the order of steps inside a block is not a recorded edge.
-- **Accepted step 60,000.** `tools/elo_history.continuity` confirms that it descends from step
+- **Accepted step 60,000.** `jope_records::elo_history::continuity` confirms that it descends from step
   6,000 through 18 retained block edges. It refuses any continuity claim that reaches step 3,000
   or earlier, and any claim between steps in the same block, such as 4,000 and 4,477.
 - **Shared unretained root.** Both native lineages descend from the unretained state `20dca670…`,
@@ -164,8 +170,8 @@ here, so the replay attests the ladder arithmetic, not the upstream scores.
 - This work changes no Rust. The port's silent replacement of a duplicate cell
   (`leaderboard.rs:331-334`) is recorded here, not changed. A change to refuse duplicates belongs
   to `jope-arena` and its own review.
-- The Golden45 replay needs `zstd`. Whether the hosted hygiene runner provides it has not been
-  verified. On a host without it, the two Golden45 histories are reported as not replayed, never
-  as passed.
+- The Python replay needed a `zstd` binary, which the hosted hygiene runner was never verified to
+  provide. The Rust port decodes zstd in process, so the Golden45 histories now replay in hosted
+  CI as well. Without a decoder they would be reported as not replayed, never as passed.
 - `S08-G09` and `S08-K09` stay open in `findings/dispositions.json`. Any disposition record there
   is a separate, reviewed step.

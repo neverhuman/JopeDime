@@ -5,7 +5,7 @@ use std::process::{Command, Output};
 
 use jope_records::pyjson::{self, Value};
 use jope_records::{
-    claims, dispositions, findings, layout, progress_view, task_status, test_inventory,
+    claims, dispositions, elo_history, findings, layout, progress_view, task_status, test_inventory,
 };
 
 use crate::{repo, scratch};
@@ -147,4 +147,62 @@ fn explicit_paths_and_failures() {
     let custody = run(&["verify-claims", "--require-custody"], &repo);
     let available = claims::verify(&layout::claims(&repo), None, true).is_ok();
     assert_eq!(custody.status.success(), available);
+}
+
+#[test]
+fn elo_history_prints_the_python_summaries() {
+    let repo = repo();
+    let summary = elo_history::verify(
+        &repo.join(elo_history::RECORD),
+        &repo,
+        elo_history::Zstd::Builtin,
+    )
+    .expect("committed histories");
+    let expected = printed(&summary.to_json());
+    assert_eq!(succeeds(&run(&["elo-history"], &repo)), expected);
+    assert_eq!(
+        succeeds(&run(&["elo-history", "--require-all"], &repo)),
+        expected
+    );
+    let sensitivity = succeeds(&run(
+        &["elo-history", "--sensitivity", "H-same-cut-v1-deep"],
+        &repo,
+    ));
+    assert_eq!(
+        sensitivity,
+        "{\"extended_converged\": true, \"extended_iterations\": 43, \"historical_cap\": 250, \
+         \"historical_converged\": true, \"history\": \"H-same-cut-v1-deep\", \"max_abs_rating_shift\": 0.0, \
+         \"positions_changed\": 0, \"top10_unchanged\": true}\n"
+    );
+    let refused = run(
+        &[
+            "elo-history",
+            "--sensitivity",
+            "H-legacy-round1-internal-elo",
+        ],
+        &repo,
+    );
+    assert_eq!(refused.status.code(), Some(1));
+    assert!(String::from_utf8_lossy(&refused.stderr)
+        .contains("H-legacy-round1-internal-elo: no replayable history"));
+}
+
+#[test]
+fn verify_inventory_needs_its_asset() {
+    // The accepted asset lives on the host, not in CI; a record naming an absent asset fails
+    // (exit 1) rather than verifying anything.
+    let repo = repo();
+    let directory = scratch();
+    let record = directory.path().join("tensors.json");
+    std::fs::write(&record, "{\"path\": \"/nonexistent/policy.safetensors\"}").expect("record");
+    let absent = run(
+        &[
+            "verify-inventory",
+            "--record",
+            &record.display().to_string(),
+        ],
+        &repo,
+    );
+    assert_eq!(absent.status.code(), Some(1));
+    assert!(String::from_utf8_lossy(&absent.stderr).contains("/nonexistent/policy.safetensors"));
 }

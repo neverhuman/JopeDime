@@ -81,12 +81,10 @@
         "cargo run -q --locked -p jope-records -- verify-findings",
         "cargo run -q --locked -p jope-records -- verify-dispositions",
         "cargo run -q --locked -p jope-records -- verify-test-inventory",
-        "python3 -m unittest discover -s docs/internal/core-ip/tools -p test_verify_inventory.py -v",
         "cargo run -q --locked -p jope-records -- verify-claims",
         "cargo run -q --locked -p jope-records -- task-status",
         "cargo run -q --locked -p jope-records -- progress-view",
-        "python3 docs/internal/core-ip/tools/elo_history.py",
-        "python3 -m unittest discover -s docs/internal/core-ip/tools -p test_elo_history.py -v"
+        "cargo run -q --locked -p jope-records -- elo-history --require-all"
       ]
     },
     "rust-check": {
@@ -2167,26 +2165,6 @@
         "maintenance"
       ],
       "scope": "Standalone fixture runner; not pytest-collected."
-    },
-    "python:docs/internal/core-ip/tools/test_elo_history.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "lanes": [
-        "hygiene"
-      ],
-      "dispositions": [],
-      "scope": "Independent replay of the retained historical Elo ladders from digest-pinned inputs (every committed cell must match; only likelihood-exchangeable methods may trade places), refusal of duplicate score deliveries, substituted or re-pinned inputs and disposition upgrades, historical-ranking-only consumer enforcement, lineage parent-edge recomputation with continuity and exposure refusals, and derived plot-table consistency. The two Golden45 ladders replay only where zstd is available and are otherwise reported as not replayed."
-    },
-    "python:docs/internal/core-ip/tools/test_verify_inventory.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "lanes": [
-        "hygiene"
-      ],
-      "dispositions": [],
-      "scope": "Synthetic safetensors fixtures for the accepted tensor inventory verifier: payload layout, per-tensor digests (bit flip, same-shape substitution), dtype/field closure, role accounting, Candle forward references and optimizer moment coverage. The real accepted asset is verified on the host, not in CI."
     },
     "python:python/src/jope/research/test_absolute_path_audit.py": {
       "discovery": {
@@ -7952,7 +7930,7 @@
         "full-default"
       ],
       "dispositions": [],
-      "scope": "Core-IP record verifiers and STATUS/PROGRESS renderers against the committed records and adversarial fixtures: findings inventory integrity, disposition evidence binding, claim-to-evidence binding and revocation closure (synthetic evidence never backs live, measurement or promotion claims), test-inventory completeness against this map, task-state evidence rules, and byte-identical STATUS.md/PROGRESS.md renders with stale-view detection. Records status only; it qualifies nothing."
+      "scope": "Core-IP record verifiers and STATUS/PROGRESS renderers against the committed records and adversarial fixtures: findings inventory integrity, disposition evidence binding, claim-to-evidence binding and revocation closure (synthetic evidence never backs live, measurement or promotion claims), test-inventory completeness against this map, task-state evidence rules, and byte-identical STATUS.md/PROGRESS.md renders with stale-view detection; the accepted tensor-inventory verifier on synthetic safetensors fixtures (layout, per-tensor digests, dtype/field closure, role accounting, Candle forward references, optimizer moments; the real asset is verified on the host) and tensors.json against the documented geometry; and the independent replay of every retained reproducible Elo ladder (Golden45 included, zstd decoded in process) with substitution, duplicate-delivery and disposition-upgrade refusals, historical-ranking-only consumers, lineage continuity/exposure refusals and derived plot-table consistency. Records status only; it qualifies nothing."
     },
     "target:numpy-pcg64/lib/numpy_pcg64": {
       "discovery": {

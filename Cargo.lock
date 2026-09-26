@@ -2466,9 +2466,12 @@ name = "jope-records"
 version = "0.1.0"
 dependencies = [
  "clap",
+ "flate2",
  "regex",
+ "ruzstd",
  "sha2",
  "tempfile",
+ "zip 8.6.0",
 ]
 
 [[package]]

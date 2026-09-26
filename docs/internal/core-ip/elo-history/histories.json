@@ -1,7 +1,7 @@
 {
   "schema": "jope.core-ip-elo-histories/v1",
-  "note": "W12-T04 reconciliation of historical Elo ladders and checkpoint genealogy. Verified by docs/internal/core-ip/tools/elo_history.py; see work-orders/evidence/W12-elo-genealogy.md.",
-  "numerical_policy": "A reproducible history must be recomputed from its digest-pinned inputs by an independent implementation (aggregated pair statistics, plain Python floats) and match every committed leaderboard and snapshot cell, as Python round/repr write them, with one exception: methods that are exchangeable in the Bradley-Terry likelihood (equal match counts against every other method and equal total score) have equal ratings in exact arithmetic, so their relative order may differ; that order was set by floating-point accumulation and is reported, not treated as data. Unrounded historical ratings were never retained.",
+  "note": "W12-T04 reconciliation of historical Elo ladders and checkpoint genealogy. Verified by `jope-records elo-history` (crates/jope-records/src/elo_history.rs, the Rust port of the former docs/internal/core-ip/tools/elo_history.py); see work-orders/evidence/W12-elo-genealogy.md.",
+  "numerical_policy": "A reproducible history must be recomputed from its digest-pinned inputs by an independent implementation (aggregated pair statistics in IEEE-754 double arithmetic, in the accumulation order of the original Python replay) and match every committed leaderboard and snapshot cell, as Python round/repr write them, with one exception: methods that are exchangeable in the Bradley-Terry likelihood (equal match counts against every other method and equal total score) have equal ratings in exact arithmetic, so their relative order may differ; that order was set by floating-point accumulation and is reported, not treated as data. Unrounded historical ratings were never retained.",
   "consumer": "historical-ranking-only",
   "refused_consumers": [
     "teaching",
@@ -20,7 +20,7 @@
         "algorithm": "regularized Bradley-Terry on the Elo scale (crates/jope-arena/src/elo.rs::fit_elo, the port of sotarena/elo.py): one equal-weight match per dataset and method pair, outcome 1/0.5/0 with the relative tie rule |a-b| <= 1e-12*max(|a|,|b|,1), start and centre 1500, L2 1e-4, at most 250 synchronous diagonal-Newton iterations, per-iteration clamp +-40, stop when the largest update is below 1e-8, final mean-centring; sorted dataset and method-pair accumulation order",
         "independent_checks": [
           "crates/jope-bench/tests/committed_evidence.rs::the_tracks_and_ladders_re_derive_byte_for_byte",
-          "docs/internal/core-ip/tools/elo_history.py (this replay)"
+          "crates/jope-records/src/elo_history.rs (this replay; Rust port of the former tools/elo_history.py)"
         ]
       },
       "replay": {
@@ -78,7 +78,7 @@
         "algorithm": "regularized Bradley-Terry on the Elo scale (crates/jope-arena/src/elo.rs::fit_elo, the port of sotarena/elo.py): one equal-weight match per dataset and method pair, outcome 1/0.5/0 with the relative tie rule |a-b| <= 1e-12*max(|a|,|b|,1), start and centre 1500, L2 1e-4, at most 250 synchronous diagonal-Newton iterations, per-iteration clamp +-40, stop when the largest update is below 1e-8, final mean-centring; sorted dataset and method-pair accumulation order",
         "independent_checks": [
           "crates/jope-bench/tests/committed_evidence.rs::the_tracks_and_ladders_re_derive_byte_for_byte",
-          "docs/internal/core-ip/tools/elo_history.py (this replay)"
+          "crates/jope-records/src/elo_history.rs (this replay; Rust port of the former tools/elo_history.py)"
         ]
       },
       "replay": {
@@ -136,7 +136,7 @@
         "algorithm": "regularized Bradley-Terry on the Elo scale (crates/jope-arena/src/elo.rs::fit_elo, the port of sotarena/elo.py): one equal-weight match per dataset and method pair, outcome 1/0.5/0 with the relative tie rule |a-b| <= 1e-12*max(|a|,|b|,1), start and centre 1500, L2 1e-4, at most 250 synchronous diagonal-Newton iterations, per-iteration clamp +-40, stop when the largest update is below 1e-8, final mean-centring; sorted dataset and method-pair accumulation order",
         "independent_checks": [
           "crates/jope-bench/tests/committed_evidence.rs::the_tracks_and_ladders_re_derive_byte_for_byte",
-          "docs/internal/core-ip/tools/elo_history.py (this replay)"
+          "crates/jope-records/src/elo_history.rs (this replay; Rust port of the former tools/elo_history.py)"
         ]
       },
       "replay": {
@@ -194,7 +194,7 @@
         "algorithm": "regularized Bradley-Terry on the Elo scale (crates/jope-arena/src/elo.rs::fit_elo, the port of sotarena/elo.py): one equal-weight match per dataset and method pair, outcome 1/0.5/0 with the relative tie rule |a-b| <= 1e-12*max(|a|,|b|,1), start and centre 1500, L2 1e-4, at most 250 synchronous diagonal-Newton iterations, per-iteration clamp +-40, stop when the largest update is below 1e-8, final mean-centring; sorted dataset and method-pair accumulation order",
         "independent_checks": [
           "crates/jope-bench/tests/committed_evidence.rs::the_tracks_and_ladders_re_derive_byte_for_byte",
-          "docs/internal/core-ip/tools/elo_history.py (this replay)"
+          "crates/jope-records/src/elo_history.rs (this replay; Rust port of the former tools/elo_history.py)"
         ]
       },
       "replay": {
@@ -252,7 +252,7 @@
         "algorithm": "regularized Bradley-Terry on the Elo scale (crates/jope-arena/src/elo.rs::fit_elo, the port of sotarena/elo.py): one equal-weight match per dataset and method pair, outcome 1/0.5/0 with the relative tie rule |a-b| <= 1e-12*max(|a|,|b|,1), start and centre 1500, L2 1e-4, at most 250 synchronous diagonal-Newton iterations, per-iteration clamp +-40, stop when the largest update is below 1e-8, final mean-centring; sorted dataset and method-pair accumulation order",
         "independent_checks": [
           "crates/jope-arena/tests/elo_regression.rs::committed_fixture_reproduces_the_published_ladder",
-          "docs/internal/core-ip/tools/elo_history.py (this replay)"
+          "crates/jope-records/src/elo_history.rs (this replay; Rust port of the former tools/elo_history.py)"
         ]
       },
       "replay": {
@@ -316,7 +316,7 @@
         "algorithm": "regularized Bradley-Terry on the Elo scale (crates/jope-arena/src/elo.rs::fit_elo, the port of sotarena/elo.py): one equal-weight match per dataset and method pair, outcome 1/0.5/0 with the relative tie rule |a-b| <= 1e-12*max(|a|,|b|,1), start and centre 1500, L2 1e-4, at most 250 synchronous diagonal-Newton iterations, per-iteration clamp +-40, stop when the largest update is below 1e-8, final mean-centring; sorted dataset and method-pair accumulation order; rows demoted by the digest-bound corrections file are left out of the fit",
         "independent_checks": [
           "crates/jope-arena/tests/elo_regression.rs::benchmark_valid_ladder_excludes_the_rows_the_campaign_code_labels_test_adaptive",
-          "docs/internal/core-ip/tools/elo_history.py (this replay)"
+          "crates/jope-records/src/elo_history.rs (this replay; Rust port of the former tools/elo_history.py)"
         ]
       },
       "replay": {

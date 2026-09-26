@@ -37,12 +37,10 @@ bash deploy/ci/test-neural-env.sh
 cargo run -q --locked -p jope-records -- verify-findings
 cargo run -q --locked -p jope-records -- verify-dispositions
 cargo run -q --locked -p jope-records -- verify-test-inventory
-python3 -m unittest discover -s docs/internal/core-ip/tools -p test_verify_inventory.py -v
 cargo run -q --locked -p jope-records -- verify-claims
 cargo run -q --locked -p jope-records -- task-status
 cargo run -q --locked -p jope-records -- progress-view
-python3 docs/internal/core-ip/tools/elo_history.py
-python3 -m unittest discover -s docs/internal/core-ip/tools -p test_elo_history.py -v
+cargo run -q --locked -p jope-records -- elo-history --require-all
     # Hygiene
 bash deploy/ci/check.sh
     # cargo-deny

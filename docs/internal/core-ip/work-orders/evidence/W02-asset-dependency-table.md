@@ -135,9 +135,9 @@ This identity is spread across compile-time constants. No release manifest ties 
 ## 5. Tensor inventory and roles
 
 The step-60000 policy has 136 F32 tensors and 27,796,494 parameters.
-- Roles follow `docs/internal/core-ip/tools/verify_inventory.py:28-33`.
+- Roles follow `docs/internal/core-ip/tools/verify_inventory.py:28-33` at the source base (the verifier is now the Rust port `crates/jope-records/src/inventory.rs`, `accepted_roles`).
 - Counts come from `docs/internal/core-ip/data/tensors.json` (`role_parameters`, asset `4b4b5a40…`); they were not re-verified here.
-- Candle's forward must reference exactly the decode ∪ rank roots (`verify_inventory.py:121-124`, `:158-161`).
+- Candle's forward must reference exactly the decode ∪ rank roots (`verify_inventory.py:121-124`, `:158-161` at the source base; now `inventory.rs`, `forward_roots` and `verify`).
 
 | Root | Role | Tensors | Parameters | Inference consumer (Candle) | Note |
 |---|---|---|---|---|---|
@@ -168,7 +168,7 @@ The step-60000 policy has 136 F32 tensors and 27,796,494 parameters.
 **Known doc inaccuracy.**
 - `model.rs:3-6` lists `runtime_head` among the tensors "that inference does not use".
 - `PolicyModel::reward_runtime` does consume it (`model.rs:586-603`), `score_pool` reports it (`ranking.rs:409`, `:422`), and the module's own line 16 describes that computation.
-- `verify_inventory.py:30-31` assigns it the `rank` role.
+- `verify_inventory.py:30-31` (now `inventory.rs`, `accepted_roles`) assigns it the `rank` role.
 
 ## 6. Gaps W2-T02..T04 must close
 

@@ -5,7 +5,7 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
-description = "Verify and render the committed core-IP remediation records: findings, dispositions, claims, test inventory, task status and progress view"
+description = "Verify and render the committed core-IP remediation records: findings, dispositions, claims, test inventory, task status, progress view, tensor inventory and historical Elo replay"
 
 [lib]
 path = "src/lib.rs"
@@ -16,8 +16,14 @@ path = "src/main.rs"
 
 [dependencies]
 clap.workspace = true
+# `.gz` retained Elo inputs (gzip.decompress); already in the workspace via jope-arena.
+flate2 = "1"
 regex = "1"
+# Pure-Rust zstd decoder for the `.zst` retained Elo inputs, as jope-arena and jope-encoders use.
+ruzstd = "0.8"
 sha2.workspace = true
+# Central-directory sizes of a torch optimizer archive; reading metadata needs no codec feature.
+zip = { version = "8.6", default-features = false }
 
 [dev-dependencies]
 tempfile.workspace = true

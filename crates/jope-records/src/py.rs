@@ -234,6 +234,222 @@ impl PosixPath {
             && self.parts.len() >= prefix.len()
             && self.parts.iter().zip(prefix).all(|(a, b)| a == b)
     }
+
+    /// `self / other`: an absolute `other` replaces the path, as in Python.
+    pub fn join(&self, other: &str) -> Self {
+        let other = PosixPath::parse(other);
+        if other.is_absolute() {
+            return other;
+        }
+        let mut parts = self.parts.clone();
+        parts.extend(other.parts);
+        PosixPath {
+            root: self.root,
+            parts,
+        }
+    }
+
+    /// `path.name`: the final component, or `""`.
+    pub fn name(&self) -> &str {
+        self.parts.last().map_or("", String::as_str)
+    }
+
+    /// `path.suffix` (Python 3.12): the final component's extension, if it has one that is not
+    /// its whole name.
+    pub fn suffix(&self) -> &str {
+        let name = self.name();
+        match name.rfind('.') {
+            Some(i) if 0 < i && i < name.len() - 1 => &name[i..],
+            _ => "",
+        }
+    }
+}
+
+/// `str(PurePosixPath(...))`.
+impl std::fmt::Display for PosixPath {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let body = self.parts.join("/");
+        match (self.root, body.is_empty()) {
+            (Some(root), _) => write!(f, "{root}{body}"),
+            (None, true) => f.write_str("."),
+            (None, false) => f.write_str(&body),
+        }
+    }
+}
+
+/// `math.fsum`: the correctly rounded sum of finite values, ported from CPython's
+/// `mathmodule.c` (Shewchuk partials plus its half-even correction across partials). Returns
+/// `None` where CPython raises (intermediate overflow, or `-inf + inf`).
+pub fn fsum(values: impl IntoIterator<Item = f64>) -> Option<f64> {
+    let mut partials: Vec<f64> = Vec::new();
+    let mut special_sum = 0.0_f64;
+    let mut inf_sum = 0.0_f64;
+    for value in values {
+        let mut x = value;
+        let xsave = x;
+        let mut kept = 0;
+        for j in 0..partials.len() {
+            let mut y = partials[j];
+            if x.abs() < y.abs() {
+                std::mem::swap(&mut x, &mut y);
+            }
+            let hi = x + y;
+            let yr = hi - x;
+            let lo = y - yr;
+            if lo != 0.0 {
+                partials[kept] = lo;
+                kept += 1;
+            }
+            x = hi;
+        }
+        partials.truncate(kept);
+        if x != 0.0 {
+            if !x.is_finite() {
+                if xsave.is_finite() {
+                    return None; // intermediate overflow
+                }
+                if xsave.is_infinite() {
+                    inf_sum += xsave;
+                }
+                special_sum += xsave;
+                partials.clear();
+            } else {
+                partials.push(x);
+            }
+        }
+    }
+    if special_sum != 0.0 {
+        return if inf_sum.is_nan() {
+            None
+        } else {
+            Some(special_sum)
+        };
+    }
+    let mut n = partials.len();
+    let mut hi = 0.0_f64;
+    if n > 0 {
+        n -= 1;
+        hi = partials[n];
+        let mut lo = 0.0_f64;
+        while n > 0 {
+            let x = hi;
+            n -= 1;
+            let y = partials[n];
+            hi = x + y;
+            let yr = hi - x;
+            lo = y - yr;
+            if lo != 0.0 {
+                break;
+            }
+        }
+        if n > 0 && ((lo < 0.0 && partials[n - 1] < 0.0) || (lo > 0.0 && partials[n - 1] > 0.0)) {
+            let y = lo * 2.0;
+            let x = hi + y;
+            let yr = x - hi;
+            if y == yr {
+                hi = x;
+            }
+        }
+    }
+    Some(hi)
+}
+
+/// Python `round(value, ndigits)` for a float: correctly rounded to `ndigits` decimals (ties to
+/// even on the exact binary value), returned as the nearest double.
+pub fn round(value: f64, ndigits: usize) -> f64 {
+    if !value.is_finite() {
+        return value;
+    }
+    format!("{value:.ndigits$}").parse().unwrap_or(value)
+}
+
+/// Python `float(text)` for `str` input: surrounding whitespace, a sign, `inf`/`infinity`/`nan`
+/// in any case, and underscores between digits (PEP 515). Non-ASCII digits are refused.
+pub fn float(text: &str) -> Option<f64> {
+    let body = strip(text);
+    let (negative, unsigned) = match body.as_bytes().first() {
+        Some(b'-') => (true, &body[1..]),
+        Some(b'+') => (false, &body[1..]),
+        _ => (false, body),
+    };
+    let lower = unsigned.to_ascii_lowercase();
+    let special = match lower.as_str() {
+        "inf" | "infinity" => Some(f64::INFINITY),
+        "nan" => Some(f64::NAN),
+        _ => None,
+    };
+    if let Some(value) = special {
+        return Some(if negative { -value } else { value });
+    }
+    // digitpart ("." digitpart?)? | "." digitpart, then an optional exponent; digitpart is digits
+    // with single underscores between them.
+    fn digitpart(s: &[u8], mut i: usize) -> usize {
+        let start = i;
+        while i < s.len() {
+            let separator =
+                s[i] == b'_' && i > start && s.get(i + 1).is_some_and(u8::is_ascii_digit);
+            if !(s[i].is_ascii_digit() || separator) {
+                break;
+            }
+            i += 1;
+        }
+        i
+    }
+    let s = unsigned.as_bytes();
+    let mut i = digitpart(s, 0);
+    let mut digits = i > 0;
+    if i < s.len() && s[i] == b'.' {
+        let after = digitpart(s, i + 1);
+        digits |= after > i + 1;
+        i = after;
+    }
+    if !digits {
+        return None;
+    }
+    if i < s.len() && (s[i] == b'e' || s[i] == b'E') {
+        let mut j = i + 1;
+        if j < s.len() && (s[j] == b'+' || s[j] == b'-') {
+            j += 1;
+        }
+        let end = digitpart(s, j);
+        if end == j {
+            return None;
+        }
+        i = end;
+    }
+    if i != s.len() {
+        return None;
+    }
+    let value: f64 = unsigned.replace('_', "").parse().ok()?;
+    Some(if negative { -value } else { value })
+}
+
+/// Python `str.splitlines()`: lines without their terminators.
+pub fn splitlines(text: &str) -> Vec<&str> {
+    let mut lines = Vec::new();
+    let mut start = 0;
+    let mut chars = text.char_indices().peekable();
+    while let Some((i, c)) = chars.next() {
+        let end = match c {
+            '\r' => {
+                if let Some(&(_, '\n')) = chars.peek() {
+                    chars.next();
+                    i + 2
+                } else {
+                    i + 1
+                }
+            }
+            '\n' | '\u{b}' | '\u{c}' | '\u{1c}' | '\u{1d}' | '\u{1e}' | '\u{85}' | '\u{2028}'
+            | '\u{2029}' => i + c.len_utf8(),
+            _ => continue,
+        };
+        lines.push(&text[start..i]);
+        start = end;
+    }
+    if start < text.len() {
+        lines.push(&text[start..]);
+    }
+    lines
 }
 
 #[cfg(test)]
@@ -258,6 +474,62 @@ mod tests {
         assert!(PosixPath::parse("///a").root == Some("/"));
         assert!(PosixPath::parse("a/../b").has_parent_reference());
         assert!(PosixPath::parse("").parts.is_empty());
+        let base = PosixPath::parse("assets/./track/");
+        assert_eq!(
+            base.join("tracks")
+                .join("t1")
+                .join("track.json")
+                .to_string(),
+            "assets/track/tracks/t1/track.json"
+        );
+        assert_eq!(base.join("/abs").to_string(), "/abs");
+        assert_eq!(PosixPath::parse("").to_string(), ".");
+        assert_eq!(PosixPath::parse("//x//y/").to_string(), "//x/y");
+        assert_eq!(PosixPath::parse("a/scores.csv.zst").suffix(), ".zst");
+        assert_eq!(PosixPath::parse("a/.zst").suffix(), "");
+        assert_eq!(PosixPath::parse("a/b.").suffix(), "");
+        assert_eq!(PosixPath::parse("a/b.json").name(), "b.json");
+    }
+
+    #[test]
+    fn fsum_matches_cpython() {
+        assert_eq!(fsum([0.1; 10]), Some(1.0));
+        assert_eq!(fsum([1e-16, 1.0, 1e16]), Some(10000000000000002.0));
+        assert_eq!(fsum([1e308, 1e308, -1e308]), None);
+        assert_eq!(fsum([f64::INFINITY, 1.0]), Some(f64::INFINITY));
+        assert_eq!(fsum([f64::INFINITY, f64::NEG_INFINITY]), None);
+        assert_eq!(fsum([]), Some(0.0));
+        assert_eq!(fsum([1.0, 1e100, 1.0, -1e100]), Some(2.0));
+        // Plain left-to-right addition gives 0.9999999999999999 here.
+        assert_ne!([0.1_f64; 10].iter().sum::<f64>(), 1.0);
+    }
+
+    #[test]
+    fn python_round_and_float() {
+        assert_eq!(round(2.675, 2), 2.67);
+        assert_eq!(round(0.25, 1), 0.2);
+        assert_eq!((round(0.125, 2), round(0.375, 2)), (0.12, 0.38));
+        assert_eq!(round(-0.04, 1).to_bits(), (-0.0_f64).to_bits());
+        assert_eq!(float(" 1_000.5 "), Some(1000.5));
+        assert_eq!(float("1."), Some(1.0));
+        assert_eq!(float(".5e-1"), Some(0.05));
+        assert!(float("-Infinity").is_some_and(|v| v == f64::NEG_INFINITY));
+        assert!(float("nan").is_some_and(f64::is_nan));
+        for bad in [
+            "", "1__0", "_1", "1_", ".", "e5", "1e", "0x10", "1,5", "abc",
+        ] {
+            assert_eq!(float(bad), None, "{bad:?}");
+        }
+    }
+
+    #[test]
+    fn python_splitlines() {
+        assert_eq!(
+            splitlines("a\nb\r\nc\rd\u{2028}e\n"),
+            ["a", "b", "c", "d", "e"]
+        );
+        assert_eq!(splitlines("a\n\n"), ["a", ""]);
+        assert!(splitlines("").is_empty());
     }
 
     #[test]

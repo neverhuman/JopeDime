@@ -25,6 +25,9 @@ pub enum Error {
     Shape(String),
     /// An external command failed (Python: `subprocess.CalledProcessError`).
     Command(String),
+    /// A retained input exists but cannot be decoded on this host; it is never counted as
+    /// verified (Python: `elo_history.Unavailable`).
+    Unavailable(String),
 }
 
 impl Error {
@@ -51,9 +54,10 @@ impl Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Error::Invalid(message) | Error::Shape(message) | Error::Command(message) => {
-                f.write_str(message)
-            }
+            Error::Invalid(message)
+            | Error::Shape(message)
+            | Error::Command(message)
+            | Error::Unavailable(message) => f.write_str(message),
             Error::Parse { path, message } => write!(f, "{}: {message}", path.display()),
             Error::Io { path, source } => write!(f, "{}: {source}", path.display()),
         }

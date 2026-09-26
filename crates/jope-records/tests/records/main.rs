@@ -8,7 +8,9 @@
 mod claims;
 mod cli;
 mod dispositions;
+mod elo_history;
 mod findings;
+mod inventory;
 mod progress_view;
 mod task_status;
 mod test_inventory;

@@ -233,19 +233,6 @@
       "role": "infrastructure",
       "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
     },
-    "python:docs/internal/core-ip/tools/test_elo_history.py": {
-      "role": "regression",
-      "subsystems": [
-        "evidence"
-      ]
-    },
-    "python:docs/internal/core-ip/tools/test_verify_inventory.py": {
-      "role": "regression",
-      "subsystems": [
-        "encoders",
-        "policy"
-      ]
-    },
     "python:python/src/jope/research/test_absolute_path_audit.py": {
       "role": "research",
       "reason": "research script test outside the maintained product surface"
@@ -2357,7 +2344,9 @@
     "target:jope-records/test/records": {
       "role": "regression",
       "subsystems": [
-        "evidence"
+        "evidence",
+        "encoders",
+        "policy"
       ]
     },
     "target:numpy-pcg64/lib/numpy_pcg64": {

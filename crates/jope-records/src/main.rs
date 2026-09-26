@@ -10,7 +10,8 @@ use std::process::ExitCode;
 use clap::{Parser, Subcommand};
 use jope_records::pyjson::{self, Value};
 use jope_records::{
-    claims, dispositions, findings, layout, progress_view, task_status, test_inventory,
+    claims, dispositions, elo_history, findings, inventory, layout, progress_view, py, task_status,
+    test_inventory,
 };
 
 #[derive(Parser)]
@@ -78,6 +79,27 @@ enum Command {
         #[arg(long)]
         write: bool,
     },
+    /// Verify the accepted policy tensor inventory against its asset (W2-T06; host-only asset).
+    VerifyInventory {
+        /// The inventory record (default: docs/internal/core-ip/data/tensors.json).
+        #[arg(long)]
+        record: Option<PathBuf>,
+        /// Optional torch optimizer archive of the same checkpoint.
+        #[arg(long)]
+        optimizer: Option<PathBuf>,
+    },
+    /// Replay the retained historical Elo ladders and keep unrecoverable history open (W12-T04).
+    EloHistory {
+        /// The histories record (default: docs/internal/core-ip/elo-history/histories.json).
+        #[arg(long)]
+        record: Option<PathBuf>,
+        /// Fail when a reproducible history cannot be replayed on this host.
+        #[arg(long)]
+        require_all: bool,
+        /// Only report the iteration-cap sensitivity of one reproducible history.
+        #[arg(long, value_name = "HISTORY")]
+        sensitivity: Option<String>,
+    },
 }
 
 fn repository(cli_repo: Option<&Path>) -> jope_records::Result<PathBuf> {
@@ -142,6 +164,41 @@ fn run(cli: Cli) -> jope_records::Result<Value> {
             let text = progress_view::render(&data)?;
             progress_view::check_or_write(&core, &text, write)?;
             progress_view::summary(&data)
+        }
+        Command::VerifyInventory { record, optimizer } => {
+            let repo = repo()?;
+            let record_path = record.unwrap_or_else(|| repo.join(inventory::RECORD));
+            let record = py::load_json(&record_path)?;
+            let asset = record
+                .get("path")
+                .and_then(Value::as_str)
+                .ok_or_else(|| jope_records::Error::Shape("record: path is not a string".into()))?;
+            let raw = py::read_bytes(Path::new(asset))?;
+            let source = py::read_text(&repo.join(inventory::MODEL_SOURCE))?;
+            inventory::verify(
+                &record,
+                &raw,
+                &source,
+                optimizer.as_deref(),
+                &inventory::Spec::accepted(),
+            )?
+        }
+        Command::EloHistory {
+            record,
+            require_all,
+            sensitivity,
+        } => {
+            let repo = repo()?;
+            let record = record.unwrap_or_else(|| repo.join(elo_history::RECORD));
+            let zstd = elo_history::Zstd::Builtin;
+            if let Some(history) = sensitivity {
+                return elo_history::sensitivity_of(&record, &repo, &history, zstd);
+            }
+            let summary = elo_history::verify(&record, &repo, zstd)?;
+            if require_all {
+                summary.require_all()?;
+            }
+            summary.to_json()
         }
     })
 }
