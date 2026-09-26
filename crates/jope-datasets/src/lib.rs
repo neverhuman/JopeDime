@@ -13,6 +13,7 @@ pub mod hash;
 pub mod ingest;
 pub mod meta;
 pub mod paths;
+pub mod regression_release;
 pub mod repo;
 pub mod schema;
 pub mod store;

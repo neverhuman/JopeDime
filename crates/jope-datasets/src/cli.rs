@@ -5,6 +5,7 @@ use crate::cache::{link_from, verify_cache, Fetcher};
 use crate::catalog::Task;
 use crate::ingest::{self, Source};
 use crate::paths::{now_compact, offline_env, Cache};
+use crate::regression_release::{self, FamilyRegistry, RegressionRelease};
 use crate::repo::verify_repo;
 use crate::store::Store;
 use anyhow::Result;
@@ -90,6 +91,174 @@ pub enum Cmd {
     },
     /// Print the JSON Schema derived from the Rust types.
     Schema { which: Which },
+    /// Derive or verify the immutable ten-regression release. Reads only exact
+    /// pre-staged local objects; never fetches, never substitutes.
+    RegressionRelease {
+        #[command(subcommand)]
+        action: ReleaseAction,
+    },
+}
+
+#[derive(Subcommand)]
+pub enum ReleaseAction {
+    /// Derive a new release document; the output path must not exist.
+    Derive {
+        /// Frozen panel manifest (benchmarks/panel.json).
+        #[arg(long)]
+        panel: PathBuf,
+        /// Repository-relative preparation implementation (benchmarks/prepare.py).
+        #[arg(long)]
+        preparation_source: PathBuf,
+        /// Canonical family/exposure registry document.
+        #[arg(long)]
+        registry: PathBuf,
+        /// Preparation root holding downloads/, metadata/, development/, splits/, sealed/.
+        #[arg(long)]
+        staged_root: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    /// Reopen a release byte-exactly and re-derive it from the staged objects.
+    Verify {
+        #[arg(long)]
+        release: PathBuf,
+        #[arg(long)]
+        registry: PathBuf,
+        #[arg(long)]
+        panel: PathBuf,
+        #[arg(long)]
+        preparation_source: PathBuf,
+        #[arg(long)]
+        staged_root: PathBuf,
+    },
+}
+
+fn release_sources(
+    panel: &std::path::Path,
+    preparation_source: &std::path::Path,
+    registry: &std::path::Path,
+) -> Result<(Vec<u8>, String, Vec<u8>, FamilyRegistry)> {
+    let source_path = preparation_source
+        .to_str()
+        .ok_or_else(|| anyhow::anyhow!("preparation source path is not UTF-8"))?
+        .to_owned();
+    let registry = FamilyRegistry::open(&std::fs::read(registry)?)?;
+    Ok((
+        std::fs::read(panel)?,
+        source_path,
+        std::fs::read(preparation_source)?,
+        registry,
+    ))
+}
+
+fn run_release(action: ReleaseAction) -> Result<ExitCode> {
+    match action {
+        ReleaseAction::Derive {
+            panel,
+            preparation_source,
+            registry,
+            staged_root,
+            output,
+        } => {
+            let (panel, source_path, source, registry) =
+                release_sources(&panel, &preparation_source, &registry)?;
+            let staged = regression_release::load_staged(&staged_root, &panel)?;
+            let release = regression_release::derive(&regression_release::ReleaseSources {
+                panel: &panel,
+                preparation_source_path: &source_path,
+                preparation_source: &source,
+                registry: &registry,
+                staged: &staged,
+            })?;
+            let bytes = release.encode()?;
+            {
+                use std::io::Write;
+                let mut file = std::fs::OpenOptions::new()
+                    .write(true)
+                    .create_new(true)
+                    .open(&output)
+                    .map_err(|e| {
+                        anyhow::anyhow!(
+                            "{}: {e}; releases are immutable, choose a new path",
+                            output.display()
+                        )
+                    })?;
+                file.write_all(&bytes)?;
+                file.sync_all()?;
+            }
+            println!(
+                "{}",
+                serde_json::json!({
+                    "schema": "jope.regression-release-derivation/v1",
+                    "release_id": release.release_id,
+                    "release_sha256": crate::hash::sha256_hex(&bytes),
+                    "members": release.members.iter().map(|m| &m.dataset).collect::<Vec<_>>(),
+                    "exclusions": release.exclusions.len(),
+                    "family_registry_sha256": release.family_registry_sha256,
+                    "panel_sha256": release.derived_from.panel_sha256,
+                    "sealed_partitions_parsed": false,
+                    "network_access": false,
+                })
+            );
+            Ok(ExitCode::SUCCESS)
+        }
+        ReleaseAction::Verify {
+            release,
+            registry,
+            panel,
+            preparation_source,
+            staged_root,
+        } => {
+            let release_bytes = std::fs::read(&release)?;
+            let release = RegressionRelease::open(&release_bytes)?;
+            let (panel, source_path, source, registry) =
+                release_sources(&panel, &preparation_source, &registry)?;
+            anyhow::ensure!(
+                registry.sha256()? == release.family_registry_sha256,
+                "registry is not the one bound by the release"
+            );
+            regression_release::check_against_panel(&release, &panel)?;
+            let staged = regression_release::load_staged(&staged_root, &panel)?;
+            for member in &release.members {
+                let objects = staged
+                    .get(&member.dataset)
+                    .ok_or_else(|| anyhow::anyhow!("{}: staged objects absent", member.dataset))?;
+                release.verify_staged(&member.dataset, objects)?;
+            }
+            let rederived = regression_release::derive(&regression_release::ReleaseSources {
+                panel: &panel,
+                preparation_source_path: &source_path,
+                preparation_source: &source,
+                registry: &registry,
+                staged: &staged,
+            })?;
+            anyhow::ensure!(
+                rederived.encode()? == release_bytes,
+                "re-derivation does not reproduce the release bytes"
+            );
+            let mut blocked = serde_json::Map::new();
+            for member in &release.members {
+                blocked.insert(
+                    member.dataset.clone(),
+                    serde_json::json!(registry.never_seen_claim_blockers(&member.dataset)?.len()),
+                );
+            }
+            println!(
+                "{}",
+                serde_json::json!({
+                    "schema": "jope.regression-release-verification/v1",
+                    "release_id": release.release_id,
+                    "release_sha256": crate::hash::sha256_hex(&release_bytes),
+                    "members_verified": release.members.len(),
+                    "rederived_bytes_equal": true,
+                    "never_seen_claim_blockers": blocked,
+                    "sealed_partitions_parsed": false,
+                    "network_access": false,
+                })
+            );
+            Ok(ExitCode::SUCCESS)
+        }
+    }
 }
 
 /// Run a parsed command line; errors are printed as `error: …` and exit with status 2, a
@@ -262,5 +431,6 @@ pub fn run(cli: Cli) -> Result<ExitCode> {
             println!("{}", serde_json::to_string_pretty(&v)?);
             Ok(ExitCode::SUCCESS)
         }
+        Cmd::RegressionRelease { action } => run_release(action),
     }
 }
