@@ -2181,6 +2181,12 @@
         "policy"
       ]
     },
+    "target:jope-parallel/test/receiver_roots": {
+      "role": "regression",
+      "subsystems": [
+        "preparation"
+      ]
+    },
     "target:jope-parallel/test/replay_training": {
       "role": "regression",
       "subsystems": [

@@ -173,15 +173,18 @@ pub fn fit_view(prepared: &Path, cut: usize, genome: &str, output: &Path) -> Res
         .find(|c| c.index == cut)
         .context("unknown cut")?;
     let preprocessing_path = prepared.join(format!("cut-{cut}/preprocessing.json"));
-    ensure!(
-        file_hash(&preprocessing_path)? == c.preprocessing_sha256,
-        "preprocessing changed"
-    );
-    let preprocessing: Preprocessing = read_json(&preprocessing_path)?;
+    // Route R8: the stored state and the fitted feature view bind the same
+    // verified bytes; the path is read once.
+    let preprocessing_bytes = read_verified(
+        &preprocessing_path,
+        &c.preprocessing_sha256,
+        "preprocessing",
+    )
+    .context("preprocessing changed")?;
+    let preprocessing: Preprocessing = serde_json::from_slice(&preprocessing_bytes)?;
     let table = crate::prepare::load_view(prepared, cut, true)?;
     let (x, y) = xy(&table);
     let g = GenomeIr::parse(genome)?;
-    let preprocessing_bytes = fs::read(&preprocessing_path)?;
     let feature_view = raw_feature_view(&c.training_sha256, &preprocessing_bytes)?;
     let fitted = crate::fit_boundary::fit(
         &g.canonical(),
@@ -431,7 +434,17 @@ pub fn evaluate_view(prepared: &Path, cut: usize, genome: &Path, output: &Path) 
     } else {
         None
     };
-    let preprocessing = fs::read(prepared.join(format!("cut-{cut}/preprocessing.json")))?;
+    // Route R8: the preprocessing bound into the evaluation is the verified state.
+    let c = p
+        .cuts
+        .iter()
+        .find(|c| c.index == cut)
+        .context("unknown cut")?;
+    let preprocessing = read_verified(
+        &prepared.join(format!("cut-{cut}/preprocessing.json")),
+        &c.preprocessing_sha256,
+        "preprocessing",
+    )?;
     evaluate_tables(&tr, &va, genome, output, &p.task, mase, &preprocessing)
 }
 /// Sealed anonymous RAM file, shared with isolated candidate processes. No cut
@@ -1504,11 +1517,15 @@ fn search_inner(
         "search is already complete"
     );
     let resuming = output.join("progress.json").exists();
-    let pp: Preprocessing = read_json(&dir.join("preprocessing.json"))?;
-    ensure!(
-        file_hash(&dir.join("preprocessing.json"))? == c.preprocessing_sha256,
-        "preprocessing changed"
-    );
+    // Route R8: parse exactly the verified preprocessing bytes.
+    let pp: Preprocessing = serde_json::from_slice(
+        &read_verified(
+            &dir.join("preprocessing.json"),
+            &c.preprocessing_sha256,
+            "preprocessing",
+        )
+        .context("preprocessing changed")?,
+    )?;
     let vocab: Option<crate::grammar::Vocab> = vocabulary.map(read_json).transpose()?;
     let vocabulary_sha256 = vocabulary.map(file_hash).transpose()?;
     let supplied: Option<SeedPopulation> = seeds.map(read_json).transpose()?;

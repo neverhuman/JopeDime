@@ -800,6 +800,11 @@ enum Cmd {
         family_registry: Option<PathBuf>,
         #[arg(long)]
         entity_review: Option<PathBuf>,
+        /// The dataset tree declared authoritative for a frozen family
+        /// partition when no frozen family registry is given. Never taken
+        /// from the environment.
+        #[arg(long)]
+        authoritative_inventory_root: Option<PathBuf>,
     },
     Stage {
         #[arg(long)]
@@ -1914,6 +1919,7 @@ fn main() -> Result<()> {
             backing_manifest,
             family_registry,
             entity_review,
+            authoritative_inventory_root,
         } => {
             let p = prepare::run_with_admission(
                 &audit,
@@ -1924,6 +1930,7 @@ fn main() -> Result<()> {
                 &backing_manifest,
                 family_registry.as_deref(),
                 entity_review.as_deref(),
+                authoritative_inventory_root.as_deref(),
             )?;
             println!(
                 "{}",
