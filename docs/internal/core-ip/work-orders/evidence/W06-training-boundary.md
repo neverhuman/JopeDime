@@ -238,9 +238,9 @@ It refuses resume together with a parent, a policy without a parent, and a polic
 
 | Mode | Objective | Execution partition | Corpus, sampler, seed | Declared changes |
 |---|---|---|---|---|
-| exact resume | identical, or legacy IDs only | identical | identical, same world and batch | none |
-| new-corpus transition (optimizer carried) | identical, or legacy IDs only | identical, unknown for a legacy parent, or changed only when declared exactly | may change | `execution_partition` only |
-| weight warm start (optimizer reset) | may change; recorded `changed` | may change; recorded | may change | none |
+| exact resume | identical (a legacy parent is refused, (e) below) | identical | identical, same world and batch | none |
+| new-corpus transition (optimizer carried) | identical (a legacy parent is refused, (e) below) | identical, unknown for a parent without one, or changed only when declared exactly | may change | `execution_partition` only |
+| weight warm start (optimizer reset) | may change; recorded `changed`, or `legacy_ids_only` for a legacy parent | may change; recorded | may change | none |
 
 The continuity record says which mode ran and what the parent's lineage mode was (`unknown_legacy` when absent). It records:
 - whether the attempt is an exact resume (`exact_resume_claim`);
@@ -250,7 +250,7 @@ The continuity record says which mode ran and what the parent's lineage mode was
 
 It is written into `initialization.json` for new lineages, which also record `continuation_mode`, `objective_sha256` and `exact_same_experiment_resume: false`, and into each `complete-{rank}.json`. Transition and warm-start lineages therefore name their mode and never claim exact resume. An exact resume of a transition lineage is recorded with `lineage_mode: new_corpus_transition`.
 
-**Legacy parents.** A parent written before the identity existed is accepted only when both legacy identifiers match, and is recorded as `legacy_ids_only`, not `identical`. The accepted step-60000 parent is such a checkpoint, and so is any in-flight run. Whether legacy carry and resume should instead be refused outright is an owner decision; refusing would stop the native continuation route from the accepted checkpoint.
+**Legacy parents.** A parent written before the identity existed is accepted only when both legacy identifiers match, and is recorded as `legacy_ids_only`, not `identical`. The accepted step-60000 parent is such a checkpoint, and so is any in-flight run. Whether legacy carry and resume should instead be refused outright is an owner decision; refusing would stop the native continuation route from the accepted checkpoint. **Superseded 2026-09-26:** the owner adopted the refusal; see (e) at the end of this record.
 
 ### Fixtures
 File `crates/jope-engine/tests/continuation_modes.rs` (feature `neural`, CPU, no model). It exercises the same guard functions `rank_impl` calls.
@@ -260,8 +260,8 @@ File `crates/jope-engine/tests/continuation_modes.rs` (feature `neural`, CPU, no
 | Identity equals an independently restated literal; digest and named constants pinned | `the_objective_identity_restates_every_declared_literal` |
 | Every request is exactly one mode; ambiguity refused | `every_request_is_exactly_one_mode_and_ambiguity_is_refused` |
 | G1: the legacy two-identifier guard accepts an objective change; the full identity refuses it for carry and resume; warm start records it | `the_two_identifier_guard_accepted_an_objective_change_that_the_full_identity_refuses` |
-| Exact resume refuses objective, digest, microbatch, world, corpus, vocabulary, seed, sampler, architecture, declared-change, absent-partition and legacy-runtime changes; legacy recorded as `legacy_ids_only` | `exact_resume_refuses_every_undeclared_change` |
-| Carry accepts a new corpus, seed and sampler; refuses an undeclared, mis-declared or unsupported declared change and any objective or vocabulary change; a legacy partition is recorded unknown | `a_carry_transition_allows_only_declared_changes` |
+| Exact resume refuses objective, digest, microbatch, world, corpus, vocabulary, seed, sampler, architecture, declared-change, absent-partition and legacy-runtime changes, and (since (e)) any legacy parent | `exact_resume_refuses_every_undeclared_change` |
+| Carry accepts a new corpus, seed and sampler; refuses an undeclared, mis-declared or unsupported declared change and any objective or vocabulary change; an absent partition is recorded unknown; (since (e)) a legacy parent is refused | `a_carry_transition_allows_only_declared_changes` |
 | Warm start resets the optimizer, may change the objective and partition, declares nothing; refuses a vocabulary change; cold initialization has no parent | `a_weight_warm_start_resets_the_optimizer_and_declares_nothing` |
 | Transition lineages keep their name; an unrecorded lineage mode stays unknown | `a_transition_lineage_never_inherits_an_exact_resume_claim` |
 
@@ -472,3 +472,36 @@ The trainer already validates a declaration against the classified request (`con
 | `w6-post-nlcont-check-20260926T141606Z` | `cargo check --locked -p jope-parallel --all-targets` | exit 0 |
 
 **Open.** No native-loop materialization or worker execution ran; the fixtures exercise the contract functions the materializer, worker and graph call.
+
+### (e) Legacy parents continue only as a weight warm start (owner decision, 2026-09-26)
+
+**Decision.** `docs/internal/core-ip/work-orders/OWNER-DECISIONS.md` D12, adopted by owner delegation 2026-09-26. A parent without an objective identity (`objective` and `objective_sha256` absent) cannot prove its objective. It is refused for exact resume and for an optimizer-carry transition, even when both legacy identifiers match. It continues only as a weight warm start: optimizer reset, sampler from a new window, nothing carried, recorded `legacy_ids_only` (or `changed` when a legacy identifier differs).
+
+**Reproduction.** `pd-w6t06-legacy-pre-20260926T223055Z` (HEAD `8a55c4fef`, tests only): 5/9 passed, 4 failed, each because `check_parent` returned `Ok` for a legacy parent:
+- `exact_resume_refuses_every_undeclared_change` and `a_legacy_parent_continues_only_as_a_weight_warm_start`: exact resume of a legacy parent was accepted with `exact_resume_claim: true`, `continuity: legacy_ids_only`;
+- `a_carry_transition_allows_only_declared_changes`: a carry from a legacy parent was accepted with `optimizer: carried`;
+- `the_accepted_step_60000_checkpoint_continues_as_a_weight_warm_start`: the real accepted step-60000 `state.json` under the native loop's replay policy (`optimizer: carry`, new corpus) was accepted as `new_corpus_transition`, `optimizer: carried`, `parent_step: 60000`.
+
+**Fix** (`training/continuation.rs`, `check_parent_partition`, the receiving guard `rank_impl` calls before CUDA). After the objective continuity is computed and before any mode rule, `legacy_ids_only` is refused unless the mode is a weight warm start: "a parent without an objective identity continues only as a weight warm start (optimizer reset); {mode} is refused". Existing refusal wording is unchanged; a legacy parent whose identifiers differ still gets the existing "requires the same objective" refusals.
+
+**Fixtures** (`crates/jope-engine/tests/continuation_modes.rs`, feature `neural`, CPU).
+
+| Acceptance item | Test |
+|---|---|
+| Refused for exact resume, carry on the same or a new corpus, and carry with a declared partition; the parent value is unchanged by each refusal. Warm start: `optimizer: reset`, `sampler: new_window_from_zero`, no exact-resume claim, `legacy_ids_only`, parent digest null. Positive control: the same parent with its identity still resumes and carries (`identical`). Differing legacy identifiers: resume and carry refused with the existing wording, warm start recorded `changed` | `a_legacy_parent_continues_only_as_a_weight_warm_start` |
+| The real accepted step-60000 `state.json` (`docs/internal/asm-manual/data/training-history/accepted60000-state.json`, SHA-256 `8ac80c26…`, byte-identical to the host checkpoint's) has no objective identity, matching legacy identifiers and the `Config::regression(401)` config hash. The native loop's `optimizer: carry` policy classifies to a carry and is refused; exact resume is refused; `optimizer: reset` classifies to a weight warm start and continues: `parent_step` 60000, `lineage_mode: unknown_legacy`, partition `unknown`, corpus parent → new | `the_accepted_step_60000_checkpoint_continues_as_a_weight_warm_start` |
+| Updated: exact resume and carry now refuse the legacy parents these tests used to accept | `exact_resume_refuses_every_undeclared_change`, `a_carry_transition_allows_only_declared_changes` |
+
+**No authority state changes on refusal.** `check_parent_partition` is pure. `rank_impl` writes nothing before it: the guard runs before any weights or optimizer state are loaded, before `initialization.json`, `training-inputs.json` or any checkpoint is written, and before the communicator or CUDA device exists. (The launcher has already created the launch directory, as for every other pre-CUDA refusal.)
+
+**Runs**
+
+| Evidence directory | Command | Result |
+|---|---|---|
+| `pd-w6t06-legacy-pre-20260926T223055Z` | neural, `continuation_modes`, before the fix | 5/9, 4 failed as above |
+| `pd-w6t06-legacy-post-20260926T223205Z` | neural, `continuation_modes`, `checkpoint_commit`, `partition_wiring`, `lossless_partition`, `native_loop_continuation` | 35/35 |
+
+**Consequences and open items.**
+- The native loop's training block from the accepted step-60000 checkpoint (`native_loop/materialize.rs` `training_eligibility` freezes `optimizer: carry`) is now refused at the trainer's pre-CUDA guard. Continuation from step-60000 works as a weight warm start (fixture above), but the native loop's own window accounting assumes a carried optimizer: `native_graph.rs` requires `initialization.optimizer_parent_step == initial_optimizer_step` and a checkpoint step equal to `target_optimizer_step`, and a warm start restarts the optimizer step at zero. A native-loop warm-start window needs a new native-loop protocol identity; it is not built here.
+- In-flight lineages written before the objective identity existed can no longer be resumed exactly; they continue as a weight warm start.
+- `rank_impl` wiring stays compile-checked only.

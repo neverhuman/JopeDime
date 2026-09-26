@@ -11,9 +11,11 @@
 //! - **exact resume**: the complete same-lineage state. Nothing may change.
 //!
 //! Vocabulary and architecture never change implicitly in any mode. A
-//! parent written before the objective identity existed is accepted only
-//! when its two legacy objective identifiers match, and it is recorded as
-//! `legacy_ids_only`, never as `identical`.
+//! parent written before the objective identity existed cannot prove its
+//! objective: it is refused for exact resume and optimizer carry, and
+//! continues only as a weight warm start, recorded as `legacy_ids_only` when
+//! its two legacy objective identifiers match and never as `identical`
+//! (owner decision 2026-09-26, `docs/internal/core-ip/work-orders/OWNER-DECISIONS.md` D12).
 use super::objective::{identity_digest, RUNTIME_OBJECTIVE_ID};
 use anyhow::{ensure, Context, Result};
 use serde_json::{json, Value};
@@ -161,6 +163,14 @@ pub fn check_parent_partition(
         None if legacy_ids => "legacy_ids_only",
         None => "changed",
     };
+    // A legacy parent's objective is unverified: nothing but its weights may
+    // continue (OWNER-DECISIONS.md D12). Checked before any other mode rule.
+    ensure!(
+        objective != "legacy_ids_only" || mode == Mode::WeightWarmStart,
+        "a parent without an objective identity continues only as a weight warm start \
+         (optimizer reset); {} is refused",
+        mode.as_str()
+    );
     let parent_partition = state
         .get("execution_partition")
         .filter(|v| !v.is_null())
