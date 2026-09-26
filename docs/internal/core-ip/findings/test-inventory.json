@@ -1,0 +1,2673 @@
+{
+  "schema": "jope.regression-test-inventory/v1",
+  "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",
+  "coverage_map": "deploy/ci/coverage.json",
+  "baseline": "docs/internal/core-ip/findings/baseline.json",
+  "subsystems": {
+    "preparation": {
+      "work_packages": [
+        "W1"
+      ],
+      "description": "Dataset acquisition, family registry, preparation, splits, views and label admission."
+    },
+    "encoders": {
+      "work_packages": [
+        "W2"
+      ],
+      "description": "Hyperion/Foundation/Target encoders, semantic bundles and context production."
+    },
+    "policy": {
+      "work_packages": [
+        "W2",
+        "W4"
+      ],
+      "description": "Policy model, grammar, decoding, sampling and proposal ranking."
+    },
+    "gp": {
+      "work_packages": [
+        "W4",
+        "W5"
+      ],
+      "description": "Genetic-programming search, variation, proposal population and expression kernels."
+    },
+    "fitting": {
+      "work_packages": [
+        "W5"
+      ],
+      "description": "Fit boundary, fitted predictors, selection, refit and scoring."
+    },
+    "teaching": {
+      "work_packages": [
+        "W3"
+      ],
+      "description": "Teacher admission, eligibility, HWM decisions and corpus membership."
+    },
+    "training": {
+      "work_packages": [
+        "W6"
+      ],
+      "description": "Training corpus, objectives, updates and checkpoints."
+    },
+    "storage": {
+      "work_packages": [
+        "W3",
+        "W6",
+        "W8"
+      ],
+      "description": "Ledgers, sealed storage, mirrors and durable state."
+    },
+    "export": {
+      "work_packages": [
+        "W9"
+      ],
+      "description": "Fitted export, emitters and backend parity."
+    },
+    "orchestration": {
+      "work_packages": [
+        "W7"
+      ],
+      "description": "SmartCluster, workers, queues, services and native controller."
+    },
+    "performance": {
+      "work_packages": [
+        "W11"
+      ],
+      "description": "GPU/timing benchmarks and performance harnesses."
+    },
+    "evaluation": {
+      "work_packages": [
+        "W10"
+      ],
+      "description": "Arena/Elo, panels and benchmark evaluation."
+    },
+    "evidence": {
+      "work_packages": [
+        "W12"
+      ],
+      "description": "Evidence, findings and claim verification tooling."
+    }
+  },
+  "items": {
+    "python:benchmarks/test_prepare.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "evaluation"
+      ]
+    },
+    "python:crates/jope-bench/adapters/test_panel.py": {
+      "role": "regression",
+      "subsystems": [
+        "evaluation"
+      ]
+    },
+    "python:crates/jope-bench/src/panel/test_inference_report.py": {
+      "role": "regression",
+      "subsystems": [
+        "performance"
+      ]
+    },
+    "python:deploy/ci/test-aggregate.py": {
+      "role": "infrastructure",
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+    },
+    "python:deploy/ci/test-cargo-artifact.py": {
+      "role": "infrastructure",
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+    },
+    "python:deploy/ci/test-coverage.py": {
+      "role": "infrastructure",
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+    },
+    "python:deploy/ci/test-full-main.py": {
+      "role": "infrastructure",
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+    },
+    "python:deploy/ci/test-install-private.py": {
+      "role": "infrastructure",
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+    },
+    "python:deploy/ci/test-prepare-asm-runtime.py": {
+      "role": "infrastructure",
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+    },
+    "python:deploy/ci/test-qualify-demo.py": {
+      "role": "infrastructure",
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+    },
+    "python:deploy/ci/test-receipt.py": {
+      "role": "infrastructure",
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+    },
+    "python:deploy/ci/test-results.py": {
+      "role": "infrastructure",
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+    },
+    "python:deploy/ci/test-runner.py": {
+      "role": "infrastructure",
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+    },
+    "python:deploy/ci/test-status.py": {
+      "role": "infrastructure",
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+    },
+    "python:deploy/ci/test-training-proof.py": {
+      "role": "infrastructure",
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+    },
+    "python:deploy/kernel-v1/source/tests/test_experiment_scheduler.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:deploy/kernel-v1/source/tests/test_opportunistic_proposals.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:deploy/kernel-v1/source/tests/test_opportunistic_proposals_v2.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:deploy/kernel-v1/source/tools/test_binary_inventory.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:deploy/kernel-v1/source/tools/test_binary_workflow.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:deploy/kernel-v1/source/tools/test_campaign_bound_jobs.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:deploy/kernel-v1/source/tools/test_continuous_learning.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:deploy/kernel-v1/source/tools/test_corpus_cache_snapshot.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:deploy/kernel-v1/source/tools/test_deferred_proposal_admission.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:deploy/kernel-v1/source/tools/test_experiment_hardening.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:deploy/kernel-v1/source/tools/test_extend_component_sampling.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:deploy/kernel-v1/source/tools/test_gpu_batch_probe.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:deploy/kernel-v1/source/tools/test_kernel_release.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:deploy/kernel-v1/source/tools/test_kernel_verification.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:deploy/kernel-v1/source/tools/test_qualify_matched_v2.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:deploy/kernel-v1/source/tools/test_qualify_pure_proposals.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:deploy/kernel-v1/source/tools/test_report_cycle.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:deploy/kernel-v1/source/tools/test_seed_experiment.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:deploy/kernel-v1/source/tools/test_watch_campaign_reports.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:deploy/maintenance/test_report.py": {
+      "role": "infrastructure",
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+    },
+    "python:deploy/maintenance/test_wrapper.py": {
+      "role": "infrastructure",
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+    },
+    "python:docs/internal/core-ip/tools/test_verify_dispositions.py": {
+      "role": "regression",
+      "subsystems": [
+        "evidence"
+      ]
+    },
+    "python:docs/internal/core-ip/tools/test_verify_findings.py": {
+      "role": "regression",
+      "subsystems": [
+        "evidence"
+      ]
+    },
+    "python:docs/internal/core-ip/tools/test_verify_test_inventory.py": {
+      "role": "regression",
+      "subsystems": [
+        "evidence"
+      ]
+    },
+    "python:python/src/jope/research/test_absolute_path_audit.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/research/test_exact_accept.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/research/test_exact_adaptive.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/research/test_exact_backlog.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/research/test_exact_campaign.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/research/test_exact_canary.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/research/test_exact_canary_propose.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/research/test_exact_capacity.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/research/test_exact_common.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/research/test_exact_compile_cache.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/research/test_exact_context_catalog.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/research/test_exact_context_proposals.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/research/test_exact_controller.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/research/test_exact_dl_generate.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/research/test_exact_evaluator.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/research/test_exact_expansion.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/research/test_exact_freshness.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/research/test_exact_freshness_mcp.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/research/test_exact_gp_bridge.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/research/test_exact_ingest.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/research/test_exact_monitor.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/research/test_exact_ops.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/research/test_exact_packed_corpus.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/research/test_exact_pair_registry.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/research/test_exact_sealed_audit.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/research/test_exact_service.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/research/test_exact_service_launcher.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/research/test_exact_status.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/research/test_exact_takeover.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/research/test_exact_train.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/research/test_exact_train_reserve.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/research/test_exact_wave.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/research/test_exact_winner_scan.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/research/test_jope_learning_report.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/research/test_jope_recovery_report.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/research/test_migrate_foundation_inventory.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/research/test_project_boundary_check.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/research/test_proposal_task_routing.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/research/test_smart_v3_cpu_scq.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/research/test_train_only_redteam_generation.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/research/test_train_only_redteam_scq.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/research/test_train_spec_policy.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/research/test_validate_unified_v3.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/research/test_workspace_batch.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/research/test_workspace_inventory.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/research/test_workspace_pages.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/research/test_workspace_pages_review.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/research/test_workspace_sync.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_activation.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_authority_resolution.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_beyond_reproach.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_binary_inventory.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_binary_workflow.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_campaign_bound_jobs.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_candidate_intake.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_champion_git.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_checkpoint_ledger.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_closed_loop.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_collect_admitted_corpus.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_component_ledger.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_continuous_learning.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_continuous_quality_units.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_continuous_status.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_continuous_teacher_progress.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_corpus_cache_snapshot.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_corpus_verification.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_cut_baseline.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_deferred_proposal_admission.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_direct_proposal_evaluation.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_eval_registry.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_expansion_assembly.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_experiment_hardening.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_expert_iteration_setup.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_extend_component_sampling.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_family_growth_policy.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_fence_honesty.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_flywheel_acceptance.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_flywheel_baseline.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_flywheel_f9_readout.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_flywheel_headline.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_flywheel_metrics.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_flywheel_plan.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_flywheel_series.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_flywheel_verdict.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_four_task_campaign.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_freeze_registry_release.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_funding_client.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_funding_recovery.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_gp_emission_handoff.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_gp_queue_gc.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_gpu_batch_probe.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_gpu_occupancy.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_head_cost_census.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_hold_release_readout.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_inventory_legacy_fits.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_kernel_release.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_kernel_verification.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_label_admission.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_launch_next.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_league_episode.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_learning_inputs.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_live_controller_copy.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_loop_preflight.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_migration_health.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_mirror_learning_receipts.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_node_mirror_pull.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_nominate_replay_challenger.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_operational_release.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_original_learning_selection.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_original_query_selection.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_population_arm_policy.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_population_judge.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_promotion_gate.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_promotion_tournament.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_qualification_budget.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_qualification_collection.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_qualification_slots.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_qualify_matched_v2.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_qualify_pure_proposals.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_qualify_resident_workers.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_qualify_teaching_store.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_quarantine_incompatible_searches.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_raw_triplet_parity.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_registry_namespace.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_release_qualification.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_replay_planner.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_replay_policy.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_report_cycle.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_required_learning_plan.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_required_learning_trial.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_resident_gpu_pool.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_restamp_encode_receipts.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_scored_family_allowlist.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_screen_fixture.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_screen_pilot_select.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_seed_experiment.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_selfplay_milestones.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_shadow_eval_registry.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_shared_teaching_cache.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_stopped_unit.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_successor_ledger.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_successor_targets.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_sync_certificates.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_task_kernel_fixtures.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_unpublished_cut_census.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_useful_hour.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_verify_manifest_v10.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_verify_remote.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_watch_campaign_reports.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_winrate_receipt.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/src/jope/tools/test_xbabe2_local_ui_ci.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/tests/engine/test_experiment_scheduler.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:python/tests/engine/test_opportunistic_proposals.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:python/tests/engine/test_opportunistic_proposals_v2.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:python/tests/test_append_realtime_agent_chat.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:python/tests/test_backfill_hyperion_stale_confirmation_cells.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:python/tests/test_context_proposals.py": {
+      "role": "regression",
+      "subsystems": [
+        "policy"
+      ]
+    },
+    "python:python/tests/test_corpus_freeze_guardrails.py": {
+      "role": "regression",
+      "subsystems": [
+        "teaching",
+        "training"
+      ]
+    },
+    "python:python/tests/test_dlgp_budget_campaign.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:python/tests/test_dlgp_safe_cleanup.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:python/tests/test_durable_selfplay.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:python/tests/test_expanded_gp_finale_audit.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:python/tests/test_expanded_gp_protected_screen.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:python/tests/test_experimental_proposal.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/tests/test_experimental_runtime.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/tests/test_external_fixture_index.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:python/tests/test_freeze_corpus_decoupling.py": {
+      "role": "regression",
+      "subsystems": [
+        "teaching",
+        "training"
+      ]
+    },
+    "python:python/tests/test_freeze_hyperion_precomputed_cell_coverage.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:python/tests/test_frozen_vocabulary_training.py": {
+      "role": "regression",
+      "subsystems": [
+        "training",
+        "policy"
+      ]
+    },
+    "python:python/tests/test_genome_boost_cluster_campaign.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:python/tests/test_golden46_campaign.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:python/tests/test_golden46_execution.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:python/tests/test_golden46_special_execution.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:python/tests/test_hyperion_authority_b5_screen.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:python/tests/test_hyperion_blend_train_audit.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:python/tests/test_hyperion_cv_search_protected.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:python/tests/test_hyperion_final_cv7_train_benchmark.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:python/tests/test_hyperion_residual_train_audit.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:python/tests/test_hyperion_train_audit.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:python/tests/test_install_hyperion_orig_v2.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:python/tests/test_optional_task_readiness.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:python/tests/test_policy_training_contract.py": {
+      "role": "regression",
+      "subsystems": [
+        "training"
+      ]
+    },
+    "python:python/tests/test_raw_floor_train_audit.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:python/tests/test_realtime_selfplay.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:python/tests/test_recipe_e.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:python/tests/test_reconstruct_latest_hyperion_old_semantics.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:python/tests/test_reconstruct_old_hyperion_vs.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:python/tests/test_replay_hyperion_confirmation_cells.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:python/tests/test_reward_ranked_dl_generate.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:python/tests/test_selfplay_controller.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:python/tests/test_task_semantics.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation"
+      ]
+    },
+    "python:python/tests/test_test_exact_campaign.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "python:python/tests/test_training_campaign.py": {
+      "role": "regression",
+      "subsystems": [
+        "training"
+      ]
+    },
+    "python:python/tests/test_training_comparison.py": {
+      "role": "regression",
+      "subsystems": [
+        "training"
+      ]
+    },
+    "python:python/tests/test_training_corpus_contract.py": {
+      "role": "regression",
+      "subsystems": [
+        "training",
+        "teaching"
+      ]
+    },
+    "python:python/tests/test_training_input_closure.py": {
+      "role": "regression",
+      "subsystems": [
+        "training",
+        "preparation"
+      ]
+    },
+    "python:python/tests/test_training_transition.py": {
+      "role": "regression",
+      "subsystems": [
+        "training"
+      ]
+    },
+    "python:python/tests/test_verify_old_hyperion_vs_replays.py": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:battle-gpu/lib/battle_gpu": {
+      "role": "regression",
+      "subsystems": [
+        "performance"
+      ]
+    },
+    "target:feat-math/lib/feat_math": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "fitting",
+        "export"
+      ]
+    },
+    "target:feat-math/test/advanced_v3_conformance": {
+      "role": "regression",
+      "subsystems": [
+        "fitting",
+        "export"
+      ]
+    },
+    "target:feat-math/test/advanced_v3_fitted_cpp": {
+      "role": "regression",
+      "subsystems": [
+        "export"
+      ]
+    },
+    "target:feat-math/test/advanced_v3_multiclass": {
+      "role": "deferred-classification",
+      "reason": "binary/multiclass/time-series specialized scope deferred by the regression plan"
+    },
+    "target:feat-math/test/advanced_v3_parity": {
+      "role": "regression",
+      "subsystems": [
+        "export"
+      ]
+    },
+    "target:feat-math/test/advanced_v3_property": {
+      "role": "regression",
+      "subsystems": [
+        "fitting"
+      ]
+    },
+    "target:feat-math/test/bench": {
+      "role": "regression",
+      "subsystems": [
+        "performance"
+      ]
+    },
+    "target:feat-math/test/champion_parity": {
+      "role": "regression",
+      "subsystems": [
+        "export"
+      ]
+    },
+    "target:feat-math/test/golden": {
+      "role": "regression",
+      "subsystems": [
+        "fitting"
+      ]
+    },
+    "target:feat-math/test/ip_scrub": {
+      "role": "regression",
+      "subsystems": [
+        "export"
+      ]
+    },
+    "target:feat-math/test/kernel_codec": {
+      "role": "regression",
+      "subsystems": [
+        "gp"
+      ]
+    },
+    "target:feat-math/test/kernel_emission_safety": {
+      "role": "regression",
+      "subsystems": [
+        "export"
+      ]
+    },
+    "target:feat-math/test/kernel_expression": {
+      "role": "regression",
+      "subsystems": [
+        "gp"
+      ]
+    },
+    "target:feat-math/test/kernel_pipeline": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "fitting"
+      ]
+    },
+    "target:feat-math/test/legacy_v2_freeze": {
+      "role": "regression",
+      "subsystems": [
+        "export"
+      ]
+    },
+    "target:feat-math/test/portable_parity": {
+      "role": "regression",
+      "subsystems": [
+        "export"
+      ]
+    },
+    "target:feat-math/test/registry_vocabulary": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "policy"
+      ]
+    },
+    "target:feat-math/test/tokens": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "policy"
+      ]
+    },
+    "target:hyperion/bin/hyperion-batch-worker": {
+      "role": "regression",
+      "subsystems": [
+        "encoders"
+      ]
+    },
+    "target:hyperion/bin/hyperion-v5-reference": {
+      "role": "regression",
+      "subsystems": [
+        "encoders"
+      ]
+    },
+    "target:hyperion/lib/hyperion": {
+      "role": "regression",
+      "subsystems": [
+        "encoders"
+      ]
+    },
+    "target:hyperion/test/weights_smoke": {
+      "role": "regression",
+      "subsystems": [
+        "encoders"
+      ]
+    },
+    "target:jain-smartcluster-core/lib/jain_smartcluster_core": {
+      "role": "regression",
+      "subsystems": [
+        "orchestration"
+      ]
+    },
+    "target:jain-smartcluster-daemon/bin/scqd": {
+      "role": "regression",
+      "subsystems": [
+        "orchestration"
+      ]
+    },
+    "target:jain-smartcluster-daemon/lib/jain_smartcluster_daemon": {
+      "role": "regression",
+      "subsystems": [
+        "orchestration"
+      ]
+    },
+    "target:jain-smartcluster-daemon/test/daemon_e2e": {
+      "role": "regression",
+      "subsystems": [
+        "orchestration"
+      ]
+    },
+    "target:jain-smartcluster-daemon/test/gpu_host": {
+      "role": "regression",
+      "subsystems": [
+        "orchestration",
+        "performance"
+      ]
+    },
+    "target:jain-smartcluster-daemon/test/linux_cgroup": {
+      "role": "regression",
+      "subsystems": [
+        "orchestration"
+      ]
+    },
+    "target:jain-smartcluster-daemon/test/performance": {
+      "role": "regression",
+      "subsystems": [
+        "orchestration",
+        "performance"
+      ]
+    },
+    "target:jain-smartcluster-daemon/test/resident_kernel": {
+      "role": "regression",
+      "subsystems": [
+        "orchestration"
+      ]
+    },
+    "target:jain-smartcluster-daemon/test/restart_chaos": {
+      "role": "regression",
+      "subsystems": [
+        "orchestration"
+      ]
+    },
+    "target:jain-smartcluster-daemon/test/soak": {
+      "role": "regression",
+      "subsystems": [
+        "orchestration"
+      ]
+    },
+    "target:jain-smartcluster-fabric/lib/jain_smartcluster_fabric": {
+      "role": "regression",
+      "subsystems": [
+        "orchestration"
+      ]
+    },
+    "target:jain-smartcluster/lib/jain_smartcluster": {
+      "role": "regression",
+      "subsystems": [
+        "orchestration"
+      ]
+    },
+    "target:jain-smartcluster/test/native_fit_protocol": {
+      "role": "regression",
+      "subsystems": [
+        "orchestration",
+        "fitting"
+      ]
+    },
+    "target:jain-smartcluster/test/wire_contract": {
+      "role": "regression",
+      "subsystems": [
+        "orchestration"
+      ]
+    },
+    "target:jain-worker/bin/jain-worker": {
+      "role": "regression",
+      "subsystems": [
+        "orchestration"
+      ]
+    },
+    "target:jainnode/bin/jainnode": {
+      "role": "regression",
+      "subsystems": [
+        "orchestration"
+      ]
+    },
+    "target:jainnode/lib/jainnode": {
+      "role": "regression",
+      "subsystems": [
+        "orchestration"
+      ]
+    },
+    "target:jainnode/test/rustls_provider": {
+      "role": "regression",
+      "subsystems": [
+        "orchestration"
+      ]
+    },
+    "target:jope-arena/bin/jope-arena": {
+      "role": "regression",
+      "subsystems": [
+        "evaluation"
+      ]
+    },
+    "target:jope-arena/lib/jope_arena": {
+      "role": "regression",
+      "subsystems": [
+        "evaluation"
+      ]
+    },
+    "target:jope-arena/test/elo_regression": {
+      "role": "regression",
+      "subsystems": [
+        "evaluation"
+      ]
+    },
+    "target:jope-bench/bin/jope-bench": {
+      "role": "regression",
+      "subsystems": [
+        "evaluation",
+        "export",
+        "performance"
+      ]
+    },
+    "target:jope-bench/lib/jope_bench": {
+      "role": "regression",
+      "subsystems": [
+        "evaluation",
+        "export",
+        "performance"
+      ]
+    },
+    "target:jope-bench/test/classification": {
+      "role": "deferred-classification",
+      "reason": "binary/multiclass/time-series specialized scope deferred by the regression plan"
+    },
+    "target:jope-bench/test/committed_evidence": {
+      "role": "regression",
+      "subsystems": [
+        "evaluation",
+        "evidence"
+      ]
+    },
+    "target:jope-bench/test/pwlinear": {
+      "role": "regression",
+      "subsystems": [
+        "fitting"
+      ]
+    },
+    "target:jope-cli/bin/jope": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "orchestration"
+      ]
+    },
+    "target:jope-cli/lib/jope_cli": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "orchestration"
+      ]
+    },
+    "target:jope-cli/test/offline_cli": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "orchestration"
+      ]
+    },
+    "target:jope-datasets/bin/jope-datasets": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "storage"
+      ]
+    },
+    "target:jope-datasets/lib/jope_datasets": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "storage"
+      ]
+    },
+    "target:jope-datasets/test/ingest_dry_run": {
+      "role": "regression",
+      "subsystems": [
+        "preparation"
+      ]
+    },
+    "target:jope-datasets/test/repo_verify": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "storage"
+      ]
+    },
+    "target:jope-datasets/test/roundtrip": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "storage"
+      ]
+    },
+    "target:jope-datasets/test/schema_agreement": {
+      "role": "regression",
+      "subsystems": [
+        "preparation"
+      ]
+    },
+    "target:jope-dime-regressor/bin/aspfm_recovery_evolve": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/corpus_eval": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope-dime-regressor": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control; also holds real-corpus island/train-only fixtures and deferred binary42 fixtures"
+    },
+    "target:jope-dime-regressor/bin/jope_canary_executor": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope_capacity": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope_causal_evidence": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope_causal_pair_repair": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope_compile_cache": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope_dlgp_best5": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope_dlgp_best5_worker": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope_dlgp_budget_supervisor": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope_effective_unit_audit": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope_encoder_supervisor": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope_encoder_v2_capacity": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope_encoder_v2_import": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope_expanded_catalog": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope_flywheel_liveness": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope_generalized_gp": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope_gp_bridge": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope_gpu_lane_admission": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope_hyperion_cache": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope_hyperion_gate": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope_ledger_reconciler": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope_ops_health_check": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope_queue_control": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope_reporting": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope_sealed_zeroshot": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope_selfplay_alarms": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope_selfplay_bundle": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope_selfplay_corpus_freezer": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope_selfplay_expansion_driver": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope_selfplay_freshness": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope_selfplay_gc": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope_selfplay_mcp": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope_selfplay_promotion": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope_selfplay_propose_driver": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope_selfplay_queue": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope_selfplay_shadow": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope_selfplay_status": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope_selfplay_supply": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope_selfplay_trainer_watchdog": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope_selfplay_tui": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope_selfplay_wave": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope_spec_drift": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope_strategy_screen": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope_task_elo": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope_task_learning_controller": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope_task_rating": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope_timeseries_export": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope_training_archive": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope_training_history": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope_training_replica": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope_utilization_supervisor": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/jope_v3_control": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/scq_runs_gc": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/bin/search-v3": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/lib/jope_dime_regressor": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/test/dlgp_best5": {
+      "role": "regression-real-corpus",
+      "subsystems": [
+        "gp",
+        "training"
+      ]
+    },
+    "target:jope-dime-regressor/test/dlgp_budget_campaign": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/test/encoder_v2_recovery": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/test/epoch6_foundation": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/test/epoch6_waves": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/test/generalized_gp": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/test/hyperion_gate": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/test/router_contracts_v2": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/test/search_v3": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/test/selfplay_shadow_integration": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-dime-regressor/test/systemd_unit_paths": {
+      "role": "historical",
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+    },
+    "target:jope-learning/bin/jope-learning": {
+      "role": "regression",
+      "subsystems": [
+        "teaching",
+        "storage"
+      ]
+    },
+    "target:jope-learning/lib/jope_learning": {
+      "role": "regression",
+      "subsystems": [
+        "teaching",
+        "storage"
+      ]
+    },
+    "target:jope-learning/test/champions_fixture": {
+      "role": "regression",
+      "subsystems": [
+        "teaching"
+      ]
+    },
+    "target:jope-learning/test/ledger_tamper": {
+      "role": "regression",
+      "subsystems": [
+        "storage",
+        "teaching"
+      ]
+    },
+    "target:jope-learning/test/mirror_lost_update": {
+      "role": "regression",
+      "subsystems": [
+        "storage"
+      ]
+    },
+    "target:jope-learning/test/mirror_reconcile": {
+      "role": "regression",
+      "subsystems": [
+        "storage"
+      ]
+    },
+    "target:jope-learning/test/nonfinite_scores": {
+      "role": "regression",
+      "subsystems": [
+        "teaching"
+      ]
+    },
+    "target:jope-learning/test/schema_agreement": {
+      "role": "regression",
+      "subsystems": [
+        "storage"
+      ]
+    },
+    "target:jope-learning/test/score_import": {
+      "role": "regression",
+      "subsystems": [
+        "teaching"
+      ]
+    },
+    "target:jope-learning/test/sources": {
+      "role": "regression",
+      "subsystems": [
+        "storage"
+      ]
+    },
+    "target:jope-learning/test/state_resolve": {
+      "role": "regression",
+      "subsystems": [
+        "storage"
+      ]
+    },
+    "target:jope-models/bin/jope-models": {
+      "role": "regression",
+      "subsystems": [
+        "storage",
+        "encoders"
+      ]
+    },
+    "target:jope-models/lib/jope_models": {
+      "role": "regression",
+      "subsystems": [
+        "storage",
+        "encoders"
+      ]
+    },
+    "target:jope-models/test/roundtrip": {
+      "role": "regression",
+      "subsystems": [
+        "storage"
+      ]
+    },
+    "target:jope-motifs/lib/jope_motifs": {
+      "role": "regression",
+      "subsystems": [
+        "gp"
+      ]
+    },
+    "target:jope-parallel/bin/jope-build-receipt": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "gp",
+        "fitting",
+        "teaching",
+        "training",
+        "storage",
+        "export",
+        "orchestration"
+      ]
+    },
+    "target:jope-parallel/bin/jope-continuation-corpus": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "gp",
+        "fitting",
+        "teaching",
+        "training",
+        "storage",
+        "export",
+        "orchestration"
+      ]
+    },
+    "target:jope-parallel/bin/jope-gp-population": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "gp",
+        "fitting",
+        "teaching",
+        "training",
+        "storage",
+        "export",
+        "orchestration"
+      ]
+    },
+    "target:jope-parallel/bin/jope-native-graph": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "gp",
+        "fitting",
+        "teaching",
+        "training",
+        "storage",
+        "export",
+        "orchestration"
+      ]
+    },
+    "target:jope-parallel/bin/jope-native-loop": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "gp",
+        "fitting",
+        "teaching",
+        "training",
+        "storage",
+        "export",
+        "orchestration"
+      ]
+    },
+    "target:jope-parallel/bin/jope-native-observer": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "gp",
+        "fitting",
+        "teaching",
+        "training",
+        "storage",
+        "export",
+        "orchestration"
+      ]
+    },
+    "target:jope-parallel/bin/jope-native-provisioner": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "gp",
+        "fitting",
+        "teaching",
+        "training",
+        "storage",
+        "export",
+        "orchestration"
+      ]
+    },
+    "target:jope-parallel/bin/jope-native-recovery": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "gp",
+        "fitting",
+        "teaching",
+        "training",
+        "storage",
+        "export",
+        "orchestration"
+      ]
+    },
+    "target:jope-parallel/bin/jope-parallel": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "gp",
+        "fitting",
+        "teaching",
+        "training",
+        "storage",
+        "export",
+        "orchestration"
+      ]
+    },
+    "target:jope-parallel/bin/jope-prove-native-grant-request": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "gp",
+        "fitting",
+        "teaching",
+        "training",
+        "storage",
+        "export",
+        "orchestration"
+      ]
+    },
+    "target:jope-parallel/bin/jope-smartcluster-worker": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "gp",
+        "fitting",
+        "teaching",
+        "training",
+        "storage",
+        "export",
+        "orchestration"
+      ]
+    },
+    "target:jope-parallel/bin/jope-witness-ssh": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "gp",
+        "fitting",
+        "teaching",
+        "training",
+        "storage",
+        "export",
+        "orchestration"
+      ]
+    },
+    "target:jope-parallel/lib/jope_parallel": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "gp",
+        "fitting",
+        "teaching",
+        "training",
+        "storage",
+        "export",
+        "orchestration"
+      ]
+    },
+    "target:jope-parallel/test/ablation_ranking": {
+      "role": "regression",
+      "subsystems": [
+        "policy",
+        "training"
+      ]
+    },
+    "target:jope-parallel/test/binary_preparation": {
+      "role": "deferred-classification",
+      "reason": "binary/multiclass/time-series specialized scope deferred by the regression plan"
+    },
+    "target:jope-parallel/test/corpus": {
+      "role": "regression",
+      "subsystems": [
+        "teaching",
+        "training"
+      ]
+    },
+    "target:jope-parallel/test/corpus_incremental": {
+      "role": "regression",
+      "subsystems": [
+        "teaching",
+        "training"
+      ]
+    },
+    "target:jope-parallel/test/corpus_progress": {
+      "role": "regression",
+      "subsystems": [
+        "teaching",
+        "training"
+      ]
+    },
+    "target:jope-parallel/test/corpus_projection": {
+      "role": "regression",
+      "subsystems": [
+        "teaching",
+        "training"
+      ]
+    },
+    "target:jope-parallel/test/dashboard": {
+      "role": "regression",
+      "subsystems": [
+        "evidence"
+      ]
+    },
+    "target:jope-parallel/test/data_contracts": {
+      "role": "regression",
+      "subsystems": [
+        "preparation"
+      ]
+    },
+    "target:jope-parallel/test/experiment_cli": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "orchestration"
+      ]
+    },
+    "target:jope-parallel/test/experiment_isolation": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "orchestration"
+      ]
+    },
+    "target:jope-parallel/test/families": {
+      "role": "regression",
+      "subsystems": [
+        "preparation"
+      ]
+    },
+    "target:jope-parallel/test/fit_boundary": {
+      "role": "regression",
+      "subsystems": [
+        "fitting"
+      ]
+    },
+    "target:jope-parallel/test/gp_admission": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "fitting"
+      ]
+    },
+    "target:jope-parallel/test/gp_contracts": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "fitting",
+        "export"
+      ]
+    },
+    "target:jope-parallel/test/gpu_entry_guards": {
+      "role": "regression",
+      "subsystems": [
+        "orchestration",
+        "performance"
+      ]
+    },
+    "target:jope-parallel/test/grammar": {
+      "role": "regression",
+      "subsystems": [
+        "policy",
+        "gp"
+      ]
+    },
+    "target:jope-parallel/test/learning_history": {
+      "role": "regression",
+      "subsystems": [
+        "teaching"
+      ]
+    },
+    "target:jope-parallel/test/proposal_ranking": {
+      "role": "regression",
+      "subsystems": [
+        "policy"
+      ]
+    },
+    "target:jope-parallel/test/queue": {
+      "role": "regression",
+      "subsystems": [
+        "orchestration"
+      ]
+    },
+    "target:jope-parallel/test/ranked_proposals": {
+      "role": "regression",
+      "subsystems": [
+        "policy"
+      ]
+    },
+    "target:jope-parallel/test/replay_training": {
+      "role": "regression",
+      "subsystems": [
+        "training"
+      ]
+    },
+    "target:jope-parallel/test/resident_protocol": {
+      "role": "regression",
+      "subsystems": [
+        "orchestration"
+      ]
+    },
+    "target:jope-parallel/test/resident_worker": {
+      "role": "regression",
+      "subsystems": [
+        "orchestration"
+      ]
+    },
+    "target:jope-parallel/test/reward_sequence": {
+      "role": "regression",
+      "subsystems": [
+        "policy"
+      ]
+    },
+    "target:jope-parallel/test/sealed_storage": {
+      "role": "regression",
+      "subsystems": [
+        "storage",
+        "preparation"
+      ]
+    },
+    "target:jope-parallel/test/service_continuous": {
+      "role": "regression",
+      "subsystems": [
+        "fitting",
+        "orchestration"
+      ]
+    },
+    "target:jope-parallel/test/training": {
+      "role": "regression",
+      "subsystems": [
+        "training"
+      ]
+    },
+    "target:jope-parallel/test/view_contracts": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "gp",
+        "fitting"
+      ]
+    },
+    "target:jope-paths/bin/jope-units-render": {
+      "role": "infrastructure",
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+    },
+    "target:jope-paths/lib/jope_paths": {
+      "role": "infrastructure",
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+    },
+    "target:jope-pipeline/bin/jope-context-proof": {
+      "role": "regression",
+      "subsystems": [
+        "encoders",
+        "policy"
+      ]
+    },
+    "target:jope-pipeline/lib/jope_pipeline": {
+      "role": "regression",
+      "subsystems": [
+        "encoders",
+        "policy"
+      ]
+    },
+    "target:jope-pipeline/test/schema_agreement": {
+      "role": "regression",
+      "subsystems": [
+        "encoders",
+        "policy"
+      ]
+    },
+    "target:jope-policy/bin/jope-context-worker": {
+      "role": "regression",
+      "subsystems": [
+        "policy",
+        "encoders"
+      ]
+    },
+    "target:jope-policy/bin/jope-policy-producer": {
+      "role": "regression",
+      "subsystems": [
+        "policy",
+        "encoders"
+      ]
+    },
+    "target:jope-policy/lib/jope_policy": {
+      "role": "regression",
+      "subsystems": [
+        "policy",
+        "encoders"
+      ]
+    },
+    "target:jope-policy/test/jope_dime": {
+      "role": "regression",
+      "subsystems": [
+        "policy",
+        "encoders"
+      ]
+    },
+    "target:numpy-pcg64/lib/numpy_pcg64": {
+      "role": "infrastructure",
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+    },
+    "target:numpy-pcg64/test/first_outputs": {
+      "role": "infrastructure",
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+    },
+    "target:numpy-pcg64/test/sampling_golden": {
+      "role": "infrastructure",
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+    },
+    "target:scq/bin/scq": {
+      "role": "regression",
+      "subsystems": [
+        "orchestration"
+      ]
+    },
+    "target:scq/lib/scq": {
+      "role": "regression",
+      "subsystems": [
+        "orchestration"
+      ]
+    },
+    "target:starforge/bin/model_bundle_pack": {
+      "role": "regression",
+      "subsystems": [
+        "encoders",
+        "policy"
+      ]
+    },
+    "target:starforge/bin/starforge": {
+      "role": "regression",
+      "subsystems": [
+        "encoders",
+        "policy"
+      ]
+    },
+    "target:starforge/lib/starforge": {
+      "role": "regression",
+      "subsystems": [
+        "encoders",
+        "policy"
+      ]
+    },
+    "target:starforge/test/foundation_parity": {
+      "role": "regression",
+      "subsystems": [
+        "encoders"
+      ]
+    },
+    "target:starforge/test/golden_parity": {
+      "role": "regression",
+      "subsystems": [
+        "encoders"
+      ]
+    },
+    "target:starforge/test/jope_policy_parity": {
+      "role": "regression",
+      "subsystems": [
+        "policy"
+      ]
+    },
+    "target:starforge/test/novel_input_differential": {
+      "role": "regression",
+      "subsystems": [
+        "encoders"
+      ]
+    },
+    "target:starforge/test/target_encoder_parity": {
+      "role": "regression",
+      "subsystems": [
+        "encoders"
+      ]
+    }
+  },
+  "baseline_triage": [
+    {
+      "lane": "full-default",
+      "class": "jope-dime-regressor::dlgp_best5",
+      "test": "all_six_arms_complete_eight_generation_synthetic_worker_with_exact_ledgers",
+      "item": "target:jope-dime-regressor/test/dlgp_best5",
+      "triage": "missing-real-corpus-input",
+      "status": "open",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-hostlane-20260926T051335Z"
+      ],
+      "note": "Real-corpus fixture; roots now resolve via ADR-0003. Passes in the host lane with the read-only custody inputs; CI has no such inputs, so it stays a visible failure there."
+    },
+    {
+      "lane": "full-default",
+      "class": "jope-dime-regressor::dlgp_best5",
+      "test": "training_staging_rebuilds_stable_rows_without_resolving_test",
+      "item": "target:jope-dime-regressor/test/dlgp_best5",
+      "triage": "missing-real-corpus-input",
+      "status": "open",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-hostlane-20260926T051335Z"
+      ],
+      "note": "Real-corpus fixture; roots now resolve via ADR-0003. Passes in the host lane with the read-only custody inputs; CI has no such inputs, so it stays a visible failure there."
+    },
+    {
+      "lane": "full-default",
+      "class": "jope-dime-regressor::bin/jope-dime-regressor",
+      "test": "commands::train_only_study::tests::production_sotarena_registry_freezes_exact_37_to_requested_10",
+      "item": "target:jope-dime-regressor/bin/jope-dime-regressor",
+      "triage": "missing-real-corpus-input",
+      "status": "open",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-hostlane-20260926T051335Z"
+      ],
+      "note": "Historical production context catalog not located on this host or in CI; explicit unavailable precondition added."
+    },
+    {
+      "lane": "full-default",
+      "class": "jope-dime-regressor::bin/jope-dime-regressor",
+      "test": "test_adaptive::binary42::tests::all_frozen_dataset_bindings_and_binary_labels_are_valid",
+      "item": "target:jope-dime-regressor/bin/jope-dime-regressor",
+      "triage": "deferred-classification",
+      "status": "open",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z"
+      ],
+      "note": "Binary classification is deferred; real-corpus inputs are absent here and in CI. Fails with an explicit unavailable message."
+    },
+    {
+      "lane": "full-default",
+      "class": "jope-dime-regressor::bin/jope-dime-regressor",
+      "test": "test_adaptive::binary42::tests::binary42_fitted_cpp17_predictions_match_rust_bits",
+      "item": "target:jope-dime-regressor/bin/jope-dime-regressor",
+      "triage": "deferred-classification",
+      "status": "open",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z"
+      ],
+      "note": "Binary classification is deferred; real-corpus inputs are absent here and in CI. Fails with an explicit unavailable message."
+    },
+    {
+      "lane": "full-default",
+      "class": "jope-dime-regressor::bin/jope-dime-regressor",
+      "test": "test_adaptive::island_extension::tests::generation_30_populations_reconstruct_deterministically",
+      "item": "target:jope-dime-regressor/bin/jope-dime-regressor",
+      "triage": "missing-real-corpus-input",
+      "status": "open",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-hostlane-20260926T051335Z"
+      ],
+      "note": "Real-corpus fixture; roots now resolve via ADR-0003. Passes in the host lane with the read-only custody inputs; CI has no such inputs, so it stays a visible failure there."
+    },
+    {
+      "lane": "full-default",
+      "class": "jope-dime-regressor::bin/jope-dime-regressor",
+      "test": "test_adaptive::island_extension::tests::prior_no_win_cohort_reconstructs_in_order",
+      "item": "target:jope-dime-regressor/bin/jope-dime-regressor",
+      "triage": "missing-real-corpus-input",
+      "status": "open",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-hostlane-20260926T051335Z"
+      ],
+      "note": "Real-corpus fixture; roots now resolve via ADR-0003. Passes in the host lane with the read-only custody inputs; CI has no such inputs, so it stays a visible failure there."
+    },
+    {
+      "lane": "full-default",
+      "class": "jope-dime-regressor::bin/jope-dime-regressor",
+      "test": "test_adaptive::island_extension::tests::sealed_generation_29_artifacts_bind_seven_champion_continuations",
+      "item": "target:jope-dime-regressor/bin/jope-dime-regressor",
+      "triage": "missing-real-corpus-input",
+      "status": "open",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-hostlane-20260926T051335Z"
+      ],
+      "note": "Real-corpus fixture; roots now resolve via ADR-0003. Passes in the host lane with the read-only custody inputs; CI has no such inputs, so it stays a visible failure there."
+    },
+    {
+      "lane": "full-default",
+      "class": "jope-parallel::gp_contracts",
+      "test": "fitted_predictor_roundtrip_matches_native_gp_and_restores_target_units",
+      "item": "target:jope-parallel/test/gp_contracts",
+      "triage": "fit-authority-fence",
+      "status": "open",
+      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness); cannot pass in a product build by design."
+    },
+    {
+      "lane": "full-default",
+      "class": "jope-parallel::gp_contracts",
+      "test": "sealed_memory_view_matches_file_evaluation_and_rejects_writes",
+      "item": "target:jope-parallel/test/gp_contracts",
+      "triage": "fit-authority-fence",
+      "status": "open",
+      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness); cannot pass in a product build by design."
+    },
+    {
+      "lane": "full-default",
+      "class": "jope-parallel::view_contracts",
+      "test": "fitted_view_predictor_uses_the_exact_cut_and_original_target_units",
+      "item": "target:jope-parallel/test/view_contracts",
+      "triage": "fit-authority-fence",
+      "status": "open",
+      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness); cannot pass in a product build by design."
+    },
+    {
+      "lane": "full-default",
+      "class": "jope-parallel::view_contracts",
+      "test": "experiment_crashes_at_durable_boundaries_recover_without_repeating_committed_fits",
+      "item": "target:jope-parallel/test/view_contracts",
+      "triage": "fit-authority-fence",
+      "status": "open",
+      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness); cannot pass in a product build by design."
+    },
+    {
+      "lane": "full-default",
+      "class": "jope-parallel::view_contracts",
+      "test": "isolated_fitted_view_export_binds_success_and_preserves_worker_failures",
+      "item": "target:jope-parallel/test/view_contracts",
+      "triage": "fit-authority-fence",
+      "status": "open",
+      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness); cannot pass in a product build by design."
+    },
+    {
+      "lane": "full-default",
+      "class": "jope-parallel::view_contracts",
+      "test": "one_evaluation_budget_runs_the_incumbent_before_neural_candidates",
+      "item": "target:jope-parallel/test/view_contracts",
+      "triage": "fit-authority-fence",
+      "status": "open",
+      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness); cannot pass in a product build by design."
+    },
+    {
+      "lane": "full-default",
+      "class": "jope-parallel::view_contracts",
+      "test": "matched_search_seed_is_recorded_and_cannot_change_on_resume",
+      "item": "target:jope-parallel/test/view_contracts",
+      "triage": "product-defect",
+      "status": "fixed-locally",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-seed-prefix-20260926T050454Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-seed-postfix-20260926T050536Z"
+      ],
+      "note": "Request check ran before resume identity (7b745bf9e): specific RNG diagnostic unreachable and legacy resumes recorded refused requests. Fixed in gp.rs; new legacy-resume test."
+    },
+    {
+      "lane": "full-default",
+      "class": "jope-parallel::view_contracts",
+      "test": "projected_gp_candidates_are_exactly_representable_unique_and_durable",
+      "item": "target:jope-parallel/test/view_contracts",
+      "triage": "stale-expectation",
+      "status": "fixed-locally",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-seed-prefix-20260926T050454Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-seed-postfix-20260926T050536Z"
+      ],
+      "note": "Asserted pre-7b745bf9e cleanup; journal and candidate artifacts are deliberately retained recovery evidence. Test now asserts retention."
+    },
+    {
+      "lane": "full-scratch",
+      "class": "feat-math::golden",
+      "test": "fast_profile_portfolio_head",
+      "item": "target:feat-math/test/golden",
+      "triage": "untriaged",
+      "status": "open",
+      "note": "Scratch-lane golden test; exceeds the lane window under gpr-scratch-reuse. Root cause pending."
+    },
+    {
+      "lane": "full-scratch",
+      "class": "jope-dime-regressor::dlgp_best5",
+      "test": "all_six_arms_complete_eight_generation_synthetic_worker_with_exact_ledgers",
+      "item": "target:jope-dime-regressor/test/dlgp_best5",
+      "triage": "missing-real-corpus-input",
+      "status": "open",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-hostlane-20260926T051335Z"
+      ],
+      "note": "Real-corpus fixture; roots now resolve via ADR-0003. Passes in the host lane with the read-only custody inputs; CI has no such inputs, so it stays a visible failure there."
+    },
+    {
+      "lane": "full-scratch",
+      "class": "jope-dime-regressor::dlgp_best5",
+      "test": "training_staging_rebuilds_stable_rows_without_resolving_test",
+      "item": "target:jope-dime-regressor/test/dlgp_best5",
+      "triage": "missing-real-corpus-input",
+      "status": "open",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-hostlane-20260926T051335Z"
+      ],
+      "note": "Real-corpus fixture; roots now resolve via ADR-0003. Passes in the host lane with the read-only custody inputs; CI has no such inputs, so it stays a visible failure there."
+    },
+    {
+      "lane": "full-scratch",
+      "class": "jope-dime-regressor::bin/jope-dime-regressor",
+      "test": "commands::train_only_study::tests::production_sotarena_registry_freezes_exact_37_to_requested_10",
+      "item": "target:jope-dime-regressor/bin/jope-dime-regressor",
+      "triage": "missing-real-corpus-input",
+      "status": "open",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-hostlane-20260926T051335Z"
+      ],
+      "note": "Historical production context catalog not located on this host or in CI; explicit unavailable precondition added."
+    },
+    {
+      "lane": "full-scratch",
+      "class": "jope-dime-regressor::bin/jope-dime-regressor",
+      "test": "test_adaptive::binary42::tests::all_frozen_dataset_bindings_and_binary_labels_are_valid",
+      "item": "target:jope-dime-regressor/bin/jope-dime-regressor",
+      "triage": "deferred-classification",
+      "status": "open",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z"
+      ],
+      "note": "Binary classification is deferred; real-corpus inputs are absent here and in CI. Fails with an explicit unavailable message."
+    },
+    {
+      "lane": "full-scratch",
+      "class": "jope-dime-regressor::bin/jope-dime-regressor",
+      "test": "test_adaptive::binary42::tests::binary42_fitted_cpp17_predictions_match_rust_bits",
+      "item": "target:jope-dime-regressor/bin/jope-dime-regressor",
+      "triage": "deferred-classification",
+      "status": "open",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z"
+      ],
+      "note": "Binary classification is deferred; real-corpus inputs are absent here and in CI. Fails with an explicit unavailable message."
+    },
+    {
+      "lane": "full-scratch",
+      "class": "jope-dime-regressor::bin/jope-dime-regressor",
+      "test": "test_adaptive::island_extension::tests::generation_30_populations_reconstruct_deterministically",
+      "item": "target:jope-dime-regressor/bin/jope-dime-regressor",
+      "triage": "missing-real-corpus-input",
+      "status": "open",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-hostlane-20260926T051335Z"
+      ],
+      "note": "Real-corpus fixture; roots now resolve via ADR-0003. Passes in the host lane with the read-only custody inputs; CI has no such inputs, so it stays a visible failure there."
+    },
+    {
+      "lane": "full-scratch",
+      "class": "jope-dime-regressor::bin/jope-dime-regressor",
+      "test": "test_adaptive::island_extension::tests::prior_no_win_cohort_reconstructs_in_order",
+      "item": "target:jope-dime-regressor/bin/jope-dime-regressor",
+      "triage": "missing-real-corpus-input",
+      "status": "open",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-hostlane-20260926T051335Z"
+      ],
+      "note": "Real-corpus fixture; roots now resolve via ADR-0003. Passes in the host lane with the read-only custody inputs; CI has no such inputs, so it stays a visible failure there."
+    },
+    {
+      "lane": "full-scratch",
+      "class": "jope-dime-regressor::bin/jope-dime-regressor",
+      "test": "test_adaptive::island_extension::tests::sealed_generation_29_artifacts_bind_seven_champion_continuations",
+      "item": "target:jope-dime-regressor/bin/jope-dime-regressor",
+      "triage": "missing-real-corpus-input",
+      "status": "open",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-hostlane-20260926T051335Z"
+      ],
+      "note": "Real-corpus fixture; roots now resolve via ADR-0003. Passes in the host lane with the read-only custody inputs; CI has no such inputs, so it stays a visible failure there."
+    },
+    {
+      "lane": "full-scratch",
+      "class": "jope-parallel::gp_contracts",
+      "test": "sealed_memory_view_matches_file_evaluation_and_rejects_writes",
+      "item": "target:jope-parallel/test/gp_contracts",
+      "triage": "fit-authority-fence",
+      "status": "open",
+      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness); cannot pass in a product build by design."
+    },
+    {
+      "lane": "full-scratch",
+      "class": "jope-parallel::gp_contracts",
+      "test": "fitted_predictor_roundtrip_matches_native_gp_and_restores_target_units",
+      "item": "target:jope-parallel/test/gp_contracts",
+      "triage": "fit-authority-fence",
+      "status": "open",
+      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness); cannot pass in a product build by design."
+    },
+    {
+      "lane": "full-scratch",
+      "class": "jope-parallel::view_contracts",
+      "test": "fitted_view_predictor_uses_the_exact_cut_and_original_target_units",
+      "item": "target:jope-parallel/test/view_contracts",
+      "triage": "fit-authority-fence",
+      "status": "open",
+      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness); cannot pass in a product build by design."
+    },
+    {
+      "lane": "full-scratch",
+      "class": "jope-parallel::view_contracts",
+      "test": "experiment_crashes_at_durable_boundaries_recover_without_repeating_committed_fits",
+      "item": "target:jope-parallel/test/view_contracts",
+      "triage": "fit-authority-fence",
+      "status": "open",
+      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness); cannot pass in a product build by design."
+    },
+    {
+      "lane": "full-scratch",
+      "class": "jope-parallel::view_contracts",
+      "test": "isolated_fitted_view_export_binds_success_and_preserves_worker_failures",
+      "item": "target:jope-parallel/test/view_contracts",
+      "triage": "fit-authority-fence",
+      "status": "open",
+      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness); cannot pass in a product build by design."
+    },
+    {
+      "lane": "full-scratch",
+      "class": "jope-parallel::view_contracts",
+      "test": "one_evaluation_budget_runs_the_incumbent_before_neural_candidates",
+      "item": "target:jope-parallel/test/view_contracts",
+      "triage": "fit-authority-fence",
+      "status": "open",
+      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness); cannot pass in a product build by design."
+    },
+    {
+      "lane": "full-scratch",
+      "class": "jope-parallel::view_contracts",
+      "test": "matched_search_seed_is_recorded_and_cannot_change_on_resume",
+      "item": "target:jope-parallel/test/view_contracts",
+      "triage": "product-defect",
+      "status": "fixed-locally",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-seed-prefix-20260926T050454Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-seed-postfix-20260926T050536Z"
+      ],
+      "note": "Request check ran before resume identity (7b745bf9e): specific RNG diagnostic unreachable and legacy resumes recorded refused requests. Fixed in gp.rs; new legacy-resume test."
+    },
+    {
+      "lane": "full-scratch",
+      "class": "jope-parallel::view_contracts",
+      "test": "projected_gp_candidates_are_exactly_representable_unique_and_durable",
+      "item": "target:jope-parallel/test/view_contracts",
+      "triage": "stale-expectation",
+      "status": "fixed-locally",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-seed-prefix-20260926T050454Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-seed-postfix-20260926T050536Z"
+      ],
+      "note": "Asserted pre-7b745bf9e cleanup; journal and candidate artifacts are deliberately retained recovery evidence. Test now asserts retention."
+    }
+  ]
+}

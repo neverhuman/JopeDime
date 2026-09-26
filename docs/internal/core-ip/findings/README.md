@@ -33,9 +33,43 @@ Run from the repository root:
 
 ```sh
 python3 docs/internal/core-ip/tools/verify_findings.py
-python3 -m unittest discover -s docs/internal/core-ip/tools -p test_verify_findings.py -v
+python3 docs/internal/core-ip/tools/verify_dispositions.py
+python3 docs/internal/core-ip/tools/verify_test_inventory.py
+python3 -m unittest discover -s docs/internal/core-ip/tools -p 'test_verify_*.py' -v
 git diff --check
 ```
+
+## Dispositions and evidence (W12-T02)
+
+`register.json` stays the immutable open inventory. Scoped dispositions are appended
+to `dispositions.json`, which binds the exact register digest. `verify_dispositions.py`
+accepts a closure only with stage-appropriate evidence under `evidence/<finding>/`.
+Each evidence file must match its SHA-256 and name the same finding, stage and source commit.
+A confirmed defect needs a pre-fix failure at a distinct commit plus negative and positive
+tests observed passing, source trace and hosted CI. W7/W8/W10/W11 routes also need live
+qualification, and promotion needs the scientific decision owner. Synthetic fixtures never
+back hosted CI, live, measurement or promotion stages. `historical-unknown`,
+`missing-execution-evidence` and `deferred-non-regression` never close.
+The committed record is empty, so every finding remains open.
+
+## Maintained regression test inventory (W0)
+
+`test-inventory.json` classifies every test-bearing item of `deploy/ci/coverage.json`.
+The roles are regression, real-corpus regression, deferred classification, historical,
+research and infrastructure. It maps regression items to the subsystems preparation,
+encoders, policy, GP, fitting, teaching, training, storage, export, orchestration,
+performance, evaluation and evidence, each owned by work packages.
+`verify_test_inventory.py` requires complete classification and an executing regression
+item for each of the nine W0 subsystems. It also requires exactly one triage record per
+preserved baseline failure. Real-corpus, fence and deferred failures can never be marked
+fixed; `fixed-locally` requires retained evidence. The map is static: it neither collects
+nor executes tests.
+
+Real-corpus fixtures read their inputs through the ADR-0003 roots
+(`SOTARENA_ROOT`, `JOPE_STATE`, `JOPE_REGISTRY`). When absent they fail with an explicit
+`unavailable:` message instead of being skipped. A read-only custody copy of the
+regression fixture inputs, with `MANIFEST.sha256` and `PROVENANCE.txt`, is kept outside
+the source tree for host-lane runs.
 
 These commands verify inventory integrity only. The test suite includes a valid
 inventory and adversarial omissions, duplicate IDs, renumbering, changed hashes,
