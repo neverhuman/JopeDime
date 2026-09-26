@@ -9,14 +9,15 @@ use fixture::*;
 use jope_parallel::{
     native_loop::bounded::{
         assignment::{
-            trainer_assignment, verify_trainer_assignment, worker_cuda_visible_devices,
-            RESTRICTED_DEVICE_INDEX,
+            bound_worker, trainer_assignment, verify_trainer_assignment,
+            worker_cuda_visible_devices, RESTRICTED_DEVICE_INDEX,
         },
         contract::{BoundedRunContract, DeviceAssignment},
-        controller,
+        controller, launch,
     },
     training::topology::{self, Assignment, LocalDevices, Participant, SCHEMA},
 };
+use std::ffi::OsStr;
 
 fn uuid(n: usize) -> String {
     format!("GPU-{n:08x}-0000-4000-8000-{n:012x}")
@@ -216,4 +217,113 @@ fn plans_the_trainer_cannot_bind_are_refused() {
     let mut rebooted = restricted_view(&c, 0);
     rebooted.boot_id = "rebooted".into();
     assert!(topology::bind(&a, 0, 3, &rebooted).is_err());
+}
+
+/// W7-T03 delivery: a launched worker's topology comes only from the frozen plan and its
+/// launch record, and every mismatch is refused before any communicator could exist.
+#[test]
+fn a_worker_binds_only_from_its_frozen_launch_and_visibility() {
+    for layout in [vec![0, 1, 2], vec![0, 0, 1]] {
+        let (c, _) = plan(&layout);
+        let plan_sha = sha(&bytes(&c));
+        for rank in 0..3u32 {
+            let record = launch::launch_record(&c, &plan_sha, rank).unwrap();
+            let own = record.cuda_visible_devices.clone();
+            let (a, b) = bound_worker(&c, &plan_sha, &record, Some(OsStr::new(&own)), || {
+                Ok(restricted_view(&c, rank))
+            })
+            .unwrap();
+            assert_eq!(a, trainer_assignment(&c).unwrap());
+            assert_eq!(b.global_rank(), rank as usize);
+            assert_eq!(b.world(), 3);
+            assert_eq!(b.device_index(), RESTRICTED_DEVICE_INDEX);
+            assert_eq!(b.gpu_uuid(), Some(own.as_str()));
+            assert_eq!(b.receipt()["plan_sha256"], plan_sha);
+        }
+    }
+    let (c, _) = plan(&[0, 0, 1]);
+    let plan_sha = sha(&bytes(&c));
+    let record = launch::launch_record(&c, &plan_sha, 0).unwrap();
+    let (own, other, foreign) = (uuid(0x10), uuid(0x11), uuid(0x99));
+    let host = &c.participants[0].host;
+    let view = |visible: Vec<String>| LocalDevices {
+        host_id: host.machine_id.clone(),
+        boot_id: host.boot_id.clone(),
+        visible,
+    };
+    // Environment refusals happen before the device view is even read.
+    for env in [
+        None,
+        Some("0".to_string()),
+        Some(format!("{own},{own}")),
+        Some(other.clone()),
+        Some(format!("{own},{other}")),
+        Some(String::new()),
+    ] {
+        let refused = bound_worker(
+            &c,
+            &plan_sha,
+            &record,
+            env.as_deref().map(OsStr::new),
+            || panic!("the device view is not read before the environment is verified"),
+        );
+        assert!(refused.is_err(), "{env:?}");
+    }
+    // Mismatched visibility, a duplicated UUID and a wrong local index in the device view.
+    let env = Some(OsStr::new(&own));
+    for visible in [
+        vec![other.clone()],
+        vec![own.clone(), own.clone()],
+        vec![foreign.clone(), own.clone()],
+        vec![own.clone(), foreign.clone()],
+        vec![own.clone(), other.clone()],
+        Vec::new(),
+    ] {
+        let refused = bound_worker(&c, &plan_sha, &record, env, || Ok(view(visible.clone())));
+        assert!(refused.is_err(), "{visible:?}");
+    }
+    let mut rebooted = view(vec![own.clone()]);
+    rebooted.boot_id = "rebooted".into();
+    assert!(bound_worker(&c, &plan_sha, &record, env, || Ok(rebooted)).is_err());
+    assert!(bound_worker(&c, &plan_sha, &record, env, || anyhow::bail!(
+        "no device view"
+    ))
+    .is_err());
+    // Launch records the plan does not derive.
+    let mut edited = record.clone();
+    edited.cuda_visible_devices = other.clone();
+    assert!(
+        bound_worker(&c, &plan_sha, &edited, Some(OsStr::new(&other)), || Ok(
+            view(vec![other.clone()])
+        ))
+        .is_err()
+    );
+    let mut other_plan = c.clone();
+    other_plan.run = "w7-fixture-other".into();
+    resign(&mut other_plan, &keys(3));
+    let other_sha = sha(&bytes(&other_plan));
+    let foreign_record = launch::launch_record(&other_plan, &other_sha, 0).unwrap();
+    assert!(
+        bound_worker(&c, &plan_sha, &foreign_record, env, || Ok(view(vec![
+            own.clone()
+        ])))
+        .is_err()
+    );
+    assert!(bound_worker(&c, &other_sha, &record, env, || Ok(view(vec![own.clone()]))).is_err());
+    // Rank 2's genuine launch on rank 0's host view: another host.
+    let (c3, _) = plan(&[0, 1, 2]);
+    let sha3 = sha(&bytes(&c3));
+    let r2 = launch::launch_record(&c3, &sha3, 2).unwrap();
+    let wrong_host = LocalDevices {
+        visible: vec![r2.cuda_visible_devices.clone()],
+        ..restricted_view(&c3, 0)
+    };
+    assert!(bound_worker(
+        &c3,
+        &sha3,
+        &r2,
+        Some(OsStr::new(&r2.cuda_visible_devices)),
+        || Ok(wrong_host)
+    )
+    .is_err());
 }
