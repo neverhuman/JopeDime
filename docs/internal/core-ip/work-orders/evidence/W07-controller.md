@@ -1,8 +1,11 @@
 # W7 — Repository-managed execution controller (source and fixture half)
 
-Owner: Claude implementation subagent in `.agent/worktrees/honesty`, branch
-`rr/w7-controller`, based on `723cc035a`. This record covers the source- and
-fixture-provable parts of W7-T01, W7-T02, W7-T04 and W7-T05.
+Owner: Claude implementation subagent in `.agent/worktrees/honesty`. T01/T02 landed on
+branch `rr/w7-controller` (based on `723cc035a`) and were cherry-picked into
+`feat/regression-remediation` as `8d66723d3`. T04, T05 and the plan → trainer assignment
+join are on `rr/w7-controller-2`, based on `8d66723d3`, which also carries W7-T03
+(`fdbde7c3f`). This record covers the source- and fixture-provable parts of W7-T01,
+W7-T02, W7-T04 and W7-T05, and the W7-T02 × W7-T03 join.
 
 Every observation here is **fixture-proven** only. Identities are synthetic: fixture host
 names, boot ids, GPU UUIDs and digests are generated. No host was contacted, nothing was
@@ -83,7 +86,8 @@ allocation. It refuses:
 
 - stale telemetry (older than the frozen `max_age_ms`) and future telemetry (beyond
   `clock_skew_ms`);
-- any difference in boot, address, certificate, source, executable, runtime or policy;
+- any difference in machine (added on `rr/w7-controller-2`), boot, address, certificate,
+  source, executable, runtime or policy;
 - a planned GPU UUID that is missing, or that is present under another local index;
 - a device owned by anything other than this exact run attempt — a CI owner, a user, another
   run or another attempt of the same run;
@@ -97,8 +101,8 @@ Tests in `tests/bounded_run.rs`:
 
 - `preflight_admits_a_fresh_matching_funded_census` (positive control)
 - `preflight_refuses_stale_and_future_telemetry`
-- `preflight_refuses_mismatched_boot_gpu_source_executable_runtime_policy` (9 reasons at
-  once)
+- `preflight_refuses_mismatched_boot_gpu_source_executable_runtime_policy` (10 reasons at
+  once since the machine id was added; 9 at `8d66723d3`)
 - `preflight_refuses_conflicting_device_ownership_but_not_its_own_attempt`
 - `preflight_refuses_unavailable_capacity` (also covers a missing host)
 - `census_record_is_typed_versioned_and_bounded`
@@ -225,4 +229,231 @@ are recomputed: 94 rows, 88 moved and 6 new, for a total of 784.
 The journal vocabulary, and the Status mapping that T02's acceptance names, depend on the
 admission and drain records. So the rendezvous (T04) and coordinator (T05) source landed
 with the T01/T02 commit and are exercised there only by the Status state tests. Their own
-acceptance fixtures land in the W7-T04 and W7-T05 commits.
+acceptance fixtures land in the W7-T04 and W7-T05 commits on `rr/w7-controller-2`.
+
+## Host machine identity (contract change on `rr/w7-controller-2`)
+
+The W7-T03 trainer assignment identifies a host by `/etc/machine-id`. The T02 plan had
+only an operator-facing host name, so it could not supply that value without an implicit
+naming convention. `HostIdentity` therefore gains `machine_id` (32 lowercase hex).
+
+- Census preflight compares it (`RefusalReason::MachineMismatch`).
+- The rendezvous hello reports it, and a difference is `WrongParticipant`.
+- Plan validation refuses two host names that share a machine id or a boot id.
+
+The contract is still unreleased and nothing live has used it; this is a schema change to
+`jope.native_bounded_run.v1` and `jope.native_host_census.v1` before first use, not a new
+version.
+
+## W7-T04 — Authenticated rendezvous and immutable verified exchange
+
+Source: `bounded/rendezvous.rs` and the admission/delivery steps of
+`bounded/controller.rs`.
+
+**Messages.** Every message is a length-prefixed frame. The frozen `max_message_bytes`
+(bounded to 1 KiB–1 MiB by the contract) is enforced before the body is read. Each carries
+a domain-separated ed25519 signature from a key frozen in the plan:
+
+- `challenge` (coordinator): run, attempt, plan digest, rendezvous id, coordinator boot,
+  opened time and join deadline. The rendezvous id digests the plan, attempt, coordinator
+  boot, open time and a fresh kernel nonce, so a message captured before a coordinator
+  restart cannot join a new rendezvous.
+- `hello` (participant): run, attempt, plan, rendezvous id, rank, delivery id and send time;
+  the participant's observed host, machine, boot, device, source commit, executable,
+  runtime and installed policy; its own locally hashed input closure; its grant digest;
+  and, from rank 0 only, the communicator bootstrap.
+- `admission` (coordinator): every member with its hello digest, host, boot and device;
+  the grants digest; the original deadline; and the bootstrap.
+- `result` (participant): run, attempt, plan, admission digest, rank, delivery id, result
+  digest and length, update count and completion time.
+
+**Group refusal.** The first invalid message refuses the whole group, and the refusal is
+terminal. It covers:
+
+- a forged or unknown peer;
+- another run, attempt, plan, rendezvous or boot;
+- a wrong participant;
+- substituted source or runtime, or a substituted input closure;
+- an expired grant or deadline, a stale message or the join timeout;
+- equivocation, where one delivery id carries different bytes (an identical redelivery is
+  idempotent);
+- an oversized or malformed frame.
+
+`GroupRefusal` always records `started_ranks: 0` and `committed_updates: 0`.
+`Coordinator::record_refusal` journals it, stops any launched rank process before it can
+start work, and marks every rank `refused`.
+
+**Admission before any rank starts.**
+
+- `Coordinator::record_admission` requires the persisted launch record of every rank. It
+  verifies that the admission is the planned coordinator's signed full-group admission and
+  journals it *before* any participant learns of it.
+- `deliver_admission` sends that journaled admission only, to one control stream per
+  planned rank. It records `admission_delivered`, and a failed delivery drains the group.
+- A participant starts work only after `verify_admission` accepts that admission against
+  its own hello.
+- A rank that exits before delivery is a failure, and no result is acknowledged before
+  delivery.
+
+**Result authentication.** `verify_result` checks, before acknowledgement:
+
+- the planned participant key;
+- the run, attempt, plan and admission;
+- the byte length and digest;
+- the destination bound;
+- the synchronous update count.
+
+**Artifact exchange.** `receive_artifact` accepts only bytes that match the planned closure
+entry. It publishes them without replacement: an identical file is idempotent, and a
+conflicting existing file is refused and kept.
+
+Tests in `tests/bounded_run.rs` (T04 part):
+
+- `full_group_is_admitted_and_acknowledged_before_any_rank_may_start` (positive control)
+- `missing_participant_refuses_the_group_with_zero_commits`
+- `substituted_source_or_input_refuses_the_group` (executable, runtime and a changed input
+  byte)
+- `forged_peer_refuses_the_group` (a foreign key, a field altered in transit, an unknown
+  rank)
+- `expired_grant_refuses_the_group` (at hello and at admission)
+- `stale_or_replayed_rendezvous_is_refused` (an earlier rendezvous; another attempt, boot,
+  plan or rendezvous; an old message; a forged or expired challenge; an admission from
+  another rendezvous; equivocation)
+- `delivery_ids_message_limits_and_timeouts_are_enforced`
+- `results_are_authenticated_before_acknowledgement`
+- `immutable_artifact_exchange_verifies_bytes_without_replacement`
+- `same_host_socket_rendezvous_admits_only_the_authenticated_full_group` (real Unix-socket
+  handshakes on threads; the forged case refuses and admits no rank)
+
+Every refusal case asserts four things:
+
+- the refusal is `started_ranks: 0` and `committed_updates: 0`;
+- no launched rank process survives;
+- a later admission or dispatch is refused;
+- Status and Verify show `refused` with 60 000 committed updates, unchanged, and no
+  `results/`.
+
+Pre-fix record: `w7c-t04-pre-20260926T101544Z`. Post-fix record:
+`w7c-t04-post-20260926T103831Z` (all of `bounded_run`: 27 passed).
+
+**Open.** The cross-host transport, certificate or TLS identity, and actual network
+timeouts are not implemented; the Unix-socket transport is a same-host fixture only. The
+legacy `neural::Nccl::init` shared-file rendezvous is untouched (trainer partition). The
+trainer still has to consume `AdmittedMember::communicator_bootstrap` instead of
+`nccl.id`, which needs the live path.
+
+## W7-T05 — Whole-group drain and coordinator recovery
+
+Source: `Coordinator` in `bounded/controller.rs`.
+
+**Persistence order.** Each step is journaled before the one that depends on it:
+
+1. the dispatch intent;
+2. the launch identity (ownership);
+3. the full-group admission;
+4. delivery of the admission;
+5. result acknowledgement, whose bytes are published first;
+6. the single group commit.
+
+Journal replay enforces this order, one drain, at most one commit, and exactly one
+disposition per rank before the terminal record.
+
+**Drain causes.** A drain covers the whole group and is idempotent and resumable. The
+causes are rank failure (a nonzero exit, a missing or invalid result, or an exit before
+admission delivery), lost control, grant expiry, deadline, cancellation and coordinator
+restart. Every rank ends with exactly one disposition:
+
+- `failed` — the rank that caused the drain;
+- `drained` — stopped by the drain;
+- `never_started` — no supervised work exists for its dispatch id;
+- `completed_unacknowledged` — an authenticated result was retained but never
+  acknowledged;
+- `completed_uncommitted` — the result was acknowledged, but the group drained;
+- `refused`;
+- `committed`.
+
+**Restart.** A restarted coordinator refuses dispatch and polling until it reconciles.
+
+- If the whole group completed with authenticated results inside the original deadline, it
+  acknowledges them and commits once.
+- Otherwise it drains. Work that was launched but whose launch was never journaled is found
+  by dispatch id, stopped and labelled as such.
+- Reopening a terminal run changes nothing.
+- A successor attempt must keep the run, the original deadline, the topology and the
+  committed counters, and name the predecessor's exact journal tip.
+
+**Fixture.** `tests/bounded_run_recovery.rs`. Rank processes are re-executions of the test
+binary. They join the authenticated rendezvous over a Unix socket, hold on heartbeats with
+strictly increasing delivery ids, and stop themselves with exit 75 when control is lost.
+This is a **same-host fixture only**: three processes under one boot on one host are not
+the three-host proof (W7-T07), and no rank does numerical work.
+
+- `positive_control_commits_the_whole_group_exactly_once`
+- `killed_rank_drains_the_whole_group_with_zero_commits` (SIGKILL one rank)
+- `severed_control_stops_every_rank_and_drains_the_group` (heartbeats stop; ranks exit
+  themselves)
+- `coordinator_restart_reconciles_and_drains_with_original_deadline_and_counters` (also
+  refuses successor plans that renew the deadline, change topology or reset counters)
+- `restart_commits_a_complete_unacknowledged_group_exactly_once`
+- `restart_distinguishes_unacknowledged_completion_from_running_work`
+- `restart_before_admission_distinguishes_never_started_from_unrecorded_launch`
+- `cancellation_and_grant_expiry_drain_the_whole_group`
+
+Each scenario ends by asserting that no rank process survives: none of the recorded pids
+exists (reaped), and no `/proc/*/cmdline` names a dispatch id of the run.
+
+One flake was found and fixed while repeating the run. Concurrent fixtures created in the
+same millisecond had identical plans, so the orphan scan saw another test's ranks. Each
+harness now uses a unique run name. After the fix, both targets passed four consecutive
+repeats (36 of 36 each time).
+
+Pre-fix record: `w7c-t05-pre-20260926T101545Z`. Post-fix record:
+`w7c-t05-post-20260926T103906Z` (9 passed: the 8 scenarios plus the `rank_child` entry
+point, which is a no-op outside a rank process).
+
+**Open.** A SmartCluster-backed `Supervisor` and the cross-host drain are W7-T07. The
+fixture supervisor keeps its records on disk like a daemon but reaps as the parent process.
+
+## Join — frozen plan → trainer assignment (W7-T02 × W7-T03)
+
+Source: `bounded/assignment.rs`, compiled only with the `neural` feature because
+`training` is neural-gated. The join is intentionally small:
+
+- `trainer_assignment(contract)` is a pure function. It reads no clock, file, environment
+  or device. It maps each participant to `topology::Participant`:
+  - `host_id` is `machine_id`;
+  - `boot_id` and `local_rank` are copied;
+  - `device_index` is 0;
+  - `gpu_uuid` is the planned UUID.
+  The plan digest is SHA-256 of the canonical contract bytes, identical to the controller's
+  `plan.json` digest. It requires `topology::validate` to accept the result, and it refuses
+  a rank without a GPU or a UUID that is not in `nvidia-smi` form.
+- `verify_trainer_assignment` refuses any assignment that differs from it.
+- `worker_cuda_visible_devices(contract, rank)` is the planned UUID. This is the visibility
+  contract: each worker sees exactly its own GPU, at CUDA ordinal 0. The plan's
+  `local_index` is the census's host-wide index; CUDA's default enumeration need not match
+  it, so it never becomes a CUDA ordinal.
+
+Tests: `tests/bounded_assignment.rs`, neural-gated and CPU only with
+`CUDA_VISIBLE_DEVICES=""`:
+
+- `plan_maps_to_exactly_the_assignment_topology_accepts` — three one-GPU hosts, and two
+  workers on one host. The derived assignment equals the expected one, `validate` accepts
+  it, and the digest equals `controller::plan`'s. `topology::bind` succeeds for every rank
+  under the restricted view.
+- `plan_assignment_mismatch_is_refused` — covers another digest, swapped GPUs, the host
+  index used as the CUDA ordinal, another boot or machine, a dropped rank, a renumbered
+  local rank, the wrong schema, and an assignment derived from another plan.
+- `plans_the_trainer_cannot_bind_are_refused` — covers a CPU rank, a non-`nvidia-smi` UUID,
+  an unrestricted worker that can see another participant's GPU, and a rebooted host.
+
+Pre-fix record: `w7c-join-pre-20260926T103432Z` (no derivation existed; the plan had no
+machine id). Post-fix record: `w7c-join-post-20260926T103759Z`, a `neural` build against
+`/opt/jope-sdk` with `CUDA_VISIBLE_DEVICES=""` set inside the script (its
+`invocation.txt` records the outer environment before that). 8 passed: the 3 join tests
+and the 5 W7-T03 `trainer_topology` tests. No device was enumerated or used. The run is
+sequential, never alongside the fence suites.
+
+**Open.** Two pieces need the live path (W7-T07/T08). One is how the Assignment reaches
+`training::rank_impl`, which today uses the legacy single-host binding. The other is the
+launcher that actually sets each worker's `CUDA_VISIBLE_DEVICES` to its planned UUID.

@@ -7208,6 +7208,21 @@
       "dispositions": [],
       "scope": "W7-T05 same-host process fixture: rank processes (re-executions of the test binary) join the authenticated rendezvous; kill one rank, sever control, cancel, expire a grant and restart the coordinator; whole-group drain, reconciled dispositions, single commit and no orphan process. One host, one boot; not the three-host proof and no numerical work."
     },
+    "target:jope-parallel/test/bounded_assignment": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-engine/tests/bounded_assignment.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "Neural-gated CPU fixtures: a frozen bounded-run plan maps by a pure function to exactly the trainer assignment topology::validate accepts, and a plan/assignment mismatch is refused; no device enumerated, no GPU."
+    },
     "target:jope-parallel/test/checkpoint_commit": {
       "discovery": {
         "kind": "target",

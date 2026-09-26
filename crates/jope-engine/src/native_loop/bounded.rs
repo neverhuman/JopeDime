@@ -11,6 +11,10 @@
 //!   whole-group drain and coordinator recovery (W7-T02, W7-T05).
 //! * [`rendezvous`] — authenticated rendezvous, group admission, bounded framing and
 //!   authenticated results (W7-T04).
+//! * `assignment` (`neural` only) — the pure plan → trainer assignment join (W7-T03).
+/// Plan → trainer assignment join (W7-T02 × W7-T03); the trainer is `neural`-gated.
+#[cfg(feature = "neural")]
+pub mod assignment;
 pub mod census;
 pub mod contract;
 pub mod controller;
