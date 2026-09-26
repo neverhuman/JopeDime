@@ -27,10 +27,10 @@ fn eligibility_alone_and_redelivery_never_count_as_improvement() {
     let replay = hwm::ingest(&f.state, None, vec![candidate()], json!({"kind":"w3-t05"})).unwrap();
     assert_eq!(
         transitions(&f.state),
-        vec![json!("initialized"), json!("tie")]
+        vec![json!("initialized"), json!("duplicate")]
     );
     assert_eq!(first.transitions.get("initialized"), Some(&1));
-    assert_eq!(replay.transitions.get("tie"), Some(&1));
+    assert_eq!(replay.transitions.get("duplicate"), Some(&1));
     assert!(
         !first.transitions.contains_key("improved") && !replay.transitions.contains_key("improved")
     );

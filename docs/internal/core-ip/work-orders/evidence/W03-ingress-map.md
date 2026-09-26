@@ -211,7 +211,7 @@ Tests:
 - `hwm::tests::transitions_separate_initialization_ties_non_improvement_and_improvement`
 - `eligibility::tests::transitions::eligibility_alone_and_redelivery_never_count_as_improvement`
 
-Not done:
+Not done at T05 (the first three were later addressed, see T04 and T06 below):
 
 - per-fold adverse-tail diagnostics;
 - idempotent delivery identity: a redelivered record is a `tie`, not a distinct `duplicate`;
@@ -288,6 +288,85 @@ Not done:
   cannot be detected here.
 - **Classification metrics.** Validity outcomes and class-permutation tests for binary and
   multiclass are deferred with the register scope.
+
+## W3-T06 recoverable decision linkage (fixture-proven)
+
+Two crash windows existed between durable writes. Both were reproduced by removing exactly
+the later step's durable effect: the appended batch plus its `HEAD.json`, or the pointer
+write.
+
+- **`qualify`.** The immutable qualification file is written before its `qualified` decision
+  event. After a crash in between, the file alone qualified the teacher:
+  - `hwm::ingest` accepted it;
+  - `freeze_teaching` would have listed it.
+- **`hwm::ingest`.** The batch is appended before pointers move, and later ingests decided
+  against whatever pointer was on disk. After a crash in between:
+  - a candidate weaker than the ledger's HWM was accepted against the stale pointer;
+  - `freeze_teaching` presented a teacher the ledger had already superseded;
+  - an acceptance whose first pointer write was lost silently vanished from the manifest;
+  - a pointer holding a record the ledger never accepted was used as the incumbent.
+
+Behaviour now:
+
+- **Qualification linkage.**
+  - The `jope.teaching-decision/v1` event carries `qualification_sha256`, the digest of the
+    stored qualification bytes.
+  - `require_qualified`, `revalidate_qualification`, `revalidate_replay` and
+    `freeze_teaching` require a durable `qualified` decision for (comparison, record,
+    digest). Until one exists, a qualification file is pending.
+  - Redelivering `qualify` completes a pending link. Redelivering an already durable decision
+    is idempotent and appends no second event.
+- **HWM linkage.**
+  - An HWM event records the `qualification_sha256` its train-side decision relied on.
+  - `freeze_teaching` requires the ledger tip's digest to equal the stored qualification's.
+- **Ledger-resolved incumbents.** `hwm::ingest` resolves every touched pointer against the
+  ledger's accepted history before writing anything.
+  - The incumbent is the ledger tip.
+  - A lagging pointer (missing, or an earlier accepted record) is rolled forward in the
+    pointer phase and counted in `IngestReport.pointers_recovered`.
+  - A pointer holding a record the ledger never accepted at that pointer fails the ingest
+    before any ledger or pointer write.
+- **Recovery.** `hwm::recover` rolls every lagging exact-identity pointer forward. It reports
+  unaccepted pointers and leaves them untouched.
+- **Explicit duplicates.** A record already accepted at the pointer is a `duplicate`
+  transition and is never accepted again. The ledger `reason` stays `tie` or `not-better`.
+- **Visible incompleteness.** `freeze_teaching` admits a pointer only when it equals its
+  ledger tip. It reports as exclusions both a pointer that lags its tip and an accepted
+  teaching tip that has no pointer.
+
+Evidence:
+
+- **Pre-fix** `w3-t06-prefix-linkage-20260926T060249Z/`: 6 of 55 lib tests failed:
+  - `qualification_without_a_durable_decision_is_not_eligible_until_qualify_resumes`
+  - `crash_between_hwm_append_and_pointer_advance_never_lists_a_superseded_teacher`
+  - `first_acceptance_lost_before_its_pointer_is_visible_not_silently_absent`
+  - `hwm::tests::a_pointer_behind_the_ledger_is_rolled_forward_before_any_decision`
+  - `hwm::tests::a_pointer_the_ledger_never_accepted_is_refused_before_any_write`
+  - `hwm::tests::redelivery_of_an_accepted_record_is_a_duplicate_not_a_tie`
+
+  `stronger_and_weaker_teachers_race_in_both_orders_to_the_same_state` **passed** pre-fix. It
+  covers both sequential orders and a two-thread race, and records an existing serialization
+  safeguard.
+- **Post-fix** `w3-t06-postfix-linkage-20260926T060641Z/`: `jope-learning` 99 of 99 pass with
+  0 skipped. It also holds `doctest.log` and `check.log` (jope-motifs, jope-cli and
+  jope-bench, all targets).
+
+Test changes:
+
+- The T05 redelivery expectations changed from `tie` to `duplicate`. This is intended: the
+  ledger reason is unchanged.
+- The eligibility fixture gained `Fixture::candidate` for a second teacher on the same
+  frozen comparison.
+
+Not done:
+
+- There is no CLI verb for `hwm::recover`.
+- **Rejected-decision redelivery is not deduplicated.** Every submission stays in the
+  rejected inventory.
+- **Mirror recovery is out of scope.** A mirror that holds a lagging pointer catches up only
+  when a later batch accepts at that pointer; remote durability is W8.
+- **Corpus linkage beyond `freeze_teaching` is not covered.** That includes the jope-cli
+  corpus writer and the jope-engine teaching store; both are outside this crate.
 
 ## Not established here (open)
 

@@ -389,7 +389,8 @@ fn retained_context_is_revalidated_by_every_receiving_gate() {
     let report = ingest(&f);
     assert_eq!(report.rejects[0].reason, "teaching-ineligible");
     assert_eq!(before, authority(&f.state));
-    assert!(require_qualified(&f.state, &f.record).is_err());
+    let decisions = Decisions::load(&f.state).unwrap();
+    assert!(require_qualified(&f.state, &f.record, &decisions).is_err());
     assert!(revalidate_qualification(&f.state, &f.record).is_err());
     fs::write(&output, &bytes).unwrap();
     assert_eq!(ingest(&f).accepted, 1);
@@ -425,7 +426,8 @@ fn legacy_qualification_without_provenance_stays_quarantined_and_is_not_upgraded
     assert!(manifest.exclusions[0]
         .1
         .contains("MissingEncoderProvenance"));
-    assert!(require_qualified(&f.state, &f.record).is_err());
+    let decisions = Decisions::load(&f.state).unwrap();
+    assert!(require_qualified(&f.state, &f.record, &decisions).is_err());
     assert!(revalidate_qualification(&f.state, &f.record).is_err());
     assert!(revalidate_replay(&f.state, &[legacy]).is_err());
     // Still readable diagnostically: the pointer and accepted event are retained as history.
