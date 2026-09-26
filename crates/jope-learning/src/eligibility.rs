@@ -45,7 +45,7 @@ const DIAGNOSTICS: &str = "jope.teaching-diagnostics/v1";
 const RUST_FITTED: &str = "jope.panel-fitted-rust/v1";
 const RUST_FITTED_V2: &str = "jope.panel-fitted-rust/v2";
 
-/// Owner decision (d), 2026-09-26: evidence made before a provenance requirement existed stays
+/// Owner decision D4, 2026-09-26: evidence made before a provenance requirement existed stays
 /// quarantined. Nothing upgrades it in place, and no route re-admits it; requalification is a
 /// refusal with this message, not a procedure, and happens only by producing a new, fully
 /// provenanced qualification.

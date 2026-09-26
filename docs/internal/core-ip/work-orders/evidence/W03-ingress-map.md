@@ -462,6 +462,8 @@ bar.
 - The independent replay's eligibility-first rule would pick the best eligible teacher
   instead. This is exactly the open item "whether a quarantined legacy incumbent should stop
   defining the bar". It needs an owner decision and, if changed, a new policy version.
+  **Decided 2026-09-26:** keep the tip as the bar (OWNER-DECISIONS.md D1; "Owner decision of
+  2026-09-26: the HWM bar" below).
 
 ## Not established here (open)
 
@@ -534,8 +536,8 @@ The ledger history now also yields, for each pointer, the records it rejected th
 
 ## Owner decision of 2026-09-26: the HWM bar (recorded on rr2/integration-a)
 
-**Adopted: an ineligible ledger tip still sets the HWM bar.** This is the conservative option of
-the W3-T07 finding above, and the behaviour is unchanged.
+**Adopted: an ineligible ledger tip still sets the HWM bar** (OWNER-DECISIONS.md D1). This is
+the conservative option of the W3-T07 finding above, and the behaviour is unchanged.
 
 - `hwm::ingest` compares a later candidate against the ledger's tip even when that tip cannot
   teach: a legacy pre-provenance acceptance, or a tip whose retained evidence is lost.
@@ -718,7 +720,8 @@ every route: `qualify`, `hwm::ingest`, `freeze_teaching`, `revalidate_qualificat
 - Every new field is optional and absent fields are not serialized. So a freeze plan with no
   producer, context evidence with no handoff and a qualification with no handoff digest all parse,
   and re-serialize byte-identically. Freeze and evidence digests are unchanged.
-- Following owner decision (d) of 2026-09-26, what they admit is quarantined:
+- Following owner decision D4 of 2026-09-26 (recorded on rr2/integration-a as decision (d)), what
+  they admit is quarantined:
   - A freeze with a context encoder but no producer refuses with `PreHandoffProvenance`.
   - A submission without a handoff refuses with `MissingContextHandoff`.
   - Both messages end with the requalification rule: nothing is upgraded in place, and
@@ -808,7 +811,7 @@ every route: `qualify`, `hwm::ingest`, `freeze_teaching`, `revalidate_qualificat
 
 ## W3-T03 / W3-T07 (rr2/integration-a): requalification is a refusal, the matrix covers every task, and the engine routes
 
-### Requalification (owner decision (d), 2026-09-26)
+### Requalification (owner decision D4, 2026-09-26; recorded on rr2/integration-a as decision (d))
 
 **Adopted.** Pre-provenance qualifications stay quarantined. Requalification happens only by
 producing a new, fully provenanced qualification. It is a refusal with a clear message, not a
@@ -906,13 +909,19 @@ Wiring them in this lane is not containable, for three reasons:
    qualification, and every writer must supply it.
 2. **The dependency direction and the fence.** `jope-engine` (package `jope-parallel`) does not
    depend on `jope-learning`. `jope-learning` has `jope-parallel` as a dev-dependency (the
-   owner-accepted W8 one), so the reverse edge would make a dev-dependency cycle. The fence
+   owner-accepted W8 one, OWNER-DECISIONS.md D18), so the reverse edge would make a
+   dev-dependency cycle. The fence
    suites (`fit_boundary`, `view_contracts`, `gp_contracts`, `gp::fit_contract_tests`) pin that
    crate.
 3. **Enforcement would stop engine training, which is the owner's call.** Every engine corpus
    today is pre-provenance by construction (reason 1). Applying the requalification rule would
    quarantine all of them and stop engine training until a W2 producer and new engine formats
    exist.
+
+**Status (reconciled with OWNER-DECISIONS.md, 2026-09-26).** This is a format follow-up, not a
+policy default. The engine formats must first carry a W3 comparison and record identity to join
+on (reason 1); enforcing the rule without that format change would quarantine every existing
+engine corpus (reason 3). No entry in OWNER-DECISIONS.md decides it.
 
 The CLI route is already covered. `jope-cli train corpus prepare` and `train admission` read
 `freeze_teaching` / `revalidate_replay`, which recompute `measured`. So they now also enforce

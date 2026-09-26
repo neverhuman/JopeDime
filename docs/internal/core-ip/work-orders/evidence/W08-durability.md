@@ -80,8 +80,9 @@ Guarantees:
 ### Capacity
 
 `Limits` sets the pause thresholds and the maxima for pending entries and pending bytes.
-The proposed defaults are **awaiting owner approval**: pause at 7,500 entries or 768 MiB,
-and refuse everything at 10,000 entries or 1 GiB.
+The proposed defaults were **awaiting owner approval** when this section was written, and
+are now `adopted-by-owner-delegation-2026-09-26` (OWNER-DECISIONS.md D6): pause at 7,500
+entries or 768 MiB, and refuse everything at 10,000 entries or 1 GiB.
 
 - **At the pause threshold**, appends that open new work are refused with
   `Refused::Paused`. These are `scheduled` and `retry` events. The check uses the durable
@@ -197,7 +198,9 @@ The evidence root is
   W8-T04/T06 reconstruction.
 - **Durability.** Directory fsync is best-effort, as in `atomic_write`. A newly created
   parent directory's own entry is not fsynced.
-- **Limits.** The `Limits` defaults are proposals, not approved high-water values.
+- **Limits.** The `Limits` defaults were proposals, not approved high-water values, when this
+  section was written. They are now `adopted-by-owner-delegation-2026-09-26`
+  (OWNER-DECISIONS.md D6) and remain explicit configuration.
 
 ## W8-T03 — Dependency-first conditional publication
 
@@ -634,7 +637,9 @@ policy.
 ### Not established here (open)
 
 - **Proposed values.** `Policy::PROPOSED` (60 s, 1 MiB, 100 updates, 5 min) and the outbox
-  `Limits` are proposals awaiting owner approval.
+  `Limits` were proposals awaiting owner approval when this section was written. They are now
+  `Policy::ADOPTED` and `Limits::ADOPTED`, `adopted-by-owner-delegation-2026-09-26`
+  (OWNER-DECISIONS.md D6).
 - **No product scheduler.** Nothing calls `Cadence::tick` or `Checkpoints` yet.
   - The engine's training loop (`checkpoint_recovery.rs`) and the corpus freeze
     (`corpus_publication.rs`) would request `CheckpointCommit` and `CorpusFreeze`.
@@ -763,8 +768,10 @@ This is a mapping decision recorded for review.
 **Configuration.** The outbox limits and the cadence are explicit `Config` values
 (`jope.progress.config/v1`). An explicit file must name every value; unknown fields,
 missing values, zero cadence values and a pause above the maximum are refused. The defaults
-are `Limits::PROPOSED` and `Policy::PROPOSED`. Every report carries `approval:
-"owner-pending"`, and no file can change that.
+are `Limits::ADOPTED` and `Policy::ADOPTED` (named `PROPOSED` when this section was written).
+Every report of the defaults carries `approval: "adopted-by-owner-delegation-2026-09-26"`
+(OWNER-DECISIONS.md D6; it read `owner-pending` when this section was written), and no file
+can change that: a file's own values report `operator-configured-not-the-adopted-defaults`.
 
 **Restart.** Everything is re-derived from the outbox and the remote's verified committed
 closure:
@@ -807,7 +814,8 @@ decision|flush|follow|status`, with one capability-matrix row each (`learning-su
   - `a_failed_flush_keeps_progress_owed_and_claims_nothing` — a disconnect mid-delivery gives
     `Blocked`, keeps the staged objects and the urgency, and the next tick commits. A restart
     with uncommitted progress commits it at once.
-  - `outbox_limits_and_cadence_are_explicit_owner_pending_configuration`.
+  - `outbox_limits_and_cadence_are_explicit_adopted_configuration` (named
+    `outbox_limits_and_cadence_are_explicit_owner_pending_configuration` before D6 was adopted).
   - `hwm_decisions_link_through_this_hosts_ledger_and_flush_at_once`.
 - `tests/progress_cli.rs` (new target; coverage.json and test-inventory.json updated):
   - `progress_verbs_publish_engine_events_to_an_explicit_store_only` exercises the shipped verbs
@@ -845,7 +853,8 @@ checked):
 - **Retention.** Retention is not applied to engine events: engine results are appended whole,
   and nothing is compacted. The role is still not recorded (W8-T05).
 - **Publisher identity** is still a local string.
-- **Approval.** The configuration values are owner-pending.
+- **Approval.** The configuration values are `adopted-by-owner-delegation-2026-09-26`
+  (OWNER-DECISIONS.md D6); they were owner-pending when this section was written.
 - **Live stores.** There is no live proof: `file://` and `memory:///` only. Live S3 is W8-T07/T08
   and needs a scoped credential and an approved budget.
 
@@ -916,9 +925,10 @@ unauthenticated. Live S3 conditional writes are W8-T07/T08.
 
 The owner delegated the pending W8 policy choices and adopted the conservative options. This
 section supersedes the "owner-pending" and "proposed" wording of the earlier sections, which
-stays as the history of what was reviewed.
+stays as the history of what was reviewed. The canonical record of each decision is
+`docs/internal/core-ip/work-orders/OWNER-DECISIONS.md`, under the D-number given below.
 
-**Outbox limits and cadence: adopted.**
+**Outbox limits and cadence: adopted (D6).**
 
 - Values:
   - pause new work at 7,500 entries or 768 MiB pending;
@@ -938,15 +948,15 @@ stays as the history of what was reviewed.
   - `progress::tests::product::outbox_limits_and_cadence_are_explicit_adopted_configuration`;
   - `progress_cli::progress_verbs_publish_engine_events_to_an_explicit_store_only`.
 
-**One W8 update is one checkpoint window: adopted.** `update_index` counts the windows of
+**One W8 update is one checkpoint window: adopted (D17).** `update_index` counts the windows of
 optimizer steps between two published W8 checkpoints, and `consumed_rows` is
 `(step − previous step) × global_batch`. See "The update index" above.
 
-**The `jope-parallel` dev-dependency of `jope-learning`: accepted.** It is used only by the
+**The `jope-parallel` dev-dependency of `jope-learning`: accepted (D18).** It is used only by the
 tests, to check their engine fixtures with the engine's own `corpus_publication::verify` and
 `checkpoint_recovery::reconcile`. The library does not link the engine.
 
-**Live S3 phase: authorized once the owner creates a scoped credential.** No credential was
+**Live S3 phase: authorized once the owner creates a scoped credential (D20).** No credential was
 used here. The product path reaches an `s3://` store by configuration alone, with no code
 change.
 

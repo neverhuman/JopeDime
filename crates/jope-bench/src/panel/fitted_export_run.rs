@@ -73,7 +73,7 @@ pub struct PackageRecord {
     /// W9-T02: the fitted subject the package serves.
     pub fitted_subject: FittedSubject,
     /// W9-T02: the authorized final whole-data refit the export binds. Always `None` today:
-    /// no whole-data refit is defined or authorized (an owner decision), so the package serves
+    /// no whole-data refit is defined or authorized (owner decision D19), so the package serves
     /// the selected recipe's fold fit and cannot be presented as the final model.
     pub final_refit_sha256: Option<String>,
     pub release: String,

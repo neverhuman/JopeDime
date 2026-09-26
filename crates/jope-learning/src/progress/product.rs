@@ -56,8 +56,8 @@ use std::path::Path;
 pub const CONFIG_SCHEMA: &str = "jope.progress.config/v1";
 
 /// The approval state of the default [`Config`] values: the outbox limits (W8-T02) and the
-/// cadence (W8-T05) were adopted by owner delegation on 2026-09-26. This is reported beside them;
-/// it is not a setting, and no configuration file can change it.
+/// cadence (W8-T05) were adopted by owner delegation on 2026-09-26 (owner decision D6). This is
+/// reported beside them; it is not a setting, and no configuration file can change it.
 pub const APPROVAL: &str = "adopted-by-owner-delegation-2026-09-26";
 
 /// The approval state reported when a configuration file sets values other than the adopted
