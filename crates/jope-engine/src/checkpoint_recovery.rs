@@ -101,6 +101,33 @@ pub fn verify_continuation(
     global: usize,
     new_steps: usize,
 ) -> Result<Value> {
+    verify_continuation_partition(
+        root,
+        policy,
+        corpus_sha,
+        vocabulary_sha,
+        &crate::task_contract::training_partition(world, micro, global)?,
+        new_steps,
+    )
+}
+
+/// [`verify_continuation`] for an explicit requested execution-partition
+/// record, v1 or v2 (W7-T06). The original partition is recovered from the
+/// original launch topology under the parent's own partition version; a
+/// continuation keeps it exactly.
+pub fn verify_continuation_partition(
+    root: &Path,
+    policy: &Value,
+    corpus_sha: &str,
+    vocabulary_sha: &str,
+    requested: &Value,
+    new_steps: usize,
+) -> Result<Value> {
+    let global = usize::try_from(
+        requested["global_batch"]
+            .as_u64()
+            .context("requested global batch absent")?,
+    )?;
     let allowed = [
         "schema",
         "mode",
@@ -161,8 +188,24 @@ pub fn verify_continuation(
             .as_u64()
             .context("original global batch absent")?,
     )?;
-    let partition =
-        crate::task_contract::training_partition(original_world, original_micro, original_global)?;
+    // A v2 parent names its partition; every other parent is v1, recovered
+    // exactly as before.
+    let partition = if state["execution_partition"]["schema"]
+        == crate::task_contract::PARTITION_V2_SCHEMA
+    {
+        let partition = crate::task_contract::training_partition_v2(
+            original_world,
+            original_micro,
+            original_global,
+        )?;
+        ensure!(
+            state["execution_partition"] == partition,
+            "original partition-v2 record differs from its launch topology"
+        );
+        partition
+    } else {
+        crate::task_contract::training_partition(original_world, original_micro, original_global)?
+    };
     ensure!(
         state["schema"] == "parallel.checkpoint.v1"
             && run["schema"] == "parallel.training_run.v1"
@@ -188,8 +231,7 @@ pub fn verify_continuation(
         "continuation corpus, vocabulary or parent binding changed"
     );
     ensure!(
-        policy["execution_partition"] == partition
-            && partition == crate::task_contract::training_partition(world, micro, global)?,
+        policy["execution_partition"] == partition && partition == *requested,
         "requested continuation partition differs from recovered original topology"
     );
     let original_seed = state["seed"].as_u64().context("original seed absent")?;

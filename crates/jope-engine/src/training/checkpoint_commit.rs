@@ -325,11 +325,19 @@ pub fn verify_dir(root: &Path, dir: &Path, step: u64, expect: &Expectation) -> R
             .as_u64()
             .context("checkpoint microbatch")?,
     )?;
+    // W7-T06: the record's own schema selects v1 or v2; v1 is recomputed
+    // exactly as before.
+    let partition_schema = state["execution_partition"]["schema"]
+        .as_str()
+        .context("checkpoint execution partition schema")?;
     ensure!(
         state["execution_partition"]
-            == crate::task_contract::training_partition(world, micro, global)?,
+            == crate::task_contract::training_partition_of(partition_schema, world, micro, global)?,
         "checkpoint execution partition is inconsistent"
     );
+    let v2 = partition_schema == crate::task_contract::PARTITION_V2_SCHEMA;
+    let rows_per_rank =
+        crate::task_contract::partition_rows_per_rank(&state["execution_partition"])?;
     for (expected, field) in [
         (expect.corpus_sha256, "corpus_sha256"),
         (expect.vocabulary_sha256, "vocabulary_sha256"),
@@ -354,17 +362,28 @@ pub fn verify_dir(root: &Path, dir: &Path, step: u64, expect: &Expectation) -> R
     }
     if state.get("committed_exposure_by_rank").is_some() {
         for rank in 0..world {
-            crate::training_exposure::checkpoint_baseline(&state, rank, world, global / world)?;
+            crate::training_exposure::checkpoint_baseline_rows(&state, rank, &rows_per_rank)?;
         }
     }
+    let plan = if v2 {
+        let plan = super::partition::Plan::new(world, global, micro)?;
+        verify_partition_state(&state, step, &plan)?;
+        Some(plan)
+    } else {
+        None
+    };
     let format = if field_present(&state, "checkpoint_format") {
         ensure!(
             state["checkpoint_format"] == FORMAT,
             "unknown checkpoint format"
         );
-        verify_complete(root, &state, step, world, global)?;
+        verify_complete(root, &state, step, world, global, plan.as_ref())?;
         Format::Complete
     } else {
+        ensure!(
+            !v2,
+            "a partition-v2 checkpoint must use the complete commit format"
+        );
         ensure!(
             !expect.require_complete,
             "checkpoint predates the complete commit format"
@@ -380,12 +399,45 @@ pub fn verify_dir(root: &Path, dir: &Path, step: u64, expect: &Expectation) -> R
     })
 }
 
+/// A partition-v2 checkpoint binds the v2 objective and its persisted
+/// partition state: every rank's RNG and sampler state and the global
+/// committed update, re-derived from the plan.
+fn verify_partition_state(state: &Value, step: u64, plan: &super::partition::Plan) -> Result<()> {
+    ensure!(
+        state["objective"]["normalization"] == super::partition::NORMALIZATION,
+        "a partition-v2 checkpoint must bind the globally normalized objective"
+    );
+    let persisted: super::partition::State = serde_json::from_value(
+        state
+            .get("partition_state")
+            .filter(|v| !v.is_null())
+            .context("partition-v2 checkpoint lacks its partition state")?
+            .clone(),
+    )
+    .context("partition state malformed")?;
+    persisted.verify(plan)?;
+    ensure!(
+        persisted.committed_step == step
+            && Some(persisted.seed) == state["seed"].as_u64()
+            && Some(persisted.sampling_offset)
+                == Some(
+                    state["initialization"]["optimizer_parent_step"]
+                        .as_u64()
+                        .unwrap_or(0)
+                )
+            && state["parameter_sha256"] == persisted.committed_update.parameter_sha256.as_str(),
+        "partition state differs from the checkpoint it is bound to"
+    );
+    Ok(())
+}
+
 fn verify_complete(
     root: &Path,
     state: &Value,
     step: u64,
     world: usize,
     global: usize,
+    plan: Option<&super::partition::Plan>,
 ) -> Result<()> {
     for field in COMPLETE_FIELDS {
         ensure!(
@@ -460,6 +512,13 @@ fn verify_complete(
                 && Some(consumed.header.seed) == state["seed"].as_u64()
                 && state["corpus_sha256"] == consumed.header.corpus_sha256.as_str(),
             "rank {rank} consumption journal does not reach the committed update"
+        );
+        // Partition v2: the journal ran exactly this rank's shard of the
+        // checkpoint's plan; a v1 journal never binds a v2 checkpoint.
+        ensure!(
+            consumed.shard.as_ref() == plan.map(|p| &p.shards()[rank])
+                && plan.is_none_or(|p| consumed.header.microbatch == p.microbatch_rows()),
+            "rank {rank} consumption journal ran another partition"
         );
     }
     Ok(())

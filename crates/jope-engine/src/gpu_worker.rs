@@ -208,6 +208,10 @@ pub fn inherit_lease(command: &mut std::process::Command, lease: &fs::File) -> R
 
 /// Public train-rank must carry the controller's lease and immutable run
 /// identity before it can initialize CUDA or contact a resident worker.
+///
+/// Returns the execution-partition version the frozen run names (W7-T06).
+/// The controller writes v1; v2 runs only when a frozen run record declares
+/// exactly the v2 record of this topology, never by default.
 pub fn verify_training_launch(
     root: &Path,
     corpus: &Path,
@@ -219,9 +223,20 @@ pub fn verify_training_launch(
     resume: bool,
     initialize: Option<&Path>,
     policy: Option<&Path>,
-) -> Result<fs::File> {
+) -> Result<(fs::File, crate::training::partition::Version)> {
     let lease = inherited_task_lease(root)?;
     let spec: Value = read_json(&run.join("run.json"))?;
+    let partition_version =
+        crate::training::partition::Version::of_record(&spec["execution_partition"])
+            .context("train-rank controller contract changed")?;
+    let expected_partition = match partition_version {
+        crate::training::partition::Version::V1 => {
+            crate::task_contract::training_partition(world, micro, 2048)?
+        }
+        crate::training::partition::Version::V2 => {
+            crate::task_contract::training_partition_v2(world, micro, 2048)?
+        }
+    };
     let path_hash = |path: &Path| -> Result<String> {
         file_hash(&resolve(
             root,
@@ -241,8 +256,7 @@ pub fn verify_training_launch(
         spec["schema"] == "parallel.training_run.v1"
             && spec["corpus_sha256"] == file_hash(&corpus.join("index.json"))?
             && spec["executable_sha256"] == file_hash(Path::new("/proc/self/exe"))?
-            && spec["execution_partition"]
-                == crate::task_contract::training_partition(world, micro, 2048)?
+            && spec["execution_partition"] == expected_partition
             && spec["step_window"]["requested_step_increment"] == steps
             && spec["replay_policy_sha256"] == json!(policy_sha)
             && (resume || spec["initialization_sha256"] == json!(initialization_sha))
@@ -255,7 +269,7 @@ pub fn verify_training_launch(
         "launch":launch, "resume":resume, "initialize":initialize, "replay_policy":policy}),
     )?;
     protocol::remaining(deadline)?;
-    Ok(lease)
+    Ok((lease, partition_version))
 }
 
 pub fn inherited_task_lease(root: &Path) -> Result<fs::File> {

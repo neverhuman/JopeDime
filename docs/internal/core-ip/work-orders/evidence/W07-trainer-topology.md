@@ -152,7 +152,7 @@ File `crates/jope-engine/tests/lossless_partition.rs` (feature `neural`, CPU). S
 The v1 objective, identity digest and `check_parent` behavior are unchanged. `objective_fixtures` and `continuation_modes` pass unmodified.
 
 ### Open for W7-T06
-- **The trainer still runs v1.** Wiring v2 into `rank_impl` touches the following, all outside this slice. None can run on this host without a GPU.
+- **The trainer still runs v1.** Resolved in "W7-T06 wiring" at the end of this record, which generalizes each item below. When this section was written, wiring v2 into `rank_impl` touched the following, none of which can run on this host without a GPU.
   - **Selection and sampling.** Select a `Plan` explicitly in the request, never by default. Sample each slot at its cursor. Compute the global denominators once per step from the global ids.
   - **Objective and reduction.** Call `partition::composite` scaled by `local_scale(Transport::Mean)`, with no division by accumulation. Backpropagate `empty_rank_objective` on an empty rank.
   - **Checkpoint.** Write `State` into the checkpoint manifest.
@@ -207,3 +207,72 @@ File `crates/jope-engine/tests/trainer_topology.rs` (feature `neural`, CPU).
 ### Open
 - **Assignment delivery.** Same join as W7-T03, owned by the controller lane.
 - **Other fixed `Device::Cuda(0)` users** (`contexts.rs`, `monitoring.rs`, `components.rs`) and `encoding.rs` `Device::Cuda(gpu)` are single-device services, not rank-indexed, and were not changed.
+
+---
+
+## W7-T06 wiring — partition v2 in the trainer's pre-device guards and records
+
+**Status.** Source and CPU fixtures only. The guards and records below are fixture-proven. The training step (`rank_impl` from the communicator onward) is compile-checked only; no step, device or communicator ran.
+
+### Reproduction (before any source change)
+Run `w6-pre-w7t06wire-20260926T104229Z`, 5 of 6 failing as intended. Each test asked a v1 assumption for a three-rank attempt through the existing public API:
+
+| v1 assumption | Refusal |
+|---|---|
+| `checkpoint_commit::verify_dir`: a v2 manifest committed through `commit` | `invalid training partition` |
+| Journal: `sampler_serial` for rank 1 of 3, then `Journal::create` with an uneven three-rank header | `invalid sampler partition` |
+| `training_exposure::checkpoint_baseline`: each rank with its own rows (688, 680, 680 per step) | `checkpoint exposure differs from committed step window` |
+| `validation_panel(index, 3, …)` | `validation panel requires families and a supported world size` |
+| `checkpoint_recovery::verify_continuation` of a completed three-rank original | `invalid training partition` |
+| `rank_impl`'s world and microbatch gate | Not callable without a device. Source trace, and W7-T06's `training_partition(3, …)` reproduction |
+
+The sixth test, `v1_journal_header_bytes_are_frozen`, passed before the change and is kept unchanged afterward (below).
+
+### Change
+| Location | Change |
+|---|---|
+| `task_contract.rs` | The v2 record `training_partition_v2`, `PartitionShard` and `assign_partition` move here, beside v1, so non-neural request and recovery code can build them. The record is the same value as before. Also new: `training_partition_of(schema, …)`, `recompute_partition(record)` and `partition_rows_per_rank(record)` (equal under v1, shard sizes under v2, 0 for an empty rank) |
+| `training/partition.rs` | Re-exports the shard and assignment and delegates `Plan::record`. `Version` is v1 or v2, from a record's schema. `execution(version, world, micro, global, batch_qualification)` is the trainer gate, formerly inline in `rank_impl`. v1 keeps its exact rule. v2 allows 1 to 8 ranks with no divisibility requirement, the standard microbatch and global batch, and never batch qualification. `Execution` gives the record, per-rank rows, accumulation, shard, and the objective identity the partition defines. `VALIDATION_PANEL_ROWS = 2048` |
+| `training/consumption.rs` | The attempt event gains an optional `shard`, which is never serialized under v1, so v1 journals are byte-identical. A v2 header must carry exactly its rank's plan shard, with `accumulation` equal to its microbatch count (0 for an empty rank). The v1 equation still applies when no shard is given. Cursors (`serial_in`) and row counts (`rows_in`) follow the shard. `Journal::create_with_shard` is new, and `create` stays v1. `Reconciliation` carries the shard, and `reconcile_run` refuses a shard change between attempts |
+| `training_exposure.rs` | `checkpoint_baseline_rows(state, rank, rows_per_step)`. `checkpoint_baseline` delegates with equal rows and keeps its v1 rule |
+| `training/checkpoint_commit.rs` | `verify_dir` recomputes the record under its own schema. Exposure uses per-rank rows. A v2 checkpoint must be in the complete format and bind the v2 objective and a `partition_state`. That state is re-derived from the plan and must match the checkpoint's step, seed, sampling origin and parameter digest. `verify_complete` requires each rank journal to have run exactly that rank's shard of the checkpoint's plan, so a v1 or other-microbatch journal never binds a v2 checkpoint |
+| `checkpoint_recovery.rs` | `verify_continuation_partition(…, requested_record, …)`. A v2 parent is recovered under v2 and its recorded partition must equal its launch topology. `verify_continuation` delegates with the v1 record and is unchanged |
+| `training.rs` | `validation_panel_partitioned(index, plan, seed)` is the fixed 2048-row panel split by the plan. Its rows are the v1 eight-rank panel's for every rank count; `validation_panel` keeps its v1 world set. `rank_impl` takes a `partition::Version` and gates through `execution`. Resume, continuation (`check_parent_partition`), recovery and the resume metadata use the execution record, and exposure uses per-rank rows. Under v2: the global batch is drawn once and its denominators come from labels; each slot runs `partition::composite` scaled by the world size with no division by accumulation; an empty rank backpropagates `empty_rank_objective`; validation uses the partitioned panel with its global denominators; the checkpoint writes the v2 record, the v2 objective and the `partition_state` with the global committed update; the completion receipt records the partition. The v1 path and its records are unchanged |
+| `gpu_worker.rs` | `verify_training_launch` returns the version the frozen `run.json` names. v2 is accepted only when that record equals the v2 record of the requested topology. The controller writes v1, so no existing launch selects v2 |
+
+Every other caller (`qualify_batch_rank`, `smartcluster_rank`) passes `Version::V1`.
+
+### v1 is byte-for-byte
+- The v1 journal attempt line equals a literal captured before the change (`v1_records_are_unchanged`, which passed in the reproduction run).
+- The v1 record equals its literal.
+- The v1 exposure rule still refuses unequal rows.
+- `verify_continuation` gives identical output through both entry points.
+- The existing v1 suites pass unmodified: `checkpoint_commit`, `committed_updates`, `continuation_modes`, and the `checkpoint_recovery` and `training_exposure` unit tests.
+- The v1 checkpoint manifest fields are written in the same order and gain no field.
+
+### Fixtures
+File `crates/jope-engine/tests/partition_wiring.rs` (feature `neural`, CPU).
+
+| Acceptance item | Test |
+|---|---|
+| The gate: v1 still refuses world 3 and gives the v1 record; v2 gives 688/680/680 rows and shards 32/32/22 and 32/32/21; v2 refuses worlds 0 and 9, a nonstandard microbatch or global batch, and batch qualification. `Execution::declared` refuses another topology and a forged shard; unknown schemas are refused; records recompute outside the neural build | `the_trainer_gate_keeps_v1_and_admits_only_an_explicit_v2` |
+| Journal: the v1 equation still refuses an uneven header; another rank's shard, wrong accumulation or another microbatch is refused. Each of three ranks journals two steps with short last microbatches; a 256-row or wrong-cursor event is refused and the journal stays usable; `reconcile` returns the shard, committed rows and the next cursor. An empty rank (12 ranks, 11 comparisons) journals zero microbatches | `a_three_rank_journal_records_each_uneven_shard` |
+| v1 journal line, v1 record literal, v1 equal-row exposure | `v1_records_are_unchanged` |
+| Per-rank baselines for 688/680/680; swapped rows or an out-of-range rank refused; an empty rank must commit nothing | `three_rank_exposure_baselines_follow_each_shard` |
+| The v2 panel for worlds 1, 3, 5, 8 and microbatches 64, 128, 256 is the v1 eight-rank panel, sliced as each rank's slots; v1 keeps its world set; a 4096-row panel plan is refused | `the_v2_validation_panel_is_the_v1_eight_rank_panel_split_by_the_plan` |
+| A three-rank original continues with its own record. The v1 entry point, another microbatch, another world and a v1 request are refused. A parent whose recorded shards disagree with its launch topology is refused. A v1 original gives identical results through both entry points, and a v2 request for it is refused | `a_three_rank_original_continues_with_its_own_partition` |
+| A three-rank checkpoint through `checkpoint_commit::commit`, with real per-rank journals, receipts, exposure and partition state, reloads as complete. Per-rank exposure, journal reconciliation and the next cursors and dropout seeds agree with the persisted state. Refused before publication: missing partition state, a v1 objective, legacy format, 128-row journals. Refused on load, with or without `require_complete`: 8 published-state alterations | `a_three_rank_checkpoint_commits_and_reloads_through_the_real_path` |
+
+### Runs
+| Evidence directory | Command | Result |
+|---|---|---|
+| `w6-pre-w7t06wire-20260926T104229Z` | reproduction file, before any source change | 1 passed, 5 failed (the recorded refusals above) |
+| `w6-post-w7t06wire-a-20260926T105310Z` | `partition_wiring`, `lossless_partition`, `checkpoint_commit`, `committed_updates`, `continuation_modes`, and `--lib` training, checkpoint_recovery, training_exposure, task_contract, gpu_worker | 61/61 |
+| `w6-post-w7t06wire-b-20260926T105432Z` | neural suite: 14 integration tests and `--lib` training, neural, task_contract, controller, gpu_worker, proposals, ranked_proposals, smartcluster_worker, native_graph, checkpoint_recovery, training_exposure | 161/161 |
+| `w6-post-w7t06wire-default-20260926T105601Z` | default features, `--lib` task_contract, checkpoint_recovery, training_exposure, controller | 31/31 |
+| `w6-post-w7t06wire-default-check-20260926T105643Z` | `cargo check --locked -p jope-parallel --all-targets` | exit 0 |
+
+### Open
+- **Selecting v2 in production.** The controller writes a v1 `run.json` (`controller.rs:649`), so no existing launch selects v2. Writing a v2 record for a three-host run belongs to the controller lane, with the assignment join and the W7-T04 rendezvous.
+- **Not executed.** No training step, device or communicator ran. The v2 step (global sampling, scaled objectives, empty-rank backward, v2 validation, partition-state capture) is compile-checked only; that is W7-T08.
+- **Cost.** The v2 checkpoint hashes the applied gradient and parameters once per checkpoint, not per step. Not measured.

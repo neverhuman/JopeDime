@@ -2202,6 +2202,12 @@
         "preparation"
       ]
     },
+    "target:jope-parallel/test/partition_wiring": {
+      "role": "regression",
+      "subsystems": [
+        "training"
+      ]
+    },
     "target:jope-parallel/test/preparation_semantics": {
       "role": "regression",
       "subsystems": [

@@ -151,8 +151,7 @@ pub fn sample_replay_fresh(
     }
     result
 }
-/// Fixed global validation panel, identical on every evaluation of a corpus.
-pub fn validation_panel(index: &Index, world: usize, seed: u64) -> Result<Vec<Vec<usize>>> {
+fn validation_families(index: &Index) -> Result<BTreeMap<String, Vec<usize>>> {
     let mut families = BTreeMap::<String, Vec<usize>>::new();
     for (i, group) in index.groups.iter().enumerate() {
         if group.partition == "meta_validation" {
@@ -163,6 +162,13 @@ pub fn validation_panel(index: &Index, world: usize, seed: u64) -> Result<Vec<Ve
             families.entry(group.family.clone()).or_default().push(i);
         }
     }
+    Ok(families)
+}
+
+/// Fixed global validation panel, identical on every evaluation of a corpus
+/// (partition v1: 256 rows per rank).
+pub fn validation_panel(index: &Index, world: usize, seed: u64) -> Result<Vec<Vec<usize>>> {
+    let families = validation_families(index)?;
     ensure!(
         !families.is_empty() && [1, 2, 4, 8].contains(&world),
         "validation panel requires families and a supported world size"
@@ -170,6 +176,58 @@ pub fn validation_panel(index: &Index, world: usize, seed: u64) -> Result<Vec<Ve
     Ok((0..world)
         .map(|rank| sample(index, &families, rank * 256, 256, seed ^ 0x76616c))
         .collect())
+}
+
+/// The fixed validation panel of one attempt.
+enum ValidationPanel {
+    /// Partition v1: 256 rows per rank.
+    V1(Vec<Vec<usize>>),
+    /// Partition v2: every rank's microbatches of the fixed global panel,
+    /// the panel in global order, and its global denominators.
+    V2 {
+        per_rank: Vec<Vec<Vec<usize>>>,
+        global_ids: Vec<usize>,
+        denominators: partition::Denominators,
+    },
+}
+
+/// Partition v2 (W7-T06): one fixed global panel of
+/// `partition::VALIDATION_PANEL_ROWS` rows, whatever the rank count, split
+/// by `plan` into each rank's microbatches (`[rank][microbatch]` record ids).
+/// Its rows are those of the v1 eight-rank panel, so the panel and the
+/// globally normalized validation objective do not depend on the rank count.
+pub fn validation_panel_partitioned(
+    index: &Index,
+    plan: &partition::Plan,
+    seed: u64,
+) -> Result<Vec<Vec<Vec<usize>>>> {
+    ensure!(
+        plan.global_batch() == partition::VALIDATION_PANEL_ROWS,
+        "the validation panel has {} rows",
+        partition::VALIDATION_PANEL_ROWS
+    );
+    let families = validation_families(index)?;
+    ensure!(
+        !families.is_empty(),
+        "validation panel requires families and a supported world size"
+    );
+    (0..plan.world())
+        .map(|rank| {
+            Ok(plan
+                .slots(rank, seed, 0)?
+                .iter()
+                .map(|slot| {
+                    sample(
+                        index,
+                        &families,
+                        slot.serial as usize,
+                        slot.rows,
+                        seed ^ 0x76616c,
+                    )
+                })
+                .collect())
+        })
+        .collect()
 }
 
 pub(crate) fn parameter_hash(vs: &nn::VarStore) -> Result<String> {
@@ -217,7 +275,8 @@ fn checkpoint(
     initialization: &Value,
     validation: &Value,
     global_batch: usize,
-    micro: usize,
+    execution: &partition::Execution,
+    partition_state: Option<&partition::State>,
     batch_qualification: bool,
     exposure: &Option<crate::training_exposure::Counts>,
     family_groups: &crate::training_exposure::FamilyGroups,
@@ -298,8 +357,8 @@ fn checkpoint(
                 }
                 state["ranking_backward"] = json!(crate::neural::RANKING_BACKWARD_ID);
                 state["runtime_objective"] = json!("huber_log1p_seconds_v2");
-                state["execution_partition"] =
-                    crate::task_contract::training_partition(world, micro, global_batch)?;
+                // v1 records the same value as before W7-T06.
+                state["execution_partition"] = execution.record().clone();
                 state["committed_exposure_by_rank"] = json!(hashes
             .iter()
             .map(|row| {
@@ -313,11 +372,14 @@ fn checkpoint(
             })
             .collect::<Vec<_>>());
                 state["training_inputs_sha256"] = json!(training_inputs_sha256);
-                state["objective"] = objective::identity();
-                state["objective_sha256"] = json!(objective::identity_sha256());
+                state["objective"] = execution.objective_identity();
+                state["objective_sha256"] = json!(execution.objective_sha256());
                 state["checkpoint_format"] = json!(checkpoint_commit::FORMAT);
                 state["required_objects"] = json!(checkpoint_commit::required_object_names());
                 state["rank_receipts"] = json!(rank_receipts);
+                if let Some(partition_state) = partition_state {
+                    state["partition_state"] = serde_json::to_value(partition_state)?;
+                }
                 Ok(state)
             },
             &mut checkpoint_commit::no_stop,
@@ -446,7 +508,7 @@ pub fn rank_with_policy(
             },
         )?;
     }
-    let _lease = crate::gpu_worker::verify_training_launch(
+    let (_lease, partition_version) = crate::gpu_worker::verify_training_launch(
         root, corpus, run, launch, world, micro, steps, resume, initialize, policy,
     )?;
     if crate::gpu_worker::enabled() {
@@ -487,6 +549,7 @@ pub fn rank_with_policy(
         false,
         continuation_mode,
         None,
+        partition_version,
     )
 }
 
@@ -565,6 +628,7 @@ pub fn qualify_batch_rank(
         false,
         None,
         None,
+        partition::Version::V1,
     )
 }
 
@@ -682,6 +746,7 @@ pub(crate) fn smartcluster_rank(
         native_continuation,
         *continuation_mode,
         None,
+        partition::Version::V1,
     )?;
     let complete: Value = read_json(&launch.join("complete-0.json"))?;
     ensure!(
@@ -814,6 +879,7 @@ fn rank_impl(
     verified_native_continuation: bool,
     declared_mode: Option<continuation::Mode>,
     assignment: Option<&topology::Assignment>,
+    partition_version: partition::Version,
 ) -> Result<()> {
     // W7-T03: a frozen host/device assignment is validated before any input,
     // device or communicator work. Without one, the pre-W7 single-host
@@ -826,19 +892,18 @@ fn rank_impl(
         );
     }
     ensure!(
-        [1, 2, 4, 8].contains(&world)
-            && rank < world
-            && (if batch_qualification {
-                [256, 512, 1024, 2048].contains(&micro)
-            } else {
-                [64, 128, 256].contains(&micro)
-            })
-            && [2048, 4096, 8192, 16384].contains(&global_batch)
-            && global_batch % (world * micro) == 0
-            && steps > 0
-            && checkpoint_steps > 0,
+        rank < world && steps > 0 && checkpoint_steps > 0,
         "invalid training topology"
     );
+    // W7-T06: the v1 gate is unchanged; partition v2 runs only when the
+    // request selects it, with any world from one to eight.
+    let execution = partition::execution(
+        partition_version,
+        world,
+        micro,
+        global_batch,
+        batch_qualification,
+    )?;
     crate::neural::configure_runtime();
     let policy: Option<Value> = replay_policy.map(read_json).transpose()?;
     let policy_sha = replay_policy.map(file_hash).transpose()?;
@@ -964,25 +1029,53 @@ fn rank_impl(
     let fixed_panel = if validation.is_empty() {
         None
     } else {
-        Some(validation_panel(&index, world, SEED)?)
+        Some(match execution.plan() {
+            None => ValidationPanel::V1(validation_panel(&index, world, SEED)?),
+            Some(_) => {
+                // W7-T06: one fixed global panel split by the plan, with its
+                // global denominators from labels alone.
+                let plan = partition::Plan::new(world, partition::VALIDATION_PANEL_ROWS, micro)?;
+                let per_rank = validation_panel_partitioned(&index, &plan, SEED)?;
+                let global_ids = per_rank
+                    .iter()
+                    .flatten()
+                    .flatten()
+                    .copied()
+                    .collect::<Vec<_>>();
+                let labels = global_ids
+                    .iter()
+                    .map(|&id| objective::RowLabels::from_record(id, &records.get(id)))
+                    .collect::<Vec<_>>();
+                let denominators = partition::denominators(&labels)?;
+                ValidationPanel::V2 {
+                    per_rank,
+                    global_ids,
+                    denominators,
+                }
+            }
+        })
     };
     let panel_sha256 = fixed_panel
         .as_ref()
-        .map(|ids| serde_json::to_vec(ids).map(|bytes| hash(&bytes)))
+        .map(|panel| {
+            match panel {
+                ValidationPanel::V1(ids) => serde_json::to_vec(ids),
+                ValidationPanel::V2 { global_ids, .. } => serde_json::to_vec(global_ids),
+            }
+            .map(|bytes| hash(&bytes))
+        })
         .transpose()?;
     let config = Config::regression(vocabulary.tokens.len() as i64);
     let recovered_continuation = policy
         .as_ref()
         .filter(|p| p["schema"] == crate::checkpoint_recovery::CONTINUATION_SCHEMA)
         .map(|p| {
-            crate::checkpoint_recovery::verify_continuation(
+            crate::checkpoint_recovery::verify_continuation_partition(
                 root,
                 p,
                 &corpus_hash,
                 &index.vocabulary_sha256,
-                world,
-                micro,
-                global_batch,
+                execution.record(),
                 steps,
             )
         })
@@ -1007,7 +1100,8 @@ fn rank_impl(
         }
         .as_ref(),
     )?;
-    let objective_sha = objective::identity_sha256();
+    // The objective is the one the partition's reductions define.
+    let objective_sha = execution.objective_sha256();
     let mut continuity = Value::Null;
     let selected_checkpoint = if resume {
         let latest: Value = read_json(&launch.join("resume-input.json"))?;
@@ -1054,7 +1148,7 @@ fn rank_impl(
         }
         // Full objective identity, partition, vocabulary and architecture
         // against the requested mode; undeclared changes are refused.
-        continuity = continuation::check_parent(
+        continuity = continuation::check_parent_partition(
             mode,
             state,
             &read_json::<Value>(&cp.join("config.json"))?,
@@ -1069,6 +1163,7 @@ fn rank_impl(
                 config: &serde_json::to_value(&config)?,
                 objective_sha256: &objective_sha,
             },
+            execution.record(),
             policy.as_ref(),
         )?;
         ensure!(
@@ -1102,7 +1197,7 @@ fn rank_impl(
             }
             let optimizer: Value = read_json(&cp.join("optimizer.json"))?;
             let expected = if resume {
-                json!({"execution_partition":crate::task_contract::training_partition(world,micro,global_batch)?,
+                json!({"execution_partition":execution.record(),
                     "sampler_id":active_sampler_id(replay.as_ref()),"corpus_sha256":corpus_hash,
                     "world":world,"global_batch":global_batch,"seed":seed,
                     "ranking_backward":crate::neural::RANKING_BACKWARD_ID,
@@ -1145,13 +1240,12 @@ fn rank_impl(
         }
     }
     let exposure_baseline = if resume {
-        crate::training_exposure::checkpoint_baseline(
+        crate::training_exposure::checkpoint_baseline_rows(
             selected_state
                 .as_ref()
                 .context("resume exposure state absent")?,
             rank,
-            world,
-            global_batch / world,
+            &execution.rows_per_rank(),
         )?
     } else {
         Some(crate::training_exposure::Counts::default())
@@ -1264,7 +1358,7 @@ fn rank_impl(
             .as_ref()
             .context("resume selection absent")?;
         let state = selected_state.as_ref().context("resume state absent")?;
-        ensure!(state["execution_partition"] == crate::task_contract::training_partition(world, micro, global_batch)?,
+        ensure!(state["execution_partition"] == *execution.record(),
             "exact resume requires the original microbatch, accumulation and RNG/objective partition");
         ensure!(state["sampler_id"] == active_sampler_id(replay.as_ref()),
                 "exact resume requires the same sampler; use an explicit warm-start across sampler versions");
@@ -1402,13 +1496,18 @@ fn rank_impl(
     // Validate every sampled comparison against the frozen index before its
     // records are read or any loss is formed (W6-T03).
     let comparisons = objective::SampledComparisons::new(index)?;
-    let loss_for = |ids: &[usize], train: bool| -> Result<(Tensor, [f64; 5])> {
-        let partition = if train {
+    // `global` selects the objective: `None` is v1's microbatch-local
+    // composite; partition v2 passes the step's global denominators.
+    let loss_for = |ids: &[usize],
+                    train: bool,
+                    global: Option<&partition::Denominators>|
+     -> Result<(Tensor, [f64; 5])> {
+        let corpus_partition = if train {
             "meta_train"
         } else {
             "meta_validation"
         };
-        comparisons.check_ids(index, ids, partition)?;
+        comparisons.check_ids(index, ids, corpus_partition)?;
         let rows = ids.iter().map(|&i| records.get(i)).collect::<Vec<_>>();
         let labels = ids
             .iter()
@@ -1445,22 +1544,34 @@ fn rank_impl(
                     .bitwise_and(0xffffi64),
             )
             .view([ids.len() as i64, length - 1, vocabulary.tokens.len() as i64]);
-        objective::composite(
-            &objective::Outputs {
-                logits: &logits,
-                rewards: &rewards,
-                runtime: &runtime,
-                stability: &stability,
-                ablation: &ablation,
-            },
-            model.loss_log_vars.values(),
-            &tokens,
-            &pad,
-            &legal,
-            &labels,
-        )
+        let outputs = objective::Outputs {
+            logits: &logits,
+            rewards: &rewards,
+            runtime: &runtime,
+            stability: &stability,
+            ablation: &ablation,
+        };
+        match global {
+            None => objective::composite(
+                &outputs,
+                model.loss_log_vars.values(),
+                &tokens,
+                &pad,
+                &legal,
+                &labels,
+            ),
+            Some(global) => partition::composite(
+                &outputs,
+                model.loss_log_vars.values(),
+                &tokens,
+                &pad,
+                &legal,
+                &labels,
+                global,
+            ),
+        }
     };
-    let accumulation = global_batch / (world * micro);
+    let accumulation = execution.accumulation(rank)?;
     let started = Instant::now();
     let initial_step = optimizer.step as usize;
     let mut last_live_write = Instant::now() - Duration::from_secs(1);
@@ -1497,7 +1608,7 @@ fn rank_impl(
     )?;
     // W6-T04: every consumed microbatch, attempted update and durable commit
     // of this rank and attempt, bound into each checkpoint receipt.
-    let mut journal = consumption::Journal::create(
+    let mut journal = consumption::Journal::create_with_shard(
         &launch.join(format!("consumption-rank-{rank}.jsonl")),
         consumption::Header {
             schema: consumption::SCHEMA.into(),
@@ -1525,17 +1636,99 @@ fn rank_impl(
                 None
             },
         },
+        execution.shard(rank)?,
     )?;
     let journal_path = journal.path().strip_prefix(root)?.to_path_buf();
     // The optimizer step whose update is in flight; cleared once applied.
     let mut attempting: Option<usize> = None;
-    let execution = (|| -> Result<()> {
+    let outcome = (|| -> Result<()> {
         for step in optimizer.step as usize..steps {
             attempting = Some(step);
             let begun = Instant::now();
             let mut values = [0.0; 5];
             let mut loss_value = 0.0;
-            for mb in 0..accumulation {
+            // W7-T06: partition v2 draws the whole global batch once, forms
+            // the global denominators from labels alone, and runs this rank's
+            // contiguous shard of whole comparisons. Each microbatch's
+            // objective is scaled by the world size, so the mean all-reduce
+            // delivers the sum of rank gradients of the global objective.
+            let mut step_denominators = None;
+            if let Some(plan) = execution.plan() {
+                let local_step = (step - sampling_offset) as u64;
+                let scale = plan.local_scale(partition::Transport::Mean);
+                let global_ids = sample_replay_fresh(
+                    &index,
+                    &families,
+                    &fresh,
+                    &fresh_by_teacher,
+                    usize::try_from(plan.global_serial(local_step)?)?,
+                    global_batch,
+                    seed,
+                    balanced,
+                );
+                comparisons.check_ids(index, &global_ids, "meta_train")?;
+                let global_labels = global_ids
+                    .iter()
+                    .map(|&id| objective::RowLabels::from_record(id, &records.get(id)))
+                    .collect::<Vec<_>>();
+                comparisons.check_rows(index, &global_labels)?;
+                let global = partition::denominators(&global_labels)?;
+                let slots = plan.slots(rank, seed, local_step)?;
+                if slots.is_empty() {
+                    // An empty rank contributes exact zero gradients with the
+                    // same packed layout and still joins every collective.
+                    partition::empty_rank_objective(vs.trainable_variables().iter())?.backward();
+                }
+                for slot in &slots {
+                    tch::manual_seed(slot.dropout_seed);
+                    let first = slot.first_comparison * objective::COMPARISON_ROWS;
+                    let ids = global_ids[first..first + slot.rows].to_vec();
+                    let serial = usize::try_from(slot.serial)?;
+                    let guard = Bf16::enter();
+                    let (loss, contributions) = loss_for(&ids, true, Some(&global))?;
+                    let loss = loss * scale;
+                    loss_value += loss.double_value(&[]);
+                    for i in 0..5 {
+                        values[i] += contributions[i] * scale;
+                    }
+                    drop(guard);
+                    loss.backward();
+                    observed_exposure.observe(
+                        &ids,
+                        &fresh_records,
+                        serial,
+                        balanced && !fresh.is_empty(),
+                    )?;
+                    crate::training_exposure::observe_families(
+                        &mut observed_families,
+                        &teacher_family,
+                        &ids,
+                    )?;
+                    let consumed = ids.iter().map(|&i| records.get(i)).collect::<Vec<_>>();
+                    journal.microbatch(
+                        step as u64,
+                        slot.microbatch,
+                        slot.serial,
+                        slot.dropout_seed,
+                        &ids,
+                        objective::supervision(
+                            &ids.iter()
+                                .zip(&consumed)
+                                .map(|(&id, r)| objective::RowLabels::from_record(id, r))
+                                .collect::<Vec<_>>(),
+                            &consumed.iter().map(|r| r.length).collect::<Vec<_>>(),
+                        )?,
+                    )?;
+                }
+                step_denominators = Some(global);
+            }
+            // Partition v1: equal rank shards of `accumulation` microbatches.
+            let v1_microbatches = if execution.plan().is_none() {
+                accumulation
+            } else {
+                0
+            };
+            for mb in 0..v1_microbatches {
                 let dropout_seed =
                     consumption::dropout_seed(seed, (step - sampling_offset) as u64, rank, mb);
                 tch::manual_seed(dropout_seed);
@@ -1553,7 +1746,7 @@ fn rank_impl(
                     balanced,
                 );
                 let guard = Bf16::enter();
-                let (loss, m) = loss_for(&ids, true)?;
+                let (loss, m) = loss_for(&ids, true, None)?;
                 let loss = loss / accumulation as f64;
                 loss_value += loss.double_value(&[]);
                 for i in 0..5 {
@@ -1654,15 +1847,40 @@ fn rank_impl(
             let checkpoint_due = checkpoint_vote.double_value(&[0]) > 0.0;
             coordination_seconds += vote_started.elapsed().as_secs_f64();
             if checkpoint_due && !validation.is_empty() {
-                let ids = &fixed_panel.as_ref().context("validation panel missing")?[rank];
-                let (_, v) = tch::no_grad(|| {
-                    let _guard = Bf16::enter();
-                    loss_for(ids, false)
-                })?;
+                let (v, sampled_examples) =
+                    match fixed_panel.as_ref().context("validation panel missing")? {
+                        ValidationPanel::V1(panel) => {
+                            let (_, v) = tch::no_grad(|| {
+                                let _guard = Bf16::enter();
+                                loss_for(&panel[rank], false, None)
+                            })?;
+                            (v, world * 256)
+                        }
+                        // Partition v2: this rank's contributions to the
+                        // globally normalized panel objective, scaled for the
+                        // mean all-reduce; an empty rank contributes zeros.
+                        ValidationPanel::V2 {
+                            per_rank,
+                            denominators,
+                            ..
+                        } => {
+                            let mut v = [0.0; 5];
+                            for ids in &per_rank[rank] {
+                                let (_, contributions) = tch::no_grad(|| {
+                                    let _guard = Bf16::enter();
+                                    loss_for(ids, false, Some(denominators))
+                                })?;
+                                for i in 0..5 {
+                                    v[i] += contributions[i] * world as f64;
+                                }
+                            }
+                            (v, partition::VALIDATION_PANEL_ROWS)
+                        }
+                    };
                 let mut t = Tensor::from_slice(&v.map(|x| x as f32)).to_device(device);
                 comm.reduce(&mut t)?;
                 let v: Vec<f32> = Vec::try_from(t.to_device(Device::Cpu))?;
-                validation_metrics = json!({"sequence_nll":v[0],"ranking_bt":v[1],"ranking_listwise":v[2],"runtime_huber":v[3],"contextfree_bt":v[4],"weighted_losses":objective::weighted_losses(&v),"source_families":validation.len(),"evaluated_step":step+1,"panel_sha256":panel_sha256,"sampler_id":SAMPLER_ID,"sampled_examples":world*256,"family_balanced":true,"evaluation_bias":"adaptive_cut_heldout_teacher","independent_evaluation":false});
+                validation_metrics = json!({"sequence_nll":v[0],"ranking_bt":v[1],"ranking_listwise":v[2],"runtime_huber":v[3],"contextfree_bt":v[4],"weighted_losses":objective::weighted_losses(&v),"source_families":validation.len(),"evaluated_step":step+1,"panel_sha256":panel_sha256,"sampler_id":SAMPLER_ID,"sampled_examples":sampled_examples,"family_balanced":true,"evaluation_bias":"adaptive_cut_heldout_teacher","independent_evaluation":false});
             }
             let seconds = begun.elapsed().as_secs_f64();
             measured_step_seconds += seconds;
@@ -1691,6 +1909,25 @@ fn rank_impl(
                 // Consumption through this update is durable before any
                 // checkpoint can reference it.
                 let consumed = journal.sync()?;
+                // Partition v2 persists every rank's RNG/sampler state and
+                // the global committed update this checkpoint covers.
+                let partition_state = match (execution.plan(), &step_denominators) {
+                    (Some(plan), Some(global)) => Some(plan.state(
+                        seed,
+                        sampling_offset as u64,
+                        partition::CommittedUpdate::new(
+                            plan,
+                            optimizer.step,
+                            (step - sampling_offset) as u64,
+                            global,
+                            [totals[1], totals[2], totals[3], totals[4], totals[5]].map(f64::from),
+                            &packed,
+                            norm,
+                            &parameter_hash(&vs)?,
+                        )?,
+                    )?),
+                    _ => None,
+                };
                 checkpoint(
                     root,
                     run,
@@ -1708,7 +1945,8 @@ fn rank_impl(
                     &initialization,
                     &validation_metrics,
                     global_batch,
-                    micro,
+                    &execution,
+                    partition_state.as_ref(),
                     batch_qualification,
                     &exposure_baseline
                         .as_ref()
@@ -1834,10 +2072,14 @@ fn rank_impl(
             complete["eligible_checkpoint"] = json!(false);
         }
         complete["consumption_journal"] = json!({"path":journal_path,"binding":journal.sync()?});
+        if execution.plan().is_some() {
+            // Added only for partition v2; v1 completion receipts are unchanged.
+            complete["execution_partition"] = execution.record().clone();
+        }
         write_json(&launch.join(format!("complete-{rank}.json")), &complete)?;
         Ok(())
     })();
-    if let Err(error) = &execution {
+    if let Err(error) = &outcome {
         // An update that was attempted but not applied is recorded as
         // rejected; the journal refuses anything after it. Best effort: the
         // original error is what this rank returns.
@@ -1846,7 +2088,7 @@ fn rank_impl(
         }
         let _ = journal.sync();
     }
-    if execution.is_err() {
+    if outcome.is_err() {
         // Normal error returns preserve all observed completed forwards. A
         // hard process death can leave an unreported tail and must remain
         // unknown during reconciliation; never infer zero lost exposure.
@@ -1867,7 +2109,7 @@ fn rank_impl(
             );
         }
     }
-    execution
+    outcome
 }
 
 #[cfg(test)]

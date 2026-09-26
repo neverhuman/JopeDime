@@ -90,24 +90,43 @@ pub struct Header {
 }
 
 impl Header {
-    fn validate(&self) -> Result<()> {
+    /// `shard` is the rank's partition-v2 shard; `None` is partition v1,
+    /// whose equal shards satisfy `accumulation × world × microbatch ==
+    /// global_batch`. Under v2 the shard must be exactly the plan's shard for
+    /// this rank, and `accumulation` its microbatch count (0 for an empty rank).
+    fn validate(&self, shard: Option<&Shard>) -> Result<()> {
         ensure!(
             self.schema == SCHEMA && self.rng == RNG_ID,
             "unknown consumption journal schema or RNG identity"
         );
-        ensure!(
-            self.world > 0
-                && self.rank < self.world
-                && self.microbatch > 0
-                && self.microbatch % super::objective::COMPARISON_ROWS == 0
-                && self.accumulation > 0
-                && self
-                    .accumulation
-                    .checked_mul(self.world)
-                    .and_then(|x| x.checked_mul(self.microbatch))
-                    == Some(self.global_batch),
-            "consumption journal partition is inconsistent"
-        );
+        match shard {
+            None => ensure!(
+                self.world > 0
+                    && self.rank < self.world
+                    && self.microbatch > 0
+                    && self.microbatch % super::objective::COMPARISON_ROWS == 0
+                    && self.accumulation > 0
+                    && self
+                        .accumulation
+                        .checked_mul(self.world)
+                        .and_then(|x| x.checked_mul(self.microbatch))
+                        == Some(self.global_batch),
+                "consumption journal partition is inconsistent"
+            ),
+            Some(shard) => {
+                ensure!(
+                    self.world > 0 && self.rank < self.world,
+                    "consumption journal partition is inconsistent"
+                );
+                let plan =
+                    super::partition::Plan::new(self.world, self.global_batch, self.microbatch)?;
+                ensure!(
+                    plan.shards().get(self.rank) == Some(shard)
+                        && self.accumulation == shard.microbatches.len(),
+                    "consumption journal shard differs from the partition-v2 plan"
+                );
+            }
+        }
         ensure!(
             self.sampling_offset <= self.initial_optimizer_step
                 && self.initial_optimizer_step <= self.target_optimizer_step,
@@ -143,7 +162,48 @@ impl Header {
             .context("step precedes the sampling origin")?;
         Ok(dropout_seed(self.seed, local, self.rank, microbatch))
     }
+
+    /// Sampler cursor under either partition: v1's [`Header::serial`], or
+    /// the v2 global cursor `local_step × global_batch + 8 × first
+    /// comparison of the microbatch`. `microbatch` may equal the shard's
+    /// microbatch count (the cursor after the shard).
+    pub fn serial_in(&self, shard: Option<&Shard>, step: u64, microbatch: usize) -> Result<u64> {
+        let Some(shard) = shard else {
+            return self.serial(step, microbatch);
+        };
+        ensure!(
+            microbatch <= shard.microbatches.len(),
+            "microbatch {microbatch} outside the rank's shard"
+        );
+        let local = step
+            .checked_sub(self.sampling_offset)
+            .context("step precedes the sampling origin")?;
+        local
+            .checked_mul(self.global_batch as u64)
+            .and_then(|x| {
+                x.checked_add(
+                    (shard.microbatch_first_group(microbatch) * super::objective::COMPARISON_ROWS)
+                        as u64,
+                )
+            })
+            .context("sampler cursor overflow")
+    }
+
+    /// Rows of `microbatch`: the fixed v1 microbatch, or the v2 shard's.
+    pub fn rows_in(&self, shard: Option<&Shard>, microbatch: usize) -> Result<usize> {
+        match shard {
+            None => Ok(self.microbatch),
+            Some(shard) => Ok(shard
+                .microbatches
+                .get(microbatch)
+                .context("microbatch outside the rank's shard")?
+                * super::objective::COMPARISON_ROWS),
+        }
+    }
 }
+
+/// A rank's partition-v2 shard, recorded beside the v1 header fields.
+pub use super::partition::Shard;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -157,6 +217,10 @@ pub enum Outcome {
 pub enum Event {
     Attempt {
         header: Header,
+        /// Partition v2 only. Absent, and never serialized, under v1, so
+        /// v1 journals are byte-identical to those written before v2.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        shard: Option<Shard>,
     },
     Microbatch {
         step: u64,
@@ -225,6 +289,7 @@ struct Pending {
 #[derive(Clone, Debug, Default)]
 struct Tracker {
     header: Option<Header>,
+    shard: Option<Shard>,
     track_records: bool,
     next_step: u64,
     step: Pending,
@@ -245,22 +310,24 @@ impl Tracker {
         if let Some(reason) = &self.ended {
             bail!("consumption journal continues after a rejected update ({reason})");
         }
-        if let Event::Attempt { header } = event {
+        if let Event::Attempt { header, shard } = event {
             ensure!(
                 self.header.is_none(),
                 "consumption journal has two attempt headers"
             );
-            header.validate()?;
+            header.validate(shard.as_ref())?;
             self.next_step = header.initial_optimizer_step;
             self.applied_through = header.initial_optimizer_step;
             self.committed_through = header.initial_optimizer_step;
             self.header = Some(header.clone());
+            self.shard = shard.clone();
             return Ok(());
         }
         let h = self
             .header
             .clone()
             .context("consumption journal must begin with its attempt header")?;
+        let shard = self.shard.clone();
         match event {
             Event::Attempt { .. } => unreachable!(),
             Event::Microbatch {
@@ -281,7 +348,7 @@ impl Tracker {
                     "microbatch {microbatch} of step {step} out of order"
                 );
                 ensure!(
-                    *serial == h.serial(*step, *microbatch)?,
+                    *serial == h.serial_in(shard.as_ref(), *step, *microbatch)?,
                     "sampler cursor of step {step} microbatch {microbatch} differs"
                 );
                 ensure!(
@@ -289,7 +356,8 @@ impl Tracker {
                     "dropout RNG identity of step {step} microbatch {microbatch} differs"
                 );
                 ensure!(
-                    records.len() == h.microbatch && supervision.rows == records.len(),
+                    records.len() == h.rows_in(shard.as_ref(), *microbatch)?
+                        && supervision.rows == records.len(),
                     "microbatch record count differs from the partition"
                 );
                 self.step.units.add(&Units {
@@ -406,8 +474,14 @@ pub struct Journal {
 }
 
 impl Journal {
+    /// A partition-v1 journal.
     pub fn create(path: &Path, header: Header) -> Result<Self> {
-        header.validate()?;
+        Self::create_with_shard(path, header, None)
+    }
+
+    /// A journal for either partition; `shard` is the rank's v2 shard.
+    pub fn create_with_shard(path: &Path, header: Header, shard: Option<Shard>) -> Result<Self> {
+        header.validate(shard.as_ref())?;
         let file = fs::OpenOptions::new()
             .append(true)
             .create_new(true)
@@ -421,7 +495,7 @@ impl Journal {
             tracker: Tracker::default(),
             poisoned: false,
         };
-        journal.append(&Event::Attempt { header })?;
+        journal.append(&Event::Attempt { header, shard })?;
         journal.sync()?;
         if let Some(parent) = path.parent() {
             fs::File::open(parent)?.sync_all()?;
@@ -539,6 +613,9 @@ pub struct Cursor {
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct Reconciliation {
     pub header: Header,
+    /// The rank's partition-v2 shard; `None` under v1.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub shard: Option<Shard>,
     /// Every journaled microbatch whose update outcome was recorded,
     /// including rejected and re-executed work.
     pub computed: Units,
@@ -654,10 +731,11 @@ pub fn reconcile(bytes: &[u8], durable_step: Option<u64>) -> Result<Reconciliati
         unique_committed_records: tracker.committed_records.len() as u64,
         next: Cursor {
             optimizer_step: committed_through,
-            serial: header.serial(committed_through, 0)?,
+            serial: header.serial_in(tracker.shard.as_ref(), committed_through, 0)?,
             dropout_seed: header.dropout_seed(committed_through, 0)?,
         },
         committed_records: tracker.committed_records,
+        shard: tracker.shard,
         header,
     })
 }
@@ -747,7 +825,7 @@ pub fn reconcile_run(attempts: &[Reconciliation]) -> Result<RunTotals> {
         if i > 0 {
             let previous = &attempts[i - 1];
             ensure!(
-                same(&previous.header, &attempt.header),
+                same(&previous.header, &attempt.header) && previous.shard == attempt.shard,
                 "attempt {i} changed the run constants"
             );
             ensure!(

@@ -103,6 +103,168 @@ pub fn training_partition(world: usize, micro: usize, global: usize) -> Result<V
     )
 }
 
+pub const PARTITION_V1_SCHEMA: &str = "parallel.training_partition.v1";
+/// Lossless partition v2 (W7-T06); the trainer-side arithmetic is
+/// `training::partition`. Its record lives here, beside v1, so request and
+/// recovery code outside the neural build can name and check it.
+pub const PARTITION_V2_SCHEMA: &str = "parallel.training_partition.v2";
+pub const PARTITION_V2_NORMALIZATION: &str = "global_term_sums_v1";
+pub const PARTITION_V2_ASSIGNMENT: &str = "contiguous_blocks_remainder_to_lowest_ranks";
+/// Frozen numerical policy of v2 against its declared single-process reference.
+pub const PARTITION_V2_LOSS_RTOL: f64 = 1e-5;
+pub const PARTITION_V2_GRADIENT_RTOL: f64 = 1e-5;
+const PARTITION_RNG: &str = "mix_seed_local_step_rank_microbatch_v1";
+const PARTITION_COMPARISON_ROWS: usize = 8;
+
+/// One rank's contiguous share of the global comparisons (partition v2).
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct PartitionShard {
+    pub rank: usize,
+    pub first_group: usize,
+    pub groups: usize,
+    /// Comparisons per microbatch, in order; empty for an empty rank.
+    pub microbatches: Vec<usize>,
+}
+
+impl PartitionShard {
+    /// First global comparison of microbatch `mb`; `mb` may equal the
+    /// microbatch count (the end of the shard).
+    pub fn microbatch_first_group(&self, mb: usize) -> usize {
+        self.first_group + self.microbatches[..mb].iter().sum::<usize>()
+    }
+}
+
+/// Assign `total_groups` comparisons to `world` ranks: contiguous blocks,
+/// remainder to the lowest ranks, microbatches of at most `microbatch_groups`.
+pub fn assign_partition(
+    total_groups: usize,
+    world: usize,
+    microbatch_groups: usize,
+) -> Result<Vec<PartitionShard>> {
+    ensure!(
+        world > 0 && microbatch_groups > 0,
+        "partition needs ranks and a positive microbatch"
+    );
+    let (base, remainder) = (total_groups / world, total_groups % world);
+    let mut first = 0;
+    Ok((0..world)
+        .map(|rank| {
+            let groups = base + usize::from(rank < remainder);
+            let mut microbatches = Vec::new();
+            let mut left = groups;
+            while left > 0 {
+                let n = left.min(microbatch_groups);
+                microbatches.push(n);
+                left -= n;
+            }
+            let shard = PartitionShard {
+                rank,
+                first_group: first,
+                groups,
+                microbatches,
+            };
+            first += groups;
+            shard
+        })
+        .collect())
+}
+
+/// The partition-v2 execution record for `world` ranks, the largest
+/// rank-local microbatch `micro` and `global` rows. `world` may be any
+/// positive count, including 3.
+pub fn training_partition_v2(world: usize, micro: usize, global: usize) -> Result<Value> {
+    let rows = PARTITION_COMPARISON_ROWS;
+    ensure!(
+        global > 0 && global % rows == 0,
+        "global batch must be whole comparisons of {rows}"
+    );
+    ensure!(
+        micro > 0 && micro % rows == 0,
+        "microbatch must be whole comparisons of {rows}"
+    );
+    let shards = assign_partition(global / rows, world, micro / rows)?;
+    Ok(json!({
+        "schema": PARTITION_V2_SCHEMA,
+        "world": world,
+        "global_batch": global,
+        "microbatch": micro,
+        "comparisons": global / rows,
+        "assignment": PARTITION_V2_ASSIGNMENT,
+        "shards": shards,
+        "normalization": PARTITION_V2_NORMALIZATION,
+        "gradient_reduction": "sum_of_rank_gradients_of_global_normalized_local_objectives",
+        "mean_transport_scale": "world",
+        "empty_rank": "explicit_zero_gradient_joins_every_collective",
+        "empty_term": "globally_zero_denominator_gives_zero_value_and_gradient",
+        "rng": PARTITION_RNG,
+        "sampler": "global_comparison_serial",
+        "autocast": "scoped_bf16_fp32_master_v2",
+        "numerical_policy": {
+            "reference": "single_process_v1_composite_over_the_whole_global_batch",
+            "arithmetic": "f32_terms_f64_denominators",
+            "loss_rtol": PARTITION_V2_LOSS_RTOL,
+            "gradient_rtol_of_max_abs": PARTITION_V2_GRADIENT_RTOL,
+            "dropout": "off_for_equivalence_claims",
+        },
+    }))
+}
+
+/// The record of partition `schema` (v1 or v2) for a topology.
+pub fn training_partition_of(
+    schema: &str,
+    world: usize,
+    micro: usize,
+    global: usize,
+) -> Result<Value> {
+    match schema {
+        PARTITION_V1_SCHEMA => training_partition(world, micro, global),
+        PARTITION_V2_SCHEMA => training_partition_v2(world, micro, global),
+        other => anyhow::bail!("unknown execution partition schema {other}"),
+    }
+}
+
+/// Recompute a declared record from its own schema, world, microbatch and
+/// global batch. A record is consistent exactly when it equals the result.
+pub fn recompute_partition(record: &Value) -> Result<Value> {
+    let field = |name: &str| -> Result<usize> {
+        Ok(usize::try_from(record[name].as_u64().with_context(
+            || format!("execution partition {name} absent"),
+        )?)?)
+    };
+    training_partition_of(
+        record["schema"]
+            .as_str()
+            .context("execution partition schema absent")?,
+        field("world")?,
+        field("microbatch")?,
+        field("global_batch")?,
+    )
+}
+
+/// Rows each rank consumes per optimizer step under a consistent record:
+/// equal under v1, the shard sizes under v2 (0 for an empty rank).
+pub fn partition_rows_per_rank(record: &Value) -> Result<Vec<usize>> {
+    ensure!(
+        recompute_partition(record)? == *record,
+        "execution partition record is inconsistent"
+    );
+    let world = usize::try_from(record["world"].as_u64().context("partition world")?)?;
+    let global = usize::try_from(
+        record["global_batch"]
+            .as_u64()
+            .context("partition global batch")?,
+    )?;
+    if record["schema"] == PARTITION_V1_SCHEMA {
+        return Ok(vec![global / world; world]);
+    }
+    let shards: Vec<PartitionShard> = serde_json::from_value(record["shards"].clone())?;
+    Ok(shards
+        .iter()
+        .map(|s| s.groups * PARTITION_COMPARISON_ROWS)
+        .collect())
+}
+
 /// CPU-only gate; call before creating a CUDA device, tensor or communicator.
 pub fn verify_resume_metadata(state: &Value, expected: &Value, optimizer: &Value) -> Result<()> {
     for (field, value) in expected

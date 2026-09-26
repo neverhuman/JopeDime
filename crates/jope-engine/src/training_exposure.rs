@@ -127,6 +127,23 @@ pub fn checkpoint_baseline(
         world > 0 && rank < world && batch_per_rank > 0,
         "invalid checkpoint exposure partition"
     );
+    checkpoint_baseline_rows(state, rank, &vec![batch_per_rank; world])
+}
+
+/// [`checkpoint_baseline`] for any partition: `rows_per_step[r]` is what
+/// rank `r` consumes per optimizer step. Partition v1 ranks are equal;
+/// partition-v2 ranks may differ by one comparison, and an empty rank
+/// consumes nothing (`task_contract::partition_rows_per_rank`).
+pub fn checkpoint_baseline_rows(
+    state: &Value,
+    rank: usize,
+    rows_per_step: &[usize],
+) -> Result<Option<Counts>> {
+    let world = rows_per_step.len();
+    ensure!(
+        world > 0 && rank < world && rows_per_step.iter().any(|&rows| rows > 0),
+        "invalid checkpoint exposure partition"
+    );
     let Some(rows) = state.get("committed_exposure_by_rank") else {
         return Ok(None);
     };
@@ -152,7 +169,7 @@ pub fn checkpoint_baseline(
             let counts: Counts = serde_json::from_value(row["counts"].clone())?;
             counts.validate()?;
             ensure!(
-                steps.checked_mul(batch_per_rank as u64) == Some(counts.program_presentations),
+                steps.checked_mul(rows_per_step[i] as u64) == Some(counts.program_presentations),
                 "checkpoint exposure differs from committed step window"
             );
         }

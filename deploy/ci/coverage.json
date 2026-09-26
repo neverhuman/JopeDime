@@ -7358,6 +7358,21 @@
       "dispositions": [],
       "scope": "W7-T06 partition v2: lossless whole-comparison assignment for any world, global-denominator reduction matching the single-process reference within the frozen policy, explicit empty rank/term, persisted rank RNG/sampler state and committed update, rank-count change as an explicit transition; neural-gated CPU fixtures only."
     },
+    "target:jope-parallel/test/partition_wiring": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-engine/tests/partition_wiring.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "W7-T06 wiring: explicit v2 selection and trainer gate, v2 consumption journal shards, per-rank exposure, v2 validation panel, v2 continuation recovery, and a three-rank checkpoint through the real commit path; v1 records byte-for-byte; neural-gated CPU fixtures, step compile-checked only."
+    },
     "target:jope-parallel/test/corpus": {
       "discovery": {
         "kind": "target",
