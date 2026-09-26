@@ -1,0 +1,591 @@
+{
+  "schema": "jope.regression-task-status/v1",
+  "note": "Reviewed task states; evidence paths are custody receipts outside the tree.",
+  "tasks": {
+    "W1-T01": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W1-T02": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W1-T03": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W1-T04": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W1-T05": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W1-T06": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W1-T07": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W2-T01": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W2-T02": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W2-T03": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W2-T04": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W2-T05": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W2-T06": {
+      "states": [
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "7425536660221cc5877e59ef9dc3a1e4286e8826"
+      ],
+      "tests": [
+        "test_verify_inventory.py (8)",
+        "host proof verify-real.json",
+        "host proof tamper.json"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w2t06-host-proof-20260926T052352Z"
+      ],
+      "remaining": "Hosted CI runs the synthetic fixtures only; the real asset is verified on the host."
+    },
+    "W2-T07": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W3-T01": {
+      "states": [
+        "implemented"
+      ],
+      "commits": [
+        "5cad30084b2012fc4d2d4a7717eb7e4c95e78f17"
+      ],
+      "evidence": [
+        "docs/internal/core-ip/work-orders/evidence/W03-ingress-map.md"
+      ],
+      "remaining": "jope-engine teaching-store/corpus routes are mapped, not reproduced."
+    },
+    "W3-T02": {
+      "states": [
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "cff5ead8a066851429ed78d8f715f9c25c1369aa"
+      ],
+      "tests": [
+        "missing_context_provenance_is_refused_at_real_teaching_ingress",
+        "wrong_scope_consumer_encoder_or_altered_context_is_refused_before_authority",
+        "retained_context_is_revalidated_by_every_receiving_gate"
+      ],
+      "remaining": "Producer authentication, revocation lookup and W2 execution-proof linkage remain; jope-bench's live teaching driver now fails closed until a W2 context producer runs before admission."
+    },
+    "W3-T03": {
+      "states": [
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "cff5ead8a066851429ed78d8f715f9c25c1369aa"
+      ],
+      "tests": [
+        "legacy_qualification_without_provenance_stays_quarantined_and_is_not_upgraded",
+        "freeze_without_preregistered_context_encoder_is_diagnostic_only"
+      ],
+      "remaining": "Versioned requalification procedure and jope-engine ingress routes remain."
+    },
+    "W3-T04": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W3-T05": {
+      "states": [
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "2db85243df5a1e8f48e0f36aedd4158125f1225d",
+        "7216cad2168bdc62a5c41485410494112e19691d"
+      ],
+      "tests": [
+        "transitions_separate_initialization_ties_non_improvement_and_improvement",
+        "eligibility_alone_and_redelivery_never_count_as_improvement"
+      ],
+      "remaining": "Per-fold tail diagnostics and an explicit duplicate outcome remain."
+    },
+    "W3-T06": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W3-T07": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W4-T01": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W4-T02": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W4-T03": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W4-T04": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W4-T05": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W4-T06": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W4-T07": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W5-T01": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W5-T02": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W5-T03": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W5-T04": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W5-T05": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W5-T06": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W5-T07": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W6-T01": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W6-T02": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W6-T03": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W6-T04": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W6-T05": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W6-T06": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W6-T07": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W7-T01": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W7-T02": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W7-T03": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W7-T04": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W7-T05": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W7-T06": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W7-T07": {
+      "states": [
+        "blocked"
+      ],
+      "blocker": "Needs admitted three-host CPU/GPU phases, managed worker installation and grants; not authorized in this change."
+    },
+    "W7-T08": {
+      "states": [
+        "blocked"
+      ],
+      "blocker": "Needs admitted three-host CPU/GPU phases, managed worker installation and grants; not authorized in this change."
+    },
+    "W7-T09": {
+      "states": [
+        "blocked"
+      ],
+      "blocker": "Needs admitted three-host CPU/GPU phases, managed worker installation and grants; not authorized in this change."
+    },
+    "W8-T01": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W8-T02": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W8-T03": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W8-T04": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W8-T05": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W8-T06": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W8-T07": {
+      "states": [
+        "blocked"
+      ],
+      "blocker": "Needs a scoped publisher credential from its owner and an approved live storage budget; the administrator profile is not a substitute."
+    },
+    "W8-T08": {
+      "states": [
+        "blocked"
+      ],
+      "blocker": "Needs a scoped publisher credential from its owner and an approved live storage budget; the administrator profile is not a substitute."
+    },
+    "W9-T01": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W9-T02": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W9-T03": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W9-T04": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W9-T05": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W9-T06": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W9-T07": {
+      "states": [
+        "blocked"
+      ],
+      "blocker": "Needs the W1-W9 live gates and an admitted real-loop window; no execution is authorized in this change."
+    },
+    "W10-T01": {
+      "states": [
+        "blocked"
+      ],
+      "blocker": "Needs the W1-W9 live gates and an admitted real-loop window; no execution is authorized in this change."
+    },
+    "W10-T02": {
+      "states": [
+        "blocked"
+      ],
+      "blocker": "Needs the W1-W9 live gates and an admitted real-loop window; no execution is authorized in this change."
+    },
+    "W10-T03": {
+      "states": [
+        "blocked"
+      ],
+      "blocker": "Needs the W1-W9 live gates and an admitted real-loop window; no execution is authorized in this change."
+    },
+    "W10-T04": {
+      "states": [
+        "blocked"
+      ],
+      "blocker": "Needs the W1-W9 live gates and an admitted real-loop window; no execution is authorized in this change."
+    },
+    "W10-T05": {
+      "states": [
+        "blocked"
+      ],
+      "blocker": "Needs a separately costed, preregistered study manifest and budget."
+    },
+    "W10-T06": {
+      "states": [
+        "blocked"
+      ],
+      "blocker": "Needs a separately costed, preregistered study manifest and budget."
+    },
+    "W10-T07": {
+      "states": [
+        "blocked"
+      ],
+      "blocker": "Needs a separately costed, preregistered study manifest and budget."
+    },
+    "W10-T08": {
+      "states": [
+        "blocked"
+      ],
+      "blocker": "Needs a separately costed, preregistered study manifest and budget."
+    },
+    "W10-T09": {
+      "states": [
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "361fb112af9fd5f3ea4f33c14abefd4a2b6b6523"
+      ],
+      "tests": [
+        "independent_python_scorer_reproduces_the_report",
+        "test_transfer_score.py (5)"
+      ],
+      "remaining": "No transfer round has been measured; complete scoring stays blocked on T07/T08."
+    },
+    "W10-T10": {
+      "states": [
+        "blocked"
+      ],
+      "blocker": "Needs a separately costed, preregistered study manifest and budget."
+    },
+    "W11-T01": {
+      "states": [
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "e9f270f38d0ead8555f197b4d698d2c5db3891a6"
+      ],
+      "tests": [
+        "test_census_comes_from_the_frozen_plan"
+      ],
+      "remaining": "The corrected study manifest itself is not frozen; that needs the GPU study approval."
+    },
+    "W11-T02": {
+      "states": [
+        "blocked"
+      ],
+      "blocker": "Needs an approved corrected GPU study manifest, runtime qualification and a new admitted window."
+    },
+    "W11-T03": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W11-T04": {
+      "states": [
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "e9f270f38d0ead8555f197b4d698d2c5db3891a6"
+      ],
+      "tests": [
+        "test_every_planned_slot_reconciles_to_one_outcome",
+        "test_unplanned_receipts_are_listed_and_block_the_headline"
+      ],
+      "remaining": "Journal-to-controller allocation reconciliation needs an executed study."
+    },
+    "W11-T05": {
+      "states": [
+        "blocked"
+      ],
+      "blocker": "Needs an approved corrected GPU study manifest, runtime qualification and a new admitted window."
+    },
+    "W11-T06": {
+      "states": [
+        "blocked"
+      ],
+      "blocker": "Needs an approved corrected GPU study manifest, runtime qualification and a new admitted window."
+    },
+    "W11-T07": {
+      "states": [
+        "blocked"
+      ],
+      "blocker": "Needs an approved corrected GPU study manifest, runtime qualification and a new admitted window."
+    },
+    "W11-T08": {
+      "states": [
+        "blocked"
+      ],
+      "blocker": "Needs an approved corrected GPU study manifest, runtime qualification and a new admitted window."
+    },
+    "W12-T01": {
+      "states": [
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "9e31ad12e3d71efd055e6737f8665fece40a2734"
+      ],
+      "tests": [
+        "test_verify_claims.py (5 methods, 18 mutations)"
+      ],
+      "remaining": "Capability/KPI sentence inventory across the monograph is not yet generated from claims."
+    },
+    "W12-T02": {
+      "states": [
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "354962c5c659e44e26f8e8365cb059f00a9abe9a"
+      ],
+      "tests": [
+        "test_verify_dispositions.py (29 adversarial cases)"
+      ],
+      "remaining": "No finding has a closing disposition; hosted CI and live stages must precede any closure."
+    },
+    "W12-T03": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W12-T04": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W12-T05": {
+      "states": [
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "9e31ad12e3d71efd055e6737f8665fece40a2734"
+      ],
+      "tests": [
+        "test_revocation_invalidates_exactly_the_descendants"
+      ],
+      "remaining": "Live consumers do not yet query revocations (W3/W8 receiving paths)."
+    },
+    "W12-T06": {
+      "states": [
+        "blocked"
+      ],
+      "blocker": "Depends on qualified W8-W11 records and live restoration."
+    },
+    "W12-T07": {
+      "states": [
+        "planned"
+      ]
+    },
+    "W12-T08": {
+      "states": [
+        "blocked"
+      ],
+      "blocker": "Final reconciliation depends on the applicable live gates; every finding remains open."
+    }
+  }
+}

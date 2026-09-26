@@ -249,6 +249,12 @@
       "role": "infrastructure",
       "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
     },
+    "python:docs/internal/core-ip/tools/test_task_status.py": {
+      "role": "regression",
+      "subsystems": [
+        "evidence"
+      ]
+    },
     "python:docs/internal/core-ip/tools/test_verify_claims.py": {
       "role": "regression",
       "subsystems": [

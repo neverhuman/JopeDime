@@ -86,7 +86,9 @@
         "python3 -m unittest discover -s docs/internal/core-ip/tools -p test_verify_test_inventory.py -v",
         "python3 -m unittest discover -s docs/internal/core-ip/tools -p test_verify_inventory.py -v",
         "python3 docs/internal/core-ip/tools/verify_claims.py",
-        "python3 -m unittest discover -s docs/internal/core-ip/tools -p test_verify_claims.py -v"
+        "python3 -m unittest discover -s docs/internal/core-ip/tools -p test_verify_claims.py -v",
+        "python3 docs/internal/core-ip/tools/task_status.py",
+        "python3 -m unittest discover -s docs/internal/core-ip/tools -p test_task_status.py -v"
       ]
     },
     "rust-check": {
@@ -2173,6 +2175,16 @@
         "maintenance"
       ],
       "scope": "Standalone fixture runner; not pytest-collected."
+    },
+    "python:docs/internal/core-ip/tools/test_task_status.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "hygiene"
+      ],
+      "dispositions": [],
+      "scope": "Task-status record completeness against the W1-W12 task headings, state/evidence rules (planned alone, SHAs, proving tests, CI run binding, live evidence, blockers), deterministic STATUS.md rendering and stale-view detection. Records states only; it qualifies nothing."
     },
     "python:docs/internal/core-ip/tools/test_verify_claims.py": {
       "discovery": {
