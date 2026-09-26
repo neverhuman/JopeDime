@@ -6,10 +6,10 @@ not CI verification, and neither is live qualification. No finding closes throug
 
 | State | Tasks |
 |---|---:|
-| planned | 6 |
+| planned | 3 |
 | reproduced | 29 |
-| implemented | 64 |
-| fixture-proven | 60 |
+| implemented | 67 |
+| fixture-proven | 63 |
 | CI-verified | 0 |
 | live-qualified | 0 |
 | measurement-complete | 0 |
@@ -23,7 +23,7 @@ not CI verification, and neither is live qualification. No finding closes throug
 | W1-T02 Freeze the regression release and family registry | implemented, fixture-proven | 0b695b3d2619; tests/regression_release.rs (8, including the mutation table) | New contract (no pre-existing receiver to reproduce). All ten members have unknown exposure, so never-seen-family claims stay blocked; 14 catalog-name relations are unresolved and need independent review. |
 | W1-T03 Define preparation semantics explicitly | reproduced, implemented, fixture-proven | cbdb4c3123d5; tests/preparation_semantics.rs (13) | Fails closed on legacy pointer views whose stored preprocessing differs from a refit, and on exact identity features, with no declared exception mechanism yet. |
 | W1-T04 Separate fit inputs, scoring labels and result release | reproduced, implemented, fixture-proven | 86697269e11c; 62c1327488c1; label_release::audit_never_parses_or_publishes_sealed_test_labels; qualification_search_of_a_sealed_meta_test_family_is_refused_before_any_view_or_fit; a_selection_receipt_alone_neither_reads_caller_chosen_labels_nor_publishes_a_score; +1 tests | The audit no longer parses sealed labels; sealed meta_test families are refused by search; outer scoring needs a one-attempt grant for an authenticated fitted subject, records exposure before any label byte is read, and releases once through a hash-chained ledger. Release is library-only (no CLI verb yet); the scorer is separated by component contract on one host, not OS isolation (W7). |
-| W1-T05 Enforce an immutable worker input closure | reproduced, implemented, fixture-proven | 8b4e51f1eb71; tests/input_closure.rs (5) | Fixture scope only (stale cached blobs). Worker isolation is W7; environment re-rooting, upward root search, jope_home cwd fallback and store_file early return are mapped, not fixed. |
+| W1-T05 Enforce an immutable worker input closure | reproduced, implemented, fixture-proven | 8b4e51f1eb71; 152b54f98747; 08a8ac5b3f4f; tests/input_closure.rs (5); tests/receiver_roots.rs; jope-datasets tests/pinned_catalog.rs | Fixture scope. Stale cached blobs (R3) and consumer-map routes R1 (environment-derived backing root), R4 (authoritative online manifest, pinned catalog), R8 (engine hash-then-reopen sites), R9 (proof of the existing safeguard) and R11 (frozen family partition) are enforced at their receivers. Open: R2 remainder (ancestor-walking load_view in pinned and neural paths), R5/R10 (worker network and credential isolation, W7 live), R6 (Python prepare.py bound into the release), R12 (release v2 and W2 schema), and the label_admission and pinned eval_registry R8 sites. |
 | W1-T06 Build counterfactual receiving-path proofs | reproduced, implemented, fixture-proven | d21889a5f30c; tests/counterfactual_boundaries.rs (13 mutation receipts, exact SHA-256 equality) | Forbidden-only perturbations leave results bit-identical and authorized controls change them; duplicate-expanding joins, collapsed duplicate source rows and symlinked splits are now refused. The harness does not yet cover the context producer, encoders, teacher or trainer; consumer-map routes R1, R2, R4-R6, R9-R12 and the remaining R8 sites stay open. |
 | W1-T07 Resolve historical staging without rewriting it | implemented, fixture-proven | 20da5a84ce38; jope-datasets tests/staging_disposition.rs (6) | The historical staging is dispositioned from retained custody (outer-label parsing, failure before CUDA qualification, 28 affected descendants, unknowns kept unknown; excluded from headline measurements) and the corrected protocol has a new identity. No corrected run exists yet; the verifier is not wired into jope benchmark inference-plan. |
 
@@ -91,9 +91,9 @@ not CI verification, and neither is live qualification. No finding closes throug
 
 | Task | States | Evidence | Remaining or blocker |
 |---|---|---|---|
-| W7-T01 Inventory hosts, runtime and reservations | planned | — | — |
-| W7-T02 Add a versioned bounded-run contract and controller operations | planned | — | — |
-| W7-T03 Separate communicator identity from local CUDA device | planned | — | — |
+| W7-T01 Inventory hosts, runtime and reservations | implemented, fixture-proven | 8d66723d317f; tests/bounded_run.rs preflight, census and execution-binding cases | Source half: a typed, versioned census and a preflight that refuses stale or future telemetry, boot/address/certificate/source/executable/runtime/policy mismatch, missing or re-indexed GPU UUIDs, foreign device ownership and CPU/RAM/VRAM shortfall. No collector exists and no live three-host census has been taken. |
+| W7-T02 Add a versioned bounded-run contract and controller operations | implemented, fixture-proven | 8d66723d317f; tests/bounded_run.rs (17) | jope.native_bounded_run.v1 beside the unchanged old contract (old manifests are refused as legacy, never reinterpreted); jope-native-loop plan/status/verify/cancel with execution bound to the frozen plan; status and verify are read-only and start nothing. The SmartCluster-backed supervisor and cross-host transport belong to T07; the old verbs now report a missing loop argument with exit 1 instead of clap's exit 2. |
+| W7-T03 Separate communicator identity from local CUDA device | implemented, fixture-proven | fdbde7c3fc83; tests/trainer_topology.rs (5, neural feature, CPU) | Communicator rank is separated from the local CUDA device through a frozen, validated host/device assignment checked before NCCL init; native code is compile-checked only. Open: delivering the assignment from the W7-T02 plan, per-worker CUDA_VISIBLE_DEVICES from the controller, three-rank world sizes (T06) and the non-training Device::Cuda(rank) uses in the proposal paths. |
 | W7-T04 Replace shared-filesystem rendezvous assumptions | planned | — | — |
 | W7-T05 Implement whole-group drain and coordinator recovery | planned | — | — |
 | W7-T06 Define the lossless three-rank numerical partition | planned | — | — |

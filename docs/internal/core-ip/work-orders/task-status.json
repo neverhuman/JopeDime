@@ -82,16 +82,25 @@
         "fixture-proven"
       ],
       "commits": [
-        "8b4e51f1eb716aed52b902a424ff3e8e2a0dc136"
+        "8b4e51f1eb716aed52b902a424ff3e8e2a0dc136",
+        "152b54f98747bb54c50f074ca28893da518c3c13",
+        "08a8ac5b3f4fbf15350cc7349fc1d2e97302b59b"
       ],
       "tests": [
-        "tests/input_closure.rs (5)"
+        "tests/input_closure.rs (5)",
+        "tests/receiver_roots.rs",
+        "jope-datasets tests/pinned_catalog.rs"
       ],
       "evidence": [
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1-t05-prefix-20260926T060016Z",
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1-t05-postfix-final-20260926T060134Z"
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1-t05-postfix-final-20260926T060134Z",
+        "docs/internal/core-ip/work-orders/evidence/W01-open-routes-and-follow-ups.md",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1b-r3-2a-prefix-roots-bytes-20260926T095751Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1b-r3-2a-prefix-r4-20260926T100302Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1b-r3-2a-postfix-roots-bytes-20260926T100112Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w1b-r3-2a-postfix-r4-20260926T100449Z"
       ],
-      "remaining": "Fixture scope only (stale cached blobs). Worker isolation is W7; environment re-rooting, upward root search, jope_home cwd fallback and store_file early return are mapped, not fixed."
+      "remaining": "Fixture scope. Stale cached blobs (R3) and consumer-map routes R1 (environment-derived backing root), R4 (authoritative online manifest, pinned catalog), R8 (engine hash-then-reopen sites), R9 (proof of the existing safeguard) and R11 (frozen family partition) are enforced at their receivers. Open: R2 remainder (ancestor-walking load_view in pinned and neural paths), R5/R10 (worker network and credential isolation, W7 live), R6 (Python prepare.py bound into the release), R12 (release v2 and W2 schema), and the label_admission and pinned eval_registry R8 sites."
     },
     "W1-T06": {
       "states": [
@@ -760,18 +769,56 @@
     },
     "W7-T01": {
       "states": [
-        "planned"
-      ]
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "8d66723d317f09269ee0db036095dba2674d5f0c"
+      ],
+      "tests": [
+        "tests/bounded_run.rs preflight, census and execution-binding cases"
+      ],
+      "evidence": [
+        "docs/internal/core-ip/work-orders/evidence/W07-controller.md",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w7c-t01-pre-20260926T095726Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w7c-t01-post-20260926T102532Z"
+      ],
+      "remaining": "Source half: a typed, versioned census and a preflight that refuses stale or future telemetry, boot/address/certificate/source/executable/runtime/policy mismatch, missing or re-indexed GPU UUIDs, foreign device ownership and CPU/RAM/VRAM shortfall. No collector exists and no live three-host census has been taken."
     },
     "W7-T02": {
       "states": [
-        "planned"
-      ]
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "8d66723d317f09269ee0db036095dba2674d5f0c"
+      ],
+      "tests": [
+        "tests/bounded_run.rs (17)"
+      ],
+      "evidence": [
+        "docs/internal/core-ip/work-orders/evidence/W07-controller.md",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w7c-t02-pre-20260926T095725Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w7c-t02-post-20260926T102533Z"
+      ],
+      "remaining": "jope.native_bounded_run.v1 beside the unchanged old contract (old manifests are refused as legacy, never reinterpreted); jope-native-loop plan/status/verify/cancel with execution bound to the frozen plan; status and verify are read-only and start nothing. The SmartCluster-backed supervisor and cross-host transport belong to T07; the old verbs now report a missing loop argument with exit 1 instead of clap's exit 2."
     },
     "W7-T03": {
       "states": [
-        "planned"
-      ]
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "fdbde7c3fc8364d1c4770f85bf1dd89ab1f395c6"
+      ],
+      "tests": [
+        "tests/trainer_topology.rs (5, neural feature, CPU)"
+      ],
+      "evidence": [
+        "docs/internal/core-ip/work-orders/evidence/W07-trainer-topology.md",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w6-post-w7t03-b-20260926T100619Z"
+      ],
+      "remaining": "Communicator rank is separated from the local CUDA device through a frozen, validated host/device assignment checked before NCCL init; native code is compile-checked only. Open: delivering the assignment from the W7-T02 plan, per-worker CUDA_VISIBLE_DEVICES from the controller, three-rank world sizes (T06) and the non-training Device::Cuda(rank) uses in the proposal paths."
     },
     "W7-T04": {
       "states": [
