@@ -626,16 +626,17 @@ pub fn run(args: RunArgs) -> Result<Value> {
         }
         drop(m);
         let prediction_cutoff = phase(&journal, "prediction", 300, cutoff)?;
-        let status = Command::new("python3")
-            .arg("-c")
-            .arg(include_str!("inference_prediction.py"))
-            .arg(&args.plan)
-            .arg(&journal)
-            .arg(prediction_cutoff.to_string())
-            .status()?;
+        // An error stops the stage (exit code 1), as an uncaught driver exception did.
+        let exit_code = match super::prediction::run(&args.plan, &journal, prediction_cutoff) {
+            Ok(()) => 0,
+            Err(error) => {
+                eprintln!("prediction stage stopped: {error:#}");
+                1
+            }
+        };
         write(
             &journal.join("prediction-stage.json"),
-            &json!({"exit_code":status.code(),"cutoff":prediction_cutoff}),
+            &json!({"exit_code":exit_code,"cutoff":prediction_cutoff}),
         )?;
         if now() + 30_000 < cutoff {
             let m = load(&p)?;

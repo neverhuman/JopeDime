@@ -296,6 +296,9 @@ mod export;
 mod gp;
 #[path = "inference_inputs.rs"]
 mod inputs;
+#[cfg(any(test, feature = "inference-cuda"))]
+#[path = "inference_prediction.rs"]
+mod prediction;
 #[path = "inference_report.rs"]
 mod reporting;
 pub fn run(args: RunArgs) -> Result<Value> {

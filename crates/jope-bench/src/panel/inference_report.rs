@@ -46,7 +46,7 @@ const BOUNDARY: &str = "Fitting data to first prediction, including preprocessin
 
 /// A JSON value that keeps member order, as Python's `json` module does.
 #[derive(Clone, Debug, PartialEq)]
-enum Json {
+pub(super) enum Json {
     Null,
     Bool(bool),
     Int(i128),
@@ -58,19 +58,19 @@ enum Json {
 
 /// Members in first-insertion order; a repeated key keeps its first position and last value.
 #[derive(Clone, Debug, Default, PartialEq)]
-struct Object(Vec<(String, Json)>);
+pub(super) struct Object(pub(super) Vec<(String, Json)>);
 
 static NULL: Json = Json::Null;
 static ZERO: Json = Json::Int(0);
-static EMPTY_ARRAY: Json = Json::Array(Vec::new());
-static EMPTY_OBJECT: Json = Json::Object(Object(Vec::new()));
+pub(super) static EMPTY_ARRAY: Json = Json::Array(Vec::new());
+pub(super) static EMPTY_OBJECT: Json = Json::Object(Object(Vec::new()));
 static EMPTY_STRING: Json = Json::Str(String::new());
 
 impl Object {
-    fn get(&self, key: &str) -> Option<&Json> {
+    pub(super) fn get(&self, key: &str) -> Option<&Json> {
         self.0.iter().find(|(k, _)| k == key).map(|(_, v)| v)
     }
-    fn set(&mut self, key: &str, value: Json) {
+    pub(super) fn set(&mut self, key: &str, value: Json) {
         match self.0.iter_mut().find(|(k, _)| k == key) {
             Some(slot) => slot.1 = value,
             None => self.0.push((key.to_owned(), value)),
@@ -168,7 +168,7 @@ fn object<const N: usize>(entries: [(&str, Json); N]) -> Json {
     Json::Object(members(entries))
 }
 
-fn sha256_hex(bytes: &[u8]) -> String {
+pub(super) fn sha256_hex(bytes: &[u8]) -> String {
     format!("{:x}", Sha256::digest(bytes))
 }
 
@@ -259,7 +259,7 @@ fn above_zero(n: Number) -> bool {
 
 /// Python `==` between JSON values: numbers (and bools) by value, containers structurally,
 /// objects regardless of member order.
-fn py_eq(a: &Json, b: &Json) -> bool {
+pub(super) fn py_eq(a: &Json, b: &Json) -> bool {
     if let (Some(x), Some(y)) = (number(a), number(b)) {
         return compare(x, y) == Some(Ordering::Equal);
     }
@@ -278,7 +278,7 @@ fn py_eq(a: &Json, b: &Json) -> bool {
         _ => false,
     }
 }
-fn is(value: &Json, text: &str) -> bool {
+pub(super) fn is(value: &Json, text: &str) -> bool {
     matches!(value, Json::Str(s) if s == text)
 }
 /// `value is True`.
@@ -305,7 +305,7 @@ fn py_len(value: &Json) -> Result<usize> {
     })
 }
 /// Python iteration: array items, object keys or string characters.
-fn py_iter(value: &Json) -> Result<Vec<Json>> {
+pub(super) fn py_iter(value: &Json) -> Result<Vec<Json>> {
     Ok(match value {
         Json::Str(s) => s.chars().map(|c| Json::Str(c.to_string())).collect(),
         Json::Array(items) => items.clone(),
@@ -387,15 +387,15 @@ fn get<'a>(value: &'a Json, key: &str) -> Result<Option<&'a Json>> {
     }
 }
 /// `value.get(key, default)`.
-fn get_or<'a>(value: &'a Json, key: &str, default: &'a Json) -> Result<&'a Json> {
+pub(super) fn get_or<'a>(value: &'a Json, key: &str, default: &'a Json) -> Result<&'a Json> {
     Ok(get(value, key)?.unwrap_or(default))
 }
 /// `value.get(key)`, absent as `None`.
-fn at<'a>(value: &'a Json, key: &str) -> Result<&'a Json> {
+pub(super) fn at<'a>(value: &'a Json, key: &str) -> Result<&'a Json> {
     get_or(value, key, &NULL)
 }
 /// `value[key]`: a missing member or a non-object fails the report.
-fn index<'a>(value: &'a Json, key: &str) -> Result<&'a Json> {
+pub(super) fn index<'a>(value: &'a Json, key: &str) -> Result<&'a Json> {
     match value {
         Json::Object(o) => o.get(key).with_context(|| format!("KeyError: {key:?}")),
         other => bail!(
@@ -527,24 +527,49 @@ fn parity_verified(b: &Json) -> Result<bool> {
 // Python `json.dumps`, `repr`/`str` and `csv` spelling.
 
 #[derive(Clone, Copy)]
-struct Style {
+pub(super) struct Style {
     /// `ensure_ascii`.
     ascii: bool,
-    /// `indent`; `None` is the compact `separators=(',', ':')` form.
+    /// `indent`; `None` writes one line.
     indent: Option<usize>,
+    /// On one line, the default `(', ', ': ')` separators rather than `(',', ':')`.
+    spaced: bool,
 }
 
 impl Style {
     /// `json.dumps(value, indent=2, allow_nan=False)`.
-    const REPORT: Style = Style {
+    pub(super) const REPORT: Style = Style {
         ascii: true,
         indent: Some(2),
+        spaced: false,
     };
     /// `json.dumps(value, ensure_ascii=False, separators=(',', ':'))`.
-    const IDENTITY: Style = Style {
+    pub(super) const IDENTITY: Style = Style {
         ascii: false,
         indent: None,
+        spaced: false,
     };
+    /// `json.dumps(value)`.
+    #[cfg_attr(not(any(test, feature = "inference-cuda")), allow(dead_code))]
+    pub(super) const DEFAULT: Style = Style {
+        ascii: true,
+        indent: None,
+        spaced: true,
+    };
+    fn item_separator(self) -> &'static str {
+        if self.indent.is_none() && self.spaced {
+            ", "
+        } else {
+            ","
+        }
+    }
+    fn key_separator(self) -> &'static str {
+        if self.indent.is_some() || self.spaced {
+            ": "
+        } else {
+            ":"
+        }
+    }
     fn newline(self, level: usize, out: &mut String) {
         if let Some(width) = self.indent {
             out.push('\n');
@@ -553,7 +578,7 @@ impl Style {
     }
 }
 
-fn dumps(value: &Json, style: Style) -> Result<String> {
+pub(super) fn dumps(value: &Json, style: Style) -> Result<String> {
     let mut out = String::new();
     dump(value, style, 0, &mut out)?;
     Ok(out)
@@ -578,7 +603,7 @@ fn dump(value: &Json, style: Style, level: usize, out: &mut String) -> Result<()
             out.push('[');
             for (position, item) in items.iter().enumerate() {
                 if position > 0 {
-                    out.push(',');
+                    out.push_str(style.item_separator());
                 }
                 style.newline(level + 1, out);
                 dump(item, style, level + 1, out)?;
@@ -590,11 +615,11 @@ fn dump(value: &Json, style: Style, level: usize, out: &mut String) -> Result<()
             out.push('{');
             for (position, (key, item)) in o.0.iter().enumerate() {
                 if position > 0 {
-                    out.push(',');
+                    out.push_str(style.item_separator());
                 }
                 style.newline(level + 1, out);
                 quote(key, style.ascii, out);
-                out.push_str(if style.indent.is_some() { ": " } else { ":" });
+                out.push_str(style.key_separator());
                 dump(item, style, level + 1, out)?;
             }
             style.newline(level, out);
@@ -628,7 +653,7 @@ fn quote(text: &str, ascii: bool, out: &mut String) {
 }
 
 /// Python's `repr(float)`: shortest round-trip digits, positional for exponents -4..=15.
-fn float_repr(x: f64) -> String {
+pub(super) fn float_repr(x: f64) -> String {
     if x == 0.0 {
         return if x.is_sign_negative() { "-0.0" } else { "0.0" }.into();
     }
@@ -672,14 +697,14 @@ fn float_repr(x: f64) -> String {
 }
 
 /// Python `str()` of a JSON value, as f-strings and `csv` render it.
-fn py_str(value: &Json) -> String {
+pub(super) fn py_str(value: &Json) -> String {
     match value {
         Json::Str(s) => s.clone(),
         other => py_repr(other),
     }
 }
 
-fn py_repr(value: &Json) -> String {
+pub(super) fn py_repr(value: &Json) -> String {
     match value {
         Json::Null => "None".into(),
         Json::Bool(true) => "True".into(),
@@ -703,7 +728,7 @@ fn py_repr(value: &Json) -> String {
 
 /// Python `repr(str)`. Printability of non-ASCII characters follows the common Unicode
 /// separator, format, control and private-use ranges rather than the full database.
-fn str_repr(text: &str) -> String {
+pub(super) fn str_repr(text: &str) -> String {
     let delimiter = if text.contains('\'') && !text.contains('"') {
         '"'
     } else {
@@ -1002,7 +1027,7 @@ fn distribution(values: &[Json]) -> Result<Json> {
 
 /// `Path.exists()`: absence (including a non-directory parent or a symlink loop) is false; any
 /// other failure fails the report.
-fn exists(path: &Path) -> Result<bool> {
+pub(super) fn exists(path: &Path) -> Result<bool> {
     match fs::metadata(path) {
         Ok(_) => Ok(true),
         // ENOENT, EBADF, ENOTDIR and ELOOP, and paths the OS cannot encode.
