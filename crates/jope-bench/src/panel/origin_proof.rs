@@ -1036,6 +1036,109 @@ mod tests {
         Ok(())
     }
 
+    /// The accepted receipt as `tools/ot-export` writes it, around the accepted identity, or
+    /// (`reexport`) the accepted checkpoint re-exported by `jope-parallel export-policy`.
+    fn accepted_export_receipt(reexport: bool) -> Value {
+        let tool = if reexport {
+            jope_policy::config::REEXPORT_TOOL
+        } else {
+            "ot-export"
+        };
+        let mut receipt = json!({
+            "schema": jope_policy::config::EXPORT_RECEIPT_SCHEMA,
+            "runtime": {"tool": tool, "tool_version": "0.1.0", "tch": "0.26.0",
+                "libtorch": "/sdk/libtorch", "libtorch_build_version": "2.13.0", "device": "cpu",
+                "cuda_visible_devices": ""},
+            "checkpoint": {
+                "accepted_identity": true,
+                "carried_bindings": {
+                    "corpus_sha256": sha256_hex(b"corpus"),
+                    "vocabulary_sha256": jope_policy::CHECKPOINT_VOCABULARY_SHA256,
+                },
+                "config": jope_policy::config::PolicyConfig::regression(401),
+                "config_sha256": jope_policy::ACCEPTED_CONFIG_SHA256,
+                "expected_state_sha256": jope_policy::ACCEPTED_STATE_SHA256,
+                "model_sha256": jope_policy::ACCEPTED_MODEL_SHA256,
+                "parameter_sha256": jope_policy::ACCEPTED_PARAMETER_SHA256,
+                "parameter_sha256_recomputed": jope_policy::ACCEPTED_PARAMETER_SHA256,
+                "state_sha256": jope_policy::ACCEPTED_STATE_SHA256,
+                "step": jope_policy::ACCEPTED_STEP,
+                "verified_bindings": ["model_sha256", "config_sha256", "autocast_cache_lifetime", "parameter_sha256"],
+            },
+            "policy": {"output": {"sha256": "4b4b5a40f03c9226b4b15856fd35b90127c8b6a4d1435b815484cdd050744f1e"},
+                "tensor_count": 0, "tensors": []},
+        });
+        if reexport {
+            receipt["policy"]["architecture"] =
+                json!("neural::Policy::new names and shapes; F32; finite");
+            receipt["relative_change"] = Value::Null;
+        }
+        receipt
+    }
+
+    /// D13: the demo path binds only the accepted receipt. The proposal route's receipt check
+    /// (`optimize::pinned_checkpoint`, the one `prepare_neural` runs before any worker) admits the
+    /// accepted `tools/ot-export` shape and refuses the ASM-demo anchor's shape (a re-export of
+    /// the accepted checkpoint by this repository's exporter) with a plain reason, as well as a
+    /// stale pin and other weights.
+    #[test]
+    fn the_proposal_route_binds_only_the_accepted_receipt() -> Result<()> {
+        let scratch = scratch()?;
+        let write = |name: &str, value: &Value| -> Result<Artifact> {
+            let path = scratch.path().join(name);
+            let bytes = serde_json::to_vec(value)?;
+            fs::write(&path, &bytes)?;
+            Ok(Artifact {
+                path,
+                sha256: sha256_hex(&bytes),
+            })
+        };
+        let mut config = configuration(None);
+        config.checkpoint_receipt = write("accepted.json", &accepted_export_receipt(false))?;
+        let binding = optimize::pinned_checkpoint(&config)?;
+        assert_eq!(binding.state_sha256(), jope_policy::ACCEPTED_STATE_SHA256);
+        let mut anchor = config.clone();
+        anchor.checkpoint_receipt = write("anchor.json", &accepted_export_receipt(true))?;
+        let error = format!("{:#}", optimize::pinned_checkpoint(&anchor).unwrap_err());
+        assert!(
+            error.contains("a derived re-export carries no acceptance authority"),
+            "{error}"
+        );
+        let mut stale = config.clone();
+        stale.checkpoint_receipt.sha256 = sha256_hex(b"other receipt");
+        assert!(optimize::pinned_checkpoint(&stale).is_err());
+        let mut weights = config.clone();
+        weights.policy_weights.sha256 = sha256_hex(b"other weights");
+        let error = format!("{:#}", optimize::pinned_checkpoint(&weights).unwrap_err());
+        assert!(error.contains("policy checksum differs"), "{error}");
+        Ok(())
+    }
+
+    /// D13 on the host: every ASM demo configuration's pinned receipt and weights verify under
+    /// the pinned-field rule through the proposal route's own check. Configurations are named by
+    /// `JOPE_ASM_DEMO_CONFIGURATIONS` (`:`-separated paths).
+    #[test]
+    #[ignore = "needs JOPE_ASM_DEMO_CONFIGURATIONS (host ASM demo configuration paths)"]
+    fn the_asm_demo_configurations_bind_the_accepted_receipt() -> Result<()> {
+        let paths = std::env::var("JOPE_ASM_DEMO_CONFIGURATIONS")
+            .context("set JOPE_ASM_DEMO_CONFIGURATIONS to run this ignored evidence test")?;
+        for path in paths.split(':') {
+            let config: Configuration = serde_json::from_slice(&fs::read(path)?)?;
+            let binding = optimize::pinned_checkpoint(&config)?;
+            config.policy_weights.verify()?;
+            if config.native_challenger.is_none() {
+                binding.require_accepted_identity()?;
+            }
+            println!(
+                "{path}: receipt {} binds state {} and weights {}",
+                config.checkpoint_receipt.sha256,
+                binding.state_sha256(),
+                binding.policy_safetensors_sha256()
+            );
+        }
+        Ok(())
+    }
+
     #[test]
     fn round_zero_is_legacy_and_rounds_reseed() -> Result<()> {
         let sha = "a".repeat(64);

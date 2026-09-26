@@ -2235,12 +2235,109 @@ fn a_challenger_receipt_carrying_an_unpinned_field_is_refused() {
     assert!(parse_receipt(&receipt).is_err());
 }
 
+const DERIVED_REFUSAL: &str = "a derived re-export carries no acceptance authority";
+
+/// The accepted checkpoint re-exported by this repository's exporter, exactly as
+/// `jope-parallel export-policy` writes it (the ASM-demo anchor's shape).
+fn derived_reexport_receipt() -> Value {
+    let mut receipt = full_accepted_receipt();
+    receipt
+        .as_object_mut()
+        .unwrap()
+        .remove("context_transforms");
+    receipt["runtime"]["tool"] = json!(jope_policy::config::REEXPORT_TOOL);
+    receipt["policy"]["architecture"] = json!("neural::Policy::new names and shapes; F32; finite");
+    receipt["relative_change"] = Value::Null;
+    receipt
+}
+
+/// D13, the ASM-demo anchor's disposition: a re-export of the accepted checkpoint by this
+/// repository's exporter is refused wherever acceptance authority is needed (accepted parser,
+/// proposal path, challenger path), and is consumed only as a non-authoritative derived
+/// re-export that must reproduce the accepted receipt tensor for tensor.
+#[test]
+fn a_derived_reexport_reproduces_the_accepted_receipt_without_authority() {
+    let accepted = parse_receipt(&full_accepted_receipt()).unwrap();
+    let reexport = derived_reexport_receipt();
+    let bytes = serde_json::to_vec(&reexport).unwrap();
+    // Refused wherever an acceptance authority is required, with a plain reason.
+    assert_refused(
+        CheckpointBinding::from_receipt_bytes(&bytes),
+        DERIVED_REFUSAL,
+    );
+    assert_refused(
+        CheckpointBinding::for_proposal(&bytes, None),
+        DERIVED_REFUSAL,
+    );
+    let identity = ChallengerIdentity {
+        state_sha256: ACCEPTED_STATE_SHA256.into(),
+        parameter_sha256: ACCEPTED_PARAMETER_SHA256.into(),
+        config_sha256: ACCEPTED_CONFIG_SHA256.into(),
+        policy_safetensors_sha256: RELEASED_WEIGHTS_SHA256.into(),
+    };
+    assert!(CheckpointBinding::for_proposal(&bytes, Some(&identity)).is_err());
+    // Consumed only as derived evidence: it reproduces the accepted export.
+    let derived = accepted.derived_reexport(&bytes).unwrap();
+    assert_eq!(derived.receipt_sha256, sha256_hex(&bytes));
+    assert_eq!(derived.policy_safetensors_sha256, RELEASED_WEIGHTS_SHA256);
+    assert!(derived.byte_identical);
+    // Different re-exported bytes are recorded, not refused (anchor rule A2).
+    let mut rewritten = reexport.clone();
+    rewritten["policy"]["output"]["sha256"] = json!(digest("re-serialized weights"));
+    let derived = accepted
+        .derived_reexport(&serde_json::to_vec(&rewritten).unwrap())
+        .unwrap();
+    assert!(!derived.byte_identical);
+    // Anything that does not reproduce the accepted export is refused (anchor rule A1).
+    type Edit = fn(&mut Value);
+    let cases: [(&str, Edit); 7] = [
+        ("another tensor", |r| {
+            r["policy"]["tensors"][0]["sha256"] = json!(digest("other tensor"))
+        }),
+        ("another state", |r| {
+            r["checkpoint"]["state_sha256"] = json!(digest("other state"))
+        }),
+        ("unreproduced parameters", |r| {
+            r["checkpoint"]["parameter_sha256_recomputed"] = json!(digest("other"))
+        }),
+        ("another vocabulary", |r| {
+            r["checkpoint"]["carried_bindings"]["vocabulary_sha256"] =
+                json!(PRODUCT_VOCABULARY_SHA256)
+        }),
+        ("another exporter", |r| {
+            r["runtime"]["tool"] = json!("ot-export")
+        }),
+        ("an unpinned field", |r| {
+            r["policy"]["unpinned"] = json!(true)
+        }),
+        ("the accepted exporter's transforms", |r| {
+            r["context_transforms"] = full_accepted_receipt()["context_transforms"].clone()
+        }),
+    ];
+    for (case, edit) in cases {
+        let mut forged = reexport.clone();
+        edit(&mut forged);
+        assert!(
+            accepted
+                .derived_reexport(&serde_json::to_vec(&forged).unwrap())
+                .is_err(),
+            "{case} accepted as a derived re-export"
+        );
+    }
+    // Only the accepted binding can vouch for a re-export.
+    let challenger = CheckpointBinding::unbound_for_testing(
+        PolicyConfig::regression(401),
+        CHECKPOINT_VOCABULARY_SHA256,
+    );
+    assert!(challenger.derived_reexport(&bytes).is_err());
+}
+
 /// W2 G-08 on the real receipts (owner decision 2026-09-26, `OWNER-DECISIONS.md` D13).
 /// `JOPE_DIME_EXPORT_RECEIPT` is the accepted `step-60000.receipt.json` (`tools/ot-export`): it
 /// binds the accepted identity and the released weights under the pinned field set, and one added
-/// field in any of its objects is refused. With `JOPE_DIME_REEXPORT_RECEIPT` (a re-export of the
-/// accepted checkpoint by `jope-parallel export-policy`), that receipt is refused as the accepted
-/// receipt because it carries the challenger exporter's fields.
+/// field in any of its objects is refused. `JOPE_DIME_REEXPORT_RECEIPT` (the ASM-demo anchor, a
+/// re-export of the accepted checkpoint by `jope-parallel export-policy`) is refused as the
+/// accepted receipt and verified only as a non-authoritative derived re-export.
 #[test]
 #[ignore = "needs JOPE_DIME_EXPORT_RECEIPT (the accepted step-60000.receipt.json)"]
 fn the_real_accepted_receipt_carries_only_pinned_fields() {
@@ -2264,7 +2361,12 @@ fn the_real_accepted_receipt_carries_only_pinned_fields() {
         println!("re-export receipt sha256 {}", sha256_hex(&bytes));
         assert_refused(
             CheckpointBinding::for_proposal(&bytes, None),
-            ACCEPTED_FIELD_REFUSAL,
+            DERIVED_REFUSAL,
+        );
+        let derived = binding.derived_reexport(&bytes).unwrap();
+        println!(
+            "derived re-export: weights {} byte_identical={} (no acceptance authority)",
+            derived.policy_safetensors_sha256, derived.byte_identical
         );
     }
 }
