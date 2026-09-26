@@ -660,3 +660,22 @@ run). 3/3 FAIL.
 
   The earlier run `w4c-post-20260926T205852Z` is kept. It failed twice, and both failures are corrected above: the unit-test vocabulary cannot cross the producer transport, and the seed-shape key list needed the new key.
 - Pre-commit `w4c-c-20260926T210202Z`: fence suites, `gp::fit_contract_tests` and `gp::lineage` 87/87; workspace all-targets check, coverage (0 unassigned), verify-test-inventory, fmt and diff-check exit 0.
+
+## 13. Appended 2026-09-26: the pinned policy worker is refused until rebuilt and re-pinned (owner decision D15)
+
+**Decision.** `OWNER-DECISIONS.md` D15, adopted by owner delegation 2026-09-26: no worker is rebuilt or re-pinned now, and the producer path keeps refusing until a rebuilt, re-pinned `jope-policy-producer` exists. Nothing was rebuilt or re-pinned for this record.
+
+**Why the pinned worker cannot pass.** Host run `pd-d15-policy-worker-host-20260926T224418Z` (read-only):
+- **The pin.** The only campaign configuration on this host that pins a policy worker is `/home/ubuntu/jope-evidence/asm-demo-20260925/kpi/cfg-k0.json`. It pins `policy.program` = `…/asm-demo-20260925/b0/build/bin/jope-policy-producer`, SHA-256 `c12b865cd2dc683e12cf5289717fb9acc38974941ea9415a179c8e027fafdca2`, `version` `905ebd1a8e75`. The file on disk hashes to that pin.
+- **It predates the ledger.** Its source commit `905ebd1a8e75` does not contain the ledger commit (W4-T07 `eceb241f5` is not an ancestor), and the binary contains no `proposal_ledger` string. Its producer envelope therefore never carries a ledger.
+- **The controller refuses that output.** `neural_search::run_neural` refuses a producer artifact without a ledger ("policy producer artifact lacks its proposal ledger") before any candidate is built or any search runs.
+  - `jope_policy::producer::read_claims` still reads such an artifact, but `ProducerFile::ledger()` is `None`: test `producer::tests::historical_producer_artifact_has_no_ledger_evidence`.
+  - An artifact that does carry a reconciled ledger is admitted: `producer_artifact_carries_a_reconciled_proposal_ledger`.
+- **A rebuild alone is also refused.** A worker built from current source has a different executable hash. `neural_search::verify_policy_inputs` refuses it:
+  - "policy executable differs from installation pin";
+  - and the requirement that `worker.expected_program_sha256` equal `comparison.installation.policy_program_sha256`.
+
+  Only an owner-authorized rebuild *and* a re-pin in the installation and the campaign configuration can admit a worker again.
+- **Retained evidence is still readable.** `panel/asm_campaign.rs` `verify_producer` verifies retained historical runs. It admits a pre-ledger artifact only when the recorded evidence also names no ledger, and it starts no search.
+
+**Not executed.** The refusal was not run end to end through `run_neural`. No fixture drives `run_neural` with a producer (the coordinator fixture's `produce` refuses to run one), and running the pinned worker needs the full ASM input closure (qualified context, weights, request).

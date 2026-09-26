@@ -13,6 +13,8 @@ evidence, approval gates, budget accounting and the independent Codex review lif
 Read [the validation matrix](VALIDATION-MATRIX.md) before selecting a test lane.
 [Findings coverage](FINDINGS-COVERAGE.md) retains every original gap/improvement ID;
 the authoritative original text remains in the [findings register](../findings/register.json).
+[Owner decisions](OWNER-DECISIONS.md) records each policy choice the remediation surfaced,
+the option adopted by owner delegation on 2026-09-26, where it is enforced and how to reverse it.
 
 | Order | Work order | Main handoff | Required result |
 |---|---|---|---|
