@@ -58,6 +58,7 @@ fn evaluator_command(executable: &Path) -> Command {
 
 #[cfg(test)]
 mod fit_contract_tests;
+pub mod lineage;
 pub mod selection_replay;
 
 #[cfg(test)]
@@ -1262,14 +1263,19 @@ pub fn metadata_initial_population(rng_seed: u64) -> Result<Vec<String>> {
     fill_initial_population(&mut population, &mut seen, rng_seed, None)?;
     Ok(population)
 }
+/// Appends adapted bootstrap programs and returns, for each appended slot, its
+/// original generator draw and generator seed. The search executes the single
+/// adaptation of that original; it never adapts an already adapted program.
 fn fill_initial_population(
     population: &mut Vec<String>,
     seen: &mut BTreeSet<String>,
     rng_seed: u64,
     vocab: Option<&crate::grammar::Vocab>,
-) -> Result<()> {
+) -> Result<Vec<(String, u64)>> {
     let mut seed = rng_seed;
+    let mut originals = Vec::new();
     while population.len() < 80 {
+        let generator_seed = seed;
         let raw = feat_math::evolve::random_canonical_pipeline(seed, 6);
         seed = seed.wrapping_add(1);
         let g = if let Some(v) = vocab {
@@ -1278,7 +1284,7 @@ fn fill_initial_population(
                 Err(_) => continue,
             }
         } else {
-            raw
+            raw.clone()
         };
         ensure!(
             seed.wrapping_sub(rng_seed) < 100000,
@@ -1286,9 +1292,10 @@ fn fill_initial_population(
         );
         if seen.insert(g.clone()) {
             population.push(g);
+            originals.push((raw, generator_seed));
         }
     }
-    Ok(())
+    Ok(originals)
 }
 
 fn search_inner(
@@ -1434,9 +1441,59 @@ fn search_inner(
         seen.len() == population.len(),
         "duplicate initial proposals"
     );
+    // Original proposal and lineage source of every initial slot (W5-T01).
+    // A critic weight estimates the original proposal, never its adaptation.
+    let mut initial_sources: Vec<(String, serde_json::Value)> =
+        if let Some((_, task, _, _)) = native {
+            population
+                .iter()
+                .map(|genome| {
+                    Ok((
+                        genome.clone(),
+                        json!({"kind":"native_candidate","slot":0,
+                            "candidate":serde_json::to_value(&task.candidate)?}),
+                    ))
+                })
+                .collect::<Result<_>>()?
+        } else if let Some(s) = &supplied {
+            s.candidates
+                .iter()
+                .enumerate()
+                .map(|(slot, c)| {
+                    (
+                        c.genome.clone(),
+                        json!({"kind":"seed_population_slot","slot":slot,
+                            "seeds_sha256":seeds_sha256,"origin":c.origin,
+                            "rank_log_weight":c.policy_logprob,
+                            "score_subject":"original_proposal"}),
+                    )
+                })
+                .collect()
+        } else {
+            vec![(
+                population[0].clone(),
+                json!({"kind":"fixed_reference","slot":0}),
+            )]
+        };
     if native.is_none() {
-        fill_initial_population(&mut population, &mut seen, rng_seed, vocab.as_ref())?;
+        let first = initial_sources.len();
+        let originals =
+            fill_initial_population(&mut population, &mut seen, rng_seed, vocab.as_ref())?;
+        initial_sources.extend(originals.into_iter().enumerate().map(
+            |(offset, (raw, generator_seed))| {
+                (
+                    raw,
+                    json!({"kind":"generic_bootstrap","slot":first + offset,
+                        "generator":"feat_math.random_canonical_pipeline.depth6",
+                        "generator_seed":generator_seed}),
+                )
+            },
+        ));
     }
+    ensure!(
+        initial_sources.len() == population.len(),
+        "initial proposal sources are incomplete"
+    );
     let prepared_sha = file_hash(&prepared.join("prepared.json"))?;
     let evaluator_sha = file_hash(&executable)?;
     let champion_root = if p.storage.is_some() && experiment.is_none() {
@@ -1532,7 +1589,8 @@ fn search_inner(
         atomic_write(&journal_path, &bytes)?;
     }
     let mut journal = fs::OpenOptions::new().append(true).open(&journal_path)?;
-    let mut ranked: Vec<(f64, String)> = Vec::new();
+    // (measured objective, executable program, ledger position; -1 = inherited).
+    let mut ranked: Vec<(f64, String, i64)> = Vec::new();
     if let Some((_, task, candidate, Some(parent))) = native {
         ensure!(
             task.stage == crate::native_genome::Stage::Continuation,
@@ -1546,7 +1604,7 @@ fn search_inner(
                 rmse.is_finite() && rmse >= 0.,
                 "original parent score invalid"
             );
-            ranked.push((rmse * pp.target_scale, candidate.genome.clone()));
+            ranked.push((rmse * pp.target_scale, candidate.genome.clone(), -1));
         }
     }
     let mut semantic = BTreeSet::new();
@@ -1638,6 +1696,7 @@ fn search_inner(
                 ranked.push((
                     rmse,
                     o["genome"].as_str().context("missing genome")?.to_string(),
+                    index as i64,
                 ));
             }
         }
@@ -1679,7 +1738,7 @@ fn search_inner(
         } else {
             None
         };
-        let (raw_genome, genome, initial_proposal) = if let Some(a) = &saved_attempt {
+        let (raw_genome, genome, initial_proposal, lineage) = if let Some(a) = &saved_attempt {
             proposal_attempts = a["proposal_attempts"]
                 .as_u64()
                 .context("missing proposal counter")?;
@@ -1712,6 +1771,8 @@ fn search_inner(
                 a["initial_proposal"]
                     .as_bool()
                     .context("missing candidate origin")?,
+                // Attempts recorded before the lineage envelope keep null.
+                a.get("lineage").cloned().unwrap_or(serde_json::Value::Null),
             )
         } else {
             let mut selected = None;
@@ -1723,48 +1784,77 @@ fn search_inner(
                 let initial = attempt == 0 && i < population.len();
                 let proposal_seed = random_word(rng_seed, proposal_attempts, "variation");
                 let operator = random_word(rng_seed, proposal_attempts, "operator") % 16;
-                let raw = if initial {
-                    population[execution_order[i]].clone()
+                // An explicit variation event: operator, parents and stream words.
+                let variation = |kind: &str, parents: Vec<serde_json::Value>| {
+                    json!({"kind":"variation","operator":kind,"parents":parents,
+                        "proposal_attempt":proposal_attempts,"variation_seed":proposal_seed,
+                        "operator_word":operator})
+                };
+                let parent = |entry: &(f64, String, i64)| json!({"position":entry.2,"program_sha256":hash(entry.1.as_bytes())});
+                let (raw, source) = if initial {
+                    // The original proposal, never its already adapted form.
+                    initial_sources[execution_order[i]].clone()
                 } else {
                     let keep = ranked.len().min(10);
                     if keep == 0 && native.is_some() {
                         let (_, _, candidate, _) =
                             native.context("native continuation parent absent")?;
-                        feat_math::evolve::mutate_canonical_pipeline(
-                            &candidate.genome,
-                            proposal_seed,
-                            6,
+                        (
+                            feat_math::evolve::mutate_canonical_pipeline(
+                                &candidate.genome,
+                                proposal_seed,
+                                6,
+                            )
+                            .map_err(anyhow::Error::msg)?,
+                            variation(
+                                "continuation_mutate",
+                                vec![json!({"position":null,"source":"native_candidate",
+                                    "program_sha256":hash(candidate.genome.as_bytes())})],
+                            ),
                         )
-                        .map_err(anyhow::Error::msg)?
                     } else if keep == 0 || operator < 2 {
-                        feat_math::evolve::random_canonical_pipeline(proposal_seed, 6)
+                        (
+                            feat_math::evolve::random_canonical_pipeline(proposal_seed, 6),
+                            variation("fresh_random", Vec::new()),
+                        )
                     } else {
                         let ranked_genomes: Vec<String> = ranked
                             .iter()
                             .take(keep)
-                            .map(|(_, genome)| genome.clone())
+                            .map(|(_, genome, _)| genome.clone())
                             .collect();
                         let left = &ranked[policy_weighted_parent(
                             keep,
                             random_word(rng_seed, proposal_attempts, "left_parent"),
                             supplied.as_ref(),
                             Some(ranked_genomes.as_slice()),
-                        )]
-                        .1;
-                        let child = if operator < 9 {
-                            feat_math::evolve::mutate_canonical_pipeline(left, proposal_seed, 6)
+                        )];
+                        if operator < 9 {
+                            (
+                                feat_math::evolve::mutate_canonical_pipeline(
+                                    &left.1,
+                                    proposal_seed,
+                                    6,
+                                )
+                                .map_err(anyhow::Error::msg)?,
+                                variation("mutate", vec![parent(left)]),
+                            )
                         } else {
-                            feat_math::evolve::crossover_canonical_pipelines(
-                                left,
+                            let right =
                                 &ranked[(random_word(rng_seed, proposal_attempts, "right_parent")
                                     % keep as u64)
-                                    as usize]
-                                    .1,
-                                proposal_seed,
-                                6,
+                                    as usize];
+                            (
+                                feat_math::evolve::crossover_canonical_pipelines(
+                                    &left.1,
+                                    &right.1,
+                                    proposal_seed,
+                                    6,
+                                )
+                                .map_err(anyhow::Error::msg)?,
+                                variation("crossover", vec![parent(left), parent(right)]),
                             )
-                        };
-                        child.map_err(anyhow::Error::msg)?
+                        }
                     }
                 };
                 let projected = if let Some(v) = &vocab {
@@ -1775,7 +1865,21 @@ fn search_inner(
                 if let Ok(genome) = projected {
                     let canonical = GenomeIr::parse(&genome)?.canonical();
                     if evaluated_programs.insert(canonical) {
-                        selected = Some((raw, genome, initial));
+                        // Original → one explicit adaptation → executable recipe.
+                        let lineage = json!({"schema":"parallel.gp_candidate_lineage.v1",
+                            "original":{"program":raw,"program_sha256":hash(raw.as_bytes())},
+                            "source":source,
+                            "adaptation":if vocab.is_some() {
+                                json!({"kind":"vocabulary_projection","applications":1,
+                                    "vocabulary_sha256":vocabulary_sha256,
+                                    "input_sha256":hash(raw.as_bytes()),
+                                    "output_sha256":hash(genome.as_bytes()),
+                                    "changed":raw != genome})
+                            } else {
+                                json!({"kind":"none","applications":0})
+                            },
+                            "executable":{"program":genome,"program_sha256":hash(genome.as_bytes())}});
+                        selected = Some((raw, genome, initial, lineage));
                         break;
                     }
                 }
@@ -1816,7 +1920,8 @@ fn search_inner(
                     "left_parent":random_word(rng_seed,proposal_attempts,"left_parent"),
                     "right_parent":random_word(rng_seed,proposal_attempts,"right_parent"),
                     "variation":random_word(rng_seed,proposal_attempts,"variation")},
-                "proposal_attempts":proposal_attempts,"rejected_proposals":rejected_proposals}),
+                "proposal_attempts":proposal_attempts,"rejected_proposals":rejected_proposals,
+                "lineage":lineage}),
             )?;
         }
         let result_path = output.join(format!("candidate-{i}.json"));
@@ -2057,7 +2162,7 @@ fn search_inner(
                 .as_str()
                 .context("missing prediction signature")?;
             if semantic.insert(signature.to_string()) {
-                ranked.push((rmse, genome.clone()));
+                ranked.push((rmse, genome.clone(), i as i64));
                 ranked.sort_by(|a, b| a.0.total_cmp(&b.0));
                 ranked.truncate(80);
                 if i + 1 == 200 {
@@ -2100,6 +2205,8 @@ fn search_inner(
             observation["continuation_parent"] = serde_json::to_value(&task.direct_parent)?;
         }
         observation["task"] = json!("regression");
+        // The pre-dispatch lineage envelope, repeated so the ledger is self-contained.
+        observation["lineage"] = lineage;
         observation["clean_completion"] = json!(completion_reference);
         if let Some(reference) = &completion_reference {
             let completion = crate::label_admission::artifact(&completion_root, reference)?;
