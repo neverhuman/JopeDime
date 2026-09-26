@@ -490,7 +490,10 @@ pub(crate) fn train_controlled(
     stop: Option<&AtomicBool>,
     policy: Option<&Path>,
 ) -> Result<()> {
-    crate::task_contract::require_original_gpu_grant("training-controller")?;
+    // Input validation below is read-only: it creates no GPU context, lease,
+    // lock, output directory or receipt. It precedes the dispatch hold so an
+    // invalid request is refused for its own reason, and the hold still
+    // refuses every valid request before any resource admission.
     ensure!(
         [1, 2, 4, 8].contains(&world)
             && [64, 128, 256].contains(&micro)
@@ -605,6 +608,7 @@ pub(crate) fn train_controlled(
         };
         training_step_window(initial, steps)?
     };
+    crate::task_contract::require_original_gpu_grant("training-controller")?;
     check_cancel(stop)?;
     let _lease = gpu_lease_controlled(root, "neural policy training", stop)?;
     let h: crate::telemetry::Hardware = read_json(&root.join("runs/hardware.json"))?;
