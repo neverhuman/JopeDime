@@ -7,8 +7,9 @@ use jope_learning::mirror::{mirror_url, Mirror};
 use jope_learning::progress::cadence::Clock;
 use jope_learning::progress::inventory::{RunManifest, WorkSpec};
 use jope_learning::progress::product::{Config, Driver, Step, SystemClock};
-use jope_learning::progress::publish::reusable;
+use jope_learning::progress::publish::{reusable, Publication};
 use jope_learning::progress::rebuild::{read_summary, summarize};
+use jope_learning::progress::reconcile;
 use jope_learning::scores;
 use jope_learning::sources::{champions, genebank, snapshot, sotarena};
 use jope_learning::state::State;
@@ -219,6 +220,15 @@ enum ProgressCmd {
         #[arg(long)]
         run: String,
     },
+    /// Reconcile a publication that lost a race: adopt the winner's committed closure, then
+    /// commit this host's remaining work on top of it. Read-only unless --apply; exit 1 when the
+    /// rebased commit would not pass the receiving checks.
+    Reconcile {
+        #[command(flatten)]
+        run: RunArgs,
+        #[arg(long)]
+        apply: bool,
+    },
 }
 
 #[derive(Clone, Copy, ValueEnum)]
@@ -285,6 +295,13 @@ enum HwmCmd {
     },
     /// Ledger head, pointer count and tree size.
     Status,
+    /// Roll a lagging HWM ledger head and lagging pointers forward to the ledger tip (the
+    /// recovery after a crash between a batch and its pointer writes). Read-only unless --apply;
+    /// exit 1 when a pointer holds a record the ledger never accepted there.
+    Recover {
+        #[arg(long)]
+        apply: bool,
+    },
 }
 
 #[derive(Clone, Copy, ValueEnum, PartialEq, Eq)]
@@ -599,6 +616,30 @@ fn run_progress(state: &State, common: &Common, cmd: ProgressCmd) -> Result<bool
             }))?;
             Ok(owed == 0)
         }
+        ProgressCmd::Reconcile { run, apply } => {
+            let remote = progress_store(common)?;
+            let config = progress_config(run.config.as_ref())?;
+            let plan = if apply {
+                reconcile::apply(
+                    state,
+                    &remote,
+                    config,
+                    &run.run,
+                    &run.publisher,
+                    clock.now_ms(),
+                )?
+            } else {
+                reconcile::plan(state, &remote, &run.run, &run.publisher, config.limits)?
+            };
+            print_json(&plan)?;
+            let applied = plan.applied.as_ref().map_or(!apply, |a| {
+                matches!(
+                    a.publication,
+                    Some(Publication::Advanced { .. } | Publication::AlreadyPublished { .. })
+                )
+            });
+            Ok(plan.recommit.is_empty() || (plan.admissible && applied))
+        }
         ProgressCmd::Status { run } => {
             let remote = progress_store(common)?;
             let Some(committed) = reusable(&remote, &run)? else {
@@ -748,6 +789,15 @@ fn run_hwm(state: &State, common: &Common, cmd: HwmCmd) -> Result<bool> {
                 "ledger_head": m.ledger_head,
             }))?;
             Ok(true)
+        }
+        HwmCmd::Recover { apply } => {
+            let report = if apply {
+                hwm::recover(state)?
+            } else {
+                hwm::recover_plan(state)?
+            };
+            print_json(&report)?;
+            Ok(report.refused.is_empty())
         }
         HwmCmd::Status => {
             let ledger = jope_learning::ledger::Ledger::open(state.root(), "hwm");

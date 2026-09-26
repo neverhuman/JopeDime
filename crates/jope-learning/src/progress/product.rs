@@ -508,6 +508,19 @@ impl<'r> Driver<'r> {
             ),
             None => (None, 0),
         };
+        if let Some(parent) = &parent {
+            let recorded = self.outbox.seq_of(&Dependency::Object(ObjectRef {
+                kind: Kind::Commit,
+                digest: parent.clone(),
+            }));
+            ensure!(
+                recorded.is_some(),
+                "run {} is committed at {parent}, which this host never recorded: another \
+                 publisher advanced the run. `jope-learning progress reconcile` adopts it and \
+                 commits this host's work on top; nothing was written",
+                self.manifest.value().run_id
+            );
+        }
         let commit = encode(&Commit {
             schema: Kind::Commit.schema().into(),
             run_id: self.manifest.value().run_id.clone(),

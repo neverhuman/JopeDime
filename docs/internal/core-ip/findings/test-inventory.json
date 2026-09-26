@@ -1783,6 +1783,13 @@
         "storage"
       ]
     },
+    "target:jope-learning/test/recovery_cli": {
+      "role": "regression",
+      "subsystems": [
+        "storage",
+        "teaching"
+      ]
+    },
     "target:jope-learning/test/schema_agreement": {
       "role": "regression",
       "subsystems": [
