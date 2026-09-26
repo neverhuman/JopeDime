@@ -6,10 +6,10 @@ not CI verification, and neither is live qualification. No finding closes throug
 
 | State | Tasks |
 |---|---:|
-| planned | 59 |
-| reproduced | 4 |
-| implemented | 11 |
-| fixture-proven | 10 |
+| planned | 56 |
+| reproduced | 5 |
+| implemented | 14 |
+| fixture-proven | 13 |
 | CI-verified | 0 |
 | live-qualified | 0 |
 | measurement-complete | 0 |
@@ -57,9 +57,9 @@ not CI verification, and neither is live qualification. No finding closes throug
 |---|---|---|---|
 | W4-T01 Write the operation-level forward contract | planned | — | — |
 | W4-T02 Prove autoregressive and batching invariants | planned | — | — |
-| W4-T03 Make decoding outcomes total and bounded | planned | — | — |
-| W4-T04 Differentially test grammar and typed parser | planned | — | — |
-| W4-T05 Establish scorer dependencies and architectural limits | planned | — | — |
+| W4-T03 Make decoding outcomes total and bounded | reproduced, implemented, fixture-proven | 319c4cd5f700; tests/decode_outcomes.rs (12) | The LibTorch proposal sampler in jope-engine (neural feature) is untouched; per-draw outcomes are not yet written to the candidate ledger (T07). |
+| W4-T04 Differentially test grammar and typed parser | implemented, fixture-proven | 663880fa69b7; tests/grammar_differential.rs | Verified safeguard: no dead-end legal prefix or parser disagreement found over 6,430 enumerated states and 17,036 programs/expressions. |
+| W4-T05 Establish scorer dependencies and architectural limits | implemented, fixture-proven | de747c363357; tests/scorer_dependencies.rs | Characterized on synthetic weights only; the order-aware challenger is W10. |
 | W4-T06 Freeze sampler replay separately from backend parity | planned | — | — |
 | W4-T07 Preserve proposal identity and complete denominators | planned | — | — |
 

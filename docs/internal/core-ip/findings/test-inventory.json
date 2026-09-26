@@ -2241,7 +2241,27 @@
         "encoders"
       ]
     },
+    "target:jope-policy/test/decode_outcomes": {
+      "role": "regression",
+      "subsystems": [
+        "policy"
+      ]
+    },
+    "target:jope-policy/test/grammar_differential": {
+      "role": "regression",
+      "subsystems": [
+        "policy",
+        "gp"
+      ]
+    },
     "target:jope-policy/test/jope_dime": {
+      "role": "regression",
+      "subsystems": [
+        "policy",
+        "encoders"
+      ]
+    },
+    "target:jope-policy/test/scorer_dependencies": {
       "role": "regression",
       "subsystems": [
         "policy",

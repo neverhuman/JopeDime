@@ -171,18 +171,47 @@
     },
     "W4-T03": {
       "states": [
-        "planned"
-      ]
+        "reproduced",
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "319c4cd5f7009eac9cfe033234bb4575675ac145"
+      ],
+      "tests": [
+        "tests/decode_outcomes.rs (12)"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w4-t03-prefix-20260926T052354Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w4-t03-postfix-20260926T053604Z"
+      ],
+      "remaining": "The LibTorch proposal sampler in jope-engine (neural feature) is untouched; per-draw outcomes are not yet written to the candidate ledger (T07)."
     },
     "W4-T04": {
       "states": [
-        "planned"
-      ]
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "663880fa69b712759a9c2e92668f30bb6e79520a"
+      ],
+      "tests": [
+        "tests/grammar_differential.rs"
+      ],
+      "remaining": "Verified safeguard: no dead-end legal prefix or parser disagreement found over 6,430 enumerated states and 17,036 programs/expressions."
     },
     "W4-T05": {
       "states": [
-        "planned"
-      ]
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "de747c36335775d441f0abe0cd0a12ef1c366f0b"
+      ],
+      "tests": [
+        "tests/scorer_dependencies.rs"
+      ],
+      "remaining": "Characterized on synthetic weights only; the order-aware challenger is W10."
     },
     "W4-T06": {
       "states": [
