@@ -97,6 +97,138 @@ pub enum Cmd {
         #[command(subcommand)]
         action: ReleaseAction,
     },
+    /// Record the historical GPU-study staging from its retained evidence and
+    /// verify input closures against the corrected fitting-only protocol.
+    /// Local reads only; nothing is fetched or rewritten.
+    StagingDisposition {
+        #[command(subcommand)]
+        action: StagingAction,
+    },
+}
+
+#[derive(Subcommand)]
+pub enum StagingAction {
+    /// Derive the disposition and its corrected protocol; outputs must not exist.
+    Derive {
+        /// Retained study directory (plan, journal, manifests, projected inputs).
+        #[arg(long)]
+        study_root: PathBuf,
+        /// Repository root holding docs/internal/core-ip/data/.
+        #[arg(long)]
+        repository_root: PathBuf,
+        #[arg(long)]
+        disposition: PathBuf,
+        #[arg(long)]
+        protocol: PathBuf,
+    },
+    /// Reopen both documents; optionally re-derive them from the evidence and
+    /// replay-check an input closure, or a corrected run with its closure.
+    /// A rejected closure or run exits 1.
+    Verify {
+        #[arg(long)]
+        disposition: PathBuf,
+        #[arg(long)]
+        protocol: PathBuf,
+        #[arg(long, requires = "repository_root")]
+        study_root: Option<PathBuf>,
+        #[arg(long, requires = "study_root")]
+        repository_root: Option<PathBuf>,
+        /// A pinned fitting-input manifest to check against the corrected protocol.
+        #[arg(long)]
+        closure: Option<PathBuf>,
+        /// A corrected run document (requires --closure).
+        #[arg(long, requires = "closure")]
+        run: Option<PathBuf>,
+    },
+}
+
+fn create_new(path: &std::path::Path, bytes: &[u8]) -> Result<()> {
+    use std::io::Write;
+    let mut file = std::fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(path)
+        .map_err(|e| anyhow::anyhow!("{}: {e}; records are immutable", path.display()))?;
+    file.write_all(bytes)?;
+    file.sync_all()?;
+    Ok(())
+}
+
+fn run_staging(action: StagingAction) -> Result<ExitCode> {
+    use crate::staging_disposition::{
+        derive_disposition, verify_closure, verify_corrected_run, CorrectedProtocol,
+        HistoricalDisposition,
+    };
+    match action {
+        StagingAction::Derive {
+            study_root,
+            repository_root,
+            disposition,
+            protocol,
+        } => {
+            let derived = derive_disposition(&study_root, &repository_root)?;
+            let corrected = CorrectedProtocol::derive(&derived)?;
+            let (d, p) = (derived.encode()?, corrected.encode()?);
+            create_new(&disposition, &d)?;
+            create_new(&protocol, &p)?;
+            println!(
+                "{}",
+                serde_json::json!({"schema":"jope.staging-disposition-derivation/v1",
+                    "disposition_id":derived.disposition_id,"disposition_sha256":crate::hash::sha256_hex(&d),
+                    "protocol_id":corrected.protocol_id,"protocol_sha256":crate::hash::sha256_hex(&p),
+                    "historical_closure_manifest_sha256":derived.input_closure.manifest_sha256,
+                    "forbidden_closure_objects":corrected.forbidden_closure_sha256.len(),
+                    "contamination_inferred":derived.classification.contamination_inferred,
+                    "network_access":false})
+            );
+            Ok(ExitCode::SUCCESS)
+        }
+        StagingAction::Verify {
+            disposition,
+            protocol,
+            study_root,
+            repository_root,
+            closure,
+            run,
+        } => {
+            let d_bytes = std::fs::read(&disposition)?;
+            let d = HistoricalDisposition::open(&d_bytes)?;
+            let p = CorrectedProtocol::open(&std::fs::read(&protocol)?, &d)?;
+            let mut report = serde_json::json!({"schema":"jope.staging-disposition-verification/v1",
+                "disposition_id":d.disposition_id,"protocol_id":p.protocol_id,"network_access":false});
+            if let (Some(study), Some(repository)) = (study_root, repository_root) {
+                let rederived = derive_disposition(&study, &repository)?.encode()?;
+                anyhow::ensure!(
+                    rederived == d_bytes,
+                    "re-derivation from the retained evidence does not reproduce the disposition"
+                );
+                report["rederived_bytes_equal"] = serde_json::json!(true);
+            }
+            let mut accepted = true;
+            if let Some(closure) = closure {
+                let manifest = std::fs::read(&closure)?;
+                report["closure_sha256"] = serde_json::json!(crate::hash::sha256_hex(&manifest));
+                let decision = match &run {
+                    Some(run) => verify_corrected_run(&d, &p, &std::fs::read(run)?, &manifest),
+                    None => verify_closure(&p, &manifest),
+                };
+                match decision {
+                    Ok(value) => report["closure_decision"] = value,
+                    Err(e) => {
+                        accepted = false;
+                        report["closure_decision"] =
+                            serde_json::json!({"accepted":false,"reason":format!("{e:#}")});
+                    }
+                }
+            }
+            println!("{report}");
+            Ok(if accepted {
+                ExitCode::SUCCESS
+            } else {
+                ExitCode::FAILURE
+            })
+        }
+    }
 }
 
 #[derive(Subcommand)]
@@ -432,5 +564,6 @@ pub fn run(cli: Cli) -> Result<ExitCode> {
             Ok(ExitCode::SUCCESS)
         }
         Cmd::RegressionRelease { action } => run_release(action),
+        Cmd::StagingDisposition { action } => run_staging(action),
     }
 }

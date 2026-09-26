@@ -5305,6 +5305,23 @@
       "dispositions": [],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "target:jope-datasets/test/staging_disposition": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-datasets/tests/staging_disposition.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "inputs",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
     "target:jope-dime-regressor/bin/aspfm_recovery_evolve": {
       "discovery": {
         "kind": "target",
