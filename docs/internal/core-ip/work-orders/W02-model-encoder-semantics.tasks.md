@@ -1,6 +1,8 @@
 # W2 — Complete accepted model and encoder semantics
 
-Status: planned. Owner: policy/encoder admission. Depends on W1 release and scope
+Status: current per-task state lives only in the generated [STATUS.md](STATUS.md); the
+checkboxes below are the original acceptance plan, not a progress record.
+Owner: policy/encoder admission. Depends on W1 release and scope
 contracts. Follow [the execution contract](EXECUTION-CONTRACT.md); qualifying a new
 architecture or calculation requires a challenger identity, never an accepted-loader
 compatibility fallback.
