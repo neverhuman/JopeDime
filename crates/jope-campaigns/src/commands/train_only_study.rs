@@ -5732,6 +5732,11 @@ mod tests {
         let sotarena_root = qualified_root
             .as_deref()
             .unwrap_or_else(|| Path::new(default_sotarena_root_str()));
+        assert!(
+            Path::new(default_catalog_pointer_str()).is_file(),
+            "unavailable: production context catalog pointer {} (provision <JOPE_STATE>/legacy/test_exact_gen0)",
+            default_catalog_pointer_str()
+        );
         let (_, catalog) = load_catalog(Path::new(default_catalog_pointer_str()))
             .expect("production context catalog");
         let disclosure = CorpusExclusions {

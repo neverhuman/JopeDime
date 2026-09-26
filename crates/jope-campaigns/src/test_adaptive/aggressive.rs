@@ -266,13 +266,13 @@ fn is_golden46_run(run_id: &str) -> bool {
 
 fn root(run_id: &str) -> PathBuf {
     if run_id == format!("{GOLDEN46_RUN_PREFIX}{GOLDEN46_TRANSFER_SUFFIX}") {
-        return workspace_root()
+        return campaign_state_root()
             .join("runs")
             .join(GOLDEN46_RUN_PREFIX)
             .join("transfer-arms")
             .join("target-family-informed");
     }
-    workspace_root().join("runs").join(run_id)
+    campaign_state_root().join("runs").join(run_id)
 }
 
 fn dataset_root(run_id: &str, dataset_hash: &str) -> PathBuf {

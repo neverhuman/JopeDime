@@ -845,8 +845,14 @@ fn workspace_root() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).to_path_buf()
 }
 
+/// Mutable campaign state (ADR-0003): `runs/<id>` hangs off `<jope_state>`, never
+/// the source tree. Recorded run artifact names stay relative to this root.
+fn campaign_state_root() -> PathBuf {
+    paths::jope_state()
+}
+
 fn run_root(run_id: &str) -> PathBuf {
-    workspace_root().join("runs").join(run_id)
+    campaign_state_root().join("runs").join(run_id)
 }
 
 fn extension_run_id(base_run_id: &str) -> String {
@@ -1238,7 +1244,7 @@ fn report_sources(registry: &Path, dataset_hash: &str) -> Result<Vec<CandidateSo
 
 fn jope_generation_sources(dataset_hash: &str) -> Result<Vec<CandidateSource>> {
     let mut ledgers = Vec::new();
-    for entry in fs::read_dir(workspace_root().join("runs"))? {
+    for entry in fs::read_dir(campaign_state_root().join("runs"))? {
         let entry = entry?;
         let path = entry.path().join(dataset_hash).join("slots.v1.jsonl");
         if path.is_file() {
@@ -1291,7 +1297,7 @@ fn jope_generation_sources(dataset_hash: &str) -> Result<Vec<CandidateSource>> {
 
 fn prior_test_adaptive_checkpoint_sources(dataset_hash: &str) -> Result<Vec<CandidateSource>> {
     let mut checkpoint_paths = Vec::new();
-    for entry in fs::read_dir(workspace_root().join("runs"))? {
+    for entry in fs::read_dir(campaign_state_root().join("runs"))? {
         let run_root = entry?.path();
         let Some(run_name) = run_root.file_name().and_then(|name| name.to_str()) else {
             continue;
@@ -1385,13 +1391,13 @@ fn prior_test_adaptive_checkpoint_sources(dataset_hash: &str) -> Result<Vec<Cand
 }
 
 fn confirmed_campaign_winner_sources(target_dataset_hash: &str) -> Result<Vec<CandidateSource>> {
-    confirmed_campaign_winner_sources_at(&workspace_root().join("runs"), target_dataset_hash)
+    confirmed_campaign_winner_sources_at(&campaign_state_root().join("runs"), target_dataset_hash)
 }
 
 /// Confirmed winners suitable for transfer to a different target.  A target's
 /// own prior answer must never enter its discovery seed bank.
 fn confirmed_transfer_winner_sources(target_dataset_hash: &str) -> Result<Vec<CandidateSource>> {
-    confirmed_transfer_winner_sources_at(&workspace_root().join("runs"), target_dataset_hash)
+    confirmed_transfer_winner_sources_at(&campaign_state_root().join("runs"), target_dataset_hash)
 }
 
 fn confirmed_transfer_winner_sources_at(
