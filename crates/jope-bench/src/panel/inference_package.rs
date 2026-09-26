@@ -494,8 +494,13 @@ mod tests {
         tempfile::tempdir_in(scratch).unwrap()
     }
     /// Loaded package must serve the qualified predictions from its installed bytes.
+    ///
+    /// `-B`: serving must not write `__pycache__` into the installed directory. `load` refuses
+    /// any entry the package did not ship, so a bytecode cache would make the next load fail
+    /// (and this used to pass only on hosts that set PYTHONDONTWRITEBYTECODE).
     fn serve_python(directory: &Path, module: &str) -> Vec<u8> {
         let run = Command::new("python3")
+            .arg("-B")
             .arg("-c")
             .arg(format!("import json,{module};print(json.dumps({module}.predict_raw([['3.25','NA'],[None,None],['-1','unseen']]),ensure_ascii=False,allow_nan=False))"))
             .current_dir(directory)
