@@ -2842,7 +2842,8 @@
         "evidence_status": "not-produced",
         "source_predicates": [
           "**Detection:** freeze a candidate and perturb only its inner validation labels: its fold-fitted state must not change, although its score may. Separately perturb outer labels under a controlled deterministic search schedule: proposal/selection outputs must not change. Instrument reads and invalidate caches; a label-read boolean alone is insufficient.",
-          "**Harden:** separate fitter, inner scorer, and outer auditor capabilities. Bind every state to permitted rows, label access, transforms, context, and ancestors. Freeze the selected recipe before a declared final refit; link the new fitted state to its actual membership rather than presenting it as an OOF fold model."
+          "**Harden:** separate fitter, inner scorer, and outer auditor capabilities. Bind every state to permitted rows, label access, transforms, context, and ancestors. Freeze the selected recipe before a declared final refit; link the new fitted state to its actual membership rather than presenting it as an OOF fold model.",
+          "**Close with:** complete §5.9 procedure, §5.8 request construction, fold/final-fit receipts, negative access tests, and the actual §10 staging-deviation details. Do not infer a clean run from the stated intended protocol."
         ]
       },
       "attestations": {
@@ -2877,7 +2878,8 @@
         "evidence_status": "not-produced",
         "source_predicates": [
           "**Detection:** use controlled fixtures for adaptation repeated twice, a changed transform with unchanged display name, a changed fitting membership, and a mutated child sharing a parent object. Check that parent state stays unchanged and every fit/score cache hit has the correct subject.",
-          "**Harden:** keep original proposal bytes, typed recipe, adaptation record, executable recipe, fold-fitted states, and final-refit state separately identified. Revalidate supported variation outputs. Distinguish fit-cache identity from score-cache identity; scoring on a new partition must not reuse an old score merely because fitted state matches."
+          "**Harden:** keep original proposal bytes, typed recipe, adaptation record, executable recipe, fold-fitted states, and final-refit state separately identified. Revalidate supported variation outputs. Distinguish fit-cache identity from score-cache identity; scoring on a new partition must not reuse an old score merely because fitted state matches.",
+          "**Close with:** §5.1 type/lifecycle rules, §5.8 variation validation, and §5.10 serialized examples tracing one unchanged parent and its changed child through fitting and selection."
         ]
       },
       "attestations": {
@@ -2912,7 +2914,8 @@
         "evidence_status": "not-produced",
         "source_predicates": [
           "**Detection:** replay a small controlled plan while changing only origin labels and arm execution order. Inject an extra rejected proposal; verify that unrelated random streams and budget charges remain as specified. Inspect generation-zero proposed/admitted/evaluated inventories rather than comparing final winner labels alone.",
-          "**Harden:** freeze the comparison's estimand: whole neural-seeded optimizer versus whole generic optimizer, or initialization quality specifically. Bind common folds, evaluator, downstream operators, caps, cache policy, and tie rules. Record source-dependent overhead and all permitted arm differences explicitly."
+          "**Harden:** freeze the comparison's estimand: whole neural-seeded optimizer versus whole generic optimizer, or initialization quality specifically. Bind common folds, evaluator, downstream operators, caps, cache policy, and tie rules. Record source-dependent overhead and all permitted arm differences explicitly.",
+          "**Close with:** §5.5 generation-zero specification and paired manifests, §5.8 random-stream/attempt semantics, and order-balanced run receipts. Do not copy the direct request's sampling configuration into full GP; §10.1 distinguishes them."
         ]
       },
       "attestations": {
@@ -2947,7 +2950,8 @@
         "evidence_status": "not-produced",
         "source_predicates": [
           "**Detection:** inject a blocked worker, allocation failure, delayed completion, exhausted grammar, repeated invalid proposals, and deadline/dispatch races in an isolated harness. Verify ledger reconciliation, stop reason, absence of unauthorized late selection, and cleanup before worker reuse.",
-          "**Harden:** define all charged work and separately bounded preparation. Reserve attempt capacity before dispatch, enforce resource isolation, and freeze the eligible incumbent set at the declared deadline. Preserve all retry/refusal events even where the protocol does not count them as fitting attempts."
+          "**Harden:** define all charged work and separately bounded preparation. Reserve attempt capacity before dispatch, enforce resource isolation, and freeze the eligible incumbent set at the declared deadline. Preserve all retry/refusal events even where the protocol does not count them as fitting attempts.",
+          "**Close with:** §5.2 stop policy, §5.8 scheduler contract and failure receipts, and §10's actual admission/termination timestamps. No runtime containment or compliance measurement is available here."
         ]
       },
       "attestations": {
@@ -2982,7 +2986,8 @@
         "evidence_status": "not-produced",
         "source_predicates": [
           "**Detection:** exercise supported operators with training-side high-cardinality data, missing-value expansion, empty/degenerate inputs, chained widening, and arithmetic-overflow boundaries. Compare predicted bounds with instrumented intermediate widths and covered allocations, not only terminal output width.",
-          "**Harden:** use operator-specific conservative checks with explicit covered resources and outcomes: proved within contract, proved outside contract, or unknown. Unknown must not silently mean feasible. Preserve runtime containment for uncovered backend workspaces and reject or sandbox unresolved cases under a stated policy."
+          "**Harden:** use operator-specific conservative checks with explicit covered resources and outcomes: proved within contract, proved outside contract, or unknown. Unknown must not silently mean feasible. Preserve runtime containment for uncovered backend workspaces and reject or sandbox unresolved cases under a stated policy.",
+          "**Close with:** full §5.6 proposal and implementation status, operator coverage, cap scope, overflow tests, estimate-versus-observation records, and paired refusal inventories. A safe refusal is not itself a bug or a completed candidate."
         ]
       },
       "attestations": {
@@ -3017,7 +3022,8 @@
         "evidence_status": "not-produced",
         "source_predicates": [
           "**Detection:** feed a selector complete strict-winner fixtures, exact ties, invalid/nonfinite results, incomplete fold vectors, and results from incompatible evaluator identities. Deliberately reverse predicted-rank and measured-fitness order; verify the declared measured selection rule controls the winner.",
-          "**Harden:** represent validity separately from the numerical objective. Require the complete declared evidence before ranking; freeze objective direction, aggregation, ties, any secondary criterion, and stopping policy in the RequestPlan. Proposal rank may control evaluation priority, but must not impersonate measured fitness."
+          "**Harden:** represent validity separately from the numerical objective. Require the complete declared evidence before ranking; freeze objective direction, aggregation, ties, any secondary criterion, and stopping policy in the RequestPlan. Proposal rank may control evaluation priority, but must not impersonate measured fitness.",
+          "**Close with:** full §§5.2–5.4 and §5.8 selection tables, executable reference fixtures, and a real ordered candidate ledger. §6.1 explicitly distinguishes reward scores, percentiles, and fitted RMSE."
         ]
       },
       "attestations": {
@@ -3052,7 +3058,8 @@
         "evidence_status": "not-produced",
         "source_predicates": [
           "**Detection:** reconstruct a selected lineage from original proposals through every recorded variation, adaptation, evaluation, and final refit. Tamper independently with a parent identity, operator record, executable recipe, and fitted-state reference; each inconsistency must prevent an authenticated handoff.",
-          "**Harden:** retain an append-only event trace with parent references, exact changed recipe, operation identity, relevant random-stream state, cache provenance, fit scopes, scores, and selection decisions. Distinguish direct proposal, evolved descendant, copied incumbent, and reused evaluation without inventing unrecorded parentage."
+          "**Harden:** retain an append-only event trace with parent references, exact changed recipe, operation identity, relevant random-stream state, cache provenance, fit scopes, scores, and selection decisions. Distinguish direct proposal, evolved descendant, copied incumbent, and reused evaluation without inventing unrecorded parentage.",
+          "**Close with:** the real §5.10 trace, linked fitted artifact, resolver for all ancestors/cache entries, and an independently replayed selected path with tamper-test results."
         ]
       },
       "attestations": {
@@ -3087,7 +3094,8 @@
         "evidence_status": "not-produced",
         "source_predicates": [
           "**Detection:** request generation-zero best valid results, later incumbents, source/ancestry labels, all attempted and failed work, proposal overhead, and matched paired outcomes. Check whether the winner is an evolved descendant, an unchanged initial candidate, or a declared reuse.",
-          "**Harden:** label integration, feasibility, search-quality, and independent performance evidence separately. Compare evolution against additional fresh proposals from the same seed source; retain the generic arm as a separate source comparison rather than assuming it isolates evolution alone."
+          "**Harden:** label integration, feasibility, search-quality, and independent performance evidence separately. Compare evolution against additional fresh proposals from the same seed source; retain the generic arm as a separate source comparison rather than assuming it isolates evolution alone.",
+          "**Close with:** §§5.3, 5.5, 5.7 worked examples and paired trajectory receipts. Do not infer a general win rate, population diversity, or cross-dataset benefit from missing operational tables."
         ]
       },
       "attestations": {
@@ -3121,7 +3129,8 @@
         "evidence_location": "evidence/S05-I1.json",
         "evidence_status": "not-produced",
         "source_predicates": [
-          "**Falsifiable acceptance:** in a controlled fixed-work schedule, changing outer labels cannot change search outputs. For a frozen candidate, changing inner validation labels cannot change its fitted state. Forbidden reads fail, cache mismatches reject, and final refit cannot silently expand the permitted membership."
+          "**Falsifiable acceptance:** in a controlled fixed-work schedule, changing outer labels cannot change search outputs. For a frozen candidate, changing inner validation labels cannot change its fitted state. Forbidden reads fail, cache mismatches reject, and final refit cannot silently expand the permitted membership.",
+          "**Completion evidence:** retained negative tests, actual fold/final-fit receipts, and one full bounded run showing the selected recipe frozen before refit. Reusing held labels later requires a distinct artifact/protocol, not relabeling earlier accuracy evidence."
         ]
       },
       "attestations": {
@@ -3156,7 +3165,8 @@
         "evidence_status": "not-produced",
         "source_predicates": [
           "**Falsifiable acceptance:** every supported variation either validates as a fresh candidate or fails explicitly; changing executable semantics, fit scope, or evaluator scope cannot produce a stale eligible score. Repeat adaptation is rejected or demonstrably follows a declared idempotent rule without corrupting original provenance.",
-          "**State acceptance:** a child mutation cannot change its parent's predictions; a final refit cannot inherit a fold score as though that score measured its exact final state. Unsupported export retains the same selected candidate and its explicit export-failure status."
+          "**State acceptance:** a child mutation cannot change its parent's predictions; a final refit cannot inherit a fold score as though that score measured its exact final state. Unsupported export retains the same selected candidate and its explicit export-failure status.",
+          "**Completion evidence:** round-trip/corruption fixtures and a serialized candidate-to-final-state record consumed by the actual handoff, not only a standalone receipt validator."
         ]
       },
       "attestations": {
@@ -3191,7 +3201,8 @@
         "evidence_status": "not-produced",
         "source_predicates": [
           "**Falsifiable acceptance:** with identical injected candidates, swapping only origin labels cannot alter evaluator results, admissibility, or budget policy. An inserted rejected proposal cannot perturb unrelated random streams. Reversing arm order follows the same declared cache/warmup policy and produces an auditable record of any observed differences.",
-          "**Operational acceptance:** paired reports reconcile proposed, scheduled, completed, rejected, cached, and failed events under non-overlapping declared categories. Missing/failed arms remain visible; direct-path sampling settings are never silently substituted for the paired plan."
+          "**Operational acceptance:** paired reports reconcile proposed, scheduled, completed, rejected, cached, and failed events under non-overlapping declared categories. Missing/failed arms remain visible; direct-path sampling settings are never silently substituted for the paired plan.",
+          "**Completion evidence:** a small controlled comparison plus retained real paired manifests and order-balanced observations. Exact equality of noisy production timing is not an acceptance requirement."
         ]
       },
       "attestations": {
@@ -3226,7 +3237,8 @@
         "evidence_status": "not-produced",
         "source_predicates": [
           "**Falsifiable acceptance:** blocking, OOM, repeated-rejection, cancellation, and dispatch-race fixtures cannot admit work beyond the declared quotas or promote incomplete evidence. Late results obey the frozen policy, and contaminated workers cannot service another request without verified cleanup or replacement.",
-          "**Timing acceptance:** each run reports admission, deadline, stop, result, and cleanup boundaries. An observed overrun fails any strict elapsed-time claim; excluding cleanup from a metric requires a distinct, explicitly named metric."
+          "**Timing acceptance:** each run reports admission, deadline, stop, result, and cleanup boundaries. An observed overrun fails any strict elapsed-time claim; excluding cleanup from a metric requires a distinct, explicitly named metric.",
+          "**Completion evidence:** failure-injection receipts and a real bounded run whose complete event inventory reconciles to its counters. No valid incumbent must produce a typed no-result outcome, not a substitute winner."
         ]
       },
       "attestations": {
@@ -3261,7 +3273,8 @@
         "evidence_status": "not-produced",
         "source_predicates": [
           "**Falsifiable acceptance:** for covered controlled cases, measured intermediate widths and allocations never exceed the stated conservative bounds. Unsupported operators, arithmetic overflow, and insufficient metadata cannot receive a proved-feasible result. Held-only categories cannot influence fitting-side estimates.",
-          "**Quality acceptance:** compare rejection decisions against bounded actual evaluations on an adjudication set; disclose conservative false refusals and unknowns by arm. A speedup claim must include preflight overhead and refusal inventory; changing search feasibility policy requires a new protocol identity."
+          "**Quality acceptance:** compare rejection decisions against bounded actual evaluations on an adjudication set; disclose conservative false refusals and unknowns by arm. A speedup claim must include preflight overhead and refusal inventory; changing search feasibility policy requires a new protocol identity.",
+          "**Completion evidence:** per-operator soundness tests, boundary/overflow fixtures, an estimate-versus-observation report, and paired attrition tables. This does not assert a new dense cap or promise an unmeasured speed gain."
         ]
       },
       "attestations": {
@@ -3295,7 +3308,8 @@
         "evidence_location": "evidence/S05-I6.json",
         "evidence_status": "not-produced",
         "source_predicates": [
-          "**Falsifiable acceptance:** hand-checkable complete-score fixtures select the expected candidate; nonfinite/incomplete/incomparable records never become an eligible winner. When proposal ordering conflicts with measured ordering, the declared measured rule wins. Stopping uses only permitted evidence and its recorded policy."
+          "**Falsifiable acceptance:** hand-checkable complete-score fixtures select the expected candidate; nonfinite/incomplete/incomparable records never become an eligible winner. When proposal ordering conflicts with measured ordering, the declared measured rule wins. Stopping uses only permitted evidence and its recorded policy.",
+          "**Completion evidence:** a passing adversarial selector suite and replay of a retained real candidate ledger. Move this work to P0 if production currently lacks an explicit completeness/validity gate; that absence is not established by the extract."
         ]
       },
       "attestations": {
@@ -3330,7 +3344,8 @@
         "evidence_status": "not-produced",
         "source_predicates": [
           "**Falsifiable acceptance:** a separate reader reconstructs the selected recipe and decision sequence without trusting the final summary. Broken parent references, omitted changes, wrong fit scope, substituted executable bytes, or incompatible cached scores prevent authentication.",
-          "**Replay acceptance:** recorded-event replay reproduces the decisions; fresh numerical execution is checked under an explicitly qualified reproducibility contract. Run actual bounded searches for timing claims rather than substituting offline trace replay."
+          "**Replay acceptance:** recorded-event replay reproduces the decisions; fresh numerical execution is checked under an explicitly qualified reproducibility contract. Run actual bounded searches for timing claims rather than substituting offline trace replay.",
+          "**Completion evidence:** one genuine selected lineage with final fitted-state linkage, full candidate inventory, and tamper-test results. Keep private discovery information separate from public deployable state as §8.1.1 requires."
         ]
       },
       "attestations": {
@@ -3364,7 +3379,8 @@
         "evidence_location": "evidence/S05-I8.json",
         "evidence_status": "not-produced",
         "source_predicates": [
-          "**Falsifiable acceptance:** every planned outcome, including refusal and no-result, is retained. The primary comparison, data/seed allocation, and uncertainty decision rule are frozen before independent evaluation. Claim evolutionary benefit only if the prespecified comparison supports it; otherwise report no demonstrated benefit."
+          "**Falsifiable acceptance:** every planned outcome, including refusal and no-result, is retained. The primary comparison, data/seed allocation, and uncertainty decision rule are frozen before independent evaluation. Claim evolutionary benefit only if the prespecified comparison supports it; otherwise report no demonstrated benefit.",
+          "**Completion evidence:** paired trajectories, actual ancestry attribution, complete outcome denominators, and the preregistered comparison report. The existing seed0/three-dataset study does not supply these missing conclusions in the extract."
         ]
       },
       "attestations": {
@@ -6666,7 +6682,8 @@
         "evidence_location": "evidence/S10-K1.json",
         "evidence_status": "not-produced",
         "source_predicates": [
-          "**Falsifiable acceptance:** the valid control succeeds; invalid scope, identity, and missing evidence never produce an eligible corpus record or unauthorized HWM mutation. Retries are idempotent and interrupted transitions recover to a consistent state."
+          "**Falsifiable acceptance:** the valid control succeeds; invalid scope, identity, and missing evidence never produce an eligible corpus record or unauthorized HWM mutation. Retries are idempotent and interrupted transitions recover to a consistent state.",
+          "**Stop / dependency:** do not claim protection from tests that only call the helper. Historical records without adequate evidence remain quarantined or explicitly unproven; signing a record cannot cure unsupported provenance."
         ]
       },
       "attestations": {
@@ -6700,7 +6717,8 @@
         "evidence_location": "evidence/S10-K2.json",
         "evidence_status": "not-produced",
         "source_predicates": [
-          "**Falsifiable acceptance:** forbidden access attempts fail; permitted artifacts satisfy the declared repeatability comparison; the study receipt records the closure and exception status. All contaminated or unresolved descendants remain excluded from clean-qualification claims."
+          "**Falsifiable acceptance:** forbidden access attempts fail; permitted artifacts satisfy the declared repeatability comparison; the study receipt records the closure and exception status. All contaminated or unresolved descendants remain excluded from clean-qualification claims.",
+          "**Stop / dependency:** absence of historical access logs is recorded as unknown, not proof of no read. A clean rerun gets a new identity and does not repair the historical claim by renaming it."
         ]
       },
       "attestations": {
@@ -6734,7 +6752,8 @@
         "evidence_location": "evidence/S10-K3.json",
         "evidence_status": "not-produced",
         "source_predicates": [
-          "**Falsifiable acceptance:** all 100 planned warm requests reconcile without denominator changes; invalid evidence blocks the appropriate headline; retries cannot erase earlier outcomes. Per-arm GP attempt accounting reconciles independently against its pinned plan."
+          "**Falsifiable acceptance:** all 100 planned warm requests reconcile without denominator changes; invalid evidence blocks the appropriate headline; retries cannot erase earlier outcomes. Per-arm GP attempt accounting reconciles independently against its pinned plan.",
+          "**Stop / dependency:** incomplete evidence produces an incomplete-study report, never a fabricated aggregate. K1–K2 establish the integrity prerequisites for new clean learning or boundary-sensitive claims; K3 can still inventory historical limitations."
         ]
       },
       "attestations": {
@@ -6768,7 +6787,8 @@
         "evidence_location": "evidence/S10-K4.json",
         "evidence_status": "not-produced",
         "source_predicates": [
-          "**Falsifiable acceptance:** injected required work appears at the correct boundary, no backend is silently excluded, and timeline reconciliation explains overlap rather than summing overlapping/cumulative spans. The existing synchronized whole-request definition remains the headline."
+          "**Falsifiable acceptance:** injected required work appears at the correct boundary, no backend is silently excluded, and timeline reconciliation explains overlap rather than summing overlapping/cumulative spans. The existing synchronized whole-request definition remains the headline.",
+          "**Stop / dependency:** isolated-language or different-cache experiments are additional named protocols. A fresh-process case is not relabeled a fully cold system, and profiling-derived timing does not replace unprofiled measurement."
         ]
       },
       "attestations": {
@@ -6802,7 +6822,8 @@
         "evidence_location": "evidence/S10-K5.json",
         "evidence_status": "not-produced",
         "source_predicates": [
-          "**Falsifiable acceptance:** every deliberate semantic/state corruption is rejected or explicitly classified, while valid fixtures pass their own gate. Near-tie differences cannot silently inherit a behavior-preserving label merely from numeric closeness."
+          "**Falsifiable acceptance:** every deliberate semantic/state corruption is rejected or explicitly classified, while valid fixtures pass their own gate. Near-tie differences cannot silently inherit a behavior-preserving label merely from numeric closeness.",
+          "**Stop / dependency:** do not weaken `3e-4` to make a faster mode pass. New precision modes, hardware, or unsupported model heads require their own declared qualification; passing tests does not prove all possible inputs."
         ]
       },
       "attestations": {
@@ -6836,7 +6857,8 @@
         "evidence_location": "evidence/S10-K6.json",
         "evidence_status": "not-produced",
         "source_predicates": [
-          "**Falsifiable acceptance:** the preregistered paired latency decision favors the change beyond its uncertainty criterion, K5 qualification still passes, and failure coverage and required work do not degrade. Include lookup, validation, transfer, and compilation costs wherever the protocol charges them."
+          "**Falsifiable acceptance:** the preregistered paired latency decision favors the change beyond its uncertainty criterion, K5 qualification still passes, and failure coverage and required work do not degrade. Include lookup, validation, transfer, and compilation costs wherever the protocol charges them.",
+          "**Stop / dependency:** reject a change whose apparent benefit comes only from skipping encoders/candidates without an explicitly new reuse protocol. Delay reduced precision or broad kernel rewrites until measured stage evidence justifies them."
         ]
       },
       "attestations": {
@@ -6870,7 +6892,8 @@
         "evidence_location": "evidence/S10-K7.json",
         "evidence_status": "not-produced",
         "source_predicates": [
-          "**Falsifiable acceptance:** replay produces the same declared candidate results and selected fitted-state identity under the applicable numeric contract; every scheduled logical attempt reconciles. Live-search benefits are demonstrated under the same declared budget and inclusion rules, with completed work disclosed."
+          "**Falsifiable acceptance:** replay produces the same declared candidate results and selected fitted-state identity under the applicable numeric contract; every scheduled logical attempt reconciles. Live-search benefits are demonstrated under the same declared budget and inclusion rules, with completed work disclosed.",
+          "**Stop / dependency:** no outer-fold or unrelated-family reuse, no uncharged preprocessing, no hidden refusal filtering. Stop when coordination or memory costs erase benefits; ordinary DAG/caching techniques are not asserted as inventions."
         ]
       },
       "attestations": {
@@ -6904,7 +6927,8 @@
         "evidence_location": "evidence/S10-K8.json",
         "evidence_status": "not-produced",
         "source_predicates": [
-          "**Falsifiable acceptance:** first, the full real-GPU chain reproduces with authenticated receipts. Separately, the challenger meets the preregistered transfer-improvement and guardrail criteria; a plumbing pass with null/negative lift is recorded honestly and does not trigger promotion."
+          "**Falsifiable acceptance:** first, the full real-GPU chain reproduces with authenticated receipts. Separately, the challenger meets the preregistered transfer-improvement and guardrail criteria; a plumbing pass with null/negative lift is recorded honestly and does not trigger promotion.",
+          "**Stop / dependency:** depends on K1–K5. A new retained checkpoint, lower imitation loss, or additional accepted teachers cannot substitute for the independent matched-search outcome."
         ]
       },
       "attestations": {
@@ -6938,7 +6962,8 @@
         "evidence_location": "evidence/S10-K9.json",
         "evidence_status": "not-produced",
         "source_predicates": [
-          "**Falsifiable acceptance:** each advertised domain/hardware/backend scope has its own complete qualification and measurement records, including failures and uncertainty. Unsupported tasks or classification remain outside the original regression qualification until separately tested."
+          "**Falsifiable acceptance:** each advertised domain/hardware/backend scope has its own complete qualification and measurement records, including failures and uncertainty. Unsupported tasks or classification remain outside the original regression qualification until separately tested.",
+          "**Stop / dependency:** do not expand a scope after observing only favorable subgroups. Declare power/precision goals and material-effect criteria before additional sampling; an inconclusive experiment cannot be relabeled a broad win."
         ]
       },
       "attestations": {
@@ -6972,7 +6997,8 @@
         "evidence_location": "evidence/S10-K10.json",
         "evidence_status": "not-produced",
         "source_predicates": [
-          "**Falsifiable acceptance:** the valid package reproduces the scoped outcome without undocumented intervention; every tampered prerequisite blocks affected claims; an upstream correction triggers the specified downstream requalification. Serving promotion remains a separate explicit authorization."
+          "**Falsifiable acceptance:** the valid package reproduces the scoped outcome without undocumented intervention; every tampered prerequisite blocks affected claims; an upstream correction triggers the specified downstream requalification. Serving promotion remains a separate explicit authorization.",
+          "**Stop / dependency:** “proof-carrying” means checkable evidence within declared verifier trust assumptions, not a formal proof of generalization or truth. Document these assumptions and distinguish integration contribution from generic hashing, signing, caching, or code generation."
         ]
       },
       "attestations": {

@@ -50,7 +50,10 @@ def verify(root=ROOT):
             fields = list(re.finditer(r"^(?:- )?\*\*([^*]+)\*\*", section, re.M))
             predicates = []
             for n, field in enumerate(fields):
-                if re.search("detection|acceptance|closure|stop condition|harden", field[1], re.I):
+                if re.search(
+                    "detection|acceptance|closure|close with|completion evidence|"
+                    "stop condition|stop / dependency|harden", field[1], re.I
+                ):
                     stop = fields[n + 1].start() if n + 1 < len(fields) else len(section)
                     predicates.append(section[field.start():stop].strip())
             source_entries[key] = {
