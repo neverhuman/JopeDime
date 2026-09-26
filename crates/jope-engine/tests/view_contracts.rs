@@ -288,16 +288,19 @@ fn unbound_fitted_view_export_is_fenced_before_output_and_receipted() {
         "this contract requires an environment without a fit service binding"
     );
     let (temp, prepared) = fixture();
+    // The pointer view is projected under its declared root (W1 route R2).
     let output = temp.path().join("predictor.json");
-    let error = jope_parallel::gp::fit_view(&prepared, 0, authority::PROGRAM, &output)
-        .unwrap_err()
-        .to_string();
+    let error =
+        jope_parallel::gp::fit_view_in_root(temp.path(), &prepared, 0, authority::PROGRAM, &output)
+            .unwrap_err()
+            .to_string();
     assert!(error.contains(FENCED), "{error}");
     assert!(!output.exists());
     let executable = PathBuf::from(env!("CARGO_BIN_EXE_jope-parallel"));
     let isolated = temp.path().join("isolated.json");
-    assert!(jope_parallel::gp::fit_view_isolated(
+    assert!(jope_parallel::gp::fit_view_isolated_in_root(
         &executable,
+        temp.path(),
         &prepared,
         0,
         authority::PROGRAM,
@@ -330,6 +333,8 @@ fn configured_authority_refuses_fit_view_without_verified_activation() {
     );
     let result = authority
         .command()
+        .arg("--root")
+        .arg(temp.path())
         .args(["fit-view", "--prepared"])
         .arg(&prepared)
         .args(["--cut", "0", "--genome", authority::PROGRAM, "--output"])

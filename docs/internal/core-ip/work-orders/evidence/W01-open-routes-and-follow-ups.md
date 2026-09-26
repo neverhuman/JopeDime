@@ -682,3 +682,66 @@ authority's store.
 - Not touched: the pinned `eval_registry` files (including the `service.rs` definition
   used above), `fit_boundary`, jope-learning, `native_loop/materialize.rs` and the
   request schema.
+
+## Round 8 — R2 at the public `fit-view` verb and the legacy isolated export (branch `rr2/integration-c`, base `e4f1b6c62`)
+
+Evidence: `runs/w1c-r2-*` under the claude-w0-w12 custody root.
+
+**Defect.** Two fitted-view entry points still resolved a pointer view through
+`prepare::load_view`, whose ancestor walk picks the nearest directory holding `manifests/`
+and `Cargo.toml`:
+- the public `fit-view` verb (`gp::fit_view`), which ignored the CLI's `--root`;
+- the legacy `gp::fit_view_isolated` wrapper, whose parent projected through that walk
+  before handing the worker its sealed memfd.
+
+**Reproduction.** `w1c-r2-pre-20260926T193941Z`: 3/3 FAIL (the fourth test in the run,
+`shipped_fit_memory_is_fenced…`, is an unchanged control and passed). The setup is the one
+of round 4's 2c: the declared root carries no workspace markers, an ancestor is a workspace
+holding a byte-identical backing table, and the root's own backing is moved away.
+
+| Test | Pre-fix outcome |
+|---|---|
+| `gp::fit_contract_tests::the_public_fit_view_projects_under_its_declared_root_and_never_resolves_an_ancestor` | `fit-view --root <declared>` **fitted** the ancestor's copy. |
+| `gp::fit_contract_tests::the_legacy_isolated_export_never_resolves_a_pointer_view_from_its_ancestors` | The root-less legacy export **exported** the pointer view from the ancestor's copy. |
+| `projected_export::shipped_fit_view_projects_under_its_declared_root_before_the_fence` | The shipped binary projected the ancestor's copy and reached the activation fence (`UNVERIFIED_ACTIVATION`) instead of refusing at the projection. |
+
+**Fix.**
+- `gp::fit_view_in_root` (new) is the public verb: the cut's fitting rows are projected once
+  under the declared root, from the preparation it read (`prepare::load_bound_view_in_root`,
+  so `prepared.json` is not reopened), and only that projection and the verified preparation
+  state reach `fit_projected`. `main.rs` passes the CLI's `--root`.
+- Without a root (`gp::fit_view`, `gp::fit_view_isolated`) only a contained view is
+  projected: the new `prepare::load_bound_contained_view` resolves the cut's own tables and
+  refuses a pointer view ("pointer view needs its declared data root: its backing table is
+  never resolved from the view's ancestors").
+- The isolated export projects from the preparation bytes it already read (was a second
+  read of `prepared.json`). Its receipt's `view_resolution` is `declared_root` or
+  `contained_view`; the value `legacy_view_resolution` (the ancestor walk) is no longer
+  produced.
+- `examples/champion_export.rs` passes its declared `--root`.
+
+**Callers updated (assertions unchanged).** The fence suite `view_contracts` projects its
+pointer-view fixture under the fixture's root: `unbound_fitted_view_export_is_fenced_before_output_and_receipted`
+calls the `_in_root` variants and `configured_authority_refuses_fit_view_without_verified_activation`
+passes `--root`. `fit_boundary`'s fixture is a contained view and is unchanged. In
+`gp::fit_contract_tests`, three positive tests of pointer views pass `--root`.
+
+**Controls.**
+- Negative: the backing table only outside the declared root is refused before any fit
+  start (fixture authority and shipped binary); the root-less pointer export leaves a
+  failed receipt with no worker argv and `view_resolution: contained_view`.
+- Positive: the backing inside the declared root fits (fixture authority) or reaches only
+  the activation fence (shipped); the pointer view under its root and a contained view with
+  no root both export through `sealed_memory_projection`.
+
+**Results.**
+- Post-fix `w1c-r2-post-20260926T194142Z`: 41/41 (the four tests, the three updated
+  positives, the 2c test, and the `view_contracts` and `fit_boundary` suites).
+- Pre-commit `w1c-r2-c-20260926T194403Z`: fence suites plus `gp::fit_contract_tests` and
+  `projected_export`, 84/84; workspace all-targets check, coverage (0 unassigned, 261
+  targets), verify-test-inventory, fmt and diff-check exit 0; no warning in a changed file.
+
+**Still open (recorded).** The pinned `eval_registry/native_scq.rs:451` still calls the
+root-less `load_view` (pinned, not touched). The other `load_view` callers (neural-gated
+`encoding.rs`, `components.rs`, `hyperion.rs`, `hyperion-batch-worker`, examples and test
+fixtures) are unchanged; `load_view` itself keeps its behavior.
