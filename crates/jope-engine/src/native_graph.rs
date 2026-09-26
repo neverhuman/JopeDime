@@ -475,10 +475,10 @@ impl Graph {
             "input manifest changed"
         );
         let input: InputManifest = serde_json::from_slice(&bytes)?;
-        ensure!(
-            input.root == self.root && input.schema == "jope.smartcluster_input.v1",
-            "input root/schema mismatch"
-        );
+        ensure!(input.root == self.root, "input root/schema mismatch");
+        input
+            .validate_version()
+            .context("input root/schema mismatch")?;
         Ok(input)
     }
     fn expected_spec(&self, admission: &Admission) -> Result<JobSpec> {

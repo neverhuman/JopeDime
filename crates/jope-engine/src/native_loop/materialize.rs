@@ -58,6 +58,9 @@ impl Loop {
             .join("result.json")
             .strip_prefix(&self.root)?
             .to_owned();
+        // A training input declares its lineage mode (W6 follow-up), under
+        // the input version it was first frozen with.
+        let mut training_declaration = None;
         let (operation, mut dependencies, kind, delivery, resources, parent, corpus) = match r.role
         {
             Role::ProposalModel | Role::ProposalShuffled => {
@@ -169,6 +172,13 @@ impl Loop {
                     &self.config.scientific_policy,
                     r,
                 )?;
+                // Parent weights with carried optimizer moments and a new
+                // sampling window: classified, never assumed.
+                training_declaration = Some(crate::task_contract::classify_continuation(
+                    false,
+                    true,
+                    Some(&policy),
+                )?);
                 let replay = frozen(&self.root, &base.join("replay-policy.json"), &policy)?;
                 let run = base.join("run");
                 let launch = base.join("launch");
@@ -194,9 +204,8 @@ impl Loop {
                     requested_step_increment: 3000,
                     target_optimizer_step: self.config.initial_optimizer_step
                         + (r.generation + 1) * 3000,
-                    // Frozen task inputs are compared byte for byte when a
-                    // request is re-materialized; declaring the mode here
-                    // needs a new request schema version (W6 follow-up, open).
+                    // Declared below through `InputManifest::declare_training`,
+                    // which keeps an input frozen as v1 undeclared.
                     continuation_mode: None,
                 };
                 let inputs = crate::resident_protocol::input_artifacts(
@@ -287,7 +296,7 @@ impl Loop {
             &closure_bytes,
         )?;
         let input = InputManifest {
-            schema: "jope.smartcluster_input.v1".into(),
+            schema: crate::smartcluster_worker::INPUT_SCHEMA_V1.into(),
             root: self.root.clone(),
             operation,
             input_artifacts: BTreeMap::new(),
@@ -297,7 +306,21 @@ impl Loop {
             }),
             output_receipt,
         };
-        let input_ref = frozen(&self.root, &base.join("task.input.json"), &input)?;
+        let input_path = base.join("task.input.json");
+        let input = match training_declaration {
+            // A request first frozen as v1 re-materializes as v1, byte for
+            // byte; a new request is frozen as v2 with its declaration.
+            Some(mode) => {
+                let existing = match fs::symlink_metadata(&input_path) {
+                    Ok(_) => Some(read(&input_path)?),
+                    Err(e) if e.kind() == std::io::ErrorKind::NotFound => None,
+                    Err(e) => return Err(e.into()),
+                };
+                input.declare_training(existing.as_deref(), mode)?
+            }
+            None => input,
+        };
+        let input_ref = frozen(&self.root, &input_path, &input)?;
         let task = TaskManifest {
             schema: "jope.smartcluster_task.v1".into(),
             run: r.run.clone(),

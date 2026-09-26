@@ -421,7 +421,7 @@ File `crates/jope-engine/tests/training_ancestry.rs` (feature `neural`, CPU). Th
   - `exact_resume` is an attempt property, never a lineage declaration.
   - A legacy lineage without a recorded mode stays `unknown_legacy`, and a declaration cannot be checked against it, so it is refused.
   - The result is recorded in `complete-{rank}.json` (`continuation_declaration`) and, for new lineages, in `initialization.json` (`continuation_mode_declaration`).
-- **Native loop.** The materializer still constructs `Operation::Train` without a declaration. Its `task.input.json` is frozen and compared byte for byte when a request is re-materialized, so declaring there needs a new request schema version. This is open.
+- **Native loop.** When this section was written, the materializer constructed `Operation::Train` without a declaration. Its `task.input.json` is frozen and compared byte for byte when a request is re-materialized, so declaring there needs a new request schema version. Resolved in "(d) Native-loop continuation declaration" below.
 - **Classification.** Classifying a new run's lineage mode is new capability: the pre-existing behavior was implicit-only. Declaration validation is tested directly.
 
 ### Fixtures
@@ -432,5 +432,43 @@ File `crates/jope-engine/tests/training_ancestry.rs` (feature `neural`, CPU). Th
 
 ### Still open
 - **Corpus format change** (T03 / G11): typed runtime fields and evaluator, task and fitted-subject binding. Not started, by instruction.
-- **Native-loop declaration** at a new request schema version.
+- **Native-loop declaration** at a new request schema version. Resolved in (d) below.
 - **Not executed.** The GPU launch paths (rank, controller spawn, smartcluster) are compile-checked only.
+
+### (d) Native-loop continuation declaration (`jope.smartcluster_input.v2`)
+
+**Reproduction.** `w6-pre-nlcont-20260926T110004Z`, before any source change; 1/1 passed, which records the defect.
+- A materialized training input had one version, `jope.smartcluster_input.v1`.
+- Adding `continuation_mode` changed the input's bytes under the same label, so every request frozen before it would conflict on re-materialization (`immutable` refuses different bytes at a frozen path).
+- The worker and the native graph accepted a declared input as v1.
+
+**Change**
+
+| Location | Change |
+|---|---|
+| `smartcluster_worker.rs` | `INPUT_SCHEMA_V1` and `INPUT_SCHEMA_V2`. `InputManifest::validate_version`: v1 never carries a declaration; v2 is a training input that always declares a lineage mode, never `exact_resume`; an unknown schema is refused. `InputManifest::declare_training(existing, mode)` freezes a new input as v2 with its declaration and re-materializes an input under the version it was first frozen with. A v1 input stays undeclared, byte for byte. Unknown or unreadable frozen versions are refused. `verify_task_inputs` uses `validate_version` in place of the v1-only schema check |
+| `native_graph.rs` | The admission input check uses `validate_version` |
+| `native_loop/materialize.rs` | A training request's mode is classified from its frozen replay policy (`classify_continuation(false, true, policy)`, optimizer carry, so `new_corpus_transition`) and declared through `declare_training`, which reads any input already frozen at `task.input.json`. Other roles are unchanged v1 |
+| `native_loop.rs` | Binding validation requires a v2 declaration to equal the mode the independently reconstructed replay policy classifies to; a v1 input keeps its implicit meaning |
+
+The trainer already validates a declaration against the classified request (`continuation::declared_lineage`), so a v2 input's mode is checked again at `rank_impl`.
+
+**Fixtures.** `crates/jope-engine/tests/native_loop_continuation.rs` (default features).
+
+| Acceptance item | Test |
+|---|---|
+| The undeclared form equals the exact bytes frozen before the change. Re-materializing a frozen v1 input returns those bytes and no declaration, and a frozen v1 input still verifies | `a_request_frozen_as_v1_re_materializes_byte_for_byte` |
+| A new request is frozen as v2 with `new_corpus_transition`. Re-materializing a v2 input reproduces its bytes, and the declaration is the only difference from the v1 form | `a_new_request_is_frozen_as_v2_with_its_declaration_and_stays_stable` |
+| Refused: v1 with a declaration, v2 without one, v2 declaring `exact_resume`, an unknown schema, v2 for a non-training operation. Each lineage mode is accepted under v2, and non-training v1 inputs are unchanged | `only_v2_declares_and_v2_always_declares_a_lineage_mode` |
+| Refused: unknown, unreadable or schema-less frozen inputs; declaring an already declared, v2 or non-training input; an `exact_resume` declaration | `declaring_refuses_anything_but_an_undeclared_training_input_and_a_known_version` |
+
+**Runs**
+
+| Evidence directory | Command | Result |
+|---|---|---|
+| `w6-pre-nlcont-20260926T110004Z` | reproduction, before any source change (HEAD 2f41dcec5) | 1/1, which records the defect |
+| `w6-post-nlcont-a-20260926T141334Z` | default features: `native_loop_continuation`, `request_integrity`, `bounded_run`, and `--lib` native_loop, native_graph, smartcluster_worker, task_contract | 82/82 |
+| `w6-post-nlcont-b-20260926T141432Z` | neural suite on HEAD abbdbcf0a: 16 integration tests and `--lib` training, neural, task_contract, controller, gpu_worker, proposals, ranked_proposals, smartcluster_worker, native_graph, native_loop, checkpoint_recovery, training_exposure | 202/202 |
+| `w6-post-nlcont-check-20260926T141606Z` | `cargo check --locked -p jope-parallel --all-targets` | exit 0 |
+
+**Open.** No native-loop materialization or worker execution ran; the fixtures exercise the contract functions the materializer, worker and graph call.

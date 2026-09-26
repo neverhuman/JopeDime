@@ -2189,6 +2189,13 @@
         "training"
       ]
     },
+    "target:jope-parallel/test/native_loop_continuation": {
+      "role": "regression",
+      "subsystems": [
+        "training",
+        "orchestration"
+      ]
+    },
     "target:jope-parallel/test/objective_fixtures": {
       "role": "regression",
       "subsystems": [

@@ -7328,6 +7328,21 @@
       "dispositions": [],
       "scope": "Verified resident corpus loading and optional continuation-mode declarations on gpu_worker/smartcluster/controller requests; neural module covers declaration validation and a representative write_json caller. CPU only."
     },
+    "target:jope-parallel/test/native_loop_continuation": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-engine/tests/native_loop_continuation.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "W6 follow-up: native-loop training inputs declare their continuation mode at jope.smartcluster_input.v2; inputs frozen as v1 re-materialize byte for byte undeclared; the worker and native graph refuse any other schema/declaration pairing; CPU contract fixtures, no worker executed."
+    },
     "target:jope-parallel/test/trainer_topology": {
       "discovery": {
         "kind": "target",
