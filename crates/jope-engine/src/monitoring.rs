@@ -117,7 +117,13 @@ pub fn evaluate(
     );
     let mut vs = nn::VarStore::new(device);
     let model = Policy::new(vs.root(), config)?;
-    vs.load(checkpoint.join("model.ot"))?;
+    // W2-T04 (G-10c): exactly the model bytes the checkpoint state binds.
+    crate::neural::load_bound_model(
+        &mut vs,
+        &checkpoint.join("model.ot"),
+        &state["model_sha256"],
+        "monitor checkpoint changed",
+    )?;
     let mut contexts = BTreeMap::<usize, Vec<f32>>::new();
     let mut sums = [0.0; 4];
     for batch in &ids {

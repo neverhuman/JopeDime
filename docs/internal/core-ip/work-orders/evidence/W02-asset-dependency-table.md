@@ -474,3 +474,63 @@ temporarily to `lib.rs`: a raw `&[f32]` passed to `PolicyModel::reward_runtime`,
 **Runs.**
 - Post `w2c-t03-post-20260926T202525Z`: jope-policy (`testing,context-producer`) 97/97, 19 doctests (the three new compile-fail cases in `context.rs` pass), jope-pipeline (`neural-search`) 119/119, and the full-default workspace check (`jope-cli/asm,jope-cli/qualified-training-context`) exit 0.
 - Pre-commit `w2c-t03-c-20260926T202805Z`: fence suites and `gp::fit_contract_tests` 82/82; workspace all-targets check, coverage (0 unassigned), verify-test-inventory, fmt and diff-check exit 0.
+
+## 11. Appended 2026-09-26: W2-T04 authenticated bytes at the remaining re-reads and cache keys (branch `rr2/integration-c`)
+
+Runs `w2c-t04-*`. Each defect was reproduced before its fix. Test-only instrumentation
+(`after_verification`) replaces a file between its check and its consumption, as in W1
+rounds 6 and 7. jope-pipeline gains the same `cfg(test)`-only hook in `execution.rs`.
+
+**Step 0.** Two behavior-preserving extractions:
+- `VerifiedRegressionContext::load`'s receipt and vector reads become
+  `search_context::{native_receipt, native_vector}`, with the same statements in the same order;
+- the training warm-start and resume loads become `neural::{load_bound_model,
+  AdamW::load_bound}`, with the same hash-by-path, then load-by-path.
+
+Reproduction `w2c-t04-pre-20260926T203226Z`: 5/5 FAIL.
+
+| Gap | Test | Pre-fix outcome |
+|---|---|---|
+| G-10e native context | `jope-pipeline search_context::tests::a_native_context_replaced_after_its_check_is_never_consumed` | A context vector replaced after `Artifact::verify` was **consumed**; so was a receipt with an added field. |
+| G-11e cached context cost | `jope-pipeline neural_search::tests::a_context_cost_cannot_claim_a_cache_nothing_issued` | A `ContextCost` with `cached: true` (which relaxes the qualified context's arm-charge check, and which no producer issues) **validated**. |
+| G-11c resident teaching view | `jope-parallel teaching_store::read_once_tests::a_resident_view_is_never_served_for_another_corpus_directory` | Another corpus directory with the same index bytes and a changed `groups.bin` was **served** from the resident cache. Its cold load refuses. |
+| G-10c warm-start/resume model | `jope-parallel neural::bound_load_tests::a_checkpoint_model_replaced_after_its_check_is_never_loaded` (neural, CPU) | The replacement `model.ot` was **loaded** after the digest check passed. |
+| G-10c warm-start/resume optimizer | `…::a_checkpoint_optimizer_replaced_after_its_check_is_never_loaded` (neural, CPU) | A consistent replacement pair (`optimizer.ot` plus the `optimizer.json` naming it) was **loaded**: step 9 instead of 3. |
+
+**Fixes.**
+- `Artifact::read_verified` (new, jope-pipeline): reads once, requires the pin of those bytes and
+  returns them, with `verify`'s wording. `native_receipt` and `native_vector` use it, and
+  `VerifiedRegressionContext.sha256` is the digest of the consumed bytes.
+- `ContextCost::validate` refuses `cached: true` ("a cached context cost has no issuer: the
+  context must be charged to its original arm"). Every producer writes `false`, so no retained
+  record changes meaning.
+- `teaching_store::load_resident_verified` keys the resident view by root, canonical corpus
+  directory and index digest.
+- `neural::load_bound_model` reads `model.ot` once (`manifest::read_bound`) and loads the
+  VarStore from those bytes (`VarStore::load_from_stream`).
+- `AdamW::load_bound` reads `optimizer.json` and `optimizer.ot` once each and builds the
+  moments from those bytes (`Tensor::load_multi_from_stream_with_device`). The metadata must
+  name the moments' digest. `AdamW::load` also reads once now.
+- Warm-start and resume (`training.rs`) use them with their refusal wording unchanged. Resume
+  also parses `config.json` from its bound bytes.
+- The same class elsewhere uses `load_bound_model`: `monitoring::evaluate`,
+  `proposals::rank_impl` and `ranked_proposals::load`.
+- G-11a/b: `RESIDENT_CONTEXT` and `RESIDENT_TENSORS` keys now include the device. This is
+  compile-checked only; CPU tests cannot place tensors on a second device.
+
+**Recorded, not changed.**
+- G-10g (corpus index): already closed. `training::rank_impl` reads `index.json` once and
+  passes the bytes to `load_resident_verified` (W6 follow-up); the leading `file_hash` is
+  redundant but harmless.
+- G-11d (jope-bench `inference_cuda` journal reuse): feature `inference-cuda` needs the CUDA
+  toolchain, and it is benchmark-only.
+- The recorded `parameter_sha256` is not re-checked after a warm-start load. Its equality on
+  real checkpoints was not verified here.
+
+**Controls.** Positive: every receiver consumes the honest pinned bytes. Negative: bytes other
+than the pin are refused with the receiver's wording, and the refused load leaves the target
+store unchanged.
+
+**Runs.**
+- Post `w2c-t04-post-20260926T203511Z`: jope-pipeline (`neural-search`) read-once, context-cost and search_context cases 6/6; the resident-view case 1/1; the neural CPU `bound_load_tests` 3/3; the neural integration suites (`checkpoint_commit`, `continuation_modes`, `frozen_inputs`, `request_integrity`) 24/24; the neural all-targets check exit 0.
+- Pre-commit `w2c-t04-c-20260926T203811Z`: fence suites, `gp::fit_contract_tests` and `teaching_store::` 99/99; workspace all-targets check, coverage (0 unassigned), verify-test-inventory, fmt and diff-check exit 0.

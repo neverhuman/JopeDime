@@ -111,7 +111,65 @@ impl Artifact {
             "artifact changed: {}",
             self.path.display()
         );
+        after_verification(&self.path);
         Ok(())
+    }
+    /// [`Artifact::verify`] for a receiver that consumes the artifact: read it
+    /// once, require exactly those bytes to be the pin and return them, so the
+    /// verified object is the consumed object (W2-T04 G-10e). The path is
+    /// never reopened; the refusal wording is `verify`'s.
+    pub fn read_verified(&self) -> Result<Vec<u8>> {
+        ensure!(
+            crate::experiment::sha256(&self.sha256),
+            "invalid artifact digest"
+        );
+        regular(&self.path)?;
+        let bytes = std::fs::read(&self.path)?;
+        ensure!(
+            crate::sha256_hex(&bytes) == self.sha256,
+            "artifact changed: {}",
+            self.path.display()
+        );
+        after_verification(&self.path);
+        Ok(bytes)
+    }
+}
+
+/// Test-only instrumentation point between a digest check and consumption of
+/// the checked object (W2-T04 route G-10e). Compiles to nothing outside this
+/// crate's own unit-test build; it grants and changes nothing.
+#[inline]
+pub(crate) fn after_verification(_path: &Path) {
+    #[cfg(test)]
+    verification_hook::fire(_path);
+}
+#[cfg(test)]
+pub(crate) mod verification_hook {
+    use std::{cell::RefCell, path::Path};
+    type Hook = Box<dyn FnMut(&Path)>;
+    thread_local!(static HOOK: RefCell<Option<Hook>> = RefCell::new(None));
+    /// Install `hook` for this thread until the returned guard drops.
+    pub(crate) fn install(hook: impl FnMut(&Path) + 'static) -> Guard {
+        HOOK.with(|h| *h.borrow_mut() = Some(Box::new(hook)));
+        Guard
+    }
+    pub(crate) struct Guard;
+    impl Drop for Guard {
+        fn drop(&mut self) {
+            HOOK.with(|h| *h.borrow_mut() = None);
+        }
+    }
+    pub(super) fn fire(path: &Path) {
+        let hook = HOOK.with(|h| h.borrow_mut().take());
+        if let Some(mut hook) = hook {
+            hook(path);
+            HOOK.with(|h| {
+                let mut slot = h.borrow_mut();
+                if slot.is_none() {
+                    *slot = Some(hook);
+                }
+            });
+        }
     }
 }
 

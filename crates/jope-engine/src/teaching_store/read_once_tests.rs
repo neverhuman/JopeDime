@@ -605,6 +605,36 @@ fn a_legacy_corpus_vocabulary_other_than_its_index_binding_is_refused() {
 }
 
 // ---------------------------------------------------------------------------
+// W2-T04 (G-11c): the resident teaching view is keyed by the corpus it was
+// loaded from. Another corpus directory with the same index bytes but a
+// changed payload is verified, never served from the cache.
+// ---------------------------------------------------------------------------
+
+#[test]
+fn a_resident_view_is_never_served_for_another_corpus_directory() {
+    let (s, corpus) = published("resident-a");
+    let root = s.f.root();
+    let bytes = fs::read(corpus.join("index.json")).unwrap();
+    // Positive control: a cold and a warm load of the corpus.
+    store::load_resident_verified(root, &corpus, &bytes).unwrap();
+    store::load_resident_verified(root, &corpus, &bytes).unwrap();
+    // Another directory with the same index bytes and a changed payload.
+    let other = root.join("resident-b");
+    fs::create_dir_all(&other).unwrap();
+    for name in ["index.json", "vocabulary.json", "provenance.json"] {
+        fs::copy(corpus.join(name), other.join(name)).unwrap();
+    }
+    fs::write(other.join("groups.bin"), b"changed payload").unwrap();
+    // Its cold load refuses.
+    assert!(store::load(root, &other).is_err());
+    let warm = store::load_resident_verified(root, &other, &bytes);
+    assert!(
+        warm.is_err(),
+        "a resident view of another corpus directory was served for a changed payload"
+    );
+}
+
+// ---------------------------------------------------------------------------
 // W1 round 8: a legacy (`parallel.teaching_corpus.v1`) corpus's teacher labels
 // are authenticated by a labels digest the verified index binds.
 // `provenance.json` is bound only by its own back-reference to the index, so

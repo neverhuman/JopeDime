@@ -1055,7 +1055,15 @@ pub fn load_resident_verified(
     corpus: &Path,
     index_bytes: &[u8],
 ) -> Result<std::rc::Rc<(Index, TeachingRecords)>> {
-    let key = format!("{}:{}", root.display(), hash(index_bytes));
+    // W2-T04 (G-11c): the view is of this corpus directory. Another directory
+    // with the same index bytes has its own payload files (vocabulary, groups,
+    // provenance, legacy records), which a cache hit would never verify.
+    let key = format!(
+        "{}:{}:{}",
+        root.display(),
+        corpus.canonicalize()?.display(),
+        hash(index_bytes)
+    );
     RESIDENT.with(|saved| {
         if let Some((identity, view)) = saved.borrow().as_ref() {
             if *identity == key {
