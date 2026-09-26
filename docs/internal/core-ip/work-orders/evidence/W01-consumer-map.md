@@ -239,3 +239,25 @@ Delegated read-only source reads (anchors unmarked above):
 - jope-encoders' data, cli and bundle modules
 - jope-bench `panel/*`
 - jope-learning's eligibility, state and hwm modules
+
+---
+
+## Appended 2026-09-26 — route status update from `rr/w1-inputs-2` (W1-T04/T06/T07)
+
+*Appended section.* It does not change the text above. The anchors above remain those of base
+`7216cad21`. Full record: [W01-label-release-counterfactuals-staging.md](W01-label-release-counterfactuals-staging.md).
+All statuses are fixture scope, local only, not CI-verified.
+
+| # | Route | New status | Commit / proof |
+|---|---|---|---|
+| R7 | `audit.json` persisted sealed test label value sets | **Enforced.** Sealed labels are never parsed; label statistics are withheld and declared in `sealed_test_access` | `98839ca01`; `label_release::audit_never_parses_or_publishes_sealed_test_labels` |
+| R13 | Qualification search accepted sealed `meta_test` | **Enforced.** Refused before any view load or fit claim | `98839ca01`; `gp::fit_contract_tests::qualification_search_of_a_sealed_meta_test_family_is_refused_before_any_view_or_fit` |
+| R14 | `score` test path and hash not bound to `Prepared` | **Enforced.** Grant-only scoring bound to `Prepared.original_test_sha256`; withheld result; single release; hash-chained ledger | `13dc48cc1`; `gp::fit_contract_tests::outer_scores_need_a_grant_read_only_the_granted_labels_and_release_once` |
+| R8 (scorer part) | Hash, then reopen by path in `score` | **Enforced for the scorer.** It parses exactly the hashed bytes (`Table::parse`). Other R8 sites remain open | `13dc48cc1` |
+| R17 (new) | The audit read `train.csv`/`test.csv`, and preparation read `meta.json`/`train.csv`, through a symlink that may leave the audited root | Reproduced; **enforced** (leaf symlinks refused) | `bb186aaf8`; `counterfactual_boundaries::symlinked_inputs_are_refused_at_their_receivers` |
+| R18 (new) | Duplicate-expanding join: repeated historical rows resolving to one backing row entered a membership twice | Reproduced; **enforced** in `check_cut_membership`. Reconstruction now gives equal rows distinct equal backing rows | `bb186aaf8`; `counterfactual_boundaries::a_duplicate_join_onto_one_backing_row_is_refused` |
+
+Still open from this map:
+- R1, R2, R4–R6, R9–R12, and the remaining R8 sites.
+- The fitted-view export worker loads its own view from the prepared path; it does not
+  receive a projected artifact.

@@ -298,3 +298,26 @@ Related receiver closure already in place:
 | `w1-release-verify-20260926T060255Z` | Committed release re-verified from custody at `5b7e591c1` |
 | `w1-final-focused-20260926T060300Z` | Final run at `5b7e591c1`: jope-parallel preparation_semantics, data_contracts, families, sealed_storage, binary_preparation (35 pass, 1 skipped as at baseline) |
 | `w1-final-datasets-20260926T060356Z` | Final run at `5b7e591c1`: jope-datasets and jope-models, 64/64 |
+
+---
+
+## Appended 2026-09-26 — receiving-path extensions from `rr/w1-inputs-2` (W1-T06)
+
+*Appended section.* The T03 record above is unchanged. The W1-T06 counterfactual harness
+(`crates/jope-engine/tests/counterfactual_boundaries.rs`) found three gaps in the receiving
+path. Each was reproduced before it was fixed (`w1b-t06-prefix-20260926T092507Z`), and all
+three are fixed in commit `bb186aaf8`.
+
+1. **Duplicate join onto one backing row.** Two rows of one cut membership that resolve to
+   one backing row were not refused. `check_cut_membership` now refuses them as a
+   "duplicate-expanding join", in both the receiver and the producer.
+2. **Genuine duplicate rows collapsed.** Equal historical rows were all mapped to the first
+   equal backing row. Reconstruction now maps them to distinct equal backing rows in
+   source order, so genuine duplicates in the source remain preparable.
+3. **Symlinked audited files.** Preparation followed a symlinked `meta.json` or `train.csv`.
+   It now refuses them. The audit likewise refuses a symlinked split and records the
+   refusal as an issue.
+
+**New behavior-change risk (fail-closed):** an existing pointer view whose membership repeats
+a backing pointer is refused at load and needs re-preparation under a new identity. The full
+record is [W01-label-release-counterfactuals-staging.md](W01-label-release-counterfactuals-staging.md).
