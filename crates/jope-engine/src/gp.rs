@@ -60,6 +60,7 @@ fn evaluator_command(executable: &Path) -> Command {
 mod fit_contract_tests;
 pub mod handoff;
 pub mod lineage;
+pub mod outer_release;
 pub mod paired;
 pub mod selection_replay;
 
@@ -366,9 +367,23 @@ pub struct SelectionReceipt {
     pub selected_on: String,
     pub frozen: bool,
 }
+/// Outer (sealed final-test) scoring (W1-T04). `receipt` must be a grant from
+/// the separate outer release authority named by `JOPE_OUTER_RELEASE_AUTHORITY`;
+/// the grant binds the authenticated fitted subject and the preparation's own
+/// sealed-test identity. `output` receives the scorer's receipt, never the
+/// metrics: they stay withheld until the authority releases them. A frozen
+/// selection receipt alone is still validated, then refused before the test
+/// path is opened, even for hashing.
 pub fn score(model: &Path, test: &Path, receipt: &Path, output: &Path) -> Result<()> {
-    // Validate selection before opening the final test path, including for hashes.
-    let r: SelectionReceipt = read_json(receipt)?;
+    let document: serde_json::Value = read_json(receipt)?;
+    if document["schema"] == outer_release::GRANT_SCHEMA {
+        let authority = std::env::var_os(outer_release::AUTHORITY_ENV)
+            .context("an outer release grant needs its release authority")?;
+        outer_release::Authority::open(Path::new(&authority))?
+            .score(receipt, model, test, output)?;
+        return Ok(());
+    }
+    let r: SelectionReceipt = serde_json::from_value(document)?;
     ensure!(
         r.schema == "parallel.selection.v1" && r.frozen && r.selected_on == "meta_validation",
         "a frozen meta-validation selection receipt is required"
@@ -384,42 +399,11 @@ pub fn score(model: &Path, test: &Path, receipt: &Path, output: &Path) -> Result
             && evidence["partition"] == "meta_validation",
         "selection evidence does not bind this predictor/meta-validation"
     );
-    ensure!(
-        file_hash(test)? == r.final_test_sha256,
-        "sealed test identity mismatch"
-    );
-    let p: Predictor = read_json(model)?;
-    let t = Table::read(test, &serde_json::Value::Null)?;
-    ensure!(
-        p.schema == "parallel.predictor.v1"
-            && p.task == "regression"
-            && t.width == p.feature_count + 1,
-        "predictor/test schema mismatch"
-    );
-    let x = t
-        .rows
-        .iter()
-        .map(|r| p.preprocessing.features(&r[..r.len() - 1]))
-        .collect::<Result<Vec<_>>>()?;
-    let y = t
-        .rows
-        .iter()
-        .map(|r| {
-            r.last()
-                .unwrap()
-                .parse::<f64>()
-                .context("invalid test target")
-        })
-        .collect::<Result<Vec<_>>>()?;
-    let predictions = p
-        .model
-        .predict(&x)
-        .iter()
-        .map(|v| v * p.preprocessing.target_scale + p.preprocessing.target_mean)
-        .collect::<Vec<_>>();
-    let mut result = metrics(&y, &predictions)?;
-    result["selection_sha256"] = json!(file_hash(receipt)?);
-    write_json(output, &result)
+    anyhow::bail!(
+        "a selection receipt does not release sealed labels: an outer score needs a grant from \
+         the separate outer release authority ({}); the test path was not opened",
+        outer_release::AUTHORITY_ENV
+    )
 }
 
 /// Isolated worker: the parent enforces wall time and kills/reaps the process.

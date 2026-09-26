@@ -32,10 +32,15 @@ pub fn missing(s: &str) -> bool {
 impl Table {
     pub fn read(path: &Path, meta: &Value) -> Result<Self> {
         let bytes = fs::read(path).with_context(|| format!("read {}", path.display()))?;
+        Self::parse(&bytes, meta)
+    }
+    /// Parse already-read bytes, so a caller that verified their digest parses
+    /// exactly those bytes and never reopens the path.
+    pub fn parse(bytes: &[u8], meta: &Value) -> Result<Self> {
         let mut records = csv::ReaderBuilder::new()
             .has_headers(false)
             .flexible(false)
-            .from_reader(bytes.as_slice());
+            .from_reader(bytes);
         let mut rows = records
             .records()
             .map(|r| r.map(|r| r.iter().map(|s| s.trim().to_string()).collect::<Vec<_>>()))

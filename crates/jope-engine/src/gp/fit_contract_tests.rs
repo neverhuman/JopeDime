@@ -175,6 +175,13 @@ fn run_cli(argv: &[String]) -> Result<()> {
                 .transpose()?
                 .unwrap_or(SEED),
         ),
+        // The shipped `score` subcommand's library call (outer scoring).
+        "score" => score(
+            &path("model")?,
+            &path("test")?,
+            &path("receipt")?,
+            &path("output")?,
+        ),
         // The cycle pipeline's predictor handoff for one completed search.
         "export-selected" => {
             let root = path("root")?;
@@ -2724,5 +2731,315 @@ fn qualification_search_of_a_sealed_meta_test_family_is_refused_before_any_view_
     let search: Value = read_json(&admitted.join("search.json")).unwrap();
     assert_eq!(search["final_tests_opened"], false);
     assert_eq!(authority.entries(), (1, 1));
+    authority.stop_service();
+}
+
+/// Raw-unit sealed final-test rows for the view fixture (`x`, `target`).
+const SEALED_TEST: &str = "12,136\n13,139\n14,142.5\n";
+
+/// A completed search of the view fixture and its exported selected predictor.
+fn exported_subject(
+    authority: &Fixture,
+    root: &Path,
+    prepared: &Path,
+) -> (PathBuf, PathBuf, PathBuf) {
+    let (output, seeds) = handoff_search(authority, root, prepared);
+    let predictor = root.join("selected.json");
+    success(
+        export_selected(authority, root, prepared, &output, &seeds, &predictor)
+            .output()
+            .unwrap(),
+    );
+    (output, seeds, predictor)
+}
+
+/// W1-T04, consumer-map route R14: `score` hashed whatever test file the
+/// caller named against the caller's own selection receipt, so any label file
+/// could be scored — it was never bound to the preparation's sealed-test
+/// identity — and the metrics were published straight to the caller.
+#[test]
+fn a_selection_receipt_alone_neither_reads_caller_chosen_labels_nor_publishes_a_score() {
+    let (temp, prepared) = view_fixture();
+    let root = temp.path().canonicalize().unwrap();
+    let prepared = root.join(prepared.strip_prefix(temp.path()).unwrap());
+    let mut authority = Fixture::activated(&root, vec![cut_training_hash(&prepared)]);
+    authority.start();
+    let (_, _, predictor) = exported_subject(&authority, &root, &prepared);
+    authority.stop_service();
+    // Caller-chosen labels: not the preparation's sealed identity ("1"*64).
+    let chosen = root.join("caller-chosen.csv");
+    fs::write(&chosen, SEALED_TEST).unwrap();
+    let p: Prepared = read_json(&prepared.join("prepared.json")).unwrap();
+    assert_ne!(file_hash(&chosen).unwrap(), p.original_test_sha256);
+    let evidence = root.join("selection-evidence.json");
+    write_json(
+        &evidence,
+        &json!({"predictor_sha256":file_hash(&predictor).unwrap(),"partition":"meta_validation"}),
+    )
+    .unwrap();
+    let receipt = root.join("selection.json");
+    write_json(
+        &receipt,
+        &SelectionReceipt {
+            schema: "parallel.selection.v1".into(),
+            predictor_sha256: file_hash(&predictor).unwrap(),
+            final_test_sha256: file_hash(&chosen).unwrap(),
+            selection_evidence_path: evidence.clone(),
+            selection_evidence_sha256: file_hash(&evidence).unwrap(),
+            selected_on: "meta_validation".into(),
+            frozen: true,
+        },
+    )
+    .unwrap();
+    let output = root.join("outer-score.json");
+    let scored = score(&predictor, &chosen, &receipt, &output);
+    assert!(
+        scored.is_err(),
+        "scored caller-chosen labels without a release grant: {}",
+        fs::read_to_string(&output).unwrap_or_default()
+    );
+    let error = format!("{:#}", scored.unwrap_err());
+    assert!(error.contains("outer release"), "{error}");
+    assert!(!output.exists(), "a refused score was published");
+}
+
+/// Copy a retained receipt to `$JOPE_W1_RECEIPTS/<group>/` when set.
+fn retain(group: &str, name: &str, path: &Path) {
+    if let Some(dir) = std::env::var_os("JOPE_W1_RECEIPTS") {
+        let dir = Path::new(&dir).join(group);
+        fs::create_dir_all(&dir).unwrap();
+        fs::copy(path, dir.join(name)).unwrap();
+    }
+}
+
+fn refusal<T: std::fmt::Debug>(result: Result<T>) -> String {
+    format!(
+        "{:#}",
+        result.expect_err("the release authority accepted a request it must refuse")
+    )
+}
+
+/// W1-T04 acceptance: sealed labels reach only a granted outer scorer; the
+/// score stays withheld until the separate authority releases it, once.
+#[test]
+fn outer_scores_need_a_grant_read_only_the_granted_labels_and_release_once() {
+    use outer_release::{Authority as Release, GrantRequest};
+    let (temp, prepared) = view_fixture();
+    let root = temp.path().canonicalize().unwrap();
+    let prepared = root.join(prepared.strip_prefix(temp.path()).unwrap());
+    // The preparation binds its sealed-test identity; the file itself does
+    // not exist while search, selection and export run (denied upstream).
+    let mut p: Value = read_json(&prepared.join("prepared.json")).unwrap();
+    p["original_test_sha256"] = json!(hash(SEALED_TEST.as_bytes()));
+    write_json(&prepared.join("prepared.json"), &p).unwrap();
+    let sealed = root.join("data/originals/sealed-test.csv");
+    let mut authority = Fixture::activated(&root, vec![cut_training_hash(&prepared)]);
+    authority.start();
+    let (output, seeds, predictor) = exported_subject(&authority, &root, &prepared);
+    assert!(!sealed.exists());
+    let fits = authority.entries();
+    fs::write(&sealed, SEALED_TEST).unwrap();
+    let outer_dir = root.join("outer-authority");
+    let outer = Release::initialize(&outer_dir).unwrap();
+    let search = handoff::Inputs {
+        root: &root,
+        output: &output,
+        seeds: Some(&seeds),
+        vocabulary: None,
+    };
+    // Grants: a symlinked label path and an unexported subject are refused.
+    let link = root.join("data/originals/sealed-link.csv");
+    std::os::unix::fs::symlink(&sealed, &link).unwrap();
+    let error = refusal(outer.grant(&GrantRequest {
+        search,
+        predictor: &predictor,
+        test: &link,
+    }));
+    assert!(error.contains("symlink"), "{error}");
+    let orphan = root.join("unexported.json");
+    fs::copy(&predictor, &orphan).unwrap();
+    let error = refusal(outer.grant(&GrantRequest {
+        search,
+        predictor: &orphan,
+        test: &sealed,
+    }));
+    assert!(error.contains("handoff"), "{error}");
+    let grant = outer
+        .grant(&GrantRequest {
+            search,
+            predictor: &predictor,
+            test: &sealed,
+        })
+        .unwrap();
+    let granted: Value = read_json(&grant).unwrap();
+    assert_eq!(granted["scoring_labels"]["role"], "sealed_final");
+    assert_eq!(
+        granted["scoring_labels"]["path"],
+        "data/originals/sealed-test.csv"
+    );
+    assert_eq!(
+        granted["scoring_labels"]["sha256"],
+        hash(SEALED_TEST.as_bytes())
+    );
+    assert_eq!(
+        granted["subject"]["predictor"]["sha256"],
+        file_hash(&predictor).unwrap()
+    );
+    let error = refusal(outer.grant(&GrantRequest {
+        search,
+        predictor: &predictor,
+        test: &sealed,
+    }));
+    assert!(error.contains("already granted"), "{error}");
+
+    // Refused label reads, each before the first label byte is read.
+    let receipts = root.join("outer-receipts");
+    let mut forged = granted.clone();
+    forged["scoring_labels"]["path"] = json!("data/originals/raw.csv");
+    let forged_path = root.join("forged-grant.json");
+    write_json(&forged_path, &forged).unwrap();
+    let refused_forged = receipts.join("refused-forged-grant.json");
+    let error = refusal(outer.score(&forged_path, &predictor, &sealed, &refused_forged));
+    assert!(error.contains("not recorded"), "{error}");
+    let other_model = root.join("other-model.json");
+    let reencoded: Value = read_json(&predictor).unwrap();
+    fs::write(&other_model, serde_json::to_vec(&reencoded).unwrap()).unwrap();
+    let refused_model = receipts.join("refused-other-model.json");
+    let error = refusal(outer.score(&grant, &other_model, &sealed, &refused_model));
+    assert!(error.contains("not the granted fitted subject"), "{error}");
+    let copy = root.join("data/originals/sealed-copy.csv");
+    fs::write(&copy, SEALED_TEST).unwrap();
+    let refused_copy = receipts.join("refused-other-label-file.json");
+    let error = refusal(outer.score(&grant, &predictor, &copy, &refused_copy));
+    assert!(error.contains("not the granted one"), "{error}");
+    for path in [&refused_forged, &refused_model, &refused_copy] {
+        let receipt: Value = read_json(path).unwrap();
+        assert_eq!(receipt["status"], "refused", "{receipt}");
+        assert_eq!(receipt["labels_opened"], false, "{receipt}");
+    }
+
+    // The valid score, through the shipped `score` entry: withheld.
+    let scored_receipt = receipts.join("scored-withheld.json");
+    success(
+        authority
+            .command()
+            .args(["score", "--model"])
+            .arg(&predictor)
+            .arg("--test")
+            .arg(&sealed)
+            .arg("--receipt")
+            .arg(&grant)
+            .arg("--output")
+            .arg(&scored_receipt)
+            .env(outer_release::AUTHORITY_ENV, &outer_dir)
+            .output()
+            .unwrap(),
+    );
+    let scored: Value = read_json(&scored_receipt).unwrap();
+    assert_eq!(scored["status"], "scored_withheld");
+    assert_eq!(scored["released"], false);
+    assert!(!fs::read_to_string(&scored_receipt)
+        .unwrap()
+        .contains("rmse"));
+    // A retry cannot obtain a second look.
+    let refused_retry = receipts.join("refused-retry.json");
+    let error = refusal(outer.score(&grant, &predictor, &sealed, &refused_retry));
+    assert!(error.contains("consumed"), "{error}");
+
+    // Release, once; the released metrics are the granted labels' metrics.
+    let grant_id = granted["grant_id"].as_str().unwrap();
+    let visible = root.join("released-outer-score.json");
+    outer.release(grant_id, &visible).unwrap();
+    let released: Value = read_json(&visible).unwrap();
+    let fitted: Predictor = read_json(&predictor).unwrap();
+    let rows: Vec<(&str, f64)> = SEALED_TEST
+        .lines()
+        .map(|line| {
+            let (x, y) = line.split_once(',').unwrap();
+            (x, y.parse().unwrap())
+        })
+        .collect();
+    let x: Vec<Vec<f64>> = rows
+        .iter()
+        .map(|(x, _)| fitted.preprocessing.features(&[x.to_string()]).unwrap())
+        .collect();
+    let predicted = fitted.model.predict(&x);
+    let squared = rows
+        .iter()
+        .zip(&predicted)
+        .map(|((_, y), p)| {
+            (y - (p * fitted.preprocessing.target_scale + fitted.preprocessing.target_mean)).powi(2)
+        })
+        .sum::<f64>();
+    let rmse = (squared / rows.len() as f64).sqrt();
+    let reported = released["metrics"]["rmse"].as_f64().unwrap();
+    assert!(
+        (reported - rmse).abs() <= 1e-12 * rmse.abs().max(1.0),
+        "released RMSE {reported} is not the granted labels' RMSE {rmse}"
+    );
+    assert_eq!(released["scoring_labels"]["rows"], 3);
+    assert_eq!(released["per_row_values_included"], false);
+    assert_eq!(
+        released["preparation"]["clean_status"], p["clean_status"],
+        "a released score must carry its preparation's evaluation status"
+    );
+    let again = root.join("released-again.json");
+    let error = refusal(outer.release(grant_id, &again));
+    assert!(error.contains("already released"), "{error}");
+    assert!(!again.exists());
+
+    // The append-only history records every decision; only the one granted
+    // attempt ever opened sealed labels. No fit was started for scoring.
+    let events = outer.events().unwrap();
+    let kinds: Vec<&str> = events
+        .iter()
+        .map(|event| event["event"].as_str().unwrap())
+        .collect();
+    assert_eq!(
+        kinds,
+        [
+            "grant_refused",
+            "grant_refused",
+            "granted",
+            "grant_refused",
+            "score_refused",
+            "score_refused",
+            "score_refused",
+            "score_started",
+            "scored",
+            "score_refused",
+            "released",
+            "release_refused"
+        ]
+    );
+    assert!(events
+        .iter()
+        .filter(|event| event["event"] == "score_refused")
+        .all(|event| event["labels_opened"] == false));
+    assert_eq!(authority.entries(), fits);
+    let ledger = outer_dir.join("ledger.jsonl");
+    for (name, path) in [
+        ("ledger.jsonl", &ledger),
+        ("grant.json", &grant),
+        ("scored-withheld-receipt.json", &scored_receipt),
+        ("released-outer-score.json", &visible),
+        ("refused-label-read-forged-grant.json", &refused_forged),
+        ("refused-label-read-other-file.json", &refused_copy),
+        ("refused-retry.json", &refused_retry),
+    ] {
+        retain("outer-release", name, path);
+    }
+    // Removing a recorded event breaks the chain: the authority refuses to open.
+    let original = fs::read(&ledger).unwrap();
+    let kept: Vec<u8> = original
+        .split_inclusive(|b| *b == b'\n')
+        .enumerate()
+        .filter(|(i, _)| *i != 10)
+        .flat_map(|(_, line)| line.iter().copied())
+        .collect();
+    fs::write(&ledger, kept).unwrap();
+    assert!(refusal(Release::open(&outer_dir)).contains("chain"));
+    fs::write(&ledger, original).unwrap();
+    Release::open(&outer_dir).unwrap();
     authority.stop_service();
 }
