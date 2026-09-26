@@ -372,3 +372,165 @@ fn a_search_receipt_is_validated_from_the_bytes_its_ledger_commits() {
         "the committed valid receipt was not the one the admission validated"
     );
 }
+
+/// A published strict corpus and its directory.
+fn published(label: &str) -> (Strict, std::path::PathBuf) {
+    let s = strict();
+    publish(&s, label);
+    let corpus = s.f.root().join(label);
+    (s, corpus)
+}
+
+/// The first shard of a published corpus, its `shard.json` path, the bound
+/// bytes and a well-formed manifest that disagrees with the binding.
+fn first_shard(s: &Strict, corpus: &Path) -> (store::Shard, std::path::PathBuf, Vec<u8>, Vec<u8>) {
+    let m: store::Manifest = read_json(&corpus.join("index.json")).unwrap();
+    let shard = m.shards[0].clone();
+    let path = resolve(s.f.root(), &shard.path).unwrap().join("shard.json");
+    let good = fs::read(&path).unwrap();
+    let mut bad: Value = serde_json::from_slice(&good).unwrap();
+    bad["max_length"] = json!(shard.max_length + 1);
+    (shard, path, good, serde_json::to_vec(&bad).unwrap())
+}
+
+/// Route R8 at `teaching_store::verify_shard_metadata` (:100-106 before the
+/// fix): the shard binding is checked on exactly the verified `shard.json`.
+#[test]
+fn an_honest_shard_manifest_replaced_after_its_check_is_still_accepted() {
+    let (s, corpus) = published("shard-honest");
+    let (shard, path, _, bad) = first_shard(&s, &corpus);
+    // Positive control.
+    super::verify_shard_metadata(s.f.root(), &shard).unwrap();
+    let _hook = replace_on_verification(&path, bad);
+    let checked = super::verify_shard_metadata(s.f.root(), &shard)
+        .map(|_| ())
+        .map_err(|e| format!("{e:#}"));
+    assert_eq!(
+        checked,
+        Ok(()),
+        "the binding was checked on a shard manifest other than the verified one"
+    );
+}
+
+/// The same receiver, other direction: a bound `shard.json` that disagrees
+/// with its binding is refused, even if a matching one replaces it after the
+/// digest check.
+#[test]
+fn a_shard_manifest_disagreeing_with_its_binding_is_refused_even_if_replaced() {
+    let (s, corpus) = published("shard-forged");
+    let (shard, path, good, bad) = first_shard(&s, &corpus);
+    fs::write(&path, &bad).unwrap();
+    let mut forged = shard.clone();
+    forged.sha256 = hash(&bad);
+    // Negative control: refused without a replacement.
+    let refused = failure(super::verify_shard_metadata(s.f.root(), &forged));
+    assert!(refused.contains("shard binding changed"), "{refused}");
+    let _hook = replace_on_verification(&path, good);
+    let refused = failure(super::verify_shard_metadata(s.f.root(), &forged));
+    assert!(
+        refused.contains("shard binding changed"),
+        "a shard manifest that disagrees with its binding was accepted: {refused}"
+    );
+}
+
+/// A published corpus, the caller's verified index of it, the bytes of the
+/// index its provenance names, and an internally consistent alternative
+/// index whose first shard's labels name another program.
+struct LabelCase {
+    s: Strict,
+    corpus: std::path::PathBuf,
+    index: crate::corpus::Index,
+    bound: Vec<u8>,
+    forged: Vec<u8>,
+}
+
+fn label_case(label: &str) -> LabelCase {
+    let (s, corpus) = published(label);
+    let root = s.f.root();
+    let index = store::read_index(root, &corpus).unwrap();
+    let bound = fs::read(corpus.join("index.json")).unwrap();
+    let mut m: Value = serde_json::from_slice(&bound).unwrap();
+    let shard = resolve(root, Path::new(m["shards"][0]["path"].as_str().unwrap())).unwrap();
+    let labels = fs::read_to_string(shard.join("labels.jsonl")).unwrap();
+    let forged_labels = labels
+        .lines()
+        .map(|line| {
+            let mut row: Value = serde_json::from_str(line).unwrap();
+            row["program"] = json!("(pipe X (forged) (ridge))");
+            format!("{}\n", serde_json::to_string(&row).unwrap())
+        })
+        .collect::<String>();
+    fs::create_dir_all(root.join("forged-shard")).unwrap();
+    fs::write(root.join("forged-shard/labels.jsonl"), &forged_labels).unwrap();
+    m["shards"][0]["path"] = json!("forged-shard");
+    m["shards"][0]["labels_sha256"] = json!(hash(forged_labels.as_bytes()));
+    let forged = serde_json::to_vec_pretty(&m).unwrap();
+    LabelCase {
+        s,
+        corpus,
+        index,
+        bound,
+        forged,
+    }
+}
+
+impl LabelCase {
+    fn programs(&self) -> Result<Vec<String>, String> {
+        store::teacher_programs(self.s.f.root(), &self.corpus, &self.index, 10)
+            .map(|p| p.into_values().flatten().collect())
+            .map_err(|e| format!("{e:#}"))
+    }
+}
+
+fn forged(programs: &[String]) -> bool {
+    programs.iter().any(|p| p.contains("forged"))
+}
+
+/// Route R8 at `teaching_store::teacher_programs` (:1243-1248 before the
+/// fix): the index whose labels are read is the index whose digest the
+/// provenance names, read once.
+#[test]
+fn teacher_labels_come_from_the_named_index_even_if_it_is_replaced_after_its_read() {
+    let c = label_case("labels-honest");
+    // Positive control.
+    let programs = c.programs().unwrap();
+    assert!(!programs.is_empty() && !forged(&programs));
+    let _hook = replace_on_verification(&c.corpus.join("index.json"), c.forged.clone());
+    let raced = c.programs();
+    assert!(
+        matches!(&raced, Ok(p) if !p.is_empty() && !forged(p)),
+        "the labels were read from an index other than the one read and checked: {raced:?}"
+    );
+}
+
+/// The same receiver, other direction: an index the provenance does not name
+/// is refused, even if the named index replaces it after its read.
+#[test]
+fn teacher_labels_of_an_unnamed_index_are_refused_even_if_it_is_replaced_after_its_read() {
+    let c = label_case("labels-forged");
+    fs::write(c.corpus.join("index.json"), &c.forged).unwrap();
+    // Negative control: refused without a replacement.
+    let refused = c.programs().unwrap_err();
+    assert!(refused.contains("label index changed"), "{refused}");
+    let _hook = replace_on_verification(&c.corpus.join("index.json"), c.bound.clone());
+    let raced = c.programs();
+    assert!(
+        matches!(&raced, Err(e) if e.contains("label index changed")),
+        "teacher labels of an index the provenance does not name were returned: {raced:?}"
+    );
+}
+
+/// The same receiver, bound to its caller (`load_resident_verified`,
+/// `read_index`): the labels read are those of the index the caller verified.
+#[test]
+fn teacher_labels_are_those_of_the_callers_verified_index() {
+    let mut c = label_case("labels-caller");
+    // Positive control.
+    assert!(!forged(&c.programs().unwrap()));
+    c.index.records_sha256 = "0".repeat(64);
+    let refused = c.programs();
+    assert!(
+        matches!(&refused, Err(e) if e.contains("label index changed")),
+        "labels were read for an index other than the caller's verified index: {refused:?}"
+    );
+}

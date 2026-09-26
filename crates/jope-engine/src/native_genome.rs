@@ -1,7 +1,7 @@
 //! Explicit per-genome evaluation and budgeted continuation. No standalone execution grant.
 use crate::{
     corpus::ContextRow,
-    manifest::{file_hash, hash, read_json, read_verified, resolve},
+    manifest::{file_hash, hash, read_verified, resolve},
     native_graph::Artifact,
 };
 use anyhow::{ensure, Context, Result};
@@ -432,6 +432,12 @@ pub(crate) fn required_inputs(
     ];
     refs.extend(task.direct_parent.iter().cloned());
     refs.extend(task.preparation_overlay.iter().cloned());
+    let mut out = artifact_closure(root, refs)?;
+    prepared_closure(root, &c.context, &mut out)?;
+    Ok(out)
+}
+/// Every transitive immutable JSON artifact reference reachable from `refs`.
+fn artifact_closure(root: &Path, mut refs: Vec<Artifact>) -> Result<BTreeMap<PathBuf, String>> {
     let mut out = BTreeMap::new();
     fn nested(v: &Value, refs: &mut Vec<Artifact>) {
         if let Some(o) = v.as_object() {
@@ -482,15 +488,40 @@ pub(crate) fn required_inputs(
             continue;
         }
         let path = resolve(root, &a.path)?;
-        ensure!(file_hash(&path)? == a.sha256, "native genome input changed");
-        if fs::metadata(&path)?.len() <= 16 * 1024 * 1024 {
-            if let Ok(value) = serde_json::from_slice::<Value>(&fs::read(&path)?) {
-                nested(&value, &mut refs);
+        // Route R8: nested references are taken from exactly the verified
+        // bytes. Inputs above the parse bound are hashed and never parsed.
+        match read_parse_bounded(&path, 16 * 1024 * 1024)? {
+            Some(bytes) => {
+                ensure!(hash(&bytes) == a.sha256, "native genome input changed");
+                crate::manifest::after_verification(&path);
+                if let Ok(value) = serde_json::from_slice::<Value>(&bytes) {
+                    nested(&value, &mut refs);
+                }
             }
+            None => ensure!(file_hash(&path)? == a.sha256, "native genome input changed"),
         }
         out.insert(a.path, a.sha256);
     }
-    let dir = resolve(root, &c.context.prepared)?;
+    Ok(out)
+}
+/// The whole file through one handle when it is within `limit` bytes; `None`
+/// when it is larger (it is then hashed by the caller and never parsed).
+fn read_parse_bounded(path: &Path, limit: u64) -> Result<Option<Vec<u8>>> {
+    let file = fs::File::open(path).with_context(|| format!("open {}", path.display()))?;
+    if file.metadata()?.len() > limit {
+        return Ok(None);
+    }
+    let mut bytes = Vec::new();
+    file.take(limit + 1).read_to_end(&mut bytes)?;
+    Ok((bytes.len() as u64 <= limit).then_some(bytes))
+}
+/// The prepared directory's actual bytes and its original observation source.
+fn prepared_closure(
+    root: &Path,
+    context: &ContextRow,
+    out: &mut BTreeMap<PathBuf, String>,
+) -> Result<()> {
+    let dir = resolve(root, &context.prepared)?;
     for e in walkdir::WalkDir::new(&dir).follow_links(false) {
         let e = e?;
         ensure!(!e.file_type().is_symlink(), "prepared symlink");
@@ -501,7 +532,15 @@ pub(crate) fn required_inputs(
             );
         }
     }
-    let p: crate::prepare::Prepared = read_json(&dir.join("prepared.json"))?;
+    // Route R8: the closure records the preparation the candidate bound, and
+    // its original observation source is read from exactly those bytes.
+    let prepared = dir.join("prepared.json");
+    let bytes = read_verified(&prepared, &context.prepared_sha256, "native genome input")?;
+    ensure!(
+        out.get(prepared.strip_prefix(root)?) == Some(&context.prepared_sha256),
+        "native genome input changed"
+    );
+    let p: crate::prepare::Prepared = serde_json::from_slice(&bytes)?;
     if let Some(s) = p.storage {
         let path = if s.source.is_absolute() {
             s.source.strip_prefix(root)?.to_owned()
@@ -514,7 +553,7 @@ pub(crate) fn required_inputs(
         );
         out.insert(path, s.source_sha256);
     }
-    Ok(out)
+    Ok(())
 }
 pub(crate) fn execute(
     root: &Path,
@@ -851,6 +890,94 @@ mod tests {
         assert!(
             !stopped.contains(BOUNDARY),
             "the boundary was decided on a preparation other than the verified one: {stopped}"
+        );
+    }
+    fn referencing(root: &Path, target: &str) -> Vec<u8> {
+        let digest = hash(&fs::read(root.join(target)).unwrap());
+        serde_json::to_vec(&json!({"input":{"path":target,"sha256":digest}})).unwrap()
+    }
+    /// W1 route R8 (required_inputs :484-490 before the fix): the input
+    /// closure follows the nested references of exactly the verified bytes.
+    #[test]
+    fn the_input_closure_follows_only_the_verified_bytes() {
+        let tmp = tempfile::tempdir().unwrap();
+        let root = tmp.path().canonicalize().unwrap();
+        fs::write(root.join("x.txt"), b"bound dependency").unwrap();
+        fs::write(root.join("y.txt"), b"other dependency").unwrap();
+        let bound = referencing(&root, "x.txt");
+        let other = referencing(&root, "y.txt");
+        fs::write(root.join("a.json"), &bound).unwrap();
+        let a = Artifact {
+            path: "a.json".into(),
+            sha256: hash(&bound),
+        };
+        let follows = |c: &BTreeMap<PathBuf, String>| {
+            (
+                c.contains_key(Path::new("x.txt")),
+                c.contains_key(Path::new("y.txt")),
+            )
+        };
+        // Positive control.
+        let closure = artifact_closure(&root, vec![a.clone()]).unwrap();
+        assert_eq!(follows(&closure), (true, false));
+        // Negative control: other bytes than the bound ones are refused.
+        fs::write(root.join("a.json"), &other).unwrap();
+        let refused = format!(
+            "{:#}",
+            artifact_closure(&root, vec![a.clone()]).unwrap_err()
+        );
+        assert!(refused.contains("native genome input changed"), "{refused}");
+        fs::write(root.join("a.json"), &bound).unwrap();
+        // The input is replaced right after its digest check.
+        let _hook = replace_on_verification(&root.join("a.json"), other);
+        let raced = artifact_closure(&root, vec![a]).unwrap();
+        assert_eq!(
+            follows(&raced),
+            (true, false),
+            "the closure followed references of bytes other than the verified ones: {raced:?}"
+        );
+    }
+    /// W1 route R8 (required_inputs :493-516 before the fix): the closure
+    /// records the preparation the candidate bound, and its original
+    /// observation source is read from exactly those bytes.
+    #[test]
+    fn the_prepared_closure_is_the_preparation_the_candidate_bound() {
+        let tmp = tempfile::tempdir().unwrap();
+        let root = tmp.path().canonicalize().unwrap();
+        fs::create_dir_all(root.join("p")).unwrap();
+        fs::write(root.join("s1.csv"), b"x,y\n1,2\n").unwrap();
+        fs::write(root.join("s2.csv"), b"x,y\n3,4\n").unwrap();
+        let with_source = |source: &str| {
+            let mut v: Value = serde_json::from_slice(&preparation(true)).unwrap();
+            v["storage"] = json!({"source":source,
+                "source_sha256":hash(&fs::read(root.join(source)).unwrap()),
+                "feature_columns":["x"],"target_column":"y","original_training_row_map":[0]});
+            serde_json::to_vec(&v).unwrap()
+        };
+        let bound = with_source("s1.csv");
+        let other = with_source("s2.csv");
+        let prepared = root.join("p/prepared.json");
+        fs::write(&prepared, &bound).unwrap();
+        let context: ContextRow = serde_json::from_value(json!({"dataset":"d","family":"f",
+            "cut":0,"partition":"meta_train","path":"x","sha256":"a".repeat(64),"prepared":"p",
+            "prepared_sha256":hash(&bound)}))
+        .unwrap();
+        let closure = || {
+            let mut out = BTreeMap::new();
+            prepared_closure(&root, &context, &mut out).map(|()| out)
+        };
+        // Positive control.
+        let out = closure().unwrap();
+        assert_eq!(out[Path::new("p/prepared.json")], hash(&bound));
+        assert!(out.contains_key(Path::new("s1.csv")) && !out.contains_key(Path::new("s2.csv")));
+        // The candidate's check (`GenomeTask::candidate`) passes, and the
+        // preparation is replaced right after it.
+        let _hook = replace_on_verification(&prepared, other);
+        read_verified(&prepared, &context.prepared_sha256, "candidate preparation").unwrap();
+        let raced = closure().map_err(|e| format!("{e:#}"));
+        assert!(
+            matches!(&raced, Err(e) if e.contains("native genome input changed")),
+            "the closure recorded a preparation other than the one the candidate bound: {raced:?}"
         );
     }
     #[test]

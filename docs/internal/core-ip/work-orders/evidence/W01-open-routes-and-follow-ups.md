@@ -448,7 +448,8 @@ Each test has a positive and a negative control. The store fixture reuses
 - The pinned `eval_registry` sites (`authority.rs`, `witness.rs`, `service.rs`) and
   `native_scq*`.
 - Further hash-then-read sites found while closing these, not part of this assignment,
-  each needing its own reproduction:
+  each needing its own reproduction. All are addressed in round 7 (below); the
+  `provenance.json` entry turned out not to be an R8 site:
   - `native_genome::required_inputs` `:479-481`: an input is hashed, then re-read to
     discover nested references.
   - `native_genome::required_inputs` `:498`: the storage source comes from an unverified
@@ -460,3 +461,81 @@ Each test has a positive and a negative control. The store fixture reuses
 - The packer's `semantic_dependencies_sha256` covers `manifest.rs`, `prepare.rs`,
   `label_admission.rs` and `teaching_store.rs`. Any changed implementation gets a new store
   lineage, as designed.
+
+## Round 7 — the remaining R8 sites (branch `rr/w1-inputs-7`, base `fe4cdce08`)
+
+Round 6 (`fb4b46ee2`) was integrated as `fe4cdce08`. This round closes the further sites
+listed above.
+
+**`load_resident_verified` checked first.** `load_impl`, `load` and
+`load_resident_verified` already read `index.json` once (W6 follow-up `b5052f8d6`), and
+the index they return is parsed from the hashed bytes. They are unaffected.
+`teacher_programs` is a separate receiver. It re-read `index.json` by path, and used the
+caller's verified `Index` only to select records.
+
+**Step 0: a behavior-preserving extraction.** In `native_genome::required_inputs`, the
+reference loop and the prepared-directory walk moved into `artifact_closure` and
+`prepared_closure`, with the same statements in the same order. Each is then testable
+without a full native-graph fixture.
+
+**Reproduction.** `w1b-r7-prefix-20260926T113012Z`: 7/7 FAIL. Test-only instrumentation
+(`manifest::after_verification`) was placed after each pre-fix digest check. For
+`teacher_programs` it sat between the parse read and the digest read.
+
+| Test | Pre-fix outcome |
+|---|---|
+| `native_genome::tests::the_input_closure_follows_only_the_verified_bytes` | The closure followed the replacement's reference (`y.txt`) and lost the bound one (`x.txt`). |
+| `native_genome::tests::the_prepared_closure_is_the_preparation_the_candidate_bound` | After the candidate's check passed, the closure recorded the replacement `prepared.json` digest and its storage source (`s2.csv`). |
+| `teaching_store::read_once_tests::an_honest_shard_manifest_replaced_after_its_check_is_still_accepted` | Refused, "shard binding changed". |
+| `…::a_shard_manifest_disagreeing_with_its_binding_is_refused_even_if_replaced` | A bound `shard.json` that disagrees with its binding was **accepted**. |
+| `…::teacher_labels_come_from_the_named_index_even_if_it_is_replaced_after_its_read` | Refused, "label index changed". |
+| `…::teacher_labels_of_an_unnamed_index_are_refused_even_if_it_is_replaced_after_its_read` | The **forged teacher labels were returned** for an index the provenance does not name. |
+| `…::teacher_labels_are_those_of_the_callers_verified_index` | Labels were returned for an index other than the caller's verified one. |
+
+**Fixes.** Each receiver reads once and keeps its error wording.
+- `native_genome::artifact_closure` (was `:484-490`): a file within the 16 MiB parse bound
+  is read once, hashed, and its nested references are taken from those bytes. Larger files
+  are hashed and never parsed, as before.
+- `native_genome::prepared_closure` (was `:493-504`):
+  - `prepared.json` is read once against the candidate's bound digest, and the storage
+    source comes from those bytes;
+  - the walk's recorded digest for `prepared.json` must be the bound one;
+  - failures read "native genome input changed".
+- `teaching_store::verify_shard_metadata` (was `:103-106`): the binding is compared with
+  the parse of the `read_verified` bytes ("shard manifest changed…").
+- `teaching_store::teacher_programs` (was `:1243-1248`):
+  - `index.json` is read once (`read_hashed`); the provenance check and the label sources
+    use those bytes;
+  - its records identity must equal the caller's verified `Index` ("label index changed").
+
+**Not an R8 site: `load_impl` `:1142-1145`, `provenance.json`.**
+- There is no hash-then-read. `provenance.json` is read once, and only its
+  `index_sha256` back-reference is consumed. It is compared with the digest of the single
+  index read, so no swap window exists and there is nothing to reproduce. The earlier
+  record grouped it wrongly.
+- The real property is of a different class and is recorded, not changed: `provenance.json`
+  is bound by nothing but its own back-reference (the index cannot carry its digest).
+  `teacher_programs`' legacy (`parallel.teaching_corpus.v1`) branch takes the expected
+  `labels_sha256` from it. A legacy corpus's labels are therefore authenticated only by
+  an unbound file.
+
+**Results.**
+- Post-fix `w1b-r7-postfix-20260926T113144Z`: 42/42. It covers the new tests plus
+  `admission_tests`, `teaching_store`, `native_genome`, the prepare byte tests,
+  `corpus_incremental` and `frozen_inputs`. The one warning was the now-unused
+  `read_json` import in `native_genome`, removed before the pre-commit.
+- Pre-commit `w1b-c10-r7-*`:
+  - engine: the W1 set, the fence suites and the teacher suites, 288/288;
+  - jope-datasets 69/69;
+  - workspace all-targets check, parity-matrix, coverage (0 unassigned, 260 targets),
+    verify-test-inventory, fmt and diff-check all exit 0.
+- jope-learning is not touched. `native_loop/materialize.rs` and the request schema are
+  not touched.
+
+**Still open (recorded).**
+- The pinned `eval_registry` sites and `native_scq*`.
+- The unbound legacy `provenance.json` above.
+- `vocabulary.json` and `groups.bin`: `load_impl` hashes them but does not consume them.
+  Readers that open the corpus vocabulary by path after `load` are outside this lane or
+  neural-gated, and were not examined for this pattern: `pipeline.rs:457`,
+  `monitoring.rs:52` and `native_loop.rs:1130`.

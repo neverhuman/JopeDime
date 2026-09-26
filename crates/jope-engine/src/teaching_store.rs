@@ -99,11 +99,12 @@ pub fn midranks(scores: &[f64]) -> Vec<f32> {
 
 fn verify_shard_metadata(root: &Path, shard: &Shard) -> Result<PathBuf> {
     let path = resolve(root, &shard.path)?;
-    ensure!(
-        file_hash(&path.join("shard.json"))? == shard.sha256,
-        "shard manifest changed"
-    );
-    let saved: Shard = read_json(&path.join("shard.json"))?;
+    // Route R8: the binding is checked on exactly the verified manifest bytes.
+    let saved: Shard = serde_json::from_slice(&read_verified(
+        &path.join("shard.json"),
+        &shard.sha256,
+        "shard manifest",
+    )?)?;
     // The manifest's own digest is carried by its parent, avoiding self-hashing.
     let mut expected = shard.clone();
     expected.sha256.clear();
@@ -1240,14 +1241,22 @@ pub fn teacher_programs(
         .iter()
         .flat_map(|g| g.records.iter().take(limit).map(move |r| (*r, g.context)))
         .collect::<BTreeMap<_, _>>();
-    let value: Value = read_json(&corpus.join("index.json"))?;
+    // Route R8: the index is read once. The digest the provenance must name
+    // and the label sources come from the same bytes, and those bytes must be
+    // the index the caller verified (`load_resident_verified`, `read_index`).
+    let (index_bytes, index_sha256) = read_hashed(&corpus.join("index.json"), "label index")?;
+    let value: Value = serde_json::from_slice(&index_bytes)?;
     let provenance: Value = read_json(&corpus.join("provenance.json"))?;
     ensure!(
-        provenance["index_sha256"] == file_hash(&corpus.join("index.json"))?,
+        provenance["index_sha256"] == index_sha256,
         "label index changed"
     );
     let sources = if value["schema"] == SCHEMA {
         let m: Manifest = serde_json::from_value(value)?;
+        ensure!(
+            hash(&serde_json::to_vec(&m.shards)?) == index.records_sha256,
+            "label index changed"
+        );
         m.shards
             .iter()
             .map(|s| {
@@ -1259,6 +1268,11 @@ pub fn teacher_programs(
             })
             .collect::<Result<Vec<_>>>()?
     } else {
+        let legacy: Index = serde_json::from_value(value)?;
+        ensure!(
+            legacy.records_sha256 == index.records_sha256,
+            "label index changed"
+        );
         vec![(
             corpus.join("labels.jsonl"),
             provenance["labels_sha256"]
