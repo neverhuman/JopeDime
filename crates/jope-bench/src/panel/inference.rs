@@ -98,6 +98,81 @@ pub struct PublicManifest {
     pub files: BTreeMap<String, String>,
 }
 
+/// W9-T01: named-column input mode. A host-side adapter over the positional raw-row ABI that
+/// every backend ships, so emitted source, bundle identities and qualification plans are
+/// unchanged.
+impl PublicManifest {
+    /// Positional raw rows, in this manifest's column order, from named records: a JSON array
+    /// of objects, each naming every column exactly once with a string or null. Key order is
+    /// irrelevant, so columns of one kind can never be swapped silently, which the positional
+    /// mode cannot detect. A missing, unknown or repeated name, any other value type, a record
+    /// that is not an object, or a manifest whose column names are not distinct is refused
+    /// before anything is served. The rows then pass the unchanged positional boundary and its
+    /// validators.
+    pub fn positional_rows(&self, records: &[u8]) -> Result<Vec<Vec<Option<String>>>> {
+        let names: Vec<&str> = self.columns.iter().map(|c| c.name.as_str()).collect();
+        ensure!(
+            names
+                .iter()
+                .collect::<std::collections::BTreeSet<_>>()
+                .len()
+                == names.len(),
+            "manifest column names are not distinct; named input is ambiguous"
+        );
+        let records: Vec<NamedRecord> = serde_json::from_slice(records)
+            .context("named records must be a JSON array of objects of strings or nulls")?;
+        records
+            .into_iter()
+            .enumerate()
+            .map(|(index, record)| {
+                let mut row: Vec<Option<Option<String>>> = vec![None; names.len()];
+                for (name, value) in record.0 {
+                    let position = names
+                        .iter()
+                        .position(|column| *column == name)
+                        .with_context(|| format!("record {index}: unknown column {name:?}"))?;
+                    ensure!(
+                        row[position].replace(value).is_none(),
+                        "record {index}: column {name:?} named twice"
+                    );
+                }
+                row.into_iter()
+                    .zip(&names)
+                    .map(|(value, name)| {
+                        value.with_context(|| format!("record {index}: column {name:?} missing"))
+                    })
+                    .collect()
+            })
+            .collect()
+    }
+}
+
+/// One named record with its entries in document order, repeated names kept so that they
+/// can be refused rather than silently collapsed.
+struct NamedRecord(Vec<(String, Option<String>)>);
+impl<'de> Deserialize<'de> for NamedRecord {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        struct Entries;
+        impl<'de> serde::de::Visitor<'de> for Entries {
+            type Value = NamedRecord;
+            fn expecting(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                f.write_str("an object of column name to string or null")
+            }
+            fn visit_map<A: serde::de::MapAccess<'de>>(
+                self,
+                mut map: A,
+            ) -> Result<NamedRecord, A::Error> {
+                let mut entries = Vec::new();
+                while let Some(entry) = map.next_entry::<String, Option<String>>()? {
+                    entries.push(entry);
+                }
+                Ok(NamedRecord(entries))
+            }
+        }
+        deserializer.deserialize_map(Entries)
+    }
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct PublicBundle {
@@ -1027,6 +1102,86 @@ pub(crate) mod tests {
             ExportOutcome::Emitted { bundle } => *bundle,
             ExportOutcome::Unsupported { reason, .. } => panic!("{backend:?}: {reason:?}"),
         }
+    }
+
+    /// W9-T01: named records follow the manifest's column order whatever their key order,
+    /// and on every backend they yield the very plan (native reference included) of the
+    /// positional rows; ambiguous or malformed records are refused before anything runs.
+    #[test]
+    fn named_column_records_follow_the_manifest_and_refuse_ambiguity() {
+        let (artifact, rows) = fixture(Task::Binary, "logit_ridge");
+        let named = serde_json::to_vec(
+            &rows
+                .iter()
+                .map(|row| serde_json::json!({"country": row[1], "amount": row[0]}))
+                .collect::<Vec<_>>(),
+        )
+        .unwrap();
+        let view = FittedInferenceView::registered(&artifact).unwrap();
+        for backend in [
+            Backend::Python,
+            Backend::Rust,
+            Backend::Cpp17,
+            Backend::Cpp20,
+            Backend::JavaScript,
+        ] {
+            let bundle = emitted(&artifact, backend);
+            let positional = bundle.manifest.positional_rows(&named).unwrap();
+            assert_eq!(positional, rows, "{backend:?}");
+            assert_eq!(
+                qualification_plan_for_view(&view, &bundle, &positional)
+                    .unwrap()
+                    .identity()
+                    .unwrap(),
+                qualification_plan_for_view(&view, &bundle, &rows)
+                    .unwrap()
+                    .identity()
+                    .unwrap(),
+                "{backend:?}"
+            );
+        }
+        let manifest = emitted(&artifact, Backend::Python).manifest;
+        assert!(manifest.positional_rows(b"[]").unwrap().is_empty());
+        for (label, text, needle) in [
+            (
+                "missing",
+                r#"[{"amount":"1"}]"#,
+                r#"column "country" missing"#,
+            ),
+            (
+                "unknown",
+                r#"[{"amount":"1","country":"x","extra":"y"}]"#,
+                r#"unknown column "extra""#,
+            ),
+            (
+                "case-changed",
+                r#"[{"Amount":"1","country":"x"}]"#,
+                r#"unknown column "Amount""#,
+            ),
+            (
+                "repeated",
+                r#"[{"amount":"1","country":"x","amount":"2"}]"#,
+                r#"column "amount" named twice"#,
+            ),
+            ("number", r#"[{"amount":1,"country":"x"}]"#, "invalid type"),
+            ("positional", r#"[["1","x"]]"#, "named records"),
+            ("object", r#"{"amount":"1","country":"x"}"#, "named records"),
+        ] {
+            let error = format!(
+                "{:#}",
+                manifest.positional_rows(text.as_bytes()).unwrap_err()
+            );
+            assert!(error.contains(needle), "{label}: {error}");
+        }
+        let mut ambiguous = manifest.clone();
+        ambiguous.columns[1].name = ambiguous.columns[0].name.clone();
+        let error = format!(
+            "{:#}",
+            ambiguous
+                .positional_rows(br#"[{"amount":"1"}]"#)
+                .unwrap_err()
+        );
+        assert!(error.contains("not distinct"), "{error}");
     }
 
     #[test]

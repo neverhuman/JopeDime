@@ -233,6 +233,28 @@ pub fn seal(
     Ok((manifest, files))
 }
 
+/// The package identity of a sealed manifest: the digest of the exact `package.json` bytes
+/// [`install`] writes and a later [`load`] must present.
+pub fn identity(manifest: &PackageManifest) -> Result<String> {
+    Ok(digest(&serde_json::to_vec_pretty(manifest)?))
+}
+
+/// W9-T05: load `directory` under a recorded identity only when that identity is the one
+/// `expected` has, where `expected` is the manifest the caller re-derived by sealing from
+/// authenticated qualification evidence. A record naming any other package is refused before
+/// anything is read from the installation, so the identity is never taken on trust.
+pub fn load_authenticated(
+    directory: &Path,
+    recorded: &str,
+    expected: &PackageManifest,
+) -> Result<LoadedPackage> {
+    ensure!(
+        recorded == identity(expected)?,
+        "package record is not the one its authenticated qualification derives"
+    );
+    load(directory, recorded)
+}
+
 /// Install a sealed package into a new empty directory. Returns the package identity,
 /// the digest of the exact `package.json` bytes that a later load must present.
 pub fn install(
@@ -250,6 +272,7 @@ pub fn install(
     );
     fs::create_dir(directory)?;
     let bytes = serde_json::to_vec_pretty(manifest)?;
+    debug_assert_eq!(digest(&bytes), identity(manifest)?);
     for (name, content) in files
         .iter()
         .map(|(name, bytes)| (name.as_str(), bytes.as_slice()))
@@ -775,6 +798,44 @@ mod tests {
         );
         let refused = load(&installed, &identity).unwrap_err();
         assert!(format!("{refused:#}").contains("shipping file changed: model.so"));
+    }
+
+    /// W9-T05: a load takes its identity from a record only when the record names the
+    /// package the authenticated qualification evidence seals. `load` alone accepts any
+    /// consistent installed package under whatever identity it is handed (the recorded trust
+    /// limit), so a record naming another fitted state's package would serve that state.
+    #[test]
+    fn a_recorded_identity_must_be_the_authenticated_seal() {
+        let root = scratch();
+        let (a, _) = fixture(Task::Regression, "ridge");
+        let (b, _) = fixture(Task::Binary, "logit_ridge");
+        let q = qualify(root.path(), &a, Backend::Python);
+        let other = qualify(root.path(), &b, Backend::Python);
+        let (manifest, files) = seal_default(&q, true);
+        let (other_manifest, other_files) = seal_default(&other, true);
+        let installed = root.path().join("installed");
+        let recorded = install(&installed, &manifest, &files).unwrap();
+        assert_eq!(recorded, identity(&manifest).unwrap());
+        let loaded = load_authenticated(&installed, &recorded, &manifest).unwrap();
+        assert_eq!(loaded.manifest.fitted_sha256, q.plan.fitted_sha256);
+        // Another state's package, installed intact and loadable under its own identity.
+        let substituted = root.path().join("substituted");
+        let substituted_identity = install(&substituted, &other_manifest, &other_files).unwrap();
+        load(&substituted, &substituted_identity).unwrap();
+        let error = format!(
+            "{:#}",
+            load_authenticated(&substituted, &substituted_identity, &manifest).unwrap_err()
+        );
+        assert!(
+            error.contains("authenticated qualification derives"),
+            "{error}"
+        );
+        // The right record over another installation still fails the installed-byte checks.
+        assert!(load_authenticated(&substituted, &recorded, &manifest).is_err());
+        // A package sealed optional is another identity than the required one.
+        let (optional, _) = seal_default(&q, false);
+        assert!(load_authenticated(&installed, &recorded, &optional).is_err());
+        load_authenticated(&installed, &recorded, &manifest).unwrap();
     }
 
     #[test]
