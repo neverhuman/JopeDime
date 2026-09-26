@@ -205,6 +205,10 @@ impl<'a> FittedInferenceView<'a> {
     fn validate(&self) -> Result<()> {
         self.model.validate_binding()
     }
+    /// Digest of the complete private fitted envelope this view was built from.
+    pub fn fitted_sha256(&self) -> &str {
+        &self.fitted_sha256
+    }
     fn predict_raw(
         &self,
         features: &[jope_pipeline::experiment::Column],
@@ -590,43 +594,70 @@ pub fn qualification_plan_for_view(
     let input = serde_json::to_string(rows)?;
     let mut files = bundle.files.clone();
     files.insert("qualification-input.json".into(), input.clone());
+    let (harness_files, mut commands) = harness(bundle.manifest.backend, rows);
+    files.extend(harness_files);
+    if let Some(standard) = cpp_standard(bundle.manifest.backend) {
+        let command = feat_math::cxx::command(Some(standard));
+        let mut argv = vec![command.get_program().to_string_lossy().into_owned()];
+        argv.extend(
+            command
+                .get_args()
+                .map(|arg| arg.to_string_lossy().into_owned()),
+        );
+        argv.extend(CPP_BUILD_FLAGS.map(str::to_owned));
+        commands.insert(0, argv);
+    }
+    let plan = QualificationPlan {
+        schema: "jope.fitted-qualification-plan/v1".into(),
+        bundle_sha256: bundle.identity()?,
+        fitted_sha256: artifact.fitted_sha256.clone(),
+        input_sha256: digest(input.as_bytes()),
+        backend: bundle.manifest.backend,
+        parity_policy: bundle.manifest.parity_policy,
+        files,
+        commands,
+        expected,
+    };
+    verify_plan_binding(&plan, bundle)?;
+    Ok(plan)
+}
+
+/// Public C++ library build flags after the host-resolved compiler, the `-std=` flag and
+/// an optional `JOPE_CXX_MARCH` `-march=` flag. Floating-point contraction stays off.
+const CPP_BUILD_FLAGS: [&str; 8] = [
+    "-O2",
+    "-ffp-contract=off",
+    "-fno-fast-math",
+    "-shared",
+    "-fPIC",
+    "model.cpp",
+    "-o",
+    "model.so",
+];
+fn cpp_standard(backend: Backend) -> Option<feat_math::cxx::CxxStd> {
+    match backend {
+        Backend::Cpp17 => Some(feat_math::cxx::CxxStd::Cxx17),
+        Backend::Cpp20 => Some(feat_math::cxx::CxxStd::Cxx20),
+        _ => None,
+    }
+}
+/// The deterministic private replay harness: files beyond the public bundle and the
+/// unlabeled input, plus the host-independent commands that run them. Row values reach
+/// generated code only as JSON data or Rust debug-escaped literals, never as argv.
+fn harness(
+    backend: Backend,
+    rows: &[Vec<Option<String>>],
+) -> (BTreeMap<String, String>, Vec<Vec<String>>) {
+    let mut files = BTreeMap::new();
     let mut commands = Vec::new();
-    match bundle.manifest.backend {
+    match backend {
         Backend::Python | Backend::Cpp17 | Backend::Cpp20 => {
-            let module = if bundle.manifest.backend == Backend::Python {
+            let module = if backend == Backend::Python {
                 "model"
             } else {
                 "boundary"
             };
             files.insert("qualification.py".into(),format!("import json\nimport {module}\nwith open('qualification-input.json',encoding='utf-8') as stream:\n    rows=json.load(stream)\nimport sys\nsys.stdout.buffer.write((json.dumps({module}.predict_raw(rows),ensure_ascii=False,allow_nan=False)+'\\n').encode('utf-8'))\n"));
-            if matches!(bundle.manifest.backend, Backend::Cpp17 | Backend::Cpp20) {
-                let standard = if bundle.manifest.backend == Backend::Cpp17 {
-                    feat_math::cxx::CxxStd::Cxx17
-                } else {
-                    feat_math::cxx::CxxStd::Cxx20
-                };
-                let command = feat_math::cxx::command(Some(standard));
-                let mut argv = vec![command.get_program().to_string_lossy().into_owned()];
-                argv.extend(
-                    command
-                        .get_args()
-                        .map(|arg| arg.to_string_lossy().into_owned()),
-                );
-                argv.extend(
-                    [
-                        "-O2",
-                        "-ffp-contract=off",
-                        "-fno-fast-math",
-                        "-shared",
-                        "-fPIC",
-                        "model.cpp",
-                        "-o",
-                        "model.so",
-                    ]
-                    .map(str::to_owned),
-                );
-                commands.push(argv);
-            }
             commands.push(vec!["python3".into(), "qualification.py".into()]);
         }
         Backend::JavaScript => {
@@ -666,17 +697,69 @@ pub fn qualification_plan_for_view(
             commands.push(vec!["./qualification".into()]);
         }
     }
-    Ok(QualificationPlan {
-        schema: "jope.fitted-qualification-plan/v1".into(),
-        bundle_sha256: bundle.identity()?,
-        fitted_sha256: artifact.fitted_sha256.clone(),
-        input_sha256: digest(input.as_bytes()),
-        backend: bundle.manifest.backend,
-        parity_policy: bundle.manifest.parity_policy,
-        files,
-        commands,
-        expected,
-    })
+    (files, commands)
+}
+
+/// Bind a private qualification plan to the shipped public bundle: the executed files
+/// are exactly the bundle files, the unlabeled input and the deterministic harness, and
+/// the commands are the fixed harness commands. The C++ build argv is checked except
+/// for its host-resolved compiler program, which the pinned tool inventory binds.
+/// This proves the executed code is the shipped code; it does not re-run prediction.
+pub fn verify_plan_binding(plan: &QualificationPlan, bundle: &PublicBundle) -> Result<()> {
+    bundle.validate()?;
+    let backend = bundle.manifest.backend;
+    ensure!(
+        plan.schema == "jope.fitted-qualification-plan/v1"
+            && plan.backend == backend
+            && plan.parity_policy == backend.parity_policy()
+            && plan.bundle_sha256 == bundle.identity()?,
+        "qualification plan is bound to a different public bundle"
+    );
+    let input = plan
+        .files
+        .get("qualification-input.json")
+        .context("qualification input absent")?;
+    ensure!(
+        digest(input.as_bytes()) == plan.input_sha256,
+        "qualification input identity changed"
+    );
+    let rows: Vec<Vec<Option<String>>> =
+        serde_json::from_str(input).context("qualification input rows")?;
+    ensure!(
+        !rows.is_empty() && serde_json::to_string(&rows)? == *input,
+        "qualification input is not canonical nonempty rows"
+    );
+    let (harness_files, commands) = harness(backend, &rows);
+    let mut files = bundle.files.clone();
+    files.insert("qualification-input.json".into(), input.clone());
+    files.extend(harness_files);
+    ensure!(
+        plan.files == files,
+        "executed qualification files differ from the shipped public bundle"
+    );
+    let predictor = if let Some(standard) = cpp_standard(backend) {
+        let build = plan.commands.first().context("C++ build absent")?;
+        let prefix = build.len().saturating_sub(CPP_BUILD_FLAGS.len());
+        ensure!(
+            matches!(prefix, 2 | 3)
+                && !build[0].is_empty()
+                && build[1] == standard.flag()
+                && (prefix == 2 || build[2].starts_with("-march="))
+                && build[prefix..]
+                    .iter()
+                    .map(String::as_str)
+                    .eq(CPP_BUILD_FLAGS),
+            "C++ qualification build changed"
+        );
+        &plan.commands[1..]
+    } else {
+        &plan.commands[..]
+    };
+    ensure!(
+        predictor == commands.as_slice(),
+        "qualification commands changed"
+    );
+    Ok(())
 }
 
 impl QualificationPlan {
@@ -842,7 +925,7 @@ pub fn registered_inference_inventory() -> Result<Vec<serde_json::Value>> {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::super::data::raw_table;
     use super::super::methods::{fit_rust, rust_methods, RustFitRequest};
     use super::*;
@@ -850,11 +933,17 @@ mod tests {
     use jope_pipeline::experiment::{Column, ColumnKind as Kind};
     use std::process::Command;
 
-    fn fixture(task: Task, family: &str) -> (FittedRustArtifact, Vec<Vec<Option<String>>>) {
+    pub(crate) fn fixture(
+        task: Task,
+        family: &str,
+    ) -> (FittedRustArtifact, Vec<Vec<Option<String>>>) {
         let (request, rows) = fixture_request(task, family);
         (fit_rust(&request).unwrap().artifact, rows)
     }
-    fn fixture_request(task: Task, family: &str) -> (RustFitRequest, Vec<Vec<Option<String>>>) {
+    pub(crate) fn fixture_request(
+        task: Task,
+        family: &str,
+    ) -> (RustFitRequest, Vec<Vec<Option<String>>>) {
         let columns = vec![
             Column {
                 name: "amount".into(),
@@ -926,7 +1015,7 @@ mod tests {
         };
         (request, prediction)
     }
-    fn emitted(artifact: &FittedRustArtifact, backend: Backend) -> PublicBundle {
+    pub(crate) fn emitted(artifact: &FittedRustArtifact, backend: Backend) -> PublicBundle {
         match export_fitted(artifact, backend).unwrap() {
             ExportOutcome::Emitted { bundle } => *bundle,
             ExportOutcome::Unsupported { reason, .. } => panic!("{backend:?}: {reason:?}"),
