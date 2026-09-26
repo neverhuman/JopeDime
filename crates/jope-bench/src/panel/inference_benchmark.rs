@@ -296,6 +296,8 @@ mod export;
 mod gp;
 #[path = "inference_inputs.rs"]
 mod inputs;
+#[path = "inference_report.rs"]
+mod reporting;
 pub fn run(args: RunArgs) -> Result<Value> {
     #[cfg(feature = "inference-cuda")]
     {
@@ -328,15 +330,8 @@ pub fn report(args: ReportArgs) -> Result<Value> {
         );
     }
     custody(&args.output)?;
-    let status = std::process::Command::new("python3")
-        .arg("-c")
-        .arg(include_str!("inference_report.py"))
-        .arg(&args.plan)
-        .arg(&args.plan_sha256)
-        .arg(&args.journal)
-        .arg(&args.output)
-        .status()?;
-    ensure!(status.success(), "report generation failed");
+    // The summary is built from the same pinned plan bytes checked above.
+    reporting::write(&bytes, &args.journal, &args.output).context("report generation failed")?;
     Ok(serde_json::from_slice(&fs::read(
         args.output.join("summary.json"),
     )?)?)

@@ -114,7 +114,7 @@ Depends on T07.
 
 ```sh
 cargo test --locked -p jope-bench --lib inference_benchmark -- --list
-python3 -m unittest discover -s crates/jope-bench/src/panel -p test_inference_report.py
+cargo test --locked -p jope-bench --features asm --lib inference_benchmark::reporting
 ```
 
 Proposed slices/phases: (A) corrected manifest/qualification T01–T02; (B) boundaries

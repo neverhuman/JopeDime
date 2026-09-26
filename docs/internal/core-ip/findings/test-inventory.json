@@ -101,12 +101,6 @@
         "evaluation"
       ]
     },
-    "python:crates/jope-bench/src/panel/test_inference_report.py": {
-      "role": "regression",
-      "subsystems": [
-        "performance"
-      ]
-    },
     "python:deploy/ci/test-aggregate.py": {
       "role": "infrastructure",
       "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"

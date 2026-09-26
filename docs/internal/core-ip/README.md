@@ -16,7 +16,7 @@ and gated execution phases. They are plans, not completed capability claims.
 python3 docs/internal/core-ip/tools/build.py \
   --output /home/ubuntu/xbabe2_kicker/docs \
   --cutoff UTC_ISO_TIMESTAMP --study /ABSOLUTE/REPORT/summary.json
-python3 docs/internal/core-ip/tools/verify_inventory.py
+cargo run -q -p jope-records -- verify-inventory   # host-only: needs the accepted asset
 python3 docs/internal/core-ip/tools/verify.py /home/ubuntu/xbabe2_kicker/docs
 ```
 
@@ -48,7 +48,8 @@ CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only \
   cargo test -p jope-bench --lib -j4
 CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only \
   cargo test -p jope-bench --features inference-cuda inference_benchmark --lib -j4
-python3 -m unittest discover -s crates/jope-bench/src/panel -p test_inference_report.py
+CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only \
+  cargo test -p jope-bench --features asm --lib inference_benchmark::reporting -j4
 git diff --check
 ```
 

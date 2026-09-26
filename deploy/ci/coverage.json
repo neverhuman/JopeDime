@@ -8777,16 +8777,6 @@
         "gpu"
       ],
       "scope": "Explicit optional timing-study feature, not selected by CPU CI. Local build/boundary proof is separate from operational GPU qualification."
-    },
-    "python:crates/jope-bench/src/panel/test_inference_report.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "lanes": [
-        "python"
-      ],
-      "dispositions": [],
-      "scope": "Explicitly collected timing receipt/report contract tests in Python lane JUnit; no CUDA execution."
     }
   }
 }

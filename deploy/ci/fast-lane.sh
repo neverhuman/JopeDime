@@ -139,7 +139,7 @@ uv run --no-sync ruff format --check .
     # Pytest (xbabe2-only tests deselected)
 (
 cd python
-bash ../deploy/ci/pytest-evidence.sh uv run --no-sync pytest -q tests ../benchmarks/test_prepare.py ../crates/jope-bench/adapters/test_panel.py ../crates/jope-bench/src/panel/test_inference_report.py -m "not xbabe2" -p no:cacheprovider
+bash ../deploy/ci/pytest-evidence.sh uv run --no-sync pytest -q tests ../benchmarks/test_prepare.py ../crates/jope-bench/adapters/test_panel.py -m "not xbabe2" -p no:cacheprovider
 )
 python3 deploy/ci/training-proof.py python --junit "$EVIDENCE/junit.xml"
     ;;
