@@ -5,7 +5,8 @@
 //!
 //! | Product | Layout | Named transformation |
 //! |---|---|---|
-//! | [`RowEmbeddings`] | rows × 128 | the frozen three-sweep Hyperion composite embedding |
+//! | [`CellSurface`] | rows × features u8 grid | the fitted-quantile-bounds u8 quantization of the prepared training rows |
+//! | [`RowEmbeddings`] | rows × 128 | the frozen three-sweep Hyperion composite embedding of one [`CellSurface`] |
 //! | [`HyperionSignature`] | 512 | [`HyperionSignature::pool`]: per coordinate mean, population standard deviation, p10, p90 |
 //! | [`RawFoundation`] | 2048 | the target-conditioned Starlight Foundation encoder |
 //! | [`ProjectedFoundation`] | 1024 | [`FrozenTransforms`] projection: subtract the frozen mean, apply the frozen 2048→1024 matrix |
@@ -229,6 +230,89 @@ impl FinalContext {
     }
 }
 
+/// The Hyperion cell surface of one encode (W2-T03): the u8 grid quantized from the prepared
+/// training rows under their fitted quantile bounds, bound to the encode's input scope. It is
+/// the Hyperion sweep's only input, and row embeddings are built only from the sweep of their
+/// own encode's surface, so a grid of another encode (or another row count) cannot become this
+/// encode's row embeddings. It never crosses a public API and cannot be serialized.
+pub struct CellSurface {
+    grid: hyperion::hyperion_v7::grid::U8Grid,
+    rows: usize,
+    scope: String,
+}
+impl CellSurface {
+    /// The named transformation that constructs a cell surface.
+    pub const TRANSFORMATION: &'static str = "hyperion.v7.fitted-quantile-bounds-u8-grid/v1";
+    /// Wrap the frozen quantization of `rows` prepared training rows of the encode with input
+    /// scope `scope`.
+    pub(super) fn from_quantized_rows(
+        grid: hyperion::hyperion_v7::grid::U8Grid,
+        rows: usize,
+        scope: &str,
+    ) -> Result<Self> {
+        ensure!(
+            rows > 0 && !grid.data.is_empty(),
+            "empty Hyperion cell surface"
+        );
+        validate_hex(scope, 64)?;
+        Ok(Self {
+            grid,
+            rows,
+            scope: scope.into(),
+        })
+    }
+    pub(super) fn grid(&self) -> &hyperion::hyperion_v7::grid::U8Grid {
+        &self.grid
+    }
+    pub fn rows(&self) -> usize {
+        self.rows
+    }
+    pub fn scope(&self) -> &str {
+        &self.scope
+    }
+}
+
+#[cfg(test)]
+mod cell_surface_tests {
+    use super::*;
+    use hyperion::hyperion_v7::grid::U8Grid;
+
+    fn surface(rows: usize, scope: &str) -> Result<CellSurface> {
+        CellSurface::from_quantized_rows(
+            U8Grid {
+                data: vec![7; rows * 3],
+                h: rows,
+                w: 3,
+            },
+            rows,
+            scope,
+        )
+    }
+
+    /// W2-T03: row embeddings come only from the sweep of their own encode's cell surface and
+    /// carry its input scope; a sweep of another row count and an unscoped surface are refused.
+    #[test]
+    fn row_embeddings_are_built_only_from_their_own_encodes_cell_surface() {
+        let scope = "a".repeat(64);
+        let own = surface(3, &scope).unwrap();
+        let rows =
+            RowEmbeddings::from_hyperion_sweep(vec![0.5; 3 * RowEmbeddings::WIDTH], &own).unwrap();
+        assert_eq!((rows.len(), rows.scope()), (3, scope.as_str()));
+        assert_eq!(own.rows(), 3);
+        // A sweep of a two-row encode does not fit a three-row surface.
+        assert!(
+            RowEmbeddings::from_hyperion_sweep(vec![0.5; 2 * RowEmbeddings::WIDTH], &own).is_err()
+        );
+        // Nonfinite embeddings, a malformed scope and an empty grid are refused.
+        assert!(
+            RowEmbeddings::from_hyperion_sweep(vec![f32::NAN; 3 * RowEmbeddings::WIDTH], &own)
+                .is_err()
+        );
+        assert!(surface(3, "not-a-scope").is_err());
+        assert!(surface(0, &scope).is_err());
+    }
+}
+
 /// Hyperion row embeddings of one encode: one 128-wide embedding per prepared training row.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RowEmbeddings {
@@ -244,11 +328,14 @@ impl RowEmbeddings {
     /// Unit-test support only.
     #[cfg(test)]
     pub(super) fn for_testing(values: Vec<f32>, rows: usize, scope: &str) -> Self {
-        Self::from_hyperion_sweep(values, rows, scope).unwrap()
+        Self::in_scope(values, rows, scope).unwrap()
     }
-    /// Wrap the frozen Hyperion sweep output for `rows` rows of the encode with input scope
-    /// `scope`.
-    pub(super) fn from_hyperion_sweep(values: Vec<f32>, rows: usize, scope: &str) -> Result<Self> {
+    /// Wrap the frozen Hyperion sweep output of `surface`: one embedding per row of that
+    /// surface, in that surface's input scope.
+    pub(super) fn from_hyperion_sweep(values: Vec<f32>, surface: &CellSurface) -> Result<Self> {
+        Self::in_scope(values, surface.rows, &surface.scope)
+    }
+    fn in_scope(values: Vec<f32>, rows: usize, scope: &str) -> Result<Self> {
         ensure!(
             rows > 0 && values.len() == rows * Self::WIDTH && values.iter().all(|v| v.is_finite()),
             "incomplete Hyperion row embeddings"

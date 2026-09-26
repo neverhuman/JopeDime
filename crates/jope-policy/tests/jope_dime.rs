@@ -15,6 +15,7 @@
 #![cfg(feature = "testing")]
 
 use jope_policy::config::{ChallengerIdentity, CheckpointBinding, PolicyConfig};
+use jope_policy::context::PolicyContext;
 use jope_policy::decode::{self, SamplingOptions};
 use jope_policy::grammar::{bind_vocabulary, verify_restriction, VocabularyIdentity};
 use jope_policy::grammar::{Vocab, BOS, EOS, PAD};
@@ -106,8 +107,9 @@ fn tiny_tensors(pad_row_shift: f32) -> std::collections::HashMap<String, candle_
         .collect()
 }
 
-fn context() -> Vec<f32> {
-    (0..2048).map(|i| (i % 13) as f32 / 13.0 - 0.4).collect()
+fn context() -> PolicyContext {
+    PolicyContext::from_frozen_values((0..2048).map(|i| (i % 13) as f32 / 13.0 - 0.4).collect())
+        .unwrap()
 }
 
 fn digest(tag: &str) -> String {
@@ -1503,7 +1505,7 @@ fn exported_policy_matches_its_export_receipt() {
         binding.policy_safetensors_sha256()
     );
     let vocab = bind_vocabulary(&product_bytes(), binding.vocabulary_sha256()).unwrap();
-    let ctx = vec![0.0f32; 2048];
+    let ctx = PolicyContext::from_frozen_values(vec![0.0f32; 2048]).unwrap();
     let logits = model.next_token_logits(&ctx, &[vec![BOS, 3, 397]]).unwrap();
     assert_eq!(logits[0].len(), 401);
     assert!(logits[0].iter().all(|v| v.is_finite()));
@@ -1982,7 +1984,12 @@ fn generation_000011_rewards_agree_with_bf16_records() {
 }
 
 /// Mean grammar-masked log-probability per generated token (after the 3-token prefix).
-fn mean_token_logprob(model: &PolicyModel, vocab: &Vocab, ctx: &[f32], programs: &[String]) -> f64 {
+fn mean_token_logprob(
+    model: &PolicyModel,
+    vocab: &Vocab,
+    ctx: &PolicyContext,
+    programs: &[String],
+) -> f64 {
     let encoded = programs
         .iter()
         .map(|p| vocab.encode(p).unwrap())

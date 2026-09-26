@@ -423,3 +423,54 @@ assembly from the manifest instead of literals.
   it lists.
 - The jope-bench literal (`optimize.rs:259-262`) and jope-engine `policy_export.rs` private copies
   are not changed; jope-engine does not depend on jope-policy.
+
+## 10. Appended 2026-09-26: W2-T03 typed policy context and cell surface (branch `rr2/integration-c`)
+
+**Defect (G-09 remainder).** `PolicyModel::{logits, next_token_logits, reward_runtime,
+cache_max_error}`, `ranking::score_pool`, the decoders (`decode::{sample_batch,
+sample_batch_traced, pure_pool, pure_pool_unbound}`), `seeds::propose*`, `producer::produce` and
+`context_from_bytes` took or returned the policy context as `&[f32]`/`Vec<f32>`. A `RawFoundation`
+(2048 values, never projected, normalized or clipped) dereferences to `[f32]`, so it type-checked
+as a policy context. Only length and finiteness were checked at run time.
+
+**Reproduction.** `w2c-t03-pre-20260926T202148Z`. Two `compile_fail` doctests were added
+temporarily to `lib.rs`: a raw `&[f32]` passed to `PolicyModel::reward_runtime`, and a raw
+`&Vec<f32>` passed to `score_pool`. Both **compiled**, so the doctests failed (2/8 in `lib.rs`).
+
+**Fix.**
+- New `jope_policy::context::PolicyContext`: private values, no `Deserialize`, `Deref<[f32]>` for
+  reading only. Its named constructors are:
+  - `from_le_bytes`: the 8192-byte artifact;
+  - `from_frozen_values`: decoded values, under the same checks;
+  - `from_final_context`: the CPU producer's replayed `FinalContext` (`context-producer`);
+  - `for_testing`: `testing`/test builds only, for tiny test configurations.
+
+  Each checks the frozen ABI of the semantic manifest (2048 values, finite, within ±32).
+- Every API above takes `&PolicyContext`; `context_from_bytes` returns one. The internal
+  decoder cache takes it too.
+- `jope-policy-producer` builds the context with `from_le_bytes`. The refusal text "context is
+  nonfinite or not frozen-clipped" is unchanged. jope-bench `inference_cuda.rs` (feature
+  `inference-cuda`) wraps its assembled `FinalContext`; that feature is compile-unverified here
+  (it needs the CUDA toolchain).
+- Cell surfaces: new `context_producer::CellSurface` (the u8 grid of the prepared training rows,
+  with its row count and input scope). It is the Hyperion sweep's only input, and
+  `RowEmbeddings::from_hyperion_sweep` now takes the surface, not a free row count and scope.
+  Both the regression and the classification encoders use it.
+- The compile-fail doctests moved to `context.rs`, with a third refusing `Deserialize`.
+
+**Controls.**
+- `context::tests::only_the_frozen_context_abi_constructs_a_policy_context`:
+  - positive: byte round trip and digest;
+  - negative: a 1024-wide projected block, 2049 values, NaN, +Inf and an unclipped value, each
+    refused.
+- `context::tests::the_context_abi_is_the_semantic_manifests`.
+- `products::cell_surface_tests::row_embeddings_are_built_only_from_their_own_encodes_cell_surface`:
+  - positive: embeddings carry the surface's scope;
+  - negative: a sweep of another row count, nonfinite embeddings, a malformed scope and an empty
+    grid are refused.
+- Every existing jope-policy test passes with its helpers returning `PolicyContext`. No
+  assertion changed.
+
+**Runs.**
+- Post `w2c-t03-post-20260926T202525Z`: jope-policy (`testing,context-producer`) 97/97, 19 doctests (the three new compile-fail cases in `context.rs` pass), jope-pipeline (`neural-search`) 119/119, and the full-default workspace check (`jope-cli/asm,jope-cli/qualified-training-context`) exit 0.
+- Pre-commit `w2c-t03-c-20260926T202805Z`: fence suites and `gp::fit_contract_tests` 82/82; workspace all-targets check, coverage (0 unassigned), verify-test-inventory, fmt and diff-check exit 0.

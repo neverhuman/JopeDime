@@ -16,6 +16,7 @@
 //!   runtime = softplus(`runtime_head`([rz, g])).
 //!
 //! No numeric parity with the tch implementation is established here (see the module docs).
+use crate::context::PolicyContext;
 use anyhow::{bail, ensure, Context, Result};
 use candle_core::{DType, Device, Tensor, D};
 use std::collections::BTreeMap;
@@ -512,8 +513,8 @@ impl PolicyModel {
 
     /// Full logits `[batch, length + 1, vocab_size]` for equal-length token rows (PAD = 0 is
     /// masked as a key). Row `i`, position `t` predicts token `t` of row `i`.
-    pub fn logits(&self, context: &[f32], tokens: &[Vec<usize>]) -> Result<Tensor> {
-        let h = self.decoder_states(context, tokens)?;
+    pub fn logits(&self, context: &PolicyContext, tokens: &[Vec<usize>]) -> Result<Tensor> {
+        let h = self.decoder_states(context.values(), tokens)?;
         self.project(&h)
     }
 
@@ -526,10 +527,10 @@ impl PolicyModel {
     /// Next-token logits after the last position of each equal-length row: `[batch][vocab]`.
     pub fn next_token_logits(
         &self,
-        context: &[f32],
+        context: &PolicyContext,
         tokens: &[Vec<usize>],
     ) -> Result<Vec<Vec<f32>>> {
-        let h = self.decoder_states(context, tokens)?;
+        let h = self.decoder_states(context.values(), tokens)?;
         let last = h.dim(1)? - 1;
         let logits = self.project(&h.narrow(1, last, 1)?.contiguous()?)?;
         Ok(logits
@@ -543,13 +544,13 @@ impl PolicyModel {
     /// Rows are right-padded with PAD; PAD positions are excluded from the program mean.
     pub fn reward_runtime(
         &self,
-        context: &[f32],
+        context: &PolicyContext,
         tokens: &[Vec<usize>],
     ) -> Result<(Vec<[f32; 4]>, Vec<f32>)> {
         let c = &self.config;
         let (batch, length, ids) = self.token_tensor(tokens)?;
         let rz = self
-            .encode_context("reward_encoder", context)?
+            .encode_context("reward_encoder", context.values())?
             .broadcast_as((batch, c.width))?
             .contiguous()?;
         let present = tokens
@@ -613,7 +614,7 @@ impl PolicyModel {
     /// Qualification only: fresh batch-local cache versus full-prefix logits. Both paths need
     /// at least two tokens, so the cache is primed with the first two and every later token is
     /// one compared cached step.
-    pub fn cache_max_error(&self, context: &[f32], tokens: &[usize]) -> Result<f32> {
+    pub fn cache_max_error(&self, context: &PolicyContext, tokens: &[usize]) -> Result<f32> {
         ensure!(
             tokens.len() >= 3,
             "qualification needs a two-token prefix and at least one cached step"

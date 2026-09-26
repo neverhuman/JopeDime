@@ -11,6 +11,7 @@
 //! (or the `testing` helpers, which refuse the accepted state), and [`write_population`] only
 //! writes the population of a [`Proposal`], which has private fields. A file read back by
 //! [`validate_for_search`] is a [`SeedFile`], which no writer accepts.
+use crate::context::PolicyContext;
 use anyhow::{ensure, Context, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
@@ -475,7 +476,7 @@ pub fn propose(
     model: &PolicyModel,
     checkpoint: &CheckpointBinding,
     vocabulary: &BoundVocabulary,
-    context: &[f32],
+    context: &PolicyContext,
     binding: &SeedBinding,
     seeds: &ProposalSeeds,
     sampling: &SamplingOptions,
@@ -504,7 +505,7 @@ pub fn propose_challenger(
     checkpoint: &CheckpointBinding,
     challenger: &ChallengerIdentity,
     vocabulary: &BoundVocabulary,
-    context: &[f32],
+    context: &PolicyContext,
     binding: &SeedBinding,
     seeds: &ProposalSeeds,
     sampling: &SamplingOptions,
@@ -535,7 +536,7 @@ pub fn propose_unbound(
     model: &PolicyModel,
     checkpoint: &CheckpointBinding,
     vocabulary: &BoundVocabulary,
-    context: &[f32],
+    context: &PolicyContext,
     binding: &SeedBinding,
     seeds: &ProposalSeeds,
     sampling: &SamplingOptions,
@@ -555,7 +556,7 @@ fn propose_checked(
     model: &PolicyModel,
     checkpoint: &CheckpointBinding,
     vocabulary: &BoundVocabulary,
-    context: &[f32],
+    context: &PolicyContext,
     binding: &SeedBinding,
     seeds: &ProposalSeeds,
     sampling: &SamplingOptions,

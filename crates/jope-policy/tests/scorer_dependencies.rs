@@ -17,6 +17,7 @@
 //! `stability_head`, `reward_head_ablation` and `loss_log_vars` to nothing at inference.
 use candle_core::{Device, Tensor};
 use jope_policy::config::PolicyConfig;
+use jope_policy::context::PolicyContext;
 use jope_policy::grammar::{bind_vocabulary, Vocab, EOS, PAD};
 use jope_policy::model::{expected_inventory, PolicyModel};
 use jope_policy::ranking::{score_pool, Bindings, Options};
@@ -32,8 +33,9 @@ fn vocab() -> Vocab {
         .clone()
 }
 
-fn context() -> Vec<f32> {
-    (0..2048).map(|i| (i % 13) as f32 / 13.0 - 0.4).collect()
+fn context() -> PolicyContext {
+    PolicyContext::from_frozen_values((0..2048).map(|i| (i % 13) as f32 / 13.0 - 0.4).collect())
+        .unwrap()
 }
 
 fn config() -> PolicyConfig {
@@ -103,7 +105,7 @@ struct Readout {
     logits: Vec<Vec<f32>>,
 }
 
-fn readout(model: &PolicyModel, ctx: &[f32], rows: &[Vec<usize>]) -> Readout {
+fn readout(model: &PolicyModel, ctx: &PolicyContext, rows: &[Vec<usize>]) -> Readout {
     let (heads, runtime) = model.reward_runtime(ctx, &padded(rows)).unwrap();
     let logits = rows
         .iter()

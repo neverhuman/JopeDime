@@ -35,6 +35,7 @@ use super::grammar::{Vocab, EOS, MAX_PROGRAM_TOKENS, PAD};
 use super::model::PolicyModel;
 use super::seeds::{SeedCandidate, ORIGIN_NEURAL, ORIGIN_NEURAL_FALLBACK, ORIGIN_RANDOM};
 use super::sha256_hex;
+use crate::context::PolicyContext;
 
 pub mod replay;
 
@@ -364,7 +365,7 @@ fn choose(legal: &[usize], weights: &[f64], uniform: f64) -> usize {
 pub fn sample_batch<R: Rng>(
     model: &PolicyModel,
     vocab: &Vocab,
-    context: &[f32],
+    context: &PolicyContext,
     task: &str,
     batch: usize,
     temperature: f32,
@@ -391,7 +392,7 @@ pub fn sample_batch<R: Rng>(
 pub fn sample_batch_traced<R: Rng>(
     model: &PolicyModel,
     vocab: &Vocab,
-    context: &[f32],
+    context: &PolicyContext,
     task: &str,
     batch: usize,
     temperature: f32,
@@ -417,7 +418,7 @@ pub fn sample_batch_traced<R: Rng>(
 pub(crate) fn sample_batch_cached<R: Rng>(
     model: &PolicyModel,
     vocab: &Vocab,
-    context: &[f32],
+    context: &PolicyContext,
     task: &str,
     round: usize,
     batch: usize,
@@ -439,7 +440,7 @@ pub(crate) fn sample_batch_cached<R: Rng>(
 /// `shape` is `(round, batch)`: the round only names the draws in a failure.
 #[allow(clippy::too_many_arguments)]
 fn sample_batch_impl<R: Rng>(
-    policy: (&PolicyModel, &[f32]),
+    policy: (&PolicyModel, &PolicyContext),
     vocab: &Vocab,
     task: &str,
     shape: (usize, usize),
@@ -813,7 +814,7 @@ impl PurePool {
 pub fn pure_pool(
     model: &PolicyModel,
     vocab: &Vocab,
-    context: &[f32],
+    context: &PolicyContext,
     task: &str,
     sampling_seed: u64,
     fallback_seed: u64,
@@ -837,7 +838,7 @@ pub fn pure_pool(
 pub fn pure_pool_unbound(
     model: &PolicyModel,
     vocab: &Vocab,
-    context: &[f32],
+    context: &PolicyContext,
     task: &str,
     sampling_seed: u64,
     fallback_seed: u64,
@@ -862,7 +863,7 @@ pub fn pure_pool_unbound(
 pub(crate) fn pure_pool_checked(
     model: &PolicyModel,
     vocab: &Vocab,
-    context: &[f32],
+    context: &PolicyContext,
     task: &str,
     sampling_seed: u64,
     fallback_seed: u64,
@@ -983,9 +984,10 @@ mod cache_tests {
         config.dropout = 0.0;
         let model = PolicyModel::random_weights(config, 3).unwrap();
         assert!(model.bound_identity().is_none());
-        let context = (0..2048)
-            .map(|i| (i % 13) as f32 / 13.0 - 0.4)
-            .collect::<Vec<_>>();
+        let context = PolicyContext::from_frozen_values(
+            (0..2048).map(|i| (i % 13) as f32 / 13.0 - 0.4).collect(),
+        )
+        .unwrap();
         let mut full_rng = ChaCha20Rng::seed_from_u64(7);
         let mut cached_rng = full_rng.clone();
         let full = sample_batch(
