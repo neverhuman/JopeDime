@@ -7661,6 +7661,22 @@
       "dispositions": [],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile. Grammar masks versus the typed parser over the committed vocabularies; no model, GPU or proposal-quality claim."
     },
+    "target:jope-policy/test/scorer_dependencies": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-policy/tests/scorer_dependencies.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile. Structural scorer dependency and token-multiset collision fixture on synthetic CPU weights; no accepted-weight, GPU or ranking-utility claim."
+    },
     "target:numpy-pcg64/lib/numpy_pcg64": {
       "discovery": {
         "kind": "target",
