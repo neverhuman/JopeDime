@@ -270,8 +270,19 @@
     },
     "W3-T07": {
       "states": [
-        "planned"
-      ]
+        "implemented",
+        "fixture-proven"
+      ],
+      "commits": [
+        "c4f60b4c7a2e27a31fc41f875650c89900dc32ed"
+      ],
+      "tests": [
+        "eligibility::tests::matrix (19: 16 classes x 5 routes = 80 refusals, positive controls for regression/binary/multiclass, independent replay)"
+      ],
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w3-t07-matrix-20260926T061453Z"
+      ],
+      "remaining": "No route defect found. Owner decision open: an ineligible ledger tip still sets the HWM bar. Revocation source (W12), engine/cli corpus routes and binary/multiclass mutation coverage remain."
     },
     "W4-T01": {
       "states": [

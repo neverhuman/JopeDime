@@ -6,10 +6,10 @@ not CI verification, and neither is live qualification. No finding closes throug
 
 | State | Tasks |
 |---|---:|
-| planned | 44 |
+| planned | 43 |
 | reproduced | 11 |
-| implemented | 26 |
-| fixture-proven | 21 |
+| implemented | 27 |
+| fixture-proven | 22 |
 | CI-verified | 0 |
 | live-qualified | 0 |
 | measurement-complete | 0 |
@@ -49,7 +49,7 @@ not CI verification, and neither is live qualification. No finding closes throug
 | W3-T04 Recompute metrics from exact authenticated predictions | reproduced, implemented, fixture-proven | 170cb384d86f; forged_units_cannot_relabel_a_measured_score; pooled_rmse_r2_and_tail_are_separately_named_diagnostics; independent_evaluator_agrees_with_mean_fold_admission_on_uneven_folds; +1 tests | Fitted artifacts are not bound to their own fold's training rows (no row identity in either artifact schema); classification metric validity is deferred. |
 | W3-T05 Separate eligibility from HWM transition outcomes | reproduced, implemented, fixture-proven | 2db85243df5a; 7216cad2168b; transitions_separate_initialization_ties_non_improvement_and_improvement; eligibility_alone_and_redelivery_never_count_as_improvement | Per-fold tail diagnostics landed in W3-T04 and the explicit duplicate outcome in W3-T06. |
 | W3-T06 Make decisions recoverably link to corpus eligibility | reproduced, implemented, fixture-proven | 6be3fd4597e7; qualification_without_a_durable_decision_is_not_eligible_until_qualify_resumes; crash_between_hwm_append_and_pointer_advance_never_lists_a_superseded_teacher; first_acceptance_lost_before_its_pointer_is_visible_not_silently_absent; +4 tests | No CLI verb for hwm::recover; rejected redeliveries are not deduplicated; mirror-side lagging pointers are W8; corpus-writer linkage is outside jope-learning. |
-| W3-T07 Run the full ingress adversarial matrix | planned | — | — |
+| W3-T07 Run the full ingress adversarial matrix | implemented, fixture-proven | c4f60b4c7a2e; eligibility::tests::matrix (19: 16 classes x 5 routes = 80 refusals, positive controls for regression/binary/multiclass, independent replay) | No route defect found. Owner decision open: an ineligible ledger tip still sets the HWM bar. Revocation source (W12), engine/cli corpus routes and binary/multiclass mutation coverage remain. |
 
 ## W04
 
