@@ -5,6 +5,7 @@
 //! Fixtures are disposable copies of the committed records under Cargo's test scratch
 //! directory, never the committed tree itself.
 
+mod claim_inventory;
 mod claims;
 mod cli;
 mod dispositions;
