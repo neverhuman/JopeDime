@@ -181,6 +181,43 @@ The evidence root is
   conservative, not permissive. Deciding whether a quarantined incumbent should stop
   defining the bar is W3-T05/T06 scope.
 
+## Related: W3-T05 explicit HWM transitions (fixture-proven, same branch)
+
+Eligibility stays separate from HWM state. `qualify` writes no HWM event, and `hwm::ingest`
+now records exactly one `Transition` per candidate:
+
+- `initialized`
+- `improved`
+- `tie`
+- `not-improved`
+- `noncomparable`
+- `ineligible`
+- `invalid`
+
+`IngestReport.transitions` counts them. `hwm::verify` rederives `initialized` and `improved`
+from ledger order, independent of any recorded flag, and reports `transition-mismatch`.
+The existing `decide` rule, guard and pointer movement are unchanged.
+
+Evidence:
+
+- **Pre-fix** `w3-t05-prefix-transitions-20260926T052543Z/`: both tests FAILED. The events
+  carried no transition (`[Null, ...]`), so a bootstrap was indistinguishable from an
+  improvement.
+- **Post-fix** `w3-t05-postfix-transitions-20260926T052648Z/`: `jope-learning` 87 of 87 pass,
+  with 0 skipped.
+
+Tests:
+
+- `hwm::tests::transitions_separate_initialization_ties_non_improvement_and_improvement`
+- `eligibility::tests::transitions::eligibility_alone_and_redelivery_never_count_as_improvement`
+
+Not done:
+
+- per-fold adverse-tail diagnostics;
+- idempotent delivery identity: a redelivered record is a `tie`, not a distinct `duplicate`;
+- race and crash reconciliation (T06);
+- whether a quarantined legacy incumbent should stop defining the bar.
+
 ## Not established here (open)
 
 - **Producer authentication.** The receipt is a producer claim: nothing executes or signs
