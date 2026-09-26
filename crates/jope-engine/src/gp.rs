@@ -182,11 +182,33 @@ pub fn fit_view(prepared: &Path, cut: usize, genome: &str, output: &Path) -> Res
         "preprocessing",
     )
     .context("preprocessing changed")?;
-    let preprocessing: Preprocessing = serde_json::from_slice(&preprocessing_bytes)?;
     let table = crate::prepare::load_view(prepared, cut, true)?;
-    let (x, y) = xy(&table);
+    fit_projected(
+        &table,
+        &c.training_sha256,
+        preprocessing_bytes,
+        genome,
+        output,
+    )
+}
+
+/// Fit exactly the given projected training rows (W1 follow-up 2c). Shared by
+/// the in-process fitted-view fit and the sealed-memory export worker.
+fn fit_projected(
+    rows: &[Vec<f64>],
+    training_sha256: &str,
+    preprocessing_bytes: Vec<u8>,
+    genome: &str,
+    output: &Path,
+) -> Result<()> {
+    ensure!(
+        hash(&csv_bytes(rows)?) == training_sha256,
+        "projected training rows differ from the cut's training identity"
+    );
+    let preprocessing: Preprocessing = serde_json::from_slice(&preprocessing_bytes)?;
+    let (x, y) = xy(rows);
     let g = GenomeIr::parse(genome)?;
-    let feature_view = raw_feature_view(&c.training_sha256, &preprocessing_bytes)?;
+    let feature_view = raw_feature_view(training_sha256, &preprocessing_bytes)?;
     let fitted = crate::fit_boundary::fit(
         &g.canonical(),
         x,
@@ -201,16 +223,134 @@ pub fn fit_view(prepared: &Path, cut: usize, genome: &str, output: &Path) -> Res
             schema: "parallel.predictor.v1".into(),
             task: "regression".into(),
             canonical: g.canonical(),
-            training_sha256: c.training_sha256.clone(),
-            feature_count: table[0].len() - 1,
+            training_sha256: training_sha256.into(),
+            feature_count: rows.first().context("empty projected training rows")?.len() - 1,
             preprocessing,
             model: fitted.model,
             fit_completion: Some(fitted.completion),
         },
     )
 }
+
+/// Largest preparation state a projected export input may carry.
+const FIT_MEMORY_MAX_PREPROCESSING: usize = 16 * 1024 * 1024;
+
+/// A sealed anonymous memory file holding exactly one cut's projected training
+/// rows and the verified bytes of its learned preparation state: the export
+/// worker's whole input (W1 follow-up 2c). Layout: three little-endian u64
+/// (rows, width, preparation length), the preparation bytes, then the rows as
+/// little-endian f64. Inheritable, so a spawned worker receives it by number.
+pub fn fit_memory_input(rows: &[Vec<f64>], preprocessing: &[u8]) -> Result<fs::File> {
+    use std::io::Write;
+    use std::os::fd::{AsRawFd, FromRawFd};
+    let width = rows.first().context("empty projected training rows")?.len();
+    ensure!(
+        width >= 2
+            && rows.len() <= ROW_LIMIT
+            && rows.iter().all(|r| r.len() == width)
+            && preprocessing.len() <= FIT_MEMORY_MAX_PREPROCESSING,
+        "invalid projected export input shape"
+    );
+    let name = std::ffi::CString::new("jope-fit-input").unwrap();
+    let fd = unsafe { libc::memfd_create(name.as_ptr(), libc::MFD_ALLOW_SEALING) };
+    ensure!(fd >= 0, "memfd_create failed");
+    let file = unsafe { fs::File::from_raw_fd(fd) };
+    {
+        let mut out = std::io::BufWriter::new(&file);
+        for n in [rows.len(), width, preprocessing.len()] {
+            out.write_all(&(n as u64).to_le_bytes())?;
+        }
+        out.write_all(preprocessing)?;
+        for row in rows {
+            for value in row {
+                out.write_all(&value.to_le_bytes())?;
+            }
+        }
+        out.flush()?;
+    }
+    ensure!(
+        unsafe {
+            libc::fcntl(
+                file.as_raw_fd(),
+                libc::F_ADD_SEALS,
+                libc::F_SEAL_WRITE | libc::F_SEAL_GROW | libc::F_SEAL_SHRINK | libc::F_SEAL_SEAL,
+            )
+        } == 0,
+        "sealing projected export input failed"
+    );
+    Ok(file)
+}
+
+/// The export worker (hidden `fit-memory` command): fits exactly the sealed
+/// projected input inherited as `fd`. It is handed no prepared path, root or
+/// backing table and opens none; the rows and preparation state must match the
+/// identities its parent read from the cut.
+pub fn fit_memory(
+    fd: i32,
+    training_sha256: &str,
+    preprocessing_sha256: &str,
+    genome: &str,
+    output: &Path,
+) -> Result<()> {
+    use std::io::{Read, Seek, SeekFrom};
+    use std::os::fd::FromRawFd;
+    ensure!(!output.exists(), "fitted predictor already exists");
+    ensure!(fd >= 3, "invalid inherited projected input descriptor");
+    let seals = unsafe { libc::fcntl(fd, libc::F_GET_SEALS) };
+    ensure!(
+        seals >= 0 && seals & libc::F_SEAL_WRITE != 0 && seals & libc::F_SEAL_SHRINK != 0,
+        "projected export input must be sealed memory"
+    );
+    let copy = unsafe { libc::dup(fd) };
+    ensure!(copy >= 0, "projected input descriptor missing");
+    let mut file = unsafe { fs::File::from_raw_fd(copy) };
+    file.seek(SeekFrom::Start(0))?;
+    let mut header = [0u8; 24];
+    file.read_exact(&mut header)?;
+    let dims = header
+        .chunks_exact(8)
+        .map(|b| u64::from_le_bytes(b.try_into().unwrap()) as usize)
+        .collect::<Vec<_>>();
+    ensure!(
+        dims[0] > 0
+            && dims[0] <= ROW_LIMIT
+            && dims[1] >= 2
+            && dims[2] <= FIT_MEMORY_MAX_PREPROCESSING,
+        "invalid projected export input header"
+    );
+    let mut preprocessing = vec![0u8; dims[2]];
+    file.read_exact(&mut preprocessing)?;
+    ensure!(
+        hash(&preprocessing) == preprocessing_sha256,
+        "projected preparation state differs from the cut's identity"
+    );
+    let cells = dims[0]
+        .checked_mul(dims[1])
+        .context("projected input dimensions overflow")?;
+    let mut bytes = vec![0u8; cells * 8];
+    file.read_exact(&mut bytes)?;
+    let mut rest = [0u8; 1];
+    ensure!(
+        file.read(&mut rest)? == 0,
+        "projected export input has trailing bytes"
+    );
+    let rows = bytes
+        .chunks_exact(dims[1] * 8)
+        .map(|row| {
+            row.chunks_exact(8)
+                .map(|b| f64::from_le_bytes(b.try_into().unwrap()))
+                .collect::<Vec<_>>()
+        })
+        .collect::<Vec<_>>();
+    fit_projected(&rows, training_sha256, preprocessing, genome, output)
+}
+
 /// Export a fitted predictor under the same CPU, memory and time limits as a
 /// teacher candidate. A failed export must not strand the neural cycle.
+/// Legacy callers without a declared root: the parent projects through
+/// [`crate::prepare::load_view`] (the view's workspace ancestor). The
+/// selected-export handoff declares its root ([`fit_view_isolated_in_root`]).
+/// Either way the worker receives only the sealed projection.
 pub fn fit_view_isolated(
     executable: &Path,
     prepared: &Path,
@@ -218,90 +358,154 @@ pub fn fit_view_isolated(
     genome: &str,
     output: &Path,
 ) -> Result<()> {
+    isolated_export(executable, None, prepared, cut, genome, output)
+}
+
+/// The isolated fitted-view export (W1 follow-up 2c): the parent projects the
+/// cut's fitting-only input under the declared `root` - digest-verified
+/// training rows and preparation state - and the worker (`fit-memory`)
+/// receives only that sealed projection; it is given no prepared path and
+/// resolves no view. The receipt records the root, the projection and the
+/// worker's exact argv. A projection that cannot be made under the root is a
+/// receipted failure before any worker starts.
+pub fn fit_view_isolated_in_root(
+    executable: &Path,
+    root: &Path,
+    prepared: &Path,
+    cut: usize,
+    genome: &str,
+    output: &Path,
+) -> Result<()> {
+    isolated_export(executable, Some(root), prepared, cut, genome, output)
+}
+
+fn isolated_export(
+    executable: &Path,
+    root: Option<&Path>,
+    prepared: &Path,
+    cut: usize,
+    genome: &str,
+    output: &Path,
+) -> Result<()> {
+    use std::os::fd::AsRawFd;
     use std::os::unix::process::CommandExt;
     ensure!(!output.exists(), "fitted predictor already exists");
     let executable_sha256 = file_hash(executable)?;
-    let prepared_sha256 = file_hash(&prepared.join("prepared.json"))?;
+    let prepared_bytes = fs::read(prepared.join("prepared.json"))?;
+    let prepared_sha256 = hash(&prepared_bytes);
     let program_sha256 = hash(genome.as_bytes());
     fs::create_dir_all(output.parent().context("predictor output parent absent")?)?;
     let log_path = output.with_extension("fit.log");
     let receipt_path = output.with_extension("fit.json");
     let log = fs::File::create(&log_path)?;
-    let mut command = evaluator_command(executable);
-    command
-        .args(["fit-view", "--prepared"])
-        .arg(prepared)
-        .arg("--cut")
-        .arg(cut.to_string())
-        .arg("--genome")
-        .arg(genome)
-        .arg("--output")
-        .arg(output)
-        .env("RAYON_NUM_THREADS", "1")
-        .env("OMP_NUM_THREADS", "1")
-        .env("OPENBLAS_NUM_THREADS", "1")
-        .env("MKL_NUM_THREADS", "1")
-        .env(
-            "JOPE_FIT_DEADLINE_MONOTONIC_NS",
-            crate::fit_boundary::deadline_after(Duration::from_secs(30))?.to_string(),
-        )
-        .stdout(Stdio::from(log.try_clone()?))
-        .stderr(Stdio::from(log));
-    unsafe {
-        command.pre_exec(|| {
-            let limit = libc::rlimit {
-                rlim_cur: 8 * 1024 * 1024 * 1024,
-                rlim_max: 8 * 1024 * 1024 * 1024,
-            };
-            if libc::setrlimit(libc::RLIMIT_AS, &limit) != 0 || libc::setpgid(0, 0) != 0 {
-                return Err(std::io::Error::last_os_error());
-            }
-            Ok(())
-        });
-    }
-    crate::campaign::check_deadline()?;
     let started = Instant::now();
-    let mut child = command.spawn()?;
+    let mut projection = serde_json::Value::Null;
+    let mut worker_argv: Vec<String> = Vec::new();
     let result = (|| -> Result<()> {
-        loop {
-            crate::campaign::check_deadline()?;
-            if let Some(status) = child.try_wait()? {
-                ensure!(status.success(), "fitted predictor worker exited: {status}");
-                break;
-            }
-            ensure!(
-                started.elapsed() < Duration::from_secs(30),
-                "fitted predictor worker timeout after 30 seconds"
-            );
-            std::thread::sleep(Duration::from_millis(10));
-        }
+        let p: Prepared = serde_json::from_slice(&prepared_bytes)?;
         ensure!(
-            output.is_file(),
-            "fitted predictor worker produced no predictor"
+            p.schema == "parallel.prepared.v1" && p.task == "regression",
+            "regression preparation required"
         );
-        let fitted: Predictor = read_json(output)?;
-        ensure!(
-            fitted.canonical == GenomeIr::parse(genome)?.canonical(),
-            "fitted predictor program changed"
-        );
-        let p: Prepared = read_json(&prepared.join("prepared.json"))?;
         let c = p
             .cuts
             .iter()
             .find(|c| c.index == cut)
-            .context("fitted cut absent")?;
-        ensure!(
-            fitted.training_sha256 == c.training_sha256,
-            "fitted predictor cut changed"
-        );
-        Ok(())
-    })();
-    if child.try_wait()?.is_none() {
+            .context("unknown cut")?;
+        // The fitting-only projection, made here: under the declared root, or
+        // for a legacy caller through the view's own resolution.
+        let rows = match root {
+            Some(root) => crate::prepare::load_view_in_root(root, prepared, cut, true)?,
+            None => crate::prepare::load_view(prepared, cut, true)?,
+        };
+        let preprocessing = read_verified(
+            &prepared.join(format!("cut-{cut}/preprocessing.json")),
+            &c.preprocessing_sha256,
+            "preprocessing",
+        )?;
+        let memory = fit_memory_input(&rows, &preprocessing)?;
+        projection = json!({"kind":"sealed_memory_projection","rows":rows.len(),
+            "training_sha256":c.training_sha256,"preprocessing_sha256":c.preprocessing_sha256});
+        worker_argv = [
+            "fit-memory",
+            "--fd",
+            &memory.as_raw_fd().to_string(),
+            "--training-sha256",
+            &c.training_sha256,
+            "--preprocessing-sha256",
+            &c.preprocessing_sha256,
+            "--genome",
+            genome,
+            "--output",
+        ]
+        .iter()
+        .map(|a| a.to_string())
+        .chain([output.display().to_string()])
+        .collect();
+        let mut command = evaluator_command(executable);
+        command
+            .args(&worker_argv)
+            .env("RAYON_NUM_THREADS", "1")
+            .env("OMP_NUM_THREADS", "1")
+            .env("OPENBLAS_NUM_THREADS", "1")
+            .env("MKL_NUM_THREADS", "1")
+            .env(
+                "JOPE_FIT_DEADLINE_MONOTONIC_NS",
+                crate::fit_boundary::deadline_after(Duration::from_secs(30))?.to_string(),
+            )
+            .stdout(Stdio::from(log.try_clone()?))
+            .stderr(Stdio::from(log.try_clone()?));
         unsafe {
-            libc::kill(-(child.id() as i32), libc::SIGKILL);
+            command.pre_exec(|| {
+                let limit = libc::rlimit {
+                    rlim_cur: 8 * 1024 * 1024 * 1024,
+                    rlim_max: 8 * 1024 * 1024 * 1024,
+                };
+                if libc::setrlimit(libc::RLIMIT_AS, &limit) != 0 || libc::setpgid(0, 0) != 0 {
+                    return Err(std::io::Error::last_os_error());
+                }
+                Ok(())
+            });
         }
-        let _ = child.wait();
-    }
+        crate::campaign::check_deadline()?;
+        let mut child = command.spawn()?;
+        let waited = (|| -> Result<()> {
+            loop {
+                crate::campaign::check_deadline()?;
+                if let Some(status) = child.try_wait()? {
+                    ensure!(status.success(), "fitted predictor worker exited: {status}");
+                    break;
+                }
+                ensure!(
+                    started.elapsed() < Duration::from_secs(30),
+                    "fitted predictor worker timeout after 30 seconds"
+                );
+                std::thread::sleep(Duration::from_millis(10));
+            }
+            ensure!(
+                output.is_file(),
+                "fitted predictor worker produced no predictor"
+            );
+            let fitted: Predictor = read_json(output)?;
+            ensure!(
+                fitted.canonical == GenomeIr::parse(genome)?.canonical(),
+                "fitted predictor program changed"
+            );
+            ensure!(
+                fitted.training_sha256 == c.training_sha256,
+                "fitted predictor cut changed"
+            );
+            Ok(())
+        })();
+        if child.try_wait()?.is_none() {
+            unsafe {
+                libc::kill(-(child.id() as i32), libc::SIGKILL);
+            }
+            let _ = child.wait();
+        }
+        drop(memory);
+        waited
+    })();
     write_json(
         &receipt_path,
         &json!({
@@ -311,6 +515,10 @@ pub fn fit_view_isolated(
             "predictor_sha256":if result.is_ok(){Some(file_hash(output)?)}else{None},
             "wall_seconds":started.elapsed().as_secs_f64(), "timeout_seconds":30,
             "memory_limit_gib":8, "threads":1, "cut_csv_copies":0,
+            "artifact_root":root,
+            "view_resolution":if root.is_some(){"declared_root"}else{"legacy_view_resolution"},
+            "worker_input":projection, "worker_argv":worker_argv,
+            "worker_opens_prepared":false,
             "failure":result.as_ref().err().map(|e|format!("{e:#}")),
             "log_sha256":file_hash(&log_path)?, "final_tests_opened":false
         }),

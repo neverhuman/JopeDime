@@ -203,8 +203,11 @@ pub fn export_sealed(
         let genome = seal["selected"]["executable_program"]
             .as_str()
             .context("sealed recipe")?;
-        let exported = super::fit_view_isolated(executable, &prepared, cut, genome, predictor)
-            .and_then(|()| lineage::verify_final_refit(&root, &verified, predictor));
+        // W1 follow-up 2c: the export projects its fitting input under the
+        // search's declared root; the worker receives only that projection.
+        let exported =
+            super::fit_view_isolated_in_root(executable, &root, &prepared, cut, genome, predictor)
+                .and_then(|()| lineage::verify_final_refit(&root, &verified, predictor));
         match exported {
             Ok(refit) => {
                 handoff["status"] = json!("exported");

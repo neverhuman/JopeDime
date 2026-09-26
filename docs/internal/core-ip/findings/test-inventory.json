@@ -2195,6 +2195,13 @@
         "preparation"
       ]
     },
+    "target:jope-parallel/test/projected_export": {
+      "role": "regression",
+      "subsystems": [
+        "fitting",
+        "preparation"
+      ]
+    },
     "target:jope-parallel/test/proposal_ranking": {
       "role": "regression",
       "subsystems": [

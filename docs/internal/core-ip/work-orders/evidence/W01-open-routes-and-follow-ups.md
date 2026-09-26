@@ -125,3 +125,114 @@ workspace all-targets check, coverage validate, verify-test-inventory, fmt and d
 | R10 (`JOPE_DATASETS_URL`, credential chain) | Only `jope-datasets` (`store.rs`, `cli.rs`, `lib.rs`) reads them: the acquisition component. No engine or bench receiver does. Removing broad credentials from the managed worker is W7 (live). |
 | R12 (self-certified context-producer training identity) | Binding needs two things outside this lane. (a) A per-cut fitting-row alignment digest in the regression release: a release v2, so a new release identity. (b) The context producer's `TrainingIdentity` to carry and verify it: the jope-policy W2 schema. W2-T03 added request-issued admission (`prepared_sha256` binding), not a release binding. |
 | R8 remainder | `label_admission.rs:477-481` (teacher; outside this lane's partition). Pinned `eval_registry` sites. |
+
+## Round 4 — branch `rr/w1-inputs-4`, base `be687d8d5`
+
+Evidence: `runs/w1b-r4-*` (reproductions and post-fix runs) and `runs/w1b-c<N>-*`
+(pre-commit sets).
+
+The integrated head `be687d8d5` was verified before any change was built on it, on a
+clean tree:
+- engine 157/157 and jope-datasets 68/68;
+- workspace all-targets check, coverage validate (0 unassigned), verify-test-inventory,
+  fmt and diff-check.
+
+`manifest::read_verified` and the W6 `atomic_write` do not interact. The writer publishes
+by rename from a unique temporary; the reader reads one opened object once and hashes
+those bytes. A rename between the reader's open and read cannot mix the two objects.
+
+## 2b — `outer-release` CLI
+
+This is a new capability, so it has no defect reproduction. The prefix run
+`w1b-r4-2b-prefix-cli-*` records that the shipped binary had no such verb (`unrecognized
+subcommand 'outer-release'`).
+
+Commit `4f43295d6`. Verbs:
+- `jope-parallel outer-release init|grant|score|release|events`;
+- each call goes to the one `gp::outer_release::Authority` (grant, withheld score, single
+  release, hash-chained ledger).
+
+The shipped binary keeps the fit fence. A grant for a predictor that no authority-bound
+export produced is refused and recorded.
+
+Tests:
+- `tests/outer_release_cli.rs`, against the shipped binary:
+  - refused re-init;
+  - refused grant;
+  - refused release without a withheld score;
+  - the event sequence;
+  - `--help` listing.
+- `gp::fit_contract_tests::the_outer_release_cli_grants_scores_and_releases_once`, under
+  the fixture fit authority:
+  - grant, score and release once;
+  - a second grant, score and release are each refused;
+  - an unknown verb or a missing flag is a parse refusal.
+
+Pre-commit `w1b-c4-2b-*`: engine 159/159 and datasets 68/68. The parity matrix, coverage
+(0 unassigned), inventory, fmt and diff-check all exit 0. The capability matrix has a new
+`outer-release` row, and the counts are recomputed.
+
+## 2c — the export worker receives its projected input (R2 at the export receiver)
+
+**Defect.** `gp::handoff::export_sealed` spawned `fit-view --prepared <path>`. The worker
+reloaded the fitting view itself through `load_view`, whose ancestor walk picks the
+nearest directory holding `manifests/` and `Cargo.toml`, not the search's declared root.
+
+**Reproduction.** `w1b-r4-2c-prefix-20260926T102350Z`. The setup:
+- the declared root is relocated without workspace markers;
+- an ancestor is a workspace holding a byte-identical backing table;
+- the root's own backing is moved away.
+
+The export succeeded by reading the ancestor's copy ("the export read its fitting view from
+outside the declared root").
+
+**Fix.**
+- The parent projects the cut's fitting rows once, under the declared root
+  (`load_view_in_root`). It reads the preparation state with `read_verified`.
+- The worker receives only a sealed memfd holding those rows and that state
+  (`gp::fit_memory_input`: write, grow, shrink and seal seals).
+- The new hidden verb `fit-memory` reads only that descriptor. It refuses:
+  - an unsealed descriptor;
+  - a training digest that differs from the cut's;
+  - a preparation digest that differs from the cut's;
+  - trailing bytes.
+
+  It then fits through the same `fit_boundary` authority (`gp::fit_projected`, which the
+  in-process `fit_view` also uses).
+- The export receipt records `artifact_root`, `view_resolution`, `worker_input`,
+  `worker_argv` and `worker_opens_prepared: false`.
+- A projection that cannot be made under the root is a failed receipt, and no worker
+  starts.
+
+**Tests.**
+- `gp::fit_contract_tests::the_export_worker_receives_its_projected_input_and_never_resolves_the_view_itself`:
+  - negative: the backing exists only outside the root, so the export fails, the receipt
+    fails and no worker argv is recorded;
+  - positive control: the backing is restored inside the root and the decoy ancestor
+    stays a workspace. The export succeeds through `sealed_memory_projection`, and no argv
+    element names the prepared path.
+- `tests/projected_export.rs`, against the shipped binary: `fit-memory` is fenced
+  (`UNVERIFIED_ACTIVATION`). It refuses a mismatched training identity and an unsealed
+  regular file, with zero fit starts and zero worker spawns.
+
+**First post-fix run.** `w1b-r4-2c-postfix-*` had 2 fence failures (47/49). The legacy
+`fit_view_isolated` resolved its workspace before creating its receipt. On the fence
+suites' marker-less fixture views, a fenced export therefore left no failed receipt. The
+legacy wrapper now projects through `load_view` inside the receipted closure. The receipt
+records `view_resolution: legacy_view_resolution`.
+
+**Results.**
+- Post-fix `w1b-r4-2c-postfix2-20260926T102732Z`: 49/49, fence suites included.
+- Pre-commit `w1b-c5-2c-*`: engine 161/161 and datasets 68/68. The parity matrix,
+  coverage (0 unassigned, 253 targets), inventory, fmt and diff-check all exit 0.
+- The capability matrix has a new `fit-memory` row (hidden from `--help`), and the counts
+  are recomputed.
+
+**Still open.**
+- R2 for the public in-process `fit-view` verb and the legacy `fit_view_isolated` wrapper:
+  both still resolve through `load_view`, with digest-verified bytes and an unbounded
+  location.
+- The remaining `load_view` callers listed above.
+- The inherited memfd is sealed read-only and carries fitting rows only. It is created
+  without close-on-exec so the worker can inherit it, so a child spawned concurrently by
+  another thread of the same parent could inherit it too.

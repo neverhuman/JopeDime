@@ -126,6 +126,17 @@ fn run_cli(argv: &[String]) -> Result<()> {
             &text("genome")?,
             &path("output")?,
         ),
+        // The isolated export's worker (W1 follow-up 2c).
+        "fit-memory" if std::env::var(FAULT).as_deref() == Ok("fail_export") => {
+            anyhow::bail!("fixture: fitted-view export unavailable")
+        }
+        "fit-memory" => fit_memory(
+            text("fd")?.parse()?,
+            &text("training-sha256")?,
+            &text("preprocessing-sha256")?,
+            &text("genome")?,
+            &path("output")?,
+        ),
         // Same library call the original test made in-process, run inside a
         // configured client so its spawned worker inherits the fit bindings.
         "fit-view-isolated" => fit_view_isolated(
@@ -3375,4 +3386,78 @@ fn the_outer_release_cli_grants_scores_and_releases_once() {
     // An unknown verb or a missing required flag is a parse refusal, not a call.
     assert!(outer_release_cli_run(&["outer-release", "publish", "--authority", &a]).is_err());
     assert!(outer_release_cli_run(&["outer-release", "grant", "--authority", &a]).is_err());
+}
+
+/// W1 follow-up 2c (consumer-map route R2 at the export worker): the fitted
+/// predictor export worker loaded its own view from the prepared path and
+/// resolved the backing table under the nearest ancestor holding
+/// `manifests/` and `Cargo.toml` - not under the search's declared root. The
+/// parent must project the fitting-only input under the declared root and
+/// hand the worker only that sealed projection.
+#[test]
+fn the_export_worker_receives_its_projected_input_and_never_resolves_the_view_itself() {
+    let temp = tempfile::tempdir().unwrap();
+    let outer = temp.path().canonicalize().unwrap();
+    let root = outer.join("declared");
+    fs::create_dir_all(&root).unwrap();
+    let prepared = view_fixture_in(&root, "example", &[8, 9]);
+    let mut authority = Fixture::activated(&root, vec![cut_training_hash(&prepared)]);
+    authority.start();
+    let (output, seeds) = handoff_search(&authority, &root, &prepared);
+    // The declared root is a relocated copy without workspace markers, and an
+    // ancestor is a workspace holding a byte-identical backing table.
+    fs::remove_dir_all(root.join("manifests")).unwrap();
+    fs::remove_file(root.join("Cargo.toml")).unwrap();
+    let backing = root.join("data/originals/raw.csv");
+    let decoy = outer.join("data/originals/raw.csv");
+    fs::create_dir_all(outer.join("manifests")).unwrap();
+    fs::write(outer.join("Cargo.toml"), "[workspace]\n").unwrap();
+    fs::create_dir_all(decoy.parent().unwrap()).unwrap();
+    fs::copy(&backing, &decoy).unwrap();
+
+    // The backing table exists only outside the declared root: the export
+    // must refuse rather than read it there.
+    let away = root.join("raw.csv.away");
+    fs::rename(&backing, &away).unwrap();
+    let outside = root.join("exported-outside.json");
+    let refused = export_selected(&authority, &root, &prepared, &output, &seeds, &outside)
+        .output()
+        .unwrap();
+    assert!(
+        !refused.status.success(),
+        "the export read its fitting view from outside the declared root"
+    );
+    assert!(!outside.exists());
+    let handoff: Value = read_json(&outside.with_extension("handoff.json")).unwrap();
+    assert_eq!(handoff["status"], "export_failed");
+    let receipt: Value = read_json(&outside.with_extension("fit.json")).unwrap();
+    assert_eq!(receipt["passed"], false);
+    assert!(receipt["worker_argv"].as_array().is_none_or(Vec::is_empty));
+
+    // The backing table only inside the declared root, the decoy ancestor
+    // still a workspace without it: the export succeeds, and its worker was
+    // handed the sealed projection and no prepared path.
+    fs::rename(&away, &backing).unwrap();
+    fs::remove_file(&decoy).unwrap();
+    let inside = root.join("exported.json");
+    success(
+        export_selected(&authority, &root, &prepared, &output, &seeds, &inside)
+            .output()
+            .unwrap(),
+    );
+    let receipt: Value = read_json(&inside.with_extension("fit.json")).unwrap();
+    assert_eq!(receipt["passed"], true);
+    assert_eq!(receipt["worker_input"]["kind"], "sealed_memory_projection");
+    assert_eq!(receipt["artifact_root"], json!(root));
+    let argv = receipt["worker_argv"].as_array().unwrap();
+    assert_eq!(argv[0], "fit-memory");
+    assert!(argv
+        .iter()
+        .all(|a| !a.as_str().unwrap().contains("prepared")));
+    let handoff: Value = read_json(&inside.with_extension("handoff.json")).unwrap();
+    assert_eq!(handoff["status"], "exported");
+    let exported: Predictor = read_json(&inside).unwrap();
+    let p: Prepared = read_json(&prepared.join("prepared.json")).unwrap();
+    assert_eq!(exported.training_sha256, p.cuts[0].training_sha256);
+    authority.stop_service();
 }

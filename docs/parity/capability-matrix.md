@@ -20,7 +20,7 @@ you saw.
 |---|---:|---:|---:|---:|---:|---:|
 | engine-binary | 12 | 11 | 0 | 1 | 0 | 0 |
 | engine-example | 12 | 12 | 0 | 0 | 0 | 0 |
-| engine-subcommand | 95 | 88 | 7 | 0 | 0 | 0 |
+| engine-subcommand | 96 | 88 | 8 | 0 | 0 | 0 |
 | jope-prime-command | 49 | 49 | 0 | 0 | 0 | 0 |
 | justfile-recipe | 6 | 6 | 0 | 0 | 0 | 0 |
 | new-bin | 14 | 0 | 14 | 0 | 0 | 0 |
@@ -40,7 +40,7 @@ you saw.
 | vendored-bin | 6 | 6 | 0 | 0 | 0 | 0 |
 | vendored-example | 6 | 6 | 0 | 0 | 0 | 0 |
 | wire | 5 | 0 | 0 | 0 | 5 | 0 |
-| **total** | **785** | **735** | **22** | **1** | **20** | **7** |
+| **total** | **786** | **735** | **23** | **1** | **20** | **7** |
 
 `moved`/`new` rows without a covering test: 659.
 
@@ -831,5 +831,6 @@ you saw.
 | new-bin | (new) policy proposal worker | crates/jope-policy/src/bin/jope-policy-producer.rs (jope-policy-producer) | none | new | Private regression proposal worker for the accepted checkpoint or exactly one pinned native challenger (DEMO-3); source implementation is distinct from actual bounded model/proposal/fit qualification. |
 | new-bin | (new) GP selection replay | crates/jope-engine/src/bin/jope-gp-selection-replay.rs (jope-gp-selection-replay) | none | new | Read-only independent replay of one completed search's GP selector and stop decisions against `parallel.gp_selection_contract.v1` (W5-T06); never fits, writes or publishes. |
 | new-bin | (new) core-IP records | crates/jope-records/src/main.rs (jope-records) | jope-records::* (84 tests) | new | Core-IP record verifiers and STATUS/PROGRESS renderers; Rust port of the retired docs/internal/core-ip/tools verifier scripts. Records status only; qualifies nothing. |
+| engine-subcommand | (new) projected fitted-view export worker | crates/jope-engine/src/main.rs (jope-parallel fit-memory) | jope-parallel::projected_export shipped_fit_memory_is_fenced_and_refuses_a_mismatched_or_unsealed_projection; jope-parallel gp::fit_contract_tests::the_export_worker_receives_its_projected_input_and_never_resolves_the_view_itself | new | hidden from --help; the isolated export's worker: fits exactly the sealed projected fitting input its parent made under the declared root (W1 follow-up 2c), opens no prepared path; fenced like every public fit |
 | engine-subcommand | (new) outer score release authority | crates/jope-engine/src/main.rs (jope-parallel outer-release) | jope-parallel::outer_release_cli the_shipped_outer_release_verbs_record_refusals_and_release_nothing; jope-parallel gp::fit_contract_tests::the_outer_release_cli_grants_scores_and_releases_once | new | ungated; init, grant, score, release and events of the W1-T04 outer release authority (sealed labels reach only a granted outer scorer, one recorded attempt per grant, withheld result, single release, hash-chained ledger); fixture scope, not OS isolation of the scorer (W7) |
 | engine-subcommand | (new) native challenger export | crates/jope-engine/src/main.rs (jope-parallel export-policy) | none | new | `neural` feature (self-hosted only); CPU-only export of a verified checkpoint to policy.safetensors with a jope.checkpoint_export.v1 receipt (DEMO-3); not a serving or promotion path |

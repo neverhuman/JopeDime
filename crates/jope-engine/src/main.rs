@@ -683,6 +683,21 @@ enum Cmd {
         #[arg(long)]
         output: PathBuf,
     },
+    /// Isolated export worker: fits exactly the sealed projected input
+    /// inherited as `--fd`; opens no prepared path (W1 follow-up 2c).
+    #[command(hide = true)]
+    FitMemory {
+        #[arg(long)]
+        fd: i32,
+        #[arg(long)]
+        training_sha256: String,
+        #[arg(long)]
+        preprocessing_sha256: String,
+        #[arg(long)]
+        genome: String,
+        #[arg(long)]
+        output: PathBuf,
+    },
     Predict {
         #[arg(long)]
         model: PathBuf,
@@ -1809,6 +1824,19 @@ fn main() -> Result<()> {
             genome,
             output,
         } => jope_parallel::gp::fit_view(&prepared, cut, &genome, &output)?,
+        Cmd::FitMemory {
+            fd,
+            training_sha256,
+            preprocessing_sha256,
+            genome,
+            output,
+        } => jope_parallel::gp::fit_memory(
+            fd,
+            &training_sha256,
+            &preprocessing_sha256,
+            &genome,
+            &output,
+        )?,
         Cmd::Predict {
             model,
             features,
