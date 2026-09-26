@@ -58,6 +58,7 @@ fn evaluator_command(executable: &Path) -> Command {
 
 #[cfg(test)]
 mod fit_contract_tests;
+pub mod selection_replay;
 
 #[cfg(test)]
 mod cpu_evaluator_tests {
@@ -1066,6 +1067,24 @@ pub fn read_journal(path: &Path) -> Result<Vec<serde_json::Value>> {
     Ok(records)
 }
 
+/// A journaled success is resumable measured evidence only while its original
+/// completion attests exactly that output. Model eviction is not examined here;
+/// `selection_replay` authenticates the complete fitted evidence independently.
+fn journaled_measurement_attested(root: &Path, row: &serde_json::Value) -> Result<()> {
+    let completion = crate::label_admission::artifact(root, &row["clean_completion"])
+        .context("journaled measurement lacks its original completion")?;
+    ensure!(
+        completion["schema"] == crate::label_admission::COMPLETION_SCHEMA
+            && completion["outcome"] == "success"
+            && completion["failure"].is_null()
+            && completion["evaluation_identity_sha256"] == row["evaluation_identity_sha256"]
+            && completion["program_sha256"] == row["program_sha256"]
+            && crate::label_admission::artifact(root, &completion["output"])? == row["metrics"],
+        "journaled measurement differs from its original completion"
+    );
+    Ok(())
+}
+
 fn experiment_failpoint(name: &str, isolated: bool) {
     // Only explicitly isolated experiments can exercise crash recovery gates.
     if isolated && std::env::var("JOPE_EXPERIMENT_CRASH_AFTER").ok().as_deref() == Some(name) {
@@ -1600,6 +1619,16 @@ fn search_inner(
             .insert(GenomeIr::parse(o["genome"].as_str().context("missing genome")?)?.canonical());
         if o["failure"].is_null() {
             let r = &o["metrics"];
+            // Resumed rows obey the live admission rule and must still be the
+            // exact output their original completion attests (W5-T06).
+            let rmse = r["rmse"].as_f64().context("missing RMSE")? * pp.target_scale;
+            ensure!(
+                rmse.is_finite() && rmse >= 0.0,
+                "journaled evaluator score invalid"
+            );
+            if !o["search_clock"].is_null() {
+                journaled_measurement_attested(&completion_root, o)?;
+            }
             if semantic.insert(
                 r["semantic_sha256"]
                     .as_str()
@@ -1607,7 +1636,7 @@ fn search_inner(
                     .to_string(),
             ) {
                 ranked.push((
-                    r["rmse"].as_f64().context("missing RMSE")? * pp.target_scale,
+                    rmse,
                     o["genome"].as_str().context("missing genome")?.to_string(),
                 ));
             }

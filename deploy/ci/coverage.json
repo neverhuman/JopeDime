@@ -6762,6 +6762,23 @@
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately. Binary/example runtime behavior is not claimed by build or its unit-test harness."
     },
+    "target:jope-parallel/bin/jope-gp-selection-replay": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-engine/src/bin/jope-gp-selection-replay.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "full-default"
+      ],
+      "dispositions": [
+        "runtime-tools"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately. Binary/example runtime behavior is not claimed by build or its unit-test harness."
+    },
     "target:jope-parallel/bin/jope-native-graph": {
       "discovery": {
         "kind": "target",
