@@ -1,0 +1,104 @@
+{
+  "schema": "jope.core-ip-claims/v1",
+  "note": "Scoped publication claims bound to hash-pinned evidence. Append-only revocations; a claim citing revoked evidence must be recorded as revoked. Evidence truth still needs independent review.",
+  "evidence": {
+    "E-W2T06-verify-real": {
+      "kind": "real-corpus-fixture",
+      "location": "custody",
+      "path": "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w2t06-host-proof-20260926T052352Z/verify-real.json",
+      "sha256": "9fa7798d7c6163bd290eba071a5a848ec03d5850542d57ac2c2ed5bcb7bf5dbf",
+      "source_commit": "7425536660221cc5877e59ef9dc3a1e4286e8826",
+      "subject": "accepted policy step-60000 policy.safetensors 4b4b5a40f03c9226b4b15856fd35b90127c8b6a4d1435b815484cdd050744f1e",
+      "scope": "stored-object inventory: payload layout, per-tensor digests, role partition, optimizer moment coverage",
+      "depends_on": []
+    },
+    "E-W2T06-tamper": {
+      "kind": "real-corpus-fixture",
+      "location": "custody",
+      "path": "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w2t06-host-proof-20260926T052352Z/tamper.json",
+      "sha256": "d6f728ab208148ddfd5b2f6a8114d0dbe7c9843ca27eced801598df6c8eac2d4",
+      "source_commit": "7425536660221cc5877e59ef9dc3a1e4286e8826",
+      "subject": "accepted policy step-60000 policy.safetensors 4b4b5a40f03c9226b4b15856fd35b90127c8b6a4d1435b815484cdd050744f1e",
+      "scope": "stored-object inventory: payload layout, per-tensor digests, role partition, optimizer moment coverage",
+      "depends_on": [
+        "E-W2T06-verify-real"
+      ]
+    },
+    "E-W0-seed-prefix": {
+      "kind": "synthetic-fixture",
+      "location": "custody",
+      "path": "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-seed-prefix-20260926T050454Z/run.log",
+      "sha256": "69896fd4fcc30240bbe2e11aeff61efb8e06d7ae99be20852baaba08f1c465ca",
+      "source_commit": "576e82cf0cc2f408568b4e3c7616170e5ccf4492",
+      "subject": "jope-parallel GP search resume identity (crates/jope-engine/src/gp.rs)",
+      "scope": "fixture: view_contracts seed and legacy-resume cases on a synthetic prepared cut",
+      "depends_on": []
+    },
+    "E-W0-seed-postfix": {
+      "kind": "synthetic-fixture",
+      "location": "custody",
+      "path": "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-seed-postfix-20260926T050536Z/run.log",
+      "sha256": "0075a67b4985bee82c19ae727fcae32f7ab5b7a530c3cd79d2a75aa2ad26f8ff",
+      "source_commit": "576e82cf0cc2f408568b4e3c7616170e5ccf4492",
+      "subject": "jope-parallel GP search resume identity (crates/jope-engine/src/gp.rs)",
+      "scope": "fixture: view_contracts seed and legacy-resume cases on a synthetic prepared cut",
+      "depends_on": [
+        "E-W0-seed-prefix"
+      ]
+    }
+  },
+  "revocations": [],
+  "claims": [
+    {
+      "id": "C-W2T06-accepted-tensor-inventory",
+      "statement": "The accepted step-60000 policy stores 136 F32 tensors and 27,796,494 parameters: 20,894,208 decode, 5,851,653 rank and 1,050,633 training-only; every stored parameter carries AdamW moments at step 60000, and single-tensor tampering is rejected by name even with a re-pinned file digest.",
+      "subject": "accepted policy step-60000 policy.safetensors 4b4b5a40f03c9226b4b15856fd35b90127c8b6a4d1435b815484cdd050744f1e",
+      "metric": "stored parameters by role",
+      "units": "parameters",
+      "denominator": "all 136 stored tensors",
+      "comparison": null,
+      "baseline": null,
+      "scope": "stored-object inventory: payload layout, per-tensor digests, role partition, optimizer moment coverage",
+      "source_commit": "7425536660221cc5877e59ef9dc3a1e4286e8826",
+      "observed_utc": "2026-09-26T05:25:00Z",
+      "uncertainty": "exact counts from the stored bytes; no sampling",
+      "limitations": [
+        "Not a forward-pass, parity or training qualification.",
+        "Host-only: the asset is not available in CI.",
+        "Evidence was produced from the working tree whose verifier content equals this commit."
+      ],
+      "stage": "fixture",
+      "evidence": [
+        "E-W2T06-verify-real",
+        "E-W2T06-tamper"
+      ],
+      "status": "active"
+    },
+    {
+      "id": "C-W0-legacy-resume-seed-defect-fixed",
+      "statement": "A resume whose recorded identity differs (including the RNG seed) is refused before the search request is compared or recorded, so a refused legacy resume no longer blocks the original identity.",
+      "subject": "jope-parallel GP search resume identity (crates/jope-engine/src/gp.rs)",
+      "metric": "view_contracts seed/legacy-resume cases",
+      "units": "tests",
+      "denominator": "2 reproduced failing cases plus the 26-test view/gp contract suites",
+      "comparison": {
+        "pre_fix": "1238d524961c1e09fb8afe534c514a8758ef8b81"
+      },
+      "baseline": "pre-fix failures at 1238d5249",
+      "scope": "fixture: view_contracts seed and legacy-resume cases on a synthetic prepared cut",
+      "source_commit": "576e82cf0cc2f408568b4e3c7616170e5ccf4492",
+      "observed_utc": "2026-09-26T05:06:35Z",
+      "uncertainty": "deterministic fixture outcomes",
+      "limitations": [
+        "Fixture proof only; hosted execution is the full-default lane, not the PR rust-test lane.",
+        "Six fence-dependent tests in the same suites remain failing by design."
+      ],
+      "stage": "fixture",
+      "evidence": [
+        "E-W0-seed-prefix",
+        "E-W0-seed-postfix"
+      ],
+      "status": "active"
+    }
+  ]
+}

@@ -41,6 +41,8 @@ python3 -m unittest discover -s docs/internal/core-ip/tools -p test_verify_dispo
 python3 docs/internal/core-ip/tools/verify_test_inventory.py
 python3 -m unittest discover -s docs/internal/core-ip/tools -p test_verify_test_inventory.py -v
 python3 -m unittest discover -s docs/internal/core-ip/tools -p test_verify_inventory.py -v
+python3 docs/internal/core-ip/tools/verify_claims.py
+python3 -m unittest discover -s docs/internal/core-ip/tools -p test_verify_claims.py -v
     # Hygiene
 bash deploy/ci/check.sh
     # cargo-deny
