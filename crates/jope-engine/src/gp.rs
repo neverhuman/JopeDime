@@ -836,6 +836,49 @@ pub struct SeedCandidate {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub proposal_record_sha256: Option<String>,
 }
+/// W5-T05: environment naming the search controller that started this evaluator as the
+/// leader of its own process group under a SIGTERM parent-death signal.
+pub const EVALUATOR_GROUP_GUARD: &str = "JOPE_EVALUATOR_GROUP_GUARD";
+
+/// W5-T05: in an evaluator a search controller started, kill the evaluator's whole process
+/// group (the evaluator and every process it started) when that controller dies, even by
+/// SIGKILL. The kernel delivers SIGTERM on the controller's death (`PR_SET_PDEATHSIG`); the
+/// handler turns it into one async-signal-safe SIGKILL of the evaluator's own group. A no-op
+/// outside a guarded evaluator; refused in one that does not lead its own process group, so it
+/// never signals a group it does not own.
+pub fn guard_evaluator_group() -> Result<()> {
+    let Some(controller) = std::env::var_os(EVALUATOR_GROUP_GUARD) else {
+        return Ok(());
+    };
+    let controller: libc::pid_t = controller
+        .to_str()
+        .and_then(|pid| pid.parse().ok())
+        .context("evaluator group guard names no controller")?;
+    extern "C" fn kill_group(_: libc::c_int) {
+        unsafe {
+            libc::kill(0, libc::SIGKILL);
+        }
+    }
+    unsafe {
+        ensure!(
+            libc::getpgrp() == libc::getpid(),
+            "guarded evaluator does not lead its own process group"
+        );
+        let mut action: libc::sigaction = std::mem::zeroed();
+        action.sa_sigaction = kill_group as *const () as libc::sighandler_t;
+        libc::sigemptyset(&mut action.sa_mask);
+        ensure!(
+            libc::sigaction(libc::SIGTERM, &action, std::ptr::null_mut()) == 0,
+            "evaluator group guard not installed"
+        );
+        // The controller may have died before the handler existed.
+        if libc::getppid() != controller {
+            libc::kill(0, libc::SIGKILL);
+        }
+    }
+    Ok(())
+}
+
 /// W5-T01: directory of a search output holding the exact seed population and vocabulary
 /// bytes its request pins, read by [`lineage::verify_search_recorded`].
 pub const SEARCH_INPUTS: &str = "search-inputs";
@@ -2460,9 +2503,14 @@ fn search_inner(
                 .stderr(Stdio::from(log));
             use std::os::unix::process::CommandExt;
             let controller_pid = std::process::id();
+            // W5-T05: the evaluator's guard kills its whole process group when this
+            // controller dies, even by SIGKILL (`guard_evaluator_group`).
+            command.env(EVALUATOR_GROUP_GUARD, controller_pid.to_string());
             unsafe {
                 command.pre_exec(move || {
-                    if libc::prctl(libc::PR_SET_PDEATHSIG, libc::SIGKILL) != 0
+                    // SIGTERM, not SIGKILL: the guard turns it into SIGKILL for the group;
+                    // an evaluator without the guard still ends by its default action.
+                    if libc::prctl(libc::PR_SET_PDEATHSIG, libc::SIGTERM) != 0
                         || libc::getppid() as u32 != controller_pid
                     {
                         return Err(std::io::Error::other("evaluator lost controller"));

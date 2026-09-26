@@ -183,6 +183,8 @@ fn run_cli(argv: &[String]) -> Result<()> {
                 prepared.is_some() == cut.is_some(),
                 "--prepared and --cut go together"
             );
+            // The product entry's guard (W5-T05), before any fault starts a helper.
+            guard_evaluator_group()?;
             evaluator_fault()?;
             evaluate_prepared_memory(
                 text("fd")?.parse()?,
@@ -2279,6 +2281,47 @@ fn helpers_left_by_a_finished_evaluator_are_drained_before_the_next_dispatch() {
         assert_eq!(dispatch["process_group"]["members_after_drain"], 0);
     }
     selection_replay::verify_search(root, &output).unwrap();
+    authority.stop_service();
+}
+
+/// W5-T05: processes an evaluator starts do not outlive a search controller that is itself
+/// killed (SIGKILL, so it can run no cleanup). Reproduction: the evaluator's SIGKILL
+/// parent-death signal stopped only the evaluator; its helper was reparented and kept running.
+#[test]
+fn helpers_do_not_survive_a_killed_search_controller() {
+    let (temp, prepared) = view_fixture();
+    let root = temp.path();
+    let census = root.join("census");
+    let _guard = CensusGuard(census.clone());
+    let mut authority = Fixture::activated(root, vec![cut_training_hash(&prepared)]);
+    authority.start();
+    let output = root.join("killed-controller");
+    let mut controller = timed_search_client(&authority, root, &prepared, &output, 2, 120)
+        .env(FAULT, "fork_block")
+        .env(CENSUS, &census)
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn()
+        .unwrap();
+    let started = Instant::now();
+    while live_left_behind(&census).is_empty() {
+        assert!(
+            started.elapsed() < Duration::from_secs(120),
+            "the fault fixture did not run"
+        );
+        assert!(
+            controller.try_wait().unwrap().is_none(),
+            "the controller ended before its evaluator started a helper"
+        );
+        std::thread::sleep(Duration::from_millis(20));
+    }
+    controller.kill().unwrap();
+    controller.wait().unwrap();
+    assert_eq!(
+        settled_left_behind(&census),
+        Vec::<i32>::new(),
+        "a helper outlived its killed search controller"
+    );
     authority.stop_service();
 }
 

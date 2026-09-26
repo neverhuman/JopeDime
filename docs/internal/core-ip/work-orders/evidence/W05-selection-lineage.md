@@ -327,3 +327,45 @@ Runs `w5c-t01-*`.
   - The refusal of a resume whose frozen input was altered is not exercised by a crash-resume
     fixture here.
   - Native-continuation lineage paths remain unit-tested only.
+
+## W5-T05 follow-up — evaluator descendants die with a killed search controller (branch `rr2/integration-c`, 2026-09-26)
+
+Runs `w5c-t05-*`. This closes the residual risk recorded above.
+
+- **Reproduction** `w5c-t05-pre-20260926T210913Z` (1/1 FAIL):
+  - `gp::fit_contract_tests::helpers_do_not_survive_a_killed_search_controller` starts a CLI
+    search whose fixture evaluator starts a helper (`sleep 300`) and blocks. It waits until the
+    helper is alive, then kills the search controller with SIGKILL.
+  - The evaluator died by its SIGKILL parent-death signal, but its helper was reparented and
+    kept running ("a helper outlived its killed search controller"). The `/proc` census counts
+    only the fixture's own helpers and ignores zombies.
+- **Fix** (same-host process custody; no new service or privilege):
+  - The controller still starts each evaluator as the leader of its own process group,
+    checking `getppid()` in `pre_exec`.
+  - The parent-death signal is now SIGTERM, and the controller names itself in
+    `JOPE_EVALUATOR_GROUP_GUARD`.
+  - At the evaluator entry (`evaluate-memory` in the product CLI, and the fixture CLI before
+    any fault is injected), `gp::guard_evaluator_group` installs a SIGTERM handler. The handler
+    makes one async-signal-safe `kill(0, SIGKILL)` of the evaluator's own process group.
+  - The guard refuses to install unless the evaluator leads its own group, so it can never
+    signal a group it does not own. If the controller is already gone, it kills the group at
+    once.
+  - Outside a guarded evaluator (no variable), the guard does nothing.
+  - An evaluator binary without the guard still ends by SIGTERM's default action, as it ended
+    by SIGKILL before.
+- **Controls.** Positive: `a_blocked_fitter_and_its_helpers_are_killed_at_the_original_deadline`,
+  `helpers_left_by_a_finished_evaluator_are_drained_before_the_next_dispatch`,
+  `a_second_searcher_cannot_dispatch_into_a_live_search` and
+  `an_evaluator_allocation_failure_is_a_contained_failed_row` pass unchanged, so live
+  supervision, draining and containment keep their behavior. Negative: the killed-controller
+  census is empty within the settle window.
+- **Limits.**
+  - A process that leaves the evaluator's group (`setsid`/`setpgid`) or that ignores SIGKILL
+    through a kernel state is outside this custody.
+  - The product evaluator itself starts no processes today.
+  - A PID namespace or cgroup would be the stronger boundary; that belongs to deployment (W7)
+    and is not built here.
+- **Runs.**
+  - Pre `w5c-t05-pre-20260926T210913Z`: 1/1 FAIL as above.
+  - Post `w5c-t05-post-20260926T211014Z`: the new test and the four supervision tests pass, 5/5.
+  - Pre-commit `w5c-t05-c-20260926T211111Z`: fence suites (their shipped-binary evaluator paths included), `gp::fit_contract_tests` and `gp::lineage` 90/90; workspace all-targets check, coverage (0 unassigned), verify-test-inventory, fmt and diff-check exit 0.
