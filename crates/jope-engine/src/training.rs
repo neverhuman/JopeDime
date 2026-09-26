@@ -1297,8 +1297,23 @@ fn rank_impl(
         })?;
     let [token_tensor, legal_id_tensor, context_id_tensor, mask_table]: [Tensor; 4] =
         tensors.try_into().ok().unwrap();
+    // Validate every sampled comparison against the frozen index before its
+    // records are read or any loss is formed (W6-T03).
+    let comparisons = objective::SampledComparisons::new(index)?;
     let loss_for = |ids: &[usize], train: bool| -> Result<(Tensor, [f64; 5])> {
+        let partition = if train {
+            "meta_train"
+        } else {
+            "meta_validation"
+        };
+        comparisons.check_ids(index, ids, partition)?;
         let rows = ids.iter().map(|&i| records.get(i)).collect::<Vec<_>>();
+        let labels = ids
+            .iter()
+            .zip(&rows)
+            .map(|(&id, r)| objective::RowLabels::from_record(id, r))
+            .collect::<Vec<_>>();
+        comparisons.check_rows(index, &labels)?;
         let length = rows.iter().map(|r| r.length).max().unwrap().div_ceil(8) * 8;
         let length = length.min(SEQUENCE) as i64;
         let id = Tensor::from_slice(&ids.iter().map(|&i| i as i64).collect::<Vec<_>>())
@@ -1328,10 +1343,6 @@ fn rank_impl(
                     .bitwise_and(0xffffi64),
             )
             .view([ids.len() as i64, length - 1, vocabulary.tokens.len() as i64]);
-        let labels = rows
-            .iter()
-            .map(objective::RowLabels::from)
-            .collect::<Vec<_>>();
         objective::composite(
             &objective::Outputs {
                 logits: &logits,

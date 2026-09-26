@@ -71,23 +71,175 @@ pub const COMPARISON_ROWS: usize = 8;
 /// Reward heads averaged into one ranking score per row.
 pub const REWARD_HEADS: i64 = 4;
 
-/// The per-record labels the objective consumes.
+/// The per-record labels the objective consumes. `record` is the corpus record
+/// identity the row was sampled as; it is what makes duplicate detection and
+/// group membership checkable at the objective boundary.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct RowLabels {
+    pub record: usize,
     pub context: usize,
+    /// `1 / (1 + rmse / median_group_rmse)`: higher is better, in (0, 1].
     pub value: f32,
+    /// Rank target over the whole corpus group, in [0, 1].
     pub percentile: f32,
+    /// `ln(1 + seconds)` of a completed measurement, >= 0.
     pub runtime: f32,
 }
 
-impl From<&crate::corpus::Record> for RowLabels {
-    fn from(r: &crate::corpus::Record) -> Self {
+impl RowLabels {
+    pub fn from_record(record: usize, r: &crate::corpus::Record) -> Self {
         Self {
+            record,
             context: r.context,
             value: r.value,
             percentile: r.percentile,
             runtime: r.runtime,
         }
+    }
+}
+
+/// Labels are supervision, not data to be reinterpreted. Every row must carry
+/// a finite value in (0, 1], a finite percentile in [0, 1] and a finite
+/// completed runtime label >= 0. Rows form complete comparisons of
+/// [`COMPARISON_ROWS`] that share one context and never repeat a record, so no
+/// cross-identity pair and no duplicated member can reach a ranking term.
+///
+/// `neural::ranking` itself still skips nonfinite values and ineligible lists
+/// (its declared behavior for other callers); at the training boundary such a
+/// row is malformed supervision and is refused before any loss is formed.
+pub fn validate_rows(rows: &[RowLabels]) -> Result<()> {
+    ensure!(
+        !rows.is_empty() && rows.len() % COMPARISON_ROWS == 0,
+        "objective rows must form complete comparisons of {COMPARISON_ROWS}"
+    );
+    for (i, r) in rows.iter().enumerate() {
+        ensure!(
+            r.value.is_finite() && r.value > 0.0 && r.value <= 1.0,
+            "invalid value label at row {i}: {}",
+            r.value
+        );
+        ensure!(
+            r.percentile.is_finite() && (0.0..=1.0).contains(&r.percentile),
+            "invalid percentile label at row {i}: {}",
+            r.percentile
+        );
+        ensure!(
+            r.runtime.is_finite() && r.runtime >= 0.0,
+            "invalid runtime label at row {i}: {}",
+            r.runtime
+        );
+    }
+    for (k, comparison) in rows.chunks(COMPARISON_ROWS).enumerate() {
+        ensure!(
+            comparison
+                .iter()
+                .all(|r| r.context == comparison[0].context),
+            "comparison {k} spans contexts"
+        );
+        let distinct = comparison
+            .iter()
+            .map(|r| r.record)
+            .collect::<std::collections::BTreeSet<_>>();
+        ensure!(
+            distinct.len() == comparison.len(),
+            "comparison {k} repeats a record"
+        );
+    }
+    Ok(())
+}
+
+/// Sampled comparisons checked against the frozen corpus index: every
+/// comparison is drawn from exactly one corpus group of the expected
+/// partition, starts with that group's champion (`records[0]`, the lowest
+/// cut-normalized RMSE), and its rows carry that group's context.
+pub struct SampledComparisons {
+    record_group: Vec<u32>,
+}
+
+impl SampledComparisons {
+    pub fn new(index: &crate::corpus::Index) -> Result<Self> {
+        ensure!(
+            index.groups.len() < u32::MAX as usize,
+            "too many corpus groups"
+        );
+        let mut record_group = vec![u32::MAX; index.records];
+        for (g, group) in index.groups.iter().enumerate() {
+            for &record in &group.records {
+                let slot = record_group.get_mut(record).ok_or_else(|| {
+                    anyhow::anyhow!("corpus group {g} names record {record} outside the corpus")
+                })?;
+                ensure!(
+                    *slot == u32::MAX,
+                    "record {record} belongs to two corpus groups"
+                );
+                *slot = g as u32;
+            }
+        }
+        Ok(Self { record_group })
+    }
+
+    fn group_of(&self, record: usize) -> Option<usize> {
+        self.record_group
+            .get(record)
+            .filter(|&&g| g != u32::MAX)
+            .map(|&g| g as usize)
+    }
+
+    /// Check sampled record identities before any record is read.
+    pub fn check_ids(
+        &self,
+        index: &crate::corpus::Index,
+        ids: &[usize],
+        partition: &str,
+    ) -> Result<()> {
+        ensure!(
+            !ids.is_empty() && ids.len() % COMPARISON_ROWS == 0,
+            "sampled records must form complete comparisons of {COMPARISON_ROWS}"
+        );
+        for (k, comparison) in ids.chunks(COMPARISON_ROWS).enumerate() {
+            let g = self.group_of(comparison[0]).ok_or_else(|| {
+                anyhow::anyhow!("comparison {k} starts outside every corpus group")
+            })?;
+            let group = &index.groups[g];
+            ensure!(
+                group.partition == partition,
+                "comparison {k} draws from partition {} instead of {partition}",
+                group.partition
+            );
+            ensure!(
+                group.records.first() == Some(&comparison[0]),
+                "comparison {k} does not start with its group champion"
+            );
+            ensure!(
+                comparison.iter().all(|&id| self.group_of(id) == Some(g)),
+                "comparison {k} mixes corpus groups"
+            );
+            let distinct = comparison.iter().collect::<std::collections::BTreeSet<_>>();
+            ensure!(
+                distinct.len() == comparison.len(),
+                "comparison {k} repeats a record"
+            );
+        }
+        Ok(())
+    }
+
+    /// Check the labels read for those identities: valid supervision and the
+    /// context of the corpus group each record was sampled from.
+    pub fn check_rows(&self, index: &crate::corpus::Index, rows: &[RowLabels]) -> Result<()> {
+        validate_rows(rows)?;
+        for r in rows {
+            let g = self.group_of(r.record).ok_or_else(|| {
+                anyhow::anyhow!("record {} is outside every corpus group", r.record)
+            })?;
+            ensure!(
+                r.context == index.groups[g].context,
+                "record {} carries context {} instead of its group context {}",
+                r.record,
+                r.context,
+                index.groups[g].context
+            );
+        }
+        Ok(())
     }
 }
 
@@ -130,6 +282,7 @@ pub fn composite<'a>(
     legal: &Tensor,
     rows: &[RowLabels],
 ) -> Result<(Tensor, [f64; 5])> {
+    validate_rows(rows)?;
     let (batch, length) = tokens.size2()?;
     ensure!(
         batch as usize == rows.len() && length > 1 && pad.size() == tokens.size(),

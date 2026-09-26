@@ -2234,6 +2234,13 @@
         "training"
       ]
     },
+    "target:jope-parallel/test/training_inputs": {
+      "role": "regression",
+      "subsystems": [
+        "training",
+        "teaching"
+      ]
+    },
     "target:jope-parallel/test/view_contracts": {
       "role": "regression",
       "subsystems": [

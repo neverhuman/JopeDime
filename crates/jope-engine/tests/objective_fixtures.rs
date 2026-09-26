@@ -328,6 +328,7 @@ fn batch16() -> Batch {
     let seconds = [0.4f64, 0.1, 2.0, 0.0, 5.0, 0.3, 1.2, 0.7];
     let labels = (0..b)
         .map(|i| RowLabels {
+            record: i,
             context: 7,
             value: values[i],
             percentile: percentiles[i],
@@ -1144,6 +1145,7 @@ fn policy_batch(t: usize) -> PolicyBatch {
         legal: legal_tensor(&sets, [b as i64, t as i64 - 1, v as i64]),
         labels: (0..b)
             .map(|i| RowLabels {
+                record: i,
                 context: 3,
                 value: values[i],
                 percentile: p[i],

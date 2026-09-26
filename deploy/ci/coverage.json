@@ -7601,6 +7601,21 @@
       "dispositions": [],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "target:jope-parallel/test/training_inputs": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-engine/tests/training_inputs.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "CPU-only fixtures: corpus runtime-observation exclusion and refusal (default features); comparison, group and label validation at the objective boundary (neural feature). No GPU or training qualification."
+    },
     "target:jope-parallel/test/view_contracts": {
       "discovery": {
         "kind": "target",
