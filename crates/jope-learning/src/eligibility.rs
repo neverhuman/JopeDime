@@ -2099,4 +2099,5 @@ mod tests {
     }
 
     mod provenance;
+    mod transitions;
 }

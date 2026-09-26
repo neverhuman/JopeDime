@@ -66,6 +66,55 @@ impl RejectReason {
     }
 }
 
+/// The explicit HWM outcome of one candidate. Teaching eligibility is decided before this and
+/// never counts as an improvement: only `Improved` advances an existing pointer's chain.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum Transition {
+    /// First accepted record of a pointer: a bootstrap, not an improvement.
+    Initialized,
+    /// Strictly better than the comparable incumbent it displaced.
+    Improved,
+    Tie,
+    /// Comparable with the incumbent and not better.
+    NotImproved,
+    /// Metric or evaluator semantics differ from the incumbent's.
+    Noncomparable,
+    /// Train-side OOF record without a recomputable measured qualification.
+    Ineligible,
+    Invalid,
+}
+
+impl Transition {
+    pub fn of(incumbent: Option<&HwmRecord>, decision: &Decision) -> Self {
+        match decision {
+            Decision::Accepted if incumbent.is_none() => Self::Initialized,
+            Decision::Accepted => Self::Improved,
+            Decision::Rejected(RejectReason::Tie) => Self::Tie,
+            Decision::Rejected(RejectReason::NotBetter) => Self::NotImproved,
+            Decision::Rejected(
+                RejectReason::UnboundCannotDisplaceBound
+                | RejectReason::MetricMismatch
+                | RejectReason::IdentityMismatch,
+            ) => Self::Noncomparable,
+            Decision::Rejected(RejectReason::TeachingIneligible) => Self::Ineligible,
+            Decision::Rejected(RejectReason::Invalid) => Self::Invalid,
+        }
+    }
+
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Initialized => "initialized",
+            Self::Improved => "improved",
+            Self::Tie => "tie",
+            Self::NotImproved => "not-improved",
+            Self::Noncomparable => "noncomparable",
+            Self::Ineligible => "ineligible",
+            Self::Invalid => "invalid",
+        }
+    }
+}
+
 /// The admission rule (`champions.rs:452` + the plan's unbound rule).
 pub fn decide(incumbent: Option<&HwmRecord>, candidate: &HwmRecord) -> Decision {
     if candidate.validate().is_err() {
@@ -107,6 +156,9 @@ pub struct HwmEvent {
     /// The record this one replaced at the pointer (accepted events only).
     pub displaced_record_sha256: Option<String>,
     pub ts_unix: u64,
+    /// Absent on events written before transitions were recorded; `verify` rederives it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub transition: Option<Transition>,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -125,6 +177,8 @@ pub struct IngestReport {
     pub candidates: u64,
     pub accepted: u64,
     pub rejected: u64,
+    /// Every candidate's [`Transition`]; `accepted` = `initialized` + `improved`.
+    pub transitions: BTreeMap<String, u64>,
     pub pointers_written: u64,
     pub blobs_written: u64,
     pub batch: Option<crate::ledger::BatchReceipt>,
@@ -221,6 +275,7 @@ pub fn ingest(
     let mut current: BTreeMap<PointerKey, HwmRecord> = BTreeMap::new();
     let mut events = Vec::with_capacity(candidates.len());
     let mut rejects = Vec::new();
+    let mut transitions = BTreeMap::<String, u64>::new();
     let mut blobs_written = 0u64;
     let ts = now_unix();
     for (seq, mut c) in candidates.into_iter().enumerate() {
@@ -268,6 +323,8 @@ pub fn ingest(
         } else {
             decide(incumbent, &c.record)
         };
+        let transition = Transition::of(incumbent, &decision);
+        *transitions.entry(transition.as_str().into()).or_default() += 1;
         let (outcome, reason, displaced) = match &decision {
             Decision::Accepted => (
                 "accepted",
@@ -295,6 +352,7 @@ pub fn ingest(
             record: c.record.clone(),
             displaced_record_sha256: displaced,
             ts_unix: ts,
+            transition: Some(transition),
         };
         events.push(serde_json::to_value(&event)?);
         if decision == Decision::Accepted {
@@ -333,6 +391,7 @@ pub fn ingest(
         candidates: events.len() as u64,
         accepted,
         rejected,
+        transitions,
         pointers_written,
         blobs_written,
         batch,
@@ -637,6 +696,10 @@ pub struct VerifyReport {
     pub events: u64,
     pub accepted: u64,
     pub rejected: u64,
+    /// Rederived from ledger order, never from a recorded flag: `accepted` split into
+    /// pointer bootstraps and committed improvements.
+    pub initialized: u64,
+    pub improved: u64,
     pub identities: u64,
     pub pointers_on_disk: u64,
     pub blobs_checked: u64,
@@ -752,10 +815,35 @@ pub fn verify(state: &State, event_dirs: &[PathBuf]) -> Result<VerifyReport> {
                 }
             }
         }
+        let derived = match (e.outcome.as_str(), expected.contains_key(&e.pointer)) {
+            ("accepted", false) => Some(Transition::Initialized),
+            ("accepted", true) => Some(Transition::Improved),
+            _ => None,
+        };
+        if let Some(recorded) = e.transition {
+            let committed = matches!(recorded, Transition::Initialized | Transition::Improved);
+            if derived.map_or(committed, |d| d != recorded) {
+                brk(
+                    "transition-mismatch",
+                    subject.clone(),
+                    format!(
+                        "{} event records {} at {}",
+                        e.outcome,
+                        recorded.as_str(),
+                        e.pointer.rel()
+                    ),
+                );
+            }
+        }
         match e.outcome.as_str() {
             "accepted" => {
                 report.accepted += 1;
                 let prev = expected.get(&e.pointer);
+                if prev.is_some() {
+                    report.improved += 1;
+                } else {
+                    report.initialized += 1;
+                }
                 let prev_sha = prev.map(|p| p.provenance.record_sha256.clone());
                 if e.displaced_record_sha256 != prev_sha {
                     brk(
@@ -1432,6 +1520,109 @@ mod tests {
             decide(None, &bad),
             Decision::Rejected(RejectReason::Invalid)
         );
+    }
+
+    #[test]
+    fn transitions_separate_initialization_ties_non_improvement_and_improvement() {
+        let dir = tempfile::tempdir().unwrap();
+        let state = State::at(dir.path());
+        let cand = |v: f64, ts: u64, variant: &str| {
+            let mut r = record("d", "c", UNBOUND, Metric::R2, v);
+            r.genome.dsl = format!("(pipe X (ridge alpha={v}) {variant})");
+            r.genome.program_sha256 = crate::canon::sha256_hex(r.genome.dsl.as_bytes());
+            r.ts_unix = ts;
+            let blob = format!("d/c/{v}/{variant}").into_bytes();
+            r.provenance.record_sha256 = crate::canon::sha256_hex(&blob);
+            Candidate {
+                record: r,
+                blob,
+                chain_from_source: false,
+            }
+        };
+        let mut noncomparable = cand(0.9, 4, "other-metric");
+        noncomparable.record.score.metric = Metric::Auc;
+        let mut invalid = cand(0.95, 5, "invalid");
+        invalid.record.score.direction = Direction::Lower;
+        let mut ineligible = cand(0.99, 6, "unqualified-train-oof");
+        ineligible.record.identity.comparison = Some(ComparisonContext {
+            numerical_policy: "strict-v1".into(),
+            stage: "train_oof".into(),
+            aggregation: "mean_fold_loss".into(),
+            label_role: "development".into(),
+            sealed: false,
+            benchmark_valid: false,
+            recipe_encoding: "native-canonical-dsl-sha256/v1".into(),
+            class_order: vec![],
+            checkpoint_sha256: None,
+        });
+        ineligible.record.identity_sha256 = ineligible.record.identity.sha256().unwrap();
+        let first = ingest(
+            &state,
+            None,
+            vec![
+                cand(0.5, 1, "first"),
+                cand(0.5, 2, "equal"),
+                cand(0.4, 3, "worse"),
+                noncomparable,
+                invalid,
+                ineligible,
+            ],
+            json!({"kind": "test"}),
+        )
+        .unwrap();
+        // The same improving record delivered twice is one improvement and one tie.
+        let second = ingest(
+            &state,
+            None,
+            vec![cand(0.7, 7, "better"), cand(0.7, 7, "better")],
+            json!({"kind": "test"}),
+        )
+        .unwrap();
+        let counts = |pairs: &[(&str, u64)]| {
+            pairs
+                .iter()
+                .map(|(k, v)| (k.to_string(), *v))
+                .collect::<BTreeMap<_, _>>()
+        };
+        assert_eq!(
+            first.transitions,
+            counts(&[
+                ("initialized", 1),
+                ("tie", 1),
+                ("not-improved", 1),
+                ("noncomparable", 1),
+                ("invalid", 1),
+                ("ineligible", 1)
+            ])
+        );
+        assert_eq!((first.accepted, first.rejected), (1, 5));
+        assert_eq!(second.transitions, counts(&[("improved", 1), ("tie", 1)]));
+        let v = verify(&state, &[]).unwrap();
+        assert_eq!((v.accepted, v.initialized, v.improved), (2, 1, 1));
+        assert!(!v.breaks.iter().any(|b| b.kind == "transition-mismatch"));
+        let transitions: Vec<Value> = Ledger::open(state.root(), "hwm")
+            .events()
+            .unwrap()
+            .into_iter()
+            .map(|event| event["transition"].clone())
+            .collect();
+        assert_eq!(
+            transitions,
+            [
+                "initialized",
+                "tie",
+                "not-improved",
+                "noncomparable",
+                "invalid",
+                "ineligible",
+                "improved",
+                "tie"
+            ]
+            .map(|t| json!(t))
+        );
+        let key = PointerKey::of(&cand(0.7, 7, "better").record);
+        let current = state.read_pointer(&key).unwrap().unwrap();
+        assert_eq!((current.score.value, current.improvement_number), (0.7, 1));
     }
 
     #[test]
