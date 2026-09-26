@@ -1807,3 +1807,72 @@ fn feasibility_estimates_are_recorded_beside_observed_outcomes_under_one_rule() 
     lineage::verify_search(&root, &output, Some(seeds.as_path()), None).unwrap();
     authority.stop_service();
 }
+
+#[test]
+fn a_resume_under_other_selection_rules_is_refused_not_restarted() {
+    let (temp, prepared) = view_fixture();
+    let root = temp.path();
+    let mut authority = Fixture::activated(root, vec![cut_training_hash(&prepared)]);
+    authority.start();
+    let experiment = root.join("experiment");
+    fs::create_dir_all(&experiment).unwrap();
+    write_json(
+        &experiment.join("manifest.json"),
+        &json!({"schema":"parallel.seed_experiment.v2"}),
+    )
+    .unwrap();
+    let output = experiment.join("search");
+    let command = || {
+        let mut command = search_client(&authority, root, &prepared, &output, 2);
+        command.env("JOPE_EXPERIMENT_DIR", &experiment);
+        command
+    };
+    let crashed = command()
+        .env("JOPE_EXPERIMENT_CRASH_AFTER", "observation_progress")
+        .output()
+        .unwrap();
+    assert!(!crashed.status.success());
+    // The objective, evidence, tie and stop rules were frozen with the request.
+    let request_path = output.join("search-request.json");
+    let original = fs::read(&request_path).unwrap();
+    let request: Value = serde_json::from_slice(&original).unwrap();
+    assert_eq!(request["selection_contract"], selection_replay::CONTRACT);
+    assert_eq!(
+        request["proposal_cap_per_slot"],
+        selection_replay::PROPOSAL_CAP_PER_SLOT
+    );
+    let journal = fs::read(output.join("observations.jsonl")).unwrap();
+    for (key, value) in [
+        (
+            "selection_contract",
+            json!("parallel.gp_selection_contract.v0"),
+        ),
+        ("proposal_cap_per_slot", json!(1)),
+    ] {
+        let mut changed = request.clone();
+        changed[key] = value;
+        write_json(&request_path, &changed).unwrap();
+        let resumed = command().output().unwrap();
+        assert!(
+            !resumed.status.success(),
+            "{key}: resumed under other rules"
+        );
+        assert!(
+            String::from_utf8_lossy(&resumed.stderr).contains("request changed"),
+            "{key}: {}",
+            String::from_utf8_lossy(&resumed.stderr)
+        );
+        // Refused before any new work: the ledger and the fit registry are unchanged.
+        assert_eq!(
+            fs::read(output.join("observations.jsonl")).unwrap(),
+            journal
+        );
+        assert!(!output.join("search.json").exists());
+        assert_eq!(authority.entries().0, 1);
+    }
+    // The original rules resume and complete; the replay accepts the result.
+    fs::write(&request_path, &original).unwrap();
+    success(command().output().unwrap());
+    selection_replay::verify_search(root, &output).unwrap();
+    authority.stop_service();
+}

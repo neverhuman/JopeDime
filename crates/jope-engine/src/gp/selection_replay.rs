@@ -97,6 +97,14 @@ impl Frozen {
             request["random_protocol"] == RANDOM_PROTOCOL,
             "search request random protocol is outside the replay contract"
         );
+        // Requests that froze their selection rules must have frozen these;
+        // older requests predate the field and are replayed under this contract.
+        if let Some(contract) = request.get("selection_contract") {
+            ensure!(
+                contract == CONTRACT && request["proposal_cap_per_slot"] == PROPOSAL_CAP_PER_SLOT,
+                "search was frozen under another selection contract"
+            );
+        }
         ensure!(
             target_scale.is_finite() && target_scale > 0.0,
             "invalid frozen target scale"
@@ -367,7 +375,7 @@ pub fn replay_ledger(
         ensure!(
             row_attempts > attempts
                 && row_rejected >= rejected
-                && row_attempts >= row_rejected + position as u64 + 1,
+                && row_attempts >= row_rejected.saturating_add(position as u64 + 1),
             "{}: proposal accounting is not monotonic",
             context()
         );
@@ -1129,6 +1137,16 @@ mod tests {
         let mut other = request();
         other["random_protocol"] = json!("parallel.gp_random_streams.v1");
         assert!(Frozen::from_request(&other, SCALE).is_err());
+        let mut frozen = request();
+        frozen["selection_contract"] = json!(CONTRACT);
+        frozen["proposal_cap_per_slot"] = json!(PROPOSAL_CAP_PER_SLOT);
+        assert!(Frozen::from_request(&frozen, SCALE).is_ok());
+        let mut contract = frozen.clone();
+        contract["selection_contract"] = json!("parallel.gp_selection_contract.v0");
+        assert!(Frozen::from_request(&contract, SCALE).is_err());
+        let mut cap = frozen;
+        cap["proposal_cap_per_slot"] = json!(1);
+        assert!(Frozen::from_request(&cap, SCALE).is_err());
         let mut large = request();
         large["evaluations"] = json!(1001);
         assert!(Frozen::from_request(&large, SCALE).is_err());

@@ -1538,7 +1538,11 @@ fn search_inner(
         "training_sha256":c.training_sha256,"validation_sha256":c.validation_sha256,
         "preprocessing_sha256":c.preprocessing_sha256,"seeds_sha256":seeds_sha256,
         "vocabulary_sha256":vocabulary_sha256,"evaluations":evaluations,"seconds":seconds,
-        "qualification":qualification,"rng_seed":rng_seed,"random_protocol":RANDOM_PROTOCOL});
+        "qualification":qualification,"rng_seed":rng_seed,"random_protocol":RANDOM_PROTOCOL,
+        // W5-T02: the objective, evidence, tie and stop rules are frozen with
+        // the request, so a resume under other rules is refused, not restarted.
+        "selection_contract":selection_replay::CONTRACT,
+        "proposal_cap_per_slot":selection_replay::PROPOSAL_CAP_PER_SLOT});
     if let Some((reference, task, _, _)) = native {
         request["native_genome_task"] = serde_json::to_value(reference)?;
         request["native_genome_stage"] = serde_json::to_value(task.stage)?;
@@ -1805,7 +1809,7 @@ fn search_inner(
             )
         } else {
             let mut selected = None;
-            for attempt in 0..10000 {
+            for attempt in 0..selection_replay::PROPOSAL_CAP_PER_SLOT {
                 if start.elapsed().as_secs_f64() + previous_seconds >= seconds as f64 {
                     break;
                 }
