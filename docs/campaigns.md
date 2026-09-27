@@ -106,11 +106,17 @@ jope pipeline score --receipt <campaign>/round-003/receipt.json --split test   #
   on one random stream cannot separate the effect of seeding from that extra compute or from
   noise; that needs budget-matched runs over several seeds and datasets.
 - **The learning store** is written only by the separate `jope-learning` steps: the HWM ledger
-  records initialized / improved / tie / not-improved under a pipeline comparison identity (never
-  teaching-eligible), and the champion bank keeps improved champions as `jope.pipeline-seeds/v1`
-  targets for later campaigns.
-- **The sealed test split** is read only by `jope pipeline score`, once per (dataset, genome),
-  and never feeds selection, seeding or the bank.
+  records initialized / improved / tie / not-improved under a pipeline comparison identity that
+  names the dataset, the cuts and the source commit that measured (never teaching-eligible), and
+  the champion bank keeps improved champions as `jope.pipeline-seeds/v1` targets for later
+  campaigns, exported one comparison identity at a time.
+- **The sealed test split** is read only by `jope pipeline score`, once per (dataset, genome)
+  in the registry it is given, and nothing in the tools reads a test score back into selection,
+  seeding or the bank. The tools cannot stop an operator from scoring several champions (every
+  round, the control) and keeping the test-best, which would make the test split a selection
+  input; each score receipt therefore lists the genomes already scored on that dataset's test
+  split in the same registry. Report the test score of a genome chosen *before* any test score
+  was seen, and name every other look.
 - **Cores**: `--threads` and `--islands` multiply into the worker count, which is refused above
   the CPUs the process may use or an explicit `--cpu-ceiling`; no decision depends on it.
 

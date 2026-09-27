@@ -1,19 +1,23 @@
-//! `jope pipeline score --split test`: the one look at a dataset's sealed test split.
+//! `jope pipeline score --split test`: a genome's look at its dataset's sealed test split.
 //!
 //! Everything before this point — search, selection, the HWM ledger, the champion bank, the
 //! lineage — measures on the training rows only (`dataset::resolve` hashes `test.csv` to verify
 //! it, and nothing else reads its rows). This refits a *verified* receipt's selected genome on
-//! all of `train.csv` and
-//! scores it once on the sha-verified `test.csv`, writing a separate
-//! `jope.pipeline-test-score/v1` receipt. It never feeds selection: nothing in the pipeline reads
-//! these receipts back, and the run's own receipt is not touched.
+//! all of `train.csv` and scores it once on the sha-verified `test.csv`, writing a separate
+//! `jope.pipeline-test-score/v1` receipt. Nothing in the pipeline reads these receipts back and
+//! the run's own receipt is not touched, so the tools never feed a test score to selection.
 //!
-//! "Once" is enforced per `(dataset, genome)` by the registry: the score receipt's path is
-//! `<registry>/<dataset_hash>/<program_sha256>.json`, created exclusively (`O_EXCL`), and checked
-//! before anything is fitted. A second request for the same pair — from the same receipt or any
-//! other run that selected the same genome — is refused. The default registry is
-//! `$JOPE_STATE/pipeline/test-scores`, so one host scores a pair once unless an operator points
-//! elsewhere on purpose; the receipt records which registry it was written to.
+//! What is enforced, and what is not. "Once" is per `(dataset, genome)` in one registry: the
+//! score receipt's path is `<registry>/<dataset_hash>/<program_sha256>.json`, created exclusively
+//! (`O_EXCL`), and checked before anything is fitted, so a second request for the same pair — from
+//! the same receipt or any other run that selected the same genome — is refused. It is not once
+//! per dataset: every other genome of the dataset can still be scored, and an operator who scores
+//! several (every round's champion, the control) and keeps the test-best has made the test split
+//! a selection input. The registry is a local record the caller chooses (`--registry`, default
+//! `$JOPE_STATE/pipeline/test-scores`), not access control: another registry starts empty. What
+//! the tool can do is not hide it: every score records the registry it was written to and
+//! `earlier_looks`, the genomes already scored on the same dataset's test split there, and the
+//! command warns when there are any.
 
 use anyhow::{bail, ensure, Context, Result};
 use feat_math::{
@@ -62,7 +66,13 @@ pub struct TestScore {
     pub validation_rmse: f64,
     /// Where the once-per-(dataset, genome) record lives.
     pub registry: String,
-    /// Always false: a test score is never an input to selection.
+    /// The genomes (program sha256s, sorted) already scored on this dataset's test split in this
+    /// registry when this score was written. Non-empty means this is not the split's first
+    /// look: choosing among several test-scored genomes makes the test split a selection input.
+    /// Absent from scores written before it was recorded.
+    #[serde(default)]
+    pub earlier_looks: Vec<String>,
+    /// Always false: nothing in the tools reads a test score back into selection.
     pub feeds_selection: bool,
     pub seconds: f64,
 }
@@ -87,6 +97,30 @@ fn plain_hex(value: &str, len: usize) -> bool {
         && value
             .bytes()
             .all(|b| matches!(b, b'0'..=b'9' | b'a'..=b'f'))
+}
+
+/// The genomes already scored in `directory` (one dataset's registry directory), sorted.
+fn earlier_looks(directory: &Path) -> Result<Vec<String>> {
+    let entries = match std::fs::read_dir(directory) {
+        Ok(entries) => entries,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
+        Err(error) => {
+            return Err(error).with_context(|| format!("list {}", directory.display()));
+        }
+    };
+    let mut looks = Vec::new();
+    for entry in entries {
+        let name = entry
+            .with_context(|| format!("list {}", directory.display()))?
+            .file_name();
+        if let Some(stem) = name.to_str().and_then(|n| n.strip_suffix(".json")) {
+            if plain_hex(stem, 64) {
+                looks.push(stem.to_owned());
+            }
+        }
+    }
+    looks.sort();
+    Ok(looks)
 }
 
 fn split_rows(rows: &[Vec<f64>]) -> (Rows, Vec<f64>) {
@@ -147,6 +181,7 @@ pub fn score(options: &ScoreOptions) -> Result<(TestScore, PathBuf)> {
         receipt.search.selected_program_sha256,
         path.display()
     );
+    let earlier_looks = earlier_looks(&directory)?;
 
     let started = options.clock.start();
     let train = dataset::training_rows(&resolved)?;
@@ -197,6 +232,7 @@ pub fn score(options: &ScoreOptions) -> Result<(TestScore, PathBuf)> {
             .context("the receipt names no measured champion")?
             .validation_rmse,
         registry: options.registry.display().to_string(),
+        earlier_looks,
         feeds_selection: false,
         seconds: started.secs(),
     };
@@ -289,6 +325,61 @@ mod tests {
         let error = format!("{:#}", score(&options(&twin, &registry)).unwrap_err());
         assert!(error.contains("already scored"), "{error}");
         assert_eq!(read(&path).unwrap(), scored);
+    }
+
+    /// The registry enforces once per (dataset, genome), not once per dataset: every other genome
+    /// of the same dataset can still be scored. Each score therefore names the looks at that
+    /// dataset's test split the registry already holds, so choosing among several test-scored
+    /// genomes is visible in the receipts rather than hidden.
+    #[test]
+    fn a_score_names_the_earlier_looks_at_its_datasets_test_split() {
+        let temp = tempfile::tempdir().unwrap();
+        let registry = temp.path().join("registry");
+        let run_with = |name: &str, evaluations: usize| {
+            let output = temp.path().join(name);
+            run(&RunOptions {
+                budget: Budget {
+                    evaluations,
+                    seconds: 600,
+                },
+                rng_seed: 7,
+                languages: vec![Language::Rust],
+                policy: Policy::Skip,
+                ..RunOptions::new(dataset("pmlb-229-pwlinear"), &output)
+            })
+            .unwrap();
+            output.join("receipt.json")
+        };
+        let bootstrap = run_with("bootstrap", 1);
+        let searched = run_with("searched", 24);
+        let (first, first_path) = score(&options(&bootstrap, &registry)).unwrap();
+        let (second, second_path) = score(&options(&searched, &registry)).unwrap();
+        assert_ne!(first.program_sha256, second.program_sha256);
+        let looks = |path: &Path| -> serde_json::Value {
+            serde_json::from_slice::<serde_json::Value>(&std::fs::read(path).unwrap()).unwrap()
+                ["earlier_looks"]
+                .clone()
+        };
+        assert_eq!(looks(&first_path), serde_json::json!([]));
+        assert_eq!(
+            looks(&second_path),
+            serde_json::json!([first.program_sha256]),
+            "the second genome's test score hides the first look"
+        );
+        // Another dataset's looks are not this one's.
+        let other = temp.path().join("other");
+        run(&RunOptions {
+            budget: Budget {
+                evaluations: 1,
+                seconds: 600,
+            },
+            languages: vec![Language::Rust],
+            policy: Policy::Skip,
+            ..RunOptions::new(dataset("pmlb-695-chatfield-4"), &other)
+        })
+        .unwrap();
+        let (_, other_path) = score(&options(&other.join("receipt.json"), &registry)).unwrap();
+        assert_eq!(looks(&other_path), serde_json::json!([]));
     }
 
     #[test]
