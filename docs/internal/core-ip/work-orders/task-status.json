@@ -367,21 +367,27 @@
         "e8cf2c70ebebf3f420f2f24afe44bdb191faa749",
         "7f010a8e8334aa1c2641606cd1f450161271f822",
         "1e0537e00659a019d9db7172fa8e6d40cb295383",
-        "3ab3d5d6752f82ade009605b3d5d92eea45b1d02"
+        "3ab3d5d6752f82ade009605b3d5d92eea45b1d02",
+        "d36cdab6aee9a57e3f2a89f7a743adedc149d721"
       ],
       "tests": [
         "handoff_reaches_only_the_intended_consumer_for_the_issued_scope",
         "handoff_tests::a_teacher_admission_handoff_serializes_as_the_record_its_consumer_parses",
-        "handoff_tests::the_preregistered_producer_is_the_producer_that_hands_off_to_teacher_admission"
+        "handoff_tests::the_preregistered_producer_is_the_producer_that_hands_off_to_teacher_admission",
+        "handoff_tests::the_records_teacher_admission_rebuilds_are_pinned",
+        "cpu_context_bridge::tests::the_attestation_is_derivable_from_the_retained_receipts"
       ],
       "evidence": [
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w2b-w4-commit-policy-20260926T072208Z",
         "docs/internal/core-ip/work-orders/evidence/W02-asset-dependency-table.md",
         "docs/internal/core-ip/work-orders/evidence/W03-ingress-map.md",
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w3-t02-handoff-post-20260926T225441Z",
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w3-t02-producer-post-20260927T003118Z"
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w3-t02-producer-post-20260927T003118Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/pr114-r1-handoff-context-pre-20260927T013224Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/pr114-r1-handoff-context-post-20260927T014011Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/pr114-r1-handoff-context-gate-20260927T014544Z"
       ],
-      "remaining": "ContextHandoff binds release identity, transformation chain, scope and consumer. W3 teacher admission consumes the teacher_admission handoff and records its digest; the live producer run (jope-bench prepare_regression_context) emits it, and a W2 qualification registers the producer a freeze preregisters. Accepted-weight/native qualification not run."
+      "remaining": "ContextHandoff binds release identity, transformation chain, scope and consumer. W3 teacher admission consumes the teacher_admission handoff and records its digest; the live producer run (jope-bench prepare_regression_context) emits it, and a W2 qualification registers the producer a freeze preregisters, with the controller's case-execution pins from which teacher admission rebuilds every handoff's admission pins (one shared derivation for registration and production). Accepted-weight/native qualification not run."
     },
     "W3-T01": {
       "states": [
@@ -407,7 +413,9 @@
         "5ff45b30d9ac0f4dc5327a9ce3457fa9f2524b15",
         "1e0537e00659a019d9db7172fa8e6d40cb295383",
         "71d3d5f8c3a788e8a3ca78fbb4b154fe7e2e6e88",
-        "3ab3d5d6752f82ade009605b3d5d92eea45b1d02"
+        "3ab3d5d6752f82ade009605b3d5d92eea45b1d02",
+        "d36cdab6aee9a57e3f2a89f7a743adedc149d721",
+        "a5f71dfeef7449143411e990fcbd820b093f3815"
       ],
       "tests": [
         "missing_context_provenance_is_refused_at_real_teaching_ingress",
@@ -420,7 +428,15 @@
         "jope-policy handoff_tests (2)",
         "eligibility::tests::producer (5)",
         "handoff_tests::the_preregistered_producer_is_the_producer_that_hands_off_to_teacher_admission",
-        "jope-bench panel::teaching::tests (3, feature asm)"
+        "jope-bench panel::teaching::tests (3, feature asm)",
+        "eligibility::tests::producer::a_substituted_context_with_a_matching_handoff_digest_is_refused",
+        "eligibility::tests::producer::an_artifact_that_decodes_to_another_context_is_refused",
+        "eligibility::tests::producer::a_truncated_or_corrupt_artifact_is_refused",
+        "eligibility::tests::producer::admission_pins_the_controller_did_not_issue_are_refused",
+        "eligibility::tests::producer::the_w2_records_teacher_admission_rebuilds_are_pinned_field_for_field",
+        "eligibility::tests::producer::a_context_produced_after_the_teaching_window_is_refused",
+        "eligibility::tests::producer::a_context_from_another_experiment_is_refused",
+        "eligibility::tests::producer::a_context_window_that_ends_after_the_teaching_deadline_is_refused"
       ],
       "evidence": [
         "docs/internal/core-ip/work-orders/evidence/W03-ingress-map.md",
@@ -430,9 +446,16 @@
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w12-t05-consumers-post-20260926T223745Z",
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w3-t02-producer-pre-20260927T001342Z",
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w3-t02-producer-post-20260927T003118Z",
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w3-t02-producer-mutations-20260927T003823Z"
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w3-t02-producer-mutations-20260927T003823Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/pr114-r1-handoff-context-pre-20260927T013224Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/pr114-r1-handoff-context-post-20260927T014011Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/pr114-r1-handoff-context-gate-20260927T014544Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/pr114-r1-context-window-pre-20260927T015432Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/pr114-r1-context-window-pre-20260927T015558Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/pr114-r1-context-window-post-20260927T015750Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/pr114-r1-context-window-gate-20260927T020227Z"
       ],
-      "remaining": "Handoff and pool receipts are unsigned content-addressed evidence; W3 does not re-run W2 load_qualified; handoff row scopes not joined (dataset only). The product now issues ProducerPlan from the W2 qualification loader, and the live jope-bench driver freezes regression datasets with it and submits the W2 run's teacher_admission handoff (fixture-proven; preregister/admit_one not run end to end). No live W2 producer run or live teacher admission: needs a completed W2 CPU qualification (native reference, encoder assets) and a cgroup-delegated pool."
+      "remaining": "Handoff and pool receipts are unsigned content-addressed evidence, but a handoff can no longer be rewritten beside its producer run: the consumed context is decoded from the producer artifact, the admission pins are rebuilt from the preregistered release, qualification and case-execution pins with the artifact and the retained execution, and the context execution must be the teacher's own experiment and window (PR #114 review round 1). W3 does not re-run W2 load_qualified (the artifact is decoded and held to its envelope and layout, not re-assembled from its components); handoff row scopes not joined (dataset only). The product issues ProducerPlan from the W2 qualification loader, and the live jope-bench driver freezes regression datasets with it and submits the W2 run's teacher_admission handoff (fixture-proven; preregister/admit_one not run end to end). No live W2 producer run or live teacher admission: needs a completed W2 CPU qualification (native reference, encoder assets) and a cgroup-delegated pool."
     },
     "W3-T03": {
       "states": [
@@ -1141,7 +1164,8 @@
       "commits": [
         "64e56b410af39897c62bc887574ad53f421861b2",
         "4c86ea6dd6ba783738d523bb50c7e67e059087aa",
-        "05aaf3ff5a170bf08be873679a4b7f715c698871"
+        "05aaf3ff5a170bf08be873679a4b7f715c698871",
+        "dde575db81ce3c0ce19af02792c5b12dcea7a296"
       ],
       "tests": [
         "planned_census_reconciles_to_terminal_dispositions",
@@ -1157,7 +1181,8 @@
         "progress::tests::product::engine_events_reach_the_committed_graph_through_the_product_driver",
         "progress::tests::product::engine_events_that_do_not_verify_append_nothing_and_move_nothing",
         "progress_cli::progress_verbs_publish_engine_events_to_an_explicit_store_only",
-        "progress_cli::follow_drives_the_cadence_until_the_run_completes"
+        "progress_cli::follow_drives_the_cadence_until_the_run_completes",
+        "progress::remote::tests::every_s3_spelling_the_store_opens_goes_through_the_preflight"
       ],
       "evidence": [
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w8-t01-mutations-20260926T063358Z",
@@ -1165,9 +1190,12 @@
         "docs/internal/core-ip/work-orders/evidence/W08-durability.md",
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w8-integ-product-pre-20260926T194952Z",
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w8-integ-product-post-20260926T200708Z",
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w8-integ-product-mutations-20260926T200052Z"
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w8-integ-product-mutations-20260926T200052Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/pr114-r1-s3-preflight-pre-20260927T020605Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/pr114-r1-s3-preflight-post-20260927T020655Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/pr114-r1-s3-preflight-gate-20260927T021139Z"
       ],
-      "remaining": "Engine events map to W8 objects (progress/engine.rs) through the product Driver and progress verbs; no engine or W7 supervisor invokes it (follow runs beside a run); offline stores only; live S3 is W8-T07/T08."
+      "remaining": "Engine events map to W8 objects (progress/engine.rs) through the product Driver and progress verbs; no engine or W7 supervisor invokes it (follow runs beside a run); offline stores only. The S3 preflight reads a store URL exactly as the store opens it (jope_datasets::store::StoreLocation), so no spelling reaches the bucket root or skips the unsigned-request and conditional-write checks (PR #114 review round 1); live S3 is W8-T07/T08."
     },
     "W8-T02": {
       "states": [
@@ -1229,7 +1257,7 @@
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w8-integ-receiving-post-20260926T194229Z",
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w12-t05-consumers-post-20260926T223745Z"
       ],
-      "remaining": "Forked updates, HWM decisions not backed by the local ledger and revoked closures are refused before delivery; publisher identity is still an unauthenticated local string; live S3 conditional writes unproven."
+      "remaining": "Revoked closures are refused before anything is delivered. Forked or repeated updates, other graph-rule violations and HWM decisions not backed by the local ledger are refused before the run pointer advances; the commit's immutable objects may already be uploaded (create-only, content-addressed, named by no pointer). The product driver checks HWM decisions before staging. Publisher identity is still an unauthenticated local string; live S3 conditional writes unproven."
     },
     "W8-T04": {
       "states": [
