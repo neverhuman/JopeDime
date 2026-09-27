@@ -1879,3 +1879,176 @@ fn verify_refuses_acknowledgements_or_commits_journaled_after_the_window_closed(
     }
     controller::verify(&r.dir, Some(&r.sha)).unwrap();
 }
+
+// ------------------------------------------- W7-T06 the plan selects the training partition
+
+/// A plan at a fixed time, so its canonical bytes are reproducible.
+fn fixed_plan() -> BoundedRunContract {
+    contract(1_790_000_000_000, 3, &keys(3))
+}
+/// SHA-256 of `fixed_plan()`'s canonical bytes, recorded before a plan could select a
+/// training partition (`w7b-F-pre`). A plan that selects none keeps exactly these bytes.
+const FIXED_PLAN_SHA256: &str = "f73eaa7e1a0cbc3b01e6d50039fd194cc89ebd2011daed613931e9d0869cc976";
+
+#[test]
+fn a_plan_that_selects_no_training_keeps_its_exact_bytes() {
+    let c = fixed_plan();
+    let canonical = c.canonical_bytes().unwrap();
+    assert_eq!(sha(&canonical), FIXED_PLAN_SHA256);
+    assert_eq!(canonical, bytes(&c));
+    assert!(!String::from_utf8(canonical).unwrap().contains("training"));
+}
+
+fn select(c: &BoundedRunContract, partition: &str, microbatch: u32, global_batch: u32) -> Vec<u8> {
+    let mut v = serde_json::to_value(c).unwrap();
+    v["training"] = serde_json::json!({
+        "execution_partition": partition,
+        "microbatch": microbatch,
+        "global_batch": global_batch,
+    });
+    serde_json::to_vec(&v).unwrap()
+}
+
+#[test]
+fn a_plan_can_select_the_training_partition() {
+    let now = now_ms();
+    let c = contract(now, 3, &keys(3));
+    let selected = select(&c, "parallel.training_partition.v2", 256, 2048);
+    let parsed = BoundedRunContract::parse(&selected);
+    assert!(parsed.is_ok(), "{:?}", parsed.err());
+    let parsed = parsed.unwrap();
+    // The record is derived for exactly this plan's world: three ranks, lossless shards.
+    let record = parsed.execution_partition().unwrap().unwrap();
+    assert_eq!(
+        record,
+        jope_parallel::task_contract::training_partition_v2(3, 256, 2048).unwrap()
+    );
+    assert_eq!(
+        jope_parallel::task_contract::partition_rows_per_rank(&record).unwrap(),
+        vec![688, 680, 680]
+    );
+    // The selection is part of the frozen bytes and of the reviewed summary.
+    let canonical = parsed.canonical_bytes().unwrap();
+    assert!(String::from_utf8(canonical.clone()).unwrap().ends_with(
+        r#","training":{"execution_partition":"parallel.training_partition.v2","microbatch":256,"global_batch":2048}}"#
+    ));
+    let (_t, root) = tempdir();
+    let dir = root.join("run");
+    let report = controller::plan(&dir, &selected, now, None).unwrap();
+    assert_eq!(report.plan_sha256, sha(&canonical));
+    assert_eq!(fs::read(dir.join("plan.json")).unwrap(), canonical);
+    assert_eq!(
+        parsed.review(&report.plan_sha256)["training"]["execution_partition"],
+        record
+    );
+    // A plan that selects no training derives no record and reviews without one.
+    assert_eq!(c.execution_partition().unwrap(), None);
+    assert!(c.review("x").get("training").is_none());
+    // Partition v1 keeps its own rule: a two-rank plan may select it.
+    let two = contract(now, 2, &keys(2));
+    let v1 = BoundedRunContract::parse(&select(&two, "parallel.training_partition.v1", 256, 2048))
+        .unwrap();
+    assert_eq!(
+        v1.execution_partition().unwrap().unwrap(),
+        jope_parallel::task_contract::training_partition(2, 256, 2048).unwrap()
+    );
+}
+
+#[test]
+fn a_training_selection_the_trainer_cannot_run_is_refused() {
+    let now = now_ms();
+    let three = contract(now, 3, &keys(3));
+    for (partition, micro, global, needle) in [
+        // v1 cannot divide one global batch over three ranks: that is what v2 is for.
+        (
+            "parallel.training_partition.v1",
+            256,
+            2048,
+            "select partition v2",
+        ),
+        (
+            "parallel.training_partition.v3",
+            256,
+            2048,
+            "unknown training execution partition",
+        ),
+        (
+            "parallel.training_partition.v2",
+            100,
+            2048,
+            "training batch shape",
+        ),
+        (
+            "parallel.training_partition.v2",
+            512,
+            2048,
+            "training batch shape",
+        ),
+        (
+            "parallel.training_partition.v2",
+            256,
+            3000,
+            "training batch shape",
+        ),
+        (
+            "parallel.training_partition.v2",
+            256,
+            0,
+            "training batch shape",
+        ),
+    ] {
+        let e = BoundedRunContract::parse(&select(&three, partition, micro, global)).unwrap_err();
+        assert!(
+            matches!(&e, PlanRefusal::Invalid(m) if m.contains(needle)),
+            "{partition} {micro} {global}: {e}"
+        );
+    }
+    // Partition v2 covers one to eight ranks.
+    let nine = contract(now, 9, &keys(9));
+    let e = BoundedRunContract::parse(&select(&nine, "parallel.training_partition.v2", 256, 2048))
+        .unwrap_err();
+    assert!(e.to_string().contains("one to eight ranks"), "{e}");
+    // An unknown field inside the selection is refused.
+    let mut v = serde_json::to_value(&three).unwrap();
+    v["training"] = serde_json::json!({
+        "execution_partition": "parallel.training_partition.v2",
+        "microbatch": 256, "global_batch": 2048, "world": 3,
+    });
+    assert!(BoundedRunContract::parse(&serde_json::to_vec(&v).unwrap()).is_err());
+    // An explicit null selects nothing: Plan freezes exactly the bytes of the plan without it.
+    let mut v = serde_json::to_value(&three).unwrap();
+    v["training"] = serde_json::Value::Null;
+    let null = serde_json::to_vec(&v).unwrap();
+    let (_t, root) = tempdir();
+    let report = controller::plan(&root.join("run"), &null, now, None).unwrap();
+    assert_eq!(report.plan_sha256, sha(&bytes(&three)));
+    // A later attempt cannot change the selected partition: that is a topology transition.
+    let selected =
+        BoundedRunContract::parse(&select(&three, "parallel.training_partition.v2", 256, 2048))
+            .unwrap();
+    let outcome = jope_parallel::native_loop::bounded::contract::AttemptOutcome {
+        plan_sha256: sha(&selected.canonical_bytes().unwrap()),
+        journal_tip_sha256: sha(b"journal tip"),
+        terminal: true,
+        committed_updates_total: 60_000,
+    };
+    let mut next = selected.clone();
+    next.attempt = 2;
+    next.predecessor = Some(jope_parallel::native_loop::bounded::contract::Predecessor {
+        plan_sha256: outcome.plan_sha256.clone(),
+        attempt: 1,
+        journal_tip_sha256: outcome.journal_tip_sha256.clone(),
+        committed_updates: 60_000,
+    });
+    next.validate_successor(&selected, &outcome).unwrap();
+    let changes: [fn(&mut BoundedRunContract); 2] = [
+        |t| t.training.as_mut().unwrap().microbatch = 128,
+        |t| t.training = None,
+    ];
+    for change in changes {
+        let mut changed = next.clone();
+        change(&mut changed);
+        let e = changed.validate_successor(&selected, &outcome).unwrap_err();
+        assert!(e.to_string().contains("explicit transition"), "{e}");
+    }
+}
