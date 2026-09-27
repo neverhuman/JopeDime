@@ -109,19 +109,31 @@ pub fn admit(threads: usize, islands: usize, cpu_ceiling_millicores: Option<u64>
     Ok(workers)
 }
 
-/// A dedicated pool for `workers > 1`; `None` evaluates on the calling thread exactly as the
-/// sequential search always has.
-pub fn pool(workers: usize) -> Result<Option<rayon::ThreadPool>> {
-    if workers <= 1 {
-        return Ok(None);
-    }
-    Ok(Some(
-        rayon::ThreadPoolBuilder::new()
-            .num_threads(workers)
-            .thread_name(|i| format!("jope-pipeline-eval-{i}"))
-            .build()
-            .context("build the evaluation thread pool")?,
-    ))
+/// The stack every candidate fit runs on, whatever the worker count: the campaigns' candidate
+/// stack (`binary42::CANDIDATE_STACK_BYTES`).
+///
+/// The calling thread's stack is not the run's to choose (a CLI main thread gets the ulimit,
+/// usually 8 MiB; a test or embedding thread, and every default rayon worker, 2 MiB), and a fit
+/// that overflows it aborts the whole process: a stack overflow is not a panic
+/// `search::evaluate`'s `catch_unwind` can catch. Fitting everything on threads of this size is
+/// what keeps the worker count from deciding whether a deep fit measures or kills the run.
+pub const EVALUATION_STACK_BYTES: usize = 32 * 1024 * 1024;
+
+/// The evaluation pool: `workers` threads with [`EVALUATION_STACK_BYTES`] each. One worker is a
+/// pool too, so `--threads 1` fits on the same stack as `--threads 8`.
+pub fn pool(workers: usize) -> Result<rayon::ThreadPool> {
+    rayon::ThreadPoolBuilder::new()
+        .num_threads(workers.max(1))
+        .stack_size(EVALUATION_STACK_BYTES)
+        .thread_name(|i| format!("jope-pipeline-eval-{i}"))
+        .build()
+        .context("build the evaluation thread pool")
+}
+
+/// Run `work` on one thread with the evaluation stack: for fits outside a search's pool (the
+/// test-split refit, single-cut helpers).
+pub fn on_evaluation_stack<T: Send>(work: impl FnOnce() -> T + Send) -> Result<T> {
+    Ok(pool(1)?.install(work))
 }
 
 #[cfg(test)]
@@ -137,6 +149,44 @@ mod tests {
         assert!(admit(0, 1, None).is_err());
         assert!(admit(1, 0, None).is_err());
         assert!(admit(usize::MAX, 2, None).is_err());
+    }
+
+    /// Uses at least `bytes` of stack: every frame keeps a live 32 KiB buffer, read again after
+    /// the recursive call so it cannot be dropped or the call turned into a loop.
+    fn deep(bytes: usize) -> u64 {
+        let mut frame = [0u8; 32 * 1024];
+        std::hint::black_box(&mut frame);
+        let rest = if bytes > frame.len() {
+            deep(bytes - frame.len())
+        } else {
+            0
+        };
+        std::hint::black_box(&frame);
+        rest + u64::from(frame[0]) + 1
+    }
+
+    /// Deeper than rayon's default worker stack (2 MiB) and a CLI main thread's usual 8 MiB.
+    const DEEP: usize = 10 << 20;
+
+    /// A fit that needs more stack than a default thread must not measure at one worker and abort
+    /// the process at two: a stack overflow is not a panic `catch_unwind` can catch. Every worker
+    /// count, and a fit outside a search, runs on the same evaluation stack.
+    #[test]
+    fn a_deep_fit_survives_on_more_than_one_worker() {
+        use rayon::prelude::*;
+        let frames = (DEEP / (32 * 1024)) as u64;
+        for workers in [1, 2] {
+            let pool = pool(workers).unwrap();
+            assert_eq!(pool.current_num_threads(), workers);
+            let depths: Vec<u64> = pool.install(|| {
+                (0..workers * 2)
+                    .into_par_iter()
+                    .map(|_| deep(DEEP))
+                    .collect()
+            });
+            assert_eq!(depths, vec![frames; workers * 2], "{workers} worker(s)");
+        }
+        assert_eq!(on_evaluation_stack(|| deep(DEEP)).unwrap(), frames);
     }
 
     #[test]
