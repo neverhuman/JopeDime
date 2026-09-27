@@ -1178,3 +1178,57 @@ So no plan reaches `train_controlled`, and its v1 `run.json` is unchanged. The o
    duplicates the coordinator.
 3. **Not taken.** `train_controlled` takes only the partition from the plan and keeps its
    legacy binding and `nccl.id`. It would bypass plan admission.
+
+### Item G — operator runbook for the three-host CPU proof
+
+`docs/runbooks/w7-three-host-cpu-proof.md`. It covers:
+
+- **§0** the owner decisions and admission;
+- **§2** the build, installing `jope-native-loop` on each host and verifying it by digest,
+  and the `scqd` pin and trusted-service registration;
+- **§3** OpenSSL Ed25519 host certificates and keys;
+- **§4** the installation file and input closure;
+- **§5** census collection on each host and the pinned merge;
+- **§6** a `jq` contract template for 4 CPU, 8 GiB and 15 minutes per rank, the grant
+  signing procedure for the owner's key, and plan distribution by digest;
+- **§7** preflight and admission;
+- **§8** the supervision files and agents;
+- **§9 to §12** four runs: commit, cancel, coordinator restart and a substituted input;
+- **§13** no-orphan inventories;
+- **§14** the receipts to retain.
+
+Nothing in it has run on another host.
+
+**Local dry run** (`w7b-G-dryrun-20260927T005826Z`; the script is kept with the record). It
+ran §1 to §9 and §13 on this build host, which is xbabe2, as a fixture:
+
+- one rank and loopback addresses;
+- five updates instead of 540;
+- a scratch embedded `scqd`, never the installed daemon;
+- a throwaway grant-authority key and the lane's debug binary.
+
+What it showed:
+
+- OpenSSL-generated Ed25519 certificates and PKCS#8 keys load, and pin through the TLS
+  transport.
+- A grant signed with `openssl pkeyutl -rawin` over the documented message verifies at Plan.
+- The census receipt reads `not_queried_cuda_visible_devices_empty` with 0 GPUs; `preflight`
+  issues a receipt; the agent reports `listening`.
+- `coordinate` ends `committed` with 5 updates, and `verify` counts 1 result.
+- The participant's result is a `jope.native_cpu_proof_result.v1` document with
+  `numerical: false`, and no process is left behind.
+
+Reviewing the procedure against the code, not the dry run, found three further defects. All
+are fixed in this commit:
+
+- a census file name that could not be reused across collections;
+- build receipts written into the checkout;
+- private keys created before their mode was restricted. Keys are now generated under
+  `umask 077`.
+
+**Open for W7-T07 (live).**
+
+- The live runs need the §0 admission.
+- The daemon registration and admin uid are owner and operator changes on each host.
+- There is no repository tool for contract authoring or grant signing; the owner signs.
+- Reservations are checked by hand.
