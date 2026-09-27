@@ -1,7 +1,7 @@
 {
   "schema": "jopedime.python-archive-manifest.v1",
   "phase": "P1",
-  "ruling": "owner ruling 2026-09-26: the stack is Rust/Vite/TypeScript/React; Python remains only for GP-emitted code and its harness (docs/adr/ADR-0008-rust-only-stack.md)",
+  "ruling": "owner ruling 2026-09-26: the stack is Rust/Vite/TypeScript/React; Python remains only for GP-emitted code and its harness (docs/adr/ADR-0006-rust-only-stack.md)",
   "source_commit": "8a55c4fef407db014c4d84cf3980178f936bacd5",
   "restore": "git checkout 8a55c4fef -- <path>; the whole set: git checkout 8a55c4fef -- $(jq -r .files[].path docs/archive/python-archive-manifest.json)",
   "custody": {

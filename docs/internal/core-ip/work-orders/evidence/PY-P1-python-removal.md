@@ -237,14 +237,20 @@ no installed host file was changed.
   `jope-parallel`, so nothing ran); `py-p1-archive-post-20260927T032003Z` ran it under the right
   name: the test that spawns `shared_teaching_cache.py` as the cache server passes.
 
-## Docs — ADR-0008 and the contributor-facing pages
+## Docs — ADR-0006 and the contributor-facing pages
 
-- `docs/adr/ADR-0008-rust-only-stack.md` records the owner ruling of 2026-09-26 in the four ADR
+- `docs/adr/ADR-0006-rust-only-stack.md` records the owner ruling of 2026-09-26 in the four ADR
   sections: it supersedes owner decision 2 of the plan and, for future work, the Python-training
   parts of ADR-0005; names the GP-emitted-code exception, the always-keep list (the eight G files,
   `python3` in the runner image, the sha-pinned grammar sources until P3 decides) and the P1, P2
-  and P3 scopes. The directory held ADR-0001 to ADR-0005 and no branch or history names an
-  ADR-0006 or ADR-0007; the number follows the ruling's own name, ADR-0008.
+  and P3 scopes. It is numbered ADR-0006, the next number after ADR-0005 as `CONTRIBUTING.md`
+  requires. It was first committed as ADR-0008 (the brief's name, `e9511a2fc`) and renumbered in a
+  follow-up commit; every reference moved with it, including the `ruling` string of the archive
+  manifest. The custody copy of that manifest was replaced by the committed one (only `.ruling`
+  differs; `.files`, `.counts` and `.custody` are identical), with the previous copy kept under
+  `superseded-manifest-adr-0008-20260927/` and a `NOTE-20260927-adr-renumber.txt`; `SHA256SUMS`
+  was regenerated and verifies. Renumber gate `py-p1-adr-post-20260927T033239Z`: the full gate,
+  the relative-link check and `deploy/ci/check.sh`, all green.
 - `CONTRIBUTING.md` (toolchain, `just ci-pr`, required checks, dependencies and the former "Rust is
   authoritative" rule, now "Rust only"), `docs/architecture.md` (the summary, the Python package
   section and the contracts note), `README.md` (the ruff note and the layout row) and

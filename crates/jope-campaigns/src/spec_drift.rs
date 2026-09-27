@@ -216,7 +216,7 @@ pub const REGISTRY: &[(&str, &str, Option<Family>)] = &[
     ),
     // The offline train-only red-team renderer (train_only_redteam_scq.py) and the
     // genome-boost campaign (genome_boost_cluster_campaign.py) were registered here
-    // until the Python removal P1 (ADR-0008) archived both; restore with
+    // until the Python removal P1 (ADR-0006) archived both; restore with
     // `git checkout 8a55c4fef -- <path>` (docs/archive/python-archive-manifest.json)
     // and re-register them if either campaign is revived.
     // Smart-v3 CPU study dispatcher. It is a frozen, development-only

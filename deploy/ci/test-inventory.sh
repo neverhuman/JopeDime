@@ -85,7 +85,7 @@ do_rust = os.environ["RUST"] == "1"
 do_python = os.environ["PYTHON"] == "1"
 py_mode = os.environ["PY_MODE"]
 tmp = Path(os.environ["TMP"])
-# Python was 214 (plan Verification item 9). The Python removal P1 (ADR-0008) archived the test
+# Python was 214 (plan Verification item 9). The Python removal P1 (ADR-0006) archived the test
 # files of code with no live consumer (111 static-scan test functions under python/tests; list and
 # restore commands in docs/archive/python-archive-manifest.json), so the floor is the exact count
 # left: 172. It may only rise again or fall with a recorded archive/port.
