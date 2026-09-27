@@ -155,13 +155,15 @@ fn authored_contracts_are_signed_and_verified_by_the_grant_authority() {
     let signed = authoring::sign_grants(&unsigned, &key, now).unwrap();
     let bytes = signed.canonical_bytes().unwrap();
     let report = authoring::verify_grants(&bytes, now).unwrap();
-    assert_eq!(report.plan_sha256, sha(&bytes));
+    assert_eq!(report.plan_sha256.as_deref(), Some(sha(&bytes).as_str()));
     assert_eq!(report.grants.len(), 3);
     let (_t2, run) = tempdir();
     let plan = controller::plan(&run.join("run"), &bytes, now, None).unwrap();
-    assert_eq!(plan.plan_sha256, report.plan_sha256);
+    assert_eq!(Some(plan.plan_sha256), report.plan_sha256);
     // The unsigned review names the same grant bodies the signature covers.
     let review = authoring::unsigned_report(&unsigned).unwrap();
+    // An unsigned contract is not a plan: its review names no plan digest.
+    assert_eq!(review.plan_sha256, None);
     assert_eq!(review.grants, report.grants);
 }
 

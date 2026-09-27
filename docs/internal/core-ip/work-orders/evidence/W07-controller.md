@@ -1601,3 +1601,56 @@ and the child saw no descriptor 3. The harness now clears `FD_CLOEXEC` explicitl
 timing run (`w7c-D5-post-timing-20260927T014103Z`, 91 of 92) is marked `SUPERSEDED`.
 
 Post-fix record: `w7c-D5-post-20260927T014236Z`, the full gate.
+
+### W7-D4 — pinned leaf certificates (item D)
+
+**Decision.** Accept pinned leaf certificates. Rotating a certificate requires a new plan, and
+the coordinator must be a planned host. This is documented in the runbook, and the only code
+change is a missing negative test.
+
+**What was already enforced** (item D).
+
+- The transport accepts only a peer whose end-entity certificate SHA-256 is planned, with no
+  chain and no CA.
+- `coordinator_certificate` refuses a coordinator host outside the plan.
+- `the_plan_pins_every_host_and_the_coordinator` covers a shared certificate and an unplanned
+  coordinator.
+
+**Missing negative, now added** (`bounded_transport`, now 10):
+`a_rotated_certificate_needs_a_new_plan`.
+
+- A host whose certificate rotated is refused by the coordinator under the old plan.
+- A rotated coordinator certificate is refused by a rank still holding the old plan.
+- A new plan that pins the rotated certificate has a different digest, and admits it.
+- A coordinator outside the plan has no pinned identity.
+
+**Runbook.**
+
+- §0.1 states the decision: pinned leaves, rotation needs a new census and plan, and the
+  coordinator must be a planned host.
+- §3 keeps the 7-day certificate and the rotation note.
+
+**Follow-up to W7-D6.** The review that `contract author` prints for an unsigned contract
+reported `plan_sha256` as the digest of the unsigned bytes. That digest is not what `plan`
+freezes. `GrantReport.plan_sha256` is now `None` for an unsigned review, and only
+`grant verify` and `grant sign` report the plan digest. `bounded_grants` asserts both cases.
+
+**Runbook dry run after W7-D1 to W7-D6** (`w7c-runbook-dryrun-20260927T014529Z`, the script
+is kept with the record). It ran the updated §1 to §9 and §13 on this build host, xbabe2, as a
+fixture:
+
+- one rank and loopback addresses;
+- five updates;
+- a scratch embedded `scqd`, with the §0.3 checklist run against its configuration;
+- a throwaway grant-authority key.
+
+The `contract author`, `grant sign` and `grant verify` verbs replaced the hand assembly.
+
+- The checklist's tenant, socket and binary checks pass.
+- The digest `grant verify` reported equals the digest `plan` froze, and the key never
+  appeared in any output.
+- The participant proved its job (W7-D1) under the scratch daemon. Its result carries
+  `smartcluster_job` (attempt 1, fence 1, tenant `unix:1000`).
+- `coordinate` ended `committed` with 5 updates, and `verify` counts 1 result.
+
+Post-fix record: `w7c-D4-post-*`, the full gate (`bounded_transport` 10, `bounded_grants` 5).

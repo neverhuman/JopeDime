@@ -580,3 +580,58 @@ fn a_hello_replayed_over_a_fresh_authenticated_connection_is_refused() {
         RefusalCause::WrongParticipant { rank: 0 }
     );
 }
+
+/// W7-D4: identity is the pinned leaf certificate. A host that rotates its certificate is
+/// refused by every plan that pinned the old one, whether it dials the coordinator or is the
+/// coordinator; only a new plan that pins the new certificate admits it.
+#[test]
+fn a_rotated_certificate_needs_a_new_plan() {
+    let k = keys(3);
+    let (c, certs) = planned_hosts(&k);
+    let rotated = current("fixture-host-0", 77);
+    assert_ne!(rotated.sha256, certs[0].sha256);
+    // Host 0 dials the planned coordinator (host 1) with its rotated certificate; the
+    // coordinator's plan pins only the old one.
+    let (refusal, _) = attempt(
+        &certs[1],
+        transport::planned_certificates(&c).unwrap(),
+        &rotated,
+        &certs[1].sha256,
+    );
+    assert!(
+        !refusal.is_empty(),
+        "a rotated certificate was accepted under the old plan"
+    );
+    // The coordinator rotates: every rank still pins its planned certificate and refuses the
+    // new one.
+    let rotated_coordinator = current("fixture-host-1", 78);
+    let (_, client_refused) = attempt(
+        &rotated_coordinator,
+        transport::planned_certificates(&c).unwrap(),
+        &certs[0],
+        &certs[1].sha256,
+    );
+    assert!(
+        client_refused,
+        "a rank accepted a coordinator certificate its plan does not pin"
+    );
+    // A new plan pinning the rotated certificate is a different plan, and admits it.
+    let mut next = c.clone();
+    next.participants[0].host.certificate_sha256 = rotated.sha256.clone();
+    next.validate_structure().unwrap();
+    assert_ne!(sha(&bytes(&next)), sha(&bytes(&c)));
+    let (refusal, _) = attempt(
+        &certs[1],
+        transport::planned_certificates(&next).unwrap(),
+        &rotated,
+        &certs[1].sha256,
+    );
+    assert!(
+        refusal.is_empty(),
+        "the new plan refused its own pinned certificate: {refusal}"
+    );
+    // A coordinator outside the plan has no pinned identity at all.
+    let mut outside = next.clone();
+    outside.coordinator_host = "fixture-host-9".into();
+    assert!(transport::coordinator_certificate(&outside).is_err());
+}

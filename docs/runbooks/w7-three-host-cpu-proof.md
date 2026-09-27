@@ -13,10 +13,11 @@ next, separately admitted step. Do not start it without the admission in §0.
 What has run:
 
 - The same components pass a same-host fixture (`bounded_smartcluster`).
-- A local dry run checked the commands of §1 to §9 and §13 on the build host (xbabe2), with
-  one rank, loopback addresses, five updates, a scratch embedded `scqd` (never the installed
-  daemon) and a throwaway grant key. It covered the OpenSSL credentials and the grant
-  signature (`w7b-G-dryrun-20260927T005826Z`, outcome `committed`, 1 result verified).
+- After owner decisions W7-D1 to W7-D6, a local dry run checked §0.3 and §1 to §9 and §13 on
+  the build host (xbabe2). It used one rank, loopback addresses, five updates, a scratch
+  embedded `scqd` (never the installed daemon) and a throwaway grant key. It covered the
+  OpenSSL credentials, `contract author`, `grant sign` and `grant verify`, and the rank's job
+  proof (`w7c-runbook-dryrun-20260927T014529Z`).
 
 The dry run is neither the proof nor an admission.
 
@@ -29,25 +30,68 @@ W7-T07 accepts the proof when three distinct host and boot identities have:
 
 A same-host three-process run is a fixture, not this proof.
 
-## 0. Before anything runs (owner)
+## 0. Before anything runs
 
-Each item below is a decision or an authority this runbook does not hold. Record each answer
-in the admission record (§7).
+### 0.1 Decided (owner decisions 2026-09-27, W7-D1 to W7-D6)
+
+- **Ranks** are SmartCluster trusted-service jobs of each host's `scqd` (W7-D1).
+  - Before any work, each rank proves it is its planned job's leader. It checks the job
+    environment, that its control-socket parent is the pinned daemon, and the daemon's live
+    record of its attempt, tenant, plan, dispatch, service and arguments.
+  - A rank that cannot prove this refuses and writes `outbox/refusal.txt`.
+- **TLS identity is pinned leaf certificates** (W7-D4).
+  - Each host presents one self-signed Ed25519 leaf, and the plan pins its SHA-256. No CA
+    and no chain is accepted.
+  - **Rotating a certificate needs a new census and a new plan.** A host with a new
+    certificate is refused by every plan that pinned the old one.
+  - **The coordinator must be a planned host** (here xbabe1, rank 0's host). Otherwise it has
+    no pinned identity and every rank refuses it.
+- **Contracts and grants come from repository verbs** (W7-D6). The unsigned contract is
+  authored with `contract author`, the owner signs it with `grant sign`, and anyone checks it
+  with `grant verify` (§6). Nothing is hand-assembled.
+
+### 0.2 Owner authority (record each in the admission record, §7)
 
 1. **Phase admission** for a 4 CPU / 8 GiB / 15-minute CPU phase on each host, and a CI and
    runner reservation window. The census does not read CI or SmartCluster reservations, so
-   the window must be kept by hand (§7).
-2. **Rank execution path.** Ranks run as SmartCluster `TrustedService` jobs. The alternative
-   is the `smartcluster_worker.rs` worker path; see the W07 evidence, item E, decision 1.
-3. **Daemon change on each host.** Register the trusted service `jope-bounded-rank`, pointing
-   at the installed binary. Make the operator's uid a daemon admin uid (§2.3), and let the
-   operator connect to the daemon socket. Rank jobs run as tenant `unix:<operator uid>`.
-4. **Grant authority.** The owner's grant authority key signs each participant grant (§6.2).
-   No repository tool signs grants, and the planner holds no signing key. Never sign with a
-   key kept on xbabe1, xbabe2 or xbabe3.
-5. **Network.** TCP 7460 (coordinator rendezvous, on xbabe1) and TCP 7461 (agent, on each
-   host) must be reachable between the three hosts. Both ports are TLS 1.3 with mutual,
-   plan-pinned certificates.
+   the window is kept by hand (§7).
+2. **The grant authority key.**
+   - It stays in the owner's custody and signs with `grant sign` (§6.2).
+   - It is read only from a file that is owner-only (`0600`) and not a symlink; it is never an
+     argument or an environment value.
+   - Never keep it on xbabe1, xbabe2 or xbabe3.
+
+### 0.3 Host checklist (each host; every line must pass, and its output is kept as evidence)
+
+Run these after §2.3 and before §5. Save the whole transcript as
+`$EVIDENCE/host-checklist.txt`.
+
+```bash
+CONF=/etc/jain-smartcluster/scqd.toml
+# 1. The trusted service jope-bounded-rank maps to exactly the installed binary.
+grep -E "^jope-bounded-rank = \"$BIN\"$" "$CONF"
+# 2. The operator is a daemon admin uid (rank jobs are submitted by the operator).
+grep -E "^admin_uids = \[.*\b$(id -u)\b.*\]" "$CONF"
+# 3. Jobs run as their submitting principal: no worker uid override, so a rank's euid is the
+#    operator's and its job tenant is exactly unix:<operator uid> (W7-D1 checks this).
+! grep -E '^\s*worker_uid\s*=' "$CONF" && echo "tenant: unix:$(id -u)"
+# 4. The operator can reach the daemon socket.
+scq --socket "$SCQ_SOCKET" --json ping | jq -e '.daemon_version' >/dev/null && echo socket-ok
+# 5. One rank per host unless cgroups are delegated. A daemon in safe_single_allocation runs
+#    one job at a time, so a plan may put at most one rank on this host (the proof puts one).
+scq --socket "$SCQ_SOCKET" --json doctor | jq -r '"mode: \(.mode), cgroup_delegated: \(.capabilities.cgroup_delegated)"'
+# 6. The installed binary and the daemon are the pinned ones (§2.2).
+sha256sum "$BIN" "$SCQD_EXE"
+# 7. The ports are free before the run: 7460 on xbabe1, 7461 on every host.
+! ss -ltn | grep -E ':(7460|7461)\b'
+```
+
+Check 5 must show `mode: full` with `cgroup_delegated: true`, or else at most one planned rank
+on this host. The runbook's plans put exactly one rank on each host.
+
+**Network.** TCP 7460 (the coordinator's rendezvous, on xbabe1) and TCP 7461 (the agent, on
+each host) must be reachable between the three hosts. Both are TLS 1.3 with mutual,
+plan-pinned certificates.
 
 ## 1. Names used below
 
@@ -122,7 +166,7 @@ sha256sum "$SCQD_EXE" | tee $EVIDENCE/scqd.sha256
 ps -o uid=,pid=,args= -C scqd | tee $EVIDENCE/scqd-process.txt   # the daemon uid
 ```
 
-### 2.3 Daemon registration (each host, owner-approved change, §0.3)
+### 2.3 Daemon registration (each host; then run the §0.3 checklist)
 
 Add the following to `/etc/jain-smartcluster/scqd.toml`, then restart the daemon the way the
 host runs it. The service path must be exactly `$BIN`, absolute.
@@ -190,7 +234,10 @@ host observe:
 
 ```bash
 LIBS=$(ldd $BIN | awk '$2 == "=>" && $3 ~ /^\// {print $3} $1 ~ /^\// {print $1}' | sort -u | jq -R . | jq -s .)
-jq -n --arg addr "$ADDR" --arg w7 "$W7" --arg commit "$COMMIT" --argjson libs "$LIBS" '{
+DAEMON_UID=$(ps -o uid= -C scqd | head -1 | tr -d ' ')
+jq -n --arg addr "$ADDR" --arg w7 "$W7" --arg commit "$COMMIT" --argjson libs "$LIBS" \
+  --arg socket "$SCQ_SOCKET" --argjson daemon_uid "$DAEMON_UID" \
+  --arg scqd_sha "$(cut -d' ' -f1 $EVIDENCE/scqd.sha256)" '{
   schema: "jope.native_host_installation.v1",
   address: $addr,
   certificate: ($w7 + "/tls/host.pem"),
@@ -203,10 +250,18 @@ jq -n --arg addr "$ADDR" --arg w7 "$W7" --arg commit "$COMMIT" --argjson libs "$
   nccl_libraries: [],
   installed_policies: ["/etc/jain-smartcluster/scqd.toml"],
   gpu_inventory: false,
-  input_root: $w7
+  input_root: $w7,
+  smartcluster: {
+    daemon: {socket: $socket, uid: $daemon_uid, executable_sha256: $scqd_sha},
+    service: "jope-bounded-rank"
+  }
 }' > $W7/install/installation.json
 cp $W7/install/installation.json $EVIDENCE/
 ```
+
+`smartcluster` pins the daemon each rank must prove it was started by (W7-D1): its socket, its
+uid and the digest of its executable. The supervision file (§8) must name the same daemon and
+service, or the supervisor refuses to start.
 
 The closure path in the plan is `inputs/w7-cpu-proof.bin`, relative to `input_root`.
 
@@ -280,7 +335,7 @@ Four runs, each its own plan and run name:
 
 Work on one run at a time. For each run, set `RUN` first.
 
-### 6.1 Contract (unsigned)
+### 6.1 Contract (unsigned): `contract author`
 
 Each rank has these ceilings:
 
@@ -293,66 +348,70 @@ The work census stays inside them: 870 000 ms of wall time and 655 000 CPU core-
 There are 540 planned updates, one per 1000 ms heartbeat, so about 9 minutes of work. Grants
 last 30 minutes, and the original deadline is 1 hour.
 
+The request is small and declarative. `contract author` takes three things from elsewhere:
+
+- every host identity, from the merged census; a host not in the census is refused;
+- the closure's digest and size, from the file under `--input-root`;
+- every grant body, derived from its participant.
+
+It then checks everything `plan` checks except the signatures. The output is a new file,
+never a replacement.
+
 ```bash
 export RUN=w7-cpu-commit-$STAMP        # then w7-cpu-cancel-…, w7-cpu-restart-…, w7-cpu-invalid-…
-NOW=$(date +%s%3N)
-RANKS=$(jq -n --arg h1 "$HOST1" --arg h2 "$HOST2" --arg h3 "$HOST3" \
-  --arg k1 "$(cat <xbabe1 rank.pub>)" --arg k2 "$(cat <xbabe2 rank.pub>)" --arg k3 "$(cat <xbabe3 rank.pub>)" \
-  '[{host:$h1,key:$k1},{host:$h2,key:$k2},{host:$h3,key:$k3}]')
-jq -n --arg run "$RUN" --argjson now "$NOW" --arg coord "$HOST1" \
+jq -n --arg run "$RUN" --arg coord "$HOST1" \
   --arg coord_pub "$(cat $EVIDENCE/coordinator.pub)" --arg auth_pub "<owner grant-authority public key, 64 hex>" \
-  --argjson ranks "$RANKS" --slurpfile census $W7/census/merged-$CSTAMP.json \
-  --arg input_sha "<input.sha256 digest>" --argjson input_bytes 1048576 '
-  def identity($h): [$census[0].hosts[] | select(.identity.host == $h) | .identity] | if length == 1 then .[0] else error("host \($h) not in census") end;
-  def work($r): [
-    {id:"rank-\($r)-numerical", global_rank:$r, kind:"numerical", cpu_core_ms:600000, gpu_ms:0, wall_ms:600000, peak_ram_bytes:1073741824, peak_vram_bytes:0, updates:540},
-    {id:"rank-\($r)-verification", global_rank:$r, kind:"verification", cpu_core_ms:10000, gpu_ms:0, wall_ms:60000, peak_ram_bytes:536870912, peak_vram_bytes:0, updates:0},
-    {id:"rank-\($r)-artifact-movement", global_rank:$r, kind:"artifact_movement", cpu_core_ms:10000, gpu_ms:0, wall_ms:60000, peak_ram_bytes:536870912, peak_vram_bytes:0, updates:0},
-    {id:"rank-\($r)-cleanup", global_rank:$r, kind:"cleanup", cpu_core_ms:5000, gpu_ms:0, wall_ms:30000, peak_ram_bytes:268435456, peak_vram_bytes:0, updates:0},
-    {id:"rank-\($r)-failure-allowance", global_rank:$r, kind:"failure_allowance", cpu_core_ms:30000, gpu_ms:0, wall_ms:120000, peak_ram_bytes:1073741824, peak_vram_bytes:0, updates:0}];
-  {schema:"jope.native_bounded_run.v1", run:$run, attempt:1, coordinator_host:$coord,
-   coordinator_public_key:$coord_pub, grant_authority_public_key:$auth_pub,
-   not_before_unix_ms:$now, original_deadline_unix_ms:($now + 3600000),
-   telemetry:{max_age_ms:600000, clock_skew_ms:2000},
-   rendezvous:{join_timeout_ms:120000, max_message_bytes:65536, heartbeat_timeout_ms:5000},
-   artifact_closure:[{path:"inputs/w7-cpu-proof.bin", sha256:$input_sha, bytes:$input_bytes}],
-   participants:[$ranks | to_entries[] | .key as $r | .value as $v | {
-     global_rank:$r, local_rank:0, host:identity($v.host), device:null,
-     ceilings:{cpu_millicores:4000, ram_bytes:8589934592, gpu_vram_bytes:null, wall_ms:900000},
-     public_key:$v.key,
-     grant:{body:{schema:"jope.native_participant_grant.v1", run:$run, attempt:1, global_rank:$r,
-       host:$v.host, boot_id:identity($v.host).boot_id, device_uuid:null, participant_public_key:$v.key,
-       cpu_millicores:4000, ram_bytes:8589934592, gpu_vram_bytes:null, wall_ms:900000,
-       not_before_unix_ms:$now, expires_unix_ms:($now + 1800000)}, signature:""},
-     result_destination:{path:"rank-\($r)/result.bin", max_bytes:1048576}}],
-   work_census:[range(0; $ranks | length) as $r | work($r)[]],
-   counters:{committed_updates_at_start:0, planned_updates:540},
-   predecessor:null}' > $W7/contracts/$RUN.unsigned.json
+  --arg h1 "$HOST1" --arg h2 "$HOST2" --arg h3 "$HOST3" \
+  --arg k1 "$(cat <xbabe1 rank.pub>)" --arg k2 "$(cat <xbabe2 rank.pub>)" --arg k3 "$(cat <xbabe3 rank.pub>)" '
+  def rank($h; $k): {host: $h, public_key: $k, device_uuid: null,
+    ceilings: {cpu_millicores: 4000, ram_bytes: 8589934592, gpu_vram_bytes: null, wall_ms: 900000}};
+  {schema: "jope.native_bounded_contract_request.v1", run: $run, attempt: 1,
+   coordinator_host: $coord, coordinator_public_key: $coord_pub, grant_authority_public_key: $auth_pub,
+   window_ms: 3600000, grant_ms: 1800000,
+   telemetry: {max_age_ms: 600000, clock_skew_ms: 2000},
+   rendezvous: {join_timeout_ms: 120000, max_message_bytes: 65536, heartbeat_timeout_ms: 5000},
+   artifact_closure: ["inputs/w7-cpu-proof.bin"],
+   participants: [rank($h1; $k1), rank($h2; $k2), rank($h3; $k3)],
+   work_per_rank: [
+     {kind: "numerical", cpu_core_ms: 600000, gpu_ms: 0, wall_ms: 600000, peak_ram_bytes: 1073741824, peak_vram_bytes: 0},
+     {kind: "verification", cpu_core_ms: 10000, gpu_ms: 0, wall_ms: 60000, peak_ram_bytes: 536870912, peak_vram_bytes: 0},
+     {kind: "artifact_movement", cpu_core_ms: 10000, gpu_ms: 0, wall_ms: 60000, peak_ram_bytes: 536870912, peak_vram_bytes: 0},
+     {kind: "cleanup", cpu_core_ms: 5000, gpu_ms: 0, wall_ms: 30000, peak_ram_bytes: 268435456, peak_vram_bytes: 0},
+     {kind: "failure_allowance", cpu_core_ms: 30000, gpu_ms: 0, wall_ms: 120000, peak_ram_bytes: 1073741824, peak_vram_bytes: 0}],
+   counters: {committed_updates_at_start: 0, planned_updates: 540}}' > $W7/contracts/$RUN.request.json
+$BIN contract author --request $W7/contracts/$RUN.request.json --census $W7/census/merged-$CSTAMP.json \
+  --input-root $W7 --out $W7/contracts/$RUN.unsigned.json | tee $EVIDENCE/$RUN-authored.json
 ```
 
-The key order in the `grant.body` template above is the order in which the grant is signed.
-Do not reorder it.
+The printed `review` lists each grant's rank, host, window and body digest. The owner signs
+exactly those bodies.
 
-### 6.2 Grants (owner, with the grant-authority key; §0.4)
+### 6.2 Grants (owner, with the grant-authority key): `grant sign`, `grant verify`
 
-The signed message is the domain `jope.native_participant_grant.signature.v1` followed by one
-NUL byte, followed by the compact JSON of the grant body in the order above. The signature is
-Ed25519 over the raw message, written as 128 hex characters. On the owner's signing machine,
-for each rank `N` in 0, 1 and 2:
+Copy `$RUN.unsigned.json` to the owner's signing machine, which holds the authority key.
+There, and only there:
 
 ```bash
-{ printf 'jope.native_participant_grant.signature.v1\0'; jq -cj ".participants[N].grant.body" $RUN.unsigned.json; } > grant-N.msg
-openssl pkeyutl -sign -rawin -inkey <grant-authority.key> -in grant-N.msg -out grant-N.sig
-xxd -p -c 64 grant-N.sig    # the signature hex for rank N
+# The key file must be PKCS#8 Ed25519, mode 0600 and not a symlink; it is never an argument
+# value or an environment variable and is never printed.
+jope-native-loop grant sign --contract $RUN.unsigned.json --key <grant-authority.key> --out $RUN.json
+jope-native-loop grant verify --contract $RUN.json
 ```
 
-Back on xbabe1, insert the three signatures:
+`grant sign` refuses:
+
+- a key that is not the contract's `grant_authority_public_key`;
+- a contract that is already signed;
+- a grant whose window has already expired.
+
+The signed contract passes Plan's full validation before it is written. Copy `$RUN.json` back
+to `$W7/contracts/` on xbabe1 and verify it there as well:
 
 ```bash
-jq --arg s0 <sig0> --arg s1 <sig1> --arg s2 <sig2> \
-  '.participants[0].grant.signature=$s0 | .participants[1].grant.signature=$s1 | .participants[2].grant.signature=$s2' \
-  $W7/contracts/$RUN.unsigned.json > $W7/contracts/$RUN.json
+$BIN grant verify --contract $W7/contracts/$RUN.json | tee $EVIDENCE/$RUN-grants.json
 ```
+
+`plan_sha256` in that report is the digest `plan` will freeze (§6.3).
 
 ### 6.3 Plan, then distribute the frozen plan
 
@@ -546,7 +605,8 @@ and never under `/tmp`. Keep the following, with the UTC time each was taken:
 - **Census:** for every collection (`CSTAMP`), each host's census document and
   `census-collect-<CSTAMP>.json`, plus `census-merge-<CSTAMP>.json` and the merged census.
 - **Plans:**
-  - for each run, the unsigned and signed contract and `plan.json`;
+  - for each run: the request, `authored.json` (the grant review), the unsigned and signed
+    contracts, `grants.json` (the `grant verify` report) and `plan.json`;
   - `<run>-plan.sha256` on every host;
   - the preflight receipt, the job listings at admission and the admission record.
 - **Execution:**
@@ -563,11 +623,12 @@ key).
 
 ## 15. Not covered here
 
-- **GPU ranks.** The SmartCluster supervisor refuses them until the W7-T03 visibility decision
-  is made. That work is W7-T08 and W7-T09.
-- **Contract authoring and grant signing** have no repository tool. §6.1 and §6.2 are the
-  procedure, and the grant signature stays with the owner.
+- **GPU ranks and training** are W7-T08 and W7-T09.
+  - SmartCluster allocates a GPU rank's device, and the rank refuses unless that device's index
+    translates to its planned UUID (W7-D3).
+  - A plan that selects training runs only on a `neural` build of `jope-native-loop` (W7-D2).
+  - This CPU proof installs the default build and plans no GPU.
 - **Reservations.** The census does not read CI, runner or SmartCluster reservations; §7 checks
   them by hand.
-- **Training.** The CPU phase is a lifecycle proof (`numerical: false`). A plan can select a
-  training partition (W7-T06), but no training runs in this proof.
+- **Training in this proof.** The CPU phase is a lifecycle proof (`numerical: false`), and its
+  plans select no training partition.

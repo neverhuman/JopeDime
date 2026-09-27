@@ -276,8 +276,9 @@ pub fn sign_grants(
 #[serde(deny_unknown_fields)]
 pub struct GrantReport {
     pub schema: String,
-    /// The digest `plan` will freeze: the SHA-256 of the canonical contract bytes.
-    pub plan_sha256: String,
+    /// The digest `plan` will freeze: the SHA-256 of the signed contract's canonical bytes.
+    /// Absent in the review of an unsigned contract, which is not a plan.
+    pub plan_sha256: Option<String>,
     pub run: String,
     pub attempt: u32,
     pub grant_authority_public_key: String,
@@ -295,10 +296,16 @@ pub struct GrantSummary {
 }
 pub const GRANT_REPORT_SCHEMA: &str = "jope.native_bounded_grants.v1";
 
-fn report(contract: &BoundedRunContract) -> Result<GrantReport> {
+fn report(contract: &BoundedRunContract, signed: bool) -> Result<GrantReport> {
     Ok(GrantReport {
         schema: GRANT_REPORT_SCHEMA.into(),
-        plan_sha256: crate::manifest::hash(&contract.canonical_bytes()?),
+        plan_sha256: signed
+            .then(|| {
+                contract
+                    .canonical_bytes()
+                    .map(|b| crate::manifest::hash(&b))
+            })
+            .transpose()?,
         run: contract.run.clone(),
         attempt: contract.attempt,
         grant_authority_public_key: contract.grant_authority_public_key.clone(),
@@ -325,7 +332,7 @@ pub fn verify_grants(contract_bytes: &[u8], now_unix_ms: u64) -> Result<GrantRep
     contract
         .validate_at(now_unix_ms)
         .map_err(|e| anyhow!("{e}"))?;
-    report(&contract)
+    report(&contract, true)
 }
 
 /// The report of an unsigned contract, for the owner's review before signing.
@@ -338,7 +345,7 @@ pub fn unsigned_report(contract: &BoundedRunContract) -> Result<GrantReport> {
             .all(|p| p.grant.signature.is_empty()),
         "an authored contract carries no signature"
     );
-    report(contract)
+    report(contract, false)
 }
 
 /// Parse an unsigned contract (its grants carry empty signatures).
