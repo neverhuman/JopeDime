@@ -1,12 +1,13 @@
 # PY-P1 — Python removal, phase P1
 
 Written on branch `rr2/python-p1` (base `8a55c4fef`) and landed as `rr2/python-p1-landing`, a
-replay onto main at `cee1fc8bd`. The commits named here are the landed ones; the commit map at the
-end gives each one's original. Owner ruling 2026-09-26: the stack is Rust/Vite/TypeScript/React;
-Python remains only for GP-emitted code and its harness. Live tools are ported with differential
-tests, unused code is archived. Evidence runs live under
+replay onto main at `cee1fc8bd`, then rebased onto main at `f46a9048f` (after #116). The commits
+named here are the landed ones; the commit map at the end gives each one's original. Owner ruling
+2026-09-26: the stack is Rust/Vite/TypeScript/React; Python remains only for GP-emitted code and
+its harness. Live tools are ported with differential tests, unused code is archived. Evidence runs
+live under
 `/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/py-p1-*`
-and, for the landing, `p1-landing-*` (identity, diff, command and log per run).
+and, for the landing, `p1-landing-*` and `p1-rebase-*` (identity, diff, command and log per run).
 
 Observed states: every port below is **differentially tested on this host** against the Python it
 replaces, run before the Python was deleted. Nothing here is CI-verified or live-qualified, and
@@ -246,8 +247,8 @@ no installed host file was changed.
   parts of ADR-0005; names the GP-emitted-code exception, the always-keep list (the eight G files,
   `python3` in the runner image, the sha-pinned grammar sources until P3 decides) and the P1, P2
   and P3 scopes. It is numbered ADR-0006, the next number after ADR-0005 as `CONTRIBUTING.md`
-  requires. It was first committed as ADR-0008 (the brief's name, `4ed0e2096`) and renumbered in a
-  follow-up commit (`ee24eae50`); every reference moved with it, including the `ruling` string of
+  requires. It was first committed as ADR-0008 (the brief's name, `24ca97838`) and renumbered in a
+  follow-up commit (`14bdfe1ef`); every reference moved with it, including the `ruling` string of
   the archive manifest. The custody copy of that manifest was replaced by the committed one (only
   `.ruling` differs; `.files`, `.counts` and `.custody` are identical), with the previous copy
   kept under `superseded-manifest-adr-0008-20260927/` and a `NOTE-20260927-adr-renumber.txt`;
@@ -320,11 +321,11 @@ captured output is altered (negative control).
   `crates/jope-records/tests/fixtures/python-parity/`: all 25 cases of
   `py-p1-u3-diff-20260927T024147Z`. The inputs are those of that run's tree (the U2 commit as
   first written on `rr2/python-p1`, which the run's `identity.txt` names and the commit map below
-  pairs with its landed replay `6b95c9208`, plus the run's working changes: the jope-records
+  pairs with its landed replay `947b1a1aa`, plus the run's working changes: the jope-records
   `lib.rs`/`main.rs` edits and four new, untracked modules), recovered from an export of it
   (`git archive`, the run's `diff.patch`, the four modules; not a clone or worktree). The landed
-  `6b95c9208` does not hold that tree (its `deploy/ci/coverage.json` also has the entries main
-  gained up to `cee1fc8bd`), so the committed fixture is the record of the inputs:
+  `947b1a1aa` does not hold that tree (its `deploy/ci/coverage.json` also has the entries main
+  gained up to `f46a9048f`), so the committed fixture is the record of the inputs:
   - coverage `validate` (10 cases): the coverage map of the run (`mapping.json`, blob `5e78ee4ba`,
     the run's `deploy/ci/coverage.json`) and its nine malformed variants as `ed` scripts, each
     with the SHA-256 of the variant file the Python read (regenerated from the base with the
@@ -467,37 +468,68 @@ edited configuration (no leaks), and `deploy/ci/check.sh`: green.
 ## Commit map — `rr2/python-p1` to the landing
 
 The work above was committed on `rr2/python-p1` and landed as `rr2/python-p1-landing`: its eleven
-commits were replayed in order onto main at `cee1fc8bd` (after #114 and #115), followed by two
-landing-only commits. Every replayed commit has a new SHA, and the originals are not in the
-landed history. Where this record, the tests or the fixtures cite a commit for P1's own
-provenance, it is a landed commit, `8a55c4fef` or `cee1fc8bd`, or they cite the blob id of a
-committed file; fixture copies of main's files keep main's own citations unchanged. An original
-appears only in this table and in landed commit messages, which cannot change: the four
-`(cherry picked from commit …)` trailers (on `6b95c9208`, `7382a4275`, `6cd7672ec` and
-`6e6bf5ad2`) and `bc3ba2ca6`, which names the U3 run's tree.
+commits were replayed in order onto main at `cee1fc8bd` (after #114 and #115), followed by
+landing-only commits, and the branch was then rebased onto main at `f46a9048f` (after #116).
+Every landed commit has a new SHA; neither the originals nor the commits as they stood before the
+rebase are in the landed history. Where this record, the tests or the fixtures cite a commit for
+P1's own provenance, it is a landed commit, `8a55c4fef` or `cee1fc8bd`, or they cite the blob id
+of a committed file; fixture copies of main's files keep main's own citations unchanged. An
+original appears only in this table and in landed commit messages, which cannot change: the four
+`(cherry picked from commit …)` trailers (on `947b1a1aa`, `61817b59f`, `9ffc7036d` and
+`aadd548dc`) and `b7435c1d6`, which names the U3 run's tree. A pre-rebase SHA appears only in
+this section and in the evidence runs made before the rebase.
 
-| Landed | Original | Patch-id | Subject (short) |
-| --- | --- | --- | --- |
-| `364c06fd9` | `29f4d1077` | differs | jope-engine: grow families natively (P1 U8) |
-| `6b95c9208` | `5136986fb` | differs | jope-ci: port cargo-artifact to Rust (P1 U2) |
-| `7382a4275` | `1f1791025` | differs | jope-records: port the four hygiene guards (P1 U3) |
-| `6cd7672ec` | `6ce8fcfbe` | differs | jope-ci: port the build-directory report to Rust (P1 U5) |
-| `6e6bf5ad2` | `389898805` | differs | python: archive 703 files with no live consumer (P1 archive) |
-| `4ed0e2096` | `e9511a2fc` | same | docs: ADR-0008 Rust-only stack (P1 docs) |
-| `ee24eae50` | `9b810cd80` | same | docs: renumber the Rust-only ADR to ADR-0006 |
-| `037b8f885` | `9e8aacedc` | same | jope-ci: replay the captured Python outputs (U2, U5) |
-| `0b213a36e` | `4b4018dff` | same | jope-ci, jope-engine, jope-records: clear clippy findings |
-| `bc3ba2ca6` | `df9c78ae3` | same | jope-records: replay the captured Python outputs (U3) |
-| `575c55ea6` | `2200bc872` | same | docs, gitleaks: stale references to archived Python (PY-P2) |
+| Landed | Before the rebase | Original | Patch-id | Subject (short) |
+| --- | --- | --- | --- | --- |
+| `86d15f1c5` | `364c06fd9` | `29f4d1077` | differs | jope-engine: grow families natively (P1 U8) |
+| `947b1a1aa` | `6b95c9208` | `5136986fb` | differs | jope-ci: port cargo-artifact to Rust (P1 U2) |
+| `61817b59f` | `7382a4275` | `1f1791025` | differs | jope-records: port the four hygiene guards (P1 U3) |
+| `9ffc7036d` | `6cd7672ec` | `6ce8fcfbe` | differs | jope-ci: port the build-directory report to Rust (P1 U5) |
+| `aadd548dc` | `6e6bf5ad2` | `389898805` | differs | python: archive 703 files with no live consumer (P1 archive) |
+| `24ca97838` | `4ed0e2096` | `e9511a2fc` | same | docs: ADR-0008 Rust-only stack (P1 docs) |
+| `14bdfe1ef` | `ee24eae50` | `9b810cd80` | same | docs: renumber the Rust-only ADR to ADR-0006 |
+| `676587cb6` | `037b8f885` | `9e8aacedc` | same | jope-ci: replay the captured Python outputs (U2, U5) |
+| `68a11977a` | `0b213a36e` | `4b4018dff` | same | jope-ci, jope-engine, jope-records: clear clippy findings |
+| `b7435c1d6` | `bc3ba2ca6` | `df9c78ae3` | same | jope-records: replay the captured Python outputs (U3) |
+| `fc0abb85d` | `575c55ea6` | `2200bc872` | same | docs, gitleaks: stale references to archived Python (PY-P2) |
 
-Landing-only: `f7a19392c` (the W01 and W09 records name the Rust coverage validator) and
-`f0b1402ec` (the capability matrix recounts the jope-records tests).
+Landing-only: `ff8eb8d56` (before the rebase `f7a19392c`; the W01 and W09 records name the Rust
+coverage validator), `8e1f45228` (`f0b1402ec`; the capability matrix recounts the jope-records
+tests), `65e6f961d` (`309efce3b`; these citations and this map) and the commit that updates them
+after the rebase.
 
-"Patch-id" compares `git patch-id --stable` of the two commits. Each pair changes the same paths
-with the same status. The tree proof (`p1-landing-post-20260927T170033Z`, `step-treeproof.log`)
-finds that 8 of the 829 paths the eleven commits touch differ between the original tip and
-`f0b1402ec`, all of them paths main also changed: 5 equal the clean three-way merge, and the
-jope-records `lib.rs` and `main.rs` and the capability matrix were resolved by hand.
+"Patch-id" compares `git patch-id --stable` of the landed and the original commit. Each pair
+changes the same paths with the same status. The tree proof (`p1-landing-post-20260927T170033Z`,
+`step-treeproof.log`), run before the rebase, finds that 8 of the 829 paths the eleven commits
+touch differ between the original tip and `f0b1402ec` (now `8e1f45228`), all of them paths main
+also changed: 5 equal the clean three-way merge, and the jope-records `lib.rs` and `main.rs` and
+the capability matrix were resolved by hand.
+
+The rebase onto `f46a9048f` (#116: health routing, four commits) applied all fourteen commits
+without a conflict. Every commit keeps its patch-id and author, and all but one keep their
+message: in `65e6f961d` the three citations of landed commits were amended to the rebased SHAs. The
+rebased tip's tree is the tree `git merge-tree --write-tree f46a9048f 309efce3b` computes
+(`0365499cf`). #116 and P1 change four common paths in different lines: `deploy/ci/coverage.json`,
+`fast-lane.sh`, `full-lane.sh` and `findings/test-inventory.json`. On each, the landed file is
+exactly P1's line changes on top of #116's and #116's on top of P1's. #116's CI lines survive
+(`check-test-routing.sh` in `full-lane.sh`, the two routing self-tests in `fast-lane.sh` and in
+the hygiene `checks` list), none of them calls Python, and no retired Python tool is named
+anywhere it was not named before the rebase. The capability matrix, #116's findings README and
+`health-routing-20260927.md` needed no change. Runs: `p1-rebase-pre-20260927T191744Z` (identity,
+both diffs, the merge prediction) and the `p1-rebase-post-*` gate (the landing gate on the
+rebased head, the semantic checks above, `check-test-routing.sh` on real collections and its
+self-tests).
+
+The fourteen pre-rebase commits are in the custody bundle
+`p1-rebase-pre-20260927T191744Z/rr2-python-p1-landing-pre-rebase.bundle` (416192 bytes, SHA-256
+`bb594ade941421dc2c918689d38b3e91eda1ce21b2f70794b1afa7cbc8f8728d`, prerequisite `cee1fc8bd`,
+which main contains). `p1-rebase-preserve-20260927T192159Z` restored it into a bare clone of the
+rebased landing branch alone: every pre-rebase commit came back with its tree, and `git fsck
+--connectivity-only` passed. To restore it into any clone that has main:
+
+```
+git fetch <bundle> refs/heads/rr2/python-p1-landing:refs/preserve/rr2-python-p1-landing-pre-rebase
+```
 
 The originals stay on `rr2/python-p1`, locally and on `origin`. Independent of any ref, all
 eleven are in the custody bundle `p1-landing-preserve-20260927T172032Z/rr2-python-p1.bundle`
@@ -506,7 +538,9 @@ prerequisite `8a55c4fef`, which main contains). Restored into a bare clone of th
 alone, the state once that branch is deleted and gc has run, every original came back with its
 tree, the four trailers resolved, `git fsck --connectivity-only` passed, and `git show` of the
 U2 original's `deploy/ci/coverage.json` gave blob `5e78ee4ba`, the fixture's `mapping.json`
-(`log.txt` beside the bundle). To restore into any clone that has main:
+(`log.txt` beside the bundle). `p1-rebase-preserve-20260927T192159Z` repeated this in the clone of
+the rebased branch, with the same results for the rebased commits' trailers. To restore into any
+clone that has main:
 
 ```
 git fetch <bundle> refs/heads/rr2/python-p1:refs/preserve/rr2-python-p1
