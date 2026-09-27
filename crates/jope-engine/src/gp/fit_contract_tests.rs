@@ -1866,6 +1866,10 @@ fn frozen_input_search(
 /// output alone. Reproduction: the output held only the digests, and the lineage verifier
 /// needed the caller's original paths.
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn a_seeded_search_freezes_the_inputs_its_lineage_is_verified_against() {
     let (temp, prepared) = view_fixture();
     let root = temp.path().canonicalize().unwrap();
@@ -1904,6 +1908,10 @@ fn a_seeded_search_freezes_the_inputs_its_lineage_is_verified_against() {
 /// longer carries the request's digest (including another slot's proposal record) or is
 /// absent, and reads nothing the request does not pin.
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn recorded_search_inputs_verify_without_caller_paths_and_refuse_substitution() {
     let (temp, prepared) = view_fixture();
     let root = temp.path().canonicalize().unwrap();
@@ -2364,6 +2372,10 @@ fn helpers_left_by_a_finished_evaluator_are_drained_before_the_next_dispatch() {
 /// killed (SIGKILL, so it can run no cleanup). Reproduction: the evaluator's SIGKILL
 /// parent-death signal stopped only the evaluator; its helper was reparented and kept running.
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn helpers_do_not_survive_a_killed_search_controller() {
     let (temp, prepared) = view_fixture();
     let root = temp.path();
@@ -3827,6 +3839,10 @@ fn contained_view_fixture(root: &Path, pointer: &Path, name: &str) -> PathBuf {
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn the_public_fit_view_projects_under_its_declared_root_and_never_resolves_an_ancestor() {
     let temp = tempfile::tempdir().unwrap();
     let outer = temp.path().canonicalize().unwrap();
@@ -3888,6 +3904,10 @@ fn training_of(prepared: &Path) -> String {
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn the_legacy_isolated_export_never_resolves_a_pointer_view_from_its_ancestors() {
     let temp = tempfile::tempdir().unwrap();
     let outer = temp.path().canonicalize().unwrap();

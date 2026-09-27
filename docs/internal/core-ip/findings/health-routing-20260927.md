@@ -69,6 +69,38 @@ It corrects only the original custody manifest's construction-order mismatch for
 All original dataset/run/registry bytes verified unchanged. This is a separately
 identified custody copy, not a new dataset release or recreated historical evidence.
 
+## Landing on main `cee1fc8bd`
+
+The routing was replayed onto `cee1fc8bd242688972c352133847793c6927279f` (after PR #114).
+PR #114 added six more CPU fit-service contracts. At the replayed head the local
+full-neural family failed exactly those six, each with the designed refusal `CPU fit
+authority requires a non-neural evaluator build`. The same six passed in full-default
+and full-scratch at that head:
+
+| Added by | Contract |
+|---|---|
+| `82006d600` (W1-T05 R2) | `gp::fit_contract_tests::the_public_fit_view_projects_under_its_declared_root_and_never_resolves_an_ancestor` |
+| `82006d600` (W1-T05 R2) | `gp::fit_contract_tests::the_legacy_isolated_export_never_resolves_a_pointer_view_from_its_ancestors` |
+| `82006d600` (W1-T05 R2) | `projected_export::shipped_fit_view_projects_under_its_declared_root_before_the_fence` |
+| `4aa4aca8a` (W5-T01) | `gp::fit_contract_tests::a_seeded_search_freezes_the_inputs_its_lineage_is_verified_against` |
+| `4aa4aca8a` (W5-T01) | `gp::fit_contract_tests::recorded_search_inputs_verify_without_caller_paths_and_refuse_substitution` |
+| `c900459dd` (W5-T05) | `gp::fit_contract_tests::helpers_do_not_survive_a_killed_search_controller` |
+
+They are routed the same way as the original 74. Each is ignored only under `neural`
+and listed in `deploy/ci/neural-cpu-only-tests.txt`, which now names 80 contracts. The
+routing guard still requires every listed contract to be selected in default and
+scratch. No refusal, fence or assertion changed. The failing reproduction is retained
+as `health-landing-full-neural-20260927T172425Z`. The post-routing family runs are the
+later `health-landing-*` directories. Both sit under
+`/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/`.
+
+One local full-default failure at that head is environmental, not a product result.
+`jope-paths tests::home_resolution_is_independent_of_the_build_directory` requires a
+temporary directory with no `.jope-home` ancestor. The host rule places `TMPDIR`
+inside the lane checkout, which carries the tracked `.jope-home` marker, so that
+precondition fails. The branch does not change `crates/jope-paths`. The test passed
+on the hosted baseline diagnostic `36275127911`.
+
 Exact-head CI and the next full-main diagnostic remain distinct verification gates.
 A credential-free diagnostic passing after these explicit exclusions must not be
 reported as complete private-corpus or GPU coverage.
