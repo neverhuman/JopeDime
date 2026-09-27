@@ -636,6 +636,21 @@ fn check_common(lineage: &Lineage, run: &VerifiedRun, label: &str) -> Result<()>
             receipt.schema
         );
     }
+    let islands = receipt
+        .search
+        .islands
+        .as_ref()
+        .with_context(|| format!("{label}: a v3 receipt records its islands"))?;
+    ensure!(
+        islands.count == lineage.islands.max(1)
+            && islands.migration_interval == lineage.migration_interval,
+        "{label}: another island model than the lineage's ({} island(s), migration every {} \
+         generation(s), where the lineage records {} and {})",
+        islands.count,
+        islands.migration_interval,
+        lineage.islands,
+        lineage.migration_interval
+    );
     Ok(())
 }
 
@@ -778,6 +793,17 @@ mod tests {
         std::fs::write(&path, serde_json::to_vec_pretty(&value).unwrap()).unwrap();
         expect_refused("does not match what its receipt and evidence show");
         std::fs::write(&path, &pristine).unwrap();
+
+        // The island model is lineage-wide: a lineage that claims another one than its rounds
+        // were searched with is refused, not reported.
+        for (field, claimed) in [("islands", 3u64), ("migration_interval", 1)] {
+            let mut value: serde_json::Value = serde_json::from_slice(&pristine).unwrap();
+            assert_ne!(value[field].as_u64(), Some(claimed));
+            value[field] = claimed.into();
+            std::fs::write(&path, serde_json::to_vec_pretty(&value).unwrap()).unwrap();
+            expect_refused("another island model than the lineage's");
+            std::fs::write(&path, &pristine).unwrap();
+        }
 
         let seeds = out.join("round-002/seeds.json");
         let original = std::fs::read(&seeds).unwrap();
