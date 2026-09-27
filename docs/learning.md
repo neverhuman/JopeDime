@@ -301,10 +301,14 @@ sha256, and the HWM batch, sequence, event sha256, transition and displaced reco
 of the `bank` ledger (`$JOPE_STATE/bank/ledger`), so the bank is append-only and hash-chained;
 an entry's address is the sha256 of its canonical JSON, and re-adding an entry writes nothing.
 `bank list [--dataset]` re-checks every entry against its address.
-`bank export --dataset <hash> [--task] [--top 4] --out <seeds.json>` writes the best distinct
-banked genomes as `jope.pipeline-seeds/v1` with their bank-entry and receipt digests, never over
-an existing file; `jope pipeline run --seed-genomes` and `jope pipeline evolve --seeds` consume
-it. The pipeline never reads the learning store: that file and receipts are the whole interface.
+`bank export --dataset <hash> [--task] [--identity <sha256>] [--top 4] --out <seeds.json>`
+writes the best distinct banked genomes under one HWM comparison identity as
+`jope.pipeline-seeds/v1` with their bank-entry and receipt digests, never over an existing file.
+Champions banked under different identities (other cuts, fold seed, protocol or source commit)
+are never ranked against each other: when a dataset is banked under more than one, export
+refuses and lists them until `--identity` names one. `jope pipeline run --seed-genomes` and
+`jope pipeline evolve --seeds` consume the file. The pipeline never reads the learning store:
+that file and receipts are the whole interface.
 
 ### Engine types: mirrored, not linked
 

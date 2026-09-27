@@ -1,7 +1,7 @@
 //! The champion bank ("future targets"): pipeline champions the HWM ledger accepted as
-//! improvements, kept content-addressed and append-only, and exported as the
-//! `jope.pipeline-seeds/v1` file `jope pipeline run --seed-genomes` and
-//! `jope pipeline evolve --seeds` consume.
+//! improvements, kept content-addressed and append-only, and exported, ranked within one HWM
+//! comparison identity at a time, as the `jope.pipeline-seeds/v1` file
+//! `jope pipeline run --seed-genomes` and `jope pipeline evolve --seeds` consume.
 //!
 //! Admission (`bank add`) re-verifies everything it cites before a byte is written:
 //!
@@ -271,16 +271,24 @@ pub struct ExportReport {
     pub out: String,
     pub seeds_sha256: String,
     pub dataset_hash: String,
+    /// The one HWM comparison identity the exported champions were ranked within.
+    pub identity_sha256: String,
     pub genomes: usize,
     pub bank_head_sha256: Option<String>,
 }
 
-/// Write the best `top` distinct banked genomes of `dataset_hash` (optionally one task) as a
-/// `jope.pipeline-seeds/v1` file that does not exist yet.
+/// Write the best `top` distinct banked genomes of `dataset_hash` (optionally one task) under
+/// one HWM comparison identity as a `jope.pipeline-seeds/v1` file that does not exist yet.
+///
+/// Scores measured under different identities (other cuts, fold seed, protocol or source commit)
+/// are never ranked against each other: a mean over three folds is not comparable with a single
+/// easier fold's. When the dataset's entries span more than one identity, `identity` must name
+/// the one to rank within; the refusal lists them.
 pub fn export(
     state: &State,
     dataset_hash: &str,
     task: Option<&str>,
+    identity: Option<&str>,
     top: usize,
     out: &Path,
 ) -> Result<ExportReport> {
@@ -294,6 +302,54 @@ pub fn export(
         !entries.is_empty(),
         "the bank holds no champion for dataset {dataset_hash}"
     );
+    let mut identities: std::collections::BTreeMap<&str, Vec<&BankEntry>> =
+        std::collections::BTreeMap::new();
+    for entry in &entries {
+        identities
+            .entry(entry.identity_sha256.as_str())
+            .or_default()
+            .push(entry);
+    }
+    let identity_sha256 = match identity {
+        Some(wanted) => {
+            ensure!(
+                identities.contains_key(wanted),
+                "the bank holds no champion for dataset {dataset_hash} under comparison identity \
+                 {wanted}"
+            );
+            wanted.to_owned()
+        }
+        None => {
+            if identities.len() > 1 {
+                let listed: Vec<String> = identities
+                    .iter()
+                    .map(|(sha, banked)| {
+                        let best = banked
+                            .iter()
+                            .map(|e| e.validation_rmse)
+                            .fold(f64::INFINITY, f64::min);
+                        format!(
+                            "{sha} (cuts {}, {} entr{}, best mean held-out RMSE {best})",
+                            banked[0].cut_id,
+                            banked.len(),
+                            if banked.len() == 1 { "y" } else { "ies" }
+                        )
+                    })
+                    .collect();
+                bail!(
+                    "dataset {dataset_hash} is banked under {} comparison identities, whose scores \
+                     are not comparable; choose one with --identity: {}",
+                    identities.len(),
+                    listed.join("; ")
+                );
+            }
+            entries[0].identity_sha256.clone()
+        }
+    };
+    let entries: Vec<BankEntry> = entries
+        .into_iter()
+        .filter(|e| e.identity_sha256 == identity_sha256)
+        .collect();
     let champions: Vec<jope_pipeline::islands::Champion> = entries
         .iter()
         .map(|e| jope_pipeline::islands::Champion {
@@ -322,6 +378,7 @@ pub fn export(
         out: out.display().to_string(),
         seeds_sha256,
         dataset_hash: dataset_hash.to_owned(),
+        identity_sha256,
         genomes: file.genomes.len(),
         bank_head_sha256: Ledger::open(state.root(), LEDGER).head()?.map(|h| h.sha256),
     })
