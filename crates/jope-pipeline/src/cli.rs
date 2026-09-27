@@ -30,6 +30,14 @@ pub struct ParallelArgs {
     /// the CPUs sched_getaffinity allows, available_parallelism, or --cpu-ceiling.
     #[arg(long, default_value_t = 1)]
     pub threads: usize,
+    /// Independent random streams over the same cuts, each on --threads workers; islands x
+    /// threads is the worker count the CPU checks bound.
+    #[arg(long, default_value_t = 1)]
+    pub islands: usize,
+    /// With more than one island: every K generations each island's champion migrates into the
+    /// others' elites.
+    #[arg(long, default_value_t = crate::search::DEFAULT_MIGRATION_INTERVAL)]
+    pub migration_interval: usize,
     /// The CPU admission in millicores (e.g. 8000 for eight cores) the workers must fit.
     #[arg(long)]
     pub cpu_ceiling: Option<u64>,
@@ -130,6 +138,8 @@ pub fn run(cli: Cli) -> Result<ExitCode> {
                 seed_genomes,
                 incumbent,
                 threads: parallel.threads,
+                islands: parallel.islands,
+                migration_interval: parallel.migration_interval,
                 cpu_ceiling_millicores: parallel.cpu_ceiling,
                 clock: crate::clock::Clock::Wall,
             };

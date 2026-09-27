@@ -43,6 +43,7 @@ pub mod experiment_v2;
 #[cfg(feature = "qualified-context")]
 pub mod experimental_producer;
 pub mod front_door;
+pub mod islands;
 #[cfg(feature = "neural-search")]
 pub mod neural_search;
 pub mod parallel;

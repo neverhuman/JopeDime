@@ -65,6 +65,7 @@ use std::{
 
 use crate::{
     clock::{Clock, Stamp},
+    islands::{island_seed, next_seeds, Champion},
     prepare::Cut,
     receipt::Phase,
     sha256_hex,
@@ -145,8 +146,18 @@ pub struct SearchOptions {
     /// calling thread, exactly as the sequential search always has; any count gives the same
     /// decisions, because candidates are admitted and folded back in slot order.
     pub threads: usize,
+    /// Independent random streams over the same cuts, sharing each cut's budget and its
+    /// "never fit twice" rule. Island 0 is the `--rng-seed` stream itself, so one island is the
+    /// plain search. Each island is evaluated on `threads` workers.
+    pub islands: usize,
+    /// Every this many generations each island's top-1 is carried into every other island's
+    /// elites (with its existing measurement: a migrant is never re-fitted).
+    pub migration_interval: usize,
     pub clock: Clock,
 }
+
+/// Generations between migrations when `--migration-interval` is not given.
+pub const DEFAULT_MIGRATION_INTERVAL: usize = 4;
 
 impl SearchOptions {
     pub fn new(budget: Budget, rng_seed: u64) -> Self {
@@ -155,8 +166,15 @@ impl SearchOptions {
             rng_seed,
             seeds: Vec::new(),
             threads: 1,
+            islands: 1,
+            migration_interval: DEFAULT_MIGRATION_INTERVAL,
             clock: Clock::Wall,
         }
+    }
+
+    /// `islands x threads`: the evaluation pool's size.
+    pub fn workers(&self) -> usize {
+        self.threads.max(1).saturating_mul(self.islands.max(1))
     }
 }
 
@@ -255,6 +273,9 @@ pub struct Observation {
     /// Why, whenever `status` is not [`MEASURED`].
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub failure: Option<String>,
+    /// The island that drew this candidate, when the search ran more than one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub island: Option<usize>,
 }
 
 impl Observation {
@@ -282,6 +303,8 @@ pub struct ObservationRecord {
     pub status: String,
     #[serde(default)]
     pub failure: Option<String>,
+    #[serde(default)]
+    pub island: Option<usize>,
 }
 
 impl ObservationRecord {
@@ -320,6 +343,7 @@ impl ObservationRecord {
             seconds: self.seconds,
             status,
             failure: self.failure,
+            island: self.island,
         })
     }
 }
@@ -350,6 +374,9 @@ pub struct CutSearch {
     pub best_validation_r2: Option<f64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub best_program: Option<String>,
+    /// Every champion migration between islands on this cut (none with one island).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub migrations: Vec<crate::receipt::Migration>,
     #[serde(skip)]
     pub observations: Vec<Observation>,
     #[serde(skip)]
@@ -363,10 +390,55 @@ pub struct CutSearch {
 }
 
 /// A scored survivor carried between generations.
-#[derive(Clone, Debug)]
-struct Scored {
-    genome: String,
-    rmse: f64,
+type Scored = Champion;
+
+/// One island: its own random stream and its own elites.
+struct Island {
+    rng_seed: u64,
+    survivors: Vec<Scored>,
+}
+
+/// Carry each island's top-1 into every other island's elites. The receiving island keeps the
+/// best [`ELITES`] of its own elites and the migrants ([`next_seeds`]), so a migrant enters only
+/// when it beats one of them; either way the event is recorded. Pure in the islands' state:
+/// deterministic given the seed.
+fn migrate(
+    islands: &mut [Island],
+    cut: usize,
+    after_generation: usize,
+    events: &mut Vec<crate::receipt::Migration>,
+) {
+    let tops: Vec<(usize, Champion)> = islands
+        .iter()
+        .enumerate()
+        .filter_map(|(index, island)| island.survivors.first().map(|c| (index, c.clone())))
+        .collect();
+    for (to, island) in islands.iter_mut().enumerate() {
+        let incoming: Vec<&(usize, Champion)> =
+            tops.iter().filter(|(from, _)| *from != to).collect();
+        if incoming.is_empty() {
+            continue;
+        }
+        let before: BTreeSet<String> = island.survivors.iter().map(|c| c.genome.clone()).collect();
+        let mut pool = island.survivors.clone();
+        pool.extend(incoming.iter().map(|(_, c)| c.clone()));
+        island.survivors = next_seeds(&pool, ELITES);
+        let mut counted = BTreeSet::new();
+        for (from, champion) in incoming {
+            let admitted = !before.contains(&champion.genome)
+                && counted.insert(champion.genome.clone())
+                && island.survivors.iter().any(|c| c.genome == champion.genome);
+            events.push(crate::receipt::Migration {
+                cut: cut as u64,
+                after_generation: after_generation as u64,
+                from_island: *from as u64,
+                to_island: to as u64,
+                program_sha256: sha256_hex(champion.genome.as_bytes()),
+                rmse: champion.rmse,
+                admitted,
+            });
+        }
+    }
 }
 
 /// Derive one deterministic stream seed from the whole coordinate of a draw.
@@ -408,6 +480,7 @@ fn evaluate(
         seconds,
         status,
         failure,
+        island: None,
     };
 
     let parsed = match GenomeIr::parse(genome) {
@@ -568,7 +641,7 @@ pub fn run_cuts_with(
     options: &SearchOptions,
     output: &Path,
 ) -> Result<Vec<CutSearch>> {
-    let pool = crate::parallel::pool(options.threads)?;
+    let pool = crate::parallel::pool(options.workers())?;
     let mut searches = Vec::new();
     for cut in cuts {
         searches.push(run_cut_allocated(
@@ -588,7 +661,7 @@ pub fn run_cuts_with(
 /// the batch, exactly like the sequential loop's per-candidate deadline check; with a pool,
 /// every result lands back in its slot, whatever order the threads finished in.
 fn evaluate_admitted(
-    admitted: &[(String, &'static str)],
+    admitted: &[(usize, String, &'static str)],
     cut: &Cut,
     generation: usize,
     clock: Clock,
@@ -600,7 +673,7 @@ fn evaluate_admitted(
     match pool {
         None => {
             let mut results = Vec::with_capacity(admitted.len());
-            for (genome, origin) in admitted {
+            for (_, genome, origin) in admitted {
                 if !may_start() {
                     break;
                 }
@@ -612,7 +685,7 @@ fn evaluate_admitted(
         Some(pool) => pool.install(|| {
             admitted
                 .par_iter()
-                .map(|(genome, origin)| {
+                .map(|(_, genome, origin)| {
                     may_start().then(|| evaluate(genome, cut, generation, origin, clock))
                 })
                 .collect()
@@ -641,7 +714,15 @@ fn run_cut_allocated(
 
     let mut observations: Vec<Observation> = Vec::new();
     let mut seen: BTreeSet<String> = BTreeSet::new();
-    let mut survivors: Vec<Scored> = Vec::new();
+    let island_count = options.islands.max(1);
+    let multi = island_count > 1;
+    let mut islands: Vec<Island> = (0..island_count)
+        .map(|index| Island {
+            rng_seed: island_seed(rng_seed, index),
+            survivors: Vec::new(),
+        })
+        .collect();
+    let mut migrations = Vec::new();
     let mut evaluations = 0usize;
     let mut generation = 0usize;
     let mut barren = 0usize;
@@ -650,34 +731,50 @@ fn run_cut_allocated(
         // Generation 0 is the bootstrap plus grammar-random draws; later
         // generations are the elites' offspring. Elites carry their scores and
         // are never re-fitted, so a slot here is always an unmeasured genome.
-        let candidates: Vec<(String, &'static str)> = if generation == 0 {
-            let mut initial = vec![(BOOTSTRAP_GENOME.to_owned(), BOOTSTRAP)];
-            // Seeds follow the bootstrap and precede every random draw, so a budget that admits
-            // generation 0 at all re-measures them first; the random slots are the unseeded
-            // search's own draws, unchanged.
-            initial.extend(options.seeds.iter().map(|g| (g.clone(), INCUMBENT)));
-            for slot in 1..POPULATION {
-                let seed = stream(rng_seed, cut.index, 0, slot, 0);
-                initial.push((
-                    evolve::random_canonical_pipeline(seed, MAX_TRANSFORMS),
-                    "random",
-                ));
+        // With islands, each island draws its own generation from its own stream,
+        // in island order.
+        let mut candidates: Vec<(usize, String, &'static str)> = Vec::new();
+        for (index, island) in islands.iter().enumerate() {
+            if generation == 0 {
+                candidates.push((index, BOOTSTRAP_GENOME.to_owned(), BOOTSTRAP));
+                // Seeds follow the bootstrap and precede every random draw, so a budget that
+                // admits generation 0 at all re-measures them first; the random slots are the
+                // unseeded search's own draws, unchanged.
+                candidates.extend(options.seeds.iter().map(|g| (index, g.clone(), INCUMBENT)));
+                for slot in 1..POPULATION {
+                    let seed = stream(island.rng_seed, cut.index, 0, slot, 0);
+                    candidates.push((
+                        index,
+                        evolve::random_canonical_pipeline(seed, MAX_TRANSFORMS),
+                        "random",
+                    ));
+                }
+            } else {
+                candidates.extend((island.survivors.len()..POPULATION).map(|slot| {
+                    let (genome, origin) = offspring(
+                        &island.survivors,
+                        &seen,
+                        island.rng_seed,
+                        cut.index,
+                        generation,
+                        slot,
+                    );
+                    (index, genome, origin)
+                }));
             }
-            initial
-        } else {
-            (survivors.len()..POPULATION)
-                .map(|slot| offspring(&survivors, &seen, rng_seed, cut.index, generation, slot))
-                .collect()
-        };
+        }
 
         let spent_before = evaluations;
         // Admission, in slot order: exactly the candidates the one-at-a-time loop would fit,
         // with its checks in its order — the evaluation bound, then the seconds bound, then
         // "never fit a genome twice on one cut". The seconds bound is checked again before each
         // fit starts (`evaluate_admitted`).
-        let mut admitted: Vec<(String, &'static str)> = Vec::new();
+        let mut admitted: Vec<(usize, String, &'static str)> = Vec::new();
+        // Another island's draw of a genome this cut already measured: it joins that island's
+        // candidates with its existing score instead of being fitted again.
+        let mut shared: Vec<(usize, String)> = Vec::new();
         let mut bound = None;
-        for (genome, origin) in candidates {
+        for (island, genome, origin) in candidates {
             if evaluations + admitted.len() >= evaluation_limit {
                 bound = Some(STOPPED_BY_EVALUATIONS);
                 break;
@@ -687,23 +784,27 @@ fn run_cut_allocated(
                 break;
             }
             if !seen.insert(genome.clone()) {
+                if multi {
+                    shared.push((island, genome));
+                }
                 continue;
             }
-            admitted.push((genome, origin));
+            admitted.push((island, genome, origin));
         }
         let results = evaluate_admitted(&admitted, cut, generation, clock, pool, started, deadline);
         // The fold, in slot order: survivors and observations never depend on which worker
         // finished first.
         let mut late = false;
-        for ((genome, _), result) in admitted.into_iter().zip(results) {
-            let Some(observation) = result else {
+        for ((island, genome, _), result) in admitted.into_iter().zip(results) {
+            let Some(mut observation) = result else {
                 late = true;
                 continue;
             };
             evaluations += 1;
             if let Some(rmse) = observation.rmse {
-                survivors.push(Scored { genome, rmse });
+                islands[island].survivors.push(Scored { genome, rmse });
             }
+            observation.island = multi.then_some(island);
             observations.push(observation);
         }
         if late {
@@ -711,6 +812,17 @@ fn run_cut_allocated(
         }
         if let Some(bound) = bound {
             break 'search bound;
+        }
+        for (island, genome) in shared {
+            let known = observations
+                .iter()
+                .find(|o| o.genome == genome && o.measured())
+                .and_then(|o| o.rmse);
+            if let Some(rmse) = known {
+                if !islands[island].survivors.iter().any(|s| s.genome == genome) {
+                    islands[island].survivors.push(Scored { genome, rmse });
+                }
+            }
         }
 
         // A generation that spent nothing drew only genomes already measured.
@@ -727,8 +839,15 @@ fn run_cut_allocated(
 
         // Keep the best ELITES by held-out RMSE; ties on the canonical genome so
         // the surviving set is a function of the measurements alone.
-        survivors.sort_by(|a, b| a.rmse.total_cmp(&b.rmse).then(a.genome.cmp(&b.genome)));
-        survivors.truncate(ELITES);
+        for island in &mut islands {
+            island.survivors = next_seeds(&island.survivors, ELITES);
+        }
+        if multi
+            && options.migration_interval > 0
+            && (generation + 1).is_multiple_of(options.migration_interval)
+        {
+            migrate(&mut islands, cut.index, generation, &mut migrations);
+        }
         generation += 1;
     };
 
@@ -794,6 +913,7 @@ fn run_cut_allocated(
         best_validation_rmse: best.rmse,
         best_validation_r2: best.hold_r2,
         best_program: Some(best.genome.clone()),
+        migrations,
         observations,
         search_sha256: String::new(),
         observations_sha256: String::new(),
@@ -1289,6 +1409,7 @@ mod tests {
                 seconds: 0.0,
                 status: FIT_FAILED,
                 failure: Some("injected failure".to_owned()),
+                island: None,
             }
         })
         .unwrap();
@@ -1470,6 +1591,152 @@ mod tests {
             .iter()
             .any(|o| o.generation >= 1 && o.measured())));
         assert!(one.iter().all(|s| s.comparison.completed_evaluations > 0));
+    }
+
+    fn island_options(islands: usize, threads: usize, rng_seed: u64) -> SearchOptions {
+        SearchOptions {
+            threads,
+            islands,
+            migration_interval: 2,
+            clock: Clock::Frozen,
+            ..SearchOptions::new(
+                Budget {
+                    evaluations: 90,
+                    seconds: 600,
+                },
+                rng_seed,
+            )
+        }
+    }
+
+    /// Islands replay from the seed, record every migration, tag every observation with its
+    /// island, and publish the same bytes on any worker count.
+    #[test]
+    fn islands_migrate_record_and_replay_on_any_worker_count() {
+        let temp = tempfile::tempdir().unwrap();
+        let preparation = prepare::build(
+            &linear_rows(150),
+            "islands",
+            7,
+            1,
+            &temp.path().join("prepared"),
+        )
+        .unwrap();
+        let run = |options: &SearchOptions, name: &str| {
+            run_cuts_with(&preparation.cuts, options, &temp.path().join(name)).unwrap()
+        };
+        let a = run(&island_options(3, 1, 11), "a");
+        let again = run(&island_options(3, 1, 11), "again");
+        let wide = run(&island_options(3, 4, 11), "wide");
+        assert_eq!(published(&a), published(&again));
+        assert_eq!(published(&a), published(&wide));
+        let search = &a[0];
+        assert!(!search.migrations.is_empty(), "no migration was recorded");
+        for migration in &search.migrations {
+            assert_ne!(migration.from_island, migration.to_island);
+            assert!(migration.from_island < 3 && migration.to_island < 3);
+            assert_eq!((migration.after_generation + 1) % 2, 0);
+            assert!(search
+                .observations
+                .iter()
+                .any(|o| o.program_sha256 == migration.program_sha256
+                    && o.rmse == Some(migration.rmse)));
+        }
+        let islands: BTreeSet<usize> = search
+            .observations
+            .iter()
+            .map(|o| {
+                o.island
+                    .expect("every exploration observation names its island")
+            })
+            .collect();
+        assert_eq!(islands, BTreeSet::from([0, 1, 2]));
+        // No genome is fitted twice on the cut, whichever island drew it.
+        let genomes: BTreeSet<&str> = search
+            .observations
+            .iter()
+            .map(|o| o.genome.as_str())
+            .collect();
+        assert_eq!(genomes.len(), search.observations.len());
+        // Another seed searches other islands.
+        let other = run(&island_options(3, 1, 12), "other");
+        assert_ne!(published(&a), published(&other));
+    }
+
+    /// One island is exactly the search without islands: same stream, same bytes.
+    #[test]
+    fn one_island_is_the_plain_search() {
+        let temp = tempfile::tempdir().unwrap();
+        let preparation = prepare::build(
+            &linear_rows(150),
+            "one-island",
+            7,
+            2,
+            &temp.path().join("prepared"),
+        )
+        .unwrap();
+        let plain = SearchOptions {
+            clock: Clock::Frozen,
+            ..SearchOptions::new(
+                Budget {
+                    evaluations: 30,
+                    seconds: 600,
+                },
+                3,
+            )
+        };
+        let one = SearchOptions {
+            islands: 1,
+            migration_interval: 1,
+            ..plain.clone()
+        };
+        let a = run_cuts_with(&preparation.cuts, &plain, &temp.path().join("plain")).unwrap();
+        let b = run_cuts_with(&preparation.cuts, &one, &temp.path().join("one")).unwrap();
+        assert_eq!(published(&a), published(&b));
+        assert!(a
+            .iter()
+            .all(|s| s.migrations.is_empty() && s.observations.iter().all(|o| o.island.is_none())));
+    }
+
+    #[test]
+    fn a_migrant_enters_only_an_island_it_improves() {
+        let champion = |genome: &str, rmse: f64| Champion {
+            genome: genome.to_owned(),
+            rmse,
+        };
+        let mut islands = vec![
+            Island {
+                rng_seed: 1,
+                survivors: vec![champion("a", 1.0), champion("b", 2.0)],
+            },
+            Island {
+                rng_seed: 2,
+                survivors: vec![
+                    champion("c", 0.5),
+                    champion("d", 0.6),
+                    champion("e", 0.7),
+                    champion("f", 0.8),
+                ],
+            },
+        ];
+        let mut events = Vec::new();
+        migrate(&mut islands, 0, 3, &mut events);
+        assert_eq!(events.len(), 2);
+        // `c` (0.5) enters island 0; `a` (1.0) is worse than all of island 1's four elites.
+        let into_zero = events.iter().find(|e| e.to_island == 0).unwrap();
+        assert!(into_zero.admitted && into_zero.from_island == 1 && into_zero.rmse == 0.5);
+        let into_one = events.iter().find(|e| e.to_island == 1).unwrap();
+        assert!(!into_one.admitted && into_one.from_island == 0);
+        assert_eq!(islands[0].survivors[0].genome, "c");
+        assert_eq!(
+            islands[1]
+                .survivors
+                .iter()
+                .map(|c| c.genome.as_str())
+                .collect::<Vec<_>>(),
+            vec!["c", "d", "e", "f"]
+        );
+        assert!(events.iter().all(|e| e.after_generation == 3 && e.cut == 0));
     }
 
     /// With the real clock only the recorded seconds differ; every decision matches.
