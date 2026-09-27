@@ -23,7 +23,7 @@ you saw.
 | engine-subcommand | 96 | 88 | 8 | 0 | 0 | 0 |
 | jope-prime-command | 49 | 49 | 0 | 0 | 0 | 0 |
 | justfile-recipe | 6 | 6 | 0 | 0 | 0 | 0 |
-| learning-subcommand | 16 | 0 | 16 | 0 | 0 | 0 |
+| learning-subcommand | 19 | 0 | 19 | 0 | 0 | 0 |
 | new-bin | 14 | 0 | 14 | 0 | 0 | 0 |
 | new-example | 1 | 0 | 1 | 0 | 0 | 0 |
 | ops-sh | 1 | 1 | 0 | 0 | 0 | 0 |
@@ -42,7 +42,7 @@ you saw.
 | vendored-bin | 6 | 6 | 0 | 0 | 0 | 0 |
 | vendored-example | 6 | 6 | 0 | 0 | 0 | 0 |
 | wire | 5 | 0 | 0 | 0 | 5 | 0 |
-| **total** | **804** | **735** | **41** | **1** | **20** | **7** |
+| **total** | **807** | **735** | **44** | **1** | **20** | **7** |
 
 `moved`/`new` rows without a covering test: 659.
 
@@ -854,3 +854,6 @@ you saw.
 | learning-subcommand | (new) jope-learning revocations status | crates/jope-learning/src/main.rs (jope-learning revocations status) | jope-learning::recovery_cli revocations_import_is_read_only_by_default_and_refuses_the_revoked_record_once_applied | new | W12-T05: read-only; the revoked digests this host holds and the revocation ledger head |
 | pipeline-subcommand | (new) jope pipeline evolve | crates/jope-pipeline/src/cli.rs (jope pipeline evolve) | jope-pipeline lineage::tests::rounds_chain_on_identical_cuts_never_get_worse_and_verify; jope-cli::pipeline_cli sigterm_during_a_round_keeps_only_completed_rounds_in_the_lineage | new | Phase 5: rounds of seeded CPU search on one dataset's fixed cuts; round r>1 is seeded from round r-1's champion and ranked runners-up with the previous receipt as its verified incumbent; `--control` adds an unseeded run at the final round's configuration; `lineage.json` (`jope.pipeline-lineage/v1`) is fsynced per completed round and SIGTERM leaves only completed rounds; never writes the learning store |
 | pipeline-subcommand | (new) jope pipeline lineage verify | crates/jope-pipeline/src/cli.rs (jope pipeline lineage verify) | jope-pipeline lineage::tests::a_tampered_lineage_round_receipt_or_seeds_file_fails_verification | new | Phase 5: re-derives every round and the control from their directories: identical dataset, cuts and budget; each parent is the previous receipt; each round's seeds are the previous champion and runners-up; no champion worse than the round before; `--require-discovery` also demands a measured generation-1+ candidate in every round |
+| learning-subcommand | (new) jope-learning bank add | crates/jope-learning/src/main.rs (jope-learning bank add) | jope-learning::pipeline_bank only_an_hwm_improved_champion_is_banked; jope-learning::pipeline_bank an_unverifiable_receipt_or_hwm_ledger_is_refused | new | Phase 5: admits a pipeline champion to the append-only, content-addressed champion bank (`bank` ledger) only when its receipt re-derives from its run directory, the HWM ledger verifies and holds an accepted `improved` event for exactly this receipt whose record and blob match it; `initialized` and every rejection are refused; a given lineage must verify and name the receipt; re-adding an entry writes nothing |
+| learning-subcommand | (new) jope-learning bank list | crates/jope-learning/src/main.rs (jope-learning bank list) | jope-learning::pipeline_bank the_bank_is_append_only_and_content_addressed | new | Phase 5: read-only; every banked entry re-checked against its content address, optionally one dataset's; an edited bank batch fails the chain and nothing is listed |
+| learning-subcommand | (new) jope-learning bank export | crates/jope-learning/src/main.rs (jope-learning bank export) | jope-learning::pipeline_bank an_export_seeds_the_next_run | new | Phase 5: writes the best distinct banked genomes of a dataset as `jope.pipeline-seeds/v1` (never over an existing file), which `jope pipeline run --seed-genomes` and `jope pipeline evolve --seeds` consume |

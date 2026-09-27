@@ -15,6 +15,7 @@
 //! progress/outbox/...                               the W8 progress outbox
 //! ```
 
+pub mod bank;
 pub mod canon;
 pub mod champion;
 pub mod civil;
