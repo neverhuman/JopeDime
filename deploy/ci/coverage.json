@@ -7281,7 +7281,7 @@
         "full-default"
       ],
       "dispositions": [],
-      "scope": "W7-T03/T04 delivery half, default features: the per-rank launch record is exactly what the frozen plan derives, workers load only the frozen plan and record, the launcher execs with exactly CUDA_VISIBLE_DEVICES set to the planned UUID (empty for a CPU rank) and nothing else, a worker refuses any other visibility, and the NCCL bootstrap comes only from this plan's verified admission (forged, replayed, wrong-attempt, foreign-plan, wrong-rank and wrong-length bootstraps refused). CPU only; synthetic identities, no GPU or three-host run."
+      "scope": "W7-T03/T04 delivery half, default features: the per-rank launch record is exactly what the frozen plan derives, workers load only the frozen plan and record, the launcher execs with exactly CUDA_VISIBLE_DEVICES set to the planned UUID (empty for a CPU rank) and nothing else, a worker refuses any other visibility, and the NCCL bootstrap comes only from this plan's verified admission (forged, replayed, wrong-attempt, foreign-plan, wrong-rank and wrong-length bootstraps refused). W7-D3: SmartCluster's GPU index is translated through an injected nvidia-smi and must be exactly the planned UUID (another GPU, unreported, malformed, absent or failing probe, ambiguous listing refused), and a GPU rank asks SmartCluster for exactly one exclusive GPU. CPU only; synthetic identities, no GPU or three-host run."
     },
     "target:jope-parallel/test/bounded_smartcluster": {
       "discovery": {

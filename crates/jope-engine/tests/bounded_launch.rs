@@ -1,13 +1,19 @@
 //! W7-T03 delivery half, default features (CPU; no GPU, NCCL or device enumeration):
 //! the frozen per-rank launch record, the launcher's exact worker environment and the
-//! worker's own visibility check. Synthetic identities; not the three-host proof.
+//! worker's own visibility check, including SmartCluster's GPU index translated to the planned
+//! UUID through an injected `nvidia-smi` (W7-D3). Synthetic identities; not the three-host
+//! proof.
 #[path = "support/bounded_fixture.rs"]
 mod fixture;
 use fixture::*;
 use jope_parallel::native_loop::bounded::{
+    collect::{CommandOutput, CommandRunner},
     contract::{BoundedRunContract, Predecessor},
     controller,
-    launch::{self, LaunchRecord, LAUNCH_SCHEMA, NCCL_UNIQUE_ID_BYTES, VISIBILITY_VARIABLE},
+    launch::{
+        self, LaunchRecord, ResolvedVisibility, LAUNCH_SCHEMA, NCCL_UNIQUE_ID_BYTES,
+        VISIBILITY_VARIABLE,
+    },
     rendezvous::{self, AdmittedMember, GroupAdmission, RefusalCause, Rendezvous},
 };
 use std::{
@@ -328,4 +334,238 @@ fn the_nccl_bootstrap_comes_only_from_this_plans_verified_admission() {
     let (_, _, _, short) = admit(&c, &k, Some(hex::encode([0xab; 64])));
     let e = launch::nccl_bootstrap(&c, &plan, &r1, &short[1]).unwrap_err();
     assert!(e.to_string().contains("an NCCL unique id is 128"), "{e}");
+}
+
+// ------------------------------------ W7-D3 SmartCluster's GPU allocation stays authoritative
+
+/// A SmartCluster supervisor for the fixture host of `rank`, bound to a planned run. It never
+/// contacts its daemon: `launch_spec` only freezes the launch and builds the job.
+fn fixture_supervisor(
+    root: &Path,
+    run_dir: &Path,
+    host: &str,
+    rank: u32,
+) -> jope_parallel::native_loop::bounded::supervisor::SmartClusterSupervisor {
+    use jope_parallel::native_loop::bounded::{
+        participant::{Installation, SmartClusterInstallation, INSTALLATION_SCHEMA},
+        supervisor::{DaemonPin, HostSupervision, SmartClusterSupervisor, SERVICE},
+    };
+    let daemon = DaemonPin {
+        socket: root.join("scqd.sock"),
+        uid: 1000,
+        executable_sha256: sha(b"fixture scqd"),
+    };
+    let installation = Installation {
+        schema: INSTALLATION_SCHEMA.into(),
+        address: "127.0.0.1".into(),
+        certificate: root.join("host.der"),
+        certificate_key: root.join("host.key"),
+        source_commit: sha(b"fixture-source")[..40].to_string(),
+        executable: root.join("jope-native-loop"),
+        runtime_libraries: vec![root.join("libjope-runtime.so")],
+        compiler: root.join("compiler"),
+        cuda_libraries: Vec::new(),
+        nccl_libraries: Vec::new(),
+        installed_policies: vec![root.join("scqd.toml")],
+        gpu_inventory: true,
+        input_root: root.to_path_buf(),
+        smartcluster: SmartClusterInstallation {
+            daemon: daemon.clone(),
+            service: SERVICE.into(),
+        },
+    };
+    let path = root.join(format!("installation-{rank}.json"));
+    fs::write(&path, serde_json::to_vec(&installation).unwrap()).unwrap();
+    SmartClusterSupervisor::new(HostSupervision {
+        host: host.into(),
+        daemon,
+        tenant: "unix:1000".into(),
+        project: "w7-cpu-proof".into(),
+        service: SERVICE.into(),
+        plan: run_dir.join("plan.json"),
+        state: root.join(format!("state-{rank}")),
+        coordinator: "127.0.0.1:7460".into(),
+        installation: path,
+        participant_keys: std::collections::BTreeMap::from([(rank, root.join("rank.key"))]),
+    })
+    .unwrap()
+}
+
+#[test]
+fn smartcluster_allocates_a_gpu_rank_exactly_one_exclusive_gpu() {
+    use jain_smartcluster::{GpuMode, GpuRequest};
+    use jope_parallel::native_loop::bounded::controller::RankLaunch;
+    let k = keys(3);
+    let c = with_cpu_rank(&k);
+    let (_t, root) = tempdir();
+    let run_dir = root.join("run");
+    let plan = controller::plan(&run_dir, &bytes(&c), now_ms(), None)
+        .unwrap()
+        .plan_sha256;
+    let spec = |rank: u32| {
+        fixture_supervisor(&root, &run_dir, &format!("fixture-host-{rank}"), rank).launch_spec(
+            &RankLaunch {
+                contract: &c,
+                plan_sha256: &plan,
+                global_rank: rank,
+                dispatch_id: &rendezvous::dispatch_id(&plan, c.attempt, rank).unwrap(),
+            },
+        )
+    };
+    // A GPU rank asks SmartCluster for one exclusive GPU with its planned VRAM ceiling;
+    // SmartCluster chooses the device and the rank checks it is the planned one.
+    let (_, gpu) = spec(1).unwrap();
+    assert_eq!(
+        gpu.resources.gpu,
+        Some(GpuRequest {
+            count: 1,
+            vram_bytes: 20 * GIB,
+            compute_share_per_mille: 1000,
+            mode: GpuMode::Exclusive,
+        })
+    );
+    // A GPU rank with no VRAM ceiling in its plan cannot be allocated a GPU: refused.
+    let mut unbounded = c.clone();
+    unbounded.participants[1].ceilings.gpu_vram_bytes = None;
+    let e = fixture_supervisor(&root, &run_dir, "fixture-host-1", 11)
+        .launch_spec(&RankLaunch {
+            contract: &unbounded,
+            plan_sha256: &plan,
+            global_rank: 1,
+            dispatch_id: &rendezvous::dispatch_id(&plan, c.attempt, 1).unwrap(),
+        })
+        .unwrap_err();
+    assert!(e.to_string().contains("has no VRAM ceiling"), "{e}");
+    // A CPU rank asks for none, and keeps its CPU and RAM ceilings.
+    let (_, cpu) = spec(2).unwrap();
+    assert_eq!(cpu.resources.gpu, None);
+    assert_eq!(
+        (cpu.resources.cpu, cpu.resources.ram),
+        (
+            jain_smartcluster::ResourceRequest::cpu_and_ram(4_000, 8 * GIB).cpu,
+            jain_smartcluster::ResourceRequest::cpu_and_ram(4_000, 8 * GIB).ram
+        )
+    );
+}
+
+/// An injected `nvidia-smi --query-gpu=index,uuid`; `output: None` when it is not installed.
+struct Smi {
+    output: Option<(bool, String)>,
+    calls: std::cell::Cell<u32>,
+}
+impl Smi {
+    fn listing(text: &str) -> Self {
+        Self::with(Some((true, text.into())))
+    }
+    fn with(output: Option<(bool, String)>) -> Self {
+        Self {
+            output,
+            calls: 0.into(),
+        }
+    }
+}
+impl CommandRunner for Smi {
+    fn run(&self, program: &str, args: &[&str]) -> anyhow::Result<Option<CommandOutput>> {
+        assert_eq!(program, "nvidia-smi");
+        assert_eq!(
+            args,
+            ["--query-gpu=index,uuid", "--format=csv,noheader,nounits"]
+        );
+        self.calls.set(self.calls.get() + 1);
+        Ok(self.output.clone().map(|(success, stdout)| CommandOutput {
+            success,
+            stdout: stdout.into_bytes(),
+            stderr: b"NVML failure".to_vec(),
+        }))
+    }
+}
+
+#[test]
+fn a_smartcluster_gpu_index_must_translate_to_the_planned_uuid() {
+    let k = keys(3);
+    let c = with_cpu_rank(&k);
+    let plan = digest(&c);
+    // Rank 1 is planned on GPU-fixture-1; rank 2 is a CPU rank.
+    let gpu = launch::launch_record(&c, &plan, 1).unwrap();
+    let cpu = launch::launch_record(&c, &plan, 2).unwrap();
+    let host = "0, GPU-fixture-0\n1, GPU-another-device\n2, GPU-fixture-1\n";
+    // Positive control: SmartCluster allocated index 2, which is the planned GPU; the worker
+    // pins that UUID for itself.
+    let smi = Smi::listing(host);
+    let resolved = launch::resolve_visibility(&gpu, Some(OsStr::new("2")), &smi).unwrap();
+    assert_eq!(
+        resolved,
+        ResolvedVisibility::SchedulerIndex {
+            index: 2,
+            uuid: "GPU-fixture-1".into()
+        }
+    );
+    assert_eq!(resolved.pinned(), Some("GPU-fixture-1"));
+    assert_eq!(smi.calls.get(), 1);
+    // The launcher's exact UUID needs no translation, and a CPU rank never runs nvidia-smi.
+    let never = Smi::with(None);
+    assert_eq!(
+        launch::resolve_visibility(&gpu, Some(OsStr::new("GPU-fixture-1")), &never).unwrap(),
+        ResolvedVisibility::PlannedUuid("GPU-fixture-1".into())
+    );
+    for hidden in ["-1", ""] {
+        let resolved = launch::resolve_visibility(&cpu, Some(OsStr::new(hidden)), &never).unwrap();
+        assert_eq!(
+            (resolved.clone(), resolved.pinned()),
+            (ResolvedVisibility::Cpu, None)
+        );
+    }
+    assert!(launch::resolve_visibility(&cpu, Some(OsStr::new("2")), &never).is_err());
+    assert_eq!(never.calls.get(), 0);
+    // Everything else is refused before any device work.
+    let refuse = |observed: Option<&str>, smi: &Smi, needle: &str| {
+        let e = launch::resolve_visibility(&gpu, observed.map(OsStr::new), smi).unwrap_err();
+        assert!(
+            format!("{e:#}").contains(needle),
+            "{observed:?}: {e:#} (expected `{needle}`)"
+        );
+    };
+    // SmartCluster allocated another GPU than the planned one.
+    refuse(Some("0"), &Smi::listing(host), "not rank 1's planned GPU");
+    refuse(Some("1"), &Smi::listing(host), "not rank 1's planned GPU");
+    refuse(
+        Some("7"),
+        &Smi::listing(host),
+        "which nvidia-smi does not report",
+    );
+    for malformed in ["1,2", "2,2", "-1", " 2", "2 ", "+2", "0x2", "", "10000"] {
+        refuse(
+            Some(malformed),
+            &Smi::listing(host),
+            "is not exactly one SmartCluster GPU index",
+        );
+    }
+    refuse(None, &Smi::listing(host), "is unset");
+    refuse(Some("GPU-fixture-0"), &never, "differs from the planned");
+    refuse(Some("2"), &Smi::with(None), "nvidia-smi is not installed");
+    refuse(
+        Some("2"),
+        &Smi::with(Some((false, String::new()))),
+        "nvidia-smi --query-gpu=index,uuid failed: NVML failure",
+    );
+    refuse(
+        Some("2"),
+        &Smi::listing("2 GPU-fixture-1\n"),
+        "malformed nvidia-smi line",
+    );
+    refuse(
+        Some("2"),
+        &Smi::listing("2, [N/A]\n"),
+        "malformed nvidia-smi line",
+    );
+    refuse(
+        Some("2"),
+        &Smi::listing("2, GPU-fixture-1\n2, GPU-another-device\n"),
+        "reports GPU index 2 twice",
+    );
+    refuse(
+        Some("2"),
+        &Smi::listing("1, GPU-fixture-1\n2, GPU-fixture-1\n"),
+        "reports GPU GPU-fixture-1 twice",
+    );
 }

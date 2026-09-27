@@ -221,9 +221,11 @@ pub fn run(args: &ParticipantArgs, runner: &dyn CommandRunner) -> Result<i32> {
             arguments: args.job_arguments.clone(),
         },
     )?;
-    launch::verify_worker_visibility(
+    // W7-D3: SmartCluster's GPU index must be the planned UUID (a CPU rank sees no device).
+    launch::resolve_visibility(
         &record,
         std::env::var_os(launch::VISIBILITY_VARIABLE).as_deref(),
+        runner,
     )?;
     let rank = record.global_rank;
     let planned = contract.participant(rank).context("rank")?;

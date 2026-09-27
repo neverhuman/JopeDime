@@ -9,8 +9,9 @@
 //!
 //! * **launch** freezes the rank's launch record, then submits the job with the dispatch id as
 //!   its idempotency key and label, no automatic retry, the original deadline and the plan's
-//!   CPU/RAM ceilings. A GPU rank is refused: SmartCluster cannot pin the planned device UUID
-//!   (see the W7-T03 open item), so no GPU rank is launched through it.
+//!   CPU/RAM ceilings. A GPU rank asks for one exclusive GPU with its planned VRAM ceiling:
+//!   SmartCluster's allocation is authoritative, and the rank refuses unless the index it is
+//!   given translates to its planned UUID ([`launch::resolve_visibility`], W7-D3).
 //! * **find** returns the job labelled with the dispatch id, so work submitted before a crash
 //!   and never journaled is found, never launched twice.
 //! * **probe** maps the job state and exit code to [`Liveness`]; **terminate** cancels and
@@ -25,9 +26,10 @@ use super::{
 use crate::eval_registry::native_scq::authenticated_exchange;
 use anyhow::{bail, ensure, Context, Result};
 use jain_smartcluster::{
-    CancelMode, CancelRequest, Environment, GetRequest, IdempotencyKey, JobId, JobRecord, JobSpec,
-    ListFilter, ListRequest, PriorityClass, ProjectId, Request, ResourceRequest, Response,
-    RetryPolicy, ServiceName, SubmitRequest, TenantId, TerminalStatus, Timestamp, Workload,
+    CancelMode, CancelRequest, Environment, GetRequest, GpuMode, GpuRequest, IdempotencyKey, JobId,
+    JobRecord, JobSpec, ListFilter, ListRequest, PriorityClass, ProjectId, Request,
+    ResourceRequest, Response, RetryPolicy, ServiceName, SubmitRequest, TenantId, TerminalStatus,
+    Timestamp, Workload,
 };
 use serde::{Deserialize, Serialize};
 use std::{
@@ -238,11 +240,22 @@ impl SmartClusterSupervisor {
             p.host.host,
             self.host.host
         );
-        ensure!(
-            p.device.is_none(),
-            "rank {} plans a GPU; SmartCluster cannot pin the planned device UUID, so GPU ranks are not launched through it",
-            l.global_rank
-        );
+        // W7-D3: SmartCluster's allocation is authoritative. A GPU rank asks for one exclusive
+        // GPU with its planned VRAM ceiling; SmartCluster chooses the device and the rank
+        // refuses unless its index translates to the planned UUID.
+        let mut resources =
+            ResourceRequest::cpu_and_ram(p.ceilings.cpu_millicores, p.ceilings.ram_bytes);
+        if p.device.is_some() {
+            resources.gpu = Some(GpuRequest {
+                count: 1,
+                vram_bytes: p
+                    .ceilings
+                    .gpu_vram_bytes
+                    .with_context(|| format!("GPU rank {} has no VRAM ceiling", l.global_rank))?,
+                compute_share_per_mille: 1000,
+                mode: GpuMode::Exclusive,
+            });
+        }
         let plan =
             launch::read_bounded(&self.host.plan, super::contract::MAX_CONTRACT_BYTES as u64)?;
         ensure!(
@@ -274,10 +287,7 @@ impl SmartClusterSupervisor {
                 arguments: self.arguments(l, &dir)?,
                 environment: Environment::default(),
             },
-            resources: ResourceRequest::cpu_and_ram(
-                p.ceilings.cpu_millicores,
-                p.ceilings.ram_bytes,
-            ),
+            resources,
             retry: RetryPolicy {
                 max_failures: 0,
                 ..RetryPolicy::default()
