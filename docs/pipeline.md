@@ -167,9 +167,14 @@ test` re-derives the receipt, re-resolves the sha-verified dataset (it must be t
 it on `test.csv`, writing `jope.pipeline-test-score/v1` to
 `<registry>/<dataset_hash>/<program_sha256>.json` (default registry
 `$JOPE_STATE/pipeline/test-scores`). The path is checked before any fit and the file is created
-exclusively, so each (dataset, genome) pair is scored once: a repeat from the same receipt, or
-from any other run that selected the same genome, is refused. The score never feeds selection:
-nothing in the pipeline reads it back, and the run's receipt is not touched.
+exclusively, so each (dataset, genome) pair is scored once in that registry: a repeat from the
+same receipt, or from any other run that selected the same genome, is refused. Nothing in the
+pipeline reads a score back and the run's receipt is not touched, so the tools never feed it to
+selection. What they cannot enforce is the operator's side: the registry is a local record the
+caller chooses (a new `--registry` or `$JOPE_STATE` starts an empty one), and scoring several
+genomes of one dataset and keeping the test-best would make the test split a selection input.
+Each score receipt therefore records `earlier_looks`, the genomes already scored on that
+dataset's test split in the same registry, and the command warns when there are any.
 
 Verification: `cargo test --locked -p jope-pipeline` exercises budget exhaustion,
 failed attempts, in-flight overrun, full-cut selection and legacy reading.
