@@ -19,7 +19,9 @@ concurrency:
 jobs:
   changes:
     runs-on: [self-hosted, linux, x64, jope-ci]
-    timeout-minutes: 3
+    # Action setup and a full-history checkout alone can exceed 3 minutes when GitHub endpoints
+    # stall from the self-hosted network; the lane itself still finishes in seconds.
+    timeout-minutes: 10
     outputs:
       rust: ${{ steps.lane.outputs.rust }}
       emitters: ${{ steps.lane.outputs.emitters }}
@@ -49,7 +51,9 @@ jobs:
 
   hygiene:
     runs-on: [self-hosted, linux, x64, jope-ci]
-    timeout-minutes: 10
+    # Headroom for the three bounded evidence-publication attempts, each of which can stall for
+    # about two minutes on a blackholed connection before it resets.
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
@@ -247,7 +251,7 @@ jobs:
     needs: [changes, hygiene, rust-check, rust-test, emitters, inputs, python, e2e-smoke]
     if: always()
     runs-on: [self-hosted, linux, x64, jope-ci]
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
@@ -256,11 +260,44 @@ jobs:
           fetch-depth: 0
       - name: Runner provenance
         uses: ./.github/actions/runner-provenance
-      - name: Download this run and attempt only
+      # A connection reset part-way through the download leaves an artifact directory empty, which
+      # aggregate.py correctly refuses. Retry the whole download at most twice more, from an empty
+      # directory each time; exactly one complete attempt is required (same gate as publication).
+      - name: Download this run and attempt only (attempt 1)
+        id: download-first
+        continue-on-error: true
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1 (Node 24)
         with:
           pattern: ci-${{ github.run_id }}-${{ github.run_attempt }}-*
           path: target/ci-download/${{ github.run_id }}/${{ github.run_attempt }}
+      - name: Clear the partial download before attempt 2
+        if: steps.download-first.outcome == 'failure'
+        run: rm -rf -- "target/ci-download/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT"
+      - name: Download this run and attempt only (attempt 2)
+        id: download-second
+        if: steps.download-first.outcome == 'failure'
+        continue-on-error: true
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1 (Node 24)
+        with:
+          pattern: ci-${{ github.run_id }}-${{ github.run_attempt }}-*
+          path: target/ci-download/${{ github.run_id }}/${{ github.run_attempt }}
+      - name: Clear the partial download before attempt 3
+        if: steps.download-first.outcome == 'failure' && steps.download-second.outcome == 'failure'
+        run: rm -rf -- "target/ci-download/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT"
+      - name: Download this run and attempt only (attempt 3)
+        id: download-third
+        if: steps.download-first.outcome == 'failure' && steps.download-second.outcome == 'failure'
+        continue-on-error: true
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1 (Node 24)
+        with:
+          pattern: ci-${{ github.run_id }}-${{ github.run_attempt }}-*
+          path: target/ci-download/${{ github.run_id }}/${{ github.run_attempt }}
+      - name: Require one complete bounded download
+        env:
+          FIRST: ${{ steps.download-first.outcome }}
+          SECOND: ${{ steps.download-second.outcome }}
+          THIRD: ${{ steps.download-third.outcome }}
+        run: bash deploy/ci/publication-status.sh "$FIRST" "$SECOND" "$THIRD"
       - name: Validate every required result
         if: always()
         env:
