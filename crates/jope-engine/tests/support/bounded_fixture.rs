@@ -178,6 +178,7 @@ pub fn contract(now: u64, n: usize, keys: &Keys) -> BoundedRunContract {
             planned_updates: 3,
         },
         predecessor: None,
+        training: None,
     };
     for i in 0..n {
         let mut p = Participant {

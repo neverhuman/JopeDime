@@ -11,6 +11,12 @@
 //! the pure `bounded::assignment::trainer_assignment` (`neural` builds), never from process
 //! flags or `rank` alone. `DeviceAssignment::local_index` is the host-wide index the census
 //! observed, not a CUDA ordinal: each worker sees only its own UUID, at ordinal 0.
+//!
+//! **Training partition (W7-T06).** A plan may select the execution partition its ranks train
+//! under ([`TrainingSelection`]): partition v1, or the lossless v2 that three ranks need. The
+//! record is derived for exactly the plan's world size, and the selection is admitted only
+//! when the trainer's partition gate accepts it. A plan that selects none omits the field, so
+//! every earlier plan keeps its exact bytes and digest. A later attempt cannot change it.
 use super::{
     census::{validate_identity, HostIdentity},
     is_digest, is_name, is_relative, sign, verify, verifying_key,
@@ -160,6 +166,23 @@ pub struct Predecessor {
     pub journal_tip_sha256: String,
     pub committed_updates: u64,
 }
+/// Microbatches and global batches the trainer's partition gate accepts
+/// (`training::partition::execution`, outside batch qualification).
+pub const TRAINING_MICROBATCHES: [u32; 3] = [64, 128, 256];
+pub const TRAINING_GLOBAL_BATCHES: [u32; 4] = [2048, 4096, 8192, 16384];
+
+/// The training execution a plan selects (W7-T06): the execution-partition version and the
+/// batch shape its ranks train under. The world size is the number of participants, so the
+/// partition record is derived for exactly this plan ([`BoundedRunContract::execution_partition`]).
+/// A plan that selects none omits the field, and its canonical bytes and digest are unchanged.
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+pub struct TrainingSelection {
+    /// `parallel.training_partition.v1` or `parallel.training_partition.v2`.
+    pub execution_partition: String,
+    pub microbatch: u32,
+    pub global_batch: u32,
+}
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub struct BoundedRunContract {
@@ -179,6 +202,9 @@ pub struct BoundedRunContract {
     pub work_census: Vec<WorkItem>,
     pub counters: Counters,
     pub predecessor: Option<Predecessor>,
+    /// The training partition this plan selects, if any. Never serialized when absent.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub training: Option<TrainingSelection>,
 }
 
 /// Why a plan cannot be frozen. Every variant is raised before any dispatch.
@@ -325,7 +351,56 @@ impl BoundedRunContract {
                 ))
             }
         }
+        self.validate_training()
+    }
+    /// A selected partition must be one the trainer's gate accepts for this world size.
+    fn validate_training(&self) -> Check {
+        let Some(t) = &self.training else {
+            return Ok(());
+        };
+        let world = self.participants.len();
+        need!(
+            TRAINING_MICROBATCHES.contains(&t.microbatch)
+                && TRAINING_GLOBAL_BATCHES.contains(&t.global_batch),
+            Invalid,
+            "training batch shape: microbatch {} and global batch {}",
+            t.microbatch,
+            t.global_batch
+        );
+        match t.execution_partition.as_str() {
+            crate::task_contract::PARTITION_V1_SCHEMA => need!(
+                [1, 2, 4, 8].contains(&world) && t.global_batch as usize % (world * t.microbatch as usize) == 0,
+                Invalid,
+                "partition v1 cannot divide the global batch over {world} ranks; select partition v2"
+            ),
+            crate::task_contract::PARTITION_V2_SCHEMA => need!(
+                (1..=8).contains(&world),
+                Invalid,
+                "partition v2 supports one to eight ranks, not {world}"
+            ),
+            other => {
+                return Err(PlanRefusal::Invalid(format!(
+                    "unknown training execution partition `{other}`"
+                )))
+            }
+        }
+        self.execution_partition().map_err(invalid)?;
         Ok(())
+    }
+    /// The execution-partition record this plan's ranks train under, derived from its
+    /// selection for exactly its world size; `None` when the plan selects no training.
+    pub fn execution_partition(&self) -> anyhow::Result<Option<Value>> {
+        self.training
+            .as_ref()
+            .map(|t| {
+                crate::task_contract::training_partition_of(
+                    &t.execution_partition,
+                    self.world_size(),
+                    t.microbatch as usize,
+                    t.global_batch as usize,
+                )
+            })
+            .transpose()
     }
     fn validate_closure(&self) -> Check {
         need!(
@@ -683,8 +758,10 @@ impl BoundedRunContract {
                 })
                 .collect()
         };
+        // The selected training partition is topology too: a changed rank count, microbatch
+        // or partition version is never an exact continuation (W7-T06).
         need!(
-            topology(self) == topology(previous),
+            topology(self) == topology(previous) && self.training == previous.training,
             Invalid,
             "a topology change requires an explicit transition and requalification"
         );
@@ -714,7 +791,7 @@ impl BoundedRunContract {
                 .entry(serde_json::to_value(w.kind).unwrap_or_default().to_string())
                 .or_default() += w.wall_ms;
         }
-        json!({
+        let mut review = json!({
             "schema": "jope.native_bounded_plan_review.v1",
             "plan_sha256": plan_sha256,
             "run": self.run,
@@ -729,6 +806,14 @@ impl BoundedRunContract {
             "counters": self.counters,
             "predecessor": self.predecessor,
             "dispatch_started": false,
-        })
+        });
+        // Only a plan that selects training gains the key; every other review is unchanged.
+        if let Some(t) = &self.training {
+            review["training"] = json!({
+                "selection": t,
+                "execution_partition": self.execution_partition().ok().flatten(),
+            });
+        }
+        review
     }
 }
