@@ -6290,6 +6290,22 @@
       "dispositions": [],
       "scope": "Core-IP record verifiers and STATUS/PROGRESS renderers against the committed records and adversarial fixtures: findings inventory integrity, disposition evidence binding, claim-to-evidence binding and revocation closure (synthetic evidence never backs live, measurement or promotion claims), test-inventory completeness against this map, task-state evidence rules, and byte-identical STATUS.md/PROGRESS.md renders with stale-view detection; the accepted tensor-inventory verifier on synthetic safetensors fixtures (layout, per-tensor digests, dtype/field closure, role accounting, Candle forward references, optimizer moments; the real asset is verified on the host) and tensors.json against the documented geometry; and the independent replay of every retained reproducible Elo ladder (Golden45 included, zstd decoded in process) with substitution, duplicate-delivery and disposition-upgrade refusals, historical-ranking-only consumers, lineage continuity/exposure refusals and derived plot-table consistency. Records status only; it qualifies nothing."
     },
+    "target:jope-records/test/python_parity": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-records/tests/python_parity.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "Replays the outputs the four retired hygiene guards (deploy/ci/coverage.py, rust-test-scope-check.py, parity-census.py check, readme-benchmarks.py, archived at 8a55c4fef) printed in the differential run py-p1-u3-diff-20260927T024147Z against the jope-records ports, from committed inputs of that run's tree: coverage validate on the map and nine malformed variants, coverage discover from recorded cargo metadata, file list and workflow texts, the rust-test scope check, parity-check on the matrix and eight variants against a recorded tree inventory, and readme-benchmarks --check/--write on the recorded evidence. Variant inputs are checked against the SHA-256 of what the Python read. The only allowed differences are the two remediation hints that name the Rust command. The capture of the tree inventory is an ignored helper."
+    },
     "target:numpy-pcg64/lib/numpy_pcg64": {
       "discovery": {
         "kind": "target",

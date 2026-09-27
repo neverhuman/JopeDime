@@ -1,0 +1,31 @@
+{
+  "dataset_registry": "registry/datasets.jope-same-cut-v1-screen.json",
+  "evaluator": "jope-bench.feat-math-f64.v2",
+  "id": "jope-same-cut-v1-screen",
+  "leaderboard_policy": {
+    "dataset_weighting": "uniform",
+    "elo_method": "regularized-bradley-terry-elo-scale",
+    "official_output": "results/jope-same-cut-v1-screen/leaderboard.csv",
+    "pairwise_tie_relative_tolerance": 1e-12,
+    "partial_coverage_is_not_full_rank": true,
+    "protocols_ranked_together": true
+  },
+  "method_registry": "registry/methods.json",
+  "metric_direction": "minimize",
+  "name": "jope same-cut (screen) · regression",
+  "primary_metric": "rmse",
+  "protocols": [
+    "same-cut"
+  ],
+  "public_name": "same-cut",
+  "schema": "sotarena.track.v1",
+  "scores": "results/jope-same-cut-v1-screen/scores.csv",
+  "split": {
+    "excluded_datasets": [],
+    "family": "same-cut",
+    "restricted_dataset_count": 0,
+    "test_labels_public": true
+  },
+  "stage": "screen",
+  "task": "regression"
+}

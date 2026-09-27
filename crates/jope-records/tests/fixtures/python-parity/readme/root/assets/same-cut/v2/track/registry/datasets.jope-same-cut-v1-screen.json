@@ -1,0 +1,85 @@
+{
+  "datasets": [
+    {
+      "features": 12,
+      "id": "047e62b52a3f4ede",
+      "name": "047e62b52a3f4ede",
+      "rows": 195,
+      "task": "regression",
+      "train_sha256": "f6efbbe844d2a00256435487f60174353502afee158f74044419464e91e30d9d"
+    },
+    {
+      "features": 10,
+      "id": "1cb97b1d7314d43d",
+      "name": "1cb97b1d7314d43d",
+      "rows": 166,
+      "task": "regression",
+      "train_sha256": "12cebdca583ad0d7316e1963e0c1d7c2eda9efe1b9585a00a49364b570bb52e5"
+    },
+    {
+      "features": 21,
+      "id": "21fbfe8b53dbcd60",
+      "name": "21fbfe8b53dbcd60",
+      "rows": 1000,
+      "task": "regression",
+      "train_sha256": "d9a0b97e91ff9d04bc87fefa4671a49c40cee21dfac05be58a7fc7ce08045931"
+    },
+    {
+      "features": 30,
+      "id": "30ef3eaa6d2971a9",
+      "name": "30ef3eaa6d2971a9",
+      "rows": 109,
+      "task": "regression",
+      "train_sha256": "53e723ca42438573f0e9e4584e1004d5c777b02b852dae9f67e60951134b63e5"
+    },
+    {
+      "features": 39,
+      "id": "43b4cc3ab0ebbd97",
+      "name": "43b4cc3ab0ebbd97",
+      "rows": 482,
+      "task": "regression",
+      "train_sha256": "aee617254b8f278a2b8f0dd9c1bdff04e72d6c07c0cbde5841451cea461ec015"
+    },
+    {
+      "features": 1,
+      "id": "693890aae9dc860b",
+      "name": "693890aae9dc860b",
+      "rows": 202,
+      "task": "regression",
+      "train_sha256": "0a9dc81f52ea843bbfbbd2fabd9ff1e7c78e5d025ad21b4de4be9aa59d5497dd"
+    },
+    {
+      "features": 3,
+      "id": "79e600bc5fcd5da7",
+      "name": "79e600bc5fcd5da7",
+      "rows": 180,
+      "task": "regression",
+      "train_sha256": "24dda7eb3c3cfaf211d94f35b95806a5ef2d983f361575d912bb708ca83e58a1"
+    },
+    {
+      "features": 15,
+      "id": "b5beff4a53fa12c0",
+      "name": "b5beff4a53fa12c0",
+      "rows": 575,
+      "task": "regression",
+      "train_sha256": "54a7427165c1af7b660ec6d93a1dc2dcc6e8c418bfd76a4309e3cd5be6b4d6ec"
+    },
+    {
+      "features": 9,
+      "id": "c32fa09b48fb2f27",
+      "name": "c32fa09b48fb2f27",
+      "rows": 1000,
+      "task": "regression",
+      "train_sha256": "24dfcad2c2ecbfde5e70e87729971353a1b6f9e583ef7b1d7b8960871a63ad04"
+    },
+    {
+      "features": 7,
+      "id": "c7d815714ca52bce",
+      "name": "c7d815714ca52bce",
+      "rows": 1000,
+      "task": "regression",
+      "train_sha256": "2cc33f1cf38de2da3edfe69d8ffd4623d84039c22f20755b0dffe8411c698df3"
+    }
+  ],
+  "schema": "sotarena.dataset-registry.v1"
+}

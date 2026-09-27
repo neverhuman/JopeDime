@@ -1,0 +1,42 @@
+[
+  {
+    "name": "counts",
+    "ed": "26c\n| new-bin | 14 | 0 | 14 | 0 | 0 | 0 |\n.\n",
+    "sha256": "a9f4d3618a50e176f7f6bd73bd9e0c7277d7e85f5c5c2870bd38a23d29958307"
+  },
+  {
+    "name": "tally",
+    "ed": "45c\n`moved`/`new` rows without a covering test: 1.\n.\n",
+    "sha256": "f480c323f652b64250ce0ca4e5f5590012fd45ff85cd4caa2cec0ad3296d563b"
+  },
+  {
+    "name": "preamble",
+    "ed": "17d\n",
+    "sha256": "81a46a9082fd89c66aeb5a065696ca92002cf6584bc56d50da78cb7277e3584e"
+  },
+  {
+    "name": "status",
+    "ed": "145c\n| engine-binary | parallel/src/bin/jope-build-receipt.rs | crates/jope-engine/src/bin/jope-build-receipt.rs | none | bogus |  |\n.\n",
+    "sha256": "d9fc5e778543b53cbfd3edeb32b1e4f950d1610d87bfe09f61cae09587efd9a7"
+  },
+  {
+    "name": "pending",
+    "ed": "155c\n| engine-binary | parallel/src/bin/jope-witness-ssh.rs | crates/jope-engine/src/bin/jope-witness-ssh.rs | none | pending-WP3 | plan lists it with the dropped ssh/node scripts (forced-OpenSSH witness entrypoint); still compiled here, removal lands with the WP5 CLI consolidation |\n.\n",
+    "sha256": "9904b83f707b8ffe746f3a0b88983711468c6f51d6d7aa0ecc640b5bb607cfac"
+  },
+  {
+    "name": "dropped",
+    "ed": "561c\n| tool-sh | parallel/tools/code_publish.sh | dropped | none | dropped: node-side code publisher over ssh; plan: ssh/node scripts dropped in the history filter (archive: elsewhere) |  |\n.\n",
+    "sha256": "0bf85328099a96a0b788e6898af30f3aeef634bbabe3f61075a242e3eebf7533"
+  },
+  {
+    "name": "target",
+    "ed": "330c\n| tool-py | parallel/tools/family_growth_policy.py | crates/jope-engine/src/no_such_file.rs | jope-parallel::families growth_policy_matches_the_captured_python_outputs | moved | ported to native Rust (Python removal P1); `families::freeze_growth` no longer executes Python; the Python policy is archived at `8a55c4fef` (docs/archive/python-archive-manifest.json) and its outputs are replayed from tests/fixtures/family-growth/ |\n.\n",
+    "sha256": "92f61ecd93d6770b899e9d59409a93804fecc1415e51cb28c64d902b40ba66dc"
+  },
+  {
+    "name": "norow",
+    "ed": "834d\n",
+    "sha256": "068cff2b5bcea8bfcaaede121074b47627cf93bca0855f1568067cf43237451b"
+  }
+]

@@ -1,0 +1,16 @@
+elo_rank,full_coverage_rank,method_id,method,elo,average_rank,dataset_wins,datasets_scored,datasets_total,coverage_pct,full_coverage,pending_cells,coverage_status,protocols,benchmark_valid,scope
+1,,baseline.gpr,baseline.gpr,1711.6,1.0,4,4,10,40.0,False,0,4/10,same-cut,True,official unified benchmark comparison
+2,,adapter.rf,adapter.rf,1560.0,2.0,0,1,10,10.0,False,0,1/10,same-cut,True,official unified benchmark comparison
+3,,afm.lite-race.v1.resampled,afm.lite-race.v1.resampled,1556.6,2.6,2,5,10,50.0,False,0,5/10,same-cut,True,official unified benchmark comparison
+4,,baseline.ridge,baseline.ridge,1546.4,2.0,0,1,10,10.0,False,0,1/10,same-cut,True,official unified benchmark comparison
+5,,baseline.stack,baseline.stack,1539.4,2.714,0,7,10,70.0,False,0,7/10,same-cut,True,official unified benchmark comparison
+6,,baseline.ensemble,baseline.ensemble,1538.1,2.5,2,4,10,40.0,False,0,4/10,same-cut,True,official unified benchmark comparison
+7,,baseline.krr,baseline.krr,1488.7,3.0,1,6,10,60.0,False,0,6/10,same-cut,True,official unified benchmark comparison
+8,,adapter.xgboost,adapter.xgboost,1486.6,3.0,1,2,10,20.0,False,0,2/10,same-cut,True,official unified benchmark comparison
+9,,adapter.catboost,adapter.catboost,1470.5,3.333,0,3,10,30.0,False,0,3/10,same-cut,True,official unified benchmark comparison
+10,,baseline.histgbm,baseline.histgbm,1470.1,4.0,0,2,10,20.0,False,0,2/10,same-cut,True,official unified benchmark comparison
+11,,baseline.ridge_gcv,baseline.ridge_gcv,1465.9,3.333,0,3,10,30.0,False,0,3/10,same-cut,True,official unified benchmark comparison
+12,,adapter.lightgbm,adapter.lightgbm,1461.9,3.333,0,3,10,30.0,False,0,3/10,same-cut,True,official unified benchmark comparison
+13,,baseline.ksmooth,baseline.ksmooth,1446.1,4.0,0,1,10,10.0,False,0,1/10,same-cut,True,official unified benchmark comparison
+14,,baseline.elasticnet,baseline.elasticnet,1424.1,4.0,0,2,10,20.0,False,0,2/10,same-cut,True,official unified benchmark comparison
+15,,baseline.histgbm2,baseline.histgbm2,1333.7,4.333,0,6,10,60.0,False,0,6/10,same-cut,True,official unified benchmark comparison
