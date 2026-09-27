@@ -13,7 +13,14 @@
 //! Nothing here starts work: a launch record authorizes nothing by itself. A rank still
 //! joins the authenticated rendezvous and holds a verified full-group admission before it
 //! starts (W7-T04).
-use super::{contract::BoundedRunContract, rendezvous};
+//!
+//! * [`nccl_bootstrap`] takes the NCCL unique id only from a verified full-group admission of
+//!   this plan, attempt and rank (W7-T04). Bounded plans never read a shared `nccl.id` file;
+//!   that path keeps its meaning only for the historical same-allocation launches.
+use super::{
+    contract::BoundedRunContract,
+    rendezvous::{self, AdmittedMember},
+};
 use anyhow::{anyhow, ensure, Context, Result};
 use serde::{Deserialize, Serialize};
 use std::{
@@ -29,6 +36,8 @@ use std::{
 pub const LAUNCH_SCHEMA: &str = "jope.native_bounded_launch.v1";
 /// The only variable a launcher sets from the plan; every other variable is cleared.
 pub const VISIBILITY_VARIABLE: &str = "CUDA_VISIBLE_DEVICES";
+/// `NCCL_UNIQUE_ID_BYTES`: the only communicator bootstrap a bounded trainer accepts.
+pub const NCCL_UNIQUE_ID_BYTES: usize = 128;
 const MAX_LAUNCH_RECORD_BYTES: u64 = 64 * 1024;
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -221,4 +230,99 @@ pub fn verify_worker_visibility(record: &LaunchRecord, observed: Option<&OsStr>)
         record.global_rank
     );
     Ok(())
+}
+
+/// The communicator bootstrap of a verified full-group admission, bound to one plan,
+/// attempt, rendezvous and rank. Only [`nccl_bootstrap`] constructs it.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct AdmittedBootstrap {
+    plan_sha256: String,
+    attempt: u32,
+    rendezvous_id: String,
+    admission_sha256: String,
+    global_rank: u32,
+    world_size: u32,
+    id: [u8; NCCL_UNIQUE_ID_BYTES],
+}
+impl AdmittedBootstrap {
+    pub fn plan_sha256(&self) -> &str {
+        &self.plan_sha256
+    }
+    pub fn attempt(&self) -> u32 {
+        self.attempt
+    }
+    pub fn rendezvous_id(&self) -> &str {
+        &self.rendezvous_id
+    }
+    pub fn admission_sha256(&self) -> &str {
+        &self.admission_sha256
+    }
+    pub fn global_rank(&self) -> u32 {
+        self.global_rank
+    }
+    pub fn world_size(&self) -> u32 {
+        self.world_size
+    }
+    pub fn id(&self) -> &[u8; NCCL_UNIQUE_ID_BYTES] {
+        &self.id
+    }
+}
+
+/// The NCCL unique id this launch's rank may use: only from a full-group admission that the
+/// planned coordinator signed for exactly this plan and attempt, held as this rank's
+/// membership. Refuses a forged or foreign admission, another attempt's or plan's admission,
+/// another rank's membership and any bootstrap that is not exactly an NCCL unique id.
+/// (A stale or replayed admission never becomes an [`AdmittedMember`]: the participant's
+/// [`rendezvous::verify_admission`] binds it to the rank's own hello and rendezvous.)
+pub fn nccl_bootstrap(
+    contract: &BoundedRunContract,
+    plan_sha256: &str,
+    record: &LaunchRecord,
+    member: &AdmittedMember,
+) -> Result<AdmittedBootstrap> {
+    verify_launch_record(contract, plan_sha256, record)?;
+    let admission = member.admission();
+    let body = &admission.body;
+    ensure!(
+        body.run == contract.run && body.attempt == contract.attempt,
+        "admission is for run `{}` attempt {}, not this launch's attempt {}",
+        body.run,
+        body.attempt,
+        contract.attempt
+    );
+    ensure!(
+        body.plan_sha256 == plan_sha256,
+        "admission is for another plan"
+    );
+    // The member may have been verified against another plan: re-check the coordinator
+    // signature and the full-group binding against this one.
+    rendezvous::verify_group_admission(contract, plan_sha256, admission)?;
+    ensure!(
+        member.admission_sha256() == rendezvous::admission_sha256(admission)?,
+        "admission digest differs from the admitted member's"
+    );
+    ensure!(
+        member.global_rank() == record.global_rank && member.world_size() == record.world_size,
+        "admitted membership is rank {} of {}, not this launch's rank {} of {}",
+        member.global_rank(),
+        member.world_size(),
+        record.global_rank,
+        record.world_size
+    );
+    let bytes = member.communicator_bootstrap();
+    let id: [u8; NCCL_UNIQUE_ID_BYTES] = bytes.try_into().map_err(|_| {
+        anyhow!(
+            "admitted communicator bootstrap is {} bytes; an NCCL unique id is {NCCL_UNIQUE_ID_BYTES}",
+            bytes.len()
+        )
+    })?;
+    Ok(AdmittedBootstrap {
+        plan_sha256: plan_sha256.into(),
+        attempt: contract.attempt,
+        rendezvous_id: body.rendezvous_id.clone(),
+        admission_sha256: member.admission_sha256().into(),
+        global_rank: record.global_rank,
+        world_size: record.world_size,
+        id,
+    })
 }
