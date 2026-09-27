@@ -1,8 +1,9 @@
 //! A bounded-run rank worker for the W7-T07 CPU phase (`jope-native-loop participant`).
 //!
 //! It runs as the SmartCluster trusted service its rank's supervisor submitted, and:
-//! 1. loads only the frozen plan (by digest) and its launch record, and checks its own device
-//!    visibility before anything else (W7-T03 delivery);
+//! 1. loads only the frozen plan (by digest) and its launch record, proves it is the leader
+//!    of exactly its planned SmartCluster job and attempt ([`job_identity`], W7-D1), and
+//!    checks its own device visibility, before anything else (W7-T03 delivery);
 //! 2. observes its own host identity exactly as the census collector does, with the running
 //!    binary as the executable;
 //! 3. joins the authenticated rendezvous over the pinned-TLS transport, presenting this host's
@@ -17,8 +18,10 @@
 use super::{
     collect::{self, CollectSpec, CommandRunner},
     controller::EXIT_LOST_CONTROL,
+    job_identity::{self, ExpectedJob, JobClaim},
     launch,
     rendezvous::{self, publish_immutable, ControlFrame, ControlStream, HelloBody, ResultBody},
+    supervisor::DaemonPin,
     transport::{self, HostCredential, Timeouts},
 };
 use crate::manifest::hash;
@@ -28,6 +31,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use sha2::{Digest, Sha256};
 use std::{
+    ffi::OsString,
     fs,
     io::Read,
     net::ToSocketAddrs,
@@ -65,6 +69,16 @@ pub struct Installation {
     pub gpu_inventory: bool,
     /// Where this host keeps its copy of the plan's input closure.
     pub input_root: PathBuf,
+    /// The host's SmartCluster daemon and the trusted service its ranks run as (W7-D1).
+    pub smartcluster: SmartClusterInstallation,
+}
+/// The SmartCluster daemon a rank on this host must prove it was started by.
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+pub struct SmartClusterInstallation {
+    pub daemon: DaemonPin,
+    /// The trusted service the daemon maps to the installed `jope-native-loop`.
+    pub service: String,
 }
 fn read_small(path: &Path, private: bool) -> Result<Vec<u8>> {
     let f = fs::OpenOptions::new()
@@ -160,6 +174,9 @@ pub struct ParticipantArgs {
     pub coordinator: String,
     pub participant_key: PathBuf,
     pub installation: PathBuf,
+    /// This process's own arguments (after the program), which must be exactly its
+    /// SmartCluster job's arguments.
+    pub job_arguments: Vec<OsString>,
 }
 
 /// The CPU proof's deterministic update: one SHA-256 round over the chain, the round number,
@@ -188,6 +205,22 @@ pub fn record_refusal(outbox: &Path, error: &anyhow::Error) {
 pub fn run(args: &ParticipantArgs, runner: &dyn CommandRunner) -> Result<i32> {
     let (contract, record) =
         launch::load_launch(&args.plan, &args.plan_sha256, &args.launch_record)?;
+    // W7-D1: before any work, prove this process is its planned SmartCluster job's leader.
+    let installation = Installation::load(&args.installation)?;
+    let claim = JobClaim::from_env(|name| std::env::var_os(name))?;
+    let job = job_identity::verify_running_job(
+        &installation.smartcluster.daemon,
+        &claim,
+        &ExpectedJob {
+            plan_sha256: args.plan_sha256.clone(),
+            run: contract.run.clone(),
+            global_rank: record.global_rank,
+            dispatch_id: record.dispatch_id.clone(),
+            tenant: job_identity::own_tenant(),
+            service: installation.smartcluster.service.clone(),
+            arguments: args.job_arguments.clone(),
+        },
+    )?;
     launch::verify_worker_visibility(
         &record,
         std::env::var_os(launch::VISIBILITY_VARIABLE).as_deref(),
@@ -203,7 +236,6 @@ pub fn run(args: &ParticipantArgs, runner: &dyn CommandRunner) -> Result<i32> {
         hex::encode(key.verifying_key().to_bytes()) == planned.public_key,
         "participant key is not rank {rank}'s planned key"
     );
-    let installation = Installation::load(&args.installation)?;
     let identity = collect::observe_identity(
         &installation.collect_spec(Some(Path::new("/proc/self/exe"))),
         runner,
@@ -302,6 +334,7 @@ pub fn run(args: &ParticipantArgs, runner: &dyn CommandRunner) -> Result<i32> {
         "boot_id": identity.boot_id,
         "admission_sha256": member.admission_sha256(),
         "input_closure_sha256": closure,
+        "smartcluster_job": job,
         "updates": rounds,
         "chain_sha256": hex::encode(chain),
         "started_unix_ms": started,
