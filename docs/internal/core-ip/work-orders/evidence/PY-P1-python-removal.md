@@ -447,6 +447,28 @@ archived files for any of them.
   `python/tests/test_durable_selfplay.py:441` reads it by path, and line 130 runs only in the
   xbabe2 activation step. Proposed: decide together with that test (a `?` unit): port the
   activation to Rust or retire both.
+- **PY-P2-7 dashboard receipts with no writer.** `crates/jope-engine/src/dashboard.rs`
+  (`campaign`) reads receipts whose only writers were Python. `git grep` of each path finds no
+  writer on the branch.
+  - Three were written by programs of the archived templates: `runs/report-progress.json`
+    (`watch_campaign_reports.py`, `jope-parallel-reports`), `runs/proposal-library.json`
+    (`opportunistic_proposals.py`, v44) and `runs/pure-proposal-library.json`
+    (`opportunistic_proposals_v2.py`, v53). The archived `snapshot_dashboard.py` only copied them
+    into a new snapshot directory given by `--output`. **Resolved in P1** (see "Follow-up — the nine
+    archived unit templates"): a saved receipt is shown as history with its saved status, and
+    with no receipt no row is shown. The "Matched-budget reports" row used to be shown always and
+    said "Completed-cycle reporting receipt pending".
+  - The reports watcher also published each cycle's `report-v1/` (it ran a state-root
+    `tools/report_cycle.py`; the repository copy is archived, U13). Saved reports stay readable.
+    Without one, the reports list falls back to the cycle's `comparisons.json`, which Rust writes
+    (`pipeline.rs`), so no view waits on it.
+  - Not written by any of the nine templates: `runs/proposal-library-admission.json`
+    (`deferred_proposal_admission.py`, archived, category A; no template ran it), and
+    `runs/continuous-progress.json` and `runs/frozen-monitoring.json` (`continuous_learning.py`,
+    U14; the only template naming it, `controller-next`, named a state-root copy and was held).
+    `learning_history.rs:230` also reads `continuous-progress.json`.
+  - Proposed: P2 decides, receipt by receipt, whether the dashboard keeps showing it as history
+    or drops it. If the owner wants a producer back, it is ported to Rust.
 
 Left unchanged on purpose:
 
@@ -479,36 +501,63 @@ templates, found 53" (the guard was `count >= 60`). Reproduced locally in
 `p1-units-pre-20260927T205438Z` (same assertion, 3 passed, 1 failed). The archive commit removed
 9 of the 62 templates: `engine` 22 → 15, `selfplay` 39 → 37, `pending` 1 → 1.
 
-Each template was decided on its consumers. The ones common to all nine:
-`deploy/systemd/render.sh`, `jope-units-render` and `just render-units` render whatever `*.in`
-files exist and name no unit; `jope_selfplay_bundle` renders only `deploy/systemd/selfplay/`; no
-installer, workflow under `.github/`, `justfile` recipe or runbook names any of the nine
-(`git grep` of each name over the branch). The remaining mentions are archive records (the
-manifest, the capability matrix's dropped rows, the parity fixtures), the frozen kernel-v1 unit
-files (`deploy/kernel-v1/source/systemd/*.service`, separate files, not templates, not
-installed) and `docs/legacy`. A read-only check on xbabe2 (`host-installed-units.log`,
-`workspace-sync-installed.log` in the pre run) found none of the seven engine names in the
-system or user manager (`LoadState=not-found`).
+Each template was decided on two kinds of consumer: what renders, installs, enables, starts or
+copies the template, and what reads the files its program wrote. For the first kind, the ones
+common to all nine: `deploy/systemd/render.sh`, `jope-units-render` and `just render-units`
+render whatever `*.in` files exist and name no unit; `jope_selfplay_bundle` renders only
+`deploy/systemd/selfplay/`; no installer, workflow under `.github/`, `justfile` recipe or runbook
+names any of the nine (`git grep` of each name over the branch). The remaining mentions are
+archive records (the manifest, the capability matrix's dropped rows, the parity fixtures), the
+frozen kernel-v1 unit files (`deploy/kernel-v1/source/systemd/*.service`, separate files, not
+templates, not installed) and `docs/legacy`. For the second kind, every path each program writes
+was searched with `git grep` over the branch. The first version of this follow-up searched
+unit names only. It missed that the live dashboard reads what the reports, v44 and v53 programs
+wrote, and it said those templates had no consumer, or only a history pin. A review found this.
+`p1-units-pre-20260927T212741Z` (`receipt-writers.log`, `dashboard-reads.log`) shows the reads
+and that nothing on the branch writes those files. The table below is corrected.
 
 | Template (`deploy/systemd/…`) | Archive unit | What `ExecStart` ran | Consumers on the branch | Decision |
 | --- | --- | --- | --- | --- |
-| `engine/jope-parallel-console.service.in` | U13 | `python3 @JOPE_HOME@/python/src/jope/tools/tui-session.py` (archived, U13) | `dashboard.rs` `live_operations` asked `systemctl show` for it; no view read that row | stays archived; name dropped from the dashboard |
-| `engine/jope-parallel-controller-next.service.in` | U14 | nothing: `ExecCondition=/usr/bin/false` (held); would run a state-root copy of `continuous_learning.py` (repo source archived, U14) | none | stays archived |
-| `engine/jope-parallel-health.service.in`, `.timer.in` | U14 | a state-root copy of `continuous_status.py` (repo source archived, U14); the timer only starts that service | none | stays archived |
-| `engine/jope-parallel-proposal-library-v44.service.in` | U13 | `python3 @JOPE_HOME@/python/src/jope/tools/opportunistic_proposals.py` (archived, U13) | `crates/jope-engine/manifests/opportunistic-proposals-v44.sha256:4` pins the old `systemd/` file as history; nothing checks it (PY-P2-3) | stays archived |
-| `engine/jope-parallel-pure-proposal-library-v53.service.in` | U13 | `opportunistic_proposals_v2.py` (archived, U13) | `opportunistic-proposals-v53.sha256:5`, as above | stays archived |
-| `engine/jope-parallel-reports.service.in` | U13 | `python3 @JOPE_HOME@/python/src/jope/tools/watch_campaign_reports.py` (archived, U13) | none | stays archived |
-| `selfplay/jope-workspace-sync.service.in`, `.timer.in` | U12 | `python3 @JOPE_STATE@/jope-dime-mirror/controller/current/scripts/workspace_sync.py sync`, a mirror copy outside the repository (repo source and its installer archived, U12) | `jope_selfplay_bundle.rs` `HOST_INSTALLED_UNITS` removes them from the rendered bundle units: a stop-list that tolerates their absence | stays archived; the exclusion is kept and now tested |
+| `engine/jope-parallel-console.service.in` | U13 | `python3 @JOPE_HOME@/python/src/jope/tools/tui-session.py` (archived, U13), which kept an observer binary running in a tmux session and wrote no files | `dashboard.rs` `live_operations` asked `systemctl show` for it; no view read that row | stays archived; name dropped from the dashboard |
+| `engine/jope-parallel-controller-next.service.in` | U14 | nothing: `ExecCondition=/usr/bin/false` (held); would run a state-root copy of `continuous_learning.py` (repo source archived, U14) | none of the template: held, it never wrote anything. Its program's receipts (`runs/continuous-progress.json`, `runs/frozen-monitoring.json`) are read by `dashboard.rs` and have no writer on the branch (PY-P2-7) | stays archived |
+| `engine/jope-parallel-health.service.in`, `.timer.in` | U14 | a state-root copy of `continuous_status.py` (repo source archived, U14); the timer only starts that service | none: its program wrote only `runs/continuous-health-20260909/status/`, which nothing on the branch reads | stays archived |
+| `engine/jope-parallel-proposal-library-v44.service.in` | U13 | `python3 @JOPE_HOME@/python/src/jope/tools/opportunistic_proposals.py` (archived, U13) | `dashboard.rs` reads its receipt `runs/proposal-library.json` (the "Proposal seed library" row, and the GPU line when nothing else explains it); `crates/jope-engine/manifests/opportunistic-proposals-v44.sha256:4` pins the old `systemd/` file as history, and nothing checks it (PY-P2-3) | stays archived; a saved receipt shows as history (PY-P2-7) |
+| `engine/jope-parallel-pure-proposal-library-v53.service.in` | U13 | `opportunistic_proposals_v2.py` (archived, U13) | `dashboard.rs` reads `runs/pure-proposal-library.json` (the "Pure policy predictions" row, and the GPU line); `opportunistic-proposals-v53.sha256:5` as above | stays archived; a saved receipt shows as history (PY-P2-7) |
+| `engine/jope-parallel-reports.service.in` | U13 | `python3 @JOPE_HOME@/python/src/jope/tools/watch_campaign_reports.py` (archived, U13) | `dashboard.rs` reads `runs/report-progress.json` (the "Matched-budget reports" row) and each cycle's `report-v1/report.json` (the reports list, which falls back to the Rust-written `comparisons.json`) | stays archived; the row is shown only for a saved receipt (PY-P2-7) |
+| `selfplay/jope-workspace-sync.service.in`, `.timer.in` | U12 | `python3 @JOPE_STATE@/jope-dime-mirror/controller/current/scripts/workspace_sync.py sync`, a mirror copy outside the repository (repo source and its installer archived, U12) | `jope_selfplay_bundle.rs` `HOST_INSTALLED_UNITS` removes them from the rendered bundle units: a stop-list that tolerates their absence. The program wrote the mirror; `git grep` finds `jope-dime-mirror` only in `crates/jope-campaigns/manifests/workspace-sync.v1.json` | stays archived; the exclusion is kept and now tested |
 
 No template has a live consumer that renders, installs, enables, starts or copies it, so none
 is restored, and `docs/archive/python-archive-manifest.json` and the custody tarball keep all
 nine (the gate below re-checks that each `systemd-template` row's blob equals `8a55c4fef`'s,
-that the path is absent from the branch, and the custody `SHA256SUMS`). On xbabe2 the two
-workspace-sync units are still installed as system units by the archived installer
-(`/etc/systemd/system`, timer `enabled`), but they are dead: the timer is `inactive`, last
-triggered 2026-09-14 14:40:00 UTC with no next elapse, and the service last exited with status 2.
-They run the mirror's copy, not a repository file, so the archive does not change them; retiring
-them needs root and is left to the owner.
+that the path is absent from the branch, and the custody `SHA256SUMS`). Restoring the reports,
+v44 or v53 template would not bring back a writer for the dashboard's receipts either, because
+each one ran archived Python. So the dashboard now treats those receipts as history (Changes,
+below).
+
+Host state was read on xbabe2 only, the host this lane runs on, and xbabe2 is not an engine
+host. `systemctl show` there gives `LoadState=not-found` for the seven archived engine names, in
+the system and the user manager (`host-installed-units.log` in `p1-units-pre-20260927T205438Z`).
+It gives the same for the tracked live engine units `jope-parallel-campaign`, `jope-parallel-gp`
+and `jope-parallel-monitor`. `systemctl list-unit-files 'jope-*'` lists no `jope-parallel-*`
+unit in either manager (`host-engine-units.log` in `p1-units-pre-20260927T212741Z`). So the
+absence of the archived engine units on xbabe2 says nothing about an engine host.
+
+**Not checked: whether any engine host still has them installed.** No engine host was checked.
+This lane has no access to one: it is CPU only and has no SSH. The repository does not name the
+engine host either. An engine host is one that runs `jope-parallel-campaign` and
+`jope-parallel-gp`, and it may still have rendered copies of `jope-parallel-health.timer`,
+`jope-parallel-reports.service` or the other five installed. The check for its operator is
+read-only: in the system and user managers, for each of the seven names, run
+`systemctl show <name>.service -p LoadState -p UnitFileState -p ActiveState -p FragmentPath`
+(and `<name>.timer` for `health`), plus `systemctl list-unit-files 'jope-parallel-*'`. A copy
+found there runs archived Python, or for `controller-next` nothing. Disabling and removing it
+is the owner's call.
+
+On xbabe2 the two workspace-sync units are still installed as system units by the archived
+installer (`/etc/systemd/system`, timer `enabled`), but they are dead: the timer is `inactive`,
+last triggered 2026-09-14 14:40:00 UTC with no next elapse, and the service last exited with
+status 2 (`workspace-sync-installed.log`). They run the mirror's copy, not a repository file, so
+the archive does not change them. Retiring them needs root and is left to the owner.
 
 Changes:
 
@@ -528,6 +577,22 @@ Changes:
   `deploy/systemd/engine/<name>.service.in` for every observed name, with a negative control.
   Reproduction `p1-units-pre-20260927T205650Z`: with the old list the test fails on
   `["jope-parallel-console"]`.
+- `crates/jope-engine/src/dashboard.rs`, after the review: `campaign` says that nothing in the
+  workspace writes `runs/report-progress.json`, `runs/proposal-library.json` or
+  `runs/pure-proposal-library.json`. The "Matched-budget reports" row is now shown only when
+  its receipt exists, as the two library rows already were. With no receipt it used to show
+  `QUEUED · awaiting manifest · Completed-cycle reporting receipt pending`, a wait that no
+  writer can end. The new test `receipts_of_retired_producers_show_history_not_pending_work`
+  in `tests/dashboard.rs` runs `campaign` on a real state root. With no receipt, none of the
+  three rows is shown and nothing says a receipt is pending. With the receipts a stopped
+  producer leaves (a day old, the libraries still `running`), each row is `STALE` with its
+  saved counts, never `RUNNING`, and neither "Building saved proposal seed library on eight
+  GPUs" nor "Saving pure policy predictions on eight GPUs" is shown. Finished receipts read
+  `DONE`, `SAVED` and `STOPPED`. Reproduction `p1-units-pre-20260927T212741Z`
+  (`dashboard-repro.log`): against the old row the test fails on "Matched-budget reports
+  shown without a receipt", and the row reads `QUEUED  awaiting manifest  Completed-cycle
+  reporting receipt pending`. The existing tests for these rows with live receipts are
+  unchanged.
 
 Runs: `p1-units-pre-20260927T205438Z` (the CI failure reproduced, template counts at main and
 here, the host's unit state), `p1-units-pre-20260927T205650Z` (the dashboard reproduction),
@@ -549,6 +614,30 @@ included; fmt, `git diff --check`, `coverage validate` (0 unassigned or invalid)
 `verify-test-inventory` and the other records checks, `parity-matrix.sh --no-build`,
 `deploy/ci/check.sh` (gitleaks shimmed) and the unshimmed `secret-scan.sh`; and the nine
 manifest rows and the custody `SHA256SUMS` above.
+
+Runs for the review follow-up:
+- `p1-units-pre-20260927T212741Z`: which files write the dashboard's receipts, on the branch
+  and at `8a55c4fef`; the dashboard's reads; xbabe2's engine units; and the dashboard
+  reproduction.
+- `p1-units-post-20260927T212904Z`: fmt, after `rustfmt` of the new test; the new test;
+  `tests/dashboard.rs`, 27 passed and 1 ignored; `tests/learning_history.rs`, 16 passed; and the
+  observed-service unit test.
+- `p1-units-post-gate-20260927T213133Z`: the same gate script, with its scope step set to these
+  two commits. It ran on the branch before this entry was added; the amendment changes only
+  this file, which `p1-units-post-docs-*` checks. Every step passed:
+  - the hosted lanes run locally as `.github/workflows/ci.yml` runs them. The `rust-check`
+    receipt passed 4 of 4. The `rust-test` receipt collected 1593, ran and passed 1570, skipped
+    23 and failed 0. The new test is not in that lane's package set
+    (`deploy/ci/rust-test-scope.sh`), so the count is unchanged, and the gate ran it directly;
+  - `cargo test -p jope-dime-regressor`: 997 passed, 11 ignored;
+  - `tests/dashboard.rs` with `tests/learning_history.rs`: 43 passed, 1 ignored, the new test
+    included;
+  - the fence suites;
+  - `jope-ci`: 21 passed, 3 ignored. `jope-records`: 113 passed, 1 ignored;
+  - fmt, `git diff --check`, `coverage validate` (0 unassigned or invalid),
+    `verify-test-inventory`, the records checks, `parity-matrix.sh --no-build`,
+    `deploy/ci/check.sh` (gitleaks shimmed) and the unshimmed `secret-scan.sh`;
+  - the archive manifest and custody checks.
 
 ## Commit map — `rr2/python-p1` to the landing
 
@@ -591,6 +680,8 @@ runs made before the rebase.
 | `jope-campaigns: floor the unit templates per directory after the P1 archive (P1 landing)` | none, made later | landing only | — |
 | `jope-engine: stop observing the archived jope-parallel-console unit (P1 landing)` | none, made later | landing only | — |
 | `docs: record why the nine archived unit templates stay archived (P1 landing)` | none, made later | landing only | — |
+| `jope-engine: show receipts of the archived report and proposal writers as history (P1 landing)` | none, made later | landing only | — |
+| `docs: correct the archived units' consumers and the host they were checked on (P1 landing)` | none, made later | landing only | — |
 
 "Patch-id" compares `git patch-id --stable` of the commit as submitted and its original. Each
 pair changes the same paths with the same status. The tree proof
