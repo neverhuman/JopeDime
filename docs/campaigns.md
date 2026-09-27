@@ -83,7 +83,7 @@ scheduled, uploaded or promoted.
 jope pipeline evolve --dataset datasets/test/uci-parkinsons-telemonitoring --rounds 3 --control \
   --cuts 3 --budget evaluations=200,seconds=600 --threads 8 --policy skip --emit rust \
   --output <campaign>
-jope pipeline lineage verify --lineage <campaign>/lineage.json --require-discovery
+jope pipeline lineage verify --lineage <campaign>/lineage.json --require-bred-candidates
 for r in round-001 round-002 round-003 control; do
   jope-learning hwm ingest --source pipeline <campaign>/$r/receipt.json
   jope-learning bank add --receipt <campaign>/$r/receipt.json --lineage <campaign>/lineage.json

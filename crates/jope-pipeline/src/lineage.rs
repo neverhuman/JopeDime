@@ -100,7 +100,9 @@ pub struct Round {
     pub cuts_measured: u64,
     pub completed_evaluations: u64,
     /// Successful measurements of candidates bred in generation 1 or later (not seeds, not
-    /// generation-0 draws, not comparison re-measurements): the round's own discoveries.
+    /// generation-0 draws, not comparison re-measurements). It shows the search ran past its
+    /// starting population, not that anything it bred was better: see
+    /// [`Round::champion_found_in_round`].
     pub generation_ge1_measured: u64,
     pub cuts: Vec<CutProgress>,
     /// Sum of the receipt's stage seconds.
@@ -150,6 +152,31 @@ pub fn round_directory(round: u64) -> String {
 }
 
 pub const CONTROL_DIRECTORY: &str = "control";
+
+impl Round {
+    /// The round's champion is neither the bootstrap nor one of the seeds it started from: this
+    /// round's own search produced it. `false` for a seeded round usually means the previous
+    /// champion was re-measured and kept.
+    pub fn champion_found_in_round(&self) -> bool {
+        self.selected_genome != search::BOOTSTRAP_GENOME
+            && !self
+                .seeds
+                .iter()
+                .any(|s| s.program_sha256 == self.program_sha256)
+    }
+
+    /// Where the champion came from, for people: `found in this round`, `carried from its
+    /// seeds` or `the bootstrap`.
+    pub fn champion_origin(&self) -> &'static str {
+        if self.champion_found_in_round() {
+            "found in this round"
+        } else if self.selected_genome == search::BOOTSTRAP_GENOME {
+            "the bootstrap"
+        } else {
+            "carried from its seeds"
+        }
+    }
+}
 
 /// The next round's seeds: the champion and its ranked runners-up, at most `ELITES`.
 pub fn seeds_after(run: &VerifiedRun) -> Result<Vec<Champion>> {
@@ -473,17 +500,25 @@ pub struct VerifyReport {
     /// Round champions' mean held-out RMSE on the identical cuts, in round order.
     pub validation_rmse: Vec<f64>,
     pub control_validation_rmse: Option<f64>,
-    /// Every round measured at least one candidate bred in generation 1 or later.
-    pub discovery_in_every_round: bool,
+    /// Every round measured at least one candidate bred in generation 1 or later: the search ran
+    /// past its starting population. That is not a discovery; the next two fields say what the
+    /// rounds actually found.
+    pub bred_candidates_in_every_round: bool,
     pub generation_ge1_measured: Vec<u64>,
+    /// Per round, [`Round::champion_found_in_round`]: the champion is neither the bootstrap nor
+    /// one of the round's seeds.
+    pub champion_found_in_round: Vec<bool>,
+    /// Per round after the first: its champion's mean held-out RMSE is strictly lower than the
+    /// round before's on the same cuts.
+    pub improved_on_previous_round: Vec<bool>,
 }
 
 /// Re-derive every round (and the control) from its directory and check the chain: identical
 /// cuts and budget, each round's parent is the previous round's receipt, its seeds are exactly
 /// [`seeds_after`] the previous round, and no round's champion is worse than the previous
-/// round's on those cuts. `require_discovery` also demands a measured generation-1+ candidate
-/// in every round.
-pub fn verify(path: &Path, require_discovery: bool) -> Result<VerifyReport> {
+/// round's on those cuts. `require_bred_candidates` also demands a measured candidate bred in
+/// generation 1 or later in every round (the search ran past its seeds; not that it improved).
+pub fn verify(path: &Path, require_bred_candidates: bool) -> Result<VerifyReport> {
     let lineage = read_lineage(path)?;
     let root = path.parent().map(Path::to_path_buf).unwrap_or_default();
     ensure!(
@@ -578,7 +613,7 @@ pub fn verify(path: &Path, require_discovery: bool) -> Result<VerifyReport> {
             derived == *recorded,
             "{label}: lineage.json does not match what its receipt and evidence show"
         );
-        if require_discovery {
+        if require_bred_candidates {
             ensure!(
                 derived.generation_ge1_measured > 0,
                 "{label}: no candidate bred in generation 1 or later was measured"
@@ -625,11 +660,24 @@ pub fn verify(path: &Path, require_discovery: bool) -> Result<VerifyReport> {
         rounds: lineage.rounds.len() as u64,
         validation_rmse: lineage.rounds.iter().map(|r| r.validation_rmse).collect(),
         control_validation_rmse: control_rmse,
-        discovery_in_every_round: lineage.rounds.iter().all(|r| r.generation_ge1_measured > 0),
+        bred_candidates_in_every_round: lineage
+            .rounds
+            .iter()
+            .all(|r| r.generation_ge1_measured > 0),
         generation_ge1_measured: lineage
             .rounds
             .iter()
             .map(|r| r.generation_ge1_measured)
+            .collect(),
+        champion_found_in_round: lineage
+            .rounds
+            .iter()
+            .map(Round::champion_found_in_round)
+            .collect(),
+        improved_on_previous_round: lineage
+            .rounds
+            .windows(2)
+            .map(|pair| pair[1].validation_rmse < pair[0].validation_rmse)
             .collect(),
     })
 }
@@ -778,7 +826,7 @@ mod tests {
                 .collect::<Vec<_>>(),
             expected
         );
-        // Per-generation best-so-far never rises, and every round discovered something.
+        // Per-generation best-so-far never rises, and every round measured bred candidates.
         for round in &lineage.rounds {
             for cut in &round.cuts {
                 let values: Vec<f64> = cut.best_so_far.iter().flatten().copied().collect();
@@ -789,7 +837,25 @@ mod tests {
         assert_eq!(read_lineage(&out.join(LINEAGE_FILE)).unwrap(), lineage);
         let report = verify(&out.join(LINEAGE_FILE), true).unwrap();
         assert_eq!(report.rounds, 3);
-        assert!(report.discovery_in_every_round);
+        assert!(report.bred_candidates_in_every_round);
+        // What the rounds found is reported per round, and agrees with the RMSEs.
+        assert_eq!(
+            report.champion_found_in_round,
+            lineage
+                .rounds
+                .iter()
+                .map(Round::champion_found_in_round)
+                .collect::<Vec<_>>()
+        );
+        assert_eq!(report.improved_on_previous_round.len(), 2);
+        for (index, improved) in report.improved_on_previous_round.iter().enumerate() {
+            let (before, after) = (&lineage.rounds[index], &lineage.rounds[index + 1]);
+            assert_eq!(*improved, after.validation_rmse < before.validation_rmse);
+            // Never worse, so a round that did not improve tied its parent exactly.
+            if !*improved {
+                assert_eq!(after.validation_rmse, before.validation_rmse);
+            }
+        }
         assert_eq!(
             report.control_validation_rmse,
             Some(control.validation_rmse)
@@ -921,6 +987,58 @@ mod tests {
         assert!(!out.join("round-002/receipt.json").exists());
         assert!(!out.join("round-003").exists() && !out.join(CONTROL_DIRECTORY).exists());
         verify(&out.join(LINEAGE_FILE), false).unwrap();
+    }
+
+    /// A round whose champion is one of its own seeds found nothing better, however many bred
+    /// candidates it measured; the report must say so rather than call it a discovery.
+    #[test]
+    fn a_round_whose_champion_is_its_seed_is_not_reported_as_a_discovery() {
+        let temp = tempfile::tempdir().unwrap();
+        // A strong pipeline for this dataset, against 3 bred candidates in generation 1.
+        let genome =
+            seeds::canonical_pipeline("(pipe X (rank append=true) (gpr m=400 steps=60))").unwrap();
+        let file = temp.path().join("strong.json");
+        seeds::write(
+            &file,
+            &seeds::SeedsFile::new(
+                None,
+                vec![seeds::SeedGenome {
+                    program_sha256: sha256_hex(genome.as_bytes()),
+                    genome: genome.clone(),
+                    bank_entry_sha256: None,
+                    receipt_sha256: None,
+                }],
+            ),
+        )
+        .unwrap();
+        let out = temp.path().join("lineage");
+        let lineage = evolve(&EvolveOptions {
+            run: template(16),
+            output: out.clone(),
+            rounds: 1,
+            control: false,
+            seeds: Some(file),
+        })
+        .unwrap();
+        let round = &lineage.rounds[0];
+        assert_eq!(
+            round.selected_genome, genome,
+            "the seed was beaten after all"
+        );
+        assert!(round.generation_ge1_measured > 0);
+        assert!(!round.champion_found_in_round());
+        assert_eq!(round.champion_origin(), "carried from its seeds");
+        // The bred-candidates check still holds (the search ran past generation 0), and the
+        // report says, separately, that nothing it bred won.
+        let report = serde_json::to_value(verify(&out.join(LINEAGE_FILE), true).unwrap()).unwrap();
+        assert_eq!(report["bred_candidates_in_every_round"], true, "{report}");
+        assert_eq!(
+            report["champion_found_in_round"],
+            serde_json::json!([false]),
+            "{report}"
+        );
+        assert_eq!(report["improved_on_previous_round"], serde_json::json!([]));
+        assert!(report.get("discovery_in_every_round").is_none(), "{report}");
     }
 
     #[test]
