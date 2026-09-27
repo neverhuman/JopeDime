@@ -90,6 +90,10 @@ impl Binding {
     pub fn gpu_uuid(&self) -> Option<&str> {
         self.gpu_uuid.as_deref()
     }
+    /// The frozen bounded-run plan this binding came from; `None` for the legacy mapping.
+    pub fn plan_sha256(&self) -> Option<&str> {
+        self.plan_sha256.as_deref()
+    }
 
     /// The pre-W7 single-host mapping, stated explicitly: every rank runs on
     /// one host whose CUDA ordinal equals its rank. No UUID or visibility is
