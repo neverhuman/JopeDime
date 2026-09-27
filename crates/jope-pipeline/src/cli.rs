@@ -135,6 +135,49 @@ pub enum Cmd {
         #[arg(long)]
         json: bool,
     },
+    /// Rounds of seeded search on one dataset's fixed cuts, chained in lineage.json. Round r>1 is
+    /// seeded from round r-1's champion and ranked runners-up; --control adds one unseeded run
+    /// with the final round's exact configuration. Never writes to the learning store.
+    Evolve {
+        #[command(flatten)]
+        search: SearchArgs,
+        /// A new directory for round-NNN/, control/ and lineage.json.
+        #[arg(long)]
+        output: PathBuf,
+        /// Rounds to run (1..=100).
+        #[arg(long)]
+        rounds: usize,
+        /// After the last round, one unseeded run with its exact configuration.
+        #[arg(long)]
+        control: bool,
+        /// Round 1's jope.pipeline-seeds/v1 file (for example `jope-learning bank export`).
+        #[arg(long)]
+        seeds: Option<PathBuf>,
+        /// Print the lineage as one JSON document.
+        #[arg(long)]
+        json: bool,
+    },
+    /// jope.pipeline-lineage/v1 records.
+    Lineage {
+        #[command(subcommand)]
+        cmd: LineageCmd,
+    },
+}
+
+#[derive(Subcommand)]
+pub enum LineageCmd {
+    /// Re-derive every round and the control from their directories and check the chain:
+    /// identical cuts and budget, each parent the previous receipt, each round's seeds the
+    /// previous champion and runners-up, and no champion worse than the round before.
+    Verify {
+        #[arg(long)]
+        lineage: PathBuf,
+        /// Also require a measured candidate bred in generation 1 or later in every round.
+        #[arg(long)]
+        require_discovery: bool,
+        #[arg(long)]
+        json: bool,
+    },
 }
 
 pub fn exec(cli: Cli) -> ExitCode {
@@ -200,6 +243,83 @@ pub fn run(cli: Cli) -> Result<ExitCode> {
             }
             Ok(ExitCode::SUCCESS)
         }
+        Cmd::Evolve {
+            search,
+            output,
+            rounds,
+            control,
+            seeds,
+            json,
+        } => {
+            let options = crate::lineage::EvolveOptions {
+                run: search.options(output.clone(), true)?,
+                output,
+                rounds,
+                control,
+                seeds,
+            };
+            let lineage = crate::lineage::evolve(&options)?;
+            if json {
+                println!("{}", serde_json::to_string(&lineage)?);
+            } else {
+                for round in lineage.rounds.iter().chain(lineage.control.iter()) {
+                    println!(
+                        "{} {} ({}): mean held-out RMSE {:.6}, R2 {:.6} over {} cut(s); \
+                         {} generation-1+ measurement(s); {}",
+                        round.kind,
+                        round.round,
+                        round.directory,
+                        round.validation_rmse,
+                        round.validation_r2,
+                        round.cuts_measured,
+                        round.generation_ge1_measured,
+                        round.selected_genome
+                    );
+                }
+                println!(
+                    "lineage in {}",
+                    options.output.join(crate::lineage::LINEAGE_FILE).display()
+                );
+            }
+            Ok(ExitCode::SUCCESS)
+        }
+        Cmd::Lineage {
+            cmd:
+                LineageCmd::Verify {
+                    lineage,
+                    require_discovery,
+                    json,
+                },
+        } => match crate::lineage::verify(&lineage, require_discovery) {
+            Ok(report) => {
+                if json {
+                    println!("{}", serde_json::to_string(&report)?);
+                } else {
+                    println!(
+                        "ok {} ({} round(s) on prepared cuts {}; mean held-out RMSE by round \
+                         {:?}; control {:?})",
+                        lineage.display(),
+                        report.rounds,
+                        report.prepared_sha256,
+                        report.validation_rmse,
+                        report.control_validation_rmse
+                    );
+                }
+                Ok(ExitCode::SUCCESS)
+            }
+            Err(error) => {
+                if json {
+                    println!(
+                        "{}",
+                        serde_json::json!({"schema": crate::lineage::LINEAGE_SCHEMA_ID,
+                                           "ok": false, "error": format!("{error:#}")})
+                    );
+                } else {
+                    eprintln!("invalid lineage: {error:#}");
+                }
+                Ok(ExitCode::FAILURE)
+            }
+        },
         Cmd::VerifyReceipt {
             receipt: path,
             evidence,

@@ -27,6 +27,7 @@ you saw.
 | new-bin | 14 | 0 | 14 | 0 | 0 | 0 |
 | new-example | 1 | 0 | 1 | 0 | 0 | 0 |
 | ops-sh | 1 | 1 | 0 | 0 | 0 | 0 |
+| pipeline-subcommand | 2 | 0 | 2 | 0 | 0 | 0 |
 | root-binary | 56 | 56 | 0 | 0 | 0 | 0 |
 | script-py | 116 | 116 | 0 | 0 | 0 | 0 |
 | script-review | 5 | 5 | 0 | 0 | 0 | 0 |
@@ -41,7 +42,7 @@ you saw.
 | vendored-bin | 6 | 6 | 0 | 0 | 0 | 0 |
 | vendored-example | 6 | 6 | 0 | 0 | 0 | 0 |
 | wire | 5 | 0 | 0 | 0 | 5 | 0 |
-| **total** | **802** | **735** | **39** | **1** | **20** | **7** |
+| **total** | **804** | **735** | **41** | **1** | **20** | **7** |
 
 `moved`/`new` rows without a covering test: 659.
 
@@ -851,3 +852,5 @@ you saw.
 | learning-subcommand | (new) jope-learning progress reconcile | crates/jope-learning/src/main.rs (jope-learning progress reconcile) | jope-learning::recovery_cli progress_reconcile_is_read_only_by_default_and_rebases_only_with_apply; jope-learning progress::tests::reconcile::a_lost_race_is_rebased_onto_the_winner_only_on_apply | new | W8-T04: reconciles a publication that lost a race or found the run advanced elsewhere; read-only plan (winner, losing commits, work to re-commit, whether the rebase passes the graph rules and the HWM-ledger check) unless `--apply`, which adopts the winner's committed closure and commits this host's remaining work on top; the winner is never displaced |
 | learning-subcommand | (new) jope-learning revocations import | crates/jope-learning/src/main.rs (jope-learning revocations import) | jope-learning::recovery_cli revocations_import_is_read_only_by_default_and_refuses_the_revoked_record_once_applied | new | W12-T05: imports the revocation closure of a verified `jope.core-ip-claims/v1` record into the host's append-only revocation ledger, which W3 teacher admission, HWM ingest and W8 publication consult; read-only plan unless `--apply`; a record the claims verifier refuses imports nothing, and nothing is ever un-revoked |
 | learning-subcommand | (new) jope-learning revocations status | crates/jope-learning/src/main.rs (jope-learning revocations status) | jope-learning::recovery_cli revocations_import_is_read_only_by_default_and_refuses_the_revoked_record_once_applied | new | W12-T05: read-only; the revoked digests this host holds and the revocation ledger head |
+| pipeline-subcommand | (new) jope pipeline evolve | crates/jope-pipeline/src/cli.rs (jope pipeline evolve) | jope-pipeline lineage::tests::rounds_chain_on_identical_cuts_never_get_worse_and_verify; jope-cli::pipeline_cli sigterm_during_a_round_keeps_only_completed_rounds_in_the_lineage | new | Phase 5: rounds of seeded CPU search on one dataset's fixed cuts; round r>1 is seeded from round r-1's champion and ranked runners-up with the previous receipt as its verified incumbent; `--control` adds an unseeded run at the final round's configuration; `lineage.json` (`jope.pipeline-lineage/v1`) is fsynced per completed round and SIGTERM leaves only completed rounds; never writes the learning store |
+| pipeline-subcommand | (new) jope pipeline lineage verify | crates/jope-pipeline/src/cli.rs (jope pipeline lineage verify) | jope-pipeline lineage::tests::a_tampered_lineage_round_receipt_or_seeds_file_fails_verification | new | Phase 5: re-derives every round and the control from their directories: identical dataset, cuts and budget; each parent is the previous receipt; each round's seeds are the previous champion and runners-up; no champion worse than the round before; `--require-discovery` also demands a measured generation-1+ candidate in every round |
