@@ -787,9 +787,12 @@ impl BoundedRunContract {
             .collect();
         let mut kinds: BTreeMap<String, u64> = BTreeMap::new();
         for w in &self.work_census {
-            *kinds
-                .entry(serde_json::to_value(w.kind).unwrap_or_default().to_string())
-                .or_default() += w.wall_ms;
+            // The kind's serde name (`numerical`), never its JSON rendering (`"numerical"`).
+            let kind = serde_json::to_value(w.kind)
+                .ok()
+                .and_then(|v| v.as_str().map(str::to_string))
+                .unwrap_or_default();
+            *kinds.entry(kind).or_default() += w.wall_ms;
         }
         let mut review = json!({
             "schema": "jope.native_bounded_plan_review.v1",
