@@ -1041,3 +1041,257 @@ from the authenticated prepared development bytes.
 - **`asm`-feature tests.** `jope-bench` code behind the `asm` feature (the live teaching driver)
   compiles unchanged: no fitted-artifact literal or schema string lives there. Its tests were
   not run here; the default-feature tests were.
+
+## W3-T02 producer side (rr2/gap-closure): the product preregisters the W2 producer and retains its handoff
+
+The W3-T02 / W2-T07 section above made teacher admission require a W2 handoff from a producer
+the freeze preregisters. It left two items open ("Live routes", "Controller"): nothing in the
+product issued `ProducerPlan`, and the live `jope-bench` driver froze with `context: None`. So no
+real teacher could be admitted, and nothing in the product could change that. This section
+closes both items in source, to the extent stated below. The admission checks are unchanged; one
+refusal message gains a clearer cause.
+
+**Reproduced first** in `w3-t02-producer-pre-20260927T001342Z/`. A temporary test, whose source
+is in that run's `diff.patch`, fails. It submits a teacher exactly as the live driver did (a
+freeze with `context: None`, a submission with `context: None`), and with the most any product
+caller could preregister (a context encoder without a producer, since nothing issued a
+`ProducerPlan`). Both are refused: `MissingEncoderProvenance` and `PreHandoffProvenance`. The
+run also records the source facts: the only product `FreezePlan` is `panel/teaching.rs` with
+`context: None`, every `ProducerPlan` construction is test code, and nothing emits a
+`TeacherAdmission` handoff.
+
+### The traced path
+
+1. **Freeze.**
+   - The only product entry that freezes a teaching run is the live `jope-bench` driver.
+     `panel::teaching::preregister` runs during clock-free plan construction (`optimize_cli`, and
+     `origin_proof` for its single dataset). It freezes each dataset with
+     `eligibility::freeze_inner_optimization` and pins the freeze in the experiment's checkpoints.
+     Every ASM entry (standalone optimize, the campaign and demo drivers) reaches teaching only
+     through `preregister`, then `search_dataset` and `admit_dataset`.
+   - No `jope-learning` verb freezes a teaching run. The verbs are `hwm`, `scores`, `schema`,
+     `progress` and `revocations`; `hwm freeze` builds the teaching manifest, which is a
+     consumer.
+   - No campaign or controller in `jope-campaigns`, `jope-cli` or `jope-engine` calls
+     `freeze_optimization`, `freeze_inner_optimization` or `qualify`.
+2. **W2 producer run.**
+   - The W2 CPU context is produced by `jope-policy` `context_producer::CpuProducer`, run as the
+     `jope-context-worker` executable.
+   - The live driver runs it as a pool job inside the neural arm's window, in
+     `panel::optimize::prepare_regression_context`. That function is called by `prepare_neural`
+     (the accepted proposal) and by `experimental_proposal::prepare` (regression). It builds the
+     `QualifiedContextBundle` from the actual pool receipts and verifies it.
+   - `verify_qualified` (through `QualifiedContextBundle::verify`) is the only way to obtain a
+     `VerifiedCpuContext`, and `VerifiedCpuContext::handoff` is the only way to obtain a
+     `ContextHandoff`.
+   - The neural search path (`jope-pipeline` `search_context::ContextFiles::QualifiedCpu`,
+     `experimental_producer`) and `jope-cli train` re-admit the same files with
+     `cpu_context_bridge::load_qualified`. They hand the context to the accepted policy proposal
+     worker (`admit_for_request`), never to teacher admission. Native (GPU) contexts carry no W2
+     handoff.
+3. **Handoff record.** Before this change, no product code emitted a `teacher_admission`
+   handoff. Now `prepare_regression_context` also emits one: it replays the frozen assembly of
+   the context it just verified and writes `handoff(TeacherAdmission)` as
+   `teacher-admission-handoff.json`, beside the run's `context-files.json` in
+   `asm-contexts/<neural arm>/`. The bytes are `serde_json::to_vec` of the handoff, so their
+   digest is `ContextHandoff::sha256`.
+4. **Retained pool receipts.** `panel::teaching::admit_one` now reads that run and passes it to
+   `eligibility::retain_handed_off_context`. It passes the handoff bytes, the context job
+   (canonical JSON), the supervisor outcome and the window (the pool's own files, re-read
+   against their pins), the experiment, the artifact the job wrote and the context bytes.
+   `retain_handed_off_context` retains them in the teaching state, where teacher admission
+   looks for them.
+5. **Teacher admission** (`qualify` and every revalidating route) is unchanged. It authenticates
+   the handoff against the preregistered producer, re-verifies the execution from the retained
+   receipts and records `context_handoff_sha256`.
+
+### Source
+
+- **The W2 side registers the producer** (`jope-policy`
+  `context_producer::ProducerRegistration::from_qualification`). The registration is read from
+  the exact bytes of the W2 qualification the producer passed: the release identity (encoder
+  closure, source, producer executable, verification policy, reference manifest), the typed
+  transformation chain and the qualification digest.
+  - Only the accepted encoder, qualified under the current verification policy, registers.
+  - It serializes field for field as `ProducerPlan`, and cannot be deserialized.
+  - `jope-pipeline` `CompletedQualification::producer_registration` is the loader the freeze
+    uses. It re-admits the retained qualification with its existing `verify` (the eight executed
+    cases, their pool receipts and the rebuilt qualification), then reads the registration from
+    the qualification bytes its pin authenticates. No identity is re-derived by hand.
+- **The freeze preregisters it** (`jope-bench` `panel::teaching`). `producer_plan` loads the
+  configuration's W2 qualification once per plan. `teaching_context` then decides per dataset:
+  - A regression dataset, whose configuration's producer registered, is frozen with a
+    `ContextPlan`. Its encoder is the producer executable under its asset configuration (seed 0,
+    `teaching_context_2048`), its source family is `jope.cpu-context/v1`, and its producer is
+    the registration, converted field for field.
+  - Every other dataset is frozen with `context: None`, as before: a classification dataset (the
+    accepted W2 CPU context is regression-only), no configured qualification, one its loader
+    refuses, or an unavailable producer runtime. Teacher admission then refuses its teachers
+    with the existing `MissingEncoderProvenance` message.
+  - The registry records the choice either way: `Registration::Frozen.context` is
+    `producer { qualification_sha256 }` or `no_context { reason }`. The field is optional and
+    absent on registries written before this change, which keep their bytes.
+- **The run emits the handoff** (`panel::optimize::prepare_regression_context`), as in item 3 of
+  the traced path. It replays the same frozen assembly that the policy proposal's own admission
+  replays (`load_qualified`, `admit_for_request`), so a context the proposal can use can also be
+  handed off.
+- **The controller retains the run and issues the receipt** (`jope-learning`
+  `eligibility::retain_handed_off_context`, `ContextRun`).
+  - It refuses before retaining anything when the freeze preregistered no context encoder
+    (`MissingEncoderProvenance`) or no W2 producer (`PreHandoffProvenance`), or when the handoff
+    is not a `jope.cpu-context-handoff/v1` record.
+  - It issues the context's `jope.encoder_receipt/v1` under the freeze's encoder and scope (for
+    the inner route, the inner partition's fitting rows, with the outer hold forbidden). The
+    fitted state is the artifact the job wrote. The input closure is the handoff's own input
+    (`scope.input_sha256` and `scope.training.training_sha256`). The receipt has no parents.
+  - It decides nothing and changes no authority state.
+- **The driver submits it** (`panel::teaching::admit_one` and `handed_off_context`). When the
+  freeze preregistered a producer, the submission carries the retained context.
+  - If the neural arm emitted no handoff (no context was produced), the submission carries none,
+    and teacher admission refuses (`MissingEncoderProvenance: submission carries no context
+    receipt`).
+  - A handoff whose run files are unreadable is an admission error: retryable inventory, never a
+    context.
+- **Receiving path.** `verify_execution` now names a missing or unreadable retained pool receipt
+  (`UnprovenContextExecution: a retained pool receipt of the context job is missing or
+  unreadable`) instead of the generic blob message, which it keeps as the cause. The
+  preregistered-plan, producer and handoff-parse checks are factored out for the issuer, with
+  their messages unchanged.
+
+**Operator verb: none.** The plan is never issued by hand. The only product freeze of a teaching
+run issues it from its own frozen configuration, so there is no capability-matrix row.
+
+**Old formats keep their meaning** (owner decision (d)). Freezes, registries and qualifications
+made before this change keep their bytes and stay quarantined. A comparison already frozen with
+`context: None` cannot be re-frozen with a producer, because freezes are immutable ("optimization
+freeze is already pinned to different inputs"). Its dataset's registration is then `unavailable`
+with that reason, and requalification needs a new comparison identity.
+
+### Tests
+
+- `jope-learning` `eligibility::tests::producer` (new, 5 tests). The producer run is a CPU
+  fixture: synthetic pool receipts and a synthetic context, shaped as the live driver retains
+  them.
+  - `a_teacher_is_admitted_through_the_product_path` (positive control):
+    - the freeze preregisters the producer parsed from its registration record;
+    - `retain_handed_off_context` retains every byte admission reads, with no authority change;
+    - `qualify` admits the teacher, recording the handoff and receipt digests;
+    - `hwm::ingest` accepts it, and `freeze_teaching` and `revalidate_qualification` agree;
+    - reissuing the run is idempotent.
+  - `the_product_path_refuses_an_unauthenticated_or_unproven_context`, 9 negatives, each
+    through `qualify` and `hwm::ingest`, inventoried, with no authority change:
+    - a run of a producer the freeze did not preregister;
+    - a handoff under another W2 qualification;
+    - a handoff for another consumer;
+    - a substituted context;
+    - a run that exited after its original window;
+    - a run in a window opened before the freeze;
+    - missing pool receipts: the supervisor outcome, the context job, and the artifact the job
+      wrote.
+  - `without_a_preregistered_producer_nothing_is_issued_and_no_teacher_is_admitted`. The
+    no-context freeze and a freeze with an encoder but no producer: nothing is issued or
+    retained, and the submission without a context is refused with the existing messages.
+  - `a_pre_handoff_qualification_is_not_upgraded_by_the_product_path` (owner decision (d)):
+    `RequalificationRefused`, stored bytes and authority unchanged, the teaching manifest still
+    excludes it.
+  - `the_issued_context_is_bound_to_the_inner_scope_the_live_driver_freezes`: the receipt
+    carries the inner scope and verifies for the inner comparison only.
+- `jope-policy` `context_producer::admission::handoff_tests::the_preregistered_producer_is_the_producer_that_hands_off_to_teacher_admission`
+  (new). A context verified under the qualification bytes hands off to teacher admission under
+  exactly the registered release, chain and qualification. The registration's keys are exactly
+  `ProducerPlan`'s. It refuses bytes other than the pin, another protocol or schema, another
+  encoder, a malformed producer digest and an unknown field.
+- `jope-bench` `panel::teaching::tests` (3 new, feature `asm`):
+  - `a_context_is_preregistered_only_from_a_registered_w2_producer`:
+    - a registration is converted field for field into `ProducerPlan`, crossing both crates;
+    - the regression plan's producer, encoder and source family;
+    - `no_context` with its reason for binary and multiclass, a missing qualification, one the
+      loader refuses, and an unavailable producer runtime.
+  - `registrations_record_the_teaching_context_and_old_ones_keep_their_bytes`.
+  - `a_run_without_a_teacher_admission_handoff_yields_no_context`.
+- Fixture change: `HandoffParts` carries the artifact bytes, and `retain_handoff` retains them
+  (instead of `handoff_parts`), so a run can be built without retaining anything.
+
+**Evidence** (under the evidence root):
+
+- `w3-t02-producer-pre-20260927T001342Z/`: the reproduction fails. The live driver's teacher is
+  refused with `MissingEncoderProvenance`, and the best a caller could preregister is refused
+  with `PreHandoffProvenance`.
+- `w3-t02-producer-gate1-20260927T002409Z/` and `w3-t02-producer-gate2-20260927T002812Z/` are
+  the pre-commit gates of the `jope-policy`/`jope-pipeline` commit and the `jope-learning`
+  commit. Both are green. Each ran:
+  - fmt and the diff check;
+  - the workspace check, with and without `jope-cli/asm`;
+  - the coverage validation and the test inventory;
+  - the fence suites, 85 of 85;
+  - the suites of the commit's own crates.
+- `w3-t02-producer-post-20260927T003118Z/` is the post-fix run and the gate of the `jope-bench`
+  commit. Every step exits 0:
+
+  | Step | Result |
+  |---|---|
+  | The new and changed tests | 15 of 15 |
+  | fmt, diff check, workspace check (with and without `jope-cli/asm`), coverage, test inventory, parity matrix | pass |
+  | Fence suites | 85 of 85 |
+  | `jope-learning` | 187 of 187 |
+  | `jope-motifs` | 101 of 101 |
+  | `jope-bench` (default features) | 106 of 106 |
+  | `jope-bench` (feature `asm`) | 172 pass, 3 skipped |
+  | `jope-policy` (default features) | 41 pass, 2 skipped |
+  | `jope-policy` (`testing,context-producer`) | 106 pass, 8 skipped |
+  | `jope-policy` doctests | 10 of 10 |
+  | `jope-pipeline` (default features) | 95 pass, 2 skipped |
+  | `jope-pipeline` (`qualified-context`) | 145 pass, 2 skipped |
+  | clippy on the four crates with their live features | exit 0; no warning on a changed line |
+
+  The skipped tests are the crates' existing ignored tests.
+- `w3-t02-producer-mutations-20260927T003823Z/`: mutations of the committed source. Each was
+  applied with an exact-match replacement, run against its tests, and then restored
+  byte-identically:
+
+  | Mutation | What it breaks | Result |
+  |---|---|---|
+  | `issuer-outcome-not-retained` | The supervisor outcome is not retained | caught by the positive control, the negatives, the inner-scope and quarantine tests |
+  | `issuer-labels-unbound` | The receipt drops its label input | caught by the positive control |
+  | `issuer-skips-producer-check` | A freeze without a producer is issued | caught by the no-producer test |
+  | `receipts-message-dropped` | A missing receipt loses its named cause | caught by the missing-receipt negatives |
+  | `bench-classification-gets-producer` | A classification dataset is preregistered a producer | caught by the `jope-bench` context test |
+  | `bench-unavailable-runtime-ignored` | An unavailable producer runtime is preregistered | caught by the `jope-bench` context test |
+  | `bench-encoder-not-the-producer-v2` | The encoder names another executable | caught by the `jope-bench` context test |
+  | `policy-encoder-not-held` | Another encoder registers | caught by the `jope-policy` registration test |
+  | `policy-chain-stale` | The registered chain is not the handed-off chain | caught by the `jope-policy` registration test |
+  | `policy-pin-unchecked` | Bytes other than the pin register | caught by the `jope-policy` registration test |
+  | `bench-no-context-not-recorded` | `preregister` records no context choice | **not caught**: no test runs `preregister` (see below) |
+
+  The first form of the encoder mutation also matched the test's own assertion, so it was not
+  applied. It was rerun with a pattern that occurs only in the source, as `-v2`.
+
+### Not established here (open)
+
+- **No live run.** No W2 producer has run for teacher admission, and no real teacher has been
+  admitted. The live run needs all of the following:
+  - a completed W2 CPU qualification (`Configuration.qualification`): eight cases executed
+    through the pool against the native reference manifest (pinned registry `22b5de5f…`, index
+    `6c81da15…`), with the accepted encoder assets (Hyperion weights and manifest, component
+    bundle, frozen transforms) and the `jope-context-worker` built at the configuration's
+    source. W2-T07 records this as not run.
+  - an `ExecutionPool` with cgroup v2 delegation (`/sys/fs/cgroup/system.slice/fit-<job>`) for
+    the context job and the teacher's folds;
+  - a teaching configuration: a durable state root outside checkouts, the prepared root and the
+    approved frozen panel;
+  - a new comparison identity for any dataset already frozen with `context: None`.
+
+  All of it runs on CPU (the producer is Candle CPU FP32), but it needs the live assets and a
+  delegated pool, which this lane does not have.
+- **The `jope-bench` wiring is not exercised end to end.** `preregister` and `admit_one` need a
+  frozen campaign plan, the approved panel and pool journals, so no test runs them. The mutation
+  `bench-no-context-not-recorded` is therefore not caught. The pieces they call are tested: the
+  registration, its conversion, `teaching_context`, the registry, `handed_off_context`, the
+  issuer and admission. The one seam no single test crosses is minting a real
+  `VerifiedCpuContext`, which needs the pinned native reference bytes. The two sides of that seam
+  are pinned against each other, in `jope-policy` and in the `jope-bench` conversion test.
+- **Unchanged from the section above:**
+  - the handoff and pool receipts are unsigned, content-addressed evidence;
+  - teacher admission does not re-run W2 `load_qualified` (the live driver's emission comes
+    from the bundle it just verified);
+  - handoff row scopes are not joined (dataset only).
