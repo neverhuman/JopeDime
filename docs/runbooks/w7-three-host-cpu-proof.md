@@ -44,7 +44,7 @@ A same-host three-process run is a fixture, not this proof.
     and no chain is accepted.
   - **Rotating a certificate needs a new census and a new plan.** A host with a new
     certificate is refused by every plan that pinned the old one.
-  - **The coordinator must be a planned host** (here xbabe1, rank 0's host). Otherwise it has
+  - **The coordinator must be a planned host** (here xbabe2, rank 0's host). Otherwise it has
     no pinned identity and every rank refuses it.
 - **Contracts and grants come from repository verbs** (W7-D6). The unsigned contract is
   authored with `contract author`, the owner signs it with `grant sign`, and anyone checks it
@@ -82,14 +82,14 @@ scq --socket "$SCQ_SOCKET" --json ping | jq -e '.daemon_version' >/dev/null && e
 scq --socket "$SCQ_SOCKET" --json doctor | jq -r '"mode: \(.mode), cgroup_delegated: \(.capabilities.cgroup_delegated)"'
 # 6. The installed binary and the daemon are the pinned ones (§2.2).
 sha256sum "$BIN" "$SCQD_EXE"
-# 7. The ports are free before the run: 7460 on xbabe1, 7461 on every host.
+# 7. The ports are free before the run: 7460 on xbabe2, 7461 on every host.
 ! ss -ltn | grep -E ':(7460|7461)\b'
 ```
 
 Check 5 must show `mode: full` with `cgroup_delegated: true`, or else at most one planned rank
 on this host. The runbook's plans put exactly one rank on each host.
 
-**Network.** TCP 7460 (the coordinator's rendezvous, on xbabe1) and TCP 7461 (the agent, on
+**Network.** TCP 7460 (the coordinator's rendezvous, on xbabe2) and TCP 7461 (the agent, on
 each host) must be reachable between the three hosts. Both are TLS 1.3 with mutual,
 plan-pinned certificates.
 
@@ -97,8 +97,8 @@ plan-pinned certificates.
 
 | Host | Role | Rank |
 |---|---|---|
-| xbabe1 | coordinator host, and rank 0 | 0 |
-| xbabe2 | rank 1 | 1 |
+| xbabe2 | coordinator host, and rank 0 | 0 |
+| xbabe1 | rank 1 | 1 |
 | xbabe3 | rank 2 | 2 |
 
 Set these in every shell on every host. Nothing goes under `/tmp`.
@@ -106,7 +106,7 @@ Set these in every shell on every host. Nothing goes under `/tmp`.
 ```bash
 export W7=$HOME/jope-w7                      # per-host working root (operator-owned)
 export BIN=$W7/bin/jope-native-loop          # the one installed worker/controller binary
-export STAMP=$(date -u +%Y%m%dT%H%M%SZ)      # set once on xbabe1, then copy the same value to the others
+export STAMP=$(date -u +%Y%m%dT%H%M%SZ)      # set once on xbabe2, then copy the same value to the others
 export EVIDENCE=$HOME/jope-evidence/w7-cpu-proof/$STAMP/$(hostname)
 export SCQ_SOCKET=/run/jain-smartcluster/scqd.sock
 export ADDR=<this host's address, exactly as assigned to a local interface>   # e.g. from `ip -o -4 addr show`
@@ -116,6 +116,8 @@ chmod 700 $W7/tls $W7/keys
 
 `ADDR1`, `ADDR2` and `ADDR3` below are the three hosts' `ADDR` values. `HOST1`, `HOST2` and
 `HOST3` are the host names each host's census records (`.host` in its collection receipt, §5).
+The numeric suffix is the plan position: `HOST1`/`ADDR1` identify xbabe2 (coordinator),
+`HOST2`/`ADDR2` identify xbabe1, and `HOST3`/`ADDR3` identify xbabe3.
 
 ## 2. Binaries, installation and verification by digest
 
@@ -202,7 +204,7 @@ openssl x509 -in $W7/tls/host.pem -outform DER | sha256sum | tee $EVIDENCE/certi
 openssl pkey -in $W7/keys/rank.key -pubout -outform DER | tail -c 32 | xxd -p -c 32 | tee $EVIDENCE/rank.pub
 ```
 
-On xbabe1 only, create the coordinator key:
+On xbabe2 only, create the coordinator key:
 
 ```bash
 (umask 077 && openssl genpkey -algorithm ed25519 -out $W7/keys/coordinator.key)
@@ -217,14 +219,14 @@ evidence.
 
 ## 4. Installation file and input closure (each host)
 
-The input closure is one file, byte-identical on every host. Create it on xbabe1, copy it to
+The input closure is one file, byte-identical on every host. Create it on xbabe2, copy it to
 the other two, and check it on each:
 
 ```bash
-# xbabe1:
+# xbabe2:
 head -c 1048576 /dev/urandom > $W7/inputs/w7-cpu-proof.bin
 sha256sum $W7/inputs/w7-cpu-proof.bin; stat -c %s $W7/inputs/w7-cpu-proof.bin
-scp $W7/inputs/w7-cpu-proof.bin xbabe2:jope-w7/inputs/ && scp $W7/inputs/w7-cpu-proof.bin xbabe3:jope-w7/inputs/
+scp $W7/inputs/w7-cpu-proof.bin xbabe1:jope-w7/inputs/ && scp $W7/inputs/w7-cpu-proof.bin xbabe3:jope-w7/inputs/
 # every host (the digest must be identical):
 sha256sum $W7/inputs/w7-cpu-proof.bin | tee $EVIDENCE/input.sha256
 ```
@@ -265,13 +267,13 @@ service, or the supervisor refuses to start.
 
 The closure path in the plan is `inputs/w7-cpu-proof.bin`, relative to `input_root`.
 
-## 5. Census (each host), then merge (xbabe1)
+## 5. Census (each host), then merge (xbabe2)
 
 Collect once to author the plans (§6), and again within 10 minutes before each `coordinate`
 (§9 to §12). The plan pins each host's identity, including its boot, but not a census digest.
 The plan's telemetry policy allows 600 000 ms, and `coordinate` journals a fresh preflight of
 the census it is given. `collect` never overwrites a file, so each collection gets its own
-`CSTAMP`: set it once on xbabe1 and use the same value on all three hosts.
+`CSTAMP`: set it once on xbabe2 and use the same value on all three hosts.
 
 ```bash
 export CSTAMP=$(date -u +%Y%m%dT%H%M%SZ)
@@ -298,16 +300,16 @@ The receipt (`jope.native_host_census_collection.v1`) records the following. Che
 `CUDA_VISIBLE_DEVICES=""` records a CPU-only census and runs no `nvidia-smi`. The collector
 never allocates or reserves anything.
 
-Copy the two other documents to xbabe1, unchanged, then merge. Each document is pinned by the
+Copy the two other documents to xbabe2, unchanged, then merge. Each document is pinned by the
 `census_sha256` its own collector printed, taken from that host's receipt and never
 recomputed:
 
 ```bash
-# xbabe1:
-scp "xbabe2:jope-w7/census/$HOST2-$CSTAMP.json" "xbabe3:jope-w7/census/$HOST3-$CSTAMP.json" $W7/census/
+# xbabe2:
+scp "xbabe1:jope-w7/census/$HOST2-$CSTAMP.json" "xbabe3:jope-w7/census/$HOST3-$CSTAMP.json" $W7/census/
 $BIN census merge --out $W7/census/merged-$CSTAMP.json --max-age-ms 600000 --clock-skew-ms 2000 \
-  --document $W7/census/$HOST1-$CSTAMP.json=<xbabe1 census_sha256> \
-  --document $W7/census/$HOST2-$CSTAMP.json=<xbabe2 census_sha256> \
+  --document $W7/census/$HOST1-$CSTAMP.json=<xbabe2 census_sha256> \
+  --document $W7/census/$HOST2-$CSTAMP.json=<xbabe1 census_sha256> \
   --document $W7/census/$HOST3-$CSTAMP.json=<xbabe3 census_sha256> \
   | tee $EVIDENCE/census-merge-$CSTAMP.json
 ```
@@ -322,7 +324,7 @@ The merge refuses:
 - a duplicate document, or two that share a host, machine, boot, address or certificate;
 - mixed schemas.
 
-## 6. Plans (xbabe1): one per run
+## 6. Plans (xbabe2): one per run
 
 Four runs, each its own plan and run name:
 
@@ -362,7 +364,7 @@ export RUN=w7-cpu-commit-$STAMP        # then w7-cpu-cancel-…, w7-cpu-restart-
 jq -n --arg run "$RUN" --arg coord "$HOST1" \
   --arg coord_pub "$(cat $EVIDENCE/coordinator.pub)" --arg auth_pub "<owner grant-authority public key, 64 hex>" \
   --arg h1 "$HOST1" --arg h2 "$HOST2" --arg h3 "$HOST3" \
-  --arg k1 "$(cat <xbabe1 rank.pub>)" --arg k2 "$(cat <xbabe2 rank.pub>)" --arg k3 "$(cat <xbabe3 rank.pub>)" '
+  --arg k1 "$(cat <xbabe2 rank.pub>)" --arg k2 "$(cat <xbabe1 rank.pub>)" --arg k3 "$(cat <xbabe3 rank.pub>)" '
   def rank($h; $k): {host: $h, public_key: $k, device_uuid: null,
     ceilings: {cpu_millicores: 4000, ram_bytes: 8589934592, gpu_vram_bytes: null, wall_ms: 900000}};
   {schema: "jope.native_bounded_contract_request.v1", run: $run, attempt: 1,
@@ -405,7 +407,7 @@ jope-native-loop grant verify --contract $RUN.json
 - a grant whose window has already expired.
 
 The signed contract passes Plan's full validation before it is written. Copy `$RUN.json` back
-to `$W7/contracts/` on xbabe1 and verify it there as well:
+to `$W7/contracts/` on xbabe2 and verify it there as well:
 
 ```bash
 $BIN grant verify --contract $W7/contracts/$RUN.json | tee $EVIDENCE/$RUN-grants.json
@@ -419,7 +421,7 @@ $BIN grant verify --contract $W7/contracts/$RUN.json | tee $EVIDENCE/$RUN-grants
 $BIN plan --run-dir $W7/runs/$RUN --contract $W7/contracts/$RUN.json | tee $EVIDENCE/$RUN-plan.json
 export PLAN=$(jq -r .plan_sha256 $EVIDENCE/$RUN-plan.json)
 cp $W7/runs/$RUN/plan.json $W7/plans/$RUN.json
-scp $W7/plans/$RUN.json xbabe2:jope-w7/plans/ && scp $W7/plans/$RUN.json xbabe3:jope-w7/plans/
+scp $W7/plans/$RUN.json xbabe1:jope-w7/plans/ && scp $W7/plans/$RUN.json xbabe3:jope-w7/plans/
 # every host (each digest must equal $PLAN):
 sha256sum $W7/plans/$RUN.json | tee $EVIDENCE/$RUN-plan.sha256
 ```
@@ -432,7 +434,7 @@ sha256sum $W7/plans/$RUN.json | tee $EVIDENCE/$RUN-plan.sha256
 
 Its `review` is the reviewed summary.
 
-## 7. Preflight and admission (xbabe1)
+## 7. Preflight and admission (xbabe2)
 
 ```bash
 $BIN preflight --run-dir $W7/runs/$RUN --plan-sha256 $PLAN --census $W7/census/merged-$CSTAMP.json \
@@ -462,7 +464,7 @@ Nothing below starts without it.
 ## 8. Supervision and agents (each host, per run)
 
 ```bash
-RANK=<0 on xbabe1, 1 on xbabe2, 2 on xbabe3>; HOST=<this host's census host name>
+RANK=<0 on xbabe2, 1 on xbabe1, 2 on xbabe3>; HOST=<this host's census host name>
 jq -n --arg host "$HOST" --arg w7 "$W7" --arg run "$RUN" --arg rank "$RANK" \
   --arg socket "$SCQ_SOCKET" --argjson daemon_uid <daemon uid from §2.2> \
   --arg scqd_sha "<scqd.sha256 digest>" --arg tenant "unix:$(id -u)" --arg coordinator "$ADDR1:7460" '{
@@ -489,7 +491,7 @@ head -1 $EVIDENCE/$RUN-agent.out     # {"agent":"listening","host":…,"address"
 The agent serves only its own ranks of this plan. It accepts only the coordinator's planned
 certificate, and it refuses to start if its certificate is not this host's planned one.
 
-On xbabe1, write the agent map:
+On xbabe2, write the agent map:
 
 ```bash
 jq -n --arg a1 "$ADDR1:7461" --arg a2 "$ADDR2:7461" --arg a3 "$ADDR3:7461" \
@@ -498,7 +500,7 @@ jq -n --arg a1 "$ADDR1:7461" --arg a2 "$ADDR2:7461" --arg a3 "$ADDR3:7461" \
 
 ## 9. Run 1: commit
 
-On xbabe1, with a census collected in the last 10 minutes (otherwise repeat §5 first):
+On xbabe2, with a census collected in the last 10 minutes (otherwise repeat §5 first):
 
 ```bash
 $BIN coordinate --run-dir $W7/runs/$RUN --plan-sha256 $PLAN --census $W7/census/merged-$CSTAMP.json \
@@ -522,7 +524,7 @@ Each host's `$W7/state/$RUN/<dispatch id>/outbox/` holds `admitted`, `result.bin
 
 Set up the run as in §6 to §8, then start `coordinate` exactly as in §9, in the background
 (`&`, with its PID saved). Wait until every host has
-`$W7/state/$RUN/*/outbox/admitted`, then run on xbabe1:
+`$W7/state/$RUN/*/outbox/admitted`, then run on xbabe2:
 
 ```bash
 $BIN cancel --run-dir $W7/runs/$RUN --plan-sha256 $PLAN --reason "W7-T07 cancellation drill" \
@@ -539,7 +541,7 @@ Expected results:
 ## 11. Run 3: coordinator restart
 
 Set up the run as in §6 to §8, and start `coordinate` in the background as in §10. After every
-rank is admitted, run on xbabe1:
+rank is admitted, run on xbabe2:
 
 ```bash
 kill -KILL <coordinate pid>
@@ -582,14 +584,14 @@ mv $W7/inputs/w7-cpu-proof.bin.orig $W7/inputs/w7-cpu-proof.bin && sha256sum $W7
 ## 13. After each run: inventories and no orphan (each host)
 
 ```bash
-$BIN status --run-dir $W7/runs/$RUN | tee $EVIDENCE/$RUN-status.json                   # xbabe1
+$BIN status --run-dir $W7/runs/$RUN | tee $EVIDENCE/$RUN-status.json                   # xbabe2
 scq --socket $SCQ_SOCKET --json ls --project w7-cpu-proof | tee $EVIDENCE/$RUN-jobs.json  # every job terminal
 pgrep -af 'jope-native-loop participant' | tee $EVIDENCE/$RUN-processes.txt              # must be empty
 kill $(cat $EVIDENCE/$RUN-agent.pid)                                                     # stop this run's agent
 cp -r $W7/state/$RUN $EVIDENCE/$RUN-state                                                # launch records and outboxes
 ```
 
-On xbabe1, also run `cp -r $W7/runs/$RUN $EVIDENCE/$RUN-run`. That copies the frozen plan,
+On xbabe2, also run `cp -r $W7/runs/$RUN $EVIDENCE/$RUN-run`. That copies the frozen plan,
 the journal and the committed results.
 
 ## 14. Receipts to retain
@@ -616,7 +618,7 @@ and never under `/tmp`. Keep the following, with the UTC time each was taken:
   - each host's `state/<run>/` directory: `launch.json` and `outbox/{admitted,result.bin,envelope.json,refusal.txt}`.
 - **Closure:** each `status`, `verify` and `jobs` output and each `processes.txt`, plus
   `jobs-before.json` from before the first run.
-- **The run directories** on xbabe1: the frozen plan, the journal and `results/`.
+- **The run directories** on xbabe2: the frozen plan, the journal and `results/`.
 
 Do not retain private keys (`host.key`, `rank.key`, `coordinator.key` or the grant-authority
 key).

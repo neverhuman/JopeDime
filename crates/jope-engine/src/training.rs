@@ -551,6 +551,7 @@ pub fn rank_with_policy(
         None,
         None,
         partition_version,
+        None,
     )
 }
 
@@ -631,6 +632,7 @@ pub fn qualify_batch_rank(
         None,
         None,
         partition::Version::V1,
+        None,
     )
 }
 
@@ -772,6 +774,7 @@ pub(crate) fn smartcluster_rank(
         None,
         None,
         partition::Version::V1,
+        None,
     )?;
     let complete: Value = read_json(&launch.join("complete-0.json"))?;
     ensure!(
@@ -932,12 +935,15 @@ pub fn bounded_rank(
         Some(assignment),
         Some(admitted),
         version,
+        Some(training),
     )?;
-    read_json(
+    let completion = read_json(
         &training
             .launch_dir
             .join(format!("complete-{}.json", training.global_rank)),
-    )
+    )?;
+    training.validate_completion(&completion)?;
+    Ok(completion)
 }
 
 /// Where a trainer rank obtains its NCCL unique id (W7-T04).
@@ -1022,6 +1028,7 @@ fn rank_impl(
     assignment: Option<&topology::Assignment>,
     admitted: Option<&crate::native_loop::bounded::launch::AdmittedBootstrap>,
     partition_version: partition::Version,
+    bounded_training: Option<&crate::native_loop::bounded::training_run::BoundedTraining>,
 ) -> Result<()> {
     // W7-T03: a frozen host/device assignment is validated before any input,
     // device or communicator work. Without one, the pre-W7 single-host
@@ -1063,9 +1070,14 @@ fn rank_impl(
             .context("replay sampling seed")?,
         None => SEED,
     };
-    let corpus_hash = file_hash(&corpus.join("index.json"))?;
-    let index_bytes = fs::read(corpus.join("index.json"))?;
-    ensure!(hash(&index_bytes) == corpus_hash, "corpus index changed");
+    let bounded_inputs = bounded_training
+        .map(|t| t.verified_input_bytes())
+        .transpose()?;
+    let index_bytes = match bounded_inputs {
+        Some((index, _)) => index.to_vec(),
+        None => fs::read(corpus.join("index.json"))?,
+    };
+    let corpus_hash = hash(&index_bytes);
     let verified_index: Value = serde_json::from_slice(&index_bytes)?;
     crate::corpus_projection::verify_admitted_context_closure(&verified_index)?;
     // W6 follow-up: the resident view is loaded from the verified bytes, so a
@@ -1248,31 +1260,61 @@ fn rank_impl(
     // The objective is the one the partition's reductions define.
     let objective_sha = execution.objective_sha256();
     let mut continuity = Value::Null;
-    let selected_checkpoint = if resume {
-        let latest: Value = read_json(&launch.join("resume-input.json"))?;
-        let cp = resolve(
+    let resume_selection: Option<Value> = if resume {
+        Some(read_json(&launch.join("resume-input.json"))?)
+    } else {
+        None
+    };
+    let selected_checkpoint = if let Some(latest) = &resume_selection {
+        Some(resolve(
             root,
             Path::new(latest["checkpoint"].as_str().context("checkpoint path")?),
-        )?;
-        ensure!(
-            file_hash(&cp.join("state.json"))? == latest["state_sha256"],
-            "checkpoint selection changed"
-        );
-        Some(cp)
+        )?)
     } else {
         initialize.map(|path| resolve(root, path)).transpose()?
     };
-    // All compatibility and serialized-content checks precede CUDA/NCCL.
-    // Deserialize the chosen state once; never reselect from live latest.json.
-    let selected_state: Option<Value> = selected_checkpoint
+    // Read once: ancestry, the compatibility checks and the digests that bind
+    // every later checkpoint load all come from these retained state bytes.
+    let selected_state_bytes = selected_checkpoint
         .as_ref()
-        .map(|cp| read_json(&cp.join("state.json")))
+        .map(|cp| -> Result<Vec<u8>> {
+            match bounded_inputs {
+                Some((_, Some(state))) => Ok(state.to_vec()),
+                Some((_, None)) => anyhow::bail!("bounded parent state missing"),
+                None => Ok(fs::read(cp.join("state.json"))?),
+            }
+        })
         .transpose()?;
+    let selected_state_sha = selected_state_bytes.as_deref().map(hash);
+    if let Some(latest) = &resume_selection {
+        ensure!(
+            selected_state_sha.as_deref() == latest["state_sha256"].as_str(),
+            "checkpoint selection changed"
+        );
+    }
+    let selected_state: Option<Value> = selected_state_bytes
+        .as_deref()
+        .map(serde_json::from_slice)
+        .transpose()?;
+    // All compatibility and serialized-content checks precede CUDA/NCCL. The
+    // configuration and optimizer metadata they read come through W2-T04's
+    // read-once `read_bound`, bound by the retained state: the checked bytes
+    // are the consumed bytes. Model and optimizer tensors are digest-checked
+    // here and, after CUDA, loaded only through `load_bound_model` and
+    // `AdamW::load_bound`, which verify exactly the bytes they load.
     if let (Some(cp), Some(state)) = (&selected_checkpoint, &selected_state) {
+        let bound = |name: &str, field: &str| {
+            crate::manifest::read_bound(
+                &cp.join(name),
+                &state[field],
+                &format!("checkpoint {name} changed before CUDA"),
+            )
+        };
+        let parent_config = bound("config.json", "config_sha256")?;
         if resume {
             // W6-T05: exact resume loads only a complete, internally
             // consistent checkpoint of this corpus and topology.
-            checkpoint_commit::verify_dir(
+            let verified_checkpoint = checkpoint_commit::verify_dir(
                 root,
                 cp,
                 state["step"].as_u64().context("checkpoint step")?,
@@ -1285,6 +1327,10 @@ fn rank_impl(
                 },
             )?;
             ensure!(
+                Some(verified_checkpoint.state_sha256.as_str()) == selected_state_sha.as_deref(),
+                "verified resume checkpoint differs from the retained parent state"
+            );
+            ensure!(
                 state
                     .get("training_inputs_sha256")
                     .is_none_or(|frozen| *frozen == frozen_inputs_sha.as_str()),
@@ -1296,7 +1342,7 @@ fn rank_impl(
         continuity = continuation::check_parent_partition(
             mode,
             state,
-            &read_json::<Value>(&cp.join("config.json"))?,
+            &serde_json::from_slice::<Value>(&parent_config)?,
             &continuation::Current {
                 corpus_sha256: &corpus_hash,
                 vocabulary_sha256: &index.vocabulary_sha256,
@@ -1316,31 +1362,22 @@ fn rank_impl(
                 && state["vocabulary_sha256"] == index.vocabulary_sha256,
             "checkpoint autocast or vocabulary mismatch before CUDA"
         );
-        let previous: Config = read_json(&cp.join("config.json"))?;
+        let previous: Config = serde_json::from_slice(&parent_config)?;
         ensure!(
             serde_json::to_value(previous)? == serde_json::to_value(&config)?,
             "checkpoint architecture mismatch before CUDA"
         );
-        for (name, field) in [
-            ("model.ot", "model_sha256"),
-            ("config.json", "config_sha256"),
-        ] {
-            ensure!(
-                file_hash(&cp.join(name))? == state[field],
-                "checkpoint {name} changed before CUDA"
-            );
-        }
+        ensure!(
+            file_hash(&cp.join("model.ot"))? == state["model_sha256"],
+            "checkpoint model.ot changed before CUDA"
+        );
         if resume || policy.as_ref().is_some_and(|p| p["optimizer"] == "carry") {
-            for (name, field) in [
-                ("optimizer.ot", "optimizer_sha256"),
-                ("optimizer.json", "optimizer_metadata_sha256"),
-            ] {
-                ensure!(
-                    file_hash(&cp.join(name))? == state[field],
-                    "checkpoint {name} changed before CUDA"
-                );
-            }
-            let optimizer: Value = read_json(&cp.join("optimizer.json"))?;
+            ensure!(
+                file_hash(&cp.join("optimizer.ot"))? == state["optimizer_sha256"],
+                "checkpoint optimizer.ot changed before CUDA"
+            );
+            let optimizer: Value =
+                serde_json::from_slice(&bound("optimizer.json", "optimizer_metadata_sha256")?)?;
             let expected = if resume {
                 json!({"execution_partition":execution.record(),
                     "sampler_id":active_sampler_id(replay.as_ref()),"corpus_sha256":corpus_hash,
@@ -1379,7 +1416,10 @@ fn rank_impl(
             );
         } else if let Some(p) = &policy {
             ensure!(
-                p["parent_checkpoint_sha256"] == file_hash(&cp.join("state.json"))?,
+                p["parent_checkpoint_sha256"]
+                    == selected_state_sha
+                        .as_deref()
+                        .context("parent state digest")?,
                 "replay initialization changed before CUDA"
             );
         }
@@ -1442,11 +1482,8 @@ fn rank_impl(
             state["vocabulary_sha256"] == index.vocabulary_sha256,
             "warm-start vocabulary mismatch; no token remapping is implicit"
         );
-        let previous: Config = read_json(&checkpoint.join("config.json"))?;
-        ensure!(
-            serde_json::to_value(previous)? == serde_json::to_value(&config)?,
-            "warm-start architecture mismatch"
-        );
+        // The architecture was checked before CUDA against the configuration
+        // bytes the retained state binds; it is not re-read here.
         crate::neural::load_bound_model(
             &mut vs,
             &checkpoint.join("model.ot"),
@@ -1454,12 +1491,15 @@ fn rank_impl(
             "initialization model changed",
         )?;
         initialization = json!({"kind":"warm_start","checkpoint":checkpoint.strip_prefix(root)?,
-            "state_sha256":file_hash(&checkpoint.join("state.json"))?,"model_sha256":state["model_sha256"],
+            "state_sha256":selected_state_sha.as_deref().context("parent state digest")?,"model_sha256":state["model_sha256"],
             "parent_step":state["step"],"parent_corpus_sha256":state["corpus_sha256"],
             "optimizer":crate::native_loop::warm_start::FRESH_OPTIMIZER, "sampler":"new corpus starts at step zero"});
         if let Some(p) = &policy {
             ensure!(
-                p["parent_checkpoint_sha256"] == file_hash(&checkpoint.join("state.json"))?,
+                p["parent_checkpoint_sha256"]
+                    == selected_state_sha
+                        .as_deref()
+                        .context("parent state digest")?,
                 "replay initialization checkpoint changed"
             );
             initialization["replay_policy_sha256"] = json!(policy_sha);
@@ -1506,9 +1546,6 @@ fn rank_impl(
         }
     }
     if resume {
-        let cp = selected_checkpoint
-            .as_ref()
-            .context("resume selection absent")?;
         let state = selected_state.as_ref().context("resume state absent")?;
         ensure!(state["execution_partition"] == *execution.record(),
             "exact resume requires the original microbatch, accumulation and RNG/objective partition");
@@ -1527,18 +1564,12 @@ fn rank_impl(
                 && state["seed"] == seed,
             "resume identity mismatch"
         );
-        ensure!(
-            file_hash(&cp.join("model.ot"))? == state["model_sha256"],
-            "checkpoint model changed"
-        );
-        ensure!(
-            file_hash(&cp.join("optimizer.ot"))? == state["optimizer_sha256"]
-                && file_hash(&cp.join("optimizer.json"))? == state["optimizer_metadata_sha256"]
-                && file_hash(&cp.join("config.json"))? == state["config_sha256"],
-            "checkpoint optimizer or configuration changed"
-        );
+        let cp = selected_checkpoint
+            .as_ref()
+            .context("resume selection absent")?;
         // W2-T04 (G-10c): the configuration, model and optimizer consumed are
-        // exactly the bytes this checkpoint's state binds, each read once.
+        // exactly the bytes this checkpoint's (retained) state binds, each read
+        // once; a separate digest pass over the paths first would add nothing.
         let previous: Config = serde_json::from_slice(&crate::manifest::read_bound(
             &cp.join("config.json"),
             &state["config_sha256"],
