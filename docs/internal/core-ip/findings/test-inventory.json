@@ -1401,6 +1401,12 @@
         "orchestration"
       ]
     },
+    "target:jope-parallel/test/bounded_grants": {
+      "role": "regression",
+      "subsystems": [
+        "orchestration"
+      ]
+    },
     "target:jope-parallel/test/bounded_launch": {
       "role": "regression",
       "subsystems": [

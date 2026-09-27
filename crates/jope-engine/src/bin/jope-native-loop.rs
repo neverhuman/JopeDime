@@ -7,7 +7,9 @@
 //! only the local host and `census merge` combines pinned per-host documents (W7-T01); neither
 //! allocates or reserves anything. `coordinate` drives a planned run through SmartCluster
 //! (directly, or through each host's `agent` over the pinned transport) and `participant` is
-//! the rank worker SmartCluster runs (W7-T05/T07); none of them uses SSH.
+//! the rank worker SmartCluster runs (W7-T05/T07); none of them uses SSH. `contract author`,
+//! `grant sign` and `grant verify` author a contract and sign and check its grants (W7-D6);
+//! the grant-authority key is only ever read from an owner-only file.
 use anyhow::{bail, ensure, Context, Result};
 use clap::{Args as ClapArgs, Parser, Subcommand};
 use jain_smartcluster::{Client, ProjectId, TenantId};
@@ -140,6 +142,19 @@ enum Command {
         #[command(subcommand)]
         op: CensusCommand,
     },
+    /// Author an unsigned bounded-run contract from a declarative request and a merged census
+    /// (W7-D6). Host identities come only from the census and closure digests only from files.
+    Contract {
+        #[command(subcommand)]
+        op: ContractCommand,
+    },
+    /// Sign or verify a contract's participant grants (W7-D6). The grant-authority key is read
+    /// only from an owner-only (0600) PKCS#8 file, never from arguments or the environment,
+    /// and is never printed.
+    Grant {
+        #[command(subcommand)]
+        op: GrantCommand,
+    },
     /// A bounded-run rank worker (W7-T07 CPU phase), run by SmartCluster as the
     /// `jope-bounded-rank` trusted service. Exit 0: signed result published (or stopped);
     /// 75: control lost; any other failure: refused before admission, no work started.
@@ -257,6 +272,98 @@ enum CensusCommand {
         #[arg(long = "document", required = true)]
         documents: Vec<String>,
     },
+}
+#[derive(Subcommand)]
+enum ContractCommand {
+    /// Write the unsigned contract (new file, never replaced) and print its grant review.
+    Author {
+        /// `jope.native_bounded_contract_request.v1` JSON.
+        #[arg(long)]
+        request: PathBuf,
+        /// The merged host census.
+        #[arg(long)]
+        census: PathBuf,
+        /// The directory the request's closure paths are relative to.
+        #[arg(long)]
+        input_root: PathBuf,
+        #[arg(long)]
+        out: PathBuf,
+    },
+}
+#[derive(Subcommand)]
+enum GrantCommand {
+    /// Sign every grant of an unsigned contract and write the signed contract (new file).
+    Sign {
+        #[arg(long)]
+        contract: PathBuf,
+        /// The grant-authority key: PKCS#8 Ed25519, owner-only, not a symlink.
+        #[arg(long)]
+        key: PathBuf,
+        #[arg(long)]
+        out: PathBuf,
+    },
+    /// Check a signed contract's grants exactly as `plan` will, now.
+    Verify {
+        #[arg(long)]
+        contract: PathBuf,
+    },
+}
+/// Write `bytes` to a new file (mode 0644) in an existing directory; never replace one.
+fn write_new(path: &PathBuf, bytes: &[u8]) -> Result<()> {
+    use std::io::Write;
+    let mut f = fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .mode(0o644)
+        .custom_flags(libc::O_NOFOLLOW)
+        .open(path)
+        .with_context(|| format!("refusing to replace or create {}", path.display()))?;
+    f.write_all(bytes)?;
+    f.sync_all()?;
+    Ok(())
+}
+fn contract_command(op: ContractCommand, now: u64) -> Result<serde_json::Value> {
+    use bounded::authoring;
+    match op {
+        ContractCommand::Author {
+            request,
+            census,
+            input_root,
+            out,
+        } => {
+            let request: authoring::ContractRequest =
+                serde_json::from_slice(&read_contract(&request)?).context("contract request")?;
+            let census = bounded::census::HostCensus::from_bytes(&read_census_document(&census)?)?;
+            let contract = authoring::author(&request, &census, &input_root, now)?;
+            let bytes = contract.canonical_bytes()?;
+            write_new(&out, &bytes)?;
+            Ok(serde_json::json!({
+                "schema": "jope.native_bounded_contract_authored.v1",
+                "out": out,
+                "unsigned_sha256": jope_parallel::manifest::hash(&bytes),
+                "review": authoring::unsigned_report(&contract)?,
+            }))
+        }
+    }
+}
+fn grant_command(op: GrantCommand, now: u64) -> Result<serde_json::Value> {
+    use bounded::authoring;
+    match op {
+        GrantCommand::Sign { contract, key, out } => {
+            let unsigned = authoring::parse_unsigned(&read_contract(&contract)?)?;
+            let key = bounded::participant::load_signing_key(&key)?;
+            let signed = authoring::sign_grants(&unsigned, &key, now)?;
+            let bytes = signed.canonical_bytes()?;
+            write_new(&out, &bytes)?;
+            Ok(serde_json::to_value(authoring::verify_grants(
+                &bytes, now,
+            )?)?)
+        }
+        GrantCommand::Verify { contract } => Ok(serde_json::to_value(authoring::verify_grants(
+            &read_contract(&contract)?,
+            now,
+        )?)?),
+    }
 }
 fn read_census_document(path: &PathBuf) -> Result<Vec<u8>> {
     let f = fs::OpenOptions::new()
@@ -404,6 +511,8 @@ fn bounded_command(command: Command) -> Result<()> {
             now,
         )?)?,
         Command::Census { op } => census_command(op)?,
+        Command::Contract { op } => contract_command(op, now)?,
+        Command::Grant { op } => grant_command(op, now)?,
         Command::Coordinate {
             run_dir,
             plan_sha256,
@@ -519,6 +628,8 @@ fn main() -> Result<()> {
             | Command::Verify { .. }
             | Command::Cancel { .. }
             | Command::Census { .. }
+            | Command::Contract { .. }
+            | Command::Grant { .. }
             | Command::Participant { .. }
             | Command::Coordinate { .. }
             | Command::Agent { .. }
