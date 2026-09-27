@@ -19,6 +19,10 @@ use std::{
 mod authority;
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn shipped_fit_memory_is_fenced_and_refuses_a_mismatched_or_unsealed_projection() {
     let tmp = tempfile::tempdir().unwrap();
     let raw = (0..12)

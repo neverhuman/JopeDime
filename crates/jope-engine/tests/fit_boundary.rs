@@ -237,6 +237,10 @@ fn authority_cli_requires_reviewed_witness_bytes_before_opening_storage() {
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn public_fitting_entry_points_reject_missing_and_denied_authority() {
     let data = Data::new();
     for entry in [
@@ -276,6 +280,10 @@ fn public_fitting_entry_points_reject_missing_and_denied_authority() {
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn missing_database_or_witness_file_is_never_recreated_by_public_fit() {
     for missing_database in [true, false] {
         let data = Data::new();
@@ -327,6 +335,10 @@ fn inputs() -> Value {
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn retired_executor_rejects_even_valid_authority_and_sealed_inputs() {
     let data = Data::new();
     let descriptor = sealed_json(&inputs());
@@ -359,6 +371,10 @@ fn retired_executor_rejects_even_valid_authority_and_sealed_inputs() {
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn service_worker_rejects_missing_and_forged_original_parent_custody() {
     let data = Data::new();
     let descriptor = sealed_json(&inputs());
@@ -395,6 +411,10 @@ fn service_worker_rejects_missing_and_forged_original_parent_custody() {
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn authority_refuses_forged_start_ticket_from_unowned_peer() {
     let data = Data::new();
     let mut stream = UnixStream::connect(&data.authority.socket).unwrap();
@@ -428,6 +448,10 @@ fn authority_refuses_forged_start_ticket_from_unowned_peer() {
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn graceful_authority_shutdown_removes_only_original_readiness() {
     let mut data = Data::new();
     let pid: Value = read_json(&data.authority.identity_path()).unwrap();
@@ -468,6 +492,10 @@ fn isolated_export_child_fixture() {
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn isolated_model_export_obeys_the_same_authority_fence() {
     let data = Data::new();
     for denial in [
@@ -507,6 +535,10 @@ fn verification_command(fixture: &Fixture, sha: &str, instance: &str) -> Command
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn completion_verification_does_not_create_missing_authority_or_witness() {
     let data = Data::new();
     for (authority, witness) in [
@@ -543,6 +575,10 @@ fn completion_verification_does_not_create_missing_authority_or_witness() {
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn self_hashed_but_uncommitted_completion_is_rejected_by_cli() {
     let data = Data::new();
     let registry = Authority::open(&data.authority.authority, &data.authority.witness).unwrap();
@@ -640,6 +676,10 @@ fn read_only(fixture: &Fixture) -> rusqlite::Connection {
 /// training identity and service are all valid, yet no public entry point can
 /// start a fit, because a shipped build has no verified namespace activation.
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn configured_authority_refuses_every_public_fit_entry_without_verified_activation() {
     let mut data = Data::new();
     assert_every_entry_refused_without_verified_activation(&data, "configured");
@@ -651,6 +691,10 @@ fn configured_authority_refuses_every_public_fit_entry_without_verified_activati
 /// Shipped build: the isolated export worker inherits a fully configured
 /// authority, is refused at activation and still receipts its failure.
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn isolated_model_export_is_refused_without_verified_activation() {
     let data = Data::new();
     let spec = data.root.join("export-configured.request.json");
@@ -672,6 +716,10 @@ fn isolated_model_export_is_refused_without_verified_activation() {
 /// Shipped build: `namespace-activate` has no verifier for any capability, and
 /// refusing changes neither dispatch history nor activation state.
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn namespace_activate_refuses_every_capability_without_changing_authority_state() {
     let data = Data::new();
     let journal = data.authority.authority.join("dispatch.jsonl");
@@ -820,6 +868,10 @@ fn forge_journaled_activation(fixture: &Fixture) {
 /// `synthetic-` scope a `cfg(test)` build would admit) cannot enable fitting.
 /// The refusal is `activation_block` itself, not an integrity failure.
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn journaled_activation_row_with_current_epoch_and_coverage_cannot_enable_shipped_fitting() {
     let data = Data::new();
     assert!(SCOPE.starts_with("synthetic-"));

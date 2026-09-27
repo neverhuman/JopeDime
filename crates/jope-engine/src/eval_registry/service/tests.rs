@@ -255,6 +255,10 @@ fn query_events(root: &Path) -> Vec<Value> {
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn query_client_deadline_bounds_unserved_authority_without_acceptance() {
     let (fixture, mut inputs) = retained_query_fixture();
     let service = Service::bind(fixture.config.clone()).unwrap();
@@ -277,6 +281,10 @@ fn query_client_deadline_bounds_unserved_authority_without_acceptance() {
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn query_expired_descriptor_rejects_before_access_or_acceptance() {
     let (fixture, mut inputs) = retained_query_fixture();
     let (stop, task) = fixture.launch();
@@ -303,6 +311,10 @@ fn query_expired_descriptor_rejects_before_access_or_acceptance() {
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn query_original_service_completion_reuses_after_restart_without_fit_starts() {
     let (fixture, inputs) = retained_query_fixture();
     let (stop, task) = fixture.launch();
@@ -345,6 +357,10 @@ fn query_original_service_completion_reuses_after_restart_without_fit_starts() {
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn query_fitting_scope_does_not_authorize_outcome_access() {
     let (mut fixture, inputs) = retained_query_fixture();
     fixture.config.synthetic_query_access.clear();
@@ -358,6 +374,10 @@ fn query_fitting_scope_does_not_authorize_outcome_access() {
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn query_changed_descriptor_cannot_extend_original_deadline_or_replace_result() {
     let (mut fixture, inputs) = retained_query_fixture();
     let mut changed = inputs.clone();
@@ -378,6 +398,10 @@ fn query_changed_descriptor_cannot_extend_original_deadline_or_replace_result() 
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn query_predictor_timeout_preserves_unavailable_acceptance_without_refitting() {
     let (mut fixture, mut inputs) = retained_query_fixture();
     fixture.config.query_worker_sleep_ms = Some(300_000);
@@ -411,6 +435,10 @@ fn query_predictor_timeout_preserves_unavailable_acceptance_without_refitting() 
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn query_retrieval_preserves_expired_original_and_never_accepts_new_work() {
     let (fixture, mut inputs) = retained_query_fixture();
     let mut service = Service::bind(fixture.config.clone()).unwrap();
@@ -488,6 +516,10 @@ fn query_retrieval_preserves_expired_original_and_never_accepts_new_work() {
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn query_ambiguous_acceptance_stays_unavailable_after_restart() {
     let (mut fixture, inputs) = retained_query_fixture();
     fixture.config.query_fail_after_accept = true;
@@ -527,6 +559,10 @@ fn query_ambiguous_acceptance_stays_unavailable_after_restart() {
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn query_missing_original_predictions_blocks_recovery() {
     let (fixture, inputs) = retained_query_fixture();
     let (stop, task) = fixture.launch();
@@ -554,6 +590,10 @@ fn sealed_fd_and_absolute_partial_frame_validation() {
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn service_reuses_one_connection_and_104_clients_start_once() {
     let fixture = Fixture::new();
     let (stop, service) = fixture.launch();
@@ -622,6 +662,10 @@ fn service_reuses_one_connection_and_104_clients_start_once() {
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn lost_submit_response_still_commits_original_without_replay() {
     let fixture = Fixture::new();
     let (stop, service) = fixture.launch();
@@ -665,6 +709,10 @@ fn lost_submit_response_still_commits_original_without_replay() {
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn failed_signaled_timed_out_and_replaced_custody_are_terminal() {
     let mut fixture = Fixture::new();
     // Leave bounded room for debug-binary authentication and custody transfer.
@@ -703,6 +751,10 @@ fn failed_signaled_timed_out_and_replaced_custody_are_terminal() {
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn lost_start_permission_remains_consumed_and_terminal() {
     let mut fixture = Fixture::new();
     fixture.config.drop_start_reply = true;
@@ -730,6 +782,10 @@ fn lost_start_permission_remains_consumed_and_terminal() {
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn missing_authority_and_replaced_socket_cannot_start_service() {
     let fixture = Fixture::new();
     let (stop, service) = fixture.launch();
@@ -748,6 +804,10 @@ fn missing_authority_and_replaced_socket_cannot_start_service() {
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn forged_executor_ticket_does_not_consume_any_fit() {
     let fixture = Fixture::new();
     let (stop, service) = fixture.launch();
@@ -770,6 +830,10 @@ fn forged_executor_ticket_does_not_consume_any_fit() {
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn backlog_connect_and_invalid_request_deadlines_are_bounded() {
     let fixture = Fixture::new();
     let busy_path = fixture.temp.path().join("busy.sock");
@@ -798,6 +862,10 @@ fn backlog_connect_and_invalid_request_deadlines_are_bounded() {
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn socket_loss_during_worker_readiness_fences_authorization_and_restart() {
     let mut fixture = Fixture::new();
     let pause = Arc::new(TestPause::default());
