@@ -3,8 +3,11 @@
 //! `tests/fixtures/python-parity/python-outputs.json` holds what `deploy/ci/coverage.py`,
 //! `rust-test-scope-check.py`, `parity-census.py check` and `readme-benchmarks.py` (archived at
 //! 8a55c4fef) printed in the differential run `py-p1-u3-diff-20260927T024147Z`, before they were
-//! deleted. The inputs are committed beside them, taken from that run's tree (5136986fb plus the
-//! run's working changes; recovered from an export of it):
+//! deleted. The inputs are committed beside them, taken from that run's tree (the U2 commit as
+//! first written on `rr2/python-p1`, replayed on landing as 6b95c9208 with a different
+//! `deploy/ci/coverage.json`, plus the run's working changes; recovered from an export of it).
+//! These files are the record of those inputs; the commit map at the end of
+//! `docs/internal/core-ip/work-orders/evidence/PY-P1-python-removal.md` names the original:
 //!
 //! - `coverage/`: the coverage map (`mapping.json`) and the nine malformed variants the run
 //!   derived from it, stored as `ed` scripts with the SHA-256 of the file the Python read; the
