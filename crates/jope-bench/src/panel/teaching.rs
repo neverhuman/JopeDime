@@ -980,12 +980,18 @@ mod tests {
             verification_policy_sha256: context_producer::verification_policy_sha256(),
             reference_manifest_sha256: sha(b"reference manifest"),
             encoder: context_producer::EncoderIdentity::accepted(),
-            case_outputs: vec![],
+            case_outputs: vec![b"case output".to_vec(); 8],
         };
         let bytes = serde_json::to_vec(&qualification).unwrap();
-        let registration =
-            context_producer::ProducerRegistration::from_qualification(&bytes, &sha(&bytes))
-                .unwrap();
+        let case_executions = (0..8)
+            .map(|case| sha(format!("case execution {case}").as_bytes()))
+            .collect();
+        let registration = context_producer::ProducerRegistration::from_qualification(
+            &bytes,
+            &sha(&bytes),
+            case_executions,
+        )
+        .unwrap();
         serde_json::from_value(serde_json::to_value(&registration).unwrap()).unwrap()
     }
 
@@ -1038,6 +1044,15 @@ mod tests {
         let (plan, context) = teaching_context(&config, Task::Regression, &Ok(producer.clone()));
         let plan = plan.unwrap();
         assert_eq!(plan.producer.as_ref(), Some(&producer));
+        // The registration's case-execution pins reach the preregistration: teacher admission
+        // rebuilds every handoff's admission pins from them.
+        assert_eq!(
+            producer
+                .qualification_execution_sha256
+                .as_ref()
+                .map(Vec::len),
+            Some(8)
+        );
         assert_eq!(plan.source_family, context_producer::SCHEMA);
         assert_eq!(
             plan.encoder,

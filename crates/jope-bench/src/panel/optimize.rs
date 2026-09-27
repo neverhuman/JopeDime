@@ -1177,21 +1177,9 @@ pub(crate) fn prepare_regression_context<B: Backend, V: Variation>(
     let context_proof = proof(experiment, journal, job)?;
     let context_execution = serde_json::to_vec(&context_proof.attest(input_file, &output)?)?;
     let manifest = fs::read(&qualification.reference_manifest.path)?;
-    let cases = context_producer::case_inputs(&manifest, &qualification.reference_manifest.sha256)?;
-    let mut executions = Vec::new();
-    for (i, case) in qualification.case_executions.iter().enumerate() {
-        let pin = jope_pipeline::sha256_hex(&cases[i]);
-        let case_input = case
-            .job
-            .command
-            .inputs
-            .iter()
-            .find(|a| a.sha256 == pin)
-            .context("qualification case input absent")?;
-        executions.push(serde_json::to_vec(
-            &case.attest(case_input, &qualification.case_outputs[i])?,
-        )?);
-    }
+    // The same case-execution attestations the producer registration a teaching freeze
+    // preregisters pins (`CompletedQualification::producer_registration`).
+    let executions = qualification.case_execution_attestations()?;
     let bundle = QualifiedContextBundle {
         artifact: fs::read(&output.path)?,
         qualification: fs::read(&qualification.qualification.path)?,

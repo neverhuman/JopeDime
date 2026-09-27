@@ -119,11 +119,51 @@ impl CompletedQualification {
         Ok(())
     }
 
+    /// The controller's execution attestation of each qualification case, in reference-manifest
+    /// order, derived from the case's pool receipts (`ExecutionProof::attest`): the bytes every
+    /// context admission carries (`QualifiedContextBundle::case_executions`) and pins
+    /// (`AdmissionPins::qualification_execution_sha256`). The producer registration a teaching
+    /// freeze preregisters and every producer run take them from here, so the two cannot
+    /// disagree.
+    pub fn case_execution_attestations(&self) -> Result<Vec<Vec<u8>>> {
+        ensure!(
+            self.case_outputs.len() == 8 && self.case_executions.len() == 8,
+            "qualification requires eight executed cases"
+        );
+        let manifest = read_artifact(&self.reference_manifest, 128 << 20)?;
+        let cases = context_producer::case_inputs(&manifest, &self.reference_manifest.sha256)?;
+        ensure!(
+            cases.len() == self.case_executions.len(),
+            "qualification case count differs from its reference manifest"
+        );
+        cases
+            .iter()
+            .zip(&self.case_outputs)
+            .zip(&self.case_executions)
+            .map(|((case, output), proof)| {
+                let pin = sha256_hex(case);
+                let inputs = proof
+                    .job
+                    .command
+                    .inputs
+                    .iter()
+                    .filter(|a| a.sha256 == pin)
+                    .collect::<Vec<_>>();
+                ensure!(
+                    inputs.len() == 1,
+                    "qualification case input absent or duplicated"
+                );
+                Ok(serde_json::to_vec(&proof.attest(inputs[0], output)?)?)
+            })
+            .collect()
+    }
+
     /// W3-T02: the W2 context producer a teaching freeze preregisters for the contexts this
     /// qualification admits. The retained qualification is re-admitted by [`Self::verify`] (its
     /// eight executed cases, their pool receipts and the rebuilt qualification) and the
-    /// registration is then read from the qualification bytes its pin authenticates; nothing is
-    /// re-derived by hand.
+    /// registration is then read from the qualification bytes its pin authenticates, with the
+    /// controller's pin of each case execution ([`Self::case_execution_attestations`]); nothing
+    /// is re-derived by hand.
     pub fn producer_registration(
         &self,
         source: &str,
@@ -133,6 +173,10 @@ impl CompletedQualification {
         context_producer::ProducerRegistration::from_qualification(
             &read_artifact(&self.qualification, 32 << 20)?,
             &self.qualification.sha256,
+            self.case_execution_attestations()?
+                .iter()
+                .map(|bytes| sha256_hex(bytes))
+                .collect(),
         )
     }
 }
