@@ -2437,6 +2437,7 @@ dependencies = [
  "jope-datasets",
  "jope-policy",
  "nix 0.29.0",
+ "rayon",
  "schemars",
  "serde",
  "serde_json",

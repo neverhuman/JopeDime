@@ -55,14 +55,20 @@ use feat_math::{
     genome::GenomeIr,
     metrics::{r2, rmse},
 };
+use rayon::prelude::*;
 use serde::Serialize;
 use std::{
     collections::BTreeSet,
     path::{Path, PathBuf},
-    time::{Duration, Instant},
+    time::Duration,
 };
 
-use crate::{prepare::Cut, receipt::Phase, sha256_hex};
+use crate::{
+    clock::{Clock, Stamp},
+    prepare::Cut,
+    receipt::Phase,
+    sha256_hex,
+};
 
 /// The search implementation, named in the receipt.
 pub const SEARCH_ENGINE: &str = "feat-math canonical-pipeline GP (in-process)";
@@ -135,6 +141,11 @@ pub struct SearchOptions {
     /// [`INCUMBENT`] (already admitted by [`crate::seeds::admit`]). They are fitted on this
     /// search's own cuts like every other candidate and spend the same budget.
     pub seeds: Vec<String>,
+    /// Worker threads evaluating one generation's admitted candidates. `1` evaluates on the
+    /// calling thread, exactly as the sequential search always has; any count gives the same
+    /// decisions, because candidates are admitted and folded back in slot order.
+    pub threads: usize,
+    pub clock: Clock,
 }
 
 impl SearchOptions {
@@ -143,6 +154,8 @@ impl SearchOptions {
             budget,
             rng_seed,
             seeds: Vec::new(),
+            threads: 1,
+            clock: Clock::Wall,
         }
     }
 }
@@ -375,8 +388,14 @@ fn stream(rng_seed: u64, cut: usize, generation: usize, slot: usize, salt: u64) 
 
 /// Fit one candidate on the cut's training rows and score it on the held-out
 /// rows. Never returns `Err`: a failure is an [`Observation`], not an abort.
-fn evaluate(genome: &str, cut: &Cut, generation: usize, origin: &'static str) -> Observation {
-    let started = Instant::now();
+fn evaluate(
+    genome: &str,
+    cut: &Cut,
+    generation: usize,
+    origin: &'static str,
+    clock: Clock,
+) -> Observation {
+    let started = clock.start();
     let record = |status, failure: Option<String>, seconds| Observation {
         genome: genome.to_owned(),
         program_sha256: sha256_hex(genome.as_bytes()),
@@ -516,7 +535,13 @@ fn offspring(
 
 /// Run one cut's search and publish its evidence under `output`.
 pub fn run_cut(cut: &Cut, budget: Budget, rng_seed: u64, output: &Path) -> Result<CutSearch> {
-    run_cut_allocated(cut, &SearchOptions::new(budget, rng_seed), output, false)
+    run_cut_allocated(
+        cut,
+        &SearchOptions::new(budget, rng_seed),
+        None,
+        output,
+        false,
+    )
 }
 
 /// Multiple cuts reserve half the evaluation slots (rounded down) and half the
@@ -531,39 +556,85 @@ pub fn run_cuts(
     run_cuts_with(cuts, &SearchOptions::new(budget, rng_seed), output)
 }
 
-/// [`run_cuts`] with seeds and the other [`SearchOptions`].
+/// [`run_cuts`] with seeds, worker threads and the other [`SearchOptions`].
+///
+/// The worker count bounds concurrency only. Admission (which candidates are fitted, up to the
+/// evaluation bound) and the fold of results back into the search (survivors, observations,
+/// counters) both happen in slot order on the calling thread, so any thread count yields the
+/// same observations, the same selection and the same published bytes; only wall-clock
+/// readings differ, as they do between any two runs.
 pub fn run_cuts_with(
     cuts: &[Cut],
     options: &SearchOptions,
     output: &Path,
 ) -> Result<Vec<CutSearch>> {
+    let pool = crate::parallel::pool(options.threads)?;
     let mut searches = Vec::new();
     for cut in cuts {
         searches.push(run_cut_allocated(
             cut,
             options,
+            pool.as_ref(),
             &output.join(format!("cut-{}", cut.index)),
             cuts.len() > 1,
         )?);
     }
-    remeasure_topk_on_all_cuts(cuts, &mut searches)?;
+    remeasure_in(cuts, &mut searches, options.clock, pool.as_ref())?;
     Ok(searches)
+}
+
+/// Evaluate `admitted` in order. Each candidate starts only while the cut's seconds bound
+/// allows it; one that could not start is `None`. Sequentially (no pool) the first `None` ends
+/// the batch, exactly like the sequential loop's per-candidate deadline check; with a pool,
+/// every result lands back in its slot, whatever order the threads finished in.
+fn evaluate_admitted(
+    admitted: &[(String, &'static str)],
+    cut: &Cut,
+    generation: usize,
+    clock: Clock,
+    pool: Option<&rayon::ThreadPool>,
+    started: Stamp,
+    deadline: Duration,
+) -> Vec<Option<Observation>> {
+    let may_start = || started.elapsed() < deadline;
+    match pool {
+        None => {
+            let mut results = Vec::with_capacity(admitted.len());
+            for (genome, origin) in admitted {
+                if !may_start() {
+                    break;
+                }
+                results.push(Some(evaluate(genome, cut, generation, origin, clock)));
+            }
+            results.resize(admitted.len(), None);
+            results
+        }
+        Some(pool) => pool.install(|| {
+            admitted
+                .par_iter()
+                .map(|(genome, origin)| {
+                    may_start().then(|| evaluate(genome, cut, generation, origin, clock))
+                })
+                .collect()
+        }),
+    }
 }
 
 fn run_cut_allocated(
     cut: &Cut,
     options: &SearchOptions,
+    pool: Option<&rayon::ThreadPool>,
     output: &Path,
     reserve: bool,
 ) -> Result<CutSearch> {
-    let (budget, rng_seed) = (options.budget, options.rng_seed);
+    let (budget, rng_seed, clock) = (options.budget, options.rng_seed, options.clock);
     budget.check()?;
     ensure!(
         !output.join("search.json").exists(),
         "{}: a completed search is already published here",
         output.display()
     );
-    let started = Instant::now();
+    let started = clock.start();
     let evaluation_limit = exploration_limit(budget, if reserve { 2 } else { 1 });
     let seconds_limit = budget.seconds as f64 / if reserve { 2.0 } else { 1.0 };
     let deadline = Duration::from_secs_f64(seconds_limit);
@@ -600,25 +671,46 @@ fn run_cut_allocated(
         };
 
         let spent_before = evaluations;
+        // Admission, in slot order: exactly the candidates the one-at-a-time loop would fit,
+        // with its checks in its order — the evaluation bound, then the seconds bound, then
+        // "never fit a genome twice on one cut". The seconds bound is checked again before each
+        // fit starts (`evaluate_admitted`).
+        let mut admitted: Vec<(String, &'static str)> = Vec::new();
+        let mut bound = None;
         for (genome, origin) in candidates {
-            if evaluations >= evaluation_limit {
-                break 'search STOPPED_BY_EVALUATIONS;
+            if evaluations + admitted.len() >= evaluation_limit {
+                bound = Some(STOPPED_BY_EVALUATIONS);
+                break;
             }
             if started.elapsed() >= deadline {
-                break 'search STOPPED_BY_SECONDS;
+                bound = Some(STOPPED_BY_SECONDS);
+                break;
             }
             if !seen.insert(genome.clone()) {
                 continue;
             }
+            admitted.push((genome, origin));
+        }
+        let results = evaluate_admitted(&admitted, cut, generation, clock, pool, started, deadline);
+        // The fold, in slot order: survivors and observations never depend on which worker
+        // finished first.
+        let mut late = false;
+        for ((genome, _), result) in admitted.into_iter().zip(results) {
+            let Some(observation) = result else {
+                late = true;
+                continue;
+            };
             evaluations += 1;
-            let observation = evaluate(&genome, cut, generation, origin);
             if let Some(rmse) = observation.rmse {
-                survivors.push(Scored {
-                    genome: genome.clone(),
-                    rmse,
-                });
+                survivors.push(Scored { genome, rmse });
             }
             observations.push(observation);
+        }
+        if late {
+            break 'search STOPPED_BY_SECONDS;
+        }
+        if let Some(bound) = bound {
+            break 'search bound;
         }
 
         // A generation that spent nothing drew only genomes already measured.
@@ -719,14 +811,61 @@ pub const REMEASURE_TOP_K: usize = ELITES;
 /// including failures, use the same total allowance as exploration. Partial
 /// coverage is retained as evidence and is ineligible for selection.
 pub fn remeasure_topk_on_all_cuts(cuts: &[Cut], searches: &mut [CutSearch]) -> Result<()> {
-    remeasure_with(cuts, searches, evaluate)
+    remeasure_in(cuts, searches, Clock::Wall, None)
 }
 
+/// The comparison phase, one worker per cut when a pool is given. Each cut's admissions depend
+/// only on that cut's own state (what it already measured, its evaluation count, its active
+/// seconds), and the pool is visited in the same order on every cut, so running the cuts
+/// concurrently decides exactly what running them one after another does.
+fn remeasure_in(
+    cuts: &[Cut],
+    searches: &mut [CutSearch],
+    clock: Clock,
+    pool: Option<&rayon::ThreadPool>,
+) -> Result<()> {
+    let Some(genomes) = open_comparison(cuts, searches)? else {
+        return Ok(());
+    };
+    match pool {
+        None => {
+            for (cut, search) in cuts.iter().zip(searches.iter_mut()) {
+                remeasure_cut(cut, search, &genomes, clock, &mut |g, c, n, o| {
+                    evaluate(g, c, n, o, clock)
+                });
+            }
+        }
+        Some(pool) => pool.install(|| {
+            cuts.par_iter()
+                .zip(searches.par_iter_mut())
+                .for_each(|(cut, search)| {
+                    remeasure_cut(cut, search, &genomes, clock, &mut |g, c, n, o| {
+                        evaluate(g, c, n, o, clock)
+                    })
+                })
+        }),
+    }
+    close_comparison(searches)
+}
+
+#[cfg(test)]
 fn remeasure_with(
     cuts: &[Cut],
     searches: &mut [CutSearch],
     mut evaluate_candidate: impl FnMut(&str, &Cut, usize, &'static str) -> Observation,
 ) -> Result<()> {
+    let Some(genomes) = open_comparison(cuts, searches)? else {
+        return Ok(());
+    };
+    for (cut, search) in cuts.iter().zip(searches.iter_mut()) {
+        remeasure_cut(cut, search, &genomes, Clock::Wall, &mut evaluate_candidate);
+    }
+    close_comparison(searches)
+}
+
+/// Check the cut/search pairing, build the bounded comparison pool and open each cut's
+/// comparison phase. `None` when there is nothing to compare (a single cut).
+fn open_comparison(cuts: &[Cut], searches: &mut [CutSearch]) -> Result<Option<Vec<String>>> {
     ensure!(
         cuts.len() == searches.len(),
         "remeasure: cuts/searches length mismatch"
@@ -735,7 +874,7 @@ fn remeasure_with(
         ensure!(cut.index == search.cut, "remeasure: cut identity mismatch");
     }
     if cuts.len() <= 1 {
-        return Ok(());
+        return Ok(None);
     }
     // Round-robin ranks avoid comparing scores measured on different cuts when
     // ordering this bounded pool. Canonical genome breaks within-cut score ties.
@@ -785,34 +924,48 @@ fn remeasure_with(
             ..Phase::not_requested()
         };
     }
-    for genome in &pool {
-        for (cut, search) in cuts.iter().zip(searches.iter_mut()) {
-            let started = Instant::now();
-            // Failed attempts count and are never retried on the same cut.
-            let already = search.observations.iter().any(|o| &o.genome == genome);
-            let elapsed = search.seconds + started.elapsed().as_secs_f64();
-            if !already
-                && search.completed_evaluations < search.budget.evaluations as u64
-                && elapsed < search.budget.seconds as f64
-            {
-                let observation =
-                    evaluate_candidate(genome, cut, search.generations as usize, "remeasure");
-                search.completed_evaluations += 1;
-                search.comparison.completed_evaluations += 1;
-                if observation.measured() {
-                    search.successful_measurements += 1;
-                    search.comparison.successful_measurements += 1;
-                } else {
-                    search.failed_or_unavailable_measurements += 1;
-                    search.comparison.failed_measurements += 1;
-                }
-                search.observations.push(observation);
+    Ok(Some(pool))
+}
+
+/// One cut's comparison: the pool in order, each genome this cut has not attempted, while its
+/// total evaluation and seconds allowances last.
+fn remeasure_cut(
+    cut: &Cut,
+    search: &mut CutSearch,
+    pool: &[String],
+    clock: Clock,
+    evaluate_candidate: &mut dyn FnMut(&str, &Cut, usize, &'static str) -> Observation,
+) {
+    for genome in pool {
+        let started = clock.start();
+        // Failed attempts count and are never retried on the same cut.
+        let already = search.observations.iter().any(|o| &o.genome == genome);
+        let elapsed = search.seconds + started.secs();
+        if !already
+            && search.completed_evaluations < search.budget.evaluations as u64
+            && elapsed < search.budget.seconds as f64
+        {
+            let observation =
+                evaluate_candidate(genome, cut, search.generations as usize, REMEASURE);
+            search.completed_evaluations += 1;
+            search.comparison.completed_evaluations += 1;
+            if observation.measured() {
+                search.successful_measurements += 1;
+                search.comparison.successful_measurements += 1;
+            } else {
+                search.failed_or_unavailable_measurements += 1;
+                search.comparison.failed_measurements += 1;
             }
-            let seconds = started.elapsed().as_secs_f64();
-            search.seconds += seconds;
-            search.comparison.seconds += seconds;
+            search.observations.push(observation);
         }
+        let seconds = started.secs();
+        search.seconds += seconds;
+        search.comparison.seconds += seconds;
     }
+}
+
+/// Record each cut's comparison outcome and best, and publish it.
+fn close_comparison(searches: &mut [CutSearch]) -> Result<()> {
     for search in searches.iter_mut() {
         search.stopped_by = if search.seconds >= search.budget.seconds as f64 {
             STOPPED_BY_SECONDS
@@ -1056,6 +1209,7 @@ mod tests {
                         },
                         7,
                     ),
+                    None,
                     &temp.join(format!("search-{}", cut.index)),
                     reserve,
                 )
@@ -1108,7 +1262,7 @@ mod tests {
         remeasure_with(&cuts, &mut searches, |genome, cut, generation, origin| {
             calls += 1;
             std::thread::sleep(Duration::from_millis(25));
-            evaluate(genome, cut, generation, origin)
+            evaluate(genome, cut, generation, origin, Clock::Wall)
         })
         .unwrap();
         assert_eq!(calls, 1);
@@ -1264,6 +1418,95 @@ mod tests {
                 .collect::<Vec<_>>()
         };
         assert_eq!(decided(&a), decided(&b));
+    }
+
+    /// Everything three cuts' searches publish, in a fixed order.
+    fn published(searches: &[CutSearch]) -> Vec<(usize, Vec<u8>, Vec<u8>)> {
+        searches
+            .iter()
+            .map(|s| {
+                (
+                    s.cut,
+                    std::fs::read(s.output.join("search.json")).unwrap(),
+                    std::fs::read(s.output.join("observations.json")).unwrap(),
+                )
+            })
+            .collect()
+    }
+
+    /// Any worker count decides exactly what one worker decides. With the wall clock frozen —
+    /// the one input two runs can never agree on — every byte a search publishes is identical.
+    #[test]
+    fn eight_threads_publish_exactly_what_one_thread_publishes() {
+        let temp = tempfile::tempdir().unwrap();
+        let preparation = prepare::build(
+            &linear_rows(150),
+            "threads",
+            7,
+            3,
+            &temp.path().join("prepared"),
+        )
+        .unwrap();
+        let run = |threads: usize, name: &str| {
+            let options = SearchOptions {
+                threads,
+                clock: Clock::Frozen,
+                ..SearchOptions::new(
+                    Budget {
+                        evaluations: 40,
+                        seconds: 600,
+                    },
+                    11,
+                )
+            };
+            run_cuts_with(&preparation.cuts, &options, &temp.path().join(name)).unwrap()
+        };
+        let one = run(1, "one");
+        let eight = run(8, "eight");
+        assert_eq!(published(&one), published(&eight));
+        // Past generation 0, and through the comparison phase: both paths were exercised.
+        assert!(one.iter().all(|s| s
+            .observations
+            .iter()
+            .any(|o| o.generation >= 1 && o.measured())));
+        assert!(one.iter().all(|s| s.comparison.completed_evaluations > 0));
+    }
+
+    /// With the real clock only the recorded seconds differ; every decision matches.
+    #[test]
+    fn thread_count_never_changes_a_decision_under_the_wall_clock() {
+        let temp = tempfile::tempdir().unwrap();
+        let preparation = prepare::build(
+            &linear_rows(150),
+            "wall",
+            7,
+            2,
+            &temp.path().join("prepared"),
+        )
+        .unwrap();
+        let decided = |threads: usize, name: &str| {
+            let options = SearchOptions {
+                threads,
+                ..SearchOptions::new(
+                    Budget {
+                        evaluations: 30,
+                        seconds: 600,
+                    },
+                    5,
+                )
+            };
+            run_cuts_with(&preparation.cuts, &options, &temp.path().join(name))
+                .unwrap()
+                .iter()
+                .flat_map(|s| {
+                    s.observations
+                        .iter()
+                        .map(|o| (o.cut, o.genome.clone(), o.generation, o.origin, o.rmse))
+                        .collect::<Vec<_>>()
+                })
+                .collect::<Vec<_>>()
+        };
+        assert_eq!(decided(1, "one"), decided(4, "four"));
     }
 
     #[test]
