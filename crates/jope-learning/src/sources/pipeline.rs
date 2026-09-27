@@ -2,17 +2,26 @@
 //!
 //! The receipt is re-derived from its run directory first
 //! ([`jope_pipeline::evidence::verify_champion_run`]); a receipt its own evidence does not
-//! reproduce never reaches the ledger. The record's comparison identity is complete:
+//! reproduce never reaches the ledger. The record's comparison identity names:
 //!
 //! * `dataset_hash` — the catalog content hash the run resolved and byte-verified;
 //! * `cut_id` — sha256 of the canonical JSON naming the prepared cuts: `prepared.json`'s sha256,
 //!   the fold seed and partition, the searched cut indices and `train.csv`'s sha256;
-//! * `protocol` — the pipeline measurement protocol plus the evaluator (search engine and tool
-//!   version), the selection and budget rules, and the random-stream protocol;
+//! * `protocol` — the pipeline measurement protocol plus the evaluator: search engine, tool
+//!   version and the **source commit** the receipt records (`git_sha`: `--source-commit`,
+//!   `JOPE_GIT_SHA` or `git rev-parse HEAD`); the selection and budget rules; and the
+//!   random-stream protocol;
 //! * `comparison` — the numerical policy, the held-out stage and mean-over-cuts aggregation.
 //!
-//! The evaluator binary is not bound by hash (`unbound`, so the record is not replayable), and
-//! the stage is the development hold-out, never `train_oof`: these records are **not**
+//! The workspace version never moves (`jope-pipeline/0.1.0`) and the engine string is a constant,
+//! so the source commit is what tells one evaluator from another: a receipt measured by another
+//! commit is another identity and never displaces this one, and a receipt that names no commit is
+//! refused, because nothing would tell its evaluator apart from any other. What the commit does
+//! not bind: uncommitted changes in the tree the binary was built from, and the binary itself
+//! (`evaluator_sha256` is `unbound`, so the record is not replayable). The metric is not part of
+//! the identity; `hwm::decide` compares it separately (`metric-mismatch`).
+//!
+//! The stage is the development hold-out, never `train_oof`: these records are **not**
 //! teaching-eligible. `freeze_teaching` excludes them like every record without a measured
 //! teaching qualification.
 
@@ -46,6 +55,19 @@ struct CutIdentity<'a> {
     train_sha256: &'a str,
 }
 
+/// The commit that measured `receipt`, or the refusal: without it the evaluator is unbound.
+pub fn source_commit(receipt: &jope_pipeline::Receipt) -> Result<&str> {
+    receipt
+        .git_sha
+        .as_deref()
+        .filter(|commit| !commit.trim().is_empty())
+        .context(
+            "the receipt names no source commit (git_sha): the code that measured it cannot be \
+             told apart from any other, so its score cannot be compared; re-run with \
+             --source-commit or from a checkout",
+        )
+}
+
 /// The comparison identity of a verified receipt's measurement.
 pub fn identity(receipt: &jope_pipeline::Receipt) -> Result<HwmIdentity> {
     let train = receipt
@@ -54,6 +76,7 @@ pub fn identity(receipt: &jope_pipeline::Receipt) -> Result<HwmIdentity> {
         .iter()
         .find(|f| f.name == "train.csv")
         .context("the receipt names no train.csv digest")?;
+    let commit = source_commit(receipt)?;
     let search = &receipt.search;
     Ok(HwmIdentity {
         task: receipt.dataset.task.clone(),
@@ -69,7 +92,8 @@ pub fn identity(receipt: &jope_pipeline::Receipt) -> Result<HwmIdentity> {
         evaluator_sha256: UNBOUND.into(),
         vocabulary_sha256: UNBOUND.into(),
         protocol: format!(
-            "{PROTOCOL};engine={};tool={};selection={};budget_policy={};rng={RNG_PROTOCOL}",
+            "{PROTOCOL};engine={};tool={};source_commit={commit};selection={};budget_policy={};\
+             rng={RNG_PROTOCOL}",
             search.engine,
             receipt.tool_version,
             search.selection,
@@ -160,7 +184,12 @@ pub fn scan(
         },
         evaluator: Evaluator {
             sha256: UNBOUND.into(),
-            version: format!("{} ({})", receipt.tool_version, receipt.search.engine),
+            version: format!(
+                "{} ({}) at {}",
+                receipt.tool_version,
+                receipt.search.engine,
+                source_commit(receipt)?
+            ),
         },
         benchmark_valid: false,
         sealed: false,
