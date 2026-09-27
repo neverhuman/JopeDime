@@ -58,7 +58,11 @@ are canonicalised, deduplicated (the bootstrap is always in generation 0 already
 four, then enter generation 0 right after the bootstrap with origin `incumbent`. They spend
 evaluations like any other candidate and are re-measured on this run's cuts: no score is carried
 over. A budget whose exploration allowance cannot measure the bootstrap plus every seed on each
-cut is refused before anything is written. The receipt's `search.seeding` records the offered
+cut is refused before anything is written, and the seconds bound never skips them: generation
+0's bootstrap and seeds always start (only a stop request prevents it; an overrun is recorded as
+`deadline_overrun`), so every seed has a generation-0 measurement on every cut, which is what
+`verify-receipt --evidence` requires. The random draws after them are what the seconds bound
+stops. The receipt's `search.seeding` records the offered
 count, each admitted seed's genome, sha256 and source, the parent receipt's sha256 and the seeds
 file's sha256; the v3 validator requires every seed to have been attempted on every requested
 cut. Because the parent's champion is re-measured on the same cuts, a seeded run's champion is
