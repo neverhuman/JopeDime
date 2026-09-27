@@ -1,5 +1,5 @@
 {
-  "source": "py-p1-u3-diff-20260927T024147Z (deploy/ci/coverage.py, rust-test-scope-check.py, parity-census.py check and readme-benchmarks.py at 8a55c4fef, python3 on xbabe2), tree: the U2 commit as first written on rr2/python-p1 (replayed on landing as 947b1a1aa; commit map in docs/internal/core-ip/work-orders/evidence/PY-P1-python-removal.md) plus that run's working changes",
+  "source": "py-p1-u3-diff-20260927T024147Z (deploy/ci/coverage.py, rust-test-scope-check.py, parity-census.py check and readme-benchmarks.py at 8a55c4fef, python3 on xbabe2), tree: the U2 commit as first written on rr2/python-p1 (replayed on landing as the commit whose subject ends in '(P1 U2)'; commit map in docs/internal/core-ip/work-orders/evidence/PY-P1-python-removal.md) plus that run's working changes",
   "cases": [
     {
       "name": "cov-validate",
