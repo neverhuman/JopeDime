@@ -899,10 +899,23 @@ fn measured(
         ]);
     }
     revocations.refuse("the teaching candidate", closure)?;
-    let (context_receipt_sha256, context_handoff_sha256) =
-        context::verify(state, &policy, record, evidence, &revocations)?;
+    // The teacher's experiment and original window, held to the freeze below. The teaching
+    // context must have been produced inside exactly this execution (PR #114 review round 1), so
+    // they are read first; the context check still runs before the inner binding, the folds and
+    // any blob retention.
     let experiment: Experiment = blob(state, &evidence.experiment_blob_sha256)?;
     let window: ExecutionWindow = blob(state, &evidence.window_sha256)?;
+    let (context_receipt_sha256, context_handoff_sha256) = context::verify(
+        state,
+        &policy,
+        record,
+        evidence,
+        &revocations,
+        &context::Teaching {
+            experiment: &experiment,
+            window: &window,
+        },
+    )?;
     experiment.validate()?;
     window.validate(&experiment)?;
     let inner_binding = inner::bind(state, &policy, evidence, &experiment, &window, live)?;

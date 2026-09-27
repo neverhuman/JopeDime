@@ -52,13 +52,25 @@ fn producer_run(
     window: &ExecutionWindow,
     tamper: impl FnOnce(&mut HandoffParts),
 ) -> ContextRun {
-    let mut parts = handoff_parts(&f.state, context, &f.plan.comparison, &f.experiment, window);
+    producer_run_in(f, context, &f.experiment, window, tamper)
+}
+
+/// [`producer_run`] in `experiment` instead of `f`'s: the context job's request and the retained
+/// experiment are that experiment's.
+fn producer_run_in(
+    f: &Fixture,
+    context: &[u8],
+    experiment: &Experiment,
+    window: &ExecutionWindow,
+    tamper: impl FnOnce(&mut HandoffParts),
+) -> ContextRun {
+    let mut parts = handoff_parts(&f.state, context, &f.plan.comparison, experiment, window);
     tamper(&mut parts);
     ContextRun {
         handoff: serde_json::to_vec(&parts.handoff).unwrap(),
         job: canonical_json(&parts.job).unwrap(),
         outcome: parts.outcome_bytes(),
-        experiment: canonical_json(&f.experiment).unwrap(),
+        experiment: canonical_json(experiment).unwrap(),
         window: serde_json::to_vec(window).unwrap(),
         artifact: parts.artifact,
         context: context.to_vec(),
@@ -471,6 +483,72 @@ fn admission_pins_the_controller_did_not_issue_are_refused() {
     );
 }
 
+/// PR #114 review round 1, P2 (the reviewer's probe): the context window and its execution moved
+/// 120,000 ms later, the teacher's original 60,000-ms window and all its evidence unchanged. The
+/// context was produced entirely after the teaching deadline, so it never acquires teaching
+/// authority.
+#[test]
+fn a_context_produced_after_the_teaching_window_is_refused() {
+    let f = fixture_with(Task::Regression, 5, Some(preregistered()));
+    let mut later = f.window.clone();
+    later.started_unix_ms += 120_000;
+    later.deadline_unix_ms += 120_000;
+    assert!(later.started_unix_ms > f.window.deadline_unix_ms);
+    let run = producer_run(&f, &teaching_context(), &later, |_| {});
+    assert_refused(
+        &f,
+        &submission(&f, &run),
+        "not in the teacher's authorized experiment",
+        "a context produced after the teaching window",
+    );
+}
+
+/// P2: a context produced in another experiment, over the teacher's window times, is refused.
+#[test]
+fn a_context_from_another_experiment_is_refused() {
+    let f = fixture_with(Task::Regression, 5, Some(preregistered()));
+    let mut other = f.experiment.clone();
+    other.methods_sha256 = "6".repeat(64);
+    let window = ExecutionWindow {
+        experiment_sha256: other.identity().unwrap(),
+        ..f.window.clone()
+    };
+    let run = producer_run_in(&f, &teaching_context(), &other, &window, |_| {});
+    assert_refused(
+        &f,
+        &submission(&f, &run),
+        "not in the teacher's authorized experiment",
+        "a context from another experiment",
+    );
+}
+
+/// P2: a context produced in a window that ends after the teaching deadline (an experiment with a
+/// longer allowance, the job exiting after the teacher's deadline) is refused.
+#[test]
+fn a_context_window_that_ends_after_the_teaching_deadline_is_refused() {
+    let f = fixture_with(Task::Regression, 5, Some(preregistered()));
+    let mut longer = f.experiment.clone();
+    longer.resources.total_seconds *= 3;
+    let window = ExecutionWindow {
+        experiment_sha256: longer.identity().unwrap(),
+        started_unix_ms: f.window.started_unix_ms,
+        deadline_unix_ms: f.window.started_unix_ms + longer.resources.total_seconds * 1000,
+    };
+    assert!(window.deadline_unix_ms > f.window.deadline_unix_ms);
+    let deadline = f.window.deadline_unix_ms;
+    let run = producer_run_in(&f, &teaching_context(), &longer, &window, |p| {
+        p.outcome.consumption.gate_released_unix_ms = Some(deadline + 1_000);
+        p.outcome.consumption.observed_exit_unix_ms = Some(deadline + 1_010);
+        p.seal();
+    });
+    assert_refused(
+        &f,
+        &submission(&f, &run),
+        "not in the teacher's authorized experiment",
+        "a context window that ends after the teaching deadline",
+    );
+}
+
 /// `AdmissionPins`, as the handoff's `admission_pins_sha256` hashes them, with placeholder values.
 const ADMISSION_PINS_LAYOUT: &str = r#"{"source_sha256":"s","producer_sha256":"p","artifact_sha256":"a","qualification_sha256":"q","reference_manifest_sha256":"m","context_execution_sha256":"x","qualification_execution_sha256":["c0","c1"],"verification_policy_sha256":"v","training":{"dataset_sha256":"d","prepared_sha256":"r","training_sha256":"t","fitting_rows_sha256":"f","cut":2},"input_sha256":"i","preprocessing_sha256":"e"}"#;
 /// `ExecutionAttestation`, as the pins' `context_execution_sha256` hashes it.
@@ -687,8 +765,23 @@ fn the_issued_context_is_bound_to_the_inner_scope_the_live_driver_freezes() {
     let mut evidence = f.evidence.clone();
     evidence.freeze = freeze;
     evidence.context = Some(context.clone());
+    // The inner comparison's teacher is measured in the window that opened with its freeze.
+    let teaching = context::Teaching {
+        experiment: &f.experiment,
+        window: &window,
+    };
+    let verify = |evidence: &OofEvidence| {
+        context::verify(
+            &f.state,
+            &policy,
+            &record,
+            evidence,
+            &Default::default(),
+            &teaching,
+        )
+    };
     assert_eq!(
-        context::verify(&f.state, &policy, &record, &evidence, &Default::default()).unwrap(),
+        verify(&evidence).unwrap(),
         (
             context.receipt_sha256.clone(),
             context.handoff.unwrap().handoff_sha256
@@ -696,5 +789,5 @@ fn the_issued_context_is_bound_to_the_inner_scope_the_live_driver_freezes() {
     );
     // The whole-development freeze's issue of the same run is not the inner comparison's context.
     evidence.context = Some(retain_handed_off_context(&f.state, &f.evidence.freeze, &run).unwrap());
-    assert!(context::verify(&f.state, &policy, &record, &evidence, &Default::default()).is_err());
+    assert!(verify(&evidence).is_err());
 }

@@ -484,15 +484,27 @@ fn inner_partition_scope_forbids_outer_hold_rows() {
     record.identity_sha256 = plan.comparison.sha256().unwrap();
     let mut evidence = f.evidence.clone();
     evidence.freeze = freeze;
-    // The whole-development receipt is not a receipt for the inner comparison.
-    assert!(context::verify(&f.state, &policy, &record, &evidence, &Default::default()).is_err());
-    // The inner comparison's context, handed off by the preregistered producer in a window that
-    // opened with the inner freeze.
+    // The inner comparison's teaching window opened with the inner freeze; its context is handed
+    // off by the preregistered producer inside it.
     let window = ExecutionWindow {
         experiment_sha256: f.window.experiment_sha256.clone(),
         started_unix_ms: policy.created_at_unix * 1000,
         deadline_unix_ms: policy.created_at_unix * 1000 + 60_000,
     };
+    let teaching = context::Teaching {
+        experiment: &f.experiment,
+        window: &window,
+    };
+    // The whole-development receipt is not a receipt for the inner comparison.
+    assert!(context::verify(
+        &f.state,
+        &policy,
+        &record,
+        &evidence,
+        &Default::default(),
+        &teaching
+    )
+    .is_err());
     evidence.context = Some(handed_off(
         &f.state,
         produce_context(
@@ -507,9 +519,16 @@ fn inner_partition_scope_forbids_outer_hold_rows() {
         &window,
     ));
     assert_eq!(
-        context::verify(&f.state, &policy, &record, &evidence, &Default::default())
-            .unwrap()
-            .0,
+        context::verify(
+            &f.state,
+            &policy,
+            &record,
+            &evidence,
+            &Default::default(),
+            &teaching
+        )
+        .unwrap()
+        .0,
         evidence.context.unwrap().receipt_sha256
     );
 }
