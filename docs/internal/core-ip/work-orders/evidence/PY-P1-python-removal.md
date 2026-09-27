@@ -160,8 +160,8 @@ no installed host file was changed.
 
 ## Archive — every A file, U12–U14 with their tests, kernel-v1 Python, 9 unit templates
 
-- Removed with `git rm`: 703 files (694 `.py` + 9 systemd templates that only ran archived U12/U13
-  code). By category: 625 A, 37 L and 32 T (the U12–U14 units), 9 templates. By unit: 103
+- Removed with `git rm`: 703 files (694 `.py` + 9 systemd templates that only ran archived U12–U14
+  code; per-template decisions in "Follow-up — the nine archived unit templates"). By category: 625 A, 37 L and 32 T (the U12–U14 units), 9 templates. By unit: 103
   kernel-v1 (one unit), U12 17, U13 33, U14 28, the rest unowned A. By directory:
   `python/src/jope/tools` 285, `python/src/jope/research` 87, `python/legacy` 82,
   `python/src/jope/chimera` 44, `python/tests` 29, top-level `python/src/jope` 14,
@@ -418,7 +418,9 @@ archived files for any of them.
   asks systemd for `jope-parallel-console`, whose template
   (`deploy/systemd/engine/jope-parallel-console.service.in`) was archived with U13. Until then the
   dashboard simply reports that unit as absent. Proposed: drop the name when the dashboard is next
-  changed.
+  changed. **Resolved in P1** (see "Follow-up — the nine archived unit templates" below): the
+  name is dropped, and "reports as absent" was wrong — `systemctl show` answers for a missing
+  unit with `ActiveState=inactive`, `SubState=dead` and exit status 0, a stopped service.
 - **PY-P2-3 opportunistic-proposal manifests.**
   `crates/jope-engine/manifests/opportunistic-proposals-v44.sha256:4` and
   `opportunistic-proposals-v53.sha256:5` pin the archived unit files
@@ -469,6 +471,85 @@ is still scanned in the commits before the archive. A comment now says the file 
 Check `py-p1-stale-post-20260927T040410Z`: `git diff --check`, `gitleaks detect` loading the
 edited configuration (no leaks), and `deploy/ci/check.sh`: green.
 
+## Follow-up — the nine archived unit templates (PR #117 `rust-check`)
+
+Hosted CI failed `rust-check` on PR #117: `cargo test -p jope-dime-regressor --test
+systemd_unit_paths`, `every_tracked_unit_is_a_template`, "expected the 39 + 22 + 1 units as
+templates, found 53" (the guard was `count >= 60`). Reproduced locally in
+`p1-units-pre-20260927T205438Z` (same assertion, 3 passed, 1 failed). The archive commit removed
+9 of the 62 templates: `engine` 22 → 15, `selfplay` 39 → 37, `pending` 1 → 1.
+
+Each template was decided on its consumers. The ones common to all nine:
+`deploy/systemd/render.sh`, `jope-units-render` and `just render-units` render whatever `*.in`
+files exist and name no unit; `jope_selfplay_bundle` renders only `deploy/systemd/selfplay/`; no
+installer, workflow under `.github/`, `justfile` recipe or runbook names any of the nine
+(`git grep` of each name over the branch). The remaining mentions are archive records (the
+manifest, the capability matrix's dropped rows, the parity fixtures), the frozen kernel-v1 unit
+files (`deploy/kernel-v1/source/systemd/*.service`, separate files, not templates, not
+installed) and `docs/legacy`. A read-only check on xbabe2 (`host-installed-units.log`,
+`workspace-sync-installed.log` in the pre run) found none of the seven engine names in the
+system or user manager (`LoadState=not-found`).
+
+| Template (`deploy/systemd/…`) | Archive unit | What `ExecStart` ran | Consumers on the branch | Decision |
+| --- | --- | --- | --- | --- |
+| `engine/jope-parallel-console.service.in` | U13 | `python3 @JOPE_HOME@/python/src/jope/tools/tui-session.py` (archived, U13) | `dashboard.rs` `live_operations` asked `systemctl show` for it; no view read that row | stays archived; name dropped from the dashboard |
+| `engine/jope-parallel-controller-next.service.in` | U14 | nothing: `ExecCondition=/usr/bin/false` (held); would run a state-root copy of `continuous_learning.py` (repo source archived, U14) | none | stays archived |
+| `engine/jope-parallel-health.service.in`, `.timer.in` | U14 | a state-root copy of `continuous_status.py` (repo source archived, U14); the timer only starts that service | none | stays archived |
+| `engine/jope-parallel-proposal-library-v44.service.in` | U13 | `python3 @JOPE_HOME@/python/src/jope/tools/opportunistic_proposals.py` (archived, U13) | `crates/jope-engine/manifests/opportunistic-proposals-v44.sha256:4` pins the old `systemd/` file as history; nothing checks it (PY-P2-3) | stays archived |
+| `engine/jope-parallel-pure-proposal-library-v53.service.in` | U13 | `opportunistic_proposals_v2.py` (archived, U13) | `opportunistic-proposals-v53.sha256:5`, as above | stays archived |
+| `engine/jope-parallel-reports.service.in` | U13 | `python3 @JOPE_HOME@/python/src/jope/tools/watch_campaign_reports.py` (archived, U13) | none | stays archived |
+| `selfplay/jope-workspace-sync.service.in`, `.timer.in` | U12 | `python3 @JOPE_STATE@/jope-dime-mirror/controller/current/scripts/workspace_sync.py sync`, a mirror copy outside the repository (repo source and its installer archived, U12) | `jope_selfplay_bundle.rs` `HOST_INSTALLED_UNITS` removes them from the rendered bundle units: a stop-list that tolerates their absence | stays archived; the exclusion is kept and now tested |
+
+No template has a live consumer that renders, installs, enables, starts or copies it, so none
+is restored, and `docs/archive/python-archive-manifest.json` and the custody tarball keep all
+nine (the gate below re-checks that each `systemd-template` row's blob equals `8a55c4fef`'s,
+that the path is absent from the branch, and the custody `SHA256SUMS`). On xbabe2 the two
+workspace-sync units are still installed as system units by the archived installer
+(`/etc/systemd/system`, timer `enabled`), but they are dead: the timer is `inactive`, last
+triggered 2026-09-14 14:40:00 UTC with no next elapse, and the service last exited with status 2.
+They run the mirror's copy, not a repository file, so the archive does not change them; retiring
+them needs root and is left to the owner.
+
+Changes:
+
+- `crates/jope-campaigns/tests/systemd_unit_paths.rs`: `every_tracked_unit_is_a_template` now
+  checks a floor per directory, `engine` 15 + `selfplay` 37 + `pending` 1 = 53, and a total
+  floor of 53, and its message prints the found breakdown. Per directory, so a template added in
+  one cannot hide one lost in another. The stray-rendered-unit check is unchanged.
+- `crates/jope-campaigns/src/bin/jope_selfplay_bundle.rs`: new test
+  `host_installed_units_are_optional_and_never_rendered_into_the_bundle` renders a fixture
+  checkout without the workspace-sync templates (renders), then with restored copies (still
+  excluded). It characterises existing behaviour, so it has no failing reproduction.
+- `crates/jope-engine/src/dashboard.rs`: the observed units are `OBSERVED_SERVICES`
+  (`jope-parallel-campaign`, `jope-parallel-gp`); `jope-parallel-console` is dropped, since for a
+  unit that is not installed `systemctl show` returns `ActiveState=inactive`, `SubState=dead`
+  and exit status 0 (`systemctl-absent-unit.log`), which reads as a stopped service. The new
+  unit test `every_observed_service_has_a_tracked_unit_template` requires a tracked
+  `deploy/systemd/engine/<name>.service.in` for every observed name, with a negative control.
+  Reproduction `p1-units-pre-20260927T205650Z`: with the old list the test fails on
+  `["jope-parallel-console"]`.
+
+Runs: `p1-units-pre-20260927T205438Z` (the CI failure reproduced, template counts at main and
+here, the host's unit state), `p1-units-pre-20260927T205650Z` (the dashboard reproduction),
+`p1-units-post-20260927T205744Z` (the three tests pass; negative control: with
+`engine/jope-parallel-gp.service.in` removed the guard fails with "found engine 14 + selfplay
+37 + pending 1 = 52", and the file was restored with its blob unchanged) and
+`p1-units-post-gate-20260927T210016Z`, which runs the hosted `rust-check` and `rust-test` lanes
+locally exactly as `.github/workflows/ci.yml` does (`deploy/ci/receipt.py` around
+`deploy/ci/fast-lane.sh <lane>`) together with the landing gate. It ran on the branch before
+this paragraph's results were added (the amendment changes only this file, checked by
+`p1-units-post-docs-*`), and every step passed: the `rust-check` receipt (`cargo check
+--workspace --all-targets --locked`, then `systemd_unit_paths` 4 of 4, then the MSRV check);
+the `rust-test` receipt (the 17 product crates under nextest: 1593 collected, 1570 run and
+passed, 23 skipped, 0 failed); `cargo test -p jope-dime-regressor` over all its targets (997
+passed, 11 ignored, 0 failed); the dashboard tests (the new unit test, `tests/dashboard.rs` 26
+passed and 1 ignored, `tests/learning_history.rs` 16 passed); the fence suites; `jope-ci` (21
+passed, 3 ignored) and `jope-records` (113 passed, 1 ignored), both Python-parity suites
+included; fmt, `git diff --check`, `coverage validate` (0 unassigned or invalid),
+`verify-test-inventory` and the other records checks, `parity-matrix.sh --no-build`,
+`deploy/ci/check.sh` (gitleaks shimmed) and the unshimmed `secret-scan.sh`; and the nine
+manifest rows and the custody `SHA256SUMS` above.
+
 ## Commit map — `rr2/python-p1` to the landing
 
 The work above was committed on `rr2/python-p1` and landed through `rr2/python-p1-landing`: its
@@ -507,6 +588,9 @@ runs made before the rebase.
 | `docs, jope-records: cite landed commits, not rr2/python-p1 originals (P1 landing)` | `309efce3b` | landing only | — |
 | `docs, jope-records: cite the rebased commits after rebasing onto #116 (P1 landing)` | none, made later | landing only | — |
 | `docs, jope-records: name the landed P1 commits by subject, not by branch SHA (P1 landing)` | none, made later | landing only | — |
+| `jope-campaigns: floor the unit templates per directory after the P1 archive (P1 landing)` | none, made later | landing only | — |
+| `jope-engine: stop observing the archived jope-parallel-console unit (P1 landing)` | none, made later | landing only | — |
+| `docs: record why the nine archived unit templates stay archived (P1 landing)` | none, made later | landing only | — |
 
 "Patch-id" compares `git patch-id --stable` of the commit as submitted and its original. Each
 pair changes the same paths with the same status. The tree proof
