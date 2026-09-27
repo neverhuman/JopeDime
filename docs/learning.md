@@ -263,7 +263,7 @@ preconditions; production S3 permissions and live multi-host qualification remai
 | genebank `best_scores` (4,948) | row `task` / `dataset_hash` | `{tier: score_tier, protocol: "genebank-gen1"}` | `unbound` / `unbound`; version `genebank-legacy`; protocol `genebank-gen1` | row `metric` (`oof_r2`, `r2`, `auc`), higher | assigned by the ledger | canonical JSON of the row | `replayable: false`, `benchmark_valid: false`; `ts_unix = achieved_at_ms / 1000`; `bundle_id` = sha256 of the db file; `semantic_sha256` kept when present |
 | lineage-A snapshot (`JopeTestOnlyTrainingCorpus.v1` manifest + streamed rows) | `metadata.task_type` / `metadata.dataset_hash` | `{tier: "test_exact", protocol: strict_filter.selection_bias}` | `unbound`; version `snapshot-<watermark>` | strict-filter metric of the task (regression `r2`, binary `auc`), higher; per-(task, dataset) maximum over `valid` `test_exact` rows | assigned by the ledger | canonical JSON of the score-bearing row (embeddings dropped) | `replayable: false`; `provenance.source = snapshot-<watermark>`, `run_id = <generation>/<split>`, `bundle_id` = manifest sha256; the streamed splits must hash to `train_sha256` / `validation_sha256` |
 | SOTArena `results/<version>/scores.csv` | — (`jope.score/v1`, not HWM) | `{track: track_id, protocol}` | `unbound`; `receipt_sha256 = source_sha256` | row metric/value | — | — | `benchmark_valid` from the file; `git_sha` of the results checkout; `ts_unix` from `source_revision`; `source.version` = the results directory |
-| `jope pipeline run` / evolve round receipt (`jope.pipeline-receipt/v2` or `v3`, re-derived from its run directory) | `dataset.task` / `dataset.dataset_hash` | `{source: "pipeline", prepared_sha256, fold_seed, folds, cuts, train_sha256}` | `unbound` / `unbound`; version = tool version and search engine; protocol `jope.pipeline-holdout/v1;engine=…;tool=…;selection=…;budget_policy=…;rng=splitmix64-coordinate/v1`; comparison context stage `pipeline_holdout`, aggregation `mean_over_requested_cuts` | `rmse` = the champion's mean held-out RMSE over the requested cuts, lower, `original_target_units` | assigned by the ledger | the receipt's exact bytes | `replayable: false`, `benchmark_valid: false`, `sealed: false`; never `train_oof`, so never teaching-eligible; `provenance.source = pipeline`, `run_id = <dataset id>/<run directory>`, `git_sha` = the receipt's |
+| `jope pipeline run` / evolve round receipt (`jope.pipeline-receipt/v2` or `v3`, re-derived from its run directory) | `dataset.task` / `dataset.dataset_hash` | `{source: "pipeline", prepared_sha256, fold_seed, folds, cuts, train_sha256}` | `unbound` / `unbound`; version = tool version, search engine and source commit; protocol `jope.pipeline-holdout/v1;engine=…;tool=…;source_commit=<git_sha>;selection=…;budget_policy=…;rng=splitmix64-coordinate/v1` (a receipt without `git_sha` is refused); comparison context stage `pipeline_holdout`, aggregation `mean_over_requested_cuts` | `rmse` = the champion's mean held-out RMSE over the requested cuts, lower, `original_target_units` | assigned by the ledger | the receipt's exact bytes | `replayable: false`, `benchmark_valid: false`, `sealed: false`; never `train_oof`, so never teaching-eligible; `provenance.source = pipeline`, `run_id = <dataset id>/<run directory>`, `git_sha` = the receipt's |
 
 ### Pipeline champions (`hwm ingest --source pipeline`)
 
@@ -274,12 +274,18 @@ prepared cuts, every cut's `search.json` and `observations.json` digests, the se
 bit, coverage, seeds, migrations and emitted files); one that does not reproduce writes nothing.
 The blob is the receipt's exact bytes, so `record_sha256` is the receipt's sha256. The
 comparison identity names the dataset content hash, the prepared cuts, the evaluator (search
-engine and tool version), the metric and the random-stream protocol, so a different cut set,
-fold seed, dataset, tool version or engine is a different identity and therefore a different
-pointer: it never displaces this one (`decide` against it is `identity-mismatch`). Evolve rounds
-on one lineage share one identity, so ingesting them in order yields `initialized`, then
-`improved`, `tie` or `not-improved`. The pipeline never writes to this store; ingest is a
-separate step over its outputs.
+engine, tool version and the source commit the receipt records as `git_sha`) and the
+selection, budget and random-stream protocols, so a different cut set, fold seed, dataset,
+engine or commit is a different identity and therefore a different pointer: it never displaces
+this one (`decide` against it is `identity-mismatch`). The commit is what matters in practice:
+the workspace version never moves and the engine string is a constant, so without it a score
+from changed evaluator code would be compared with, and could displace, one from the old code. A
+receipt that records no commit is refused. The commit does not bind uncommitted changes or the
+binary itself (`evaluator_sha256` stays `unbound`). The metric is not part of the identity;
+`decide` checks it separately (`metric-mismatch`). Evolve rounds on one lineage share one
+identity, so ingesting them in order yields `initialized`, then `improved`, `tie` or
+`not-improved`. The pipeline never writes to this store; ingest is a separate step over its
+outputs.
 
 ### The champion bank (`bank add|list|export`)
 

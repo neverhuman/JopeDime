@@ -1,8 +1,9 @@
 //! `jope-learning hwm ingest --source pipeline`: a verified pipeline receipt's champion becomes
-//! a `jope.hwm/v1` record under a complete comparison identity, and the ledger's admission rules
-//! apply to it unchanged: initialized, then improved; a tie and a not-better are rejected; a
-//! different cut set or dataset is a different identity that never displaces this one; nothing
-//! it records is teaching-eligible.
+//! a `jope.hwm/v1` record under a comparison identity naming the dataset, the cuts, the protocol
+//! and the source commit that measured it, and the ledger's admission rules apply to it
+//! unchanged: initialized, then improved; a tie and a not-better are rejected; a different cut
+//! set, dataset or source commit is a different identity that never displaces this one; a
+//! receipt naming no commit is refused; nothing it records is teaching-eligible.
 
 use jope_learning::hwm::{self, Decision, RejectReason};
 use jope_learning::sources::pipeline;
@@ -197,6 +198,75 @@ fn another_cut_set_or_dataset_is_another_identity_and_never_displaces() {
     assert_eq!(pointers.len(), 2);
     assert!(pointers.iter().any(|(_, r)| *r == weak));
     assert!(hwm::verify(&state, &[]).unwrap().ok());
+}
+
+/// A run at `commit` (as `--source-commit` records it).
+fn run_at(
+    root: &Path,
+    name: &str,
+    evaluations: usize,
+    commit: &str,
+    incumbent: Option<&Path>,
+) -> PathBuf {
+    let output = root.join(name);
+    run(&RunOptions {
+        budget: Budget {
+            evaluations,
+            seconds: 600,
+        },
+        rng_seed: 7,
+        languages: vec![jope_pipeline::emit::Language::Rust],
+        policy: Policy::Skip,
+        incumbent: incumbent.map(Path::to_path_buf),
+        source_commit: Some(commit.to_owned()),
+        ..RunOptions::new(dataset("pmlb-229-pwlinear"), &output)
+    })
+    .unwrap();
+    output.join("receipt.json")
+}
+
+/// The evaluator is the code that measured: the workspace version never moves, so the source
+/// commit is what tells two evaluators apart. A lower score from other code is another identity,
+/// never an improvement, and a receipt that names no commit cannot be compared at all.
+#[test]
+fn another_source_commit_is_another_identity_and_an_unbound_one_is_refused() {
+    let root = tempfile::tempdir().unwrap();
+    let (a, b) = ("a".repeat(40), "b".repeat(40));
+    let weak = run_at(root.path(), "weak", 1, &a, None);
+    let weak_again = run_at(root.path(), "weak-again", 1, &a, None);
+    let strong_elsewhere = run_at(root.path(), "strong-b", 24, &b, Some(&weak));
+    let (weak_r, strong_r) = (record(&weak), record(&strong_elsewhere));
+    assert!(strong_r.score.value < weak_r.score.value);
+    assert_eq!(weak_r.identity_sha256, record(&weak_again).identity_sha256);
+    assert_ne!(weak_r.identity_sha256, strong_r.identity_sha256);
+    assert_eq!(
+        hwm::decide(Some(&weak_r), &strong_r),
+        Decision::Rejected(RejectReason::IdentityMismatch)
+    );
+    let temp = tempfile::tempdir().unwrap();
+    let state = State::at(temp.path());
+    ingest(&state, &weak);
+    assert_eq!(
+        transitions(&ingest(&state, &strong_elsewhere)),
+        vec![("initialized".to_owned(), 1)],
+        "a better score from other code displaced this code's record"
+    );
+    assert_eq!(state.pointers().unwrap().len(), 2);
+
+    // The same run with no recorded commit.
+    let copy = root.path().join("unbound");
+    copy_tree(weak.parent().unwrap(), &copy);
+    let receipt = copy.join("receipt.json");
+    let mut value: serde_json::Value =
+        serde_json::from_slice(&std::fs::read(&receipt).unwrap()).unwrap();
+    value["git_sha"] = serde_json::Value::Null;
+    std::fs::write(&receipt, serde_json::to_vec_pretty(&value).unwrap()).unwrap();
+    jope_pipeline::evidence::verify_champion_run(&receipt).unwrap();
+    let Err(error) = pipeline::scan(&receipt, None) else {
+        panic!("a receipt that names no source commit was mapped");
+    };
+    let error = format!("{error:#}");
+    assert!(error.contains("source commit"), "{error}");
 }
 
 #[test]
