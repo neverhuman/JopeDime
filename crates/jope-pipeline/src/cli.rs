@@ -166,7 +166,9 @@ pub enum Cmd {
     },
     /// Score a verified receipt's selected genome once on the dataset's sealed test split (refit
     /// on every train.csv row). Writes a separate jope.pipeline-test-score/v1; a repeat for the
-    /// same (dataset, genome) is refused; it never feeds selection.
+    /// same (dataset, genome) in the registry is refused, and the score lists the genomes already
+    /// scored on that test split there (choosing among several makes the test split a selection
+    /// input). Nothing in the tools reads it back into selection.
     Score {
         #[arg(long)]
         receipt: PathBuf,
@@ -177,7 +179,8 @@ pub enum Cmd {
         #[arg(long)]
         dataset: Option<String>,
         /// Where the once-per-(dataset, genome) records live (default:
-        /// $JOPE_STATE/pipeline/test-scores).
+        /// $JOPE_STATE/pipeline/test-scores). A local record, not access control: another
+        /// registry starts empty.
         #[arg(long)]
         registry: Option<PathBuf>,
         #[arg(long)]
@@ -376,6 +379,19 @@ pub fn run(cli: Cli) -> Result<ExitCode> {
                 registry: registry.unwrap_or_else(crate::test_score::default_registry),
                 clock: crate::clock::Clock::Wall,
             })?;
+            if !score.earlier_looks.is_empty() {
+                eprintln!(
+                    "jope pipeline score: the test split of {} was already scored for {} other \
+                     genome(s) in {} ({}). This is look {} at it: keeping the test-best of \
+                     several makes the test split a selection input. Report the genome chosen \
+                     before any test score was seen, and name every look.",
+                    score.dataset.dataset_hash,
+                    score.earlier_looks.len(),
+                    score.registry,
+                    score.earlier_looks.join(", "),
+                    score.earlier_looks.len() + 1
+                );
+            }
             if json {
                 println!("{}", serde_json::to_string(&score)?);
             } else {
