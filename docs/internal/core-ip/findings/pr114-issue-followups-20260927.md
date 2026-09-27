@@ -70,3 +70,39 @@ retained as `publication-hygiene.log` and `publication-hygiene2.log`. The succes
 run used the existing user service manager, without changing Git safety settings.
 Receipt (6), result (5) and coverage (9) fixtures also passed; shellcheck and diff
 whitespace validation passed. These are local checks, not hosted qualification.
+
+## Network root cause and download recovery
+
+Seven exact-head attempts at `93bfcb956` all failed only on GitHub network steps. Every source lane
+passed whenever it ran. The observed failure modes were:
+- the `changes` job exceeded its 3-minute cap because "Set up job" (action archive downloads) took
+  2m10s;
+- `ListArtifacts`, `GetSignedArtifactURL` and `FinalizeArtifact` hit `ECONNRESET` after about
+  120 seconds (runs `36301428618`, `36301414927` and `36306656599`).
+
+GitHub status reported all systems operational. Two host-side causes were measured:
+- **DNS.** The runner containers used the LAN router `192.168.68.1` as their first nameserver.
+  From xbabe1 it failed 18 of 90 lookups, while the host's systemd-resolved failed 0 of 90. Each
+  miss costs glibc 5 seconds, which is exactly the runner's connectivity-check timeout.
+
+  xbabe1 and xbabe2 were fixed on the host, not in the repository:
+  - resolved listens on `docker0`;
+  - `daemon.json` sets `dns=[172.17.0.1]` with `timeout:2 attempts:3`;
+  - fresh containers then failed 0 of 90 lookups.
+
+  Receipts are in `~/jope-evidence/runner-dns-fix-20260927/` on each host.
+- **Connection blackholing.** From an xbabe1 container, 1 of 8 fresh TCP connects to the artifact
+  service received no reply for 300 seconds, while the rest completed in 0.06 seconds. That is
+  consistent with intermittent SYN loss on the shared LAN/NAT path. The roughly 120-second hang is
+  the kernel's SYN-retry window.
+
+The workflow now tolerates one stalled connection instead of failing on it:
+- `changes` 3 → 10 minutes;
+- `hygiene` 10 → 20 minutes, which gives the three bounded publication attempts room;
+- `aggregate` 10 → 20 minutes, plus up to three whole-download attempts. Each retry starts from an
+  empty directory. `publication-status.sh` (all 125 outcome combinations under test) requires
+  exactly one complete bounded sequence.
+
+`aggregate.py` is unchanged and still refuses any artifact without its root receipt. No test, gate,
+pass criterion or evidence rule changed. Local checks: actionlint passed, `test-runner.py` 14/14,
+and the full `check.sh` hygiene run exited 0.
