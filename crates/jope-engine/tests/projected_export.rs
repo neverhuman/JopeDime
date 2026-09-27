@@ -108,6 +108,10 @@ fn pointer_view(root: &Path) -> PathBuf {
 /// only in a workspace ancestor it refuses at the projection, before any fit
 /// request; with the table under the root only the activation fence refuses.
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn shipped_fit_view_projects_under_its_declared_root_before_the_fence() {
     let tmp = tempfile::tempdir().unwrap();
     let outer = tmp.path().canonicalize().unwrap();

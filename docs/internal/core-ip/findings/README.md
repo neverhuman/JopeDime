@@ -81,7 +81,7 @@ instead of being skipped. A read-only custody copy of the regression fixture inp
 are host evidence, not CI verification, so these triage records are `moved` (passing in the
 host lane) or stay `open`.
 
-The neural build deliberately refuses the CPU fit-service binding. Its 74 CPU-only
+The neural build deliberately refuses the CPU fit-service binding. Its 80 CPU-only
 service contracts remain executable in both default and scratch families and are
 explicitly ignored only with `neural`. `deploy/ci/neural-cpu-only-tests.txt` names
 every case; `check-test-routing.sh` checks their presence and ignore state against
