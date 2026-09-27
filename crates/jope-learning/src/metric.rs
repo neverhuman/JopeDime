@@ -1,4 +1,5 @@
-//! The metric-direction table (`jope_task_elo.rs:31-36`, `promotion_gate.py:22-27`): r2, auc,
+//! The metric-direction table (`jope_task_elo.rs:31-36`,
+//! `8a55c4fef:python/src/jope/tools/promotion_gate.py:22-27`, archived): r2, auc,
 //! macro_f1 and negative_mase improve upwards; rmse, logloss and mase improve downwards.
 //! `oof_r2` (genebank's cross-validated r2) is the one addition, upward like r2.
 

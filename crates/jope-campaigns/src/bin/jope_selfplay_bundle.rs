@@ -981,11 +981,14 @@ fn selfplay_unit_templates_in(source: &Path) -> PathBuf {
     source.join("deploy/systemd/selfplay")
 }
 
-/// Templates that live next to the self-play units but are not bundle
-/// content: `install_workspace_sync.py` installs the xbabe2 mirror units as
-/// system units (`/etc/systemd/system`) from the checkout, they run a Python
-/// interpreter directly and work out of the mirror, so the bundle boundary
-/// (`validate_systemd_unit`) does not apply to them.
+/// Templates that lived next to the self-play units but were not bundle
+/// content: `install_workspace_sync.py` installed the xbabe2 mirror units as
+/// system units (`/etc/systemd/system`) from the checkout, they ran a Python
+/// interpreter directly and worked out of the mirror, so the bundle boundary
+/// (`validate_systemd_unit`) does not apply to them. The Python removal P1
+/// (ADR-0008) archived the installer and both templates (restore with
+/// `git checkout 8a55c4fef -- <path>`, docs/archive/python-archive-manifest.json);
+/// the names stay excluded so a restored copy is still not bundled.
 const HOST_INSTALLED_UNITS: [&str; 2] =
     ["jope-workspace-sync.service", "jope-workspace-sync.timer"];
 

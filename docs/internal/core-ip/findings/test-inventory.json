@@ -141,86 +141,6 @@
       "role": "infrastructure",
       "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
     },
-    "python:deploy/kernel-v1/source/tests/test_experiment_scheduler.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
-    },
-    "python:deploy/kernel-v1/source/tests/test_opportunistic_proposals.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
-    },
-    "python:deploy/kernel-v1/source/tests/test_opportunistic_proposals_v2.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
-    },
-    "python:deploy/kernel-v1/source/tools/test_binary_inventory.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
-    },
-    "python:deploy/kernel-v1/source/tools/test_binary_workflow.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
-    },
-    "python:deploy/kernel-v1/source/tools/test_campaign_bound_jobs.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
-    },
-    "python:deploy/kernel-v1/source/tools/test_continuous_learning.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
-    },
-    "python:deploy/kernel-v1/source/tools/test_corpus_cache_snapshot.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
-    },
-    "python:deploy/kernel-v1/source/tools/test_deferred_proposal_admission.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
-    },
-    "python:deploy/kernel-v1/source/tools/test_experiment_hardening.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
-    },
-    "python:deploy/kernel-v1/source/tools/test_extend_component_sampling.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
-    },
-    "python:deploy/kernel-v1/source/tools/test_gpu_batch_probe.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
-    },
-    "python:deploy/kernel-v1/source/tools/test_kernel_release.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
-    },
-    "python:deploy/kernel-v1/source/tools/test_kernel_verification.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
-    },
-    "python:deploy/kernel-v1/source/tools/test_qualify_matched_v2.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
-    },
-    "python:deploy/kernel-v1/source/tools/test_qualify_pure_proposals.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
-    },
-    "python:deploy/kernel-v1/source/tools/test_report_cycle.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
-    },
-    "python:deploy/kernel-v1/source/tools/test_seed_experiment.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
-    },
-    "python:deploy/kernel-v1/source/tools/test_watch_campaign_reports.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
-    },
-    "python:python/src/jope/research/test_absolute_path_audit.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
     "python:python/src/jope/research/test_exact_accept.py": {
       "role": "research",
       "reason": "research script test outside the maintained product surface"
@@ -245,19 +165,11 @@
       "role": "research",
       "reason": "research script test outside the maintained product surface"
     },
-    "python:python/src/jope/research/test_exact_capacity.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
     "python:python/src/jope/research/test_exact_common.py": {
       "role": "research",
       "reason": "research script test outside the maintained product surface"
     },
     "python:python/src/jope/research/test_exact_compile_cache.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/research/test_exact_context_catalog.py": {
       "role": "research",
       "reason": "research script test outside the maintained product surface"
     },
@@ -277,19 +189,7 @@
       "role": "research",
       "reason": "research script test outside the maintained product surface"
     },
-    "python:python/src/jope/research/test_exact_expansion.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
     "python:python/src/jope/research/test_exact_freshness.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/research/test_exact_freshness_mcp.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/research/test_exact_gp_bridge.py": {
       "role": "research",
       "reason": "research script test outside the maintained product surface"
     },
@@ -321,23 +221,11 @@
       "role": "research",
       "reason": "research script test outside the maintained product surface"
     },
-    "python:python/src/jope/research/test_exact_service_launcher.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
     "python:python/src/jope/research/test_exact_status.py": {
       "role": "research",
       "reason": "research script test outside the maintained product surface"
     },
-    "python:python/src/jope/research/test_exact_takeover.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
     "python:python/src/jope/research/test_exact_train.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/research/test_exact_train_reserve.py": {
       "role": "research",
       "reason": "research script test outside the maintained product surface"
     },
@@ -346,22 +234,6 @@
       "reason": "research script test outside the maintained product surface"
     },
     "python:python/src/jope/research/test_exact_winner_scan.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/research/test_jope_learning_report.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/research/test_jope_recovery_report.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/research/test_migrate_foundation_inventory.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/research/test_project_boundary_check.py": {
       "role": "research",
       "reason": "research script test outside the maintained product surface"
     },
@@ -377,465 +249,9 @@
       "role": "research",
       "reason": "research script test outside the maintained product surface"
     },
-    "python:python/src/jope/research/test_train_only_redteam_scq.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
     "python:python/src/jope/research/test_train_spec_policy.py": {
       "role": "research",
       "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/research/test_validate_unified_v3.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/research/test_workspace_batch.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/research/test_workspace_inventory.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/research/test_workspace_pages.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/research/test_workspace_pages_review.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/research/test_workspace_sync.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_activation.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_authority_resolution.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_beyond_reproach.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_binary_inventory.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_binary_workflow.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_campaign_bound_jobs.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_candidate_intake.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_champion_git.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_checkpoint_ledger.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_closed_loop.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_collect_admitted_corpus.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_component_ledger.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_continuous_learning.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_continuous_quality_units.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_continuous_status.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_continuous_teacher_progress.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_corpus_cache_snapshot.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_corpus_verification.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_cut_baseline.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_deferred_proposal_admission.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_direct_proposal_evaluation.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_eval_registry.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_expansion_assembly.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_experiment_hardening.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_expert_iteration_setup.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_extend_component_sampling.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_fence_honesty.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_flywheel_acceptance.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_flywheel_baseline.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_flywheel_f9_readout.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_flywheel_headline.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_flywheel_metrics.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_flywheel_plan.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_flywheel_series.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_flywheel_verdict.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_four_task_campaign.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_freeze_registry_release.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_funding_client.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_funding_recovery.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_gp_emission_handoff.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_gp_queue_gc.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_gpu_batch_probe.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_gpu_occupancy.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_head_cost_census.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_hold_release_readout.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_inventory_legacy_fits.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_kernel_release.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_kernel_verification.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_label_admission.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_launch_next.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_league_episode.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_learning_inputs.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_live_controller_copy.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_loop_preflight.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_migration_health.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_mirror_learning_receipts.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_node_mirror_pull.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_nominate_replay_challenger.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_operational_release.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_original_learning_selection.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_original_query_selection.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_population_arm_policy.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_population_judge.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_promotion_gate.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_promotion_tournament.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_qualification_budget.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_qualification_collection.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_qualification_slots.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_qualify_matched_v2.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_qualify_pure_proposals.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_qualify_resident_workers.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_qualify_teaching_store.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_quarantine_incompatible_searches.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_raw_triplet_parity.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_registry_namespace.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_release_qualification.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_replay_planner.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_replay_policy.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_report_cycle.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_required_learning_plan.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_required_learning_trial.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_resident_gpu_pool.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_restamp_encode_receipts.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_scored_family_allowlist.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_screen_fixture.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_screen_pilot_select.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_seed_experiment.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_selfplay_milestones.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_shadow_eval_registry.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_shared_teaching_cache.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_stopped_unit.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_successor_ledger.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_successor_targets.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_sync_certificates.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_task_kernel_fixtures.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_unpublished_cut_census.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_useful_hour.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_verify_manifest_v10.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_verify_remote.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_watch_campaign_reports.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_winrate_receipt.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/src/jope/tools/test_xbabe2_local_ui_ci.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
-    "python:python/tests/engine/test_experiment_scheduler.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
-    },
-    "python:python/tests/engine/test_opportunistic_proposals.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
-    },
-    "python:python/tests/engine/test_opportunistic_proposals_v2.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
-    },
-    "python:python/tests/test_append_realtime_agent_chat.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
-    },
-    "python:python/tests/test_backfill_hyperion_stale_confirmation_cells.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
     },
     "python:python/tests/test_context_proposals.py": {
       "role": "regression",
@@ -850,23 +266,7 @@
         "training"
       ]
     },
-    "python:python/tests/test_dlgp_budget_campaign.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
-    },
-    "python:python/tests/test_dlgp_safe_cleanup.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
-    },
     "python:python/tests/test_durable_selfplay.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
-    },
-    "python:python/tests/test_expanded_gp_finale_audit.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
-    },
-    "python:python/tests/test_expanded_gp_protected_screen.py": {
       "role": "historical",
       "reason": "historical campaign tooling retained for replay; not a maintained regression control"
     },
@@ -878,10 +278,6 @@
       "role": "research",
       "reason": "research script test outside the maintained product surface"
     },
-    "python:python/tests/test_external_fixture_index.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
-    },
     "python:python/tests/test_freeze_corpus_decoupling.py": {
       "role": "regression",
       "subsystems": [
@@ -889,60 +285,12 @@
         "training"
       ]
     },
-    "python:python/tests/test_freeze_hyperion_precomputed_cell_coverage.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
-    },
     "python:python/tests/test_frozen_vocabulary_training.py": {
       "role": "regression",
       "subsystems": [
         "training",
         "policy"
       ]
-    },
-    "python:python/tests/test_genome_boost_cluster_campaign.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
-    },
-    "python:python/tests/test_golden46_campaign.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
-    },
-    "python:python/tests/test_golden46_execution.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
-    },
-    "python:python/tests/test_golden46_special_execution.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
-    },
-    "python:python/tests/test_hyperion_authority_b5_screen.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
-    },
-    "python:python/tests/test_hyperion_blend_train_audit.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
-    },
-    "python:python/tests/test_hyperion_cv_search_protected.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
-    },
-    "python:python/tests/test_hyperion_final_cv7_train_benchmark.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
-    },
-    "python:python/tests/test_hyperion_residual_train_audit.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
-    },
-    "python:python/tests/test_hyperion_train_audit.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
-    },
-    "python:python/tests/test_install_hyperion_orig_v2.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
     },
     "python:python/tests/test_optional_task_readiness.py": {
       "role": "historical",
@@ -954,27 +302,7 @@
         "training"
       ]
     },
-    "python:python/tests/test_raw_floor_train_audit.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
-    },
-    "python:python/tests/test_realtime_selfplay.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
-    },
     "python:python/tests/test_recipe_e.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
-    },
-    "python:python/tests/test_reconstruct_latest_hyperion_old_semantics.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
-    },
-    "python:python/tests/test_reconstruct_old_hyperion_vs.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
-    },
-    "python:python/tests/test_replay_hyperion_confirmation_cells.py": {
       "role": "historical",
       "reason": "historical campaign tooling retained for replay; not a maintained regression control"
     },
@@ -985,12 +313,6 @@
     "python:python/tests/test_selfplay_controller.py": {
       "role": "historical",
       "reason": "historical campaign tooling retained for replay; not a maintained regression control"
-    },
-    "python:python/tests/test_task_semantics.py": {
-      "role": "regression",
-      "subsystems": [
-        "preparation"
-      ]
     },
     "python:python/tests/test_test_exact_campaign.py": {
       "role": "historical",
@@ -1027,10 +349,6 @@
       "subsystems": [
         "training"
       ]
-    },
-    "python:python/tests/test_verify_old_hyperion_vs_replays.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
     },
     "target:battle-gpu/lib/battle_gpu": {
       "role": "regression",
