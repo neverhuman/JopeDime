@@ -1,8 +1,9 @@
-//! The four ingest sources and their mapping into `jope.hwm/v1` / `jope.score/v1`
+//! The ingest sources and their mapping into `jope.hwm/v1` / `jope.score/v1`
 //! (the mapping table in docs/learning.md).
 
 pub mod champions;
 pub mod genebank;
+pub mod pipeline;
 pub mod snapshot;
 pub mod sotarena;
 
