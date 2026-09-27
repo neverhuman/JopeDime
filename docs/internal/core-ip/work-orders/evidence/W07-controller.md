@@ -1710,3 +1710,31 @@ now in `neural::bound_load_tests`, not `tests/training.rs`. PR #114's API is cra
 so the test moved to reach it. It proves the same properties: the restored step, parameters
 and next update are identical, the replaced files are refused, and corrupted optimizer bytes
 are refused. It also replaces every file right after its check.
+
+**Verification** (`w7-landing-post-20260927T194951Z`, at `7ee50d897`; the commit that adds this
+paragraph changes no code). All ran on xbabe2, CPU only, with `CUDA_VISIBLE_DEVICES=""` for
+`neural`:
+
+- These gates pass: `cargo fmt --check`, `git diff --check`, `cargo check --workspace
+  --all-targets`, `cargo check -p jope-parallel --features neural --all-targets`,
+  `coverage.py validate` (0 unassigned), `jope-records verify-test-inventory`, and
+  `deploy/ci/check.sh`. `check.sh` includes gitleaks over every reachable commit and the
+  parity matrix (810 rows).
+- The `bounded_*` default targets pass 99 of 99: `bounded_run` 38, `bounded_run_recovery` 12,
+  `bounded_transport` 10, `bounded_census` 8, `bounded_training` 8, `bounded_launch` 7,
+  `bounded_grants` 5, `bounded_smartcluster` 5, `bounded_agent` 3 and `bounded_preflight_cli` 3.
+- The full lanes pass through `deploy/ci/full-lane.sh`, including #116's routing checks and
+  W7-D5's `scqd` digest:
+  - `full-default`: 3 584 passed, 54 skipped, in 740 s against a 1 500 s budget;
+  - `full-scratch`: 2 183 passed, 27 skipped, in 669 s against 900 s;
+  - `full-neural`: 810 passed, 97 skipped, in 488 s against 900 s, with neural routing
+    verified for 80 contracts.
+- **An earlier pass under contention** (`w7-landing-post-20260927T193031Z`, before the
+  secret-scan fix, run at idle I/O priority) had three failures. All three pass in isolation
+  and in the full lanes above:
+  - the fence test `projected_gp_candidates_are_exactly_representable_unique_and_durable`
+    reached 25 of its 100 evaluations inside its 90 s search budget;
+  - `a_killed_rank_drains_the_whole_group_through_smartcluster` saw no admission within 60 s;
+  - under `neural`, `teaching_store::read_once_tests::a_search_receipt_is_validated_from_the_bytes_its_ledger_commits`
+    hit the default nextest profile's 360 s limit. It takes 243–290 s there; the `main`
+    profile allows 1 200 s.
