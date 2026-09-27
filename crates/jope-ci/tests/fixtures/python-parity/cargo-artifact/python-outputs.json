@@ -1,0 +1,197 @@
+{
+  "source": "py-p1-u2-diff-20260927T023243Z (deploy/ci/cargo-artifact.py at 8a55c4fef, python3 on xbabe2)",
+  "normalisation": "the lane root is @ROOT@; @METADATA@/@MESSAGES@/@SOURCE@/@OUT@ are the fixture files as materialised by the test",
+  "nextest_output": "store = { dir = \"@ROOT@/target/nextest\" }\n# Test tiers (plan: CI and testing). Profile `pr` runs on hosted runners; `main` on xbabe2.\n[profile.default]\nslow-timeout = { period = \"120s\", terminate-after = 3 }\nfail-fast = false\n\n[profile.pr]\n# Slow deadline tests and the campaign/self-play control planes run only on main (docs/parity/test-timings.json).\ndefault-filter = \"not (package(jope-dime-regressor) | test(=actual_128_192_256_routes_replay_under_retries_and_shuffled_completion) | test(=canceled_cache_commits_resume_without_adopting_partial_contributions) | test(=emit_plan_checks_every_immutable_spec_and_never_submits) | test(=fast_profile_portfolio_head) | test(=golden_portfolio_core) | test(=golden_ridge_gcv_screen_wide) | test(=eval_registry::witness::funding_tests::original_start_and_rank_are_witnessed_retained_and_single_use) | test(=model::tests::portfolio_noise_target_no_leak) | test(=sharded_interruption_tampering_and_source_order_are_enforced) | test(=sigkill_at_each_cache_durable_boundary_keeps_only_complete_entries) | test(=commands::train_only_study::tests::transfer_ranking_excludes_target_family_and_direct_dl_sources))\"\nslow-timeout = { period = \"120s\", terminate-after = 2 }\nfail-fast = false\n\n[profile.pr.junit]\npath = \"junit.xml\"\n\n[profile.main]\nslow-timeout = { period = \"600s\", terminate-after = 2 }\nfail-fast = false\n\n[profile.main.junit]\npath = \"junit-main.xml\"\n",
+  "cases": [
+    {
+      "name": "select",
+      "messages": "build",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "jope-paths",
+        "--bin",
+        "jope-units-render"
+      ],
+      "exit": 0,
+      "stdout": "@ROOT@/target/debug/jope-units-render\n",
+      "stderr": ""
+    },
+    {
+      "name": "select-map",
+      "messages": "build",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "jope-paths",
+        "--bin",
+        "jope-units-render",
+        "--path-map",
+        "@ROOT@/target",
+        "@ROOT@/target"
+      ],
+      "exit": 0,
+      "stdout": "@ROOT@/target/debug/jope-units-render\n",
+      "stderr": ""
+    },
+    {
+      "name": "select-badmap",
+      "messages": "build",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "jope-paths",
+        "--bin",
+        "jope-units-render",
+        "--path-map",
+        "/nonexistent-root",
+        "@ROOT@/target"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: '@ROOT@/target/debug/jope-units-render' is not in the subpath of '/nonexistent-root'\n"
+    },
+    {
+      "name": "select-unfinished",
+      "messages": "unfinished",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "jope-paths",
+        "--bin",
+        "jope-units-render"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: Cargo did not report a successful completed build\n"
+    },
+    {
+      "name": "select-failed",
+      "messages": "failed",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "jope-paths",
+        "--bin",
+        "jope-units-render"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: Cargo did not report a successful completed build\n"
+    },
+    {
+      "name": "select-wrongpkg",
+      "messages": "build",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "no-such-package",
+        "--bin",
+        "jope-units-render"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: expected one workspace package 'no-such-package', found 0\n"
+    },
+    {
+      "name": "select-example",
+      "messages": "build",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "jope-paths",
+        "--example",
+        "jope-units-render"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: expected one executable for jope-paths/example/jope-units-render, found 0\n"
+    },
+    {
+      "name": "select-ambiguous",
+      "messages": "doubled",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "jope-paths",
+        "--bin",
+        "jope-units-render"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: expected one executable for jope-paths/bin/jope-units-render, found 2\n"
+    },
+    {
+      "name": "usage",
+      "messages": "none",
+      "argv": [
+        "select",
+        "--package",
+        "x"
+      ],
+      "exit": 2,
+      "stdout": "",
+      "stderr": "usage: cargo-artifact.py select [-h] --package PACKAGE\n                                (--bin BIN | --example EXAMPLE) --metadata\n                                METADATA --messages MESSAGES\n                                [--path-map CONTAINER_ROOT HOST_ROOT]\ncargo-artifact.py select: error: the following arguments are required: --metadata, --messages\n"
+    },
+    {
+      "name": "nextest-config",
+      "messages": "none",
+      "argv": [
+        "nextest-config",
+        "--source",
+        "@SOURCE@",
+        "--output",
+        "@OUT@"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "nextest-exists",
+      "messages": "none",
+      "argv": [
+        "nextest-config",
+        "--source",
+        "@SOURCE@",
+        "--output",
+        "@OUT@"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: [Errno 17] File exists: '@OUT@'\n"
+    }
+  ]
+}

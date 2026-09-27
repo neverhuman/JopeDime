@@ -3244,6 +3244,25 @@
       ],
       "scope": "Build-directory report fixture runners (port of the retired deploy/maintenance/test_report.py and test_wrapper.py): candidate selection, refusals, traversal and measurement failures, exact fixture preservation, and configuration/success/overlap/measurement/SIGTERM/failure receipts. Ignored by default: they need JOPE_MAINTENANCE_SCRATCH outside /tmp and Git working trees, like the Python runners' --scratch."
     },
+    "target:jope-ci/test/build_report_python_parity": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-ci/tests/build_report_python_parity.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default",
+        "hygiene"
+      ],
+      "dispositions": [
+        "maintenance"
+      ],
+      "scope": "Replays the outputs deploy/maintenance/jope_report.py printed before it was archived at 8a55c4fef (differential run py-p1-u5-diff-20260927T025057Z) against the jope-ci binary: build-report scan on the same synthetic build tree (stale, fresh, nested, fingerprint, gitguard, linked and odd-name candidates, missing and symlinked roots, --delete, traversal failure) and the /tmp and working-tree custody refusals run by default; the failure-receipt replay is ignored by default because it needs JOPE_MAINTENANCE_SCRATCH outside /tmp and Git working trees. Allocated bytes and fresh mtimes are checked for consistency, not byte equality; the only allowed differences are argument-parser wording for bad --stale values."
+    },
     "target:jope-ci/test/cargo_artifact": {
       "discovery": {
         "kind": "target",
@@ -3260,6 +3279,23 @@
       ],
       "dispositions": [],
       "scope": "Cargo artifact protocol (port of the retired deploy/ci/test-cargo-artifact.py): executable selection from cached and fresh builds, refusal of non-matching, ambiguous, non-executable, missing and unfinished/failed streams, container mount translation, the CLI's exit-status, profile/feature/target passing with a fake Cargo, nextest store binding, and the retain-nextest.sh report retention rule. Also run by the hygiene lane."
+    },
+    "target:jope-ci/test/cargo_artifact_python_parity": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-ci/tests/cargo_artifact_python_parity.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default",
+        "hygiene"
+      ],
+      "dispositions": [],
+      "scope": "Replays the outputs deploy/ci/cargo-artifact.py printed before it was archived at 8a55c4fef (differential run py-p1-u2-diff-20260927T023243Z) against the jope-ci binary on the same committed inputs: a captured cargo message stream and its reduced workspace metadata (select, container path maps, unfinished, failed, ambiguous, wrong-package and example streams) and the nextest store relocation. The only allowed differences, asserted as such: argument-parser wording and the OS wording for an existing output file. Also run by the hygiene lane."
     },
     "target:jope-cli/bin/jope": {
       "discovery": {
