@@ -566,4 +566,34 @@ mod tests {
         );
         Ok(())
     }
+    /// PR #114 review round 1: teacher admission (`jope_learning::eligibility`) rebuilds the
+    /// controller's attestation of a context execution, and so the admission pins' digest of
+    /// it, from the retained receipts: the program is the job's, the input and output are the
+    /// handoff's, the limits are the experiment's and the elapsed time is the supervisor's wall
+    /// time. (`ExecutionProof::attest` then pins the supervisor receipt as the outcome file's
+    /// digest, which teacher admission retains.) This pins every field it derives, producer side.
+    #[test]
+    fn the_attestation_is_derivable_from_the_retained_receipts() -> anyhow::Result<()> {
+        let (_temp, job, outcome, experiment, window, input, output) = fixture()?;
+        let a = execution_attestation(&job, &outcome, &experiment, &window, &input, &output)?;
+        assert_eq!(a.schema, "jope.cpu-context-execution/controller-v1");
+        assert_eq!(a.program_sha256, job.command.program.sha256);
+        assert_eq!(
+            (a.input_sha256, a.output_sha256),
+            (input.sha256, output.sha256)
+        );
+        assert!(a.completed);
+        assert_eq!((a.cpu_limit, a.threads), (1, 1));
+        assert_eq!(
+            a.memory_max,
+            crate::execution::fit_memory_allocation(&experiment)?.per_fit_bytes
+        );
+        assert_eq!(a.swap_max, experiment.resources.swap_bytes);
+        assert_eq!(Some(a.elapsed_seconds), outcome.consumption.wall_seconds);
+        assert_eq!(
+            a.deadline_seconds,
+            experiment.resources.per_fit_seconds as f64
+        );
+        Ok(())
+    }
 }

@@ -1593,7 +1593,16 @@ mod tests {
             .map(String::from)
             .to_vec(),
             qualification_sha256: digest("W2 producer qualification"),
+            qualification_execution_sha256: Some(fixture_case_execution_pins()),
         }
+    }
+
+    /// The controller's execution attestation of each W2 qualification case, as the fixture
+    /// controller pins them (`AdmissionPins::qualification_execution_sha256`), in manifest order.
+    pub(super) fn fixture_case_execution_pins() -> Vec<String> {
+        (0..8)
+            .map(|case| sha256_hex(format!("fixture case execution {case}").as_bytes()))
+            .collect()
     }
 
     /// One W2 context handoff to teacher admission and its execution receipts, before they are
@@ -1604,22 +1613,129 @@ mod tests {
         pub(super) outcome: WorkerOutcome,
         /// The bytes of the context artifact the job wrote.
         pub(super) artifact: Vec<u8>,
+        /// The W2 qualification's case-execution pins the controller issued this admission under.
+        pub(super) case_execution_pins: Vec<String>,
+        experiment: Experiment,
+    }
+
+    /// `jope_pipeline::cpu_context_bridge::execution_attestation`'s record, field for field in
+    /// its serialization order, written out here independently of the receiver.
+    #[derive(Serialize)]
+    struct FixtureAttestation {
+        schema: &'static str,
+        supervisor_receipt_sha256: String,
+        program_sha256: String,
+        input_sha256: String,
+        output_sha256: String,
+        completed: bool,
+        cpu_limit: u32,
+        memory_max: u64,
+        swap_max: u64,
+        threads: u32,
+        elapsed_seconds: f64,
+        deadline_seconds: f64,
+    }
+
+    /// `jope_policy::context_producer::TrainingIdentity`, in its serialization order.
+    #[derive(Serialize, Deserialize)]
+    struct FixtureTraining {
+        dataset_sha256: String,
+        prepared_sha256: String,
+        training_sha256: String,
+        fitting_rows_sha256: String,
+        cut: u8,
+    }
+
+    /// `jope_policy::context_producer::AdmissionPins`, in its serialization order.
+    #[derive(Serialize)]
+    struct FixturePins {
+        source_sha256: String,
+        producer_sha256: String,
+        artifact_sha256: String,
+        qualification_sha256: String,
+        reference_manifest_sha256: String,
+        context_execution_sha256: String,
+        qualification_execution_sha256: Vec<String>,
+        verification_policy_sha256: String,
+        training: FixtureTraining,
+        input_sha256: String,
+        preprocessing_sha256: String,
     }
 
     impl HandoffParts {
-        /// Recompute the supervisor receipt's job identity after the job changed.
+        /// Recompute the supervisor receipt's job identity after the job changed, then the
+        /// controller's admission pins.
         pub(super) fn reseal(&mut self) {
             self.outcome.job_sha256 = self.job.identity().unwrap();
             self.outcome.request_sha256 = self.job.request.identity().unwrap();
+            self.seal();
+        }
+
+        /// The supervisor receipt's bytes, as a submission retains them.
+        pub(super) fn outcome_bytes(&self) -> Vec<u8> {
+            canonical_json(&self.outcome).unwrap()
+        }
+
+        /// The job wrote `bytes` instead: its supervisor receipt, the handoff and the controller's
+        /// admission pins all name them.
+        pub(super) fn with_artifact(&mut self, bytes: Vec<u8>) {
+            let sha = sha256_hex(&bytes);
+            self.outcome.outputs[0].sha256 = sha.clone();
+            self.handoff["artifact_sha256"] = sha.into();
+            self.artifact = bytes;
+            self.seal();
+        }
+
+        /// Set the handoff's `admission_pins_sha256` to the pins the controller issues for this
+        /// run (`optimize::prepare_regression_context`): the release and W2 qualification the
+        /// handoff names, the case-execution pins, this artifact and input scope, and the
+        /// controller's attestation of the retained context execution.
+        pub(super) fn seal(&mut self) {
+            let h = &self.handoff;
+            let text = |v: &serde_json::Value| v.as_str().unwrap().to_owned();
+            let resources = &self.experiment.resources;
+            let attestation = FixtureAttestation {
+                schema: "jope.cpu-context-execution/controller-v1",
+                supervisor_receipt_sha256: sha256_hex(&self.outcome_bytes()),
+                program_sha256: self.job.command.program.sha256.clone(),
+                input_sha256: text(&h["scope"]["input_sha256"]),
+                output_sha256: text(&h["artifact_sha256"]),
+                completed: true,
+                cpu_limit: 1,
+                memory_max: jope_pipeline::execution::fit_memory_allocation(&self.experiment)
+                    .unwrap()
+                    .per_fit_bytes,
+                swap_max: resources.swap_bytes,
+                threads: 1,
+                elapsed_seconds: self.outcome.consumption.wall_seconds.unwrap(),
+                deadline_seconds: resources.per_fit_seconds as f64,
+            };
+            let pins = FixturePins {
+                source_sha256: text(&h["release"]["source_sha256"]),
+                producer_sha256: text(&h["release"]["producer_sha256"]),
+                artifact_sha256: text(&h["artifact_sha256"]),
+                qualification_sha256: text(&h["qualification_sha256"]),
+                reference_manifest_sha256: text(&h["release"]["reference_manifest_sha256"]),
+                context_execution_sha256: sha256_hex(&serde_json::to_vec(&attestation).unwrap()),
+                qualification_execution_sha256: self.case_execution_pins.clone(),
+                verification_policy_sha256: text(&h["release"]["verification_policy_sha256"]),
+                training: serde_json::from_value(h["scope"]["training"].clone()).unwrap(),
+                input_sha256: text(&h["scope"]["input_sha256"]),
+                preprocessing_sha256: text(&h["scope"]["preprocessing_sha256"]),
+            };
+            self.handoff["admission_pins_sha256"] =
+                sha256_hex(&serde_json::to_vec(&pins).unwrap()).into();
         }
     }
 
-    /// The handoff the preregistered producer makes of the context `output_sha256` for the
-    /// comparison's dataset, with a completed execution inside `window`. Nothing is executed and
-    /// nothing is retained.
+    /// The handoff the preregistered producer makes of `context` (its little-endian f32 bytes)
+    /// for the comparison's dataset, with a completed execution inside `window`: the artifact the
+    /// job wrote is a `jope.cpu-context/v1` artifact holding exactly that context, and the
+    /// handoff names the controller's admission pins. Nothing is executed and nothing is
+    /// retained.
     pub(super) fn handoff_parts(
         state: &State,
-        output_sha256: &str,
+        context: &[u8],
         comparison: &HwmIdentity,
         experiment: &Experiment,
         window: &ExecutionWindow,
@@ -1634,8 +1750,37 @@ mod tests {
             path: directory.join("input.json"),
             sha256: sha256_hex(b"fixture context input"),
         };
-        let artifact_bytes = canonical_json(&json!({"schema": "fixture cpu context artifact",
-            "context_sha256": output_sha256}))
+        let training = json!({
+            "dataset_sha256": comparison.dataset_hash,
+            "prepared_sha256": sha256_hex(b"fixture prepared"),
+            "training_sha256": sha256_hex(b"fixture training"),
+            "fitting_rows_sha256": sha256_hex(b"fixture fitting rows"),
+            "cut": 0
+        });
+        let vector = context
+            .chunks_exact(4)
+            .map(|b| f32::from_le_bytes(b.try_into().unwrap()))
+            .collect::<Vec<_>>();
+        // `jope_policy::context_producer::CpuContextArtifact`, as the W2 producer job writes it.
+        let artifact_bytes = serde_json::to_vec(&json!({
+            "schema": "jope.cpu-context/v1",
+            "backend": "Rust/Candle 0.11 CPU FP32; frozen accepted transforms; \
+                        native-component qualification required",
+            "qualification": "unqualified",
+            "source_sha256": plan.release.source_sha256,
+            "producer_sha256": plan.release.producer_sha256,
+            "input_sha256": input.sha256,
+            "training": training,
+            "selected_training_rows_sha256": training["fitting_rows_sha256"],
+            "original_labels_sha256": sha256_hex(b"fixture original labels"),
+            "preprocessing_sha256": sha256_hex(b"fixture preprocessing"),
+            "prepared_rows_sha256": sha256_hex(b"fixture prepared rows"),
+            "preprocessing": {"fixture": "train-only preprocessing"},
+            "encoder": plan.release.encoder,
+            "components": {"fixture": "encoder products"},
+            "vector": vector,
+            "final_test_targets_used": false
+        }))
         .unwrap();
         let artifact = Artifact {
             path: directory.join("artifact.json"),
@@ -1702,28 +1847,26 @@ mod tests {
             "release": plan.release,
             "transformations": plan.transformations,
             "scope": {
-                "training": {
-                    "dataset_sha256": comparison.dataset_hash,
-                    "prepared_sha256": sha256_hex(b"fixture prepared"),
-                    "training_sha256": sha256_hex(b"fixture training"),
-                    "fitting_rows_sha256": sha256_hex(b"fixture fitting rows"),
-                    "cut": 0
-                },
+                "training": training,
                 "input_sha256": input.sha256,
                 "preprocessing_sha256": sha256_hex(b"fixture preprocessing"),
                 "prepared_rows_sha256": sha256_hex(b"fixture prepared rows")
             },
             "artifact_sha256": artifact.sha256,
             "qualification_sha256": plan.qualification_sha256,
-            "admission_pins_sha256": sha256_hex(b"fixture admission pins"),
-            "context_sha256": output_sha256
+            "admission_pins_sha256": "",
+            "context_sha256": sha256_hex(context)
         });
-        HandoffParts {
+        let mut parts = HandoffParts {
             handoff,
             job,
             outcome,
             artifact: artifact_bytes,
-        }
+            case_execution_pins: fixture_case_execution_pins(),
+            experiment: experiment.clone(),
+        };
+        parts.seal();
+        parts
     }
 
     /// Retain `parts` as a submission would carry them.
@@ -1739,11 +1882,16 @@ mod tests {
             handoff_sha256: put(serde_json::to_vec(&parts.handoff).unwrap()),
             execution: ContextExecution {
                 job_sha256: put(canonical_json(&parts.job).unwrap()),
-                outcome_sha256: put(canonical_json(&parts.outcome).unwrap()),
+                outcome_sha256: put(parts.outcome_bytes()),
                 experiment_sha256: put(canonical_json(experiment).unwrap()),
                 window_sha256: put(canonical_json(window).unwrap()),
             },
         }
+    }
+
+    /// The retained context bytes of `context`.
+    pub(super) fn context_bytes(state: &State, context: &ContextEvidence) -> Vec<u8> {
+        state.read_blob(&context.output_sha256).unwrap().unwrap()
     }
 
     /// The preregistered producer's handoff of `context`, executed inside `window`.
@@ -1756,7 +1904,7 @@ mod tests {
     ) -> ContextEvidence {
         let parts = handoff_parts(
             state,
-            &context.output_sha256,
+            &context_bytes(state, &context),
             comparison,
             experiment,
             window,
@@ -1783,9 +1931,10 @@ mod tests {
         }
     }
 
+    /// `width` finite f32 values inside the W2 frozen clip (|v| <= 32), little-endian.
     fn context_output(width: usize, offset: f32) -> Vec<u8> {
         (0..width)
-            .flat_map(|index| (offset + index as f32 / 64.).to_le_bytes())
+            .flat_map(|index| (offset + index as f32 / 128.).to_le_bytes())
             .collect()
     }
 

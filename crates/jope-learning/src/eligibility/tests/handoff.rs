@@ -22,7 +22,7 @@ fn tampered_in(
     let context = f.evidence.context.clone().unwrap();
     let mut parts = handoff_parts(
         &f.state,
-        &context.output_sha256,
+        &context_bytes(&f.state, &context),
         &f.plan.comparison,
         &f.experiment,
         window,

@@ -221,7 +221,7 @@ const MUTATIONS: [Mutation; 18] = [
             let handed_off = f.evidence.context.clone().unwrap();
             let mut parts = handoff_parts(
                 &f.state,
-                &handed_off.output_sha256,
+                &context_bytes(&f.state, &handed_off),
                 &f.plan.comparison,
                 &f.experiment,
                 &f.window,

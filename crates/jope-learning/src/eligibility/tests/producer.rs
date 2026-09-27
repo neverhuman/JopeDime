@@ -23,6 +23,7 @@ fn registration() -> serde_json::Value {
         "release": plan.release,
         "transformations": plan.transformations,
         "qualification_sha256": plan.qualification_sha256,
+        "qualification_execution_sha256": plan.qualification_execution_sha256,
     })
 }
 
@@ -51,18 +52,12 @@ fn producer_run(
     window: &ExecutionWindow,
     tamper: impl FnOnce(&mut HandoffParts),
 ) -> ContextRun {
-    let mut parts = handoff_parts(
-        &f.state,
-        &sha256_hex(context),
-        &f.plan.comparison,
-        &f.experiment,
-        window,
-    );
+    let mut parts = handoff_parts(&f.state, context, &f.plan.comparison, &f.experiment, window);
     tamper(&mut parts);
     ContextRun {
         handoff: serde_json::to_vec(&parts.handoff).unwrap(),
         job: canonical_json(&parts.job).unwrap(),
-        outcome: serde_json::to_vec(&parts.outcome).unwrap(),
+        outcome: parts.outcome_bytes(),
         experiment: canonical_json(&f.experiment).unwrap(),
         window: serde_json::to_vec(window).unwrap(),
         artifact: parts.artifact,
@@ -274,6 +269,307 @@ fn the_product_path_refuses_an_unauthenticated_or_unproven_context() {
         .unwrap();
         assert_refused(&f, &evidence, expected, label);
     }
+}
+
+/// A producer run whose artifact the job wrote as `change` edits it: the job's supervisor receipt,
+/// the handoff and the controller's admission pins all name the edited bytes.
+fn with_changed_artifact(f: &Fixture, change: impl FnOnce(&mut serde_json::Value)) -> ContextRun {
+    producer_run(f, &teaching_context(), &f.window, |p| {
+        let mut artifact: serde_json::Value = serde_json::from_slice(&p.artifact).unwrap();
+        change(&mut artifact);
+        p.with_artifact(serde_json::to_vec(&artifact).unwrap());
+    })
+}
+
+/// PR #114 review round 1, P1 (the reviewer's probe): the producer artifact, the context job and
+/// its supervisor outcome stay byte-identical, and only the submitted 2048-f32 context (finite,
+/// clipped values) and the handoff's context digest are substituted. The artifact still holds the
+/// original context, so the substitute is refused and no authority changes.
+#[test]
+fn a_substituted_context_with_a_matching_handoff_digest_is_refused() {
+    let f = fixture_with(Task::Regression, 5, Some(preregistered()));
+    let original = producer_run(&f, &teaching_context(), &f.window, |_| {});
+    let mut run = original.clone();
+    run.context = (0..2048).flat_map(|_| 1.0f32.to_le_bytes()).collect();
+    let mut handoff: serde_json::Value = serde_json::from_slice(&run.handoff).unwrap();
+    handoff["context_sha256"] = json!(sha256_hex(&run.context));
+    run.handoff = serde_json::to_vec(&handoff).unwrap();
+    assert_eq!(
+        (&run.artifact, &run.job, &run.outcome),
+        (&original.artifact, &original.job, &original.outcome)
+    );
+    assert_refused(
+        &f,
+        &submission(&f, &run),
+        "is not the context the producer artifact contains",
+        "a substituted context with a matching handoff digest",
+    );
+}
+
+/// P1: an artifact the job wrote, and the handoff and the controller's pins name, that decodes to
+/// another context than the one handed off (one value differs; still finite and clipped).
+#[test]
+fn an_artifact_that_decodes_to_another_context_is_refused() {
+    let f = fixture_with(Task::Regression, 5, Some(preregistered()));
+    let run = with_changed_artifact(&f, |a| a["vector"][0] = json!(0.25));
+    assert_refused(
+        &f,
+        &submission(&f, &run),
+        "is not the context the producer artifact contains",
+        "an artifact of another context",
+    );
+}
+
+/// P1: a truncated or corrupt producer artifact never yields a teaching context.
+#[test]
+fn a_truncated_or_corrupt_artifact_is_refused() {
+    // Truncated: the job's receipt, the handoff and the pins name the first half of the artifact.
+    let f = fixture_with(Task::Regression, 5, Some(preregistered()));
+    let run = producer_run(&f, &teaching_context(), &f.window, |p| {
+        let half = p.artifact[..p.artifact.len() / 2].to_vec();
+        p.with_artifact(half);
+    });
+    assert_refused(
+        &f,
+        &submission(&f, &run),
+        "is not a jope.cpu-context/v1 context artifact",
+        "a truncated artifact",
+    );
+
+    type Change = fn(&mut serde_json::Value);
+    let corrupt: [(&str, &str, Change); 6] = [
+        (
+            "an unknown artifact field",
+            "is not a jope.cpu-context/v1 context artifact",
+            |a| a["issued_by"] = json!("the candidate"),
+        ),
+        (
+            "another artifact schema",
+            "is not the W2 CPU context envelope",
+            |a| a["schema"] = json!("jope.cpu-context/v0"),
+        ),
+        (
+            "an artifact that used final test targets",
+            "is not the W2 CPU context envelope",
+            |a| a["final_test_targets_used"] = json!(true),
+        ),
+        (
+            "an artifact of another input",
+            "another release or input scope",
+            |a| a["input_sha256"] = json!(sha256_hex(b"another input")),
+        ),
+        (
+            "a context outside the frozen clip",
+            "is not a finite, clipped 2048-f32 vector",
+            |a| a["vector"][0] = json!(64.0),
+        ),
+        (
+            "a short context",
+            "is not a finite, clipped 2048-f32 vector",
+            |a| {
+                a["vector"].as_array_mut().unwrap().pop();
+            },
+        ),
+    ];
+    for (label, expected, change) in corrupt {
+        let f = fixture_with(Task::Regression, 5, Some(preregistered()));
+        let run = with_changed_artifact(&f, change);
+        assert_refused(&f, &submission(&f, &run), expected, label);
+    }
+
+    // Corrupt on disk: the retained artifact no longer hashes to its content address.
+    let f = fixture_with(Task::Regression, 5, Some(preregistered()));
+    let run = producer_run(&f, &teaching_context(), &f.window, |_| {});
+    let evidence = submission(&f, &run);
+    let fitted = &evidence.context.as_ref().unwrap().fitted_state_sha256;
+    fs::write(f.state.blob_path(fitted), b"{\"schema\":").unwrap();
+    assert_refused(&f, &evidence, "is corrupt", "a corrupt retained artifact");
+}
+
+/// P1: the handoff's `admission_pins_sha256` must be the controller's pins for this run: the
+/// release and W2 qualification the freeze preregistered, the W2 qualification's case-execution
+/// pins, this run's artifact and input scope, and the controller's attestation of the retained
+/// context execution. Pins the controller did not issue are refused.
+#[test]
+fn admission_pins_the_controller_did_not_issue_are_refused() {
+    type Tamper = fn(&mut HandoffParts);
+    let cases: [(&str, Tamper); 3] = [
+        (
+            "pins issued under other qualification case executions",
+            |p| {
+                p.case_execution_pins[0] = sha256_hex(b"another case execution");
+                p.seal();
+            },
+        ),
+        ("pins over another record of the context execution", |p| {
+            p.outcome.consumption.cpu_seconds = Some(0.02)
+        }),
+        ("a digest that names no pins", |p| {
+            p.handoff["admission_pins_sha256"] = sha256_hex(b"fixture admission pins").into()
+        }),
+    ];
+    for (label, tamper) in cases {
+        let f = fixture_with(Task::Regression, 5, Some(preregistered()));
+        let run = producer_run(&f, &teaching_context(), &f.window, tamper);
+        assert_refused(
+            &f,
+            &submission(&f, &run),
+            "are not the controller's admission pins",
+            label,
+        );
+    }
+
+    // The freeze's registration preregistered other case-execution pins than the controller
+    // issued this admission under.
+    let mut other = preregistered();
+    other
+        .producer
+        .as_mut()
+        .unwrap()
+        .qualification_execution_sha256 = Some(
+        (0..8)
+            .map(|case| sha256_hex(format!("another case execution {case}").as_bytes()))
+            .collect(),
+    );
+    let f = fixture_with(Task::Regression, 5, Some(other));
+    let run = producer_run(&f, &teaching_context(), &f.window, |_| {});
+    assert_refused(
+        &f,
+        &submission(&f, &run),
+        "are not the controller's admission pins",
+        "a freeze that preregistered other case-execution pins",
+    );
+
+    // A registration that records no admission pins: nothing is issued or retained, and teacher
+    // admission refuses the context with a clear, quarantining message.
+    let mut unpinned = preregistered();
+    unpinned
+        .producer
+        .as_mut()
+        .unwrap()
+        .qualification_execution_sha256 = None;
+    let f = fixture_with(Task::Regression, 5, Some(unpinned));
+    let run = producer_run(&f, &teaching_context(), &f.window, |_| {});
+    let error = format!(
+        "{:#}",
+        retain_handed_off_context(&f.state, &f.evidence.freeze, &run).unwrap_err()
+    );
+    assert!(
+        error.contains("records no controller admission pins")
+            && error.contains("new, fully provenanced qualification"),
+        "{error}"
+    );
+    for bytes in [&run.handoff, &run.outcome, &run.artifact, &run.context] {
+        assert_eq!(f.state.read_blob(&sha256_hex(bytes)).unwrap(), None);
+    }
+    assert_eq!(authority(&f.state), nothing());
+    assert_refused(
+        &f,
+        &f.evidence,
+        "records no controller admission pins",
+        "a registration without admission pins",
+    );
+}
+
+/// `AdmissionPins`, as the handoff's `admission_pins_sha256` hashes them, with placeholder values.
+const ADMISSION_PINS_LAYOUT: &str = r#"{"source_sha256":"s","producer_sha256":"p","artifact_sha256":"a","qualification_sha256":"q","reference_manifest_sha256":"m","context_execution_sha256":"x","qualification_execution_sha256":["c0","c1"],"verification_policy_sha256":"v","training":{"dataset_sha256":"d","prepared_sha256":"r","training_sha256":"t","fitting_rows_sha256":"f","cut":2},"input_sha256":"i","preprocessing_sha256":"e"}"#;
+/// `ExecutionAttestation`, as the pins' `context_execution_sha256` hashes it.
+const EXECUTION_ATTESTATION_LAYOUT: &str = r#"{"schema":"jope.cpu-context-execution/controller-v1","supervisor_receipt_sha256":"o","program_sha256":"p","input_sha256":"i","output_sha256":"a","completed":true,"cpu_limit":1,"memory_max":4096,"swap_max":0,"threads":1,"elapsed_seconds":0.25,"deadline_seconds":30.0}"#;
+/// `CpuContextArtifact`'s fields, sorted.
+const ARTIFACT_FIELDS: [&str; 16] = [
+    "backend",
+    "components",
+    "encoder",
+    "final_test_targets_used",
+    "input_sha256",
+    "original_labels_sha256",
+    "prepared_rows_sha256",
+    "preprocessing",
+    "preprocessing_sha256",
+    "producer_sha256",
+    "qualification",
+    "schema",
+    "selected_training_rows_sha256",
+    "source_sha256",
+    "training",
+    "vector",
+];
+
+/// The W2 records teacher admission rebuilds (the admission pins and the controller's execution
+/// attestation) and decodes (the producer artifact), pinned byte for byte with placeholder values.
+/// `jope_policy`'s `handoff_tests::the_records_teacher_admission_rebuilds_are_pinned` pins the
+/// same bytes for `AdmissionPins`, `ExecutionAttestation` and `CpuContextArtifact`, so a change on
+/// either side fails a test on that side.
+#[test]
+fn the_w2_records_teacher_admission_rebuilds_are_pinned_field_for_field() {
+    let training = context::HandoffTraining {
+        dataset_sha256: "d".into(),
+        prepared_sha256: "r".into(),
+        training_sha256: "t".into(),
+        fitting_rows_sha256: "f".into(),
+        cut: 2,
+    };
+    let cases = ["c0".to_owned(), "c1".to_owned()];
+    let pins = context::AdmissionPinsRecord {
+        source_sha256: "s",
+        producer_sha256: "p",
+        artifact_sha256: "a",
+        qualification_sha256: "q",
+        reference_manifest_sha256: "m",
+        context_execution_sha256: "x",
+        qualification_execution_sha256: &cases,
+        verification_policy_sha256: "v",
+        training: &training,
+        input_sha256: "i",
+        preprocessing_sha256: "e",
+    };
+    assert_eq!(serde_json::to_string(&pins).unwrap(), ADMISSION_PINS_LAYOUT);
+    let attestation = context::ExecutionAttestationRecord {
+        schema: context::EXECUTION_ATTESTATION_SCHEMA,
+        supervisor_receipt_sha256: "o",
+        program_sha256: "p",
+        input_sha256: "i",
+        output_sha256: "a",
+        completed: true,
+        cpu_limit: 1,
+        memory_max: 4096,
+        swap_max: 0,
+        threads: 1,
+        elapsed_seconds: 0.25,
+        deadline_seconds: 30.0,
+    };
+    assert_eq!(
+        serde_json::to_string(&attestation).unwrap(),
+        EXECUTION_ATTESTATION_LAYOUT
+    );
+    // The producer artifact: exactly `CpuContextArtifact`'s fields, under W2's schema and backend.
+    let f = fixture_with(Task::Regression, 5, Some(preregistered()));
+    let run = producer_run(&f, &teaching_context(), &f.window, |_| {});
+    let artifact: context::ProducedArtifact = serde_json::from_slice(&run.artifact).unwrap();
+    let value = serde_json::to_value(&artifact).unwrap();
+    let mut keys = value
+        .as_object()
+        .unwrap()
+        .keys()
+        .cloned()
+        .collect::<Vec<_>>();
+    keys.sort();
+    assert_eq!(keys, ARTIFACT_FIELDS);
+    assert_eq!(context::PRODUCED_ARTIFACT_SCHEMA, "jope.cpu-context/v1");
+    assert_eq!(
+        context::PRODUCED_ARTIFACT_BACKEND,
+        "Rust/Candle 0.11 CPU FP32; frozen accepted transforms; native-component qualification \
+         required"
+    );
+    // The consumed context is the artifact's vector, as little-endian f32 bytes.
+    assert_eq!(
+        artifact
+            .vector
+            .iter()
+            .flat_map(|v| v.to_le_bytes())
+            .collect::<Vec<_>>(),
+        run.context
+    );
 }
 
 /// Where no context is used the live driver freezes with no context plan; a freeze made before

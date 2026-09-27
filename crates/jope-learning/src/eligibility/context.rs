@@ -6,7 +6,10 @@
 //! W3-T02 / W2-T07: the context must also have been handed off to teacher admission by the W2
 //! context producer the freeze preregistered, through a retained `jope.cpu-context-handoff/v1`
 //! record, and the execution that produced its artifact must be proven from retained pool
-//! receipts ([`verify_handoff`]). The encoder receipt's own claims are not enough.
+//! receipts ([`verify_handoff`]). The encoder receipt's own claims are not enough, and neither
+//! are the handoff's: the consumed context is decoded from the producer's artifact, and the
+//! handoff's admission pins are rebuilt from the preregistration, that artifact and the retained
+//! execution (PR #114 review round 1).
 use super::*;
 use crate::encoder_receipt::{
     check_teaching_binding, Encoder, EncoderCapability, EncoderReceipt, Inputs, Member, Product,
@@ -213,8 +216,9 @@ fn preregistered_plan(policy: &FrozenPolicy) -> Result<&ContextPlan> {
     Ok(plan)
 }
 
-/// The W2 producer the freeze preregistered with its context encoder (W3-T02, W2-T07).
-fn preregistered_producer(plan: &ContextPlan) -> Result<&ProducerPlan> {
+/// The W2 producer the freeze preregistered with its context encoder (W3-T02, W2-T07), and the
+/// case-execution admission pins its registration recorded.
+fn preregistered_producer(plan: &ContextPlan) -> Result<(&ProducerPlan, &[String])> {
     let producer = plan.producer.as_ref().with_context(|| {
         quarantined(
             "PreHandoffProvenance: the freeze preregistered no W2 context producer (release \
@@ -223,7 +227,17 @@ fn preregistered_producer(plan: &ContextPlan) -> Result<&ProducerPlan> {
         )
     })?;
     producer.validate()?;
-    Ok(producer)
+    let pins = producer
+        .qualification_execution_sha256
+        .as_deref()
+        .with_context(|| {
+            quarantined(
+                "PreHandoffProvenance: the freeze's W2 producer registration records no \
+                 controller admission pins (the W2 qualification's case-execution pins), so no \
+                 handoff under it can be authenticated",
+            )
+        })?;
+    Ok((producer, pins))
 }
 
 /// The W2 producer run behind one teaching context, as the exact bytes teacher admission reads
@@ -251,8 +265,9 @@ pub struct ContextRun {
 /// This decides nothing and changes no authority state. Teacher admission (`qualify` and every
 /// revalidating route) authenticates the handoff against the preregistered producer and
 /// re-verifies the execution from the retained receipts. Refused before anything is retained when
-/// the freeze preregistered no context encoder or no W2 producer (the context stays quarantined)
-/// or the handoff is not a `jope.cpu-context-handoff/v1` record.
+/// the freeze preregistered no context encoder or no W2 producer, or a producer registration
+/// without its admission pins (the context stays quarantined), or the handoff is not a
+/// `jope.cpu-context-handoff/v1` record.
 pub fn retain_handed_off_context(
     state: &State,
     freeze: &FreezeReceipt,
@@ -353,6 +368,15 @@ pub struct ProducerPlan {
     /// `jope_policy::context_producer::transformation_chain()`, in execution order.
     pub transformations: Vec<String>,
     pub qualification_sha256: String,
+    /// The controller's admission pins fixed when the producer registered: its attestation of
+    /// each W2 qualification case execution, in reference-manifest order
+    /// (`jope_policy::context_producer::AdmissionPins::qualification_execution_sha256`, as
+    /// `ProducerRegistration` records them). Teacher admission rebuilds a handoff's admission
+    /// pins from these, the release and qualification above, and the run's own artifact, input
+    /// scope and retained execution. Absent on a registration made before the pins were
+    /// recorded: that freeze keeps its bytes, and no context under it can be authenticated.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub qualification_execution_sha256: Option<Vec<String>>,
 }
 impl ProducerPlan {
     fn validate(&self) -> Result<()> {
@@ -368,7 +392,13 @@ impl ProducerPlan {
                 && is_hex64(&r.reference_manifest_sha256)
                 && is_hex64(&self.qualification_sha256)
                 && !self.transformations.is_empty()
-                && self.transformations.iter().all(|t| !t.trim().is_empty()),
+                && self.transformations.iter().all(|t| !t.trim().is_empty())
+                && self
+                    .qualification_execution_sha256
+                    .as_ref()
+                    .is_none_or(|pins| {
+                        pins.len() == QUALIFICATION_CASES && pins.iter().all(|p| is_hex64(p))
+                    }),
             "invalid preregistered W2 context producer"
         );
         Ok(())
@@ -431,17 +461,147 @@ struct HandoffScope {
     prepared_rows_sha256: String,
 }
 
-/// W2's training scope. Its row digests are over W2's own prepared-row encoding, which is not
+/// W2's training scope (`jope_policy::context_producer::TrainingIdentity`, field for field in its
+/// serialization order). Its row digests are over W2's own prepared-row encoding, which is not
 /// the W3 receipt's row encoding, so only their form is checked here; the dataset is joined.
-#[derive(Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
-struct HandoffTraining {
-    dataset_sha256: String,
-    prepared_sha256: String,
-    training_sha256: String,
-    fitting_rows_sha256: String,
-    #[allow(dead_code)]
-    cut: u8,
+pub(super) struct HandoffTraining {
+    pub(super) dataset_sha256: String,
+    pub(super) prepared_sha256: String,
+    pub(super) training_sha256: String,
+    pub(super) fitting_rows_sha256: String,
+    pub(super) cut: u8,
+}
+
+/// The W2 context artifact (`jope_policy::context_producer::{SCHEMA, BACKEND}`).
+pub(super) const PRODUCED_ARTIFACT_SCHEMA: &str = "jope.cpu-context/v1";
+pub(super) const PRODUCED_ARTIFACT_BACKEND: &str = "Rust/Candle 0.11 CPU FP32; frozen accepted \
+                                                    transforms; native-component qualification \
+                                                    required";
+/// `FinalContext::WIDTH` and the frozen clip `CpuContextArtifact::validate` holds it to.
+const CONTEXT_WIDTH: usize = 2048;
+const CONTEXT_CLIP: f32 = 32.0;
+/// `verify_qualified`'s bound on the artifact bytes.
+const MAX_ARTIFACT_BYTES: usize = 16 << 20;
+/// The W2 verification policy's eight native meta-train qualification cases.
+const QUALIFICATION_CASES: usize = 8;
+/// The controller's execution attestation (`jope_pipeline::cpu_context_bridge`).
+pub(super) const EXECUTION_ATTESTATION_SCHEMA: &str = "jope.cpu-context-execution/controller-v1";
+
+/// The artifact a W2 producer job writes (`jope_policy::context_producer::CpuContextArtifact`),
+/// field for field; anything else is refused. The encoder products and the train-only
+/// preprocessing are carried, not interpreted: teacher admission consumes the final context.
+#[derive(Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(super) struct ProducedArtifact {
+    pub(super) schema: String,
+    pub(super) backend: String,
+    pub(super) qualification: String,
+    pub(super) source_sha256: String,
+    pub(super) producer_sha256: String,
+    pub(super) input_sha256: String,
+    pub(super) training: HandoffTraining,
+    pub(super) selected_training_rows_sha256: String,
+    pub(super) original_labels_sha256: String,
+    pub(super) preprocessing_sha256: String,
+    pub(super) prepared_rows_sha256: String,
+    pub(super) preprocessing: serde_json::Value,
+    pub(super) encoder: HandoffEncoder,
+    pub(super) components: serde_json::Value,
+    pub(super) vector: Vec<f32>,
+    pub(super) final_test_targets_used: bool,
+}
+
+/// `jope_policy::context_producer::AdmissionPins`, field for field in its serialization order:
+/// the sha256 of these bytes is the handoff's `admission_pins_sha256` (`AdmissionPins::sha256`).
+#[derive(Serialize)]
+pub(super) struct AdmissionPinsRecord<'a> {
+    pub(super) source_sha256: &'a str,
+    pub(super) producer_sha256: &'a str,
+    pub(super) artifact_sha256: &'a str,
+    pub(super) qualification_sha256: &'a str,
+    pub(super) reference_manifest_sha256: &'a str,
+    pub(super) context_execution_sha256: &'a str,
+    pub(super) qualification_execution_sha256: &'a [String],
+    pub(super) verification_policy_sha256: &'a str,
+    pub(super) training: &'a HandoffTraining,
+    pub(super) input_sha256: &'a str,
+    pub(super) preprocessing_sha256: &'a str,
+}
+
+/// `jope_policy::context_producer::ExecutionAttestation`, field for field in its serialization
+/// order, with the values the controller derives from the context job's pool receipts
+/// (`jope_pipeline::cpu_context_bridge::ExecutionProof::attest`): the admission pins'
+/// `context_execution_sha256` is the sha256 of these bytes.
+#[derive(Serialize)]
+pub(super) struct ExecutionAttestationRecord<'a> {
+    pub(super) schema: &'a str,
+    pub(super) supervisor_receipt_sha256: &'a str,
+    pub(super) program_sha256: &'a str,
+    pub(super) input_sha256: &'a str,
+    pub(super) output_sha256: &'a str,
+    pub(super) completed: bool,
+    pub(super) cpu_limit: u32,
+    pub(super) memory_max: u64,
+    pub(super) swap_max: u64,
+    pub(super) threads: u32,
+    pub(super) elapsed_seconds: f64,
+    pub(super) deadline_seconds: f64,
+}
+
+/// The context the W2 producer job wrote, decoded as the producer decodes it
+/// (`jope_policy::context_producer::verify_qualified`): the retained, digest-verified artifact
+/// bytes parsed as `CpuContextArtifact`, held to the envelope and context layout
+/// `CpuContextArtifact::validate` checks, and produced under the handoff's release and input
+/// scope. Returns the context's little-endian f32 bytes.
+fn produced_context(state: &State, handoff: &HandoffRecord) -> Result<Vec<u8>> {
+    let bytes = retained(state, &handoff.artifact_sha256)?;
+    ensure!(
+        bytes.len() <= MAX_ARTIFACT_BYTES,
+        "ContextHandoffMismatch: the producer artifact exceeds its bound"
+    );
+    let artifact: ProducedArtifact = serde_json::from_slice(&bytes).with_context(|| {
+        format!(
+            "ContextHandoffMismatch: the producer artifact {} is not a {PRODUCED_ARTIFACT_SCHEMA} \
+             context artifact",
+            handoff.artifact_sha256
+        )
+    })?;
+    ensure!(
+        artifact.schema == PRODUCED_ARTIFACT_SCHEMA
+            && artifact.backend == PRODUCED_ARTIFACT_BACKEND
+            && artifact.qualification == "unqualified"
+            && !artifact.final_test_targets_used,
+        "ContextHandoffMismatch: the producer artifact is not the W2 CPU context envelope"
+    );
+    let (release, scope) = (&handoff.release, &handoff.scope);
+    ensure!(
+        artifact.source_sha256 == release.source_sha256
+            && artifact.producer_sha256 == release.producer_sha256
+            && artifact.encoder == release.encoder
+            && artifact.input_sha256 == scope.input_sha256
+            && artifact.training == scope.training
+            && artifact.selected_training_rows_sha256 == scope.training.fitting_rows_sha256
+            && artifact.preprocessing_sha256 == scope.preprocessing_sha256
+            && artifact.prepared_rows_sha256 == scope.prepared_rows_sha256,
+        "ContextHandoffMismatch: the producer artifact was produced under another release or \
+         input scope than the handoff names"
+    );
+    ensure!(
+        artifact.vector.len() == CONTEXT_WIDTH
+            && artifact
+                .vector
+                .iter()
+                .all(|v| v.is_finite() && v.abs() <= CONTEXT_CLIP),
+        "ContextHandoffMismatch: the producer artifact's context is not a finite, clipped \
+         {CONTEXT_WIDTH}-f32 vector"
+    );
+    Ok(artifact
+        .vector
+        .iter()
+        .flat_map(|v| v.to_le_bytes())
+        .collect())
 }
 
 /// Teacher admission consumes the W2 handoff instead of trusting the receipt's own claims. The
@@ -455,7 +615,13 @@ struct HandoffTraining {
 ///   dataset;
 /// - name no revoked evidence (W12-T05);
 /// - have its artifact produced by a completed execution of the preregistered producer
-///   executable, proven from retained pool receipts ([`verify_execution`]).
+///   executable, proven from retained pool receipts ([`verify_execution`]);
+/// - hand off exactly the context that artifact contains, decoded as the W2 producer decodes it
+///   ([`produced_context`]): the consumed vector is the artifact's vector byte for byte, and
+///   `context_sha256` is its digest;
+/// - name the controller's admission pins for this run: `admission_pins_sha256` is rebuilt from
+///   the preregistered release, W2 qualification and case-execution pins, the artifact, its input
+///   scope and the controller's attestation of the retained context execution.
 ///
 /// Returns the handoff digest the qualification records.
 fn verify_handoff(
@@ -466,7 +632,7 @@ fn verify_handoff(
     context: &ContextEvidence,
     revocations: &Revocations,
 ) -> Result<String> {
-    let producer = preregistered_producer(plan)?;
+    let (producer, case_execution_pins) = preregistered_producer(plan)?;
     let evidence = context.handoff.as_ref().with_context(|| {
         quarantined(
             "MissingContextHandoff: the submission carries no W2 context handoff to teacher \
@@ -547,7 +713,39 @@ fn verify_handoff(
             handoff.qualification_sha256.as_str(),
         ],
     )?;
-    verify_execution(state, policy, &handoff, ex, record)?;
+    let context_execution_sha256 = verify_execution(state, policy, &handoff, ex, record)?;
+    let produced = produced_context(state, &handoff)?;
+    let produced_sha256 = sha256_hex(&produced);
+    ensure!(
+        produced == retained(state, &context.output_sha256)?
+            && produced_sha256 == handoff.context_sha256,
+        "ContextHandoffMismatch: the handed-off context {} is not the context the producer \
+         artifact contains ({produced_sha256})",
+        handoff.context_sha256
+    );
+    let r = &producer.release;
+    let pins = AdmissionPinsRecord {
+        source_sha256: &r.source_sha256,
+        producer_sha256: &r.producer_sha256,
+        artifact_sha256: &handoff.artifact_sha256,
+        qualification_sha256: &producer.qualification_sha256,
+        reference_manifest_sha256: &r.reference_manifest_sha256,
+        context_execution_sha256: &context_execution_sha256,
+        qualification_execution_sha256: case_execution_pins,
+        verification_policy_sha256: &r.verification_policy_sha256,
+        training: &handoff.scope.training,
+        input_sha256: &handoff.scope.input_sha256,
+        preprocessing_sha256: &handoff.scope.preprocessing_sha256,
+    };
+    let pins_sha256 = sha256_hex(&serde_json::to_vec(&pins)?);
+    ensure!(
+        handoff.admission_pins_sha256 == pins_sha256,
+        "ProducerNotAuthenticated: the handoff's admission pins {} are not the controller's \
+         admission pins {pins_sha256} for this run (the preregistered release, W2 qualification \
+         and case-execution pins, the producer artifact, its input scope and the retained \
+         context execution)",
+        handoff.admission_pins_sha256
+    );
     Ok(evidence.handoff_sha256.clone())
 }
 
@@ -556,13 +754,16 @@ fn verify_handoff(
 /// live files. The preregistered producer executable ran the job to completion, inside its
 /// original window (which opened after the freeze), under the pool's per-fit memory cap, on the
 /// handoff's input, and wrote the handoff's artifact.
+///
+/// Returns the sha256 of the controller's attestation of this execution (the admission pins'
+/// `context_execution_sha256`), derived from the verified receipts as the controller derives it.
 fn verify_execution(
     state: &State,
     policy: &FrozenPolicy,
     handoff: &HandoffRecord,
     ex: &ContextExecution,
     record: &HwmRecord,
-) -> Result<()> {
+) -> Result<String> {
     const RECEIPTS: &str = "UnprovenContextExecution: a retained pool receipt of the context job \
                             is missing or unreadable";
     let job: WorkerJob = blob(state, &ex.job_sha256).context(RECEIPTS)?;
@@ -618,7 +819,6 @@ fn verify_execution(
         "UnprovenContextExecution: the handoff's artifact is not a declared output of the context \
          job"
     );
-    retained(state, &handoff.artifact_sha256)?;
     let c = &outcome.consumption;
     let (Some(started), Some(exited), Some(wall), Some(cpu)) = (
         c.gate_released_unix_ms,
@@ -651,5 +851,21 @@ fn verify_execution(
         "UnprovenContextExecution: the context job's memory cap is absent or changed, or its peak \
          is outside the allocation"
     );
-    Ok(())
+    // The supervisor receipt is the retained outcome file (`ExecutionProof::attest` pins the
+    // file's digest), the input and output are the handoff's, verified above.
+    let attestation = ExecutionAttestationRecord {
+        schema: EXECUTION_ATTESTATION_SCHEMA,
+        supervisor_receipt_sha256: &ex.outcome_sha256,
+        program_sha256: &job.command.program.sha256,
+        input_sha256: &handoff.scope.input_sha256,
+        output_sha256: &handoff.artifact_sha256,
+        completed: true,
+        cpu_limit: 1,
+        memory_max: allocation.per_fit_bytes,
+        swap_max: experiment.resources.swap_bytes,
+        threads: 1,
+        elapsed_seconds: wall,
+        deadline_seconds: experiment.resources.per_fit_seconds as f64,
+    };
+    Ok(sha256_hex(&serde_json::to_vec(&attestation)?))
 }
