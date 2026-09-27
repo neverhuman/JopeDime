@@ -9,8 +9,13 @@
 #     `all_cuts_then_min_mean_validation_rmse_then_genome` and the receipt carries a champion with a real held-out RMSE and
 #     R^2. This is the assertion that fails if the search ever regresses to the unmeasured
 #     bootstrap fallback, which is what the engine-backed search did on every run;
-#   * the receipt validates against the committed `jope.pipeline-receipt/v2` schema, records the
+#   * the receipt validates against the committed `jope.pipeline-receipt/v3` schema, records the
 #     skip with a reason, and names the emitted files with their real sha256;
+#   * `verify-receipt --evidence` re-derives each receipt's selection from its run directory;
+#   * a two-round `jope pipeline evolve` lineage chains: round 2 is seeded from round 1's champion
+#     on the identical cuts, both rounds measured a candidate bred in generation 1 or later, and
+#     round 2's champion is not worse than round 1's (`jope pipeline lineage verify
+#     --require-discovery` re-derives all of it in Rust);
 #   * two runs at the same seeds emit byte-identical sources;
 #   * every emitted program compiles, runs on the committed split and agrees with its siblings on
 #     the IEEE-754 bits of its predictions (the same comparison deploy/ci/emitters.sh makes, via
@@ -161,6 +166,26 @@ echo "  ok"
 echo "== receipt validates against the committed schema"
 "$JOPE" pipeline verify-receipt --receipt "$OUT/a/receipt.json"
 "$JOPE" pipeline verify-receipt --receipt "$OUT/cuts3/receipt.json"
+
+echo "== receipts re-derive from their run directories' evidence"
+"$JOPE" pipeline verify-receipt --evidence --receipt "$OUT/a/receipt.json"
+"$JOPE" pipeline verify-receipt --evidence --receipt "$OUT/cuts3/receipt.json"
+
+# A mini-lineage: two rounds on the same cuts, round 2 seeded from round 1. The budget is larger
+# than the single runs' so that generation 1 is reached in both rounds; `lineage verify` fails the
+# lane if either round measured nothing bred past generation 0 or round 2 lost ground.
+echo "== a two-round lineage chains, discovers and does not regress"
+lineage_started=$SECONDS
+"$JOPE" pipeline evolve \
+  --dataset "$DATASET" \
+  --rounds 2 \
+  --budget "${E2E_LINEAGE_BUDGET:-evaluations=40,seconds=120}" \
+  --rng-seed "$RNG_SEED" \
+  --emit rust \
+  --policy skip \
+  --output "$OUT/lineage"
+"$JOPE" pipeline lineage verify --lineage "$OUT/lineage/lineage.json" --require-discovery
+echo "  ok: lineage in $((SECONDS - lineage_started))s"
 
 echo "== receipt is truthful about the skip and the artifacts"
 python3 - "$OUT/a" <<'PY'
