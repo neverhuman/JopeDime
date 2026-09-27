@@ -16,7 +16,7 @@ use crate::{
     prepare, receipt,
     receipt::Receipt,
     search::{self, Budget},
-    select, sha256_hex, TOOL_VERSION,
+    seeds, select, sha256_hex, TOOL_VERSION,
 };
 
 /// What to do about the proposal stage.
@@ -67,6 +67,83 @@ pub struct RunOptions {
     pub cuts: usize,
     pub languages: Vec<Language>,
     pub policy: Policy,
+    /// A `jope.pipeline-seeds/v1` file whose genomes enter generation 0 after the bootstrap.
+    pub seed_genomes: Option<PathBuf>,
+    /// A parent receipt: re-derived from its run's evidence, then its selected genome is seeded
+    /// first and its sha256 recorded as this run's parent.
+    pub incumbent: Option<PathBuf>,
+}
+
+impl RunOptions {
+    /// Defaults matching `jope pipeline run` with only `--dataset` and `--output` given.
+    pub fn new(dataset: impl Into<String>, output: impl Into<PathBuf>) -> Self {
+        RunOptions {
+            dataset: dataset.into(),
+            output: output.into(),
+            budget: Budget::default(),
+            seed: crate::DEFAULT_SEED,
+            rng_seed: crate::DEFAULT_SEED,
+            cuts: 1,
+            languages: Language::parse_list("rust,python,cpp17,cpp20,js")
+                .expect("the default emit list parses"),
+            policy: Policy::Auto,
+            seed_genomes: None,
+            incumbent: None,
+        }
+    }
+}
+
+/// Seeds resolved from `--incumbent` and `--seed-genomes`, before anything is written.
+fn resolve_seeding(options: &RunOptions) -> Result<(Vec<String>, receipt::Seeding)> {
+    let mut offered: Vec<(String, &'static str)> = Vec::new();
+    let mut parent_receipt_sha256 = None;
+    let mut seeds_file_sha256 = None;
+    if let Some(path) = &options.incumbent {
+        let parent = crate::evidence::verify_champion_run(path)
+            .with_context(|| format!("--incumbent {}", path.display()))?;
+        offered.push((
+            parent.receipt.search.selected_genome.clone(),
+            seeds::FROM_INCUMBENT,
+        ));
+        parent_receipt_sha256 = Some(parent.receipt_sha256);
+    }
+    if let Some(path) = &options.seed_genomes {
+        let (file, sha) =
+            seeds::read(path).with_context(|| format!("--seed-genomes {}", path.display()))?;
+        offered.extend(
+            file.genomes
+                .into_iter()
+                .map(|g| (g.genome, seeds::FROM_SEEDS_FILE)),
+        );
+        seeds_file_sha256 = Some(sha);
+    }
+    let admitted = seeds::admit(&offered)?;
+    let limit = search::exploration_limit(options.budget, options.cuts);
+    ensure!(
+        admitted.seeds.len() < limit || admitted.seeds.is_empty(),
+        "the budget cannot re-measure {} seed(s): generation 0 needs the bootstrap plus every seed \
+         on each cut, {} evaluation(s), and exploration allows {limit} per cut",
+        admitted.seeds.len(),
+        admitted.seeds.len() + 1
+    );
+    let record = receipt::Seeding {
+        offered: admitted.offered as u64,
+        seeds: admitted
+            .seeds
+            .iter()
+            .map(|s| receipt::Seed {
+                genome: s.genome.clone(),
+                program_sha256: s.program_sha256.clone(),
+                source: s.source.to_owned(),
+            })
+            .collect(),
+        parent_receipt_sha256,
+        seeds_file_sha256,
+    };
+    Ok((
+        admitted.seeds.into_iter().map(|s| s.genome).collect(),
+        record,
+    ))
 }
 
 struct Stages {
@@ -109,6 +186,9 @@ pub fn run(options: &RunOptions) -> Result<Receipt> {
             output.display()
         );
     }
+    // A seed that does not parse, a seeds file that does not verify or a parent receipt its own
+    // evidence does not re-derive is refused here, before anything is written.
+    let (seed_genomes, seeding) = resolve_seeding(options)?;
     let mut stages = Stages::new();
 
     let started = Instant::now();
@@ -151,12 +231,11 @@ pub fn run(options: &RunOptions) -> Result<Receipt> {
     );
 
     let started = Instant::now();
-    let searched = search::run_cuts(
-        &preparation.cuts,
-        options.budget,
-        options.rng_seed,
-        &root.join("search"),
-    )?;
+    let search_options = search::SearchOptions {
+        seeds: seed_genomes,
+        ..search::SearchOptions::new(options.budget, options.rng_seed)
+    };
+    let searched = search::run_cuts_with(&preparation.cuts, &search_options, &root.join("search"))?;
     let successful: u64 = searched.iter().map(|c| c.successful_measurements).sum();
     let failed: u64 = searched
         .iter()
@@ -246,6 +325,7 @@ pub fn run(options: &RunOptions) -> Result<Receipt> {
         &selection,
         &emitted,
         stages.stages,
+        seeding,
     )?;
     // A receipt that does not satisfy its own contract is a failed run.
     receipt::validate_value(&serde_json::to_value(&receipt)?)
@@ -281,6 +361,7 @@ fn assemble(
     selection: &select::Selection,
     emitted: &emit::Emitted,
     stages: Vec<receipt::Stage>,
+    seeding: receipt::Seeding,
 ) -> Result<Receipt> {
     let mut observation_digests = String::new();
     let mut cuts = Vec::new();
@@ -365,6 +446,7 @@ fn assemble(
                 seconds: b.seconds,
                 cuts_measured: b.cuts_measured as u64,
             }),
+            seeding: Some(seeding),
         },
         artifacts: emitted
             .artifacts
@@ -438,17 +520,15 @@ mod tests {
         std::fs::write(input.join("metadata.json"), row.to_string()).unwrap();
         let output = temp.path().join("run");
         let options = RunOptions {
-            dataset: input.display().to_string(),
-            output: output.clone(),
             budget: Budget {
                 evaluations: 1,
                 seconds: 1,
             },
             seed: 1,
             rng_seed: 1,
-            cuts: 1,
             languages: vec![Language::Rust],
             policy: Policy::Skip,
+            ..RunOptions::new(input.display().to_string(), output.clone())
         };
         let error = format!("{:#}", run(&options).unwrap_err());
         assert!(error.contains("task binary is unsupported"), "{error}");
@@ -462,18 +542,260 @@ mod tests {
         let temp = tempfile::tempdir().unwrap();
         let output = temp.path().join("run");
         let options = RunOptions {
-            dataset: "0000000000000000".to_owned(),
-            output: output.clone(),
-            budget: Budget::default(),
             seed: 1,
             rng_seed: 1,
-            cuts: 1,
             languages: vec![Language::Rust],
             policy: Policy::Require,
+            ..RunOptions::new("0000000000000000", output.clone())
         };
         let error = format!("{:#}", run(&options).unwrap_err());
         assert!(error.contains("--policy require"), "{error}");
         assert!(error.contains("--policy skip"), "{error}");
+        assert!(!output.exists());
+    }
+
+    fn committed_dataset() -> String {
+        concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../datasets/test/pmlb-229-pwlinear"
+        )
+        .to_owned()
+    }
+
+    fn small(output: &std::path::Path, evaluations: usize) -> RunOptions {
+        RunOptions {
+            budget: Budget {
+                evaluations,
+                seconds: 300,
+            },
+            rng_seed: 7,
+            languages: vec![Language::Rust],
+            policy: Policy::Skip,
+            ..RunOptions::new(committed_dataset(), output)
+        }
+    }
+
+    /// What a run decided, without the wall clock: genome, generation, origin, status, scores.
+    type Decided = Vec<(
+        usize,
+        String,
+        usize,
+        &'static str,
+        &'static str,
+        Option<f64>,
+        Option<f64>,
+    )>;
+
+    fn decided(run: &crate::evidence::VerifiedRun) -> Decided {
+        run.cuts
+            .iter()
+            .flat_map(|(cut, observations)| {
+                observations.iter().map(move |o| {
+                    (
+                        *cut,
+                        o.genome.clone(),
+                        o.generation,
+                        o.origin,
+                        o.status,
+                        o.rmse,
+                        o.hold_r2,
+                    )
+                })
+            })
+            .collect()
+    }
+
+    fn seeds_file(dir: &std::path::Path, genomes: &[&str]) -> std::path::PathBuf {
+        let path = dir.join("seeds.json");
+        let file = seeds::SeedsFile::new(
+            None,
+            genomes
+                .iter()
+                .map(|g| seeds::SeedGenome {
+                    genome: (*g).to_owned(),
+                    program_sha256: sha256_hex(g.as_bytes()),
+                    bank_entry_sha256: None,
+                    receipt_sha256: None,
+                })
+                .collect(),
+        );
+        seeds::write(&path, &file).unwrap();
+        path
+    }
+
+    #[test]
+    fn a_seed_enters_generation_zero_after_the_bootstrap_as_an_incumbent() {
+        let temp = tempfile::tempdir().unwrap();
+        let seed = seeds::canonical_pipeline("(pipe X (standardize) (ridge_gcv))").unwrap();
+        let file = seeds_file(temp.path(), &[&seed]);
+        let output = temp.path().join("run");
+        let receipt = run(&RunOptions {
+            seed_genomes: Some(file.clone()),
+            ..small(&output, 14)
+        })
+        .unwrap();
+        assert_eq!(receipt.schema, receipt::RECEIPT_SCHEMA_ID);
+        let seeding = receipt.search.seeding.as_ref().unwrap();
+        assert_eq!(seeding.offered, 1);
+        assert_eq!(seeding.seeds.len(), 1);
+        assert_eq!(seeding.seeds[0].genome, seed);
+        assert_eq!(seeding.seeds[0].program_sha256, sha256_hex(seed.as_bytes()));
+        assert_eq!(seeding.seeds[0].source, seeds::FROM_SEEDS_FILE);
+        assert_eq!(
+            seeding.seeds_file_sha256.as_deref(),
+            Some(crate::sha256_file(&file).unwrap().as_str())
+        );
+        assert!(seeding.parent_receipt_sha256.is_none());
+
+        let verified = crate::evidence::verify_run(&output.join("receipt.json")).unwrap();
+        let observations = &verified.cuts[0].1;
+        assert_eq!(observations[0].origin, search::BOOTSTRAP);
+        assert_eq!(observations[1].genome, seed);
+        assert_eq!(observations[1].origin, search::INCUMBENT);
+        assert_eq!(observations[1].generation, 0);
+        // The seed spent budget like any candidate: the evaluation bound still holds.
+        assert!(receipt.search.cuts[0].completed_evaluations <= 14);
+    }
+
+    #[test]
+    fn the_same_seed_and_rng_replay_identically() {
+        let temp = tempfile::tempdir().unwrap();
+        let seed = seeds::canonical_pipeline("(pipe X (robust_scale) (ridge))").unwrap();
+        let file = seeds_file(temp.path(), &[&seed]);
+        let mut replays = Vec::new();
+        for name in ["a", "b"] {
+            let output = temp.path().join(name);
+            run(&RunOptions {
+                seed_genomes: Some(file.clone()),
+                ..small(&output, 16)
+            })
+            .unwrap();
+            replays.push(crate::evidence::verify_run(&output.join("receipt.json")).unwrap());
+        }
+        assert_eq!(decided(&replays[0]), decided(&replays[1]));
+        assert_eq!(
+            replays[0].receipt.search.selected_genome,
+            replays[1].receipt.search.selected_genome
+        );
+        assert_eq!(
+            replays[0].receipt.search.seeding,
+            replays[1].receipt.search.seeding
+        );
+    }
+
+    /// Seeding from a parent re-measures the parent's champion on this run's cuts, and the
+    /// selection over those measurements can only match or beat it.
+    #[test]
+    fn a_champion_is_never_worse_than_its_seed_on_the_same_cuts() {
+        let temp = tempfile::tempdir().unwrap();
+        let parent_dir = temp.path().join("parent");
+        let parent = run(&RunOptions {
+            cuts: 2,
+            ..small(&parent_dir, 24)
+        })
+        .unwrap();
+        let parent_best = parent.search.best.clone().unwrap();
+        let child_dir = temp.path().join("child");
+        let child = run(&RunOptions {
+            cuts: 2,
+            rng_seed: 8,
+            incumbent: Some(parent_dir.join("receipt.json")),
+            ..small(&child_dir, 24)
+        })
+        .unwrap();
+        let seeding = child.search.seeding.clone().unwrap();
+        assert_eq!(
+            seeding.parent_receipt_sha256.as_deref(),
+            Some(
+                crate::sha256_file(&parent_dir.join("receipt.json"))
+                    .unwrap()
+                    .as_str()
+            )
+        );
+        let child_best = child.search.best.clone().unwrap();
+        assert!(
+            child_best.validation_rmse <= parent_best.validation_rmse,
+            "child {} ({}) is worse than its seed {} ({})",
+            child_best.genome,
+            child_best.validation_rmse,
+            parent_best.genome,
+            parent_best.validation_rmse
+        );
+        // Same cuts, same fit: the re-measurement reproduces the parent's own numbers.
+        assert_eq!(child.prepared.sha256, parent.prepared.sha256);
+        let verified = crate::evidence::verify_run(&child_dir.join("receipt.json")).unwrap();
+        let ranking = verified.ranking().unwrap();
+        if parent_best.genome != search::BOOTSTRAP_GENOME {
+            let again = ranking
+                .iter()
+                .find(|b| b.genome == parent_best.genome)
+                .expect("the seed was measured on every cut");
+            assert_eq!(
+                again.validation_rmse.to_bits(),
+                parent_best.validation_rmse.to_bits()
+            );
+        }
+    }
+
+    #[test]
+    fn a_tampered_parent_receipt_is_refused_before_anything_is_written() {
+        let temp = tempfile::tempdir().unwrap();
+        let parent_dir = temp.path().join("parent");
+        run(&small(&parent_dir, 12)).unwrap();
+        let receipt_path = parent_dir.join("receipt.json");
+        let pristine = std::fs::read(&receipt_path).unwrap();
+
+        // A better score than the evidence shows.
+        let mut value: serde_json::Value = serde_json::from_slice(&pristine).unwrap();
+        let rmse = value["search"]["best"]["validation_rmse"].as_f64().unwrap();
+        value["search"]["best"]["validation_rmse"] = (rmse / 2.0).into();
+        std::fs::write(&receipt_path, serde_json::to_vec_pretty(&value).unwrap()).unwrap();
+        let child = temp.path().join("child-score");
+        let error = format!(
+            "{:#}",
+            run(&RunOptions {
+                incumbent: Some(receipt_path.clone()),
+                ..small(&child, 12)
+            })
+            .unwrap_err()
+        );
+        assert!(error.contains("--incumbent"), "{error}");
+        assert!(!child.exists(), "a refused run wrote {}", child.display());
+
+        // An observation edited under an untouched receipt.
+        std::fs::write(&receipt_path, &pristine).unwrap();
+        let observations = parent_dir.join("search/cut-0/observations.json");
+        let mut rows: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(&observations).unwrap()).unwrap();
+        rows[0]["rmse"] = 0.0.into();
+        std::fs::write(&observations, serde_json::to_vec_pretty(&rows).unwrap()).unwrap();
+        let child = temp.path().join("child-observation");
+        let error = format!(
+            "{:#}",
+            run(&RunOptions {
+                incumbent: Some(receipt_path.clone()),
+                ..small(&child, 12)
+            })
+            .unwrap_err()
+        );
+        assert!(error.contains("hashes to"), "{error}");
+        assert!(!child.exists());
+    }
+
+    #[test]
+    fn a_budget_that_cannot_remeasure_the_seeds_is_refused() {
+        let temp = tempfile::tempdir().unwrap();
+        let file = seeds_file(temp.path(), &["(pipe X (standardize) (ridge))"]);
+        let output = temp.path().join("run");
+        let error = format!(
+            "{:#}",
+            run(&RunOptions {
+                seed_genomes: Some(file),
+                ..small(&output, 1)
+            })
+            .unwrap_err()
+        );
+        assert!(error.contains("cannot re-measure"), "{error}");
         assert!(!output.exists());
     }
 

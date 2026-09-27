@@ -1,10 +1,12 @@
-//! The committed `jope.pipeline-receipt/v2` schema and the schemars output of
+//! The committed `jope.pipeline-receipt/v3` schema and the schemars output of
 //! [`jope_pipeline::Receipt`] must agree on every object's required set and
 //! property list, so neither can drift without this failing. The walk is the one
-//! `crates/jope-datasets/tests/schema_agreement.rs` uses.
+//! `crates/jope-datasets/tests/schema_agreement.rs` uses. v1 and v2 receipts keep
+//! validating against their own committed schemas.
 
 use jope_pipeline::receipt::{
-    derived_schema, schema, validate_value, RECEIPT_SCHEMA_ID, RECEIPT_SCHEMA_JSON,
+    derived_schema, schema, validate_value, RECEIPT_SCHEMA_ID, RECEIPT_SCHEMA_JSON, V2_SCHEMA_ID,
+    V2_SCHEMA_JSON,
 };
 use serde_json::{json, Value};
 use std::collections::BTreeSet;
@@ -135,9 +137,15 @@ fn receipt_schema_agrees_with_the_rust_type() {
 
 #[test]
 fn the_committed_file_is_byte_identical_to_the_embedded_schema() {
-    let path = Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../schemas/jope.pipeline-receipt.v2.schema.json");
-    assert_eq!(std::fs::read_to_string(&path).unwrap(), RECEIPT_SCHEMA_JSON);
+    let schemas = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../schemas");
+    assert_eq!(
+        std::fs::read_to_string(schemas.join("jope.pipeline-receipt.v3.schema.json")).unwrap(),
+        RECEIPT_SCHEMA_JSON
+    );
+    assert_eq!(
+        std::fs::read_to_string(schemas.join("jope.pipeline-receipt.v2.schema.json")).unwrap(),
+        V2_SCHEMA_JSON
+    );
 }
 
 /// A receipt shaped exactly as `run` writes one, with a measured champion.
@@ -202,7 +210,86 @@ fn fixture() -> Value {
             "seconds": 1.0, "stopped_by": "evaluations"},
         "comparison": jope_pipeline::receipt::Phase::not_requested()
     });
+    value["search"]["seeding"] = json!({
+        "offered": 0, "seeds": [], "parent_receipt_sha256": null, "seeds_file_sha256": null
+    });
     value
+}
+
+/// The same run recorded as a v2 receipt: no seeding record.
+fn v2_fixture() -> Value {
+    let mut value = fixture();
+    value["schema"] = json!(V2_SCHEMA_ID);
+    value["search"].as_object_mut().unwrap().remove("seeding");
+    value
+}
+
+#[test]
+fn v2_receipts_still_verify_and_cannot_claim_v3_seeding() {
+    let receipt = validate_value(&v2_fixture()).unwrap();
+    assert_eq!(receipt.schema, V2_SCHEMA_ID);
+    assert!(receipt.search.seeding.is_none());
+    // A v2 receipt is checked by the v2 contract, which has no seeding field at all.
+    let mut claimed = v2_fixture();
+    claimed["search"]["seeding"] = fixture()["search"]["seeding"].clone();
+    let errors = validate_value(&claimed).unwrap_err();
+    assert!(errors.iter().any(|e| e.contains("seeding")), "{errors:?}");
+    // And v2's own budget invariants still apply to it.
+    let mut overspent = v2_fixture();
+    overspent["search"]["evaluations"] = json!(4);
+    let errors = validate_value(&overspent).unwrap_err();
+    assert!(
+        errors
+            .iter()
+            .any(|e| e.contains("total budget/phase accounting mismatch")),
+        "{errors:?}"
+    );
+}
+
+#[test]
+fn v3_seeding_records_are_checked_against_digests_cap_and_coverage() {
+    let sha = jope_pipeline::sha256_hex(b"(pipe X (ridge))");
+    let seed_genome = "(pipe X (standardize) (ridge))";
+    let seed_sha = jope_pipeline::sha256_hex(seed_genome.as_bytes());
+    let seeded = |source: &str| {
+        let mut v = fixture();
+        v["search"]["seeding"] = json!({
+            "offered": 1,
+            "seeds": [{"genome": seed_genome, "program_sha256": seed_sha, "source": source}],
+            "parent_receipt_sha256": "c".repeat(64),
+            "seeds_file_sha256": null
+        });
+        // The seed was attempted on the one requested cut.
+        v["search"]["coverage"][1]["program_sha256"] = json!(seed_sha);
+        v
+    };
+    validate_value(&seeded("incumbent")).unwrap();
+
+    let mut cases: Vec<(Value, &str)> = Vec::new();
+    let mut v = fixture();
+    v["search"].as_object_mut().unwrap().remove("seeding");
+    cases.push((v, "seeding"));
+    let mut v = seeded("incumbent");
+    v["search"]["coverage"][1]["program_sha256"] = json!(format!("{:064x}", 1));
+    cases.push((v, "not attempted on every requested cut"));
+    let mut v = seeded("incumbent");
+    v["search"]["seeding"]["seeds"][0]["program_sha256"] = json!(sha);
+    cases.push((v, "digest, duplicate or bootstrap mismatch"));
+    cases.push((seeded("seeds_file"), "without a seeds file digest"));
+    cases.push((seeded("oracle"), "unknown"));
+    let mut v = seeded("incumbent");
+    v["search"]["seeding"]["offered"] = json!(0);
+    cases.push((v, "exceeds the cap"));
+    let mut v = seeded("incumbent");
+    v["search"]["seeding"]["parent_receipt_sha256"] = json!("short");
+    cases.push((v, "match"));
+    for (value, expected) in cases {
+        let errors = validate_value(&value).unwrap_err();
+        assert!(
+            errors.iter().any(|e| e.contains(expected)),
+            "wanted {expected:?}, got {errors:?}"
+        );
+    }
 }
 
 #[test]
@@ -359,7 +446,7 @@ fn the_validator_rejects_what_the_schema_and_the_invariants_forbid() {
 
 #[test]
 fn old_v1_receipts_remain_readable_without_claiming_v2_budget_guarantees() {
-    let mut value = fixture();
+    let mut value = v2_fixture();
     value["schema"] = json!(jope_pipeline::receipt::LEGACY_SCHEMA_ID);
     for key in ["budget_policy", "compared_cuts", "coverage"] {
         value["search"].as_object_mut().unwrap().remove(key);
@@ -421,7 +508,7 @@ fn v2_rejects_overspending_missing_accounting_and_incomparable_cut_sets() {
 #[test]
 fn schema_only_consumers_require_every_new_v2_field() {
     let schema = schema();
-    for field in ["budget_policy", "compared_cuts", "coverage"] {
+    for field in ["budget_policy", "compared_cuts", "coverage", "seeding"] {
         assert!(schema["$defs"]["Search"]["required"]
             .as_array()
             .unwrap()

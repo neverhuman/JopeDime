@@ -7,7 +7,11 @@
 //! `feat_math::folds::fold_of`, [`search`] runs a genetic-programming search
 //! whose every fit is `feat_math::fit`, and [`emit`] transpiles the champion to
 //! standalone Python, Rust, C++ and JavaScript. Every stage records what it did —
-//! including what it skipped and why — in a `jope.pipeline-receipt/v2`.
+//! including what it skipped and why — in a `jope.pipeline-receipt/v3`.
+//!
+//! A search may be seeded ([`seeds`]) from a `jope.pipeline-seeds/v1` file or from a parent
+//! receipt that [`evidence::verify_run`] re-derives from its own run directory. Seeds are
+//! starting points only: they are re-measured on the run's own cuts.
 //!
 //! This crate deliberately does **not** depend on `jope-engine`. The engine's GP
 //! search cannot measure anything in a shipped binary — `eval_registry/authority.rs`
@@ -30,6 +34,7 @@ pub mod cpu_context_bridge;
 pub mod dataset;
 pub mod emit;
 pub mod evaluation_score;
+pub mod evidence;
 #[cfg(target_os = "linux")]
 pub mod execution;
 pub mod experiment;
@@ -47,6 +52,7 @@ pub mod search;
 #[cfg(feature = "neural-search")]
 pub mod search_context;
 pub mod search_plan;
+pub mod seeds;
 pub mod select;
 #[cfg(target_os = "linux")]
 pub mod supervisor;

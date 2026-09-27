@@ -109,6 +109,53 @@ pub const PARSE_FAILED: &str = "parse_failed";
 pub const FIT_FAILED: &str = "fit_failed";
 pub const SCORE_FAILED: &str = "score_failed";
 pub const PANICKED: &str = "panicked";
+/// Every status an observation can carry.
+pub const STATUSES: [&str; 5] = [MEASURED, PARSE_FAILED, FIT_FAILED, SCORE_FAILED, PANICKED];
+
+/// How a candidate was produced. A seed enters generation 0 right after the bootstrap as
+/// [`INCUMBENT`]; comparison re-measurements are [`REMEASURE`].
+pub const BOOTSTRAP: &str = "bootstrap";
+pub const INCUMBENT: &str = "incumbent";
+pub const REMEASURE: &str = "remeasure";
+pub const ORIGINS: [&str; 6] = [
+    BOOTSTRAP,
+    INCUMBENT,
+    "random",
+    "mutate",
+    "crossover",
+    REMEASURE,
+];
+
+/// Everything a search is asked to do besides which cuts to search.
+#[derive(Clone, Debug)]
+pub struct SearchOptions {
+    pub budget: Budget,
+    pub rng_seed: u64,
+    /// Canonical pipeline genomes that enter generation 0 after the bootstrap with origin
+    /// [`INCUMBENT`] (already admitted by [`crate::seeds::admit`]). They are fitted on this
+    /// search's own cuts like every other candidate and spend the same budget.
+    pub seeds: Vec<String>,
+}
+
+impl SearchOptions {
+    pub fn new(budget: Budget, rng_seed: u64) -> Self {
+        SearchOptions {
+            budget,
+            rng_seed,
+            seeds: Vec::new(),
+        }
+    }
+}
+
+/// Evaluation slots a search on `cuts` cuts gives exploration: all of them for one cut, half
+/// (rounded up) when the rest is reserved for cross-cut comparison.
+pub fn exploration_limit(budget: Budget, cuts: usize) -> usize {
+    if cuts > 1 {
+        budget.evaluations.div_ceil(2)
+    } else {
+        budget.evaluations
+    }
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Budget {
@@ -200,6 +247,67 @@ pub struct Observation {
 impl Observation {
     pub fn measured(&self) -> bool {
         self.status == MEASURED
+    }
+}
+
+/// An [`Observation`] as `observations.json` publishes it, read back for re-derivation.
+#[derive(Clone, Debug, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ObservationRecord {
+    pub genome: String,
+    pub program_sha256: String,
+    pub cut: usize,
+    pub generation: usize,
+    pub origin: String,
+    #[serde(default)]
+    pub train_r2: Option<f64>,
+    #[serde(default)]
+    pub hold_r2: Option<f64>,
+    #[serde(default)]
+    pub rmse: Option<f64>,
+    pub seconds: f64,
+    pub status: String,
+    #[serde(default)]
+    pub failure: Option<String>,
+}
+
+impl ObservationRecord {
+    /// The observation this record publishes, refusing an unknown origin or status, a digest
+    /// that is not its genome's, or a measured row without its scores.
+    pub fn into_observation(self) -> Result<Observation> {
+        let origin = ORIGINS
+            .iter()
+            .copied()
+            .find(|o| *o == self.origin)
+            .with_context(|| format!("unknown observation origin {:?}", self.origin))?;
+        let status = STATUSES
+            .iter()
+            .copied()
+            .find(|s| *s == self.status)
+            .with_context(|| format!("unknown observation status {:?}", self.status))?;
+        ensure!(
+            self.program_sha256 == sha256_hex(self.genome.as_bytes()),
+            "observation program_sha256 is not the digest of its genome"
+        );
+        ensure!(
+            (status == MEASURED)
+                == (self.rmse.is_some() && self.hold_r2.is_some() && self.train_r2.is_some())
+                && (status == MEASURED) == self.failure.is_none(),
+            "observation status {status} disagrees with its scores"
+        );
+        Ok(Observation {
+            genome: self.genome,
+            program_sha256: self.program_sha256,
+            cut: self.cut,
+            generation: self.generation,
+            origin,
+            train_r2: self.train_r2,
+            hold_r2: self.hold_r2,
+            rmse: self.rmse,
+            seconds: self.seconds,
+            status,
+            failure: self.failure,
+        })
     }
 }
 
@@ -408,7 +516,7 @@ fn offspring(
 
 /// Run one cut's search and publish its evidence under `output`.
 pub fn run_cut(cut: &Cut, budget: Budget, rng_seed: u64, output: &Path) -> Result<CutSearch> {
-    run_cut_allocated(cut, budget, rng_seed, output, false)
+    run_cut_allocated(cut, &SearchOptions::new(budget, rng_seed), output, false)
 }
 
 /// Multiple cuts reserve half the evaluation slots (rounded down) and half the
@@ -420,12 +528,20 @@ pub fn run_cuts(
     rng_seed: u64,
     output: &Path,
 ) -> Result<Vec<CutSearch>> {
+    run_cuts_with(cuts, &SearchOptions::new(budget, rng_seed), output)
+}
+
+/// [`run_cuts`] with seeds and the other [`SearchOptions`].
+pub fn run_cuts_with(
+    cuts: &[Cut],
+    options: &SearchOptions,
+    output: &Path,
+) -> Result<Vec<CutSearch>> {
     let mut searches = Vec::new();
     for cut in cuts {
         searches.push(run_cut_allocated(
             cut,
-            budget,
-            rng_seed,
+            options,
             &output.join(format!("cut-{}", cut.index)),
             cuts.len() > 1,
         )?);
@@ -436,11 +552,11 @@ pub fn run_cuts(
 
 fn run_cut_allocated(
     cut: &Cut,
-    budget: Budget,
-    rng_seed: u64,
+    options: &SearchOptions,
     output: &Path,
     reserve: bool,
 ) -> Result<CutSearch> {
+    let (budget, rng_seed) = (options.budget, options.rng_seed);
     budget.check()?;
     ensure!(
         !output.join("search.json").exists(),
@@ -448,11 +564,7 @@ fn run_cut_allocated(
         output.display()
     );
     let started = Instant::now();
-    let evaluation_limit = if reserve {
-        budget.evaluations.div_ceil(2)
-    } else {
-        budget.evaluations
-    };
+    let evaluation_limit = exploration_limit(budget, if reserve { 2 } else { 1 });
     let seconds_limit = budget.seconds as f64 / if reserve { 2.0 } else { 1.0 };
     let deadline = Duration::from_secs_f64(seconds_limit);
 
@@ -468,7 +580,11 @@ fn run_cut_allocated(
         // generations are the elites' offspring. Elites carry their scores and
         // are never re-fitted, so a slot here is always an unmeasured genome.
         let candidates: Vec<(String, &'static str)> = if generation == 0 {
-            let mut initial = vec![(BOOTSTRAP_GENOME.to_owned(), "bootstrap")];
+            let mut initial = vec![(BOOTSTRAP_GENOME.to_owned(), BOOTSTRAP)];
+            // Seeds follow the bootstrap and precede every random draw, so a budget that admits
+            // generation 0 at all re-measures them first; the random slots are the unseeded
+            // search's own draws, unchanged.
+            initial.extend(options.seeds.iter().map(|g| (g.clone(), INCUMBENT)));
             for slot in 1..POPULATION {
                 let seed = stream(rng_seed, cut.index, 0, slot, 0);
                 initial.push((
@@ -933,11 +1049,13 @@ mod tests {
             .map(|cut| {
                 run_cut_allocated(
                     cut,
-                    Budget {
-                        evaluations: 8,
-                        seconds: 60,
-                    },
-                    7,
+                    &SearchOptions::new(
+                        Budget {
+                            evaluations: 8,
+                            seconds: 60,
+                        },
+                        7,
+                    ),
                     &temp.join(format!("search-{}", cut.index)),
                     reserve,
                 )

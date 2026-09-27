@@ -52,14 +52,25 @@ pub enum Cmd {
         /// The proposal stage: auto and skip record a skip, require fails closed.
         #[arg(long, default_value = "auto")]
         policy: String,
+        /// A jope.pipeline-seeds/v1 file: its genomes enter generation 0 after the bootstrap
+        /// (canonicalised, deduplicated, at most 4) and are re-measured on this run's cuts.
+        #[arg(long)]
+        seed_genomes: Option<PathBuf>,
+        /// A parent receipt: verified against its run's evidence, its selected genome is seeded
+        /// first and its sha256 recorded as this run's parent.
+        #[arg(long)]
+        incumbent: Option<PathBuf>,
         /// Print the receipt as one JSON document.
         #[arg(long)]
         json: bool,
     },
-    /// Validate a receipt against the committed jope.pipeline-receipt/v1 or v2 schema.
+    /// Validate a receipt against the committed jope.pipeline-receipt/v1, v2 or v3 schema.
     VerifyReceipt {
         #[arg(long)]
         receipt: PathBuf,
+        /// Also re-derive the receipt from its run directory's evidence (v2 and v3).
+        #[arg(long)]
+        evidence: bool,
         #[arg(long)]
         json: bool,
     },
@@ -86,6 +97,8 @@ pub fn run(cli: Cli) -> Result<ExitCode> {
             cuts,
             emit,
             policy,
+            seed_genomes,
+            incumbent,
             json,
         } => {
             let options = RunOptions {
@@ -99,6 +112,8 @@ pub fn run(cli: Cli) -> Result<ExitCode> {
                 policy: Policy::parse(&policy).ok_or_else(|| {
                     anyhow::anyhow!("--policy must be auto, skip or require, got {policy:?}")
                 })?,
+                seed_genomes,
+                incumbent,
             };
             let receipt = crate::run::run(&options)?;
             if json {
@@ -137,8 +152,13 @@ pub fn run(cli: Cli) -> Result<ExitCode> {
         }
         Cmd::VerifyReceipt {
             receipt: path,
+            evidence,
             json,
-        } => match receipt::read(&path) {
+        } => match if evidence {
+            crate::evidence::verify_run(&path).map(|run| run.receipt)
+        } else {
+            receipt::read(&path)
+        } {
             Ok(receipt) => {
                 if json {
                     println!("{}", serde_json::to_string(&receipt)?);
