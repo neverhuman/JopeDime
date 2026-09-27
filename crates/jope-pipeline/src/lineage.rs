@@ -11,6 +11,11 @@
 //! run with the final round's exact configuration and no seeds, which separates what seeding
 //! carried forward from what the search discovered on its own.
 //!
+//! Every refusal a round could make — parallelism, budget, a seed that is not a pipeline, a
+//! dataset that does not resolve or is not a regression task, a budget too small to re-measure
+//! the seeds — is made before the output directory is created, so a refused command can be
+//! corrected and re-run into the same `--output`.
+//!
 //! `lineage.json` is rewritten atomically and fsynced after every completed round, so a parent
 //! process can count completed rounds while evolve runs; a round interrupted by SIGTERM writes no
 //! receipt and never enters it. Evolve never touches the learning store: HWM ingest and the
@@ -318,11 +323,28 @@ pub fn evolve(options: &EvolveOptions) -> Result<Lineage> {
         "{}: already holds a lineage; choose a new --output",
         output.display()
     );
-    // Everything that can be refused is refused before the first byte is written.
-    run::preflight(&options.run)?;
+    // Everything that can be refused is refused before the first byte is written: a refusal
+    // inside round 1 would otherwise leave `round-001/` behind, and the guard above would then
+    // turn the corrected retry into "already holds a lineage".
     if let Some(path) = &options.seeds {
         seeds::read(path).with_context(|| format!("--seeds {}", path.display()))?;
     }
+    // Round 1 exactly as it will run: parallelism, budget, its seeds, the dataset.
+    run::check(&RunOptions {
+        seed_genomes: options.seeds.clone(),
+        ..options.run.clone()
+    })?;
+    // Every later round carries up to ELITES seeds, which generation 0 re-measures after the
+    // bootstrap on each cut; a budget that cannot would refuse round 2 after round 1 ran.
+    let limit = search::exploration_limit(options.run.budget, options.run.cuts);
+    ensure!(
+        options.rounds == 1 || search::ELITES < limit,
+        "--rounds {}: every round after the first re-measures up to {} seeds plus the bootstrap \
+         in generation 0 on each cut, and this budget's exploration allows {limit} evaluation(s) \
+         per cut; raise --budget evaluations",
+        options.rounds,
+        search::ELITES
+    );
     std::fs::create_dir_all(output).with_context(|| format!("create {}", output.display()))?;
 
     let mut lineage: Option<Lineage> = None;
@@ -935,6 +957,123 @@ mod tests {
             (SEEDED, FROM_SEEDS_FILE)
         );
         assert_eq!(round.seeds[0].genome, genome);
+        verify(&out.join(LINEAGE_FILE), false).unwrap();
+    }
+
+    /// A copy of the committed regression fixture whose catalog row says `binary`.
+    fn binary_dataset(root: &Path) -> String {
+        let source = Path::new(&dataset()).to_path_buf();
+        let target = root.join("binary");
+        std::fs::create_dir_all(&target).unwrap();
+        for name in ["train.csv", "test.csv"] {
+            std::fs::copy(source.join(name), target.join(name)).unwrap();
+        }
+        let mut row: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(source.join("metadata.json")).unwrap()).unwrap();
+        row["task"] = "binary".into();
+        row["target"]["type"] = "binary".into();
+        std::fs::write(target.join("metadata.json"), row.to_string()).unwrap();
+        target.display().to_string()
+    }
+
+    /// Every refusal a round could make is made before evolve writes anything: a seed that is
+    /// not a pipeline, an unresolvable or non-regression dataset, a budget that cannot re-measure
+    /// round 1's seeds or the seeds a later round carries. Nothing is left behind, so the
+    /// corrected command runs into the same --output.
+    #[test]
+    fn a_refused_lineage_writes_nothing_and_the_corrected_retry_runs() {
+        let temp = tempfile::tempdir().unwrap();
+        let out = temp.path().join("lineage");
+        let seeds_of = |name: &str, genomes: &[&str]| {
+            let path = temp.path().join(name);
+            seeds::write(
+                &path,
+                &seeds::SeedsFile::new(
+                    None,
+                    genomes
+                        .iter()
+                        .map(|g| seeds::SeedGenome {
+                            genome: (*g).to_owned(),
+                            program_sha256: sha256_hex(g.as_bytes()),
+                            bank_entry_sha256: None,
+                            receipt_sha256: None,
+                        })
+                        .collect(),
+                ),
+            )
+            .unwrap();
+            path
+        };
+        let not_a_pipeline = seeds_of("sym.json", &["(sym affine \"x0\")"]);
+        let four = seeds_of(
+            "four.json",
+            &[
+                "(pipe X (standardize) (ridge))",
+                "(pipe X (rank) (ridge))",
+                "(pipe X (blom) (ridge))",
+                "(pipe X (robust_scale) (ridge))",
+            ],
+        );
+        let refused = |options: EvolveOptions, needle: &str| {
+            let error = format!("{:#}", evolve(&options).unwrap_err());
+            assert!(error.contains(needle), "wanted {needle:?}: {error}");
+            assert!(
+                !out.exists(),
+                "a refusal ({needle}) left {} behind",
+                out.display()
+            );
+        };
+        let options = |run: RunOptions, rounds: usize, seeds: Option<PathBuf>| EvolveOptions {
+            run,
+            output: out.clone(),
+            rounds,
+            control: false,
+            seeds,
+        };
+        refused(
+            options(template(16), 2, Some(not_a_pipeline)),
+            "seed \"(sym affine",
+        );
+        refused(
+            options(
+                RunOptions {
+                    dataset: "0000000000000000".to_owned(),
+                    ..template(16)
+                },
+                2,
+                None,
+            ),
+            "not in the local dataset cache",
+        );
+        refused(
+            options(
+                RunOptions {
+                    dataset: binary_dataset(temp.path()),
+                    ..template(16)
+                },
+                2,
+                None,
+            ),
+            "task binary is unsupported",
+        );
+        refused(
+            options(template(4), 1, Some(four.clone())),
+            "cannot re-measure 4 seed(s)",
+        );
+        refused(
+            options(
+                RunOptions {
+                    cuts: 2,
+                    ..template(8)
+                },
+                2,
+                None,
+            ),
+            "every round after the first",
+        );
+        // The corrected command runs into the same directory.
+        let lineage = evolve(&options(template(16), 2, Some(four))).unwrap();
+        assert_eq!(lineage.rounds.len(), 2);
         verify(&out.join(LINEAGE_FILE), false).unwrap();
     }
 

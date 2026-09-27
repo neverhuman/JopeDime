@@ -119,6 +119,13 @@ re-measured on the same cuts, no round's champion is worse than the round before
 adds `control/`: the final round's exact configuration with no seeds, which separates what
 seeding carried forward from what the search found on its own.
 
+Every refusal a round could make is made before the output directory is created: the counts,
+budget and parallelism; round 1's seeds (a genome that is not a pipeline, or more seeds than the
+budget can re-measure); a dataset that does not resolve, is not a regression task or does not
+parse; and, with more than one round, a budget whose exploration allowance cannot re-measure the
+four seeds a later round may carry. A refused command leaves nothing behind, so the corrected
+command can be re-run into the same `--output`.
+
 `lineage.json` (`jope.pipeline-lineage/v1`) is rewritten atomically and fsynced after each
 completed round: per round the selected genome and program sha256, the mean held-out RMSE, R^2
 and train R^2 on the identical cuts, the parent receipt sha256, the seed origin and seeds, each
