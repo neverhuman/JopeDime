@@ -68,10 +68,27 @@ fixed; `fixed-locally` requires retained evidence. The map is static: it neither
 nor executes tests.
 
 Real-corpus fixtures read their inputs through the ADR-0003 roots
-(`SOTARENA_ROOT`, `JOPE_STATE`, `JOPE_REGISTRY`). When absent they fail with an explicit
-`unavailable:` message instead of being skipped. A read-only custody copy of the
-regression fixture inputs, with `MANIFEST.sha256` and `PROVENANCE.txt`, is kept outside
-the source tree for host-lane runs.
+(`SOTARENA_ROOT`, `JOPE_STATE`, `JOPE_REGISTRY`). Those inputs exist only in host custody,
+so every CI family declares the fixtures non-executable: each is `#[ignore]`d with a reason
+starting `real-corpus:` (or `deferred-classification:` for binary42) and listed in
+`deploy/ci/real-corpus-tests.txt`. They run in the host lane,
+`just test-real-corpus <custody-root>` (`deploy/ci/real-corpus-lane.sh`, coverage lane
+`host-real-corpus`). It refuses a writable or drifted custody copy, checks that the list
+still names exactly the ignored tests, points the roots at the copy and runs only those
+tests. An input the copy lacks still fails there with an explicit `unavailable:` message
+instead of being skipped. A read-only custody copy of the regression fixture inputs, with
+`MANIFEST.sha256` and `PROVENANCE.txt`, is kept outside the source tree. Host-lane outcomes
+are host evidence, not CI verification, so these triage records are `moved` (passing in the
+host lane) or stay `open`.
+
+The neural build deliberately refuses the CPU fit-service binding. Its 74 CPU-only
+service contracts remain executable in both default and scratch families and are
+explicitly ignored only with `neural`. `deploy/ci/neural-cpu-only-tests.txt` names
+every case; `check-test-routing.sh` checks their presence and ignore state against
+the actual nextest collection before each family runs. The neural refusal test
+continues to execute. The campaign and ranked-proposal public entrypoints still
+refuse unavailable GPU grants; separate private-core fixtures test post-admission
+behavior without making a production grant or claiming GPU qualification.
 
 These commands verify inventory integrity only. The test suite includes a valid
 inventory and adversarial omissions, duplicate IDs, renumbering, changed hashes,
@@ -79,6 +96,9 @@ missing acceptance, evidence path traversal, unsupported closure, and promotion.
 Original source whitespace is preserved for digest identity.
 
 ## Baseline and next gates
+
+The [2026-09-27 health routing record](health-routing-20260927.md) records the later
+reproduction, repair boundaries, explicit exclusions and bounded local results.
 
 `baseline.json` retains counts, commands, exit statuses, failed test names, and
 hash-addressed custody references from diagnostic run **36195898277 attempt 1** at

@@ -37,6 +37,10 @@ fn fixture() -> (tempfile::TempDir, PathBuf) {
 /// outcome of the same budget is proven by
 /// `gp::fit_contract_tests::one_evaluation_budget_runs_the_incumbent_before_neural_candidates`.
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn fenced_one_evaluation_budget_orders_the_incumbent_first_and_records_its_refusal() {
     let (temp, prepared) = fixture();
     let vocabulary = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets/grammar/featmath.json");
@@ -319,6 +323,10 @@ fn unbound_fitted_view_export_is_fenced_before_output_and_receipted() {
 /// Shipped build: a fully configured, in-scope authority still refuses the cut
 /// fit at namespace activation; nothing is claimed, started or published.
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn configured_authority_refuses_fit_view_without_verified_activation() {
     let (temp, prepared) = fixture();
     let output = temp.path().join("predictor.json");

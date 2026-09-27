@@ -190,6 +190,11 @@ fn evaluator_hashes(root: &Path) -> Result<(String, String)> {
 #[cfg(feature = "neural")]
 pub fn run(root: &Path, spec_path: &Path) -> Result<()> {
     crate::task_contract::require_original_gpu_grant("learning-campaign")?;
+    run_admitted(root, spec_path)
+}
+
+#[cfg(feature = "neural")]
+fn run_admitted(root: &Path, spec_path: &Path) -> Result<()> {
     let spec: Spec = read_json(spec_path)?;
     ensure!(
         spec.schema == "parallel.campaign.v1" && spec.qualification,
@@ -648,13 +653,19 @@ mod tests {
             deadline: started + 10800,
         };
         write_json(&output.join("schedule.json"), &schedule).unwrap();
-        run(root, &spec_path).unwrap();
+        // The shipped entry must refuse even this expired, nonnumerical request.
+        assert!(run(root, &spec_path)
+            .unwrap_err()
+            .to_string()
+            .contains("original native GPU grant verifier unavailable"));
+        assert!(!output.join("complete.json").exists());
+        run_admitted(root, &spec_path).unwrap();
         let completed: Value = read_json(&output.join("complete.json")).unwrap();
         assert_eq!(completed["status"], "complete_expired");
         assert_eq!(completed["dl_gp_dl_complete"], false);
         assert!(!output.join("cycle-0000").exists());
         let receipt = fs::read(output.join("complete.json")).unwrap();
-        run(root, &spec_path).unwrap();
+        run_admitted(root, &spec_path).unwrap();
         assert_eq!(fs::read(output.join("complete.json")).unwrap(), receipt);
         check_deadline().unwrap();
     }

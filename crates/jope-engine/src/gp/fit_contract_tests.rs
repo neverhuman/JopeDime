@@ -701,6 +701,10 @@ fn assert_fit_refused(authority: &Fixture, mut client: Command, train: &Path, me
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn fitted_predictor_roundtrip_matches_native_gp_and_restores_target_units() {
     let tmp = tempfile::tempdir().unwrap();
     let (train, training) = raw_training(tmp.path());
@@ -786,6 +790,10 @@ fn fitted_predictor_roundtrip_matches_native_gp_and_restores_target_units() {
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn sealed_memory_view_matches_file_evaluation_and_rejects_writes() {
     use std::io::Write;
     use std::os::fd::AsRawFd;
@@ -847,6 +855,10 @@ fn sealed_memory_view_matches_file_evaluation_and_rejects_writes() {
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn fitted_view_predictor_uses_the_exact_cut_and_original_target_units() {
     let (temp, prepared) = view_fixture();
     let output = temp.path().join("predictor.json");
@@ -883,6 +895,10 @@ fn fitted_view_predictor_uses_the_exact_cut_and_original_target_units() {
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn isolated_fitted_view_export_binds_success_and_preserves_worker_failures() {
     let (temp, prepared) = view_fixture();
     let executable = std::env::current_exe().unwrap();
@@ -922,6 +938,10 @@ fn isolated_fitted_view_export_binds_success_and_preserves_worker_failures() {
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn experiment_crashes_at_durable_boundaries_recover_without_repeating_committed_fits() {
     for boundary in [
         "candidate_intent",
@@ -1044,6 +1064,10 @@ fn experiment_crashes_at_durable_boundaries_recover_without_repeating_committed_
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn one_evaluation_budget_runs_the_incumbent_before_neural_candidates() {
     let (temp, prepared) = view_fixture();
     let vocabulary = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets/grammar/featmath.json");
@@ -1131,6 +1155,10 @@ fn one_evaluation_budget_runs_the_incumbent_before_neural_candidates() {
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn deactivated_synthetic_namespace_refuses_a_configured_fit_before_any_start() {
     let tmp = tempfile::tempdir().unwrap();
     let (train, training) = raw_training(tmp.path());
@@ -1145,6 +1173,10 @@ fn deactivated_synthetic_namespace_refuses_a_configured_fit_before_any_start() {
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn coverage_reimport_deactivates_the_synthetic_namespace_before_any_start() {
     let tmp = tempfile::tempdir().unwrap();
     let (train, training) = raw_training(tmp.path());
@@ -1161,6 +1193,10 @@ fn coverage_reimport_deactivates_the_synthetic_namespace_before_any_start() {
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn out_of_scope_training_and_foreign_scope_are_refused_before_any_start() {
     let tmp = tempfile::tempdir().unwrap();
     let (train, training) = raw_training(tmp.path());
@@ -1188,6 +1224,10 @@ fn out_of_scope_training_and_foreign_scope_are_refused_before_any_start() {
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn recovery_epoch_change_invalidates_the_synthetic_activation_before_any_start() {
     let tmp = tempfile::tempdir().unwrap();
     let (train, training) = raw_training(tmp.path());
@@ -1304,6 +1344,10 @@ fn republish_ledger(output: &Path, rows: &[Value]) {
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn independent_replay_reproduces_real_search_winners_and_refuses_tampered_ledgers() {
     use selection_replay::{verify_search, Eligibility, StopReason};
     let (temp, prepared) = view_fixture();
@@ -1448,6 +1492,10 @@ fn independent_replay_reproduces_real_search_winners_and_refuses_tampered_ledger
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn resumed_search_refuses_journaled_measurements_its_original_completion_does_not_support() {
     for forged in [json!(0.0), json!(-1.0)] {
         let (temp, prepared) = view_fixture();
@@ -1519,6 +1567,10 @@ fn generic_bootstrap(vocab: &crate::grammar::Vocab, slots: usize) -> Vec<(String
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn generic_bootstrap_candidates_retain_their_original_proposal_and_one_adaptation() {
     let vocabulary = vocabulary_path();
     let vocab: crate::grammar::Vocab = read_json(&vocabulary).unwrap();
@@ -1623,6 +1675,10 @@ fn generic_bootstrap_candidates_retain_their_original_proposal_and_one_adaptatio
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn variation_children_record_parents_and_cannot_alter_parent_fitted_state() {
     let vocabulary = vocabulary_path();
     let (temp, prepared) = view_fixture();
@@ -1730,6 +1786,10 @@ fn variation_children_record_parents_and_cannot_alter_parent_fitted_state() {
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn reused_fits_are_rescored_on_their_own_rows_and_never_inherit_scores() {
     let temp = tempfile::tempdir().unwrap();
     let root = temp.path().canonicalize().unwrap();
@@ -1851,6 +1911,10 @@ fn reused_fits_are_rescored_on_their_own_rows_and_never_inherit_scores() {
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn feasibility_estimates_are_recorded_beside_observed_outcomes_under_one_rule() {
     let (temp, prepared) = view_fixture();
     let root = temp.path().canonicalize().unwrap();
@@ -1906,6 +1970,10 @@ fn feasibility_estimates_are_recorded_beside_observed_outcomes_under_one_rule() 
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn a_resume_under_other_selection_rules_is_refused_not_restarted() {
     let (temp, prepared) = view_fixture();
     let root = temp.path();
@@ -2040,6 +2108,10 @@ fn completion(root: &Path, row: &Value) -> Value {
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn a_blocked_fitter_and_its_helpers_are_killed_at_the_original_deadline() {
     let (temp, prepared) = view_fixture();
     let root = temp.path();
@@ -2094,6 +2166,10 @@ fn a_blocked_fitter_and_its_helpers_are_killed_at_the_original_deadline() {
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn helpers_left_by_a_finished_evaluator_are_drained_before_the_next_dispatch() {
     let (temp, prepared) = view_fixture();
     let root = temp.path();
@@ -2129,6 +2205,10 @@ fn helpers_left_by_a_finished_evaluator_are_drained_before_the_next_dispatch() {
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn a_second_searcher_cannot_dispatch_into_a_live_search() {
     let (temp, prepared) = view_fixture();
     let root = temp.path();
@@ -2183,6 +2263,10 @@ fn a_second_searcher_cannot_dispatch_into_a_live_search() {
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn an_evaluator_allocation_failure_is_a_contained_failed_row() {
     let (temp, prepared) = view_fixture();
     let root = temp.path();
@@ -2264,6 +2348,10 @@ fn export_selected(
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn the_predictor_handoff_exports_only_the_sealed_replayed_selection() {
     let (temp, prepared) = view_fixture();
     let root = temp.path().canonicalize().unwrap();
@@ -2340,6 +2428,10 @@ fn the_predictor_handoff_exports_only_the_sealed_replayed_selection() {
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn a_sealed_selection_refuses_swaps_and_keeps_the_selection_when_export_fails() {
     let (temp, prepared) = view_fixture();
     let root = temp.path().canonicalize().unwrap();
@@ -2465,6 +2557,10 @@ fn relabelled_population(base: &Path, path: &Path, origin: &str) {
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn a_paired_comparison_names_its_sole_arm_difference_and_refuses_any_other() {
     let (temp, prepared) = view_fixture();
     let root = temp.path().canonicalize().unwrap();
@@ -2618,6 +2714,10 @@ fn a_paired_comparison_names_its_sole_arm_difference_and_refuses_any_other() {
 }
 
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn a_refused_proposal_in_one_slot_does_not_shift_another_slots_random_streams() {
     let (temp, prepared) = view_fixture();
     let root = temp.path().canonicalize().unwrap();
@@ -2709,6 +2809,10 @@ fn set_partition(prepared: &Path, partition: &str) {
 /// the sealed family would reach learning through the search. The refusal
 /// precedes every view load, output reservation and fit claim.
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn qualification_search_of_a_sealed_meta_test_family_is_refused_before_any_view_or_fit() {
     let (temp, prepared) = view_fixture();
     let root = temp.path().canonicalize().unwrap();
@@ -2794,6 +2898,10 @@ fn label_variant(root: &Path, name: &str, labels: &[(usize, &str)]) -> PathBuf {
 /// stay identical (fits reused) while scores change. A training label is an
 /// authorized fitting input: the fitted subject changes.
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn search_proposals_fits_and_scores_depend_only_on_their_permitted_rows() {
     let temp = tempfile::tempdir().unwrap();
     let root = temp.path().canonicalize().unwrap();
@@ -2975,6 +3083,10 @@ fn exported_subject(
 /// could be scored — it was never bound to the preparation's sealed-test
 /// identity — and the metrics were published straight to the caller.
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn a_selection_receipt_alone_neither_reads_caller_chosen_labels_nor_publishes_a_score() {
     let (temp, prepared) = view_fixture();
     let root = temp.path().canonicalize().unwrap();
@@ -3039,6 +3151,10 @@ fn refusal<T: std::fmt::Debug>(result: Result<T>) -> String {
 /// W1-T04 acceptance: sealed labels reach only a granted outer scorer; the
 /// score stays withheld until the separate authority releases it, once.
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn outer_scores_need_a_grant_read_only_the_granted_labels_and_release_once() {
     use outer_release::{Authority as Release, GrantRequest};
     let (temp, prepared) = view_fixture();
@@ -3290,6 +3406,10 @@ fn outer_release_cli_run(argv: &[&str]) -> Result<Value> {
 /// W1 follow-up 2b: init, grant, score, release and events through the CLI
 /// verbs, with the same one-grant, one-attempt, one-release rules.
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn the_outer_release_cli_grants_scores_and_releases_once() {
     let (temp, prepared) = view_fixture();
     let root = temp.path().canonicalize().unwrap();
@@ -3395,6 +3515,10 @@ fn the_outer_release_cli_grants_scores_and_releases_once() {
 /// parent must project the fitting-only input under the declared root and
 /// hand the worker only that sealed projection.
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn the_export_worker_receives_its_projected_input_and_never_resolves_the_view_itself() {
     let temp = tempfile::tempdir().unwrap();
     let outer = temp.path().canonicalize().unwrap();
@@ -3572,6 +3696,10 @@ fn swap_at(target: &Path, nth: usize, bytes: Vec<u8>) -> crate::manifest::verifi
 /// sealed selection, then reopened it. A preparation substituted between the
 /// two supplied the grant's sealed-label identity and metadata.
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn an_outer_grant_takes_its_labels_and_metadata_from_the_verified_preparation() {
     let case = outer_case();
     let prepared = case.prepared.join("prepared.json");
@@ -3625,6 +3753,10 @@ fn an_outer_grant_takes_its_labels_and_metadata_from_the_verified_preparation() 
 /// The same receiver, for the sealed selection: the seal the handoff records
 /// is the seal that is compared with the replayed selection.
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn an_outer_grant_is_bound_to_the_seal_it_checked() {
     let case = outer_case();
     let mut handoff: Value = read_json(&case.handoff()).unwrap();
@@ -3659,6 +3791,10 @@ fn an_outer_grant_is_bound_to_the_seal_it_checked() {
 /// The same receiver, for the fitted subject: the predictor the grant names
 /// is the predictor verified as the selected final refit.
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn an_outer_grant_is_for_the_predictor_it_verified() {
     let case = outer_case();
     let mut handoff: Value = read_json(&case.handoff()).unwrap();
@@ -3691,6 +3827,10 @@ fn an_outer_grant_is_for_the_predictor_it_verified() {
 /// The same receiver, for the handoff: the digest the grant records is the
 /// digest of the handoff whose content was checked and recorded.
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn an_outer_grant_records_the_handoff_it_checked() {
     let case = outer_case();
     let recorded = fs::read(case.handoff()).unwrap();
@@ -3724,6 +3864,10 @@ fn an_outer_grant_records_the_handoff_it_checked() {
 /// (`lineage::verify_final_refit`): the completion consumed is the one whose
 /// digest the predictor records.
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn an_outer_grant_consumes_the_fit_completion_it_verified() {
     let case = outer_case();
     let exported: Value = read_json(&case.predictor).unwrap();
@@ -3765,6 +3909,10 @@ fn swap_written(
 /// The authority's own records: the ledger binds the digest of exactly the
 /// grant and withheld score the authority wrote, never a later reread.
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn the_release_ledger_binds_the_bytes_the_authority_wrote() {
     let case = outer_case();
     let other = hash(OTHER_TEST.as_bytes());
@@ -3862,6 +4010,10 @@ fn change_one_parameter(value: &mut Value) -> bool {
 /// the predictor serves. Those must be the model the verified completion
 /// retained (its `model_sha256`, as the fit authority defines it).
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn an_exported_predictors_model_parameters_are_those_of_its_verified_final_refit() {
     let case = outer_case();
     let inputs = handoff::Inputs {
@@ -3915,6 +4067,10 @@ fn an_exported_predictors_model_parameters_are_those_of_its_verified_final_refit
 /// The grant names the model identity its final-refit check verified, never
 /// the handoff's unverified record of it.
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn an_outer_grant_names_the_model_its_final_refit_verified() {
     let case = outer_case();
     let honest = case.grant("honest", &case.sealed).unwrap();

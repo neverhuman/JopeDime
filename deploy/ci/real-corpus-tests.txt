@@ -1,0 +1,22 @@
+# Real-corpus and deferred-classification fixtures of jope-dime-regressor. Their inputs exist
+# only in host custody, never in CI, so each is #[ignore]d with a reason that starts
+# `real-corpus:` or `deferred-classification:`. No CI family executes them. They run in the
+# host lane, which verifies a read-only custody copy against its MANIFEST.sha256, points the
+# ADR-0003 roots at it and runs exactly these tests:
+#
+#   just test-real-corpus <custody-root>      # bash deploy/ci/real-corpus-lane.sh <custody-root>
+#
+# An input the custody copy lacks still fails there with an explicit `unavailable:` message;
+# nothing is skipped or replaced with synthetic rows under these names. A listed test that
+# loses its #[ignore], or an entry that no longer names an ignored test, fails the lane.
+# Triage: docs/internal/core-ip/findings/test-inventory.json `baseline_triage`.
+#
+# Format: <nextest binary id> <test name> # <class>: <inputs>
+jope-dime-regressor::dlgp_best5 all_six_arms_complete_eight_generation_synthetic_worker_with_exact_ledgers # real-corpus: pinned SOTArena clone (SOTARENA_ROOT)
+jope-dime-regressor::dlgp_best5 training_staging_rebuilds_stable_rows_without_resolving_test # real-corpus: pinned SOTArena clone (SOTARENA_ROOT)
+jope-dime-regressor::bin/jope-dime-regressor commands::train_only_study::tests::production_sotarena_registry_freezes_exact_37_to_requested_10 # real-corpus: production context catalog (<JOPE_STATE>/legacy/test_exact_gen0)
+jope-dime-regressor::bin/jope-dime-regressor test_adaptive::binary42::tests::all_frozen_dataset_bindings_and_binary_labels_are_valid # deferred-classification: binary42 inputs (JOPE_BINARY42_TEST_DATA_ROOT)
+jope-dime-regressor::bin/jope-dime-regressor test_adaptive::binary42::tests::binary42_fitted_cpp17_predictions_match_rust_bits # deferred-classification: binary42 inputs (JOPE_BINARY42_TEST_DATA_ROOT)
+jope-dime-regressor::bin/jope-dime-regressor test_adaptive::island_extension::tests::generation_30_populations_reconstruct_deterministically # real-corpus: sealed runs (<JOPE_STATE>/runs), golden42 panel, JOPE_REGISTRY
+jope-dime-regressor::bin/jope-dime-regressor test_adaptive::island_extension::tests::prior_no_win_cohort_reconstructs_in_order # real-corpus: sealed runs (<JOPE_STATE>/runs)
+jope-dime-regressor::bin/jope-dime-regressor test_adaptive::island_extension::tests::sealed_generation_29_artifacts_bind_seven_champion_continuations # real-corpus: sealed runs (<JOPE_STATE>/runs)

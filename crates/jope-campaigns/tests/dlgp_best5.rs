@@ -912,6 +912,7 @@ fn residual_and_portfolio_predictors_round_trip_and_reconstruct() {
 }
 
 #[test]
+#[ignore = "real-corpus: private inputs require the explicit host-real-corpus lane"]
 fn training_staging_rebuilds_stable_rows_without_resolving_test() {
     let mut campaign = campaign();
     campaign.sotarena_root = sotarena_fixture_root(&campaign.datasets[0].dataset_id);
@@ -1127,6 +1128,7 @@ for candidate in m['candidates']:
 }
 
 #[test]
+#[ignore = "real-corpus: private inputs require the explicit host-real-corpus lane"]
 fn all_six_arms_complete_eight_generation_synthetic_worker_with_exact_ledgers() {
     let directory = tempfile::tempdir().unwrap();
     let mut campaign = campaign();
