@@ -72,3 +72,38 @@ no installed host file was changed.
 - Records: coverage.json items for the `jope-ci` package and its three targets (hygiene lane
   added to the test-bearing ones; the hygiene `checks` list names `cargo test -q --locked -p
   jope-ci`), test-inventory roles `infrastructure`, one `new-bin` capability row.
+
+## U3 — hygiene guards (`coverage.py`, `rust-test-scope-check.py`, `parity-census.py`, `readme-benchmarks.py`)
+
+- Home: `jope-records` subcommands `coverage discover|validate`, `rust-scope-check`,
+  `parity-check` and `readme-benchmarks --check|--write` (modules `coverage`, `scope_check`,
+  `parity`, `readme`), reusing the crate's Python-compatible JSON, CSV, `repr`, `float()` and
+  `splitlines` layer so the output is the Python output. `check.sh`, `parity-matrix.sh` and the
+  hygiene lane of `fast-lane.sh` call them; the hygiene lane runs their unit tests
+  (`cargo test -q --locked -p jope-records --lib -- coverage:: scope_check:: parity:: readme::`)
+  where it ran `test-coverage.py`.
+- Not ported: `parity-census.py census`, a one-off generator that needs the read-only pre-port
+  checkout and has no consumer (archived; restore it from `8a55c4fef` to regenerate the matrix).
+- Differential run `py-p1-u3-diff-20260927T024147Z` (`comparison.txt`), Python and Rust on the
+  same inputs: `coverage validate` and `discover` on the real tree (3,020-line discovery,
+  byte-identical) and on nine mutated mappings (unassigned, stale, schema, lane fields,
+  dispositions, unknown lane/disposition/scope, unassigned item, required features, changed
+  discovery); `rust-scope-check` on the real tree; `parity-check` on the real matrix with and
+  without the built engine's `--help`, and on eight mutated matrices (counts, tally, preamble,
+  invalid status, pending range, dropped archive, missing target, missing row);
+  `readme-benchmarks --check` on the real and a stale README, and `--write` from the stale copy.
+  Every exit status and stdout is identical, the two `--write` results are byte-identical and
+  equal the committed README, and the only differences are the two remediation hints that named
+  the deleted scripts (the preamble refusal and the stale-README notice now name the Rust
+  command).
+- Tests: `test-coverage.py`'s nine cases are unit tests in `coverage.rs` (the test-inventory
+  collection-failure case still drives `deploy/ci/test-inventory.sh` with a fake `uv`), plus
+  unit tests for the scope reader, the matrix parser and tally, and Python's number formats.
+  Pre `py-p1-u3-pre-20260927T024301Z` (the Python suite 9 OK and all four guards green); post
+  `py-p1-u3-post-20260927T024409Z` (jope-records suites, the four guards, `check.sh`, fence
+  suites, workspace check and the record guards).
+- Records: coverage.json drops `python:deploy/ci/test-coverage.py` and
+  `benchmark:deploy/ci/readme-benchmarks.py` and adds the hygiene lane to the jope-records library
+  target; test-inventory.json drops the Python family. Prose that told readers to run the
+  deleted scripts (README, quickstart, same-cut and regression SOURCES, coverage.md, the matrix
+  preamble) names the Rust commands.

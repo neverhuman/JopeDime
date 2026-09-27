@@ -80,7 +80,7 @@ methods). CSV SHA-256 `4c39f51c2e269114f7bbd32728c4627e9aba240518c8950cfb4facce5
 **`jope-dime-regressor` (one fixed-seed reproducible run, `public-development`) is rank 31, Elo
 1687.0, 1 dataset win, 42/45**; TabFM Ensemble is rank 1 at 1934.9. Asserted byte-for-byte by
 `crates/jope-arena/tests/elo_regression.rs::benchmark_valid_ladder_excludes_the_rows_the_campaign_code_labels_test_adaptive`
-and rendered into the README by `deploy/ci/readme-benchmarks.py`, which refuses to render when the
+and rendered into the README by `jope-records readme-benchmarks`, which refuses to render when the
 two snapshots, the two CSVs and the corrections file disagree with each other.
 
 ## `golden42-baseline.json`

@@ -1,7 +1,7 @@
 # CI coverage and receipts
 
 `coverage.json` is the explicit mapping from discovered source to execution lanes or
-deferred/historical dispositions. Validate it with `python3 deploy/ci/coverage.py validate`.
+deferred/historical dispositions. Validate it with `cargo run -q --locked -p jope-records -- coverage validate`.
 `discover` prints the current static inventory without changing assignments. New packages,
 features, Cargo targets, Python test-named files, workflows/jobs and benchmark sources fail
 validation until their scope is assigned. Changed target requirements and feature dependencies
@@ -75,7 +75,7 @@ availability over SSH. `--host NAME` overrides the hosts and `--no-host-probes` 
 reporting. Probe failures stay unavailable, not healthy. Service properties exclude environment,
 process arguments and secret-bearing registration logs. Unknown queue age stays unknown.
 
-Acceptance: `python3 deploy/ci/test-coverage.py`, `python3 deploy/ci/test-receipt.py`,
+Acceptance: `cargo test -q --locked -p jope-records --lib -- coverage::`, `python3 deploy/ci/test-receipt.py`,
 `bash deploy/ci/test-inventory.sh --no-rust`, and the existing exact-head CI/review lifecycle.
 `test-results.py`, `test-aggregate.py` and `test-status.py` add negative count reconciliation,
 wrong SHA/attempt, cancellation, missing results/receipts, zero/unknown execution and capability

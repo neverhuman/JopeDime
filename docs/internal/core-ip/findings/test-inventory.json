@@ -105,10 +105,6 @@
       "role": "infrastructure",
       "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
     },
-    "python:deploy/ci/test-coverage.py": {
-      "role": "infrastructure",
-      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
-    },
     "python:deploy/ci/test-full-main.py": {
       "role": "infrastructure",
       "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
