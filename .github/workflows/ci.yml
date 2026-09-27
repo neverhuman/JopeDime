@@ -42,7 +42,7 @@ jobs:
           python3 deploy/ci/receipt.py --lane changes --output "$evidence" --backend none -- bash deploy/ci/fast-lane.sh changes
       - name: Upload current lane evidence
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1 (Node 24)
         with:
           name: ci-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
           path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
@@ -70,7 +70,7 @@ jobs:
           python3 deploy/ci/receipt.py --lane hygiene --output "$evidence" --backend unittest -- bash deploy/ci/fast-lane.sh hygiene
       - name: Upload current lane evidence
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1 (Node 24)
         with:
           name: ci-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
           path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
@@ -100,7 +100,7 @@ jobs:
           python3 deploy/ci/receipt.py --lane rust-check --output "$evidence" --backend rust -- bash deploy/ci/fast-lane.sh rust-check
       - name: Upload current lane evidence
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1 (Node 24)
         with:
           name: ci-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
           path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
@@ -136,7 +136,7 @@ jobs:
           python3 deploy/ci/receipt.py --lane rust-test --output "$evidence" --backend nextest --junit "$evidence/junit.xml" -- bash deploy/ci/fast-lane.sh rust-test
       - name: Upload current lane evidence
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1 (Node 24)
         with:
           name: ci-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
           path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
@@ -168,7 +168,7 @@ jobs:
           python3 deploy/ci/receipt.py --lane emitters --output "$evidence" --backend rust -- bash deploy/ci/fast-lane.sh emitters
       - name: Upload current lane evidence
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1 (Node 24)
         with:
           name: ci-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
           path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
@@ -198,7 +198,7 @@ jobs:
           python3 deploy/ci/receipt.py --lane inputs --output "$evidence" --backend none -- bash deploy/ci/fast-lane.sh inputs
       - name: Upload current lane evidence
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1 (Node 24)
         with:
           name: ci-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
           path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
@@ -228,7 +228,7 @@ jobs:
           python3 deploy/ci/receipt.py --lane python --output "$evidence" --backend pytest --junit "$evidence/junit.xml" -- bash deploy/ci/fast-lane.sh python
       - name: Upload current lane evidence
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1 (Node 24)
         with:
           name: ci-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
           path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
@@ -258,7 +258,7 @@ jobs:
           python3 deploy/ci/receipt.py --lane e2e-smoke --output "$evidence" --backend none -- bash deploy/ci/fast-lane.sh e2e-smoke
       - name: Upload current lane evidence
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1 (Node 24)
         with:
           name: ci-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
           path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
@@ -280,7 +280,7 @@ jobs:
       - name: Runner provenance
         uses: ./.github/actions/runner-provenance
       - name: Download this run and attempt only
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1 (Node 24)
         with:
           pattern: ci-${{ github.run_id }}-${{ github.run_attempt }}-*
           path: target/ci-download/${{ github.run_id }}/${{ github.run_attempt }}
@@ -296,7 +296,7 @@ jobs:
           python3 deploy/ci/aggregate.py --receipts "target/ci-download/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT" --needs "$output/needs.json" --output "$output/aggregate.json"
       - name: Upload aggregate inventory
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1 (Node 24)
         with:
           name: ci-aggregate-${{ github.run_id }}-${{ github.run_attempt }}
           path: target/ci-aggregate/${{ github.run_id }}/${{ github.run_attempt }}/
