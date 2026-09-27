@@ -150,12 +150,14 @@ fn atomic_json(path: &Path, value: &Value) -> Result<()> {
 
 fn numeric_columns(path: &Path) -> Result<usize> {
     let text = fs::read_to_string(path)?;
-    for line in text.lines().map(str::trim).filter(|line| !line.is_empty()) {
-        let columns = line.split(',').count();
-        ensure!(columns >= 2, "dataset has fewer than two columns");
-        return Ok(columns - 1);
-    }
-    bail!("empty dataset")
+    // The first non-blank line decides the width. This was a `for` that returned on its first
+    // iteration, which reads as "try every line" but never could -- `never_loop` caught it.
+    let Some(first) = text.lines().map(str::trim).find(|line| !line.is_empty()) else {
+        bail!("empty dataset")
+    };
+    let columns = first.split(',').count();
+    ensure!(columns >= 2, "dataset has fewer than two columns");
+    Ok(columns - 1)
 }
 
 fn score_matches(left: f64, right: f64) -> bool {
