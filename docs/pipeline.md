@@ -39,7 +39,7 @@ cut set. If no program has complete coverage, selection fails and retains the
 per-cut evidence. No partial or unmeasured fallback is emitted. This is development
 selection over inner folds, not sealed outer-test evaluation or promotion.
 
-New runs write `jope.pipeline-search/v2` and `jope.pipeline-receipt/v2`, binding the
+New runs write `jope.pipeline-search/v2` and `jope.pipeline-receipt/v3`, binding the
 requested total, phase allowances/counts/failures/stop reasons, active time and cut
 coverage. For multiple cuts, the overall stop reason is comparison's outcome:
 `seconds` takes precedence when both total limits are reached, then `evaluations`,
@@ -47,9 +47,27 @@ otherwise `comparison_pool_exhausted`. The exploration phase retains its own
 reason (`evaluations`, `seconds` or `search_space_exhausted`). Single-cut runs use
 the exploration reason and record comparison as `not_requested`.
 
-`jope pipeline verify-receipt` validates either v1 or v2 according to its
-own schema; v2 fields are required and their totals are checked. The v1 schema is
-unchanged. Generate the v2 schema from code with:
+## Seeding (`--seed-genomes`, `--incumbent`)
+
+`--seed-genomes <seeds.json>` reads a `jope.pipeline-seeds/v1` file (the champion bank's
+export format, and what `jope pipeline evolve` writes per round). `--incumbent <receipt.json>`
+takes a parent run's receipt: it is re-derived from that run's own evidence (prepared cuts,
+every cut's `search.json` and `observations.json`, the selection bit for bit, and the emitted
+files) and refused if anything disagrees; its selected genome is offered first. Offered genomes
+are canonicalised, deduplicated (the bootstrap is always in generation 0 already) and capped at
+four, then enter generation 0 right after the bootstrap with origin `incumbent`. They spend
+evaluations like any other candidate and are re-measured on this run's cuts: no score is carried
+over. A budget whose exploration allowance cannot measure the bootstrap plus every seed on each
+cut is refused before anything is written. The receipt's `search.seeding` records the offered
+count, each admitted seed's genome, sha256 and source, the parent receipt's sha256 and the seeds
+file's sha256; the v3 validator requires every seed to have been attempted on every requested
+cut. Because the parent's champion is re-measured on the same cuts, a seeded run's champion is
+never worse than its seed there.
+
+`jope pipeline verify-receipt` validates v1, v2 or v3 according to its own schema; v2 and v3
+fields are required and their totals are checked. The v1 and v2 schemas are unchanged.
+`--evidence` also re-derives a v2/v3 receipt from its run directory. Generate the v3 schema
+from code with:
 
 ```sh
 CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only \

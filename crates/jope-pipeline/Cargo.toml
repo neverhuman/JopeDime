@@ -25,7 +25,9 @@ jope-policy = { path = "../jope-policy", optional = true }
 schemars = "1"
 sha2.workspace = true
 serde.workspace = true
-serde_json.workspace = true
+# float_roundtrip: evidence::verify_run re-derives a receipt's mean held-out RMSE from the
+# published observations bit for bit, which needs exact float parsing (as jope-learning uses).
+serde_json = { workspace = true, features = ["float_roundtrip"] }
 csv = "1.4"
 
 [[bin]]

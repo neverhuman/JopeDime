@@ -9,7 +9,10 @@
 use anyhow::{ensure, Result};
 use std::collections::{BTreeMap, BTreeSet};
 
-use crate::{search::CutSearch, sha256_hex};
+use crate::{
+    search::{CutSearch, Observation},
+    sha256_hex,
+};
 
 /// Generation 0's seed.
 pub use crate::search::BOOTSTRAP_GENOME;
@@ -59,7 +62,53 @@ pub struct Selection {
 
 /// Apply the selection rule over every cut's observations.
 pub fn select(cuts: &[CutSearch]) -> Result<Selection> {
-    let expected: BTreeSet<usize> = cuts.iter().map(|c| c.cut).collect();
+    let per_cut: Vec<(usize, &[Observation])> = cuts
+        .iter()
+        .map(|c| (c.cut, c.observations.as_slice()))
+        .collect();
+    select_from(&per_cut)
+}
+
+/// [`select`] over `(cut index, observations)` pairs, for callers that re-derive a selection
+/// from published evidence rather than from a live search.
+pub fn select_from(cuts: &[(usize, &[Observation])]) -> Result<Selection> {
+    let (ranked, coverage, partial) = rank(cuts)?;
+    let searched = cuts.len();
+    let best = ranked.into_iter().next().ok_or_else(|| anyhow::anyhow!(
+        "no program measured on all {searched} requested cuts; {partial} incomplete program(s); inspect observations.json"
+    ))?;
+    let reason = (partial > 0).then(|| {
+        format!(
+            "excluded {partial} program(s) without measurements on all {searched} requested cuts"
+        )
+    });
+    Ok(Selection {
+        method: MIN_MEAN_VALIDATION_RMSE,
+        genome: best.genome.clone(),
+        program_sha256: best.program_sha256.clone(),
+        best: Some(best),
+        reason,
+        compared_cuts: cuts
+            .iter()
+            .map(|&(c, _)| c as u64)
+            .collect::<BTreeSet<_>>()
+            .into_iter()
+            .collect(),
+        coverage,
+    })
+}
+
+/// Every program measured on all requested cuts, best first under the selection rule (lowest
+/// mean held-out RMSE, then canonical genome). The first entry is what [`select`] picks; the
+/// rest are the ranked runners-up a later round may be seeded with.
+pub fn ranking(cuts: &[(usize, &[Observation])]) -> Result<Vec<Best>> {
+    Ok(rank(cuts)?.0)
+}
+
+type Ranked = (Vec<Best>, Vec<crate::receipt::Coverage>, usize);
+
+fn rank(cuts: &[(usize, &[Observation])]) -> Result<Ranked> {
+    let expected: BTreeSet<usize> = cuts.iter().map(|&(c, _)| c).collect();
     ensure!(
         !expected.is_empty() && expected.len() == cuts.len(),
         "selection needs distinct cuts"
@@ -67,19 +116,19 @@ pub fn select(cuts: &[CutSearch]) -> Result<Selection> {
     let mut attempted: BTreeMap<String, BTreeSet<usize>> = BTreeMap::new();
     // genome -> cut -> that program's measurement on that cut.
     let mut measured: BTreeMap<String, BTreeMap<usize, Measurement>> = BTreeMap::new();
-    for cut in cuts {
-        for observation in &cut.observations {
+    for &(cut_index, observations) in cuts {
+        for observation in observations {
             ensure!(
-                observation.cut == cut.cut,
+                observation.cut == cut_index,
                 "observation cut identity mismatch"
             );
             ensure!(
                 attempted
                     .entry(observation.genome.clone())
                     .or_default()
-                    .insert(cut.cut),
+                    .insert(cut_index),
                 "duplicate program attempt on cut {}",
-                cut.cut
+                cut_index
             );
             let (Some(rmse), Some(hold_r2), Some(train_r2)) =
                 (observation.rmse, observation.hold_r2, observation.train_r2)
@@ -131,7 +180,7 @@ pub fn select(cuts: &[CutSearch]) -> Result<Selection> {
         .iter()
         .filter(|c| c.measured_cuts.len() != searched)
         .count();
-    let ranked = measured
+    let mut ranked: Vec<Best> = measured
         .into_iter()
         .filter(|(_, per_cut)| per_cut.len() == searched)
         .map(|(genome, per_cut)| {
@@ -146,29 +195,13 @@ pub fn select(cuts: &[CutSearch]) -> Result<Selection> {
                 cuts_measured: per_cut.len(),
             }
         })
-        .min_by(|a, b| {
-            a.validation_rmse
-                .total_cmp(&b.validation_rmse)
-                .then(a.genome.cmp(&b.genome))
-        });
-
-    let best = ranked.ok_or_else(|| anyhow::anyhow!(
-        "no program measured on all {searched} requested cuts; {partial} incomplete program(s); inspect observations.json"
-    ))?;
-    let reason = (partial > 0).then(|| {
-        format!(
-            "excluded {partial} program(s) without measurements on all {searched} requested cuts"
-        )
+        .collect();
+    ranked.sort_by(|a, b| {
+        a.validation_rmse
+            .total_cmp(&b.validation_rmse)
+            .then(a.genome.cmp(&b.genome))
     });
-    Ok(Selection {
-        method: MIN_MEAN_VALIDATION_RMSE,
-        genome: best.genome.clone(),
-        program_sha256: best.program_sha256.clone(),
-        best: Some(best),
-        reason,
-        compared_cuts: expected.iter().map(|&c| c as u64).collect(),
-        coverage,
-    })
+    Ok((ranked, coverage, partial))
 }
 
 #[cfg(test)]
