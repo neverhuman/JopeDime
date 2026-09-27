@@ -22,6 +22,8 @@ clap.workspace = true
 feat-math = { path = "../feat-math" }
 jope-datasets = { path = "../jope-datasets" }
 jope-policy = { path = "../jope-policy", optional = true }
+# Bounded parallel candidate evaluation (`--threads`); already in the graph through feat-math.
+rayon.workspace = true
 schemars = "1"
 sha2.workspace = true
 serde.workspace = true
@@ -36,7 +38,7 @@ path = "src/bin/jope-context-proof.rs"
 required-features = ["qualified-context"]
 
 [target.'cfg(target_os = "linux")'.dependencies]
-nix = { workspace = true, features = ["time"] }
+nix = { workspace = true, features = ["time", "sched"] }
 signal-hook = "0.3"
 
 [dev-dependencies]

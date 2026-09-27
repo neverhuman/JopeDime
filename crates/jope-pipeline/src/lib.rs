@@ -27,6 +27,7 @@
 #[cfg(all(target_os = "linux", feature = "qualified-context"))]
 pub mod classification_bridge;
 pub mod cli;
+pub mod clock;
 #[cfg(all(target_os = "linux", feature = "qualified-context"))]
 pub mod context_qualification;
 #[cfg(feature = "qualified-context")]
@@ -44,6 +45,7 @@ pub mod experimental_producer;
 pub mod front_door;
 #[cfg(feature = "neural-search")]
 pub mod neural_search;
+pub mod parallel;
 pub mod prepare;
 pub mod prepared_data;
 pub mod receipt;

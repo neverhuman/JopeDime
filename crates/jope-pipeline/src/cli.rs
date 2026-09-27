@@ -2,7 +2,7 @@
 //! subcommand crates expose, so the umbrella delegates to it in process.
 
 use anyhow::Result;
-use clap::{Parser, Subcommand};
+use clap::{Args, Parser, Subcommand};
 use std::{path::PathBuf, process::ExitCode};
 
 use crate::{
@@ -21,6 +21,18 @@ use crate::{
 pub struct Cli {
     #[command(subcommand)]
     pub cmd: Cmd,
+}
+
+/// How many CPUs the search may use. The worker count never changes a decision.
+#[derive(Args, Clone, Debug)]
+pub struct ParallelArgs {
+    /// Worker threads evaluating each generation's candidates (1 = sequential). Refused above
+    /// the CPUs sched_getaffinity allows, available_parallelism, or --cpu-ceiling.
+    #[arg(long, default_value_t = 1)]
+    pub threads: usize,
+    /// The CPU admission in millicores (e.g. 8000 for eight cores) the workers must fit.
+    #[arg(long)]
+    pub cpu_ceiling: Option<u64>,
 }
 
 #[derive(Subcommand)]
@@ -60,6 +72,8 @@ pub enum Cmd {
         /// first and its sha256 recorded as this run's parent.
         #[arg(long)]
         incumbent: Option<PathBuf>,
+        #[command(flatten)]
+        parallel: ParallelArgs,
         /// Print the receipt as one JSON document.
         #[arg(long)]
         json: bool,
@@ -99,6 +113,7 @@ pub fn run(cli: Cli) -> Result<ExitCode> {
             policy,
             seed_genomes,
             incumbent,
+            parallel,
             json,
         } => {
             let options = RunOptions {
@@ -114,6 +129,9 @@ pub fn run(cli: Cli) -> Result<ExitCode> {
                 })?,
                 seed_genomes,
                 incumbent,
+                threads: parallel.threads,
+                cpu_ceiling_millicores: parallel.cpu_ceiling,
+                clock: crate::clock::Clock::Wall,
             };
             let receipt = crate::run::run(&options)?;
             if json {

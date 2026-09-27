@@ -7,10 +7,10 @@
 //! and router-training stages are likewise out of scope and are not pretended to.
 
 use anyhow::{bail, ensure, Context, Result};
-use jope_datasets::paths::now_rfc3339;
-use std::{path::PathBuf, time::Instant};
+use std::path::PathBuf;
 
 use crate::{
+    clock::{Clock, Stamp},
     dataset, emit,
     emit::Language,
     prepare, receipt,
@@ -72,6 +72,12 @@ pub struct RunOptions {
     /// A parent receipt: re-derived from its run's evidence, then its selected genome is seeded
     /// first and its sha256 recorded as this run's parent.
     pub incumbent: Option<PathBuf>,
+    /// Worker threads evaluating each generation. Never changes a decision or a published byte
+    /// other than wall-clock readings; not recorded in the receipt for that reason.
+    pub threads: usize,
+    /// An explicit CPU admission in millicores that the worker count must fit.
+    pub cpu_ceiling_millicores: Option<u64>,
+    pub clock: Clock,
 }
 
 impl RunOptions {
@@ -89,8 +95,27 @@ impl RunOptions {
             policy: Policy::Auto,
             seed_genomes: None,
             incumbent: None,
+            threads: 1,
+            cpu_ceiling_millicores: None,
+            clock: Clock::Wall,
         }
     }
+}
+
+/// Every refusal that needs no dataset and writes nothing: the counts, the budget, the policy
+/// and the parallelism this host admits. Returns the worker count.
+pub fn preflight(options: &RunOptions) -> Result<usize> {
+    ensure!(options.cuts > 0, "--cuts must be at least 1");
+    ensure!(!options.languages.is_empty(), "--emit needs a target");
+    options.budget.check()?;
+    // Fail closed before anything is written: a refused run must not leave a half
+    // prepared output directory behind to block the retry.
+    ensure!(
+        options.policy != Policy::Require,
+        "--policy require: {PROPOSE_SKIP_REASON}. Re-run with --policy skip to proceed \
+         without it."
+    );
+    crate::parallel::admit(options.threads, 1, options.cpu_ceiling_millicores)
 }
 
 /// Seeds resolved from `--incumbent` and `--seed-genomes`, before anything is written.
@@ -155,28 +180,20 @@ impl Stages {
         Stages { stages: Vec::new() }
     }
 
-    fn record(&mut self, name: &str, status: &str, reason: Option<String>, started: Instant) {
+    fn record(&mut self, name: &str, status: &str, reason: Option<String>, started: Stamp) {
         self.stages.push(receipt::Stage {
             name: name.to_owned(),
             status: status.to_owned(),
             reason,
-            seconds: started.elapsed().as_secs_f64(),
+            seconds: started.secs(),
         });
     }
 }
 
 /// Run the pipeline and write `<output>/receipt.json`.
 pub fn run(options: &RunOptions) -> Result<Receipt> {
-    ensure!(options.cuts > 0, "--cuts must be at least 1");
-    ensure!(!options.languages.is_empty(), "--emit needs a target");
-    options.budget.check()?;
-    // Fail closed before anything is written: a refused run must not leave a half
-    // prepared output directory behind to block the retry.
-    ensure!(
-        options.policy != Policy::Require,
-        "--policy require: {PROPOSE_SKIP_REASON}. Re-run with --policy skip to proceed \
-         without it."
-    );
+    preflight(options)?;
+    let clock = options.clock;
 
     let output = &options.output;
     for existing in ["receipt.json", "prepared", "search", "emit"] {
@@ -191,7 +208,7 @@ pub fn run(options: &RunOptions) -> Result<Receipt> {
     let (seed_genomes, seeding) = resolve_seeding(options)?;
     let mut stages = Stages::new();
 
-    let started = Instant::now();
+    let started = clock.start();
     let resolved = dataset::resolve(&options.dataset)?;
     ensure!(
         resolved.row.task == jope_datasets::catalog::Task::Regression,
@@ -209,7 +226,7 @@ pub fn run(options: &RunOptions) -> Result<Receipt> {
         .canonicalize()
         .with_context(|| format!("resolve {}", output.display()))?;
 
-    let started = Instant::now();
+    let started = clock.start();
     let prepared_dir = root.join("prepared");
     let preparation = prepare::build(
         &rows,
@@ -220,7 +237,7 @@ pub fn run(options: &RunOptions) -> Result<Receipt> {
     )?;
     stages.record("prepare", "passed", None, started);
 
-    let started = Instant::now();
+    let started = clock.start();
     // Never let a skipped stage pass unseen.
     eprintln!("jope pipeline: propose stage SKIPPED - {PROPOSE_SKIP_REASON}");
     stages.record(
@@ -230,9 +247,11 @@ pub fn run(options: &RunOptions) -> Result<Receipt> {
         started,
     );
 
-    let started = Instant::now();
+    let started = clock.start();
     let search_options = search::SearchOptions {
         seeds: seed_genomes,
+        threads: options.threads,
+        clock,
         ..search::SearchOptions::new(options.budget, options.rng_seed)
     };
     let searched = search::run_cuts_with(&preparation.cuts, &search_options, &root.join("search"))?;
@@ -259,14 +278,14 @@ pub fn run(options: &RunOptions) -> Result<Receipt> {
     }
     stages.record("search", "passed", search_reason, started);
 
-    let started = Instant::now();
+    let started = clock.start();
     let selection = select::select(&searched)?;
     if let Some(reason) = &selection.reason {
         eprintln!("jope pipeline: select - {reason}");
     }
     stages.record("select", "passed", selection.reason.clone(), started);
 
-    let started = Instant::now();
+    let started = clock.start();
     let emit_dir = root.join("emit");
     let emitted = emit::emit(&selection.genome, &options.languages, &emit_dir)?;
     // Both fields below are read back out of emit/manifest.json, which transpile builds from the
@@ -315,7 +334,7 @@ pub fn run(options: &RunOptions) -> Result<Receipt> {
     let emit_status = if all_excluded { "failed" } else { "passed" };
     stages.record("emit", emit_status, emit_reason, started);
 
-    let started = Instant::now();
+    let started = clock.start();
     stages.record("receipt", "passed", None, started);
     let mut receipt = assemble(
         options,
@@ -394,7 +413,7 @@ fn assemble(
         ok: stages.iter().all(|s| s.status != "failed"),
         tool_version: TOOL_VERSION.to_owned(),
         git_sha: git_sha(),
-        created_at: now_rfc3339(),
+        created_at: options.clock.now_rfc3339(),
         policy: options.policy.as_str().to_owned(),
         dataset: receipt::Dataset {
             id: resolved.row.id.clone(),
@@ -780,6 +799,110 @@ mod tests {
         );
         assert!(error.contains("hashes to"), "{error}");
         assert!(!child.exists());
+    }
+
+    /// Every file under `root`, by relative path.
+    fn tree(root: &std::path::Path) -> std::collections::BTreeMap<String, Vec<u8>> {
+        fn walk(
+            root: &std::path::Path,
+            dir: &std::path::Path,
+            out: &mut std::collections::BTreeMap<String, Vec<u8>>,
+        ) {
+            for entry in std::fs::read_dir(dir).unwrap() {
+                let path = entry.unwrap().path();
+                if path.is_dir() {
+                    walk(root, &path, out);
+                } else {
+                    out.insert(
+                        path.strip_prefix(root).unwrap().display().to_string(),
+                        std::fs::read(&path).unwrap(),
+                    );
+                }
+            }
+        }
+        let mut out = std::collections::BTreeMap::new();
+        walk(root, root, &mut out);
+        out
+    }
+
+    /// The worker count this host admits, up to eight.
+    fn workers_up_to_eight() -> usize {
+        let available = std::thread::available_parallelism().map_or(1, std::num::NonZero::get);
+        crate::parallel::affinity_cpus()
+            .unwrap()
+            .min(available)
+            .min(8)
+    }
+
+    /// `--threads 1` and `--threads 8` write the same run: the receipt, the prepared cuts, every
+    /// cut's search and observations, and the emitted sources, byte for byte. The wall clock is
+    /// frozen for the comparison because it is the one thing two runs never share.
+    #[test]
+    fn one_thread_and_eight_threads_write_byte_identical_runs() {
+        let workers = workers_up_to_eight();
+        if workers < 2 {
+            eprintln!("skipped: this host admits one worker, so no parallel run can be compared");
+            return;
+        }
+        let temp = tempfile::tempdir().unwrap();
+        let write = |threads: usize, name: &str| {
+            let output = temp.path().join(name);
+            let receipt = run(&RunOptions {
+                threads,
+                clock: Clock::Frozen,
+                cuts: 2,
+                ..small(&output, 30)
+            })
+            .unwrap();
+            (receipt, tree(&output))
+        };
+        let (one, one_tree) = write(1, "one");
+        let (many, many_tree) = write(workers, "many");
+        assert_eq!(
+            one_tree.keys().collect::<Vec<_>>(),
+            many_tree.keys().collect::<Vec<_>>()
+        );
+        for (path, bytes) in &one_tree {
+            assert!(
+                many_tree[path] == *bytes,
+                "{path} differs between 1 and {workers} threads"
+            );
+        }
+        assert_eq!(one, many);
+        assert!(one_tree.contains_key("receipt.json"));
+        assert!(one.search.cuts.iter().all(|c| c
+            .accounting
+            .as_ref()
+            .unwrap()
+            .comparison
+            .completed_evaluations
+            > 0));
+    }
+
+    #[test]
+    fn workers_above_the_cpu_ceiling_or_the_affinity_mask_are_refused_first() {
+        let temp = tempfile::tempdir().unwrap();
+        let output = temp.path().join("run");
+        let cpus = crate::parallel::affinity_cpus().unwrap();
+        let error = format!(
+            "{:#}",
+            run(&RunOptions {
+                threads: cpus + 1,
+                ..small(&output, 4)
+            })
+            .unwrap_err()
+        );
+        assert!(error.contains("sched_getaffinity"), "{error}");
+        let error = format!(
+            "{:#}",
+            run(&RunOptions {
+                cpu_ceiling_millicores: Some(999),
+                ..small(&output, 4)
+            })
+            .unwrap_err()
+        );
+        assert!(error.contains("--cpu-ceiling 999"), "{error}");
+        assert!(!output.exists(), "a refused run wrote {}", output.display());
     }
 
     #[test]
