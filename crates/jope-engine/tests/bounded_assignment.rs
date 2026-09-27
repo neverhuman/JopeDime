@@ -393,3 +393,85 @@ fn bounded_plans_take_the_communicator_only_from_the_verified_admission() {
     );
     assert!(jope_parallel::neural::Nccl::init_admitted(&bound(0), &b1).is_err());
 }
+
+/// W7-T06: a plan's training selection is admitted exactly when the trainer's partition gate
+/// accepts it for the plan's world size, and the plan derives exactly the record the trainer
+/// declares. The contract mirrors the gate without the neural build; this pins the two.
+#[test]
+fn a_plan_selects_exactly_the_partitions_the_trainer_runs() {
+    use jope_parallel::{
+        native_loop::bounded::contract::TrainingSelection,
+        task_contract::{PARTITION_V1_SCHEMA, PARTITION_V2_SCHEMA},
+        training::partition::{execution, Execution, Version},
+    };
+    let (mut admitted, mut refused) = (0, 0);
+    for world in 1..=8usize {
+        let base = contract(now_ms(), world, &keys(world));
+        for (schema, version) in [
+            (PARTITION_V1_SCHEMA, Version::V1),
+            (PARTITION_V2_SCHEMA, Version::V2),
+        ] {
+            for micro in [8u32, 64, 128, 256, 512] {
+                for global in [1024u32, 2048, 3000, 4096, 8192, 16384] {
+                    let mut c = base.clone();
+                    c.training = Some(TrainingSelection {
+                        execution_partition: schema.into(),
+                        microbatch: micro,
+                        global_batch: global,
+                    });
+                    let gate = execution(version, world, micro as usize, global as usize, false);
+                    match c.validate_structure() {
+                        Ok(()) => {
+                            admitted += 1;
+                            let record = c.execution_partition().unwrap().unwrap();
+                            let gate = gate.unwrap_or_else(|e| {
+                                panic!("{schema} world {world} {micro}/{global}: {e}")
+                            });
+                            assert_eq!(*gate.record(), record);
+                            let declared = Execution::declared(
+                                &record,
+                                world,
+                                micro as usize,
+                                global as usize,
+                                false,
+                            )
+                            .unwrap();
+                            assert_eq!(declared.version(), version);
+                            assert_eq!(
+                                declared.rows_per_rank().iter().sum::<usize>(),
+                                global as usize
+                            );
+                        }
+                        Err(e) => {
+                            refused += 1;
+                            assert!(
+                                gate.is_err(),
+                                "{schema} world {world} {micro}/{global} refused by the plan \
+                                 but run by the trainer: {e}"
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
+    assert!(
+        admitted > 0 && refused > 0,
+        "{admitted} admitted, {refused} refused"
+    );
+    // Three ranks train only under v2; its rows are lossless and uneven.
+    let mut three = contract(now_ms(), 3, &keys(3));
+    three.training = Some(TrainingSelection {
+        execution_partition: PARTITION_V2_SCHEMA.into(),
+        microbatch: 256,
+        global_batch: 2048,
+    });
+    three.validate_structure().unwrap();
+    let record = three.execution_partition().unwrap().unwrap();
+    assert_eq!(
+        Execution::declared(&record, 3, 256, 2048, false)
+            .unwrap()
+            .rows_per_rank(),
+        vec![688, 680, 680]
+    );
+}

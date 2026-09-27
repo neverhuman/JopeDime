@@ -1089,3 +1089,92 @@ Post-fix records:
 **Open.** Nothing ran on another host. The agent has no signal handler: SIGTERM ends it, and
 it holds no state because the daemon owns the jobs. The CPU workload is a lifecycle proof,
 not training.
+
+### Item F — W7-T06 the frozen plan selects the training partition
+
+**Stopped at an owner decision.** The plan now selects its partition. Writing a
+plan-selected `run.json` needs a choice of launcher first; the options are below.
+
+**Pre-fix record** (`w7b-F-pre-20260927T004609Z`).
+
+- `controller.rs:649` writes the v1 partition record unconditionally. `train_controlled`
+  refuses three ranks as "unsupported training topology", so no launch selects v2.
+- A frozen plan could not select a partition. A plan carrying a `training` section is refused
+  as ``unknown field `training` ``. This reproduction test fails.
+- With the code from before the change, the canonical bytes of a fixed-time three-rank plan
+  hash to `f73eaa7e1a0cbc3b01e6d50039fd194cc89ebd2011daed613931e9d0869cc976`. That digest was
+  captured then and is now pinned in `a_plan_that_selects_no_training_keeps_its_exact_bytes`.
+
+Source: `bounded/contract.rs` only (default features).
+
+- `TrainingSelection { execution_partition, microbatch, global_batch }` is the optional
+  `training` field of `BoundedRunContract`. It is never serialized when absent, so every
+  earlier plan keeps its exact bytes and digest. An explicit `null` selects nothing, and Plan
+  freezes the same bytes as a plan without the field.
+- **Validation** (`validate_training`, part of `validate_structure`) mirrors the trainer's
+  partition gate (`training::partition::execution`, outside batch qualification):
+  - the microbatch must be 64, 128 or 256, and the global batch 2048, 4096, 8192 or 16384;
+  - v1 needs 1, 2, 4 or 8 ranks and a whole division. Three ranks are refused with "select
+    partition v2";
+  - v2 needs one to eight ranks;
+  - any other schema is refused.
+- `execution_partition()` derives the record (`task_contract::training_partition_of`) for
+  exactly the plan's world size. For three ranks at 256/2048 that is the v2 record with rows
+  688, 680 and 680.
+- A later attempt that changes, adds or removes the selection is a topology change
+  (`validate_successor`), never an exact continuation.
+- The Plan review gains a `training` key only when a partition is selected.
+
+Tests:
+
+- `tests/bounded_run.rs`, 3 new, 33 in all:
+  - `a_plan_that_selects_no_training_keeps_its_exact_bytes` — pins the digest captured before
+    the change;
+  - `a_plan_can_select_the_training_partition` — covers v2 for three ranks, the frozen
+    canonical bytes and `plan.json`, the review, and v1 for two ranks;
+  - `a_training_selection_the_trainer_cannot_run_is_refused` — v1 for three ranks, an unknown
+    schema, four bad batch shapes, v2 for nine ranks, an unknown selection field and an
+    explicit null. A successor attempt that changes or drops the selection is refused.
+- `tests/bounded_assignment.rs` (`neural`, CPU), 1 new, 6 in all:
+  `a_plan_selects_exactly_the_partitions_the_trainer_runs`. For worlds 1 to 8, both schemas, 5
+  microbatches and 6 global batches, the plan admits a selection exactly when the trainer's
+  gate runs it. Every admitted record equals the gate's record, and `Execution::declared`
+  accepts it with the same version and lossless rows.
+
+Post-fix records:
+
+- `w7b-F-post-20260927T005419Z` — the full gate, with `bounded_run` at 33 and every other
+  E target unchanged.
+- `w7b-F-post-neural-20260927T005022Z` — `neural`, `CUDA_VISIBLE_DEVICES=""`, run alone:
+  `bounded_assignment` 6, `bounded_launch` 5, `lossless_partition` 10 and
+  `partition_wiring` 7.
+
+**Decision for the owner: which launcher writes a plan-selected `run.json` and runs its
+ranks.**
+
+The only writer of a training `run.json` is `controller::train_controlled`, the single-host
+launcher. Its ranks (`train-rank`) bind devices by the legacy single-host mapping and meet
+through the shared `nccl.id`. Giving it a bounded plan would ignore four things:
+
+- the plan's hosts;
+- its device UUIDs;
+- its grants and admission;
+- item C's rule that a bounded plan never uses `nccl.id`.
+
+So no plan reaches `train_controlled`, and its v1 `run.json` is unchanged. The options:
+
+1. **Bounded ranks train.** A training run spec is frozen from the plan:
+   - the partition comes from `execution_partition()`;
+   - the deadline is the plan's original deadline;
+   - the step window comes from the counters.
+
+   Each participant then enters `rank_impl` with the assignment from `bound_worker`, the
+   admitted bootstrap from `nccl_bootstrap` and the plan's `partition::Version`. This is
+   consistent with items B and C. It can only be exercised in the GPU phase (W7-T08/T09),
+   after the W7-T03 SmartCluster GPU-visibility decision.
+2. **`train_controlled` accepts a frozen single-host plan**, with every participant on this
+   machine and boot. It would write a v2 `run.json`, set each rank's `CUDA_VISIBLE_DEVICES`
+   through `launch::worker_command`, and run a local rendezvous for the bootstrap. That
+   duplicates the coordinator.
+3. **Not taken.** `train_controlled` takes only the partition from the plan and keeps its
+   legacy binding and `nccl.id`. It would bypass plan admission.
