@@ -60,6 +60,10 @@ use serde::Serialize;
 use std::{
     collections::BTreeSet,
     path::{Path, PathBuf},
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    },
     time::Duration,
 };
 
@@ -154,6 +158,10 @@ pub struct SearchOptions {
     /// elites (with its existing measurement: a migrant is never re-fitted).
     pub migration_interval: usize,
     pub clock: Clock,
+    /// Set by SIGTERM/SIGINT ([`crate::parallel::termination_flag`]). Checked before every fit:
+    /// once set, nothing new starts, in-flight fits finish, and the search returns
+    /// [`crate::parallel::Cancelled`] without publishing the interrupted cut.
+    pub cancel: Option<Arc<AtomicBool>>,
 }
 
 /// Generations between migrations when `--migration-interval` is not given.
@@ -169,12 +177,26 @@ impl SearchOptions {
             islands: 1,
             migration_interval: DEFAULT_MIGRATION_INTERVAL,
             clock: Clock::Wall,
+            cancel: None,
         }
     }
 
     /// `islands x threads`: the evaluation pool's size.
     pub fn workers(&self) -> usize {
         self.threads.max(1).saturating_mul(self.islands.max(1))
+    }
+
+    pub fn cancelled(&self) -> bool {
+        self.cancel
+            .as_ref()
+            .is_some_and(|flag| flag.load(Ordering::SeqCst))
+    }
+
+    fn check_cancelled(&self) -> Result<()> {
+        if self.cancelled() {
+            return Err(crate::parallel::Cancelled.into());
+        }
+        Ok(())
     }
 }
 
@@ -652,7 +674,7 @@ pub fn run_cuts_with(
             cuts.len() > 1,
         )?);
     }
-    remeasure_in(cuts, &mut searches, options.clock, pool.as_ref())?;
+    remeasure_in(cuts, &mut searches, options, pool.as_ref())?;
     Ok(searches)
 }
 
@@ -664,12 +686,14 @@ fn evaluate_admitted(
     admitted: &[(usize, String, &'static str)],
     cut: &Cut,
     generation: usize,
-    clock: Clock,
+    options: &SearchOptions,
     pool: Option<&rayon::ThreadPool>,
     started: Stamp,
     deadline: Duration,
 ) -> Vec<Option<Observation>> {
-    let may_start = || started.elapsed() < deadline;
+    let clock = options.clock;
+    // A stop request is honoured exactly where the seconds bound is: before a fit starts.
+    let may_start = || !options.cancelled() && started.elapsed() < deadline;
     match pool {
         None => {
             let mut results = Vec::with_capacity(admitted.len());
@@ -791,7 +815,9 @@ fn run_cut_allocated(
             }
             admitted.push((island, genome, origin));
         }
-        let results = evaluate_admitted(&admitted, cut, generation, clock, pool, started, deadline);
+        options.check_cancelled()?;
+        let results =
+            evaluate_admitted(&admitted, cut, generation, options, pool, started, deadline);
         // The fold, in slot order: survivors and observations never depend on which worker
         // finished first.
         let mut late = false;
@@ -807,6 +833,9 @@ fn run_cut_allocated(
             observation.island = multi.then_some(island);
             observations.push(observation);
         }
+        // Stopped between evaluations: nothing of this cut is published, and the run that
+        // asked for it writes no receipt.
+        options.check_cancelled()?;
         if late {
             break 'search STOPPED_BY_SECONDS;
         }
@@ -931,7 +960,12 @@ pub const REMEASURE_TOP_K: usize = ELITES;
 /// including failures, use the same total allowance as exploration. Partial
 /// coverage is retained as evidence and is ineligible for selection.
 pub fn remeasure_topk_on_all_cuts(cuts: &[Cut], searches: &mut [CutSearch]) -> Result<()> {
-    remeasure_in(cuts, searches, Clock::Wall, None)
+    remeasure_in(
+        cuts,
+        searches,
+        &SearchOptions::new(Budget::default(), 0),
+        None,
+    )
 }
 
 /// The comparison phase, one worker per cut when a pool is given. Each cut's admissions depend
@@ -941,16 +975,18 @@ pub fn remeasure_topk_on_all_cuts(cuts: &[Cut], searches: &mut [CutSearch]) -> R
 fn remeasure_in(
     cuts: &[Cut],
     searches: &mut [CutSearch],
-    clock: Clock,
+    options: &SearchOptions,
     pool: Option<&rayon::ThreadPool>,
 ) -> Result<()> {
     let Some(genomes) = open_comparison(cuts, searches)? else {
         return Ok(());
     };
+    let clock = options.clock;
+    let stop = || options.cancelled();
     match pool {
         None => {
             for (cut, search) in cuts.iter().zip(searches.iter_mut()) {
-                remeasure_cut(cut, search, &genomes, clock, &mut |g, c, n, o| {
+                remeasure_cut(cut, search, &genomes, clock, &stop, &mut |g, c, n, o| {
                     evaluate(g, c, n, o, clock)
                 });
             }
@@ -959,12 +995,14 @@ fn remeasure_in(
             cuts.par_iter()
                 .zip(searches.par_iter_mut())
                 .for_each(|(cut, search)| {
-                    remeasure_cut(cut, search, &genomes, clock, &mut |g, c, n, o| {
+                    remeasure_cut(cut, search, &genomes, clock, &stop, &mut |g, c, n, o| {
                         evaluate(g, c, n, o, clock)
                     })
                 })
         }),
     }
+    // Stopped mid-comparison: the cuts' comparison phases are incomplete, so none is published.
+    options.check_cancelled()?;
     close_comparison(searches)
 }
 
@@ -978,7 +1016,14 @@ fn remeasure_with(
         return Ok(());
     };
     for (cut, search) in cuts.iter().zip(searches.iter_mut()) {
-        remeasure_cut(cut, search, &genomes, Clock::Wall, &mut evaluate_candidate);
+        remeasure_cut(
+            cut,
+            search,
+            &genomes,
+            Clock::Wall,
+            &|| false,
+            &mut evaluate_candidate,
+        );
     }
     close_comparison(searches)
 }
@@ -1054,9 +1099,13 @@ fn remeasure_cut(
     search: &mut CutSearch,
     pool: &[String],
     clock: Clock,
+    stop: &(dyn Fn() -> bool + Sync),
     evaluate_candidate: &mut dyn FnMut(&str, &Cut, usize, &'static str) -> Observation,
 ) {
     for genome in pool {
+        if stop() {
+            return;
+        }
         let started = clock.start();
         // Failed attempts count and are never retried on the same cut.
         let already = search.observations.iter().any(|o| &o.genome == genome);

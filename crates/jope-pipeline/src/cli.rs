@@ -43,35 +43,76 @@ pub struct ParallelArgs {
     pub cpu_ceiling: Option<u64>,
 }
 
+/// What a search runs on and with, shared by `run` and `evolve`.
+#[derive(Args, Clone, Debug)]
+pub struct SearchArgs {
+    /// A 16-hex catalog id resolved in the local cache, or a dataset directory.
+    #[arg(long)]
+    pub dataset: String,
+    /// Total per-cut budget across search and comparison (1..=1000 attempts / 1..=600 active seconds).
+    /// Multiple cuts reserve half for comparison; an in-flight fit may overrun time.
+    #[arg(long, default_value = "evaluations=64,seconds=300")]
+    pub budget: String,
+    /// Fold seed for the cut preparation.
+    #[arg(long, default_value_t = crate::DEFAULT_SEED)]
+    pub seed: u64,
+    /// Seed of the search's random streams.
+    #[arg(long, default_value_t = crate::DEFAULT_SEED)]
+    pub rng_seed: u64,
+    /// How many of the fold partition's cuts to prepare and search (1..=5).
+    #[arg(long, default_value_t = 1)]
+    pub cuts: usize,
+    /// Languages to emit: rust, python, cpp17, cpp20, js, or all.
+    #[arg(long, default_value = "rust,python,cpp17,cpp20,js")]
+    pub emit: String,
+    /// The proposal stage: auto and skip record a skip, require fails closed.
+    #[arg(long, default_value = "auto")]
+    pub policy: String,
+    #[command(flatten)]
+    pub parallel: ParallelArgs,
+    /// The commit the caller runs (40 or 64 lowercase hex): recorded as the receipt's git_sha,
+    /// and git is never spawned.
+    #[arg(long)]
+    pub source_commit: Option<String>,
+}
+
+impl SearchArgs {
+    /// Run options for `output`, with the termination flag wired when `signals`.
+    pub fn options(&self, output: PathBuf, signals: bool) -> Result<RunOptions> {
+        let policy = &self.policy;
+        Ok(RunOptions {
+            budget: Budget::parse(&self.budget)?,
+            seed: self.seed,
+            rng_seed: self.rng_seed,
+            cuts: self.cuts,
+            languages: Language::parse_list(&self.emit)?,
+            policy: Policy::parse(policy).ok_or_else(|| {
+                anyhow::anyhow!("--policy must be auto, skip or require, got {policy:?}")
+            })?,
+            threads: self.parallel.threads,
+            islands: self.parallel.islands,
+            migration_interval: self.parallel.migration_interval,
+            cpu_ceiling_millicores: self.parallel.cpu_ceiling,
+            source_commit: self.source_commit.clone(),
+            cancel: if signals {
+                Some(crate::parallel::termination_flag()?)
+            } else {
+                None
+            },
+            ..RunOptions::new(self.dataset.clone(), output)
+        })
+    }
+}
+
 #[derive(Subcommand)]
 pub enum Cmd {
     /// Run dataset -> prepare -> search -> select -> emit and write the receipt.
     Run {
-        /// A 16-hex catalog id resolved in the local cache, or a dataset directory.
-        #[arg(long)]
-        dataset: String,
+        #[command(flatten)]
+        search: SearchArgs,
         /// Where the preparation, searches, emitted sources and receipt are written.
         #[arg(long)]
         output: PathBuf,
-        /// Total per-cut budget across search and comparison (1..=1000 attempts / 1..=600 active seconds).
-        /// Multiple cuts reserve half for comparison; an in-flight fit may overrun time.
-        #[arg(long, default_value = "evaluations=64,seconds=300")]
-        budget: String,
-        /// Fold seed for the cut preparation.
-        #[arg(long, default_value_t = crate::DEFAULT_SEED)]
-        seed: u64,
-        /// Seed of the search's random streams.
-        #[arg(long, default_value_t = crate::DEFAULT_SEED)]
-        rng_seed: u64,
-        /// How many of the fold partition's cuts to prepare and search (1..=5).
-        #[arg(long, default_value_t = 1)]
-        cuts: usize,
-        /// Languages to emit: rust, python, cpp17, cpp20, js, or all.
-        #[arg(long, default_value = "rust,python,cpp17,cpp20,js")]
-        emit: String,
-        /// The proposal stage: auto and skip record a skip, require fails closed.
-        #[arg(long, default_value = "auto")]
-        policy: String,
         /// A jope.pipeline-seeds/v1 file: its genomes enter generation 0 after the bootstrap
         /// (canonicalised, deduplicated, at most 4) and are re-measured on this run's cuts.
         #[arg(long)]
@@ -80,8 +121,6 @@ pub enum Cmd {
         /// first and its sha256 recorded as this run's parent.
         #[arg(long)]
         incumbent: Option<PathBuf>,
-        #[command(flatten)]
-        parallel: ParallelArgs,
         /// Print the receipt as one JSON document.
         #[arg(long)]
         json: bool,
@@ -101,6 +140,10 @@ pub enum Cmd {
 pub fn exec(cli: Cli) -> ExitCode {
     match run(cli) {
         Ok(code) => code,
+        Err(error) if crate::parallel::is_cancelled(&error) => {
+            eprintln!("error: {error:#}");
+            ExitCode::from(crate::parallel::CANCELLED_EXIT)
+        }
         Err(error) => {
             eprintln!("error: {error:#}");
             ExitCode::from(2)
@@ -111,37 +154,16 @@ pub fn exec(cli: Cli) -> ExitCode {
 pub fn run(cli: Cli) -> Result<ExitCode> {
     match cli.cmd {
         Cmd::Run {
-            dataset,
+            search,
             output,
-            budget,
-            seed,
-            rng_seed,
-            cuts,
-            emit,
-            policy,
             seed_genomes,
             incumbent,
-            parallel,
             json,
         } => {
             let options = RunOptions {
-                dataset,
-                output,
-                budget: Budget::parse(&budget)?,
-                seed,
-                rng_seed,
-                cuts,
-                languages: Language::parse_list(&emit)?,
-                policy: Policy::parse(&policy).ok_or_else(|| {
-                    anyhow::anyhow!("--policy must be auto, skip or require, got {policy:?}")
-                })?,
                 seed_genomes,
                 incumbent,
-                threads: parallel.threads,
-                islands: parallel.islands,
-                migration_interval: parallel.migration_interval,
-                cpu_ceiling_millicores: parallel.cpu_ceiling,
-                clock: crate::clock::Clock::Wall,
+                ..search.options(output, true)?
             };
             let receipt = crate::run::run(&options)?;
             if json {

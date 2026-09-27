@@ -6,8 +6,61 @@
 //! quotas) or an explicit `--cpu-ceiling` in millicores. Parallelism never changes a result:
 //! candidates are admitted in slot order, evaluated concurrently, and folded back in slot order,
 //! so selection is independent of which thread finished first.
+//!
+//! A run launched as a child process is stopped the same cooperative way: SIGTERM or SIGINT set
+//! a flag the search checks before every fit, so in-flight fits finish, nothing new starts, and
+//! the run returns [`Cancelled`] without writing a receipt.
 
 use anyhow::{ensure, Context, Result};
+
+/// A run stopped by a termination signal between evaluations. It wrote no receipt.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Cancelled;
+
+impl std::fmt::Display for Cancelled {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(
+            "stopped by a termination signal between evaluations; the interrupted run wrote no \
+             receipt",
+        )
+    }
+}
+
+impl std::error::Error for Cancelled {}
+
+/// Whether `error` is, or wraps, [`Cancelled`].
+pub fn is_cancelled(error: &anyhow::Error) -> bool {
+    error.chain().any(|cause| cause.is::<Cancelled>())
+}
+
+/// The exit status of a run a signal stopped: 128 + SIGTERM.
+pub const CANCELLED_EXIT: u8 = 143;
+
+/// A flag SIGTERM and SIGINT set. A second signal while the first is being honoured exits at once
+/// with [`CANCELLED_EXIT`].
+#[cfg(target_os = "linux")]
+pub fn termination_flag() -> Result<std::sync::Arc<std::sync::atomic::AtomicBool>> {
+    use signal_hook::consts::{SIGINT, SIGTERM};
+    let flag = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+    for signal in [SIGTERM, SIGINT] {
+        signal_hook::flag::register_conditional_shutdown(
+            signal,
+            i32::from(CANCELLED_EXIT),
+            flag.clone(),
+        )
+        .context("register the second-signal shutdown")?;
+        signal_hook::flag::register(signal, flag.clone()).context("register the stop flag")?;
+    }
+    Ok(flag)
+}
+
+/// Off Linux no signal is wired: the flag never trips.
+#[cfg(not(target_os = "linux"))]
+pub fn termination_flag() -> Result<std::sync::Arc<std::sync::atomic::AtomicBool>> {
+    Ok(std::sync::Arc::new(std::sync::atomic::AtomicBool::new(
+        false,
+    )))
+}
 
 /// CPUs in this process's affinity mask.
 #[cfg(target_os = "linux")]

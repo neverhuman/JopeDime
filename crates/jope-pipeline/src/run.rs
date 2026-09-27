@@ -7,7 +7,13 @@
 //! and router-training stages are likewise out of scope and are not pretended to.
 
 use anyhow::{bail, ensure, Context, Result};
-use std::path::PathBuf;
+use std::{
+    path::PathBuf,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    },
+};
 
 use crate::{
     clock::{Clock, Stamp},
@@ -80,6 +86,12 @@ pub struct RunOptions {
     pub migration_interval: usize,
     /// An explicit CPU admission in millicores that `islands x threads` must fit.
     pub cpu_ceiling_millicores: Option<u64>,
+    /// The commit the caller runs. When given it is the receipt's `git_sha` and `git` is never
+    /// spawned (a SmartCluster job's working directory need not be a checkout at all).
+    pub source_commit: Option<String>,
+    /// The termination flag: once set, the search stops between evaluations and no receipt is
+    /// written.
+    pub cancel: Option<Arc<AtomicBool>>,
     pub clock: Clock,
 }
 
@@ -102,9 +114,31 @@ impl RunOptions {
             islands: 1,
             migration_interval: search::DEFAULT_MIGRATION_INTERVAL,
             cpu_ceiling_millicores: None,
+            source_commit: None,
+            cancel: None,
             clock: Clock::Wall,
         }
     }
+}
+
+/// [`crate::parallel::Cancelled`] once the run's termination flag is set.
+pub fn check_cancelled(options: &RunOptions) -> Result<()> {
+    if options
+        .cancel
+        .as_ref()
+        .is_some_and(|flag| flag.load(Ordering::SeqCst))
+    {
+        return Err(crate::parallel::Cancelled.into());
+    }
+    Ok(())
+}
+
+/// A full git object id: 40 (SHA-1) or 64 (SHA-256) lowercase hex digits.
+fn is_commit(value: &str) -> bool {
+    matches!(value.len(), 40 | 64)
+        && value
+            .bytes()
+            .all(|b| matches!(b, b'0'..=b'9' | b'a'..=b'f'))
 }
 
 /// Every refusal that needs no dataset and writes nothing: the counts, the budget, the policy
@@ -124,6 +158,12 @@ pub fn preflight(options: &RunOptions) -> Result<usize> {
         options.islands <= 1 || options.migration_interval >= 1,
         "--migration-interval must be at least 1 with more than one island"
     );
+    if let Some(commit) = &options.source_commit {
+        ensure!(
+            is_commit(commit),
+            "--source-commit {commit:?} is not a full commit id (40 or 64 lowercase hex digits)"
+        );
+    }
     crate::parallel::admit(
         options.threads,
         options.islands,
@@ -267,6 +307,7 @@ pub fn run(options: &RunOptions) -> Result<Receipt> {
         islands: options.islands,
         migration_interval: options.migration_interval,
         clock,
+        cancel: options.cancel.clone(),
         ..search::SearchOptions::new(options.budget, options.rng_seed)
     };
     let searched = search::run_cuts_with(&preparation.cuts, &search_options, &root.join("search"))?;
@@ -300,6 +341,7 @@ pub fn run(options: &RunOptions) -> Result<Receipt> {
     }
     stages.record("select", "passed", selection.reason.clone(), started);
 
+    check_cancelled(options)?;
     let started = clock.start();
     let emit_dir = root.join("emit");
     let emitted = emit::emit(&selection.genome, &options.languages, &emit_dir)?;
@@ -367,6 +409,9 @@ pub fn run(options: &RunOptions) -> Result<Receipt> {
     if let Some(stage) = receipt.stages.last_mut() {
         stage.seconds = started.elapsed().as_secs_f64();
     }
+    // The last point a stop request is honoured: after this the receipt exists and the run
+    // counts as completed.
+    check_cancelled(options)?;
     let path = root.join("receipt.json");
     std::fs::write(&path, serde_json::to_vec_pretty(&receipt)?)
         .with_context(|| format!("write {}", path.display()))?;
@@ -427,7 +472,10 @@ fn assemble(
         schema: receipt::RECEIPT_SCHEMA_ID.to_owned(),
         ok: stages.iter().all(|s| s.status != "failed"),
         tool_version: TOOL_VERSION.to_owned(),
-        git_sha: git_sha(),
+        git_sha: match &options.source_commit {
+            Some(commit) => Some(commit.clone()),
+            None => git_sha(),
+        },
         created_at: options.clock.now_rfc3339(),
         policy: options.policy.as_str().to_owned(),
         dataset: receipt::Dataset {
@@ -982,6 +1030,69 @@ mod tests {
         assert!(error.contains("--islands 2 x --threads 1"), "{error}");
         assert!(error.contains("--cpu-ceiling 1000"), "{error}");
         assert!(!output.exists());
+    }
+
+    /// A stop request mid-search (SIGTERM sets this flag in the CLI) ends the run between
+    /// evaluations with `Cancelled`: no receipt, and the interrupted cut is not published.
+    #[test]
+    fn a_stop_request_mid_search_writes_no_receipt() {
+        let temp = tempfile::tempdir().unwrap();
+        let output = temp.path().join("run");
+        let flag = Arc::new(AtomicBool::new(false));
+        let watcher = {
+            let flag = flag.clone();
+            let prepared = output.join("prepared/prepared.json");
+            std::thread::spawn(move || {
+                while !prepared.exists() {
+                    std::thread::sleep(std::time::Duration::from_millis(2));
+                }
+                flag.store(true, Ordering::SeqCst);
+            })
+        };
+        let error = run(&RunOptions {
+            cancel: Some(flag),
+            ..small(&output, 400)
+        })
+        .unwrap_err();
+        watcher.join().unwrap();
+        assert!(crate::parallel::is_cancelled(&error), "{error:#}");
+        assert!(!output.join("receipt.json").exists());
+        assert!(!output.join("search/cut-0/search.json").exists());
+        assert!(!output.join("emit").exists());
+        // Positive control: the same run without a stop request completes.
+        let control = temp.path().join("control");
+        run(&RunOptions {
+            cancel: Some(Arc::new(AtomicBool::new(false))),
+            ..small(&control, 4)
+        })
+        .unwrap();
+        assert!(control.join("receipt.json").exists());
+    }
+
+    #[test]
+    fn a_given_source_commit_is_the_receipts_git_sha_and_a_malformed_one_is_refused() {
+        let temp = tempfile::tempdir().unwrap();
+        let commit = "a".repeat(40);
+        let output = temp.path().join("run");
+        let receipt = run(&RunOptions {
+            source_commit: Some(commit.clone()),
+            ..small(&output, 2)
+        })
+        .unwrap();
+        assert_eq!(receipt.git_sha.as_deref(), Some(commit.as_str()));
+        for bad in ["HEAD", "ABCDEF", &"a".repeat(41), &"g".repeat(40)] {
+            let output = temp.path().join("bad");
+            let error = format!(
+                "{:#}",
+                run(&RunOptions {
+                    source_commit: Some(bad.to_owned()),
+                    ..small(&output, 2)
+                })
+                .unwrap_err()
+            );
+            assert!(error.contains("--source-commit"), "{error}");
+            assert!(!output.exists());
+        }
     }
 
     #[test]

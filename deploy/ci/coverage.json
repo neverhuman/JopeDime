@@ -5207,6 +5207,22 @@
       "dispositions": [],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "target:jope-cli/test/pipeline_cli": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-cli/tests/pipeline_cli.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
     "target:jope-datasets/bin/jope-datasets": {
       "discovery": {
         "kind": "target",
@@ -8092,6 +8108,22 @@
       "discovery": {
         "kind": "target",
         "source": "crates/jope-pipeline/tests/schema_agreement.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:jope-pipeline/test/dependency_fence": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-pipeline/tests/dependency_fence.rs",
         "test": true,
         "doctest": false,
         "required_features": []
