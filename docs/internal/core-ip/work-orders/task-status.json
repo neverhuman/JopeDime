@@ -365,19 +365,23 @@
       ],
       "commits": [
         "e8cf2c70ebebf3f420f2f24afe44bdb191faa749",
-        "7f010a8e8334aa1c2641606cd1f450161271f822"
+        "7f010a8e8334aa1c2641606cd1f450161271f822",
+        "1e0537e00659a019d9db7172fa8e6d40cb295383",
+        "3ab3d5d6752f82ade009605b3d5d92eea45b1d02"
       ],
       "tests": [
         "handoff_reaches_only_the_intended_consumer_for_the_issued_scope",
-        "handoff_tests::a_teacher_admission_handoff_serializes_as_the_record_its_consumer_parses"
+        "handoff_tests::a_teacher_admission_handoff_serializes_as_the_record_its_consumer_parses",
+        "handoff_tests::the_preregistered_producer_is_the_producer_that_hands_off_to_teacher_admission"
       ],
       "evidence": [
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w2b-w4-commit-policy-20260926T072208Z",
         "docs/internal/core-ip/work-orders/evidence/W02-asset-dependency-table.md",
         "docs/internal/core-ip/work-orders/evidence/W03-ingress-map.md",
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w3-t02-handoff-post-20260926T225441Z"
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w3-t02-handoff-post-20260926T225441Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w3-t02-producer-post-20260927T003118Z"
       ],
-      "remaining": "ContextHandoff binds release identity, transformation chain, scope and consumer. W3 teacher admission now consumes the teacher_admission handoff and records its digest; accepted-weight/native qualification not run."
+      "remaining": "ContextHandoff binds release identity, transformation chain, scope and consumer. W3 teacher admission consumes the teacher_admission handoff and records its digest; the live producer run (jope-bench prepare_regression_context) emits it, and a W2 qualification registers the producer a freeze preregisters. Accepted-weight/native qualification not run."
     },
     "W3-T01": {
       "states": [
@@ -400,7 +404,10 @@
       "commits": [
         "cff5ead8a066851429ed78d8f715f9c25c1369aa",
         "7f010a8e8334aa1c2641606cd1f450161271f822",
-        "5ff45b30d9ac0f4dc5327a9ce3457fa9f2524b15"
+        "5ff45b30d9ac0f4dc5327a9ce3457fa9f2524b15",
+        "1e0537e00659a019d9db7172fa8e6d40cb295383",
+        "71d3d5f8c3a788e8a3ca78fbb4b154fe7e2e6e88",
+        "3ab3d5d6752f82ade009605b3d5d92eea45b1d02"
       ],
       "tests": [
         "missing_context_provenance_is_refused_at_real_teaching_ingress",
@@ -410,16 +417,22 @@
         "eligibility::tests::handoff::a_freeze_without_a_preregistered_producer_stays_quarantined",
         "eligibility::tests::handoff::pre_handoff_formats_keep_their_meaning_and_stay_quarantined",
         "eligibility::tests::revocation (2)",
-        "jope-policy handoff_tests (2)"
+        "jope-policy handoff_tests (2)",
+        "eligibility::tests::producer (5)",
+        "handoff_tests::the_preregistered_producer_is_the_producer_that_hands_off_to_teacher_admission",
+        "jope-bench panel::teaching::tests (3, feature asm)"
       ],
       "evidence": [
         "docs/internal/core-ip/work-orders/evidence/W03-ingress-map.md",
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w3-t02-handoff-pre-20260926T224712Z",
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w3-t02-handoff-post-20260926T225441Z",
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w3-t02-handoff-mutations-20260926T225603Z",
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w12-t05-consumers-post-20260926T223745Z"
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w12-t05-consumers-post-20260926T223745Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w3-t02-producer-pre-20260927T001342Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w3-t02-producer-post-20260927T003118Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w3-t02-producer-mutations-20260927T003823Z"
       ],
-      "remaining": "Handoff and pool receipts are unsigned content-addressed evidence; W3 does not re-run W2 load_qualified; handoff row scopes not joined (dataset only); no controller issues ProducerPlan and the live jope-bench driver still freezes with context: None."
+      "remaining": "Handoff and pool receipts are unsigned content-addressed evidence; W3 does not re-run W2 load_qualified; handoff row scopes not joined (dataset only). The product now issues ProducerPlan from the W2 qualification loader, and the live jope-bench driver freezes regression datasets with it and submits the W2 run's teacher_admission handoff (fixture-proven; preregister/admit_one not run end to end). No live W2 producer run or live teacher admission: needs a completed W2 CPU qualification (native reference, encoder assets) and a cgroup-delegated pool."
     },
     "W3-T03": {
       "states": [
