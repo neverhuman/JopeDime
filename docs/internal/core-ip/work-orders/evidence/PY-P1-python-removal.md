@@ -389,3 +389,71 @@ also lints the `jope-records` dependency and stopped at the scope check's `% 2`.
 without this host's gitleaks shim, which stops on the 244 historical findings, so that run exits
 with status 1. `py-p1-clippy-post-20260927T035547Z` then ran fmt, `git diff --check` and
 `deploy/ci/check.sh` with the shim: green.
+
+## Follow-up — stale references to archived Python: PY-P2 items
+
+References that still name archived Python after P1, beyond the archive records themselves (the
+manifest, the matrix's dropped rows, this record). Each item gives the consumer (file:line at
+this branch), what it points at, and the proposed disposition for P2. No CI lane needs the
+archived files for any of them.
+
+- **PY-P2-1 `jope-parallel compare-seeds`.** `crates/jope-engine/src/main.rs:1348-1358`: the verb
+  execs `python3 <state root>/tools/seed_experiment.py` (a copy in the state root, not this
+  checkout); `crates/jope-engine/tests/experiment_cli.rs:24` writes a stand-in script there. The
+  source is archived (`8a55c4fef:python/src/jope/tools/seed_experiment.py`, U13) and no unit has
+  run it since the flywheel stopped on 2026-09-16. Proposed: retire the verb, or port the seed
+  comparison to Rust if the owner wants it back.
+- **PY-P2-2 dashboard service list.** `crates/jope-engine/src/dashboard.rs:402` (`live_operations`)
+  asks systemd for `jope-parallel-console`, whose template
+  (`deploy/systemd/engine/jope-parallel-console.service.in`) was archived with U13. Until then the
+  dashboard simply reports that unit as absent. Proposed: drop the name when the dashboard is next
+  changed.
+- **PY-P2-3 opportunistic-proposal manifests.**
+  `crates/jope-engine/manifests/opportunistic-proposals-v44.sha256:4` and
+  `opportunistic-proposals-v53.sha256:5` pin the archived unit files
+  `systemd/jope-parallel-proposal-library-v44.service` and
+  `systemd/jope-parallel-pure-proposal-library-v53.service`; the `.json` specs were read by the
+  archived `opportunistic_proposals.py` / `_v2.py`. Nothing in the tree reads these copies; the
+  only units that name such manifests are the frozen kernel-v1 ones,
+  `deploy/kernel-v1/source/systemd/jope-parallel-proposal-library-v44.service:9-10` and
+  `jope-parallel-pure-proposal-library-v53.service:9-10`, which point at the old `parallel/`
+  layout and are not installed. Proposed: keep the pins as history (they record what ran).
+- **PY-P2-4 workspace-sync manifests.** `crates/jope-campaigns/manifests/workspace-sync.v2.json:35-38`,
+  `workspace-sync.references.v2.json:34-37` and `workspace-sync.canonical-raw.v2.json:33-36` pin
+  the archived U12 sources (`scripts/workspace_{inventory,store,sync}.py`,
+  `parallel/tools/kernel_remote_state.py`). No consumer in the tree (`git grep`). Proposed: keep
+  as history.
+- **PY-P2-5 source bindings.** `python/src/jope/tools/flywheel-source-binding.json:42,47,52` (and
+  its frozen twin `deploy/kernel-v1/source/tools/flywheel-source-binding.json:42,47,52`) bind the
+  archived `kernel_remote_state.py`, `campaign_bound_jobs.py` and `diagnose_val_vs_corpus.py`;
+  `python/src/jope/tools/research-readouts-binding.json:8-16` binds nine archived readout tools. No
+  consumer in the tree. Proposed: keep the kernel-v1 twin as history; retire the two
+  `python/src/jope/tools/` copies with that directory (P2/P3).
+- **PY-P2-6 durable self-play deploy.** `python/src/jope/research/deploy_selfplay_bundle.py:130`
+  names `tests/test_realtime_selfplay.py`, archived in P1; the module is kept because
+  `python/tests/test_durable_selfplay.py:441` reads it by path, and line 130 runs only in the
+  xbabe2 activation step. Proposed: decide together with that test (a `?` unit): port the
+  activation to Rust or retire both.
+
+Left unchanged on purpose:
+
+- `assets/regression/protocol-corrections-tabular-regression-v2.json:38,43` cite
+  `index_combined_regression_evolution.py:183` and `train_only_redteam_scq.py:1527-1536`; the file
+  is SHA-256-pinned, and `README.md:64` quotes the first citation from it in the block
+  `jope-records readme-benchmarks` renders. `assets/regression/SOURCES.md` maps both to
+  `8a55c4fef`.
+- `docs/internal/training-support/audit.md:13,44` and `audit.html:17,94`: the generation receipt
+  `audit.receipt.json` binds both files (with the PDF) by SHA-256.
+- `docs/internal/asm-manual/sections/deep-stack.md:248` and `sections/training.md:43` (listed in
+  the manual's `render-receipt.json`) and the rendered `MANUAL.md:917,1926`, and
+  `docs/internal/core-ip/sections/06.md:181`, which repeats the manual's sentence: historical
+  citations of what a snapshot contained. They go with the documentation tooling (U16, P2).
+- `docs/coordination/AGENT_CHAT-20260923-pr68-to-pr72.md:29`: an archived coordination record.
+
+Fixed: `.gitleaks.toml` keeps the allowlist entry for
+`python/src/jope/research/test_workspace_sync.py`: `deploy/ci/check.sh` runs `gitleaks detect`
+over git history, so on any full clone (as contributors run it) the file's synthetic key fixture
+is still scanned in the commits before the archive. A comment now says the file is archived at
+`8a55c4fef` and why the entry stays; removing it would only make full-history scans fail.
+Check `py-p1-stale-post-20260927T040410Z`: `git diff --check`, `gitleaks detect` loading the
+edited configuration (no leaks), and `deploy/ci/check.sh`: green.
