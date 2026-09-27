@@ -4,7 +4,8 @@
 # Records every test id per crate/package into docs/parity/test-inventory.json and fails when a
 # test that the committed inventory lists is no longer present, unless the inventory is updated in
 # the same change (`--update` rewrites the file). Added tests are reported (run `--update`). The
-# committed floors (Rust >= 966, Python >= 214, from the plan's Verification item 9) are enforced.
+# committed floors (Rust >= 966 from the plan's Verification item 9; Python >= 172, see FLOORS)
+# are enforced.
 #
 #   Rust:   cargo nextest list --workspace --locked -P main --message-format json
 #           (falls back to --config-file deploy/ci/nextest-inventory.toml when the tree's
@@ -84,7 +85,11 @@ do_rust = os.environ["RUST"] == "1"
 do_python = os.environ["PYTHON"] == "1"
 py_mode = os.environ["PY_MODE"]
 tmp = Path(os.environ["TMP"])
-FLOORS = {"rust": 966, "python": 214}
+# Python was 214 (plan Verification item 9). The Python removal P1 (ADR-0008) archived the test
+# files of code with no live consumer (111 static-scan test functions under python/tests; list and
+# restore commands in docs/archive/python-archive-manifest.json), so the floor is the exact count
+# left: 172. It may only rise again or fall with a recorded archive/port.
+FLOORS = {"rust": 966, "python": 172}
 
 committed = json.loads(inventory.read_text()) if inventory.exists() else {}
 fresh = {"schema": "jope.test-inventory/v1", "floors": committed.get("floors", FLOORS)}
