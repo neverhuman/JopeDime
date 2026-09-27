@@ -272,4 +272,6 @@ Coverage keys added:
 - `target:jope-parallel/test/counterfactual_boundaries`
 - `target:jope-datasets/test/staging_disposition`
 
-`deploy/ci/coverage.py validate` reported 0 unassigned. No Python was added.
+`deploy/ci/coverage.py validate` reported 0 unassigned (that tool is archived at `8a55c4fef` by
+the Python removal P1; its Rust port is `cargo run -q --locked -p jope-records -- coverage
+validate`). No Python was added.
