@@ -1,11 +1,14 @@
 # PY-P1 — Python removal, phase P1
 
-Written on branch `rr2/python-p1` (base `8a55c4fef`) and landed as `rr2/python-p1-landing`, a
-replay onto main at `cee1fc8bd`, then rebased onto main at `f46a9048f` (after #116). The commits
-named here are the landed ones; the commit map at the end gives each one's original. Owner ruling
-2026-09-26: the stack is Rust/Vite/TypeScript/React; Python remains only for GP-emitted code and
-its harness. Live tools are ported with differential tests, unused code is archived. Evidence runs
-live under
+Written on branch `rr2/python-p1` (base `8a55c4fef`) and landed through `rr2/python-p1-landing`,
+a replay onto main at `cee1fc8bd`, then rebased onto main at `f46a9048f` (after #116). This
+repository merges pull requests only by rebase or squash, and either gives every commit a new SHA
+on main, so this record names P1's own commits by role (the U2 commit, the ADR-0008 commit, …).
+The commit map at the end gives each one's exact subject, which a rebase merge keeps and a squash
+merge lists in its message, so `git log -F --grep='<subject>' main` finds it after either; the map
+also gives each one's original and its SHA before the rebase. Owner ruling 2026-09-26: the stack
+is Rust/Vite/TypeScript/React; Python remains only for GP-emitted code and its harness. Live tools
+are ported with differential tests, unused code is archived. Evidence runs live under
 `/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/py-p1-*`
 and, for the landing, `p1-landing-*` and `p1-rebase-*` (identity, diff, command and log per run).
 
@@ -247,9 +250,10 @@ no installed host file was changed.
   parts of ADR-0005; names the GP-emitted-code exception, the always-keep list (the eight G files,
   `python3` in the runner image, the sha-pinned grammar sources until P3 decides) and the P1, P2
   and P3 scopes. It is numbered ADR-0006, the next number after ADR-0005 as `CONTRIBUTING.md`
-  requires. It was first committed as ADR-0008 (the brief's name, `24ca97838`) and renumbered in a
-  follow-up commit (`14bdfe1ef`); every reference moved with it, including the `ruling` string of
-  the archive manifest. The custody copy of that manifest was replaced by the committed one (only
+  requires. It was first committed as ADR-0008 (the brief's name, in the ADR-0008 commit) and
+  renumbered in a follow-up commit (the renumbering commit; the commit map gives both subjects);
+  every reference moved with it, including the `ruling` string of the archive manifest. The
+  custody copy of that manifest was replaced by the committed one (only
   `.ruling` differs; `.files`, `.counts` and `.custody` are identical), with the previous copy
   kept under `superseded-manifest-adr-0008-20260927/` and a `NOTE-20260927-adr-renumber.txt`;
   `SHA256SUMS` was regenerated and verifies. Renumber gate `py-p1-adr-post-20260927T033239Z`: the
@@ -321,10 +325,10 @@ captured output is altered (negative control).
   `crates/jope-records/tests/fixtures/python-parity/`: all 25 cases of
   `py-p1-u3-diff-20260927T024147Z`. The inputs are those of that run's tree (the U2 commit as
   first written on `rr2/python-p1`, which the run's `identity.txt` names and the commit map below
-  pairs with its landed replay `947b1a1aa`, plus the run's working changes: the jope-records
+  pairs with the landed U2 commit, plus the run's working changes: the jope-records
   `lib.rs`/`main.rs` edits and four new, untracked modules), recovered from an export of it
   (`git archive`, the run's `diff.patch`, the four modules; not a clone or worktree). The landed
-  `947b1a1aa` does not hold that tree (its `deploy/ci/coverage.json` also has the entries main
+  U2 commit does not hold that tree (its `deploy/ci/coverage.json` also has the entries main
   gained up to `f46a9048f`), so the committed fixture is the record of the inputs:
   - coverage `validate` (10 cases): the coverage map of the run (`mapping.json`, blob `5e78ee4ba`,
     the run's `deploy/ci/coverage.json`) and its nine malformed variants as `ed` scripts, each
@@ -467,50 +471,58 @@ edited configuration (no leaks), and `deploy/ci/check.sh`: green.
 
 ## Commit map — `rr2/python-p1` to the landing
 
-The work above was committed on `rr2/python-p1` and landed as `rr2/python-p1-landing`: its eleven
-commits were replayed in order onto main at `cee1fc8bd` (after #114 and #115), followed by
-landing-only commits, and the branch was then rebased onto main at `f46a9048f` (after #116).
-Every landed commit has a new SHA; neither the originals nor the commits as they stood before the
-rebase are in the landed history. Where this record, the tests or the fixtures cite a commit for
-P1's own provenance, it is a landed commit, `8a55c4fef` or `cee1fc8bd`, or they cite the blob id
-of a committed file; fixture copies of main's files keep main's own citations unchanged. An
-original appears only in this table and in landed commit messages, which cannot change: the four
-`(cherry picked from commit …)` trailers (on `947b1a1aa`, `61817b59f`, `9ffc7036d` and
-`aadd548dc`) and `b7435c1d6`, which names the U3 run's tree. A pre-rebase SHA appears only in
-this section and in the evidence runs made before the rebase.
+The work above was committed on `rr2/python-p1` and landed through `rr2/python-p1-landing`: its
+eleven commits were replayed in order onto main at `cee1fc8bd` (after #114 and #115), followed by
+landing-only commits, and the branch was then rebased onto main at `f46a9048f` (after #116). The
+repository merges a pull request only by rebase or squash (merge commits are disabled, and the
+head branch is deleted on merge), and both give each commit a new SHA on main, as they did for
+#114, #115 and #116. So no SHA this branch has had, before or after the rebase, becomes a SHA on
+main, and the table keys each landed commit by its exact subject: after a rebase merge
+`git log -F --grep='<subject>' main` finds that commit, and after a squash merge it finds the
+squash commit, whose message lists every subject. Where this record, the tests or the fixtures
+cite a commit for P1's own provenance, they name a landed commit by its role or subject, name a
+commit on main (`8a55c4fef`, `cee1fc8bd` or `f46a9048f`) or a commit in one of the custody bundles
+below (an original or a pre-rebase commit), or cite the blob id of a committed file; fixture
+copies of main's files keep main's own citations unchanged. An original appears only in this
+table and in commit messages, which cannot change: the four `(cherry picked from commit …)`
+trailers (on the landed U2, U3, U5 and archive commits) and the message of the U3 fixture commit,
+which names the U3 run's tree. A pre-rebase SHA appears only in this section and in the evidence
+runs made before the rebase.
 
-| Landed | Before the rebase | Original | Patch-id | Subject (short) |
-| --- | --- | --- | --- | --- |
-| `86d15f1c5` | `364c06fd9` | `29f4d1077` | differs | jope-engine: grow families natively (P1 U8) |
-| `947b1a1aa` | `6b95c9208` | `5136986fb` | differs | jope-ci: port cargo-artifact to Rust (P1 U2) |
-| `61817b59f` | `7382a4275` | `1f1791025` | differs | jope-records: port the four hygiene guards (P1 U3) |
-| `9ffc7036d` | `6cd7672ec` | `6ce8fcfbe` | differs | jope-ci: port the build-directory report to Rust (P1 U5) |
-| `aadd548dc` | `6e6bf5ad2` | `389898805` | differs | python: archive 703 files with no live consumer (P1 archive) |
-| `24ca97838` | `4ed0e2096` | `e9511a2fc` | same | docs: ADR-0008 Rust-only stack (P1 docs) |
-| `14bdfe1ef` | `ee24eae50` | `9b810cd80` | same | docs: renumber the Rust-only ADR to ADR-0006 |
-| `676587cb6` | `037b8f885` | `9e8aacedc` | same | jope-ci: replay the captured Python outputs (U2, U5) |
-| `68a11977a` | `0b213a36e` | `4b4018dff` | same | jope-ci, jope-engine, jope-records: clear clippy findings |
-| `b7435c1d6` | `bc3ba2ca6` | `df9c78ae3` | same | jope-records: replay the captured Python outputs (U3) |
-| `fc0abb85d` | `575c55ea6` | `2200bc872` | same | docs, gitleaks: stale references to archived Python (PY-P2) |
+| Landed commit (exact subject) | Before the rebase | Original | Patch-id |
+| --- | --- | --- | --- |
+| `jope-engine: grow families natively; retire the Python growth policy (P1 U8)` | `364c06fd9` | `29f4d1077` | differs |
+| `jope-ci: port cargo-artifact to Rust; retire deploy/ci/cargo-artifact.py (P1 U2)` | `6b95c9208` | `5136986fb` | differs |
+| `jope-records: port the four hygiene guards; retire their Python (P1 U3)` | `7382a4275` | `1f1791025` | differs |
+| `jope-ci: port the build-directory report to Rust; retire jope_report.py (P1 U5)` | `6cd7672ec` | `6ce8fcfbe` | differs |
+| `python: archive 703 files with no live consumer (P1 archive)` | `6e6bf5ad2` | `389898805` | differs |
+| `docs: ADR-0008 Rust-only stack; say where Python still lives (P1 docs)` | `4ed0e2096` | `e9511a2fc` | same |
+| `docs: renumber the Rust-only ADR to ADR-0006 (P1 follow-up)` | `ee24eae50` | `9b810cd80` | same |
+| `jope-ci: replay the captured Python outputs of cargo-artifact and build-report (P1 follow-up)` | `037b8f885` | `9e8aacedc` | same |
+| `jope-ci, jope-engine, jope-records: clear clippy findings in P1 port code` | `0b213a36e` | `4b4018dff` | same |
+| `jope-records: replay the captured Python outputs of the four hygiene guards (P1 follow-up)` | `bc3ba2ca6` | `df9c78ae3` | same |
+| `docs, gitleaks: record the stale references to archived Python as PY-P2 items (P1 follow-up)` | `575c55ea6` | `2200bc872` | same |
+| `docs: name the Rust coverage validator where W01 and W09 cite coverage.py (P1 landing)` | `f7a19392c` | landing only | — |
+| `docs: recount the jope-records tests in the capability matrix (P1 landing)` | `f0b1402ec` | landing only | — |
+| `docs, jope-records: cite landed commits, not rr2/python-p1 originals (P1 landing)` | `309efce3b` | landing only | — |
+| `docs, jope-records: cite the rebased commits after rebasing onto #116 (P1 landing)` | none, made later | landing only | — |
+| `docs, jope-records: name the landed P1 commits by subject, not by branch SHA (P1 landing)` | none, made later | landing only | — |
 
-Landing-only: `ff8eb8d56` (before the rebase `f7a19392c`; the W01 and W09 records name the Rust
-coverage validator), `8e1f45228` (`f0b1402ec`; the capability matrix recounts the jope-records
-tests), `65e6f961d` (`309efce3b`; these citations and this map) and the commit that updates them
-after the rebase.
-
-"Patch-id" compares `git patch-id --stable` of the landed and the original commit. Each pair
-changes the same paths with the same status. The tree proof (`p1-landing-post-20260927T170033Z`,
-`step-treeproof.log`), run before the rebase, finds that 8 of the 829 paths the eleven commits
-touch differ between the original tip and `f0b1402ec` (now `8e1f45228`), all of them paths main
-also changed: 5 equal the clean three-way merge, and the jope-records `lib.rs` and `main.rs` and
-the capability matrix were resolved by hand.
+"Patch-id" compares `git patch-id --stable` of the commit as submitted and its original. Each
+pair changes the same paths with the same status. The tree proof
+(`p1-landing-post-20260927T170033Z`, `step-treeproof.log`), run before the rebase, finds that 8 of
+the 829 paths the eleven commits touch differ between the original tip and `f0b1402ec` (the
+capability-matrix recount before the rebase), all of them paths main also changed: 5 equal the
+clean three-way merge, and the jope-records `lib.rs` and `main.rs` and the capability matrix were
+resolved by hand.
 
 The rebase onto `f46a9048f` (#116: health routing, four commits) applied all fourteen commits
 without a conflict. Every commit keeps its patch-id and author, and all but one keep their
-message: in `65e6f961d` the three citations of landed commits were amended to the rebased SHAs. The
-rebased tip's tree is the tree `git merge-tree --write-tree f46a9048f 309efce3b` computes
-(`0365499cf`). #116 and P1 change four common paths in different lines: `deploy/ci/coverage.json`,
-`fast-lane.sh`, `full-lane.sh` and `findings/test-inventory.json`. On each, the landed file is
+message: in the first citation commit (`309efce3b` before the rebase) the three citations of
+landed commits were amended to the rebased SHAs. The rebased tip's tree is the tree
+`git merge-tree --write-tree f46a9048f 309efce3b` computes (`0365499cf`). #116 and P1 change four
+common paths in different lines: `deploy/ci/coverage.json`, `fast-lane.sh`, `full-lane.sh` and
+`findings/test-inventory.json`. On each, the landed file is
 exactly P1's line changes on top of #116's and #116's on top of P1's. #116's CI lines survive
 (`check-test-routing.sh` in `full-lane.sh`, the two routing self-tests in `fast-lane.sh` and in
 the hygiene `checks` list), none of them calls Python, and no retired Python tool is named
@@ -519,6 +531,24 @@ anywhere it was not named before the rebase. The capability matrix, #116's findi
 both diffs, the merge prediction) and the `p1-rebase-post-*` gate (the landing gate on the
 rebased head, the semantic checks above, `check-test-routing.sh` on real collections and its
 self-tests).
+
+Two landing commit messages, which cannot change either, name commits by the SHA they had on this
+branch after the rebase, which the merge replaces: the first citation commit's message names the
+ADR-0008 commit as `24ca97838`, the renumbering commit as `14bdfe1ef` and the U2 commit as
+`947b1a1aa`, and the rebase citation commit's message names those three and the first citation
+commit as `65e6f961d`. These four SHAs are given here only to decode those two messages; they are
+not the landed commits.
+
+A review of the rebased branch found that this record, `python_parity.rs` and the U3 fixture's
+`source` string still cited those branch SHAs as the landed commits. Reproduction
+`p1-rebase-cite-pre-20260927T195252Z`: GitHub reports merge commits disabled; the heads of #114,
+#115 and #116 are not ancestors of main, whose commits have the heads' trees, one parent each and
+the same authors and messages; after a simulated rebase merge and a simulated squash merge of this
+branch, and in a single-branch `--no-local` clone of the simulated rebase-merged main, none of
+the 14 cited branch commits resolves, while every subject resolves to exactly one commit. The last
+landing commit names them by role and subject instead. `p1-rebase-cite-post-*` repeats those
+checks on it (no branch SHA left but the four above; every subject in the table found once on the
+branch, after either simulated merge and in the clone) and runs the gate.
 
 The fourteen pre-rebase commits are in the custody bundle
 `p1-rebase-pre-20260927T191744Z/rr2-python-p1-landing-pre-rebase.bundle` (416192 bytes, SHA-256
