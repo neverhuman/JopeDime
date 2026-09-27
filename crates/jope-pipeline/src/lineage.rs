@@ -7,9 +7,16 @@
 //! with the previous receipt as its verified `--incumbent`. The fold seed and cut count never
 //! change, so every round measures on the identical prepared cuts and its champion's mean
 //! held-out RMSE is directly comparable with the round before; the previous champion is
-//! re-measured there, so a round can only match or beat it. The optional control is one more
-//! run with the final round's exact configuration and no seeds, which separates what seeding
-//! carried forward from what the search discovered on its own.
+//! re-measured there, so a round can only match or beat it *on those cuts*. Every round selects
+//! on the same held-out folds, so part of any round-over-round gain is selection on reused folds;
+//! only the sealed test split (`jope pipeline score`) speaks to generalisation.
+//!
+//! The optional control is one more run at the final round's configuration (one round's budget,
+//! the final round's random stream) with no seeds: what one round of search finds without
+//! inherited seeds. It is not compute-matched against the lineage, whose final round inherits
+//! every earlier round's search on the same cuts, and one control on one stream cannot separate
+//! seeding from that extra compute or from noise; [`verify`] reports both evaluation totals so
+//! nobody has to take the comparison on trust.
 //!
 //! Every refusal a round could make — parallelism, budget, a seed that is not a pipeline, a
 //! dataset that does not resolve or is not a regression task, a budget too small to re-measure
@@ -511,6 +518,13 @@ pub struct VerifyReport {
     /// Per round after the first: its champion's mean held-out RMSE is strictly lower than the
     /// round before's on the same cuts.
     pub improved_on_previous_round: Vec<bool>,
+    /// Completed evaluations of every round, summed over their cuts: the search the final
+    /// round's champion inherits.
+    pub rounds_completed_evaluations: u64,
+    /// The control's completed evaluations: one round's budget. The control is not
+    /// compute-matched against the lineage; compare the two totals before reading a difference
+    /// in RMSE as the effect of seeding.
+    pub control_completed_evaluations: Option<u64>,
 }
 
 /// Re-derive every round (and the control) from its directory and check the chain: identical
@@ -679,6 +693,8 @@ pub fn verify(path: &Path, require_bred_candidates: bool) -> Result<VerifyReport
             .windows(2)
             .map(|pair| pair[1].validation_rmse < pair[0].validation_rmse)
             .collect(),
+        rounds_completed_evaluations: lineage.rounds.iter().map(|r| r.completed_evaluations).sum(),
+        control_completed_evaluations: lineage.control.as_ref().map(|c| c.completed_evaluations),
     })
 }
 
@@ -860,6 +876,20 @@ mod tests {
             report.control_validation_rmse,
             Some(control.validation_rmse)
         );
+        // The compute the control comparison rests on: the rounds' total against one round's.
+        assert_eq!(
+            report.rounds_completed_evaluations,
+            lineage
+                .rounds
+                .iter()
+                .map(|r| r.completed_evaluations)
+                .sum::<u64>()
+        );
+        assert_eq!(
+            report.control_completed_evaluations,
+            Some(control.completed_evaluations)
+        );
+        assert!(report.rounds_completed_evaluations > control.completed_evaluations);
     }
 
     #[test]

@@ -74,10 +74,13 @@ row by row in `docs/parity/capability-matrix.md` (PR
 
 ## Targeted evolution of one dataset (`jope pipeline evolve`, CPU)
 
-The panels above measure many datasets under one protocol. A targeted campaign drives **one**
-chosen dataset to better GP programs over rounds and turns each round's champion into the next
-round's starting point. Everything it runs exists today in `jope` and `jope-learning`; nothing is
-scheduled, uploaded or promoted.
+The panels above measure many datasets under one protocol. A targeted campaign searches **one**
+chosen dataset over rounds and turns each round's champion into the next round's starting point.
+Every round selects on the same held-out folds of the training rows, so a round can only match or
+beat the round before *on those folds*: part of any round-over-round gain is selection on reused
+folds and need not generalise. Only the sealed test split says anything about generalisation (see
+below). Everything it runs exists today in `jope` and `jope-learning`; nothing is scheduled,
+uploaded or promoted.
 
 ```bash
 jope pipeline evolve --dataset datasets/test/uci-parkinsons-telemonitoring --rounds 3 --control \
@@ -95,9 +98,13 @@ jope pipeline score --receipt <campaign>/round-003/receipt.json --split test   #
 
 - **Rounds** share one prepared set of cuts (fixed fold seed and cut count), so their mean
   held-out RMSEs are directly comparable; round r > 1 is seeded from round r-1's champion and
-  ranked runners-up and can never end worse than it. `--control` repeats the final round's
-  configuration unseeded, which separates what seeding carried forward from what the search
-  found on its own.
+  ranked runners-up and can never end worse than it on those cuts.
+- **`--control`** is one more run at the final round's configuration (one round's budget, the
+  final round's random stream) without seeds. It is **not** compute-matched: the final round
+  inherits every earlier round's search on the same cuts, so the lineage has spent roughly
+  `rounds` times the control's evaluations (`lineage verify` reports both totals). One control
+  on one random stream cannot separate the effect of seeding from that extra compute or from
+  noise; that needs budget-matched runs over several seeds and datasets.
 - **The learning store** is written only by the separate `jope-learning` steps: the HWM ledger
   records initialized / improved / tie / not-improved under a pipeline comparison identity (never
   teaching-eligible), and the champion bank keeps improved champions as `jope.pipeline-seeds/v1`
