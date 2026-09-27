@@ -301,7 +301,7 @@ fn scan_preserves_fixtures_and_fails_visibly() {
     // Permission changes leave mtimes alone; each mode is restored exactly.
     let mode_of = |p: &Path| fs::symlink_metadata(p).unwrap().permissions().mode() & 0o7777;
     let locked_mode = mode_of(&locked);
-    fs::set_permissions(&locked, fs::Permissions::from_mode(0)).unwrap();
+    fs::set_permissions(&locked, fs::Permissions::from_mode(0o000)).unwrap();
     let c = call(&helper, &[&root, Path::new("--stale"), Path::new("48")]);
     fs::set_permissions(&locked, fs::Permissions::from_mode(locked_mode)).unwrap();
     assert!(
@@ -312,7 +312,7 @@ fn scan_preserves_fixtures_and_fails_visibly() {
     // A descendant the candidate search never enters (.git) still fails the mtime walk.
     let git_objects = root.join("gitguard/.git/objects");
     let objects_mode = mode_of(&git_objects);
-    fs::set_permissions(&git_objects, fs::Permissions::from_mode(0)).unwrap();
+    fs::set_permissions(&git_objects, fs::Permissions::from_mode(0o000)).unwrap();
     let c = call(&helper, &[&root, Path::new("--stale"), Path::new("48")]);
     fs::set_permissions(&git_objects, fs::Permissions::from_mode(objects_mode)).unwrap();
     assert!(
