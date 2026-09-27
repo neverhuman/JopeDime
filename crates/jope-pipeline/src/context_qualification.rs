@@ -118,6 +118,23 @@ impl CompletedQualification {
         );
         Ok(())
     }
+
+    /// W3-T02: the W2 context producer a teaching freeze preregisters for the contexts this
+    /// qualification admits. The retained qualification is re-admitted by [`Self::verify`] (its
+    /// eight executed cases, their pool receipts and the rebuilt qualification) and the
+    /// registration is then read from the qualification bytes its pin authenticates; nothing is
+    /// re-derived by hand.
+    pub fn producer_registration(
+        &self,
+        source: &str,
+        program: &Artifact,
+    ) -> Result<context_producer::ProducerRegistration> {
+        self.verify(source, program)?;
+        context_producer::ProducerRegistration::from_qualification(
+            &read_artifact(&self.qualification, 32 << 20)?,
+            &self.qualification.sha256,
+        )
+    }
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]

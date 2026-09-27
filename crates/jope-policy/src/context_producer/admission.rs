@@ -369,6 +369,63 @@ impl ContextHandoff {
     }
 }
 
+/// The W2 context producer a teaching freeze preregisters (W3-T02), read from the bytes of the W2
+/// qualification the producer passed: the release identity every context qualified under it is
+/// handed off with (exactly the [`ContextRelease`] that [`VerifiedCpuContext::handoff`] builds,
+/// since [`verify_qualified`] holds the artifact, pins and qualification to one another), the
+/// typed transformation chain and the qualification's digest. It serializes field for field as
+/// the preregistration teacher admission parses (`jope_learning::eligibility::ProducerPlan`). It
+/// admits nothing and cannot be deserialized.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+pub struct ProducerRegistration {
+    release: ContextRelease,
+    transformations: Vec<String>,
+    qualification_sha256: String,
+}
+impl ProducerRegistration {
+    /// Read from `qualification`, the exact bytes `expected_sha256` pins. Only the accepted
+    /// encoder, qualified under the current verification policy, registers. The evidence behind
+    /// the qualification (its eight executed cases) is re-admitted by the qualification's loader
+    /// (`jope_pipeline::context_qualification::CompletedQualification::producer_registration`)
+    /// and again by [`verify_qualified`] before any context is handed off under it.
+    pub fn from_qualification(qualification: &[u8], expected_sha256: &str) -> Result<Self> {
+        ensure!(
+            qualification.len() <= 16 << 20 && sha(qualification) == expected_sha256,
+            "W2 qualification bytes differ from their pin"
+        );
+        let q: Qualification = serde_json::from_slice(qualification)?;
+        ensure!(
+            q.schema == "jope.cpu-context-qualification/v1"
+                && q.verification_policy_sha256 == verification_policy_sha256(),
+            "qualification protocol changed"
+        );
+        validate_hex(&q.source_sha256, 40)?;
+        validate_hex(&q.producer_sha256, 64)?;
+        validate_hex(&q.reference_manifest_sha256, 64)?;
+        q.encoder.require_accepted()?;
+        Ok(Self {
+            release: ContextRelease {
+                encoder: q.encoder,
+                source_sha256: q.source_sha256,
+                producer_sha256: q.producer_sha256,
+                verification_policy_sha256: q.verification_policy_sha256,
+                reference_manifest_sha256: q.reference_manifest_sha256,
+            },
+            transformations: transformation_chain(),
+            qualification_sha256: expected_sha256.into(),
+        })
+    }
+    pub fn release(&self) -> &ContextRelease {
+        &self.release
+    }
+    pub fn transformations(&self) -> &[String] {
+        &self.transformations
+    }
+    pub fn qualification_sha256(&self) -> &str {
+        &self.qualification_sha256
+    }
+}
+
 impl CpuProducer {
     /// One case per bounded job (30s, one numerical thread). The caller gives
     /// this worker only one canonical ReferenceCase payload from case_inputs.
@@ -1220,6 +1277,95 @@ mod handoff_tests {
             sha(&serde_json::to_vec(&handoff).unwrap()),
             handoff.sha256().unwrap()
         );
+    }
+
+    /// W3-T02: the producer a teaching freeze preregisters, read from the W2 qualification bytes,
+    /// is exactly the producer that hands a context qualified under them to teacher admission
+    /// (release identity, transformation chain and W2 qualification), and it serializes as the
+    /// preregistration teacher admission parses (`jope_learning::eligibility::ProducerPlan`).
+    /// Other bytes, another protocol, another encoder and unknown fields do not register.
+    #[test]
+    fn the_preregistered_producer_is_the_producer_that_hands_off_to_teacher_admission() {
+        let transforms = FrozenTransforms::synthetic_for_testing(1.0);
+        let artifact = synthetic_artifact(&transforms);
+        let qualification = Qualification {
+            schema: "jope.cpu-context-qualification/v1".into(),
+            source_sha256: artifact.source_sha256.clone(),
+            producer_sha256: artifact.producer_sha256.clone(),
+            verification_policy_sha256: verification_policy_sha256(),
+            reference_manifest_sha256: sha(b"reference manifest"),
+            encoder: artifact.encoder.clone(),
+            case_outputs: vec![b"case output".to_vec(); 8],
+        };
+        let bytes = serde_json::to_vec(&qualification).unwrap();
+        let registration = ProducerRegistration::from_qualification(&bytes, &sha(&bytes)).unwrap();
+
+        // A context verified under exactly these qualification bytes hands off to teacher
+        // admission under the registered release, chain and qualification.
+        let mut pins = pins(&artifact);
+        pins.qualification_sha256 = sha(&bytes);
+        assert_eq!(
+            pins.reference_manifest_sha256,
+            qualification.reference_manifest_sha256
+        );
+        let verified = VerifiedCpuContext::for_testing(artifact.clone(), &pins);
+        let context = verified.replay_assembly(&transforms).unwrap();
+        let handoff = verified
+            .handoff(&context, ContextConsumer::TeacherAdmission)
+            .unwrap();
+        assert_eq!(handoff.release(), registration.release());
+        assert_eq!(handoff.transformations(), registration.transformations());
+        assert_eq!(registration.qualification_sha256(), sha(&bytes));
+        let handed = serde_json::to_value(&handoff).unwrap();
+        let registered = serde_json::to_value(&registration).unwrap();
+        for field in ["release", "transformations", "qualification_sha256"] {
+            assert_eq!(handed[field], registered[field], "{field}");
+        }
+        // Field for field the record the consumer parses: exactly these keys, the release as the
+        // handoff serializes it.
+        let mut keys = registered
+            .as_object()
+            .unwrap()
+            .keys()
+            .cloned()
+            .collect::<Vec<_>>();
+        keys.sort();
+        assert_eq!(keys, ["qualification_sha256", "release", "transformations"]);
+
+        // Refusals: bytes other than the pin, another protocol, another encoder, unknown fields.
+        let refused = |bytes: &[u8], pin: &str, needle: &str| {
+            let error = format!(
+                "{:#}",
+                ProducerRegistration::from_qualification(bytes, pin).unwrap_err()
+            );
+            assert!(error.contains(needle), "{needle}: {error}");
+        };
+        refused(
+            &bytes,
+            &sha(b"another qualification"),
+            "differ from their pin",
+        );
+        let reencode = |q: &Qualification| serde_json::to_vec(q).unwrap();
+        let mut other = qualification.clone();
+        other.verification_policy_sha256 = sha(b"older protocol");
+        let other = reencode(&other);
+        refused(&other, &sha(&other), "protocol changed");
+        let mut other = qualification.clone();
+        other.schema = "jope.cpu-context-qualification/v0".into();
+        let other = reencode(&other);
+        refused(&other, &sha(&other), "protocol changed");
+        let mut other = qualification.clone();
+        other.encoder.component_bundle = worker::COMPONENT_BUNDLE_MANIFEST_SHA256.into();
+        let other = reencode(&other);
+        refused(&other, &sha(&other), "encoder lineage changed");
+        let mut other = qualification.clone();
+        other.producer_sha256 = "not a digest".into();
+        let other = reencode(&other);
+        refused(&other, &sha(&other), "invalid lowercase hex");
+        let mut json = serde_json::to_value(&qualification).unwrap();
+        json["issued_by"] = serde_json::json!("the candidate");
+        let other = serde_json::to_vec(&json).unwrap();
+        refused(&other, &sha(&other), "unknown field");
     }
 
     fn test_support_context(transforms: &FrozenTransforms, value: f32) -> FinalContext {
