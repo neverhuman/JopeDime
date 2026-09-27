@@ -13,7 +13,7 @@ use jope_learning::progress::reconcile;
 use jope_learning::progress::remote::open_publishing_store;
 use jope_learning::revocation;
 use jope_learning::scores;
-use jope_learning::sources::{champions, genebank, snapshot, sotarena};
+use jope_learning::sources::{champions, genebank, pipeline, snapshot, sotarena};
 use jope_learning::state::State;
 use serde_json::{json, Value};
 use std::collections::BTreeMap;
@@ -278,6 +278,9 @@ enum HwmSource {
     Genebank,
     /// A lineage-A corpus-manifest.json plus --rows streams.
     Snapshot,
+    /// A `jope pipeline run` (or evolve round) receipt, re-derived from its run directory first:
+    /// its champion under the pipeline comparison identity (never teaching-eligible).
+    Pipeline,
 }
 
 #[derive(Subcommand)]
@@ -758,6 +761,11 @@ fn run_hwm(state: &State, common: &Common, cmd: HwmCmd) -> Result<bool> {
                     }
                     let (c, scan) = snapshot::scan(&path, splits)?;
                     let sv = snapshot::scan_source(&path, &scan);
+                    (c, sv, serde_json::to_value(&scan)?)
+                }
+                HwmSource::Pipeline => {
+                    let (c, scan) = pipeline::scan(&path, bundle_id.as_deref())?;
+                    let sv = pipeline::scan_source(&path, &scan);
                     (c, sv, serde_json::to_value(&scan)?)
                 }
             };
