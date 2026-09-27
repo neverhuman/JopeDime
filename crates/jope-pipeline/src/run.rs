@@ -765,6 +765,44 @@ mod tests {
         assert!(receipt.search.cuts[0].completed_evaluations <= 14);
     }
 
+    /// A seeded run whose seconds bound has already passed still re-measures every seed in
+    /// generation 0 on every cut, so it writes a receipt its own evidence verification accepts
+    /// (the v3 seeding record and `verify_run` agree), rather than one only a comparison
+    /// re-measurement covers, or none.
+    #[test]
+    fn a_seeded_run_past_its_seconds_bound_writes_a_receipt_that_verifies() {
+        let temp = tempfile::tempdir().unwrap();
+        let seeds: Vec<String> = [
+            "(pipe X (standardize) (ridge_gcv))",
+            "(pipe X (rank) (ridge))",
+        ]
+        .iter()
+        .map(|g| seeds::canonical_pipeline(g).unwrap())
+        .collect();
+        let file = seeds_file(temp.path(), &[&seeds[0], &seeds[1]]);
+        let output = temp.path().join("run");
+        let receipt = run(&RunOptions {
+            seed_genomes: Some(file),
+            cuts: 2,
+            clock: Clock::Expired,
+            ..small(&output, 40)
+        })
+        .unwrap();
+        assert!(receipt.search.cuts.iter().all(|c| c
+            .accounting
+            .as_ref()
+            .is_some_and(|a| a.deadline_overrun && a.exploration.stopped_by == "seconds")));
+        let verified = crate::evidence::verify_champion_run(&output.join("receipt.json")).unwrap();
+        for (_, observations) in &verified.cuts {
+            let incumbents: Vec<&str> = observations
+                .iter()
+                .filter(|o| o.origin == search::INCUMBENT && o.generation == 0)
+                .map(|o| o.genome.as_str())
+                .collect();
+            assert_eq!(incumbents, vec![seeds[0].as_str(), seeds[1].as_str()]);
+        }
+    }
+
     #[test]
     fn the_same_seed_and_rng_replay_identically() {
         let temp = tempfile::tempdir().unwrap();
