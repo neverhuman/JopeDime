@@ -402,9 +402,11 @@ fn smartcluster_allocates_a_gpu_rank_exactly_one_exclusive_gpu() {
     let plan = controller::plan(&run_dir, &bytes(&c), now_ms(), None)
         .unwrap()
         .plan_sha256;
+    let intent = now_ms() - 1000;
     let spec = |rank: u32| {
         fixture_supervisor(&root, &run_dir, &format!("fixture-host-{rank}"), rank).launch_spec(
             &RankLaunch {
+                dispatch_intent_unix_ms: intent,
                 contract: &c,
                 plan_sha256: &plan,
                 global_rank: rank,
@@ -415,6 +417,12 @@ fn smartcluster_allocates_a_gpu_rank_exactly_one_exclusive_gpu() {
     // A GPU rank asks SmartCluster for one exclusive GPU with its planned VRAM ceiling;
     // SmartCluster chooses the device and the rank checks it is the planned one.
     let (_, gpu) = spec(1).unwrap();
+    assert_eq!(
+        gpu.deadline,
+        Some(jain_smartcluster::Timestamp::from(
+            intent + c.participants[1].ceilings.wall_ms
+        ))
+    );
     assert_eq!(
         gpu.resources.gpu,
         Some(GpuRequest {
@@ -429,6 +437,7 @@ fn smartcluster_allocates_a_gpu_rank_exactly_one_exclusive_gpu() {
     unbounded.participants[1].ceilings.gpu_vram_bytes = None;
     let e = fixture_supervisor(&root, &run_dir, "fixture-host-1", 11)
         .launch_spec(&RankLaunch {
+            dispatch_intent_unix_ms: now_ms(),
             contract: &unbounded,
             plan_sha256: &plan,
             global_rank: 1,

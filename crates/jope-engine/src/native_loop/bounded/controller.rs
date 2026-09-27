@@ -68,6 +68,7 @@ pub enum DrainCause {
     ControlLost { global_rank: u32 },
     GrantExpired { global_rank: u32 },
     DeadlineElapsed,
+    WallBudgetElapsed { global_rank: u32 },
     Cancelled,
     CoordinatorRestart,
 }
@@ -87,6 +88,25 @@ pub fn group_window_closed(contract: &BoundedRunContract, now: u64) -> Option<Dr
             global_rank: p.global_rank,
         })
 }
+/// Wall consumption starts at the first durable dispatch intent, not at recovery.
+fn journal_window_closed(
+    contract: &BoundedRunContract,
+    records: &[(JournalRecord, String)],
+    now: u64,
+) -> Option<DrainCause> {
+    if let Some(cause) = group_window_closed(contract, now) {
+        return Some(cause);
+    }
+    records.iter().find_map(|(record, _)| {
+        let Event::DispatchIntent { global_rank, .. } = record.event else {
+            return None;
+        };
+        let participant = contract.participant(global_rank)?;
+        (now.saturating_sub(record.recorded_unix_ms) >= participant.ceilings.wall_ms)
+            .then_some(DrainCause::WallBudgetElapsed { global_rank })
+    })
+}
+
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum Disposition {
@@ -474,7 +494,8 @@ fn replay(
                 | Event::ResultAcknowledged { .. }
                 | Event::GroupCommitted { .. }
         ) {
-            if let Some(cause) = group_window_closed(contract, r.recorded_unix_ms) {
+            if let Some(cause) = journal_window_closed(contract, &records[..i], r.recorded_unix_ms)
+            {
                 bail!(
                     "journal record {at} was journaled after the group window closed ({cause:?})"
                 );
@@ -1130,6 +1151,8 @@ pub struct RankLaunch<'a> {
     pub plan_sha256: &'a str,
     pub global_rank: u32,
     pub dispatch_id: &'a str,
+    /// Original durable intent time; remote launch/recovery cannot renew the wall allowance.
+    pub dispatch_intent_unix_ms: u64,
 }
 /// Repository supervisor of rank work. The live implementation is SmartCluster-backed
 /// ([`super::supervisor::SmartClusterSupervisor`]); implementations must never start work
@@ -1232,7 +1255,7 @@ impl<S: Supervisor> Coordinator<S> {
         replay(&self.contract, &self.plan_sha256, &self.records)
     }
     fn window_closed(&self, now: u64) -> Option<DrainCause> {
-        group_window_closed(&self.contract, now)
+        journal_window_closed(&self.contract, &self.records, now)
     }
     pub fn status(&self) -> Result<StatusReport> {
         build_status(
@@ -1357,6 +1380,16 @@ impl<S: Supervisor> Coordinator<S> {
         connected: &mut [Connected],
         now: u64,
     ) -> Result<()> {
+        self.deliver_admission_with_clock(persisted, connected, || now)
+    }
+    /// Refresh the original execution window around each potentially blocking delivery.
+    pub fn deliver_admission_with_clock(
+        &mut self,
+        persisted: &PersistedAdmission,
+        connected: &mut [Connected],
+        clock: impl Fn() -> u64,
+    ) -> Result<()> {
+        let now = clock();
         let s = self.state()?;
         ensure!(
             s.admission.as_ref().map(|(_, h)| h.as_str())
@@ -1391,13 +1424,23 @@ impl<S: Supervisor> Coordinator<S> {
         let bytes = serde_json::to_vec(&persisted.admission)?;
         let limit = self.contract.rendezvous.max_message_bytes;
         for c in connected.iter_mut() {
+            let now = clock();
+            if let Some(cause) = self.window_closed(now) {
+                self.drain(cause.clone(), now)?;
+                bail!("admission delivery window closed ({cause:?}); group drained");
+            }
             if let Err(e) = rendezvous::write_frame(&mut c.stream, &bytes, limit) {
                 let rank = c.global_rank;
-                self.drain(DrainCause::ControlLost { global_rank: rank }, now)?;
+                self.drain(DrainCause::ControlLost { global_rank: rank }, clock())?;
                 return Err(e.context(format!(
                     "admission delivery to rank {rank} failed; group drained"
                 )));
             }
+        }
+        let now = clock();
+        if let Some(cause) = self.window_closed(now) {
+            self.drain(cause.clone(), now)?;
+            bail!("admission delivery window closed ({cause:?}); group drained");
         }
         self.append(
             Event::AdmissionDelivered {
@@ -1504,7 +1547,14 @@ impl<S: Supervisor> Coordinator<S> {
     /// Launch a rank whose intent is persisted. Never relaunches: journaled or already
     /// supervised work under the same dispatch id is recorded, not restarted.
     pub fn launch(&mut self, rank: u32, now: u64) -> Result<SupervisorHandle> {
-        let s = self.require_dispatchable(rank, now)?;
+        self.launch_with_clock(rank, || now)
+    }
+    pub fn launch_with_clock(
+        &mut self,
+        rank: u32,
+        clock: impl Fn() -> u64,
+    ) -> Result<SupervisorHandle> {
+        let s = self.require_dispatchable(rank, clock())?;
         let id = s
             .intents
             .get(&rank)
@@ -1513,15 +1563,39 @@ impl<S: Supervisor> Coordinator<S> {
         if let Some(h) = s.launched.get(&rank) {
             return Ok(h.clone());
         }
-        let handle = match self.supervisor.find(&id)? {
+        let intent = self
+            .records
+            .iter()
+            .find_map(|(r, _)| match &r.event {
+                Event::DispatchIntent {
+                    global_rank,
+                    dispatch_id,
+                } if *global_rank == rank && *dispatch_id == id => Some(r.recorded_unix_ms),
+                _ => None,
+            })
+            .context("dispatch intent timestamp absent")?;
+        let found = self.supervisor.find(&id)?;
+        let now = clock();
+        if let Some(cause) = self.window_closed(now) {
+            self.drain(cause, now)?;
+            bail!("execution window closed while finding rank {rank}");
+        }
+        self.require_dispatchable(rank, now)?;
+        let handle = match found {
             Some(h) => h,
             None => self.supervisor.launch(&RankLaunch {
                 contract: &self.contract,
                 plan_sha256: &self.plan_sha256,
                 global_rank: rank,
                 dispatch_id: &id,
+                dispatch_intent_unix_ms: intent,
             })?,
         };
+        let now = clock();
+        if let Some(cause) = self.window_closed(now) {
+            self.drain(cause, now)?;
+            bail!("execution window closed while launching rank {rank}");
+        }
         self.append(
             Event::Launched {
                 global_rank: rank,
@@ -1533,9 +1607,12 @@ impl<S: Supervisor> Coordinator<S> {
         Ok(handle)
     }
     pub fn dispatch_all(&mut self, now: u64) -> Result<()> {
+        self.dispatch_all_with_clock(|| now)
+    }
+    pub fn dispatch_all_with_clock(&mut self, clock: impl Fn() -> u64) -> Result<()> {
         for rank in 0..self.contract.world_size() as u32 {
-            self.record_dispatch_intent(rank, now)?;
-            self.launch(rank, now)?;
+            self.record_dispatch_intent(rank, clock())?;
+            self.launch_with_clock(rank, &clock)?;
         }
         Ok(())
     }
@@ -1559,7 +1636,13 @@ impl<S: Supervisor> Coordinator<S> {
             },
         })
     }
-    fn acknowledge(&mut self, v: &VerifiedResult, rank: u32, now: u64) -> Result<()> {
+    fn acknowledge(
+        &mut self,
+        v: &VerifiedResult,
+        rank: u32,
+        clock: &impl Fn() -> u64,
+    ) -> Result<bool> {
+        let now = clock();
         let s = self.state()?;
         ensure!(
             v.body().global_rank == rank && s.intents.contains_key(&rank),
@@ -1570,12 +1653,13 @@ impl<S: Supervisor> Coordinator<S> {
                 *previous == v.body().result_sha256,
                 "conflicting second result for rank {rank}"
             );
-            return Ok(());
+            return Ok(true);
         }
         // Adopting a retained result is authority-bearing: the same gate as poll and
         // recovery, whichever path reaches it.
         if let Some(cause) = self.window_closed(now) {
-            bail!("rank {rank} result not acknowledged: the group window closed ({cause:?})");
+            self.drain(cause, now)?;
+            return Ok(false);
         }
         let p = self.contract.participant(rank).context("rank")?.clone();
         publish_immutable(
@@ -1588,6 +1672,16 @@ impl<S: Supervisor> Coordinator<S> {
             Path::new(&format!("rank-{rank}.json")),
             v.envelope(),
         )?;
+        let now = clock();
+        let cause = if self.cancel_pending(now)? {
+            Some(DrainCause::Cancelled)
+        } else {
+            self.window_closed(now)
+        };
+        if let Some(cause) = cause {
+            self.drain(cause, now)?;
+            return Ok(false);
+        }
         self.append(
             Event::ResultAcknowledged {
                 global_rank: rank,
@@ -1597,19 +1691,22 @@ impl<S: Supervisor> Coordinator<S> {
                 updates: v.body().updates,
             },
             now,
-        )
+        )?;
+        Ok(true)
     }
     /// Journal the single group commit (inside the group window only), or finish a commit
     /// that is already journaled (at any time, exactly once, never drained).
-    fn commit(&mut self, now: u64) -> Result<()> {
+    fn commit(&mut self, clock: &impl Fn() -> u64) -> Result<()> {
         let s = self.state()?;
+        let now = clock();
         if s.committed.is_none() {
             ensure!(
                 s.drain.is_none() && s.acked.len() == self.contract.world_size(),
                 "group commit requires every authenticated result"
             );
             if let Some(cause) = self.window_closed(now) {
-                bail!("no group commit after the group window closed ({cause:?})");
+                self.drain(cause, now)?;
+                return Ok(());
             }
             self.append(
                 Event::GroupCommitted {
@@ -1771,6 +1868,12 @@ impl<S: Supervisor> Coordinator<S> {
     /// One supervision step: cancellation, deadline, grant expiry, rank exits, result
     /// acknowledgement and — once every rank's result is authenticated — the single commit.
     pub fn poll(&mut self, now: u64) -> Result<StatusReport> {
+        self.poll_with_clock(|| now)
+    }
+    /// Live callers refresh time after blocking supervisor operations. The fixed-time
+    /// wrapper remains available for deterministic journal replay fixtures.
+    pub fn poll_with_clock(&mut self, clock: impl Fn() -> u64) -> Result<StatusReport> {
+        let now = clock();
         ensure!(
             !self.needs_reconcile,
             "coordinator restarted: reconcile before polling"
@@ -1808,7 +1911,12 @@ impl<S: Supervisor> Coordinator<S> {
             let Some(handle) = s.launched.get(&rank).cloned() else {
                 continue;
             };
-            match self.supervisor.probe(&handle)? {
+            let observed = self.supervisor.probe(&handle)?;
+            let now = clock();
+            if let Some(cause) = self.window_closed(now) {
+                return self.drain(cause, now);
+            }
+            match observed {
                 Liveness::Running => {}
                 Liveness::Exited { code: Some(0), .. } if !s.delivered => {
                     return self.drain(
@@ -1819,27 +1927,41 @@ impl<S: Supervisor> Coordinator<S> {
                         now,
                     )
                 }
-                Liveness::Exited { code: Some(0), .. } => match self.retained(&handle)? {
-                    Retained::Valid(v) => self.acknowledge(&v, rank, now)?,
-                    Retained::Absent => {
-                        return self.drain(
-                            DrainCause::RankFailed {
-                                global_rank: rank,
-                                detail: "exited without a retained result".into(),
-                            },
-                            now,
-                        )
+                Liveness::Exited { code: Some(0), .. } => {
+                    let retained = self.retained(&handle)?;
+                    let now = clock();
+                    if self.cancel_pending(now)? {
+                        return self.drain(DrainCause::Cancelled, now);
                     }
-                    Retained::Invalid(detail) => {
-                        return self.drain(
-                            DrainCause::RankFailed {
-                                global_rank: rank,
-                                detail: format!("result refused: {detail}"),
-                            },
-                            now,
-                        )
+                    if let Some(cause) = self.window_closed(now) {
+                        return self.drain(cause, now);
                     }
-                },
+                    match retained {
+                        Retained::Valid(v) => {
+                            if !self.acknowledge(&v, rank, &clock)? {
+                                return self.status();
+                            }
+                        }
+                        Retained::Absent => {
+                            return self.drain(
+                                DrainCause::RankFailed {
+                                    global_rank: rank,
+                                    detail: "exited without a retained result".into(),
+                                },
+                                now,
+                            )
+                        }
+                        Retained::Invalid(detail) => {
+                            return self.drain(
+                                DrainCause::RankFailed {
+                                    global_rank: rank,
+                                    detail: format!("result refused: {detail}"),
+                                },
+                                now,
+                            )
+                        }
+                    }
+                }
                 Liveness::Exited {
                     code: Some(EXIT_LOST_CONTROL),
                     ..
@@ -1855,9 +1977,16 @@ impl<S: Supervisor> Coordinator<S> {
                 }
             }
         }
+        let now = clock();
+        if self.cancel_pending(now)? {
+            return self.drain(DrainCause::Cancelled, now);
+        }
+        if let Some(cause) = self.window_closed(now) {
+            return self.drain(cause, now);
+        }
         let s = self.state()?;
         if s.delivered && s.acked.len() == self.contract.world_size() {
-            self.commit(now)?;
+            self.commit(&clock)?;
         }
         self.status()
     }
@@ -1876,6 +2005,10 @@ impl<S: Supervisor> Coordinator<S> {
     ///
     /// A restart therefore never widens the window `poll` enforces (review of #111).
     pub fn reconcile(&mut self, now: u64) -> Result<StatusReport> {
+        self.reconcile_with_clock(|| now)
+    }
+    pub fn reconcile_with_clock(&mut self, clock: impl Fn() -> u64) -> Result<StatusReport> {
+        let now = clock();
         let s = self.state()?;
         if s.terminal.is_none() && s.intents.is_empty() {
             if self.cancel_pending(now)? {
@@ -1889,7 +2022,7 @@ impl<S: Supervisor> Coordinator<S> {
             }
         } else if s.terminal.is_none() {
             if s.committed.is_some() {
-                self.commit(now)?;
+                self.commit(&clock)?;
             } else if let Some(cause) = s.drain.clone() {
                 self.drain(cause, now)?;
             } else if self.cancel_pending(now)? {
@@ -1923,11 +2056,26 @@ impl<S: Supervisor> Coordinator<S> {
                         _ => complete = false,
                     }
                 }
-                if complete {
+                let now = clock();
+                if self.cancel_pending(now)? {
+                    self.drain(DrainCause::Cancelled, now)?;
+                } else if let Some(cause) = self.window_closed(now) {
+                    self.drain(cause, now)?;
+                } else if complete {
                     for (rank, v) in &found {
-                        self.acknowledge(v, *rank, now)?;
+                        if !self.acknowledge(v, *rank, &clock)? {
+                            self.needs_reconcile = false;
+                            return self.status();
+                        }
                     }
-                    self.commit(now)?;
+                    let now = clock();
+                    if self.cancel_pending(now)? {
+                        self.drain(DrainCause::Cancelled, now)?;
+                    } else if let Some(cause) = self.window_closed(now) {
+                        self.drain(cause, now)?;
+                    } else {
+                        self.commit(&clock)?;
+                    }
                 } else {
                     self.drain(DrainCause::CoordinatorRestart, now)?;
                 }

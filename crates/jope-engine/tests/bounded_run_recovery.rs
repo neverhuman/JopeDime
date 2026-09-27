@@ -801,6 +801,7 @@ fn restart_before_admission_distinguishes_never_started_from_unrecorded_launch()
     let sha = c.plan_sha256().to_string();
     c.supervisor()
         .launch(&RankLaunch {
+            dispatch_intent_unix_ms: now_ms(),
             contract: &contract,
             plan_sha256: &sha,
             global_rank: 1,
@@ -923,10 +924,28 @@ fn restart_at_grant_expiry_drains_retained_results_instead_of_committing() {
 /// Positive control: the same crash reconciled one millisecond before the first grant
 /// expiry commits the complete group exactly once.
 #[test]
-fn restart_just_before_grant_expiry_commits_exactly_once() {
+fn restart_just_before_execution_window_closes_commits_exactly_once() {
     let h = Harness::new(["complete"; 3]);
     let connected = h.completed_then_crashed();
-    let before = h.first_expiry() - 1;
+    let inspected = h.open();
+    let wall_end = inspected
+        .journal()
+        .iter()
+        .filter_map(|r| match r.event {
+            controller::Event::DispatchIntent { global_rank, .. } => Some(
+                r.recorded_unix_ms
+                    + h.contract
+                        .participant(global_rank)
+                        .unwrap()
+                        .ceilings
+                        .wall_ms,
+            ),
+            _ => None,
+        })
+        .min()
+        .unwrap();
+    drop(inspected);
+    let before = h.first_expiry().min(wall_end) - 1;
     let mut c = h.open_at(before);
     let s = c.reconcile(before).unwrap();
     assert_eq!(
