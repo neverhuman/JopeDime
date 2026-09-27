@@ -1,6 +1,8 @@
 # W12 — Generate defensible claims and close the evidence chain
 
-Status: planned. Owner: evidence/publication. Consumes qualified W3/W8/W9 decisions
+Status: current per-task state lives only in the generated [STATUS.md](STATUS.md); the
+checkboxes below are the original acceptance plan, not a progress record.
+Owner: evidence/publication. Consumes qualified W3/W8/W9 decisions
 and W10/W11 measurements. Source scaffolding can precede live results, but publication
 claims cannot. Follow [the execution contract](EXECUTION-CONTRACT.md).
 

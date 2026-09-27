@@ -1,6 +1,8 @@
 # W6 — Bind training consumption, objectives and exact continuation
 
-Status: planned. Owner: native trainer/corpus. Requires W2 semantic identities,
+Status: current per-task state lives only in the generated [STATUS.md](STATUS.md); the
+checkboxes below are the original acceptance plan, not a progress record.
+Owner: native trainer/corpus. Requires W2 semantic identities,
 W3 qualified teachers and W5 program/fitted ancestry. Use native lineage-B as the
 initial regression route; the experimental Python architecture is not a substitute.
 Apply [the execution contract](EXECUTION-CONTRACT.md).

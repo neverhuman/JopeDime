@@ -1,6 +1,8 @@
 # W11 — Qualify GPU measurement and evaluate one optimization at a time
 
-Status: planned. Owner: benchmark/controller. Requires W1 corrected fitting-only
+Status: current per-task state lives only in the generated [STATUS.md](STATUS.md); the
+checkboxes below are the original acceptance plan, not a progress record.
+Owner: benchmark/controller. Requires W1 corrected fitting-only
 inputs, W2/W4 semantics, W5 search accounting, W7 admission and applicable W9 export.
 Use [the execution contract](EXECUTION-CONTRACT.md). A fast failed request is not a
 qualified latency result; every planned request retains a terminal disposition.

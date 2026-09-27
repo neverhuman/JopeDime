@@ -1,6 +1,8 @@
 # W1 — Seal regression inputs and enforce permitted access
 
-Status: planned. Accountable subsystem: preparation/data admission; consumers:
+Status: current per-task state lives only in the generated [STATUS.md](STATUS.md); the
+checkboxes below are the original acceptance plan, not a progress record.
+Accountable subsystem: preparation/data admission; consumers:
 context production, fitting, scorers and learning workers. Read the
 [execution contract](EXECUTION-CONTRACT.md). W0's applicable boundary/fixture tests
 must execute honestly before this package can claim fixture qualification.

@@ -1,6 +1,8 @@
 # W8 — Publish reusable intermediate learning progress to S3
 
-Status: planned. Owner: learning persistence/publisher. Requires W3 decision semantics,
+Status: current per-task state lives only in the generated [STATUS.md](STATUS.md); the
+checkboxes below are the original acceptance plan, not a progress record.
+Owner: learning persistence/publisher. Requires W3 decision semantics,
 W6 complete checkpoints and W7 immutable worker results. xbabe2 is the sole publisher
 initially. Apply [the execution contract](EXECUTION-CONTRACT.md).
 
