@@ -545,6 +545,7 @@ fn main() -> Result<()> {
                 coordinator,
                 participant_key,
                 installation,
+                job_arguments: std::env::args_os().skip(1).collect(),
             };
             match bounded::participant::run(&args, &bounded::collect::SystemCommands) {
                 Ok(code) => std::process::exit(code),

@@ -1232,3 +1232,78 @@ are fixed in this commit:
 - The daemon registration and admin uid are owner and operator changes on each host.
 - There is no repository tool for contract authoring or grant signing; the owner signs.
 - Reservations are checked by hand.
+
+## Owner decisions 2026-09-27 (W7)
+
+The owner delegated these decisions on 2026-09-27. Each takes the fail-closed option and each
+can be reversed. They are implemented on `rr2/w7-live` as separate commits, and their custody
+evidence uses the `w7c-<item>` prefix.
+
+### W7-D1 — ranks stay trusted-service jobs, and each proves its job first (item E)
+
+**Decision.** Ranks stay trusted-service jobs of each host's `scqd`. Before any work, a
+participant proves it is running inside its planned SmartCluster job and attempt. If it cannot
+prove that, it refuses.
+
+**Pre-fix record** (`w7c-D1-pre-20260927T011116Z`). A participant started by hand, outside
+SmartCluster, with valid frozen inputs ran past every check until its TCP connect failed
+(`connect 127.0.0.1:…: Connection refused`). Nothing tied it to a job.
+
+**Implementation** (`bounded/job_identity.rs`, called first in `participant::run`). The proof
+uses only what `scqd` exposes to a job.
+
+1. **Job environment.** `SCQ_JOB_ID`, `SCQ_ATTEMPT_NUMBER`, `SCQ_ATTEMPT_FENCE` and
+   `SCQ_CONTROL_FD` must all be present and well formed.
+2. **Control socket.** The peer of the inherited control socket must be this process's parent,
+   running as the pinned daemon uid from the pinned daemon executable. The socket is inspected
+   through a private duplicate. `scqd`'s exec helper replaces itself with the job program, so
+   the daemon is the parent of the job leader.
+3. **The daemon's record of the job.** The same daemon process, asked over its authenticated
+   socket (`native_scq::authenticated_exchange`, pinned to that process identity), must report
+   the job:
+   - as live (`Starting` or `Running`);
+   - with exactly this attempt number and fence as its active attempt;
+   - with tenant `unix:<this process's euid>`;
+   - labelled with this plan digest, run, rank and dispatch id;
+   - running the host's trusted service with exactly this process's arguments.
+4. **The host installation** (`jope.native_host_installation.v1`) now pins the daemon and the
+   service (`smartcluster: {daemon: {socket, uid, executable_sha256}, service}`).
+   `SmartClusterSupervisor::new` refuses a supervision whose daemon or service differs from
+   what the installation pins.
+5. **The verified job, attempt, fence and tenant** are recorded in the rank's signed result
+   (`smartcluster_job`).
+
+`scqd`'s `InspectAttempt` would also name the attempt's live process, but it refuses in
+single-allocation mode ("live attempt cgroup absent"). The control-socket parent check is the
+process binding that works in both isolation modes.
+
+**Tests** (`bounded_smartcluster`, now 5).
+
+`a_participant_proves_its_smartcluster_job_before_any_work` runs against a real daemon:
+
+- **Genuine job (positive control).** A job submitted to rank 0's daemon with rank 0's frozen
+  launch passes the proof. It is refused only later, at the connect, because no coordinator
+  is listening.
+- **Wrong job.** The same launch, labelled for rank 1's dispatch, is refused with "was
+  submitted for another dispatch".
+- **Different plan.** The same launch, labelled for another plan digest, is refused with "was
+  submitted for another plan".
+- **Outside SmartCluster.** Started by hand, the participant is refused with "SCQ_JOB_ID is
+  unset".
+- **Forged environment.** With the genuine job's environment but no control socket, it is
+  refused with "is not an open descriptor".
+- **Impostor daemon.** A control socket whose peer is the test process is refused with "is not
+  the pinned SmartCluster executable".
+- **Record checks.** The genuine job's real record, made live again, is accepted. It is
+  refused for:
+  - a replayed attempt (another fence, or another attempt number);
+  - a job that is no longer live;
+  - another tenant, another service or other arguments;
+  - another job's answer.
+- **Supervision mismatch.** A supervision whose daemon is not the installation's is refused.
+- **No work started.** No refused job wrote `admitted`.
+
+`smartcluster_ranks_commit_the_whole_group_exactly_once` now also checks that each result
+names its own job and attempt.
+
+Post-fix record: `w7c-D1-post-20260927T011514Z`, the full gate (`bounded_smartcluster` 5).
