@@ -1,10 +1,12 @@
 # PY-P1 — Python removal, phase P1
 
-Branch `rr2/python-p1`, base `8a55c4fef`. Owner ruling 2026-09-26: the stack is
-Rust/Vite/TypeScript/React; Python remains only for GP-emitted code and its harness. Live tools
-are ported with differential tests, unused code is archived. Evidence runs live under
+Written on branch `rr2/python-p1` (base `8a55c4fef`) and landed as `rr2/python-p1-landing`, a
+replay onto main at `cee1fc8bd`. The commits named here are the landed ones; the commit map at the
+end gives each one's original. Owner ruling 2026-09-26: the stack is Rust/Vite/TypeScript/React;
+Python remains only for GP-emitted code and its harness. Live tools are ported with differential
+tests, unused code is archived. Evidence runs live under
 `/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/py-p1-*`
-(identity, diff, command and log per run).
+and, for the landing, `p1-landing-*` (identity, diff, command and log per run).
 
 Observed states: every port below is **differentially tested on this host** against the Python it
 replaces, run before the Python was deleted. Nothing here is CI-verified or live-qualified, and
@@ -244,13 +246,13 @@ no installed host file was changed.
   parts of ADR-0005; names the GP-emitted-code exception, the always-keep list (the eight G files,
   `python3` in the runner image, the sha-pinned grammar sources until P3 decides) and the P1, P2
   and P3 scopes. It is numbered ADR-0006, the next number after ADR-0005 as `CONTRIBUTING.md`
-  requires. It was first committed as ADR-0008 (the brief's name, `e9511a2fc`) and renumbered in a
-  follow-up commit; every reference moved with it, including the `ruling` string of the archive
-  manifest. The custody copy of that manifest was replaced by the committed one (only `.ruling`
-  differs; `.files`, `.counts` and `.custody` are identical), with the previous copy kept under
-  `superseded-manifest-adr-0008-20260927/` and a `NOTE-20260927-adr-renumber.txt`; `SHA256SUMS`
-  was regenerated and verifies. Renumber gate `py-p1-adr-post-20260927T033239Z`: the full gate,
-  the relative-link check and `deploy/ci/check.sh`, all green.
+  requires. It was first committed as ADR-0008 (the brief's name, `4ed0e2096`) and renumbered in a
+  follow-up commit (`ee24eae50`); every reference moved with it, including the `ruling` string of
+  the archive manifest. The custody copy of that manifest was replaced by the committed one (only
+  `.ruling` differs; `.files`, `.counts` and `.custody` are identical), with the previous copy
+  kept under `superseded-manifest-adr-0008-20260927/` and a `NOTE-20260927-adr-renumber.txt`;
+  `SHA256SUMS` was regenerated and verifies. Renumber gate `py-p1-adr-post-20260927T033239Z`: the
+  full gate, the relative-link check and `deploy/ci/check.sh`, all green.
 - `CONTRIBUTING.md` (toolchain, `just ci-pr`, required checks, dependencies and the former "Rust is
   authoritative" rule, now "Rust only"), `docs/architecture.md` (the summary, the Python package
   section and the contracts note), `README.md` (the ruff note and the layout row) and
@@ -316,13 +318,16 @@ captured output is altered (negative control).
   `deploy/ci/check.sh`, all green.
 - U3 — `crates/jope-records/tests/python_parity.rs`, fixture
   `crates/jope-records/tests/fixtures/python-parity/`: all 25 cases of
-  `py-p1-u3-diff-20260927T024147Z`. The inputs are those of that run's tree (`5136986fb` plus the
-  run's working changes: the jope-records `lib.rs`/`main.rs` edits and four new, untracked
-  modules), recovered from an export of it (`git archive`, the run's `diff.patch`, the four
-  modules; not a clone or worktree):
-  - coverage `validate` (10 cases): the coverage map of the run (`mapping.json`, the same blob as
-    `deploy/ci/coverage.json` at `5136986fb`) and its nine malformed variants as `ed` scripts,
-    each with the SHA-256 of the variant file the Python read (regenerated from the base with the
+  `py-p1-u3-diff-20260927T024147Z`. The inputs are those of that run's tree (the U2 commit as
+  first written on `rr2/python-p1`, which the run's `identity.txt` names and the commit map below
+  pairs with its landed replay `6b95c9208`, plus the run's working changes: the jope-records
+  `lib.rs`/`main.rs` edits and four new, untracked modules), recovered from an export of it
+  (`git archive`, the run's `diff.patch`, the four modules; not a clone or worktree). The landed
+  `6b95c9208` does not hold that tree (its `deploy/ci/coverage.json` also has the entries main
+  gained up to `cee1fc8bd`), so the committed fixture is the record of the inputs:
+  - coverage `validate` (10 cases): the coverage map of the run (`mapping.json`, blob `5e78ee4ba`,
+    the run's `deploy/ci/coverage.json`) and its nine malformed variants as `ed` scripts, each
+    with the SHA-256 of the variant file the Python read (regenerated from the base with the
     run's own `jq` edits and compared byte for byte first); every case is checked against
     `discovered.json`, the Python's discovery output of that tree.
   - coverage `discover` (1 case): `cargo metadata` of the export reduced to the fields discovery
@@ -339,9 +344,10 @@ captured output is altered (negative control).
     systemd units, and whether each row target existed), captured from the export by the ignored
     `capture_parity_tree` test.
   - `readme-benchmarks` (3 cases): every render input at that tree (byte-identical to the
-    committed evidence, so git stores them once; `docs/same-cut-bench.md` is the `5136986fb` text,
-    which the renderer only names), the run's stale README, and the README its `--write`
-    produced; `--check` on the stale copy, `--write`, and `--check` on the result.
+    committed evidence, so git stores them once; `docs/same-cut-bench.md` is blob `8df62628d`, the
+    text at `8a55c4fef` and at `cee1fc8bd`, which the renderer only names), the run's stale README,
+    and the README its `--write` produced; `--check` on the stale copy, `--write`, and `--check` on
+    the result.
 
   To replay recorded inputs the guards gained seams with no behaviour change: `coverage::
   discover_from`, `validate_text` and `discover_document`; `parity::Tree`, `scan_tree`,
@@ -457,3 +463,51 @@ is still scanned in the commits before the archive. A comment now says the file 
 `8a55c4fef` and why the entry stays; removing it would only make full-history scans fail.
 Check `py-p1-stale-post-20260927T040410Z`: `git diff --check`, `gitleaks detect` loading the
 edited configuration (no leaks), and `deploy/ci/check.sh`: green.
+
+## Commit map — `rr2/python-p1` to the landing
+
+The work above was committed on `rr2/python-p1` and landed as `rr2/python-p1-landing`: its eleven
+commits were replayed in order onto main at `cee1fc8bd` (after #114 and #115), followed by two
+landing-only commits. Every replayed commit has a new SHA, and the originals are not in the
+landed history. Where this record, the tests or the fixtures cite a commit for P1's own
+provenance, it is a landed commit, `8a55c4fef` or `cee1fc8bd`, or they cite the blob id of a
+committed file; fixture copies of main's files keep main's own citations unchanged. An original
+appears only in this table and in landed commit messages, which cannot change: the four
+`(cherry picked from commit …)` trailers (on `6b95c9208`, `7382a4275`, `6cd7672ec` and
+`6e6bf5ad2`) and `bc3ba2ca6`, which names the U3 run's tree.
+
+| Landed | Original | Patch-id | Subject (short) |
+| --- | --- | --- | --- |
+| `364c06fd9` | `29f4d1077` | differs | jope-engine: grow families natively (P1 U8) |
+| `6b95c9208` | `5136986fb` | differs | jope-ci: port cargo-artifact to Rust (P1 U2) |
+| `7382a4275` | `1f1791025` | differs | jope-records: port the four hygiene guards (P1 U3) |
+| `6cd7672ec` | `6ce8fcfbe` | differs | jope-ci: port the build-directory report to Rust (P1 U5) |
+| `6e6bf5ad2` | `389898805` | differs | python: archive 703 files with no live consumer (P1 archive) |
+| `4ed0e2096` | `e9511a2fc` | same | docs: ADR-0008 Rust-only stack (P1 docs) |
+| `ee24eae50` | `9b810cd80` | same | docs: renumber the Rust-only ADR to ADR-0006 |
+| `037b8f885` | `9e8aacedc` | same | jope-ci: replay the captured Python outputs (U2, U5) |
+| `0b213a36e` | `4b4018dff` | same | jope-ci, jope-engine, jope-records: clear clippy findings |
+| `bc3ba2ca6` | `df9c78ae3` | same | jope-records: replay the captured Python outputs (U3) |
+| `575c55ea6` | `2200bc872` | same | docs, gitleaks: stale references to archived Python (PY-P2) |
+
+Landing-only: `f7a19392c` (the W01 and W09 records name the Rust coverage validator) and
+`f0b1402ec` (the capability matrix recounts the jope-records tests).
+
+"Patch-id" compares `git patch-id --stable` of the two commits. Each pair changes the same paths
+with the same status. The tree proof (`p1-landing-post-20260927T170033Z`, `step-treeproof.log`)
+finds that 8 of the 829 paths the eleven commits touch differ between the original tip and
+`f0b1402ec`, all of them paths main also changed: 5 equal the clean three-way merge, and the
+jope-records `lib.rs` and `main.rs` and the capability matrix were resolved by hand.
+
+The originals stay on `rr2/python-p1`, locally and on `origin`. Independent of any ref, all
+eleven are in the custody bundle `p1-landing-preserve-20260927T172032Z/rr2-python-p1.bundle`
+(406474 bytes, SHA-256 `750c4ce1abf56023380028b32717b321a4c3b674464b59c242d24a3040211cdd`,
+prerequisite `8a55c4fef`, which main contains). Restored into a bare clone of the landing branch
+alone, the state once that branch is deleted and gc has run, every original came back with its
+tree, the four trailers resolved, `git fsck --connectivity-only` passed, and `git show` of the
+U2 original's `deploy/ci/coverage.json` gave blob `5e78ee4ba`, the fixture's `mapping.json`
+(`log.txt` beside the bundle). To restore into any clone that has main:
+
+```
+git fetch <bundle> refs/heads/rr2/python-p1:refs/preserve/rr2-python-p1
+```
