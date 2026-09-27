@@ -2076,6 +2076,13 @@
         "orchestration"
       ]
     },
+    "target:jope-parallel/test/bounded_training": {
+      "role": "regression",
+      "subsystems": [
+        "orchestration",
+        "training"
+      ]
+    },
     "target:jope-parallel/test/bounded_transport": {
       "role": "regression",
       "subsystems": [

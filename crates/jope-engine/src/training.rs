@@ -863,6 +863,54 @@ fn verify_native_training_eligibility(
     Ok(())
 }
 
+/// W7-D2: a bounded rank trains from its admitted plan. `training` is what
+/// `native_loop::bounded::training_run::prepare` derived from the plan, the launch record and
+/// the admitted bootstrap (including its `run.json`); `assignment` is the plan's trainer
+/// assignment, bound to this rank's device view. The communicator comes only from `admitted`:
+/// [`communicator_source`] refuses a shared `nccl.id` before any input or device work. The
+/// partition is the one the plan selects (v2 for three ranks). The single-host
+/// `train_controlled` launcher is not involved. Returns this rank's completion receipt.
+pub fn bounded_rank(
+    training: &crate::native_loop::bounded::training_run::BoundedTraining,
+    assignment: &topology::Assignment,
+    admitted: &crate::native_loop::bounded::launch::AdmittedBootstrap,
+    stop: &std::sync::atomic::AtomicBool,
+) -> Result<Value> {
+    let version = partition::Version::of_record(&training.spec["execution_partition"])?;
+    ensure!(
+        training.spec["plan_sha256"].as_str() == Some(assignment.plan_sha256.as_str())
+            && admitted.plan_sha256() == assignment.plan_sha256,
+        "the bounded run, its assignment and its admitted bootstrap name different plans"
+    );
+    rank_impl(
+        &training.input_root,
+        &training.input_root.join(&training.corpus),
+        &training.run_dir,
+        &training.launch_dir,
+        training.global_rank,
+        training.world,
+        training.microbatch,
+        training.steps,
+        training.checkpoint_steps,
+        false,
+        training.initialize.as_deref(),
+        training.global_batch,
+        false,
+        None,
+        Some(stop),
+        false,
+        None,
+        Some(assignment),
+        Some(admitted),
+        version,
+    )?;
+    read_json(
+        &training
+            .launch_dir
+            .join(format!("complete-{}.json", training.global_rank)),
+    )
+}
+
 /// Where a trainer rank obtains its NCCL unique id (W7-T04).
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum CommunicatorSource {

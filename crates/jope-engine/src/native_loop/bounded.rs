@@ -24,6 +24,8 @@
 //!   authenticated rendezvous over TLS, one update round per heartbeat, signed result.
 //! * [`job_identity`] — a rank's proof, before any work, that it runs inside its planned
 //!   SmartCluster job and attempt (W7-D1).
+//! * [`training_run`] — a bounded training rank's `run.json`, launch directory and inputs,
+//!   derived from its admitted plan, launch record and NCCL bootstrap (W7-D2).
 //! * [`driver`] — the coordinator process: preflight, dispatch, gather, admission, heartbeat
 //!   and poll to a terminal outcome, or reconcile after a restart.
 //! * [`agent`] — cross-host supervision: a per-host agent serves its host's supervisor to the
@@ -43,6 +45,7 @@ pub mod launch;
 pub mod participant;
 pub mod rendezvous;
 pub mod supervisor;
+pub mod training_run;
 pub mod transport;
 
 use anyhow::{ensure, Result};

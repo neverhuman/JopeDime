@@ -1355,3 +1355,111 @@ this before creating any communicator. CPU ranks are unaffected.
 
 Post-fix record: `w7c-D3-post-20260927T012149Z`, the full gate (`bounded_launch` 7,
 `bounded_smartcluster` 5).
+
+### W7-D2 — bounded ranks train (item F)
+
+**Decision.** Bounded ranks train. A bounded rank's entry into the trainer receives four
+things:
+
+- the admitted plan;
+- its frozen launch record;
+- the admitted NCCL bootstrap;
+- the partition the plan selects (v2 when the plan selects it).
+
+It writes the v2 `run.json` from the plan. `train_controlled` stays on the legacy v1 path,
+untouched, and plans that select no partition keep their exact bytes.
+
+**Pre-fix record** (`w7c-D2-pre-20260927T012445Z`, source trace).
+
+- Every `rank_impl` caller passed no assignment and no admitted bootstrap.
+- The only writer of a training `run.json` was `train_controlled`, which writes v1.
+- The participant refused every GPU rank.
+- A plan could not name the corpus or parent checkpoint it trains from.
+
+This is a new capability.
+
+**Implementation.**
+
+- **`TrainingSelection` (contract)** gains three fields:
+  - `corpus`, whose `index.json` must be in the input closure;
+  - `checkpoint_steps`, in `1..=planned_updates`;
+  - an optional `initialize`, a parent checkpoint whose `state.json` must be in the closure.
+
+  A fresh start without a parent must be at 0 committed updates, and every rank of a training
+  plan must have a GPU. Plans without a selection are byte-identical: the digest pinned by
+  `a_plan_that_selects_no_training_keeps_its_exact_bytes` is unchanged.
+- **`bounded/training_run.rs`** (default features, CPU):
+  - `training_run_spec(plan)` is the `run.json` (`jope.bounded_training_run.v1`). It holds
+    the plan digest, run, attempt and world, the selected execution-partition record, the
+    corpus and parent digests, and the step window from the counters. It also holds the
+    checkpoint cadence, the original deadline, each host's identity, the `frozen_plan`
+    assignment and the `admitted_bootstrap` communicator.
+  - `prepare(plan, record, bootstrap, input_root)` does the following, in order:
+    1. checks the launch record against the plan;
+    2. checks that the admitted bootstrap is this plan's, attempt's, rank's and world's;
+    3. checks that this host's corpus index and parent state are the planned bytes, and that
+       the parent is at the plan's committed start;
+    4. publishes `run.json` without replacement, so every rank on a host writes the same
+       bytes, and refuses another plan's;
+    5. refuses a shared `nccl.id` in the run directory;
+    6. creates a fresh `launch-<dispatch id>` directory. It refuses an existing one, and
+       names the refusal when it holds a `train_controlled`-style `nccl.id`.
+- **`training::bounded_rank`** (`neural`) enters `rank_impl` with:
+  - the prepared inputs;
+  - `Some(assignment)` and `Some(admitted)`, so `communicator_source` admits only the admitted
+    bootstrap and `Nccl::init_admitted` creates the communicator;
+  - the plan's `partition::Version`;
+  - the control stop flag.
+
+  It returns the completion receipt.
+- **The participant**, for a plan that selects training:
+  - it refuses at once in a build without the `neural` feature;
+  - after its job proof (W7-D1) and visibility translation (W7-D3), it pins its planned UUID
+    as its own `CUDA_VISIBLE_DEVICES`;
+  - rank 0 bootstraps with a fresh NCCL unique id, and every rank's hello names its planned
+    device;
+  - after admission it runs `nccl_bootstrap`, then `prepare`, then `bound_worker` (the device
+    view), then `bounded_rank`;
+  - a watcher thread stops training on a stop, a lost heartbeat or end of stream, and then no
+    result is published;
+  - on success it signs a `jope.native_training_result.v1` result that names the `run.json`,
+    partition, completion and parameter digests.
+
+**Tests.**
+
+- `tests/bounded_training.rs` (new, default features, 6):
+  - `a_bounded_rank_writes_the_v2_run_json_from_its_plan` — for all three ranks: the exact
+    `run.json` content, the v2 record with rows 688/680/680, the step window 60 000 → 60 003,
+    fresh launch directories, and the v1 record for a two-rank v1 plan. A plan without a
+    selection writes nothing.
+  - `the_plan_and_the_admitted_bootstrap_must_agree` — another rank's bootstrap, another
+    plan's bootstrap and a forged launch record are refused, and nothing is written.
+  - `a_train_controlled_style_shared_nccl_id_is_refused` — an `nccl.id` in the launch or run
+    directory, a reused launch directory and another plan's `run.json` are refused.
+  - `a_rank_trains_only_from_the_planned_input_bytes` — an altered or missing corpus index,
+    and a parent at another step, are refused.
+  - `a_training_selection_names_its_corpus_parent_gpus_and_cadence` — the contract refusals,
+    with a fresh start at 0 accepted.
+  - `a_default_build_participant_refuses_a_training_plan_before_any_work` — the real binary.
+- `tests/bounded_assignment.rs` (`neural`, CPU, now 7):
+  `a_bounded_training_rank_takes_only_the_admitted_bootstrap_into_the_trainer`. For every rank,
+  the prepared partition is the trainer's declared v2 and `communicator_source` gives
+  `Admitted`. A missing bootstrap and an `nccl.id` in the launch directory are refused, and so
+  is another rank's bootstrap.
+- `bounded_run`'s F tests now select a corpus and parent.
+
+**Device boundary.** The native path is compile-checked in the `neural` build and has not
+run: the NCCL unique id, the device view, `rank_impl` and the communicator. No training step
+ran, and no GPU was used.
+
+Post-fix records:
+
+- `w7c-D2-post-20260927T013044Z` — the full gate (`bounded_training` 6, `bounded_run` 34,
+  `bounded_smartcluster` 5).
+- `w7c-D2-post-neural-20260927T012946Z` — `neural`, `CUDA_VISIBLE_DEVICES=""`, run alone:
+  `bounded_assignment` 7, `bounded_launch` 7, `bounded_training` 5 (the default-build-only
+  refusal test is not compiled in `neural`), `checkpoint_commit` 5, `lossless_partition` 10,
+  `partition_wiring` 7 and `trainer_topology` 7. It compiled the neural participant path and
+  `training::bounded_rank`.
+- `w7c-D2-post-neural-20260927T012830Z` is marked `SUPERSEDED`. It ran the default-build-only
+  test under `neural`, where the binary goes on past the refusal that test expects.
