@@ -2963,16 +2963,6 @@
       ],
       "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
     },
-    "python:python/src/jope/tools/test_family_growth_policy.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "lanes": [],
-      "dispositions": [
-        "research"
-      ],
-      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
-    },
     "python:python/src/jope/tools/test_fence_honesty.py": {
       "discovery": {
         "kind": "python-family"

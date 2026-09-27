@@ -120,33 +120,16 @@ pub fn stable_component_assignment(component: &str) -> (String, u64, String) {
     (digest, bucket, partition.into())
 }
 
-/// One policy implementation serves Python staging and native membership.
-/// Its exact source is embedded in the compiled release; a replaced helper
-/// cannot authorize a component. Isolated Python uses only the standard library.
+/// The growth receipt, recomputed from its own recorded inputs by the compiled release
+/// (`crate::family_growth`, the native port of the retired `family_growth_policy.py`). No
+/// helper in the workspace is consulted, so a replaced or forged one cannot authorize a
+/// component. The receipt's bytes are hashed and parsed once.
 fn verified_growth(binding: &FileBinding) -> Result<Value> {
-    ensure!(
-        file_hash(&binding.path)? == binding.sha256,
-        "growth receipt changed"
-    );
-    let request: Value = read_json(&binding.path)?;
-    let root = Path::new(field(&request, "root")?).canonicalize()?;
-    let helper = root.join("tools/family_growth_policy.py");
-    ensure!(
-        file_hash(&helper)? == hash(include_bytes!("../policy/family_growth_policy.py")),
-        "growth verifier differs from compiled release"
-    );
-    let output = Command::new("/usr/bin/python3")
-        .args(["-I", "-B"])
-        .arg(helper)
-        .arg("--verify")
-        .arg(&binding.path)
-        .output()?;
-    ensure!(
-        output.status.success(),
-        "original growth evidence verification failed: {}",
-        String::from_utf8_lossy(&output.stderr)
-    );
-    let verified: Value = serde_json::from_slice(&output.stdout)?;
+    let bytes = fs::read(&binding.path)?;
+    ensure!(hash(&bytes) == binding.sha256, "growth receipt changed");
+    let request: Value = serde_json::from_slice(&bytes)?;
+    let verified = crate::family_growth::verify_assignment(&request)
+        .map_err(|e| anyhow::anyhow!("original growth evidence verification failed: {e}"))?;
     ensure!(verified == request, "growth verifier result changed");
     Ok(verified)
 }
