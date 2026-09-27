@@ -236,3 +236,25 @@ no installed host file was changed.
   red step named the wrong package for the `sealed_storage` test (`jope-engine` instead of
   `jope-parallel`, so nothing ran); `py-p1-archive-post-20260927T032003Z` ran it under the right
   name: the test that spawns `shared_teaching_cache.py` as the cache server passes.
+
+## Docs — ADR-0008 and the contributor-facing pages
+
+- `docs/adr/ADR-0008-rust-only-stack.md` records the owner ruling of 2026-09-26 in the four ADR
+  sections: it supersedes owner decision 2 of the plan and, for future work, the Python-training
+  parts of ADR-0005; names the GP-emitted-code exception, the always-keep list (the eight G files,
+  `python3` in the runner image, the sha-pinned grammar sources until P3 decides) and the P1, P2
+  and P3 scopes. The directory held ADR-0001 to ADR-0005 and no branch or history names an
+  ADR-0006 or ADR-0007; the number follows the ruling's own name, ADR-0008.
+- `CONTRIBUTING.md` (toolchain, `just ci-pr`, required checks, dependencies and the former "Rust is
+  authoritative" rule, now "Rust only"), `docs/architecture.md` (the summary, the Python package
+  section and the contracts note), `README.md` (the ruff note and the layout row) and
+  `docs/asm.md` (the training row, dataset preparation, the external adapters and the panel
+  runtime preparer) now say that Python remains only on the listed live paths until P2/P3 and
+  that new Python is not accepted except emitted model code and its harness. The first docs gate
+  (`py-p1-docs-post-20260927T032141Z`) failed `deploy/ci/ip-scrub.sh`: the public prose used the
+  ruling's internal term for that exception. The public pages now say "the Python the emitters
+  generate"; the ADR body (a historical record the scrub does not scan) keeps the ruling's
+  wording, and its title does not. Rerun `py-p1-docs-post-20260927T032336Z`: the full gate plus a
+  relative-link check of the five edited pages (no link checker is installed here) and
+  `deploy/ci/check.sh`, all green. One wording fix followed (architecture.md: "694 files, plus 9
+  unit templates"), rechecked with `ip-scrub.sh`, the link check and `git diff --check`.
