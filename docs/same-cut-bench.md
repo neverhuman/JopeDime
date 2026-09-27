@@ -88,7 +88,7 @@ comparison between methods fair on those ten; the evidence says nothing about a 
 the README block says so. The experiment contract's frozen 30-dataset PMLB panel (`docs/asm.md`)
 excludes `test-10` on purpose; a same-cut run over that panel is the next evidence step. `crates/jope-bench/tests/committed_evidence.rs` re-derives the
 tracks from the reports and both ladders from the tracks byte for byte, and re-evaluates one
-dataset's baselines on the same cuts bit for bit; `deploy/ci/readme-benchmarks.py` renders the
+dataset's baselines on the same cuts bit for bit; `jope-records readme-benchmarks` renders the
 README's same-cut block from these files and refuses when they disagree. Regenerate with the
 commands in `SOURCES.md` and commit the whole directory together; a changed evaluator, head set
 or search budget is a new evidence directory, not an edit.

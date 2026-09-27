@@ -64,7 +64,7 @@
       "feature_selection": "not-applicable",
       "checks": [
         "cargo test -q --locked -p jope-ci",
-        "python3 deploy/ci/test-coverage.py",
+        "cargo test -q --locked -p jope-records --lib -- coverage:: scope_check:: parity:: readme::",
         "python3 deploy/ci/test-receipt.py",
         "bash deploy/ci/check.sh",
         "cargo deny --all-features check bans licenses sources",
@@ -996,16 +996,6 @@
         "benchmark"
       ],
       "scope": "Benchmark script/example source; not a collected test or performance proof."
-    },
-    "benchmark:deploy/ci/readme-benchmarks.py": {
-      "discovery": {
-        "kind": "benchmark-source"
-      },
-      "lanes": [
-        "hygiene"
-      ],
-      "dispositions": [],
-      "scope": "Checks README against committed evidence; does not rerun benchmark."
     },
     "benchmark:deploy/kernel-v1/source/assets/source/hyperion-jain/crates/feat-core/src/bench.rs": {
       "discovery": {
@@ -2006,16 +1996,6 @@
       ],
       "dispositions": [],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
-    },
-    "python:deploy/ci/test-coverage.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "lanes": [
-        "hygiene"
-      ],
-      "dispositions": [],
-      "scope": "Direct stdlib unittest execution."
     },
     "python:deploy/kernel-v1/source/tests/test_experiment_scheduler.py": {
       "discovery": {
@@ -8327,7 +8307,8 @@
         "rust-check",
         "rust-test",
         "full-default",
-        "full-doctests"
+        "full-doctests",
+        "hygiene"
       ],
       "dispositions": [],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."

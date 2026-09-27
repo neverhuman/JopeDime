@@ -11,7 +11,8 @@
 # The clap subcommands are taken from the source enum (crates/jope-engine/src/main.rs, which also
 # lists the `neural`-gated and hidden variants) and, unless --no-build is given, cross-checked
 # against the parsed `cargo run -q -p jope-parallel -- --help` output. The hygiene lane passes
-# --no-build; the test lanes run the full form once the engine is built.
+# --no-build; the test lanes run the full form once the engine is built. The check itself is
+# `jope-records parity-check` (the Rust port of the archived deploy/ci/parity-census.py).
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 
@@ -24,7 +25,7 @@ for arg in "$@"; do
   esac
 done
 
-args=(check --matrix docs/parity/capability-matrix.md --root .)
+args=(--matrix docs/parity/capability-matrix.md --root .)
 help_file=""
 if [ "$build" = 1 ]; then
   help_file=$(mktemp)
@@ -37,4 +38,4 @@ if [ "$build" = 1 ]; then
   args+=(--help-text "$help_file")
 fi
 
-python3 deploy/ci/parity-census.py "${args[@]}"
+cargo run -q --locked -p jope-records -- parity-check "${args[@]}"

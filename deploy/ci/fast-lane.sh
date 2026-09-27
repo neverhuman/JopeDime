@@ -22,7 +22,7 @@ done
     # Cargo artifact protocol tests
 cargo test -q --locked -p jope-ci
     # Coverage mapping and collection failure tests
-python3 deploy/ci/test-coverage.py
+cargo test -q --locked -p jope-records --lib -- coverage:: scope_check:: parity:: readme::
 python3 deploy/ci/test-receipt.py
 python3 deploy/ci/test-results.py
 python3 deploy/ci/test-aggregate.py

@@ -10,7 +10,7 @@ where the historical engine ranked first (`docs/datasets.md`): a favourable sele
 it is the only committed regression data. The comparison between methods on identical cuts of these
 ten is fair; nothing here generalises to a broader panel. `crates/jope-bench/tests/committed_evidence.rs` re-derives the tracks and both
 ladders from the reports byte for byte and re-evaluates the committed baselines of one dataset on
-the same cuts; `deploy/ci/readme-benchmarks.py` renders the README block from these files and
+the same cuts; `jope-records readme-benchmarks` renders the README block from these files and
 refuses when they disagree with each other.
 
 ## How it was produced

@@ -1,5 +1,5 @@
 **For the currently published benchmark numbers, read [Measured results](../README.md#measured-results)** —
-that section is regenerated from committed evidence by `deploy/ci/readme-benchmarks.py` and names the
+that section is regenerated from committed evidence by `jope-records readme-benchmarks` and names the
 SHA it was generated at. The timings on *this* page are historical: measured 2026-09-18 at `4235db6`,
 never re-measured at the head of `main`.
 
