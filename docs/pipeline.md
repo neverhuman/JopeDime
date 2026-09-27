@@ -85,7 +85,10 @@ candidates are fitted, up to the evaluation bound) and the fold of results back 
 both happen in slot order, so the thread count never changes a decision: `--threads 1` and
 `--threads 8` publish the same observations, selection and receipt apart from wall-clock
 readings (with the clock frozen in tests, byte for byte). The comparison phase runs one worker
-per cut. The thread count is not recorded in the receipt, because it cannot change it.
+per cut. The thread count is not recorded in the receipt, because it cannot change it. Every fit
+runs on an evaluation-pool thread with a 32 MiB stack, `--threads 1` included (and the test-split
+refit too), so a deep fit cannot measure at one worker count and overflow a smaller default
+stack, aborting the process, at another.
 
 `--islands M` runs M independent random streams over the same cuts. Island 0 is `--rng-seed`
 itself, so one island is the plain search. Islands share each cut's evaluation budget and the
