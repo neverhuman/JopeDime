@@ -144,7 +144,8 @@ pub struct SearchOptions {
     pub rng_seed: u64,
     /// Canonical pipeline genomes that enter generation 0 after the bootstrap with origin
     /// [`INCUMBENT`] (already admitted by [`crate::seeds::admit`]). They are fitted on this
-    /// search's own cuts like every other candidate and spend the same budget.
+    /// search's own cuts like every other candidate and spend the same evaluation budget; the
+    /// seconds bound never skips them ([`seconds_exempt`]).
     pub seeds: Vec<String>,
     /// Worker threads evaluating one generation's admitted candidates. `1` evaluates on the
     /// calling thread, exactly as the sequential search always has; any count gives the same
@@ -198,6 +199,19 @@ impl SearchOptions {
         }
         Ok(())
     }
+}
+
+/// Generation 0's head — the bootstrap and every seed — is exempt from the seconds bound, both
+/// when it is admitted and when its fit starts; the evaluation bound and a stop request still
+/// apply. Re-measuring the seeds on this search's own cuts is what the receipt's seeding record,
+/// its evidence verification ([`crate::evidence::verify_run`]: an [`INCUMBENT`] observation in
+/// generation 0 on every cut) and a lineage's "never worse than the round before" rest on, so a
+/// slow seed fit (or a loaded host) must not keep a later seed from being measured. They precede
+/// every random draw, the run refuses up front a budget whose evaluations cannot cover them, and
+/// the random draws after them are stopped by the seconds bound exactly as before. An overrun is
+/// recorded as `deadline_overrun`, like any in-flight fit's.
+pub fn seconds_exempt(generation: usize, origin: &str) -> bool {
+    generation == 0 && (origin == BOOTSTRAP || origin == INCUMBENT)
 }
 
 /// Evaluation slots a search on `cuts` cuts gives exploration: all of them for one cut, half
@@ -679,9 +693,10 @@ pub fn run_cuts_with(
 }
 
 /// Evaluate `admitted` in order. Each candidate starts only while the cut's seconds bound
-/// allows it; one that could not start is `None`. Sequentially (no pool) the first `None` ends
-/// the batch, exactly like the sequential loop's per-candidate deadline check; with a pool,
-/// every result lands back in its slot, whatever order the threads finished in.
+/// allows it ([`seconds_exempt`] candidates always, unless stopped); one that could not start is
+/// `None`. Sequentially (no pool) the first `None` ends the batch, exactly like the sequential
+/// loop's per-candidate deadline check (the exempt candidates are the batch's head); with a
+/// pool, every result lands back in its slot, whatever order the threads finished in.
 fn evaluate_admitted(
     admitted: &[(usize, String, &'static str)],
     cut: &Cut,
@@ -693,12 +708,14 @@ fn evaluate_admitted(
 ) -> Vec<Option<Observation>> {
     let clock = options.clock;
     // A stop request is honoured exactly where the seconds bound is: before a fit starts.
-    let may_start = || !options.cancelled() && started.elapsed() < deadline;
+    let may_start = |origin: &str| {
+        !options.cancelled() && (seconds_exempt(generation, origin) || started.elapsed() < deadline)
+    };
     match pool {
         None => {
             let mut results = Vec::with_capacity(admitted.len());
             for (_, genome, origin) in admitted {
-                if !may_start() {
+                if !may_start(origin) {
                     break;
                 }
                 results.push(Some(evaluate(genome, cut, generation, origin, clock)));
@@ -710,7 +727,7 @@ fn evaluate_admitted(
             admitted
                 .par_iter()
                 .map(|(_, genome, origin)| {
-                    may_start().then(|| evaluate(genome, cut, generation, origin, clock))
+                    may_start(origin).then(|| evaluate(genome, cut, generation, origin, clock))
                 })
                 .collect()
         }),
@@ -803,7 +820,7 @@ fn run_cut_allocated(
                 bound = Some(STOPPED_BY_EVALUATIONS);
                 break;
             }
-            if started.elapsed() >= deadline {
+            if !seconds_exempt(generation, origin) && started.elapsed() >= deadline {
                 bound = Some(STOPPED_BY_SECONDS);
                 break;
             }
@@ -1823,6 +1840,74 @@ mod tests {
                 .collect::<Vec<_>>()
         };
         assert_eq!(decided(1, "one"), decided(4, "four"));
+    }
+
+    /// Generation 0's bootstrap and seeds are measured on every cut even when the seconds bound
+    /// has already passed (a slow seed fit on a loaded host), on any worker count, so the
+    /// receipt's seeding record and the evidence verification always agree; the random draws are
+    /// what the bound stops. A stop request still stops everything.
+    #[test]
+    fn seeds_are_remeasured_on_every_cut_even_past_the_seconds_bound() {
+        let temp = tempfile::tempdir().unwrap();
+        let preparation = prepare::build(
+            &linear_rows(150),
+            "expired",
+            7,
+            3,
+            &temp.path().join("prepared"),
+        )
+        .unwrap();
+        let seeds: Vec<String> = ["(pipe X (standardize) (ridge))", "(pipe X (rank) (ridge))"]
+            .iter()
+            .map(|g| crate::seeds::canonical_pipeline(g).unwrap())
+            .collect();
+        let options = |threads: usize| SearchOptions {
+            seeds: seeds.clone(),
+            threads,
+            clock: Clock::Expired,
+            ..SearchOptions::new(
+                Budget {
+                    evaluations: 40,
+                    seconds: 60,
+                },
+                11,
+            )
+        };
+        for threads in [1, 3] {
+            let searches = run_cuts_with(
+                &preparation.cuts,
+                &options(threads),
+                &temp.path().join(format!("threads-{threads}")),
+            )
+            .unwrap();
+            assert_eq!(searches.len(), 3);
+            for search in &searches {
+                let measured: Vec<(&str, usize, &str)> = search
+                    .observations
+                    .iter()
+                    .map(|o| (o.genome.as_str(), o.generation, o.origin))
+                    .collect();
+                assert_eq!(
+                    measured,
+                    vec![
+                        (BOOTSTRAP_GENOME, 0, BOOTSTRAP),
+                        (seeds[0].as_str(), 0, INCUMBENT),
+                        (seeds[1].as_str(), 0, INCUMBENT),
+                    ],
+                    "cut {} at {threads} thread(s)",
+                    search.cut
+                );
+                assert_eq!(search.exploration.stopped_by, STOPPED_BY_SECONDS);
+                assert_eq!(search.comparison.completed_evaluations, 0);
+            }
+        }
+        let stopped = SearchOptions {
+            cancel: Some(Arc::new(AtomicBool::new(true))),
+            ..options(1)
+        };
+        let error =
+            run_cuts_with(&preparation.cuts, &stopped, &temp.path().join("stopped")).unwrap_err();
+        assert!(crate::parallel::is_cancelled(&error), "{error:#}");
     }
 
     #[test]
