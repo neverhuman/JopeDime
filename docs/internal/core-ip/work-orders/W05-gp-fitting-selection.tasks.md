@@ -1,6 +1,8 @@
 # W5 — Close GP, fitting, selection and ancestry contracts
 
-Status: planned. Owner: engine search/fitting. Requires W1 inputs and W4 proposal
+Status: current per-task state lives only in the generated [STATUS.md](STATUS.md); the
+checkboxes below are the original acceptance plan, not a progress record.
+Owner: engine search/fitting. Requires W1 inputs and W4 proposal
 semantics; W2 supplies model/context identities. W0 must repair test authority through
 legitimate issuers. Follow [the execution contract](EXECUTION-CONTRACT.md).
 

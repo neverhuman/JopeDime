@@ -1,6 +1,8 @@
 # W9 — Bind fitted export to the released package
 
-Status: planned. Owner: fitted exporters/package loader. Requires W1 raw-input
+Status: current per-task state lives only in the generated [STATUS.md](STATUS.md); the
+checkboxes below are the original acceptance plan, not a progress record.
+Owner: fitted exporters/package loader. Requires W1 raw-input
 semantics, W2 applicable identities and W5 selected fitted subject. Follow
 [the execution contract](EXECUTION-CONTRACT.md). Extend the existing fitted export
 path; do not replace it with recipe refitting or an alternate selected model.

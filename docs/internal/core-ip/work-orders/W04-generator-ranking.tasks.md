@@ -1,6 +1,8 @@
 # W4 — Qualify neural generation and ranking
 
-Status: planned. Owner: policy inference. Requires W2 semantic bundle and context
+Status: current per-task state lives only in the generated [STATUS.md](STATUS.md); the
+checkboxes below are the original acceptance plan, not a progress record.
+Owner: policy inference. Requires W2 semantic bundle and context
 ABI. W5 receives executable candidates; W10 measures utility. Apply the
 [execution contract](EXECUTION-CONTRACT.md). Numerical agreement, identical sampling
 decisions, valid syntax and useful proposals are separate claims.

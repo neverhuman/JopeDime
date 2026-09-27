@@ -1,6 +1,8 @@
 # W3 — Mandatory provenance, authenticated metrics and HWM decisions
 
-Status: planned. Owner: learning admission/storage. Requires W1 permitted scopes and
+Status: current per-task state lives only in the generated [STATUS.md](STATUS.md); the
+checkboxes below are the original acceptance plan, not a progress record.
+Owner: learning admission/storage. Requires W1 permitted scopes and
 W2 authenticated context producers. [Shared execution rules](EXECUTION-CONTRACT.md)
 apply. Existing arithmetic or receipt helpers are not evidence of mandatory ingress.
 

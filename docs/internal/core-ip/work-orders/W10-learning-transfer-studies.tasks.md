@@ -1,6 +1,8 @@
 # W10 — Demonstrate regression learning and measure research hypotheses
 
-Status: planned. Owner: scientific controller/evaluation. Operational loop requires
+Status: current per-task state lives only in the generated [STATUS.md](STATUS.md); the
+checkboxes below are the original acceptance plan, not a progress record.
+Owner: scientific controller/evaluation. Operational loop requires
 the applicable W1–W9 controls and live gates. Studies require their own costed frozen
 manifests. Follow [the execution contract](EXECUTION-CONTRACT.md) and preserve
 [the regression transfer contract](../../transfer-measurement.md).

@@ -1,6 +1,8 @@
 # W7 — Repository-managed execution on xbabe1, xbabe2 and xbabe3
 
-Status: planned. Owner: native controller/SmartCluster and native distributed trainer.
+Status: current per-task state lives only in the generated [STATUS.md](STATUS.md); the
+checkboxes below are the original acceptance plan, not a progress record.
+Owner: native controller/SmartCluster and native distributed trainer.
 Requires W1 closures, W5 bounded jobs and W6 update/checkpoint semantics. Follow the
 [execution contract](EXECUTION-CONTRACT.md). Independent node reachability, same-host
 collectives and a configured workflow are not multi-host numerical qualification.
