@@ -26,6 +26,8 @@
 //!   SmartCluster job and attempt (W7-D1).
 //! * [`training_run`] — a bounded training rank's `run.json`, launch directory and inputs,
 //!   derived from its admitted plan, launch record and NCCL bootstrap (W7-D2).
+//! * [`authoring`] — contract authoring from a declarative request and a merged census, and
+//!   grant signing and verification with the grant-authority key file (W7-D6).
 //! * [`driver`] — the coordinator process: preflight, dispatch, gather, admission, heartbeat
 //!   and poll to a terminal outcome, or reconcile after a restart.
 //! * [`agent`] — cross-host supervision: a per-host agent serves its host's supervisor to the
@@ -35,6 +37,7 @@ pub mod agent;
 /// Plan → trainer assignment join (W7-T02 × W7-T03); the trainer is `neural`-gated.
 #[cfg(feature = "neural")]
 pub mod assignment;
+pub mod authoring;
 pub mod census;
 pub mod collect;
 pub mod contract;
