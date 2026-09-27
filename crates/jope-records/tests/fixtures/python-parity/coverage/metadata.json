@@ -1,0 +1,2745 @@
+{
+  "workspace_members": [
+    "path+file://@ROOT@/crates/feat-math#0.1.0",
+    "path+file://@ROOT@/crates/hyperion#0.1.0",
+    "path+file://@ROOT@/crates/jope-engine#jope-parallel@0.1.0",
+    "path+file://@ROOT@/crates/smartcluster/jain-smartcluster#8.0.0",
+    "path+file://@ROOT@/crates/smartcluster/jain-smartcluster-core#8.0.0",
+    "path+file://@ROOT@/crates/jope-paths#0.1.0",
+    "path+file://@ROOT@/crates/jope-policy#0.1.0",
+    "path+file://@ROOT@/crates/jope-encoders#starforge@0.1.0",
+    "path+file://@ROOT@/crates/battle-gpu#0.1.0",
+    "path+file://@ROOT@/crates/jope-arena#0.1.0",
+    "path+file://@ROOT@/crates/jope-bench#0.1.0",
+    "path+file://@ROOT@/crates/jope-datasets#0.1.0",
+    "path+file://@ROOT@/crates/jope-learning#0.1.0",
+    "path+file://@ROOT@/crates/jope-pipeline#0.1.0",
+    "path+file://@ROOT@/crates/jope-campaigns#jope-dime-regressor@0.1.0",
+    "path+file://@ROOT@/crates/jope-ci#0.1.0",
+    "path+file://@ROOT@/crates/jope-cli#0.1.0",
+    "path+file://@ROOT@/crates/jope-models#0.1.0",
+    "path+file://@ROOT@/crates/jope-motifs#0.1.0",
+    "path+file://@ROOT@/crates/jope-records#0.1.0",
+    "path+file://@ROOT@/crates/numpy-pcg64#0.1.0",
+    "path+file://@ROOT@/crates/smartcluster/jain-smartcluster-fabric#8.0.0",
+    "path+file://@ROOT@/crates/smartcluster/jain-smartcluster-daemon#8.0.0",
+    "path+file://@ROOT@/crates/smartcluster/jain-worker#8.0.0",
+    "path+file://@ROOT@/crates/smartcluster/jainnode#8.0.0",
+    "path+file://@ROOT@/crates/smartcluster/scq#8.0.0"
+  ],
+  "packages": [
+    {
+      "id": "path+file://@ROOT@/crates/feat-math#0.1.0",
+      "name": "feat-math",
+      "manifest_path": "@ROOT@/crates/feat-math/Cargo.toml",
+      "features": {
+        "default": [],
+        "gpr-scratch-reuse": []
+      },
+      "targets": [
+        {
+          "kind": [
+            "lib"
+          ],
+          "name": "feat_math",
+          "src_path": "@ROOT@/crates/feat-math/src/lib.rs",
+          "test": true,
+          "doctest": true
+        },
+        {
+          "kind": [
+            "example"
+          ],
+          "name": "emit",
+          "src_path": "@ROOT@/crates/feat-math/examples/emit.rs",
+          "test": false,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "example"
+          ],
+          "name": "evolve_smoke",
+          "src_path": "@ROOT@/crates/feat-math/examples/evolve_smoke.rs",
+          "test": false,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "example"
+          ],
+          "name": "expression_benchmark",
+          "src_path": "@ROOT@/crates/feat-math/examples/expression_benchmark.rs",
+          "test": false,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "example"
+          ],
+          "name": "registry_dump",
+          "src_path": "@ROOT@/crates/feat-math/examples/registry_dump.rs",
+          "test": false,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "example"
+          ],
+          "name": "screening_regime_probe",
+          "src_path": "@ROOT@/crates/feat-math/examples/screening_regime_probe.rs",
+          "test": false,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "advanced_v3_conformance",
+          "src_path": "@ROOT@/crates/feat-math/tests/advanced_v3_conformance.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "advanced_v3_fitted_cpp",
+          "src_path": "@ROOT@/crates/feat-math/tests/advanced_v3_fitted_cpp.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "advanced_v3_multiclass",
+          "src_path": "@ROOT@/crates/feat-math/tests/advanced_v3_multiclass.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "advanced_v3_parity",
+          "src_path": "@ROOT@/crates/feat-math/tests/advanced_v3_parity.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "advanced_v3_property",
+          "src_path": "@ROOT@/crates/feat-math/tests/advanced_v3_property.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "bench",
+          "src_path": "@ROOT@/crates/feat-math/tests/bench.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "champion_parity",
+          "src_path": "@ROOT@/crates/feat-math/tests/champion_parity.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "golden",
+          "src_path": "@ROOT@/crates/feat-math/tests/golden.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "ip_scrub",
+          "src_path": "@ROOT@/crates/feat-math/tests/ip_scrub.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "kernel_codec",
+          "src_path": "@ROOT@/crates/feat-math/tests/kernel_codec.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "kernel_emission_safety",
+          "src_path": "@ROOT@/crates/feat-math/tests/kernel_emission_safety.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "kernel_expression",
+          "src_path": "@ROOT@/crates/feat-math/tests/kernel_expression.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "kernel_pipeline",
+          "src_path": "@ROOT@/crates/feat-math/tests/kernel_pipeline.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "legacy_v2_freeze",
+          "src_path": "@ROOT@/crates/feat-math/tests/legacy_v2_freeze.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "portable_parity",
+          "src_path": "@ROOT@/crates/feat-math/tests/portable_parity.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "registry_vocabulary",
+          "src_path": "@ROOT@/crates/feat-math/tests/registry_vocabulary.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "tokens",
+          "src_path": "@ROOT@/crates/feat-math/tests/tokens.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "custom-build"
+          ],
+          "name": "build-script-build",
+          "src_path": "@ROOT@/crates/feat-math/build.rs",
+          "test": false,
+          "doctest": false
+        }
+      ]
+    },
+    {
+      "id": "path+file://@ROOT@/crates/hyperion#0.1.0",
+      "name": "hyperion",
+      "manifest_path": "@ROOT@/crates/hyperion/Cargo.toml",
+      "features": {
+        "batch-worker": [
+          "dep:jope-parallel",
+          "dep:rayon"
+        ],
+        "default": [
+          "hyperion-cpu",
+          "batch-worker"
+        ],
+        "hyperion-cpu": [
+          "dep:candle-core",
+          "dep:candle-nn"
+        ],
+        "hyperion-cuda": [
+          "hyperion-cpu",
+          "candle-core/cuda",
+          "candle-nn/cuda"
+        ]
+      },
+      "targets": [
+        {
+          "kind": [
+            "lib"
+          ],
+          "name": "hyperion",
+          "src_path": "@ROOT@/crates/hyperion/src/lib.rs",
+          "test": true,
+          "doctest": true
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "hyperion-batch-worker",
+          "src_path": "@ROOT@/crates/hyperion/src/bin/hyperion-batch-worker.rs",
+          "test": true,
+          "doctest": false,
+          "required-features": [
+            "hyperion-cpu",
+            "batch-worker"
+          ]
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "hyperion-v5-reference",
+          "src_path": "@ROOT@/crates/hyperion/src/bin/hyperion-v5-reference.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "weights_smoke",
+          "src_path": "@ROOT@/crates/hyperion/tests/weights_smoke.rs",
+          "test": true,
+          "doctest": false
+        }
+      ]
+    },
+    {
+      "id": "path+file://@ROOT@/crates/jope-engine#jope-parallel@0.1.0",
+      "name": "jope-parallel",
+      "manifest_path": "@ROOT@/crates/jope-engine/Cargo.toml",
+      "features": {
+        "default": [],
+        "gpr-scratch-reuse": [
+          "feat-math/gpr-scratch-reuse"
+        ],
+        "neural": [
+          "dep:tch"
+        ]
+      },
+      "targets": [
+        {
+          "kind": [
+            "lib"
+          ],
+          "name": "jope_parallel",
+          "src_path": "@ROOT@/crates/jope-engine/src/lib.rs",
+          "test": true,
+          "doctest": true
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope-build-receipt",
+          "src_path": "@ROOT@/crates/jope-engine/src/bin/jope-build-receipt.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope-continuation-corpus",
+          "src_path": "@ROOT@/crates/jope-engine/src/bin/jope-continuation-corpus.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope-gp-population",
+          "src_path": "@ROOT@/crates/jope-engine/src/bin/jope-gp-population.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope-gp-selection-replay",
+          "src_path": "@ROOT@/crates/jope-engine/src/bin/jope-gp-selection-replay.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope-native-graph",
+          "src_path": "@ROOT@/crates/jope-engine/src/bin/jope-native-graph.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope-native-loop",
+          "src_path": "@ROOT@/crates/jope-engine/src/bin/jope-native-loop.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope-native-observer",
+          "src_path": "@ROOT@/crates/jope-engine/src/bin/jope-native-observer.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope-native-provisioner",
+          "src_path": "@ROOT@/crates/jope-engine/src/bin/jope-native-provisioner.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope-native-recovery",
+          "src_path": "@ROOT@/crates/jope-engine/src/bin/jope-native-recovery.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope-parallel",
+          "src_path": "@ROOT@/crates/jope-engine/src/main.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope-prove-native-grant-request",
+          "src_path": "@ROOT@/crates/jope-engine/src/bin/jope-prove-native-grant-request.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope-smartcluster-worker",
+          "src_path": "@ROOT@/crates/jope-engine/src/bin/jope-smartcluster-worker.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope-witness-ssh",
+          "src_path": "@ROOT@/crates/jope-engine/src/bin/jope-witness-ssh.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "example"
+          ],
+          "name": "archive_compatibility",
+          "src_path": "@ROOT@/crates/jope-engine/examples/archive_compatibility.rs",
+          "test": false,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "example"
+          ],
+          "name": "champion_export",
+          "src_path": "@ROOT@/crates/jope-engine/examples/champion_export.rs",
+          "test": false,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "example"
+          ],
+          "name": "champions",
+          "src_path": "@ROOT@/crates/jope-engine/examples/champions.rs",
+          "test": false,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "example"
+          ],
+          "name": "derive_jain_vocabulary",
+          "src_path": "@ROOT@/crates/jope-engine/examples/derive_jain_vocabulary.rs",
+          "test": false,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "example"
+          ],
+          "name": "gpr_cuda_bench",
+          "src_path": "@ROOT@/crates/jope-engine/examples/gpr_cuda_bench.rs",
+          "test": false,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "example"
+          ],
+          "name": "qualification_proposals",
+          "src_path": "@ROOT@/crates/jope-engine/examples/qualification_proposals.rs",
+          "test": false,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "example"
+          ],
+          "name": "qualify_auxiliary",
+          "src_path": "@ROOT@/crates/jope-engine/examples/qualify_auxiliary.rs",
+          "test": false,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "example"
+          ],
+          "name": "reconstruction_probe",
+          "src_path": "@ROOT@/crates/jope-engine/examples/reconstruction_probe.rs",
+          "test": false,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "example"
+          ],
+          "name": "replay_training",
+          "src_path": "@ROOT@/crates/jope-engine/examples/replay_training.rs",
+          "test": false,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "example"
+          ],
+          "name": "select_cohort",
+          "src_path": "@ROOT@/crates/jope-engine/examples/select_cohort.rs",
+          "test": false,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "example"
+          ],
+          "name": "verify_binary_preparation",
+          "src_path": "@ROOT@/crates/jope-engine/examples/verify_binary_preparation.rs",
+          "test": false,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "example"
+          ],
+          "name": "verify_prepared",
+          "src_path": "@ROOT@/crates/jope-engine/examples/verify_prepared.rs",
+          "test": false,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "ablation_ranking",
+          "src_path": "@ROOT@/crates/jope-engine/tests/ablation_ranking.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "atomic_write",
+          "src_path": "@ROOT@/crates/jope-engine/tests/atomic_write.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "binary_preparation",
+          "src_path": "@ROOT@/crates/jope-engine/tests/binary_preparation.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "bounded_assignment",
+          "src_path": "@ROOT@/crates/jope-engine/tests/bounded_assignment.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "bounded_preflight_cli",
+          "src_path": "@ROOT@/crates/jope-engine/tests/bounded_preflight_cli.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "bounded_run",
+          "src_path": "@ROOT@/crates/jope-engine/tests/bounded_run.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "bounded_run_recovery",
+          "src_path": "@ROOT@/crates/jope-engine/tests/bounded_run_recovery.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "checkpoint_commit",
+          "src_path": "@ROOT@/crates/jope-engine/tests/checkpoint_commit.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "committed_updates",
+          "src_path": "@ROOT@/crates/jope-engine/tests/committed_updates.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "continuation_modes",
+          "src_path": "@ROOT@/crates/jope-engine/tests/continuation_modes.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "corpus",
+          "src_path": "@ROOT@/crates/jope-engine/tests/corpus.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "corpus_incremental",
+          "src_path": "@ROOT@/crates/jope-engine/tests/corpus_incremental.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "corpus_progress",
+          "src_path": "@ROOT@/crates/jope-engine/tests/corpus_progress.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "corpus_projection",
+          "src_path": "@ROOT@/crates/jope-engine/tests/corpus_projection.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "counterfactual_boundaries",
+          "src_path": "@ROOT@/crates/jope-engine/tests/counterfactual_boundaries.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "dashboard",
+          "src_path": "@ROOT@/crates/jope-engine/tests/dashboard.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "data_contracts",
+          "src_path": "@ROOT@/crates/jope-engine/tests/data_contracts.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "experiment_cli",
+          "src_path": "@ROOT@/crates/jope-engine/tests/experiment_cli.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "experiment_isolation",
+          "src_path": "@ROOT@/crates/jope-engine/tests/experiment_isolation.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "families",
+          "src_path": "@ROOT@/crates/jope-engine/tests/families.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "fit_boundary",
+          "src_path": "@ROOT@/crates/jope-engine/tests/fit_boundary.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "frozen_inputs",
+          "src_path": "@ROOT@/crates/jope-engine/tests/frozen_inputs.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "gp_admission",
+          "src_path": "@ROOT@/crates/jope-engine/tests/gp_admission.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "gp_contracts",
+          "src_path": "@ROOT@/crates/jope-engine/tests/gp_contracts.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "gpu_entry_guards",
+          "src_path": "@ROOT@/crates/jope-engine/tests/gpu_entry_guards.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "grammar",
+          "src_path": "@ROOT@/crates/jope-engine/tests/grammar.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "label_release",
+          "src_path": "@ROOT@/crates/jope-engine/tests/label_release.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "learning_history",
+          "src_path": "@ROOT@/crates/jope-engine/tests/learning_history.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "lossless_partition",
+          "src_path": "@ROOT@/crates/jope-engine/tests/lossless_partition.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "native_loop_continuation",
+          "src_path": "@ROOT@/crates/jope-engine/tests/native_loop_continuation.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "objective_fixtures",
+          "src_path": "@ROOT@/crates/jope-engine/tests/objective_fixtures.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "outer_release_cli",
+          "src_path": "@ROOT@/crates/jope-engine/tests/outer_release_cli.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "partition_wiring",
+          "src_path": "@ROOT@/crates/jope-engine/tests/partition_wiring.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "preparation_semantics",
+          "src_path": "@ROOT@/crates/jope-engine/tests/preparation_semantics.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "projected_export",
+          "src_path": "@ROOT@/crates/jope-engine/tests/projected_export.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "proposal_ranking",
+          "src_path": "@ROOT@/crates/jope-engine/tests/proposal_ranking.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "queue",
+          "src_path": "@ROOT@/crates/jope-engine/tests/queue.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "ranked_proposals",
+          "src_path": "@ROOT@/crates/jope-engine/tests/ranked_proposals.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "receiver_roots",
+          "src_path": "@ROOT@/crates/jope-engine/tests/receiver_roots.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "replay_training",
+          "src_path": "@ROOT@/crates/jope-engine/tests/replay_training.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "request_integrity",
+          "src_path": "@ROOT@/crates/jope-engine/tests/request_integrity.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "resident_protocol",
+          "src_path": "@ROOT@/crates/jope-engine/tests/resident_protocol.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "resident_worker",
+          "src_path": "@ROOT@/crates/jope-engine/tests/resident_worker.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "reward_sequence",
+          "src_path": "@ROOT@/crates/jope-engine/tests/reward_sequence.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "sealed_storage",
+          "src_path": "@ROOT@/crates/jope-engine/tests/sealed_storage.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "service_continuous",
+          "src_path": "@ROOT@/crates/jope-engine/tests/service_continuous.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "teacher_counterfactuals",
+          "src_path": "@ROOT@/crates/jope-engine/tests/teacher_counterfactuals.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "trainer_topology",
+          "src_path": "@ROOT@/crates/jope-engine/tests/trainer_topology.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "training",
+          "src_path": "@ROOT@/crates/jope-engine/tests/training.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "training_ancestry",
+          "src_path": "@ROOT@/crates/jope-engine/tests/training_ancestry.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "training_inputs",
+          "src_path": "@ROOT@/crates/jope-engine/tests/training_inputs.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "view_contracts",
+          "src_path": "@ROOT@/crates/jope-engine/tests/view_contracts.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "custom-build"
+          ],
+          "name": "build-script-build",
+          "src_path": "@ROOT@/crates/jope-engine/build.rs",
+          "test": false,
+          "doctest": false
+        }
+      ]
+    },
+    {
+      "id": "path+file://@ROOT@/crates/smartcluster/jain-smartcluster#8.0.0",
+      "name": "jain-smartcluster",
+      "manifest_path": "@ROOT@/crates/smartcluster/jain-smartcluster/Cargo.toml",
+      "features": {},
+      "targets": [
+        {
+          "kind": [
+            "lib"
+          ],
+          "name": "jain_smartcluster",
+          "src_path": "@ROOT@/crates/smartcluster/jain-smartcluster/src/lib.rs",
+          "test": true,
+          "doctest": true
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "native_fit_protocol",
+          "src_path": "@ROOT@/crates/smartcluster/jain-smartcluster/tests/native_fit_protocol.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "wire_contract",
+          "src_path": "@ROOT@/crates/smartcluster/jain-smartcluster/tests/wire_contract.rs",
+          "test": true,
+          "doctest": false
+        }
+      ]
+    },
+    {
+      "id": "path+file://@ROOT@/crates/smartcluster/jain-smartcluster-core#8.0.0",
+      "name": "jain-smartcluster-core",
+      "manifest_path": "@ROOT@/crates/smartcluster/jain-smartcluster-core/Cargo.toml",
+      "features": {},
+      "targets": [
+        {
+          "kind": [
+            "lib"
+          ],
+          "name": "jain_smartcluster_core",
+          "src_path": "@ROOT@/crates/smartcluster/jain-smartcluster-core/src/lib.rs",
+          "test": true,
+          "doctest": true
+        }
+      ]
+    },
+    {
+      "id": "path+file://@ROOT@/crates/jope-paths#0.1.0",
+      "name": "jope-paths",
+      "manifest_path": "@ROOT@/crates/jope-paths/Cargo.toml",
+      "features": {},
+      "targets": [
+        {
+          "kind": [
+            "lib"
+          ],
+          "name": "jope_paths",
+          "src_path": "@ROOT@/crates/jope-paths/src/lib.rs",
+          "test": true,
+          "doctest": true
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope-units-render",
+          "src_path": "@ROOT@/crates/jope-paths/src/bin/jope-units-render.rs",
+          "test": true,
+          "doctest": false
+        }
+      ]
+    },
+    {
+      "id": "path+file://@ROOT@/crates/jope-policy#0.1.0",
+      "name": "jope-policy",
+      "manifest_path": "@ROOT@/crates/jope-policy/Cargo.toml",
+      "features": {
+        "context-producer": [
+          "dep:hyperion",
+          "dep:starforge"
+        ],
+        "cuda": [
+          "candle-core/cuda",
+          "candle-nn/cuda"
+        ],
+        "default": [],
+        "inference-cuda": [
+          "context-producer",
+          "cuda",
+          "hyperion/hyperion-cuda",
+          "starforge/cuda"
+        ],
+        "testing": []
+      },
+      "targets": [
+        {
+          "kind": [
+            "lib"
+          ],
+          "name": "jope_policy",
+          "src_path": "@ROOT@/crates/jope-policy/src/lib.rs",
+          "test": true,
+          "doctest": true
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope-context-worker",
+          "src_path": "@ROOT@/crates/jope-policy/src/bin/jope-context-worker.rs",
+          "test": true,
+          "doctest": false,
+          "required-features": [
+            "context-producer"
+          ]
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope-policy-producer",
+          "src_path": "@ROOT@/crates/jope-policy/src/bin/jope-policy-producer.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "decode_outcomes",
+          "src_path": "@ROOT@/crates/jope-policy/tests/decode_outcomes.rs",
+          "test": true,
+          "doctest": false,
+          "required-features": [
+            "testing"
+          ]
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "grammar_differential",
+          "src_path": "@ROOT@/crates/jope-policy/tests/grammar_differential.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "jope_dime",
+          "src_path": "@ROOT@/crates/jope-policy/tests/jope_dime.rs",
+          "test": true,
+          "doctest": false,
+          "required-features": [
+            "testing"
+          ]
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "scorer_dependencies",
+          "src_path": "@ROOT@/crates/jope-policy/tests/scorer_dependencies.rs",
+          "test": true,
+          "doctest": false
+        }
+      ]
+    },
+    {
+      "id": "path+file://@ROOT@/crates/jope-encoders#starforge@0.1.0",
+      "name": "starforge",
+      "manifest_path": "@ROOT@/crates/jope-encoders/Cargo.toml",
+      "features": {
+        "cuda": [
+          "candle-core/cuda",
+          "candle-nn/cuda"
+        ],
+        "default": []
+      },
+      "targets": [
+        {
+          "kind": [
+            "lib"
+          ],
+          "name": "starforge",
+          "src_path": "@ROOT@/crates/jope-encoders/src/lib.rs",
+          "test": true,
+          "doctest": true
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "model_bundle_pack",
+          "src_path": "@ROOT@/crates/jope-encoders/src/bin/model_bundle_pack.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "starforge",
+          "src_path": "@ROOT@/crates/jope-encoders/src/main.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "foundation_parity",
+          "src_path": "@ROOT@/crates/jope-encoders/tests/foundation_parity.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "golden_parity",
+          "src_path": "@ROOT@/crates/jope-encoders/tests/golden_parity.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "jope_policy_parity",
+          "src_path": "@ROOT@/crates/jope-encoders/tests/jope_policy_parity.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "novel_input_differential",
+          "src_path": "@ROOT@/crates/jope-encoders/tests/novel_input_differential.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "target_encoder_parity",
+          "src_path": "@ROOT@/crates/jope-encoders/tests/target_encoder_parity.rs",
+          "test": true,
+          "doctest": false
+        }
+      ]
+    },
+    {
+      "id": "path+file://@ROOT@/crates/battle-gpu#0.1.0",
+      "name": "battle-gpu",
+      "manifest_path": "@ROOT@/crates/battle-gpu/Cargo.toml",
+      "features": {},
+      "targets": [
+        {
+          "kind": [
+            "lib"
+          ],
+          "name": "battle_gpu",
+          "src_path": "@ROOT@/crates/battle-gpu/src/lib.rs",
+          "test": true,
+          "doctest": true
+        }
+      ]
+    },
+    {
+      "id": "path+file://@ROOT@/crates/jope-arena#0.1.0",
+      "name": "jope-arena",
+      "manifest_path": "@ROOT@/crates/jope-arena/Cargo.toml",
+      "features": {
+        "default": [],
+        "s3": [
+          "object_store/aws"
+        ]
+      },
+      "targets": [
+        {
+          "kind": [
+            "lib"
+          ],
+          "name": "jope_arena",
+          "src_path": "@ROOT@/crates/jope-arena/src/lib.rs",
+          "test": true,
+          "doctest": true
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope-arena",
+          "src_path": "@ROOT@/crates/jope-arena/src/main.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "elo_regression",
+          "src_path": "@ROOT@/crates/jope-arena/tests/elo_regression.rs",
+          "test": true,
+          "doctest": false
+        }
+      ]
+    },
+    {
+      "id": "path+file://@ROOT@/crates/jope-bench#0.1.0",
+      "name": "jope-bench",
+      "manifest_path": "@ROOT@/crates/jope-bench/Cargo.toml",
+      "features": {
+        "asm": [
+          "jope-pipeline/qualified-context",
+          "dep:jope-policy",
+          "dep:jope-learning"
+        ],
+        "default": [],
+        "inference-cuda": [
+          "jope-pipeline/timing-study",
+          "asm",
+          "jope-policy/inference-cuda",
+          "dep:candle-core",
+          "candle-core/cuda"
+        ]
+      },
+      "targets": [
+        {
+          "kind": [
+            "lib"
+          ],
+          "name": "jope_bench",
+          "src_path": "@ROOT@/crates/jope-bench/src/lib.rs",
+          "test": true,
+          "doctest": true
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope-bench",
+          "src_path": "@ROOT@/crates/jope-bench/src/main.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "adapter_contract",
+          "src_path": "@ROOT@/crates/jope-bench/tests/adapter_contract.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "classification",
+          "src_path": "@ROOT@/crates/jope-bench/tests/classification.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "committed_evidence",
+          "src_path": "@ROOT@/crates/jope-bench/tests/committed_evidence.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "pwlinear",
+          "src_path": "@ROOT@/crates/jope-bench/tests/pwlinear.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "transfer_independent",
+          "src_path": "@ROOT@/crates/jope-bench/tests/transfer_independent.rs",
+          "test": true,
+          "doctest": false
+        }
+      ]
+    },
+    {
+      "id": "path+file://@ROOT@/crates/jope-datasets#0.1.0",
+      "name": "jope-datasets",
+      "manifest_path": "@ROOT@/crates/jope-datasets/Cargo.toml",
+      "features": {},
+      "targets": [
+        {
+          "kind": [
+            "lib"
+          ],
+          "name": "jope_datasets",
+          "src_path": "@ROOT@/crates/jope-datasets/src/lib.rs",
+          "test": true,
+          "doctest": true
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope-datasets",
+          "src_path": "@ROOT@/crates/jope-datasets/src/main.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "ingest_dry_run",
+          "src_path": "@ROOT@/crates/jope-datasets/tests/ingest_dry_run.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "input_closure",
+          "src_path": "@ROOT@/crates/jope-datasets/tests/input_closure.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "pinned_catalog",
+          "src_path": "@ROOT@/crates/jope-datasets/tests/pinned_catalog.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "regression_release",
+          "src_path": "@ROOT@/crates/jope-datasets/tests/regression_release.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "repo_verify",
+          "src_path": "@ROOT@/crates/jope-datasets/tests/repo_verify.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "roundtrip",
+          "src_path": "@ROOT@/crates/jope-datasets/tests/roundtrip.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "schema_agreement",
+          "src_path": "@ROOT@/crates/jope-datasets/tests/schema_agreement.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "staging_disposition",
+          "src_path": "@ROOT@/crates/jope-datasets/tests/staging_disposition.rs",
+          "test": true,
+          "doctest": false
+        }
+      ]
+    },
+    {
+      "id": "path+file://@ROOT@/crates/jope-learning#0.1.0",
+      "name": "jope-learning",
+      "manifest_path": "@ROOT@/crates/jope-learning/Cargo.toml",
+      "features": {},
+      "targets": [
+        {
+          "kind": [
+            "lib"
+          ],
+          "name": "jope_learning",
+          "src_path": "@ROOT@/crates/jope-learning/src/lib.rs",
+          "test": true,
+          "doctest": true
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope-learning",
+          "src_path": "@ROOT@/crates/jope-learning/src/main.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "champions_fixture",
+          "src_path": "@ROOT@/crates/jope-learning/tests/champions_fixture.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "ledger_tamper",
+          "src_path": "@ROOT@/crates/jope-learning/tests/ledger_tamper.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "mirror_lost_update",
+          "src_path": "@ROOT@/crates/jope-learning/tests/mirror_lost_update.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "mirror_reconcile",
+          "src_path": "@ROOT@/crates/jope-learning/tests/mirror_reconcile.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "nonfinite_scores",
+          "src_path": "@ROOT@/crates/jope-learning/tests/nonfinite_scores.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "schema_agreement",
+          "src_path": "@ROOT@/crates/jope-learning/tests/schema_agreement.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "score_import",
+          "src_path": "@ROOT@/crates/jope-learning/tests/score_import.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "sources",
+          "src_path": "@ROOT@/crates/jope-learning/tests/sources.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "state_resolve",
+          "src_path": "@ROOT@/crates/jope-learning/tests/state_resolve.rs",
+          "test": true,
+          "doctest": false
+        }
+      ]
+    },
+    {
+      "id": "path+file://@ROOT@/crates/jope-pipeline#0.1.0",
+      "name": "jope-pipeline",
+      "manifest_path": "@ROOT@/crates/jope-pipeline/Cargo.toml",
+      "features": {
+        "default": [],
+        "neural-search": [
+          "dep:jope-policy"
+        ],
+        "qualified-context": [
+          "neural-search",
+          "jope-policy/context-producer"
+        ],
+        "timing-study": [
+          "neural-search"
+        ]
+      },
+      "targets": [
+        {
+          "kind": [
+            "lib"
+          ],
+          "name": "jope_pipeline",
+          "src_path": "@ROOT@/crates/jope-pipeline/src/lib.rs",
+          "test": true,
+          "doctest": true
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope-context-proof",
+          "src_path": "@ROOT@/crates/jope-pipeline/src/bin/jope-context-proof.rs",
+          "test": true,
+          "doctest": false,
+          "required-features": [
+            "qualified-context"
+          ]
+        },
+        {
+          "kind": [
+            "example"
+          ],
+          "name": "receipt_schema",
+          "src_path": "@ROOT@/crates/jope-pipeline/examples/receipt_schema.rs",
+          "test": false,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "schema_agreement",
+          "src_path": "@ROOT@/crates/jope-pipeline/tests/schema_agreement.rs",
+          "test": true,
+          "doctest": false
+        }
+      ]
+    },
+    {
+      "id": "path+file://@ROOT@/crates/jope-campaigns#jope-dime-regressor@0.1.0",
+      "name": "jope-dime-regressor",
+      "manifest_path": "@ROOT@/crates/jope-campaigns/Cargo.toml",
+      "features": {
+        "gpr-scratch-reuse": [
+          "feat-math/gpr-scratch-reuse"
+        ],
+        "gpu": [
+          "dep:battle-gpu"
+        ]
+      },
+      "targets": [
+        {
+          "kind": [
+            "lib"
+          ],
+          "name": "jope_dime_regressor",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/lib.rs",
+          "test": true,
+          "doctest": true
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "aspfm_recovery_evolve",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/aspfm_recovery_evolve.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "corpus_eval",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/corpus_eval.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope-dime-regressor",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/main.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_canary_executor",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_canary_executor.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_capacity",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_capacity.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_causal_evidence",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_causal_evidence.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_causal_pair_repair",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_causal_pair_repair.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_compile_cache",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_compile_cache.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_dlgp_best5",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_dlgp_best5.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_dlgp_best5_worker",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_dlgp_best5_worker.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_dlgp_budget_supervisor",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_dlgp_budget_supervisor.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_effective_unit_audit",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_effective_unit_audit.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_encoder_supervisor",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_encoder_supervisor.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_encoder_v2_capacity",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_encoder_v2_capacity.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_encoder_v2_import",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_encoder_v2_import.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_expanded_catalog",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_expanded_catalog.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_flywheel_liveness",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_flywheel_liveness.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_generalized_gp",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_generalized_gp.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_gp_bridge",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_gp_bridge.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_gpu_lane_admission",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_gpu_lane_admission.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_hyperion_cache",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_hyperion_cache.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_hyperion_gate",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_hyperion_gate.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_ledger_reconciler",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_ledger_reconciler.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_ops_health_check",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_ops_health_check.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_queue_control",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_queue_control.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_reporting",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_reporting.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_sealed_zeroshot",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_sealed_zeroshot.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_selfplay_alarms",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_selfplay_alarms.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_selfplay_bundle",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_selfplay_bundle.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_selfplay_corpus_freezer",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_selfplay_corpus_freezer.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_selfplay_expansion_driver",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_selfplay_expansion_driver.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_selfplay_freshness",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_selfplay_freshness.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_selfplay_gc",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_selfplay_gc.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_selfplay_mcp",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_selfplay_mcp.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_selfplay_promotion",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_selfplay_promotion.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_selfplay_propose_driver",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_selfplay_propose_driver.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_selfplay_queue",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_selfplay_queue.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_selfplay_shadow",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_selfplay_shadow.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_selfplay_status",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_selfplay_status.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_selfplay_supply",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_selfplay_supply.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_selfplay_trainer_watchdog",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_selfplay_trainer_watchdog.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_selfplay_tui",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_selfplay_tui.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_selfplay_wave",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_selfplay_wave.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_spec_drift",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_spec_drift.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_strategy_screen",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_strategy_screen.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_task_elo",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_task_elo.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_task_learning_controller",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_task_learning_controller.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_task_rating",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_task_rating.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_timeseries_export",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_timeseries_export.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_training_archive",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_training_archive.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_training_history",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_training_history.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_training_replica",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_training_replica.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_utilization_supervisor",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_utilization_supervisor.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope_v3_control",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/jope_v3_control.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "scq_runs_gc",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/scq_runs_gc.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "search-v3",
+          "src_path": "@ROOT@/crates/jope-campaigns/src/bin/search-v3.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "dlgp_best5",
+          "src_path": "@ROOT@/crates/jope-campaigns/tests/dlgp_best5.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "dlgp_budget_campaign",
+          "src_path": "@ROOT@/crates/jope-campaigns/tests/dlgp_budget_campaign.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "encoder_v2_recovery",
+          "src_path": "@ROOT@/crates/jope-campaigns/tests/encoder_v2_recovery.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "epoch6_foundation",
+          "src_path": "@ROOT@/crates/jope-campaigns/tests/epoch6_foundation.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "epoch6_waves",
+          "src_path": "@ROOT@/crates/jope-campaigns/tests/epoch6_waves.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "generalized_gp",
+          "src_path": "@ROOT@/crates/jope-campaigns/tests/generalized_gp.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "hyperion_gate",
+          "src_path": "@ROOT@/crates/jope-campaigns/tests/hyperion_gate.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "router_contracts_v2",
+          "src_path": "@ROOT@/crates/jope-campaigns/tests/router_contracts_v2.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "search_v3",
+          "src_path": "@ROOT@/crates/jope-campaigns/tests/search_v3.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "selfplay_shadow_integration",
+          "src_path": "@ROOT@/crates/jope-campaigns/tests/selfplay_shadow_integration.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "systemd_unit_paths",
+          "src_path": "@ROOT@/crates/jope-campaigns/tests/systemd_unit_paths.rs",
+          "test": true,
+          "doctest": false
+        }
+      ]
+    },
+    {
+      "id": "path+file://@ROOT@/crates/jope-ci#0.1.0",
+      "name": "jope-ci",
+      "manifest_path": "@ROOT@/crates/jope-ci/Cargo.toml",
+      "features": {},
+      "targets": [
+        {
+          "kind": [
+            "lib"
+          ],
+          "name": "jope_ci",
+          "src_path": "@ROOT@/crates/jope-ci/src/lib.rs",
+          "test": true,
+          "doctest": true
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope-ci",
+          "src_path": "@ROOT@/crates/jope-ci/src/main.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "cargo_artifact",
+          "src_path": "@ROOT@/crates/jope-ci/tests/cargo_artifact.rs",
+          "test": true,
+          "doctest": false
+        }
+      ]
+    },
+    {
+      "id": "path+file://@ROOT@/crates/jope-cli#0.1.0",
+      "name": "jope-cli",
+      "manifest_path": "@ROOT@/crates/jope-cli/Cargo.toml",
+      "features": {
+        "asm": [
+          "jope-bench/asm"
+        ],
+        "default": [
+          "qualified-training-context"
+        ],
+        "inference-cuda": [
+          "jope-bench/inference-cuda"
+        ],
+        "qualified-training-context": [
+          "jope-pipeline/qualified-context",
+          "dep:jope-policy"
+        ]
+      },
+      "targets": [
+        {
+          "kind": [
+            "lib"
+          ],
+          "name": "jope_cli",
+          "src_path": "@ROOT@/crates/jope-cli/src/lib.rs",
+          "test": true,
+          "doctest": true
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope",
+          "src_path": "@ROOT@/crates/jope-cli/src/main.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "offline_cli",
+          "src_path": "@ROOT@/crates/jope-cli/tests/offline_cli.rs",
+          "test": true,
+          "doctest": false
+        }
+      ]
+    },
+    {
+      "id": "path+file://@ROOT@/crates/jope-models#0.1.0",
+      "name": "jope-models",
+      "manifest_path": "@ROOT@/crates/jope-models/Cargo.toml",
+      "features": {},
+      "targets": [
+        {
+          "kind": [
+            "lib"
+          ],
+          "name": "jope_models",
+          "src_path": "@ROOT@/crates/jope-models/src/lib.rs",
+          "test": true,
+          "doctest": true
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope-models",
+          "src_path": "@ROOT@/crates/jope-models/src/main.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "roundtrip",
+          "src_path": "@ROOT@/crates/jope-models/tests/roundtrip.rs",
+          "test": true,
+          "doctest": false
+        }
+      ]
+    },
+    {
+      "id": "path+file://@ROOT@/crates/jope-motifs#0.1.0",
+      "name": "jope-motifs",
+      "manifest_path": "@ROOT@/crates/jope-motifs/Cargo.toml",
+      "features": {},
+      "targets": [
+        {
+          "kind": [
+            "lib"
+          ],
+          "name": "jope_motifs",
+          "src_path": "@ROOT@/crates/jope-motifs/src/lib.rs",
+          "test": true,
+          "doctest": true
+        }
+      ]
+    },
+    {
+      "id": "path+file://@ROOT@/crates/jope-records#0.1.0",
+      "name": "jope-records",
+      "manifest_path": "@ROOT@/crates/jope-records/Cargo.toml",
+      "features": {},
+      "targets": [
+        {
+          "kind": [
+            "lib"
+          ],
+          "name": "jope_records",
+          "src_path": "@ROOT@/crates/jope-records/src/lib.rs",
+          "test": true,
+          "doctest": true
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jope-records",
+          "src_path": "@ROOT@/crates/jope-records/src/main.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "records",
+          "src_path": "@ROOT@/crates/jope-records/tests/records/main.rs",
+          "test": true,
+          "doctest": false
+        }
+      ]
+    },
+    {
+      "id": "path+file://@ROOT@/crates/numpy-pcg64#0.1.0",
+      "name": "numpy-pcg64",
+      "manifest_path": "@ROOT@/crates/numpy-pcg64/Cargo.toml",
+      "features": {},
+      "targets": [
+        {
+          "kind": [
+            "lib"
+          ],
+          "name": "numpy_pcg64",
+          "src_path": "@ROOT@/crates/numpy-pcg64/src/lib.rs",
+          "test": true,
+          "doctest": true
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "first_outputs",
+          "src_path": "@ROOT@/crates/numpy-pcg64/tests/first_outputs.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "sampling_golden",
+          "src_path": "@ROOT@/crates/numpy-pcg64/tests/sampling_golden.rs",
+          "test": true,
+          "doctest": false
+        }
+      ]
+    },
+    {
+      "id": "path+file://@ROOT@/crates/smartcluster/jain-smartcluster-fabric#8.0.0",
+      "name": "jain-smartcluster-fabric",
+      "manifest_path": "@ROOT@/crates/smartcluster/jain-smartcluster-fabric/Cargo.toml",
+      "features": {},
+      "targets": [
+        {
+          "kind": [
+            "lib"
+          ],
+          "name": "jain_smartcluster_fabric",
+          "src_path": "@ROOT@/crates/smartcluster/jain-smartcluster-fabric/src/lib.rs",
+          "test": true,
+          "doctest": true
+        }
+      ]
+    },
+    {
+      "id": "path+file://@ROOT@/crates/smartcluster/jain-smartcluster-daemon#8.0.0",
+      "name": "jain-smartcluster-daemon",
+      "manifest_path": "@ROOT@/crates/smartcluster/jain-smartcluster-daemon/Cargo.toml",
+      "features": {},
+      "targets": [
+        {
+          "kind": [
+            "lib"
+          ],
+          "name": "jain_smartcluster_daemon",
+          "src_path": "@ROOT@/crates/smartcluster/jain-smartcluster-daemon/src/lib.rs",
+          "test": true,
+          "doctest": true
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "scqd",
+          "src_path": "@ROOT@/crates/smartcluster/jain-smartcluster-daemon/src/bin/scqd.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "example"
+          ],
+          "name": "fit_child_fixture",
+          "src_path": "@ROOT@/crates/smartcluster/jain-smartcluster-daemon/examples/fit_child_fixture.rs",
+          "test": false,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "daemon_e2e",
+          "src_path": "@ROOT@/crates/smartcluster/jain-smartcluster-daemon/tests/daemon_e2e.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "gpu_host",
+          "src_path": "@ROOT@/crates/smartcluster/jain-smartcluster-daemon/tests/gpu_host.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "linux_cgroup",
+          "src_path": "@ROOT@/crates/smartcluster/jain-smartcluster-daemon/tests/linux_cgroup.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "performance",
+          "src_path": "@ROOT@/crates/smartcluster/jain-smartcluster-daemon/tests/performance.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "resident_kernel",
+          "src_path": "@ROOT@/crates/smartcluster/jain-smartcluster-daemon/tests/resident_kernel.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "restart_chaos",
+          "src_path": "@ROOT@/crates/smartcluster/jain-smartcluster-daemon/tests/restart_chaos.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "soak",
+          "src_path": "@ROOT@/crates/smartcluster/jain-smartcluster-daemon/tests/soak.rs",
+          "test": true,
+          "doctest": false
+        }
+      ]
+    },
+    {
+      "id": "path+file://@ROOT@/crates/smartcluster/jain-worker#8.0.0",
+      "name": "jain-worker",
+      "manifest_path": "@ROOT@/crates/smartcluster/jain-worker/Cargo.toml",
+      "features": {},
+      "targets": [
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jain-worker",
+          "src_path": "@ROOT@/crates/smartcluster/jain-worker/src/main.rs",
+          "test": true,
+          "doctest": false
+        }
+      ]
+    },
+    {
+      "id": "path+file://@ROOT@/crates/smartcluster/jainnode#8.0.0",
+      "name": "jainnode",
+      "manifest_path": "@ROOT@/crates/smartcluster/jainnode/Cargo.toml",
+      "features": {},
+      "targets": [
+        {
+          "kind": [
+            "lib"
+          ],
+          "name": "jainnode",
+          "src_path": "@ROOT@/crates/smartcluster/jainnode/src/lib.rs",
+          "test": true,
+          "doctest": true
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "jainnode",
+          "src_path": "@ROOT@/crates/smartcluster/jainnode/src/main.rs",
+          "test": true,
+          "doctest": false
+        },
+        {
+          "kind": [
+            "test"
+          ],
+          "name": "rustls_provider",
+          "src_path": "@ROOT@/crates/smartcluster/jainnode/tests/rustls_provider.rs",
+          "test": true,
+          "doctest": false
+        }
+      ]
+    },
+    {
+      "id": "path+file://@ROOT@/crates/smartcluster/scq#8.0.0",
+      "name": "scq",
+      "manifest_path": "@ROOT@/crates/smartcluster/scq/Cargo.toml",
+      "features": {},
+      "targets": [
+        {
+          "kind": [
+            "lib"
+          ],
+          "name": "scq",
+          "src_path": "@ROOT@/crates/smartcluster/scq/src/lib.rs",
+          "test": true,
+          "doctest": true
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "scq",
+          "src_path": "@ROOT@/crates/smartcluster/scq/src/main.rs",
+          "test": true,
+          "doctest": false
+        }
+      ]
+    }
+  ]
+}

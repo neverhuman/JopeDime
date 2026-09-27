@@ -314,6 +314,59 @@ captured output is altered (negative control).
   (the new targets 1 + 2 passed, 1 ignored), both ignored fixture runners with
   `JOPE_MAINTENANCE_SCRATCH` (receipt replay and the build-report runners) and
   `deploy/ci/check.sh`, all green.
+- U3 — `crates/jope-records/tests/python_parity.rs`, fixture
+  `crates/jope-records/tests/fixtures/python-parity/`: all 25 cases of
+  `py-p1-u3-diff-20260927T024147Z`. The inputs are those of that run's tree (`5136986fb` plus the
+  run's working changes: the jope-records `lib.rs`/`main.rs` edits and four new, untracked
+  modules), recovered from an export of it (`git archive`, the run's `diff.patch`, the four
+  modules; not a clone or worktree):
+  - coverage `validate` (10 cases): the coverage map of the run (`mapping.json`, the same blob as
+    `deploy/ci/coverage.json` at `5136986fb`) and its nine malformed variants as `ed` scripts,
+    each with the SHA-256 of the variant file the Python read (regenerated from the base with the
+    run's own `jq` edits and compared byte for byte first); every case is checked against
+    `discovered.json`, the Python's discovery output of that tree.
+  - coverage `discover` (1 case): `cargo metadata` of the export reduced to the fields discovery
+    reads (root as `@ROOT@`), the file list `git ls-files --cached --others --exclude-standard`
+    gave (the tree's files plus the four untracked modules) and the workflow texts; the Rust
+    discovery of those inputs must print `discovered.json` byte for byte.
+  - `rust-scope-check` (1 case): the workspace package names, what `rust-test-scope.sh` emitted
+    for both scopes and the script text of that tree.
+  - `parity-check` (10 cases): the capability matrix of the run and its eight variants as `ed`
+    scripts with SHA-256s (again regenerated with the run's own `sed`/`grep` first); the seven
+    lines whose notes cite `/home/<user>/` read `~/` in the fixture, which the no-home-paths lint
+    requires and which touches no checked cell. `tree.json` records what the check reads from the
+    tree (89 binaries, 19 examples, 92 clap subcommands, 430 Python tools, `jope-py` commands, 0
+    systemd units, and whether each row target existed), captured from the export by the ignored
+    `capture_parity_tree` test.
+  - `readme-benchmarks` (3 cases): every render input at that tree (byte-identical to the
+    committed evidence, so git stores them once; `docs/same-cut-bench.md` is the `5136986fb` text,
+    which the renderer only names), the run's stale README, and the README its `--write`
+    produced; `--check` on the stale copy, `--write`, and `--check` on the result.
+
+  To replay recorded inputs the guards gained seams with no behaviour change: `coverage::
+  discover_from`, `validate_text` and `discover_document`; `parity::Tree`, `scan_tree`,
+  `evaluate`, `parse_matrix` and `target_heads`; `scope_check::evaluate`. The live commands
+  gather the same inputs and call them. Allowed differences, asserted as exact substitutions: the
+  two remediation hints that name the Rust source or command instead of the retired script
+  (`parity-preamble`, `readme-stale`). Build and verification of the inputs:
+  `py-p1-fixtures-u3-20260927T034740Z`.
+- Negative control for U3: `py-p1-fixtures-u3-20260927T034740Z/mutation.txt` (nine alterations:
+  a validate output, a variant SHA-256, the discover output, a discover input file, the scope
+  output, a parity output, a recorded target existence, the written README and a README render
+  input; nine failures, fixtures restored byte-identically). A first attempt
+  (`mutation-first-attempt.txt`) altered the bench baseline's `schema`, which the renderer does
+  not read, and so rightly went undetected; the rerun alters a rendered value.
+- Records: `target:jope-records/test/python_parity` in `deploy/ci/coverage.json` (rust-check,
+  rust-test, full-default) and in the regression test inventory (role `infrastructure`).
+- Gate `py-p1-fixtures-u3-post-20260927T040129Z`: the full gate plus `cargo test -p jope-records`
+  (the parity target 5 passed, 1 ignored helper), `clippy -p jope-records -p jope-ci
+  --all-targets -D warnings` and the live guards on this tree (`coverage discover`,
+  `rust-scope-check`, `readme-benchmarks --check`), all green except `deploy/ci/check.sh`, whose
+  size-cap step hit a stale index entry: the first gate (`py-p1-fixtures-u3-post-20260927T035846Z`)
+  failed `git diff --check` on the trailing spaces of the captured `--help` text, which is now
+  kept as a JSON string (`parity/help.json`, with its SHA-256) and the old path's intent-to-add
+  entry was dropped. `py-p1-fixtures-u3-post-20260927T040335Z` then ran `deploy/ci/check.sh`, the
+  parity tests and `git diff --check`: green.
 
 ## Follow-up — clippy on the P1 code
 

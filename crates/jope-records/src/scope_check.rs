@@ -29,22 +29,26 @@ pub const SCRIPT: &str = "deploy/ci/rust-test-scope.sh";
 ///
 /// Repeats are kept: the script emits `-p X -p X` for a name written twice, `cargo` accepts it,
 /// and turning that into a set here would make the counts printed below disagree with the file.
-fn emitted(root: &Path, args: &[&str]) -> Result<Vec<String>> {
+fn emitted(root: &Path, args: &[&str]) -> Result<String> {
     let output = Command::new("bash")
         .arg(root.join(SCRIPT))
         .args(args)
         .current_dir(root)
         .output()
         .map_err(|e| Error::io(Path::new("bash"), e))?;
-    let shown = args.join(" ");
     if !output.status.success() {
         return Err(Error::Command(format!(
-            "rust-test-scope.sh {shown}: exit {}\n{}",
+            "rust-test-scope.sh {}: exit {}\n{}",
+            args.join(" "),
             output.status.code().unwrap_or(-1),
             py::strip(&String::from_utf8_lossy(&output.stderr))
         )));
     }
-    let stdout = String::from_utf8_lossy(&output.stdout).into_owned();
+    Ok(String::from_utf8_lossy(&output.stdout).into_owned())
+}
+
+/// The package names in the script's stdout for the invocation `shown` (`-p <name>` pairs).
+fn parse_emitted(stdout: &str, shown: &str) -> Result<Vec<String>> {
     let tokens: Vec<&str> = stdout
         .split(py::is_space)
         .filter(|t| !t.is_empty())
@@ -55,7 +59,7 @@ fn emitted(root: &Path, args: &[&str]) -> Result<Vec<String>> {
     {
         return Err(Error::Command(format!(
             "rust-test-scope.sh {shown}: expected `-p <name>` pairs, got: {}",
-            pyjson::str_repr(&stdout)
+            pyjson::str_repr(stdout)
         )));
     }
     Ok(tokens
@@ -115,12 +119,26 @@ pub fn check(root: &Path) -> Result<(String, bool)> {
                 .collect()
         })
         .unwrap_or_default();
-    let product_list = emitted(root, &[])?;
-    let deferred_list = emitted(root, &["--deferred"])?;
+    let product = emitted(root, &[])?;
+    let deferred = emitted(root, &["--deferred"])?;
     let text = py::read_text(&root.join(SCRIPT))?;
+    evaluate(&workspace, &product, &deferred, &text)
+}
+
+/// The report for the workspace package names, the script's stdout for both scopes and the
+/// script text, and whether the scopes partition the workspace. `check` gathers the inputs; the
+/// Python-parity fixtures replay recorded ones.
+pub fn evaluate(
+    workspace: &BTreeSet<String>,
+    product_stdout: &str,
+    deferred_stdout: &str,
+    text: &str,
+) -> Result<(String, bool)> {
+    let product_list = parse_emitted(product_stdout, "")?;
+    let deferred_list = parse_emitted(deferred_stdout, "--deferred")?;
     let mut problems = vec![];
     for (var, listed) in [("product", &product_list), ("deferred", &deferred_list)] {
-        let written = declared(&text, var)?;
+        let written = declared(text, var)?;
         if sorted(listed) != sorted(&written) {
             problems.push(format!(
                 "the {var} scope emits {} but the {var}=( ... ) array reads {} — the file and the lane disagree",
@@ -156,7 +174,7 @@ pub fn check(root: &Path) -> Result<(String, bool)> {
             join(unplaced)
         ));
     }
-    let ghosts: BTreeSet<&String> = either.difference(&workspace).collect();
+    let ghosts: BTreeSet<&String> = either.difference(workspace).collect();
     if !ghosts.is_empty() {
         problems.push(format!(
             "emitted but not in the workspace: {}",

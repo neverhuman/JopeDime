@@ -1,0 +1,33 @@
+{
+  "packages": [
+    "feat-math",
+    "hyperion",
+    "jope-parallel",
+    "jain-smartcluster",
+    "jain-smartcluster-core",
+    "jope-paths",
+    "jope-policy",
+    "starforge",
+    "battle-gpu",
+    "jope-arena",
+    "jope-bench",
+    "jope-datasets",
+    "jope-learning",
+    "jope-pipeline",
+    "jope-dime-regressor",
+    "jope-ci",
+    "jope-cli",
+    "jope-models",
+    "jope-motifs",
+    "jope-records",
+    "numpy-pcg64",
+    "jain-smartcluster-fabric",
+    "jain-smartcluster-daemon",
+    "jain-worker",
+    "jainnode",
+    "scq"
+  ],
+  "product_stdout": "-p feat-math -p jope-pipeline -p jope-cli -p jope-datasets -p jope-models -p starforge -p jope-policy -p hyperion -p numpy-pcg64 -p jope-paths -p battle-gpu -p jope-arena -p jope-bench -p jope-learning -p jope-motifs -p jope-records -p jope-ci ",
+  "deferred_stdout": "-p jope-parallel -p jope-dime-regressor -p jain-smartcluster -p jain-smartcluster-core -p jain-smartcluster-fabric -p jain-smartcluster-daemon -p jain-worker -p jainnode -p scq ",
+  "script": "#!/usr/bin/env bash\n# deploy/ci/rust-test-scope.sh — the crates whose tests the hosted `rust-test` lane gates.\n#\n#   (no args)   the -p flags for the hosted (product) scope\n#   --deferred  the -p flags for the crates a hosted runner cannot build (see below)\n#\n# WHY A SCOPE AND NOT THE WHOLE WORKSPACE\n# `cargo test` LINKS, unlike `cargo check`. Linking every test binary in this workspace produces a\n# 72 GB target directory (measured 2026-09-21); a standard ubuntu-24.04 runner has roughly 14 GB\n# free, so the link dies with `collect2: fatal error: ld terminated with signal 7 [Bus error]` and\n# no test runs at all. The product scope below links to 9.4 GB and runs 617 tests in about a\n# minute, so it is a real gate that fits.\n#\n# The deferred crates (jope-parallel, jope-dime-regressor, the vendored smartcluster set) are the\n# heavy ones, and they are also where every currently-broken and every race-sensitive test lives:\n# deploy/ci/known-broken-tests.txt and deploy/ci/serial-test-binaries.txt describe them. They\n# belong on the self-hosted runner lane, which has the disk for them. Until that lane exists they\n# are genuinely untested on pull requests, which this file states rather than hides.\nset -euo pipefail\n\nproduct=(feat-math jope-pipeline jope-cli jope-datasets jope-models starforge jope-policy hyperion numpy-pcg64 jope-paths battle-gpu jope-arena jope-bench jope-learning jope-motifs jope-records jope-ci)\ndeferred=(jope-parallel jope-dime-regressor jain-smartcluster jain-smartcluster-core jain-smartcluster-fabric jain-smartcluster-daemon jain-worker jainnode scq)\n\n# deploy/ci/check.sh asserts that product + deferred is exactly the workspace, so a crate added\n# later cannot silently land in neither list (which is how jope-arena slipped through once).\ncase \"${1:-}\" in\n  --deferred) set -- \"${deferred[@]}\" ;;\n  \"\")         set -- \"${product[@]}\" ;;\n  *) echo \"usage: $0 [--deferred]\" >&2; exit 2 ;;\nesac\n[ \"$#\" -gt 0 ] || { echo \"$0: empty package set\" >&2; exit 3; }\nprintf -- '-p %s ' \"$@\"\necho\n"
+}

@@ -1,0 +1,65 @@
+{
+  "methods": [
+    {
+      "id": "adapter.catboost",
+      "name": "adapter.catboost"
+    },
+    {
+      "id": "adapter.lightgbm",
+      "name": "adapter.lightgbm"
+    },
+    {
+      "id": "adapter.rf",
+      "name": "adapter.rf"
+    },
+    {
+      "id": "adapter.xgboost",
+      "name": "adapter.xgboost"
+    },
+    {
+      "id": "afm.lite-race.v1.resampled",
+      "name": "afm.lite-race.v1.resampled"
+    },
+    {
+      "id": "baseline.elasticnet",
+      "name": "baseline.elasticnet"
+    },
+    {
+      "id": "baseline.ensemble",
+      "name": "baseline.ensemble"
+    },
+    {
+      "id": "baseline.gpr",
+      "name": "baseline.gpr"
+    },
+    {
+      "id": "baseline.histgbm",
+      "name": "baseline.histgbm"
+    },
+    {
+      "id": "baseline.histgbm2",
+      "name": "baseline.histgbm2"
+    },
+    {
+      "id": "baseline.krr",
+      "name": "baseline.krr"
+    },
+    {
+      "id": "baseline.ksmooth",
+      "name": "baseline.ksmooth"
+    },
+    {
+      "id": "baseline.ridge",
+      "name": "baseline.ridge"
+    },
+    {
+      "id": "baseline.ridge_gcv",
+      "name": "baseline.ridge_gcv"
+    },
+    {
+      "id": "baseline.stack",
+      "name": "baseline.stack"
+    }
+  ],
+  "schema": "sotarena.method-registry.v1"
+}
