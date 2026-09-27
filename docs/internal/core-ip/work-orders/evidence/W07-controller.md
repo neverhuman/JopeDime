@@ -743,3 +743,70 @@ through the scheduler as it stands. The options are for the owner:
 
 CPU ranks (W7-T07) are unaffected. Native code is compile-checked only; no device was
 enumerated.
+
+### Item C — W7-T04 communicator bootstrap from admission
+
+**Pre-fix record** (`w7b-C-pre-20260926T235601Z`, source trace). Every communicator creation
+(`training.rs` and both neural probes) called `Nccl::init(binding, <dir>/nccl.id)`. Rank 0
+wrote an unauthenticated unique id to a shared path, and the other ranks polled it. Nothing
+consumed the verified admission's `communicator_bootstrap` apart from one rendezvous test
+assertion. The call is native, so the record is a source trace.
+
+Source: `bounded/launch.rs` (default features); `neural.rs` and `training.rs` (`neural`).
+
+- `launch::nccl_bootstrap(contract, plan_sha256, launch_record, member)` returns an
+  `AdmittedBootstrap`, which nothing else can construct. It requires:
+  - a launch record the plan derives;
+  - an admission for exactly this run, attempt and plan, re-verified against this plan
+    (coordinator signature and full-group binding);
+  - the member's admission digest;
+  - this launch's rank and world;
+  - a bootstrap of exactly 128 bytes, `NCCL_UNIQUE_ID_BYTES`.
+
+  A stale or replayed admission never becomes an `AdmittedMember`, because
+  `verify_admission` binds it to the rank's own hello and rendezvous.
+- `neural::nccl_unique_id()` is rank 0's fresh id for its signed hello.
+  `Nccl::init_admitted(binding, bootstrap)` checks `verify_admitted_bootstrap` (this
+  binding's plan, rank and world) before any native call.
+- **Old path kept for historical launches only.** `Nccl::init(binding, path)` still serves
+  bindings without a frozen plan: the legacy single-host mapping and the probes. It refuses a
+  binding derived from a frozen bounded plan before reading or writing anything.
+- `training::communicator_source(assignment, admitted, rank, launch)` runs in `rank_impl`
+  right after the assignment check, before any input or device work.
+  - With no plan and no bootstrap, it returns the historical `launch/nccl.id`, unchanged.
+  - A plan without a bootstrap is refused ("the shared nccl.id rendezvous is refused"), and
+    so is a bootstrap without a plan.
+  - A bootstrap for another plan, rank or world is refused.
+  - A bounded launch directory that holds an `nccl.id` is refused.
+  - `rank_impl` gains the `admitted` argument, and every existing caller passes `None`, so
+    their behaviour is unchanged.
+
+Tests:
+
+- `tests/bounded_launch.rs` (default features, now 5):
+  `the_nccl_bootstrap_comes_only_from_this_plans_verified_admission`.
+  - Positive control: all three ranks take rank 0's id from the signed admission.
+  - Forged: a bootstrap altered in transit, and an admission signed by a participant key,
+    both give `ForgedCoordinator`.
+  - Replayed: an earlier rendezvous's admission gives `StaleRendezvous`.
+  - Wrong attempt: attempt 2's admission is refused as `ReplayedAttempt`, and attempt 2's
+    membership never yields attempt 1's bootstrap.
+  - Also refused: another plan's membership, another rank's membership, an edited launch
+    record and a 64-byte bootstrap.
+- `tests/bounded_assignment.rs` (`neural`, CPU, now 5):
+  `bounded_plans_take_the_communicator_only_from_the_verified_admission`. It covers every
+  `communicator_source` case. It shows that `Nccl::init` refuses a plan-bound binding and
+  that `Nccl::init_admitted` refuses a mismatched bootstrap, both before any native call.
+
+Post-fix records:
+
+- `w7b-C-post-20260927T000223Z` — the full gate.
+- `w7b-C-post-neural-20260927T000056Z` — `neural`, `CUDA_VISIBLE_DEVICES=""`, run alone:
+  `bounded_assignment` 5, `checkpoint_commit` 5, `lossless_partition` 10,
+  `partition_wiring` 7 and `trainer_topology` 7, plus the `training::`, `neural::` and
+  `gpu_worker::` lib tests (7, 1 ignored).
+
+**Open (W7-T04, trainer side).** A bounded training rank's entry into `rank_impl`, with the
+assignment, the admitted bootstrap and the plan-selected partition, lands with item F. No
+native call ran: `Nccl::init_admitted` with a matching bootstrap and a real NCCL
+communicator are compile-checked only, and belong to W7-T08.

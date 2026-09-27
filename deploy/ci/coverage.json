@@ -7251,7 +7251,7 @@
         "full-default"
       ],
       "dispositions": [],
-      "scope": "Neural-gated CPU fixtures: a frozen bounded-run plan maps by a pure function to exactly the trainer assignment topology::validate accepts, and a plan/assignment mismatch is refused; a launched worker binds only from its frozen launch record and exact CUDA_VISIBLE_DEVICES, refusing mismatched visibility, duplicate UUIDs and wrong local indices before any communicator; no device enumerated, no GPU."
+      "scope": "Neural-gated CPU fixtures: a frozen bounded-run plan maps by a pure function to exactly the trainer assignment topology::validate accepts, and a plan/assignment mismatch is refused; a launched worker binds only from its frozen launch record and exact CUDA_VISIBLE_DEVICES, refusing mismatched visibility, duplicate UUIDs and wrong local indices before any communicator; a bounded rank's communicator source is only its plan's admitted bootstrap and the shared nccl.id is refused, before any native call; no device enumerated, no GPU."
     },
     "target:jope-parallel/test/bounded_launch": {
       "discovery": {
@@ -7266,7 +7266,7 @@
         "full-default"
       ],
       "dispositions": [],
-      "scope": "W7-T03 delivery half, default features: the per-rank launch record is exactly what the frozen plan derives, workers load only the frozen plan and record, the launcher execs with exactly CUDA_VISIBLE_DEVICES set to the planned UUID (empty for a CPU rank) and nothing else, and a worker refuses any other visibility. CPU only; synthetic identities, no GPU or three-host run."
+      "scope": "W7-T03/T04 delivery half, default features: the per-rank launch record is exactly what the frozen plan derives, workers load only the frozen plan and record, the launcher execs with exactly CUDA_VISIBLE_DEVICES set to the planned UUID (empty for a CPU rank) and nothing else, a worker refuses any other visibility, and the NCCL bootstrap comes only from this plan's verified admission (forged, replayed, wrong-attempt, foreign-plan, wrong-rank and wrong-length bootstraps refused). CPU only; synthetic identities, no GPU or three-host run."
     },
     "target:jope-parallel/test/checkpoint_commit": {
       "discovery": {

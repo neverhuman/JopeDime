@@ -549,6 +549,7 @@ pub fn rank_with_policy(
         false,
         continuation_mode,
         None,
+        None,
         partition_version,
     )
 }
@@ -626,6 +627,7 @@ pub fn qualify_batch_rank(
         None,
         None,
         false,
+        None,
         None,
         None,
         partition::Version::V1,
@@ -746,6 +748,7 @@ pub(crate) fn smartcluster_rank(
         native_continuation,
         *continuation_mode,
         None,
+        None,
         partition::Version::V1,
     )?;
     let complete: Value = read_json(&launch.join("complete-0.json"))?;
@@ -860,6 +863,67 @@ fn verify_native_training_eligibility(
     Ok(())
 }
 
+/// Where a trainer rank obtains its NCCL unique id (W7-T04).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum CommunicatorSource {
+    /// The historical same-allocation rendezvous file in this launch's directory. Only a
+    /// rank without a frozen bounded-run assignment uses it.
+    LaunchFile(std::path::PathBuf),
+    /// The verified full-group admission of the rank's frozen bounded-run plan.
+    Admitted,
+}
+
+/// Decide, before any input, device or communicator work, which rendezvous a rank may use:
+/// - no frozen assignment and no admission: the historical `nccl.id` in `launch`;
+/// - a frozen bounded-run assignment: only the admitted bootstrap of exactly that plan,
+///   rank and world. A missing bootstrap, a bootstrap for another plan, rank or world, and a
+///   shared `nccl.id` in the launch directory are refused;
+/// - an admitted bootstrap without a frozen assignment is refused.
+pub fn communicator_source(
+    assignment: Option<&topology::Assignment>,
+    admitted: Option<&crate::native_loop::bounded::launch::AdmittedBootstrap>,
+    global_rank: usize,
+    launch: &Path,
+) -> Result<CommunicatorSource> {
+    let shared = launch.join("nccl.id");
+    match (assignment, admitted) {
+        (None, None) => Ok(CommunicatorSource::LaunchFile(shared)),
+        (None, Some(_)) => {
+            anyhow::bail!("an admitted communicator bootstrap requires its plan's frozen assignment")
+        }
+        (Some(_), None) => anyhow::bail!(
+            "a frozen bounded-run assignment takes its communicator bootstrap only from the verified admission; the shared nccl.id rendezvous is refused"
+        ),
+        (Some(assignment), Some(bootstrap)) => {
+            ensure!(
+                bootstrap.plan_sha256() == assignment.plan_sha256
+                    && bootstrap.global_rank() as usize == global_rank
+                    && bootstrap.world_size() as usize == assignment.world,
+                "admitted bootstrap is for another plan, rank or world"
+            );
+            ensure!(
+                !shared.try_exists()?,
+                "a bounded launch directory holds a shared nccl.id; refused"
+            );
+            Ok(CommunicatorSource::Admitted)
+        }
+    }
+}
+
+/// An admitted bootstrap creates only the communicator of the binding its plan derived.
+pub fn verify_admitted_bootstrap(
+    binding: &topology::Binding,
+    bootstrap: &crate::native_loop::bounded::launch::AdmittedBootstrap,
+) -> Result<()> {
+    ensure!(
+        binding.plan_sha256() == Some(bootstrap.plan_sha256())
+            && binding.global_rank() == bootstrap.global_rank() as usize
+            && binding.world() == bootstrap.world_size() as usize,
+        "admitted bootstrap is not for this binding's plan, rank and world"
+    );
+    Ok(())
+}
+
 fn rank_impl(
     root: &Path,
     corpus: &Path,
@@ -879,6 +943,7 @@ fn rank_impl(
     verified_native_continuation: bool,
     declared_mode: Option<continuation::Mode>,
     assignment: Option<&topology::Assignment>,
+    admitted: Option<&crate::native_loop::bounded::launch::AdmittedBootstrap>,
     partition_version: partition::Version,
 ) -> Result<()> {
     // W7-T03: a frozen host/device assignment is validated before any input,
@@ -891,6 +956,9 @@ fn rank_impl(
             "requested world differs from the frozen assignment"
         );
     }
+    // W7-T04: which rendezvous this rank may use is decided here, before any
+    // input or device work.
+    let communicator = communicator_source(assignment, admitted, rank, launch)?;
     ensure!(
         rank < world && steps > 0 && checkpoint_steps > 0,
         "invalid training topology"
@@ -1264,7 +1332,13 @@ fn rank_impl(
     // The communicator rank is not the CUDA ordinal: bind this worker to its
     // owned device and check visibility before the communicator exists.
     let binding = topology::resolve(assignment, rank, world, crate::neural::local_devices)?;
-    let comm = Nccl::init(&binding, &launch.join("nccl.id"))?;
+    let comm = match &communicator {
+        CommunicatorSource::LaunchFile(path) => Nccl::init(&binding, path)?,
+        CommunicatorSource::Admitted => Nccl::init_admitted(
+            &binding,
+            admitted.context("admitted communicator bootstrap")?,
+        )?,
+    };
     let device = Device::Cuda(binding.device_index());
     tch::manual_seed(seed as i64);
     let mut vs = nn::VarStore::new(device);

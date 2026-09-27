@@ -1104,14 +1104,34 @@ pub fn local_devices() -> Result<crate::training::topology::LocalDevices> {
     })
 }
 
+/// Rank 0's fresh NCCL unique id, carried in its signed rendezvous hello and redistributed
+/// only inside the coordinator's signed full-group admission (bounded plans, W7-T04).
+pub fn nccl_unique_id() -> Result<[u8; crate::native_loop::bounded::launch::NCCL_UNIQUE_ID_BYTES]> {
+    let mut id = [0u8; crate::native_loop::bounded::launch::NCCL_UNIQUE_ID_BYTES];
+    ensure!(
+        unsafe { jp_unique_id(id.as_mut_ptr()) } == 0,
+        "{}",
+        native_error()
+    );
+    Ok(id)
+}
+
 impl Nccl {
-    /// Create this worker's communicator from a validated binding: the
-    /// communicator rank is the binding's global rank, and the CUDA ordinal
-    /// is its local device index (checked against its GPU UUID natively).
+    /// The historical same-allocation rendezvous: rank 0 publishes an NCCL unique id at
+    /// `rendezvous` (unique to the launch) and the other ranks poll it. The communicator
+    /// rank is the binding's global rank, and the CUDA ordinal is its local device index
+    /// (checked against its GPU UUID natively).
+    ///
+    /// A binding from a frozen bounded-run plan is refused before anything is read or
+    /// written: bounded plans take the id only from the verified admission
+    /// ([`Nccl::init_admitted`]).
     pub fn init(binding: &crate::training::topology::Binding, rendezvous: &Path) -> Result<Self> {
+        ensure!(
+            binding.plan_sha256().is_none(),
+            "a binding from a frozen bounded-run plan creates its communicator only from the verified admission; the shared nccl.id rendezvous is refused"
+        );
         let (rank, world) = (binding.global_rank(), binding.world());
         ensure!(rank < world && world <= 8, "invalid rank topology");
-        let expected = std::ffi::CString::new(binding.gpu_uuid().unwrap_or(""))?;
         let mut id = [0u8; 128];
         if rank == 0 {
             ensure!(
@@ -1135,6 +1155,22 @@ impl Nccl {
             }
             id.copy_from_slice(&fs::read(rendezvous)?[..128]);
         }
+        Self::create(binding, &id)
+    }
+    /// Bounded plans (W7-T04): the communicator of a binding derived from a frozen plan,
+    /// from the NCCL unique id of that plan's verified full-group admission. Refused before
+    /// any native call unless the bootstrap is for this binding's plan, rank and world.
+    pub fn init_admitted(
+        binding: &crate::training::topology::Binding,
+        bootstrap: &crate::native_loop::bounded::launch::AdmittedBootstrap,
+    ) -> Result<Self> {
+        crate::training::verify_admitted_bootstrap(binding, bootstrap)?;
+        Self::create(binding, bootstrap.id())
+    }
+    fn create(binding: &crate::training::topology::Binding, id: &[u8; 128]) -> Result<Self> {
+        let (rank, world) = (binding.global_rank(), binding.world());
+        ensure!(rank < world && world <= 8, "invalid rank topology");
+        let expected = std::ffi::CString::new(binding.gpu_uuid().unwrap_or(""))?;
         let comm = unsafe {
             jp_nccl_init(
                 id.as_ptr(),

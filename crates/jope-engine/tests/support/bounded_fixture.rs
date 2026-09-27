@@ -14,7 +14,7 @@ use jope_parallel::native_loop::bounded::{
         WorkKind,
     },
     controller::{Liveness, RankLaunch, Supervisor, SupervisorHandle},
-    rendezvous::{self, Challenge, HelloBody, ResultBody},
+    rendezvous::{self, AdmittedMember, Challenge, Hello, HelloBody, Rendezvous, ResultBody},
 };
 use sha2::{Digest, Sha256};
 use std::{
@@ -321,6 +321,44 @@ pub fn hello_body(
         grant_sha256: sha(&serde_json::to_vec(&p.grant).unwrap()),
         communicator_bootstrap: (rank == 0).then(|| hex::encode([0xab; 128])),
     }
+}
+/// A full in-process rendezvous for `c`: every rank's honest hello, the coordinator's
+/// admission frame and every rank's verified membership. `rank0_bootstrap` replaces rank
+/// 0's hello bootstrap (hex).
+pub fn admit_group(
+    c: &BoundedRunContract,
+    k: &Keys,
+    rank0_bootstrap: Option<String>,
+) -> (Rendezvous, Vec<u8>, Vec<Hello>, Vec<AdmittedMember>) {
+    let plan = sha(&bytes(c));
+    let now = now_ms();
+    let mut rv = Rendezvous::open(
+        c,
+        &plan,
+        &k.coordinator,
+        "fixture-coordinator-boot",
+        &rendezvous::fresh_nonce().unwrap(),
+        now,
+    )
+    .unwrap();
+    let closure = rendezvous::closure_digest(&c.artifact_closure).unwrap();
+    let mut hellos = Vec::new();
+    for rank in 0..c.participants.len() as u32 {
+        let mut body = hello_body(c, &plan, rv.challenge(), rank, now, &closure);
+        if let (0, Some(b)) = (rank, &rank0_bootstrap) {
+            body.communicator_bootstrap = Some(b.clone());
+        }
+        let hello = rendezvous::sign_hello(&k.ranks[rank as usize], body).unwrap();
+        rv.offer(&serde_json::to_vec(&hello).unwrap(), now).unwrap();
+        hellos.push(hello);
+    }
+    let admission = rv.admit(&k.coordinator, now).unwrap().unwrap();
+    let frame = serde_json::to_vec(&admission).unwrap();
+    let members = hellos
+        .iter()
+        .map(|h| rendezvous::verify_admission(c, &plan, h, &frame, now).unwrap())
+        .collect();
+    (rv, frame, hellos, members)
 }
 pub fn hello_frame(keys: &Keys, body: HelloBody) -> Vec<u8> {
     let rank = body.global_rank as usize;
