@@ -313,7 +313,7 @@ pub fn file_closure_digest(paths: &[PathBuf]) -> Result<String> {
 }
 
 /// Strict standard base64 (RFC 4648 with padding), ignoring ASCII whitespace.
-fn base64_decode(text: &str) -> Result<Vec<u8>> {
+pub(crate) fn base64_decode(text: &str) -> Result<Vec<u8>> {
     let clean: Vec<u8> = text.bytes().filter(|b| !b.is_ascii_whitespace()).collect();
     ensure!(
         !clean.is_empty() && clean.len() % 4 == 0,
@@ -582,12 +582,14 @@ fn gpu_inventory(
     ))
 }
 
-/// Observe the local host. Refuses rather than inventing any value.
-pub fn collect(
-    spec: &CollectSpec,
-    runner: &dyn CommandRunner,
-    now_unix_ms: u64,
-) -> Result<(HostCensus, CollectionReport)> {
+/// The local host's identity exactly as the collector records it. A rendezvous participant
+/// reports this in its hello, with its own running binary as `spec.executable`, so a host's
+/// census and its participants observe the same values the same way.
+pub fn observe_identity(spec: &CollectSpec, runner: &dyn CommandRunner) -> Result<HostIdentity> {
+    Ok(observe(spec, runner)?.0)
+}
+type Observed = (HostIdentity, GpuProbe, Vec<GpuObservation>, Vec<Ownership>);
+fn observe(spec: &CollectSpec, runner: &dyn CommandRunner) -> Result<Observed> {
     let host = read_line(Path::new("/proc/sys/kernel/hostname"))?;
     ensure!(
         is_name(&host),
@@ -640,6 +642,16 @@ pub fn collect(
             driver_version,
         },
     };
+    Ok((identity, gpu_probe, gpus, ownership))
+}
+
+/// Observe the local host. Refuses rather than inventing any value.
+pub fn collect(
+    spec: &CollectSpec,
+    runner: &dyn CommandRunner,
+    now_unix_ms: u64,
+) -> Result<(HostCensus, CollectionReport)> {
+    let (identity, gpu_probe, gpus, ownership) = observe(spec, runner)?;
     let census = HostCensus {
         schema: CENSUS_SCHEMA.into(),
         captured_unix_ms: now_unix_ms,

@@ -626,7 +626,51 @@ impl<S: Read + Write> Sequenced<S> {
     /// Receive the next frame; only the next consecutive delivery id is accepted.
     pub fn receive(&mut self) -> Result<(u64, Vec<u8>)> {
         ensure!(!self.refused, "sequenced channel already refused");
-        let result = read_frame(&mut self.stream, self.limit).and_then(|frame| {
+        let frame = read_frame(&mut self.stream, self.limit);
+        self.accept(frame)
+    }
+    /// Like [`Sequenced::receive`], for a server waiting on an idle peer: `Ok(None)` when no
+    /// byte arrived within the stream's read deadline (nothing was consumed, the channel stays
+    /// usable). A deadline that expires inside a frame refuses the channel.
+    pub fn poll_receive(&mut self) -> Result<Option<(u64, Vec<u8>)>> {
+        ensure!(!self.refused, "sequenced channel already refused");
+        let mut first = [0u8; 1];
+        match self.stream.read(&mut first) {
+            Ok(0) => {
+                self.refused = true;
+                bail!("peer closed the sequenced channel")
+            }
+            Ok(_) => {}
+            Err(e)
+                if matches!(
+                    e.kind(),
+                    std::io::ErrorKind::WouldBlock | std::io::ErrorKind::TimedOut
+                ) =>
+            {
+                return Ok(None)
+            }
+            Err(e) => {
+                self.refused = true;
+                return Err(e.into());
+            }
+        }
+        let frame = (|| {
+            let mut rest = [0u8; 3];
+            self.stream.read_exact(&mut rest)?;
+            let len = u32::from_be_bytes([first[0], rest[0], rest[1], rest[2]]);
+            ensure!(
+                len <= self.limit,
+                "frame of {len} bytes exceeds message limit {}",
+                self.limit
+            );
+            let mut body = vec![0u8; len as usize];
+            self.stream.read_exact(&mut body)?;
+            Ok(body)
+        })();
+        self.accept(frame).map(Some)
+    }
+    fn accept(&mut self, frame: Result<Vec<u8>>) -> Result<(u64, Vec<u8>)> {
+        let result = frame.and_then(|frame| {
             ensure!(frame.len() >= 8, "frame without a delivery id");
             let id = u64::from_be_bytes(frame[..8].try_into()?);
             ensure!(
