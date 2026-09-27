@@ -281,6 +281,25 @@ on one lineage share one identity, so ingesting them in order yields `initialize
 `improved`, `tie` or `not-improved`. The pipeline never writes to this store; ingest is a
 separate step over its outputs.
 
+### The champion bank (`bank add|list|export`)
+
+The bank holds the "future targets": pipeline champions the HWM ledger accepted as
+improvements. `jope-learning bank add --receipt <r> [--lineage <lineage.json>]` verifies
+everything before a byte is written: the receipt re-derives from its run directory; the HWM
+ledger walks clean (`hwm verify`) and holds an accepted event for exactly this receipt whose
+transition is `improved` (a pointer's first record, `initialized`, beat nothing; every rejection
+is refused); that event's record is this receipt's mapping and its blob is the receipt; a given
+lineage verifies and names the receipt. Entries (`jope.pipeline-bank-entry/v1`: dataset,
+comparison identity, cut, genome, program sha256, mean held-out RMSE, receipt sha256, lineage
+sha256, and the HWM batch, sequence, event sha256, transition and displaced record) are events
+of the `bank` ledger (`$JOPE_STATE/bank/ledger`), so the bank is append-only and hash-chained;
+an entry's address is the sha256 of its canonical JSON, and re-adding an entry writes nothing.
+`bank list [--dataset]` re-checks every entry against its address.
+`bank export --dataset <hash> [--task] [--top 4] --out <seeds.json>` writes the best distinct
+banked genomes as `jope.pipeline-seeds/v1` with their bank-entry and receipt digests, never over
+an existing file; `jope pipeline run --seed-genomes` and `jope pipeline evolve --seeds` consume
+it. The pipeline never reads the learning store: that file and receipts are the whole interface.
+
 ### Engine types: mirrored, not linked
 
 `champion.rs` mirrors `jope-engine`'s `champions::{Identity, Champion}` field-for-field
