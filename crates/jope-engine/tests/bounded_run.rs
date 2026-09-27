@@ -561,7 +561,7 @@ fn deliver(
         let (a, b) = UnixStream::pair().unwrap();
         connected.push(Connected {
             global_rank: rank,
-            stream: a,
+            stream: Box::new(a),
         });
         peers.push(b);
     }
@@ -1747,7 +1747,7 @@ fn admission_and_delivery_stop_when_any_participant_grant_expires() {
         let (a, b) = UnixStream::pair().unwrap();
         connected.push(Connected {
             global_rank: rank,
-            stream: a,
+            stream: Box::new(a),
         });
         peers.push(b);
     }

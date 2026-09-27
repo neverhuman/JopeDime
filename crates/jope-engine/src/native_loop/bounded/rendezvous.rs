@@ -9,10 +9,12 @@
 //! refusal is terminal for the rendezvous and commits nothing.
 //!
 //! Transport-independent verification lives in [`Rendezvous`], [`verify_challenge`],
-//! [`verify_admission`] and [`verify_result`]. [`gather_unix`] / [`join_unix`] bind them to
-//! a same-host Unix socket for fixtures; the admission is delivered only by the controller
-//! after it is journaled. A cross-host transport must reuse the same verification and is
-//! not provided or qualified here (W7-T07).
+//! [`verify_admission`] and [`verify_result`]. [`gather`] / [`join`] run the handshake over
+//! any [`ControlStream`] from an [`Acceptor`]: the cross-host TLS transport with pinned
+//! certificate identity ([`super::transport`]), or a same-host Unix socket for fixtures
+//! ([`gather_unix`] / [`join_unix`]). A peer's channel identity ([`PeerIdentity`]) is bound
+//! to the rank it claims. The admission is delivered only by the controller after it is
+//! journaled.
 use super::{
     census::RuntimeIdentity,
     contract::{BoundedRunContract, ClosureEntry},
@@ -44,6 +46,53 @@ const RESULT_DOMAIN: &[u8] = b"jope.native_rank_result.signature.v1\0";
 /// Opaque communicator bootstrap (for example an NCCL unique id) carried only by rank 0's
 /// hello and redistributed only inside a signed full-group admission.
 pub const MAX_BOOTSTRAP_BYTES: usize = 256;
+
+/// A bidirectional control stream: an authenticated TLS stream
+/// ([`super::transport::TlsStream`]) or a same-host Unix socket (fixtures).
+pub trait ControlStream: Read + Write + Send {
+    fn set_timeouts(&self, read: Option<Duration>, write: Option<Duration>) -> std::io::Result<()>;
+}
+impl ControlStream for UnixStream {
+    fn set_timeouts(&self, read: Option<Duration>, write: Option<Duration>) -> std::io::Result<()> {
+        self.set_read_timeout(read)?;
+        self.set_write_timeout(write)
+    }
+}
+/// The channel identity of a peer, established before any frame is read.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum PeerIdentity {
+    /// A same-host Unix socket (fixture transport): no identity beyond the host.
+    SameHostSocket,
+    /// A mutually authenticated TLS peer that presented this pinned certificate; it may only
+    /// speak for ranks planned on the host that owns that certificate.
+    Certificate { sha256: String },
+}
+/// One step of an [`Acceptor`].
+pub enum Incoming {
+    /// Nothing is waiting.
+    Pending,
+    /// A peer connected but did not authenticate; nothing it sent is trusted.
+    Unauthenticated(String),
+    Stream(Box<dyn ControlStream>, PeerIdentity),
+}
+/// A non-blocking source of authenticated control streams.
+pub trait Acceptor {
+    fn next_incoming(&mut self) -> Incoming;
+}
+/// The same-host fixture acceptor.
+pub struct UnixAcceptor<'a>(pub &'a UnixListener);
+impl Acceptor for UnixAcceptor<'_> {
+    fn next_incoming(&mut self) -> Incoming {
+        match self.0.accept() {
+            Ok((stream, _)) => match stream.set_nonblocking(false) {
+                Ok(()) => Incoming::Stream(Box::new(stream), PeerIdentity::SameHostSocket),
+                Err(e) => Incoming::Unauthenticated(e.to_string()),
+            },
+            Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => Incoming::Pending,
+            Err(e) => Incoming::Unauthenticated(e.to_string()),
+        }
+    }
+}
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
@@ -405,8 +454,20 @@ impl Rendezvous {
         });
         refusal.clone()
     }
-    /// Offer one untrusted hello frame. Returns the rank it authenticated as.
+    /// Offer one untrusted hello frame from a same-host fixture socket. Returns the rank it
+    /// authenticated as.
     pub fn offer(&mut self, frame: &[u8], now_unix_ms: u64) -> Result<u32, GroupRefusal> {
+        self.offer_from(frame, &PeerIdentity::SameHostSocket, now_unix_ms)
+    }
+    /// Offer one untrusted hello frame received from `peer`. A certificate-authenticated peer
+    /// may only speak for a rank planned on the host that owns its certificate; any other
+    /// rank is refused as a wrong participant, which refuses the whole group.
+    pub fn offer_from(
+        &mut self,
+        frame: &[u8],
+        peer: &PeerIdentity,
+        now_unix_ms: u64,
+    ) -> Result<u32, GroupRefusal> {
         if let Some(r) = &self.refused {
             return Err(r.clone());
         }
@@ -435,6 +496,15 @@ impl Rendezvous {
             Err(cause) => return Err(self.refuse(cause)),
         }
         let rank = hello.body.global_rank;
+        if let PeerIdentity::Certificate { sha256 } = peer {
+            let planned = self
+                .contract
+                .participant(rank)
+                .map(|p| p.host.certificate_sha256.as_str());
+            if planned != Some(sha256.as_str()) {
+                return Err(self.refuse(RefusalCause::WrongParticipant { rank }));
+            }
+        }
         if let Some((old, _)) = self.hellos.get(&rank) {
             if old.as_slice() == frame {
                 return Ok(rank); // identical redelivery is idempotent
@@ -908,16 +978,17 @@ pub fn verify_result(
     })
 }
 
-/// A connected, authenticated participant control stream (same-host fixture transport).
+/// A connected, authenticated participant control stream.
 pub struct Connected {
     pub global_rank: u32,
-    pub stream: UnixStream,
+    pub stream: Box<dyn ControlStream>,
 }
-/// Accept and authenticate participants on a Unix socket until the group is admitted or
-/// refused. Each handshake is bounded by the join deadline and the frozen message limit.
-/// Admission is returned *undelivered*: only the controller delivers it, after journaling.
-pub fn gather_unix(
-    listener: &UnixListener,
+/// Accept and authenticate participants from `acceptor` until the group is admitted or
+/// refused. Each handshake is bounded by the join deadline and the frozen message limit, and
+/// each hello is bound to its peer's channel identity. Admission is returned *undelivered*:
+/// only the controller delivers it, after journaling.
+pub fn gather(
+    acceptor: &mut dyn Acceptor,
     rendezvous: &mut Rendezvous,
     coordinator: &SigningKey,
     now: &dyn Fn() -> u64,
@@ -925,22 +996,20 @@ pub fn gather_unix(
     let limit = rendezvous.contract.rendezvous.max_message_bytes;
     let challenge = serde_json::to_vec(rendezvous.challenge()).unwrap_or_default();
     let mut connected = Vec::new();
-    let _ = listener.set_nonblocking(true);
     loop {
         if let Some(admission) = rendezvous.admit(coordinator, now())? {
             return Ok((admission, connected));
         }
-        match listener.accept() {
-            Ok((mut stream, _)) => {
+        match acceptor.next_incoming() {
+            Incoming::Stream(mut stream, peer) => {
                 let remaining = rendezvous
                     .challenge
                     .body
                     .join_deadline_unix_ms
                     .saturating_sub(now())
                     .max(1);
-                let _ = stream.set_nonblocking(false);
-                let _ = stream.set_read_timeout(Some(Duration::from_millis(remaining)));
-                let _ = stream.set_write_timeout(Some(Duration::from_millis(remaining)));
+                let remaining = Some(Duration::from_millis(remaining));
+                let _ = stream.set_timeouts(remaining, remaining);
                 if write_frame(&mut stream, &challenge, limit).is_err() {
                     continue; // the peer went away before authenticating; nothing trusted
                 }
@@ -960,24 +1029,44 @@ pub fn gather_unix(
                         return Err(rendezvous.refuse(cause));
                     }
                 };
-                let rank = rendezvous.offer(&frame, now())?;
+                let rank = rendezvous.offer_from(&frame, &peer, now())?;
                 connected.retain(|c: &Connected| c.global_rank != rank);
                 connected.push(Connected {
                     global_rank: rank,
                     stream,
                 });
             }
-            Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
+            Incoming::Pending | Incoming::Unauthenticated(_) => {
                 std::thread::sleep(Duration::from_millis(10));
             }
-            Err(_) => std::thread::sleep(Duration::from_millis(10)),
         }
     }
 }
-/// Participant side of the same-host fixture transport: read and verify the challenge,
-/// send the signed hello built by `hello`, then verify the full-group admission.
+/// [`gather`] on a same-host Unix socket (fixture transport).
+pub fn gather_unix(
+    listener: &UnixListener,
+    rendezvous: &mut Rendezvous,
+    coordinator: &SigningKey,
+    now: &dyn Fn() -> u64,
+) -> Result<(GroupAdmission, Vec<Connected>), GroupRefusal> {
+    let _ = listener.set_nonblocking(true);
+    gather(&mut UnixAcceptor(listener), rendezvous, coordinator, now)
+}
+/// Participant side on a same-host Unix socket (fixture transport); see [`join`].
 pub fn join_unix(
     stream: &mut UnixStream,
+    contract: &BoundedRunContract,
+    plan_sha256: &str,
+    key: &SigningKey,
+    hello: impl FnOnce(&Challenge) -> HelloBody,
+    now: &dyn Fn() -> u64,
+) -> Result<AdmittedMember> {
+    join(stream, contract, plan_sha256, key, hello, now)
+}
+/// Participant side: read and verify the challenge, send the signed hello built by `hello`,
+/// then verify the full-group admission. Reads are bounded by the join timeout.
+pub fn join(
+    mut stream: &mut dyn ControlStream,
     contract: &BoundedRunContract,
     plan_sha256: &str,
     key: &SigningKey,
@@ -990,13 +1079,13 @@ pub fn join_unix(
         .join_timeout_ms
         .min(contract.original_deadline_unix_ms.saturating_sub(now()))
         .max(1);
-    stream.set_read_timeout(Some(Duration::from_millis(remaining)))?;
-    let frame = read_frame(stream, limit)?;
+    stream.set_timeouts(Some(Duration::from_millis(remaining)), None)?;
+    let frame = read_frame(&mut stream, limit)?;
     let challenge = verify_challenge(contract, plan_sha256, &frame, now())
         .map_err(|c| anyhow::anyhow!("challenge refused: {c:?}"))?;
     let signed = sign_hello(key, hello(&challenge))?;
-    write_frame(stream, &serde_json::to_vec(&signed)?, limit)?;
-    let frame = read_frame(stream, limit)?;
+    write_frame(&mut stream, &serde_json::to_vec(&signed)?, limit)?;
+    let frame = read_frame(&mut stream, limit)?;
     verify_admission(contract, plan_sha256, &signed, &frame, now())
         .map_err(|c| anyhow::anyhow!("admission refused: {c:?}"))
 }

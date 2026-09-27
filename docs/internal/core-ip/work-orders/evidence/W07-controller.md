@@ -810,3 +810,105 @@ Post-fix records:
 assignment, the admitted bootstrap and the plan-selected partition, lands with item F. No
 native call ran: `Nccl::init_admitted` with a matching bootstrap and a real NCCL
 communicator are compile-checked only, and belong to W7-T08.
+
+### Item D — W7-T04/T07 cross-host transport with certificate identity
+
+**Pre-fix record** (`w7b-D-pre-20260927T000633Z`, source trace).
+
+- The rendezvous transport was a same-host Unix socket only: `Connected` held a
+  `UnixStream`, and the only entry points were `gather_unix` and `join_unix`.
+- No TCP, TLS or certificate-bound channel existed anywhere in the bounded controller, and
+  jope-parallel had no TLS dependency.
+- The planned `certificate_sha256` was compared only against a census record, never against
+  a peer.
+
+This is a new capability.
+
+**TLS stack.** The workspace already carries rustls 0.23 and tokio-rustls 0.26 with the
+aws-lc-rs provider (jainnode's mTLS control channel). jope-parallel now uses the workspace
+`rustls`. The provider is always named explicitly (`aws_lc_rs::default_provider()`), so the
+workspace's single-provider guard still passes: `rustls feature "aws_lc_rs"` is the only
+one. `Cargo.lock` changes by exactly one line, the dependency edge; no package is added.
+Test certificates are built from DER in the test support code and signed with
+ed25519-dalek, so no certificate crate is added.
+
+**Identity model.** The census already pins each host's `certificate_sha256`, and so does
+the plan. The transport makes that pin the channel identity:
+
+- TLS 1.3 only, and mutual.
+- Each side presents its host certificate. It accepts the peer only when the SHA-256 of the
+  peer's end-entity certificate is a planned digest and the certificate is inside its
+  validity window. The handshake signature is verified with the provider's algorithms.
+- No chain is accepted, no CA, no host name (SNI is off).
+- `planned_certificates` refuses two hosts that present one certificate.
+  `coordinator_certificate` is the certificate of the planned host named `coordinator_host`,
+  so a coordinator outside the plan has no identity and is refused.
+
+**Rendezvous over the transport** (`rendezvous.rs`).
+
+- `gather` and `join` now run over any `ControlStream` from an `Acceptor`. `gather_unix` and
+  `join_unix` remain thin fixture wrappers.
+- `offer_from(frame, PeerIdentity)` binds each hello to its channel: a certificate
+  authenticated peer may speak only for ranks planned on the host that owns that
+  certificate. Any other rank is refused as `WrongParticipant`, which refuses the whole group.
+- `Connected.stream` is now a boxed `ControlStream`. The two fixtures in
+  `tests/bounded_run.rs` that build one by hand now box their `UnixStream`; nothing else in
+  them changes.
+
+**Limits, deadlines and delivery ids** (`transport.rs`).
+
+- Every frame is bounded before its body is read.
+- `Timeouts::from_plan` sets I/O to the plan's heartbeat timeout, and connect and handshake
+  to the join timeout, at most 10 s each.
+- `Sequenced` carries strictly consecutive delivery ids. A repeated, regressed or skipped
+  id, or a frame without an id, refuses the channel for good. The frame limit covers the
+  8-byte id.
+
+Tests in `tests/bounded_transport.rs` (9), loopback TCP with in-test self-signed Ed25519
+certificates:
+
+- `mutually_pinned_tls_carries_bounded_frames` — positive control. Frames flow both ways,
+  and each peer is identified by its pinned certificate. Credentials load from PEM. A key
+  readable by group or others, a symlinked key, a non-key and a non-certificate are refused.
+- `a_wrong_certificate_is_refused_in_both_directions` — an unpinned client and an unpinned
+  server are both refused, with a positive control.
+- `expired_and_not_yet_valid_certificates_are_refused` — client and server, even though
+  pinned.
+- `oversize_frames_are_refused_before_their_body_is_read` — including the sequenced frame
+  bound.
+- `silent_peers_time_out` — a TCP peer that never starts the handshake, an authenticated
+  peer that sends nothing, and a closed port.
+- `replayed_bytes_and_delivery_ids_are_refused` — the recorded bytes of an authenticated
+  session, replayed on a new connection, cannot complete a handshake. A duplicated delivery
+  id refuses the channel for good, and so do a skipped id and a frame too short to carry one.
+- `the_plan_pins_every_host_and_the_coordinator` — including a shared certificate and a
+  coordinator outside the plan.
+- `the_rendezvous_admits_only_hosts_presenting_their_planned_certificates` — the full
+  coordinator (`FakeSupervisor`) over TLS. Three ranks on their own certificates are admitted
+  and running. Rank 2 on host 0's valid, pinned certificate refuses the whole group
+  (`wrong_participant`, rank 2): outcome refused, 60 000 committed updates, and no rank
+  admitted.
+- `a_hello_replayed_over_a_fresh_authenticated_connection_is_refused` — a captured hello
+  replayed to a new rendezvous gives `StaleRendezvous`. A genuine rank-0 hello from host 1's
+  certificate gives `WrongParticipant`.
+
+Post-fix records:
+
+- `w7b-D-post-20260927T001252Z` — the full gate. It adds two steps: exactly one rustls crypto
+  provider, as in `deploy/ci/check.sh`, and no package added to `Cargo.lock`.
+- `w7b-D-post-repeat-20260927T001125Z` — `bounded_transport`, `bounded_run` and
+  `bounded_run_recovery` five times: 15 of 15 target runs passed.
+
+**Decisions for the owner.** None blocks W7-T07; each is implemented in the fail-closed
+direction.
+
+1. **Pinned leaf certificates or a CA-issued PKI.** Pinning is what the frozen plan already
+   specifies. A CA-issued leaf still works if it is presented alone, but a presented chain
+   is refused.
+2. **Certificate rotation.** The digest is frozen in the plan, so a rotated certificate
+   needs a new plan attempt.
+3. **The coordinator must be a planned host.** Otherwise it has no pinned identity.
+
+**Open.** `gather` handshakes one connection at a time, so a slow authenticated peer can
+delay the others, though never past the join deadline. Timeouts have been exercised only on
+loopback. Host certificate and key provisioning is an operator step (runbook).
