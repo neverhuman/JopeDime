@@ -1,8 +1,9 @@
 //! Versioned bounded-run contract for repository-managed multi-host execution (W7).
 //!
 //! This lives alongside the fixed `jope.native_loop.v1` run contract; it never reinterprets
-//! an old manifest. Every record here is source- and fixture-level: nothing in this module
-//! contacts another host, probes a network, reads live GPU state or starts numerical work.
+//! an old manifest. Nothing here contacts another host, reads live GPU state or starts
+//! numerical work on its own: the census collector reads only the local host, and the
+//! transport connects only where an operator-run coordinator, participant or agent directs it.
 //! A same-host fixture exercising these types is a fixture, not the three-host proof (W7-T07).
 //!
 //! * [`census`] — typed host census and admission preflight refusals (W7-T01, source half).
@@ -15,6 +16,8 @@
 //!   and the worker's own visibility check (W7-T03 delivery half).
 //! * [`rendezvous`] — authenticated rendezvous, group admission, bounded framing and
 //!   authenticated results (W7-T04).
+//! * [`transport`] — the cross-host TCP transport: TLS 1.3 with mutual certificate identity
+//!   pinned by the plan, deadlines and delivery ids (W7-T04/T07).
 //! * `assignment` (`neural` only) — the pure plan → trainer assignment join (W7-T03).
 /// Plan → trainer assignment join (W7-T02 × W7-T03); the trainer is `neural`-gated.
 #[cfg(feature = "neural")]
@@ -25,6 +28,7 @@ pub mod contract;
 pub mod controller;
 pub mod launch;
 pub mod rendezvous;
+pub mod transport;
 
 use anyhow::{ensure, Result};
 use ed25519_dalek::{Signature, Signer, SigningKey, VerifyingKey};
