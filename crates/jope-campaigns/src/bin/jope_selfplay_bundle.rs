@@ -988,7 +988,8 @@ fn selfplay_unit_templates_in(source: &Path) -> PathBuf {
 /// (`validate_systemd_unit`) does not apply to them. The Python removal P1
 /// (ADR-0006) archived the installer and both templates (restore with
 /// `git checkout 8a55c4fef -- <path>`, docs/archive/python-archive-manifest.json);
-/// the names stay excluded so a restored copy is still not bundled.
+/// the names stay excluded so a restored copy is still not bundled
+/// (`host_installed_units_are_optional_and_never_rendered_into_the_bundle`).
 const HOST_INSTALLED_UNITS: [&str; 2] =
     ["jope-workspace-sync.service", "jope-workspace-sync.timer"];
 
@@ -2892,6 +2893,44 @@ mod tests {
                 .unwrap_or_else(|error| panic!("{}: {error:#}", path.display()));
         }
         assert!(seen > 0, "no unit templates under {}", systemd.display());
+    }
+
+    /// The Python removal P1 (ADR-0006) archived the workspace-sync templates.
+    /// Rendering must not need them, and a copy restored with
+    /// `git checkout 8a55c4fef -- <path>` must still stay out of the bundle.
+    #[test]
+    fn host_installed_units_are_optional_and_never_rendered_into_the_bundle() {
+        let temporary = tempfile::tempdir().unwrap();
+        let source = temporary.path().join("source");
+        let templates = selfplay_unit_templates_in(&source);
+        fs::create_dir_all(&templates).unwrap();
+        fs::write(
+            templates.join("jope-selfplay-gc.service.in"),
+            "[Service]\nExecStart=@JOPE_BUNDLE@/jope_selfplay_gc\n",
+        )
+        .unwrap();
+        let rendered_names = |dir: &Path| {
+            let mut names = fs::read_dir(dir)
+                .unwrap()
+                .map(|entry| entry.unwrap().file_name().to_string_lossy().into_owned())
+                .collect::<Vec<_>>();
+            names.sort();
+            names
+        };
+
+        let absent = render_unit_templates(&source, &temporary.path().join("absent")).unwrap();
+        assert_eq!(rendered_names(&absent), ["jope-selfplay-gc.service"]);
+
+        for unit in HOST_INSTALLED_UNITS {
+            let text = if unit.ends_with(".timer") {
+                "[Timer]\nUnit=jope-workspace-sync.service\n"
+            } else {
+                "[Service]\nExecStart=/usr/bin/python3 @JOPE_STATE@/scripts/workspace_sync.py sync\n"
+            };
+            fs::write(templates.join(format!("{unit}.in")), text).unwrap();
+        }
+        let restored = render_unit_templates(&source, &temporary.path().join("restored")).unwrap();
+        assert_eq!(rendered_names(&restored), ["jope-selfplay-gc.service"]);
     }
 
     #[test]

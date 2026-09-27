@@ -95,6 +95,14 @@ fn under_roots(path: &str, roots: &Roots) -> bool {
         || path.starts_with(&roots.bundle)
 }
 
+/// The fewest templates each directory may hold. ADR-0003 converted 22 engine,
+/// 39 self-play and 1 pending unit; the Python removal P1 (ADR-0006) then
+/// archived the 9 templates that only ran archived Python -- 7 engine, 2
+/// self-play -- as category `systemd-template` in
+/// `docs/archive/python-archive-manifest.json`. Checked per directory so a
+/// template added in one cannot hide one lost in another.
+const TEMPLATE_FLOORS: [(&str, usize); 3] = [("engine", 15), ("selfplay", 37), ("pending", 1)];
+
 #[test]
 fn every_tracked_unit_is_a_template() {
     let stray: Vec<_> = walk(&templates())
@@ -109,10 +117,34 @@ fn every_tracked_unit_is_a_template() {
         stray.is_empty(),
         "rendered units committed next to the templates: {stray:?}"
     );
-    let count = templates_under(&templates()).unwrap().len();
+    let found = templates_under(&templates()).unwrap();
+    let counts: Vec<(&str, usize, usize)> = TEMPLATE_FLOORS
+        .iter()
+        .map(|&(dir, floor)| {
+            let count = found.iter().filter(|path| path.starts_with(dir)).count();
+            (dir, floor, count)
+        })
+        .collect();
+    let floor_total: usize = TEMPLATE_FLOORS.iter().map(|&(_, floor)| floor).sum();
+    let breakdown = |pick: fn(&(&str, usize, usize)) -> usize| {
+        counts
+            .iter()
+            .map(|row| format!("{} {}", row.0, pick(row)))
+            .collect::<Vec<_>>()
+            .join(" + ")
+    };
+    let expected = format!("{} = {floor_total}", breakdown(|row| row.1));
+    let actual = format!("{} = {}", breakdown(|row| row.2), found.len());
+    for (dir, floor, count) in &counts {
+        assert!(
+            count >= floor,
+            "expected at least {floor} unit templates under deploy/systemd/{dir} \
+             ({expected} after the P1 archive), found {actual}"
+        );
+    }
     assert!(
-        count >= 60,
-        "expected the 39 + 22 + 1 units as templates, found {count}"
+        found.len() >= floor_total,
+        "expected at least {expected} unit templates, found {actual}"
     );
 }
 
