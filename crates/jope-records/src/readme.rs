@@ -146,7 +146,7 @@ fn thousands(n: i64) -> String {
     let digits = n.unsigned_abs().to_string();
     let mut out = String::new();
     for (i, c) in digits.chars().enumerate() {
-        if i > 0 && (digits.len() - i) % 3 == 0 {
+        if i > 0 && (digits.len() - i).is_multiple_of(3) {
             out.push(',');
         }
         out.push(c);
@@ -832,7 +832,7 @@ fn render_samecut(p: &Paths) -> Result<String> {
     let mut search_seconds: Vec<f64> = vec![];
     let (mut finalist, mut best) = (0usize, 0usize);
     let mut ordered: Vec<&Value> = reports.iter().collect();
-    ordered.sort_by(|a, b| s(get(a, "dataset_id")).cmp(&s(get(b, "dataset_id"))));
+    ordered.sort_by_key(|r| s(get(r, "dataset_id")));
     for r in ordered {
         let methods = at(r, "methods")?.as_list().cloned().unwrap_or_default();
         let s_index = methods

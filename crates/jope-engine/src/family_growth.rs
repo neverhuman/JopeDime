@@ -403,7 +403,9 @@ fn reviewer_listed(reviewers: &Value, reviewer: &Value) -> Outcome<bool> {
     }
 }
 
-/// Authenticate one decision receipt and return its component id.
+/// Authenticate one decision receipt and return its component id. The arguments mirror the
+/// retired Python's `authenticate` one for one.
+#[allow(clippy::too_many_arguments)]
 fn authenticate(
     root: &Path,
     graph: &Graph,

@@ -10,7 +10,6 @@ use std::{
     fs::{self, File, OpenOptions},
     os::fd::AsRawFd,
     path::{Path, PathBuf},
-    process::Command,
 };
 
 const SCHEMA: &str = "parallel.family_registry.v1";

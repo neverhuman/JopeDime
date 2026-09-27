@@ -178,14 +178,14 @@ pub fn never_interrupted() -> Outcome<()> {
     Ok(())
 }
 
+/// What `walk` calls for each directory: the directory, its subdirectory names (prune by
+/// retaining) and its other entries.
+pub type Visit<'a> = &'a mut dyn FnMut(&Path, &mut Vec<String>, &[String]) -> Outcome<()>;
+
 /// `os.walk(root, followlinks=False, onerror=raise)` after refusing a root with symlink
 /// components; `visit` sees each directory, its subdirectory names (symlinks to directories
 /// included, as `os.walk` lists them; prune by retaining) and its other entries.
-pub fn walk(
-    root: &Path,
-    interrupt: Interrupt<'_>,
-    visit: &mut dyn FnMut(&Path, &mut Vec<String>, &[String]) -> Outcome<()>,
-) -> Outcome<()> {
+pub fn walk(root: &Path, interrupt: Interrupt<'_>, visit: Visit<'_>) -> Outcome<()> {
     let root = abspath(root);
     let resolved = root.canonicalize().map_err(|e| os_error(&e, &root))?;
     if resolved != root || !root.is_dir() {
