@@ -101,6 +101,15 @@ enum Command {
         #[arg(long)]
         predecessor_run_dir: Option<PathBuf>,
     },
+    /// Check a pinned plan against a host census without admission or dispatch.
+    Preflight {
+        #[arg(long)]
+        run_dir: PathBuf,
+        #[arg(long)]
+        plan_sha256: String,
+        #[arg(long)]
+        census: PathBuf,
+    },
     /// Read-only status of a planned bounded run.
     Status {
         #[arg(long)]
@@ -149,6 +158,16 @@ fn bounded_command(command: Command) -> Result<()> {
             now,
             predecessor_run_dir.as_deref(),
         )?)?,
+        Command::Preflight {
+            run_dir,
+            plan_sha256,
+            census,
+        } => serde_json::to_value(bounded::controller::preflight_dry_run(
+            &run_dir,
+            &plan_sha256,
+            &census,
+            now,
+        )?)?,
         Command::Status { run_dir } => {
             serde_json::to_value(bounded::controller::status(&run_dir)?)?
         }
@@ -179,6 +198,7 @@ fn main() -> Result<()> {
     if matches!(
         args.command,
         Command::Plan { .. }
+            | Command::Preflight { .. }
             | Command::Status { .. }
             | Command::Verify { .. }
             | Command::Cancel { .. }

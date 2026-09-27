@@ -764,6 +764,43 @@ fn build_status(
     })
 }
 
+/// Read-only preflight of a pinned, unstarted plan. This never journals admission,
+/// holds an allocation, or contacts a host; the coordinator must recheck at dispatch.
+pub fn preflight_dry_run(
+    dir: &Path,
+    expected_plan_sha256: &str,
+    census_path: &Path,
+    now: u64,
+) -> Result<PreflightReceipt> {
+    verify(dir, Some(expected_plan_sha256))?;
+    let (contract, plan_sha256) = load_plan(dir)?;
+    ensure!(
+        plan_sha256 == expected_plan_sha256,
+        "frozen plan changed during preflight"
+    );
+    contract.validate_at(now).map_err(|e| anyhow!("{e}"))?;
+    let records = load_journal(dir)?;
+    let state = replay(&contract, &plan_sha256, &records)?;
+    ensure!(
+        state.terminal.is_none()
+            && state.intents.is_empty()
+            && state.admission.is_none()
+            && !state.cancel
+            && fs::symlink_metadata(dir.join(CANCEL)).is_err()
+            && coordinator_lock_holder(dir)?.is_none(),
+        "dry-run preflight requires an unstarted, uncancelled plan without a live coordinator"
+    );
+    let bytes = read_bounded(census_path, census::MAX_CENSUS_BYTES as u64)?;
+    let census = HostCensus::from_bytes(&bytes)?;
+    Ok(census::preflight(
+        &contract,
+        &plan_sha256,
+        &census,
+        &hash(&bytes),
+        now,
+    )?)
+}
+
 /// Read-only Status. Creates nothing, takes no lock and contacts no participant.
 pub fn status(dir: &Path) -> Result<StatusReport> {
     existing_dir(dir)?;
