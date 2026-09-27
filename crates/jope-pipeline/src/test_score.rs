@@ -154,11 +154,14 @@ pub fn score(options: &ScoreOptions) -> Result<(TestScore, PathBuf)> {
     let (train_x, train_y) = split_rows(&train);
     let (test_x, test_y) = split_rows(&test);
     let parsed = GenomeIr::parse(&receipt.search.selected_genome)?;
-    let predictions = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        let model = feat_math::fit(&parsed, &train_x, &train_y)?;
-        anyhow::Ok(model.predict(&test_x))
-    }))
-    .map_err(|_| anyhow::anyhow!("the fit panicked"))??;
+    // On the stack the search fitted this genome with, not whatever the caller's thread has.
+    let predictions = crate::parallel::on_evaluation_stack(|| {
+        std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            let model = feat_math::fit(&parsed, &train_x, &train_y)?;
+            anyhow::Ok(model.predict(&test_x))
+        }))
+        .map_err(|_| anyhow::anyhow!("the fit panicked"))
+    })???;
     ensure!(
         predictions.len() == test_y.len(),
         "predicted {} values for {} test rows",

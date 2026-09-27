@@ -147,9 +147,10 @@ pub struct SearchOptions {
     /// search's own cuts like every other candidate and spend the same evaluation budget; the
     /// seconds bound never skips them ([`seconds_exempt`]).
     pub seeds: Vec<String>,
-    /// Worker threads evaluating one generation's admitted candidates. `1` evaluates on the
-    /// calling thread, exactly as the sequential search always has; any count gives the same
-    /// decisions, because candidates are admitted and folded back in slot order.
+    /// Worker threads evaluating one generation's admitted candidates. `1` evaluates one at a
+    /// time, exactly as the sequential search always has (on the evaluation pool's single
+    /// thread, so on the same stack as any other count); any count gives the same decisions,
+    /// because candidates are admitted and folded back in slot order.
     pub threads: usize,
     /// Independent random streams over the same cuts, sharing each cut's budget and its
     /// "never fit twice" rule. Island 0 is the `--rng-seed` stream itself, so one island is the
@@ -642,15 +643,18 @@ fn offspring(
     )
 }
 
-/// Run one cut's search and publish its evidence under `output`.
+/// Run one cut's search and publish its evidence under `output` (sequentially, on the
+/// evaluation stack).
 pub fn run_cut(cut: &Cut, budget: Budget, rng_seed: u64, output: &Path) -> Result<CutSearch> {
-    run_cut_allocated(
-        cut,
-        &SearchOptions::new(budget, rng_seed),
-        None,
-        output,
-        false,
-    )
+    crate::parallel::on_evaluation_stack(|| {
+        run_cut_allocated(
+            cut,
+            &SearchOptions::new(budget, rng_seed),
+            None,
+            output,
+            false,
+        )
+    })?
 }
 
 /// Multiple cuts reserve half the evaluation slots (rounded down) and half the
@@ -672,24 +676,32 @@ pub fn run_cuts(
 /// counters) both happen in slot order on the calling thread, so any thread count yields the
 /// same observations, the same selection and the same published bytes; only wall-clock
 /// readings differ, as they do between any two runs.
+///
+/// Every fit runs on the pool's threads, which have
+/// [`crate::parallel::EVALUATION_STACK_BYTES`] of stack: one worker keeps the sequential
+/// slot-by-slot loop, but on the pool's single thread rather than the caller's, so no worker
+/// count gives a fit less stack than another.
 pub fn run_cuts_with(
     cuts: &[Cut],
     options: &SearchOptions,
     output: &Path,
 ) -> Result<Vec<CutSearch>> {
     let pool = crate::parallel::pool(options.workers())?;
-    let mut searches = Vec::new();
-    for cut in cuts {
-        searches.push(run_cut_allocated(
-            cut,
-            options,
-            pool.as_ref(),
-            &output.join(format!("cut-{}", cut.index)),
-            cuts.len() > 1,
-        )?);
-    }
-    remeasure_in(cuts, &mut searches, options, pool.as_ref())?;
-    Ok(searches)
+    let concurrent = (options.workers() > 1).then_some(&pool);
+    pool.install(|| {
+        let mut searches = Vec::new();
+        for cut in cuts {
+            searches.push(run_cut_allocated(
+                cut,
+                options,
+                concurrent,
+                &output.join(format!("cut-{}", cut.index)),
+                cuts.len() > 1,
+            )?);
+        }
+        remeasure_in(cuts, &mut searches, options, concurrent)?;
+        Ok(searches)
+    })
 }
 
 /// Evaluate `admitted` in order. Each candidate starts only while the cut's seconds bound
@@ -977,12 +989,14 @@ pub const REMEASURE_TOP_K: usize = ELITES;
 /// including failures, use the same total allowance as exploration. Partial
 /// coverage is retained as evidence and is ineligible for selection.
 pub fn remeasure_topk_on_all_cuts(cuts: &[Cut], searches: &mut [CutSearch]) -> Result<()> {
-    remeasure_in(
-        cuts,
-        searches,
-        &SearchOptions::new(Budget::default(), 0),
-        None,
-    )
+    crate::parallel::on_evaluation_stack(|| {
+        remeasure_in(
+            cuts,
+            searches,
+            &SearchOptions::new(Budget::default(), 0),
+            None,
+        )
+    })?
 }
 
 /// The comparison phase, one worker per cut when a pool is given. Each cut's admissions depend
