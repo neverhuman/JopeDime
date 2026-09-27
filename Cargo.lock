@@ -2435,6 +2435,7 @@ dependencies = [
  "csv",
  "feat-math",
  "jope-datasets",
+ "jope-paths",
  "jope-policy",
  "nix 0.29.0",
  "rayon",

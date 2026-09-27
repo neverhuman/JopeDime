@@ -162,6 +162,25 @@ pub enum Cmd {
         #[command(subcommand)]
         cmd: LineageCmd,
     },
+    /// Score a verified receipt's selected genome once on the dataset's sealed test split (refit
+    /// on every train.csv row). Writes a separate jope.pipeline-test-score/v1; a repeat for the
+    /// same (dataset, genome) is refused; it never feeds selection.
+    Score {
+        #[arg(long)]
+        receipt: PathBuf,
+        /// The split to score; only `test`.
+        #[arg(long)]
+        split: String,
+        /// The dataset (default: the path the receipt recorded).
+        #[arg(long)]
+        dataset: Option<String>,
+        /// Where the once-per-(dataset, genome) records live (default:
+        /// $JOPE_STATE/pipeline/test-scores).
+        #[arg(long)]
+        registry: Option<PathBuf>,
+        #[arg(long)]
+        json: bool,
+    },
 }
 
 #[derive(Subcommand)]
@@ -320,6 +339,37 @@ pub fn run(cli: Cli) -> Result<ExitCode> {
                 Ok(ExitCode::FAILURE)
             }
         },
+        Cmd::Score {
+            receipt,
+            split,
+            dataset,
+            registry,
+            json,
+        } => {
+            anyhow::ensure!(split == "test", "--split must be test, got {split:?}");
+            let (score, path) = crate::test_score::score(&crate::test_score::ScoreOptions {
+                receipt,
+                dataset,
+                registry: registry.unwrap_or_else(crate::test_score::default_registry),
+                clock: crate::clock::Clock::Wall,
+            })?;
+            if json {
+                println!("{}", serde_json::to_string(&score)?);
+            } else {
+                println!(
+                    "scored {} on {} test row(s) of {}: test RMSE {:.6}, test R2 {:.6} \
+                     (development held-out RMSE {:.6}); score receipt {}",
+                    score.genome,
+                    score.dataset.test_rows,
+                    score.dataset.id,
+                    score.test_rmse,
+                    score.test_r2,
+                    score.validation_rmse,
+                    path.display()
+                );
+            }
+            Ok(ExitCode::SUCCESS)
+        }
         Cmd::VerifyReceipt {
             receipt: path,
             evidence,
