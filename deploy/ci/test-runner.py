@@ -109,5 +109,109 @@ class RunnerTests(unittest.TestCase):
                     self.assertEqual(expected, result.returncode, result.stderr)
 
 
+class SecretScanTests(unittest.TestCase):
+    def test_full_head_history_is_independent_of_custody_refs(self):
+        scratch = ROOT / 'target' / 'tmp'
+        scratch.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(prefix='secret-scan-fixture-', dir=scratch) as name:
+            repo = Path(name)
+            def git(*args):
+                return subprocess.run(['git', '-c', 'user.name=Fixture', '-c',
+                    'user.email=fixture@example.invalid', *args], cwd=repo,
+                    capture_output=True, text=True, check=True)
+            def scan():
+                return subprocess.run(['bash', str(ROOT/'deploy/ci/secret-scan.sh'), str(repo)],
+                    capture_output=True, text=True)
+            git('init', '-q', '-b', 'main')
+            (repo/'README').write_text('synthetic scan fixture\n')
+            git('add', 'README'); git('commit', '-qm', 'clean source')
+            git('switch', '--orphan', 'custody')
+            (repo/'historical.env').write_text('SYNTHETIC_FIXTURE=not-a-credential\n')
+            git('add', 'historical.env'); git('commit', '-qm', 'unrelated custody')
+            git('switch', 'main')
+            # Reproduce the old gate: an unrelated ref changes its result.
+            old = subprocess.run(['gitleaks', 'detect', '--redact', '--no-banner',
+                '--config', str(ROOT/'.gitleaks.toml'), '--source', str(repo)],
+                capture_output=True, text=True)
+            self.assertEqual(1, old.returncode, old.stderr)
+            self.assertEqual(0, scan().returncode)
+            # A removed file in HEAD ancestry must still fail: this is a history scan.
+            (repo/'service.env').write_text('SYNTHETIC_FIXTURE=not-a-credential\n')
+            git('add', 'service.env'); git('commit', '-qm', 'historical source violation')
+            git('rm', 'service.env'); git('commit', '-qm', 'remove current file')
+            self.assertEqual(1, scan().returncode)
+            # A shallow marker must fail before the scanner can claim complete history.
+            (repo/'.git'/'shallow').write_text(git('rev-parse', 'HEAD').stdout)
+            refused = scan()
+            self.assertEqual(2, refused.returncode)
+            self.assertIn('requires full HEAD history', refused.stderr)
+
+    def test_hygiene_requests_complete_history(self):
+        workflow = (ROOT/'.github/workflows/ci.yml').read_text()
+        hygiene = workflow.split('\n  hygiene:', 1)[1].split('\n  rust-check:', 1)[0]
+        self.assertIn('fetch-depth: 0', hygiene)
+        self.assertIn('bash deploy/ci/secret-scan.sh', (ROOT/'deploy/ci/check.sh').read_text())
+
+
+class DropInAdmissionTests(unittest.TestCase):
+    def test_actual_launcher_refuses_unrecorded_systemd_configuration(self):
+        scratch = ROOT / 'target' / 'tmp'
+        scratch.mkdir(parents=True, exist_ok=True)
+        approved = '/etc/systemd/system/jope-runner@.service.d/runtime-max.conf'
+        fragment = '/etc/systemd/system/jope-runner@.service'
+        script = r'''hostname() { echo xbabe1; }
+systemctl() { case "$*" in *DropInPaths*) printf '%s\n' "$fixture_dropins";; *FragmentPath*) printf '%s\n' "$fixture_fragment";; *) return 91;; esac; }
+flock() { exit 77; } # valid admission stops here, before any Docker or credential access
+source deploy/runner/run.sh ci
+'''
+        import os
+        with tempfile.TemporaryDirectory(prefix='dropin-fixture-', dir=scratch) as name:
+            for dropins, unit, expected in [(approved, fragment, 77),
+                    ('', fragment, 2),
+                    (approved+' /etc/systemd/system/jope-runner@ci.service.d/resource-budget.conf', fragment, 2),
+                    (approved, '/foreign.service', 2)]:
+                with self.subTest(dropins=dropins, unit=unit):
+                    env = dict(os.environ, JOPE_RUNNER_STATE=name,
+                               fixture_dropins=dropins, fixture_fragment=unit)
+                    result = subprocess.run(['bash', '-ec', script], cwd=ROOT, env=env,
+                                            capture_output=True, text=True)
+                    self.assertEqual(expected, result.returncode, result.stderr)
+
+
+class EmitterEvidenceTests(unittest.TestCase):
+    def test_actual_lane_routes_emitter_output_to_run_evidence(self):
+        import os
+        scratch = ROOT / 'target' / 'tmp'
+        scratch.mkdir(parents=True, exist_ok=True)
+        script = r'''rustup() { :; }
+g++() { echo fixture; }
+clang++() { echo fixture; }
+node() { echo fixture; }
+python3() { echo fixture; }
+rustc() { echo fixture; }
+bash() {
+  [[ "$1" == deploy/ci/emitters.sh ]] || exit 91
+  printf '%s\n' "$EMITTERS_OUT" > "$fixture_capture"
+  return 77
+}
+source deploy/ci/fast-lane.sh emitters
+'''
+        with tempfile.TemporaryDirectory(prefix='emitter-route-', dir=scratch) as name:
+            root = Path(name)
+            evidence = root/'workspace-evidence'/'run'/'attempt'/'emitters'
+            cache = root/'persistent-cargo'
+            capture = root/'captured-path'
+            env = dict(os.environ, JOPE_LANE_EVIDENCE=str(evidence),
+                       CARGO_TARGET_DIR=str(cache), fixture_capture=str(capture))
+            result = subprocess.run(['bash', '-ec', script], cwd=ROOT, env=env,
+                                    capture_output=True, text=True)
+            self.assertEqual(77, result.returncode, result.stderr)
+            self.assertEqual(str(evidence/'emitters'), capture.read_text().strip())
+            self.assertFalse(cache.exists())
+        workflow = (ROOT/'.github/workflows/ci.yml').read_text()
+        lane = workflow.split('\n  emitters:', 1)[1].split('\n  inputs:', 1)[0]
+        self.assertIn('$GITHUB_WORKSPACE/target/ci-evidence/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT/$GITHUB_JOB', lane)
+
+
 if __name__ == '__main__':
     unittest.main()
