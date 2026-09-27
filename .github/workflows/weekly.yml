@@ -41,7 +41,7 @@ jobs:
       - name: Pinned models and Golden42 datasets
         run: |
           set -euo pipefail
-          jope=$(python3 deploy/ci/cargo-artifact.py build --package jope-cli --bin jope)
+          jope=$(cargo run -q --locked -p jope-ci -- cargo-artifact build --package jope-cli --bin jope)
           "$jope" models fetch --pinned
           "$jope" datasets fetch golden42
       - name: Regression suite

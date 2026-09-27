@@ -70,7 +70,7 @@ jobs:
               cargo metadata --locked --no-deps --format-version 1 > /builder/metadata.json
               cargo build --release --locked -p jope-cli --bin jope --message-format=json-render-diagnostics > /builder/build.jsonl
             '
-          binary=$(python3 deploy/ci/cargo-artifact.py select --package jope-cli --bin jope \
+          binary=$(cargo run -q --locked -p jope-ci -- cargo-artifact select --package jope-cli --bin jope \
             --metadata "$RUNNER_TEMP/builder/metadata.json" --messages "$RUNNER_TEMP/builder/build.jsonl" \
             --path-map /work "$PWD")
           cp "$binary" "dist/jope-$GITHUB_REF_NAME-x86_64-unknown-linux-gnu"

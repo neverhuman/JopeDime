@@ -63,7 +63,7 @@
       "result_backend": "unittest",
       "feature_selection": "not-applicable",
       "checks": [
-        "python3 deploy/ci/test-cargo-artifact.py",
+        "cargo test -q --locked -p jope-ci",
         "python3 deploy/ci/test-coverage.py",
         "python3 deploy/ci/test-receipt.py",
         "bash deploy/ci/check.sh",
@@ -1741,6 +1741,20 @@
       "dispositions": [],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "package:jope-ci": {
+      "discovery": {
+        "kind": "package",
+        "manifest": "crates/jope-ci/Cargo.toml"
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default",
+        "full-doctests"
+      ],
+      "dispositions": [],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
     "package:jope-cli": {
       "discovery": {
         "kind": "package",
@@ -1935,16 +1949,6 @@
       ],
       "dispositions": [],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
-    },
-    "python:deploy/ci/test-cargo-artifact.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "lanes": [
-        "hygiene"
-      ],
-      "dispositions": [],
-      "scope": "Direct stdlib unittest execution."
     },
     "python:deploy/ci/test-coverage.py": {
       "discovery": {
@@ -5085,6 +5089,60 @@
       ],
       "dispositions": [],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:jope-ci/bin/jope-ci": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-ci/src/main.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default",
+        "hygiene"
+      ],
+      "dispositions": [
+        "runtime-tools"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately. Binary/example runtime behavior is not claimed by build or its unit-test harness."
+    },
+    "target:jope-ci/lib/jope_ci": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-ci/src/lib.rs",
+        "test": true,
+        "doctest": true,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default",
+        "full-doctests",
+        "hygiene"
+      ],
+      "dispositions": [],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:jope-ci/test/cargo_artifact": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-ci/tests/cargo_artifact.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default",
+        "hygiene"
+      ],
+      "dispositions": [],
+      "scope": "Cargo artifact protocol (port of the retired deploy/ci/test-cargo-artifact.py): executable selection from cached and fresh builds, refusal of non-matching, ambiguous, non-executable, missing and unfinished/failed streams, container mount translation, the CLI's exit-status, profile/feature/target passing with a fake Cargo, nextest store binding, and the retain-nextest.sh report retention rule. Also run by the hygiene lane."
     },
     "target:jope-cli/bin/jope": {
       "discovery": {

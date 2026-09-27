@@ -11,7 +11,7 @@ case $lane in
   full-build-reuse)
     cargo metadata --locked --no-deps --format-version 1 > "$EVIDENCE/metadata.json"
     cargo build --locked -p jope-paths --bin jope-units-render --message-format=json-render-diagnostics > "$EVIDENCE/artifacts.jsonl"
-    python3 deploy/ci/cargo-artifact.py select --metadata "$EVIDENCE/metadata.json" --messages "$EVIDENCE/artifacts.jsonl" --package jope-paths --bin jope-units-render > "$EVIDENCE/executable.txt"
+    cargo run -q --locked -p jope-ci -- cargo-artifact select --metadata "$EVIDENCE/metadata.json" --messages "$EVIDENCE/artifacts.jsonl" --package jope-paths --bin jope-units-render > "$EVIDENCE/executable.txt"
     python3 - <<'PY'
 import hashlib, json, os
 from pathlib import Path
@@ -68,7 +68,7 @@ PY
         selection=(-p jope-parallel --features neural)
         ;;
     esac
-    python3 deploy/ci/cargo-artifact.py nextest-config --output "$EVIDENCE/nextest.toml"
+    cargo run -q --locked -p jope-ci -- cargo-artifact nextest-config --output "$EVIDENCE/nextest.toml"
     # Cargo's effective target still owns the nextest store; each report is run-specific.
     python3 - <<'PY'
 import json, os

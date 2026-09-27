@@ -1,0 +1,27 @@
+[package]
+name = "jope-ci"
+publish = false
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "CI and host-maintenance tooling: Rust ports of the deploy/ci and deploy/maintenance Python helpers (Cargo artifact selection, build-directory report)"
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "jope-ci"
+path = "src/main.rs"
+
+[dependencies]
+clap.workspace = true
+nix.workspace = true
+serde_json.workspace = true
+toml.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[lints]
+workspace = true

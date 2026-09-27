@@ -99,7 +99,7 @@ golden42() {
   if [ -n "${JOPE_CAMPAIGNS_BIN:-}" ]; then
     bin=$JOPE_CAMPAIGNS_BIN; [ -x "$bin" ] || fail "JOPE_CAMPAIGNS_BIN=$bin is not executable"
   else
-    bin=$(python3 "$REPO/deploy/ci/cargo-artifact.py" build --profile release \
+    bin=$(cargo run -q --locked --manifest-path "$REPO/Cargo.toml" -p jope-ci -- cargo-artifact build --profile release \
       --package jope-dime-regressor --bin jope-dime-regressor) \
       || fail "cargo build -p jope-dime-regressor failed (WP5 campaigns crate)"
   fi
@@ -190,7 +190,7 @@ policy_parity() {
   if [ -n "${JOPE_ENGINE_BIN:-}" ]; then
     bin=$JOPE_ENGINE_BIN; [ -x "$bin" ] || fail "JOPE_ENGINE_BIN=$bin is not executable"
   else
-    bin=$(python3 "$REPO/deploy/ci/cargo-artifact.py" build --profile release \
+    bin=$(cargo run -q --locked --manifest-path "$REPO/Cargo.toml" -p jope-ci -- cargo-artifact build --profile release \
       --package jope-parallel --bin jope-parallel --features neural) \
       || fail "cargo build -p jope-parallel --features neural failed (LibTorch per deploy/receipts/libtorch.json, WP8)"
   fi
@@ -233,7 +233,7 @@ bench() { # [--record]
   local genome="$REPO/crates/feat-math/assets/champions/8944cbdf.dsl"
   require_file "$genome" "the committed champion genome"
   local emit runs=${JOPE_BENCH_RUNS:-200} out="$RECEIPTS_DIR/bench-emit"
-  emit=$(python3 "$REPO/deploy/ci/cargo-artifact.py" build --profile release --package feat-math --example emit) \
+  emit=$(cargo run -q --locked --manifest-path "$REPO/Cargo.toml" -p jope-ci -- cargo-artifact build --profile release --package feat-math --example emit) \
     || fail "cargo build -p feat-math --example emit failed"
   rm -rf "$out"; mkdir -p "$out"
   "$emit" "$genome" "$out/warm" > /dev/null 2>&1 || fail "$emit cannot emit the champion"
