@@ -2411,6 +2411,7 @@ dependencies = [
  "ratatui",
  "rayon",
  "rusqlite",
+ "rustls",
  "serde",
  "serde_json",
  "sha2",
