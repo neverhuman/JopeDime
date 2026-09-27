@@ -38,7 +38,7 @@ if [ -z "$renderer" ]; then
   if command -v jope-units-render >/dev/null 2>&1; then
     renderer=$(command -v jope-units-render)
   else
-    renderer=$(python3 "$repo/deploy/ci/cargo-artifact.py" build \
+    renderer=$(cargo run -q --locked --manifest-path "$repo/Cargo.toml" -p jope-ci -- cargo-artifact build \
       --manifest-path "$repo/Cargo.toml" --package jope-paths --bin jope-units-render)
   fi
 fi

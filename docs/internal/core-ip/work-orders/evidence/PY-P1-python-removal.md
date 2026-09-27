@@ -42,3 +42,33 @@ no installed host file was changed.
 - Records: `deploy/ci/coverage.json` and `findings/test-inventory.json` drop
   `python:python/src/jope/tools/test_family_growth_policy.py`; the capability-matrix rows for the
   policy and its test now name the Rust port and its parity test.
+
+## U2 — Cargo artifact selection (`deploy/ci/cargo-artifact.py`)
+
+- Home: new crate `crates/jope-ci` (binary `jope-ci`, subcommand `cargo-artifact
+  build|select|target-dir|nextest-config`, same flags, output and refusal messages). A new crate
+  rather than `jope-records`: this is build tooling, not a core-IP record, and it is where the P2
+  ports of the other `deploy/ci` helpers (receipts, aggregate, plan) are planned. It depends only
+  on workspace crates already in the lock (`clap`, `nix`, `serde_json`, `toml`); `Cargo.lock`
+  gains only the `jope-ci` entry. It is in the `rust-test` product scope.
+- Consumers now run `cargo run -q --locked [--manifest-path <repo>/Cargo.toml] -p jope-ci --
+  cargo-artifact …`: `fast-lane.sh` (hygiene protocol tests, rust-test target and nextest config),
+  `retain-nextest.sh`, `emitters.sh`, `e2e-smoke.sh`, `full-lane.sh`, `regression-suite.sh` (3),
+  `restore-drill.sh`, `kernel-v1-product-build.sh`, `deploy/systemd/render.sh`,
+  `release.yml:73`, `weekly.yml:44`, and the one argv of `deploy/install-private.py:284` (a U6 P2
+  tool; no other line of it changed). `deploy/ci/ci-plan.py` (U1, P2) still names the old path in
+  its image-path pattern; the pattern is inert for a deleted file and is left for the U1 port.
+- Differential run `py-p1-u2-diff-20260927T023243Z` (`comparison.txt`): Python and Rust on the
+  real tree — `target-dir`, `nextest-config` (byte-identical TOML), `build` of a bin and of an
+  example, a failing build (both exit 101, no stdout), and `select` on a captured real Cargo
+  message stream plus identity and failing path maps, unfinished, failed, wrong-package,
+  wrong-kind and doubled streams, and a usage error. Every exit status, stdout and
+  `cargo-artifact:` line is identical except the OS wording of "file exists".
+- Tests: `crates/jope-ci/tests/cargo_artifact.rs` ports the 11 Python cases (the fake Cargo is a
+  shell script now); pre `py-p1-u2-pre-20260927T023312Z` (the Python suite, 11 OK); post
+  `py-p1-u2-post-20260927T023758Z` (jope-ci 3 + 11, scope partition 17 + 9 = 26 packages,
+  `deploy/ci/check.sh` with the host's history-scanning gitleaks shimmed — it reports 244
+  pre-existing historical findings on this host — fence suites, workspace check and guards).
+- Records: coverage.json items for the `jope-ci` package and its three targets (hygiene lane
+  added to the test-bearing ones; the hygiene `checks` list names `cargo test -q --locked -p
+  jope-ci`), test-inventory roles `infrastructure`, one `new-bin` capability row.

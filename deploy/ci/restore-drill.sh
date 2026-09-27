@@ -65,7 +65,7 @@ step "jope binary"
 if [ -n "${JOPE_BIN:-}" ]; then
   [ -x "$JOPE_BIN" ] || fail "JOPE_BIN=$JOPE_BIN is not executable"
 else
-  JOPE_BIN=$(python3 "$REPO/deploy/ci/cargo-artifact.py" build --package jope-cli --bin jope) \
+  JOPE_BIN=$(cargo run -q --locked --manifest-path "$REPO/Cargo.toml" -p jope-ci -- cargo-artifact build --package jope-cli --bin jope) \
     || fail "cargo build -p jope-cli failed"
 fi
 "$JOPE_BIN" --version || fail "$JOPE_BIN --version failed"

@@ -20,7 +20,7 @@ for t in shellcheck actionlint gitleaks; do
   printf '%-12s %s\n' "$t" "$(command -v "$t")"
 done
     # Cargo artifact protocol tests
-python3 deploy/ci/test-cargo-artifact.py
+cargo test -q --locked -p jope-ci
     # Coverage mapping and collection failure tests
 python3 deploy/ci/test-coverage.py
 python3 deploy/ci/test-receipt.py
@@ -178,12 +178,12 @@ runner="$(uname -srm)"
 df -B1 --output=source,size,used,avail,pcent / | tee "$EVIDENCE"/disk-before.txt
 # Marks that nextest was reached, so the retention step can tell "the report is missing"
 # from "the run never got that far" instead of accepting both.
-target=$(python3 deploy/ci/cargo-artifact.py target-dir)
+target=$(cargo run -q --locked -p jope-ci -- cargo-artifact target-dir)
 junit="$target/nextest/pr/junit.xml"
 # Preserve a previous report before execution, so a failed build cannot
 # upload it as this run's test result from the persistent target.
 if [ -f "$junit" ]; then mv "$junit" "$EVIDENCE"/prior-junit.xml; fi
-python3 deploy/ci/cargo-artifact.py nextest-config --output "$EVIDENCE"/nextest.toml
+cargo run -q --locked -p jope-ci -- cargo-artifact nextest-config --output "$EVIDENCE"/nextest.toml
 cargo nextest list --config-file "$EVIDENCE"/nextest.toml -P pr --locked "${pkgs[@]}" --features "jope-cli/asm,jope-cli/qualified-training-context" --message-format json > "$EVIDENCE/collection.json"
 touch "$EVIDENCE"/nextest-started
 cargo nextest run --config-file "$EVIDENCE"/nextest.toml -P pr --locked "${pkgs[@]}" --features "jope-cli/asm,jope-cli/qualified-training-context"
