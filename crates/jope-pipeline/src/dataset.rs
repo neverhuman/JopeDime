@@ -106,16 +106,31 @@ fn locate(selector: &str) -> Result<(PathBuf, CatalogRow)> {
 /// every field is parsed and every row's width is checked here rather than
 /// trusted.
 pub fn training_rows(resolved: &Resolved) -> Result<Vec<Vec<f64>>> {
-    let path = resolved.train_csv();
-    let columns = resolved.row.shape.columns as usize;
+    numeric_rows(
+        &resolved.train_csv(),
+        resolved.row.shape.columns as usize,
+        resolved.row.split.train_rows,
+    )
+}
+
+/// The sealed test partition, parsed and checked exactly like [`training_rows`]. Only
+/// [`crate::test_score`] reads it: nothing that searches, selects, seeds or learns ever does.
+pub fn test_rows(resolved: &Resolved) -> Result<Vec<Vec<f64>>> {
+    numeric_rows(
+        &resolved.dir.join("test.csv"),
+        resolved.row.shape.columns as usize,
+        resolved.row.split.test_rows,
+    )
+}
+
+fn numeric_rows(path: &Path, columns: usize, expected_rows: u64) -> Result<Vec<Vec<f64>>> {
     ensure!(
         columns >= 2,
         "{}: {columns} columns; features and a target are required",
         path.display()
     );
-    let text =
-        std::fs::read_to_string(&path).with_context(|| format!("read {}", path.display()))?;
-    let mut rows = Vec::with_capacity(resolved.row.split.train_rows as usize);
+    let text = std::fs::read_to_string(path).with_context(|| format!("read {}", path.display()))?;
+    let mut rows = Vec::with_capacity(expected_rows as usize);
     for (line_index, line) in text.lines().enumerate() {
         let line = line.trim();
         if line.is_empty() {
@@ -148,11 +163,11 @@ pub fn training_rows(resolved: &Resolved) -> Result<Vec<Vec<f64>>> {
         rows.push(row);
     }
     ensure!(
-        rows.len() as u64 == resolved.row.split.train_rows,
+        rows.len() as u64 == expected_rows,
         "{}: {} rows, the catalog records {}",
         path.display(),
         rows.len(),
-        resolved.row.split.train_rows
+        expected_rows
     );
     Ok(rows)
 }
