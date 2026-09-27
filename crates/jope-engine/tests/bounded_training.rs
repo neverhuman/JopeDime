@@ -401,3 +401,83 @@ fn a_default_build_participant_refuses_a_training_plan_before_any_work() {
         "{refusal}"
     );
 }
+
+#[test]
+fn consumed_inputs_are_the_prepared_bytes_and_request_fields_cannot_be_substituted() {
+    let k = keys(3);
+    let c = training_plan(3, V2, &k);
+    let plan = sha(&bytes(&c));
+    let boots = bootstraps(&c, &k);
+    let (_t, root) = tempdir();
+    write_inputs(&root, PARENT_STATE);
+    let prepared = training_run::prepare(&c, &plan, &record(&c, 0), &boots[0], &root).unwrap();
+    fs::write(
+        root.join("corpus/index.json"),
+        br#"{"fixture":"substituted index"}"#,
+    )
+    .unwrap();
+    fs::write(
+        root.join("parent/state.json"),
+        br#"{"fixture":"other parent","step":60000}"#,
+    )
+    .unwrap();
+    let (index, state) = prepared.verified_input_bytes().unwrap();
+    assert_eq!(index, CORPUS_INDEX);
+    assert_eq!(state.unwrap(), PARENT_STATE);
+    let mut changed = prepared.clone();
+    changed.steps += 1;
+    assert!(changed.verified_input_bytes().is_err());
+    let mut changed = prepared.clone();
+    changed.spec["corpus_sha256"] = sha(b"other").into();
+    assert!(changed.verified_input_bytes().is_err());
+    let mut changed = prepared.clone();
+    changed.input_root = root.join("other");
+    assert!(changed.verified_input_bytes().is_err());
+    // Fresh preparation against altered bytes refuses; a cached preparation consumes
+    // only its originally verified inputs, never the replacement.
+    assert!(training_run::prepare(&c, &plan, &record(&c, 1), &boots[1], &root).is_err());
+}
+
+#[test]
+fn planned_updates_cannot_replace_the_actual_optimizer_completion() {
+    let k = keys(3);
+    let c = training_plan(3, V2, &k);
+    let (_t, root) = tempdir();
+    write_inputs(&root, PARENT_STATE);
+    let prepared = training_run::prepare(
+        &c,
+        &sha(&bytes(&c)),
+        &record(&c, 0),
+        &bootstraps(&c, &k)[0],
+        &root,
+    )
+    .unwrap();
+    let actual = serde_json::json!({
+        "rank": 0, "world": 3,
+        "initial_optimizer_step": c.counters.committed_updates_at_start,
+        "executed_steps": c.counters.planned_updates,
+        "steps": c.counters.committed_updates_at_start + c.counters.planned_updates,
+        "corpus_sha256": sha(CORPUS_INDEX), "parameter_sha256": sha(b"actual parameters")
+    });
+    prepared.validate_completion(&actual).unwrap();
+    for field in [
+        "rank",
+        "world",
+        "initial_optimizer_step",
+        "executed_steps",
+        "steps",
+        "corpus_sha256",
+        "parameter_sha256",
+    ] {
+        let mut missing = actual.clone();
+        missing.as_object_mut().unwrap().remove(field);
+        assert!(prepared.validate_completion(&missing).is_err(), "{field}");
+        let mut wrong = actual.clone();
+        wrong[field] = serde_json::json!(999);
+        assert!(prepared.validate_completion(&wrong).is_err(), "{field}");
+    }
+    let mut fresh_optimizer = actual.clone();
+    fresh_optimizer["initial_optimizer_step"] = serde_json::json!(0);
+    fresh_optimizer["steps"] = serde_json::json!(c.counters.planned_updates);
+    assert!(prepared.validate_completion(&fresh_optimizer).is_err());
+}

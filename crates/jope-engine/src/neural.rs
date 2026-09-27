@@ -1011,14 +1011,18 @@ impl AdamW {
         )
     }
     pub fn load(path: &Path, device: Device) -> Result<Self> {
-        let m: serde_json::Value = read_json(&path.with_extension("json"))?;
-        ensure!(
-            file_hash(path)? == m["sha256"],
-            "optimizer artifact changed"
-        );
-        let mut tensors = Tensor::load_multi_with_device(path, device)?
-            .into_iter()
-            .collect::<BTreeMap<_, _>>();
+        let metadata = fs::read(path.with_extension("json"))?;
+        let bytes = fs::read(path)?;
+        Self::load_from_bytes(&bytes, &metadata, device)
+    }
+    /// Consume the same optimizer bytes whose digest was checked, without reopening a path.
+    pub fn load_from_bytes(bytes: &[u8], metadata: &[u8], device: Device) -> Result<Self> {
+        let m: serde_json::Value = serde_json::from_slice(metadata)?;
+        ensure!(hash(bytes) == m["sha256"], "optimizer artifact changed");
+        let mut tensors =
+            Tensor::load_multi_from_stream_with_device(std::io::Cursor::new(bytes), device)?
+                .into_iter()
+                .collect::<BTreeMap<_, _>>();
         let names = tensors
             .keys()
             .filter_map(|n| n.strip_prefix("m/").map(String::from))

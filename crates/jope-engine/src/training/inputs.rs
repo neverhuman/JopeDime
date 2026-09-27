@@ -261,3 +261,35 @@ pub fn freeze(
 pub fn digest(frozen: &Value) -> Result<String> {
     Ok(hash(&serde_json::to_vec(frozen)?))
 }
+
+/// Checkpoint dependencies captured before CUDA and consumed without reopening their paths.
+/// The caller supplies the already admitted state, not an untrusted replacement sidecar.
+pub struct CheckpointArtifacts {
+    pub config: Vec<u8>,
+    pub model: Vec<u8>,
+    pub optimizer: Option<(Vec<u8>, Vec<u8>)>,
+}
+impl CheckpointArtifacts {
+    pub fn read(dir: &Path, state: &Value, carry_optimizer: bool) -> Result<Self> {
+        let read = |name: &str, field: &str| {
+            read_verified(
+                &dir.join(name),
+                state[field]
+                    .as_str()
+                    .context("checkpoint dependency digest")?,
+            )
+        };
+        Ok(Self {
+            config: read("config.json", "config_sha256")?,
+            model: read("model.ot", "model_sha256")?,
+            optimizer: if carry_optimizer {
+                Some((
+                    read("optimizer.ot", "optimizer_sha256")?,
+                    read("optimizer.json", "optimizer_metadata_sha256")?,
+                ))
+            } else {
+                None
+            },
+        })
+    }
+}

@@ -54,6 +54,71 @@ pub struct BoundedTraining {
     pub initialize: Option<PathBuf>,
     pub run_dir: PathBuf,
     pub launch_dir: PathBuf,
+    contract: BoundedRunContract,
+    record: LaunchRecord,
+    verified_root: PathBuf,
+    index_bytes: Vec<u8>,
+    state_bytes: Option<Vec<u8>>,
+}
+
+impl BoundedTraining {
+    /// A signed numerical result must describe updates actually completed by this rank.
+    pub fn validate_completion(&self, completion: &Value) -> Result<()> {
+        self.verified_input_bytes()?;
+        let counters = &self.contract.counters;
+        let target = counters
+            .committed_updates_at_start
+            .checked_add(counters.planned_updates)
+            .context("completion step overflow")?;
+        ensure!(
+            completion["rank"].as_u64() == Some(self.global_rank as u64)
+                && completion["world"].as_u64() == Some(self.world as u64)
+                && completion["initial_optimizer_step"].as_u64()
+                    == Some(counters.committed_updates_at_start)
+                && completion["executed_steps"].as_u64() == Some(counters.planned_updates)
+                && completion["steps"].as_u64() == Some(target)
+                && completion["corpus_sha256"] == self.spec["corpus_sha256"],
+            "trainer completion differs from the admitted rank, corpus or optimizer window"
+        );
+        let digest = completion["parameter_sha256"]
+            .as_str()
+            .context("completed parameter digest absent")?;
+        ensure!(
+            digest.len() == 64 && digest.bytes().all(|b| b.is_ascii_hexdigit()),
+            "invalid completed parameter digest"
+        );
+        Ok(())
+    }
+    /// Return the exact admitted input bytes; never reopen a replaceable index/state path.
+    /// Public descriptive fields cannot change the frozen execution request.
+    pub fn verified_input_bytes(&self) -> Result<(&[u8], Option<&[u8]>)> {
+        let t = self
+            .contract
+            .training
+            .as_ref()
+            .context("training selection")?;
+        let run_dir = self
+            .verified_root
+            .join(RUNS_DIRECTORY)
+            .join(&self.contract.run)
+            .join(format!("attempt-{}", self.contract.attempt));
+        ensure!(
+            self.spec == training_run_spec(&self.contract, &self.record.plan_sha256)?
+                && self.global_rank == self.record.global_rank as usize
+                && self.world == self.record.world_size as usize
+                && self.microbatch == t.microbatch as usize
+                && self.global_batch == t.global_batch as usize
+                && self.steps as u64 == self.contract.counters.planned_updates
+                && self.checkpoint_steps as u64 == t.checkpoint_steps
+                && self.input_root == self.verified_root
+                && self.corpus == t.corpus
+                && self.initialize == t.initialize
+                && self.run_dir == run_dir
+                && self.launch_dir == run_dir.join(format!("launch-{}", self.record.dispatch_id)),
+            "bounded training request differs from its verified plan"
+        );
+        Ok((&self.index_bytes, self.state_bytes.as_deref()))
+    }
 }
 
 fn closure_entry<'a>(contract: &'a BoundedRunContract, path: &Path) -> Result<&'a ClosureEntry> {
@@ -166,23 +231,26 @@ pub fn prepare(
     let spec = training_run_spec(contract, plan_sha256)?;
     let t = contract.training.as_ref().context("training selection")?;
     ensure!(input_root.is_absolute(), "the input root must be absolute");
-    read_planned(
+    let index_bytes = read_planned(
         input_root,
         closure_entry(contract, &t.corpus.join("index.json"))?,
     )?;
-    if let Some(initialize) = &t.initialize {
+    let state_bytes = if let Some(initialize) = &t.initialize {
         let state = read_planned(
             input_root,
             closure_entry(contract, &initialize.join("state.json"))?,
         )?;
-        let state: Value = serde_json::from_slice(&state).context("parent checkpoint state")?;
+        let parsed: Value = serde_json::from_slice(&state).context("parent checkpoint state")?;
         ensure!(
-            state["step"].as_u64() == Some(contract.counters.committed_updates_at_start),
+            parsed["step"].as_u64() == Some(contract.counters.committed_updates_at_start),
             "the parent checkpoint is at optimizer step {}, not the plan's committed start {}",
-            state["step"],
+            parsed["step"],
             contract.counters.committed_updates_at_start
         );
-    }
+        Some(state)
+    } else {
+        None
+    };
     let run_dir = input_root
         .join(RUNS_DIRECTORY)
         .join(&contract.run)
@@ -223,5 +291,10 @@ pub fn prepare(
         initialize: t.initialize.clone(),
         run_dir,
         launch_dir,
+        contract: contract.clone(),
+        record: record.clone(),
+        verified_root: input_root.to_path_buf(),
+        index_bytes,
+        state_bytes,
     })
 }

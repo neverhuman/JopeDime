@@ -442,3 +442,50 @@ fn benchmark_cuda_adamw() {
     eprintln!("optimizer benchmark: {parameters} tensors, {count} FP32 master parameters, reference {:.3} ms, fused {:.3} ms, {:.2}x speedup",
         results[0]*1000.0, results[1]*1000.0, results[0]/results[1]);
 }
+
+#[test]
+fn checkpoint_consumption_uses_verified_tensor_bytes_after_path_replacement() {
+    use jope_parallel::{manifest::hash, training::inputs::CheckpointArtifacts};
+    use serde_json::json;
+    use std::{fs, io::Cursor};
+    let dir = tempfile::tempdir().unwrap();
+    let vs = nn::VarStore::new(Device::Cpu);
+    let p = vs.root().var("weight", &[2], nn::Init::Const(2.0));
+    let mut optimizer = AdamW::new(1e-4, 0.01);
+    p.square().sum(Kind::Float).backward();
+    optimizer.update(&vs).unwrap();
+    vs.save(dir.path().join("model.ot")).unwrap();
+    optimizer.save(&dir.path().join("optimizer.ot")).unwrap();
+    fs::write(dir.path().join("config.json"), b"{}").unwrap();
+    let mut state = json!({});
+    for (file, field) in [
+        ("model.ot", "model_sha256"),
+        ("config.json", "config_sha256"),
+        ("optimizer.ot", "optimizer_sha256"),
+        ("optimizer.json", "optimizer_metadata_sha256"),
+    ] {
+        state[field] = json!(hash(&fs::read(dir.path().join(file)).unwrap()));
+    }
+    let retained = CheckpointArtifacts::read(dir.path(), &state, true).unwrap();
+    for name in ["model.ot", "optimizer.ot", "optimizer.json", "config.json"] {
+        fs::write(dir.path().join(name), b"replaced after verification").unwrap();
+    }
+    assert!(CheckpointArtifacts::read(dir.path(), &state, true).is_err());
+    let mut restored = nn::VarStore::new(Device::Cpu);
+    let q = restored.root().var("weight", &[2], nn::Init::Const(0.0));
+    restored
+        .load_from_stream(Cursor::new(&retained.model))
+        .unwrap();
+    let (bytes, metadata) = retained.optimizer.as_ref().unwrap();
+    let mut resumed = AdamW::load_from_bytes(bytes, metadata, Device::Cpu).unwrap();
+    assert_eq!(resumed.step, optimizer.step);
+    assert_eq!((&p - &q).abs().max().double_value(&[]), 0.0);
+    p.square().sum(Kind::Float).backward();
+    optimizer.update(&vs).unwrap();
+    q.square().sum(Kind::Float).backward();
+    resumed.update(&restored).unwrap();
+    assert_eq!((&p - &q).abs().max().double_value(&[]), 0.0);
+    let mut corrupt = bytes.clone();
+    corrupt[0] ^= 1;
+    assert!(AdamW::load_from_bytes(&corrupt, metadata, Device::Cpu).is_err());
+}
