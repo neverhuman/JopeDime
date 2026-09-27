@@ -41,10 +41,10 @@ use std::{
 
 pub const SERVICE: &str = "jope-bounded-rank";
 pub const SUPERVISOR_NAME: &str = "smartcluster";
-const DISPATCH_LABEL: &str = "jope.bounded.dispatch_id";
-const RUN_LABEL: &str = "jope.bounded.run";
-const RANK_LABEL: &str = "jope.bounded.rank";
-const PLAN_LABEL: &str = "jope.bounded.plan_sha256";
+pub const DISPATCH_LABEL: &str = "jope.bounded.dispatch_id";
+pub const RUN_LABEL: &str = "jope.bounded.run";
+pub const RANK_LABEL: &str = "jope.bounded.rank";
+pub const PLAN_LABEL: &str = "jope.bounded.plan_sha256";
 const MAX_RESULT_ENVELOPE: u64 = 1024 * 1024;
 
 /// The pinned identity of the host's SmartCluster daemon.
@@ -102,6 +102,14 @@ impl SmartClusterSupervisor {
             "daemon executable digest"
         );
         ServiceName::new(host.service.clone())?;
+        // Its ranks prove their job against the daemon the host installation pins (W7-D1);
+        // a supervisor submitting to another daemon or service would only launch refusals.
+        let installation = super::participant::Installation::load(&host.installation)?;
+        ensure!(
+            installation.smartcluster.daemon == host.daemon
+                && installation.smartcluster.service == host.service,
+            "the host installation pins another SmartCluster daemon or service than this supervision"
+        );
         let plan = launch::read_bounded(&host.plan, super::contract::MAX_CONTRACT_BYTES as u64)?;
         Ok(Self {
             tenant: TenantId::new(host.tenant.clone())?,
@@ -215,8 +223,10 @@ fn read_retained(path: &Path, limit: u64) -> Result<Option<Vec<u8>>> {
     Ok(Some(b))
 }
 
-impl Supervisor for SmartClusterSupervisor {
-    fn launch(&mut self, l: &RankLaunch<'_>) -> Result<SupervisorHandle> {
+impl SmartClusterSupervisor {
+    /// Freeze one rank's launch record under its dispatch directory and return the
+    /// directory and the job this supervisor submits for it. Nothing is submitted.
+    pub fn launch_spec(&self, l: &RankLaunch<'_>) -> Result<(PathBuf, JobSpec)> {
         let p = l
             .contract
             .participant(l.global_rank)
@@ -282,6 +292,13 @@ impl Supervisor for SmartClusterSupervisor {
                 (PLAN_LABEL.to_string(), l.plan_sha256.to_string()),
             ]),
         };
+        Ok((dir, spec))
+    }
+}
+
+impl Supervisor for SmartClusterSupervisor {
+    fn launch(&mut self, l: &RankLaunch<'_>) -> Result<SupervisorHandle> {
+        let (_, spec) = self.launch_spec(l)?;
         let job = match self.exchange(Request::Submit(Box::new(SubmitRequest {
             spec,
             effective_principal: None,

@@ -22,7 +22,7 @@ use jope_parallel::native_loop::bounded::{
     contract::{BoundedRunContract, Ceilings, WorkItem, WorkKind},
     controller::{self, Disposition, Outcome, Supervisor},
     driver::{self, CoordinateArgs},
-    participant::{Installation, INSTALLATION_SCHEMA},
+    participant::{Installation, SmartClusterInstallation, INSTALLATION_SCHEMA},
     rendezvous,
     supervisor::{DaemonPin, HostSupervision, SmartClusterSupervisor, SERVICE},
     transport::HostCredential,
@@ -259,6 +259,18 @@ impl Host {
         }
         let k = keys(RANKS as usize);
         write_private(&etc.join("coordinator.key"), &pkcs8([7; 32]));
+        // One daemon per rank; each rank's installation pins its own daemon (W7-D1).
+        let daemons: Vec<Scqd> = (0..RANKS)
+            .map(|rank| Scqd::start(&root.join(format!("rank-{rank}/scqd"))))
+            .collect();
+        let pin = |scqd: &Scqd| SmartClusterInstallation {
+            daemon: DaemonPin {
+                socket: scqd.socket.clone(),
+                uid: unsafe { libc::geteuid() },
+                executable_sha256: scqd.executable_sha256.clone(),
+            },
+            service: SERVICE.into(),
+        };
         let installation = Installation {
             schema: INSTALLATION_SCHEMA.into(),
             address: "127.0.0.1".into(),
@@ -273,13 +285,8 @@ impl Host {
             installed_policies: vec![etc.join("worker.json")],
             gpu_inventory: false,
             input_root: root.clone(),
+            smartcluster: pin(&daemons[0]),
         };
-        let installation_path = etc.join("installation.json");
-        fs::write(
-            &installation_path,
-            serde_json::to_vec(&installation).unwrap(),
-        )
-        .unwrap();
         // The census this host's collector writes.
         let now = now_ms();
         let (census, _) = collect::collect(&installation.collect_spec(None), &NoGpu, now).unwrap();
@@ -339,18 +346,19 @@ impl Host {
         let listen: SocketAddr = format!("127.0.0.1:{}", free_port()).parse().unwrap();
         // Per rank: its daemon, its supervision and its agent process.
         let mut ranks = Vec::new();
-        for rank in 0..RANKS {
+        for (rank, scqd) in (0..RANKS).zip(daemons) {
             let dir = root.join(format!("rank-{rank}"));
-            let scqd = Scqd::start(&dir.join("scqd"));
             let key = dir.join("participant.key");
             write_private(&key, &pkcs8(rank_seed(rank as usize)));
+            let installation_path = dir.join("installation.json");
+            let own = Installation {
+                smartcluster: pin(&scqd),
+                ..installation.clone()
+            };
+            fs::write(&installation_path, serde_json::to_vec(&own).unwrap()).unwrap();
             let supervision = HostSupervision {
                 host: identity.host.clone(),
-                daemon: DaemonPin {
-                    socket: scqd.socket.clone(),
-                    uid: unsafe { libc::geteuid() },
-                    executable_sha256: scqd.executable_sha256.clone(),
-                },
+                daemon: own.smartcluster.daemon.clone(),
                 tenant: tenant(),
                 project: PROJECT.into(),
                 service: SERVICE.into(),
@@ -596,10 +604,22 @@ fn smartcluster_ranks_commit_the_whole_group_exactly_once() {
     let verified = controller::verify(&host.run_dir, Some(&host.sha)).unwrap();
     assert_eq!(verified.results_verified, 3);
     host.assert_no_orphans();
-    // Every rank ran as a SmartCluster job of the real participant binary, one per daemon.
+    // Every rank ran as a SmartCluster job of the real participant binary, one per daemon,
+    // and its result records the job and attempt it proved it was (W7-D1).
     for rank in 0..RANKS {
         let outbox = host.dispatch_dir(rank).join("outbox");
         assert!(outbox.join("envelope.json").exists() && outbox.join("result.bin").exists());
+        let result: serde_json::Value =
+            serde_json::from_slice(&fs::read(outbox.join("result.bin")).unwrap()).unwrap();
+        let mut own =
+            SmartClusterSupervisor::new(host.ranks[rank as usize].supervision.clone()).unwrap();
+        let handle = own
+            .find(&rendezvous::dispatch_id(&host.sha, 1, rank).unwrap())
+            .unwrap()
+            .unwrap();
+        assert_eq!(result["smartcluster_job"]["job_id"], handle.identity);
+        assert_eq!(result["smartcluster_job"]["attempt"], 1);
+        assert_eq!(result["smartcluster_job"]["tenant"], tenant());
     }
     // Running the coordinator again on a committed run changes nothing.
     let before = controller::status(&host.run_dir).unwrap().journal_records;
@@ -695,6 +715,262 @@ fn cancellation_drains_the_whole_group_through_smartcluster() {
         .iter()
         .all(|r| r.disposition == Some(Disposition::Drained)));
     host.assert_no_orphans();
+}
+
+/// Rank 0's participant argv (as its supervisor would submit it), writing to `outbox`, with
+/// its frozen launch record at `dir/launch.json`.
+fn participant_argv(host: &Host, dir: &Path) -> Vec<String> {
+    let s = &host.ranks[0].supervision;
+    let record =
+        jope_parallel::native_loop::bounded::launch::launch_record(&host.contract, &host.sha, 0)
+            .unwrap();
+    fs::create_dir_all(dir.join("outbox")).unwrap();
+    fs::write(
+        dir.join("launch.json"),
+        serde_json::to_vec(&record).unwrap(),
+    )
+    .unwrap();
+    let p = |p: &Path| p.display().to_string();
+    vec![
+        "participant".into(),
+        "--plan".into(),
+        p(&s.plan),
+        "--plan-sha256".into(),
+        host.sha.clone(),
+        "--launch-record".into(),
+        p(&dir.join("launch.json")),
+        "--outbox".into(),
+        p(&dir.join("outbox")),
+        "--coordinator".into(),
+        s.coordinator.clone(),
+        "--participant-key".into(),
+        p(&s.participant_keys[&0]),
+        "--installation".into(),
+        p(&s.installation),
+    ]
+}
+/// Run the participant directly (not as a SmartCluster job); its exit status and refusal.
+/// `control` becomes its descriptor 3 when given.
+fn run_outside(
+    host: &Host,
+    case: &str,
+    env: &[(&str, String)],
+    control: Option<&std::os::unix::net::UnixStream>,
+) -> (bool, String) {
+    use std::os::{fd::AsRawFd, unix::process::CommandExt};
+    let dir = host.root.join(format!("outside-{case}"));
+    let mut command = Command::new(participant_binary());
+    command
+        .args(participant_argv(host, &dir))
+        .env_clear()
+        .env("CUDA_VISIBLE_DEVICES", "-1")
+        .envs(env.iter().map(|(k, v)| (*k, v.as_str())))
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null());
+    if let Some(control) = control {
+        let fd = control.as_raw_fd();
+        // SAFETY: dup2 is async-signal-safe; it only duplicates an open descriptor.
+        unsafe {
+            command.pre_exec(move || {
+                if libc::dup2(fd, 3) < 0 {
+                    return Err(std::io::Error::last_os_error());
+                }
+                Ok(())
+            });
+        }
+    }
+    let status = command.status().unwrap();
+    (
+        status.success(),
+        fs::read_to_string(dir.join("outbox/refusal.txt")).unwrap_or_default(),
+    )
+}
+fn block_on<F: std::future::Future>(future: F) -> F::Output {
+    tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .unwrap()
+        .block_on(future)
+}
+
+#[test]
+fn a_participant_proves_its_smartcluster_job_before_any_work() {
+    use jain_smartcluster::{
+        AttemptNumber, FenceToken, FencedAttempt, IdempotencyKey, JobSpec, JobState, TerminalStatus,
+    };
+    use jope_parallel::native_loop::bounded::{
+        controller::RankLaunch,
+        job_identity::{verify_job_record, ExpectedJob},
+        supervisor::{DISPATCH_LABEL, PLAN_LABEL},
+    };
+    let host = Host::new(5);
+    let rank0 = &host.ranks[0].supervision;
+    let dispatch = |rank| rendezvous::dispatch_id(&host.sha, 1, rank).unwrap();
+
+    // Outside SmartCluster: started by hand, with no job environment.
+    let (ok, refusal) = run_outside(&host, "no-job", &[], None);
+    assert!(!ok);
+    assert!(refusal.contains("SCQ_JOB_ID is unset"), "{refusal}");
+
+    // Jobs of rank 0's own daemon, submitted directly with rank 0's frozen launch, whose
+    // spec differs from its supervisor's only by `edit`.
+    let client = jain_smartcluster::Client::new(rank0.daemon.socket.clone());
+    let (mut genuine, mut other_job) = (None, None);
+    let cases: [(&str, fn(&mut JobSpec, &str), &str); 3] = [
+        // Positive control: it proves its job, then finds no coordinator listening.
+        ("genuine", |_, _| {}, "connect 127.0.0.1"),
+        (
+            "wrong-dispatch",
+            |spec, other| {
+                spec.labels.insert(DISPATCH_LABEL.into(), other.to_string());
+            },
+            "was submitted for another dispatch",
+        ),
+        (
+            "other-plan",
+            |spec, _| {
+                spec.labels.insert(PLAN_LABEL.into(), sha(b"another plan"));
+            },
+            "was submitted for another plan",
+        ),
+    ];
+    for (case, edit, needle) in cases {
+        let supervisor = SmartClusterSupervisor::new(HostSupervision {
+            state: host.root.join(format!("jobs-{case}")),
+            ..rank0.clone()
+        })
+        .unwrap();
+        let (dir, mut spec) = supervisor
+            .launch_spec(&RankLaunch {
+                contract: &host.contract,
+                plan_sha256: &host.sha,
+                global_rank: 0,
+                dispatch_id: &dispatch(0),
+            })
+            .unwrap();
+        spec.idempotency_key = IdempotencyKey::new(format!("w7-d1-{case}")).unwrap();
+        edit(&mut spec, &dispatch(1));
+        let submitted = block_on(client.submit(spec)).unwrap();
+        let mut job = None;
+        wait(Duration::from_secs(60), || {
+            job = block_on(client.get(submitted.id)).unwrap();
+            job.as_ref().is_some_and(|j| j.terminal.is_some())
+        });
+        let job = job.unwrap();
+        assert!(
+            matches!(job.terminal, Some(TerminalStatus::Failed { .. })),
+            "{case}: {:?}\n{}",
+            job.terminal,
+            host.diagnose()
+        );
+        let refusal = fs::read_to_string(dir.join("outbox/refusal.txt")).unwrap();
+        assert!(refusal.contains(needle), "{case}: {refusal}");
+        assert!(!dir.join("outbox/admitted").exists());
+        if case == "genuine" {
+            genuine = Some(job);
+        } else {
+            other_job = Some(job.id);
+        }
+    }
+
+    // Started by hand with a genuine job's environment: no control socket, then a control
+    // socket whose peer (this test, its parent) is not the pinned daemon executable.
+    let genuine = genuine.unwrap();
+    let forged = [
+        ("SCQ_JOB_ID", genuine.id.to_string()),
+        ("SCQ_ATTEMPT_NUMBER", "1".to_string()),
+        ("SCQ_ATTEMPT_FENCE", "1".to_string()),
+        ("SCQ_CONTROL_FD", "3".to_string()),
+    ];
+    let (ok, refusal) = run_outside(&host, "no-control", &forged, None);
+    assert!(!ok);
+    assert!(refusal.contains("is not an open descriptor"), "{refusal}");
+    let (ours, _theirs) = std::os::unix::net::UnixStream::pair().unwrap();
+    let (ok, refusal) = run_outside(&host, "impostor-daemon", &forged, Some(&ours));
+    assert!(!ok);
+    assert!(
+        refusal.contains("is not the pinned SmartCluster executable"),
+        "{refusal}"
+    );
+
+    // The daemon's record checks, on the genuine job's real record made live again.
+    let attempt = FencedAttempt::new(
+        genuine.id,
+        AttemptNumber::new(1).unwrap(),
+        FenceToken::new(7).unwrap(),
+    );
+    let mut live = genuine.clone();
+    live.state = JobState::Running;
+    live.terminal = None;
+    live.active_attempt = Some(attempt);
+    let arguments = match &live.spec.workload {
+        jain_smartcluster::Workload::TrustedService { arguments, .. } => arguments
+            .iter()
+            .map(std::ffi::OsString::from)
+            .collect::<Vec<_>>(),
+        _ => unreachable!(),
+    };
+    let expected = ExpectedJob {
+        plan_sha256: host.sha.clone(),
+        run: host.contract.run.clone(),
+        global_rank: 0,
+        dispatch_id: dispatch(0),
+        tenant: tenant(),
+        service: SERVICE.into(),
+        arguments,
+    };
+    verify_job_record(&attempt, &live, &expected).unwrap();
+    let refused = |claim: &FencedAttempt, job: &jain_smartcluster::JobRecord, e: &ExpectedJob| {
+        format!("{:#}", verify_job_record(claim, job, e).unwrap_err())
+    };
+    // A replayed attempt: the same job under another fence or attempt number.
+    for claim in [
+        FencedAttempt::new(
+            genuine.id,
+            AttemptNumber::new(1).unwrap(),
+            FenceToken::new(6).unwrap(),
+        ),
+        FencedAttempt::new(
+            genuine.id,
+            AttemptNumber::new(2).unwrap(),
+            FenceToken::new(7).unwrap(),
+        ),
+    ] {
+        assert!(refused(&claim, &live, &expected).contains("stale or replayed attempt"));
+    }
+    // A job that is no longer live.
+    assert!(refused(&attempt, &genuine, &expected).contains("not live"));
+    // Another tenant, another service or other arguments.
+    let other_tenant = ExpectedJob {
+        tenant: "unix:0".into(),
+        ..expected.clone()
+    };
+    assert!(refused(&attempt, &live, &other_tenant).contains("tenant"));
+    let other_service = ExpectedJob {
+        service: "another-service".into(),
+        ..expected.clone()
+    };
+    assert!(refused(&attempt, &live, &other_service).contains("runs service"));
+    let mut other_arguments = expected.clone();
+    other_arguments.arguments.push("--extra".into());
+    assert!(refused(&attempt, &live, &other_arguments).contains("arguments"));
+    // Another job's answer to this job's claim.
+    let mut another = live.clone();
+    another.id = other_job.unwrap();
+    assert!(refused(&attempt, &another, &expected).contains("answered with job"));
+
+    // A supervision whose daemon is not the one the host installation pins is refused.
+    let e = SmartClusterSupervisor::new(HostSupervision {
+        daemon: host.ranks[1].supervision.daemon.clone(),
+        ..rank0.clone()
+    })
+    .err()
+    .unwrap();
+    assert!(
+        e.to_string().contains("pins another SmartCluster daemon"),
+        "{e}"
+    );
 }
 
 fn coordinate_cli(host: &Host) -> Child {

@@ -22,6 +22,8 @@
 //!   service jobs of the host's own daemon, through its authenticated exchange (W7-T05/T07).
 //! * [`participant`] — the rank worker of the CPU phase: frozen launch, own host identity,
 //!   authenticated rendezvous over TLS, one update round per heartbeat, signed result.
+//! * [`job_identity`] — a rank's proof, before any work, that it runs inside its planned
+//!   SmartCluster job and attempt (W7-D1).
 //! * [`driver`] — the coordinator process: preflight, dispatch, gather, admission, heartbeat
 //!   and poll to a terminal outcome, or reconcile after a restart.
 //! * [`agent`] — cross-host supervision: a per-host agent serves its host's supervisor to the
@@ -36,6 +38,7 @@ pub mod collect;
 pub mod contract;
 pub mod controller;
 pub mod driver;
+pub mod job_identity;
 pub mod launch;
 pub mod participant;
 pub mod rendezvous;
