@@ -114,7 +114,7 @@ written, and the process exits 143. A second signal exits at once.
 jope pipeline evolve --dataset datasets/test/uci-parkinsons-telemonitoring --rounds 3 --control \
   --cuts 3 --budget evaluations=200,seconds=600 --threads 8 --policy skip --emit rust \
   --output <new-directory>
-jope pipeline lineage verify --lineage <new-directory>/lineage.json --require-discovery
+jope pipeline lineage verify --lineage <new-directory>/lineage.json --require-bred-candidates
 ```
 
 Each round is a full `jope pipeline run` in `round-NNN/` on the identical prepared cuts (fixed
@@ -141,8 +141,14 @@ receipt's stage seconds. A round interrupted by a signal writes no receipt and n
 `jope pipeline lineage verify` re-derives every round and the control from its directory and
 checks the chain: same dataset, cuts, budget and island model; each parent is the previous
 receipt; each round's seeds are exactly the previous round's champion and runners-up; the
-recorded numbers are what the receipts show; no champion got worse. `--require-discovery` also
-demands a measured candidate bred in generation 1 or later in every round.
+recorded numbers are what the receipts show; no champion got worse. `--require-bred-candidates`
+also demands a measured candidate bred in generation 1 or later in every round: the search ran
+past its starting population, which says nothing about whether anything it bred was better. The
+report says that separately: `champion_found_in_round` per round (the champion is neither the
+bootstrap nor one of the seeds the round started from, so the round's own search produced it)
+and `improved_on_previous_round` (strictly lower mean held-out RMSE than the round before);
+`jope pipeline evolve` prints each round's champion as found in the round, carried from its
+seeds, or the bootstrap.
 
 Evolve never writes to the learning store. HWM ingest and the champion bank are separate
 `jope-learning` steps over its outputs (see `docs/learning.md`).

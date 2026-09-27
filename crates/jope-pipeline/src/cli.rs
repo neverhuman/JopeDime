@@ -191,9 +191,11 @@ pub enum LineageCmd {
     Verify {
         #[arg(long)]
         lineage: PathBuf,
-        /// Also require a measured candidate bred in generation 1 or later in every round.
+        /// Also require a measured candidate bred in generation 1 or later in every round: the
+        /// search ran past its starting population. That is not a discovery; the report's
+        /// champion_found_in_round and improved_on_previous_round say what the rounds found.
         #[arg(long)]
-        require_discovery: bool,
+        require_bred_candidates: bool,
         #[arg(long)]
         json: bool,
     },
@@ -284,7 +286,7 @@ pub fn run(cli: Cli) -> Result<ExitCode> {
                 for round in lineage.rounds.iter().chain(lineage.control.iter()) {
                     println!(
                         "{} {} ({}): mean held-out RMSE {:.6}, R2 {:.6} over {} cut(s); \
-                         {} generation-1+ measurement(s); {}",
+                         {} generation-1+ measurement(s); champion {}: {}",
                         round.kind,
                         round.round,
                         round.directory,
@@ -292,6 +294,7 @@ pub fn run(cli: Cli) -> Result<ExitCode> {
                         round.validation_r2,
                         round.cuts_measured,
                         round.generation_ge1_measured,
+                        round.champion_origin(),
                         round.selected_genome
                     );
                 }
@@ -306,22 +309,25 @@ pub fn run(cli: Cli) -> Result<ExitCode> {
             cmd:
                 LineageCmd::Verify {
                     lineage,
-                    require_discovery,
+                    require_bred_candidates,
                     json,
                 },
-        } => match crate::lineage::verify(&lineage, require_discovery) {
+        } => match crate::lineage::verify(&lineage, require_bred_candidates) {
             Ok(report) => {
                 if json {
                     println!("{}", serde_json::to_string(&report)?);
                 } else {
                     println!(
                         "ok {} ({} round(s) on prepared cuts {}; mean held-out RMSE by round \
-                         {:?}; control {:?})",
+                         {:?}; control {:?}; champion found in the round itself {:?}; \
+                         improved on the round before {:?})",
                         lineage.display(),
                         report.rounds,
                         report.prepared_sha256,
                         report.validation_rmse,
-                        report.control_validation_rmse
+                        report.control_validation_rmse,
+                        report.champion_found_in_round,
+                        report.improved_on_previous_round
                     );
                 }
                 Ok(ExitCode::SUCCESS)
