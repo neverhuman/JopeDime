@@ -59,7 +59,7 @@ own code contradicts. Two entries (file SHA-256
 | id | selects | why |
 |---|---|---|
 | `golden46-new3-20260723-v4-test-adaptive` | the 3 `jope-dime` rows with `source_revision = golden46-new3-20260723-v4` (`6054656956182296`, `ZTS_small`, `a3bd0a400ec4d7f9`; `source_kind = accepted-current-best-rust-replay`, via `aspfm-acceptance-manifest.json`) | the run's own artefacts are written with `benchmark_valid: false, test_adaptive: true` (`crates/jope-campaigns/src/test_adaptive/aggressive.rs`); the acceptance manifest relabelled the replayed winners `true` |
-| `golden42-evolution-envelope-test-selected` | the 42 `jope-dime` rows with `source_kind = complete-evolution-ledger-snapshot` (`source_revision = 1784790556145`, `source_uri = …/jope-dime-evolution/datasets/golden42/<hash>/evaluations.jsonl`) | each value is the per-dataset minimum RMSE over every valid evaluation of the combined evolution ledger (63,108 test-scored candidate evaluations; `python/src/jope/research/index_combined_regression_evolution.py:183`). The red-team lane in this tree names that quantity the *best-test ASPFM envelope*, role `oracle_reference_only`, refuses a config that says otherwise and keeps it out of its fair ladder (`crates/jope-campaigns/src/commands/train_only_redteam.rs:402-407,550-556`, `train_only_redteam_results.rs:566-578,1440-1471`). A minimum over test-scored candidates is a test-adaptive selection whatever each candidate was fitted on |
+| `golden42-evolution-envelope-test-selected` | the 42 `jope-dime` rows with `source_kind = complete-evolution-ledger-snapshot` (`source_revision = 1784790556145`, `source_uri = …/jope-dime-evolution/datasets/golden42/<hash>/evaluations.jsonl`) | each value is the per-dataset minimum RMSE over every valid evaluation of the combined evolution ledger (63,108 test-scored candidate evaluations; `8a55c4fef:python/src/jope/research/index_combined_regression_evolution.py:183`, archived). The red-team lane in this tree names that quantity the *best-test ASPFM envelope*, role `oracle_reference_only`, refuses a config that says otherwise and keeps it out of its fair ladder (`crates/jope-campaigns/src/commands/train_only_redteam.rs:402-407,550-556`, `train_only_redteam_results.rs:566-578,1440-1471`). A minimum over test-scored candidates is a test-adaptive selection whatever each candidate was fitted on |
 
 The second entry was added after independent review 5285270844 of PR #68 found the red-team
 labels; the first version of this file corrected only the Golden46 rows and said the tree held no
@@ -68,6 +68,14 @@ select at least one row, and are refused against any other `scores.csv`
 (`crates/jope-arena/src/corrections.rs`). `jope-dime-regressor` (one fixed-seed reproducible run of
 the same engine, `public-development`) is untouched and is this repository's entry on the
 benchmark-valid ladder.
+
+The corrections file is pinned by the SHA-256 above, so its evidence strings keep the paths they
+had when it was written. Two of them name Python that the Python removal P1 (ADR-0008) archived:
+`python/src/jope/research/index_combined_regression_evolution.py:183` and
+`python/src/jope/research/train_only_redteam_scq.py:1527-1536`. Read both at `8a55c4fef`
+(`git show 8a55c4fef:<path>`; every archived path and its restore command is in
+`docs/archive/python-archive-manifest.json`). The README best-known block quotes the first of them
+from this file verbatim.
 
 ## `leaderboard-tabular-regression-v2.benchmark-valid.csv` and `elo-tabular-regression-v2.benchmark-valid.json`
 

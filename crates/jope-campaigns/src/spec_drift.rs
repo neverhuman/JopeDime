@@ -214,29 +214,16 @@ pub const REGISTRY: &[(&str, &str, Option<Family>)] = &[
         "render_resource_block",
         Some(Family::Trainer),
     ),
-    // Offline train-only red-team campaign renderer. It is not part of the
-    // flywheel families, but its SCQ resource/placement syntax is still
-    // audited so a future campaign cannot reintroduce ignored host pins.
-    (
-        "python/src/jope/research/train_only_redteam_scq.py",
-        "render_spec",
-        None,
-    ),
+    // The offline train-only red-team renderer (train_only_redteam_scq.py) and the
+    // genome-boost campaign (genome_boost_cluster_campaign.py) were registered here
+    // until the Python removal P1 (ADR-0008) archived both; restore with
+    // `git checkout 8a55c4fef -- <path>` (docs/archive/python-archive-manifest.json)
+    // and re-register them if either campaign is revived.
     // Smart-v3 CPU study dispatcher. It is a frozen, development-only
     // campaign renderer outside the flywheel families, but it still belongs
     // in the registry so its SCQ syntax is audited by the repository test.
     (
         "python/src/jope/research/smart_v3_cpu_scq.py",
-        "render_spec",
-        None,
-    ),
-    // Offline genome-boost campaign. NOT a flywheel family: it is a manually
-    // driven benchmark sweep with its own cadence, so its reservations are not
-    // compared against trainer/propose/eval/encode. It IS still checked for the
-    // forms scq drops or rejects -- and it currently emits a `[resource] node`
-    // pin, which scq refuses outright.
-    (
-        "python/src/jope/research/genome_boost_cluster_campaign.py",
         "render_spec",
         None,
     ),

@@ -151,3 +151,88 @@ no installed host file was changed.
 - Records: coverage.json and test-inventory.json replace the two Python fixture families with
   `target:jope-ci/test/build_report` (disposition `maintenance`, role `infrastructure`); the
   jope-ci capability row names both ports.
+
+## Archive — every A file, U12–U14 with their tests, kernel-v1 Python, 9 unit templates
+
+- Removed with `git rm`: 703 files (694 `.py` + 9 systemd templates that only ran archived U12/U13
+  code). By category: 625 A, 37 L and 32 T (the U12–U14 units), 9 templates. By unit: 103
+  kernel-v1 (one unit), U12 17, U13 33, U14 28, the rest unowned A. By directory:
+  `python/src/jope/tools` 285, `python/src/jope/research` 87, `python/legacy` 82,
+  `python/src/jope/chimera` 44, `python/tests` 29, top-level `python/src/jope` 14,
+  `python/src/jope/zyal` 12, `python/src/jope/genome_perf` 10, `python/src/jope/fitness_corrector` 6,
+  `python/src/jope/target_maker` 5, `python/src/jope/broad_shadow` 3, `python/src/jope/data` 1,
+  `python/src/jope/dime_score` 1, `deploy/kernel-v1` 103, `deploy/systemd/engine` 7,
+  `deploy/systemd/selfplay` 2, `docs/legacy/root-docs/audits/worldclass-redteam-20260911` 11,
+  `crates/jope-campaigns` 1. `git ls-files '*.py'` now lists 216 files.
+- Manifest: `docs/archive/python-archive-manifest.json`, 715 rows (the 703 above plus the 12
+  Python files the U8/U2/U3/U5 commits ported), each with path, blob, mode, category, unit,
+  disposition, Rust replacement for ported rows, source commit `8a55c4fef407db01…` and
+  `git checkout 8a55c4fef -- <path>`. Every blob equals the base tree (checked by joining
+  `git ls-tree -r 8a55c4fef`) and no archived file changed between the base and the archive commit.
+- Custody: `/home/ubuntu/jope-evidence/python-archive-20260926/python-archive-20260926.tar.gz`
+  (`git archive 8a55c4fef -- <715 paths> | gzip -n -9`, 1,856,667 bytes, sha256
+  `41d1247a9628efb3133289f5b72bee451ad655a7725b5c25cc1e58159a5c1205`) with the manifest, the
+  TSV and the file list; `SHA256SUMS` lists every file there except itself and verifies.
+  Verification (`VERIFICATION.txt`): extracted into a fresh directory, all 715 paths present,
+  `git hash-object --no-filters` and the executable bit equal the manifest for every row, no other
+  file or link; RESULT PASS, then the verified extraction was removed.
+- Superseded first build, kept unchanged under `superseded-718-rows-20260927T030130Z/` with its own
+  `SHA256SUMS` and a `NOTE.txt`: it also held `python/src/jope/elo_replica.py`,
+  `python/src/jope/chimera/elo_finetune/elo_meter.py` and
+  `python/src/jope/research/render_elo_ranking.py`. Those three are digest-checked `retained`
+  inputs of `docs/internal/core-ip/elo-history/histories.json` (`jope-records elo-history
+  --require-all`, hygiene lane), so they have a live consumer and stay. Its first verification
+  report failed only because the checker read the TSV with `read`, which collapses empty tab
+  fields; it is kept as `VERIFICATION-20260927T030130Z-parser-bug.txt`, and the rerun on the same
+  tarball passed.
+- Kept although classified A (live consumer found while archiving): the 19 research modules and
+  `deploy_selfplay_bundle.py` imported or read by kept tests, `test_exact_canary.py` (launched by
+  path from kept tests, so its `spec_drift` entry stays live), the three elo-history files above,
+  and from U13 `shared_teaching_cache.py`, `resume_expired_cycle.py` and `tools/__init__.py`
+  (`crates/jope-engine/tests/sealed_storage.rs` spawns the cache server). The cache's own
+  never-collected test imports the archived `resident_gpu_pool.py` and went with U13.
+- Guards, none weakened:
+  - `jope-records coverage validate`: 186 stale items removed from `deploy/ci/coverage.json`
+    (605 → 419 items; key order kept); 0 unassigned or invalid.
+  - `verify-test-inventory`: the same 170 test-bearing keys removed from
+    `docs/internal/core-ip/findings/test-inventory.json` (473 → 303).
+  - `deploy/ci/test-inventory.sh --static-python`: 276 → 172 static test functions (111 in
+    archived files removed; 7 existing `test_policy_training_contract.py` tests that were never
+    recorded are now recorded). The floor goes from 214 to exactly 172 in both the committed
+    inventory and `FLOORS`, with the reason and this manifest's path in a comment.
+  - Capability matrix: the 380 rows whose target was archived (script-py 83, script-test 4,
+    systemd-unit 9, tool-py 183, tool-test 101) become `dropped` with the reason, the all-refs
+    bundle key and the `8a55c4fef` restore command; Counts recomputed from the rows (moved
+    735 → 355, dropped 20 → 400; no-test tally 657 → 300); the legend names the P1 drops. The
+    shared-cache row's note now says why the module stays.
+  - `spec_drift` registry: the entries for `train_only_redteam_scq.py` and
+    `genome_boost_cluster_campaign.py` are removed (both archived) with a comment on how to
+    restore and re-register them; `test_exact_backlog.py`, `test_exact_canary.py`,
+    `test_exact_ops.py`, `test_exact_train.py` and `smart_v3_cpu_scq.py` stay registered.
+  - `python/pyproject.toml`: the `src/jope/chimera/**` per-file ignore is removed (ruff passes on
+    the one chimera file left without it).
+  - Provenance: `assets/regression/SOURCES.md` cites
+    `8a55c4fef:python/src/jope/research/index_combined_regression_evolution.py:183` and explains
+    that the SHA-pinned corrections file (and the README block rendered from it) keeps its original
+    paths; `crates/jope-learning/src/metric.rs` cites `8a55c4fef:…/promotion_gate.py:22-27`;
+    `jope_selfplay_bundle.rs` says why the workspace-sync unit names stay excluded.
+- Left in place and reported: the SHA-pinned `protocol-corrections-tabular-regression-v2.json`
+  citations; `crates/jope-engine/manifests/opportunistic-proposals-v44/v53` and
+  `crates/jope-campaigns/manifests/workspace-sync*.json` (historical manifests naming archived
+  files); `jope-parallel compare-seeds`, which still execs `<state root>/tools/seed_experiment.py`
+  (a state-root copy, not this checkout); `deploy_selfplay_bundle.py`'s reference to the archived
+  `tests/test_realtime_selfplay.py` (an xbabe2-only path); the `.gitleaks.toml` allowlist entry
+  for `test_workspace_sync.py` (history is still scanned); manual and training-support prose that
+  cites archived paths (`docs/internal/asm-manual`, `docs/internal/training-support`,
+  `docs/internal/core-ip/sections/06.md`).
+- Python lane before the archive: `py-p1-archive-pre-20260927T030540Z` (uv sync, ruff check and
+  format, pytest 343 passed / 15 deselected, training-proof's required cases: PASS).
+- After: `py-p1-archive-post-20260927T031513Z` — the full gate (fences, `cargo check --workspace
+  --all-targets`, fmt, `git diff --check`, coverage validate, `verify-test-inventory`, the matrix
+  check, the static-Python inventory) plus the `spec_drift` tests (13 passed), `elo-history
+  --require-all`, `jope-arena`'s `elo_regression` (4 passed), `cargo test -p jope-records`,
+  ShellCheck on `test-inventory.sh`, `deploy/ci/check.sh` and the Python lane (uv sync, ruff check
+  and format, pytest 245 passed / 2 deselected, training-proof's required cases: PASS). Its one
+  red step named the wrong package for the `sealed_storage` test (`jope-engine` instead of
+  `jope-parallel`, so nothing ran); `py-p1-archive-post-20260927T032003Z` ran it under the right
+  name: the test that spawns `shared_teaching_cache.py` as the cache server passes.
