@@ -88,7 +88,7 @@ docker run --rm --network none \
         $build_cmd > /work/build.jsonl
     " 2>&1 | tee "$run/build.log"
 
-binary=$(python3 "$repo/deploy/ci/cargo-artifact.py" select --package jope-parallel --bin jope-parallel \
+binary=$(cargo run -q --locked --manifest-path "$repo/Cargo.toml" -p jope-ci -- cargo-artifact select --package jope-parallel --bin jope-parallel \
     --metadata "$run/work/metadata.json" --messages "$run/work/build.jsonl" --path-map /work "$run/work")
 # The copy that was built must equal the git-tracked source it is receipted as.
 diff -r "$source_dir" "$run/work/src" >/dev/null

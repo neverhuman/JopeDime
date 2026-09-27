@@ -26,7 +26,7 @@ for tool in rustc g++ clang++ node python3 sha256sum; do
 done
 [ ! -e "$OUT" ] || { echo "refusing to overwrite prior evidence: $OUT" >&2; exit 1; }
 mkdir -p "$OUT"
-EMIT=$(python3 deploy/ci/cargo-artifact.py build --package feat-math --example emit)
+EMIT=$(cargo run -q --locked -p jope-ci -- cargo-artifact build --package feat-math --example emit)
 
 # The emitted programs take (train.csv, test_features.csv, predictions): derive the features-only
 # test file from the committed split (the last column is the target).

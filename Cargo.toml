@@ -9,6 +9,7 @@ members = [
   "crates/jope-bench",
   "crates/jope-engine",
   "crates/jope-campaigns",
+  "crates/jope-ci",
   "crates/jope-cli",
   "crates/jope-datasets",
   "crates/jope-encoders",

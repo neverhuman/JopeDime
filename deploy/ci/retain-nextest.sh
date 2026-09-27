@@ -3,7 +3,7 @@ set -euo pipefail
 EVIDENCE=${1:?evidence directory required}
 mkdir -p "$EVIDENCE"
 df -B1 --output=source,size,used,avail,pcent / | tee "$EVIDENCE"/disk-after.txt
-target=$(python3 deploy/ci/cargo-artifact.py target-dir)
+target=$(cargo run -q --locked -p jope-ci -- cargo-artifact target-dir)
 du -sb "$target" 2>/dev/null | tee "$EVIDENCE"/target-bytes.txt
 # `[profile.pr.junit] path = "junit.xml"` puts it here; keep the lane honest about a
 # missing report instead of uploading a directory that quietly holds no results.

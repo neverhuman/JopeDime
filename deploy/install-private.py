@@ -281,7 +281,7 @@ def build_source(checkout, source_sha, output, jobs=4):
             "diagnostics":{"path":str(diagnostics),"sha256":checksum(diagnostics)},
             "dependency_inventory":{"path":str(inventory_path),"sha256":checksum(inventory_path)}})
         raise ValueError("CLI source build failed; immutable diagnostics and failure receipt retained")
-    executable = Path(read(sys.executable, str(checkout / "deploy/ci/cargo-artifact.py"), "select",
+    executable = Path(read("cargo", "run", "-q", "--locked", "-p", "jope-ci", "--", "cargo-artifact", "select",
                            "--package", "jope-cli", "--bin", "jope", "--metadata", str(metadata_path), "--messages", str(messages)))
     if read("git", "rev-parse", "HEAD") != source_sha or read("git", "status", "--porcelain"):
         raise ValueError("source changed during the build")
