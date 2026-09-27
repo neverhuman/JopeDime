@@ -171,10 +171,11 @@ pub struct Predecessor {
 pub const TRAINING_MICROBATCHES: [u32; 3] = [64, 128, 256];
 pub const TRAINING_GLOBAL_BATCHES: [u32; 4] = [2048, 4096, 8192, 16384];
 
-/// The training execution a plan selects (W7-T06): the execution-partition version and the
-/// batch shape its ranks train under. The world size is the number of participants, so the
-/// partition record is derived for exactly this plan ([`BoundedRunContract::execution_partition`]).
-/// A plan that selects none omits the field, and its canonical bytes and digest are unchanged.
+/// The training a plan selects (W7-T06, W7-D2): the execution-partition version and batch
+/// shape its ranks train under, and what they train from. The world size is the number of
+/// participants, so the partition record is derived for exactly this plan
+/// ([`BoundedRunContract::execution_partition`]). A plan that selects none omits the field,
+/// and its canonical bytes and digest are unchanged.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub struct TrainingSelection {
@@ -182,6 +183,15 @@ pub struct TrainingSelection {
     pub execution_partition: String,
     pub microbatch: u32,
     pub global_batch: u32,
+    /// The corpus directory, relative to each host's input root; its `index.json` is in the
+    /// plan's input closure.
+    pub corpus: PathBuf,
+    /// Optimizer steps between committed checkpoints, `1..=planned_updates`.
+    pub checkpoint_steps: u64,
+    /// The parent checkpoint directory, relative to the input root; its `state.json` is in
+    /// the input closure and is at the plan's committed start. Absent for a fresh start at 0.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub initialize: Option<PathBuf>,
 }
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
@@ -385,6 +395,44 @@ impl BoundedRunContract {
             }
         }
         self.execution_partition().map_err(invalid)?;
+        // W7-D2: what the ranks train from is pinned by the plan.
+        let in_closure =
+            |path: &std::path::Path| self.artifact_closure.iter().any(|e| e.path == path);
+        need!(
+            is_relative(&t.corpus) && in_closure(&t.corpus.join("index.json")),
+            Invalid,
+            "the training corpus index `{}/index.json` is not in the plan's input closure",
+            t.corpus.display()
+        );
+        need!(
+            (1..=self.counters.planned_updates).contains(&t.checkpoint_steps),
+            Invalid,
+            "checkpoint cadence {} is outside 1..={} planned updates",
+            t.checkpoint_steps,
+            self.counters.planned_updates
+        );
+        match &t.initialize {
+            Some(parent) => need!(
+                is_relative(parent) && in_closure(&parent.join("state.json")),
+                Invalid,
+                "the parent checkpoint state `{}/state.json` is not in the plan's input closure",
+                parent.display()
+            ),
+            None => need!(
+                self.counters.committed_updates_at_start == 0,
+                Invalid,
+                "a fresh training run starts at 0 committed updates, not {}; name the parent checkpoint it continues",
+                self.counters.committed_updates_at_start
+            ),
+        }
+        for p in &self.participants {
+            need!(
+                p.device.is_some(),
+                Invalid,
+                "rank {} has no GPU; every rank of a training plan trains on a GPU",
+                p.global_rank
+            );
+        }
         Ok(())
     }
     /// The execution-partition record this plan's ranks train under, derived from its
