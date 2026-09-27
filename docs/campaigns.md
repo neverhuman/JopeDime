@@ -71,3 +71,41 @@ Scores and receipts a campaign produces are appended to the learning store's `sc
 `docs/arena.md`). The 55 historical program names, their new homes and their tests are enumerated
 row by row in `docs/parity/capability-matrix.md` (PR
 [#12](https://github.com/veox-ai/JopeDime/pull/12)).
+
+## Targeted evolution of one dataset (`jope pipeline evolve`, CPU)
+
+The panels above measure many datasets under one protocol. A targeted campaign drives **one**
+chosen dataset to better GP programs over rounds and turns each round's champion into the next
+round's starting point. Everything it runs exists today in `jope` and `jope-learning`; nothing is
+scheduled, uploaded or promoted.
+
+```bash
+jope pipeline evolve --dataset datasets/test/uci-parkinsons-telemonitoring --rounds 3 --control \
+  --cuts 3 --budget evaluations=200,seconds=600 --threads 8 --policy skip --emit rust \
+  --output <campaign>
+jope pipeline lineage verify --lineage <campaign>/lineage.json --require-discovery
+for r in round-001 round-002 round-003 control; do
+  jope-learning hwm ingest --source pipeline <campaign>/$r/receipt.json
+  jope-learning bank add --receipt <campaign>/$r/receipt.json --lineage <campaign>/lineage.json
+done                                  # the bank accepts only HWM-improved champions
+jope-learning bank export --dataset <dataset_hash> --out seeds.json
+jope pipeline evolve --seeds seeds.json ...            # the next campaign starts from the bank
+jope pipeline score --receipt <campaign>/round-003/receipt.json --split test   # once per genome
+```
+
+- **Rounds** share one prepared set of cuts (fixed fold seed and cut count), so their mean
+  held-out RMSEs are directly comparable; round r > 1 is seeded from round r-1's champion and
+  ranked runners-up and can never end worse than it. `--control` repeats the final round's
+  configuration unseeded, which separates what seeding carried forward from what the search
+  found on its own.
+- **The learning store** is written only by the separate `jope-learning` steps: the HWM ledger
+  records initialized / improved / tie / not-improved under a pipeline comparison identity (never
+  teaching-eligible), and the champion bank keeps improved champions as `jope.pipeline-seeds/v1`
+  targets for later campaigns.
+- **The sealed test split** is read only by `jope pipeline score`, once per (dataset, genome),
+  and never feeds selection, seeding or the bank.
+- **Cores**: `--threads` and `--islands` multiply into the worker count, which is refused above
+  the CPUs the process may use or an explicit `--cpu-ceiling`; no decision depends on it.
+
+Command reference: [`docs/pipeline.md`](pipeline.md) ("Targeted evolution", "Test-split
+scoring") and [`docs/learning.md`](learning.md) ("Pipeline champions", "The champion bank").
