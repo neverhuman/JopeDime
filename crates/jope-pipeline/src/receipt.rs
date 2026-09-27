@@ -41,6 +41,37 @@ pub struct Seed {
     pub source: String,
 }
 
+/// One champion carried from one island into another on one cut.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct Migration {
+    pub cut: u64,
+    /// The generation after which the migration happened.
+    pub after_generation: u64,
+    pub from_island: u64,
+    pub to_island: u64,
+    #[schemars(regex(pattern = r"^[0-9a-f]{64}$"))]
+    pub program_sha256: String,
+    /// The migrant's held-out RMSE on this cut, as its home island measured it: a migrant is
+    /// never re-fitted.
+    pub rmse: f64,
+    /// Whether it entered the receiving island's elites (only a champion better than one of them
+    /// does).
+    pub admitted: bool,
+}
+
+/// v3: the island model the search ran.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct Islands {
+    /// Independent random streams over the same cuts; 1 is the plain search.
+    pub count: u64,
+    /// Generations between migrations of each island's top-1 into the others.
+    pub migration_interval: u64,
+    /// Every migration on every cut, in cut order and then the order it happened.
+    pub migrations: Vec<Migration>,
+}
+
 /// v3: how generation 0 was seeded. Present, with an empty `seeds`, on an unseeded run.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
@@ -249,6 +280,10 @@ pub struct Search {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[schemars(required)]
     pub seeding: Option<Seeding>,
+    /// v3: island count, migration interval and every migration.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(required)]
+    pub islands: Option<Islands>,
 }
 
 /// One emitted source file.
@@ -397,8 +432,11 @@ impl Receipt {
         }
         if self.schema == RECEIPT_SCHEMA_ID {
             self.v3_errors(&mut errors);
-        } else if self.search.seeding.is_some() {
-            errors.push(format!("{} receipts carry no seeding record", self.schema));
+        } else if self.search.seeding.is_some() || self.search.islands.is_some() {
+            errors.push(format!(
+                "{} receipts carry no seeding or islands record",
+                self.schema
+            ));
         }
         errors
     }
@@ -407,6 +445,35 @@ impl Receipt {
     /// requested cut, so its place in the selection rests on this run's measurements alone.
     fn v3_errors(&self, errors: &mut Vec<String>) {
         use std::collections::BTreeSet;
+        match &self.search.islands {
+            None => errors.push("v3 requires an islands record".into()),
+            Some(islands) => {
+                if islands.count == 0 || (islands.count == 1 && !islands.migrations.is_empty()) {
+                    errors.push(format!(
+                        "{} island(s) with {} migration(s)",
+                        islands.count,
+                        islands.migrations.len()
+                    ));
+                }
+                for migration in &islands.migrations {
+                    if migration.from_island >= islands.count
+                        || migration.to_island >= islands.count
+                        || migration.from_island == migration.to_island
+                        || !self.prepared.cuts.contains(&migration.cut)
+                        || !migration.rmse.is_finite()
+                        || migration.rmse < 0.0
+                        || islands.migration_interval == 0
+                        || (migration.after_generation + 1) % islands.migration_interval != 0
+                    {
+                        errors.push(format!(
+                            "migration of {} on cut {} is not a migration between this run's \
+                             islands at its interval",
+                            migration.program_sha256, migration.cut
+                        ));
+                    }
+                }
+            }
+        }
         let Some(seeding) = &self.search.seeding else {
             errors.push("v3 requires a seeding record".into());
             return;
@@ -652,7 +719,13 @@ pub fn derived_schema() -> serde_json::Value {
         ("CutSearch", &["accounting"][..]),
         (
             "Search",
-            &["budget_policy", "compared_cuts", "coverage", "seeding"][..],
+            &[
+                "budget_policy",
+                "compared_cuts",
+                "coverage",
+                "seeding",
+                "islands",
+            ][..],
         ),
     ] {
         let required = value["$defs"][definition]["required"]

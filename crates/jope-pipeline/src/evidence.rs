@@ -87,6 +87,7 @@ pub fn verify_run(receipt_path: &Path) -> Result<VerifiedRun> {
         )?;
         let mut digests = String::new();
         let mut cuts = Vec::new();
+        let mut published_migrations: Vec<receipt::Migration> = Vec::new();
         for cut in &receipt.search.cuts {
             let dir = root.join("search").join(format!("cut-{}", cut.cut));
             let summary = read_digest(&dir.join("search.json"), &cut.search_sha256, "search")?;
@@ -96,6 +97,12 @@ pub fn verify_run(receipt_path: &Path) -> Result<VerifiedRun> {
                 "cut {}: search.json names other observations",
                 cut.cut
             );
+            if let Some(migrations) = summary.get("migrations") {
+                published_migrations.extend(
+                    serde_json::from_value::<Vec<receipt::Migration>>(migrations.clone())
+                        .with_context(|| format!("cut {}: search.json migrations", cut.cut))?,
+                );
+            }
             let published = read_digest(
                 &dir.join("observations.json"),
                 &cut.observations_sha256,
@@ -181,6 +188,42 @@ pub fn verify_run(receipt_path: &Path) -> Result<VerifiedRun> {
                 *coverage == selection.coverage,
                 "the recorded program coverage is not what the observations show"
             );
+        }
+        match &receipt.search.islands {
+            Some(islands) => {
+                for (cut, observations) in &cuts {
+                    ensure!(
+                        observations.iter().all(|o| match o.island {
+                            Some(island) => islands.count > 1 && (island as u64) < islands.count,
+                            None => islands.count == 1 || o.origin == REMEASURE,
+                        }),
+                        "cut {cut}: observations name islands this run did not have"
+                    );
+                }
+                ensure!(
+                    published_migrations == islands.migrations,
+                    "the recorded migrations are not the ones the cuts' searches published"
+                );
+                for migration in &islands.migrations {
+                    let measured = cuts.iter().any(|(cut, observations)| {
+                        *cut as u64 == migration.cut
+                            && observations.iter().any(|o| {
+                                o.program_sha256 == migration.program_sha256
+                                    && o.rmse.map(f64::to_bits) == Some(migration.rmse.to_bits())
+                            })
+                    });
+                    ensure!(
+                        measured,
+                        "migrant {} was never measured with that score on cut {}",
+                        migration.program_sha256,
+                        migration.cut
+                    );
+                }
+            }
+            None => ensure!(
+                published_migrations.is_empty(),
+                "the cuts published migrations a receipt without islands does not record"
+            ),
         }
         if let Some(seeding) = &receipt.search.seeding {
             for seed in &seeding.seeds {

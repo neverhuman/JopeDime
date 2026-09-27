@@ -338,6 +338,56 @@
       ],
       "type": "object"
     },
+    "Migration": {
+      "additionalProperties": false,
+      "description": "One champion carried from one island into another on one cut.",
+      "properties": {
+        "admitted": {
+          "description": "Whether it entered the receiving island's elites (only a champion better than one of them\ndoes).",
+          "type": "boolean"
+        },
+        "after_generation": {
+          "description": "The generation after which the migration happened.",
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "cut": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "from_island": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "program_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "rmse": {
+          "description": "The migrant's held-out RMSE on this cut, as its home island measured it: a migrant is\nnever re-fitted.",
+          "format": "double",
+          "type": "number"
+        },
+        "to_island": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "cut",
+        "after_generation",
+        "from_island",
+        "to_island",
+        "program_sha256",
+        "rmse",
+        "admitted"
+      ],
+      "type": "object"
+    },
     "Phase": {
       "additionalProperties": false,
       "description": "Per-phase admission limits and actual work. One non-preemptible fit can\nexceed seconds_limit; no later fit is admitted in that phase.",
@@ -485,6 +535,37 @@
           "minimum": 0,
           "type": "integer"
         },
+        "islands": {
+          "additionalProperties": false,
+          "description": "v3: island count, migration interval and every migration.",
+          "properties": {
+            "count": {
+              "description": "Independent random streams over the same cuts; 1 is the plain search.",
+              "format": "uint64",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "migration_interval": {
+              "description": "Generations between migrations of each island's top-1 into the others.",
+              "format": "uint64",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "migrations": {
+              "description": "Every migration on every cut, in cut order and then the order it happened.",
+              "items": {
+                "$ref": "#/$defs/Migration"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "count",
+            "migration_interval",
+            "migrations"
+          ],
+          "type": "object"
+        },
         "max_transforms": {
           "format": "uint64",
           "minimum": 0,
@@ -574,7 +655,8 @@
         "budget_policy",
         "compared_cuts",
         "coverage",
-        "seeding"
+        "seeding",
+        "islands"
       ],
       "type": "object"
     },

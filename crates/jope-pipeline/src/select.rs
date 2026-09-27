@@ -229,6 +229,7 @@ mod tests {
             best_validation_rmse: None,
             best_validation_r2: None,
             best_program: None,
+            migrations: Vec::new(),
             observations,
             search_sha256: String::new(),
             observations_sha256: String::new(),
@@ -250,6 +251,7 @@ mod tests {
             seconds: 0.5,
             status: MEASURED,
             failure: None,
+            island: None,
         }
     }
 

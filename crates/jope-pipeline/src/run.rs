@@ -75,7 +75,10 @@ pub struct RunOptions {
     /// Worker threads evaluating each generation. Never changes a decision or a published byte
     /// other than wall-clock readings; not recorded in the receipt for that reason.
     pub threads: usize,
-    /// An explicit CPU admission in millicores that the worker count must fit.
+    /// Independent random streams over the same cuts (recorded, with every migration).
+    pub islands: usize,
+    pub migration_interval: usize,
+    /// An explicit CPU admission in millicores that `islands x threads` must fit.
     pub cpu_ceiling_millicores: Option<u64>,
     pub clock: Clock,
 }
@@ -96,6 +99,8 @@ impl RunOptions {
             seed_genomes: None,
             incumbent: None,
             threads: 1,
+            islands: 1,
+            migration_interval: search::DEFAULT_MIGRATION_INTERVAL,
             cpu_ceiling_millicores: None,
             clock: Clock::Wall,
         }
@@ -115,7 +120,15 @@ pub fn preflight(options: &RunOptions) -> Result<usize> {
         "--policy require: {PROPOSE_SKIP_REASON}. Re-run with --policy skip to proceed \
          without it."
     );
-    crate::parallel::admit(options.threads, 1, options.cpu_ceiling_millicores)
+    ensure!(
+        options.islands <= 1 || options.migration_interval >= 1,
+        "--migration-interval must be at least 1 with more than one island"
+    );
+    crate::parallel::admit(
+        options.threads,
+        options.islands,
+        options.cpu_ceiling_millicores,
+    )
 }
 
 /// Seeds resolved from `--incumbent` and `--seed-genomes`, before anything is written.
@@ -251,6 +264,8 @@ pub fn run(options: &RunOptions) -> Result<Receipt> {
     let search_options = search::SearchOptions {
         seeds: seed_genomes,
         threads: options.threads,
+        islands: options.islands,
+        migration_interval: options.migration_interval,
         clock,
         ..search::SearchOptions::new(options.budget, options.rng_seed)
     };
@@ -466,6 +481,14 @@ fn assemble(
                 cuts_measured: b.cuts_measured as u64,
             }),
             seeding: Some(seeding),
+            islands: Some(receipt::Islands {
+                count: options.islands.max(1) as u64,
+                migration_interval: options.migration_interval as u64,
+                migrations: searched
+                    .iter()
+                    .flat_map(|cut| cut.migrations.iter().cloned())
+                    .collect(),
+            }),
         },
         artifacts: emitted
             .artifacts
@@ -903,6 +926,62 @@ mod tests {
         );
         assert!(error.contains("--cpu-ceiling 999"), "{error}");
         assert!(!output.exists(), "a refused run wrote {}", output.display());
+    }
+
+    #[test]
+    fn an_island_run_records_its_islands_and_migrations_and_reverifies() {
+        let temp = tempfile::tempdir().unwrap();
+        let output = temp.path().join("islands");
+        let receipt = run(&RunOptions {
+            islands: 2,
+            migration_interval: 1,
+            cuts: 2,
+            ..small(&output, 60)
+        })
+        .unwrap();
+        let islands = receipt.search.islands.clone().unwrap();
+        assert_eq!((islands.count, islands.migration_interval), (2, 1));
+        assert!(!islands.migrations.is_empty());
+        let verified = crate::evidence::verify_run(&output.join("receipt.json")).unwrap();
+        assert!(verified.cuts.iter().all(|(_, observations)| observations
+            .iter()
+            .all(|o| o.origin == search::REMEASURE || o.island.is_some())));
+
+        // A migration edited in the receipt no longer matches what the cuts published.
+        let mut value: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(output.join("receipt.json")).unwrap()).unwrap();
+        let admitted = value["search"]["islands"]["migrations"][0]["admitted"]
+            .as_bool()
+            .unwrap();
+        value["search"]["islands"]["migrations"][0]["admitted"] = (!admitted).into();
+        std::fs::write(
+            output.join("receipt.json"),
+            serde_json::to_vec_pretty(&value).unwrap(),
+        )
+        .unwrap();
+        let error = format!(
+            "{:#}",
+            crate::evidence::verify_run(&output.join("receipt.json")).unwrap_err()
+        );
+        assert!(error.contains("recorded migrations"), "{error}");
+    }
+
+    #[test]
+    fn islands_times_threads_above_the_ceiling_is_refused() {
+        let temp = tempfile::tempdir().unwrap();
+        let output = temp.path().join("run");
+        let error = format!(
+            "{:#}",
+            run(&RunOptions {
+                islands: 2,
+                cpu_ceiling_millicores: Some(1000),
+                ..small(&output, 4)
+            })
+            .unwrap_err()
+        );
+        assert!(error.contains("--islands 2 x --threads 1"), "{error}");
+        assert!(error.contains("--cpu-ceiling 1000"), "{error}");
+        assert!(!output.exists());
     }
 
     #[test]
