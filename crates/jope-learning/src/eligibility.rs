@@ -28,8 +28,9 @@ use std::{
 mod context;
 mod inner;
 pub use context::{
-    ContextEvidence, ContextExecution, ContextPlan, HandoffEncoder, HandoffEvidence,
-    HandoffRelease, ProducerPlan, HANDOFF_SCHEMA, TEACHER_ADMISSION,
+    retain_handed_off_context, ContextEvidence, ContextExecution, ContextPlan, ContextRun,
+    HandoffEncoder, HandoffEvidence, HandoffRelease, ProducerPlan, HANDOFF_SCHEMA,
+    TEACHER_ADMISSION,
 };
 pub use inner::{
     derive_inner_partition, freeze_inner_optimization, register_inner_candidate, InnerEvidence,
@@ -1601,6 +1602,8 @@ mod tests {
         pub(super) handoff: serde_json::Value,
         pub(super) job: WorkerJob,
         pub(super) outcome: WorkerOutcome,
+        /// The bytes of the context artifact the job wrote.
+        pub(super) artifact: Vec<u8>,
     }
 
     impl HandoffParts {
@@ -1612,7 +1615,8 @@ mod tests {
     }
 
     /// The handoff the preregistered producer makes of the context `output_sha256` for the
-    /// comparison's dataset, with a completed execution inside `window`. Nothing is executed.
+    /// comparison's dataset, with a completed execution inside `window`. Nothing is executed and
+    /// nothing is retained.
     pub(super) fn handoff_parts(
         state: &State,
         output_sha256: &str,
@@ -1635,7 +1639,7 @@ mod tests {
         .unwrap();
         let artifact = Artifact {
             path: directory.join("artifact.json"),
-            sha256: state.put_blob(&artifact_bytes).unwrap(),
+            sha256: sha256_hex(&artifact_bytes),
         };
         let request = EvaluationRequest {
             schema: REQUEST_SCHEMA.into(),
@@ -1718,6 +1722,7 @@ mod tests {
             handoff,
             job,
             outcome,
+            artifact: artifact_bytes,
         }
     }
 
@@ -1729,6 +1734,7 @@ mod tests {
         window: &ExecutionWindow,
     ) -> HandoffEvidence {
         let put = |bytes: Vec<u8>| state.put_blob(&bytes).unwrap();
+        put(parts.artifact.clone());
         HandoffEvidence {
             handoff_sha256: put(serde_json::to_vec(&parts.handoff).unwrap()),
             execution: ContextExecution {
@@ -2703,6 +2709,7 @@ mod tests {
     mod linkage;
     mod matrix;
     mod metrics;
+    mod producer;
     mod provenance;
     mod revocation;
     mod transitions;
