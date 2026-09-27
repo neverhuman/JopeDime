@@ -9,6 +9,7 @@ pub mod controller;
 pub mod dashboard;
 pub mod encoding;
 pub mod families;
+pub mod family_growth;
 pub mod fit_boundary;
 pub mod gp;
 pub mod learning_history;

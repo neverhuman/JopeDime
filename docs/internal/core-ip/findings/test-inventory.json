@@ -529,10 +529,6 @@
       "role": "research",
       "reason": "research script test outside the maintained product surface"
     },
-    "python:python/src/jope/tools/test_family_growth_policy.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
-    },
     "python:python/src/jope/tools/test_fence_honesty.py": {
       "role": "research",
       "reason": "research script test outside the maintained product surface"

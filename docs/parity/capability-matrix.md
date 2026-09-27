@@ -42,7 +42,7 @@ you saw.
 | wire | 5 | 0 | 0 | 0 | 5 | 0 |
 | **total** | **786** | **735** | **23** | **1** | **20** | **7** |
 
-`moved`/`new` rows without a covering test: 659.
+`moved`/`new` rows without a covering test: 657.
 
 ## Rows
 
@@ -327,7 +327,7 @@ you saw.
 | tool-py | parallel/tools/export_policy_reference.py | python/src/jope/tools/export_policy_reference.py | none | moved |  |
 | tool-py | parallel/tools/export_target.py | python/src/jope/tools/export_target.py | none | moved |  |
 | tool-py | parallel/tools/extend_component_sampling.py | python/src/jope/tools/extend_component_sampling.py | none | moved | sibling python/src/jope/tools/test_extend_component_sampling.py (5 test functions) is not collected (pytest testpaths=tests) |
-| tool-py | parallel/tools/family_growth_policy.py | crates/jope-engine/policy/family_growth_policy.py | none | moved | kept crate-local (read by jope-engine); sibling python/src/jope/tools/test_family_growth_policy.py (11 test functions) is not collected (pytest testpaths=tests) |
+| tool-py | parallel/tools/family_growth_policy.py | crates/jope-engine/src/family_growth.rs | jope-parallel::families growth_policy_matches_the_captured_python_outputs | moved | ported to native Rust (Python removal P1); `families::freeze_growth` no longer executes Python; the Python policy is archived at `8a55c4fef` (docs/archive/python-archive-manifest.json) and its outputs are replayed from tests/fixtures/family-growth/ |
 | tool-py | parallel/tools/fence_honesty.py | python/src/jope/tools/fence_honesty.py | none | moved | sibling python/src/jope/tools/test_fence_honesty.py (4 test functions) is not collected (pytest testpaths=tests) |
 | tool-py | parallel/tools/fence_legacy_fits.py | python/src/jope/tools/fence_legacy_fits.py | none | moved |  |
 | tool-py | parallel/tools/flywheel_acceptance.py | python/src/jope/tools/flywheel_acceptance.py | none | moved | sibling python/src/jope/tools/test_flywheel_acceptance.py (11 test functions) is not collected (pytest testpaths=tests) |
@@ -463,7 +463,7 @@ you saw.
 | tool-test | parallel/tools/test_experiment_hardening.py | python/src/jope/tools/test_experiment_hardening.py | none | moved | 13 test functions travel with the tool but are not collected (pytest testpaths=tests); collection decision is WP6 triage |
 | tool-test | parallel/tools/test_expert_iteration_setup.py | python/src/jope/tools/test_expert_iteration_setup.py | none | moved | 11 test functions travel with the tool but are not collected (pytest testpaths=tests); collection decision is WP6 triage |
 | tool-test | parallel/tools/test_extend_component_sampling.py | python/src/jope/tools/test_extend_component_sampling.py | none | moved | 5 test functions travel with the tool but are not collected (pytest testpaths=tests); collection decision is WP6 triage |
-| tool-test | parallel/tools/test_family_growth_policy.py | python/src/jope/tools/test_family_growth_policy.py | none | moved | 11 test functions travel with the tool but are not collected (pytest testpaths=tests); collection decision is WP6 triage |
+| tool-test | parallel/tools/test_family_growth_policy.py | crates/jope-engine/tests/families.rs | jope-parallel::families growth_policy_matches_the_captured_python_outputs | moved | ported to Rust (Python removal P1): its GrowthFixture and cases run natively against the outputs captured from the Python policy; the Python file is archived at `8a55c4fef` |
 | tool-test | parallel/tools/test_fence_honesty.py | python/src/jope/tools/test_fence_honesty.py | none | moved | 4 test functions travel with the tool but are not collected (pytest testpaths=tests); collection decision is WP6 triage |
 | tool-test | parallel/tools/test_flywheel_acceptance.py | python/src/jope/tools/test_flywheel_acceptance.py | none | moved | 11 test functions travel with the tool but are not collected (pytest testpaths=tests); collection decision is WP6 triage |
 | tool-test | parallel/tools/test_flywheel_baseline.py | python/src/jope/tools/test_flywheel_baseline.py | none | moved | 16 test functions travel with the tool but are not collected (pytest testpaths=tests); collection decision is WP6 triage |
