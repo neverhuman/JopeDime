@@ -1230,7 +1230,10 @@ are fixed in this commit:
 
 - The live runs need the §0 admission.
 - The daemon registration and admin uid are owner and operator changes on each host.
-- There is no repository tool for contract authoring or grant signing; the owner signs.
+- Contract authoring and grant signing were assembled by hand at this point (`jq` and
+  `openssl pkeyutl`). W7-D6 below replaced both with repository verbs: `contract author`,
+  `grant sign` and `grant verify`. The owner still signs, with the grant-authority key, through
+  `grant sign`.
 - Reservations are checked by hand.
 
 ## Owner decisions 2026-09-27 (W7)
@@ -1654,3 +1657,56 @@ The `contract author`, `grant sign` and `grant verify` verbs replaced the hand a
 - `coordinate` ended `committed` with 5 updates, and `verify` counts 1 result.
 
 Post-fix record: `w7c-D4-post-*`, the full gate (`bounded_transport` 10, `bounded_grants` 5).
+
+## Landing on main (`rr2/w7-landing`)
+
+`rr2/w7-live` (`961ad2333`, 16 commits on `8a55c4fef`) is replayed onto main `f46a9048f`, after
+PRs #114, #115 and #116, as `rr2/w7-landing`. Each commit is a `cherry-pick -x` with its
+original author, and each conflict resolution is described in the landed commit's message.
+`rr2/w7-live` itself is unchanged. The pre-landing record is `w7-landing-pre-20260927T191733Z`:
+the conflicts as git left them, each side's diff since `8a55c4fef`, and the scripts used.
+
+**Conflicts and how they were resolved.**
+
+- **`docs/parity/capability-matrix.md`** (the W7-T01, W7-T05 and W7-D6 commits). Only the
+  `## Counts` total conflicted with main's `learning-subcommand` rows; the rows merged cleanly.
+  Each time the table was regenerated from the rows with `deploy/ci/parity-census.py check`
+  (a scripted replacement of the lines it recomputes), never merged by hand. The final tree
+  has 810 rows: moved 735, new 47, pending 1, dropped 20, lost 7.
+- **`deploy/ci/full-lane.sh`** (W7-D5). It conflicted with #116's test-routing block at the
+  same place. Both are kept, before `touch nextest-started`: first #116's
+  `check-test-routing.sh` calls, then W7-D5's `full-default` check that `scqd` exists, with its
+  digest. `rr2/python-p1-landing` has not merged, so the `scqd` path still comes from
+  `python3 deploy/ci/cargo-artifact.py target-dir`; no other line W7 adds names retired Python.
+- **`crates/jope-engine/src/neural.rs` and `training.rs`** (`961ad2333`). PR #114 (W2-T04) and
+  W7 each added a "read the verified bytes once" API for the same `rank_impl` sites. PR #114's
+  API (`manifest::read_bound`, `neural::load_bound_model`, `AdamW::load_bound`,
+  `AdamW::from_verified`) is kept with every caller and test. W7's `AdamW::load_from_bytes`
+  (PR #114's `from_verified` with the metadata parsed first) and its retained-buffer
+  `CheckpointArtifacts` are dropped, and W7's callers go through PR #114's API. The bounded
+  path keeps consuming the prepared index and parent-state bytes from
+  `BoundedTraining::verified_input_bytes`, which PR #114's path-based API does not cover.
+  `findings/w7-corrections-20260927.md` maps each rerouted use.
+- **`deploy/ci/coverage.json`, `findings/test-inventory.json` and `Cargo.lock`** merged
+  textually. The landed tree is checked by `coverage.py validate` and `jope-records
+  verify-test-inventory`: every W7 target (`bounded_census`, `bounded_launch`,
+  `bounded_transport`, `bounded_agent`, `bounded_smartcluster`, `bounded_training`,
+  `bounded_grants`) has its coverage item and inventory entry.
+
+**Secret-scan false positive, fixed at the source.** `deploy/ci/secret-scan.sh` (gitleaks,
+`private-key` rule) flagged the W7-T05 commit. In `participant.rs`, `load_signing_key` had the
+two PEM armour literals for `PRIVATE KEY` within 64 characters of each other. No key was
+ever committed. The landed W7-T05 commit now joins the label at run time from `PKCS8_LABEL`,
+so the parser accepts exactly the same PEM blocks. The scanner and its allowlist are
+unchanged. The finding is recorded in `w7-landing-gitleaks-pre-*`; the landed range and every
+commit reachable from the head now scan clean.
+
+**Correction in this record.** Item G's "Open for W7-T07" list said there was no repository
+tool for contract authoring or grant signing. W7-D6 added those verbs, so the list now says
+so. The owner still signs, through `grant sign`.
+
+**Test moved.** `checkpoint_consumption_uses_verified_tensor_bytes_after_path_replacement` is
+now in `neural::bound_load_tests`, not `tests/training.rs`. PR #114's API is crate-private,
+so the test moved to reach it. It proves the same properties: the restored step, parameters
+and next update are identical, the replaced files are refused, and corrupted optimizer bytes
+are refused. It also replaces every file right after its check.
