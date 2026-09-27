@@ -137,7 +137,8 @@ pub enum Cmd {
     },
     /// Rounds of seeded search on one dataset's fixed cuts, chained in lineage.json. Round r>1 is
     /// seeded from round r-1's champion and ranked runners-up; --control adds one unseeded run
-    /// with the final round's exact configuration. Never writes to the learning store.
+    /// at the final round's configuration (one round's budget: not compute-matched against the
+    /// lineage). Never writes to the learning store.
     Evolve {
         #[command(flatten)]
         search: SearchArgs,
@@ -147,7 +148,8 @@ pub enum Cmd {
         /// Rounds to run (1..=100).
         #[arg(long)]
         rounds: usize,
-        /// After the last round, one unseeded run with its exact configuration.
+        /// After the last round, one unseeded run with its configuration and one round's budget
+        /// (the rounds' cumulative search is not matched; lineage verify reports both totals).
         #[arg(long)]
         control: bool,
         /// Round 1's jope.pipeline-seeds/v1 file (for example `jope-learning bank export`).
@@ -298,6 +300,18 @@ pub fn run(cli: Cli) -> Result<ExitCode> {
                         round.selected_genome
                     );
                 }
+                if let Some(control) = &lineage.control {
+                    println!(
+                        "the rounds made {} evaluation(s) in total, the control {} (one round's \
+                         budget: not a compute-matched comparison)",
+                        lineage
+                            .rounds
+                            .iter()
+                            .map(|r| r.completed_evaluations)
+                            .sum::<u64>(),
+                        control.completed_evaluations
+                    );
+                }
                 println!(
                     "lineage in {}",
                     options.output.join(crate::lineage::LINEAGE_FILE).display()
@@ -320,14 +334,17 @@ pub fn run(cli: Cli) -> Result<ExitCode> {
                     println!(
                         "ok {} ({} round(s) on prepared cuts {}; mean held-out RMSE by round \
                          {:?}; control {:?}; champion found in the round itself {:?}; \
-                         improved on the round before {:?})",
+                         improved on the round before {:?}; evaluations: rounds {} in total, \
+                         control {:?})",
                         lineage.display(),
                         report.rounds,
                         report.prepared_sha256,
                         report.validation_rmse,
                         report.control_validation_rmse,
                         report.champion_found_in_round,
-                        report.improved_on_previous_round
+                        report.improved_on_previous_round,
+                        report.rounds_completed_evaluations,
+                        report.control_completed_evaluations
                     );
                 }
                 Ok(ExitCode::SUCCESS)
