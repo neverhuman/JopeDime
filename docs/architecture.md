@@ -4,9 +4,13 @@
 
 JopeDime is one repository that holds the whole pipeline
 **dataset → encoders → policy → program → emitted source code**. Rust owns search, evaluation,
-the emitters, the CLI and every contract validator; a `uv`-managed Python package owns encoder
-inference/training and the deep-learning models (owner decision 2 in the plan). This page is the
-map; the numbers were verified on the tree at the commit that introduced it (2026-09-18).
+the emitters, the CLI and every contract validator. Owner decision 2 of the plan gave encoder
+inference/training and the deep-learning models to a `uv`-managed Python package;
+[ADR-0008](adr/ADR-0008-rust-only-stack.md) (owner ruling 2026-09-26) supersedes it. The stack
+is Rust-only apart from the Python the emitters generate and its harness, and the Python that
+still holds the training stack and some operational tools stays only until phases P2/P3 port or
+retire it. This page is the map; the numbers were verified on the tree at the commit that
+introduced it (2026-09-18).
 
 ## Data flow
 
@@ -103,8 +107,19 @@ Excluded from the workspace on purpose: `crates/hyperion/host` (superseded by `c
 
 ## The Python package (`python/`)
 
+**Status: being retired ([ADR-0008](adr/ADR-0008-rust-only-stack.md)).** Phase P1 removed the
+Python with no live consumer (694 files, plus 9 unit templates that only ran it), among them all
+of `zyal`, `fitness_corrector` and
+`genome_perf`, all but one file of `chimera`, most of `tools` and `research`, and the kernel-v1
+Python. [`docs/archive/python-archive-manifest.json`](archive/python-archive-manifest.json) lists
+each with its restore command. What remains is the training stack (`policy`, `encoders`,
+`target_maker`, `data`, `dime_score`, `broad_shadow` and the `jope-py` console script), the
+research drivers and helpers that kept tests still use, the sha-pinned grammar sources and the
+files that records digest-check; phases P2 and P3 port or retire them. New Python is not accepted
+except the emitted model code and its harness.
+
 One `uv` project, package `jope`, src layout `python/src/jope/` so the grammar pins keyed by
-`jope/grammars/…` stay valid. Sub-packages by function (WP6, PR
+`jope/grammars/…` stay valid. Sub-packages by function as ported (WP6, PR
 [#8](https://github.com/veox-ai/JopeDime/pull/8)): `encoders`, `policy`, `chimera`,
 `target_maker`, `zyal`, `dime_score`, `fitness_corrector`, `grammars`, `tools`, `research` (the
 former `scripts/` drivers, import-checked only), `tests/` with a `conftest.py` replacing the
@@ -116,8 +131,8 @@ runners.
 
 Every record that crosses a stage boundary has a schema id in its `schema` field. The single
 source per contract is `schemas/<name>.schema.json` (landing with WP10, crate `jope-contracts`);
-Rust types round-trip through `schemars`, Python validates with `jsonschema`. Today's ids, by
-stage:
+Rust types round-trip through `schemars`; the remaining Python validates with `jsonschema` until
+ADR-0008 retires it. Today's ids, by stage:
 
 | Stage | Contract | Producer → consumer |
 |---|---|---|

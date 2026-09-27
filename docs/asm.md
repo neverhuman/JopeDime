@@ -20,7 +20,7 @@ are separate milestones.
 | Task metrics | [panel evaluator](../crates/jope-bench/src/panel/score.rs) | RMSE, binary AUROC and multiclass probability-matrix log loss use original labels and explicit class ordering. The multiclass fitting objective remains macro-F1; confirmation uses log loss. |
 | External methods | [typed adapters](../crates/jope-bench/adapters/_panel.py) | XGBoost, LightGBM, CatBoost and scikit-learn RF accept nullable raw cells, fit preprocessing on training rows, and retain complete private fitted artifacts. Dependencies and campaign execution still require qualification. |
 | Neural proposals | [bounded proposal evaluation](../crates/jope-pipeline/src/neural_search.rs) | Source connects verified proposals to fitted generation-zero candidates and training-side selection. CPU context qualification and the first timed-out accepted-model attempt are recorded below; successful neural consumption remains pending. |
-| Training | [existing trainer](../crates/jope-engine/src/training.rs), Python trainers | Execution/category/provenance qualification remains. `jope train-step` is a centroid router. Existing sequence, quality and runtime objectives remain unchanged. |
+| Training | [existing trainer](../crates/jope-engine/src/training.rs), Python trainers (ported or retired in phase P3 of [ADR-0008](adr/ADR-0008-rust-only-stack.md)) | Execution/category/provenance qualification remains. `jope train-step` is a centroid router. Existing sequence, quality and runtime objectives remain unchanged. |
 | Export | Legacy transpiler; advanced bound emitters and fitted C++ runtime | Coverage differs; emitted training recipes do not establish parity of a fitted predictor. Multiclass matrices need one shared output contract. |
 | Reuse | Existing champions and learning/HWM ledgers | General typed motif mining and governed operator promotion are pending. |
 
@@ -96,7 +96,9 @@ or an independence guarantee. Ordinal inputs use categorical encoding. No imputa
 scaling, feature selection or outcome measurement occurs in preparation.
 
 Use an external data directory. Install the optional benchmark dependencies through
-`uv sync --project python --extra benchmark` (Python 3.12 is the tested environment):
+`uv sync --project python --extra benchmark` (Python 3.12 is the tested environment; preparation
+stays Python until phase P2 of [ADR-0008](adr/ADR-0008-rust-only-stack.md) ports it to
+`jope-datasets prepare` under a new dataset release identity):
 
 ```sh
 cargo build --locked -p jope-cli
@@ -131,7 +133,9 @@ renormalizing predictions. These constants are pinned before campaign scoring.
 Install the external engines with the existing locked `foundry` extra in addition to
 `benchmark`: `uv sync --project python --locked --extra cpu --extra benchmark --extra foundry`.
 The required Python CI lane installs both extras and executes all twelve synthetic
-engine/task fits; missing engines fail that qualification.
+engine/task fits; missing engines fail that qualification. The adapters wrap the engines'
+Python reference libraries; under ADR-0008 phase P2 they stay as external-reference adapters or
+move to the engines' C APIs.
 
 `jope benchmark plan --manifest benchmarks/panel.json --datasets PATH --source-sha FULL_SHA
 --output PLAN.json` writes a private, immutable Rust screening plan after verification.
@@ -143,7 +147,7 @@ source implementation and live host qualification are separate evidence mileston
 
 ### Bounded comparator execution
 
-`deploy/prepare-panel-runtime.py` pins a checksum-verified binary/build receipt, the
+`deploy/prepare-panel-runtime.py` (Python until ADR-0008 phase P2) pins a checksum-verified binary/build receipt, the
 Python interpreter, adapter source, installed package files and engine versions without
 fitting. It requires the provisioned shared CPU lock and refuses a busy allocation.
 Missing engines remain explicit entries in the comparison roster. The native command
