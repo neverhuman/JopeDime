@@ -392,15 +392,18 @@ fn count_pair(done: u64, total: u64) -> String {
         format!("{done} / {total}")
     }
 }
+/// Units `live_operations` asks systemd about. `systemctl show` also answers for a unit
+/// that is not installed (`ActiveState=inactive`, `SubState=dead`, exit status 0), so a
+/// name with no installable unit reads as a stopped service, never as an absent one.
+/// Each name must therefore have a tracked template under `deploy/systemd/engine/`.
+/// `jope-parallel-console` was dropped when the Python removal P1 (ADR-0006) archived its
+/// template, which ran the archived `tui-session.py`; no view read its row.
+const OBSERVED_SERVICES: [&str; 2] = ["jope-parallel-campaign", "jope-parallel-gp"];
 /// Read durable campaign receipts, without traversing candidate directories or opening data.
 /// Called every five seconds; hardware and worker progress retain their one-second refresh.
 fn live_operations(root: &Path) -> Value {
     let mut services = serde_json::Map::new();
-    for name in [
-        "jope-parallel-campaign",
-        "jope-parallel-gp",
-        "jope-parallel-console",
-    ] {
+    for name in OBSERVED_SERVICES {
         let output = std::process::Command::new("timeout")
             .args([
                 "2",
@@ -479,6 +482,46 @@ fn live_operations(root: &Path) -> Value {
         })
         .collect::<BTreeSet<_>>();
     serde_json::json!({"timestamp":now(),"services":services,"gpu_owners":owners,"gpu_units":gpu_units,"gp_units":gp_units})
+}
+
+#[cfg(test)]
+mod observed_service_tests {
+    use super::OBSERVED_SERVICES;
+    use std::path::{Path, PathBuf};
+
+    fn engine_unit_templates() -> PathBuf {
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("../../deploy/systemd/engine")
+    }
+
+    /// The names in `names` with no `<name>.service.in` under `templates`.
+    fn untracked<'a>(names: &[&'a str], templates: &Path) -> Vec<&'a str> {
+        names
+            .iter()
+            .copied()
+            .filter(|name| !templates.join(format!("{name}.service.in")).is_file())
+            .collect()
+    }
+
+    #[test]
+    fn every_observed_service_has_a_tracked_unit_template() {
+        let templates = engine_unit_templates();
+        assert!(
+            templates.is_dir(),
+            "no engine unit templates at {}",
+            templates.display()
+        );
+        assert_eq!(
+            untracked(&OBSERVED_SERVICES, &templates),
+            Vec::<&str>::new(),
+            "the dashboard observes services with no tracked unit template under {}",
+            templates.display()
+        );
+        assert_eq!(
+            untracked(&["jope-parallel-no-such-unit"], &templates),
+            vec!["jope-parallel-no-such-unit"],
+            "an observed name without a template must be reported"
+        );
+    }
 }
 
 pub fn campaign(root: &Path) -> Value {
