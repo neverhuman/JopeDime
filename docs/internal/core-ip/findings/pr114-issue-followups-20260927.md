@@ -33,3 +33,40 @@ Custody root:
 
 Every changed PR head needs new hosted CI and independent native approval. Earlier artifact
 connection resets, cancelled jobs and runner provenance failures remain failed evidence.
+
+## Bounded evidence publication recovery
+
+Manual run `36299781070`, attempt 1, ran the smoke lane successfully but failed its
+artifact upload (job `108565759005`). PR run `36299756410`, attempt 1, similarly
+passed hygiene before a `FinalizeArtifact` connection reset. These failures remain
+failed evidence; source-test success alone does not qualify either run.
+
+The publication composite now permits three upload attempts within the unchanged
+job deadline. Each uses a distinct `-pub-1` through `-pub-3` artifact name, retains
+hidden files for 30 days and fails on missing files. It never overwrites an artifact.
+A mandatory final gate rejects exhausted, cancelled, missing or inconsistent outcomes.
+A successful upload cannot repair an earlier failed test step or job.
+
+A lost finalize acknowledgement can leave two remote artifacts. The aggregate may
+coalesce only explicitly numbered publications with identical complete file paths
+and bytes, including the root receipt. Divergent, unnumbered, out-of-range or unsafe
+publications fail. Its report retains all publication names; existing source, run,
+attempt, status, evidence and test-count checks still apply.
+
+Local fixture evidence in the custody directory above:
+
+- `publication-aggregate.log`: 16 tests pass, including identical lost-ack recovery,
+  divergent bytes, extra files, symlinks, invalid numbering, stale attempts and failed jobs.
+- `publication-gates.log`: 14 tests pass; the publication gate checks all 125 combinations
+  of five possible outcomes and admits only the three valid bounded sequences.
+
+These fixture results do not establish hosted artifact service reliability. A fresh
+complete run at the committed head must qualify composite execution and download.
+
+`publication-hygiene3.log` records a passing full local hygiene run under 4 CPUs,
+16 GiB and a 900-second ceiling. The first two launch attempts failed before completing
+verification (missing Cargo PATH, then root/Git ownership mismatch); their logs are
+retained as `publication-hygiene.log` and `publication-hygiene2.log`. The successful
+run used the existing user service manager, without changing Git safety settings.
+Receipt (6), result (5) and coverage (9) fixtures also passed; shellcheck and diff
+whitespace validation passed. These are local checks, not hosted qualification.

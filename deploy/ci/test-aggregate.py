@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import copy
 import json
+import shutil
 from pathlib import Path
 import tempfile
 import unittest
@@ -153,6 +154,74 @@ class AggregateTests(unittest.TestCase):
         self.receipts['python'].append(copy.deepcopy(self.receipts['python'][0]))
         del self.needs['rust-check']
         self.assertEqual('failed', self.verify()['status'])
+
+
+class PublicationTests(unittest.TestCase):
+    setUp = AggregateTests.setUp
+
+    def publications(self):
+        for candidates in self.receipts.values():
+            for path, receipt in candidates:
+                path.write_text(json.dumps(receipt))
+        original = self.receipts['python'][0][0].parent
+        first = original.with_name('ci-42-2-python-pub-1')
+        original.rename(first)
+        second = first.with_name('ci-42-2-python-pub-2')
+        shutil.copytree(first, second)
+        return first, second
+
+    def test_acknowledgement_loss_coalesces_only_identical_publications(self):
+        first, second = self.publications()
+        publications = {}
+        received = aggregate.load_receipts(self.root, publications)
+        self.assertEqual([first.name, second.name], publications['python'])
+        self.assertEqual(1, len(received['python']))
+        self.assertEqual([], aggregate.verify(self.mapping, self.plan, self.needs, received, self.expected)['errors'])
+        # Recovering transport must not repair a failed test job or stale identity.
+        self.needs['python']['result'] = 'failure'
+        self.assertEqual('failed', aggregate.verify(self.mapping, self.plan, self.needs, received, self.expected)['status'])
+        self.needs['python']['result'] = 'success'
+        changed = dict(self.expected, attempt=3)
+        self.assertEqual('failed', aggregate.verify(self.mapping, self.plan, self.needs, received, changed)['status'])
+
+    def test_divergent_or_unbounded_publications_refuse(self):
+        first, second = self.publications()
+        log = second/'command.log'
+        original = log.read_bytes()
+        log.write_bytes(original+b'changed')
+        with self.assertRaisesRegex(ValueError, 'divergent'):
+            aggregate.load_receipts(self.root)
+        log.write_bytes(original)
+        unexpected = second/'extra-file'
+        unexpected.write_text('unmanifested')
+        with self.assertRaisesRegex(ValueError, 'divergent'):
+            aggregate.load_receipts(self.root)
+        unexpected.unlink()
+        fourth = second.with_name('ci-42-2-python-pub-4')
+        second.rename(fourth)
+        with self.assertRaisesRegex(ValueError, 'invalid publication'):
+            aggregate.load_receipts(self.root)
+        fourth.rename(second)
+        nested = second/'link'
+        nested.symlink_to(first/'command.log')
+        with self.assertRaisesRegex(ValueError, 'symlink'):
+            aggregate.load_receipts(self.root)
+
+    def test_unlabelled_duplicate_execution_still_refuses(self):
+        first, second = self.publications()
+        second.rename(second.with_name('unlabelled-copy'))
+        with self.assertRaisesRegex(ValueError, 'ambiguous execution'):
+            aggregate.load_receipts(self.root)
+
+    def test_missing_first_publication_can_recover_from_second(self):
+        first, second = self.publications()
+        shutil.rmtree(first)  # synthetic fixture owned by this test
+        received = aggregate.load_receipts(self.root)
+        self.assertEqual([], aggregate.verify(self.mapping, self.plan, self.needs, received, self.expected)['errors'])
+        path = second/'receipt.json'
+        path.unlink()
+        with self.assertRaisesRegex(ValueError, 'lacks a root'):
+            aggregate.load_receipts(self.root)
 
 
 if __name__ == '__main__':
