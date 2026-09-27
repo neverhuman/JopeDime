@@ -7,11 +7,11 @@
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, ValueEnum};
 use jope_records::pyjson::{self, Value};
 use jope_records::{
-    claim_inventory, claims, conformance, dispositions, elo_history, findings, inventory, layout,
-    progress_view, py, task_status, test_inventory,
+    claim_inventory, claims, conformance, coverage, dispositions, elo_history, findings, inventory,
+    layout, parity, progress_view, py, readme, scope_check, task_status, test_inventory,
 };
 
 #[derive(Parser)]
@@ -117,6 +117,59 @@ enum Command {
         #[arg(long, value_name = "HISTORY")]
         sensitivity: Option<String>,
     },
+    /// Static CI execution map guard: deploy/ci/coverage.json against Cargo and git.
+    /// Discovery is neither collection nor execution.
+    Coverage {
+        #[arg(value_enum)]
+        command: CoverageCommand,
+        /// The mapping (default: deploy/ci/coverage.json).
+        #[arg(long)]
+        mapping: Option<PathBuf>,
+    },
+    /// Assert deploy/ci/rust-test-scope.sh partitions the workspace exactly.
+    RustScopeCheck,
+    /// Capability-parity guard for docs/parity/capability-matrix.md.
+    ParityCheck {
+        /// The matrix (default: docs/parity/capability-matrix.md).
+        #[arg(long)]
+        matrix: Option<PathBuf>,
+        /// The tree the rows are resolved against (default: the repository).
+        #[arg(long)]
+        root: Option<PathBuf>,
+        /// Parsed `jope-parallel --help` output to cross-check the clap subcommands against.
+        #[arg(long)]
+        help_text: Option<PathBuf>,
+    },
+    /// Render the README's measured-results blocks from committed evidence.
+    ReadmeBenchmarks {
+        /// Exit 1 if README.md is out of date (CI).
+        #[arg(long, conflicts_with = "write", required_unless_present = "write")]
+        check: bool,
+        /// Rewrite the blocks in place.
+        #[arg(long)]
+        write: bool,
+    },
+}
+
+#[derive(Clone, Copy, ValueEnum)]
+enum CoverageCommand {
+    Discover,
+    Validate,
+}
+
+/// What a command prints: the JSON summary of a record verifier, or the text report of a
+/// hygiene guard with its own exit status.
+enum Output {
+    Summary(Value),
+    Report { out: String, err: String, ok: bool },
+}
+
+fn report((out, ok): (String, bool)) -> Output {
+    Output::Report {
+        out,
+        err: String::new(),
+        ok,
+    }
 }
 
 fn repository(cli_repo: Option<&Path>) -> jope_records::Result<PathBuf> {
@@ -130,9 +183,9 @@ fn repository(cli_repo: Option<&Path>) -> jope_records::Result<PathBuf> {
     }
 }
 
-fn run(cli: Cli) -> jope_records::Result<Value> {
+fn run(cli: Cli) -> jope_records::Result<Output> {
     let repo = || repository(cli.repo.as_deref());
-    Ok(match cli.command {
+    Ok(Output::Summary(match cli.command {
         Command::VerifyFindings { root } => {
             let root = match root {
                 Some(root) => root,
@@ -231,7 +284,8 @@ fn run(cli: Cli) -> jope_records::Result<Value> {
             let record = record.unwrap_or_else(|| repo.join(elo_history::RECORD));
             let zstd = elo_history::Zstd::Builtin;
             if let Some(history) = sensitivity {
-                return elo_history::sensitivity_of(&record, &repo, &history, zstd);
+                return elo_history::sensitivity_of(&record, &repo, &history, zstd)
+                    .map(Output::Summary);
             }
             let summary = elo_history::verify(&record, &repo, zstd)?;
             if require_all {
@@ -239,14 +293,59 @@ fn run(cli: Cli) -> jope_records::Result<Value> {
             }
             summary.to_json()
         }
-    })
+        Command::Coverage { command, mapping } => {
+            let repo = repo()?;
+            return Ok(match command {
+                CoverageCommand::Discover => report((coverage::discover_report(&repo)?, true)),
+                CoverageCommand::Validate => {
+                    let mapping = mapping.unwrap_or_else(|| repo.join(coverage::MAPPING));
+                    report(coverage::validate_report(&repo, &mapping)?)
+                }
+            });
+        }
+        Command::RustScopeCheck => return Ok(report(scope_check::check(&repo()?)?)),
+        Command::ParityCheck {
+            matrix,
+            root,
+            help_text,
+        } => {
+            let root = match root {
+                Some(root) => root,
+                None => repo()?,
+            };
+            let matrix = matrix.unwrap_or_else(|| root.join(parity::MATRIX));
+            return Ok(report(parity::check(&matrix, &root, help_text.as_deref())?));
+        }
+        Command::ReadmeBenchmarks { write, .. } => {
+            let (message, ok) = readme::run(&repo()?, write)?;
+            // The out-of-date notice goes to stderr, like the Python renderer's.
+            return Ok(if ok {
+                report((message, true))
+            } else {
+                Output::Report {
+                    out: String::new(),
+                    err: message,
+                    ok: false,
+                }
+            });
+        }
+    }))
 }
 
 fn main() -> ExitCode {
     match run(Cli::parse()) {
-        Ok(summary) => {
+        Ok(Output::Summary(summary)) => {
             println!("{}", pyjson::dumps(&summary, true, None));
             ExitCode::SUCCESS
+        }
+        Ok(Output::Report { out, err, ok }) => {
+            print!("{out}");
+            eprint!("{err}");
+            if ok {
+                ExitCode::SUCCESS
+            } else {
+                ExitCode::FAILURE
+            }
         }
         Err(error) => {
             eprintln!("jope-records: {error}");
