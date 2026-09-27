@@ -9,8 +9,8 @@
 //! receipts ([`verify_handoff`]). The encoder receipt's own claims are not enough.
 use super::*;
 use crate::encoder_receipt::{
-    check_teaching_binding, Encoder, EncoderCapability, EncoderReceipt, Member, Product, Scope,
-    TeachingBinding, SCHEMA as RECEIPT_SCHEMA,
+    check_teaching_binding, Encoder, EncoderCapability, EncoderReceipt, Inputs, Member, Product,
+    Scope, TeachingBinding, SCHEMA as RECEIPT_SCHEMA,
 };
 use crate::revocation::Revocations;
 
@@ -168,10 +168,7 @@ pub(super) fn verify(
     evidence: &OofEvidence,
     revocations: &Revocations,
 ) -> Result<(String, String)> {
-    let plan = policy.context.as_ref().with_context(|| {
-        quarantined("MissingEncoderProvenance: freeze preregistered no teaching context encoder")
-    })?;
-    plan.validate()?;
+    let plan = preregistered_plan(policy)?;
     let context = evidence.context.as_ref().with_context(|| {
         quarantined("MissingEncoderProvenance: submission carries no context receipt")
     })?;
@@ -205,6 +202,91 @@ pub(super) fn verify(
     parents(state, &receipt, revocations)?;
     let handoff = verify_handoff(state, policy, plan, record, context, revocations)?;
     Ok((context.receipt_sha256.clone(), handoff))
+}
+
+/// The teaching context encoder the freeze preregistered; without one no context can teach.
+fn preregistered_plan(policy: &FrozenPolicy) -> Result<&ContextPlan> {
+    let plan = policy.context.as_ref().with_context(|| {
+        quarantined("MissingEncoderProvenance: freeze preregistered no teaching context encoder")
+    })?;
+    plan.validate()?;
+    Ok(plan)
+}
+
+/// The W2 producer the freeze preregistered with its context encoder (W3-T02, W2-T07).
+fn preregistered_producer(plan: &ContextPlan) -> Result<&ProducerPlan> {
+    let producer = plan.producer.as_ref().with_context(|| {
+        quarantined(
+            "PreHandoffProvenance: the freeze preregistered no W2 context producer (release \
+             identity, transformation chain and W2 qualification), so no teaching context under \
+             it can be authenticated",
+        )
+    })?;
+    producer.validate()?;
+    Ok(producer)
+}
+
+/// The W2 producer run behind one teaching context, as the exact bytes teacher admission reads
+/// (W3-T02): the `jope.cpu-context-handoff/v1` record the run emitted for teacher admission; the
+/// pool receipts of the context job (the job, its supervisor outcome, and the experiment and
+/// original window it ran in); the context artifact the job wrote; and the context's
+/// little-endian f32 bytes.
+#[derive(Clone, Debug)]
+pub struct ContextRun {
+    pub handoff: Vec<u8>,
+    pub job: Vec<u8>,
+    pub outcome: Vec<u8>,
+    pub experiment: Vec<u8>,
+    pub window: Vec<u8>,
+    pub artifact: Vec<u8>,
+    pub context: Vec<u8>,
+}
+
+/// The controller side of W3-T02: retain a W2 producer run where teacher admission looks for it
+/// (the teaching state's content-addressed blobs) and issue the teaching context's
+/// `jope.encoder_receipt/v1` under the encoder and scope the freeze preregistered. The receipt's
+/// fitted state is the context artifact the job wrote, its input closure is the handoff's own
+/// input (the W2 training input and its training rows), and it has no parents.
+///
+/// This decides nothing and changes no authority state. Teacher admission (`qualify` and every
+/// revalidating route) authenticates the handoff against the preregistered producer and
+/// re-verifies the execution from the retained receipts. Refused before anything is retained when
+/// the freeze preregistered no context encoder or no W2 producer (the context stays quarantined)
+/// or the handoff is not a `jope.cpu-context-handoff/v1` record.
+pub fn retain_handed_off_context(
+    state: &State,
+    freeze: &FreezeReceipt,
+    run: &ContextRun,
+) -> Result<ContextEvidence> {
+    let policy = load_freeze(state, freeze)?;
+    let plan = preregistered_plan(&policy)?;
+    preregistered_producer(plan)?;
+    let handoff = parse_handoff(&run.handoff)?;
+    let capability = EncoderCapability::bind(
+        scope(state, &policy, plan)?,
+        plan.encoder.clone(),
+        Inputs {
+            features_sha256: handoff.scope.input_sha256,
+            labels_sha256: Some(handoff.scope.training.training_sha256),
+            parent_receipts: vec![],
+        },
+    )?;
+    let receipt = capability.receipt(&run.artifact, &run.context)?;
+    let put = |bytes: &[u8]| state.put_blob(bytes);
+    Ok(ContextEvidence {
+        receipt_sha256: put(&canonical_json(&receipt)?)?,
+        fitted_state_sha256: put(&run.artifact)?,
+        output_sha256: put(&run.context)?,
+        handoff: Some(HandoffEvidence {
+            handoff_sha256: put(&run.handoff)?,
+            execution: ContextExecution {
+                job_sha256: put(&run.job)?,
+                outcome_sha256: put(&run.outcome)?,
+                experiment_sha256: put(&run.experiment)?,
+                window_sha256: put(&run.window)?,
+            },
+        }),
+    })
 }
 
 // ------------------------------------------------------------------------------------------
@@ -334,6 +416,12 @@ struct HandoffRecord {
     context_sha256: String,
 }
 
+fn parse_handoff(bytes: &[u8]) -> Result<HandoffRecord> {
+    serde_json::from_slice(bytes).context(
+        "ContextHandoffMismatch: the retained handoff is not a jope.cpu-context-handoff/v1 record",
+    )
+}
+
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct HandoffScope {
@@ -378,14 +466,7 @@ fn verify_handoff(
     context: &ContextEvidence,
     revocations: &Revocations,
 ) -> Result<String> {
-    let producer = plan.producer.as_ref().with_context(|| {
-        quarantined(
-            "PreHandoffProvenance: the freeze preregistered no W2 context producer (release \
-             identity, transformation chain and W2 qualification), so no teaching context under \
-             it can be authenticated",
-        )
-    })?;
-    producer.validate()?;
+    let producer = preregistered_producer(plan)?;
     let evidence = context.handoff.as_ref().with_context(|| {
         quarantined(
             "MissingContextHandoff: the submission carries no W2 context handoff to teacher \
@@ -403,11 +484,7 @@ fn verify_handoff(
             ex.window_sha256.as_str(),
         ],
     )?;
-    let handoff: HandoffRecord =
-        serde_json::from_slice(&retained(state, &evidence.handoff_sha256)?).context(
-            "ContextHandoffMismatch: the retained handoff is not a jope.cpu-context-handoff/v1 \
-             record",
-        )?;
+    let handoff = parse_handoff(&retained(state, &evidence.handoff_sha256)?)?;
     ensure!(
         handoff.schema == HANDOFF_SCHEMA,
         "ContextHandoffMismatch: handoff schema {:?}",
@@ -486,10 +563,12 @@ fn verify_execution(
     ex: &ContextExecution,
     record: &HwmRecord,
 ) -> Result<()> {
-    let job: WorkerJob = blob(state, &ex.job_sha256)?;
-    let outcome: WorkerOutcome = blob(state, &ex.outcome_sha256)?;
-    let experiment: Experiment = blob(state, &ex.experiment_sha256)?;
-    let window: ExecutionWindow = blob(state, &ex.window_sha256)?;
+    const RECEIPTS: &str = "UnprovenContextExecution: a retained pool receipt of the context job \
+                            is missing or unreadable";
+    let job: WorkerJob = blob(state, &ex.job_sha256).context(RECEIPTS)?;
+    let outcome: WorkerOutcome = blob(state, &ex.outcome_sha256).context(RECEIPTS)?;
+    let experiment: Experiment = blob(state, &ex.experiment_sha256).context(RECEIPTS)?;
+    let window: ExecutionWindow = blob(state, &ex.window_sha256).context(RECEIPTS)?;
     ensure!(
         job.command.program.sha256 == handoff.release.producer_sha256,
         "ProducerNotAuthenticated: the context job ran executable {}, not the preregistered \
