@@ -103,12 +103,17 @@ enum BankCmd {
         #[arg(long)]
         dataset: Option<String>,
     },
-    /// Write a dataset's best distinct banked genomes as a new jope.pipeline-seeds/v1 file.
+    /// Write a dataset's best distinct banked genomes under one HWM comparison identity as a new
+    /// jope.pipeline-seeds/v1 file. Scores from different identities are never ranked together.
     Export {
         #[arg(long)]
         dataset: String,
         #[arg(long)]
         task: Option<String>,
+        /// The comparison identity (identity_sha256) to rank within; required when the dataset
+        /// is banked under more than one.
+        #[arg(long)]
+        identity: Option<String>,
         #[arg(long, default_value_t = 4)]
         top: usize,
         #[arg(long)]
@@ -473,6 +478,7 @@ fn run(cli: Cli) -> Result<bool> {
             BankCmd::Export {
                 dataset,
                 task,
+                identity,
                 top,
                 out,
             } => {
@@ -480,6 +486,7 @@ fn run(cli: Cli) -> Result<bool> {
                     &state,
                     &dataset,
                     task.as_deref(),
+                    identity.as_deref(),
                     top,
                     &out,
                 )?)?;

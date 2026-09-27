@@ -191,13 +191,14 @@ fn an_export_seeds_the_next_run() {
     let (temp, state) = (&runs.temp, &runs.state);
     bank::add(&state, &runs.strong, None).unwrap();
     let seeds = temp.path().join("seeds.json");
-    let exported = bank::export(&state, "1cb97b1d7314d43d", None, 4, &seeds).unwrap();
+    let exported = bank::export(&state, "1cb97b1d7314d43d", None, None, 4, &seeds).unwrap();
     assert_eq!(exported.genomes, 1);
     // Never overwritten.
-    assert!(bank::export(&state, "1cb97b1d7314d43d", None, 4, &seeds).is_err());
+    assert!(bank::export(&state, "1cb97b1d7314d43d", None, None, 4, &seeds).is_err());
     assert!(bank::export(
         &state,
         "0000000000000000",
+        None,
         None,
         4,
         &temp.path().join("none.json")
@@ -222,6 +223,84 @@ fn an_export_seeds_the_next_run() {
     if banked.entry.genome != jope_pipeline::search::BOOTSTRAP_GENOME {
         assert_eq!(seeding.seeds[0].genome, banked.entry.genome);
     }
+}
+
+/// A second comparison identity on the same dataset: another fold seed prepares other cuts. Its
+/// bootstrap-only run initializes that identity's pointer and a better run improves it.
+fn bank_a_second_identity(runs: &Runs) -> PathBuf {
+    let (temp, state) = (&runs.temp, &runs.state);
+    let other = |name: &str, evaluations: usize, incumbent: Option<PathBuf>| {
+        let output = temp.path().join(name);
+        run(&RunOptions {
+            seed: 11,
+            incumbent,
+            ..options(&output, evaluations)
+        })
+        .unwrap();
+        output.join("receipt.json")
+    };
+    let weak = other("weak-11", 1, None);
+    let strong = other("strong-11", 24, Some(weak.clone()));
+    assert_eq!(ingest(state, &weak).transitions["initialized"], 1);
+    assert_eq!(ingest(state, &strong).transitions["improved"], 1);
+    bank::add(state, &strong, None).unwrap();
+    strong
+}
+
+/// `bank export` never ranks champions measured under different comparison identities (other
+/// cuts, fold seed, protocol or source commit) against each other.
+#[test]
+fn an_export_never_ranks_across_comparison_identities() {
+    let runs = ingested();
+    let (temp, state) = (&runs.temp, &runs.state);
+    let first = bank::add(state, &runs.strong, None).unwrap().entry;
+    bank_a_second_identity(&runs);
+    let entries: Vec<bank::BankEntry> = bank::list(state)
+        .unwrap()
+        .into_iter()
+        .map(|e| e.entry)
+        .collect();
+    assert_eq!(entries.len(), 2);
+    assert_ne!(entries[0].identity_sha256, entries[1].identity_sha256);
+
+    let mixed = temp.path().join("mixed.json");
+    let refused = bank::export(state, "1cb97b1d7314d43d", None, None, 4, &mixed);
+    let error = format!(
+        "{:#}",
+        refused.expect_err("an export ranked across identities")
+    );
+    assert!(error.contains("comparison identities"), "{error}");
+    for entry in &entries {
+        assert!(error.contains(&entry.identity_sha256), "{error}");
+    }
+    assert!(!mixed.exists());
+    let unknown = "0".repeat(64);
+    assert!(bank::export(state, "1cb97b1d7314d43d", None, Some(&unknown), 4, &mixed).is_err());
+    assert!(!mixed.exists());
+
+    // Naming one identity exports that identity's champions only.
+    for entry in &entries {
+        let out = temp
+            .path()
+            .join(format!("{}.json", &entry.identity_sha256[..12]));
+        let report = bank::export(
+            state,
+            "1cb97b1d7314d43d",
+            None,
+            Some(&entry.identity_sha256),
+            4,
+            &out,
+        )
+        .unwrap();
+        assert_eq!(report.identity_sha256, entry.identity_sha256);
+        let (file, _) = jope_pipeline::seeds::read(&out).unwrap();
+        assert_eq!(file.genomes.len(), 1);
+        assert_eq!(
+            file.genomes[0].receipt_sha256.as_deref(),
+            Some(entry.receipt_sha256.as_str())
+        );
+    }
+    assert!(entries.iter().any(|e| *e == first));
 }
 
 fn copy_tree(from: &Path, to: &Path) {
