@@ -912,3 +912,180 @@ direction.
 **Open.** `gather` handshakes one connection at a time, so a slow authenticated peer can
 delay the others, though never past the join deadline. Timeouts have been exercised only on
 loopback. Host certificate and key provisioning is an operator step (runbook).
+
+### Item E — W7-T05/T07 SmartCluster-backed group supervisor
+
+**Pre-fix record** (`w7b-E-pre-20260927T001714Z`, source trace).
+
+- The only `Supervisor` implementations were test fixtures: `FakeSupervisor` and the
+  `bounded_run_recovery` process supervisor. The controller's own documentation named the
+  SmartCluster-backed supervisor as missing.
+- `jope-native-loop` had no rank worker and no coordinator process: `participant` and
+  `coordinate` were unrecognized subcommands.
+
+This is a new capability.
+
+**Topology.** It is the same in the fixture and on three hosts, and SSH is never involved.
+
+```text
+coordinator host                               each rank's host
+jope-native-loop coordinate --agents ──TLS──▶ jope-native-loop agent
+  RemoteSupervisor (pinned certs)                SmartClusterSupervisor
+                                                   │ authenticated exchange (pinned uid + exe)
+                                                   ▼
+                                                 scqd ── trusted-service job `jope-bounded-rank`
+                                                           │
+  rendezvous acceptor ◀────────────TLS─────────── jope-native-loop participant
+```
+
+On a single host, `coordinate --supervision` drives the host's own `SmartClusterSupervisor`
+directly.
+
+Source (all new): `bounded/supervisor.rs`, `bounded/agent.rs`, `bounded/participant.rs`,
+`bounded/driver.rs`, plus the `participant`, `coordinate` and `agent` verbs. Small additions
+elsewhere:
+
+- `Sequenced::poll_receive`, an idle wait that consumes nothing;
+- `launch::load_plan`, the plan-digest check `load_launch` already made, now shared;
+- serde for `Liveness`.
+
+- **`SmartClusterSupervisor`.** Every request goes through the repository's
+  `native_scq::authenticated_exchange`, which pins the daemon's uid and executable digest. That
+  file is only called, never changed.
+  - **launch** refuses a rank planned on another host and a GPU rank (see the W7-T03 open
+    item). It checks the host's plan artifact against the reviewed digest, then freezes the
+    rank's launch record under `state/<dispatch id>/`.
+  - It then submits a `TrustedService` job: the idempotency key is the dispatch id, automatic
+    retry is off, the deadline is the plan's original deadline and the CPU/RAM ceilings are
+    the plan's. The job carries the labels `jope.bounded.{dispatch_id,run,rank,plan_sha256}`.
+    Its argv names only the frozen plan, the launch record, the outbox, the coordinator
+    address, the rank's key and the host installation file.
+  - **find** lists by the dispatch and plan labels, so a job submitted before a crash is found
+    and never launched twice. **probe** maps the job's terminal status to `Liveness`.
+    **terminate** cancels gracefully and waits at most 60 s. **retained_result** reads the
+    rank's outbox with bounded, no-symlink reads.
+  - **It acts only on its own plan's jobs.** A handle whose job has another tenant, project or
+    plan digest is refused before anything is read or cancelled.
+  - SmartCluster requires a job's tenant to be exactly the submitting peer's principal
+    (`unix:<uid>`). The first fixture run was refused with "job tenant must exactly match the
+    authenticated effective principal".
+- **`participant`**, the rank worker:
+  - it loads only the frozen plan and its launch record, and checks its own visibility first.
+    A CPU rank accepts `""` or SmartCluster's `-1`; a GPU rank is refused;
+  - it observes its own identity exactly as the census collector does, with `/proc/self/exe`
+    as the executable, and hashes its input closure;
+  - it joins the rendezvous over pinned TLS. Rank 0 carries a 32-byte group token, never an
+    NCCL id;
+  - it publishes `outbox/admitted`, then runs one SHA-256 update round per strictly increasing
+    heartbeat, and signs its result (`jope.native_cpu_proof_result.v1`, `numerical: false`);
+  - losing control ends it with exit 75 and no result. A refusal before admission is written
+    to `outbox/refusal.txt`, a diagnostic that is never a result.
+- **`coordinate`** (`driver::coordinate`) has two paths.
+  - After a restart it only reconciles.
+  - Otherwise it checks the heartbeat against the plan, then checks the coordinator key and
+    the TLS certificate against the plan, and journals a preflight of the merged census. Only
+    then does it open the rendezvous and dispatch every rank.
+  - It then gathers over TLS. A refusal is journaled and dispatches nothing more. It journals
+    the admission before delivering it, then heartbeats and polls until the group commits or
+    drains.
+- **`agent`** (`agent.rs`) serves one host's supervisor to the coordinator.
+  - It holds its own copy of the frozen plan, by digest. It serves only its planned ranks, and
+    only under the dispatch ids its plan derives.
+  - Its listener presents this host's planned certificate and accepts only the plan's
+    coordinator certificate. Requests travel on a `Sequenced` channel (16 MiB frames).
+  - Between requests, a newly authenticated coordinator connection replaces the old one, so a
+    restarted coordinator reconnects at once.
+  - On the coordinator, `RemoteSupervisor` presents only the coordinator's planned
+    certificate. It needs an agent for every rank and reaches each rank only through the
+    planned certificate of that rank's host. Each reply has a bounded deadline: 30 s for a
+    launch, 90 s for a terminate, and otherwise the plan's I/O deadline.
+
+**Finding: an embedded `scqd` runs one job at a time.** Without delegated cgroups, the daemon
+starts in `IsolationMode::SingleAllocation` (`cgroup.rs`, `initialize`), and its scheduler then
+starts nothing while any job is active (`actor/scheduling.rs`).
+
+The first fixture put all three ranks on one daemon. Rank 0 ran while ranks 1 and 2 stayed
+queued, and the rendezvous refused the group with `join_timeout`, missing ranks 1 and 2. That
+refusal is the whole-group rule working.
+
+The fixture therefore gives each rank its own daemon and agent. That is the three-host
+topology: one rank per host, each host's daemon behind its agent. On a real host with delegated
+cgroups, one daemon runs several ranks at once.
+
+Tests:
+
+- `tests/bounded_smartcluster.rs` (4). Each rank has a real unprivileged embedded `scqd`,
+  built from this workspace if absent, running the real participant binary as a trusted
+  service. A real `jope-native-loop agent` process serves each daemon. The census is collected
+  from the host installation.
+  - `smartcluster_ranks_commit_the_whole_group_exactly_once` — the group commits once
+    (60 005 updates) and all three results verify, with no orphan. A second `coordinate` on
+    the committed run appends nothing. A supervisor bound to another plan artifact on the same
+    daemon neither finds rank 0's job nor probes, cancels or reads it.
+  - `a_killed_rank_drains_the_whole_group_through_smartcluster` — SIGKILL of rank 1's
+    participant, which rank 1's daemon started: rank 1 is failed, ranks 0 and 2 are drained,
+    nothing is committed, no results directory exists, and no orphan remains.
+  - `cancellation_drains_the_whole_group_through_smartcluster` — `cancel` reaches the live
+    coordinator, and every rank is drained.
+  - `a_restarted_coordinator_reconciles_and_drains_with_no_orphan` — the `coordinate --agents`
+    CLI is SIGKILLed after admission. The ranks lose control and stop. A restarted CLI
+    reconciles every rank through the same agents: drained, the original deadline kept,
+    `coordinator_restarted` journaled, the run verified, no orphan.
+- `tests/bounded_agent.rs` (3), an in-memory supervisor over loopback TLS:
+  - `an_agent_serves_only_its_own_plan_and_planned_ranks` — covers another digest, a host not
+    planned for the ranks, another rank's dispatch and a forged dispatch id. The supervisor's
+    own refusal is returned as a reply, and nothing is launched.
+  - `remote_supervision_is_mutually_pinned_by_the_plan` — an agent presenting another host's
+    certificate is refused. So is a planned non-coordinator client, which launches nothing. A
+    remote supervisor presenting a non-coordinator certificate is refused, as is one missing a
+    rank's agent or naming another plan. A rank routed to the wrong host's agent is refused
+    by the pin. Forged handles and unplanned dispatch ids are refused before anything is sent.
+    Terminate and retained results travel back, and a reconnecting coordinator replaces the
+    old connection.
+  - `an_agent_refuses_malformed_and_replayed_requests` — a malformed request gets a refusal
+    reply. A replayed delivery id and an oversize frame end the connection, and nothing is
+    launched.
+
+Post-fix records:
+
+- `w7b-E-post-20260927T003907Z` — the full gate. Affected targets: `bounded_agent` 3,
+  `bounded_census` 8, `bounded_launch` 5, `bounded_preflight_cli` 3, `bounded_run` 30,
+  `bounded_run_recovery` 12, `bounded_smartcluster` 4 and `bounded_transport` 9. It also ran
+  the native lib tests (30), the fence suites (16, 8, 17 and `gp::fit_contract_tests` 39, 3
+  ignored), workspace check, fmt, diff check, coverage, test inventory, the parity matrix,
+  the single rustls provider and no lockfile package.
+- `w7b-E-post-repeat-20260927T004337Z` — `bounded_smartcluster`, `bounded_agent` and
+  `bounded_run_recovery`, five rounds each: 15 of 15 target runs passed.
+- `w7b-E-post-neural-20260927T004437Z` — `neural`, `CUDA_VISIBLE_DEVICES=""`, run alone:
+  `bounded_assignment` 5 and `bounded_launch` 5.
+
+**Decisions for the owner.**
+
+1. **Trusted-service job or the `smartcluster_worker.rs` worker path.** The brief names
+   `smartcluster_worker.rs`. Its worker (`serve`) requires a root-owned policy at
+   `/etc/jope-smartcluster/worker.json`, a delegated fenced cgroup, `SCQ_CONTROL_FD` and a
+   fixed `Operation` set. None of that can run unprivileged here (no sudo), so no same-host
+   fixture could exercise it.
+   - What is implemented: each rank is a `TrustedService` job of the host's `scqd`. The
+     supervisor uses the same pinned daemon exchange (`native_scq::authenticated_exchange`)
+     that `smartcluster_worker.rs` uses.
+   - What this forgoes: the participant does not verify, as the worker path does, that it
+     runs inside its own fenced attempt.
+   - Options:
+     - (a) keep trusted services and add an `SCQ_JOB_ID`/label self-check to the participant;
+     - (b) add a bounded-rank `Operation` to `smartcluster_worker.rs`. That needs the root
+       policy and delegated cgroups on each host, and a privileged fixture.
+2. **Daemon registration.** Each host's `scqd` configuration must map `jope-bounded-rank` to
+   the installed `jope-native-loop`. The operator's uid must be an admin uid, because the rank
+   jobs run as tenant `unix:<operator uid>`. The owner decides which account that is.
+3. **One rank per host, or delegated cgroups.** Several ranks on one host need a daemon with
+   delegated cgroups. The W7-T07 CPU proof has one rank per host.
+4. **The `scqd` binary in CI.** `bounded_smartcluster` builds `scqd` with a nested
+   `cargo build --locked --offline -p jain-smartcluster-daemon` when the target directory
+   lacks it. The first run in a fresh CI target pays that build. The alternative is to build
+   `scqd` explicitly before the test step.
+5. **GPU ranks** stay refused by the supervisor until the W7-T03 visibility decision is made.
+
+**Open.** Nothing ran on another host. The agent has no signal handler: SIGTERM ends it, and
+it holds no state because the daemon owns the jobs. The CPU workload is a lifecycle proof,
+not training.

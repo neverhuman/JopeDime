@@ -18,7 +18,16 @@
 //!   authenticated results (W7-T04).
 //! * [`transport`] — the cross-host TCP transport: TLS 1.3 with mutual certificate identity
 //!   pinned by the plan, deadlines and delivery ids (W7-T04/T07).
+//! * [`supervisor`] — the SmartCluster-backed [`controller::Supervisor`]: ranks are trusted
+//!   service jobs of the host's own daemon, through its authenticated exchange (W7-T05/T07).
+//! * [`participant`] — the rank worker of the CPU phase: frozen launch, own host identity,
+//!   authenticated rendezvous over TLS, one update round per heartbeat, signed result.
+//! * [`driver`] — the coordinator process: preflight, dispatch, gather, admission, heartbeat
+//!   and poll to a terminal outcome, or reconcile after a restart.
+//! * [`agent`] — cross-host supervision: a per-host agent serves its host's supervisor to the
+//!   coordinator over the pinned transport, and a remote supervisor routes each rank to it.
 //! * `assignment` (`neural` only) — the pure plan → trainer assignment join (W7-T03).
+pub mod agent;
 /// Plan → trainer assignment join (W7-T02 × W7-T03); the trainer is `neural`-gated.
 #[cfg(feature = "neural")]
 pub mod assignment;
@@ -26,8 +35,11 @@ pub mod census;
 pub mod collect;
 pub mod contract;
 pub mod controller;
+pub mod driver;
 pub mod launch;
+pub mod participant;
 pub mod rendezvous;
+pub mod supervisor;
 pub mod transport;
 
 use anyhow::{ensure, Result};

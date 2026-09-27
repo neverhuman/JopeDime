@@ -5566,6 +5566,36 @@
       "dispositions": [],
       "scope": "W7-T03/T04 delivery half, default features: the per-rank launch record is exactly what the frozen plan derives, workers load only the frozen plan and record, the launcher execs with exactly CUDA_VISIBLE_DEVICES set to the planned UUID (empty for a CPU rank) and nothing else, a worker refuses any other visibility, and the NCCL bootstrap comes only from this plan's verified admission (forged, replayed, wrong-attempt, foreign-plan, wrong-rank and wrong-length bootstraps refused). CPU only; synthetic identities, no GPU or three-host run."
     },
+    "target:jope-parallel/test/bounded_smartcluster": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-engine/tests/bounded_smartcluster.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "W7-T05/T07 same-host multi-process fixture through the real supervisor: per rank a real unprivileged embedded SmartCluster daemon (scqd, built from this workspace if absent) runs the real jope-native-loop participant as a trusted-service job, and a real jope-native-loop agent process serves that daemon over pinned TLS to the coordinator's remote supervisor; the whole group commits once, a SIGKILLed rank and a cancel drain the whole group, a SIGKILLed coordinator CLI is restarted and reconciles through the same agents, no orphan process, and a host supervisor acts only on its own plan's jobs. CPU proof workload on loopback under one boot; not the three-host proof and no numerical training."
+    },
+    "target:jope-parallel/test/bounded_agent": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-engine/tests/bounded_agent.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "W7-T07 cross-host supervision boundaries with an in-memory supervisor on loopback TLS (in-test certificates): an agent serves only its own reviewed plan and planned ranks under plan-derived dispatch ids, only to the plan's coordinator certificate; the remote supervisor presents only the coordinator certificate, needs an agent for every rank and reaches a rank only through that rank's planned host certificate; malformed, replayed and oversize requests are refused with nothing launched, and a reconnecting coordinator replaces the previous connection. Not the three-host proof."
+    },
     "target:jope-parallel/test/checkpoint_commit": {
       "discovery": {
         "kind": "target",

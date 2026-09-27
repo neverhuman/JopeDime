@@ -20,7 +20,7 @@ you saw.
 |---|---:|---:|---:|---:|---:|---:|
 | engine-binary | 12 | 11 | 0 | 1 | 0 | 0 |
 | engine-example | 12 | 12 | 0 | 0 | 0 | 0 |
-| engine-subcommand | 98 | 88 | 10 | 0 | 0 | 0 |
+| engine-subcommand | 101 | 88 | 13 | 0 | 0 | 0 |
 | jope-prime-command | 49 | 49 | 0 | 0 | 0 | 0 |
 | justfile-recipe | 6 | 6 | 0 | 0 | 0 | 0 |
 | learning-subcommand | 19 | 0 | 19 | 0 | 0 | 0 |
@@ -42,7 +42,7 @@ you saw.
 | vendored-bin | 6 | 6 | 0 | 0 | 0 | 0 |
 | vendored-example | 6 | 6 | 0 | 0 | 0 | 0 |
 | wire | 5 | 0 | 0 | 0 | 5 | 0 |
-| **total** | **811** | **355** | **48** | **1** | **400** | **7** |
+| **total** | **814** | **355** | **51** | **1** | **400** | **7** |
 
 `moved`/`new` rows without a covering test: 300.
 
@@ -71,6 +71,9 @@ you saw.
 | engine-subcommand | (new) jope-native-loop cancel | crates/jope-engine/src/bin/jope-native-loop.rs (jope-native-loop cancel) | jope-parallel::bounded_run cli_plan_status_verify_cancel_round_trip | new | W7-T02: idempotent cancellation bound to the reviewed plan digest; a live coordinator drains the whole group |
 | engine-subcommand | (new) jope-native-loop census collect | crates/jope-engine/src/bin/jope-native-loop.rs (jope-native-loop census collect) | jope-parallel::bounded_census cli_collect_merge_and_preflight_round_trip_without_side_effects | new | W7-T01: observes the local host only (machine/boot id, host name, local address, certificate, pinned executable/runtime/policy digests, CPU/RAM, GPUs and device owners via `nvidia-smi`, none when `CUDA_VISIBLE_DEVICES=""` or absent) and writes one `jope.native_host_census.v1` document; never allocates or reserves. Fixture-proven; no live census taken |
 | engine-subcommand | (new) jope-native-loop census merge | crates/jope-engine/src/bin/jope-native-loop.rs (jope-native-loop census merge) | jope-parallel::bounded_census merge_refuses_tampered_stale_future_duplicate_and_mixed_documents | new | W7-T01: combines per-host documents pinned by their collector digests; refuses altered, stale, future, duplicate and mixed-schema documents |
+| engine-subcommand | (new) jope-native-loop participant | crates/jope-engine/src/bin/jope-native-loop.rs (jope-native-loop participant) | jope-parallel::bounded_smartcluster smartcluster_ranks_commit_the_whole_group_exactly_once | new | W7-T07 CPU phase rank worker, run by the host's SmartCluster daemon as the `jope-bounded-rank` trusted service: frozen plan and launch record only, own host identity, authenticated rendezvous over pinned TLS, one update round per heartbeat, signed result; records its refusal in the outbox. Same-host fixture only; no live multi-host run |
+| engine-subcommand | (new) jope-native-loop coordinate | crates/jope-engine/src/bin/jope-native-loop.rs (jope-native-loop coordinate) | jope-parallel::bounded_smartcluster a_restarted_coordinator_reconciles_and_drains_with_no_orphan | new | W7-T05/T07: preflight, dispatch through SmartCluster (`--supervision`) or per-host agents (`--agents`), gather, admit, heartbeat and poll to commit or whole-group drain; a restart reconciles. Never SSH. Same-host fixture only; no live multi-host run |
+| engine-subcommand | (new) jope-native-loop agent | crates/jope-engine/src/bin/jope-native-loop.rs (jope-native-loop agent) | jope-parallel::bounded_smartcluster a_killed_rank_drains_the_whole_group_through_smartcluster; jope-parallel::bounded_agent remote_supervision_is_mutually_pinned_by_the_plan | new | W7-T07: serves this host's SmartCluster supervisor to the plan's coordinator certificate only, over pinned TLS, for the planned ranks of its own frozen plan. Same-host fixture only; no live multi-host run |
 | engine-subcommand | jope-parallel comparison-baseline | crates/jope-engine/src/main.rs (jope-parallel comparison-baseline) | none | moved | `jope engine <sub>` umbrella is WP5 |
 | engine-subcommand | jope-parallel enqueue | crates/jope-engine/src/main.rs (jope-parallel enqueue) | jope-parallel::queue command_line_admission_uses_the_exact_campaign_binding | moved | `jope engine <sub>` umbrella is WP5 |
 | engine-subcommand | jope-parallel campaign-coverage | crates/jope-engine/src/main.rs (jope-parallel campaign-coverage) | none | moved | hidden from --help; `jope engine <sub>` umbrella is WP5 |
