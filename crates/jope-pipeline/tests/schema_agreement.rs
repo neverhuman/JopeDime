@@ -213,15 +213,61 @@ fn fixture() -> Value {
     value["search"]["seeding"] = json!({
         "offered": 0, "seeds": [], "parent_receipt_sha256": null, "seeds_file_sha256": null
     });
+    value["search"]["islands"] = json!({"count": 1, "migration_interval": 4, "migrations": []});
     value
 }
 
-/// The same run recorded as a v2 receipt: no seeding record.
+/// The same run recorded as a v2 receipt: no seeding or islands record.
 fn v2_fixture() -> Value {
     let mut value = fixture();
     value["schema"] = json!(V2_SCHEMA_ID);
     value["search"].as_object_mut().unwrap().remove("seeding");
+    value["search"].as_object_mut().unwrap().remove("islands");
     value
+}
+
+#[test]
+fn v3_islands_records_are_checked() {
+    let migration = |from: u64, to: u64, after: u64| {
+        json!({"cut": 0, "after_generation": after, "from_island": from, "to_island": to,
+               "program_sha256": "d".repeat(64), "rmse": 1.5, "admitted": true})
+    };
+    let islands = |count: u64, migrations: Vec<Value>| {
+        let mut v = fixture();
+        v["search"]["islands"] =
+            json!({"count": count, "migration_interval": 2, "migrations": migrations});
+        v
+    };
+    validate_value(&islands(3, vec![migration(0, 1, 1), migration(2, 0, 3)])).unwrap();
+    let cases = [
+        (
+            islands(1, vec![migration(0, 1, 1)]),
+            "1 island(s) with 1 migration(s)",
+        ),
+        (islands(0, vec![]), "0 island(s)"),
+        (
+            islands(3, vec![migration(0, 3, 1)]),
+            "not a migration between",
+        ),
+        (
+            islands(3, vec![migration(1, 1, 1)]),
+            "not a migration between",
+        ),
+        (
+            islands(3, vec![migration(0, 1, 2)]),
+            "not a migration between",
+        ),
+    ];
+    for (value, expected) in cases {
+        let errors = validate_value(&value).unwrap_err();
+        assert!(
+            errors.iter().any(|e| e.contains(expected)),
+            "wanted {expected:?}, got {errors:?}"
+        );
+    }
+    let mut missing = fixture();
+    missing["search"].as_object_mut().unwrap().remove("islands");
+    assert!(validate_value(&missing).is_err());
 }
 
 #[test]
@@ -508,7 +554,13 @@ fn v2_rejects_overspending_missing_accounting_and_incomparable_cut_sets() {
 #[test]
 fn schema_only_consumers_require_every_new_v2_field() {
     let schema = schema();
-    for field in ["budget_policy", "compared_cuts", "coverage", "seeding"] {
+    for field in [
+        "budget_policy",
+        "compared_cuts",
+        "coverage",
+        "seeding",
+        "islands",
+    ] {
         assert!(schema["$defs"]["Search"]["required"]
             .as_array()
             .unwrap()
