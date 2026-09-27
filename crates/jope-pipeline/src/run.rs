@@ -171,6 +171,30 @@ pub fn preflight(options: &RunOptions) -> Result<usize> {
     )
 }
 
+/// A catalog row this regression-only path can fit, resolved and byte-verified, or the refusal.
+fn resolve_regression(selector: &str) -> Result<dataset::Resolved> {
+    let resolved = dataset::resolve(selector)?;
+    ensure!(
+        resolved.row.task == jope_datasets::catalog::Task::Regression,
+        "task {} is unsupported by jope pipeline run: this path fits and scores regression only; \
+         use a task-qualified evaluator when available",
+        resolved.row.task.as_str()
+    );
+    Ok(resolved)
+}
+
+/// Every refusal [`run`] makes before it writes a byte, made without writing anything:
+/// [`preflight`], the seeds and the parent receipt, and a dataset that resolves, is a regression
+/// task and parses. `jope pipeline evolve` calls this before it creates its first round, so a
+/// refused lineage leaves nothing behind that would block the corrected retry.
+pub fn check(options: &RunOptions) -> Result<()> {
+    preflight(options)?;
+    resolve_seeding(options)?;
+    let resolved = resolve_regression(&options.dataset)?;
+    dataset::training_rows(&resolved)?;
+    Ok(())
+}
+
 /// Seeds resolved from `--incumbent` and `--seed-genomes`, before anything is written.
 fn resolve_seeding(options: &RunOptions) -> Result<(Vec<String>, receipt::Seeding)> {
     let mut offered: Vec<(String, &'static str)> = Vec::new();
@@ -262,13 +286,7 @@ pub fn run(options: &RunOptions) -> Result<Receipt> {
     let mut stages = Stages::new();
 
     let started = clock.start();
-    let resolved = dataset::resolve(&options.dataset)?;
-    ensure!(
-        resolved.row.task == jope_datasets::catalog::Task::Regression,
-        "task {} is unsupported by jope pipeline run: this path fits and scores regression only; \
-         use a task-qualified evaluator when available",
-        resolved.row.task.as_str()
-    );
+    let resolved = resolve_regression(&options.dataset)?;
     let rows = dataset::training_rows(&resolved)?;
     stages.record("dataset", "passed", None, started);
 
