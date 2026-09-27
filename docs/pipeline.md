@@ -125,10 +125,10 @@ and train R^2 on the identical cuts, the parent receipt sha256, the seed origin 
 cut's per-generation best-so-far and stop reasons, the generation-1+ measurements and the
 receipt's stage seconds. A round interrupted by a signal writes no receipt and never enters it.
 `jope pipeline lineage verify` re-derives every round and the control from its directory and
-checks the chain: same dataset, cuts and budget; each parent is the previous receipt; each
-round's seeds are exactly the previous round's champion and runners-up; the recorded numbers
-are what the receipts show; no champion got worse. `--require-discovery` also demands a
-measured candidate bred in generation 1 or later in every round.
+checks the chain: same dataset, cuts, budget and island model; each parent is the previous
+receipt; each round's seeds are exactly the previous round's champion and runners-up; the
+recorded numbers are what the receipts show; no champion got worse. `--require-discovery` also
+demands a measured candidate bred in generation 1 or later in every round.
 
 Evolve never writes to the learning store. HWM ingest and the champion bank are separate
 `jope-learning` steps over its outputs (see `docs/learning.md`).
