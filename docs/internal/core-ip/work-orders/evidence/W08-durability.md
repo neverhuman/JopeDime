@@ -1003,3 +1003,90 @@ ancestors. Continuing needs a new run whose closure excludes it.
 
 The reproduction, source, tests, evidence and mutation controls are in `W03-ingress-map.md`,
 "W12-T05 at the live consumers".
+
+## PR #114 review round 1 (rr2/gap-closure)
+
+The independent review of PR #114 (review 5328374415, REQUEST_CHANGES; receipts in
+`independent-review-pr114/` beside the runs root) found one W8 defect and made one non-blocking
+observation.
+
+### P2: the S3 preflight reads the URL the store opens
+
+**Defect.** `preflight_publishing_store` split the raw string at `://` and `/`, while
+`Store::open_with` parses it with `url::Url` and builds its object prefix from the normalized
+path. The two disagreed:
+
+- `S3://example-bucket` returned early at the case-sensitive scheme check, so neither the bucket
+  root nor `JOPE_DATASETS_ANON=1` nor `AWS_CONDITIONAL_PUT=disabled` was refused; the store's
+  parser reads it as S3;
+- `s3://example-bucket/run/..` passed, but normalizes to `/`, so the store would write at the
+  bucket root.
+
+The reviewer reproduced both with pure URL parsing (`s3-preflight-probe.rs`,
+`s3-preflight-probe.log`); nothing was opened and no credential or network was used.
+
+**Fix.** One reading of a store URL, shared by the store and the preflight:
+`jope_datasets::store::StoreLocation::parse`. It does exactly what `Store::open_with` did (a bare
+path becomes `file://`; `url::Url` parses and normalizes, lower-casing the scheme and removing
+`.` and `..` segments, percent-encoded ones included), and for `s3://`/`s3a://` it names the bucket
+and the effective object prefix (`ObjPath::parse` of the trimmed path, the bucket root when that
+does not parse, as before). `Store::open_with` now takes its URL, scheme and prefix from it, with
+no change in behaviour. The preflight refuses, before any store is opened, every S3 spelling
+whose effective prefix is empty (or whose bucket is), and applies the unsigned-request and
+conditional-write checks to every spelling the store reads as S3. The refusal names where the
+store would have written.
+
+**Regression test** (the reviewer's probe, asserting refusal):
+`progress::remote::tests::every_s3_spelling_the_store_opens_goes_through_the_preflight`. No
+store is opened; no credential or network is used.
+
+- Refused as the bucket root, with a signed environment and with `JOPE_DATASETS_ANON=1` plus
+  `AWS_CONDITIONAL_PUT=disabled`: `s3://b`, `S3://b`, `s3://b/`, `s3://b//`, `s3://b/.`,
+  `s3://b/run/..`, `s3://b/run/%2e%2e`, `s3://b/%2E`, `S3A://b/run/./../`, `s3://b/run//1` (an
+  empty segment `object_store` cannot parse, so the store writes at the root) and `s3:///run-1`
+  (no bucket).
+- With a run-scoped prefix, in any spelling (`s3://b/run-1`, `S3://b/run-1`,
+  `s3a://b/runs/../run-1`, `S3://b/run-1/./`): accepted when signed, refused under
+  `JOPE_DATASETS_ANON=1` and under `AWS_CONDITIONAL_PUT=disabled`, and the store's own reading
+  gives the prefix `run-1`.
+- `memory:///`, a `file://` URL and a bare path need nothing.
+
+**Evidence** (under the evidence root; commit `dde575db81ce`):
+
+- `pr114-r1-s3-preflight-pre-20260927T020605Z/`: the reproduction. With the test but not the
+  fix, it fails and lists 20 bypasses. The upper-case `S3` and `S3A` spellings skipped every
+  check, `JOPE_DATASETS_ANON=1` and `AWS_CONDITIONAL_PUT=disabled` included. The dot,
+  percent-encoded dot and empty-segment spellings passed with a signed environment although the
+  store would write at the bucket root.
+- `pr114-r1-s3-preflight-post-20260927T020655Z/`: `jope-learning` and `jope-datasets`, 268 of
+  268.
+- `pr114-r1-s3-preflight-gate-20260927T021139Z/`: the commit gate. fmt, the diff check,
+  coverage, the test inventory and the workspace check pass; the fence suites 85 of 85.
+
+### Observation: where the low-level publisher refuses
+
+The review observed that `publish::prepare` uploads a commit's immutable objects before it
+verifies the closure and checks the graph rules and HWM decisions, and only then blocks the
+pointer. That is correct, and some earlier wording claimed more. The precise statement, for the
+low-level publisher (`publish::prepare`, `publish::publish`):
+
+- **Refused before anything is appended or delivered:** the wrong publisher or run; a commit
+  naming anything the outbox has not recorded; a commit whose closure, ancestors included, names
+  revoked evidence (W12-T05).
+- **Refused before the pointer advances; immutable objects may already be uploaded:** a closure
+  that does not verify on the remote (missing, corrupt), a broken graph rule (forked or repeated
+  update indexes, skipped heights, a checkpoint without its parent, an HWM decision from a failed
+  attempt), and an HWM decision this host's ledger did not record. The objects of a refused
+  commit are create-only and content-addressed, and no run pointer names them; `reusable` and
+  every reader start from the pointer, so they never count as progress.
+- The product driver (`progress::product::Driver::decision`) checks HWM decisions against the
+  local ledger before it stages anything, so on the product path such a decision is refused
+  before delivery.
+
+Validating before upload was considered and not done here. The closure verification and the
+graph rules are defined over the remote closure: they must also see ancestors a host restored
+from the remote holds only there, and objects lost remotely are re-uploaded from the outbox during
+verification. Moving them ahead of delivery needs a reader that overlays undelivered outbox
+records on the remote, which changes the remote read pattern the offline fault matrix
+(`progress::tests::faults`) is built on. That is not a contained change for a review round. The
+W8-T03 task-status text now says "before the pointer advances" where it said "before delivery".

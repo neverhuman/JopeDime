@@ -1295,3 +1295,172 @@ with that reason, and requalification needs a new comparison identity.
   - teacher admission does not re-run W2 `load_qualified` (the live driver's emission comes
     from the bundle it just verified);
   - handoff row scopes are not joined (dataset only).
+
+## PR #114 review round 1 (rr2/gap-closure): the handed-off context and its window are the producer's own
+
+The independent review of PR #114 (review 5328374415, REQUEST_CHANGES; receipts in
+`independent-review-pr114/` beside the runs root) reproduced two acceptances at teacher admission
+with a target-only probe harness (`adversarial-probes.rs`, `probes-pinned.log`). Both are fixed at
+the receiving path, `eligibility/context.rs` (`verify_handoff`, `verify_execution`), each in its
+own commit, and each probe is now a permanent regression test asserting refusal. Every refusal
+below goes through `qualify` and `hwm::ingest`, is inventoried, and changes no authority state
+(no qualification, no HWM record, no pointer, no teaching-manifest entry). The positive control
+(`a_teacher_is_admitted_through_the_product_path`) still admits.
+
+### P1: the consumed context is the one the producer artifact contains
+
+**Defect.** Admission compared two digests the submission controls. `retain_handed_off_context`
+issued a receipt for whatever `run.context` it was given, and `verify_execution` only checked that
+`handoff.artifact_sha256` names a retained output of the context job. Nothing decoded the context
+from those artifact bytes, and `admission_pins_sha256` was checked for its form only. The
+reviewer kept the producer artifact, the job and the supervisor outcome byte-identical, replaced
+only the submitted 2048-f32 vector (finite, clipped values) and `handoff.context_sha256`, and
+`qualify` admitted the teacher and `hwm::ingest` accepted it.
+
+**Fix** (in `verify_handoff`, after the execution proof):
+
+- **The context comes from the artifact.** `produced_context` reads the retained artifact
+  (`State::read_blob` refuses bytes that do not hash to their address), bounded at 16 MiB as
+  `verify_qualified` bounds it, and decodes it as the W2 producer does:
+  - the bytes parse as `CpuContextArtifact`, field for field (`ProducedArtifact`; unknown fields
+    are refused);
+  - the envelope is W2's: its schema and backend, `qualification: "unqualified"`, no final test
+    targets;
+  - it was produced under the handoff's release (source, producer executable, encoder closure)
+    and input scope (input, training identity and its fitting rows, preprocessing, prepared
+    rows);
+  - its `vector` is 2048 finite values inside the frozen clip (|v| <= 32).
+
+  The consumed vector (the receipt's retained output) must then be exactly that vector's
+  little-endian bytes, and `handoff.context_sha256` their digest. Otherwise:
+  `ContextHandoffMismatch: the handed-off context … is not the context the producer artifact
+  contains (…)`.
+- **The admission pins are rebuilt, not read.** `admission_pins_sha256` must be the digest of the
+  controller's `AdmissionPins` for this run. Teacher admission rebuilds them field for field
+  (`AdmissionPinsRecord`):
+  - from the freeze's preregistration: the release (source, producer, reference manifest,
+    verification policy), the W2 qualification digest, and the controller's pin of each of the
+    eight qualification case executions;
+  - from the authenticated run: the artifact digest, the input, training identity and
+    preprocessing, and `context_execution_sha256`. That is the digest of the controller's
+    attestation of the context execution (`ExecutionAttestationRecord`), which
+    `verify_execution` now derives from the verified receipts as `ExecutionProof::attest` does:
+    the supervisor receipt is the retained outcome file's digest, then the program, input and
+    output, the per-fit memory allocation, swap, the wall time and the per-fit allowance.
+
+  Otherwise: `ProducerNotAuthenticated: the handoff's admission pins … are not the controller's
+  admission pins … for this run`.
+- **The case-execution pins are preregistered.** The W2 qualification fixes them, so the
+  registration records them:
+  - `jope-policy` `ProducerRegistration` gains `qualification_execution_sha256`: eight hex
+    digests, one per qualification case. Incomplete or malformed pins do not register.
+  - `jope-pipeline` `CompletedQualification::case_execution_attestations` derives them from the
+    case pool receipts. `producer_registration` (the freeze) and `jope-bench`
+    `prepare_regression_context` (every producer run) both take them from it, so the two cannot
+    disagree.
+  - `ProducerPlan` gains the same field, optional. A freeze made without it keeps its bytes, and
+    nothing under it is issued or admitted: `PreHandoffProvenance: the freeze's W2 producer
+    registration records no controller admission pins …`, quarantined as owner decision D4
+    requires.
+- **Both sides are pinned.** `jope-policy`
+  `handoff_tests::the_records_teacher_admission_rebuilds_are_pinned` and `jope-learning`
+  `eligibility::tests::producer::the_w2_records_teacher_admission_rebuilds_are_pinned_field_for_field`
+  pin the same bytes for `AdmissionPins` and `ExecutionAttestation` (placeholder values, exact
+  serialization order), and the same `CpuContextArtifact` field set, schema and backend.
+  `jope-pipeline` `cpu_context_bridge::tests::the_attestation_is_derivable_from_the_retained_receipts`
+  pins, on the producer side, every attestation field teacher admission derives.
+
+**Tests** (`eligibility::tests::producer`, new):
+
+- `a_substituted_context_with_a_matching_handoff_digest_is_refused`: the reviewer's probe. The
+  artifact, job and outcome are asserted byte-identical to the producer run's.
+- `an_artifact_that_decodes_to_another_context_is_refused`: the job wrote, and the handoff and
+  pins name, an artifact whose vector differs in one finite, clipped value.
+- `a_truncated_or_corrupt_artifact_is_refused`: a truncated artifact, an unknown field, another
+  schema, final test targets used, another input, a value outside the clip, a short context, and
+  an artifact corrupted on disk.
+- `admission_pins_the_controller_did_not_issue_are_refused`: pins under other case executions,
+  pins over another record of the context execution, a digest that names no pins, a freeze that
+  preregistered other case pins, and a registration without pins (nothing issued or retained).
+- `the_w2_records_teacher_admission_rebuilds_are_pinned_field_for_field` (above).
+
+The fixture's artifact is now a `jope.cpu-context/v1` artifact holding the handed-off context,
+and its handoff names the controller's pins, written out by the fixture independently of the
+receiver. Fixture contexts stay inside the frozen clip.
+
+### P2: the context execution is the teacher's own authorized execution
+
+**Defect.** The only link between the context execution and the teacher's freeze was a lower
+bound: the context window had to open after the freeze. The experiment and window loaded from
+`context.handoff.execution` were never joined to the teacher's `OofEvidence.experiment_blob_sha256`
+and `window_sha256`. The reviewer moved the context window and its execution 120,000 ms later,
+leaving the teacher's original 60,000-ms window and all its evidence unchanged: `qualify`
+admitted the teacher and `hwm::ingest` accepted it. A context produced entirely after the
+teaching deadline acquired teaching authority.
+
+**Fix.** The freeze already models the teacher's authorized execution: `qualify` holds the
+teacher's experiment and original window to the freeze (the experiment pins the freeze and
+vocabulary, and the window opens after the freeze and belongs to the experiment). So the context
+execution is joined to exactly that, and no freeze field is added.
+
+- `qualify` reads the teacher's experiment and window before the context check and passes them
+  in (`context::Teaching`). The context check still runs before the inner binding, the folds and
+  any blob retention.
+- `verify_execution` requires the context job's experiment identity and window (experiment,
+  start and deadline) to be the teacher's. It runs after the existing lower bound:
+  `UnprovenContextExecution: the context was produced in experiment … over [start, deadline] ms,
+  not in the teacher's authorized experiment … and window […] ms`.
+- With the existing timing check (the job exits by the window's deadline less its reporting
+  allowance), a context produced after the teaching deadline never acquires teaching authority.
+- In the live driver the context job and the teacher's folds run in the same campaign experiment
+  and journal: `journal/window.json` is both the teacher's `window_sha256` and the context proof's
+  window. So the join holds there by construction.
+
+**Tests** (`eligibility::tests::producer`, new):
+
+- `a_context_produced_after_the_teaching_window_is_refused`: the reviewer's +120,000 ms probe.
+- `a_context_from_another_experiment_is_refused`: a context from another experiment, over the
+  teacher's window times.
+- `a_context_window_that_ends_after_the_teaching_deadline_is_refused`: a context from an
+  experiment with a longer allowance, whose window ends after the teaching deadline and whose job
+  exits after it.
+
+The tests that call `context::verify` directly pass the teacher's window: the inner-scope tests
+pass the window that opened with the inner freeze. The existing before-the-freeze and
+escaped-window refusals keep their messages.
+
+### Evidence (under the evidence root)
+
+- **P1** (commit `d36cdab6aee9`):
+  - `pr114-r1-handoff-context-pre-20260927T013224Z/`: the reproduction. With the new fixture
+    and tests but not the fix, the four refusal tests fail because `qualify` admits (the log
+    shows each returned `Qualification`); the other 62 eligibility tests pass on the new
+    fixture.
+  - `pr114-r1-handoff-context-post-20260927T014011Z/`: `jope-learning`, 192 of 192.
+  - `pr114-r1-handoff-context-gate-20260927T014544Z/`: the commit gate. fmt, the diff check,
+    coverage, the test inventory and the workspace check pass; the fence suites 85 of 85; the
+    feature receivers (`jope-policy` `testing,context-producer`, `jope-pipeline`
+    `qualified-context`, `jope-bench` `asm`) 425 pass, 13 skipped (their existing ignored
+    tests).
+- **P2** (commit `a5f71dfeef74`):
+  - `pr114-r1-context-window-pre-20260927T015558Z/`: the reproduction. The three refusal tests
+    fail because `qualify` admits; the other 67 eligibility tests pass. An earlier run,
+    `-015432Z`, held both experiment cases in one test, so only its first case ran; they are
+    now two tests.
+  - `pr114-r1-context-window-post-20260927T015750Z/`: `jope-learning`, 195 of 195.
+  - `pr114-r1-context-window-gate-20260927T020227Z/`: the commit gate. fmt, the diff check,
+    coverage, the test inventory and the workspace check pass; the fence suites 85 of 85.
+- The re-authoring of the branch before these fixes is recorded in
+  `pr114-r1-reauthor-20260927T012953Z/`.
+
+### Not established here (open)
+
+- **Unchanged from the sections above:** the handoff and pool receipts are unsigned,
+  content-addressed evidence. A handoff can no longer be rewritten beside its producer run, but a
+  submitter who fabricates a whole consistent run (artifact, job, outcome) is bounded only by the
+  preregistered release, qualification and case-execution pins, not by a signature. Teacher
+  admission decodes the artifact and holds it to its envelope and layout; it does not re-run W2
+  `load_qualified` (the frozen assembly is not replayed from the artifact's components). Handoff
+  row scopes are not joined (dataset only).
+- **No live run.** As in the section above: no W2 producer has run for teacher admission, and no
+  real teacher has been admitted.
