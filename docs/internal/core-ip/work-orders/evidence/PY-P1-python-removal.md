@@ -314,3 +314,25 @@ captured output is altered (negative control).
   (the new targets 1 + 2 passed, 1 ignored), both ignored fixture runners with
   `JOPE_MAINTENANCE_SCRATCH` (receipt replay and the build-report runners) and
   `deploy/ci/check.sh`, all green.
+
+## Follow-up — clippy on the P1 code
+
+`just ci-pr` runs `cargo clippy --workspace --all-targets --locked -- -D warnings`; the per-commit
+gate above did not. Run on the crates this branch touched, it flagged code the branch wrote: an
+import `families.rs` stopped using in the U8 port (also a plain rustc warning), U8's
+eight-argument `authenticate` (it mirrors the Python function; allowed as `run_report` is), U5's
+walk visitor type (now the named alias `Visit`), decimal `0` modes in the U5 tests (`0o000`), and
+U3's `is_multiple_of` and `sort_by_key` idioms in the README renderer and the scope check. All are
+fixed without behaviour change. `jope-ci` and `jope-records` are clean with `-D warnings`;
+`jope-parallel` and `jope-dime-regressor` still carry findings that predate this branch (in
+`dashboard.rs`, `grammar.rs`, `service.rs`, `spec_drift.rs` outside the comment this branch
+edited, and others), none in code this branch wrote. Gate
+`py-p1-clippy-post-20260927T035020Z` (full gate, `cargo test -p jope-ci` and both ignored runners,
+the families tests, `readme::` unit tests, no clippy finding in `families.rs`, `family_growth.rs`
+or `readme.rs`, `deploy/ci/check.sh`) was green except `clippy -p jope-ci -D warnings`, which
+also lints the `jope-records` dependency and stopped at the scope check's `% 2`. With that fixed,
+`py-p1-clippy-post-20260927T035412Z` passed `clippy -p jope-ci -p jope-records --all-targets
+-D warnings` and the scope-check unit tests; its last chained step ran `deploy/ci/check.sh`
+without this host's gitleaks shim, which stops on the 244 historical findings, so that run exits
+with status 1. `py-p1-clippy-post-20260927T035547Z` then ran fmt, `git diff --check` and
+`deploy/ci/check.sh` with the shim: green.

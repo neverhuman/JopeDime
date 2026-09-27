@@ -49,7 +49,10 @@ fn emitted(root: &Path, args: &[&str]) -> Result<Vec<String>> {
         .split(py::is_space)
         .filter(|t| !t.is_empty())
         .collect();
-    if tokens.is_empty() || tokens.len() % 2 != 0 || tokens.iter().step_by(2).any(|t| *t != "-p") {
+    if tokens.is_empty()
+        || !tokens.len().is_multiple_of(2)
+        || tokens.iter().step_by(2).any(|t| *t != "-p")
+    {
         return Err(Error::Command(format!(
             "rust-test-scope.sh {shown}: expected `-p <name>` pairs, got: {}",
             pyjson::str_repr(&stdout)

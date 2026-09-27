@@ -205,7 +205,7 @@ fn scan_matches_the_captured_python_outputs() {
     for case in cases {
         let name = case["name"].as_str().unwrap();
         if name == "scan-descendant-failure" {
-            fs::set_permissions(&guarded, fs::Permissions::from_mode(0)).unwrap();
+            fs::set_permissions(&guarded, fs::Permissions::from_mode(0o000)).unwrap();
             if fs::read_dir(&guarded).is_ok() {
                 // A user that ignores permissions (root) cannot reproduce the traversal failure.
                 fs::set_permissions(&guarded, fs::Permissions::from_mode(0o755)).unwrap();
