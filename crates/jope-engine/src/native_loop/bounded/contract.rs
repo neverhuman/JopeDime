@@ -236,6 +236,13 @@ impl std::fmt::Display for PlanRefusal {
 }
 impl std::error::Error for PlanRefusal {}
 type Check = std::result::Result<(), PlanRefusal>;
+/// Whether validation checks the grant signatures: always for a plan, never for an authored
+/// contract awaiting `grant sign`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Signatures {
+    Verify,
+    Skip,
+}
 macro_rules! need {
     ($cond:expr, $kind:ident, $($msg:tt)+) => {
         if !$cond {
@@ -293,6 +300,14 @@ impl BoundedRunContract {
     }
     /// Time-independent validation: identity, uniqueness, grants and funding arithmetic.
     pub fn validate_structure(&self) -> Check {
+        self.validate_with(Signatures::Verify)
+    }
+    /// Every check of [`Self::validate_structure`] except the grant signatures: an authored
+    /// contract before `grant sign` (W7-D6). An unsigned contract is never a plan.
+    pub fn validate_unsigned(&self) -> Check {
+        self.validate_with(Signatures::Skip)
+    }
+    fn validate_with(&self, signatures: Signatures) -> Check {
         need!(
             self.schema == CONTRACT_SCHEMA,
             Invalid,
@@ -331,7 +346,7 @@ impl BoundedRunContract {
             "rendezvous timeout/message policy"
         );
         self.validate_closure()?;
-        self.validate_participants(window)?;
+        self.validate_participants(window, signatures)?;
         self.validate_work_census()?;
         need!(
             self.counters.planned_updates > 0
@@ -475,7 +490,7 @@ impl BoundedRunContract {
         }
         Ok(())
     }
-    fn validate_participants(&self, window: u64) -> Check {
+    fn validate_participants(&self, window: u64, signatures: Signatures) -> Check {
         let n = self.participants.len();
         need!(
             (1..=MAX_PARTICIPANTS).contains(&n),
@@ -570,7 +585,7 @@ impl BoundedRunContract {
                 Invalid,
                 "participant {i} result destination"
             );
-            self.validate_grant(p)?;
+            self.validate_grant(p, signatures)?;
         }
         for (host, ranks) in local_ranks {
             need!(
@@ -582,7 +597,7 @@ impl BoundedRunContract {
         }
         Ok(())
     }
-    fn validate_grant(&self, p: &Participant) -> Check {
+    fn validate_grant(&self, p: &Participant, signatures: Signatures) -> Check {
         let g = &p.grant.body;
         need!(
             g.schema == GRANT_SCHEMA
@@ -598,15 +613,17 @@ impl BoundedRunContract {
             "grant for rank {} does not bind this run/attempt/participant",
             p.global_rank
         );
-        verify(
-            &self.grant_authority_public_key,
-            GRANT_DOMAIN,
-            g,
-            &p.grant.signature,
-        )
-        .map_err(|e| {
-            PlanRefusal::Invalid(format!("grant signature for rank {}: {e:#}", p.global_rank))
-        })?;
+        if signatures == Signatures::Verify {
+            verify(
+                &self.grant_authority_public_key,
+                GRANT_DOMAIN,
+                g,
+                &p.grant.signature,
+            )
+            .map_err(|e| {
+                PlanRefusal::Invalid(format!("grant signature for rank {}: {e:#}", p.global_rank))
+            })?;
+        }
         need!(
             g.expires_unix_ms <= self.original_deadline_unix_ms,
             Invalid,

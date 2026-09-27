@@ -20,7 +20,7 @@ you saw.
 |---|---:|---:|---:|---:|---:|---:|
 | engine-binary | 12 | 11 | 0 | 1 | 0 | 0 |
 | engine-example | 12 | 12 | 0 | 0 | 0 | 0 |
-| engine-subcommand | 101 | 88 | 13 | 0 | 0 | 0 |
+| engine-subcommand | 104 | 88 | 16 | 0 | 0 | 0 |
 | jope-prime-command | 49 | 49 | 0 | 0 | 0 | 0 |
 | justfile-recipe | 6 | 6 | 0 | 0 | 0 | 0 |
 | learning-subcommand | 19 | 0 | 19 | 0 | 0 | 0 |
@@ -42,7 +42,7 @@ you saw.
 | vendored-bin | 6 | 6 | 0 | 0 | 0 | 0 |
 | vendored-example | 6 | 6 | 0 | 0 | 0 | 0 |
 | wire | 5 | 0 | 0 | 0 | 5 | 0 |
-| **total** | **814** | **355** | **51** | **1** | **400** | **7** |
+| **total** | **817** | **355** | **54** | **1** | **400** | **7** |
 
 `moved`/`new` rows without a covering test: 300.
 
@@ -71,6 +71,9 @@ you saw.
 | engine-subcommand | (new) jope-native-loop cancel | crates/jope-engine/src/bin/jope-native-loop.rs (jope-native-loop cancel) | jope-parallel::bounded_run cli_plan_status_verify_cancel_round_trip | new | W7-T02: idempotent cancellation bound to the reviewed plan digest; a live coordinator drains the whole group |
 | engine-subcommand | (new) jope-native-loop census collect | crates/jope-engine/src/bin/jope-native-loop.rs (jope-native-loop census collect) | jope-parallel::bounded_census cli_collect_merge_and_preflight_round_trip_without_side_effects | new | W7-T01: observes the local host only (machine/boot id, host name, local address, certificate, pinned executable/runtime/policy digests, CPU/RAM, GPUs and device owners via `nvidia-smi`, none when `CUDA_VISIBLE_DEVICES=""` or absent) and writes one `jope.native_host_census.v1` document; never allocates or reserves. Fixture-proven; no live census taken |
 | engine-subcommand | (new) jope-native-loop census merge | crates/jope-engine/src/bin/jope-native-loop.rs (jope-native-loop census merge) | jope-parallel::bounded_census merge_refuses_tampered_stale_future_duplicate_and_mixed_documents | new | W7-T01: combines per-host documents pinned by their collector digests; refuses altered, stale, future, duplicate and mixed-schema documents |
+| engine-subcommand | (new) jope-native-loop contract author | crates/jope-engine/src/bin/jope-native-loop.rs (jope-native-loop contract author) | jope-parallel::bounded_grants the_cli_authors_signs_and_verifies_without_printing_the_key | new | W7-D6: authors an unsigned `jope.native_bounded_run.v1` contract from a `jope.native_bounded_contract_request.v1` request and a merged census; identities and device indices only from the census, closure digests only from the files; every check but the grant signatures; new file, never replaced |
+| engine-subcommand | (new) jope-native-loop grant sign | crates/jope-engine/src/bin/jope-native-loop.rs (jope-native-loop grant sign) | jope-parallel::bounded_grants a_wrong_key_a_tampered_grant_and_an_expired_window_are_refused | new | W7-D6: signs every grant with the grant-authority key, read only from an owner-only (0600), non-symlink PKCS#8 Ed25519 file (never argv or env, never printed); refuses another key and an expired grant window; the signed contract passes Plan's validation |
+| engine-subcommand | (new) jope-native-loop grant verify | crates/jope-engine/src/bin/jope-native-loop.rs (jope-native-loop grant verify) | jope-parallel::bounded_grants authored_contracts_are_signed_and_verified_by_the_grant_authority | new | W7-D6: checks a signed contract's grants exactly as Plan will (structure, every signature and binding, no expired grant) and prints the plan digest and each grant body digest |
 | engine-subcommand | (new) jope-native-loop participant | crates/jope-engine/src/bin/jope-native-loop.rs (jope-native-loop participant) | jope-parallel::bounded_smartcluster smartcluster_ranks_commit_the_whole_group_exactly_once | new | W7-T07 CPU phase rank worker, run by the host's SmartCluster daemon as the `jope-bounded-rank` trusted service: frozen plan and launch record only, proves before any work that it is its planned SmartCluster job's leader (W7-D1), own host identity, authenticated rendezvous over pinned TLS, one update round per heartbeat, signed result; records its refusal in the outbox. For a plan that selects training (W7-D2, `neural` builds only) it pins its planned GPU, takes the admitted NCCL bootstrap, writes `run.json` from the plan and trains under the selected partition; that path is compile-checked only. Same-host fixture only; no live multi-host run |
 | engine-subcommand | (new) jope-native-loop coordinate | crates/jope-engine/src/bin/jope-native-loop.rs (jope-native-loop coordinate) | jope-parallel::bounded_smartcluster a_restarted_coordinator_reconciles_and_drains_with_no_orphan | new | W7-T05/T07: preflight, dispatch through SmartCluster (`--supervision`) or per-host agents (`--agents`), gather, admit, heartbeat and poll to commit or whole-group drain; a restart reconciles. Never SSH. Same-host fixture only; no live multi-host run |
 | engine-subcommand | (new) jope-native-loop agent | crates/jope-engine/src/bin/jope-native-loop.rs (jope-native-loop agent) | jope-parallel::bounded_smartcluster a_killed_rank_drains_the_whole_group_through_smartcluster; jope-parallel::bounded_agent remote_supervision_is_mutually_pinned_by_the_plan | new | W7-T07: serves this host's SmartCluster supervisor to the plan's coordinator certificate only, over pinned TLS, for the planned ranks of its own frozen plan. Same-host fixture only; no live multi-host run |

@@ -1463,3 +1463,75 @@ Post-fix records:
   `training::bounded_rank`.
 - `w7c-D2-post-neural-20260927T012830Z` is marked `SUPERSEDED`. It ran the default-build-only
   test under `neural`, where the binary goes on past the refusal that test expects.
+
+### W7-D6 — repository verbs author contracts and sign and verify grants
+
+**Decision.** Add repository verbs so that nothing is assembled by hand. They reuse the
+existing grant format and verification code. The key is read only from a 0600 file path,
+never from arguments or the environment, and is never logged.
+
+**Pre-fix record** (`w7c-D6-pre-20260927T013453Z`).
+
+- `jope-native-loop contract author`, `grant sign` and `grant verify` were unrecognized
+  subcommands.
+- No source outside the test fixtures called `sign_grant`.
+- The previous runbook assembled the contract with `jq` and signed each grant with
+  `openssl pkeyutl`.
+
+**Implementation** (`bounded/authoring.rs` and three new verbs).
+
+- **`contract author --request R --census C --input-root D --out F`.**
+  - It reads a small declarative request (`jope.native_bounded_contract_request.v1`): the run,
+    the keys, the window and grant lengths, the policies, the closure paths, and each rank's
+    host, key, GPU UUID and ceilings. It also takes one per-rank work template, the counters,
+    and optionally a training selection.
+  - It builds the unsigned contract:
+    - host identities and device indices come only from the merged census, and a host or GPU
+      the census lacks is refused;
+    - closure digests and sizes come only from the files under `D`; a path that is missing,
+      repeated or not relative is refused;
+    - every grant body is derived from its participant, with an empty signature;
+    - the work census is expanded from the template;
+    - grants must end within the window.
+  - `validate_unsigned` then runs every contract check except the grant signatures. The output
+    is a new file, never a replacement, and the verb prints the review: the digest of each
+    grant body.
+- **`grant sign --contract U --key K --out F`.**
+  - The key comes from `participant::load_signing_key`: PKCS#8 Ed25519, owner-only mode, no
+    symlink.
+  - It refuses a key that is not the contract's `grant_authority_public_key`, and a contract
+    that is already signed.
+  - It refuses a grant whose window has already expired.
+  - It signs every grant body with the existing `sign_grant`. The signed contract must pass
+    `validate_at(now)`, which is Plan's full validation, before it is written as a new file.
+- **`grant verify --contract F`** parses the contract, runs `validate_at(now)`, and prints the
+  plan digest and each grant body digest.
+- **`BoundedRunContract::validate_unsigned`** is `validate_structure` with the grant signatures
+  skipped. It is used only for authored contracts. `parse`, `plan` and every other path keep
+  verifying signatures.
+
+**Tests** (`tests/bounded_grants.rs`, new, 5).
+
+- `authored_contracts_are_signed_and_verified_by_the_grant_authority` — round trip.
+  - Identities and devices come from the census, and the closure digests from the files.
+  - The unsigned contract is not a plan.
+  - Signed, it verifies and plans under the same digest.
+  - The unsigned review names the same grant bodies.
+- `a_wrong_key_a_tampered_grant_and_an_expired_window_are_refused` — covers:
+  - a wrong key;
+  - a grant altered after signing, and a signature moved to another rank;
+  - verification after expiry, and signing after expiry;
+  - re-signing an already signed contract.
+- `the_authority_key_file_must_be_owner_only_and_not_a_symlink` — modes `0640`, `0644`, `0604`
+  and `0660`, a symlink and a non-key are refused; `0600` loads.
+- `authoring_refuses_what_the_census_and_inputs_do_not_show` — an unknown host, an unknown
+  GPU, and a missing, duplicate or escaping closure path are refused. So are a grant longer
+  than the window, another request schema, and a coordinator key that is the authority key.
+- `the_cli_authors_signs_and_verifies_without_printing_the_key` — the real binary runs author,
+  then sign, then verify, and neither the seed nor the key bytes ever appear in stdout or
+  stderr. It also checks:
+  - an output is never replaced;
+  - a key with mode `0644` is refused, and nothing is written;
+  - there is no argument that takes a key value.
+
+Post-fix record: `w7c-D6-post-20260927T013703Z`, the full gate (`bounded_grants` 5).

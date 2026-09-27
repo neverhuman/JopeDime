@@ -5596,6 +5596,21 @@
       "dispositions": [],
       "scope": "W7-D2 CPU fixtures up to the device boundary (default features; no GPU, NCCL or device): a rank whose frozen plan selects training writes run.json from the plan alone (partition v2 for three ranks, corpus and parent digests, step window, deadline) after checking the plan, its launch record and the admitted NCCL bootstrap against each other; another rank's or plan's bootstrap, a forged launch record, a shared nccl.id (the train_controlled rendezvous) in the launch or run directory, a reused launch directory, another plan's run.json, altered inputs and a parent at another step are refused; a training selection must pin its corpus, parent, cadence and GPUs; a default-build participant refuses a training plan before any work. Synthetic identities; no training step."
     },
+    "target:jope-parallel/test/bounded_grants": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-engine/tests/bounded_grants.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "W7-D6 contract authoring and grant signing: an unsigned contract is authored from a declarative request, the fixture census and the closure files; the grant-authority key (read only from an owner-only, non-symlink PKCS#8 file) signs it and the signed contract verifies and plans; a wrong key, a tampered or swapped grant, an expired window, re-signing, bad key modes, symlinked or non-key files, unknown hosts or GPUs and missing, duplicate or escaping closure paths are refused; the CLI never prints the key and never replaces an output. Synthetic identities; no host contacted."
+    },
     "target:jope-parallel/test/bounded_agent": {
       "discovery": {
         "kind": "target",
