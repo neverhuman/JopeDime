@@ -1,5 +1,83 @@
 # JopeDime current direction
 
+**2026-09-27 W1–W12 source gap closure.** [PR #114](https://github.com/neverhuman/JopeDime/pull/114)
+landed the remaining source- and fixture-scope W1–W12 work on top of #111 and #113:
+- W1 input boundaries;
+- W2 semantic manifest, typed context and authenticated bytes;
+- W3 revocation consumers, the authenticated W2 handoff with its producer side, requalification
+  refusal, fitted-artifact binding and HWM recovery;
+- W4 per-draw outcomes;
+- W5 frozen inputs and evaluator process groups;
+- W8 publication, reconcile and S3 preflight;
+- W9 package seal and install;
+- W12 claim inventory, conformance pack and duplicate-cell refusal;
+- the never-loop Hyperion fix;
+- the owner's conservative policy defaults, `OWNER-DECISIONS.md` D1–D20.
+
+It merged by rebase, 45 commits, at 2026-09-27T09:39:08Z as main
+`1b301a9c52b8ef409a85e76d878a0bbcb6bb0f40`. The merged tree is byte-identical to the reviewed head
+`9dc747155a34f1f5194ded2a5abb9c11899d06a4`.
+
+Review was by independent Codex processes as `neverhumanbot` (219957145); every commit author and
+committer is `jepsontaylor`:
+- Changes were requested at `2160a28c9`: context substitution, a later context window, S3 URL
+  normalization, and a commit whose email mapped to the reviewer, re-authored with its tree
+  unchanged.
+- Changes were requested at `09b9676b3`: HTTPS S3 routes.
+- All findings were reproduced first and then fixed.
+- Approvals followed at `94b1616fb`, `4d475b320`, `31383aa48` and `93bfcb956`, and finally review
+  5329763785 at `9dc747155`.
+
+PR run 36309043047 and manual run 36309054082 passed all eight jobs and aggregate on attempt 1 at
+that head. It closes #57 and #58. #47, #48 and #62 stay open with the reasons in
+`docs/internal/core-ip/findings/pr114-issue-followups-20260927.md`.
+
+Earlier exact-head attempts failed only on GitHub network steps, for two causes:
+- Runner containers resolved through the LAN router, which failed 18 of 90 lookups from xbabe1.
+  This is fixed on the xbabe1 and xbabe2 hosts: resolved now serves `docker0`, and receipts are in
+  `~/jope-evidence/runner-dns-fix-20260927/`.
+- Intermittent SYN loss on the LAN/NAT path. The final commit gives `changes`, `hygiene` and
+  `aggregate` room for one stalled connection and retries the aggregate download at most three
+  times. No gate or pass criterion changed.
+
+Task status: 92 tasks, of which 70 are implemented, 67 fixture-proven, 35 reproduced and 22 blocked.
+None is CI-verified or live-qualified, and all 195 findings remain open. The blocked tasks are the
+live gates W7-T07/T08/T09, W8-T07/T08, W9-T07, W10 (except T09), W11-T02/T05–T08 and W12-T06/T08.
+
+Custody:
+- `/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/pr114-merge-20260927T093857Z/`
+- `independent-review-pr114*/`
+- `runs/`
+
+Owner decisions of 2026-09-27:
+- **D-A:** Codex lands the queued source branches.
+- **D-B:** the Python policy-v3 training lineage is retired in favour of the native trainer.
+- **D-C:** the following infrastructure actions are authorized, each logged with receipts and
+  reversible:
+  - the scoped S3 role `JopeDimeW8Publisher`, which now exists and is verified;
+  - root host setup on xbabe1–3;
+  - retiring xbabe2's out-of-repo qualification daemons, which is done;
+  - pausing competing workloads in admitted windows.
+- **D-D:** the next release is v0.2.0, from the self-hosted runner with a repo-held signature.
+
+Next allowed action: land the queued branches in order, each rebased on `1b301a9c5` with records
+regenerated:
+1. `health/full-main-green`;
+2. `rr2/w7-live`;
+3. `rr2/python-p1`.
+
+Under D-A the owner changed the PR-first order in writing: Claude proceeds in parallel, on paths
+disjoint from those branches, with the following work, each as its own reviewed PR:
+- clean the base;
+- run and fix jankurai;
+- finish removing Python;
+- close the remaining source gaps;
+- the targeted GP evolution demo;
+- the live three-host S3 training demonstration;
+- the v0.2.0 release.
+
+This record does not start any of them.
+
 **2026-09-26 core-IP regression remediation.** [PR #111](https://github.com/neverhuman/JopeDime/pull/111)
 delivered W0 and the recorded source- and fixture-scope slices across W1–W12 of
 `docs/internal/core-ip/work-orders`. Source integration items and live gates remain open;
