@@ -1880,6 +1880,33 @@ fn verify_refuses_acknowledgements_or_commits_journaled_after_the_window_closed(
     controller::verify(&r.dir, Some(&r.sha)).unwrap();
 }
 
+#[test]
+fn the_plan_review_names_work_kinds_plainly() {
+    let c = fixed_plan();
+    let review = c.review("x");
+    let kinds: Vec<&str> = review["work_census_wall_ms_by_kind"]
+        .as_object()
+        .unwrap()
+        .keys()
+        .map(String::as_str)
+        .collect();
+    assert_eq!(
+        kinds,
+        [
+            "artifact_movement",
+            "cleanup",
+            "failure_allowance",
+            "numerical",
+            "verification"
+        ]
+    );
+    // Wall time per kind is summed over every rank.
+    assert_eq!(
+        review["work_census_wall_ms_by_kind"]["numerical"],
+        3 * 400_000
+    );
+}
+
 // ------------------------------------------- W7-T06 the plan selects the training partition
 
 /// A plan at a fixed time, so its canonical bytes are reproducible.
