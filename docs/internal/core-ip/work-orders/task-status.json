@@ -1165,7 +1165,8 @@
         "64e56b410af39897c62bc887574ad53f421861b2",
         "4c86ea6dd6ba783738d523bb50c7e67e059087aa",
         "05aaf3ff5a170bf08be873679a4b7f715c698871",
-        "dde575db81ce3c0ce19af02792c5b12dcea7a296"
+        "dde575db81ce3c0ce19af02792c5b12dcea7a296",
+        "90acc312fd382e355612e45ebfa43dde81a77014"
       ],
       "tests": [
         "planned_census_reconciles_to_terminal_dispositions",
@@ -1182,7 +1183,9 @@
         "progress::tests::product::engine_events_that_do_not_verify_append_nothing_and_move_nothing",
         "progress_cli::progress_verbs_publish_engine_events_to_an_explicit_store_only",
         "progress_cli::follow_drives_the_cadence_until_the_run_completes",
-        "progress::remote::tests::every_s3_spelling_the_store_opens_goes_through_the_preflight"
+        "progress::remote::tests::every_s3_spelling_the_store_opens_goes_through_the_preflight",
+        "progress::remote::tests::only_the_admitted_store_kinds_pass_the_publishing_preflight",
+        "store::tests::a_store_location_names_the_backend_and_prefix_object_store_opens"
       ],
       "evidence": [
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w8-t01-mutations-20260926T063358Z",
@@ -1193,9 +1196,14 @@
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w8-integ-product-mutations-20260926T200052Z",
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/pr114-r1-s3-preflight-pre-20260927T020605Z",
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/pr114-r1-s3-preflight-post-20260927T020655Z",
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/pr114-r1-s3-preflight-gate-20260927T021139Z"
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/pr114-r1-s3-preflight-gate-20260927T021139Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/pr114-r2-https-s3-pre-20260927T033307Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/pr114-r2-https-s3-post-20260927T033330Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/pr114-r2-https-s3-mutation-20260927T033846Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/pr114-r2-https-s3-gate-20260927T033904Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/pr114-r2-https-s3-extra-20260927T034427Z"
       ],
-      "remaining": "Engine events map to W8 objects (progress/engine.rs) through the product Driver and progress verbs; no engine or W7 supervisor invokes it (follow runs beside a run); offline stores only. The S3 preflight reads a store URL exactly as the store opens it (jope_datasets::store::StoreLocation), so no spelling reaches the bucket root or skips the unsigned-request and conditional-write checks (PR #114 review round 1); live S3 is W8-T07/T08."
+      "remaining": "Engine events map to W8 objects (progress/engine.rs) through the product Driver and progress verbs; no engine or W7 supervisor invokes it (follow runs beside a run); offline stores only. The S3 preflight reads a store URL exactly as the store opens it (jope_datasets::store::StoreLocation, classified by object_store's own ObjectStoreScheme), so no spelling reaches the bucket root or skips the unsigned-request and conditional-write checks (PR #114 review round 1), and it admits only s3/s3a at a run-scoped prefix, file:// or a local path, and memory:///, refusing HTTPS (AWS virtual-host and path-style, R2), HTTP, GCS, Azure and every other URL before any store is opened (PR #114 review round 2); live S3 is W8-T07/T08."
     },
     "W8-T02": {
       "states": [

@@ -1090,3 +1090,105 @@ verification. Moving them ahead of delivery needs a reader that overlays undeliv
 records on the remote, which changes the remote read pattern the offline fault matrix
 (`progress::tests::faults`) is built on. That is not a contained change for a review round. The
 W8-T03 task-status text now says "before the pointer advances" where it said "before delivery".
+
+## PR #114 review round 2 (rr2/gap-closure)
+
+The second independent review of PR #114 (review 5328684141, REQUEST_CHANGES; receipts in
+`independent-review-pr114-round2/` beside the runs root) confirmed the round-1 preflight fix
+across 192 `s3`/`s3a` spellings and found one W8 defect beyond them.
+
+### P2: HTTPS URLs object_store opens on S3 passed the preflight
+
+**Defect.** `StoreLocation::parse` named a location S3 only for the `s3` and `s3a` schemes.
+`Store::open_with` sends every other URL to `object_store::parse_url`, and the locked
+object_store 0.14.2 classifies AWS virtual-host
+(`https://<bucket>.s3.<region>.amazonaws.com/<prefix>`) and path-style
+(`https://s3.<region>.amazonaws.com/<bucket>/<prefix>`) HTTPS URLs and R2 URLs
+(`https://<account>.r2.cloudflarestorage.com/<bucket>/<prefix>`) as AmazonS3, at the prefix after
+the bucket. The preflight returned `Ok(())` for them as for any store that is not S3, so
+`https://example-bucket.s3.us-east-2.amazonaws.com` (and its `/run/..` spelling) would have
+published at the bucket root, and neither the unsigned-request nor the conditional-write check
+applied. It was the round-1 failure mode (the preflight and the store reading a URL differently)
+outside the two schemes round 1 covered. The reviewer reproduced it with pure URL parsing
+(`https-s3-probe.rs`, `https-s3-probe.log`, six URLs); nothing was opened.
+
+**Fix** (commit `90acc312fd38`), fail-closed in two parts:
+
+1. **An allowlist of publishing stores.** `preflight_publishing_store` admits only `s3://` and
+   `s3a://` (in any case) at a run-scoped prefix, which then go through the unsigned-request and
+   conditional-write checks, and `file://` (or a bare path) and `memory:///`, which need nothing.
+   It refuses every other URL before any store is opened: HTTPS that object_store opens on S3,
+   Azure over HTTPS, plain `http(s)://`, `gs://`, `az://`, `abfss://` and any other backend
+   (`"... storage through <scheme>://, which is not a publishing store: progress publishes only
+   to ..."`). A URL object_store does not recognise (`ftp://`, `sftp://`, `file://<host>/`,
+   `memory://<host>/`) is refused as not a store URL.
+2. **One classification, object_store's own.** `StoreLocation` now carries the route
+   `Store::open_with` takes (`StoreRoute::S3` for `s3`/`s3a`, unchanged: the S3 builder
+   configured from the environment; `StoreRoute::ParseUrl` for everything else), the backend
+   (`object_store::ObjectStoreScheme`, re-exported from `jope_datasets::store`) and the prefix
+   the store writes under. On the `ParseUrl` route the backend and prefix are exactly
+   `ObjectStoreScheme::parse` and then `Path::parse`, the two steps `parse_url` takes before it
+   builds the store, and a URL the classifier does not recognise is not a store location. Every
+   location on S3, by either route, reports `s3` with its bucket and prefix, and the preflight
+   refuses any S3 location at the bucket root before it applies the allowlist (belt and braces):
+   the four HTTPS root URLs are refused as the bucket root. `Store::open_with` takes the
+   location's route, backend and prefix, so reads are unchanged for existing callers (HTTPS URLs
+   still open through `parse_url`); on the `ParseUrl` route it refuses to open a store if
+   `parse_url` ever names a prefix other than the location's.
+
+No existing caller or test opens a store over HTTPS: in `jope-datasets`, `jope-learning`,
+`jope-models`, `jope-cli` and `jope-arena`, `https://` appears only in metadata and source URLs.
+`jope-arena`'s own `publish` opens stores with `parse_url` directly; it is not the W8 path.
+
+**Regression tests.** Pure URL parsing: no store is opened, and no credential or network is used.
+
+- `progress::remote::tests::only_the_admitted_store_kinds_pass_the_publishing_preflight`
+  (`jope-learning`), each case under a signed environment and under `JOPE_DATASETS_ANON=1` plus
+  `AWS_CONDITIONAL_PUT=disabled`:
+  - the reviewer's four root URLs (virtual-host, path-style, the normalized `/run/..` spelling,
+    R2) are refused as the bucket root;
+  - the reviewer's two prefixed URLs, a prefixed R2 URL, Azure over HTTPS, plain HTTPS and HTTP,
+    `gs://`, `az://` and `abfss://` are refused as not a publishing store;
+  - `ftp://`, `sftp://`, `file://remote-host/` and `memory://remote/` are refused as not a store
+    URL;
+  - positive controls: `s3://b/run-1`, `S3A://b/run-1`, `memory:///`, a `file://` URL and a bare
+    path pass.
+- `store::tests::a_store_location_names_the_backend_and_prefix_object_store_opens`
+  (`jope-datasets`): for 20 URLs (`s3`, `s3a`, `S3` with `..`; AWS virtual-host and path-style
+  HTTPS at the root, normalized to the root and with a prefix; R2; `gs`; `az`; `abfss`; Azure over
+  HTTPS; HTTP(S); `file`, percent-encoded included; `memory`), the location's backend and prefix
+  equal object_store's classifier, the independent oracle, and a stated expectation; the route
+  is S3 exactly for `s3`/`s3a`; exactly the AmazonS3 locations report `s3`, with bucket
+  `example-bucket` and the same prefix. A bare path is a local store at its absolute path. The
+  four unrecognised URLs are refused by both the classifier and `StoreLocation::parse`. HTTPS
+  URLs still parse for the read path.
+- The round-1 test `every_s3_spelling_the_store_opens_goes_through_the_preflight` passes
+  unchanged.
+
+**Evidence** (under the evidence root; commit `90acc312fd38`):
+
+- `pr114-r2-https-s3-pre-20260927T033307Z/`: the reproduction at `09b9676b3`, with the new
+  `jope-learning` test and not the fix. It fails and lists 34 bypasses, 17 URLs under each of
+  the two environments, every one `Ok(())` ("passed the preflight"), the reviewer's six
+  included. The first attempt, `pr114-r2-https-s3-pre-20260927T032956Z/`, is superseded: its
+  list included `unix:/run/jope.sock`, which has no `://`, so the store reads it as a bare local
+  path (a directory `unix:` under the working directory) and `Ok` is right for it. The test uses
+  `sftp://example.com/run-1` instead.
+- `pr114-r2-https-s3-post-20260927T033330Z/`: the fmt check, then `jope-learning` and
+  `jope-datasets`, 270 of 270.
+- `pr114-r2-https-s3-mutation-20260927T033846Z/`: the allowlist arm replaced by
+  `_ => return Ok(())`. The test fails with 18 bypasses: the 9 prefixed remote URLs under both
+  environments. The four HTTPS bucket-root URLs stay refused as the bucket root, because the
+  location reports S3 for them (the second part holds on its own).
+- `pr114-r2-https-s3-gate-20260927T033904Z/`: the commit gate. fmt, the diff checks, coverage,
+  the test inventory and the workspace check pass; the fence suites 85 of 85.
+- `pr114-r2-https-s3-extra-20260927T034427Z/`: the reviewer's own probes at the fix, appended
+  to a working copy only and not committed. `extra-s3-probes.rs`, unchanged (192 `s3`/`s3a`
+  URL variants, each signed, unsigned and unconditional, and the round-1 originals), passes, so
+  the S3 route's policy is unchanged. `https-s3-probe.rs`, with only its import of
+  `ObjectStoreScheme` taken through `jope_datasets::store` (`jope-learning` has no direct
+  `object_store` dependency), now fails at its first assertion, `location.s3.is_none()`: the
+  location reports S3 for the HTTPS URLs.
+
+What stays open: nothing for this finding. Live S3 publication remains W8-T07/T08; no store was
+opened, and no credential or network was used.

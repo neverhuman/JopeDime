@@ -11,7 +11,7 @@ neither is live qualification.
 |---|---|
 | `findings/register.json` | `33146b77ca2bd8769d8a2b869fe4844755df86a0a8dccdd41609c2d1080e5e6a` |
 | `findings/dispositions.json` | `e097ca511964e584ed81dfa44c8f43dbaf072981fb666747eb9a3e821210cca1` |
-| `work-orders/task-status.json` | `8545e990464c1a0f7aabd4ddb5fd7776fec033ff40036682e916397ebbfca9c3` |
+| `work-orders/task-status.json` | `e72c21dc95c81cb78ab9e073c78a00c71890d1a85fff83501a813141496a8dc2` |
 | `claims/claims.json` | `380ec2ffc72fd1e41bcde9f8897f485d5c0605549cad52165a07fecb0874a011` |
 
 ## Findings and tasks by primary work order
