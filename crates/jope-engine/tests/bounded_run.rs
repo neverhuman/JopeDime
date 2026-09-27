@@ -1926,12 +1926,25 @@ fn a_plan_that_selects_no_training_keeps_its_exact_bytes() {
     assert!(!String::from_utf8(canonical).unwrap().contains("training"));
 }
 
+/// `c` selecting training: the partition and batch shape, and (W7-D2) the corpus and parent
+/// checkpoint it trains from, both pinned in the input closure.
 fn select(c: &BoundedRunContract, partition: &str, microbatch: u32, global_batch: u32) -> Vec<u8> {
     let mut v = serde_json::to_value(c).unwrap();
+    let closure = v["artifact_closure"].as_array_mut().unwrap();
+    for (path, bytes) in [
+        ("corpus/index.json", &b"fixture corpus index"[..]),
+        ("parent/state.json", &br#"{"step":60000}"#[..]),
+    ] {
+        closure.push(serde_json::json!({"path": path, "sha256": sha(bytes), "bytes": bytes.len()}));
+    }
+    closure.sort_by(|a, b| a["path"].as_str().cmp(&b["path"].as_str()));
     v["training"] = serde_json::json!({
         "execution_partition": partition,
         "microbatch": microbatch,
         "global_batch": global_batch,
+        "corpus": "corpus",
+        "checkpoint_steps": 1,
+        "initialize": "parent",
     });
     serde_json::to_vec(&v).unwrap()
 }
@@ -1957,7 +1970,7 @@ fn a_plan_can_select_the_training_partition() {
     // The selection is part of the frozen bytes and of the reviewed summary.
     let canonical = parsed.canonical_bytes().unwrap();
     assert!(String::from_utf8(canonical.clone()).unwrap().ends_with(
-        r#","training":{"execution_partition":"parallel.training_partition.v2","microbatch":256,"global_batch":2048}}"#
+        r#","training":{"execution_partition":"parallel.training_partition.v2","microbatch":256,"global_batch":2048,"corpus":"corpus","checkpoint_steps":1,"initialize":"parent"}}"#
     ));
     let (_t, root) = tempdir();
     let dir = root.join("run");

@@ -211,6 +211,9 @@ pub fn record_refusal(outbox: &Path, error: &anyhow::Error) {
 pub fn run(args: &ParticipantArgs, runner: &dyn CommandRunner) -> Result<i32> {
     let (contract, record) =
         launch::load_launch(&args.plan, &args.plan_sha256, &args.launch_record)?;
+    // W7-D2: a plan that selects training runs only on a build that has the trainer.
+    let training = contract.training.is_some();
+    ensure!(!training || cfg!(feature = "neural"), "{NO_TRAINER}");
     // W7-D1: before any work, prove this process is its planned SmartCluster job's leader.
     let installation = Installation::load(&args.installation)?;
     let claim = JobClaim::from_env(|name| std::env::var_os(name))?;
@@ -228,7 +231,7 @@ pub fn run(args: &ParticipantArgs, runner: &dyn CommandRunner) -> Result<i32> {
         },
     )?;
     // W7-D3: SmartCluster's GPU index must be the planned UUID (a CPU rank sees no device).
-    launch::resolve_visibility(
+    let visibility = launch::resolve_visibility(
         &record,
         std::env::var_os(launch::VISIBILITY_VARIABLE).as_deref(),
         runner,
@@ -236,9 +239,17 @@ pub fn run(args: &ParticipantArgs, runner: &dyn CommandRunner) -> Result<i32> {
     let rank = record.global_rank;
     let planned = contract.participant(rank).context("rank")?;
     ensure!(
-        planned.device.is_none(),
-        "rank {rank} plans a GPU; the CPU-phase participant runs CPU ranks only"
+        training || planned.device.is_none(),
+        "rank {rank} plans a GPU but the plan selects no training; the CPU-phase participant runs CPU ranks only"
     );
+    if training {
+        // Pin the planned UUID before anything can initialize CUDA: CUDA then sees exactly
+        // that device at ordinal 0, whatever its enumeration order. No other thread exists yet.
+        let uuid = visibility
+            .pinned()
+            .context("a training rank needs its planned GPU")?;
+        std::env::set_var(launch::VISIBILITY_VARIABLE, uuid);
+    }
     let key = load_signing_key(&args.participant_key)?;
     ensure!(
         hex::encode(key.verifying_key().to_bytes()) == planned.public_key,
@@ -265,14 +276,16 @@ pub fn run(args: &ParticipantArgs, runner: &dyn CommandRunner) -> Result<i32> {
         (&pin.0, &pin.1),
         Timeouts::from_plan(&contract),
     )?;
-    // Rank 0 carries the group bootstrap. The CPU phase creates no communicator, so it is a
-    // fresh 32-byte group token, never an NCCL id (which is exactly 128 bytes).
-    let bootstrap = if rank == 0 {
-        let mut token = rendezvous::fresh_nonce()?.to_vec();
-        token.extend(rendezvous::fresh_nonce()?);
-        Some(hex::encode(token))
-    } else {
-        None
+    // Rank 0 carries the group bootstrap: an NCCL unique id (exactly 128 bytes) for a training
+    // plan; otherwise the CPU phase creates no communicator and it is a fresh 32-byte token.
+    let bootstrap = match (rank, training) {
+        (0, true) => Some(nccl_bootstrap_hex()?),
+        (0, false) => {
+            let mut token = rendezvous::fresh_nonce()?.to_vec();
+            token.extend(rendezvous::fresh_nonce()?);
+            Some(hex::encode(token))
+        }
+        _ => None,
     };
     let grant_sha256 = super::digest(&planned.grant)?;
     let member = rendezvous::join(
@@ -292,7 +305,7 @@ pub fn run(args: &ParticipantArgs, runner: &dyn CommandRunner) -> Result<i32> {
             host: identity.host.clone(),
             machine_id: identity.machine_id.clone(),
             boot_id: identity.boot_id.clone(),
-            device_uuid: None,
+            device_uuid: planned.device.as_ref().map(|d| d.uuid.clone()),
             source_commit: identity.source_commit.clone(),
             executable_sha256: identity.executable_sha256.clone(),
             runtime: identity.runtime.clone(),
@@ -308,6 +321,47 @@ pub fn run(args: &ParticipantArgs, runner: &dyn CommandRunner) -> Result<i32> {
         Path::new("admitted"),
         member.admission_sha256().as_bytes(),
     )?;
+    if training {
+        #[cfg(feature = "neural")]
+        {
+            let Some((completion, spec)) =
+                train(args, &contract, &record, &member, &installation, stream)?
+            else {
+                return Ok(EXIT_LOST_CONTROL);
+            };
+            let result = serde_json::to_vec(&json!({
+                "schema": TRAINING_RESULT_SCHEMA,
+                "run": contract.run,
+                "attempt": contract.attempt,
+                "global_rank": rank,
+                "host": identity.host,
+                "machine_id": identity.machine_id,
+                "boot_id": identity.boot_id,
+                "device_uuid": record.cuda_visible_devices,
+                "admission_sha256": member.admission_sha256(),
+                "input_closure_sha256": closure,
+                "smartcluster_job": job,
+                "run_json_sha256": hash(&serde_json::to_vec(&spec)?),
+                "execution_partition": spec["execution_partition"],
+                "completion_sha256": hash(&serde_json::to_vec(&completion)?),
+                "parameter_sha256": completion["parameter_sha256"],
+                "steps": completion["steps"],
+                "updates": contract.counters.planned_updates,
+                "numerical": true,
+            }))?;
+            publish_result(
+                args,
+                &contract,
+                &key,
+                &member,
+                &result,
+                contract.counters.planned_updates,
+            )?;
+            return Ok(0);
+        }
+        #[cfg(not(feature = "neural"))]
+        anyhow::bail!("{NO_TRAINER}");
+    }
     // Admitted: work may start. One update round per heartbeat.
     let heartbeat = Some(Duration::from_millis(
         contract.rendezvous.heartbeat_timeout_ms,
@@ -348,28 +402,121 @@ pub fn run(args: &ParticipantArgs, runner: &dyn CommandRunner) -> Result<i32> {
         "started_unix_ms": started,
         "numerical": false,
     }))?;
+    publish_result(args, &contract, &key, &member, &result, rounds)?;
+    Ok(0)
+}
+
+/// Sign `result` for this rank's admission and publish it in the outbox: the result bytes
+/// first, the signed envelope last, so an envelope always names complete bytes.
+fn publish_result(
+    args: &ParticipantArgs,
+    contract: &super::contract::BoundedRunContract,
+    key: &SigningKey,
+    member: &rendezvous::AdmittedMember,
+    result: &[u8],
+    updates: u64,
+) -> Result<()> {
     let envelope = rendezvous::sign_result(
-        &key,
+        key,
         ResultBody {
             schema: rendezvous::RESULT_SCHEMA.into(),
             run: contract.run.clone(),
             attempt: contract.attempt,
             plan_sha256: args.plan_sha256.clone(),
             admission_sha256: member.admission_sha256().into(),
-            global_rank: rank,
+            global_rank: member.global_rank(),
             delivery_id: 1,
-            result_sha256: hash(&result),
+            result_sha256: hash(result),
             result_bytes: result.len() as u64,
-            updates: rounds,
+            updates,
             completed_unix_ms: now_ms(),
         },
     )?;
-    // The result bytes first, the signed envelope last: an envelope names complete bytes.
-    publish_immutable(&args.outbox, Path::new("result.bin"), &result)?;
+    publish_immutable(&args.outbox, Path::new("result.bin"), result)?;
     publish_immutable(
         &args.outbox,
         Path::new("envelope.json"),
         &serde_json::to_vec(&envelope)?,
     )?;
-    Ok(0)
+    Ok(())
+}
+
+pub const TRAINING_RESULT_SCHEMA: &str = "jope.native_training_result.v1";
+const NO_TRAINER: &str = "the plan selects training, but this jope-native-loop was built without the neural feature; a training rank runs only on a neural build";
+
+/// Rank 0's communicator bootstrap for a training plan: a fresh NCCL unique id.
+#[cfg(feature = "neural")]
+fn nccl_bootstrap_hex() -> Result<String> {
+    Ok(hex::encode(crate::neural::nccl_unique_id()?))
+}
+#[cfg(not(feature = "neural"))]
+fn nccl_bootstrap_hex() -> Result<String> {
+    anyhow::bail!("{NO_TRAINER}")
+}
+
+/// W7-D2: train from the admitted plan, the frozen launch record and the admitted NCCL
+/// bootstrap, with the partition the plan selects. A watcher thread holds control: a stop,
+/// a replayed or regressed heartbeat, silence past the heartbeat timeout or end of stream
+/// stops training at its next step, and then no result is published (`None`). Returns the
+/// completion receipt and the `run.json` written from the plan.
+#[cfg(feature = "neural")]
+fn train(
+    args: &ParticipantArgs,
+    contract: &super::contract::BoundedRunContract,
+    record: &launch::LaunchRecord,
+    member: &rendezvous::AdmittedMember,
+    installation: &Installation,
+    mut stream: transport::TlsStream,
+) -> Result<Option<(serde_json::Value, serde_json::Value)>> {
+    use std::sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    };
+    let admitted = launch::nccl_bootstrap(contract, &args.plan_sha256, record, member)?;
+    let prepared = super::training_run::prepare(
+        contract,
+        &args.plan_sha256,
+        record,
+        &admitted,
+        &installation.input_root,
+    )?;
+    // The environment is pinned to the planned UUID; the device view must agree.
+    let (assignment, _) = super::assignment::bound_worker(
+        contract,
+        &args.plan_sha256,
+        record,
+        std::env::var_os(launch::VISIBILITY_VARIABLE).as_deref(),
+        crate::neural::local_devices,
+    )?;
+    let stop = Arc::new(AtomicBool::new(false));
+    let limit = contract.rendezvous.max_message_bytes;
+    let heartbeat = Some(Duration::from_millis(
+        contract.rendezvous.heartbeat_timeout_ms,
+    ));
+    stream.set_timeouts(heartbeat, heartbeat)?;
+    {
+        let stop = Arc::clone(&stop);
+        std::thread::spawn(move || {
+            let mut last = 0u64;
+            loop {
+                let frame = rendezvous::read_frame(&mut stream, limit)
+                    .ok()
+                    .and_then(|f| serde_json::from_slice::<ControlFrame>(&f).ok());
+                match frame {
+                    Some(ControlFrame::Heartbeat { delivery_id }) if delivery_id > last => {
+                        last = delivery_id
+                    }
+                    _ => {
+                        stop.store(true, Ordering::Release);
+                        return;
+                    }
+                }
+            }
+        });
+    }
+    let completion = crate::training::bounded_rank(&prepared, &assignment, &admitted, &stop);
+    if stop.load(Ordering::Acquire) {
+        return Ok(None);
+    }
+    Ok(Some((completion?, prepared.spec)))
 }
