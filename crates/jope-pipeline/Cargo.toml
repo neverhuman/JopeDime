@@ -21,6 +21,8 @@ anyhow.workspace = true
 clap.workspace = true
 feat-math = { path = "../feat-math" }
 jope-datasets = { path = "../jope-datasets" }
+# The default test-score registry lives under $JOPE_STATE (zero dependencies).
+jope-paths = { path = "../jope-paths" }
 jope-policy = { path = "../jope-policy", optional = true }
 # Bounded parallel candidate evaluation (`--threads`); already in the graph through feat-math.
 rayon.workspace = true

@@ -61,6 +61,7 @@ pub mod select;
 #[cfg(target_os = "linux")]
 pub mod supervisor;
 pub mod synthesized_recipe;
+pub mod test_score;
 
 pub use receipt::{Receipt, RECEIPT_SCHEMA_ID};
 pub use run::{run, Policy, RunOptions};

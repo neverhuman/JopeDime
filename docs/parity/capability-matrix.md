@@ -27,7 +27,7 @@ you saw.
 | new-bin | 14 | 0 | 14 | 0 | 0 | 0 |
 | new-example | 1 | 0 | 1 | 0 | 0 | 0 |
 | ops-sh | 1 | 1 | 0 | 0 | 0 | 0 |
-| pipeline-subcommand | 2 | 0 | 2 | 0 | 0 | 0 |
+| pipeline-subcommand | 3 | 0 | 3 | 0 | 0 | 0 |
 | root-binary | 56 | 56 | 0 | 0 | 0 | 0 |
 | script-py | 116 | 116 | 0 | 0 | 0 | 0 |
 | script-review | 5 | 5 | 0 | 0 | 0 | 0 |
@@ -42,7 +42,7 @@ you saw.
 | vendored-bin | 6 | 6 | 0 | 0 | 0 | 0 |
 | vendored-example | 6 | 6 | 0 | 0 | 0 | 0 |
 | wire | 5 | 0 | 0 | 0 | 5 | 0 |
-| **total** | **807** | **735** | **44** | **1** | **20** | **7** |
+| **total** | **808** | **735** | **45** | **1** | **20** | **7** |
 
 `moved`/`new` rows without a covering test: 659.
 
@@ -857,3 +857,4 @@ you saw.
 | learning-subcommand | (new) jope-learning bank add | crates/jope-learning/src/main.rs (jope-learning bank add) | jope-learning::pipeline_bank only_an_hwm_improved_champion_is_banked; jope-learning::pipeline_bank an_unverifiable_receipt_or_hwm_ledger_is_refused | new | Phase 5: admits a pipeline champion to the append-only, content-addressed champion bank (`bank` ledger) only when its receipt re-derives from its run directory, the HWM ledger verifies and holds an accepted `improved` event for exactly this receipt whose record and blob match it; `initialized` and every rejection are refused; a given lineage must verify and name the receipt; re-adding an entry writes nothing |
 | learning-subcommand | (new) jope-learning bank list | crates/jope-learning/src/main.rs (jope-learning bank list) | jope-learning::pipeline_bank the_bank_is_append_only_and_content_addressed | new | Phase 5: read-only; every banked entry re-checked against its content address, optionally one dataset's; an edited bank batch fails the chain and nothing is listed |
 | learning-subcommand | (new) jope-learning bank export | crates/jope-learning/src/main.rs (jope-learning bank export) | jope-learning::pipeline_bank an_export_seeds_the_next_run | new | Phase 5: writes the best distinct banked genomes of a dataset as `jope.pipeline-seeds/v1` (never over an existing file), which `jope pipeline run --seed-genomes` and `jope pipeline evolve --seeds` consume |
+| pipeline-subcommand | (new) jope pipeline score | crates/jope-pipeline/src/cli.rs (jope pipeline score) | jope-pipeline test_score::tests::the_test_split_is_scored_once_per_dataset_and_genome | new | Phase 5: re-derives a receipt, refits its selected genome on every train.csv row and scores it once on the sha-verified test.csv; writes a separate `jope.pipeline-test-score/v1` to `<registry>/<dataset_hash>/<program_sha256>.json` (created exclusively, so a repeat for the same dataset and genome is refused before any fit); never feeds selection |

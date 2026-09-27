@@ -454,7 +454,10 @@ mod tests {
         assert!(datasets.find_subcommand("fetch").is_some());
         let pipeline = cmd.find_subcommand("pipeline").unwrap();
         let verbs: Vec<&str> = pipeline.get_subcommands().map(|c| c.get_name()).collect();
-        assert_eq!(verbs, ["run", "verify-receipt", "evolve", "lineage"]);
+        assert_eq!(
+            verbs,
+            ["run", "verify-receipt", "evolve", "lineage", "score"]
+        );
         let lineage = pipeline.find_subcommand("lineage").unwrap();
         let verbs: Vec<&str> = lineage.get_subcommands().map(|c| c.get_name()).collect();
         assert_eq!(verbs, ["verify"]);

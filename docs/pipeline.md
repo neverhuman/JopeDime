@@ -133,6 +133,18 @@ measured candidate bred in generation 1 or later in every round.
 Evolve never writes to the learning store. HWM ingest and the champion bank are separate
 `jope-learning` steps over its outputs (see `docs/learning.md`).
 
+## Test-split scoring (`jope pipeline score --split test`)
+
+Everything above measures on the training rows only. `jope pipeline score --receipt <r> --split
+test` re-derives the receipt, re-resolves the sha-verified dataset (it must be the dataset and
+`train.csv` the search measured), refits the selected genome on every `train.csv` row and scores
+it on `test.csv`, writing `jope.pipeline-test-score/v1` to
+`<registry>/<dataset_hash>/<program_sha256>.json` (default registry
+`$JOPE_STATE/pipeline/test-scores`). The path is checked before any fit and the file is created
+exclusively, so each (dataset, genome) pair is scored once: a repeat from the same receipt, or
+from any other run that selected the same genome, is refused. The score never feeds selection:
+nothing in the pipeline reads it back, and the run's receipt is not touched.
+
 Verification: `cargo test --locked -p jope-pipeline` exercises budget exhaustion,
 failed attempts, in-flight overrun, full-cut selection and legacy reading.
 `E2E_OUT=<new-durable-directory> bash deploy/ci/e2e-smoke.sh` runs the committed
