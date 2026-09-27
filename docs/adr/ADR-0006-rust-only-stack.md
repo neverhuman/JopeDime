@@ -1,4 +1,4 @@
-# ADR-0008 — Rust-only stack: Python remains only for emitted code and its harness
+# ADR-0006 — Rust-only stack: Python remains only for emitted code and its harness
 
 **Status:** accepted 2026-09-26 (owner ruling); phase P1 implemented by the `python-p1` pull
 request · **Supersedes:** owner decision 2 of the port plan ("a `uv`-managed Python package owns

@@ -84,7 +84,7 @@ ignore = ["E501", "B905", "B023", "B007", "B904", "E731", "E741", "UP031", "UP02
 # The ops tooling (former parallel/tools) is written in the compressed several-statements-per-line
 # style with imports after the environment setup; reformatting it is out of WP6's scope (behaviour
 # must not change). The chimera trainers that shared this entry were archived in the Python removal
-# P1 (ADR-0008, docs/archive/python-archive-manifest.json).
+# P1 (ADR-0006, docs/archive/python-archive-manifest.json).
 "src/jope/tools/**" = ["E701", "E702", "E402", "UP022"]
 
 [tool.pytest.ini_options]
