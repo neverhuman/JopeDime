@@ -13,7 +13,7 @@ emitter or a learning-loop pointer can be reviewed and reproduced by someone who
   1.96 (decision 8 of the plan) and CI checks it. `g++` is a hard build requirement (feat-math's
   `build.rs` compiles the fitted C++ runtime); `clang++`, `node` and `python3` are needed for the
   emitter matrix (`python3` runs the emitted Python); `uv` for the remaining Python package,
-  which [ADR-0008](docs/adr/ADR-0008-rust-only-stack.md) is retiring; `just` runs the recipes.
+  which [ADR-0006](docs/adr/ADR-0006-rust-only-stack.md) is retiring; `just` runs the recipes.
 
 ## The landing policy
 
@@ -29,7 +29,7 @@ rebase merges only (linear history); the branch is deleted on merge.
    plan section, ADR or blocker number when there is one.
 3. Run `just ci-pr` before opening the PR (the exact scripts the hosted lanes call: hygiene, fmt,
    clippy `-D warnings`, `cargo nextest -P pr`, and the Python checks over the Python that
-   remains until ADR-0008's phase P3). A PR that touches only docs runs
+   remains until ADR-0006's phase P3). A PR that touches only docs runs
    `hygiene` alone in CI; still run `just docs` locally (rustdoc builds — its warnings are
    advisory until the WP8 `docs` lane makes `-D warnings` blocking — plus the markdown link check
    over README and `docs/` excluding `docs/legacy/`).
@@ -38,7 +38,7 @@ rebase merges only (linear history); the branch is deleted on merge.
    with WP10 fails a PR that silently removes tests).
 5. Review by someone other than the author; every conversation resolved; the required checks
    (`hygiene`, `rust-check`, `emitters`, `python` once each lane exists) green. The `python` lane
-   covers only the remaining Python and is removed at the end of ADR-0008's phase P3.
+   covers only the remaining Python and is removed at the end of ADR-0006's phase P3.
 
 ## What reviewers look for
 
@@ -61,7 +61,7 @@ rebase merges only (linear history); the branch is deleted on merge.
   [deny.toml](deny.toml); no git dependencies). The remaining Python dependencies are derived from
   an import scan (see `python/pyproject.toml`) and may shrink but not grow; `research` extras
   never run in CI.
-- **Rust only ([ADR-0008](docs/adr/ADR-0008-rust-only-stack.md), owner ruling 2026-09-26).** The
+- **Rust only ([ADR-0006](docs/adr/ADR-0006-rust-only-stack.md), owner ruling 2026-09-26).** The
   stack is Rust, Vite, TypeScript and React. New Python is not accepted, with one exception:
   the Python the emitters generate and the harness that runs and checks it (the emitter matrix,
   `compare-bits.py`, the portable references). The Python still in the tree (the training stack,

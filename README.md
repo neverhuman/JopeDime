@@ -193,7 +193,7 @@ JOPE_PARITY_STRICT=1 cargo test --locked -p feat-math
 ```
 
 `just required` / `just ci-pr` also run clippy, nextest, and ruff over the Python that
-remains until [ADR-0008](docs/adr/ADR-0008-rust-only-stack.md) retires it, when those tools are
+remains until [ADR-0006](docs/adr/ADR-0006-rust-only-stack.md) retires it, when those tools are
 installed. New Python is not accepted except the emitted model code and its harness.
 
 ## Intended pipeline (later PRs, one at a time)
@@ -224,7 +224,7 @@ Do not open a stack of PRs. Merge or close the current one before starting the n
 | `crates/jope-campaigns` | Campaign and qualification tooling |
 | `datasets/synthetic` | Ten integer-only Git fixtures + `catalog.json` |
 | `datasets/test` | Tiny CI table(s) |
-| `python/` | Remaining Python (training stack, some operational tools), kept only until ADR-0008's phases P2/P3; no new Python |
+| `python/` | Remaining Python (training stack, some operational tools), kept only until ADR-0006's phases P2/P3; no new Python |
 | `ops/ci` | Required local/hosted checks |
 
 ## Further reading

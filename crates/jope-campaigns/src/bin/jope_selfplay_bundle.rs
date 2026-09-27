@@ -986,7 +986,7 @@ fn selfplay_unit_templates_in(source: &Path) -> PathBuf {
 /// system units (`/etc/systemd/system`) from the checkout, they ran a Python
 /// interpreter directly and worked out of the mirror, so the bundle boundary
 /// (`validate_systemd_unit`) does not apply to them. The Python removal P1
-/// (ADR-0008) archived the installer and both templates (restore with
+/// (ADR-0006) archived the installer and both templates (restore with
 /// `git checkout 8a55c4fef -- <path>`, docs/archive/python-archive-manifest.json);
 /// the names stay excluded so a restored copy is still not bundled.
 const HOST_INSTALLED_UNITS: [&str; 2] =

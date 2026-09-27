@@ -70,7 +70,7 @@ the same engine, `public-development`) is untouched and is this repository's ent
 benchmark-valid ladder.
 
 The corrections file is pinned by the SHA-256 above, so its evidence strings keep the paths they
-had when it was written. Two of them name Python that the Python removal P1 (ADR-0008) archived:
+had when it was written. Two of them name Python that the Python removal P1 (ADR-0006) archived:
 `python/src/jope/research/index_combined_regression_evolution.py:183` and
 `python/src/jope/research/train_only_redteam_scq.py:1527-1536`. Read both at `8a55c4fef`
 (`git show 8a55c4fef:<path>`; every archived path and its restore command is in
