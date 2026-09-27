@@ -678,7 +678,15 @@
       "role": "infrastructure",
       "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
     },
+    "target:jope-ci/test/build_report_python_parity": {
+      "role": "infrastructure",
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+    },
     "target:jope-ci/test/cargo_artifact": {
+      "role": "infrastructure",
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+    },
+    "target:jope-ci/test/cargo_artifact_python_parity": {
       "role": "infrastructure",
       "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
     },
