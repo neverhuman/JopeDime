@@ -1535,3 +1535,69 @@ never from arguments or the environment, and is never logged.
   - there is no argument that takes a key value.
 
 Post-fix record: `w7c-D6-post-20260927T013703Z`, the full gate (`bounded_grants` 5).
+
+### W7-D5 — SmartCluster setup in the runbook; no `scqd` build inside a test
+
+**Decision.**
+
+- The runbook's §0 carries a checklist, with exact verification commands, for four things:
+  the daemon registration, the admin uid, the tenant, and one rank per host without delegated
+  cgroups.
+- CI must not build `scqd` inside the test on the first run in a lane that has a time budget.
+
+**Pre-fix record** (`w7c-D5-pre-20260927T014011Z`, source trace).
+
+- `bounded_smartcluster`'s `scqd_binary()` ran a nested
+  `cargo build --locked --offline -p jain-smartcluster-daemon --bin scqd` when the target
+  lacked `scqd`.
+- The lane that runs the test, `full-default` (`timeout … 1500s`), had no `scqd` step.
+
+**Implementation.**
+
+- **The test never builds `scqd`.** `scqd_binary()` returns the target's own `scqd`, or fails at
+  once with the exact build command.
+- **The test sits in the lane that already builds `scqd`.**
+  - `full-default` runs `cargo nextest` over the whole workspace.
+  - `jain-smartcluster-daemon`'s integration tests make Cargo build its `scqd` binary as part of
+    that same test build.
+  - `deploy/ci/full-lane.sh` now checks, after `nextest list` (the build) and before
+    `nextest run`, that `$target/debug/scqd` exists and is executable. It records its digest
+    as lane evidence (`scqd.sha256`), and refuses to run the tests without it.
+  - The hosted `rust-test` lane defers `jope-parallel`, so it never runs this test.
+- **Runbook.** §0.1 lists the decided facts, and §0.3 has a seven-line host checklist:
+  - the trusted service maps to exactly `$BIN`;
+  - the operator is an admin uid;
+  - there is no `worker_uid` override, so the job tenant is `unix:<operator uid>`;
+  - the operator can reach the socket;
+  - the daemon mode and cgroup delegation (one rank per host unless the daemon is `full` with
+    delegated cgroups);
+  - the digests of the binary and the daemon;
+  - the ports are free.
+
+**Timing and proof** (`w7c-D5-post-timing-20260927T014207Z`).
+
+1. `bash -n` and `shellcheck -S warning` pass on `full-lane.sh`.
+2. `cargo test --no-run -p jain-smartcluster-daemon --message-format=json` emits
+   `target/debug/scqd` as a compiler artifact. The workspace test build produces it with no
+   extra step.
+3. A copy of the `bounded_smartcluster` binary with no `scqd` beside it refuses in 7 ms with
+   the build instruction. No nested build process ran.
+4. The whole bounded family ran with the lane's own runner (`cargo nextest run -P main
+   --test-threads 16`): all 10 `bounded_*` targets, 92 tests, 92 passed, in 9.98 s (10.65 s
+   of wall time).
+
+   Against the lane's 1 500 s `timeout`, that is 0.7 %. The change adds no build step: `scqd`
+   was already a product of the lane's workspace test build.
+5. **Not timed locally: the full `full-default` lane.** It runs `nextest` over the whole
+   workspace, which `deploy/ci/rust-test-scope.sh` measures at a 72 GB test link. This shared
+   host was at 90 % disk (740 GB free) with other agents' builds running, so the lane's total
+   was not re-measured here, and no earlier `full-default` receipt exists on this host.
+
+   What is measured: the change adds 0 s of build and about 10 s of test time.
+
+The same `nextest` run found a harness bug that `cargo test` had hidden. Under nextest, the
+impostor-daemon case's socket already was descriptor 3, so `dup2(3, 3)` kept close-on-exec
+and the child saw no descriptor 3. The harness now clears `FD_CLOEXEC` explicitly. The first
+timing run (`w7c-D5-post-timing-20260927T014103Z`, 91 of 92) is marked `SUPERSEDED`.
+
+Post-fix record: `w7c-D5-post-20260927T014236Z`, the full gate.
