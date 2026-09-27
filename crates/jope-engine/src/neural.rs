@@ -1702,4 +1702,100 @@ mod bound_load_tests {
         assert!(error.contains(refusal), "{error}");
         Ok(())
     }
+
+    /// W7 (961ad2333), landed on this API: a checkpoint restored through
+    /// `load_bound_model` and `AdamW::load_bound` after one AdamW update is the
+    /// saved state and continues training exactly as the original, although
+    /// every file it came from is replaced right after its check. The
+    /// replacements are refused on the next load, and optimizer bytes the
+    /// metadata does not name are refused by `from_verified`.
+    #[test]
+    fn checkpoint_consumption_uses_verified_tensor_bytes_after_path_replacement() -> Result<()> {
+        tch::set_num_threads(1);
+        let dir = tempfile::tempdir()?;
+        let vs = nn::VarStore::new(Device::Cpu);
+        let p = vs.root().var("weight", &[2], nn::Init::Const(2.0));
+        let mut optimizer = AdamW::new(1e-4, 0.01);
+        p.square().sum(Kind::Float).backward();
+        optimizer.update(&vs)?;
+        let model = dir.path().join("model.ot");
+        let optimizer_path = dir.path().join("optimizer.ot");
+        vs.save(&model)?;
+        optimizer.save(&optimizer_path)?;
+        let state = serde_json::json!({
+            "model_sha256": file_hash(&model)?,
+            "optimizer_sha256": file_hash(&optimizer_path)?,
+            "optimizer_metadata_sha256": file_hash(&optimizer_path.with_extension("json"))?,
+        });
+        let saved_step = optimizer.step;
+        let metadata: serde_json::Value = read_json(&optimizer_path.with_extension("json"))?;
+        let optimizer_bytes = fs::read(&optimizer_path)?;
+        let replaced = || b"replaced after verification".to_vec();
+        let (model_refusal, optimizer_refusal) = (
+            "checkpoint model changed",
+            "checkpoint optimizer or configuration changed",
+        );
+        // Each file is replaced as soon as it is verified; the load uses the verified bytes.
+        let mut restored = nn::VarStore::new(Device::Cpu);
+        let q = restored.root().var("weight", &[2], nn::Init::Const(0.0));
+        {
+            let _hook = replace_on_verification(&model, vec![(model.clone(), replaced())]);
+            load_bound_model(&mut restored, &model, &state["model_sha256"], model_refusal)?;
+        }
+        let mut resumed = {
+            let _hook = replace_on_verification(
+                &optimizer_path,
+                vec![
+                    (optimizer_path.clone(), replaced()),
+                    (optimizer_path.with_extension("json"), replaced()),
+                ],
+            );
+            AdamW::load_bound(
+                &optimizer_path,
+                &state["optimizer_sha256"],
+                &state["optimizer_metadata_sha256"],
+                Device::Cpu,
+                optimizer_refusal,
+            )?
+        };
+        // The replacements are refused on the next load, with the receivers' wording.
+        let mut other = nn::VarStore::new(Device::Cpu);
+        let _ = other.root().var("weight", &[2], nn::Init::Const(0.0));
+        let error = load_bound_model(&mut other, &model, &state["model_sha256"], model_refusal)
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains(model_refusal), "{error}");
+        let error = AdamW::load_bound(
+            &optimizer_path,
+            &state["optimizer_sha256"],
+            &state["optimizer_metadata_sha256"],
+            Device::Cpu,
+            optimizer_refusal,
+        )
+        .err()
+        .map(|e| e.to_string())
+        .unwrap_or_default();
+        assert!(error.contains(optimizer_refusal), "{error}");
+        // The restored checkpoint is the saved one and continues identically.
+        assert_eq!(resumed.step, saved_step);
+        assert_eq!((&p - &q).abs().max().double_value(&[]), 0.0);
+        p.square().sum(Kind::Float).backward();
+        optimizer.update(&vs)?;
+        q.square().sum(Kind::Float).backward();
+        resumed.update(&restored)?;
+        assert_eq!((&p - &q).abs().max().double_value(&[]), 0.0);
+        // `from_verified` loads the verified bytes and refuses bytes its metadata does not name.
+        assert_eq!(
+            AdamW::from_verified(metadata.clone(), optimizer_bytes.clone(), Device::Cpu)?.step,
+            saved_step
+        );
+        let mut corrupt = optimizer_bytes;
+        corrupt[0] ^= 1;
+        let error = AdamW::from_verified(metadata, corrupt, Device::Cpu)
+            .err()
+            .map(|e| e.to_string())
+            .unwrap_or_default();
+        assert!(error.contains("optimizer artifact changed"), "{error}");
+        Ok(())
+    }
 }
