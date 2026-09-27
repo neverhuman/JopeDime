@@ -5,7 +5,9 @@
 //! on the versioned `jope.native_bounded_run.v1` contract (W7-T02) and take none of them:
 //! status and verify are read-only and never start numerical work. `census collect` observes
 //! only the local host and `census merge` combines pinned per-host documents (W7-T01); neither
-//! allocates or reserves anything.
+//! allocates or reserves anything. `coordinate` drives a planned run through SmartCluster
+//! (directly, or through each host's `agent` over the pinned transport) and `participant` is
+//! the rank worker SmartCluster runs (W7-T05/T07); none of them uses SSH.
 use anyhow::{bail, ensure, Context, Result};
 use clap::{Args as ClapArgs, Parser, Subcommand};
 use jain_smartcluster::{Client, ProjectId, TenantId};
@@ -138,6 +140,78 @@ enum Command {
         #[command(subcommand)]
         op: CensusCommand,
     },
+    /// A bounded-run rank worker (W7-T07 CPU phase), run by SmartCluster as the
+    /// `jope-bounded-rank` trusted service. Exit 0: signed result published (or stopped);
+    /// 75: control lost; any other failure: refused before admission, no work started.
+    Participant {
+        #[arg(long)]
+        plan: PathBuf,
+        #[arg(long)]
+        plan_sha256: String,
+        #[arg(long)]
+        launch_record: PathBuf,
+        #[arg(long)]
+        outbox: PathBuf,
+        /// The coordinator's rendezvous address, `host:port`.
+        #[arg(long)]
+        coordinator: String,
+        #[arg(long)]
+        participant_key: PathBuf,
+        #[arg(long)]
+        installation: PathBuf,
+    },
+    /// Drive a planned bounded run to a terminal outcome through this host's SmartCluster
+    /// supervisor (`--supervision`) or each rank's host agent (`--agents`), or reconcile it
+    /// after a coordinator restart.
+    Coordinate {
+        #[arg(long)]
+        run_dir: PathBuf,
+        #[arg(long)]
+        plan_sha256: String,
+        /// The merged census, preflighted and journaled before dispatch.
+        #[arg(long)]
+        census: PathBuf,
+        #[arg(long)]
+        listen: std::net::SocketAddr,
+        #[arg(long)]
+        certificate: PathBuf,
+        #[arg(long)]
+        certificate_key: PathBuf,
+        #[arg(long)]
+        coordinator_key: PathBuf,
+        /// Below the plan's heartbeat timeout.
+        #[arg(long)]
+        heartbeat_ms: u64,
+        /// Supervise every rank through this host's SmartCluster (`HostSupervision` JSON).
+        #[arg(long, conflicts_with = "agents", required_unless_present = "agents")]
+        supervision: Option<PathBuf>,
+        /// Supervise each rank through its host's agent: JSON `{"<rank>": "host:port"}`.
+        #[arg(long)]
+        agents: Option<PathBuf>,
+    },
+    /// Serve this host's SmartCluster supervisor to the planned coordinator over the pinned
+    /// transport (W7-T07). Runs until stopped.
+    Agent {
+        #[arg(long)]
+        plan: PathBuf,
+        #[arg(long)]
+        plan_sha256: String,
+        /// The planned host this agent serves.
+        #[arg(long)]
+        host: String,
+        /// Serve only these planned ranks of the host (default: all of them).
+        #[arg(long = "rank")]
+        ranks: Vec<u32>,
+        #[arg(long)]
+        listen: std::net::SocketAddr,
+        #[arg(long)]
+        certificate: PathBuf,
+        #[arg(long)]
+        certificate_key: PathBuf,
+        /// This host's SmartCluster supervision (`HostSupervision` JSON).
+        #[arg(long)]
+        supervision: PathBuf,
+    },
 }
 #[derive(Subcommand)]
 enum CensusCommand {
@@ -199,6 +273,9 @@ fn read_census_document(path: &PathBuf) -> Result<Vec<u8>> {
         "census document exceeds {limit} bytes"
     );
     Ok(b)
+}
+fn host_supervision(path: &PathBuf) -> Result<bounded::supervisor::HostSupervision> {
+    serde_json::from_slice(&read_census_document(path)?).context("supervision")
 }
 fn census_command(op: CensusCommand) -> Result<serde_json::Value> {
     use bounded::collect;
@@ -327,6 +404,106 @@ fn bounded_command(command: Command) -> Result<()> {
             now,
         )?)?,
         Command::Census { op } => census_command(op)?,
+        Command::Coordinate {
+            run_dir,
+            plan_sha256,
+            census,
+            listen,
+            certificate,
+            certificate_key,
+            coordinator_key,
+            heartbeat_ms,
+            supervision,
+            agents,
+        } => {
+            let args = bounded::driver::CoordinateArgs {
+                run_dir,
+                plan_sha256,
+                census,
+                listen,
+                certificate,
+                certificate_key,
+                coordinator_key,
+                heartbeat: Duration::from_millis(heartbeat_ms),
+            };
+            let stop = std::sync::atomic::AtomicBool::new(false);
+            let report = match (supervision, agents) {
+                (Some(supervision), None) => bounded::driver::coordinate(
+                    &args,
+                    bounded::supervisor::SmartClusterSupervisor::new(host_supervision(
+                        &supervision,
+                    )?)?,
+                    &stop,
+                )?,
+                (None, Some(agents)) => {
+                    let agents: std::collections::BTreeMap<u32, std::net::SocketAddr> =
+                        serde_json::from_slice(&read_census_document(&agents)?)
+                            .context("agents")?;
+                    let (contract, _) = bounded::launch::load_plan(
+                        &args.run_dir.join("plan.json"),
+                        &args.plan_sha256,
+                    )?;
+                    let credential = bounded::transport::HostCredential::load(
+                        &args.certificate,
+                        &args.certificate_key,
+                    )?;
+                    bounded::driver::coordinate(
+                        &args,
+                        bounded::agent::RemoteSupervisor::new(
+                            &contract,
+                            &args.plan_sha256,
+                            credential,
+                            agents,
+                        )?,
+                        &stop,
+                    )?
+                }
+                _ => bail!("coordinate takes exactly one of --supervision and --agents"),
+            };
+            serde_json::to_value(report)?
+        }
+        Command::Agent {
+            plan,
+            plan_sha256,
+            host,
+            ranks,
+            listen,
+            certificate,
+            certificate_key,
+            supervision,
+        } => {
+            let supervision = host_supervision(&supervision)?;
+            ensure!(
+                supervision.host == host,
+                "the supervision describes host `{}`, not `{host}`",
+                supervision.host
+            );
+            let (_, bytes) = bounded::launch::load_plan(&plan, &plan_sha256)?;
+            let served: std::collections::BTreeSet<u32> = ranks.iter().copied().collect();
+            ensure!(
+                served.len() == ranks.len(),
+                "a rank is named more than once"
+            );
+            let mut agent = bounded::agent::Agent::new(
+                &bytes,
+                &plan_sha256,
+                &host,
+                (!served.is_empty()).then_some(served),
+                bounded::supervisor::SmartClusterSupervisor::new(supervision)?,
+            )?;
+            let credential =
+                bounded::transport::HostCredential::load(&certificate, &certificate_key)?;
+            let acceptor =
+                bounded::agent::agent_acceptor(agent.contract(), listen, &credential, &host)?;
+            // One readiness line, so an operator (or a fixture) learns the bound address.
+            println!(
+                "{}",
+                serde_json::json!({"agent": "listening", "host": host, "address": acceptor.local_addr()?})
+            );
+            std::io::Write::flush(&mut std::io::stdout())?;
+            agent.serve(&acceptor, &std::sync::atomic::AtomicBool::new(false))?;
+            serde_json::json!({"agent": "stopped", "host": host})
+        }
         _ => bail!("not a bounded-run operation"),
     };
     println!("{}", serde_json::to_string(&out)?);
@@ -342,11 +519,42 @@ fn main() -> Result<()> {
             | Command::Verify { .. }
             | Command::Cancel { .. }
             | Command::Census { .. }
+            | Command::Participant { .. }
+            | Command::Coordinate { .. }
+            | Command::Agent { .. }
     ) {
         ensure!(
             !args.legacy.any(),
             "bounded-run operations take no fixed-loop arguments; the frozen plan is the only input"
         );
+        if let Command::Participant {
+            plan,
+            plan_sha256,
+            launch_record,
+            outbox,
+            coordinator,
+            participant_key,
+            installation,
+        } = args.command
+        {
+            let args = bounded::participant::ParticipantArgs {
+                plan,
+                plan_sha256,
+                launch_record,
+                outbox,
+                coordinator,
+                participant_key,
+                installation,
+            };
+            match bounded::participant::run(&args, &bounded::collect::SystemCommands) {
+                Ok(code) => std::process::exit(code),
+                Err(e) => {
+                    // The rank's supervisor keeps its outbox; record why nothing started.
+                    bounded::participant::record_refusal(&args.outbox, &e);
+                    return Err(e);
+                }
+            }
+        }
         return bounded_command(args.command);
     }
     let a = args.legacy.complete().context(

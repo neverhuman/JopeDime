@@ -14,9 +14,9 @@
 //!   or restart, distinguishes never-started work from unacknowledged completion, and
 //!   commits a group at most once.
 //!
-//! The execution backend is the [`Supervisor`] trait. The SmartCluster-backed supervisor for
-//! the live three-host phases is not implemented here (W7-T07); fixtures use same-host
-//! processes and are fixtures only.
+//! The execution backend is the [`Supervisor`] trait. The live implementation is the
+//! SmartCluster-backed [`super::supervisor::SmartClusterSupervisor`]; the in-process fake and
+//! the same-host process supervisor in the tests are fixtures only.
 use super::{
     census::{self, HostCensus, PreflightReceipt, RefusalReason},
     contract::{AttemptOutcome, BoundedRunContract, PlanRefusal, MAX_CONTRACT_BYTES},
@@ -1113,7 +1113,8 @@ fn finish_cancel_before_dispatch(
 }
 
 /// Liveness of supervised rank work.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(tag = "state", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Liveness {
     Running,
     Exited {
@@ -1130,8 +1131,9 @@ pub struct RankLaunch<'a> {
     pub global_rank: u32,
     pub dispatch_id: &'a str,
 }
-/// Repository supervisor of rank work. A live implementation must be SmartCluster-backed
-/// (W7-T07); implementations must never start work from anything but a [`RankLaunch`].
+/// Repository supervisor of rank work. The live implementation is SmartCluster-backed
+/// ([`super::supervisor::SmartClusterSupervisor`]); implementations must never start work
+/// from anything but a [`RankLaunch`].
 pub trait Supervisor {
     fn launch(&mut self, launch: &RankLaunch<'_>) -> Result<SupervisorHandle>;
     /// Find work started under `dispatch_id` whose launch was never journaled.

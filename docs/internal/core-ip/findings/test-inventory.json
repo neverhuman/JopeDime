@@ -2026,6 +2026,12 @@
       "role": "deferred-classification",
       "reason": "binary/multiclass/time-series specialized scope deferred by the regression plan"
     },
+    "target:jope-parallel/test/bounded_agent": {
+      "role": "regression",
+      "subsystems": [
+        "orchestration"
+      ]
+    },
     "target:jope-parallel/test/bounded_assignment": {
       "role": "regression",
       "subsystems": [
@@ -2059,6 +2065,12 @@
       ]
     },
     "target:jope-parallel/test/bounded_run_recovery": {
+      "role": "regression",
+      "subsystems": [
+        "orchestration"
+      ]
+    },
+    "target:jope-parallel/test/bounded_smartcluster": {
       "role": "regression",
       "subsystems": [
         "orchestration"

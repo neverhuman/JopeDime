@@ -117,7 +117,7 @@ pub fn verify_launch_record(
     Ok(())
 }
 
-fn read_bounded(path: &Path, limit: u64) -> Result<Vec<u8>> {
+pub(crate) fn read_bounded(path: &Path, limit: u64) -> Result<Vec<u8>> {
     let f = fs::OpenOptions::new()
         .read(true)
         .custom_flags(libc::O_NOFOLLOW | libc::O_NONBLOCK | libc::O_CLOEXEC)
@@ -138,13 +138,9 @@ fn read_bounded(path: &Path, limit: u64) -> Result<Vec<u8>> {
     Ok(b)
 }
 
-/// A worker's view of its launch: the exact frozen plan bytes (by digest) and its launch
-/// record, both verified. The worker's rank, world and devices come only from these.
-pub fn load_launch(
-    plan: &Path,
-    plan_sha256: &str,
-    record: &Path,
-) -> Result<(BoundedRunContract, LaunchRecord)> {
+/// The frozen plan artifact at `plan`, bound to its reviewed digest: its canonical bytes and
+/// the contract they parse to.
+pub fn load_plan(plan: &Path, plan_sha256: &str) -> Result<(BoundedRunContract, Vec<u8>)> {
     let bytes = read_bounded(plan, super::contract::MAX_CONTRACT_BYTES as u64)?;
     ensure!(
         crate::manifest::hash(&bytes) == plan_sha256,
@@ -155,6 +151,17 @@ pub fn load_launch(
         contract.canonical_bytes()? == bytes,
         "frozen plan bytes are not the canonical contract"
     );
+    Ok((contract, bytes))
+}
+
+/// A worker's view of its launch: the exact frozen plan bytes (by digest) and its launch
+/// record, both verified. The worker's rank, world and devices come only from these.
+pub fn load_launch(
+    plan: &Path,
+    plan_sha256: &str,
+    record: &Path,
+) -> Result<(BoundedRunContract, LaunchRecord)> {
+    let (contract, _) = load_plan(plan, plan_sha256)?;
     let record: LaunchRecord =
         serde_json::from_slice(&read_bounded(record, MAX_LAUNCH_RECORD_BYTES)?)?;
     verify_launch_record(&contract, plan_sha256, &record)?;
