@@ -588,6 +588,11 @@ pub fn campaign(root: &Path) -> Value {
     run["bootstrap"] = state(&root.join("runs/cohort64-bootstrap-readiness.json"));
     run["corpus_progress"] = state(&root.join("runs/corpus-progress.json"));
     run["runtime_readiness"] = state(&root.join("runs/runtime-readiness.json"));
+    // Nothing in this workspace writes the next three receipts. Their writers,
+    // `watch_campaign_reports.py`, `opportunistic_proposals.py` and
+    // `opportunistic_proposals_v2.py`, were archived by the Python removal P1 (ADR-0006).
+    // A receipt left in the state root is history and keeps its saved status; without
+    // one, no row is shown.
     run["report_progress"] = state(&root.join("runs/report-progress.json"));
     run["proposal_library"] = state(&root.join("runs/proposal-library.json"));
     run["pure_proposal_library"] = state(&root.join("runs/pure-proposal-library.json"));
@@ -1665,26 +1670,26 @@ fn workflow_rows(run: &Value, gp: &Value, neural: &Value) -> Vec<TaskRow> {
             ),
             campaign_detail,
         ),
-        task_row(
+    ];
+    // The report watcher that wrote this receipt was archived (see `campaign`), so a missing
+    // receipt is not a pending one: show the row only for a saved receipt.
+    let report = &run["report_progress"];
+    if report.is_object() {
+        rows.push(task_row(
             "Matched-budget reports",
-            report_status(&run["report_progress"]),
-            if phase(&run["report_progress"]).starts_with("Waiting")
-                && number(&run["report_progress"], "total") == 0
-            {
+            report_status(report),
+            if phase(report).starts_with("Waiting") && number(report, "total") == 0 {
                 "0 completed cycles".into()
             } else {
-                count_pair(
-                    number(&run["report_progress"], "completed"),
-                    number(&run["report_progress"], "total"),
-                )
+                count_pair(number(report, "completed"), number(report, "total"))
             },
-            run["report_progress"]["reason"]
+            report["reason"]
                 .as_str()
-                .or_else(|| run["report_progress"]["phase"].as_str())
+                .or_else(|| report["phase"].as_str())
                 .unwrap_or("Completed-cycle reporting receipt pending")
                 .into(),
-        ),
-    ];
+        ));
+    }
     let mut operations_rows = Vec::new();
     if run["operations"].is_object() {
         let services = &run["operations"]["services"];

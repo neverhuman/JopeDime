@@ -1018,6 +1018,120 @@ fn report_watcher_waiting_is_live_at_its_fifteen_second_poll_interval() {
     assert!(row(&mut terminal, &run).contains("STALE"));
 }
 
+/// The Python removal P1 (ADR-0006) archived the only writers of three receipts the overview
+/// reads: `watch_campaign_reports.py` (`runs/report-progress.json`), `opportunistic_proposals.py`
+/// (`runs/proposal-library.json`) and `opportunistic_proposals_v2.py`
+/// (`runs/pure-proposal-library.json`). Without a receipt no row waits for one; a receipt left
+/// in the state root by a producer that has stopped is history, shown with its saved status.
+#[test]
+fn receipts_of_retired_producers_show_history_not_pending_work() {
+    let dir = tempfile::tempdir().unwrap();
+    let root = dir.path();
+    std::fs::create_dir_all(root.join("runs")).unwrap();
+    let hardware = Hardware {
+        timestamp: now(),
+        gpus: (0..8)
+            .map(|index| Gpu {
+                index,
+                ..Default::default()
+            })
+            .collect(),
+        ..Default::default()
+    };
+    let lines = |run: &serde_json::Value| {
+        rendered_lines(
+            160,
+            55,
+            0,
+            &hardware,
+            &serde_json::Value::Null,
+            run,
+            "",
+            &History::default(),
+        )
+    };
+    let titles = [
+        "Matched-budget reports",
+        "Proposal seed library",
+        "Pure policy predictions",
+    ];
+
+    // No receipt: no row, and nothing says a receipt is pending.
+    let text = lines(&dashboard::campaign(root)).join("\n");
+    for title in titles {
+        assert!(
+            !text.contains(title),
+            "{title} shown without a receipt:\n{text}"
+        );
+    }
+    assert!(!text.contains("reporting receipt pending"), "{text}");
+
+    // Receipts as the producers left them a day before: shown, stale, never current work.
+    let stopped = now() - 86_400;
+    let write = |name: &str, value: serde_json::Value| {
+        std::fs::write(
+            root.join("runs").join(name),
+            serde_json::to_vec(&value).unwrap(),
+        )
+        .unwrap()
+    };
+    write(
+        "report-progress.json",
+        serde_json::json!({"schema":"parallel.report_progress.v1","timestamp":stopped,
+            "phase":"Calculating matched-budget policy comparisons","completed":3,"total":4,
+            "complete":false}),
+    );
+    write(
+        "proposal-library.json",
+        serde_json::json!({"schema":"parallel.proposal_library_progress.v1","timestamp":stopped,
+            "phase":"running","saved_seed_pools":3204,"planned_seed_pools":7819,
+            "saved_ranked_programs":205056,"gp_jobs_admitted":0,"gp_evaluations":0}),
+    );
+    write(
+        "pure-proposal-library.json",
+        serde_json::json!({"schema":"parallel.pure_proposal_library_progress.v1",
+            "timestamp":stopped,"phase":"running","saved_seed_pools":446,
+            "planned_seed_pools":3692,"saved_ranked_programs":28544,"gp_jobs_admitted":0,
+            "gp_evaluations":0}),
+    );
+    let mut run = dashboard::campaign(root);
+    let rows = lines(&run);
+    let row = |rows: &[String], title: &str| {
+        rows.iter()
+            .find(|line| line.contains(title))
+            .cloned()
+            .unwrap_or_else(|| panic!("no {title} row for a saved receipt:\n{}", rows.join("\n")))
+    };
+    for (title, progress) in [
+        ("Matched-budget reports", "3 / 4"),
+        ("Proposal seed library", "3204 / 7819 pools"),
+        ("Pure policy predictions", "446 / 3692 pools"),
+    ] {
+        let line = row(&rows, title);
+        assert!(line.contains("STALE"), "{line}");
+        assert!(!line.contains("RUNNING"), "{line}");
+        assert!(line.contains(progress), "{line}");
+    }
+    let text = rows.join("\n");
+    assert!(
+        !text.contains("Saving pure policy predictions on eight GPUs"),
+        "{text}"
+    );
+    assert!(
+        !text.contains("Building saved proposal seed library on eight GPUs"),
+        "{text}"
+    );
+
+    // A finished receipt reads as finished, not as pending or live.
+    run["report_progress"]["complete"] = true.into();
+    run["proposal_library"]["phase"] = "completed".into();
+    run["pure_proposal_library"]["phase"] = "stopped".into();
+    let rows = lines(&run);
+    assert!(row(&rows, "Matched-budget reports").contains("DONE"));
+    assert!(row(&rows, "Proposal seed library").contains("SAVED"));
+    assert!(row(&rows, "Pure policy predictions").contains("STOPPED"));
+}
+
 #[test]
 fn admitted_library_counts_only_matching_compact_gp_outputs_with_a_bounded_scan() {
     use jope_parallel::manifest::file_hash;
