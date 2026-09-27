@@ -188,7 +188,7 @@ Directories are under `/home/ubuntu/jope-rescue-20260921/regression-remediation-
 | Commit 3 as committed, default / asm | `w9-commitC2-default-20260926T063720Z`, `w9-commitC2-asm-20260926T063747Z` | 91/91, 128/128 |
 | Commit 4 (clippy fix; also covers this document), default / asm | `w9-commitE-default-20260926T063905Z`, `w9-commitE-asm-20260926T063937Z` | 91/91, 128/128 |
 
-At every commit, the pass-name sets were compared with the baseline, and no previously passing test was lost. `python3 deploy/ci/coverage.py validate` reports 0 unassigned or invalid items. The new tests live in the existing `jope-bench` lib target, so no coverage key was needed.
+At every commit, the pass-name sets were compared with the baseline, and no previously passing test was lost. `python3 deploy/ci/coverage.py validate` reported 0 unassigned or invalid items (that tool is archived at `8a55c4fef` by the Python removal P1; its Rust port is `cargo run -q --locked -p jope-records -- coverage validate`). The new tests live in the existing `jope-bench` lib target, so no coverage key was needed.
 
 Clippy: `cargo clippy -p jope-bench --no-deps --all-targets --locked`, default and with `--features jope-bench/asm`, reports nothing in `fitted_export.rs`, `inference_contract_tests.rs` or `inference_package.rs`. The remaining jope-bench findings are pre-existing and on unchanged lines: six `needless_borrow` in `inference.rs`; under asm also `fitted_export_run.rs:116` (`needless_lifetimes`), `demo_asm.rs`, `experimental_proposal.rs` and `optimize.rs`. The workspace `just clippy` (`-D warnings`) already stops on pre-existing lints in `jope-pipeline` (`search_plan.rs:200`), `hyperion` and `jope-encoders` with the pinned 1.97.1 toolchain.
 
