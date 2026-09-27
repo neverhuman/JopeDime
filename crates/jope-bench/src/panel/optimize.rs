@@ -30,6 +30,9 @@ pub const SCHEMA: &str = "jope.asm-configuration/v1";
 pub const CONFIG_RUNTIME: &str = "asm-configuration";
 /// Largest accepted round nonce. The S2 series preregisters at most 12 rounds.
 pub const MAX_SEARCH_ROUND: u32 = 64;
+/// W3-T02: the W2 producer run's handoff of its context to teacher admission, beside the
+/// run's `context-files.json` (`prepare_regression_context`).
+pub(crate) const TEACHER_HANDOFF: &str = "teacher-admission-handoff.json";
 pub const NEURAL_METHOD: &str = "asm.neural";
 pub const GENERIC_METHOD: &str = "asm.generic";
 pub const VARIATION: &str = "feat-math.canonical-mutate-crossover/task-grammar/max-transforms4/v1";
@@ -1240,5 +1243,17 @@ pub(crate) fn prepare_regression_context<B: Backend, V: Variation>(
     };
     // Durable input to train prepare-request; callers need not reconstruct opaque proof pins.
     immutable(&context_directory.join("context-files.json"), &files)?;
+    // W3-T02: the run also hands the qualified context off to teacher admission. Teaching
+    // admission retains this record with the run's pool receipts (`teaching::admit_dataset`).
+    let transforms =
+        context_producer::FrozenTransforms::from_bytes(&config.frozen_transforms.read_verified()?)?;
+    let handoff = admitted.handoff(
+        &admitted.replay_assembly(&transforms)?,
+        context_producer::ContextConsumer::TeacherAdmission,
+    )?;
+    immutable_bytes(
+        &context_directory.join(TEACHER_HANDOFF),
+        &serde_json::to_vec(&handoff)?,
+    )?;
     Ok((files, outcome))
 }

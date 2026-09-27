@@ -7,13 +7,15 @@ use super::{
     optimize::{Configuration, DatasetSearch},
     optimize_fit::{self, FitAdapter},
 };
-use anyhow::{ensure, Context, Result};
+use anyhow::{bail, ensure, Context, Result};
+use jope_datasets::catalog::Task;
 use jope_learning::{
     canon::{canonical_json, canonical_sha256},
     eligibility::{
-        self, FoldPredictions, FreezePlan, FreezeReceipt, InnerEvidence, InnerPartition,
-        OofEvidence,
+        self, ContextEvidence, ContextPlan, ContextRun, FoldPredictions, FreezePlan, FreezeReceipt,
+        InnerEvidence, InnerPartition, OofEvidence, ProducerPlan,
     },
+    encoder_receipt::{Encoder, Product},
     hwm,
     metric::Metric,
     record::{
@@ -23,11 +25,13 @@ use jope_learning::{
     state::State,
 };
 use jope_pipeline::{
+    cpu_context_bridge::CpuContextFiles,
     execution::{Artifact, WorkerOutcome},
     experiment::EvaluationStatus,
     experiment_v2::{Consumption, EvaluationResult, RESULT_SCHEMA},
     neural_search::{FrozenRecipe, SearchReceipt},
 };
+use jope_policy::context_producer;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::{
@@ -93,10 +97,94 @@ enum Registration {
         comparison: HwmIdentity,
         partition: InnerPartition,
         freeze: FreezeReceipt,
+        /// W3-T02: the teaching context the freeze preregistered. Absent on registries written
+        /// before producer preregistration, whose freezes preregistered no context.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        context: Option<TeachingContext>,
     },
     Unavailable {
         reason: String,
     },
+}
+/// W3-T02: whether a dataset's teaching freeze preregistered a W2 context producer, recorded
+/// explicitly either way.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case", deny_unknown_fields)]
+enum TeachingContext {
+    /// The freeze preregistered the W2 CPU context producer that passed this W2 qualification.
+    /// A teacher needs that producer's `teacher_admission` handoff of the dataset's context.
+    Producer { qualification_sha256: String },
+    /// No context is used on this dataset, for `reason`. The freeze preregistered no context
+    /// encoder, so teacher admission refuses its teachers (`MissingEncoderProvenance`).
+    NoContext { reason: String },
+}
+/// The source family of a W2 teaching context: the W2 CPU context schema. Its encoder is the
+/// producer executable under its asset configuration (the CPU producer takes no seed, so 0).
+const CONTEXT_SOURCE_FAMILY: &str = context_producer::SCHEMA;
+/// The W2 producer every regression teaching freeze of `config` preregisters, read by the W2
+/// qualification's own loader from its authenticated bytes, or why there is none.
+fn producer_plan(config: &Configuration) -> Result<ProducerPlan> {
+    let qualification = config
+        .qualification
+        .as_ref()
+        .context("no completed W2 CPU context qualification is configured")?;
+    if let Some(reason) = &config.encoder.unavailable {
+        bail!("the W2 context producer runtime is unavailable: {reason}");
+    }
+    let registration =
+        qualification.producer_registration(&config.source_sha40, &config.encoder.program)?;
+    // Field for field: the W2 registration is the preregistration teacher admission parses.
+    Ok(serde_json::from_value(serde_json::to_value(
+        &registration,
+    )?)?)
+}
+/// The teaching context a dataset's freeze preregisters, and the record of that choice. A
+/// context is used exactly when the dataset is a regression dataset (the accepted W2 CPU context
+/// is regression-only) and the configuration's W2 producer registered; otherwise the freeze
+/// preregisters none and the reason is recorded.
+fn teaching_context(
+    config: &Configuration,
+    task: Task,
+    producer: &Result<ProducerPlan>,
+) -> (Option<ContextPlan>, TeachingContext) {
+    let producer = match (task, producer) {
+        (Task::Regression, Ok(producer)) => producer,
+        (Task::Regression, Err(error)) => {
+            return (
+                None,
+                TeachingContext::NoContext {
+                    reason: format!("{error:#}"),
+                },
+            )
+        }
+        (task, _) => {
+            return (
+                None,
+                TeachingContext::NoContext {
+                    reason: format!(
+                        "the accepted W2 CPU context is regression-only; a {} dataset uses no \
+                         teaching context",
+                        task.as_str()
+                    ),
+                },
+            )
+        }
+    };
+    (
+        Some(ContextPlan {
+            source_family: CONTEXT_SOURCE_FAMILY.into(),
+            encoder: Encoder {
+                artifact_sha256: config.encoder.program.sha256.clone(),
+                configuration_sha256: config.encoder_assets.configuration.sha256.clone(),
+                seed: 0,
+                product: Product::TeachingContext2048,
+            },
+            producer: Some(producer.clone()),
+        }),
+        TeachingContext::Producer {
+            qualification_sha256: producer.qualification_sha256.clone(),
+        },
+    )
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -179,11 +267,14 @@ pub fn preregister(plan: &mut CampaignPlan, config: &Configuration) -> Result<()
     } else {
         None
     };
+    // W3-T02: registered once, from the configuration's W2 qualification.
+    let producer = producer_plan(config);
     let mut entries = BTreeMap::new();
     for dataset in &plan.panel.datasets {
         if selected.as_ref().is_some_and(|id| id != &dataset.id) {
             continue;
         }
+        let (context_plan, context) = teaching_context(config, dataset.task, &producer);
         let result = (|| -> Result<Registration> {
             super::data::load_development(&settings.prepared_root, dataset)?;
             let bytes = fs::read(
@@ -215,9 +306,9 @@ pub fn preregister(plan: &mut CampaignPlan, config: &Configuration) -> Result<()
                     panel_sha256: settings.panel.sha256.clone(),
                     dataset_id: dataset.id.clone(),
                     evaluation_seed: plan.experiment.seed,
-                    // No preregistered context encoder exists on this route yet, so
-                    // its admissions are refused as MissingEncoderProvenance.
-                    context: None,
+                    // W3-T02: the W2 producer when a context is used; otherwise none, and
+                    // teacher admission refuses as MissingEncoderProvenance.
+                    context: context_plan.clone(),
                 },
                 &partition,
             )?;
@@ -225,6 +316,7 @@ pub fn preregister(plan: &mut CampaignPlan, config: &Configuration) -> Result<()
                 comparison,
                 partition,
                 freeze,
+                context: Some(context.clone()),
             })
         })();
         entries.insert(
@@ -279,6 +371,35 @@ pub fn preregister(plan: &mut CampaignPlan, config: &Configuration) -> Result<()
 fn retain(state: &State, path: &Path) -> Result<String> {
     state.put_blob(&fs::read(path)?)
 }
+/// W3-T02: the dataset's teaching context, as the W2 producer run in `directory` (the neural
+/// arm's `prepare_regression_context`) handed it off to teacher admission, retained with that
+/// run's pool receipts where teacher admission looks for them. `None` when the run emitted no
+/// handoff (the neural arm produced no context): the submission then carries no context and
+/// teacher admission refuses (`MissingEncoderProvenance`). Teacher admission authenticates the
+/// handoff against the preregistered producer and re-verifies the run from these receipts.
+fn handed_off_context(
+    state: &State,
+    freeze: &FreezeReceipt,
+    directory: &Path,
+) -> Result<Option<ContextEvidence>> {
+    let handoff = directory.join(super::optimize::TEACHER_HANDOFF);
+    if !handoff.try_exists()? {
+        return Ok(None);
+    }
+    let files: CpuContextFiles =
+        serde_json::from_slice(&fs::read(directory.join("context-files.json"))?)?;
+    let run = &files.context_execution;
+    let run = ContextRun {
+        handoff: fs::read(&handoff)?,
+        job: canonical_json(&run.job)?,
+        outcome: run.outcome.read_verified()?,
+        experiment: canonical_json(&run.experiment)?,
+        window: run.window.read_verified()?,
+        artifact: files.artifact.read_verified()?,
+        context: files.vector.read_verified()?,
+    };
+    eligibility::retain_handed_off_context(state, freeze, &run).map(Some)
+}
 #[derive(Serialize, Deserialize)]
 struct Admission {
     method: String,
@@ -317,6 +438,7 @@ fn admit_one(
         comparison,
         partition,
         freeze,
+        context,
     } = registration
     else {
         anyhow::bail!("teaching partition unavailable")
@@ -525,13 +647,25 @@ fn admit_one(
         ts_unix: jope_learning::ledger::now_unix(),
     };
     record.validate()?;
+    // W3-T02: the dataset's context as the preregistered W2 producer handed it off. Without a
+    // preregistered producer (no context is used) the submission carries none.
+    let context = match context {
+        Some(TeachingContext::Producer { .. }) => handed_off_context(
+            state,
+            freeze,
+            &journal
+                .join("asm-contexts")
+                .join(search.pair.arm(true)?.id_sha256),
+        )?,
+        Some(TeachingContext::NoContext { .. }) | None => None,
+    };
     let evidence = OofEvidence {
         freeze: freeze.clone(),
         experiment_blob_sha256: state.put_blob(&serde_json::to_vec(&plan.experiment)?)?,
         window_sha256: retain(state, &journal.join("window.json"))?,
         fold_predictions_sha256: folds,
         inner: Some(inner),
-        context: None,
+        context,
     };
     let result = eligibility::qualify(state, &record, &evidence);
     let (qualified, reason, qualification) = match result {
@@ -807,5 +941,212 @@ mod tests {
         // Only the dependency inventory frozen before admission is permanent.
         report.registration_unavailable = Some("fewer than five training groups".into());
         assert!(terminal_report(&report));
+    }
+
+    fn sha(bytes: &[u8]) -> String {
+        jope_pipeline::sha256_hex(bytes)
+    }
+
+    /// A configuration whose files are never opened unless its W2 qualification is loaded.
+    fn configuration(qualification: Option<Value>, unavailable: Option<&str>) -> Configuration {
+        let artifact = |name: &str| json!({"path": format!("/nonexistent/{name}"), "sha256": sha(name.as_bytes())});
+        let runtime = |name: &str| {
+            json!({"program": artifact(name), "argument_prefix": [], "inputs": [],
+                "package_files": [], "environment": {}, "version": "fixture",
+                "unavailable": unavailable})
+        };
+        serde_json::from_value(json!({
+            "schema": super::super::optimize::SCHEMA, "source_sha40": "a".repeat(40),
+            "release_manifest": artifact("release"), "source_manifest": artifact("source"),
+            "checkpoint_receipt": artifact("checkpoint"), "policy_weights": artifact("policy"),
+            "vocabulary": artifact("vocabulary"), "frozen_transforms": artifact("transforms"),
+            "policy": runtime("policy worker"), "encoder": runtime("W2 context producer"),
+            "encoder_assets": {"configuration": artifact("encoder assets"), "files": []},
+            "qualification": qualification, "seconds": 60, "max_evaluations": 80,
+            "sampling_rounds": 1, "sampling_batch": 8, "sampling_temperature": 1.0,
+            "dataset_wave_width": 1, "scheduling_policy": "fixture", "inner_fold_policy": "fixture"
+        }))
+        .unwrap()
+    }
+
+    /// The producer a W2 qualification of `config`'s producer registers, converted as
+    /// `producer_plan` converts it: field for field into the preregistration teacher admission
+    /// parses.
+    fn registered(config: &Configuration) -> ProducerPlan {
+        let qualification = context_producer::Qualification {
+            schema: "jope.cpu-context-qualification/v1".into(),
+            source_sha256: config.source_sha40.clone(),
+            producer_sha256: config.encoder.program.sha256.clone(),
+            verification_policy_sha256: context_producer::verification_policy_sha256(),
+            reference_manifest_sha256: sha(b"reference manifest"),
+            encoder: context_producer::EncoderIdentity::accepted(),
+            case_outputs: vec![],
+        };
+        let bytes = serde_json::to_vec(&qualification).unwrap();
+        let registration =
+            context_producer::ProducerRegistration::from_qualification(&bytes, &sha(&bytes))
+                .unwrap();
+        serde_json::from_value(serde_json::to_value(&registration).unwrap()).unwrap()
+    }
+
+    /// W3-T02: a regression dataset's freeze preregisters the W2 producer exactly as its
+    /// qualification registers it, under the producer's own encoder identity. Every other case
+    /// preregisters no context and records why: no qualification, one its loader refuses, an
+    /// unavailable producer runtime, or a classification dataset.
+    #[test]
+    fn a_context_is_preregistered_only_from_a_registered_w2_producer() {
+        let no_context = |config: &Configuration, task: Task, needle: &str| {
+            let (plan, context) = teaching_context(config, task, &producer_plan(config));
+            assert!(plan.is_none(), "{needle}");
+            match context {
+                TeachingContext::NoContext { reason } => {
+                    assert!(reason.contains(needle), "{needle}: {reason}")
+                }
+                other => panic!("{needle}: {other:?}"),
+            }
+        };
+        no_context(
+            &configuration(None, None),
+            Task::Regression,
+            "no completed W2 CPU context qualification is configured",
+        );
+        let unverifiable = json!({"qualification": {"path": "/nonexistent/q", "sha256": sha(b"q")},
+            "reference_manifest": {"path": "/nonexistent/r", "sha256": sha(b"r")},
+            "case_outputs": [], "case_executions": []});
+        no_context(
+            &configuration(Some(unverifiable.clone()), None),
+            Task::Regression,
+            "qualification requires eight executed cases",
+        );
+        no_context(
+            &configuration(Some(unverifiable), Some("withheld")),
+            Task::Regression,
+            "runtime is unavailable: withheld",
+        );
+
+        let config = configuration(None, None);
+        let producer = registered(&config);
+        for task in [Task::Binary, Task::Multiclass] {
+            let (plan, context) = teaching_context(&config, task, &Ok(producer.clone()));
+            assert!(plan.is_none());
+            assert!(
+                matches!(&context, TeachingContext::NoContext { reason }
+                    if reason.contains("regression-only")),
+                "{context:?}"
+            );
+        }
+        let (plan, context) = teaching_context(&config, Task::Regression, &Ok(producer.clone()));
+        let plan = plan.unwrap();
+        assert_eq!(plan.producer.as_ref(), Some(&producer));
+        assert_eq!(plan.source_family, context_producer::SCHEMA);
+        assert_eq!(
+            plan.encoder,
+            Encoder {
+                artifact_sha256: config.encoder.program.sha256.clone(),
+                configuration_sha256: config.encoder_assets.configuration.sha256.clone(),
+                seed: 0,
+                product: Product::TeachingContext2048,
+            }
+        );
+        // The registered release is the producer executable the configuration runs.
+        assert_eq!(
+            producer.release.producer_sha256,
+            config.encoder.program.sha256
+        );
+        assert_eq!(
+            context,
+            TeachingContext::Producer {
+                qualification_sha256: producer.qualification_sha256.clone()
+            }
+        );
+    }
+
+    /// Registrations record the teaching context either way; a registration written before
+    /// producer preregistration keeps its bytes.
+    #[test]
+    fn registrations_record_the_teaching_context_and_old_ones_keep_their_bytes() {
+        let old = json!({
+            "state": "frozen",
+            "comparison": HwmIdentity {
+                task: "regression".into(),
+                dataset_hash: "d".repeat(64),
+                cut_id: "c".repeat(64),
+                evaluator_sha256: "e".repeat(64),
+                vocabulary_sha256: "a".repeat(64),
+                protocol: "fixture".into(),
+                comparison: None,
+            },
+            "partition": InnerPartition {
+                schema: "fixture".into(),
+                dataset_sha256: "d".repeat(64),
+                original_split_sha256: "c".repeat(64),
+                development_sha256: "b".repeat(64),
+                outer_fold: 0,
+                fitting_rows: vec!["r1".into()],
+                hold_rows: vec!["r2".into()],
+                fitting_groups: vec!["g1".into()],
+                hold_groups: vec!["g2".into()],
+                inner_validation_rows: vec![vec!["r1".into()]],
+                assignment_policy: "fixture".into(),
+                evaluation_seed: 7,
+                request_seed_policy: "fixture".into(),
+                executor_program_sha256: "f".repeat(64),
+                runtime_inventory_sha256: "f".repeat(64),
+                fit_randomness_policy: "fixture".into(),
+                raw_input_policy: "fixture".into(),
+            },
+            "freeze": FreezeReceipt {
+                comparison_sha256: "1".repeat(64),
+                freeze_sha256: "2".repeat(64),
+            },
+        });
+        let parsed: Registration = serde_json::from_value(old.clone()).unwrap();
+        assert!(matches!(
+            &parsed,
+            Registration::Frozen { context: None, .. }
+        ));
+        assert_eq!(serde_json::to_value(&parsed).unwrap(), old);
+        for (context, key) in [
+            (
+                TeachingContext::Producer {
+                    qualification_sha256: "3".repeat(64),
+                },
+                "producer",
+            ),
+            (
+                TeachingContext::NoContext {
+                    reason: "fixture".into(),
+                },
+                "no_context",
+            ),
+        ] {
+            let mut value = old.clone();
+            value["context"] = serde_json::to_value(&context).unwrap();
+            assert!(value["context"].get(key).is_some(), "{value}");
+            let parsed: Registration = serde_json::from_value(value.clone()).unwrap();
+            assert!(
+                matches!(&parsed, Registration::Frozen { context: Some(c), .. } if *c == context)
+            );
+            assert_eq!(serde_json::to_value(&parsed).unwrap(), value);
+        }
+    }
+
+    /// A run that emitted no handoff yields no context; the submission then carries none.
+    #[test]
+    fn a_run_without_a_teacher_admission_handoff_yields_no_context() {
+        let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../target/tmp/teaching-handoff");
+        fs::create_dir_all(&root).unwrap();
+        let directory = tempfile::tempdir_in(fs::canonicalize(&root).unwrap()).unwrap();
+        let state = State::at(&directory.path().join("state"));
+        let freeze = FreezeReceipt {
+            comparison_sha256: "1".repeat(64),
+            freeze_sha256: "2".repeat(64),
+        };
+        let run = directory.path().join("asm-contexts");
+        assert!(handed_off_context(&state, &freeze, &run).unwrap().is_none());
+        // A handoff whose run files are absent is an error (retryable inventory), not a context.
+        fs::create_dir_all(&run).unwrap();
+        fs::write(run.join(super::super::optimize::TEACHER_HANDOFF), b"{}").unwrap();
+        assert!(handed_off_context(&state, &freeze, &run).is_err());
     }
 }
