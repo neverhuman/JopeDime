@@ -816,6 +816,7 @@ fn a_participant_proves_its_smartcluster_job_before_any_work() {
         .unwrap();
         let (dir, mut spec) = supervisor
             .launch_spec(&RankLaunch {
+                dispatch_intent_unix_ms: now_ms(),
                 contract: &host.contract,
                 plan_sha256: &host.sha,
                 global_rank: 0,
