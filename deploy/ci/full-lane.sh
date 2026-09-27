@@ -88,6 +88,14 @@ PY
         ;;
       full-neural) bash deploy/ci/check-test-routing.sh neural "$EVIDENCE/collection.json" ;;
     esac
+    if [ "$lane" = full-default ]; then
+      # bounded_smartcluster runs this workspace's own scqd and never builds it inside a test
+      # (W7-D5). The workspace test build above produces it (jain-smartcluster-daemon's
+      # integration tests make Cargo build its binary); refuse to run the tests without it.
+      scqd="$(cargo run -q --locked -p jope-ci -- cargo-artifact target-dir)/debug/scqd"
+      [ -x "$scqd" ] || { echo "scqd was not built by the workspace test build: $scqd"; exit 1; }
+      sha256sum "$scqd" > "$EVIDENCE/scqd.sha256"
+    fi
     touch "$EVIDENCE/nextest-started"
     cargo nextest run --config-file "$EVIDENCE/nextest.toml" -P main --locked --test-threads "${JOPE_CPU_TEST_THREADS:-16}" "${selection[@]}"
     case $lane in

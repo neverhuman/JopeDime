@@ -35,7 +35,7 @@ use std::{
     os::unix::fs::PermissionsExt,
     path::{Path, PathBuf},
     process::{Child, ChildStdout, Command, Stdio},
-    sync::{atomic::AtomicBool, Arc, OnceLock},
+    sync::{atomic::AtomicBool, Arc},
     thread,
     time::{Duration, Instant},
 };
@@ -60,50 +60,22 @@ impl CommandRunner for NoGpu {
     }
 }
 
-/// The `scqd` binary of this target directory, built once if it is absent.
+/// The `scqd` binary of this target directory. The test never builds it (W7-D5): a test must
+/// not spend a time-budgeted CI lane on a nested `cargo build`. The workspace test build that
+/// runs this test already produces it (`jain-smartcluster-daemon`'s integration tests make
+/// Cargo build its `scqd` binary), and `deploy/ci/full-lane.sh` refuses to run the tests
+/// without it. Locally: `cargo build --locked -p jain-smartcluster-daemon --bin scqd`.
 fn scqd_binary() -> PathBuf {
-    static BUILT: OnceLock<PathBuf> = OnceLock::new();
-    BUILT
-        .get_or_init(|| {
-            let exe = std::env::current_exe().unwrap();
-            let profile_dir = exe.parent().unwrap().parent().unwrap().to_path_buf();
-            let binary = profile_dir.join("scqd");
-            if !binary.exists() {
-                let profile = profile_dir
-                    .file_name()
-                    .unwrap()
-                    .to_str()
-                    .unwrap()
-                    .to_string();
-                let mut cmd = Command::new(env!("CARGO"));
-                cmd.args([
-                    "build",
-                    "--locked",
-                    "--offline",
-                    "-p",
-                    "jain-smartcluster-daemon",
-                    "--bin",
-                    "scqd",
-                ])
-                .env("CARGO_TARGET_DIR", profile_dir.parent().unwrap());
-                match profile.as_str() {
-                    "debug" => {}
-                    "release" => {
-                        cmd.arg("--release");
-                    }
-                    other => {
-                        cmd.args(["--profile", other]);
-                    }
-                }
-                let status = cmd.status().expect("run cargo to build scqd");
-                assert!(
-                    status.success(),
-                    "building scqd for the SmartCluster fixture failed"
-                );
-            }
-            binary
-        })
-        .clone()
+    let exe = std::env::current_exe().unwrap();
+    let binary = exe.parent().unwrap().parent().unwrap().join("scqd");
+    assert!(
+        binary.is_file(),
+        "{} is absent: this fixture runs the workspace's own scqd and never builds it; build it \
+         first with `cargo build --locked -p jain-smartcluster-daemon --bin scqd` (the \
+         full-default CI lane builds it with the workspace)",
+        binary.display()
+    );
+    binary
 }
 
 struct Scqd {
@@ -770,10 +742,11 @@ fn run_outside(
         .stderr(Stdio::null());
     if let Some(control) = control {
         let fd = control.as_raw_fd();
-        // SAFETY: dup2 is async-signal-safe; it only duplicates an open descriptor.
+        // SAFETY: dup2 and fcntl are async-signal-safe. When the socket already is descriptor 3
+        // (as under nextest), dup2 is a no-op that keeps close-on-exec, so clear it explicitly.
         unsafe {
             command.pre_exec(move || {
-                if libc::dup2(fd, 3) < 0 {
+                if (fd != 3 && libc::dup2(fd, 3) < 0) || libc::fcntl(3, libc::F_SETFD, 0) < 0 {
                     return Err(std::io::Error::last_os_error());
                 }
                 Ok(())
