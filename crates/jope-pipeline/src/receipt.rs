@@ -1,23 +1,63 @@
-//! `jope.pipeline-receipt/v2`: what the run did, stage by stage.
+//! `jope.pipeline-receipt/v3`: what the run did, stage by stage.
 //!
 //! The committed JSON Schema under `schemas/` is the public contract; the Rust
 //! type derives `JsonSchema` so `tests/schema_agreement.rs` can assert the two
 //! agree on every object's required set and property list, exactly as
 //! `jope-datasets` does for its catalog. Validation reuses
 //! `jope_datasets::schema`, the workspace's JSON Schema 2020-12 subset validator.
+//!
+//! v3 adds `search.seeding` (the genomes generation 0 was seeded with, their digests and the
+//! parent receipt they came from). v1 and v2 receipts keep validating against their own
+//! committed schemas; nothing about them is reinterpreted.
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-pub const RECEIPT_SCHEMA_ID: &str = "jope.pipeline-receipt/v2";
+pub const RECEIPT_SCHEMA_ID: &str = "jope.pipeline-receipt/v3";
 
 /// The committed receipt schema (JSON Schema 2020-12).
 pub const RECEIPT_SCHEMA_JSON: &str =
+    include_str!("../../../schemas/jope.pipeline-receipt.v3.schema.json");
+
+/// The previous current schema: total-budget accounting and complete-coverage selection,
+/// without seeding.
+pub const V2_SCHEMA_ID: &str = "jope.pipeline-receipt/v2";
+pub const V2_SCHEMA_JSON: &str =
     include_str!("../../../schemas/jope.pipeline-receipt.v2.schema.json");
 
 pub const LEGACY_SCHEMA_ID: &str = "jope.pipeline-receipt/v1";
 pub const LEGACY_SCHEMA_JSON: &str =
     include_str!("../../../schemas/jope.pipeline-receipt.v1.schema.json");
+
+/// One genome generation 0 was seeded with.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct Seed {
+    /// Canonical pipeline DSL, exactly as it entered generation 0 with origin `incumbent`.
+    pub genome: String,
+    #[schemars(regex(pattern = r"^[0-9a-f]{64}$"))]
+    pub program_sha256: String,
+    /// `incumbent` (the parent receipt's selected genome) or `seeds_file`.
+    pub source: String,
+}
+
+/// v3: how generation 0 was seeded. Present, with an empty `seeds`, on an unseeded run.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct Seeding {
+    /// Genomes offered by `--incumbent` and `--seed-genomes` before canonicalisation,
+    /// deduplication (including against the bootstrap) and the cap at the elite count.
+    pub offered: u64,
+    /// Admitted seeds, in the order they entered generation 0 after the bootstrap. Every one is
+    /// re-measured on this run's cuts; no score is carried over from where it came from.
+    pub seeds: Vec<Seed>,
+    /// sha256 of the `--incumbent` receipt's bytes, which verified with its on-disk evidence.
+    #[schemars(regex(pattern = r"^[0-9a-f]{64}$"))]
+    pub parent_receipt_sha256: Option<String>,
+    /// sha256 of the `--seed-genomes` file's bytes.
+    #[schemars(regex(pattern = r"^[0-9a-f]{64}$"))]
+    pub seeds_file_sha256: Option<String>,
+}
 
 /// Per-phase admission limits and actual work. One non-preemptible fit can
 /// exceed seconds_limit; no later fit is admitted in that phase.
@@ -205,6 +245,10 @@ pub struct Search {
     /// Absent when no cut produced a successful measurement.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub best: Option<Best>,
+    /// v3: the seeds generation 0 started from and where they came from.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(required)]
+    pub seeding: Option<Seeding>,
 }
 
 /// One emitted source file.
@@ -255,7 +299,7 @@ impl Receipt {
     /// Structural invariants the schema cannot express.
     pub fn invariant_errors(&self) -> Vec<String> {
         let mut errors = Vec::new();
-        if self.schema != RECEIPT_SCHEMA_ID && self.schema != LEGACY_SCHEMA_ID {
+        if ![RECEIPT_SCHEMA_ID, V2_SCHEMA_ID, LEGACY_SCHEMA_ID].contains(&self.schema.as_str()) {
             errors.push(format!(
                 "schema is {:?}, expected {RECEIPT_SCHEMA_ID:?}",
                 self.schema
@@ -348,10 +392,68 @@ impl Receipt {
                 self.search.selection
             ));
         }
-        if self.schema == RECEIPT_SCHEMA_ID {
+        if self.schema == RECEIPT_SCHEMA_ID || self.schema == V2_SCHEMA_ID {
             self.v2_errors(&mut errors);
         }
+        if self.schema == RECEIPT_SCHEMA_ID {
+            self.v3_errors(&mut errors);
+        } else if self.search.seeding.is_some() {
+            errors.push(format!("{} receipts carry no seeding record", self.schema));
+        }
         errors
+    }
+
+    /// v3: the seeding record is internally consistent and every seed was attempted on every
+    /// requested cut, so its place in the selection rests on this run's measurements alone.
+    fn v3_errors(&self, errors: &mut Vec<String>) {
+        use std::collections::BTreeSet;
+        let Some(seeding) = &self.search.seeding else {
+            errors.push("v3 requires a seeding record".into());
+            return;
+        };
+        if seeding.seeds.len() > crate::search::ELITES
+            || seeding.seeds.len() as u64 > seeding.offered
+        {
+            errors.push(format!(
+                "{} seed(s) from {} offered exceeds the cap of {}",
+                seeding.seeds.len(),
+                seeding.offered,
+                crate::search::ELITES
+            ));
+        }
+        let mut distinct = BTreeSet::new();
+        for seed in &seeding.seeds {
+            if crate::sha256_hex(seed.genome.as_bytes()) != seed.program_sha256
+                || !distinct.insert(&seed.genome)
+                || seed.genome == crate::search::BOOTSTRAP_GENOME
+            {
+                errors.push(format!(
+                    "seed {}: digest, duplicate or bootstrap mismatch",
+                    seed.program_sha256
+                ));
+            }
+            match seed.source.as_str() {
+                crate::seeds::FROM_INCUMBENT if seeding.parent_receipt_sha256.is_none() => {
+                    errors.push("an incumbent seed without a parent receipt digest".into())
+                }
+                crate::seeds::FROM_SEEDS_FILE if seeding.seeds_file_sha256.is_none() => {
+                    errors.push("a seeds-file seed without a seeds file digest".into())
+                }
+                crate::seeds::FROM_INCUMBENT | crate::seeds::FROM_SEEDS_FILE => {}
+                other => errors.push(format!("seed source {other:?} is unknown")),
+            }
+            let covered = self.search.coverage.as_ref().is_some_and(|coverage| {
+                coverage
+                    .iter()
+                    .any(|p| p.program_sha256 == seed.program_sha256 && p.missing_cuts.is_empty())
+            });
+            if !covered {
+                errors.push(format!(
+                    "seed {} was not attempted on every requested cut",
+                    seed.program_sha256
+                ));
+            }
+        }
     }
 
     fn v2_errors(&self, errors: &mut Vec<String>) {
@@ -530,7 +632,7 @@ pub fn derived_schema() -> serde_json::Value {
     let mut value = schemars::schema_for!(Receipt).to_value();
     value["title"] = RECEIPT_SCHEMA_ID.into();
     value["$id"] =
-        "https://github.com/veox-ai/JopeDime/schemas/jope.pipeline-receipt.v2.schema.json".into();
+        "https://github.com/veox-ai/JopeDime/schemas/jope.pipeline-receipt.v3.schema.json".into();
     value["properties"]["schema"]["const"] = RECEIPT_SCHEMA_ID.into();
     value["properties"]["policy"]["enum"] = serde_json::json!(["auto", "skip", "require"]);
     value["$defs"]["Stage"]["properties"]["status"]["enum"] = serde_json::json!(STATUSES);
@@ -550,7 +652,7 @@ pub fn derived_schema() -> serde_json::Value {
         ("CutSearch", &["accounting"][..]),
         (
             "Search",
-            &["budget_policy", "compared_cuts", "coverage"][..],
+            &["budget_policy", "compared_cuts", "coverage", "seeding"][..],
         ),
     ] {
         let required = value["$defs"][definition]["required"]
@@ -591,6 +693,8 @@ pub fn derived_schema() -> serde_json::Value {
 pub fn validate_value(value: &serde_json::Value) -> Result<Receipt, Vec<String>> {
     let schema = if value["schema"] == LEGACY_SCHEMA_ID {
         serde_json::from_str(LEGACY_SCHEMA_JSON).expect("legacy schema parses")
+    } else if value["schema"] == V2_SCHEMA_ID {
+        serde_json::from_str(V2_SCHEMA_JSON).expect("v2 schema parses")
     } else {
         schema()
     };

@@ -1,0 +1,723 @@
+{
+  "$defs": {
+    "Artifact": {
+      "additionalProperties": false,
+      "description": "One emitted source file.",
+      "properties": {
+        "build": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "bytes": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "language": {
+          "type": "string"
+        },
+        "path": {
+          "description": "Relative to the run's `emit/` directory. `cpp17` and `cpp20` share one\npath: there is a single C++ emitter and the standard is a compile flag.",
+          "type": "string"
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "language",
+        "path",
+        "sha256",
+        "bytes"
+      ],
+      "type": "object"
+    },
+    "Best": {
+      "additionalProperties": false,
+      "description": "The selected program and its measured evidence.",
+      "properties": {
+        "cuts_measured": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "genome": {
+          "type": "string"
+        },
+        "program_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "seconds": {
+          "description": "Fit-and-score seconds this program cost across those cuts.",
+          "format": "double",
+          "type": "number"
+        },
+        "train_r2": {
+          "description": "Mean in-sample R^2, for the gap against `validation_r2`.",
+          "format": "double",
+          "type": "number"
+        },
+        "validation_r2": {
+          "description": "Mean held-out R^2 over the same cuts — the fits never saw these rows.",
+          "format": "double",
+          "type": "number"
+        },
+        "validation_rmse": {
+          "description": "Mean held-out RMSE over the cuts this program was measured on, in the\ndataset's own target units. There is no normalisation to undo: the search\nfits the committed rows as they are.",
+          "format": "double",
+          "type": "number"
+        }
+      },
+      "required": [
+        "genome",
+        "program_sha256",
+        "validation_rmse",
+        "validation_r2",
+        "train_r2",
+        "seconds",
+        "cuts_measured"
+      ],
+      "type": "object"
+    },
+    "Coverage": {
+      "additionalProperties": false,
+      "properties": {
+        "failed_cuts": {
+          "items": {
+            "format": "uint64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "measured_cuts": {
+          "items": {
+            "format": "uint64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "missing_cuts": {
+          "items": {
+            "format": "uint64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "program_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "program_sha256",
+        "measured_cuts",
+        "failed_cuts",
+        "missing_cuts"
+      ],
+      "type": "object"
+    },
+    "CutSearch": {
+      "additionalProperties": false,
+      "description": "One cut's search, as its `search.json` published it.",
+      "properties": {
+        "accounting": {
+          "additionalProperties": false,
+          "description": "Required for v2; absent for historical v1 receipts, which made no total-budget guarantee.",
+          "properties": {
+            "active_seconds": {
+              "format": "double",
+              "type": "number"
+            },
+            "comparison": {
+              "$ref": "#/$defs/Phase"
+            },
+            "deadline_overrun": {
+              "type": "boolean"
+            },
+            "exploration": {
+              "$ref": "#/$defs/Phase"
+            }
+          },
+          "required": [
+            "exploration",
+            "comparison",
+            "active_seconds",
+            "deadline_overrun"
+          ],
+          "type": "object"
+        },
+        "best_program": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "best_validation_r2": {
+          "description": "That same candidate's held-out R^2.",
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "best_validation_rmse": {
+          "description": "The best held-out RMSE measured on this cut, in the dataset's target units.",
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "completed_evaluations": {
+          "description": "Fits attempted. One fit is one evaluation, whatever its outcome, so this\nis exactly `successful + failed`.",
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "cut": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "failed_or_unavailable_measurements": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "generations": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "hold_rows": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "observations_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "search_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "stopped_by": {
+          "description": "Single cut: exploration's `evaluations`, `seconds`, or `search_space_exhausted`.\nMultiple cuts: comparison's outcome, with `seconds` before `evaluations`\nwhen both are reached, else `comparison_pool_exhausted`. Exploration's\noriginal reason remains in accounting.exploration.stopped_by.",
+          "enum": [
+            "evaluations",
+            "seconds",
+            "search_space_exhausted",
+            "comparison_pool_exhausted"
+          ],
+          "type": "string"
+        },
+        "successful_measurements": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "train_rows": {
+          "description": "Rows the fits on this cut saw, and rows they were scored on. Disjoint.",
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "cut",
+        "search_sha256",
+        "observations_sha256",
+        "train_rows",
+        "hold_rows",
+        "generations",
+        "completed_evaluations",
+        "successful_measurements",
+        "failed_or_unavailable_measurements",
+        "stopped_by",
+        "accounting"
+      ],
+      "type": "object"
+    },
+    "Dataset": {
+      "additionalProperties": false,
+      "properties": {
+        "columns": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "dataset_hash": {
+          "pattern": "^[0-9a-f]{16}$",
+          "type": "string"
+        },
+        "files": {
+          "items": {
+            "$ref": "#/$defs/DatasetFile"
+          },
+          "type": "array"
+        },
+        "id": {
+          "type": "string"
+        },
+        "path": {
+          "description": "Where the dataset was read from, as given on the command line.",
+          "type": "string"
+        },
+        "rows": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "task": {
+          "type": "string"
+        },
+        "training_rows": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "dataset_hash",
+        "path",
+        "task",
+        "rows",
+        "columns",
+        "training_rows",
+        "files"
+      ],
+      "type": "object"
+    },
+    "DatasetFile": {
+      "additionalProperties": false,
+      "description": "One file of the dataset, as hashed at resolution time.",
+      "properties": {
+        "bytes": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "sha256",
+        "bytes"
+      ],
+      "type": "object"
+    },
+    "Exclusion": {
+      "additionalProperties": false,
+      "description": "A requested language the selected genome is not covered for.",
+      "properties": {
+        "language": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "language",
+        "reason"
+      ],
+      "type": "object"
+    },
+    "Phase": {
+      "additionalProperties": false,
+      "description": "Per-phase admission limits and actual work. One non-preemptible fit can\nexceed seconds_limit; no later fit is admitted in that phase.",
+      "properties": {
+        "completed_evaluations": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "evaluation_limit": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "failed_measurements": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "seconds": {
+          "format": "double",
+          "type": "number"
+        },
+        "seconds_limit": {
+          "format": "double",
+          "type": "number"
+        },
+        "stopped_by": {
+          "enum": [
+            "evaluations",
+            "seconds",
+            "search_space_exhausted",
+            "comparison_pool_exhausted",
+            "not_requested"
+          ],
+          "type": "string"
+        },
+        "successful_measurements": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "evaluation_limit",
+        "seconds_limit",
+        "completed_evaluations",
+        "successful_measurements",
+        "failed_measurements",
+        "seconds",
+        "stopped_by"
+      ],
+      "type": "object"
+    },
+    "Prepared": {
+      "additionalProperties": false,
+      "properties": {
+        "cuts": {
+          "description": "The cut indices that were built, in build order.",
+          "items": {
+            "format": "uint64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "folds": {
+          "description": "The partition each cut holds one fold out of.",
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "rows": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "seed": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "sha256",
+        "seed",
+        "rows",
+        "folds",
+        "cuts"
+      ],
+      "type": "object"
+    },
+    "Search": {
+      "additionalProperties": false,
+      "properties": {
+        "best": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Best"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Absent when no cut produced a successful measurement."
+        },
+        "bootstrap_genome": {
+          "description": "The genome generation 0 always contains, so a measured champion is never\nworse than it.",
+          "type": "string"
+        },
+        "budget_policy": {
+          "type": "string"
+        },
+        "compared_cuts": {
+          "items": {
+            "format": "uint64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "coverage": {
+          "items": {
+            "$ref": "#/$defs/Coverage"
+          },
+          "type": "array"
+        },
+        "cuts": {
+          "items": {
+            "$ref": "#/$defs/CutSearch"
+          },
+          "type": "array"
+        },
+        "engine": {
+          "description": "The search implementation that produced these measurements.",
+          "type": "string"
+        },
+        "evaluations": {
+          "description": "The `--budget` bounds, per cut.",
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "max_transforms": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "population": {
+          "description": "Candidates alive per generation, and the transform depth they may reach.",
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "rng_seed": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "seconds": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "seeding": {
+          "additionalProperties": false,
+          "description": "v3: the seeds generation 0 started from and where they came from.",
+          "properties": {
+            "offered": {
+              "description": "Genomes offered by `--incumbent` and `--seed-genomes` before canonicalisation,\ndeduplication (including against the bootstrap) and the cap at the elite count.",
+              "format": "uint64",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "parent_receipt_sha256": {
+              "description": "sha256 of the `--incumbent` receipt's bytes, which verified with its on-disk evidence.",
+              "pattern": "^[0-9a-f]{64}$",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "seeds": {
+              "description": "Admitted seeds, in the order they entered generation 0 after the bootstrap. Every one is\nre-measured on this run's cuts; no score is carried over from where it came from.",
+              "items": {
+                "$ref": "#/$defs/Seed"
+              },
+              "type": "array"
+            },
+            "seeds_file_sha256": {
+              "description": "sha256 of the `--seed-genomes` file's bytes.",
+              "pattern": "^[0-9a-f]{64}$",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "offered",
+            "seeds"
+          ],
+          "type": "object"
+        },
+        "selected_genome": {
+          "description": "The genome handed to the emitters, always present.",
+          "type": "string"
+        },
+        "selected_program_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "selection": {
+          "description": "v2: require every requested cut, then minimum mean RMSE, then canonical\ngenome. v1 used coverage count before RMSE, including different partial sets.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "engine",
+        "rng_seed",
+        "evaluations",
+        "seconds",
+        "population",
+        "max_transforms",
+        "bootstrap_genome",
+        "cuts",
+        "selection",
+        "selected_genome",
+        "selected_program_sha256",
+        "budget_policy",
+        "compared_cuts",
+        "coverage",
+        "seeding"
+      ],
+      "type": "object"
+    },
+    "Seed": {
+      "additionalProperties": false,
+      "description": "One genome generation 0 was seeded with.",
+      "properties": {
+        "genome": {
+          "description": "Canonical pipeline DSL, exactly as it entered generation 0 with origin `incumbent`.",
+          "type": "string"
+        },
+        "program_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "source": {
+          "description": "`incumbent` (the parent receipt's selected genome) or `seeds_file`.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "genome",
+        "program_sha256",
+        "source"
+      ],
+      "type": "object"
+    },
+    "Stage": {
+      "additionalProperties": false,
+      "description": "One pipeline stage.",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "reason": {
+          "description": "Why, for anything that is not a plain pass. A skip always carries one.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "seconds": {
+          "format": "double",
+          "type": "number"
+        },
+        "status": {
+          "description": "`passed`, `skipped` or `failed`.",
+          "enum": [
+            "passed",
+            "skipped",
+            "failed"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "status",
+        "seconds"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "https://github.com/veox-ai/JopeDime/schemas/jope.pipeline-receipt.v3.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "artifacts": {
+      "items": {
+        "$ref": "#/$defs/Artifact"
+      },
+      "type": "array"
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "dataset": {
+      "$ref": "#/$defs/Dataset"
+    },
+    "emit_exclusions": {
+      "items": {
+        "$ref": "#/$defs/Exclusion"
+      },
+      "type": "array"
+    },
+    "git_sha": {
+      "description": "The checkout this ran from, when it could be determined.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "observations_sha256": {
+      "description": "sha256 over every cut's `observations.json` digest, concatenated as hex\nin cut order: one value binding the run to all of its evidence.",
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "ok": {
+      "type": "boolean"
+    },
+    "policy": {
+      "description": "The `--policy` the run was given: `auto`, `skip` or `require`.",
+      "enum": [
+        "auto",
+        "skip",
+        "require"
+      ],
+      "type": "string"
+    },
+    "prepared": {
+      "$ref": "#/$defs/Prepared"
+    },
+    "schema": {
+      "const": "jope.pipeline-receipt/v3",
+      "type": "string"
+    },
+    "search": {
+      "$ref": "#/$defs/Search"
+    },
+    "stages": {
+      "items": {
+        "$ref": "#/$defs/Stage"
+      },
+      "type": "array"
+    },
+    "tool_version": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema",
+    "ok",
+    "tool_version",
+    "created_at",
+    "policy",
+    "dataset",
+    "prepared",
+    "stages",
+    "search",
+    "artifacts",
+    "emit_exclusions",
+    "observations_sha256"
+  ],
+  "title": "jope.pipeline-receipt/v3",
+  "type": "object"
+}
