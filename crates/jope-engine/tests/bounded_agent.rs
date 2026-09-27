@@ -99,6 +99,7 @@ fn an_agent_serves_only_its_own_plan_and_planned_ranks() {
         (0, sha(b"forged")),
     ] {
         let reason = refused(agent.handle(AgentRequest::Launch {
+            dispatch_intent_unix_ms: now_ms(),
             global_rank,
             dispatch_id: id,
         }));
@@ -111,6 +112,7 @@ fn an_agent_serves_only_its_own_plan_and_planned_ranks() {
     assert_eq!(fake.0.lock().unwrap().launches, 0);
     // Positive control: its own rank launches once, under the plan's dispatch id.
     let handle = match agent.handle(AgentRequest::Launch {
+        dispatch_intent_unix_ms: now_ms(),
         global_rank: 0,
         dispatch_id: dispatch(&p, 0),
     }) {
@@ -129,6 +131,7 @@ fn an_agent_serves_only_its_own_plan_and_planned_ranks() {
     );
     // The supervisor's own refusal is a reply, never a partial action.
     let reason = refused(agent.handle(AgentRequest::Launch {
+        dispatch_intent_unix_ms: now_ms(),
         global_rank: 0,
         dispatch_id: dispatch(&p, 0),
     }));
@@ -192,6 +195,7 @@ fn remote_supervision_is_mutually_pinned_by_the_plan() {
         let mut ch = Sequenced::new(s, AGENT_FRAME_LIMIT);
         ch.send(
             &serde_json::to_vec(&AgentRequest::Launch {
+                dispatch_intent_unix_ms: now_ms(),
                 global_rank: 0,
                 dispatch_id: dispatch(&p, 0),
             })
@@ -231,6 +235,7 @@ fn remote_supervision_is_mutually_pinned_by_the_plan() {
     let id0 = dispatch(&p, 0);
     let handle = remote
         .launch(&RankLaunch {
+            dispatch_intent_unix_ms: now_ms(),
             contract: &p.contract,
             plan_sha256: &p.sha,
             global_rank: 0,
@@ -243,6 +248,7 @@ fn remote_supervision_is_mutually_pinned_by_the_plan() {
     let id1 = dispatch(&p, 1);
     assert!(remote
         .launch(&RankLaunch {
+            dispatch_intent_unix_ms: now_ms(),
             contract: &p.contract,
             plan_sha256: &p.sha,
             global_rank: 1,
@@ -292,6 +298,7 @@ fn an_agent_refuses_malformed_and_replayed_requests() {
     use rendezvous::{read_frame, write_frame};
     let frame = |id: u64, body: &[u8]| [&id.to_be_bytes()[..], body].concat();
     let launch = serde_json::to_vec(&AgentRequest::Launch {
+        dispatch_intent_unix_ms: now_ms(),
         global_rank: 0,
         dispatch_id: dispatch(&p, 0),
     })

@@ -2092,3 +2092,198 @@ fn a_training_selection_the_trainer_cannot_run_is_refused() {
         assert!(e.to_string().contains("explicit transition"), "{e}");
     }
 }
+
+#[test]
+fn blocking_poll_and_recovery_refresh_time_before_result_authority() {
+    use std::cell::Cell;
+    // Clock advances after probe, after result retrieval, or immediately before
+    // group commit. Complete valid results must not turn the old timestamp into authority.
+    for (recovery, expire_on_call) in [
+        (false, 2),
+        (false, 3),
+        (false, 5),
+        (false, 14),
+        (false, 15),
+        (true, 2),
+        (true, 4),
+        (true, 9),
+        (true, 10),
+    ] {
+        let now = now_ms();
+        let r = planned(now);
+        let fake = FakeSupervisor::default();
+        let mut c = Coordinator::open(&r.dir, &r.sha, fake.clone(), now).unwrap();
+        c.preflight(&serde_json::to_vec(&census(&r.contract, now)).unwrap(), now)
+            .unwrap();
+        c.dispatch_all(now).unwrap();
+        let (persisted, hellos) = admit(&mut c, &r, now);
+        deliver(&mut c, &r, &persisted, &hellos, now);
+        for rank in 0..3u32 {
+            let id = rendezvous::dispatch_id(&r.sha, 1, rank).unwrap();
+            fake.set(
+                &id,
+                Liveness::Exited {
+                    code: Some(0),
+                    signal: None,
+                },
+                Some(result(
+                    &r.contract,
+                    &r.sha,
+                    persisted.admission_sha256(),
+                    rank,
+                    &r.keys.ranks[rank as usize],
+                )),
+            );
+        }
+        if recovery {
+            drop(c);
+            c = Coordinator::open(&r.dir, &r.sha, fake.clone(), now).unwrap();
+        }
+        let calls = Cell::new(0);
+        let clock = || {
+            calls.set(calls.get() + 1);
+            if calls.get() >= expire_on_call {
+                r.contract.original_deadline_unix_ms
+            } else {
+                now
+            }
+        };
+        let done = if recovery {
+            c.reconcile_with_clock(clock)
+        } else {
+            c.poll_with_clock(clock)
+        }
+        .unwrap();
+        assert_eq!(done.outcome, Some(Outcome::Drained));
+        assert_eq!(
+            done.committed_updates_total,
+            r.contract.counters.committed_updates_at_start
+        );
+        assert!(!c
+            .journal()
+            .iter()
+            .any(|r| matches!(r.event, controller::Event::GroupCommitted { .. })));
+    }
+}
+
+#[test]
+fn wall_budget_is_measured_from_persisted_dispatch_not_coordinator_restart() {
+    let now = now_ms();
+    let r = planned(now);
+    let fake = FakeSupervisor::default();
+    let mut c = Coordinator::open(&r.dir, &r.sha, fake.clone(), now).unwrap();
+    c.preflight(&serde_json::to_vec(&census(&r.contract, now)).unwrap(), now)
+        .unwrap();
+    c.dispatch_all(now).unwrap();
+    let end = now + r.contract.participants[0].ceilings.wall_ms;
+    assert!(end < r.contract.original_deadline_unix_ms);
+    drop(c);
+    let mut c = Coordinator::open(&r.dir, &r.sha, fake.clone(), end).unwrap();
+    assert_eq!(c.reconcile(end).unwrap().outcome, Some(Outcome::Drained));
+    assert_eq!(fake.running(), 0);
+    assert!(c.journal().iter().any(|r| matches!(
+        r.event,
+        controller::Event::DrainStarted {
+            cause: controller::DrainCause::WallBudgetElapsed { .. }
+        }
+    )));
+    controller::verify(&r.dir, Some(&r.sha)).unwrap();
+}
+
+#[test]
+fn daemon_deadline_is_the_earliest_wall_grant_or_original_limit() {
+    use jope_parallel::native_loop::bounded::supervisor::rank_job_deadline;
+    let now = now_ms();
+    let k = keys(3);
+    let mut c = contract(now, 3, &k);
+    assert_eq!(
+        rank_job_deadline(&c, 0, now).unwrap(),
+        now + c.participants[0].ceilings.wall_ms
+    );
+    c.participants[0].grant.body.expires_unix_ms = now + 100;
+    assert_eq!(rank_job_deadline(&c, 0, now).unwrap(), now + 100);
+    c.original_deadline_unix_ms = now + 50;
+    assert_eq!(rank_job_deadline(&c, 0, now).unwrap(), now + 50);
+    assert!(rank_job_deadline(&c, 0, now + 50).is_err());
+    assert!(rank_job_deadline(&c, 0, u64::MAX).is_err());
+}
+
+#[test]
+fn blocking_admission_delivery_cannot_renew_the_execution_window() {
+    use std::sync::{
+        atomic::{AtomicU64, AtomicUsize, Ordering},
+        Arc,
+    };
+    struct DelayedWrite {
+        clock: Arc<AtomicU64>,
+        expire_at: Option<u64>,
+        writes: Arc<AtomicUsize>,
+    }
+    impl std::io::Read for DelayedWrite {
+        fn read(&mut self, _: &mut [u8]) -> std::io::Result<usize> {
+            Ok(0)
+        }
+    }
+    impl std::io::Write for DelayedWrite {
+        fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
+            self.writes.fetch_add(1, Ordering::SeqCst);
+            if let Some(end) = self.expire_at {
+                self.clock.store(end, Ordering::SeqCst);
+            }
+            Ok(bytes.len())
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+    impl rendezvous::ControlStream for DelayedWrite {
+        fn set_timeouts(
+            &self,
+            _: Option<std::time::Duration>,
+            _: Option<std::time::Duration>,
+        ) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+    // Include expiry on the final stream: no later iteration can catch it.
+    for expire_rank in [Some(0), Some(2), None] {
+        let now = now_ms();
+        let r = planned(now);
+        let fake = FakeSupervisor::default();
+        let mut c = Coordinator::open(&r.dir, &r.sha, fake.clone(), now).unwrap();
+        c.preflight(&serde_json::to_vec(&census(&r.contract, now)).unwrap(), now)
+            .unwrap();
+        c.dispatch_all(now).unwrap();
+        let (persisted, _) = admit(&mut c, &r, now);
+        let clock = Arc::new(AtomicU64::new(now));
+        let writes: Vec<_> = (0..3).map(|_| Arc::new(AtomicUsize::new(0))).collect();
+        let mut connected: Vec<_> = (0..3)
+            .map(|rank| Connected {
+                global_rank: rank,
+                stream: Box::new(DelayedWrite {
+                    clock: clock.clone(),
+                    expire_at: (expire_rank == Some(rank))
+                        .then_some(now + r.contract.participants[0].ceilings.wall_ms),
+                    writes: writes[rank as usize].clone(),
+                }),
+            })
+            .collect();
+        let result = c.deliver_admission_with_clock(&persisted, &mut connected, || {
+            clock.load(Ordering::SeqCst)
+        });
+        assert_eq!(result.is_ok(), expire_rank.is_none());
+        let delivered = c
+            .journal()
+            .iter()
+            .any(|record| matches!(record.event, controller::Event::AdmissionDelivered { .. }));
+        assert_eq!(delivered, expire_rank.is_none());
+        if let Some(rank) = expire_rank {
+            assert_eq!(fake.running(), 0);
+            for count in &writes[rank as usize + 1..] {
+                assert_eq!(count.load(Ordering::SeqCst), 0);
+            }
+            assert_eq!(c.status().unwrap().outcome, Some(Outcome::Drained));
+        }
+        controller::verify(&r.dir, Some(&r.sha)).unwrap();
+    }
+}

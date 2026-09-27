@@ -65,7 +65,7 @@ pub fn coordinate<S: Supervisor>(
 ) -> Result<StatusReport> {
     let mut c = Coordinator::open(&args.run_dir, &args.plan_sha256, supervisor, now_ms())?;
     if c.needs_reconcile() {
-        return c.reconcile(now_ms());
+        return c.reconcile_with_clock(now_ms);
     }
     let status = c.status()?;
     if status.outcome.is_some() {
@@ -96,7 +96,7 @@ pub fn coordinate<S: Supervisor>(
         Timeouts::from_plan(&contract),
     )?;
     let mut rv = c.open_rendezvous(&key, &boot_id()?, &rendezvous::fresh_nonce()?, now_ms())?;
-    c.dispatch_all(now_ms())?;
+    c.dispatch_all_with_clock(now_ms)?;
     let (admission, mut connected) = match rendezvous::gather(&mut acceptor, &mut rv, &key, &now_ms)
     {
         Ok(gathered) => gathered,
@@ -106,7 +106,7 @@ pub fn coordinate<S: Supervisor>(
         }
     };
     let persisted = c.record_admission(admission, now_ms())?;
-    c.deliver_admission(&persisted, &mut connected, now_ms())?;
+    c.deliver_admission_with_clock(&persisted, &mut connected, now_ms)?;
     let limit = contract.rendezvous.max_message_bytes;
     let mut next = 0u64;
     loop {
@@ -116,7 +116,7 @@ pub fn coordinate<S: Supervisor>(
         );
         next += 1;
         heartbeat_all(&mut connected, next, limit);
-        let status = c.poll(now_ms())?;
+        let status = c.poll_with_clock(now_ms)?;
         if status.outcome.is_some() {
             return Ok(status);
         }

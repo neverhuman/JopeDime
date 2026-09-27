@@ -38,6 +38,7 @@ pub enum AgentRequest {
     Launch {
         global_rank: u32,
         dispatch_id: String,
+        dispatch_intent_unix_ms: u64,
     },
     Find {
         dispatch_id: String,
@@ -136,6 +137,7 @@ impl<S: Supervisor> Agent<S> {
             AgentRequest::Launch {
                 global_rank,
                 dispatch_id,
+                dispatch_intent_unix_ms,
             } => {
                 ensure!(
                     self.served_rank(&dispatch_id)? == global_rank,
@@ -146,6 +148,7 @@ impl<S: Supervisor> Agent<S> {
                     plan_sha256: &self.plan_sha256,
                     global_rank,
                     dispatch_id: &dispatch_id,
+                    dispatch_intent_unix_ms,
                 })?;
                 AgentReply::Handle { handle }
             }
@@ -364,6 +367,7 @@ impl Supervisor for RemoteSupervisor {
             &AgentRequest::Launch {
                 global_rank: l.global_rank,
                 dispatch_id: l.dispatch_id.to_string(),
+                dispatch_intent_unix_ms: l.dispatch_intent_unix_ms,
             },
         )? {
             AgentReply::Handle { handle } => Ok(Self::wrap(l.global_rank, handle)),

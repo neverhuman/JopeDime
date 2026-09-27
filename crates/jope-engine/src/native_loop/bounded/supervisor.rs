@@ -41,6 +41,26 @@ use std::{
     time::{Duration, Instant},
 };
 
+/// Earliest signed window and local wall ceiling; never renew a submitted job.
+pub fn rank_job_deadline(
+    contract: &super::contract::BoundedRunContract,
+    rank: u32,
+    dispatch_intent_unix_ms: u64,
+) -> Result<u64> {
+    let p = contract.participant(rank).context("rank outside plan")?;
+    let wall_end = dispatch_intent_unix_ms
+        .checked_add(p.ceilings.wall_ms)
+        .context("rank wall deadline overflow")?;
+    let deadline = wall_end
+        .min(p.grant.body.expires_unix_ms)
+        .min(contract.original_deadline_unix_ms);
+    ensure!(
+        dispatch_intent_unix_ms < deadline,
+        "rank execution window is closed"
+    );
+    Ok(deadline)
+}
+
 pub const SERVICE: &str = "jope-bounded-rank";
 pub const SUPERVISOR_NAME: &str = "smartcluster";
 pub const DISPATCH_LABEL: &str = "jope.bounded.dispatch_id";
@@ -277,6 +297,15 @@ impl SmartClusterSupervisor {
             Path::new("launch.json"),
             &serde_json::to_vec(&record)?,
         )?;
+        let now = crate::resident_protocol::now_ms()?;
+        ensure!(
+            l.dispatch_intent_unix_ms <= now,
+            "dispatch intent is in the future"
+        );
+        ensure!(
+            now < rank_job_deadline(l.contract, l.global_rank, l.dispatch_intent_unix_ms)?,
+            "rank execution window expired before remote launch"
+        );
         let spec = JobSpec {
             tenant: self.tenant.clone(),
             project: self.project.clone(),
@@ -294,7 +323,13 @@ impl SmartClusterSupervisor {
             },
             preemption: Default::default(),
             io: Default::default(),
-            deadline: Some(Timestamp::from(l.contract.original_deadline_unix_ms)),
+            // The daemon owns this absolute deadline even if the coordinator blocks or
+            // disappears. The submitted JobSpec persists it across reconnect/recovery.
+            deadline: Some(Timestamp::from(rank_job_deadline(
+                l.contract,
+                l.global_rank,
+                l.dispatch_intent_unix_ms,
+            )?)),
             labels: BTreeMap::from([
                 (DISPATCH_LABEL.to_string(), l.dispatch_id.to_string()),
                 (RUN_LABEL.to_string(), l.contract.run.clone()),
