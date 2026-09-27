@@ -2187,26 +2187,6 @@
       ],
       "scope": "Frozen test-named reference file; not collected."
     },
-    "python:deploy/maintenance/test_report.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "lanes": [],
-      "dispositions": [
-        "maintenance"
-      ],
-      "scope": "Standalone fixture runner; not pytest-collected."
-    },
-    "python:deploy/maintenance/test_wrapper.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "lanes": [],
-      "dispositions": [
-        "maintenance"
-      ],
-      "scope": "Standalone fixture runner; not pytest-collected."
-    },
     "python:python/src/jope/research/test_absolute_path_audit.py": {
       "discovery": {
         "kind": "python-family"
@@ -5163,6 +5143,24 @@
       ],
       "dispositions": [],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:jope-ci/test/build_report": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-ci/tests/build_report.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "dispositions": [
+        "maintenance"
+      ],
+      "scope": "Build-directory report fixture runners (port of the retired deploy/maintenance/test_report.py and test_wrapper.py): candidate selection, refusals, traversal and measurement failures, exact fixture preservation, and configuration/success/overlap/measurement/SIGTERM/failure receipts. Ignored by default: they need JOPE_MAINTENANCE_SCRATCH outside /tmp and Git working trees, like the Python runners' --scratch."
     },
     "target:jope-ci/test/cargo_artifact": {
       "discovery": {

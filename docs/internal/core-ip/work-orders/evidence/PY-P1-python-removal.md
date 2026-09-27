@@ -107,3 +107,47 @@ no installed host file was changed.
   target; test-inventory.json drops the Python family. Prose that told readers to run the
   deleted scripts (README, quickstart, same-cut and regression SOURCES, coverage.md, the matrix
   preamble) names the Rust commands.
+
+## U5 — build-directory report (`deploy/maintenance/jope_report.py`)
+
+- Home: `jope-ci build-report scan|report` (module `build_report`), using jope-records'
+  Python-compatible JSON so the scan documents and receipts keep their shape and key order.
+  SIGTERM/SIGINT still become a failed receipt ("report interrupted by signal N") through
+  `signal-hook` (already in the lock). The wrappers `cargo-build-dirs.sh` and
+  `jope-build-report.sh` exec the `jope-ci` installed beside them; the report wrapper passes its
+  own directory so the receipt still fingerprints the wrappers with the core.
+- One deliberate move: the Python's `APPROVED_ROOTS` constant (two absolute host paths) would
+  fail `just lint-paths` (ADR-0003) inside `crates/`, so the literal stays in
+  `deploy/maintenance/`, now in `jope-build-report.sh`, which passes it as two required
+  `--approved-root` arguments. The fence is unchanged: the report refuses unless exactly two
+  roots are given and the configuration names exactly those, and the wrapper holding them is
+  checksummed in every receipt, as `jope_report.py` was. The fixture runner reads the roots from
+  the wrapper and adds two refusal cases (a single approved root; a configuration naming one).
+- Out of scope, unchanged: the installed `~/lane-tools` copy (still the Python core) and the user
+  units. `deploy/maintenance/README.md` now says how to build and install the Rust core and how
+  to run its fixture runners, and that the superseded installed `jope_report.py` is removed only
+  after its bytes are preserved.
+- Differential run `py-p1-u5-diff-20260927T025057Z` (`comparison.txt`): Python and Rust `scan`
+  on the retired test's fixture tree (with and without `--stale`, a nested root, missing and
+  symlinked roots, `--delete` before and after root validation, bad, negative and missing ages, and
+  an unreadable `.git` subtree the mtime walk must not suppress), `scan` of this lane's real
+  30 GB build tree, and `report` with malformed, key-missing and wrong-root configurations and
+  `/tmp` and working-tree custody. Every exit status matches; documents are identical apart from
+  `completed_at`; receipts are identical apart from timestamps, custody paths and the core's own
+  checksum; failure lines match except argument-parser wording. The first lane scan differed by
+  one 4 KiB block measured moments after a build; the back-to-back re-measure Python, Rust,
+  Python (`scan-lane-rerun.txt`) is identical.
+- Tests: `crates/jope-ci/tests/build_report.rs` ports both fixture runners (ignored by default,
+  `JOPE_MAINTENANCE_SCRATCH` outside `/tmp` and working trees, like the Python `--scratch`); the
+  wrapper runner drives the library with injected scans and measurements, and a real SIGTERM
+  against the binary scanning the approved roots. Pre `py-p1-u5-pre-20260927T025026Z` (both
+  Python runners PASS, 15 + 15 scenarios). Post `py-p1-u5-post-20260927T030252Z`: the full gate
+  plus `cargo test -p jope-ci`, both fixture runners (scratch
+  `py-p1-u5-post-scratch-20260927T030252Z`, including the real SIGTERM run and the two new
+  approved-root refusals), ShellCheck on the wrappers and `deploy/ci/check.sh` all green. Earlier
+  post attempts failed and were fixed, not waived: restored fixture modes (the runner now
+  restores the original modes), `just lint-paths` flagging the approved-root literal (moved to the
+  wrapper, above), and one missed call site.
+- Records: coverage.json and test-inventory.json replace the two Python fixture families with
+  `target:jope-ci/test/build_report` (disposition `maintenance`, role `infrastructure`); the
+  jope-ci capability row names both ports.

@@ -4,6 +4,7 @@ use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
 use clap::{Args, Parser, Subcommand};
+use jope_ci::build_report;
 use jope_ci::cargo_artifact::{self, Build, Failure};
 
 #[derive(Parser)]
@@ -23,6 +24,106 @@ enum Top {
         #[command(subcommand)]
         command: Artifact,
     },
+    /// Report Cargo candidates and allocated disk usage without changing scanned files.
+    ///
+    /// Report only: `--delete` is refused before anything is read. Cargo markers never establish
+    /// that contents are disposable.
+    BuildReport {
+        #[command(subcommand)]
+        command: Report,
+    },
+}
+
+#[derive(Subcommand)]
+enum Report {
+    /// Print ROOT's outermost Cargo candidates as JSON.
+    Scan {
+        root: PathBuf,
+        /// Only candidates whose newest content is at least this many whole hours old.
+        #[arg(long, value_parser = build_report::whole_hours)]
+        stale: Option<u64>,
+    },
+    /// Scan the two approved roots, measure the configured roots and keep a receipt under
+    /// CUSTODY (outside /tmp and Git working trees).
+    Report {
+        #[arg(long)]
+        config: PathBuf,
+        #[arg(long)]
+        custody: PathBuf,
+        /// Where the wrapper scripts live, for the receipt's checksums (default: this
+        /// executable's directory; the wrappers pass their own).
+        #[arg(long)]
+        tools_dir: Option<PathBuf>,
+        /// One of the two approved Cargo roots (given twice; host layout, so the installed
+        /// wrapper `jope-build-report.sh` passes them). The configuration must name exactly these.
+        #[arg(long = "approved-root", value_name = "DIR", required = true)]
+        approved_roots: Vec<String>,
+    },
+}
+
+fn build_report_command(command: Report) -> ExitCode {
+    let failed = |error: build_report::Failure| {
+        eprintln!("report failed: {error}");
+        ExitCode::from(1)
+    };
+    match command {
+        Report::Scan { root, stale } => {
+            let measure = |path: &Path, privileged: bool| {
+                build_report::allocated(path, privileged, &build_report::never_interrupted)
+            };
+            match build_report::scan(&root, stale, &build_report::never_interrupted, &measure) {
+                Ok(document) => {
+                    println!("{}", jope_records::pyjson::dumps(&document, false, Some(2)));
+                    ExitCode::SUCCESS
+                }
+                Err(error) => failed(error),
+            }
+        }
+        Report::Report {
+            config,
+            custody,
+            tools_dir,
+            approved_roots,
+        } => {
+            let interrupt = match build_report::signal_interrupt() {
+                Ok(interrupt) => interrupt,
+                Err(error) => return failed(build_report::Failure::new(error.to_string())),
+            };
+            let tools = tools_dir.unwrap_or_else(|| {
+                std::env::current_exe()
+                    .and_then(|p| p.canonicalize())
+                    .ok()
+                    .and_then(|p| p.parent().map(Path::to_path_buf))
+                    .unwrap_or_default()
+            });
+            let scan = |root: &str, interrupt: build_report::Interrupt<'_>| {
+                let measure = |path: &Path, privileged: bool| {
+                    build_report::allocated(path, privileged, interrupt)
+                };
+                build_report::scan(Path::new(root), Some(48), interrupt, &measure)
+            };
+            let measure =
+                |path: &Path, privileged: bool, interrupt: build_report::Interrupt<'_>| {
+                    build_report::allocated(path, privileged, interrupt)
+                };
+            let hooks = build_report::Hooks {
+                scan: &scan,
+                measure: &measure,
+            };
+            match build_report::report(
+                &config,
+                &custody,
+                &tools,
+                &approved_roots,
+                &hooks,
+                &interrupt,
+            ) {
+                Ok(0) => ExitCode::SUCCESS,
+                Ok(_) => ExitCode::from(1),
+                Err(error) => failed(error),
+            }
+        }
+    }
 }
 
 #[derive(Args)]
@@ -153,7 +254,13 @@ fn artifact(command: Artifact) -> Result<String, Failure> {
 }
 
 fn main() -> ExitCode {
+    let args: Vec<String> = std::env::args().collect();
+    if args.get(1).is_some_and(|a| a == "build-report") && args.iter().any(|a| a == "--delete") {
+        eprintln!("{}", build_report::DELETE_REFUSAL);
+        return ExitCode::from(2);
+    }
     match Cli::parse().command {
+        Top::BuildReport { command } => build_report_command(command),
         Top::CargoArtifact { command } => match artifact(command) {
             Ok(line) if line.is_empty() => ExitCode::SUCCESS,
             Ok(line) => {

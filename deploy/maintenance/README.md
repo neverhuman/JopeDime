@@ -16,8 +16,13 @@ and verify it, check current consumers, then remove the explicit approved paths.
 
 The installed entrypoints remain `~/lane-tools/cargo-build-dirs.sh` and the
 user units `jope-build-sweep.service` / `.timer`. The service calls
-`~/lane-tools/jope-build-report.sh`; install `jope_report.py` beside both helpers.
-Python 3 and GNU coreutils are required. Pass the custody location through
+`~/lane-tools/jope-build-report.sh`. Both wrappers run the report core
+`jope-ci build-report` (crate `crates/jope-ci`), which must sit beside them; it replaced
+`jope_report.py` (Python removal P1, archived at `8a55c4fef`) with the same candidate rule,
+JSON documents, receipts and failure behaviour. The two approved Cargo roots are host layout
+and are passed by `jope-build-report.sh` (`--approved-root`, twice); the configuration must name
+exactly those. GNU coreutils are required; Python is not.
+Pass the custody location through
 the service's `--custody` argument, independently of `--config`, so malformed
 configuration still gets a failure receipt. Custody inside `/tmp` or a Git working
 tree is rejected. If custody itself cannot be created/accessed, diagnostics remain
@@ -63,23 +68,30 @@ failure is recorded, never bypassed. Cargo scanning remains unprivileged.
 
 Before installation, claim the files and preserve their installed bytes and
 systemd readback under custody. Stop the existing timer and service. Run shell
-syntax checks, ShellCheck, the fixture test below, and `systemd-analyze --user
-verify` on the units. Install the three helper files, local root configuration
-and two units, then `systemctl --user daemon-reload`. Manually start the service,
+syntax checks, ShellCheck, the fixture tests below, and `systemd-analyze --user
+verify` on the units. Build the core with `cargo build --release --locked -p jope-ci`
+from a clean checkout and install the three helper files (`install -m 0755
+target/release/jope-ci deploy/maintenance/cargo-build-dirs.sh
+deploy/maintenance/jope-build-report.sh ~/lane-tools/`), the local root configuration
+and two units, then `systemctl --user daemon-reload`. Remove the superseded
+`~/lane-tools/jope_report.py` only after preserving its bytes under custody. Manually start the service,
 inspect its receipt and `systemctl --user cat/show` readback, then enable and
 start the timer. Verify `loginctl show-user ubuntu -p Linger` reports `Linger=yes`
 so the user manager can run without a login session. Its calendar is explicitly `04:00:00 UTC`, with
 `Persistent=true`. On failure leave automatic deletion stopped.
 
-Run `python3 deploy/maintenance/test_report.py --scratch CUSTODY_FIXTURE_DIR`.
-Run `python3 deploy/maintenance/test_wrapper.py --scratch CUSTODY_WRAPPER_FIXTURE_DIR`
-for configuration, success, overlap, measurement, interruption and failure receipts.
-The tests reject Python optimization mode because their assertions are required.
-Fixtures and their before/after hashes stay under that explicit non-`/tmp`
-directory. The fixture directory is proof evidence, not a working lane. Test the
-installed helper too with `--helper /home/ubuntu/lane-tools/cargo-build-dirs.sh`.
+Run the fixture tests with
+`JOPE_MAINTENANCE_SCRATCH=CUSTODY_FIXTURE_DIR cargo test --locked -p jope-ci --test build_report -- --ignored`:
+`scan_preserves_fixtures_and_fails_visibly` covers candidate selection, refusals, traversal
+and measurement failures and exact fixture preservation; `report_receipts_record_every_outcome`
+covers configuration, success, overlap, measurement, interruption (a real SIGTERM while the
+approved roots are scanned) and failure receipts. Fixtures, inventories and `results.json`
+stay under that explicit directory, which must be outside `/tmp` and outside Git working
+trees. The fixture directory is proof evidence, not a working lane. Test the installed
+helper too with `JOPE_MAINTENANCE_HELPER=/home/ubuntu/lane-tools/cargo-build-dirs.sh`.
 The next-day measurement is a separate acceptance gate: scheduling it does not
 mean it happened. Keep PR #49 open until its actual successful report is recorded.
 
-Test the installed wrapper core with `test_wrapper.py --core /home/ubuntu/lane-tools/jope_report.py`,
-using the same required `--scratch` argument. Both test receipts fingerprint the test script.
+Until the installed copy is replaced, `~/lane-tools` still runs the Python `jope_report.py`;
+this repository no longer carries it (restore with `git checkout 8a55c4fef --
+deploy/maintenance/jope_report.py` if that installed copy must be re-verified).
