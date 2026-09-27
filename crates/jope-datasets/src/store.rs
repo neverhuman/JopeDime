@@ -35,6 +35,54 @@ pub enum PutOutcome {
     Exists,
 }
 
+/// A store URL as [`Store::open_with`] reads it. The store and every caller that must agree with
+/// it about where it writes (the W8 publishing preflight,
+/// `jope_learning::progress::remote::preflight_publishing_store`) take it from here, so the two
+/// cannot disagree:
+/// - a bare filesystem path becomes a `file://` URL;
+/// - `url::Url` parses and normalizes it: the scheme is lower-cased, and `.` and `..` segments
+///   (percent-encoded ones included) are removed;
+/// - an `s3://` or `s3a://` URL names its bucket and the object prefix every key is written under.
+#[derive(Clone, Debug)]
+pub struct StoreLocation {
+    /// The URL the store opens and records ([`Store::url`]).
+    pub url: String,
+    pub parsed: Url,
+    /// The bucket and effective object prefix of an S3 store; `None` for every other backend.
+    pub s3: Option<S3Location>,
+}
+
+/// Where an S3 store writes.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct S3Location {
+    pub bucket: String,
+    /// Empty when the store writes at the bucket root. A path `object_store` cannot parse as a
+    /// prefix (an empty segment, for one) is the root as well: that is where the store writes.
+    pub prefix: ObjPath,
+}
+
+impl StoreLocation {
+    pub fn parse(url: &str) -> Result<StoreLocation> {
+        let url_string = if url.contains("://") {
+            url.to_string()
+        } else {
+            let abs =
+                std::path::absolute(url).with_context(|| format!("absolute path of {url}"))?;
+            format!("file://{}", abs.display())
+        };
+        let parsed = Url::parse(&url_string).with_context(|| format!("parse {url_string}"))?;
+        let s3 = matches!(parsed.scheme(), "s3" | "s3a").then(|| S3Location {
+            bucket: parsed.host_str().unwrap_or_default().to_owned(),
+            prefix: ObjPath::parse(parsed.path().trim_matches('/')).unwrap_or_default(),
+        });
+        Ok(StoreLocation {
+            url: url_string,
+            parsed,
+            s3,
+        })
+    }
+}
+
 /// `JOPE_DATASETS_URL`, else the default bucket.
 pub fn datasets_url() -> String {
     std::env::var("JOPE_DATASETS_URL")
@@ -55,16 +103,14 @@ impl Store {
         Store::open_with(url, anonymous)
     }
 
-    /// [`Store::open`] with an explicit choice of anonymous (unsigned) S3 requests.
+    /// [`Store::open`] with an explicit choice of anonymous (unsigned) S3 requests. The URL is read
+    /// by [`StoreLocation::parse`].
     pub fn open_with(url: &str, anonymous: bool) -> Result<Store> {
-        let url_string = if url.contains("://") {
-            url.to_string()
-        } else {
-            let abs =
-                std::path::absolute(url).with_context(|| format!("absolute path of {url}"))?;
-            format!("file://{}", abs.display())
-        };
-        let parsed = Url::parse(&url_string).with_context(|| format!("parse {url_string}"))?;
+        let StoreLocation {
+            url: url_string,
+            parsed,
+            s3,
+        } = StoreLocation::parse(url)?;
         let local_root = if parsed.scheme() == "file" {
             Some(
                 parsed
@@ -74,8 +120,8 @@ impl Store {
         } else {
             None
         };
-        let (inner, prefix): (Box<dyn ObjectStore>, ObjPath) = match parsed.scheme() {
-            "s3" | "s3a" => {
+        let (inner, prefix): (Box<dyn ObjectStore>, ObjPath) = match s3 {
+            Some(S3Location { prefix, .. }) => {
                 // object_store's default request timeout is 30 s, which a 200–250 MB blob GET
                 // exceeds on a shared link (seen against the real bucket: "request or response
                 // body error" on the three largest starforge/hyperion blobs); allow up to an
@@ -100,10 +146,11 @@ impl Store {
                     builder = credentials.apply_to(builder);
                 }
                 let store = builder.build().context("build S3 store")?;
-                let prefix = ObjPath::parse(parsed.path().trim_matches('/')).unwrap_or_default();
                 (Box::new(store), prefix)
             }
-            _ => object_store::parse_url(&parsed).with_context(|| format!("open {url_string}"))?,
+            None => {
+                object_store::parse_url(&parsed).with_context(|| format!("open {url_string}"))?
+            }
         };
         Ok(Store {
             inner,
