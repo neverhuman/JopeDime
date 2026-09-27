@@ -2691,7 +2691,13 @@ fn latest_rating(
 /// Rebuild and atomically publish the four-task telemetry authority from
 /// read-only snapshots. Missing source evidence becomes typed N/A, never zero.
 pub fn four_task_telemetry(root: &Path) -> Result<JopeFourTaskTelemetryV1> {
-    let now = now_ms();
+    four_task_telemetry_at(root, now_ms())
+}
+
+/// [`four_task_telemetry`] at one explicit wall-clock instant (Unix milliseconds).
+/// Every age, freshness verdict and per-minute window in the snapshot is measured
+/// from `now`, so the rebuild is a function of the snapshots and this instant.
+fn four_task_telemetry_at(root: &Path, now: i64) -> Result<JopeFourTaskTelemetryV1> {
     let catalog = telemetry_catalog(root)?;
     let dataset_state = telemetry_dataset_state(root)?;
     let corpus = telemetry_corpus(root, &catalog, now)?;
@@ -4393,6 +4399,9 @@ mod tests {
                ('timeseries','t1',1,1,0);",
         )?;
         drop(state);
+        // One injected instant for the observation and both rebuilds: the rows depend
+        // on the snapshots and this clock only, never on how long the rebuild took.
+        let now = now_ms();
         let corpus = open_corpus(&root.join("corpus/strict-test-exact.sqlite"))?;
         insert_curve_row(
             &corpus,
@@ -4400,7 +4409,7 @@ mod tests {
             "(pipe X (ridge))",
             "robust_gp_seed_bank",
             &digest('a'),
-            now_ms(),
+            now,
         )?;
         corpus.execute(
             "UPDATE observations SET score=-99.0 WHERE task='regression' AND dataset_hash='r1'",
@@ -4408,9 +4417,25 @@ mod tests {
         )?;
         drop(corpus);
 
-        let first = four_task_telemetry(root)?;
-        let second = four_task_telemetry(root)?;
+        let first = four_task_telemetry_at(root, now)?;
+        let second = four_task_telemetry_at(root, now)?;
         assert_eq!(first.rows, second.rows);
+        assert_eq!(
+            first.rows[0].freshness_reason,
+            "fresh — last observation 0s ago"
+        );
+        // Ages follow the injected clock across the second and staleness boundaries.
+        let later = four_task_telemetry_at(root, now + 1_000)?;
+        assert_ne!(later.rows, first.rows);
+        assert_eq!(
+            later.rows[0].freshness_reason,
+            "fresh — last observation 1s ago"
+        );
+        let stale = four_task_telemetry_at(root, now + 901_000)?;
+        assert_eq!(
+            stale.rows[0].freshness_reason,
+            "stale — last observation 901s ago"
+        );
         assert_eq!(
             first.rows.iter().map(|row| row.task).collect::<Vec<_>>(),
             FOUR_TASK_ORDER

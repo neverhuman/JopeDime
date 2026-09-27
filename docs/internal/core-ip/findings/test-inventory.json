@@ -2541,7 +2541,7 @@
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z",
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-hostlane-20260926T051335Z"
       ],
-      "note": "Real-corpus fixture; roots now resolve via ADR-0003. Passes in the host lane with the read-only custody inputs; CI has no such inputs, so it stays a visible failure there."
+      "note": "Real-corpus fixture; roots now resolve via ADR-0003. Passes in the host lane with the read-only custody inputs; CI has no such inputs. The health follow-up routes this exact case to deploy/ci/real-corpus-tests.txt and the manifest-verified host-real-corpus lane; it remains collected but explicitly ignored in credential-free CI. Missing host inputs remain unavailable, not passing."
     },
     {
       "lane": "full-default",
@@ -2554,7 +2554,7 @@
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z",
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-hostlane-20260926T051335Z"
       ],
-      "note": "Real-corpus fixture; roots now resolve via ADR-0003. Passes in the host lane with the read-only custody inputs; CI has no such inputs, so it stays a visible failure there."
+      "note": "Real-corpus fixture; roots now resolve via ADR-0003. Passes in the host lane with the read-only custody inputs; CI has no such inputs. The health follow-up routes this exact case to deploy/ci/real-corpus-tests.txt and the manifest-verified host-real-corpus lane; it remains collected but explicitly ignored in credential-free CI. Missing host inputs remain unavailable, not passing."
     },
     {
       "lane": "full-default",
@@ -2567,7 +2567,7 @@
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z",
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-hostlane-20260926T051335Z"
       ],
-      "note": "Historical production context catalog not located on this host or in CI; explicit unavailable precondition added."
+      "note": "Historical production context catalog not located on this host or in CI; explicit unavailable precondition added. Health follow-up routes this exact case to deploy/ci/real-corpus-tests.txt and the manifest-verified host-real-corpus lane; it remains collected but explicitly ignored in credential-free CI. Missing host inputs remain unavailable, not passing."
     },
     {
       "lane": "full-default",
@@ -2579,7 +2579,7 @@
       "evidence": [
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z"
       ],
-      "note": "Binary classification is deferred; real-corpus inputs are absent here and in CI. Fails with an explicit unavailable message."
+      "note": "Binary classification is deferred; real-corpus inputs are absent here and in CI. Fails with an explicit unavailable message. Health follow-up routes this exact case to deploy/ci/real-corpus-tests.txt and the manifest-verified host-real-corpus lane; it remains collected but explicitly ignored in credential-free CI. Missing host inputs remain unavailable, not passing."
     },
     {
       "lane": "full-default",
@@ -2591,7 +2591,7 @@
       "evidence": [
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z"
       ],
-      "note": "Binary classification is deferred; real-corpus inputs are absent here and in CI. Fails with an explicit unavailable message."
+      "note": "Binary classification is deferred; real-corpus inputs are absent here and in CI. Fails with an explicit unavailable message. Health follow-up routes this exact case to deploy/ci/real-corpus-tests.txt and the manifest-verified host-real-corpus lane; it remains collected but explicitly ignored in credential-free CI. Missing host inputs remain unavailable, not passing."
     },
     {
       "lane": "full-default",
@@ -2604,7 +2604,7 @@
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z",
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-hostlane-20260926T051335Z"
       ],
-      "note": "Real-corpus fixture; roots now resolve via ADR-0003. Passes in the host lane with the read-only custody inputs; CI has no such inputs, so it stays a visible failure there."
+      "note": "Real-corpus fixture; roots now resolve via ADR-0003. Passes in the host lane with the read-only custody inputs; CI has no such inputs. The health follow-up routes this exact case to deploy/ci/real-corpus-tests.txt and the manifest-verified host-real-corpus lane; it remains collected but explicitly ignored in credential-free CI. Missing host inputs remain unavailable, not passing."
     },
     {
       "lane": "full-default",
@@ -2617,7 +2617,7 @@
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z",
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-hostlane-20260926T051335Z"
       ],
-      "note": "Real-corpus fixture; roots now resolve via ADR-0003. Passes in the host lane with the read-only custody inputs; CI has no such inputs, so it stays a visible failure there."
+      "note": "Real-corpus fixture; roots now resolve via ADR-0003. Passes in the host lane with the read-only custody inputs; CI has no such inputs. The health follow-up routes this exact case to deploy/ci/real-corpus-tests.txt and the manifest-verified host-real-corpus lane; it remains collected but explicitly ignored in credential-free CI. Missing host inputs remain unavailable, not passing."
     },
     {
       "lane": "full-default",
@@ -2630,7 +2630,7 @@
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z",
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-hostlane-20260926T051335Z"
       ],
-      "note": "Real-corpus fixture; roots now resolve via ADR-0003. Passes in the host lane with the read-only custody inputs; CI has no such inputs, so it stays a visible failure there."
+      "note": "Real-corpus fixture; roots now resolve via ADR-0003. Passes in the host lane with the read-only custody inputs; CI has no such inputs. The health follow-up routes this exact case to deploy/ci/real-corpus-tests.txt and the manifest-verified host-real-corpus lane; it remains collected but explicitly ignored in credential-free CI. Missing host inputs remain unavailable, not passing."
     },
     {
       "lane": "full-default",
@@ -2760,7 +2760,7 @@
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z",
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-hostlane-20260926T051335Z"
       ],
-      "note": "Real-corpus fixture; roots now resolve via ADR-0003. Passes in the host lane with the read-only custody inputs; CI has no such inputs, so it stays a visible failure there."
+      "note": "Real-corpus fixture; roots now resolve via ADR-0003. Passes in the host lane with the read-only custody inputs; CI has no such inputs. The health follow-up routes this exact case to deploy/ci/real-corpus-tests.txt and the manifest-verified host-real-corpus lane; it remains collected but explicitly ignored in credential-free CI. Missing host inputs remain unavailable, not passing."
     },
     {
       "lane": "full-scratch",
@@ -2773,7 +2773,7 @@
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z",
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-hostlane-20260926T051335Z"
       ],
-      "note": "Real-corpus fixture; roots now resolve via ADR-0003. Passes in the host lane with the read-only custody inputs; CI has no such inputs, so it stays a visible failure there."
+      "note": "Real-corpus fixture; roots now resolve via ADR-0003. Passes in the host lane with the read-only custody inputs; CI has no such inputs. The health follow-up routes this exact case to deploy/ci/real-corpus-tests.txt and the manifest-verified host-real-corpus lane; it remains collected but explicitly ignored in credential-free CI. Missing host inputs remain unavailable, not passing."
     },
     {
       "lane": "full-scratch",
@@ -2786,7 +2786,7 @@
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z",
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-hostlane-20260926T051335Z"
       ],
-      "note": "Historical production context catalog not located on this host or in CI; explicit unavailable precondition added."
+      "note": "Historical production context catalog not located on this host or in CI; explicit unavailable precondition added. Health follow-up routes this exact case to deploy/ci/real-corpus-tests.txt and the manifest-verified host-real-corpus lane; it remains collected but explicitly ignored in credential-free CI. Missing host inputs remain unavailable, not passing."
     },
     {
       "lane": "full-scratch",
@@ -2798,7 +2798,7 @@
       "evidence": [
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z"
       ],
-      "note": "Binary classification is deferred; real-corpus inputs are absent here and in CI. Fails with an explicit unavailable message."
+      "note": "Binary classification is deferred; real-corpus inputs are absent here and in CI. Fails with an explicit unavailable message. Health follow-up routes this exact case to deploy/ci/real-corpus-tests.txt and the manifest-verified host-real-corpus lane; it remains collected but explicitly ignored in credential-free CI. Missing host inputs remain unavailable, not passing."
     },
     {
       "lane": "full-scratch",
@@ -2810,7 +2810,7 @@
       "evidence": [
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z"
       ],
-      "note": "Binary classification is deferred; real-corpus inputs are absent here and in CI. Fails with an explicit unavailable message."
+      "note": "Binary classification is deferred; real-corpus inputs are absent here and in CI. Fails with an explicit unavailable message. Health follow-up routes this exact case to deploy/ci/real-corpus-tests.txt and the manifest-verified host-real-corpus lane; it remains collected but explicitly ignored in credential-free CI. Missing host inputs remain unavailable, not passing."
     },
     {
       "lane": "full-scratch",
@@ -2823,7 +2823,7 @@
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z",
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-hostlane-20260926T051335Z"
       ],
-      "note": "Real-corpus fixture; roots now resolve via ADR-0003. Passes in the host lane with the read-only custody inputs; CI has no such inputs, so it stays a visible failure there."
+      "note": "Real-corpus fixture; roots now resolve via ADR-0003. Passes in the host lane with the read-only custody inputs; CI has no such inputs. The health follow-up routes this exact case to deploy/ci/real-corpus-tests.txt and the manifest-verified host-real-corpus lane; it remains collected but explicitly ignored in credential-free CI. Missing host inputs remain unavailable, not passing."
     },
     {
       "lane": "full-scratch",
@@ -2836,7 +2836,7 @@
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z",
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-hostlane-20260926T051335Z"
       ],
-      "note": "Real-corpus fixture; roots now resolve via ADR-0003. Passes in the host lane with the read-only custody inputs; CI has no such inputs, so it stays a visible failure there."
+      "note": "Real-corpus fixture; roots now resolve via ADR-0003. Passes in the host lane with the read-only custody inputs; CI has no such inputs. The health follow-up routes this exact case to deploy/ci/real-corpus-tests.txt and the manifest-verified host-real-corpus lane; it remains collected but explicitly ignored in credential-free CI. Missing host inputs remain unavailable, not passing."
     },
     {
       "lane": "full-scratch",
@@ -2849,7 +2849,7 @@
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z",
         "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-hostlane-20260926T051335Z"
       ],
-      "note": "Real-corpus fixture; roots now resolve via ADR-0003. Passes in the host lane with the read-only custody inputs; CI has no such inputs, so it stays a visible failure there."
+      "note": "Real-corpus fixture; roots now resolve via ADR-0003. Passes in the host lane with the read-only custody inputs; CI has no such inputs. The health follow-up routes this exact case to deploy/ci/real-corpus-tests.txt and the manifest-verified host-real-corpus lane; it remains collected but explicitly ignored in credential-free CI. Missing host inputs remain unavailable, not passing."
     },
     {
       "lane": "full-scratch",

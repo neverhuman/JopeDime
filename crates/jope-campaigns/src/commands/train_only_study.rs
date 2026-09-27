@@ -5727,6 +5727,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "real-corpus: private inputs require the explicit host-real-corpus lane"]
     fn production_sotarena_registry_freezes_exact_37_to_requested_10() {
         let qualified_root = std::env::var_os("JOPE_TEST_SOTARENA_ROOT").map(PathBuf::from);
         let sotarena_root = qualified_root

@@ -6131,6 +6131,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "deferred-classification: binary42 inputs require the explicit host-real-corpus lane"]
     fn all_frozen_dataset_bindings_and_binary_labels_are_valid() {
         let (cohort, _) = read_cohort().unwrap();
         assert_eq!(cohort.datasets.len(), 42);
@@ -6267,6 +6268,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "deferred-classification: binary42 inputs require the explicit host-real-corpus lane"]
     fn binary42_fitted_cpp17_predictions_match_rust_bits() {
         let (cohort, _) = read_cohort().unwrap();
         let spec = qualified_dataset(

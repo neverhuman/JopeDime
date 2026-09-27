@@ -737,6 +737,11 @@ pub fn worker_device(
 
 pub fn run(root: &Path, manifest_path: &Path, rank: usize, world: usize) -> Result<()> {
     crate::task_contract::require_qualified_gpu_experiment("propose-ranked")?;
+    run_admitted(root, manifest_path, rank, world)
+}
+
+// Private post-admission implementation. Public callers must cross the hold above.
+fn run_admitted(root: &Path, manifest_path: &Path, rank: usize, world: usize) -> Result<()> {
     let canonical_root = root.canonicalize()?;
     let root = canonical_root.as_path();
     ensure!(
@@ -1159,3 +1164,6 @@ mod tests {
         assert_eq!(generic.iter().collect::<BTreeSet<_>>().len(), 64);
     }
 }
+
+#[cfg(test)]
+mod manifest_run_tests;

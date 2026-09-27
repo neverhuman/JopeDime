@@ -41,6 +41,11 @@ test-pr-all:
 test-main:
     env OMP_NUM_THREADS=1 RAYON_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 JOPE_PARITY_STRICT=1 cargo nextest run -P main --workspace --locked -j 32
 
+# host lane: the real-corpus and deferred-classification fixtures every CI family ignores
+# (deploy/ci/real-corpus-tests.txt), run against a read-only custody copy of their inputs
+test-real-corpus custody:
+    bash deploy/ci/real-corpus-lane.sh {{custody}}
+
 python-check:
     cd python && uv run ruff check . && uv run ruff format --check . && uv run pytest -q -m "not xbabe2"
 

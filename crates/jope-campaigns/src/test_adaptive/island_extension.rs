@@ -4875,6 +4875,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "real-corpus: private inputs require the explicit host-real-corpus lane"]
     fn prior_no_win_cohort_reconstructs_in_order() {
         require_historical_run("test-adaptive-golden42-v1");
         require_historical_run(&extension_run_id("test-adaptive-golden42-v1"));
@@ -4914,6 +4915,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "real-corpus: private inputs require the explicit host-real-corpus lane"]
     fn sealed_generation_29_artifacts_bind_seven_champion_continuations() {
         require_historical_run(&island_run_id("test-adaptive-golden42-v1"));
         let bindings = champion_bindings("test-adaptive-golden42-v1").unwrap();
@@ -4936,6 +4938,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "real-corpus: private inputs require the explicit host-real-corpus lane"]
     fn generation_30_populations_reconstruct_deterministically() {
         let registry = paths::jope_registry();
         assert!(

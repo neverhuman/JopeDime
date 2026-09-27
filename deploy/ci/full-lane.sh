@@ -81,8 +81,15 @@ assert text.count(needle) == 1
 path.write_text(text.replace(needle, 'path = ' + json.dumps(str(root / 'junit.xml'))))
 PY
     cargo nextest list --config-file "$EVIDENCE/nextest.toml" -P main --locked "${selection[@]}" --message-format json > "$EVIDENCE/collection.json"
+    case $lane in
+      full-default|full-scratch)
+        bash deploy/ci/check-test-routing.sh cpu "$EVIDENCE/collection.json"
+        bash deploy/ci/check-test-routing.sh host "$EVIDENCE/collection.json"
+        ;;
+      full-neural) bash deploy/ci/check-test-routing.sh neural "$EVIDENCE/collection.json" ;;
+    esac
     touch "$EVIDENCE/nextest-started"
-    cargo nextest run --config-file "$EVIDENCE/nextest.toml" -P main --locked --test-threads 16 "${selection[@]}"
+    cargo nextest run --config-file "$EVIDENCE/nextest.toml" -P main --locked --test-threads "${JOPE_CPU_TEST_THREADS:-16}" "${selection[@]}"
     case $lane in
       full-default) python3 deploy/ci/training-proof.py rust --collection "$EVIDENCE/collection.json" --junit "$EVIDENCE/junit.xml" ;;
       full-policy) python3 deploy/ci/training-proof.py policy --collection "$EVIDENCE/collection.json" --junit "$EVIDENCE/junit.xml" ;;

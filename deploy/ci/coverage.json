@@ -86,7 +86,9 @@
         "cargo run -q --locked -p jope-records -- conformance",
         "cargo run -q --locked -p jope-records -- task-status",
         "cargo run -q --locked -p jope-records -- progress-view",
-        "cargo run -q --locked -p jope-records -- elo-history --require-all"
+        "cargo run -q --locked -p jope-records -- elo-history --require-all",
+        "bash deploy/ci/test-test-routing.sh",
+        "bash deploy/ci/test-real-corpus-lane.sh"
       ]
     },
     "rust-check": {
@@ -442,14 +444,17 @@
         "OMP_NUM_THREADS": "1",
         "RAYON_NUM_THREADS": "1",
         "OPENBLAS_NUM_THREADS": "1",
-        "MKL_NUM_THREADS": "1"
+        "MKL_NUM_THREADS": "1",
+        "JOPE_CPU_TEST_THREADS": "16 by default; may be lowered within the original resource allowance"
       },
       "inputs": [
         "source SHA",
         "Cargo.lock",
         "python/uv.lock",
         "deploy/ci/full-lane.sh",
-        "declared repository fixtures"
+        "declared repository fixtures",
+        "deploy/ci/neural-cpu-only-tests.txt: contracts must be executable here",
+        "deploy/ci/real-corpus-tests.txt: host-only exclusions"
       ],
       "path_applicability": "every push to main and manual dispatch of main; diagnostic only",
       "evidence": [
@@ -527,14 +532,17 @@
         "OMP_NUM_THREADS": "1",
         "RAYON_NUM_THREADS": "1",
         "OPENBLAS_NUM_THREADS": "1",
-        "MKL_NUM_THREADS": "1"
+        "MKL_NUM_THREADS": "1",
+        "JOPE_CPU_TEST_THREADS": "16 by default; may be lowered within the original resource allowance"
       },
       "inputs": [
         "source SHA",
         "Cargo.lock",
         "python/uv.lock",
         "deploy/ci/full-lane.sh",
-        "declared repository fixtures"
+        "declared repository fixtures",
+        "deploy/ci/neural-cpu-only-tests.txt: contracts must be executable here",
+        "deploy/ci/real-corpus-tests.txt: host-only exclusions"
       ],
       "path_applicability": "every push to main and manual dispatch of main; diagnostic only",
       "evidence": [
@@ -656,14 +664,16 @@
         "OMP_NUM_THREADS": "1",
         "RAYON_NUM_THREADS": "1",
         "OPENBLAS_NUM_THREADS": "1",
-        "MKL_NUM_THREADS": "1"
+        "MKL_NUM_THREADS": "1",
+        "JOPE_CPU_TEST_THREADS": "16 by default; may be lowered within the original resource allowance"
       },
       "inputs": [
         "source SHA",
         "Cargo.lock",
         "python/uv.lock",
         "deploy/ci/full-lane.sh",
-        "declared repository fixtures"
+        "declared repository fixtures",
+        "deploy/ci/neural-cpu-only-tests.txt: exact CPU-service exclusions, active in default/scratch"
       ],
       "path_applicability": "every push to main and manual dispatch of main; diagnostic only",
       "evidence": [
@@ -821,6 +831,51 @@
       "stage": "execution",
       "result_backend": "none",
       "feature_selection": "not-applicable"
+    },
+    "host-real-corpus": {
+      "command": [
+        "bash",
+        "deploy/ci/real-corpus-lane.sh",
+        "CUSTODY_ROOT"
+      ],
+      "environment": {
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "line-tables-only",
+        "CARGO_TARGET_DIR": "the host lane's reused target",
+        "SOTARENA_ROOT": "CUSTODY_ROOT/sotarena",
+        "JOPE_STATE": "CUSTODY_ROOT/state",
+        "JOPE_REGISTRY": "CUSTODY_ROOT/registry",
+        "OMP_NUM_THREADS": "1",
+        "RAYON_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "SOTARENA_REPORTER_ROOT": "CUSTODY_ROOT/state/arena",
+        "JOPE_TEST_SOTARENA_ROOT": "CUSTODY_ROOT/state/arena",
+        "JOPE_BINARY42_TEST_DATA_ROOT": "CUSTODY_ROOT/binary42/data",
+        "JOPE_BINARY42_TEST_REPORT_ROOT": "CUSTODY_ROOT/binary42/reports"
+      },
+      "inputs": [
+        "source SHA",
+        "Cargo.lock",
+        "deploy/ci/real-corpus-tests.txt",
+        "read-only custody copy verified against its MANIFEST.sha256",
+        "CUSTODY_ROOT/binary42/{data,reports} when provisioned (deferred binary42 inputs)"
+      ],
+      "path_applicability": "manual host run only, never a CI workflow job; the listed tests are ignored in every CI family",
+      "evidence": [
+        "custody manifest verification and provenance",
+        "ignored-test collection count equal to the list",
+        "per-test nextest outcomes; absent inputs fail with explicit unavailable messages"
+      ],
+      "requires_nonzero_tests": true,
+      "stage": "execution",
+      "result_backend": "nextest",
+      "feature_selection": "package-defaults",
+      "checks": [
+        "reject writable/link/special files and compare sorted MANIFEST.sha256 with hashes of the complete discovered regular-file closure",
+        "cargo nextest list -P main --locked -p jope-dime-regressor --run-ignored only -E <listed tests>",
+        "cargo nextest run -P main --locked -p jope-dime-regressor --run-ignored only --no-fail-fast -E <listed tests>"
+      ]
     }
   },
   "dispositions": {
@@ -5370,12 +5425,13 @@
       "lanes": [
         "rust-check",
         "inputs",
-        "full-default"
+        "full-default",
+        "host-real-corpus"
       ],
       "dispositions": [
         "runtime-tools"
       ],
-      "scope": "The inputs lane additionally executes only commands::train_only_redteam::tests::bradley_terry, with a counted nested receipt and nonzero guard. Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately. Binary/example runtime behavior is not claimed by build or its unit-test harness."
+      "scope": "Its real-corpus island/train-only fixtures and deferred binary42 fixtures are ignored in every CI family and execute only in the host-real-corpus lane (deploy/ci/real-corpus-tests.txt). The inputs lane additionally executes only commands::train_only_redteam::tests::bradley_terry, with a counted nested receipt and nonzero guard. Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately. Binary/example runtime behavior is not claimed by build or its unit-test harness."
     },
     "target:jope-dime-regressor/bin/jope_canary_executor": {
       "discovery": {
@@ -6305,10 +6361,11 @@
       },
       "lanes": [
         "rust-check",
-        "full-default"
+        "full-default",
+        "host-real-corpus"
       ],
       "dispositions": [],
-      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+      "scope": "Its real-corpus fixtures are ignored in every CI family and execute only in the host-real-corpus lane (deploy/ci/real-corpus-tests.txt). Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
     "target:jope-dime-regressor/test/dlgp_budget_campaign": {
       "discovery": {

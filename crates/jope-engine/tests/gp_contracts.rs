@@ -5,6 +5,10 @@ mod authority;
 /// Shipped build. The positive file/memory equivalence is proven by
 /// `gp::fit_contract_tests::sealed_memory_view_matches_file_evaluation_and_rejects_writes`.
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn sealed_memory_view_rejects_writes_and_configured_evaluations_are_refused_without_activation() {
     use std::io::Write;
     use std::os::fd::AsRawFd;
@@ -78,6 +82,10 @@ fn memory_evaluation_rejects_unsealed_regular_files() {
 /// roundtrip is refused at namespace activation. The positive roundtrip is
 /// `gp::fit_contract_tests::fitted_predictor_roundtrip_matches_native_gp_and_restores_target_units`.
 #[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
 fn configured_fit_is_refused_without_verified_namespace_activation() {
     let tmp = tempfile::tempdir().unwrap();
     let train = tmp.path().join("train.csv");
