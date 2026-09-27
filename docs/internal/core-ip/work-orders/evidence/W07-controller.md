@@ -1307,3 +1307,51 @@ process binding that works in both isolation modes.
 names its own job and attempt.
 
 Post-fix record: `w7c-D1-post-20260927T011514Z`, the full gate (`bounded_smartcluster` 5).
+
+### W7-D3 — SmartCluster's GPU allocation stays authoritative (item B)
+
+**Decision.** SmartCluster's allocation is not bypassed. The rank translates the device index
+SmartCluster gives it into a GPU UUID and refuses unless that UUID is the planned one. It does
+this before creating any communicator. CPU ranks are unaffected.
+
+**Pre-fix record** (`w7c-D3-pre-20260927T011912Z`).
+
+- `verify_worker_visibility` refused any index ("selects a device by local index, not by its
+  planned UUID").
+- `SmartClusterSupervisor` refused every GPU rank: "SmartCluster cannot pin the planned device
+  UUID, so GPU ranks are not launched through it".
+
+**Implementation.**
+
+- **The supervisor** now asks SmartCluster for one exclusive GPU (`count: 1`,
+  `compute_share_per_mille: 1000`, `Exclusive`) with the rank's planned VRAM ceiling.
+  SmartCluster chooses the device. A GPU rank without a VRAM ceiling is refused.
+- **`launch::resolve_visibility(record, CUDA_VISIBLE_DEVICES, runner)`** handles each case:
+  - a CPU rank keeps the existing rule (`""` or `-1`);
+  - a GPU rank whose value is exactly the planned UUID needs no translation;
+  - a GPU rank given one SmartCluster index (1 to 4 digits) is translated with
+    `nvidia-smi --query-gpu=index,uuid --format=csv,noheader,nounits`, through an injectable
+    command runner, and must be exactly the planned UUID.
+- **`ResolvedVisibility::pinned()`** is the UUID the worker pins as its own
+  `CUDA_VISIBLE_DEVICES` before any CUDA call. CUDA then selects the device by UUID, and
+  `CUDA_DEVICE_ORDER` never matters. After pinning, `bound_worker`'s check of the device view
+  (the planned UUID at ordinal 0) still runs at the device boundary.
+- **The participant** calls `resolve_visibility` right after its job proof (W7-D1).
+
+**Tests** (`bounded_launch`, now 7; CPU only, injected `nvidia-smi`, no GPU).
+
+- `a_smartcluster_gpu_index_must_translate_to_the_planned_uuid`:
+  - **Accepted:** SmartCluster's index 2, which is the planned GPU, gives the pinned UUID; the
+    launcher's exact UUID needs no probe; a CPU rank never runs `nvidia-smi`.
+  - **Refused:**
+    - an index for another GPU, or one `nvidia-smi` does not report;
+    - nine malformed values (several devices, `-1`, padded, signed, hex, empty, over-long);
+    - an unset value, or another UUID;
+    - an absent or failing `nvidia-smi`;
+    - malformed lines;
+    - a repeated index or UUID.
+- `smartcluster_allocates_a_gpu_rank_exactly_one_exclusive_gpu` — the exact GPU request for a
+  GPU rank, none for a CPU rank, and refusal of a GPU rank without a VRAM ceiling.
+
+Post-fix record: `w7c-D3-post-20260927T012149Z`, the full gate (`bounded_launch` 7,
+`bounded_smartcluster` 5).

@@ -9,6 +9,9 @@
 //!   `CUDA_VISIBLE_DEVICES`, to the planned GPU UUID (empty for a CPU rank), before exec.
 //! * [`verify_worker_visibility`] is the worker's own check of that environment, before any
 //!   input, device or communicator work.
+//! * [`resolve_visibility`] (W7-D3) accepts SmartCluster's own GPU allocation: the NVML index
+//!   its executor exports must translate, through `nvidia-smi`, to exactly the planned UUID,
+//!   which the worker then pins for itself.
 //!
 //! Nothing here starts work: a launch record authorizes nothing by itself. A rank still
 //! joins the authenticated rendezvous and holds a verified full-group admission before it
@@ -18,6 +21,7 @@
 //!   this plan, attempt and rank (W7-T04). Bounded plans never read a shared `nccl.id` file;
 //!   that path keeps its meaning only for the historical same-allocation launches.
 use super::{
+    collect::CommandRunner,
     contract::BoundedRunContract,
     rendezvous::{self, AdmittedMember},
 };
@@ -237,6 +241,115 @@ pub fn verify_worker_visibility(record: &LaunchRecord, observed: Option<&OsStr>)
         record.global_rank
     );
     Ok(())
+}
+
+/// How a rank's device was established (W7-D3).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum ResolvedVisibility {
+    /// A CPU rank: every device hidden.
+    Cpu,
+    /// The launcher set exactly the planned UUID.
+    PlannedUuid(String),
+    /// SmartCluster allocated the GPU at this NVML index, and it is the planned UUID.
+    SchedulerIndex { index: u32, uuid: String },
+}
+impl ResolvedVisibility {
+    /// What the worker pins as its own `CUDA_VISIBLE_DEVICES` before any CUDA call: always
+    /// the planned UUID for a GPU rank, so CUDA's enumeration order never selects the device.
+    pub fn pinned(&self) -> Option<&str> {
+        match self {
+            Self::Cpu => None,
+            Self::PlannedUuid(uuid) | Self::SchedulerIndex { uuid, .. } => Some(uuid),
+        }
+    }
+}
+
+/// W7-D3: SmartCluster's GPU allocation stays authoritative. Its executor exports the NVML
+/// index of the GPU it allocated, not a UUID; the rank translates that index with
+/// `nvidia-smi --query-gpu=index,uuid` and refuses unless it is exactly the planned UUID,
+/// before any device or communicator work. A CPU rank keeps [`verify_worker_visibility`],
+/// and a rank launched by [`worker_command`] (exactly the planned UUID) needs no translation.
+///
+/// Refused: an unset or non-UTF-8 value, several devices, a negative, signed, padded or
+/// over-long index, an absent or failing `nvidia-smi`, a malformed or ambiguous listing (a
+/// repeated index or UUID), an index `nvidia-smi` does not report, and an index whose UUID is
+/// not the planned one.
+pub fn resolve_visibility(
+    record: &LaunchRecord,
+    observed: Option<&OsStr>,
+    runner: &dyn CommandRunner,
+) -> Result<ResolvedVisibility> {
+    if record.cuda_visible_devices.is_empty() {
+        verify_worker_visibility(record, observed)?;
+        return Ok(ResolvedVisibility::Cpu);
+    }
+    let value = observed
+        .context("CUDA_VISIBLE_DEVICES is unset; a bounded worker sees only its planned device")?
+        .to_str()
+        .context("CUDA_VISIBLE_DEVICES is not UTF-8")?;
+    if value.starts_with("GPU-") {
+        verify_worker_visibility(record, observed)?;
+        return Ok(ResolvedVisibility::PlannedUuid(value.to_string()));
+    }
+    ensure!(
+        !value.is_empty() && value.len() <= 4 && value.bytes().all(|b| b.is_ascii_digit()),
+        "CUDA_VISIBLE_DEVICES `{value}` is not exactly one SmartCluster GPU index for rank {}",
+        record.global_rank
+    );
+    let index: u32 = value.parse()?;
+    let output = runner
+        .run(
+            "nvidia-smi",
+            &["--query-gpu=index,uuid", "--format=csv,noheader,nounits"],
+        )?
+        .context(
+            "nvidia-smi is not installed; SmartCluster's GPU index cannot be translated to a UUID",
+        )?;
+    ensure!(
+        output.success,
+        "nvidia-smi --query-gpu=index,uuid failed: {}",
+        String::from_utf8_lossy(&output.stderr).trim()
+    );
+    let text = std::str::from_utf8(&output.stdout).context("nvidia-smi output is not UTF-8")?;
+    let mut by_index = BTreeMap::new();
+    let mut uuids = BTreeSet::new();
+    for line in text.lines().filter(|l| !l.trim().is_empty()) {
+        let (i, uuid) = line
+            .split_once(',')
+            .with_context(|| format!("malformed nvidia-smi line `{line}`"))?;
+        let (i, uuid) = (i.trim(), uuid.trim());
+        ensure!(
+            !i.is_empty()
+                && i.len() <= 4
+                && i.bytes().all(|b| b.is_ascii_digit())
+                && uuid.starts_with("GPU-")
+                && !uuid.contains(',')
+                && !uuid.contains(char::is_whitespace),
+            "malformed nvidia-smi line `{line}`"
+        );
+        let i: u32 = i.parse()?;
+        ensure!(
+            uuids.insert(uuid.to_string()),
+            "nvidia-smi reports GPU {uuid} twice"
+        );
+        ensure!(
+            by_index.insert(i, uuid.to_string()).is_none(),
+            "nvidia-smi reports GPU index {i} twice"
+        );
+    }
+    let uuid = by_index.get(&index).with_context(|| {
+        format!("SmartCluster allocated GPU index {index}, which nvidia-smi does not report")
+    })?;
+    ensure!(
+        *uuid == record.cuda_visible_devices,
+        "SmartCluster allocated GPU index {index} ({uuid}), not rank {}'s planned GPU {}",
+        record.global_rank,
+        record.cuda_visible_devices
+    );
+    Ok(ResolvedVisibility::SchedulerIndex {
+        index,
+        uuid: uuid.clone(),
+    })
 }
 
 /// The communicator bootstrap of a verified full-group admission, bound to one plan,
