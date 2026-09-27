@@ -8,7 +8,7 @@ use anyhow::{bail, Context, Result};
 use serde::Serialize;
 use std::{fs, path::Path};
 
-const S3_CLOSED: &str = "live S3 champion pull/push is not wired on this SHA (no AWS credentials, no bucket allow-list). Use --local.";
+const S3_CLOSED: &str = "live S3 champion pull/push is not implemented for this command; host credentials do not enable this route. Use --local.";
 
 #[derive(Debug, Serialize, Clone)]
 pub struct ChampionRow {

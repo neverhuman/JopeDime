@@ -289,6 +289,9 @@ fn champions_pull_and_push_fail_closed() {
         let report: Value = serde_json::from_slice(&output.stdout).unwrap();
         assert_eq!(report["ok"], false);
         assert_eq!(report["schema"], "jope.champions.v1");
+        let diagnostic = report.to_string();
+        assert!(diagnostic.contains("not implemented for this command"));
+        assert!(!diagnostic.contains("no AWS credentials"));
     }
 }
 
