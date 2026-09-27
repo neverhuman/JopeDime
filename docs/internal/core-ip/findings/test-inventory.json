@@ -217,14 +217,6 @@
       "role": "historical",
       "reason": "historical campaign tooling retained for replay; not a maintained regression control"
     },
-    "python:deploy/maintenance/test_report.py": {
-      "role": "infrastructure",
-      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
-    },
-    "python:deploy/maintenance/test_wrapper.py": {
-      "role": "infrastructure",
-      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
-    },
     "python:python/src/jope/research/test_absolute_path_audit.py": {
       "role": "research",
       "reason": "research script test outside the maintained product surface"
@@ -1361,6 +1353,10 @@
       "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
     },
     "target:jope-ci/lib/jope_ci": {
+      "role": "infrastructure",
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+    },
+    "target:jope-ci/test/build_report": {
       "role": "infrastructure",
       "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
     },

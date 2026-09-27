@@ -16,8 +16,13 @@ path = "src/main.rs"
 
 [dependencies]
 clap.workspace = true
+# Python-compatible JSON (ordered objects, float repr) for the build-report documents.
+jope-records = { path = "../jope-records" }
 nix.workspace = true
 serde_json.workspace = true
+sha2.workspace = true
+# SIGTERM/SIGINT become a failed receipt (safe flag registration; already in the lock).
+signal-hook = "0.3"
 toml.workspace = true
 
 [dev-dependencies]
