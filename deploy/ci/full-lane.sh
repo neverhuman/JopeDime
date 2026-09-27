@@ -81,6 +81,14 @@ assert text.count(needle) == 1
 path.write_text(text.replace(needle, 'path = ' + json.dumps(str(root / 'junit.xml'))))
 PY
     cargo nextest list --config-file "$EVIDENCE/nextest.toml" -P main --locked "${selection[@]}" --message-format json > "$EVIDENCE/collection.json"
+    if [ "$lane" = full-default ]; then
+      # bounded_smartcluster runs this workspace's own scqd and never builds it inside a test
+      # (W7-D5). The workspace test build above produces it (jain-smartcluster-daemon's
+      # integration tests make Cargo build its binary); refuse to run the tests without it.
+      scqd="$(python3 deploy/ci/cargo-artifact.py target-dir)/debug/scqd"
+      [ -x "$scqd" ] || { echo "scqd was not built by the workspace test build: $scqd"; exit 1; }
+      sha256sum "$scqd" > "$EVIDENCE/scqd.sha256"
+    fi
     touch "$EVIDENCE/nextest-started"
     cargo nextest run --config-file "$EVIDENCE/nextest.toml" -P main --locked --test-threads 16 "${selection[@]}"
     case $lane in
