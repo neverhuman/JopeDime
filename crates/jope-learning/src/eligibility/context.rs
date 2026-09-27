@@ -162,6 +162,15 @@ fn parents(state: &State, child: &EncoderReceipt, revocations: &Revocations) -> 
     Ok(())
 }
 
+/// The teacher's authorized execution: the experiment and original window its OOF evidence names
+/// (`OofEvidence::experiment_blob_sha256`, `window_sha256`), which `qualify` holds to the
+/// preoptimization freeze. A teaching context must have been produced inside exactly this
+/// execution (PR #114 review round 1).
+pub(super) struct Teaching<'a> {
+    pub(super) experiment: &'a Experiment,
+    pub(super) window: &'a ExecutionWindow,
+}
+
 /// Runs before any teaching decision; returns the verified receipt digest and the digest of the
 /// W2 handoff it was admitted under.
 pub(super) fn verify(
@@ -170,6 +179,7 @@ pub(super) fn verify(
     record: &HwmRecord,
     evidence: &OofEvidence,
     revocations: &Revocations,
+    teaching: &Teaching<'_>,
 ) -> Result<(String, String)> {
     let plan = preregistered_plan(policy)?;
     let context = evidence.context.as_ref().with_context(|| {
@@ -203,7 +213,7 @@ pub(super) fn verify(
         &retained(state, &context.output_sha256)?,
     )?;
     parents(state, &receipt, revocations)?;
-    let handoff = verify_handoff(state, policy, plan, record, context, revocations)?;
+    let handoff = verify_handoff(state, policy, plan, record, context, revocations, teaching)?;
     Ok((context.receipt_sha256.clone(), handoff))
 }
 
@@ -615,7 +625,8 @@ fn produced_context(state: &State, handoff: &HandoffRecord) -> Result<Vec<u8>> {
 ///   dataset;
 /// - name no revoked evidence (W12-T05);
 /// - have its artifact produced by a completed execution of the preregistered producer
-///   executable, proven from retained pool receipts ([`verify_execution`]);
+///   executable inside the teacher's own authorized experiment and window, proven from retained
+///   pool receipts ([`verify_execution`]);
 /// - hand off exactly the context that artifact contains, decoded as the W2 producer decodes it
 ///   ([`produced_context`]): the consumed vector is the artifact's vector byte for byte, and
 ///   `context_sha256` is its digest;
@@ -631,6 +642,7 @@ fn verify_handoff(
     record: &HwmRecord,
     context: &ContextEvidence,
     revocations: &Revocations,
+    teaching: &Teaching<'_>,
 ) -> Result<String> {
     let (producer, case_execution_pins) = preregistered_producer(plan)?;
     let evidence = context.handoff.as_ref().with_context(|| {
@@ -713,7 +725,7 @@ fn verify_handoff(
             handoff.qualification_sha256.as_str(),
         ],
     )?;
-    let context_execution_sha256 = verify_execution(state, policy, &handoff, ex, record)?;
+    let context_execution_sha256 = verify_execution(state, policy, &handoff, ex, record, teaching)?;
     let produced = produced_context(state, &handoff)?;
     let produced_sha256 = sha256_hex(&produced);
     ensure!(
@@ -752,8 +764,9 @@ fn verify_handoff(
 /// The W2 execution proof, re-verified from retained pool receipts: the checks
 /// `jope_pipeline::cpu_context_bridge::execution_attestation` makes, on retained bytes instead of
 /// live files. The preregistered producer executable ran the job to completion, inside its
-/// original window (which opened after the freeze), under the pool's per-fit memory cap, on the
-/// handoff's input, and wrote the handoff's artifact.
+/// original window (which opened after the freeze, and is the teacher's own authorized
+/// experiment and window), under the pool's per-fit memory cap, on the handoff's input, and wrote
+/// the handoff's artifact.
 ///
 /// Returns the sha256 of the controller's attestation of this execution (the admission pins'
 /// `context_execution_sha256`), derived from the verified receipts as the controller derives it.
@@ -763,6 +776,7 @@ fn verify_execution(
     handoff: &HandoffRecord,
     ex: &ContextExecution,
     record: &HwmRecord,
+    teaching: &Teaching<'_>,
 ) -> Result<String> {
     const RECEIPTS: &str = "UnprovenContextExecution: a retained pool receipt of the context job \
                             is missing or unreadable";
@@ -787,6 +801,26 @@ fn verify_execution(
         window.started_unix_ms >= policy.created_at_unix * 1000,
         "UnprovenContextExecution: the context was produced before the freeze that preregistered \
          its producer"
+    );
+    // PR #114 review round 1: the context was produced inside the teacher's own authorized
+    // execution, the experiment and original window `qualify` holds to the freeze, not in any
+    // self-consistent later window. With the timing check below (exit by the window's deadline
+    // less its reporting allowance), a context produced after the teaching deadline never teaches.
+    let (context_experiment, teacher_experiment) =
+        (experiment.identity()?, teaching.experiment.identity()?);
+    let authorized = teaching.window;
+    ensure!(
+        context_experiment == teacher_experiment
+            && window.experiment_sha256 == authorized.experiment_sha256
+            && window.started_unix_ms == authorized.started_unix_ms
+            && window.deadline_unix_ms == authorized.deadline_unix_ms,
+        "UnprovenContextExecution: the context was produced in experiment {context_experiment} \
+         over [{}, {}] ms, not in the teacher's authorized experiment {teacher_experiment} and \
+         window [{}, {}] ms",
+        window.started_unix_ms,
+        window.deadline_unix_ms,
+        authorized.started_unix_ms,
+        authorized.deadline_unix_ms
     );
     let job_sha = job.identity()?;
     ensure!(
