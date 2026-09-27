@@ -109,6 +109,12 @@ impl V7Model {
     pub fn load(weights_path: &Path, settings: &HyperionSweepSettings) -> Result<Self> {
         #[cfg(feature = "hyperion-cuda")]
         let mut cuda_error: Option<anyhow::Error> = None;
+        // Held rather than returned, so a candidate that fails lets the next one be tried. The
+        // `continue` below is behind `hyperion-cuda`, so without that feature every arm of the
+        // match used to return and the loop ran exactly once: the fallback across candidates did
+        // not exist on a CPU-only build, and the `bail!` after the loop was unreachable. Clippy's
+        // `never_loop` caught it.
+        let mut last_error: Option<anyhow::Error> = None;
         for device in hyperion_device_candidates() {
             #[cfg(feature = "hyperion-cuda")]
             let label = hyperion_device_label_for(&device);
@@ -147,15 +153,17 @@ impl V7Model {
                     cuda_error = Some(anyhow!(reason));
                 }
                 Err(err) => {
-                    #[cfg(feature = "hyperion-cuda")]
-                    if let Some(cuda_error) = cuda_error {
-                        return Err(err).with_context(|| {
-                            format!("Hyperion CUDA load failed first: {cuda_error:#}")
-                        });
-                    }
-                    return Err(err);
+                    last_error = Some(err);
                 }
             }
+        }
+        if let Some(err) = last_error {
+            #[cfg(feature = "hyperion-cuda")]
+            if let Some(cuda_error) = cuda_error {
+                return Err(err)
+                    .with_context(|| format!("Hyperion CUDA load failed first: {cuda_error:#}"));
+            }
+            return Err(err);
         }
         bail!("no Hyperion device candidates available")
     }
