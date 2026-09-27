@@ -264,3 +264,53 @@ no installed host file was changed.
   relative-link check of the five edited pages (no link checker is installed here) and
   `deploy/ci/check.sh`, all green. One wording fix followed (architecture.md: "694 files, plus 9
   unit templates"), rechecked with `ip-scrub.sh`, the link check and `git diff --check`.
+
+## Follow-up — captured Python outputs as committed fixtures (U2, U5, U3)
+
+U8 already replayed its captured Python outputs (`python-verify-outputs.jsonl`). U2, U3 and U5 had
+differential runs but no committed fixtures; these tests close that gap. Each fixture holds the
+Python outputs of the unit's differential run, normalised the same way in the fixture and in the
+Rust output under test (the no-home-paths lint scans `crates/*/tests`), and the inputs they were
+produced from. Where a committed input is reduced or normalised, the archived Python (restored
+from `8a55c4fef`, run from a scratch directory, never extended) was re-run on exactly the
+committed inputs and reproduced every captured output. The intended differences are asserted
+explicitly, case by case, as the only allowed ones. Each test was also shown to fail when one
+captured output is altered (negative control).
+
+- U2 — `crates/jope-ci/tests/cargo_artifact_python_parity.rs`, fixture
+  `crates/jope-ci/tests/fixtures/python-parity/cargo-artifact/`: 11 cases from
+  `py-p1-u2-diff-20260927T023243Z` (select, select with a path map, a bad path map, unfinished,
+  failed, wrong-package, example-kind and ambiguous streams, usage, nextest-config and an existing
+  nextest output). Inputs: the captured `cargo build --message-format=json-render-diagnostics`
+  stream of `jope-paths`/`jope-units-render`, that workspace's `cargo metadata` reduced to the
+  fields `select` reads (package names and ids, members, target directory, root), and
+  `.config/nextest.toml`; the lane root is `@ROOT@`. The test runs the real binary with those
+  inputs under a fresh directory standing for `@ROOT@` and compares exit status, stdout, stderr
+  and the relocated nextest config byte for byte. Allowed differences: argument-parser wording
+  (`usage`) and the OS wording for an existing output (`nextest-exists`). Faithfulness re-run:
+  `py-p1-fixtures-u2-20260927T033630Z/verification.txt` (11 of 11 identical).
+- U5 — `crates/jope-ci/tests/build_report_python_parity.rs`, fixture
+  `crates/jope-ci/tests/fixtures/python-parity/build-report/`: from
+  `py-p1-u5-diff-20260927T025057Z`, 11 `scan` cases on the synthetic build tree that run created
+  (stale, all, fingerprint root, missing and symlinked roots, `--delete` twice, three bad
+  `--stale` values, a traversal failure), 2 custody refusals (`/tmp`, a Git working tree) and 3
+  failure receipts (malformed, key-missing and wrong-root configurations). The test rebuilds the
+  same tree with the same fixed epoch; tree root, run directory, `completed_at`, allocated bytes
+  (filesystem-dependent: checked positive and summing instead) and fresh mtimes (checked to be the
+  time the test touched them) are placeholders. Scans and custody refusals run by default; the
+  receipt replay is ignored by default because custody must be outside `/tmp` and Git working
+  trees, and ran green with `JOPE_MAINTENANCE_SCRATCH`. The traversal-failure case is skipped only
+  for a user that ignores permissions. Allowed differences: argument-parser wording for the three
+  bad `--stale` values. Not replayed: the differential run's scan of this lane's own 30 GB build
+  tree. Faithfulness re-run: `py-p1-fixtures-u5-20260927T033842Z/verification.txt` (16 of 16
+  identical).
+- Negative control for both: `py-p1-fixtures-mutation-ci.txt` beside the verification files
+  (four altered outputs, four failures, fixtures restored byte-identically).
+- Records: `target:jope-ci/test/cargo_artifact_python_parity` and
+  `target:jope-ci/test/build_report_python_parity` in `deploy/ci/coverage.json` (the hygiene lane
+  runs them with `cargo test -p jope-ci`; the second carries the `maintenance` disposition for its
+  ignored receipt replay) and in the regression test inventory (role `infrastructure`).
+- Gate `py-p1-fixtures-ci-post-20260927T034300Z`: the full gate plus `cargo test -p jope-ci`
+  (the new targets 1 + 2 passed, 1 ignored), both ignored fixture runners with
+  `JOPE_MAINTENANCE_SCRATCH` (receipt replay and the build-report runners) and
+  `deploy/ci/check.sh`, all green.

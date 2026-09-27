@@ -1,0 +1,197 @@
+{
+  "source": "py-p1-u5-diff-20260927T025057Z (deploy/maintenance/jope_report.py at 8a55c4fef, python3 on xbabe2)",
+  "normalisation": "@FIXTURE@ is the synthetic tree root, @RUN@ its parent run directory; completed_at, allocated bytes (filesystem dependent) and any newest_mtime other than old_epoch are placeholders; receipts drop timestamps, checksums, custody paths and the host-dependent missing_unit_files",
+  "old_epoch": 1790218258.0,
+  "scan_cases": [
+    {
+      "name": "scan-stale",
+      "argv": [
+        "scan",
+        "@FIXTURE@",
+        "--stale",
+        "48"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"completed_at\": \"@COMPLETED_AT@\",\n  \"root\": \"@FIXTURE@\",\n  \"stale_hours\": 48,\n  \"candidates\": [\n    {\n      \"path\": \"@FIXTURE@/fingerprint\",\n      \"allocated_bytes\": \"@ALLOCATED@\",\n      \"newest_mtime\": 1790218258.0\n    },\n    {\n      \"path\": \"@FIXTURE@/gitguard\",\n      \"allocated_bytes\": \"@ALLOCATED@\",\n      \"newest_mtime\": 1790218258.0\n    },\n    {\n      \"path\": \"@FIXTURE@/odd name\",\n      \"allocated_bytes\": \"@ALLOCATED@\",\n      \"newest_mtime\": 1790218258.0\n    },\n    {\n      \"path\": \"@FIXTURE@/stale\",\n      \"allocated_bytes\": \"@ALLOCATED@\",\n      \"newest_mtime\": 1790218258.0\n    }\n  ],\n  \"candidate_allocated_bytes_sum\": \"@ALLOCATED@\",\n  \"sum_may_double_count_hardlinks\": true,\n  \"report_only\": true,\n  \"complete\": true\n}\n",
+      "stderr": ""
+    },
+    {
+      "name": "scan-all",
+      "argv": [
+        "scan",
+        "@FIXTURE@"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"completed_at\": \"@COMPLETED_AT@\",\n  \"root\": \"@FIXTURE@\",\n  \"stale_hours\": null,\n  \"candidates\": [\n    {\n      \"path\": \"@FIXTURE@/fingerprint\",\n      \"allocated_bytes\": \"@ALLOCATED@\",\n      \"newest_mtime\": 1790218258.0\n    },\n    {\n      \"path\": \"@FIXTURE@/fresh\",\n      \"allocated_bytes\": \"@ALLOCATED@\",\n      \"newest_mtime\": \"@RECENT@\"\n    },\n    {\n      \"path\": \"@FIXTURE@/gitguard\",\n      \"allocated_bytes\": \"@ALLOCATED@\",\n      \"newest_mtime\": 1790218258.0\n    },\n    {\n      \"path\": \"@FIXTURE@/odd name\",\n      \"allocated_bytes\": \"@ALLOCATED@\",\n      \"newest_mtime\": 1790218258.0\n    },\n    {\n      \"path\": \"@FIXTURE@/recent-nested\",\n      \"allocated_bytes\": \"@ALLOCATED@\",\n      \"newest_mtime\": \"@RECENT@\"\n    },\n    {\n      \"path\": \"@FIXTURE@/stale\",\n      \"allocated_bytes\": \"@ALLOCATED@\",\n      \"newest_mtime\": 1790218258.0\n    }\n  ],\n  \"candidate_allocated_bytes_sum\": \"@ALLOCATED@\",\n  \"sum_may_double_count_hardlinks\": true,\n  \"report_only\": true,\n  \"complete\": true\n}\n",
+      "stderr": ""
+    },
+    {
+      "name": "scan-fingerprint",
+      "argv": [
+        "scan",
+        "@FIXTURE@/fingerprint/release"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"completed_at\": \"@COMPLETED_AT@\",\n  \"root\": \"@FIXTURE@/fingerprint/release\",\n  \"stale_hours\": null,\n  \"candidates\": [],\n  \"candidate_allocated_bytes_sum\": \"@ALLOCATED@\",\n  \"sum_may_double_count_hardlinks\": true,\n  \"report_only\": true,\n  \"complete\": true\n}\n",
+      "stderr": ""
+    },
+    {
+      "name": "scan-missing",
+      "argv": [
+        "scan",
+        "@RUN@/missing"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "report failed: [Errno 2] No such file or directory: '@RUN@/missing'\n"
+    },
+    {
+      "name": "scan-symlink",
+      "argv": [
+        "scan",
+        "@FIXTURE@/linked"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "report failed: root must be an existing directory without symlink components: @FIXTURE@/linked\n"
+    },
+    {
+      "name": "scan-delete",
+      "argv": [
+        "scan",
+        "@FIXTURE@",
+        "--delete"
+      ],
+      "exit": 2,
+      "stdout": "",
+      "stderr": "Deletion is disabled. Use a logged preservation and independent verification batch.\n"
+    },
+    {
+      "name": "scan-delete-missing",
+      "argv": [
+        "scan",
+        "@RUN@/missing",
+        "--delete"
+      ],
+      "exit": 2,
+      "stdout": "",
+      "stderr": "Deletion is disabled. Use a logged preservation and independent verification batch.\n"
+    },
+    {
+      "name": "scan-bad-age",
+      "argv": [
+        "scan",
+        "@FIXTURE@",
+        "--stale",
+        "wat"
+      ],
+      "exit": 2,
+      "stdout": "",
+      "stderr": "usage: jope_report.py scan [-h] [--stale STALE] root\njope_report.py scan: error: argument --stale: --stale requires nonnegative whole hours\n"
+    },
+    {
+      "name": "scan-negative-age",
+      "argv": [
+        "scan",
+        "@FIXTURE@",
+        "--stale",
+        "-1"
+      ],
+      "exit": 2,
+      "stdout": "",
+      "stderr": "usage: jope_report.py scan [-h] [--stale STALE] root\njope_report.py scan: error: argument --stale: --stale requires nonnegative whole hours\n"
+    },
+    {
+      "name": "scan-no-age",
+      "argv": [
+        "scan",
+        "@FIXTURE@",
+        "--stale"
+      ],
+      "exit": 2,
+      "stdout": "",
+      "stderr": "usage: jope_report.py scan [-h] [--stale STALE] root\njope_report.py scan: error: argument --stale: expected one argument\n"
+    },
+    {
+      "name": "scan-descendant-failure",
+      "argv": [
+        "scan",
+        "@FIXTURE@",
+        "--stale",
+        "48"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "report failed: [Errno 13] Permission denied: '@FIXTURE@/gitguard/.git/objects'\n"
+    }
+  ],
+  "custody_refusals": [
+    {
+      "name": "report-tmp",
+      "custody": "/tmp/<never created>",
+      "exit": 1,
+      "stderr": "report failed: report custody must be outside /tmp and Git working trees\n"
+    },
+    {
+      "name": "report-tree",
+      "custody": "<a Git working tree>/<never created>",
+      "exit": 1,
+      "stderr": "report failed: report custody must be outside /tmp and Git working trees\n"
+    }
+  ],
+  "report_receipts": [
+    {
+      "name": "report-malformed",
+      "config": "{\n",
+      "exit": 1,
+      "stdout": "@CUSTODY@/@STAMP@/receipt.json\n",
+      "stderr": "",
+      "receipt": {
+        "error": "Expecting property name enclosed in double quotes: line 2 column 1 (char 2)",
+        "exit_status": 1,
+        "invocation_id": null,
+        "measurements": [],
+        "scan_outputs": [],
+        "status": "failed"
+      },
+      "failure_txt": "Expecting property name enclosed in double quotes: line 2 column 1 (char 2)\n"
+    },
+    {
+      "name": "report-missing-key",
+      "config": "{}\n",
+      "exit": 1,
+      "stdout": "@CUSTODY@/@STAMP@/receipt.json\n",
+      "stderr": "",
+      "receipt": {
+        "error": "config requires cargo_roots, stale_hours and measurement_roots",
+        "exit_status": 1,
+        "invocation_id": null,
+        "measurements": [],
+        "scan_outputs": [],
+        "status": "failed"
+      },
+      "failure_txt": "config requires cargo_roots, stale_hours and measurement_roots\n"
+    },
+    {
+      "name": "report-wrong-roots",
+      "config": "{\"cargo_roots\": [], \"stale_hours\": 48, \"measurement_roots\": []}\n",
+      "exit": 1,
+      "stdout": "@CUSTODY@/@STAMP@/receipt.json\n",
+      "stderr": "",
+      "receipt": {
+        "config": {
+          "cargo_roots": [],
+          "measurement_roots": [],
+          "stale_hours": 48
+        },
+        "error": "service requires the two approved Cargo roots and a 48-hour filter",
+        "exit_status": 1,
+        "invocation_id": null,
+        "measurements": [],
+        "scan_outputs": [],
+        "status": "failed"
+      },
+      "failure_txt": "service requires the two approved Cargo roots and a 48-hour filter\n"
+    }
+  ]
+}

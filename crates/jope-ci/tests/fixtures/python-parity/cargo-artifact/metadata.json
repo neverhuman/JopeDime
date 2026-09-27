@@ -1,0 +1,138 @@
+{
+  "packages": [
+    {
+      "name": "feat-math",
+      "id": "path+file://@ROOT@/crates/feat-math#0.1.0"
+    },
+    {
+      "name": "hyperion",
+      "id": "path+file://@ROOT@/crates/hyperion#0.1.0"
+    },
+    {
+      "name": "jope-parallel",
+      "id": "path+file://@ROOT@/crates/jope-engine#jope-parallel@0.1.0"
+    },
+    {
+      "name": "jain-smartcluster",
+      "id": "path+file://@ROOT@/crates/smartcluster/jain-smartcluster#8.0.0"
+    },
+    {
+      "name": "jain-smartcluster-core",
+      "id": "path+file://@ROOT@/crates/smartcluster/jain-smartcluster-core#8.0.0"
+    },
+    {
+      "name": "jope-paths",
+      "id": "path+file://@ROOT@/crates/jope-paths#0.1.0"
+    },
+    {
+      "name": "jope-policy",
+      "id": "path+file://@ROOT@/crates/jope-policy#0.1.0"
+    },
+    {
+      "name": "starforge",
+      "id": "path+file://@ROOT@/crates/jope-encoders#starforge@0.1.0"
+    },
+    {
+      "name": "battle-gpu",
+      "id": "path+file://@ROOT@/crates/battle-gpu#0.1.0"
+    },
+    {
+      "name": "jope-arena",
+      "id": "path+file://@ROOT@/crates/jope-arena#0.1.0"
+    },
+    {
+      "name": "jope-bench",
+      "id": "path+file://@ROOT@/crates/jope-bench#0.1.0"
+    },
+    {
+      "name": "jope-datasets",
+      "id": "path+file://@ROOT@/crates/jope-datasets#0.1.0"
+    },
+    {
+      "name": "jope-learning",
+      "id": "path+file://@ROOT@/crates/jope-learning#0.1.0"
+    },
+    {
+      "name": "jope-pipeline",
+      "id": "path+file://@ROOT@/crates/jope-pipeline#0.1.0"
+    },
+    {
+      "name": "jope-dime-regressor",
+      "id": "path+file://@ROOT@/crates/jope-campaigns#jope-dime-regressor@0.1.0"
+    },
+    {
+      "name": "jope-ci",
+      "id": "path+file://@ROOT@/crates/jope-ci#0.1.0"
+    },
+    {
+      "name": "jope-cli",
+      "id": "path+file://@ROOT@/crates/jope-cli#0.1.0"
+    },
+    {
+      "name": "jope-models",
+      "id": "path+file://@ROOT@/crates/jope-models#0.1.0"
+    },
+    {
+      "name": "jope-motifs",
+      "id": "path+file://@ROOT@/crates/jope-motifs#0.1.0"
+    },
+    {
+      "name": "jope-records",
+      "id": "path+file://@ROOT@/crates/jope-records#0.1.0"
+    },
+    {
+      "name": "numpy-pcg64",
+      "id": "path+file://@ROOT@/crates/numpy-pcg64#0.1.0"
+    },
+    {
+      "name": "jain-smartcluster-fabric",
+      "id": "path+file://@ROOT@/crates/smartcluster/jain-smartcluster-fabric#8.0.0"
+    },
+    {
+      "name": "jain-smartcluster-daemon",
+      "id": "path+file://@ROOT@/crates/smartcluster/jain-smartcluster-daemon#8.0.0"
+    },
+    {
+      "name": "jain-worker",
+      "id": "path+file://@ROOT@/crates/smartcluster/jain-worker#8.0.0"
+    },
+    {
+      "name": "jainnode",
+      "id": "path+file://@ROOT@/crates/smartcluster/jainnode#8.0.0"
+    },
+    {
+      "name": "scq",
+      "id": "path+file://@ROOT@/crates/smartcluster/scq#8.0.0"
+    }
+  ],
+  "workspace_members": [
+    "path+file://@ROOT@/crates/feat-math#0.1.0",
+    "path+file://@ROOT@/crates/hyperion#0.1.0",
+    "path+file://@ROOT@/crates/jope-engine#jope-parallel@0.1.0",
+    "path+file://@ROOT@/crates/smartcluster/jain-smartcluster#8.0.0",
+    "path+file://@ROOT@/crates/smartcluster/jain-smartcluster-core#8.0.0",
+    "path+file://@ROOT@/crates/jope-paths#0.1.0",
+    "path+file://@ROOT@/crates/jope-policy#0.1.0",
+    "path+file://@ROOT@/crates/jope-encoders#starforge@0.1.0",
+    "path+file://@ROOT@/crates/battle-gpu#0.1.0",
+    "path+file://@ROOT@/crates/jope-arena#0.1.0",
+    "path+file://@ROOT@/crates/jope-bench#0.1.0",
+    "path+file://@ROOT@/crates/jope-datasets#0.1.0",
+    "path+file://@ROOT@/crates/jope-learning#0.1.0",
+    "path+file://@ROOT@/crates/jope-pipeline#0.1.0",
+    "path+file://@ROOT@/crates/jope-campaigns#jope-dime-regressor@0.1.0",
+    "path+file://@ROOT@/crates/jope-ci#0.1.0",
+    "path+file://@ROOT@/crates/jope-cli#0.1.0",
+    "path+file://@ROOT@/crates/jope-models#0.1.0",
+    "path+file://@ROOT@/crates/jope-motifs#0.1.0",
+    "path+file://@ROOT@/crates/jope-records#0.1.0",
+    "path+file://@ROOT@/crates/numpy-pcg64#0.1.0",
+    "path+file://@ROOT@/crates/smartcluster/jain-smartcluster-fabric#8.0.0",
+    "path+file://@ROOT@/crates/smartcluster/jain-smartcluster-daemon#8.0.0",
+    "path+file://@ROOT@/crates/smartcluster/jain-worker#8.0.0",
+    "path+file://@ROOT@/crates/smartcluster/jainnode#8.0.0",
+    "path+file://@ROOT@/crates/smartcluster/scq#8.0.0"
+  ],
+  "target_directory": "@ROOT@/target",
+  "workspace_root": "@ROOT@"
+}
