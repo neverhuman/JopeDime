@@ -122,9 +122,15 @@ fold seed and cut count). Round 1 starts from `--seeds` (a `jope.pipeline-seeds/
 as a champion-bank export) or unseeded; every later round is seeded from the previous round's
 champion and ranked runners-up (at most four, `islands::next_seeds`), with the previous receipt
 as its verified `--incumbent`, and its own random stream. Because the previous champion is
-re-measured on the same cuts, no round's champion is worse than the round before. `--control`
-adds `control/`: the final round's exact configuration with no seeds, which separates what
-seeding carried forward from what the search found on its own.
+re-measured on the same cuts, no round's champion is worse than the round before *on those
+cuts*. Every round selects on the same held-out folds, so part of a round-over-round gain is
+selection on reused folds; only the sealed test split speaks to generalisation. `--control` adds
+`control/`: one run at the final round's configuration (one round's budget and the final round's
+random stream) with no seeds. It shows what one round of search finds without inherited seeds;
+it is not compute-matched against the lineage, whose final round inherits every earlier round's
+search on the same cuts (`lineage verify` reports the rounds' total evaluations beside the
+control's), and one control on one stream cannot separate seeding from that extra compute or from
+noise.
 
 Every refusal a round could make is made before the output directory is created: the counts,
 budget and parallelism; round 1's seeds (a genome that is not a pipeline, or more seeds than the
