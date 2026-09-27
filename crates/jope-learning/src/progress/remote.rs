@@ -8,7 +8,7 @@
 
 use crate::mirror::Mirror;
 use anyhow::{bail, Context, Result};
-use jope_datasets::store::{ObservedObject, PutOutcome};
+use jope_datasets::store::{ObservedObject, PutOutcome, StoreLocation};
 
 /// The environment a progress publisher reads to reach an `s3://` store. Nothing here is a
 /// default: the store URL must be named explicitly, and the credential is the operator's.
@@ -28,8 +28,11 @@ pub const S3_ENVIRONMENT: &str = "JOPE_LEARNING_URL=s3://<bucket>/<run-scoped pr
      AWS_CONDITIONAL_PUT unset or `etag`; JOPE_DATASETS_ANON not `1`";
 
 /// Refuse, before any store is opened or anything is written, a publishing store whose
-/// configuration could not keep W8's guarantees. Local (`file://`, bare path) and `memory:///`
-/// stores need nothing. An `s3://` store must:
+/// configuration could not keep W8's guarantees. The URL is read exactly as the store opens it
+/// (`jope_datasets::store::StoreLocation`, the reading `Store::open_with` uses), so every
+/// spelling the store treats as S3 (`s3`/`s3a` in any case) is checked, at the prefix the store
+/// would write under after normalization (`.` and `..` segments, percent-encoded ones included,
+/// removed). Local (`file://`, bare path) and `memory:///` stores need nothing. An S3 store must:
 /// - name a prefix under the bucket (a run-scoped prefix; never the bucket root);
 /// - sign its requests (`JOPE_DATASETS_ANON` is not `1`);
 /// - keep object_store's conditional writes on (`AWS_CONDITIONAL_PUT` unset or `etag`): every
@@ -38,17 +41,18 @@ pub const S3_ENVIRONMENT: &str = "JOPE_LEARNING_URL=s3://<bucket>/<run-scoped pr
 ///
 /// `env` reads one environment variable; the CLI passes the process environment.
 pub fn preflight_publishing_store(url: &str, env: impl Fn(&str) -> Option<String>) -> Result<()> {
-    let Some((scheme, rest)) = url.split_once("://") else {
+    let location = StoreLocation::parse(url)
+        .with_context(|| format!("{url}: not a store URL. Nothing was written"))?;
+    let Some(s3) = &location.s3 else {
         return Ok(());
     };
-    if !matches!(scheme, "s3" | "s3a") {
-        return Ok(());
-    }
-    let (bucket, prefix) = rest.split_once('/').unwrap_or((rest, ""));
-    if bucket.is_empty() || prefix.trim_matches('/').is_empty() {
+    if s3.bucket.is_empty() || s3.prefix.as_ref().is_empty() {
         bail!(
             "{url}: a progress store on S3 names a run-scoped prefix under the bucket \
-             (s3://<bucket>/<prefix>); the bucket root is refused. Nothing was written"
+             (s3://<bucket>/<prefix>); the bucket root is refused (this URL opens the store at \
+             bucket {:?}, prefix {:?}). Nothing was written",
+            s3.bucket,
+            s3.prefix.as_ref()
         );
     }
     if env("JOPE_DATASETS_ANON").is_some_and(|v| v == "1") {
@@ -126,5 +130,131 @@ impl Remote for Mirror {
 
     fn list(&self, prefix: &str) -> Result<Vec<String>> {
         Mirror::list(self, prefix)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::preflight_publishing_store as preflight;
+    use jope_datasets::store::StoreLocation;
+
+    type Env = fn(&str) -> Option<String>;
+    fn signed(_: &str) -> Option<String> {
+        None
+    }
+    fn unsigned(name: &str) -> Option<String> {
+        (name == "JOPE_DATASETS_ANON").then(|| "1".to_owned())
+    }
+    fn unconditional(name: &str) -> Option<String> {
+        (name == "AWS_CONDITIONAL_PUT").then(|| "disabled".to_owned())
+    }
+    fn both(name: &str) -> Option<String> {
+        unsigned(name).or_else(|| unconditional(name))
+    }
+
+    /// `url` under `env` is refused with `needle`; otherwise the bypass is recorded.
+    fn expect_refusal(url: &str, env: (&str, Env), needle: &str, bypasses: &mut Vec<String>) {
+        match preflight(url, env.1) {
+            Ok(()) => bypasses.push(format!("{url} ({}): passed the preflight", env.0)),
+            Err(e) if !format!("{e:#}").contains(needle) => bypasses.push(format!(
+                "{url} ({}): refused without {needle:?}: {e:#}",
+                env.0
+            )),
+            Err(_) => {}
+        }
+    }
+
+    /// PR #114 review round 1 (the reviewer's probe, as a refusal): the preflight reads a store
+    /// URL exactly as the store opens it. Every spelling the store reads as an S3 bucket root is
+    /// refused whatever the environment: an upper-case scheme, `.` and `..` segments (also
+    /// percent-encoded), an empty segment `object_store` cannot parse as a prefix, no bucket.
+    /// Every S3 spelling with a run-scoped prefix still goes through the unsigned-request and
+    /// conditional-write checks. Pure URL parsing: no store is opened, and no credential or
+    /// network is used.
+    #[test]
+    fn every_s3_spelling_the_store_opens_goes_through_the_preflight() {
+        let mut bypasses = Vec::new();
+        let root = [
+            "s3://example-bucket",
+            "S3://example-bucket",
+            "s3://example-bucket/",
+            "s3://example-bucket//",
+            "s3://example-bucket/.",
+            "s3://example-bucket/run/..",
+            "s3://example-bucket/run/%2e%2e",
+            "s3://example-bucket/%2E",
+            "S3A://example-bucket/run/./../",
+            "s3://example-bucket/run//1",
+            "s3:///run-1",
+        ];
+        for url in root {
+            for env in [("signed", signed as Env), ("unsigned, unconditional", both)] {
+                expect_refusal(url, env, "the bucket root is refused", &mut bypasses);
+            }
+        }
+        let prefixed = [
+            "s3://example-bucket/run-1",
+            "S3://example-bucket/run-1",
+            "s3a://example-bucket/runs/../run-1",
+            "S3://example-bucket/run-1/./",
+        ];
+        for url in prefixed {
+            if let Err(e) = preflight(url, signed) {
+                bypasses.push(format!("{url} (signed): refused: {e:#}"));
+            }
+            expect_refusal(
+                url,
+                ("unsigned", unsigned),
+                "JOPE_DATASETS_ANON=1",
+                &mut bypasses,
+            );
+            expect_refusal(
+                url,
+                ("unconditional", unconditional),
+                "AWS_CONDITIONAL_PUT",
+                &mut bypasses,
+            );
+        }
+        for url in [
+            "memory:///",
+            "file:///var/lib/jope/progress",
+            "progress-store",
+        ] {
+            if let Err(e) = preflight(url, both) {
+                bypasses.push(format!("{url}: a non-S3 store was refused: {e:#}"));
+            }
+        }
+        assert!(bypasses.is_empty(), "{}", bypasses.join("\n"));
+
+        // The preflight and the store read each URL the same way (`StoreLocation`, which
+        // `Store::open_with` uses): the root spellings open the store at the bucket root (or name
+        // no bucket), the prefixed ones at `run-1` in `example-bucket`, and the others are not S3.
+        let s3 = |url: &str| {
+            StoreLocation::parse(url)
+                .unwrap()
+                .s3
+                .map(|s3| (s3.bucket, s3.prefix.as_ref().to_owned()))
+        };
+        for url in root {
+            let (bucket, prefix) = s3(url).expect(url);
+            assert!(
+                bucket.is_empty() || prefix.is_empty(),
+                "{url}: {bucket} {prefix}"
+            );
+        }
+        for url in prefixed {
+            assert_eq!(
+                s3(url),
+                Some(("example-bucket".into(), "run-1".into())),
+                "{url}"
+            );
+        }
+        for url in [
+            "memory:///",
+            "file:///var/lib/jope/progress",
+            "progress-store",
+        ] {
+            assert_eq!(s3(url), None, "{url}");
+        }
     }
 }
