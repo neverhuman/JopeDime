@@ -8,14 +8,16 @@
 
 use crate::mirror::Mirror;
 use anyhow::{bail, Context, Result};
-use jope_datasets::store::{ObservedObject, PutOutcome, StoreLocation};
+use jope_datasets::store::{
+    ObjectStoreScheme, ObservedObject, PutOutcome, StoreLocation, StoreRoute,
+};
 
 /// The environment a progress publisher reads to reach an `s3://` store. Nothing here is a
 /// default: the store URL must be named explicitly, and the credential is the operator's.
 ///
 /// | Variable | Meaning |
 /// |---|---|
-/// | `JOPE_LEARNING_URL` (or `--store`) | `s3://<bucket>/<run-scoped prefix>`; a bare bucket is refused |
+/// | `JOPE_LEARNING_URL` (or `--store`) | `s3://<bucket>/<run-scoped prefix>`; a bare bucket and every other remote URL (`https://`, `gs://`, `az://`, ...) are refused |
 /// | `JOPE_AWS_PROFILE` (or `AWS_PROFILE`) | the scoped publisher profile, evaluated through `aws configure export-credentials` |
 /// | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN` | a static or STS key instead of a profile |
 /// | `AWS_REGION` | the bucket's region (`us-east-2` when unset) |
@@ -29,11 +31,17 @@ pub const S3_ENVIRONMENT: &str = "JOPE_LEARNING_URL=s3://<bucket>/<run-scoped pr
 
 /// Refuse, before any store is opened or anything is written, a publishing store whose
 /// configuration could not keep W8's guarantees. The URL is read exactly as the store opens it
-/// (`jope_datasets::store::StoreLocation`, the reading `Store::open_with` uses), so every
-/// spelling the store treats as S3 (`s3`/`s3a` in any case) is checked, at the prefix the store
-/// would write under after normalization (`.` and `..` segments, percent-encoded ones included,
-/// removed). Local (`file://`, bare path) and `memory:///` stores need nothing. An S3 store must:
-/// - name a prefix under the bucket (a run-scoped prefix; never the bucket root);
+/// (`jope_datasets::store::StoreLocation`, the reading `Store::open_with` uses): its route, its
+/// backend (object_store's own classification) and the prefix the store would write under after
+/// normalization (`.` and `..` segments, percent-encoded ones included, removed).
+///
+/// Only these publishing stores are admitted, and every other URL is refused:
+/// - `s3://` or `s3a://` (in any case) at a run-scoped prefix;
+/// - `file://` or a bare path, and `memory:///`, which need nothing.
+///
+/// HTTPS URLs object_store opens on S3 (AWS virtual-host and path-style, R2), `http(s)://`,
+/// `gs://`, `az://` and every other remote backend are refused; any S3 location at the bucket
+/// root, whatever its spelling, is refused as such. An admitted S3 store must also:
 /// - sign its requests (`JOPE_DATASETS_ANON` is not `1`);
 /// - keep object_store's conditional writes on (`AWS_CONDITIONAL_PUT` unset or `etag`): every
 ///   immutable write is `If-None-Match: *` and every pointer write `If-Match`, with no
@@ -43,17 +51,28 @@ pub const S3_ENVIRONMENT: &str = "JOPE_LEARNING_URL=s3://<bucket>/<run-scoped pr
 pub fn preflight_publishing_store(url: &str, env: impl Fn(&str) -> Option<String>) -> Result<()> {
     let location = StoreLocation::parse(url)
         .with_context(|| format!("{url}: not a store URL. Nothing was written"))?;
-    let Some(s3) = &location.s3 else {
-        return Ok(());
-    };
-    if s3.bucket.is_empty() || s3.prefix.as_ref().is_empty() {
-        bail!(
-            "{url}: a progress store on S3 names a run-scoped prefix under the bucket \
-             (s3://<bucket>/<prefix>); the bucket root is refused (this URL opens the store at \
-             bucket {:?}, prefix {:?}). Nothing was written",
-            s3.bucket,
-            s3.prefix.as_ref()
-        );
+    if let Some(s3) = &location.s3 {
+        if s3.bucket.is_empty() || s3.prefix.as_ref().is_empty() {
+            bail!(
+                "{url}: a progress store on S3 names a run-scoped prefix under the bucket \
+                 (s3://<bucket>/<prefix>); the bucket root is refused (this URL opens the store \
+                 at bucket {:?}, prefix {:?}). Nothing was written",
+                s3.bucket,
+                s3.prefix.as_ref()
+            );
+        }
+    }
+    match (location.route, &location.backend) {
+        (StoreRoute::S3, ObjectStoreScheme::AmazonS3) => {}
+        (StoreRoute::ParseUrl, ObjectStoreScheme::Local | ObjectStoreScheme::Memory) => {
+            return Ok(())
+        }
+        (_, backend) => bail!(
+            "{url}: this URL opens {backend:?} storage through {}://, which is not a publishing \
+             store: progress publishes only to s3://<bucket>/<run-scoped prefix> (or s3a://), a \
+             file:// URL or local path, or memory:///. Nothing was written",
+            location.parsed.scheme()
+        ),
     }
     if env("JOPE_DATASETS_ANON").is_some_and(|v| v == "1") {
         bail!(
@@ -256,5 +275,71 @@ mod tests {
         ] {
             assert_eq!(s3(url), None, "{url}");
         }
+    }
+
+    /// PR #114 review round 2 (the reviewer's probe, as a refusal): the preflight admits only the
+    /// publishing stores it can vouch for, `s3://`/`s3a://` at a run-scoped prefix, `file://` (or
+    /// a bare path) and `memory:///`, and refuses every other URL before any store is opened.
+    /// `Store::open_with` routes the others through `object_store::parse_url`, whose classifier
+    /// sends AWS virtual-host and path-style HTTPS URLs and R2 URLs to S3 at the prefix after the
+    /// bucket. The reviewer's six such URLs passed the preflight, four of them at the bucket root.
+    /// The store location reports S3 for them, so those at the root are refused as the bucket
+    /// root; every other URL a remote backend would open is refused as a store kind the preflight
+    /// does not admit, and a URL no backend opens is not a store URL. Pure URL parsing: no store
+    /// is opened, and no credential or network is used.
+    #[test]
+    fn only_the_admitted_store_kinds_pass_the_publishing_preflight() {
+        let mut bypasses = Vec::new();
+        let envs = [("signed", signed as Env), ("unsigned, unconditional", both)];
+        // The reviewer's six: object_store opens each on S3, the first four at the bucket root.
+        let https_root = [
+            "https://example-bucket.s3.us-east-2.amazonaws.com",
+            "https://s3.us-east-2.amazonaws.com/example-bucket",
+            "https://example-bucket.s3.us-east-2.amazonaws.com/run/..",
+            "https://account.r2.cloudflarestorage.com/example-bucket",
+        ];
+        let remote = [
+            "https://example-bucket.s3.us-east-2.amazonaws.com/run?q=1#x",
+            "https://s3.us-east-2.amazonaws.com/example-bucket/run",
+            "https://account.r2.cloudflarestorage.com/example-bucket/run-1",
+            "https://account.blob.core.windows.net/container/run-1",
+            "https://example.com/progress/run-1",
+            "http://example.com/progress/run-1",
+            "gs://example-bucket/run-1",
+            "az://container/run-1",
+            "abfss://container@account.dfs.core.windows.net/run-1",
+        ];
+        let unrecognised = [
+            "ftp://example.com/run-1",
+            "sftp://example.com/run-1",
+            "file://remote-host/run-1",
+            "memory://remote/",
+        ];
+        for env in envs {
+            for url in https_root {
+                expect_refusal(url, env, "the bucket root is refused", &mut bypasses);
+            }
+            for url in remote {
+                expect_refusal(url, env, "is not a publishing store", &mut bypasses);
+            }
+            for url in unrecognised {
+                expect_refusal(url, env, "not a store URL", &mut bypasses);
+            }
+        }
+        // Positive controls: the admitted kinds still pass.
+        for url in [
+            "s3://example-bucket/run-1",
+            "S3A://example-bucket/run-1",
+            "memory:///",
+            "file:///var/lib/jope/progress",
+            "progress-store",
+        ] {
+            if let Err(e) = preflight(url, signed) {
+                bypasses.push(format!(
+                    "{url} (signed): an admitted store was refused: {e:#}"
+                ));
+            }
+        }
+        assert!(bypasses.is_empty(), "{}", bypasses.join("\n"));
     }
 }

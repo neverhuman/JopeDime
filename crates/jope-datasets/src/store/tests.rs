@@ -247,3 +247,172 @@ fn historical_compare_then_put_reproduces_two_successful_publishers() {
     // independent_local_publishers_have_one_winner applies the same schedule to
     // the corrected API and requires exactly one committed update instead.
 }
+
+/// PR #114 review round 2: a `StoreLocation` names the backend and prefix object_store's own
+/// classifier (`ObjectStoreScheme::parse`, then the prefix parse `object_store::parse_url`
+/// applies) names, for every URL `Store::open_with` opens through `parse_url` and for the
+/// well-formed `s3://`/`s3a://` URLs it opens on its own S3 route. The HTTPS URLs object_store
+/// sends to S3 (AWS virtual-host and path-style, R2) are S3 locations at the prefix the store
+/// would write under, which the W8 publishing preflight refuses at the bucket root. HTTPS URLs
+/// still parse for the read path, which opens them through `parse_url` as before. Pure URL
+/// parsing: no store is opened, and no credential or network is used.
+#[test]
+fn a_store_location_names_the_backend_and_prefix_object_store_opens() {
+    use object_store::ObjectStoreScheme as S;
+    let bucket = Some("example-bucket");
+    let cases: [(&str, S, &str, Option<&str>); 20] = [
+        ("s3://example-bucket", S::AmazonS3, "", bucket),
+        (
+            "s3://example-bucket/run-1/a",
+            S::AmazonS3,
+            "run-1/a",
+            bucket,
+        ),
+        ("s3a://example-bucket/run-1", S::AmazonS3, "run-1", bucket),
+        (
+            "S3://example-bucket/runs/../run-1",
+            S::AmazonS3,
+            "run-1",
+            bucket,
+        ),
+        (
+            "https://example-bucket.s3.us-east-2.amazonaws.com",
+            S::AmazonS3,
+            "",
+            bucket,
+        ),
+        (
+            "https://example-bucket.s3.us-east-2.amazonaws.com/run/..",
+            S::AmazonS3,
+            "",
+            bucket,
+        ),
+        (
+            "https://example-bucket.s3.us-east-2.amazonaws.com/run?q=1#x",
+            S::AmazonS3,
+            "run",
+            bucket,
+        ),
+        (
+            "https://s3.us-east-2.amazonaws.com/example-bucket",
+            S::AmazonS3,
+            "",
+            bucket,
+        ),
+        (
+            "https://s3.us-east-2.amazonaws.com/example-bucket/run",
+            S::AmazonS3,
+            "run",
+            bucket,
+        ),
+        (
+            "https://account.r2.cloudflarestorage.com/example-bucket",
+            S::AmazonS3,
+            "",
+            bucket,
+        ),
+        (
+            "https://account.r2.cloudflarestorage.com/example-bucket/run-1",
+            S::AmazonS3,
+            "run-1",
+            bucket,
+        ),
+        (
+            "gs://example-bucket/run-1",
+            S::GoogleCloudStorage,
+            "run-1",
+            None,
+        ),
+        ("az://container/run-1", S::MicrosoftAzure, "run-1", None),
+        (
+            "abfss://container@account.dfs.core.windows.net/run-1",
+            S::MicrosoftAzure,
+            "run-1",
+            None,
+        ),
+        (
+            "https://account.blob.core.windows.net/container/run-1",
+            S::MicrosoftAzure,
+            "run-1",
+            None,
+        ),
+        (
+            "https://example.com/progress/run-1",
+            S::Http,
+            "progress/run-1",
+            None,
+        ),
+        (
+            "http://example.com/progress/run-1",
+            S::Http,
+            "progress/run-1",
+            None,
+        ),
+        (
+            "file:///var/lib/jope/progress",
+            S::Local,
+            "var/lib/jope/progress",
+            None,
+        ),
+        (
+            "file:///var/lib/jope/run%201",
+            S::Local,
+            "var/lib/jope/run 1",
+            None,
+        ),
+        ("memory:///", S::Memory, "", None),
+    ];
+    for (url, backend, prefix, bucket) in cases {
+        let location = StoreLocation::parse(url).unwrap();
+        // The oracle: object_store's classifier and parse_url's prefix, on the same URL.
+        let (oracle, path) = S::parse(&Url::parse(url).unwrap()).unwrap();
+        let oracle_prefix = ObjPath::parse(path).unwrap();
+        assert_eq!(
+            (&location.backend, &location.prefix),
+            (&oracle, &oracle_prefix),
+            "{url}"
+        );
+        assert_eq!(
+            (&location.backend, location.prefix.as_ref()),
+            (&backend, prefix),
+            "{url}"
+        );
+        let route = if url.to_ascii_lowercase().starts_with("s3") {
+            StoreRoute::S3
+        } else {
+            StoreRoute::ParseUrl
+        };
+        assert_eq!(location.route, route, "{url}");
+        assert_eq!(
+            location
+                .s3
+                .as_ref()
+                .map(|s3| (s3.bucket.as_str(), s3.prefix.as_ref())),
+            bucket.map(|bucket| (bucket, prefix)),
+            "{url}"
+        );
+    }
+    // A bare path is a local store at its absolute path.
+    let bare = StoreLocation::parse("progress-store").unwrap();
+    let (oracle, path) = S::parse(&Url::parse(&bare.url).unwrap()).unwrap();
+    assert_eq!(
+        (bare.route, &bare.backend, &bare.prefix, &bare.s3),
+        (
+            StoreRoute::ParseUrl,
+            &oracle,
+            &ObjPath::parse(path).unwrap(),
+            &None
+        )
+    );
+    assert_eq!(bare.backend, S::Local);
+    // Neither object_store nor the store opens these.
+    for url in [
+        "ftp://example.com/run-1",
+        "sftp://example.com/run-1",
+        "file://remote-host/run-1",
+        "memory://remote/",
+    ] {
+        assert!(S::parse(&Url::parse(url).unwrap()).is_err(), "{url}");
+        assert!(StoreLocation::parse(url).is_err(), "{url}");
+    }
+}

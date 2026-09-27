@@ -35,6 +35,20 @@ pub enum PutOutcome {
     Exists,
 }
 
+/// The backends `object_store` classifies a URL into ([`StoreLocation::backend`]).
+pub use object_store::ObjectStoreScheme;
+
+/// How [`Store::open_with`] builds the store for a [`StoreLocation`].
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum StoreRoute {
+    /// An `s3://` or `s3a://` URL: object_store's S3 builder, configured from the environment
+    /// (credentials, region, request signing), writing under the location's prefix.
+    S3,
+    /// Every other URL: `object_store::parse_url`, which opens the backend its classifier
+    /// ([`ObjectStoreScheme::parse`]) names, at the prefix it names.
+    ParseUrl,
+}
+
 /// A store URL as [`Store::open_with`] reads it. The store and every caller that must agree with
 /// it about where it writes (the W8 publishing preflight,
 /// `jope_learning::progress::remote::preflight_publishing_store`) take it from here, so the two
@@ -42,22 +56,39 @@ pub enum PutOutcome {
 /// - a bare filesystem path becomes a `file://` URL;
 /// - `url::Url` parses and normalizes it: the scheme is lower-cased, and `.` and `..` segments
 ///   (percent-encoded ones included) are removed;
-/// - an `s3://` or `s3a://` URL names its bucket and the object prefix every key is written under.
+/// - an `s3://` or `s3a://` URL takes the S3 route: its host is the bucket and its path the
+///   object prefix every key is written under;
+/// - every other URL takes object_store's own route, and the backend and prefix are the ones
+///   object_store's classifier names, exactly as `object_store::parse_url` opens it. That route
+///   reaches S3 too: AWS virtual-host (`https://<bucket>.s3.<region>.amazonaws.com/<prefix>`) and
+///   path-style (`https://s3.<region>.amazonaws.com/<bucket>/<prefix>`) URLs and R2 URLs
+///   (`https://<account>.r2.cloudflarestorage.com/<bucket>/<prefix>`) are S3 locations. A URL the
+///   classifier does not recognise is not a store location.
 #[derive(Clone, Debug)]
 pub struct StoreLocation {
     /// The URL the store opens and records ([`Store::url`]).
     pub url: String,
     pub parsed: Url,
-    /// The bucket and effective object prefix of an S3 store; `None` for every other backend.
+    pub route: StoreRoute,
+    /// The backend the store opens.
+    pub backend: ObjectStoreScheme,
+    /// The object prefix every key is written under; empty at the root of the backend.
+    pub prefix: ObjPath,
+    /// The bucket and effective object prefix of an S3 store, whichever route reaches S3; `None`
+    /// for every other backend.
     pub s3: Option<S3Location>,
 }
 
 /// Where an S3 store writes.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct S3Location {
+    /// The bucket the URL names: the host of an `s3://` or `s3a://` URL (empty when it names none);
+    /// for an HTTPS URL, where object_store's classifier splits it off the prefix (the first path
+    /// segment of a path-style AWS or an R2 URL, else the first label of the host).
     pub bucket: String,
-    /// Empty when the store writes at the bucket root. A path `object_store` cannot parse as a
-    /// prefix (an empty segment, for one) is the root as well: that is where the store writes.
+    /// The location's prefix. Empty when the store writes at the bucket root. On the S3 route, a
+    /// path `object_store` cannot parse as a prefix (an empty segment, for one) is the root as
+    /// well: that is where the store writes.
     pub prefix: ObjPath,
 }
 
@@ -71,15 +102,45 @@ impl StoreLocation {
             format!("file://{}", abs.display())
         };
         let parsed = Url::parse(&url_string).with_context(|| format!("parse {url_string}"))?;
-        let s3 = matches!(parsed.scheme(), "s3" | "s3a").then(|| S3Location {
-            bucket: parsed.host_str().unwrap_or_default().to_owned(),
-            prefix: ObjPath::parse(parsed.path().trim_matches('/')).unwrap_or_default(),
+        let (route, backend, prefix) = if matches!(parsed.scheme(), "s3" | "s3a") {
+            let prefix = ObjPath::parse(parsed.path().trim_matches('/')).unwrap_or_default();
+            (StoreRoute::S3, ObjectStoreScheme::AmazonS3, prefix)
+        } else {
+            // The two steps `object_store::parse_url` takes before it builds the store.
+            let (backend, path) =
+                ObjectStoreScheme::parse(&parsed).with_context(|| format!("open {url_string}"))?;
+            let prefix = ObjPath::parse(path).with_context(|| format!("open {url_string}"))?;
+            (StoreRoute::ParseUrl, backend, prefix)
+        };
+        let s3 = (backend == ObjectStoreScheme::AmazonS3).then(|| S3Location {
+            bucket: match route {
+                StoreRoute::S3 => parsed.host_str().unwrap_or_default().to_owned(),
+                StoreRoute::ParseUrl => endpoint_bucket(&parsed),
+            },
+            prefix: prefix.clone(),
         });
         Ok(StoreLocation {
             url: url_string,
             parsed,
+            route,
+            backend,
+            prefix,
             s3,
         })
+    }
+}
+
+/// The bucket of an HTTPS URL object_store's classifier sends to S3, split where the classifier
+/// splits it off the prefix: path-style AWS hosts (`s3…`) and R2 hosts name it in the first path
+/// segment, virtual-host AWS hosts in their first label.
+fn endpoint_bucket(parsed: &Url) -> String {
+    let host = parsed.host_str().unwrap_or_default();
+    if host.starts_with("s3") || host.ends_with("r2.cloudflarestorage.com") {
+        let path = parsed.path();
+        let path = path.strip_prefix('/').unwrap_or(path);
+        path.split('/').next().unwrap_or_default().to_owned()
+    } else {
+        host.split('.').next().unwrap_or_default().to_owned()
     }
 }
 
@@ -104,14 +165,18 @@ impl Store {
     }
 
     /// [`Store::open`] with an explicit choice of anonymous (unsigned) S3 requests. The URL is read
-    /// by [`StoreLocation::parse`].
+    /// by [`StoreLocation::parse`]: the store takes that location's route and writes under its
+    /// prefix.
     pub fn open_with(url: &str, anonymous: bool) -> Result<Store> {
         let StoreLocation {
             url: url_string,
             parsed,
-            s3,
+            route,
+            backend,
+            prefix,
+            ..
         } = StoreLocation::parse(url)?;
-        let local_root = if parsed.scheme() == "file" {
+        let local_root = if backend == ObjectStoreScheme::Local {
             Some(
                 parsed
                     .to_file_path()
@@ -120,8 +185,8 @@ impl Store {
         } else {
             None
         };
-        let (inner, prefix): (Box<dyn ObjectStore>, ObjPath) = match s3 {
-            Some(S3Location { prefix, .. }) => {
+        let inner: Box<dyn ObjectStore> = match route {
+            StoreRoute::S3 => {
                 // object_store's default request timeout is 30 s, which a 200–250 MB blob GET
                 // exceeds on a shared link (seen against the real bucket: "request or response
                 // body error" on the three largest starforge/hyperion blobs); allow up to an
@@ -146,10 +211,20 @@ impl Store {
                     builder = credentials.apply_to(builder);
                 }
                 let store = builder.build().context("build S3 store")?;
-                (Box::new(store), prefix)
+                Box::new(store)
             }
-            None => {
-                object_store::parse_url(&parsed).with_context(|| format!("open {url_string}"))?
+            StoreRoute::ParseUrl => {
+                let (store, opened_at) = object_store::parse_url(&parsed)
+                    .with_context(|| format!("open {url_string}"))?;
+                // parse_url classifies the URL as the location did. Were they ever to disagree,
+                // the store would not write where its callers checked, so it is not opened.
+                ensure!(
+                    opened_at == prefix,
+                    "open {url_string}: object_store opens it at prefix {:?}, not {:?}",
+                    opened_at.as_ref(),
+                    prefix.as_ref()
+                );
+                store
             }
         };
         Ok(Store {
