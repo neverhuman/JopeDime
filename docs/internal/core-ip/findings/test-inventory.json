@@ -1389,6 +1389,13 @@
         "orchestration"
       ]
     },
+    "target:jope-cli/test/pipeline_cli": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "orchestration"
+      ]
+    },
     "target:jope-datasets/bin/jope-datasets": {
       "role": "regression",
       "subsystems": [
@@ -2376,6 +2383,13 @@
       "subsystems": [
         "encoders",
         "policy"
+      ]
+    },
+    "target:jope-pipeline/test/dependency_fence": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "orchestration"
       ]
     },
     "target:jope-pipeline/test/schema_agreement": {
