@@ -79,6 +79,41 @@ enum Cmd {
         #[command(subcommand)]
         cmd: RevocationsCmd,
     },
+    /// The champion bank: HWM-improved pipeline champions, content-addressed and append-only,
+    /// exported as jope.pipeline-seeds/v1 for later rounds.
+    Bank {
+        #[command(subcommand)]
+        cmd: BankCmd,
+    },
+}
+
+#[derive(Subcommand)]
+enum BankCmd {
+    /// Admit one pipeline champion: its receipt must re-derive from its run directory and the HWM
+    /// ledger must verify and hold an accepted `improved` event for exactly this receipt.
+    Add {
+        #[arg(long)]
+        receipt: PathBuf,
+        /// The jope.pipeline-lineage/v1 that produced it; must verify and name the receipt.
+        #[arg(long)]
+        lineage: Option<PathBuf>,
+    },
+    /// Read-only: every banked entry, re-checked against its content address.
+    List {
+        #[arg(long)]
+        dataset: Option<String>,
+    },
+    /// Write a dataset's best distinct banked genomes as a new jope.pipeline-seeds/v1 file.
+    Export {
+        #[arg(long)]
+        dataset: String,
+        #[arg(long)]
+        task: Option<String>,
+        #[arg(long, default_value_t = 4)]
+        top: usize,
+        #[arg(long)]
+        out: PathBuf,
+    },
 }
 
 #[derive(Subcommand)]
@@ -419,6 +454,35 @@ fn run(cli: Cli) -> Result<bool> {
             RevocationsCmd::Status => {
                 let revocations = revocation::Revocations::load(&state)?;
                 print_json(&json!({"state": state.root(), "status": revocations.status()}))?;
+                Ok(true)
+            }
+        },
+        Cmd::Bank { cmd } => match cmd {
+            BankCmd::Add { receipt, lineage } => {
+                print_json(&jope_learning::bank::add(
+                    &state,
+                    &receipt,
+                    lineage.as_deref(),
+                )?)?;
+                Ok(true)
+            }
+            BankCmd::List { dataset } => {
+                print_json(&jope_learning::bank::listing(&state, dataset.as_deref())?)?;
+                Ok(true)
+            }
+            BankCmd::Export {
+                dataset,
+                task,
+                top,
+                out,
+            } => {
+                print_json(&jope_learning::bank::export(
+                    &state,
+                    &dataset,
+                    task.as_deref(),
+                    top,
+                    &out,
+                )?)?;
                 Ok(true)
             }
         },

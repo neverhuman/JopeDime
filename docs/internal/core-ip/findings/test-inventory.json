@@ -1784,6 +1784,13 @@
         "teaching"
       ]
     },
+    "target:jope-learning/test/pipeline_bank": {
+      "role": "regression",
+      "subsystems": [
+        "storage",
+        "evidence"
+      ]
+    },
     "target:jope-learning/test/pipeline_hwm": {
       "role": "regression",
       "subsystems": [
