@@ -74,6 +74,65 @@ CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only \
   cargo run --locked -q -p jope-pipeline --example receipt_schema
 ```
 
+## Parallelism (`--threads`, `--islands`, `--cpu-ceiling`)
+
+`--threads N` evaluates each generation's admitted candidates on N workers. Admission (which
+candidates are fitted, up to the evaluation bound) and the fold of results back into the search
+both happen in slot order, so the thread count never changes a decision: `--threads 1` and
+`--threads 8` publish the same observations, selection and receipt apart from wall-clock
+readings (with the clock frozen in tests, byte for byte). The comparison phase runs one worker
+per cut. The thread count is not recorded in the receipt, because it cannot change it.
+
+`--islands M` runs M independent random streams over the same cuts. Island 0 is `--rng-seed`
+itself, so one island is the plain search. Islands share each cut's evaluation budget and the
+rule that no genome is fitted twice on a cut; a genome another island already measured joins
+the drawing island's candidates with its existing score. Every `--migration-interval K`
+generations (default 4) each island's top-1 is carried into every other island's elites; it
+enters only if it beats one of them, and a migrant is never re-fitted. Observations carry their
+island, and the receipt's `search.islands` records the count, the interval and every migration
+(cut, generation, from, to, program sha256, RMSE, admitted). The evaluation pool has
+`islands x threads` workers; a run is refused before anything is written when that exceeds the
+CPUs `sched_getaffinity` allows, `available_parallelism`, or `--cpu-ceiling <millicores>`.
+
+## Child-process use (`--source-commit`, SIGTERM)
+
+`--source-commit <sha>` records the given commit as the receipt's `git_sha` and never spawns
+`git` (without it the run uses `JOPE_GIT_SHA`, else `git rev-parse HEAD`). SIGTERM or SIGINT
+stops a run between evaluations: in-flight fits finish, nothing new starts, no receipt is
+written, and the process exits 143. A second signal exits at once.
+
+## Targeted evolution (`jope pipeline evolve`)
+
+```sh
+jope pipeline evolve --dataset datasets/test/uci-parkinsons-telemonitoring --rounds 3 --control \
+  --cuts 3 --budget evaluations=200,seconds=600 --threads 8 --policy skip --emit rust \
+  --output <new-directory>
+jope pipeline lineage verify --lineage <new-directory>/lineage.json --require-discovery
+```
+
+Each round is a full `jope pipeline run` in `round-NNN/` on the identical prepared cuts (fixed
+fold seed and cut count). Round 1 starts from `--seeds` (a `jope.pipeline-seeds/v1` file, such
+as a champion-bank export) or unseeded; every later round is seeded from the previous round's
+champion and ranked runners-up (at most four, `islands::next_seeds`), with the previous receipt
+as its verified `--incumbent`, and its own random stream. Because the previous champion is
+re-measured on the same cuts, no round's champion is worse than the round before. `--control`
+adds `control/`: the final round's exact configuration with no seeds, which separates what
+seeding carried forward from what the search found on its own.
+
+`lineage.json` (`jope.pipeline-lineage/v1`) is rewritten atomically and fsynced after each
+completed round: per round the selected genome and program sha256, the mean held-out RMSE, R^2
+and train R^2 on the identical cuts, the parent receipt sha256, the seed origin and seeds, each
+cut's per-generation best-so-far and stop reasons, the generation-1+ measurements and the
+receipt's stage seconds. A round interrupted by a signal writes no receipt and never enters it.
+`jope pipeline lineage verify` re-derives every round and the control from its directory and
+checks the chain: same dataset, cuts and budget; each parent is the previous receipt; each
+round's seeds are exactly the previous round's champion and runners-up; the recorded numbers
+are what the receipts show; no champion got worse. `--require-discovery` also demands a
+measured candidate bred in generation 1 or later in every round.
+
+Evolve never writes to the learning store. HWM ingest and the champion bank are separate
+`jope-learning` steps over its outputs (see `docs/learning.md`).
+
 Verification: `cargo test --locked -p jope-pipeline` exercises budget exhaustion,
 failed attempts, in-flight overrun, full-cut selection and legacy reading.
 `E2E_OUT=<new-durable-directory> bash deploy/ci/e2e-smoke.sh` runs the committed
