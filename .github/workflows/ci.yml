@@ -42,13 +42,10 @@ jobs:
           python3 deploy/ci/receipt.py --lane changes --output "$evidence" --backend none -- bash deploy/ci/fast-lane.sh changes
       - name: Upload current lane evidence
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1 (Node 24)
+        uses: ./.github/actions/upload-ci-evidence
         with:
           name: ci-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
           path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
-          if-no-files-found: error
-          include-hidden-files: true
-          retention-days: 30
 
   hygiene:
     runs-on: [self-hosted, linux, x64, jope-ci]
@@ -71,13 +68,10 @@ jobs:
           python3 deploy/ci/receipt.py --lane hygiene --output "$evidence" --backend unittest -- bash deploy/ci/fast-lane.sh hygiene
       - name: Upload current lane evidence
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1 (Node 24)
+        uses: ./.github/actions/upload-ci-evidence
         with:
           name: ci-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
           path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
-          if-no-files-found: error
-          include-hidden-files: true
-          retention-days: 30
 
   rust-check:
     needs: changes
@@ -101,13 +95,10 @@ jobs:
           python3 deploy/ci/receipt.py --lane rust-check --output "$evidence" --backend rust -- bash deploy/ci/fast-lane.sh rust-check
       - name: Upload current lane evidence
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1 (Node 24)
+        uses: ./.github/actions/upload-ci-evidence
         with:
           name: ci-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
           path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
-          if-no-files-found: error
-          include-hidden-files: true
-          retention-days: 30
 
   rust-test:
     needs: changes
@@ -137,13 +128,10 @@ jobs:
           python3 deploy/ci/receipt.py --lane rust-test --output "$evidence" --backend nextest --junit "$evidence/junit.xml" -- bash deploy/ci/fast-lane.sh rust-test
       - name: Upload current lane evidence
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1 (Node 24)
+        uses: ./.github/actions/upload-ci-evidence
         with:
           name: ci-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
           path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
-          if-no-files-found: error
-          include-hidden-files: true
-          retention-days: 30
 
   emitters:
     needs: changes
@@ -169,13 +157,10 @@ jobs:
           python3 deploy/ci/receipt.py --lane emitters --output "$evidence" --backend rust -- bash deploy/ci/fast-lane.sh emitters
       - name: Upload current lane evidence
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1 (Node 24)
+        uses: ./.github/actions/upload-ci-evidence
         with:
           name: ci-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
           path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
-          if-no-files-found: error
-          include-hidden-files: true
-          retention-days: 30
 
   inputs:
     needs: changes
@@ -199,13 +184,10 @@ jobs:
           python3 deploy/ci/receipt.py --lane inputs --output "$evidence" --backend none -- bash deploy/ci/fast-lane.sh inputs
       - name: Upload current lane evidence
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1 (Node 24)
+        uses: ./.github/actions/upload-ci-evidence
         with:
           name: ci-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
           path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
-          if-no-files-found: error
-          include-hidden-files: true
-          retention-days: 30
 
   python:
     needs: changes
@@ -229,13 +211,10 @@ jobs:
           python3 deploy/ci/receipt.py --lane python --output "$evidence" --backend pytest --junit "$evidence/junit.xml" -- bash deploy/ci/fast-lane.sh python
       - name: Upload current lane evidence
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1 (Node 24)
+        uses: ./.github/actions/upload-ci-evidence
         with:
           name: ci-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
           path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
-          if-no-files-found: error
-          include-hidden-files: true
-          retention-days: 30
 
   e2e-smoke:
     needs: changes
@@ -259,13 +238,10 @@ jobs:
           python3 deploy/ci/receipt.py --lane e2e-smoke --output "$evidence" --backend none -- bash deploy/ci/fast-lane.sh e2e-smoke
       - name: Upload current lane evidence
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1 (Node 24)
+        uses: ./.github/actions/upload-ci-evidence
         with:
           name: ci-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
           path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
-          if-no-files-found: error
-          include-hidden-files: true
-          retention-days: 30
 
   aggregate:
     needs: [changes, hygiene, rust-check, rust-test, emitters, inputs, python, e2e-smoke]
@@ -297,10 +273,7 @@ jobs:
           python3 deploy/ci/aggregate.py --receipts "target/ci-download/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT" --needs "$output/needs.json" --output "$output/aggregate.json"
       - name: Upload aggregate inventory
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1 (Node 24)
+        uses: ./.github/actions/upload-ci-evidence
         with:
           name: ci-aggregate-${{ github.run_id }}-${{ github.run_attempt }}
           path: target/ci-aggregate/${{ github.run_id }}/${{ github.run_attempt }}/
-          if-no-files-found: error
-          include-hidden-files: true
-          retention-days: 30

@@ -1,0 +1,53 @@
+name: Publish CI evidence
+description: Retry evidence publication within the job deadline without overwriting an earlier upload.
+inputs:
+  name:
+    description: Run/attempt-specific logical artifact name
+    required: true
+  path:
+    description: Completed evidence directory
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Publication attempt 1
+      id: first
+      if: ${{ !cancelled() }}
+      continue-on-error: true
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1 (Node 24)
+      with:
+        name: ${{ inputs.name }}-pub-1
+        path: ${{ inputs.path }}
+        if-no-files-found: error
+        include-hidden-files: true
+        retention-days: 30
+    - name: Publication attempt 2
+      id: second
+      if: ${{ !cancelled() && steps.first.outcome == 'failure' }}
+      continue-on-error: true
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1 (Node 24)
+      with:
+        name: ${{ inputs.name }}-pub-2
+        path: ${{ inputs.path }}
+        if-no-files-found: error
+        include-hidden-files: true
+        retention-days: 30
+    - name: Publication attempt 3
+      id: third
+      if: ${{ !cancelled() && steps.first.outcome == 'failure' && steps.second.outcome == 'failure' }}
+      continue-on-error: true
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1 (Node 24)
+      with:
+        name: ${{ inputs.name }}-pub-3
+        path: ${{ inputs.path }}
+        if-no-files-found: error
+        include-hidden-files: true
+        retention-days: 30
+    - name: Require successful publication
+      if: always()
+      shell: bash
+      env:
+        FIRST: ${{ steps.first.outcome }}
+        SECOND: ${{ steps.second.outcome }}
+        THIRD: ${{ steps.third.outcome }}
+      run: bash deploy/ci/publication-status.sh "$FIRST" "$SECOND" "$THIRD"

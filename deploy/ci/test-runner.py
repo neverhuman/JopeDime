@@ -213,5 +213,26 @@ source deploy/ci/fast-lane.sh emitters
         self.assertIn('$GITHUB_WORKSPACE/target/ci-evidence/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT/$GITHUB_JOB', lane)
 
 
+class PublicationStatusTests(unittest.TestCase):
+    def test_publication_gate_requires_one_bounded_successful_sequence(self):
+        import itertools
+        admitted = {('success', 'skipped', 'skipped'), ('failure', 'success', 'skipped'),
+                    ('failure', 'failure', 'success')}
+        for outcomes in itertools.product(['success', 'failure', 'cancelled', 'skipped', ''], repeat=3):
+            result = subprocess.run(['bash', str(ROOT/'deploy/ci/publication-status.sh'), *outcomes],
+                                    capture_output=True, text=True)
+            self.assertEqual(outcomes in admitted, result.returncode == 0, outcomes)
+
+    def test_upload_retries_keep_distinct_artifacts_and_existing_caps(self):
+        action = (ROOT/'.github/actions/upload-ci-evidence/action.yml').read_text()
+        self.assertNotIn('overwrite:', action)
+        self.assertNotIn('timeout-minutes:', action)
+        for number in range(1, 4):
+            self.assertIn('${{ inputs.name }}-pub-'+str(number), action)
+        self.assertEqual(3, action.count('retention-days: 30'))
+        self.assertEqual(3, action.count('if-no-files-found: error'))
+        self.assertIn('bash deploy/ci/publication-status.sh "$FIRST" "$SECOND" "$THIRD"', action)
+
+
 if __name__ == '__main__':
     unittest.main()

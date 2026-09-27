@@ -5,6 +5,7 @@ import datetime
 import importlib.util
 import json
 import os
+import re
 from pathlib import Path
 import sys
 import subprocess
@@ -18,17 +19,52 @@ plan_module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(plan_module)
 
 
-def load_receipts(root):
+def load_receipts(root, publications=None):
     receipts = {}
     # download-artifact keeps each artifact in a separate immediate directory.
     # Product pipeline evidence also contains receipt.json; it is data covered by
     # the CI receipt's hashes, not another CI lane to discover recursively.
     for artifact in root.iterdir():
         path = artifact / "receipt.json"
-        if artifact.is_symlink() or not artifact.is_dir() or not path.is_file():
+        if artifact.is_symlink() or not artifact.is_dir() or path.is_symlink() or not path.is_file():
             raise ValueError(f"artifact lacks a root CI receipt: {artifact.name}")
         receipt = json.loads(path.read_text())
         receipts.setdefault(receipt["lane"], []).append((path, receipt))
+    # A timed-out FinalizeArtifact may have committed remotely before its response
+    # was lost. Keep each upload, but count only one execution if explicitly numbered
+    # publication attempts contain exactly the same complete bytes.
+    for lane, candidates in receipts.items():
+        if publications is not None:
+            publications[lane] = sorted(path.parent.name for path, _ in candidates)
+        for path, receipt in candidates:
+            base = f"ci-{receipt['run_id']}-{receipt['attempt']}-{lane}-pub-"
+            if '-pub-' in path.parent.name and not re.fullmatch(re.escape(base) + r"[1-3]", path.parent.name):
+                raise ValueError(f"{lane}: invalid publication attempt name")
+        if len(candidates) < 2:
+            continue
+        signatures = []
+        numbers = set()
+        for path, receipt in candidates:
+            base = f"ci-{receipt['run_id']}-{receipt['attempt']}-{lane}-pub-"
+            name = path.parent.name
+            if not re.fullmatch(re.escape(base) + r"[1-3]", name):
+                raise ValueError(f"{lane}: ambiguous execution receipts, not publication retries")
+            number = name.rsplit('-', 1)[1]
+            if number in numbers:
+                raise ValueError(f"{lane}: repeated publication number")
+            numbers.add(number)
+            files = []
+            for member in sorted(path.parent.rglob('*')):
+                if member.is_symlink():
+                    raise ValueError(f"{lane}: symlink in publication")
+                if member.is_file():
+                    files.append((str(member.relative_to(path.parent)), digest(member)))
+                elif not member.is_dir():
+                    raise ValueError(f"{lane}: special file in publication")
+            signatures.append(files)
+        if any(signature != signatures[0] for signature in signatures[1:]):
+            raise ValueError(f"{lane}: divergent publication attempts")
+        receipts[lane] = [min(candidates, key=lambda row: row[0].parent.name)]
     return receipts
 
 
@@ -136,7 +172,8 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     try:
-        receipts = load_receipts(args.receipts)
+        publications = {}
+        receipts = load_receipts(args.receipts, publications)
         changes = receipts.get("changes", [])
         if len(changes) != 1:
             raise ValueError("missing or ambiguous changes receipt")
@@ -152,6 +189,7 @@ def main():
         if sorted(set(paths) - {""}) != plan["paths"]:
             raise ValueError("path plan does not match checked-out changes")
         report = verify(mapping, plan, json.loads(args.needs.read_text()), receipts, expected)
+        report["publication_artifacts"] = publications
     except (OSError, ValueError, KeyError, TypeError) as exc:
         report = {"status": "failed", "errors": [str(exc)]}
     args.output.parent.mkdir(parents=True, exist_ok=True)
