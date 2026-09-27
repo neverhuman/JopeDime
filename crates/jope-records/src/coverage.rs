@@ -204,6 +204,21 @@ pub fn discover(root: &Path) -> Result<Dict> {
     )?;
     let files = String::from_utf8(files)
         .map_err(|e| Error::parse(Path::new("git ls-files"), e.to_string()))?;
+    discover_from(&metadata, files.split('\0'), root, &|name: &str| {
+        py::read_text(&root.join(name))
+    })
+}
+
+/// Discovery from its inputs: the `cargo metadata --no-deps` document, the repository's file
+/// list and a reader for workflow files (by repository-relative path). Manifest and source paths
+/// in the metadata are made relative to `root`. `discover` gathers the inputs from the tree; the
+/// Python-parity fixtures replay recorded ones.
+pub fn discover_from<'a>(
+    metadata: &Value,
+    files: impl IntoIterator<Item = &'a str>,
+    root: &Path,
+    read: &dyn Fn(&str) -> Result<String>,
+) -> Result<Dict> {
     let shape = |what: &str| Error::Shape(format!("cargo metadata has no {what}"));
     let members = metadata
         .get("workspace_members")
@@ -271,7 +286,7 @@ pub fn discover(root: &Path) -> Result<Dict> {
             );
         }
     }
-    let unique: BTreeSet<&str> = files.split('\0').filter(|f| !f.is_empty()).collect();
+    let unique: BTreeSet<&str> = files.into_iter().filter(|f| !f.is_empty()).collect();
     for filename in unique {
         let path = Path::new(filename);
         let name = path.file_name().map_or("", |n| n.to_str().unwrap_or(""));
@@ -287,7 +302,7 @@ pub fn discover(root: &Path) -> Result<Dict> {
             && matches!(suffix, ".yaml" | ".yml")
         {
             items.insert(format!("workflow:{filename}"), kind("workflow"));
-            let text = py::read_text(&root.join(filename))?;
+            let text = read(filename)?;
             for job in workflow_jobs(&text).map_err(Error::Invalid)? {
                 items.insert(format!("job:{filename}/{job}"), kind("workflow-job"));
             }
@@ -466,7 +481,12 @@ pub fn counts(discovered: &Dict) -> Dict {
 pub fn validate_report(root: &Path, mapping_path: &Path) -> Result<(String, bool)> {
     let discovered = discover(root)?;
     let mapping = py::load_json(mapping_path)?;
-    let errors = validate(&mapping, &discovered);
+    Ok(validate_text(&mapping, &discovered))
+}
+
+/// The `validate` report for a map and a discovered inventory, and whether it passes.
+pub fn validate_text(mapping: &Value, discovered: &Dict) -> (String, bool) {
+    let errors = validate(mapping, discovered);
     let mut out = String::new();
     for error in &errors {
         out.push_str(error);
@@ -474,26 +494,30 @@ pub fn validate_report(root: &Path, mapping_path: &Path) -> Result<(String, bool
     }
     let summary: Dict = [
         ("stage", Value::from("static")),
-        ("counts", Value::Dict(counts(&discovered))),
+        ("counts", Value::Dict(counts(discovered))),
         ("unassigned_or_invalid", Value::from(errors.len())),
     ]
     .into_iter()
     .collect();
     out.push_str(&pyjson::dumps(&Value::Dict(summary), true, None));
     out.push('\n');
-    Ok((out, errors.is_empty()))
+    (out, errors.is_empty())
 }
 
 /// `coverage.py discover`: `{"stage": "static", "items": ...}` with a two-space indent.
 pub fn discover_report(root: &Path) -> Result<String> {
-    let discovered = discover(root)?;
+    Ok(discover_document(discover(root)?))
+}
+
+/// The `discover` document for a discovered inventory.
+pub fn discover_document(discovered: Dict) -> String {
     let document: Dict = [
         ("stage", Value::from("static")),
         ("items", Value::Dict(discovered)),
     ]
     .into_iter()
     .collect();
-    Ok(pyjson::dumps(&Value::Dict(document), false, Some(2)) + "\n")
+    pyjson::dumps(&Value::Dict(document), false, Some(2)) + "\n"
 }
 
 /// Negative acceptance cases for static mapping and real collection failures (port of the

@@ -400,9 +400,13 @@ pub fn split_row(line: &str) -> Vec<String> {
 }
 
 pub fn read_matrix(path: &Path) -> Result<Vec<Row>> {
-    let text = py::read_text(path)?;
+    Ok(parse_matrix(&py::read_text(path)?))
+}
+
+/// The six-cell table rows of a matrix text.
+pub fn parse_matrix(text: &str) -> Vec<Row> {
     let mut rows = vec![];
-    for line in py::splitlines(&text) {
+    for line in py::splitlines(text) {
         if !line.starts_with("| ") || line.starts_with("| kind ") || line.starts_with("|---") {
             continue;
         }
@@ -421,7 +425,7 @@ pub fn read_matrix(path: &Path) -> Result<Vec<Row>> {
             notes: next(),
         });
     }
-    Ok(rows)
+    rows
 }
 
 fn pending_number(status: &str) -> Option<u64> {
@@ -525,10 +529,80 @@ fn head_of(new: &str) -> &str {
     py::strip(new.split(" (").next().unwrap_or(""))
 }
 
+/// What the check reads from the tree besides the matrix.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Tree {
+    /// `jope-parallel` subcommands: the `Cmd` variants of `crates/jope-engine/src/main.rs`.
+    pub clap: Vec<String>,
+    /// `(package, kind, name, src path)` of every bin/example target.
+    pub bins: Vec<(String, String, String, String)>,
+    /// Python tools under `python/src/jope/{tools,research}`.
+    pub tools: Vec<String>,
+    /// `jope-py` commands, when `python/src/jope/cli.py` exists.
+    pub jope_py: Option<Vec<String>>,
+    /// systemd units under `deploy/systemd`.
+    pub units: Vec<String>,
+}
+
+/// Read the tree's entry points (`root` canonical).
+pub fn scan_tree(root: &Path) -> Result<Tree> {
+    let main_rs = root.join("crates/jope-engine/src/main.rs");
+    let clap = if main_rs.exists() {
+        parse_clap_enum(&main_rs, "Cmd")?
+            .into_iter()
+            .map(|c| c.name)
+            .collect()
+    } else {
+        vec![]
+    };
+    let bins = cargo_bins(root)?;
+    let tools = python_tools(root);
+    let cli = root.join("python/src/jope/cli.py");
+    let jope_py = if cli.exists() {
+        Some(parse_argparse_commands(&cli)?)
+    } else {
+        None
+    };
+    let units = systemd_units(root);
+    Ok(Tree {
+        clap,
+        bins,
+        tools,
+        jope_py,
+        units,
+    })
+}
+
+/// Every row target that names a path (`evaluate` asks whether those exist).
+pub fn target_heads(matrix_text: &str) -> BTreeSet<String> {
+    parse_matrix(matrix_text)
+        .iter()
+        .map(|r| head_of(&r.new).to_owned())
+        .filter(|h| h.contains('/'))
+        .collect()
+}
+
 /// The check report and whether the matrix passes.
 pub fn check(matrix: &Path, root: &Path, help_text: Option<&Path>) -> Result<(String, bool)> {
     let root = root.canonicalize().map_err(|e| Error::io(root, e))?;
-    let rows = read_matrix(matrix)?;
+    let text = py::read_text(matrix)?;
+    let help = help_text.map(py::read_text).transpose()?;
+    let tree = scan_tree(&root)?;
+    Ok(evaluate(&text, &tree, help.as_deref(), &|head: &str| {
+        root.join(head).exists()
+    }))
+}
+
+/// The check report for a matrix text against a tree, and whether the matrix passes. `exists`
+/// answers whether a row target path exists. `check` gathers the inputs; the Python-parity
+/// fixtures replay recorded ones.
+pub fn evaluate(
+    matrix_text: &str,
+    tree: &Tree,
+    help_text: Option<&str>,
+    exists: &dyn Fn(&str) -> bool,
+) -> (String, bool) {
+    let rows = parse_matrix(matrix_text);
     let mut problems: Vec<String> = vec![];
     let mut targets: BTreeSet<String> = BTreeSet::new();
     let mut parens: BTreeSet<String> = BTreeSet::new();
@@ -578,26 +652,20 @@ pub fn check(matrix: &Path, root: &Path, help_text: Option<&Path>) -> Result<(St
                 if head.is_empty() || matches!(head, "dropped" | "lost" | "pending" | "-" | "none")
                 {
                     problems.push(format!("{place}: status `{}` but no target", r.status));
-                } else if head.contains('/') && !root.join(head).exists() {
+                } else if head.contains('/') && !exists(head) {
                     problems.push(format!("{place}: target `{head}` does not exist"));
                 }
             }
         }
     }
     let mut missing: Vec<String> = vec![];
-    let main_rs = root.join("crates/jope-engine/src/main.rs");
-    let clap = if main_rs.exists() {
-        parse_clap_enum(&main_rs, "Cmd")?
-    } else {
-        vec![]
-    };
-    for c in &clap {
-        if !parens.contains(&format!("jope-parallel {}", c.name)) {
-            missing.push(format!("clap subcommand: jope-parallel {}", c.name));
+    for name in &tree.clap {
+        if !parens.contains(&format!("jope-parallel {name}")) {
+            missing.push(format!("clap subcommand: jope-parallel {name}"));
         }
     }
     if let Some(help) = help_text {
-        for name in parse_help_commands(&py::read_text(help)?) {
+        for name in parse_help_commands(help) {
             if !parens.contains(&format!("jope-parallel {name}")) {
                 missing.push(format!(
                     "clap subcommand (from --help): jope-parallel {name}"
@@ -605,28 +673,22 @@ pub fn check(matrix: &Path, root: &Path, help_text: Option<&Path>) -> Result<(St
             }
         }
     }
-    let bins = cargo_bins(&root)?;
-    for (pkg, kind, name, src) in &bins {
+    for (pkg, kind, name, src) in &tree.bins {
         if !targets.contains(src) {
             missing.push(format!("{kind} {pkg}/{name}: {src}"));
         }
     }
-    let tools = python_tools(&root);
-    for tool in &tools {
+    for tool in &tree.tools {
         if !targets.contains(tool) {
             missing.push(format!("python tool: {tool}"));
         }
     }
-    let cli = root.join("python/src/jope/cli.py");
-    if cli.exists() {
-        for command in parse_argparse_commands(&cli)? {
-            if !parens.contains(&format!("jope-py {command}")) {
-                missing.push(format!("jope-py command: {command}"));
-            }
+    for command in tree.jope_py.iter().flatten() {
+        if !parens.contains(&format!("jope-py {command}")) {
+            missing.push(format!("jope-py command: {command}"));
         }
     }
-    let units = systemd_units(&root);
-    for unit in &units {
+    for unit in &tree.units {
         if !targets.contains(unit) {
             missing.push(format!("systemd unit: {unit}"));
         }
@@ -635,7 +697,7 @@ pub fn check(matrix: &Path, root: &Path, help_text: Option<&Path>) -> Result<(St
         problems.push(format!("no row for {m}"));
     }
     let (want_table, want_no_test) = counts_lines(&rows);
-    let (got_table, got_no_test, got_prose) = committed_counts(&py::read_text(matrix)?);
+    let (got_table, got_no_test, got_prose) = committed_counts(matrix_text);
     for line in COUNTS_PREAMBLE {
         if !got_prose.iter().any(|p| p == line) {
             problems.push(format!(
@@ -687,21 +749,21 @@ pub fn check(matrix: &Path, root: &Path, help_text: Option<&Path>) -> Result<(St
     out.push_str(&format!("by kind: {}\n", listing(&by_kind)));
     out.push_str(&format!(
         "this tree: {} binaries, {} examples, {} clap subcommands, {} python tools, {} systemd units\n",
-        bins.iter().filter(|b| b.1 == "bin").count(),
-        bins.iter().filter(|b| b.1 == "example").count(),
-        clap.len(),
-        tools.len(),
-        units.len()
+        tree.bins.iter().filter(|b| b.1 == "bin").count(),
+        tree.bins.iter().filter(|b| b.1 == "example").count(),
+        tree.clap.len(),
+        tree.tools.len(),
+        tree.units.len()
     ));
     if !problems.is_empty() {
         out.push_str(&format!("\n{} problem(s):\n", problems.len()));
         for p in &problems {
             out.push_str(&format!("  - {p}\n"));
         }
-        return Ok((out, false));
+        return (out, false);
     }
     out.push_str("ok: every row resolved and every entry point of this tree has a row\n");
-    Ok((out, true))
+    (out, true)
 }
 
 #[cfg(test)]

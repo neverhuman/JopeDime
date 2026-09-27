@@ -1,0 +1,3020 @@
+{
+  "stage": "static",
+  "items": {
+    "benchmark:crates/feat-math/examples/expression_benchmark.rs": {
+      "kind": "benchmark-source"
+    },
+    "benchmark:crates/feat-math/tests/bench.rs": {
+      "kind": "benchmark-source"
+    },
+    "benchmark:crates/jope-bench/src/panel/inference_benchmark.rs": {
+      "kind": "benchmark-source"
+    },
+    "benchmark:crates/jope-engine/examples/gpr_cuda_bench.rs": {
+      "kind": "benchmark-source"
+    },
+    "benchmark:deploy/ci/readme-benchmarks.py": {
+      "kind": "benchmark-source"
+    },
+    "benchmark:deploy/kernel-v1/source/assets/source/hyperion-jain/crates/feat-core/src/bench.rs": {
+      "kind": "benchmark-source"
+    },
+    "benchmark:deploy/kernel-v1/source/assets/source/hyperion-jain/crates/feat-core/tests/apex_bench.rs": {
+      "kind": "benchmark-source"
+    },
+    "benchmark:deploy/kernel-v1/source/assets/source/hyperion-jain/crates/feat-core/tests/apex_elo_bench.rs": {
+      "kind": "benchmark-source"
+    },
+    "benchmark:deploy/kernel-v1/source/assets/source/hyperion-jain/crates/feat-core/tests/apex_real_bench.rs": {
+      "kind": "benchmark-source"
+    },
+    "benchmark:deploy/kernel-v1/source/assets/source/jope-dime/vendor/feat-math/examples/expression_benchmark.rs": {
+      "kind": "benchmark-source"
+    },
+    "benchmark:deploy/kernel-v1/source/assets/source/jope-dime/vendor/feat-math/tests/bench.rs": {
+      "kind": "benchmark-source"
+    },
+    "benchmark:deploy/kernel-v1/source/examples/gpr_cuda_bench.rs": {
+      "kind": "benchmark-source"
+    },
+    "benchmark:deploy/kernel-v1/source/tools/benchmark_corpus_cache.py": {
+      "kind": "benchmark-source"
+    },
+    "benchmark:deploy/kernel-v1/source/tools/benchmark_foundation.py": {
+      "kind": "benchmark-source"
+    },
+    "benchmark:deploy/kernel-v1/source/tools/report_gpr_benchmark.py": {
+      "kind": "benchmark-source"
+    },
+    "benchmark:deploy/kernel-v1/source/tools/run_gpr_benchmark.py": {
+      "kind": "benchmark-source"
+    },
+    "benchmark:deploy/kernel-v1/source/tools/select_gpr_benchmark.py": {
+      "kind": "benchmark-source"
+    },
+    "benchmark:docs/legacy/root-docs/legacy/hyperion-jain-snapshot/crates/feat-core/src/bench.rs": {
+      "kind": "benchmark-source"
+    },
+    "benchmark:docs/legacy/root-docs/legacy/hyperion-jain-snapshot/crates/feat-core/tests/apex_bench.rs": {
+      "kind": "benchmark-source"
+    },
+    "benchmark:docs/legacy/root-docs/legacy/hyperion-jain-snapshot/crates/feat-core/tests/apex_elo_bench.rs": {
+      "kind": "benchmark-source"
+    },
+    "benchmark:docs/legacy/root-docs/legacy/hyperion-jain-snapshot/crates/feat-core/tests/apex_real_bench.rs": {
+      "kind": "benchmark-source"
+    },
+    "benchmark:python/legacy/fable_god/python/elo_finetune/bench_allreduce.py": {
+      "kind": "benchmark-source"
+    },
+    "benchmark:python/src/jope/chimera/elo_finetune/bench_allreduce.py": {
+      "kind": "benchmark-source"
+    },
+    "benchmark:python/src/jope/elo_bench.py": {
+      "kind": "benchmark-source"
+    },
+    "benchmark:python/src/jope/research/benchmark_hyperion_orig_v2_catboost.py": {
+      "kind": "benchmark-source"
+    },
+    "benchmark:python/src/jope/research/benchmark_old_hyperion_orig_catboost.py": {
+      "kind": "benchmark-source"
+    },
+    "benchmark:python/src/jope/research/hyperion_final_cv7_train_benchmark.py": {
+      "kind": "benchmark-source"
+    },
+    "benchmark:python/src/jope/tools/benchmark_corpus_cache.py": {
+      "kind": "benchmark-source"
+    },
+    "benchmark:python/src/jope/tools/benchmark_foundation.py": {
+      "kind": "benchmark-source"
+    },
+    "benchmark:python/src/jope/tools/report_gpr_benchmark.py": {
+      "kind": "benchmark-source"
+    },
+    "benchmark:python/src/jope/tools/run_gpr_benchmark.py": {
+      "kind": "benchmark-source"
+    },
+    "benchmark:python/src/jope/tools/select_gpr_benchmark.py": {
+      "kind": "benchmark-source"
+    },
+    "benchmark:python/tests/test_hyperion_final_cv7_train_benchmark.py": {
+      "kind": "benchmark-source"
+    },
+    "feature:feat-math/default": {
+      "kind": "feature",
+      "dependencies": []
+    },
+    "feature:feat-math/gpr-scratch-reuse": {
+      "kind": "feature",
+      "dependencies": []
+    },
+    "feature:hyperion/batch-worker": {
+      "kind": "feature",
+      "dependencies": [
+        "dep:jope-parallel",
+        "dep:rayon"
+      ]
+    },
+    "feature:hyperion/default": {
+      "kind": "feature",
+      "dependencies": [
+        "batch-worker",
+        "hyperion-cpu"
+      ]
+    },
+    "feature:hyperion/hyperion-cpu": {
+      "kind": "feature",
+      "dependencies": [
+        "dep:candle-core",
+        "dep:candle-nn"
+      ]
+    },
+    "feature:hyperion/hyperion-cuda": {
+      "kind": "feature",
+      "dependencies": [
+        "candle-core/cuda",
+        "candle-nn/cuda",
+        "hyperion-cpu"
+      ]
+    },
+    "feature:jope-arena/default": {
+      "kind": "feature",
+      "dependencies": []
+    },
+    "feature:jope-arena/s3": {
+      "kind": "feature",
+      "dependencies": [
+        "object_store/aws"
+      ]
+    },
+    "feature:jope-bench/asm": {
+      "kind": "feature",
+      "dependencies": [
+        "dep:jope-learning",
+        "dep:jope-policy",
+        "jope-pipeline/qualified-context"
+      ]
+    },
+    "feature:jope-bench/default": {
+      "kind": "feature",
+      "dependencies": []
+    },
+    "feature:jope-bench/inference-cuda": {
+      "kind": "feature",
+      "dependencies": [
+        "asm",
+        "candle-core/cuda",
+        "dep:candle-core",
+        "jope-pipeline/timing-study",
+        "jope-policy/inference-cuda"
+      ]
+    },
+    "feature:jope-cli/asm": {
+      "kind": "feature",
+      "dependencies": [
+        "jope-bench/asm"
+      ]
+    },
+    "feature:jope-cli/default": {
+      "kind": "feature",
+      "dependencies": [
+        "qualified-training-context"
+      ]
+    },
+    "feature:jope-cli/inference-cuda": {
+      "kind": "feature",
+      "dependencies": [
+        "jope-bench/inference-cuda"
+      ]
+    },
+    "feature:jope-cli/qualified-training-context": {
+      "kind": "feature",
+      "dependencies": [
+        "dep:jope-policy",
+        "jope-pipeline/qualified-context"
+      ]
+    },
+    "feature:jope-dime-regressor/gpr-scratch-reuse": {
+      "kind": "feature",
+      "dependencies": [
+        "feat-math/gpr-scratch-reuse"
+      ]
+    },
+    "feature:jope-dime-regressor/gpu": {
+      "kind": "feature",
+      "dependencies": [
+        "dep:battle-gpu"
+      ]
+    },
+    "feature:jope-parallel/default": {
+      "kind": "feature",
+      "dependencies": []
+    },
+    "feature:jope-parallel/gpr-scratch-reuse": {
+      "kind": "feature",
+      "dependencies": [
+        "feat-math/gpr-scratch-reuse"
+      ]
+    },
+    "feature:jope-parallel/neural": {
+      "kind": "feature",
+      "dependencies": [
+        "dep:tch"
+      ]
+    },
+    "feature:jope-pipeline/default": {
+      "kind": "feature",
+      "dependencies": []
+    },
+    "feature:jope-pipeline/neural-search": {
+      "kind": "feature",
+      "dependencies": [
+        "dep:jope-policy"
+      ]
+    },
+    "feature:jope-pipeline/qualified-context": {
+      "kind": "feature",
+      "dependencies": [
+        "jope-policy/context-producer",
+        "neural-search"
+      ]
+    },
+    "feature:jope-pipeline/timing-study": {
+      "kind": "feature",
+      "dependencies": [
+        "neural-search"
+      ]
+    },
+    "feature:jope-policy/context-producer": {
+      "kind": "feature",
+      "dependencies": [
+        "dep:hyperion",
+        "dep:starforge"
+      ]
+    },
+    "feature:jope-policy/cuda": {
+      "kind": "feature",
+      "dependencies": [
+        "candle-core/cuda",
+        "candle-nn/cuda"
+      ]
+    },
+    "feature:jope-policy/default": {
+      "kind": "feature",
+      "dependencies": []
+    },
+    "feature:jope-policy/inference-cuda": {
+      "kind": "feature",
+      "dependencies": [
+        "context-producer",
+        "cuda",
+        "hyperion/hyperion-cuda",
+        "starforge/cuda"
+      ]
+    },
+    "feature:jope-policy/testing": {
+      "kind": "feature",
+      "dependencies": []
+    },
+    "feature:starforge/cuda": {
+      "kind": "feature",
+      "dependencies": [
+        "candle-core/cuda",
+        "candle-nn/cuda"
+      ]
+    },
+    "feature:starforge/default": {
+      "kind": "feature",
+      "dependencies": []
+    },
+    "job:.github/workflows/ci.yml/aggregate": {
+      "kind": "workflow-job"
+    },
+    "job:.github/workflows/ci.yml/changes": {
+      "kind": "workflow-job"
+    },
+    "job:.github/workflows/ci.yml/e2e-smoke": {
+      "kind": "workflow-job"
+    },
+    "job:.github/workflows/ci.yml/emitters": {
+      "kind": "workflow-job"
+    },
+    "job:.github/workflows/ci.yml/hygiene": {
+      "kind": "workflow-job"
+    },
+    "job:.github/workflows/ci.yml/inputs": {
+      "kind": "workflow-job"
+    },
+    "job:.github/workflows/ci.yml/python": {
+      "kind": "workflow-job"
+    },
+    "job:.github/workflows/ci.yml/rust-check": {
+      "kind": "workflow-job"
+    },
+    "job:.github/workflows/ci.yml/rust-test": {
+      "kind": "workflow-job"
+    },
+    "job:.github/workflows/full-main.yml/cpu": {
+      "kind": "workflow-job"
+    },
+    "job:.github/workflows/main-guard.yml/guard": {
+      "kind": "workflow-job"
+    },
+    "job:.github/workflows/release.yml/release": {
+      "kind": "workflow-job"
+    },
+    "job:.github/workflows/runner-admission-probe.yml/reject-fast": {
+      "kind": "workflow-job"
+    },
+    "job:.github/workflows/runner-admission-probe.yml/reject-main": {
+      "kind": "workflow-job"
+    },
+    "job:.github/workflows/weekly.yml/regression-suite": {
+      "kind": "workflow-job"
+    },
+    "job:.github/workflows/weekly.yml/restore-drill": {
+      "kind": "workflow-job"
+    },
+    "package:battle-gpu": {
+      "kind": "package",
+      "manifest": "crates/battle-gpu/Cargo.toml"
+    },
+    "package:feat-math": {
+      "kind": "package",
+      "manifest": "crates/feat-math/Cargo.toml"
+    },
+    "package:hyperion": {
+      "kind": "package",
+      "manifest": "crates/hyperion/Cargo.toml"
+    },
+    "package:jain-smartcluster": {
+      "kind": "package",
+      "manifest": "crates/smartcluster/jain-smartcluster/Cargo.toml"
+    },
+    "package:jain-smartcluster-core": {
+      "kind": "package",
+      "manifest": "crates/smartcluster/jain-smartcluster-core/Cargo.toml"
+    },
+    "package:jain-smartcluster-daemon": {
+      "kind": "package",
+      "manifest": "crates/smartcluster/jain-smartcluster-daemon/Cargo.toml"
+    },
+    "package:jain-smartcluster-fabric": {
+      "kind": "package",
+      "manifest": "crates/smartcluster/jain-smartcluster-fabric/Cargo.toml"
+    },
+    "package:jain-worker": {
+      "kind": "package",
+      "manifest": "crates/smartcluster/jain-worker/Cargo.toml"
+    },
+    "package:jainnode": {
+      "kind": "package",
+      "manifest": "crates/smartcluster/jainnode/Cargo.toml"
+    },
+    "package:jope-arena": {
+      "kind": "package",
+      "manifest": "crates/jope-arena/Cargo.toml"
+    },
+    "package:jope-bench": {
+      "kind": "package",
+      "manifest": "crates/jope-bench/Cargo.toml"
+    },
+    "package:jope-ci": {
+      "kind": "package",
+      "manifest": "crates/jope-ci/Cargo.toml"
+    },
+    "package:jope-cli": {
+      "kind": "package",
+      "manifest": "crates/jope-cli/Cargo.toml"
+    },
+    "package:jope-datasets": {
+      "kind": "package",
+      "manifest": "crates/jope-datasets/Cargo.toml"
+    },
+    "package:jope-dime-regressor": {
+      "kind": "package",
+      "manifest": "crates/jope-campaigns/Cargo.toml"
+    },
+    "package:jope-learning": {
+      "kind": "package",
+      "manifest": "crates/jope-learning/Cargo.toml"
+    },
+    "package:jope-models": {
+      "kind": "package",
+      "manifest": "crates/jope-models/Cargo.toml"
+    },
+    "package:jope-motifs": {
+      "kind": "package",
+      "manifest": "crates/jope-motifs/Cargo.toml"
+    },
+    "package:jope-parallel": {
+      "kind": "package",
+      "manifest": "crates/jope-engine/Cargo.toml"
+    },
+    "package:jope-paths": {
+      "kind": "package",
+      "manifest": "crates/jope-paths/Cargo.toml"
+    },
+    "package:jope-pipeline": {
+      "kind": "package",
+      "manifest": "crates/jope-pipeline/Cargo.toml"
+    },
+    "package:jope-policy": {
+      "kind": "package",
+      "manifest": "crates/jope-policy/Cargo.toml"
+    },
+    "package:jope-records": {
+      "kind": "package",
+      "manifest": "crates/jope-records/Cargo.toml"
+    },
+    "package:numpy-pcg64": {
+      "kind": "package",
+      "manifest": "crates/numpy-pcg64/Cargo.toml"
+    },
+    "package:scq": {
+      "kind": "package",
+      "manifest": "crates/smartcluster/scq/Cargo.toml"
+    },
+    "package:starforge": {
+      "kind": "package",
+      "manifest": "crates/jope-encoders/Cargo.toml"
+    },
+    "python:benchmarks/test_prepare.py": {
+      "kind": "python-family"
+    },
+    "python:crates/jope-bench/adapters/test_panel.py": {
+      "kind": "python-family"
+    },
+    "python:deploy/ci/test-aggregate.py": {
+      "kind": "python-family"
+    },
+    "python:deploy/ci/test-coverage.py": {
+      "kind": "python-family"
+    },
+    "python:deploy/ci/test-full-main.py": {
+      "kind": "python-family"
+    },
+    "python:deploy/ci/test-install-private.py": {
+      "kind": "python-family"
+    },
+    "python:deploy/ci/test-prepare-asm-runtime.py": {
+      "kind": "python-family"
+    },
+    "python:deploy/ci/test-qualify-demo.py": {
+      "kind": "python-family"
+    },
+    "python:deploy/ci/test-receipt.py": {
+      "kind": "python-family"
+    },
+    "python:deploy/ci/test-results.py": {
+      "kind": "python-family"
+    },
+    "python:deploy/ci/test-runner.py": {
+      "kind": "python-family"
+    },
+    "python:deploy/ci/test-status.py": {
+      "kind": "python-family"
+    },
+    "python:deploy/ci/test-training-proof.py": {
+      "kind": "python-family"
+    },
+    "python:deploy/kernel-v1/source/tests/test_experiment_scheduler.py": {
+      "kind": "python-family"
+    },
+    "python:deploy/kernel-v1/source/tests/test_opportunistic_proposals.py": {
+      "kind": "python-family"
+    },
+    "python:deploy/kernel-v1/source/tests/test_opportunistic_proposals_v2.py": {
+      "kind": "python-family"
+    },
+    "python:deploy/kernel-v1/source/tools/test_binary_inventory.py": {
+      "kind": "python-family"
+    },
+    "python:deploy/kernel-v1/source/tools/test_binary_workflow.py": {
+      "kind": "python-family"
+    },
+    "python:deploy/kernel-v1/source/tools/test_campaign_bound_jobs.py": {
+      "kind": "python-family"
+    },
+    "python:deploy/kernel-v1/source/tools/test_continuous_learning.py": {
+      "kind": "python-family"
+    },
+    "python:deploy/kernel-v1/source/tools/test_corpus_cache_snapshot.py": {
+      "kind": "python-family"
+    },
+    "python:deploy/kernel-v1/source/tools/test_deferred_proposal_admission.py": {
+      "kind": "python-family"
+    },
+    "python:deploy/kernel-v1/source/tools/test_experiment_hardening.py": {
+      "kind": "python-family"
+    },
+    "python:deploy/kernel-v1/source/tools/test_extend_component_sampling.py": {
+      "kind": "python-family"
+    },
+    "python:deploy/kernel-v1/source/tools/test_gpu_batch_probe.py": {
+      "kind": "python-family"
+    },
+    "python:deploy/kernel-v1/source/tools/test_kernel_release.py": {
+      "kind": "python-family"
+    },
+    "python:deploy/kernel-v1/source/tools/test_kernel_verification.py": {
+      "kind": "python-family"
+    },
+    "python:deploy/kernel-v1/source/tools/test_qualify_matched_v2.py": {
+      "kind": "python-family"
+    },
+    "python:deploy/kernel-v1/source/tools/test_qualify_pure_proposals.py": {
+      "kind": "python-family"
+    },
+    "python:deploy/kernel-v1/source/tools/test_report_cycle.py": {
+      "kind": "python-family"
+    },
+    "python:deploy/kernel-v1/source/tools/test_seed_experiment.py": {
+      "kind": "python-family"
+    },
+    "python:deploy/kernel-v1/source/tools/test_watch_campaign_reports.py": {
+      "kind": "python-family"
+    },
+    "python:deploy/maintenance/test_report.py": {
+      "kind": "python-family"
+    },
+    "python:deploy/maintenance/test_wrapper.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/research/test_absolute_path_audit.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/research/test_exact_accept.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/research/test_exact_adaptive.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/research/test_exact_backlog.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/research/test_exact_campaign.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/research/test_exact_canary.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/research/test_exact_canary_propose.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/research/test_exact_capacity.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/research/test_exact_common.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/research/test_exact_compile_cache.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/research/test_exact_context_catalog.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/research/test_exact_context_proposals.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/research/test_exact_controller.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/research/test_exact_dl_generate.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/research/test_exact_evaluator.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/research/test_exact_expansion.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/research/test_exact_freshness.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/research/test_exact_freshness_mcp.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/research/test_exact_gp_bridge.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/research/test_exact_ingest.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/research/test_exact_monitor.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/research/test_exact_ops.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/research/test_exact_packed_corpus.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/research/test_exact_pair_registry.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/research/test_exact_sealed_audit.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/research/test_exact_service.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/research/test_exact_service_launcher.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/research/test_exact_status.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/research/test_exact_takeover.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/research/test_exact_train.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/research/test_exact_train_reserve.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/research/test_exact_wave.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/research/test_exact_winner_scan.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/research/test_jope_learning_report.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/research/test_jope_recovery_report.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/research/test_migrate_foundation_inventory.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/research/test_project_boundary_check.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/research/test_proposal_task_routing.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/research/test_smart_v3_cpu_scq.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/research/test_train_only_redteam_generation.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/research/test_train_only_redteam_scq.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/research/test_train_spec_policy.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/research/test_validate_unified_v3.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/research/test_workspace_batch.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/research/test_workspace_inventory.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/research/test_workspace_pages.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/research/test_workspace_pages_review.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/research/test_workspace_sync.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_activation.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_authority_resolution.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_beyond_reproach.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_binary_inventory.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_binary_workflow.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_campaign_bound_jobs.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_candidate_intake.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_champion_git.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_checkpoint_ledger.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_closed_loop.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_collect_admitted_corpus.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_component_ledger.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_continuous_learning.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_continuous_quality_units.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_continuous_status.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_continuous_teacher_progress.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_corpus_cache_snapshot.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_corpus_verification.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_cut_baseline.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_deferred_proposal_admission.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_direct_proposal_evaluation.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_eval_registry.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_expansion_assembly.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_experiment_hardening.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_expert_iteration_setup.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_extend_component_sampling.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_fence_honesty.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_flywheel_acceptance.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_flywheel_baseline.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_flywheel_f9_readout.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_flywheel_headline.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_flywheel_metrics.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_flywheel_plan.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_flywheel_series.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_flywheel_verdict.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_four_task_campaign.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_freeze_registry_release.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_funding_client.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_funding_recovery.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_gp_emission_handoff.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_gp_queue_gc.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_gpu_batch_probe.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_gpu_occupancy.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_head_cost_census.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_hold_release_readout.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_inventory_legacy_fits.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_kernel_release.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_kernel_verification.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_label_admission.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_launch_next.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_league_episode.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_learning_inputs.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_live_controller_copy.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_loop_preflight.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_migration_health.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_mirror_learning_receipts.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_node_mirror_pull.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_nominate_replay_challenger.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_operational_release.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_original_learning_selection.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_original_query_selection.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_population_arm_policy.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_population_judge.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_promotion_gate.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_promotion_tournament.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_qualification_budget.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_qualification_collection.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_qualification_slots.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_qualify_matched_v2.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_qualify_pure_proposals.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_qualify_resident_workers.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_qualify_teaching_store.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_quarantine_incompatible_searches.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_raw_triplet_parity.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_registry_namespace.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_release_qualification.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_replay_planner.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_replay_policy.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_report_cycle.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_required_learning_plan.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_required_learning_trial.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_resident_gpu_pool.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_restamp_encode_receipts.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_scored_family_allowlist.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_screen_fixture.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_screen_pilot_select.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_seed_experiment.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_selfplay_milestones.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_shadow_eval_registry.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_shared_teaching_cache.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_stopped_unit.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_successor_ledger.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_successor_targets.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_sync_certificates.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_task_kernel_fixtures.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_unpublished_cut_census.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_useful_hour.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_verify_manifest_v10.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_verify_remote.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_watch_campaign_reports.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_winrate_receipt.py": {
+      "kind": "python-family"
+    },
+    "python:python/src/jope/tools/test_xbabe2_local_ui_ci.py": {
+      "kind": "python-family"
+    },
+    "python:python/tests/engine/test_experiment_scheduler.py": {
+      "kind": "python-family"
+    },
+    "python:python/tests/engine/test_opportunistic_proposals.py": {
+      "kind": "python-family"
+    },
+    "python:python/tests/engine/test_opportunistic_proposals_v2.py": {
+      "kind": "python-family"
+    },
+    "python:python/tests/test_append_realtime_agent_chat.py": {
+      "kind": "python-family"
+    },
+    "python:python/tests/test_backfill_hyperion_stale_confirmation_cells.py": {
+      "kind": "python-family"
+    },
+    "python:python/tests/test_context_proposals.py": {
+      "kind": "python-family"
+    },
+    "python:python/tests/test_corpus_freeze_guardrails.py": {
+      "kind": "python-family"
+    },
+    "python:python/tests/test_dlgp_budget_campaign.py": {
+      "kind": "python-family"
+    },
+    "python:python/tests/test_dlgp_safe_cleanup.py": {
+      "kind": "python-family"
+    },
+    "python:python/tests/test_durable_selfplay.py": {
+      "kind": "python-family"
+    },
+    "python:python/tests/test_expanded_gp_finale_audit.py": {
+      "kind": "python-family"
+    },
+    "python:python/tests/test_expanded_gp_protected_screen.py": {
+      "kind": "python-family"
+    },
+    "python:python/tests/test_experimental_proposal.py": {
+      "kind": "python-family"
+    },
+    "python:python/tests/test_experimental_runtime.py": {
+      "kind": "python-family"
+    },
+    "python:python/tests/test_external_fixture_index.py": {
+      "kind": "python-family"
+    },
+    "python:python/tests/test_freeze_corpus_decoupling.py": {
+      "kind": "python-family"
+    },
+    "python:python/tests/test_freeze_hyperion_precomputed_cell_coverage.py": {
+      "kind": "python-family"
+    },
+    "python:python/tests/test_frozen_vocabulary_training.py": {
+      "kind": "python-family"
+    },
+    "python:python/tests/test_genome_boost_cluster_campaign.py": {
+      "kind": "python-family"
+    },
+    "python:python/tests/test_golden46_campaign.py": {
+      "kind": "python-family"
+    },
+    "python:python/tests/test_golden46_execution.py": {
+      "kind": "python-family"
+    },
+    "python:python/tests/test_golden46_special_execution.py": {
+      "kind": "python-family"
+    },
+    "python:python/tests/test_hyperion_authority_b5_screen.py": {
+      "kind": "python-family"
+    },
+    "python:python/tests/test_hyperion_blend_train_audit.py": {
+      "kind": "python-family"
+    },
+    "python:python/tests/test_hyperion_cv_search_protected.py": {
+      "kind": "python-family"
+    },
+    "python:python/tests/test_hyperion_final_cv7_train_benchmark.py": {
+      "kind": "python-family"
+    },
+    "python:python/tests/test_hyperion_residual_train_audit.py": {
+      "kind": "python-family"
+    },
+    "python:python/tests/test_hyperion_train_audit.py": {
+      "kind": "python-family"
+    },
+    "python:python/tests/test_install_hyperion_orig_v2.py": {
+      "kind": "python-family"
+    },
+    "python:python/tests/test_optional_task_readiness.py": {
+      "kind": "python-family"
+    },
+    "python:python/tests/test_policy_training_contract.py": {
+      "kind": "python-family"
+    },
+    "python:python/tests/test_raw_floor_train_audit.py": {
+      "kind": "python-family"
+    },
+    "python:python/tests/test_realtime_selfplay.py": {
+      "kind": "python-family"
+    },
+    "python:python/tests/test_recipe_e.py": {
+      "kind": "python-family"
+    },
+    "python:python/tests/test_reconstruct_latest_hyperion_old_semantics.py": {
+      "kind": "python-family"
+    },
+    "python:python/tests/test_reconstruct_old_hyperion_vs.py": {
+      "kind": "python-family"
+    },
+    "python:python/tests/test_replay_hyperion_confirmation_cells.py": {
+      "kind": "python-family"
+    },
+    "python:python/tests/test_reward_ranked_dl_generate.py": {
+      "kind": "python-family"
+    },
+    "python:python/tests/test_selfplay_controller.py": {
+      "kind": "python-family"
+    },
+    "python:python/tests/test_task_semantics.py": {
+      "kind": "python-family"
+    },
+    "python:python/tests/test_test_exact_campaign.py": {
+      "kind": "python-family"
+    },
+    "python:python/tests/test_training_campaign.py": {
+      "kind": "python-family"
+    },
+    "python:python/tests/test_training_comparison.py": {
+      "kind": "python-family"
+    },
+    "python:python/tests/test_training_corpus_contract.py": {
+      "kind": "python-family"
+    },
+    "python:python/tests/test_training_input_closure.py": {
+      "kind": "python-family"
+    },
+    "python:python/tests/test_training_transition.py": {
+      "kind": "python-family"
+    },
+    "python:python/tests/test_verify_old_hyperion_vs_replays.py": {
+      "kind": "python-family"
+    },
+    "target:battle-gpu/lib/battle_gpu": {
+      "kind": "target",
+      "source": "crates/battle-gpu/src/lib.rs",
+      "test": true,
+      "doctest": true,
+      "required_features": []
+    },
+    "target:feat-math/custom-build/build-script-build": {
+      "kind": "target",
+      "source": "crates/feat-math/build.rs",
+      "test": false,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:feat-math/example/emit": {
+      "kind": "target",
+      "source": "crates/feat-math/examples/emit.rs",
+      "test": false,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:feat-math/example/evolve_smoke": {
+      "kind": "target",
+      "source": "crates/feat-math/examples/evolve_smoke.rs",
+      "test": false,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:feat-math/example/expression_benchmark": {
+      "kind": "target",
+      "source": "crates/feat-math/examples/expression_benchmark.rs",
+      "test": false,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:feat-math/example/registry_dump": {
+      "kind": "target",
+      "source": "crates/feat-math/examples/registry_dump.rs",
+      "test": false,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:feat-math/example/screening_regime_probe": {
+      "kind": "target",
+      "source": "crates/feat-math/examples/screening_regime_probe.rs",
+      "test": false,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:feat-math/lib/feat_math": {
+      "kind": "target",
+      "source": "crates/feat-math/src/lib.rs",
+      "test": true,
+      "doctest": true,
+      "required_features": []
+    },
+    "target:feat-math/test/advanced_v3_conformance": {
+      "kind": "target",
+      "source": "crates/feat-math/tests/advanced_v3_conformance.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:feat-math/test/advanced_v3_fitted_cpp": {
+      "kind": "target",
+      "source": "crates/feat-math/tests/advanced_v3_fitted_cpp.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:feat-math/test/advanced_v3_multiclass": {
+      "kind": "target",
+      "source": "crates/feat-math/tests/advanced_v3_multiclass.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:feat-math/test/advanced_v3_parity": {
+      "kind": "target",
+      "source": "crates/feat-math/tests/advanced_v3_parity.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:feat-math/test/advanced_v3_property": {
+      "kind": "target",
+      "source": "crates/feat-math/tests/advanced_v3_property.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:feat-math/test/bench": {
+      "kind": "target",
+      "source": "crates/feat-math/tests/bench.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:feat-math/test/champion_parity": {
+      "kind": "target",
+      "source": "crates/feat-math/tests/champion_parity.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:feat-math/test/golden": {
+      "kind": "target",
+      "source": "crates/feat-math/tests/golden.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:feat-math/test/ip_scrub": {
+      "kind": "target",
+      "source": "crates/feat-math/tests/ip_scrub.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:feat-math/test/kernel_codec": {
+      "kind": "target",
+      "source": "crates/feat-math/tests/kernel_codec.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:feat-math/test/kernel_emission_safety": {
+      "kind": "target",
+      "source": "crates/feat-math/tests/kernel_emission_safety.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:feat-math/test/kernel_expression": {
+      "kind": "target",
+      "source": "crates/feat-math/tests/kernel_expression.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:feat-math/test/kernel_pipeline": {
+      "kind": "target",
+      "source": "crates/feat-math/tests/kernel_pipeline.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:feat-math/test/legacy_v2_freeze": {
+      "kind": "target",
+      "source": "crates/feat-math/tests/legacy_v2_freeze.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:feat-math/test/portable_parity": {
+      "kind": "target",
+      "source": "crates/feat-math/tests/portable_parity.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:feat-math/test/registry_vocabulary": {
+      "kind": "target",
+      "source": "crates/feat-math/tests/registry_vocabulary.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:feat-math/test/tokens": {
+      "kind": "target",
+      "source": "crates/feat-math/tests/tokens.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:hyperion/bin/hyperion-batch-worker": {
+      "kind": "target",
+      "source": "crates/hyperion/src/bin/hyperion-batch-worker.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": [
+        "batch-worker",
+        "hyperion-cpu"
+      ]
+    },
+    "target:hyperion/bin/hyperion-v5-reference": {
+      "kind": "target",
+      "source": "crates/hyperion/src/bin/hyperion-v5-reference.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:hyperion/lib/hyperion": {
+      "kind": "target",
+      "source": "crates/hyperion/src/lib.rs",
+      "test": true,
+      "doctest": true,
+      "required_features": []
+    },
+    "target:hyperion/test/weights_smoke": {
+      "kind": "target",
+      "source": "crates/hyperion/tests/weights_smoke.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jain-smartcluster-core/lib/jain_smartcluster_core": {
+      "kind": "target",
+      "source": "crates/smartcluster/jain-smartcluster-core/src/lib.rs",
+      "test": true,
+      "doctest": true,
+      "required_features": []
+    },
+    "target:jain-smartcluster-daemon/bin/scqd": {
+      "kind": "target",
+      "source": "crates/smartcluster/jain-smartcluster-daemon/src/bin/scqd.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jain-smartcluster-daemon/example/fit_child_fixture": {
+      "kind": "target",
+      "source": "crates/smartcluster/jain-smartcluster-daemon/examples/fit_child_fixture.rs",
+      "test": false,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jain-smartcluster-daemon/lib/jain_smartcluster_daemon": {
+      "kind": "target",
+      "source": "crates/smartcluster/jain-smartcluster-daemon/src/lib.rs",
+      "test": true,
+      "doctest": true,
+      "required_features": []
+    },
+    "target:jain-smartcluster-daemon/test/daemon_e2e": {
+      "kind": "target",
+      "source": "crates/smartcluster/jain-smartcluster-daemon/tests/daemon_e2e.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jain-smartcluster-daemon/test/gpu_host": {
+      "kind": "target",
+      "source": "crates/smartcluster/jain-smartcluster-daemon/tests/gpu_host.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jain-smartcluster-daemon/test/linux_cgroup": {
+      "kind": "target",
+      "source": "crates/smartcluster/jain-smartcluster-daemon/tests/linux_cgroup.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jain-smartcluster-daemon/test/performance": {
+      "kind": "target",
+      "source": "crates/smartcluster/jain-smartcluster-daemon/tests/performance.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jain-smartcluster-daemon/test/resident_kernel": {
+      "kind": "target",
+      "source": "crates/smartcluster/jain-smartcluster-daemon/tests/resident_kernel.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jain-smartcluster-daemon/test/restart_chaos": {
+      "kind": "target",
+      "source": "crates/smartcluster/jain-smartcluster-daemon/tests/restart_chaos.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jain-smartcluster-daemon/test/soak": {
+      "kind": "target",
+      "source": "crates/smartcluster/jain-smartcluster-daemon/tests/soak.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jain-smartcluster-fabric/lib/jain_smartcluster_fabric": {
+      "kind": "target",
+      "source": "crates/smartcluster/jain-smartcluster-fabric/src/lib.rs",
+      "test": true,
+      "doctest": true,
+      "required_features": []
+    },
+    "target:jain-smartcluster/lib/jain_smartcluster": {
+      "kind": "target",
+      "source": "crates/smartcluster/jain-smartcluster/src/lib.rs",
+      "test": true,
+      "doctest": true,
+      "required_features": []
+    },
+    "target:jain-smartcluster/test/native_fit_protocol": {
+      "kind": "target",
+      "source": "crates/smartcluster/jain-smartcluster/tests/native_fit_protocol.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jain-smartcluster/test/wire_contract": {
+      "kind": "target",
+      "source": "crates/smartcluster/jain-smartcluster/tests/wire_contract.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jain-worker/bin/jain-worker": {
+      "kind": "target",
+      "source": "crates/smartcluster/jain-worker/src/main.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jainnode/bin/jainnode": {
+      "kind": "target",
+      "source": "crates/smartcluster/jainnode/src/main.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jainnode/lib/jainnode": {
+      "kind": "target",
+      "source": "crates/smartcluster/jainnode/src/lib.rs",
+      "test": true,
+      "doctest": true,
+      "required_features": []
+    },
+    "target:jainnode/test/rustls_provider": {
+      "kind": "target",
+      "source": "crates/smartcluster/jainnode/tests/rustls_provider.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-arena/bin/jope-arena": {
+      "kind": "target",
+      "source": "crates/jope-arena/src/main.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-arena/lib/jope_arena": {
+      "kind": "target",
+      "source": "crates/jope-arena/src/lib.rs",
+      "test": true,
+      "doctest": true,
+      "required_features": []
+    },
+    "target:jope-arena/test/elo_regression": {
+      "kind": "target",
+      "source": "crates/jope-arena/tests/elo_regression.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-bench/bin/jope-bench": {
+      "kind": "target",
+      "source": "crates/jope-bench/src/main.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-bench/lib/jope_bench": {
+      "kind": "target",
+      "source": "crates/jope-bench/src/lib.rs",
+      "test": true,
+      "doctest": true,
+      "required_features": []
+    },
+    "target:jope-bench/test/adapter_contract": {
+      "kind": "target",
+      "source": "crates/jope-bench/tests/adapter_contract.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-bench/test/classification": {
+      "kind": "target",
+      "source": "crates/jope-bench/tests/classification.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-bench/test/committed_evidence": {
+      "kind": "target",
+      "source": "crates/jope-bench/tests/committed_evidence.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-bench/test/pwlinear": {
+      "kind": "target",
+      "source": "crates/jope-bench/tests/pwlinear.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-bench/test/transfer_independent": {
+      "kind": "target",
+      "source": "crates/jope-bench/tests/transfer_independent.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-ci/bin/jope-ci": {
+      "kind": "target",
+      "source": "crates/jope-ci/src/main.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-ci/lib/jope_ci": {
+      "kind": "target",
+      "source": "crates/jope-ci/src/lib.rs",
+      "test": true,
+      "doctest": true,
+      "required_features": []
+    },
+    "target:jope-ci/test/cargo_artifact": {
+      "kind": "target",
+      "source": "crates/jope-ci/tests/cargo_artifact.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-cli/bin/jope": {
+      "kind": "target",
+      "source": "crates/jope-cli/src/main.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-cli/lib/jope_cli": {
+      "kind": "target",
+      "source": "crates/jope-cli/src/lib.rs",
+      "test": true,
+      "doctest": true,
+      "required_features": []
+    },
+    "target:jope-cli/test/offline_cli": {
+      "kind": "target",
+      "source": "crates/jope-cli/tests/offline_cli.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-datasets/bin/jope-datasets": {
+      "kind": "target",
+      "source": "crates/jope-datasets/src/main.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-datasets/lib/jope_datasets": {
+      "kind": "target",
+      "source": "crates/jope-datasets/src/lib.rs",
+      "test": true,
+      "doctest": true,
+      "required_features": []
+    },
+    "target:jope-datasets/test/ingest_dry_run": {
+      "kind": "target",
+      "source": "crates/jope-datasets/tests/ingest_dry_run.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-datasets/test/input_closure": {
+      "kind": "target",
+      "source": "crates/jope-datasets/tests/input_closure.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-datasets/test/pinned_catalog": {
+      "kind": "target",
+      "source": "crates/jope-datasets/tests/pinned_catalog.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-datasets/test/regression_release": {
+      "kind": "target",
+      "source": "crates/jope-datasets/tests/regression_release.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-datasets/test/repo_verify": {
+      "kind": "target",
+      "source": "crates/jope-datasets/tests/repo_verify.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-datasets/test/roundtrip": {
+      "kind": "target",
+      "source": "crates/jope-datasets/tests/roundtrip.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-datasets/test/schema_agreement": {
+      "kind": "target",
+      "source": "crates/jope-datasets/tests/schema_agreement.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-datasets/test/staging_disposition": {
+      "kind": "target",
+      "source": "crates/jope-datasets/tests/staging_disposition.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/aspfm_recovery_evolve": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/aspfm_recovery_evolve.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/corpus_eval": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/corpus_eval.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope-dime-regressor": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/main.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_canary_executor": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_canary_executor.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_capacity": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_capacity.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_causal_evidence": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_causal_evidence.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_causal_pair_repair": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_causal_pair_repair.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_compile_cache": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_compile_cache.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_dlgp_best5": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_dlgp_best5.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_dlgp_best5_worker": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_dlgp_best5_worker.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_dlgp_budget_supervisor": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_dlgp_budget_supervisor.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_effective_unit_audit": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_effective_unit_audit.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_encoder_supervisor": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_encoder_supervisor.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_encoder_v2_capacity": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_encoder_v2_capacity.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_encoder_v2_import": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_encoder_v2_import.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_expanded_catalog": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_expanded_catalog.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_flywheel_liveness": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_flywheel_liveness.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_generalized_gp": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_generalized_gp.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_gp_bridge": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_gp_bridge.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_gpu_lane_admission": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_gpu_lane_admission.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_hyperion_cache": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_hyperion_cache.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_hyperion_gate": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_hyperion_gate.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_ledger_reconciler": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_ledger_reconciler.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_ops_health_check": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_ops_health_check.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_queue_control": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_queue_control.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_reporting": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_reporting.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_sealed_zeroshot": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_sealed_zeroshot.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_selfplay_alarms": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_selfplay_alarms.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_selfplay_bundle": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_selfplay_bundle.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_selfplay_corpus_freezer": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_selfplay_corpus_freezer.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_selfplay_expansion_driver": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_selfplay_expansion_driver.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_selfplay_freshness": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_selfplay_freshness.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_selfplay_gc": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_selfplay_gc.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_selfplay_mcp": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_selfplay_mcp.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_selfplay_promotion": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_selfplay_promotion.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_selfplay_propose_driver": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_selfplay_propose_driver.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_selfplay_queue": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_selfplay_queue.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_selfplay_shadow": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_selfplay_shadow.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_selfplay_status": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_selfplay_status.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_selfplay_supply": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_selfplay_supply.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_selfplay_trainer_watchdog": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_selfplay_trainer_watchdog.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_selfplay_tui": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_selfplay_tui.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_selfplay_wave": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_selfplay_wave.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_spec_drift": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_spec_drift.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_strategy_screen": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_strategy_screen.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_task_elo": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_task_elo.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_task_learning_controller": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_task_learning_controller.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_task_rating": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_task_rating.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_timeseries_export": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_timeseries_export.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_training_archive": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_training_archive.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_training_history": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_training_history.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_training_replica": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_training_replica.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_utilization_supervisor": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_utilization_supervisor.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/jope_v3_control": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/jope_v3_control.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/scq_runs_gc": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/scq_runs_gc.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/bin/search-v3": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/bin/search-v3.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/lib/jope_dime_regressor": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/src/lib.rs",
+      "test": true,
+      "doctest": true,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/test/dlgp_best5": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/tests/dlgp_best5.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/test/dlgp_budget_campaign": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/tests/dlgp_budget_campaign.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/test/encoder_v2_recovery": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/tests/encoder_v2_recovery.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/test/epoch6_foundation": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/tests/epoch6_foundation.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/test/epoch6_waves": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/tests/epoch6_waves.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/test/generalized_gp": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/tests/generalized_gp.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/test/hyperion_gate": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/tests/hyperion_gate.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/test/router_contracts_v2": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/tests/router_contracts_v2.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/test/search_v3": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/tests/search_v3.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/test/selfplay_shadow_integration": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/tests/selfplay_shadow_integration.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-dime-regressor/test/systemd_unit_paths": {
+      "kind": "target",
+      "source": "crates/jope-campaigns/tests/systemd_unit_paths.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-learning/bin/jope-learning": {
+      "kind": "target",
+      "source": "crates/jope-learning/src/main.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-learning/lib/jope_learning": {
+      "kind": "target",
+      "source": "crates/jope-learning/src/lib.rs",
+      "test": true,
+      "doctest": true,
+      "required_features": []
+    },
+    "target:jope-learning/test/champions_fixture": {
+      "kind": "target",
+      "source": "crates/jope-learning/tests/champions_fixture.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-learning/test/ledger_tamper": {
+      "kind": "target",
+      "source": "crates/jope-learning/tests/ledger_tamper.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-learning/test/mirror_lost_update": {
+      "kind": "target",
+      "source": "crates/jope-learning/tests/mirror_lost_update.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-learning/test/mirror_reconcile": {
+      "kind": "target",
+      "source": "crates/jope-learning/tests/mirror_reconcile.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-learning/test/nonfinite_scores": {
+      "kind": "target",
+      "source": "crates/jope-learning/tests/nonfinite_scores.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-learning/test/schema_agreement": {
+      "kind": "target",
+      "source": "crates/jope-learning/tests/schema_agreement.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-learning/test/score_import": {
+      "kind": "target",
+      "source": "crates/jope-learning/tests/score_import.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-learning/test/sources": {
+      "kind": "target",
+      "source": "crates/jope-learning/tests/sources.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-learning/test/state_resolve": {
+      "kind": "target",
+      "source": "crates/jope-learning/tests/state_resolve.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-models/bin/jope-models": {
+      "kind": "target",
+      "source": "crates/jope-models/src/main.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-models/lib/jope_models": {
+      "kind": "target",
+      "source": "crates/jope-models/src/lib.rs",
+      "test": true,
+      "doctest": true,
+      "required_features": []
+    },
+    "target:jope-models/test/roundtrip": {
+      "kind": "target",
+      "source": "crates/jope-models/tests/roundtrip.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-motifs/lib/jope_motifs": {
+      "kind": "target",
+      "source": "crates/jope-motifs/src/lib.rs",
+      "test": true,
+      "doctest": true,
+      "required_features": []
+    },
+    "target:jope-parallel/bin/jope-build-receipt": {
+      "kind": "target",
+      "source": "crates/jope-engine/src/bin/jope-build-receipt.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/bin/jope-continuation-corpus": {
+      "kind": "target",
+      "source": "crates/jope-engine/src/bin/jope-continuation-corpus.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/bin/jope-gp-population": {
+      "kind": "target",
+      "source": "crates/jope-engine/src/bin/jope-gp-population.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/bin/jope-gp-selection-replay": {
+      "kind": "target",
+      "source": "crates/jope-engine/src/bin/jope-gp-selection-replay.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/bin/jope-native-graph": {
+      "kind": "target",
+      "source": "crates/jope-engine/src/bin/jope-native-graph.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/bin/jope-native-loop": {
+      "kind": "target",
+      "source": "crates/jope-engine/src/bin/jope-native-loop.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/bin/jope-native-observer": {
+      "kind": "target",
+      "source": "crates/jope-engine/src/bin/jope-native-observer.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/bin/jope-native-provisioner": {
+      "kind": "target",
+      "source": "crates/jope-engine/src/bin/jope-native-provisioner.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/bin/jope-native-recovery": {
+      "kind": "target",
+      "source": "crates/jope-engine/src/bin/jope-native-recovery.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/bin/jope-parallel": {
+      "kind": "target",
+      "source": "crates/jope-engine/src/main.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/bin/jope-prove-native-grant-request": {
+      "kind": "target",
+      "source": "crates/jope-engine/src/bin/jope-prove-native-grant-request.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/bin/jope-smartcluster-worker": {
+      "kind": "target",
+      "source": "crates/jope-engine/src/bin/jope-smartcluster-worker.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/bin/jope-witness-ssh": {
+      "kind": "target",
+      "source": "crates/jope-engine/src/bin/jope-witness-ssh.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/custom-build/build-script-build": {
+      "kind": "target",
+      "source": "crates/jope-engine/build.rs",
+      "test": false,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/example/archive_compatibility": {
+      "kind": "target",
+      "source": "crates/jope-engine/examples/archive_compatibility.rs",
+      "test": false,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/example/champion_export": {
+      "kind": "target",
+      "source": "crates/jope-engine/examples/champion_export.rs",
+      "test": false,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/example/champions": {
+      "kind": "target",
+      "source": "crates/jope-engine/examples/champions.rs",
+      "test": false,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/example/derive_jain_vocabulary": {
+      "kind": "target",
+      "source": "crates/jope-engine/examples/derive_jain_vocabulary.rs",
+      "test": false,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/example/gpr_cuda_bench": {
+      "kind": "target",
+      "source": "crates/jope-engine/examples/gpr_cuda_bench.rs",
+      "test": false,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/example/qualification_proposals": {
+      "kind": "target",
+      "source": "crates/jope-engine/examples/qualification_proposals.rs",
+      "test": false,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/example/qualify_auxiliary": {
+      "kind": "target",
+      "source": "crates/jope-engine/examples/qualify_auxiliary.rs",
+      "test": false,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/example/reconstruction_probe": {
+      "kind": "target",
+      "source": "crates/jope-engine/examples/reconstruction_probe.rs",
+      "test": false,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/example/replay_training": {
+      "kind": "target",
+      "source": "crates/jope-engine/examples/replay_training.rs",
+      "test": false,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/example/select_cohort": {
+      "kind": "target",
+      "source": "crates/jope-engine/examples/select_cohort.rs",
+      "test": false,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/example/verify_binary_preparation": {
+      "kind": "target",
+      "source": "crates/jope-engine/examples/verify_binary_preparation.rs",
+      "test": false,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/example/verify_prepared": {
+      "kind": "target",
+      "source": "crates/jope-engine/examples/verify_prepared.rs",
+      "test": false,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/lib/jope_parallel": {
+      "kind": "target",
+      "source": "crates/jope-engine/src/lib.rs",
+      "test": true,
+      "doctest": true,
+      "required_features": []
+    },
+    "target:jope-parallel/test/ablation_ranking": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/ablation_ranking.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/atomic_write": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/atomic_write.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/binary_preparation": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/binary_preparation.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/bounded_assignment": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/bounded_assignment.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/bounded_preflight_cli": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/bounded_preflight_cli.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/bounded_run": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/bounded_run.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/bounded_run_recovery": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/bounded_run_recovery.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/checkpoint_commit": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/checkpoint_commit.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/committed_updates": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/committed_updates.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/continuation_modes": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/continuation_modes.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/corpus": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/corpus.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/corpus_incremental": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/corpus_incremental.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/corpus_progress": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/corpus_progress.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/corpus_projection": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/corpus_projection.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/counterfactual_boundaries": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/counterfactual_boundaries.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/dashboard": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/dashboard.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/data_contracts": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/data_contracts.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/experiment_cli": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/experiment_cli.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/experiment_isolation": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/experiment_isolation.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/families": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/families.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/fit_boundary": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/fit_boundary.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/frozen_inputs": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/frozen_inputs.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/gp_admission": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/gp_admission.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/gp_contracts": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/gp_contracts.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/gpu_entry_guards": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/gpu_entry_guards.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/grammar": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/grammar.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/label_release": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/label_release.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/learning_history": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/learning_history.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/lossless_partition": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/lossless_partition.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/native_loop_continuation": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/native_loop_continuation.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/objective_fixtures": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/objective_fixtures.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/outer_release_cli": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/outer_release_cli.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/partition_wiring": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/partition_wiring.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/preparation_semantics": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/preparation_semantics.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/projected_export": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/projected_export.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/proposal_ranking": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/proposal_ranking.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/queue": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/queue.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/ranked_proposals": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/ranked_proposals.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/receiver_roots": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/receiver_roots.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/replay_training": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/replay_training.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/request_integrity": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/request_integrity.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/resident_protocol": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/resident_protocol.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/resident_worker": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/resident_worker.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/reward_sequence": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/reward_sequence.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/sealed_storage": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/sealed_storage.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/service_continuous": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/service_continuous.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/teacher_counterfactuals": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/teacher_counterfactuals.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/trainer_topology": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/trainer_topology.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/training": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/training.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/training_ancestry": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/training_ancestry.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/training_inputs": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/training_inputs.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-parallel/test/view_contracts": {
+      "kind": "target",
+      "source": "crates/jope-engine/tests/view_contracts.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-paths/bin/jope-units-render": {
+      "kind": "target",
+      "source": "crates/jope-paths/src/bin/jope-units-render.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-paths/lib/jope_paths": {
+      "kind": "target",
+      "source": "crates/jope-paths/src/lib.rs",
+      "test": true,
+      "doctest": true,
+      "required_features": []
+    },
+    "target:jope-pipeline/bin/jope-context-proof": {
+      "kind": "target",
+      "source": "crates/jope-pipeline/src/bin/jope-context-proof.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": [
+        "qualified-context"
+      ]
+    },
+    "target:jope-pipeline/example/receipt_schema": {
+      "kind": "target",
+      "source": "crates/jope-pipeline/examples/receipt_schema.rs",
+      "test": false,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-pipeline/lib/jope_pipeline": {
+      "kind": "target",
+      "source": "crates/jope-pipeline/src/lib.rs",
+      "test": true,
+      "doctest": true,
+      "required_features": []
+    },
+    "target:jope-pipeline/test/schema_agreement": {
+      "kind": "target",
+      "source": "crates/jope-pipeline/tests/schema_agreement.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-policy/bin/jope-context-worker": {
+      "kind": "target",
+      "source": "crates/jope-policy/src/bin/jope-context-worker.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": [
+        "context-producer"
+      ]
+    },
+    "target:jope-policy/bin/jope-policy-producer": {
+      "kind": "target",
+      "source": "crates/jope-policy/src/bin/jope-policy-producer.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-policy/lib/jope_policy": {
+      "kind": "target",
+      "source": "crates/jope-policy/src/lib.rs",
+      "test": true,
+      "doctest": true,
+      "required_features": []
+    },
+    "target:jope-policy/test/decode_outcomes": {
+      "kind": "target",
+      "source": "crates/jope-policy/tests/decode_outcomes.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": [
+        "testing"
+      ]
+    },
+    "target:jope-policy/test/grammar_differential": {
+      "kind": "target",
+      "source": "crates/jope-policy/tests/grammar_differential.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-policy/test/jope_dime": {
+      "kind": "target",
+      "source": "crates/jope-policy/tests/jope_dime.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": [
+        "testing"
+      ]
+    },
+    "target:jope-policy/test/scorer_dependencies": {
+      "kind": "target",
+      "source": "crates/jope-policy/tests/scorer_dependencies.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-records/bin/jope-records": {
+      "kind": "target",
+      "source": "crates/jope-records/src/main.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:jope-records/lib/jope_records": {
+      "kind": "target",
+      "source": "crates/jope-records/src/lib.rs",
+      "test": true,
+      "doctest": true,
+      "required_features": []
+    },
+    "target:jope-records/test/records": {
+      "kind": "target",
+      "source": "crates/jope-records/tests/records/main.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:numpy-pcg64/lib/numpy_pcg64": {
+      "kind": "target",
+      "source": "crates/numpy-pcg64/src/lib.rs",
+      "test": true,
+      "doctest": true,
+      "required_features": []
+    },
+    "target:numpy-pcg64/test/first_outputs": {
+      "kind": "target",
+      "source": "crates/numpy-pcg64/tests/first_outputs.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:numpy-pcg64/test/sampling_golden": {
+      "kind": "target",
+      "source": "crates/numpy-pcg64/tests/sampling_golden.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:scq/bin/scq": {
+      "kind": "target",
+      "source": "crates/smartcluster/scq/src/main.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:scq/lib/scq": {
+      "kind": "target",
+      "source": "crates/smartcluster/scq/src/lib.rs",
+      "test": true,
+      "doctest": true,
+      "required_features": []
+    },
+    "target:starforge/bin/model_bundle_pack": {
+      "kind": "target",
+      "source": "crates/jope-encoders/src/bin/model_bundle_pack.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:starforge/bin/starforge": {
+      "kind": "target",
+      "source": "crates/jope-encoders/src/main.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:starforge/lib/starforge": {
+      "kind": "target",
+      "source": "crates/jope-encoders/src/lib.rs",
+      "test": true,
+      "doctest": true,
+      "required_features": []
+    },
+    "target:starforge/test/foundation_parity": {
+      "kind": "target",
+      "source": "crates/jope-encoders/tests/foundation_parity.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:starforge/test/golden_parity": {
+      "kind": "target",
+      "source": "crates/jope-encoders/tests/golden_parity.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:starforge/test/jope_policy_parity": {
+      "kind": "target",
+      "source": "crates/jope-encoders/tests/jope_policy_parity.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:starforge/test/novel_input_differential": {
+      "kind": "target",
+      "source": "crates/jope-encoders/tests/novel_input_differential.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "target:starforge/test/target_encoder_parity": {
+      "kind": "target",
+      "source": "crates/jope-encoders/tests/target_encoder_parity.rs",
+      "test": true,
+      "doctest": false,
+      "required_features": []
+    },
+    "workflow:.github/workflows/ci.yml": {
+      "kind": "workflow"
+    },
+    "workflow:.github/workflows/full-main.yml": {
+      "kind": "workflow"
+    },
+    "workflow:.github/workflows/main-guard.yml": {
+      "kind": "workflow"
+    },
+    "workflow:.github/workflows/release.yml": {
+      "kind": "workflow"
+    },
+    "workflow:.github/workflows/runner-admission-probe.yml": {
+      "kind": "workflow"
+    },
+    "workflow:.github/workflows/weekly.yml": {
+      "kind": "workflow"
+    }
+  }
+}

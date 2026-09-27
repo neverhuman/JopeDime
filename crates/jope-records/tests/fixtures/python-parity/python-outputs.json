@@ -1,0 +1,155 @@
+{
+  "source": "py-p1-u3-diff-20260927T024147Z (deploy/ci/coverage.py, rust-test-scope-check.py, parity-census.py check and readme-benchmarks.py at 8a55c4fef, python3 on xbabe2), tree 5136986fb plus that run's working changes",
+  "cases": [
+    {
+      "name": "cov-validate",
+      "exit": 0,
+      "stdout": "{\"counts\": {\"benchmark-source\": 33, \"feature\": 31, \"package\": 26, \"python-family\": 231, \"target\": 265, \"workflow\": 6, \"workflow-job\": 16}, \"stage\": \"static\", \"unassigned_or_invalid\": 0}\n",
+      "stderr": ""
+    },
+    {
+      "name": "cov-unassigned",
+      "exit": 1,
+      "stdout": "unassigned addition: benchmark:crates/feat-math/examples/expression_benchmark.rs\n{\"counts\": {\"benchmark-source\": 33, \"feature\": 31, \"package\": 26, \"python-family\": 231, \"target\": 265, \"workflow\": 6, \"workflow-job\": 16}, \"stage\": \"static\", \"unassigned_or_invalid\": 1}\n",
+      "stderr": ""
+    },
+    {
+      "name": "cov-stale",
+      "exit": 1,
+      "stdout": "stale assignment: python:no/such/test_file.py\n{\"counts\": {\"benchmark-source\": 33, \"feature\": 31, \"package\": 26, \"python-family\": 231, \"target\": 265, \"workflow\": 6, \"workflow-job\": 16}, \"stage\": \"static\", \"unassigned_or_invalid\": 1}\n",
+      "stderr": ""
+    },
+    {
+      "name": "cov-schema",
+      "exit": 1,
+      "stdout": "unsupported coverage schema\n{\"counts\": {\"benchmark-source\": 33, \"feature\": 31, \"package\": 26, \"python-family\": 231, \"target\": 265, \"workflow\": 6, \"workflow-job\": 16}, \"stage\": \"static\", \"unassigned_or_invalid\": 1}\n",
+      "stderr": ""
+    },
+    {
+      "name": "cov-lanes",
+      "exit": 1,
+      "stdout": "lane hygiene missing stage\nlane hygiene has invalid stage\nlane rust-check requires_nonzero_tests must be boolean\nlane inputs has empty command/inputs/evidence\nlane python must declare result backend\n{\"counts\": {\"benchmark-source\": 33, \"feature\": 31, \"package\": 26, \"python-family\": 231, \"target\": 265, \"workflow\": 6, \"workflow-job\": 16}, \"stage\": \"static\", \"unassigned_or_invalid\": 5}\n",
+      "stderr": ""
+    },
+    {
+      "name": "cov-dispositions",
+      "exit": 1,
+      "stdout": "disposition research has invalid status\ndisposition research missing reason\n{\"counts\": {\"benchmark-source\": 33, \"feature\": 31, \"package\": 26, \"python-family\": 231, \"target\": 265, \"workflow\": 6, \"workflow-job\": 16}, \"stage\": \"static\", \"unassigned_or_invalid\": 2}\n",
+      "stderr": ""
+    },
+    {
+      "name": "cov-unknown",
+      "exit": 1,
+      "stdout": "unknown lane no-such-lane for benchmark:crates/feat-math/examples/expression_benchmark.rs\nunknown disposition no-such-disposition for benchmark:crates/feat-math/examples/expression_benchmark.rs\nmissing execution scope: benchmark:crates/feat-math/examples/expression_benchmark.rs\n{\"counts\": {\"benchmark-source\": 33, \"feature\": 31, \"package\": 26, \"python-family\": 231, \"target\": 265, \"workflow\": 6, \"workflow-job\": 16}, \"stage\": \"static\", \"unassigned_or_invalid\": 3}\n",
+      "stderr": ""
+    },
+    {
+      "name": "cov-unassigned-item",
+      "exit": 1,
+      "stdout": "unassigned item: benchmark:crates/feat-math/examples/expression_benchmark.rs\n{\"counts\": {\"benchmark-source\": 33, \"feature\": 31, \"package\": 26, \"python-family\": 231, \"target\": 265, \"workflow\": 6, \"workflow-job\": 16}, \"stage\": \"static\", \"unassigned_or_invalid\": 1}\n",
+      "stderr": ""
+    },
+    {
+      "name": "cov-features",
+      "exit": 1,
+      "stdout": "non-default required features ['testing'] assigned to default execution: target:jope-policy/test/jope_dime\n{\"counts\": {\"benchmark-source\": 33, \"feature\": 31, \"package\": 26, \"python-family\": 231, \"target\": 265, \"workflow\": 6, \"workflow-job\": 16}, \"stage\": \"static\", \"unassigned_or_invalid\": 1}\n",
+      "stderr": ""
+    },
+    {
+      "name": "cov-discovery",
+      "exit": 1,
+      "stdout": "changed discovery: benchmark:crates/feat-math/examples/expression_benchmark.rs; review its assignment\n{\"counts\": {\"benchmark-source\": 33, \"feature\": 31, \"package\": 26, \"python-family\": 231, \"target\": 265, \"workflow\": 6, \"workflow-job\": 16}, \"stage\": \"static\", \"unassigned_or_invalid\": 1}\n",
+      "stderr": ""
+    },
+    {
+      "name": "cov-discover",
+      "exit": 0,
+      "stderr": "",
+      "stdout_file": "coverage/discovered.json"
+    },
+    {
+      "name": "scope",
+      "exit": 0,
+      "stdout": "ok: 26 workspace packages = 17 product + 9 deferred (no repeats, no overlap, none unplaced)\n",
+      "stderr": ""
+    },
+    {
+      "name": "parity",
+      "exit": 0,
+      "stdout": "capability matrix: 787 rows\nby status: dropped=20, lost=7, moved=735, new=24, pending=1\nby kind: engine-binary=12, engine-example=12, engine-subcommand=96, jope-prime-command=49, justfile-recipe=6, new-bin=15, new-example=1, ops-sh=1, root-binary=56, script-py=116, script-review=5, script-sh=23, script-test=5, state=7, systemd-unit=70, tool-dir=1, tool-py=186, tool-sh=7, tool-test=102, vendored-bin=6, vendored-example=6, wire=5\nthis tree: 89 binaries, 19 examples, 92 clap subcommands, 430 python tools, 0 systemd units\nok: every row resolved and every entry point of this tree has a row\n",
+      "stderr": ""
+    },
+    {
+      "name": "parity-help",
+      "exit": 0,
+      "stdout": "capability matrix: 787 rows\nby status: dropped=20, lost=7, moved=735, new=24, pending=1\nby kind: engine-binary=12, engine-example=12, engine-subcommand=96, jope-prime-command=49, justfile-recipe=6, new-bin=15, new-example=1, ops-sh=1, root-binary=56, script-py=116, script-review=5, script-sh=23, script-test=5, state=7, systemd-unit=70, tool-dir=1, tool-py=186, tool-sh=7, tool-test=102, vendored-bin=6, vendored-example=6, wire=5\nthis tree: 89 binaries, 19 examples, 92 clap subcommands, 430 python tools, 0 systemd units\nok: every row resolved and every entry point of this tree has a row\n",
+      "stderr": ""
+    },
+    {
+      "name": "parity-counts",
+      "exit": 1,
+      "stdout": "capability matrix: 787 rows\nby status: dropped=20, lost=7, moved=735, new=24, pending=1\nby kind: engine-binary=12, engine-example=12, engine-subcommand=96, jope-prime-command=49, justfile-recipe=6, new-bin=15, new-example=1, ops-sh=1, root-binary=56, script-py=116, script-review=5, script-sh=23, script-test=5, state=7, systemd-unit=70, tool-dir=1, tool-py=186, tool-sh=7, tool-test=102, vendored-bin=6, vendored-example=6, wire=5\nthis tree: 89 binaries, 19 examples, 92 clap subcommands, 430 python tools, 0 systemd units\n\n1 problem(s):\n  - ## Counts row `new-bin` disagrees with the rows below it: committed `| new-bin | 14 | 0 | 14 | 0 | 0 | 0 |`, recomputed `| new-bin | 15 | 0 | 15 | 0 | 0 | 0 |`\n",
+      "stderr": ""
+    },
+    {
+      "name": "parity-tally",
+      "exit": 1,
+      "stdout": "capability matrix: 787 rows\nby status: dropped=20, lost=7, moved=735, new=24, pending=1\nby kind: engine-binary=12, engine-example=12, engine-subcommand=96, jope-prime-command=49, justfile-recipe=6, new-bin=15, new-example=1, ops-sh=1, root-binary=56, script-py=116, script-review=5, script-sh=23, script-test=5, state=7, systemd-unit=70, tool-dir=1, tool-py=186, tool-sh=7, tool-test=102, vendored-bin=6, vendored-example=6, wire=5\nthis tree: 89 binaries, 19 examples, 92 clap subcommands, 430 python tools, 0 systemd units\n\n1 problem(s):\n  - ## Counts says 1 `moved`/`new` rows without a covering test; the rows say 657\n",
+      "stderr": ""
+    },
+    {
+      "name": "parity-preamble",
+      "exit": 1,
+      "stdout": "capability matrix: 787 rows\nby status: dropped=20, lost=7, moved=735, new=24, pending=1\nby kind: engine-binary=12, engine-example=12, engine-subcommand=96, jope-prime-command=49, justfile-recipe=6, new-bin=15, new-example=1, ops-sh=1, root-binary=56, script-py=116, script-review=5, script-sh=23, script-test=5, state=7, systemd-unit=70, tool-dir=1, tool-py=186, tool-sh=7, tool-test=102, vendored-bin=6, vendored-example=6, wire=5\nthis tree: 89 binaries, 19 examples, 92 clap subcommands, 430 python tools, 0 systemd units\n\n1 problem(s):\n  - ## Counts is missing the line documenting why it is gated: `you saw.` (re-run `deploy/ci/parity-census.py census`, which emits it)\n",
+      "stderr": ""
+    },
+    {
+      "name": "parity-status",
+      "exit": 1,
+      "stdout": "capability matrix: 787 rows\nby status: dropped=20, invalid=1, lost=7, moved=734, new=24, pending=1\nby kind: engine-binary=12, engine-example=12, engine-subcommand=96, jope-prime-command=49, justfile-recipe=6, new-bin=15, new-example=1, ops-sh=1, root-binary=56, script-py=116, script-review=5, script-sh=23, script-test=5, state=7, systemd-unit=70, tool-dir=1, tool-py=186, tool-sh=7, tool-test=102, vendored-bin=6, vendored-example=6, wire=5\nthis tree: 89 binaries, 19 examples, 92 clap subcommands, 430 python tools, 0 systemd units\n\n5 problem(s):\n  - row 95 [engine-binary | parallel/src/bin/jope-build-receipt.rs]: invalid status `bogus`\n  - no row for bin jope-parallel/jope-build-receipt: crates/jope-engine/src/bin/jope-build-receipt.rs\n  - ## Counts row `**total**` disagrees with the rows below it: committed `| **total** | **787** | **735** | **24** | **1** | **20** | **7** |`, recomputed `| **total** | **787** | **734** | **24** | **1** | **20** | **7** |`\n  - ## Counts row `engine-binary` disagrees with the rows below it: committed `| engine-binary | 12 | 11 | 0 | 1 | 0 | 0 |`, recomputed `| engine-binary | 12 | 10 | 0 | 1 | 0 | 0 |`\n  - ## Counts says 657 `moved`/`new` rows without a covering test; the rows say 656\n",
+      "stderr": ""
+    },
+    {
+      "name": "parity-pending",
+      "exit": 1,
+      "stdout": "capability matrix: 787 rows\nby status: dropped=20, lost=7, moved=735, new=24, pending=1\nby kind: engine-binary=12, engine-example=12, engine-subcommand=96, jope-prime-command=49, justfile-recipe=6, new-bin=15, new-example=1, ops-sh=1, root-binary=56, script-py=116, script-review=5, script-sh=23, script-test=5, state=7, systemd-unit=70, tool-dir=1, tool-py=186, tool-sh=7, tool-test=102, vendored-bin=6, vendored-example=6, wire=5\nthis tree: 89 binaries, 19 examples, 92 clap subcommands, 430 python tools, 0 systemd units\n\n1 problem(s):\n  - row 105 [engine-binary | parallel/src/bin/jope-witness-ssh.rs]: pending-WP3 is outside WP4..WP12\n",
+      "stderr": ""
+    },
+    {
+      "name": "parity-dropped",
+      "exit": 1,
+      "stdout": "capability matrix: 787 rows\nby status: dropped=20, lost=7, moved=735, new=24, pending=1\nby kind: engine-binary=12, engine-example=12, engine-subcommand=96, jope-prime-command=49, justfile-recipe=6, new-bin=15, new-example=1, ops-sh=1, root-binary=56, script-py=116, script-review=5, script-sh=23, script-test=5, state=7, systemd-unit=70, tool-dir=1, tool-py=186, tool-sh=7, tool-test=102, vendored-bin=6, vendored-example=6, wire=5\nthis tree: 89 binaries, 19 examples, 92 clap subcommands, 430 python tools, 0 systemd units\n\n1 problem(s):\n  - row 511 [tool-sh | parallel/tools/code_publish.sh]: dropped without the archive location\n",
+      "stderr": ""
+    },
+    {
+      "name": "parity-target",
+      "exit": 1,
+      "stdout": "capability matrix: 787 rows\nby status: dropped=20, lost=7, moved=735, new=24, pending=1\nby kind: engine-binary=12, engine-example=12, engine-subcommand=96, jope-prime-command=49, justfile-recipe=6, new-bin=15, new-example=1, ops-sh=1, root-binary=56, script-py=116, script-review=5, script-sh=23, script-test=5, state=7, systemd-unit=70, tool-dir=1, tool-py=186, tool-sh=7, tool-test=102, vendored-bin=6, vendored-example=6, wire=5\nthis tree: 89 binaries, 19 examples, 92 clap subcommands, 430 python tools, 0 systemd units\n\n1 problem(s):\n  - row 280 [tool-py | parallel/tools/family_growth_policy.py]: target `crates/jope-engine/src/no_such_file.rs` does not exist\n",
+      "stderr": ""
+    },
+    {
+      "name": "parity-norow",
+      "exit": 1,
+      "stdout": "capability matrix: 786 rows\nby status: dropped=20, lost=7, moved=735, new=23, pending=1\nby kind: engine-binary=12, engine-example=12, engine-subcommand=96, jope-prime-command=49, justfile-recipe=6, new-bin=14, new-example=1, ops-sh=1, root-binary=56, script-py=116, script-review=5, script-sh=23, script-test=5, state=7, systemd-unit=70, tool-dir=1, tool-py=186, tool-sh=7, tool-test=102, vendored-bin=6, vendored-example=6, wire=5\nthis tree: 89 binaries, 19 examples, 92 clap subcommands, 430 python tools, 0 systemd units\n\n3 problem(s):\n  - no row for bin jope-ci/jope-ci: crates/jope-ci/src/main.rs\n  - ## Counts row `**total**` disagrees with the rows below it: committed `| **total** | **787** | **735** | **24** | **1** | **20** | **7** |`, recomputed `| **total** | **786** | **735** | **23** | **1** | **20** | **7** |`\n  - ## Counts row `new-bin` disagrees with the rows below it: committed `| new-bin | 15 | 0 | 15 | 0 | 0 | 0 |`, recomputed `| new-bin | 14 | 0 | 14 | 0 | 0 | 0 |`\n",
+      "stderr": ""
+    },
+    {
+      "name": "readme",
+      "exit": 0,
+      "stdout": "README.md benchmark blocks are current\n",
+      "stderr": ""
+    },
+    {
+      "name": "readme-stale",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "README.md is out of date with the committed benchmark evidence.\nRun: python3 deploy/ci/readme-benchmarks.py --write\n"
+    },
+    {
+      "name": "readme-write",
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": ""
+    }
+  ]
+}

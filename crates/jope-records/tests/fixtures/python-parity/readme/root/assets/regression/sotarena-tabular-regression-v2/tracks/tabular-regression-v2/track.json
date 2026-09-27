@@ -1,0 +1,38 @@
+{
+  "schema": "sotarena.track.v1",
+  "id": "tabular-regression-v2",
+  "name": "Golden45 · Tabular Regression",
+  "public_name": "Golden45",
+  "status": "current-full-coverage",
+  "task": "regression",
+  "primary_metric": "rmse",
+  "metric_direction": "minimize",
+  "dataset_registry": "registry/datasets.tabular-regression-v2.json",
+  "scores": "results/tabular-regression-v2/scores.csv",
+  "resolution_ledger": "results/tabular-regression-v2/resolution-ledger.jsonl",
+  "acceptance_manifest": "results/tabular-regression-v2/aspfm-acceptance-manifest.json",
+  "acceptance": {
+    "aspfm_publication_state": "45/45",
+    "rankable_scores": 8763
+  },
+  "protocols": [
+    "public-development",
+    "aspfm-generated"
+  ],
+  "split": {
+    "family": "golden45",
+    "excluded_datasets": [
+      "ZTS"
+    ],
+    "restricted_dataset_count": 3,
+    "test_labels_public": false
+  },
+  "leaderboard_policy": {
+    "dataset_weighting": "uniform",
+    "pairwise_tie_relative_tolerance": 1e-12,
+    "elo_method": "regularized-bradley-terry-elo-scale",
+    "protocols_ranked_together": true,
+    "official_output": "results/tabular-regression-v2/leaderboard.csv",
+    "partial_coverage_is_not_full_rank": true
+  }
+}

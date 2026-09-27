@@ -1,0 +1,47 @@
+[
+  {
+    "name": "unassigned",
+    "ed": "911,920d\n",
+    "sha256": "547663e2d790dc05d42d9af12ca09f91a404ccfef25e4230ef5d8a9fdbec99b3"
+  },
+  {
+    "name": "stale",
+    "ed": "9018a\n    },\n    \"python:no/such/test_file.py\": {\n      \"discovery\": {\n        \"kind\": \"python-family\"\n      },\n      \"lanes\": [\n        \"python\"\n      ],\n      \"dispositions\": [],\n      \"scope\": \"x\"\n.\n",
+    "sha256": "da4ee91712df24181a54fe64778828f4e9f405125ac76a40c40023e5360a7ca0"
+  },
+  {
+    "name": "schema",
+    "ed": "2c\n  \"schema\": \"jope.coverage/v0\",\n.\n",
+    "sha256": "3ad10203a4b900d7c9b62fe6561c5356baefb0cc54d0676abf4b72a055c70438"
+  },
+  {
+    "name": "lanes",
+    "ed": "253c\n      \"result_backend\": \"junit\",\n.\n196,200c\n      \"command\": [],\n.\n113c\n      \"requires_nonzero_tests\": \"yes\",\n.\n62d\n",
+    "sha256": "fb829bd9d9f338e8d3a22cc4e255d11e6acdc25c086d312364d01b25362a2c5a"
+  },
+  {
+    "name": "dispositions",
+    "ed": "836,837c\n      \"status\": \"open\",\n      \"reason\": \"\",\n.\n",
+    "sha256": "e9370392b85ad73f25f038eabcc9f06012943b3e1555d9d1cb5adc04d910e129"
+  },
+  {
+    "name": "unknown",
+    "ed": "919c\n      \"scope\": \"\"\n.\n917c\n        \"no-such-disposition\"\n.\n915c\n      \"lanes\": [\n        \"no-such-lane\"\n      ],\n.\n",
+    "sha256": "9ade58b681dcaa1b7484980360ee2ae71949b1e1d90940f8576c316232ac1fc4"
+  },
+  {
+    "name": "unassigned-item",
+    "ed": "916,918c\n      \"dispositions\": [],\n.\n",
+    "sha256": "77f62f715b82af45729d02954726931ab525042ba80f22161e50201b05ca9245"
+  },
+  {
+    "name": "features",
+    "ed": "8092c\n        \"rust-check\"\n.\n",
+    "sha256": "5e8b0a84f1e574a4cdec76491992e4cbf945fe3493ac0bd70a3a9ddaa70cc307"
+  },
+  {
+    "name": "discovery",
+    "ed": "913c\n        \"kind\": \"changed\"\n.\n",
+    "sha256": "aeb8f0915dd35355cd1f77e34924390612aab9a10a693c15f3b5bfc1f1221edb"
+  }
+]

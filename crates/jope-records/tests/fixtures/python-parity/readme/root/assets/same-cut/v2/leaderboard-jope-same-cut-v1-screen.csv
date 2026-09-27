@@ -1,0 +1,16 @@
+elo_rank,full_coverage_rank,method_id,method,elo,average_rank,dataset_wins,datasets_scored,datasets_total,coverage_pct,full_coverage,pending_cells,coverage_status,protocols,benchmark_valid,scope
+1,1,baseline.stack,baseline.stack,1727.2,3.8,2,10,10,100.0,True,0,10/10,same-cut,True,official unified benchmark comparison
+2,2,baseline.histgbm2,baseline.histgbm2,1628.8,5.2,1,10,10,100.0,True,0,10/10,same-cut,True,official unified benchmark comparison
+3,3,baseline.krr,baseline.krr,1628.8,5.2,1,10,10,100.0,True,0,10/10,same-cut,True,official unified benchmark comparison
+4,4,afm.lite-race.v1.resampled,afm.lite-race.v1.resampled,1596.1,5.9,1,10,10,100.0,True,0,10/10,same-cut,True,official unified benchmark comparison
+5,5,baseline.ensemble,baseline.ensemble,1559.9,6.4,2,10,10,100.0,True,0,10/10,same-cut,True,official unified benchmark comparison
+6,6,adapter.catboost,adapter.catboost,1512.9,7.7,1,10,10,100.0,True,0,10/10,same-cut,True,official unified benchmark comparison
+7,7,baseline.gpr,baseline.gpr,1494.4,8.1,1,10,10,100.0,True,0,10/10,same-cut,True,official unified benchmark comparison
+8,8,adapter.rf,adapter.rf,1480.4,8.4,0,10,10,100.0,True,0,10/10,same-cut,True,official unified benchmark comparison
+9,9,baseline.histgbm,baseline.histgbm,1466.5,8.9,0,10,10,100.0,True,0,10/10,same-cut,True,official unified benchmark comparison
+10,10,adapter.lightgbm,adapter.lightgbm,1461.8,8.8,0,10,10,100.0,True,0,10/10,same-cut,True,official unified benchmark comparison
+11,11,baseline.ridge_gcv,baseline.ridge_gcv,1433.6,9.4,0,10,10,100.0,True,0,10/10,same-cut,True,official unified benchmark comparison
+12,12,baseline.elasticnet,baseline.elasticnet,1407.2,9.9,0,10,10,100.0,True,0,10/10,same-cut,True,official unified benchmark comparison
+13,13,baseline.ridge,baseline.ridge,1407.2,10.1,0,10,10,100.0,True,0,10/10,same-cut,True,official unified benchmark comparison
+14,14,adapter.xgboost,adapter.xgboost,1390.0,10.3,1,10,10,100.0,True,0,10/10,same-cut,True,official unified benchmark comparison
+15,15,baseline.ksmooth,baseline.ksmooth,1305.3,11.9,0,10,10,100.0,True,0,10/10,same-cut,True,official unified benchmark comparison

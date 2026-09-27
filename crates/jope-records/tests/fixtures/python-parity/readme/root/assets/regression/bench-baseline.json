@@ -1,0 +1,20 @@
+{
+  "schema": "jope.bench-baseline/v1",
+  "bench": "emit-champion-8944cbdf",
+  "what": "wall time of one `feat-math` release `emit` example run (process spawn included) on the committed champion; lower is better",
+  "genome": "crates/feat-math/assets/champions/8944cbdf.dsl",
+  "genome_sha256": "0bc6e75d8f12173ac6e2acf432233e48457cf773e1bedef56f536384513c158d",
+  "runs": 200,
+  "host": "xbabe2",
+  "cpu": "x86_64",
+  "nproc": 128,
+  "kernel": "6.8.0-139-generic",
+  "git_sha": "a53a1499da7213713b7ebf2a9d7134207169730c",
+  "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+  "recorded": "2026-09-19T00:34:16Z",
+  "mean_ms": 48.4025,
+  "median_ms": 20.5898,
+  "min_ms": 3.6108,
+  "p95_ms": 222.3321,
+  "alert_pct": 10.0
+}
