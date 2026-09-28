@@ -1985,8 +1985,10 @@ with both join phases in one test, which stopped at the first.)
 - `write_frame` hands length and body to the stream in one write. A TLS stream therefore
   queues a small frame, such as a heartbeat or an admission, whole: a write cut short by a
   deadline cannot leave a length queued without its body.
-- Dropping a `TlsStream` sends `close_notify` under the same bound: never past the stream's
-  deadline, and at most one write timeout from the drop.
+- Dropping a `TlsStream` sends `close_notify` under a bound of its own: never past the stream's
+  deadline, and at most `transport::CLOSE_TIMEOUT` (1 s) from the drop, or the write timeout if
+  that is shorter. As first committed the cap was one whole write timeout from the drop; see
+  [the close cap](#close-cap-verifier-note-on-c9ca8b547) below.
 
 No allowance is extended. Every deadline is an allowance the plan or the code already names:
 the handshake, join or heartbeat timeout, the heartbeat interval, or a reply bound. It is now
@@ -2004,7 +2006,7 @@ Line numbers are those of the commit that adds this section.
 | `transport.rs:653` `connect` | client handshake (`complete_io` loop) | per-read timeout; elapsed checked between steps | one deadline, the handshake allowance, over all of its I/O |
 | `transport.rs:736` `accept_by` (`poll_accept`, `poll_accept_by`) | server handshake | as above | one deadline: the handshake allowance, cut to the caller's deadline |
 | `transport.rs:546`, `554` `TlsStream` `Read`/`Write` | record reads, writes and flushes, several socket operations each | per-operation timeout only | every socket operation through `DeadlineSocket`, bounded by the caller's deadline |
-| `transport.rs:575` `Drop for TlsStream` | `close_notify` and flush | per-write timeout, per write | capped at the stream's deadline and one write timeout from the drop |
+| `transport.rs:575` `Drop for TlsStream` | `close_notify` and flush | per-write timeout, per write | capped at the stream's deadline and at `CLOSE_TIMEOUT` (1 s) from the drop, or the write timeout if shorter. First committed as one write timeout from the drop; see the close cap below |
 | `transport.rs:785`, `795` `Sequenced::send`, `receive` | one frame | the caller's per-operation timeouts | unchanged; production callers use `send_by` and `receive_by` (`839`, `843`) |
 | `transport.rs:850` `Sequenced::poll_receive` | idle wait, then one frame | per-read timeouts, so a started frame could trickle | `wait` for the first byte; the rest of the frame within `within` of it |
 | `rendezvous.rs:370`, `382` `write_frame`, `read_frame` | one frame | primitives | primitives, bounded by the stream's deadline; `write_frame` writes once |
@@ -2012,8 +2014,8 @@ Line numbers are those of the commit that adds this section.
 | `rendezvous.rs:1066`-`1071` `gather` | challenge write, hello read | join time remaining, per read | end by the join deadline itself; cleared once the hello is read |
 | `rendezvous.rs:1154` `join` | challenge read, hello write, admission read | join timeout per read | one deadline for the whole exchange: the join timeout, cut to the original deadline |
 | `rendezvous.rs:126`, `1125` `UnixAcceptor`, `join_unix` (fixtures) | as `gather` and `join` | bare `UnixStream` | `DeadlineSocket` over the fixture socket |
-| `controller.rs:1450` `deliver_admission_with_clock` | admission write, per rank | the join time left at accept, per write | the plan's I/O (heartbeat) timeout, cut to the end of the group window |
-| `driver.rs:57` `heartbeat_all` | heartbeat write, per rank | the join time left at accept, per write | one heartbeat interval per write; a failed write is still observed through the rank's own exit |
+| `controller.rs:1450` `deliver_admission_with_clock` | admission write, per rank | the join time left at accept, per write | the plan's I/O (heartbeat) timeout, cut to the end of the group window. Each socket write is also still bounded by the per-operation timeout `gather` left on the stream (the join time left at accept, at least 1 ms); the smaller of the two applies |
+| `driver.rs:57` `heartbeat_all` | heartbeat write, per rank | the join time left at accept, per write | one heartbeat interval per write, and each socket write also within the per-operation timeout `gather` left on the stream, whichever is smaller; a failed write is still observed through the rank's own exit |
 | `participant.rs:274`, `292` | connect, join | as `connect`, `join` | as `connect`, `join` |
 | `participant.rs:376` CPU phase | each heartbeat read | heartbeat timeout per read | the whole heartbeat within the heartbeat timeout, or control is lost |
 | `participant.rs:505` `train` watcher (`neural`) | each heartbeat read | heartbeat timeout per read | as the CPU phase |
@@ -2022,7 +2024,7 @@ Line numbers are those of the commit that adds this section.
 | `agent.rs:232` `Agent::serve` | reply write | 30 s per write | `REPLY_WRITE` (30 s) for the whole reply |
 | `agent.rs:309` `RemoteSupervisor::call` | connect | as `connect` | as `connect` |
 | `agent.rs:337`-`338` `RemoteSupervisor::call` | request and reply | reply bound per read | the reply bound (I/O timeout, 30 s launch, 90 s terminate) over the whole exchange |
-| `supervisor.rs:146`, `job_identity.rs:234` | SmartCluster control exchange | `native_scq::authenticated_exchange` (pinned, not edited): the whole write and read inside one 30 s `tokio::time::timeout` | unchanged: already absolute. The peer is the host's own daemon, pinned by uid and executable |
+| `supervisor.rs:146` `SmartClusterSupervisor::exchange`, `job_identity.rs:234` | SmartCluster control exchange | `native_scq::authenticated_exchange` (pinned, not edited): the whole write and read inside one 30 s `tokio::time::timeout` | unchanged: already absolute. The peer is the host's own daemon, pinned by uid and executable |
 | `collect.rs:78` `SystemCommands::run` (census collection) | output of a local read-only inventory program | the child is killed after `COMMAND_TIMEOUT` (30 s), measured once | unchanged: no network peer. See the open note below |
 | census merge, grants (`census.rs`, `authoring.rs`, `contract.rs`) | pinned per-host documents and signed grant files | no network I/O | not applicable: nothing is exchanged over a socket |
 
@@ -2041,10 +2043,39 @@ Consequences worth stating:
   step.
 - **The agent sees `stop` within bounded time** whatever its peers do: after its current step,
   and no peer can stretch a step. A handshake takes at most its allowance (at most 10 s), a
-  started request at most the plan's I/O timeout, and a reply write at most 30 s. The
+  started request at most the plan's I/O timeout, and a reply write at most 30 s. Dropping the
+  connection after a failed reply adds at most `CLOSE_TIMEOUT` (1 s) for its courtesy close,
+  so about 31 s in all from the start of the reply. As first committed, that close could take
+  one more whole write timeout, `REPLY_WRITE`: about 60 s in all (see the close cap below). The
   supervisor operation being served, such as a terminate, takes as long as it takes, as
   before. One agent serves one peer at a time, so a stream of trickling connections can still
   occupy it for one allowance each. That is a fairness limit, and it is recorded below.
+- **`gather`'s per-operation timeout stays on every admitted stream.** `gather` sets both
+  per-operation timeouts of an accepted stream to the join time left at its accept (at least
+  1 ms), and nothing resets them. The admission delivery and `heartbeat_all` set only
+  deadlines, so each socket write there ends by the smaller of that per-operation timeout and
+  the time left before its deadline. For a rank accepted late in the join window that timeout
+  can be a few milliseconds. A socket write waits only when the socket buffers are full, which
+  a small admission or heartbeat frame to a rank that is reading its control stream does not
+  reach; for a rank that has stopped reading, the write only fails sooner.
+
+**Plan sizing.** Two allowances now bound more than they did, and a plan must be sized for
+them:
+
+- **A rank's join timeout covers its whole join.** `rendezvous::join` puts one deadline, the
+  plan's `join_timeout_ms` cut to the original deadline, over the challenge read, the hello
+  write and the admission read together; before `c9ca8b547` each read had the whole join
+  timeout. `join_timeout_ms` must therefore cover, from when a rank starts to join, its wait for
+  the challenge, its hello, the coordinator's wait for the rest of the group, the journaling of
+  the admission and its delivery.
+- **A retained result must arrive whole within the heartbeat timeout.**
+  `RemoteSupervisor::call` bounds every request except a launch (30 s) and a terminate (90 s)
+  by the plan's I/O timeout, `heartbeat_timeout_ms`, over the whole exchange, request and
+  reply. A `RetainedResult` reply carries the signed envelope and the result bytes, hex-encoded,
+  in one frame of up to `AGENT_FRAME_LIMIT` (16 MiB), so `heartbeat_timeout_ms` must be long
+  enough for the largest retained result the plan can produce to cross the link: 16 MiB takes
+  about 1.3 s at 100 Mbit/s before TLS framing. A reply that misses its deadline fails that
+  call, the channel is reopened for the next one, and a partial frame is never used.
 
 **Tests.** Nine of the ten new tests use only the API that existed at `3d12729a2`, so they ran
 unchanged as the pre-fix record above. The tenth needs `read_frame_by`. All use loopback TCP
@@ -2129,3 +2160,58 @@ commit that adds this paragraph changes only this record). All ran on xbabe2, CP
   read-only probe run by the operator's own collector, not a network peer, so this change
   leaves it alone.
 - Loopback only, as before. The deadlines have not been exercised across hosts.
+
+## Rebase onto `4ff4e7b69` (PR #119)
+
+`main` moved to `4ff4e7b697dcd5b7097dacbae9e99c07ffef8e28`: `7aec174e0` plus PR #119, which
+removed the inactive `ops/ci` copies, pinned `actions/checkout` to v7.0.1, gave the `feat-math`
+tests `tempfile` scratch directories, updated `README.md` and `CONTRIBUTING.md`, and added a
+`feat-math -> tempfile` edge to `Cargo.lock`. `git rebase --onto 4ff4e7b69 7aec174e0` replayed
+the 22 W7 commits with no conflict. `Cargo.lock` is the only file both sides change, in
+different packages, and the rebased lock keeps both edges: `feat-math -> tempfile` and
+`jope-parallel -> rustls`. `git range-diff 7aec174e0..829a0a696 4ff4e7b69..f71dfea7a` reports
+all 22 patches unchanged (`=`). No W7 file names anything #119 removed. Record:
+`w7-rebase119-pre-20260928T145644Z` (`range-diff.txt`, `rebase-heads.txt`).
+
+## Close cap (verifier note on `c9ca8b547`)
+
+**Finding.** `Drop for TlsStream` capped its courtesy `close_notify` and flush at the stream's
+write timeout, measured from the drop. `Agent::serve` gives its stream a `REPLY_WRITE` (30 s)
+write timeout. After a reply write to a coordinator that had stopped reading failed at its
+30 s deadline, dropping that connection could therefore wait up to another 30 s, about 60 s in
+all before the agent saw `stop`, where the consequences above said 30 s. The coordinator's
+`RemoteSupervisor` dropped a failed channel under the same rule, with the plan's I/O timeout.
+
+**Fix** (`transport.rs`). The close is capped at the new public `transport::CLOSE_TIMEOUT`
+(1 s) from the drop, or at the stream's write timeout if that is shorter, and never past the
+stream's deadline. Before, `CLOSE_TIMEOUT` applied only to a stream with no write timeout. The
+close is cut short only when the peer has not read for that long, and then the peer reads end
+of stream or a reset instead of `close_notify`. Every frame is length-prefixed and read whole,
+so nothing takes a stream cut short as a complete one. The `Agent::serve` documentation names
+the close bound, and the consequences above are corrected. The edit keeps every line number
+the table cites.
+
+**Test** (`bounded_transport`, 19, was 18):
+`dropping_a_stream_whose_peer_stopped_reading_ends_within_the_close_timeout`. Over an
+authenticated pair it fills the socket buffers with a 100 ms write timeout until one write
+makes no progress (the peer never reads, so TLS records stay queued), then gives the stream a
+5 s write timeout and no deadline, drops it, and asserts that the drop ends at `CLOSE_TIMEOUT`:
+no earlier than 50 ms before it and no later than 500 ms after it. The lower bound shows the
+close really waited, so the test tells a 1 s cap from a 5 s one.
+
+**Pre-fix record** (`w7-rebase119-pre-20260928T150209Z`, on `f71dfea7a` with only
+`CLOSE_TIMEOUT` made public and the new test added). The new test fails: the drop ended after
+5.12 s against a 1 s cap, the whole 5 s write timeout. The 18 other `bounded_transport` tests
+pass.
+
+**Post-fix record** (`w7-rebase119-post-20260928T150504Z`). `bounded_transport` and
+`bounded_agent` pass 24 of 24 three times running, the new test included; it takes 6.5 to
+6.7 s, nearly all of it filling the buffers. That run's `cargo fmt --check` asked for one
+line of the fix to be split; the committed fix reads the write timeout in its own statement
+instead, which keeps the line count, and is otherwise the same.
+
+**Verifier notes also settled here.** The `gather` per-operation timeout and the two
+plan-sizing constraints are recorded above, under the consequences. The SmartCluster row's
+`supervisor.rs:146` was rechecked: `SmartClusterSupervisor::exchange` calls
+`authenticated_exchange` on line 146 at `c9ca8b547` and at every later W7 commit, and line 151
+is inside `SmartClusterSupervisor::job`. The row now names the function.

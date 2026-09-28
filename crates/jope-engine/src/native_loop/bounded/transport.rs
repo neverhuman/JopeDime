@@ -62,8 +62,8 @@ use std::{
 const MAX_CREDENTIAL_BYTES: u64 = 64 * 1024;
 /// The TLS server name a client sends; identity is the pinned certificate, never this name.
 const SERVER_NAME: &str = "jope-bounded-peer";
-/// Bound on the courtesy close of a stream that has no write timeout.
-const CLOSE_TIMEOUT: Duration = Duration::from_secs(1);
+/// Bound on the courtesy `close_notify` of a dropped [`TlsStream`], whatever its write timeout.
+pub const CLOSE_TIMEOUT: Duration = Duration::from_secs(1);
 
 /// A socket whose kernel timeouts bound one read or one write at a time.
 pub trait TimedSocket: Read + Write {
@@ -574,10 +574,10 @@ impl ControlStream for TlsStream {
 }
 impl Drop for TlsStream {
     fn drop(&mut self) {
-        // The close is a courtesy and bounded like every other write: never past the stream's
-        // deadline, and at most one write timeout from now.
+        // A courtesy close: never past the stream's deadline, and at most CLOSE_TIMEOUT from now.
         let socket = self.socket();
-        let wait = socket.limits().write.unwrap_or(CLOSE_TIMEOUT);
+        let write = socket.limits().write;
+        let wait = write.map_or(CLOSE_TIMEOUT, |w| w.min(CLOSE_TIMEOUT));
         socket.cap_deadline(Instant::now() + wait);
         match &mut self.inner {
             Inner::Client(s) => s.conn.send_close_notify(),
