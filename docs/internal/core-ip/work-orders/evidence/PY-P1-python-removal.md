@@ -1078,6 +1078,52 @@ ignored receipt replays included), the family-growth unit tests, the fences, `co
 the secret scan, the reviewer's four inputs, and round two's differential harness rerun unchanged
 except for its scratch paths.
 
+### Round three, addendum
+
+A verifier reran the original tools (git bytes of `f46a9048f`) beside the ports at `ed49fbc3e` on
+132 new inputs of the two classes (`check-r3`). Four were accepted only by the port, from one
+root cause, and they refute the sweep's `py::int` bullet above: `py::int` and build-report's `du`
+parse stripped the whitespace, the sign and the underscores and parsed with `i64`, which reads
+any number of leading zeros. So a README CSV cell (`int(r["datasets_scored"])`; `elo_rank` is read
+the same way) of 4299 zeros and `45`, plain, with `+`, between spaces or with `0_` separators,
+rendered where Python 3.12 raised the limit's `ValueError`.
+
+- **Fix.** `py::int` returns `Result<i64, py::IntError>`. As CPython did, once the literal is
+  well-formed and before it is converted, it counts the digits (leading zeros, not the sign,
+  whitespace or underscores) and calls `check_int_digits`: `IntError::Limit` carries CPython's
+  message. Everything it refused before is `IntError::Invalid`, worded by each caller as before:
+  the README's `int_cell`, and in the non-P1 readers `task_status::int_key` and the finding
+  number of `findings`.
+  build-report's `py_int` makes the same check. Every other text-to-integer parse in the two
+  crates is bounded before it (`--stale`, eight characters), parses `decimal_int`'s output
+  (parity), or is `pyjson`'s.
+- **Reproduction first.** `p1-r3b-pre-20260928T044721Z`, at `ed49fbc3e` with only the fixture,
+  the replay count and the new assertions: the verifier's harness, rerun unchanged but for its
+  scratch paths, reports the four (Python 1, port 0); the README replay fails on the same four
+  and on the 4301-digit control's message; the `du` unit test fails.
+- **Fixtures.** Nine cases appended to `jope-records/…/readme/negative-r3.json` (now 12: 5 exit 0,
+  7 crash), captured in `p1-r3b-capture-20260928T044551Z` by `cap3b.sh` (bash and jq, the
+  original tool unmodified in a scratch root) and naming that run in their own `source` and
+  `capture`: 4300 digits with leading zeros, plain, with `+`, between spaces and with `0_`
+  separators render (README SHA-256 recorded); the same at 4301 digits, and 4301 ones, raise the
+  limit. The round-three total is 77 cases.
+- **Tests.** `readme_benchmarks_matches_round_three` replays 12 cases and now requires a refusal
+  to carry CPython's text wherever the Python raised that limit; `py.rs`
+  `int_of_text_counts_digits_as_python_did` (new), `int_conversion_limit_is_pythons` and
+  `python_int_and_strip` (the new type); `build_report.rs`
+  `stale_hours_and_du_parsing_follow_the_python_rules` (extended). No new target; the capability
+  matrix's `jope-records::*` count is now 136.
+- **After.** `p1-r3b-post-20260928T045128Z`, on the fix before it was committed (its tree): the
+  verifier's harness reports none of its 132 cases, integer or path, refused by the Python and
+  accepted by the port (the four are refused, with CPython's text); the README replay and the
+  `du` unit test pass.
+- **Gate.** `p1-r3b-gate-20260928T045221Z`, on the head (this file's commit): the round-three
+  gate's steps, the listed `jope-records` test count against the matrix, and the verifier's
+  harness rerun unchanged except for its scratch paths.
+- **Commits.** `jope-records, jope-ci: count leading zeros toward the 4300-digit limit in int() of
+  text (P1 review 3 addendum)` and `docs: record round three's addendum of the P1 ports (P1 review 3
+  addendum)` (this section and the matrix count).
+
 ## Commit map — `rr2/python-p1` to the landing
 
 The work above was committed on `rr2/python-p1` and landed through `rr2/python-p1-landing`: its
