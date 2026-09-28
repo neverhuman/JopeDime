@@ -3,9 +3,12 @@
 //! A host fills its admitted cores with `islands x threads` workers. That product is refused,
 //! before anything is written, when it exceeds the CPUs this process may run on
 //! (`sched_getaffinity`), `std::thread::available_parallelism` (which also honours cgroup CPU
-//! quotas) or an explicit `--cpu-ceiling` in millicores. Parallelism never changes a result:
-//! candidates are admitted in slot order, evaluated concurrently, and folded back in slot order,
-//! so selection is independent of which thread finished first.
+//! quotas) or an explicit `--cpu-ceiling` in millicores. Which thread finishes first never
+//! changes a result: candidates are admitted in slot order, evaluated concurrently, and folded
+//! back in slot order. So while the evaluation budget ends every phase, the worker count changes
+//! no decision either. The seconds bound is checked before each fit starts, on its worker, so
+//! when it binds, how many candidates start before it depends on timing and so on the worker
+//! count; the receipt records such a phase as stopped by `seconds`.
 //!
 //! A run launched as a child process is stopped the same cooperative way: SIGTERM or SIGINT set
 //! a flag the search checks before every fit, so in-flight fits finish, nothing new starts, and

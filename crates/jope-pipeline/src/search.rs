@@ -149,8 +149,11 @@ pub struct SearchOptions {
     pub seeds: Vec<String>,
     /// Worker threads evaluating one generation's admitted candidates. `1` evaluates one at a
     /// time, exactly as the sequential search always has (on the evaluation pool's single
-    /// thread, so on the same stack as any other count); any count gives the same decisions,
-    /// because candidates are admitted and folded back in slot order.
+    /// thread, so on the same stack as any other count). While the evaluation budget ends every
+    /// phase, any count gives the same decisions, because candidates are admitted and folded
+    /// back in slot order. A binding seconds bound is checked again before each fit starts, on
+    /// its worker (`evaluate_admitted`), so how many candidates start before it depends on
+    /// timing and so on this count; the phase then records [`STOPPED_BY_SECONDS`].
     pub threads: usize,
     /// Independent random streams over the same cuts, sharing each cut's budget and its
     /// "never fit twice" rule. Island 0 is the `--rng-seed` stream itself, so one island is the
@@ -673,9 +676,13 @@ pub fn run_cuts(
 ///
 /// The worker count bounds concurrency only. Admission (which candidates are fitted, up to the
 /// evaluation bound) and the fold of results back into the search (survivors, observations,
-/// counters) both happen in slot order on the calling thread, so any thread count yields the
-/// same observations, the same selection and the same published bytes; only wall-clock
-/// readings differ, as they do between any two runs.
+/// counters) both happen in slot order on the calling thread, so while the evaluation budget,
+/// not the seconds bound, ends every phase, any thread count yields the same observations, the
+/// same selection and the same published bytes; only wall-clock readings differ, as they do
+/// between any two runs. The seconds bound is checked again before each fit starts, on
+/// whichever worker runs it, so when it binds, how many candidates start before it depends on
+/// how fast the fits run, and with it the observations and possibly the selection. Such a phase
+/// records [`STOPPED_BY_SECONDS`] as its stop reason.
 ///
 /// Every fit runs on the pool's threads, which have
 /// [`crate::parallel::EVALUATION_STACK_BYTES`] of stack: one worker keeps the sequential
@@ -708,7 +715,9 @@ pub fn run_cuts_with(
 /// allows it ([`seconds_exempt`] candidates always, unless stopped); one that could not start is
 /// `None`. Sequentially (no pool) the first `None` ends the batch, exactly like the sequential
 /// loop's per-candidate deadline check (the exempt candidates are the batch's head); with a
-/// pool, every result lands back in its slot, whatever order the threads finished in.
+/// pool, every result lands back in its slot, whatever order the threads finished in. Each
+/// worker reads the clock for its own candidate, so once the deadline passes mid-batch, which
+/// slots started depends on timing and on the worker count.
 fn evaluate_admitted(
     admitted: &[(usize, String, &'static str)],
     cut: &Cut,
@@ -1001,8 +1010,9 @@ pub fn remeasure_topk_on_all_cuts(cuts: &[Cut], searches: &mut [CutSearch]) -> R
 
 /// The comparison phase, one worker per cut when a pool is given. Each cut's admissions depend
 /// only on that cut's own state (what it already measured, its evaluation count, its active
-/// seconds), and the pool is visited in the same order on every cut, so running the cuts
-/// concurrently decides exactly what running them one after another does.
+/// seconds), and the pool is visited in the same order on every cut, so unless the seconds
+/// bound ends a cut's comparison, running the cuts concurrently decides exactly what running
+/// them one after another does.
 fn remeasure_in(
     cuts: &[Cut],
     searches: &mut [CutSearch],
@@ -1635,8 +1645,9 @@ mod tests {
             .collect()
     }
 
-    /// Any worker count decides exactly what one worker decides. With the wall clock frozen —
-    /// the one input two runs can never agree on — every byte a search publishes is identical.
+    /// With the wall clock frozen — the one input two runs can never agree on — the seconds bound
+    /// never binds and the evaluation budget ends every phase; then any worker count decides
+    /// exactly what one worker decides, and every byte a search publishes is identical.
     #[test]
     fn eight_threads_publish_exactly_what_one_thread_publishes() {
         let temp = tempfile::tempdir().unwrap();
@@ -1690,7 +1701,8 @@ mod tests {
     }
 
     /// Islands replay from the seed, record every migration, tag every observation with its
-    /// island, and publish the same bytes on any worker count.
+    /// island, and publish the same bytes on any worker count (frozen clock, so the evaluation
+    /// budget ends every phase).
     #[test]
     fn islands_migrate_record_and_replay_on_any_worker_count() {
         let temp = tempfile::tempdir().unwrap();
@@ -1819,9 +1831,12 @@ mod tests {
         assert!(events.iter().all(|e| e.after_generation == 3 && e.cut == 0));
     }
 
-    /// With the real clock only the recorded seconds differ; every decision matches.
+    /// With the real clock, and a seconds budget far longer than 30 evaluations on these rows
+    /// take, the evaluation budget ends every phase: only the recorded seconds differ and every
+    /// decision matches. The test checks it ran in that regime. A binding seconds bound is the
+    /// timing-dependent case this does not cover.
     #[test]
-    fn thread_count_never_changes_a_decision_under_the_wall_clock() {
+    fn thread_count_changes_no_decision_when_the_evaluation_budget_binds() {
         let temp = tempfile::tempdir().unwrap();
         let preparation = prepare::build(
             &linear_rows(150),
@@ -1842,8 +1857,15 @@ mod tests {
                     5,
                 )
             };
-            run_cuts_with(&preparation.cuts, &options, &temp.path().join(name))
-                .unwrap()
+            let searches =
+                run_cuts_with(&preparation.cuts, &options, &temp.path().join(name)).unwrap();
+            assert!(
+                searches.iter().all(|s| s.stopped_by != STOPPED_BY_SECONDS
+                    && s.exploration.stopped_by != STOPPED_BY_SECONDS
+                    && s.comparison.stopped_by != STOPPED_BY_SECONDS),
+                "{threads} thread(s): the seconds bound ended a phase"
+            );
+            searches
                 .iter()
                 .flat_map(|s| {
                     s.observations

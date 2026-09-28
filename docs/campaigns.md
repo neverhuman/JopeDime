@@ -118,7 +118,11 @@ jope pipeline score --receipt <campaign>/round-003/receipt.json --split test   #
   split in the same registry. Report the test score of a candidate chosen *before* any test score
   was seen, and name every other look.
 - **Cores**: `--threads` and `--islands` multiply into the worker count, which is refused above
-  the CPUs the process may use or an explicit `--cpu-ceiling`; no decision depends on it.
+  the CPUs the process may use or an explicit `--cpu-ceiling`. The thread count changes no
+  decision while the evaluation budget ends every phase. When the seconds budget binds, which
+  candidates start before it depends on timing, and so on the thread count and the host's load;
+  receipts record such phases as stopped by `seconds` (see [`docs/pipeline.md`](pipeline.md),
+  "Parallelism").
 
 Command reference: [`docs/pipeline.md`](pipeline.md) ("Targeted search", "Test-split
 scoring") and [`docs/learning.md`](learning.md) ("Pipeline champions", "The champion bank").

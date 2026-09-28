@@ -23,7 +23,9 @@ pub struct Cli {
     pub cmd: Cmd,
 }
 
-/// How many CPUs the search may use. The worker count never changes a decision.
+/// How many CPUs the search may use. The worker count changes no decision while the evaluation
+/// budget ends every phase; when the seconds budget binds, which candidates start depends on
+/// timing, and the receipt records that phase as stopped by `seconds`.
 #[derive(Args, Clone, Debug)]
 pub struct ParallelArgs {
     /// Worker threads evaluating each generation's candidates (1 = sequential). Refused above

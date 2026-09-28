@@ -78,8 +78,11 @@ pub struct RunOptions {
     /// A parent receipt: re-derived from its run's evidence, then its selected genome is seeded
     /// first and its sha256 recorded as this run's parent.
     pub incumbent: Option<PathBuf>,
-    /// Worker threads evaluating each generation. Never changes a decision or a published byte
-    /// other than wall-clock readings; not recorded in the receipt for that reason.
+    /// Worker threads evaluating each generation. When the evaluation budget ends every phase it
+    /// changes no decision and no published byte other than wall-clock readings. A binding
+    /// seconds bound is checked before each fit starts, on every worker, so how many candidates
+    /// start before it depends on timing and therefore on this count; the receipt then records
+    /// `seconds` as the phase's stop reason. Not recorded in the receipt.
     pub threads: usize,
     /// Independent random streams over the same cuts (recorded, with every migration).
     pub islands: usize,
@@ -993,7 +996,10 @@ pub(crate) mod tests {
 
     /// `--threads 1` and `--threads 8` write the same run: the receipt, the prepared cuts, every
     /// cut's search and observations, and the emitted sources, byte for byte. The wall clock is
-    /// frozen for the comparison because it is the one thing two runs never share.
+    /// frozen for the comparison because it is the one thing two runs never share. A frozen clock
+    /// never reaches the seconds bound, so this proves the case where the evaluation budget ends
+    /// every phase, which the test asserts; a binding seconds bound makes the admitted candidates
+    /// timing-dependent (`a_phase_the_seconds_bound_ended_is_recorded_as_stopped_by_seconds`).
     #[test]
     fn one_thread_and_eight_threads_write_byte_identical_runs() {
         let workers = workers_up_to_eight();
@@ -1034,6 +1040,13 @@ pub(crate) mod tests {
             .comparison
             .completed_evaluations
             > 0));
+        // The regime this comparison covers: no phase was ended by the seconds bound.
+        assert!(one.search.cuts.iter().all(|c| {
+            let accounting = c.accounting.as_ref().unwrap();
+            c.stopped_by != search::STOPPED_BY_SECONDS
+                && accounting.exploration.stopped_by != search::STOPPED_BY_SECONDS
+                && accounting.comparison.stopped_by != search::STOPPED_BY_SECONDS
+        }));
     }
 
     #[test]
@@ -1239,6 +1252,45 @@ pub(crate) mod tests {
         .unwrap();
         assert_eq!(receipt.prepared.cuts, vec![0, 1, 2]);
         crate::evidence::verify_run(&output.join("receipt.json")).unwrap();
+    }
+
+    /// The byte identity across thread counts is a property of runs the evaluation budget ends:
+    /// the frozen clock never reaches a seconds bound. When the seconds bound ends a phase, how
+    /// many candidates started before it depends on how fast the fits ran, and so on the worker
+    /// count; the receipt discloses that case as the phase's stop reason, `seconds`. The
+    /// test-only expired clock reads past every deadline, so this is deterministic.
+    #[test]
+    fn a_phase_the_seconds_bound_ended_is_recorded_as_stopped_by_seconds() {
+        let temp = tempfile::tempdir().unwrap();
+        let exploration_stops = |clock: Clock, name: &str| {
+            run(&RunOptions {
+                clock,
+                cuts: 2,
+                ..small(&temp.path().join(name), 30)
+            })
+            .unwrap()
+            .search
+            .cuts
+            .iter()
+            .map(|c| {
+                c.accounting
+                    .as_ref()
+                    .unwrap()
+                    .exploration
+                    .stopped_by
+                    .clone()
+            })
+            .collect::<Vec<_>>()
+        };
+        assert_eq!(
+            exploration_stops(Clock::Expired, "expired"),
+            vec![search::STOPPED_BY_SECONDS; 2]
+        );
+        let frozen = exploration_stops(Clock::Frozen, "frozen");
+        assert!(
+            frozen.iter().all(|s| s != search::STOPPED_BY_SECONDS),
+            "{frozen:?}"
+        );
     }
 
     #[test]
