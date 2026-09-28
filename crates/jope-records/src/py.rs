@@ -1,7 +1,7 @@
 //! Small Python built-in semantics the verifiers depend on: `str.strip`, hashing equality for set
-//! membership, `in`, iteration, `Path.read_text` and `PurePosixPath.parts`, the `re` classes of a
-//! `str` pattern, subprocess output read with `text=True`, and the text of the `OSError` and
-//! `CalledProcessError` a tool printed.
+//! membership, `in`, iteration, `Path.read_text`, `PurePosixPath.parts`, `os.path.realpath` and
+//! `Path.resolve()`, the `re` classes of a `str` pattern, subprocess output read with `text=True`,
+//! and the text of the `OSError` and `CalledProcessError` a tool printed.
 //!
 //! Numbers are the exception: text is read as a number by one strict grammar ([`decimal`],
 //! [`int`], [`decimal_int`], [`float`]) that accepts a subset of what Python's `int()` and
@@ -605,6 +605,216 @@ pub fn is_symlink(path: &Path) -> bool {
     std::fs::symlink_metadata(path).is_ok_and(|m| m.file_type().is_symlink())
 }
 
+/// `os.path.abspath` (`posixpath`): joined to the working directory and normalised as
+/// `posixpath.normpath` normalises, lexically: empty and `.` components dropped, `..` removing
+/// the previous component (and nothing at the root), and exactly two leading slashes kept (POSIX
+/// leaves `//` to the implementation, so Python keeps it as its own root; three or more are `/`).
+/// Names stay the bytes they are. Lexical only: a symlink followed by `..` is [`realpath`]'s.
+pub fn abspath(path: &Path) -> PathBuf {
+    use std::os::unix::ffi::{OsStrExt, OsStringExt};
+    let mut joined = vec![];
+    if !path.as_os_str().as_bytes().starts_with(b"/") {
+        let cwd = std::env::current_dir().unwrap_or_default();
+        joined.extend_from_slice(cwd.as_os_str().as_bytes());
+        if !joined.ends_with(b"/") {
+            joined.push(b'/');
+        }
+    }
+    joined.extend_from_slice(path.as_os_str().as_bytes());
+    let slashes = if joined.starts_with(b"//") && !joined.starts_with(b"///") {
+        2
+    } else {
+        1
+    };
+    let mut parts: Vec<&[u8]> = vec![];
+    for part in joined.split(|&b| b == b'/') {
+        match part {
+            b"" | b"." => {}
+            b".." => {
+                parts.pop();
+            }
+            _ => parts.push(part),
+        }
+    }
+    let mut out = b"/".repeat(slashes);
+    out.extend(parts.join(&b'/'));
+    PathBuf::from(std::ffi::OsString::from_vec(out))
+}
+
+/// Why [`realpath`] or [`resolve`] could not resolve a path.
+#[derive(Debug)]
+pub enum ResolveError {
+    /// `os.lstat` (strict mode) or `os.readlink` raised for `path`.
+    Os {
+        error: std::io::Error,
+        path: PathBuf,
+    },
+    /// A symlink loop: pathlib raised `RuntimeError("Symlink loop from '<path>'")`.
+    Loop { path: PathBuf },
+}
+
+impl std::fmt::Display for ResolveError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ResolveError::Os { error, path } => {
+                f.write_str(&os_error(error, &path.to_string_lossy()))
+            }
+            ResolveError::Loop { path } => write!(
+                f,
+                "Symlink loop from {}",
+                pyjson::str_repr(&path.to_string_lossy())
+            ),
+        }
+    }
+}
+
+/// `os.path.realpath(path, strict=strict)`, CPython 3.12's `posixpath._joinrealpath` component by
+/// component: each name is `lstat`ed and a symlink is replaced by its target, resolved in turn,
+/// **before** a later `..` removes the last component of the path resolved so far, so
+/// `outer/link/../x` with `link -> guarded/sub` is `guarded/x`, not the lexical `outer/x`.
+/// Empty and `.` components are skipped and a leading `//` is `/` (the path is resolved from the
+/// root). In strict mode a missing component (any `lstat` error) refuses naming the path up to it,
+/// as Python's `OSError` did; otherwise the name is kept as it is spelled and resolution goes on.
+/// `os.readlink` errors refuse in both modes. A symlink met again while it is being resolved is a
+/// loop: in strict mode that refuses ([`ResolveError::Loop`], pathlib's `RuntimeError`); otherwise
+/// the rest of the path is appended unresolved, as Python did. The result is [`abspath`] of the
+/// resolved path (relative input is resolved against the working directory).
+pub fn realpath(path: &Path, strict: bool) -> std::result::Result<PathBuf, ResolveError> {
+    use std::collections::HashMap;
+    use std::ffi::OsStr;
+    use std::os::unix::ffi::OsStrExt;
+
+    fn os(bytes: &[u8]) -> &Path {
+        Path::new(OsStr::from_bytes(bytes))
+    }
+    /// `posixpath.join(a, b)`.
+    fn join(a: &[u8], b: &[u8]) -> Vec<u8> {
+        if b.starts_with(b"/") {
+            return b.to_vec();
+        }
+        let mut out = a.to_vec();
+        if !(out.is_empty() || out.ends_with(b"/")) {
+            out.push(b'/');
+        }
+        out.extend_from_slice(b);
+        out
+    }
+    /// `posixpath.split(p)`.
+    fn split(p: &[u8]) -> (Vec<u8>, Vec<u8>) {
+        let i = p.iter().rposition(|&b| b == b'/').map_or(0, |i| i + 1);
+        let (head, tail) = p.split_at(i);
+        let mut head = head.to_vec();
+        if !head.is_empty() && head.iter().any(|&b| b != b'/') {
+            while head.ends_with(b"/") {
+                head.pop();
+            }
+        }
+        (head, tail.to_vec())
+    }
+    type Seen = HashMap<Vec<u8>, Option<Vec<u8>>>;
+    /// `_joinrealpath(path, rest, strict, seen)`: the resolved path and whether it is complete.
+    fn join_realpath(
+        mut path: Vec<u8>,
+        rest: &[u8],
+        strict: bool,
+        seen: &mut Seen,
+    ) -> std::result::Result<(Vec<u8>, bool), ResolveError> {
+        let mut rest = rest;
+        if rest.starts_with(b"/") {
+            rest = &rest[1..];
+            path = b"/".to_vec();
+        }
+        while !rest.is_empty() {
+            let (name, tail) = match rest.iter().position(|&b| b == b'/') {
+                Some(i) => (&rest[..i], &rest[i + 1..]),
+                None => (rest, &b""[..]),
+            };
+            rest = tail;
+            if name.is_empty() || name == b"." {
+                continue;
+            }
+            if name == b".." {
+                if path.is_empty() {
+                    path = b"..".to_vec();
+                } else {
+                    let (head, last) = split(&path);
+                    path = head;
+                    if last == b".." {
+                        path = join(&join(&path, b".."), b"..");
+                    }
+                }
+                continue;
+            }
+            let newpath = join(&path, name);
+            let is_link = match std::fs::symlink_metadata(os(&newpath)) {
+                Ok(meta) => meta.file_type().is_symlink(),
+                Err(error) if strict => {
+                    return Err(ResolveError::Os {
+                        error,
+                        path: os(&newpath).to_path_buf(),
+                    })
+                }
+                Err(_) => false,
+            };
+            if !is_link {
+                path = newpath;
+                continue;
+            }
+            match seen.get(&newpath) {
+                Some(Some(resolved)) => {
+                    path = resolved.clone();
+                    continue;
+                }
+                Some(None) if strict => {
+                    return Err(ResolveError::Loop {
+                        path: os(&newpath).to_path_buf(),
+                    })
+                }
+                Some(None) => return Ok((join(&newpath, rest), false)),
+                None => {}
+            }
+            seen.insert(newpath.clone(), None);
+            let target = std::fs::read_link(os(&newpath)).map_err(|error| ResolveError::Os {
+                error,
+                path: os(&newpath).to_path_buf(),
+            })?;
+            let (resolved, ok) = join_realpath(path, target.as_os_str().as_bytes(), strict, seen)?;
+            path = resolved;
+            if !ok {
+                return Ok((join(&path, rest), false));
+            }
+            seen.insert(newpath, Some(path.clone()));
+        }
+        Ok((path, true))
+    }
+    let (resolved, _) = join_realpath(
+        vec![],
+        path.as_os_str().as_bytes(),
+        strict,
+        &mut HashMap::new(),
+    )?;
+    Ok(abspath(os(&resolved)))
+}
+
+/// `Path(path).resolve(strict=strict)` (Python 3.12): [`realpath`], and in non-strict mode a
+/// `stat` of the result, so a symlink loop refuses in both modes ([`ResolveError::Loop`], the
+/// path `stat` named) while any other `stat` error is ignored, as pathlib ignored it. Every port
+/// that resolves a path for a safety decision (custody, roots, "inside the tree") resolves it
+/// here or with `std::fs::canonicalize`, which is the same resolution in strict mode; none
+/// normalises `..` lexically before symlinks are resolved.
+pub fn resolve(path: &Path, strict: bool) -> std::result::Result<PathBuf, ResolveError> {
+    const ELOOP: i32 = 40; // Linux
+    let resolved = realpath(path, strict)?;
+    if !strict {
+        if let Err(error) = std::fs::metadata(&resolved) {
+            if error.raw_os_error() == Some(ELOOP) {
+                return Err(ResolveError::Loop { path: resolved });
+            }
+        }
+    }
+    Ok(resolved)
+}
+
 /// `re.fullmatch("[0-9a-f]{n}", value or "")` for a JSON value (a non-string never matches).
 pub fn is_hex(value: Option<&Value>, len: usize) -> bool {
     value.and_then(Value::as_str).is_some_and(|s| {
@@ -1053,6 +1263,104 @@ mod tests {
         assert_eq!(rel("a/b", "/a"), outside("a/b", "/a"));
         assert_eq!(rel("/a/b", ""), outside("/a/b", "."));
         assert_eq!(rel("/a/../b", "/b"), outside("/a/../b", "/b"));
+    }
+
+    /// `os.path.realpath` and `Path.resolve()` resolve each symlink before a later `..` removes a
+    /// component, as CPython 3.12's `posixpath._joinrealpath` did (round four of the review of
+    /// PR #117: `outer/link/../receipts` with `link -> guarded/sub` is `guarded/receipts`).
+    #[test]
+    fn realpath_resolves_symlinks_before_parent_components() {
+        let temp = tempfile::tempdir().unwrap();
+        let c = temp.path().canonicalize().unwrap();
+        for dir in ["outer/realdir", "guarded/sub"] {
+            std::fs::create_dir_all(c.join(dir)).unwrap();
+        }
+        let link = |target: &Path, name: &str| std::os::unix::fs::symlink(target, c.join(name));
+        link(&c.join("guarded/sub"), "outer/link").unwrap();
+        link(Path::new("../guarded/sub"), "outer/rel").unwrap();
+        link(Path::new("loop"), "outer/loop").unwrap();
+        link(Path::new("nowhere"), "outer/dangling").unwrap();
+        link(Path::new("b"), "outer/a").unwrap();
+        link(Path::new("a"), "outer/b").unwrap();
+        let at = |spelled: &str| PathBuf::from(format!("{}/{spelled}", c.display()));
+        let lenient = |spelled: &str| resolve(&at(spelled), false).map_err(|e| e.to_string());
+        for (spelled, resolved) in [
+            ("outer/link/../receipts", "guarded/receipts"),
+            ("outer/link/../sub/../receipts", "guarded/receipts"),
+            ("outer/rel/../receipts", "guarded/receipts"),
+            ("outer/missing/../link/../receipts", "guarded/receipts"),
+            ("outer/link/..", "guarded"),
+            ("outer/link/receipts", "guarded/sub/receipts"),
+            ("outer/link/../../outer/receipts", "outer/receipts"),
+            ("outer/realdir/../receipts", "outer/receipts"),
+            ("outer/missing/../receipts", "outer/receipts"),
+            ("outer/dangling/../receipts", "outer/receipts"),
+            ("outer/dangling", "outer/nowhere"),
+            ("outer/./link//receipts/", "guarded/sub/receipts"),
+            // A loop's rest is appended unresolved and normalised, and `stat` of the result is
+            // not a loop: resolved, as pathlib resolved it.
+            ("outer/loop/../receipts", "outer/receipts"),
+        ] {
+            assert_eq!(lenient(spelled), Ok(c.join(resolved)), "{spelled}");
+        }
+        // POSIX's `//` root is the root `/` once resolved; `..` at the root stays there.
+        let doubled = format!("/{}", at("outer/link/../receipts").display());
+        assert_eq!(
+            resolve(Path::new(&doubled), false).unwrap(),
+            c.join("guarded/receipts")
+        );
+        assert_eq!(
+            resolve(Path::new("/../.."), false).unwrap(),
+            PathBuf::from("/")
+        );
+        // Symlink loops refuse (pathlib's `RuntimeError`), naming the path `stat` or `realpath` met.
+        let spelled = at("outer/loop/x");
+        assert_eq!(
+            lenient("outer/loop/x"),
+            Err(format!(
+                "Symlink loop from {}",
+                pyjson::str_repr(&spelled.to_string_lossy())
+            ))
+        );
+        assert!(matches!(
+            resolve(&at("outer/a"), false),
+            Err(ResolveError::Loop { .. })
+        ));
+        assert!(matches!(
+            resolve(&at("outer/loop"), true),
+            Err(ResolveError::Loop { path }) if path == c.join("outer/loop")
+        ));
+        // Strict: a missing component refuses naming the path up to it.
+        let missing = at("outer/missing");
+        assert_eq!(
+            resolve(&at("outer/missing/../receipts"), true).map_err(|e| e.to_string()),
+            Err(format!(
+                "[Errno 2] No such file or directory: {}",
+                pyjson::str_repr(&missing.to_string_lossy())
+            ))
+        );
+        assert_eq!(
+            resolve(&at("outer/link/.."), true).unwrap(),
+            c.join("guarded")
+        );
+        // Where everything exists, strict resolution is `realpath(3)`'s.
+        for spelled in ["outer/link", "outer/rel/..", "outer/realdir/../link/."] {
+            assert_eq!(
+                resolve(&at(spelled), true).unwrap(),
+                at(spelled).canonicalize().unwrap(),
+                "{spelled}"
+            );
+        }
+        // `abspath` alone is lexical.
+        assert_eq!(
+            abspath(&at("outer/link/../receipts")),
+            c.join("outer/receipts")
+        );
+        assert_eq!(
+            abspath(Path::new("//a/./b//c/")).into_os_string(),
+            "//a/b/c"
+        );
+        assert_eq!(abspath(Path::new("///a/../b")).into_os_string(), "/b");
     }
 
     #[test]
