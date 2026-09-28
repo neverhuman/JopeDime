@@ -100,6 +100,17 @@
 //! inputs Python read that the grammar refuses (Unicode whitespace, underscores, other Unicode
 //! digits, `nan` and the infinities) are listed in `RUST_STRICTER`, `PROCESS_STRICTER` and
 //! `PROCESS_REFUSES_REPORT`, each with its reason.
+//!
+//! # Round five
+//!
+//! A verifier found `parity-check` reading a permission error as "absent" where Python 3.12's
+//! pathlib raised (`Path.exists()`, `is_dir()`, `is_file()`), and the sweep that followed found
+//! the `src/bin` fallback skipping entries its globs listed (a directory, a dangling link or a bare
+//! `.rs` named like a source; a `Cargo.toml` that is not a readable file) and the README renderer
+//! skipping a report whose name is not UTF-8. `process-r5-sweep.json` and `readme/negative-r5.json`
+//! hold what the Python did, each case's tree (and the modes it ran under) as data. A directory
+//! that cannot be listed, which pathlib's globs skipped, now refuses: `PROCESS_STRICTER` lists
+//! those cases.
 
 use jope_records::pyjson::{self, Dict, Value};
 use jope_records::{coverage, parity, py, readme, scope_check};
@@ -583,6 +594,22 @@ const RUST_STRICTER: &[(&str, &str, &str)] = &[
     ),
 ];
 
+/// README cases where both refuse with an explicit message and the port's words differ (round
+/// five): the Python counted the reports it globbed or found none, the port refuses the entry
+/// itself.
+const README_MESSAGE_DIFFERS: &[(&str, &str, &str)] = &[
+    (
+        "readme/negative-r5.json",
+        "readme-r5-report-name-not-utf8",
+        "the Python read the report and refused the count; the port refuses the undecodable name",
+    ),
+    (
+        "readme/negative-r5.json",
+        "readme-r5-reports-unlistable",
+        "the Python's glob listed nothing (\"no reports\"); the port refuses to list the directory",
+    ),
+];
+
 /// Cases where the Python refused an integer of more than 4300 digits and the port refuses the
 /// text earlier, because it is outside the strict number grammar: the refusal is not required to
 /// carry CPython's message about the limit.
@@ -943,6 +970,16 @@ fn readme_benchmarks_matches_round_three() {
 /// so is every other input Python refused. ASCII whitespace, a sign, leading zeros and exponent
 /// forms render as Python rendered them; Unicode whitespace, underscores, other Unicode digits,
 /// `nan` and the infinities, which Python read, are refused (`RUST_STRICTER`).
+/// Round five (`readme/negative-r5.json`): `sorted(reports.glob("*.bench-report.json"))` lists
+/// entries of every kind and names that are not UTF-8 (one such extra report made the Python
+/// refuse the count, while the port had skipped it and rendered); a directory or dangling link so
+/// named, a report or directory that cannot be read, and an input under a directory that may not
+/// be searched all refuse.
+#[test]
+fn readme_benchmarks_matches_round_five() {
+    replay_readme("readme/negative-r5.json", 9);
+}
+
 #[test]
 fn readme_benchmarks_matches_round_four() {
     replay_readme("readme/negative-r4.json", 37);
@@ -969,18 +1006,38 @@ fn replay_readme(rel: &str, count: usize) {
             let base = text(&format!("readme/root/{path}"));
             fs::write(root.join(path), variant(edit, &base)).unwrap();
         }
-        for copy in case.get("copies").and_then(Value::as_list).unwrap() {
-            fs::copy(
-                root.join(s(copy.get("from").unwrap())),
-                root.join(s(copy.get("to").unwrap())),
-            )
-            .unwrap();
-        }
+        // Copies (round five: also to a name that is not UTF-8), directories and symlinks.
+        tree_extras(case, &root);
         fs::write(root.join("README.md"), &stale).unwrap();
+        let effective = apply_modes(case, &root, false);
         let rust = Rust::of(readme::run(&root, true));
+        apply_modes(case, &root, true);
+        if !effective {
+            eprintln!("{rel} {name}: skipped, this user may search a directory of that mode");
+            continue;
+        }
         record(rel, name, case, &rust);
         let is_stricter = stricter.contains(name.as_str());
-        let mut outcome = compare(case, &rust, is_stricter);
+        let differs = README_MESSAGE_DIFFERS
+            .iter()
+            .any(|(fixture, n, _)| *fixture == rel && n == name);
+        let mut outcome = if differs {
+            // Both refuse, in different words: the Python's explicit refusal (nothing on stdout)
+            // and the port's.
+            let python_refused = case.get("exit").and_then(Value::as_int) == Some(1)
+                && case.get("raised").is_none()
+                && case.get("stdout").is_some_and(|o| s(o).is_empty())
+                && case.get("stderr").is_some_and(|e| !s(e).is_empty());
+            match &rust {
+                Rust::Refused(message) if python_refused && !message.is_empty() => Ok(()),
+                _ => Err(format!(
+                    "listed as refused in other words; the Python {:?}, the port {rust:?}",
+                    case.get("stderr")
+                )),
+            }
+        } else {
+            compare(case, &rust, is_stricter)
+        };
         if outcome.is_ok() {
             // What `--write` left in README.md: the Python's bytes where it rendered, the stale
             // README untouched where it (or, for a stricter case, the port) refused.
@@ -1060,6 +1117,8 @@ fn materialise(case: &Value, root: &Path, dir: &Path) {
         fs::create_dir_all(path.parent().unwrap()).unwrap();
         fs::write(&path, bytes).unwrap();
     }
+    // Round five: directories, symlinks (a target's `@ROOT@` replaced) and copies of files.
+    tree_extras(case, root);
     fs::create_dir_all(dir).unwrap();
     let cargo = case.get("cargo").unwrap();
     let text = s(cargo.get("stdout").unwrap()).replace("@ROOT@", root_text);
@@ -1093,6 +1152,67 @@ fn materialise(case: &Value, root: &Path, dir: &Path) {
     fs::write(dir.join("git.stdout"), git).unwrap();
 }
 
+/// A case's `dirs` (created), `symlinks` (`path` -> `target`, `@ROOT@` in the target replaced) and
+/// `copies` (`from` -> `to`, or `to_hex` for a name that is not UTF-8), all relative to `root`.
+fn tree_extras(case: &Value, root: &Path) {
+    use std::os::unix::ffi::OsStrExt;
+    let list = |key: &str| {
+        case.get(key)
+            .and_then(Value::as_list)
+            .cloned()
+            .unwrap_or_default()
+    };
+    for dir in list("dirs") {
+        fs::create_dir_all(root.join(s(&dir))).unwrap();
+    }
+    for link in list("symlinks") {
+        let path = root.join(s(link.get("path").unwrap()));
+        fs::create_dir_all(path.parent().unwrap()).unwrap();
+        let target = s(link.get("target").unwrap()).replace("@ROOT@", root.to_str().unwrap());
+        std::os::unix::fs::symlink(target, path).unwrap();
+    }
+    for copy in list("copies") {
+        let to = match (copy.get("to_hex"), copy.get("to")) {
+            (Some(hex), _) => root.join(std::ffi::OsStr::from_bytes(&unhex(s(hex)))),
+            (None, Some(to)) => root.join(s(to)),
+            _ => panic!("a copy without a destination"),
+        };
+        fs::copy(root.join(s(copy.get("from").unwrap())), to).unwrap();
+    }
+}
+
+/// A case's `modes` (`path` -> octal mode) applied under `root`, or with `restore` set back to 755.
+/// Returns whether each mode took effect for this user: a privileged user may search and list a
+/// directory whatever its mode, so a case that relies on a refused search cannot be reproduced.
+fn apply_modes(case: &Value, root: &Path, restore: bool) -> bool {
+    use std::os::unix::fs::PermissionsExt;
+    let mut effective = true;
+    for entry in case
+        .get("modes")
+        .and_then(Value::as_list)
+        .cloned()
+        .unwrap_or_default()
+    {
+        let path = root.join(s(entry.get("path").unwrap()));
+        let mode = if restore {
+            0o755
+        } else {
+            u32::from_str_radix(s(entry.get("mode").unwrap()), 8).unwrap()
+        };
+        fs::set_permissions(&path, fs::Permissions::from_mode(mode)).unwrap();
+        if !restore && mode & 0o500 != 0o500 && path.is_dir() {
+            // A mode without read and search: would this user still list the directory, or reach
+            // an entry of it?
+            effective &= fs::read_dir(&path).is_err()
+                || fs::read_dir(&path)
+                    .unwrap()
+                    .flatten()
+                    .any(|e| fs::symlink_metadata(e.path()).is_err());
+        }
+    }
+    effective
+}
+
 /// The `cargo` and `git` the capture put first on PATH.
 fn shims(dir: &Path) {
     use std::os::unix::fs::PermissionsExt;
@@ -1111,7 +1231,8 @@ fn shims(dir: &Path) {
 
 /// Process cases the port refuses although the Python ran to completion (exit status 0): round
 /// four's strict number grammar reads a number in ASCII digits only, where Python's `int()` read
-/// any Unicode decimal digits.
+/// any Unicode decimal digits; round five's walks refuse a directory they cannot list, which
+/// pathlib's globs skipped.
 const PROCESS_STRICTER: &[(&str, &str)] = &[
     (
         "parity-tally-arabic-equal",
@@ -1120,6 +1241,18 @@ const PROCESS_STRICTER: &[(&str, &str)] = &[
     (
         "parity-tally-4300-arabic-indic-digits",
         "a covering-test tally of 4300 Arabic-Indic digits (`int()` of `\\d+`)",
+    ),
+    (
+        "parity-r5-tools-sub-unlistable",
+        "a directory under python/src/jope/tools that cannot be listed (pathlib's rglob skipped it)",
+    ),
+    (
+        "parity-r5-fallback-bin-unlistable",
+        "a src/bin directory that cannot be listed (pathlib's glob found nothing in it)",
+    ),
+    (
+        "parity-r5-fallback-crate-unlistable",
+        "a crate directory that cannot be listed (pathlib's `**` walk skipped it)",
     ),
 ];
 
@@ -1264,6 +1397,17 @@ fn process_cases_match_round_three_paths() {
     replay_process("process-r3-paths.json", &json("process-r3-paths.json"), 15);
 }
 
+/// Round five (`process-r5-sweep.json`): `parity-check` where Python 3.12's pathlib raised
+/// (`main_rs.exists()`, `cli.exists()`, `is_dir()` and `is_file()` in the tool and unit walks, on
+/// a directory that may not be listed or searched) and the `src/bin` fallback's globs, which list
+/// entries of every kind by name. The port read a permission error as "absent" and skipped what
+/// the globs listed; each case now refuses or reports as the Python did, and a directory that
+/// cannot be listed refuses (`PROCESS_STRICTER`).
+#[test]
+fn process_cases_match_round_five() {
+    replay_process("process-r5-sweep.json", &json("process-r5-sweep.json"), 28);
+}
+
 /// Replay every case of a process fixture (the layout of `process.json`) through the binary and
 /// hold each to `judge_process`; the cases, for the caller's controls.
 fn replay_process<'a>(rel: &str, doc: &'a Value, count: usize) -> &'a Vec<Value> {
@@ -1298,6 +1442,8 @@ fn replay_process<'a>(rel: &str, doc: &'a Value, count: usize) -> &'a Vec<Value>
             .iter()
             .map(|a| s(a).replace("@ROOT@", root_text))
             .collect();
+        // Round five: the modes the case ran under, set back after the run.
+        let effective = apply_modes(case, &root, false);
         let run = std::process::Command::new(env!("CARGO_BIN_EXE_jope-records"))
             .arg("--repo")
             .arg(&root)
@@ -1307,6 +1453,11 @@ fn replay_process<'a>(rel: &str, doc: &'a Value, count: usize) -> &'a Vec<Value>
             .env("CASE_DIR", &dir)
             .output()
             .unwrap();
+        apply_modes(case, &root, true);
+        if !effective {
+            eprintln!("{rel} {name}: skipped, this user may search a directory of that mode");
+            continue;
+        }
         let replace = |bytes: &[u8]| -> Vec<u8> {
             String::from_utf8(bytes.to_vec())
                 .map(|t| t.replace(root_text, "@ROOT@").into_bytes())

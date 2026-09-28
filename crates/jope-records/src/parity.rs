@@ -235,13 +235,15 @@ pub fn cargo_bins(root: &Path) -> Result<Vec<(String, String, String, String)>> 
     fallback_bins(root)
 }
 
-/// `os.path.abspath`: absolute (against the working directory) and lexically normalised.
-fn abspath(text: &str) -> PathBuf {
+/// `os.path.abspath`: absolute (against the working directory) and lexically normalised. A
+/// relative path when the working directory cannot be read (it was deleted) refuses, as
+/// `os.getcwd()` raised, instead of being resolved against `/`.
+fn abspath(text: &str) -> std::io::Result<PathBuf> {
     let path = Path::new(text);
     let joined = if path.is_absolute() {
         path.to_path_buf()
     } else {
-        std::env::current_dir().unwrap_or_default().join(path)
+        std::env::current_dir()?.join(path)
     };
     let mut out = PathBuf::from("/");
     for component in joined.components() {
@@ -253,7 +255,7 @@ fn abspath(text: &str) -> PathBuf {
             _ => {}
         }
     }
-    out
+    Ok(out)
 }
 
 /// `(package, kind, name, src path)` for every bin/example target of a `cargo metadata` document
@@ -319,13 +321,16 @@ pub fn bins_from_metadata(
             let src = src
                 .as_str()
                 .ok_or_else(|| raised(&format!("{at} src_path"), py::exception::fspath(src)))?;
+            // `os.path.relpath` runs before the names are read.
+            let absolute = abspath(src)
+                .map_err(|e| raised(&format!("{at} src_path"), py::os_error_bare(&e)))?;
             let name = py::subscript(package, "name").map_err(|e| raised(&at, e))?;
             let target_name = py::subscript(target, "name").map_err(|e| raised(&at, e))?;
             out.push((
                 text(name, &format!("{at} package name"))?,
                 kind,
                 text(target_name, &format!("{at} name"))?,
-                relpath(&abspath(src), root),
+                relpath(&absolute, root),
             ));
         }
     }
@@ -333,19 +338,80 @@ pub fn bins_from_metadata(
     Ok(out)
 }
 
-fn walk_files(dir: &Path, out: &mut Vec<PathBuf>) {
-    let Ok(entries) = std::fs::read_dir(dir) else {
-        return;
+/// An `OSError` the Python raised inspecting `path`, as a refusal naming what was being read.
+fn os_refusal(what: &str, path: &Path, error: &std::io::Error) -> Error {
+    Error::Shape(format!(
+        "{what}: {}",
+        py::os_error(error, &path.to_string_lossy())
+    ))
+}
+
+/// `path.exists()` ([`py::path_exists`]): a missing path (or a loop) is absent, and any other
+/// error, such as a directory that may not be searched, refuses as the Python raised it.
+fn exists(path: &Path, what: &str) -> Result<bool> {
+    py::path_exists(path).map_err(|e| os_refusal(what, path, &e))
+}
+
+/// `path.is_dir()` ([`py::path_is_dir`]), refusing where the Python raised.
+fn is_dir(path: &Path, what: &str) -> Result<bool> {
+    py::path_is_dir(path).map_err(|e| os_refusal(what, path, &e))
+}
+
+/// `path.is_file()` ([`py::path_is_file`]), refusing where the Python raised.
+fn is_file(path: &Path, what: &str) -> Result<bool> {
+    py::path_is_file(path).map_err(|e| os_refusal(what, path, &e))
+}
+
+/// The entries of `dir` (any kind: files, directories, links, dangling or not), sorted. Where
+/// pathlib's globs skipped a directory they could not list, this refuses (stricter), except a
+/// directory that is gone (`ENOENT`).
+fn dir_entries(dir: &Path, what: &str) -> Result<Vec<(PathBuf, std::fs::FileType)>> {
+    let entries = match std::fs::read_dir(dir) {
+        Ok(entries) => entries,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(vec![]),
+        Err(e) => return Err(os_refusal(what, dir, &e)),
     };
-    let mut entries: Vec<PathBuf> = entries.flatten().map(|e| e.path()).collect();
-    entries.sort();
-    for path in entries {
-        if path.is_dir() && !py::is_symlink(&path) {
-            walk_files(&path, out);
-        } else if path.is_file() {
-            out.push(path);
-        }
+    let mut out = vec![];
+    for entry in entries {
+        let entry = entry.map_err(|e| os_refusal(what, dir, &e))?;
+        // The entry's own type (`d_type`, else `lstat`), as `Path.walk(follow_symlinks=False)` read
+        // it to decide what to descend into; nothing is followed through a link here.
+        let kind = entry
+            .file_type()
+            .map_err(|e| os_refusal(what, &entry.path(), &e))?;
+        out.push((entry.path(), kind));
     }
+    out.sort_by(|a, b| a.0.cmp(&b.0));
+    Ok(out)
+}
+
+/// `dir.rglob("*")` (Python 3.12), sorted as pathlib sorts paths (part by part): every entry below
+/// `dir` of any kind, descending into real directories only (a link to a directory is listed, not
+/// entered, as `Path.walk(follow_symlinks=False)` walked). A directory that may be listed but not
+/// searched is listed like any other; what the caller then asks of its entries (`is_file`) refuses
+/// as the Python raised. A directory that cannot be listed refuses (stricter: pathlib skipped it).
+fn entries_below(dir: &Path, what: &str) -> Result<Vec<PathBuf>> {
+    fn walk(dir: &Path, what: &str, out: &mut Vec<PathBuf>) -> Result<()> {
+        for (path, kind) in dir_entries(dir, what)? {
+            out.push(path.clone());
+            if kind.is_dir() {
+                walk(&path, what, out)?;
+            }
+        }
+        Ok(())
+    }
+    let mut out = vec![];
+    walk(dir, what, &mut out)?;
+    out.sort();
+    Ok(out)
+}
+
+/// `Path.name` of a listed entry matches `*<suffix>` (pathlib's `*` matches a leading dot and any
+/// bytes, so a name that is not UTF-8 matches too).
+fn name_ends_with(path: &Path, suffix: &str) -> bool {
+    use std::os::unix::ffi::OsStrExt;
+    path.file_name()
+        .is_some_and(|n| n.as_bytes().ends_with(suffix.as_bytes()))
 }
 
 /// `str(path.relative_to(root))` for an entry point the check lists (and must find a row for).
@@ -374,13 +440,28 @@ fn rel(path: &Path, root: &Path, what: &str) -> Result<String> {
         .map_err(|e| Error::Shape(format!("{what}: ValueError: {e}")))
 }
 
-/// The src/bin listing used when cargo metadata is unavailable.
+/// The src/bin listing used when cargo metadata is unavailable, read as the Python's globs read
+/// the tree (Python 3.12 pathlib):
+///
+/// - `root.glob("crates/**/Cargo.toml")`: every entry named `Cargo.toml`, of any kind, in `crates`
+///   and every real directory below it (links to directories are not entered), each then read as
+///   text, so one that is a directory or a dangling link refuses as `read_text` raised;
+/// - `(crate / "src" / "main.rs").exists()`, which raised on an error other than a missing path;
+/// - `(crate / "src" / "bin").glob("*.rs")` and `examples`: nothing unless the directory
+///   `is_dir()` (which raised the same way), then every entry whose name ends in `.rs`, of any
+///   kind (a directory or a dangling link named `x.rs` is listed, and so is a bare `.rs`, its stem
+///   `.rs`), without inspecting it.
+///
+/// A directory the globs could not list was skipped by pathlib; here it refuses (stricter).
 pub fn fallback_bins(root: &Path) -> Result<Vec<(String, String, String, String)>> {
     let package_name = py::regex(r#"(?m)^\[package\]\s*\nname\s*=\s*"([^"]+)""#);
     let bin_table = py::regex(r#"\[\[bin\]\]\s*\nname\s*=\s*"([^"]+)"\s*\npath\s*=\s*"([^"]+)""#);
+    let crates = root.join("crates");
     let mut manifests = vec![];
-    walk_files(&root.join("crates"), &mut manifests);
-    manifests.retain(|p| p.file_name().is_some_and(|n| n == "Cargo.toml"));
+    if is_dir(&crates, "crates")? {
+        manifests = entries_below(&crates, "crates")?;
+        manifests.retain(|p| p.file_name().is_some_and(|n| n == "Cargo.toml"));
+    }
     let mut out = BTreeSet::new();
     for cargo in manifests {
         let krate = cargo.parent().expect("manifest dir");
@@ -389,7 +470,7 @@ pub fn fallback_bins(root: &Path) -> Result<Vec<(String, String, String, String)
             continue;
         };
         let pkg = m[1].to_owned();
-        if krate.join("src/main.rs").exists() {
+        if exists(&krate.join("src/main.rs"), "bin")? {
             out.insert((
                 pkg.clone(),
                 "bin".to_owned(),
@@ -398,13 +479,16 @@ pub fn fallback_bins(root: &Path) -> Result<Vec<(String, String, String, String)
             ));
         }
         for (dir, kind) in [("src/bin", "bin"), ("examples", "example")] {
-            let Ok(entries) = std::fs::read_dir(krate.join(dir)) else {
+            let dir = krate.join(dir);
+            if !is_dir(&dir, kind)? {
                 continue;
-            };
-            for entry in entries.flatten() {
-                let path = entry.path();
-                if path.extension().is_some_and(|e| e == "rs") && path.is_file() {
+            }
+            for (path, _) in dir_entries(&dir, kind)? {
+                if name_ends_with(&path, ".rs") {
                     let source = rel(&path, root, kind)?;
+                    // `Path.stem` and `Path::file_stem` agree on every name ending in `.rs`
+                    // (`x.rs` is `x`, `.rs` is `.rs`, `..rs` is `.`); a name that is not UTF-8 was
+                    // refused by `rel` above.
                     let stem = path
                         .file_stem()
                         .unwrap_or_default()
@@ -426,13 +510,21 @@ pub fn fallback_bins(root: &Path) -> Result<Vec<(String, String, String, String)
     Ok(out.into_iter().collect())
 }
 
-/// Every `.py`/`.sh` under `python/src/jope/{tools,research}` except `__init__.py`.
+/// Every `.py`/`.sh` under `python/src/jope/{tools,research}` except `__init__.py`: for each
+/// directory that `is_dir()`, every entry of `rglob("*")` that `is_file()` (both refuse where the
+/// Python raised: a directory that may be listed but not searched holds entries that cannot be
+/// inspected), asked of every entry before its name is looked at, as the Python asked it.
 pub fn python_tools(root: &Path) -> Result<Vec<String>> {
     let mut out = vec![];
     for sub in ["python/src/jope/tools", "python/src/jope/research"] {
-        let mut files = vec![];
-        walk_files(&root.join(sub), &mut files);
-        for path in files {
+        let dir = root.join(sub);
+        if !is_dir(&dir, "python tool")? {
+            continue;
+        }
+        for path in entries_below(&dir, "python tool")? {
+            if !is_file(&path, "python tool")? {
+                continue;
+            }
             // `Path.suffix` and `Path.extension()` agree: a bare dotfile such as `.py` has none.
             let listed = path.extension().is_some_and(|e| e == "py" || e == "sh")
                 && path.file_name().is_some_and(|n| n != "__init__.py");
@@ -444,15 +536,19 @@ pub fn python_tools(root: &Path) -> Result<Vec<String>> {
     Ok(out)
 }
 
-/// Every `.service`/`.timer` file under `deploy/systemd` (templates end in `.in` and are not).
+/// Every `.service`/`.timer` file under `deploy/systemd` (templates end in `.in` and are not):
+/// the entries of `rglob("*")` that `is_file()`, read as [`python_tools`] reads its directories.
 pub fn systemd_units(root: &Path) -> Result<Vec<String>> {
-    let mut files = vec![];
-    walk_files(&root.join("deploy/systemd"), &mut files);
+    let dir = root.join("deploy/systemd");
+    if !is_dir(&dir, "systemd unit")? {
+        return Ok(vec![]);
+    }
     let mut out = vec![];
-    for path in files {
-        if path
-            .extension()
-            .is_some_and(|e| e == "service" || e == "timer")
+    for path in entries_below(&dir, "systemd unit")? {
+        if is_file(&path, "systemd unit")?
+            && path
+                .extension()
+                .is_some_and(|e| e == "service" || e == "timer")
         {
             out.push(rel(&path, root, "systemd unit")?);
         }
@@ -649,10 +745,11 @@ pub fn scan_tree(root: &Path) -> Result<Tree> {
     scan_rest(root, clap)
 }
 
-/// The `jope-parallel` subcommands of `crates/jope-engine/src/main.rs`, when it exists.
+/// The `jope-parallel` subcommands of `crates/jope-engine/src/main.rs`, when it exists
+/// (`main_rs.exists()`, which raised on an error other than a missing path: that refuses).
 fn clap_names(root: &Path) -> Result<Vec<String>> {
     let main_rs = root.join("crates/jope-engine/src/main.rs");
-    Ok(if main_rs.exists() {
+    Ok(if exists(&main_rs, "clap subcommands")? {
         parse_clap_enum(&main_rs, "Cmd")?
             .into_iter()
             .map(|c| c.name)
@@ -668,7 +765,7 @@ fn scan_rest(root: &Path, clap: Vec<String>) -> Result<Tree> {
     let bins = cargo_bins(root)?;
     let tools = python_tools(root)?;
     let cli = root.join("python/src/jope/cli.py");
-    let jope_py = if cli.exists() {
+    let jope_py = if exists(&cli, "jope-py commands")? {
         Some(parse_argparse_commands(&cli)?)
     } else {
         None
@@ -1009,11 +1106,90 @@ mod tests {
             "{refused}"
         );
         assert!(rel(Path::new("//r/x.rs"), root, "bin").is_err());
-        assert_eq!(relpath(&abspath("//r/src/main.rs"), root), "src/main.rs");
         assert_eq!(
-            relpath(&abspath("/r/a/../src/main.rs"), root),
+            relpath(&abspath("//r/src/main.rs").unwrap(), root),
             "src/main.rs"
         );
+        assert_eq!(
+            relpath(&abspath("/r/a/../src/main.rs").unwrap(), root),
+            "src/main.rs"
+        );
+    }
+
+    /// The tree walks list what pathlib's globs listed and refuse where its predicates raised:
+    /// `rglob("*")` lists entries of every kind and enters real directories only; `glob("*.rs")`
+    /// lists a directory, a dangling link and a bare `.rs` by name; `is_file()` of an entry in a
+    /// directory that may be listed but not searched refuses; a directory that cannot be listed
+    /// refuses (stricter than pathlib, which skipped it).
+    #[test]
+    fn walks_list_as_pathlib_listed_and_refuse_where_it_raised() {
+        use std::os::unix::fs::PermissionsExt;
+        let temp = tempfile::tempdir().unwrap();
+        let root = temp.path().canonicalize().unwrap();
+        let tools = root.join("python/src/jope/tools");
+        std::fs::create_dir_all(tools.join("sub")).unwrap();
+        std::fs::create_dir_all(root.join("elsewhere")).unwrap();
+        std::fs::write(tools.join("x.py"), "").unwrap();
+        std::fs::write(tools.join("sub/y.sh"), "").unwrap();
+        std::fs::write(root.join("elsewhere/z.py"), "").unwrap();
+        std::os::unix::fs::symlink("nowhere", tools.join("dangling.py")).unwrap();
+        std::os::unix::fs::symlink(root.join("elsewhere"), tools.join("dirlink")).unwrap();
+        assert_eq!(
+            python_tools(&root).unwrap(),
+            [
+                "python/src/jope/tools/sub/y.sh",
+                "python/src/jope/tools/x.py"
+            ]
+        );
+        let krate = root.join("crates/c");
+        std::fs::create_dir_all(krate.join("src/bin/dir.rs")).unwrap();
+        std::fs::write(krate.join("Cargo.toml"), "[package]\nname = \"c\"\n").unwrap();
+        std::fs::write(krate.join("src/bin/.rs"), "").unwrap();
+        std::fs::write(krate.join("src/bin/notes.txt"), "").unwrap();
+        std::os::unix::fs::symlink("nowhere", krate.join("src/bin/gone.rs")).unwrap();
+        let names: Vec<(String, String)> = fallback_bins(&root)
+            .unwrap()
+            .into_iter()
+            .map(|(_, _, name, source)| (name, source))
+            .collect();
+        assert_eq!(
+            names,
+            [
+                (".rs".to_owned(), "crates/c/src/bin/.rs".to_owned()),
+                ("dir".to_owned(), "crates/c/src/bin/dir.rs".to_owned()),
+                ("gone".to_owned(), "crates/c/src/bin/gone.rs".to_owned()),
+            ]
+        );
+        // A manifest that is not a readable file refuses, as `read_text` raised.
+        std::os::unix::fs::symlink("nowhere", root.join("crates/Cargo.toml")).unwrap();
+        assert!(fallback_bins(&root).is_err());
+        std::fs::remove_file(root.join("crates/Cargo.toml")).unwrap();
+        let mode = |path: &Path, mode: u32| {
+            std::fs::set_permissions(path, std::fs::Permissions::from_mode(mode)).unwrap()
+        };
+        // Refused only where this user is refused (a privileged user may search anything).
+        mode(&tools.join("sub"), 0o644);
+        if std::fs::metadata(tools.join("sub/y.sh")).is_err() {
+            let refused = python_tools(&root).unwrap_err().to_string();
+            assert!(
+                refused.contains("[Errno 13] Permission denied"),
+                "{refused}"
+            );
+        }
+        mode(&tools.join("sub"), 0o000);
+        if std::fs::read_dir(tools.join("sub")).is_err() {
+            assert!(python_tools(&root).is_err());
+        }
+        mode(&tools.join("sub"), 0o755);
+        mode(&krate.join("src"), 0o644);
+        if std::fs::metadata(krate.join("src/main.rs")).is_err() {
+            let refused = fallback_bins(&root).unwrap_err().to_string();
+            assert!(
+                refused.contains("[Errno 13] Permission denied"),
+                "{refused}"
+            );
+        }
+        mode(&krate.join("src"), 0o755);
     }
 
     /// Python's `\s` and `\w` in the clap, `--help` and argparse readers.

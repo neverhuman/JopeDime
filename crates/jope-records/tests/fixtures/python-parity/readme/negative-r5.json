@@ -1,0 +1,155 @@
+{
+  "source": "p1-sweep5-capture-20260928T065333Z",
+  "capture": "bash cap5.sh p1-sweep5-capture-20260928T065333Z (Python from git show f46a9048fbb2697d6d1f4463a688083ea9dfcce1:<tool>, unmodified, in a scratch root)",
+  "tool": "deploy/ci/readme-benchmarks.py --write",
+  "root": "readme/root",
+  "readme": "readme/README.stale.md",
+  "layout": "each case is the fixture root with README.stale.md as README.md, then copies (from -> to, or to_hex for a name that is not UTF-8), dirs, symlinks (path -> target) and modes (path -> octal mode, applied before the run and set back to 755 after it)",
+  "cases": [
+    {
+      "name": "readme-r5-control",
+      "edits": [],
+      "copies": [],
+      "dirs": [],
+      "symlinks": [],
+      "modes": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "258313a8378b9111735e4eb3834d78560c2ac6f77193afe404f383517074ca3d"
+    },
+    {
+      "name": "readme-r5-report-name-not-utf8",
+      "edits": [],
+      "copies": [
+        {
+          "from": "assets/same-cut/v2/reports/047e62b52a3f4ede.bench-report.json",
+          "to_hex": "6173736574732f73616d652d6375742f76322f7265706f7274732f7aff2e62656e63682d7265706f72742e6a736f6e"
+        }
+      ],
+      "dirs": [],
+      "symlinks": [],
+      "modes": [],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "assets/same-cut/v2: 11 reports but the ladders scored other dataset counts\nThe committed benchmark evidence disagrees with itself; refusing to publish.\n",
+      "readme_sha256": "2ec5f806e5c96b3edd312a053c4006447dbe02702ba2e11908986ccae12b5ed9"
+    },
+    {
+      "name": "readme-r5-report-dotfile",
+      "edits": [],
+      "copies": [
+        {
+          "from": "assets/same-cut/v2/reports/047e62b52a3f4ede.bench-report.json",
+          "to": "assets/same-cut/v2/reports/.bench-report.json"
+        }
+      ],
+      "dirs": [],
+      "symlinks": [],
+      "modes": [],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "assets/same-cut/v2: 11 reports but the ladders scored other dataset counts\nThe committed benchmark evidence disagrees with itself; refusing to publish.\n",
+      "readme_sha256": "2ec5f806e5c96b3edd312a053c4006447dbe02702ba2e11908986ccae12b5ed9"
+    },
+    {
+      "name": "readme-r5-report-directory",
+      "edits": [],
+      "copies": [],
+      "dirs": [
+        "assets/same-cut/v2/reports/zz.bench-report.json"
+      ],
+      "symlinks": [],
+      "modes": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "IsADirectoryError: [Errno 21] Is a directory: '@ROOT@/assets/same-cut/v2/reports/zz.bench-report.json'",
+      "readme_sha256": "2ec5f806e5c96b3edd312a053c4006447dbe02702ba2e11908986ccae12b5ed9"
+    },
+    {
+      "name": "readme-r5-report-dangling",
+      "edits": [],
+      "copies": [],
+      "dirs": [],
+      "symlinks": [
+        {
+          "path": "assets/same-cut/v2/reports/zz.bench-report.json",
+          "target": "nowhere"
+        }
+      ],
+      "modes": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "FileNotFoundError: [Errno 2] No such file or directory: '@ROOT@/assets/same-cut/v2/reports/zz.bench-report.json'",
+      "readme_sha256": "2ec5f806e5c96b3edd312a053c4006447dbe02702ba2e11908986ccae12b5ed9"
+    },
+    {
+      "name": "readme-r5-report-other-suffix",
+      "edits": [],
+      "copies": [
+        {
+          "from": "assets/same-cut/v2/reports/047e62b52a3f4ede.bench-report.json",
+          "to": "assets/same-cut/v2/reports/zz.bench-report.json.bak"
+        }
+      ],
+      "dirs": [],
+      "symlinks": [],
+      "modes": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "258313a8378b9111735e4eb3834d78560c2ac6f77193afe404f383517074ca3d"
+    },
+    {
+      "name": "readme-r5-reports-unlistable",
+      "edits": [],
+      "copies": [],
+      "dirs": [],
+      "symlinks": [],
+      "modes": [
+        {
+          "path": "assets/same-cut/v2/reports",
+          "mode": "000"
+        }
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "assets/same-cut/v2: no reports\nThe committed benchmark evidence disagrees with itself; refusing to publish.\n",
+      "readme_sha256": "2ec5f806e5c96b3edd312a053c4006447dbe02702ba2e11908986ccae12b5ed9"
+    },
+    {
+      "name": "readme-r5-report-unreadable",
+      "edits": [],
+      "copies": [],
+      "dirs": [],
+      "symlinks": [],
+      "modes": [
+        {
+          "path": "assets/same-cut/v2/reports/047e62b52a3f4ede.bench-report.json",
+          "mode": "000"
+        }
+      ],
+      "exit": 1,
+      "stdout": "",
+      "raised": "PermissionError: [Errno 13] Permission denied: '@ROOT@/assets/same-cut/v2/reports/047e62b52a3f4ede.bench-report.json'",
+      "readme_sha256": "2ec5f806e5c96b3edd312a053c4006447dbe02702ba2e11908986ccae12b5ed9"
+    },
+    {
+      "name": "readme-r5-samecut-no-search",
+      "edits": [],
+      "copies": [],
+      "dirs": [],
+      "symlinks": [],
+      "modes": [
+        {
+          "path": "assets/same-cut/v2",
+          "mode": "644"
+        }
+      ],
+      "exit": 1,
+      "stdout": "",
+      "raised": "PermissionError: [Errno 13] Permission denied: '@ROOT@/assets/same-cut/v2/leaderboard-jope-same-cut-v1-deep.csv'",
+      "readme_sha256": "2ec5f806e5c96b3edd312a053c4006447dbe02702ba2e11908986ccae12b5ed9"
+    }
+  ]
+}

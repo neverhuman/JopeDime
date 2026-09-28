@@ -1,0 +1,1452 @@
+{
+  "source": "p1-sweep5-capture-20260928T065333Z",
+  "capture": "bash cap5.sh p1-sweep5-capture-20260928T065333Z (Python from git show f46a9048fbb2697d6d1f4463a688083ea9dfcce1:<tool>, unmodified, in a scratch root)",
+  "tools": {
+    "parity": "deploy/ci/parity-census.py"
+  },
+  "layout": "the layout of process.json, plus dirs (created), symlinks (path -> target, @ROOT@ in the target replaced) and modes (path -> octal mode, applied after the tree is built and before the run, and set back to 755 after it); the Python ran as `python3 <tool> <python args>` from @ROOT@, the port runs `jope-records --repo @ROOT@ <rust args>`",
+  "cases": [
+    {
+      "name": "parity-r5-control",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **1** | **1** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 1.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/1 | a/b.py (jope-parallel run) | none | moved |  |"
+        },
+        {
+          "path": "crates/jope-engine/src/main.rs",
+          "text": "enum Cmd {\n    Run,\n}\n"
+        }
+      ],
+      "dirs": [],
+      "symlinks": [],
+      "modes": [],
+      "cargo": {
+        "stdout": "{\"packages\":[],\"workspace_members\":[]}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "git": [],
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 0,
+      "stdout": "capability matrix: 1 rows\nby status: moved=1\nby kind: tool-py=1\nthis tree: 0 binaries, 0 examples, 1 clap subcommands, 0 python tools, 0 systemd units\nok: every row resolved and every entry point of this tree has a row\n",
+      "stderr": ""
+    },
+    {
+      "name": "parity-r5-engine-src-unlistable",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **1** | **1** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 1.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/1 | a/b.py (jope-parallel run) | none | moved |  |"
+        },
+        {
+          "path": "crates/jope-engine/src/main.rs",
+          "text": "enum Cmd {\n    Run,\n}\n"
+        }
+      ],
+      "dirs": [],
+      "symlinks": [],
+      "modes": [
+        {
+          "path": "crates/jope-engine/src",
+          "mode": "000"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[],\"workspace_members\":[]}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "git": [],
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "raised": "PermissionError: [Errno 13] Permission denied: '@ROOT@/crates/jope-engine/src/main.rs'"
+    },
+    {
+      "name": "parity-r5-python-jope-unlistable",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **1** | **1** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 1.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/1 | a/b.py | none | moved |  |"
+        },
+        {
+          "path": "python/src/jope/tools/x.py",
+          "text": ""
+        }
+      ],
+      "dirs": [],
+      "symlinks": [],
+      "modes": [
+        {
+          "path": "python/src/jope",
+          "mode": "000"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[],\"workspace_members\":[]}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "git": [],
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "raised": "PermissionError: [Errno 13] Permission denied: '@ROOT@/python/src/jope/tools'"
+    },
+    {
+      "name": "parity-r5-cli-py-under-unlistable",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **1** | **1** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 1.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/1 | a/b.py | none | moved |  |"
+        },
+        {
+          "path": "python/src/jope/cli.py",
+          "text": ""
+        }
+      ],
+      "dirs": [],
+      "symlinks": [],
+      "modes": [
+        {
+          "path": "python/src/jope",
+          "mode": "000"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[],\"workspace_members\":[]}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "git": [],
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "raised": "PermissionError: [Errno 13] Permission denied: '@ROOT@/python/src/jope/tools'"
+    },
+    {
+      "name": "parity-r5-tools-no-search",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **1** | **1** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 1.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/1 | a/b.py | none | moved |  |"
+        },
+        {
+          "path": "python/src/jope/tools/x.py",
+          "text": ""
+        }
+      ],
+      "dirs": [],
+      "symlinks": [],
+      "modes": [
+        {
+          "path": "python/src/jope/tools",
+          "mode": "644"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[],\"workspace_members\":[]}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "git": [],
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "raised": "PermissionError: [Errno 13] Permission denied: '@ROOT@/python/src/jope/tools/x.py'"
+    },
+    {
+      "name": "parity-r5-systemd-no-search",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **1** | **1** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 1.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/1 | a/b.py | none | moved |  |"
+        },
+        {
+          "path": "deploy/systemd/a.service",
+          "text": ""
+        }
+      ],
+      "dirs": [],
+      "symlinks": [],
+      "modes": [
+        {
+          "path": "deploy/systemd",
+          "mode": "644"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[],\"workspace_members\":[]}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "git": [],
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "raised": "PermissionError: [Errno 13] Permission denied: '@ROOT@/deploy/systemd/a.service'"
+    },
+    {
+      "name": "parity-r5-tools-sub-control",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| tool-py | 2 | 2 | 0 | 0 | 0 | 0 |\n| **total** | **2** | **2** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 2.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/1 | a/b.py | none | moved |  |\n| tool-py | old/2 | python/src/jope/tools/x.py | none | moved |  |"
+        },
+        {
+          "path": "python/src/jope/tools/x.py",
+          "text": ""
+        }
+      ],
+      "dirs": [
+        "python/src/jope/tools/sub"
+      ],
+      "symlinks": [],
+      "modes": [],
+      "cargo": {
+        "stdout": "{\"packages\":[],\"workspace_members\":[]}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "git": [],
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 0,
+      "stdout": "capability matrix: 2 rows\nby status: moved=2\nby kind: tool-py=2\nthis tree: 0 binaries, 0 examples, 0 clap subcommands, 1 python tools, 0 systemd units\nok: every row resolved and every entry point of this tree has a row\n",
+      "stderr": ""
+    },
+    {
+      "name": "parity-r5-tools-sub-no-search",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| tool-py | 2 | 2 | 0 | 0 | 0 | 0 |\n| **total** | **2** | **2** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 2.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/1 | a/b.py | none | moved |  |\n| tool-py | old/2 | python/src/jope/tools/x.py | none | moved |  |"
+        },
+        {
+          "path": "python/src/jope/tools/x.py",
+          "text": ""
+        },
+        {
+          "path": "python/src/jope/tools/sub/y.py",
+          "text": ""
+        }
+      ],
+      "dirs": [],
+      "symlinks": [],
+      "modes": [
+        {
+          "path": "python/src/jope/tools/sub",
+          "mode": "644"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[],\"workspace_members\":[]}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "git": [],
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "raised": "PermissionError: [Errno 13] Permission denied: '@ROOT@/python/src/jope/tools/sub/y.py'"
+    },
+    {
+      "name": "parity-r5-tools-sub-unlistable",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| tool-py | 2 | 2 | 0 | 0 | 0 | 0 |\n| **total** | **2** | **2** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 2.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/1 | a/b.py | none | moved |  |\n| tool-py | old/2 | python/src/jope/tools/x.py | none | moved |  |"
+        },
+        {
+          "path": "python/src/jope/tools/x.py",
+          "text": ""
+        },
+        {
+          "path": "python/src/jope/tools/sub/y.py",
+          "text": ""
+        }
+      ],
+      "dirs": [],
+      "symlinks": [],
+      "modes": [
+        {
+          "path": "python/src/jope/tools/sub",
+          "mode": "000"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[],\"workspace_members\":[]}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "git": [],
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 0,
+      "stdout": "capability matrix: 2 rows\nby status: moved=2\nby kind: tool-py=2\nthis tree: 0 binaries, 0 examples, 0 clap subcommands, 1 python tools, 0 systemd units\nok: every row resolved and every entry point of this tree has a row\n",
+      "stderr": ""
+    },
+    {
+      "name": "parity-r5-systemd-sub-no-search",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| unit | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **2** | **2** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 2.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/1 | a/b.py | none | moved |  |\n| unit | old/2 | deploy/systemd/a.service | none | moved |  |"
+        },
+        {
+          "path": "deploy/systemd/a.service",
+          "text": ""
+        },
+        {
+          "path": "deploy/systemd/sub/b.service",
+          "text": ""
+        }
+      ],
+      "dirs": [],
+      "symlinks": [],
+      "modes": [
+        {
+          "path": "deploy/systemd/sub",
+          "mode": "644"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[],\"workspace_members\":[]}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "git": [],
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "raised": "PermissionError: [Errno 13] Permission denied: '@ROOT@/deploy/systemd/sub/b.service'"
+    },
+    {
+      "name": "parity-r5-tools-links",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| tool-py | 2 | 2 | 0 | 0 | 0 | 0 |\n| **total** | **2** | **2** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 2.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/1 | a/b.py | none | moved |  |\n| tool-py | old/2 | python/src/jope/tools/x.py | none | moved |  |"
+        },
+        {
+          "path": "python/src/jope/tools/x.py",
+          "text": ""
+        }
+      ],
+      "dirs": [],
+      "symlinks": [
+        {
+          "path": "python/src/jope/tools/dangling.py",
+          "target": "nowhere"
+        },
+        {
+          "path": "python/src/jope/tools/loop.py",
+          "target": "loop.py"
+        },
+        {
+          "path": "python/src/jope/tools/dirlink",
+          "target": "@ROOT@/a"
+        }
+      ],
+      "modes": [],
+      "cargo": {
+        "stdout": "{\"packages\":[],\"workspace_members\":[]}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "git": [],
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 0,
+      "stdout": "capability matrix: 2 rows\nby status: moved=2\nby kind: tool-py=2\nthis tree: 0 binaries, 0 examples, 0 clap subcommands, 1 python tools, 0 systemd units\nok: every row resolved and every entry point of this tree has a row\n",
+      "stderr": ""
+    },
+    {
+      "name": "parity-r5-main-rs-directory",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **1** | **1** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 1.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/1 | a/b.py | none | moved |  |"
+        }
+      ],
+      "dirs": [
+        "crates/jope-engine/src/main.rs"
+      ],
+      "symlinks": [],
+      "modes": [],
+      "cargo": {
+        "stdout": "{\"packages\":[],\"workspace_members\":[]}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "git": [],
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "raised": "IsADirectoryError: [Errno 21] Is a directory: '@ROOT@/crates/jope-engine/src/main.rs'"
+    },
+    {
+      "name": "parity-r5-cli-py-directory",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **1** | **1** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 1.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/1 | a/b.py | none | moved |  |"
+        }
+      ],
+      "dirs": [
+        "python/src/jope/cli.py"
+      ],
+      "symlinks": [],
+      "modes": [],
+      "cargo": {
+        "stdout": "{\"packages\":[],\"workspace_members\":[]}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "git": [],
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "raised": "IsADirectoryError: [Errno 21] Is a directory: '@ROOT@/python/src/jope/cli.py'"
+    },
+    {
+      "name": "parity-r5-main-rs-loop",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **1** | **1** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 1.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/1 | a/b.py | none | moved |  |"
+        }
+      ],
+      "dirs": [],
+      "symlinks": [
+        {
+          "path": "crates/jope-engine/src/main.rs",
+          "target": "main.rs"
+        }
+      ],
+      "modes": [],
+      "cargo": {
+        "stdout": "{\"packages\":[],\"workspace_members\":[]}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "git": [],
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 0,
+      "stdout": "capability matrix: 1 rows\nby status: moved=1\nby kind: tool-py=1\nthis tree: 0 binaries, 0 examples, 0 clap subcommands, 0 python tools, 0 systemd units\nok: every row resolved and every entry point of this tree has a row\n",
+      "stderr": ""
+    },
+    {
+      "name": "parity-r5-fallback-control",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "crates/c/Cargo.toml",
+          "text": "[package]\nname = \"c\"\n"
+        },
+        {
+          "path": "crates/c/src/main.rs",
+          "text": "fn main() {}\n"
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| bin | 1 | 1 | 0 | 0 | 0 | 0 |\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **2** | **2** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 2.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/1 | a/b.py | none | moved |  |\n| bin | old/2 | crates/c/src/main.rs (c) | none | moved |  |"
+        }
+      ],
+      "dirs": [],
+      "symlinks": [],
+      "modes": [],
+      "cargo": {
+        "stdout": "",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "1"
+      },
+      "git": [],
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 0,
+      "stdout": "capability matrix: 2 rows\nby status: moved=2\nby kind: bin=1, tool-py=1\nthis tree: 1 binaries, 0 examples, 0 clap subcommands, 0 python tools, 0 systemd units\nok: every row resolved and every entry point of this tree has a row\n",
+      "stderr": "warning: cargo metadata unavailable (Command '['cargo', 'metadata', '--locked', '--no-deps', '--format-version', '1']' returned non-zero exit status 1.); falling back to src/bin listings\n"
+    },
+    {
+      "name": "parity-r5-fallback-bin-directory-named-rs",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "crates/c/Cargo.toml",
+          "text": "[package]\nname = \"c\"\n"
+        },
+        {
+          "path": "crates/c/src/main.rs",
+          "text": "fn main() {}\n"
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| bin | 1 | 1 | 0 | 0 | 0 | 0 |\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **2** | **2** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 2.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/1 | a/b.py | none | moved |  |\n| bin | old/2 | crates/c/src/main.rs (c) | none | moved |  |"
+        }
+      ],
+      "dirs": [
+        "crates/c/src/bin/x.rs"
+      ],
+      "symlinks": [],
+      "modes": [],
+      "cargo": {
+        "stdout": "",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "1"
+      },
+      "git": [],
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 1,
+      "stdout": "capability matrix: 2 rows\nby status: moved=2\nby kind: bin=1, tool-py=1\nthis tree: 2 binaries, 0 examples, 0 clap subcommands, 0 python tools, 0 systemd units\n\n1 problem(s):\n  - no row for bin c/x: crates/c/src/bin/x.rs\n",
+      "stderr": "warning: cargo metadata unavailable (Command '['cargo', 'metadata', '--locked', '--no-deps', '--format-version', '1']' returned non-zero exit status 1.); falling back to src/bin listings\n"
+    },
+    {
+      "name": "parity-r5-fallback-bin-dotfile-rs",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "crates/c/Cargo.toml",
+          "text": "[package]\nname = \"c\"\n"
+        },
+        {
+          "path": "crates/c/src/main.rs",
+          "text": "fn main() {}\n"
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| bin | 1 | 1 | 0 | 0 | 0 | 0 |\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **2** | **2** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 2.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/1 | a/b.py | none | moved |  |\n| bin | old/2 | crates/c/src/main.rs (c) | none | moved |  |"
+        },
+        {
+          "path": "crates/c/src/bin/.rs",
+          "text": ""
+        }
+      ],
+      "dirs": [],
+      "symlinks": [],
+      "modes": [],
+      "cargo": {
+        "stdout": "",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "1"
+      },
+      "git": [],
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 1,
+      "stdout": "capability matrix: 2 rows\nby status: moved=2\nby kind: bin=1, tool-py=1\nthis tree: 2 binaries, 0 examples, 0 clap subcommands, 0 python tools, 0 systemd units\n\n1 problem(s):\n  - no row for bin c/.rs: crates/c/src/bin/.rs\n",
+      "stderr": "warning: cargo metadata unavailable (Command '['cargo', 'metadata', '--locked', '--no-deps', '--format-version', '1']' returned non-zero exit status 1.); falling back to src/bin listings\n"
+    },
+    {
+      "name": "parity-r5-fallback-bin-dangling-rs",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "crates/c/Cargo.toml",
+          "text": "[package]\nname = \"c\"\n"
+        },
+        {
+          "path": "crates/c/src/main.rs",
+          "text": "fn main() {}\n"
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| bin | 1 | 1 | 0 | 0 | 0 | 0 |\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **2** | **2** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 2.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/1 | a/b.py | none | moved |  |\n| bin | old/2 | crates/c/src/main.rs (c) | none | moved |  |"
+        }
+      ],
+      "dirs": [],
+      "symlinks": [
+        {
+          "path": "crates/c/src/bin/y.rs",
+          "target": "nowhere"
+        }
+      ],
+      "modes": [],
+      "cargo": {
+        "stdout": "",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "1"
+      },
+      "git": [],
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 1,
+      "stdout": "capability matrix: 2 rows\nby status: moved=2\nby kind: bin=1, tool-py=1\nthis tree: 2 binaries, 0 examples, 0 clap subcommands, 0 python tools, 0 systemd units\n\n1 problem(s):\n  - no row for bin c/y: crates/c/src/bin/y.rs\n",
+      "stderr": "warning: cargo metadata unavailable (Command '['cargo', 'metadata', '--locked', '--no-deps', '--format-version', '1']' returned non-zero exit status 1.); falling back to src/bin listings\n"
+    },
+    {
+      "name": "parity-r5-fallback-example-directory-named-rs",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "crates/c/Cargo.toml",
+          "text": "[package]\nname = \"c\"\n"
+        },
+        {
+          "path": "crates/c/src/main.rs",
+          "text": "fn main() {}\n"
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| bin | 1 | 1 | 0 | 0 | 0 | 0 |\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **2** | **2** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 2.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/1 | a/b.py | none | moved |  |\n| bin | old/2 | crates/c/src/main.rs (c) | none | moved |  |"
+        }
+      ],
+      "dirs": [
+        "crates/c/examples/e.rs"
+      ],
+      "symlinks": [],
+      "modes": [],
+      "cargo": {
+        "stdout": "",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "1"
+      },
+      "git": [],
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 1,
+      "stdout": "capability matrix: 2 rows\nby status: moved=2\nby kind: bin=1, tool-py=1\nthis tree: 1 binaries, 1 examples, 0 clap subcommands, 0 python tools, 0 systemd units\n\n1 problem(s):\n  - no row for example c/e: crates/c/examples/e.rs\n",
+      "stderr": "warning: cargo metadata unavailable (Command '['cargo', 'metadata', '--locked', '--no-deps', '--format-version', '1']' returned non-zero exit status 1.); falling back to src/bin listings\n"
+    },
+    {
+      "name": "parity-r5-fallback-bin-file-control",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "crates/c/Cargo.toml",
+          "text": "[package]\nname = \"c\"\n"
+        },
+        {
+          "path": "crates/c/src/main.rs",
+          "text": "fn main() {}\n"
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| bin | 2 | 2 | 0 | 0 | 0 | 0 |\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **3** | **3** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 3.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/1 | a/b.py | none | moved |  |\n| bin | old/2 | crates/c/src/main.rs (c) | none | moved |  |\n| bin | old/3 | crates/c/src/bin/z.rs | none | moved |  |"
+        },
+        {
+          "path": "crates/c/src/bin/z.rs",
+          "text": ""
+        }
+      ],
+      "dirs": [],
+      "symlinks": [],
+      "modes": [],
+      "cargo": {
+        "stdout": "",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "1"
+      },
+      "git": [],
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 0,
+      "stdout": "capability matrix: 3 rows\nby status: moved=3\nby kind: bin=2, tool-py=1\nthis tree: 2 binaries, 0 examples, 0 clap subcommands, 0 python tools, 0 systemd units\nok: every row resolved and every entry point of this tree has a row\n",
+      "stderr": "warning: cargo metadata unavailable (Command '['cargo', 'metadata', '--locked', '--no-deps', '--format-version', '1']' returned non-zero exit status 1.); falling back to src/bin listings\n"
+    },
+    {
+      "name": "parity-r5-fallback-manifest-directory",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "crates/c/Cargo.toml",
+          "text": "[package]\nname = \"c\"\n"
+        },
+        {
+          "path": "crates/c/src/main.rs",
+          "text": "fn main() {}\n"
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| bin | 1 | 1 | 0 | 0 | 0 | 0 |\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **2** | **2** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 2.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/1 | a/b.py | none | moved |  |\n| bin | old/2 | crates/c/src/main.rs (c) | none | moved |  |"
+        }
+      ],
+      "dirs": [
+        "crates/d/Cargo.toml"
+      ],
+      "symlinks": [],
+      "modes": [],
+      "cargo": {
+        "stdout": "",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "1"
+      },
+      "git": [],
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "raised": "IsADirectoryError: [Errno 21] Is a directory: '@ROOT@/crates/d/Cargo.toml'"
+    },
+    {
+      "name": "parity-r5-fallback-manifest-dangling",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "crates/c/Cargo.toml",
+          "text": "[package]\nname = \"c\"\n"
+        },
+        {
+          "path": "crates/c/src/main.rs",
+          "text": "fn main() {}\n"
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| bin | 1 | 1 | 0 | 0 | 0 | 0 |\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **2** | **2** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 2.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/1 | a/b.py | none | moved |  |\n| bin | old/2 | crates/c/src/main.rs (c) | none | moved |  |"
+        }
+      ],
+      "dirs": [],
+      "symlinks": [
+        {
+          "path": "crates/d/Cargo.toml",
+          "target": "nowhere"
+        }
+      ],
+      "modes": [],
+      "cargo": {
+        "stdout": "",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "1"
+      },
+      "git": [],
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "raised": "FileNotFoundError: [Errno 2] No such file or directory: '@ROOT@/crates/d/Cargo.toml'"
+    },
+    {
+      "name": "parity-r5-fallback-manifest-link-to-file",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "crates/c/Cargo.toml",
+          "text": "[package]\nname = \"c\"\n"
+        },
+        {
+          "path": "crates/c/src/main.rs",
+          "text": "fn main() {}\n"
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| bin | 1 | 1 | 0 | 0 | 0 | 0 |\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **2** | **2** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 2.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/1 | a/b.py | none | moved |  |\n| bin | old/2 | crates/c/src/main.rs (c) | none | moved |  |"
+        }
+      ],
+      "dirs": [],
+      "symlinks": [
+        {
+          "path": "crates/d/Cargo.toml",
+          "target": "../c/Cargo.toml"
+        }
+      ],
+      "modes": [],
+      "cargo": {
+        "stdout": "",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "1"
+      },
+      "git": [],
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 0,
+      "stdout": "capability matrix: 2 rows\nby status: moved=2\nby kind: bin=1, tool-py=1\nthis tree: 1 binaries, 0 examples, 0 clap subcommands, 0 python tools, 0 systemd units\nok: every row resolved and every entry point of this tree has a row\n",
+      "stderr": "warning: cargo metadata unavailable (Command '['cargo', 'metadata', '--locked', '--no-deps', '--format-version', '1']' returned non-zero exit status 1.); falling back to src/bin listings\n"
+    },
+    {
+      "name": "parity-r5-fallback-src-no-search",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "crates/c/Cargo.toml",
+          "text": "[package]\nname = \"c\"\n"
+        },
+        {
+          "path": "crates/c/src/main.rs",
+          "text": "fn main() {}\n"
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **1** | **1** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 1.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/1 | a/b.py | none | moved |  |"
+        }
+      ],
+      "dirs": [],
+      "symlinks": [],
+      "modes": [
+        {
+          "path": "crates/c/src",
+          "mode": "644"
+        }
+      ],
+      "cargo": {
+        "stdout": "",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "1"
+      },
+      "git": [],
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "raised": "PermissionError: [Errno 13] Permission denied: '@ROOT@/crates/c/src/main.rs'"
+    },
+    {
+      "name": "parity-r5-fallback-bin-no-search",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "crates/c/Cargo.toml",
+          "text": "[package]\nname = \"c\"\n"
+        },
+        {
+          "path": "crates/c/src/main.rs",
+          "text": "fn main() {}\n"
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| bin | 1 | 1 | 0 | 0 | 0 | 0 |\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **2** | **2** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 2.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/1 | a/b.py | none | moved |  |\n| bin | old/2 | crates/c/src/main.rs (c) | none | moved |  |"
+        },
+        {
+          "path": "crates/c/src/bin/z.rs",
+          "text": ""
+        }
+      ],
+      "dirs": [],
+      "symlinks": [],
+      "modes": [
+        {
+          "path": "crates/c/src/bin",
+          "mode": "644"
+        }
+      ],
+      "cargo": {
+        "stdout": "",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "1"
+      },
+      "git": [],
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 1,
+      "stdout": "capability matrix: 2 rows\nby status: moved=2\nby kind: bin=1, tool-py=1\nthis tree: 2 binaries, 0 examples, 0 clap subcommands, 0 python tools, 0 systemd units\n\n1 problem(s):\n  - no row for bin c/z: crates/c/src/bin/z.rs\n",
+      "stderr": "warning: cargo metadata unavailable (Command '['cargo', 'metadata', '--locked', '--no-deps', '--format-version', '1']' returned non-zero exit status 1.); falling back to src/bin listings\n"
+    },
+    {
+      "name": "parity-r5-fallback-bin-unlistable",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "crates/c/Cargo.toml",
+          "text": "[package]\nname = \"c\"\n"
+        },
+        {
+          "path": "crates/c/src/main.rs",
+          "text": "fn main() {}\n"
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| bin | 1 | 1 | 0 | 0 | 0 | 0 |\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **2** | **2** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 2.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/1 | a/b.py | none | moved |  |\n| bin | old/2 | crates/c/src/main.rs (c) | none | moved |  |"
+        },
+        {
+          "path": "crates/c/src/bin/z.rs",
+          "text": ""
+        }
+      ],
+      "dirs": [],
+      "symlinks": [],
+      "modes": [
+        {
+          "path": "crates/c/src/bin",
+          "mode": "000"
+        }
+      ],
+      "cargo": {
+        "stdout": "",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "1"
+      },
+      "git": [],
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 0,
+      "stdout": "capability matrix: 2 rows\nby status: moved=2\nby kind: bin=1, tool-py=1\nthis tree: 1 binaries, 0 examples, 0 clap subcommands, 0 python tools, 0 systemd units\nok: every row resolved and every entry point of this tree has a row\n",
+      "stderr": "warning: cargo metadata unavailable (Command '['cargo', 'metadata', '--locked', '--no-deps', '--format-version', '1']' returned non-zero exit status 1.); falling back to src/bin listings\n"
+    },
+    {
+      "name": "parity-r5-fallback-crate-unlistable",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "crates/c/Cargo.toml",
+          "text": "[package]\nname = \"c\"\n"
+        },
+        {
+          "path": "crates/c/src/main.rs",
+          "text": "fn main() {}\n"
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **1** | **1** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 1.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/1 | a/b.py | none | moved |  |"
+        }
+      ],
+      "dirs": [],
+      "symlinks": [],
+      "modes": [
+        {
+          "path": "crates/c",
+          "mode": "000"
+        }
+      ],
+      "cargo": {
+        "stdout": "",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "1"
+      },
+      "git": [],
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 0,
+      "stdout": "capability matrix: 1 rows\nby status: moved=1\nby kind: tool-py=1\nthis tree: 0 binaries, 0 examples, 0 clap subcommands, 0 python tools, 0 systemd units\nok: every row resolved and every entry point of this tree has a row\n",
+      "stderr": "warning: cargo metadata unavailable (Command '['cargo', 'metadata', '--locked', '--no-deps', '--format-version', '1']' returned non-zero exit status 1.); falling back to src/bin listings\n"
+    },
+    {
+      "name": "parity-r5-fallback-crates-link",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "crates/c/Cargo.toml",
+          "text": "[package]\nname = \"c\"\n"
+        },
+        {
+          "path": "crates/c/src/main.rs",
+          "text": "fn main() {}\n"
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| bin | 1 | 1 | 0 | 0 | 0 | 0 |\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **2** | **2** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 2.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/1 | a/b.py | none | moved |  |\n| bin | old/2 | crates/c/src/main.rs (c) | none | moved |  |"
+        }
+      ],
+      "dirs": [],
+      "symlinks": [
+        {
+          "path": "crates/l",
+          "target": "@ROOT@/crates/c"
+        }
+      ],
+      "modes": [],
+      "cargo": {
+        "stdout": "",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "1"
+      },
+      "git": [],
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 0,
+      "stdout": "capability matrix: 2 rows\nby status: moved=2\nby kind: bin=1, tool-py=1\nthis tree: 1 binaries, 0 examples, 0 clap subcommands, 0 python tools, 0 systemd units\nok: every row resolved and every entry point of this tree has a row\n",
+      "stderr": "warning: cargo metadata unavailable (Command '['cargo', 'metadata', '--locked', '--no-deps', '--format-version', '1']' returned non-zero exit status 1.); falling back to src/bin listings\n"
+    }
+  ]
+}
