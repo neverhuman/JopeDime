@@ -959,6 +959,125 @@ inventory are unchanged.
   its scratch paths (`results.tsv`, `summary.txt`): no case more permissive and none different
   on success; its stricter and both-failing rows are the ones listed above.
 
+## Follow-up — review round three
+
+Independent review 5333747872 of PR #117 (REQUEST_CHANGES on `e8640b7b0`, by `neverhumanbot`)
+ran the original tools (git bytes of `f46a9048f`) and the ports side by side on 17 more invalid
+inputs. Both refused 13; four were accepted only by the port, from two root causes. Its receipts
+are in `independent-review-pr117-e8640b7b0` (`spot-results.json`, `guard-spot-results.json`,
+`review-notes.md`). That refutes round two's "never more permissive" for these inputs; what holds
+now is under **Contract after round three** below.
+
+| # | Finding | Root cause | Disposition | Change | Cases |
+| ---: | --- | --- | --- | --- | --- |
+| 1 | `select --path-map /r /r` printed `/r/demo` for an executable `//r/demo`; the Python refused (`'//r/demo' is not in the subpath of '/r'`) | pathlib, like POSIX, keeps exactly two leading slashes as a root of their own (three or more are `/`) and compares paths as spelled after parsing; `jope_ci::py::pure_path` collapsed `//` through Rust's `Path` components | fixed, with the class | `jope_records::py::PosixPath::relative_to` (Python 3.12, `walk_up=False`), `joinpath` and `parent`; `select` maps `Path(host) / path.relative_to(container)` on them and prints `str()` of the path; `pure_path` is removed | cargo-artifact `negative-r3-paths.json` (15) |
+| 2 | a 4301-digit integer in an unused metadata field, and a negative one in a Cargo message, accepted by `select` | Python 3.12 converts at most `sys.get_int_max_str_digits()` = 4300 decimal digits (`ValueError: Exceeds the limit (4300 digits) for integer string conversion: value has N digits; ...`), and `json.loads` converts every integer literal as it scans it | fixed, with the class | `py::check_int_digits` (the sign is not a digit, leading zeros are); `pyjson` checks every integer literal, in the 64-bit and the big-integer readers, with Python's message and no position | cargo-artifact `negative-r3-digits.json` (14) |
+| 3 | the covering-test tally prefixed with 4301 zeros accepted by `parity-check` | the same limit, on `int(m.group(1))` | fixed, with the class | `py::decimal_int` (each Unicode digit counts once, leading zeros included) for the tally and for `pending-WP<n>`; `parity::evaluate` returns a `Result`; classifying a status converts nothing, as `PENDING_RE.match` did not | `process-r3-digits.json` (15) |
+
+**The two classes, swept.** Every place a P1 port parses an integer from text:
+- `pyjson` (all JSON the ports read: cargo-artifact's metadata, `select`'s files, every Cargo
+  message line and `target-dir`'s metadata; build-report's configuration; coverage's metadata and
+  map; scope's and parity's metadata; the README evidence): fixed centrally. The 64-bit reader
+  already refused every integer outside 64 bits (all of 20 digits or more); past 4300 digits it
+  now refuses in Python's words.
+- `py::decimal_int` (parity's tally and pending number): fixed.
+- `py::int` (README CSV cells, and the non-P1 records readers), build-report's `du` field: 64-bit,
+  so they refuse long before 4300 digits.
+- `nextest-config`'s TOML: the `toml` crate reads no integer beyond 64 bits, so a 4301-digit one is
+  refused on both sides (`toml-int-4301-digits`, in the crate's words; `tomllib` raised the limit's
+  `ValueError`).
+- The native family-growth verifier (U8): `serde_json` reads no integer a double cannot hold
+  (about 310 digits and up); a unit test pins the 4301-digit refusal, and the module lists the 310
+  to 4300 digit range among its deliberate, stricter differences.
+
+Every place a P1 port compares or normalises a POSIX path:
+- cargo-artifact `select`: finding 1. Also fixed: a container equal to the executable maps to the
+  host itself (the port had appended a separator and refused it), and the refusal for a missing
+  executable prints `//...` as `str()` did.
+- build-report: `abspath` keeps `//` as `posixpath.normpath` does, and `walk` compares the
+  normalised spellings, so `scan //r` is refused as `root.resolve(strict=True) != root` refused it
+  (`///r` and `r/./` are scanned). A measurement root is compared as `Path(text)` with its resolved
+  path (`explicit_root`), and its refusals and the receipt's `custody_argument` print
+  `str(Path(...))`.
+- coverage discovery: the root is resolved, as `ROOT` was, and Cargo's manifest and source paths
+  are made relative with `relative_to`, so a `//` spelling is refused as the Python's `ValueError`
+  crashed it. The listed files' name, suffix and parent are read as pathlib reads them, so
+  `./.github/workflows/ci.yml` is a workflow, as it was.
+- parity-check: the entry points it lists are made relative with `relative_to`, so a `[[bin]]`
+  path of the src/bin fallback normalises (`./src/x.rs` is `crates/<c>/src/x.rs`) and one outside
+  the tree, either root, refuses as the Python crashed. `os.path.relpath` of Cargo's `src_path`
+  splits on separators and has no `//` root; the port already matched it, and a control case and a
+  unit test pin that.
+- Not a P1 comparison: the README renderer joins only constant paths; the other `PosixPath` users
+  in `jope-records` predate P1.
+
+The measurement-root check is pinned by a unit test, not a capture: the Python reached it only
+after scanning its two hard-coded host roots. Its predicate is the scan root's
+(`resolve(strict=True) != path`), which the captured scans pin.
+
+**Reproduction first.** `p1-r3-pre-20260928T040118Z`, at `e8640b7b0` (only additive, unused
+helpers in the tree): the reviewer's four inputs, rerun with its recorded Rust command lines, exit
+0 where its recorded Python exited 1, and its valid control exits 0 on both. The round-three
+fixtures replayed there: 18 cases exited 0 where the Python did not (cargo-artifact 6 integer and 4
+path, build-report 2, parity 3 integer, coverage 3 path), two refused where the Python succeeded
+(`map-equals-executable`, `parity-fallback-bin-paths-normalised`), two printed a report where the
+Python crashed (`parity-fallback-bin-path-absolute`, `-double-slash`), one discovery differed
+(`cov-discover-workflow-dot-prefix`) and two refusals printed a different path.
+
+**After.** `p1-r3-post-20260928T041107Z`, at the paths commit: the reviewer's four inputs exit 1,
+the three cargo-artifact refusals byte-identical to its recorded Python stderr
+(`stderr-comparison.txt`), the tally with CPython's `ValueError` text; the valid control exits 0;
+every replay passes.
+
+**Fixtures.** Captured in `p1-r3-capture-20260928T035917Z` by `cap3.sh`, kept in that run: bash and
+jq only, the original tools from `f46a9048f`'s git bytes in scratch roots, the layouts of round two.
+
+| Fixture | Cases | Python exit 0 | Explicit refusal | Crash |
+| --- | ---: | ---: | ---: | ---: |
+| `jope-records/…/process-r3-digits.json` | 15 | 7 | 0 | 8 |
+| `jope-records/…/process-r3-paths.json` | 15 | 10 | 0 | 5 |
+| `jope-records/…/readme/negative-r3.json` | 3 | 1 | 0 | 2 |
+| `jope-ci/…/cargo-artifact/negative-r3-digits.json` | 14 | 7 | 7 | 0 |
+| `jope-ci/…/cargo-artifact/negative-r3-paths.json` | 15 | 9 | 6 | 0 |
+| `jope-ci/…/build-report/negative-r3.json` | 6 | 3 | 3 | 0 |
+| **total** | **68** | **37** | **16** | **15** |
+
+**Tests.** New test functions in existing targets, so `deploy/ci/coverage.json` and the test
+inventory are unchanged; the capability matrix's `jope-records::*` count is now 135 (from
+`cargo test -q --locked -p jope-records -- --list`).
+- `jope-records` `python_parity.rs`: `process_cases_match_round_three_digits` and `_paths` (the
+  round-two replay is factored into `replay_process`), `readme_benchmarks_matches_round_three`.
+- `jope-ci` `cargo_artifact_python_parity.rs`: `cargo_artifact_matches_round_three_digits` and
+  `_paths` (`replay_round`; the TOML case is the one allowed wording difference);
+  `build_report_python_parity.rs`: `scans_match_round_three` (`replay_scans`).
+- Unit tests in `py.rs`, `pyjson.rs`, `parity.rs` and `coverage.rs` (`jope-records`),
+  `build_report.rs` (`jope-ci`) and `family_growth.rs` (`jope-engine`).
+
+**Contract after round three.** As after round two, for the same ports, with these corrections:
+round two's finding 9 (`int()` of Unicode digits, "unbounded") and 12 (4) (cargo-artifact reads
+"integers of any size") now stop at 4300 digits, as Python 3.12 did; and paths are compared as
+pathlib compares them, `//` included. One case joins round two's `tomllib` wording difference:
+a 4301-digit TOML integer, refused on both sides in different words (`toml-int-4301-digits`). The
+64-bit readers' strictness from 20 digits up was already listed; the family-growth verifier's
+from about 310 digits is now listed in its module.
+
+**Commits.**
+- `jope-records, jope-ci: refuse integers of more than 4300 digits, as Python 3.12 did (P1 review 3)`
+- `jope-records, jope-ci: keep POSIX's distinct '//' root where the ports compare paths (P1 review 3)`
+- `docs: record review round three of the P1 ports (P1 review 3)` (this section and the matrix
+  count)
+
+The first commit's own tree was tested with the path-class tests and fixtures set aside (fmt,
+`git diff --check`, clippy, the `jope-records` and `jope-ci` tests, the family-growth unit tests).
+
+**Gate.** `p1-r3-gate-20260928T041354Z`, on the head (this file's commit): the hosted `rust-check` and
+`rust-test` lanes run locally as `.github/workflows/ci.yml` runs them, fmt, whitespace, the
+workspace check, clippy with `-D warnings` on `jope-ci` and `jope-records`, both crates' tests (the
+ignored receipt replays included), the family-growth unit tests, the fences, `coverage validate`,
+`verify-test-inventory`, the records checks, `parity-matrix.sh --no-build`, `deploy/ci/check.sh`,
+the secret scan, the reviewer's four inputs, and round two's differential harness rerun unchanged
+except for its scratch paths.
+
 ## Commit map — `rr2/python-p1` to the landing
 
 The work above was committed on `rr2/python-p1` and landed through `rr2/python-p1-landing`: its
@@ -1007,6 +1126,12 @@ runs made before the rebase.
 | `jope-ci: replay build-report configuration refusals against the Python (P1 review)` | none, made later | landing only | — |
 | `docs: record the fail-closed audit of the P1 ports (P1 review)` | none, made later | landing only | — |
 | `docs: record the fail-closed gate and post-fix runs (P1 review)` | none, made later | landing only | — |
+| `jope-records: read Cargo's output, regex classes, NaN, integers and repr as the Python did (P1 review 2)` | none, made later | landing only | — |
+| `jope-ci: CPython's messages, nextest-config order and names that are not UTF-8 (P1 review 2)` | none, made later | landing only | — |
+| `docs: record round two of the fail-closed differential review (P1 review 2)` | none, made later | landing only | — |
+| `jope-records, jope-ci: refuse integers of more than 4300 digits, as Python 3.12 did (P1 review 3)` | none, made later | landing only | — |
+| `jope-records, jope-ci: keep POSIX's distinct '//' root where the ports compare paths (P1 review 3)` | none, made later | landing only | — |
+| `docs: record review round three of the P1 ports (P1 review 3)` | none, made later | landing only | — |
 
 "Patch-id" compares `git patch-id --stable` of the commit as submitted and its original. Each
 pair changes the same paths with the same status. The tree proof
