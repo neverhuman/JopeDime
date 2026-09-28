@@ -22,7 +22,9 @@
 //! partition, a seed that is not a pipeline, a dataset that does not resolve, is not a regression
 //! task or cannot be partitioned into those cuts, a budget too small to re-measure the seeds — is
 //! made before the output directory is created, so a refused command can be corrected and re-run
-//! into the same `--output`.
+//! into the same `--output`. That `--output` must be new or an empty directory: anything already
+//! in it (a stale round, control or lineage, or an unrelated file) is refused before anything is
+//! written, rather than when the round that would write over it is reached.
 //!
 //! `lineage.json` is rewritten atomically and fsynced after every completed round, so a parent
 //! process can count completed rounds while evolve runs; a round interrupted by SIGTERM writes no
@@ -341,6 +343,58 @@ pub struct EvolveOptions {
     pub seeds: Option<PathBuf>,
 }
 
+/// `--output` must not exist yet or be an empty directory. Anything already in it is refused
+/// before a byte is written: a stale `control/` or `round-002/` would otherwise be refused only
+/// when that run is reached, after the earlier rounds had written `lineage.json` (and the round
+/// its `seeds.json`), and the corrected retry would then be refused as "already holds a
+/// lineage"; an entry no round writes would sit in the lineage directory as if it belonged there.
+fn check_output(output: &Path) -> Result<()> {
+    let entries = match std::fs::read_dir(output) {
+        Ok(entries) => entries,
+        // Not there at all (a dangling symbolic link is there, and is refused below).
+        Err(error)
+            if error.kind() == std::io::ErrorKind::NotFound
+                && std::fs::symlink_metadata(output).is_err() =>
+        {
+            return Ok(())
+        }
+        Err(error) => {
+            return Err(error).with_context(|| {
+                format!(
+                    "{}: not a directory to write a lineage into; choose a new --output",
+                    output.display()
+                )
+            })
+        }
+    };
+    let mut names = entries
+        .map(|entry| entry.map(|e| e.file_name().to_string_lossy().into_owned()))
+        .collect::<std::io::Result<Vec<_>>>()
+        .with_context(|| format!("read {}", output.display()))?;
+    if names.is_empty() {
+        return Ok(());
+    }
+    ensure!(
+        !names
+            .iter()
+            .any(|name| name == LINEAGE_FILE || *name == round_directory(1)),
+        "{}: already holds a lineage; choose a new --output",
+        output.display()
+    );
+    names.sort();
+    let shown = names.len().min(3);
+    let more = match names.len() - shown {
+        0 => String::new(),
+        n => format!(" and {n} more"),
+    };
+    bail!(
+        "{}: is not empty ({}{more}); evolve writes only into a new or empty directory, so \
+         choose a new --output or empty this one",
+        output.display(),
+        names[..shown].join(", ")
+    )
+}
+
 /// Run the lineage. Returns it as written after the last completed round.
 pub fn evolve(options: &EvolveOptions) -> Result<Lineage> {
     ensure!(
@@ -353,11 +407,7 @@ pub fn evolve(options: &EvolveOptions) -> Result<Lineage> {
         "evolve seeds its own rounds; pass round 1's seeds with --seeds"
     );
     let output = &options.output;
-    ensure!(
-        !output.join(LINEAGE_FILE).exists() && !output.join(round_directory(1)).exists(),
-        "{}: already holds a lineage; choose a new --output",
-        output.display()
-    );
+    check_output(output)?;
     // Everything that can be refused is refused before the first byte is written: a refusal
     // inside round 1 would otherwise leave `round-001/` behind, and the guard above would then
     // turn the corrected retry into "already holds a lineage".
@@ -804,6 +854,29 @@ mod tests {
         }
         let mut out = std::collections::BTreeMap::new();
         walk(root, root, &mut out);
+        out
+    }
+
+    /// Every entry under `root`, directories included, by relative path (a file with its bytes).
+    fn entries(root: &Path) -> Vec<(String, Vec<u8>)> {
+        let mut out = Vec::new();
+        let mut pending = vec![root.to_path_buf()];
+        while let Some(dir) = pending.pop() {
+            for entry in std::fs::read_dir(&dir).unwrap() {
+                let path = entry.unwrap().path();
+                let bytes = if path.is_dir() {
+                    pending.push(path.clone());
+                    Vec::new()
+                } else {
+                    std::fs::read(&path).unwrap()
+                };
+                out.push((
+                    path.strip_prefix(root).unwrap().display().to_string(),
+                    bytes,
+                ));
+            }
+        }
+        out.sort();
         out
     }
 
@@ -1307,5 +1380,74 @@ mod tests {
             evolve_into(&out, 1, false, template(4)).unwrap_err()
         );
         assert!(error.contains("already holds a lineage"), "{error}");
+    }
+
+    /// The PR #118 verifier's reproduction: an `--output` holding a stale `control/` or
+    /// `round-002/` was refused only when that run was reached, after the earlier rounds had
+    /// written `lineage.json` (and round 2 its `seeds.json`), so the corrected retry was refused
+    /// as "already holds a lineage". Anything in `--output`, an unrelated file included, is now
+    /// refused before a byte is written, and so is an `--output` that is not a directory. An
+    /// empty directory is accepted: the same command runs once the stale entry is removed.
+    #[test]
+    fn a_non_empty_output_is_refused_before_writing_and_the_emptied_one_runs() {
+        let temp = tempfile::tempdir().unwrap();
+        for (name, stale, control, needle) in [
+            (
+                "stale-control",
+                "control/receipt.json",
+                true,
+                "is not empty (control)",
+            ),
+            (
+                "stale-round",
+                "round-002/receipt.json",
+                false,
+                "is not empty (round-002)",
+            ),
+            ("unrelated", "notes.txt", false, "is not empty (notes.txt)"),
+            (
+                "old-lineage",
+                LINEAGE_FILE,
+                false,
+                "already holds a lineage",
+            ),
+        ] {
+            let out = temp.path().join(name);
+            let path = out.join(stale);
+            std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+            std::fs::write(&path, b"{}\n").unwrap();
+            let before = entries(&out);
+            let error = format!(
+                "{:#}",
+                evolve_into(&out, 2, control, template(10)).unwrap_err()
+            );
+            assert!(error.contains(needle), "{name}: wanted {needle:?}: {error}");
+            assert_eq!(entries(&out), before, "{name}: the refusal wrote into it");
+        }
+        let file = temp.path().join("a-file");
+        std::fs::write(&file, b"x").unwrap();
+        let dangling = temp.path().join("dangling");
+        let missing = temp.path().join("missing");
+        std::os::unix::fs::symlink(&missing, &dangling).unwrap();
+        for out in [&file, &dangling] {
+            let error = format!("{:#}", evolve_into(out, 1, false, template(4)).unwrap_err());
+            assert!(
+                error.contains("not a directory to write a lineage into"),
+                "{error}"
+            );
+        }
+        assert_eq!(std::fs::read(&file).unwrap(), b"x");
+        assert!(
+            !missing.exists(),
+            "evolve created the dangling link's target"
+        );
+        // Positive control: the stale control/ removed, the same command runs into the directory.
+        let out = temp.path().join("stale-control");
+        std::fs::remove_dir_all(out.join(CONTROL_DIRECTORY)).unwrap();
+        assert!(entries(&out).is_empty());
+        let lineage = evolve_into(&out, 2, true, template(10)).unwrap();
+        assert_eq!(lineage.rounds.len(), 2);
+        assert!(lineage.control.is_some());
+        verify(&out.join(LINEAGE_FILE), false).unwrap();
     }
 }

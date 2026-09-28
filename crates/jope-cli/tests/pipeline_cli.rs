@@ -154,6 +154,64 @@ fn a_refused_cut_count_exits_2_leaves_nothing_and_the_corrected_retry_runs() {
     assert_eq!(lineage["cuts"], serde_json::json!([0, 1, 2]));
 }
 
+/// `evolve` into an `--output` that already holds something (here a stale `control/`) exits 2
+/// before it writes anything; it used to run every round first, write `lineage.json` and only then
+/// refuse, so the corrected retry was refused as "already holds a lineage". Once the directory is
+/// emptied the same command runs into it.
+#[test]
+fn evolve_into_a_non_empty_output_exits_2_first_and_runs_once_it_is_emptied() {
+    let temp = tempfile::tempdir().unwrap();
+    let output = temp.path().join("lineage");
+    std::fs::create_dir_all(output.join("control")).unwrap();
+    std::fs::write(output.join("control/receipt.json"), b"{}\n").unwrap();
+    let evolve = || {
+        jope()
+            .args(["pipeline", "evolve", "--dataset"])
+            .arg(dataset())
+            .arg("--output")
+            .arg(&output)
+            .args([
+                "--rounds",
+                "1",
+                "--control",
+                "--budget",
+                "evaluations=4,seconds=60",
+            ])
+            .args(["--policy", "skip", "--emit", "rust"])
+            .output()
+            .unwrap()
+    };
+    let result = evolve();
+    let stderr = String::from_utf8_lossy(&result.stderr);
+    assert_eq!(result.status.code(), Some(2), "{stderr}");
+    assert!(stderr.contains("is not empty (control)"), "{stderr}");
+    let names = |dir: &Path| {
+        let mut names: Vec<String> = std::fs::read_dir(dir)
+            .unwrap()
+            .map(|e| e.unwrap().file_name().to_string_lossy().into_owned())
+            .collect();
+        names.sort();
+        names
+    };
+    assert_eq!(
+        names(&output),
+        ["control"],
+        "the refusal wrote into --output"
+    );
+    assert_eq!(names(&output.join("control")), ["receipt.json"]);
+    std::fs::remove_dir_all(output.join("control")).unwrap();
+    let result = evolve();
+    assert!(
+        result.status.success(),
+        "{}",
+        String::from_utf8_lossy(&result.stderr)
+    );
+    let lineage: Value =
+        serde_json::from_slice(&std::fs::read(output.join("lineage.json")).unwrap()).unwrap();
+    assert_eq!(lineage["rounds"].as_array().map(Vec::len), Some(1));
+    assert!(lineage["control"].is_object());
+}
+
 fn wait_for(what: &str, deadline: Duration, mut ready: impl FnMut() -> bool, child: &mut Child) {
     let started = Instant::now();
     while !ready() {
