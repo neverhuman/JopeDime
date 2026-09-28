@@ -1,14 +1,20 @@
 //! W7-T01 census collector and merge fixtures.
 //!
-//! The collector reads this host's real machine id, boot id, host name and interface
-//! addresses. GPU inventory always comes from an injected command runner (or is hidden with
-//! `CUDA_VISIBLE_DEVICES=""`): no fixture runs `nvidia-smi` or touches a GPU. Multi-host
-//! documents are derived from one local collection with synthetic identities, so they are
-//! fixtures, not a live three-host census.
+//! The collector observes the checked-in fixture host (`support/fixture_host.rs`), not the
+//! machine the tests run on: its machine id, boot id and host name are files read by the same
+//! code that reads a real host's, and its one interface address is loopback. The command-line
+//! round trip runs the production command line through the test-only fixture executable, which
+//! observes that same fixture host. GPU inventory always comes from an injected command runner
+//! (or is hidden with `CUDA_VISIBLE_DEVICES=""`): no fixture runs `nvidia-smi` or touches a GPU.
+//! Multi-host documents are derived from one local collection with synthetic identities, so they
+//! are fixtures, not a live three-host census.
 #[path = "support/bounded_fixture.rs"]
 mod fixture;
+#[path = "support/fixture_host.rs"]
+mod fixture_host;
 use anyhow::Result;
 use fixture::*;
+use fixture_host::with_commands;
 use jope_parallel::native_loop::bounded::{
     census::{HostCensus, HostIdentity, RefusalReason},
     collect::{
@@ -109,8 +115,12 @@ fn cpu_only(mut spec: CollectSpec) -> CollectSpec {
     spec.cuda_visible_devices = Some(OsString::new());
     spec
 }
-fn local(path: &str) -> String {
-    fs::read_to_string(path).unwrap().trim().to_string()
+/// One of the fixture host's checked-in identity files, read independently of the collector.
+fn fixture_file(name: &str) -> String {
+    fs::read_to_string(fixture_host::identity_dir().join(name))
+        .unwrap()
+        .trim()
+        .to_string()
 }
 
 /// A small funded plan whose participants are exactly the given observed hosts, so it can be
@@ -214,7 +224,7 @@ fn collected_census_round_trips_through_preflight() {
     let (_t, root) = tempdir();
     let spec = install(&root);
     let nvidia = FakeNvidia::with(&one_gpu(), "");
-    let (census, report) = collect::collect(&spec, &nvidia, now).unwrap();
+    let (census, report) = collect::collect(&spec, &with_commands(&nvidia), now).unwrap();
     assert_eq!(nvidia.calls(), 2, "one GPU query and one process query");
     // The record is exactly the typed census the preflight validator reads.
     let bytes = serde_json::to_vec(&census).unwrap();
@@ -223,9 +233,22 @@ fn collected_census_round_trips_through_preflight() {
     assert_eq!(report.gpu_probe, GpuProbe::NvidiaSmi);
     assert!(!report.allocation_held);
     let h = &census.hosts[0];
-    assert_eq!(h.identity.machine_id, local("/etc/machine-id"));
-    assert_eq!(h.identity.boot_id, local("/proc/sys/kernel/random/boot_id"));
-    assert_eq!(h.identity.host, local("/proc/sys/kernel/hostname"));
+    // The observed identity is the fixture host's files, exactly as written.
+    assert_eq!(h.identity.machine_id, fixture_file("machine-id"));
+    assert_eq!(h.identity.boot_id, fixture_file("boot_id"));
+    assert_eq!(h.identity.host, fixture_file("hostname"));
+    assert_eq!(
+        (
+            h.identity.host.as_str(),
+            h.identity.machine_id.as_str(),
+            h.identity.boot_id.as_str()
+        ),
+        (
+            fixture_host::HOST,
+            fixture_host::MACHINE_ID,
+            fixture_host::BOOT_ID
+        )
+    );
     assert_eq!(h.identity.address, "127.0.0.1");
     assert_eq!(
         h.identity.certificate_sha256,
@@ -249,7 +272,12 @@ fn collected_census_round_trips_through_preflight() {
     assert!(h.ownership.is_empty());
     assert!(h.cpu_millicores_allocatable >= 1_000 && h.ram_bytes_allocatable > 0);
     // The identical collection is deterministic apart from the clock.
-    let (again, _) = collect::collect(&spec, &FakeNvidia::with(&one_gpu(), ""), now).unwrap();
+    let (again, _) = collect::collect(
+        &spec,
+        &with_commands(&FakeNvidia::with(&one_gpu(), "")),
+        now,
+    )
+    .unwrap();
     assert_eq!(again.hosts[0].identity, h.identity);
 
     let plan = plan_for(now, &[(h.identity.clone(), Some((UUID0, 0)))]);
@@ -259,7 +287,12 @@ fn collected_census_round_trips_through_preflight() {
     assert_eq!(receipt.hosts[&h.identity.host].devices.len(), 1);
     // A changed installed file is a different executable identity: preflight refuses it.
     fs::write(&spec.executable, b"substituted worker").unwrap();
-    let (substituted, _) = collect::collect(&spec, &FakeNvidia::with(&one_gpu(), ""), now).unwrap();
+    let (substituted, _) = collect::collect(
+        &spec,
+        &with_commands(&FakeNvidia::with(&one_gpu(), "")),
+        now,
+    )
+    .unwrap();
     let refused = err(preflight(&root, "substituted", &plan, &substituted, now));
     assert!(refused.contains("executable_mismatch"), "{refused}");
 }
@@ -271,7 +304,8 @@ fn cpu_only_or_absent_nvidia_smi_records_no_gpu() {
     let spec = install(&root);
     // CUDA_VISIBLE_DEVICES="": nothing is queried and nothing is recorded.
     let never = FakeNvidia::with(&one_gpu(), "");
-    let (hidden, report) = collect::collect(&cpu_only(spec.clone()), &never, now).unwrap();
+    let (hidden, report) =
+        collect::collect(&cpu_only(spec.clone()), &with_commands(&never), now).unwrap();
     assert_eq!(never.calls(), 0, "no GPU probe runs for a CPU-only census");
     assert_eq!(
         report.gpu_probe,
@@ -282,7 +316,7 @@ fn cpu_only_or_absent_nvidia_smi_records_no_gpu() {
         absent: true,
         ..FakeNvidia::default()
     };
-    let (missing, report) = collect::collect(&spec, &absent, now).unwrap();
+    let (missing, report) = collect::collect(&spec, &with_commands(&absent), now).unwrap();
     assert_eq!(absent.calls(), 1);
     assert_eq!(report.gpu_probe, GpuProbe::NvidiaSmiAbsent);
     for census in [&hidden, &missing] {
@@ -329,7 +363,9 @@ fn failing_malformed_or_unavailable_gpu_probes_refuse_the_collection() {
         fail: true,
         ..FakeNvidia::with(&one_gpu(), "")
     };
-    assert!(err(collect::collect(&spec, &failing, now)).contains("GPU query failed"));
+    assert!(
+        err(collect::collect(&spec, &with_commands(&failing), now)).contains("GPU query failed")
+    );
     for (gpus, apps, needle) in [
         (
             format!("0, {UUID0}, Fixture GPU, 550.54.14, [N/A], 23552\n"),
@@ -367,7 +403,7 @@ fn failing_malformed_or_unavailable_gpu_probes_refuse_the_collection() {
     ] {
         let refused = err(collect::collect(
             &spec,
-            &FakeNvidia::with(&gpus, &apps),
+            &with_commands(&FakeNvidia::with(&gpus, &apps)),
             now,
         ));
         assert!(refused.contains(needle), "{needle}: {refused}");
@@ -376,7 +412,7 @@ fn failing_malformed_or_unavailable_gpu_probes_refuse_the_collection() {
     let mut partial = spec.clone();
     partial.cuda_visible_devices = Some(OsString::from("0"));
     let never = FakeNvidia::with(&one_gpu(), "");
-    assert!(err(collect::collect(&partial, &never, now)).contains("host-wide"));
+    assert!(err(collect::collect(&partial, &with_commands(&never), now)).contains("host-wide"));
     assert_eq!(never.calls(), 0);
 }
 
@@ -386,8 +422,12 @@ fn device_processes_are_owners_that_preflight_refuses() {
     let (_t, root) = tempdir();
     let spec = install(&root);
     let apps = format!("No running processes found\n{UUID0}, 4242, /usr/bin/fixture, with comma\n");
-    let (census, report) =
-        collect::collect(&spec, &FakeNvidia::with(&one_gpu(), &apps), now).unwrap();
+    let (census, report) = collect::collect(
+        &spec,
+        &with_commands(&FakeNvidia::with(&one_gpu(), &apps)),
+        now,
+    )
+    .unwrap();
     assert_eq!(report.device_owners, 1);
     let o = &census.hosts[0].ownership[0];
     assert_eq!(o.owner, "gpu-process-4242");
@@ -428,6 +468,7 @@ fn unverifiable_identity_inputs_refuse_the_collection() {
     let (_t, root) = tempdir();
     let spec = install(&root);
     let never = FakeNvidia::default();
+    let host = with_commands(&never);
     let cases: Vec<(&str, Box<dyn Fn(&mut CollectSpec)>)> = vec![
         (
             "not assigned to a local interface",
@@ -473,7 +514,7 @@ fn unverifiable_identity_inputs_refuse_the_collection() {
     for (needle, edit) in cases {
         let mut s = cpu_only(spec.clone());
         edit(&mut s);
-        let refused = err(collect::collect(&s, &never, now));
+        let refused = err(collect::collect(&s, &host, now));
         assert!(refused.contains(needle), "{needle}: {refused}");
     }
     for garbage in [
@@ -482,7 +523,7 @@ fn unverifiable_identity_inputs_refuse_the_collection() {
         vec![0x02, 0x01, 0x00],
     ] {
         fs::write(&spec.certificate, garbage).unwrap();
-        assert!(err(collect::collect(&cpu_only(spec.clone()), &never, now)).contains("certificate"));
+        assert!(err(collect::collect(&cpu_only(spec.clone()), &host, now)).contains("certificate"));
     }
     assert_eq!(never.calls(), 0);
 }
@@ -491,8 +532,12 @@ fn unverifiable_identity_inputs_refuse_the_collection() {
 fn merge_combines_pinned_documents_into_a_preflight_census() {
     let now = now_ms();
     let (_t, root) = tempdir();
-    let (base, _) =
-        collect::collect(&cpu_only(install(&root)), &FakeNvidia::default(), now).unwrap();
+    let (base, _) = collect::collect(
+        &cpu_only(install(&root)),
+        &with_commands(&FakeNvidia::default()),
+        now,
+    )
+    .unwrap();
     let docs: Vec<HostCensus> = [2, 0, 1]
         .into_iter()
         .map(|i| synthetic(&base, i, now - 1_000 * i as u64))
@@ -541,8 +586,12 @@ fn merge_combines_pinned_documents_into_a_preflight_census() {
 fn merge_refuses_tampered_stale_future_duplicate_and_mixed_documents() {
     let now = now_ms();
     let (_t, root) = tempdir();
-    let (base, _) =
-        collect::collect(&cpu_only(install(&root)), &FakeNvidia::default(), now).unwrap();
+    let (base, _) = collect::collect(
+        &cpu_only(install(&root)),
+        &with_commands(&FakeNvidia::default()),
+        now,
+    )
+    .unwrap();
     let good = |i| pinned(&format!("doc-{i}"), &synthetic(&base, i, now));
     let refuse = |docs: Vec<PinnedDocument>, needle: &str| {
         let refused = err(collect::merge(&docs, policy(), now));
@@ -630,8 +679,17 @@ fn merge_refuses_tampered_stale_future_duplicate_and_mixed_documents() {
     refuse(Vec::new(), "1..=64");
 }
 
-fn run(prefix: &[&str], args: &[&str]) -> std::process::Output {
-    Command::new(env!("CARGO_BIN_EXE_jope-native-loop"))
+/// `census collect` observes a host, so it runs as the test-only fixture executable: the
+/// production command line observing the fixture host.
+fn collector() -> PathBuf {
+    fixture_host::executable()
+}
+/// `census merge` and `preflight` read only pinned files and observe no host: the product binary.
+fn product() -> PathBuf {
+    PathBuf::from(env!("CARGO_BIN_EXE_jope-native-loop"))
+}
+fn run(exe: &Path, prefix: &[&str], args: &[&str]) -> std::process::Output {
+    Command::new(exe)
         .args(prefix)
         .args(args)
         .env("CUDA_VISIBLE_DEVICES", "")
@@ -675,8 +733,9 @@ fn cli_collect_merge_and_preflight_round_trip_without_side_effects() {
     let out = root.join("host.census.json");
     let argv = collect_argv(&spec, &out);
     let argv: Vec<&str> = argv.iter().map(String::as_str).collect();
+    let (collector, product) = (collector(), product());
     let before = contents(&root);
-    let o = run(&[], &argv);
+    let o = run(&collector, &[], &argv);
     assert!(o.status.success(), "{}", String::from_utf8_lossy(&o.stderr));
     let report: serde_json::Value = serde_json::from_slice(&o.stdout).unwrap();
     let written = fs::read(&out).unwrap();
@@ -692,16 +751,34 @@ fn cli_collect_merge_and_preflight_round_trip_without_side_effects() {
     assert_eq!(after, before);
     // A census is never replaced.
     let before = contents(&root);
-    let o = run(&[], &argv);
+    let o = run(&collector, &[], &argv);
     assert!(!o.status.success());
     assert!(String::from_utf8_lossy(&o.stderr).contains("already exists"));
     assert_eq!(contents(&root), before);
     // Legacy loop flags are refused for census operations.
-    let o = run(&["--tenant", "t"], &argv);
+    let o = run(&collector, &["--tenant", "t"], &argv);
     assert!(!o.status.success());
     assert!(String::from_utf8_lossy(&o.stderr).contains("no fixed-loop arguments"));
 
     let base = HostCensus::from_bytes(&written).unwrap();
+    // The command line observed the fixture host and hashed the installed worker it was given.
+    let identity = &base.hosts[0].identity;
+    assert_eq!(
+        (
+            identity.host.as_str(),
+            identity.machine_id.as_str(),
+            identity.boot_id.as_str()
+        ),
+        (
+            fixture_host::HOST,
+            fixture_host::MACHINE_ID,
+            fixture_host::BOOT_ID
+        )
+    );
+    assert_eq!(
+        identity.executable_sha256,
+        sha(b"fixture worker executable")
+    );
     let now = base.captured_unix_ms;
     let mut documents = Vec::new();
     for i in 0..3 {
@@ -735,7 +812,11 @@ fn cli_collect_merge_and_preflight_round_trip_without_side_effects() {
             d.clone()
         });
     }
-    let o = run(&wrong.iter().map(String::as_str).collect::<Vec<_>>(), &[]);
+    let o = run(
+        &product,
+        &wrong.iter().map(String::as_str).collect::<Vec<_>>(),
+        &[],
+    );
     assert!(!o.status.success());
     assert!(String::from_utf8_lossy(&o.stderr).contains("was altered"));
     assert!(!merged_path.exists());
@@ -743,7 +824,11 @@ fn cli_collect_merge_and_preflight_round_trip_without_side_effects() {
         merge.push("--document".into());
         merge.push(d.clone());
     }
-    let o = run(&merge.iter().map(String::as_str).collect::<Vec<_>>(), &[]);
+    let o = run(
+        &product,
+        &merge.iter().map(String::as_str).collect::<Vec<_>>(),
+        &[],
+    );
     assert!(o.status.success(), "{}", String::from_utf8_lossy(&o.stderr));
     let report: serde_json::Value = serde_json::from_slice(&o.stdout).unwrap();
     let merged_bytes = fs::read(&merged_path).unwrap();
@@ -762,6 +847,7 @@ fn cli_collect_merge_and_preflight_round_trip_without_side_effects() {
     let dir = root.join("run");
     let plan = controller::plan(&dir, &bytes(&c), plan_now, None).unwrap();
     let o = run(
+        &product,
         &[
             "preflight",
             "--run-dir",

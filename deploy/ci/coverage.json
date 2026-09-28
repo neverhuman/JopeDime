@@ -5303,6 +5303,21 @@
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately. Binary/example runtime behavior is not claimed by build or its unit-test harness."
     },
+    "target:jope-parallel/example/jope-native-loop-fixture": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-engine/tests/support/native_loop_fixture.rs",
+        "test": false,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "Test-only W7 fixture executable, not a product binary: the production jope-native-loop command line (native_loop::cli, same parsing, dispatch, admission, SmartCluster job proof and /proc/self/exe observation) observing the checked-in fixture host (tests/fixtures/host, loopback, no inventory program) instead of the machine the tests run on, so the census and SmartCluster fixtures pass alike on a bare host and in the read-only runner container whose /etc/machine-id is empty. Cargo's default test target selection builds it (the full-default workspace nextest build), and bounded_census (census collect) and bounded_smartcluster (the trusted-service participant) execute it; the default cargo build and install do not produce it. The product binary hardwires HostSources::system(); no argument or environment variable substitutes an identity source."
+    },
     "target:jope-parallel/example/qualification_proposals": {
       "discovery": {
         "kind": "target",
@@ -5489,7 +5504,7 @@
         "full-default"
       ],
       "dispositions": [],
-      "scope": "W7-T01 local host census collector and pinned per-host merge: collected documents round-trip through preflight, no GPU when CUDA_VISIBLE_DEVICES is empty or nvidia-smi is absent (injected command runner, never a real GPU), refusal of failing/unavailable probes and unverifiable identity inputs, device processes as conflicting owners, and tampered, stale, future, duplicate and mixed-schema documents refused. Collects this host's own identity only; merged multi-host documents are synthetic, not a live census."
+      "scope": "W7-T01 local host census collector and pinned per-host merge: collected documents round-trip through preflight, no GPU when CUDA_VISIBLE_DEVICES is empty or nvidia-smi is absent (injected command runner, never a real GPU), refusal of failing/unavailable probes and unverifiable identity inputs, device processes as conflicting owners, and tampered, stale, future, duplicate and mixed-schema documents refused. Observes the checked-in fixture host (tests/fixtures/host, loopback), not the machine the tests run on, through the same HostSources reader the product uses on /etc/machine-id; the census collect command line runs as the test-only jope-native-loop-fixture executable, and merge and preflight run as the product binary. Merged multi-host documents are synthetic, not a live census."
     },
     "target:jope-parallel/test/bounded_run": {
       "discovery": {
@@ -5579,7 +5594,7 @@
         "full-default"
       ],
       "dispositions": [],
-      "scope": "W7-T05/T07 same-host multi-process fixture through the real supervisor: per rank a real unprivileged embedded SmartCluster daemon (this workspace's own scqd, which the fixture never builds: W7-D5, full-default's workspace test build produces it and full-lane.sh checks it is built and records its digest before the tests run; absent, the fixture fails at once with the build command) runs the real jope-native-loop participant as a trusted-service job, and a real jope-native-loop agent process serves that daemon over pinned TLS to the coordinator's remote supervisor; the whole group commits once, a SIGKILLed rank and a cancel drain the whole group, a SIGKILLed coordinator CLI is restarted and reconciles through the same agents, no orphan process, and a host supervisor acts only on its own plan's jobs. W7-D1: a participant proves before any work that it is its planned job's leader (job environment, control-socket parent = pinned daemon, the daemon's live record of attempt, tenant, plan, dispatch, service and arguments); outside SmartCluster, forged environment, impostor daemon, wrong dispatch, other plan, replayed attempt and other tenant are refused. CPU proof workload on loopback under one boot; not the three-host proof and no numerical training."
+      "scope": "W7-T05/T07 same-host multi-process fixture through the real supervisor: per rank a real unprivileged embedded SmartCluster daemon (this workspace's own scqd, which the fixture never builds: W7-D5, full-default's workspace test build produces it and full-lane.sh checks it is built and records its digest before the tests run; absent, the fixture fails at once with the build command) runs the production jope-native-loop command line as the test-only jope-native-loop-fixture executable (the participant observes the checked-in fixture host and its own /proc/self/exe, whose digest the plan pins) as a trusted-service job, and a real jope-native-loop agent process (the product binary) serves that daemon over pinned TLS to the coordinator's remote supervisor; the whole group commits once, a SIGKILLed rank and a cancel drain the whole group, a SIGKILLed coordinator CLI is restarted and reconciles through the same agents, no orphan process, and a host supervisor acts only on its own plan's jobs. W7-D1: a participant proves before any work that it is its planned job's leader (job environment, control-socket parent = pinned daemon, the daemon's live record of attempt, tenant, plan, dispatch, service and arguments); outside SmartCluster, forged environment, impostor daemon, wrong dispatch, other plan, replayed attempt and other tenant are refused. CPU proof workload on loopback under one boot; not the three-host proof and no numerical training."
     },
     "target:jope-parallel/test/bounded_training": {
       "discovery": {

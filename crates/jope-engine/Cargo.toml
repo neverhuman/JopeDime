@@ -42,5 +42,17 @@ gpr-scratch-reuse = ["feat-math/gpr-scratch-reuse"]
 [build-dependencies]
 cc = "1"
 
+# Test-only: the W7 fixture executable, the production `jope-native-loop` command line observing
+# a checked-in fixture host (tests/support/native_loop_fixture.rs). It is an example target, not
+# a binary of the package: Cargo's default test target selection (`cargo test` and `cargo
+# nextest` without a target filter, as deploy/ci/full-lane.sh runs them) compiles it, and the
+# DEFAULT `cargo build` and `cargo install` do not produce it. An explicit `cargo build
+# --example`, `--examples` or `--all-targets`, or `cargo install --example`, can. The separation
+# from production rests on the production entrypoints hardwiring `HostSources::system()` and on
+# the product target set (the `jope-native-loop` binary), not on Cargo being unable to build it.
+[[example]]
+name = "jope-native-loop-fixture"
+path = "tests/support/native_loop_fixture.rs"
+
 [dev-dependencies]
 

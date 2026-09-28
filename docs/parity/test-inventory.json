@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 4",
-  "count": 3780,
+  "count": 3783,
   "ignored": 62,
   "packages": {
    "battle-gpu": {
@@ -3675,12 +3675,12 @@
     }
    },
    "jope-parallel": {
-    "count": 786,
+    "count": 789,
     "ignored": 14,
     "binaries": {
      "jope-parallel": {
       "kind": "lib",
-      "count": 435,
+      "count": 438,
       "ignored": 7,
       "tests": [
        "build_receipt::tests::bounds_are_numeric_and_fail_closed",
@@ -3999,7 +3999,10 @@
        "native_input_cache::tests::symlinks_and_fifo_refuse_before_read",
        "native_input_cache::tests::unqualified_filesystem_keeps_full_hashing_for_old_read_only_inputs",
        "native_input_cache::tests::writable_files_never_cache_and_wrong_expected_hash_never_enters",
+       "native_loop::bounded::collect::tests::an_empty_malformed_or_absent_machine_id_is_refused_where_it_is_read",
+       "native_loop::bounded::collect::tests::an_empty_or_oversized_boot_id_and_a_bad_host_name_are_refused_where_read",
        "native_loop::bounded::collect::tests::base64_and_pem_framing_are_strict",
+       "native_loop::bounded::collect::tests::the_production_provider_reads_the_real_host_identity_files",
        "native_loop::materialize::tests::previous_generation_targets_are_not_relabelled_as_fresh",
        "native_loop::run_approval::tests::run_review_binds_entire_config_epoch_census_and_original_deadline",
        "native_loop::tests::committed_training_is_not_a_quality_or_serving_acceptance",
@@ -5975,7 +5978,7 @@
   }
  },
  "totals": {
-  "rust": 3780,
+  "rust": 3783,
   "python": 172
  }
 }

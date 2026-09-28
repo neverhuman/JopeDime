@@ -2,17 +2,23 @@
 //!
 //! Every rank has the topology of the three-host proof, collapsed onto loopback: its own real
 //! SmartCluster daemon (`scqd`, unprivileged embedded mode, one allocation at a time) runs the
-//! rank as a trusted-service job whose program is the real `jope-native-loop participant`; its
-//! own real `jope-native-loop agent` process serves that daemon's `SmartClusterSupervisor`
-//! (authenticated exchange: pinned uid and executable digest) over the pinned-TLS transport;
-//! the coordinator's `RemoteSupervisor` routes each rank to its agent, and the coordinator runs
-//! the real rendezvous over the same transport. The host census is collected from the host's
-//! installation file. SSH is never involved.
+//! rank as a trusted-service job whose program is the production `jope-native-loop` command line
+//! as the test-only fixture executable (`support/native_loop_fixture.rs`), so the participant
+//! freshly observes the checked-in fixture host (`support/fixture_host.rs`) and its own running
+//! binary, not the machine the tests run on; its own real `jope-native-loop agent` process (the
+//! product binary) serves that daemon's `SmartClusterSupervisor` (authenticated exchange: pinned
+//! uid and executable digest) over the pinned-TLS transport; the coordinator's
+//! `RemoteSupervisor` routes each rank to its agent, and the coordinator runs the real
+//! rendezvous over the same transport. The host census is collected, on the same fixture host,
+//! from the host's installation file, whose executable is the participant's. SSH is never
+//! involved.
 //!
 //! This is a FIXTURE: three ranks under one boot on one host are not the three-host proof
 //! (W7-T07), and the CPU proof workload is not numerical training.
 #[path = "support/bounded_fixture.rs"]
 mod fixture;
+#[path = "support/fixture_host.rs"]
+mod fixture_host;
 #[path = "support/tls_fixture.rs"]
 mod tls;
 use fixture::*;
@@ -48,7 +54,14 @@ const RANKS: u32 = 3;
 fn tenant() -> String {
     format!("unix:{}", unsafe { libc::geteuid() })
 }
+/// The rank worker every daemon runs as its trusted service, and the executable the host
+/// installation pins: the production command line observing the fixture host. A participant
+/// observes its host, so it is never the product binary here.
 fn participant_binary() -> PathBuf {
+    fixture_host::executable()
+}
+/// The product binary, for the roles that observe no host: `agent` and `coordinate`.
+fn product_binary() -> PathBuf {
     PathBuf::from(env!("CARGO_BIN_EXE_jope-native-loop"))
 }
 
@@ -259,9 +272,14 @@ impl Host {
             input_root: root.clone(),
             smartcluster: pin(&daemons[0]),
         };
-        // The census this host's collector writes.
+        // The census this host's collector writes, observing the fixture host.
         let now = now_ms();
-        let (census, _) = collect::collect(&installation.collect_spec(None), &NoGpu, now).unwrap();
+        let (census, _) = collect::collect(
+            &installation.collect_spec(None),
+            &fixture_host::with_commands(&NoGpu),
+            now,
+        )
+        .unwrap();
         let census_path = root.join("census.json");
         collect::write_census(&census_path, &census).unwrap();
         let identity = census.hosts[0].identity.clone();
@@ -343,7 +361,7 @@ impl Host {
             let supervision_path = dir.join("supervision.json");
             fs::write(&supervision_path, serde_json::to_vec(&supervision).unwrap()).unwrap();
             let log = fs::File::create(dir.join("agent.log")).unwrap();
-            let mut agent = Command::new(&participant)
+            let mut agent = Command::new(product_binary())
                 .arg("agent")
                 .args(["--plan", run_dir.join("plan.json").to_str().unwrap()])
                 .args(["--plan-sha256", &sha])
@@ -576,13 +594,25 @@ fn smartcluster_ranks_commit_the_whole_group_exactly_once() {
     let verified = controller::verify(&host.run_dir, Some(&host.sha)).unwrap();
     assert_eq!(verified.results_verified, 3);
     host.assert_no_orphans();
-    // Every rank ran as a SmartCluster job of the real participant binary, one per daemon,
-    // and its result records the job and attempt it proved it was (W7-D1).
+    // The plan pins the digest of the participant executable the daemons run; every rank's
+    // hello matched it from its own `/proc/self/exe` (the coordinator admits nothing else).
+    let executable = sha(&fs::read(participant_binary()).unwrap());
+    assert!(host
+        .contract
+        .participants
+        .iter()
+        .all(|p| p.host.executable_sha256 == executable));
+    // Every rank ran as a SmartCluster job of the participant executable, one per daemon,
+    // observed the fixture host, and its result records the job and attempt it proved it was
+    // (W7-D1).
     for rank in 0..RANKS {
         let outbox = host.dispatch_dir(rank).join("outbox");
         assert!(outbox.join("envelope.json").exists() && outbox.join("result.bin").exists());
         let result: serde_json::Value =
             serde_json::from_slice(&fs::read(outbox.join("result.bin")).unwrap()).unwrap();
+        assert_eq!(result["host"], fixture_host::HOST);
+        assert_eq!(result["machine_id"], fixture_host::MACHINE_ID);
+        assert_eq!(result["boot_id"], fixture_host::BOOT_ID);
         let mut own =
             SmartClusterSupervisor::new(host.ranks[rank as usize].supervision.clone()).unwrap();
         let handle = own
@@ -950,7 +980,7 @@ fn a_participant_proves_its_smartcluster_job_before_any_work() {
 fn coordinate_cli(host: &Host) -> Child {
     let a = host.args();
     let log = fs::File::create(host.root.join(format!("coordinate-{}.log", now_ms()))).unwrap();
-    Command::new(participant_binary())
+    Command::new(product_binary())
         .arg("coordinate")
         .args(["--run-dir", a.run_dir.to_str().unwrap()])
         .args(["--plan-sha256", &a.plan_sha256])
