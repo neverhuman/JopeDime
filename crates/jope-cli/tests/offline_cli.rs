@@ -28,7 +28,7 @@ fn cli_generates_checks_and_reports_tampering_from_unrelated_directory() {
         String::from_utf8_lossy(&output.stdout)
     );
     let generated: Value = serde_json::from_slice(&output.stdout).unwrap();
-    assert_eq!(generated["dataset_count"], 10);
+    assert_eq!(generated["dataset_count"], 40);
     for arguments in [
         vec![
             "verify-inputs",
@@ -123,7 +123,7 @@ fn committed_corpus_matches_regeneration() {
     // Test-only source location; the installed CLI resolves every path at runtime.
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../datasets/synthetic");
     let report = jope_cli::verify_inputs(&root).unwrap();
-    assert_eq!(report.dataset_count, 10);
+    assert_eq!(report.dataset_count, 40);
 }
 
 #[test]
@@ -320,11 +320,11 @@ fn local_champions_and_train_step_report_supported_and_unsupported_fixtures() {
     let bank: Value = serde_json::from_slice(&champions.stdout).unwrap();
     assert_eq!(bank["ok"], true);
     assert_eq!(bank["env"], "local");
-    assert_eq!(bank["dataset_count"], 10);
-    assert_eq!(bank["supported_count"], 3);
-    assert_eq!(bank["unsupported_count"], 7);
+    assert_eq!(bank["dataset_count"], 40);
+    assert_eq!(bank["supported_count"], 8);
+    assert_eq!(bank["unsupported_count"], 32);
     let rows = bank["rows"].as_array().unwrap();
-    assert_eq!(rows.len(), 3);
+    assert_eq!(rows.len(), 8);
     assert!(rows
         .iter()
         .all(|row| row["task"] == "regression" && row["hold_r2"].as_f64().unwrap().is_finite()));
@@ -333,19 +333,47 @@ fn local_champions_and_train_step_report_supported_and_unsupported_fixtures() {
         .map(|row| row["scenario"].as_str().unwrap())
         .collect();
     searched.sort_unstable();
-    assert_eq!(searched, ["extrapolation", "linear", "sparse_signal"]);
+    assert_eq!(
+        searched,
+        [
+            "collinearity",
+            "constant_target",
+            "extrapolation",
+            "heavy_tailed",
+            "heteroscedastic",
+            "linear",
+            "nonlinear",
+            "sparse_signal"
+        ]
+    );
     let unsupported = bank["unsupported"].as_array().unwrap();
-    assert_eq!(unsupported.len(), 7);
-    for (task, count) in [("binary", 3), ("time_series", 2), ("multiclass", 2)] {
+    assert_eq!(unsupported.len(), 32);
+    for task in ["binary", "time_series", "multiclass"] {
         let excluded: Vec<_> = unsupported
             .iter()
             .filter(|row| row["task"] == task)
             .collect();
-        assert_eq!(excluded.len(), count, "{task}");
+        assert_eq!(excluded.len(), 10, "{task}");
         let reason = format!("unsupported task {task}");
         assert!(excluded
             .iter()
             .all(|row| row["reason"].as_str().unwrap().contains(&reason)));
+    }
+    let mut regression: Vec<(&str, &str)> = unsupported
+        .iter()
+        .filter(|row| row["task"] == "regression")
+        .map(|row| {
+            (
+                row["scenario"].as_str().unwrap(),
+                row["reason"].as_str().unwrap(),
+            )
+        })
+        .collect();
+    regression.sort_unstable();
+    assert_eq!(regression.len(), 2);
+    for ((scenario, reason), expected) in regression.iter().zip(["categorical", "missing_values"]) {
+        assert_eq!(*scenario, expected);
+        assert!(reason.contains("integer, non-null"), "{scenario}: {reason}");
     }
 
     let step = jope(
@@ -359,9 +387,9 @@ fn local_champions_and_train_step_report_supported_and_unsupported_fixtures() {
     );
     let report: Value = serde_json::from_slice(&step.stdout).unwrap();
     assert_eq!(report["ok"], true);
-    assert_eq!(report["dataset_count"], 10);
-    assert_eq!(report["supported_count"], 3);
-    assert_eq!(report["unsupported_count"], 7);
+    assert_eq!(report["dataset_count"], 40);
+    assert_eq!(report["supported_count"], 8);
+    assert_eq!(report["unsupported_count"], 32);
     assert_eq!(report["labels"], bank["rows"]);
     assert_eq!(report["unsupported"], bank["unsupported"]);
     assert_eq!(report["router"]["dim"], 128);
@@ -372,7 +400,7 @@ fn local_champions_and_train_step_report_supported_and_unsupported_fixtures() {
             .iter()
             .map(|class| class["n"].as_u64().unwrap())
             .sum::<u64>(),
-        3
+        8
     );
     assert!(report["note"]
         .as_str()
@@ -432,6 +460,8 @@ fn regression_commands_refuse_other_tasks_and_unsupported_features() {
             "unsupported task multiclass",
         ),
         ("time_series/trend.json", "unsupported task time_series"),
+        ("regression/categorical.json", "integer, non-null"),
+        ("regression/missing_values.json", "integer, non-null"),
     ] {
         cases.push((synthetic_root().join(fixture), reason));
     }
