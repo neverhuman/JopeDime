@@ -89,8 +89,10 @@ deadline is different: it is checked again before each fit starts, on the worker
 so when it binds, how many candidates start before it depends on how fast the fits run, and so
 on the thread count and the host's load. Such a run is timing-dependent: the same command can
 admit a different set of candidates, record different observations and select differently. Its
-receipt shows it: every phase the deadline ended records `seconds` as its stop reason (each
-cut's `stopped_by`, and the exploration and comparison phases' own reasons). The comparison phase
+receipt shows it: every phase the deadline ended records `seconds` as its own stop reason,
+`accounting.exploration.stopped_by` or `accounting.comparison.stopped_by`. With more than one
+cut, a cut's `stopped_by` is its comparison outcome, so an exploration phase the deadline cut
+short shows only in `accounting.exploration.stopped_by`. The comparison phase
 runs one worker per cut. The thread count is not recorded in the receipt. Every fit runs on an
 evaluation-pool thread with a 32 MiB stack, `--threads 1` included (and the test-split refit
 too), so a deep fit cannot measure at one worker count and overflow a smaller default stack,
