@@ -165,36 +165,25 @@ fn command_output(root: &Path, program: &str, args: &[&str]) -> Result<Vec<u8>> 
     Ok(output.stdout)
 }
 
-/// `str(Path(path).relative_to(root))`: `.` for the root itself; a path outside the root refuses.
+/// `str(Path(path).relative_to(root))`: `.` for the root itself; a path outside the root refuses
+/// (the Python crashed with `ValueError`). pathlib compares the two as spelled after parsing, so a
+/// path under POSIX's distinct `//` root is outside the resolved root, which is spelled `/`.
 fn relative(path: &str, root: &Path, context: &str) -> Result<String> {
-    let relative = Path::new(path).strip_prefix(root).map_err(|_| {
-        raised(
-            context,
-            format!(
-                "ValueError: {} is not in the subpath of {}",
-                pyjson::str_repr(path),
-                pyjson::str_repr(&root.to_string_lossy())
-            ),
-        )
-    })?;
-    // pathlib drops repeated separators and `.` components; so does rebuilding from components.
-    let text = relative
-        .components()
-        .collect::<std::path::PathBuf>()
-        .to_string_lossy()
-        .into_owned();
-    Ok(if text.is_empty() {
-        ".".to_owned()
-    } else {
-        text
-    })
-}
-
-fn suffix(name: &str) -> &str {
-    match name.rfind('.') {
-        Some(i) if i > 0 && i < name.len() - 1 => &name[i..],
-        _ => "",
-    }
+    let path = py::PosixPath::parse(path);
+    let base = py::PosixPath::parse(&root.to_string_lossy());
+    // A root that is not UTF-8 holds a byte no metadata string can (the port's JSON strings hold
+    // no lone surrogate), so no path is under it.
+    let relative = match root.to_str() {
+        Some(_) => path.relative_to(&base),
+        None => Err(format!(
+            "{} is not in the subpath of {}",
+            pyjson::str_repr(&path.to_string()),
+            pyjson::str_repr(&base.to_string())
+        )),
+    };
+    relative
+        .map(|r| r.to_string())
+        .map_err(|e| raised(context, format!("ValueError: {e}")))
 }
 
 fn stem(name: &str) -> &str {
@@ -248,6 +237,9 @@ pub fn metadata_from_stdout(stdout: &[u8]) -> Result<Value> {
 
 /// Everything the map must assign, keyed and sorted as `coverage.py discover` printed it.
 pub fn discover(root: &Path) -> Result<Dict> {
+    // `ROOT = Path(__file__).resolve().parents[2]`: the repository, resolved, is what Cargo's
+    // paths are compared with.
+    let root = &root.canonicalize().map_err(|e| Error::io(root, e))?;
     let metadata_bytes = command_output(
         root,
         "cargo",
@@ -358,10 +350,13 @@ pub fn discover_from<'a>(
         }
     }
     let unique: BTreeSet<&str> = files.into_iter().filter(|f| !f.is_empty()).collect();
+    let workflows = py::PosixPath::parse(".github/workflows");
     for filename in unique {
-        let path = Path::new(filename);
-        let name = path.file_name().map_or("", |n| n.to_str().unwrap_or(""));
-        let suffix = suffix(name);
+        // `Path(filename)`: its `name`, `suffix`, `stem` and `parent` as pathlib parses it (`.` and
+        // repeated separators dropped, `//` a root of its own).
+        let path = py::PosixPath::parse(filename);
+        let name = path.name();
+        let suffix = path.suffix();
         if suffix == ".py"
             && (name.starts_with("test_")
                 || name.starts_with("test-")
@@ -369,9 +364,7 @@ pub fn discover_from<'a>(
         {
             items.insert(format!("python:{filename}"), kind("python-family"));
         }
-        if path.parent() == Some(Path::new(".github/workflows"))
-            && matches!(suffix, ".yaml" | ".yml")
-        {
+        if path.parent() == workflows && matches!(suffix, ".yaml" | ".yml") {
             items.insert(format!("workflow:{filename}"), kind("workflow"));
             let text = read(filename)?;
             for job in workflow_jobs(&text).map_err(Error::Invalid)? {
@@ -782,6 +775,28 @@ mod tests {
             .map(String::from)
             .into();
         assert_eq!(default_features(&discovered, "hyperion").unwrap(), expected);
+    }
+
+    /// `Path(p).relative_to(ROOT)`: a metadata path spelled with POSIX's distinct `//` root is
+    /// outside the resolved root; one spelled `///`, or with `.` and repeated separators, is not.
+    #[test]
+    fn metadata_paths_are_relative_to_the_root_as_pathlib_compares_them() {
+        let root = Path::new("/r");
+        assert_eq!(relative("/r/Cargo.toml", root, "m").unwrap(), "Cargo.toml");
+        assert_eq!(
+            relative("///r//src/./main.rs", root, "m").unwrap(),
+            "src/main.rs"
+        );
+        assert_eq!(relative("/r/", root, "m").unwrap(), ".");
+        let refused = relative("//r/Cargo.toml", root, "m")
+            .unwrap_err()
+            .to_string();
+        assert!(
+            refused.contains("ValueError: '//r/Cargo.toml' is not in the subpath of '/r'"),
+            "{refused}"
+        );
+        assert!(relative("/rx/Cargo.toml", root, "m").is_err());
+        assert!(relative("r/Cargo.toml", root, "m").is_err());
     }
 
     #[test]

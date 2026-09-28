@@ -37,9 +37,10 @@
 //! characters, `--path-map` normalisation, the `nextest-config` order of refusals, NaN and big
 //! integer ids. It is replayed by `cargo_artifact_matches_round_two`, with its own exceptions.
 //!
-//! `negative-r3-digits.json` holds the third round (review 5333747872 of PR #117), captured the
-//! same way: Python 3.12's limit of 4300 digits on integer conversion in every JSON and TOML
-//! reader. It is replayed by `cargo_artifact_matches_round_three_digits`.
+//! `negative-r3-digits.json` and `negative-r3-paths.json` hold the third round (review 5333747872
+//! of PR #117), captured the same way: Python 3.12's limit of 4300 digits on integer conversion in
+//! every JSON and TOML reader, and POSIX's distinct `//` root in `--path-map` and in the printed
+//! paths. They are replayed by `cargo_artifact_matches_round_three_digits` and `..._paths`.
 
 use serde_json::Value;
 use std::fs;
@@ -236,6 +237,14 @@ fn cargo_artifact_matches_round_two() {
 #[test]
 fn cargo_artifact_matches_round_three_digits() {
     replay_round("negative-r3-digits.json", 14, &["toml-int-4301-digits"]);
+}
+
+/// Round three, paths (`negative-r3-paths.json`): `Path(host) / path.relative_to(container)` with
+/// POSIX's distinct `//` root (exactly two leading slashes; three or more are `/`), in both
+/// directions and at the root itself, and the paths the refusals print.
+#[test]
+fn cargo_artifact_matches_round_three_paths() {
+    replay_round("negative-r3-paths.json", 15, &[]);
 }
 
 /// Replay every case of a round fixture (the layout of `negative-r2.json`); `message_differs` names

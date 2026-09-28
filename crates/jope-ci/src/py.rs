@@ -1,7 +1,7 @@
-//! The few Python built-in behaviours the ported tools' output depends on.
+//! The few Python built-in behaviours the ported tools' output depends on. `PurePosixPath` is
+//! [`jope_records::py::PosixPath`], which keeps POSIX's distinct `//` root.
 
 use std::fmt::Write as _;
-use std::path::{Component, Path, PathBuf};
 
 /// `str.splitlines()`: the line boundaries Python recognises, not just `\n`.
 pub fn splitlines(text: &str) -> Vec<&str> {
@@ -98,21 +98,6 @@ pub fn json_str(text: &str) -> String {
     out
 }
 
-/// `pathlib.PurePosixPath(text)`: repeated separators and `.` components collapse, a trailing
-/// separator is dropped, and the empty path is `.`.
-pub fn pure_path(text: &str) -> PathBuf {
-    let mut out = PathBuf::new();
-    for component in Path::new(text).components() {
-        if component != Component::CurDir {
-            out.push(component.as_os_str());
-        }
-    }
-    if out.as_os_str().is_empty() {
-        out.push(".");
-    }
-    out
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -144,13 +129,5 @@ mod tests {
         assert_eq!(os_repr(std::ffi::OsStr::new("/r/a")), "'/r/a'");
         assert_eq!(json_str("/t with spaces/é"), "\"/t with spaces/\\u00e9\"");
         assert_eq!(json_str("\u{1F600}"), "\"\\ud83d\\ude00\"");
-    }
-
-    #[test]
-    fn pure_path_normalises_like_pathlib() {
-        assert_eq!(pure_path("a//b/./c/"), PathBuf::from("a/b/c"));
-        assert_eq!(pure_path("./a"), PathBuf::from("a"));
-        assert_eq!(pure_path(""), PathBuf::from("."));
-        assert_eq!(pure_path("/w/x"), PathBuf::from("/w/x"));
     }
 }

@@ -182,7 +182,8 @@ pub fn argparse_commands(src: &str) -> Vec<String> {
     out
 }
 
-/// `os.path.relpath(path, root)` for absolute paths.
+/// `os.path.relpath(path, root)` for absolute paths. It splits both on separators and drops the
+/// empty parts, so unlike pathlib it has no distinct `//` root: `//r/x` relative to `/r` is `x`.
 fn relpath(path: &Path, root: &Path) -> String {
     let path: Vec<_> = path.components().collect();
     let base: Vec<_> = root.components().collect();
@@ -347,7 +348,12 @@ fn walk_files(dir: &Path, out: &mut Vec<PathBuf>) {
     }
 }
 
-/// The path relative to `root` of an entry point the check lists (and must find a row for).
+/// `str(path.relative_to(root))` for an entry point the check lists (and must find a row for).
+///
+/// pathlib compares the two as spelled after parsing: `.` and repeated separators drop out of the
+/// relative path (a `[[bin]]` `path = "./src/x.rs"` is `crates/<c>/src/x.rs`), and a path that is
+/// not under the root (an absolute `[[bin]]` path, either root) refuses, as the Python crashed
+/// with `ValueError` there.
 ///
 /// A name that is not UTF-8 refuses: Python kept it surrogate-escaped, so no row (read as UTF-8
 /// text) could ever name it, and it failed the check reporting the entry point as missing (its
@@ -355,13 +361,17 @@ fn walk_files(dir: &Path, out: &mut Vec<PathBuf>) {
 /// This report is text, so the port refuses instead (exit status 1 either way). Two such names
 /// never collapse into one, as a lossy conversion made them.
 fn rel(path: &Path, root: &Path, what: &str) -> Result<String> {
-    let relative = path.strip_prefix(root).unwrap_or(path);
-    relative.to_str().map(str::to_owned).ok_or_else(|| {
-        Error::Shape(format!(
+    let Some(text) = path.to_str() else {
+        let relative = path.strip_prefix(root).unwrap_or(path);
+        return Err(Error::Shape(format!(
             "{what} {}: the path is not UTF-8, so no row can name it (the Python failed the check reporting it as missing)",
             relative.to_string_lossy()
-        ))
-    })
+        )));
+    };
+    py::PosixPath::parse(text)
+        .relative_to(&py::PosixPath::parse(&root.to_string_lossy()))
+        .map(|relative| relative.to_string())
+        .map_err(|e| Error::Shape(format!("{what}: ValueError: {e}")))
 }
 
 /// The src/bin listing used when cargo metadata is unavailable.
@@ -963,6 +973,31 @@ mod tests {
         );
         let refused = committed_counts(&counts(4300)).unwrap_err().to_string();
         assert!(refused.contains("value has 4301 digits"), "{refused}");
+    }
+
+    /// `str(p.relative_to(root))` of a listed entry point normalises as pathlib does and refuses a
+    /// path outside the root, POSIX's distinct `//` root included; `os.path.relpath` of a Cargo
+    /// `src_path` has no such root.
+    #[test]
+    fn listed_paths_are_relative_to_the_root_as_python_compared_them() {
+        let root = Path::new("/r");
+        assert_eq!(
+            rel(Path::new("/r/crates/c/./src//x.rs"), root, "bin").unwrap(),
+            "crates/c/src/x.rs"
+        );
+        let refused = rel(Path::new("/elsewhere/x.rs"), root, "bin")
+            .unwrap_err()
+            .to_string();
+        assert!(
+            refused.contains("ValueError: '/elsewhere/x.rs' is not in the subpath of '/r'"),
+            "{refused}"
+        );
+        assert!(rel(Path::new("//r/x.rs"), root, "bin").is_err());
+        assert_eq!(relpath(&abspath("//r/src/main.rs"), root), "src/main.rs");
+        assert_eq!(
+            relpath(&abspath("/r/a/../src/main.rs"), root),
+            "src/main.rs"
+        );
     }
 
     /// Python's `\s` and `\w` in the clap, `--help` and argparse readers.
