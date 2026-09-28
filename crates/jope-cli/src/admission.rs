@@ -126,7 +126,7 @@ fn validate_catalog(catalog: &Catalog) -> Result<()> {
         catalog.provenance == Provenance::default(),
         "untrusted synthetic provenance"
     );
-    ensure!(catalog.datasets.len() == 10, "expected exactly 10 datasets");
+    ensure!(catalog.datasets.len() == 40, "expected exactly 40 datasets");
     let mut ids = BTreeSet::new();
     let mut paths = BTreeSet::new();
     for entry in &catalog.datasets {
@@ -162,9 +162,8 @@ fn validate_catalog(catalog: &Catalog) -> Result<()> {
                 .iter()
                 .filter(|entry| entry.task == task)
                 .count()
-                == task.scenarios().len(),
-            "expected {} {} datasets",
-            task.scenarios().len(),
+                == 10,
+            "expected ten {} datasets",
             task.name()
         );
     }

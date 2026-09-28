@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 4",
-  "count": 3711,
+  "count": 3714,
   "ignored": 62,
   "packages": {
    "battle-gpu": {
@@ -1489,12 +1489,12 @@
     }
    },
    "jope-cli": {
-    "count": 58,
+    "count": 61,
     "ignored": 0,
     "binaries": {
      "jope-cli": {
       "kind": "lib",
-      "count": 19,
+      "count": 22,
       "ignored": 0,
       "tests": [
        "champions::tests::champions_and_training_keep_the_admitted_snapshot_after_paths_change",
@@ -1503,16 +1503,19 @@
        "router::tests::routing_features_and_fit_do_not_depend_on_test_features_or_targets",
        "tests::a_fifo_is_rejected_without_waiting_for_a_writer",
        "tests::altered_file_and_replaced_checksum_cannot_redefine_trust",
+       "tests::forty_scenarios_are_valid_and_regeneration_is_byte_identical",
        "tests::generation_never_overwrites_existing_or_incomplete_output",
+       "tests::grouping_is_enforced_even_outside_the_named_grouped_scenario",
        "tests::groups_cannot_cross_partitions_or_lose_identity",
        "tests::individual_dataset_reads_reject_unsafe_objects_and_oversized_payloads",
        "tests::malformed_features_targets_ids_and_splits_fail_schema_validation",
        "tests::missing_extra_duplicate_and_untrusted_catalog_entries_fail",
        "tests::missing_unmanifested_and_oversized_files_fail",
        "tests::named_stress_scenarios_have_their_promised_structure",
+       "tests::pre_d5_fixtures_keep_their_bytes",
+       "tests::pre_d5_ten_member_catalog_is_rejected",
        "tests::swapped_root_and_file_paths_cannot_change_bytes_already_opened",
        "tests::symlink_files_directories_and_roots_are_rejected",
-       "tests::ten_scenarios_are_valid_and_regeneration_is_byte_identical",
        "tests::time_reversal_duplicate_times_and_future_partitions_fail",
        "tests::traversal_and_nonportable_paths_are_rejected",
        "tests::unknown_fields_and_unsupported_target_shapes_are_rejected"
@@ -5857,7 +5860,7 @@
   }
  },
  "totals": {
-  "rust": 3711,
+  "rust": 3714,
   "python": 172
  }
 }

@@ -38,7 +38,7 @@ enum Command {
     Train(train::TrainCli),
     /// Generate and optimize executable algorithms from the verified development panel.
     Optimize(jope_bench::panel::optimize_cli::OptimizeCli),
-    /// Verify the ten synthetic fixtures against the pinned deterministic generator.
+    /// Verify all forty synthetic fixtures against the pinned deterministic generator.
     VerifyInputs {
         /// Explicitly select offline qualification; no network access is performed.
         #[arg(long)]
