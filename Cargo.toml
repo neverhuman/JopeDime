@@ -28,14 +28,13 @@ members = [
   "crates/smartcluster/jainnode",
   "crates/smartcluster/scq",
 ]
-exclude = ["xtools/ot-export"]
 
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
 rust-version = "1.96"
 license = "Apache-2.0"
-repository = "https://github.com/veox-ai/JopeDime"
+repository = "https://github.com/neverhuman/JopeDime"
 
 [workspace.dependencies]
 # shared by feat-math / jope-campaigns (former root workspace) and the vendored smartcluster workspace
