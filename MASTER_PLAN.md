@@ -1,5 +1,349 @@
 # JopeDime current direction
 
+**2026-09-28 wrap-up train and v0.2.0.** Eight pull requests, #115 to #122, landed on main between
+2026-09-27T09:56:32Z and 2026-09-28T19:29:10Z. Clean-base part B (#123) followed at
+2026-09-28T21:39:07Z. This pull request, which carries the v0.2.0 release tooling, sits on #123's
+merge and closes the wrap-up train the owner approved at 2026-09-27T22:20Z: release first, then
+the live three-host S3 demonstration as the next milestone.
+
+The same rules held for all eight, and for #123 (whose one failed CI attempt was at an earlier
+head, below):
+- **Merge.** Each one merged by GitHub rebase at the exact reviewed head, and each merged tree is
+  byte-identical to the reviewed head's tree. `jepsontaylor` performed every merge.
+- **Review.** Every approval and every changes-requested review came from `neverhumanbot`
+  (219957145). Every commit that landed on main has Jepson Taylor
+  `<130782313+jepsontaylor@users.noreply.github.com>` as both author and committer. Claude
+  appears only as a Co-Authored-By trailer.
+- **CI.** A `pull_request` run and a `workflow_dispatch` run of `ci.yml` passed on attempt 1 at
+  each final head. A full run is nine jobs: `changes`, `hygiene`, `rust-check`, `rust-test`,
+  `emitters`, `inputs`, `python`, `e2e-smoke` and `aggregate`. Lanes skipped by the path matrix
+  are named below.
+- **Issues.** None of the eight closes an issue.
+- **Custody.** `…/claude-w0-w12/` stands for
+  `/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/`.
+
+Merge order, main SHA after each merge, and final main:
+`cee1fc8bd242688972c352133847793c6927279f` (#115) →
+`f46a9048fbb2697d6d1f4463a688083ea9dfcce1` (#116) →
+`dd49b23bc94678106d33544e138f22e8979e8344` (#118) →
+`7aec174e055af6ffe41f71446876e0b0e6f632ce` (#117) →
+`4ff4e7b697dcd5b7097dacbae9e99c07ffef8e28` (#119) →
+`01ef9ddcb31133bea27188e29af9978c2d36b8c4` (#121) →
+`4d9a27e64d31c57b6573a84e35f22c69ebb2b1b6` (#120) →
+`a8e4ce8f1f7cdf2f518e867147c4f0b038d966c5` (#122) →
+`0737da51102ad502676c1b1c3c06549a3ad0442e` (#123) → this pull request's merge commit.
+
+A rebase merge writes new commits, so no commit of this pull request can name that merge commit.
+It is `origin/main` immediately after the merge, and the v0.2.0 release readback under
+`~/jope-evidence/release-v0.2.0/` records its SHA.
+
+- **[#115](https://github.com/neverhuman/JopeDime/pull/115): the record of #114's landing.**
+  It added the MASTER_PLAN record that follows this one.
+  - Merge: one commit, main `cee1fc8bd242688972c352133847793c6927279f`.
+  - Reviewed head: `a2e45bca35a31db33bbd4b7a24d1038be8142c1a`. The tree is
+    `070bf1c6969c01963fcd8f86991e758ba16e5c10` on both sides.
+  - Review: approval 5329823074.
+  - PR run 36310255122: `changes`, `hygiene` and `aggregate` passed; the six other lanes were
+    skipped by path.
+  - Manual run 36310333178: all nine jobs passed.
+  - Manual dispatches 36310263359 and 36310263463 were cancelled. They are not evidence.
+  - After merge: main-guard 36310954778 passed. full-main-cpu 36310954813 failed. No run of
+    that workflow succeeded until #116.
+  - Custody: `…/claude-w0-w12/pr115-merge-20260927T095621Z/` and
+    `…/claude-w0-w12/independent-review-pr115/`.
+- **[#116](https://github.com/neverhuman/JopeDime/pull/116): the known full-main-cpu failures
+  are routed to the lanes that can prove them.**
+  - It carries Codex's `health/full-main-green`. The 8 host-data tests go to
+    `deploy/ci/real-corpus-lane.sh`. The CPU fit-service contracts are ignored only under
+    `neural`; that list grew from 74 to 80 with #114's six new contracts.
+    `deploy/ci/check-test-routing.sh` guards both lists.
+  - No test was deleted, and no fence was weakened.
+  - Merge: four commits, main `f46a9048fbb2697d6d1f4463a688083ea9dfcce1`.
+  - Reviewed head: `05a5cf84c90bca27f00c0d67dda624e5d63634fd`. The tree is
+    `3cb9737c1b6f6f10bd412815c386a78359b85db0`.
+  - Review: approval 5331659297.
+  - CI: PR run 36340840488 and manual run 36340841630 passed all nine jobs.
+  - After merge: main-guard 36343656758 passed, and full-main-cpu 36343656796 passed. That was
+    the workflow's first successful run: the 53 runs created before it ended in 48 failures and
+    5 cancellations.
+  - Custody: `…/claude-w0-w12/pr116-merge-20260927T191447Z/` and
+    `…/claude-w0-w12/independent-review-pr116-05a5cf84c/`.
+- **[#118](https://github.com/neverhuman/JopeDime/pull/118): targeted single-dataset search in
+  `jope pipeline`.**
+  - What it adds:
+    - seeded generation 0 and an incumbent;
+    - deterministic threads and islands (parallel search groups over the same cuts);
+    - `evolve` rounds chained in a verified `lineage.json`, with an unseeded control;
+    - a sealed test split scored at most once per dataset and program in its registry (a local
+      record, not access control);
+    - `hwm ingest --source pipeline`;
+    - an append-only champion bank whose export feeds the next `evolve --seeds`.
+  - The local demonstration improved on validation folds that every round selected on. On the
+    sealed test split the control's champion scored better. The PR says so.
+  - Merge: 32 commits, main `dd49b23bc94678106d33544e138f22e8979e8344`.
+  - Reviewed head: `9fa240906991bd10f5538c29edc66c7b99d28b29`. The tree is
+    `d5ddc3358218de0711d39e98c71fdd3284816771`.
+  - Review:
+    - 5334007364 requested changes at `d7e89f21197f446618bd1c80e03e90890f185010`. Refused
+      arguments had to leave nothing written, and the determinism claim had to be limited to
+      phases that the budget, not the deadline, ends.
+    - 5334625316 requested changes at `053c7862f755a17ae7434561e626e4d4c096b686`. Two
+      concurrent test-split scores both recorded no earlier looks. The fix is a per-dataset lock.
+    - 5334865651 approved.
+  - CI: PR run 36387309556 and manual run 36387306913 passed all nine jobs.
+  - After merge: main-guard 36388986311 and full-main-cpu 36388986268 passed.
+  - Custody: `…/claude-w0-w12/pr118-merge-20260928T065616Z/`,
+    `…/claude-w0-w12/independent-review-pr118-*/` and `…/claude-w0-w12/pr118-review-*`.
+- **[#117](https://github.com/neverhuman/JopeDime/pull/117): Python removal P1.**
+  - The Python that CI and the engine depend on is ported to Rust:
+    - family growth, in `jope-engine`;
+    - `jope-ci cargo-artifact`;
+    - the four records guards, as `jope-records` verbs;
+    - `jope-ci build-report`.
+  - 703 files with no live consumer are archived, with a manifest and a custody tarball.
+    ADR-0006 records the Rust-only stack.
+  - Merge: 50 commits, main `7aec174e055af6ffe41f71446876e0b0e6f632ce`.
+  - Reviewed head: `083485a76c1ab13e7ed73ac20f608e6332f6e12f`. The tree is
+    `d2e989ce2d00eeb4f061896728e622369d4f94db`.
+  - Review: four requests for changes, then approval. Each finding was fixed across its whole
+    class, and each fix is backed by differential fixtures captured from the original tools. In
+    every harness there are 0 cases where the original refuses and the port accepts.
+    - 5332299199 at `a997ab82500ce9708fe88054c8147a38ae4d9bd7`: the coverage validator
+      accepted malformed lanes and dispositions.
+    - 5333747872 at `e8640b7b07ab7977d20b99b450bd99456e7fe4ca`: POSIX `//` roots and
+      Python's 4300-digit integer limit.
+    - 5334300806 at `bc22bc6ca229c6f95153e0a8b2372506a0191de1`: two cases the original
+      rejects and the port accepted.
+    - 5337854418 at `bcdadfc77caf34ef32fd8fe279427ee4b617c909`: inexact arithmetic on
+      input-derived values.
+    - 5338691773 approved.
+  - CI: PR run 36421749004 and manual run 36421748661 passed all nine jobs.
+  - After merge: main-guard 36424942633 and full-main-cpu 36424942246 passed.
+  - Custody: `…/claude-w0-w12/pr117-merge-20260928T125447Z/`,
+    `…/claude-w0-w12/independent-review-pr117-*/` and `…/claude-w0-w12/pr117-review-*`.
+- **[#119](https://github.com/neverhuman/JopeDime/pull/119): clean-base part A.**
+  - Changes:
+    - three unreferenced leftovers and the dead `ops/ci` directory are removed;
+    - `actions/checkout` is pinned to v7.0.1 in `ci.yml`, `full-main.yml` and
+      `main-guard.yml`;
+    - the stash-only ledger block and plan are archived under `docs/`;
+    - all 33 feat-math temp-dir test callers now use `tempfile`.
+  - `AGENT_CHAT.md` is unchanged.
+  - Merge: 10 commits, main `4ff4e7b697dcd5b7097dacbae9e99c07ffef8e28`.
+  - Reviewed head: `d582c30bfab7a14dad44cc05764bda680c76e28d`. The tree is
+    `2876e389b09e849e0b1246fe80b424f6a418acd4`.
+  - Review, two approvals:
+    - 5338771284, submitted at 12:42:58Z. It was given at
+      `01f3b6f1872eca8ca4281d6b090251090eb2eec9`, before the rebase onto #117; its body names
+      that head. The API now reports its `commit_id` as the rebased head.
+    - 5339999982, submitted at 14:19:47Z, after the rebased head was pushed (its PR run was
+      created at 13:32:47Z). The merge relied on this one.
+  - CI: PR run 36429372310 and manual run 36429371243 passed all nine jobs.
+  - After merge: main-guard 36435189783 and full-main-cpu 36435189776 passed.
+  - Custody: `…/claude-w0-w12/pr119-merge-20260928T141950Z/`,
+    `…/claude-w0-w12/independent-review-pr119-01f3b6f18/` and
+    `…/claude-w0-w12/independent-review-pr119-d582c30bf/`.
+- **[#121](https://github.com/neverhuman/JopeDime/pull/121): D5, all forty synthetic
+  fixtures.**
+  - The fixtures were regenerated by this tree's generator, not copied. On main, the
+    `datasets/synthetic` tree is `43e962350afe29fd1c93c0ba3128bd8bcfc8e58e`, which is the tree of
+    Codex's `15a1d3102c7c45e79396749c8ba1fd516cfc34e9`. It holds 40 fixtures plus
+    `catalog.json`, whose sha256 is
+    `651d28c8456bc160ed33960110142cdb8e9941d2a727348416db999f99d22e93`.
+  - The ten real `test-10` datasets are kept, and `MAX_DATASETS` stays 10.
+  - `champions --local` and `train-step --local` use one verified snapshot. They search the 8
+    supported regression fixtures and report the other 32 as unsupported.
+  - No Python was added or edited.
+  - Merge: four commits, main `01ef9ddcb31133bea27188e29af9978c2d36b8c4`.
+  - Reviewed head: `e0b906b239b107701364adb41d522f7a7c1ff051`. The tree is
+    `65d8c3f2ae2e59dbccfa322ebc36d42f558fe947`.
+  - Review: approval 5340876669.
+  - PR run 36442700858: seven jobs passed; `python` and `emitters` were skipped by path.
+  - Manual run 36442700618: all nine jobs passed.
+  - After merge: main-guard 36445370527 and full-main-cpu 36445370746 passed.
+  - Custody: `…/claude-w0-w12/pr121-merge-20260928T154011Z/` and
+    `…/claude-w0-w12/independent-review-pr121-e0b906b23/`.
+- **[#120](https://github.com/neverhuman/JopeDime/pull/120): W7, the bounded multi-host
+  native training loop.**
+  - This lands Codex's `rr2/w7-live` through cherry-picks with `-x`: W7-T01, T03 to T07 and
+    W7-D1 to D6.
+  - #114's read-once API is kept, and `full-lane.sh` calls the Rust `cargo-artifact` port.
+  - No live three-host run is claimed.
+  - Review 5339604155 requested changes at `3d12729a2181bcbe5c153770c60095be9c4414fe`: the
+    TLS handshake and framed-I/O deadlines were checked only between `complete_io` calls.
+    `transport::DeadlineSocket` now applies the absolute deadline to every read and write, and
+    the courtesy close is capped at 1 s.
+  - The branch was updated without rewriting history. Merge commit
+    `1c19341fcd5e387863e0b71aa1aae5814d63dd98` brought in main
+    `01ef9ddcb31133bea27188e29af9978c2d36b8c4`, and the corrections were cherry-picked on top.
+    The previously pushed head stayed an ancestor.
+  - GitHub's rebase merge replayed the 25 non-merge commits of the 26 and dropped the merge
+    commit. Main became `4d9a27e64d31c57b6573a84e35f22c69ebb2b1b6`.
+  - Reviewed head: `58a919e214b4c46ac6614156d7bc498084cb17b3`. The tree is
+    `7c544624efdb3af542a33365a54401ec974bb984` on both sides.
+  - Approval: 5341334345, at 16:00:21Z, after the 15:56Z push.
+  - CI: PR run 36447376345 and manual run 36447429049 passed all nine jobs.
+  - Codex ran the review, CI and merge (AGENT_CHAT 2026-09-28T15:42Z).
+  - After merge: main-guard 36449887715 passed. full-main-cpu 36449887665 **failed**. The failure
+    reproduced in #122 is 11 tests: 6 in `jope-parallel::bounded_census` and 5 in
+    `bounded_smartcluster`. They read the runner container's empty `/etc/machine-id`, and PR
+    CI's `rust-test` lane does not run those suites.
+  - Custody:
+    - `/home/ubuntu/jope-rescue-20260921/pr120-codex-resume-20260928/`;
+    - `/mnt/jope-archive/jopedime-pr120-custody-20260928/`, the honesty lane archive;
+    - `…/claude-w0-w12/independent-review-pr120-3d12729a2/`;
+    - Claude's evidence, in `…/claude-w0-w12/runs/w7-*`.
+- **[#122](https://github.com/neverhuman/JopeDime/pull/122): W7's host-identity tests become
+  hermetic.**
+  - `collect::HostSources` has no `Default`. The product binary hard-wires
+    `HostSources::system()`, which reads `/etc/machine-id` with the same strict refusal.
+  - The tests go through the example `jope-native-loop-fixture` and checked-in fixture host
+    files. No test was weakened or skipped.
+  - Test support gained three things: a stale-fixture guard (mtime and dep-info only), coordinator
+    diagnostics, and a port reservation outside the ephemeral range.
+  - Authorship: Claude wrote eight commits, through `4af8afe7547f7fbdb9b0881742b96778965e04cc`,
+    and handed off. Codex added the ninth, which only corrects the freshness guard's scope wording
+    in comments and docs. That commit is main `a8e4ce8f1f7cdf2f518e867147c4f0b038d966c5` itself.
+  - Merge: nine commits, main `a8e4ce8f1f7cdf2f518e867147c4f0b038d966c5`.
+  - Reviewed head: `00541d319493c772c053821ae6b3f8b0462c5423`. The tree is
+    `37ce3d5cbfe638bc22bfd6a3eeb0fd1a71ec328c`.
+  - Review: approval 5343417155.
+  - CI: PR run 36469868551 and manual run 36469978500 passed all nine jobs.
+  - Codex ran the review, CI and merge.
+  - After merge: main-guard 36472565789 passed, and full-main-cpu 36472565658 passed on attempt 1
+    (completed 2026-09-28T20:11:15Z), so the #120 failure is fixed on main.
+  - Custody:
+    - `/home/ubuntu/jope-rescue-20260921/fix-census-codex-lifecycle-20260928/`;
+    - `/mnt/jope-archive/jopedime-pr122-custody-20260928/`;
+    - Claude's evidence, in `…/claude-w0-w12/runs/fix-machine-id-*`.
+- **[#123](https://github.com/neverhuman/JopeDime/pull/123): clean-base part B.** It completes
+  the clean-base plan (D-A) on a main that holds #117 and #119 to #122. Main has 536 fewer
+  tracked files: 2,880 at `a8e4ce8f1f7cdf2f518e867147c4f0b038d966c5`, 2,344 at the merge (557
+  deleted, 21 added).
+  - Changes:
+    - it retires `deploy/kernel-v1` (304 files, among them second copies of `jope-parallel`,
+      `feat-math`, `feat-cli` and `feat-core`) and `docs/legacy` (250 files), after custody in
+      `/home/ubuntu/jope-evidence/clean-base-20260927/`: a tarball, a bundle restored
+      independently with `git clone --no-local --bare` by two verifiers, `SHA256SUMS` and
+      `VERIFICATION.txt`;
+    - `docs/archive/clean-base-manifest.json` is generated and gives each of its 564 entries a
+      `git checkout <sha> -- <path>` restore;
+    - `repository = "https://github.com/neverhuman/JopeDime"` in `[workspace.package]`, and the
+      `jope` binary with its direct crates as the workspace `default-members`;
+    - `actions/checkout` is pinned to v7.0.1 in `weekly.yml`;
+    - the `jope-records repo-layout` guard joins the hygiene lane, with a shrink-only allowlist;
+    - `check-test-routing.sh` checks both directions.
+  - Review 5344298377 requested changes at `fc39cfb59118d8622eccbf58fea45d3c3c249254`: the
+    duplicate-package rule read `[package]` names with a regex, so a copy whose name was a
+    single-quoted TOML string passed at exit 0, and manifests the regex could not read were
+    skipped silently. The fix, two commits added without a rewrite
+    (`7982c479fd673084ed1490b3edcd4d72f315544e` and `dd4675c097901ad323323adc7361ef67a6b0ab0e`),
+    reads every tracked Cargo manifest as TOML 1.0, adds the rule `bad-manifest` for a manifest
+    the guard cannot read, and reports every tracked path that is not UTF-8 (`bad-path`) instead
+    of skipping it. Neither rule takes an exception. It added 7 jope-records tests (3,789 to
+    3,796 in the inventory).
+  - Merge: 12 commits, main `0737da51102ad502676c1b1c3c06549a3ad0442e`, at
+    2026-09-28T21:39:07Z.
+  - Reviewed head: `dd4675c097901ad323323adc7361ef67a6b0ab0e`. The tree is
+    `67677e988df377cfd157219b047875b1d8d508bc` on both sides.
+  - Review: 5344298377 requested changes at `fc39cfb59118d8622eccbf58fea45d3c3c249254`, as
+    above. 5344815205 approved at `dd4675c097901ad323323adc7361ef67a6b0ab0e`.
+  - CI at `fc39cfb59118d8622eccbf58fea45d3c3c249254`:
+    - PR run 36479466799 failed on attempt 1. `hygiene` and `changes` stopped at the
+      runner-provenance step on the xbabe1 runners, because the job's cgroup limits did not equal
+      the approved CPU budget, and `aggregate` failed with them. The PR attributes this to a host
+      `systemctl daemon-reload` at 20:03Z that reset the idle containers' swap limit. Attempt 2
+      passed all nine jobs.
+    - Manual run 36479467996 passed all nine jobs.
+  - CI at `dd4675c097901ad323323adc7361ef67a6b0ab0e`: PR run 36485227333 and manual run
+    36485226033 passed all nine jobs on attempt 1.
+  - After merge: main-guard 36487524917 passed, and full-main-cpu 36487524712 passed on attempt 1
+    (completed 2026-09-28T22:24:59Z).
+  - Custody: `…/claude-w0-w12/pr123-merge-20260928T213854Z/`,
+    `…/claude-w0-w12/independent-review-pr123-fc39cfb59/` and
+    `…/claude-w0-w12/independent-review-pr123-dd4675c09/`.
+- **This pull request: the v0.2.0 release tooling, CHANGELOG, README and this record.** Rebased
+  on #123's merge, `0737da51102ad502676c1b1c3c06549a3ad0442e`.
+  - Changes:
+    - the lock-only dependency bump that was PR #5's intent, on current main: `cc` 1.4.5 to
+      1.5.1, `clap` 4.6.6 to 4.6.7 and `crc32fast` 1.5.1 to 1.5.2;
+    - `deploy/release/release.sh` (bash and jq) and its refusal tests,
+      `deploy/release/test-release.sh`, which runs in the hygiene lane (owner decision D-D);
+    - `docs/release/README.md` and the public key `docs/release/signing.pub`, sha256
+      `de84945ec5326877d202d0738e655492a8b2c3b794873a2eb248939c4d326e4e`;
+    - `release.yml` made dispatch-only; it fails closed at its first step;
+    - version 0.2.0 for the workspace and every product crate;
+    - `CHANGELOG.md` for 0.2.0, generated with git-cliff and curated by pull request;
+    - the README's 0.2.0 status, stats, releases section and layout, and the lines that #117 to
+      #123 and the release made false in `SECURITY.md`, `CONTRIBUTING.md` and `docs/`;
+    - this record.
+  - Merge: this pull request's merge commit, `origin/main` immediately after the merge; its SHA
+    is recorded in the release readback, not here. No tag exists yet: `release.sh --publish`
+    creates `v0.2.0` on that commit. The Python package stays 0.1.0 and unreleased, and no wheel
+    ships.
+
+Deferred to the next milestone. These are recorded, not dropped:
+1. **The live three-host S3 training demonstration.**
+   - First, P6-0 search throughput. #118's run measured about 3 of 8 cores busy; the work is
+     parallel folds and steady-state generations.
+   - Then the P6-1 to P6-7 host setup.
+   - Then windows A to E: 80% CPU search islands on three hosts, 3-GPU training, and S3 progress
+     and restore.
+   - The live W7 three-host run follows its runbooks under its own admission window.
+2. **A self-hosted `release.yml`:** a release lane, the Rust admission hook (ADR-0006 U4) and the
+   `jope-ci release` commands. Until then, releases come from `deploy/release/release.sh`.
+3. **Python P2 and P3:** the remaining CI tools move to Rust, and then the torch lineage, the
+   `python` lane and `pyproject` are retired.
+4. **The remaining W-series gaps and open issues:**
+   - #48, the C++/JS emit binding;
+   - #62, live S3 from the command line. Its last status (2026-09-27) lists the live champion
+     pull/push route, the unused `s3` feature of `jope-arena`, a receipted live `jope.hwm/v1`
+     round-trip through the `jope-learning` mirror and sync, and where `JOPE_DATASETS_CACHE`
+     actually puts fetched files;
+   - #47, the gitleaks history scan, whose findings depend on the clone's refs. #114 made the
+     hygiene scan cover `HEAD` and all of its history; still open are an audit of the 243
+     findings on custody refs that are not ancestors of the source head (225 vendored
+     `generic-api-key`, 18 `jope-env-files`) and a scheduled scan of every retained ref;
+   - W7 cross-host exchange and continuation;
+   - the other open W1–W12 items.
+5. **Two W7 test-support items:**
+   - the transient `bounded_smartcluster` failure (post2) is not root-caused;
+   - the port-reservation window left open by #122 needs a production change.
+6. **Smaller items:**
+   - the jankurai measurement and its caps;
+   - the WP5 cli-split;
+   - the 35 `std::env::temp_dir` calls in the test code of 25 files outside feat-math, held on
+     the repo-layout R5 allowlist (3 of them in the pinned fit-authority source, which stays as
+     it is);
+   - the README's generated arena block cites
+     `python/src/jope/research/index_combined_regression_evolution.py:183` and
+     `docs/learning.md:46` cites `promotion_gate.py:22-27`, both archived by #117. The arena text
+     comes from the sha256-pinned `assets/regression/protocol-corrections-tabular-regression-v2.json`
+     through the `jope-records readme-benchmarks` generator, so the fix goes through it (PY-P2);
+     the generated block is not edited by hand;
+   - owner: `docs/runbooks/rotate-credentials.md` gives the OIDC trust policies' `sub` claims
+     as `repo:veox-ai/JopeDime:…`, with a `refs/tags/v*` binding for `release.yml`, which no
+     longer requests `id-token: write`. Re-check the policies' repository and ref bindings
+     against `neverhuman/JopeDime`; they cannot be read from here;
+   - untracking `AGENT_CHAT.md`, which waits for the owner and Codex.
+
+Next allowed action:
+1. Cut v0.2.0 on xbabe2, from a clean registered worktree at this pull request's merge commit
+   (`origin/main` immediately after the merge, after a fresh fetch): run
+   `deploy/release/release.sh v0.2.0 "$(git rev-parse origin/main)"` (the dry run), inspect its
+   evidence, then run the same command with `--publish`. `release.sh` refuses unless `HEAD` and
+   a freshly fetched `origin/main` both equal that SHA. Read back the receipts under
+   `~/jope-evidence/release-v0.2.0/`: `readback.json` must show cosign `Verified OK` against the
+   committed key, `sha256sum -c` passing, the manifest `git_sha` equal to
+   `git rev-parse v0.2.0^{commit}`, the binary printing `jope 0.2.0`, glibc at most 2.36 and a
+   failing tampered copy. Record them with the main-guard and full-main-cpu runs on that commit.
+2. Close the `bench` and `demo` lanes under custody: bundle, restore independently, then
+   `git worktree remove`. Delete the landed branches. Confirm that `gh pr list --state open` is
+   empty and that `git log --all --not --remotes` shows only custody refs.
+3. Update the records of issues #47, #48 and #62, which stay open.
+4. Then start the next milestone, with P6-0 throughput as its own reviewed PR. The live three-host
+   S3 and GPU windows need their own admission. This record does not start them.
+
 **2026-09-27 W1–W12 source gap closure.** [PR #114](https://github.com/neverhuman/JopeDime/pull/114)
 landed the remaining source- and fixture-scope W1–W12 work on top of #111 and #113:
 - W1 input boundaries;
@@ -375,9 +719,10 @@ missing fixtures instead of importing them wholesale, and it keeps the ten
 
 ## Blockers (do not fake)
 
-- Full-main CPU workflow and runner delivery remain unimplemented and unqualified.
-  Writer access has recovered; keep runner credentials separate and preserve
-  independent reviewer eligibility for each subsequent PR.
+- `full-main-cpu` runs on every push to `main`; its first success came after #116 (see the
+  2026-09-28 record). The `xbabe2-gpu` runner that `weekly.yml` targets is not provisioned.
+  Keep runner credentials separate and preserve independent reviewer eligibility for each
+  subsequent PR.
 - Private-repo rulesets API returns HTTP 403 until the org is upgraded (D3,
   owner action in progress). Until then the merge rule below is process-only.
 - No `--admin` merge. Worktrees only in `.agent/worktrees/`, at most four,
@@ -447,8 +792,8 @@ can be satisfied by remembering.
 | — | strict Python parity prerequisites | d76cdf1e | #50 | `baa4c1f24e7b2ab7f38af5061feea6029d27cc94` 2026-09-22T03:10:24Z |
 | — | generated README benchmark results | 9e44a206 | #51 | `25242513173e1a8b01f7d1e9f73775b7df14110e` 2026-09-22T03:20:41Z |
 | — | feat-math Clippy cleanup | c0e8d473 | #53 | `3e0616057bc3234d568deceb884ea1c69ea8451b` 2026-09-22T04:09:11Z; external merge, remaining workspace lint work still requires its own measured evidence |
-| #5 | dependabot cargo group | 1151493 | | re-trigger after main settles; lockfile = trust surface, two lenses |
-| — | `rr2/d5-forty-fixtures` | | | Not merged; this row travels in the PR from `rr2/d5-forty-fixtures`. A commit cannot name its own SHA and the rebase merge rewrites the branch's SHAs, so the reviewed exact head is recorded on that PR, and the merge SHA with its push-time `git ls-remote origin main` and `gh pr list --state merged` readback is recorded by the records PR after the merge. The forty fixtures are regenerated by this tree's generator: `datasets/synthetic` tree `43e96235` (the Codex `15a1d31` tree), catalog sha256 `651d28c8…22e93`. The `test-10` datasets are kept. `champions --local` searches the 8 supported regression fixtures and reports the other 32 as unsupported. Needs exact-head CI and independent review. |
+| #5 | dependabot cargo group | 1151493 | the v0.2.0 release PR | its merge commit, whose SHA the v0.2.0 release readback records: #5's intent re-cut on current main as a lock-only bump (`cc` 1.4.5 to 1.5.1, `clap` 4.6.6 to 4.6.7, `crc32fast` 1.5.1 to 1.5.2), one commit of the release PR |
+| — | `rr2/d5-forty-fixtures` | e0b906b239b107701364adb41d522f7a7c1ff051 | #121 | `01ef9ddcb31133bea27188e29af9978c2d36b8c4` 2026-09-28T15:40:24Z (rebase; four commits; reviewed tree `65d8c3f2ae2e59dbccfa322ebc36d42f558fe947` equals the merged tree; approval 5340876669; PR run 36442700858 and manual run 36442700618 green; the forty fixtures, 8 supported and 32 reported unsupported; the `test-10` datasets are kept) |
 
 Recovery of #5–#16: bundle `pr-5-through-16.bundle` (sha256 3bafaa52…) is also
 at `s3://veox-jopedime-archive-use2/git-bundles/20260921/`.
@@ -583,10 +928,13 @@ sessions.
 
 | Claim, and where it still appears | Why it is wrong |
 | --- | --- |
-| "617 tests", "9.4 GB", "about a minute" — `deploy/ci/rust-test-scope.sh` and `.github/workflows/ci.yml` at `70506066` | Local numbers from before the lane ever ran hosted. Measured: 651 tests, 8.98 GB, 626 s. Corrected on `ci/rust-test-followup-20260921`; the tree carries the old ones until that lands. |
+| "617 tests", "9.4 GB", "about a minute" — `deploy/ci/rust-test-scope.sh` and `.github/workflows/ci.yml` at `70506066`; still in `deploy/ci/rust-test-scope.sh` and the `test-pr` comment of `justfile` | Local numbers from before the lane ever ran hosted. Measured: 651 tests, 8.98 GB, 626 s. Corrected on `ci/rust-test-followup-20260921`; the tree carries the old ones until that lands. |
 | "the hosted gate ran no Rust tests at all" — this board's earlier draft and the #39 discussion | `emitters` ran `cargo test -p feat-math --lib -- cxx::` and `--test portable_parity`. The rest of the claim holds. |
 | "the fence explains 9 of the quarantined tests" — this board's earlier draft | It explains 5. The `cause A` block held 9 because 3 relocation failures and 1 panic were misfiled under it. |
-| "`rust-check` runs clippy and fmt" — the D2 row before this revision | It runs `cargo check`, a systemd test and an MSRV check. Neither linter is in any hosted lane. |
+| "`rust-check` runs clippy and fmt" — the D2 row before this revision | It runs `cargo check`, a systemd test and an MSRV check. `cargo fmt --all --check` now runs in the hosted `hygiene` lane (`deploy/ci/check.sh`); clippy is still in no hosted lane. |
+| "Full-main CPU workflow and runner delivery remain unimplemented and unqualified" — this file's Blockers before the 2026-09-28 record | `full-main-cpu` runs on every push to `main`. Its first success, 36343656796, came after #116; 36472565658 passed on `a8e4ce8f1f7cdf2f518e867147c4f0b038d966c5`. |
+| "Live S3 is **not** wired" — the README before the v0.2.0 release PR | The dataset and model stores and the learning mirror reach `s3://` through `object_store`. What fails closed is the champion route (#62) and `train-step --env`; no live S3 training run has been made. |
+| "A `v0.1.0` tag through `release.yml` with attested `jope` binary, wheel, SBOMs and receipt" — `docs/public-readiness-checklist.md` before the v0.2.0 release PR | Releases come from `deploy/release/release.sh` (owner decision D-D), with a cosign signature over `SHA256SUMS`; `release.yml` is dispatch-only; there is no wheel and no attestation. The first release is v0.2.0. |
 | In the stale `jain-split` mirror: "Eight-A100 recovery" in the header of `/home/ubuntu/jain-split/jope-dime/AGENT_CHAT.md:12` (not this repository's file, whose header says the opposite); and `main` at `458ef58` **with** "zero Actions workflows / runs" in that tree's `FINAL_GITHUB_PORT_PLAN.md:116` and `CODEX_GITHUB_PORT_PLAN.md:27-28`. "13 open PRs" appears in neither and was this appendix's own misattribution | Pre-2026-09-21 state of the stale `jain-split` mirror, which is now a pointer. |
 | PR #40, PR #41 | Opened from the reviewer's identity and closed unmerged; the same branches are #42 and #43. Not withdrawals of the work. |
 
