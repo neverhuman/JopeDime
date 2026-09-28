@@ -9,15 +9,19 @@
 # script (deploy/ci/fast-lane.sh hygiene).
 #
 # release.sh is exercised in three ways:
-#   - read statically, for its temporary files: /tmp is never a working path, and TMPDIR is pinned
-#     before any external command runs;
+#   - read statically, for its temporary files: /tmp is never a working path, TMPDIR is pinned
+#     before any external command runs, every `docker run` goes through builder_container, every
+#     env -i names TMPDIR, and root's sign script exports its own TMPDIR before it runs anything;
 #   - run in its test mode, which stops after the guards and cannot publish (once with TMPDIR unset
 #     and every command it names wrapped, to show that each one runs with the pinned TMPDIR and none
-#     reads its input from /tmp);
+#     reads its input from /tmp, and once with a syft stand-in, which preflight refuses);
 #   - sourced, so that its helpers can be called directly: sums, notes, glibc, NEEDED, artifact
 #     selection, manifest, the git archive source export and its verification, the shared cargo
-#     home check, the root sign script (run by sh with its root paths moved under the test dir),
-#     the tampered-copy negative, and the readback (with cosign, GitHub and origin stood in by
+#     home check, the syft and cosign pins (with stand-ins, never the real tools), the host-tool
+#     check, the root sign script (run by sh with its root paths moved under the test dir, also with
+#     an empty environment as sudo leaves it), the build, binary check and receipt stages (with
+#     docker and objdump stood in by functions that record every container's arguments), the
+#     tampered-copy negative, and the readback (with cosign, GitHub and origin stood in by
 #     functions).
 #
 # Usage: deploy/release/test-release.sh   (exit 0 only when every case passes)
@@ -424,6 +428,9 @@ printf '#!/bin/sh\nexit 3\n' > "$scratch/jope-fail" && chmod +x "$scratch/jope-f
 expect "binary prints 'jope 0.2.0' first" ok '^jope 0\.2\.0$' unit 'binary_prints_version "$1" 0.2.0 "$2"' "$scratch/jope-good" "$scratch/run"
 expect "binary printing 'jope 0.2.0-dirty' is refused" refuse 'jope 0\.2\.0-dirty' unit 'binary_prints_version "$1" 0.2.0 "$2"' "$scratch/jope-bad" "$scratch/run"
 expect "binary exiting non-zero is refused" refuse '^rc=1$' unit 'rc=0; binary_prints_version "$1" 0.2.0 "$2" || rc=$?; echo "rc=$rc"; exit "$rc"' "$scratch/jope-fail" "$scratch/run"
+printf '#!/bin/sh\necho "jope 0.2.0"\necho "tmpdir=${TMPDIR-unset}"\n' > "$scratch/jope-tmpdir" && chmod +x "$scratch/jope-tmpdir"
+expect "env -i: the binary check hands the binary the pinned TMPDIR by name" ok "^tmpdir=$TMPDIR\$" \
+  unit 'binary_prints_version "$1" 0.2.0 "$2"' "$scratch/jope-tmpdir" "$scratch/run"
 
 echo "# cargo artifact selection (sourced select_executable / map_target_path)"
 m=/src/crates/jope-cli/Cargo.toml
@@ -552,11 +559,13 @@ echo "# temporary files: TMPDIR is pinned before any external command, and nothi
 static_tmp_check() {
   local refs first pre top line seg kind
   local -a segs words
-  # 1. /tmp is a path only in the refusal to run from a checkout under /tmp (comment lines aside;
-  #    $run_dir/tmp and ./tmp are the run directory's own tmp/).
+  # 1. /tmp is a path only in the refusal to run from a checkout under /tmp and in the name of the
+  #    containers' /tmp, which builder_container covers with the run's own directory (comment lines
+  #    aside; $run_dir/tmp and ./tmp are the run directory's own tmp/).
   refs=$(grep -nE '(^|[^[:alnum:]_.}/-])/tmp([^[:alnum:]_.-]|$)' "$release" | grep -vE '^[0-9]+:[[:space:]]*#' || true)
-  if [[ $refs != *'[[ $here/ != /tmp/* ]] || die "refusing to run from under /tmp: $here"' || $(wc -l <<<"$refs") -ne 1 ]]; then
-    printf 'release.sh uses /tmp outside its refusal:\n%s\n' "$refs"
+  if [[ $(grep -cvE '^[0-9]+:(  \[\[ \$here/ != /tmp/\* \]\] \|\| die "refusing to run from under /tmp: \$here"|readonly CONTAINER_SYSTEM_TMP=/tmp)$' <<<"$refs") -ne 0 \
+    || $(wc -l <<<"$refs") -ne 2 ]]; then
+    printf 'release.sh uses /tmp outside its refusal and the containers'"'"' /tmp:\n%s\n' "$refs"
     return 1
   fi
   # 2. main() pins TMPDIR before it does anything else.
@@ -655,6 +664,16 @@ probe_run() {
 expect "TMPDIR unset: every command runs with the pinned 0700 TMPDIR, none reads from /tmp, jq reads a pipe" ok \
   '^rc=0;commands=logged;tmpdir_not_pinned=0;stdin_under_tmp=0;jq=logged;jq_stdin_not_a_pipe=0;pinned_mode=700$' \
   probe_run
+# Every command the probe saw release.sh run is one that a real run checks (require_tools).
+expect "every command release.sh ran in the probe is a checked host tool (HOST_TOOLS)" ok '^ran=[1-9][0-9]*;unlisted=none$' \
+  unit 'mapfile -t ran < <(cut -f1 "$1" | LC_ALL=C sort -u)
+        extra=()
+        for c in "${ran[@]}"; do
+          listed=0
+          for t in "${HOST_TOOLS[@]}"; do [[ $c != "$t" ]] || listed=1; done
+          (( listed )) || extra+=("$c")
+        done
+        printf "ran=%s;unlisted=%s\n" "${#ran[@]}" "${extra[*]:-none}"' "$probe/log"
 
 echo "# shared cargo home (sourced check_cargo_home)"
 ch=$scratch/cargo-home
@@ -685,10 +704,13 @@ printf 'not-a-real-password\n' > "$sd/keys/signing.password"
 printf 'sums\n' > "$sd/dist/SHA256SUMS-v0.2.0.txt"
 cat > "$sd/fake-cosign" <<'EOF'
 #!/bin/sh
-# Records its argv, its working directory and whether COSIGN_PASSWORD is the stand-in password.
+# Records its argv, its working directory, its TMPDIR (and that directory's mode) and whether
+# COSIGN_PASSWORD is the stand-in password.
 log=${FAKE_COSIGN_LOG:?}
 printf '%s\n' "$@" > "$log.argv"
 pwd > "$log.cwd"
+printf '%s\n' "${TMPDIR-unset}" > "$log.tmpdir"
+if [ -d "${TMPDIR-}" ]; then stat -c %a "$TMPDIR"; else echo none; fi > "$log.tmpmode"
 if [ "${COSIGN_PASSWORD-}" = not-a-real-password ]; then echo match; else echo mismatch; fi > "$log.password"
 out=
 while [ $# -gt 0 ]; do
@@ -722,6 +744,44 @@ expect "sign: a cosign that does not match the pinned digest is never run" ok '^
         if grep -q "not the pinned $COSIGN_SHA256; refusing to run it as root" <<<"$out"; then m=yes; else m=no; fi
         printf "rc=%s;ran=%s;refused=%s;leftover=%s\n" "$rc" "$r" "$m" "$(find "$1/run" -mindepth 1 | wc -l)"' \
   "$sd" "$fake_sha"
+# sudo resets the environment, so root's shell inherits no TMPDIR; env -i stands in for that here.
+expect "sign: with the environment reset (as sudo does), cosign gets a 0700 TMPDIR inside root's work directory" ok \
+  '^rc=0;tmpdir=work-dir;mode=700;leftover=0$' \
+  unit "$SIGN_PREP"'
+        env -i PATH=/usr/bin:/bin FAKE_COSIGN_LOG="$1/log3" sh -c "$s" sh "$1/dist/y.sig" \
+          "$1/dist/SHA256SUMS-v0.2.0.txt" "$1/fake-cosign" "$2" || rc=$?
+        t=$(cat "$1/log3.tmpdir")
+        case $t in "$1"/run/jope-release-sign.*/tmp) w=work-dir ;; *) w="other:$t" ;; esac
+        printf "rc=%s;tmpdir=%s;mode=%s;leftover=%s\n" "$rc" "$w" "$(cat "$1/log3.tmpmode")" \
+          "$(find "$1/run" -mindepth 1 | wc -l)"' "$sd" "$fake_sha"
+# The same rule, read from the source: every sudo runs test, cat, chown, chmod or the sign script,
+# and the sign script names no /tmp, gives mktemp an absolute /root template and exports TMPDIR
+# inside its work directory before it runs anything else.
+expect "static: sudo runs only test, cat, chown, chmod and the sign script, which sets its own TMPDIR first" ok '^ok$' \
+  unit 'sudos=$(grep -vE "^[[:space:]]*#" "$1" | grep -oE "(^|[;&|(]|then |else )[[:space:]]*sudo -n [a-z]+" \
+          | sed -E "s/.*sudo -n //" | LC_ALL=C sort -u | paste -sd, -)
+        [[ $sudos == cat,chmod,chown,sh,test ]] || { echo "sudo runs: $sudos"; exit 1; }
+        [[ $(grep -cE "sudo -n sh " "$1") == 1 && $(grep -c "sudo -n sh -c \"\$SIGN_SCRIPT\" sh" "$1") == 1 ]] \
+          || { echo "sudo -n sh runs something other than SIGN_SCRIPT"; exit 1; }
+        s=$SIGN_SCRIPT
+        ! grep -nE "(^|[^[:alnum:]_.}/-])/tmp([^[:alnum:]_.-]|\$)" <<<"$s" || { echo "the sign script names /tmp"; exit 1; }
+        mapfile -t l <<<"$s"
+        [[ ${l[0]} == "set -eu" && ${l[1]} =~ ^work=\$\(mktemp\ -d\ /root/[A-Za-z0-9._-]*XXXXXX\)$ ]] \
+          || { echo "the sign script does not start with set -eu and mktemp -d /root/...: ${l[0]} / ${l[1]}"; exit 1; }
+        set_at=-1 export_at=-1 first=-1
+        for i in "${!l[@]}"; do
+          (( i > 1 )) || continue
+          case ${l[i]} in
+            "trap "*) ;;
+            "TMPDIR=\$work/"*) (( set_at >= 0 )) || set_at=$i ;;
+            "export TMPDIR") (( export_at >= 0 )) || export_at=$i ;;
+            *) (( first >= 0 )) || first=$i ;;
+          esac
+        done
+        (( set_at > 1 && export_at > set_at && first > export_at )) \
+          || { echo "TMPDIR is not set and exported before the first command (set=$set_at export=$export_at first=$first)"; exit 1; }
+        [[ $s == *"\"\$work/cosign\" sign-blob"* ]] || { echo "cosign does not run from the work directory"; exit 1; }
+        echo ok' "$release"
 
 echo "# tampered-copy negative (sourced tampered_rejected; cosign stood in by a function)"
 # cosign_verify stand-in: a "signature" is "sig:<sha256 of the signed file>".
@@ -794,6 +854,174 @@ rb "readback with a failed download fails every check, the tampered negative inc
 rb "readback catches an origin tag that moved after the release" \
   "^rc=1;passed=false;remote=FAIL;set=ok;blob=ok;tampered=ok;sums=ok;manifest=ok;binary=ok;marker=absent;origin_commit=$c0\$" \
   'remote_tag_lines() { printf "%s\trefs/tags/%s\n%s\trefs/tags/%s^{}\n" "$tag_object" "$tag" "$other_commit" "$tag"; }'
+
+echo "# pinned tools (sourced check_syft / check_cosign / check_sboms / make_sbom; stand-ins only, never the real tools)"
+# stand_in <path> <name> <reported version>: a syft or cosign stand-in. It records that it ran and
+# its environment next to itself ($0.ran, $0.env), since syft_env hands it no variable of ours.
+stand_in() {
+  mkdir -p -- "${1%/*}"
+  {
+    printf '#!/bin/sh\n: > "$0.ran"\nenv > "$0.env"\n'
+    case $2 in
+      syft) printf 'if [ "$1" = version ]; then printf %s; fi\n' "'{\"application\":\"syft\",\"version\":\"$3\"}\\n'" ;;
+      cosign) printf 'if [ "$1" = version ]; then printf %s; fi\n' "'{\"gitVersion\":\"$3\"}\\n'" ;;
+    esac
+  } > "$1"
+  chmod 0755 "$1"
+}
+pt=$scratch/pinned
+stand_in "$pt/syft-1.40.0/syft" syft 1.40.0
+stand_in "$pt/syft-1.41.0/syft" syft 1.41.0
+stand_in "$pt/cosign-v2.4.4/cosign" cosign v2.4.4
+# ran <path>: whether a stand-in ran.
+PT_RAN='ran() { if [[ -e $1.ran ]]; then echo yes; else echo no; fi; }
+  '
+expect "syft pin: a syft whose sha256 is not the pin is refused and never run" refuse \
+  'has sha256 [0-9a-f]{64}, not the pinned syft 1\.40\.0 \(eb9714fb[0-9a-f]{56}\).*;ran=no$' \
+  unit "$PT_RAN"'rc=0; out=$(check_syft "$1" "$SYFT_SHA256" "$SYFT_VERSION" "$2" 2>&1) || rc=$?
+        printf "%s;ran=%s\n" "$out" "$(ran "$1")"; exit "$rc"' "$pt/syft-1.40.0/syft" "$pt/check-a"
+expect "syft pin: the pinned digest but another reported version is refused" refuse \
+  "reports version '1\\.41\\.0', not the pinned syft 1\\.40\\.0" \
+  unit 'check_syft "$1" "$(sha256_of "$1")" "$SYFT_VERSION" "$2"' "$pt/syft-1.41.0/syft" "$pt/check-b"
+expect "syft pin: digest and version match; syft runs with nothing inherited, TMPDIR, HOME and cache under its dir" ok \
+  '^version=1\.40\.0;leak=no;tmpdir=ok;home=ok;cache=ok;update_check=off$' \
+  unit 'd=$2; export LEAK_CANARY=1; out=$(check_syft "$1" "$(sha256_of "$1")" 1.40.0 "$d")
+        e=$1.env
+        if grep -q "^LEAK_CANARY=" "$e"; then l=yes; else l=no; fi
+        printf "version=%s;leak=%s;tmpdir=%s;home=%s;cache=%s;update_check=%s\n" "$(jq -r .version <<<"$out")" "$l" \
+          "$(grep -qx "TMPDIR=$d/tmp" "$e" && echo ok || echo bad)" "$(grep -qx "HOME=$d/home" "$e" && echo ok || echo bad)" \
+          "$(grep -qx "SYFT_CACHE_DIR=$d/cache/syft" "$e" && echo ok || echo bad)" \
+          "$(grep -qx "SYFT_CHECK_FOR_APP_UPDATE=false" "$e" && echo off || echo on)"' "$pt/syft-1.40.0/syft" "$pt/check-c"
+rm -f -- "$pt/syft-1.40.0/syft.ran"
+# The same refusal through release.sh itself: preflight checks a syft stand-in against the real pin.
+preflight_syft() {
+  local rc=0 out
+  out=$(run "JOPE_RELEASE_TEST_SYFT=$pt/syft-1.40.0/syft" JOPE_RELEASE_TEST_STAMP=20260928T000003Z \
+    "${R[@]}" v0.2.0 "$c1" 2>&1) || rc=$?
+  printf '%s\n' "$out"
+  printf 'refused=%s;ran=%s\n' "$(grep -q 'REFUSED: .*syft-1\.40\.0/syft has sha256 [0-9a-f]*, not the pinned syft 1\.40\.0' <<<"$out" && echo yes || echo no)" \
+    "$([[ -e $pt/syft-1.40.0/syft.ran ]] && echo yes || echo no)"
+  return "$rc"
+}
+expect "preflight refuses a replaced syft before anything is built or signed, without running it" refuse \
+  '^refused=yes;ran=no$' preflight_syft
+expect "make_sbom runs only a checked copy: a replaced syft is refused, never run, and writes no SBOM" refuse \
+  '^rc=1;refused=yes;ran=no;copy_ran=no;sboms=0$' \
+  unit "$PT_RAN"'tag=v0.2.0 sha=$2 run_dir=$1/run dist=$1/run/dist src_dir=$1/run/src syft_bin=$3
+        mkdir -p "$run_dir/tmp" "$dist" "$src_dir"
+        rc=0; ( make_sbom ) > "$1/out" 2>&1 || rc=$?
+        if grep -q "tmp/syft/syft has sha256 [0-9a-f]*, not the pinned syft 1\.40\.0" "$1/out"; then r=yes; else r=no; fi
+        printf "rc=%s;refused=%s;ran=%s;copy_ran=%s;sboms=%s\n" "$rc" "$r" "$(ran "$3")" "$(ran "$run_dir/tmp/syft/syft")" \
+          "$(find "$dist" -type f | wc -l)"; exit "$rc"' "$pt/sbom" "$c1" "$pt/syft-1.40.0/syft"
+jq -n '{spdxVersion: "SPDX-2.3", creationInfo: {creators: ["Organization: Anchore, Inc", "Tool: syft-1.40.0"]}}' > "$pt/good.spdx.json"
+jq -n '{bomFormat: "CycloneDX", metadata: {tools: {components: [{type: "application", author: "anchore", name: "syft", version: "1.40.0"}]}}}' > "$pt/good.cdx.json"
+jq '.creationInfo.creators[1] = "Tool: syft-1.41.0"' "$pt/good.spdx.json" > "$pt/other.spdx.json"
+jq '.metadata.tools.components[0].version = "1.41.0"' "$pt/good.cdx.json" > "$pt/other.cdx.json"
+expect "SBOMs that name the pinned syft as their creator are accepted" ok '^ok$' \
+  unit 'check_sboms "$1" "$2" "$SYFT_VERSION" && echo ok' "$pt/good.spdx.json" "$pt/good.cdx.json"
+expect "an SBOM made by another syft version is refused" refuse 'other\.cdx\.json is not a CycloneDX document made by syft 1\.40\.0' \
+  unit 'check_sboms "$1" "$2" "$SYFT_VERSION"' "$pt/good.spdx.json" "$pt/other.cdx.json"
+expect "cosign pin: a cosign whose sha256 is not the pin is refused and never run" refuse \
+  'has sha256 [0-9a-f]{64}, not the pinned cosign v2\.4\.3 \(caaad125[0-9a-f]{56}\).*;ran=no$' \
+  unit "$PT_RAN"'rc=0; out=$(check_cosign "$1" "$COSIGN_SHA256" "$COSIGN_VERSION" 2>&1) || rc=$?
+        printf "%s;ran=%s\n" "$out" "$(ran "$1")"; exit "$rc"' "$pt/cosign-v2.4.4/cosign"
+expect "cosign pin: the pinned digest but another reported version is refused" refuse \
+  "reports version 'v2\\.4\\.4', not the pinned cosign v2\\.4\\.3" \
+  unit 'check_cosign "$1" "$(sha256_of "$1")" "$COSIGN_VERSION"' "$pt/cosign-v2.4.4/cosign"
+
+echo "# host tools (sourced check_host_tool)"
+# A jq that the operator could replace, first on PATH. Its directory is group-writable, so it is
+# refused by mode whoever runs the tests (the CI container may run them as root).
+mkdir -p "$scratch/user-bin" && chmod 0775 "$scratch/user-bin"
+printf '#!/bin/sh\nexec /usr/bin/jq "$@"\n' > "$scratch/user-bin/jq" && chmod 0755 "$scratch/user-bin/jq"
+expect "host tools: a jq the operator can replace, first on PATH, is refused" refuse \
+  'host tool jq resolves to .*/user-bin/jq .* is not root-owned and closed to group and other writes' \
+  unit 'PATH=$1:$PATH check_host_tool jq' "$scratch/user-bin"
+expect "host tools: a root-owned system tool is accepted" ok '^/(usr/)?bin/cat$' \
+  unit 'PATH=/usr/bin:/bin check_host_tool cat'
+md2=$scratch/dist-manifest-tools
+mkdir -p "$md2" && printf 'binary' > "$md2/jope-v0.2.0-x86_64-unknown-linux-gnu"
+expect "the release manifest records the pinned syft and cosign" ok '^ok$' \
+  unit 'cd "$3" && write_manifest "$1" v0.2.0 "$2" 0.2.0 2.34
+        jq -e --arg ss "$SYFT_SHA256" --arg cs "$COSIGN_SHA256" \
+          ".tools == {syft: {version: \"1.40.0\", sha256: \$ss}, cosign: {version: \"v2.4.3\", sha256: \$cs}}" \
+          "$1/release-manifest-v0.2.0.json" >/dev/null && echo ok' "$md2" "$c1" "$repo"
+
+echo "# containers carry the run's temporary directory (sourced build_jope, check_binary, make_receipt; docker and objdump stood in by functions)"
+{ art /src/crates/jope-cli/Cargo.toml jope '"/target/release/jope"' false; jq -nc '{reason: "build-finished", success: true}'; } \
+  > "$scratch/dk-build.jsonl"
+{ art /src/crates/jope-engine/Cargo.toml jope-build-receipt '"/target/release/jope-build-receipt"' false
+  jq -nc '{reason: "build-finished", success: true}'; } > "$scratch/dk-receipt-tool.jsonl"
+# $1 dir, $2 commit, $3 cargo metadata, $4 build messages, $5 receipt-tool build messages. The
+# docker stand-in logs each argv (fields joined by \x1f) and answers as the builder would.
+CONTAINERS=$(cat <<'EOF'
+tag=v0.2.0 version=0.2.0 sha=$2 run_dir=$1/run target_root=$1/target
+dist=$run_dir/dist src_dir=$run_dir/src log=$1/docker.log meta=$3 build_msgs=$4 receipt_msgs=$5
+mkdir -p "$run_dir/tmp" "$run_dir/home" "$dist" "$src_dir" "$target_root/cargo-home" "$target_root/release"
+printf '#!/bin/sh\necho "jope 0.2.0"\n' > "$target_root/release/jope"
+chmod 0755 "$target_root/release/jope"
+: > "$log"
+docker() {
+  local line i img=-1 out=''
+  local -a args=("$@") cmd
+  printf -v line '%s\x1f' "$@"
+  printf '%s\n' "${line%$'\x1f'}" >> "$log"
+  [[ $1 == run ]] || return 0
+  # The first image argument is docker's; the receipt tool is later given it as --builder-image.
+  for i in "${!args[@]}"; do if [[ ${args[i]} == "$BUILDER_IMAGE" ]]; then img=$i; break; fi; done
+  (( img > 0 )) || { echo "docker stand-in: no image in: $*" >&2; return 99; }
+  cmd=("${args[@]:img+1}")
+  case ${cmd[0]} in
+    rustc) printf 'rustc 1.97.1 (stand-in)\nrelease: 1.97.1\n' ;;
+    ldd) printf 'ldd (Debian GLIBC 2.36-9+deb12u7) 2.36\n' ;;
+    cargo)
+      if [[ ${cmd[1]} == metadata ]]; then cat "$meta"
+      elif [[ " ${cmd[*]} " == *" jope-build-receipt "* ]]; then cat "$receipt_msgs"
+      else cat "$build_msgs"; fi ;;
+    /dist/*) printf 'jope 0.2.0\n' ;;
+    /target/release/jope-build-receipt)
+      for i in "${!cmd[@]}"; do [[ ${cmd[i]} != --output ]] || out=${cmd[i+1]}; done
+      jq -n --arg bin "$(sha256_of "$dist/jope-$tag-$TARGET_TRIPLE")" \
+        --arg toml "$(blob_sha256 "$sha" Cargo.toml)" --arg lock "$(blob_sha256 "$sha" Cargo.lock)" '
+        {bounds: {passed: true}, binary_sha256: $bin, links_cuda_or_torch: false,
+         glibc_max_needed: "GLIBC_2.34", cargo_toml_sha256: $toml, cargo_lock_sha256: $lock, git: null}' \
+        > "$run_dir/receipt/${out#/out/}" ;;
+    *) echo "docker stand-in: unexpected command: ${cmd[*]}" >&2; return 98 ;;
+  esac
+}
+objdump() {
+  case $1 in
+    -T) printf '0000000000000000      DF *UND*  0000000000000000 (GLIBC_2.34) __libc_start_main\n' ;;
+    -p) printf 'Dynamic Section:\n  NEEDED               libc.so.6\n' ;;
+  esac
+}
+build_jope
+check_binary
+make_receipt
+ctmp=$run_dir/tmp/container runs=0 carried=0
+while IFS= read -r line; do
+  [[ $line == run$'\x1f'* ]] || continue
+  runs=$((runs + 1))
+  s=$'\x1f'"$line"$'\x1f'
+  if [[ $s == *$'\x1f-v\x1f'"$ctmp:/release-tmp"$'\x1f'* && $s == *$'\x1f-v\x1f'"$ctmp:/tmp"$'\x1f'* \
+        && $s == *$'\x1f-e\x1fTMPDIR=/release-tmp\x1f'* ]]; then
+    carried=$((carried + 1))
+  fi
+done < "$log"
+printf 'runs=%s;carrying_tmp=%s;container_tmp_mode=%s\n' "$runs" "$carried" "$(stat -c %a "$ctmp" 2>/dev/null || echo missing)"
+EOF
+)
+expect "every docker run of the build, the binary check and the receipt mounts the run's tmp/container at /release-tmp and /tmp, with TMPDIR set" ok \
+  '^runs=7;carrying_tmp=7;container_tmp_mode=700$' \
+  unit "$CONTAINERS" "$scratch/containers" "$c1" "$work/meta-ok.json" "$scratch/dk-build.jsonl" "$scratch/dk-receipt-tool.jsonl"
+# The same rule, read from the source, so that a new docker run cannot bypass builder_container.
+expect "static: every docker run in release.sh is in builder_container" ok '^sites=builder_container\(\)$' \
+  unit 'sites=$(awk "/^[A-Za-z_][A-Za-z0-9_]*\\(\\) [{(]\$/ { f = \$1 }
+          !/^[[:space:]]*#/ && /(^|[;&|(]|\\\$\\()[[:space:]]*docker[[:space:]]+run([[:space:]]|\$)/ { print f }" "$1" | paste -sd, -)
+        printf "sites=%s\n" "$sites"' "$release"
+expect "static: every env -i in release.sh names TMPDIR" ok '^env_i=[2-9];without_tmpdir=0$' \
+  unit 'lines=$(grep -vE "^[[:space:]]*#" "$1" | grep -E "(^|[^[:alnum:]_-])env -i( |\$)")
+        printf "env_i=%s;without_tmpdir=%s\n" "$(grep -c . <<<"$lines")" "$(grep -vc "TMPDIR=" <<<"$lines" || true)"' "$release"
 
 echo
 total=$((pass + ${#failures[@]}))
