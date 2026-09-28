@@ -1,7 +1,11 @@
-//! Small Python built-in semantics the verifiers depend on: `str.strip`, `int(text)`, hashing
-//! equality for set membership, `in`, iteration, `Path.read_text` and `PurePosixPath.parts`, the
-//! `re` classes of a `str` pattern, subprocess output read with `text=True`, and the text of the
-//! `OSError` and `CalledProcessError` a tool printed.
+//! Small Python built-in semantics the verifiers depend on: `str.strip`, hashing equality for set
+//! membership, `in`, iteration, `Path.read_text` and `PurePosixPath.parts`, the `re` classes of a
+//! `str` pattern, subprocess output read with `text=True`, and the text of the `OSError` and
+//! `CalledProcessError` a tool printed.
+//!
+//! Numbers are the exception: text is read as a number by one strict grammar ([`decimal`],
+//! [`int`], [`decimal_int`], [`float`]) that accepts a subset of what Python's `int()` and
+//! `float()` accepted, never more (see [`decimal`]).
 
 use std::path::{Path, PathBuf};
 
@@ -36,44 +40,78 @@ pub fn check_int_digits(digits: usize) -> std::result::Result<(), String> {
     Ok(())
 }
 
-/// Why [`int`] refused its text.
+/// Why [`decimal`] or [`int`] refused its text.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum IntError {
-    /// Not a literal Python read, or one the port does not read: non-ASCII digits, or a value
-    /// beyond `i64` (Python converted both). Each caller words this refusal.
+    /// Not a decimal integer of the strict grammar ([`decimal`]), or for [`int`] a value beyond
+    /// `i64`. Each caller words this refusal.
     Invalid,
-    /// A well-formed literal of more than [`INT_MAX_STR_DIGITS`] digits: CPython's `ValueError`
+    /// A decimal integer of more than [`INT_MAX_STR_DIGITS`] digits: CPython's `ValueError`
     /// message ([`check_int_digits`]).
     Limit(String),
 }
 
-/// Python `int(text)` for ASCII decimal text: surrounding whitespace, an optional sign and
-/// single underscores between digits. As in CPython 3.12, a well-formed literal of more than
-/// [`INT_MAX_STR_DIGITS`] digits refuses with its message before it is converted, whatever its
-/// value: leading zeros count, the sign, the whitespace and the underscores do not. Non-ASCII
-/// digits (which Python also accepted) and values beyond `i64` (which Python converted) are
-/// [`IntError::Invalid`].
-pub fn int(text: &str) -> std::result::Result<i64, IntError> {
-    let body = strip(text);
+/// The whitespace the strict number grammar allows around a number: ASCII space, `\t`, `\n`,
+/// `\r`, `\x0b` and `\x0c`, CPython's `Py_ISSPACE`. `int()` and `float()` of a `str` also stripped
+/// the Unicode whitespace at or above U+0080 (U+0085, U+00A0, U+2003, ...), which the grammar
+/// refuses; they refused U+001C..U+001F, which `str.strip()` removes, and so does the grammar.
+pub fn is_number_space(c: char) -> bool {
+    matches!(c, ' ' | '\t' | '\n' | '\r' | '\u{b}' | '\u{c}')
+}
+
+/// A decimal integer read by the strict grammar ([`decimal`]): its sign and its ASCII digits as
+/// written (leading zeros kept).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Decimal<'a> {
+    pub negative: bool,
+    pub digits: &'a str,
+}
+
+impl Decimal<'_> {
+    /// The digits without leading zeros (`0` for zero): `str(abs(int(text)))`, of any length.
+    pub fn magnitude(&self) -> &str {
+        let trimmed = self.digits.trim_start_matches('0');
+        if trimmed.is_empty() {
+            "0"
+        } else {
+            trimmed
+        }
+    }
+
+    /// The value, when it fits `i64`.
+    pub fn to_i64(&self) -> Option<i64> {
+        let magnitude: i128 = self.magnitude().parse().ok()?;
+        i64::try_from(if self.negative { -magnitude } else { magnitude }).ok()
+    }
+}
+
+/// The one grammar every port reads a decimal integer from text with. It accepts a subset of what
+/// Python's `int(text)` accepted, never more: optional surrounding whitespace of
+/// [`is_number_space`] only, an optional ASCII sign (`+` or `-`), then one or more ASCII digits,
+/// at most [`INT_MAX_STR_DIGITS`] of them (leading zeros count, as they did for CPython 3.12,
+/// which refused more with the message [`check_int_digits`] words). Python also read single
+/// underscores between digits (PEP 515), every other Unicode decimal digit (mapped to ASCII) and
+/// Unicode whitespace at or above U+0080; the grammar refuses all three, and each port documents
+/// that as stricter than the Python it replaced. The text is validated before its digits are
+/// counted, as CPython validated a literal before it applied the limit.
+pub fn decimal(text: &str) -> std::result::Result<Decimal<'_>, IntError> {
+    let body = text.trim_matches(is_number_space);
     let (negative, digits) = match body.as_bytes().first() {
         Some(b'-') => (true, &body[1..]),
         Some(b'+') => (false, &body[1..]),
         _ => (false, body),
     };
-    if digits.is_empty()
-        || digits.starts_with('_')
-        || digits.ends_with('_')
-        || digits.contains("__")
-        || !digits.bytes().all(|b| b.is_ascii_digit() || b == b'_')
-    {
+    if digits.is_empty() || !digits.bytes().all(|b| b.is_ascii_digit()) {
         return Err(IntError::Invalid);
     }
-    check_int_digits(digits.bytes().filter(|&b| b != b'_').count()).map_err(IntError::Limit)?;
-    let value: i64 = digits
-        .replace('_', "")
-        .parse()
-        .map_err(|_| IntError::Invalid)?;
-    Ok(if negative { -value } else { value })
+    check_int_digits(digits.len()).map_err(IntError::Limit)?;
+    Ok(Decimal { negative, digits })
+}
+
+/// `int(text)` through the strict grammar ([`decimal`]): the value, or [`IntError::Invalid`] for
+/// text outside the grammar and for a value beyond `i64` (which Python converted; stricter).
+pub fn int(text: &str) -> std::result::Result<i64, IntError> {
+    decimal(text)?.to_i64().ok_or(IntError::Invalid)
 }
 
 /// A hashable JSON scalar under Python's hash equality (`1 == 1.0 == True`).
@@ -511,57 +549,36 @@ pub fn regex(pattern: &str) -> regex::Regex {
     regex::Regex::new(&out).expect("translated pattern")
 }
 
-/// Python `int(text)` for a run of Unicode decimal digits that `\d+` captured: the value as ASCII
-/// decimal without leading zeros ([`decimal_digits`]), or the `ValueError` Python raised: text that
-/// is not decimal digits, or more than [`INT_MAX_STR_DIGITS`] of them (leading zeros count; CPython
-/// maps each Unicode digit to one ASCII digit before it counts).
+/// `int(m.group(1))` of what a pattern's `\d+` captured, through the strict grammar ([`decimal`]):
+/// the value as ASCII decimal without leading zeros, of any length up to [`INT_MAX_STR_DIGITS`]
+/// digits, or the refusal. Python's `\d` matched every Unicode decimal digit and its `int()` mapped
+/// them to ASCII; the grammar reads ASCII digits only and refuses a run holding any other
+/// (stricter), naming it. More than 4300 digits refuse in CPython's words.
 pub fn decimal_int(text: &str) -> std::result::Result<String, String> {
-    let value = decimal_digits(text).ok_or_else(|| {
-        format!(
-            "invalid literal for int() with base 10: {}",
+    match decimal(text) {
+        Ok(Decimal {
+            negative: false,
+            digits,
+        }) if digits.len() == text.len() => Ok(Decimal {
+            negative: false,
+            digits,
+        }
+        .magnitude()
+        .to_owned()),
+        Err(IntError::Limit(message)) => Err(message),
+        _ => Err(format!(
+            "{} is not ASCII decimal digits, the only digits the port reads as a number",
             pyjson::str_repr(text)
-        )
-    })?;
-    check_int_digits(text.chars().count())?;
-    Ok(value)
+        )),
+    }
 }
 
-/// The value of a run of Unicode decimal digits (`str.isdecimal`, what `\d+` captures) as ASCII
-/// decimal without leading zeros, of any length; `None` when a character is not a decimal digit.
-/// This is the digit mapping only: [`decimal_int`] is Python's `int()` of such a run, with its
-/// limit on the number of digits.
-pub fn decimal_digits(text: &str) -> Option<String> {
-    static DIGIT: std::sync::LazyLock<regex::Regex> = std::sync::LazyLock::new(|| regex(r"^\d$"));
-    let is_digit = |c: char| {
-        let mut buffer = [0u8; 4];
-        DIGIT.is_match(c.encode_utf8(&mut buffer))
-    };
-    let mut out = String::with_capacity(text.len());
-    for c in text.chars() {
-        if !is_digit(c) {
-            return None;
-        }
-        // Unicode encodes every decimal digit set as ten consecutive code points 0..9, and the
-        // sets that abut each other (the mathematical digits) each start at a multiple of ten
-        // from the run's first code point.
-        let mut first = c as u32;
-        while let Some(previous) = first.checked_sub(1).and_then(char::from_u32) {
-            if !is_digit(previous) {
-                break;
-            }
-            first -= 1;
-        }
-        out.push(char::from_digit((c as u32 - first) % 10, 10).expect("a digit"));
-    }
-    if out.is_empty() {
-        return None;
-    }
-    let trimmed = out.trim_start_matches('0');
-    Some(if trimmed.is_empty() {
-        "0".to_owned()
-    } else {
-        trimmed.to_owned()
-    })
+/// Whether `text` is a run of what Python 3.12's `\d` matched (`str.isdecimal`, Unicode 15.0):
+/// `re.fullmatch(r"\d+", text)`. A match only; a number is read from such a run by
+/// [`decimal_int`].
+pub fn is_decimal_run(text: &str) -> bool {
+    static RUN: std::sync::LazyLock<regex::Regex> = std::sync::LazyLock::new(|| regex(r"^\d+$"));
+    RUN.is_match(text)
 }
 
 /// `json.loads(path.read_text())`.
@@ -809,55 +826,40 @@ pub fn round(value: f64, ndigits: usize) -> f64 {
     format!("{value:.ndigits$}").parse().unwrap_or(value)
 }
 
-/// Python `float(text)` for `str` input: surrounding whitespace, a sign, `inf`/`infinity`/`nan`
-/// in any case, and underscores between digits (PEP 515). Non-ASCII digits are refused.
+/// `float(text)` through the strict number grammar: optional surrounding whitespace of
+/// [`is_number_space`] only, an optional ASCII sign, then `digits [. [digits]]` or `. digits` in
+/// ASCII digits, then optionally `e` or `E`, a sign and digits; the value is correctly rounded (an
+/// exponent beyond the range of a double gives an infinity or zero, as Python's did). `None` for
+/// anything else. Python also read `nan`, `inf` and `infinity` in any case, underscores between
+/// digits, other Unicode decimal digits and Unicode whitespace at or above U+0080; no committed
+/// input the ports read with `float()` writes any of them, and the grammar refuses them all
+/// (stricter).
 pub fn float(text: &str) -> Option<f64> {
-    let body = strip(text);
-    let (negative, unsigned) = match body.as_bytes().first() {
-        Some(b'-') => (true, &body[1..]),
-        Some(b'+') => (false, &body[1..]),
-        _ => (false, body),
-    };
-    let lower = unsigned.to_ascii_lowercase();
-    let special = match lower.as_str() {
-        "inf" | "infinity" => Some(f64::INFINITY),
-        "nan" => Some(f64::NAN),
-        _ => None,
-    };
-    if let Some(value) = special {
-        return Some(if negative { -value } else { value });
-    }
-    // digitpart ("." digitpart?)? | "." digitpart, then an optional exponent; digitpart is digits
-    // with single underscores between them.
-    fn digitpart(s: &[u8], mut i: usize) -> usize {
-        let start = i;
-        while i < s.len() {
-            let separator =
-                s[i] == b'_' && i > start && s.get(i + 1).is_some_and(u8::is_ascii_digit);
-            if !(s[i].is_ascii_digit() || separator) {
-                break;
-            }
+    let body = text.trim_matches(is_number_space);
+    let unsigned = body.strip_prefix(['+', '-']).unwrap_or(body);
+    let s = unsigned.as_bytes();
+    let digits = |mut i: usize| {
+        while s.get(i).is_some_and(u8::is_ascii_digit) {
             i += 1;
         }
         i
-    }
-    let s = unsigned.as_bytes();
-    let mut i = digitpart(s, 0);
-    let mut digits = i > 0;
-    if i < s.len() && s[i] == b'.' {
-        let after = digitpart(s, i + 1);
-        digits |= after > i + 1;
+    };
+    let mut i = digits(0);
+    let mut any = i > 0;
+    if s.get(i) == Some(&b'.') {
+        let after = digits(i + 1);
+        any |= after > i + 1;
         i = after;
     }
-    if !digits {
+    if !any {
         return None;
     }
-    if i < s.len() && (s[i] == b'e' || s[i] == b'E') {
+    if matches!(s.get(i), Some(b'e' | b'E')) {
         let mut j = i + 1;
-        if j < s.len() && (s[j] == b'+' || s[j] == b'-') {
+        if matches!(s.get(j), Some(b'+' | b'-')) {
             j += 1;
         }
-        let end = digitpart(s, j);
+        let end = digits(j);
         if end == j {
             return None;
         }
@@ -866,8 +868,7 @@ pub fn float(text: &str) -> Option<f64> {
     if i != s.len() {
         return None;
     }
-    let value: f64 = unsigned.replace('_', "").parse().ok()?;
-    Some(if negative { -value } else { value })
+    body.parse().ok()
 }
 
 /// Python `str.splitlines()`: lines without their terminators.
@@ -903,12 +904,80 @@ mod tests {
     use super::*;
 
     #[test]
-    fn python_int_and_strip() {
-        assert_eq!(int("01"), Ok(1));
-        assert_eq!(int(" +1_0 "), Ok(10));
-        assert_eq!(int("1__0"), Err(IntError::Invalid));
-        assert_eq!(int(""), Err(IntError::Invalid));
+    fn python_strip() {
         assert_eq!(strip("\u{1c} x \u{a0}"), "x");
+        assert_eq!(strip("\u{1f}45"), "45");
+    }
+
+    /// The strict grammar reads what Python's `int()` read with ASCII whitespace, sign and digits.
+    #[test]
+    fn strict_int_reads_ascii_decimal() {
+        assert_eq!(int("01"), Ok(1));
+        assert_eq!(int("45"), Ok(45));
+        assert_eq!(int(" \t\n\r\u{b}\u{c}+45 \t\n\r\u{b}\u{c}"), Ok(45));
+        assert_eq!(int("-45"), Ok(-45));
+        assert_eq!(int("-0"), Ok(0));
+        assert_eq!(int(&i64::MAX.to_string()), Ok(i64::MAX));
+        assert_eq!(int(&i64::MIN.to_string()), Ok(i64::MIN));
+        let decimal = decimal(" -0045 ").unwrap();
+        assert_eq!((decimal.negative, decimal.digits), (true, "0045"));
+        assert_eq!(decimal.magnitude(), "45");
+        assert_eq!(super::decimal("000").unwrap().magnitude(), "0");
+    }
+
+    /// Round four of the review of PR #117: every input Python's `int()` refused is refused, and
+    /// so are the forms it read that the strict grammar does not (stricter): U+001C..U+001F
+    /// (Python refused them though `str.strip()` removes them), Unicode whitespace at or above
+    /// U+0080, underscores, other Unicode digits and values beyond `i64`.
+    #[test]
+    fn strict_int_refuses_what_python_refused_and_more() {
+        for refused_by_python in [
+            "",
+            " ",
+            "+",
+            "-",
+            "+-1",
+            "1 1",
+            "4.0",
+            "0x10",
+            "1e3",
+            "45x",
+            "\u{1c}45",
+            "\u{1d}45",
+            "\u{1e}45",
+            "\u{1f}45",
+            "45\u{1f}",
+            "\u{200b}45",
+            "1__0",
+            "_1",
+            "1_",
+        ] {
+            assert_eq!(
+                int(refused_by_python),
+                Err(IntError::Invalid),
+                "{refused_by_python:?}"
+            );
+        }
+        for read_by_python in [
+            "\u{a0}45",
+            "\u{85}45",
+            "\u{2003}45",
+            "\u{3000}45",
+            "45\u{2028}",
+            "4_5",
+            "+1_0",
+            "\u{664}\u{665}",
+            "\u{ff14}\u{ff15}",
+            "\u{1d7d2}",
+            "9223372036854775808",
+            "-9223372036854775809",
+        ] {
+            assert_eq!(
+                int(read_by_python),
+                Err(IntError::Invalid),
+                "{read_by_python:?}"
+            );
+        }
     }
 
     #[test]
@@ -1005,15 +1074,76 @@ mod tests {
         assert_eq!(round(0.25, 1), 0.2);
         assert_eq!((round(0.125, 2), round(0.375, 2)), (0.12, 0.38));
         assert_eq!(round(-0.04, 1).to_bits(), (-0.0_f64).to_bits());
-        assert_eq!(float(" 1_000.5 "), Some(1000.5));
+    }
+
+    /// `float()` through the strict grammar: the ASCII forms Python read, the same values.
+    #[test]
+    fn strict_float_reads_ascii_decimal_and_exponent_forms() {
+        assert_eq!(float("21.511"), Some(21.511));
+        assert_eq!(float(" \t\n\r\u{b}\u{c}21.511 \u{c}"), Some(21.511));
+        assert_eq!(float("+4.622"), Some(4.622));
+        assert_eq!(float("-4.622"), Some(-4.622));
         assert_eq!(float("1."), Some(1.0));
         assert_eq!(float(".5e-1"), Some(0.05));
-        assert!(float("-Infinity").is_some_and(|v| v == f64::NEG_INFINITY));
-        assert!(float("nan").is_some_and(f64::is_nan));
-        for bad in [
-            "", "1__0", "_1", "1_", ".", "e5", "1e", "0x10", "1,5", "abc",
+        assert_eq!(float("4622E-3"), Some(4.622));
+        assert_eq!(float("0.1e+01"), Some(1.0));
+        assert_eq!(float("0021.5"), Some(21.5));
+        assert_eq!(float("1e999"), Some(f64::INFINITY));
+        assert_eq!(float("-1e999"), Some(f64::NEG_INFINITY));
+        assert_eq!(float("1e-999"), Some(0.0));
+        assert_eq!(float("2.675"), Some(2.675));
+    }
+
+    /// Round four of the review of PR #117: every input Python's `float()` refused is refused, and
+    /// so are the forms it read that the strict grammar does not (stricter): `nan`, `inf` and
+    /// `infinity`, underscores, other Unicode digits and Unicode whitespace at or above U+0080.
+    #[test]
+    fn strict_float_refuses_what_python_refused_and_more() {
+        for refused_by_python in [
+            "",
+            " ",
+            ".",
+            "e5",
+            "1e",
+            "1e+",
+            "1.5e",
+            "0x10",
+            "0x1p2",
+            "1,5",
+            "abc",
+            "1 1",
+            "\u{1c}21.5",
+            "\u{1f}21.511",
+            "21.511\u{1f}",
+            "\u{200b}1",
+            "1__0",
+            "_1",
+            "1_",
+            "1.5_",
+            "--1",
+            "+-1",
+            "infinit",
+            "nana",
         ] {
-            assert_eq!(float(bad), None, "{bad:?}");
+            assert_eq!(float(refused_by_python), None, "{refused_by_python:?}");
+        }
+        for read_by_python in [
+            "nan",
+            "NaN",
+            "-nan",
+            "inf",
+            "+inf",
+            "-Infinity",
+            "INFINITY",
+            " 1_000.5 ",
+            "1_0.5",
+            "\u{a0}21.5",
+            "\u{2003}21.5",
+            "\u{85}21.5",
+            "\u{664}.\u{666}",
+            "\u{ff14}.5",
+        ] {
+            assert_eq!(float(read_by_python), None, "{read_by_python:?}");
         }
     }
 
@@ -1046,14 +1176,14 @@ mod tests {
         assert!(class.is_match("a-b\u{1f}:") && !class.is_match("a\u{301}:"));
         let digit = regex(r"^\d+$");
         assert!(digit.is_match("0\u{665}\u{1d7ce}") && !digit.is_match("\u{b2}"));
-        // U+1D7D9 is MATHEMATICAL DOUBLE-STRUCK DIGIT ONE, in the run after the bold digits.
-        assert_eq!(decimal_digits("\u{665}\u{1d7d9}0"), Some("510".to_owned()));
-        assert_eq!(decimal_digits("007"), Some("7".to_owned()));
-        assert_eq!(decimal_digits("\u{b2}"), None);
+        // What `\d+` matches is a match only; reading it as a number is the strict grammar's.
+        assert!(is_decimal_run("0\u{665}\u{1d7d9}") && is_decimal_run("007"));
+        assert!(!is_decimal_run("\u{b2}") && !is_decimal_run("") && !is_decimal_run("5\n"));
     }
 
-    /// Python 3.12's `int()` of a digit run: 4300 digits convert, 4301 refuse with its message;
-    /// leading zeros and Unicode digits count, one digit each.
+    /// `int()` of a `\d+` capture through the strict grammar: ASCII digits of any value up to 4300
+    /// digits (leading zeros count, as they did for CPython 3.12), 4301 refused in CPython's words;
+    /// a run holding any other Unicode digit (which Python read) refused, naming it.
     #[test]
     fn int_conversion_limit_is_pythons() {
         let limit = |n: usize| {
@@ -1065,20 +1195,26 @@ mod tests {
             |n: usize, zero: char, one: char| format!("{}{one}", zero.to_string().repeat(n - 1));
         assert_eq!(decimal_int(&run(4300, '0', '1')), Ok("1".to_owned()));
         assert_eq!(decimal_int(&run(4301, '0', '1')), Err(limit(4301)));
-        assert_eq!(
-            decimal_int(&run(4300, '\u{660}', '\u{661}')),
-            Ok("1".to_owned())
-        );
-        assert_eq!(
-            decimal_int(&run(4302, '\u{660}', '\u{661}')),
-            Err(limit(4302))
-        );
-        assert_eq!(
-            decimal_int("\u{b2}"),
-            Err("invalid literal for int() with base 10: '\u{b2}'".to_owned())
-        );
-        // The digit mapping alone has no limit (what `\d+` matches, before `int()`).
-        assert_eq!(decimal_digits(&run(4301, '0', '7')), Some("7".to_owned()));
+        assert_eq!(decimal_int(&"9".repeat(4300)), Ok("9".repeat(4300)));
+        assert_eq!(decimal_int("000"), Ok("0".to_owned()));
+        let not_ascii = |text: &str| {
+            Err(format!(
+                "{} is not ASCII decimal digits, the only digits the port reads as a number",
+                pyjson::str_repr(text)
+            ))
+        };
+        for read_by_python in [
+            "\u{665}".to_owned(),
+            "\u{ff10}\u{ff15}".to_owned(),
+            "\u{1d7d3}".to_owned(),
+            run(4300, '\u{660}', '\u{661}'),
+            run(4302, '\u{660}', '\u{661}'),
+        ] {
+            assert_eq!(decimal_int(&read_by_python), not_ascii(&read_by_python));
+        }
+        for refused in ["\u{b2}", "", " 5", "+5", "-5", "5 "] {
+            assert_eq!(decimal_int(refused), not_ascii(refused), "{refused:?}");
+        }
         // `int` of text: beyond `i64` it refuses as invalid, past the limit in CPython's words.
         assert_eq!(int(&"1".repeat(20)), Err(IntError::Invalid));
         assert_eq!(int(&"1".repeat(4301)), Err(IntError::Limit(limit(4301))));
@@ -1086,7 +1222,9 @@ mod tests {
 
     /// Python 3.12's `int()` of text: the limit is checked on a well-formed literal before it is
     /// converted, so 4301 digits refuse even when they are leading zeros of a small value; the
-    /// sign, surrounding whitespace and underscores are not digits.
+    /// sign and surrounding whitespace are not digits. The strict grammar refuses underscores
+    /// (which Python read, not counting them as digits) whatever their number, and the reviewer's
+    /// U+001F around the digits (which Python refused).
     #[test]
     fn int_of_text_counts_digits_as_python_did() {
         let limit = |n: usize| {
@@ -1094,13 +1232,11 @@ mod tests {
         };
         let zeros = |n: usize| "0".repeat(n);
         let unders = |n: usize| "0_".repeat(n);
-        // 4300 digits convert, whatever surrounds them.
+        // 4300 digits convert, whatever ASCII whitespace and sign surround them.
         for text in [
             format!("{}45", zeros(4298)),
             format!("+{}45", zeros(4298)),
             format!(" \t{}45\n", zeros(4298)),
-            format!("{}45", unders(4298)),
-            format!("\u{a0}+{}45\u{1f}", unders(4298)),
         ] {
             assert_eq!(int(&text), Ok(45), "{} characters", text.len());
         }
@@ -1112,12 +1248,26 @@ mod tests {
             format!("+{}45", zeros(4299)),
             format!("-{}45", zeros(4299)),
             format!(" {}45 ", zeros(4299)),
-            format!("{}45", unders(4299)),
             zeros(4301),
         ] {
             assert_eq!(int(&text), Err(limit(4301)), "{} characters", text.len());
         }
         assert_eq!(int(&zeros(5000)), Err(limit(5000)));
+        // Outside the grammar, however many digits: underscores (Python read 4300 of them as 45
+        // and refused 4301 at the limit), U+00A0 and U+001F around the digits.
+        for text in [
+            format!("{}45", unders(4298)),
+            format!("{}45", unders(4299)),
+            format!("\u{a0}+{}45\u{1f}", unders(4298)),
+            format!("\u{1f}{}45", zeros(4298)),
+        ] {
+            assert_eq!(
+                int(&text),
+                Err(IntError::Invalid),
+                "{} characters",
+                text.len()
+            );
+        }
         // A malformed literal is refused as such, however long: CPython validated it first.
         assert_eq!(int(&format!("{}45_", zeros(4299))), Err(IntError::Invalid));
         assert_eq!(int(&format!("{}4x", zeros(4299))), Err(IntError::Invalid));

@@ -126,8 +126,11 @@ fn cell<'a>(row: &'a Dict, key: &str) -> Result<&'a str> {
         .ok_or_else(|| shape(&pyrepr_key(key)))
 }
 
-/// `int(row[key])` for a CSV cell; text that is not an integer refuses (Python's `ValueError`),
-/// and so does one of more than 4300 digits, leading zeros counted, in CPython's words.
+/// `int(row[key])` for a CSV cell through the strict number grammar ([`py::int`]): text that is
+/// not an integer refuses (Python's `ValueError`), and so does one of more than 4300 digits,
+/// leading zeros counted, in CPython's words. Underscores, Unicode digits and Unicode whitespace,
+/// which Python read, are refused too (stricter), as are U+001C..U+001F around the digits, which
+/// Python refused although `str.strip()` removes them.
 fn int_cell(row: &Dict, key: &str) -> Result<i64> {
     let text = cell(row, key)?;
     py::int(text).map_err(|e| match e {
@@ -139,7 +142,10 @@ fn int_cell(row: &Dict, key: &str) -> Result<i64> {
     })
 }
 
-/// `float(row[key])` for a CSV cell; text that is not a number refuses (Python's `ValueError`).
+/// `float(row[key])` for a CSV cell through the strict number grammar ([`py::float`]); text that
+/// is not a number refuses (Python's `ValueError`). `nan`, `inf`, underscores, Unicode digits and
+/// Unicode whitespace, which Python read, are refused too (stricter; no committed ladder writes
+/// them).
 fn float_cell(row: &Dict, key: &str) -> Result<f64> {
     let text = cell(row, key)?;
     py::float(text).ok_or_else(|| {

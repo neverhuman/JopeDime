@@ -86,7 +86,20 @@
 //! naming its own `source` and `capture`: `int()` of a README CSV cell (`datasets_scored`) counts
 //! leading zeros, so 4301 digits written with leading zeros, a sign, surrounding spaces or `0_`
 //! separators refused where 4300 rendered. Where the Python raised that limit's `ValueError`, the
-//! port's refusal must carry CPython's message.
+//! port's refusal must carry CPython's message, unless the strict number grammar refused the text
+//! first (`REFUSED_BEFORE_THE_LIMIT`).
+//!
+//! # Round four
+//!
+//! Review 5334300806 found `int()` and `float()` of a README CSV cell accepting U+001F around the
+//! digits, which `str.strip()` removes but Python's conversions refused. Rather than match
+//! Python's conversions case by case, every port now reads text as a number with one strict
+//! grammar (`py::decimal`, `py::int`, `py::decimal_int`, `py::float`): ASCII whitespace, sign and
+//! digits (and for a float, a decimal point and exponent) only, a subset of what Python read.
+//! `readme/negative-r4.json` holds the reviewer's cells and the boundary cases of each class; the
+//! inputs Python read that the grammar refuses (Unicode whitespace, underscores, other Unicode
+//! digits, `nan` and the infinities) are listed in `RUST_STRICTER`, `PROCESS_STRICTER` and
+//! `PROCESS_REFUSES_REPORT`, each with its reason.
 
 use jope_records::pyjson::{self, Dict, Value};
 use jope_records::{coverage, parity, py, readme, scope_check};
@@ -487,7 +500,97 @@ const RUST_STRICTER: &[(&str, &str, &str)] = &[
         "valid-rankable-float",
         "`rankable_rows` must be an integer; the Python printed `format(8718.0, ',')`",
     ),
+    // Round four: the strict number grammar (`py::decimal`, `py::float`).
+    (
+        "readme/negative-r2.json",
+        "csv-average-rank-nan",
+        "`float()` of `nan` is outside the strict number grammar (no committed ladder writes it)",
+    ),
+    (
+        "readme/negative-r3.json",
+        "csv-int-underscores-4300-digits",
+        "`int()` of digits with `_` separators is outside the strict number grammar",
+    ),
+    (
+        "readme/negative-r4.json",
+        "published-scored-nbsp",
+        "U+00A0 around an integer is outside the strict number grammar (ASCII whitespace only)",
+    ),
+    (
+        "readme/negative-r4.json",
+        "published-scored-em-space",
+        "U+2003 around an integer is outside the strict number grammar (ASCII whitespace only)",
+    ),
+    (
+        "readme/negative-r4.json",
+        "published-scored-ideographic-space",
+        "U+3000 around an integer is outside the strict number grammar (ASCII whitespace only)",
+    ),
+    (
+        "readme/negative-r4.json",
+        "published-scored-underscore",
+        "`int()` of digits with a `_` separator is outside the strict number grammar",
+    ),
+    (
+        "readme/negative-r4.json",
+        "published-scored-arabic-indic",
+        "`int()` of Arabic-Indic digits is outside the strict number grammar (ASCII digits only)",
+    ),
+    (
+        "readme/negative-r4.json",
+        "published-scored-fullwidth",
+        "`int()` of fullwidth digits is outside the strict number grammar (ASCII digits only)",
+    ),
+    (
+        "readme/negative-r4.json",
+        "samecut-rank-nbsp",
+        "U+00A0 around an integer is outside the strict number grammar (ASCII whitespace only)",
+    ),
+    (
+        "readme/negative-r4.json",
+        "valid-average-nbsp",
+        "U+00A0 around a float is outside the strict number grammar (ASCII whitespace only)",
+    ),
+    (
+        "readme/negative-r4.json",
+        "valid-average-em-space",
+        "U+2003 around a float is outside the strict number grammar (ASCII whitespace only)",
+    ),
+    (
+        "readme/negative-r4.json",
+        "valid-average-underscore",
+        "`float()` of digits with a `_` separator is outside the strict number grammar",
+    ),
+    (
+        "readme/negative-r4.json",
+        "valid-average-arabic-indic",
+        "`float()` of Arabic-Indic digits is outside the strict number grammar (ASCII digits only)",
+    ),
+    (
+        "readme/negative-r4.json",
+        "valid-average-nan",
+        "`float()` of `nan` is outside the strict number grammar (no committed ladder writes it)",
+    ),
+    (
+        "readme/negative-r4.json",
+        "valid-average-inf",
+        "`float()` of `inf` is outside the strict number grammar (no committed ladder writes it)",
+    ),
+    (
+        "readme/negative-r4.json",
+        "valid-average-minus-infinity",
+        "`float()` of `-Infinity` is outside the strict number grammar (no committed ladder writes it)",
+    ),
 ];
+
+/// Cases where the Python refused an integer of more than 4300 digits and the port refuses the
+/// text earlier, because it is outside the strict number grammar: the refusal is not required to
+/// carry CPython's message about the limit.
+const REFUSED_BEFORE_THE_LIMIT: &[(&str, &str, &str)] = &[(
+    "readme/negative-r3.json",
+    "csv-int-underscores-4301-digits",
+    "`_` separators are outside the strict number grammar, which refuses the text before it counts digits",
+)];
 
 /// What the port did with one input.
 #[derive(Debug)]
@@ -826,10 +929,23 @@ fn readme_benchmarks_matches_round_two() {
 /// Round three: an integer of more than 4300 digits (either sign) in an evidence file, which
 /// Python 3.12's `json.loads` refused to convert even in a field nothing reads; 19 digits render.
 /// Its addendum: `int()` of a CSV cell of 4300 digits renders and of 4301 refuses, leading zeros
-/// counted, whether written plain, with `+`, between spaces or with `0_` separators.
+/// counted, whether written plain, with `+` or between spaces (`0_` separators, which Python also
+/// read, are refused by the strict number grammar since round four).
 #[test]
 fn readme_benchmarks_matches_round_three() {
     replay_readme("readme/negative-r3.json", 12);
+}
+
+/// Round four (`readme/negative-r4.json`, review 5334300806 of PR #117): `int()` and `float()` of
+/// README CSV cells, which the port reads with the strict number grammar. The reviewer's two
+/// cells (U+001F before a published `datasets_scored` and before a benchmark-valid
+/// `average_rank`), which Python refused although `str.strip()` removes U+001F, are refused;
+/// so is every other input Python refused. ASCII whitespace, a sign, leading zeros and exponent
+/// forms render as Python rendered them; Unicode whitespace, underscores, other Unicode digits,
+/// `nan` and the infinities, which Python read, are refused (`RUST_STRICTER`).
+#[test]
+fn readme_benchmarks_matches_round_four() {
+    replay_readme("readme/negative-r4.json", 37);
 }
 
 fn replay_readme(rel: &str, count: usize) {
@@ -876,12 +992,16 @@ fn replay_readme(rel: &str, count: usize) {
             if py::sha256_hex(written.as_bytes()) != want {
                 outcome = Err("README.md differs from what the Python left".to_owned());
             }
-            // Python 3.12's limit on integer conversion is refused in CPython's words.
+            // Python 3.12's limit on integer conversion is refused in CPython's words, unless the
+            // strict number grammar refused the text before it counted digits.
             let limit = case
                 .get("raised")
                 .and_then(|raised| s(raised).strip_prefix("ValueError: "))
                 .filter(|message| message.starts_with("Exceeds the limit ("));
-            if let (Some(limit), Rust::Refused(message)) = (limit, &rust) {
+            let earlier = REFUSED_BEFORE_THE_LIMIT
+                .iter()
+                .any(|(fixture, n, _)| *fixture == rel && n == name);
+            if let (Some(limit), Rust::Refused(message), false) = (limit, &rust, earlier) {
                 if !message.contains(limit) {
                     outcome = Err(format!(
                         "refusal message: CPython's {limit:?}, the port {message:?}"
@@ -898,6 +1018,15 @@ fn replay_readme(rel: &str, count: usize) {
             cases.iter().any(|(n, _)| n == name),
             "RUST_STRICTER names {name}"
         );
+    }
+    for (fixture, name, _) in REFUSED_BEFORE_THE_LIMIT {
+        if *fixture == rel {
+            let case = cases.iter().find(|(n, _)| n == name).map(|(_, c)| c);
+            assert!(
+                case.is_some_and(|c| c.get("raised").is_some()),
+                "REFUSED_BEFORE_THE_LIMIT names {name}, which is not a case the Python crashed on"
+            );
+        }
     }
     assert!(failures.is_empty(), "{}", failures.join("\n"));
 }
@@ -980,14 +1109,29 @@ fn shims(dir: &Path) {
     }
 }
 
-/// Process cases the port refuses although the Python ran to completion (exit status 0).
-const PROCESS_STRICTER: &[(&str, &str)] = &[];
+/// Process cases the port refuses although the Python ran to completion (exit status 0): round
+/// four's strict number grammar reads a number in ASCII digits only, where Python's `int()` read
+/// any Unicode decimal digits.
+const PROCESS_STRICTER: &[(&str, &str)] = &[
+    (
+        "parity-tally-arabic-equal",
+        "a covering-test tally written in Arabic-Indic digits (`int()` of `\\d+`)",
+    ),
+    (
+        "parity-tally-4300-arabic-indic-digits",
+        "a covering-test tally of 4300 Arabic-Indic digits (`int()` of `\\d+`)",
+    ),
+];
 
 /// Process cases where both exit 1 but the Python printed a failing report and the port refuses
-/// instead. The report names an entry point whose path is not UTF-8: the Python kept it
-/// surrogate-escaped, and printed its raw bytes only because the capture's `C.UTF-8` locale gives
-/// stdout the `surrogateescape` handler (under another UTF-8 locale it crashed printing them).
-/// The port's reports are text, so it refuses, naming the path.
+/// instead:
+///
+/// - The report names an entry point whose path is not UTF-8: the Python kept it
+///   surrogate-escaped, and printed its raw bytes only because the capture's `C.UTF-8` locale gives
+///   stdout the `surrogateescape` handler (under another UTF-8 locale it crashed printing them).
+///   The port's reports are text, so it refuses, naming the path.
+/// - Round four: a number written in Unicode digits other than ASCII, which Python's `int()` read
+///   and the strict number grammar refuses before the report is made.
 const PROCESS_REFUSES_REPORT: &[(&str, &str)] = &[
     (
         "parity-tool-name-not-utf8-decoy",
@@ -996,6 +1140,14 @@ const PROCESS_REFUSES_REPORT: &[(&str, &str)] = &[
     (
         "parity-unit-name-not-utf8",
         "a systemd unit named with a byte that is not UTF-8",
+    ),
+    (
+        "parity-pending-wp-arabic-digit",
+        "a `pending-WP<n>` status numbered in Arabic-Indic digits (`int()` of `\\d+`)",
+    ),
+    (
+        "parity-tally-arabic-differs",
+        "a covering-test tally written in Arabic-Indic digits (`int()` of `\\d+`)",
     ),
 ];
 

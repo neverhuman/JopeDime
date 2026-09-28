@@ -515,14 +515,18 @@ pub fn parse_matrix(text: &str) -> Vec<Row> {
     rows
 }
 
-/// The digits of `^pending-WP(\d+)$` as ASCII decimal without leading zeros, when the status
-/// matches (`PENDING_RE.match`, no `int()` yet: classifying a status never refused).
-fn pending_number(status: &str) -> Option<String> {
-    py::decimal_digits(status.strip_prefix("pending-WP")?)
+/// `PENDING_RE.match(status)` (`^pending-WP(\d+)$`, Python's Unicode `\d`): classifying a status
+/// reads no number and never refused.
+fn is_pending(status: &str) -> bool {
+    status
+        .strip_prefix("pending-WP")
+        .is_some_and(py::is_decimal_run)
 }
 
-/// `int(PENDING_RE.match(status).group(1))` of a pending status: the work-package number, or
-/// Python 3.12's `ValueError` for more than 4300 digits (the check crashed there).
+/// `int(PENDING_RE.match(status).group(1))` of a pending status through the strict number grammar
+/// ([`py::decimal_int`]): the work-package number as ASCII decimal, or the refusal. The check
+/// crashed where Python 3.12 refused more than 4300 digits; a number written in other Unicode
+/// digits, which Python read, is refused as well (stricter).
 fn pending_int(status: &str, place: &str) -> Result<String> {
     let digits = status.strip_prefix("pending-WP").expect("a pending status");
     py::decimal_int(digits)
@@ -534,7 +538,7 @@ pub fn status_class(status: &str) -> &'static str {
         "moved" => "moved",
         "new" => "new",
         "lost" => "lost",
-        s if pending_number(s).is_some() => "pending",
+        s if is_pending(s) => "pending",
         s if s.starts_with("dropped:") => "dropped",
         _ => "invalid",
     }
@@ -585,9 +589,10 @@ fn counts_row_kind(line: &str) -> String {
         .unwrap_or_else(|| line.to_owned())
 }
 
-/// The `## Counts` section as committed: table lines, covering-test tally (`int` of the captured
-/// Unicode decimal digits, as ASCII decimal; more than 4300 digits refuse as Python 3.12's `int()`
-/// raised), every other line.
+/// The `## Counts` section as committed: table lines, covering-test tally (`int()` of what `\d+`
+/// captured through the strict number grammar, [`py::decimal_int`]: ASCII decimal, more than 4300
+/// digits refused as Python 3.12's `int()` raised, other Unicode digits refused though Python read
+/// them), every other line.
 fn committed_counts(text: &str) -> Result<(Vec<String>, Option<String>, Vec<String>)> {
     let lines = py::splitlines(text);
     let Some(start) = lines.iter().position(|l| *l == "## Counts") else {
@@ -732,8 +737,9 @@ pub fn check(matrix: &Path, root: &Path, help_text: Option<&Path>) -> Result<(St
 
 /// The check report for a matrix text against a tree, and whether the matrix passes. `exists`
 /// answers whether a row target path exists. `check` gathers the inputs; the Python-parity
-/// fixtures replay recorded ones. Refuses where the Python's `int()` raised: a `pending-WP<n>`
-/// status or a covering-test tally of more than 4300 digits.
+/// fixtures replay recorded ones. Refuses where the Python's `int()` raised (a `pending-WP<n>`
+/// status or a covering-test tally of more than 4300 digits) and where the strict number grammar
+/// does not read what it read (such a number in other Unicode digits).
 pub fn evaluate(
     matrix_text: &str,
     tree: &Tree,
@@ -940,15 +946,25 @@ mod tests {
         assert_eq!(status_class("pending-WP"), "invalid");
         assert_eq!(status_class("dropped: why (archive: x)"), "dropped");
         assert_eq!(status_class("gone"), "invalid");
-        assert_eq!(pending_number("pending-WP13"), Some("13".to_owned()));
-        // Python's `\d` and `int()`: any Unicode decimal digits, of any length.
-        assert_eq!(status_class("pending-WP\u{665}"), "pending");
-        assert_eq!(pending_number("pending-WP\u{665}"), Some("5".to_owned()));
+        assert_eq!(pending_int("pending-WP13", "row 1").unwrap(), "13");
         assert_eq!(
-            pending_number("pending-WP0099999999999999999999"),
-            Some("99999999999999999999".to_owned())
+            pending_int("pending-WP0099999999999999999999", "row 1").unwrap(),
+            "99999999999999999999"
         );
+        // Python's `\d` classifies any Unicode decimal digits as pending, as before; reading the
+        // number is the strict grammar's, which refuses them (Python read 5; stricter).
+        assert_eq!(status_class("pending-WP\u{665}"), "pending");
+        let refused = pending_int("pending-WP\u{665}", "row 1")
+            .unwrap_err()
+            .to_string();
+        assert!(refused.contains("is not ASCII decimal digits"), "{refused}");
         assert_eq!(status_class("pending-WP\u{b2}"), "invalid");
+        let refused = committed_counts(
+            "## Counts\n\n`moved`/`new` rows without a covering test: \u{ff11}.\n",
+        )
+        .unwrap_err()
+        .to_string();
+        assert!(refused.contains("is not ASCII decimal digits"), "{refused}");
     }
 
     /// `int()` of the pending number and of the covering-test tally: 4300 digits (leading zeros

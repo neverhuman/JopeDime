@@ -1,0 +1,786 @@
+{
+  "source": "p1-strict-capture-20260928T054323Z",
+  "capture": "bash cap4.sh p1-strict-capture-20260928T054323Z (Python from git show f46a9048fbb2697d6d1f4463a688083ea9dfcce1:<tool>, unmodified, in a scratch root)",
+  "tool": "deploy/ci/readme-benchmarks.py --write",
+  "root": "readme/root",
+  "readme": "readme/README.stale.md",
+  "cases": [
+    {
+      "name": "published-scored-unit-separator",
+      "commands": "row 2 column 8 of assets/regression/sotarena-tabular-regression-v2/results/tabular-regression-v2/leaderboard.csv set to the value (hex 1f3435), assets/regression/elo-tabular-regression-v2.json rebound to its SHA-256",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.json",
+          "ed": "9c\n  \"leaderboard_sha256\": \"338d91817f8ef74d61e44b43cd927fcf2fe40d2ece6af734ea70bc43b8035511\",\n.\n",
+          "sha256": "05bab8aa28785144fe1364b6de709be69b8e2d6027ff2c724a32eacee7383d94"
+        },
+        {
+          "path": "assets/regression/sotarena-tabular-regression-v2/results/tabular-regression-v2/leaderboard.csv",
+          "ed": "2c\n1,1,jope-dime,jope-dime (evolved),2259.8,4.622,11,\u001f45,45,100.0,True,0,45/45,aspfm-generated,True,official unified benchmark comparison\n.\n",
+          "sha256": "338d91817f8ef74d61e44b43cd927fcf2fe40d2ece6af734ea70bc43b8035511"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "ValueError: invalid literal for int() with base 10: '\\x1f45'",
+      "readme_sha256": "2ec5f806e5c96b3edd312a053c4006447dbe02702ba2e11908986ccae12b5ed9"
+    },
+    {
+      "name": "valid-average-unit-separator",
+      "commands": "row 2 column 6 of assets/regression/leaderboard-tabular-regression-v2.benchmark-valid.csv set to the value (hex 1f32312e353131), assets/regression/elo-tabular-regression-v2.benchmark-valid.json rebound to its SHA-256",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "23c\n  \"leaderboard_sha256\": \"d601c670a48291485583f6599ccd428629a176231d3319949b711adf982179da\",\n.\n",
+          "sha256": "c67649a0058a47dd5fdda79fa14fba15579cbbb77729606b5ab30f4fa523bc6b"
+        },
+        {
+          "path": "assets/regression/leaderboard-tabular-regression-v2.benchmark-valid.csv",
+          "ed": "2c\n1,1,tabfm_ensemble_regressor,TabFM Ensemble,1934.9,\u001f21.511,7,45,45,100.0,True,0,45/45,public-development,True,benchmark-valid rows only; protocol corrections applied\n.\n",
+          "sha256": "d601c670a48291485583f6599ccd428629a176231d3319949b711adf982179da"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "ValueError: could not convert string to float: '\\x1f21.511'",
+      "readme_sha256": "2ec5f806e5c96b3edd312a053c4006447dbe02702ba2e11908986ccae12b5ed9"
+    },
+    {
+      "name": "published-scored-unit-separator-after",
+      "commands": "row 2 column 8 of assets/regression/sotarena-tabular-regression-v2/results/tabular-regression-v2/leaderboard.csv set to the value (hex 34351f), assets/regression/elo-tabular-regression-v2.json rebound to its SHA-256",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.json",
+          "ed": "9c\n  \"leaderboard_sha256\": \"318e82e666575f900c21d5af2d07dc17b8ed7099590524264c77b7275f03562a\",\n.\n",
+          "sha256": "a78f821a28a3b8314863385210cb0b692f1d0e2e5c475fdec1d5e0e0cfeb6422"
+        },
+        {
+          "path": "assets/regression/sotarena-tabular-regression-v2/results/tabular-regression-v2/leaderboard.csv",
+          "ed": "2c\n1,1,jope-dime,jope-dime (evolved),2259.8,4.622,11,45\u001f,45,100.0,True,0,45/45,aspfm-generated,True,official unified benchmark comparison\n.\n",
+          "sha256": "318e82e666575f900c21d5af2d07dc17b8ed7099590524264c77b7275f03562a"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "ValueError: invalid literal for int() with base 10: '45\\x1f'",
+      "readme_sha256": "2ec5f806e5c96b3edd312a053c4006447dbe02702ba2e11908986ccae12b5ed9"
+    },
+    {
+      "name": "published-scored-record-separator",
+      "commands": "row 2 column 8 of assets/regression/sotarena-tabular-regression-v2/results/tabular-regression-v2/leaderboard.csv set to the value (hex 1e3435), assets/regression/elo-tabular-regression-v2.json rebound to its SHA-256",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.json",
+          "ed": "9c\n  \"leaderboard_sha256\": \"39579f27268c4a2db3a8e241d8aec2a57be7625c943ecc070237c2e0945bcffd\",\n.\n",
+          "sha256": "6b9c9bd39a911bef5b70b19ec23cd27ff863b87a4a049420753c8205a1ca46c9"
+        },
+        {
+          "path": "assets/regression/sotarena-tabular-regression-v2/results/tabular-regression-v2/leaderboard.csv",
+          "ed": "2c\n1,1,jope-dime,jope-dime (evolved),2259.8,4.622,11,\u001e45,45,100.0,True,0,45/45,aspfm-generated,True,official unified benchmark comparison\n.\n",
+          "sha256": "39579f27268c4a2db3a8e241d8aec2a57be7625c943ecc070237c2e0945bcffd"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "assets/regression/elo-tabular-regression-v2.json: 305 methods but the CSV has 306 rows\nThe committed benchmark evidence disagrees with itself; refusing to publish.\n",
+      "readme_sha256": "2ec5f806e5c96b3edd312a053c4006447dbe02702ba2e11908986ccae12b5ed9"
+    },
+    {
+      "name": "published-scored-nbsp",
+      "commands": "row 2 column 8 of assets/regression/sotarena-tabular-regression-v2/results/tabular-regression-v2/leaderboard.csv set to the value (hex c2a03435), assets/regression/elo-tabular-regression-v2.json rebound to its SHA-256",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.json",
+          "ed": "9c\n  \"leaderboard_sha256\": \"8ca37d3179ce3cf625c61b23f76e9b02f7ba43c77adeb664d22f176f27b9ba9b\",\n.\n",
+          "sha256": "9f01253ec112dfd499881913d52a26024226c517595d0e0fba2a8f99cd996b10"
+        },
+        {
+          "path": "assets/regression/sotarena-tabular-regression-v2/results/tabular-regression-v2/leaderboard.csv",
+          "ed": "2c\n1,1,jope-dime,jope-dime (evolved),2259.8,4.622,11, 45,45,100.0,True,0,45/45,aspfm-generated,True,official unified benchmark comparison\n.\n",
+          "sha256": "8ca37d3179ce3cf625c61b23f76e9b02f7ba43c77adeb664d22f176f27b9ba9b"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "d0324302ed06d834a14000949597ff18cb73afbbfd2e3f86cebcda1594ced154"
+    },
+    {
+      "name": "published-scored-em-space",
+      "commands": "row 2 column 8 of assets/regression/sotarena-tabular-regression-v2/results/tabular-regression-v2/leaderboard.csv set to the value (hex e280833435), assets/regression/elo-tabular-regression-v2.json rebound to its SHA-256",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.json",
+          "ed": "9c\n  \"leaderboard_sha256\": \"843cb2c0ab2294cd8e47897064ad3b8c525b865d0d34995e771abaebe53786aa\",\n.\n",
+          "sha256": "bf1737cf8326123e0371512d4a8b9430b2508d338b7a53f0fa62ddd0a56d3dcf"
+        },
+        {
+          "path": "assets/regression/sotarena-tabular-regression-v2/results/tabular-regression-v2/leaderboard.csv",
+          "ed": "2c\n1,1,jope-dime,jope-dime (evolved),2259.8,4.622,11, 45,45,100.0,True,0,45/45,aspfm-generated,True,official unified benchmark comparison\n.\n",
+          "sha256": "843cb2c0ab2294cd8e47897064ad3b8c525b865d0d34995e771abaebe53786aa"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "69c0b3c7918261773222678d4da5692b3cd35943f6cb7ac216dc4fb5b6ea3128"
+    },
+    {
+      "name": "published-scored-ideographic-space",
+      "commands": "row 2 column 8 of assets/regression/sotarena-tabular-regression-v2/results/tabular-regression-v2/leaderboard.csv set to the value (hex e380803435), assets/regression/elo-tabular-regression-v2.json rebound to its SHA-256",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.json",
+          "ed": "9c\n  \"leaderboard_sha256\": \"3ca3b80518ae55dd49daf7060c442da542ff433160c2bd9058302fd2aebeb544\",\n.\n",
+          "sha256": "b62db356e5d76c057ed322260278b4dc8d2bb592fdb9c995ff0f2f376e41555a"
+        },
+        {
+          "path": "assets/regression/sotarena-tabular-regression-v2/results/tabular-regression-v2/leaderboard.csv",
+          "ed": "2c\n1,1,jope-dime,jope-dime (evolved),2259.8,4.622,11,　45,45,100.0,True,0,45/45,aspfm-generated,True,official unified benchmark comparison\n.\n",
+          "sha256": "3ca3b80518ae55dd49daf7060c442da542ff433160c2bd9058302fd2aebeb544"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "f3db2d5a437afb29cdaa392ad514d02dd0001d5ff791d132d267817d416b6abd"
+    },
+    {
+      "name": "published-scored-zero-width-space",
+      "commands": "row 2 column 8 of assets/regression/sotarena-tabular-regression-v2/results/tabular-regression-v2/leaderboard.csv set to the value (hex e2808b3435), assets/regression/elo-tabular-regression-v2.json rebound to its SHA-256",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.json",
+          "ed": "9c\n  \"leaderboard_sha256\": \"24364eae6ae83aa5a998e04e71d3b8d75266fb17236a11743f1a18099a909790\",\n.\n",
+          "sha256": "92e6fa21149dfb899291a8fbf6ccad0b2731ffad790d277b40fd72a62a949945"
+        },
+        {
+          "path": "assets/regression/sotarena-tabular-regression-v2/results/tabular-regression-v2/leaderboard.csv",
+          "ed": "2c\n1,1,jope-dime,jope-dime (evolved),2259.8,4.622,11,​45,45,100.0,True,0,45/45,aspfm-generated,True,official unified benchmark comparison\n.\n",
+          "sha256": "24364eae6ae83aa5a998e04e71d3b8d75266fb17236a11743f1a18099a909790"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "ValueError: invalid literal for int() with base 10: '\\u200b45'",
+      "readme_sha256": "2ec5f806e5c96b3edd312a053c4006447dbe02702ba2e11908986ccae12b5ed9"
+    },
+    {
+      "name": "published-scored-ascii-spaces",
+      "commands": "row 2 column 8 of assets/regression/sotarena-tabular-regression-v2/results/tabular-regression-v2/leaderboard.csv set to the value (hex 20343520), assets/regression/elo-tabular-regression-v2.json rebound to its SHA-256",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.json",
+          "ed": "9c\n  \"leaderboard_sha256\": \"36b7f747e19065d53fac538e47b053edaa8267d035ef7ed7e2ba77bab30b6981\",\n.\n",
+          "sha256": "34a6849d9479e7484f6955bca51e4e524653d3ee58bc7b6fc4c65f8bc9ff4073"
+        },
+        {
+          "path": "assets/regression/sotarena-tabular-regression-v2/results/tabular-regression-v2/leaderboard.csv",
+          "ed": "2c\n1,1,jope-dime,jope-dime (evolved),2259.8,4.622,11, 45 ,45,100.0,True,0,45/45,aspfm-generated,True,official unified benchmark comparison\n.\n",
+          "sha256": "36b7f747e19065d53fac538e47b053edaa8267d035ef7ed7e2ba77bab30b6981"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "9a7fa70292437f9689ab31e7defe2262105f985b10a98bc46f9e665a50cc5eab"
+    },
+    {
+      "name": "published-scored-tab",
+      "commands": "row 2 column 8 of assets/regression/sotarena-tabular-regression-v2/results/tabular-regression-v2/leaderboard.csv set to the value (hex 093435), assets/regression/elo-tabular-regression-v2.json rebound to its SHA-256",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.json",
+          "ed": "9c\n  \"leaderboard_sha256\": \"bf5912a6576f2daea71ed412a28c5c511d55771187e96c93e8a4e8b75aeb4fca\",\n.\n",
+          "sha256": "9a4c048ff04fb77ad16efe48babcfb14026572460b56db4f4f4ff8b80f092b73"
+        },
+        {
+          "path": "assets/regression/sotarena-tabular-regression-v2/results/tabular-regression-v2/leaderboard.csv",
+          "ed": "2c\n1,1,jope-dime,jope-dime (evolved),2259.8,4.622,11,\t45,45,100.0,True,0,45/45,aspfm-generated,True,official unified benchmark comparison\n.\n",
+          "sha256": "bf5912a6576f2daea71ed412a28c5c511d55771187e96c93e8a4e8b75aeb4fca"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "3ac176abee4ca9a221a7a355d56bba1ea59ee4b84f52a318b702ba27fd1a19ac"
+    },
+    {
+      "name": "published-scored-form-feed",
+      "commands": "row 2 column 8 of assets/regression/sotarena-tabular-regression-v2/results/tabular-regression-v2/leaderboard.csv set to the value (hex 0c3435), assets/regression/elo-tabular-regression-v2.json rebound to its SHA-256",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.json",
+          "ed": "9c\n  \"leaderboard_sha256\": \"9ac157a41fafe9a5d3c1cfb4f244616c5628ebfdcbb336be63a4a50985ed5450\",\n.\n",
+          "sha256": "1ec9b81ce285860d3d9e2999ec503b0ce5821e76fe5f11c872e5306c31c5fa72"
+        },
+        {
+          "path": "assets/regression/sotarena-tabular-regression-v2/results/tabular-regression-v2/leaderboard.csv",
+          "ed": "2c\n1,1,jope-dime,jope-dime (evolved),2259.8,4.622,11,\f45,45,100.0,True,0,45/45,aspfm-generated,True,official unified benchmark comparison\n.\n",
+          "sha256": "9ac157a41fafe9a5d3c1cfb4f244616c5628ebfdcbb336be63a4a50985ed5450"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "assets/regression/elo-tabular-regression-v2.json: 305 methods but the CSV has 306 rows\nThe committed benchmark evidence disagrees with itself; refusing to publish.\n",
+      "readme_sha256": "2ec5f806e5c96b3edd312a053c4006447dbe02702ba2e11908986ccae12b5ed9"
+    },
+    {
+      "name": "published-scored-plus",
+      "commands": "row 2 column 8 of assets/regression/sotarena-tabular-regression-v2/results/tabular-regression-v2/leaderboard.csv set to the value (hex 2b3435), assets/regression/elo-tabular-regression-v2.json rebound to its SHA-256",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.json",
+          "ed": "9c\n  \"leaderboard_sha256\": \"75c13df13abec24cdf7c4bc520579ffada082b42cda7d48c62d3797adafea30b\",\n.\n",
+          "sha256": "5b2de52c879b6a90991f5ab83dfea81e6f6cb36a3a95c42752ab415a7377d88a"
+        },
+        {
+          "path": "assets/regression/sotarena-tabular-regression-v2/results/tabular-regression-v2/leaderboard.csv",
+          "ed": "2c\n1,1,jope-dime,jope-dime (evolved),2259.8,4.622,11,+45,45,100.0,True,0,45/45,aspfm-generated,True,official unified benchmark comparison\n.\n",
+          "sha256": "75c13df13abec24cdf7c4bc520579ffada082b42cda7d48c62d3797adafea30b"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "74bbc2af5647dab365b1b02fae43f597f3919648a75d4775c82b6f8c552e4822"
+    },
+    {
+      "name": "published-scored-leading-zero",
+      "commands": "row 2 column 8 of assets/regression/sotarena-tabular-regression-v2/results/tabular-regression-v2/leaderboard.csv set to the value (hex 303435), assets/regression/elo-tabular-regression-v2.json rebound to its SHA-256",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.json",
+          "ed": "9c\n  \"leaderboard_sha256\": \"c56bc5ff1a8dab45ac561fb014c4d546742007d302165193a3e7347b3eb62fdb\",\n.\n",
+          "sha256": "88d7cb7e4abf2febc28f6786aba3a763581e9ab3a65d885d640c87f6c6f05dff"
+        },
+        {
+          "path": "assets/regression/sotarena-tabular-regression-v2/results/tabular-regression-v2/leaderboard.csv",
+          "ed": "2c\n1,1,jope-dime,jope-dime (evolved),2259.8,4.622,11,045,45,100.0,True,0,45/45,aspfm-generated,True,official unified benchmark comparison\n.\n",
+          "sha256": "c56bc5ff1a8dab45ac561fb014c4d546742007d302165193a3e7347b3eb62fdb"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "db274e9cce0eab6fe149e50c3ba51e5562f0da5175b43581330e3d7255c52cb0"
+    },
+    {
+      "name": "published-scored-underscore",
+      "commands": "row 2 column 8 of assets/regression/sotarena-tabular-regression-v2/results/tabular-regression-v2/leaderboard.csv set to the value (hex 345f35), assets/regression/elo-tabular-regression-v2.json rebound to its SHA-256",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.json",
+          "ed": "9c\n  \"leaderboard_sha256\": \"cc440342492be9ebcedec3d3b221e63b54fffeda0e8fe51ba80c551bc7b57526\",\n.\n",
+          "sha256": "73e39380e05dcb95904bd06dc871ff78c3d52448f3c94b4c5dcb225d913f051f"
+        },
+        {
+          "path": "assets/regression/sotarena-tabular-regression-v2/results/tabular-regression-v2/leaderboard.csv",
+          "ed": "2c\n1,1,jope-dime,jope-dime (evolved),2259.8,4.622,11,4_5,45,100.0,True,0,45/45,aspfm-generated,True,official unified benchmark comparison\n.\n",
+          "sha256": "cc440342492be9ebcedec3d3b221e63b54fffeda0e8fe51ba80c551bc7b57526"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "ed0ec8ab5d952cc32f6443737231c362517499948d1ee49d6f413d417bddbbe4"
+    },
+    {
+      "name": "published-scored-arabic-indic",
+      "commands": "row 2 column 8 of assets/regression/sotarena-tabular-regression-v2/results/tabular-regression-v2/leaderboard.csv set to the value (hex d9a4d9a5), assets/regression/elo-tabular-regression-v2.json rebound to its SHA-256",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.json",
+          "ed": "9c\n  \"leaderboard_sha256\": \"38713441fdc32122cec1449c0ca27bc432064c7b85d21c3036f111a29bb31a2c\",\n.\n",
+          "sha256": "11ac02de3544fa92848d808f0cf267affba50bbc71c14fa9fac3ddc202be6ca3"
+        },
+        {
+          "path": "assets/regression/sotarena-tabular-regression-v2/results/tabular-regression-v2/leaderboard.csv",
+          "ed": "2c\n1,1,jope-dime,jope-dime (evolved),2259.8,4.622,11,٤٥,45,100.0,True,0,45/45,aspfm-generated,True,official unified benchmark comparison\n.\n",
+          "sha256": "38713441fdc32122cec1449c0ca27bc432064c7b85d21c3036f111a29bb31a2c"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "7d5a54372155427887e547551ab412e3a453ad252366568e9cb542188cde4295"
+    },
+    {
+      "name": "published-scored-fullwidth",
+      "commands": "row 2 column 8 of assets/regression/sotarena-tabular-regression-v2/results/tabular-regression-v2/leaderboard.csv set to the value (hex efbc94efbc95), assets/regression/elo-tabular-regression-v2.json rebound to its SHA-256",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.json",
+          "ed": "9c\n  \"leaderboard_sha256\": \"0a139c0f586d480adf0380ebe73567e5f7ac75387da30509db6e7dddd6bf32a3\",\n.\n",
+          "sha256": "14fd437722ebb6ad5b933249a453f4169a5748ed175ca0d26e33e781bf823d9d"
+        },
+        {
+          "path": "assets/regression/sotarena-tabular-regression-v2/results/tabular-regression-v2/leaderboard.csv",
+          "ed": "2c\n1,1,jope-dime,jope-dime (evolved),2259.8,4.622,11,４５,45,100.0,True,0,45/45,aspfm-generated,True,official unified benchmark comparison\n.\n",
+          "sha256": "0a139c0f586d480adf0380ebe73567e5f7ac75387da30509db6e7dddd6bf32a3"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "7eb8398d96afdcd54311af7cfffd56ad1b529b4d28c244fbd61c0b5e50b91484"
+    },
+    {
+      "name": "published-scored-decimal-point",
+      "commands": "row 2 column 8 of assets/regression/sotarena-tabular-regression-v2/results/tabular-regression-v2/leaderboard.csv set to the value (hex 34352e30), assets/regression/elo-tabular-regression-v2.json rebound to its SHA-256",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.json",
+          "ed": "9c\n  \"leaderboard_sha256\": \"e03b5346396613bb3675aaddcdfcfea0087a2ba4c2a3d848b436af1f058f7b15\",\n.\n",
+          "sha256": "6d04e2ed675afcfd7d132c92c333bed991557d32ac6918514a628d5989d022a3"
+        },
+        {
+          "path": "assets/regression/sotarena-tabular-regression-v2/results/tabular-regression-v2/leaderboard.csv",
+          "ed": "2c\n1,1,jope-dime,jope-dime (evolved),2259.8,4.622,11,45.0,45,100.0,True,0,45/45,aspfm-generated,True,official unified benchmark comparison\n.\n",
+          "sha256": "e03b5346396613bb3675aaddcdfcfea0087a2ba4c2a3d848b436af1f058f7b15"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "ValueError: invalid literal for int() with base 10: '45.0'",
+      "readme_sha256": "2ec5f806e5c96b3edd312a053c4006447dbe02702ba2e11908986ccae12b5ed9"
+    },
+    {
+      "name": "samecut-rank-unit-separator",
+      "commands": "row 3 column 1 of assets/same-cut/v2/leaderboard-jope-same-cut-v1-deep.csv set to the value (hex 1f32), assets/same-cut/v2/elo-jope-same-cut-v1-deep.json rebound to its SHA-256",
+      "edits": [
+        {
+          "path": "assets/same-cut/v2/elo-jope-same-cut-v1-deep.json",
+          "ed": "9c\n  \"leaderboard_sha256\": \"593eb7321663bc954ccfb11e9f0a8ff5ddf2c844436a43f708a4cccf1626aad5\",\n.\n",
+          "sha256": "412764e152a6a2d772d87c0b8bebf760fdd2f7a6be9b9f9bff2a3ff9fb7fb460"
+        },
+        {
+          "path": "assets/same-cut/v2/leaderboard-jope-same-cut-v1-deep.csv",
+          "ed": "3c\n\u001f2,,adapter.rf,adapter.rf,1560.0,2.0,0,1,10,10.0,False,0,1/10,same-cut,True,official unified benchmark comparison\n.\n",
+          "sha256": "593eb7321663bc954ccfb11e9f0a8ff5ddf2c844436a43f708a4cccf1626aad5"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "ValueError: invalid literal for int() with base 10: '\\x1f2'",
+      "readme_sha256": "2ec5f806e5c96b3edd312a053c4006447dbe02702ba2e11908986ccae12b5ed9"
+    },
+    {
+      "name": "samecut-rank-nbsp",
+      "commands": "row 3 column 1 of assets/same-cut/v2/leaderboard-jope-same-cut-v1-deep.csv set to the value (hex c2a032), assets/same-cut/v2/elo-jope-same-cut-v1-deep.json rebound to its SHA-256",
+      "edits": [
+        {
+          "path": "assets/same-cut/v2/elo-jope-same-cut-v1-deep.json",
+          "ed": "9c\n  \"leaderboard_sha256\": \"e00eb6cd082f9d7cba38f8574eede7045431043f4b55d47d5c7b6e37f4141d4e\",\n.\n",
+          "sha256": "7971b06cd207e5c8f90b40c427d642b00ff6118bc037a1c6125df430f057f913"
+        },
+        {
+          "path": "assets/same-cut/v2/leaderboard-jope-same-cut-v1-deep.csv",
+          "ed": "3c\n 2,,adapter.rf,adapter.rf,1560.0,2.0,0,1,10,10.0,False,0,1/10,same-cut,True,official unified benchmark comparison\n.\n",
+          "sha256": "e00eb6cd082f9d7cba38f8574eede7045431043f4b55d47d5c7b6e37f4141d4e"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "626c9b2e8c1bd150485fac520c3e1e40f86c91fea55e672a9e5ce999aaa7af74"
+    },
+    {
+      "name": "valid-average-unit-separator-after",
+      "commands": "row 2 column 6 of assets/regression/leaderboard-tabular-regression-v2.benchmark-valid.csv set to the value (hex 32312e3531311f), assets/regression/elo-tabular-regression-v2.benchmark-valid.json rebound to its SHA-256",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "23c\n  \"leaderboard_sha256\": \"2fb2c12cdcabacb88a3cf62fa328a4eff5a532cd2c857cffb7d7b156fd532339\",\n.\n",
+          "sha256": "5fb48da599c7b482fa27ba72f56f2c937af27c9f2e65f7620a627d5378868137"
+        },
+        {
+          "path": "assets/regression/leaderboard-tabular-regression-v2.benchmark-valid.csv",
+          "ed": "2c\n1,1,tabfm_ensemble_regressor,TabFM Ensemble,1934.9,21.511\u001f,7,45,45,100.0,True,0,45/45,public-development,True,benchmark-valid rows only; protocol corrections applied\n.\n",
+          "sha256": "2fb2c12cdcabacb88a3cf62fa328a4eff5a532cd2c857cffb7d7b156fd532339"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "ValueError: could not convert string to float: '21.511\\x1f'",
+      "readme_sha256": "2ec5f806e5c96b3edd312a053c4006447dbe02702ba2e11908986ccae12b5ed9"
+    },
+    {
+      "name": "valid-average-nbsp",
+      "commands": "row 2 column 6 of assets/regression/leaderboard-tabular-regression-v2.benchmark-valid.csv set to the value (hex c2a032312e353131), assets/regression/elo-tabular-regression-v2.benchmark-valid.json rebound to its SHA-256",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "23c\n  \"leaderboard_sha256\": \"0812497bf3e0a95419640e71e893f6583e76cba5438b948be3ca48e84ff52523\",\n.\n",
+          "sha256": "c7623ae3063d6136bb7509ad0e2f7eefb0f05023db194e04cbfe7f39233c5b4f"
+        },
+        {
+          "path": "assets/regression/leaderboard-tabular-regression-v2.benchmark-valid.csv",
+          "ed": "2c\n1,1,tabfm_ensemble_regressor,TabFM Ensemble,1934.9, 21.511,7,45,45,100.0,True,0,45/45,public-development,True,benchmark-valid rows only; protocol corrections applied\n.\n",
+          "sha256": "0812497bf3e0a95419640e71e893f6583e76cba5438b948be3ca48e84ff52523"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "a6e1347f469baebc574dbf3622aa7b71b7dd97e0dbc2dcb4f267aecb741b135d"
+    },
+    {
+      "name": "valid-average-em-space",
+      "commands": "row 2 column 6 of assets/regression/leaderboard-tabular-regression-v2.benchmark-valid.csv set to the value (hex e2808332312e353131), assets/regression/elo-tabular-regression-v2.benchmark-valid.json rebound to its SHA-256",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "23c\n  \"leaderboard_sha256\": \"5b736427a829b6cc679bfa553a5c1f84e8c9ab4371b3839a4442c73b2ef2082e\",\n.\n",
+          "sha256": "8dab26d67035079e0f031495188b82d28825ab73a2466265c095ece62c233ae1"
+        },
+        {
+          "path": "assets/regression/leaderboard-tabular-regression-v2.benchmark-valid.csv",
+          "ed": "2c\n1,1,tabfm_ensemble_regressor,TabFM Ensemble,1934.9, 21.511,7,45,45,100.0,True,0,45/45,public-development,True,benchmark-valid rows only; protocol corrections applied\n.\n",
+          "sha256": "5b736427a829b6cc679bfa553a5c1f84e8c9ab4371b3839a4442c73b2ef2082e"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "c63fcb542bad0010ecdc984b77dfa9d0a87fad2d10ea7217bce81856e67e27b4"
+    },
+    {
+      "name": "valid-average-ascii-spaces",
+      "commands": "row 2 column 6 of assets/regression/leaderboard-tabular-regression-v2.benchmark-valid.csv set to the value (hex 2032312e35313120), assets/regression/elo-tabular-regression-v2.benchmark-valid.json rebound to its SHA-256",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "23c\n  \"leaderboard_sha256\": \"ec859b0e3c7b630fb843d12d480f5ec5cafd4144757da284d52dd74cafa15f0e\",\n.\n",
+          "sha256": "ac06c31556e271d60397fa4f7d576577f04f590e9aca4b6d1738ad8f4d3b9970"
+        },
+        {
+          "path": "assets/regression/leaderboard-tabular-regression-v2.benchmark-valid.csv",
+          "ed": "2c\n1,1,tabfm_ensemble_regressor,TabFM Ensemble,1934.9, 21.511 ,7,45,45,100.0,True,0,45/45,public-development,True,benchmark-valid rows only; protocol corrections applied\n.\n",
+          "sha256": "ec859b0e3c7b630fb843d12d480f5ec5cafd4144757da284d52dd74cafa15f0e"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "79795cc4ee570a29849bc4587f5a3f19e7df226a8be8bdd9da01552e2589dc73"
+    },
+    {
+      "name": "valid-average-tab",
+      "commands": "row 2 column 6 of assets/regression/leaderboard-tabular-regression-v2.benchmark-valid.csv set to the value (hex 0932312e353131), assets/regression/elo-tabular-regression-v2.benchmark-valid.json rebound to its SHA-256",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "23c\n  \"leaderboard_sha256\": \"9473d161e2055c59eac23ff6f558fa9578f2fc1c6dbcf282bcb1604559314a15\",\n.\n",
+          "sha256": "b84d5203695fb26ecf7439d60915336006ed0e3c851677dc18be26c26b98927e"
+        },
+        {
+          "path": "assets/regression/leaderboard-tabular-regression-v2.benchmark-valid.csv",
+          "ed": "2c\n1,1,tabfm_ensemble_regressor,TabFM Ensemble,1934.9,\t21.511,7,45,45,100.0,True,0,45/45,public-development,True,benchmark-valid rows only; protocol corrections applied\n.\n",
+          "sha256": "9473d161e2055c59eac23ff6f558fa9578f2fc1c6dbcf282bcb1604559314a15"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "8e50ddb3c07cb32f801470bc33cc6aee73fea330e02f3f551067e8cd73f6c885"
+    },
+    {
+      "name": "valid-average-plus",
+      "commands": "row 2 column 6 of assets/regression/leaderboard-tabular-regression-v2.benchmark-valid.csv set to the value (hex 2b32312e353131), assets/regression/elo-tabular-regression-v2.benchmark-valid.json rebound to its SHA-256",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "23c\n  \"leaderboard_sha256\": \"54bdf52e3a79ef09d6a26e9cc6920086cb589ab89520b541f0c0016c1abf5d96\",\n.\n",
+          "sha256": "4d9e71a0229d15608c8e9f0337dcd86daea04e94048465cf13fcfd7ccb315d67"
+        },
+        {
+          "path": "assets/regression/leaderboard-tabular-regression-v2.benchmark-valid.csv",
+          "ed": "2c\n1,1,tabfm_ensemble_regressor,TabFM Ensemble,1934.9,+21.511,7,45,45,100.0,True,0,45/45,public-development,True,benchmark-valid rows only; protocol corrections applied\n.\n",
+          "sha256": "54bdf52e3a79ef09d6a26e9cc6920086cb589ab89520b541f0c0016c1abf5d96"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "22cacf200ccec9a0dac9dffbf6c1a4efd81d743c07257460a9169079b9c5ec7c"
+    },
+    {
+      "name": "valid-average-exponent",
+      "commands": "row 2 column 6 of assets/regression/leaderboard-tabular-regression-v2.benchmark-valid.csv set to the value (hex 3231353131452d33), assets/regression/elo-tabular-regression-v2.benchmark-valid.json rebound to its SHA-256",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "23c\n  \"leaderboard_sha256\": \"e7652657cba6d3004a890320b82a4f0eb7e5272299b54275fb5eb828c56b92c8\",\n.\n",
+          "sha256": "b5b5af639ab27880a0025e296db2811f19b55795bfe87514f08c8d00d160d754"
+        },
+        {
+          "path": "assets/regression/leaderboard-tabular-regression-v2.benchmark-valid.csv",
+          "ed": "2c\n1,1,tabfm_ensemble_regressor,TabFM Ensemble,1934.9,21511E-3,7,45,45,100.0,True,0,45/45,public-development,True,benchmark-valid rows only; protocol corrections applied\n.\n",
+          "sha256": "e7652657cba6d3004a890320b82a4f0eb7e5272299b54275fb5eb828c56b92c8"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "379f286ac4fdff491dbf0b498b5ab1c835600a094b55d0244104a85f4ae9c92a"
+    },
+    {
+      "name": "valid-average-dot-end",
+      "commands": "row 2 column 6 of assets/regression/leaderboard-tabular-regression-v2.benchmark-valid.csv set to the value (hex 32312e), assets/regression/elo-tabular-regression-v2.benchmark-valid.json rebound to its SHA-256",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "23c\n  \"leaderboard_sha256\": \"2a61c414fa9a98cfe681d1aa1c6b74c681d230ab3362e871406e7b8ddf626c18\",\n.\n",
+          "sha256": "d78d7b23a38246c05f8b4f62064ad7edb071fd589c1e3cca605c0bee601fc65b"
+        },
+        {
+          "path": "assets/regression/leaderboard-tabular-regression-v2.benchmark-valid.csv",
+          "ed": "2c\n1,1,tabfm_ensemble_regressor,TabFM Ensemble,1934.9,21.,7,45,45,100.0,True,0,45/45,public-development,True,benchmark-valid rows only; protocol corrections applied\n.\n",
+          "sha256": "2a61c414fa9a98cfe681d1aa1c6b74c681d230ab3362e871406e7b8ddf626c18"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "c94f9d3954bd8ad942b19f86f71572eb1bec64b3c43d6ded6fc283fb1206fb52"
+    },
+    {
+      "name": "valid-average-underscore",
+      "commands": "row 2 column 6 of assets/regression/leaderboard-tabular-regression-v2.benchmark-valid.csv set to the value (hex 325f312e353131), assets/regression/elo-tabular-regression-v2.benchmark-valid.json rebound to its SHA-256",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "23c\n  \"leaderboard_sha256\": \"d0328c8488cfbd5f464bb08e87dbf091f4faf684ad5a662b5a09e3771f349871\",\n.\n",
+          "sha256": "0859ef9908c8b64ea34cdf146a8797ceb4c72d4faef3aeddc410192f1438e1ea"
+        },
+        {
+          "path": "assets/regression/leaderboard-tabular-regression-v2.benchmark-valid.csv",
+          "ed": "2c\n1,1,tabfm_ensemble_regressor,TabFM Ensemble,1934.9,2_1.511,7,45,45,100.0,True,0,45/45,public-development,True,benchmark-valid rows only; protocol corrections applied\n.\n",
+          "sha256": "d0328c8488cfbd5f464bb08e87dbf091f4faf684ad5a662b5a09e3771f349871"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "738276adb8571cf380317adc0ecc794d8b4c88013eb31115dd142f4021ad1f77"
+    },
+    {
+      "name": "valid-average-arabic-indic",
+      "commands": "row 2 column 6 of assets/regression/leaderboard-tabular-regression-v2.benchmark-valid.csv set to the value (hex d9a2d9a12ed9a5d9a1d9a1), assets/regression/elo-tabular-regression-v2.benchmark-valid.json rebound to its SHA-256",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "23c\n  \"leaderboard_sha256\": \"759414617cb4fb6234a8e82601499522fde0680f73fad91997cc517bfc375bf2\",\n.\n",
+          "sha256": "be5b3e993a0b67aa69127f4aec5cfc1c4e7043525ec2493552303240ed67805d"
+        },
+        {
+          "path": "assets/regression/leaderboard-tabular-regression-v2.benchmark-valid.csv",
+          "ed": "2c\n1,1,tabfm_ensemble_regressor,TabFM Ensemble,1934.9,٢١.٥١١,7,45,45,100.0,True,0,45/45,public-development,True,benchmark-valid rows only; protocol corrections applied\n.\n",
+          "sha256": "759414617cb4fb6234a8e82601499522fde0680f73fad91997cc517bfc375bf2"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "08598bc0181b62176e796e8040098c494fab133a029fc9789787dabf09aac3cd"
+    },
+    {
+      "name": "valid-average-nan",
+      "commands": "row 2 column 6 of assets/regression/leaderboard-tabular-regression-v2.benchmark-valid.csv set to the value (hex 6e616e), assets/regression/elo-tabular-regression-v2.benchmark-valid.json rebound to its SHA-256",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "23c\n  \"leaderboard_sha256\": \"589d3e8a72e211a4b7e945d9f9ae9992e24fff5663976f20225a0bed0a10e7e0\",\n.\n",
+          "sha256": "0bb3536c0c5b553121410d372035039674fd6e6b325e64a4f4603a569118db48"
+        },
+        {
+          "path": "assets/regression/leaderboard-tabular-regression-v2.benchmark-valid.csv",
+          "ed": "2c\n1,1,tabfm_ensemble_regressor,TabFM Ensemble,1934.9,nan,7,45,45,100.0,True,0,45/45,public-development,True,benchmark-valid rows only; protocol corrections applied\n.\n",
+          "sha256": "589d3e8a72e211a4b7e945d9f9ae9992e24fff5663976f20225a0bed0a10e7e0"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "bc9e1ae184fe110a160b256f60143db8305049c50e56f28200305706786c3db5"
+    },
+    {
+      "name": "valid-average-inf",
+      "commands": "row 2 column 6 of assets/regression/leaderboard-tabular-regression-v2.benchmark-valid.csv set to the value (hex 696e66), assets/regression/elo-tabular-regression-v2.benchmark-valid.json rebound to its SHA-256",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "23c\n  \"leaderboard_sha256\": \"1749d089d6661d4b42bef5658300f3be38ec4d24b1ca8edacc996b7eeb4291e6\",\n.\n",
+          "sha256": "3176c5f4add2049ed11c105ee0133da35a4edb9d3c4bcbaf6468c4f5e0393429"
+        },
+        {
+          "path": "assets/regression/leaderboard-tabular-regression-v2.benchmark-valid.csv",
+          "ed": "2c\n1,1,tabfm_ensemble_regressor,TabFM Ensemble,1934.9,inf,7,45,45,100.0,True,0,45/45,public-development,True,benchmark-valid rows only; protocol corrections applied\n.\n",
+          "sha256": "1749d089d6661d4b42bef5658300f3be38ec4d24b1ca8edacc996b7eeb4291e6"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "0b9f814ad755a0f51fb2fe7f7b6668206928c93a956bf8ab8594f37d0e6ab348"
+    },
+    {
+      "name": "valid-average-minus-infinity",
+      "commands": "row 2 column 6 of assets/regression/leaderboard-tabular-regression-v2.benchmark-valid.csv set to the value (hex 2d496e66696e697479), assets/regression/elo-tabular-regression-v2.benchmark-valid.json rebound to its SHA-256",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "23c\n  \"leaderboard_sha256\": \"84b758810e8a3dc9a1b9627ec650c3fbd97046fe710d0379371972eaa16dbfc0\",\n.\n",
+          "sha256": "10630aa03279ba1d07976ae55cff235fecd47beaecf7c50ecc3b3d7c293e165e"
+        },
+        {
+          "path": "assets/regression/leaderboard-tabular-regression-v2.benchmark-valid.csv",
+          "ed": "2c\n1,1,tabfm_ensemble_regressor,TabFM Ensemble,1934.9,-Infinity,7,45,45,100.0,True,0,45/45,public-development,True,benchmark-valid rows only; protocol corrections applied\n.\n",
+          "sha256": "84b758810e8a3dc9a1b9627ec650c3fbd97046fe710d0379371972eaa16dbfc0"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "eb707a4208340c19551b4fb4b56a5c2d6f9796f68ae249b8fd8b48370b4641f4"
+    },
+    {
+      "name": "valid-average-huge",
+      "commands": "row 2 column 6 of assets/regression/leaderboard-tabular-regression-v2.benchmark-valid.csv set to the value (hex 3165393939), assets/regression/elo-tabular-regression-v2.benchmark-valid.json rebound to its SHA-256",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "23c\n  \"leaderboard_sha256\": \"ccd3bfe94996a04aec259961075d73b744f533ec13392bb72d4b1790fc68956b\",\n.\n",
+          "sha256": "e899ca4a59afa6b4f49fc2458b50c143c57b942010edf9945417611d03b361e8"
+        },
+        {
+          "path": "assets/regression/leaderboard-tabular-regression-v2.benchmark-valid.csv",
+          "ed": "2c\n1,1,tabfm_ensemble_regressor,TabFM Ensemble,1934.9,1e999,7,45,45,100.0,True,0,45/45,public-development,True,benchmark-valid rows only; protocol corrections applied\n.\n",
+          "sha256": "ccd3bfe94996a04aec259961075d73b744f533ec13392bb72d4b1790fc68956b"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "4172cf7aac29ca22e6d8ff545c251821705f7b16982ce85b2c5430f93cb8ed9c"
+    },
+    {
+      "name": "valid-average-hex",
+      "commands": "row 2 column 6 of assets/regression/leaderboard-tabular-regression-v2.benchmark-valid.csv set to the value (hex 3078317032), assets/regression/elo-tabular-regression-v2.benchmark-valid.json rebound to its SHA-256",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "23c\n  \"leaderboard_sha256\": \"704d50b94002f18b193fe59ee5cb45104b24682a78402fa021c9e42d7d140d90\",\n.\n",
+          "sha256": "ba46bfb6c71f12c9b129c3c44f22a7b7df46498d9f524fa8c2db2edbb8191570"
+        },
+        {
+          "path": "assets/regression/leaderboard-tabular-regression-v2.benchmark-valid.csv",
+          "ed": "2c\n1,1,tabfm_ensemble_regressor,TabFM Ensemble,1934.9,0x1p2,7,45,45,100.0,True,0,45/45,public-development,True,benchmark-valid rows only; protocol corrections applied\n.\n",
+          "sha256": "704d50b94002f18b193fe59ee5cb45104b24682a78402fa021c9e42d7d140d90"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "ValueError: could not convert string to float: '0x1p2'",
+      "readme_sha256": "2ec5f806e5c96b3edd312a053c4006447dbe02702ba2e11908986ccae12b5ed9"
+    },
+    {
+      "name": "valid-average-exponent-no-digits",
+      "commands": "row 2 column 6 of assets/regression/leaderboard-tabular-regression-v2.benchmark-valid.csv set to the value (hex 32312e35313165), assets/regression/elo-tabular-regression-v2.benchmark-valid.json rebound to its SHA-256",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "23c\n  \"leaderboard_sha256\": \"fcc57e312c4b58e2d36d0001d8e03f5a6723bc5e7a5979c1ad8841f21b01ecfc\",\n.\n",
+          "sha256": "74b0559191d1204ecbdc2e19352cf73c38f75b79d3110f7617e92df7f240adee"
+        },
+        {
+          "path": "assets/regression/leaderboard-tabular-regression-v2.benchmark-valid.csv",
+          "ed": "2c\n1,1,tabfm_ensemble_regressor,TabFM Ensemble,1934.9,21.511e,7,45,45,100.0,True,0,45/45,public-development,True,benchmark-valid rows only; protocol corrections applied\n.\n",
+          "sha256": "fcc57e312c4b58e2d36d0001d8e03f5a6723bc5e7a5979c1ad8841f21b01ecfc"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "ValueError: could not convert string to float: '21.511e'",
+      "readme_sha256": "2ec5f806e5c96b3edd312a053c4006447dbe02702ba2e11908986ccae12b5ed9"
+    },
+    {
+      "name": "valid-average-empty",
+      "commands": "row 2 column 6 of assets/regression/leaderboard-tabular-regression-v2.benchmark-valid.csv set to the value (hex ), assets/regression/elo-tabular-regression-v2.benchmark-valid.json rebound to its SHA-256",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "23c\n  \"leaderboard_sha256\": \"56ec9ff41a4f6d67ca3497e93f4ecf42bc476fbaf1c21d1c7df92b4a17a4f80a\",\n.\n",
+          "sha256": "8a253bcdb07fdfcb38fad853e23fd35ff8e0f1f5a90cbc0898e38280991836dc"
+        },
+        {
+          "path": "assets/regression/leaderboard-tabular-regression-v2.benchmark-valid.csv",
+          "ed": "2c\n1,1,tabfm_ensemble_regressor,TabFM Ensemble,1934.9,,7,45,45,100.0,True,0,45/45,public-development,True,benchmark-valid rows only; protocol corrections applied\n.\n",
+          "sha256": "56ec9ff41a4f6d67ca3497e93f4ecf42bc476fbaf1c21d1c7df92b4a17a4f80a"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "ValueError: could not convert string to float: ''",
+      "readme_sha256": "2ec5f806e5c96b3edd312a053c4006447dbe02702ba2e11908986ccae12b5ed9"
+    },
+    {
+      "name": "samecut-average-unit-separator",
+      "commands": "row 2 column 6 of assets/same-cut/v2/leaderboard-jope-same-cut-v1-deep.csv set to the value (hex 1f312e30), assets/same-cut/v2/elo-jope-same-cut-v1-deep.json rebound to its SHA-256",
+      "edits": [
+        {
+          "path": "assets/same-cut/v2/elo-jope-same-cut-v1-deep.json",
+          "ed": "9c\n  \"leaderboard_sha256\": \"abdb1b14e59eea2d492d727b030c2b6309fd75e2f8fc9ecf0682ef072015ba0d\",\n.\n",
+          "sha256": "9f875fb2cd428495bd0f3c92a94a3e6e0556d0b7d19f42eb88224a3bcf744c2a"
+        },
+        {
+          "path": "assets/same-cut/v2/leaderboard-jope-same-cut-v1-deep.csv",
+          "ed": "2c\n1,,baseline.gpr,baseline.gpr,1711.6,\u001f1.0,4,4,10,40.0,False,0,4/10,same-cut,True,official unified benchmark comparison\n.\n",
+          "sha256": "abdb1b14e59eea2d492d727b030c2b6309fd75e2f8fc9ecf0682ef072015ba0d"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "ValueError: could not convert string to float: '\\x1f1.0'",
+      "readme_sha256": "2ec5f806e5c96b3edd312a053c4006447dbe02702ba2e11908986ccae12b5ed9"
+    }
+  ]
+}
