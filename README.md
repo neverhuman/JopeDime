@@ -7,8 +7,8 @@ second numeric dialect.
 
 This is the product tree for [`veox-ai/JopeDime`](https://github.com/veox-ai/JopeDime).
 It is **not** the 8×A100 node workspace and **not** a `jain-split` sibling.
-Training corpora and model weights live in S3. Git holds source, catalogs, and
-at most ten tiny test datasets.
+Training corpora and model weights live in S3. Git holds source, catalogs,
+forty generated synthetic fixtures and at most ten tiny test datasets.
 
 SOTArena **ASPFM** / `jope-dime` campaign wins are the feat-math program track. The
 encodings→program neural policy will ship because the product needs a router; it is
@@ -25,7 +25,7 @@ encodings→program neural policy will ship because the product needs a router; 
 | `crates/hyperion` | Workspace member. CPU/Candle default (`hyperion-cpu`). CUDA feature exists; not the CI default. |
 | `crates/jope-policy` | Workspace member. Step-60000 proposal policy on Candle. Needs the bound checkpoint to propose. |
 | `crates/jope-engine`, `crates/jope-campaigns` | Engine and campaign crates in the workspace. |
-| Git datasets | Ten synthetic fixtures in `datasets/synthetic/` plus `datasets/test/pmlb-229-pwlinear/`. Real tables stay in S3. |
+| Git datasets | Forty synthetic fixtures in `datasets/synthetic/` and the ten licensed test datasets (`test-10`) in `datasets/test/`. Real tables stay in S3. |
 | S3 fetch / champion training | Live S3 fail-closed. Local champion bank + 128-d centroid router train-step exist. Bound `jope-policy` checkpoint weights are **not** updated. |
 
 The executed 2026-09-18 port plan is archived as [`docs/archive/CURSOR_GITHUB_PORT_PLAN.md`](docs/archive/CURSOR_GITHUB_PORT_PLAN.md).
@@ -167,7 +167,7 @@ cargo build --locked
 cargo run --locked --bin jope
 # jope 0.1.0
 cargo run --locked --bin jope -- verify-inputs --offline --root datasets/synthetic
-# Verified 10 synthetic datasets, … bytes, offline.
+# Verified 40 synthetic datasets, … bytes, offline.
 # Encode needs the Hyperion bundle (not in git):
 # HYPERION_V7_WEIGHTS=… cargo run --locked --bin jope -- encode --input datasets/synthetic/binary/linear.json
 cargo run --locked --bin jope -- fit --input datasets/synthetic/regression/linear.json --json
@@ -222,8 +222,8 @@ Do not open a stack of PRs. Merge or close the current one before starting the n
 | `crates/jope-policy` | Bound step-60000 program router (needs checkpoint) |
 | `crates/jope-engine` | Storage / training / execution contracts |
 | `crates/jope-campaigns` | Campaign and qualification tooling |
-| `datasets/synthetic` | Ten integer-only Git fixtures + `catalog.json` |
-| `datasets/test` | Tiny CI table(s) |
+| `datasets/synthetic` | Forty integer-only Git fixtures + `catalog.json` |
+| `datasets/test` | The ten licensed test datasets (`test-10`) |
 | `python/` | Remaining Python (training stack, some operational tools), kept only until ADR-0006's phases P2/P3; no new Python |
 | `ops/ci` | Required local/hosted checks |
 

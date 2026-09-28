@@ -144,10 +144,6 @@ with PR #11): each file's sha256 equals `metadata.json.files.*.sha256`, the SOTA
 while private and the gate for going public; `JOPE_OFFLINE=1 jope datasets fetch test-10`
 succeeds with the repo directory as the seed cache.
 
-Only `pmlb-229-pwlinear`'s CSVs are on `main` today (they arrived with the emitter matrix in
-`4235db6`); the other nine, every `metadata.json`/`LICENSE` and `datasets/manifest.json` land with
-PR #11.
-
 ## Downloader (`jope datasets fetch <collection|task|id>`)
 
 One transport, the `object_store` crate (pinned 0.13.2 — 0.14 pulls a licence `deny.toml`
