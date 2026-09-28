@@ -36,15 +36,30 @@ fn emitted(root: &Path, args: &[&str]) -> Result<String> {
         .current_dir(root)
         .output()
         .map_err(|e| Error::io(Path::new("bash"), e))?;
-    if !output.status.success() {
+    let shown = args.join(" ");
+    let (stdout, stderr) = decoded(&output, &format!("rust-test-scope.sh {shown}"))?;
+    emitted_result(py::returncode(output.status), &stdout, &stderr, &shown)
+}
+
+/// `capture_output=True, text=True`: both streams decoded strictly with universal newlines. The
+/// Python raised `UnicodeDecodeError` (a traceback) on bytes that are not UTF-8 in either stream,
+/// whatever the exit status; so does this, naming the command and the stream.
+fn decoded(output: &std::process::Output, command: &str) -> Result<(String, String)> {
+    py::text_streams(output).map_err(|m| Error::Command(format!("{command}: {m}")))
+}
+
+/// What the Python did with the script's result for the invocation `shown`: `sys.exit` with the
+/// exit status (`returncode`, minus the signal for a killed script) and the stripped stderr, or the
+/// `-p <name>` pairs of its stdout (see [`parse_emitted`]).
+pub fn emitted_result(returncode: i64, stdout: &str, stderr: &str, shown: &str) -> Result<String> {
+    if returncode != 0 {
         return Err(Error::Command(format!(
-            "rust-test-scope.sh {}: exit {}\n{}",
-            args.join(" "),
-            output.status.code().unwrap_or(-1),
-            py::strip(&String::from_utf8_lossy(&output.stderr))
+            "rust-test-scope.sh {shown}: exit {returncode}\n{}",
+            py::strip(stderr)
         )));
     }
-    Ok(String::from_utf8_lossy(&output.stdout).into_owned())
+    parse_emitted(stdout, shown)?;
+    Ok(stdout.to_owned())
 }
 
 /// The package names in the script's stdout for the invocation `shown` (`-p <name>` pairs).
@@ -93,22 +108,27 @@ fn sorted(items: &[String]) -> Vec<String> {
     items
 }
 
-/// The report and whether the scope partitions the workspace.
+/// The report and whether the scope partitions the workspace. The steps run in the Python's
+/// order: `cargo metadata` (both streams decoded before the exit status is checked, as
+/// `subprocess.run(..., capture_output=True, text=True, check=True)` does), the workspace names,
+/// the product scope (run and checked), the deferred scope, then the script text.
 pub fn check(root: &Path) -> Result<(String, bool)> {
     let output = Command::new("cargo")
         .args(["metadata", "--no-deps", "--locked", "--format-version", "1"])
         .current_dir(root)
         .output()
         .map_err(|e| Error::io(Path::new("cargo"), e))?;
+    let (stdout, stderr) = decoded(&output, "cargo metadata")?;
     if !output.status.success() {
         return Err(Error::Command(format!(
             "cargo metadata exited {}: {}",
-            output.status.code().unwrap_or(-1),
-            String::from_utf8_lossy(&output.stderr).trim()
+            py::returncode(output.status),
+            stderr.trim()
         )));
     }
-    let meta = pyjson::parse_bytes(&output.stdout)
-        .map_err(|m| Error::parse(Path::new("cargo metadata"), m))?;
+    // `json.loads(str)`: a UTF-8 BOM refuses.
+    let meta =
+        pyjson::parse_str(&stdout).map_err(|m| Error::parse(Path::new("cargo metadata"), m))?;
     let workspace = workspace_packages(&meta)?;
     let product = emitted(root, &[])?;
     let deferred = emitted(root, &["--deferred"])?;

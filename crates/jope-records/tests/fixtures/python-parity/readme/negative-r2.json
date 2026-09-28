@@ -1,0 +1,572 @@
+{
+  "source": "p1-failclosed-r2-capture-20260928T031831Z",
+  "capture": "bash cap2.sh (run p1-failclosed-r2-capture-20260928T031831Z; Python from git show f46a9048fbb2697d6d1f4463a688083ea9dfcce1:<tool>, unmodified, in a scratch root)",
+  "tool": "deploy/ci/readme-benchmarks.py --write",
+  "root": "readme/root",
+  "readme": "readme/README.stale.md",
+  "cases": [
+    {
+      "name": "base",
+      "commands": ":",
+      "edits": [],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "258313a8378b9111735e4eb3834d78560c2ac6f77193afe404f383517074ca3d"
+    },
+    {
+      "name": "bench-min-nan",
+      "commands": "sed -i \"s/\\\"min_ms\\\": [-0-9.e+]*/\\\"min_ms\\\": NaN/\" $BE",
+      "edits": [
+        {
+          "path": "assets/regression/bench-baseline.json",
+          "ed": "17c\n  \"min_ms\": NaN,\n.\n",
+          "sha256": "26fbdd44014a77a8826cab199529884f937bd50e95c3cbba1229a09869057d7c"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "7e12f88255739c78c49c4768e15b321cc1619b49e2aa7661762cb6107fdeb9d7"
+    },
+    {
+      "name": "bench-alert-nan",
+      "commands": "sed -i \"s/\\\"alert_pct\\\": [-0-9.e+]*/\\\"alert_pct\\\": NaN/\" $BE",
+      "edits": [
+        {
+          "path": "assets/regression/bench-baseline.json",
+          "ed": "19c\n  \"alert_pct\": NaN\n.\n",
+          "sha256": "77a9b9821305f17e9258e87ce432d7b23c84cc636a40d12bd7d77e816ee0c198"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "f9bcf93e934467df367aa0056d26068a958d7381b5ed2b771a5a8564a952ebb1"
+    },
+    {
+      "name": "bench-mean-inf",
+      "commands": "sed -i \"s/\\\"mean_ms\\\": [-0-9.e+]*/\\\"mean_ms\\\": -Infinity/\" $BE",
+      "edits": [
+        {
+          "path": "assets/regression/bench-baseline.json",
+          "ed": "15c\n  \"mean_ms\": -Infinity,\n.\n",
+          "sha256": "cb258157ed54095ab93c2de6757290c2dc24a2d0de7e983674895d1965b8da5b"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "d7e13d6e6fdf2b789f9b7b53f63960b2c2fc1b91fbc1648c87a968a60f19d464"
+    },
+    {
+      "name": "report-produce-nan-first",
+      "commands": "sed -i -E \"s/\\\"produce_seconds\\\": [-0-9.e+]+/\\\"produce_seconds\\\": NaN/\" $(ls $RP/*.bench-report.json | head -1)",
+      "edits": [
+        {
+          "path": "assets/same-cut/v2/reports/047e62b52a3f4ede.bench-report.json",
+          "ed": "917c\n        \"produce_seconds\": NaN,\n.\n895c\n        \"produce_seconds\": NaN\n.\n873c\n        \"produce_seconds\": NaN\n.\n851c\n        \"produce_seconds\": NaN\n.\n820c\n        \"produce_seconds\": NaN,\n.\n798c\n        \"produce_seconds\": NaN\n.\n767c\n        \"produce_seconds\": NaN,\n.\n736c\n        \"produce_seconds\": NaN,\n.\n714c\n        \"produce_seconds\": NaN\n.\n692c\n        \"produce_seconds\": NaN\n.\n683c\n        \"produce_seconds\": NaN\n.\n568c\n        \"produce_seconds\": NaN\n.\n559c\n        \"produce_seconds\": NaN\n.\n444c\n        \"produce_seconds\": NaN\n.\n435c\n        \"produce_seconds\": NaN\n.\n314c\n        \"produce_seconds\": NaN,\n.\n305c\n        \"produce_seconds\": NaN\n.\n190c\n        \"produce_seconds\": NaN\n.\n181c\n        \"produce_seconds\": NaN\n.\n66c\n        \"produce_seconds\": NaN\n.\n",
+          "sha256": "c896432ca7c4f40e7454c8a0f3f3ec584544ec85ee63642b86325adb9db6f2c1"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "667e5a8734e76315509b190cb6b4f8ef5c953b598134387a1b3042c4354e8cbb"
+    },
+    {
+      "name": "report-produce-nan-two",
+      "commands": "sed -i -E \"s/\\\"produce_seconds\\\": [-0-9.e+]+/\\\"produce_seconds\\\": NaN/\" $(ls $RP/*.bench-report.json | sed -n \"4p;9p\")",
+      "edits": [
+        {
+          "path": "assets/same-cut/v2/reports/30ef3eaa6d2971a9.bench-report.json",
+          "ed": "926c\n        \"produce_seconds\": NaN\n.\n904c\n        \"produce_seconds\": NaN\n.\n882c\n        \"produce_seconds\": NaN\n.\n851c\n        \"produce_seconds\": NaN,\n.\n820c\n        \"produce_seconds\": NaN,\n.\n798c\n        \"produce_seconds\": NaN\n.\n776c\n        \"produce_seconds\": NaN\n.\n754c\n        \"produce_seconds\": NaN\n.\n732c\n        \"produce_seconds\": NaN\n.\n710c\n        \"produce_seconds\": NaN\n.\n701c\n        \"produce_seconds\": NaN\n.\n577c\n        \"produce_seconds\": NaN,\n.\n568c\n        \"produce_seconds\": NaN\n.\n453c\n        \"produce_seconds\": NaN\n.\n444c\n        \"produce_seconds\": NaN\n.\n320c\n        \"produce_seconds\": NaN,\n.\n311c\n        \"produce_seconds\": NaN\n.\n190c\n        \"produce_seconds\": NaN,\n.\n181c\n        \"produce_seconds\": NaN\n.\n66c\n        \"produce_seconds\": NaN\n.\n",
+          "sha256": "ee7436377f9b26eae5520ec8f87aa22553383d4835c56aee72950f5a7a01314a"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/c32fa09b48fb2f27.bench-report.json",
+          "ed": "917c\n        \"produce_seconds\": NaN,\n.\n895c\n        \"produce_seconds\": NaN\n.\n864c\n        \"produce_seconds\": NaN,\n.\n833c\n        \"produce_seconds\": NaN,\n.\n802c\n        \"produce_seconds\": NaN,\n.\n780c\n        \"produce_seconds\": NaN\n.\n752c\n        \"produce_seconds\": NaN,\n.\n730c\n        \"produce_seconds\": NaN\n.\n708c\n        \"produce_seconds\": NaN\n.\n686c\n        \"produce_seconds\": NaN\n.\n677c\n        \"produce_seconds\": NaN\n.\n562c\n        \"produce_seconds\": NaN\n.\n553c\n        \"produce_seconds\": NaN\n.\n438c\n        \"produce_seconds\": NaN\n.\n429c\n        \"produce_seconds\": NaN\n.\n314c\n        \"produce_seconds\": NaN\n.\n305c\n        \"produce_seconds\": NaN\n.\n190c\n        \"produce_seconds\": NaN\n.\n181c\n        \"produce_seconds\": NaN\n.\n66c\n        \"produce_seconds\": NaN\n.\n",
+          "sha256": "f98c6c9a4aed19a6dbdf592316190b7615cdfd32778afe261bde9134aef9df3e"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "dfbffb87ba63c89ef6c18cb5fb4e9573419fdeafd77954f0bb86efa8d01c1727"
+    },
+    {
+      "name": "report-produce-nan-descending",
+      "commands": "i=0; for f in $(ls $RP/*.bench-report.json); do i=$((i+1)); case $i in 1) v=90.0;; 2) v=80.0;; 3) v=NaN;; 4) v=70.0;; 5) v=5.0;; 6) v=NaN;; 7) v=60.0;; 8) v=1.0;; 9) v=50.0;; *) v=2.0;; esac; sed -i -E \"s/\\\"produce_seconds\\\": [-0-9.e+]+/\\\"produce_seconds\\\": $v/\" $f; done",
+      "edits": [
+        {
+          "path": "assets/same-cut/v2/reports/047e62b52a3f4ede.bench-report.json",
+          "ed": "917c\n        \"produce_seconds\": 90.0,\n.\n895c\n        \"produce_seconds\": 90.0\n.\n873c\n        \"produce_seconds\": 90.0\n.\n851c\n        \"produce_seconds\": 90.0\n.\n820c\n        \"produce_seconds\": 90.0,\n.\n798c\n        \"produce_seconds\": 90.0\n.\n767c\n        \"produce_seconds\": 90.0,\n.\n736c\n        \"produce_seconds\": 90.0,\n.\n714c\n        \"produce_seconds\": 90.0\n.\n692c\n        \"produce_seconds\": 90.0\n.\n683c\n        \"produce_seconds\": 90.0\n.\n568c\n        \"produce_seconds\": 90.0\n.\n559c\n        \"produce_seconds\": 90.0\n.\n444c\n        \"produce_seconds\": 90.0\n.\n435c\n        \"produce_seconds\": 90.0\n.\n314c\n        \"produce_seconds\": 90.0,\n.\n305c\n        \"produce_seconds\": 90.0\n.\n190c\n        \"produce_seconds\": 90.0\n.\n181c\n        \"produce_seconds\": 90.0\n.\n66c\n        \"produce_seconds\": 90.0\n.\n",
+          "sha256": "5bd1bd29563237320c2e49f378610da433e2e0fd914e98c3ddd71b3b823f9f6c"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/1cb97b1d7314d43d.bench-report.json",
+          "ed": "926c\n        \"produce_seconds\": 80.0\n.\n904c\n        \"produce_seconds\": 80.0\n.\n882c\n        \"produce_seconds\": 80.0\n.\n860c\n        \"produce_seconds\": 80.0\n.\n838c\n        \"produce_seconds\": 80.0\n.\n807c\n        \"produce_seconds\": 80.0,\n.\n776c\n        \"produce_seconds\": 80.0,\n.\n745c\n        \"produce_seconds\": 80.0,\n.\n723c\n        \"produce_seconds\": 80.0\n.\n701c\n        \"produce_seconds\": 80.0\n.\n692c\n        \"produce_seconds\": 80.0\n.\n577c\n        \"produce_seconds\": 80.0\n.\n568c\n        \"produce_seconds\": 80.0\n.\n453c\n        \"produce_seconds\": 80.0\n.\n444c\n        \"produce_seconds\": 80.0\n.\n320c\n        \"produce_seconds\": 80.0,\n.\n311c\n        \"produce_seconds\": 80.0\n.\n190c\n        \"produce_seconds\": 80.0,\n.\n181c\n        \"produce_seconds\": 80.0\n.\n66c\n        \"produce_seconds\": 80.0\n.\n",
+          "sha256": "80b3dd1fb2c2bc8197a2bd49ba2db53efd91d5fe3a97e7e47ce5ee6bf4d693b3"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/21fbfe8b53dbcd60.bench-report.json",
+          "ed": "926c\n        \"produce_seconds\": NaN\n.\n904c\n        \"produce_seconds\": NaN\n.\n882c\n        \"produce_seconds\": NaN\n.\n860c\n        \"produce_seconds\": NaN\n.\n838c\n        \"produce_seconds\": NaN\n.\n810c\n        \"produce_seconds\": NaN,\n.\n788c\n        \"produce_seconds\": NaN\n.\n766c\n        \"produce_seconds\": NaN\n.\n744c\n        \"produce_seconds\": NaN\n.\n713c\n        \"produce_seconds\": NaN,\n.\n704c\n        \"produce_seconds\": NaN\n.\n580c\n        \"produce_seconds\": NaN,\n.\n571c\n        \"produce_seconds\": NaN\n.\n447c\n        \"produce_seconds\": NaN,\n.\n438c\n        \"produce_seconds\": NaN\n.\n323c\n        \"produce_seconds\": NaN\n.\n314c\n        \"produce_seconds\": NaN\n.\n199c\n        \"produce_seconds\": NaN\n.\n190c\n        \"produce_seconds\": NaN\n.\n66c\n        \"produce_seconds\": NaN,\n.\n",
+          "sha256": "45923607a4a47290e4755bdc075d8e1885913a0104afec6c59af2dcf3181fbd1"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/30ef3eaa6d2971a9.bench-report.json",
+          "ed": "926c\n        \"produce_seconds\": 70.0\n.\n904c\n        \"produce_seconds\": 70.0\n.\n882c\n        \"produce_seconds\": 70.0\n.\n851c\n        \"produce_seconds\": 70.0,\n.\n820c\n        \"produce_seconds\": 70.0,\n.\n798c\n        \"produce_seconds\": 70.0\n.\n776c\n        \"produce_seconds\": 70.0\n.\n754c\n        \"produce_seconds\": 70.0\n.\n732c\n        \"produce_seconds\": 70.0\n.\n710c\n        \"produce_seconds\": 70.0\n.\n701c\n        \"produce_seconds\": 70.0\n.\n577c\n        \"produce_seconds\": 70.0,\n.\n568c\n        \"produce_seconds\": 70.0\n.\n453c\n        \"produce_seconds\": 70.0\n.\n444c\n        \"produce_seconds\": 70.0\n.\n320c\n        \"produce_seconds\": 70.0,\n.\n311c\n        \"produce_seconds\": 70.0\n.\n190c\n        \"produce_seconds\": 70.0,\n.\n181c\n        \"produce_seconds\": 70.0\n.\n66c\n        \"produce_seconds\": 70.0\n.\n",
+          "sha256": "82fb94b1e74edb26aa4fb524a48111502d9a076593e5f16c343fbb39416c04c6"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/43b4cc3ab0ebbd97.bench-report.json",
+          "ed": "917c\n        \"produce_seconds\": 5.0,\n.\n895c\n        \"produce_seconds\": 5.0\n.\n864c\n        \"produce_seconds\": 5.0,\n.\n833c\n        \"produce_seconds\": 5.0,\n.\n811c\n        \"produce_seconds\": 5.0\n.\n789c\n        \"produce_seconds\": 5.0\n.\n758c\n        \"produce_seconds\": 5.0,\n.\n736c\n        \"produce_seconds\": 5.0\n.\n714c\n        \"produce_seconds\": 5.0\n.\n686c\n        \"produce_seconds\": 5.0,\n.\n677c\n        \"produce_seconds\": 5.0\n.\n562c\n        \"produce_seconds\": 5.0\n.\n553c\n        \"produce_seconds\": 5.0\n.\n438c\n        \"produce_seconds\": 5.0\n.\n429c\n        \"produce_seconds\": 5.0\n.\n314c\n        \"produce_seconds\": 5.0\n.\n305c\n        \"produce_seconds\": 5.0\n.\n190c\n        \"produce_seconds\": 5.0\n.\n181c\n        \"produce_seconds\": 5.0\n.\n66c\n        \"produce_seconds\": 5.0\n.\n",
+          "sha256": "8c1d7af6059dd5e9c3ffb3d66a4a1cebd480d9ecb139b6922ca53e98bd9592f8"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/693890aae9dc860b.bench-report.json",
+          "ed": "926c\n        \"produce_seconds\": NaN\n.\n904c\n        \"produce_seconds\": NaN\n.\n882c\n        \"produce_seconds\": NaN\n.\n860c\n        \"produce_seconds\": NaN\n.\n838c\n        \"produce_seconds\": NaN\n.\n816c\n        \"produce_seconds\": NaN\n.\n785c\n        \"produce_seconds\": NaN,\n.\n763c\n        \"produce_seconds\": NaN\n.\n732c\n        \"produce_seconds\": NaN,\n.\n701c\n        \"produce_seconds\": NaN,\n.\n692c\n        \"produce_seconds\": NaN\n.\n568c\n        \"produce_seconds\": NaN,\n.\n559c\n        \"produce_seconds\": NaN\n.\n444c\n        \"produce_seconds\": NaN\n.\n435c\n        \"produce_seconds\": NaN\n.\n320c\n        \"produce_seconds\": NaN\n.\n311c\n        \"produce_seconds\": NaN\n.\n196c\n        \"produce_seconds\": NaN\n.\n187c\n        \"produce_seconds\": NaN\n.\n66c\n        \"produce_seconds\": NaN,\n.\n",
+          "sha256": "27aa67f01d23c608d046a2878d31477a7ad2b80df09efd22eb0b67baa48e6cf0"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/79e600bc5fcd5da7.bench-report.json",
+          "ed": "926c\n        \"produce_seconds\": 60.0\n.\n904c\n        \"produce_seconds\": 60.0\n.\n882c\n        \"produce_seconds\": 60.0\n.\n860c\n        \"produce_seconds\": 60.0\n.\n838c\n        \"produce_seconds\": 60.0\n.\n807c\n        \"produce_seconds\": 60.0,\n.\n785c\n        \"produce_seconds\": 60.0\n.\n757c\n        \"produce_seconds\": 60.0,\n.\n726c\n        \"produce_seconds\": 60.0,\n.\n695c\n        \"produce_seconds\": 60.0,\n.\n686c\n        \"produce_seconds\": 60.0\n.\n562c\n        \"produce_seconds\": 60.0,\n.\n553c\n        \"produce_seconds\": 60.0\n.\n438c\n        \"produce_seconds\": 60.0\n.\n429c\n        \"produce_seconds\": 60.0\n.\n314c\n        \"produce_seconds\": 60.0\n.\n305c\n        \"produce_seconds\": 60.0\n.\n190c\n        \"produce_seconds\": 60.0\n.\n181c\n        \"produce_seconds\": 60.0\n.\n66c\n        \"produce_seconds\": 60.0\n.\n",
+          "sha256": "c0587b12419fc01e8c39577db1cc7598bd907ee0f83b05fa8273dfdc0e4f996b"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/b5beff4a53fa12c0.bench-report.json",
+          "ed": "917c\n        \"produce_seconds\": 1.0,\n.\n895c\n        \"produce_seconds\": 1.0\n.\n867c\n        \"produce_seconds\": 1.0,\n.\n836c\n        \"produce_seconds\": 1.0,\n.\n805c\n        \"produce_seconds\": 1.0,\n.\n783c\n        \"produce_seconds\": 1.0\n.\n761c\n        \"produce_seconds\": 1.0\n.\n739c\n        \"produce_seconds\": 1.0\n.\n717c\n        \"produce_seconds\": 1.0\n.\n695c\n        \"produce_seconds\": 1.0\n.\n686c\n        \"produce_seconds\": 1.0\n.\n571c\n        \"produce_seconds\": 1.0\n.\n562c\n        \"produce_seconds\": 1.0\n.\n447c\n        \"produce_seconds\": 1.0\n.\n438c\n        \"produce_seconds\": 1.0\n.\n323c\n        \"produce_seconds\": 1.0\n.\n314c\n        \"produce_seconds\": 1.0\n.\n199c\n        \"produce_seconds\": 1.0\n.\n190c\n        \"produce_seconds\": 1.0\n.\n66c\n        \"produce_seconds\": 1.0,\n.\n",
+          "sha256": "f7e7102ba32e122461cdf7312db0a81ced64054dbfd05c5bea2981994cd39ccd"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/c32fa09b48fb2f27.bench-report.json",
+          "ed": "917c\n        \"produce_seconds\": 50.0,\n.\n895c\n        \"produce_seconds\": 50.0\n.\n864c\n        \"produce_seconds\": 50.0,\n.\n833c\n        \"produce_seconds\": 50.0,\n.\n802c\n        \"produce_seconds\": 50.0,\n.\n780c\n        \"produce_seconds\": 50.0\n.\n752c\n        \"produce_seconds\": 50.0,\n.\n730c\n        \"produce_seconds\": 50.0\n.\n708c\n        \"produce_seconds\": 50.0\n.\n686c\n        \"produce_seconds\": 50.0\n.\n677c\n        \"produce_seconds\": 50.0\n.\n562c\n        \"produce_seconds\": 50.0\n.\n553c\n        \"produce_seconds\": 50.0\n.\n438c\n        \"produce_seconds\": 50.0\n.\n429c\n        \"produce_seconds\": 50.0\n.\n314c\n        \"produce_seconds\": 50.0\n.\n305c\n        \"produce_seconds\": 50.0\n.\n190c\n        \"produce_seconds\": 50.0\n.\n181c\n        \"produce_seconds\": 50.0\n.\n66c\n        \"produce_seconds\": 50.0\n.\n",
+          "sha256": "e5c4b7c94373a84f6dd20f1ce6b6a5e1f751e3dc7d382a3c86f7e3f8c534ff11"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/c7d815714ca52bce.bench-report.json",
+          "ed": "917c\n        \"produce_seconds\": 2.0,\n.\n895c\n        \"produce_seconds\": 2.0\n.\n873c\n        \"produce_seconds\": 2.0\n.\n851c\n        \"produce_seconds\": 2.0\n.\n829c\n        \"produce_seconds\": 2.0\n.\n798c\n        \"produce_seconds\": 2.0,\n.\n776c\n        \"produce_seconds\": 2.0\n.\n754c\n        \"produce_seconds\": 2.0\n.\n723c\n        \"produce_seconds\": 2.0,\n.\n692c\n        \"produce_seconds\": 2.0,\n.\n683c\n        \"produce_seconds\": 2.0\n.\n562c\n        \"produce_seconds\": 2.0,\n.\n553c\n        \"produce_seconds\": 2.0\n.\n438c\n        \"produce_seconds\": 2.0\n.\n429c\n        \"produce_seconds\": 2.0\n.\n314c\n        \"produce_seconds\": 2.0\n.\n305c\n        \"produce_seconds\": 2.0\n.\n190c\n        \"produce_seconds\": 2.0\n.\n181c\n        \"produce_seconds\": 2.0\n.\n66c\n        \"produce_seconds\": 2.0\n.\n",
+          "sha256": "5a5141618c1d4fe1d559c3d20d349715bc59239f7564266ab2c6facc7c78750d"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "dfda910c464e5d415047da4aa94609e98d652987010ddda12bade30cfd5a894e"
+    },
+    {
+      "name": "report-produce-negzero",
+      "commands": "sed -i -E \"s/\\\"produce_seconds\\\": [-0-9.e+]+/\\\"produce_seconds\\\": -0.0/\" $RP/*.bench-report.json",
+      "edits": [
+        {
+          "path": "assets/same-cut/v2/reports/047e62b52a3f4ede.bench-report.json",
+          "ed": "917c\n        \"produce_seconds\": -0.0,\n.\n895c\n        \"produce_seconds\": -0.0\n.\n873c\n        \"produce_seconds\": -0.0\n.\n851c\n        \"produce_seconds\": -0.0\n.\n820c\n        \"produce_seconds\": -0.0,\n.\n798c\n        \"produce_seconds\": -0.0\n.\n767c\n        \"produce_seconds\": -0.0,\n.\n736c\n        \"produce_seconds\": -0.0,\n.\n714c\n        \"produce_seconds\": -0.0\n.\n692c\n        \"produce_seconds\": -0.0\n.\n683c\n        \"produce_seconds\": -0.0\n.\n568c\n        \"produce_seconds\": -0.0\n.\n559c\n        \"produce_seconds\": -0.0\n.\n444c\n        \"produce_seconds\": -0.0\n.\n435c\n        \"produce_seconds\": -0.0\n.\n314c\n        \"produce_seconds\": -0.0,\n.\n305c\n        \"produce_seconds\": -0.0\n.\n190c\n        \"produce_seconds\": -0.0\n.\n181c\n        \"produce_seconds\": -0.0\n.\n66c\n        \"produce_seconds\": -0.0\n.\n",
+          "sha256": "77e4df667bb23237faaec5f3ac6ce929f0bdc01a8dd1e116379da56c24319c2f"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/1cb97b1d7314d43d.bench-report.json",
+          "ed": "926c\n        \"produce_seconds\": -0.0\n.\n904c\n        \"produce_seconds\": -0.0\n.\n882c\n        \"produce_seconds\": -0.0\n.\n860c\n        \"produce_seconds\": -0.0\n.\n838c\n        \"produce_seconds\": -0.0\n.\n807c\n        \"produce_seconds\": -0.0,\n.\n776c\n        \"produce_seconds\": -0.0,\n.\n745c\n        \"produce_seconds\": -0.0,\n.\n723c\n        \"produce_seconds\": -0.0\n.\n701c\n        \"produce_seconds\": -0.0\n.\n692c\n        \"produce_seconds\": -0.0\n.\n577c\n        \"produce_seconds\": -0.0\n.\n568c\n        \"produce_seconds\": -0.0\n.\n453c\n        \"produce_seconds\": -0.0\n.\n444c\n        \"produce_seconds\": -0.0\n.\n320c\n        \"produce_seconds\": -0.0,\n.\n311c\n        \"produce_seconds\": -0.0\n.\n190c\n        \"produce_seconds\": -0.0,\n.\n181c\n        \"produce_seconds\": -0.0\n.\n66c\n        \"produce_seconds\": -0.0\n.\n",
+          "sha256": "bd330b0c8ba92c652fc8dbb5fffb6fc9df8797e3f9ea73e4d6c4f1578e493578"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/21fbfe8b53dbcd60.bench-report.json",
+          "ed": "926c\n        \"produce_seconds\": -0.0\n.\n904c\n        \"produce_seconds\": -0.0\n.\n882c\n        \"produce_seconds\": -0.0\n.\n860c\n        \"produce_seconds\": -0.0\n.\n838c\n        \"produce_seconds\": -0.0\n.\n810c\n        \"produce_seconds\": -0.0,\n.\n788c\n        \"produce_seconds\": -0.0\n.\n766c\n        \"produce_seconds\": -0.0\n.\n744c\n        \"produce_seconds\": -0.0\n.\n713c\n        \"produce_seconds\": -0.0,\n.\n704c\n        \"produce_seconds\": -0.0\n.\n580c\n        \"produce_seconds\": -0.0,\n.\n571c\n        \"produce_seconds\": -0.0\n.\n447c\n        \"produce_seconds\": -0.0,\n.\n438c\n        \"produce_seconds\": -0.0\n.\n323c\n        \"produce_seconds\": -0.0\n.\n314c\n        \"produce_seconds\": -0.0\n.\n199c\n        \"produce_seconds\": -0.0\n.\n190c\n        \"produce_seconds\": -0.0\n.\n66c\n        \"produce_seconds\": -0.0,\n.\n",
+          "sha256": "296a262c74f558ed7b76e9e884ac313f31700abd20ef1bdf3805310b2d7edf9b"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/30ef3eaa6d2971a9.bench-report.json",
+          "ed": "926c\n        \"produce_seconds\": -0.0\n.\n904c\n        \"produce_seconds\": -0.0\n.\n882c\n        \"produce_seconds\": -0.0\n.\n851c\n        \"produce_seconds\": -0.0,\n.\n820c\n        \"produce_seconds\": -0.0,\n.\n798c\n        \"produce_seconds\": -0.0\n.\n776c\n        \"produce_seconds\": -0.0\n.\n754c\n        \"produce_seconds\": -0.0\n.\n732c\n        \"produce_seconds\": -0.0\n.\n710c\n        \"produce_seconds\": -0.0\n.\n701c\n        \"produce_seconds\": -0.0\n.\n577c\n        \"produce_seconds\": -0.0,\n.\n568c\n        \"produce_seconds\": -0.0\n.\n453c\n        \"produce_seconds\": -0.0\n.\n444c\n        \"produce_seconds\": -0.0\n.\n320c\n        \"produce_seconds\": -0.0,\n.\n311c\n        \"produce_seconds\": -0.0\n.\n190c\n        \"produce_seconds\": -0.0,\n.\n181c\n        \"produce_seconds\": -0.0\n.\n66c\n        \"produce_seconds\": -0.0\n.\n",
+          "sha256": "e3f661e3c4a260387ce63b5ca975622980c768b6f334089bc1ba19aa81058a91"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/43b4cc3ab0ebbd97.bench-report.json",
+          "ed": "917c\n        \"produce_seconds\": -0.0,\n.\n895c\n        \"produce_seconds\": -0.0\n.\n864c\n        \"produce_seconds\": -0.0,\n.\n833c\n        \"produce_seconds\": -0.0,\n.\n811c\n        \"produce_seconds\": -0.0\n.\n789c\n        \"produce_seconds\": -0.0\n.\n758c\n        \"produce_seconds\": -0.0,\n.\n736c\n        \"produce_seconds\": -0.0\n.\n714c\n        \"produce_seconds\": -0.0\n.\n686c\n        \"produce_seconds\": -0.0,\n.\n677c\n        \"produce_seconds\": -0.0\n.\n562c\n        \"produce_seconds\": -0.0\n.\n553c\n        \"produce_seconds\": -0.0\n.\n438c\n        \"produce_seconds\": -0.0\n.\n429c\n        \"produce_seconds\": -0.0\n.\n314c\n        \"produce_seconds\": -0.0\n.\n305c\n        \"produce_seconds\": -0.0\n.\n190c\n        \"produce_seconds\": -0.0\n.\n181c\n        \"produce_seconds\": -0.0\n.\n66c\n        \"produce_seconds\": -0.0\n.\n",
+          "sha256": "788de30a73948388de19ec1bb5c2ef8296cb20d453e5ef95cf8cbe2dce6ebad2"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/693890aae9dc860b.bench-report.json",
+          "ed": "926c\n        \"produce_seconds\": -0.0\n.\n904c\n        \"produce_seconds\": -0.0\n.\n882c\n        \"produce_seconds\": -0.0\n.\n860c\n        \"produce_seconds\": -0.0\n.\n838c\n        \"produce_seconds\": -0.0\n.\n816c\n        \"produce_seconds\": -0.0\n.\n785c\n        \"produce_seconds\": -0.0,\n.\n763c\n        \"produce_seconds\": -0.0\n.\n732c\n        \"produce_seconds\": -0.0,\n.\n701c\n        \"produce_seconds\": -0.0,\n.\n692c\n        \"produce_seconds\": -0.0\n.\n568c\n        \"produce_seconds\": -0.0,\n.\n559c\n        \"produce_seconds\": -0.0\n.\n444c\n        \"produce_seconds\": -0.0\n.\n435c\n        \"produce_seconds\": -0.0\n.\n320c\n        \"produce_seconds\": -0.0\n.\n311c\n        \"produce_seconds\": -0.0\n.\n196c\n        \"produce_seconds\": -0.0\n.\n187c\n        \"produce_seconds\": -0.0\n.\n66c\n        \"produce_seconds\": -0.0,\n.\n",
+          "sha256": "d850d0efa41e2306501f24e910f1c375ac2e2799cd0d634cb99e61f10558b1e7"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/79e600bc5fcd5da7.bench-report.json",
+          "ed": "926c\n        \"produce_seconds\": -0.0\n.\n904c\n        \"produce_seconds\": -0.0\n.\n882c\n        \"produce_seconds\": -0.0\n.\n860c\n        \"produce_seconds\": -0.0\n.\n838c\n        \"produce_seconds\": -0.0\n.\n807c\n        \"produce_seconds\": -0.0,\n.\n785c\n        \"produce_seconds\": -0.0\n.\n757c\n        \"produce_seconds\": -0.0,\n.\n726c\n        \"produce_seconds\": -0.0,\n.\n695c\n        \"produce_seconds\": -0.0,\n.\n686c\n        \"produce_seconds\": -0.0\n.\n562c\n        \"produce_seconds\": -0.0,\n.\n553c\n        \"produce_seconds\": -0.0\n.\n438c\n        \"produce_seconds\": -0.0\n.\n429c\n        \"produce_seconds\": -0.0\n.\n314c\n        \"produce_seconds\": -0.0\n.\n305c\n        \"produce_seconds\": -0.0\n.\n190c\n        \"produce_seconds\": -0.0\n.\n181c\n        \"produce_seconds\": -0.0\n.\n66c\n        \"produce_seconds\": -0.0\n.\n",
+          "sha256": "20e934bc2b17e2d32118fe4c3e5bf1f98b87bf35a28ec7333c89a1db3d6f95c1"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/b5beff4a53fa12c0.bench-report.json",
+          "ed": "917c\n        \"produce_seconds\": -0.0,\n.\n895c\n        \"produce_seconds\": -0.0\n.\n867c\n        \"produce_seconds\": -0.0,\n.\n836c\n        \"produce_seconds\": -0.0,\n.\n805c\n        \"produce_seconds\": -0.0,\n.\n783c\n        \"produce_seconds\": -0.0\n.\n761c\n        \"produce_seconds\": -0.0\n.\n739c\n        \"produce_seconds\": -0.0\n.\n717c\n        \"produce_seconds\": -0.0\n.\n695c\n        \"produce_seconds\": -0.0\n.\n686c\n        \"produce_seconds\": -0.0\n.\n571c\n        \"produce_seconds\": -0.0\n.\n562c\n        \"produce_seconds\": -0.0\n.\n447c\n        \"produce_seconds\": -0.0\n.\n438c\n        \"produce_seconds\": -0.0\n.\n323c\n        \"produce_seconds\": -0.0\n.\n314c\n        \"produce_seconds\": -0.0\n.\n199c\n        \"produce_seconds\": -0.0\n.\n190c\n        \"produce_seconds\": -0.0\n.\n66c\n        \"produce_seconds\": -0.0,\n.\n",
+          "sha256": "9a64ff98da7301a64e27244a3fc5e1eec71e776a99275013b84769f7296e6d35"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/c32fa09b48fb2f27.bench-report.json",
+          "ed": "917c\n        \"produce_seconds\": -0.0,\n.\n895c\n        \"produce_seconds\": -0.0\n.\n864c\n        \"produce_seconds\": -0.0,\n.\n833c\n        \"produce_seconds\": -0.0,\n.\n802c\n        \"produce_seconds\": -0.0,\n.\n780c\n        \"produce_seconds\": -0.0\n.\n752c\n        \"produce_seconds\": -0.0,\n.\n730c\n        \"produce_seconds\": -0.0\n.\n708c\n        \"produce_seconds\": -0.0\n.\n686c\n        \"produce_seconds\": -0.0\n.\n677c\n        \"produce_seconds\": -0.0\n.\n562c\n        \"produce_seconds\": -0.0\n.\n553c\n        \"produce_seconds\": -0.0\n.\n438c\n        \"produce_seconds\": -0.0\n.\n429c\n        \"produce_seconds\": -0.0\n.\n314c\n        \"produce_seconds\": -0.0\n.\n305c\n        \"produce_seconds\": -0.0\n.\n190c\n        \"produce_seconds\": -0.0\n.\n181c\n        \"produce_seconds\": -0.0\n.\n66c\n        \"produce_seconds\": -0.0\n.\n",
+          "sha256": "2a9dad6db4f90888de90747de124292b90758d45bb99adb30043b92dce281520"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/c7d815714ca52bce.bench-report.json",
+          "ed": "917c\n        \"produce_seconds\": -0.0,\n.\n895c\n        \"produce_seconds\": -0.0\n.\n873c\n        \"produce_seconds\": -0.0\n.\n851c\n        \"produce_seconds\": -0.0\n.\n829c\n        \"produce_seconds\": -0.0\n.\n798c\n        \"produce_seconds\": -0.0,\n.\n776c\n        \"produce_seconds\": -0.0\n.\n754c\n        \"produce_seconds\": -0.0\n.\n723c\n        \"produce_seconds\": -0.0,\n.\n692c\n        \"produce_seconds\": -0.0,\n.\n683c\n        \"produce_seconds\": -0.0\n.\n562c\n        \"produce_seconds\": -0.0,\n.\n553c\n        \"produce_seconds\": -0.0\n.\n438c\n        \"produce_seconds\": -0.0\n.\n429c\n        \"produce_seconds\": -0.0\n.\n314c\n        \"produce_seconds\": -0.0\n.\n305c\n        \"produce_seconds\": -0.0\n.\n190c\n        \"produce_seconds\": -0.0\n.\n181c\n        \"produce_seconds\": -0.0\n.\n66c\n        \"produce_seconds\": -0.0\n.\n",
+          "sha256": "30b0d1ff7b95d725837403436665c8cea7d6d895ec1fc0f3328b40299c22408d"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "0a13d6ef367076c1783debb7f276a3527cd29a105738694a3468624eca1bd74a"
+    },
+    {
+      "name": "report-produce-compensated",
+      "commands": "i=0; for f in $(ls $RP/*.bench-report.json); do i=$((i+1)); case $i in 1) v=1e16;; 2) v=1.0;; 3) v=-1e16;; *) v=0.0;; esac; sed -i -E \"s/\\\"produce_seconds\\\": [-0-9.e+]+/\\\"produce_seconds\\\": $v/\" $f; done",
+      "edits": [
+        {
+          "path": "assets/same-cut/v2/reports/047e62b52a3f4ede.bench-report.json",
+          "ed": "917c\n        \"produce_seconds\": 1e16,\n.\n895c\n        \"produce_seconds\": 1e16\n.\n873c\n        \"produce_seconds\": 1e16\n.\n851c\n        \"produce_seconds\": 1e16\n.\n820c\n        \"produce_seconds\": 1e16,\n.\n798c\n        \"produce_seconds\": 1e16\n.\n767c\n        \"produce_seconds\": 1e16,\n.\n736c\n        \"produce_seconds\": 1e16,\n.\n714c\n        \"produce_seconds\": 1e16\n.\n692c\n        \"produce_seconds\": 1e16\n.\n683c\n        \"produce_seconds\": 1e16\n.\n568c\n        \"produce_seconds\": 1e16\n.\n559c\n        \"produce_seconds\": 1e16\n.\n444c\n        \"produce_seconds\": 1e16\n.\n435c\n        \"produce_seconds\": 1e16\n.\n314c\n        \"produce_seconds\": 1e16,\n.\n305c\n        \"produce_seconds\": 1e16\n.\n190c\n        \"produce_seconds\": 1e16\n.\n181c\n        \"produce_seconds\": 1e16\n.\n66c\n        \"produce_seconds\": 1e16\n.\n",
+          "sha256": "cea8be623af6aff55ee0d3cbe67162b6b8a5b796ea1630ced5c2f5f3c2a90877"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/1cb97b1d7314d43d.bench-report.json",
+          "ed": "926c\n        \"produce_seconds\": 1.0\n.\n904c\n        \"produce_seconds\": 1.0\n.\n882c\n        \"produce_seconds\": 1.0\n.\n860c\n        \"produce_seconds\": 1.0\n.\n838c\n        \"produce_seconds\": 1.0\n.\n807c\n        \"produce_seconds\": 1.0,\n.\n776c\n        \"produce_seconds\": 1.0,\n.\n745c\n        \"produce_seconds\": 1.0,\n.\n723c\n        \"produce_seconds\": 1.0\n.\n701c\n        \"produce_seconds\": 1.0\n.\n692c\n        \"produce_seconds\": 1.0\n.\n577c\n        \"produce_seconds\": 1.0\n.\n568c\n        \"produce_seconds\": 1.0\n.\n453c\n        \"produce_seconds\": 1.0\n.\n444c\n        \"produce_seconds\": 1.0\n.\n320c\n        \"produce_seconds\": 1.0,\n.\n311c\n        \"produce_seconds\": 1.0\n.\n190c\n        \"produce_seconds\": 1.0,\n.\n181c\n        \"produce_seconds\": 1.0\n.\n66c\n        \"produce_seconds\": 1.0\n.\n",
+          "sha256": "2a426a888ad2b200184af239fb072bf365c7abe13283d5592277ed0ee8e9bb71"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/21fbfe8b53dbcd60.bench-report.json",
+          "ed": "926c\n        \"produce_seconds\": -1e16\n.\n904c\n        \"produce_seconds\": -1e16\n.\n882c\n        \"produce_seconds\": -1e16\n.\n860c\n        \"produce_seconds\": -1e16\n.\n838c\n        \"produce_seconds\": -1e16\n.\n810c\n        \"produce_seconds\": -1e16,\n.\n788c\n        \"produce_seconds\": -1e16\n.\n766c\n        \"produce_seconds\": -1e16\n.\n744c\n        \"produce_seconds\": -1e16\n.\n713c\n        \"produce_seconds\": -1e16,\n.\n704c\n        \"produce_seconds\": -1e16\n.\n580c\n        \"produce_seconds\": -1e16,\n.\n571c\n        \"produce_seconds\": -1e16\n.\n447c\n        \"produce_seconds\": -1e16,\n.\n438c\n        \"produce_seconds\": -1e16\n.\n323c\n        \"produce_seconds\": -1e16\n.\n314c\n        \"produce_seconds\": -1e16\n.\n199c\n        \"produce_seconds\": -1e16\n.\n190c\n        \"produce_seconds\": -1e16\n.\n66c\n        \"produce_seconds\": -1e16,\n.\n",
+          "sha256": "0857643401a0c49a4f703e302da155e4a45ed69dde7dc2a0102ce9d6c963f447"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/30ef3eaa6d2971a9.bench-report.json",
+          "ed": "311c\n        \"produce_seconds\": 0.0\n.\n190c\n        \"produce_seconds\": 0.0,\n.\n",
+          "sha256": "7d1234d1ee8e6b111456ab0a1e3b842cfc583bc14b07c146215bf8b2af27f5d7"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/43b4cc3ab0ebbd97.bench-report.json",
+          "ed": "686c\n        \"produce_seconds\": 0.0,\n.\n",
+          "sha256": "2b73e9806b1433331eef50746f00d44581afbca22624c3e0d6c44d5cf75314e9"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/693890aae9dc860b.bench-report.json",
+          "ed": "187c\n        \"produce_seconds\": 0.0\n.\n66c\n        \"produce_seconds\": 0.0,\n.\n",
+          "sha256": "0b1ef346d050ece7822a2a117f3ad83b5b7f7596930acb248065db6384039185"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/79e600bc5fcd5da7.bench-report.json",
+          "ed": "757c\n        \"produce_seconds\": 0.0,\n.\n",
+          "sha256": "f2706e689f504d813def4a0ffad1d4b261dfae5961ab2be14fe402aa94dd627e"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/b5beff4a53fa12c0.bench-report.json",
+          "ed": "867c\n        \"produce_seconds\": 0.0,\n.\n",
+          "sha256": "35d5f63e1b1e677319253865ccb809ca4bd1d9b91204582438985616fe32ad22"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/c32fa09b48fb2f27.bench-report.json",
+          "ed": "752c\n        \"produce_seconds\": 0.0,\n.\n",
+          "sha256": "8b88c8b8e84988080f2545a568d7403a7a9df6ea40222e00e0189dcc5ca9fd9e"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/c7d815714ca52bce.bench-report.json",
+          "ed": "683c\n        \"produce_seconds\": 0.0\n.\n562c\n        \"produce_seconds\": 0.0,\n.\n",
+          "sha256": "3691ed7d5703c5fcda099d0a075ffa4b62d0815e39ccec6b5ec68ab1b19bb5b3"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "2e3e4c630025c575ab6154a5c0c3da32cfd090fa0e9bfe51fe5a972b67a4e149"
+    },
+    {
+      "name": "report-produce-int-after-float",
+      "commands": "i=0; for f in $(ls $RP/*.bench-report.json); do i=$((i+1)); case $i in 1) v=1e16;; 2) v=1;; 3) v=-1e16;; *) v=0.0;; esac; sed -i -E \"s/\\\"produce_seconds\\\": [-0-9.e+]+/\\\"produce_seconds\\\": $v/\" $f; done",
+      "edits": [
+        {
+          "path": "assets/same-cut/v2/reports/047e62b52a3f4ede.bench-report.json",
+          "ed": "917c\n        \"produce_seconds\": 1e16,\n.\n895c\n        \"produce_seconds\": 1e16\n.\n873c\n        \"produce_seconds\": 1e16\n.\n851c\n        \"produce_seconds\": 1e16\n.\n820c\n        \"produce_seconds\": 1e16,\n.\n798c\n        \"produce_seconds\": 1e16\n.\n767c\n        \"produce_seconds\": 1e16,\n.\n736c\n        \"produce_seconds\": 1e16,\n.\n714c\n        \"produce_seconds\": 1e16\n.\n692c\n        \"produce_seconds\": 1e16\n.\n683c\n        \"produce_seconds\": 1e16\n.\n568c\n        \"produce_seconds\": 1e16\n.\n559c\n        \"produce_seconds\": 1e16\n.\n444c\n        \"produce_seconds\": 1e16\n.\n435c\n        \"produce_seconds\": 1e16\n.\n314c\n        \"produce_seconds\": 1e16,\n.\n305c\n        \"produce_seconds\": 1e16\n.\n190c\n        \"produce_seconds\": 1e16\n.\n181c\n        \"produce_seconds\": 1e16\n.\n66c\n        \"produce_seconds\": 1e16\n.\n",
+          "sha256": "cea8be623af6aff55ee0d3cbe67162b6b8a5b796ea1630ced5c2f5f3c2a90877"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/1cb97b1d7314d43d.bench-report.json",
+          "ed": "926c\n        \"produce_seconds\": 1\n.\n904c\n        \"produce_seconds\": 1\n.\n882c\n        \"produce_seconds\": 1\n.\n860c\n        \"produce_seconds\": 1\n.\n838c\n        \"produce_seconds\": 1\n.\n807c\n        \"produce_seconds\": 1,\n.\n776c\n        \"produce_seconds\": 1,\n.\n745c\n        \"produce_seconds\": 1,\n.\n723c\n        \"produce_seconds\": 1\n.\n701c\n        \"produce_seconds\": 1\n.\n692c\n        \"produce_seconds\": 1\n.\n577c\n        \"produce_seconds\": 1\n.\n568c\n        \"produce_seconds\": 1\n.\n453c\n        \"produce_seconds\": 1\n.\n444c\n        \"produce_seconds\": 1\n.\n320c\n        \"produce_seconds\": 1,\n.\n311c\n        \"produce_seconds\": 1\n.\n190c\n        \"produce_seconds\": 1,\n.\n181c\n        \"produce_seconds\": 1\n.\n66c\n        \"produce_seconds\": 1\n.\n",
+          "sha256": "a5cc6b92233f7d22a3fbf334cee98884696840ba00034147e3a1c12950c4fc7b"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/21fbfe8b53dbcd60.bench-report.json",
+          "ed": "926c\n        \"produce_seconds\": -1e16\n.\n904c\n        \"produce_seconds\": -1e16\n.\n882c\n        \"produce_seconds\": -1e16\n.\n860c\n        \"produce_seconds\": -1e16\n.\n838c\n        \"produce_seconds\": -1e16\n.\n810c\n        \"produce_seconds\": -1e16,\n.\n788c\n        \"produce_seconds\": -1e16\n.\n766c\n        \"produce_seconds\": -1e16\n.\n744c\n        \"produce_seconds\": -1e16\n.\n713c\n        \"produce_seconds\": -1e16,\n.\n704c\n        \"produce_seconds\": -1e16\n.\n580c\n        \"produce_seconds\": -1e16,\n.\n571c\n        \"produce_seconds\": -1e16\n.\n447c\n        \"produce_seconds\": -1e16,\n.\n438c\n        \"produce_seconds\": -1e16\n.\n323c\n        \"produce_seconds\": -1e16\n.\n314c\n        \"produce_seconds\": -1e16\n.\n199c\n        \"produce_seconds\": -1e16\n.\n190c\n        \"produce_seconds\": -1e16\n.\n66c\n        \"produce_seconds\": -1e16,\n.\n",
+          "sha256": "0857643401a0c49a4f703e302da155e4a45ed69dde7dc2a0102ce9d6c963f447"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/30ef3eaa6d2971a9.bench-report.json",
+          "ed": "311c\n        \"produce_seconds\": 0.0\n.\n190c\n        \"produce_seconds\": 0.0,\n.\n",
+          "sha256": "7d1234d1ee8e6b111456ab0a1e3b842cfc583bc14b07c146215bf8b2af27f5d7"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/43b4cc3ab0ebbd97.bench-report.json",
+          "ed": "686c\n        \"produce_seconds\": 0.0,\n.\n",
+          "sha256": "2b73e9806b1433331eef50746f00d44581afbca22624c3e0d6c44d5cf75314e9"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/693890aae9dc860b.bench-report.json",
+          "ed": "187c\n        \"produce_seconds\": 0.0\n.\n66c\n        \"produce_seconds\": 0.0,\n.\n",
+          "sha256": "0b1ef346d050ece7822a2a117f3ad83b5b7f7596930acb248065db6384039185"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/79e600bc5fcd5da7.bench-report.json",
+          "ed": "757c\n        \"produce_seconds\": 0.0,\n.\n",
+          "sha256": "f2706e689f504d813def4a0ffad1d4b261dfae5961ab2be14fe402aa94dd627e"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/b5beff4a53fa12c0.bench-report.json",
+          "ed": "867c\n        \"produce_seconds\": 0.0,\n.\n",
+          "sha256": "35d5f63e1b1e677319253865ccb809ca4bd1d9b91204582438985616fe32ad22"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/c32fa09b48fb2f27.bench-report.json",
+          "ed": "752c\n        \"produce_seconds\": 0.0,\n.\n",
+          "sha256": "8b88c8b8e84988080f2545a568d7403a7a9df6ea40222e00e0189dcc5ca9fd9e"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/c7d815714ca52bce.bench-report.json",
+          "ed": "683c\n        \"produce_seconds\": 0.0\n.\n562c\n        \"produce_seconds\": 0.0,\n.\n",
+          "sha256": "3691ed7d5703c5fcda099d0a075ffa4b62d0815e39ccec6b5ec68ab1b19bb5b3"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "98c079786563605fddeb50e019520f05ef10dc1a269580db4261130c5852766c"
+    },
+    {
+      "name": "report-produce-ints",
+      "commands": "i=0; for f in $(ls $RP/*.bench-report.json); do i=$((i+1)); sed -i -E \"s/\\\"produce_seconds\\\": [-0-9.e+]+/\\\"produce_seconds\\\": $i/\" $f; done",
+      "edits": [
+        {
+          "path": "assets/same-cut/v2/reports/047e62b52a3f4ede.bench-report.json",
+          "ed": "917c\n        \"produce_seconds\": 1,\n.\n895c\n        \"produce_seconds\": 1\n.\n873c\n        \"produce_seconds\": 1\n.\n851c\n        \"produce_seconds\": 1\n.\n820c\n        \"produce_seconds\": 1,\n.\n798c\n        \"produce_seconds\": 1\n.\n767c\n        \"produce_seconds\": 1,\n.\n736c\n        \"produce_seconds\": 1,\n.\n714c\n        \"produce_seconds\": 1\n.\n692c\n        \"produce_seconds\": 1\n.\n683c\n        \"produce_seconds\": 1\n.\n568c\n        \"produce_seconds\": 1\n.\n559c\n        \"produce_seconds\": 1\n.\n444c\n        \"produce_seconds\": 1\n.\n435c\n        \"produce_seconds\": 1\n.\n314c\n        \"produce_seconds\": 1,\n.\n305c\n        \"produce_seconds\": 1\n.\n190c\n        \"produce_seconds\": 1\n.\n181c\n        \"produce_seconds\": 1\n.\n66c\n        \"produce_seconds\": 1\n.\n",
+          "sha256": "bc4e7d1364399048f07d4ad9b4d87d6c7a5ffe6833051b79742a3c2f4820b734"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/1cb97b1d7314d43d.bench-report.json",
+          "ed": "926c\n        \"produce_seconds\": 2\n.\n904c\n        \"produce_seconds\": 2\n.\n882c\n        \"produce_seconds\": 2\n.\n860c\n        \"produce_seconds\": 2\n.\n838c\n        \"produce_seconds\": 2\n.\n807c\n        \"produce_seconds\": 2,\n.\n776c\n        \"produce_seconds\": 2,\n.\n745c\n        \"produce_seconds\": 2,\n.\n723c\n        \"produce_seconds\": 2\n.\n701c\n        \"produce_seconds\": 2\n.\n692c\n        \"produce_seconds\": 2\n.\n577c\n        \"produce_seconds\": 2\n.\n568c\n        \"produce_seconds\": 2\n.\n453c\n        \"produce_seconds\": 2\n.\n444c\n        \"produce_seconds\": 2\n.\n320c\n        \"produce_seconds\": 2,\n.\n311c\n        \"produce_seconds\": 2\n.\n190c\n        \"produce_seconds\": 2,\n.\n181c\n        \"produce_seconds\": 2\n.\n66c\n        \"produce_seconds\": 2\n.\n",
+          "sha256": "b00998c83fa4a9e650897f3253e7dfeeb87e858823557668289760dd068c7089"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/21fbfe8b53dbcd60.bench-report.json",
+          "ed": "926c\n        \"produce_seconds\": 3\n.\n904c\n        \"produce_seconds\": 3\n.\n882c\n        \"produce_seconds\": 3\n.\n860c\n        \"produce_seconds\": 3\n.\n838c\n        \"produce_seconds\": 3\n.\n810c\n        \"produce_seconds\": 3,\n.\n788c\n        \"produce_seconds\": 3\n.\n766c\n        \"produce_seconds\": 3\n.\n744c\n        \"produce_seconds\": 3\n.\n713c\n        \"produce_seconds\": 3,\n.\n704c\n        \"produce_seconds\": 3\n.\n580c\n        \"produce_seconds\": 3,\n.\n571c\n        \"produce_seconds\": 3\n.\n447c\n        \"produce_seconds\": 3,\n.\n438c\n        \"produce_seconds\": 3\n.\n323c\n        \"produce_seconds\": 3\n.\n314c\n        \"produce_seconds\": 3\n.\n199c\n        \"produce_seconds\": 3\n.\n190c\n        \"produce_seconds\": 3\n.\n66c\n        \"produce_seconds\": 3,\n.\n",
+          "sha256": "bee842fef748c3c026704e5962b5ded9d11b11987021b4ca41eb1691a07c18b5"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/30ef3eaa6d2971a9.bench-report.json",
+          "ed": "926c\n        \"produce_seconds\": 4\n.\n904c\n        \"produce_seconds\": 4\n.\n882c\n        \"produce_seconds\": 4\n.\n851c\n        \"produce_seconds\": 4,\n.\n820c\n        \"produce_seconds\": 4,\n.\n798c\n        \"produce_seconds\": 4\n.\n776c\n        \"produce_seconds\": 4\n.\n754c\n        \"produce_seconds\": 4\n.\n732c\n        \"produce_seconds\": 4\n.\n710c\n        \"produce_seconds\": 4\n.\n701c\n        \"produce_seconds\": 4\n.\n577c\n        \"produce_seconds\": 4,\n.\n568c\n        \"produce_seconds\": 4\n.\n453c\n        \"produce_seconds\": 4\n.\n444c\n        \"produce_seconds\": 4\n.\n320c\n        \"produce_seconds\": 4,\n.\n311c\n        \"produce_seconds\": 4\n.\n190c\n        \"produce_seconds\": 4,\n.\n181c\n        \"produce_seconds\": 4\n.\n66c\n        \"produce_seconds\": 4\n.\n",
+          "sha256": "5c7ce21a2c2004023acaaca7076032683980c91cf89c65394e769371281e9d91"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/43b4cc3ab0ebbd97.bench-report.json",
+          "ed": "917c\n        \"produce_seconds\": 5,\n.\n895c\n        \"produce_seconds\": 5\n.\n864c\n        \"produce_seconds\": 5,\n.\n833c\n        \"produce_seconds\": 5,\n.\n811c\n        \"produce_seconds\": 5\n.\n789c\n        \"produce_seconds\": 5\n.\n758c\n        \"produce_seconds\": 5,\n.\n736c\n        \"produce_seconds\": 5\n.\n714c\n        \"produce_seconds\": 5\n.\n686c\n        \"produce_seconds\": 5,\n.\n677c\n        \"produce_seconds\": 5\n.\n562c\n        \"produce_seconds\": 5\n.\n553c\n        \"produce_seconds\": 5\n.\n438c\n        \"produce_seconds\": 5\n.\n429c\n        \"produce_seconds\": 5\n.\n314c\n        \"produce_seconds\": 5\n.\n305c\n        \"produce_seconds\": 5\n.\n190c\n        \"produce_seconds\": 5\n.\n181c\n        \"produce_seconds\": 5\n.\n66c\n        \"produce_seconds\": 5\n.\n",
+          "sha256": "5337f7a0df6ab88fdce8ce10c5937b0d816cf10396ee0935387c0fcc64607534"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/693890aae9dc860b.bench-report.json",
+          "ed": "926c\n        \"produce_seconds\": 6\n.\n904c\n        \"produce_seconds\": 6\n.\n882c\n        \"produce_seconds\": 6\n.\n860c\n        \"produce_seconds\": 6\n.\n838c\n        \"produce_seconds\": 6\n.\n816c\n        \"produce_seconds\": 6\n.\n785c\n        \"produce_seconds\": 6,\n.\n763c\n        \"produce_seconds\": 6\n.\n732c\n        \"produce_seconds\": 6,\n.\n701c\n        \"produce_seconds\": 6,\n.\n692c\n        \"produce_seconds\": 6\n.\n568c\n        \"produce_seconds\": 6,\n.\n559c\n        \"produce_seconds\": 6\n.\n444c\n        \"produce_seconds\": 6\n.\n435c\n        \"produce_seconds\": 6\n.\n320c\n        \"produce_seconds\": 6\n.\n311c\n        \"produce_seconds\": 6\n.\n196c\n        \"produce_seconds\": 6\n.\n187c\n        \"produce_seconds\": 6\n.\n66c\n        \"produce_seconds\": 6,\n.\n",
+          "sha256": "b82ec1586eb98a38b82b00a1c316a262276349bb841c76118e19ad613b90710d"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/79e600bc5fcd5da7.bench-report.json",
+          "ed": "926c\n        \"produce_seconds\": 7\n.\n904c\n        \"produce_seconds\": 7\n.\n882c\n        \"produce_seconds\": 7\n.\n860c\n        \"produce_seconds\": 7\n.\n838c\n        \"produce_seconds\": 7\n.\n807c\n        \"produce_seconds\": 7,\n.\n785c\n        \"produce_seconds\": 7\n.\n757c\n        \"produce_seconds\": 7,\n.\n726c\n        \"produce_seconds\": 7,\n.\n695c\n        \"produce_seconds\": 7,\n.\n686c\n        \"produce_seconds\": 7\n.\n562c\n        \"produce_seconds\": 7,\n.\n553c\n        \"produce_seconds\": 7\n.\n438c\n        \"produce_seconds\": 7\n.\n429c\n        \"produce_seconds\": 7\n.\n314c\n        \"produce_seconds\": 7\n.\n305c\n        \"produce_seconds\": 7\n.\n190c\n        \"produce_seconds\": 7\n.\n181c\n        \"produce_seconds\": 7\n.\n66c\n        \"produce_seconds\": 7\n.\n",
+          "sha256": "28aa7f18f1fe04606ebde6cd32aa72a17af4f3e4e884f4d2349548471ba5b049"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/b5beff4a53fa12c0.bench-report.json",
+          "ed": "917c\n        \"produce_seconds\": 8,\n.\n895c\n        \"produce_seconds\": 8\n.\n867c\n        \"produce_seconds\": 8,\n.\n836c\n        \"produce_seconds\": 8,\n.\n805c\n        \"produce_seconds\": 8,\n.\n783c\n        \"produce_seconds\": 8\n.\n761c\n        \"produce_seconds\": 8\n.\n739c\n        \"produce_seconds\": 8\n.\n717c\n        \"produce_seconds\": 8\n.\n695c\n        \"produce_seconds\": 8\n.\n686c\n        \"produce_seconds\": 8\n.\n571c\n        \"produce_seconds\": 8\n.\n562c\n        \"produce_seconds\": 8\n.\n447c\n        \"produce_seconds\": 8\n.\n438c\n        \"produce_seconds\": 8\n.\n323c\n        \"produce_seconds\": 8\n.\n314c\n        \"produce_seconds\": 8\n.\n199c\n        \"produce_seconds\": 8\n.\n190c\n        \"produce_seconds\": 8\n.\n66c\n        \"produce_seconds\": 8,\n.\n",
+          "sha256": "f48148a8615aa8b129d27a1e0f1fe717d7f96bca1db7d18343e4d3cba0469a3a"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/c32fa09b48fb2f27.bench-report.json",
+          "ed": "917c\n        \"produce_seconds\": 9,\n.\n895c\n        \"produce_seconds\": 9\n.\n864c\n        \"produce_seconds\": 9,\n.\n833c\n        \"produce_seconds\": 9,\n.\n802c\n        \"produce_seconds\": 9,\n.\n780c\n        \"produce_seconds\": 9\n.\n752c\n        \"produce_seconds\": 9,\n.\n730c\n        \"produce_seconds\": 9\n.\n708c\n        \"produce_seconds\": 9\n.\n686c\n        \"produce_seconds\": 9\n.\n677c\n        \"produce_seconds\": 9\n.\n562c\n        \"produce_seconds\": 9\n.\n553c\n        \"produce_seconds\": 9\n.\n438c\n        \"produce_seconds\": 9\n.\n429c\n        \"produce_seconds\": 9\n.\n314c\n        \"produce_seconds\": 9\n.\n305c\n        \"produce_seconds\": 9\n.\n190c\n        \"produce_seconds\": 9\n.\n181c\n        \"produce_seconds\": 9\n.\n66c\n        \"produce_seconds\": 9\n.\n",
+          "sha256": "ac76ad2a02d495963adaf7314a97e7bdad6223308f12352140d32776869bab4e"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/c7d815714ca52bce.bench-report.json",
+          "ed": "917c\n        \"produce_seconds\": 10,\n.\n895c\n        \"produce_seconds\": 10\n.\n873c\n        \"produce_seconds\": 10\n.\n851c\n        \"produce_seconds\": 10\n.\n829c\n        \"produce_seconds\": 10\n.\n798c\n        \"produce_seconds\": 10,\n.\n776c\n        \"produce_seconds\": 10\n.\n754c\n        \"produce_seconds\": 10\n.\n723c\n        \"produce_seconds\": 10,\n.\n692c\n        \"produce_seconds\": 10,\n.\n683c\n        \"produce_seconds\": 10\n.\n562c\n        \"produce_seconds\": 10,\n.\n553c\n        \"produce_seconds\": 10\n.\n438c\n        \"produce_seconds\": 10\n.\n429c\n        \"produce_seconds\": 10\n.\n314c\n        \"produce_seconds\": 10\n.\n305c\n        \"produce_seconds\": 10\n.\n190c\n        \"produce_seconds\": 10\n.\n181c\n        \"produce_seconds\": 10\n.\n66c\n        \"produce_seconds\": 10\n.\n",
+          "sha256": "3b033588871097fdeb7c70f79f6ad1f13da0acf788a30159945e2483a2f5b314"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "cdf5232029d48abbb8bb54798d82a26721bbc514400a47bc65579dedc207b17a"
+    },
+    {
+      "name": "report-rmse-nan-tie",
+      "commands": "sed -i -E \"s/\\\"rmse\\\": [-0-9.e+]+/\\\"rmse\\\": NaN/g\" $RP/047e62b52a3f4ede.bench-report.json",
+      "edits": [
+        {
+          "path": "assets/same-cut/v2/reports/047e62b52a3f4ede.bench-report.json",
+          "ed": "934c\n          \"rmse\": NaN\n.\n903c\n          \"rmse\": NaN\n.\n881c\n          \"rmse\": NaN\n.\n859c\n          \"rmse\": NaN\n.\n837c\n          \"rmse\": NaN\n.\n806c\n          \"rmse\": NaN\n.\n784c\n          \"rmse\": NaN\n.\n753c\n          \"rmse\": NaN\n.\n722c\n          \"rmse\": NaN\n.\n700c\n          \"rmse\": NaN\n.\n678c\n          \"rmse\": NaN\n.\n660c\n                \"rmse\": NaN\n.\n644c\n                \"rmse\": NaN\n.\n628c\n                \"rmse\": NaN\n.\n612c\n                \"rmse\": NaN\n.\n596c\n                \"rmse\": NaN\n.\n576c\n          \"rmse\": NaN\n.\n554c\n          \"rmse\": NaN\n.\n536c\n                \"rmse\": NaN\n.\n520c\n                \"rmse\": NaN\n.\n504c\n                \"rmse\": NaN\n.\n488c\n                \"rmse\": NaN\n.\n472c\n                \"rmse\": NaN\n.\n452c\n          \"rmse\": NaN\n.\n430c\n          \"rmse\": NaN\n.\n412c\n                \"rmse\": NaN\n.\n396c\n                \"rmse\": NaN\n.\n380c\n                \"rmse\": NaN\n.\n364c\n                \"rmse\": NaN\n.\n348c\n                \"rmse\": NaN\n.\n328c\n          \"rmse\": NaN\n.\n300c\n          \"rmse\": NaN\n.\n282c\n                \"rmse\": NaN\n.\n266c\n                \"rmse\": NaN\n.\n250c\n                \"rmse\": NaN\n.\n234c\n                \"rmse\": NaN\n.\n218c\n                \"rmse\": NaN\n.\n198c\n          \"rmse\": NaN\n.\n176c\n          \"rmse\": NaN\n.\n158c\n                \"rmse\": NaN\n.\n142c\n                \"rmse\": NaN\n.\n126c\n                \"rmse\": NaN\n.\n110c\n                \"rmse\": NaN\n.\n94c\n                \"rmse\": NaN\n.\n74c\n          \"rmse\": NaN\n.\n",
+          "sha256": "010819c7c9559c367670dea3b301092bb220c28d8bdb5b2d7eec8a153271d3f3"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "7c10686d1db4e68c8d76503fe1f17cf3bd9816de4c5ceb20fd7153561c0f93fe"
+    },
+    {
+      "name": "csv-average-rank-nan",
+      "commands": "old=$(sha256sum $V2/leaderboard-jope-same-cut-v1-deep.csv | cut -d\" \" -f1); sed -i \"2s/,1711.6,1.0,/,1711.6,nan,/\" $V2/leaderboard-jope-same-cut-v1-deep.csv; new=$(sha256sum $V2/leaderboard-jope-same-cut-v1-deep.csv | cut -d\" \" -f1); sed -i \"s/$old/$new/\" $V2/elo-jope-same-cut-v1-deep.json",
+      "edits": [
+        {
+          "path": "assets/same-cut/v2/elo-jope-same-cut-v1-deep.json",
+          "ed": "9c\n  \"leaderboard_sha256\": \"f43dafa69a8ddb66b6c22c8e2018ef6703dd209de2ba8fe6a29a19f4af27e51a\",\n.\n",
+          "sha256": "9d90569bd6ec56993a1b58c1bb82bf0d69eda9381d916857ce2449645b043c8b"
+        },
+        {
+          "path": "assets/same-cut/v2/leaderboard-jope-same-cut-v1-deep.csv",
+          "ed": "2c\n1,,baseline.gpr,baseline.gpr,1711.6,nan,4,4,10,40.0,False,0,4/10,same-cut,True,official unified benchmark comparison\n.\n",
+          "sha256": "f43dafa69a8ddb66b6c22c8e2018ef6703dd209de2ba8fe6a29a19f4af27e51a"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "5274eee449430ad6b63d3e545fa055ef895f0f0922fe47783d78858f07ed144d"
+    },
+    {
+      "name": "scores-sha-short-circuit",
+      "commands": "sed -i \"s/\\\"scores_sha256\\\": \\\"[0-9a-f]*\\\"/\\\"scores_sha256\\\": \\\"x\\\"/\" $CO; sed -i \"/\\\"scores_sha256\\\"/d\" $VS",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "6d\n",
+          "sha256": "65bf7fd3758df20d924b84e5d0823ee1f5c3397cdae862dbdfef7a862161bf5c"
+        },
+        {
+          "path": "assets/regression/protocol-corrections-tabular-regression-v2.json",
+          "ed": "4c\n  \"scores_sha256\": \"x\",\n.\n",
+          "sha256": "4b9188101f09f5ef4abd93b80ac500722a06648c9a7ae37f003b2cab5a372d13"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "the two ladders and the corrections do not bind the same scores.csv\nThe committed benchmark evidence disagrees with itself; refusing to publish.\n"
+    },
+    {
+      "name": "snapshot-schema-unassigned",
+      "commands": "sed -i \"0,/\\\"schema\\\": \\\"jope.arena-elo-snapshot\\/v2\\\"/s//\\\"schema\\\": \\\"\\\\\\\\u0378\\\"/\" $SN",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.json",
+          "ed": "2c\n  \"schema\": \"\\u0378\",\n.\n",
+          "sha256": "6dc840ab3c52602b42b365f7ac149726f6b7f0b68018448d2e8fb10f0c84091f"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "assets/regression/elo-tabular-regression-v2.json: schema '\\u0378' is not jope.arena-elo-snapshot/v2\nThe committed benchmark evidence disagrees with itself; refusing to publish.\n"
+    },
+    {
+      "name": "snapshot-ladder-nbsp",
+      "commands": "sed -i \"0,/\\\"ladder\\\": \\\"published\\\"/s//\\\"ladder\\\": \\\"pub\\\\\\\\u00a0lished\\\"/\" $SN",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.json",
+          "ed": "5c\n  \"ladder\": \"pub\\u00a0lished\",\n.\n",
+          "sha256": "9d3c98012e878123235891e7049b0d050d15630da5ed6433a7cc2903df77e21b"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "assets/regression/elo-tabular-regression-v2.json: ladder 'pub\\xa0lished' is not 'published'\nThe committed benchmark evidence disagrees with itself; refusing to publish.\n"
+    },
+    {
+      "name": "snapshot-ladder-line-separator",
+      "commands": "sed -i \"0,/\\\"ladder\\\": \\\"published\\\"/s//\\\"ladder\\\": \\\"pub\\\\\\\\u2028lished\\\"/\" $SN",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.json",
+          "ed": "5c\n  \"ladder\": \"pub\\u2028lished\",\n.\n",
+          "sha256": "ea6b01f8816286d60aedab759d03f07c9f76242026091706eddec1aff465c146"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "assets/regression/elo-tabular-regression-v2.json: ladder 'pub\\u2028lished' is not 'published'\nThe committed benchmark evidence disagrees with itself; refusing to publish.\n"
+    },
+    {
+      "name": "report-adapter-token-newline",
+      "commands": "sed -i \"s/\\\"python3\\\",/\\\"python3\\\\\\\\n\\\",/\" $RP/*.bench-report.json",
+      "edits": [
+        {
+          "path": "assets/same-cut/v2/reports/047e62b52a3f4ede.bench-report.json",
+          "ed": "921c\n            \"python3\\n\",\n.\n824c\n            \"python3\\n\",\n.\n771c\n            \"python3\\n\",\n.\n740c\n            \"python3\\n\",\n.\n",
+          "sha256": "6626bc64ba873195fef466483fbd11bebb8a463be4b7331e1b826fbdaacbf914"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/1cb97b1d7314d43d.bench-report.json",
+          "ed": "811c\n            \"python3\\n\",\n.\n780c\n            \"python3\\n\",\n.\n749c\n            \"python3\\n\",\n.\n324c\n            \"python3\\n\",\n.\n",
+          "sha256": "2d20574e4a6380424b7666430e1eb0f5623349b9d1b573a913ad5dbef7abce71"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/21fbfe8b53dbcd60.bench-report.json",
+          "ed": "717c\n            \"python3\\n\",\n.\n584c\n            \"python3\\n\",\n.\n451c\n            \"python3\\n\",\n.\n70c\n            \"python3\\n\",\n.\n",
+          "sha256": "c2232e64be28a92e030b046ae7d8c4c28a279575cc4421f6ddc595d4ea497479"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/30ef3eaa6d2971a9.bench-report.json",
+          "ed": "855c\n            \"python3\\n\",\n.\n824c\n            \"python3\\n\",\n.\n581c\n            \"python3\\n\",\n.\n324c\n            \"python3\\n\",\n.\n",
+          "sha256": "0c17aaf8a7dfe4c6f19c6888e1106524a9b6e671619d283e0b4cbb933b0b5c0a"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/43b4cc3ab0ebbd97.bench-report.json",
+          "ed": "921c\n            \"python3\\n\",\n.\n868c\n            \"python3\\n\",\n.\n837c\n            \"python3\\n\",\n.\n762c\n            \"python3\\n\",\n.\n",
+          "sha256": "1464474932494e41f3bb346c6030f862aedf9d52600b3424e9445bdcd86d9d2c"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/693890aae9dc860b.bench-report.json",
+          "ed": "789c\n            \"python3\\n\",\n.\n736c\n            \"python3\\n\",\n.\n705c\n            \"python3\\n\",\n.\n572c\n            \"python3\\n\",\n.\n",
+          "sha256": "07c16704a6f6a255ded075bc313b615d98bf25f50e1ac73b5e1613df28545278"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/79e600bc5fcd5da7.bench-report.json",
+          "ed": "811c\n            \"python3\\n\",\n.\n730c\n            \"python3\\n\",\n.\n699c\n            \"python3\\n\",\n.\n566c\n            \"python3\\n\",\n.\n",
+          "sha256": "4f00631b1e4282b1142a0fd0029cb8f60a25cc0989d3cf16f6b63193f8797478"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/b5beff4a53fa12c0.bench-report.json",
+          "ed": "921c\n            \"python3\\n\",\n.\n840c\n            \"python3\\n\",\n.\n809c\n            \"python3\\n\",\n.\n70c\n            \"python3\\n\",\n.\n",
+          "sha256": "2bc51dc1d3dea4c88f1aa930983296bf62b5adfc1ede023f29be2e076d1369ca"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/c32fa09b48fb2f27.bench-report.json",
+          "ed": "921c\n            \"python3\\n\",\n.\n868c\n            \"python3\\n\",\n.\n837c\n            \"python3\\n\",\n.\n806c\n            \"python3\\n\",\n.\n",
+          "sha256": "6dbe2d9b9ff9d46225ba45ee9644944dae83d78be992e04b3a5782b33c45a590"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/c7d815714ca52bce.bench-report.json",
+          "ed": "921c\n            \"python3\\n\",\n.\n802c\n            \"python3\\n\",\n.\n727c\n            \"python3\\n\",\n.\n696c\n            \"python3\\n\",\n.\n",
+          "sha256": "3e888e8fd800a31a631e973dd65bd2fbabb5da50aec7151970cf0ced2bd44fc9"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "55077b15cc96724a6a51e89846438484ede0b1cf7891587967af6a5b2fcd7651"
+    }
+  ]
+}

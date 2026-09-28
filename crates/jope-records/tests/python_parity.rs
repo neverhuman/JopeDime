@@ -58,6 +58,22 @@
 //! text. The only exceptions are listed in `RUST_STRICTER`: malformed inputs the Python accepted
 //! and the port refuses. `negative_replay_detects_a_changed_outcome` shows `compare` failing on
 //! altered expectations.
+//!
+//! # Round two
+//!
+//! A differential review of those ports raised further classes, captured the same way (`source`
+//! and `capture` name the run):
+//!
+//! - `process.json`: the coverage, scope and parity guards run end to end by the binary, each on a
+//!   tree and behind a `cargo` (and `git`) printing recorded output: Cargo's stdout and stderr as
+//!   `text=True` decoded them (a BOM, UTF-16, bytes that are not UTF-8 in either stream), Python's
+//!   `\s`, `\w` and `\d` in the workflow, clap, `--help` and argparse readers, `int()` of Unicode
+//!   digits, `repr` of non-printable characters, a killed script, CRLF sources, names that are not
+//!   UTF-8, and the order of each guard's steps. `judge_process` holds each case to the contract,
+//!   with `PROCESS_REFUSES_REPORT` as its only exception.
+//! - `readme/negative-r2.json`: NaN and infinities, Python 3.12's `sorted`, `max` and `sum` of
+//!   the same-cut seconds, NaN RMSEs tied by id, `a == b == c`, `repr`, and `$` before a final
+//!   newline, replayed by `readme_benchmarks_matches_round_two`.
 
 use jope_records::pyjson::{self, Dict, Value};
 use jope_records::{coverage, parity, py, readme, scope_check};
@@ -782,17 +798,26 @@ fn parity_check_refuses_every_metadata_the_python_refused() {
 
 #[test]
 fn readme_benchmarks_refuses_every_evidence_the_python_refused() {
-    let doc = json("readme/negative.json");
+    replay_readme("readme/negative.json", 85);
+}
+
+/// Round two: NaN and infinity formatting, Python 3.12's `sorted`, `max` and `sum` over the
+/// same-cut seconds (a NaN among them, compensated float sums), the tie between NaN RMSEs, the
+/// short-circuit of `a == b == c`, `repr` of non-printable characters and `$` before a final
+/// newline.
+#[test]
+fn readme_benchmarks_matches_round_two() {
+    replay_readme("readme/negative-r2.json", 18);
+}
+
+fn replay_readme(rel: &str, count: usize) {
+    let doc = json(rel);
     let stale = text("readme/README.stale.md");
-    let cases = negative("readme/negative.json");
-    assert_eq!(
-        cases.len(),
-        85,
-        "readme/negative.json: every captured case is present"
-    );
+    let cases = negative(rel);
+    assert_eq!(cases.len(), count, "{rel}: every captured case is present");
     let stricter: BTreeSet<&str> = RUST_STRICTER
         .iter()
-        .filter(|(fixture, _, _)| *fixture == "readme/negative.json")
+        .filter(|(fixture, _, _)| *fixture == rel)
         .map(|(_, name, _)| *name)
         .collect();
     assert_eq!(s(doc.get("root").unwrap()), "readme/root");
@@ -815,7 +840,7 @@ fn readme_benchmarks_refuses_every_evidence_the_python_refused() {
         }
         fs::write(root.join("README.md"), &stale).unwrap();
         let rust = Rust::of(readme::run(&root, true));
-        record("readme/negative.json", name, case, &rust);
+        record(rel, name, case, &rust);
         let is_stricter = stricter.contains(name.as_str());
         let mut outcome = compare(case, &rust, is_stricter);
         if outcome.is_ok() {
@@ -831,7 +856,7 @@ fn readme_benchmarks_refuses_every_evidence_the_python_refused() {
             }
         }
         if let Err(why) = outcome {
-            failures.push(format!("readme/negative.json {name}: {why}"));
+            failures.push(format!("{rel} {name}: {why}"));
         }
     }
     for name in &stricter {
@@ -841,6 +866,254 @@ fn readme_benchmarks_refuses_every_evidence_the_python_refused() {
         );
     }
     assert!(failures.is_empty(), "{}", failures.join("\n"));
+}
+
+// ------------------------------------------------------------------------------------------------
+// Round two: whole-process cases (see `process.json`).
+
+fn unhex(text: &str) -> Vec<u8> {
+    (0..text.len())
+        .step_by(2)
+        .map(|i| u8::from_str_radix(&text[i..i + 2], 16).unwrap())
+        .collect()
+}
+
+/// Write a `process.json` case: its tree under `root` (`@ROOT@` in text replaced), and what the
+/// `cargo` and `git` shims print under `dir`, encoded as the capture encoded it.
+fn materialise(case: &Value, root: &Path, dir: &Path) {
+    use std::os::unix::ffi::OsStrExt;
+    let root_text = root.to_str().unwrap();
+    for file in case.get("files").and_then(Value::as_list).unwrap() {
+        let path = match file.get("path_hex") {
+            Some(hex) => root.join(std::ffi::OsStr::from_bytes(&unhex(s(hex)))),
+            None => root.join(s(file.get("path").unwrap())),
+        };
+        let bytes = match file.get("hex") {
+            Some(hex) => unhex(s(hex)),
+            None => s(file.get("text").unwrap())
+                .replace("@ROOT@", root_text)
+                .into_bytes(),
+        };
+        fs::create_dir_all(path.parent().unwrap()).unwrap();
+        fs::write(&path, bytes).unwrap();
+    }
+    fs::create_dir_all(dir).unwrap();
+    let cargo = case.get("cargo").unwrap();
+    let text = s(cargo.get("stdout").unwrap()).replace("@ROOT@", root_text);
+    let stdout = match s(cargo.get("encoding").unwrap()) {
+        "utf-8" => text.into_bytes(),
+        "utf-8-sig" => [&[0xef, 0xbb, 0xbf][..], text.as_bytes()].concat(),
+        "utf-16" => [0xff, 0xfe]
+            .into_iter()
+            .chain(text.encode_utf16().flat_map(u16::to_le_bytes))
+            .collect(),
+        "hex" => unhex(s(cargo.get("stdout_hex").unwrap())),
+        other => panic!("encoding {other}"),
+    };
+    fs::write(dir.join("cargo.stdout"), stdout).unwrap();
+    fs::write(
+        dir.join("cargo.stderr"),
+        unhex(s(cargo.get("stderr_hex").unwrap())),
+    )
+    .unwrap();
+    fs::write(dir.join("cargo.exit"), s(cargo.get("exit").unwrap())).unwrap();
+    let git = match (case.get("git_hex"), case.get("git")) {
+        (Some(hex), _) => unhex(s(hex)),
+        (None, Some(list)) => list
+            .as_list()
+            .unwrap()
+            .iter()
+            .flat_map(|p| format!("{}\0", s(p)).into_bytes())
+            .collect(),
+        (None, None) => vec![],
+    };
+    fs::write(dir.join("git.stdout"), git).unwrap();
+}
+
+/// The `cargo` and `git` the capture put first on PATH.
+fn shims(dir: &Path) {
+    use std::os::unix::fs::PermissionsExt;
+    fs::create_dir_all(dir).unwrap();
+    for (name, text) in [
+        (
+            "cargo",
+            "#!/bin/bash\ncat \"$CASE_DIR/cargo.stderr\" >&2\ncat \"$CASE_DIR/cargo.stdout\"\ne=$(cat \"$CASE_DIR/cargo.exit\")\n[ \"$e\" = kill ] && kill -9 $$\nexit \"$e\"\n",
+        ),
+        ("git", "#!/bin/bash\ncat \"$CASE_DIR/git.stdout\"\n"),
+    ] {
+        fs::write(dir.join(name), text).unwrap();
+        fs::set_permissions(dir.join(name), fs::Permissions::from_mode(0o755)).unwrap();
+    }
+}
+
+/// Process cases the port refuses although the Python ran to completion (exit status 0).
+const PROCESS_STRICTER: &[(&str, &str)] = &[];
+
+/// Process cases where both exit 1 but the Python printed a failing report and the port refuses
+/// instead. The report names an entry point whose path is not UTF-8: the Python kept it
+/// surrogate-escaped, and printed its raw bytes only because the capture's `C.UTF-8` locale gives
+/// stdout the `surrogateescape` handler (under another UTF-8 locale it crashed printing them).
+/// The port's reports are text, so it refuses, naming the path.
+const PROCESS_REFUSES_REPORT: &[(&str, &str)] = &[
+    (
+        "parity-tool-name-not-utf8-decoy",
+        "a Python tool named with a byte that is not UTF-8",
+    ),
+    (
+        "parity-unit-name-not-utf8",
+        "a systemd unit named with a byte that is not UTF-8",
+    ),
+];
+
+/// Hold one process case to the contract: where the Python crashed, the port exits 1 and prints
+/// nothing on stdout; otherwise the exit status and stdout are identical, and stderr is identical
+/// or (for a refusal) the Python's message after `jope-records: `.
+fn judge_process(case: &Value, exit: i32, stdout: &[u8], stderr: &str) -> Result<(), String> {
+    let name = s(case.get("name").unwrap());
+    let want_exit = case.get("exit").and_then(Value::as_int).unwrap();
+    if PROCESS_STRICTER.iter().any(|(n, _)| *n == name) {
+        return if want_exit == 0 && exit == 1 && stdout.is_empty() {
+            Ok(())
+        } else {
+            Err(format!(
+                "listed as stricter; the Python {want_exit}, the port {exit}"
+            ))
+        };
+    }
+    if PROCESS_REFUSES_REPORT.iter().any(|(n, _)| *n == name) {
+        return if want_exit == 1
+            && case.get("raised").is_none()
+            && exit == 1
+            && stdout.is_empty()
+            && stderr.starts_with("jope-records: ")
+        {
+            Ok(())
+        } else {
+            Err(format!(
+                "listed as a refusal of a failing report; the Python {want_exit}, the port {exit} {stderr:?}"
+            ))
+        };
+    }
+    if let Some(raised) = case.get("raised") {
+        return if exit == 1 && stdout.is_empty() && !stderr.is_empty() {
+            Ok(())
+        } else {
+            Err(format!(
+                "the Python raised {}; the port exited {exit} with stdout {:?} and stderr {stderr:?}",
+                s(raised),
+                String::from_utf8_lossy(stdout)
+            ))
+        };
+    }
+    if i64::from(exit) != want_exit {
+        return Err(format!(
+            "exit status: the Python {want_exit}, the port {exit} (stderr {stderr:?})"
+        ));
+    }
+    let want_stdout = match case.get("stdout_hex") {
+        Some(hex) => unhex(s(hex)),
+        None => s(case.get("stdout").unwrap()).as_bytes().to_vec(),
+    };
+    if stdout != want_stdout {
+        return Err(format!(
+            "stdout: the Python {:?}, the port {:?}",
+            String::from_utf8_lossy(&want_stdout),
+            String::from_utf8_lossy(stdout)
+        ));
+    }
+    let want_stderr = s(case.get("stderr").unwrap());
+    let refusal =
+        exit == 1 && stdout.is_empty() && stderr == format!("jope-records: {want_stderr}");
+    if stderr != want_stderr && !refusal {
+        return Err(format!(
+            "stderr: the Python {want_stderr:?}, the port {stderr:?}"
+        ));
+    }
+    Ok(())
+}
+
+/// Round two of the differential review: the guards run end to end, each against a tree and a
+/// `cargo` (and `git`) whose output the capture recorded, so what the port does with Cargo's
+/// stdout and stderr (decoded as `text=True` decoded them), the files it reads (`read_text`, with
+/// and without `errors="replace"`) and the order of its steps is compared with the Python's.
+#[test]
+fn process_cases_match_the_captured_python() {
+    let doc = json("process.json");
+    assert!(
+        doc.get("source").and_then(Value::as_str).is_some()
+            && doc.get("capture").and_then(Value::as_str).is_some(),
+        "process.json names its capture run and command"
+    );
+    let cases = doc.get("cases").and_then(Value::as_list).unwrap();
+    assert_eq!(
+        cases.len(),
+        65,
+        "process.json: every captured case is present"
+    );
+    let temp = tempfile::tempdir().unwrap();
+    let shim_dir = temp.path().join("shims");
+    shims(&shim_dir);
+    let path = format!(
+        "{}:{}",
+        shim_dir.display(),
+        std::env::var("PATH").unwrap_or_default()
+    );
+    let mut failures = vec![];
+    for case in cases {
+        let name = s(case.get("name").unwrap());
+        let root = temp.path().join(name).join("root");
+        let dir = temp.path().join(name).join("shim");
+        fs::create_dir_all(&root).unwrap();
+        let root = root.canonicalize().unwrap();
+        materialise(case, &root, &dir);
+        let root_text = root.to_str().unwrap();
+        let args: Vec<String> = case
+            .get("rust")
+            .and_then(Value::as_list)
+            .unwrap()
+            .iter()
+            .map(|a| s(a).replace("@ROOT@", root_text))
+            .collect();
+        let run = std::process::Command::new(env!("CARGO_BIN_EXE_jope-records"))
+            .arg("--repo")
+            .arg(&root)
+            .args(&args)
+            .current_dir(&root)
+            .env("PATH", &path)
+            .env("CASE_DIR", &dir)
+            .output()
+            .unwrap();
+        let replace = |bytes: &[u8]| -> Vec<u8> {
+            String::from_utf8(bytes.to_vec())
+                .map(|t| t.replace(root_text, "@ROOT@").into_bytes())
+                .unwrap_or_else(|_| bytes.to_vec())
+        };
+        let stdout = replace(&run.stdout);
+        let stderr = String::from_utf8_lossy(&replace(&run.stderr)).into_owned();
+        let exit = run.status.code().unwrap_or(-1);
+        let port = if stdout.is_empty() {
+            Rust::Refused(stderr.clone())
+        } else {
+            Rust::Report(String::from_utf8_lossy(&stdout).into_owned(), exit == 0)
+        };
+        record("process.json", name, case, &port);
+        if let Err(why) = judge_process(case, exit, &stdout, &stderr) {
+            failures.push(format!("process.json {name}: {why}"));
+        }
+    }
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
+    // Negative control: a changed exit status, stdout or message fails the judgement.
+    let base = cases
+        .iter()
+        .find(|c| c.get("name") == Some(&Value::from("parity-base")))
+        .unwrap();
+    let base_stdout = s(base.get("stdout").unwrap()).as_bytes();
+    assert_eq!(judge_process(base, 0, base_stdout, ""), Ok(()));
+    assert!(judge_process(base, 1, base_stdout, "").is_err());
+    assert!(judge_process(base, 0, b"x", "").is_err());
+    let crash = cases.iter().find(|c| c.get("raised").is_some()).unwrap();
+    assert!(judge_process(crash, 0, b"", "").is_err());
+    assert!(judge_process(crash, 1, b"a report", "x").is_err());
 }
 
 /// The comparison is not vacuous: an altered expectation, a refusal where the Python reported,

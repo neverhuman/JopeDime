@@ -1,5 +1,7 @@
 //! Small Python built-in semantics the verifiers depend on: `str.strip`, `int(text)`, hashing
-//! equality for set membership, `in`, iteration, `Path.read_text` and `PurePosixPath.parts`.
+//! equality for set membership, `in`, iteration, `Path.read_text` and `PurePosixPath.parts`, the
+//! `re` classes of a `str` pattern, subprocess output read with `text=True`, and the text of the
+//! `OSError` and `CalledProcessError` a tool printed.
 
 use std::path::{Path, PathBuf};
 
@@ -44,6 +46,8 @@ pub fn int(text: &str) -> Option<i64> {
 pub enum Key {
     None,
     Int(i64),
+    /// An integer beyond `i64` (a [`Value::BigInt`], or a float equal to one), as its decimal.
+    Big(String),
     Float(u64),
     Str(String),
 }
@@ -55,9 +59,12 @@ impl Key {
             Value::Null => Key::None,
             Value::Bool(b) => Key::Int(i64::from(*b)),
             Value::Int(i) => Key::Int(*i),
+            Value::BigInt(i) => Key::Big(i.clone()),
             Value::Float(f) => {
                 if value == &Value::Int(*f as i64) {
                     Key::Int(*f as i64)
+                } else if let Some(integer) = pyjson::integral_float_text(*f) {
+                    Key::Big(integer)
                 } else {
                     Key::Float(f.to_bits())
                 }
@@ -95,10 +102,11 @@ pub fn key_set(value: &Value) -> Option<std::collections::HashSet<Key>> {
     iterate(value)?.iter().map(Key::of).collect()
 }
 
-/// Python `item in container`; `None` when Python would raise `TypeError`.
+/// Python `item in container`; `None` when Python would raise `TypeError`. A list is searched
+/// with identity first ([`pyjson::eq_or_identical`]), so a JSON `NaN` is in a list holding one.
 pub fn contains(container: &Value, item: &Value) -> Option<bool> {
     match container {
-        Value::List(list) => Some(list.iter().any(|x| x == item)),
+        Value::List(list) => Some(list.iter().any(|x| pyjson::eq_or_identical(x, item))),
         Value::Dict(dict) => {
             let key = Key::of(item)?;
             Some(key.as_str().is_some_and(|k| dict.contains_key(k)))
@@ -119,7 +127,7 @@ pub fn type_name(value: &Value) -> &'static str {
     match value {
         Value::Null => "NoneType",
         Value::Bool(_) => "bool",
-        Value::Int(_) => "int",
+        Value::Int(_) | Value::BigInt(_) => "int",
         Value::Float(_) => "float",
         Value::Str(_) => "str",
         Value::List(_) => "list",
@@ -284,27 +292,225 @@ pub fn read_bytes(path: &Path) -> Result<Vec<u8>> {
     std::fs::read(path).map_err(|e| Error::io(path, e))
 }
 
-/// `Path.read_text()`: strict UTF-8 with universal newlines (`\r\n` and `\r` become `\n`).
+/// `Path.read_text()`: strict UTF-8 (a bad byte refuses with CPython's `UnicodeDecodeError`
+/// message) with universal newlines (`\r\n` and `\r` become `\n`).
 pub fn read_text(path: &Path) -> Result<String> {
     let bytes = read_bytes(path)?;
-    let text = String::from_utf8(bytes)
-        .map_err(|e| Error::parse(path, format!("'utf-8' codec can't decode: {e}")))?;
-    if !text.contains('\r') {
-        return Ok(text);
+    let text = pyjson::decode_utf8(&bytes).map_err(|message| Error::parse(path, message))?;
+    Ok(universal_newlines(text))
+}
+
+/// `Path.read_text(errors="replace")`: each invalid UTF-8 sequence becomes U+FFFD (the same
+/// maximal subparts CPython replaces), with universal newlines.
+pub fn read_text_replace(path: &Path) -> Result<String> {
+    Ok(universal_newlines(&String::from_utf8_lossy(&read_bytes(
+        path,
+    )?)))
+}
+
+/// Text-mode newline translation (`newline=None`): `\r\n` and a lone `\r` become `\n`.
+pub fn universal_newlines(text: &str) -> String {
+    text.replace("\r\n", "\n").replace('\r', "\n")
+}
+
+/// A subprocess stream read with `text=True`: strict UTF-8 with universal newlines, or CPython's
+/// `UnicodeDecodeError` message (Python raised it, and did not return the output, even when the
+/// command succeeded).
+pub fn text_output(bytes: &[u8]) -> std::result::Result<String, String> {
+    pyjson::decode_utf8(bytes).map(universal_newlines)
+}
+
+/// `subprocess.run(..., capture_output=True, text=True)`: stdout and stderr both decoded as
+/// [`text_output`] (stdout first, as `communicate` decodes them), or the stream that could not be
+/// decoded and CPython's message.
+pub fn text_streams(
+    output: &std::process::Output,
+) -> std::result::Result<(String, String), String> {
+    let stdout = text_output(&output.stdout).map_err(|e| format!("stdout: {e}"))?;
+    let stderr = text_output(&output.stderr).map_err(|e| format!("stderr: {e}"))?;
+    Ok((stdout, stderr))
+}
+
+/// `Path.exists()` (Python 3.12): `False` for a path that is missing (`ENOENT`, `ENOTDIR`,
+/// `EBADF`, `ELOOP`) or holds a NUL byte (a `ValueError` there); any other `OSError` (a name too
+/// long, a permission refused) was raised, and is returned here.
+pub fn path_exists(path: &Path) -> std::io::Result<bool> {
+    const IGNORED: [i32; 4] = [2, 9, 20, 40]; // ENOENT, EBADF, ENOTDIR, ELOOP (Linux)
+    match std::fs::metadata(path) {
+        Ok(_) => Ok(true),
+        Err(e) if e.raw_os_error().is_some_and(|code| IGNORED.contains(&code)) => Ok(false),
+        Err(e) if e.raw_os_error().is_none() && e.kind() == std::io::ErrorKind::InvalidInput => {
+            Ok(false)
+        }
+        Err(e) => Err(e),
     }
-    let mut out = String::with_capacity(text.len());
-    let mut chars = text.chars().peekable();
+}
+
+/// `CompletedProcess.returncode`: the exit code, or minus the signal that killed the process.
+pub fn returncode(status: std::process::ExitStatus) -> i64 {
+    use std::os::unix::process::ExitStatusExt;
+    match (status.code(), status.signal()) {
+        (Some(code), _) => i64::from(code),
+        (None, Some(signal)) => -i64::from(signal),
+        (None, None) => -1,
+    }
+}
+
+/// `str(subprocess.CalledProcessError(returncode, argv))` for `command`, the `repr` of the argument
+/// list: `Command '[...]' returned non-zero exit status N.`, or for a command killed by a signal
+/// `died with <Signals.SIGKILL: 9>.` (Linux signal numbers; an alias prints under its enum name,
+/// `SIGABRT`, `SIGCHLD`, `SIGIO`).
+pub fn called_process_error(command: &str, returncode: i64) -> String {
+    const SIGNALS: [&str; 31] = [
+        "SIGHUP",
+        "SIGINT",
+        "SIGQUIT",
+        "SIGILL",
+        "SIGTRAP",
+        "SIGABRT",
+        "SIGBUS",
+        "SIGFPE",
+        "SIGKILL",
+        "SIGUSR1",
+        "SIGSEGV",
+        "SIGUSR2",
+        "SIGPIPE",
+        "SIGALRM",
+        "SIGTERM",
+        "SIGSTKFLT",
+        "SIGCHLD",
+        "SIGCONT",
+        "SIGSTOP",
+        "SIGTSTP",
+        "SIGTTIN",
+        "SIGTTOU",
+        "SIGURG",
+        "SIGXCPU",
+        "SIGXFSZ",
+        "SIGVTALRM",
+        "SIGPROF",
+        "SIGWINCH",
+        "SIGIO",
+        "SIGPWR",
+        "SIGSYS",
+    ];
+    if returncode >= 0 {
+        return format!("Command '{command}' returned non-zero exit status {returncode}.");
+    }
+    let signal = -returncode;
+    let name = match signal {
+        1..=31 => Some(SIGNALS[(signal - 1) as usize]),
+        34 => Some("SIGRTMIN"),
+        64 => Some("SIGRTMAX"),
+        _ => None,
+    };
+    match name {
+        Some(name) => format!("Command '{command}' died with <Signals.{name}: {signal}>."),
+        None => format!("Command '{command}' died with unknown signal {signal}."),
+    }
+}
+
+/// `str(OSError)` for an error Python raised with a file name: `[Errno N] <strerror>: '<name>'`
+/// (`strerror` is the C library's text, which Rust's `io::Error` carries before `(os error N)`).
+pub fn os_error(error: &std::io::Error, filename: &str) -> String {
+    match error.raw_os_error() {
+        Some(code) => {
+            let text = std::io::Error::from_raw_os_error(code).to_string();
+            let strerror = text
+                .strip_suffix(&format!(" (os error {code})"))
+                .unwrap_or(&text);
+            format!("[Errno {code}] {strerror}: {}", pyjson::str_repr(filename))
+        }
+        None => format!("{filename}: {error}"),
+    }
+}
+
+/// A pattern written for Python 3.12's `re` (a `str` pattern, Unicode 15.0), compiled so that its
+/// classes match what Python's matched. The `regex` crate's own `\s`, `\w` and `\d` are Unicode
+/// 16.0 `White_Space`, `Alphabetic`+marks+connectors and `Nd`; Python's are `str.isspace`
+/// (`White_Space` plus U+001C..U+001F), `str.isalnum` or `_` (general category `L*` or `N*`)
+/// and `str.isdecimal` (`Nd`), all as of Unicode 15.0. Those three escapes are rewritten, inside
+/// or outside a bracket class; `\S`, `\W`, `\D`, `\b` and `\B` are not supported (none of the
+/// ported patterns uses them).
+pub fn regex(pattern: &str) -> regex::Regex {
+    const SPACE: &str = r"\s\x1C-\x1F";
+    const WORD: &str = r"[\p{L}\p{N}_&&\p{Age=V15_0}]";
+    const DIGIT: &str = r"[\p{Nd}&&\p{Age=V15_0}]";
+    let mut out = String::with_capacity(pattern.len() * 2);
+    let mut depth = 0usize;
+    let mut chars = pattern.chars();
     while let Some(c) = chars.next() {
-        if c == '\r' {
-            out.push('\n');
-            if chars.peek() == Some(&'\n') {
-                chars.next();
+        match c {
+            '\\' => {
+                let escaped = chars.next().expect("a complete escape");
+                match (escaped, depth > 0) {
+                    ('s', false) => {
+                        out.push('[');
+                        out.push_str(SPACE);
+                        out.push(']');
+                    }
+                    ('s', true) => out.push_str(SPACE),
+                    ('w', _) => out.push_str(WORD),
+                    ('d', _) => out.push_str(DIGIT),
+                    ('S' | 'W' | 'D' | 'b' | 'B', _) => {
+                        panic!("\\{escaped} has no Python-compatible translation here")
+                    }
+                    (other, _) => {
+                        out.push('\\');
+                        out.push(other);
+                    }
+                }
             }
-        } else {
-            out.push(c);
+            '[' => {
+                depth += 1;
+                out.push(c);
+                // A `]` or `^]` right after the opening bracket is literal in both dialects.
+            }
+            ']' if depth > 0 => {
+                depth -= 1;
+                out.push(c);
+            }
+            _ => out.push(c),
         }
     }
-    Ok(out)
+    regex::Regex::new(&out).expect("translated pattern")
+}
+
+/// Python `int(digits)` for a run of Unicode decimal digits (`str.isdecimal`, what `\d+`
+/// captures): the value as ASCII decimal without leading zeros, of any length (Python's `int` is
+/// unbounded). `None` when a character is not a decimal digit.
+pub fn decimal_digits(text: &str) -> Option<String> {
+    static DIGIT: std::sync::LazyLock<regex::Regex> = std::sync::LazyLock::new(|| regex(r"^\d$"));
+    let is_digit = |c: char| {
+        let mut buffer = [0u8; 4];
+        DIGIT.is_match(c.encode_utf8(&mut buffer))
+    };
+    let mut out = String::with_capacity(text.len());
+    for c in text.chars() {
+        if !is_digit(c) {
+            return None;
+        }
+        // Unicode encodes every decimal digit set as ten consecutive code points 0..9, and the
+        // sets that abut each other (the mathematical digits) each start at a multiple of ten
+        // from the run's first code point.
+        let mut first = c as u32;
+        while let Some(previous) = first.checked_sub(1).and_then(char::from_u32) {
+            if !is_digit(previous) {
+                break;
+            }
+            first -= 1;
+        }
+        out.push(char::from_digit((c as u32 - first) % 10, 10).expect("a digit"));
+    }
+    if out.is_empty() {
+        return None;
+    }
+    let trimmed = out.trim_start_matches('0');
+    Some(if trimmed.is_empty() {
+        "0".to_owned()
+    } else {
+        trimmed.to_owned()
+    })
 }
 
 /// `json.loads(path.read_text())`.
@@ -677,6 +883,87 @@ mod tests {
         }
     }
 
+    /// Python 3.12's `\s`, `\w` and `\d` (Unicode 15.0), not the `regex` crate's.
+    #[test]
+    fn regex_classes_are_pythons() {
+        let space = regex(r"^\s$");
+        for c in ['\u{1c}', '\u{1f}', '\u{a0}', '\u{2028}', '\u{3000}', '\t'] {
+            assert!(space.is_match(&c.to_string()), "{c:?} is a Python space");
+        }
+        assert!(!space.is_match("\u{180e}") && !space.is_match("\u{200b}"));
+        let word = regex(r"^\w$");
+        for c in [
+            '_', 'a', '\u{e9}', '\u{b2}', '\u{2167}', '\u{4e00}', '\u{661}',
+        ] {
+            assert!(
+                word.is_match(&c.to_string()),
+                "{c:?} is a Python word character"
+            );
+        }
+        // Marks, connector punctuation, joiners and `Other_Alphabetic` symbols are not; nor is a
+        // letter first assigned after Unicode 15.0 (U+2EBF0, CJK Extension I, 15.1).
+        for c in ['\u{301}', '\u{203f}', '\u{200d}', '\u{24b6}', '\u{2ebf0}'] {
+            assert!(
+                !word.is_match(&c.to_string()),
+                "{c:?} is not a Python word character"
+            );
+        }
+        let class = regex(r"^[\w-]+\s*:$");
+        assert!(class.is_match("a-b\u{1f}:") && !class.is_match("a\u{301}:"));
+        let digit = regex(r"^\d+$");
+        assert!(digit.is_match("0\u{665}\u{1d7ce}") && !digit.is_match("\u{b2}"));
+        // U+1D7D9 is MATHEMATICAL DOUBLE-STRUCK DIGIT ONE, in the run after the bold digits.
+        assert_eq!(decimal_digits("\u{665}\u{1d7d9}0"), Some("510".to_owned()));
+        assert_eq!(decimal_digits("007"), Some("7".to_owned()));
+        assert_eq!(decimal_digits("\u{b2}"), None);
+    }
+
+    #[test]
+    fn subprocess_text_and_errors_read_as_python_printed_them() {
+        assert_eq!(text_output(b"a\r\nb\rc\n").unwrap(), "a\nb\nc\n");
+        assert_eq!(
+            text_output(b"ok\xff").unwrap_err(),
+            "'utf-8' codec can't decode byte 0xff in position 2: invalid start byte"
+        );
+        assert_eq!(
+            text_output(b"\xe2\x82x").unwrap_err(),
+            "'utf-8' codec can't decode bytes in position 0-1: invalid continuation byte"
+        );
+        assert_eq!(
+            text_output(b"x\xed\xa0\x80").unwrap_err(),
+            "'utf-8' codec can't decode byte 0xed in position 1: invalid continuation byte"
+        );
+        assert_eq!(
+            text_output(b"x\xe2\x82").unwrap_err(),
+            "'utf-8' codec can't decode bytes in position 1-2: unexpected end of data"
+        );
+        let missing = std::fs::metadata("/nonexistent-q/a").unwrap_err();
+        assert_eq!(
+            os_error(&missing, "/nonexistent-q/a"),
+            "[Errno 2] No such file or directory: '/nonexistent-q/a'"
+        );
+        let argv = str_list_repr(&["du", "-s"]);
+        assert_eq!(
+            called_process_error(&argv, 1),
+            "Command '['du', '-s']' returned non-zero exit status 1."
+        );
+        assert_eq!(
+            called_process_error(&argv, -9),
+            "Command '['du', '-s']' died with <Signals.SIGKILL: 9>."
+        );
+        assert_eq!(
+            called_process_error(&argv, -40),
+            "Command '['du', '-s']' died with unknown signal 40."
+        );
+        assert!(!path_exists(Path::new("/nonexistent-q/a")).unwrap());
+        assert!(!path_exists(Path::new("/nonexistent-q/a\0b")).unwrap());
+        let long = format!("/{}", "x".repeat(300));
+        assert_eq!(
+            path_exists(Path::new(&long)).unwrap_err().raw_os_error(),
+            Some(36)
+        );
+    }
+
     #[test]
     fn python_splitlines() {
         assert_eq!(
@@ -719,6 +1006,26 @@ mod tests {
         );
         assert_eq!(contains(&Value::Int(1), &Value::from("x")), None);
         assert_eq!(Key::of(&Value::Bool(true)), Key::of(&Value::Float(1.0)));
+        // Every JSON NaN is one object: found by identity, though `NaN == NaN` is false.
+        let nans = pyjson::parse_str("[NaN]").unwrap();
+        assert_eq!(contains(&nans, &Value::Float(f64::NAN)), Some(true));
+        assert_ne!(Value::Float(f64::NAN), Value::Float(f64::NAN));
+        assert_eq!(nans, pyjson::parse_str("[NaN]").unwrap());
+        // Integers beyond 64 bits (opted in) compare and hash exactly, with floats too.
+        let big = pyjson::parse_str_big("[18446744073709551616, 18446744073709551617]").unwrap();
+        let items = big.as_list().unwrap();
+        assert_ne!(items[0], items[1]);
+        assert_eq!(items[0], Value::Float(18446744073709551616.0));
+        assert_eq!(
+            Key::of(&items[0]),
+            Key::of(&Value::Float(18446744073709551616.0))
+        );
+        assert_eq!(
+            contains(&big, &Value::Float(18446744073709551616.0)),
+            Some(true)
+        );
+        assert_eq!(type_name(&items[1]), "int");
+        assert!(pyjson::parse_str("18446744073709551616").is_err());
         assert_eq!(tuple_repr(&[Value::from("a"), Value::Null]), "('a', None)");
     }
 }

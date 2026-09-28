@@ -81,21 +81,22 @@ pub struct Variant {
     pub hidden: bool,
 }
 
-/// Top-level variants of `enum <enum_name> { ... }` with their outer attributes.
+/// Top-level variants of `enum <enum_name> { ... }` with their outer attributes. The source is read
+/// as `read_text(errors="replace")` read it (universal newlines, so a CRLF file parses), and the
+/// patterns use Python's classes ([`py::regex`]).
 pub fn parse_clap_enum(path: &Path, enum_name: &str) -> Result<Vec<Variant>> {
-    let src = String::from_utf8_lossy(&py::read_bytes(path)?).into_owned();
-    let block = Regex::new(&format!(
+    let src = py::read_text_replace(path)?;
+    let block = py::regex(&format!(
         r"(?s)enum {} \{{\n(.*?)\n\}}\n",
         regex::escape(enum_name)
-    ))
-    .expect("escaped pattern");
+    ));
     let body = block
         .captures(&src)
         .ok_or_else(|| Error::Shape(format!("{}: enum {enum_name} not found", path.display())))?[1]
         .to_owned();
-    let attr = Regex::new(r"^    #\[").expect("static pattern");
-    let variant = Regex::new(r"^    ([A-Z][A-Za-z0-9]*)\s*(\{|,|\()").expect("static pattern");
-    let named = Regex::new(r#"name\s*=\s*"([^"]+)""#).expect("static pattern");
+    let attr = py::regex(r"^    #\[");
+    let variant = py::regex(r"^    ([A-Z][A-Za-z0-9]*)\s*(\{|,|\()");
+    let named = py::regex(r#"name\s*=\s*"([^"]+)""#);
     let mut rows = vec![];
     let mut attrs: Vec<String> = vec![];
     for line in py::splitlines(&body) {
@@ -127,7 +128,7 @@ pub fn parse_clap_enum(path: &Path, enum_name: &str) -> Result<Vec<Variant>> {
 
 /// Subcommand names from clap `--help` output (the `Commands:` block).
 pub fn parse_help_commands(text: &str) -> Vec<String> {
-    let name = Regex::new(r"^  ([a-z0-9][a-z0-9-]*)(\s|$)").expect("static pattern");
+    let name = py::regex(r"^  ([a-z0-9][a-z0-9-]*)(\s|$)");
     let mut names = vec![];
     let mut inside = false;
     for line in py::splitlines(text) {
@@ -154,17 +155,20 @@ pub fn parse_help_commands(text: &str) -> Vec<String> {
 
 /// Command paths (`data build`, `train`, ...) from an argparse CLI built with `add_parser`.
 pub fn parse_argparse_commands(path: &Path) -> Result<Vec<String>> {
-    let src = String::from_utf8_lossy(&py::read_bytes(path)?).into_owned();
-    let subparsers = Regex::new(r"(\w+)\s*=\s*(\w+)\.add_subparsers\(").expect("static pattern");
-    let parsers =
-        Regex::new(r#"(\w+)\s*=\s*(\w+)\.add_parser\(\s*"([^"]+)""#).expect("static pattern");
+    Ok(argparse_commands(&py::read_text_replace(path)?))
+}
+
+/// [`parse_argparse_commands`] for the source text.
+pub fn argparse_commands(src: &str) -> Vec<String> {
+    let subparsers = py::regex(r"(\w+)\s*=\s*(\w+)\.add_subparsers\(");
+    let parsers = py::regex(r#"(\w+)\s*=\s*(\w+)\.add_parser\(\s*"([^"]+)""#);
     let owner: BTreeMap<String, String> = subparsers
-        .captures_iter(&src)
+        .captures_iter(src)
         .map(|m| (m[1].to_owned(), m[2].to_owned()))
         .collect();
     let mut command_of: BTreeMap<String, String> = BTreeMap::new();
     let mut out = vec![];
-    for m in parsers.captures_iter(&src) {
+    for m in parsers.captures_iter(src) {
         let (var, subs, name) = (&m[1], &m[2], &m[3]);
         let prefix = owner
             .get(subs)
@@ -175,7 +179,7 @@ pub fn parse_argparse_commands(path: &Path) -> Result<Vec<String>> {
         command_of.insert(var.to_owned(), full.clone());
         out.push(full);
     }
-    Ok(out)
+    out
 }
 
 /// `os.path.relpath(path, root)` for absolute paths.
@@ -198,30 +202,36 @@ fn relpath(path: &Path, root: &Path) -> String {
 }
 
 /// `(package, kind, name, src path)` for every bin/example target, via cargo metadata.
+///
+/// As `subprocess.run(..., check=True, capture_output=True, text=True)` ran it: both streams are
+/// decoded (strict UTF-8, universal newlines) before the exit status is looked at, and a stream
+/// that does not decode refuses (the Python raised `UnicodeDecodeError`, which its fallback did
+/// not catch). A Cargo that cannot be started (`OSError`) or exits non-zero
+/// (`CalledProcessError`) falls back to the `src/bin` listings with the Python's warning. The
+/// stdout is then read as a `str`, so a UTF-8 BOM refuses.
 pub fn cargo_bins(root: &Path) -> Result<Vec<(String, String, String, String)>> {
+    const COMMAND: [&str; 5] = ["metadata", "--locked", "--no-deps", "--format-version", "1"];
     let output = Command::new("cargo")
-        .args(["metadata", "--locked", "--no-deps", "--format-version", "1"])
+        .args(COMMAND)
         .current_dir(root)
         .output();
-    let meta = match output {
-        Ok(out) if out.status.success() => pyjson::parse_bytes(&out.stdout)
-            .map_err(|m| Error::parse(Path::new("cargo metadata"), m))?,
-        failed => {
-            let why = match failed {
-                Ok(out) => format!(
-                    "Command '['cargo', 'metadata', '--locked', '--no-deps', '--format-version', '1']' returned non-zero exit status {}.",
-                    out.status.code().unwrap_or(-1)
-                ),
-                Err(e) => e.to_string(),
-            };
-            eprintln!(
-                "warning: cargo metadata unavailable ({why}); falling back to src/bin listings"
-            );
-            return fallback_bins(root);
+    let why = match output {
+        Err(e) => py::os_error(&e, "cargo"),
+        Ok(out) => {
+            let (stdout, _) = py::text_streams(&out)
+                .map_err(|m| Error::Command(format!("cargo metadata: {m}")))?;
+            if out.status.success() {
+                let meta = pyjson::parse_str(&stdout)
+                    .map_err(|m| Error::parse(Path::new("cargo metadata"), m))?;
+                let root = root.canonicalize().map_err(|e| Error::io(root, e))?;
+                return bins_from_metadata(&meta, &root);
+            }
+            let argv: Vec<&str> = std::iter::once("cargo").chain(COMMAND).collect();
+            py::called_process_error(&py::str_list_repr(&argv), py::returncode(out.status))
         }
     };
-    let root = root.canonicalize().map_err(|e| Error::io(root, e))?;
-    bins_from_metadata(&meta, &root)
+    eprintln!("warning: cargo metadata unavailable ({why}); falling back to src/bin listings");
+    fallback_bins(root)
 }
 
 /// `os.path.abspath`: absolute (against the working directory) and lexically normalised.
@@ -337,25 +347,34 @@ fn walk_files(dir: &Path, out: &mut Vec<PathBuf>) {
     }
 }
 
-fn rel(path: &Path, root: &Path) -> String {
-    path.strip_prefix(root)
-        .unwrap_or(path)
-        .to_string_lossy()
-        .into_owned()
+/// The path relative to `root` of an entry point the check lists (and must find a row for).
+///
+/// A name that is not UTF-8 refuses: Python kept it surrogate-escaped, so no row (read as UTF-8
+/// text) could ever name it, and it failed the check reporting the entry point as missing (its
+/// raw bytes printed under a `C.UTF-8` locale, a `UnicodeEncodeError` under other UTF-8 locales).
+/// This report is text, so the port refuses instead (exit status 1 either way). Two such names
+/// never collapse into one, as a lossy conversion made them.
+fn rel(path: &Path, root: &Path, what: &str) -> Result<String> {
+    let relative = path.strip_prefix(root).unwrap_or(path);
+    relative.to_str().map(str::to_owned).ok_or_else(|| {
+        Error::Shape(format!(
+            "{what} {}: the path is not UTF-8, so no row can name it (the Python failed the check reporting it as missing)",
+            relative.to_string_lossy()
+        ))
+    })
 }
 
 /// The src/bin listing used when cargo metadata is unavailable.
 pub fn fallback_bins(root: &Path) -> Result<Vec<(String, String, String, String)>> {
-    let package_name = Regex::new(r#"(?m)^\[package\]\s*\nname\s*=\s*"([^"]+)""#).expect("static");
-    let bin_table = Regex::new(r#"\[\[bin\]\]\s*\nname\s*=\s*"([^"]+)"\s*\npath\s*=\s*"([^"]+)""#)
-        .expect("static");
+    let package_name = py::regex(r#"(?m)^\[package\]\s*\nname\s*=\s*"([^"]+)""#);
+    let bin_table = py::regex(r#"\[\[bin\]\]\s*\nname\s*=\s*"([^"]+)"\s*\npath\s*=\s*"([^"]+)""#);
     let mut manifests = vec![];
     walk_files(&root.join("crates"), &mut manifests);
     manifests.retain(|p| p.file_name().is_some_and(|n| n == "Cargo.toml"));
     let mut out = BTreeSet::new();
     for cargo in manifests {
         let krate = cargo.parent().expect("manifest dir");
-        let text = String::from_utf8_lossy(&py::read_bytes(&cargo)?).into_owned();
+        let text = py::read_text_replace(&cargo)?;
         let Some(m) = package_name.captures(&text) else {
             continue;
         };
@@ -365,7 +384,7 @@ pub fn fallback_bins(root: &Path) -> Result<Vec<(String, String, String, String)
                 pkg.clone(),
                 "bin".to_owned(),
                 pkg.clone(),
-                rel(&krate.join("src/main.rs"), root),
+                rel(&krate.join("src/main.rs"), root, "bin")?,
             ));
         }
         for (dir, kind) in [("src/bin", "bin"), ("examples", "example")] {
@@ -375,12 +394,13 @@ pub fn fallback_bins(root: &Path) -> Result<Vec<(String, String, String, String)
             for entry in entries.flatten() {
                 let path = entry.path();
                 if path.extension().is_some_and(|e| e == "rs") && path.is_file() {
+                    let source = rel(&path, root, kind)?;
                     let stem = path
                         .file_stem()
                         .unwrap_or_default()
                         .to_string_lossy()
                         .into_owned();
-                    out.insert((pkg.clone(), kind.to_owned(), stem, rel(&path, root)));
+                    out.insert((pkg.clone(), kind.to_owned(), stem, source));
                 }
             }
         }
@@ -389,7 +409,7 @@ pub fn fallback_bins(root: &Path) -> Result<Vec<(String, String, String, String)
                 pkg.clone(),
                 "bin".to_owned(),
                 m[1].to_owned(),
-                rel(&krate.join(&m[2]), root),
+                rel(&krate.join(&m[2]), root, "bin")?,
             ));
         }
     }
@@ -397,37 +417,38 @@ pub fn fallback_bins(root: &Path) -> Result<Vec<(String, String, String, String)
 }
 
 /// Every `.py`/`.sh` under `python/src/jope/{tools,research}` except `__init__.py`.
-pub fn python_tools(root: &Path) -> Vec<String> {
+pub fn python_tools(root: &Path) -> Result<Vec<String>> {
     let mut out = vec![];
     for sub in ["python/src/jope/tools", "python/src/jope/research"] {
         let mut files = vec![];
         walk_files(&root.join(sub), &mut files);
         for path in files {
             // `Path.suffix` and `Path.extension()` agree: a bare dotfile such as `.py` has none.
-            let name = path.file_name().unwrap_or_default().to_string_lossy();
-            let ext = path.extension().map(|e| e.to_string_lossy().into_owned());
-            if matches!(ext.as_deref(), Some("py" | "sh")) && name != "__init__.py" {
-                out.push(rel(&path, root));
+            let listed = path.extension().is_some_and(|e| e == "py" || e == "sh")
+                && path.file_name().is_some_and(|n| n != "__init__.py");
+            if listed {
+                out.push(rel(&path, root, "python tool")?);
             }
         }
     }
-    out
+    Ok(out)
 }
 
 /// Every `.service`/`.timer` file under `deploy/systemd` (templates end in `.in` and are not).
-pub fn systemd_units(root: &Path) -> Vec<String> {
+pub fn systemd_units(root: &Path) -> Result<Vec<String>> {
     let mut files = vec![];
     walk_files(&root.join("deploy/systemd"), &mut files);
-    let mut out: Vec<String> = files
-        .iter()
-        .filter(|p| {
-            p.extension()
-                .is_some_and(|e| e == "service" || e == "timer")
-        })
-        .map(|p| rel(p, root))
-        .collect();
+    let mut out = vec![];
+    for path in files {
+        if path
+            .extension()
+            .is_some_and(|e| e == "service" || e == "timer")
+        {
+            out.push(rel(&path, root, "systemd unit")?);
+        }
+    }
     out.sort();
-    out
+    Ok(out)
 }
 
 /// A table line split into cells, `\|` read as a literal bar.
@@ -484,11 +505,10 @@ pub fn parse_matrix(text: &str) -> Vec<Row> {
     rows
 }
 
-fn pending_number(status: &str) -> Option<u64> {
-    let digits = status.strip_prefix("pending-WP")?;
-    (!digits.is_empty() && digits.bytes().all(|b| b.is_ascii_digit()))
-        .then(|| digits.parse().ok())
-        .flatten()
+/// `int(PENDING_RE.match(status).group(1))` for `^pending-WP(\d+)$`: the work-package number as
+/// Python's unbounded `int` of Unicode decimal digits printed it (ASCII, no leading zeros).
+fn pending_number(status: &str) -> Option<String> {
+    py::decimal_digits(status.strip_prefix("pending-WP")?)
 }
 
 pub fn status_class(status: &str) -> &'static str {
@@ -496,12 +516,7 @@ pub fn status_class(status: &str) -> &'static str {
         "moved" => "moved",
         "new" => "new",
         "lost" => "lost",
-        s if s
-            .strip_prefix("pending-WP")
-            .is_some_and(|d| !d.is_empty() && d.bytes().all(|b| b.is_ascii_digit())) =>
-        {
-            "pending"
-        }
+        s if pending_number(s).is_some() => "pending",
         s if s.starts_with("dropped:") => "dropped",
         _ => "invalid",
     }
@@ -552,14 +567,14 @@ fn counts_row_kind(line: &str) -> String {
         .unwrap_or_else(|| line.to_owned())
 }
 
-/// The `## Counts` section as committed: table lines, covering-test tally, every other line.
-fn committed_counts(text: &str) -> (Vec<String>, Option<usize>, Vec<String>) {
+/// The `## Counts` section as committed: table lines, covering-test tally (`int` of the captured
+/// Unicode decimal digits, as ASCII decimal of any length), every other line.
+fn committed_counts(text: &str) -> (Vec<String>, Option<String>, Vec<String>) {
     let lines = py::splitlines(text);
     let Some(start) = lines.iter().position(|l| *l == "## Counts") else {
         return (vec![], None, vec![]);
     };
-    let tally =
-        Regex::new(r"^`moved`/`new` rows without a covering test: (\d+)\.$").expect("static");
+    let tally = py::regex(r"^`moved`/`new` rows without a covering test: (\d+)\.$");
     let (mut table, mut prose, mut no_test) = (vec![], vec![], None);
     for line in &lines[start + 1..] {
         if line.starts_with("## ") {
@@ -571,7 +586,7 @@ fn committed_counts(text: &str) -> (Vec<String>, Option<usize>, Vec<String>) {
             continue;
         }
         if let Some(m) = tally.captures(stripped) {
-            no_test = m[1].parse().ok();
+            no_test = py::decimal_digits(&m[1]);
             continue;
         }
         if !stripped.is_empty() {
@@ -602,24 +617,35 @@ pub struct Tree {
 
 /// Read the tree's entry points (`root` canonical).
 pub fn scan_tree(root: &Path) -> Result<Tree> {
+    let clap = clap_names(root)?;
+    scan_rest(root, clap)
+}
+
+/// The `jope-parallel` subcommands of `crates/jope-engine/src/main.rs`, when it exists.
+fn clap_names(root: &Path) -> Result<Vec<String>> {
     let main_rs = root.join("crates/jope-engine/src/main.rs");
-    let clap = if main_rs.exists() {
+    Ok(if main_rs.exists() {
         parse_clap_enum(&main_rs, "Cmd")?
             .into_iter()
             .map(|c| c.name)
             .collect()
     } else {
         vec![]
-    };
+    })
+}
+
+/// The entry points read after the clap subcommands (and, in `check`, after the `--help` text):
+/// binaries and examples, Python tools, `jope-py` commands, systemd units, in the Python's order.
+fn scan_rest(root: &Path, clap: Vec<String>) -> Result<Tree> {
     let bins = cargo_bins(root)?;
-    let tools = python_tools(root);
+    let tools = python_tools(root)?;
     let cli = root.join("python/src/jope/cli.py");
     let jope_py = if cli.exists() {
         Some(parse_argparse_commands(&cli)?)
     } else {
         None
     };
-    let units = systemd_units(root);
+    let units = systemd_units(root)?;
     Ok(Tree {
         clap,
         bins,
@@ -627,6 +653,25 @@ pub fn scan_tree(root: &Path) -> Result<Tree> {
         jope_py,
         units,
     })
+}
+
+/// The row targets whose existence `evaluate` asks about, in the order the Python's row loop
+/// asked (`moved`/`new` rows whose head names a path).
+pub fn checked_heads(matrix_text: &str) -> Vec<String> {
+    let mut heads = vec![];
+    for r in parse_matrix(matrix_text) {
+        if !matches!(status_class(&r.status), "moved" | "new") {
+            continue;
+        }
+        let head = head_of(&r.new);
+        if !head.is_empty()
+            && !matches!(head, "dropped" | "lost" | "pending" | "-" | "none")
+            && head.contains('/')
+        {
+            heads.push(head.to_owned());
+        }
+    }
+    heads
 }
 
 /// Every row target that names a path (`evaluate` asks whether those exist).
@@ -639,13 +684,28 @@ pub fn target_heads(matrix_text: &str) -> BTreeSet<String> {
 }
 
 /// The check report and whether the matrix passes.
+///
+/// The inputs are read in `cmd_check`'s order, so the first failure is the one the Python
+/// stopped at: the matrix, the row targets' existence (`Path.exists`, which raised on an error
+/// other than a missing path), the clap enum, the `--help` text, then the rest of the tree.
 pub fn check(matrix: &Path, root: &Path, help_text: Option<&Path>) -> Result<(String, bool)> {
     let root = root.canonicalize().map_err(|e| Error::io(root, e))?;
     let text = py::read_text(matrix)?;
+    let mut exists = BTreeMap::new();
+    for head in checked_heads(&text) {
+        let present = py::path_exists(&root.join(&head)).map_err(|e| {
+            Error::Shape(format!(
+                "row target `{head}`: {}",
+                py::os_error(&e, &root.join(&head).to_string_lossy())
+            ))
+        })?;
+        exists.insert(head, present);
+    }
+    let clap = clap_names(&root)?;
     let help = help_text.map(py::read_text).transpose()?;
-    let tree = scan_tree(&root)?;
+    let tree = scan_rest(&root, clap)?;
     Ok(evaluate(&text, &tree, help.as_deref(), &|head: &str| {
-        root.join(head).exists()
+        exists[head]
     }))
 }
 
@@ -680,8 +740,8 @@ pub fn evaluate(
         }
         match class {
             "pending" => {
-                let n = pending_number(&r.status).unwrap_or(0);
-                if !(4..=12).contains(&n) {
+                let n = pending_number(&r.status).expect("a pending status has a number");
+                if !n.parse::<u64>().is_ok_and(|n| (4..=12).contains(&n)) {
                     problems.push(format!("{place}: pending-WP{n} is outside WP4..WP12"));
                 }
             }
@@ -783,7 +843,7 @@ pub fn evaluate(
     match got_no_test {
         None => problems
             .push("## Counts has no `moved`/`new` rows without a covering test: <n>. line".into()),
-        Some(n) if n != want_no_test => problems.push(format!(
+        Some(n) if n != want_no_test.to_string() => problems.push(format!(
             "## Counts says {n} `moved`/`new` rows without a covering test; the rows say {want_no_test}"
         )),
         Some(_) => {}
@@ -858,7 +918,30 @@ mod tests {
         assert_eq!(status_class("pending-WP"), "invalid");
         assert_eq!(status_class("dropped: why (archive: x)"), "dropped");
         assert_eq!(status_class("gone"), "invalid");
-        assert_eq!(pending_number("pending-WP13"), Some(13));
+        assert_eq!(pending_number("pending-WP13"), Some("13".to_owned()));
+        // Python's `\d` and `int()`: any Unicode decimal digits, of any length.
+        assert_eq!(status_class("pending-WP\u{665}"), "pending");
+        assert_eq!(pending_number("pending-WP\u{665}"), Some("5".to_owned()));
+        assert_eq!(
+            pending_number("pending-WP0099999999999999999999"),
+            Some("99999999999999999999".to_owned())
+        );
+        assert_eq!(status_class("pending-WP\u{b2}"), "invalid");
+    }
+
+    /// Python's `\s` and `\w` in the clap, `--help` and argparse readers.
+    #[test]
+    fn readers_use_python_classes() {
+        assert_eq!(
+            parse_help_commands("Commands:\n  foo\u{1f}bar  x\n  baz\u{301} y\n"),
+            ["foo"]
+        );
+        assert_eq!(
+            argparse_commands(
+                "subs = p.add_subparsers()\nt\u{b2} = subs.add_parser(\"train\")\nx\u{2040} = subs.add_parser(\"no\")\nv = subs.add_parser(\u{1f}\"sep\")\n"
+            ),
+            ["train", "sep"]
+        );
     }
 
     /// The tally is recomputed from the rows: a moved row without a test counts once, a dropped
