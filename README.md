@@ -28,7 +28,7 @@ encodings→program neural policy will ship because the product needs a router; 
 | Git datasets | Ten synthetic fixtures in `datasets/synthetic/` plus `datasets/test/pmlb-229-pwlinear/`. Real tables stay in S3. |
 | S3 fetch / champion training | Live S3 fail-closed. Local champion bank + 128-d centroid router train-step exist. Bound `jope-policy` checkpoint weights are **not** updated. |
 
-The engineering spec remains [`CURSOR_GITHUB_PORT_PLAN.md`](CURSOR_GITHUB_PORT_PLAN.md).
+The executed 2026-09-18 port plan is archived as [`docs/archive/CURSOR_GITHUB_PORT_PLAN.md`](docs/archive/CURSOR_GITHUB_PORT_PLAN.md).
 Serial recovery of withdrawn PRs #5–#16 (unmerged, branches retained) is
 [`MASTER_PLAN.md`](MASTER_PLAN.md).
 
@@ -181,10 +181,10 @@ cargo run --locked --bin jope -- pipeline run --dataset datasets/test/pmlb-229-p
 cargo run --locked --bin jope -- pipeline verify-receipt --receipt target/e2e/receipt.json
 ```
 
-GitHub PR CI is `.github/workflows/ci.yml` (hygiene + cargo-deny).
-`ops/ci/required.sh` is the fuller local gate (path audit, `rustfmt`, locked
-workspace tests, `jope 0.` version line). Replacing the hosted workflow with
-`ops/ci/github-ci.yml` needs a token with `workflow` scope.
+GitHub PR CI is `.github/workflows/ci.yml`; its lanes run the scripts in `deploy/ci/`,
+and the hygiene lane is `deploy/ci/check.sh`. Locally, `just required` (an alias of
+`just ci-pr`) runs that hygiene lane and the `rustfmt` check, and `just lint-paths`
+runs only the absolute-home-path check.
 
 Prove emitters on this SHA:
 
