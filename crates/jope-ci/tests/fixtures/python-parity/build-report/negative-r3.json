@@ -1,0 +1,134 @@
+{
+  "source": "p1-r3-capture-20260928T035917Z",
+  "capture": "bash cap3.sh (run p1-r3-capture-20260928T035917Z; Python from git show f46a9048fbb2697d6d1f4463a688083ea9dfcce1:<tool>, unmodified, in a scratch root)",
+  "tool": "deploy/maintenance/jope_report.py",
+  "normalisation": "scan: @ROOT@ is the scanned tree; completed_at, allocated bytes, their sum and newest_mtime are blanked (host-dependent)",
+  "cases": [
+    {
+      "name": "base",
+      "kind": "scan",
+      "tree": [
+        {
+          "dir": "proj/target/debug/.fingerprint/x"
+        },
+        {
+          "file": "proj/target/.rustc_info.json"
+        },
+        {
+          "file": "proj/target/debug/.fingerprint/x/f"
+        }
+      ],
+      "args": [
+        "@ROOT@"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"completed_at\": \"@T@\",\n  \"root\": \"@ROOT@\",\n  \"stale_hours\": null,\n  \"candidates\": [\n    {\n      \"path\": \"@ROOT@/proj/target\",\n      \"allocated_bytes\": 0,\n      \"newest_mtime\": 0\n    }\n  ],\n  \"candidate_allocated_bytes_sum\": 0,\n  \"sum_may_double_count_hardlinks\": true,\n  \"report_only\": true,\n  \"complete\": true\n}\n",
+      "stderr": ""
+    },
+    {
+      "name": "root-double-slash",
+      "kind": "scan",
+      "tree": [
+        {
+          "dir": "proj/target/debug/.fingerprint/x"
+        },
+        {
+          "file": "proj/target/.rustc_info.json"
+        },
+        {
+          "file": "proj/target/debug/.fingerprint/x/f"
+        }
+      ],
+      "args": [
+        "/@ROOT@"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "report failed: root must be an existing directory without symlink components: /@ROOT@\n"
+    },
+    {
+      "name": "root-double-slash-parent-reference",
+      "kind": "scan",
+      "tree": [
+        {
+          "dir": "proj/target/debug/.fingerprint/x"
+        },
+        {
+          "file": "proj/target/.rustc_info.json"
+        },
+        {
+          "file": "proj/target/debug/.fingerprint/x/f"
+        }
+      ],
+      "args": [
+        "/@ROOT@/proj/.."
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "report failed: root must be an existing directory without symlink components: /@ROOT@\n"
+    },
+    {
+      "name": "root-double-slash-missing",
+      "kind": "scan",
+      "tree": [
+        {
+          "dir": "proj/target/debug/.fingerprint/x"
+        },
+        {
+          "file": "proj/target/.rustc_info.json"
+        },
+        {
+          "file": "proj/target/debug/.fingerprint/x/f"
+        }
+      ],
+      "args": [
+        "/@ROOT@/nothing"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "report failed: [Errno 2] No such file or directory: '@ROOT@/nothing'\n"
+    },
+    {
+      "name": "root-triple-slash",
+      "kind": "scan",
+      "tree": [
+        {
+          "dir": "proj/target/debug/.fingerprint/x"
+        },
+        {
+          "file": "proj/target/.rustc_info.json"
+        },
+        {
+          "file": "proj/target/debug/.fingerprint/x/f"
+        }
+      ],
+      "args": [
+        "//@ROOT@"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"completed_at\": \"@T@\",\n  \"root\": \"@ROOT@\",\n  \"stale_hours\": null,\n  \"candidates\": [\n    {\n      \"path\": \"@ROOT@/proj/target\",\n      \"allocated_bytes\": 0,\n      \"newest_mtime\": 0\n    }\n  ],\n  \"candidate_allocated_bytes_sum\": 0,\n  \"sum_may_double_count_hardlinks\": true,\n  \"report_only\": true,\n  \"complete\": true\n}\n",
+      "stderr": ""
+    },
+    {
+      "name": "root-dot-and-trailing-slash",
+      "kind": "scan",
+      "tree": [
+        {
+          "dir": "proj/target/debug/.fingerprint/x"
+        },
+        {
+          "file": "proj/target/.rustc_info.json"
+        },
+        {
+          "file": "proj/target/debug/.fingerprint/x/f"
+        }
+      ],
+      "args": [
+        "@ROOT@/./"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"completed_at\": \"@T@\",\n  \"root\": \"@ROOT@\",\n  \"stale_hours\": null,\n  \"candidates\": [\n    {\n      \"path\": \"@ROOT@/proj/target\",\n      \"allocated_bytes\": 0,\n      \"newest_mtime\": 0\n    }\n  ],\n  \"candidate_allocated_bytes_sum\": 0,\n  \"sum_may_double_count_hardlinks\": true,\n  \"report_only\": true,\n  \"complete\": true\n}\n",
+      "stderr": ""
+    }
+  ]
+}

@@ -631,16 +631,50 @@ impl PosixPath {
 
     /// `self / other`: an absolute `other` replaces the path, as in Python.
     pub fn join(&self, other: &str) -> Self {
-        let other = PosixPath::parse(other);
+        self.joinpath(&PosixPath::parse(other))
+    }
+
+    /// `self / other` for a parsed path: an absolute `other` (either root) replaces the path.
+    pub fn joinpath(&self, other: &PosixPath) -> Self {
         if other.is_absolute() {
-            return other;
+            return other.clone();
         }
         let mut parts = self.parts.clone();
-        parts.extend(other.parts);
+        parts.extend(other.parts.iter().cloned());
         PosixPath {
             root: self.root,
             parts,
         }
+    }
+
+    /// `path.parent`: the path without its final part (a root, or `.`, is its own parent).
+    pub fn parent(&self) -> Self {
+        let mut parts = self.parts.clone();
+        parts.pop();
+        PosixPath {
+            root: self.root,
+            parts,
+        }
+    }
+
+    /// `self.relative_to(other)` (Python 3.12, `walk_up=False`): the rest of the path when `other`
+    /// is the path itself or one of its parents. pathlib compares them as spelled after parsing,
+    /// so the roots must be the same (`/`, POSIX's distinct `//`, or none; `///` is `/`) and so
+    /// must the leading parts. Otherwise the `ValueError` message, both paths as `str()` prints
+    /// them.
+    pub fn relative_to(&self, other: &PosixPath) -> std::result::Result<Self, String> {
+        let n = other.parts.len();
+        if self.root == other.root && self.parts.len() >= n && self.parts[..n] == other.parts[..] {
+            return Ok(PosixPath {
+                root: None,
+                parts: self.parts[n..].to_vec(),
+            });
+        }
+        Err(format!(
+            "{} is not in the subpath of {}",
+            pyjson::str_repr(&self.to_string()),
+            pyjson::str_repr(&other.to_string())
+        ))
     }
 
     /// `path.name`: the final component, or `""`.
@@ -883,6 +917,55 @@ mod tests {
         assert_eq!(PosixPath::parse("a/.zst").suffix(), "");
         assert_eq!(PosixPath::parse("a/b.").suffix(), "");
         assert_eq!(PosixPath::parse("a/b.json").name(), "b.json");
+        assert_eq!(PosixPath::parse("a/..").name(), "..");
+        assert_eq!(
+            PosixPath::parse("./.github//workflows/ci.yml").parent(),
+            PosixPath::parse(".github/workflows")
+        );
+        assert_ne!(
+            PosixPath::parse("/.github/workflows/ci.yml").parent(),
+            PosixPath::parse(".github/workflows")
+        );
+        assert_eq!(PosixPath::parse("/").parent().to_string(), "/");
+        assert_eq!(PosixPath::parse("//a").parent().to_string(), "//");
+        assert_eq!(PosixPath::parse("a").parent().to_string(), ".");
+        assert_eq!(
+            PosixPath::parse("h")
+                .joinpath(&PosixPath::parse("//x"))
+                .to_string(),
+            "//x"
+        );
+    }
+
+    /// `PurePosixPath.relative_to` (Python 3.12): exactly two leading slashes are a root of their
+    /// own, in either direction and at the root itself; three or more are `/`. The refusal names
+    /// both paths as `str()` prints them.
+    #[test]
+    fn relative_to_keeps_the_double_slash_root() {
+        let rel = |a: &str, b: &str| {
+            PosixPath::parse(a)
+                .relative_to(&PosixPath::parse(b))
+                .map(|p| p.to_string())
+        };
+        let outside = |a: &str, b: &str| Err(format!("'{a}' is not in the subpath of '{b}'"));
+        assert_eq!(rel("/r/demo", "/r"), Ok("demo".to_owned()));
+        assert_eq!(rel("//r/demo", "//r/"), Ok("demo".to_owned()));
+        assert_eq!(rel("///r//demo", "/r"), Ok("demo".to_owned()));
+        assert_eq!(rel("/r/demo", "///r"), Ok("demo".to_owned()));
+        assert_eq!(rel("/r/demo", "/"), Ok("r/demo".to_owned()));
+        assert_eq!(rel("//r/demo", "//"), Ok("r/demo".to_owned()));
+        assert_eq!(rel("/r/demo", "/r/./demo/"), Ok(".".to_owned()));
+        assert_eq!(rel("./bin/demo", "bin"), Ok("demo".to_owned()));
+        assert_eq!(rel("a", ""), Ok("a".to_owned()));
+        assert_eq!(rel("//r/demo", "/r"), outside("//r/demo", "/r"));
+        assert_eq!(rel("/r/demo", "//r"), outside("/r/demo", "//r"));
+        assert_eq!(rel("/r/demo", "//"), outside("/r/demo", "//"));
+        assert_eq!(rel("//r/demo", "/"), outside("//r/demo", "/"));
+        assert_eq!(rel("/rx/demo", "/r"), outside("/rx/demo", "/r"));
+        assert_eq!(rel("/r", "/r/demo"), outside("/r", "/r/demo"));
+        assert_eq!(rel("a/b", "/a"), outside("a/b", "/a"));
+        assert_eq!(rel("/a/b", ""), outside("/a/b", "."));
+        assert_eq!(rel("/a/../b", "/b"), outside("/a/../b", "/b"));
     }
 
     #[test]

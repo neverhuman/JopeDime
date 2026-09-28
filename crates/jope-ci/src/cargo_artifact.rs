@@ -216,7 +216,7 @@ pub fn executable(
         let path = executable
             .as_str()
             .ok_or_else(|| format!("{at} executable: {}", exception::path_argument(executable)))?;
-        matches.push(py::pure_path(path));
+        matches.push(python::PosixPath::parse(path));
     }
     if !finished {
         return Err("Cargo did not report a successful completed build".into());
@@ -229,25 +229,23 @@ pub fn executable(
     }
     let mut path = matches.remove(0);
     if let Some((container, host)) = path_map {
-        // `path.relative_to(container)`: both sides as `PurePath` normalises them, and the
-        // refusal names them as `str()` prints them (no trailing separator or `.` component).
-        let container = py::pure_path(&container.to_string_lossy());
-        let relative = path.strip_prefix(&container).map_err(|_| {
-            format!(
-                "{} is not in the subpath of {}",
-                py::repr(&path.to_string_lossy()),
-                py::repr(&container.to_string_lossy())
-            )
-        })?;
-        path = py::pure_path(&host.to_string_lossy()).join(relative);
+        // `Path(host) / path.relative_to(container)`: pathlib compares the two as spelled after
+        // parsing, so a path under POSIX's distinct `//` root is not under `/`, nor the reverse
+        // (`///` is `/`); the refusal names both as `str()` prints them. The container itself
+        // maps to the host itself.
+        let container = python::PosixPath::parse(&container.to_string_lossy());
+        let relative = path.relative_to(&container)?;
+        path = python::PosixPath::parse(&host.to_string_lossy()).joinpath(&relative);
     }
-    if !path.is_file() || access(&path, AccessFlags::X_OK).is_err() {
+    // `path.is_file()`, `os.access(path, os.X_OK)` and `path.resolve()` of `str(path)`, which the
+    // refusal prints.
+    let file = PathBuf::from(path.to_string());
+    if !file.is_file() || access(&file, AccessFlags::X_OK).is_err() {
         return Err(format!(
-            "Cargo executable is missing or not executable: {}",
-            path.display()
+            "Cargo executable is missing or not executable: {path}"
         ));
     }
-    path.canonicalize().map_err(|e| e.to_string())
+    file.canonicalize().map_err(|e| e.to_string())
 }
 
 /// Write `output` (which must not exist): `store = { dir = "<target>/nextest" }` followed by

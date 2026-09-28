@@ -17,6 +17,7 @@
 //! `--approved-root` and whose checksum every receipt records. `report` fails unless exactly two
 //! are given and the configuration names exactly those.
 
+use jope_records::py::PosixPath;
 use jope_records::pyjson::{self, Dict, Value};
 use sha2::{Digest, Sha256};
 use std::ffi::{OsStr, OsString};
@@ -172,24 +173,39 @@ pub fn utc() -> Utc {
     utc_at(SystemTime::now())
 }
 
-/// `os.path.abspath`: absolute and lexically normalised (`..` removes the previous component).
+/// `os.path.abspath`: joined to the working directory and normalised as `posixpath.normpath`
+/// normalises: empty and `.` components dropped, `..` removing the previous component, and
+/// exactly two leading slashes kept (POSIX leaves `//` to the implementation, so Python keeps it
+/// as its own root; three or more are `/`). Names stay the bytes they are.
 pub fn abspath(path: &Path) -> PathBuf {
-    let joined = if path.is_absolute() {
-        path.to_path_buf()
-    } else {
-        std::env::current_dir().unwrap_or_default().join(path)
-    };
-    let mut out = PathBuf::from("/");
-    for component in joined.components() {
-        match component {
-            Component::ParentDir => {
-                out.pop();
-            }
-            Component::Normal(part) => out.push(part),
-            _ => {}
+    use std::os::unix::ffi::{OsStrExt, OsStringExt};
+    let mut joined = vec![];
+    if !path.as_os_str().as_bytes().starts_with(b"/") {
+        let cwd = std::env::current_dir().unwrap_or_default();
+        joined.extend_from_slice(cwd.as_os_str().as_bytes());
+        if !joined.ends_with(b"/") {
+            joined.push(b'/');
         }
     }
-    out
+    joined.extend_from_slice(path.as_os_str().as_bytes());
+    let slashes = if joined.starts_with(b"//") && !joined.starts_with(b"///") {
+        2
+    } else {
+        1
+    };
+    let mut parts: Vec<&[u8]> = vec![];
+    for part in joined.split(|&b| b == b'/') {
+        match part {
+            b"" | b"." => {}
+            b".." => {
+                parts.pop();
+            }
+            _ => parts.push(part),
+        }
+    }
+    let mut out = b"/".repeat(slashes);
+    out.extend(parts.join(&b'/'));
+    PathBuf::from(OsString::from_vec(out))
 }
 
 /// `Path.resolve()` (not strict): symlinks resolved as far as the path exists.
@@ -245,7 +261,11 @@ pub type Visit<'a> = &'a mut dyn FnMut(&Path, &mut Vec<OsString>, &[OsString]) -
 pub fn walk(root: &Path, interrupt: Interrupt<'_>, visit: Visit<'_>) -> Outcome<()> {
     let root = abspath(root);
     let resolved = realpath_strict(&root)?;
-    if resolved != root || !root.is_dir() {
+    // `root.resolve(strict=True) != root`: pathlib compares the spellings, and `abspath` keeps
+    // POSIX's distinct `//` root where `realpath` resolves it to `/`, so the Python refused such a
+    // root as it refused one with a symlink component. Both sides are normalised, so their bytes
+    // compare (`Path`'s `==` would compare components, which have no `//`).
+    if resolved.as_os_str() != root.as_os_str() || !root.is_dir() {
         return Err(Failure::new(format!(
             "root must be an existing directory without symlink components: {}",
             root.display()
@@ -561,10 +581,7 @@ pub fn report(
         ("checksums", Value::Dict(Dict::new())),
         ("measurements", Value::List(vec![])),
         ("scan_outputs", Value::List(vec![])),
-        (
-            "custody_argument",
-            Value::from(custody.to_string_lossy().into_owned()),
-        ),
+        ("custody_argument", Value::from(custody_argument(custody))),
         (
             "custody_resolved",
             Value::from(output.to_string_lossy().into_owned()),
@@ -607,6 +624,30 @@ pub fn report(
     save(&receipt)?;
     println!("{}", receipt_path.display());
     Ok(if result.is_ok() { 0 } else { 1 })
+}
+
+/// A measurement root: `path = Path(text)`, `resolved = path.resolve(strict=True)`, refused unless
+/// `resolved == path` and it is a directory. pathlib compares the spellings after parsing, so a
+/// trailing separator or `.` is the same path, while `..` or POSIX's distinct `//` root (which
+/// `resolve` turns into `/`) is not. Returns the path as `str()` prints it and the resolved path.
+fn explicit_root(text: &str) -> Outcome<(PosixPath, PathBuf)> {
+    let spelled = PosixPath::parse(text);
+    let path = Path::new(text);
+    let resolved = path.canonicalize().map_err(|e| os_error(&e, path))?;
+    let same = resolved
+        .to_str()
+        .is_some_and(|r| PosixPath::parse(r) == spelled);
+    if !same || !resolved.is_dir() {
+        return Err(Failure::new(format!(
+            "measurement roots must be explicit resolved directories: {spelled}"
+        )));
+    }
+    Ok((spelled, resolved))
+}
+
+/// `str(args.custody)` (`--custody` is parsed with `type=Path`): the argument as pathlib spells it.
+fn custody_argument(custody: &Path) -> String {
+    PosixPath::parse(&custody.to_string_lossy()).to_string()
 }
 
 fn list_mut<'a>(receipt: &'a mut Dict, key: &str) -> &'a mut Vec<Value> {
@@ -737,20 +778,13 @@ fn run_report(
                 "each measurement requires string path/group and optional boolean privileged",
             ));
         }
-        let path = PathBuf::from(item.get("path").and_then(Value::as_str).expect("checked"));
-        let resolved = path.canonicalize().map_err(|e| os_error(&e, &path))?;
-        if resolved != path || !resolved.is_dir() {
-            return Err(Failure::new(format!(
-                "measurement roots must be explicit resolved directories: {}",
-                path.display()
-            )));
-        }
+        let (path, resolved) =
+            explicit_root(item.get("path").and_then(Value::as_str).expect("checked"))?;
         if seen.iter().any(|prior| {
             resolved == *prior || resolved.starts_with(prior) || prior.starts_with(&resolved)
         }) {
             return Err(Failure::new(format!(
-                "overlapping measurement root: {}",
-                path.display()
+                "overlapping measurement root: {path}"
             )));
         }
         seen.push(resolved);
@@ -829,6 +863,56 @@ mod tests {
     fn abspath_is_lexical() {
         assert_eq!(abspath(Path::new("/a/b/../c/./d")), PathBuf::from("/a/c/d"));
         assert_eq!(abspath(Path::new("/..")), PathBuf::from("/"));
+        // `posixpath.normpath` keeps exactly two leading slashes; `Path`'s `==` would not see them.
+        let spelled = |p: &str| abspath(Path::new(p)).into_os_string();
+        assert_eq!(spelled("//a/./b//c/"), "//a/b/c");
+        assert_eq!(spelled("//a/.."), "//");
+        assert_eq!(spelled("///a/b"), "/a/b");
+        assert_eq!(spelled("////"), "/");
+        let cwd = std::env::current_dir().unwrap();
+        assert_eq!(abspath(Path::new("x/../y")), cwd.join("y"));
+    }
+
+    /// A root spelled with POSIX's distinct `//` root: `resolve(strict=True)` spells it `/`, so the
+    /// Python refused it as a scan root and as a measurement root; `///`, `/./` and a trailing
+    /// separator spell the same path and were accepted.
+    #[test]
+    fn roots_spelled_with_a_double_slash_are_refused_as_python_refused_them() {
+        let temp = tempfile::tempdir().unwrap();
+        let dir = temp.path().canonicalize().unwrap();
+        std::fs::create_dir(dir.join("sub")).unwrap();
+        let text = dir.to_str().unwrap();
+        let walk_root = |root: String| {
+            walk(Path::new(&root), &never_interrupted, &mut |_, _, _| Ok(())).map_err(|e| e.message)
+        };
+        let refusal = |root: &str| {
+            format!("root must be an existing directory without symlink components: {root}")
+        };
+        assert_eq!(
+            walk_root(format!("/{text}")),
+            Err(refusal(&format!("/{text}")))
+        );
+        assert_eq!(
+            walk_root(format!("/{text}/sub/..")),
+            Err(refusal(&format!("/{text}")))
+        );
+        assert_eq!(walk_root(format!("//{text}")), Ok(()));
+        assert_eq!(walk_root(format!("{text}/./")), Ok(()));
+        let measured = |root: String| explicit_root(&root).map(|(p, _)| p.to_string());
+        let refusal =
+            |root: &str| format!("measurement roots must be explicit resolved directories: {root}");
+        assert_eq!(
+            measured(format!("/{text}")).map_err(|e| e.message),
+            Err(refusal(&format!("/{text}")))
+        );
+        assert_eq!(
+            measured(format!("{text}/sub/..")).map_err(|e| e.message),
+            Err(refusal(&format!("{text}/sub/..")))
+        );
+        assert_eq!(measured(format!("//{text}")).unwrap(), text);
+        assert_eq!(measured(format!("{text}/./")).unwrap(), text);
+        assert_eq!(custody_argument(Path::new("//c//d/./")), "//c/d");
+        assert_eq!(custody_argument(Path::new("c/")), "c");
     }
 
     #[test]

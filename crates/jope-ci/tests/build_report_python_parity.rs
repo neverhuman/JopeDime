@@ -374,15 +374,34 @@ fn config_refusals_match_the_captured_python_outputs() {
 /// are blanked on both sides as the fixture records (`normalisation`).
 #[test]
 fn scans_match_round_two() {
+    replay_scans(&round_two(), 6);
+}
+
+/// Round three (`build-report/negative-r3.json`, review 5333747872 of PR #117): scan roots spelled
+/// with POSIX's distinct `//` root, which `os.path.abspath` keeps and `resolve(strict=True)` does
+/// not, so the Python refused them as roots with symlink components; `///` and `/./` spellings of
+/// the same root, which it scanned; and a missing root under `//`, refused while resolving it.
+#[test]
+fn scans_match_round_three() {
+    let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/fixtures/python-parity/build-report/negative-r3.json");
+    let doc: Value = serde_json::from_str(&fs::read_to_string(path).unwrap()).unwrap();
+    assert!(doc["source"].is_string() && doc["capture"].is_string());
+    replay_scans(&doc, 6);
+}
+
+/// Replay the scan cases of a round fixture: each tree built under a fresh root, `scan` run on the
+/// case's arguments, and the exit status, stdout and stderr compared (host-dependent fields blanked
+/// on both sides).
+fn replay_scans(doc: &Value, count: usize) {
     use std::os::unix::ffi::OsStrExt;
-    let doc = round_two();
     let cases: Vec<&Value> = doc["cases"]
         .as_array()
         .unwrap()
         .iter()
         .filter(|c| c["kind"] == "scan")
         .collect();
-    assert_eq!(cases.len(), 6, "every captured scan is replayed");
+    assert_eq!(cases.len(), count, "every captured scan is replayed");
     let unhex = |text: &str| -> Vec<u8> {
         (0..text.len())
             .step_by(2)
@@ -390,7 +409,7 @@ fn scans_match_round_two() {
             .collect()
     };
     let temp = tempfile::Builder::new()
-        .prefix("build-report-r2-")
+        .prefix("build-report-round-")
         .tempdir()
         .unwrap();
     let mut failures = vec![];

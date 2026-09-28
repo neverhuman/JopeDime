@@ -77,10 +77,10 @@
 //!
 //! # Round three
 //!
-//! Review 5333747872 of PR #117 found classes the port accepted and the Python refused, captured
-//! the same way: Python 3.12's limit of 4300 digits on integer conversion
-//! (`process-r3-digits.json`, `readme/negative-r3.json`), with the boundary cases the Python
-//! accepted.
+//! Review 5333747872 of PR #117 found two classes the port accepted and the Python refused,
+//! captured the same way: Python 3.12's limit of 4300 digits on integer conversion
+//! (`process-r3-digits.json`, `readme/negative-r3.json`) and POSIX's distinct `//` root in path
+//! comparisons (`process-r3-paths.json`), each with the boundary cases the Python accepted.
 
 use jope_records::pyjson::{self, Dict, Value};
 use jope_records::{coverage, parity, py, readme, scope_check};
@@ -1080,6 +1080,16 @@ fn process_cases_match_round_three_digits() {
         &json("process-r3-digits.json"),
         15,
     );
+}
+
+/// Round three, paths (`process-r3-paths.json`): POSIX's distinct `//` root where the guards
+/// compared paths. `Path(p).relative_to(ROOT)` in coverage discovery and in the parity check's
+/// `src/bin` fallback refused a path spelled `//...` (and one outside the tree); `///`, inner `//`
+/// and `.` spellings normalise; `Path(name).parent` of the listed files is compared normalised; and
+/// `os.path.relpath`, which splits on separators, has no distinct `//` root at all.
+#[test]
+fn process_cases_match_round_three_paths() {
+    replay_process("process-r3-paths.json", &json("process-r3-paths.json"), 15);
 }
 
 /// Replay every case of a process fixture (the layout of `process.json`) through the binary and
