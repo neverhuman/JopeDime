@@ -1822,6 +1822,148 @@ the Python's raw bytes as `stdout_hex`. The replay itself was not at fault. The 
 (its later steps build from the working tree, which the fix changes; `STOPPED.txt` there), the
 writer fixed in its own commit, and the gate run again.
 
+## Follow-up — review round seven: argument grammar
+
+An independent verifier of the rebased head (`newcls.sh`, 179 cases on `065575789`, the commit-map
+commit `docs: map the P1 commits rebased onto #118 (P1 landing)`; harness and runs kept in that
+verifier's scratch) compared the originals' argparse grammar with the ports' clap grammar and found
+two inputs `cargo-artifact.py` refused and the port accepted. Both predate round six (the round-five
+binaries of `3c31229ec` give the same result), and no committed caller reaches either
+(`kernel-v1-product-build.sh:92` and `release.yml:75` pass `--path-map` once; nothing passes an empty
+`--bin`). A sweep of the class found a third. All three are closed, and the class by construction:
+every argument of the five ported command lines was compared with its argparse definition at
+`f46a9048f` (the table below); where argparse refused, the port refuses, and where clap would read a
+command line otherwise than argparse read it, the port refuses it as a usage error (exit 2) before
+anything is read.
+
+| # | Finding | Root cause | Change | Cases |
+| ---: | --- | --- | --- | --- |
+| 1 | `select` with `--path-map` given twice used the first pair and exited 0: `--path-map /c1 ROOT/bin --path-map /c2 ROOT/bin` printed the executable the Python refused (`'/c1/demo' is not in the subpath of '/c2'`), and `--path-map /c ROOT/bin --path-map /c ROOT/nowhere` printed one under the first host root where the Python refused the second's (`Cargo executable is missing or not executable: ROOT/nowhere/demo`) | argparse's `nargs=2` store kept the last pair; clap's default action for the `Vec` field is `Append`, and `main.rs` read the first two values | `action = Set`: a second `--path-map` is a usage error (`cannot be used multiple times`), as every other repeated single-value option already was; stricter where the last pair was valid | cargo-artifact `negative-r7.json`: `select-r7-path-map-*` (8) |
+| 2 | `--bin ""` selected and built a bin named "" (exit 0) where the Python asked for an example named `None`: `select` found none (`expected one executable for demo/example/None, found 0`), `build` crashed after `cargo metadata` (`TypeError`) | `"bin" if args.bin else "example"` and `args.bin or args.example` test the value's truth; clap keeps `Some("")` | `--bin` takes a non-empty value (`NonEmptyStringValueParser`): `--bin ""` and `--bin=` are usage errors; stricter where the messages hold an example target whose name is `null` or missing (the Python matched it; Cargo never writes one). An empty `--example` is kept, as the Python kept it | `*-r7-bin-empty*`, `select-r7-bin-equals-empty`, `select-r7-bin-twice-last-empty` (7) |
+| 3 | `jope-ci cargo-artifact help [select]` and `jope-ci build-report help [scan]` printed help and exited 0; `cargo-artifact.py help` and `jope_report.py help` refused the choice (`invalid choice: 'help'`, exit 2). Found by this round's sweep, outside the verifier's report | clap adds a `help` subcommand to every command that has subcommands | `disable_help_subcommand` on `jope-ci`, which clap propagates to every level: `help` is an unrecognised subcommand; `-h` and `--help` are unchanged, as argparse had them | `help-r7`, `help-r7-select`; build-report `negative-r7.json`: `report-r7-help`, `report-r7-help-scan` |
+
+**The grammar, argument by argument.** argparse at `f46a9048f` against clap in the ports (`jope-ci`
+`main.rs`; `jope-records` `main.rs` for the four guards). "Repeated" is what a second occurrence
+does, "empty" what the value `""` does; "stricter" means the port refuses a command line the original
+ran, and "both refuse" that each refused it.
+
+| Command | Argument | argparse | Port | Repeated | Empty value |
+| --- | --- | --- | --- | --- | --- |
+| `cargo-artifact`, `build-report` | `help` where a command is expected | invalid choice | fixed: unrecognised subcommand | — | — |
+| `cargo-artifact build`, `target-dir`, `nextest-config` | `--manifest-path` | store, default `Cargo.toml` | `String` | the last wins; the port refuses (stricter) | passed to `cargo` by both |
+| same | `--target-dir` | store, tested `is not None` | `Option<String>` | stricter | `CARGO_TARGET_DIR=""` in both |
+| `build`, `select` | `--package` | store, required | `String` | stricter (a last that names no package: both refuse) | both refuse, the same message |
+| same | `--bin` | store, tested for truth | fixed: a non-empty `String` | stricter | fixed: refused (stricter; finding 2) |
+| same | `--example` | store | `String` | stricter | kept, identical |
+| same | `--bin` and `--example` | mutually exclusive, one required | a clap group, one required | both refuse | — |
+| `build` | `--profile` | store, default `dev` | `String` | stricter | passed to `cargo` by both |
+| `build` | `--features` | append | `Vec<String>`, append | identical: each passed, in order | passed by both |
+| `build` | `--no-default-features` | store_true | `bool` | stricter (`=x`: both refuse) | — |
+| `select` | `--metadata`, `--messages` | store, required | `PathBuf` | stricter | the port refuses (clap's path parser); the Python read `Path("")`, the working directory: both refuse |
+| `select` | `--path-map` | `nargs=2` store | fixed: two `PathBuf` values, `Set` | fixed: refused (stricter; finding 1) | the port refuses; the Python used `Path("")` as a root (stricter) |
+| `nextest-config` | `--source`, `--output` | store | `PathBuf` | stricter | both refuse |
+| `build-report scan` | `ROOT` | positional | `PathBuf` | a second root: both refuse | the port refuses; the Python scanned the working directory (stricter) |
+| same | `--stale` | store, `whole_hours` | `Option<u64>`, the same rule | stricter (a last that is invalid: both refuse) | both refuse |
+| `build-report report` | `--config`, `--custody` | store, `Path` | `PathBuf` | stricter | the port refuses (stricter where the Python used `.`) |
+| same | `--tools-dir`, `--approved-root` | none (`__file__`; a constant) | the port's own (U5) | — | — |
+| `build-report` | `--delete` anywhere | refused first | refused first, the same text | — | — |
+| `coverage` | `discover`, `validate` | positional choice | value enum | both refuse | — |
+| same | `--mapping` | store, `Path` | `PathBuf` | stricter | the port refuses (stricter for `discover`, which never read it) |
+| `rust-scope-check` | any argument | ignored (no parser) | refused | stricter | — |
+| `parity-check` | `--matrix`, `--root`, `--help-text` | store | `PathBuf` | stricter | the port refuses (stricter: `if a.help_text:` skipped an empty one; `--root ""` was the working directory) |
+| `readme-benchmarks` | `--check`, `--write` | store_true, exclusive, one required | `bool`, conflicting, one required | stricter | — |
+| every command | a prefix of an option (`--pack`) | expanded when unambiguous | refused | stricter (an ambiguous prefix: both refuse) | — |
+| every command | a value like `-1` after a space | taken as the value | read as an option, refused | stricter (`--bin=-1`: identical) | — |
+| every command | `--opt=value` | the value | the value | identical (`--path-map=a b`: both refuse) | — |
+| every command | `--` then a word | unrecognised | unexpected | both refuse | — |
+| `jope-ci`, `jope-records` | `--version`; `jope-records help` | none: the originals were separate scripts with no such level | print the version or help | — | — |
+
+**Reproduction first.** `p1-r7-pre-20260928T100031Z`: the verifier's `newcls.sh`, copied with its
+scratch moved to this agent's, its `cli` group (40 cases) on the binaries of `065575789`: the four
+cases the verifier reported (`x-cli-path-map-twice-first-valid`, `x-cli-path-map-twice-host-differs`,
+`x-cli-bin-empty-bin-target`, `x-cli-build-bin-empty`), 8 both refuse, 5 identical and 23 stricter
+(the verifier's 41st `cli` case, `x-rg-custody-empty-argument`, is in its `rgood` group, which the
+gate runs); and `probe.sh`, 56 grammar probes of the originals and the ports, in which
+`cargo-artifact help`, `help select`, `build-report help` and `help scan` exit 0 on the port and 2 on
+the originals.
+
+The negative control (`p1-r7-negctl-20260928T103920Z`): the committed tests and fixtures with `065575789`'s `main.rs`
+(blob `c628e4e9e`): both round-seven replays fail, each for the reason it was written: 12 of the 47
+`cargo-artifact` cases (the repeated pairs print or refuse with the first pair, the empty `--bin`
+selects, builds or refuses in other words, `help` prints help) and 2 of the 10 `build-report` cases
+(`help`). With the fixed `main.rs` restored byte for byte (SHA-256 `196765e6…`) and touched, both
+pass. (`p1-r7-negctl-20260928T095950Z`, `…T100027Z`, `…T100407Z` and `…T103515Z` ran the same
+check on earlier spellings of the tests, the same cases and lists but for their order and comments;
+the first stopped at the first failing target, without `--no-fail-fast`.)
+
+**Fixtures.** Captured in `p1-r7-capture-20260928T095659Z` by `cap7.sh` (bash and jq; the originals
+from `f46a9048f`'s git bytes in scratch roots, every case as data, the root written `@ROOT@`).
+
+| Fixture | Cases | Python exit 0 | Python refused | Crash | Port identical | Port stricter | Both refuse |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `jope-ci/…/cargo-artifact/negative-r7.json` | 47 | 29 | 17 (5 messages, 12 usage errors) | 1 (`TypeError`) | 9 | 21 | 17 |
+| `jope-ci/…/build-report/negative-r7.json` | 10 | 4 | 6 (usage errors) | 0 | 1 | 3 | 6 |
+
+**Tests.** New test functions in existing targets, so `deploy/ci/coverage.json`, the test inventory
+and the capability matrix are unchanged: `cargo_artifact_matches_round_seven` (`replay_round` takes
+a sixth list, the cases the port's parser refuses and the text its refusal holds; the test also
+holds `R7_STRICTER` to cases the Python ran and `R7_BOTH_REFUSE` to cases it refused) and
+`grammar_matches_round_seven` (each `build-report` refusal with whether the Python ran it).
+
+**After.** `p1-r7-post-20260928T100236Z`, on the fix before it was committed (its `main.rs` is the
+committed one): `newcls.sh`'s `cli` group has no case the original refused and the port accepted
+(12 both refuse, the four among them; 5 identical; 23 stricter), and every `help` probe of
+`cargo-artifact` and `build-report` exits 2.
+
+**Stricter than the Python, new or previously unlisted** (each replayed but the last, which follows
+from the Python reading no arguments at all):
+- a repeated option or flag other than `--features`, in every ported command line (argparse kept
+  the last): cargo-artifact `R7_STRICTER` (16 cases), `report-r7-scan-stale-twice`, and the
+  verifier's `x-cli-parity-root-twice`, `x-cli-cov-discover-mapping-twice` and
+  `x-cli-readme-write-twice`;
+- a prefix of an option: `select-r7-abbrev-package`, `report-r7-scan-stale-abbrev` and the
+  verifier's `x-cli-*-abbrev*` cases;
+- a value like `-1` after a space: `select-r7-bin-negative-number`;
+- an empty `--bin` where the messages hold an example without a name, and an empty path argument:
+  `select-r7-bin-empty-example-*`, `select-r7-bin-equals-empty`, `report-r7-scan-root-empty`, and the
+  verifier's `x-cli-parity-help-text-empty`, `x-cli-parity-root-empty` and
+  `x-rg-custody-empty-argument`;
+- any argument to `rust-scope-check`, which the Python ignored.
+
+**Contract after round seven.** As after round six, with these corrections: no ported command line
+accepts an argument list its original refused; where clap and argparse read one differently (a
+repeated option, a prefix, an empty `--bin`, a value like `-1`, `help` in place of a command), the
+port refuses it as a usage error (exit 2) before anything is read.
+
+**Commits.**
+- `jope-ci: refuse a repeated --path-map, an empty --bin and a 'help' subcommand, as argparse did (P1 review 7)`
+- `docs: record review round seven of the P1 ports: argument grammar (P1 review 7)` (this section and
+  the commit map)
+
+**Gate.** `p1-r7-gate-20260928T103922Z`, on the head (this file's commit): the landing gate of the
+rebase onto #118 (its rebase proofs aside) — fmt, whitespace, the path lint, the changed fixtures,
+the workspace check, clippy with `-D warnings` on `jope-ci` and `jope-records` and on the P1 files
+of `jope-parallel`, both crates' tests with the ignored receipt replays and the python-parity
+targets, the round-seven replays by name, family growth, the fences, spec drift, sealed storage,
+`coverage validate`, `verify-test-inventory`, the record checks, the live guards, the parity matrix
+with and without a build, the static Python inventory, the hygiene lane's Rust and Python tests, the
+routing guard on real collections and its self-tests, `check.sh` shimmed and unshimmed, the secret
+scan and round six's audit — every differential harness (round seven's `newcls.sh` with every group
+and with its `cli` group alone, and `probe.sh`; round six's `sweep6.sh`, round five's `sweep5.sh`,
+the verifiers' `check-strict.sh` and `check-sweep5.sh` with `adjudicate.sh`, round four's, two's and
+three's harnesses and round four's reviewer probes; none may hold a case the original refused and
+the port accepted; the reviewer probes rerun their recorded commands on the live tree, so
+`coverage-valid` and `parity-valid` print #118's counts, four more targets and six more matrix rows,
+against outputs recorded before it), and the hosted lanes run as `.github/workflows/ci.yml` runs
+them: `changes` (given the `pull_request` event and a `GITHUB_OUTPUT` file, which a runner provides;
+the rebase gate's run gave neither, and its `changes` step failed on the missing
+`GITHUB_EVENT_NAME`), `rust-check`, `rust-test`, `python` and `e2e-smoke`, with `hygiene` as
+information: the lane asserts the runner image's `cargo-deny 0.20.2` and this host has 0.19.8, so it
+fails at that assertion after every command before it has passed (its `check.sh`, gitleaks included,
+also runs as its own step). Every harness copy has its scratch moved under this agent's `TMPDIR`.
+`p1-r7-gate-20260928T100821Z` and `…T102150Z` passed on earlier spellings of these two commits, whose
+test comments and this record differed; `…T103517Z` was stopped when a test comment was corrected.
+
 ## Commit map — `rr2/python-p1` to the landing
 
 The work above was committed on `rr2/python-p1` and landed through `rr2/python-p1-landing`: its
@@ -1894,6 +2036,8 @@ column of that name decodes each, and the custody bundle below holds them.
 | `jope-ci: let the negative report hold a replayed stdout that is not UTF-8 (P1 review 6)` | none, made later | `e5f4d24ed` | landing only | — |
 | `docs: record review round six of the P1 ports: lossy path conversion and environment values (P1 review 6)` | none, made later | `0c9171441` | landing only | — |
 | `docs: map the P1 commits rebased onto #118 (P1 landing)` | none, made later | none, made later | landing only | — |
+| `jope-ci: refuse a repeated --path-map, an empty --bin and a 'help' subcommand, as argparse did (P1 review 7)` | none, made later | none, made later | landing only | — |
+| `docs: record review round seven of the P1 ports: argument grammar (P1 review 7)` | none, made later | none, made later | landing only | — |
 
 "Patch-id" compares `git patch-id --stable` of the commit as submitted and its original. Each
 pair changes the same paths with the same status. The tree proof
