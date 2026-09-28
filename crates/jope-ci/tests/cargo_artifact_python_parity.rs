@@ -782,12 +782,17 @@ fn record(case: &Value, exit: i64, stdout: &str, stderr: &str) {
         return;
     };
     let first = |text: &str| -> String { text.lines().next().unwrap_or("").to_owned() };
+    // Round six's stdout that is not UTF-8 (the raw bytes the Python printed under C and
+    // `C.UTF-8`) is recorded as its hex.
     let python = match case.get("raised") {
         Some(raised) => format!("raised {}", raised.as_str().unwrap()),
         None if !case["stderr"].as_str().unwrap().is_empty() => {
             format!("refused {}", first(case["stderr"].as_str().unwrap()))
         }
-        None => format!("printed {}", first(case["stdout"].as_str().unwrap())),
+        None => match case.get("stdout").and_then(Value::as_str) {
+            Some(stdout) => format!("printed {}", first(stdout)),
+            None => format!("printed the bytes {}", case["stdout_hex"].as_str().unwrap()),
+        },
     };
     let port = if stderr.is_empty() {
         format!("printed {}", first(stdout))
