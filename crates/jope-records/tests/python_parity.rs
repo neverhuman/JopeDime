@@ -111,6 +111,14 @@
 //! hold what the Python did, each case's tree (and the modes it ran under) as data. A directory
 //! that cannot be listed, which pathlib's globs skipped, now refuses: `PROCESS_STRICTER` lists
 //! those cases.
+//!
+//! # Round eight
+//!
+//! Review 5337854418 found the README renderer's correction totals promoting an integer sum that
+//! left 64 bits to a float, so `[2^63-1, 1, -(2^63-1), 45]` totalled 45 where Python's exact 46
+//! refused. `readme/negative-r8.json` holds that case and the class around it (every other
+//! integer sum, difference, division and comparison the renderer makes on evidence values), each
+//! with the outcome of the original; none is listed as stricter.
 
 use jope_records::pyjson::{self, Dict, Value};
 use jope_records::{coverage, parity, py, readme, scope_check};
@@ -983,6 +991,20 @@ fn readme_benchmarks_matches_round_five() {
 #[test]
 fn readme_benchmarks_matches_round_four() {
     replay_readme("readme/negative-r4.json", 37);
+}
+
+/// Round eight (`readme/negative-r8.json`, review 5337854418 of PR #117): Python's integers are
+/// exact. The per-method correction totals (`get(m, 0) + applied[id]`) pass 64 bits and return
+/// (the reviewer's `[2^63-1, 1, -(2^63-1), 45]`, which Python refused as 46 and the port had
+/// accepted as 45), leave it below `-2^63`, are printed beyond it in a refusal, and become a float
+/// only when a float operand appears; `before - after` at the extremes of `i64` (which a release
+/// build had wrapped); and the same-cut seconds as CPython 3.12 sums, divides, sorts and compares
+/// them: the C `long` fast path, exact integers and plain float addition after it overflows,
+/// Neumaier compensation otherwise (integers added plainly), integer true division rounded once,
+/// and `sorted`, `min` and `max` comparing an int with a float exactly.
+#[test]
+fn readme_benchmarks_matches_round_eight() {
+    replay_readme("readme/negative-r8.json", 23);
 }
 
 fn replay_readme(rel: &str, count: usize) {

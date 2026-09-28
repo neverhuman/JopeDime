@@ -16,8 +16,10 @@
 //!
 //! Deliberate, fail-closed differences (inputs Python accepted that are refused here): JSON
 //! Python's `json` module reads but RFC 8259 does not (`NaN`, `Infinity`, UTF-16/32, a BOM);
-//! integers of about 310 to 4300 digits (`serde_json` reads none a double cannot hold; beyond 4300
-//! digits Python 3.12 refused them too);
+//! integers outside `i64::MIN..=u64::MAX`, up to 4300 digits (`serde_json` reads them as the
+//! nearest double, so they are refused rather than rounded; beyond 4300 digits Python 3.12 refused
+//! them too); a float literal beyond the range of a double (`1e400`, which Python read as an
+//! infinity and `serde_json` refuses);
 //! non-ASCII reviewer names (Python's `str.isalnum` admitted them; the reviewer key is a path
 //! component); paths spelled with exactly two leading slashes, which Python's `pathlib`
 //! keeps as a distinct root; and a policy or reviewer key whose resolved name is too long to
@@ -322,7 +324,64 @@ fn read(path: &Path) -> Outcome<Vec<u8>> {
 }
 
 fn parse(bytes: &[u8], what: &str) -> Outcome<Value> {
+    if let Some(why) = wide_integer(bytes) {
+        return Err(malformed(format!("parse {what}: {why}")));
+    }
     serde_json::from_slice(bytes).map_err(|e| malformed(format!("parse {what}: {e}")))
+}
+
+/// Why the first integer literal outside `i64::MIN..=u64::MAX` cannot be read, or `None`.
+/// `serde_json` reads such a literal as the nearest double, so two integers Python kept distinct
+/// would compare equal here and an integer would become another one: the verifier refuses it
+/// instead of rounding it (stricter; Python read it exactly). More than 4300 digits refuse in
+/// CPython 3.12's words, as `json.loads` refused them. A literal with a fraction or an exponent
+/// is a float, and text inside a string is not a number; anything malformed is left to
+/// `serde_json`, which refuses it.
+fn wide_integer(bytes: &[u8]) -> Option<String> {
+    let mut i = 0;
+    while i < bytes.len() {
+        match bytes[i] {
+            b'"' => {
+                i += 1;
+                while i < bytes.len() && bytes[i] != b'"' {
+                    i += if bytes[i] == b'\\' { 2 } else { 1 };
+                }
+                i += 1;
+            }
+            b'-' | b'0'..=b'9' => {
+                let start = i;
+                while i < bytes.len()
+                    && matches!(bytes[i], b'-' | b'+' | b'.' | b'e' | b'E' | b'0'..=b'9')
+                {
+                    i += 1;
+                }
+                let token = &bytes[start..i];
+                let digits = token.strip_prefix(b"-").unwrap_or(token);
+                if digits.is_empty() || !digits.iter().all(u8::is_ascii_digit) {
+                    continue;
+                }
+                if digits.len() > 4300 {
+                    return Some(format!(
+                        "Exceeds the limit (4300 digits) for integer string conversion: value has {} digits; use sys.set_int_max_str_digits() to increase the limit",
+                        digits.len()
+                    ));
+                }
+                let text = std::str::from_utf8(token).expect("ASCII digits");
+                let fits = if token.len() > digits.len() {
+                    text.parse::<i64>().is_ok()
+                } else {
+                    text.parse::<u64>().is_ok()
+                };
+                if !fits {
+                    return Some(format!(
+                        "integer {text} is outside 64 bits, which is all this reader holds exactly; it is refused rather than rounded to a double (Python kept it exact)"
+                    ));
+                }
+            }
+            _ => i += 1,
+        }
+    }
+    None
 }
 
 /// Read durable evidence named by `{path, sha256}` inside `root` and return its bytes.
@@ -861,23 +920,50 @@ mod tests {
     }
 
     /// Python 3.12's `json.loads` refused an integer literal of more than 4300 digits, of either
-    /// sign, even in a field nothing reads. `serde_json` reads no integer that a double cannot
-    /// hold (about 310 digits and up), so the native reader refuses those too.
+    /// sign, even in a field nothing reads, and so does the native reader, in its words. Below
+    /// that Python read every integer exactly; `serde_json` reads one outside
+    /// `i64::MIN..=u64::MAX` as the nearest double, so the native reader refuses it rather than
+    /// round it (review round eight; stricter): `2^64` and `2^64 + 1` would otherwise be one
+    /// value. The 64-bit edges, floats, and digits inside a string are read as before.
     #[test]
-    fn integers_python_refused_to_convert_are_refused() {
-        for sign in ["", "-"] {
-            let receipt = format!(
-                r#"{{"schema": "{ASSIGNMENT_SCHEMA}", "unused": {sign}{}}}"#,
-                "9".repeat(4301)
-            );
-            assert!(matches!(
-                parse(receipt.as_bytes(), "growth assignment"),
-                Err(GrowthError::Malformed(_))
-            ));
-        }
+    fn integers_are_exact_or_refused() {
         let receipt =
-            format!(r#"{{"schema": "{ASSIGNMENT_SCHEMA}", "unused": 12345678901234567890123}}"#);
-        assert!(parse(receipt.as_bytes(), "growth assignment").is_ok());
+            |field: &str| format!(r#"{{"schema": "{ASSIGNMENT_SCHEMA}", "unused": {field}}}"#);
+        let refusal = |field: &str| match parse(receipt(field).as_bytes(), "growth assignment") {
+            Err(GrowthError::Malformed(message)) => message,
+            other => panic!("{field}: {other:?}"),
+        };
+        for sign in ["", "-"] {
+            let message = refusal(&format!("{sign}{}", "9".repeat(4301)));
+            assert!(
+                message.ends_with("Exceeds the limit (4300 digits) for integer string conversion: value has 4301 digits; use sys.set_int_max_str_digits() to increase the limit"),
+                "{message}"
+            );
+        }
+        for wide in [
+            "12345678901234567890123",
+            "18446744073709551616",
+            "18446744073709551617",
+            "-9223372036854775809",
+            "[1, {\"k\": -18446744073709551616}]",
+        ] {
+            assert!(refusal(wide).contains("is outside 64 bits"), "{wide}");
+        }
+        let exact = |field: &str| {
+            parse(receipt(field).as_bytes(), "growth assignment").unwrap()["unused"].clone()
+        };
+        assert_eq!(exact("18446744073709551615"), json!(u64::MAX));
+        assert_eq!(exact("-9223372036854775808"), json!(i64::MIN));
+        assert_eq!(exact("1.8446744073709552e19"), json!(1.8446744073709552e19));
+        assert_eq!(exact("1e25"), json!(1e25));
+        assert_eq!(
+            exact(r#""18446744073709551617 \" 99999999999999999999""#),
+            json!("18446744073709551617 \" 99999999999999999999")
+        );
+        assert!(!py_eq(
+            &exact("18446744073709551615"),
+            &exact("1.8446744073709552e19")
+        ));
     }
 
     /// Same seed and bucket rule as `families::stable_component_assignment`.

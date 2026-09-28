@@ -358,7 +358,9 @@ pub fn scan(
             - h as f64 * 3600.0
     });
     let mut rows = vec![];
-    let mut total: u64 = 0;
+    // `sum(r["allocated_bytes"] for r in rows)`: Python's int has no width, so the total is held
+    // exactly (in `u128`, which fewer than 2^64 measurements cannot leave) and written exactly.
+    let mut total: u128 = 0;
     for candidate in &candidates {
         if candidate
             .ancestors()
@@ -380,7 +382,9 @@ pub fn scan(
             continue;
         }
         let bytes = measure(candidate, false)?;
-        total += bytes;
+        total = total
+            .checked_add(u128::from(bytes))
+            .ok_or_else(|| Failure::new("the allocated-bytes total leaves 128 bits"))?;
         // `du` prints the path it measured, and its output is decoded strictly, so a measured
         // candidate is UTF-8; any other measurement is held to the same rule.
         let path = candidate.to_str().ok_or_else(|| {
@@ -391,7 +395,7 @@ pub fn scan(
         })?;
         let row: Dict = [
             ("path", Value::from(path)),
-            ("allocated_bytes", Value::from(bytes as i64)),
+            ("allocated_bytes", exact_int(u128::from(bytes))),
             ("newest_mtime", Value::Float(newest)),
         ]
         .into_iter()
@@ -411,10 +415,10 @@ pub fn scan(
         ("root", Value::from(root_text)),
         (
             "stale_hours",
-            hours.map_or(Value::Null, |h| Value::from(h as i64)),
+            hours.map_or(Value::Null, |h| exact_int(u128::from(h))),
         ),
         ("candidates", Value::List(rows)),
-        ("candidate_allocated_bytes_sum", Value::from(total as i64)),
+        ("candidate_allocated_bytes_sum", exact_int(total)),
         ("sum_may_double_count_hardlinks", Value::from(true)),
         // This object is returned only after every traversal and measurement succeeds.
         ("report_only", Value::from(true)),
@@ -423,6 +427,12 @@ pub fn scan(
     .into_iter()
     .collect();
     Ok(Value::Dict(document))
+}
+
+/// A count as the JSON integer Python wrote: `int` has no width, so one beyond `i64` is written as
+/// its decimal literal ([`Value::BigInt`]), never wrapped or rounded.
+fn exact_int(n: u128) -> Value {
+    i64::try_from(n).map_or_else(|_| Value::BigInt(n.to_string()), Value::Int)
 }
 
 /// `--stale HOURS`: nonnegative whole hours of at most eight digits (`value.isascii() and
@@ -791,7 +801,7 @@ fn run_report(
         let privileged = item.get("privileged") == Some(&Value::Bool(true));
         let bytes = (hooks.measure)(&root, privileged, interrupt)?;
         let mut row = item.as_dict().expect("checked").clone();
-        row.insert("allocated_bytes", Value::from(bytes as i64));
+        row.insert("allocated_bytes", exact_int(u128::from(bytes)));
         row.insert("observed_at", Value::from(utc().iso));
         list_mut(receipt, "measurements").push(Value::Dict(row));
         save(receipt)?;
@@ -890,6 +900,33 @@ mod tests {
                 "{text:?}"
             );
         }
+    }
+
+    /// `sum(r["allocated_bytes"] for r in rows)` is exact at any size (review round eight): three
+    /// measurements of `2^63 - 1` bytes total `3 * (2^63 - 1)`, written as that integer, which a
+    /// 64-bit total wrapped (a release build) or panicked on (a debug build). Not captured from
+    /// the original: its measurements come from `/usr/bin/du`, which prints no such size here.
+    #[test]
+    fn candidate_bytes_sum_exactly_past_64_bits() {
+        let temp = tempfile::tempdir().unwrap();
+        let root = temp.path().canonicalize().unwrap();
+        for name in ["a", "b", "c"] {
+            std::fs::create_dir(root.join(name)).unwrap();
+            std::fs::write(root.join(name).join(".rustc_info.json"), "{}").unwrap();
+        }
+        let measured = i64::MAX.unsigned_abs();
+        let document = scan(&root, None, &never_interrupted, &|_, _| Ok(measured)).unwrap();
+        let rows = document.get("candidates").and_then(Value::as_list).unwrap();
+        assert_eq!(rows.len(), 3);
+        for row in rows {
+            assert_eq!(row.get("allocated_bytes"), Some(&Value::Int(i64::MAX)));
+        }
+        let total = document.get("candidate_allocated_bytes_sum").unwrap();
+        assert!(matches!(total, Value::BigInt(_)), "{total:?}");
+        assert_eq!(total.repr(), "27670116110564327421");
+        assert!(
+            dumps(&document).contains("\"candidate_allocated_bytes_sum\": 27670116110564327421,")
+        );
     }
 
     /// The libtest name of a test in this module (its path without the crate).

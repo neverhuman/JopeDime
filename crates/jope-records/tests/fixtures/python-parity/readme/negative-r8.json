@@ -1,0 +1,842 @@
+{
+  "source": "p1-r8-capture-20260928T114307Z",
+  "capture": "bash cap8.sh p1-r8-capture-20260928T114307Z (Python from git show f46a9048fbb2697d6d1f4463a688083ea9dfcce1:<tool>, unmodified, in a scratch root)",
+  "tool": "deploy/ci/readme-benchmarks.py --write",
+  "root": "readme/root",
+  "readme": "readme/README.stale.md",
+  "cases": [
+    {
+      "name": "corrections-overflow-then-cancel",
+      "commands": "the reviewer's case (review 5337854418): jope-dime applied rows 9223372036854775807, 1, -9223372036854775807, 45 over four corrections (two added); exact total 46",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "17c\n        \"rows\": 1\n      },\n      {\n        \"id\": \"r8-a\",\n        \"rows\": -9223372036854775807\n      },\n      {\n        \"id\": \"r8-b\",\n        \"rows\": 45\n.\n13c\n        \"rows\": 9223372036854775807\n.\n9c\n    \"sha256\": \"9ca8dd4a699442ff3bece2c885180661a7d73fe7f3a849b345ad13b2c84c2093\",\n.\n",
+          "sha256": "e94d106911cacca14f064350ca8dbaf08bd4077a106d913bbeee63a6c1264495"
+        },
+        {
+          "path": "assets/regression/protocol-corrections-tabular-regression-v2.json",
+          "ed": "46a\n    },\n    {\n      \"id\": \"r8-a\",\n      \"method_id\": \"jope-dime\"\n    },\n    {\n      \"id\": \"r8-b\",\n      \"method_id\": \"jope-dime\"\n.\n",
+          "sha256": "9ca8dd4a699442ff3bece2c885180661a7d73fe7f3a849b345ad13b2c84c2093"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "jope-dime: 46 rows corrected but scored datasets went 45 -> 0\nThe committed benchmark evidence disagrees with itself; refusing to publish.\n",
+      "readme_sha256": "2ec5f806e5c96b3edd312a053c4006447dbe02702ba2e11908986ccae12b5ed9"
+    },
+    {
+      "name": "corrections-overflow-then-cancel-exact",
+      "commands": "jope-dime applied rows 9223372036854775807, 1, -9223372036854775807, 44: the int sum passes 64 bits and returns to 45",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "17c\n        \"rows\": 1\n      },\n      {\n        \"id\": \"r8-a\",\n        \"rows\": -9223372036854775807\n      },\n      {\n        \"id\": \"r8-b\",\n        \"rows\": 44\n.\n13c\n        \"rows\": 9223372036854775807\n.\n9c\n    \"sha256\": \"9ca8dd4a699442ff3bece2c885180661a7d73fe7f3a849b345ad13b2c84c2093\",\n.\n",
+          "sha256": "9ebc1769f615847137dc7ea49f14c2bfb26335f4800c8cab7e4402c1b0e3d81e"
+        },
+        {
+          "path": "assets/regression/protocol-corrections-tabular-regression-v2.json",
+          "ed": "46a\n    },\n    {\n      \"id\": \"r8-a\",\n      \"method_id\": \"jope-dime\"\n    },\n    {\n      \"id\": \"r8-b\",\n      \"method_id\": \"jope-dime\"\n.\n",
+          "sha256": "9ca8dd4a699442ff3bece2c885180661a7d73fe7f3a849b345ad13b2c84c2093"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "9d5ca157d5a8c62aa972d84cb57634a302f711114332c6068c22d71e8a688034"
+    },
+    {
+      "name": "corrections-overflow-then-float",
+      "commands": "jope-dime applied rows 9223372036854775807, 1, -9223372036854775807, 44.0: the int stays exact until the float operand, 45.0",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "17c\n        \"rows\": 1\n      },\n      {\n        \"id\": \"r8-a\",\n        \"rows\": -9223372036854775807\n      },\n      {\n        \"id\": \"r8-b\",\n        \"rows\": 44.0\n.\n13c\n        \"rows\": 9223372036854775807\n.\n9c\n    \"sha256\": \"9ca8dd4a699442ff3bece2c885180661a7d73fe7f3a849b345ad13b2c84c2093\",\n.\n",
+          "sha256": "0f31932dc4a1e34d8e697aca49d92f8a0889ce10106c882b50953935b18cc1e7"
+        },
+        {
+          "path": "assets/regression/protocol-corrections-tabular-regression-v2.json",
+          "ed": "46a\n    },\n    {\n      \"id\": \"r8-a\",\n      \"method_id\": \"jope-dime\"\n    },\n    {\n      \"id\": \"r8-b\",\n      \"method_id\": \"jope-dime\"\n.\n",
+          "sha256": "9ca8dd4a699442ff3bece2c885180661a7d73fe7f3a849b345ad13b2c84c2093"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "9d5ca157d5a8c62aa972d84cb57634a302f711114332c6068c22d71e8a688034"
+    },
+    {
+      "name": "corrections-min-edges",
+      "commands": "jope-dime applied rows -9223372036854775808, -1, 9223372036854775807, 47: below -2^63 and back, 45",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "17c\n        \"rows\": -1\n      },\n      {\n        \"id\": \"r8-a\",\n        \"rows\": 9223372036854775807\n      },\n      {\n        \"id\": \"r8-b\",\n        \"rows\": 47\n.\n13c\n        \"rows\": -9223372036854775808\n.\n9c\n    \"sha256\": \"9ca8dd4a699442ff3bece2c885180661a7d73fe7f3a849b345ad13b2c84c2093\",\n.\n",
+          "sha256": "0140b674b25c1ec6d37b5ccf08dda3c06a5476cf1499ca3a7963d49def14377a"
+        },
+        {
+          "path": "assets/regression/protocol-corrections-tabular-regression-v2.json",
+          "ed": "46a\n    },\n    {\n      \"id\": \"r8-a\",\n      \"method_id\": \"jope-dime\"\n    },\n    {\n      \"id\": \"r8-b\",\n      \"method_id\": \"jope-dime\"\n.\n",
+          "sha256": "9ca8dd4a699442ff3bece2c885180661a7d73fe7f3a849b345ad13b2c84c2093"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "6553c610469a09ecc1c63e8089511e830492711b694404c8850bb023174ad878"
+    },
+    {
+      "name": "corrections-min-edges-refused",
+      "commands": "jope-dime applied rows -9223372036854775808, -1, 9223372036854775807, 46: exact total 44",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "17c\n        \"rows\": -1\n      },\n      {\n        \"id\": \"r8-a\",\n        \"rows\": 9223372036854775807\n      },\n      {\n        \"id\": \"r8-b\",\n        \"rows\": 46\n.\n13c\n        \"rows\": -9223372036854775808\n.\n9c\n    \"sha256\": \"9ca8dd4a699442ff3bece2c885180661a7d73fe7f3a849b345ad13b2c84c2093\",\n.\n",
+          "sha256": "278c80b9930bd4e6959a6912adacf2e3bc4ca03ab737edaa49b41a4e0d2e24c2"
+        },
+        {
+          "path": "assets/regression/protocol-corrections-tabular-regression-v2.json",
+          "ed": "46a\n    },\n    {\n      \"id\": \"r8-a\",\n      \"method_id\": \"jope-dime\"\n    },\n    {\n      \"id\": \"r8-b\",\n      \"method_id\": \"jope-dime\"\n.\n",
+          "sha256": "9ca8dd4a699442ff3bece2c885180661a7d73fe7f3a849b345ad13b2c84c2093"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "jope-dime: 44 rows corrected but scored datasets went 45 -> 0\nThe committed benchmark evidence disagrees with itself; refusing to publish.\n",
+      "readme_sha256": "2ec5f806e5c96b3edd312a053c4006447dbe02702ba2e11908986ccae12b5ed9"
+    },
+    {
+      "name": "corrections-beyond-64-bits",
+      "commands": "jope-dime applied rows 9223372036854775807, 9223372036854775807, 2, 0: exact total 2^64, printed in the refusal",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "17c\n        \"rows\": 9223372036854775807\n      },\n      {\n        \"id\": \"r8-a\",\n        \"rows\": 2\n      },\n      {\n        \"id\": \"r8-b\",\n        \"rows\": 0\n.\n13c\n        \"rows\": 9223372036854775807\n.\n9c\n    \"sha256\": \"9ca8dd4a699442ff3bece2c885180661a7d73fe7f3a849b345ad13b2c84c2093\",\n.\n",
+          "sha256": "52103316476c5c37253b9c632db0f93c0272d9158e0612992070d3d8d9d81432"
+        },
+        {
+          "path": "assets/regression/protocol-corrections-tabular-regression-v2.json",
+          "ed": "46a\n    },\n    {\n      \"id\": \"r8-a\",\n      \"method_id\": \"jope-dime\"\n    },\n    {\n      \"id\": \"r8-b\",\n      \"method_id\": \"jope-dime\"\n.\n",
+          "sha256": "9ca8dd4a699442ff3bece2c885180661a7d73fe7f3a849b345ad13b2c84c2093"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "jope-dime: 18446744073709551616 rows corrected but scored datasets went 45 -> 0\nThe committed benchmark evidence disagrees with itself; refusing to publish.\n",
+      "readme_sha256": "2ec5f806e5c96b3edd312a053c4006447dbe02702ba2e11908986ccae12b5ed9"
+    },
+    {
+      "name": "corrections-negative",
+      "commands": "jope-dime applied rows -3, 48 over the two committed corrections: 45",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "17c\n        \"rows\": 48\n.\n13c\n        \"rows\": -3\n.\n",
+          "sha256": "4da495696ecb049fa8cd4a931f4d992bb5553661425d3c5cdc47ad3016889e54"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "7bb3b7a624edbd8bc0bfe4b87f412e8500371eb4fac3d5eed2e7874ffed1c5a0"
+    },
+    {
+      "name": "corrections-int-prefix-then-half",
+      "commands": "jope-dime applied rows 9007199254740992, 1, 1, 0.5: ints exact to 2^53+2, then a float",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "17c\n        \"rows\": 1\n      },\n      {\n        \"id\": \"r8-a\",\n        \"rows\": 1\n      },\n      {\n        \"id\": \"r8-b\",\n        \"rows\": 0.5\n.\n13c\n        \"rows\": 9007199254740992\n.\n9c\n    \"sha256\": \"9ca8dd4a699442ff3bece2c885180661a7d73fe7f3a849b345ad13b2c84c2093\",\n.\n",
+          "sha256": "8d9969ba399bce7434c404b12c017ae2c23e9bf6dbf09bc9580f1979cb5c114f"
+        },
+        {
+          "path": "assets/regression/protocol-corrections-tabular-regression-v2.json",
+          "ed": "46a\n    },\n    {\n      \"id\": \"r8-a\",\n      \"method_id\": \"jope-dime\"\n    },\n    {\n      \"id\": \"r8-b\",\n      \"method_id\": \"jope-dime\"\n.\n",
+          "sha256": "9ca8dd4a699442ff3bece2c885180661a7d73fe7f3a849b345ad13b2c84c2093"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "jope-dime: 9007199254740994.0 rows corrected but scored datasets went 45 -> 0\nThe committed benchmark evidence disagrees with itself; refusing to publish.\n",
+      "readme_sha256": "2ec5f806e5c96b3edd312a053c4006447dbe02702ba2e11908986ccae12b5ed9"
+    },
+    {
+      "name": "corrections-float-first",
+      "commands": "jope-dime applied rows 0.5, 9223372036854775807, -9223372036854775807, 44.5: a float first, then plain float additions",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "17c\n        \"rows\": 9223372036854775807\n      },\n      {\n        \"id\": \"r8-a\",\n        \"rows\": -9223372036854775807\n      },\n      {\n        \"id\": \"r8-b\",\n        \"rows\": 44.5\n.\n13c\n        \"rows\": 0.5\n.\n9c\n    \"sha256\": \"9ca8dd4a699442ff3bece2c885180661a7d73fe7f3a849b345ad13b2c84c2093\",\n.\n",
+          "sha256": "a7b8f6855562b54cc76f3a49bc9122710192324cdc0d10ca2890b08b11291ee7"
+        },
+        {
+          "path": "assets/regression/protocol-corrections-tabular-regression-v2.json",
+          "ed": "46a\n    },\n    {\n      \"id\": \"r8-a\",\n      \"method_id\": \"jope-dime\"\n    },\n    {\n      \"id\": \"r8-b\",\n      \"method_id\": \"jope-dime\"\n.\n",
+          "sha256": "9ca8dd4a699442ff3bece2c885180661a7d73fe7f3a849b345ad13b2c84c2093"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "jope-dime: 44.5 rows corrected but scored datasets went 45 -> 0\nThe committed benchmark evidence disagrees with itself; refusing to publish.\n",
+      "readme_sha256": "2ec5f806e5c96b3edd312a053c4006447dbe02702ba2e11908986ccae12b5ed9"
+    },
+    {
+      "name": "corrections-float-order-plain",
+      "commands": "jope-dime applied rows 1.0, 1e16, -1e16, 44.0: left-to-right float addition without compensation, 44.0",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "17c\n        \"rows\": 1e16\n      },\n      {\n        \"id\": \"r8-a\",\n        \"rows\": -1e16\n      },\n      {\n        \"id\": \"r8-b\",\n        \"rows\": 44.0\n.\n13c\n        \"rows\": 1.0\n.\n9c\n    \"sha256\": \"9ca8dd4a699442ff3bece2c885180661a7d73fe7f3a849b345ad13b2c84c2093\",\n.\n",
+          "sha256": "f26a5c616049801225b13cf69aa322bb90d011ae2551fe8a52681fbd97917c8b"
+        },
+        {
+          "path": "assets/regression/protocol-corrections-tabular-regression-v2.json",
+          "ed": "46a\n    },\n    {\n      \"id\": \"r8-a\",\n      \"method_id\": \"jope-dime\"\n    },\n    {\n      \"id\": \"r8-b\",\n      \"method_id\": \"jope-dime\"\n.\n",
+          "sha256": "9ca8dd4a699442ff3bece2c885180661a7d73fe7f3a849b345ad13b2c84c2093"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "jope-dime: 44.0 rows corrected but scored datasets went 45 -> 0\nThe committed benchmark evidence disagrees with itself; refusing to publish.\n",
+      "readme_sha256": "2ec5f806e5c96b3edd312a053c4006447dbe02702ba2e11908986ccae12b5ed9"
+    },
+    {
+      "name": "before-after-wraps-positive",
+      "commands": "tabfm_ensemble_regressor scored 9223372036854775807 published and -1 valid, one correction of -9223372036854775808 rows: before - after is 2^63",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "23c\n  \"leaderboard_sha256\": \"ab9f67275118f110cc74e995b885022f9ddf1b0fbc14511b3346de5487c876a4\",\n.\n17a\n      },\n      {\n        \"id\": \"r8-x\",\n        \"rows\": -9223372036854775808\n.\n9c\n    \"sha256\": \"c1ddd8f36ec8ef5e3262a9d4a06e88da2210d04d80a5bc55ffb0ea90ce391784\",\n.\n",
+          "sha256": "af0777da5a08063f8f468b4eb59e6af3255c9b7c61dbfd05d64f531df1478e9e"
+        },
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.json",
+          "ed": "9c\n  \"leaderboard_sha256\": \"43fc5b94655d306bc326180b70ebb30574f0c8b74ac61509d0ddd42ec951c994\",\n.\n",
+          "sha256": "c115d7c9d6553386094d2954b8f2204e94c6c5cd03ea014ae2d396280819f21b"
+        },
+        {
+          "path": "assets/regression/leaderboard-tabular-regression-v2.benchmark-valid.csv",
+          "ed": "2c\n1,1,tabfm_ensemble_regressor,TabFM Ensemble,1934.9,21.511,7,-1,45,100.0,True,0,45/45,public-development,True,benchmark-valid rows only; protocol corrections applied\n.\n",
+          "sha256": "ab9f67275118f110cc74e995b885022f9ddf1b0fbc14511b3346de5487c876a4"
+        },
+        {
+          "path": "assets/regression/protocol-corrections-tabular-regression-v2.json",
+          "ed": "46a\n    },\n    {\n      \"id\": \"r8-x\",\n      \"method_id\": \"tabfm_ensemble_regressor\"\n.\n",
+          "sha256": "c1ddd8f36ec8ef5e3262a9d4a06e88da2210d04d80a5bc55ffb0ea90ce391784"
+        },
+        {
+          "path": "assets/regression/sotarena-tabular-regression-v2/results/tabular-regression-v2/leaderboard.csv",
+          "ed": "3c\n2,2,tabfm_ensemble_regressor,TabFM Ensemble,1933.1,22.311,5,9223372036854775807,45,100.0,True,0,45/45,public-development,True,official unified benchmark comparison\n.\n",
+          "sha256": "43fc5b94655d306bc326180b70ebb30574f0c8b74ac61509d0ddd42ec951c994"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "tabfm_ensemble_regressor: -9223372036854775808 rows corrected but scored datasets went 9223372036854775807 -> -1\nThe committed benchmark evidence disagrees with itself; refusing to publish.\n",
+      "readme_sha256": "2ec5f806e5c96b3edd312a053c4006447dbe02702ba2e11908986ccae12b5ed9"
+    },
+    {
+      "name": "before-after-wraps-negative",
+      "commands": "tabfm_ensemble_regressor scored -2 published and 9223372036854775807 valid, one correction of 9223372036854775807 rows: before - after is -2^63 - 1",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "23c\n  \"leaderboard_sha256\": \"4117015d1c50bc2f218fab23de4170f26d4c5294e9be55598664ddb163f03feb\",\n.\n17a\n      },\n      {\n        \"id\": \"r8-x\",\n        \"rows\": 9223372036854775807\n.\n9c\n    \"sha256\": \"c1ddd8f36ec8ef5e3262a9d4a06e88da2210d04d80a5bc55ffb0ea90ce391784\",\n.\n",
+          "sha256": "895a7a30535de046f22e53bf348c219678b1e985b2d3aba86aab862fb4fe31ce"
+        },
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.json",
+          "ed": "9c\n  \"leaderboard_sha256\": \"c477a0ac66848b2d8b9b6c18176457b834707d08b8caa7acea6415569b2ef018\",\n.\n",
+          "sha256": "7f0546344785bd278cb500a26b776a5a630dfe8ae927a028ec72e7ae7b0c77ed"
+        },
+        {
+          "path": "assets/regression/leaderboard-tabular-regression-v2.benchmark-valid.csv",
+          "ed": "2c\n1,1,tabfm_ensemble_regressor,TabFM Ensemble,1934.9,21.511,7,9223372036854775807,45,100.0,True,0,45/45,public-development,True,benchmark-valid rows only; protocol corrections applied\n.\n",
+          "sha256": "4117015d1c50bc2f218fab23de4170f26d4c5294e9be55598664ddb163f03feb"
+        },
+        {
+          "path": "assets/regression/protocol-corrections-tabular-regression-v2.json",
+          "ed": "46a\n    },\n    {\n      \"id\": \"r8-x\",\n      \"method_id\": \"tabfm_ensemble_regressor\"\n.\n",
+          "sha256": "c1ddd8f36ec8ef5e3262a9d4a06e88da2210d04d80a5bc55ffb0ea90ce391784"
+        },
+        {
+          "path": "assets/regression/sotarena-tabular-regression-v2/results/tabular-regression-v2/leaderboard.csv",
+          "ed": "3c\n2,2,tabfm_ensemble_regressor,TabFM Ensemble,1933.1,22.311,5,-2,45,100.0,True,0,45/45,public-development,True,official unified benchmark comparison\n.\n",
+          "sha256": "c477a0ac66848b2d8b9b6c18176457b834707d08b8caa7acea6415569b2ef018"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "tabfm_ensemble_regressor: 9223372036854775807 rows corrected but scored datasets went -2 -> 9223372036854775807\nThe committed benchmark evidence disagrees with itself; refusing to publish.\n",
+      "readme_sha256": "2ec5f806e5c96b3edd312a053c4006447dbe02702ba2e11908986ccae12b5ed9"
+    },
+    {
+      "name": "before-after-extreme-exact",
+      "commands": "tabfm_ensemble_regressor scored -1 published and 9223372036854775807 valid, one correction of -9223372036854775808 rows: before - after is exactly -2^63",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "23c\n  \"leaderboard_sha256\": \"4117015d1c50bc2f218fab23de4170f26d4c5294e9be55598664ddb163f03feb\",\n.\n17a\n      },\n      {\n        \"id\": \"r8-x\",\n        \"rows\": -9223372036854775808\n.\n9c\n    \"sha256\": \"c1ddd8f36ec8ef5e3262a9d4a06e88da2210d04d80a5bc55ffb0ea90ce391784\",\n.\n",
+          "sha256": "9cd04768fba87ea88d23b35c7bb70114517f079bb1ca9cefa082b1b74a67788c"
+        },
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.json",
+          "ed": "9c\n  \"leaderboard_sha256\": \"7542c8c354bfcb39bbeb962c6b4c2d91cd73ceafafbef2bd7917d19fe5637d37\",\n.\n",
+          "sha256": "da8766a39198f3974c68a1b7c76043a50fea5f6a0b5d42fccebfad4806b4b959"
+        },
+        {
+          "path": "assets/regression/leaderboard-tabular-regression-v2.benchmark-valid.csv",
+          "ed": "2c\n1,1,tabfm_ensemble_regressor,TabFM Ensemble,1934.9,21.511,7,9223372036854775807,45,100.0,True,0,45/45,public-development,True,benchmark-valid rows only; protocol corrections applied\n.\n",
+          "sha256": "4117015d1c50bc2f218fab23de4170f26d4c5294e9be55598664ddb163f03feb"
+        },
+        {
+          "path": "assets/regression/protocol-corrections-tabular-regression-v2.json",
+          "ed": "46a\n    },\n    {\n      \"id\": \"r8-x\",\n      \"method_id\": \"tabfm_ensemble_regressor\"\n.\n",
+          "sha256": "c1ddd8f36ec8ef5e3262a9d4a06e88da2210d04d80a5bc55ffb0ea90ce391784"
+        },
+        {
+          "path": "assets/regression/sotarena-tabular-regression-v2/results/tabular-regression-v2/leaderboard.csv",
+          "ed": "3c\n2,2,tabfm_ensemble_regressor,TabFM Ensemble,1933.1,22.311,5,-1,45,100.0,True,0,45/45,public-development,True,official unified benchmark comparison\n.\n",
+          "sha256": "7542c8c354bfcb39bbeb962c6b4c2d91cd73ceafafbef2bd7917d19fe5637d37"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "f7ad3bccebc26f51cffc968f75ef12fe60e7d7c56fe9715baf14d2dc8bec3334"
+    },
+    {
+      "name": "seconds-int-overflow-then-cancel",
+      "commands": "search produce_seconds 9223372036854775807, 1, -9223372036854775807, then zeros: sum() leaves the C long fast path and returns to 1",
+      "edits": [
+        {
+          "path": "assets/same-cut/v2/reports/047e62b52a3f4ede.bench-report.json",
+          "ed": "314c\n        \"produce_seconds\": 9223372036854775807,\n.\n",
+          "sha256": "2d7f4a167d3af3fcfd39a064f626701add0e1873e3b01f70043e06c3809dd48f"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/1cb97b1d7314d43d.bench-report.json",
+          "ed": "190c\n        \"produce_seconds\": 1,\n.\n",
+          "sha256": "f965e56c53238a06b7d3617a294ab2111893aa5d1fadb4ffd46eb2a51b4d43c4"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/21fbfe8b53dbcd60.bench-report.json",
+          "ed": "810c\n        \"produce_seconds\": -9223372036854775807,\n.\n",
+          "sha256": "01044e090ecd00fb0c0debc1cdb0c932da812115df08deb54c7fd053c6c68876"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/30ef3eaa6d2971a9.bench-report.json",
+          "ed": "190c\n        \"produce_seconds\": 0,\n.\n",
+          "sha256": "5d7e38c57fad41ff48276e08b840248474666e103787ec04980efa300b518790"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/43b4cc3ab0ebbd97.bench-report.json",
+          "ed": "686c\n        \"produce_seconds\": 0,\n.\n",
+          "sha256": "eb1fcc2aaf716d63d0ade9565a96cc6f951d5fb0bf7baf59de634145549d1317"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/693890aae9dc860b.bench-report.json",
+          "ed": "66c\n        \"produce_seconds\": 0,\n.\n",
+          "sha256": "c71ee4d767a43d389c6d85b4181384effb2ceb719ab52ba0079749094d83a1a1"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/79e600bc5fcd5da7.bench-report.json",
+          "ed": "757c\n        \"produce_seconds\": 0,\n.\n",
+          "sha256": "7e1d30b1f9c55c3c0d5682e9c3102352faf0c64bb6046f0b6c24ce4402c51ff0"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/b5beff4a53fa12c0.bench-report.json",
+          "ed": "867c\n        \"produce_seconds\": 0,\n.\n",
+          "sha256": "7394a8f00c0cc4c5387b0fdaa8f17f2b8968cd8f3526536f0a374a57c4fa0e8c"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/c32fa09b48fb2f27.bench-report.json",
+          "ed": "752c\n        \"produce_seconds\": 0,\n.\n",
+          "sha256": "4c9f68a2ab95f9e8b194c2c09f965689a77140bf55b47d90b2ede838e946c7d1"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/c7d815714ca52bce.bench-report.json",
+          "ed": "562c\n        \"produce_seconds\": 0,\n.\n",
+          "sha256": "d5ede0df8343400808feaaf1c5ca98eb60053a43323261ab2ea10caef460647e"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "2b265c14102f99bd224f13472b3b7dbd10007657b09fb51aefaac27bd094a4dd"
+    },
+    {
+      "name": "seconds-min-edges",
+      "commands": "search produce_seconds -9223372036854775808, -1, 9223372036854775807, then zeros: exact sum -2",
+      "edits": [
+        {
+          "path": "assets/same-cut/v2/reports/047e62b52a3f4ede.bench-report.json",
+          "ed": "314c\n        \"produce_seconds\": -9223372036854775808,\n.\n",
+          "sha256": "d6c37273e6edccc0e4c5968cba2eeebd25acba92309dd601690641ec84dc94bf"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/1cb97b1d7314d43d.bench-report.json",
+          "ed": "190c\n        \"produce_seconds\": -1,\n.\n",
+          "sha256": "a2876da90b1700215b7e51261453b336f0a657d92d000f8c68c9974c1b2b01f9"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/21fbfe8b53dbcd60.bench-report.json",
+          "ed": "810c\n        \"produce_seconds\": 9223372036854775807,\n.\n",
+          "sha256": "81f7cc375375653cf11d127aae3d8d93375c8445c45343d10acfe20622f8bdc5"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/30ef3eaa6d2971a9.bench-report.json",
+          "ed": "190c\n        \"produce_seconds\": 0,\n.\n",
+          "sha256": "5d7e38c57fad41ff48276e08b840248474666e103787ec04980efa300b518790"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/43b4cc3ab0ebbd97.bench-report.json",
+          "ed": "686c\n        \"produce_seconds\": 0,\n.\n",
+          "sha256": "eb1fcc2aaf716d63d0ade9565a96cc6f951d5fb0bf7baf59de634145549d1317"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/693890aae9dc860b.bench-report.json",
+          "ed": "66c\n        \"produce_seconds\": 0,\n.\n",
+          "sha256": "c71ee4d767a43d389c6d85b4181384effb2ceb719ab52ba0079749094d83a1a1"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/79e600bc5fcd5da7.bench-report.json",
+          "ed": "757c\n        \"produce_seconds\": 0,\n.\n",
+          "sha256": "7e1d30b1f9c55c3c0d5682e9c3102352faf0c64bb6046f0b6c24ce4402c51ff0"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/b5beff4a53fa12c0.bench-report.json",
+          "ed": "867c\n        \"produce_seconds\": 0,\n.\n",
+          "sha256": "7394a8f00c0cc4c5387b0fdaa8f17f2b8968cd8f3526536f0a374a57c4fa0e8c"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/c32fa09b48fb2f27.bench-report.json",
+          "ed": "752c\n        \"produce_seconds\": 0,\n.\n",
+          "sha256": "4c9f68a2ab95f9e8b194c2c09f965689a77140bf55b47d90b2ede838e946c7d1"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/c7d815714ca52bce.bench-report.json",
+          "ed": "562c\n        \"produce_seconds\": 0,\n.\n",
+          "sha256": "d5ede0df8343400808feaaf1c5ca98eb60053a43323261ab2ea10caef460647e"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "522972719edea7ccd449f4fe82b1ef29b3cf5218b66a6a79c386d5a42d835fc0"
+    },
+    {
+      "name": "seconds-generic-after-overflow",
+      "commands": "search produce_seconds 9223372036854775807, 1, -9223372036854775807, 1e16, 1.0, -1e16, then zeros: after the int overflow sum() adds the floats plainly (0.0), not with compensation (1.0)",
+      "edits": [
+        {
+          "path": "assets/same-cut/v2/reports/047e62b52a3f4ede.bench-report.json",
+          "ed": "314c\n        \"produce_seconds\": 9223372036854775807,\n.\n",
+          "sha256": "2d7f4a167d3af3fcfd39a064f626701add0e1873e3b01f70043e06c3809dd48f"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/1cb97b1d7314d43d.bench-report.json",
+          "ed": "190c\n        \"produce_seconds\": 1,\n.\n",
+          "sha256": "f965e56c53238a06b7d3617a294ab2111893aa5d1fadb4ffd46eb2a51b4d43c4"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/21fbfe8b53dbcd60.bench-report.json",
+          "ed": "810c\n        \"produce_seconds\": -9223372036854775807,\n.\n",
+          "sha256": "01044e090ecd00fb0c0debc1cdb0c932da812115df08deb54c7fd053c6c68876"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/30ef3eaa6d2971a9.bench-report.json",
+          "ed": "190c\n        \"produce_seconds\": 1e16,\n.\n",
+          "sha256": "6529b902894e49d0d93d82496e73eaf9b6cca6abbf70fc563cd77015b47d3343"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/43b4cc3ab0ebbd97.bench-report.json",
+          "ed": "686c\n        \"produce_seconds\": 1.0,\n.\n",
+          "sha256": "4709b32db1899c05d67987c8957852c5d8245c31bab9577a1f82ad8a8b322271"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/693890aae9dc860b.bench-report.json",
+          "ed": "66c\n        \"produce_seconds\": -1e16,\n.\n",
+          "sha256": "8cf9cc0cb4d4fbf37deb314b26beff63f42966868c5e6f907325a861722efc5d"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/79e600bc5fcd5da7.bench-report.json",
+          "ed": "757c\n        \"produce_seconds\": 0,\n.\n",
+          "sha256": "7e1d30b1f9c55c3c0d5682e9c3102352faf0c64bb6046f0b6c24ce4402c51ff0"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/b5beff4a53fa12c0.bench-report.json",
+          "ed": "867c\n        \"produce_seconds\": 0,\n.\n",
+          "sha256": "7394a8f00c0cc4c5387b0fdaa8f17f2b8968cd8f3526536f0a374a57c4fa0e8c"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/c32fa09b48fb2f27.bench-report.json",
+          "ed": "752c\n        \"produce_seconds\": 0,\n.\n",
+          "sha256": "4c9f68a2ab95f9e8b194c2c09f965689a77140bf55b47d90b2ede838e946c7d1"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/c7d815714ca52bce.bench-report.json",
+          "ed": "562c\n        \"produce_seconds\": 0,\n.\n",
+          "sha256": "d5ede0df8343400808feaaf1c5ca98eb60053a43323261ab2ea10caef460647e"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "a64870333e10ee271c8b167b07431fdcdaad6ea34f420fd9b109f31b27d3e5f6"
+    },
+    {
+      "name": "seconds-int-true-division",
+      "commands": "search produce_seconds 5000000000000000321, then zeros: int / int is correctly rounded (mean 500000000000000064.0), not double rounded (500000000000000000.0)",
+      "edits": [
+        {
+          "path": "assets/same-cut/v2/reports/047e62b52a3f4ede.bench-report.json",
+          "ed": "314c\n        \"produce_seconds\": 5000000000000000321,\n.\n",
+          "sha256": "0b93ffe13a0e18f3b04baedaf93f62b9d7298bb7364970064739f033a037bed0"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/1cb97b1d7314d43d.bench-report.json",
+          "ed": "190c\n        \"produce_seconds\": 0,\n.\n",
+          "sha256": "e9fb46618cb5b8d01b92f2d5e0772210887faa66663e5a5c6f382cc562420ef8"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/21fbfe8b53dbcd60.bench-report.json",
+          "ed": "810c\n        \"produce_seconds\": 0,\n.\n",
+          "sha256": "bb44f8e1a13df3a46c83f27abb0b8a36a27296cb0cb8e22c4c20c03e929f695b"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/30ef3eaa6d2971a9.bench-report.json",
+          "ed": "190c\n        \"produce_seconds\": 0,\n.\n",
+          "sha256": "5d7e38c57fad41ff48276e08b840248474666e103787ec04980efa300b518790"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/43b4cc3ab0ebbd97.bench-report.json",
+          "ed": "686c\n        \"produce_seconds\": 0,\n.\n",
+          "sha256": "eb1fcc2aaf716d63d0ade9565a96cc6f951d5fb0bf7baf59de634145549d1317"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/693890aae9dc860b.bench-report.json",
+          "ed": "66c\n        \"produce_seconds\": 0,\n.\n",
+          "sha256": "c71ee4d767a43d389c6d85b4181384effb2ceb719ab52ba0079749094d83a1a1"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/79e600bc5fcd5da7.bench-report.json",
+          "ed": "757c\n        \"produce_seconds\": 0,\n.\n",
+          "sha256": "7e1d30b1f9c55c3c0d5682e9c3102352faf0c64bb6046f0b6c24ce4402c51ff0"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/b5beff4a53fa12c0.bench-report.json",
+          "ed": "867c\n        \"produce_seconds\": 0,\n.\n",
+          "sha256": "7394a8f00c0cc4c5387b0fdaa8f17f2b8968cd8f3526536f0a374a57c4fa0e8c"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/c32fa09b48fb2f27.bench-report.json",
+          "ed": "752c\n        \"produce_seconds\": 0,\n.\n",
+          "sha256": "4c9f68a2ab95f9e8b194c2c09f965689a77140bf55b47d90b2ede838e946c7d1"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/c7d815714ca52bce.bench-report.json",
+          "ed": "562c\n        \"produce_seconds\": 0,\n.\n",
+          "sha256": "d5ede0df8343400808feaaf1c5ca98eb60053a43323261ab2ea10caef460647e"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "67e053469ab64fb1aaac053c31c3830760ec5a800f2e9b4fa8605e50364446f7"
+    },
+    {
+      "name": "seconds-median-pair-overflow",
+      "commands": "search produce_seconds zeros then 9223372036854775806 and five of 9223372036854775807: the median pair's int sum leaves 64 bits",
+      "edits": [
+        {
+          "path": "assets/same-cut/v2/reports/047e62b52a3f4ede.bench-report.json",
+          "ed": "314c\n        \"produce_seconds\": 0,\n.\n",
+          "sha256": "e20bcd3423173d54992287fd711b259d75ebf2b04e3ab71971b76b0c7bb48788"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/1cb97b1d7314d43d.bench-report.json",
+          "ed": "190c\n        \"produce_seconds\": 0,\n.\n",
+          "sha256": "e9fb46618cb5b8d01b92f2d5e0772210887faa66663e5a5c6f382cc562420ef8"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/21fbfe8b53dbcd60.bench-report.json",
+          "ed": "810c\n        \"produce_seconds\": 0,\n.\n",
+          "sha256": "bb44f8e1a13df3a46c83f27abb0b8a36a27296cb0cb8e22c4c20c03e929f695b"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/30ef3eaa6d2971a9.bench-report.json",
+          "ed": "190c\n        \"produce_seconds\": 0,\n.\n",
+          "sha256": "5d7e38c57fad41ff48276e08b840248474666e103787ec04980efa300b518790"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/43b4cc3ab0ebbd97.bench-report.json",
+          "ed": "686c\n        \"produce_seconds\": 9223372036854775806,\n.\n",
+          "sha256": "4c7fcd0fed7a300182a6e033a76cfa4c132ca759e1428b496c682f544ede7d3b"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/693890aae9dc860b.bench-report.json",
+          "ed": "66c\n        \"produce_seconds\": 9223372036854775807,\n.\n",
+          "sha256": "208f9860312c6d3850e8660a3889f25824fdbda220f39f26aaf81247a7b5e2ee"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/79e600bc5fcd5da7.bench-report.json",
+          "ed": "757c\n        \"produce_seconds\": 9223372036854775807,\n.\n",
+          "sha256": "d439afaf112b1d6305037ecd6d3955f3d57e17005ca47533add5d0684b8f4345"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/b5beff4a53fa12c0.bench-report.json",
+          "ed": "867c\n        \"produce_seconds\": 9223372036854775807,\n.\n",
+          "sha256": "63ae8455c9735e423c9ab8d9901c94ac0e3d377647da9619dd325ab70ab4d7f4"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/c32fa09b48fb2f27.bench-report.json",
+          "ed": "752c\n        \"produce_seconds\": 9223372036854775807,\n.\n",
+          "sha256": "24dee94a59e591490658feab0a34040ef60854e7ce7af13dece617228d923d8c"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/c7d815714ca52bce.bench-report.json",
+          "ed": "562c\n        \"produce_seconds\": 9223372036854775807,\n.\n",
+          "sha256": "36205cd47e42afc60ebdc90c69dec5a16c214881010e8a2a60aed746697206ba"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "082568f1ce88bc64eecdd3950040e3b8bb812a7c1aef57b47391fe12b4c0599d"
+    },
+    {
+      "name": "seconds-sorted-exact",
+      "commands": "search produce_seconds 1, 2, 3, 4, 2^60-128, 2^60+127, 2^60-64, three of 2^60+2^59: sorted() orders 2^60+127 and 2^60-64 exactly, though both round to 2^60, so the median pair is (2^60-128, 2^60-64)",
+      "edits": [
+        {
+          "path": "assets/same-cut/v2/reports/047e62b52a3f4ede.bench-report.json",
+          "ed": "314c\n        \"produce_seconds\": 1,\n.\n",
+          "sha256": "3528ecf855b3b41d423a0b6ccaad05820815b1f327df43d4ac03ac6a9b37eddd"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/1cb97b1d7314d43d.bench-report.json",
+          "ed": "190c\n        \"produce_seconds\": 2,\n.\n",
+          "sha256": "667b8f4a1b97dd0b43a3f4236e0cdf4122e17a036b3d409b537b2f51261bc74e"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/21fbfe8b53dbcd60.bench-report.json",
+          "ed": "810c\n        \"produce_seconds\": 3,\n.\n",
+          "sha256": "137f94cd6ba25a0cfeda38c4d9e23f3675b936172c925f95c45bff5d534b5d01"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/30ef3eaa6d2971a9.bench-report.json",
+          "ed": "190c\n        \"produce_seconds\": 4,\n.\n",
+          "sha256": "64476243c579886920c1599f2b8163d6e9e07345c4b6754dcbbabad8f4990536"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/43b4cc3ab0ebbd97.bench-report.json",
+          "ed": "686c\n        \"produce_seconds\": 1152921504606846848,\n.\n",
+          "sha256": "1a4b85416ce1bf7d45dea661894bdffc211a81131a5b6873ac6b83b425b845b3"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/693890aae9dc860b.bench-report.json",
+          "ed": "66c\n        \"produce_seconds\": 1152921504606847103,\n.\n",
+          "sha256": "12f25f36818c57f26acc9ecccf74f1c59b7cbf7872e71eebd130be029c508542"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/79e600bc5fcd5da7.bench-report.json",
+          "ed": "757c\n        \"produce_seconds\": 1152921504606846912,\n.\n",
+          "sha256": "e439f036afb120c35ac604947168172567b0f3888a5b9b85191f46af8d64d9d4"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/b5beff4a53fa12c0.bench-report.json",
+          "ed": "867c\n        \"produce_seconds\": 1729382256910270464,\n.\n",
+          "sha256": "fb048c9649531884ac668ac02294e751affccbb0076fd4d0a58cae9e71fb4bf5"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/c32fa09b48fb2f27.bench-report.json",
+          "ed": "752c\n        \"produce_seconds\": 1729382256910270464,\n.\n",
+          "sha256": "90719ff088a2ac0c65004e6a57797789bae0c31af6c96a75da76db80e6bf8d93"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/c7d815714ca52bce.bench-report.json",
+          "ed": "562c\n        \"produce_seconds\": 1729382256910270464,\n.\n",
+          "sha256": "e28dce23d17a20fb0ae53f5f0687d775d53589fb1eae729acad8b34ee23a4728"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "6082b80ad5d20134463732ec0e16a7dfc45ce8c8f8fd4168200b58cbcb656413"
+    },
+    {
+      "name": "seconds-ints-in-float-path",
+      "commands": "search produce_seconds 1e16, 1, 1, -1e16, then zeros: once sum() holds a float it adds ints plainly (0.0), without compensation (2.0)",
+      "edits": [
+        {
+          "path": "assets/same-cut/v2/reports/047e62b52a3f4ede.bench-report.json",
+          "ed": "314c\n        \"produce_seconds\": 1e16,\n.\n",
+          "sha256": "914ed6377c8d567cc849077ca020fae0cc76cf22898894f940195e92e8e87b57"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/1cb97b1d7314d43d.bench-report.json",
+          "ed": "190c\n        \"produce_seconds\": 1,\n.\n",
+          "sha256": "f965e56c53238a06b7d3617a294ab2111893aa5d1fadb4ffd46eb2a51b4d43c4"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/21fbfe8b53dbcd60.bench-report.json",
+          "ed": "810c\n        \"produce_seconds\": 1,\n.\n",
+          "sha256": "ab6983db307d2ec818a6c2c6667f30396d9687b0460958f96bc9bf5f97c5a2c1"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/30ef3eaa6d2971a9.bench-report.json",
+          "ed": "190c\n        \"produce_seconds\": -1e16,\n.\n",
+          "sha256": "701b406703b0a79e6e0cbf5d7504c0110280f4ca59b5ca673cedc75ec7724189"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/43b4cc3ab0ebbd97.bench-report.json",
+          "ed": "686c\n        \"produce_seconds\": 0,\n.\n",
+          "sha256": "eb1fcc2aaf716d63d0ade9565a96cc6f951d5fb0bf7baf59de634145549d1317"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/693890aae9dc860b.bench-report.json",
+          "ed": "66c\n        \"produce_seconds\": 0,\n.\n",
+          "sha256": "c71ee4d767a43d389c6d85b4181384effb2ceb719ab52ba0079749094d83a1a1"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/79e600bc5fcd5da7.bench-report.json",
+          "ed": "757c\n        \"produce_seconds\": 0,\n.\n",
+          "sha256": "7e1d30b1f9c55c3c0d5682e9c3102352faf0c64bb6046f0b6c24ce4402c51ff0"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/b5beff4a53fa12c0.bench-report.json",
+          "ed": "867c\n        \"produce_seconds\": 0,\n.\n",
+          "sha256": "7394a8f00c0cc4c5387b0fdaa8f17f2b8968cd8f3526536f0a374a57c4fa0e8c"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/c32fa09b48fb2f27.bench-report.json",
+          "ed": "752c\n        \"produce_seconds\": 0,\n.\n",
+          "sha256": "4c9f68a2ab95f9e8b194c2c09f965689a77140bf55b47d90b2ede838e946c7d1"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/c7d815714ca52bce.bench-report.json",
+          "ed": "562c\n        \"produce_seconds\": 0,\n.\n",
+          "sha256": "d5ede0df8343400808feaaf1c5ca98eb60053a43323261ab2ea10caef460647e"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "5cc5bd0d57dbac92a30386b371bc5480aa68130bd07aa3d95a717ef7fd8646fb"
+    },
+    {
+      "name": "seconds-int-prefix-then-half",
+      "commands": "search produce_seconds 9007199254740992, 1, 1, 0.5, then zeros: ints exact to 2^53+2 before the float",
+      "edits": [
+        {
+          "path": "assets/same-cut/v2/reports/047e62b52a3f4ede.bench-report.json",
+          "ed": "314c\n        \"produce_seconds\": 9007199254740992,\n.\n",
+          "sha256": "e2fb6f70628e103041c6f062eb2cbcdd6446924377e6979da1a466ccfe28053a"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/1cb97b1d7314d43d.bench-report.json",
+          "ed": "190c\n        \"produce_seconds\": 1,\n.\n",
+          "sha256": "f965e56c53238a06b7d3617a294ab2111893aa5d1fadb4ffd46eb2a51b4d43c4"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/21fbfe8b53dbcd60.bench-report.json",
+          "ed": "810c\n        \"produce_seconds\": 1,\n.\n",
+          "sha256": "ab6983db307d2ec818a6c2c6667f30396d9687b0460958f96bc9bf5f97c5a2c1"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/30ef3eaa6d2971a9.bench-report.json",
+          "ed": "190c\n        \"produce_seconds\": 0.5,\n.\n",
+          "sha256": "c44129a4753df6298f397ef006b998d9017f618ff57d72cbf4e32d252eb74113"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/43b4cc3ab0ebbd97.bench-report.json",
+          "ed": "686c\n        \"produce_seconds\": 0,\n.\n",
+          "sha256": "eb1fcc2aaf716d63d0ade9565a96cc6f951d5fb0bf7baf59de634145549d1317"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/693890aae9dc860b.bench-report.json",
+          "ed": "66c\n        \"produce_seconds\": 0,\n.\n",
+          "sha256": "c71ee4d767a43d389c6d85b4181384effb2ceb719ab52ba0079749094d83a1a1"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/79e600bc5fcd5da7.bench-report.json",
+          "ed": "757c\n        \"produce_seconds\": 0,\n.\n",
+          "sha256": "7e1d30b1f9c55c3c0d5682e9c3102352faf0c64bb6046f0b6c24ce4402c51ff0"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/b5beff4a53fa12c0.bench-report.json",
+          "ed": "867c\n        \"produce_seconds\": 0,\n.\n",
+          "sha256": "7394a8f00c0cc4c5387b0fdaa8f17f2b8968cd8f3526536f0a374a57c4fa0e8c"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/c32fa09b48fb2f27.bench-report.json",
+          "ed": "752c\n        \"produce_seconds\": 0,\n.\n",
+          "sha256": "4c9f68a2ab95f9e8b194c2c09f965689a77140bf55b47d90b2ede838e946c7d1"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/c7d815714ca52bce.bench-report.json",
+          "ed": "562c\n        \"produce_seconds\": 0,\n.\n",
+          "sha256": "d5ede0df8343400808feaaf1c5ca98eb60053a43323261ab2ea10caef460647e"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "0c27f721479d6bf20c66e0e1c5ddb452fd72c78d810a56529016d9fc2dcd050d"
+    },
+    {
+      "name": "rmse-int-below-float",
+      "commands": "report 047e62b52a3f4ede: baseline.ridge deep RMSE -9007199254740993 (int), the searched method's -9007199254740992.0: the int is lower, though both round to -2^53",
+      "edits": [
+        {
+          "path": "assets/same-cut/v2/reports/047e62b52a3f4ede.bench-report.json",
+          "ed": "554c\n          \"rmse\": -9007199254740993\n.\n430c\n          \"rmse\": -9007199254740992.0\n.\n",
+          "sha256": "2ee16855f0768afeb7c5640378b8bf7f6acc0378a7c1cfe51a40ad81661696cd"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "218af6c4b1f3356a13ca04ee027165c6f446719c03956eaad3c30615b0a726d7"
+    },
+    {
+      "name": "method-id-int-float-tie",
+      "commands": "report 693890aae9dc860b: baseline.gpr and baseline.krr tie on RMSE 0.001 with ids 9007199254740993 (int, first) and 9007199254740992.0 (float): the float id is lower",
+      "edits": [
+        {
+          "path": "assets/same-cut/v2/reports/693890aae9dc860b.bench-report.json",
+          "ed": "430c\n          \"rmse\": 0.001\n.\n317c\n        \"id\": 9007199254740992.0,\n.\n306c\n          \"rmse\": 0.001\n.\n193c\n        \"id\": 9007199254740993,\n.\n",
+          "sha256": "1c649f2446659d4890e7558011e4a5837bc5ef54c7ffeeb0e4d7375342c6aa8b"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "4466e85822a850d61e55c80040d48634bc883767a58633ea25d823b6354d0da1"
+    }
+  ]
+}
