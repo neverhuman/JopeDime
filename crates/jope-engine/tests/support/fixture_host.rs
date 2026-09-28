@@ -63,9 +63,11 @@ pub fn with_commands(commands: &dyn CommandRunner) -> HostSources<'_> {
 /// do not produce it, and an explicit `cargo build --example`, `--examples` or `--all-targets`,
 /// or `cargo install --example`, can. The separation from production rests on the production
 /// entrypoints hardwiring `HostSources::system()` and on the product target set (the
-/// `jope-native-loop` binary), not on Cargo being unable to build this. A run narrowed to one
-/// test target (`--test NAME`) does not build examples: it finds the fixture absent, or one
-/// built from older sources, so build it first as the assertion below says.
+/// `jope-native-loop` binary), not on Cargo being unable to build this.
+///
+/// A run narrowed to one test target (`--test NAME`) rebuilds the tests but not examples, so it
+/// can find the fixture absent, or built from older sources than the tests. Both fail here,
+/// loudly, before any fixture starts: absent, and stale by [`stale_source`].
 pub fn executable() -> PathBuf {
     let exe = std::env::current_exe().unwrap();
     let path = exe
@@ -76,9 +78,81 @@ pub fn executable() -> PathBuf {
     assert!(
         path.is_file(),
         "{} is absent: the bounded-run fixtures run the test-only fixture executable, which \
-         Cargo's default test target selection compiles and a `--test NAME` run does not; build \
-         it with `cargo build --locked -p jope-parallel --example jope-native-loop-fixture`",
+         Cargo's default test target selection compiles and a `--test NAME` run does not. {REBUILD}",
         path.display()
     );
+    if let Err(stale) = stale_source(&path) {
+        panic!(
+            "{} is stale: {stale}. A run narrowed to one test target (`--test NAME`) rebuilds \
+             the tests but not this example, so it would run a fixture built from older sources \
+             than the code under test. {REBUILD}",
+            path.display()
+        );
+    }
     path
+}
+const REBUILD: &str = "Rebuild it with `cargo build --locked -p jope-parallel --example \
+    jope-native-loop-fixture` (with the tests' own --features selection), or run the tests \
+    without narrowing the target selection";
+
+/// Whether the fixture at `path` was built from the sources it would now be built from, by
+/// Cargo's own freshness rule: `path.d`, the dep-info Cargo writes next to the executable, lists
+/// every local source it was compiled from (the library, its path dependencies and the fixture's
+/// own files), and a source modified after the executable, or gone, makes it stale. The test
+/// executable is no reference: Cargo links the tests and the example in either order, and a
+/// change to a test file alone rebuilds that test and not the example. A dep-info that is absent
+/// or unreadable proves nothing and is reported too; a false stale report only costs a rebuild.
+pub fn stale_source(path: &Path) -> std::result::Result<(), String> {
+    let built = modified(path)?;
+    let dep_info = path.with_extension("d");
+    let text = std::fs::read_to_string(&dep_info)
+        .map_err(|e| format!("its dep-info {} is unreadable ({e})", dep_info.display()))?;
+    let sources = text
+        .lines()
+        .next()
+        .and_then(|line| line.split_once(": "))
+        .map(|(_, sources)| sources)
+        .ok_or_else(|| format!("its dep-info {} lists no source", dep_info.display()))?;
+    let mut count = 0;
+    for source in dep_info_paths(sources) {
+        count += 1;
+        if modified(&source)? > built {
+            return Err(format!(
+                "{} changed after it was built (its dep-info {} lists it)",
+                source.display(),
+                dep_info.display()
+            ));
+        }
+    }
+    if count == 0 {
+        return Err(format!(
+            "its dep-info {} lists no source",
+            dep_info.display()
+        ));
+    }
+    Ok(())
+}
+fn modified(path: &Path) -> std::result::Result<std::time::SystemTime, String> {
+    std::fs::metadata(path)
+        .and_then(|m| m.modified())
+        .map_err(|e| format!("{} has no readable modification time ({e})", path.display()))
+}
+/// The space-separated paths of a Make-style dep-info rule, where `\ ` is a space in a name.
+fn dep_info_paths(rule: &str) -> Vec<PathBuf> {
+    let (mut paths, mut current, mut chars) = (Vec::new(), String::new(), rule.chars());
+    while let Some(c) = chars.next() {
+        match c {
+            '\\' => current.extend(chars.next()),
+            ' ' => {
+                if !current.is_empty() {
+                    paths.push(PathBuf::from(std::mem::take(&mut current)));
+                }
+            }
+            c => current.push(c),
+        }
+    }
+    if !current.is_empty() {
+        paths.push(PathBuf::from(current));
+    }
+    paths
 }
