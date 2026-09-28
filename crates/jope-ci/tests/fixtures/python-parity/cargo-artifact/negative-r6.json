@@ -1,0 +1,816 @@
+{
+  "source": "p1-r6-capture-20260928T082121Z",
+  "capture": "bash cap6.sh p1-r6-capture-20260928T082121Z (Python from git show f46a9048fbb2697d6d1f4463a688083ea9dfcce1:<tool>, unmodified, in a scratch root)",
+  "tool": "deploy/ci/cargo-artifact.py",
+  "layout": "the layout of negative-r5.json, plus dirs (created under @ROOT@, each holding an executable demo), symlinks, deep ({link, length, file}: a directory whose absolute name is length bytes, reached through @ROOT@/<link>), metadata_copy_to and locale (en: en_US.UTF-8, cu: C.UTF-8, c: C; the Python's). @Xhh@ is the byte hh; in position @ROOT+k@ is k characters past the root; stdout_hex holds a stdout that is not UTF-8",
+  "cases": [
+    {
+      "name": "select-r6-resolved-ff-en",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/l-ff/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "dirs": [
+        "@Xff@"
+      ],
+      "symlinks": [
+        {
+          "path": "l-ff",
+          "target": "@Xff@"
+        }
+      ],
+      "locale": "en",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: 'utf-8' codec can't encode character '\\udcff' in position @ROOT+1@: surrogates not allowed\n",
+      "output_after": null
+    },
+    {
+      "name": "select-r6-resolved-ff-cu",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/l-ff/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "dirs": [
+        "@Xff@"
+      ],
+      "symlinks": [
+        {
+          "path": "l-ff",
+          "target": "@Xff@"
+        }
+      ],
+      "locale": "cu",
+      "exit": 0,
+      "stdout_hex": "40524f4f54402fff2f64656d6f0a",
+      "stderr": "",
+      "output_after": null
+    },
+    {
+      "name": "select-r6-resolved-ff-c",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/l-ff/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "dirs": [
+        "@Xff@"
+      ],
+      "symlinks": [
+        {
+          "path": "l-ff",
+          "target": "@Xff@"
+        }
+      ],
+      "locale": "c",
+      "exit": 0,
+      "stdout_hex": "40524f4f54402fff2f64656d6f0a",
+      "stderr": "",
+      "output_after": null
+    },
+    {
+      "name": "select-r6-resolved-run-en",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/l-run/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "dirs": [
+        "@Xff@@Xfe@"
+      ],
+      "symlinks": [
+        {
+          "path": "l-run",
+          "target": "@Xff@@Xfe@"
+        }
+      ],
+      "locale": "en",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: 'utf-8' codec can't encode characters in position @ROOT+1@-@ROOT+2@: surrogates not allowed\n",
+      "output_after": null
+    },
+    {
+      "name": "select-r6-resolved-run-cu",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/l-run/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "dirs": [
+        "@Xff@@Xfe@"
+      ],
+      "symlinks": [
+        {
+          "path": "l-run",
+          "target": "@Xff@@Xfe@"
+        }
+      ],
+      "locale": "cu",
+      "exit": 0,
+      "stdout_hex": "40524f4f54402ffffe2f64656d6f0a",
+      "stderr": "",
+      "output_after": null
+    },
+    {
+      "name": "select-r6-resolved-run-c",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/l-run/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "dirs": [
+        "@Xff@@Xfe@"
+      ],
+      "symlinks": [
+        {
+          "path": "l-run",
+          "target": "@Xff@@Xfe@"
+        }
+      ],
+      "locale": "c",
+      "exit": 0,
+      "stdout_hex": "40524f4f54402ffffe2f64656d6f0a",
+      "stderr": "",
+      "output_after": null
+    },
+    {
+      "name": "select-r6-resolved-eacute-en",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/l-eacute/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "dirs": [
+        "é@Xff@"
+      ],
+      "symlinks": [
+        {
+          "path": "l-eacute",
+          "target": "é@Xff@"
+        }
+      ],
+      "locale": "en",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: 'utf-8' codec can't encode character '\\udcff' in position @ROOT+2@: surrogates not allowed\n",
+      "output_after": null
+    },
+    {
+      "name": "select-r6-resolved-eacute-cu",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/l-eacute/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "dirs": [
+        "é@Xff@"
+      ],
+      "symlinks": [
+        {
+          "path": "l-eacute",
+          "target": "é@Xff@"
+        }
+      ],
+      "locale": "cu",
+      "exit": 0,
+      "stdout_hex": "40524f4f54402fc3a9ff2f64656d6f0a",
+      "stderr": "",
+      "output_after": null
+    },
+    {
+      "name": "select-r6-resolved-eacute-c",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/l-eacute/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "dirs": [
+        "é@Xff@"
+      ],
+      "symlinks": [
+        {
+          "path": "l-eacute",
+          "target": "é@Xff@"
+        }
+      ],
+      "locale": "c",
+      "exit": 0,
+      "stdout_hex": "40524f4f54402fc3a9ff2f64656d6f0a",
+      "stderr": "",
+      "output_after": null
+    },
+    {
+      "name": "select-r6-resolved-partial-en",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/l-partial/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "dirs": [
+        "@Xe2@@X82@x"
+      ],
+      "symlinks": [
+        {
+          "path": "l-partial",
+          "target": "@Xe2@@X82@x"
+        }
+      ],
+      "locale": "en",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: 'utf-8' codec can't encode characters in position @ROOT+1@-@ROOT+2@: surrogates not allowed\n",
+      "output_after": null
+    },
+    {
+      "name": "select-r6-resolved-partial-cu",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/l-partial/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "dirs": [
+        "@Xe2@@X82@x"
+      ],
+      "symlinks": [
+        {
+          "path": "l-partial",
+          "target": "@Xe2@@X82@x"
+        }
+      ],
+      "locale": "cu",
+      "exit": 0,
+      "stdout_hex": "40524f4f54402fe282782f64656d6f0a",
+      "stderr": "",
+      "output_after": null
+    },
+    {
+      "name": "select-r6-resolved-partial-c",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/l-partial/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "dirs": [
+        "@Xe2@@X82@x"
+      ],
+      "symlinks": [
+        {
+          "path": "l-partial",
+          "target": "@Xe2@@X82@x"
+        }
+      ],
+      "locale": "c",
+      "exit": 0,
+      "stdout_hex": "40524f4f54402fe282782f64656d6f0a",
+      "stderr": "",
+      "output_after": null
+    },
+    {
+      "name": "select-r6-resolved-mid-en",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/l-mid/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "dirs": [
+        "a@Xff@b@Xfe@"
+      ],
+      "symlinks": [
+        {
+          "path": "l-mid",
+          "target": "a@Xff@b@Xfe@"
+        }
+      ],
+      "locale": "en",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: 'utf-8' codec can't encode character '\\udcff' in position @ROOT+2@: surrogates not allowed\n",
+      "output_after": null
+    },
+    {
+      "name": "select-r6-resolved-mid-cu",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/l-mid/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "dirs": [
+        "a@Xff@b@Xfe@"
+      ],
+      "symlinks": [
+        {
+          "path": "l-mid",
+          "target": "a@Xff@b@Xfe@"
+        }
+      ],
+      "locale": "cu",
+      "exit": 0,
+      "stdout_hex": "40524f4f54402f61ff62fe2f64656d6f0a",
+      "stderr": "",
+      "output_after": null
+    },
+    {
+      "name": "select-r6-resolved-mid-c",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/l-mid/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "dirs": [
+        "a@Xff@b@Xfe@"
+      ],
+      "symlinks": [
+        {
+          "path": "l-mid",
+          "target": "a@Xff@b@Xfe@"
+        }
+      ],
+      "locale": "c",
+      "exit": 0,
+      "stdout_hex": "40524f4f54402f61ff62fe2f64656d6f0a",
+      "stderr": "",
+      "output_after": null
+    },
+    {
+      "name": "build-r6-resolved-ff-en",
+      "argv": [
+        "build",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"], \"target_directory\": \"@ROOT@/target\"}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/l-ff/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "dirs": [
+        "@Xff@"
+      ],
+      "symlinks": [
+        {
+          "path": "l-ff",
+          "target": "@Xff@"
+        }
+      ],
+      "locale": "en",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: 'utf-8' codec can't encode character '\\udcff' in position @ROOT+1@: surrogates not allowed\n",
+      "output_after": null
+    },
+    {
+      "name": "select-r6-map-host-link-ff-en",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo",
+        "--path-map",
+        "/container",
+        "@ROOT@/l-ff"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"/container/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "dirs": [
+        "@Xff@"
+      ],
+      "symlinks": [
+        {
+          "path": "l-ff",
+          "target": "@Xff@"
+        }
+      ],
+      "locale": "en",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: 'utf-8' codec can't encode character '\\udcff' in position @ROOT+1@: surrogates not allowed\n",
+      "output_after": null
+    },
+    {
+      "name": "select-r6-map-host-arg-ff-en",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo",
+        "--path-map",
+        "/container",
+        "@ROOT@/@Xff@"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"/container/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "dirs": [
+        "@Xff@"
+      ],
+      "locale": "en",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: 'utf-8' codec can't encode character '\\udcff' in position @ROOT+1@: surrogates not allowed\n",
+      "output_after": null
+    },
+    {
+      "name": "select-r6-metadata-arg-ff-en",
+      "argv": [
+        "select",
+        "--metadata",
+        "@ROOT@/@Xff@/metadata.json",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "dirs": [
+        "@Xff@"
+      ],
+      "metadata_copy_to": "@Xff@/metadata.json",
+      "locale": "en",
+      "exit": 0,
+      "stdout": "@ROOT@/bin/demo\n",
+      "stderr": "",
+      "output_after": null
+    },
+    {
+      "name": "build-r6-resolved-ff-cu",
+      "argv": [
+        "build",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"], \"target_directory\": \"@ROOT@/target\"}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/l-ff/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "dirs": [
+        "@Xff@"
+      ],
+      "symlinks": [
+        {
+          "path": "l-ff",
+          "target": "@Xff@"
+        }
+      ],
+      "locale": "cu",
+      "exit": 0,
+      "stdout_hex": "40524f4f54402fff2f64656d6f0a",
+      "stderr": "",
+      "output_after": null
+    },
+    {
+      "name": "select-r6-map-host-link-ff-cu",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo",
+        "--path-map",
+        "/container",
+        "@ROOT@/l-ff"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"/container/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "dirs": [
+        "@Xff@"
+      ],
+      "symlinks": [
+        {
+          "path": "l-ff",
+          "target": "@Xff@"
+        }
+      ],
+      "locale": "cu",
+      "exit": 0,
+      "stdout_hex": "40524f4f54402fff2f64656d6f0a",
+      "stderr": "",
+      "output_after": null
+    },
+    {
+      "name": "select-r6-map-host-arg-ff-cu",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo",
+        "--path-map",
+        "/container",
+        "@ROOT@/@Xff@"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"/container/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "dirs": [
+        "@Xff@"
+      ],
+      "locale": "cu",
+      "exit": 0,
+      "stdout_hex": "40524f4f54402fff2f64656d6f0a",
+      "stderr": "",
+      "output_after": null
+    },
+    {
+      "name": "select-r6-metadata-arg-ff-cu",
+      "argv": [
+        "select",
+        "--metadata",
+        "@ROOT@/@Xff@/metadata.json",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "dirs": [
+        "@Xff@"
+      ],
+      "metadata_copy_to": "@Xff@/metadata.json",
+      "locale": "cu",
+      "exit": 0,
+      "stdout": "@ROOT@/bin/demo\n",
+      "stderr": "",
+      "output_after": null
+    },
+    {
+      "name": "select-r6-utf8-link-en",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/l-ok/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "dirs": [
+        "ok"
+      ],
+      "symlinks": [
+        {
+          "path": "l-ok",
+          "target": "ok"
+        }
+      ],
+      "locale": "en",
+      "exit": 0,
+      "stdout": "@ROOT@/ok/demo\n",
+      "stderr": "",
+      "output_after": null
+    },
+    {
+      "name": "select-r6-utf8-nonascii-en",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/é/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "dirs": [
+        "é"
+      ],
+      "locale": "en",
+      "exit": 0,
+      "stdout": "@ROOT@/é/demo\n",
+      "stderr": "",
+      "output_after": null
+    },
+    {
+      "name": "select-r6-resolved-name-too-long",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/deeplink/demo-with-a-long-name\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "deep": {
+        "link": "deeplink",
+        "length": 4090,
+        "file": "demo-with-a-long-name"
+      },
+      "exit": 0,
+      "stdout": "@ROOT@/deep/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee/demo-with-a-long-name\n",
+      "stderr": "",
+      "output_after": null
+    },
+    {
+      "name": "select-r6-resolved-name-4005",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/deeplink2/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "deep": {
+        "link": "deeplink2",
+        "length": 4000,
+        "file": "demo"
+      },
+      "exit": 0,
+      "stdout": "@ROOT@/deep/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee/demo\n",
+      "stderr": "",
+      "output_after": null
+    },
+    {
+      "name": "toml-r6-implicit-then-dotted",
+      "argv": [
+        "nextest-config",
+        "--source",
+        "@SOURCE@",
+        "--output",
+        "@OUT@"
+      ],
+      "metadata": "{\"target_directory\": \"@ROOT@/target\"}",
+      "source": "[a.b.c]\n[a]\nb.d = 1\n",
+      "exit": 0,
+      "stdout": "",
+      "stderr": "",
+      "output_after": "store = { dir = \"@ROOT@/target/nextest\" }\n[a.b.c]\n[a]\nb.d = 1\n"
+    },
+    {
+      "name": "toml-r6-implicit-then-key",
+      "argv": [
+        "nextest-config",
+        "--source",
+        "@SOURCE@",
+        "--output",
+        "@OUT@"
+      ],
+      "metadata": "{\"target_directory\": \"@ROOT@/target\"}",
+      "source": "[a.b.c]\n[a]\nd = 1\n",
+      "exit": 0,
+      "stdout": "",
+      "stderr": "",
+      "output_after": "store = { dir = \"@ROOT@/target/nextest\" }\n[a.b.c]\n[a]\nd = 1\n"
+    }
+  ]
+}

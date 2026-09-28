@@ -59,21 +59,21 @@ impl std::fmt::Display for Failure {
 pub type Outcome<T> = Result<T, Failure>;
 
 /// An `OSError` as Python prints it: `[Errno N] <strerror>: '<path>'`, a path that is not UTF-8
-/// shown as Python's surrogate-escaped `repr` (`'\udcff'`).
+/// shown as Python's surrogate-escaped `repr` (`'\udcff'`), never converted lossily.
 fn os_error(error: &std::io::Error, path: &Path) -> Failure {
-    match error.raw_os_error() {
-        Some(code) => {
-            let text = std::io::Error::from_raw_os_error(code).to_string();
-            let strerror = text
-                .strip_suffix(&format!(" (os error {code})"))
-                .unwrap_or(&text);
-            Failure::new(format!(
-                "[Errno {code}] {strerror}: {}",
-                crate::py::os_repr(path.as_os_str())
-            ))
-        }
-        None => Failure::new(format!("{}: {error}", path.display())),
-    }
+    Failure::new(py::os_error_path(error, path))
+}
+
+/// A path the receipt records or the command prints, as text. One that is not UTF-8 was a
+/// surrogate-escaped `str` in Python, which this port's JSON and output cannot hold; it refuses
+/// (`what` names the field) instead of being converted lossily (U+FFFD names another path).
+fn receipt_text<'a>(path: &'a Path, what: &str) -> Outcome<&'a str> {
+    path.to_str().ok_or_else(|| {
+        Failure::new(format!(
+            "{what} {} is not UTF-8; its surrogate-escaped name cannot be represented",
+            crate::py::os_repr(path.as_os_str())
+        ))
+    })
 }
 
 /// `Path.resolve()`'s failure as Python printed it: the `OSError` naming the path up to the
@@ -184,11 +184,12 @@ pub fn walk(root: &Path, interrupt: Interrupt<'_>, visit: Visit<'_>) -> Outcome<
     // `root.resolve(strict=True) != root`: pathlib compares the spellings, and `abspath` keeps
     // POSIX's distinct `//` root where `realpath` resolves it to `/`, so the Python refused such a
     // root as it refused one with a symlink component. Both sides are normalised, so their bytes
-    // compare (`Path`'s `==` would compare components, which have no `//`).
+    // compare (`Path`'s `==` would compare components, which have no `//`). The refusal names the
+    // root as Python's stderr printed its `str` (an undecodable byte as `\udcff`, never U+FFFD).
     if resolved.as_os_str() != root.as_os_str() || !root.is_dir() {
         return Err(Failure::new(format!(
             "root must be an existing directory without symlink components: {}",
-            root.display()
+            py::os_display(root.as_os_str())
         )));
     }
     let mut stack = vec![root];
@@ -495,6 +496,20 @@ pub fn report(
     interrupt: Interrupt<'_>,
 ) -> Outcome<i32> {
     let output = custody_output(custody)?;
+    // The resolved custody is recorded (`custody_resolved`) and the receipt path under it printed
+    // (`print(receipt_path)`, after everything was written). One that is not UTF-8 refuses before
+    // anything is created, with the `UnicodeEncodeError` Python's print raised under a strict UTF-8
+    // stdout (`en_US.UTF-8`; under C and `C.UTF-8` it printed the raw bytes: stricter there, and
+    // stricter in writing nothing where the Python had written the receipt).
+    let output_text = output.to_str().ok_or_else(|| {
+        Failure::new(
+            py::utf8_encode_error(output.as_os_str())
+                .expect("a name that is not UTF-8 has an undecodable byte"),
+        )
+    })?;
+    // `str(args.custody)` is recorded (`custody_argument`): one that is not UTF-8 refuses too
+    // (stricter; the command line refuses it first).
+    let argument = custody_argument(custody)?;
     // `os.environ.get("INVOCATION_ID")` into the receipt: a value that is not UTF-8 (which Python
     // held surrogate-escaped) cannot be written by this port's JSON, so it refuses before anything
     // is created (stricter); it was never read as absent.
@@ -525,11 +540,8 @@ pub fn report(
         ("checksums", Value::Dict(Dict::new())),
         ("measurements", Value::List(vec![])),
         ("scan_outputs", Value::List(vec![])),
-        ("custody_argument", Value::from(custody_argument(custody))),
-        (
-            "custody_resolved",
-            Value::from(output.to_string_lossy().into_owned()),
-        ),
+        ("custody_argument", Value::from(argument)),
+        ("custody_resolved", Value::from(output_text)),
         ("missing_unit_files", Value::List(vec![])),
         ("invocation_id", invocation_id),
     ]
@@ -563,7 +575,12 @@ pub fn report(
     }
     receipt.insert("completed_at", Value::from(utc().iso));
     save(&receipt)?;
-    println!("{}", receipt_path.display());
+    println!(
+        "{}",
+        receipt_path
+            .to_str()
+            .expect("a UTF-8 custody, an ASCII stamp and file name")
+    );
     Ok(if result.is_ok() { 0 } else { 1 })
 }
 
@@ -586,32 +603,45 @@ fn explicit_root(text: &str) -> Outcome<(PosixPath, PathBuf)> {
 }
 
 /// `Path.home() / ".config/systemd/user"` (Python 3.12: `expanduser("~")` is `$HOME` without its
-/// trailing separators, or `/` when that leaves nothing), spelled as pathlib spells it (repeated
-/// separators and `.` dropped, POSIX's `//` root kept). An unset `HOME`, for which Python read the
-/// password database, and one that is not UTF-8, which it held surrogate-escaped, refuse
-/// (stricter); neither is ever read as an empty or default directory.
+/// trailing separators), spelled as pathlib spells it (repeated separators and `.` dropped,
+/// POSIX's `//` root kept). `HOME` is read only when it is set, UTF-8 and absolute:
+///
+/// - one that begins with `~` (`~`, `~/x`, `~user/x`, whatever follows) is refused with the
+///   `RuntimeError` Python 3.12's `Path.home()` raised, `Could not determine home directory.`, at
+///   the same step, so the receipt fails as the Python's did;
+/// - unset (Python read the password database), not UTF-8 (Python held it surrogate-escaped),
+///   empty (Python took `/`) or relative (Python located the units from the working directory):
+///   refused, stricter. None is ever read as an empty, default or relative directory.
 fn units_dir() -> Outcome<PosixPath> {
-    let home = match std::env::var("HOME") {
-        Ok(home) => home,
-        Err(std::env::VarError::NotPresent) => {
-            return Err(Failure::new(
-                "HOME is not set; the unit files under it cannot be located",
-            ))
-        }
-        Err(std::env::VarError::NotUnicode(_)) => {
-            return Err(Failure::new(
-                "HOME is not UTF-8; its surrogate-escaped value cannot be represented",
-            ))
-        }
+    use std::os::unix::ffi::OsStrExt;
+    let Some(home) = std::env::var_os("HOME") else {
+        return Err(Failure::new(
+            "HOME is not set; the unit files under it cannot be located",
+        ));
     };
+    if home.as_bytes().starts_with(b"~") {
+        return Err(Failure::new("Could not determine home directory."));
+    }
+    let Some(home) = home.to_str() else {
+        return Err(Failure::new(
+            "HOME is not UTF-8; its surrogate-escaped value cannot be represented",
+        ));
+    };
+    if !home.starts_with('/') {
+        return Err(Failure::new(format!(
+            "HOME {} is not an absolute path; the unit files under it cannot be located",
+            pyjson::str_repr(home)
+        )));
+    }
     let trimmed = home.trim_end_matches('/');
     let home = if trimmed.is_empty() { "/" } else { trimmed };
     Ok(PosixPath::parse(home).join(".config/systemd/user"))
 }
 
 /// `str(args.custody)` (`--custody` is parsed with `type=Path`): the argument as pathlib spells it.
-fn custody_argument(custody: &Path) -> String {
-    PosixPath::parse(&custody.to_string_lossy()).to_string()
+/// One that is not UTF-8 refuses (see [`receipt_text`]).
+fn custody_argument(custody: &Path) -> Outcome<String> {
+    Ok(PosixPath::parse(receipt_text(custody, "custody argument")?).to_string())
 }
 
 fn list_mut<'a>(receipt: &'a mut Dict, key: &str) -> &'a mut Vec<Value> {
@@ -653,24 +683,28 @@ fn run_report(
             list_mut(receipt, "missing_unit_files").push(Value::from(spelled));
         }
     }
+    // `receipt["checksums"][str(path)] = sha256(path.read_bytes())`: the file is read first, then
+    // its name is the key. A name that is not UTF-8 (this executable, the tools directory or the
+    // configuration reached through a directory named with such a byte) was a surrogate-escaped
+    // key in the Python's receipt; here it fails the run (stricter), never a lossy key.
     for path in &paths {
         let sum = sha256_file(path)?;
+        let key = receipt_text(path, "checksum key")?.to_owned();
         receipt
             .get_mut("checksums")
             .and_then(Value::as_dict_mut)
             .expect("checksums")
-            .insert(path.to_string_lossy().into_owned(), Value::from(sum));
+            .insert(key, Value::from(sum));
     }
     let config_path = config.canonicalize().map_err(|e| os_error(&e, config))?;
     let config_bytes = fs::read(&config_path).map_err(|e| os_error(&e, &config_path))?;
+    let sum = sha256_file(&config_path)?;
+    let key = receipt_text(&config_path, "checksum key")?.to_owned();
     receipt
         .get_mut("checksums")
         .and_then(Value::as_dict_mut)
         .expect("checksums")
-        .insert(
-            config_path.to_string_lossy().into_owned(),
-            Value::from(sha256_file(&config_path)?),
-        );
+        .insert(key, Value::from(sum));
     let config = pyjson::parse_bytes(&config_bytes).map_err(Failure::new)?;
     let keys_present = config.as_dict().is_some_and(|d| {
         ["cargo_roots", "stale_hours", "measurement_roots"]
@@ -921,8 +955,10 @@ mod tests {
         );
     }
 
-    /// `Path.home() / ".config/systemd/user"` as pathlib spells it; an unset or undecodable `HOME`
-    /// refuses (checked in a child process, which owns its environment).
+    /// `Path.home() / ".config/systemd/user"` as pathlib spells it. A `HOME` beginning with `~`
+    /// refuses with the `RuntimeError` text Python 3.12 raised; an unset, undecodable, empty or
+    /// relative one refuses (stricter; review round six). Checked in a child process, which owns
+    /// its environment.
     #[test]
     fn unit_files_are_located_as_path_home_located_them() {
         if let Some(case) = std::env::var_os("JOPE_CI_UNITS_CHILD") {
@@ -963,14 +999,46 @@ mod tests {
                 Some("//h"),
                 r#"Ok("//h/.config/systemd/user")"#,
             ),
-            ("empty", Some(""), r#"Ok("/.config/systemd/user")"#),
+            ("root", Some("/"), r#"Ok("/.config/systemd/user")"#),
+            (
+                "slash-tilde",
+                Some("/~x"),
+                r#"Ok("/~x/.config/systemd/user")"#,
+            ),
             ("unset", None, "Err(\"HOME is not set"),
+            (
+                "tilde",
+                Some("~"),
+                r#"Err("Could not determine home directory.")"#,
+            ),
+            (
+                "tilde-path",
+                Some("~/x"),
+                r#"Err("Could not determine home directory.")"#,
+            ),
+            (
+                "tilde-user",
+                Some("~nobody/x"),
+                r#"Err("Could not determine home directory.")"#,
+            ),
+            ("empty", Some(""), "Err(\"HOME '' is not an absolute path"),
+            (
+                "relative",
+                Some("rel/home"),
+                "Err(\"HOME 'rel/home' is not an absolute path",
+            ),
         ] {
             let out = run(case, home.map(std::ffi::OsStr::new));
             assert!(out.contains(&format!("{case}={want}")), "{case}: {out}");
         }
         let out = run("bytes", Some(std::ffi::OsStr::from_bytes(b"/h/\xff")));
         assert!(out.contains("bytes=Err(\"HOME is not UTF-8"), "{out}");
+        // `~` first: `expanduser` returned it unexpanded whatever followed.
+        let out = run("tilde-bytes", Some(std::ffi::OsStr::from_bytes(b"~\xff")));
+        assert!(
+            out.contains(r#"tilde-bytes=Err("Could not determine home directory.")"#),
+            "{out}"
+        );
     }
 
     /// A root spelled with POSIX's distinct `//` root: `resolve(strict=True)` spells it `/`, so the
@@ -1011,8 +1079,8 @@ mod tests {
         );
         assert_eq!(measured(format!("//{text}")).unwrap(), text);
         assert_eq!(measured(format!("{text}/./")).unwrap(), text);
-        assert_eq!(custody_argument(Path::new("//c//d/./")), "//c/d");
-        assert_eq!(custody_argument(Path::new("c/")), "c");
+        assert_eq!(custody_argument(Path::new("//c//d/./")).unwrap(), "//c/d");
+        assert_eq!(custody_argument(Path::new("c/")).unwrap(), "c");
     }
 
     #[test]

@@ -46,32 +46,9 @@ pub fn repr(text: &str) -> String {
 }
 
 /// `repr(os.fsdecode(name))`: a name that is not UTF-8 is decoded with `surrogateescape`, so each
-/// byte of an undecodable sequence prints as `\udcXX`.
+/// byte of an undecodable sequence prints as `\udcXX` ([`jope_records::py::os_repr`]).
 pub fn os_repr(name: &std::ffi::OsStr) -> String {
-    use std::os::unix::ffi::OsStrExt;
-    let mut units = vec![];
-    let mut rest = name.as_bytes();
-    loop {
-        match std::str::from_utf8(rest) {
-            Ok(text) => {
-                units.extend(text.chars().map(Ok));
-                break;
-            }
-            Err(error) => {
-                let (good, bad) = rest.split_at(error.valid_up_to());
-                units.extend(
-                    std::str::from_utf8(good)
-                        .expect("the valid prefix")
-                        .chars()
-                        .map(Ok),
-                );
-                let n = error.error_len().unwrap_or(bad.len());
-                units.extend(bad[..n].iter().map(|&b| Err(0xdc00 | u16::from(b))));
-                rest = &bad[n..];
-            }
-        }
-    }
-    jope_records::pyjson::units_repr(&units)
+    jope_records::py::os_repr(name)
 }
 
 /// `json.dumps(str)` with the default `ensure_ascii=True`.

@@ -23,6 +23,11 @@
 //! relative root from a deleted working directory, and reports whose unit files under `HOME` cannot
 //! be inspected (`scans_match_round_five`, `scan_from_a_deleted_working_directory_matches_round_five`,
 //! and the ignored `units_match_round_five`).
+//!
+//! `negative-r6.json` holds round six (lossy path conversion and `HOME`): scans whose root is not
+//! UTF-8 (`scans_match_round_six`), and reports under `HOME` spellings pathlib refused (`~...`) or
+//! the port refuses (empty, relative, not UTF-8) and with custody, configuration or tools behind
+//! names that are not UTF-8 (the ignored `reports_match_round_six`).
 
 use serde_json::Value;
 use std::fs;
@@ -466,12 +471,17 @@ fn scan_from_a_deleted_working_directory_matches_round_five() {
     );
 }
 
+/// Round five's unit cases the port has refused since round six (stricter): an empty `HOME`, which
+/// Python 3.12 took for `/` and the port refuses as not absolute (the report fails at the same step,
+/// the receipt naming `HOME`).
+const R5_UNITS_NOW_STRICTER: &[&str] = &["units-r5-home-empty"];
+
 /// Round five: the unit files under `Path.home()`. `path.is_file()` raised in a unit directory
 /// that may not be searched, failing the report; the port recorded the units as missing and went
 /// on (to a successful report, given a configuration it accepts: `units-r5-no-search-good-config`).
-/// `HOME`'s spelling (a trailing or doubled separator, empty) gives the Python's paths. Same
-/// environment as the other receipt replays; each case runs with the case's own `HOME` and its
-/// `a` and `b` as the approved roots.
+/// `HOME`'s spelling (a trailing or doubled separator) gives the Python's paths; an empty one is
+/// refused since round six (`R5_UNITS_NOW_STRICTER`). Same environment as the other receipt
+/// replays; each case runs with the case's own `HOME` and its `a` and `b` as the approved roots.
 #[test]
 #[ignore = "needs JOPE_MAINTENANCE_SCRATCH outside /tmp and Git working trees"]
 fn units_match_round_five() {
@@ -585,7 +595,19 @@ fn units_match_round_five() {
             })
             .collect::<serde_json::Map<_, _>>()
             .into();
-        if kept != case["receipt"] {
+        if R5_UNITS_NOW_STRICTER.contains(&name) {
+            // Round six: an empty `HOME` (which Python took for `/`) refuses at the same step.
+            let refused = kept["status"] == "failed"
+                && kept["error"]
+                    .as_str()
+                    .is_some_and(|e| e.starts_with("HOME '' is not an absolute path"))
+                && kept["missing_unit_files"] == serde_json::json!([]);
+            if !refused || case["receipt"]["status"] != "failed" {
+                why.push(format!(
+                    "listed as stricter since round six: receipt {kept}"
+                ));
+            }
+        } else if kept != case["receipt"] {
             why.push(format!("receipt {kept}, the Python {}", case["receipt"]));
         }
         if !why.is_empty() {
@@ -595,6 +617,441 @@ fn units_match_round_five() {
     }
     assert!(failures.is_empty(), "{}", failures.join("\n"));
     assert!(replayed >= 4, "replayed {replayed}");
+}
+
+fn round_six() -> Value {
+    let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/fixtures/python-parity/build-report/negative-r6.json");
+    let doc: Value = serde_json::from_str(&fs::read_to_string(path).unwrap()).unwrap();
+    assert!(doc["source"].is_string() && doc["capture"].is_string());
+    assert_eq!(
+        doc["cases"].as_array().unwrap().len(),
+        25,
+        "every captured case is replayed"
+    );
+    doc
+}
+
+/// A fixture string with `@Xhh@` for the byte `hh` (a name that is not UTF-8), as its bytes.
+fn unescape(text: &str) -> std::ffi::OsString {
+    use std::os::unix::ffi::OsStringExt;
+    let mut out = vec![];
+    let mut rest = text;
+    while let Some(at) = rest.find("@X") {
+        match (rest.get(at + 2..at + 4), rest.get(at + 4..at + 5)) {
+            (Some(hex), Some("@")) if hex.bytes().all(|b| b.is_ascii_hexdigit()) => {
+                out.extend_from_slice(&rest.as_bytes()[..at]);
+                out.push(u8::from_str_radix(hex, 16).unwrap());
+                rest = &rest[at + 5..];
+            }
+            _ => {
+                out.extend_from_slice(&rest.as_bytes()[..at + 2]);
+                rest = &rest[at + 2..];
+            }
+        }
+    }
+    out.extend_from_slice(rest.as_bytes());
+    std::ffi::OsString::from_vec(out)
+}
+
+/// A codec position the fixture wrote `@<tag>+k@` (k characters past the capture's directory) at
+/// the same place past this one, `chars` characters long.
+fn place_positions(text: &str, tag: &str, chars: usize) -> String {
+    let marker = format!("@{tag}+");
+    let mut out = String::new();
+    let mut rest = text;
+    while let Some(at) = rest.find(&marker) {
+        let after = &rest[at + marker.len()..];
+        let digits = after.bytes().take_while(u8::is_ascii_digit).count();
+        assert_eq!(&after[digits..=digits], "@", "{text}");
+        out.push_str(&rest[..at]);
+        out.push_str(&(chars + after[..digits].parse::<usize>().unwrap()).to_string());
+        rest = &after[digits + 1..];
+    }
+    out.push_str(rest);
+    out
+}
+
+/// Every `receipt.json` below `dir`, links not followed.
+fn receipts_below(dir: &Path, out: &mut Vec<PathBuf>) {
+    for entry in fs::read_dir(dir).unwrap() {
+        let entry = entry.unwrap();
+        let kind = entry.file_type().unwrap();
+        if kind.is_dir() {
+            receipts_below(&entry.path(), out);
+        } else if entry.file_name() == "receipt.json" {
+            out.push(entry.path());
+        }
+    }
+}
+
+/// Round six scans the Python ran to completion and the port refuses (stricter), printing nothing:
+/// a relative root from a working directory whose name is not UTF-8 (the Python printed the root
+/// surrogate-escaped, `"\udcff"`, in its JSON), and a root argument that is not UTF-8 (refused with
+/// the other arguments before anything is read). The refusal each begins with.
+const R6_SCAN_STRICTER: &[(&str, &str)] = &[
+    (
+        "scan-r6-relative-root-from-not-utf8-cwd",
+        r"report failed: scan root '@ROOT@/\udcff/r' is not UTF-8",
+    ),
+    (
+        "scan-r6-root-argument-not-utf8",
+        r"jope-ci: argument 3 '@ROOT@/\udcff' is not UTF-8",
+    ),
+];
+
+/// Round six of the review of PR #117 (`negative-r6.json`, `kind: scan-cwd`): a root whose resolved
+/// name is not UTF-8. A root with a link component is refused naming it as the Python's stderr
+/// printed it (`\udcff`; the port printed U+FFFD); `--delete` is refused first, whatever the other
+/// arguments hold (the port panicked on the argument that is not UTF-8 before it looked).
+#[test]
+fn scans_match_round_six() {
+    let doc = round_six();
+    let temp = tempfile::Builder::new()
+        .prefix("build-report-r6-")
+        .tempdir()
+        .unwrap();
+    let mut failures = vec![];
+    let mut replayed = 0;
+    for case in doc["cases"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|c| c["kind"] == "scan-cwd")
+    {
+        let name = case["name"].as_str().unwrap();
+        let root = temp.path().join(name);
+        fs::create_dir_all(&root).unwrap();
+        let root = root.canonicalize().unwrap();
+        let root_text = root.to_str().unwrap();
+        let sub = |text: &str| unescape(&text.replace("@ROOT@", root_text));
+        for entry in case["tree"].as_array().unwrap() {
+            if let Some(dir) = entry.get("dir") {
+                fs::create_dir_all(root.join(unescape(dir.as_str().unwrap()))).unwrap();
+            } else {
+                let file = root.join(unescape(entry["file"].as_str().unwrap()));
+                fs::create_dir_all(file.parent().unwrap()).unwrap();
+                fs::write(file, "x").unwrap();
+            }
+        }
+        for link in case["symlinks"].as_array().into_iter().flatten() {
+            symlink(
+                unescape(link["target"].as_str().unwrap()),
+                root.join(unescape(link["path"].as_str().unwrap())),
+            )
+            .unwrap();
+        }
+        let cwd = case
+            .get("cwd")
+            .and_then(Value::as_str)
+            .map_or(root.clone(), |c| PathBuf::from(sub(c)));
+        let args: Vec<std::ffi::OsString> = case["args"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|a| sub(a.as_str().unwrap()))
+            .collect();
+        let output = Command::new(env!("CARGO_BIN_EXE_jope-ci"))
+            .args(["build-report", "scan"])
+            .args(&args)
+            .current_dir(&cwd)
+            .output()
+            .unwrap();
+        let stdout =
+            blank_scan(&String::from_utf8_lossy(&output.stdout).replace(root_text, "@ROOT@"));
+        let stderr = String::from_utf8_lossy(&output.stderr).replace(root_text, "@ROOT@");
+        let exit = i64::from(output.status.code().unwrap());
+        let verdict = match R6_SCAN_STRICTER.iter().find(|(n, _)| *n == name) {
+            Some((_, refusal)) => {
+                case["exit"] == 0
+                    && exit != 0
+                    && stdout.is_empty()
+                    && stderr.starts_with(refusal)
+                    && stderr.lines().count() == 1
+            }
+            None => {
+                (exit, stdout.as_str(), stderr.as_str())
+                    == (
+                        case["exit"].as_i64().unwrap(),
+                        blank_scan(case["stdout"].as_str().unwrap()).as_str(),
+                        case["stderr"].as_str().unwrap(),
+                    )
+            }
+        };
+        if !verdict {
+            failures.push(format!(
+                "{name}: the Python {} {:?} {:?}, the port {exit} {stdout:?} {stderr:?}",
+                case["exit"], case["stdout"], case["stderr"]
+            ));
+        }
+        replayed += 1;
+    }
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
+    assert_eq!(replayed, 5);
+}
+
+/// Round six reports the port fails at an earlier step than the Python (stricter): a `HOME` that is
+/// empty, relative or not UTF-8 (the Python took `/`, the working directory's relative path, or a
+/// surrogate-escaped name, and went on to the configuration), and a checksum key that is not UTF-8
+/// (a configuration reached through a directory named with such a byte, and this executable in
+/// one), which the Python recorded surrogate-escaped. Each is a failure receipt whose error begins
+/// with the text given; the Python's failed later, at the harness's approved roots.
+const R6_REPORT_STRICTER: &[(&str, &str)] = &[
+    (
+        "units-r6-home-relative",
+        "HOME 'rel/home' is not an absolute path",
+    ),
+    ("units-r6-home-empty", "HOME '' is not an absolute path"),
+    ("units-r6-home-not-utf8", "HOME is not UTF-8"),
+    (
+        "custody-r6-config-via-not-utf8-link",
+        r"checksum key '@C@/\udcff/cfg.json' is not UTF-8",
+    ),
+    (
+        "custody-r6-tools-in-not-utf8-dir",
+        r"checksum key '@C@/\udcff/tools/jope-ci' is not UTF-8",
+    ),
+];
+
+/// Round six custody whose resolved name is not UTF-8. The Python wrote its receipt, then failed
+/// printing the receipt's path (`en_US.UTF-8`: `report failed: 'utf-8' codec can't encode ...`) or
+/// printed its raw bytes (`C.UTF-8`); the port refuses with that message before creating anything
+/// (stricter in writing nothing, and under `C.UTF-8`). The case whose message is used.
+const R6_CUSTODY_NOTHING_WRITTEN: &[(&str, &str)] = &[
+    ("custody-r6-link-not-utf8-en", "custody-r6-link-not-utf8-en"),
+    ("custody-r6-link-not-utf8-cu", "custody-r6-link-not-utf8-en"),
+    (
+        "custody-r6-link-not-utf8-good-config-en",
+        "custody-r6-link-not-utf8-good-config-en",
+    ),
+    (
+        "custody-r6-relative-from-not-utf8-cwd-en",
+        "custody-r6-relative-from-not-utf8-cwd-en",
+    ),
+];
+
+/// Round six custody arguments that are not UTF-8, refused with the other arguments before
+/// anything is read (exit status 2); the Python failed printing a resolved name that is not UTF-8,
+/// or resolved `<0xff>/..` to a UTF-8 custody and ran.
+const R6_REPORT_ARGV: &[&str] = &[
+    "custody-r6-argument-not-utf8-en",
+    "custody-r6-argument-not-utf8-dotdot-cu",
+];
+
+/// Round six (`negative-r6.json`, kinds `units` and `custody`): `HOME` beginning with `~` fails the
+/// receipt with the `RuntimeError` Python 3.12's `Path.home()` raised (`Could not determine home
+/// directory.`; the port read it as a relative directory and, given a configuration it accepts,
+/// succeeded), `/` and `<dir>/~x` are read as the Python read them; custody, configuration and
+/// tools behind names that are not UTF-8 refuse (see the lists above). Same environment as the other
+/// receipt replays; a `good` case gets its `a` and `b` as the approved roots, a `bad` one the
+/// wrapper's.
+#[test]
+#[ignore = "needs JOPE_MAINTENANCE_SCRATCH outside /tmp and Git working trees"]
+fn reports_match_round_six() {
+    let doc = round_six();
+    let scratch = PathBuf::from(
+        std::env::var("JOPE_MAINTENANCE_SCRATCH")
+            .expect("set JOPE_MAINTENANCE_SCRATCH to a directory outside /tmp and working trees"),
+    )
+    .join("python-parity-r6");
+    fs::create_dir_all(scratch.parent().unwrap()).unwrap();
+    fs::create_dir(&scratch).expect("a fresh scratch directory");
+    let scratch = scratch.canonicalize().unwrap();
+    let tools = repo().join("deploy/maintenance");
+    let cases: Vec<&Value> = doc["cases"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|c| c["kind"] == "units" || c["kind"] == "custody")
+        .collect();
+    let named = |name: &str| *cases.iter().find(|c| c["name"] == name).unwrap();
+    let mut failures = vec![];
+    for &case in &cases {
+        let name = case["name"].as_str().unwrap();
+        let c = scratch.join(name);
+        for dir in ["home/.config/systemd/user", "a", "b"] {
+            fs::create_dir_all(c.join(dir)).unwrap();
+        }
+        let c_text = c.to_str().unwrap().to_owned();
+        let sub = |text: &str| unescape(&text.replace("@C@", &c_text));
+        for dir in case["dirs"].as_array().into_iter().flatten() {
+            fs::create_dir_all(c.join(unescape(dir.as_str().unwrap()))).unwrap();
+        }
+        for link in case["symlinks"].as_array().into_iter().flatten() {
+            symlink(
+                unescape(link["target"].as_str().unwrap()),
+                c.join(link["path"].as_str().unwrap()),
+            )
+            .unwrap();
+        }
+        let good = case["config"] == "good";
+        let (config, roots) = if good {
+            let roots = vec![format!("{c_text}/a"), format!("{c_text}/b")];
+            (
+                format!(
+                    r#"{{"cargo_roots": ["{}", "{}"], "stale_hours": 48, "measurement_roots": []}}"#,
+                    roots[0], roots[1]
+                ),
+                roots,
+            )
+        } else {
+            (
+                doc["bad_config"].as_str().unwrap().to_owned(),
+                approved_roots(),
+            )
+        };
+        let at = c.join(unescape(
+            case.get("config_at")
+                .and_then(Value::as_str)
+                .unwrap_or("cfg.json"),
+        ));
+        fs::create_dir_all(at.parent().unwrap()).unwrap();
+        fs::write(&at, config).unwrap();
+        let (program, tools_args): (PathBuf, Vec<std::ffi::OsString>) = if case["tools"] == "ff" {
+            // The executable and its wrappers in a directory named with the byte 0xff: the tools
+            // directory is the executable's (no `--tools-dir`).
+            let dir = c.join(unescape("@Xff@/tools"));
+            fs::create_dir_all(&dir).unwrap();
+            fs::copy(env!("CARGO_BIN_EXE_jope-ci"), dir.join("jope-ci")).unwrap();
+            for wrapper in ["cargo-build-dirs.sh", "jope-build-report.sh"] {
+                fs::copy(tools.join(wrapper), dir.join(wrapper)).unwrap();
+            }
+            (dir.join("jope-ci"), vec![])
+        } else {
+            (
+                PathBuf::from(env!("CARGO_BIN_EXE_jope-ci")),
+                vec!["--tools-dir".into(), tools.clone().into_os_string()],
+            )
+        };
+        let mut command = Command::new(&program);
+        command
+            .args(["build-report", "report", "--config"])
+            .arg(&at)
+            .arg("--custody")
+            .arg(sub(case["custody"].as_str().unwrap()))
+            .args(&tools_args);
+        for root in &roots {
+            command.arg("--approved-root").arg(root);
+        }
+        let home = sub(case
+            .get("home")
+            .and_then(Value::as_str)
+            .unwrap_or("@C@/home"));
+        let cwd = PathBuf::from(sub(case
+            .get("cwd")
+            .and_then(Value::as_str)
+            .unwrap_or("@C@")));
+        command
+            .current_dir(&cwd)
+            .env("HOME", &home)
+            .env_remove("INVOCATION_ID");
+        match case.get("locale").and_then(Value::as_str) {
+            Some("en") => {
+                command
+                    .env_remove("LC_ALL")
+                    .env_remove("LC_CTYPE")
+                    .env_remove("LC_MESSAGES")
+                    .env("LANG", "en_US.UTF-8");
+            }
+            _ => {
+                command.env("LC_ALL", "C.UTF-8");
+            }
+        }
+        let output = command.output().unwrap();
+        let exit = i64::from(output.status.code().unwrap());
+        let stdout = String::from_utf8_lossy(&output.stdout).into_owned();
+        let stderr = String::from_utf8_lossy(&output.stderr).into_owned();
+        let mut written = vec![];
+        receipts_below(&c, &mut written);
+        let stamp = written
+            .first()
+            .and_then(|r| r.parent())
+            .and_then(Path::file_name)
+            .and_then(|s| s.to_str())
+            .map(str::to_owned);
+        let normalise = |text: &str| {
+            let text = text.replace(&c_text, "@C@");
+            match &stamp {
+                Some(stamp) => text.replace(stamp.as_str(), "@STAMP@"),
+                None => text,
+            }
+        };
+        let kept = written.first().map(|path| {
+            let receipt: Value =
+                serde_json::from_str(&normalise(&fs::read_to_string(path).unwrap())).unwrap();
+            let kept: Value = ["status", "exit_status", "error", "missing_unit_files"]
+                .iter()
+                .map(|k| {
+                    (
+                        k.to_string(),
+                        receipt.get(*k).cloned().unwrap_or(Value::Null),
+                    )
+                })
+                .collect::<serde_json::Map<_, _>>()
+                .into();
+            kept
+        });
+        let (stdout, stderr) = (normalise(&stdout), normalise(&stderr));
+        let receipt_line = "@C@/receipts/@STAMP@/receipt.json\n";
+        let why = if let Some((_, refusal)) = R6_REPORT_STRICTER.iter().find(|(n, _)| *n == name) {
+            let kept = kept.clone().unwrap_or(Value::Null);
+            let refused = exit == 1
+                && stdout == receipt_line
+                && written.len() == 1
+                && kept["status"] == "failed"
+                && kept["error"]
+                    .as_str()
+                    .is_some_and(|e| e.starts_with(refusal))
+                && case["exit"] == 1
+                && case["receipt"]["error"]
+                    == "service requires the two approved Cargo roots and a 48-hour filter";
+            (!refused).then(|| format!("listed as stricter: {exit} {stdout:?} {stderr:?} {kept}"))
+        } else if let Some((_, message)) =
+            R6_CUSTODY_NOTHING_WRITTEN.iter().find(|(n, _)| *n == name)
+        {
+            let want = place_positions(
+                named(message)["stderr"].as_str().unwrap(),
+                "C",
+                c_text.chars().count(),
+            );
+            let refused = exit == 1 && stdout.is_empty() && stderr == want && written.is_empty();
+            let python_wrote = case["receipts_written"] == 1;
+            (!(refused && python_wrote)).then(|| {
+                format!(
+                    "refusal {exit} {stdout:?} {stderr:?} ({} receipts), want {want:?} and none",
+                    written.len()
+                )
+            })
+        } else if R6_REPORT_ARGV.contains(&name) {
+            let refused = exit == 2
+                && stdout.is_empty()
+                && stderr.starts_with("jope-ci: argument ")
+                && stderr.contains(" is not UTF-8")
+                && written.is_empty();
+            (!refused).then(|| format!("argument refusal: {exit} {stdout:?} {stderr:?}"))
+        } else {
+            let want_stderr = place_positions(
+                case["stderr"].as_str().unwrap(),
+                "C",
+                c_text.chars().count(),
+            );
+            let same = exit == case["exit"].as_i64().unwrap()
+                && Some(stdout.as_str()) == case["stdout"].as_str()
+                && stderr == want_stderr
+                && kept.clone().unwrap_or(Value::Null) == case["receipt"];
+            (!same).then(|| {
+                format!(
+                    "the Python {} {:?} {want_stderr:?} {}, the port {exit} {stdout:?} {stderr:?} {kept:?}",
+                    case["exit"], case["stdout"], case["receipt"]
+                )
+            })
+        };
+        if let Some(why) = why {
+            failures.push(format!("{name}: {why}"));
+        }
+    }
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
+    assert_eq!(cases.len(), 20);
 }
 
 /// Replay the scan cases of a round fixture: each tree built under a fresh root, `scan` run on the

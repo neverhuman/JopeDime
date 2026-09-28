@@ -1,0 +1,537 @@
+{
+  "source": "p1-r6-capture-20260928T082121Z",
+  "capture": "bash cap6.sh p1-r6-capture-20260928T082121Z (Python from git show f46a9048fbb2697d6d1f4463a688083ea9dfcce1:<tool>, unmodified, in a scratch root)",
+  "tool": "deploy/maintenance/jope_report.py",
+  "normalisation": "units and custody: the case directory is written @C@ and the receipt stamp @STAMP@; home, custody, cwd, config_at, dirs and symlink targets may hold @Xhh@ (the byte hh); the receipt keeps status, exit_status, error and missing_unit_files of the receipt.json the Python wrote (receipts_written counts them, printed or not); bad is the configuration below, good names @C@/a and @C@/b (the port is given them as its approved roots); tools ff: the tool files under @C@/@Xff@/tools (the port's executable there). scan-cwd: the case directory is written @ROOT@ and completed_at @T@. A codec position is written @C+k@ or @ROOT+k@: k characters past that directory",
+  "bad_config": "{\"cargo_roots\": [\"/nonexistent-approved-a\", \"/nonexistent-approved-b\"], \"stale_hours\": 48, \"measurement_roots\": []}",
+  "cases": [
+    {
+      "name": "units-r6-control",
+      "kind": "units",
+      "config": "bad",
+      "custody": "@C@/receipts",
+      "exit": 1,
+      "stdout": "@C@/receipts/@STAMP@/receipt.json\n",
+      "stderr": "",
+      "receipts_written": 1,
+      "receipt": {
+        "status": "failed",
+        "exit_status": 1,
+        "error": "service requires the two approved Cargo roots and a 48-hour filter",
+        "missing_unit_files": [
+          "@C@/home/.config/systemd/user/jope-build-sweep.service",
+          "@C@/home/.config/systemd/user/jope-build-sweep.timer"
+        ]
+      }
+    },
+    {
+      "name": "units-r6-home-tilde",
+      "kind": "units",
+      "home": "~",
+      "config": "bad",
+      "custody": "@C@/receipts",
+      "exit": 1,
+      "stdout": "@C@/receipts/@STAMP@/receipt.json\n",
+      "stderr": "",
+      "receipts_written": 1,
+      "receipt": {
+        "status": "failed",
+        "exit_status": 1,
+        "error": "Could not determine home directory.",
+        "missing_unit_files": []
+      }
+    },
+    {
+      "name": "units-r6-home-tilde-slash-x",
+      "kind": "units",
+      "home": "~/x",
+      "config": "bad",
+      "custody": "@C@/receipts",
+      "exit": 1,
+      "stdout": "@C@/receipts/@STAMP@/receipt.json\n",
+      "stderr": "",
+      "receipts_written": 1,
+      "receipt": {
+        "status": "failed",
+        "exit_status": 1,
+        "error": "Could not determine home directory.",
+        "missing_unit_files": []
+      }
+    },
+    {
+      "name": "units-r6-home-tilde-user",
+      "kind": "units",
+      "home": "~nobody/x",
+      "config": "bad",
+      "custody": "@C@/receipts",
+      "exit": 1,
+      "stdout": "@C@/receipts/@STAMP@/receipt.json\n",
+      "stderr": "",
+      "receipts_written": 1,
+      "receipt": {
+        "status": "failed",
+        "exit_status": 1,
+        "error": "Could not determine home directory.",
+        "missing_unit_files": []
+      }
+    },
+    {
+      "name": "units-r6-home-tilde-not-utf8",
+      "kind": "units",
+      "home": "~@Xff@",
+      "config": "bad",
+      "custody": "@C@/receipts",
+      "exit": 1,
+      "stdout": "@C@/receipts/@STAMP@/receipt.json\n",
+      "stderr": "",
+      "receipts_written": 1,
+      "receipt": {
+        "status": "failed",
+        "exit_status": 1,
+        "error": "Could not determine home directory.",
+        "missing_unit_files": []
+      }
+    },
+    {
+      "name": "units-r6-home-tilde-good-config",
+      "kind": "units",
+      "home": "~",
+      "config": "good",
+      "custody": "@C@/receipts",
+      "exit": 1,
+      "stdout": "@C@/receipts/@STAMP@/receipt.json\n",
+      "stderr": "",
+      "receipts_written": 1,
+      "receipt": {
+        "status": "failed",
+        "exit_status": 1,
+        "error": "Could not determine home directory.",
+        "missing_unit_files": []
+      }
+    },
+    {
+      "name": "units-r6-home-tilde-user-good-config",
+      "kind": "units",
+      "home": "~nobody/x",
+      "config": "good",
+      "custody": "@C@/receipts",
+      "exit": 1,
+      "stdout": "@C@/receipts/@STAMP@/receipt.json\n",
+      "stderr": "",
+      "receipts_written": 1,
+      "receipt": {
+        "status": "failed",
+        "exit_status": 1,
+        "error": "Could not determine home directory.",
+        "missing_unit_files": []
+      }
+    },
+    {
+      "name": "units-r6-home-root",
+      "kind": "units",
+      "home": "/",
+      "config": "bad",
+      "custody": "@C@/receipts",
+      "exit": 1,
+      "stdout": "@C@/receipts/@STAMP@/receipt.json\n",
+      "stderr": "",
+      "receipts_written": 1,
+      "receipt": {
+        "status": "failed",
+        "exit_status": 1,
+        "error": "service requires the two approved Cargo roots and a 48-hour filter",
+        "missing_unit_files": [
+          "/.config/systemd/user/jope-build-sweep.service",
+          "/.config/systemd/user/jope-build-sweep.timer"
+        ]
+      }
+    },
+    {
+      "name": "units-r6-home-slash-tilde",
+      "kind": "units",
+      "home": "@C@/~x",
+      "config": "bad",
+      "custody": "@C@/receipts",
+      "exit": 1,
+      "stdout": "@C@/receipts/@STAMP@/receipt.json\n",
+      "stderr": "",
+      "receipts_written": 1,
+      "receipt": {
+        "status": "failed",
+        "exit_status": 1,
+        "error": "service requires the two approved Cargo roots and a 48-hour filter",
+        "missing_unit_files": [
+          "@C@/~x/.config/systemd/user/jope-build-sweep.service",
+          "@C@/~x/.config/systemd/user/jope-build-sweep.timer"
+        ]
+      }
+    },
+    {
+      "name": "units-r6-home-relative",
+      "kind": "units",
+      "home": "rel/home",
+      "config": "bad",
+      "custody": "@C@/receipts",
+      "exit": 1,
+      "stdout": "@C@/receipts/@STAMP@/receipt.json\n",
+      "stderr": "",
+      "receipts_written": 1,
+      "receipt": {
+        "status": "failed",
+        "exit_status": 1,
+        "error": "service requires the two approved Cargo roots and a 48-hour filter",
+        "missing_unit_files": [
+          "rel/home/.config/systemd/user/jope-build-sweep.service",
+          "rel/home/.config/systemd/user/jope-build-sweep.timer"
+        ]
+      }
+    },
+    {
+      "name": "units-r6-home-empty",
+      "kind": "units",
+      "home": "",
+      "config": "bad",
+      "custody": "@C@/receipts",
+      "exit": 1,
+      "stdout": "@C@/receipts/@STAMP@/receipt.json\n",
+      "stderr": "",
+      "receipts_written": 1,
+      "receipt": {
+        "status": "failed",
+        "exit_status": 1,
+        "error": "service requires the two approved Cargo roots and a 48-hour filter",
+        "missing_unit_files": [
+          "/.config/systemd/user/jope-build-sweep.service",
+          "/.config/systemd/user/jope-build-sweep.timer"
+        ]
+      }
+    },
+    {
+      "name": "units-r6-home-not-utf8",
+      "kind": "units",
+      "home": "@C@/h@Xff@",
+      "config": "bad",
+      "custody": "@C@/receipts",
+      "exit": 1,
+      "stdout": "@C@/receipts/@STAMP@/receipt.json\n",
+      "stderr": "",
+      "receipts_written": 1,
+      "receipt": {
+        "status": "failed",
+        "exit_status": 1,
+        "error": "service requires the two approved Cargo roots and a 48-hour filter",
+        "missing_unit_files": [
+          "@C@/h�/.config/systemd/user/jope-build-sweep.service",
+          "@C@/h�/.config/systemd/user/jope-build-sweep.timer"
+        ]
+      }
+    },
+    {
+      "name": "custody-r6-link-not-utf8-en",
+      "kind": "custody",
+      "config": "bad",
+      "dirs": [
+        "@Xff@"
+      ],
+      "symlinks": [
+        {
+          "path": "fl",
+          "target": "@Xff@"
+        }
+      ],
+      "custody": "@C@/fl/receipts",
+      "locale": "en",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "report failed: 'utf-8' codec can't encode character '\\udcff' in position @C+1@: surrogates not allowed\n",
+      "receipts_written": 1,
+      "receipt": {
+        "status": "failed",
+        "exit_status": 1,
+        "error": "service requires the two approved Cargo roots and a 48-hour filter",
+        "missing_unit_files": [
+          "@C@/home/.config/systemd/user/jope-build-sweep.service",
+          "@C@/home/.config/systemd/user/jope-build-sweep.timer"
+        ]
+      }
+    },
+    {
+      "name": "custody-r6-link-not-utf8-cu",
+      "kind": "custody",
+      "config": "bad",
+      "dirs": [
+        "@Xff@"
+      ],
+      "symlinks": [
+        {
+          "path": "fl",
+          "target": "@Xff@"
+        }
+      ],
+      "custody": "@C@/fl/receipts",
+      "locale": "cu",
+      "exit": 1,
+      "stdout_hex": "4043402fff2f72656365697074732f405354414d50402f726563656970742e6a736f6e0a",
+      "stderr": "",
+      "receipts_written": 1,
+      "receipt": {
+        "status": "failed",
+        "exit_status": 1,
+        "error": "service requires the two approved Cargo roots and a 48-hour filter",
+        "missing_unit_files": [
+          "@C@/home/.config/systemd/user/jope-build-sweep.service",
+          "@C@/home/.config/systemd/user/jope-build-sweep.timer"
+        ]
+      }
+    },
+    {
+      "name": "custody-r6-link-not-utf8-good-config-en",
+      "kind": "custody",
+      "config": "good",
+      "dirs": [
+        "@Xff@"
+      ],
+      "symlinks": [
+        {
+          "path": "fl",
+          "target": "@Xff@"
+        }
+      ],
+      "custody": "@C@/fl/receipts",
+      "locale": "en",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "report failed: 'utf-8' codec can't encode character '\\udcff' in position @C+1@: surrogates not allowed\n",
+      "receipts_written": 1,
+      "receipt": {
+        "status": "failed",
+        "exit_status": 1,
+        "error": "service requires the two approved Cargo roots and a 48-hour filter",
+        "missing_unit_files": [
+          "@C@/home/.config/systemd/user/jope-build-sweep.service",
+          "@C@/home/.config/systemd/user/jope-build-sweep.timer"
+        ]
+      }
+    },
+    {
+      "name": "custody-r6-relative-from-not-utf8-cwd-en",
+      "kind": "custody",
+      "config": "bad",
+      "dirs": [
+        "@Xff@"
+      ],
+      "cwd": "@C@/@Xff@",
+      "custody": "receipts",
+      "locale": "en",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "report failed: 'utf-8' codec can't encode character '\\udcff' in position @C+1@: surrogates not allowed\n",
+      "receipts_written": 1,
+      "receipt": {
+        "status": "failed",
+        "exit_status": 1,
+        "error": "service requires the two approved Cargo roots and a 48-hour filter",
+        "missing_unit_files": [
+          "@C@/home/.config/systemd/user/jope-build-sweep.service",
+          "@C@/home/.config/systemd/user/jope-build-sweep.timer"
+        ]
+      }
+    },
+    {
+      "name": "custody-r6-argument-not-utf8-en",
+      "kind": "custody",
+      "config": "bad",
+      "dirs": [
+        "@Xff@"
+      ],
+      "custody": "@C@/@Xff@/receipts",
+      "locale": "en",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "report failed: 'utf-8' codec can't encode character '\\udcff' in position @C+1@: surrogates not allowed\n",
+      "receipts_written": 1,
+      "receipt": {
+        "status": "failed",
+        "exit_status": 1,
+        "error": "service requires the two approved Cargo roots and a 48-hour filter",
+        "missing_unit_files": [
+          "@C@/home/.config/systemd/user/jope-build-sweep.service",
+          "@C@/home/.config/systemd/user/jope-build-sweep.timer"
+        ]
+      }
+    },
+    {
+      "name": "custody-r6-argument-not-utf8-dotdot-cu",
+      "kind": "custody",
+      "config": "bad",
+      "dirs": [
+        "@Xff@"
+      ],
+      "custody": "@C@/@Xff@/../receipts",
+      "locale": "cu",
+      "exit": 1,
+      "stdout": "@C@/receipts/@STAMP@/receipt.json\n",
+      "stderr": "",
+      "receipts_written": 1,
+      "receipt": {
+        "status": "failed",
+        "exit_status": 1,
+        "error": "service requires the two approved Cargo roots and a 48-hour filter",
+        "missing_unit_files": [
+          "@C@/home/.config/systemd/user/jope-build-sweep.service",
+          "@C@/home/.config/systemd/user/jope-build-sweep.timer"
+        ]
+      }
+    },
+    {
+      "name": "custody-r6-config-via-not-utf8-link",
+      "kind": "custody",
+      "config": "bad",
+      "dirs": [
+        "@Xff@"
+      ],
+      "symlinks": [
+        {
+          "path": "cl",
+          "target": "@Xff@"
+        }
+      ],
+      "config_at": "cl/cfg.json",
+      "custody": "@C@/receipts",
+      "exit": 1,
+      "stdout": "@C@/receipts/@STAMP@/receipt.json\n",
+      "stderr": "",
+      "receipts_written": 1,
+      "receipt": {
+        "status": "failed",
+        "exit_status": 1,
+        "error": "service requires the two approved Cargo roots and a 48-hour filter",
+        "missing_unit_files": [
+          "@C@/home/.config/systemd/user/jope-build-sweep.service",
+          "@C@/home/.config/systemd/user/jope-build-sweep.timer"
+        ]
+      }
+    },
+    {
+      "name": "custody-r6-tools-in-not-utf8-dir",
+      "kind": "custody",
+      "config": "bad",
+      "tools": "ff",
+      "custody": "@C@/receipts",
+      "exit": 1,
+      "stdout": "@C@/receipts/@STAMP@/receipt.json\n",
+      "stderr": "",
+      "receipts_written": 1,
+      "receipt": {
+        "status": "failed",
+        "exit_status": 1,
+        "error": "service requires the two approved Cargo roots and a 48-hour filter",
+        "missing_unit_files": [
+          "@C@/home/.config/systemd/user/jope-build-sweep.service",
+          "@C@/home/.config/systemd/user/jope-build-sweep.timer"
+        ]
+      }
+    },
+    {
+      "name": "scan-r6-relative-root-from-not-utf8-cwd",
+      "kind": "scan-cwd",
+      "tree": [
+        {
+          "dir": "@Xff@/r/plain"
+        },
+        {
+          "file": "@Xff@/r/plain/f"
+        }
+      ],
+      "cwd": "@ROOT@/@Xff@",
+      "args": [
+        "r",
+        "--stale",
+        "99999999"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"completed_at\": \"@T@\",\n  \"root\": \"@ROOT@/\\udcff/r\",\n  \"stale_hours\": 99999999,\n  \"candidates\": [],\n  \"candidate_allocated_bytes_sum\": 0,\n  \"sum_may_double_count_hardlinks\": true,\n  \"report_only\": true,\n  \"complete\": true\n}\n",
+      "stderr": ""
+    },
+    {
+      "name": "scan-r6-relative-link-root-from-not-utf8-cwd",
+      "kind": "scan-cwd",
+      "tree": [
+        {
+          "dir": "@Xff@/real"
+        }
+      ],
+      "symlinks": [
+        {
+          "path": "@Xff@/lnk",
+          "target": "real"
+        }
+      ],
+      "cwd": "@ROOT@/@Xff@",
+      "args": [
+        "lnk",
+        "--stale",
+        "99999999"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "report failed: root must be an existing directory without symlink components: @ROOT@/\\udcff/lnk\n"
+    },
+    {
+      "name": "scan-r6-root-argument-not-utf8",
+      "kind": "scan-cwd",
+      "tree": [
+        {
+          "dir": "@Xff@/plain"
+        },
+        {
+          "file": "@Xff@/plain/f"
+        }
+      ],
+      "args": [
+        "@ROOT@/@Xff@",
+        "--stale",
+        "99999999"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"completed_at\": \"@T@\",\n  \"root\": \"@ROOT@/\\udcff\",\n  \"stale_hours\": 99999999,\n  \"candidates\": [],\n  \"candidate_allocated_bytes_sum\": 0,\n  \"sum_may_double_count_hardlinks\": true,\n  \"report_only\": true,\n  \"complete\": true\n}\n",
+      "stderr": ""
+    },
+    {
+      "name": "scan-r6-root-argument-not-utf8-delete",
+      "kind": "scan-cwd",
+      "tree": [
+        {
+          "dir": "@Xff@"
+        }
+      ],
+      "args": [
+        "@ROOT@/@Xff@",
+        "--delete"
+      ],
+      "exit": 2,
+      "stdout": "",
+      "stderr": "Deletion is disabled. Use a logged preservation and independent verification batch.\n"
+    },
+    {
+      "name": "scan-r6-control",
+      "kind": "scan-cwd",
+      "tree": [
+        {
+          "dir": "r/plain"
+        },
+        {
+          "file": "r/plain/f"
+        }
+      ],
+      "args": [
+        "@ROOT@/r",
+        "--stale",
+        "99999999"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"completed_at\": \"@T@\",\n  \"root\": \"@ROOT@/r\",\n  \"stale_hours\": 99999999,\n  \"candidates\": [],\n  \"candidate_allocated_bytes_sum\": 0,\n  \"sum_may_double_count_hardlinks\": true,\n  \"report_only\": true,\n  \"complete\": true\n}\n",
+      "stderr": ""
+    }
+  ]
+}

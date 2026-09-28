@@ -64,6 +64,7 @@ impl Fixture {
             "demo",
             path_map,
         )
+        .map(PathBuf::from)
     }
 
     fn default_select(&self) -> Result<PathBuf, String> {
