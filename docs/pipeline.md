@@ -149,7 +149,9 @@ stale `round-NNN/`, `control/` or `lineage.json`, or an unrelated file) is refus
 is written, not when the round that would write over it is reached. A refused command leaves
 nothing behind, so the corrected command can be re-run into the same `--output`, or into it once
 emptied. `jope pipeline run` likewise makes each of these that applies to one run before it
-creates its `--output`.
+creates its `--output`, and refuses an `--output` that already holds an entry it writes
+(`receipt.json`, `prepared`, `search` or `emit`), a dangling symbolic link included; it leaves any
+other file there alone.
 
 `lineage.json` (`jope.pipeline-lineage/v1`) is rewritten atomically and fsynced after each
 completed round: per round the `selected_genome` and program sha256, the mean held-out RMSE, R^2
