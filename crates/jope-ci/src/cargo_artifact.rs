@@ -238,14 +238,54 @@ pub fn executable(
         path = python::PosixPath::parse(&host.to_string_lossy()).joinpath(&relative);
     }
     // `path.is_file()`, `os.access(path, os.X_OK)` and `path.resolve()` of `str(path)`, which the
-    // refusal prints.
+    // refusal prints. `is_file()` raised on an error other than a missing path (a directory that
+    // may not be searched), which the Python caught and printed as the `OSError`; so does this.
+    // `os.access` answered `False` on any error, which refuses.
     let file = PathBuf::from(path.to_string());
-    if !file.is_file() || access(&file, AccessFlags::X_OK).is_err() {
+    let is_file =
+        python::path_is_file(&file).map_err(|e| python::os_error(&e, &path.to_string()))?;
+    if !is_file || access(&file, AccessFlags::X_OK).is_err() {
         return Err(format!(
             "Cargo executable is missing or not executable: {path}"
         ));
     }
-    file.canonicalize().map_err(|e| e.to_string())
+    file.canonicalize()
+        .map_err(|e| python::os_error(&e, &path.to_string()))
+}
+
+/// The TOML value types the port reads in the nextest config: those the committed
+/// `.config/nextest.toml` uses (tables, inline tables, strings, integers, booleans). Any other
+/// refuses before anything is written, naming the key (stricter than the Python, which read them):
+///
+/// - a date, time or datetime of any form: `tomllib` and the `toml` crate disagree on which are
+///   valid (the crate reads a seconds field of 60 and the year 0000, which `tomllib` refused), so
+///   the port reads none rather than one `tomllib` refused;
+/// - a float or an array (an array of tables included): no committed configuration holds one, so
+///   their readings were never compared with `tomllib`'s.
+fn committed_types_only(table: &toml::Table, at: &str) -> Result<(), String> {
+    for (key, value) in table {
+        let at = if at.is_empty() {
+            py::json_str(key)
+        } else {
+            format!("{at}.{}", py::json_str(key))
+        };
+        let refused = match value {
+            toml::Value::String(_) | toml::Value::Integer(_) | toml::Value::Boolean(_) => None,
+            toml::Value::Table(inner) => {
+                committed_types_only(inner, &at)?;
+                None
+            }
+            toml::Value::Datetime(_) => Some("a date, time or datetime"),
+            toml::Value::Float(_) => Some("a float"),
+            toml::Value::Array(_) => Some("an array"),
+        };
+        if let Some(kind) = refused {
+            return Err(format!(
+                "nextest config {at}: {kind} is not read by this port (the committed configuration uses only tables, strings, integers and booleans)"
+            ));
+        }
+    }
+    Ok(())
 }
 
 /// Write `output` (which must not exist): `store = { dir = "<target>/nextest" }` followed by
@@ -258,7 +298,9 @@ pub fn executable(
 /// (at line 1, column 1)`; any other TOML error is reported in the `toml` crate's words, not
 /// `tomllib`'s), refuse a `store`, create the output (`open("x")`), and only then read `target`
 /// as a path. A `target` that is not a string crashed the Python there (`TypeError`), after it had
-/// created the output; the port refuses at the same point and leaves the same empty file.
+/// created the output; the port refuses at the same point and leaves the same empty file. After
+/// the `store` check, a value of a type the committed configuration does not use refuses
+/// (stricter; see [`committed_types_only`]), before any output exists.
 pub fn nextest_config(source: &Path, output: &Path, target: &Value) -> Result<(), String> {
     let text = read_text(source)?;
     if text.starts_with('\u{feff}') {
@@ -270,6 +312,7 @@ pub fn nextest_config(source: &Path, output: &Path, target: &Value) -> Result<()
             "nextest already configures a store; reconcile it before relocating reports".into(),
         );
     }
+    committed_types_only(&table, "")?;
     let output_name = python::PosixPath::parse(&output.to_string_lossy()).to_string();
     let mut file = OpenOptions::new()
         .write(true)
