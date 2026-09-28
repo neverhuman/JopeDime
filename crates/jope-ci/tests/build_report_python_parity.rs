@@ -17,6 +17,12 @@
 //! `--stale` values; both exit 2 and print nothing on stdout. The report also takes the approved
 //! roots as `--approved-root` arguments (from `deploy/maintenance/jope-build-report.sh`) where the
 //! Python held them as a constant.
+//!
+//! `negative-r5.json` holds round five (the fail-closed sweep), captured from the same Python:
+//! scans of a directory that may be listed but not searched, links that are never entered, a
+//! relative root from a deleted working directory, and reports whose unit files under `HOME` cannot
+//! be inspected (`scans_match_round_five`, `scan_from_a_deleted_working_directory_matches_round_five`,
+//! and the ignored `units_match_round_five`).
 
 use serde_json::Value;
 use std::fs;
@@ -390,6 +396,207 @@ fn scans_match_round_three() {
     replay_scans(&doc, 6);
 }
 
+fn round_five() -> Value {
+    let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/fixtures/python-parity/build-report/negative-r5.json");
+    let doc: Value = serde_json::from_str(&fs::read_to_string(path).unwrap()).unwrap();
+    assert!(doc["source"].is_string() && doc["capture"].is_string());
+    assert_eq!(
+        doc["cases"].as_array().unwrap().len(),
+        16,
+        "every captured case is replayed"
+    );
+    doc
+}
+
+/// Round five (`build-report/negative-r5.json`, the fail-closed sweep): a directory that may be
+/// listed but not searched. `os.walk` entered it by its `d_type` and raised on its subdirectory;
+/// the port took the subdirectory for a file because its `stat` failed and scanned on. Links into
+/// a directory that cannot be searched, dangling links and loops are listed, never entered, on
+/// both sides.
+#[test]
+fn scans_match_round_five() {
+    replay_scans(&round_five(), 8);
+}
+
+/// Round five: `scan` of a relative root from a working directory that no longer exists.
+/// `os.path.abspath` raised (`os.getcwd()`); the port took the working directory to be `/` and
+/// scanned the root spelled from there. The relative root names the case directory from `/`.
+#[test]
+fn scan_from_a_deleted_working_directory_matches_round_five() {
+    let doc = round_five();
+    let case = doc["cases"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|c| c["kind"] == "scan-from-deleted-cwd")
+        .unwrap();
+    let temp = tempfile::Builder::new()
+        .prefix("build-report-cwd-")
+        .tempdir()
+        .unwrap();
+    let root = temp.path().join("case").join("x");
+    fs::create_dir_all(&root).unwrap();
+    let root = temp.path().join("case").canonicalize().unwrap();
+    let gone = temp.path().join("gone");
+    fs::create_dir(&gone).unwrap();
+    let relative = root.to_str().unwrap().trim_start_matches('/').to_owned();
+    let output = Command::new("/bin/sh")
+        .arg("-c")
+        .arg("cd \"$1\" && rmdir \"$1\" && shift && exec \"$@\"")
+        .arg("sh")
+        .arg(&gone)
+        .arg(env!("CARGO_BIN_EXE_jope-ci"))
+        .args(["build-report", "scan", &relative, "--stale", "99999999"])
+        .output()
+        .unwrap();
+    let text =
+        |bytes: &[u8]| String::from_utf8_lossy(bytes).replace(root.to_str().unwrap(), "@ROOT@");
+    assert_eq!(
+        (
+            i64::from(output.status.code().unwrap()),
+            text(&output.stdout),
+            text(&output.stderr)
+        ),
+        (
+            case["exit"].as_i64().unwrap(),
+            case["stdout"].as_str().unwrap().to_owned(),
+            case["stderr"].as_str().unwrap().to_owned()
+        )
+    );
+}
+
+/// Round five: the unit files under `Path.home()`. `path.is_file()` raised in a unit directory
+/// that may not be searched, failing the report; the port recorded the units as missing and went
+/// on (to a successful report, given a configuration it accepts: `units-r5-no-search-good-config`).
+/// `HOME`'s spelling (a trailing or doubled separator, empty) gives the Python's paths. Same
+/// environment as the other receipt replays; each case runs with the case's own `HOME` and its
+/// `a` and `b` as the approved roots.
+#[test]
+#[ignore = "needs JOPE_MAINTENANCE_SCRATCH outside /tmp and Git working trees"]
+fn units_match_round_five() {
+    let doc = round_five();
+    let scratch = PathBuf::from(
+        std::env::var("JOPE_MAINTENANCE_SCRATCH")
+            .expect("set JOPE_MAINTENANCE_SCRATCH to a directory outside /tmp and working trees"),
+    )
+    .join("python-parity-units-r5");
+    fs::create_dir_all(scratch.parent().unwrap()).unwrap();
+    fs::create_dir(&scratch).expect("a fresh scratch directory");
+    let scratch = scratch.canonicalize().unwrap();
+    let tools = repo().join("deploy/maintenance");
+    let mut failures = vec![];
+    let mut replayed = 0;
+    for case in doc["cases"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|c| c["kind"] == "units")
+    {
+        let name = case["name"].as_str().unwrap();
+        let c = scratch.join(name);
+        for dir in ["home/.config/systemd/user", "a", "b"] {
+            fs::create_dir_all(c.join(dir)).unwrap();
+        }
+        let c_text = c.to_str().unwrap().to_owned();
+        let config = match case["config"].as_str().unwrap() {
+            "bad" => doc["bad_config"].as_str().unwrap().to_owned(),
+            _ => format!(
+                r#"{{"cargo_roots": ["{c_text}/a", "{c_text}/b"], "stale_hours": 48, "measurement_roots": []}}"#
+            ),
+        };
+        fs::write(c.join("cfg.json"), config).unwrap();
+        let modes = |restore: bool| {
+            for entry in case["modes"].as_array().unwrap() {
+                let mode = if restore {
+                    0o755
+                } else {
+                    u32::from_str_radix(entry["mode"].as_str().unwrap(), 8).unwrap()
+                };
+                fs::set_permissions(
+                    c.join(entry["path"].as_str().unwrap()),
+                    fs::Permissions::from_mode(mode),
+                )
+                .unwrap();
+            }
+        };
+        modes(false);
+        let searchable = !case["modes"].as_array().unwrap().is_empty()
+            && fs::metadata(c.join("home/.config/systemd/user/jope-build-sweep.service"))
+                .is_err_and(|e| e.kind() == std::io::ErrorKind::NotFound);
+        let output = Command::new(env!("CARGO_BIN_EXE_jope-ci"))
+            .args(["build-report", "report", "--config"])
+            .arg(c.join("cfg.json"))
+            .arg("--custody")
+            .arg(c.join("receipts"))
+            .arg("--tools-dir")
+            .arg(&tools)
+            .arg("--approved-root")
+            .arg(c.join("a"))
+            .arg("--approved-root")
+            .arg(c.join("b"))
+            .current_dir(&c)
+            .env(
+                "HOME",
+                case["home"].as_str().unwrap().replace("@C@", &c_text),
+            )
+            .env_remove("INVOCATION_ID")
+            .output()
+            .unwrap();
+        modes(true);
+        if searchable {
+            eprintln!("{name}: skipped, this user may search a directory of that mode");
+            continue;
+        }
+        let stdout = String::from_utf8_lossy(&output.stdout).into_owned();
+        let stamp = stdout
+            .rsplit('/')
+            .nth(1)
+            .filter(|s| s.ends_with('Z') && s.len() == 23)
+            .map(str::to_owned);
+        let normalise = |text: &str| {
+            let text = text.replace(&c_text, "@C@");
+            match &stamp {
+                Some(stamp) => text.replace(stamp.as_str(), "@STAMP@"),
+                None => text,
+            }
+        };
+        let mut why = vec![];
+        if i64::from(output.status.code().unwrap()) != case["exit"].as_i64().unwrap() {
+            why.push(format!("exit {:?}", output.status.code()));
+        }
+        if normalise(&stdout) != case["stdout"].as_str().unwrap() {
+            why.push(format!("stdout {stdout:?}"));
+        }
+        let stderr = normalise(&String::from_utf8_lossy(&output.stderr));
+        if stderr != case["stderr"].as_str().unwrap() {
+            why.push(format!("stderr {stderr:?}"));
+        }
+        let run = Path::new(stdout.trim_end()).parent().unwrap();
+        let text = fs::read_to_string(run.join("receipt.json")).unwrap();
+        let receipt: Value = serde_json::from_str(&normalise(&text)).unwrap();
+        let kept: Value = ["status", "exit_status", "error", "missing_unit_files"]
+            .iter()
+            .map(|k| {
+                (
+                    k.to_string(),
+                    receipt.get(*k).cloned().unwrap_or(Value::Null),
+                )
+            })
+            .collect::<serde_json::Map<_, _>>()
+            .into();
+        if kept != case["receipt"] {
+            why.push(format!("receipt {kept}, the Python {}", case["receipt"]));
+        }
+        if !why.is_empty() {
+            failures.push(format!("{name}: {}", why.join("; ")));
+        }
+        replayed += 1;
+    }
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
+    assert!(replayed >= 4, "replayed {replayed}");
+}
+
 /// Replay the scan cases of a round fixture: each tree built under a fresh root, `scan` run on the
 /// case's arguments, and the exit status, stdout and stderr compared (host-dependent fields blanked
 /// on both sides).
@@ -436,6 +643,29 @@ fn replay_scans(doc: &Value, count: usize) {
             }
         }
         let root_text = root.to_str().unwrap();
+        // Round five: more directories, symlinks (`@ROOT@` in a target replaced), and the modes
+        // the case ran under, set back to 755 after the run.
+        for dir in case["dirs"].as_array().into_iter().flatten() {
+            fs::create_dir_all(root.join(dir.as_str().unwrap())).unwrap();
+        }
+        for link in case["symlinks"].as_array().into_iter().flatten() {
+            let target = link["target"]
+                .as_str()
+                .unwrap()
+                .replace("@ROOT@", root_text);
+            symlink(target, root.join(link["path"].as_str().unwrap())).unwrap();
+        }
+        let modes = |restore: bool| {
+            for entry in case["modes"].as_array().into_iter().flatten() {
+                let mode = if restore {
+                    0o755
+                } else {
+                    u32::from_str_radix(entry["mode"].as_str().unwrap(), 8).unwrap()
+                };
+                let path = root.join(entry["path"].as_str().unwrap());
+                fs::set_permissions(path, fs::Permissions::from_mode(mode)).unwrap();
+            }
+        };
         let args: Vec<String> = case["args"]
             .as_array()
             .unwrap()
@@ -444,7 +674,20 @@ fn replay_scans(doc: &Value, count: usize) {
             .collect();
         let mut argv = vec!["scan"];
         argv.extend(args.iter().map(String::as_str));
+        modes(false);
+        // A user who may search anything (root) cannot reproduce a refused search.
+        let privileged = case["modes"].as_array().into_iter().flatten().any(|entry| {
+            let dir = root.join(entry["path"].as_str().unwrap());
+            fs::read_dir(&dir).is_ok_and(|mut entries| {
+                entries.all(|e| e.is_ok_and(|e| fs::symlink_metadata(e.path()).is_ok()))
+            })
+        });
         let output = jope_ci(&argv);
+        modes(true);
+        if privileged {
+            eprintln!("{name}: skipped, this user may search a directory of that mode");
+            continue;
+        }
         let stdout =
             blank_scan(&String::from_utf8_lossy(&output.stdout).replace(root_text, "@ROOT@"));
         let stderr =

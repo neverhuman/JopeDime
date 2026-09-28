@@ -31,7 +31,7 @@ fn scratch(name: &str) -> PathBuf {
         std::env::var("JOPE_MAINTENANCE_SCRATCH")
             .expect("set JOPE_MAINTENANCE_SCRATCH to a directory outside /tmp and working trees"),
     );
-    let base = jope_ci::build_report::abspath(&base);
+    let base = jope_ci::build_report::abspath(&base).unwrap();
     assert!(!base.starts_with("/tmp"), "fixtures must be outside /tmp");
     let dir = base.join(name);
     fs::create_dir_all(dir.parent().unwrap()).unwrap();

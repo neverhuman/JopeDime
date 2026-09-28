@@ -86,7 +86,15 @@ fn resolve_failure(error: ResolveError) -> Failure {
             "Symlink loop from {}",
             crate::py::os_repr(path.as_os_str())
         )),
+        ResolveError::Cwd(error) => Failure::new(py::os_error_bare(&error)),
     }
+}
+
+/// `os.path.abspath(path)`: a relative path from a working directory that cannot be read (it was
+/// deleted) refuses as `os.getcwd()` raised (`[Errno 2] No such file or directory`), instead of
+/// being taken relative to `/`.
+fn absolute(path: &Path) -> Outcome<PathBuf> {
+    abspath(path).map_err(|e| Failure::new(py::os_error_bare(&e)))
 }
 
 /// The UTC clock as `datetime.now(timezone.utc)` prints it: `isoformat()` and the receipt stamp
@@ -158,10 +166,20 @@ pub fn never_interrupted() -> Outcome<()> {
 pub type Visit<'a> = &'a mut dyn FnMut(&Path, &mut Vec<OsString>, &[OsString]) -> Outcome<()>;
 
 /// `os.walk(root, followlinks=False, onerror=raise)` after refusing a root with symlink
-/// components; `visit` sees each directory, its subdirectory names (symlinks to directories
-/// included, as `os.walk` lists them; prune by retaining) and its other entries.
+/// components; `visit` sees each directory, its subdirectory names (prune by retaining) and its
+/// other entries.
+///
+/// A subdirectory is an entry whose own type is a directory (`d_type`, else `lstat`), as
+/// `os.walk` read it for a directory: so a directory that may be listed but not searched is still
+/// entered, and entering its subdirectories fails as `os.walk`'s `scandir` raised (it was once
+/// taken for a file, because its `stat` failed, and silently not entered). A symlink is listed with
+/// the other entries and never entered: `os.walk` listed a link to a directory among the
+/// subdirectories (and one it could not `stat` among the files) but never entered it either, and
+/// every caller `lstat`s the names of both lists alike and asks nothing else of a link, so where
+/// a link is listed is not observable; nothing is followed through a link, so no error is
+/// swallowed. Any error listing or typing an entry refuses.
 pub fn walk(root: &Path, interrupt: Interrupt<'_>, visit: Visit<'_>) -> Outcome<()> {
-    let root = abspath(root);
+    let root = absolute(root)?;
     let resolved = py::resolve(&root, true).map_err(resolve_failure)?;
     // `root.resolve(strict=True) != root`: pathlib compares the spellings, and `abspath` keeps
     // POSIX's distinct `//` root where `realpath` resolves it to `/`, so the Python refused such a
@@ -181,17 +199,20 @@ pub fn walk(root: &Path, interrupt: Interrupt<'_>, visit: Visit<'_>) -> Outcome<
         for entry in entries {
             let entry = entry.map_err(|e| os_error(&e, &directory))?;
             let name = entry.file_name();
-            if entry.path().is_dir() {
+            let kind = entry.file_type().map_err(|e| os_error(&e, &entry.path()))?;
+            if kind.is_dir() {
                 dirs.push(name);
             } else {
                 files.push(name);
             }
         }
         visit(&directory, &mut dirs, &files)?;
-        // Depth first in listing order, as os.walk recurses; directory symlinks are not entered.
+        // Depth first in listing order, as os.walk recurses; `os.walk` checked `islink` before
+        // entering, so an entry replaced by a symlink since it was listed is not entered, and one
+        // that can no longer be inspected refuses.
         for name in dirs.iter().rev() {
             let child = directory.join(name);
-            if !fs::symlink_metadata(&child).is_ok_and(|m| m.file_type().is_symlink()) {
+            if !lstat(&child)?.file_type().is_symlink() {
                 stack.push(child);
             }
         }
@@ -304,7 +325,7 @@ pub fn scan(
     interrupt: Interrupt<'_>,
     measure: &dyn Fn(&Path, bool) -> Outcome<u64>,
 ) -> Outcome<Value> {
-    let root = abspath(root);
+    let root = absolute(root)?;
     let mut candidates: std::collections::BTreeSet<PathBuf> = Default::default();
     walk(&root, interrupt, &mut |directory, dirs, files| {
         dirs.retain(|d| d != ".git");
@@ -474,6 +495,18 @@ pub fn report(
     interrupt: Interrupt<'_>,
 ) -> Outcome<i32> {
     let output = custody_output(custody)?;
+    // `os.environ.get("INVOCATION_ID")` into the receipt: a value that is not UTF-8 (which Python
+    // held surrogate-escaped) cannot be written by this port's JSON, so it refuses before anything
+    // is created (stricter); it was never read as absent.
+    let invocation_id = match std::env::var("INVOCATION_ID") {
+        Ok(id) => Value::from(id),
+        Err(std::env::VarError::NotPresent) => Value::Null,
+        Err(std::env::VarError::NotUnicode(_)) => {
+            return Err(Failure::new(
+                "INVOCATION_ID is not UTF-8; its surrogate-escaped value cannot be represented",
+            ))
+        }
+    };
     fs::DirBuilder::new()
         .recursive(true)
         .mode(0o700)
@@ -498,10 +531,7 @@ pub fn report(
             Value::from(output.to_string_lossy().into_owned()),
         ),
         ("missing_unit_files", Value::List(vec![])),
-        (
-            "invocation_id",
-            std::env::var("INVOCATION_ID").map_or(Value::Null, Value::from),
-        ),
+        ("invocation_id", invocation_id),
     ]
     .into_iter()
     .collect();
@@ -555,6 +585,30 @@ fn explicit_root(text: &str) -> Outcome<(PosixPath, PathBuf)> {
     Ok((spelled, resolved))
 }
 
+/// `Path.home() / ".config/systemd/user"` (Python 3.12: `expanduser("~")` is `$HOME` without its
+/// trailing separators, or `/` when that leaves nothing), spelled as pathlib spells it (repeated
+/// separators and `.` dropped, POSIX's `//` root kept). An unset `HOME`, for which Python read the
+/// password database, and one that is not UTF-8, which it held surrogate-escaped, refuse
+/// (stricter); neither is ever read as an empty or default directory.
+fn units_dir() -> Outcome<PosixPath> {
+    let home = match std::env::var("HOME") {
+        Ok(home) => home,
+        Err(std::env::VarError::NotPresent) => {
+            return Err(Failure::new(
+                "HOME is not set; the unit files under it cannot be located",
+            ))
+        }
+        Err(std::env::VarError::NotUnicode(_)) => {
+            return Err(Failure::new(
+                "HOME is not UTF-8; its surrogate-escaped value cannot be represented",
+            ))
+        }
+    };
+    let trimmed = home.trim_end_matches('/');
+    let home = if trimmed.is_empty() { "/" } else { trimmed };
+    Ok(PosixPath::parse(home).join(".config/systemd/user"))
+}
+
 /// `str(args.custody)` (`--custody` is parsed with `type=Path`): the argument as pathlib spells it.
 fn custody_argument(custody: &Path) -> String {
     PosixPath::parse(&custody.to_string_lossy()).to_string()
@@ -587,17 +641,16 @@ fn run_report(
         tools.join("cargo-build-dirs.sh"),
         tools.join("jope-build-report.sh"),
     ];
-    let units =
-        PathBuf::from(std::env::var("HOME").unwrap_or_default()).join(".config/systemd/user");
-    for path in [
-        units.join("jope-build-sweep.service"),
-        units.join("jope-build-sweep.timer"),
-    ] {
-        if path.is_file() {
+    let units = units_dir()?;
+    for name in ["jope-build-sweep.service", "jope-build-sweep.timer"] {
+        // `path.is_file()`: a missing unit is recorded as missing; any other error (a unit
+        // directory that may not be searched) fails the run, as the Python raised it.
+        let spelled = units.join(name).to_string();
+        let path = PathBuf::from(&spelled);
+        if py::path_is_file(&path).map_err(|e| os_error(&e, &path))? {
             paths.push(path);
         } else {
-            list_mut(receipt, "missing_unit_files")
-                .push(Value::from(path.to_string_lossy().into_owned()));
+            list_mut(receipt, "missing_unit_files").push(Value::from(spelled));
         }
     }
     for path in &paths {
@@ -805,18 +858,119 @@ mod tests {
         }
     }
 
+    /// The libtest name of a test in this module (its path without the crate).
+    fn test_name(name: &str) -> String {
+        let module = module_path!().split_once("::").expect("a crate path").1;
+        format!("{module}::{name}")
+    }
+
     #[test]
     fn abspath_is_lexical() {
-        assert_eq!(abspath(Path::new("/a/b/../c/./d")), PathBuf::from("/a/c/d"));
-        assert_eq!(abspath(Path::new("/..")), PathBuf::from("/"));
+        let abs = |p: &str| abspath(Path::new(p)).unwrap();
+        assert_eq!(abs("/a/b/../c/./d"), PathBuf::from("/a/c/d"));
+        assert_eq!(abs("/.."), PathBuf::from("/"));
         // `posixpath.normpath` keeps exactly two leading slashes; `Path`'s `==` would not see them.
-        let spelled = |p: &str| abspath(Path::new(p)).into_os_string();
+        let spelled = |p: &str| abs(p).into_os_string();
         assert_eq!(spelled("//a/./b//c/"), "//a/b/c");
         assert_eq!(spelled("//a/.."), "//");
         assert_eq!(spelled("///a/b"), "/a/b");
         assert_eq!(spelled("////"), "/");
         let cwd = std::env::current_dir().unwrap();
-        assert_eq!(abspath(Path::new("x/../y")), cwd.join("y"));
+        assert_eq!(abs("x/../y"), cwd.join("y"));
+    }
+
+    /// A relative scan root or custody from a working directory that no longer exists refuses as
+    /// `os.getcwd()` raised; it is never taken relative to `/`. Run in a child process, whose
+    /// working directory is removed under it, so this test's own process keeps its directory.
+    #[test]
+    fn a_deleted_working_directory_refuses_relative_paths() {
+        if std::env::var_os("JOPE_CI_DELETED_CWD_CHILD").is_some() {
+            let failure = |r: Outcome<Value>| r.map(|_| ()).unwrap_err().message;
+            let scanned = failure(scan(Path::new("x"), None, &never_interrupted, &|_, _| {
+                Ok(0)
+            }));
+            let custody = custody_output(Path::new("receipts")).unwrap_err().message;
+            println!("scan={scanned}\ncustody={custody}");
+            return;
+        }
+        let temp = tempfile::tempdir().unwrap();
+        let gone = temp.path().join("gone");
+        std::fs::create_dir(&gone).unwrap();
+        let exe = std::env::current_exe().unwrap();
+        let script = format!(
+            "cd '{}' && rmdir '{}' && exec '{}' --exact --nocapture {}",
+            gone.display(),
+            gone.display(),
+            exe.display(),
+            test_name("a_deleted_working_directory_refuses_relative_paths")
+        );
+        let output = std::process::Command::new("/bin/sh")
+            .args(["-c", &script])
+            .env("JOPE_CI_DELETED_CWD_CHILD", "1")
+            .output()
+            .unwrap();
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        assert!(output.status.success(), "{stdout}");
+        assert!(
+            stdout.contains("scan=[Errno 2] No such file or directory\n"),
+            "{stdout}"
+        );
+        assert!(
+            stdout.contains("custody=[Errno 2] No such file or directory\n"),
+            "{stdout}"
+        );
+    }
+
+    /// `Path.home() / ".config/systemd/user"` as pathlib spells it; an unset or undecodable `HOME`
+    /// refuses (checked in a child process, which owns its environment).
+    #[test]
+    fn unit_files_are_located_as_path_home_located_them() {
+        if let Some(case) = std::env::var_os("JOPE_CI_UNITS_CHILD") {
+            let located = units_dir().map(|p| p.to_string()).map_err(|e| e.message);
+            println!("{}={located:?}", case.to_string_lossy());
+            return;
+        }
+        let exe = std::env::current_exe().unwrap();
+        let run = |case: &str, home: Option<&std::ffi::OsStr>| {
+            let mut command = std::process::Command::new(&exe);
+            command
+                .args(["--exact", "--nocapture"])
+                .arg(test_name(
+                    "unit_files_are_located_as_path_home_located_them",
+                ))
+                .env("JOPE_CI_UNITS_CHILD", case);
+            match home {
+                Some(home) => command.env("HOME", home),
+                None => command.env_remove("HOME"),
+            };
+            String::from_utf8_lossy(&command.output().unwrap().stdout).into_owned()
+        };
+        use std::os::unix::ffi::OsStrExt;
+        for (case, home, want) in [
+            ("plain", Some("/h/u"), r#"Ok("/h/u/.config/systemd/user")"#),
+            (
+                "trailing",
+                Some("/h/u//"),
+                r#"Ok("/h/u/.config/systemd/user")"#,
+            ),
+            (
+                "inner",
+                Some("/h//./u"),
+                r#"Ok("/h/u/.config/systemd/user")"#,
+            ),
+            (
+                "double-root",
+                Some("//h"),
+                r#"Ok("//h/.config/systemd/user")"#,
+            ),
+            ("empty", Some(""), r#"Ok("/.config/systemd/user")"#),
+            ("unset", None, "Err(\"HOME is not set"),
+        ] {
+            let out = run(case, home.map(std::ffi::OsStr::new));
+            assert!(out.contains(&format!("{case}={want}")), "{case}: {out}");
+        }
+        let out = run("bytes", Some(std::ffi::OsStr::from_bytes(b"/h/\xff")));
+        assert!(out.contains("bytes=Err(\"HOME is not UTF-8"), "{out}");
     }
 
     /// A root spelled with POSIX's distinct `//` root: `resolve(strict=True)` spells it `/`, so the

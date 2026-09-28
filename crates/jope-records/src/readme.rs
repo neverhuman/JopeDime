@@ -990,17 +990,27 @@ fn load_samecut(p: &Paths) -> Result<SameCut> {
     if !at(&deep, "corrections")?.is_null() || at(&deep, "excluded_rows")? != &Value::Int(0) {
         return refuse(format!("{rel}: the same-cut ladder applies no corrections"));
     }
-    let mut report_paths: Vec<PathBuf> = std::fs::read_dir(p.at(&samecut_path("reports")))
-        .map_err(|e| Error::io(&p.at(&samecut_path("reports")), e))?
-        .flatten()
-        .map(|entry| entry.path())
-        // `Path.glob("*.bench-report.json")`: pathlib's `*` matches a leading dot too.
-        .filter(|path| {
-            path.file_name()
-                .and_then(|n| n.to_str())
-                .is_some_and(|n| n.ends_with(".bench-report.json"))
-        })
-        .collect();
+    // `sorted(reports.glob("*.bench-report.json"))`: every entry whose name matches, of any kind
+    // (pathlib's `*` matches a leading dot too, and a name that is not UTF-8), each then read as
+    // JSON. A directory or an entry that cannot be listed refuses (pathlib listed nothing and the
+    // Python refused with "no reports"). A matching name that is not UTF-8 refuses (stricter): the
+    // Python read that report too, and the port's paths and messages are text.
+    let reports_dir = p.at(&samecut_path("reports"));
+    let mut report_paths: Vec<PathBuf> = vec![];
+    for entry in std::fs::read_dir(&reports_dir).map_err(|e| Error::io(&reports_dir, e))? {
+        let path = entry.map_err(|e| Error::io(&reports_dir, e))?.path();
+        let name = path.file_name().expect("a listed entry has a name");
+        if !std::os::unix::ffi::OsStrExt::as_bytes(name).ends_with(b".bench-report.json") {
+            continue;
+        }
+        if name.to_str().is_none() {
+            return Err(Error::Shape(format!(
+                "{rel}: report {} is not UTF-8 (the Python read it as one of the reports)",
+                path.to_string_lossy()
+            )));
+        }
+        report_paths.push(path);
+    }
     report_paths.sort();
     let reports: Vec<Value> = report_paths
         .iter()
@@ -1244,10 +1254,16 @@ fn render_samecut(p: &Paths) -> Result<String> {
     ordered.sort_by(|a, b| a.0.cmp(b.0));
     for (_, r) in ordered {
         let methods = items(at(r, "methods")?, &format!("{SAMECUT} report methods"))?;
-        let s_index = methods
-            .iter()
-            .position(|m| kind_of(m).is_ok_and(|k| k == "search"))
-            .ok_or_else(|| shape("search method"))?;
+        // `next(m for m in r["methods"] if m["method"]["kind"] == "search")`: every method before
+        // the first search one is read, and one that cannot be read refuses.
+        let mut s_index = None;
+        for (i, m) in methods.iter().enumerate() {
+            if kind_of(m)? == "search" {
+                s_index = Some(i);
+                break;
+            }
+        }
+        let s_index = s_index.ok_or_else(|| shape("search method"))?;
         let sm = &methods[s_index];
         // "Best" is the ladder's own rule: the lowest pooled RMSE among the finalists that
         // scored, ties by method id: `min(scored, key=lambda m: (rmse, id))`, which keeps the
@@ -1539,7 +1555,9 @@ pub fn required_inputs() -> Vec<String> {
 pub fn run(root: &Path, write: bool) -> Result<(String, bool)> {
     for input in required_inputs() {
         let path = root.join(&input);
-        if !path.exists() {
+        // `p.exists()`: a missing input refuses with the Python's message; any other error (a
+        // directory that may not be searched) refuses as the Python raised it.
+        if !py::path_exists(&path).map_err(|e| Error::io(&path, e))? {
             return Err(Error::Invalid(format!(
                 "missing required input: {}",
                 path.display()

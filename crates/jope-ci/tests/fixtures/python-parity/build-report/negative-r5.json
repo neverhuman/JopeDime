@@ -1,0 +1,438 @@
+{
+  "source": "p1-sweep5-capture-20260928T065333Z",
+  "capture": "bash cap5.sh p1-sweep5-capture-20260928T065333Z (Python from git show f46a9048fbb2697d6d1f4463a688083ea9dfcce1:<tool>, unmodified, in a scratch root)",
+  "tool": "deploy/maintenance/jope_report.py",
+  "normalisation": "scan: the case directory is written @ROOT@ and completed_at @T@. units: the case directory is written @C@ and the receipt stamp @STAMP@; the receipt keeps status, exit_status, error and missing_unit_files; bad is the configuration below, good names @C@/a and @C@/b (the port is given them as its approved roots)",
+  "bad_config": "{\"cargo_roots\": [\"/nonexistent-approved-a\", \"/nonexistent-approved-b\"], \"stale_hours\": 48, \"measurement_roots\": []}",
+  "cases": [
+    {
+      "kind": "scan",
+      "name": "scan-r5-control",
+      "tree": [
+        {
+          "dir": "root/a/s/t"
+        },
+        {
+          "dir": "root/b"
+        },
+        {
+          "file": "root/a/f"
+        },
+        {
+          "file": "root/a/s/g"
+        }
+      ],
+      "args": [
+        "@ROOT@/root",
+        "--stale",
+        "99999999"
+      ],
+      "modes": [],
+      "symlinks": [],
+      "dirs": [],
+      "exit": 0,
+      "stdout": "{\n  \"completed_at\": \"@T@\",\n  \"root\": \"@ROOT@/root\",\n  \"stale_hours\": 99999999,\n  \"candidates\": [],\n  \"candidate_allocated_bytes_sum\": 0,\n  \"sum_may_double_count_hardlinks\": true,\n  \"report_only\": true,\n  \"complete\": true\n}\n",
+      "stderr": ""
+    },
+    {
+      "kind": "scan",
+      "name": "scan-r5-dir-no-search",
+      "tree": [
+        {
+          "dir": "root/a/s/t"
+        },
+        {
+          "dir": "root/b"
+        },
+        {
+          "file": "root/a/f"
+        },
+        {
+          "file": "root/a/s/g"
+        }
+      ],
+      "args": [
+        "@ROOT@/root",
+        "--stale",
+        "99999999"
+      ],
+      "modes": [
+        {
+          "path": "root/a",
+          "mode": "644"
+        }
+      ],
+      "symlinks": [],
+      "dirs": [],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "report failed: [Errno 13] Permission denied: '@ROOT@/root/a/s'\n"
+    },
+    {
+      "kind": "scan",
+      "name": "scan-r5-dir-no-search-deep",
+      "tree": [
+        {
+          "dir": "root/a/s/t"
+        },
+        {
+          "dir": "root/b"
+        },
+        {
+          "file": "root/a/f"
+        },
+        {
+          "file": "root/a/s/g"
+        }
+      ],
+      "args": [
+        "@ROOT@/root",
+        "--stale",
+        "99999999"
+      ],
+      "modes": [
+        {
+          "path": "root/a/s",
+          "mode": "644"
+        }
+      ],
+      "symlinks": [],
+      "dirs": [],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "report failed: [Errno 13] Permission denied: '@ROOT@/root/a/s/t'\n"
+    },
+    {
+      "kind": "scan",
+      "name": "scan-r5-dir-unlistable",
+      "tree": [
+        {
+          "dir": "root/a/s/t"
+        },
+        {
+          "dir": "root/b"
+        },
+        {
+          "file": "root/a/f"
+        },
+        {
+          "file": "root/a/s/g"
+        }
+      ],
+      "args": [
+        "@ROOT@/root",
+        "--stale",
+        "99999999"
+      ],
+      "modes": [
+        {
+          "path": "root/a",
+          "mode": "000"
+        }
+      ],
+      "symlinks": [],
+      "dirs": [],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "report failed: [Errno 13] Permission denied: '@ROOT@/root/a'\n"
+    },
+    {
+      "kind": "scan",
+      "name": "scan-r5-link-into-unsearchable",
+      "tree": [
+        {
+          "dir": "root/a/s/t"
+        },
+        {
+          "dir": "root/b"
+        },
+        {
+          "file": "root/a/f"
+        },
+        {
+          "file": "root/a/s/g"
+        }
+      ],
+      "args": [
+        "@ROOT@/root",
+        "--stale",
+        "99999999"
+      ],
+      "modes": [
+        {
+          "path": "private",
+          "mode": "000"
+        }
+      ],
+      "symlinks": [
+        {
+          "path": "root/b/l",
+          "target": "@ROOT@/private/d"
+        }
+      ],
+      "dirs": [
+        "private/d"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"completed_at\": \"@T@\",\n  \"root\": \"@ROOT@/root\",\n  \"stale_hours\": 99999999,\n  \"candidates\": [],\n  \"candidate_allocated_bytes_sum\": 0,\n  \"sum_may_double_count_hardlinks\": true,\n  \"report_only\": true,\n  \"complete\": true\n}\n",
+      "stderr": ""
+    },
+    {
+      "kind": "scan",
+      "name": "scan-r5-link-dangling-and-loop",
+      "tree": [
+        {
+          "dir": "root/a/s/t"
+        },
+        {
+          "dir": "root/b"
+        },
+        {
+          "file": "root/a/f"
+        },
+        {
+          "file": "root/a/s/g"
+        }
+      ],
+      "args": [
+        "@ROOT@/root",
+        "--stale",
+        "99999999"
+      ],
+      "modes": [],
+      "symlinks": [
+        {
+          "path": "root/b/dangling",
+          "target": "nowhere"
+        },
+        {
+          "path": "root/b/loop",
+          "target": "loop"
+        }
+      ],
+      "dirs": [],
+      "exit": 0,
+      "stdout": "{\n  \"completed_at\": \"@T@\",\n  \"root\": \"@ROOT@/root\",\n  \"stale_hours\": 99999999,\n  \"candidates\": [],\n  \"candidate_allocated_bytes_sum\": 0,\n  \"sum_may_double_count_hardlinks\": true,\n  \"report_only\": true,\n  \"complete\": true\n}\n",
+      "stderr": ""
+    },
+    {
+      "kind": "scan",
+      "name": "scan-r5-candidate-control",
+      "tree": [
+        {
+          "dir": "root/t/debug/.fingerprint"
+        },
+        {
+          "dir": "root/t/in/s"
+        },
+        {
+          "file": "root/t/.rustc_info.json"
+        },
+        {
+          "file": "root/t/in/f"
+        }
+      ],
+      "args": [
+        "@ROOT@/root",
+        "--stale",
+        "99999999"
+      ],
+      "modes": [],
+      "symlinks": [],
+      "dirs": [],
+      "exit": 0,
+      "stdout": "{\n  \"completed_at\": \"@T@\",\n  \"root\": \"@ROOT@/root\",\n  \"stale_hours\": 99999999,\n  \"candidates\": [],\n  \"candidate_allocated_bytes_sum\": 0,\n  \"sum_may_double_count_hardlinks\": true,\n  \"report_only\": true,\n  \"complete\": true\n}\n",
+      "stderr": ""
+    },
+    {
+      "kind": "scan",
+      "name": "scan-r5-candidate-no-search",
+      "tree": [
+        {
+          "dir": "root/t/debug/.fingerprint"
+        },
+        {
+          "dir": "root/t/in/s"
+        },
+        {
+          "file": "root/t/.rustc_info.json"
+        },
+        {
+          "file": "root/t/in/f"
+        }
+      ],
+      "args": [
+        "@ROOT@/root",
+        "--stale",
+        "99999999"
+      ],
+      "modes": [
+        {
+          "path": "root/t/in",
+          "mode": "644"
+        }
+      ],
+      "symlinks": [],
+      "dirs": [],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "report failed: [Errno 13] Permission denied: '@ROOT@/root/t/in/s'\n"
+    },
+    {
+      "kind": "scan-from-deleted-cwd",
+      "name": "scan-r5-relative-from-deleted-cwd",
+      "tree": [
+        {
+          "dir": "x"
+        }
+      ],
+      "args": [
+        "@ROOT_RELATIVE@",
+        "--stale",
+        "99999999"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "report failed: [Errno 2] No such file or directory\n"
+    },
+    {
+      "kind": "units",
+      "name": "units-r5-control",
+      "home": "@C@/home",
+      "modes": [],
+      "config": "bad",
+      "exit": 1,
+      "stdout": "@C@/receipts/@STAMP@/receipt.json\n",
+      "stderr": "",
+      "receipt": {
+        "status": "failed",
+        "exit_status": 1,
+        "error": "service requires the two approved Cargo roots and a 48-hour filter",
+        "missing_unit_files": [
+          "@C@/home/.config/systemd/user/jope-build-sweep.service",
+          "@C@/home/.config/systemd/user/jope-build-sweep.timer"
+        ]
+      }
+    },
+    {
+      "kind": "units",
+      "name": "units-r5-no-search",
+      "home": "@C@/home",
+      "modes": [
+        {
+          "path": "home/.config/systemd/user",
+          "mode": "644"
+        }
+      ],
+      "config": "bad",
+      "exit": 1,
+      "stdout": "@C@/receipts/@STAMP@/receipt.json\n",
+      "stderr": "",
+      "receipt": {
+        "status": "failed",
+        "exit_status": 1,
+        "error": "[Errno 13] Permission denied: '@C@/home/.config/systemd/user/jope-build-sweep.service'",
+        "missing_unit_files": []
+      }
+    },
+    {
+      "kind": "units",
+      "name": "units-r5-unlistable",
+      "home": "@C@/home",
+      "modes": [
+        {
+          "path": "home/.config/systemd/user",
+          "mode": "000"
+        }
+      ],
+      "config": "bad",
+      "exit": 1,
+      "stdout": "@C@/receipts/@STAMP@/receipt.json\n",
+      "stderr": "",
+      "receipt": {
+        "status": "failed",
+        "exit_status": 1,
+        "error": "[Errno 13] Permission denied: '@C@/home/.config/systemd/user/jope-build-sweep.service'",
+        "missing_unit_files": []
+      }
+    },
+    {
+      "kind": "units",
+      "name": "units-r5-home-trailing-slash",
+      "home": "@C@/home/",
+      "modes": [],
+      "config": "bad",
+      "exit": 1,
+      "stdout": "@C@/receipts/@STAMP@/receipt.json\n",
+      "stderr": "",
+      "receipt": {
+        "status": "failed",
+        "exit_status": 1,
+        "error": "service requires the two approved Cargo roots and a 48-hour filter",
+        "missing_unit_files": [
+          "@C@/home/.config/systemd/user/jope-build-sweep.service",
+          "@C@/home/.config/systemd/user/jope-build-sweep.timer"
+        ]
+      }
+    },
+    {
+      "kind": "units",
+      "name": "units-r5-home-doubled-separator",
+      "home": "@C@//home",
+      "modes": [],
+      "config": "bad",
+      "exit": 1,
+      "stdout": "@C@/receipts/@STAMP@/receipt.json\n",
+      "stderr": "",
+      "receipt": {
+        "status": "failed",
+        "exit_status": 1,
+        "error": "service requires the two approved Cargo roots and a 48-hour filter",
+        "missing_unit_files": [
+          "@C@/home/.config/systemd/user/jope-build-sweep.service",
+          "@C@/home/.config/systemd/user/jope-build-sweep.timer"
+        ]
+      }
+    },
+    {
+      "kind": "units",
+      "name": "units-r5-home-empty",
+      "home": "",
+      "modes": [],
+      "config": "bad",
+      "exit": 1,
+      "stdout": "@C@/receipts/@STAMP@/receipt.json\n",
+      "stderr": "",
+      "receipt": {
+        "status": "failed",
+        "exit_status": 1,
+        "error": "service requires the two approved Cargo roots and a 48-hour filter",
+        "missing_unit_files": [
+          "/.config/systemd/user/jope-build-sweep.service",
+          "/.config/systemd/user/jope-build-sweep.timer"
+        ]
+      }
+    },
+    {
+      "kind": "units",
+      "name": "units-r5-no-search-good-config",
+      "home": "@C@/home",
+      "modes": [
+        {
+          "path": "home/.config/systemd/user",
+          "mode": "644"
+        }
+      ],
+      "config": "good",
+      "exit": 1,
+      "stdout": "@C@/receipts/@STAMP@/receipt.json\n",
+      "stderr": "",
+      "receipt": {
+        "status": "failed",
+        "exit_status": 1,
+        "error": "[Errno 13] Permission denied: '@C@/home/.config/systemd/user/jope-build-sweep.service'",
+        "missing_unit_files": []
+      }
+    }
+  ]
+}

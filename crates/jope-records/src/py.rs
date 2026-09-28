@@ -404,18 +404,59 @@ pub fn text_streams(
     Ok((stdout, stderr))
 }
 
+/// What Python 3.12's pathlib predicates (`exists`, `is_dir`, `is_file`, `is_symlink`) answered for
+/// a path they could not inspect: `False` for a path that is missing (`pathlib._ignore_error`:
+/// `ENOENT`, `ENOTDIR`, `EBADF`, `ELOOP`) or holds a NUL byte (a `ValueError` there), and the
+/// `OSError` raised for anything else (a permission refused, a name too long), which is returned
+/// here for the caller to refuse. No other error is ever read as "absent".
+fn inspected(
+    result: std::io::Result<std::fs::Metadata>,
+) -> std::io::Result<Option<std::fs::Metadata>> {
+    const IGNORED: [i32; 4] = [2, 9, 20, 40]; // ENOENT, EBADF, ENOTDIR, ELOOP (Linux)
+    match result {
+        Ok(meta) => Ok(Some(meta)),
+        Err(e) if e.raw_os_error().is_some_and(|code| IGNORED.contains(&code)) => Ok(None),
+        Err(e) if e.raw_os_error().is_none() && e.kind() == std::io::ErrorKind::InvalidInput => {
+            Ok(None)
+        }
+        Err(e) => Err(e),
+    }
+}
+
 /// `Path.exists()` (Python 3.12): `False` for a path that is missing (`ENOENT`, `ENOTDIR`,
 /// `EBADF`, `ELOOP`) or holds a NUL byte (a `ValueError` there); any other `OSError` (a name too
 /// long, a permission refused) was raised, and is returned here.
 pub fn path_exists(path: &Path) -> std::io::Result<bool> {
-    const IGNORED: [i32; 4] = [2, 9, 20, 40]; // ENOENT, EBADF, ENOTDIR, ELOOP (Linux)
-    match std::fs::metadata(path) {
-        Ok(_) => Ok(true),
-        Err(e) if e.raw_os_error().is_some_and(|code| IGNORED.contains(&code)) => Ok(false),
-        Err(e) if e.raw_os_error().is_none() && e.kind() == std::io::ErrorKind::InvalidInput => {
-            Ok(false)
+    Ok(inspected(std::fs::metadata(path))?.is_some())
+}
+
+/// `Path.is_dir()` (Python 3.12, following symlinks), failing as [`path_exists`] fails.
+pub fn path_is_dir(path: &Path) -> std::io::Result<bool> {
+    Ok(inspected(std::fs::metadata(path))?.is_some_and(|m| m.is_dir()))
+}
+
+/// `Path.is_file()` (Python 3.12, following symlinks), failing as [`path_exists`] fails.
+pub fn path_is_file(path: &Path) -> std::io::Result<bool> {
+    Ok(inspected(std::fs::metadata(path))?.is_some_and(|m| m.is_file()))
+}
+
+/// `Path.is_symlink()` (Python 3.12, `lstat`), failing as [`path_exists`] fails.
+pub fn path_is_symlink(path: &Path) -> std::io::Result<bool> {
+    Ok(inspected(std::fs::symlink_metadata(path))?.is_some_and(|m| m.file_type().is_symlink()))
+}
+
+/// `str(OSError)` for an error Python raised without a file name (`os.getcwd()`, say):
+/// `[Errno N] <strerror>`.
+pub fn os_error_bare(error: &std::io::Error) -> String {
+    match error.raw_os_error() {
+        Some(code) => {
+            let text = std::io::Error::from_raw_os_error(code).to_string();
+            let strerror = text
+                .strip_suffix(&format!(" (os error {code})"))
+                .unwrap_or(&text);
+            format!("[Errno {code}] {strerror}")
         }
-        Err(e) => Err(e),
+        None => error.to_string(),
     }
 }
 
@@ -600,7 +641,10 @@ pub fn sha256_hex(data: &[u8]) -> String {
         .collect()
 }
 
-/// `Path.is_symlink()`: false when the path cannot be inspected.
+/// `Path.is_symlink()` read leniently: false when the path cannot be inspected. The P1 ports
+/// (coverage, scope, parity, README, cargo-artifact, build-report) do not use it; they use
+/// [`path_is_symlink`], which refuses instead. It remains for the record verifiers that predate
+/// them.
 pub fn is_symlink(path: &Path) -> bool {
     std::fs::symlink_metadata(path).is_ok_and(|m| m.file_type().is_symlink())
 }
@@ -610,11 +654,13 @@ pub fn is_symlink(path: &Path) -> bool {
 /// the previous component (and nothing at the root), and exactly two leading slashes kept (POSIX
 /// leaves `//` to the implementation, so Python keeps it as its own root; three or more are `/`).
 /// Names stay the bytes they are. Lexical only: a symlink followed by `..` is [`realpath`]'s.
-pub fn abspath(path: &Path) -> PathBuf {
+/// A relative path needs the working directory: when it cannot be read (it was deleted, say),
+/// `os.getcwd()` raised and so does this, instead of resolving against `/`.
+pub fn abspath(path: &Path) -> std::io::Result<PathBuf> {
     use std::os::unix::ffi::{OsStrExt, OsStringExt};
     let mut joined = vec![];
     if !path.as_os_str().as_bytes().starts_with(b"/") {
-        let cwd = std::env::current_dir().unwrap_or_default();
+        let cwd = std::env::current_dir()?;
         joined.extend_from_slice(cwd.as_os_str().as_bytes());
         if !joined.ends_with(b"/") {
             joined.push(b'/');
@@ -638,7 +684,7 @@ pub fn abspath(path: &Path) -> PathBuf {
     }
     let mut out = b"/".repeat(slashes);
     out.extend(parts.join(&b'/'));
-    PathBuf::from(std::ffi::OsString::from_vec(out))
+    Ok(PathBuf::from(std::ffi::OsString::from_vec(out)))
 }
 
 /// Why [`realpath`] or [`resolve`] could not resolve a path.
@@ -651,6 +697,9 @@ pub enum ResolveError {
     },
     /// A symlink loop: pathlib raised `RuntimeError("Symlink loop from '<path>'")`.
     Loop { path: PathBuf },
+    /// The working directory a relative path is resolved against could not be read:
+    /// `os.getcwd()` raised (`[Errno 2] No such file or directory` for a deleted one).
+    Cwd(std::io::Error),
 }
 
 impl std::fmt::Display for ResolveError {
@@ -659,6 +708,7 @@ impl std::fmt::Display for ResolveError {
             ResolveError::Os { error, path } => {
                 f.write_str(&os_error(error, &path.to_string_lossy()))
             }
+            ResolveError::Cwd(error) => f.write_str(&os_error_bare(error)),
             ResolveError::Loop { path } => write!(
                 f,
                 "Symlink loop from {}",
@@ -793,7 +843,7 @@ pub fn realpath(path: &Path, strict: bool) -> std::result::Result<PathBuf, Resol
         strict,
         &mut HashMap::new(),
     )?;
-    Ok(abspath(os(&resolved)))
+    abspath(os(&resolved)).map_err(ResolveError::Cwd)
 }
 
 /// `Path(path).resolve(strict=strict)` (Python 3.12): [`realpath`], and in non-strict mode a
@@ -1353,14 +1403,65 @@ mod tests {
         }
         // `abspath` alone is lexical.
         assert_eq!(
-            abspath(&at("outer/link/../receipts")),
+            abspath(&at("outer/link/../receipts")).unwrap(),
             c.join("outer/receipts")
         );
         assert_eq!(
-            abspath(Path::new("//a/./b//c/")).into_os_string(),
+            abspath(Path::new("//a/./b//c/")).unwrap().into_os_string(),
             "//a/b/c"
         );
-        assert_eq!(abspath(Path::new("///a/../b")).into_os_string(), "/b");
+        assert_eq!(
+            abspath(Path::new("///a/../b")).unwrap().into_os_string(),
+            "/b"
+        );
+    }
+
+    /// The pathlib predicates answer "absent" only where Python 3.12 answered `False` (a missing
+    /// path, a loop, a name through a file, a NUL byte); a permission refused or a name too long
+    /// is an error, as Python raised it. No answer is read through a lenient default.
+    #[test]
+    fn predicates_refuse_what_pathlib_raised() {
+        use std::os::unix::fs::PermissionsExt;
+        let temp = tempfile::tempdir().unwrap();
+        let c = temp.path().canonicalize().unwrap();
+        std::fs::create_dir_all(c.join("dir/sub")).unwrap();
+        std::fs::write(c.join("dir/file"), "").unwrap();
+        std::os::unix::fs::symlink("loop", c.join("loop")).unwrap();
+        std::os::unix::fs::symlink("nowhere", c.join("dangling")).unwrap();
+        std::os::unix::fs::symlink(c.join("dir"), c.join("dirlink")).unwrap();
+        assert!(path_is_dir(&c.join("dir")).unwrap());
+        assert!(!path_is_dir(&c.join("dir/file")).unwrap());
+        assert!(path_is_file(&c.join("dir/file")).unwrap());
+        assert!(path_is_dir(&c.join("dirlink")).unwrap());
+        assert!(path_is_symlink(&c.join("dirlink")).unwrap());
+        assert!(!path_is_symlink(&c.join("dir")).unwrap());
+        for absent in ["missing", "loop", "dangling", "dir/file/x", "nul\0x"] {
+            let path = c.join(absent);
+            assert!(!path_exists(&path).unwrap(), "{absent}");
+            assert!(!path_is_dir(&path).unwrap(), "{absent}");
+            assert!(!path_is_file(&path).unwrap(), "{absent}");
+        }
+        assert!(path_is_symlink(&c.join("loop")).unwrap());
+        let long = c.join("x".repeat(300));
+        for probe in [path_exists, path_is_dir, path_is_file, path_is_symlink] {
+            assert_eq!(probe(&long).unwrap_err().raw_os_error(), Some(36));
+        }
+        // A directory that may be listed but not searched: its entries cannot be inspected.
+        std::fs::set_permissions(c.join("dir"), std::fs::Permissions::from_mode(0o644)).unwrap();
+        let denied = std::fs::metadata(c.join("dir/file")).is_err();
+        if denied {
+            for probe in [path_exists, path_is_dir, path_is_file, path_is_symlink] {
+                assert_eq!(
+                    probe(&c.join("dir/file")).unwrap_err().raw_os_error(),
+                    Some(13)
+                );
+            }
+        }
+        std::fs::set_permissions(c.join("dir"), std::fs::Permissions::from_mode(0o755)).unwrap();
+        assert_eq!(
+            os_error_bare(&std::io::Error::from_raw_os_error(2)),
+            "[Errno 2] No such file or directory"
+        );
     }
 
     #[test]

@@ -89,13 +89,19 @@ fn build_report_command(command: Report) -> ExitCode {
                 Ok(interrupt) => interrupt,
                 Err(error) => return failed(build_report::Failure::new(error.to_string())),
             };
-            let tools = tools_dir.unwrap_or_else(|| {
-                std::env::current_exe()
-                    .and_then(|p| p.canonicalize())
-                    .ok()
-                    .and_then(|p| p.parent().map(Path::to_path_buf))
-                    .unwrap_or_default()
-            });
+            // The wrappers' directory (default: this executable's). An executable that cannot be
+            // located refuses; it is never taken to be the working directory.
+            let tools = match tools_dir {
+                Some(tools) => tools,
+                None => match std::env::current_exe().and_then(|p| p.canonicalize()) {
+                    Ok(exe) => exe.parent().map(Path::to_path_buf).unwrap_or(exe),
+                    Err(error) => {
+                        return failed(build_report::Failure::new(format!(
+                            "cannot locate this executable for the tools directory: {error}"
+                        )))
+                    }
+                },
+            };
             let scan = |root: &str, interrupt: build_report::Interrupt<'_>| {
                 let measure = |path: &Path, privileged: bool| {
                     build_report::allocated(path, privileged, interrupt)
