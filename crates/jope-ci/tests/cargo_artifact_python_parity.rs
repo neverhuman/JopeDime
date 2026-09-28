@@ -10,12 +10,10 @@
 //! inputs reproduced every captured output (run `py-p1-fixtures-u2-20260927T033630Z`).
 //!
 //! Each case runs the real binary on the same inputs, materialised under a fresh directory that
-//! takes the place of `@ROOT@`. Two differences are intended and are the only ones allowed:
-//!
-//! - `usage`: argument-parser wording (argparse vs clap). Both exit 2 and name the missing
-//!   `--metadata` and `--messages`.
-//! - `nextest-exists`: the OS error wording for an existing output file (Python's
-//!   `[Errno 17] File exists: '<path>'` vs Rust's `<path>: File exists (os error 17)`).
+//! takes the place of `@ROOT@`. One difference is intended and is the only one allowed:
+//! `usage`, the argument-parser wording (argparse vs clap). Both exit 2 and name the missing
+//! `--metadata` and `--messages`. (The OS error of an existing output file, `nextest-exists`, is
+//! Python's `[Errno 17] File exists: '<path>'` on both sides.)
 //!
 //! # Malformed inputs
 //!
@@ -30,8 +28,14 @@
 //! stdout and stderr; where the Python crashed with a traceback, the port refuses (exit status 1,
 //! one `cargo-artifact: <field>: <what failed and the offending type>` line, nothing on stdout;
 //! the text is not CPython's). The exceptions are listed in `STRICTER` (inputs the Python accepted
-//! and the port refuses) and `MESSAGE_DIFFERS` (both refuse; the port's wording differs because
-//! it refuses at an earlier step or with Rust's decoder wording).
+//! and the port refuses). A refused `nextest-config` leaves the output file exactly as the Python
+//! left it: absent, or empty where its crash came after `open("x")` had created it.
+//!
+//! `negative-r2.json` holds the second round of such cases (the differential review of the
+//! fail-closed ports): library messages the Python caught and printed (`OSError`,
+//! `UnicodeDecodeError`, `JSONDecodeError` positions, `tomllib`), `repr` of non-printable
+//! characters, `--path-map` normalisation, the `nextest-config` order of refusals, NaN and big
+//! integer ids. It is replayed by `cargo_artifact_matches_round_two`, with its own exceptions.
 
 use serde_json::Value;
 use std::fs;
@@ -183,16 +187,13 @@ fn cargo_artifact_matches_the_captured_python_outputs() {
                 );
             }
             "nextest-exists" => {
-                // Allowed difference: the OS error wording for an existing output.
+                // The OS error of an existing output, as the Python printed it; the file stays.
                 assert_eq!((stdout.as_str(), want_stdout), ("", ""), "{name}");
                 assert_eq!(
                     want_stderr, "cargo-artifact: [Errno 17] File exists: '@OUT@'\n",
                     "{name}: captured Python stderr"
                 );
-                assert_eq!(
-                    stderr, "cargo-artifact: @OUT@: File exists (os error 17)\n",
-                    "{name}: Rust stderr"
-                );
+                assert_eq!(stderr, want_stderr, "{name}: stderr");
                 assert_eq!(fs::read_to_string(&output_file).unwrap(), "", "{name}");
             }
             _ => {
@@ -213,15 +214,140 @@ fn cargo_artifact_matches_the_captured_python_outputs() {
     }
 }
 
+/// Round two: both refuse with exit status 1 and the port's words differ, because the Python
+/// printed a `tomllib.TOMLDecodeError` and the port reads TOML with the `toml` crate, whose errors
+/// are worded differently (the port does not reproduce `tomllib`'s messages).
+const R2_MESSAGE_DIFFERS: &[&str] = &["toml-invalid-value"];
+
+#[test]
+fn cargo_artifact_matches_round_two() {
+    let doc: Value =
+        serde_json::from_str(&fs::read_to_string(fixture().join("negative-r2.json")).unwrap())
+            .unwrap();
+    assert!(doc["source"].is_string() && doc["capture"].is_string());
+    let cases = doc["cases"].as_array().unwrap();
+    assert_eq!(cases.len(), 40, "every captured case is replayed");
+    let unhex = |text: &str| -> Vec<u8> {
+        (0..text.len())
+            .step_by(2)
+            .map(|i| u8::from_str_radix(&text[i..i + 2], 16).unwrap())
+            .collect()
+    };
+    let temp = tempfile::Builder::new()
+        .prefix("cargo-artifact-r2-")
+        .tempdir()
+        .unwrap();
+    let root = temp.path().canonicalize().unwrap();
+    let root_text = root.to_str().unwrap().to_owned();
+    fs::create_dir(root.join("bin")).unwrap();
+    executable(&root.join("bin/demo"), "#!/bin/sh\nexit 0\n");
+    let shims = root.join("shims");
+    fs::create_dir(&shims).unwrap();
+    executable(
+        &shims.join("cargo"),
+        "#!/bin/bash\ncase \"$1\" in\n  metadata) cat \"$CA_ROOT/metadata.json\"; e=$(cat \"$CA_ROOT/metadata.exit\") ;;\n  build) cat \"$CA_ROOT/messages.jsonl\"; e=$(cat \"$CA_ROOT/build.exit\") ;;\nesac\n[ \"$e\" = kill ] && kill -9 $$\nexit \"$e\"\n",
+    );
+    let path = format!(
+        "{}:{}",
+        shims.display(),
+        std::env::var("PATH").unwrap_or_default()
+    );
+    let mut failures = vec![];
+    for case in cases {
+        let name = case["name"].as_str().unwrap();
+        for file in ["metadata.json", "messages.jsonl", "source.toml", "out.toml"] {
+            let _ = fs::remove_file(root.join(file));
+        }
+        for (key, file) in [
+            ("metadata", "metadata.json"),
+            ("messages", "messages.jsonl"),
+            ("source", "source.toml"),
+        ] {
+            let bytes = match (case.get(format!("{key}_hex")), case.get(key)) {
+                (Some(hex), _) => unhex(hex.as_str().unwrap()),
+                (None, Some(text)) => text
+                    .as_str()
+                    .unwrap()
+                    .replace("@ROOT@", &root_text)
+                    .into_bytes(),
+                (None, None) => continue,
+            };
+            fs::write(root.join(file), bytes).unwrap();
+        }
+        for (key, file) in [
+            ("metadata_exit", "metadata.exit"),
+            ("build_exit", "build.exit"),
+        ] {
+            let exit = case.get(key).and_then(Value::as_str).unwrap_or("0");
+            fs::write(root.join(file), exit).unwrap();
+        }
+        if case["output_exists"] == true {
+            fs::write(root.join("out.toml"), "").unwrap();
+        }
+        let argv: Vec<String> = case["argv"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|a| {
+                a.as_str()
+                    .unwrap()
+                    .replace("@METADATA@", root.join("metadata.json").to_str().unwrap())
+                    .replace("@MESSAGES@", root.join("messages.jsonl").to_str().unwrap())
+                    .replace("@SOURCE@", root.join("source.toml").to_str().unwrap())
+                    .replace("@OUT@", root.join("out.toml").to_str().unwrap())
+                    .replace("@ROOT@", &root_text)
+            })
+            .collect();
+        let run = Command::new(env!("CARGO_BIN_EXE_jope-ci"))
+            .arg("cargo-artifact")
+            .args(&argv)
+            .env("PATH", &path)
+            .env("CA_ROOT", &root)
+            .env_remove("CARGO_TARGET_DIR")
+            .current_dir(&root)
+            .output()
+            .unwrap();
+        let normalise = |bytes: &[u8]| String::from_utf8_lossy(bytes).replace(&root_text, "@ROOT@");
+        let (stdout, stderr) = (normalise(&run.stdout), normalise(&run.stderr));
+        let exit = i64::from(run.status.code().unwrap());
+        record(case, exit, &stdout, &stderr);
+        let verdict = if R2_MESSAGE_DIFFERS.contains(&name) {
+            let refused = exit == 1
+                && stdout.is_empty()
+                && stderr.starts_with("cargo-artifact: ")
+                && case["exit"] == 1
+                && case["stdout"] == "";
+            if refused {
+                Ok(())
+            } else {
+                Err(format!(
+                    "both must refuse: the port {exit} {stdout:?} {stderr:?}"
+                ))
+            }
+        } else {
+            judge(case, exit, &stdout, &stderr)
+        };
+        if let Err(why) = verdict {
+            failures.push(format!("{name}: {why}"));
+        }
+        // The output file as the Python left it (absent, empty, or the written configuration).
+        let left = fs::read_to_string(root.join("out.toml"))
+            .ok()
+            .map(|t| t.replace(&root_text, "@ROOT@"));
+        let python_left = case["output_after"].as_str().map(str::to_owned);
+        if left != python_left {
+            failures.push(format!(
+                "{name}: the output is {left:?}, the Python left {python_left:?}"
+            ));
+        }
+    }
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
+}
+
 /// Malformed inputs the Python accepted (exit status 0) and the port refuses: a
 /// `target_directory` that is not a string, which the Python printed as `5` or `None`. (Its
 /// `nextest-config` crashed on the same values.)
 const STRICTER: &[&str] = &["target-dir-int", "target-dir-null"];
-
-/// Both refuse with exit status 1, with different words: integers beyond 64 bits are refused by
-/// the port's JSON reader before the package lookup the Python failed in (`found 0`), and bytes
-/// that are not UTF-8 are reported in Rust's decoder wording rather than Python's codec wording.
-const MESSAGE_DIFFERS: &[&str] = &["ids-beyond-64-bits", "build-non-utf8"];
 
 /// Hold one case to the contract (see the module documentation); `Err` names the disagreement.
 fn judge(case: &Value, exit: i64, stdout: &str, stderr: &str) -> Result<(), String> {
@@ -260,13 +386,6 @@ fn judge(case: &Value, exit: i64, stdout: &str, stderr: &str) -> Result<(), Stri
         return Err(format!(
             "stdout: the Python {want_stdout:?}, the port {stdout:?}"
         ));
-    }
-    if MESSAGE_DIFFERS.contains(&name) {
-        return if refused {
-            Ok(())
-        } else {
-            Err(format!("the port did not refuse: {stderr:?}"))
-        };
     }
     let want_stderr = case["stderr"].as_str().unwrap();
     if stderr != want_stderr {
@@ -324,7 +443,7 @@ fn cargo_artifact_refuses_every_input_the_python_refused() {
     );
     let cases = doc["cases"].as_array().unwrap();
     assert_eq!(cases.len(), 50, "every captured case is replayed");
-    for name in STRICTER.iter().chain(MESSAGE_DIFFERS) {
+    for name in STRICTER {
         assert!(
             cases.iter().any(|c| c["name"] == *name),
             "{name} is not a case"
@@ -373,7 +492,21 @@ fn cargo_artifact_refuses_every_input_the_python_refused() {
             .unwrap()
             .replace("@ROOT@", &root_text)
             .into_bytes();
-        if let Some(bytes) = case.get("append_bytes") {
+        let mut case = case.clone();
+        if let Some(bytes) = case.get("append_bytes").cloned() {
+            // The codec position counts the stream Cargo printed, whose `@ROOT@` was the capture's
+            // root: here the appended byte sits after this root, so the Python's message names the
+            // position it would have had on these bytes.
+            let stderr = case["stderr"].as_str().unwrap();
+            let at = stderr.find("in position ").unwrap() + "in position ".len();
+            let digits = stderr[at..].bytes().take_while(u8::is_ascii_digit).count();
+            let placed = format!(
+                "{}{}{}",
+                &stderr[..at],
+                messages.len(),
+                &stderr[at + digits..]
+            );
+            case["stderr"] = Value::from(placed);
             messages.extend(
                 bytes
                     .as_array()
@@ -408,13 +541,20 @@ fn cargo_artifact_refuses_every_input_the_python_refused() {
         let normalise = |bytes: &[u8]| String::from_utf8_lossy(bytes).replace(&root_text, "@ROOT@");
         let (stdout, stderr) = (normalise(&run.stdout), normalise(&run.stderr));
         let exit = i64::from(run.status.code().unwrap());
-        record(case, exit, &stdout, &stderr);
-        if let Err(why) = judge(case, exit, &stdout, &stderr) {
+        record(&case, exit, &stdout, &stderr);
+        if let Err(why) = judge(&case, exit, &stdout, &stderr) {
             failures.push(format!("{name}: {why}"));
         }
-        // A refused `nextest-config` leaves no partial output behind.
-        if name.starts_with("nextest-config") && exit != 0 && output_file.exists() {
-            failures.push(format!("{name}: a refusal left {}", output_file.display()));
+        // A refused `nextest-config` leaves the output as the Python did: its `TypeError` came
+        // after `open("x")` had created the (still empty) file; every other refusal came first.
+        if name.starts_with("nextest-config") && exit != 0 {
+            let left = fs::read(&output_file).ok();
+            let python_left = case.get("raised").map(|_| Vec::new());
+            if left != python_left {
+                failures.push(format!(
+                    "{name}: the output is {left:?}, the Python left {python_left:?}"
+                ));
+            }
         }
     }
     assert!(failures.is_empty(), "{}", failures.join("\n"));

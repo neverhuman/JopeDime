@@ -1,0 +1,742 @@
+{
+  "source": "p1-failclosed-r2-capture-20260928T031831Z",
+  "capture": "bash cap2.sh (run p1-failclosed-r2-capture-20260928T031831Z; Python from git show f46a9048fbb2697d6d1f4463a688083ea9dfcce1:<tool>, unmodified, in a scratch root)",
+  "tool": "deploy/ci/cargo-artifact.py",
+  "root": "a scratch directory standing for @ROOT@, holding the executable bin/demo; metadata.json, messages.jsonl and source.toml hold the case inputs (text with @ROOT@, or hex), out.toml is the --output",
+  "cargo": "a `cargo` first on PATH that prints metadata.json for `cargo metadata` and messages.jsonl for `cargo build`, then exits with metadata_exit / build_exit (or kills itself)",
+  "cases": [
+    {
+      "name": "select-ok",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "output_after": null,
+      "exit": 0,
+      "stdout": "@ROOT@/bin/demo\n",
+      "stderr": ""
+    },
+    {
+      "name": "meta-crlf-syntax-error",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\r\n\"packages\": [],\r\n\"x\": }\r\n",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "output_after": null,
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: Expecting value: line 3 column 6 (char 23)\n"
+    },
+    {
+      "name": "meta-cr-syntax-error",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\r\"packages\": [],\r\"x\": }\r",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "output_after": null,
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: Expecting value: line 3 column 6 (char 23)\n"
+    },
+    {
+      "name": "meta-missing",
+      "argv": [
+        "select",
+        "--metadata",
+        "@ROOT@/no-such-meta.json",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "output_after": null,
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: [Errno 2] No such file or directory: '@ROOT@/no-such-meta.json'\n"
+    },
+    {
+      "name": "meta-missing-dotted",
+      "argv": [
+        "select",
+        "--metadata",
+        "@ROOT@/./sub//no-such-meta.json",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "output_after": null,
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: [Errno 2] No such file or directory: '@ROOT@/sub/no-such-meta.json'\n"
+    },
+    {
+      "name": "meta-not-utf8",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata_hex": "ff7b7d",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "output_after": null,
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: 'utf-8' codec can't decode byte 0xff in position 0: invalid start byte\n"
+    },
+    {
+      "name": "meta-truncated-utf8",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata_hex": "7b2261223a2022e282",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "output_after": null,
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: 'utf-8' codec can't decode bytes in position 7-8: unexpected end of data\n"
+    },
+    {
+      "name": "messages-missing",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@ROOT@/no-such-msgs.jsonl",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "output_after": null,
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: [Errno 2] No such file or directory: '@ROOT@/no-such-msgs.jsonl'\n"
+    },
+    {
+      "name": "messages-not-utf8",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages_hex": "7b22726561736f6e223a2022636f6d70696c65722d6172746966616374222c20227061636b6167655f6964223a202264656d6f20302e312e30222c2022746172676574223a207b226b696e64223a205b2262696e225d2c20226e616d65223a202264656d6f227d2c202270726f66696c65223a207b2274657374223a2066616c73657d2c202265786563757461626c65223a202240524f4f54402f62696e2f64656d6f227d0aeda0800a",
+      "output_after": null,
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: 'utf-8' codec can't decode byte 0xed in position 166: invalid continuation byte\n"
+    },
+    {
+      "name": "meta-utf8-bom",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "﻿{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "output_after": null,
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: Unexpected UTF-8 BOM (decode using utf-8-sig): line 1 column 1 (char 0)\n"
+    },
+    {
+      "name": "msg-short-unicode-escape",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"a\": \"\\u12\"}\n{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "output_after": null,
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: Invalid \\uXXXX escape: line 1 column 9 (char 8)\n"
+    },
+    {
+      "name": "msg-short-unicode-escape-at-end",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"a\": \"\\u004\n{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "output_after": null,
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: Invalid \\uXXXX escape: line 1 column 9 (char 8)\n"
+    },
+    {
+      "name": "msg-unicode-escape-then-end",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"a\": \"\\u0041\n{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "output_after": null,
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: Invalid \\uXXXX escape: line 1 column 9 (char 8)\n"
+    },
+    {
+      "name": "msg-high-surrogate-bad-low",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"a\": \"\\ud800\\uzzzz\", \"b\": 1}\n{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "output_after": null,
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: Invalid \\uXXXX escape: line 1 column 15 (char 14)\n"
+    },
+    {
+      "name": "msg-lone-surrogate-then-error",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"a\": \"\\ud800\", \"b\": }\n{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "output_after": null,
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: Expecting value: line 1 column 22 (char 21)\n"
+    },
+    {
+      "name": "path-map-container-trailing-slash",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo",
+        "--path-map",
+        "/container/",
+        "@ROOT@"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "output_after": null,
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: '@ROOT@/bin/demo' is not in the subpath of '/container'\n"
+    },
+    {
+      "name": "path-map-container-dot",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo",
+        "--path-map",
+        "/nowhere/./x",
+        "@ROOT@"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "output_after": null,
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: '@ROOT@/bin/demo' is not in the subpath of '/nowhere/x'\n"
+    },
+    {
+      "name": "package-nbsp",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "de mo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "output_after": null,
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: expected one workspace package 'de\\xa0mo', found 0\n"
+    },
+    {
+      "name": "package-del",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "de\u007fmo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "output_after": null,
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: expected one workspace package 'de\\x7fmo', found 0\n"
+    },
+    {
+      "name": "package-line-sep",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "de mo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "output_after": null,
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: expected one workspace package 'de\\u2028mo', found 0\n"
+    },
+    {
+      "name": "package-unassigned",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "͸x",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "output_after": null,
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: expected one workspace package '\\u0378x', found 0\n"
+    },
+    {
+      "name": "package-soft-hyphen",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "de­mo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "output_after": null,
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: expected one workspace package 'de\\xadmo', found 0\n"
+    },
+    {
+      "name": "id-nan",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": NaN}], \"workspace_members\": [NaN]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": NaN, \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "output_after": null,
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: expected one executable for demo/bin/demo, found 0\n"
+    },
+    {
+      "name": "ids-beyond-64-bits-equal",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": 18446744073709551616}], \"workspace_members\": [18446744073709551616]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": 18446744073709551616, \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "output_after": null,
+      "exit": 0,
+      "stdout": "@ROOT@/bin/demo\n",
+      "stderr": ""
+    },
+    {
+      "name": "ids-beyond-64-bits-float",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": 100000000000000000000}], \"workspace_members\": [1e20]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": 1e20, \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "output_after": null,
+      "exit": 0,
+      "stdout": "@ROOT@/bin/demo\n",
+      "stderr": ""
+    },
+    {
+      "name": "target-dir-empty",
+      "argv": [
+        "target-dir"
+      ],
+      "metadata": "{\"target_directory\": \"\"}",
+      "output_after": null,
+      "exit": 0,
+      "stdout": "\n",
+      "stderr": ""
+    },
+    {
+      "name": "metadata-exit-3",
+      "argv": [
+        "target-dir"
+      ],
+      "metadata": "{}",
+      "metadata_exit": "3",
+      "output_after": null,
+      "exit": 3,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "metadata-killed",
+      "argv": [
+        "target-dir"
+      ],
+      "metadata": "{}",
+      "metadata_exit": "kill",
+      "output_after": null,
+      "exit": 247,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "toml-utf8-bom",
+      "argv": [
+        "nextest-config",
+        "--source",
+        "@SOURCE@",
+        "--output",
+        "@OUT@"
+      ],
+      "metadata": "{\"target_directory\": \"@ROOT@/target\"}",
+      "source": "﻿x = 1\n",
+      "output_after": null,
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: Invalid statement (at line 1, column 1)\n"
+    },
+    {
+      "name": "toml-invalid-value",
+      "argv": [
+        "nextest-config",
+        "--source",
+        "@SOURCE@",
+        "--output",
+        "@OUT@"
+      ],
+      "metadata": "{\"target_directory\": \"@ROOT@/target\"}",
+      "source": "a = \n",
+      "output_after": null,
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: Invalid value (at line 1, column 5)\n"
+    },
+    {
+      "name": "store-and-int-target",
+      "argv": [
+        "nextest-config",
+        "--source",
+        "@SOURCE@",
+        "--output",
+        "@OUT@"
+      ],
+      "metadata": "{\"target_directory\": 5}",
+      "source": "store = { dir = \"x\" }\n",
+      "output_after": null,
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: nextest already configures a store; reconcile it before relocating reports\n"
+    },
+    {
+      "name": "store-and-null-target",
+      "argv": [
+        "nextest-config",
+        "--source",
+        "@SOURCE@",
+        "--output",
+        "@OUT@"
+      ],
+      "metadata": "{\"target_directory\": null}",
+      "source": "store = { dir = \"x\" }\n",
+      "output_after": null,
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: nextest already configures a store; reconcile it before relocating reports\n"
+    },
+    {
+      "name": "int-target-output-exists",
+      "argv": [
+        "nextest-config",
+        "--source",
+        "@SOURCE@",
+        "--output",
+        "@OUT@"
+      ],
+      "metadata": "{\"target_directory\": 5}",
+      "source": "x = 1\n",
+      "output_exists": true,
+      "output_after": "",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: [Errno 17] File exists: '@ROOT@/out.toml'\n"
+    },
+    {
+      "name": "int-target",
+      "argv": [
+        "nextest-config",
+        "--source",
+        "@SOURCE@",
+        "--output",
+        "@OUT@"
+      ],
+      "metadata": "{\"target_directory\": 5}",
+      "source": "x = 1\n",
+      "output_after": "",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: argument should be a str or an os.PathLike object where __fspath__ returns a str, not 'int'"
+    },
+    {
+      "name": "empty-target",
+      "argv": [
+        "nextest-config",
+        "--source",
+        "@SOURCE@",
+        "--output",
+        "@OUT@"
+      ],
+      "metadata": "{\"target_directory\": \"\"}",
+      "source": "x = 1\n",
+      "output_after": "store = { dir = \"nextest\" }\nx = 1\n",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "source-not-utf8",
+      "argv": [
+        "nextest-config",
+        "--source",
+        "@SOURCE@",
+        "--output",
+        "@OUT@"
+      ],
+      "metadata": "{\"target_directory\": \"@ROOT@/target\"}",
+      "source_hex": "78203d2022ff220a",
+      "output_after": null,
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: 'utf-8' codec can't decode byte 0xff in position 5: invalid start byte\n"
+    },
+    {
+      "name": "output-exists",
+      "argv": [
+        "nextest-config",
+        "--source",
+        "@SOURCE@",
+        "--output",
+        "@OUT@"
+      ],
+      "metadata": "{\"target_directory\": \"@ROOT@/target\"}",
+      "source": "x = 1\n",
+      "output_exists": true,
+      "output_after": "",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: [Errno 17] File exists: '@ROOT@/out.toml'\n"
+    },
+    {
+      "name": "source-missing",
+      "argv": [
+        "nextest-config",
+        "--source",
+        "@ROOT@/none.toml",
+        "--output",
+        "@OUT@"
+      ],
+      "metadata": "{\"target_directory\": \"@ROOT@/target\"}",
+      "output_after": null,
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: [Errno 2] No such file or directory: '@ROOT@/none.toml'\n"
+    },
+    {
+      "name": "build-non-utf8-and-failed",
+      "argv": [
+        "build",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages_hex": "7b22726561736f6e223a20226275696c642d66696e6973686564222c202273756363657373223a20747275657d0aff0a",
+      "build_exit": "101",
+      "output_after": null,
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: 'utf-8' codec can't decode byte 0xff in position 46: invalid start byte\n"
+    },
+    {
+      "name": "build-killed",
+      "argv": [
+        "build",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "build_exit": "kill",
+      "output_after": null,
+      "exit": 137,
+      "stdout": "",
+      "stderr": ""
+    }
+  ]
+}

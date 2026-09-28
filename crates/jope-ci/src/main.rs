@@ -197,7 +197,8 @@ enum Artifact {
     },
 }
 
-fn artifact(command: Artifact) -> Result<String, Failure> {
+/// The line a subcommand prints on success (`None`: it prints nothing).
+fn artifact(command: Artifact) -> Result<Option<String>, Failure> {
     match command {
         Artifact::Build {
             manifest,
@@ -218,7 +219,7 @@ fn artifact(command: Artifact) -> Result<String, Failure> {
                 features: &features,
                 no_default_features,
             })?;
-            Ok(path.display().to_string())
+            Ok(Some(path.display().to_string()))
         }
         Artifact::Select {
             package,
@@ -232,23 +233,27 @@ fn artifact(command: Artifact) -> Result<String, Failure> {
                 .as_deref()
                 .map(|pair| (Path::new(&pair[0]), Path::new(&pair[1])));
             let path = cargo_artifact::select(&metadata, &messages, &package, kind, name, map)?;
-            Ok(path.display().to_string())
+            Ok(Some(path.display().to_string()))
         }
+        // `print(meta["target_directory"])`: an empty directory still prints its newline.
         Artifact::TargetDir { manifest } => cargo_artifact::target_directory(
             &manifest.manifest_path,
             manifest.target_dir.as_deref(),
-        ),
+        )
+        .map(Some),
         Artifact::NextestConfig {
             source,
             output,
             manifest,
         } => {
-            let target = cargo_artifact::target_directory(
+            // `nextest_config(args.source, args.output, meta["target_directory"])`: the key is
+            // looked up first; its type matters only once the output is created.
+            let target = cargo_artifact::target_value(
                 &manifest.manifest_path,
                 manifest.target_dir.as_deref(),
             )?;
-            cargo_artifact::nextest_config(&source, &output, Path::new(&target))?;
-            Ok(String::new())
+            cargo_artifact::nextest_config(&source, &output, &target)?;
+            Ok(None)
         }
     }
 }
@@ -262,8 +267,8 @@ fn main() -> ExitCode {
     match Cli::parse().command {
         Top::BuildReport { command } => build_report_command(command),
         Top::CargoArtifact { command } => match artifact(command) {
-            Ok(line) if line.is_empty() => ExitCode::SUCCESS,
-            Ok(line) => {
+            Ok(None) => ExitCode::SUCCESS,
+            Ok(Some(line)) => {
                 println!("{line}");
                 ExitCode::SUCCESS
             }

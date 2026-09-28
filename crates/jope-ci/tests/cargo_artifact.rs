@@ -308,12 +308,14 @@ fn nextest_config_preserves_profiles_and_binds_external_store() {
         "[profile.pr]\ndefault-filter = \"all()\"\n[profile.pr.junit]\npath = \"junit.xml\"\n",
     )
     .unwrap();
-    let target = f.binary.parent().unwrap();
+    let target_path = f.binary.parent().unwrap();
+    // `meta["target_directory"]`, as Cargo reports it.
+    let target = &jope_records::pyjson::Value::from(target_path.to_str().unwrap());
     nextest_config(&source, &output, target).unwrap();
     let config: toml::Table = fs::read_to_string(&output).unwrap().parse().unwrap();
     assert_eq!(
         config["store"]["dir"].as_str().unwrap(),
-        target.join("nextest").to_str().unwrap()
+        target_path.join("nextest").to_str().unwrap()
     );
     let original: toml::Table = fs::read_to_string(&source).unwrap().parse().unwrap();
     assert_eq!(config["profile"], original["profile"]);

@@ -39,33 +39,39 @@ pub fn splitlines(text: &str) -> Vec<&str> {
     lines
 }
 
-/// `repr(str)`: single quotes unless the text holds a single quote and no double quote.
+/// `repr(str)`: single quotes unless the text holds a single quote and no double quote, and every
+/// character CPython 3.12 does not print escaped (see [`jope_records::pyjson::str_repr`]).
 pub fn repr(text: &str) -> String {
-    let quote = if text.contains('\'') && !text.contains('"') {
-        '"'
-    } else {
-        '\''
-    };
-    let mut out = String::new();
-    out.push(quote);
-    for c in text.chars() {
-        match c {
-            '\\' => out.push_str("\\\\"),
-            '\n' => out.push_str("\\n"),
-            '\r' => out.push_str("\\r"),
-            '\t' => out.push_str("\\t"),
-            c if c == quote => {
-                out.push('\\');
-                out.push(c);
+    jope_records::pyjson::str_repr(text)
+}
+
+/// `repr(os.fsdecode(name))`: a name that is not UTF-8 is decoded with `surrogateescape`, so each
+/// byte of an undecodable sequence prints as `\udcXX`.
+pub fn os_repr(name: &std::ffi::OsStr) -> String {
+    use std::os::unix::ffi::OsStrExt;
+    let mut units = vec![];
+    let mut rest = name.as_bytes();
+    loop {
+        match std::str::from_utf8(rest) {
+            Ok(text) => {
+                units.extend(text.chars().map(Ok));
+                break;
             }
-            c if (c as u32) < 0x20 || c as u32 == 0x7f => {
-                write!(out, "\\x{:02x}", c as u32).unwrap();
+            Err(error) => {
+                let (good, bad) = rest.split_at(error.valid_up_to());
+                units.extend(
+                    std::str::from_utf8(good)
+                        .expect("the valid prefix")
+                        .chars()
+                        .map(Ok),
+                );
+                let n = error.error_len().unwrap_or(bad.len());
+                units.extend(bad[..n].iter().map(|&b| Err(0xdc00 | u16::from(b))));
+                rest = &bad[n..];
             }
-            c => out.push(c),
         }
     }
-    out.push(quote);
-    out
+    jope_records::pyjson::units_repr(&units)
 }
 
 /// `json.dumps(str)` with the default `ensure_ascii=True`.
@@ -125,6 +131,17 @@ mod tests {
         assert_eq!(repr("demo"), "'demo'");
         assert_eq!(repr("it's"), "\"it's\"");
         assert_eq!(repr("a'b\"c"), "'a\\'b\"c'");
+        // Latin-1 and line separators, and a code point Unicode 15.0 had not assigned.
+        assert_eq!(repr("de\u{a0}mo"), "'de\\xa0mo'");
+        assert_eq!(repr("de\u{2028}mo"), "'de\\u2028mo'");
+        assert_eq!(repr("\u{378}x"), "'\\u0378x'");
+        assert_eq!(repr("\u{e9}\u{1F600}"), "'\u{e9}\u{1F600}'");
+        use std::os::unix::ffi::OsStrExt;
+        assert_eq!(
+            os_repr(std::ffi::OsStr::from_bytes(b"/r/\xff\xe2\x82x'")),
+            "\"/r/\\udcff\\udce2\\udc82x'\""
+        );
+        assert_eq!(os_repr(std::ffi::OsStr::new("/r/a")), "'/r/a'");
         assert_eq!(json_str("/t with spaces/é"), "\"/t with spaces/\\u00e9\"");
         assert_eq!(json_str("\u{1F600}"), "\"\\ud83d\\ude00\"");
     }

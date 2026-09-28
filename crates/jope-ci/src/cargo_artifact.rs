@@ -65,18 +65,35 @@ pub fn metadata(manifest: &str, target_dir: Option<&str>) -> Result<Value, Failu
         .stdout(Stdio::piped())
         .stderr(Stdio::inherit())
         .output()
-        .map_err(|e| format!("cargo: {e}"))?;
+        .map_err(|e| python::os_error(&e, "cargo"))?;
     if !output.status.success() {
-        return Err(Failure::Exit(status_code(output.status)));
+        // `except CalledProcessError as exc: return exc.returncode`, then `sys.exit(...)`: a
+        // Cargo killed by a signal gives the negative return code, which exits as its low byte.
+        return Err(Failure::Exit(
+            i32::try_from(python::returncode(output.status)).unwrap_or(1),
+        ));
     }
-    // `json.loads(check_output(...))`: Python's JSON reading (NaN and Infinity literals, a repeated
-    // key keeps its last value) and its error messages.
-    pyjson::parse_bytes(&output.stdout).map_err(Failure::Refused)
+    // `json.loads(check_output(...))`: bytes, so the encoding is detected; Python's JSON reading
+    // (NaN and Infinity literals, a repeated key keeps its last value, unbounded integers) and
+    // its error messages.
+    pyjson::parse_bytes_big(&output.stdout).map_err(Failure::Refused)
+}
+
+/// `Path(path).read_text()`: strict UTF-8 with universal newlines. A file that cannot be read
+/// refuses as the Python printed the `OSError` it caught (`[Errno 2] No such file or directory:
+/// '<path>'`, the path as `str(Path(path))`), and bytes that are not UTF-8 as its
+/// `UnicodeDecodeError` (`'utf-8' codec can't decode byte 0xff in position 0: invalid start
+/// byte`).
+pub fn read_text(path: &Path) -> Result<String, String> {
+    let name = python::PosixPath::parse(&path.to_string_lossy()).to_string();
+    let bytes = fs::read(path).map_err(|e| python::os_error(&e, &name))?;
+    pyjson::decode_utf8(&bytes).map(python::universal_newlines)
 }
 
 // How the Python read `metadata` and the message stream. JSON is read with Python's `json`
-// semantics and compared with Python's `==` (`1 == 1.0 == True`, `[1] == [1.0]`), so an id matches
-// exactly when it matched in Python. A missing key raised `KeyError`, which the Python caught and
+// semantics (integers of any size, every `NaN` one object) and compared with Python's `==`
+// (`1 == 1.0 == True`, `[1] == [1.0]`, `NaN in [NaN]` but `NaN != NaN`), so an id matches exactly
+// when it matched in Python. A missing key raised `KeyError`, which the Python caught and
 // printed as `cargo-artifact: '<key>'` (exit status 1); the port prints the same. A value of the
 // wrong type raised a `TypeError` or `AttributeError` it did not catch (a traceback, exit status
 // 1); the port refuses too (`cargo-artifact: <field>: <what failed and the offending type>`, exit
@@ -167,7 +184,7 @@ pub fn executable(
             continue; // Cargo documents possible non-JSON output from other tools.
         }
         // A line that starts with `{` is a JSON object or refuses with Python's decoder message.
-        let message = pyjson::parse_str(line)?;
+        let message = pyjson::parse_str_big(line)?;
         let at = format!("Cargo message on line {}", number + 1);
         let reason = message.get("reason").and_then(Value::as_str);
         if reason == Some("build-finished") {
@@ -212,15 +229,16 @@ pub fn executable(
     }
     let mut path = matches.remove(0);
     if let Some((container, host)) = path_map {
-        let relative = path
-            .strip_prefix(py::pure_path(&container.to_string_lossy()))
-            .map_err(|_| {
-                format!(
-                    "{} is not in the subpath of {}",
-                    py::repr(&path.to_string_lossy()),
-                    py::repr(&container.to_string_lossy())
-                )
-            })?;
+        // `path.relative_to(container)`: both sides as `PurePath` normalises them, and the
+        // refusal names them as `str()` prints them (no trailing separator or `.` component).
+        let container = py::pure_path(&container.to_string_lossy());
+        let relative = path.strip_prefix(&container).map_err(|_| {
+            format!(
+                "{} is not in the subpath of {}",
+                py::repr(&path.to_string_lossy()),
+                py::repr(&container.to_string_lossy())
+            )
+        })?;
         path = py::pure_path(&host.to_string_lossy()).join(relative);
     }
     if !path.is_file() || access(&path, AccessFlags::X_OK).is_err() {
@@ -236,29 +254,42 @@ pub fn executable(
 /// every byte of the nextest config at `source`. Nextest's default store is workspace-relative,
 /// independently of Cargo; TOML basic strings accept JSON's escaped string form, including
 /// spaces in an absolute target directory.
-pub fn nextest_config(source: &Path, output: &Path, target: &Path) -> Result<(), String> {
-    let raw = fs::read_to_string(source).map_err(|e| format!("{}: {e}", source.display()))?;
-    // Python's read_text() translates newlines universally.
-    let text = raw.replace("\r\n", "\n").replace('\r', "\n");
+///
+/// The steps run in the Python's order, so the first refusal is the one it printed: read the
+/// source, parse it (a leading U+FEFF, which `read_text` keeps, is `tomllib`'s `Invalid statement
+/// (at line 1, column 1)`; any other TOML error is reported in the `toml` crate's words, not
+/// `tomllib`'s), refuse a `store`, create the output (`open("x")`), and only then read `target`
+/// as a path. A `target` that is not a string crashed the Python there (`TypeError`), after it had
+/// created the output; the port refuses at the same point and leaves the same empty file.
+pub fn nextest_config(source: &Path, output: &Path, target: &Value) -> Result<(), String> {
+    let text = read_text(source)?;
+    if text.starts_with('\u{feff}') {
+        return Err("Invalid statement (at line 1, column 1)".into());
+    }
     let table: toml::Table = text.parse().map_err(|e: toml::de::Error| e.to_string())?;
     if table.contains_key("store") {
         return Err(
             "nextest already configures a store; reconcile it before relocating reports".into(),
         );
     }
-    let store = py::pure_path(&target.to_string_lossy()).join("nextest");
+    let output_name = python::PosixPath::parse(&output.to_string_lossy()).to_string();
     let mut file = OpenOptions::new()
         .write(true)
         .create_new(true)
         .open(output)
-        .map_err(|e| format!("{}: {e}", output.display()))?;
-    let header = format!(
-        "store = {{ dir = {} }}\n",
-        py::json_str(&store.to_string_lossy())
-    );
+        .map_err(|e| python::os_error(&e, &output_name))?;
+    // `str(Path(target) / "nextest")`
+    let target = target.as_str().ok_or_else(|| {
+        format!(
+            "cargo metadata target_directory: {}",
+            exception::path_argument(target)
+        )
+    })?;
+    let store = python::PosixPath::parse(target).join("nextest").to_string();
+    let header = format!("store = {{ dir = {} }}\n", py::json_str(&store));
     file.write_all(header.as_bytes())
         .and_then(|()| file.write_all(text.as_bytes()))
-        .map_err(|e| format!("{}: {e}", output.display()))
+        .map_err(|e| python::os_error(&e, &output_name))
 }
 
 /// `build`: compile one bin/example and return its executable (never one from a failed build).
@@ -297,15 +328,15 @@ pub fn build(request: &Build<'_>) -> Result<PathBuf, Failure> {
         .stdout(Stdio::piped())
         .stderr(Stdio::inherit())
         .output()
-        .map_err(|e| format!("cargo: {e}"))?;
+        .map_err(|e| python::os_error(&e, "cargo"))?;
+    // `subprocess.run(..., stdout=PIPE, text=True)` decoded the stream before it returned, so
+    // bytes that are not UTF-8 refuse (with the `UnicodeDecodeError` the Python printed) even
+    // when the build failed.
+    let messages = python::text_output(&output.stdout)?;
     // Never return an artifact from a build that later failed.
     if !output.status.success() {
         return Err(Failure::Exit(status_code(output.status)));
     }
-    // `subprocess.run(..., text=True)` decoded strictly: bytes that are not UTF-8 refuse rather
-    // than being replaced.
-    let messages = String::from_utf8(output.stdout)
-        .map_err(|e| format!("Cargo's messages are not UTF-8: {e}"))?;
     Ok(executable(
         &messages,
         &meta,
@@ -325,27 +356,28 @@ pub fn select(
     name: &str,
     path_map: Option<(&Path, &Path)>,
 ) -> Result<PathBuf, Failure> {
-    // `Path(...).read_text()`: strict UTF-8.
-    let read = |path: &Path| {
-        fs::read_to_string(path).map_err(|e| Failure::Refused(format!("{}: {e}", path.display())))
-    };
-    // `json.loads(...)`: Python's JSON reading and its error messages.
-    let meta = pyjson::parse_str(&read(metadata_path)?).map_err(Failure::Refused)?;
-    let messages = read(messages_path)?;
+    // `json.loads(Path(...).read_text())`: a `str` (a UTF-8 BOM refuses), positions counted after
+    // universal-newline translation, unbounded integers; then the messages.
+    let meta = pyjson::parse_str_big(&read_text(metadata_path)?).map_err(Failure::Refused)?;
+    let messages = read_text(messages_path)?;
     Ok(executable(&messages, &meta, package, kind, name, path_map)?)
 }
 
-/// `target-dir`: Cargo's effective target directory for the manifest. A missing key refuses as
-/// the Python did (`cargo-artifact: 'target_directory'`). A value that is not a string refuses
-/// too, which is stricter than `target-dir` in the Python (it printed `str(value)`, such as
-/// `None`) and the same outcome as its `nextest-config` (a `TypeError` in `Path(value)`).
-pub fn target_directory(manifest: &str, target_dir: Option<&str>) -> Result<String, Failure> {
+/// `meta["target_directory"]` of Cargo's metadata for the manifest; a missing key refuses as the
+/// Python's caught `KeyError` did (`cargo-artifact: 'target_directory'`).
+pub fn target_value(manifest: &str, target_dir: Option<&str>) -> Result<Value, Failure> {
     let meta = metadata(manifest, target_dir)?;
-    let value = index(&meta, "target_directory", "cargo metadata")?;
+    Ok(index(&meta, "target_directory", "cargo metadata")?.clone())
+}
+
+/// `target-dir`: Cargo's effective target directory for the manifest. A value that is not a
+/// string refuses, which is stricter than the Python (it printed `str(value)`, such as `None`).
+pub fn target_directory(manifest: &str, target_dir: Option<&str>) -> Result<String, Failure> {
+    let value = target_value(manifest, target_dir)?;
     value.as_str().map(str::to_owned).ok_or_else(|| {
         Failure::Refused(format!(
             "cargo metadata target_directory: {}",
-            exception::path_argument(value)
+            exception::path_argument(&value)
         ))
     })
 }
