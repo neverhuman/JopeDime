@@ -2487,9 +2487,169 @@ Every gate below ran at `fa6b44a18` on xbabe2, CPU only.
 - The one unexplained in-process failure of
   `smartcluster_ranks_commit_the_whole_group_exactly_once` (`post2`, above) did not recur in 26
   more in-process runs, or in 15 process-per-test runs, in the same image. Its message was not
-  kept. If it recurs, the full output is what to keep.
+  kept. If it recurs, the full output is what to keep. (See the review follow-ups below: a
+  plausible cause is closed, and a recurrence now carries its full diagnostic.)
 - A test run narrowed to one target (`cargo nextest run --test bounded_census`) does not build
   examples. It then finds the fixture absent and says how to build it, or finds one built from
-  older sources. `full-lane.sh` never narrows its selection that way.
+  older sources. `full-lane.sh` never narrows its selection that way. (Closed below: a stale
+  fixture now fails the run.)
 - The fixture host is one host. The multi-host census documents stay synthetic, as before; the
   three-host proof (W7-T07) is unchanged.
+
+### Review follow-ups on `31972d7a7`
+
+The fix passed independent verification with no blocking finding. The verifier's and Codex's
+reviewer's notes (AGENT_CHAT 2026-09-28T17:46–18:11Z) are addressed in test support, in
+`coverage.json` and in this record. No production source changes.
+
+**1. A stale fixture fails the run.** `fixture_host::executable()` finds the fixture by path in
+the target directory. A run narrowed to one test target rebuilds the tests but not the example,
+so it could run a fixture built from older sources, silently. The pre record shows exactly that:
+with `collect.rs` touched and only `bounded_smartcluster` rebuilt, the suite passed 5 of 5 with
+the fixture 8 minutes older than the source (`fix-machine-id-polish-pre-*/stale-silent.txt`).
+Now `executable()` also refuses a stale fixture, before any fixture starts, with the rebuild
+command. The rule is Cargo's own: the dep-info Cargo writes next to the executable
+(`target/debug/examples/jope-native-loop-fixture.d`) lists every local source it was compiled
+from, the library, its path dependencies and the fixture's own files; any of them modified after
+the executable, or gone, makes it stale, and an absent or unreadable dep-info proves nothing and
+is refused too. The test executable's own time is no reference: Cargo links the tests and the
+example in either order, and a change to one test file rebuilds that test and not the example,
+so comparing the two would fail correct full-lane runs. A false stale report costs only a
+rebuild. The remaining gap is a source edited while the example itself was compiling, which
+Cargo rebuilds on its next build.
+
+**2. The coordinator's error is kept.** The coordinator's `Result` used to be a plain `unwrap`,
+so an error printed only its own message, and the fixture's evidence went with the tempdir and
+the child processes. Every coordinator result in `bounded_smartcluster` now goes through
+`Host::coordinated` or `Host::joined`: on an error, or a panic of the coordinator's thread, it
+panics with the error chain (`{error:#}`) and `Host::diagnose()`, formatted while the host, its
+daemons, agents and run directory still exist. `diagnose()` now also names the coordinator's
+listen address and tails every coordinator process log (`coordinate-*.log`), beside the journal
+events, each rank's outbox and refusal, each daemon's and agent's log tail and each daemon's
+jobs. Nothing is retried and no predicate is relaxed.
+
+**3. The coordinator's listen port.** The previous fixture chose it with `free_port()`: bind
+`127.0.0.1:0`, read the number, close the socket. The number went into every rank's supervision
+file, three agents started, and only then did the coordinator bind it. In between, the number
+was free for the kernel to hand to any `bind(:0)` or autobound `connect` of any process. The
+same fixture's `free_port()` and agents (`--listen 127.0.0.1:0`) in the other in-process tests
+make exactly those calls, and Linux draws every `bind(:0)` from the same subset of the range (it
+prefers odd ports for `bind(:0)` and leaves even ones to `connect`). The coordinator's bind then
+fails (`listen 127.0.0.1:P`), or two fixtures share one number.
+This is a plausible cause of the `post2` failure, whose message was lost; it is not proven to be
+that cause.
+
+The window is closed in test support only (`ListenPort` in `bounded_smartcluster.rs`):
+
+- The port lies outside the kernel's ephemeral range (`/proc/sys/net/ipv4/ip_local_port_range`,
+  read at run time): below it by at most 8 192, or above it. No `bind(:0)` or autobound
+  `connect` of any process is ever given such a port.
+- A lock named after the port, an abstract Unix socket `jope-test-loopback-port-<port>`, is held
+  for the host's whole life. The abstract namespace belongs to the network namespace, like the
+  port space, so the lock excludes every other reservation in this process and in any other
+  test process on that network namespace, whatever its `TMPDIR`. The kernel drops it when the
+  holder exits, so nothing goes stale.
+- A TCP socket bound to the address, not listening and without `SO_REUSEADDR`, holds the address
+  itself until `Host::args()`, which every coordinator start calls immediately before it starts:
+  meanwhile every other bind of the address fails, and a participant's connection is refused as
+  if nothing were bound (`a_participant_proves_its_smartcluster_job_before_any_work` relies on
+  that).
+
+What remains is a process that binds this exact number explicitly, bypassing the reservation:
+between the release and the coordinator's bind (the coordinator opens the journal and checks the
+census first), or between a killed coordinator and its restart. Its bind then fails, and item 2
+puts the error and the fixture's evidence in the failure. Closing that last window would need
+the coordinator to accept a bound listener, a production change, which this does not make.
+
+**4. `coverage.json`.** The example's item lists `full-scratch` beside `rust-check` and
+`full-default`: `full-scratch`'s `-p jope-parallel` nextest build compiles it, and
+`bounded_census` and `bounded_smartcluster` run it there (full-main run 36449887665 failed the
+same tests in both lanes).
+
+**5. Operator-facing refusal text.** For an invalid host machine id, the refusal an operator
+sees moved to where the id is read. `census collect` and a participant now say
+``machine id `<value>` read from /etc/machine-id is not 32 lowercase hex``, naming the value and
+the file. The old wording, ``host `<name>` machine id must be 32 lowercase hex
+(/etc/machine-id)``, stays in `census::validate_identity`, which checks the identities a census
+*document* (`census.rs:230`) or a plan (`contract.rs:516`) carries; a host's own empty or
+malformed `/etc/machine-id` is refused at the read and no longer reaches it. The training
+boundary's own read (`training/topology.rs:308`) is unchanged. A runbook, alert or log search
+that matched the old string for a host's `/etc/machine-id` must match the new one. None in this
+repository does: the old string occurs only in `census.rs` and in this record.
+
+**Commits.** Four commits on `31972d7a7`, then this record:
+
+- `33654d1c2` refuses a stale fixture (`fixture_host.rs`);
+- `f9f059571` keeps the coordinator's error and evidence (`bounded_smartcluster.rs`);
+- `b2f5b2c50` reserves the coordinator's listen port (`bounded_smartcluster.rs`);
+- `b810271f5` lists `full-scratch` for the example (`coverage.json`).
+
+No production source, and none of `neural.rs`, `training.rs`, `training/`, `assignment.rs` or
+`eval_registry/native_scq*`, changes; those stay byte-identical to `4d9a27e64`. No test is added,
+removed or renamed, so the test inventory is unchanged (3 783 Rust tests).
+
+**Verification** (`fix-machine-id-polish-pre-20260928T183152Z` and
+`fix-machine-id-polish-post-20260928T184030Z`). Every run is at `b810271f5`, the code head, on
+xbabe2, CPU only. Logs are unfiltered, and each process's own exit code follows its output.
+
+- **Stale fixture** (`gates/guard/`). Built fresh, `bounded_smartcluster` passes 5 of 5 and
+  `bounded_census` 8 of 8. With `collect.rs` touched and only those two test targets rebuilt,
+  every `bounded_smartcluster` test and `bounded_census`'s CLI test fail at once (exit 101).
+  Each names the fixture, the newer source and the rebuild command. The other seven census tests
+  run no fixture and pass. After `cargo build --locked -p jope-parallel --example
+  jope-native-loop-fixture`, both suites pass again.
+- **Coordinator diagnostic** (`diagnostic-proof.txt`). A throwaway patch, never committed, makes
+  the test bind the released address before the coordinator starts, standing in for the
+  residual explicit binder. `smartcluster_ranks_commit_the_whole_group_exactly_once` then fails
+  with `driver::coordinate failed: listen 127.0.0.1:30560: Address already in use (os error
+  98)`. The message goes on with the listen address, the journal (`planned`,
+  `preflight_admitted`), each rank's empty outbox and each daemon's and agent's log tail. Port
+  30560 is below the ephemeral range 32768–60999. The patch was reverted with `git checkout`
+  and the target rebuilt, and the test passes.
+- **In the runner container** (`container/`). The same binaries, with their digests recorded
+  inside the container, ran in `jope-runner:current` under `deploy/runner/run.sh`'s hardening
+  flags, as in the hermeticity proof above. The container reported `machine-id-bytes=0`,
+  `rootfs=ro`, no `nvidia-smi`, and the ephemeral range 32768–60999 in its own network
+  namespace. Results, each with exit 0:
+  - `bounded_census` 8 of 8;
+  - `bounded_smartcluster` 5 of 5 at 5 threads, and 5 of 5 at 1 thread;
+  - `collect`'s unit tests 4 of 4.
+
+  The 11 full-main failures are among them. The product binary refuses the empty machine id
+  with ``machine id `` read from /etc/machine-id is not 32 lowercase hex`` (exit 1, no file).
+  The fixture executable collects the fixture host.
+- **Stress on the host** (`stress/`). `bounded_smartcluster` ran 30 times in process, back to
+  back, at 5 test threads, with each run's full output kept. All 30 exit 0: 150 of 150 tests
+  pass, in 5.9–7.7 s a run. No run failed, so there is no diagnostic to report.
+- **Gates** (`gates/summary.txt`):
+  - `cargo fmt --check` passes, and so does `git diff --check 4d9a27e64..HEAD`.
+  - `cargo check --workspace --all-targets --locked` passes.
+  - `cargo clippy -p jope-parallel --all-targets --locked` reports 119 findings, the count
+    recorded above. None is in `fixture_host.rs`. The one in `bounded_smartcluster.rs` is the
+    `type_complexity` of `288bb2a24`, now on line 974.
+  - The `bounded_*` and fence selection passes 199 of 199 under nextest:
+    - the `bounded_*` targets, 110;
+    - `collect`'s unit tests, 4;
+    - the fences, 85.
+  - `coverage validate` passes with 0 unassigned. `verify-test-inventory` passes with 319
+    items, and `test-inventory.sh --no-python` finds 3 783 Rust tests, none added or removed.
+  - `parity-matrix.sh --no-build` passes with 818 rows.
+  - `deploy/ci/check.sh` passes. gitleaks scanned 614 commits and found no leaks, and
+    `ip-scrub` found 47 files clean.
+  - `deploy/ci/full-lane.sh full-default` passes (`fulllane/`, `gates/full-default.txt`): 3 787
+    tests pass and 65 are skipped, the nextest run taking 623 s and the lane 638 s, against a
+    1 500 s budget. Among them are the `bounded_*` targets (110 of 110), with the 13 census and
+    SmartCluster tests running the fixture beside the full workspace, and `collect`'s unit tests
+    (4 of 4). `check-test-routing.sh` verifies 80 `cpu` and 8 `host` contracts. W7-D5's check
+    found `scqd`, with the same digest as before (`3e60aaf1…`).
+
+**Open.**
+
+- The cause of the one `post2` failure is still not proven. The port race, its plausible cause,
+  is closed as above, and any coordinator failure now carries its error and the fixture's
+  evidence.
+- The residual window of item 3: a process that binds the reserved number explicitly between
+  the release and the coordinator's bind.
+- In `coverage.json`, the `bounded_census` and `bounded_smartcluster` items list `rust-check` and
+  `full-default` only, though `full-scratch` runs them too (run 36449887665 failed them in both
+  lanes). `coverage validate` accepts that, and this change leaves them as they were.
