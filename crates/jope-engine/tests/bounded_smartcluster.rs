@@ -459,10 +459,40 @@ impl Host {
             thread::sleep(Duration::from_millis(50));
         }
     }
-    /// Every rank's outbox (including a participant's recorded refusal), the journal events,
-    /// each daemon's and agent's log tail and each daemon's jobs, for assertion messages.
+    /// A coordinator's report, or a panic with its error and [`Host::diagnose`] taken while
+    /// the daemons, agents and run directory still exist (they go when the host drops).
+    fn coordinated(
+        &self,
+        what: &str,
+        report: anyhow::Result<controller::StatusReport>,
+    ) -> controller::StatusReport {
+        report.unwrap_or_else(|e| panic!("{what} failed: {e:#}\n{}", self.diagnose()))
+    }
+    /// [`Host::coordinated`] for a coordinator run on its own thread, which may also panic.
+    fn joined(
+        &self,
+        coordinator: thread::JoinHandle<anyhow::Result<controller::StatusReport>>,
+    ) -> controller::StatusReport {
+        match coordinator.join() {
+            Ok(report) => self.coordinated("driver::coordinate", report),
+            Err(panic) => {
+                let message = panic
+                    .downcast_ref::<String>()
+                    .map(String::as_str)
+                    .or_else(|| panic.downcast_ref::<&str>().copied())
+                    .unwrap_or("a non-text panic");
+                panic!(
+                    "the coordinator thread panicked: {message}\n{}",
+                    self.diagnose()
+                )
+            }
+        }
+    }
+    /// The coordinator's listen address, the journal events, every rank's outbox (including a
+    /// participant's recorded refusal), each daemon's and agent's log tail, each daemon's jobs
+    /// and each coordinator process's log tail, for assertion messages.
     fn diagnose(&self) -> String {
-        let mut out = String::new();
+        let mut out = format!("coordinator listen {}\n", self.listen);
         if let Ok(entries) = fs::read_dir(self.run_dir.join("journal")) {
             let mut names: Vec<_> = entries.flatten().map(|e| e.path()).collect();
             names.sort();
@@ -514,6 +544,24 @@ impl Host {
                 }
                 Err(e) => out += &format!("rank {rank} scqd list failed: {e}\n"),
             }
+        }
+        // `coordinate_cli`'s logs, oldest first.
+        let mut logs: Vec<PathBuf> = fs::read_dir(&self.root)
+            .map(|d| {
+                d.flatten()
+                    .map(|e| e.path())
+                    .filter(|p| {
+                        p.file_name()
+                            .is_some_and(|n| n.to_string_lossy().starts_with("coordinate-"))
+                    })
+                    .collect()
+            })
+            .unwrap_or_default();
+        logs.sort();
+        for path in logs {
+            let log = fs::read_to_string(&path).unwrap_or_default();
+            let tail: Vec<&str> = log.lines().rev().take(10).collect();
+            out += &format!("{} tail: {tail:?}\n", path.display());
         }
         out
     }
@@ -579,7 +627,7 @@ fn coordinate_in_background(
 fn smartcluster_ranks_commit_the_whole_group_exactly_once() {
     let host = Host::new(5);
     let (_stop, t) = coordinate_in_background(&host);
-    let status = t.join().unwrap().unwrap();
+    let status = host.joined(t);
     assert_eq!(
         status.outcome,
         Some(Outcome::Committed),
@@ -625,8 +673,10 @@ fn smartcluster_ranks_commit_the_whole_group_exactly_once() {
     }
     // Running the coordinator again on a committed run changes nothing.
     let before = controller::status(&host.run_dir).unwrap().journal_records;
-    let again =
-        driver::coordinate(&host.args(), host.supervisor(), &AtomicBool::new(false)).unwrap();
+    let again = host.coordinated(
+        "driver::coordinate on the committed run",
+        driver::coordinate(&host.args(), host.supervisor(), &AtomicBool::new(false)),
+    );
     assert_eq!(again.outcome, Some(Outcome::Committed));
     assert_eq!(again.committed_updates_total, 60_005);
     assert_eq!(
@@ -680,7 +730,7 @@ fn a_killed_rank_drains_the_whole_group_through_smartcluster() {
         found.unwrap()
     };
     unsafe { libc::kill(pid, libc::SIGKILL) };
-    let status = t.join().unwrap().unwrap();
+    let status = host.joined(t);
     assert_eq!(
         status.outcome,
         Some(Outcome::Drained),
@@ -704,7 +754,7 @@ fn cancellation_drains_the_whole_group_through_smartcluster() {
     host.wait_admitted();
     let report = controller::cancel(&host.run_dir, &host.sha, "operator cancel", now_ms()).unwrap();
     assert!(report.delivered_to_live_coordinator);
-    let status = t.join().unwrap().unwrap();
+    let status = host.joined(t);
     assert_eq!(
         status.outcome,
         Some(Outcome::Cancelled),
