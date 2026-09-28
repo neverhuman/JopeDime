@@ -11,7 +11,8 @@ use clap::{Parser, Subcommand, ValueEnum};
 use jope_records::pyjson::{self, Value};
 use jope_records::{
     claim_inventory, claims, conformance, coverage, dispositions, elo_history, findings, inventory,
-    layout, parity, progress_view, py, readme, scope_check, task_status, test_inventory,
+    layout, parity, progress_view, py, readme, repo_layout, scope_check, task_status,
+    test_inventory,
 };
 
 #[derive(Parser)]
@@ -139,6 +140,18 @@ enum Command {
         /// Parsed `jope-parallel --help` output to cross-check the clap subcommands against.
         #[arg(long)]
         help_text: Option<PathBuf>,
+    },
+    /// Repository layout guard (hygiene lane): root Markdown, tracked logs, member directory vs
+    /// package name, duplicate package names and temp-dir use in test code, against the
+    /// reviewed exceptions in deploy/ci/repo-layout-allow.txt.
+    RepoLayout {
+        /// The checkout to check (default: the repository).
+        #[arg(long)]
+        root: Option<PathBuf>,
+        /// Print the current `temp-dir <path> <count>` lines of test code instead of checking
+        /// (the generator of the allowlist's temp-dir entries).
+        #[arg(long)]
+        print_temp_dir: bool,
     },
     /// Render the README's measured-results blocks from committed evidence.
     ReadmeBenchmarks {
@@ -315,6 +328,16 @@ fn run(cli: Cli) -> jope_records::Result<Output> {
             };
             let matrix = matrix.unwrap_or_else(|| root.join(parity::MATRIX));
             return Ok(report(parity::check(&matrix, &root, help_text.as_deref())?));
+        }
+        Command::RepoLayout {
+            root,
+            print_temp_dir,
+        } => {
+            let root = match root {
+                Some(root) => root,
+                None => repo()?,
+            };
+            return Ok(report(repo_layout::run(&root, print_temp_dir)?));
         }
         Command::ReadmeBenchmarks { write, .. } => {
             let (message, ok) = readme::run(&repo()?, write)?;

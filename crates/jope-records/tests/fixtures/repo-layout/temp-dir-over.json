@@ -1,0 +1,14 @@
+{
+  "tracked": [
+    "crates/x/src/lib.rs"
+  ],
+  "members": [],
+  "manifests": {},
+  "sources": {
+    "crates/x/src/lib.rs": "pub fn f() {}\n\n#[cfg(test)]\nmod tests {\n    #[test]\n    fn t() {\n        let a = std::env::temp_dir().join(\"a\");\n        let b = std::env::temp_dir().join(\"b\");\n        assert_ne!(a, b);\n    }\n}\n"
+  },
+  "allow": "temp-dir crates/x/src/lib.rs 1 -- follow-up\n",
+  "expect": [
+    "temp-dir crates/x/src/lib.rs: 2 call(s) of std::env::temp_dir in test code, deploy/ci/repo-layout-allow.txt:1 permits 1; use tempfile for the new call (the allowlist is shrink-only)"
+  ]
+}

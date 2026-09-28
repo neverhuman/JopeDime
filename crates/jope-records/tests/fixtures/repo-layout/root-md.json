@@ -1,0 +1,16 @@
+{
+  "tracked": [
+    "Cargo.toml",
+    "NOTES.md",
+    "README.md"
+  ],
+  "members": [],
+  "manifests": {
+    "Cargo.toml": "[workspace]\nmembers = []\n"
+  },
+  "sources": {},
+  "allow": "root-md README.md -- project front page\n",
+  "expect": [
+    "root-md NOTES.md: Markdown file at the repository root; move it under docs/ (or add a reviewed `root-md NOTES.md -- <reason>` entry to deploy/ci/repo-layout-allow.txt)"
+  ]
+}

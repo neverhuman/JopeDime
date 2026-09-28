@@ -1,0 +1,24 @@
+{
+  "tracked": [
+    "Cargo.toml",
+    "README.md",
+    "crates/foo/Cargo.toml",
+    "crates/foo/src/lib.rs",
+    "crates/jope-engine/Cargo.toml",
+    "crates/jope-engine/src/lib.rs",
+    "crates/x/tests/t.rs",
+    "docs/guide.md"
+  ],
+  "members": ["crates/foo", "crates/jope-engine"],
+  "manifests": {
+    "Cargo.toml": "[workspace]\nmembers = [\"crates/foo\", \"crates/jope-engine\"]\n",
+    "crates/foo/Cargo.toml": "[package]\nname = \"foo\"\nversion = \"0.1.0\"\n",
+    "crates/jope-engine/Cargo.toml": "[package]\nname = \"jope-parallel\"\nversion = \"0.1.0\"\n\n[[bin]]\nname = \"jope-parallel\"\n"
+  },
+  "sources": {
+    "crates/foo/src/lib.rs": "pub fn f() {}\n",
+    "crates/x/tests/t.rs": "#[test]\nfn t() {\n    let d = std::env::temp_dir().join(\"x\");\n    let _ = d;\n}\n"
+  },
+  "allow": "# reviewed exceptions\nroot-md README.md -- project front page\ndir-package crates/jope-engine jope-parallel -- historical package name\ntemp-dir crates/x/tests/t.rs 1 -- follow-up\n",
+  "expect": []
+}

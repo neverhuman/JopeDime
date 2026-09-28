@@ -19,7 +19,7 @@
 //! | [`elo_history`] | `elo-history` | `elo-history/histories.json` + its digest-pinned inputs |
 //!
 //! Four repository hygiene guards live here too, ported from `deploy/ci` Python (archived at
-//! `8a55c4fef`) with their output and exit statuses unchanged:
+//! `8a55c4fef`) with their output and exit statuses unchanged, plus one written here:
 //!
 //! | Module | Command | Guards |
 //! |---|---|---|
@@ -27,6 +27,7 @@
 //! | [`scope_check`] | `rust-scope-check` | `deploy/ci/rust-test-scope.sh` partitions the workspace |
 //! | [`parity`] | `parity-check` | `docs/parity/capability-matrix.md` rows and counts |
 //! | [`readme`] | `readme-benchmarks --check\|--write` | the README's measured-results blocks |
+//! | [`repo_layout`] | `repo-layout` | root Markdown, tracked logs, member and package names, test temp dirs (no Python predecessor) |
 //!
 //! Records were written and read by Python, so [`pyjson`], [`pycsv`] and [`py`] reproduce the
 //! parts of Python's `json` and `csv` modules and built-ins the rules depend on
@@ -50,6 +51,7 @@ pub mod py;
 pub mod pycsv;
 pub mod pyjson;
 pub mod readme;
+pub mod repo_layout;
 pub mod scope_check;
 pub mod synthetic;
 pub mod task_status;

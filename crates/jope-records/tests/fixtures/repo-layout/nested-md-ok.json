@@ -1,0 +1,15 @@
+{
+  "tracked": [
+    "Cargo.toml",
+    "crates/foo/README.md",
+    "docs/x.md",
+    "docs/archive/y.md"
+  ],
+  "members": [],
+  "manifests": {
+    "Cargo.toml": "[workspace]\nmembers = []\n"
+  },
+  "sources": {},
+  "allow": "",
+  "expect": []
+}
