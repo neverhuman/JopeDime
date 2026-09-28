@@ -1124,6 +1124,188 @@ rendered where Python 3.12 raised the limit's `ValueError`.
   text (P1 review 3 addendum)` and `docs: record round three's addendum of the P1 ports (P1 review 3
   addendum)` (this section and the matrix count).
 
+## Follow-up — review round four: strict grammars
+
+Independent review 5334300806 of PR #117 (REQUEST_CHANGES on `bc22bc6ca`, by `neverhumanbot`)
+found two more classes where a port accepted what the original tool (git bytes of `f46a9048f`)
+refused. Its receipts are in `independent-review-pr117-bc22bc6ca` (`review-notes.md`,
+`report-spotcheck-results.json`, `numeric-spotcheck-results.json`).
+
+| # | Finding | Root cause | Change | Cases |
+| ---: | --- | --- | --- | --- |
+| 1 | custody `outer/link/../receipts`, with `outer/link -> guarded/sub` and a `.git` in `guarded`: the Python resolved `guarded/receipts` and refused; build-report resolved `outer/receipts` and wrote a successful report there | `resolve_lenient` applied `os.path.abspath` (lexical: `link/..` removed first) and then canonicalised the existing prefix; `Path.resolve()` resolves each symlink before a later `..` | `py::realpath` and `py::resolve`, CPython 3.12's `posixpath._joinrealpath` and `Path.resolve()`, used for custody, scan roots and measurement roots | build-report `negative-r4.json` (22) |
+| 2 | a README CSV cell `\x1f45` (a published `datasets_scored`) or `\x1f21.511` (a benchmark-valid `average_rank`): the Python's `int()` and `float()` refused; the port rendered | `py::int` and `py::float` trimmed with `str.strip()`'s whitespace, which includes U+001C..U+001F; `int()` and `float()` strip only `Py_ISSPACE` (ASCII space, `\t\n\r\x0b\x0c`) after mapping Unicode whitespace at or above U+0080 to spaces | the strict number grammar below | readme `negative-r4.json` (37) |
+
+Each of the four rounds has found another Python conversion or path quirk the ports copied
+imperfectly. This round converges by construction instead of by case: a port may be stricter than
+the Python, never more permissive, so text is read as a number by one grammar that accepts a
+subset of what Python read, and a path is resolved for a safety decision only as `realpath`
+resolves it.
+
+**Numbers: one strict grammar** (`jope_records::py`). `decimal` accepts optional surrounding
+whitespace from ASCII space, `\t`, `\n`, `\r`, `\x0b` and `\x0c` only (`is_number_space`), an
+optional ASCII sign and one or more ASCII digits, at most 4300 of them (leading zeros count, as
+they did for CPython 3.12, which refused more with the message `check_int_digits` words); the text
+is validated before its digits are counted. `int` also needs the value to fit `i64`.
+`decimal_int` reads what a pattern's `\d+` captured through the same grammar. `float` takes the same
+whitespace and sign, then `digits [. [digits]]` or `. digits`, then an optional `e`/`E`, sign and
+digits, correctly rounded (`1e999` is an infinity, as in Python). Every conversion of text to a
+number in the P1 ports goes through them:
+
+| Where | Python | Now |
+| --- | --- | --- |
+| README CSV cells: `datasets_scored`, `elo_rank` (`readme::int_cell`) | `int(cell)` | `py::int` |
+| README CSV cells: `average_rank` (`readme::float_cell`) | `float(cell)` | `py::float` |
+| parity: `pending-WP<n>` and the covering-test tally | `int(m.group(1))` of `\d+` | `py::decimal_int`; classifying a status only matches (`py::is_decimal_run`) and converts nothing |
+| build-report: the `du` field (`du_bytes`) | `int(stdout.split("\t", 1)[0])` | `py::int`, not negative |
+| build-report: `--stale` (`whole_hours`) | `int(value)` after `isascii()`, `isdecimal()`, 8 characters | the same checks, then `py::int` |
+| `pyjson`: every JSON integer and float literal the ports read (cargo-artifact's metadata and messages, build-report's configuration, coverage's map and metadata, scope's and parity's metadata, the README evidence) | `json.loads` | the JSON grammar chooses the literal; `py::decimal` and `py::float`, of which every JSON number is a sentence, convert it |
+| records readers outside P1: finding numbers (`findings`), sort keys (`task_status`) | `int(text)` | `py::int` (their committed inputs are ASCII digits; `verify-test-inventory` and the records tests are unchanged) |
+
+Not converted by the grammar, and why: `nextest-config` parses its TOML source with the `toml`
+crate only to look for a `store` key, and TOML's number grammar is ASCII-only (44 TOML number
+literals in the round-four harness find none that `tomllib` refused and the crate read; the crate
+refuses four that `tomllib` read: two 64-bit overflows, `0xFFFFFFFFFFFFFFFF` and `1e999`); the
+family-growth verifier (U8) reads JSON with `serde_json` (JSON's ASCII grammar, no `NaN` or
+`Infinity`) and converts no other text (its one conversion is the hexadecimal prefix of its own
+SHA-256); `readme.rs`, `pyjson.rs` and `py::round` re-read exponents and digits of their own
+float formatting. `nan`, `inf` and `infinity`: no committed ladder writes them in a cell the ports
+read with `float()` (every committed leaderboard and same-cut CSV was searched), so the grammar
+refuses them.
+
+**Paths: symlinks before `..`.** `py::realpath(path, strict)` ports `posixpath._joinrealpath`
+byte for byte: each name is `lstat`ed and a symlink replaced by its target, resolved in turn,
+before a later `..` removes the last component of the path resolved so far; in strict mode a
+missing component refuses naming the path up to it, otherwise it is kept as spelled; a loop
+refuses in strict mode and, as Python did, appends the rest unresolved otherwise; the result is
+`abspath` of it. `py::resolve` adds `Path.resolve()`'s `stat` of a non-strict result, so a loop
+refuses as pathlib's `RuntimeError("Symlink loop from ...")`. Every place a P1 port resolves a
+path for a safety decision:
+- build-report custody (`custody_output`): `py::resolve(custody, strict=False)`, then `/tmp` among
+  the output and its parents, then a `.git` from the output upwards with `Path.exists()`'s
+  semantics (`py::path_exists`): a missing path is absent, any other error refuses in the
+  `OSError`'s words. The port's `exists()` had read every error as absence, so under a directory
+  that may not be searched it went on to create the custody and failed there in other words
+  (`custody-permission-denied` now prints the Python's refusal).
+- build-report scan roots (`walk`): `abspath` and then `py::resolve(strict=True)`, compared with
+  the spelling. The Python applied `os.path.abspath` first here too, so only here is `..` removed
+  before symlinks are resolved; `realpath_strict` is replaced by the shared port.
+- build-report measurement roots (`explicit_root`): `py::resolve(strict=True)` instead of
+  `canonicalize` (the same resolution; a missing component is now named as Python named it).
+- coverage discovery and parity-check: the repository or `--root` is `canonicalize`d (`realpath(3)`,
+  strict: the Python's non-strict `resolve()` of an existing path gives the same path, and a missing
+  root refuses, which is stricter); `relative_to` is pure (`PosixPath`), as pathlib's was.
+- family growth (U8): evidence is `canonicalize`d and checked with `starts_with`
+  (`resolve(strict=True)` and `is_relative_to`); the policy and reviewer-key checks `canonicalize`
+  and, where that fails and Python's non-strict `resolve()` went on, the read that follows refuses
+  (unchanged; `jope-engine` does not depend on `jope-records`).
+- cargo-artifact: `relative_to` is pure; the final `resolve()` of the executable is output, after
+  `is_file()` and `X_OK` of the unresolved path (unchanged).
+
+The choice is realpath semantics rather than refusing `..` or symlinks in operator paths: the
+installed wrapper passes an absolute custody with neither, but refusing them would reject
+spellings the Python accepted and resolved to a safe destination (`outer/realdir/../receipts`,
+`outer/link/../../outer/receipts`), and faithful resolution gives the Python's destination, or its
+refusal, for every spelling. `abspath` moves to `py` (build-report re-exports it).
+
+**Stricter than the Python, each listed with its reason in the tests.** `RUST_STRICTER`:
+`readme/negative-r2.json` `csv-average-rank-nan`, `readme/negative-r3.json`
+`csv-int-underscores-4300-digits`, and 14 cases of `readme/negative-r4.json` (Unicode whitespace
+around an integer or a float, `_` separators, Arabic-Indic and fullwidth digits, `nan`, `inf`,
+`-Infinity`). `REFUSED_BEFORE_THE_LIMIT`: `csv-int-underscores-4301-digits` (the Python raised the
+4300-digit limit; the grammar refuses the `_` first, so CPython's message is not required).
+`PROCESS_STRICTER`: `parity-tally-arabic-equal`, `parity-tally-4300-arabic-indic-digits`.
+`PROCESS_REFUSES_REPORT`: `parity-pending-wp-arabic-digit`, `parity-tally-arabic-differs` (the
+Python printed a failing report; the port refuses before reporting). Outside the fixtures: the
+`du` field (du prints ASCII digits) and every JSON number are read by the same grammar.
+
+**Reproduction first.** `p1-strict-pre-20260928T053625Z`: the binaries of `bc22bc6ca` (built from
+the clean tree). A new differential harness, `check-r4.sh` (bash and jq; the original tools from
+`f46a9048f`'s git bytes in scratch roots), 244 cases: README `int()` and `float()` cells of each
+character class in three ladders, 32 JSON and 44 TOML number literals, parity numbers in other
+digits, 22 custody spellings through a synthetic layout (links into a tree whose `.git` is an empty
+directory or a file, a loop, a dangling link, an unsearchable directory), and 6 scan roots. 19 were
+refused by the Python and accepted by the port: 12 numeric (the reviewer's two and ten like them)
+and 7 custody spellings where the Python refused and the port wrote a receipt. With the pre-fix
+sources and the new tests (`negative-control/`), `readme_benchmarks_matches_round_four` fails on
+17 cases (the six U+001F cells, the reviewer's two among them, and 11 the grammar now refuses)
+and `custody_matches_round_four` on 9 custody cases; the sources were restored byte for byte.
+
+**After.** `p1-strict-post-20260928T054638Z`, on the fix before it was committed (its tree and
+diff are kept): the harness finds no case refused by the Python and accepted by the port (0 of
+244), no output or receipt difference, 42 stricter cases, all of the listed classes; every custody
+refusal prints the Python's text (the symlink loop as its `RuntimeError`), and every accepted
+custody writes the Python's receipt, `custody_resolved` included. Round two's harness (137 cases)
+and round three's (132), rerun unchanged except for their scratch paths: none accepted where the Python
+refused; round two gains 2 stricter cases (`tally-arabic-equal`, `csv-average-rank-nan`), round
+three 5 (four parity numbers in other digits, the 4300 `0_` digits), and round three's one receipt
+difference (`br-int-report-config-4300`: both exit 1 with a failure receipt, the port's 64-bit JSON
+reader refusing the integer the Python kept) is unchanged. The reviewer's 18 probes that write
+nothing, rerun from its receipts' command lines: each outcome as recorded (6 accepted with the same
+output, 12 refused); its custody and README probes, which write, are rebuilt in scratch
+(`custody-rv-symlink-parent`, `readme-rv-*`: refused, with the Python's text). The live guards on
+the real tree give identical exit status, stdout and stderr before and after (coverage `validate`
+and `discover`, `rust-scope-check`, `readme-benchmarks --check`, `parity-check`,
+`verify-test-inventory`, cargo-artifact `target-dir`, `nextest-config` and its file, `build`, and
+`select` on real Cargo output with and without a path map, build-report `scan` of the lane's Cargo
+target and of `crates/`); the one difference is Cargo's own timing line in `build`'s stderr.
+
+**Fixtures.** Captured in `p1-strict-capture-20260928T054323Z` by `cap4.sh`, kept in that run:
+bash and jq only, the original tools from `f46a9048f`'s git bytes in scratch roots.
+
+| Fixture | Cases | Python exit 0 | Explicit refusal | Crash |
+| --- | ---: | ---: | ---: | ---: |
+| `jope-records/…/readme/negative-r4.json` | 37 | 24 | 2 | 11 |
+| `jope-ci/…/build-report/negative-r4.json` | 22 | 0 | 21 (12 of the custody; 9 of the configuration, after accepting the custody and writing the failure receipt) | 1 |
+| **total** | **59** | **24** | **23** | **12** |
+
+The custody fixture records its synthetic layout, which the test rebuilds per case, and runs
+`report` with a configuration naming wrong Cargo roots, so nothing is scanned and a custody the
+Python accepted ends in the same failure receipt; it compares the exit status, stdout, stderr, the
+receipt (`custody_resolved` included), `failure.txt` and every path the run created.
+
+**Tests.** New test functions in existing targets, so `deploy/ci/coverage.json` and the test
+inventory are unchanged; the capability matrix's `jope-records::*` count is now 142 (from
+`cargo test -q --locked -p jope-records -- --list`).
+- `jope-records` `py.rs`: `strict_int_reads_ascii_decimal`,
+  `strict_int_refuses_what_python_refused_and_more`,
+  `strict_float_reads_ascii_decimal_and_exponent_forms`,
+  `strict_float_refuses_what_python_refused_and_more`,
+  `realpath_resolves_symlinks_before_parent_components`;
+  `python_strip` (from `python_int_and_strip`), `int_conversion_limit_is_pythons`,
+  `int_of_text_counts_digits_as_python_did` and `regex_classes_are_pythons` corrected (the test at
+  the old lines 1103–1105 expected U+001F around an integer to be read); `parity.rs`
+  `status_classes_and_pending_range`; `python_parity.rs` `readme_benchmarks_matches_round_four`.
+- `jope-ci` `build_report.rs`: `custody_is_resolved_symlinks_first`,
+  `custody_under_tmp_or_a_working_tree_is_refused` and
+  `stale_hours_and_du_parsing_follow_the_python_rules`;
+  `build_report_python_parity.rs`: `custody_matches_round_four` (ignored by default like the other
+  receipt replays; it needs `JOPE_MAINTENANCE_SCRATCH` outside `/tmp` and any working tree).
+
+**Contract after round four.** As after round three, for the same ports, with these corrections:
+text is read as a number only by the strict grammar, so the forms Python read beyond it (Unicode
+whitespace, `_` separators, other Unicode digits, `nan` and the infinities in a CSV cell) are
+refused and listed; and a path the ports resolve for a safety decision is resolved as `realpath`
+resolves it, symlinks before `..`, with `Path.exists()`'s errors.
+
+**Commits.**
+- `jope-records, jope-ci: read every number from text through one strict grammar (P1 review 4)`
+- `jope-records, jope-ci: resolve custody symlinks before '..', as Path.resolve() did (P1 review 4)`
+- `docs: record review round four of the P1 ports: strict grammars (P1 review 4)` (this section,
+  the commit map and the matrix count)
+
+The first commit's own tree was tested with the path-class change set aside (fmt,
+`git diff --check`, clippy with `-D warnings`, the `jope-records` and `jope-ci` tests, the ignored
+receipt replays).
+
+**Gate.** `p1-strict-gate-20260928T055524Z`, on the head (this file's commit): the hosted
+`rust-check` and `rust-test` lanes run locally as `.github/workflows/ci.yml` runs them, fmt,
+whitespace, the workspace check, clippy with `-D warnings` on `jope-ci` and `jope-records`, both
+crates' tests (the ignored receipt replays included), the fences, `coverage validate`,
+`verify-test-inventory`, `parity-matrix.sh --no-build`, `deploy/ci/check.sh`, the listed
+`jope-records` test count against the matrix, the round-four harness, round two's and round
+three's harnesses, and the reviewer's probes.
+
 ## Commit map — `rr2/python-p1` to the landing
 
 The work above was committed on `rr2/python-p1` and landed through `rr2/python-p1-landing`: its
@@ -1178,6 +1360,11 @@ runs made before the rebase.
 | `jope-records, jope-ci: refuse integers of more than 4300 digits, as Python 3.12 did (P1 review 3)` | none, made later | landing only | — |
 | `jope-records, jope-ci: keep POSIX's distinct '//' root where the ports compare paths (P1 review 3)` | none, made later | landing only | — |
 | `docs: record review round three of the P1 ports (P1 review 3)` | none, made later | landing only | — |
+| `jope-records, jope-ci: count leading zeros toward the 4300-digit limit in int() of text (P1 review 3 addendum)` | none, made later | landing only | — |
+| `docs: record round three's addendum of the P1 ports (P1 review 3 addendum)` | none, made later | landing only | — |
+| `jope-records, jope-ci: read every number from text through one strict grammar (P1 review 4)` | none, made later | landing only | — |
+| `jope-records, jope-ci: resolve custody symlinks before '..', as Path.resolve() did (P1 review 4)` | none, made later | landing only | — |
+| `docs: record review round four of the P1 ports: strict grammars (P1 review 4)` | none, made later | landing only | — |
 
 "Patch-id" compares `git patch-id --stable` of the commit as submitted and its original. Each
 pair changes the same paths with the same status. The tree proof
