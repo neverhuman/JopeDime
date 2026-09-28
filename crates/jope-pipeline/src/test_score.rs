@@ -18,6 +18,17 @@
 //! the tool can do is not hide it: every score records the registry it was written to and
 //! `earlier_looks`, the genomes already scored on the same dataset's test split there, and the
 //! command warns when there are any.
+//!
+//! Concurrency. The repeat check, the `earlier_looks` listing, the fit and the publication are
+//! one transaction per (registry, dataset). `score` takes an exclusive advisory lock
+//! (`std::fs::File::lock`, `flock` on Linux) on `<registry>/<dataset_hash>/.lock` before the
+//! repeat check and holds it until the score receipt is written and synced, with its directory
+//! entry. A second scorer of the same dataset in the same registry waits for the lock (and says
+//! so), then sees the first score: it is refused before it fits if the first scored the same
+//! genome, and otherwise lists the first among its `earlier_looks`, so the command warns. The
+//! lock file is not a look, and it stays (removing it would let a waiter lock an unlinked file).
+//! The lock orders only scorers that take it, on a file system that honours `flock` between
+//! them (a local one); like the registry, it is not access control.
 
 use anyhow::{bail, ensure, Context, Result};
 use feat_math::{
@@ -34,6 +45,10 @@ use std::{
 use crate::{clock::Clock, dataset, evidence, TOOL_VERSION};
 
 pub const TEST_SCORE_SCHEMA_ID: &str = "jope.pipeline-test-score/v1";
+
+/// The per-dataset lock in `<registry>/<dataset_hash>/`. Not a look: `earlier_looks` lists only
+/// `<program_sha256>.json` entries.
+pub const LOCK_FILE: &str = ".lock";
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -123,6 +138,54 @@ fn earlier_looks(directory: &Path) -> Result<Vec<String>> {
     Ok(looks)
 }
 
+/// What [`score_observed`] reports while it runs; tests use it to order concurrent scorers.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Stage {
+    /// Another scorer holds the dataset's lock in this registry; this one waits for it.
+    Waiting,
+    /// The lock is held, the repeat check passed and the earlier looks are read: the fit is next.
+    Admitted,
+}
+
+/// Take the exclusive lock on `directory`'s [`LOCK_FILE`], waiting while another scorer holds
+/// it. The lock is released when the returned file is dropped.
+fn lock_dataset(directory: &Path, observe: &dyn Fn(Stage)) -> Result<std::fs::File> {
+    std::fs::create_dir_all(directory)
+        .with_context(|| format!("create {}", directory.display()))?;
+    let path = directory.join(LOCK_FILE);
+    let lock = std::fs::OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create(true)
+        .truncate(false)
+        .open(&path)
+        .with_context(|| format!("open {}", path.display()))?;
+    match lock.try_lock() {
+        Ok(()) => {}
+        Err(std::fs::TryLockError::WouldBlock) => {
+            observe(Stage::Waiting);
+            eprintln!(
+                "jope pipeline score: another score of this dataset holds {}; waiting for it \
+                 (the scores of one dataset in one registry run one at a time)",
+                path.display()
+            );
+            lock.lock()
+                .with_context(|| format!("lock {}", path.display()))?;
+        }
+        Err(std::fs::TryLockError::Error(error)) => {
+            return Err(error).with_context(|| format!("lock {}", path.display()));
+        }
+    }
+    Ok(lock)
+}
+
+/// fsync a directory, so the entries just created in it are durable.
+fn sync_directory(directory: &Path) -> Result<()> {
+    std::fs::File::open(directory)
+        .and_then(|d| d.sync_all())
+        .with_context(|| format!("sync {}", directory.display()))
+}
+
 fn split_rows(rows: &[Vec<f64>]) -> (Rows, Vec<f64>) {
     rows.iter()
         .map(|row| {
@@ -134,6 +197,10 @@ fn split_rows(rows: &[Vec<f64>]) -> (Rows, Vec<f64>) {
 
 /// Score a verified receipt's champion on the test split, once.
 pub fn score(options: &ScoreOptions) -> Result<(TestScore, PathBuf)> {
+    score_observed(options, &|_| {})
+}
+
+fn score_observed(options: &ScoreOptions, observe: &dyn Fn(Stage)) -> Result<(TestScore, PathBuf)> {
     let run = evidence::verify_champion_run(&options.receipt)?;
     let receipt = &run.receipt;
     let selector = options
@@ -173,6 +240,9 @@ pub fn score(options: &ScoreOptions) -> Result<(TestScore, PathBuf)> {
     );
     let directory = options.registry.join(&receipt.dataset.dataset_hash);
     let path = directory.join(format!("{}.json", receipt.search.selected_program_sha256));
+    // From here to the synced publication this scorer holds the dataset's lock, so no other
+    // score of it in this registry is admitted, reads the looks or publishes in between.
+    let lock = lock_dataset(&directory, observe)?;
     ensure!(
         !path.exists(),
         "the test split of dataset {} was already scored for genome {} ({}); a test split is \
@@ -182,6 +252,7 @@ pub fn score(options: &ScoreOptions) -> Result<(TestScore, PathBuf)> {
         path.display()
     );
     let earlier_looks = earlier_looks(&directory)?;
+    observe(Stage::Admitted);
 
     let started = options.clock.start();
     let train = dataset::training_rows(&resolved)?;
@@ -236,8 +307,6 @@ pub fn score(options: &ScoreOptions) -> Result<(TestScore, PathBuf)> {
         feeds_selection: false,
         seconds: started.secs(),
     };
-    std::fs::create_dir_all(&directory)
-        .with_context(|| format!("create {}", directory.display()))?;
     let mut bytes = serde_json::to_vec_pretty(&record)?;
     bytes.push(b'\n');
     let mut file = std::fs::OpenOptions::new()
@@ -252,6 +321,9 @@ pub fn score(options: &ScoreOptions) -> Result<(TestScore, PathBuf)> {
         })?;
     file.write_all(&bytes)?;
     file.sync_all()?;
+    sync_directory(&directory)?;
+    sync_directory(&options.registry)?;
+    drop(lock);
     Ok((record, path))
 }
 
@@ -276,10 +348,14 @@ mod tests {
     }
 
     fn a_run(root: &Path, name: &str) -> PathBuf {
+        a_run_of(root, name, 6)
+    }
+
+    fn a_run_of(root: &Path, name: &str, evaluations: usize) -> PathBuf {
         let output = root.join(name);
         run(&RunOptions {
             budget: Budget {
-                evaluations: 6,
+                evaluations,
                 seconds: 600,
             },
             rng_seed: 7,
@@ -380,6 +456,111 @@ mod tests {
         .unwrap();
         let (_, other_path) = score(&options(&other.join("receipt.json"), &registry)).unwrap();
         assert_eq!(looks(&other_path), serde_json::json!([]));
+    }
+
+    type Scored = Result<(TestScore, PathBuf)>;
+
+    /// Scores `first` and `second` into their registries at once, deterministically interleaved:
+    /// `first` runs until it is admitted (it holds the dataset's lock and has read the earlier
+    /// looks), then `second` starts, and `first` goes on to fit and publish only once `second`
+    /// has found the lock held. Without the lock `second` would read the looks and publish while
+    /// `first` is still paused, however quick either fit is. Returns both results and the stages
+    /// `second` reported. Threads with their own lock files contend exactly as processes do:
+    /// `flock` locks belong to the open file, not to the process.
+    fn race(first: &ScoreOptions, second: &ScoreOptions) -> (Scored, Scored, Vec<Stage>) {
+        use std::{sync::mpsc, time::Duration};
+        let patience = Duration::from_secs(600);
+        let (admitted_tx, admitted_rx) = mpsc::channel::<()>();
+        let (stage_tx, stage_rx) = mpsc::channel::<Stage>();
+        let seen = std::sync::Mutex::new(Vec::new());
+        let seen = &seen;
+        std::thread::scope(|scope| {
+            let holder = scope.spawn(move || {
+                score_observed(first, &|stage| {
+                    if stage == Stage::Admitted {
+                        admitted_tx.send(()).unwrap();
+                        // Every stage `second` reports is sent here, and its sender is dropped
+                        // when it returns, so a `second` that never waits fails this at once.
+                        match stage_rx.recv_timeout(patience) {
+                            Ok(Stage::Waiting) => {}
+                            other => {
+                                panic!("the second scorer did not wait for the lock: {other:?}")
+                            }
+                        }
+                    }
+                })
+            });
+            admitted_rx
+                .recv_timeout(patience)
+                .expect("the first scorer was not admitted");
+            let waiter = scope.spawn(move || {
+                let scored = score_observed(second, &|stage| {
+                    seen.lock().unwrap().push(stage);
+                    let _ = stage_tx.send(stage);
+                });
+                drop(stage_tx);
+                scored
+            });
+            let first = holder.join().expect("the first scorer panicked");
+            let second = waiter.join().expect("the second scorer panicked");
+            (first, second, seen.lock().unwrap().clone())
+        })
+    }
+
+    /// Review 5334625316 on PR #118: two genomes of one dataset scored into one registry at once
+    /// both recorded `earlier_looks: []`. The reviewer's pair: the slower fit starts first
+    /// (24 evaluations select `(pipe X (rank append=true) (gpr m=400 steps=60))`), the quicker
+    /// one (1 evaluation, `(pipe X (ridge))`) while it fits. The second now waits for the first
+    /// and names it.
+    #[test]
+    fn a_concurrent_score_waits_and_names_the_look_it_waited_for() {
+        let temp = tempfile::tempdir().unwrap();
+        let registry = temp.path().join("registry");
+        let slow = a_run_of(temp.path(), "slow", 24);
+        let quick = a_run_of(temp.path(), "quick", 1);
+        let (first, second, stages) = race(&options(&slow, &registry), &options(&quick, &registry));
+        let (first, first_path) = first.unwrap();
+        let (second, second_path) = second.unwrap();
+        assert_ne!(first.program_sha256, second.program_sha256);
+        assert_eq!(stages, [Stage::Waiting, Stage::Admitted]);
+        assert!(first.earlier_looks.is_empty(), "{:?}", first.earlier_looks);
+        assert_eq!(
+            second.earlier_looks,
+            [first.program_sha256.clone()],
+            "the second score hides the look it waited for"
+        );
+        assert_eq!(read(&first_path).unwrap(), first);
+        assert_eq!(read(&second_path).unwrap(), second);
+        // The lock file stays beside the scores and is not a look.
+        let directory = first_path.parent().unwrap();
+        assert_eq!(second_path.parent().unwrap(), directory);
+        assert!(directory.join(LOCK_FILE).is_file());
+        let mut both = vec![first.program_sha256.clone(), second.program_sha256.clone()];
+        both.sort();
+        assert_eq!(earlier_looks(directory).unwrap(), both);
+    }
+
+    /// The same genome scored twice at once (two runs that selected it): the second waits, then
+    /// is refused by the repeat check before it fits (it is never admitted), and the first
+    /// score is untouched.
+    #[test]
+    fn a_concurrent_repeat_is_refused_before_it_fits() {
+        let temp = tempfile::tempdir().unwrap();
+        let registry = temp.path().join("registry");
+        let receipt = a_run(temp.path(), "run");
+        let twin = a_run(temp.path(), "twin");
+        let (first, second, stages) =
+            race(&options(&receipt, &registry), &options(&twin, &registry));
+        let (first, path) = first.unwrap();
+        let error = format!("{:#}", second.unwrap_err());
+        assert!(error.contains("already scored"), "{error}");
+        assert_eq!(stages, [Stage::Waiting], "the repeat was admitted to a fit");
+        assert!(first.earlier_looks.is_empty(), "{:?}", first.earlier_looks);
+        assert_eq!(read(&path).unwrap(), first);
+        assert_eq!(
+            earlier_looks(path.parent().unwrap()).unwrap(),
+            [first.program_sha256.clone()]
+        );
     }
 
     #[test]

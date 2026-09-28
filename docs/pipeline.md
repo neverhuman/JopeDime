@@ -192,6 +192,15 @@ candidates of one dataset and keeping the test-best would make the test split a 
 Each score receipt therefore records `earlier_looks`, the candidates already scored on that
 dataset's test split in the same registry, and the command warns when there are any.
 
+The scores of one dataset in one registry run one at a time. A score takes an exclusive advisory
+lock on `<registry>/<dataset_hash>/.lock` before the repeat check and the `earlier_looks` listing,
+and holds it through the fit until the score receipt and its directory entry are synced. A
+concurrent second score of that dataset in that registry says it is waiting, waits, and then sees
+the first: a repeat of the same candidate is refused before it fits, and any other candidate lists
+the first among its `earlier_looks`, so the command warns. The lock file is not a look and is left
+in place. The lock orders only scores that take it, on a file system that honours `flock` between
+them (a local one); like the registry, it is not access control.
+
 Verification: `cargo test --locked -p jope-pipeline` exercises budget exhaustion,
 failed attempts, in-flight overrun, full-cut selection and legacy reading.
 `E2E_OUT=<new-durable-directory> bash deploy/ci/e2e-smoke.sh` runs the committed
