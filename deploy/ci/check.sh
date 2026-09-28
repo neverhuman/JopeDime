@@ -51,4 +51,14 @@ step "full-default/full-scratch budgets cover the slowest recorded feat-math::go
 slowest=$(jq '[.tests[] | select(.binary == "feat-math::golden") | .seconds] | max' docs/parity/test-timings.json)
 if jq -e --argjson slowest "$slowest" '[.lanes["full-default", "full-scratch"].command[3] | rtrimstr("s") | tonumber] | length == 2 and all(. >= 1.25 * $slowest + 120)' deploy/ci/coverage.json > /dev/null; then echo "ok (slowest ${slowest}s)"; else echo "a full family budget is below 1.25 x ${slowest}s + 120s"; fail=1; fi
 step "size caps"; big=$(git ls-files -z | xargs -0 stat -c '%s %n' | awk '$1>5242880{print}' ); if [ -n "$big" ]; then echo "$big"; echo "files over 5 MiB"; fail=1; else echo "ok"; fi
+# gitleaks' private-key rule needs a complete block and skips its allowlisted paths (docs/legacy/,
+# SHA256SUMS, ...), and the gitleaks step above is skipped where gitleaks is not installed. This
+# refuses any PEM private-key armour line (BEGIN or END; RSA, EC, OPENSSH, ENCRYPTED SIGSTORE, ...)
+# in a tracked text file, so the cosign release key (docs/release/README.md, "Key custody") can
+# never be committed next to its public half. .gitleaks.toml is excluded: a comment there quotes
+# gitleaks' own synthetic fixture.
+step "no private key blocks in tracked files"
+pem='-----(BEGIN|END) ([A-Z0-9]+ )*PRIVATE KEY( BLOCK)?-----'
+keys=$(git grep -nIE -e "$pem" -- . ':(exclude).gitleaks.toml' || true)
+if [ -n "$keys" ]; then cut -c1-160 <<<"$keys" | head -20; echo "private key material is tracked above; remove it from the tree (and rotate the key)"; fail=1; else echo "ok"; fi
 exit $fail

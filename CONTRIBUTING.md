@@ -92,10 +92,15 @@ build hosts is shared by every tenant and emptied at boot.
 
 ## Releases
 
-`just bump X.Y.Z` sets the version everywhere `deploy/ci/version-consistency.sh` checks, then a
-PR, then the owner pushes the tag `vX.Y.Z`, which runs
-[release.yml](.github/workflows/release.yml): glibc-2.36 build of `jope`, build receipt, wheel,
-SBOMs, provenance attestation, git-cliff notes, GitHub release.
+Releases come from [`deploy/release/release.sh`](deploy/release/release.sh), run on xbabe2 after
+the release PR (version bump and git-cliff `CHANGELOG.md`) has merged: first a dry run, then the
+same command with `--publish`, which creates the annotated tag `vX.Y.Z` and the GitHub release. It
+builds `jope` in the digest-pinned `rust:1.97.1-bookworm` image (glibc 2.36) and writes a build
+receipt, SBOMs, the release notes, a release manifest and `SHA256SUMS`. The trust statement is a
+cosign signature over `SHA256SUMS`, made with the root-held release key; there is no provenance
+attestation and no Python wheel. [docs/release/README.md](docs/release/README.md) explains how to
+verify a release and how the key is held. [release.yml](.github/workflows/release.yml) is
+dispatch-only and is not the release path.
 
 ## Licence
 
