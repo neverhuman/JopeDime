@@ -170,8 +170,11 @@ pub fn verify(root: &Path) -> Result<Summary> {
             let key = format!("S{shard:02}-{original_id}");
             require!(!source_entries.contains_key(&key), "duplicate source ID");
             let prefix = original_id.chars().next().expect("regex requires a prefix");
-            let number = py::int(&original_id[1..]).ok_or_else(|| {
-                Error::Shape(format!("{key}: non-ASCII finding number is not supported"))
+            let number = py::int(&original_id[1..]).map_err(|e| match e {
+                py::IntError::Limit(message) => Error::Shape(format!("{key}: {message}")),
+                py::IntError::Invalid => {
+                    Error::Shape(format!("{key}: non-ASCII finding number is not supported"))
+                }
             })?;
             ids.insert((prefix, number));
             let end = headings.get(n + 1).map_or(text.len(), |next| next.start());

@@ -237,9 +237,13 @@ pub fn state_counts(tasks: &Dict) -> BTreeMap<&'static str, usize> {
         .collect()
 }
 
-/// `int(text)` for a sort key, as the Python `sorted(..., key=int(...))` required.
+/// `int(text)` for a sort key, as the Python `sorted(..., key=int(...))` required; more than 4300
+/// digits refuse in CPython's words.
 pub(crate) fn int_key(text: &str, what: &str) -> Result<i64> {
-    py::int(text).ok_or_else(|| Error::Shape(format!("invalid literal for int(): {what}")))
+    py::int(text).map_err(|e| match e {
+        py::IntError::Limit(message) => Error::Shape(format!("{what}: {message}")),
+        py::IntError::Invalid => Error::Shape(format!("invalid literal for int(): {what}")),
+    })
 }
 
 fn string_items(value: &Value, task: &str, field: &str) -> Result<Vec<String>> {
