@@ -1964,6 +1964,195 @@ also runs as its own step). Every harness copy has its scratch moved under this 
 `p1-r7-gate-20260928T100821Z` and `…T102150Z` passed on earlier spellings of these two commits, whose
 test comments and this record differed; `…T103517Z` was stopped when a test comment was corrected.
 
+## Follow-up — review round eight: exact arithmetic
+
+Independent review 5337854418 of `bcdadfc77` (REQUEST_CHANGES; receipts in
+`independent-review-pr117-bcdadfc77/` of the custody directory) found the README renderer's
+per-method correction totals promoting an integer sum that left 64 bits to a double: with the
+jope-dime corrections' applied rows `[2^63-1, 1, -(2^63-1), 45]` Python's exact total is 46 and it
+refused (`jope-dime: 46 rows corrected but scored datasets went 45 -> 0`, `--write` and `--check`),
+while the port lost the unit in the rounding, totalled 45, published the README and passed
+`--check`. Every individual number fits `i64`. The fix is for the class: every arithmetic
+operation, numeric conversion and numeric comparison the P1 ports make on a value read from their
+inputs was enumerated (the table below), and each is now exact as Python's is, Python's own float
+arithmetic in Python's order, or bounded by construction.
+
+| # | Found | Root cause | Change | Cases |
+| ---: | --- | --- | --- | --- |
+| 1 | the reviewer's case: a correction total that passes `2^63` and returns totalled one less, and was accepted; totals that pass it and return to the right value were refused (`44.0 rows corrected`), and a total beyond 64 bits was refused in the wrong words (`1.8446744073709552e+19 rows`) | `Num::add` fell back to `a as f64 + b as f64` on `i64` overflow | `Num::Int` holds `i128` and `Num::plus` adds two ints exactly; an int becomes a double only when the other operand is a float (`float.__radd__`), one IEEE addition; a sum past 128 bits refuses (it needs 2^64 terms) | readme `negative-r8.json` `corrections-*` (10) |
+| 2 | `before - after` of two `i64` counts: a debug build panicked, a release build wrapped, and accepted two inputs Python refused (`scored datasets went 9223372036854775807 -> -1`, `-2 -> 9223372036854775807`) | `i64` subtraction | the difference in `i128`, compared with the total exactly (`py_eq`) | `before-after-*` (3) |
+| 3 | the same-cut seconds' `sum()` refused an integer sum past 64 bits, which Python rendered (stricter, not listed) | one `i64` path with `checked_add` | CPython 3.12's `builtin_sum_impl`, path for path: the C `long` fast path; after it overflows, generic `+` (exact ints, floats added plainly, no compensation); a float met on the fast path starts the compensated float path (Neumaier, ints added plainly, the compensation applied once when finite) | `seconds-int-overflow-then-cancel`, `-min-edges`, `-generic-after-overflow`, `-median-pair-overflow`; `-ints-in-float-path`, `-int-prefix-then-half` (identical before and after) |
+| 4 | the mean of an integer total was rounded twice: `500000000000000000.0` where Python printed `500000000000000064.0` | `total as f64 / n` | `int / int` rounded once (`int_true_div`, the quotient developed in binary to 55 bits and the remainder deciding a tie, as `long_true_divide` rounds) | `seconds-int-true-division` |
+| 5 | `sorted()` and `max()` of the seconds compared through doubles, so two ints (or an int and a float) that round to one double kept their input order and the median took the wrong pair | `a.as_f64() < b.as_f64()` | exact comparison (`py_cmp`: int with int exactly; int with float as CPython's `float_richcompare`, never rounding the int; `None` with a NaN) | `seconds-sorted-exact` |
+| 6 | `min(scored, key=(rmse, id))` compared RMSEs and numeric ids through doubles: an int RMSE below a float one, and a float id below an int one, that round to the same double were taken for ties or equal, and the README named the wrong method | `float_of` before comparing; `id_less` compared `as f64` | RMSEs kept as `Num` and compared with `py_cmp`; numeric ids compared with `py_lt` | `rmse-int-below-float`, `method-id-int-float-tie` |
+| 7 | build-report's `candidate_allocated_bytes_sum`: a `u64` total (wrapping in a release build, panicking in a debug one) written `as i64` (negative past `i64::MAX`); Python wrote the exact integer | `u64 +=`, `as i64` | the total in `u128` (checked; unreachable), every byte count written by `exact_int`: an `i64` or, beyond it, the exact decimal (`Value::BigInt`) | unit test `candidate_bytes_sum_exactly_past_64_bits` |
+| 8 | family growth: `serde_json` reads an integer literal outside `i64::MIN..=u64::MAX` as the nearest double, which `number()` then took for another integer (`2^64` and `2^64 + 1` one value). Round three's sweep recorded this reader as refusing only integers a double cannot hold; it read those from 20 to about 309 digits rounded | `serde_json` without `arbitrary_precision` (a workspace-wide feature, not enabled) | `wide_integer` scans the bytes before `serde_json` and refuses such a literal, in any field (stricter: Python read it exactly); beyond 4300 digits in CPython's words | unit test `integers_are_exact_or_refused` (was `integers_python_refused_to_convert_are_refused`, which asserted a 23-digit unused integer read) |
+
+Findings 7 and 8 have no capture from the original: build-report's measurements are
+`/usr/bin/du`'s, which prints no size near `2^63` here (and this user can create no namespace to
+replace it), and family growth's Python read every such integer, so the port is stricter there by
+design. In family growth a number is compared with a constant or a string, or must be a string;
+where two values the input chose are compared (a decision's `source_objects` with the graph's, an
+alias set), any number in them must still pass `artifact()` or the string checks, which refuse it.
+So the rounding could change which refusal was worded (`provenance source identity mismatch`
+against `durable evidence path and hash required`), never whether it refused; it is refused now at
+parse all the same.
+
+**The sweep.** `audit8.sh` (kept in the gate run) lists every product line (unit-test modules cut
+at `#[cfg(test)]`, comments dropped) of `jope-ci` (`build_report`, `cargo_artifact`, `main`, `py`,
+`lib`), the `jope-records` P1 modules and the helpers they call (`coverage`, `parity`, `readme`,
+`scope_check`, `py`, `pyjson`, `pycsv`, `findings`, `task_status`, `main`, `layout`, `error`) and
+`jope-engine` `family_growth` that holds a binary or compound `+ - * / %`, a unary minus, `sum`,
+`abs`, `checked_*`/`wrapping_*`/`saturating_*`, `trunc`/`fract`, an `as` cast to a number type,
+`from`/`try_from` between number types, a numeric `parse`, `min`/`max`, `partial_cmp`/`total_cmp`,
+`as_f64` or `to_i64`; the comparisons of numbers the pattern cannot see (`<`, `==` on converted
+values, `Value` equality) were added by reading each module. Lines are those of this round's code
+commit. Decisions: **fixed** (this round; the row says to what); **exact** (integer arithmetic that
+cannot leave its type, or a widening); **Python float** (double arithmetic on values Python also
+held as floats, the same operations in the same order, or an int converted to the nearest double,
+ties to even, where Python converted it); **position** (offsets, lengths, indices and counters of
+text or items in memory, `usize`, bounded by what was read, each subtraction guarded on its own
+line); **refuses** (a conversion that refuses what does not fit: the 64-bit readers, listed as
+stricter since round three); **text** (compared as decimal digits, any width); **clock**,
+**status** (the system clock, a process status; no input value); **format** (digits and exponents
+of a number being printed).
+
+| file:line | operation | decision |
+| --- | --- | --- |
+| `jope-records/src/readme.rs:296`, `:297` | `i128::from` of a bool or a JSON `i64` | exact (widening) |
+| `readme.rs:313`–`:315`, `:163` | `Num::as_f64`, `float_of` | Python float (`float(int)`: `i128 as f64` rounds to nearest, ties to even, as `PyLong_AsDouble`; used for a float format and for `+` with a float) |
+| `readme.rs:327`–`:329` | int + int | fixed: exact in `i128`, refused past it (finding 1; was promoted to a double on `i64` overflow) |
+| `readme.rs:332` | int + float, float + float | Python float (one IEEE addition after the int's conversion) |
+| `readme.rs:372`–`:401` | `py_cmp`, `int_float_cmp`: `cmp`, `partial_cmp`, `trunc`, `as i128`, `f - whole` | fixed: exact comparison (findings 5, 6); `|f| < 2^127` is checked first, so the integral part is exact in `i128` and the fraction exact in the double |
+| `readme.rs:419`–`:453` | `int_true_div`: `/`, `%`, `<<`, `-=`, `+= 1`, `as f64`, the power of two | fixed: correctly rounded true division (finding 4); the remainder stays below the divisor (a `u64`), the quotient below `2^55` in the loop and `kept` at most `2^53`, so nothing wraps and the final product is exact |
+| `readme.rs:226`–`:233` | `id_less`: numeric ids | fixed: `py_lt` (finding 6) |
+| `readme.rs:472`–`:476`, `:490`–`:509` | `py_sorted`: comparisons; `count_run`, `binarysort` indices | fixed: `py_cmp`/`py_lt` (finding 5); indices: position |
+| `readme.rs:517`–`:521` | `py_max` | fixed: `py_lt` (finding 5) |
+| `readme.rs:534`–`:548` | `py_sum`: the C `long` path, the hand-over to generic `+` | fixed: CPython's paths (finding 3) |
+| `readme.rs:555`–`:571` | `py_sum`: Neumaier's compensation, `(double)value` for an int | Python float (CPython's float path, same order) |
+| `readme.rs:589`–`:592` | `py_div` | float / `n`: Python float (`n` exact as a double); int / `n`: fixed, `int_true_div` (finding 4) |
+| `readme.rs:598`, `:601` | `thousands`: `unsigned_abs`, digit grouping | format (`unsigned_abs` holds `i64::MIN`) |
+| `readme.rs:623`–`:632` | `general4`: exponent arithmetic | format (the exponent of a formatted double) |
+| `readme.rs:683`, `:708`, `:733`, `:1128`, `:1161` | `Value` equality of counts (`methods`, `excluded_rows`, `rows_corrected`, `datasets_scored`) | exact (`pyjson`'s int/float equality is exact; `Value::from(usize)` below) |
+| `readme.rs:815`–`:817` | `before - after != n` | fixed: `i128` difference, `py_eq` (finding 2) |
+| `readme.rs:871`, `:875` | ladder table row indices | position |
+| `readme.rs:985` | `thousands(rankable_rows)` | format (an `i64`; a float refuses, listed since round one) |
+| `readme.rs:1427`, `:1430` | the RMSE tie and `<` | fixed: `py_eq`, `py_lt` (finding 6) |
+| `readme.rs:1450`, `:1471`, `:1481`, `:1485` | `as_f64` of the produce seconds, the chosen RMSE, the median and the maximum | Python float (`format(int, ".1f")`/`".4g"` convert to the nearest double) |
+| `readme.rs:1453`, `:1457`, `:1532` | `finalist`, `best`, `n - finalist` | position (each at most the number of reports) |
+| `readme.rs:1480`–`:1483` | `n % 2`, `n / 2`, `n / 2 - 1` | position (`n >= 1`: no reports refuses; `n >= 2` where even) |
+| `readme.rs:1515` | `ours_rank < int_cell(...)` | exact (two `i64`; `int()` beyond 64 bits refuses, listed) |
+| `readme.rs:1625` | splice offsets | position |
+| `jope-records/src/pyjson.rs:188`, `:201`–`:203` | integral float to integer text; `float_equals_int` | exact (`as i64` only inside the checked range, then compared) |
+| `pyjson.rs:210` | `i64::from(bool)` | exact |
+| `pyjson.rs:332` | `Value::from(usize)` | exact (a count; `unwrap_or(i64::MAX)` unreachable, listed in round five) |
+| `pyjson.rs:368`–`:374` | float `repr` exponent | format |
+| `pyjson.rs:895` | `to_i64`: an integer literal to `Int`, `BigInt` or a refusal | refuses (the 64-bit reader, listed); cargo-artifact's reader keeps `BigInt` exact |
+| `pyjson.rs:904`–`:968` | `\u` escapes: four hex digits, the surrogate-pair formula | exact (`u32`, at most `0x10ffff`) |
+| `pyjson.rs:95`, `:402`–`:515`, `:624`–`:663`, `:724`–`:749`, `:774`–`:1045` | dict positions, escaping and indentation, UTF-8 error offsets, UTF-16/32 decoding, parser offsets and depth | position |
+| `jope-records/src/py.rs:82`–`:84`, `:114` | `Decimal::to_i64`, `py::int` | refuses (beyond `i64`, listed; the magnitude is parsed as `i128`, whose negation cannot overflow) |
+| `py.rs:133`–`:138` | `Key::of`: `f as i64` | exact (used only after the exact equality `value == Value::Int(f as i64)`; otherwise a `Big` or `Float` key) |
+| `py.rs:467`, `:468`, `:514`, `:516` | return code, signal number | status |
+| `py.rs:1106`–`:1161`, `:1176` | `fsum`, `round` | Python float (CPython's algorithms; not called by the P1 ports) |
+| `py.rs:1221` | `float()`: `parse::<f64>` | Python float (correctly rounded, as `float()`) |
+| `py.rs:631`, `:647`, `:673`, `:678`, `:844`, `:869`, `:1075`, `:1193`–`:1240` | message positions, regex translation depth, path splitting, the float grammar and `splitlines` offsets | position |
+| `jope-records/src/pycsv.rs:31`–`:45`, `:84` | line ends, field length | position |
+| `jope-records/src/coverage.rs:68`, `:72`, `:191` | indentation, `Path.stem` | position |
+| `coverage.rs:597` | per-kind counts | position (counter) |
+| `jope-records/src/parity.rs:61`, `:62`, `:599`, `:719`, `:883`, `:907` | kebab-case neighbours, slices, row numbers, `len(status)` | position |
+| `parity.rs:674`–`:682`, `:1009`, `:1010` | tallies | position (counters) |
+| `parity.rs:899` | `pending-WP<N>`: `parse::<u64>`, `4..=12` | exact (a number that does not fit `u64` is outside the range, as Python's exact int was) |
+| `parity.rs:1001` | the committed `no_test` tally against the rows' | text (decimal without leading zeros, any width) |
+| `jope-records/src/scope_check.rs:72` | even token count | position |
+| `jope-records/src/findings.rs:143`–`:210`, `:320`, `:322` | shard numbers, heading offsets, constant counts, tallies | position (constants and counters) |
+| `jope-records/src/task_status.rs:156`, `:157`, `:308` | `min(4)`, `len - 3` (guarded by `> 3`) | position |
+| `jope-records/src/main.rs`, `layout.rs`, `error.rs`, `lib.rs` | — | no arithmetic |
+| `jope-ci/src/build_report.rs:109`–`:127` | civil date of the clock | clock |
+| `build_report.rs:149` | `st_mtime`: seconds + nanoseconds × 1e-9 | clock (Python's formula, one double) |
+| `build_report.rs:292` | `unsigned_abs` of a checked non-negative `du` field | exact |
+| `build_report.rs:353`–`:358` | the cutoff: now − hours × 3600 | clock (hours at most eight digits: the product is exact as a double, as Python's `int` converted) |
+| `build_report.rs:377`, `:381` | `max` of mtimes, `newest > cutoff` | Python float (both doubles, as in Python) |
+| `build_report.rs:384`–`:386` | the byte total | fixed: `u128`, checked (finding 7) |
+| `build_report.rs:398`, `:418`, `:804`, `:434`–`:435` | byte counts, hours and the total written | fixed: `exact_int` (finding 7) |
+| `build_report.rs:450` | `u64::try_from` of the hours | exact |
+| `build_report.rs:734` | `stale_hours != 48` | exact (`Value` equality) |
+| `build_report.rs:826` | signal number | status |
+| `jope-ci/src/cargo_artifact.rs:41`, `:73` | `128 + signal`, the return code | status |
+| `cargo_artifact.rs:207` | message line number | position |
+| `cargo_artifact.rs:350` | TOML parse | not arithmetic (the value types are refused by type since round five) |
+| `jope-ci/src/py.rs:26`, `:30` | text offsets | position |
+| `jope-ci/src/main.rs`, `lib.rs` | — | no arithmetic |
+| `jope-engine/src/family_growth.rs:88`, `:109`–`:117`, `:138` | truthiness; `number()`: widening, an integral float below `1e38` as `i128`; `==` | exact (every integer reaching them fits 64 bits after the fix; an integral float is exact in `i128`) |
+| `family_growth.rs:264`, `:265` | bucket: 16 hex digits `% 1_000_000`, `< 800_000` | exact (at most `u64::MAX`, as Python's `int(h[:16], 16) % 1_000_000`) |
+| `family_growth.rs:326`–`:381` | `wide_integer`: offsets; `parse::<i64>`/`<u64>` of a literal | fixed: refuses beyond 64 bits (finding 8); offsets: position |
+
+**Reproduction first.** `p1-r8-capture-20260928T114307Z`: `cap8.sh` (bash, awk and jq; the original
+from `f46a9048f`'s git bytes in a scratch root per case, every case as data: `ed` scripts against
+`readme/root` and the SHA-256 of each file the Python read) captured 23 cases and gave each case's
+root to the port at `bcdadfc77` (debug build): 7 identical, 1 the original refused and the port
+accepted (the reviewer's), 7 the original rendered and the port refused, 2 both refused in different
+words, 4 both rendered different READMEs, 2 panicked (`before - after`). The same port built for
+release (`p1-r8-pre-release-20260928T114441Z`) accepted 3 the original refused: the reviewer's case
+and both `before-after-wraps-*`. `classification.tsv` in each run names every case's class. The
+reviewer's own reproduction tree, rerun (`reviewer-reproduction-pre/`): the original refused
+`--write` and `--check`, the port wrote the README and passed `--check`, as the review recorded.
+
+**Fixtures.** `readme/negative-r8.json` (23 cases, `source` the capture run): the correction
+totals (the reviewer's case; passing `2^63` and returning, exactly and through a float; below
+`-2^63` and back, to a right and a wrong total; `2^64` printed in the refusal; negative rows; an
+exact int prefix then a half; a float first; `1.0, 1e16, -1e16, 44.0`, which only plain
+left-to-right addition refuses as `44.0`), `before - after` at `i64`'s extremes (both wraps, and
+exactly `-2^63`), the seconds (each of `sum()`'s paths, integer true division, the median pair
+past 64 bits, `sorted()` of ints that round to one double), an int RMSE below a float one and an
+int id above a float one. The original rendered 15 cases and refused 8; none is listed as stricter.
+
+**Tests.** `python_parity.rs` `readme_benchmarks_matches_round_eight` (the fixture through
+`replay_readme`), and unit tests in the same targets: `readme::tests::integer_true_division_rounds_once`
+(20,000 pairs a double holds exactly against one IEEE division, the captured mean and the ties
+around `2^53`), `numbers_compare_exactly`, `sums_follow_cpython`,
+`build_report::tests::candidate_bytes_sum_exactly_past_64_bits` and
+`family_growth::tests::integers_are_exact_or_refused` (renamed; it now asserts the refusal). No new
+target: `deploy/ci/coverage.json` and the test inventory are unchanged; the capability matrix's
+`jope-records` count is 154 (was 150).
+
+**Negative control.** `p1-r8-negctl-20260928T115204Z`: with `bcdadfc77`'s `readme.rs`, and the
+pre-fix product code of `build_report.rs` and `family_growth.rs` under this round's test modules,
+each new test fails (the replay panics at the pre-fix `before - after`, the sum test at the `u64`
+total, the family-growth test at the 23-digit literal it read); with the fixed files restored byte
+for byte (`cp`, SHA-256 checked, then touched) each passes.
+
+**After.** `p1-r8-post-20260928T115056Z`, on the fix before it was committed (its code is the
+committed code): the port matches the original on all 23 cases (exit status, message, stdout and
+the README's SHA-256), a second capture of the original gave the same outcomes, and the reviewer's
+reproduction refuses on both sides with the same message, `--write` and `--check`.
+
+**Stricter than the Python, new or previously unlisted:**
+- family growth refuses an integer literal outside `i64::MIN..=u64::MAX` (up to 4300 digits, which
+  Python read exactly) in any field, and a float literal beyond the range of a double (`1e400`,
+  which Python read as an infinity; `serde_json` refused it before this round too, unlisted);
+- a correction total, a `sum()` or a byte total past 128 bits refuses (it needs at least 2^64
+  terms; not reachable).
+
+**Contract after round eight.** As after round seven, with this addition: every integer the P1
+ports add, subtract, divide or compare is exact as Python's `int` is (held in `i128`/`u128` or
+compared as text), or refused where the reader cannot hold it (the 64-bit readers, family growth's
+literals), never rounded or wrapped; an int becomes a double only where Python converted it; float
+arithmetic follows CPython's operations and order; and numbers compare exactly, an int with a float
+included.
+
+**Commits.**
+- `jope-records, jope-ci, family growth: keep integer arithmetic exact and compare numbers as Python did (P1 review 8)`
+- `docs: record review round eight of the P1 ports: exact arithmetic (P1 review 8)` (this section)
+
+**Gate.** `p1-r8-gate-20260928T120300Z`, on the head (this file's commit; `…T120500Z` was stopped
+after its first steps when a sentence of this record was corrected): round seven's gate as it
+ran (`gate.sh` there), with `PREV` the reviewed head `bcdadfc77`, the scope step's path list this
+round's and every harness copy's scratch moved to this agent's, plus the round-eight tests by name,
+the round-eight differential (`cap8.sh` again on the gate's binary: the original's outcomes must
+equal the fixture's and the port must match all 23), the reviewer's reproduction on the gate's
+binary (both sides refuse `--write` and `--check` with one message), the arithmetic audit, and
+`rust-test`'s JUnit holding the round-eight replay.
+
 ## Commit map — `rr2/python-p1` to the landing
 
 The work above was committed on `rr2/python-p1` and landed through `rr2/python-p1-landing`: its
