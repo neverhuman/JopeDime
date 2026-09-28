@@ -12,7 +12,7 @@ use fixture::*;
 use jope_parallel::native_loop::bounded::{
     contract::BoundedRunContract,
     controller::{self, Coordinator, Outcome, RankState},
-    rendezvous::{self, read_frame, write_frame, PeerIdentity, RefusalCause},
+    rendezvous::{self, read_frame, write_frame, ControlStream, PeerIdentity, RefusalCause},
     transport::{self, HostCredential, Sequenced, Timeouts, TlsAcceptor, TlsStream},
 };
 use std::{
@@ -933,6 +933,41 @@ fn an_exchange_deadline_bounds_trickled_frames_and_stalled_writes() {
         start.elapsed(),
         deadline,
         "a write to a peer that stopped reading",
+    );
+    drop(client);
+}
+
+/// Verifier note on `c9ca8b547`: a dropped stream's courtesy `close_notify` was capped at one
+/// write timeout from the drop, so after an agent's reply write failed at its 30 s bound the
+/// close could hold `Agent::serve` about 30 s more before it saw `stop`. The close now ends
+/// within `CLOSE_TIMEOUT` of the drop, whatever the stream's write timeout.
+#[test]
+fn dropping_a_stream_whose_peer_stopped_reading_ends_within_the_close_timeout() {
+    let (a, b) = (current("host-a", 11), current("host-b", 12));
+    let (mut server, client) = tls_pair(&a, &b);
+    // Fill the socket buffers. With a 100 ms write timeout a write fails only once a socket
+    // write has made no progress for that long: the peer never reads, so the buffers are full
+    // and TLS records are still queued behind them.
+    let io = Some(Duration::from_secs(5));
+    server
+        .set_timeouts(io, Some(Duration::from_millis(100)))
+        .unwrap();
+    let chunk = vec![0u8; 64 << 10];
+    let start = Instant::now();
+    while matches!(server.write(&chunk), Ok(n) if n > 0) {
+        assert!(
+            start.elapsed() < Duration::from_secs(60),
+            "the socket buffers never filled"
+        );
+    }
+    // Five times the close timeout, and no deadline: uncapped, the close waited all of it.
+    server.set_timeouts(io, io).unwrap();
+    let start = Instant::now();
+    drop(server);
+    ended_at_deadline(
+        start.elapsed(),
+        transport::CLOSE_TIMEOUT,
+        "the close of a stream whose peer stopped reading",
     );
     drop(client);
 }
