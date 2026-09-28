@@ -1,16 +1,18 @@
 # PY-P1 — Python removal, phase P1
 
 Written on branch `rr2/python-p1` (base `8a55c4fef`) and landed through `rr2/python-p1-landing`,
-a replay onto main at `cee1fc8bd`, then rebased onto main at `f46a9048f` (after #116). This
-repository merges pull requests only by rebase or squash, and either gives every commit a new SHA
-on main, so this record names P1's own commits by role (the U2 commit, the ADR-0008 commit, …).
+a replay onto main at `cee1fc8bd`, then rebased onto main at `f46a9048f` (after #116) and again
+onto main at `dd49b23bc` (after #118). This repository merges pull requests only by rebase or
+squash, and either gives every commit a new SHA on main, so this record names P1's own commits by
+role (the U2 commit, the ADR-0008 commit, …).
 The commit map at the end gives each one's exact subject, which a rebase merge keeps and a squash
 merge lists in its message, so `git log -F --grep='<subject>' main` finds it after either; the map
-also gives each one's original and its SHA before the rebase. Owner ruling 2026-09-26: the stack
+also gives each one's original and its SHA before each rebase. Owner ruling 2026-09-26: the stack
 is Rust/Vite/TypeScript/React; Python remains only for GP-emitted code and its harness. Live tools
 are ported with differential tests, unused code is archived. Evidence runs live under
 `/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/py-p1-*`
-and, for the landing, `p1-landing-*` and `p1-rebase-*` (identity, diff, command and log per run).
+and, for the landing, `p1-landing-*`, `p1-rebase-*` and `p1-rebase2-*` (identity, diff, command
+and log per run).
 
 Observed states: every port below is **differentially tested on this host** against the Python it
 replaces, run before the Python was deleted. Nothing here is CI-verified or live-qualified, and
@@ -1824,69 +1826,74 @@ writer fixed in its own commit, and the gate run again.
 
 The work above was committed on `rr2/python-p1` and landed through `rr2/python-p1-landing`: its
 eleven commits were replayed in order onto main at `cee1fc8bd` (after #114 and #115), followed by
-landing-only commits, and the branch was then rebased onto main at `f46a9048f` (after #116). The
-repository merges a pull request only by rebase or squash (merge commits are disabled, and the
-head branch is deleted on merge), and both give each commit a new SHA on main, as they did for
-#114, #115 and #116. So no SHA this branch has had, before or after the rebase, becomes a SHA on
-main, and the table keys each landed commit by its exact subject: after a rebase merge
+landing-only commits, and the branch was then rebased onto main at `f46a9048f` (after #116) and
+again onto main at `dd49b23bc` (after #118). The repository merges a pull request only by rebase
+or squash (merge commits are disabled, and the head branch is deleted on merge), and both give
+each commit a new SHA on main, as they did for
+#114, #115, #116 and #118. So no SHA this branch has had, before or after either rebase, becomes a
+SHA on main, and the table keys each landed commit by its exact subject: after a rebase merge
 `git log -F --grep='<subject>' main` finds that commit, and after a squash merge it finds the
 squash commit, whose message lists every subject. Where this record, the tests or the fixtures
 cite a commit for P1's own provenance, they name a landed commit by its role or subject, name a
-commit on main (`8a55c4fef`, `cee1fc8bd` or `f46a9048f`) or a commit in one of the custody bundles
-below (an original or a pre-rebase commit), or cite the blob id of a committed file; fixture
-copies of main's files keep main's own citations unchanged. An original appears only in this
-table and in commit messages, which cannot change: the four `(cherry picked from commit …)`
+commit on main (`8a55c4fef`, `cee1fc8bd`, `f46a9048f` or `dd49b23bc`) or a commit in one of the
+custody bundles below (an original or a pre-rebase commit), or cite the blob id of a committed file;
+fixture copies of main's files keep main's own citations unchanged. An original appears only in
+this table and in commit messages, which cannot change: the four `(cherry picked from commit …)`
 trailers (on the landed U2, U3, U5 and archive commits) and the message of the U3 fixture commit,
-which names the U3 run's tree. A pre-rebase SHA appears only in this section and in the evidence
-runs made before the rebase.
+which names the U3 run's tree. A SHA from before the rebase onto #116 appears only in this section
+and in the evidence runs made before that rebase. The review sections above, and five review
+commit messages, cite SHAs from before the rebase onto #118: the heads that reviews, verifiers and
+evidence runs used, which those runs identify. They are kept as the runs recorded them; the
+column of that name decodes each, and the custody bundle below holds them.
 
-| Landed commit (exact subject) | Before the rebase | Original | Patch-id |
-| --- | --- | --- | --- |
-| `jope-engine: grow families natively; retire the Python growth policy (P1 U8)` | `364c06fd9` | `29f4d1077` | differs |
-| `jope-ci: port cargo-artifact to Rust; retire deploy/ci/cargo-artifact.py (P1 U2)` | `6b95c9208` | `5136986fb` | differs |
-| `jope-records: port the four hygiene guards; retire their Python (P1 U3)` | `7382a4275` | `1f1791025` | differs |
-| `jope-ci: port the build-directory report to Rust; retire jope_report.py (P1 U5)` | `6cd7672ec` | `6ce8fcfbe` | differs |
-| `python: archive 703 files with no live consumer (P1 archive)` | `6e6bf5ad2` | `389898805` | differs |
-| `docs: ADR-0008 Rust-only stack; say where Python still lives (P1 docs)` | `4ed0e2096` | `e9511a2fc` | same |
-| `docs: renumber the Rust-only ADR to ADR-0006 (P1 follow-up)` | `ee24eae50` | `9b810cd80` | same |
-| `jope-ci: replay the captured Python outputs of cargo-artifact and build-report (P1 follow-up)` | `037b8f885` | `9e8aacedc` | same |
-| `jope-ci, jope-engine, jope-records: clear clippy findings in P1 port code` | `0b213a36e` | `4b4018dff` | same |
-| `jope-records: replay the captured Python outputs of the four hygiene guards (P1 follow-up)` | `bc3ba2ca6` | `df9c78ae3` | same |
-| `docs, gitleaks: record the stale references to archived Python as PY-P2 items (P1 follow-up)` | `575c55ea6` | `2200bc872` | same |
-| `docs: name the Rust coverage validator where W01 and W09 cite coverage.py (P1 landing)` | `f7a19392c` | landing only | — |
-| `docs: recount the jope-records tests in the capability matrix (P1 landing)` | `f0b1402ec` | landing only | — |
-| `docs, jope-records: cite landed commits, not rr2/python-p1 originals (P1 landing)` | `309efce3b` | landing only | — |
-| `docs, jope-records: cite the rebased commits after rebasing onto #116 (P1 landing)` | none, made later | landing only | — |
-| `docs, jope-records: name the landed P1 commits by subject, not by branch SHA (P1 landing)` | none, made later | landing only | — |
-| `jope-campaigns: floor the unit templates per directory after the P1 archive (P1 landing)` | none, made later | landing only | — |
-| `jope-engine: stop observing the archived jope-parallel-console unit (P1 landing)` | none, made later | landing only | — |
-| `docs: record why the nine archived unit templates stay archived (P1 landing)` | none, made later | landing only | — |
-| `jope-engine: show receipts of the archived report and proposal writers as history (P1 landing)` | none, made later | landing only | — |
-| `docs: correct the archived units' consumers and the host they were checked on (P1 landing)` | none, made later | landing only | — |
-| `jope-records: fail closed on malformed inputs to the four hygiene guards, as their Python did (P1 review)` | none, made later | landing only | — |
-| `jope-ci: compare cargo-artifact ids with Python's == and fail closed on malformed metadata and messages (P1 review)` | none, made later | landing only | — |
-| `jope-ci: replay build-report configuration refusals against the Python (P1 review)` | none, made later | landing only | — |
-| `docs: record the fail-closed audit of the P1 ports (P1 review)` | none, made later | landing only | — |
-| `docs: record the fail-closed gate and post-fix runs (P1 review)` | none, made later | landing only | — |
-| `jope-records: read Cargo's output, regex classes, NaN, integers and repr as the Python did (P1 review 2)` | none, made later | landing only | — |
-| `jope-ci: CPython's messages, nextest-config order and names that are not UTF-8 (P1 review 2)` | none, made later | landing only | — |
-| `docs: record round two of the fail-closed differential review (P1 review 2)` | none, made later | landing only | — |
-| `jope-records, jope-ci: refuse integers of more than 4300 digits, as Python 3.12 did (P1 review 3)` | none, made later | landing only | — |
-| `jope-records, jope-ci: keep POSIX's distinct '//' root where the ports compare paths (P1 review 3)` | none, made later | landing only | — |
-| `docs: record review round three of the P1 ports (P1 review 3)` | none, made later | landing only | — |
-| `jope-records, jope-ci: count leading zeros toward the 4300-digit limit in int() of text (P1 review 3 addendum)` | none, made later | landing only | — |
-| `docs: record round three's addendum of the P1 ports (P1 review 3 addendum)` | none, made later | landing only | — |
-| `jope-records, jope-ci: read every number from text through one strict grammar (P1 review 4)` | none, made later | landing only | — |
-| `jope-records, jope-ci: resolve custody symlinks before '..', as Path.resolve() did (P1 review 4)` | none, made later | landing only | — |
-| `docs: record review round four of the P1 ports: strict grammars (P1 review 4)` | none, made later | landing only | — |
-| `jope-records, jope-ci: refuse filesystem errors pathlib raised and list what its globs listed (P1 review 5)` | none, made later | landing only | — |
-| `jope-ci: read only the committed nextest config's TOML types; print select's OSError (P1 review 5)` | none, made later | landing only | — |
-| `jope-engine: refuse family-growth custody that cannot be resolved (P1 review 5)` | none, made later | landing only | — |
-| `docs: record review round five of the P1 ports: fail-closed filesystem and value sweep (P1 review 5)` | none, made later | landing only | — |
-| `jope-records: never convert a name that is not UTF-8 lossily; refuse it where entry points are named (P1 review 6)` | none, made later | landing only | — |
-| `jope-ci: refuse names and arguments that are not UTF-8 instead of printing them lossily; read HOME as Path.home() did (P1 review 6)` | none, made later | landing only | — |
-| `jope-ci: let the negative report hold a replayed stdout that is not UTF-8 (P1 review 6)` | none, made later | landing only | — |
-| `docs: record review round six of the P1 ports: lossy path conversion and environment values (P1 review 6)` | none, made later | landing only | — |
+| Landed commit (exact subject) | Before the rebase onto #116 | Before the rebase onto #118 | Original | Patch-id |
+| --- | --- | --- | --- | --- |
+| `jope-engine: grow families natively; retire the Python growth policy (P1 U8)` | `364c06fd9` | `86d15f1c5` | `29f4d1077` | differs |
+| `jope-ci: port cargo-artifact to Rust; retire deploy/ci/cargo-artifact.py (P1 U2)` | `6b95c9208` | `947b1a1aa` | `5136986fb` | differs |
+| `jope-records: port the four hygiene guards; retire their Python (P1 U3)` | `7382a4275` | `61817b59f` | `1f1791025` | differs |
+| `jope-ci: port the build-directory report to Rust; retire jope_report.py (P1 U5)` | `6cd7672ec` | `9ffc7036d` | `6ce8fcfbe` | differs |
+| `python: archive 703 files with no live consumer (P1 archive)` | `6e6bf5ad2` | `aadd548dc` | `389898805` | differs |
+| `docs: ADR-0008 Rust-only stack; say where Python still lives (P1 docs)` | `4ed0e2096` | `24ca97838` | `e9511a2fc` | same |
+| `docs: renumber the Rust-only ADR to ADR-0006 (P1 follow-up)` | `ee24eae50` | `14bdfe1ef` | `9b810cd80` | same |
+| `jope-ci: replay the captured Python outputs of cargo-artifact and build-report (P1 follow-up)` | `037b8f885` | `676587cb6` | `9e8aacedc` | same |
+| `jope-ci, jope-engine, jope-records: clear clippy findings in P1 port code` | `0b213a36e` | `68a11977a` | `4b4018dff` | same |
+| `jope-records: replay the captured Python outputs of the four hygiene guards (P1 follow-up)` | `bc3ba2ca6` | `b7435c1d6` | `df9c78ae3` | same |
+| `docs, gitleaks: record the stale references to archived Python as PY-P2 items (P1 follow-up)` | `575c55ea6` | `fc0abb85d` | `2200bc872` | same |
+| `docs: name the Rust coverage validator where W01 and W09 cite coverage.py (P1 landing)` | `f7a19392c` | `ff8eb8d56` | landing only | — |
+| `docs: recount the jope-records tests in the capability matrix (P1 landing)` | `f0b1402ec` | `8e1f45228` | landing only | — |
+| `docs, jope-records: cite landed commits, not rr2/python-p1 originals (P1 landing)` | `309efce3b` | `65e6f961d` | landing only | — |
+| `docs, jope-records: cite the rebased commits after rebasing onto #116 (P1 landing)` | none, made later | `cefcebeed` | landing only | — |
+| `docs, jope-records: name the landed P1 commits by subject, not by branch SHA (P1 landing)` | none, made later | `9f6c00bdb` | landing only | — |
+| `jope-campaigns: floor the unit templates per directory after the P1 archive (P1 landing)` | none, made later | `aac1c6e59` | landing only | — |
+| `jope-engine: stop observing the archived jope-parallel-console unit (P1 landing)` | none, made later | `970ff9479` | landing only | — |
+| `docs: record why the nine archived unit templates stay archived (P1 landing)` | none, made later | `f71348f29` | landing only | — |
+| `jope-engine: show receipts of the archived report and proposal writers as history (P1 landing)` | none, made later | `c46130435` | landing only | — |
+| `docs: correct the archived units' consumers and the host they were checked on (P1 landing)` | none, made later | `a997ab825` | landing only | — |
+| `jope-records: fail closed on malformed inputs to the four hygiene guards, as their Python did (P1 review)` | none, made later | `da1ab3732` | landing only | — |
+| `jope-ci: compare cargo-artifact ids with Python's == and fail closed on malformed metadata and messages (P1 review)` | none, made later | `d03813d35` | landing only | — |
+| `jope-ci: replay build-report configuration refusals against the Python (P1 review)` | none, made later | `41a73f721` | landing only | — |
+| `docs: record the fail-closed audit of the P1 ports (P1 review)` | none, made later | `468f9ff35` | landing only | — |
+| `docs: record the fail-closed gate and post-fix runs (P1 review)` | none, made later | `ef8d31c0b` | landing only | — |
+| `jope-records: read Cargo's output, regex classes, NaN, integers and repr as the Python did (P1 review 2)` | none, made later | `08bc251ef` | landing only | — |
+| `jope-ci: CPython's messages, nextest-config order and names that are not UTF-8 (P1 review 2)` | none, made later | `a54f7079b` | landing only | — |
+| `docs: record round two of the fail-closed differential review (P1 review 2)` | none, made later | `e8640b7b0` | landing only | — |
+| `jope-records, jope-ci: refuse integers of more than 4300 digits, as Python 3.12 did (P1 review 3)` | none, made later | `cad7b42ba` | landing only | — |
+| `jope-records, jope-ci: keep POSIX's distinct '//' root where the ports compare paths (P1 review 3)` | none, made later | `0533b3356` | landing only | — |
+| `docs: record review round three of the P1 ports (P1 review 3)` | none, made later | `ed49fbc3e` | landing only | — |
+| `jope-records, jope-ci: count leading zeros toward the 4300-digit limit in int() of text (P1 review 3 addendum)` | none, made later | `43182b632` | landing only | — |
+| `docs: record round three's addendum of the P1 ports (P1 review 3 addendum)` | none, made later | `bc22bc6ca` | landing only | — |
+| `jope-records, jope-ci: read every number from text through one strict grammar (P1 review 4)` | none, made later | `df307e2c5` | landing only | — |
+| `jope-records, jope-ci: resolve custody symlinks before '..', as Path.resolve() did (P1 review 4)` | none, made later | `762b3c84e` | landing only | — |
+| `docs: record review round four of the P1 ports: strict grammars (P1 review 4)` | none, made later | `5f3de344e` | landing only | — |
+| `jope-records, jope-ci: refuse filesystem errors pathlib raised and list what its globs listed (P1 review 5)` | none, made later | `4f457bd1e` | landing only | — |
+| `jope-ci: read only the committed nextest config's TOML types; print select's OSError (P1 review 5)` | none, made later | `7dd76020e` | landing only | — |
+| `jope-engine: refuse family-growth custody that cannot be resolved (P1 review 5)` | none, made later | `e3e7fa66a` | landing only | — |
+| `docs: record review round five of the P1 ports: fail-closed filesystem and value sweep (P1 review 5)` | none, made later | `3c31229ec` | landing only | — |
+| `jope-records: never convert a name that is not UTF-8 lossily; refuse it where entry points are named (P1 review 6)` | none, made later | `2c9c05b6d` | landing only | — |
+| `jope-ci: refuse names and arguments that are not UTF-8 instead of printing them lossily; read HOME as Path.home() did (P1 review 6)` | none, made later | `fceaf7aba` | landing only | — |
+| `jope-ci: let the negative report hold a replayed stdout that is not UTF-8 (P1 review 6)` | none, made later | `e5f4d24ed` | landing only | — |
+| `docs: record review round six of the P1 ports: lossy path conversion and environment values (P1 review 6)` | none, made later | `0c9171441` | landing only | — |
+| `docs: map the P1 commits rebased onto #118 (P1 landing)` | none, made later | none, made later | landing only | — |
 
 "Patch-id" compares `git patch-id --stable` of the commit as submitted and its original. Each
 pair changes the same paths with the same status. The tree proof
@@ -1912,12 +1919,39 @@ both diffs, the merge prediction) and the `p1-rebase-post-*` gate (the landing g
 rebased head, the semantic checks above, `check-test-routing.sh` on real collections and its
 self-tests).
 
+The rebase onto `dd49b23bc` (#118: targeted GP search, 22 commits) applied 43 of the 45 commits
+without a conflict. Two stopped on the capability matrix's `## Counts` table and nowhere else: the
+U2 commit (the `learning-subcommand` and `new-bin` rows and the total) and the archive commit (the
+total), because #118 added three `learning-subcommand` and three `pipeline-subcommand` rows. Each
+was resolved by dropping both sides of the conflicted count lines and recomputing the table from
+the rows, which had merged cleanly, so each commit keeps its own change to the counts and the
+landed table has #118's six rows on top of P1's: 809 rows, 355 `moved`, 46 `new`, 400 `dropped`.
+Every commit keeps its author and message. 42 keep their patch-id against the commit before the
+rebase; the U8, U2 and archive commits differ only in Counts lines, as context (U8) or as the
+counts they change (U2, archive). The rebased tip's tree, before the commit that records this,
+equals `git merge-tree --write-tree dd49b23bc 0c9171441` in every path but the capability matrix,
+where the merge leaves the two Counts conflicts and the tip has the recomputed table. #118 and P1
+change six common paths. `Cargo.lock`: P1 adds the `jope-ci` package, #118 two dependencies of
+`jope-pipeline`; the lock differs from main's only by the `jope-ci` package. `README.md` and
+`deploy/ci/e2e-smoke.sh` (P1's `jope-ci cargo-artifact` call, #118's receipt-evidence and lineage
+rounds) keep both sides' lines. `deploy/ci/coverage.json` and `findings/test-inventory.json` are
+each #118's file with P1's key-level additions, removals and changes applied, #118's key order
+kept and `jq --indent 2` output unchanged; the Rust coverage validator accepts #118's four new test
+targets. #118 adds no reference to a path in `docs/archive/python-archive-manifest.json` and no
+new call to Python. Runs: `p1-rebase2-pre-20260928T084834Z` (identity, both diffs, the merge
+prediction, the custody bundle, the check of #118's added lines against the archive manifest),
+`p1-rebase2-preserve-20260928T085352Z` (below) and the `p1-rebase2-post-*` gate (the resolution
+log, the record checks above, the landing gate and the hosted lanes on the rebased head).
+
 Two landing commit messages, which cannot change either, name commits by the SHA they had on this
-branch after the rebase, which the merge replaces: the first citation commit's message names the
-ADR-0008 commit as `24ca97838`, the renumbering commit as `14bdfe1ef` and the U2 commit as
-`947b1a1aa`, and the rebase citation commit's message names those three and the first citation
-commit as `65e6f961d`. These four SHAs are given here only to decode those two messages; they are
-not the landed commits.
+branch after the rebase onto #116, which the rebase onto #118 replaced: the first citation
+commit's message names the ADR-0008 commit as `24ca97838`, the renumbering commit as `14bdfe1ef`
+and the U2 commit as `947b1a1aa`, and the rebase citation commit's message names those three and
+the first citation commit as `65e6f961d`. These four SHAs are given here only to decode those two
+messages; they are not the landed commits. Five review commit messages name the head a review or
+run used, as it was before the rebase onto #118: the round-two `jope-records` commit names
+`ef8d31c0b`, both round-three code commits `e8640b7b0`, the round-three addendum's code commit
+`ed49fbc3e` and the round-five filesystem commit `5f3de344e`. The table decodes them.
 
 A review of the rebased branch found that this record, `python_parity.rs` and the U3 fixture's
 `source` string still cited those branch SHAs as the landed commits. Reproduction
@@ -1939,6 +1973,20 @@ rebased landing branch alone: every pre-rebase commit came back with its tree, a
 
 ```
 git fetch <bundle> refs/heads/rr2/python-p1-landing:refs/preserve/rr2-python-p1-landing-pre-rebase
+```
+
+The 45 commits as they were before the rebase onto #118 are in the custody bundle
+`p1-rebase2-pre-20260928T084834Z/rr2-python-p1-landing-pre-rebase2.bundle` (753094 bytes, SHA-256
+`7179180d05f46454b4cdcee5c40f14b7d56aee51f097839db019524f62497714`, prerequisite `f46a9048f`,
+which main contains; `pre-rebase2-commits.txt` beside it lists each commit, tree and subject).
+`p1-rebase2-preserve-20260928T085352Z` restored it into a bare single-branch clone of the rebased
+landing branch alone, with no alternates, in which none of the 45 existed before: every commit
+came back with its tree and author, the pre-#116-rebase and originals bundles restored there too,
+the four trailers and every commit SHA named in a rebased commit message resolved, and
+`git fsck --connectivity-only` passed. To restore it into any clone that has main:
+
+```
+git fetch <bundle> refs/heads/rr2/python-p1-landing:refs/preserve/rr2-python-p1-landing-pre-rebase2
 ```
 
 The originals stay on `rr2/python-p1`, locally and on `origin`. Independent of any ref, all
