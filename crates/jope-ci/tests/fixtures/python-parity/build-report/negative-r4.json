@@ -1,0 +1,473 @@
+{
+  "source": "p1-strict-capture-20260928T054323Z",
+  "capture": "bash cap4.sh p1-strict-capture-20260928T054323Z (Python from git show f46a9048fbb2697d6d1f4463a688083ea9dfcce1:<tool>, unmodified, in a scratch root)",
+  "tool": "deploy/maintenance/jope_report.py report --config <config> --custody <custody>",
+  "normalisation": "the case directory is written @C@ and the receipt stamp @STAMP@; receipts drop started_at, completed_at, checksums and missing_unit_files; created lists the paths the run added under @C@ (the layout and the configuration excluded); a traceback is kept as its last line (raised)",
+  "config": "{\"cargo_roots\": [\"/nonexistent-approved-a\", \"/nonexistent-approved-b\"], \"stale_hours\": 48, \"measurement_roots\": []}",
+  "layout": {
+    "dirs": [
+      "outer/realdir",
+      "outer/noperm/x",
+      "guarded/sub",
+      "guarded/.git",
+      "guarded2/a"
+    ],
+    "files": {
+      "guarded2/.git": "gitdir: synthetic\n"
+    },
+    "symlinks": {
+      "outer/link": "@C@/guarded/sub",
+      "outer/rel": "../guarded/sub",
+      "outer/loop": "loop",
+      "outer/safe": "@C@/outer/realdir",
+      "outer/filelink": "@C@/guarded2/a",
+      "outer/glink": "@C@/guarded",
+      "outer/dangling": "nowhere"
+    },
+    "no_search": [
+      "outer/noperm"
+    ]
+  },
+  "cases": [
+    {
+      "name": "custody-control",
+      "custody": "@C@/outer/receipts",
+      "cwd": ".",
+      "exit": 1,
+      "stdout": "@C@/outer/receipts/@STAMP@/receipt.json\n",
+      "stderr": "",
+      "receipt": {
+        "status": "failed",
+        "exit_status": 1,
+        "measurements": [],
+        "scan_outputs": [],
+        "custody_argument": "@C@/outer/receipts",
+        "custody_resolved": "@C@/outer/receipts",
+        "invocation_id": null,
+        "config": {
+          "cargo_roots": [
+            "/nonexistent-approved-a",
+            "/nonexistent-approved-b"
+          ],
+          "stale_hours": 48,
+          "measurement_roots": []
+        },
+        "error": "service requires the two approved Cargo roots and a 48-hour filter"
+      },
+      "failure_txt": "service requires the two approved Cargo roots and a 48-hour filter\n",
+      "created": [
+        "./outer/receipts",
+        "./outer/receipts/@STAMP@",
+        "./outer/receipts/@STAMP@/failure.txt",
+        "./outer/receipts/@STAMP@/receipt.json"
+      ]
+    },
+    {
+      "name": "custody-symlink-parent",
+      "custody": "@C@/outer/link/../receipts",
+      "cwd": ".",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "report failed: report custody must be outside /tmp and Git working trees\n",
+      "receipt": null,
+      "failure_txt": null,
+      "created": []
+    },
+    {
+      "name": "custody-symlink-parent-twice",
+      "custody": "@C@/outer/link/../sub2/../receipts",
+      "cwd": ".",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "report failed: report custody must be outside /tmp and Git working trees\n",
+      "receipt": null,
+      "failure_txt": null,
+      "created": []
+    },
+    {
+      "name": "custody-symlink-inside",
+      "custody": "@C@/outer/link/receipts",
+      "cwd": ".",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "report failed: report custody must be outside /tmp and Git working trees\n",
+      "receipt": null,
+      "failure_txt": null,
+      "created": []
+    },
+    {
+      "name": "custody-relative-symlink-parent",
+      "custody": "@C@/outer/rel/../receipts",
+      "cwd": ".",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "report failed: report custody must be outside /tmp and Git working trees\n",
+      "receipt": null,
+      "failure_txt": null,
+      "created": []
+    },
+    {
+      "name": "custody-relative-argument",
+      "custody": "link/../receipts",
+      "cwd": "outer",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "report failed: report custody must be outside /tmp and Git working trees\n",
+      "receipt": null,
+      "failure_txt": null,
+      "created": []
+    },
+    {
+      "name": "custody-relative-argument-control",
+      "custody": "receipts",
+      "cwd": "outer",
+      "exit": 1,
+      "stdout": "@C@/outer/receipts/@STAMP@/receipt.json\n",
+      "stderr": "",
+      "receipt": {
+        "status": "failed",
+        "exit_status": 1,
+        "measurements": [],
+        "scan_outputs": [],
+        "custody_argument": "receipts",
+        "custody_resolved": "@C@/outer/receipts",
+        "invocation_id": null,
+        "config": {
+          "cargo_roots": [
+            "/nonexistent-approved-a",
+            "/nonexistent-approved-b"
+          ],
+          "stale_hours": 48,
+          "measurement_roots": []
+        },
+        "error": "service requires the two approved Cargo roots and a 48-hour filter"
+      },
+      "failure_txt": "service requires the two approved Cargo roots and a 48-hour filter\n",
+      "created": [
+        "./outer/receipts",
+        "./outer/receipts/@STAMP@",
+        "./outer/receipts/@STAMP@/failure.txt",
+        "./outer/receipts/@STAMP@/receipt.json"
+      ]
+    },
+    {
+      "name": "custody-safe-link-parent",
+      "custody": "@C@/outer/safe/../receipts",
+      "cwd": ".",
+      "exit": 1,
+      "stdout": "@C@/outer/receipts/@STAMP@/receipt.json\n",
+      "stderr": "",
+      "receipt": {
+        "status": "failed",
+        "exit_status": 1,
+        "measurements": [],
+        "scan_outputs": [],
+        "custody_argument": "@C@/outer/safe/../receipts",
+        "custody_resolved": "@C@/outer/receipts",
+        "invocation_id": null,
+        "config": {
+          "cargo_roots": [
+            "/nonexistent-approved-a",
+            "/nonexistent-approved-b"
+          ],
+          "stale_hours": 48,
+          "measurement_roots": []
+        },
+        "error": "service requires the two approved Cargo roots and a 48-hour filter"
+      },
+      "failure_txt": "service requires the two approved Cargo roots and a 48-hour filter\n",
+      "created": [
+        "./outer/receipts",
+        "./outer/receipts/@STAMP@",
+        "./outer/receipts/@STAMP@/failure.txt",
+        "./outer/receipts/@STAMP@/receipt.json"
+      ]
+    },
+    {
+      "name": "custody-missing-then-dotdot",
+      "custody": "@C@/outer/missing/../receipts",
+      "cwd": ".",
+      "exit": 1,
+      "stdout": "@C@/outer/receipts/@STAMP@/receipt.json\n",
+      "stderr": "",
+      "receipt": {
+        "status": "failed",
+        "exit_status": 1,
+        "measurements": [],
+        "scan_outputs": [],
+        "custody_argument": "@C@/outer/missing/../receipts",
+        "custody_resolved": "@C@/outer/receipts",
+        "invocation_id": null,
+        "config": {
+          "cargo_roots": [
+            "/nonexistent-approved-a",
+            "/nonexistent-approved-b"
+          ],
+          "stale_hours": 48,
+          "measurement_roots": []
+        },
+        "error": "service requires the two approved Cargo roots and a 48-hour filter"
+      },
+      "failure_txt": "service requires the two approved Cargo roots and a 48-hour filter\n",
+      "created": [
+        "./outer/receipts",
+        "./outer/receipts/@STAMP@",
+        "./outer/receipts/@STAMP@/failure.txt",
+        "./outer/receipts/@STAMP@/receipt.json"
+      ]
+    },
+    {
+      "name": "custody-missing-then-link-parent",
+      "custody": "@C@/outer/missing/../link/../receipts",
+      "cwd": ".",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "report failed: report custody must be outside /tmp and Git working trees\n",
+      "receipt": null,
+      "failure_txt": null,
+      "created": []
+    },
+    {
+      "name": "custody-self-loop",
+      "custody": "@C@/outer/loop/x",
+      "cwd": ".",
+      "exit": 1,
+      "stdout": "",
+      "raised": "RuntimeError: Symlink loop from '@C@/outer/loop/x'",
+      "receipt": null,
+      "failure_txt": null,
+      "created": []
+    },
+    {
+      "name": "custody-self-loop-parent",
+      "custody": "@C@/outer/loop/../receipts",
+      "cwd": ".",
+      "exit": 1,
+      "stdout": "@C@/outer/receipts/@STAMP@/receipt.json\n",
+      "stderr": "",
+      "receipt": {
+        "status": "failed",
+        "exit_status": 1,
+        "measurements": [],
+        "scan_outputs": [],
+        "custody_argument": "@C@/outer/loop/../receipts",
+        "custody_resolved": "@C@/outer/receipts",
+        "invocation_id": null,
+        "config": {
+          "cargo_roots": [
+            "/nonexistent-approved-a",
+            "/nonexistent-approved-b"
+          ],
+          "stale_hours": 48,
+          "measurement_roots": []
+        },
+        "error": "service requires the two approved Cargo roots and a 48-hour filter"
+      },
+      "failure_txt": "service requires the two approved Cargo roots and a 48-hour filter\n",
+      "created": [
+        "./outer/receipts",
+        "./outer/receipts/@STAMP@",
+        "./outer/receipts/@STAMP@/failure.txt",
+        "./outer/receipts/@STAMP@/receipt.json"
+      ]
+    },
+    {
+      "name": "custody-dangling-parent",
+      "custody": "@C@/outer/dangling/../receipts",
+      "cwd": ".",
+      "exit": 1,
+      "stdout": "@C@/outer/receipts/@STAMP@/receipt.json\n",
+      "stderr": "",
+      "receipt": {
+        "status": "failed",
+        "exit_status": 1,
+        "measurements": [],
+        "scan_outputs": [],
+        "custody_argument": "@C@/outer/dangling/../receipts",
+        "custody_resolved": "@C@/outer/receipts",
+        "invocation_id": null,
+        "config": {
+          "cargo_roots": [
+            "/nonexistent-approved-a",
+            "/nonexistent-approved-b"
+          ],
+          "stale_hours": 48,
+          "measurement_roots": []
+        },
+        "error": "service requires the two approved Cargo roots and a 48-hour filter"
+      },
+      "failure_txt": "service requires the two approved Cargo roots and a 48-hour filter\n",
+      "created": [
+        "./outer/receipts",
+        "./outer/receipts/@STAMP@",
+        "./outer/receipts/@STAMP@/failure.txt",
+        "./outer/receipts/@STAMP@/receipt.json"
+      ]
+    },
+    {
+      "name": "custody-git-file",
+      "custody": "@C@/outer/filelink/receipts",
+      "cwd": ".",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "report failed: report custody must be outside /tmp and Git working trees\n",
+      "receipt": null,
+      "failure_txt": null,
+      "created": []
+    },
+    {
+      "name": "custody-git-file-parent",
+      "custody": "@C@/outer/filelink/../receipts",
+      "cwd": ".",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "report failed: report custody must be outside /tmp and Git working trees\n",
+      "receipt": null,
+      "failure_txt": null,
+      "created": []
+    },
+    {
+      "name": "custody-link-to-guarded",
+      "custody": "@C@/outer/glink/receipts",
+      "cwd": ".",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "report failed: report custody must be outside /tmp and Git working trees\n",
+      "receipt": null,
+      "failure_txt": null,
+      "created": []
+    },
+    {
+      "name": "custody-link-twice-up",
+      "custody": "@C@/outer/link/../../outer/receipts",
+      "cwd": ".",
+      "exit": 1,
+      "stdout": "@C@/outer/receipts/@STAMP@/receipt.json\n",
+      "stderr": "",
+      "receipt": {
+        "status": "failed",
+        "exit_status": 1,
+        "measurements": [],
+        "scan_outputs": [],
+        "custody_argument": "@C@/outer/link/../../outer/receipts",
+        "custody_resolved": "@C@/outer/receipts",
+        "invocation_id": null,
+        "config": {
+          "cargo_roots": [
+            "/nonexistent-approved-a",
+            "/nonexistent-approved-b"
+          ],
+          "stale_hours": 48,
+          "measurement_roots": []
+        },
+        "error": "service requires the two approved Cargo roots and a 48-hour filter"
+      },
+      "failure_txt": "service requires the two approved Cargo roots and a 48-hour filter\n",
+      "created": [
+        "./outer/receipts",
+        "./outer/receipts/@STAMP@",
+        "./outer/receipts/@STAMP@/failure.txt",
+        "./outer/receipts/@STAMP@/receipt.json"
+      ]
+    },
+    {
+      "name": "custody-link-up-into-guarded",
+      "custody": "@C@/outer/link/../../guarded/x",
+      "cwd": ".",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "report failed: report custody must be outside /tmp and Git working trees\n",
+      "receipt": null,
+      "failure_txt": null,
+      "created": []
+    },
+    {
+      "name": "custody-guarded-down-up",
+      "custody": "@C@/guarded/sub/../../outer/receipts",
+      "cwd": ".",
+      "exit": 1,
+      "stdout": "@C@/outer/receipts/@STAMP@/receipt.json\n",
+      "stderr": "",
+      "receipt": {
+        "status": "failed",
+        "exit_status": 1,
+        "measurements": [],
+        "scan_outputs": [],
+        "custody_argument": "@C@/guarded/sub/../../outer/receipts",
+        "custody_resolved": "@C@/outer/receipts",
+        "invocation_id": null,
+        "config": {
+          "cargo_roots": [
+            "/nonexistent-approved-a",
+            "/nonexistent-approved-b"
+          ],
+          "stale_hours": 48,
+          "measurement_roots": []
+        },
+        "error": "service requires the two approved Cargo roots and a 48-hour filter"
+      },
+      "failure_txt": "service requires the two approved Cargo roots and a 48-hour filter\n",
+      "created": [
+        "./outer/receipts",
+        "./outer/receipts/@STAMP@",
+        "./outer/receipts/@STAMP@/failure.txt",
+        "./outer/receipts/@STAMP@/receipt.json"
+      ]
+    },
+    {
+      "name": "custody-permission-denied",
+      "custody": "@C@/outer/noperm/x/receipts",
+      "cwd": ".",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "report failed: [Errno 13] Permission denied: '@C@/outer/noperm/x/receipts/.git'\n",
+      "receipt": null,
+      "failure_txt": null,
+      "created": []
+    },
+    {
+      "name": "custody-root-dotdot",
+      "custody": "/../@C@/outer/receipts",
+      "cwd": ".",
+      "exit": 1,
+      "stdout": "@C@/outer/receipts/@STAMP@/receipt.json\n",
+      "stderr": "",
+      "receipt": {
+        "status": "failed",
+        "exit_status": 1,
+        "measurements": [],
+        "scan_outputs": [],
+        "custody_argument": "/..@C@/outer/receipts",
+        "custody_resolved": "@C@/outer/receipts",
+        "invocation_id": null,
+        "config": {
+          "cargo_roots": [
+            "/nonexistent-approved-a",
+            "/nonexistent-approved-b"
+          ],
+          "stale_hours": 48,
+          "measurement_roots": []
+        },
+        "error": "service requires the two approved Cargo roots and a 48-hour filter"
+      },
+      "failure_txt": "service requires the two approved Cargo roots and a 48-hour filter\n",
+      "created": [
+        "./outer/receipts",
+        "./outer/receipts/@STAMP@",
+        "./outer/receipts/@STAMP@/failure.txt",
+        "./outer/receipts/@STAMP@/receipt.json"
+      ]
+    },
+    {
+      "name": "custody-trailing-dotdot",
+      "custody": "@C@/outer/link/..",
+      "cwd": ".",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "report failed: report custody must be outside /tmp and Git working trees\n",
+      "receipt": null,
+      "failure_txt": null,
+      "created": []
+    }
+  ]
+}

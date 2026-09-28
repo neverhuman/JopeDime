@@ -17,13 +17,13 @@
 //! `--approved-root` and whose checksum every receipt records. `report` fails unless exactly two
 //! are given and the configuration names exactly those.
 
-use jope_records::py::{self, PosixPath};
+use jope_records::py::{self, PosixPath, ResolveError};
 use jope_records::pyjson::{self, Dict, Value};
 use sha2::{Digest, Sha256};
 use std::ffi::{OsStr, OsString};
 use std::fs;
 use std::os::unix::fs::{DirBuilderExt, MetadataExt};
-use std::path::{Component, Path, PathBuf};
+use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
@@ -76,58 +76,17 @@ fn os_error(error: &std::io::Error, path: &Path) -> Failure {
     }
 }
 
-/// `os.path.realpath(path, strict=True)` for an absolute, normalised path: each component is
-/// `lstat`ed in turn and symlinks are followed as `posixpath._joinrealpath` follows them, so a
-/// missing component refuses naming the path up to it (`[Errno 2] ...: '/nonexistent-q'`), as
-/// Python's `FileNotFoundError` did.
-fn realpath_strict(path: &Path) -> Outcome<PathBuf> {
-    fn join(
-        mut path: PathBuf,
-        rest: &Path,
-        seen: &mut std::collections::HashMap<PathBuf, Option<PathBuf>>,
-    ) -> Outcome<PathBuf> {
-        if rest.is_absolute() {
-            path = PathBuf::from("/");
-        }
-        for component in rest.components() {
-            let name = match component {
-                Component::Normal(name) => name,
-                Component::ParentDir => {
-                    if path.as_os_str().is_empty() || path.ends_with("..") {
-                        path.push("..");
-                    } else if path != Path::new("/") {
-                        path.pop();
-                    }
-                    continue;
-                }
-                _ => continue,
-            };
-            let newpath = path.join(name);
-            let meta = fs::symlink_metadata(&newpath).map_err(|e| os_error(&e, &newpath))?;
-            if !meta.file_type().is_symlink() {
-                path = newpath;
-                continue;
-            }
-            match seen.get(&newpath) {
-                Some(Some(resolved)) => {
-                    path = resolved.clone();
-                    continue;
-                }
-                // A symlink met again while resolving it: `os.stat` raises `ELOOP`.
-                Some(None) => {
-                    let error = fs::metadata(&newpath).expect_err("a symlink loop");
-                    return Err(os_error(&error, &newpath));
-                }
-                None => {}
-            }
-            seen.insert(newpath.clone(), None);
-            let target = fs::read_link(&newpath).map_err(|e| os_error(&e, &newpath))?;
-            path = join(path, &target, seen)?;
-            seen.insert(newpath, Some(path.clone()));
-        }
-        Ok(path)
+/// `Path.resolve()`'s failure as Python printed it: the `OSError` naming the path up to the
+/// component it could not resolve (`[Errno 2] ...: '/nonexistent-q'`), or pathlib's
+/// `RuntimeError` for a symlink loop.
+fn resolve_failure(error: ResolveError) -> Failure {
+    match error {
+        ResolveError::Os { error, path } => os_error(&error, &path),
+        ResolveError::Loop { path } => Failure::new(format!(
+            "Symlink loop from {}",
+            crate::py::os_repr(path.as_os_str())
+        )),
     }
-    join(PathBuf::new(), path, &mut std::collections::HashMap::new())
 }
 
 /// The UTC clock as `datetime.now(timezone.utc)` prints it: `isoformat()` and the receipt stamp
@@ -173,66 +132,9 @@ pub fn utc() -> Utc {
     utc_at(SystemTime::now())
 }
 
-/// `os.path.abspath`: joined to the working directory and normalised as `posixpath.normpath`
-/// normalises: empty and `.` components dropped, `..` removing the previous component, and
-/// exactly two leading slashes kept (POSIX leaves `//` to the implementation, so Python keeps it
-/// as its own root; three or more are `/`). Names stay the bytes they are.
-pub fn abspath(path: &Path) -> PathBuf {
-    use std::os::unix::ffi::{OsStrExt, OsStringExt};
-    let mut joined = vec![];
-    if !path.as_os_str().as_bytes().starts_with(b"/") {
-        let cwd = std::env::current_dir().unwrap_or_default();
-        joined.extend_from_slice(cwd.as_os_str().as_bytes());
-        if !joined.ends_with(b"/") {
-            joined.push(b'/');
-        }
-    }
-    joined.extend_from_slice(path.as_os_str().as_bytes());
-    let slashes = if joined.starts_with(b"//") && !joined.starts_with(b"///") {
-        2
-    } else {
-        1
-    };
-    let mut parts: Vec<&[u8]> = vec![];
-    for part in joined.split(|&b| b == b'/') {
-        match part {
-            b"" | b"." => {}
-            b".." => {
-                parts.pop();
-            }
-            _ => parts.push(part),
-        }
-    }
-    let mut out = b"/".repeat(slashes);
-    out.extend(parts.join(&b'/'));
-    PathBuf::from(OsString::from_vec(out))
-}
-
-/// `Path.resolve()` (not strict): symlinks resolved as far as the path exists.
-fn resolve_lenient(path: &Path) -> PathBuf {
-    let path = abspath(path);
-    let mut existing = path.clone();
-    let mut rest: Vec<std::ffi::OsString> = vec![];
-    loop {
-        if let Ok(resolved) = existing.canonicalize() {
-            let mut out = resolved;
-            for part in rest.iter().rev() {
-                out.push(part);
-            }
-            return out;
-        }
-        match (
-            existing.file_name().map(ToOwned::to_owned),
-            existing.parent(),
-        ) {
-            (Some(name), Some(parent)) => {
-                rest.push(name);
-                existing = parent.to_path_buf();
-            }
-            _ => return path,
-        }
-    }
-}
+/// `os.path.abspath`, lexical: [`jope_records::py::abspath`]. The Python applied it to a scan root
+/// before resolving it, so there (and only there) `..` is removed before symlinks are resolved.
+pub use jope_records::py::abspath;
 
 fn mtime(meta: &fs::Metadata) -> f64 {
     // Python's st_mtime: seconds plus nanoseconds * 1e-9, as one double.
@@ -260,7 +162,7 @@ pub type Visit<'a> = &'a mut dyn FnMut(&Path, &mut Vec<OsString>, &[OsString]) -
 /// included, as `os.walk` lists them; prune by retaining) and its other entries.
 pub fn walk(root: &Path, interrupt: Interrupt<'_>, visit: Visit<'_>) -> Outcome<()> {
     let root = abspath(root);
-    let resolved = realpath_strict(&root)?;
+    let resolved = py::resolve(&root, true).map_err(resolve_failure)?;
     // `root.resolve(strict=True) != root`: pathlib compares the spellings, and `abspath` keeps
     // POSIX's distinct `//` root where `realpath` resolves it to `/`, so the Python refused such a
     // root as it refused one with a symlink component. Both sides are normalised, so their bytes
@@ -535,14 +437,27 @@ fn sha256_file(path: &Path) -> Outcome<String> {
         .collect())
 }
 
-/// Refuse custody inside `/tmp` or any Git working tree, before anything is written.
-pub fn custody_refusal(custody: &Path) -> Option<Failure> {
-    let output = resolve_lenient(custody);
-    let chain: Vec<&Path> = output.ancestors().collect();
-    let in_tmp = chain.iter().any(|p| *p == Path::new("/tmp"));
-    let in_tree = chain.iter().any(|p| p.join(".git").exists());
-    (in_tmp || in_tree)
-        .then(|| Failure::new("report custody must be outside /tmp and Git working trees"))
+/// `output = args.custody.resolve()`, refused inside `/tmp` or any Git working tree before anything
+/// is written. The custody is resolved as `Path.resolve()` resolved it ([`py::resolve`]): each
+/// symlink before a later `..`, so `outer/link/../receipts` with `link -> guarded/sub` is
+/// `guarded/receipts` (not the lexical `outer/receipts`), and a missing component is kept as
+/// spelled. `/tmp` is looked for among the output and its parents first, then a `.git` from the
+/// output upwards (`Path.exists()`: a missing path is not there, and any other error, such as a
+/// directory that may not be searched, refuses in the `OSError`'s words, as Python raised it). A
+/// symlink loop refuses as pathlib's `RuntimeError` did.
+pub fn custody_output(custody: &Path) -> Outcome<PathBuf> {
+    let output = py::resolve(custody, false).map_err(resolve_failure)?;
+    let refused = || Failure::new("report custody must be outside /tmp and Git working trees");
+    if output.ancestors().any(|p| p == Path::new("/tmp")) {
+        return Err(refused());
+    }
+    for directory in output.ancestors() {
+        let marker = directory.join(".git");
+        if py::path_exists(&marker).map_err(|e| os_error(&e, &marker))? {
+            return Err(refused());
+        }
+    }
+    Ok(output)
 }
 
 /// `report --config --custody`: scan the two approved roots, measure the configured roots and
@@ -558,10 +473,7 @@ pub fn report(
     hooks: &Hooks<'_>,
     interrupt: Interrupt<'_>,
 ) -> Outcome<i32> {
-    if let Some(refused) = custody_refusal(custody) {
-        return Err(refused);
-    }
-    let output = resolve_lenient(custody);
+    let output = custody_output(custody)?;
     fs::DirBuilder::new()
         .recursive(true)
         .mode(0o700)
@@ -631,8 +543,7 @@ pub fn report(
 /// `resolve` turns into `/`) is not. Returns the path as `str()` prints it and the resolved path.
 fn explicit_root(text: &str) -> Outcome<(PosixPath, PathBuf)> {
     let spelled = PosixPath::parse(text);
-    let path = Path::new(text);
-    let resolved = path.canonicalize().map_err(|e| os_error(&e, path))?;
+    let resolved = py::resolve(Path::new(text), true).map_err(resolve_failure)?;
     let same = resolved
         .to_str()
         .is_some_and(|r| PosixPath::parse(r) == spelled);
@@ -952,9 +863,68 @@ mod tests {
 
     #[test]
     fn custody_under_tmp_or_a_working_tree_is_refused() {
-        assert!(custody_refusal(Path::new("/tmp")).is_some());
-        assert!(custody_refusal(Path::new("/tmp/x/y")).is_some());
+        let refusal = |custody: &Path| custody_output(custody).map_err(|e| e.message);
+        let refused = Err("report custody must be outside /tmp and Git working trees".to_owned());
+        assert_eq!(refusal(Path::new("/tmp")), refused);
+        assert_eq!(refusal(Path::new("/tmp/x/y")), refused);
+        assert_eq!(refusal(Path::new("//tmp/never-created")), refused);
         let tree = Path::new(env!("CARGO_MANIFEST_DIR"));
-        assert!(custody_refusal(&tree.join("never-created")).is_some());
+        assert_eq!(refusal(&tree.join("never-created")), refused);
+        assert_eq!(
+            refusal(&tree.join("src/never/../../never-created")),
+            refused
+        );
+    }
+
+    /// Round four of the review of PR #117: custody is resolved as `Path.resolve()` resolved it,
+    /// each symlink before a later `..`. With `outer/link -> guarded/sub` and a `.git` in
+    /// `guarded`, `outer/link/../receipts` is `guarded/receipts` and is refused (the lexical
+    /// `outer/receipts` was accepted before); the plain custody and a `..` after a directory that
+    /// is not a link resolve where they did. Nothing is created. The tree is under the build's
+    /// temporary directory, which must itself be outside `/tmp` and any working tree for the
+    /// accepted cases to mean anything, so they are checked only there.
+    #[test]
+    fn custody_is_resolved_symlinks_first() {
+        let temp = tempfile::tempdir().unwrap();
+        let c = temp.path().canonicalize().unwrap();
+        for dir in ["outer/realdir", "guarded/sub", "guarded/.git"] {
+            std::fs::create_dir_all(c.join(dir)).unwrap();
+        }
+        std::os::unix::fs::symlink(c.join("guarded/sub"), c.join("outer/link")).unwrap();
+        std::os::unix::fs::symlink("loop", c.join("outer/loop")).unwrap();
+        let refused = Err("report custody must be outside /tmp and Git working trees".to_owned());
+        let custody = |spelled: &str| {
+            custody_output(&PathBuf::from(format!("{}/{spelled}", c.display())))
+                .map_err(|e| e.message)
+        };
+        for into_guarded in [
+            "outer/link/../receipts",
+            "outer/link/../sub/../receipts",
+            "outer/missing/../link/../receipts",
+            "outer/link/receipts",
+            "outer/link/..",
+        ] {
+            assert_eq!(custody(into_guarded), refused, "{into_guarded}");
+        }
+        assert_eq!(
+            custody("outer/loop/x"),
+            Err(format!(
+                "Symlink loop from {}",
+                crate::py::repr(&format!("{}/outer/loop/x", c.display()))
+            ))
+        );
+        let outside = custody_output(&c).is_ok();
+        if outside {
+            for (spelled, resolved) in [
+                ("outer/receipts", "outer/receipts"),
+                ("outer/realdir/../receipts", "outer/receipts"),
+                ("outer/missing/../receipts", "outer/receipts"),
+                ("outer/link/../../outer/receipts", "outer/receipts"),
+                ("outer/loop/../receipts", "outer/receipts"),
+            ] {
+                assert_eq!(custody(spelled), Ok(c.join(resolved)), "{spelled}");
+            }
+        }
+        assert!(!c.join("outer/receipts").exists() && !c.join("guarded/receipts").exists());
     }
 }

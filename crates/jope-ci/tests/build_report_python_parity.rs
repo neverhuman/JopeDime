@@ -540,6 +540,181 @@ fn config_bytes_match_round_two() {
     }
 }
 
+/// Round four (`build-report/negative-r4.json`, review 5334300806 of PR #117): custody resolved as
+/// `Path.resolve()` resolved it, each symlink before a later `..`, then refused under /tmp or a
+/// Git working tree before anything is written. The fixture's synthetic layout (links from
+/// `outer/` into `guarded/`, whose `.git` is an empty directory, and into `guarded2/`, whose `.git`
+/// is a file; a self loop; a dangling link; a directory that may not be searched) is rebuilt for
+/// each case, and `report` runs with a configuration that names wrong Cargo roots, so a custody
+/// the Python accepted ends in the same failure receipt and nothing is scanned. The exit status,
+/// stdout, stderr, the receipt (with `custody_resolved`), `failure.txt` and every path the run
+/// created are compared; a symlink loop, which the Python raised as an uncaught `RuntimeError`,
+/// is refused with that exception's message. Same environment as the tests above.
+#[test]
+#[ignore = "needs JOPE_MAINTENANCE_SCRATCH outside /tmp and Git working trees"]
+fn custody_matches_round_four() {
+    use std::collections::BTreeSet;
+    let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/fixtures/python-parity/build-report/negative-r4.json");
+    let doc: Value = serde_json::from_str(&fs::read_to_string(path).unwrap()).unwrap();
+    assert!(doc["source"].is_string() && doc["capture"].is_string());
+    let cases = doc["cases"].as_array().unwrap();
+    assert_eq!(cases.len(), 22, "every captured case is replayed");
+    let scratch = PathBuf::from(
+        std::env::var("JOPE_MAINTENANCE_SCRATCH")
+            .expect("set JOPE_MAINTENANCE_SCRATCH to a directory outside /tmp and working trees"),
+    )
+    .join("python-parity-custody-r4");
+    fs::create_dir_all(scratch.parent().unwrap()).unwrap();
+    fs::create_dir(&scratch).expect("a fresh scratch directory");
+    let scratch = scratch.canonicalize().unwrap();
+    let roots = approved_roots();
+    let tools = repo().join("deploy/maintenance");
+    let layout = &doc["layout"];
+    let no_search: Vec<&str> = layout["no_search"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|d| d.as_str().unwrap())
+        .collect();
+    // Every path under `c` as `find . -path ./<no_search> -prune -o -print` lists it.
+    fn listing(c: &Path, dir: &Path, skip: &[&str], out: &mut BTreeSet<String>) {
+        let rel = dir.strip_prefix(c).unwrap();
+        if skip.iter().any(|s| rel == Path::new(s)) {
+            return;
+        }
+        out.insert(
+            format!("./{}", rel.display())
+                .trim_end_matches('/')
+                .to_owned(),
+        );
+        let meta = fs::symlink_metadata(dir).unwrap();
+        if meta.is_dir() {
+            for entry in fs::read_dir(dir).unwrap() {
+                listing(c, &entry.unwrap().path(), skip, out);
+            }
+        }
+    }
+    let mut failures = vec![];
+    let mut replayed = 0;
+    for case in cases {
+        let name = case["name"].as_str().unwrap();
+        let c = scratch.join(name);
+        for dir in layout["dirs"].as_array().unwrap() {
+            fs::create_dir_all(c.join(dir.as_str().unwrap())).unwrap();
+        }
+        for (file, text) in layout["files"].as_object().unwrap() {
+            fs::write(c.join(file), text.as_str().unwrap()).unwrap();
+        }
+        let c_text = c.to_str().unwrap().to_owned();
+        for (link, target) in layout["symlinks"].as_object().unwrap() {
+            symlink(
+                target.as_str().unwrap().replace("@C@", &c_text),
+                c.join(link),
+            )
+            .unwrap();
+        }
+        for dir in &no_search {
+            fs::set_permissions(c.join(dir), fs::Permissions::from_mode(0o000)).unwrap();
+        }
+        // A user who may search anything (root) cannot reproduce a refused search.
+        let searchable = fs::metadata(c.join(no_search[0]).join("x")).is_ok();
+        let config = c.join("cfg.json");
+        fs::write(&config, doc["config"].as_str().unwrap()).unwrap();
+        let mut before = BTreeSet::new();
+        listing(&c, &c, &no_search, &mut before);
+        let custody = case["custody"].as_str().unwrap().replace("@C@", &c_text);
+        let output = Command::new(env!("CARGO_BIN_EXE_jope-ci"))
+            .args(["build-report", "report", "--config"])
+            .arg(&config)
+            .args(["--custody", &custody, "--tools-dir"])
+            .arg(&tools)
+            .args(["--approved-root", &roots[0], "--approved-root", &roots[1]])
+            .current_dir(c.join(case["cwd"].as_str().unwrap()))
+            .env_remove("INVOCATION_ID")
+            .output()
+            .unwrap();
+        for dir in &no_search {
+            fs::set_permissions(c.join(dir), fs::Permissions::from_mode(0o755)).unwrap();
+        }
+        if searchable && name == "custody-permission-denied" {
+            eprintln!("{name}: skipped, this user may search a directory of mode 000");
+            continue;
+        }
+        let mut after = BTreeSet::new();
+        listing(&c, &c, &no_search, &mut after);
+        let stdout = String::from_utf8_lossy(&output.stdout).into_owned();
+        let stamp = stdout
+            .rsplit('/')
+            .nth(1)
+            .filter(|s| s.ends_with('Z') && s.len() == 23)
+            .map(str::to_owned);
+        let normalise = |text: &str| {
+            let text = text.replace(&c_text, "@C@");
+            match &stamp {
+                Some(stamp) => text.replace(stamp.as_str(), "@STAMP@"),
+                None => text,
+            }
+        };
+        let stderr = normalise(&String::from_utf8_lossy(&output.stderr));
+        let mut why = vec![];
+        if i64::from(output.status.code().unwrap()) != case["exit"].as_i64().unwrap() {
+            why.push(format!("exit {:?}", output.status.code()));
+        }
+        if normalise(&stdout) != case["stdout"].as_str().unwrap() {
+            why.push(format!("stdout {stdout:?}"));
+        }
+        let want_stderr = match case["raised"].as_str() {
+            Some(raised) => format!(
+                "report failed: {}\n",
+                raised
+                    .strip_prefix("RuntimeError: ")
+                    .expect("a RuntimeError")
+            ),
+            None => case["stderr"].as_str().unwrap().to_owned(),
+        };
+        if stderr != want_stderr {
+            why.push(format!("stderr {stderr:?}, the Python {want_stderr:?}"));
+        }
+        let created: Vec<String> = after.difference(&before).map(|p| normalise(p)).collect();
+        let want_created: Vec<&str> = case["created"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|p| p.as_str().unwrap())
+            .collect();
+        if created != want_created {
+            why.push(format!("created {created:?}, the Python {want_created:?}"));
+        }
+        if !case["receipt"].is_null() {
+            let run = Path::new(stdout.trim_end()).parent().unwrap();
+            let text = fs::read_to_string(run.join("receipt.json")).unwrap();
+            let mut receipt: Value = serde_json::from_str(&normalise(&text)).unwrap();
+            for key in [
+                "started_at",
+                "completed_at",
+                "checksums",
+                "missing_unit_files",
+            ] {
+                receipt.as_object_mut().unwrap().remove(key);
+            }
+            if receipt != case["receipt"] {
+                why.push(format!("receipt {receipt}"));
+            }
+            let failure = fs::read_to_string(run.join("failure.txt")).unwrap();
+            if failure != case["failure_txt"].as_str().unwrap() {
+                why.push(format!("failure.txt {failure:?}"));
+            }
+        }
+        if !why.is_empty() {
+            failures.push(format!("{name}: {}", why.join("; ")));
+        }
+        replayed += 1;
+    }
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
+    assert!(replayed >= 21);
+}
+
 fn round_two() -> Value {
     let path = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("tests/fixtures/python-parity/build-report/negative-r2.json");
