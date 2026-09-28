@@ -1,0 +1,18 @@
+{
+  "tracked": [
+    "Cargo.toml",
+    "crates/foo/Cargo.toml",
+    "vendor/foo-copy/Cargo.toml"
+  ],
+  "members": ["crates/foo"],
+  "manifests": {
+    "Cargo.toml": "[workspace]\nmembers = [\"crates/foo\"]\n",
+    "crates/foo/Cargo.toml": "[package]\nname = \"foo\"\nversion = \"0.1.0\"\n",
+    "vendor/foo-copy/Cargo.toml": "package.name = \"foo\"\npackage.version = \"0.1.0\"\n\n[workspace]\n"
+  },
+  "sources": {},
+  "allow": "",
+  "expect": [
+    "dup-package crates/foo/Cargo.toml: package `foo` is also declared by vendor/foo-copy/Cargo.toml; rename one package or remove the copy (this rule has no allowlist)"
+  ]
+}

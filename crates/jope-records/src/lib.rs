@@ -27,7 +27,7 @@
 //! | [`scope_check`] | `rust-scope-check` | `deploy/ci/rust-test-scope.sh` partitions the workspace |
 //! | [`parity`] | `parity-check` | `docs/parity/capability-matrix.md` rows and counts |
 //! | [`readme`] | `readme-benchmarks --check\|--write` | the README's measured-results blocks |
-//! | [`repo_layout`] | `repo-layout` | root Markdown, tracked logs, member and package names, test temp dirs (no Python predecessor) |
+//! | [`repo_layout`] | `repo-layout` | root Markdown, tracked logs, member and package names (manifests read as TOML), test temp dirs (no Python predecessor) |
 //!
 //! Records were written and read by Python, so [`pyjson`], [`pycsv`] and [`py`] reproduce the
 //! parts of Python's `json` and `csv` modules and built-ins the rules depend on

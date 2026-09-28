@@ -142,8 +142,8 @@ enum Command {
         help_text: Option<PathBuf>,
     },
     /// Repository layout guard (hygiene lane): root Markdown, tracked logs, member directory vs
-    /// package name, duplicate package names and temp-dir use in test code, against the
-    /// reviewed exceptions in deploy/ci/repo-layout-allow.txt.
+    /// package name, duplicate package names, temp-dir use in test code and Cargo manifests that
+    /// cannot be read as TOML, against the reviewed exceptions in deploy/ci/repo-layout-allow.txt.
     RepoLayout {
         /// The checkout to check (default: the repository).
         #[arg(long)]

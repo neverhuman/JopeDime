@@ -1,0 +1,18 @@
+{
+  "tracked": [
+    "Cargo.toml",
+    "archived/Cargo.toml",
+    "crates/x/Cargo.toml"
+  ],
+  "members": ["crates/x"],
+  "manifests": {
+    "Cargo.toml": "[workspace]\nmembers = [\"crates/x\"]\n",
+    "archived/Cargo.toml": "[package]\nname = 'x'\nversion = \"0.1.0\"\n",
+    "crates/x/Cargo.toml": "[package]\nname = \"x\"\nversion = \"0.1.0\"\n"
+  },
+  "sources": {},
+  "allow": "",
+  "expect": [
+    "dup-package archived/Cargo.toml: package `x` is also declared by crates/x/Cargo.toml; rename one package or remove the copy (this rule has no allowlist)"
+  ]
+}

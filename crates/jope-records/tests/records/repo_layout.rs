@@ -1,6 +1,7 @@
-//! `jope-records repo-layout` (hygiene lane): the committed tree passes, and a checkout with a
-//! stray root Markdown file fails with exactly one finding line. Added with the guard; there is
-//! no Python predecessor.
+//! `jope-records repo-layout` (hygiene lane): the committed tree passes, a checkout with a stray
+//! root Markdown file fails with exactly one finding line, and (review 5344298377) Cargo
+//! manifests are read as TOML through the CLI too. Added with the guard; there is no Python
+//! predecessor.
 
 use std::path::Path;
 use std::process::{Command, Output};
@@ -79,5 +80,83 @@ fn a_stray_root_markdown_file_fails_with_its_line() {
         allowed.status.success(),
         "{}",
         String::from_utf8_lossy(&allowed.stdout)
+    );
+}
+
+/// `path` under `root` with `bytes`, creating its parents.
+fn write(root: &Path, path: &str, bytes: &[u8]) {
+    let path = root.join(path);
+    std::fs::create_dir_all(path.parent().expect("parent")).expect("parent directory");
+    std::fs::write(&path, bytes).expect("write file");
+}
+
+/// Review 5344298377, the reviewer's reproduction through the CLI: a tracked copy whose
+/// `[package] name` is a TOML literal string duplicates the workspace package `x`, so the checkout
+/// fails with exactly the dup-package line (the line-scanning reader passed it with 0 findings).
+#[test]
+fn a_literal_string_duplicate_package_fails_with_its_line() {
+    let directory = scratch();
+    let root = directory.path();
+    git(root, &["init", "-q"]);
+    write(
+        root,
+        "Cargo.toml",
+        b"[workspace]\nmembers = [\"crates/x\"]\n",
+    );
+    write(
+        root,
+        "crates/x/Cargo.toml",
+        b"[package]\nname = \"x\"\nversion = \"0.1.0\"\n",
+    );
+    write(
+        root,
+        "archived/Cargo.toml",
+        b"[package]\nname = 'x'\nversion = \"0.1.0\"\n",
+    );
+    write(root, "deploy/ci/repo-layout-allow.txt", b"# none\n");
+    git(root, &["add", "-A"]);
+    let root_arg = root.display().to_string();
+    let output = run(&["repo-layout", "--root", &root_arg], &repo());
+    assert_eq!(output.status.code(), Some(1));
+    assert_eq!(
+        String::from_utf8_lossy(&output.stdout),
+        "dup-package archived/Cargo.toml: package `x` is also declared by crates/x/Cargo.toml; \
+         rename one package or remove the copy (this rule has no allowlist)\n\
+         repo-layout: 1 finding(s); reviewed exceptions live in deploy/ci/repo-layout-allow.txt\n"
+    );
+}
+
+/// Review 5344298377: the root manifest's literal-string `members` and a member's literal-string
+/// package name are read as TOML (dir-package), and a tracked manifest that is not UTF-8 is a
+/// bad-manifest finding instead of a manifest the package rules skip.
+#[test]
+fn a_manifest_cargo_cannot_read_fails_with_bad_manifest() {
+    let directory = scratch();
+    let root = directory.path();
+    git(root, &["init", "-q"]);
+    write(root, "Cargo.toml", b"[workspace]\nmembers = ['crates/x']\n");
+    write(
+        root,
+        "crates/x/Cargo.toml",
+        b"[package]\nname = 'y'\nversion = '0.1.0'\n",
+    );
+    write(
+        root,
+        "archived/Cargo.toml",
+        b"[package]\nname = \"x\xff\"\n",
+    );
+    write(root, "deploy/ci/repo-layout-allow.txt", b"# none\n");
+    git(root, &["add", "-A"]);
+    let root_arg = root.display().to_string();
+    let output = run(&["repo-layout", "--root", &root_arg], &repo());
+    assert_eq!(output.status.code(), Some(1));
+    assert_eq!(
+        String::from_utf8_lossy(&output.stdout),
+        "dir-package crates/x: directory `x` holds package `y`; rename one to match (or add a \
+         reviewed `dir-package crates/x y -- <reason>` entry to deploy/ci/repo-layout-allow.txt)\n\
+         bad-manifest archived/Cargo.toml: not UTF-8 (first invalid byte at offset 19); fix it so \
+         Cargo can read its package name, or give a deliberately malformed test input another \
+         file name (this rule has no allowlist)\n\
+         repo-layout: 2 finding(s); reviewed exceptions live in deploy/ci/repo-layout-allow.txt\n"
     );
 }
