@@ -286,9 +286,13 @@ pub fn run(options: &RunOptions) -> Result<Receipt> {
     let clock = options.clock;
 
     let output = &options.output;
+    // Every entry the run writes, looked up without following symbolic links: `exists()` passes
+    // a dangling link, and the run then wrote its receipt through it, outside `--output`, or was
+    // refused by it only after `prepared/` and `search/` existed, which blocked the retry. Other
+    // entries are left alone (`evolve` hands each round a directory holding its `seeds.json`).
     for existing in ["receipt.json", "prepared", "search", "emit"] {
         ensure!(
-            !output.join(existing).exists(),
+            std::fs::symlink_metadata(output.join(existing)).is_err(),
             "{}: already holds a pipeline run ({existing}); choose a new --output",
             output.display()
         );
@@ -1252,6 +1256,47 @@ pub(crate) mod tests {
         .unwrap();
         assert_eq!(receipt.prepared.cuts, vec![0, 1, 2]);
         crate::evidence::verify_run(&output.join("receipt.json")).unwrap();
+    }
+
+    /// An entry the run writes is refused even as a dangling symbolic link. `exists()` follows
+    /// links, so a dangling `emit` let the run write `prepared/` and `search/` and then fail
+    /// ("File exists"), after which the corrected retry was refused as "already holds a pipeline
+    /// run (prepared)"; a dangling `receipt.json` had the receipt written through it, outside
+    /// `--output`. An unrelated file is left alone and the run goes ahead.
+    #[test]
+    fn an_entry_the_run_writes_is_refused_even_as_a_dangling_link() {
+        let temp = tempfile::tempdir().unwrap();
+        let output = temp.path().join("run");
+        std::fs::create_dir(&output).unwrap();
+        std::fs::write(output.join("notes.txt"), b"kept\n").unwrap();
+        let outside = temp.path().join("outside");
+        std::fs::create_dir(&outside).unwrap();
+        let names = |dir: &std::path::Path| {
+            let mut names: Vec<String> = std::fs::read_dir(dir)
+                .unwrap()
+                .map(|e| e.unwrap().file_name().to_string_lossy().into_owned())
+                .collect();
+            names.sort();
+            names
+        };
+        for entry in ["receipt.json", "prepared", "search", "emit"] {
+            std::os::unix::fs::symlink(outside.join(entry), output.join(entry)).unwrap();
+            let error = format!("{:#}", run(&small(&output, 4)).unwrap_err());
+            assert!(
+                error.contains(&format!("already holds a pipeline run ({entry})")),
+                "{error}"
+            );
+            let mut left = vec![entry, "notes.txt"];
+            left.sort_unstable();
+            assert_eq!(names(&output), left, "{entry}: it wrote into --output");
+            assert!(names(&outside).is_empty(), "{entry}: it wrote outside");
+            std::fs::remove_file(output.join(entry)).unwrap();
+        }
+        // Positive control: the same command into the same --output, the unrelated file kept.
+        run(&small(&output, 4)).unwrap();
+        crate::evidence::verify_run(&output.join("receipt.json")).unwrap();
+        assert_eq!(std::fs::read(output.join("notes.txt")).unwrap(), b"kept\n");
+        assert!(names(&outside).is_empty());
     }
 
     /// The byte identity across thread counts is a property of runs the evaluation budget ends:
