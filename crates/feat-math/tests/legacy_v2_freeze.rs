@@ -420,7 +420,14 @@ fn legacy_v2_reference_files_match_the_takeover_snapshot() {
             // semantic change: `regenerate_legacy_v2_freeze` reports every genome_sha256,
             // emission hash and prediction_bits fixture unchanged.
             // Previous: cb79da4b7f64555ba51ec60b6a6ffcf72ac9325ea03bedc8d8130472fd8d1e85
-            "69d4db59e21dad0a0f05df3e463d44e76bbddb0dfcbf9d7b32ee23c7826fab53",
+            // Re-pinned: the same test's scratch directory is a tempfile::TempDir, removed when
+            // it drops (also when an assertion fails), instead of a fixed
+            // `feat_math_parity_<pid>` directory in the system temp directory that was removed
+            // only on success. A freeze update, not a semantic change: the genome, data, emitted
+            // program and assertions are untouched, and `regenerate_legacy_v2_freeze` prints
+            // byte-identical constants before and after.
+            // Previous: 69d4db59e21dad0a0f05df3e463d44e76bbddb0dfcbf9d7b32ee23c7826fab53
+            "d259cfc0d4b3faf86126ab2f7c930cb10e08f87e804264a0741f6d2a2ee01740",
         ),
         (
             "tests/tokens.rs",
