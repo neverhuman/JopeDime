@@ -2239,3 +2239,257 @@ xbabe2, CPU only:
   `deploy/ci/check-test-routing.sh` verifies 80 `cpu` and 8 `host` contracts. W7-D5's check
   found `scqd` with the same digest as at `c9ca8b547`. The `bounded_*` targets pass 110 of 110
   and the fences 85 of 85; the new test took 6.8 s under the lane's 16 test threads.
+
+## Hermetic host identity for the census and SmartCluster fixtures (full-main run 36449887665)
+
+**Failure.** full-main run 36449887665 on main `4d9a27e64` (after PR #120) failed 11 tests in
+the hosted runner container, whose rootfs is read-only and whose hostname was `fa56d0c02aed`:
+six in `bounded_census` and all five in `bounded_smartcluster`. Every one panicked with
+`host 'fa56d0c02aed' machine id must be 32 lowercase hex (/etc/machine-id)`. The runner
+image's `/etc/machine-id` is empty (0 bytes). The refusal is correct and stays strict. The
+defect was in the tests: they observed the machine they ran on. PR CI's `rust-test` lane does
+not run these suites; only full-main does, through `deploy/ci/full-lane.sh` `full-default`
+and `full-scratch`.
+
+**Pre-fix record** (`fix-machine-id-pre-20260928T175159Z`). The two suites were built from
+`4d9a27e64` in this lane and run in `jope-runner:current` (image `7660d0e65582`) under
+`deploy/runner/run.sh`'s hardening flags. `bounded_census` passed 2 and failed 6, and
+`bounded_smartcluster` failed 5 of 5: the same 11 tests, with the same message, naming the
+container's host name. The product binary's `census collect` refused the same way.
+
+### Design
+
+- **One observation provider.** `collect::HostSources` is how `collect`, `observe_identity`
+  and every participant observe a host. It holds the host-name, machine-id and boot-id files,
+  the interface-address source and the inventory command runner (`nvidia-smi`). It has no
+  `Default`. `HostSources::system()` names `/proc/sys/kernel/hostname`, `/etc/machine-id`,
+  `/proc/sys/kernel/random/boot_id`, `getifaddrs` and `SystemCommands`.
+- **Checked where read.** `observe_host` reads each file through the same bounded,
+  regular-file reader as before. It refuses, naming the file, a machine id that is not 32
+  lowercase hex, an empty or longer-than-64-byte boot id, and a host name that is not a census
+  name. Nothing is derived or defaulted. `census::validate_identity` keeps its own check and
+  now shares `is_machine_id` and `is_boot_id` with the reader.
+- **Production hardwires the real host.** The command line moved unchanged into the library
+  as `native_loop::cli` (the pure-move commit `08a215c86`: apart from the module header, the
+  imports and `pub fn main`, `cli.rs` is the old binary). `cli::main` takes the provider from
+  its caller. The product binary `src/bin/jope-native-loop.rs` is
+  `cli::main(&HostSources::system())` and nothing else. No argument and no environment
+  variable selects or overrides a source.
+- **The participant.** `participant::run(args, sources)` uses the provider for its visibility
+  probe (`sources.commands`) and for its identity: `observe_identity` of the installation, with
+  `/proc/self/exe` as the executable. Its executable is still the binary actually running, and
+  its job arguments are still `std::env::args_os()`. Its training path is unchanged: `train`,
+  `assignment::bound_worker(..., crate::neural::local_devices)`, and `neural.rs`,
+  `training.rs` and `training/` are byte-identical to `4d9a27e64`. The training boundary
+  re-reads host identity on its own (`training/topology.rs` reads `/etc/machine-id`). The only
+  `participant.rs` change is the parameter type, from `&dyn CommandRunner` to `&HostSources`,
+  with its import, its doc comment and its two uses. The CPU lifecycle tests need it because
+  the participant is where a rank observes its host.
+- **The test-only entrypoint.** The example target `jope-native-loop-fixture`
+  (`tests/support/native_loop_fixture.rs`) is `cli::main(&fixture_host::sources())`. It uses
+  the same parsing, dispatch, admission, SmartCluster job proof and `/proc/self/exe`
+  observation. Its host is the checked-in files
+  `tests/fixtures/host/{hostname,machine-id,boot_id}`, read by the same `HostSources` reader,
+  with loopback as the only interface and a command runner that runs nothing. In-process
+  tests pass `fixture_host::with_commands(&FakeNvidia)`. Cargo's default test target
+  selection builds the example, and so does the full-default workspace nextest build. The
+  DEFAULT `cargo build` and `cargo install` do not produce it; an explicit `cargo build
+  --example`, `--examples` or `--all-targets`, or `cargo install --example`, can. The separation from production rests on two things: the production
+  entrypoints hardwire `HostSources::system()`, and the product target set is the
+  `jope-native-loop` binary. It does not rest on Cargo being unable to build the fixture.
+- **The real receiving paths.** In `bounded_census`, the CLI round trip runs `census collect`
+  through the fixture executable, and `census merge` and `preflight` through the product
+  binary. In `bounded_smartcluster`, each rank's `scqd` maps the trusted service to the
+  fixture executable, and the host installation pins that executable. Every participant is a
+  real SmartCluster job. It proves its job (W7-D1) and freshly observes the fixture host in its
+  own process. It then hashes its own `/proc/self/exe`. The plan pins that digest through the
+  census taken from the installation, and the coordinator's rendezvous compares every hello
+  with the plan (`rendezvous.rs:594`–`600`). `agent` and `coordinate` stay the product binary:
+  neither observes a host identity. The coordinator reads the kernel boot id only for its own
+  liveness record.
+- **Not tautological.** The plan's identity comes from a census of the fixture files. Each
+  participant re-reads those files, and its own executable, in its own process. No test feeds
+  a planned identity back as an observation. New positive assertions in
+  `smartcluster_ranks_commit_the_whole_group_exactly_once` check that every result records the
+  fixture host's name, machine id and boot id, and that the plan pins the SHA-256 of the
+  participant executable the daemons ran. The positive integration cases are unchanged. The
+  census CLI test also asserts that the collected identity is the fixture host's.
+
+**Refusal by the production provider.** Three new `collect` unit tests cover it:
+
+- `an_empty_malformed_or_absent_machine_id_is_refused_where_it_is_read` covers empty, a bare
+  newline, uppercase, 31 and 33 digits, an embedded space, `uninitialized` and an absent file.
+  Each one refuses both `collect` and `observe_identity`, with the exact message naming the file.
+- `an_empty_or_oversized_boot_id_and_a_bad_host_name_are_refused_where_read`.
+- `the_production_provider_reads_the_real_host_identity_files`: `HostSources::system()` names
+  exactly the real host's three files, so it reads them through the reader the refusals above
+  exercise. It reads none of them.
+
+The in-container record also runs the product binary itself. With the container's empty
+`/etc/machine-id`, `jope-native-loop census collect` exits 1 and writes no file. It refuses with
+the message ```machine id `` read from /etc/machine-id is not 32 lowercase hex```. The
+fixture executable, given the same argv, succeeds with the fixture identity.
+
+### Audit of the `bounded_*` targets' host dependencies
+
+| Dependency | Where the bounded tests meet it | In the runner container | Treatment |
+|---|---|---|---|
+| machine id | `collect`/`observe_identity`: `bounded_census` (in process and CLI), `bounded_smartcluster` (census and participants) | `/etc/machine-id` is empty; refused | fixture host through `HostSources`; production stays strict |
+| host name | same paths | the container id, which differs from the host | fixture host |
+| boot id, as an identity | same paths | the kernel's, readable | fixture host |
+| boot id, as liveness | `driver.rs:46` (the coordinator's own record); `bounded_run_recovery`'s rank records | `/proc/sys/kernel/random/boot_id` is readable in any container | container-safe; neither is a plan or hello input |
+| interface addresses | the `collect` address check (`getifaddrs`) | loopback exists in every network namespace | fixture host (loopback only); listeners bind `127.0.0.1` |
+| CPUs, memory | `collect` capacity: `sysconf(_SC_NPROCESSORS_ONLN)`, `/proc/meminfo` `MemAvailable` | procfs present; host values | container-safe: the tests assert only at least 1 000 mCPU and more than 0 bytes, and the plans fund 1 CPU and 256 MiB (census) or 250 mCPU and 128 MiB (SmartCluster) per participant |
+| `/sys` | none: no bounded test or bounded source reads `/sys` | — | not applicable |
+| `nvidia-smi` on `PATH` | the `collect` GPU probe and the participant visibility probe | absent from the image | an injected runner (`FakeNvidia`, `NoGpu`, the fixture's `NoPrograms`), so `PATH` is never consulted; product `agent` and `coordinate` never run it |
+| uid/gid | `bounded_smartcluster`: tenant `unix:<euid>`, `scqd` `admin_uids`, `DaemonPin.uid`; 0600 key-file owner checks | uid 1001, gid 1001 | container-safe: read with `geteuid()` at run time |
+| read-only rootfs | every write goes to `tempfile::tempdir()`; the fixture identity files are read-only inputs | the proof mounted the lane read-only | container-safe |
+| `/tmp` | `tempdir()`, including `scqd` sockets (well under 108 bytes) | 4 GiB `exec` tmpfs, `TMPDIR` unset | container-safe |
+| `/proc/<pid>` scans | orphan checks in `bounded_smartcluster` and `bounded_run_recovery` | the container's pid namespace holds the tests' own children | container-safe |
+| executables | `CARGO_BIN_EXE_jope-native-loop`, `target/debug/scqd` and the fixture, at target paths fixed when the tests were built | CI builds inside the container | container-safe |
+
+**Grep proof** (`gates/grep-proof.txt`). `SystemCommands` and `local_addresses` are named
+only by `HostSources::system` itself. `HostSources::system()` is called in exactly two places:
+the product binary `src/bin/jope-native-loop.rs`, and the unit test
+`the_production_provider_reads_the_real_host_identity_files`, which compares paths and reads
+nothing. Under `crates/jope-engine/tests`, `HostSources::system`, `SystemCommands`,
+`local_addresses`, `/etc/machine-id` and `/proc/sys/kernel/hostname` occur only in comments.
+Every test that runs the product binary uses one of `status`, `verify`, `plan`, `cancel`,
+`--help`, `preflight`, `census merge`, `contract`, `grant`, `agent` or `coordinate`. None of
+these observes a host. One test also runs the product `participant`, with a training plan on a
+default build (`bounded_training`). `participant::run` refuses that at the W7-D2 check on line
+222, before `JobClaim` (225), `resolve_visibility` (240) and `observe_identity` (264).
+
+### Hermeticity proof (`fix-machine-id-post-20260928T174559Z`)
+
+The post-fix record ran these in `jope-runner:current` (image `7660d0e65582`) with
+`deploy/runner/run.sh`'s hardening flags: uid 1001, `--read-only`, 4 GiB `exec` tmpfs at `/tmp`
+and `/home/runner`, `--cap-drop ALL`, `no-new-privileges`, `--pids-limit 4096`, `--init`,
+48 GiB and 16 CPUs, and the default bridge network. The lane was mounted read-only at its own
+path. The process also had supplementary group 1000, only to traverse the image's 0750
+`/home/ubuntu` to that mount. No credential, volume or runner service was involved. The
+container reported `machine-id-bytes=0`, `rootfs=ro`, `TMPDIR` unset and no `nvidia-smi`.
+
+- `bounded_census` passes 8 of 8, including the six full-main failures.
+- `bounded_smartcluster` passes 5 of 5 at 5 test threads, and 5 of 5 again at 1 thread.
+- `collect`'s unit tests pass 4 of 4.
+- Every other `bounded_*` target passes: `bounded_agent` 5, `bounded_assignment` 0 (its tests
+  are `neural`-gated), `bounded_grants` 5, `bounded_launch` 7, `bounded_preflight_cli` 3,
+  `bounded_run` 38, `bounded_run_recovery` 12, `bounded_training` 8 and `bounded_transport` 19.
+- The product binary refuses the container's empty machine id, and the fixture executable
+  collects the fixture host.
+
+Those were the binaries of the final tree (`post1`), built from the working tree that became
+`fa6b44a18`. The same binaries' digests were recorded inside the container and on the host.
+After the commits and the pre-fix checkout, the binaries were rebuilt at `fa6b44a18` and run
+again (`post2`), with the same digests except `scqd`. Everything passed as above, except one
+run: at 5 threads, `smartcluster_ranks_commit_the_whole_group_exactly_once` failed once, on
+`driver::coordinate` returning an error. Its message was lost to the output filter, and the
+1-thread run straight after passed 5 of 5. Repeated in the same image at that head, the suite
+passed every time:
+
+- `rep1`: 6 in-process runs at 5 threads, 30 of 30.
+- `rep1`: 3 rounds of 5 concurrent processes, one test each, as nextest runs them, 15 of 15.
+- `rep2`: 20 in-process runs at 5 threads, 100 of 100.
+
+The one failure stays unexplained; it is recorded under Open below.
+
+**Cold build** (`cold-nextest/`, `cold-fulllane/`). Two runs show that the full-lane nextest
+invocation builds the example before any test runs.
+
+1. **The exact `nextest run` command.** At `fa6b44a18`, the example's build outputs, and
+   nothing else, were removed from the lane `target/`: the uplifted
+   `target/debug/examples/jope-native-loop-fixture` and its `.d`, the two hashed binaries
+   (from the `-p jope-parallel` and `--workspace` feature resolutions), and the hashed dep-info
+   files of all four builds of the example, 8 files in all. The fingerprint directories,
+   which are cargo metadata and not build outputs, were kept. Then the exact `full-default`
+   command of `full-lane.sh` ran:
+   `cargo nextest run --config-file <evidence>/nextest.toml -P main --locked --test-threads 16
+   --workspace --features "jope-cli/asm,jope-cli/qualified-training-context"`, with only
+   `-E 'binary(bounded_census) | binary(bounded_smartcluster)'` added, and with
+   `CARGO_LOG=cargo::core::compiler::fingerprint=info` in the environment. The config was
+   generated by `jope-ci cargo-artifact nextest-config`, with its junit path rewritten as
+   `full-lane.sh` does. Timestamped output:
+   - 17:54:07.613: the run starts.
+   - 17:54:18.169: cargo reports `fingerprint dirty for ... kind: "example", name:
+     "jope-native-loop-fixture"`, with `FailedToReadMetadata` for the removed binary.
+   - 17:54:45: the example is rebuilt (its file mtime).
+   - 17:55:09.761: `Finished`.
+   - 17:55:10.396: `Starting 13 tests across 2 binaries`.
+
+   All 13 pass, and the command exits 0.
+2. **`full-lane.sh` itself.** At the same head, the example's outputs were removed again: 6
+   files, with the fingerprints kept. Then `JOPE_LANE_EVIDENCE=<dir> bash deploy/ci/full-lane.sh
+   full-default` ran unchanged.
+   - 18:01:24.905: its `cargo nextest list` step finds the example dirty (`FailedToReadMetadata`).
+   - 18:01:25.585: the example is rebuilt.
+   - 18:01:26.168: the list step finishes.
+   - 18:01:28.518: `cargo nextest run` starts 3 787 tests.
+
+   The lane passes 3 787 of 3 787 with 65 skipped, the 13 census and SmartCluster tests among
+   them, and exits 0.
+
+### Commits and verification
+
+`rr2/fix-census-machine-id` on `4d9a27e64` has three commits:
+
+- `08a215c86` is the pure move of the command line into `native_loop::cli`.
+- `fa6b44a18` adds the provider, the fixture host and executable, the tests, `coverage.json`,
+  the capability matrix and the test inventory.
+- The third commit adds this record and changes nothing else.
+
+Every gate below ran at `fa6b44a18` on xbabe2, CPU only.
+
+- **Format and diff.** `cargo fmt --check` passes, and so does `git diff --check`
+  `4d9a27e64..fa6b44a18`.
+- **Check.** `cargo check --workspace --all-targets --locked` passes.
+- **Clippy.** `cargo clippy -p jope-parallel --all-targets --locked` reports 119 findings, the
+  count this record gives for `c9ca8b547`. Fourteen are in files this branch touches, and all
+  of them predate it:
+  - nine in `native_loop.rs`, whose only change is `pub mod cli;`;
+  - in `collect.rs`, the `manual_is_multiple_of` and the two `type_complexity` listed above
+    (lines 389, 454 and 555, from `067d2d8fb`);
+  - one `type_complexity` in `bounded_census.rs` (`067d2d8fb`);
+  - one `type_complexity` in `bounded_smartcluster.rs` (`288bb2a24`).
+
+  None is in `cli.rs`, `census.rs`, `participant.rs`, the binary, `fixture_host.rs` or
+  `native_loop_fixture.rs`.
+- **The bounded and fence selection** passes 199 of 199 under nextest:
+  - the `bounded_*` targets, 110;
+  - `collect`'s unit tests, 4, three of them new;
+  - the fences, 85: `fit_boundary` 16, `view_contracts` 17, `gp_contracts` 8 and
+    `gp::fit_contract_tests` 44.
+- **Records.** `jope-records coverage validate` passes with 0 unassigned, after the example's
+  item was added (the validator named it as an unassigned addition).
+  `jope-records verify-test-inventory` passes (319 items).
+  `deploy/ci/test-inventory.sh --update --no-python` records 3 783 Rust tests: the 3 780 before
+  plus the three new `collect` unit tests, with none removed or renamed.
+- **Parity matrix.** `deploy/ci/parity-matrix.sh --no-build` passes with 818 rows: the new
+  `new-example` row, and the twelve `jope-native-loop` subcommand rows now pointing at `cli.rs`.
+- **`full-default`** passes through `deploy/ci/full-lane.sh`, which is the cold run above
+  (`cold-fulllane/`): 3 787 passed and 65 skipped, in 629 s against a 1 500 s budget.
+  - The `bounded_*` targets pass 110 of 110, including the 11 full-main failures, and
+    `collect`'s unit tests pass 4 of 4.
+  - `deploy/ci/check-test-routing.sh` verifies 80 `cpu` and 8 `host` contracts.
+  - W7-D5's check found `scqd`.
+- **`deploy/ci/check.sh`** passes, run with this record in the tree:
+  - gitleaks scanned 609 commits and found no leaks;
+  - `ip-scrub` found 47 files clean;
+  - the parity matrix has 818 rows;
+  - the test inventory is consistent;
+  - every other step is ok.
+
+  The static gates above (`coverage validate`, `verify-test-inventory` and the parity matrix)
+  passed again in the same run.
+
+**Open.**
+
+- The one unexplained in-process failure of
+  `smartcluster_ranks_commit_the_whole_group_exactly_once` (`post2`, above) did not recur in 26
+  more in-process runs, or in 15 process-per-test runs, in the same image. Its message was not
+  kept. If it recurs, the full output is what to keep.
+- A test run narrowed to one target (`cargo nextest run --test bounded_census`) does not build
+  examples. It then finds the fixture absent and says how to build it, or finds one built from
+  older sources. `full-lane.sh` never narrows its selection that way.
+- The fixture host is one host. The multi-host census documents stay synthetic, as before; the
+  three-host proof (W7-T07) is unchanged.
