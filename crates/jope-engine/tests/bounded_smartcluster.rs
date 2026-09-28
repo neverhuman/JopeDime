@@ -37,7 +37,7 @@ use std::{
     collections::BTreeMap,
     fs,
     io::{BufRead, BufReader},
-    net::{SocketAddr, TcpListener},
+    net::SocketAddr,
     os::unix::fs::PermissionsExt,
     path::{Path, PathBuf},
     process::{Child, ChildStdout, Command, Stdio},
@@ -188,12 +188,109 @@ fn pkcs8(seed: [u8; 32]) -> Vec<u8> {
     ]
     .concat()
 }
-fn free_port() -> u16 {
-    TcpListener::bind("127.0.0.1:0")
-        .unwrap()
-        .local_addr()
-        .unwrap()
-        .port()
+/// The coordinator's listen address, reserved for one [`Host`].
+///
+/// The agents learn the address from their supervision files before the coordinator binds
+/// it, so it is chosen first. It used to be `127.0.0.1:0` bound and closed at once: from then
+/// until the coordinator bound it, after the agents had started, the kernel could hand the
+/// number to any process's `bind(:0)` (another fixture's reservation or agent) or autobound
+/// `connect`, and the coordinator's bind then failed. The reservation closes those windows:
+/// - the port lies outside the kernel's ephemeral range (`ip_local_port_range`), so no
+///   `bind(:0)` or `connect` of any process is ever given it;
+/// - a lock named after the port in the network namespace's abstract Unix socket namespace,
+///   held for the host's whole life, keeps every other reservation off it: in this process,
+///   in any other test process on the same network namespace, whatever its `TMPDIR`; the
+///   kernel drops it when the holder exits;
+/// - a bound, not listening, TCP socket without `SO_REUSEADDR` holds the address itself
+///   until [`ListenPort::release`], immediately before a coordinator starts: every other bind
+///   fails, and a participant's connection is refused exactly as if nothing were bound.
+///
+/// What remains is a process that binds this very number explicitly, bypassing the
+/// reservation, between that release and the coordinator's bind, or between a killed
+/// coordinator and its restart. The coordinator's bind then fails, and its error, naming the
+/// address, is in the assertion message (`Host::coordinated`).
+struct ListenPort {
+    address: SocketAddr,
+    _lock: std::os::unix::net::UnixDatagram,
+    held: std::sync::Mutex<Option<std::os::fd::OwnedFd>>,
+}
+impl ListenPort {
+    fn reserve() -> Self {
+        use std::os::{linux::net::SocketAddrExt, unix::net};
+        let range = fs::read_to_string("/proc/sys/net/ipv4/ip_local_port_range").unwrap();
+        let (low, high) = match range.split_whitespace().collect::<Vec<_>>()[..] {
+            [low, high] => (low.parse::<u16>().unwrap(), high.parse::<u16>().unwrap()),
+            _ => panic!("unreadable ip_local_port_range: {range:?}"),
+        };
+        // Below the ephemeral range by at most 8192, or above it; never a privileged port.
+        let candidates: Vec<u16> = (1024..=u16::MAX)
+            .filter(|p| (*p < low && *p >= low.saturating_sub(8192)) || *p > high)
+            .collect();
+        assert!(
+            !candidates.is_empty(),
+            "no port outside the ephemeral range {low}-{high}"
+        );
+        // Start where concurrent processes are unlikely to meet; every candidate is tried.
+        let start = (std::process::id() as usize).wrapping_mul(7919)
+            ^ std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .subsec_nanos() as usize;
+        for i in 0..candidates.len() {
+            let port = candidates[(start + i) % candidates.len()];
+            let name = format!("jope-test-loopback-port-{port}");
+            let Ok(lock) = net::SocketAddr::from_abstract_name(name.as_bytes())
+                .and_then(|a| net::UnixDatagram::bind_addr(&a))
+            else {
+                continue;
+            };
+            if let Ok(held) = hold_loopback_port(port) {
+                return Self {
+                    address: SocketAddr::from(([127, 0, 0, 1], port)),
+                    _lock: lock,
+                    held: std::sync::Mutex::new(Some(held)),
+                };
+            }
+        }
+        panic!(
+            "no loopback port outside the ephemeral range {low}-{high} is free: {} tried",
+            candidates.len()
+        )
+    }
+    /// Let a coordinator that is about to start bind the address. The lock stays held.
+    fn release(&self) {
+        self.held.lock().unwrap().take();
+    }
+}
+/// A TCP socket bound to `127.0.0.1:port`, not listening, without `SO_REUSEADDR`.
+fn hold_loopback_port(port: u16) -> std::io::Result<std::os::fd::OwnedFd> {
+    use std::os::fd::{AsRawFd, FromRawFd, OwnedFd};
+    // SAFETY: socket(2) returns a new descriptor that OwnedFd then owns; bind(2) reads the
+    // sockaddr_in on this stack frame for the length given.
+    unsafe {
+        let fd = libc::socket(libc::AF_INET, libc::SOCK_STREAM | libc::SOCK_CLOEXEC, 0);
+        if fd < 0 {
+            return Err(std::io::Error::last_os_error());
+        }
+        let fd = OwnedFd::from_raw_fd(fd);
+        let address = libc::sockaddr_in {
+            sin_family: libc::AF_INET as libc::sa_family_t,
+            sin_port: port.to_be(),
+            sin_addr: libc::in_addr {
+                s_addr: u32::from(std::net::Ipv4Addr::LOCALHOST).to_be(),
+            },
+            sin_zero: [0; 8],
+        };
+        if libc::bind(
+            fd.as_raw_fd(),
+            &address as *const libc::sockaddr_in as *const libc::sockaddr,
+            std::mem::size_of::<libc::sockaddr_in>() as libc::socklen_t,
+        ) < 0
+        {
+            return Err(std::io::Error::last_os_error());
+        }
+        Ok(fd)
+    }
 }
 
 /// One rank's supervision: its own daemon and its own agent process.
@@ -220,7 +317,7 @@ struct Host {
     sha: String,
     contract: BoundedRunContract,
     census: PathBuf,
-    listen: SocketAddr,
+    listen: ListenPort,
     agents_file: PathBuf,
     ranks: Vec<RankHost>,
 }
@@ -333,7 +430,7 @@ impl Host {
         let sha = controller::plan(&run_dir, &bytes(&c), now, None)
             .unwrap()
             .plan_sha256;
-        let listen: SocketAddr = format!("127.0.0.1:{}", free_port()).parse().unwrap();
+        let listen = ListenPort::reserve();
         // Per rank: its daemon, its supervision and its agent process.
         let mut ranks = Vec::new();
         for (rank, scqd) in (0..RANKS).zip(daemons) {
@@ -354,7 +451,7 @@ impl Host {
                 service: SERVICE.into(),
                 plan: run_dir.join("plan.json"),
                 state: dir.join("supervisor"),
-                coordinator: listen.to_string(),
+                coordinator: listen.address.to_string(),
                 installation: installation_path.clone(),
                 participant_keys: BTreeMap::from([(rank, key)]),
             };
@@ -414,13 +511,16 @@ impl Host {
             ranks,
         }
     }
+    /// The coordinator's arguments, for a coordinator about to start: this releases the held
+    /// listen address so that it can bind it ([`ListenPort`]).
     fn args(&self) -> CoordinateArgs {
+        self.listen.release();
         let etc = self.root.join("etc");
         CoordinateArgs {
             run_dir: self.run_dir.clone(),
             plan_sha256: self.sha.clone(),
             census: self.census.clone(),
-            listen: self.listen,
+            listen: self.listen.address,
             certificate: etc.join("host.der"),
             certificate_key: etc.join("host.key"),
             coordinator_key: etc.join("coordinator.key"),
@@ -492,7 +592,7 @@ impl Host {
     /// participant's recorded refusal), each daemon's and agent's log tail, each daemon's jobs
     /// and each coordinator process's log tail, for assertion messages.
     fn diagnose(&self) -> String {
-        let mut out = format!("coordinator listen {}\n", self.listen);
+        let mut out = format!("coordinator listen {}\n", self.listen.address);
         if let Ok(entries) = fs::read_dir(self.run_dir.join("journal")) {
             let mut names: Vec<_> = entries.flatten().map(|e| e.path()).collect();
             names.sort();
@@ -616,7 +716,8 @@ fn coordinate_in_background(
     thread::JoinHandle<anyhow::Result<controller::StatusReport>>,
 ) {
     let stop = Arc::new(AtomicBool::new(false));
-    let (args, supervisor, flag) = (host.args(), host.supervisor(), Arc::clone(&stop));
+    // The supervisor first: `args` releases the listen address, right before the bind.
+    let (supervisor, args, flag) = (host.supervisor(), host.args(), Arc::clone(&stop));
     (
         stop,
         thread::spawn(move || driver::coordinate(&args, supervisor, &flag)),
