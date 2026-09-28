@@ -1,0 +1,261 @@
+{
+  "source": "p1-failclosed-capture-20260928T020533Z",
+  "capture": "bash capture.sh (run p1-failclosed-capture-20260928T020533Z; Python from git show f46a9048fbb2697d6d1f4463a688083ea9dfcce1:<tool>, unmodified, in a scratch root)",
+  "tool": "deploy/maintenance/jope_report.py report",
+  "normalisation": "@CUSTODY@ is the custody argument and @STAMP@ its run directory; @APPROVED_ROOT_0@ and @APPROVED_ROOT_1@ are the two approved roots, in the order jope-build-report.sh passes them; receipts drop started_at, completed_at, checksums, custody_argument, custody_resolved and missing_unit_files; INVOCATION_ID unset",
+  "cases": [
+    {
+      "name": "config-list",
+      "config": "[]\n",
+      "exit": 1,
+      "stdout": "@CUSTODY@/@STAMP@/receipt.json\n",
+      "stderr": "",
+      "receipt": {
+        "error": "config requires cargo_roots, stale_hours and measurement_roots",
+        "exit_status": 1,
+        "invocation_id": null,
+        "measurements": [],
+        "scan_outputs": [],
+        "status": "failed"
+      },
+      "failure_txt": "config requires cargo_roots, stale_hours and measurement_roots\n"
+    },
+    {
+      "name": "config-null",
+      "config": "null\n",
+      "exit": 1,
+      "stdout": "@CUSTODY@/@STAMP@/receipt.json\n",
+      "stderr": "",
+      "receipt": {
+        "error": "config requires cargo_roots, stale_hours and measurement_roots",
+        "exit_status": 1,
+        "invocation_id": null,
+        "measurements": [],
+        "scan_outputs": [],
+        "status": "failed"
+      },
+      "failure_txt": "config requires cargo_roots, stale_hours and measurement_roots\n"
+    },
+    {
+      "name": "config-string",
+      "config": "\"cargo_roots stale_hours measurement_roots\"\n",
+      "exit": 1,
+      "stdout": "@CUSTODY@/@STAMP@/receipt.json\n",
+      "stderr": "",
+      "receipt": {
+        "error": "config requires cargo_roots, stale_hours and measurement_roots",
+        "exit_status": 1,
+        "invocation_id": null,
+        "measurements": [],
+        "scan_outputs": [],
+        "status": "failed"
+      },
+      "failure_txt": "config requires cargo_roots, stale_hours and measurement_roots\n"
+    },
+    {
+      "name": "config-keys-in-list",
+      "config": "[\"cargo_roots\", \"stale_hours\", \"measurement_roots\"]\n",
+      "exit": 1,
+      "stdout": "@CUSTODY@/@STAMP@/receipt.json\n",
+      "stderr": "",
+      "receipt": {
+        "error": "config requires cargo_roots, stale_hours and measurement_roots",
+        "exit_status": 1,
+        "invocation_id": null,
+        "measurements": [],
+        "scan_outputs": [],
+        "status": "failed"
+      },
+      "failure_txt": "config requires cargo_roots, stale_hours and measurement_roots\n"
+    },
+    {
+      "name": "stale-hours-string",
+      "config": "{\"cargo_roots\": [\"@APPROVED_ROOT_0@\", \"@APPROVED_ROOT_1@\"], \"stale_hours\": \"48\", \"measurement_roots\": []}\n",
+      "exit": 1,
+      "stdout": "@CUSTODY@/@STAMP@/receipt.json\n",
+      "stderr": "",
+      "receipt": {
+        "config": {
+          "cargo_roots": [
+            "@APPROVED_ROOT_0@",
+            "@APPROVED_ROOT_1@"
+          ],
+          "measurement_roots": [],
+          "stale_hours": "48"
+        },
+        "error": "service requires the two approved Cargo roots and a 48-hour filter",
+        "exit_status": 1,
+        "invocation_id": null,
+        "measurements": [],
+        "scan_outputs": [],
+        "status": "failed"
+      },
+      "failure_txt": "service requires the two approved Cargo roots and a 48-hour filter\n"
+    },
+    {
+      "name": "stale-hours-fraction",
+      "config": "{\"cargo_roots\": [\"@APPROVED_ROOT_0@\", \"@APPROVED_ROOT_1@\"], \"stale_hours\": 48.5, \"measurement_roots\": []}\n",
+      "exit": 1,
+      "stdout": "@CUSTODY@/@STAMP@/receipt.json\n",
+      "stderr": "",
+      "receipt": {
+        "config": {
+          "cargo_roots": [
+            "@APPROVED_ROOT_0@",
+            "@APPROVED_ROOT_1@"
+          ],
+          "measurement_roots": [],
+          "stale_hours": 48.5
+        },
+        "error": "service requires the two approved Cargo roots and a 48-hour filter",
+        "exit_status": 1,
+        "invocation_id": null,
+        "measurements": [],
+        "scan_outputs": [],
+        "status": "failed"
+      },
+      "failure_txt": "service requires the two approved Cargo roots and a 48-hour filter\n"
+    },
+    {
+      "name": "stale-hours-null",
+      "config": "{\"cargo_roots\": [\"@APPROVED_ROOT_0@\", \"@APPROVED_ROOT_1@\"], \"stale_hours\": null, \"measurement_roots\": []}\n",
+      "exit": 1,
+      "stdout": "@CUSTODY@/@STAMP@/receipt.json\n",
+      "stderr": "",
+      "receipt": {
+        "config": {
+          "cargo_roots": [
+            "@APPROVED_ROOT_0@",
+            "@APPROVED_ROOT_1@"
+          ],
+          "measurement_roots": [],
+          "stale_hours": null
+        },
+        "error": "service requires the two approved Cargo roots and a 48-hour filter",
+        "exit_status": 1,
+        "invocation_id": null,
+        "measurements": [],
+        "scan_outputs": [],
+        "status": "failed"
+      },
+      "failure_txt": "service requires the two approved Cargo roots and a 48-hour filter\n"
+    },
+    {
+      "name": "roots-swapped",
+      "config": "{\"cargo_roots\": [\"@APPROVED_ROOT_1@\", \"@APPROVED_ROOT_0@\"], \"stale_hours\": 48, \"measurement_roots\": []}\n",
+      "exit": 1,
+      "stdout": "@CUSTODY@/@STAMP@/receipt.json\n",
+      "stderr": "",
+      "receipt": {
+        "config": {
+          "cargo_roots": [
+            "@APPROVED_ROOT_1@",
+            "@APPROVED_ROOT_0@"
+          ],
+          "measurement_roots": [],
+          "stale_hours": 48
+        },
+        "error": "service requires the two approved Cargo roots and a 48-hour filter",
+        "exit_status": 1,
+        "invocation_id": null,
+        "measurements": [],
+        "scan_outputs": [],
+        "status": "failed"
+      },
+      "failure_txt": "service requires the two approved Cargo roots and a 48-hour filter\n"
+    },
+    {
+      "name": "roots-string",
+      "config": "{\"cargo_roots\": \"@APPROVED_ROOT_0@\", \"stale_hours\": 48, \"measurement_roots\": []}\n",
+      "exit": 1,
+      "stdout": "@CUSTODY@/@STAMP@/receipt.json\n",
+      "stderr": "",
+      "receipt": {
+        "config": {
+          "cargo_roots": "@APPROVED_ROOT_0@",
+          "measurement_roots": [],
+          "stale_hours": 48
+        },
+        "error": "service requires the two approved Cargo roots and a 48-hour filter",
+        "exit_status": 1,
+        "invocation_id": null,
+        "measurements": [],
+        "scan_outputs": [],
+        "status": "failed"
+      },
+      "failure_txt": "service requires the two approved Cargo roots and a 48-hour filter\n"
+    },
+    {
+      "name": "measurement-roots-dict",
+      "config": "{\"cargo_roots\": [\"@APPROVED_ROOT_0@\", \"@APPROVED_ROOT_1@\"], \"stale_hours\": 48, \"measurement_roots\": {}}\n",
+      "exit": 1,
+      "stdout": "@CUSTODY@/@STAMP@/receipt.json\n",
+      "stderr": "",
+      "receipt": {
+        "config": {
+          "cargo_roots": [
+            "@APPROVED_ROOT_0@",
+            "@APPROVED_ROOT_1@"
+          ],
+          "measurement_roots": {},
+          "stale_hours": 48
+        },
+        "error": "measurement_roots must be a list",
+        "exit_status": 1,
+        "invocation_id": null,
+        "measurements": [],
+        "scan_outputs": [],
+        "status": "failed"
+      },
+      "failure_txt": "measurement_roots must be a list\n"
+    },
+    {
+      "name": "measurement-roots-null",
+      "config": "{\"cargo_roots\": [\"@APPROVED_ROOT_0@\", \"@APPROVED_ROOT_1@\"], \"stale_hours\": 48, \"measurement_roots\": null}\n",
+      "exit": 1,
+      "stdout": "@CUSTODY@/@STAMP@/receipt.json\n",
+      "stderr": "",
+      "receipt": {
+        "config": {
+          "cargo_roots": [
+            "@APPROVED_ROOT_0@",
+            "@APPROVED_ROOT_1@"
+          ],
+          "measurement_roots": null,
+          "stale_hours": 48
+        },
+        "error": "measurement_roots must be a list",
+        "exit_status": 1,
+        "invocation_id": null,
+        "measurements": [],
+        "scan_outputs": [],
+        "status": "failed"
+      },
+      "failure_txt": "measurement_roots must be a list\n"
+    },
+    {
+      "name": "measurement-roots-string",
+      "config": "{\"cargo_roots\": [\"@APPROVED_ROOT_0@\", \"@APPROVED_ROOT_1@\"], \"stale_hours\": 48, \"measurement_roots\": \"/home/ubuntu\"}\n",
+      "exit": 1,
+      "stdout": "@CUSTODY@/@STAMP@/receipt.json\n",
+      "stderr": "",
+      "receipt": {
+        "config": {
+          "cargo_roots": [
+            "@APPROVED_ROOT_0@",
+            "@APPROVED_ROOT_1@"
+          ],
+          "measurement_roots": "/home/ubuntu",
+          "stale_hours": 48
+        },
+        "error": "measurement_roots must be a list",
+        "exit_status": 1,
+        "invocation_id": null,
+        "measurements": [],
+        "scan_outputs": [],
+        "status": "failed"
+      },
+      "failure_txt": "measurement_roots must be a list\n"
+    }
+  ]
+}
