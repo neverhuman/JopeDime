@@ -1,5 +1,6 @@
 //! CPU Hyperion encode of an admitted dataset. Requires the served weight bundle; does not download.
 
+use crate::kernel::read_dataset;
 use crate::schema::{Dataset, Kind, Split};
 use anyhow::{bail, Context, Result};
 use hyperion::data::Matrix;
@@ -9,7 +10,7 @@ use hyperion::hyperion::{
 };
 use hyperion::progress::NullSink;
 use serde::Serialize;
-use std::{fs, path::Path, time::Instant};
+use std::{path::Path, time::Instant};
 
 #[derive(Debug, Serialize)]
 pub struct EncodeReport {
@@ -24,10 +25,8 @@ pub struct EncodeReport {
 }
 
 pub fn encode_dataset(path: &Path) -> Result<EncodeReport> {
-    let data: Dataset = serde_json::from_slice(
-        &fs::read(path).with_context(|| format!("read dataset {}", path.display()))?,
-    )
-    .with_context(|| format!("parse dataset {}", path.display()))?;
+    // Bounded, no-symlink read plus full schema validation, as for fit/search/route.
+    let data = read_dataset(path)?;
     let names: Vec<String> = data
         .columns
         .iter()
@@ -39,10 +38,8 @@ pub fn encode_dataset(path: &Path) -> Result<EncodeReport> {
         }
     }
     let train = matrix(&data, Split::Train)?;
-    let hold = match matrix(&data, Split::Validation) {
-        Ok(matrix) => matrix,
-        Err(_) => matrix(&data, Split::Test)?,
-    };
+    // The hold-out is the validation split only; there is no fallback to test rows.
+    let hold = matrix(&data, Split::Validation)?;
     let cfg = HyperionConfig {
         mode: HyperionMode::On,
         weights_path: default_weights_path(),

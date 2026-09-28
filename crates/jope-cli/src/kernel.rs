@@ -1,6 +1,8 @@
 //! Fit, emit, and a tiny offline search over feat-math GP genomes.
 
-use crate::schema::{Dataset, Kind, Split};
+use crate::admission::validate_dataset;
+use crate::schema::{Dataset, Kind, Split, Task, MAX_FILE_BYTES};
+use crate::storage::Directory;
 use anyhow::{bail, Context, Result};
 use feat_math::transpile::{emit, emit_cpp17, emit_javascript, EmitOptions};
 use feat_math::{r2, GenomeIr, Model};
@@ -57,19 +59,25 @@ pub struct SearchReport {
 
 pub fn fit_dataset(path: &Path, genome: &str) -> Result<FitReport> {
     let data = read_dataset(path)?;
-    let (train_x, train_y) = matrix(&data, Split::Train)?;
-    let (hold_x, hold_y) = holdout(&data)?;
+    fit_validated_dataset(&data, genome)
+}
+
+/// Fit one already-validated snapshot; the caller never reopens its path.
+pub(crate) fn fit_validated_dataset(data: &Dataset, genome: &str) -> Result<FitReport> {
+    ensure_regression_support(data)?;
+    let (train_x, train_y) = matrix(data, Split::Train)?;
+    let (hold_x, hold_y) = holdout(data)?;
     let parsed = GenomeIr::parse(genome).context("parse genome")?;
     let model = feat_math::fit(&parsed, &train_x, &train_y).context("fit genome")?;
     Ok(FitReport {
         schema: "jope.fit.v1",
         ok: true,
-        dataset_id: data.id,
+        dataset_id: data.id.clone(),
         genome: parsed.canonical(),
         train_rows: train_x.len(),
         hold_rows: hold_x.len(),
-        train_r2: score(&model, &train_x, &train_y),
-        hold_r2: score(&model, &hold_x, &hold_y),
+        train_r2: score(&model, &train_x, &train_y)?,
+        hold_r2: score(&model, &hold_x, &hold_y)?,
     })
 }
 
@@ -124,15 +132,21 @@ pub fn emit_genome(genome: &str, lang: &str, output: Option<&Path>) -> Result<Em
 
 pub fn search_dataset(path: &Path) -> Result<SearchReport> {
     let data = read_dataset(path)?;
-    let (train_x, train_y) = matrix(&data, Split::Train)?;
-    let (hold_x, hold_y) = holdout(&data)?;
+    search_validated_dataset(&data)
+}
+
+/// Search one already-validated snapshot. Selection and its score use the validation split only.
+pub(crate) fn search_validated_dataset(data: &Dataset) -> Result<SearchReport> {
+    ensure_regression_support(data)?;
+    let (train_x, train_y) = matrix(data, Split::Train)?;
+    let (hold_x, hold_y) = holdout(data)?;
     let mut best_genome = String::new();
     let mut best_r2 = f64::NEG_INFINITY;
     for genome in SEARCH_CANDIDATES {
         let parsed = GenomeIr::parse(genome).context("parse search candidate")?;
         let model =
             feat_math::fit(&parsed, &train_x, &train_y).with_context(|| format!("fit {genome}"))?;
-        let hold = score(&model, &hold_x, &hold_y);
+        let hold = score(&model, &hold_x, &hold_y).with_context(|| format!("evaluate {genome}"))?;
         if hold > best_r2 {
             best_r2 = hold;
             best_genome = parsed.canonical();
@@ -142,7 +156,7 @@ pub fn search_dataset(path: &Path) -> Result<SearchReport> {
     Ok(SearchReport {
         schema: "jope.search.v1",
         ok: true,
-        dataset_id: data.id,
+        dataset_id: data.id.clone(),
         genome: best_genome,
         hold_r2: best_r2,
         considered: SEARCH_CANDIDATES.len(),
@@ -171,26 +185,59 @@ fn filename(lang: &str) -> &'static str {
     }
 }
 
+/// Read one dataset through the same bounded, no-symlink reader as admission (regular files
+/// only, at most `MAX_FILE_BYTES`), then apply the full schema validation to those bytes.
 pub(crate) fn read_dataset(path: &Path) -> Result<Dataset> {
-    serde_json::from_slice(
-        &fs::read(path).with_context(|| format!("read dataset {}", path.display()))?,
-    )
-    .with_context(|| format!("parse dataset {}", path.display()))
+    let parent = path
+        .parent()
+        .filter(|parent| !parent.as_os_str().is_empty())
+        .unwrap_or_else(|| Path::new("."));
+    let filename = path
+        .file_name()
+        .and_then(|name| name.to_str())
+        .with_context(|| format!("dataset path needs a UTF-8 filename: {}", path.display()))?;
+    let bytes = Directory::open(parent)
+        .and_then(|directory| directory.read(filename, MAX_FILE_BYTES))
+        .with_context(|| format!("read dataset {}", path.display()))?;
+    let data = serde_json::from_slice(&bytes)
+        .with_context(|| format!("parse dataset {}", path.display()))?;
+    validate_dataset(&data).with_context(|| format!("validate dataset {}", path.display()))?;
+    Ok(data)
 }
 
-fn holdout(data: &Dataset) -> Result<(feat_math::Rows, Vec<f64>)> {
-    match matrix(data, Split::Validation) {
-        Ok(pair) => Ok(pair),
-        Err(_) => matrix(data, Split::Test),
+/// Why fit/search/route cannot use a dataset, or `None` when it is a supported regression
+/// fixture with integer, non-null features.
+pub(crate) fn unsupported_regression_reason(data: &Dataset) -> Option<String> {
+    if data.task != Task::Regression {
+        return Some(format!(
+            "unsupported task {}: fit/search/route support regression only",
+            data.task.name()
+        ));
     }
+    if data
+        .columns
+        .iter()
+        .any(|column| column.kind != Kind::Integer || column.nullable)
+    {
+        return Some("fit/search/route currently admit integer, non-null features only".into());
+    }
+    None
+}
+
+pub(crate) fn ensure_regression_support(data: &Dataset) -> Result<()> {
+    if let Some(reason) = unsupported_regression_reason(data) {
+        bail!("{reason}");
+    }
+    Ok(())
+}
+
+/// The held-out score is the validation split. There is no fallback to test rows.
+fn holdout(data: &Dataset) -> Result<(feat_math::Rows, Vec<f64>)> {
+    matrix(data, Split::Validation)
 }
 
 fn matrix(data: &Dataset, split: Split) -> Result<(feat_math::Rows, Vec<f64>)> {
-    for column in &data.columns {
-        if column.kind != Kind::Integer || column.nullable {
-            bail!("fit/search currently admit integer, non-null features only");
-        }
-    }
+    ensure_regression_support(data)?;
     let mut xs = Vec::new();
     let mut ys = Vec::new();
     for row in &data.rows {
@@ -213,8 +260,15 @@ fn matrix(data: &Dataset, split: Split) -> Result<(feat_math::Rows, Vec<f64>)> {
     Ok((xs, ys))
 }
 
-fn score(model: &Model, x: &feat_math::Rows, y: &[f64]) -> f64 {
-    r2(y, &model.predict(x))
+fn score(model: &Model, x: &feat_math::Rows, y: &[f64]) -> Result<f64> {
+    let predictions = model.predict(x);
+    anyhow::ensure!(
+        predictions.len() == y.len() && predictions.iter().all(|value| value.is_finite()),
+        "evaluation produced missing or non-finite predictions"
+    );
+    let score = r2(y, &predictions);
+    anyhow::ensure!(score.is_finite(), "evaluation produced a non-finite R²");
+    Ok(score)
 }
 
 fn digest(source: &str) -> String {

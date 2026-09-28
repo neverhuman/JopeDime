@@ -1,6 +1,7 @@
-//! Local centroid router over 128-d dataset embeddings. Not the bound jope-policy checkpoint.
+//! Local centroid router over 128-d dataset embeddings: a baseline, not the bound jope-policy
+//! checkpoint. Accepted policy weights are unchanged by anything here.
 
-use crate::kernel::{fit_dataset, read_dataset};
+use crate::kernel::{ensure_regression_support, fit_validated_dataset, read_dataset};
 use crate::schema::{Dataset, Kind, Split, Task};
 use anyhow::{bail, Context, Result};
 use feat_math::router_policy::ROUTER_EMBEDDING_DIMS;
@@ -98,13 +99,19 @@ pub fn load_router(path: &Path) -> Result<RouterArtifact> {
 
 pub fn route_dataset(input: &Path, router: &RouterArtifact) -> Result<RouteReport> {
     let data = read_dataset(input)?;
-    let embedding = dataset_embedding(&data)?;
+    route_validated_dataset(&data, router)
+}
+
+/// Embed and fit one in-memory snapshot, so the routed bytes are the fitted bytes.
+fn route_validated_dataset(data: &Dataset, router: &RouterArtifact) -> Result<RouteReport> {
+    ensure_regression_support(data)?;
+    let embedding = dataset_embedding(data)?;
     let (genome, cosine) = nearest(router, &embedding)?;
-    let fitted = fit_dataset(input, &genome)?;
+    let fitted = fit_validated_dataset(data, &genome)?;
     Ok(RouteReport {
         schema: "jope.route.v1",
         ok: true,
-        dataset_id: data.id,
+        dataset_id: data.id.clone(),
         genome,
         cosine,
         train_r2: fitted.train_r2,
@@ -186,4 +193,62 @@ fn cosine(a: &[f64], b: &[f64]) -> f64 {
         return 0.0;
     }
     dot / (na.sqrt() * nb.sqrt())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{admission::validate_dataset, generator::dataset, schema::serialize};
+
+    fn router_for(data: &Dataset) -> RouterArtifact {
+        fit_centroid_router(&[(
+            dataset_embedding(data).unwrap(),
+            crate::kernel::DEFAULT_GENOME.into(),
+        )])
+        .unwrap()
+    }
+
+    #[test]
+    fn routing_embeds_and_fits_the_same_snapshot_after_input_is_replaced() {
+        let temporary = tempfile::tempdir().unwrap();
+        let path = temporary.path().join("input.json");
+        fs::write(&path, serialize(&dataset(Task::Regression, 0)).unwrap()).unwrap();
+        let data = read_dataset(&path).unwrap();
+        let router = router_for(&data);
+        let expected = route_validated_dataset(&data, &router).unwrap();
+        assert_eq!(
+            route_dataset(&path, &router).unwrap().hold_r2,
+            expected.hold_r2
+        );
+
+        // Replace the input after it was read: a fresh route refuses the replacement, and the
+        // snapshot still embeds and fits the bytes it was admitted from.
+        fs::write(&path, serialize(&dataset(Task::Binary, 0)).unwrap()).unwrap();
+        let refused = format!("{:#}", route_dataset(&path, &router).unwrap_err());
+        assert!(refused.contains("unsupported task binary"), "{refused}");
+        let actual = route_validated_dataset(&data, &router).unwrap();
+        assert_eq!(
+            serde_json::to_value(actual).unwrap(),
+            serde_json::to_value(expected).unwrap()
+        );
+    }
+
+    #[test]
+    fn routing_features_and_fit_do_not_depend_on_test_features_or_targets() {
+        let mut data = dataset(Task::Regression, 0);
+        validate_dataset(&data).unwrap();
+        let embedding = dataset_embedding(&data).unwrap();
+        let router = router_for(&data);
+        let expected = route_validated_dataset(&data, &router).unwrap();
+        for row in data.rows.iter_mut().filter(|row| row.split == Split::Test) {
+            row.target = -999_999_999;
+            row.features.fill(serde_json::json!(999_999_999));
+        }
+        validate_dataset(&data).unwrap();
+        assert_eq!(dataset_embedding(&data).unwrap(), embedding);
+        assert_eq!(
+            serde_json::to_value(route_validated_dataset(&data, &router).unwrap()).unwrap(),
+            serde_json::to_value(expected).unwrap()
+        );
+    }
 }
