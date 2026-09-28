@@ -27,6 +27,12 @@ pub struct Verification {
 
 /// Verify exact generator identity, then parse and validate the same bounded bytes that were hashed.
 pub fn verify_inputs(root: &Path) -> Result<Verification> {
+    verified_datasets(root).map(|(report, _)| report)
+}
+
+/// The admitted snapshot: every dataset parsed from the same bounded bytes that were hashed.
+/// Consumers use it so that search and training never reopen a path after admission.
+pub(crate) fn verified_datasets(root: &Path) -> Result<(Verification, Vec<Dataset>)> {
     let directory = Directory::open(root)?;
     let manifest_bytes = directory.read("catalog.json", MAX_FILE_BYTES)?;
     let manifest: Catalog =
@@ -67,6 +73,7 @@ pub fn verify_inputs(root: &Path) -> Result<Verification> {
         );
         task_counts.insert(task.name().into(), 0);
     }
+    let mut datasets = Vec::with_capacity(manifest.datasets.len());
     for entry in &manifest.datasets {
         let bytes = directory.read(&entry.path, MAX_FILE_BYTES)?;
         ensure!(
@@ -90,6 +97,7 @@ pub fn verify_inputs(root: &Path) -> Result<Verification> {
             entry.id
         );
         validate_dataset(&data).with_context(|| format!("dataset {}", entry.id))?;
+        datasets.push(data);
         total_bytes += bytes.len() as u64;
         *task_counts.get_mut(entry.task.name()).expect("known task") += 1;
     }
@@ -97,16 +105,19 @@ pub fn verify_inputs(root: &Path) -> Result<Verification> {
         total_bytes < MAX_CORPUS_BYTES,
         "fixture corpus exceeds 10 MiB"
     );
-    Ok(Verification {
-        schema: "jope.input-verification.v1",
-        ok: true,
-        offline: true,
-        dataset_count: manifest.datasets.len(),
-        task_counts,
-        bytes: total_bytes,
-        catalog_sha256: digest(&manifest_bytes),
-        generator: manifest.provenance.generator,
-    })
+    Ok((
+        Verification {
+            schema: "jope.input-verification.v1",
+            ok: true,
+            offline: true,
+            dataset_count: manifest.datasets.len(),
+            task_counts,
+            bytes: total_bytes,
+            catalog_sha256: digest(&manifest_bytes),
+            generator: manifest.provenance.generator,
+        },
+        datasets,
+    ))
 }
 
 fn validate_catalog(catalog: &Catalog) -> Result<()> {
