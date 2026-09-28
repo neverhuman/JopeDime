@@ -76,3 +76,6 @@ must be empty; `deploy/ci/check.sh` reports the count until WP4 lands and fails 
   exclusion under Consequences no longer applies to anything. Restore it with the command in
   [docs/archive/clean-base-manifest.json](../archive/clean-base-manifest.json). The decision
   above is unchanged.
+- 2026-09-28 (clean-base): `docs/legacy/` was removed from the tree as well; its documents keep
+  their absolute paths verbatim in git history (restore commands in the same manifest), and the
+  "docs/legacy excluded" qualifiers under Consequences and Verification now exclude nothing.

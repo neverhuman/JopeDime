@@ -84,3 +84,7 @@ redline locks, jankurai identity, `hosted-source-authority.sh`, the private forg
   Restore it with the command in
   [docs/archive/clean-base-manifest.json](../archive/clean-base-manifest.json). The decision
   above is unchanged.
+- 2026-09-28 (clean-base): `docs/legacy/` was removed from the tree as well, so the historical
+  documents under Consequences now live in git history only (restore commands in the same
+  manifest) and their lint exclusions match nothing. `.gitleaks.toml` keeps its `docs/legacy/`
+  path rule because `gitleaks detect` scans history.

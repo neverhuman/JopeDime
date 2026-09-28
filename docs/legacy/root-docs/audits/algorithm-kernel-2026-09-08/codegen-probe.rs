@@ -1,2 +1,0 @@
-use feat_math::{GenomeIr,fit_legacy_numeric_bound,emit_fitted_cpp17,RawTable};
-fn main(){let g=GenomeIr::parse("(sym raw \"c9 + 1\")").unwrap();let m=fit_legacy_numeric_bound(&g,&[vec![1.0,2.0],vec![2.0,3.0]],&[1.0,2.0]).unwrap();let t=RawTable::from_csv("c0,c1\n1,2\n").unwrap();println!("runtime={:?}",m.predict_table(&t).unwrap());let a=emit_fitted_cpp17(&m).unwrap();std::fs::write(std::env::args().nth(1).unwrap(),a.source).unwrap();}

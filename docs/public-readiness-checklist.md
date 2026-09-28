@@ -15,7 +15,7 @@ weights: Licences", "Datasets: Licence rule", "Security", "Self-hosted runner: G
 | Third-party Rust dependencies within the `deny.toml` allow-list (`cargo deny check licenses` in every PR) | gate, green today |
 | Python dependencies: `uv run pip-licenses --allow-only "Apache-2.0;MIT;BSD;ISC;PSF"` in the `python` lane | gate, lands with WP8 |
 | Vendored `crates/smartcluster/*` (jain-smartcluster @ `715128f8`) carries its upstream licence headers and is named in `NOTICE` | owner: confirm the upstream licence permits redistribution before the switch (it is a private-forge project today) |
-| `docs/legacy/` documents mention internal hosts and people | done: excluded from lints; owner: skim for anything not meant to be public (names, customer identifiers) |
+| `docs/legacy/` documents mention internal hosts and people | done: removed from the tree on 2026-09-28 (restore commands in `docs/archive/clean-base-manifest.json`); owner: git history still holds them, so skim it for anything not meant to be public (names, customer identifiers) before the switch |
 
 ## 2. Licences of model weights (`models/bundles/*.json`, PR #9)
 
@@ -73,7 +73,7 @@ any non-`recorded` member fails CI**.
 ## 6. Content review before the switch
 
 - `git grep -nE 'git\.neverhuman\.org|127\.0\.0\.1:8787|/home/ubuntu/' -- crates python assets deploy .github` is empty (plan "Verification" 8; `deploy/ci/check.sh` enforces the first two today).
-- `docs/legacy/` is the only place allowed to mention historical hosts; skim it once for personal data. (`deploy/kernel-v1/source` was removed from the tree on 2026-09-28; git history still holds it.)
+- Historical hosts: the "no family leftovers" step of `deploy/ci/check.sh` fails when `git.neverhuman.org` or `127.0.0.1:8787` appears in a tracked file under `crates`, `python`, `deploy` or `.github`, except inside a nested `docs/` directory and in `crates/jope-engine/assets/grammar/`. Nothing checks the rest of the tree: on 2026-09-28 `git grep -lE 'git\.neverhuman\.org|127\.0\.0\.1:8787'` lists this checklist, which names both hosts in this item, and 11 other tracked files (`AGENTS.md`, `CLAUDE.md`, `MASTER_CLEAN_UP.md`, `docs/ORIGIN.md`, ADR-0001, `docs/archive/CURSOR_GITHUB_PORT_PLAN.md`, the two grammar assets and three files of `xtools/registry-dump-legacy`); review them before the switch. `docs/legacy/` and `deploy/kernel-v1/source` were removed from the tree on 2026-09-28, but git history still holds both, so skim it once for personal data.
 - `NOTICE` names every third-party model and dataset source the public artefacts depend on.
 - `README.md` quickstart re-run from a fresh clone on a machine without CUDA (< 15 min budget in the plan; measured 2026-09-18: build 1 m 57 s, feat-math tests 13 m 01 s including compilation, emitters 20 s).
 - A `v0.1.0` tag through `release.yml` with attested `jope` binary, wheel, SBOMs and receipt (plan "Verification" 7).

@@ -183,4 +183,5 @@ ADR-0006 retires it. Today's ids, by stage:
 [docs/campaigns.md](campaigns.md) · [docs/adr/](adr/) ·
 [docs/models.md](models.md) · [docs/runbooks/runner.md](runbooks/runner.md) ·
 `docs/learning.md`, `docs/arena.md` (landing with WP11/WP12) ·
-[docs/legacy/root-docs/](legacy/root-docs/) (the pre-port documents, kept verbatim for provenance).
+the pre-port documents, kept verbatim under `docs/legacy/root-docs/` until 2026-09-28, restore
+from the commands in [docs/archive/clean-base-manifest.json](archive/clean-base-manifest.json).

@@ -32,7 +32,7 @@ rebase merges only (linear history); the branch is deleted on merge.
    remains until ADR-0006's phase P3). A PR that touches only docs runs
    `hygiene` alone in CI; still run `just docs` locally (rustdoc builds — its warnings are
    advisory until the WP8 `docs` lane makes `-D warnings` blocking — plus the markdown link check
-   over README and `docs/` excluding `docs/legacy/`).
+   over README and `docs/`).
 4. Open the PR with a description that a reviewer can verify: what was run, on which host, with
    which output. Tests you had to change are listed explicitly (the test-inventory guard landing
    with WP10 fails a PR that silently removes tests).
