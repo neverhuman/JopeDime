@@ -146,7 +146,7 @@ ADR-0006 retires it. Today's ids, by stage:
 | engine | `jain.jope-search-receipt/v1` (the jain-core consumer contract, `tests/cli_contract.rs`), `parallel.cut_champion.v1`, `parallel.teaching_shards.v1`, `parallel.checkpoint.v1`, `parallel.cycle.v1`, `parallel.gp_jobs.v1`, `parallel.clean_completion.v3` | `jope-parallel` subcommands → each other, `jope-learning` |
 | evaluation | `JopeDimeEvaluatorIdentity.v1` + `known-evaluator-identities.json` (ADR-0004), `JopeDimeSemanticEvaluationReceipt.v2` | `jope-campaigns` `evaluation_v2.rs` |
 | learning | `jope.hwm/v1`, `jope.score/v1`, `parallel.promotion_evidence.v2`, `parallel.promotion_decision.v2`, `RatchetArtifactPointerV1`, `LearningWaveManifest.v1`, `jope.learn-pull/v1` | `jope-learning hwm` / `jope-learning scores` |
-| builds | `jope.product_evaluator_build.v1` (`jope-build-receipt`), `jope.sdk-receipt/v1` (`deploy/receipts/libtorch.json`, landed by PR [#25](https://github.com/veox-ai/JopeDime/pull/25)), `jope.cuda-qualification/v1`, `jope.release-manifest/v1` (`release.yml`) | CI lanes → artefacts / S3 `ci-receipts/` |
+| builds | `jope.product_evaluator_build.v1` (`jope-build-receipt`), `jope.sdk-receipt/v1` (`deploy/receipts/libtorch.json`, landed by PR [#25](https://github.com/veox-ai/JopeDime/pull/25)), `jope.cuda-qualification/v1`, `jope.release-manifest/v1` (`deploy/release/release.sh`) | CI lanes → artefacts / S3 `ci-receipts/` |
 | parity | `jope.test-timings/v1` (`docs/parity/test-timings.json`, landed by PR [#29](https://github.com/veox-ai/JopeDime/pull/29)), the capability matrix and test inventory (landed by PR [#28](https://github.com/veox-ai/JopeDime/pull/28)) | WP1/WP10 → `deploy/ci/{parity-matrix,test-inventory}.sh` |
 
 ## Where state lives
