@@ -505,10 +505,18 @@ pub fn parse_matrix(text: &str) -> Vec<Row> {
     rows
 }
 
-/// `int(PENDING_RE.match(status).group(1))` for `^pending-WP(\d+)$`: the work-package number as
-/// Python's unbounded `int` of Unicode decimal digits printed it (ASCII, no leading zeros).
+/// The digits of `^pending-WP(\d+)$` as ASCII decimal without leading zeros, when the status
+/// matches (`PENDING_RE.match`, no `int()` yet: classifying a status never refused).
 fn pending_number(status: &str) -> Option<String> {
     py::decimal_digits(status.strip_prefix("pending-WP")?)
+}
+
+/// `int(PENDING_RE.match(status).group(1))` of a pending status: the work-package number, or
+/// Python 3.12's `ValueError` for more than 4300 digits (the check crashed there).
+fn pending_int(status: &str, place: &str) -> Result<String> {
+    let digits = status.strip_prefix("pending-WP").expect("a pending status");
+    py::decimal_int(digits)
+        .map_err(|e| Error::Shape(format!("{place}: pending-WP<n>: ValueError: {e}")))
 }
 
 pub fn status_class(status: &str) -> &'static str {
@@ -568,11 +576,12 @@ fn counts_row_kind(line: &str) -> String {
 }
 
 /// The `## Counts` section as committed: table lines, covering-test tally (`int` of the captured
-/// Unicode decimal digits, as ASCII decimal of any length), every other line.
-fn committed_counts(text: &str) -> (Vec<String>, Option<String>, Vec<String>) {
+/// Unicode decimal digits, as ASCII decimal; more than 4300 digits refuse as Python 3.12's `int()`
+/// raised), every other line.
+fn committed_counts(text: &str) -> Result<(Vec<String>, Option<String>, Vec<String>)> {
     let lines = py::splitlines(text);
     let Some(start) = lines.iter().position(|l| *l == "## Counts") else {
-        return (vec![], None, vec![]);
+        return Ok((vec![], None, vec![]));
     };
     let tally = py::regex(r"^`moved`/`new` rows without a covering test: (\d+)\.$");
     let (mut table, mut prose, mut no_test) = (vec![], vec![], None);
@@ -586,14 +595,18 @@ fn committed_counts(text: &str) -> (Vec<String>, Option<String>, Vec<String>) {
             continue;
         }
         if let Some(m) = tally.captures(stripped) {
-            no_test = py::decimal_digits(&m[1]);
+            no_test = Some(py::decimal_int(&m[1]).map_err(|e| {
+                Error::Shape(format!(
+                    "## Counts `moved`/`new` rows without a covering test: ValueError: {e}"
+                ))
+            })?);
             continue;
         }
         if !stripped.is_empty() {
             prose.push(stripped.to_owned());
         }
     }
-    (table, no_test, prose)
+    Ok((table, no_test, prose))
 }
 
 fn head_of(new: &str) -> &str {
@@ -704,20 +717,19 @@ pub fn check(matrix: &Path, root: &Path, help_text: Option<&Path>) -> Result<(St
     let clap = clap_names(&root)?;
     let help = help_text.map(py::read_text).transpose()?;
     let tree = scan_rest(&root, clap)?;
-    Ok(evaluate(&text, &tree, help.as_deref(), &|head: &str| {
-        exists[head]
-    }))
+    evaluate(&text, &tree, help.as_deref(), &|head: &str| exists[head])
 }
 
 /// The check report for a matrix text against a tree, and whether the matrix passes. `exists`
 /// answers whether a row target path exists. `check` gathers the inputs; the Python-parity
-/// fixtures replay recorded ones.
+/// fixtures replay recorded ones. Refuses where the Python's `int()` raised: a `pending-WP<n>`
+/// status or a covering-test tally of more than 4300 digits.
 pub fn evaluate(
     matrix_text: &str,
     tree: &Tree,
     help_text: Option<&str>,
     exists: &dyn Fn(&str) -> bool,
-) -> (String, bool) {
+) -> Result<(String, bool)> {
     let rows = parse_matrix(matrix_text);
     let mut problems: Vec<String> = vec![];
     let mut targets: BTreeSet<String> = BTreeSet::new();
@@ -740,7 +752,7 @@ pub fn evaluate(
         }
         match class {
             "pending" => {
-                let n = pending_number(&r.status).expect("a pending status has a number");
+                let n = pending_int(&r.status, &place)?;
                 if !n.parse::<u64>().is_ok_and(|n| (4..=12).contains(&n)) {
                     problems.push(format!("{place}: pending-WP{n} is outside WP4..WP12"));
                 }
@@ -813,7 +825,7 @@ pub fn evaluate(
         problems.push(format!("no row for {m}"));
     }
     let (want_table, want_no_test) = counts_lines(&rows);
-    let (got_table, got_no_test, got_prose) = committed_counts(matrix_text);
+    let (got_table, got_no_test, got_prose) = committed_counts(matrix_text)?;
     for line in COUNTS_PREAMBLE {
         if !got_prose.iter().any(|p| p == line) {
             problems.push(format!(
@@ -876,10 +888,10 @@ pub fn evaluate(
         for p in &problems {
             out.push_str(&format!("  - {p}\n"));
         }
-        return (out, false);
+        return Ok((out, false));
     }
     out.push_str("ok: every row resolved and every entry point of this tree has a row\n");
-    (out, true)
+    Ok((out, true))
 }
 
 #[cfg(test)]
@@ -927,6 +939,30 @@ mod tests {
             Some("99999999999999999999".to_owned())
         );
         assert_eq!(status_class("pending-WP\u{b2}"), "invalid");
+    }
+
+    /// `int()` of the pending number and of the covering-test tally: 4300 digits (leading zeros
+    /// count) are read and 4301 refuse, as Python 3.12 refused them; classifying a status converts
+    /// nothing.
+    #[test]
+    fn integers_past_4300_digits_refuse_where_the_check_converts_them() {
+        let wp = |n: usize| format!("pending-WP{}5", "0".repeat(n - 1));
+        assert_eq!(status_class(&wp(4301)), "pending");
+        assert_eq!(pending_int(&wp(4300), "row 1").unwrap(), "5");
+        let refused = pending_int(&wp(4301), "row 1").unwrap_err().to_string();
+        assert!(refused.contains("value has 4301 digits"), "{refused}");
+        let counts = |zeros: usize| {
+            format!(
+                "## Counts\n\n`moved`/`new` rows without a covering test: {}1.\n",
+                "0".repeat(zeros)
+            )
+        };
+        assert_eq!(
+            committed_counts(&counts(4299)).unwrap().1,
+            Some("1".to_owned())
+        );
+        let refused = committed_counts(&counts(4300)).unwrap_err().to_string();
+        assert!(refused.contains("value has 4301 digits"), "{refused}");
     }
 
     /// Python's `\s` and `\w` in the clap, `--help` and argparse readers.
