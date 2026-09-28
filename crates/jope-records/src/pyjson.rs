@@ -9,6 +9,9 @@
 //! - [`dumps`] reproduces `json.dumps(..., sort_keys=..., indent=...)` with the default
 //!   `ensure_ascii=True` escaping and Python float `repr`.
 //!
+//! An integer literal of more than 4300 digits is refused as Python 3.12 refused it
+//! ([`crate::py::check_int_digits`], with CPython's message), wherever it stands.
+//!
 //! Deliberate limits: integers must fit in `i64` unless the caller opts in to
 //! [`Value::BigInt`] ([`parse_bytes_big`], [`parse_str_big`]), and a lone UTF-16 surrogate (an
 //! unpaired `\uXXXX` escape, or UTF-8 bytes of one, which `json.loads(bytes)` decoded with
@@ -25,7 +28,8 @@ pub enum Value {
     Bool(bool),
     Int(i64),
     /// An integer outside `i64`, as its decimal literal (JSON integers have no leading zeros, so
-    /// the literal is Python's `repr`). Only [`parse_bytes_big`] and [`parse_str_big`] produce it.
+    /// the literal is Python's `repr`), of at most 4300 digits. Only [`parse_bytes_big`] and
+    /// [`parse_str_big`] produce it.
     BigInt(String),
     Float(f64),
     Str(String),
@@ -554,7 +558,8 @@ pub fn parse_str(text: &str) -> Result<Value, String> {
     parse_text(text, false, true)
 }
 
-/// [`parse_str`], keeping integers beyond `i64` as [`Value::BigInt`].
+/// [`parse_str`], keeping integers beyond `i64` as [`Value::BigInt`] (up to Python 3.12's 4300
+/// digits; more refuse, as `json.loads` refused them).
 pub fn parse_str_big(text: &str) -> Result<Value, String> {
     parse_text(text, true, true)
 }
@@ -569,7 +574,8 @@ pub fn parse_bytes(data: &[u8]) -> Result<Value, String> {
     parse_text(&text, false, false)
 }
 
-/// [`parse_bytes`], keeping integers beyond `i64` as [`Value::BigInt`].
+/// [`parse_bytes`], keeping integers beyond `i64` as [`Value::BigInt`] (up to Python 3.12's 4300
+/// digits; more refuse, as `json.loads` refused them).
 pub fn parse_bytes_big(data: &[u8]) -> Result<Value, String> {
     let text = decode_detected(data)?;
     parse_text(&text, true, false)
@@ -874,6 +880,10 @@ impl Parser<'_> {
                 .map(Value::Float)
                 .map_err(|_| self.error("Invalid number", start))
         } else {
+            // The scanner converts the literal with `int()` as soon as it reads it, and Python 3.12
+            // refuses more than 4300 digits there (the sign is not a digit): its `ValueError`, which
+            // carries no position, even for a field nothing reads.
+            crate::py::check_int_digits(literal.len() - usize::from(literal.starts_with('-')))?;
             match literal.parse::<i64>() {
                 Ok(i) => Ok(Value::Int(i)),
                 Err(_) if self.big_ints => Ok(Value::BigInt(literal.to_owned())),
@@ -1163,6 +1173,39 @@ mod tests {
             parse_bytes(b"\xef\xbb\xbf[\"\xff\"]").unwrap_err(),
             "'utf-8' codec can't decode byte 0xff in position 2: invalid start byte"
         );
+    }
+
+    /// Python 3.12's limit on integer conversion: 4300 digits are read, 4301 refuse with its
+    /// message (the sign is not a digit), in either reader, even in a field nothing reads; a float
+    /// literal of any length is read.
+    #[test]
+    fn integers_of_more_than_4300_digits_refuse_as_python_did() {
+        let limit = "Exceeds the limit (4300 digits) for integer string conversion: value has 4301 digits; use sys.set_int_max_str_digits() to increase the limit";
+        let (d4300, d4301) = ("9".repeat(4300), "9".repeat(4301));
+        for sign in ["", "-"] {
+            let ok = format!(r#"{{"unused": {sign}{d4300}, "a": 1}}"#);
+            let big = parse_str_big(&ok).unwrap();
+            assert!(
+                matches!(big.get("unused"), Some(Value::BigInt(i)) if i.len() == 4300 + sign.len())
+            );
+            assert!(parse_bytes_big(ok.as_bytes()).is_ok());
+            let refused = format!(r#"{{"unused": {sign}{d4301}, "a": 1}}"#);
+            assert_eq!(parse_str_big(&refused).unwrap_err(), limit);
+            assert_eq!(parse_bytes_big(refused.as_bytes()).unwrap_err(), limit);
+            // The 64-bit reader refuses both, 4301 digits in Python's words.
+            assert_eq!(parse_str(&refused).unwrap_err(), limit);
+            assert!(parse_str(&ok)
+                .unwrap_err()
+                .starts_with("Integer outside the supported 64-bit range"));
+        }
+        // The first refusal in document order is the one reported.
+        assert_eq!(parse_str_big(&format!("[{d4301}, ]")).unwrap_err(), limit);
+        assert!(parse_str_big(&format!("[1,, {d4301}]"))
+            .unwrap_err()
+            .starts_with("Expecting value"));
+        let float = format!("[{d4301}.5, {d4301}e-4301]");
+        assert!(parse_str_big(&float).is_ok());
+        assert!(parse_str(&"1".repeat(19)).is_ok());
     }
 
     #[test]

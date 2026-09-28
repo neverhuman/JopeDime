@@ -74,6 +74,13 @@
 //! - `readme/negative-r2.json`: NaN and infinities, Python 3.12's `sorted`, `max` and `sum` of
 //!   the same-cut seconds, NaN RMSEs tied by id, `a == b == c`, `repr`, and `$` before a final
 //!   newline, replayed by `readme_benchmarks_matches_round_two`.
+//!
+//! # Round three
+//!
+//! Review 5333747872 of PR #117 found classes the port accepted and the Python refused, captured
+//! the same way: Python 3.12's limit of 4300 digits on integer conversion
+//! (`process-r3-digits.json`, `readme/negative-r3.json`), with the boundary cases the Python
+//! accepted.
 
 use jope_records::pyjson::{self, Dict, Value};
 use jope_records::{coverage, parity, py, readme, scope_check};
@@ -316,7 +323,7 @@ fn parity_check_matches_the_captured_python_outputs() {
     }
     assert_eq!(replayed.len(), 10);
     for (name, matrix, help) in replayed {
-        let (stdout, ok) = parity::evaluate(&matrix, &tree, help, &exists);
+        let (stdout, ok) = parity::evaluate(&matrix, &tree, help, &exists).unwrap();
         let mut want = cases[&name].clone();
         if name == "parity-preamble" {
             // Allowed difference: the remediation hint names the Rust source, not the census.
@@ -781,7 +788,7 @@ fn parity_check_refuses_every_metadata_the_python_refused() {
             let result = pyjson::parse_str(&metadata.replace("@ROOT@", &root_text))
                 .map_err(|m| jope_records::Error::Invalid(format!("cargo metadata: {m}")))
                 .and_then(|meta| parity::bins_from_metadata(&meta, &root))
-                .map(|bins| {
+                .and_then(|bins| {
                     let tree = parity::Tree {
                         clap: vec![],
                         bins,
@@ -808,6 +815,13 @@ fn readme_benchmarks_refuses_every_evidence_the_python_refused() {
 #[test]
 fn readme_benchmarks_matches_round_two() {
     replay_readme("readme/negative-r2.json", 18);
+}
+
+/// Round three: an integer of more than 4300 digits (either sign) in an evidence file, which
+/// Python 3.12's `json.loads` refused to convert even in a field nothing reads; 19 digits render.
+#[test]
+fn readme_benchmarks_matches_round_three() {
+    replay_readme("readme/negative-r3.json", 3);
 }
 
 fn replay_readme(rel: &str, count: usize) {
@@ -1039,17 +1053,45 @@ fn judge_process(case: &Value, exit: i32, stdout: &[u8], stderr: &str) -> Result
 #[test]
 fn process_cases_match_the_captured_python() {
     let doc = json("process.json");
+    let cases = replay_process("process.json", &doc, 65);
+    // Negative control: a changed exit status, stdout or message fails the judgement.
+    let base = cases
+        .iter()
+        .find(|c| c.get("name") == Some(&Value::from("parity-base")))
+        .unwrap();
+    let base_stdout = s(base.get("stdout").unwrap()).as_bytes();
+    assert_eq!(judge_process(base, 0, base_stdout, ""), Ok(()));
+    assert!(judge_process(base, 1, base_stdout, "").is_err());
+    assert!(judge_process(base, 0, b"x", "").is_err());
+    let crash = cases.iter().find(|c| c.get("raised").is_some()).unwrap();
+    assert!(judge_process(crash, 0, b"", "").is_err());
+    assert!(judge_process(crash, 1, b"a report", "x").is_err());
+}
+
+/// Round three, integers (`process-r3-digits.json`, review 5333747872 of PR #117): Python 3.12
+/// refused to convert an integer of more than 4300 decimal digits. `json.loads` of Cargo's
+/// metadata and of the coverage map, and `int()` of the capability matrix's covering-test tally
+/// and of a `pending-WP<n>` status (leading zeros and Unicode digits count), each crashed on 4301
+/// digits and read 4300.
+#[test]
+fn process_cases_match_round_three_digits() {
+    replay_process(
+        "process-r3-digits.json",
+        &json("process-r3-digits.json"),
+        15,
+    );
+}
+
+/// Replay every case of a process fixture (the layout of `process.json`) through the binary and
+/// hold each to `judge_process`; the cases, for the caller's controls.
+fn replay_process<'a>(rel: &str, doc: &'a Value, count: usize) -> &'a Vec<Value> {
     assert!(
         doc.get("source").and_then(Value::as_str).is_some()
             && doc.get("capture").and_then(Value::as_str).is_some(),
-        "process.json names its capture run and command"
+        "{rel} names its capture run and command"
     );
     let cases = doc.get("cases").and_then(Value::as_list).unwrap();
-    assert_eq!(
-        cases.len(),
-        65,
-        "process.json: every captured case is present"
-    );
+    assert_eq!(cases.len(), count, "{rel}: every captured case is present");
     let temp = tempfile::tempdir().unwrap();
     let shim_dir = temp.path().join("shims");
     shims(&shim_dir);
@@ -1096,24 +1138,13 @@ fn process_cases_match_the_captured_python() {
         } else {
             Rust::Report(String::from_utf8_lossy(&stdout).into_owned(), exit == 0)
         };
-        record("process.json", name, case, &port);
+        record(rel, name, case, &port);
         if let Err(why) = judge_process(case, exit, &stdout, &stderr) {
-            failures.push(format!("process.json {name}: {why}"));
+            failures.push(format!("{rel} {name}: {why}"));
         }
     }
     assert!(failures.is_empty(), "{}", failures.join("\n"));
-    // Negative control: a changed exit status, stdout or message fails the judgement.
-    let base = cases
-        .iter()
-        .find(|c| c.get("name") == Some(&Value::from("parity-base")))
-        .unwrap();
-    let base_stdout = s(base.get("stdout").unwrap()).as_bytes();
-    assert_eq!(judge_process(base, 0, base_stdout, ""), Ok(()));
-    assert!(judge_process(base, 1, base_stdout, "").is_err());
-    assert!(judge_process(base, 0, b"x", "").is_err());
-    let crash = cases.iter().find(|c| c.get("raised").is_some()).unwrap();
-    assert!(judge_process(crash, 0, b"", "").is_err());
-    assert!(judge_process(crash, 1, b"a report", "x").is_err());
+    cases
 }
 
 /// The comparison is not vacuous: an altered expectation, a refusal where the Python reported,

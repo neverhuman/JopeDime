@@ -16,6 +16,8 @@
 //!
 //! Deliberate, fail-closed differences (inputs Python accepted that are refused here): JSON
 //! Python's `json` module reads but RFC 8259 does not (`NaN`, `Infinity`, UTF-16/32, a BOM);
+//! integers of about 310 to 4300 digits (`serde_json` reads none a double cannot hold; beyond 4300
+//! digits Python 3.12 refused them too);
 //! non-ASCII reviewer names (Python's `str.isalnum` admitted them; the reviewer key is a path
 //! component); and paths spelled with exactly two leading slashes, which Python's `pathlib`
 //! keeps as a distinct root.
@@ -829,6 +831,26 @@ mod tests {
         assert!(contains(&json!(3), &json!("k")).is_err());
         assert_eq!(iterate(&json!("ab")).unwrap(), vec![json!("a"), json!("b")]);
         assert_eq!(py_strip("\u{1c} x \u{a0}"), "x");
+    }
+
+    /// Python 3.12's `json.loads` refused an integer literal of more than 4300 digits, of either
+    /// sign, even in a field nothing reads. `serde_json` reads no integer that a double cannot
+    /// hold (about 310 digits and up), so the native reader refuses those too.
+    #[test]
+    fn integers_python_refused_to_convert_are_refused() {
+        for sign in ["", "-"] {
+            let receipt = format!(
+                r#"{{"schema": "{ASSIGNMENT_SCHEMA}", "unused": {sign}{}}}"#,
+                "9".repeat(4301)
+            );
+            assert!(matches!(
+                parse(receipt.as_bytes(), "growth assignment"),
+                Err(GrowthError::Malformed(_))
+            ));
+        }
+        let receipt =
+            format!(r#"{{"schema": "{ASSIGNMENT_SCHEMA}", "unused": 12345678901234567890123}}"#);
+        assert!(parse(receipt.as_bytes(), "growth assignment").is_ok());
     }
 
     /// Same seed and bucket rule as `families::stable_component_assignment`.

@@ -36,6 +36,10 @@
 //! `UnicodeDecodeError`, `JSONDecodeError` positions, `tomllib`), `repr` of non-printable
 //! characters, `--path-map` normalisation, the `nextest-config` order of refusals, NaN and big
 //! integer ids. It is replayed by `cargo_artifact_matches_round_two`, with its own exceptions.
+//!
+//! `negative-r3-digits.json` holds the third round (review 5333747872 of PR #117), captured the
+//! same way: Python 3.12's limit of 4300 digits on integer conversion in every JSON and TOML
+//! reader. It is replayed by `cargo_artifact_matches_round_three_digits`.
 
 use serde_json::Value;
 use std::fs;
@@ -221,12 +225,37 @@ const R2_MESSAGE_DIFFERS: &[&str] = &["toml-invalid-value"];
 
 #[test]
 fn cargo_artifact_matches_round_two() {
+    replay_round("negative-r2.json", 40, R2_MESSAGE_DIFFERS);
+}
+
+/// Round three, integers (`negative-r3-digits.json`): Python 3.12 refuses to convert an integer of
+/// more than 4300 decimal digits (`sys.get_int_max_str_digits()`), so `json.loads` of the metadata
+/// or of a Cargo message, and `tomllib` of the nextest config, refused one even in a field nothing
+/// reads; 4300 digits, either sign, and a float of any length are read. The TOML case refuses on
+/// both sides, in the `toml` crate's words (it reads no integer beyond 64 bits).
+#[test]
+fn cargo_artifact_matches_round_three_digits() {
+    replay_round("negative-r3-digits.json", 14, &["toml-int-4301-digits"]);
+}
+
+/// Replay every case of a round fixture (the layout of `negative-r2.json`); `message_differs` names
+/// the cases where both refuse in different words.
+fn replay_round(file: &str, count: usize, message_differs: &[&str]) {
     let doc: Value =
-        serde_json::from_str(&fs::read_to_string(fixture().join("negative-r2.json")).unwrap())
-            .unwrap();
+        serde_json::from_str(&fs::read_to_string(fixture().join(file)).unwrap()).unwrap();
     assert!(doc["source"].is_string() && doc["capture"].is_string());
     let cases = doc["cases"].as_array().unwrap();
-    assert_eq!(cases.len(), 40, "every captured case is replayed");
+    assert_eq!(
+        cases.len(),
+        count,
+        "{file}: every captured case is replayed"
+    );
+    for name in message_differs {
+        assert!(
+            cases.iter().any(|c| c["name"] == *name),
+            "{file}: {name} is not a case"
+        );
+    }
     let unhex = |text: &str| -> Vec<u8> {
         (0..text.len())
             .step_by(2)
@@ -234,7 +263,7 @@ fn cargo_artifact_matches_round_two() {
             .collect()
     };
     let temp = tempfile::Builder::new()
-        .prefix("cargo-artifact-r2-")
+        .prefix("cargo-artifact-round-")
         .tempdir()
         .unwrap();
     let root = temp.path().canonicalize().unwrap();
@@ -311,7 +340,7 @@ fn cargo_artifact_matches_round_two() {
         let (stdout, stderr) = (normalise(&run.stdout), normalise(&run.stderr));
         let exit = i64::from(run.status.code().unwrap());
         record(case, exit, &stdout, &stderr);
-        let verdict = if R2_MESSAGE_DIFFERS.contains(&name) {
+        let verdict = if message_differs.contains(&name) {
             let refused = exit == 1
                 && stdout.is_empty()
                 && stderr.starts_with("cargo-artifact: ")
@@ -341,7 +370,7 @@ fn cargo_artifact_matches_round_two() {
             ));
         }
     }
-    assert!(failures.is_empty(), "{}", failures.join("\n"));
+    assert!(failures.is_empty(), "{file}:\n{}", failures.join("\n"));
 }
 
 /// Malformed inputs the Python accepted (exit status 0) and the port refuses: a

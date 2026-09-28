@@ -20,8 +20,25 @@ pub fn strip(s: &str) -> &str {
     s.trim_matches(is_space)
 }
 
+/// CPython 3.12's default `sys.get_int_max_str_digits()`. `int()` of a decimal string, and so
+/// `json.loads` and `tomllib` of an integer literal, raised `ValueError` for more digits than this
+/// (the sign, surrounding whitespace and underscores are not digits; leading zeros are).
+pub const INT_MAX_STR_DIGITS: usize = 4300;
+
+/// The limit on decimal integer conversion: `digits` digits are converted, more than
+/// [`INT_MAX_STR_DIGITS`] refuse with CPython's `ValueError` message.
+pub fn check_int_digits(digits: usize) -> std::result::Result<(), String> {
+    if digits > INT_MAX_STR_DIGITS {
+        return Err(format!(
+            "Exceeds the limit ({INT_MAX_STR_DIGITS} digits) for integer string conversion: value has {digits} digits; use sys.set_int_max_str_digits() to increase the limit"
+        ));
+    }
+    Ok(())
+}
+
 /// Python `int(text)` for ASCII decimal text: surrounding whitespace, an optional sign and
-/// single underscores between digits. Non-ASCII digits (which Python also accepts) are refused.
+/// single underscores between digits. Non-ASCII digits (which Python also accepts) are refused,
+/// and so is anything beyond `i64` (Python refused only past [`INT_MAX_STR_DIGITS`] digits).
 pub fn int(text: &str) -> Option<i64> {
     let body = strip(text);
     let (negative, digits) = match body.as_bytes().first() {
@@ -476,9 +493,25 @@ pub fn regex(pattern: &str) -> regex::Regex {
     regex::Regex::new(&out).expect("translated pattern")
 }
 
-/// Python `int(digits)` for a run of Unicode decimal digits (`str.isdecimal`, what `\d+`
-/// captures): the value as ASCII decimal without leading zeros, of any length (Python's `int` is
-/// unbounded). `None` when a character is not a decimal digit.
+/// Python `int(text)` for a run of Unicode decimal digits that `\d+` captured: the value as ASCII
+/// decimal without leading zeros ([`decimal_digits`]), or the `ValueError` Python raised: text that
+/// is not decimal digits, or more than [`INT_MAX_STR_DIGITS`] of them (leading zeros count; CPython
+/// maps each Unicode digit to one ASCII digit before it counts).
+pub fn decimal_int(text: &str) -> std::result::Result<String, String> {
+    let value = decimal_digits(text).ok_or_else(|| {
+        format!(
+            "invalid literal for int() with base 10: {}",
+            pyjson::str_repr(text)
+        )
+    })?;
+    check_int_digits(text.chars().count())?;
+    Ok(value)
+}
+
+/// The value of a run of Unicode decimal digits (`str.isdecimal`, what `\d+` captures) as ASCII
+/// decimal without leading zeros, of any length; `None` when a character is not a decimal digit.
+/// This is the digit mapping only: [`decimal_int`] is Python's `int()` of such a run, with its
+/// limit on the number of digits.
 pub fn decimal_digits(text: &str) -> Option<String> {
     static DIGIT: std::sync::LazyLock<regex::Regex> = std::sync::LazyLock::new(|| regex(r"^\d$"));
     let is_digit = |c: char| {
@@ -916,6 +949,38 @@ mod tests {
         assert_eq!(decimal_digits("\u{665}\u{1d7d9}0"), Some("510".to_owned()));
         assert_eq!(decimal_digits("007"), Some("7".to_owned()));
         assert_eq!(decimal_digits("\u{b2}"), None);
+    }
+
+    /// Python 3.12's `int()` of a digit run: 4300 digits convert, 4301 refuse with its message;
+    /// leading zeros and Unicode digits count, one digit each.
+    #[test]
+    fn int_conversion_limit_is_pythons() {
+        let limit = |n: usize| {
+            format!("Exceeds the limit (4300 digits) for integer string conversion: value has {n} digits; use sys.set_int_max_str_digits() to increase the limit")
+        };
+        assert_eq!(check_int_digits(4300), Ok(()));
+        assert_eq!(check_int_digits(4301), Err(limit(4301)));
+        let run =
+            |n: usize, zero: char, one: char| format!("{}{one}", zero.to_string().repeat(n - 1));
+        assert_eq!(decimal_int(&run(4300, '0', '1')), Ok("1".to_owned()));
+        assert_eq!(decimal_int(&run(4301, '0', '1')), Err(limit(4301)));
+        assert_eq!(
+            decimal_int(&run(4300, '\u{660}', '\u{661}')),
+            Ok("1".to_owned())
+        );
+        assert_eq!(
+            decimal_int(&run(4302, '\u{660}', '\u{661}')),
+            Err(limit(4302))
+        );
+        assert_eq!(
+            decimal_int("\u{b2}"),
+            Err("invalid literal for int() with base 10: '\u{b2}'".to_owned())
+        );
+        // The digit mapping alone has no limit (what `\d+` matches, before `int()`).
+        assert_eq!(decimal_digits(&run(4301, '0', '7')), Some("7".to_owned()));
+        // The 64-bit `int` refuses long before the limit.
+        assert_eq!(int(&"1".repeat(20)), None);
+        assert_eq!(int(&"1".repeat(4301)), None);
     }
 
     #[test]
