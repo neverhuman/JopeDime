@@ -1671,13 +1671,15 @@ the conflicts as git left them, each side's diff since `8a55c4fef`, and the scri
 - **`docs/parity/capability-matrix.md`** (the W7-T01, W7-T05 and W7-D6 commits). Only the
   `## Counts` total conflicted with main's `learning-subcommand` rows; the rows merged cleanly.
   Each time the table was regenerated from the rows with `deploy/ci/parity-census.py check`
-  (a scripted replacement of the lines it recomputes), never merged by hand. The final tree
-  has 810 rows: moved 735, new 47, pending 1, dropped 20, lost 7.
+  (a scripted replacement of the lines it recomputes), never merged by hand. #117 (Python
+  removal P1) archives that tool; its Rust port is `jope-records parity-check`. The landed tree
+  on `f46a9048f` had 810 rows: moved 735, new 47, pending 1, dropped 20, lost 7.
 - **`deploy/ci/full-lane.sh`** (W7-D5). It conflicted with #116's test-routing block at the
   same place. Both are kept, before `touch nextest-started`: first #116's
   `check-test-routing.sh` calls, then W7-D5's `full-default` check that `scqd` exists, with its
-  digest. `rr2/python-p1-landing` has not merged, so the `scqd` path still comes from
-  `python3 deploy/ci/cargo-artifact.py target-dir`; no other line W7 adds names retired Python.
+  digest. `rr2/python-p1-landing` had not merged, so on `f46a9048f` the `scqd` path came from
+  `python3 deploy/ci/cargo-artifact.py target-dir`. Stacked on #117 it comes from
+  `cargo run -q --locked -p jope-ci -- cargo-artifact target-dir` (see "Stacked on #117" below).
 - **`crates/jope-engine/src/neural.rs` and `training.rs`** (`961ad2333`). PR #114 (W2-T04) and
   W7 each added a "read the verified bytes once" API for the same `rank_impl` sites. PR #114's
   API (`manifest::read_bound`, `neural::load_bound_model`, `AdamW::load_bound`,
@@ -1688,8 +1690,9 @@ the conflicts as git left them, each side's diff since `8a55c4fef`, and the scri
   `BoundedTraining::verified_input_bytes`, which PR #114's path-based API does not cover.
   `findings/w7-corrections-20260927.md` maps each rerouted use.
 - **`deploy/ci/coverage.json`, `findings/test-inventory.json` and `Cargo.lock`** merged
-  textually. The landed tree is checked by `coverage.py validate` and `jope-records
-  verify-test-inventory`: every W7 target (`bounded_census`, `bounded_launch`,
+  textually. The landed tree was checked by `coverage.py validate` (archived by #117; its Rust
+  port is `jope-records coverage validate`) and `jope-records verify-test-inventory`: every W7
+  target (`bounded_census`, `bounded_launch`,
   `bounded_transport`, `bounded_agent`, `bounded_smartcluster`, `bounded_training`,
   `bounded_grants`) has its coverage item and inventory entry.
 
@@ -1717,7 +1720,8 @@ paragraph changes no code). All ran on xbabe2, CPU only, with `CUDA_VISIBLE_DEVI
 
 - These gates pass: `cargo fmt --check`, `git diff --check`, `cargo check --workspace
   --all-targets`, `cargo check -p jope-parallel --features neural --all-targets`,
-  `coverage.py validate` (0 unassigned), `jope-records verify-test-inventory`, and
+  `coverage.py validate` (0 unassigned; archived by #117, its Rust port is `jope-records
+  coverage validate`), `jope-records verify-test-inventory`, and
   `deploy/ci/check.sh`. `check.sh` includes gitleaks over every reachable commit and the
   parity matrix (810 rows).
 - The `bounded_*` default targets pass 99 of 99: `bounded_run` 38, `bounded_run_recovery` 12,
@@ -1738,3 +1742,82 @@ paragraph changes no code). All ran on xbabe2, CPU only, with `CUDA_VISIBLE_DEVI
   - under `neural`, `teaching_store::read_once_tests::a_search_receipt_is_validated_from_the_bytes_its_ledger_commits`
     hit the default nextest profile's 360 s limit. It takes 243–290 s there; the `main`
     profile allows 1 200 s.
+
+## Stacked on #117 (`rr2/python-p1-landing`)
+
+PR #117 (`rr2/python-p1-landing` at `e8640b7b0`, 29 commits on `f46a9048f`) archives
+`deploy/ci/cargo-artifact.py` and ports it to `cargo run -q --locked -p jope-ci --
+cargo-artifact`. `rr2/w7-landing` (`97e51859b`, 18 commits on `f46a9048f`) is rebased onto it with
+`git rebase --onto e8640b7b0 f46a9048f rr2/w7-landing`. Authors and author dates are kept.
+`git range-diff` shows 14 patches unchanged and the 4 changed ones listed here. The
+records are `w7-stack-pre-20260928T032913Z` (the old head, a verified bundle of the 18 commits,
+and both bases) and `w7-stack-post-20260928T033432Z` (the verification, the range-diff, the
+commit map, the record comparison and the scripts used).
+
+**Conflicts and how they were resolved.**
+
+- **`docs/parity/capability-matrix.md`** (the W7-T01, W7-T05 and W7-D6 commits). As on
+  `f46a9048f`, only the `## Counts` total conflicted, this time with #117's rows for the
+  archived Python; the rows merged cleanly. Each time the table was regenerated from the rows
+  with `jope-records parity-check`, the Rust port of `deploy/ci/parity-census.py` (a scripted
+  replacement of the lines it recomputes), never merged by hand. Each commit message says so.
+  The tree has 811 rows: moved 355, new 48, pending 1, dropped 400, lost 7. It is #117's 803 rows
+  plus W7's eight `jope-native-loop` rows, and it keeps #117's `jope-ci` row (`new-bin` 15).
+- **`deploy/ci/coverage.json`, `findings/test-inventory.json` and `Cargo.lock`** merged with no
+  conflict. Each record item was compared with a three-way merge of `f46a9048f`, #117 and W7.
+  `coverage.json` matches that merge in every item but one: #117's 201 changed items, including
+  its `jope-ci` package and targets, and W7's seven. The one exception is the correction below.
+  `test-inventory.json` matches it in every item: #117's 182 and W7's 7. `Cargo.lock` passes
+  `cargo metadata --locked`.
+
+**W7-D5 on #117.** In the W7-D5 commit, `deploy/ci/full-lane.sh` now reads the `scqd` path from
+`cargo run -q --locked -p jope-ci -- cargo-artifact target-dir`. That is the same call
+`fast-lane.sh` and `retain-nextest.sh` make on #117. #116's routing block and W7-D5's check are
+still in the same order, both before `touch nextest-started`.
+
+**Correction in this record.** The same commit fixes the `coverage.json` scope of
+`bounded_smartcluster`. W7-T05 wrote it, and it still said `scqd` was "built from this workspace
+if absent". It now says what W7-D5 does: the fixture never builds `scqd`, `full-default`'s
+workspace test build produces it, and `full-lane.sh` checks the binary and records its digest
+before the tests run.
+
+**Retired Python in lines W7 adds.** Every line added in the 18 commits was searched for Python
+paths and for the `deploy/ci` tools that #117's `docs/archive/python-archive-manifest.json`
+archives. Only one of those lines ran retired Python: the `full-lane.sh` line above. Four
+sentences in "Landing on main" above named an archived tool as if it still ran:
+`parity-census.py check`, `coverage.py validate` (twice), and the `scqd` bullet's
+`python3 deploy/ci/cargo-artifact.py target-dir`. Each now says what ran at the time, that the
+tool is archived, and names its Rust port. The commit messages of the W7-T01 and W7-D6 landings
+still name `parity-census.py check`, which is what ran on `f46a9048f`.
+
+**Verification** (`w7-stack-post-20260928T033432Z`, at `99b6c0aec`; the commit that adds this
+section changes no code). All ran on xbabe2, CPU only, with `CUDA_VISIBLE_DEVICES=""` for
+`neural`:
+
+- The `rust-check` and `rust-test` lanes of `.github/workflows/ci.yml` ran as the workflow runs
+  them: `deploy/ci/receipt.py` wrapping `deploy/ci/fast-lane.sh`. Both passed, and both receipts
+  record a clean tree before and after.
+  - `rust-check`: the workspace check, `systemd_unit_paths` (4 of 4) and the MSRV check.
+  - `rust-test`: 1 585 of 1 585 passed, 25 skipped, over the 17 product crates, including
+    `jope-ci`.
+- These gates pass:
+  - `cargo fmt --check` and `git diff --check` over the stack;
+  - `cargo check --workspace --all-targets --locked`;
+  - `cargo check -p jope-parallel --features neural --all-targets --locked`;
+  - `jope-records coverage validate` (0 unassigned) and `jope-records verify-test-inventory`;
+  - `deploy/ci/parity-matrix.sh`, with and without `--no-build` (811 rows; `--help` lists 55
+    subcommands);
+  - `deploy/ci/check.sh`, whose gitleaks run scanned 534 commits and found no leaks.
+- Under `cargo nextest run -P main`, the `bounded_*` default targets pass 99 of 99. The fence
+  suites pass 85 of 85: `fit_boundary` 16, `view_contracts` 17, `gp_contracts` 8 and
+  `gp::fit_contract_tests` 44.
+- W7-D5's block was cut from `full-lane.sh` and run as `full-default` runs it. It recorded the
+  digest of `target/debug/scqd`, at the path Cargo's metadata names.
+- **Not re-run here:** the full lanes (`full-default`, `full-scratch` and `full-neural`) and the
+  `neural` tests. The landing verification above ran them on `f46a9048f`.
+
+**Next rebase.** After #117 merges, `git rebase --onto origin/main e8640b7b0 rr2/w7-landing`
+replays this stack. The upstream is `e8640b7b0`, not `f46a9048f`. The replay stays mechanical if
+the merged #117 has the tree of `e8640b7b0`, whether it is squashed or rebased. If #117 changes
+before it merges, or other PRs reach main first, the `## Counts` total can conflict again.
+Regenerate it with `jope-records parity-check`. The #117 SHAs cited here are branch SHAs.
