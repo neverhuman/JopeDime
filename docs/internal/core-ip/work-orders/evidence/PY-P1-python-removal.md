@@ -1306,6 +1306,278 @@ crates' tests (the ignored receipt replays included), the fences, `coverage vali
 `jope-records` test count against the matrix, the round-four harness, round two's and round
 three's harnesses, and the reviewer's probes.
 
+## Follow-up — review round five: fail-closed filesystem and value sweep
+
+An independent verifier of round four (`check-strict.sh`, 327 cases on `5f3de344e`, the originals
+from `f46a9048f`'s git bytes in scratch roots; report and cases kept in the pre-fix run below)
+found three more classes where a port accepted what the original tool refused:
+
+| # | Finding | Root cause | Change | Cases |
+| ---: | --- | --- | --- | --- |
+| 1 | `cargo-artifact nextest-config` wrote a configuration from `x = 07:32:60`, `1979-05-27T23:59:60Z`, `0000-01-01` and two more year-0000 datetimes; `tomllib` refused all five | the `toml` crate (0.8) reads a seconds field of 60 and the year 0000; the port parsed with it and read any value type | the nextest source may hold only the value types the committed `.config/nextest.toml` uses (tables, inline tables, strings, integers, booleans); a date, time or datetime of any form, a float or an array refuses, naming the key, after the `store` check and before any output exists (an exhaustive `match` on `toml::Value`, no catch-all) | cargo-artifact `negative-r5.json` (31) |
+| 2 | `parity-check` passed with `crates/jope-engine/src` or `python/src/jope` of mode 000, or `python/src/jope/tools` or `deploy/systemd` of mode 644 (listable, not searchable); the Python raised `PermissionError` | `main_rs.exists()`, `cli.exists()` and the tool and unit walks (`is_dir()`, `is_file()`) read every error as "absent" | `py::path_exists`, `path_is_dir`, `path_is_file`, `path_is_symlink`: `False` only where Python 3.12's pathlib answered `False` (`ENOENT`, `ENOTDIR`, `EBADF`, `ELOOP`, a NUL byte), any other error returned and refused; the walks list entries as `rglob("*")` listed them and ask `is_file()` of every one, as the Python did | `process-r5-sweep.json` (28) |
+| 3 | family growth read the pinned policy through `manifests -> <a directory outside the root whose resolved name exceeds PATH_MAX>`; the Python refused "pinned provenance policy escaped workspace custody" | `escapes()` took a `canonicalize()` error for "does not escape" (policy and reviewer key) | `escapes()` returns an outcome: `lstat` error malformed, a symlink escapes, a resolved path outside the root escapes, a name too long to resolve escapes (Python's non-strict `resolve()` built it and found it outside), any other resolution error malformed | family-growth `python-custody-r5.jsonl` (7) |
+
+Round four recorded the family-growth custody checks as "unchanged" on the claim that the read
+after a failed `canonicalize()` refuses where Python's `resolve()` went on. That was wrong: the read
+goes through the root's short path, which the kernel resolves, so it succeeded.
+
+**The sweep.** Every product line of the P1 ports and the helpers they call
+(`jope-records` `coverage`, `scope_check`, `parity`, `readme`, `py`, `pyjson`, `pycsv`, `error`;
+`jope-ci` `build_report`, `cargo_artifact`, `main`, `py`; `jope-engine` `family_growth`) was grepped
+for `.exists()`, `.is_dir()`, `.is_file()`, `is_symlink`, `try_exists`, `metadata(`,
+`canonicalize`, `read_dir`, `read_link`, `file_type()`, `filter_map(Result::ok)`, `.flatten()`,
+`.ok()`, `is_ok`/`is_err`, `unwrap_or*`, `if let Ok`/`let Ok(`, `Err(_)`, `current_dir`,
+`current_exe`, `env::var` and catch-all `_ =>` arms (`audit.sh`, kept in the post-fix run). The
+rule for each hit: an error other than "not there" refuses; an error inside a safety or custody
+check refuses; a value type the committed inputs do not hold refuses. The sweep found seven more
+places, fixed here with the verifier's three:
+
+| # | Where | Found | Now | Cases |
+| ---: | --- | --- | --- | --- |
+| 4 | parity-check's `src/bin` fallback (when `cargo metadata` fails) | `root.glob("crates/**/Cargo.toml")`, `glob("*.rs")` list entries of every kind by name; the port kept only regular files with an `rs` extension, so a directory, a dangling link or a bare `.rs` named like a source got no required row (the Python reported it missing), and a `Cargo.toml` that is a directory or a dangling link was skipped (the Python's `read_text` raised) | the globs listed by name (`fallback_bins`), each manifest read as the Python read it, `(crate/"src"/"main.rs").exists()` and `(crate/"src"/"bin").is_dir()` refusing as they raised | `process-r5-sweep.json` fallback cases |
+| 5 | README `reports` glob | an entry the listing could not read was skipped (`.flatten()`); a report whose name is not UTF-8 was skipped, so one extra report changed the Python's count (a refusal) but not the port's (a render) | entry errors refuse; the glob matches names as bytes; a matching name that is not UTF-8 refuses (stricter) | readme `negative-r5.json` (9) |
+| 6 | build-report `walk` | a subdirectory was typed by `stat` through its path, so in a directory that may be listed but not searched it was taken for a file and silently not entered; `os.walk` typed it by `d_type`, entered it and raised | subdirectories typed by the entry (`d_type`, else `lstat`); a link is listed and never entered (where `os.walk` listed it is not observable: both lists are `lstat`ed and nothing else is asked of a link); the `islink` check before entering refuses on error | build-report `negative-r5.json` scans (8) |
+| 7 | build-report `report`, unit files | `path.is_file()` read an error as "missing" and went on (to a successful report, given a configuration the port accepts); `HOME` unset was read as `""` and the path kept its doubled separators | `py::path_is_file` refuses where it raised; the unit directory is `Path.home() / ".config/systemd/user"` as pathlib spells it (trailing separators dropped, `/` for an empty `HOME`); an unset or undecodable `HOME` refuses (stricter) | build-report `negative-r5.json` units (7, a receipt replay) |
+| 8 | `os.path.abspath` (`py::abspath`, parity's `abspath`) | a relative path from a deleted working directory was taken relative to `/` (`current_dir().unwrap_or_default()`): `build-report scan <relative>` scanned the directory the relative path names from `/`; `os.getcwd()` raised | `abspath` returns the error; `scan`, custody resolution (`ResolveError::Cwd`) and parity's `src_path` refuse with `[Errno 2] No such file or directory` | build-report `scan-r5-relative-from-deleted-cwd`; unit test |
+| 9 | cargo-artifact `select` | `is_file()` of an executable under a directory that may not be searched: both refused, the port in its own words | the Python's caught `OSError` (`cargo-artifact: [Errno 13] Permission denied: '<path>'`) | cargo-artifact `select-r5-*` (3) |
+| 10 | build-report `report` start; `jope-ci` tools directory | an `INVOCATION_ID` that is not UTF-8 was written as `null`; the default tools directory fell back to the working directory when the executable could not be located | both refuse (the first stricter: the Python wrote the surrogate-escaped value) | unit tests |
+
+**The audit table.** Every hit of `audit.sh` in product code (doc comments and unit tests
+excluded), at the lines of this round's fixed tree, and the calls to the new fail-closed
+predicates, which the pattern does not match. Decisions: **fixed** (this round; the row says to
+what); **refuses** (the error is returned, `?` or `map_err`); **Python** (the Python's own
+non-error semantics: a `dict.get` default, a `Counter`, a comparison of unlike types, a lexical
+path step); **accessor** (a typed view returning `None`/`false` for another type, which every
+caller refuses or which is Python's own answer); **unreachable** (the default can never be
+taken, and why); **text** (a message, an exit status or a timestamp, no decision); **not a
+lookup** (the pattern matched a name).
+
+| file:line | pattern | decision |
+| --- | --- | --- |
+| `jope-records/src/coverage.rs:52` | `unwrap_or` | unreachable (`split` yields at least one part) |
+| `coverage.rs:141` | `.flatten()` | Python (`features.get(feature, [])`) |
+| `coverage.rs:154` | `current_dir` | not a lookup (the child's working directory) |
+| `coverage.rs:162` | `unwrap_or(-1)` | text (a refusal's exit status) |
+| `coverage.rs:192` | `_ =>` | Python (`Path.stem`) |
+| `coverage.rs:242` | `canonicalize` | refuses (stricter than a non-strict `resolve()` only for a missing root) |
+| `coverage.rs:527`, `:528` | `unwrap_or` | Python (`item.get("lanes", [])`, `item.get("dispositions", [])`) |
+| `coverage.rs:532` | `unwrap_or_default` | unreachable (`split`) |
+| `scope_check.rs:36`, `:118` | `current_dir` | not a lookup |
+| `parity.rs:177` | `unwrap_or_default` | Python (`parser_cmd.get(parent, "")`) |
+| `parity.rs:217` | `current_dir` | not a lookup |
+| `parity.rs:227`, `:817` | `canonicalize` | refuses |
+| `parity.rs:228`, `:270` | `metadata(` | not a lookup (`bins_from_metadata`) |
+| `parity.rs:246` | `current_dir` | fixed: `abspath` refuses a working directory it cannot read (`os.getcwd()` raised) instead of `/` |
+| `parity.rs:255` | `_ =>` | Python (lexical `abspath`) |
+| `parity.rs:306` | `_ =>` | Python (`kind in ("bin", "example")`) |
+| `parity.rs:369` | `read_dir` | fixed: a directory the walks cannot list refuses (pathlib skipped it: stricter), one that vanished is empty |
+| `parity.rs:380` | `file_type()` | fixed: refuses (was `.flatten()`, which skipped the entry) |
+| `parity.rs:397` | `.is_dir()` | fixed: descend by the entry's own type, as `Path.walk(follow_symlinks=False)` (was `path.is_dir()`, `false` on error) |
+| `parity.rs:352`, `:357`, `:362` | `path_exists` / `path_is_dir` / `path_is_file` | fixed: the fail-closed predicates behind every lookup below |
+| `parity.rs:461`, `:462` | `is_dir`, walk | fixed: `root.glob("crates/**/Cargo.toml")` lists every entry named `Cargo.toml`, of any kind; each read refuses as `read_text` raised |
+| `parity.rs:473` | `exists` | fixed (was `.exists()`): `src/main.rs` |
+| `parity.rs:483`, `:486`, `:487` | `is_dir`, list, name | fixed: `glob("*.rs")` by name, any kind (was `extension()` and `is_file()`) |
+| `parity.rs:521`, `:524`, `:525` | `is_dir`, walk, `is_file` | fixed (was `walk_files`: `read_dir` errors and `is_dir()`/`is_file()` errors read as absent) |
+| `parity.rs:543`, `:547`, `:548` | `is_dir`, walk, `is_file` | fixed (systemd units, as above) |
+| `parity.rs:752` | `exists` | fixed (was `main_rs.exists()`) |
+| `parity.rs:768` | `exists` | fixed (was `cli.exists()`) |
+| `parity.rs:821` | `path_exists` | refuses (round four) |
+| `parity.rs:431` | `unwrap_or` | text (a refusal's path) |
+| `parity.rs:494` | `unwrap_or_default` | unreachable (a listed entry has a name) |
+| `parity.rs:639` | `_ =>` | refuses by report (an unknown status is a problem that fails the check) |
+| `parity.rs:665`, `:671` | `unwrap_or(0)` | Python (`Counter`) |
+| `parity.rs:685` | `unwrap_or_else` | Python (`cells[0] if cells else line`) |
+| `parity.rs:724`, `:851` | `unwrap_or` | unreachable (`split`; a constant) |
+| `parity.rs:869` | `is_ok_and` | Python (a number that does not fit is outside WP4..WP12 and is reported) |
+| `parity.rs:892` | `_ =>` | Python (the `moved`/`new` branch) |
+| `parity.rs:927` | `.flatten()` | Python (`jope-py` commands only when `cli.py` exists) |
+| `readme.rs:115` | `unwrap_or(&NULL)` | accessor (`.get(key)`; each call follows a `dict_get`/`at` that refused a non-dict) |
+| `readme.rs:241`, `:245`, `:247`, `:306` | `_ =>` | accessor (numbers; a non-number refuses) |
+| `readme.rs:676` | `unwrap_or(0)` | Python (`scored.get(method, 0)`) |
+| `readme.rs:748`, `:749`, `:753` | `unwrap_or` | Python (`.get("split", {})`, …) |
+| `readme.rs:807` | `unwrap_or_default` | unreachable (`split`) |
+| `readme.rs:1000` | `read_dir` | fixed: entry errors refuse (was `.flatten()`), names matched as bytes, a matching name that is not UTF-8 refuses (stricter) |
+| `readme.rs:1071` | `kind_of(m)?` | fixed: `next(... if m["method"]["kind"] == "search")` reads each method until the first search one (was `position(... is_ok_and ...)`, which skipped an unreadable one; unreachable after `load_samecut`, fixed anyway) |
+| `readme.rs:1490` | `_ =>` | refuses |
+| `readme.rs:1560` | `path_exists` | fixed (was `.exists()`): a required input under a directory that may not be searched refuses as `p.exists()` raised |
+| `py.rs:83`, `:84` | `.ok()` | accessor (`to_i64`; `None` refuses) |
+| `py.rs:102` | `_ =>` | Python (no sign) |
+| `py.rs:157`, `:169`, `:188` | `_ =>` | accessor (`Key::as_str`, `iterate`, `contains`: `None` where Python raised `TypeError`, which callers raise) |
+| `py.rs:430`, `:435`, `:440`, `:444`–`:445` | `metadata(` | fixed: `path_exists`, `path_is_dir`, `path_is_file`, `path_is_symlink`, `Ok(false)` only for `ENOENT`, `ENOTDIR`, `EBADF`, `ELOOP` and a NUL byte (pathlib's `_ignore_error`), any other error returned |
+| `py.rs:456`, `:535` | `unwrap_or` | text (`strerror`) |
+| `py.rs:519` | `_ =>` | text (signal names) |
+| `py.rs:587`, `:682`, `:986`, `:1099`, `:1151` | `_ =>`/`unwrap_or` | Python (regex translation, lexical parts, `suffix`, sign, `splitlines`) |
+| `py.rs:610` | `_ =>` | refuses (`decimal_int`) |
+| `py.rs:648`–`:649` | `is_symlink` | not used by P1 code any more (was parity's walk); kept, documented, for the older record verifiers |
+| `py.rs:663` | `current_dir` | fixed: `abspath` returns the error (`ResolveError::Cwd` in `realpath`) |
+| `py.rs:799`–`:807` | `symlink_metadata`, `Err(_)` | Python (`_joinrealpath` in non-strict mode reads an `lstat` error as "not a link"; strict mode refuses; the non-strict result feeds only custody's `path_exists` checks, which refuse) |
+| `py.rs:827` | `read_link` | refuses |
+| `py.rs:859` | `metadata(` | Python (`Path.resolve()`'s `stat` of a non-strict result raises only for a loop; same consumers) |
+| `py.rs:1086` | `unwrap_or` | unreachable (re-parsing its own formatting) |
+| `py.rs:1131` | `.ok()` | accessor (`float`; `None` refuses) |
+| `pyjson.rs:172` | `unwrap_or_default` | unreachable (one side is an integer in that arm) |
+| `pyjson.rs:181` | `_ =>` | Python (unlike types are unequal) |
+| `pyjson.rs:212`–`:263` | `_ =>` | accessor (`integer`, `get`, `as_str`, `as_int`, `as_list`, `as_list_mut`, `as_dict`, `as_dict_mut`) |
+| `pyjson.rs:332` | `unwrap_or` | unreachable (a count beyond `i64`) |
+| `pyjson.rs:371`, `:372` | `unwrap_or` | unreachable (re-reading `{:e}`) |
+| `pyjson.rs:815`, `:856`, `:982`, `:1024`, `:1048` | `_ =>` | refuses (the JSON grammar's errors, or its number branch) |
+| `pyjson.rs:908` | `.ok()` | refuses (an invalid `\u` escape) |
+| `pycsv.rs:37` | `_ =>` | Python (not a line end) |
+| `error.rs:71` | `_ =>` | not a lookup (`Error::source`) |
+| `jope-ci/src/build_report.rs:69` | `unwrap_or` | text |
+| `build_report.rs:96`, `:182`, `:328` | `absolute` | fixed: a relative scan root from a deleted working directory refuses (was resolved against `/`) |
+| `build_report.rs:122`, `:355` | `unwrap_or_default` | text (a clock before 1970) |
+| `build_report.rs:153` | `symlink_metadata` | refuses |
+| `build_report.rs:188`, `:580` | `.is_dir()` | refuses (`false` refuses the root; `stat` after a strict resolution) |
+| `build_report.rs:197` | `read_dir` | refuses |
+| `build_report.rs:202`–`:203` | `file_type()` | fixed: a subdirectory is typed by the entry, as `os.walk` did (was `stat` through the path, `false` on error, so a subdirectory of a directory that may not be searched was taken for a file and not entered) |
+| `build_report.rs:215` | `lstat` | fixed: `islink` before entering refuses on error (was `is_ok_and`) |
+| `build_report.rs:293` | `_ =>` | refuses (`du_bytes`) |
+| `build_report.rs:318` | `unwrap_or` | unreachable (`split`) |
+| `build_report.rs:334`–`:345` | `lstat` | refuses |
+| `build_report.rs:438`, `:439` | `.ok()` | refuses (`--stale`) |
+| `build_report.rs:477` | `path_exists` | refuses (round four) |
+| `build_report.rs:501` | `env::var` | fixed: an `INVOCATION_ID` that is not UTF-8 refuses (stricter; was `null`) |
+| `build_report.rs:567` | `is_ok` | text (exit status) |
+| `build_report.rs:594`, `:644` | `env::var` | fixed: `Path.home()` spelled as pathlib spells it; unset or undecodable `HOME` refuses (stricter; was `""`) |
+| `build_report.rs:650` | `path_is_file` | fixed (was `path.is_file()`, an error recorded as a missing unit) |
+| `build_report.rs:636`–`:637`, `:664` | `current_exe`, `canonicalize` | refuses |
+| `build_report.rs:723` | `unwrap_or_default` | text (the diagnostic) |
+| `cargo_artifact.rs:41`, `:73` | `unwrap_or` | unreachable (a status that is neither an exit nor a signal; a return code outside `i32`) |
+| `cargo_artifact.rs:48`, `:51` | `env::var_os` | Python (`env.setdefault`) |
+| `cargo_artifact.rs:61`, `:349`, `:410` | `metadata(` | not a lookup |
+| `cargo_artifact.rs:197`, `:206`, `:215` | `unwrap_or` | Python (`message.get(...)`, `.get("kind", [])`) |
+| `cargo_artifact.rs:246` | `path_is_file` | fixed: the Python's caught `OSError` (was the port's own words) |
+| `cargo_artifact.rs:247` | `is_err` | refuses (`os.access` answered `False`) |
+| `cargo_artifact.rs:252` | `canonicalize` | refuses (stricter than a non-strict `resolve()` only in a race) |
+| `cargo_artifact.rs:265`–`:315` | `toml::Value` | fixed: the committed configuration's value types only, an exhaustive `match` (no catch-all) |
+| `main.rs:96`–`:97` | `current_exe` | fixed: refuses (was the working directory) |
+| `main.rs:281` | `unwrap_or` | unreachable (`& 0xff`) |
+| `jope-ci/src/py.rs:68` | `unwrap_or` | Python (an incomplete sequence at the end is the rest of the bytes) |
+| `family_growth.rs:90` | `_ =>` | unreachable (a JSON number has an `f64`) |
+| `family_growth.rs:120`, `:158` | `_ =>` | accessor (`number`, `key`) |
+| `family_growth.rs:135`, `:137`, `:204`, `:254`, `:709` | `_ =>`/`unwrap_or` | Python (`==` of unlike types, `dict.get`, `compare_digest`'s length, `memberships.get(cid, set())`) |
+| `family_growth.rs:172`, `:182`, `:196`, `:198`, `:378`, `:417`, `:431`, `:474`, `:488`, `:504` | `_ =>` | refuses |
+| `family_growth.rs:286` | `canonicalize` | refuses (`resolve(strict=True)`) |
+| `family_growth.rs:306`–`:316`, `:507`, `:629` | `symlink_metadata`, `canonicalize` | fixed: `escapes` refuses every error (was `is_ok_and`: an error was "not a link" and "does not escape") |
+
+**Stricter than the Python, each listed with its reason in the tests.** `PROCESS_STRICTER`:
+`parity-r5-tools-sub-unlistable`, `parity-r5-fallback-bin-unlistable`,
+`parity-r5-fallback-crate-unlistable` (a directory the walks cannot list; pathlib's globs skipped
+it). cargo-artifact `R5_STRICTER`: 17 nextest sources holding a date, time or datetime `tomllib`
+read (10), a float (3) or an array (4). Where both refuse in other words: cargo-artifact
+`R5_MESSAGE_DIFFERS` (the verifier's five dates and times and three the crate refuses too, in
+`tomllib`'s words and the port's), `README_MESSAGE_DIFFERS` (`readme-r5-report-name-not-utf8`,
+`readme-r5-reports-unlistable`). Outside the fixtures: an unset or undecodable `HOME` and an
+undecodable `INVOCATION_ID` refuse the report; a family-growth policy or key whose resolved name is
+too long refuses as an escape even inside the root; a README report whose name is not UTF-8
+refuses. On family growth's seven custody cases the refusal classes agree with the Python's: the
+escapes word for word (`ValueError`), a directory that may not be searched as malformed input
+(`PermissionError` there).
+
+**Reproduction first.** `p1-sweep5-pre-20260928T064944Z`: the binaries of `5f3de344e` (the
+verifier's build of the clean tree, SHA-256s in its identity), the verifier's report and summary,
+and a new differential harness, `sweep5.sh` (bash and jq; the original tools from `f46a9048f`'s
+git bytes in scratch roots), 83 cases: parity-check under modes 000 and 644 at every level the
+walks reach, the `src/bin` fallback's globs, the README reports glob and inputs, 28 nextest
+sources and three `select` modes, eight scans and a deleted working directory, and six reports
+with unit directories under modes and `HOME` spellings. 25 were refused by the Python and accepted
+by the port: the verifier's ten and fifteen more of the same classes (two deeper permission cases
+in the tool and unit walks, eight in the `src/bin` fallback, one README report name, two
+unsearchable scan directories, the deleted working directory, and a report that succeeded where
+the Python refused its unit files), and three receipts differed (the unit files' refusal and
+`HOME`'s spelling). The negative control (`negative-control/`): with the pre-fix sources
+(`HEAD`'s bytes) and the new tests and fixtures, every round-five replay fails
+(`process_cases_match_round_five`, `readme_benchmarks_matches_round_five`,
+`cargo_artifact_matches_round_five`, `scans_match_round_five`,
+`scan_from_a_deleted_working_directory_matches_round_five`, `units_match_round_five`,
+`custody_that_cannot_be_resolved_is_refused_as_python_refused_it`); the fixed sources were restored
+byte for byte (SHA-256 checked).
+
+**After.** `p1-sweep5-post-20260928T070302Z`, on the fix before it was committed (its diff is
+kept): the sweep finds no case refused by the Python and accepted by the port (0 of 83), no output
+or receipt difference, and 20 stricter cases, all of the listed classes. The verifier's
+`check-strict.sh`, rerun unchanged except for its scratch paths: 0 of 327 (its ten blocking cases
+refuse), no difference, 45 stricter (its 29 and 16 nextest sources holding a float or a datetime).
+Round four's harness (244 cases): none accepted where the Python refused, no difference, 54
+stricter (its 42 and 12 TOML float literals, now refused as a type the committed configuration
+does not use). Round two's (137) and round three's (132), rerun unchanged except for their scratch
+paths: none accepted where the Python refused, their stricter cases unchanged (9 and 17), and round
+three's one receipt difference (`br-int-report-config-4300`) unchanged. The 14 live guards on the
+real tree (`guards.sh`: coverage `validate` and `discover`, `rust-scope-check`,
+`readme-benchmarks --check`, `parity-check`, `verify-test-inventory`, cargo-artifact `target-dir`,
+`nextest-config` and its file, `build`, `select` with and without a path map, build-report `scan`
+of the lane's Cargo target and of `crates/`) give byte-identical exit status, stdout, stderr and
+files with the pre-fix binaries of `5f3de344e` and the post-fix ones (44 of 44 files).
+
+**Fixtures.** Captured in `p1-sweep5-capture-20260928T065333Z` by `cap5.sh` (every case as data;
+bash and jq only; the originals from `f46a9048f`'s git bytes in scratch roots), and for family
+growth by `capture_growth_custody_outputs_from_python` (`/usr/bin/python3 -I -B <policy> --verify`,
+the policy from the same commit), both kept in that run.
+
+| Fixture | Cases | Python exit 0 | Explicit refusal | Crash |
+| --- | ---: | ---: | ---: | ---: |
+| `jope-records/…/process-r5-sweep.json` | 28 | 11 | 5 (failing reports) | 12 |
+| `jope-records/…/readme/negative-r5.json` | 9 | 2 | 3 | 4 |
+| `jope-ci/…/cargo-artifact/negative-r5.json` | 31 | 20 | 11 | 0 |
+| `jope-ci/…/build-report/negative-r5.json` | 16 | 4 | 12 (5 `report failed`, 7 failure receipts) | 0 |
+| `jope-engine/…/family-growth/python-custody-r5.jsonl` | 7 | 1 | 4 (`ValueError`) | 2 (`PermissionError`) |
+| **total** | **91** | **38** | **35** | **18** |
+
+The process, README and scan replays rebuild each case's tree (directories, links, copies, a name
+given in hex) and apply its modes for the run only; a case that relies on a refused search is
+skipped with a note when the user may search anything (root).
+
+**Tests.** New test functions in existing targets, so `deploy/ci/coverage.json` and the test
+inventory are unchanged; the capability matrix's `jope-records::*` count is now 146.
+- `jope-records` `py.rs`: `predicates_refuse_what_pathlib_raised` (`realpath_resolves_symlinks_…`
+  adapted to `abspath`'s result); `parity.rs`: `walks_list_as_pathlib_listed_and_refuse_where_it_raised`;
+  `python_parity.rs`: `process_cases_match_round_five`, `readme_benchmarks_matches_round_five`.
+- `jope-ci` `build_report.rs`: `a_deleted_working_directory_refuses_relative_paths`,
+  `unit_files_are_located_as_path_home_located_them` (both in a child process, which owns its
+  working directory and environment); `abspath_is_lexical` adapted;
+  `build_report_python_parity.rs`: `scans_match_round_five`,
+  `scan_from_a_deleted_working_directory_matches_round_five`, `units_match_round_five` (ignored like
+  the other receipt replays); `cargo_artifact_python_parity.rs`: `cargo_artifact_matches_round_five`.
+- `jope-engine` `tests/families.rs`: `custody_that_cannot_be_resolved_is_refused_as_python_refused_it`
+  and the ignored `capture_growth_custody_outputs_from_python`, which drive `verify_assignment` with
+  the policy or reviewer-key directory moved out of the root behind a link whose resolved name
+  exceeds `PATH_MAX`, behind a short link, or made unsearchable.
+
+**Contract after round five.** As after round four, with these corrections: a filesystem question
+the ports ask is answered "absent" only where Python 3.12's pathlib answered `False`; every other
+error refuses, and inside a custody check any error refuses; the directory walks list what
+pathlib's globs listed and enter what `os.walk` or `Path.walk` entered, refusing a directory they
+cannot list; and the nextest source may hold only the value types of the committed configuration.
+
+**Commits.**
+- `jope-records, jope-ci: refuse filesystem errors pathlib raised and list what its globs listed (P1 review 5)`
+- `jope-ci: read only the committed nextest config's TOML types; print select's OSError (P1 review 5)`
+- `jope-engine: refuse family-growth custody that cannot be resolved (P1 review 5)`
+- `docs: record review round five of the P1 ports: fail-closed filesystem and value sweep (P1 review 5)`
+  (this section, the commit map and the matrix count)
+
+**Gate.** `p1-sweep5-gate2-20260928T072000Z`, on the head (this file's commit): the hosted `rust-check`
+and `rust-test` lanes run locally as `.github/workflows/ci.yml` runs them, fmt, whitespace, the
+workspace check, clippy with `-D warnings` on `jope-ci` and `jope-records` (and on `jope-parallel`,
+whose library already fails `-D warnings` with 84 findings in files this round does not touch, no
+finding in `family_growth.rs` or `tests/families.rs`), both crates' tests (the ignored receipt
+replays included), the family-growth tests, the fences, `coverage validate`,
+`verify-test-inventory`, `parity-matrix.sh --no-build`, `deploy/ci/check.sh`, the listed
+`jope-records` test count against the matrix, the round-five sweep, the verifier's harness, round
+four's, two's and three's harnesses, and round four's reviewer probes.
+
+A first run on the same code, `p1-sweep5-gate-20260928T071200Z`, passed every step but one,
+`engine-families`: the negative control had put the fixed sources back with their earlier
+modification times (`cp -p`), older than the `jope-parallel` library it had just built from the
+pre-fix `family_growth.rs`, so Cargo reused that library and
+`custody_that_cannot_be_resolved_is_refused_as_python_refused_it` failed as it fails on the pre-fix
+source. The other crates had been rebuilt after a later edit (the post-fix harness runs, which found
+no case accepted where the Python refused, used binaries built after it). The restored sources were
+touched, the family-growth tests passed on the rebuilt library, the negative-control script now
+restores with a fresh time, and the gate was run again.
+
 ## Commit map — `rr2/python-p1` to the landing
 
 The work above was committed on `rr2/python-p1` and landed through `rr2/python-p1-landing`: its
@@ -1365,6 +1637,10 @@ runs made before the rebase.
 | `jope-records, jope-ci: read every number from text through one strict grammar (P1 review 4)` | none, made later | landing only | — |
 | `jope-records, jope-ci: resolve custody symlinks before '..', as Path.resolve() did (P1 review 4)` | none, made later | landing only | — |
 | `docs: record review round four of the P1 ports: strict grammars (P1 review 4)` | none, made later | landing only | — |
+| `jope-records, jope-ci: refuse filesystem errors pathlib raised and list what its globs listed (P1 review 5)` | none, made later | landing only | — |
+| `jope-ci: read only the committed nextest config's TOML types; print select's OSError (P1 review 5)` | none, made later | landing only | — |
+| `jope-engine: refuse family-growth custody that cannot be resolved (P1 review 5)` | none, made later | landing only | — |
+| `docs: record review round five of the P1 ports: fail-closed filesystem and value sweep (P1 review 5)` | none, made later | landing only | — |
 
 "Patch-id" compares `git patch-id --stable` of the commit as submitted and its original. Each
 pair changes the same paths with the same status. The tree proof
