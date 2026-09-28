@@ -76,3 +76,11 @@ redline locks, jankurai identity, `hosted-source-authority.sh`, the private forg
 - The bundles' sha256 equal the `HeadObject` metadata of the archive objects (WP0 acceptance).
 - `docs/ORIGIN.md` records the snapshot commit `c9513e8288434a37ceedd4535b38f702bf35ad7f` of the
   source lineage the filter started from.
+
+## Amendments
+
+- 2026-09-28 (clean-base): the kernel-v1 snapshot `deploy/kernel-v1/source` was removed from the
+  tree, so the `deploy/ci/check.sh` leftover lint under Consequences no longer excludes it.
+  Restore it with the command in
+  [docs/archive/clean-base-manifest.json](../archive/clean-base-manifest.json). The decision
+  above is unchanged.

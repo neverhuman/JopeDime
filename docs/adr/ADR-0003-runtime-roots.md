@@ -69,3 +69,10 @@ must be empty; `deploy/ci/check.sh` reports the count until WP4 lands and fails 
   is empty (docs/legacy excluded).
 - Today on `main` (before PR #13) the remaining absolute defaults are the campaign CLIs'
   `DEFAULT_SOTARENA_ROOT` and the Golden42 node-lease path, both replaced by the table above.
+
+## Amendments
+
+- 2026-09-28 (clean-base): `deploy/kernel-v1/source` was removed from the tree, so its lint
+  exclusion under Consequences no longer applies to anything. Restore it with the command in
+  [docs/archive/clean-base-manifest.json](../archive/clean-base-manifest.json). The decision
+  above is unchanged.

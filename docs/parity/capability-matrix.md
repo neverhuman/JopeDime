@@ -22,11 +22,11 @@ you saw.
 | engine-example | 12 | 12 | 0 | 0 | 0 | 0 |
 | engine-subcommand | 104 | 88 | 16 | 0 | 0 | 0 |
 | jope-prime-command | 49 | 49 | 0 | 0 | 0 | 0 |
-| justfile-recipe | 6 | 6 | 0 | 0 | 0 | 0 |
+| justfile-recipe | 6 | 5 | 0 | 0 | 1 | 0 |
 | learning-subcommand | 19 | 0 | 19 | 0 | 0 | 0 |
 | new-bin | 15 | 0 | 15 | 0 | 0 | 0 |
 | new-example | 2 | 0 | 2 | 0 | 0 | 0 |
-| ops-sh | 1 | 1 | 0 | 0 | 0 | 0 |
+| ops-sh | 1 | 0 | 0 | 0 | 1 | 0 |
 | pipeline-subcommand | 3 | 0 | 3 | 0 | 0 | 0 |
 | root-binary | 56 | 56 | 0 | 0 | 0 | 0 |
 | script-py | 116 | 33 | 0 | 0 | 83 | 0 |
@@ -42,9 +42,9 @@ you saw.
 | vendored-bin | 6 | 6 | 0 | 0 | 0 | 0 |
 | vendored-example | 6 | 6 | 0 | 0 | 0 | 0 |
 | wire | 5 | 0 | 0 | 0 | 5 | 0 |
-| **total** | **818** | **355** | **55** | **1** | **400** | **7** |
+| **total** | **818** | **353** | **55** | **1** | **402** | **7** |
 
-`moved`/`new` rows without a covering test: 300.
+`moved`/`new` rows without a covering test: 298.
 
 ## Rows
 
@@ -574,7 +574,7 @@ you saw.
 | tool-sh | parallel/tools/node-mirror.sh | dropped | none | dropped: node mirror pull over ssh; plan: ssh/node scripts dropped in the history filter (archive: s3://veox-jopedime-archive-use2/git/20260918-jope-dime-all-refs.bundle) |  |
 | tool-sh | parallel/tools/research-readouts.sh | dropped | none | dropped: xbabe2 research-readouts cron wrapper; plan: ssh/node scripts dropped in the history filter (archive: s3://veox-jopedime-archive-use2/git/20260918-jope-dime-all-refs.bundle) |  |
 | tool-sh | parallel/tools/tui-recovery.sh | dropped | none | dropped: remote TUI recovery over ssh; plan: ssh/node scripts dropped in the history filter (archive: s3://veox-jopedime-archive-use2/git/20260918-jope-dime-all-refs.bundle) |  |
-| tool-sh | parallel/tools/tui-remote.sh | dropped | none | dropped: remote TUI over ssh (a frozen copy remains inside deploy/kernel-v1/source/tools/); plan: ssh/node scripts dropped in the history filter (archive: s3://veox-jopedime-archive-use2/git/20260918-jope-dime-all-refs.bundle) |  |
+| tool-sh | parallel/tools/tui-remote.sh | dropped | none | dropped: remote TUI over ssh; plan: ssh/node scripts dropped in the history filter (archive: s3://veox-jopedime-archive-use2/git/20260918-jope-dime-all-refs.bundle) |  |
 | tool-dir | parallel/tools/jain-math-registry-dump/ | xtools/registry-dump-legacy/ | none | moved | own Cargo workspace (dev-only regenerator of jain-math-executable-9fa594e2.json); byte-identical main.rs |
 | wire | parallel/tools/AGENT_CHAT.md | dropped | none | dropped: agent coordination wire, not a capability; plan: AGENT_CHAT wires dropped (archive: s3://veox-jopedime-archive-use2/git/20260918-jope-dime-all-refs.bundle) |  |
 | wire | parallel/tools/AGENT_CHAT.md.lock | dropped | none | dropped: agent coordination wire, not a capability; plan: AGENT_CHAT wires dropped (archive: s3://veox-jopedime-archive-use2/git/20260918-jope-dime-all-refs.bundle) |  |
@@ -730,13 +730,13 @@ you saw.
 | script-review | scripts/review/jope-review.sh | xtools/ops-sh/review/jope-review.sh | none | moved | review-epoch shell tooling; shellcheck-linted by deploy/ci/check.sh |
 | script-review | scripts/review/pack-review-payload.sh | xtools/ops-sh/review/pack-review-payload.sh | none | moved | review-epoch shell tooling; shellcheck-linted by deploy/ci/check.sh |
 | script-review | scripts/review/run-review-epoch.sh | xtools/ops-sh/review/run-review-epoch.sh | none | moved | review-epoch shell tooling; shellcheck-linted by deploy/ci/check.sh |
-| ops-sh | ops/ci/kernel-v1-product-build.sh | deploy/ci/kernel-v1-product-build.sh | none | moved |  |
+| ops-sh | ops/ci/kernel-v1-product-build.sh | dropped | none | dropped: frozen kernel-v1 lineage retired from the tree (clean-base; the script already referenced paths that no longer existed) (archive: s3://veox-jopedime-archive-use2/git/20260918-jope-dime-all-refs.bundle) | restore: `git checkout 4ff4e7b69 -- deploy/kernel-v1 deploy/ci/kernel-v1-product-build.sh deploy/docker/kernel-builder.Dockerfile deploy/docker/kernel-builder.Dockerfile.dockerignore` (docs/archive/clean-base-manifest.json) |
 | justfile-recipe | Justfile:required | justfile (required = ci-pr) | none | moved | alias kept; hosted gate is `just ci-pr` = hygiene + fmt + clippy + test-pr + python-check |
 | justfile-recipe | Justfile:fast | justfile (clippy) | none | moved | `cargo check --all-targets` is subsumed by `clippy --workspace --all-targets` |
 | justfile-recipe | Justfile:format | justfile (fmt) | none | moved |  |
 | justfile-recipe | Justfile:clippy | justfile (clippy) | none | moved | now workspace-wide |
 | justfile-recipe | Justfile:test | justfile (test-main) | none | moved | workspace-wide nextest `main` profile; `test-pr` is the hosted tier |
-| justfile-recipe | Justfile:kernel-v1-product-build | deploy/ci/kernel-v1-product-build.sh | none | moved | no just recipe yet; the script is the entry point (plan item 1: builds the current engine by default) |
+| justfile-recipe | Justfile:kernel-v1-product-build | dropped | none | dropped: frozen kernel-v1 lineage retired from the tree (clean-base); it never had a just recipe here, only the script (archive: s3://veox-jopedime-archive-use2/git/20260918-jope-dime-all-refs.bundle) | restore: `git checkout 4ff4e7b69 -- deploy/kernel-v1 deploy/ci/kernel-v1-product-build.sh deploy/docker/kernel-builder.Dockerfile deploy/docker/kernel-builder.Dockerfile.dockerignore` (docs/archive/clean-base-manifest.json) |
 | systemd-unit | systemd/jope-canary-executor.service | deploy/systemd/selfplay/jope-canary-executor.service.in (rendered by deploy/systemd/render.sh / jope-units-render) | none | moved | jope-dime-regressor::systemd_unit_paths (2 tests) exists but panics on the missing crates/jope-campaigns/systemd dir (B8, timing run 4235db6); re-pointed at deploy/systemd in WP4; templating (@JOPE_BUNDLE@ …) is WP4 |
 | systemd-unit | systemd/jope-causal-evidence.service | deploy/systemd/selfplay/jope-causal-evidence.service.in (rendered by deploy/systemd/render.sh / jope-units-render) | none | moved | jope-dime-regressor::systemd_unit_paths (2 tests) exists but panics on the missing crates/jope-campaigns/systemd dir (B8, timing run 4235db6); re-pointed at deploy/systemd in WP4; templating (@JOPE_BUNDLE@ …) is WP4 |
 | systemd-unit | systemd/jope-causal-pair-repair.service | deploy/systemd/selfplay/jope-causal-pair-repair.service.in (rendered by deploy/systemd/render.sh / jope-units-render) | none | moved | jope-dime-regressor::systemd_unit_paths (2 tests) exists but panics on the missing crates/jope-campaigns/systemd dir (B8, timing run 4235db6); re-pointed at deploy/systemd in WP4; templating (@JOPE_BUNDLE@ …) is WP4 |

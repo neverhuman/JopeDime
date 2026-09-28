@@ -28,7 +28,7 @@ members = [
   "crates/smartcluster/jainnode",
   "crates/smartcluster/scq",
 ]
-exclude = ["deploy/kernel-v1/source", "xtools/ot-export"]
+exclude = ["xtools/ot-export"]
 
 [workspace.package]
 version = "0.1.0"
