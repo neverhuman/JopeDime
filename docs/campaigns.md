@@ -72,7 +72,7 @@ Scores and receipts a campaign produces are appended to the learning store's `sc
 row by row in `docs/parity/capability-matrix.md` (PR
 [#12](https://github.com/veox-ai/JopeDime/pull/12)).
 
-## Targeted evolution of one dataset (`jope pipeline evolve`, CPU)
+## Targeted search on one dataset (`jope pipeline evolve`, CPU)
 
 The panels above measure many datasets under one protocol. A targeted campaign searches **one**
 chosen dataset over rounds and turns each round's champion into the next round's starting point.
@@ -110,15 +110,15 @@ jope pipeline score --receipt <campaign>/round-003/receipt.json --split test   #
   names the dataset, the cuts and the source commit that measured (never teaching-eligible), and
   the champion bank keeps improved champions as `jope.pipeline-seeds/v1` targets for later
   campaigns, exported one comparison identity at a time.
-- **The sealed test split** is read only by `jope pipeline score`, once per (dataset, genome)
+- **The sealed test split** is read only by `jope pipeline score`, once per (dataset, candidate)
   in the registry it is given, and nothing in the tools reads a test score back into selection,
   seeding or the bank. The tools cannot stop an operator from scoring several champions (every
   round, the control) and keeping the test-best, which would make the test split a selection
-  input; each score receipt therefore lists the genomes already scored on that dataset's test
-  split in the same registry. Report the test score of a genome chosen *before* any test score
+  input; each score receipt therefore lists the candidates already scored on that dataset's test
+  split in the same registry. Report the test score of a candidate chosen *before* any test score
   was seen, and name every other look.
 - **Cores**: `--threads` and `--islands` multiply into the worker count, which is refused above
   the CPUs the process may use or an explicit `--cpu-ceiling`; no decision depends on it.
 
-Command reference: [`docs/pipeline.md`](pipeline.md) ("Targeted evolution", "Test-split
+Command reference: [`docs/pipeline.md`](pipeline.md) ("Targeted search", "Test-split
 scoring") and [`docs/learning.md`](learning.md) ("Pipeline champions", "The champion bank").

@@ -53,8 +53,8 @@ the exploration reason and record comparison as `not_requested`.
 export format, and what `jope pipeline evolve` writes per round). `--incumbent <receipt.json>`
 takes a parent run's receipt: it is re-derived from that run's own evidence (prepared cuts,
 every cut's `search.json` and `observations.json`, the selection bit for bit, and the emitted
-files) and refused if anything disagrees; its selected genome is offered first. Offered genomes
-are canonicalised, deduplicated (the bootstrap is always in generation 0 already) and capped at
+files) and refused if anything disagrees; its selected candidate is offered first. Offered
+candidates are canonicalised, deduplicated (the bootstrap is always in generation 0 already) and capped at
 four, then enter generation 0 right after the bootstrap with origin `incumbent`. They spend
 evaluations like any other candidate and are re-measured on this run's cuts: no score is carried
 over. A budget whose exploration allowance cannot measure the bootstrap plus every seed on each
@@ -63,7 +63,7 @@ cut is refused before anything is written, and the seconds bound never skips the
 `deadline_overrun`), so every seed has a generation-0 measurement on every cut, which is what
 `verify-receipt --evidence` requires. The random draws after them are what the seconds bound
 stops. The receipt's `search.seeding` records the offered
-count, each admitted seed's genome, sha256 and source, the parent receipt's sha256 and the seeds
+count, each admitted seed's `genome`, sha256 and source, the parent receipt's sha256 and the seeds
 file's sha256; the v3 validator requires every seed to have been attempted on every requested
 cut. Because the parent's champion is re-measured on the same cuts, a seeded run's champion is
 never worse than its seed there.
@@ -92,7 +92,7 @@ stack, aborting the process, at another.
 
 `--islands M` runs M independent random streams over the same cuts. Island 0 is `--rng-seed`
 itself, so one island is the plain search. Islands share each cut's evaluation budget and the
-rule that no genome is fitted twice on a cut; a genome another island already measured joins
+rule that no candidate is fitted twice on a cut; a candidate another island already measured joins
 the drawing island's candidates with its existing score. Every `--migration-interval K`
 generations (default 4) each island's top-1 is carried into every other island's elites; it
 enters only if it beats one of them, and a migrant is never re-fitted. Observations carry their
@@ -108,7 +108,7 @@ CPUs `sched_getaffinity` allows, `available_parallelism`, or `--cpu-ceiling <mil
 stops a run between evaluations: in-flight fits finish, nothing new starts, no receipt is
 written, and the process exits 143. A second signal exits at once.
 
-## Targeted evolution (`jope pipeline evolve`)
+## Targeted search (`jope pipeline evolve`)
 
 ```sh
 jope pipeline evolve --dataset datasets/test/uci-parkinsons-telemonitoring --rounds 3 --control \
@@ -133,14 +133,14 @@ control's), and one control on one stream cannot separate seeding from that extr
 noise.
 
 Every refusal a round could make is made before the output directory is created: the counts,
-budget and parallelism; round 1's seeds (a genome that is not a pipeline, or more seeds than the
+budget and parallelism; round 1's seeds (a seed that is not a pipeline, or more seeds than the
 budget can re-measure); a dataset that does not resolve, is not a regression task or does not
 parse; and, with more than one round, a budget whose exploration allowance cannot re-measure the
 four seeds a later round may carry. A refused command leaves nothing behind, so the corrected
 command can be re-run into the same `--output`.
 
 `lineage.json` (`jope.pipeline-lineage/v1`) is rewritten atomically and fsynced after each
-completed round: per round the selected genome and program sha256, the mean held-out RMSE, R^2
+completed round: per round the `selected_genome` and program sha256, the mean held-out RMSE, R^2
 and train R^2 on the identical cuts, the parent receipt sha256, the seed origin and seeds, each
 cut's per-generation best-so-far and stop reasons, the generation-1+ measurements and the
 receipt's stage seconds. A round interrupted by a signal writes no receipt and never enters it.
@@ -149,31 +149,31 @@ checks the chain: same dataset, cuts, budget and island model; each parent is th
 receipt; each round's seeds are exactly the previous round's champion and runners-up; the
 recorded numbers are what the receipts show; no champion got worse. `--require-bred-candidates`
 also demands a measured candidate bred in generation 1 or later in every round: the search ran
-past its starting population, which says nothing about whether anything it bred was better. The
+past the candidates it started from, which says nothing about whether anything it bred was better. The
 report says that separately: `champion_found_in_round` per round (the champion is neither the
 bootstrap nor one of the seeds the round started from, so the round's own search produced it)
 and `improved_on_previous_round` (strictly lower mean held-out RMSE than the round before);
 `jope pipeline evolve` prints each round's champion as found in the round, carried from its
 seeds, or the bootstrap.
 
-Evolve never writes to the learning store. HWM ingest and the champion bank are separate
+`jope pipeline evolve` never writes to the learning store. HWM ingest and the champion bank are separate
 `jope-learning` steps over its outputs (see `docs/learning.md`).
 
 ## Test-split scoring (`jope pipeline score --split test`)
 
 Everything above measures on the training rows only. `jope pipeline score --receipt <r> --split
 test` re-derives the receipt, re-resolves the sha-verified dataset (it must be the dataset and
-`train.csv` the search measured), refits the selected genome on every `train.csv` row and scores
+`train.csv` the search measured), refits the selected candidate on every `train.csv` row and scores
 it on `test.csv`, writing `jope.pipeline-test-score/v1` to
 `<registry>/<dataset_hash>/<program_sha256>.json` (default registry
 `$JOPE_STATE/pipeline/test-scores`). The path is checked before any fit and the file is created
-exclusively, so each (dataset, genome) pair is scored once in that registry: a repeat from the
-same receipt, or from any other run that selected the same genome, is refused. Nothing in the
+exclusively, so each (dataset, candidate) pair is scored once in that registry: a repeat from the
+same receipt, or from any other run that selected the same candidate, is refused. Nothing in the
 pipeline reads a score back and the run's receipt is not touched, so the tools never feed it to
 selection. What they cannot enforce is the operator's side: the registry is a local record the
 caller chooses (a new `--registry` or `$JOPE_STATE` starts an empty one), and scoring several
-genomes of one dataset and keeping the test-best would make the test split a selection input.
-Each score receipt therefore records `earlier_looks`, the genomes already scored on that
+candidates of one dataset and keeping the test-best would make the test split a selection input.
+Each score receipt therefore records `earlier_looks`, the candidates already scored on that
 dataset's test split in the same registry, and the command warns when there are any.
 
 Verification: `cargo test --locked -p jope-pipeline` exercises budget exhaustion,
