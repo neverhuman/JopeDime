@@ -81,6 +81,15 @@ rebase merges only (linear history); the branch is deleted on merge.
 - A CI lane: keep pull-request lanes hosted, credential-free and under 35 billed minutes; heavy
   or GPU work belongs to main/nightly on the self-hosted runner (`docs/runbooks/runner.md`).
 
+## Tests
+
+A test that needs files on disk takes a scratch directory from `tempfile` (removed when the handle
+drops, also when the test panics), not a fixed name under `std::env::temp_dir()`, which is left
+behind on every run. Local runs set `TMPDIR` to a directory outside the checkout and outside
+`/tmp`, for example `~/.cache/jope-test-tmp/<lane>`. Inside the checkout, scratch directories sit
+under the tracked `.jope-home` marker and break `jope-paths`' home-resolution test; `/tmp` on the
+build hosts is shared by every tenant and emptied at boot.
+
 ## Releases
 
 `just bump X.Y.Z` sets the version everywhere `deploy/ci/version-consistency.sh` checks, then a

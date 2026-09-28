@@ -49,17 +49,17 @@ fn audit_expression_failures_match_rust_under_sanitizers() {
             .map(f64::to_bits)
             .collect();
         let artifact = emit_fitted_cpp17(&model).unwrap();
-        let directory = std::env::temp_dir().join(format!(
-            "kernel-expression-safety-{}-{index}",
-            std::process::id()
-        ));
-        std::fs::create_dir_all(&directory).unwrap();
+        let scratch = tempfile::Builder::new()
+            .prefix(&format!("kernel-expression-safety-{index}-"))
+            .tempdir()
+            .unwrap();
+        let directory = scratch.path();
         assert_eq!(
-            compile_and_run(&artifact.source, &directory, true),
+            compile_and_run(&artifact.source, directory, true),
             expected,
             "{source}"
         );
-        std::fs::remove_dir_all(directory).unwrap();
+        scratch.close().unwrap();
     }
 }
 
@@ -191,15 +191,14 @@ fn fitted_numeric_pipeline_is_deterministic_strict_and_bit_exact() {
         .into_iter()
         .map(f64::to_bits)
         .collect::<Vec<_>>();
-    let directory = std::env::temp_dir().join(format!(
-        "feat-math-advanced-v3-fitted-cpp-{}",
-        std::process::id()
-    ));
-    let _ = std::fs::remove_dir_all(&directory);
-    std::fs::create_dir_all(&directory).unwrap();
-    assert_eq!(compile_and_run(&first.source, &directory, false), expected);
-    assert_eq!(compile_and_run(&first.source, &directory, true), expected);
-    std::fs::remove_dir_all(directory).unwrap();
+    let scratch = tempfile::Builder::new()
+        .prefix("feat-math-advanced-v3-fitted-cpp-")
+        .tempdir()
+        .unwrap();
+    let directory = scratch.path();
+    assert_eq!(compile_and_run(&first.source, directory, false), expected);
+    assert_eq!(compile_and_run(&first.source, directory, true), expected);
+    scratch.close().unwrap();
 }
 
 #[test]
@@ -223,17 +222,16 @@ fn ordered_numeric_row_semantics_matches_bits() {
         .into_iter()
         .map(f64::to_bits)
         .collect::<Vec<_>>();
-    let directory = std::env::temp_dir().join(format!(
-        "feat-math-advanced-v3-fitted-cpp-ordered-{}",
-        std::process::id()
-    ));
-    let _ = std::fs::remove_dir_all(&directory);
-    std::fs::create_dir_all(&directory).unwrap();
+    let scratch = tempfile::Builder::new()
+        .prefix("feat-math-advanced-v3-fitted-cpp-ordered-")
+        .tempdir()
+        .unwrap();
+    let directory = scratch.path();
     assert_eq!(
-        compile_and_run(&artifact.source, &directory, false),
+        compile_and_run(&artifact.source, directory, false),
         expected
     );
-    std::fs::remove_dir_all(directory).unwrap();
+    scratch.close().unwrap();
 }
 
 #[test]
@@ -257,12 +255,11 @@ fn iid_live_transform_and_regression_head_corpus_matches_bits() {
         "(pipe X (target kind=winsor q=0.05) (input numeric=median) (standardize) (ridge))",
         "(pipe X (target kind=zscore) (input numeric=median) (standardize) (ridge))",
     ];
-    let directory = std::env::temp_dir().join(format!(
-        "feat-math-advanced-v3-fitted-cpp-corpus-{}",
-        std::process::id()
-    ));
-    let _ = std::fs::remove_dir_all(&directory);
-    std::fs::create_dir_all(&directory).unwrap();
+    let scratch = tempfile::Builder::new()
+        .prefix("feat-math-advanced-v3-fitted-cpp-corpus-")
+        .tempdir()
+        .unwrap();
+    let directory = scratch.path();
     for (index, source) in cases.iter().enumerate() {
         let genome = GenomeIr::parse(source).unwrap();
         let model = fit_table(&genome, &task(), &numeric_schema(), &training_table(), &y)
@@ -276,12 +273,12 @@ fn iid_live_transform_and_regression_head_corpus_matches_bits() {
             .map(f64::to_bits)
             .collect::<Vec<_>>();
         assert_eq!(
-            compile_and_run(&artifact.source, &directory, false),
+            compile_and_run(&artifact.source, directory, false),
             expected,
             "case {index}: {source}"
         );
     }
-    std::fs::remove_dir_all(directory).unwrap();
+    scratch.close().unwrap();
 }
 
 #[test]
@@ -309,12 +306,11 @@ fn legacy_row_and_expression_transform_corpus_matches_bits() {
         "(sym affine \"sigmoid(col(0)) + 0.5*col(1)\")",
         "(portfolio (member (pipe X (ridge))) (blend folds=5 guard=clip kind=nnls repeats=1))",
     ];
-    let directory = std::env::temp_dir().join(format!(
-        "feat-math-advanced-v3-fitted-cpp-row-corpus-{}",
-        std::process::id()
-    ));
-    let _ = std::fs::remove_dir_all(&directory);
-    std::fs::create_dir_all(&directory).unwrap();
+    let scratch = tempfile::Builder::new()
+        .prefix("feat-math-advanced-v3-fitted-cpp-row-corpus-")
+        .tempdir()
+        .unwrap();
+    let directory = scratch.path();
     for (index, source) in cases.iter().enumerate() {
         let genome = GenomeIr::parse(source).unwrap();
         let model = fit_legacy_numeric_bound(&genome, &train, &y)
@@ -338,7 +334,7 @@ fn legacy_row_and_expression_transform_corpus_matches_bits() {
         assert_eq!(
             compile_typed(
                 &artifact.source,
-                &directory,
+                directory,
                 false,
                 &values,
                 &missing,
@@ -349,7 +345,7 @@ fn legacy_row_and_expression_transform_corpus_matches_bits() {
             "case {index}: {source}"
         );
     }
-    std::fs::remove_dir_all(directory).unwrap();
+    scratch.close().unwrap();
 }
 
 #[test]
@@ -434,12 +430,11 @@ fn complete_legacy_transform_registry_matches_bits() {
     .unwrap();
     let values = test.iter().flatten().copied().collect::<Vec<_>>();
     let missing = vec![0; values.len()];
-    let directory = std::env::temp_dir().join(format!(
-        "feat-math-advanced-v3-fitted-cpp-all-legacy-ops-{}",
-        std::process::id()
-    ));
-    let _ = std::fs::remove_dir_all(&directory);
-    std::fs::create_dir_all(&directory).unwrap();
+    let scratch = tempfile::Builder::new()
+        .prefix("feat-math-advanced-v3-fitted-cpp-all-legacy-ops-")
+        .tempdir()
+        .unwrap();
+    let directory = scratch.path();
     for (index, source) in cases.iter().enumerate() {
         let genome = GenomeIr::parse(source).unwrap();
         let legacy = fit_legacy_numeric_bound(&genome, &train, &y)
@@ -476,7 +471,7 @@ fn complete_legacy_transform_registry_matches_bits() {
         assert_eq!(
             compile_typed(
                 &artifact.source,
-                &directory,
+                directory,
                 false,
                 &values,
                 &missing,
@@ -487,7 +482,7 @@ fn complete_legacy_transform_registry_matches_bits() {
             "case {index}: {source}"
         );
     }
-    std::fs::remove_dir_all(directory).unwrap();
+    scratch.close().unwrap();
 }
 
 #[test]
@@ -502,12 +497,11 @@ fn iid_live_binary_head_and_calibration_corpus_matches_bits() {
         "(pipe X (input numeric=median missing=indicator) (gam_boost rounds=8 bins=4 calibration=isotonic threshold=youden))",
         "(pipe X (input numeric=median missing=indicator) (portfolio))",
     ];
-    let directory = std::env::temp_dir().join(format!(
-        "feat-math-advanced-v3-fitted-cpp-binary-{}",
-        std::process::id()
-    ));
-    let _ = std::fs::remove_dir_all(&directory);
-    std::fs::create_dir_all(&directory).unwrap();
+    let scratch = tempfile::Builder::new()
+        .prefix("feat-math-advanced-v3-fitted-cpp-binary-")
+        .tempdir()
+        .unwrap();
+    let directory = scratch.path();
     for (index, source) in cases.iter().enumerate() {
         let genome = GenomeIr::parse(source).unwrap();
         let model = fit_table(&genome, &task, &numeric_schema(), &training_table(), &y)
@@ -521,12 +515,12 @@ fn iid_live_binary_head_and_calibration_corpus_matches_bits() {
             .map(f64::to_bits)
             .collect::<Vec<_>>();
         assert_eq!(
-            compile_and_run(&artifact.source, &directory, false),
+            compile_and_run(&artifact.source, directory, false),
             expected,
             "case {index}: {source}"
         );
     }
-    std::fs::remove_dir_all(directory).unwrap();
+    scratch.close().unwrap();
 }
 
 #[test]
@@ -546,12 +540,11 @@ fn iid_categorical_codec_modes_match_bits() {
     let y = [0.1, 0.4, 0.2, 0.9, 1.1, 1.6, 1.4, 2.1, 2.4, 2.9];
     let values = [0.125, 0.0, 0.0, 1.0, 2.125, -1.0];
     let missing = [0, 0, 1, 0, 0, 0];
-    let directory = std::env::temp_dir().join(format!(
-        "feat-math-advanced-v3-fitted-cpp-categorical-{}",
-        std::process::id()
-    ));
-    let _ = std::fs::remove_dir_all(&directory);
-    std::fs::create_dir_all(&directory).unwrap();
+    let scratch = tempfile::Builder::new()
+        .prefix("feat-math-advanced-v3-fitted-cpp-categorical-")
+        .tempdir()
+        .unwrap();
+    let directory = scratch.path();
     for mode in ["native", "frequency", "onehot", "ordered", "hybrid"] {
         let genome = GenomeIr::parse(&format!(
             "(pipe X (input numeric=median missing=indicator categorical={mode} max_onehot=16 min_count=1 prior=10 folds=5) (ridge))"
@@ -569,12 +562,12 @@ fn iid_categorical_codec_modes_match_bits() {
             .map(f64::to_bits)
             .collect::<Vec<_>>();
         assert_eq!(
-            compile_typed(&artifact.source, &directory, false, &values, &missing, 3, 2),
+            compile_typed(&artifact.source, directory, false, &values, &missing, 3, 2),
             expected,
             "categorical mode {mode}"
         );
     }
-    std::fs::remove_dir_all(directory).unwrap();
+    scratch.close().unwrap();
 }
 
 #[test]
@@ -610,17 +603,16 @@ fn ordered_historical_categorical_state_matches_bits() {
         .collect::<Vec<_>>();
     let values = [1.0, 6.0, 0.0, 2.0, 6.0, 1.0, 3.0, 1.0, 0.0, 1.0, 7.0, -1.0];
     let missing = [0; 12];
-    let directory = std::env::temp_dir().join(format!(
-        "feat-math-advanced-v3-fitted-cpp-historical-{}",
-        std::process::id()
-    ));
-    let _ = std::fs::remove_dir_all(&directory);
-    std::fs::create_dir_all(&directory).unwrap();
+    let scratch = tempfile::Builder::new()
+        .prefix("feat-math-advanced-v3-fitted-cpp-historical-")
+        .tempdir()
+        .unwrap();
+    let directory = scratch.path();
     assert_eq!(
-        compile_typed(&artifact.source, &directory, false, &values, &missing, 4, 3,),
+        compile_typed(&artifact.source, directory, false, &values, &missing, 4, 3,),
         expected
     );
-    std::fs::remove_dir_all(directory).unwrap();
+    scratch.close().unwrap();
 }
 
 #[test]
@@ -646,12 +638,11 @@ fn table_aware_lag_and_roll_match_bits_with_fitted_tails() {
         "(pipe X (input numeric=median categorical=native) (lag k=2 append=true) (ridge))",
         "(pipe X (input numeric=median categorical=native) (roll k=3 append=true) (ridge))",
     ];
-    let directory = std::env::temp_dir().join(format!(
-        "feat-math-advanced-v3-fitted-cpp-table-ops-{}",
-        std::process::id()
-    ));
-    let _ = std::fs::remove_dir_all(&directory);
-    std::fs::create_dir_all(&directory).unwrap();
+    let scratch = tempfile::Builder::new()
+        .prefix("feat-math-advanced-v3-fitted-cpp-table-ops-")
+        .tempdir()
+        .unwrap();
+    let directory = scratch.path();
     for source in cases {
         let model = fit_table(
             &GenomeIr::parse(source).unwrap(),
@@ -672,7 +663,7 @@ fn table_aware_lag_and_roll_match_bits_with_fitted_tails() {
         assert_eq!(
             compile_typed(
                 &artifact.source,
-                &directory,
+                directory,
                 false,
                 &encoded.values,
                 &encoded.missing,
@@ -683,7 +674,7 @@ fn table_aware_lag_and_roll_match_bits_with_fitted_tails() {
             "{source}"
         );
     }
-    std::fs::remove_dir_all(directory).unwrap();
+    scratch.close().unwrap();
 }
 
 fn bound_with_serialized_legacy_head(source: &str, y: &[f64]) -> BoundModel {
@@ -735,12 +726,11 @@ fn admitted_serialized_legacy_head_corpus_matches_bits() {
         "(pipe X (portfolio folds=5 repeats=1))",
         "(pipe X (portfolio preset=none add1=group_mean folds=5 repeats=1))",
     ];
-    let directory = std::env::temp_dir().join(format!(
-        "feat-math-advanced-v3-fitted-cpp-legacy-heads-{}",
-        std::process::id()
-    ));
-    let _ = std::fs::remove_dir_all(&directory);
-    std::fs::create_dir_all(&directory).unwrap();
+    let scratch = tempfile::Builder::new()
+        .prefix("feat-math-advanced-v3-fitted-cpp-legacy-heads-")
+        .tempdir()
+        .unwrap();
+    let directory = scratch.path();
     for (index, source) in cases.iter().enumerate() {
         let model = bound_with_serialized_legacy_head(source, &y);
         model.validate_binding().unwrap();
@@ -753,12 +743,12 @@ fn admitted_serialized_legacy_head_corpus_matches_bits() {
             .map(f64::to_bits)
             .collect::<Vec<_>>();
         assert_eq!(
-            compile_and_run(&artifact.source, &directory, false),
+            compile_and_run(&artifact.source, directory, false),
             expected,
             "case {index}: {source}"
         );
     }
-    std::fs::remove_dir_all(directory).unwrap();
+    scratch.close().unwrap();
 }
 
 #[test]
@@ -795,12 +785,11 @@ fn nontrivial_fitted_legacy_head_states_match_bits() {
     ];
     let values = test.iter().flatten().copied().collect::<Vec<_>>();
     let missing = vec![0; values.len()];
-    let directory = std::env::temp_dir().join(format!(
-        "feat-math-advanced-v3-fitted-cpp-nontrivial-heads-{}",
-        std::process::id()
-    ));
-    let _ = std::fs::remove_dir_all(&directory);
-    std::fs::create_dir_all(&directory).unwrap();
+    let scratch = tempfile::Builder::new()
+        .prefix("feat-math-advanced-v3-fitted-cpp-nontrivial-heads-")
+        .tempdir()
+        .unwrap();
+    let directory = scratch.path();
     for (index, source) in cases.iter().enumerate() {
         let model = fit_legacy_numeric_bound(&GenomeIr::parse(source).unwrap(), &train, &y)
             .unwrap_or_else(|error| panic!("case {index} fit: {error}"));
@@ -845,7 +834,7 @@ fn nontrivial_fitted_legacy_head_states_match_bits() {
                 assert_eq!(
                     compile_typed(
                         &member_artifact.source,
-                        &directory,
+                        directory,
                         false,
                         &values,
                         &missing,
@@ -861,7 +850,7 @@ fn nontrivial_fitted_legacy_head_states_match_bits() {
         assert_eq!(
             compile_typed(
                 &artifact.source,
-                &directory,
+                directory,
                 false,
                 &values,
                 &missing,
@@ -872,7 +861,7 @@ fn nontrivial_fitted_legacy_head_states_match_bits() {
             "case {index}: {source}"
         );
     }
-    std::fs::remove_dir_all(directory).unwrap();
+    scratch.close().unwrap();
 }
 
 #[test]
@@ -902,15 +891,14 @@ fn frozen_legacy_pipeline_can_cross_the_bound_cpp_bridge() {
         .collect::<Vec<_>>();
     let values = test_rows.into_iter().flatten().collect::<Vec<_>>();
     let missing = vec![0; values.len()];
-    let directory = std::env::temp_dir().join(format!(
-        "feat-math-advanced-v3-fitted-cpp-legacy-bridge-{}",
-        std::process::id()
-    ));
-    let _ = std::fs::remove_dir_all(&directory);
-    std::fs::create_dir_all(&directory).unwrap();
+    let scratch = tempfile::Builder::new()
+        .prefix("feat-math-advanced-v3-fitted-cpp-legacy-bridge-")
+        .tempdir()
+        .unwrap();
+    let directory = scratch.path();
     assert_eq!(
-        compile_typed(&artifact.source, &directory, false, &values, &missing, 3, 2),
+        compile_typed(&artifact.source, directory, false, &values, &missing, 3, 2),
         expected
     );
-    std::fs::remove_dir_all(directory).unwrap();
+    scratch.close().unwrap();
 }
