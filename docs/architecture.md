@@ -100,10 +100,10 @@ flowchart TB
 | `crates/jope-cli` | `jope-cli` (binary `jope`) | on `main` since #17–#22: `verify-inputs`, `generate-fixtures`, `encode`, `fit`, `emit`, `search`, `champions`, `train-step`, `route`; the `models`/`datasets` umbrella verbs arrive with `wp7/models-cli` | The umbrella `jope search | emit | encode | propose | learn | hwm | scores | arena | campaign | selfplay | models | datasets | doctor`; subcommands attach as their crates land. |
 | `crates/smartcluster/*` | `jain-smartcluster{,-core,-fabric,-daemon}`, `jain-worker`, `jainnode`, `scq` | landed (vendored at 715128f8, versions 8.0.0) | The scheduler the engine's native loop, smartcluster worker and native graph bind to; crates.io dependencies only. Not covered by `deploy/ci/version-consistency.sh`. |
 
-Excluded from the workspace on purpose: `crates/hyperion/host` (superseded by `crates/hyperion`),
-`deploy/kernel-v1/source` (the frozen kernel-v1 evaluator lineage that
-`deploy/ci/kernel-v1-product-build.sh` builds inside a glibc-2.35 container; B11) and
-`xtools/ot-export` (its own tch workspace).
+`xtools/registry-dump-legacy` is a standalone dev-only package with its own `[workspace]`;
+nothing else is excluded. The frozen kernel-v1 evaluator lineage (`deploy/kernel-v1/source`)
+was retired from the tree on 2026-09-28; `docs/archive/clean-base-manifest.json` gives its
+restore command.
 
 ## The Python package (`python/`)
 

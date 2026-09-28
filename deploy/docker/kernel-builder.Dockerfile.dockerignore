@@ -1,3 +1,0 @@
-# BuildKit per-Dockerfile ignore: only these files enter the build context.
-*
-!deploy/docker/fetch.sh

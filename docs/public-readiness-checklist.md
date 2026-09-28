@@ -73,7 +73,7 @@ any non-`recorded` member fails CI**.
 ## 6. Content review before the switch
 
 - `git grep -nE 'git\.neverhuman\.org|127\.0\.0\.1:8787|/home/ubuntu/' -- crates python assets deploy .github` is empty (plan "Verification" 8; `deploy/ci/check.sh` enforces the first two today).
-- `docs/legacy/` and `deploy/kernel-v1/source` are the only places allowed to mention historical hosts; skim them once for personal data.
+- `docs/legacy/` is the only place allowed to mention historical hosts; skim it once for personal data. (`deploy/kernel-v1/source` was removed from the tree on 2026-09-28; git history still holds it.)
 - `NOTICE` names every third-party model and dataset source the public artefacts depend on.
 - `README.md` quickstart re-run from a fresh clone on a machine without CUDA (< 15 min budget in the plan; measured 2026-09-18: build 1 m 57 s, feat-math tests 13 m 01 s including compilation, emitters 20 s).
 - A `v0.1.0` tag through `release.yml` with attested `jope` binary, wheel, SBOMs and receipt (plan "Verification" 7).

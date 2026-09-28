@@ -11,7 +11,7 @@
 # first: identifiers, file names and commands are not prose and legacy module names must keep
 # their spelling. Exemptions are listed in deploy/ci/ip-scrub-exempt.txt, one path per line, each
 # with the reason it is exempt; historical records (docs/adr, docs/legacy, docs/parity,
-# docs/coordination) and the frozen kernel-v1 source are never scanned.
+# docs/coordination) are never scanned.
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 

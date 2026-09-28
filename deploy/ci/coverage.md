@@ -20,8 +20,8 @@ The three evidence stages are distinct:
   workflow or deferred full-main mapping is not execution qualification.
 
 The maintained Python selection is the explicit `python/tests/` file set in the mapping.
-Research/tools test-named scripts, frozen kernel-v1 copies, maintenance fixture programs and
-benchmarks have separate dispositions. PR pytest selects `not xbabe2`; exclusions must remain
+Research/tools test-named scripts, maintenance fixture programs and benchmarks have separate
+dispositions. PR pytest selects `not xbabe2`; exclusions must remain
 visible. The PR Rust package scope and nextest profile also exclude tests. Full workspace CPU,
 doctests and declared feature variants remain assigned to the upcoming bounded full-main phase.
 Binary/example builds do not prove their operational entry points.
