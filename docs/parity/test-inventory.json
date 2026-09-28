@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 4",
-  "count": 3793,
+  "count": 3796,
   "ignored": 62,
   "packages": {
    "battle-gpu": {
@@ -5325,12 +5325,12 @@
     }
    },
    "jope-records": {
-    "count": 164,
+    "count": 167,
     "ignored": 1,
     "binaries": {
      "jope-records": {
       "kind": "lib",
-      "count": 59,
+      "count": 60,
       "ignored": 0,
       "tests": [
        "coverage::tests::changed_target_requirements_fail",
@@ -5390,6 +5390,7 @@
        "repo_layout::tests::package_name_reads_every_toml_spelling",
        "repo_layout::tests::package_name_reads_only_the_package_table",
        "repo_layout::tests::package_name_refuses_what_cargo_cannot_read",
+       "repo_layout::tests::package_name_says_toml_1_0_for_toml_1_1_only_syntax",
        "repo_layout::tests::test_code_is_whole_test_files_and_cfg_test_modules",
        "scope_check::tests::declared_reads_the_first_assignment"
       ]
@@ -5431,7 +5432,7 @@
      },
      "jope-records::records": {
       "kind": "test",
-      "count": 83,
+      "count": 85,
       "ignored": 0,
       "tests": [
        "claim_inventory::a_stale_inventory_is_refused_and_rewritten_only_on_request",
@@ -5509,7 +5510,9 @@
        "progress_view::task_states_cannot_close_a_finding",
        "repo_layout::a_literal_string_duplicate_package_fails_with_its_line",
        "repo_layout::a_manifest_cargo_cannot_read_fails_with_bad_manifest",
+       "repo_layout::a_missing_manifest_is_skipped_only_when_git_reports_it_deleted",
        "repo_layout::a_stray_root_markdown_file_fails_with_its_line",
+       "repo_layout::a_tracked_path_that_is_not_utf8_fails_with_bad_path",
        "repo_layout::the_committed_tree_passes",
        "task_status::committed_status_is_complete_and_rendered",
        "task_status::mutations_are_rejected",
@@ -5988,7 +5991,7 @@
   }
  },
  "totals": {
-  "rust": 3793,
+  "rust": 3796,
   "python": 172
  }
 }
