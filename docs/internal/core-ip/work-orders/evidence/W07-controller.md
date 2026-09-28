@@ -2206,7 +2206,7 @@ pass.
 
 **Post-fix record** (`w7-rebase119-post-20260928T150504Z`). `bounded_transport` and
 `bounded_agent` pass 24 of 24 three times running, the new test included; it takes 6.5 to
-6.7 s, nearly all of it filling the buffers. That run's `cargo fmt --check` asked for one
+6.7 s, most of it filling the buffers. That run's `cargo fmt --check` asked for one
 line of the fix to be split; the committed fix reads the write timeout in its own statement
 instead, which keeps the line count, and is otherwise the same.
 
@@ -2215,3 +2215,27 @@ plan-sizing constraints are recorded above, under the consequences. The SmartClu
 `supervisor.rs:146` was rechecked: `SmartClusterSupervisor::exchange` calls
 `authenticated_exchange` on line 146 at `c9ca8b547` and at every later W7 commit, and line 151
 is inside `SmartClusterSupervisor::job`. The row now names the function.
+
+**Verification** (`w7-rebase119-post-20260928T150714Z`, at `10cfb6d1a`, the close-cap commit
+on `4ff4e7b69`; the commit that adds this paragraph changes only this record). All ran on
+xbabe2, CPU only:
+
+- These gates pass: `cargo fmt --check`; `git diff --check` over `4ff4e7b69..10cfb6d1a` and
+  the worktree; `cargo check --workspace --all-targets --locked`; `jope-records coverage
+  validate` (0 unassigned) and `jope-records verify-test-inventory` (319 items);
+  `deploy/ci/parity-matrix.sh --no-build` (817 rows); and `deploy/ci/check.sh`, whose gitleaks
+  run scanned 601 commits and found no leaks. No test target was added, so `coverage.json` and
+  the test inventories are unchanged.
+- `cargo clippy -p jope-parallel --all-targets --locked` reports 119 findings, the same 119, by
+  file and message, as at `c9ca8b547`, and none in a file this change touches. Seven are in
+  other W7 files and predate it: two `manual_is_multiple_of` (`collect.rs`, `contract.rs`) and
+  five `type_complexity` (`collect.rs` twice, `bounded_census.rs`, `bounded_smartcluster.rs`,
+  `support/bounded_fixture.rs`).
+- The bounded and fence selection passes 195 of 195. The `bounded_*` targets pass 110, the 109
+  from before plus the new `bounded_transport` test (19 there); the fences pass 85:
+  `fit_boundary` 16, `view_contracts` 17, `gp_contracts` 8 and `gp::fit_contract_tests` 44.
+- `full-default` passes through `deploy/ci/full-lane.sh`: 3 773 passed and 65 skipped, in
+  689 s against a 1 500 s budget. That is the 3 772 of `c9ca8b547` plus the new test.
+  `deploy/ci/check-test-routing.sh` verifies 80 `cpu` and 8 `host` contracts. W7-D5's check
+  found `scqd` with the same digest as at `c9ca8b547`. The `bounded_*` targets pass 110 of 110
+  and the fences 85 of 85; the new test took 6.8 s under the lane's 16 test threads.
