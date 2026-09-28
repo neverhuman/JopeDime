@@ -63,17 +63,21 @@ is not hosted CI or an exact-head native approval of a future W7 PR.
 3. **Operational evidence:** three-host CPU/GPU execution, two/three-rank optimizer updates,
    failure drain, same-topology checkpoint restoration and the learning-loop witness remain
    unqualified. Do not start a numerical campaign based on these fixture results.
-4. **Delivery:** `rr2/w7-landing` integrates W7 with main `f46a9048f` (after PRs #114,
-   #115 and #116). Exact-head hosted CI and eligible independent native approval of that
-   branch are still required.
+4. **Delivery:** `rr2/w7-landing` sits directly on main `7aec174e0`, after PRs #114, #115,
+   #116, #118 and #117. It was first landed on main `f46a9048f`, then stacked on PR #117
+   until #117 merged; `W07-controller.md` records each move. Exact-head hosted CI and
+   eligible independent native approval of that branch are still required.
 
-The separate health and Python P1 branches remain separate source deliveries. This record
-cannot close their hosted-CI, custody or merge requirements.
+The health (#116) and Python P1 (#117) branches were separate source deliveries and merged
+separately. This record does not close or qualify their hosted-CI, custody or merge
+requirements.
 
 ## Landing on main
 
 `rr2/w7-landing` replays the sixteen `rr2/w7-live` commits onto `f46a9048f` with
-`cherry-pick -x`. PR #114 (W2-T04) had already added a "read the verified bytes once" API
+`cherry-pick -x`. They were later moved onto PR #117, and then onto main `7aec174e0` after
+#117 merged, unchanged apart from the capability matrix's `## Counts` total; see
+`W07-controller.md`. PR #114 (W2-T04) had already added a "read the verified bytes once" API
 for the same trainer paths. The landing keeps PR #114's API and routes this commit's callers
 through it:
 

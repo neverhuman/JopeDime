@@ -1761,8 +1761,8 @@ commit map, the record comparison and the scripts used).
   archived Python; the rows merged cleanly. Each time the table was regenerated from the rows
   with `jope-records parity-check`, the Rust port of `deploy/ci/parity-census.py` (a scripted
   replacement of the lines it recomputes), never merged by hand. Each commit message says so.
-  The tree has 811 rows: moved 355, new 48, pending 1, dropped 400, lost 7. It is #117's 803 rows
-  plus W7's eight `jope-native-loop` rows, and it keeps #117's `jope-ci` row (`new-bin` 15).
+  That tree had 811 rows: moved 355, new 48, pending 1, dropped 400, lost 7. It was #117's 803
+  rows plus W7's eight `jope-native-loop` rows, and it kept #117's `jope-ci` row (`new-bin` 15).
 - **`deploy/ci/coverage.json`, `findings/test-inventory.json` and `Cargo.lock`** merged with no
   conflict. Each record item was compared with a three-way merge of `f46a9048f`, #117 and W7.
   `coverage.json` matches that merge in every item but one: #117's 201 changed items, including
@@ -1816,8 +1816,123 @@ section changes no code). All ran on xbabe2, CPU only, with `CUDA_VISIBLE_DEVICE
 - **Not re-run here:** the full lanes (`full-default`, `full-scratch` and `full-neural`) and the
   `neural` tests. The landing verification above ran them on `f46a9048f`.
 
-**Next rebase.** After #117 merges, `git rebase --onto origin/main e8640b7b0 rr2/w7-landing`
-replays this stack. The upstream is `e8640b7b0`, not `f46a9048f`. The replay stays mechanical if
-the merged #117 has the tree of `e8640b7b0`, whether it is squashed or rebased. If #117 changes
-before it merges, or other PRs reach main first, the `## Counts` total can conflict again.
-Regenerate it with `jope-records parity-check`. The #117 SHAs cited here are branch SHAs.
+**Next rebase (superseded).** This paragraph planned the replay onto a merged #117 at
+`e8640b7b0`. #117 changed before it merged: it was rebased onto main `dd49b23bc` and gained
+review rounds. The stack was moved again, as "Restacked on #117 at `bcdadfc77`" below records,
+and then onto main once #117 merged ("On main after #117" below). The #117 SHAs cited here are
+branch SHAs.
+
+## Restacked on #117 at `bcdadfc77` (main `dd49b23bc`)
+
+Before it merged, PR #117 was rebased onto main `dd49b23bc` (after #118, targeted GP search) and
+gained review rounds three to seven. Its head became `bcdadfc77`, 48 commits on `dd49b23bc`.
+The 29 #117 commits under the old stack (`f46a9048f..e8640b7b0`) are the first 29 of those, by
+subject and order; 26 keep their patch-id. `e8640b7b0` was therefore no longer on #117.
+
+`rr2/w7-landing` kept only its own 19 commits: the 16 `cherry-pick -x` commits from
+`rr2/w7-live`, identified by their `(cherry picked from commit …)` trailers, and the three
+landing-record commits, which touch only this file. None of them has a patch-id on #117. They
+were moved with `git rebase --onto bcdadfc77 e8640b7b0 rr2/w7-landing`, keeping authors and author
+dates, to `3836c85b9`. `git range-diff` shows 16 patches unchanged. The other three, W7-T01,
+W7-T05 and W7-D6, differ only in the `## Counts` total and in one added paragraph of their commit
+messages. The records are `w7-restack-pre-20260928T111547Z` (a verified bundle of the old head
+`ede39dd56`, the classified commit list, both bases and the scripts used) and
+`w7-restack-post-20260928T111620Z` (the verification, the range-diff and the record comparison).
+
+**Conflicts and how they were resolved.**
+
+- **`docs/parity/capability-matrix.md`** (the W7-T01, W7-T05 and W7-D6 commits). Only the
+  `## Counts` total conflicted, this time with #118's three `learning-subcommand` and three
+  `pipeline-subcommand` rows; the rows and the `engine-subcommand` count merged cleanly. Each time
+  the total was regenerated from the rows with `jope-records parity-check` (a scripted
+  replacement of the line it recomputes), never merged by hand. Each commit message says so. That
+  tree had 817 rows: moved 355, new 54, pending 1, dropped 400, lost 7. That is #117's 809 rows
+  plus W7's eight `jope-native-loop` rows.
+- **`deploy/ci/coverage.json`, `findings/test-inventory.json` and `Cargo.lock`** merged with no
+  conflict. Each record item was compared with a three-way merge of `e8640b7b0` (the old parent),
+  `ede39dd56` (the old head) and `bcdadfc77`. No item conflicts, and both files match that merge
+  in every item: `coverage.json` in all 440 (W7's eight, including the corrected
+  `bounded_smartcluster` scope, and #118's four new targets), `test-inventory.json` in all 325
+  (W7's seven and #118's four). `Cargo.lock` adds only W7's `rustls` edge to `jope-parallel` and
+  passes `cargo metadata --locked`.
+- **`deploy/ci/full-lane.sh`** did not conflict. W7-D5's block is unchanged: it reads the `scqd`
+  path from `cargo run -q --locked -p jope-ci -- cargo-artifact target-dir` and still follows
+  #116's routing block, before `touch nextest-started`.
+
+**Verification** (`w7-restack-post-20260928T111620Z`, at `3836c85b9`). All ran on xbabe2, CPU
+only, with `CUDA_VISIBLE_DEVICES=""` for `neural`:
+
+- These gates pass: `cargo fmt --check`; `git diff --check` over the stack;
+  `cargo check --workspace --all-targets --locked`;
+  `cargo check -p jope-parallel --features neural --all-targets --locked`;
+  `jope-records coverage validate` (0 unassigned) and `jope-records verify-test-inventory`;
+  `deploy/ci/parity-matrix.sh --no-build` (817 rows); and `deploy/ci/check.sh`, whose gitleaks
+  run scanned 586 commits and found no leaks.
+- The full lanes pass through `deploy/ci/full-lane.sh`, including #116's routing checks and
+  W7-D5's `scqd` digest:
+  - `full-default`: 3 757 passed, 65 skipped, in 682 s against a 1 500 s budget;
+  - `full-scratch`: 2 193 passed, 29 skipped, in 664 s against 900 s;
+  - `full-neural`: 819 passed, 99 skipped, in 431 s against 900 s.
+- `deploy/ci/check-test-routing.sh` verifies 80 `cpu` and 8 `host` contracts in the
+  `full-default` collection, 80 `cpu` in `full-scratch`'s and 80 `neural` in `full-neural`'s.
+- In `full-default`, the `bounded_*` targets pass 99 of 99 and the fence test binaries
+  `fit_boundary` 16, `view_contracts` 17 and `gp_contracts` 8.
+
+The #117 SHAs cited in this section are branch SHAs. Once #117 merged, the stack was replayed
+onto main, as the next section records.
+
+## On main after #117 (`7aec174e0`)
+
+PR #117 merged as main `7aec174e0` by a GitHub rebase merge, 50 commits on `dd49b23bc`. The
+first 48 are `bcdadfc77`'s 48 with new SHAs, and `git range-diff` shows all 48 unchanged. The
+last two are review round eight: `02d5e49ef` (exact integer arithmetic, and numbers compared as
+Python did, in `jope-records`, `jope-ci` and `crates/jope-engine/src/family_growth.rs`) and
+`7aec174e0` (its record).
+
+`rr2/w7-landing` now sits directly on main. Its 19 commits were moved with
+`git rebase --onto 7aec174e0 bcdadfc77 rr2/w7-landing`, keeping authors and author dates, from
+`3836c85b9` to `ae04755ce`. The records are `w7-post117-pre-20260928T125735Z` (the old head's
+identity, a verified bundle of `3836c85b9` over `dd49b23bc`, #117's range-diff, the old commit
+list and the script used) and `w7-post117-post-20260928T125840Z` (the verification).
+
+- **No conflicts.** Of the files W7 changes, round eight touches only
+  `docs/parity/capability-matrix.md`, where it recounts the `jope-records` row's tests (150 to
+  154). That row is outside the `## Counts` table, and the rebase applied every W7 patch without
+  a conflict. `git range-diff` shows all 19 W7 patches unchanged, and the difference between the
+  old and the new W7 head is exactly round eight's difference, file by file (in the matrix, at a
+  shifted line number).
+- **Records.** `deploy/ci/coverage.json`, `findings/test-inventory.json` and `Cargo.lock` are
+  identical to `3836c85b9`'s: round eight changes none of them, so nothing was regenerated. The
+  matrix still has 817 rows and `jope-records parity-check` finds its `## Counts` table in
+  agreement with them.
+- **`full-default` run again.** Round eight changes `family_growth.rs`, in the `jope-parallel`
+  package that also holds W7's `native_loop`, so the `full-default` family ran again at the new
+  head. `full-scratch`, `full-neural` and the `neural` check were not re-run here; they passed
+  at `3836c85b9` above, and round eight changes no W7 file.
+
+**Verification** (`w7-post117-post-20260928T125840Z`, at `ae04755ce`; the commit that adds this
+section changes no code). All ran on xbabe2, CPU only:
+
+- These gates pass: `cargo fmt --check`; `git diff --check` over the 19 commits and the worktree;
+  `cargo check --workspace --all-targets --locked`; `jope-records coverage validate`
+  (0 unassigned) and `jope-records verify-test-inventory`; `deploy/ci/parity-matrix.sh
+  --no-build` (817 rows); and `deploy/ci/check.sh`, whose gitleaks run scanned 588 commits and
+  found no leaks.
+- `full-default` passes through `deploy/ci/full-lane.sh`: 3 762 passed, 65 skipped, in 686 s
+  against a 1 500 s budget. W7-D5's check found `scqd` and recorded its digest, the same digest
+  as at `3836c85b9`. Compared with the `3836c85b9` run, the collection gains round eight's six
+  new tests (in `jope-ci`, `jope-records` and `family_growth`) and loses the one
+  `family_growth` test that round eight replaced.
+- `deploy/ci/check-test-routing.sh` verifies 80 `cpu` and 8 `host` contracts in the
+  `full-default` collection.
+- In `full-default`, the `bounded_*` targets pass 99 of 99: `bounded_run` 38,
+  `bounded_run_recovery` 12, `bounded_transport` 10, `bounded_census` 8, `bounded_training` 8,
+  `bounded_launch` 7, `bounded_grants` 5, `bounded_smartcluster` 5, `bounded_agent` 3 and
+  `bounded_preflight_cli` 3. The fence suites pass 85 of 85: `fit_boundary` 16,
+  `view_contracts` 17, `gp_contracts` 8 and `gp::fit_contract_tests` 44. The five
+  `family_growth::tests` pass.
+
+**Next rebase.** W7 now sits on main itself. If main moves before W7 merges,
+`git rebase origin/main` replays the stack. The `## Counts` total can conflict again if a PR that
+reaches main first changes matrix rows; regenerate it with `jope-records parity-check`. The W7
+SHAs cited here are branch SHAs; a rebase merge gives them new ones.
