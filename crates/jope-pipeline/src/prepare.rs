@@ -90,10 +90,45 @@ struct PreparedRecord {
 /// The schema of the `prepared.json` this stage writes.
 pub const PREPARED_SCHEMA_ID: &str = "jope.pipeline-prepared/v1";
 
-/// Partition `rows` and materialise `<directory>/prepared.json`.
-///
-/// `rows` are complete observations, `features..., target`, as
-/// [`crate::dataset::training_rows`] loaded them.
+/// The cut counts a run may ask for: `1..=`[`FOLDS`]. It needs no dataset, so a caller checks it
+/// before reading one or writing anything.
+pub fn check_cuts(cuts: usize) -> Result<()> {
+    ensure!(
+        (1..=FOLDS).contains(&cuts),
+        "--cuts must be 1..={FOLDS}, got {cuts}"
+    );
+    Ok(())
+}
+
+/// A partition that [`partition`] computed and validated but did not write: every refusal
+/// [`build`] makes has already been made, and [`Partition::write`] only publishes it.
+#[derive(Clone, Debug)]
+pub struct Partition {
+    cuts: Vec<Cut>,
+    seed: u64,
+    rows: usize,
+    /// The exact bytes `prepared.json` will hold.
+    bytes: Vec<u8>,
+}
+
+impl Partition {
+    /// Materialise `<directory>/prepared.json`.
+    pub fn write(self, directory: &Path) -> Result<Preparation> {
+        std::fs::create_dir_all(directory)
+            .with_context(|| format!("create {}", directory.display()))?;
+        let path = directory.join("prepared.json");
+        std::fs::write(&path, &self.bytes).with_context(|| format!("write {}", path.display()))?;
+        Ok(Preparation {
+            cuts: self.cuts,
+            seed: self.seed,
+            rows: self.rows,
+            sha256: sha256_hex(&self.bytes),
+        })
+    }
+}
+
+/// Partition `rows` and materialise `<directory>/prepared.json`: [`partition`], then
+/// [`Partition::write`].
 pub fn build(
     rows: &[Vec<f64>],
     dataset: &str,
@@ -101,10 +136,17 @@ pub fn build(
     cuts: usize,
     directory: &Path,
 ) -> Result<Preparation> {
-    ensure!(
-        (1..=FOLDS).contains(&cuts),
-        "--cuts must be 1..={FOLDS}, got {cuts}"
-    );
+    partition(rows, dataset, seed, cuts)?.write(directory)
+}
+
+/// Partition `rows` into `cuts` cuts without writing anything, making every refusal the stage
+/// makes: a cut count outside `1..=`[`FOLDS`], no rows, fewer than two columns, a ragged row, and
+/// a cut with fewer than two training or held-out rows or a constant held-out target.
+///
+/// `rows` are complete observations, `features..., target`, as
+/// [`crate::dataset::training_rows`] loaded them.
+pub fn partition(rows: &[Vec<f64>], dataset: &str, seed: u64, cuts: usize) -> Result<Partition> {
+    check_cuts(cuts)?;
     ensure!(!rows.is_empty(), "the dataset has no training rows");
     let columns = rows[0].len();
     ensure!(
@@ -185,16 +227,11 @@ pub fn build(
         fold_key,
         cuts: records,
     };
-    std::fs::create_dir_all(directory)
-        .with_context(|| format!("create {}", directory.display()))?;
-    let path = directory.join("prepared.json");
-    let bytes = serde_json::to_vec_pretty(&record)?;
-    std::fs::write(&path, &bytes).with_context(|| format!("write {}", path.display()))?;
-    Ok(Preparation {
+    Ok(Partition {
         cuts: built,
         seed,
         rows: rows.len(),
-        sha256: sha256_hex(&bytes),
+        bytes: serde_json::to_vec_pretty(&record)?,
     })
 }
 
@@ -270,6 +307,40 @@ mod tests {
         let temp = tempfile::tempdir().unwrap();
         assert!(build(&rows(60), "d", 1, 0, temp.path()).is_err());
         assert!(build(&rows(60), "d", 1, FOLDS + 1, temp.path()).is_err());
+        for cuts in [0, FOLDS + 1] {
+            let error = format!("{:#}", check_cuts(cuts).unwrap_err());
+            assert_eq!(error, format!("--cuts must be 1..={FOLDS}, got {cuts}"));
+        }
+        for cuts in 1..=FOLDS {
+            check_cuts(cuts).unwrap();
+        }
+    }
+
+    /// Every refusal is made by `partition`, which writes nothing; `write` publishes exactly the
+    /// bytes `build` would have.
+    #[test]
+    fn a_partition_is_refused_or_computed_without_writing_anything() {
+        let temp = tempfile::tempdir().unwrap();
+        let directory = temp.path().join("prepared");
+        let flat: Vec<Vec<f64>> = (0..60).map(|i| vec![i as f64, 1.0, 5.0]).collect();
+        let few = rows(60);
+        for (data, cuts) in [(&flat, 1), (&few, 0), (&few, FOLDS + 1)] {
+            assert!(partition(data, "d", 1, cuts).is_err());
+        }
+        let planned = partition(&rows(120), "dataset", 11, 3).unwrap();
+        assert!(
+            !directory.exists(),
+            "partition wrote {}",
+            directory.display()
+        );
+        let written = planned.write(&directory).unwrap();
+        let built = build(&rows(120), "dataset", 11, 3, &temp.path().join("built")).unwrap();
+        assert_eq!(written.sha256, built.sha256);
+        assert_eq!(
+            sha256_hex(&std::fs::read(directory.join("prepared.json")).unwrap()),
+            written.sha256
+        );
+        assert_eq!(written.cuts.len(), 3);
     }
 
     #[test]

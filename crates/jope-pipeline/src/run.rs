@@ -141,10 +141,13 @@ fn is_commit(value: &str) -> bool {
             .all(|b| matches!(b, b'0'..=b'9' | b'a'..=b'f'))
 }
 
-/// Every refusal that needs no dataset and writes nothing: the counts, the budget, the policy
-/// and the parallelism this host admits. Returns the worker count.
+/// Every refusal that needs no dataset and writes nothing: the counts (`--cuts` within the fold
+/// partition), the budget, the policy and the parallelism this host admits. Returns the worker
+/// count.
 pub fn preflight(options: &RunOptions) -> Result<usize> {
-    ensure!(options.cuts > 0, "--cuts must be at least 1");
+    // The whole range the preparation accepts, not just a positive count: a count it refuses
+    // after `evolve` has created `round-001/` blocks the corrected retry.
+    prepare::check_cuts(options.cuts)?;
     ensure!(!options.languages.is_empty(), "--emit needs a target");
     options.budget.check()?;
     // Fail closed before anything is written: a refused run must not leave a half
@@ -185,13 +188,20 @@ fn resolve_regression(selector: &str) -> Result<dataset::Resolved> {
 
 /// Every refusal [`run`] makes before it writes a byte, made without writing anything:
 /// [`preflight`], the seeds and the parent receipt, and a dataset that resolves, is a regression
-/// task and parses. `jope pipeline evolve` calls this before it creates its first round, so a
-/// refused lineage leaves nothing behind that would block the corrected retry.
+/// task, parses and partitions into the requested cuts ([`prepare::partition`]). `jope pipeline
+/// evolve` calls this before it creates its first round, so a refused lineage leaves nothing
+/// behind that would block the corrected retry.
 pub fn check(options: &RunOptions) -> Result<()> {
     preflight(options)?;
     resolve_seeding(options)?;
     let resolved = resolve_regression(&options.dataset)?;
-    dataset::training_rows(&resolved)?;
+    let rows = dataset::training_rows(&resolved)?;
+    prepare::partition(
+        &rows,
+        &resolved.row.dataset_hash,
+        options.seed,
+        options.cuts,
+    )?;
     Ok(())
 }
 
@@ -290,22 +300,21 @@ pub fn run(options: &RunOptions) -> Result<Receipt> {
     let rows = dataset::training_rows(&resolved)?;
     stages.record("dataset", "passed", None, started);
 
-    // Validate the task and inputs before publishing any run artifacts.
+    // Validate the task and inputs before publishing any run artifacts: the partition makes its
+    // refusals (too few rows in a cut, a constant held-out target) before `--output` exists.
+    let started = clock.start();
+    let partition = prepare::partition(
+        &rows,
+        &resolved.row.dataset_hash,
+        options.seed,
+        options.cuts,
+    )?;
     std::fs::create_dir_all(output).with_context(|| format!("create {}", output.display()))?;
     // The search rejects traversal and symlink components beneath this root.
     let root = output
         .canonicalize()
         .with_context(|| format!("resolve {}", output.display()))?;
-
-    let started = clock.start();
-    let prepared_dir = root.join("prepared");
-    let preparation = prepare::build(
-        &rows,
-        &resolved.row.dataset_hash,
-        options.seed,
-        options.cuts,
-        &prepared_dir,
-    )?;
+    let preparation = partition.write(&root.join("prepared"))?;
     stages.record("prepare", "passed", None, started);
 
     let started = clock.start();
@@ -596,7 +605,7 @@ fn git_sha() -> Option<String> {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
 
     #[test]
@@ -668,6 +677,27 @@ mod tests {
             "/../../datasets/test/pmlb-229-pwlinear"
         )
         .to_owned()
+    }
+
+    /// A copy of the committed fixture whose training target is constant: it resolves, is a
+    /// regression task and parses, but no cut of it can be scored.
+    pub(crate) fn constant_target_dataset(root: &std::path::Path) -> String {
+        let source = std::path::PathBuf::from(committed_dataset());
+        let target = root.join("constant-target");
+        std::fs::create_dir_all(&target).unwrap();
+        std::fs::copy(source.join("test.csv"), target.join("test.csv")).unwrap();
+        let train: String = std::fs::read_to_string(source.join("train.csv"))
+            .unwrap()
+            .lines()
+            .map(|line| format!("{},0.5\n", line.rsplit_once(',').unwrap().0))
+            .collect();
+        std::fs::write(target.join("train.csv"), &train).unwrap();
+        let mut row: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(source.join("metadata.json")).unwrap()).unwrap();
+        row["files"]["train"]["sha256"] = sha256_hex(train.as_bytes()).into();
+        row["files"]["train"]["bytes"] = train.len().into();
+        std::fs::write(target.join("metadata.json"), row.to_string()).unwrap();
+        target.display().to_string()
     }
 
     fn small(output: &std::path::Path, evaluations: usize) -> RunOptions {
@@ -1166,6 +1196,49 @@ mod tests {
         );
         assert!(error.contains("cannot re-measure"), "{error}");
         assert!(!output.exists());
+    }
+
+    /// A cut count the partition refuses (0, or more than its folds) and a dataset it cannot cut
+    /// are refused, by `check` and by `run`, before `--output` is created, so the corrected run
+    /// goes into the same directory. `run` used to create `--output` first.
+    #[test]
+    fn a_refused_cut_count_or_partition_leaves_no_output_and_the_corrected_run_succeeds() {
+        let temp = tempfile::tempdir().unwrap();
+        let output = temp.path().join("run");
+        for cuts in [0, prepare::FOLDS + 1] {
+            let options = RunOptions {
+                cuts,
+                ..small(&output, 4)
+            };
+            let expected = format!("--cuts must be 1..={}, got {cuts}", prepare::FOLDS);
+            for error in [check(&options).unwrap_err(), run(&options).unwrap_err()] {
+                let error = format!("{error:#}");
+                assert!(error.contains(&expected), "{error}");
+            }
+            assert!(!output.exists(), "--cuts {cuts} left {}", output.display());
+        }
+        let constant = RunOptions {
+            dataset: constant_target_dataset(temp.path()),
+            cuts: 3,
+            ..small(&output, 4)
+        };
+        for error in [check(&constant).unwrap_err(), run(&constant).unwrap_err()] {
+            let error = format!("{error:#}");
+            assert!(error.contains("held-out target is constant"), "{error}");
+        }
+        assert!(
+            !output.exists(),
+            "a partition refusal left {}",
+            output.display()
+        );
+        // Positive control: the corrected command, into the same --output.
+        let receipt = run(&RunOptions {
+            cuts: 3,
+            ..small(&output, 4)
+        })
+        .unwrap();
+        assert_eq!(receipt.prepared.cuts, vec![0, 1, 2]);
+        crate::evidence::verify_run(&output.join("receipt.json")).unwrap();
     }
 
     #[test]

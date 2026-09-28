@@ -132,12 +132,15 @@ search on the same cuts (`lineage verify` reports the rounds' total evaluations 
 control's), and one control on one stream cannot separate seeding from that extra compute or from
 noise.
 
-Every refusal a round could make is made before the output directory is created: the counts,
-budget and parallelism; round 1's seeds (a seed that is not a pipeline, or more seeds than the
-budget can re-measure); a dataset that does not resolve, is not a regression task or does not
-parse; and, with more than one round, a budget whose exploration allowance cannot re-measure the
-four seeds a later round may carry. A refused command leaves nothing behind, so the corrected
-command can be re-run into the same `--output`.
+Every refusal a round could make is made before the output directory is created: the counts
+(`--cuts` must be 1 to 5, the folds of the partition), budget and parallelism; round 1's seeds (a
+seed that is not a pipeline, or more seeds than the budget can re-measure); a dataset that does
+not resolve, is not a regression task, does not parse or cannot be partitioned into the requested
+cuts (a cut with fewer than two training or held-out rows, or a constant held-out target); and,
+with more than one round, a budget whose exploration allowance cannot re-measure the four seeds a
+later round may carry. A refused command leaves nothing behind, so the corrected command can be
+re-run into the same `--output`. `jope pipeline run` likewise makes each of these that applies to
+one run before it creates its `--output`.
 
 `lineage.json` (`jope.pipeline-lineage/v1`) is rewritten atomically and fsynced after each
 completed round: per round the `selected_genome` and program sha256, the mean held-out RMSE, R^2

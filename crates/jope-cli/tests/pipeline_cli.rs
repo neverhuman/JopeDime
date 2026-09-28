@@ -1,6 +1,7 @@
 //! `jope pipeline` as a child process, the way a SmartCluster job launches it: `--source-commit`
-//! keeps the run from spawning `git`, and SIGTERM stops a run between evaluations without a
-//! receipt, leaving only completed rounds in an evolve lineage.
+//! keeps the run from spawning `git`, SIGTERM stops a run between evaluations without a
+//! receipt, leaving only completed rounds in an evolve lineage, and a refused command exits 2
+//! without writing anything.
 
 use serde_json::Value;
 use std::{
@@ -101,6 +102,56 @@ fn a_given_source_commit_is_recorded_and_git_is_never_spawned() {
         .unwrap();
     assert_eq!(output.status.code(), Some(2));
     assert!(!bad.exists());
+}
+
+/// A cut count outside the fold partition exits 2 and leaves nothing behind, for `evolve` and
+/// `run`, so the corrected command runs into the same `--output`. (`evolve --rounds 2 --cuts 6`
+/// used to leave `round-001/`, and the corrected retry failed with "already holds a lineage".)
+#[test]
+fn a_refused_cut_count_exits_2_leaves_nothing_and_the_corrected_retry_runs() {
+    let temp = tempfile::tempdir().unwrap();
+    let output = temp.path().join("lineage");
+    let evolve = |cuts: &str, budget: &str| {
+        jope()
+            .args(["pipeline", "evolve", "--dataset"])
+            .arg(dataset())
+            .arg("--output")
+            .arg(&output)
+            .args(["--rounds", "2", "--cuts", cuts, "--budget", budget])
+            .args(["--policy", "skip", "--emit", "rust"])
+            .output()
+            .unwrap()
+    };
+    for cuts in ["6", "0"] {
+        let result = evolve(cuts, "evaluations=16,seconds=60");
+        let stderr = String::from_utf8_lossy(&result.stderr);
+        assert_eq!(result.status.code(), Some(2), "{stderr}");
+        assert!(
+            stderr.contains(&format!("--cuts must be 1..=5, got {cuts}")),
+            "{stderr}"
+        );
+        assert!(!output.exists(), "--cuts {cuts} left {}", output.display());
+    }
+    let run = temp.path().join("run");
+    let result = jope()
+        .args(run_args(&run, "evaluations=4,seconds=60"))
+        .args(["--cuts", "6"])
+        .output()
+        .unwrap();
+    let stderr = String::from_utf8_lossy(&result.stderr);
+    assert_eq!(result.status.code(), Some(2), "{stderr}");
+    assert!(!run.exists(), "run --cuts 6 left {}", run.display());
+    // The corrected command, into the same --output (a small budget keeps it quick).
+    let result = evolve("3", "evaluations=10,seconds=60");
+    assert!(
+        result.status.success(),
+        "{}",
+        String::from_utf8_lossy(&result.stderr)
+    );
+    let lineage: Value =
+        serde_json::from_slice(&std::fs::read(output.join("lineage.json")).unwrap()).unwrap();
+    assert_eq!(lineage["rounds"].as_array().map(Vec::len), Some(2));
+    assert_eq!(lineage["cuts"], serde_json::json!([0, 1, 2]));
 }
 
 fn wait_for(what: &str, deadline: Duration, mut ready: impl FnMut() -> bool, child: &mut Child) {
