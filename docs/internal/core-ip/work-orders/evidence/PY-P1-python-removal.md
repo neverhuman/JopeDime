@@ -803,8 +803,37 @@ port at `a997ab825`, before the uncommitted edits. "Now" is this follow-up.
 **Runs.**
 - `p1-failclosed-pre-20260927T221449Z`: the reproduction above.
 - `p1-failclosed-capture-20260928T020533Z`: the fixtures.
-- `p1-failclosed-post-*`: `pre.sh` rerun on the committed head.
-- `p1-failclosed-gate-*`: the full gate, with the replays' `negative-report.tsv`.
+- `p1-failclosed-commits-20260928T021000Z`: the four commits. Each commit's own tree was checked
+  with later changes stashed: fmt, `git diff --check`, and the tests of the crates it changes.
+  The first commit also ran the workspace check, the second clippy, and the third the ignored
+  build-report replay.
+- `p1-failclosed-post-20260928T021102Z`: `pre.sh` rerun on the committed head (`468f9ff35`).
+  All 14 cases match: the same exit status and the same stdout as the Python. Before the fix,
+  8 exited 0 where the Python exited 1.
+- `p1-failclosed-gate-20260928T021114Z`: the full gate on `468f9ff35`, with every step green.
+  - The hosted lanes, run locally as `.github/workflows/ci.yml` runs them:
+    - `rust-check` receipt: 4 of 4 passed;
+    - `rust-test` receipt: 1601 collected, 1577 run and passed, 24 skipped, 0 failed. That is
+      seven more than before: the new replays in the product scope.
+  - fmt, `git diff --check` over `f46a9048f..HEAD` and over the tree, and `jq` on every new
+    fixture.
+  - `cargo check --workspace --all-targets --locked`, and clippy on `jope-ci` and `jope-records`
+    with `-D warnings`.
+  - `jope-records`: 119 passed and 1 ignored.
+  - `jope-ci` with `--include-ignored`: 26 passed. The build-report runners and both receipt
+    replays ran with custody scratch.
+  - The fence suites: 41 passed; `gp::fit_contract_tests` 44 passed and 3 ignored.
+  - `coverage validate` (0 unassigned or invalid), `verify-test-inventory` and the other
+    records checks.
+  - The live guards on this tree: `rust-scope-check`, `readme-benchmarks --check` and
+    `coverage discover`.
+  - `parity-matrix.sh --no-build`, `deploy/ci/check.sh` (gitleaks shimmed), the unshimmed
+    `secret-scan.sh` (no leaks) and a clean final status.
+  - `negative-report.tsv` has one line for each of the 298 replayed `jope-records` and
+    cargo-artifact cases.
+
+  This paragraph was added after that gate. It changes only this file, which
+  `p1-failclosed-post-docs-*` checks.
 
 ## Commit map — `rr2/python-p1` to the landing
 
@@ -853,6 +882,7 @@ runs made before the rebase.
 | `jope-ci: compare cargo-artifact ids with Python's == and fail closed on malformed metadata and messages (P1 review)` | none, made later | landing only | — |
 | `jope-ci: replay build-report configuration refusals against the Python (P1 review)` | none, made later | landing only | — |
 | `docs: record the fail-closed audit of the P1 ports (P1 review)` | none, made later | landing only | — |
+| `docs: record the fail-closed gate and post-fix runs (P1 review)` | none, made later | landing only | — |
 
 "Patch-id" compares `git patch-id --stable` of the commit as submitted and its original. Each
 pair changes the same paths with the same status. The tree proof
