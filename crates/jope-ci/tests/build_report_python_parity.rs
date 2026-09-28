@@ -341,23 +341,56 @@ fn custody_refusals_match_the_captured_python_outputs() {
 #[test]
 #[ignore = "needs JOPE_MAINTENANCE_SCRATCH outside /tmp and Git working trees"]
 fn failure_receipts_match_the_captured_python_outputs() {
+    let captured = captured();
+    let cases = captured["report_receipts"].as_array().unwrap();
+    assert_eq!(cases.len(), 3);
+    replay_receipts(cases, "python-parity-receipts");
+}
+
+/// Malformed configurations the Python refused before any scan (a configuration that is not an
+/// object, a wrong `stale_hours` or `cargo_roots`, `measurement_roots` that is not a list):
+/// `tests/fixtures/python-parity/build-report/negative.json` holds what
+/// `deploy/maintenance/jope_report.py` as it stood at `origin/main` `f46a9048f` (unmodified, run
+/// from its git bytes) printed and wrote for each; its `source` and `capture` fields name the
+/// custody run and the command. The port writes the same failure receipt, prints the same path and
+/// exits 1 for every one of them. Same environment as the test above.
+#[test]
+#[ignore = "needs JOPE_MAINTENANCE_SCRATCH outside /tmp and Git working trees"]
+fn config_refusals_match_the_captured_python_outputs() {
+    let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/fixtures/python-parity/build-report/negative.json");
+    let doc: Value = serde_json::from_str(&fs::read_to_string(path).unwrap()).unwrap();
+    assert!(doc["source"].is_string() && doc["capture"].is_string());
+    let cases = doc["cases"].as_array().unwrap();
+    assert_eq!(cases.len(), 12, "every captured case is replayed");
+    assert!(cases.iter().all(|c| c["exit"] == 1));
+    replay_receipts(cases, "python-parity-config-refusals");
+}
+
+/// Run `report` on each case's configuration under a fresh custody directory of the scratch
+/// directory `JOPE_MAINTENANCE_SCRATCH` names, and compare the exit status, stdout, stderr, the
+/// receipt (normalised as the fixture is) and `failure.txt` with the captured Python outputs.
+fn replay_receipts(cases: &[Value], subdirectory: &str) {
     let scratch = PathBuf::from(
         std::env::var("JOPE_MAINTENANCE_SCRATCH")
             .expect("set JOPE_MAINTENANCE_SCRATCH to a directory outside /tmp and working trees"),
     )
-    .join("python-parity-receipts");
+    .join(subdirectory);
     fs::create_dir_all(scratch.parent().unwrap()).unwrap();
     fs::create_dir(&scratch).expect("a fresh scratch directory");
     let scratch = scratch.canonicalize().unwrap();
     let roots = approved_roots();
     let tools = repo().join("deploy/maintenance");
-    let captured = captured();
-    let cases = captured["report_receipts"].as_array().unwrap();
-    assert_eq!(cases.len(), 3);
+    // A fixture writes the approved roots as `@APPROVED_ROOT_<n>@` (the no-home-paths lint scans
+    // the tests); they stand for the roots the wrapper passes.
+    let place = |text: &str| {
+        text.replace("@APPROVED_ROOT_0@", &roots[0])
+            .replace("@APPROVED_ROOT_1@", &roots[1])
+    };
     for case in cases {
         let name = case["name"].as_str().unwrap();
         let config = scratch.join(format!("{name}.json"));
-        fs::write(&config, case["config"].as_str().unwrap()).unwrap();
+        fs::write(&config, place(case["config"].as_str().unwrap())).unwrap();
         let custody = scratch.join(format!("custody-{name}"));
         let output = jope_ci(&[
             "report",
@@ -408,7 +441,8 @@ fn failure_receipts_match_the_captured_python_outputs() {
         ] {
             receipt.as_object_mut().unwrap().remove(key);
         }
-        assert_eq!(receipt, case["receipt"], "{name}: receipt");
+        let want: Value = serde_json::from_str(&place(&case["receipt"].to_string())).unwrap();
+        assert_eq!(receipt, want, "{name}: receipt");
         assert_eq!(
             fs::read_to_string(run.join("failure.txt")).unwrap(),
             case["failure_txt"].as_str().unwrap(),
