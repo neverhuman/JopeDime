@@ -639,6 +639,173 @@ Runs for the review follow-up:
     `deploy/ci/check.sh` (gitleaks shimmed) and the unshimmed `secret-scan.sh`;
   - the archive manifest and custody checks.
 
+## Follow-up — fail-closed malformed inputs (PR #117 review)
+
+A review of PR #117 found that the P1 ports could pass inputs the retired Python failed on. The
+case it gave: `coverage validate` dropped any lane or disposition that was not a string, where
+`coverage.py` printed `unknown lane None for <key>` and exited 1. Reproduction
+`p1-failclosed-pre-20260927T221449Z` ran the original `coverage.py` (git bytes of `f46a9048f`)
+and the port at `a997ab825` on the same live tree and the same 12 mutated maps. The Python exited
+1 on all 12. The port exited 0 on 8 of them (`comparison.txt`).
+
+**Contract.** It covers every malformed-input class of every P1 port: `coverage validate` and
+`discover`, `rust-scope-check`, `parity-check`, `readme-benchmarks`, `jope-ci cargo-artifact`
+(`select`, `target-dir`, `nextest-config`, `build`) and `jope-ci build-report report`.
+
+- **Never more permissive.** Wherever the Python exited non-zero, by a refusal or a crash, the
+  port exits non-zero and prints no success report.
+- **Explicit messages.** Where the Python printed one, the port prints the identical line. This
+  covers a report line such as `unknown lane None for <key>`, a `SystemExit` message, a caught
+  `cargo-artifact: ...` line and a failure receipt. `jope-records` prints its refusals after
+  `jope-records: `.
+- **Crashes.** Where the Python only crashed (`TypeError`, `KeyError`, `AttributeError`,
+  `IndexError`, or a library `ValueError`), the port refuses with an error naming the field and
+  the offending type. It does not reproduce CPython's exception text, and no comment says it
+  does. The wording is modelled on the exception so a reader can recognise the case
+  (`jope_records::py::exception`).
+- **Valid input.** Output stays byte-identical. The existing parity fixtures are unchanged and
+  still pass.
+
+**Findings and what changed.** The previous agent's uncommitted edits were kept and completed:
+
+1. Nothing was committed: no negative fixtures, and doc comments described fixtures that did not
+   exist. The fixtures and tests below now exist, and the doc comments describe them.
+2. `cargo-artifact select` compared ids with serde_json's `==`, which is stricter than Python's
+   `==` in one direction and looser in the other:
+   - `1` and `1.0` compared unequal;
+   - `2^64` and `2^64 + 1` compared equal, because both become the same `f64`.
+
+   So `select` could find one package or executable where the Python found two, or one where it
+   found none. The metadata, `select`'s files and every message line are now read with
+   `jope_records::pyjson`: Python's JSON reading, and its decoder messages for malformed JSON.
+   Membership and `package_id` use Python's `==` (`1 == 1.0 == True`, `[1] == [1.0]`). `success`
+   must be JSON `true` (`is True`).
+3. `cargo fmt --all --check` failed. The code is now formatted, and clippy passes with
+   `-D warnings`.
+4. Refusals claimed to end with CPython's exception line. The claims now say what the messages
+   are. `Path(value)` on a value that is not a string now refuses with
+   `exception::path_argument`, and `os.path` with `exception::fspath`.
+5. `parity::bins_from_metadata` gave a falsy `src_path` that was not a string (`0`, `false`, `[]`)
+   the type error. `os.path.relpath` refused any falsy value first (`no path specified`), and the
+   port now does the same, before the type check.
+6. `coverage::discover_from` gave every failed `workspace_members` membership one generic message.
+   `py::contains_or_raise` and `exception::membership` now name which operand had the wrong type:
+   a dict with an unhashable id, a string with an id that is not a string, or a container that is
+   neither.
+
+Nits:
+- `cargo-artifact build` replaced bytes that are not UTF-8. It now refuses them, as
+  `text=True` did.
+- `coverage` gives `.` for the root itself and drops repeated separators and `.` components, as
+  `str(Path.relative_to)` did.
+- A `target_directory` that is not a string refuses, naming the field and its type (it used to
+  be reported as a missing key).
+- The README renderer's `value[key]` on a value that is not a dict names the value's type (it
+  used to say "missing"). Its number and CSV refusals name the field.
+
+**Negative fixtures.** They were captured in `p1-failclosed-capture-20260928T020533Z` by
+`capture.sh`, kept in that run. The script is bash and jq only.
+- The original tools were run from `f46a9048f`'s git bytes, unmodified and never committed, in
+  scratch roots. They ran on variants of the committed parity inputs. `cargo` and `git` shims
+  served the committed metadata and file list.
+- A variant is an `ed` script against the committed base, with the SHA-256 of the file the
+  Python read. The small cargo-artifact inputs are raw text instead.
+- A case records the exit status, stdout, and either the explicit message or the last traceback
+  line. Each fixture names the run and the command (`source`, `capture`).
+- Controls:
+  - the shimmed `coverage.py discover` reproduces `discovered.json` byte for byte, and its
+    `validate` the committed `cov-validate` output;
+  - the scope check reproduces the committed `scope` output;
+  - `--write` from `README.stale.md` writes the committed `README.written.md`;
+  - the parity and cargo-artifact bases pass.
+- Two earlier captures are superseded: `p1-failclosed-capture-dbg*` (debugging) and
+  `p1-failclosed-capture-20260928T020349Z`, whose build-report fixture still held the approved
+  roots as home paths. The Python outputs of all of them are identical.
+
+| Fixture | Cases | Python exit 0 | Explicit refusal or failing report | Crash |
+| --- | ---: | ---: | ---: | ---: |
+| `jope-records/…/coverage/negative-validate.json` | 55 | 5 | 20 | 30 |
+| `jope-records/…/coverage/negative-discover.json` | 59 | 18 | 0 | 41 |
+| `jope-records/…/scope/negative.json` (+ `scope/metadata.json`) | 17 | 1 | 2 | 14 |
+| `jope-records/…/parity/negative.json` (+ `negative-metadata.json`, `negative-matrix.md`) | 32 | 7 | 1 | 24 |
+| `jope-records/…/readme/negative.json` | 85 | 23 | 19 | 43 |
+| `jope-ci/…/cargo-artifact/negative.json` | 50 | 13 | 19 | 18 |
+| `jope-ci/…/build-report/negative.json` | 12 | 0 | 12 | 0 |
+| **total** | **310** | **67** | **73** | **170** |
+
+**Tests.** They are in existing targets only, so `deploy/ci/coverage.json` and the test inventory
+are unchanged.
+- `crates/jope-records/tests/python_parity.rs` has five replays:
+  - `coverage_validate_refuses_every_map_the_python_refused`;
+  - `coverage_discover_…`;
+  - `rust_scope_check_…`;
+  - `parity_check_…`;
+  - `readme_benchmarks_refuses_every_evidence_the_python_refused`, which also checks the README
+    bytes `--write` left.
+
+  It also has the negative control `negative_replay_detects_a_changed_outcome`. One `compare`
+  function holds every case to the contract.
+- `crates/jope-ci/tests/cargo_artifact_python_parity.rs`:
+  `cargo_artifact_refuses_every_input_the_python_refused` runs the real binary behind a `cargo`
+  shim. It also checks that a refused `nextest-config` leaves no partial output; the Python left
+  an empty file. Its `judge` function has its own negative control.
+- `crates/jope-ci/tests/build_report_python_parity.rs`: `config_refusals_match_the_captured_python_outputs`
+  compares the exit status, stdout, the receipt and `failure.txt`. Like the existing receipt
+  replay, it is ignored by default because it needs `JOPE_MAINTENANCE_SCRATCH`, and the gate runs
+  it. The approved roots are `@APPROVED_ROOT_<n>@` in the fixture, because the no-home-paths lint
+  scans `crates/*/tests`.
+- With `JOPE_NEGATIVE_REPORT` set, the replays write one line per case: the Python's outcome and
+  the port's. The gate keeps this table as `negative-report.tsv`.
+
+**Allowed differences.** Each one is listed by name in the tests.
+
+Stricter than the Python (it exited 0 and the port refuses):
+- coverage `scope-bigint`: the port's JSON reader refuses integers beyond 64 bits;
+- coverage discover `feature-deps-int` and `required-int-member`: the Python sorted a list of
+  numbers;
+- parity `package-name-int` and `target-name-int`: the Python sorted and printed a name that is
+  not a string;
+- readme `valid-rankable-float`: `format(8718.0, ",")` printed `8,718.0`;
+- cargo-artifact `target-dir-int` and `target-dir-null`: the Python printed `5` and `None`.
+
+Both refuse, with different words:
+- cargo-artifact `ids-beyond-64-bits`: the port refuses at parse; the Python failed the package
+  lookup (`found 0`);
+- cargo-artifact `build-non-utf8`: Rust's decoder wording, not Python's codec wording.
+
+**Audit table.** The table lists the classes the review and this audit found. "Before" is the
+port at `a997ab825`, before the uncommitted edits. "Now" is this follow-up.
+
+| Port | Input class | Python | Before | Now |
+| --- | --- | --- | --- | --- |
+| coverage validate | lane or disposition list with a null, number or bool member | `unknown lane None/123/1.5/True for <key>`, exit 1 | member dropped, **exit 0** | identical line, exit 1 |
+| coverage validate | assignment that is a string or a dict | each character or key looked up | empty, **exit 0** | identical lines |
+| coverage validate | assignment that is null or a number, or has a list or dict member | crash (not iterable, unhashable) | **exit 0** | refuses |
+| coverage validate | `items`, `lanes`, `dispositions`, a lane, disposition or item, or the whole map not an object | crash (`AttributeError`/`TypeError`) | errors or defaults | refuses |
+| coverage validate | target: default lane as a dict key, dispositions as a substring string | `non-default required features …` | **exit 0** | identical line |
+| coverage validate | target: dispositions null or a number | crash (`in`) | varied | refuses |
+| coverage discover | any indexed field missing or of the wrong type (`packages`, `id`, `workspace_members`, `name`, `manifest_path`, `features`, `targets`, `kind`, `src_path`, `test`, `doctest`, `required-features`) | crash | **skipped or defaulted** | refuses, naming the field and type |
+| coverage discover | id `7` with member `7.0`, `True` for `1`, `[1]` for `[1.0]`; members as dict keys or a substring string | membership by Python `==`, hashing or substring | not a member | identical output |
+| coverage discover | dependency or required-feature list of numbers | sorted, exit 0 | filtered | refuses (stricter) |
+| rust-scope-check | `packages` or a package missing, null, a string or a list; a name missing, unhashable or not a string | crash | package **skipped** | refuses |
+| parity-check | `packages`, `targets`, `kind[0]` (empty, missing, dict, null), `src_path` (missing, falsy, not a string), names missing | crash | **skipped or defaulted, exit 0** | refuses |
+| parity-check | package or target name not a string | sorted and printed, exit 0 | skipped | refuses (stricter) |
+| readme | track, snapshots, corrections, bench baseline, CSV or reports of the wrong shape (43 crash classes: not an object, not iterable, unhashable, missing key, `+` of `int` and `str`, `.upper`/`.split` on a number, `[:9]` on a number or dict, format of a string or `None`, unsortable ids, unsafe command tokens) | crash | many **rendered** (`screen None`, digits, `name=`) | refuses |
+| readme | a hidden `.bench-report.json` | counted, so the report count disagrees | **ignored** | counted, identical refusal |
+| cargo-artifact select | ids equal only under Python `==`, ids beyond 64 bits | found 2, 1 or 0 packages or executables | serde `==`, so the count differs | Python `==` (identical); beyond 64 bits refused at parse |
+| cargo-artifact select | a package without a name or id; `workspace_members` missing with no name match | caught `KeyError` (`'name'`, `'id'`) or `found 0` | skipped, success | identical line |
+| cargo-artifact select | message `target` or `profile` null or a list; `kind` null or a number; `executable` not a string | crash | **skipped, success** | refuses |
+| cargo-artifact select | `kind` a dict or a string containing `bin` | counted | not counted | counted |
+| cargo-artifact build | Cargo output that is not UTF-8 | caught `UnicodeDecodeError`, exit 1 | replaced, **continued** | refuses |
+| cargo-artifact target-dir | `target_directory` not a string | printed `str(value)`, exit 0 | refused | refuses (stricter), naming the type |
+| build-report report | configuration not an object, `stale_hours` or `cargo_roots` wrong, `measurement_roots` not a list | failure receipt, exit 1 | the same | the same (now replayed) |
+
+**Runs.**
+- `p1-failclosed-pre-20260927T221449Z`: the reproduction above.
+- `p1-failclosed-capture-20260928T020533Z`: the fixtures.
+- `p1-failclosed-post-*`: `pre.sh` rerun on the committed head.
+- `p1-failclosed-gate-*`: the full gate, with the replays' `negative-report.tsv`.
+
 ## Commit map — `rr2/python-p1` to the landing
 
 The work above was committed on `rr2/python-p1` and landed through `rr2/python-p1-landing`: its
@@ -682,6 +849,10 @@ runs made before the rebase.
 | `docs: record why the nine archived unit templates stay archived (P1 landing)` | none, made later | landing only | — |
 | `jope-engine: show receipts of the archived report and proposal writers as history (P1 landing)` | none, made later | landing only | — |
 | `docs: correct the archived units' consumers and the host they were checked on (P1 landing)` | none, made later | landing only | — |
+| `jope-records: fail closed on malformed inputs to the four hygiene guards, as their Python did (P1 review)` | none, made later | landing only | — |
+| `jope-ci: compare cargo-artifact ids with Python's == and fail closed on malformed metadata and messages (P1 review)` | none, made later | landing only | — |
+| `jope-ci: replay build-report configuration refusals against the Python (P1 review)` | none, made later | landing only | — |
+| `docs: record the fail-closed audit of the P1 ports (P1 review)` | none, made later | landing only | — |
 
 "Patch-id" compares `git patch-id --stable` of the commit as submitted and its original. Each
 pair changes the same paths with the same status. The tree proof
