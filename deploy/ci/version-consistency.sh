@@ -9,8 +9,15 @@
 #   * when a tag is given (argument 1, or GITHUB_REF_NAME on a tag push), it is exactly v<version>.
 #
 # Usage: deploy/ci/version-consistency.sh [vX.Y.Z]
-# Runs in the hygiene lane with no argument; release.yml passes the pushed tag. `just bump X.Y.Z`
-# rewrites every location this script checks.
+# It runs in no CI lane, and nothing calls it any more. release.yml, which passed it the pushed tag,
+# is dispatch-only and fails at its first step; `just bump` no longer calls it. A release is gated by
+# deploy/release/release.sh's own cargo-metadata check instead: jope-cli and every product crate
+# equal the tag, with the smartcluster crates and python/ left out.
+# python/pyproject.toml is intentionally not bumped for v0.2.0: no wheel ships (owner decision; the
+# Python surface is being retired under ADR-0006), so the workspace is 0.2.0 while pyproject stays
+# 0.1.0. Run by hand, this script therefore reports the known
+#   MISMATCH python/pyproject.toml: 0.1.0 != workspace 0.2.0
+# until the Rust port of this check lands. The Python below is not edited or extended (ADR-0006).
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 

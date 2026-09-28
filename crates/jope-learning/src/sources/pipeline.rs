@@ -13,13 +13,14 @@
 //!   random-stream protocol;
 //! * `comparison` — the numerical policy, the held-out stage and mean-over-cuts aggregation.
 //!
-//! The workspace version never moves (`jope-pipeline/0.1.0`) and the engine string is a constant,
-//! so the source commit is what tells one evaluator from another: a receipt measured by another
-//! commit is another identity and never displaces this one, and a receipt that names no commit is
-//! refused, because nothing would tell its evaluator apart from any other. What the commit does
-//! not bind: uncommitted changes in the tree the binary was built from, and the binary itself
-//! (`evaluator_sha256` is `unbound`, so the record is not replayable). The metric is not part of
-//! the identity; `hwm::decide` compares it separately (`metric-mismatch`).
+//! The tool version (`jope-pipeline/<workspace version>`) changes only when a release bumps the
+//! workspace version, and the engine string is a constant, so the source commit is what tells one
+//! evaluator from another: a receipt measured by another commit is another identity and never
+//! displaces this one, and a receipt that names no commit is refused, because nothing would tell
+//! its evaluator apart from any other. What the commit does not bind: uncommitted changes in the
+//! tree the binary was built from, and the binary itself (`evaluator_sha256` is `unbound`, so the
+//! record is not replayable). The metric is not part of the identity; `hwm::decide` compares it
+//! separately (`metric-mismatch`).
 //!
 //! The stage is the development hold-out, never `train_oof`: these records are **not**
 //! teaching-eligible. `freeze_teaching` excludes them like every record without a measured
