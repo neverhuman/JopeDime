@@ -282,21 +282,25 @@ impl HostCensus {
     }
 }
 
+/// A machine id as `/etc/machine-id` holds it: exactly 32 lowercase hex digits.
+pub(crate) fn is_machine_id(s: &str) -> bool {
+    s.len() == 32
+        && s.bytes()
+            .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
+}
+/// A kernel boot id as a census records it: 1..=64 bytes.
+pub(crate) fn is_boot_id(s: &str) -> bool {
+    !s.is_empty() && s.len() <= 64
+}
 pub(crate) fn validate_identity(i: &HostIdentity) -> Result<()> {
     ensure!(is_name(&i.host), "host name");
     ensure!(
-        i.machine_id.len() == 32
-            && i.machine_id
-                .bytes()
-                .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b)),
+        is_machine_id(&i.machine_id),
         "host `{}` machine id must be 32 lowercase hex (/etc/machine-id)",
         i.host
     );
     ensure!(
-        !i.boot_id.is_empty()
-            && i.boot_id.len() <= 64
-            && !i.address.is_empty()
-            && i.address.len() <= 256,
+        is_boot_id(&i.boot_id) && !i.address.is_empty() && i.address.len() <= 256,
         "host `{}` boot/address identity",
         i.host
     );

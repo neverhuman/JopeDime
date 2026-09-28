@@ -17,7 +17,7 @@
 //! [`EXIT_LOST_CONTROL`] and no result. The CPU proof is a lifecycle workload over the
 //! verified inputs; it is not training.
 use super::{
-    collect::{self, CollectSpec, CommandRunner},
+    collect::{self, CollectSpec, HostSources},
     controller::EXIT_LOST_CONTROL,
     job_identity::{self, ExpectedJob, JobClaim},
     launch,
@@ -209,7 +209,12 @@ pub fn record_refusal(outbox: &Path, error: &anyhow::Error) {
 /// Run one participant to completion. Returns the process exit code: 0 after publishing a
 /// signed result (or on an explicit stop), [`EXIT_LOST_CONTROL`] when control is lost. Every
 /// refusal before admission is an error, and then no work was started.
-pub fn run(args: &ParticipantArgs, runner: &dyn CommandRunner) -> Result<i32> {
+///
+/// `sources` is how this process observes its host (its device visibility probe and its
+/// identity). The production `jope-native-loop participant` passes
+/// [`HostSources::system`](collect::HostSources::system); its own binary is always the one
+/// actually running (`/proc/self/exe`), and its job arguments are always its own.
+pub fn run(args: &ParticipantArgs, sources: &HostSources) -> Result<i32> {
     let (contract, record) =
         launch::load_launch(&args.plan, &args.plan_sha256, &args.launch_record)?;
     // W7-D2: a plan that selects training runs only on a build that has the trainer.
@@ -235,7 +240,7 @@ pub fn run(args: &ParticipantArgs, runner: &dyn CommandRunner) -> Result<i32> {
     let visibility = launch::resolve_visibility(
         &record,
         std::env::var_os(launch::VISIBILITY_VARIABLE).as_deref(),
-        runner,
+        sources.commands,
     )?;
     let rank = record.global_rank;
     let planned = contract.participant(rank).context("rank")?;
@@ -258,7 +263,7 @@ pub fn run(args: &ParticipantArgs, runner: &dyn CommandRunner) -> Result<i32> {
     );
     let identity = collect::observe_identity(
         &installation.collect_spec(Some(Path::new("/proc/self/exe"))),
-        runner,
+        sources,
     )?;
     let closure =
         rendezvous::observed_closure_digest(&installation.input_root, &contract.artifact_closure)?;

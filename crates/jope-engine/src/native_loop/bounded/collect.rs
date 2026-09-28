@@ -1,17 +1,27 @@
 //! Local host census collection and per-host census merge (W7-T01).
 //!
 //! [`collect`] observes the **local host only** and produces exactly the typed
-//! `jope.native_host_census.v1` record that [`super::census::preflight`] validates. It reads
-//! `/etc/machine-id`, the kernel boot id, the host name and the local interface addresses; the
-//! configured certificate; the SHA-256 of the executables, runtime libraries and installed
-//! policy files it is given; online CPUs and available memory; and, unless GPUs are hidden, the
-//! GPU inventory and device-owning processes from `nvidia-smi`. It never contacts another host,
-//! never opens a device and never allocates or reserves anything: a census is an observation,
-//! not a reservation, and admission re-checks it.
+//! `jope.native_host_census.v1` record that [`super::census::preflight`] validates. Through its
+//! [`HostSources`] it reads the machine id, the kernel boot id, the host name and the local
+//! interface addresses; the configured certificate; the SHA-256 of the executables, runtime
+//! libraries and installed policy files it is given; online CPUs and available memory; and,
+//! unless GPUs are hidden, the GPU inventory and device-owning processes from `nvidia-smi`. It
+//! never contacts another host, never opens a device and never allocates or reserves anything:
+//! a census is an observation, not a reservation, and admission re-checks it.
 //!
 //! Nothing is invented. An absent `nvidia-smi` or `CUDA_VISIBLE_DEVICES=""` records no GPU; a
 //! failing or unparseable probe, a value that is not available, or an identity input that cannot
-//! be verified locally refuses the whole collection.
+//! be verified locally refuses the whole collection. A machine id that is not 32 lowercase hex,
+//! an empty or oversized boot id and a host name that is not a census name are refused where they
+//! are read, naming the file; no identity is ever derived or defaulted.
+//!
+//! [`HostSources`] is the one observation provider the collector and every rendezvous
+//! participant read the host through. The production entrypoints (`jope-native-loop census
+//! collect` and `jope-native-loop participant`) pass [`HostSources::system`], the real
+//! `/etc/machine-id`, `/proc/sys/kernel/random/boot_id`, `/proc/sys/kernel/hostname`,
+//! `getifaddrs` and `nvidia-smi`; nothing else in the product constructs one. No argument or
+//! environment variable substitutes a source, and the type has no `Default`. A fixture passes
+//! files and functions of its own, and they are read by exactly the code that reads the real host.
 //!
 //! [`merge`] combines per-host documents into one multi-host census. Every document is pinned by
 //! the SHA-256 its collector reported, so a document changed in transit is refused. Stale or
@@ -139,6 +149,66 @@ impl CommandRunner for SystemCommands {
         }))
     }
 }
+/// The host name file of a real host.
+pub const SYSTEM_HOST_NAME: &str = "/proc/sys/kernel/hostname";
+/// The machine id file of a real host.
+pub const SYSTEM_MACHINE_ID: &str = "/etc/machine-id";
+/// The boot id file of a real host.
+pub const SYSTEM_BOOT_ID: &str = "/proc/sys/kernel/random/boot_id";
+/// Every address assigned to a local interface, observed once.
+pub type InterfaceSource = dyn Fn() -> Result<BTreeSet<IpAddr>>;
+
+/// Where the local host is observed from: the observation provider of [`collect`],
+/// [`observe_identity`] and every rendezvous participant (see the module documentation).
+/// Each identity file is read bounded and regular, symlinks resolved, and its value is checked
+/// where it is read.
+pub struct HostSources<'a> {
+    /// A file holding the host name ([`SYSTEM_HOST_NAME`] on a real host).
+    pub host_name: PathBuf,
+    /// A file holding the 32-hex machine id ([`SYSTEM_MACHINE_ID`] on a real host).
+    pub machine_id: PathBuf,
+    /// A file holding the boot id ([`SYSTEM_BOOT_ID`] on a real host).
+    pub boot_id: PathBuf,
+    /// The local interface addresses ([`local_addresses`] on a real host).
+    pub interfaces: &'a InterfaceSource,
+    /// The read-only inventory programs ([`SystemCommands`] on a real host).
+    pub commands: &'a dyn CommandRunner,
+}
+impl HostSources<'static> {
+    /// The real host. Only the production entrypoints construct this.
+    pub fn system() -> Self {
+        Self {
+            host_name: PathBuf::from(SYSTEM_HOST_NAME),
+            machine_id: PathBuf::from(SYSTEM_MACHINE_ID),
+            boot_id: PathBuf::from(SYSTEM_BOOT_ID),
+            interfaces: &local_addresses,
+            commands: &SystemCommands,
+        }
+    }
+}
+/// The host's own name, machine id and boot id, as read from `sources` and checked where read.
+fn observe_host(sources: &HostSources) -> Result<(String, String, String)> {
+    let host = read_line(&sources.host_name)?;
+    ensure!(
+        is_name(&host),
+        "host name `{host}` read from {} is not a census host name",
+        sources.host_name.display()
+    );
+    let machine_id = read_line(&sources.machine_id)?;
+    ensure!(
+        super::census::is_machine_id(&machine_id),
+        "machine id `{machine_id}` read from {} is not 32 lowercase hex",
+        sources.machine_id.display()
+    );
+    let boot_id = read_line(&sources.boot_id)?;
+    ensure!(
+        super::census::is_boot_id(&boot_id),
+        "boot id `{boot_id}` read from {} is empty or longer than 64 bytes",
+        sources.boot_id.display()
+    );
+    Ok((host, machine_id, boot_id))
+}
+
 fn resolve_program(program: &str) -> Option<PathBuf> {
     if program.contains('/') {
         let p = PathBuf::from(program);
@@ -584,25 +654,19 @@ fn gpu_inventory(
 
 /// The local host's identity exactly as the collector records it. A rendezvous participant
 /// reports this in its hello, with its own running binary as `spec.executable`, so a host's
-/// census and its participants observe the same values the same way.
-pub fn observe_identity(spec: &CollectSpec, runner: &dyn CommandRunner) -> Result<HostIdentity> {
-    Ok(observe(spec, runner)?.0)
+/// census and its participants observe the same values the same way, through the same sources.
+pub fn observe_identity(spec: &CollectSpec, sources: &HostSources) -> Result<HostIdentity> {
+    Ok(observe(spec, sources)?.0)
 }
 type Observed = (HostIdentity, GpuProbe, Vec<GpuObservation>, Vec<Ownership>);
-fn observe(spec: &CollectSpec, runner: &dyn CommandRunner) -> Result<Observed> {
-    let host = read_line(Path::new("/proc/sys/kernel/hostname"))?;
-    ensure!(
-        is_name(&host),
-        "host name `{host}` is not a census host name"
-    );
-    let machine_id = read_line(Path::new("/etc/machine-id"))?;
-    let boot_id = read_line(Path::new("/proc/sys/kernel/random/boot_id"))?;
+fn observe(spec: &CollectSpec, sources: &HostSources) -> Result<Observed> {
+    let (host, machine_id, boot_id) = observe_host(sources)?;
     let address: IpAddr = spec
         .address
         .parse()
         .with_context(|| format!("address `{}` is not an IP address", spec.address))?;
     ensure!(
-        local_addresses()?.contains(&address),
+        (sources.interfaces)()?.contains(&address),
         "address {address} is not assigned to a local interface"
     );
     ensure!(
@@ -624,7 +688,7 @@ fn observe(spec: &CollectSpec, runner: &dyn CommandRunner) -> Result<Observed> {
         "at least one runtime library and one installed policy file are required"
     );
     let (gpu_probe, gpus, driver_version, ownership) =
-        gpu_inventory(runner, spec.cuda_visible_devices.as_ref())?;
+        gpu_inventory(sources.commands, spec.cuda_visible_devices.as_ref())?;
     let identity = HostIdentity {
         host,
         machine_id,
@@ -645,13 +709,13 @@ fn observe(spec: &CollectSpec, runner: &dyn CommandRunner) -> Result<Observed> {
     Ok((identity, gpu_probe, gpus, ownership))
 }
 
-/// Observe the local host. Refuses rather than inventing any value.
+/// Observe the local host through `sources`. Refuses rather than inventing any value.
 pub fn collect(
     spec: &CollectSpec,
-    runner: &dyn CommandRunner,
+    sources: &HostSources,
     now_unix_ms: u64,
 ) -> Result<(HostCensus, CollectionReport)> {
-    let (identity, gpu_probe, gpus, ownership) = observe(spec, runner)?;
+    let (identity, gpu_probe, gpus, ownership) = observe(spec, sources)?;
     let census = HostCensus {
         schema: CENSUS_SCHEMA.into(),
         captured_unix_ms: now_unix_ms,
@@ -853,6 +917,162 @@ pub fn write_census(out: &Path, census: &HostCensus) -> Result<Vec<u8>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Runs nothing: these fixtures record no GPU.
+    struct NoPrograms;
+    impl CommandRunner for NoPrograms {
+        fn run(&self, program: &str, _: &[&str]) -> Result<Option<CommandOutput>> {
+            bail!("this fixture runs no {program}")
+        }
+    }
+    fn loopback() -> Result<BTreeSet<IpAddr>> {
+        Ok(BTreeSet::from([IpAddr::V4(Ipv4Addr::LOCALHOST)]))
+    }
+    /// A host whose identity files are `dir/{hostname,machine-id,boot_id}`, installed as a CPU-only
+    /// collector would see it. Every source is a file or function of this fixture.
+    fn host(dir: &Path) -> (CollectSpec, HostSources<'static>) {
+        let files: [(&str, &[u8]); 8] = [
+            ("hostname", b"fixture-host\n"),
+            ("machine-id", b"0123456789abcdef0123456789abcdef\n"),
+            ("boot_id", b"01234567-89ab-cdef-0123-456789abcdef\n"),
+            ("worker", b"fixture worker"),
+            ("runtime.so", b"fixture runtime"),
+            ("compiler", b"fixture compiler"),
+            ("policy.json", b"{}"),
+            ("host.der", &[0x30, 0x05, 0x30, 0x03, 0x02, 0x01, 0x07]),
+        ];
+        for (name, bytes) in files {
+            fs::write(dir.join(name), bytes).unwrap();
+        }
+        let spec = CollectSpec {
+            address: "127.0.0.1".into(),
+            certificate: dir.join("host.der"),
+            source_commit: "0".repeat(40),
+            executable: dir.join("worker"),
+            runtime_libraries: vec![dir.join("runtime.so")],
+            compiler: dir.join("compiler"),
+            cuda_libraries: Vec::new(),
+            nccl_libraries: Vec::new(),
+            installed_policies: vec![dir.join("policy.json")],
+            cuda_visible_devices: Some(OsString::new()),
+        };
+        let sources = HostSources {
+            host_name: dir.join("hostname"),
+            machine_id: dir.join("machine-id"),
+            boot_id: dir.join("boot_id"),
+            interfaces: &loopback,
+            commands: &NoPrograms,
+        };
+        (spec, sources)
+    }
+    fn refusal<T: std::fmt::Debug>(r: Result<T>) -> String {
+        format!("{:#}", r.expect_err("expected a refusal"))
+    }
+
+    /// The runner container's `/etc/machine-id` is empty (full-main run 36449887665). An empty,
+    /// malformed or absent machine id refuses both the collection and a participant's
+    /// observation, where it is read and naming the file; nothing is derived in its place.
+    #[test]
+    fn an_empty_malformed_or_absent_machine_id_is_refused_where_it_is_read() {
+        let t = tempfile::tempdir().unwrap();
+        let dir = fs::canonicalize(t.path()).unwrap();
+        let (spec, sources) = host(&dir);
+        let path = dir.join("machine-id");
+        let (census, _) = collect(&spec, &sources, 1).unwrap();
+        assert_eq!(
+            census.hosts[0].identity.machine_id,
+            "0123456789abcdef0123456789abcdef"
+        );
+        for (content, read) in [
+            ("", ""),
+            ("\n", ""),
+            (
+                "0123456789ABCDEF0123456789ABCDEF\n",
+                "0123456789ABCDEF0123456789ABCDEF",
+            ),
+            (
+                "0123456789abcdef0123456789abcde\n",
+                "0123456789abcdef0123456789abcde",
+            ),
+            (
+                "0123456789abcdef0123456789abcdef0\n",
+                "0123456789abcdef0123456789abcdef0",
+            ),
+            (
+                "0123456789abcdef 0123456789abcdef",
+                "0123456789abcdef 0123456789abcdef",
+            ),
+            ("uninitialized\n", "uninitialized"),
+        ] {
+            fs::write(&path, content).unwrap();
+            let expected = format!(
+                "machine id `{read}` read from {} is not 32 lowercase hex",
+                path.display()
+            );
+            assert_eq!(refusal(collect(&spec, &sources, 1)), expected);
+            assert_eq!(refusal(observe_identity(&spec, &sources)), expected);
+        }
+        fs::remove_file(&path).unwrap();
+        let absent = refusal(collect(&spec, &sources, 1));
+        assert!(
+            absent.starts_with(&format!("resolve {}: ", path.display())),
+            "{absent}"
+        );
+    }
+
+    #[test]
+    fn an_empty_or_oversized_boot_id_and_a_bad_host_name_are_refused_where_read() {
+        let t = tempfile::tempdir().unwrap();
+        let dir = fs::canonicalize(t.path()).unwrap();
+        let (spec, sources) = host(&dir);
+        let boot = dir.join("boot_id");
+        for content in ["", "\n", &"b".repeat(65)] {
+            fs::write(&boot, content).unwrap();
+            assert_eq!(
+                refusal(collect(&spec, &sources, 1)),
+                format!(
+                    "boot id `{}` read from {} is empty or longer than 64 bytes",
+                    content.trim(),
+                    boot.display()
+                )
+            );
+        }
+        fs::write(&boot, "b".repeat(64)).unwrap();
+        collect(&spec, &sources, 1).unwrap();
+        let name = dir.join("hostname");
+        for content in ["", "not a host\n", "host/name"] {
+            fs::write(&name, content).unwrap();
+            assert_eq!(
+                refusal(observe_identity(&spec, &sources)),
+                format!(
+                    "host name `{}` read from {} is not a census host name",
+                    content.trim(),
+                    name.display()
+                )
+            );
+        }
+    }
+
+    /// The production provider names exactly the real host's identity files, so it reads them
+    /// through the checked reader the refusals above exercise: an empty or malformed
+    /// `/etc/machine-id` refuses a production collection and a production participant alike.
+    /// Nothing here reads the real files.
+    #[test]
+    fn the_production_provider_reads_the_real_host_identity_files() {
+        let system = HostSources::system();
+        assert_eq!(system.host_name, Path::new("/proc/sys/kernel/hostname"));
+        assert_eq!(system.machine_id, Path::new("/etc/machine-id"));
+        assert_eq!(system.boot_id, Path::new("/proc/sys/kernel/random/boot_id"));
+        assert_eq!(
+            (SYSTEM_HOST_NAME, SYSTEM_MACHINE_ID, SYSTEM_BOOT_ID),
+            (
+                "/proc/sys/kernel/hostname",
+                "/etc/machine-id",
+                "/proc/sys/kernel/random/boot_id"
+            )
+        );
+    }
+
     #[test]
     fn base64_and_pem_framing_are_strict() {
         assert_eq!(base64_decode("TWFu").unwrap(), b"Man");

@@ -13,8 +13,18 @@
 //! `grant sign` and `grant verify` author a contract and sign and check its grants (W7-D6);
 //! the grant-authority key is only ever read from an owner-only file.
 //!
-//! The production binary (`src/bin/jope-native-loop.rs`) runs [`main`].
-use super::{bounded, Binding, Loop};
+//! [`main`] takes the host's observation provider from its caller and nothing else: `census
+//! collect` and `participant` observe the host only through it. The production binary
+//! (`src/bin/jope-native-loop.rs`) passes [`HostSources::system`]; no argument or environment
+//! variable changes the sources. The test-only fixture executable
+//! (`tests/support/native_loop_fixture.rs`, the example target `jope-native-loop-fixture`)
+//! runs this same code with the checked-in fixture host. Cargo's default test target selection
+//! compiles it; the DEFAULT `cargo build` and `cargo install` do not produce it, and an explicit
+//! `cargo build --example`, `--examples` or `--all-targets`, or `cargo install --example`, can.
+//! Production stays on the real host because its entrypoints hardwire [`HostSources::system`]
+//! and the product target is the `jope-native-loop` binary, not because Cargo cannot build the
+//! fixture.
+use super::{bounded, bounded::collect::HostSources, Binding, Loop};
 use crate::native_graph::{Artifact, Graph};
 use anyhow::{bail, ensure, Context, Result};
 use clap::{Args as ClapArgs, Parser, Subcommand};
@@ -386,7 +396,7 @@ fn read_census_document(path: &PathBuf) -> Result<Vec<u8>> {
 fn host_supervision(path: &PathBuf) -> Result<bounded::supervisor::HostSupervision> {
     serde_json::from_slice(&read_census_document(path)?).context("supervision")
 }
-fn census_command(op: CensusCommand) -> Result<serde_json::Value> {
+fn census_command(op: CensusCommand, sources: &HostSources) -> Result<serde_json::Value> {
     use bounded::collect;
     match op {
         CensusCommand::Collect {
@@ -414,7 +424,7 @@ fn census_command(op: CensusCommand) -> Result<serde_json::Value> {
                 cuda_visible_devices: std::env::var_os("CUDA_VISIBLE_DEVICES"),
             };
             let now = crate::resident_protocol::now_ms()?;
-            let (census, report) = collect::collect(&spec, &collect::SystemCommands, now)?;
+            let (census, report) = collect::collect(&spec, sources, now)?;
             let bytes = collect::write_census(&out, &census)?;
             ensure!(
                 crate::manifest::hash(&bytes) == report.census_sha256,
@@ -469,7 +479,7 @@ fn read_contract(path: &PathBuf) -> Result<Vec<u8>> {
     ensure!(b.len() as u64 <= limit, "contract size");
     Ok(b)
 }
-fn bounded_command(command: Command) -> Result<()> {
+fn bounded_command(command: Command, sources: &HostSources) -> Result<()> {
     let now = crate::resident_protocol::now_ms()?;
     let out = match command {
         Command::Plan {
@@ -512,7 +522,7 @@ fn bounded_command(command: Command) -> Result<()> {
             &reason,
             now,
         )?)?,
-        Command::Census { op } => census_command(op)?,
+        Command::Census { op } => census_command(op, sources)?,
         Command::Contract { op } => contract_command(op, now)?,
         Command::Grant { op } => grant_command(op, now)?,
         Command::Coordinate {
@@ -620,8 +630,8 @@ fn bounded_command(command: Command) -> Result<()> {
     println!("{}", serde_json::to_string(&out)?);
     Ok(())
 }
-/// Run `jope-native-loop` on this process's arguments.
-pub fn main() -> Result<()> {
+/// Run `jope-native-loop` on this process's arguments, observing the host through `sources`.
+pub fn main(sources: &HostSources) -> Result<()> {
     let args = Args::parse();
     if matches!(
         args.command,
@@ -661,7 +671,7 @@ pub fn main() -> Result<()> {
                 installation,
                 job_arguments: std::env::args_os().skip(1).collect(),
             };
-            match bounded::participant::run(&args, &bounded::collect::SystemCommands) {
+            match bounded::participant::run(&args, sources) {
                 Ok(code) => std::process::exit(code),
                 Err(e) => {
                     // The rank's supervisor keeps its outbox; record why nothing started.
@@ -670,7 +680,7 @@ pub fn main() -> Result<()> {
                 }
             }
         }
-        return bounded_command(args.command);
+        return bounded_command(args.command, sources);
     }
     let a = args.legacy.complete().context(
         "bind/bind-parent-decision/tick/serve require --root, --state, --graph-state, --worker-state, --config, --config-sha256, --socket, --tenant and --project",
