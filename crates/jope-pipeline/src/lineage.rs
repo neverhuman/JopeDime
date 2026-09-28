@@ -941,7 +941,8 @@ mod tests {
     }
 
     /// `--threads 1` and `--threads 8` write the same lineage: every round directory and
-    /// `lineage.json`, byte for byte, with the wall clock frozen.
+    /// `lineage.json`, byte for byte, with the wall clock frozen (so the evaluation budget, never
+    /// the seconds bound, ends every phase; a binding seconds bound is timing-dependent).
     #[test]
     fn one_and_eight_threads_write_byte_identical_lineages() {
         let temp = tempfile::tempdir().unwrap();

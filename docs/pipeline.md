@@ -82,13 +82,19 @@ CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only \
 
 `--threads N` evaluates each generation's admitted candidates on N workers. Admission (which
 candidates are fitted, up to the evaluation bound) and the fold of results back into the search
-both happen in slot order, so the thread count never changes a decision: `--threads 1` and
-`--threads 8` publish the same observations, selection and receipt apart from wall-clock
-readings (with the clock frozen in tests, byte for byte). The comparison phase runs one worker
-per cut. The thread count is not recorded in the receipt, because it cannot change it. Every fit
-runs on an evaluation-pool thread with a 32 MiB stack, `--threads 1` included (and the test-split
-refit too), so a deep fit cannot measure at one worker count and overflow a smaller default
-stack, aborting the process, at another.
+both happen in slot order. So when the evaluation budget, not the seconds deadline, ends every
+phase, `--threads 1` and `--threads 8` publish the same observations, selection and receipt apart
+from wall-clock readings; the tests show this byte for byte with the clock frozen. The seconds
+deadline is different: it is checked again before each fit starts, on the worker that runs it,
+so when it binds, how many candidates start before it depends on how fast the fits run, and so
+on the thread count and the host's load. Such a run is timing-dependent: the same command can
+admit a different set of candidates, record different observations and select differently. Its
+receipt shows it: every phase the deadline ended records `seconds` as its stop reason (each
+cut's `stopped_by`, and the exploration and comparison phases' own reasons). The comparison phase
+runs one worker per cut. The thread count is not recorded in the receipt. Every fit runs on an
+evaluation-pool thread with a 32 MiB stack, `--threads 1` included (and the test-split refit
+too), so a deep fit cannot measure at one worker count and overflow a smaller default stack,
+aborting the process, at another.
 
 `--islands M` runs M independent random streams over the same cuts. Island 0 is `--rng-seed`
 itself, so one island is the plain search. Islands share each cut's evaluation budget and the
