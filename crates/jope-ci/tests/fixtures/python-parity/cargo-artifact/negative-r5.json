@@ -1,0 +1,518 @@
+{
+  "source": "p1-sweep5-capture-20260928T065333Z",
+  "capture": "bash cap5.sh p1-sweep5-capture-20260928T065333Z (Python from git show f46a9048fbb2697d6d1f4463a688083ea9dfcce1:<tool>, unmodified, in a scratch root)",
+  "tool": "deploy/ci/cargo-artifact.py",
+  "layout": "the layout of negative-r2.json; nosearch_mode is the mode of @ROOT@/nosearch (holding an executable demo) during the run, set back to 755 after it",
+  "cases": [
+    {
+      "name": "toml-r5-committed",
+      "argv": [
+        "nextest-config",
+        "--source",
+        "@SOURCE@",
+        "--output",
+        "@OUT@"
+      ],
+      "metadata": "{\"target_directory\": \"@ROOT@/target\"}",
+      "source": "# Test tiers (plan: CI and testing). Profile `pr` runs on hosted runners; `main` on xbabe2.\n[profile.default]\nslow-timeout = { period = \"120s\", terminate-after = 3 }\nfail-fast = false\n\n[profile.pr]\n# Slow deadline tests and the campaign/self-play control planes run only on main (docs/parity/test-timings.json).\ndefault-filter = \"not (package(jope-dime-regressor) | test(=actual_128_192_256_routes_replay_under_retries_and_shuffled_completion) | test(=canceled_cache_commits_resume_without_adopting_partial_contributions) | test(=emit_plan_checks_every_immutable_spec_and_never_submits) | test(=fast_profile_portfolio_head) | test(=golden_portfolio_core) | test(=golden_ridge_gcv_screen_wide) | test(=eval_registry::witness::funding_tests::original_start_and_rank_are_witnessed_retained_and_single_use) | test(=model::tests::portfolio_noise_target_no_leak) | test(=sharded_interruption_tampering_and_source_order_are_enforced) | test(=sigkill_at_each_cache_durable_boundary_keeps_only_complete_entries) | test(=commands::train_only_study::tests::transfer_ranking_excludes_target_family_and_direct_dl_sources))\"\nslow-timeout = { period = \"120s\", terminate-after = 2 }\nfail-fast = false\n\n[profile.pr.junit]\npath = \"junit.xml\"\n\n[profile.main]\nslow-timeout = { period = \"600s\", terminate-after = 2 }\nfail-fast = false\n\n[profile.main.junit]\npath = \"junit-main.xml\"\n",
+      "exit": 0,
+      "stdout": "",
+      "stderr": "",
+      "output_after": "store = { dir = \"@ROOT@/target/nextest\" }\n# Test tiers (plan: CI and testing). Profile `pr` runs on hosted runners; `main` on xbabe2.\n[profile.default]\nslow-timeout = { period = \"120s\", terminate-after = 3 }\nfail-fast = false\n\n[profile.pr]\n# Slow deadline tests and the campaign/self-play control planes run only on main (docs/parity/test-timings.json).\ndefault-filter = \"not (package(jope-dime-regressor) | test(=actual_128_192_256_routes_replay_under_retries_and_shuffled_completion) | test(=canceled_cache_commits_resume_without_adopting_partial_contributions) | test(=emit_plan_checks_every_immutable_spec_and_never_submits) | test(=fast_profile_portfolio_head) | test(=golden_portfolio_core) | test(=golden_ridge_gcv_screen_wide) | test(=eval_registry::witness::funding_tests::original_start_and_rank_are_witnessed_retained_and_single_use) | test(=model::tests::portfolio_noise_target_no_leak) | test(=sharded_interruption_tampering_and_source_order_are_enforced) | test(=sigkill_at_each_cache_durable_boundary_keeps_only_complete_entries) | test(=commands::train_only_study::tests::transfer_ranking_excludes_target_family_and_direct_dl_sources))\"\nslow-timeout = { period = \"120s\", terminate-after = 2 }\nfail-fast = false\n\n[profile.pr.junit]\npath = \"junit.xml\"\n\n[profile.main]\nslow-timeout = { period = \"600s\", terminate-after = 2 }\nfail-fast = false\n\n[profile.main.junit]\npath = \"junit-main.xml\"\n"
+    },
+    {
+      "name": "toml-r5-dt-second-60",
+      "argv": [
+        "nextest-config",
+        "--source",
+        "@SOURCE@",
+        "--output",
+        "@OUT@"
+      ],
+      "metadata": "{\"target_directory\": \"@ROOT@/target\"}",
+      "source": "x = 07:32:60\n",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: Expected newline or end of document after a statement (at line 1, column 6)\n",
+      "output_after": null
+    },
+    {
+      "name": "toml-r5-dt-leap-second-datetime",
+      "argv": [
+        "nextest-config",
+        "--source",
+        "@SOURCE@",
+        "--output",
+        "@OUT@"
+      ],
+      "metadata": "{\"target_directory\": \"@ROOT@/target\"}",
+      "source": "x = 1979-05-27T23:59:60Z\n",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: Expected newline or end of document after a statement (at line 1, column 15)\n",
+      "output_after": null
+    },
+    {
+      "name": "toml-r5-dt-year-zero-date",
+      "argv": [
+        "nextest-config",
+        "--source",
+        "@SOURCE@",
+        "--output",
+        "@OUT@"
+      ],
+      "metadata": "{\"target_directory\": \"@ROOT@/target\"}",
+      "source": "x = 0000-01-01\n",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: Invalid date or datetime (at line 1, column 5)\n",
+      "output_after": null
+    },
+    {
+      "name": "toml-r5-dt-year-zero-offset",
+      "argv": [
+        "nextest-config",
+        "--source",
+        "@SOURCE@",
+        "--output",
+        "@OUT@"
+      ],
+      "metadata": "{\"target_directory\": \"@ROOT@/target\"}",
+      "source": "x = 0000-01-01T00:00:00Z\n",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: Invalid date or datetime (at line 1, column 5)\n",
+      "output_after": null
+    },
+    {
+      "name": "toml-r5-dt-year-zero-local",
+      "argv": [
+        "nextest-config",
+        "--source",
+        "@SOURCE@",
+        "--output",
+        "@OUT@"
+      ],
+      "metadata": "{\"target_directory\": \"@ROOT@/target\"}",
+      "source": "x = 0000-01-01T00:00:00\n",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: Invalid date or datetime (at line 1, column 5)\n",
+      "output_after": null
+    },
+    {
+      "name": "toml-r5-dt-offset",
+      "argv": [
+        "nextest-config",
+        "--source",
+        "@SOURCE@",
+        "--output",
+        "@OUT@"
+      ],
+      "metadata": "{\"target_directory\": \"@ROOT@/target\"}",
+      "source": "x = 1979-05-27T07:32:00Z\n",
+      "exit": 0,
+      "stdout": "",
+      "stderr": "",
+      "output_after": "store = { dir = \"@ROOT@/target/nextest\" }\nx = 1979-05-27T07:32:00Z\n"
+    },
+    {
+      "name": "toml-r5-dt-offset-fraction",
+      "argv": [
+        "nextest-config",
+        "--source",
+        "@SOURCE@",
+        "--output",
+        "@OUT@"
+      ],
+      "metadata": "{\"target_directory\": \"@ROOT@/target\"}",
+      "source": "x = 1979-05-27T00:32:00.999999-07:00\n",
+      "exit": 0,
+      "stdout": "",
+      "stderr": "",
+      "output_after": "store = { dir = \"@ROOT@/target/nextest\" }\nx = 1979-05-27T00:32:00.999999-07:00\n"
+    },
+    {
+      "name": "toml-r5-dt-local",
+      "argv": [
+        "nextest-config",
+        "--source",
+        "@SOURCE@",
+        "--output",
+        "@OUT@"
+      ],
+      "metadata": "{\"target_directory\": \"@ROOT@/target\"}",
+      "source": "x = 1979-05-27T07:32:00\n",
+      "exit": 0,
+      "stdout": "",
+      "stderr": "",
+      "output_after": "store = { dir = \"@ROOT@/target/nextest\" }\nx = 1979-05-27T07:32:00\n"
+    },
+    {
+      "name": "toml-r5-dt-local-date",
+      "argv": [
+        "nextest-config",
+        "--source",
+        "@SOURCE@",
+        "--output",
+        "@OUT@"
+      ],
+      "metadata": "{\"target_directory\": \"@ROOT@/target\"}",
+      "source": "x = 1979-05-27\n",
+      "exit": 0,
+      "stdout": "",
+      "stderr": "",
+      "output_after": "store = { dir = \"@ROOT@/target/nextest\" }\nx = 1979-05-27\n"
+    },
+    {
+      "name": "toml-r5-dt-local-time",
+      "argv": [
+        "nextest-config",
+        "--source",
+        "@SOURCE@",
+        "--output",
+        "@OUT@"
+      ],
+      "metadata": "{\"target_directory\": \"@ROOT@/target\"}",
+      "source": "x = 07:32:00\n",
+      "exit": 0,
+      "stdout": "",
+      "stderr": "",
+      "output_after": "store = { dir = \"@ROOT@/target/nextest\" }\nx = 07:32:00\n"
+    },
+    {
+      "name": "toml-r5-dt-space-separator",
+      "argv": [
+        "nextest-config",
+        "--source",
+        "@SOURCE@",
+        "--output",
+        "@OUT@"
+      ],
+      "metadata": "{\"target_directory\": \"@ROOT@/target\"}",
+      "source": "x = 1979-05-27 07:32:00\n",
+      "exit": 0,
+      "stdout": "",
+      "stderr": "",
+      "output_after": "store = { dir = \"@ROOT@/target/nextest\" }\nx = 1979-05-27 07:32:00\n"
+    },
+    {
+      "name": "toml-r5-dt-in-array",
+      "argv": [
+        "nextest-config",
+        "--source",
+        "@SOURCE@",
+        "--output",
+        "@OUT@"
+      ],
+      "metadata": "{\"target_directory\": \"@ROOT@/target\"}",
+      "source": "x = [1979-05-27]\n",
+      "exit": 0,
+      "stdout": "",
+      "stderr": "",
+      "output_after": "store = { dir = \"@ROOT@/target/nextest\" }\nx = [1979-05-27]\n"
+    },
+    {
+      "name": "toml-r5-dt-in-inline-table",
+      "argv": [
+        "nextest-config",
+        "--source",
+        "@SOURCE@",
+        "--output",
+        "@OUT@"
+      ],
+      "metadata": "{\"target_directory\": \"@ROOT@/target\"}",
+      "source": "x = { y = 07:32:00 }\n",
+      "exit": 0,
+      "stdout": "",
+      "stderr": "",
+      "output_after": "store = { dir = \"@ROOT@/target/nextest\" }\nx = { y = 07:32:00 }\n"
+    },
+    {
+      "name": "toml-r5-dt-in-table",
+      "argv": [
+        "nextest-config",
+        "--source",
+        "@SOURCE@",
+        "--output",
+        "@OUT@"
+      ],
+      "metadata": "{\"target_directory\": \"@ROOT@/target\"}",
+      "source": "[a]\nb = 1979-05-27\n",
+      "exit": 0,
+      "stdout": "",
+      "stderr": "",
+      "output_after": "store = { dir = \"@ROOT@/target/nextest\" }\n[a]\nb = 1979-05-27\n"
+    },
+    {
+      "name": "toml-r5-dt-in-array-of-tables",
+      "argv": [
+        "nextest-config",
+        "--source",
+        "@SOURCE@",
+        "--output",
+        "@OUT@"
+      ],
+      "metadata": "{\"target_directory\": \"@ROOT@/target\"}",
+      "source": "[[a]]\nb = 1979-05-27\n",
+      "exit": 0,
+      "stdout": "",
+      "stderr": "",
+      "output_after": "store = { dir = \"@ROOT@/target/nextest\" }\n[[a]]\nb = 1979-05-27\n"
+    },
+    {
+      "name": "toml-r5-dt-feb-30",
+      "argv": [
+        "nextest-config",
+        "--source",
+        "@SOURCE@",
+        "--output",
+        "@OUT@"
+      ],
+      "metadata": "{\"target_directory\": \"@ROOT@/target\"}",
+      "source": "x = 1979-02-30\n",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: Invalid date or datetime (at line 1, column 5)\n",
+      "output_after": null
+    },
+    {
+      "name": "toml-r5-dt-hour-24",
+      "argv": [
+        "nextest-config",
+        "--source",
+        "@SOURCE@",
+        "--output",
+        "@OUT@"
+      ],
+      "metadata": "{\"target_directory\": \"@ROOT@/target\"}",
+      "source": "x = 24:00:00\n",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: Expected newline or end of document after a statement (at line 1, column 7)\n",
+      "output_after": null
+    },
+    {
+      "name": "toml-r5-float",
+      "argv": [
+        "nextest-config",
+        "--source",
+        "@SOURCE@",
+        "--output",
+        "@OUT@"
+      ],
+      "metadata": "{\"target_directory\": \"@ROOT@/target\"}",
+      "source": "x = 1.5\n",
+      "exit": 0,
+      "stdout": "",
+      "stderr": "",
+      "output_after": "store = { dir = \"@ROOT@/target/nextest\" }\nx = 1.5\n"
+    },
+    {
+      "name": "toml-r5-float-inf",
+      "argv": [
+        "nextest-config",
+        "--source",
+        "@SOURCE@",
+        "--output",
+        "@OUT@"
+      ],
+      "metadata": "{\"target_directory\": \"@ROOT@/target\"}",
+      "source": "x = inf\n",
+      "exit": 0,
+      "stdout": "",
+      "stderr": "",
+      "output_after": "store = { dir = \"@ROOT@/target/nextest\" }\nx = inf\n"
+    },
+    {
+      "name": "toml-r5-float-in-inline-table",
+      "argv": [
+        "nextest-config",
+        "--source",
+        "@SOURCE@",
+        "--output",
+        "@OUT@"
+      ],
+      "metadata": "{\"target_directory\": \"@ROOT@/target\"}",
+      "source": "x = { y = 0.5 }\n",
+      "exit": 0,
+      "stdout": "",
+      "stderr": "",
+      "output_after": "store = { dir = \"@ROOT@/target/nextest\" }\nx = { y = 0.5 }\n"
+    },
+    {
+      "name": "toml-r5-array",
+      "argv": [
+        "nextest-config",
+        "--source",
+        "@SOURCE@",
+        "--output",
+        "@OUT@"
+      ],
+      "metadata": "{\"target_directory\": \"@ROOT@/target\"}",
+      "source": "x = [1, 2]\n",
+      "exit": 0,
+      "stdout": "",
+      "stderr": "",
+      "output_after": "store = { dir = \"@ROOT@/target/nextest\" }\nx = [1, 2]\n"
+    },
+    {
+      "name": "toml-r5-array-empty",
+      "argv": [
+        "nextest-config",
+        "--source",
+        "@SOURCE@",
+        "--output",
+        "@OUT@"
+      ],
+      "metadata": "{\"target_directory\": \"@ROOT@/target\"}",
+      "source": "x = []\n",
+      "exit": 0,
+      "stdout": "",
+      "stderr": "",
+      "output_after": "store = { dir = \"@ROOT@/target/nextest\" }\nx = []\n"
+    },
+    {
+      "name": "toml-r5-array-of-tables",
+      "argv": [
+        "nextest-config",
+        "--source",
+        "@SOURCE@",
+        "--output",
+        "@OUT@"
+      ],
+      "metadata": "{\"target_directory\": \"@ROOT@/target\"}",
+      "source": "[[a]]\nb = 1\n",
+      "exit": 0,
+      "stdout": "",
+      "stderr": "",
+      "output_after": "store = { dir = \"@ROOT@/target/nextest\" }\n[[a]]\nb = 1\n"
+    },
+    {
+      "name": "toml-r5-array-nested-deep",
+      "argv": [
+        "nextest-config",
+        "--source",
+        "@SOURCE@",
+        "--output",
+        "@OUT@"
+      ],
+      "metadata": "{\"target_directory\": \"@ROOT@/target\"}",
+      "source": "x = [[[[[[[[[[1]]]]]]]]]]\n",
+      "exit": 0,
+      "stdout": "",
+      "stderr": "",
+      "output_after": "store = { dir = \"@ROOT@/target/nextest\" }\nx = [[[[[[[[[[1]]]]]]]]]]\n"
+    },
+    {
+      "name": "toml-r5-store-and-datetime",
+      "argv": [
+        "nextest-config",
+        "--source",
+        "@SOURCE@",
+        "--output",
+        "@OUT@"
+      ],
+      "metadata": "{\"target_directory\": \"@ROOT@/target\"}",
+      "source": "store = 1\nx = 1979-05-27\n",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: nextest already configures a store; reconcile it before relocating reports\n",
+      "output_after": null
+    },
+    {
+      "name": "toml-r5-datetime-then-invalid",
+      "argv": [
+        "nextest-config",
+        "--source",
+        "@SOURCE@",
+        "--output",
+        "@OUT@"
+      ],
+      "metadata": "{\"target_directory\": \"@ROOT@/target\"}",
+      "source": "x = 1979-05-27\ny = \n",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: Invalid value (at line 2, column 5)\n",
+      "output_after": null
+    },
+    {
+      "name": "toml-r5-int-bool-string-table",
+      "argv": [
+        "nextest-config",
+        "--source",
+        "@SOURCE@",
+        "--output",
+        "@OUT@"
+      ],
+      "metadata": "{\"target_directory\": \"@ROOT@/target\"}",
+      "source": "[profile.x]\na = 1\nb = true\nc = \"s\"\nd = { e = -2, f = 'lit' }\n",
+      "exit": 0,
+      "stdout": "",
+      "stderr": "",
+      "output_after": "store = { dir = \"@ROOT@/target/nextest\" }\n[profile.x]\na = 1\nb = true\nc = \"s\"\nd = { e = -2, f = 'lit' }\n"
+    },
+    {
+      "name": "select-r5-exec-control",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/nosearch/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "exit": 0,
+      "stdout": "@ROOT@/nosearch/demo\n",
+      "stderr": "",
+      "output_after": null
+    },
+    {
+      "name": "select-r5-exec-no-search",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/nosearch/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "nosearch_mode": "644",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: [Errno 13] Permission denied: '@ROOT@/nosearch/demo'\n",
+      "output_after": null
+    },
+    {
+      "name": "select-r5-exec-unlistable",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/nosearch/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "nosearch_mode": "000",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: [Errno 13] Permission denied: '@ROOT@/nosearch/demo'\n",
+      "output_after": null
+    }
+  ]
+}

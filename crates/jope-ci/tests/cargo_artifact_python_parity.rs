@@ -41,6 +41,12 @@
 //! of PR #117), captured the same way: Python 3.12's limit of 4300 digits on integer conversion in
 //! every JSON and TOML reader, and POSIX's distinct `//` root in `--path-map` and in the printed
 //! paths. They are replayed by `cargo_artifact_matches_round_three_digits` and `..._paths`.
+//!
+//! `negative-r5.json` holds round five (the fail-closed sweep): `nextest-config` sources holding
+//! TOML dates and times (five `tomllib` refused and the `toml` crate read), floats and arrays,
+//! which the port now refuses as types the committed configuration does not use (`R5_STRICTER`
+//! where the Python accepted them), and `select` of an executable under a directory that may not
+//! be searched, whose `OSError` the Python printed. `cargo_artifact_matches_round_five` replays it.
 
 use serde_json::Value;
 use std::fs;
@@ -226,7 +232,55 @@ const R2_MESSAGE_DIFFERS: &[&str] = &["toml-invalid-value"];
 
 #[test]
 fn cargo_artifact_matches_round_two() {
-    replay_round("negative-r2.json", 40, R2_MESSAGE_DIFFERS);
+    replay_round("negative-r2.json", 40, R2_MESSAGE_DIFFERS, &[]);
+}
+
+/// Round five (`negative-r5.json`): both refuse, the Python in `tomllib`'s words and the port in
+/// the `toml` crate's or its own: the five dates and times `tomllib` refused and the crate read
+/// (a seconds field of 60, the year 0000), now refused as a TOML type the port does not read, and
+/// three the crate refuses too.
+const R5_MESSAGE_DIFFERS: &[&str] = &[
+    "toml-r5-dt-second-60",
+    "toml-r5-dt-leap-second-datetime",
+    "toml-r5-dt-year-zero-date",
+    "toml-r5-dt-year-zero-offset",
+    "toml-r5-dt-year-zero-local",
+    "toml-r5-dt-feb-30",
+    "toml-r5-dt-hour-24",
+    "toml-r5-datetime-then-invalid",
+];
+
+/// Round five: nextest configurations the Python accepted and the port refuses, writing nothing
+/// (stricter): every date, time or datetime (the two TOML readers disagree on which are valid),
+/// and floats and arrays, which the committed configuration does not use.
+const R5_STRICTER: &[&str] = &[
+    "toml-r5-dt-offset",
+    "toml-r5-dt-offset-fraction",
+    "toml-r5-dt-local",
+    "toml-r5-dt-local-date",
+    "toml-r5-dt-local-time",
+    "toml-r5-dt-space-separator",
+    "toml-r5-dt-in-array",
+    "toml-r5-dt-in-inline-table",
+    "toml-r5-dt-in-table",
+    "toml-r5-dt-in-array-of-tables",
+    "toml-r5-float",
+    "toml-r5-float-inf",
+    "toml-r5-float-in-inline-table",
+    "toml-r5-array",
+    "toml-r5-array-empty",
+    "toml-r5-array-of-tables",
+    "toml-r5-array-nested-deep",
+];
+
+/// Round five of the review of PR #117 (`negative-r5.json`): the `toml` crate read TOML dates and
+/// times that `tomllib` refused, so `nextest-config` wrote a configuration where the Python
+/// refused; the port now reads only the value types the committed configuration uses. And
+/// `select`'s `is_file()` of an executable under a directory that may not be searched raised,
+/// which the Python printed as the `OSError`; the port refused in other words and now prints it.
+#[test]
+fn cargo_artifact_matches_round_five() {
+    replay_round("negative-r5.json", 31, R5_MESSAGE_DIFFERS, R5_STRICTER);
 }
 
 /// Round three, integers (`negative-r3-digits.json`): Python 3.12 refuses to convert an integer of
@@ -236,7 +290,12 @@ fn cargo_artifact_matches_round_two() {
 /// both sides, in the `toml` crate's words (it reads no integer beyond 64 bits).
 #[test]
 fn cargo_artifact_matches_round_three_digits() {
-    replay_round("negative-r3-digits.json", 14, &["toml-int-4301-digits"]);
+    replay_round(
+        "negative-r3-digits.json",
+        14,
+        &["toml-int-4301-digits"],
+        &[],
+    );
 }
 
 /// Round three, paths (`negative-r3-paths.json`): `Path(host) / path.relative_to(container)` with
@@ -244,12 +303,14 @@ fn cargo_artifact_matches_round_three_digits() {
 /// directions and at the root itself, and the paths the refusals print.
 #[test]
 fn cargo_artifact_matches_round_three_paths() {
-    replay_round("negative-r3-paths.json", 15, &[]);
+    replay_round("negative-r3-paths.json", 15, &[], &[]);
 }
 
 /// Replay every case of a round fixture (the layout of `negative-r2.json`); `message_differs` names
-/// the cases where both refuse in different words.
-fn replay_round(file: &str, count: usize, message_differs: &[&str]) {
+/// the cases where both refuse in different words, `stricter` those the Python accepted and the
+/// port refuses (writing nothing). A case's `nosearch_mode` is the mode of `@ROOT@/nosearch`,
+/// which holds an executable `demo`, during its run.
+fn replay_round(file: &str, count: usize, message_differs: &[&str], stricter: &[&str]) {
     let doc: Value =
         serde_json::from_str(&fs::read_to_string(fixture().join(file)).unwrap()).unwrap();
     assert!(doc["source"].is_string() && doc["capture"].is_string());
@@ -259,7 +320,7 @@ fn replay_round(file: &str, count: usize, message_differs: &[&str]) {
         count,
         "{file}: every captured case is replayed"
     );
-    for name in message_differs {
+    for name in message_differs.iter().chain(stricter) {
         assert!(
             cases.iter().any(|c| c["name"] == *name),
             "{file}: {name} is not a case"
@@ -279,6 +340,8 @@ fn replay_round(file: &str, count: usize, message_differs: &[&str]) {
     let root_text = root.to_str().unwrap().to_owned();
     fs::create_dir(root.join("bin")).unwrap();
     executable(&root.join("bin/demo"), "#!/bin/sh\nexit 0\n");
+    fs::create_dir(root.join("nosearch")).unwrap();
+    executable(&root.join("nosearch/demo"), "#!/bin/sh\nexit 0\n");
     let shims = root.join("shims");
     fs::create_dir(&shims).unwrap();
     executable(
@@ -336,6 +399,15 @@ fn replay_round(file: &str, count: usize, message_differs: &[&str]) {
                     .replace("@ROOT@", &root_text)
             })
             .collect();
+        let nosearch = case
+            .get("nosearch_mode")
+            .and_then(Value::as_str)
+            .map(|m| u32::from_str_radix(m, 8).unwrap());
+        if let Some(mode) = nosearch {
+            fs::set_permissions(root.join("nosearch"), fs::Permissions::from_mode(mode)).unwrap();
+        }
+        // A user who may search anything (root) cannot reproduce a refused search.
+        let searchable = nosearch.is_some() && fs::metadata(root.join("nosearch/demo")).is_ok();
         let run = Command::new(env!("CARGO_BIN_EXE_jope-ci"))
             .arg("cargo-artifact")
             .args(&argv)
@@ -345,11 +417,31 @@ fn replay_round(file: &str, count: usize, message_differs: &[&str]) {
             .current_dir(&root)
             .output()
             .unwrap();
+        fs::set_permissions(root.join("nosearch"), fs::Permissions::from_mode(0o755)).unwrap();
+        if searchable {
+            eprintln!("{name}: skipped, this user may search a directory of that mode");
+            continue;
+        }
         let normalise = |bytes: &[u8]| String::from_utf8_lossy(bytes).replace(&root_text, "@ROOT@");
         let (stdout, stderr) = (normalise(&run.stdout), normalise(&run.stderr));
         let exit = i64::from(run.status.code().unwrap());
         record(case, exit, &stdout, &stderr);
-        let verdict = if message_differs.contains(&name) {
+        let verdict = if stricter.contains(&name) {
+            // The Python accepted; the port refuses (one `cargo-artifact:` line, nothing on stdout)
+            // and leaves no output (checked below).
+            let refused = exit == 1
+                && stdout.is_empty()
+                && stderr.starts_with("cargo-artifact: ")
+                && stderr.lines().count() == 1;
+            if refused && case["exit"] == 0 {
+                Ok(())
+            } else {
+                Err(format!(
+                    "listed as stricter, but the Python exited {} and the port {exit} {stderr:?}",
+                    case["exit"]
+                ))
+            }
+        } else if message_differs.contains(&name) {
             let refused = exit == 1
                 && stdout.is_empty()
                 && stderr.starts_with("cargo-artifact: ")
@@ -372,7 +464,11 @@ fn replay_round(file: &str, count: usize, message_differs: &[&str]) {
         let left = fs::read_to_string(root.join("out.toml"))
             .ok()
             .map(|t| t.replace(&root_text, "@ROOT@"));
-        let python_left = case["output_after"].as_str().map(str::to_owned);
+        let python_left = if stricter.contains(&name) {
+            None
+        } else {
+            case["output_after"].as_str().map(str::to_owned)
+        };
         if left != python_left {
             failures.push(format!(
                 "{name}: the output is {left:?}, the Python left {python_left:?}"
