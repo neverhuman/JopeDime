@@ -1,0 +1,152 @@
+{
+  "source": "p1-failclosed-r2-capture-20260928T031831Z",
+  "capture": "bash cap2.sh (run p1-failclosed-r2-capture-20260928T031831Z; Python from git show f46a9048fbb2697d6d1f4463a688083ea9dfcce1:<tool>, unmodified, in a scratch root)",
+  "tool": "deploy/maintenance/jope_report.py",
+  "normalisation": "scan: @ROOT@ is the scanned tree; completed_at, allocated bytes, their sum and newest_mtime are blanked (host-dependent), and a codec position is written @N@ (it counts the host path du printed); report: failure.txt of the one run under custody, INVOCATION_ID unset",
+  "cases": [
+    {
+      "name": "base",
+      "kind": "scan",
+      "tree": [
+        {
+          "dir": "proj/target/debug/.fingerprint/x"
+        },
+        {
+          "file": "proj/target/.rustc_info.json"
+        },
+        {
+          "file": "proj/target/debug/.fingerprint/x/f"
+        }
+      ],
+      "args": [
+        "@ROOT@"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"completed_at\": \"@T@\",\n  \"root\": \"@ROOT@\",\n  \"stale_hours\": null,\n  \"candidates\": [\n    {\n      \"path\": \"@ROOT@/proj/target\",\n      \"allocated_bytes\": 0,\n      \"newest_mtime\": 0\n    }\n  ],\n  \"candidate_allocated_bytes_sum\": 0,\n  \"sum_may_double_count_hardlinks\": true,\n  \"report_only\": true,\n  \"complete\": true\n}\n",
+      "stderr": ""
+    },
+    {
+      "name": "file-name-not-utf8-in-candidate",
+      "kind": "scan",
+      "tree": [
+        {
+          "dir": "proj/target/debug/.fingerprint/x"
+        },
+        {
+          "file": "proj/target/.rustc_info.json"
+        },
+        {
+          "file": "proj/target/debug/.fingerprint/x/f"
+        },
+        {
+          "file_hex": "70726f6a2f7461726765742f64656275672f2e66696e6765727072696e742f782fff"
+        }
+      ],
+      "args": [
+        "@ROOT@"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"completed_at\": \"@T@\",\n  \"root\": \"@ROOT@\",\n  \"stale_hours\": null,\n  \"candidates\": [\n    {\n      \"path\": \"@ROOT@/proj/target\",\n      \"allocated_bytes\": 0,\n      \"newest_mtime\": 0\n    }\n  ],\n  \"candidate_allocated_bytes_sum\": 0,\n  \"sum_may_double_count_hardlinks\": true,\n  \"report_only\": true,\n  \"complete\": true\n}\n",
+      "stderr": ""
+    },
+    {
+      "name": "dir-name-not-utf8-outside-candidate",
+      "kind": "scan",
+      "tree": [
+        {
+          "dir": "proj/target/debug/.fingerprint/x"
+        },
+        {
+          "file": "proj/target/.rustc_info.json"
+        },
+        {
+          "file": "proj/target/debug/.fingerprint/x/f"
+        },
+        {
+          "dir_hex": "fe2f737562"
+        }
+      ],
+      "args": [
+        "@ROOT@"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"completed_at\": \"@T@\",\n  \"root\": \"@ROOT@\",\n  \"stale_hours\": null,\n  \"candidates\": [\n    {\n      \"path\": \"@ROOT@/proj/target\",\n      \"allocated_bytes\": 0,\n      \"newest_mtime\": 0\n    }\n  ],\n  \"candidate_allocated_bytes_sum\": 0,\n  \"sum_may_double_count_hardlinks\": true,\n  \"report_only\": true,\n  \"complete\": true\n}\n",
+      "stderr": ""
+    },
+    {
+      "name": "candidate-path-not-utf8",
+      "kind": "scan",
+      "tree": [
+        {
+          "dir_hex": "fd2f70726f6a2f7461726765742f64656275672f2e66696e6765727072696e742f78"
+        },
+        {
+          "file_hex": "fd2f70726f6a2f7461726765742f2e72757374635f696e666f2e6a736f6e"
+        },
+        {
+          "file_hex": "fd2f70726f6a2f7461726765742f64656275672f2e66696e6765727072696e742f782f66"
+        }
+      ],
+      "args": [
+        "@ROOT@"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "report failed: 'utf-8' codec can't decode byte 0xfd in position @N@: invalid start byte\n"
+    },
+    {
+      "name": "root-missing-nested",
+      "kind": "scan",
+      "tree": [],
+      "args": [
+        "/nonexistent-q/a/b"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "report failed: [Errno 2] No such file or directory: '/nonexistent-q'\n"
+    },
+    {
+      "name": "root-under-a-file",
+      "kind": "scan",
+      "tree": [
+        {
+          "file": "f"
+        }
+      ],
+      "args": [
+        "@ROOT@/f/x"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "report failed: [Errno 20] Not a directory: '@ROOT@/f/x'\n"
+    },
+    {
+      "name": "config-not-utf8",
+      "kind": "report",
+      "config_hex": "ff7b7d",
+      "exit": 1,
+      "failure_txt": "'utf-8' codec can't decode byte 0xff in position 0: invalid start byte\n"
+    },
+    {
+      "name": "config-truncated-utf8",
+      "kind": "report",
+      "config_hex": "7b22636172676f5f726f6f7473223a205b22e282",
+      "exit": 1,
+      "failure_txt": "'utf-8' codec can't decode bytes in position 18-19: unexpected end of data\n"
+    },
+    {
+      "name": "config-utf8-encoded-surrogate",
+      "kind": "report",
+      "config_hex": "7b22636172676f5f726f6f7473223a205b22eda080225d2c20227374616c655f686f757273223a2034382c20226d6561737572656d656e745f726f6f7473223a205b5d7d",
+      "exit": 1,
+      "failure_txt": "service requires the two approved Cargo roots and a 48-hour filter\n"
+    },
+    {
+      "name": "config-surrogate-escape",
+      "kind": "report",
+      "config_hex": "7b22636172676f5f726f6f7473223a205b225c7564383030225d2c20227374616c655f686f757273223a2034382c20226d6561737572656d656e745f726f6f7473223a205b5d7d",
+      "exit": 1,
+      "failure_txt": "service requires the two approved Cargo roots and a 48-hour filter\n"
+    }
+  ]
+}

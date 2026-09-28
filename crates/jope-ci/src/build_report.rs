@@ -19,6 +19,7 @@
 
 use jope_records::pyjson::{self, Dict, Value};
 use sha2::{Digest, Sha256};
+use std::ffi::{OsStr, OsString};
 use std::fs;
 use std::os::unix::fs::{DirBuilderExt, MetadataExt};
 use std::path::{Component, Path, PathBuf};
@@ -56,7 +57,8 @@ impl std::fmt::Display for Failure {
 
 pub type Outcome<T> = Result<T, Failure>;
 
-/// An `OSError` as Python prints it: `[Errno N] <strerror>: '<path>'`.
+/// An `OSError` as Python prints it: `[Errno N] <strerror>: '<path>'`, a path that is not UTF-8
+/// shown as Python's surrogate-escaped `repr` (`'\udcff'`).
 fn os_error(error: &std::io::Error, path: &Path) -> Failure {
     match error.raw_os_error() {
         Some(code) => {
@@ -66,11 +68,65 @@ fn os_error(error: &std::io::Error, path: &Path) -> Failure {
                 .unwrap_or(&text);
             Failure::new(format!(
                 "[Errno {code}] {strerror}: {}",
-                pyjson::str_repr(&path.to_string_lossy())
+                crate::py::os_repr(path.as_os_str())
             ))
         }
         None => Failure::new(format!("{}: {error}", path.display())),
     }
+}
+
+/// `os.path.realpath(path, strict=True)` for an absolute, normalised path: each component is
+/// `lstat`ed in turn and symlinks are followed as `posixpath._joinrealpath` follows them, so a
+/// missing component refuses naming the path up to it (`[Errno 2] ...: '/nonexistent-q'`), as
+/// Python's `FileNotFoundError` did.
+fn realpath_strict(path: &Path) -> Outcome<PathBuf> {
+    fn join(
+        mut path: PathBuf,
+        rest: &Path,
+        seen: &mut std::collections::HashMap<PathBuf, Option<PathBuf>>,
+    ) -> Outcome<PathBuf> {
+        if rest.is_absolute() {
+            path = PathBuf::from("/");
+        }
+        for component in rest.components() {
+            let name = match component {
+                Component::Normal(name) => name,
+                Component::ParentDir => {
+                    if path.as_os_str().is_empty() || path.ends_with("..") {
+                        path.push("..");
+                    } else if path != Path::new("/") {
+                        path.pop();
+                    }
+                    continue;
+                }
+                _ => continue,
+            };
+            let newpath = path.join(name);
+            let meta = fs::symlink_metadata(&newpath).map_err(|e| os_error(&e, &newpath))?;
+            if !meta.file_type().is_symlink() {
+                path = newpath;
+                continue;
+            }
+            match seen.get(&newpath) {
+                Some(Some(resolved)) => {
+                    path = resolved.clone();
+                    continue;
+                }
+                // A symlink met again while resolving it: `os.stat` raises `ELOOP`.
+                Some(None) => {
+                    let error = fs::metadata(&newpath).expect_err("a symlink loop");
+                    return Err(os_error(&error, &newpath));
+                }
+                None => {}
+            }
+            seen.insert(newpath.clone(), None);
+            let target = fs::read_link(&newpath).map_err(|e| os_error(&e, &newpath))?;
+            path = join(path, &target, seen)?;
+            seen.insert(newpath, Some(path.clone()));
+        }
+        Ok(path)
+    }
+    join(PathBuf::new(), path, &mut std::collections::HashMap::new())
 }
 
 /// The UTC clock as `datetime.now(timezone.utc)` prints it: `isoformat()` and the receipt stamp
@@ -179,15 +235,16 @@ pub fn never_interrupted() -> Outcome<()> {
 }
 
 /// What `walk` calls for each directory: the directory, its subdirectory names (prune by
-/// retaining) and its other entries.
-pub type Visit<'a> = &'a mut dyn FnMut(&Path, &mut Vec<String>, &[String]) -> Outcome<()>;
+/// retaining) and its other entries. Names are kept as the bytes the filesystem holds (Python's
+/// surrogate-escaped `str`), so a name that is not UTF-8 is reached, measured and joined intact.
+pub type Visit<'a> = &'a mut dyn FnMut(&Path, &mut Vec<OsString>, &[OsString]) -> Outcome<()>;
 
 /// `os.walk(root, followlinks=False, onerror=raise)` after refusing a root with symlink
 /// components; `visit` sees each directory, its subdirectory names (symlinks to directories
 /// included, as `os.walk` lists them; prune by retaining) and its other entries.
 pub fn walk(root: &Path, interrupt: Interrupt<'_>, visit: Visit<'_>) -> Outcome<()> {
     let root = abspath(root);
-    let resolved = root.canonicalize().map_err(|e| os_error(&e, &root))?;
+    let resolved = realpath_strict(&root)?;
     if resolved != root || !root.is_dir() {
         return Err(Failure::new(format!(
             "root must be an existing directory without symlink components: {}",
@@ -201,7 +258,7 @@ pub fn walk(root: &Path, interrupt: Interrupt<'_>, visit: Visit<'_>) -> Outcome<
         let (mut dirs, mut files) = (vec![], vec![]);
         for entry in entries {
             let entry = entry.map_err(|e| os_error(&e, &directory))?;
-            let name = entry.file_name().to_string_lossy().into_owned();
+            let name = entry.file_name();
             if entry.path().is_dir() {
                 dirs.push(name);
             } else {
@@ -221,37 +278,43 @@ pub fn walk(root: &Path, interrupt: Interrupt<'_>, visit: Visit<'_>) -> Outcome<
 }
 
 /// Run `command` to completion within `limit`, polling `interrupt`; stdout on success.
-fn run_bounded(command: &[&str], limit: Duration, interrupt: Interrupt<'_>) -> Outcome<String> {
+///
+/// As `subprocess.run(..., capture_output=True, text=True, check=True, timeout=...)`: both streams
+/// are decoded (strict UTF-8, universal newlines; stdout first) before the exit status is looked
+/// at, so output that is not UTF-8 fails with Python's `UnicodeDecodeError` text, and a failed
+/// command with `CalledProcessError`'s (`returned non-zero exit status N.`, or `died with
+/// <Signals.SIGKILL: 9>.`). Arguments are passed as the bytes they are.
+fn run_bounded(command: &[&OsStr], limit: Duration, interrupt: Interrupt<'_>) -> Outcome<String> {
     let rendered = format!(
         "[{}]",
         command
             .iter()
-            .map(|a| pyjson::str_repr(a))
+            .map(|a| crate::py::os_repr(a))
             .collect::<Vec<_>>()
             .join(", ")
     );
+    let program = Path::new(command[0]);
     let mut child = Command::new(command[0])
         .args(&command[1..])
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
-        .map_err(|e| os_error(&e, Path::new(command[0])))?;
+        .map_err(|e| os_error(&e, program))?;
     let started = Instant::now();
     loop {
-        if let Some(status) = child
-            .try_wait()
-            .map_err(|e| os_error(&e, Path::new(command[0])))?
-        {
+        if let Some(status) = child.try_wait().map_err(|e| os_error(&e, program))? {
             let output = child
                 .wait_with_output()
-                .map_err(|e| os_error(&e, Path::new(command[0])))?;
-            let stdout = String::from_utf8_lossy(&output.stdout).into_owned();
-            let stderr = String::from_utf8_lossy(&output.stderr).into_owned();
+                .map_err(|e| os_error(&e, program))?;
+            let stdout = jope_records::py::text_output(&output.stdout).map_err(Failure::new)?;
+            let stderr = jope_records::py::text_output(&output.stderr).map_err(Failure::new)?;
             if !status.success() {
-                let code = status.code().unwrap_or(-1);
                 return Err(Failure {
-                    message: format!("Command '{rendered}' returned non-zero exit status {code}."),
+                    message: jope_records::py::called_process_error(
+                        &rendered,
+                        jope_records::py::returncode(status),
+                    ),
                     stderr: Some(stderr),
                 });
             }
@@ -296,13 +359,21 @@ fn py_int(text: &str) -> Outcome<u64> {
 
 /// Allocated bytes of `root` from `/usr/bin/du -s -B1` (through `sudo -n` when privileged).
 pub fn allocated(root: &Path, privileged: bool, interrupt: Interrupt<'_>) -> Outcome<u64> {
-    let root_text = root.to_string_lossy();
-    let mut command = if privileged {
-        vec!["/usr/bin/sudo", "-n", "/usr/bin/du"]
+    let mut command: Vec<&OsStr> = if privileged {
+        vec![
+            "/usr/bin/sudo".as_ref(),
+            "-n".as_ref(),
+            "/usr/bin/du".as_ref(),
+        ]
     } else {
-        vec!["/usr/bin/du"]
+        vec!["/usr/bin/du".as_ref()]
     };
-    command.extend(["-s", "-B1", "--", root_text.as_ref()]);
+    command.extend([
+        "-s".as_ref(),
+        "-B1".as_ref(),
+        "--".as_ref(),
+        root.as_os_str(),
+    ]);
     let stdout = run_bounded(&command, MEASURE_TIMEOUT, interrupt)?;
     py_int(stdout.split('\t').next().unwrap_or(""))
 }
@@ -369,11 +440,16 @@ pub fn scan(
         }
         let bytes = measure(candidate, false)?;
         total += bytes;
+        // `du` prints the path it measured, and its output is decoded strictly, so a measured
+        // candidate is UTF-8; any other measurement is held to the same rule.
+        let path = candidate.to_str().ok_or_else(|| {
+            Failure::new(format!(
+                "candidate {} is not UTF-8; its surrogate-escaped name cannot be represented",
+                crate::py::os_repr(candidate.as_os_str())
+            ))
+        })?;
         let row: Dict = [
-            (
-                "path",
-                Value::from(candidate.to_string_lossy().into_owned()),
-            ),
+            ("path", Value::from(path)),
             ("allocated_bytes", Value::from(bytes as i64)),
             ("newest_mtime", Value::Float(newest)),
         ]
@@ -381,9 +457,17 @@ pub fn scan(
         .collect();
         rows.push(Value::Dict(row));
     }
+    // A candidate path is UTF-8 here (`du`, which prints it, was decoded strictly). A root that is
+    // not UTF-8 would be printed surrogate-escaped (`\udcff`), which this JSON cannot hold: refused.
+    let root_text = root.to_str().ok_or_else(|| {
+        Failure::new(format!(
+            "scan root {} is not UTF-8; its surrogate-escaped name cannot be represented",
+            crate::py::os_repr(root.as_os_str())
+        ))
+    })?;
     let document: Dict = [
         ("completed_at", Value::from(utc().iso)),
-        ("root", Value::from(root.to_string_lossy().into_owned())),
+        ("root", Value::from(root_text)),
         (
             "stale_hours",
             hours.map_or(Value::Null, |h| Value::from(h as i64)),
@@ -681,8 +765,11 @@ fn run_report(
         list_mut(receipt, "measurements").push(Value::Dict(row));
         save(receipt)?;
     }
-    let output_text = output.to_string_lossy();
-    let filesystem = run_bounded(&["df", "-B1", output_text.as_ref()], DF_TIMEOUT, interrupt)?;
+    let filesystem = run_bounded(
+        &["df".as_ref(), "-B1".as_ref(), output.as_os_str()],
+        DF_TIMEOUT,
+        interrupt,
+    )?;
     let path = run.join("filesystem.txt");
     fs::write(&path, filesystem).map_err(|e| os_error(&e, &path))?;
     receipt.insert("status", Value::from("success"));

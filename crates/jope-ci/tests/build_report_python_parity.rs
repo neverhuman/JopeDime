@@ -367,6 +367,206 @@ fn config_refusals_match_the_captured_python_outputs() {
     replay_receipts(cases, "python-parity-config-refusals");
 }
 
+/// Round two of the differential review (`build-report/negative-r2.json`): scans of trees holding
+/// names that are not UTF-8 (reached and measured as the bytes they are; a candidate whose path
+/// is not UTF-8 fails in `du`'s decoded output with the Python's codec message) and roots that
+/// cannot be resolved (named as `os.path.realpath(strict=True)` names them). Host-dependent fields
+/// are blanked on both sides as the fixture records (`normalisation`).
+#[test]
+fn scans_match_round_two() {
+    use std::os::unix::ffi::OsStrExt;
+    let doc = round_two();
+    let cases: Vec<&Value> = doc["cases"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|c| c["kind"] == "scan")
+        .collect();
+    assert_eq!(cases.len(), 6, "every captured scan is replayed");
+    let unhex = |text: &str| -> Vec<u8> {
+        (0..text.len())
+            .step_by(2)
+            .map(|i| u8::from_str_radix(&text[i..i + 2], 16).unwrap())
+            .collect()
+    };
+    let temp = tempfile::Builder::new()
+        .prefix("build-report-r2-")
+        .tempdir()
+        .unwrap();
+    let mut failures = vec![];
+    for case in cases {
+        let name = case["name"].as_str().unwrap();
+        let root = temp.path().join(name);
+        fs::create_dir_all(&root).unwrap();
+        let root = root.canonicalize().unwrap();
+        for entry in case["tree"].as_array().unwrap() {
+            let relative = match (
+                entry.get("dir").or(entry.get("file")),
+                entry.get("dir_hex").or(entry.get("file_hex")),
+            ) {
+                (Some(text), _) => text.as_str().unwrap().as_bytes().to_vec(),
+                (None, Some(hex)) => unhex(hex.as_str().unwrap()),
+                _ => panic!("{name}: a tree entry without a path"),
+            };
+            let path = root.join(std::ffi::OsStr::from_bytes(&relative));
+            if entry.get("dir").is_some() || entry.get("dir_hex").is_some() {
+                fs::create_dir_all(&path).unwrap();
+            } else {
+                fs::create_dir_all(path.parent().unwrap()).unwrap();
+                fs::write(&path, "x").unwrap();
+            }
+        }
+        let root_text = root.to_str().unwrap();
+        let args: Vec<String> = case["args"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|a| a.as_str().unwrap().replace("@ROOT@", root_text))
+            .collect();
+        let mut argv = vec!["scan"];
+        argv.extend(args.iter().map(String::as_str));
+        let output = jope_ci(&argv);
+        let stdout =
+            blank_scan(&String::from_utf8_lossy(&output.stdout).replace(root_text, "@ROOT@"));
+        let stderr =
+            blank_position(&String::from_utf8_lossy(&output.stderr).replace(root_text, "@ROOT@"));
+        let exit = i64::from(output.status.code().unwrap());
+        let want = (
+            case["exit"].as_i64().unwrap(),
+            case["stdout"].as_str().unwrap(),
+            case["stderr"].as_str().unwrap(),
+        );
+        if (exit, stdout.as_str(), stderr.as_str()) != want {
+            failures.push(format!(
+                "{name}: the Python {want:?}, the port {:?}",
+                (exit, stdout, stderr)
+            ));
+        }
+    }
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
+    assert_eq!(blank_position("in position 81: x"), "in position @N@: x");
+}
+
+/// Configurations the Python read as `json.loads(bytes)` (decoded with `surrogatepass`): its
+/// codec message for bytes that are not UTF-8, identical in the failure receipt. Same environment
+/// as the tests above.
+///
+/// Two cases hold a lone surrogate, which the Python decoded and then refused as a configuration
+/// that does not name the approved roots; the port cannot represent the surrogate and refuses the
+/// configuration when it reads it (a failure receipt too, with its own message).
+#[test]
+#[ignore = "needs JOPE_MAINTENANCE_SCRATCH outside /tmp and Git working trees"]
+fn config_bytes_match_round_two() {
+    const UNREPRESENTABLE: &[&str] = &["config-utf8-encoded-surrogate", "config-surrogate-escape"];
+    let doc = round_two();
+    let cases: Vec<&Value> = doc["cases"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|c| c["kind"] == "report")
+        .collect();
+    assert_eq!(cases.len(), 4, "every captured configuration is replayed");
+    let scratch = PathBuf::from(
+        std::env::var("JOPE_MAINTENANCE_SCRATCH")
+            .expect("set JOPE_MAINTENANCE_SCRATCH to a directory outside /tmp and working trees"),
+    )
+    .join("python-parity-config-bytes-r2");
+    fs::create_dir_all(scratch.parent().unwrap()).unwrap();
+    fs::create_dir(&scratch).expect("a fresh scratch directory");
+    let roots = approved_roots();
+    let tools = repo().join("deploy/maintenance");
+    for case in cases {
+        let name = case["name"].as_str().unwrap();
+        let hex = case["config_hex"].as_str().unwrap();
+        let bytes: Vec<u8> = (0..hex.len())
+            .step_by(2)
+            .map(|i| u8::from_str_radix(&hex[i..i + 2], 16).unwrap())
+            .collect();
+        let config = scratch.join(format!("{name}.json"));
+        fs::write(&config, bytes).unwrap();
+        let custody = scratch.join(format!("custody-{name}"));
+        let output = jope_ci(&[
+            "report",
+            "--config",
+            config.to_str().unwrap(),
+            "--custody",
+            custody.to_str().unwrap(),
+            "--tools-dir",
+            tools.to_str().unwrap(),
+            "--approved-root",
+            &roots[0],
+            "--approved-root",
+            &roots[1],
+        ]);
+        assert_eq!(output.status.code(), Some(1), "{name}");
+        assert_eq!(case["exit"], 1, "{name}");
+        let runs: Vec<PathBuf> = fs::read_dir(&custody)
+            .unwrap()
+            .map(|e| e.unwrap().path())
+            .collect();
+        assert_eq!(runs.len(), 1, "{name}");
+        let failure = fs::read_to_string(runs[0].join("failure.txt")).unwrap();
+        if UNREPRESENTABLE.contains(&name) {
+            assert!(
+                failure.contains("lone surrogate") || failure.contains("Unpaired surrogate"),
+                "{name}: {failure}"
+            );
+        } else {
+            assert_eq!(
+                failure,
+                case["failure_txt"].as_str().unwrap(),
+                "{name}: failure.txt"
+            );
+        }
+    }
+}
+
+fn round_two() -> Value {
+    let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/fixtures/python-parity/build-report/negative-r2.json");
+    let doc: Value = serde_json::from_str(&fs::read_to_string(path).unwrap()).unwrap();
+    assert!(doc["source"].is_string() && doc["capture"].is_string());
+    doc
+}
+
+/// The host-dependent fields of a scan document blanked as the fixture blanks them.
+fn blank_scan(text: &str) -> String {
+    let mut out = String::new();
+    for line in text.lines() {
+        let trimmed = line.trim_start();
+        let indent = &line[..line.len() - trimmed.len()];
+        let mut done = false;
+        for (key, value) in [
+            ("\"completed_at\": ", "\"@T@\""),
+            ("\"allocated_bytes\": ", "0"),
+            ("\"newest_mtime\": ", "0"),
+            ("\"candidate_allocated_bytes_sum\": ", "0"),
+        ] {
+            if let Some(rest) = trimmed.strip_prefix(key) {
+                let comma = if rest.ends_with(',') { "," } else { "" };
+                out.push_str(&format!("{indent}{key}{value}{comma}\n"));
+                done = true;
+                break;
+            }
+        }
+        if !done {
+            out.push_str(line);
+            out.push('\n');
+        }
+    }
+    out
+}
+
+/// A codec position written `@N@`: it counts the host path `du` printed.
+fn blank_position(text: &str) -> String {
+    let Some(at) = text.find("in position ") else {
+        return text.to_owned();
+    };
+    let start = at + "in position ".len();
+    let digits = text[start..].bytes().take_while(u8::is_ascii_digit).count();
+    format!("{}@N@{}", &text[..start], &text[start + digits..])
+}
+
 /// Run `report` on each case's configuration under a fresh custody directory of the scratch
 /// directory `JOPE_MAINTENANCE_SCRATCH` names, and compare the exit status, stdout, stderr, the
 /// receipt (normalised as the fixture is) and `failure.txt` with the captured Python outputs.
