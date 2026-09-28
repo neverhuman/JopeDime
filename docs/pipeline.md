@@ -144,9 +144,12 @@ seed that is not a pipeline, or more seeds than the budget can re-measure); a da
 not resolve, is not a regression task, does not parse or cannot be partitioned into the requested
 cuts (a cut with fewer than two training or held-out rows, or a constant held-out target); and,
 with more than one round, a budget whose exploration allowance cannot re-measure the four seeds a
-later round may carry. A refused command leaves nothing behind, so the corrected command can be
-re-run into the same `--output`. `jope pipeline run` likewise makes each of these that applies to
-one run before it creates its `--output`.
+later round may carry. `--output` must be new or an empty directory: anything already in it (a
+stale `round-NNN/`, `control/` or `lineage.json`, or an unrelated file) is refused before anything
+is written, not when the round that would write over it is reached. A refused command leaves
+nothing behind, so the corrected command can be re-run into the same `--output`, or into it once
+emptied. `jope pipeline run` likewise makes each of these that applies to one run before it
+creates its `--output`.
 
 `lineage.json` (`jope.pipeline-lineage/v1`) is rewritten atomically and fsynced after each
 completed round: per round the `selected_genome` and program sha256, the mean held-out RMSE, R^2

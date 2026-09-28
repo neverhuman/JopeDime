@@ -144,7 +144,8 @@ pub enum Cmd {
     Evolve {
         #[command(flatten)]
         search: SearchArgs,
-        /// A new directory for round-NNN/, control/ and lineage.json.
+        /// A new or empty directory for round-NNN/, control/ and lineage.json; anything already
+        /// in it is refused before anything is written.
         #[arg(long)]
         output: PathBuf,
         /// Rounds to run (1..=100).
