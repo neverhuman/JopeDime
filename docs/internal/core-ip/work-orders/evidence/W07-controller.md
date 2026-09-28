@@ -2491,8 +2491,8 @@ Every gate below ran at `fa6b44a18` on xbabe2, CPU only.
   plausible cause is closed, and a recurrence now carries its full diagnostic.)
 - A test run narrowed to one target (`cargo nextest run --test bounded_census`) does not build
   examples. It then finds the fixture absent and says how to build it, or finds one built from
-  older sources. `full-lane.sh` never narrows its selection that way. (Closed below: a stale
-  fixture now fails the run.)
+  older sources. `full-lane.sh` never narrows its selection that way. The guard below detects
+  newer or missing listed sources; a matching Cargo build remains required.
 - The fixture host is one host. The multi-host census documents stay synthetic, as before; the
   three-host proof (W7-T07) is unchanged.
 
@@ -2502,21 +2502,24 @@ The fix passed independent verification with no blocking finding. The verifier's
 reviewer's notes (AGENT_CHAT 2026-09-28T17:46–18:11Z) are addressed in test support, in
 `coverage.json` and in this record. No production source changes.
 
-**1. A stale fixture fails the run.** `fixture_host::executable()` finds the fixture by path in
-the target directory. A run narrowed to one test target rebuilds the tests but not the example,
+**1. Detect newer or missing sources.** `fixture_host::executable()` finds the fixture by path
+in the target directory. A run narrowed to one test target rebuilds the tests but not the example,
 so it could run a fixture built from older sources, silently. The pre record shows exactly that:
 with `collect.rs` touched and only `bounded_smartcluster` rebuilt, the suite passed 5 of 5 with
 the fixture 8 minutes older than the source (`fix-machine-id-polish-pre-*/stale-silent.txt`).
-Now `executable()` also refuses a stale fixture, before any fixture starts, with the rebuild
-command. The rule is Cargo's own: the dep-info Cargo writes next to the executable
-(`target/debug/examples/jope-native-loop-fixture.d`) lists every local source it was compiled
-from, the library, its path dependencies and the fixture's own files; any of them modified after
-the executable, or gone, makes it stale, and an absent or unreadable dep-info proves nothing and
-is refused too. The test executable's own time is no reference: Cargo links the tests and the
-example in either order, and a change to one test file rebuilds that test and not the example,
-so comparing the two would fail correct full-lane runs. A false stale report costs only a
-rebuild. The remaining gap is a source edited while the example itself was compiling, which
-Cargo rebuilds on its next build.
+Now `executable()` refuses that case before any fixture starts, with the rebuild command. It
+reads the source paths in Cargo's dep-info next to the executable
+(`target/debug/examples/jope-native-loop-fixture.d`). A listed source modified after the
+executable, or missing, causes refusal, as does absent or unreadable dep-info. The test
+executable's own timestamp is no reference: Cargo links tests and examples in either order,
+and a test-only edit need not rebuild the example.
+
+This is an mtime heuristic, not Cargo's full freshness check or a semantic identity proof.
+Feature, configuration and toolchain changes are not checked. Preserved timestamps and source
+edits during compilation can also conceal changed contents. A passing guard therefore does
+not replace building the fixture with the tests' feature selection; use the full-lane Cargo
+invocation or explicitly build the matching example before a target-narrowed run. A false
+stale report costs a rebuild.
 
 **2. The coordinator's error is kept.** The coordinator's `Result` used to be a plain `unwrap`,
 so an error printed only its own message, and the fixture's evidence went with the tempdir and
