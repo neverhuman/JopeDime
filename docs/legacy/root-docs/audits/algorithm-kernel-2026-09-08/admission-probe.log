@@ -1,5 +1,0 @@
-source=(pipe X (map expr="c0*c0") (ridge)); validator=Ok(()); fit_table=Ok(()); legacy_fit=Ok(()); legacy_emit_support=Ok(())
-source=(pipe X (ridge misspelled_parameter=7)); validator=Ok(()); fit_table=Ok(()); legacy_fit=Ok(()); legacy_emit_support=Ok(())
-source=(pipe X (ridge lambda_frac="junk")); validator=Ok(()); fit_table=Ok(()); legacy_fit=Ok(()); legacy_emit_support=Ok(())
-source=(sym raw "c0"); validator=Err(schema-bound advanced-v3 genomes must be pipelines); fit_table=Err(schema-bound advanced-v3 genomes must be pipelines); legacy_fit=Ok(()); legacy_emit_support=Ok(())
-source=(pipe X (hurdle2)); validator=Ok(()); fit_table=Ok(()); legacy_fit=Ok(()); legacy_emit_support=Err(["hurdle2"])

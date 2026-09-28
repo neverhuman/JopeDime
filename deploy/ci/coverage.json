@@ -899,14 +899,6 @@
       ],
       "owner_phase": "Python research repair and qualification"
     },
-    "historical": {
-      "status": "historical",
-      "reason": "Frozen kernel-v1/vendor or legacy reference source; not active product execution.",
-      "dependencies": [
-        "explicit lineage migration decision before reactivation"
-      ],
-      "owner_phase": "Historical lineage custody"
-    },
     "maintenance": {
       "status": "deferred",
       "reason": "Maintenance fixture programs require explicit durable scratch paths; their prior operational proofs are dated observations.",
@@ -996,46 +988,6 @@
         "benchmark"
       ],
       "scope": "Benchmark script/example source; not a collected test or performance proof."
-    },
-    "benchmark:docs/legacy/root-docs/legacy/hyperion-jain-snapshot/crates/feat-core/src/bench.rs": {
-      "discovery": {
-        "kind": "benchmark-source"
-      },
-      "lanes": [],
-      "dispositions": [
-        "historical"
-      ],
-      "scope": "Historical benchmark source only."
-    },
-    "benchmark:docs/legacy/root-docs/legacy/hyperion-jain-snapshot/crates/feat-core/tests/apex_bench.rs": {
-      "discovery": {
-        "kind": "benchmark-source"
-      },
-      "lanes": [],
-      "dispositions": [
-        "historical"
-      ],
-      "scope": "Historical benchmark source only."
-    },
-    "benchmark:docs/legacy/root-docs/legacy/hyperion-jain-snapshot/crates/feat-core/tests/apex_elo_bench.rs": {
-      "discovery": {
-        "kind": "benchmark-source"
-      },
-      "lanes": [],
-      "dispositions": [
-        "historical"
-      ],
-      "scope": "Historical benchmark source only."
-    },
-    "benchmark:docs/legacy/root-docs/legacy/hyperion-jain-snapshot/crates/feat-core/tests/apex_real_bench.rs": {
-      "discovery": {
-        "kind": "benchmark-source"
-      },
-      "lanes": [],
-      "dispositions": [
-        "historical"
-      ],
-      "scope": "Historical benchmark source only."
     },
     "benchmark:python/src/jope/elo_bench.py": {
       "discovery": {

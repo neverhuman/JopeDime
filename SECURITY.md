@@ -22,7 +22,8 @@ You will get an acknowledgement within three working days and a fix or a documen
   emitted artefact doing any of those is a vulnerability in the emitter.
 
 Out of scope: the vendored `crates/smartcluster/*` workspace (report upstream to jain-smartcluster;
-a copy of the report here is welcome), and the archived legacy documents under `docs/legacy/`.
+a copy of the report here is welcome), and the pre-port documents that were kept under
+`docs/legacy/` until 2026-09-28 (they are no longer in the tree; git history holds them).
 
 ## What is already enforced
 
