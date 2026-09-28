@@ -1195,7 +1195,7 @@ fn sources(
             selected
                 .iter()
                 .any(|row| row.target == format!("runtime/bin/{binary}")),
-            "required release binary is missing: {binary}; run cargo build --release --bins"
+            "required release binary is missing: {binary}; run cargo build --release --workspace --bins"
         );
     }
     Ok(selected)

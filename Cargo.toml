@@ -28,6 +28,23 @@ members = [
   "crates/smartcluster/jainnode",
   "crates/smartcluster/scq",
 ]
+# What a bare `cargo build` / `cargo test` / `cargo run --bin jope` from this directory selects:
+# the `jope` binary and the workspace crates it depends on directly. Two direct dependencies are
+# left out on purpose, and are still built as dependencies of `jope`: `hyperion`, whose own
+# default features pull in jope-engine and the smartcluster crates (jope-cli takes it with
+# `hyperion-cpu` only), and `jope-learning`, whose dev-dependencies pull in jope-engine. Every CI
+# lane and justfile recipe names its crates with `--workspace` or `-p`; add `--workspace` for the
+# rest.
+default-members = [
+  "crates/jope-cli",
+  "crates/feat-math",
+  "crates/jope-bench",
+  "crates/jope-datasets",
+  "crates/jope-models",
+  "crates/jope-motifs",
+  "crates/jope-pipeline",
+  "crates/jope-policy",
+]
 
 [workspace.package]
 version = "0.1.0"

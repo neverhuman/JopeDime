@@ -159,8 +159,10 @@ Recorded 2026-09-19T00:34:16Z on `xbabe2` (x86_64, 128 cores, kernel 6.8.0-139-g
 
 ## Install and check
 
-Linux x86_64. Rust from `rust-toolchain.toml`. CPU-only default build (no
-LibTorch, CUDA, or cluster runtime).
+Linux x86_64. Rust from `rust-toolchain.toml`. `cargo build --locked` builds the
+workspace `default-members`: the `jope` binary and the crates it depends on, CPU only
+(no LibTorch, CUDA, or cluster runtime). `cargo build --workspace --locked` builds
+every member.
 
 ```sh
 cargo build --locked
