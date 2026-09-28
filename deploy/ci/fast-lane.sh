@@ -36,6 +36,7 @@ python3 deploy/ci/test-prepare-asm-runtime.py
 bash deploy/ci/test-neural-env.sh
 bash deploy/ci/test-test-routing.sh
 bash deploy/ci/test-real-corpus-lane.sh
+bash deploy/release/test-release.sh
 cargo run -q --locked -p jope-records -- verify-findings
 cargo run -q --locked -p jope-records -- verify-dispositions
 cargo run -q --locked -p jope-records -- verify-test-inventory
