@@ -1,0 +1,892 @@
+{
+  "source": "p1-failclosed-capture-20260928T020533Z",
+  "capture": "bash capture.sh (run p1-failclosed-capture-20260928T020533Z; Python from git show f46a9048fbb2697d6d1f4463a688083ea9dfcce1:<tool>, unmodified, in a scratch root)",
+  "tool": "deploy/ci/cargo-artifact.py",
+  "root": "a scratch directory standing for @ROOT@, holding the executable bin/demo and nextest.toml",
+  "nextest_source": "[profile.default]\nslow-timeout = \"60s\"\n",
+  "cargo": "a `cargo` first on PATH that prints metadata.json for `cargo metadata` and messages.jsonl for `cargo build`",
+  "cases": [
+    {
+      "name": "select-ok",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "exit": 0,
+      "stdout": "@ROOT@/bin/demo\n",
+      "stderr": ""
+    },
+    {
+      "name": "ids-equal-int-float",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": 1}, {\"name\": \"demo\", \"id\": 1.0}], \"workspace_members\": [1]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: expected one workspace package 'demo', found 2\n"
+    },
+    {
+      "name": "package-id-int-float-bool",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": 1}], \"workspace_members\": [1]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": 1.0, \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"compiler-artifact\", \"package_id\": true, \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: expected one executable for demo/bin/demo, found 2\n"
+    },
+    {
+      "name": "member-float",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": 1}], \"workspace_members\": [1.0]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": 1, \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "exit": 0,
+      "stdout": "@ROOT@/bin/demo\n",
+      "stderr": ""
+    },
+    {
+      "name": "nested-ids",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": [1]}], \"workspace_members\": [[1.0]]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": [true], \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "exit": 0,
+      "stdout": "@ROOT@/bin/demo\n",
+      "stderr": ""
+    },
+    {
+      "name": "ids-beyond-64-bits",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": 18446744073709551616}], \"workspace_members\": [18446744073709551617]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": 18446744073709551616, \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: expected one workspace package 'demo', found 0\n"
+    },
+    {
+      "name": "executable-int",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": 1}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: argument should be a str or an os.PathLike object where __fspath__ returns a str, not 'int'"
+    },
+    {
+      "name": "executable-list",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": [\"x\"]}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: argument should be a str or an os.PathLike object where __fspath__ returns a str, not 'list'"
+    },
+    {
+      "name": "executable-empty",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: expected one executable for demo/bin/demo, found 0\n"
+    },
+    {
+      "name": "success-one",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": 1}\n",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: Cargo did not report a successful completed build\n"
+    },
+    {
+      "name": "success-string",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": \"true\"}\n",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: Cargo did not report a successful completed build\n"
+    },
+    {
+      "name": "members-dict-unhashable",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": [\"x\"]}], \"workspace_members\": {\"a\": 1}}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: unhashable type: 'list'"
+    },
+    {
+      "name": "members-dict-keys",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": {\"demo 0.1.0\": 1}}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "exit": 0,
+      "stdout": "@ROOT@/bin/demo\n",
+      "stderr": ""
+    },
+    {
+      "name": "members-str-nonstr",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": 1}], \"workspace_members\": \"abc\"}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: 'in <string>' requires string as left operand, not int"
+    },
+    {
+      "name": "members-str-substring",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": \"x demo 0.1.0 x\"}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "exit": 0,
+      "stdout": "@ROOT@/bin/demo\n",
+      "stderr": ""
+    },
+    {
+      "name": "members-null",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": null}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: argument of type 'NoneType' is not iterable"
+    },
+    {
+      "name": "message-malformed",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{bad\n{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: Expecting property name enclosed in double quotes: line 1 column 2 (char 1)\n"
+    },
+    {
+      "name": "message-non-json-line",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "Compiling demo\n{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "exit": 0,
+      "stdout": "@ROOT@/bin/demo\n",
+      "stderr": ""
+    },
+    {
+      "name": "metadata-malformed",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "[",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: Expecting value: line 1 column 2 (char 1)\n"
+    },
+    {
+      "name": "metadata-list",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "[]",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: list indices must be integers or slices, not str"
+    },
+    {
+      "name": "packages-missing",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"workspace_members\": []}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: 'packages'\n"
+    },
+    {
+      "name": "packages-null",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": null, \"workspace_members\": []}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: 'NoneType' object is not iterable"
+    },
+    {
+      "name": "package-string",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [\"abc\"], \"workspace_members\": []}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: string indices must be integers, not 'str'"
+    },
+    {
+      "name": "package-name-missing",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: 'name'\n"
+    },
+    {
+      "name": "package-name-int",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": 5, \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: expected one workspace package 'demo', found 0\n"
+    },
+    {
+      "name": "package-id-missing",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: 'id'\n"
+    },
+    {
+      "name": "members-missing",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: 'workspace_members'\n"
+    },
+    {
+      "name": "package-id-null",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": null}], \"workspace_members\": [null]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "exit": 0,
+      "stdout": "@ROOT@/bin/demo\n",
+      "stderr": ""
+    },
+    {
+      "name": "target-null",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": null, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "exit": 1,
+      "stdout": "",
+      "raised": "AttributeError: 'NoneType' object has no attribute 'get'"
+    },
+    {
+      "name": "target-list",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": [], \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "exit": 1,
+      "stdout": "",
+      "raised": "AttributeError: 'list' object has no attribute 'get'"
+    },
+    {
+      "name": "target-kind-null",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": null, \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: argument of type 'NoneType' is not iterable"
+    },
+    {
+      "name": "target-kind-int",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": 5, \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: argument of type 'int' is not iterable"
+    },
+    {
+      "name": "target-kind-dict",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": {\"bin\": 1}, \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "exit": 0,
+      "stdout": "@ROOT@/bin/demo\n",
+      "stderr": ""
+    },
+    {
+      "name": "target-kind-string",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": \"xbinx\", \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "exit": 0,
+      "stdout": "@ROOT@/bin/demo\n",
+      "stderr": ""
+    },
+    {
+      "name": "target-kind-missing",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: expected one executable for demo/bin/demo, found 0\n"
+    },
+    {
+      "name": "profile-list",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": [], \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "exit": 1,
+      "stdout": "",
+      "raised": "AttributeError: 'list' object has no attribute 'get'"
+    },
+    {
+      "name": "profile-test-string",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": \"yes\"}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: expected one executable for demo/bin/demo, found 0\n"
+    },
+    {
+      "name": "profile-null",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": null, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "exit": 1,
+      "stdout": "",
+      "raised": "AttributeError: 'NoneType' object has no attribute 'get'"
+    },
+    {
+      "name": "target-dir-ok",
+      "argv": [
+        "target-dir"
+      ],
+      "metadata": "{\"target_directory\": \"@ROOT@/target\"}",
+      "messages": "",
+      "exit": 0,
+      "stdout": "@ROOT@/target\n",
+      "stderr": ""
+    },
+    {
+      "name": "target-dir-missing",
+      "argv": [
+        "target-dir"
+      ],
+      "metadata": "{}",
+      "messages": "",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: 'target_directory'\n"
+    },
+    {
+      "name": "target-dir-int",
+      "argv": [
+        "target-dir"
+      ],
+      "metadata": "{\"target_directory\": 5}",
+      "messages": "",
+      "exit": 0,
+      "stdout": "5\n",
+      "stderr": ""
+    },
+    {
+      "name": "target-dir-null",
+      "argv": [
+        "target-dir"
+      ],
+      "metadata": "{\"target_directory\": null}",
+      "messages": "",
+      "exit": 0,
+      "stdout": "None\n",
+      "stderr": ""
+    },
+    {
+      "name": "target-dir-metadata-list",
+      "argv": [
+        "target-dir"
+      ],
+      "metadata": "[]",
+      "messages": "",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: list indices must be integers or slices, not str"
+    },
+    {
+      "name": "target-dir-metadata-malformed",
+      "argv": [
+        "target-dir"
+      ],
+      "metadata": "{",
+      "messages": "",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: Expecting property name enclosed in double quotes: line 1 column 2 (char 1)\n"
+    },
+    {
+      "name": "nextest-config-int",
+      "argv": [
+        "nextest-config",
+        "--source",
+        "@SOURCE@",
+        "--output",
+        "@OUT@"
+      ],
+      "metadata": "{\"target_directory\": 5}",
+      "messages": "",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: argument should be a str or an os.PathLike object where __fspath__ returns a str, not 'int'"
+    },
+    {
+      "name": "nextest-config-null",
+      "argv": [
+        "nextest-config",
+        "--source",
+        "@SOURCE@",
+        "--output",
+        "@OUT@"
+      ],
+      "metadata": "{\"target_directory\": null}",
+      "messages": "",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: argument should be a str or an os.PathLike object where __fspath__ returns a str, not 'NoneType'"
+    },
+    {
+      "name": "nextest-config-missing",
+      "argv": [
+        "nextest-config",
+        "--source",
+        "@SOURCE@",
+        "--output",
+        "@OUT@"
+      ],
+      "metadata": "{}",
+      "messages": "",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: 'target_directory'\n"
+    },
+    {
+      "name": "build-ok",
+      "argv": [
+        "build",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "exit": 0,
+      "stdout": "@ROOT@/bin/demo\n",
+      "stderr": ""
+    },
+    {
+      "name": "build-non-utf8",
+      "argv": [
+        "build",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "append_bytes": [
+        255,
+        10
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: 'utf-8' codec can't decode byte 0xff in position 281: invalid start byte\n"
+    },
+    {
+      "name": "build-executable-int",
+      "argv": [
+        "build",
+        "--package",
+        "demo",
+        "--bin",
+        "demo"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": 1}\n{\"reason\": \"build-finished\", \"success\": true}\n",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: argument should be a str or an os.PathLike object where __fspath__ returns a str, not 'int'"
+    }
+  ]
+}

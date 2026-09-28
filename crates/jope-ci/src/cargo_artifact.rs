@@ -10,8 +10,9 @@
 //! <https://doc.rust-lang.org/cargo/reference/external-tools.html#artifact-messages>
 
 use crate::py;
+use jope_records::py::{self as python, exception};
+use jope_records::pyjson::{self, Value};
 use nix::unistd::{access, AccessFlags};
-use serde_json::Value;
 use std::fs::{self, OpenOptions};
 use std::io::Write as _;
 use std::path::{Path, PathBuf};
@@ -68,25 +69,58 @@ pub fn metadata(manifest: &str, target_dir: Option<&str>) -> Result<Value, Failu
     if !output.status.success() {
         return Err(Failure::Exit(status_code(output.status)));
     }
-    serde_json::from_slice(&output.stdout).map_err(|e| Failure::Refused(e.to_string()))
+    // `json.loads(check_output(...))`: Python's JSON reading (NaN and Infinity literals, a repeated
+    // key keeps its last value) and its error messages.
+    pyjson::parse_bytes(&output.stdout).map_err(Failure::Refused)
 }
 
-fn list<'a>(value: &'a Value, key: &str) -> Result<&'a Vec<Value>, String> {
-    value
-        .get(key)
-        .and_then(Value::as_array)
-        .ok_or_else(|| py::repr(key))
+// How the Python read `metadata` and the message stream. JSON is read with Python's `json`
+// semantics and compared with Python's `==` (`1 == 1.0 == True`, `[1] == [1.0]`), so an id matches
+// exactly when it matched in Python. A missing key raised `KeyError`, which the Python caught and
+// printed as `cargo-artifact: '<key>'` (exit status 1); the port prints the same. A value of the
+// wrong type raised a `TypeError` or `AttributeError` it did not catch (a traceback, exit status
+// 1); the port refuses too (`cargo-artifact: <field>: <what failed and the offending type>`, exit
+// status 1; the text is not CPython's). No value is skipped or defaulted.
+
+/// `value[key]`.
+fn index<'a>(value: &'a Value, key: &str, context: &str) -> Result<&'a Value, String> {
+    match value {
+        Value::Dict(map) => map.get(key).ok_or_else(|| py::repr(key)),
+        other => Err(format!(
+            "{context}: {}",
+            exception::not_subscriptable(other)
+        )),
+    }
+}
+
+/// `for x in value`: a list's items, an object's keys, a string's characters.
+fn iterate(value: &Value, context: &str) -> Result<Vec<Value>, String> {
+    python::iterate(value).ok_or_else(|| format!("{context}: {}", exception::not_iterable(value)))
+}
+
+/// `item in container`, with Python's `==` and hashing.
+fn contains(container: &Value, item: &Value, context: &str) -> Result<bool, String> {
+    python::contains_or_raise(container, item).map_err(|e| format!("{context}: {e}"))
+}
+
+/// `message.get(key, {})` used as an object (`.get` on anything else raised `AttributeError`).
+fn object<'a>(
+    message: &'a Value,
+    key: &str,
+    context: &str,
+) -> Result<Option<&'a pyjson::Dict>, String> {
+    match message.get(key) {
+        None => Ok(None),
+        Some(Value::Dict(map)) => Ok(Some(map)),
+        Some(other) => Err(format!(
+            "{context} {key}: {}",
+            exception::no_attribute(other, "get")
+        )),
+    }
 }
 
 fn truthy(value: Option<&Value>) -> bool {
-    match value {
-        None | Some(Value::Null) => false,
-        Some(Value::Bool(b)) => *b,
-        Some(Value::Number(n)) => n.as_f64().is_some_and(|f| f != 0.0),
-        Some(Value::String(s)) => !s.is_empty(),
-        Some(Value::Array(a)) => !a.is_empty(),
-        Some(Value::Object(o)) => !o.is_empty(),
-    }
+    value.is_some_and(Value::truthy)
 }
 
 /// The one executable a successful build produced for `package`/`kind`/`name`, optionally
@@ -99,13 +133,24 @@ pub fn executable(
     name: &str,
     path_map: Option<(&Path, &Path)>,
 ) -> Result<PathBuf, String> {
-    let members = list(meta, "workspace_members")?;
+    // `[p["id"] for p in meta["packages"]
+    //  if p["name"] == package and p["id"] in meta["workspace_members"]]`
     let mut packages = vec![];
-    for p in list(meta, "packages")? {
-        if p.get("name").and_then(Value::as_str) == Some(package)
-            && p.get("id").is_some_and(|id| members.contains(id))
-        {
-            packages.push(p["id"].clone());
+    for (i, p) in iterate(
+        index(meta, "packages", "cargo metadata")?,
+        "cargo metadata packages",
+    )?
+    .iter()
+    .enumerate()
+    {
+        let at = format!("cargo metadata packages[{i}]");
+        if index(p, "name", &at)?.as_str() != Some(package) {
+            continue;
+        }
+        let id = index(p, "id", &at)?;
+        let members = index(meta, "workspace_members", "cargo metadata")?;
+        if contains(members, id, "cargo metadata workspace_members")? {
+            packages.push(id.clone());
         }
     }
     if packages.len() != 1 {
@@ -117,34 +162,44 @@ pub fn executable(
     }
     let mut matches = vec![];
     let mut finished = false;
-    for line in py::splitlines(messages) {
+    for (number, line) in py::splitlines(messages).into_iter().enumerate() {
         if !line.starts_with('{') {
             continue; // Cargo documents possible non-JSON output from other tools.
         }
-        let message: Value = serde_json::from_str(line).map_err(|e| e.to_string())?;
+        // A line that starts with `{` is a JSON object or refuses with Python's decoder message.
+        let message = pyjson::parse_str(line)?;
+        let at = format!("Cargo message on line {}", number + 1);
         let reason = message.get("reason").and_then(Value::as_str);
         if reason == Some("build-finished") {
-            finished = message.get("success") == Some(&Value::Bool(true));
+            // `message.get("success") is True`: only JSON `true` (Python's `==` would take 1).
+            finished = matches!(message.get("success"), Some(Value::Bool(true)));
         }
-        let target = message.get("target");
-        let kinds = target.and_then(|t| t.get("kind"));
-        let kind_matches = match kinds {
-            Some(Value::Array(items)) => items.iter().any(|k| k == kind),
-            Some(Value::String(s)) => s.contains(kind),
-            _ => false,
-        };
-        if reason == Some("compiler-artifact")
-            && message.get("package_id") == Some(&packages[0])
-            && target.and_then(|t| t.get("name")).and_then(Value::as_str) == Some(name)
-            && kind_matches
-            && !truthy(message.get("profile").and_then(|p| p.get("test")))
-            && truthy(message.get("executable"))
+        // The artifact test, clause by clause in the Python's order; each clause is read only
+        // when the ones before it held, and a malformed value it reads refuses.
+        if reason != Some("compiler-artifact")
+            || message.get("package_id").unwrap_or(&Value::Null) != &packages[0]
         {
-            let path = message["executable"]
-                .as_str()
-                .ok_or("executable is not a path string")?;
-            matches.push(py::pure_path(path));
+            continue;
         }
+        let target = object(&message, "target", &at)?;
+        if target.and_then(|t| t.get("name")).and_then(Value::as_str) != Some(name) {
+            continue;
+        }
+        let no_kinds = Value::List(vec![]);
+        let kinds = target.and_then(|t| t.get("kind")).unwrap_or(&no_kinds);
+        if !contains(kinds, &Value::from(kind), &format!("{at} target kind"))? {
+            continue;
+        }
+        let profile = object(&message, "profile", &at)?;
+        if truthy(profile.and_then(|p| p.get("test"))) || !truthy(message.get("executable")) {
+            continue;
+        }
+        // `Path(message["executable"])`
+        let executable = message.get("executable").unwrap_or(&Value::Null);
+        let path = executable
+            .as_str()
+            .ok_or_else(|| format!("{at} executable: {}", exception::path_argument(executable)))?;
+        matches.push(py::pure_path(path));
     }
     if !finished {
         return Err("Cargo did not report a successful completed build".into());
@@ -247,7 +302,10 @@ pub fn build(request: &Build<'_>) -> Result<PathBuf, Failure> {
     if !output.status.success() {
         return Err(Failure::Exit(status_code(output.status)));
     }
-    let messages = String::from_utf8_lossy(&output.stdout);
+    // `subprocess.run(..., text=True)` decoded strictly: bytes that are not UTF-8 refuse rather
+    // than being replaced.
+    let messages = String::from_utf8(output.stdout)
+        .map_err(|e| format!("Cargo's messages are not UTF-8: {e}"))?;
     Ok(executable(
         &messages,
         &meta,
@@ -267,20 +325,27 @@ pub fn select(
     name: &str,
     path_map: Option<(&Path, &Path)>,
 ) -> Result<PathBuf, Failure> {
+    // `Path(...).read_text()`: strict UTF-8.
     let read = |path: &Path| {
         fs::read_to_string(path).map_err(|e| Failure::Refused(format!("{}: {e}", path.display())))
     };
-    let meta: Value =
-        serde_json::from_str(&read(metadata_path)?).map_err(|e| Failure::Refused(e.to_string()))?;
+    // `json.loads(...)`: Python's JSON reading and its error messages.
+    let meta = pyjson::parse_str(&read(metadata_path)?).map_err(Failure::Refused)?;
     let messages = read(messages_path)?;
     Ok(executable(&messages, &meta, package, kind, name, path_map)?)
 }
 
-/// `target-dir`: Cargo's effective target directory for the manifest.
+/// `target-dir`: Cargo's effective target directory for the manifest. A missing key refuses as
+/// the Python did (`cargo-artifact: 'target_directory'`). A value that is not a string refuses
+/// too, which is stricter than `target-dir` in the Python (it printed `str(value)`, such as
+/// `None`) and the same outcome as its `nextest-config` (a `TypeError` in `Path(value)`).
 pub fn target_directory(manifest: &str, target_dir: Option<&str>) -> Result<String, Failure> {
     let meta = metadata(manifest, target_dir)?;
-    meta.get("target_directory")
-        .and_then(Value::as_str)
-        .map(str::to_owned)
-        .ok_or_else(|| Failure::Refused(py::repr("target_directory")))
+    let value = index(&meta, "target_directory", "cargo metadata")?;
+    value.as_str().map(str::to_owned).ok_or_else(|| {
+        Failure::Refused(format!(
+            "cargo metadata target_directory: {}",
+            exception::path_argument(value)
+        ))
+    })
 }

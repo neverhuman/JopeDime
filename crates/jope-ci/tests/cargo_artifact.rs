@@ -58,7 +58,7 @@ impl Fixture {
         let text: Vec<String> = messages.iter().map(Value::to_string).collect();
         executable(
             &text.join("\n"),
-            &self.meta,
+            &jope_records::pyjson::parse_str(&self.meta.to_string()).unwrap(),
             "demo",
             "bin",
             "demo",
