@@ -36,7 +36,11 @@
 //!   twice — and fills the rest with [`evolve::mutate_canonical_pipeline`] and
 //!   [`evolve::crossover_canonical_pipelines`] children;
 //! * every seed is derived from `--rng-seed`, the cut index, the generation and
-//!   the slot, so the whole search replays from the command line alone.
+//!   the slot, so a search that the evaluation budget ends replays from the
+//!   command line alone. When the seconds deadline binds, how many candidates
+//!   start before it depends on timing (even at one thread), so the same command
+//!   can admit and select differently; that phase records `seconds` as its stop
+//!   reason (see `docs/pipeline.md`).
 //!
 //! The bootstrap genome is in generation 0 on purpose: the search can report a
 //! champion worse than it only if the bootstrap itself failed to fit.
