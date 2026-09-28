@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 4",
-  "count": 3714,
+  "count": 3780,
   "ignored": 62,
   "packages": {
    "battle-gpu": {
@@ -3675,12 +3675,12 @@
     }
    },
    "jope-parallel": {
-    "count": 720,
+    "count": 786,
     "ignored": 14,
     "binaries": {
      "jope-parallel": {
       "kind": "lib",
-      "count": 434,
+      "count": 435,
       "ignored": 7,
       "tests": [
        "build_receipt::tests::bounds_are_numeric_and_fail_closed",
@@ -3999,6 +3999,7 @@
        "native_input_cache::tests::symlinks_and_fifo_refuse_before_read",
        "native_input_cache::tests::unqualified_filesystem_keeps_full_hashing_for_old_read_only_inputs",
        "native_input_cache::tests::writable_files_never_cache_and_wrong_expected_hash_never_enters",
+       "native_loop::bounded::collect::tests::base64_and_pem_framing_are_strict",
        "native_loop::materialize::tests::previous_generation_targets_are_not_relabelled_as_fresh",
        "native_loop::run_approval::tests::run_review_binds_entire_config_epoch_census_and_original_deadline",
        "native_loop::tests::committed_training_is_not_a_quality_or_serving_acceptance",
@@ -4224,11 +4225,64 @@
        "too_few_minority_groups_is_explicit_and_preprocessing_uses_training_only"
       ]
      },
+     "jope-parallel::bounded_agent": {
+      "kind": "test",
+      "count": 5,
+      "ignored": 0,
+      "tests": [
+       "a_trickling_agent_cannot_hold_a_remote_call_past_its_reply_deadline",
+       "a_trickling_coordinator_cannot_hold_an_agent_past_its_stop",
+       "an_agent_refuses_malformed_and_replayed_requests",
+       "an_agent_serves_only_its_own_plan_and_planned_ranks",
+       "remote_supervision_is_mutually_pinned_by_the_plan"
+      ]
+     },
      "jope-parallel::bounded_assignment": {
       "kind": "test",
       "count": 0,
       "ignored": 0,
       "tests": []
+     },
+     "jope-parallel::bounded_census": {
+      "kind": "test",
+      "count": 8,
+      "ignored": 0,
+      "tests": [
+       "cli_collect_merge_and_preflight_round_trip_without_side_effects",
+       "collected_census_round_trips_through_preflight",
+       "cpu_only_or_absent_nvidia_smi_records_no_gpu",
+       "device_processes_are_owners_that_preflight_refuses",
+       "failing_malformed_or_unavailable_gpu_probes_refuse_the_collection",
+       "merge_combines_pinned_documents_into_a_preflight_census",
+       "merge_refuses_tampered_stale_future_duplicate_and_mixed_documents",
+       "unverifiable_identity_inputs_refuse_the_collection"
+      ]
+     },
+     "jope-parallel::bounded_grants": {
+      "kind": "test",
+      "count": 5,
+      "ignored": 0,
+      "tests": [
+       "a_wrong_key_a_tampered_grant_and_an_expired_window_are_refused",
+       "authored_contracts_are_signed_and_verified_by_the_grant_authority",
+       "authoring_refuses_what_the_census_and_inputs_do_not_show",
+       "the_authority_key_file_must_be_owner_only_and_not_a_symlink",
+       "the_cli_authors_signs_and_verifies_without_printing_the_key"
+      ]
+     },
+     "jope-parallel::bounded_launch": {
+      "kind": "test",
+      "count": 7,
+      "ignored": 0,
+      "tests": [
+       "a_smartcluster_gpu_index_must_translate_to_the_planned_uuid",
+       "a_worker_refuses_any_other_visibility_before_starting",
+       "launch_records_are_exactly_what_the_plan_derives",
+       "load_launch_reads_only_the_frozen_plan_and_record",
+       "smartcluster_allocates_a_gpu_rank_exactly_one_exclusive_gpu",
+       "the_launcher_environment_is_exactly_the_frozen_visibility",
+       "the_nccl_bootstrap_comes_only_from_this_plans_verified_admission"
+      ]
      },
      "jope-parallel::bounded_preflight_cli": {
       "kind": "test",
@@ -4242,14 +4296,20 @@
      },
      "jope-parallel::bounded_run": {
       "kind": "test",
-      "count": 30,
+      "count": 38,
       "ignored": 0,
       "tests": [
+       "a_plan_can_select_the_training_partition",
+       "a_plan_that_selects_no_training_keeps_its_exact_bytes",
+       "a_training_selection_the_trainer_cannot_run_is_refused",
        "admission_and_delivery_stop_when_any_participant_grant_expires",
+       "blocking_admission_delivery_cannot_renew_the_execution_window",
+       "blocking_poll_and_recovery_refresh_time_before_result_authority",
        "cancel_is_idempotent_and_bound_to_the_plan",
        "census_record_is_typed_versioned_and_bounded",
        "cli_plan_status_verify_cancel_round_trip",
        "cli_refuses_mixed_legacy_arguments_and_bad_contracts_before_creating_state",
+       "daemon_deadline_is_the_earliest_wall_grant_or_original_limit",
        "delivery_ids_message_limits_and_timeouts_are_enforced",
        "dispatch_stops_when_any_participant_grant_expires",
        "execution_binds_to_the_planned_artifact",
@@ -4272,9 +4332,11 @@
        "status_and_verify_are_read_only_and_start_nothing",
        "status_distinguishes_all_seven_states",
        "substituted_source_or_input_refuses_the_group",
+       "the_plan_review_names_work_kinds_plainly",
        "underfunded_plans_fail_before_dispatch",
        "verify_detects_tampering_with_plan_journal_or_results",
-       "verify_refuses_acknowledgements_or_commits_journaled_after_the_window_closed"
+       "verify_refuses_acknowledgements_or_commits_journaled_after_the_window_closed",
+       "wall_budget_is_measured_from_persisted_dispatch_not_coordinator_restart"
       ]
      },
      "jope-parallel::bounded_run_recovery": {
@@ -4292,8 +4354,61 @@
        "restart_before_admission_distinguishes_never_started_from_unrecorded_launch",
        "restart_commits_a_complete_unacknowledged_group_exactly_once",
        "restart_distinguishes_unacknowledged_completion_from_running_work",
-       "restart_just_before_grant_expiry_commits_exactly_once",
+       "restart_just_before_execution_window_closes_commits_exactly_once",
        "severed_control_stops_every_rank_and_drains_the_group"
+      ]
+     },
+     "jope-parallel::bounded_smartcluster": {
+      "kind": "test",
+      "count": 5,
+      "ignored": 0,
+      "tests": [
+       "a_killed_rank_drains_the_whole_group_through_smartcluster",
+       "a_participant_proves_its_smartcluster_job_before_any_work",
+       "a_restarted_coordinator_reconciles_and_drains_with_no_orphan",
+       "cancellation_drains_the_whole_group_through_smartcluster",
+       "smartcluster_ranks_commit_the_whole_group_exactly_once"
+      ]
+     },
+     "jope-parallel::bounded_training": {
+      "kind": "test",
+      "count": 8,
+      "ignored": 0,
+      "tests": [
+       "a_bounded_rank_writes_the_v2_run_json_from_its_plan",
+       "a_default_build_participant_refuses_a_training_plan_before_any_work",
+       "a_rank_trains_only_from_the_planned_input_bytes",
+       "a_train_controlled_style_shared_nccl_id_is_refused",
+       "a_training_selection_names_its_corpus_parent_gpus_and_cadence",
+       "consumed_inputs_are_the_prepared_bytes_and_request_fields_cannot_be_substituted",
+       "planned_updates_cannot_replace_the_actual_optimizer_completion",
+       "the_plan_and_the_admitted_bootstrap_must_agree"
+      ]
+     },
+     "jope-parallel::bounded_transport": {
+      "kind": "test",
+      "count": 19,
+      "ignored": 0,
+      "tests": [
+       "a_hello_replayed_over_a_fresh_authenticated_connection_is_refused",
+       "a_rotated_certificate_needs_a_new_plan",
+       "a_trickled_admission_cannot_hold_a_joining_rank_past_its_join_timeout",
+       "a_trickled_challenge_cannot_hold_a_joining_rank_past_its_join_timeout",
+       "a_trickled_handshake_cannot_hold_the_rendezvous_past_its_join_deadline",
+       "a_trickled_hello_cannot_hold_the_fixture_rendezvous_past_its_join_deadline",
+       "a_trickled_hello_cannot_hold_the_rendezvous_past_its_join_deadline",
+       "a_trickling_client_cannot_hold_the_server_handshake_past_its_deadline",
+       "a_trickling_server_cannot_hold_the_client_handshake_past_its_deadline",
+       "a_wrong_certificate_is_refused_in_both_directions",
+       "an_exchange_deadline_bounds_trickled_frames_and_stalled_writes",
+       "dropping_a_stream_whose_peer_stopped_reading_ends_within_the_close_timeout",
+       "expired_and_not_yet_valid_certificates_are_refused",
+       "mutually_pinned_tls_carries_bounded_frames",
+       "oversize_frames_are_refused_before_their_body_is_read",
+       "replayed_bytes_and_delivery_ids_are_refused",
+       "silent_peers_time_out",
+       "the_plan_pins_every_host_and_the_coordinator",
+       "the_rendezvous_admits_only_hosts_presenting_their_planned_certificates"
       ]
      },
      "jope-parallel::checkpoint_commit": {
@@ -5860,7 +5975,7 @@
   }
  },
  "totals": {
-  "rust": 3714,
+  "rust": 3780,
   "python": 172
  }
 }
