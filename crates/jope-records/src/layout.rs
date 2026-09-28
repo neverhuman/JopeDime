@@ -33,8 +33,11 @@ pub fn work_orders(repo: &Path) -> PathBuf {
     core_ip(repo).join("work-orders")
 }
 
-/// The top level of the git checkout containing `dir` (`git rev-parse --show-toplevel`).
+/// The top level of the git checkout containing `dir` (`git rev-parse --show-toplevel`), as the
+/// bytes git printed (without the line end): a checkout whose path is not UTF-8 is that path,
+/// never a lossy conversion of it, which names a directory that does not exist.
 pub fn git_toplevel(dir: &Path) -> Result<PathBuf> {
+    use std::os::unix::ffi::OsStringExt;
     let output = Command::new("git")
         .arg("-C")
         .arg(dir)
@@ -44,12 +47,50 @@ pub fn git_toplevel(dir: &Path) -> Result<PathBuf> {
     if !output.status.success() {
         return Err(Error::Command(format!(
             "{} is not inside a git checkout; pass --repo ({})",
-            dir.display(),
+            crate::py::os_display(dir.as_os_str()),
             String::from_utf8_lossy(&output.stderr).trim()
         )));
     }
-    let top = String::from_utf8_lossy(&output.stdout)
-        .trim_end_matches(['\n', '\r'])
-        .to_owned();
-    Ok(PathBuf::from(top))
+    let mut top = output.stdout;
+    while matches!(top.last(), Some(b'\n' | b'\r')) {
+        top.pop();
+    }
+    Ok(PathBuf::from(std::ffi::OsString::from_vec(top)))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Review round six of PR #117: the repository of a checkout whose path is not UTF-8 is found
+    /// as the bytes it is (it was read lossily, U+FFFD for the byte, a directory that does not
+    /// exist, so every guard run without `--repo` there failed).
+    #[test]
+    fn a_checkout_whose_path_is_not_utf8_is_found_as_it_is() {
+        use std::os::unix::ffi::OsStrExt;
+        let temp = tempfile::tempdir().unwrap();
+        let repo = temp
+            .path()
+            .canonicalize()
+            .unwrap()
+            .join(std::ffi::OsStr::from_bytes(b"r\xff"));
+        std::fs::create_dir_all(repo.join("sub")).unwrap();
+        let init = Command::new("git")
+            .arg("init")
+            .arg("-q")
+            .arg(&repo)
+            .status()
+            .unwrap();
+        assert!(init.success());
+        assert_eq!(git_toplevel(&repo.join("sub")).unwrap(), repo);
+        let outside = git_toplevel(temp.path()).map(|_| ());
+        // The temporary directory may itself be inside a checkout; when it is not, the refusal
+        // names it.
+        if let Err(Error::Command(message)) = outside {
+            assert!(
+                message.contains("is not inside a git checkout"),
+                "{message}"
+            );
+        }
+    }
 }

@@ -539,6 +539,100 @@ pub fn os_error(error: &std::io::Error, filename: &str) -> String {
     }
 }
 
+// Names that are not UTF-8. Python held a file name, an argument or an environment value it could
+// not decode as a `str` with each undecodable byte a lone surrogate (`os.fsdecode`,
+// `surrogateescape`), and wrote that `str` back as the same bytes only through a stream or API
+// with the `surrogateescape` handler. The ports never convert such a name lossily (U+FFFD): a
+// value that is printed, written, compared or recorded refuses instead, and a message names it as
+// Python printed it (`repr`, or `\udcXX` for a surrogate).
+
+/// `os.fsdecode(name)`: the name's characters, each byte of an undecodable sequence a lone
+/// surrogate `0xdc00 | byte` (`Err`), as Python's `surrogateescape` decoded it (one surrogate per
+/// byte of each maximal invalid subpart).
+pub fn fsdecode(name: &std::ffi::OsStr) -> Vec<std::result::Result<char, u16>> {
+    use std::os::unix::ffi::OsStrExt;
+    let mut units = vec![];
+    let mut rest = name.as_bytes();
+    loop {
+        match std::str::from_utf8(rest) {
+            Ok(text) => {
+                units.extend(text.chars().map(Ok));
+                return units;
+            }
+            Err(error) => {
+                let (good, bad) = rest.split_at(error.valid_up_to());
+                units.extend(
+                    std::str::from_utf8(good)
+                        .expect("the valid prefix")
+                        .chars()
+                        .map(Ok),
+                );
+                let n = error.error_len().unwrap_or(bad.len());
+                units.extend(bad[..n].iter().map(|&b| Err(0xdc00 | u16::from(b))));
+                rest = &bad[n..];
+            }
+        }
+    }
+}
+
+/// `repr(os.fsdecode(name))`: an undecodable byte prints as `\udcXX` (`'/r/\udcff'`).
+pub fn os_repr(name: &std::ffi::OsStr) -> String {
+    pyjson::units_repr(&fsdecode(name))
+}
+
+/// [`os_error`] for a path given as the bytes it is: `[Errno N] <strerror>: '<repr>'`, the name
+/// as `repr` printed Python's surrogate-escaped `str` (an error without an OS code: the name as
+/// [`os_display`] renders it, then the error).
+pub fn os_error_path(error: &std::io::Error, path: &Path) -> String {
+    match error.raw_os_error() {
+        Some(code) => {
+            let text = std::io::Error::from_raw_os_error(code).to_string();
+            let strerror = text
+                .strip_suffix(&format!(" (os error {code})"))
+                .unwrap_or(&text);
+            format!("[Errno {code}] {strerror}: {}", os_repr(path.as_os_str()))
+        }
+        None => format!("{}: {error}", os_display(path.as_os_str())),
+    }
+}
+
+/// `str(os.fsdecode(name))` as Python wrote it to stderr, whose error handler is
+/// `backslashreplace`: the name, each undecodable byte as the six characters `\udcXX`. For a
+/// message only; a name that is not UTF-8 is never text a port prints, writes or compares.
+pub fn os_display(name: &std::ffi::OsStr) -> String {
+    use std::fmt::Write as _;
+    let mut out = String::new();
+    for unit in fsdecode(name) {
+        match unit {
+            Ok(c) => out.push(c),
+            Err(surrogate) => {
+                let _ = write!(out, "\\u{surrogate:04x}");
+            }
+        }
+    }
+    out
+}
+
+/// The `UnicodeEncodeError` CPython 3.12 raised writing `os.fsdecode(name)` through the strict
+/// `utf-8` codec (stdout under a UTF-8 locale other than C or POSIX): `'utf-8' codec can't encode
+/// character '\udcff' in position 5: surrogates not allowed`, the position counted in characters
+/// and a run of surrogates one range (`characters in position 5-6`), as the codec reported the
+/// first run. `None` for a name that is UTF-8.
+pub fn utf8_encode_error(name: &std::ffi::OsStr) -> Option<String> {
+    let units = fsdecode(name);
+    let start = units.iter().position(std::result::Result::is_err)?;
+    let run = units[start..].iter().take_while(|u| u.is_err()).count();
+    Some(match (run, units[start]) {
+        (1, Err(surrogate)) => format!(
+            "'utf-8' codec can't encode character '\\u{surrogate:04x}' in position {start}: surrogates not allowed"
+        ),
+        _ => format!(
+            "'utf-8' codec can't encode characters in position {start}-{}: surrogates not allowed",
+            start + run - 1
+        ),
+    })
+}
+
 /// A pattern written for Python 3.12's `re` (a `str` pattern, Unicode 15.0), compiled so that its
 /// classes match what Python's matched. The `regex` crate's own `\s`, `\w` and `\d` are Unicode
 /// 16.0 `White_Space`, `Alphabetic`+marks+connectors and `Nd`; Python's are `str.isspace`
@@ -705,15 +799,11 @@ pub enum ResolveError {
 impl std::fmt::Display for ResolveError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ResolveError::Os { error, path } => {
-                f.write_str(&os_error(error, &path.to_string_lossy()))
-            }
+            ResolveError::Os { error, path } => f.write_str(&os_error_path(error, path)),
             ResolveError::Cwd(error) => f.write_str(&os_error_bare(error)),
-            ResolveError::Loop { path } => write!(
-                f,
-                "Symlink loop from {}",
-                pyjson::str_repr(&path.to_string_lossy())
-            ),
+            ResolveError::Loop { path } => {
+                write!(f, "Symlink loop from {}", os_repr(path.as_os_str()))
+            }
         }
     }
 }
@@ -1731,6 +1821,56 @@ mod tests {
             path_exists(Path::new(&long)).unwrap_err().raw_os_error(),
             Some(36)
         );
+    }
+
+    /// Review round six of PR #117: a name that is not UTF-8 is rendered as Python rendered its
+    /// surrogate-escaped `str` (never U+FFFD), and printing it through a strict UTF-8 stream fails
+    /// with CPython's `UnicodeEncodeError` text: the first run of surrogates, positions in
+    /// characters (`é` is one).
+    #[test]
+    fn names_that_are_not_utf8_render_as_python_rendered_them() {
+        use std::ffi::OsStr;
+        use std::os::unix::ffi::OsStrExt;
+        let name = |bytes: &[u8]| OsStr::from_bytes(bytes).to_owned();
+        let ff = name(b"/r/\xff/demo");
+        assert_eq!(os_repr(&ff), r"'/r/\udcff/demo'");
+        assert_eq!(os_display(&ff), r"/r/\udcff/demo");
+        let character = |at: usize, c: &str| {
+            format!("'utf-8' codec can't encode character '\\{c}' in position {at}: surrogates not allowed")
+        };
+        let characters = |from: usize, to: usize| {
+            format!("'utf-8' codec can't encode characters in position {from}-{to}: surrogates not allowed")
+        };
+        assert_eq!(utf8_encode_error(&ff), Some(character(3, "udcff")));
+        // A run of undecodable bytes is one range; an incomplete sequence is one surrogate per byte.
+        assert_eq!(
+            utf8_encode_error(&name(b"/r/\xff\xfe/x")),
+            Some(characters(3, 4))
+        );
+        assert_eq!(
+            utf8_encode_error(&name(b"/r/\xe2\x82x/demo")),
+            Some(characters(3, 4))
+        );
+        assert_eq!(
+            fsdecode(&name(b"\xe2\x82x")),
+            [Err(0xdce2), Err(0xdc82), Ok('x')]
+        );
+        // Positions count characters, and only the first run is reported.
+        let mut accented = "/r/\u{e9}".as_bytes().to_vec();
+        accented.extend_from_slice(b"\xff/demo");
+        assert_eq!(
+            utf8_encode_error(&name(&accented)),
+            Some(character(4, "udcff"))
+        );
+        assert_eq!(
+            utf8_encode_error(&name(b"/a\xffb\xfe")),
+            Some(character(2, "udcff"))
+        );
+        assert_eq!(os_display(&name(b"/a\xffb\xfe")), r"/a\udcffb\udcfe");
+        // A UTF-8 name, ASCII or not, is printed as it is.
+        assert_eq!(utf8_encode_error(OsStr::new("/r/\u{e9}/demo")), None);
+        assert_eq!(os_display(OsStr::new("/r/\u{e9}")), "/r/\u{e9}");
+        assert_eq!(os_repr(OsStr::new("/r/it's")), "\"/r/it's\"");
     }
 
     #[test]
