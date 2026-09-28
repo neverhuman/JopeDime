@@ -12,12 +12,22 @@
 //! the census, is the only trust root. A peer that fails any check never delivers a byte to
 //! the rendezvous.
 //!
-//! Every frame is length-prefixed and bounded before its body is read
-//! ([`read_frame`]); connect, handshake and every read and write have deadlines
-//! ([`Timeouts`]); and [`Sequenced`] carries strictly consecutive delivery ids for
-//! request/response protocols. Rendezvous messages keep their own ed25519 signatures,
-//! rendezvous binding and delivery ids, so an application message replayed over a fresh
-//! authenticated connection is still refused by the rendezvous.
+//! Every frame is length-prefixed and bounded before its body is read ([`read_frame`]), and
+//! [`Sequenced`] carries strictly consecutive delivery ids for request/response protocols.
+//! Rendezvous messages keep their own ed25519 signatures, rendezvous binding and delivery
+//! ids, so an application message replayed over a fresh authenticated connection is still
+//! refused by the rendezvous.
+//!
+//! **Deadlines are absolute.** A socket timeout bounds one read or write, and a peer that
+//! sends one byte inside every timeout never trips it, while a single TLS call (a handshake
+//! step, a record read, a flush) can make many socket reads and writes. So every socket
+//! here is a [`DeadlineSocket`]: before each read or write its kernel timeout is set to the
+//! smaller of the per-operation timeout ([`Timeouts`]) and the time left before an absolute
+//! deadline, and at the deadline the operation is refused without touching the socket. A
+//! handshake has one deadline for all of its I/O; callers put one on each exchange
+//! ([`ControlStream::set_deadline`], `rendezvous::read_frame_by`, [`Sequenced::receive_by`]).
+//! A peer, authenticated or not, therefore cannot hold a caller past the allowance it was
+//! given, however it paces its bytes, and nothing here extends an allowance.
 use super::{
     collect::{certificate_der, der_element},
     contract::BoundedRunContract,
@@ -40,15 +50,140 @@ use std::{
     fs,
     io::{Read, Write},
     net::{SocketAddr, TcpListener, TcpStream},
-    os::unix::fs::{MetadataExt, OpenOptionsExt},
+    os::unix::{
+        fs::{MetadataExt, OpenOptionsExt},
+        net::UnixStream,
+    },
     path::Path,
-    sync::Arc,
+    sync::{Arc, Mutex, MutexGuard, PoisonError},
     time::{Duration, Instant},
 };
 
 const MAX_CREDENTIAL_BYTES: u64 = 64 * 1024;
 /// The TLS server name a client sends; identity is the pinned certificate, never this name.
 const SERVER_NAME: &str = "jope-bounded-peer";
+/// Bound on the courtesy close of a stream that has no write timeout.
+const CLOSE_TIMEOUT: Duration = Duration::from_secs(1);
+
+/// A socket whose kernel timeouts bound one read or one write at a time.
+pub trait TimedSocket: Read + Write {
+    fn apply_read_timeout(&self, timeout: Option<Duration>) -> std::io::Result<()>;
+    fn apply_write_timeout(&self, timeout: Option<Duration>) -> std::io::Result<()>;
+}
+impl TimedSocket for TcpStream {
+    fn apply_read_timeout(&self, timeout: Option<Duration>) -> std::io::Result<()> {
+        self.set_read_timeout(timeout)
+    }
+    fn apply_write_timeout(&self, timeout: Option<Duration>) -> std::io::Result<()> {
+        self.set_write_timeout(timeout)
+    }
+}
+impl TimedSocket for UnixStream {
+    fn apply_read_timeout(&self, timeout: Option<Duration>) -> std::io::Result<()> {
+        self.set_read_timeout(timeout)
+    }
+    fn apply_write_timeout(&self, timeout: Option<Duration>) -> std::io::Result<()> {
+        self.set_write_timeout(timeout)
+    }
+}
+impl TimedSocket for &UnixStream {
+    fn apply_read_timeout(&self, timeout: Option<Duration>) -> std::io::Result<()> {
+        self.set_read_timeout(timeout)
+    }
+    fn apply_write_timeout(&self, timeout: Option<Duration>) -> std::io::Result<()> {
+        self.set_write_timeout(timeout)
+    }
+}
+
+#[derive(Clone, Copy, Debug, Default)]
+struct Limits {
+    read: Option<Duration>,
+    write: Option<Duration>,
+    deadline: Option<Instant>,
+}
+/// A socket whose every blocking read and write is bounded twice: by a per-operation timeout
+/// (inactivity) and by an optional absolute deadline. Before each operation the kernel
+/// timeout is set to the smaller of the two, so no single read or write can outlast the
+/// deadline; at or after the deadline an operation is refused with `TimedOut` and the socket
+/// is not touched. The deadline covers every operation a caller makes through this socket,
+/// including each of the many a TLS connection can make inside one call.
+pub struct DeadlineSocket<S> {
+    socket: S,
+    limits: Mutex<Limits>,
+}
+impl<S: TimedSocket> DeadlineSocket<S> {
+    /// No per-operation timeout and no deadline until [`ControlStream::set_timeouts`] and
+    /// [`ControlStream::set_deadline`] set them.
+    pub fn new(socket: S) -> Self {
+        Self {
+            socket,
+            limits: Mutex::new(Limits::default()),
+        }
+    }
+    pub fn get_ref(&self) -> &S {
+        &self.socket
+    }
+    fn limits(&self) -> MutexGuard<'_, Limits> {
+        self.limits.lock().unwrap_or_else(PoisonError::into_inner)
+    }
+    /// Bring the deadline forward to `cap` if that is sooner; it is never moved later.
+    fn cap_deadline(&self, cap: Instant) {
+        let mut limits = self.limits();
+        limits.deadline = Some(limits.deadline.map_or(cap, |d| d.min(cap)));
+    }
+    /// The kernel timeout for the next read (`write == false`) or write: its per-operation
+    /// timeout, cut to what is left before the deadline.
+    fn next_timeout(&self, write: bool) -> std::io::Result<Option<Duration>> {
+        let limits = *self.limits();
+        let per_operation = if write { limits.write } else { limits.read };
+        let Some(deadline) = limits.deadline else {
+            return Ok(per_operation);
+        };
+        let left = deadline.saturating_duration_since(Instant::now());
+        if left.is_zero() {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::TimedOut,
+                "the I/O deadline has passed",
+            ));
+        }
+        Ok(Some(per_operation.map_or(left, |t| t.min(left))))
+    }
+}
+impl<S: TimedSocket> Read for DeadlineSocket<S> {
+    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        let timeout = self.next_timeout(false)?;
+        self.socket.apply_read_timeout(timeout)?;
+        self.socket.read(buf)
+    }
+}
+impl<S: TimedSocket> Write for DeadlineSocket<S> {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        let timeout = self.next_timeout(true)?;
+        self.socket.apply_write_timeout(timeout)?;
+        self.socket.write(buf)
+    }
+    fn flush(&mut self) -> std::io::Result<()> {
+        self.socket.flush()
+    }
+}
+impl<S: TimedSocket + Send> ControlStream for DeadlineSocket<S> {
+    fn set_timeouts(&self, read: Option<Duration>, write: Option<Duration>) -> std::io::Result<()> {
+        if [read, write].into_iter().flatten().any(|t| t.is_zero()) {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "cannot set a 0 duration timeout",
+            ));
+        }
+        let mut limits = self.limits();
+        (limits.read, limits.write) = (read, write);
+        Ok(())
+    }
+    fn set_deadline(&self, deadline: Option<Instant>) -> std::io::Result<()> {
+        self.limits().deadline = deadline;
+        Ok(())
+    }
+}
+type Socket = DeadlineSocket<TcpStream>;
 
 fn provider() -> Arc<CryptoProvider> {
     Arc::new(aws_lc_rs::default_provider())
@@ -325,7 +460,10 @@ impl ClientCertVerifier for Pinned {
     }
 }
 
-/// Connect, handshake and I/O deadlines.
+/// Connect, handshake and I/O allowances. `connect` bounds the TCP connect and `handshake` the
+/// whole TLS handshake, as one absolute deadline over all of its reads and writes. `io` is the
+/// per-operation timeout of an established stream; each exchange on it also gets an absolute
+/// deadline from its caller.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Timeouts {
     pub connect: Duration,
@@ -380,8 +518,8 @@ pub fn coordinator_certificate(contract: &BoundedRunContract) -> Result<(String,
 }
 
 enum Inner {
-    Client(Box<StreamOwned<ClientConnection, TcpStream>>),
-    Server(Box<StreamOwned<ServerConnection, TcpStream>>),
+    Client(Box<StreamOwned<ClientConnection, Socket>>),
+    Server(Box<StreamOwned<ServerConnection, Socket>>),
 }
 /// An authenticated TLS stream whose peer presented a pinned certificate.
 pub struct TlsStream {
@@ -397,7 +535,7 @@ impl TlsStream {
     pub fn peer(&self) -> &str {
         &self.peer
     }
-    fn socket(&self) -> &TcpStream {
+    fn socket(&self) -> &Socket {
         match &self.inner {
             Inner::Client(s) => &s.sock,
             Inner::Server(s) => &s.sock,
@@ -428,12 +566,19 @@ impl Write for TlsStream {
 }
 impl ControlStream for TlsStream {
     fn set_timeouts(&self, read: Option<Duration>, write: Option<Duration>) -> std::io::Result<()> {
-        self.socket().set_read_timeout(read)?;
-        self.socket().set_write_timeout(write)
+        self.socket().set_timeouts(read, write)
+    }
+    fn set_deadline(&self, deadline: Option<Instant>) -> std::io::Result<()> {
+        self.socket().set_deadline(deadline)
     }
 }
 impl Drop for TlsStream {
     fn drop(&mut self) {
+        // The close is a courtesy and bounded like every other write: never past the stream's
+        // deadline, and at most one write timeout from now.
+        let socket = self.socket();
+        let wait = socket.limits().write.unwrap_or(CLOSE_TIMEOUT);
+        socket.cap_deadline(Instant::now() + wait);
         match &mut self.inner {
             Inner::Client(s) => s.conn.send_close_notify(),
             Inner::Server(s) => s.conn.send_close_notify(),
@@ -456,10 +601,19 @@ fn peer_of(
         .clone();
     Ok((sha, host))
 }
-fn deadlines(sock: &TcpStream, timeout: Duration) -> Result<()> {
+/// A socket for a TLS handshake: every one of its reads and writes ends by `deadline`.
+fn handshaking(sock: TcpStream, timeout: Duration, deadline: Instant) -> Result<Socket> {
     sock.set_nodelay(true)?;
-    sock.set_read_timeout(Some(timeout))?;
-    sock.set_write_timeout(Some(timeout))?;
+    let sock = DeadlineSocket::new(sock);
+    sock.set_timeouts(Some(timeout), Some(timeout))?;
+    sock.set_deadline(Some(deadline))?;
+    Ok(sock)
+}
+/// After the handshake: the per-operation I/O timeout, and no deadline until a caller sets one
+/// for an exchange.
+fn established(sock: &Socket, io: Duration) -> Result<()> {
+    sock.set_deadline(None)?;
+    sock.set_timeouts(Some(io), Some(io))?;
     Ok(())
 }
 
@@ -484,14 +638,15 @@ pub fn connect(
             credential.key.clone_key(),
         )?;
     config.enable_sni = false;
-    let mut sock = TcpStream::connect_timeout(&address, timeouts.connect)
+    let sock = TcpStream::connect_timeout(&address, timeouts.connect)
         .with_context(|| format!("connect {address}"))?;
-    deadlines(&sock, timeouts.handshake)?;
+    // One `complete_io` step can make several blocking reads; the deadline bounds them all.
+    let deadline = Instant::now() + timeouts.handshake;
+    let mut sock = handshaking(sock, timeouts.handshake, deadline)?;
     let mut conn = ClientConnection::new(Arc::new(config), ServerName::try_from(SERVER_NAME)?)?;
-    let start = Instant::now();
     while conn.is_handshaking() {
         ensure!(
-            start.elapsed() < timeouts.handshake,
+            Instant::now() < deadline,
             "TLS handshake with {address} exceeded {:?}",
             timeouts.handshake
         );
@@ -499,7 +654,7 @@ pub fn connect(
             .with_context(|| format!("TLS handshake with {address}"))?;
     }
     let (peer_certificate_sha256, peer) = peer_of(conn.peer_certificates(), &accepted)?;
-    deadlines(&sock, timeouts.io)?;
+    established(&sock, timeouts.io)?;
     Ok(TlsStream {
         inner: Inner::Client(Box::new(StreamOwned::new(conn, sock))),
         peer_certificate_sha256,
@@ -550,26 +705,39 @@ impl TlsAcceptor {
     /// `Ok(None)` when no connection is pending; an error when the peer failed to
     /// authenticate (nothing it sent is trusted).
     pub fn poll_accept(&self) -> Result<Option<TlsStream>> {
-        let (mut sock, from) = match self.listener.accept() {
+        self.accept_by(None)
+    }
+    /// [`TlsAcceptor::poll_accept`] whose handshake also ends by `deadline` (for example a
+    /// join deadline) when that comes before the handshake allowance runs out.
+    pub fn poll_accept_by(&self, deadline: Instant) -> Result<Option<TlsStream>> {
+        self.accept_by(Some(deadline))
+    }
+    fn accept_by(&self, cap: Option<Instant>) -> Result<Option<TlsStream>> {
+        let (sock, from) = match self.listener.accept() {
             Ok(accepted) => accepted,
             Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => return Ok(None),
             Err(e) => return Err(e.into()),
         };
         sock.set_nonblocking(false)?;
-        deadlines(&sock, self.timeouts.handshake)?;
-        let mut conn = ServerConnection::new(Arc::clone(&self.config))?;
+        // One absolute deadline for the whole handshake: one `complete_io` step can make
+        // several blocking reads, and a peer that trickles a record inside every socket
+        // timeout must not keep the step, or the caller, going.
         let start = Instant::now();
+        let own = start + self.timeouts.handshake;
+        let deadline = cap.map_or(own, |cap| cap.min(own));
+        let allowance = deadline.saturating_duration_since(start);
+        let mut sock = handshaking(sock, self.timeouts.handshake, deadline)?;
+        let mut conn = ServerConnection::new(Arc::clone(&self.config))?;
         while conn.is_handshaking() {
             ensure!(
-                start.elapsed() < self.timeouts.handshake,
-                "TLS handshake from {from} exceeded {:?}",
-                self.timeouts.handshake
+                Instant::now() < deadline,
+                "TLS handshake from {from} exceeded {allowance:?}"
             );
             conn.complete_io(&mut sock)
                 .with_context(|| format!("TLS handshake from {from}"))?;
         }
         let (peer_certificate_sha256, peer) = peer_of(conn.peer_certificates(), &self.accepted)?;
-        deadlines(&sock, self.timeouts.io)?;
+        established(&sock, self.timeouts.io)?;
         Ok(Some(TlsStream {
             inner: Inner::Server(Box::new(StreamOwned::new(conn, sock))),
             peer_certificate_sha256,
@@ -578,8 +746,8 @@ impl TlsAcceptor {
     }
 }
 impl Acceptor for TlsAcceptor {
-    fn next_incoming(&mut self) -> Incoming {
-        match self.poll_accept() {
+    fn next_incoming(&mut self, deadline: Instant) -> Incoming {
+        match self.poll_accept_by(deadline) {
             Ok(None) => Incoming::Pending,
             Err(e) => Incoming::Unauthenticated(format!("{e:#}")),
             Ok(Some(stream)) => {
@@ -629,46 +797,6 @@ impl<S: Read + Write> Sequenced<S> {
         let frame = read_frame(&mut self.stream, self.limit);
         self.accept(frame)
     }
-    /// Like [`Sequenced::receive`], for a server waiting on an idle peer: `Ok(None)` when no
-    /// byte arrived within the stream's read deadline (nothing was consumed, the channel stays
-    /// usable). A deadline that expires inside a frame refuses the channel.
-    pub fn poll_receive(&mut self) -> Result<Option<(u64, Vec<u8>)>> {
-        ensure!(!self.refused, "sequenced channel already refused");
-        let mut first = [0u8; 1];
-        match self.stream.read(&mut first) {
-            Ok(0) => {
-                self.refused = true;
-                bail!("peer closed the sequenced channel")
-            }
-            Ok(_) => {}
-            Err(e)
-                if matches!(
-                    e.kind(),
-                    std::io::ErrorKind::WouldBlock | std::io::ErrorKind::TimedOut
-                ) =>
-            {
-                return Ok(None)
-            }
-            Err(e) => {
-                self.refused = true;
-                return Err(e.into());
-            }
-        }
-        let frame = (|| {
-            let mut rest = [0u8; 3];
-            self.stream.read_exact(&mut rest)?;
-            let len = u32::from_be_bytes([first[0], rest[0], rest[1], rest[2]]);
-            ensure!(
-                len <= self.limit,
-                "frame of {len} bytes exceeds message limit {}",
-                self.limit
-            );
-            let mut body = vec![0u8; len as usize];
-            self.stream.read_exact(&mut body)?;
-            Ok(body)
-        })();
-        self.accept(frame).map(Some)
-    }
     fn accept(&mut self, frame: Result<Vec<u8>>) -> Result<(u64, Vec<u8>)> {
         let result = frame.and_then(|frame| {
             ensure!(frame.len() >= 8, "frame without a delivery id");
@@ -690,5 +818,74 @@ impl<S: Read + Write> Sequenced<S> {
                 Err(e)
             }
         }
+    }
+}
+impl<S: ControlStream> Sequenced<S> {
+    /// Run `op` with every blocking read and write on the stream ending by `deadline`, then
+    /// remove the deadline.
+    fn capped<T>(
+        &mut self,
+        deadline: Instant,
+        op: impl FnOnce(&mut Self) -> Result<T>,
+    ) -> Result<T> {
+        self.stream.set_deadline(Some(deadline))?;
+        let result = op(self);
+        let cleared = self.stream.set_deadline(None);
+        let value = result?;
+        cleared?;
+        Ok(value)
+    }
+    /// [`Sequenced::send`], ending by `deadline` however slowly the peer reads.
+    pub fn send_by(&mut self, body: &[u8], deadline: Instant) -> Result<u64> {
+        self.capped(deadline, |s| s.send(body))
+    }
+    /// [`Sequenced::receive`], ending by `deadline` however the peer paces its bytes.
+    pub fn receive_by(&mut self, deadline: Instant) -> Result<(u64, Vec<u8>)> {
+        self.capped(deadline, Self::receive)
+    }
+    /// Like [`Sequenced::receive`], for a server waiting on an idle peer: `Ok(None)` when no
+    /// byte arrived within `wait` (nothing was consumed, the channel stays usable). A frame
+    /// that has started must arrive whole within `within` of its first byte, however its
+    /// bytes are paced, or the channel is refused.
+    pub fn poll_receive(
+        &mut self,
+        wait: Duration,
+        within: Duration,
+    ) -> Result<Option<(u64, Vec<u8>)>> {
+        ensure!(!self.refused, "sequenced channel already refused");
+        let mut first = [0u8; 1];
+        match self.capped(Instant::now() + wait, |s| Ok(s.stream.read(&mut first)))? {
+            Ok(0) => {
+                self.refused = true;
+                bail!("peer closed the sequenced channel")
+            }
+            Ok(_) => {}
+            Err(e)
+                if matches!(
+                    e.kind(),
+                    std::io::ErrorKind::WouldBlock | std::io::ErrorKind::TimedOut
+                ) =>
+            {
+                return Ok(None)
+            }
+            Err(e) => {
+                self.refused = true;
+                return Err(e.into());
+            }
+        }
+        let limit = self.limit;
+        let frame = self.capped(Instant::now() + within, |s| {
+            let mut rest = [0u8; 3];
+            s.stream.read_exact(&mut rest)?;
+            let len = u32::from_be_bytes([first[0], rest[0], rest[1], rest[2]]);
+            ensure!(
+                len <= limit,
+                "frame of {len} bytes exceeds message limit {limit}"
+            );
+            let mut body = vec![0u8; len as usize];
+            s.stream.read_exact(&mut body)?;
+            Ok(body)
+        });
+        self.accept(frame).map(Some)
     }
 }

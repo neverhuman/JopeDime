@@ -909,9 +909,14 @@ direction.
    needs a new plan attempt.
 3. **The coordinator must be a planned host.** Otherwise it has no pinned identity.
 
-**Open.** `gather` handshakes one connection at a time, so a slow authenticated peer can
-delay the others, though never past the join deadline. Timeouts have been exercised only on
-loopback. Host certificate and key provisioning is an operator step (runbook).
+**Open.** `gather` handshakes one connection at a time, so a slow peer can delay the others.
+This record first said "though never past the join deadline"; that did not hold at
+`3d12729a2`. The deadlines were per socket read, and review 5339604155 showed a peer that
+trickles bytes inside every read timeout holding a handshake, and so the gathering, for as
+long as it kept sending. It holds now, by construction: see
+[Absolute transport deadlines](#absolute-transport-deadlines-review-5339604155) below.
+Timeouts have been exercised only on loopback. Host certificate and key provisioning is an
+operator step (runbook).
 
 ### Item E — W7-T05/T07 SmartCluster-backed group supervisor
 
@@ -1936,3 +1941,165 @@ section changes no code). All ran on xbabe2, CPU only:
 `git rebase origin/main` replays the stack. The `## Counts` total can conflict again if a PR that
 reaches main first changes matrix rows; regenerate it with `jope-records parity-check`. The W7
 SHAs cited here are branch SHAs; a rebase merge gives them new ones.
+
+## Absolute transport deadlines (review 5339604155)
+
+Independent review 5339604155 of `3d12729a2` requested changes for one finding, **[P1] enforce
+the absolute deadline inside TLS handshake I/O**. Its loopback probe drove the real
+`TlsAcceptor` with a 200 ms handshake timeout and no client credential: a handshake record
+header announcing 16 KiB, then one byte every 75 ms. `poll_accept` stayed blocked for
+1 502 ms, until the peer closed. `rendezvous::gather` and `Agent::serve` call it
+synchronously, so their join-deadline and stop checks waited too. The client loop had the same
+shape. The review also asked for the framed reads to be audited for the same assumption, and
+for the Item D claim above to be corrected.
+
+**Cause.** Every deadline was a socket timeout, which bounds one read or one write. A peer
+that sends a byte inside every timeout never trips it. The handshake loops checked the
+elapsed time only between `complete_io` calls, and one call can make several blocking reads.
+A framed read (`read_exact`) makes as many reads as the peer cares to split its bytes into,
+and one read of a TLS stream can make several socket reads before it has a whole record.
+
+**Pre-fix record** (`w7-deadline-pre-20260928T140929Z`). Nine new tests, written against the
+existing API and run on the unchanged sources at `3d12729a2`, all fail. Each operation ended
+only when its trickling peer stopped, after 2.55 to 2.60 s, against a 300 ms deadline. The 13
+existing tests of the two targets pass. (`w7-deadline-pre-20260928T140700Z` is the same run
+with both join phases in one test, which stopped at the first.)
+
+**The fix.** One mechanism, used everywhere:
+
+- `transport::DeadlineSocket` wraps every socket of the bounded transport: TCP under TLS, and
+  the same-host Unix fixture sockets. Before each read or write it sets the kernel timeout to
+  the smaller of the per-operation timeout and the time left before an absolute deadline. At
+  the deadline it refuses the operation with `TimedOut` and does not touch the socket. rustls
+  performs all of its I/O through this socket, so the deadline covers every read and write
+  inside one `complete_io` step, one record read and one flush.
+- `ControlStream::set_deadline` sets or clears that deadline. It is a required method, and
+  the `ControlStream` implementation for a bare `UnixStream` is gone, since a bare stream
+  cannot hold a deadline. The fixtures box `DeadlineSocket::new(stream)` instead.
+- A TLS handshake has one deadline over all of its I/O: the handshake allowance, cut to the
+  caller's deadline when there is one (`TlsAcceptor::poll_accept_by`, which the rendezvous
+  uses through `Acceptor::next_incoming(deadline)`).
+- Callers put one deadline on each exchange, through `rendezvous::by_deadline`,
+  `read_frame_by` and `write_frame_by`, and `Sequenced::send_by`, `receive_by` and
+  `poll_receive(wait, within)`.
+- `write_frame` hands length and body to the stream in one write. A TLS stream therefore
+  queues a small frame, such as a heartbeat or an admission, whole: a write cut short by a
+  deadline cannot leave a length queued without its body.
+- Dropping a `TlsStream` sends `close_notify` under the same bound: never past the stream's
+  deadline, and at most one write timeout from the drop.
+
+No allowance is extended. Every deadline is the allowance the code already named (handshake,
+join, heartbeat or reply), now measured once from the start of the exchange instead of per
+read. Certificate pinning, grants and every refusal are unchanged.
+
+### Every blocking read and write of the bounded transport and its callers
+
+Line numbers are those of the commit that adds this section.
+
+| Site | Operation | Before | Now |
+|---|---|---|---|
+| `transport.rs:641` `connect` | TCP connect | `connect_timeout`, one call | unchanged: already absolute |
+| `transport.rs:653` `connect` | client handshake (`complete_io` loop) | per-read timeout; elapsed checked between steps | one deadline, the handshake allowance, over all of its I/O |
+| `transport.rs:736` `accept_by` (`poll_accept`, `poll_accept_by`) | server handshake | as above | one deadline: the handshake allowance, cut to the caller's deadline |
+| `transport.rs:546`, `554` `TlsStream` `Read`/`Write` | record reads, writes and flushes, several socket operations each | per-operation timeout only | every socket operation through `DeadlineSocket`, bounded by the caller's deadline |
+| `transport.rs:575` `Drop for TlsStream` | `close_notify` and flush | per-write timeout, per write | capped at the stream's deadline and one write timeout from the drop |
+| `transport.rs:785`, `795` `Sequenced::send`, `receive` | one frame | the caller's per-operation timeouts | unchanged; production callers use `send_by` and `receive_by` (`839`, `843`) |
+| `transport.rs:850` `Sequenced::poll_receive` | idle wait, then one frame | per-read timeouts, so a started frame could trickle | `wait` for the first byte; the rest of the frame within `within` of it |
+| `rendezvous.rs:370`, `382` `write_frame`, `read_frame` | one frame | primitives | primitives, bounded by the stream's deadline; `write_frame` writes once |
+| `rendezvous.rs:1060` `gather` | the next handshake | handshake allowance per read | ends by the join deadline |
+| `rendezvous.rs:1066`-`1071` `gather` | challenge write, hello read | join time remaining, per read | end by the join deadline itself; cleared once the hello is read |
+| `rendezvous.rs:1154` `join` | challenge read, hello write, admission read | join timeout per read | one deadline for the whole exchange: the join timeout, cut to the original deadline |
+| `rendezvous.rs:126`, `1125` `UnixAcceptor`, `join_unix` (fixtures) | as `gather` and `join` | bare `UnixStream` | `DeadlineSocket` over the fixture socket |
+| `controller.rs:1450` `deliver_admission_with_clock` | admission write, per rank | the join time left at accept, per write | the plan's I/O (heartbeat) timeout, cut to the end of the group window |
+| `driver.rs:57` `heartbeat_all` | heartbeat write, per rank | the join time left at accept, per write | one heartbeat interval per write; a failed write is still observed through the rank's own exit |
+| `participant.rs:274`, `292` | connect, join | as `connect`, `join` | as `connect`, `join` |
+| `participant.rs:376` CPU phase | each heartbeat read | heartbeat timeout per read | the whole heartbeat within the heartbeat timeout, or control is lost |
+| `participant.rs:505` `train` watcher (`neural`) | each heartbeat read | heartbeat timeout per read | as the CPU phase |
+| `agent.rs:202` `Agent::serve` | accept | handshake allowance per read | the handshake allowance, absolute (at most 10 s) |
+| `agent.rs:216` `Agent::serve` | next request | 500 ms per read, so a started request could trickle | `IDLE_POLL` for the first byte; the request within the plan's I/O timeout of it |
+| `agent.rs:232` `Agent::serve` | reply write | 30 s per write | `REPLY_WRITE` (30 s) for the whole reply |
+| `agent.rs:309` `RemoteSupervisor::call` | connect | as `connect` | as `connect` |
+| `agent.rs:337`-`338` `RemoteSupervisor::call` | request and reply | reply bound per read | the reply bound (I/O timeout, 30 s launch, 90 s terminate) over the whole exchange |
+| `supervisor.rs:146`, `job_identity.rs:234` | SmartCluster control exchange | `native_scq::authenticated_exchange` (pinned, not edited): the whole write and read inside one 30 s `tokio::time::timeout` | unchanged: already absolute. The peer is the host's own daemon, pinned by uid and executable |
+| `collect.rs:78` `SystemCommands::run` (census collection) | output of a local read-only inventory program | the child is killed after `COMMAND_TIMEOUT` (30 s), measured once | unchanged: no network peer. See the open note below |
+| census merge, grants (`census.rs`, `authoring.rs`, `contract.rs`) | pinned per-host documents and signed grant files | no network I/O | not applicable: nothing is exchanged over a socket |
+
+Consequences worth stating:
+
+- **The join deadline now bounds the gathering.** Every handshake, challenge and hello ends by
+  the join deadline itself, so a slow or trickling peer can delay the other ranks but never past
+  it. After it, `admit` refuses the group (`JoinTimeout`), with nothing started or committed.
+- **A joining rank's whole exchange is one allowance.** Before, the challenge read and the
+  admission read each had the full join timeout. A rank now waits for its admission only until
+  its own join timeout, measured from when it started to join. A rank starts to join only
+  after it is dispatched, which is after the rendezvous opened, so this is no earlier than the
+  coordinator's own join deadline. The coordinator journals the admission before delivering it,
+  so a rank that joined the moment the rendezvous opened, in a group whose last rank arrived at
+  the very end of the join window, has only the rank's launch latency to cover that journaling
+  step.
+- **The agent sees `stop` within bounded time** whatever its peers do. The worst case is one
+  handshake allowance, at most 10 s. One agent serves one peer at a time, so a stream of
+  trickling connections can still occupy it for one allowance each. That is a
+  fairness limit, and it is recorded below.
+
+**Tests.** Nine of the ten new tests use only the API that existed at `3d12729a2`, so they ran
+unchanged as the pre-fix record above. The tenth needs `read_frame_by`. All use loopback TCP
+or a Unix socket, 300 ms deadlines and peers that trickle for 2.5 s, and they assert that the
+operation ends no earlier than 50 ms before its deadline and no later than 500 ms after it.
+That slack is for loaded CI hosts; 800 ms is still under the review's 1.5 s and far under the
+2.5 s every test measured before the fix.
+
+- `bounded_transport` (18, was 10):
+  - `a_trickling_client_cannot_hold_the_server_handshake_past_its_deadline` is the review's
+    probe. A silent peer ends at the same deadline, and a genuine client then completes its
+    handshake on the same listener.
+  - `a_trickling_server_cannot_hold_the_client_handshake_past_its_deadline`: likewise for the
+    client, with a server that never answers and a positive control.
+  - `a_trickled_hello_cannot_hold_the_rendezvous_past_its_join_deadline` uses an authenticated
+    rank; `a_trickled_handshake_cannot_hold_the_rendezvous_past_its_join_deadline` an
+    unauthenticated peer; and `a_trickled_hello_cannot_hold_the_fixture_rendezvous_past_its_join_deadline`
+    the Unix fixture transport. Each gives `JoinTimeout` at the join deadline, with nothing
+    started or committed.
+  - `a_trickled_challenge_cannot_hold_a_joining_rank_past_its_join_timeout` and
+    `a_trickled_admission_cannot_hold_a_joining_rank_past_its_join_timeout`.
+  - `an_exchange_deadline_bounds_trickled_frames_and_stalled_writes`: a trickled frame on an
+    established stream; a deadline already passed, which reads nothing, after which the whole
+    frame is read with no deadline (positive control); and a 64 MiB write to a peer that
+    stopped reading.
+- `bounded_agent` (5, was 3): `a_trickling_agent_cannot_hold_a_remote_call_past_its_reply_deadline`,
+  and `a_trickling_coordinator_cannot_hold_an_agent_past_its_stop`, which requires the agent
+  to stop within the plan's I/O timeout plus 500 ms of the stop flag.
+- Existing silent-peer, positive-control, certificate, rotation, replay and grant refusals pass
+  unchanged. In `bounded_run`, two fixtures now box `DeadlineSocket::new(a)`, and the
+  `DelayedWrite` fixture implements `set_deadline`: its writes never block, and its injected
+  clock is what closes the window.
+
+**Post-fix records.**
+
+- `w7-deadline-post-20260928T141431Z`: `bounded_transport`, `bounded_agent`, `bounded_run`
+  and `bounded_run_recovery` pass 73 of 73. The ten new tests take 0.4 to 0.9 s each,
+  including their positive controls. This run used a 350 ms slack, which was then widened to
+  500 ms for CI; the later runs use 500 ms.
+- `w7-deadline-post-repeat-20260928T141638Z`: the same four targets five more times, 73 of 73
+  each time.
+- `w7-deadline-negative-20260928T141745Z` is a mutation control. `DeadlineSocket` was made to
+  ignore its deadline, leaving per-operation timeouts only, which is the pre-fix behaviour.
+  All ten new tests then fail after 2.56 to 2.67 s, and the 13 older tests of the two targets
+  pass. The between-step elapsed check in the handshake loops was still in place, and it did
+  not help. `transport.rs` was then restored, byte for byte (same SHA-256), and the sources
+  were touched.
+
+**Open.**
+
+- A single-threaded agent, and `gather`, still serve one connection at a time. A continuous
+  supply of trickling connections from an address that can reach the port costs each one
+  allowance, so it can keep legitimate traffic waiting. For `gather` that ends in a
+  fail-closed `JoinTimeout`. For the agent, the coordinator's calls fail at their reply
+  deadlines and it drains. Nothing is admitted or committed that should not be. Concurrent
+  accept, or a per-source limit, is a separate change.
+- In `collect.rs`, `SystemCommands::run` kills an inventory program at its absolute
+  `COMMAND_TIMEOUT`, then joins the threads that read its output until end of file. A
+  descendant that inherited the pipe could delay that end of file. The program is a local
+  read-only probe run by the operator's own collector, not a network peer, so this change
+  leaves it alone.
+- Loopback only, as before. The deadlines have not been exercised across hosts.

@@ -38,6 +38,7 @@ use std::{
         unix::fs::{MetadataExt, OpenOptionsExt},
     },
     path::{Path, PathBuf},
+    time::{Duration, Instant},
 };
 
 pub const JOURNAL_SCHEMA: &str = "jope.native_bounded_journal.v1";
@@ -71,6 +72,14 @@ pub enum DrainCause {
     WallBudgetElapsed { global_rank: u32 },
     Cancelled,
     CoordinatorRestart,
+}
+/// When [`group_window_closed`] first closes the window (Unix ms).
+fn group_window_end(contract: &BoundedRunContract) -> u64 {
+    contract
+        .participants
+        .iter()
+        .map(|p| p.grant.body.expires_unix_ms)
+        .fold(contract.original_deadline_unix_ms, u64::min)
 }
 /// The one execution window of the synchronous group: it closes at the original deadline
 /// or at the first participant grant expiry, whichever comes first. Supervision, restart
@@ -1429,7 +1438,16 @@ impl<S: Supervisor> Coordinator<S> {
                 self.drain(cause.clone(), now)?;
                 bail!("admission delivery window closed ({cause:?}); group drained");
             }
-            if let Err(e) = rendezvous::write_frame(&mut c.stream, &bytes, limit) {
+            // Each delivery ends by the plan's I/O timeout and never after the group window
+            // closes, however slowly the rank reads.
+            let allowance = self
+                .contract
+                .rendezvous
+                .heartbeat_timeout_ms
+                .min(group_window_end(&self.contract).saturating_sub(now))
+                .max(1);
+            let deadline = Instant::now() + Duration::from_millis(allowance);
+            if let Err(e) = rendezvous::write_frame_by(&mut *c.stream, &bytes, limit, deadline) {
                 let rank = c.global_rank;
                 self.drain(DrainCause::ControlLost { global_rank: rank }, clock())?;
                 return Err(e.context(format!(

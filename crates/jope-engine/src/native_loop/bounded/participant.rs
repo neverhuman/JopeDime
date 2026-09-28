@@ -12,9 +12,10 @@
 //! 5. performs the CPU proof workload, one update round per coordinator heartbeat (strictly
 //!    increasing delivery ids), then publishes a signed result in its outbox.
 //!
-//! Losing control (no heartbeat within the plan's heartbeat timeout, end of stream, or a
-//! replayed or regressed heartbeat) stops it with [`EXIT_LOST_CONTROL`] and no result. The
-//! CPU proof is a lifecycle workload over the verified inputs; it is not training.
+//! Losing control (no whole heartbeat within the plan's heartbeat timeout, however its bytes
+//! are paced, end of stream, or a replayed or regressed heartbeat) stops it with
+//! [`EXIT_LOST_CONTROL`] and no result. The CPU proof is a lifecycle workload over the
+//! verified inputs; it is not training.
 use super::{
     collect::{self, CollectSpec, CommandRunner},
     controller::EXIT_LOST_CONTROL,
@@ -37,7 +38,7 @@ use std::{
     net::ToSocketAddrs,
     os::unix::fs::{MetadataExt, OpenOptionsExt},
     path::{Path, PathBuf},
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 pub const INSTALLATION_SCHEMA: &str = "jope.native_host_installation.v1";
@@ -363,16 +364,17 @@ pub fn run(args: &ParticipantArgs, runner: &dyn CommandRunner) -> Result<i32> {
         anyhow::bail!("{NO_TRAINER}");
     }
     // Admitted: work may start. One update round per heartbeat.
-    let heartbeat = Some(Duration::from_millis(
-        contract.rendezvous.heartbeat_timeout_ms,
-    ));
-    stream.set_timeouts(heartbeat, heartbeat)?;
+    let heartbeat = Duration::from_millis(contract.rendezvous.heartbeat_timeout_ms);
+    stream.set_timeouts(Some(heartbeat), Some(heartbeat))?;
     let limit = contract.rendezvous.max_message_bytes;
     let started = now_ms();
     let mut chain = [0u8; 32];
     let (mut last, mut rounds) = (0u64, 0u64);
     while rounds < contract.counters.planned_updates {
-        let Ok(frame) = rendezvous::read_frame(&mut stream, limit) else {
+        // Each heartbeat arrives whole within the heartbeat timeout, or control is lost: a
+        // coordinator that trickles bytes is as silent as one that sends none.
+        let Ok(frame) = rendezvous::read_frame_by(&mut stream, limit, Instant::now() + heartbeat)
+        else {
             return Ok(EXIT_LOST_CONTROL);
         };
         match serde_json::from_slice::<ControlFrame>(&frame) {
@@ -490,18 +492,19 @@ fn train(
     )?;
     let stop = Arc::new(AtomicBool::new(false));
     let limit = contract.rendezvous.max_message_bytes;
-    let heartbeat = Some(Duration::from_millis(
-        contract.rendezvous.heartbeat_timeout_ms,
-    ));
-    stream.set_timeouts(heartbeat, heartbeat)?;
+    let heartbeat = Duration::from_millis(contract.rendezvous.heartbeat_timeout_ms);
+    stream.set_timeouts(Some(heartbeat), Some(heartbeat))?;
     {
         let stop = Arc::clone(&stop);
         std::thread::spawn(move || {
             let mut last = 0u64;
             loop {
-                let frame = rendezvous::read_frame(&mut stream, limit)
-                    .ok()
-                    .and_then(|f| serde_json::from_slice::<ControlFrame>(&f).ok());
+                // A heartbeat that does not arrive whole within the heartbeat timeout is
+                // silence, however its bytes are paced.
+                let frame =
+                    rendezvous::read_frame_by(&mut stream, limit, Instant::now() + heartbeat)
+                        .ok()
+                        .and_then(|f| serde_json::from_slice::<ControlFrame>(&f).ok());
                 match frame {
                     Some(ControlFrame::Heartbeat { delivery_id }) if delivery_id > last => {
                         last = delivery_id
