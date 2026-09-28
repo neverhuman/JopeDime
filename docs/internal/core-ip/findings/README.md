@@ -85,7 +85,10 @@ The neural build deliberately refuses the CPU fit-service binding. Its 80 CPU-on
 service contracts remain executable in both default and scratch families and are
 explicitly ignored only with `neural`. `deploy/ci/neural-cpu-only-tests.txt` names
 every case; `check-test-routing.sh` checks their presence and ignore state against
-the actual nextest collection before each family runs. The neural refusal test
+the actual nextest collection before each family runs. It also checks the reverse, from
+the source attributes: a test ignored for a `cpu-fit-service:` reason that is not listed,
+or a listed test that no longer carries one, fails; the same holds for the `real-corpus:`
+and `deferred-classification:` fixtures and `deploy/ci/real-corpus-tests.txt`. The neural refusal test
 continues to execute. The campaign and ranked-proposal public entrypoints still
 refuse unavailable GPU grants; separate private-core fixtures test post-admission
 behavior without making a production grant or claiming GPU qualification.

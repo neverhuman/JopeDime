@@ -1,5 +1,8 @@
 # Exact CPU-service contracts: active in default/scratch; ignored only with feature neural.
 # Neural refusal is covered by invalid_cpu_evaluator_binding_rejects_before_opening_authority.
+# deploy/ci/check-test-routing.sh checks both ways: every row is collected with its lane's ignore
+# status, and every test whose source ignores it for a "cpu-fit-service:" reason is a row here
+# (a missing one fails as "unlisted", a row whose test lost that reason as "stale").
 jope-parallel	eval_registry::service::tests::backlog_connect_and_invalid_request_deadlines_are_bounded
 jope-parallel	eval_registry::service::tests::failed_signaled_timed_out_and_replaced_custody_are_terminal
 jope-parallel	eval_registry::service::tests::forged_executor_ticket_does_not_consume_any_fit

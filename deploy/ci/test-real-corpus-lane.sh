@@ -7,6 +7,12 @@ scratch=$(mktemp -d "$PWD/target/tmp/test-host-lane.XXXXXX")
 trap 'chmod -R u+w -- "$scratch"; rm -r -- "$scratch"' EXIT
 mkdir -p "$scratch/deploy/ci" "$scratch/bin" "$scratch/custody/"{sotarena,state,registry}
 cp deploy/ci/{real-corpus-lane.sh,check-test-routing.sh,real-corpus-tests.txt} "$scratch/deploy/ci/"
+# check-test-routing.sh also reads the routing reasons from the source attributes: copy the files
+# that declare them, and give each mocked suite the crate directory nextest reports as its cwd.
+git grep -l -E 'ignore[[:space:]]*=[[:space:]]*"(real-corpus|deferred-classification):' -- crates |
+  while IFS= read -r file; do mkdir -p "$scratch/$(dirname "$file")"; cp "$file" "$scratch/$file"; done
+dirs=$(cargo metadata --no-deps --locked --format-version 1 |
+  jq -c --arg root "$PWD/" '[.packages[] | {key: .name, value: (.manifest_path | ltrimstr($root) | rtrimstr("/Cargo.toml"))}] | from_entries')
 printf 'synthetic routing fixture only\n' > "$scratch/custody/PROVENANCE.txt"
 manifest() {
   (cd "$scratch/custody" && find . -type f ! -path './MANIFEST.sha256' -print0 | sort -z | xargs -0 sha256sum > MANIFEST.sha256)
@@ -16,7 +22,7 @@ manifest
 # Only the selected test collection is mocked. The real host wrapper and its
 # actual custody validation/root assignments execute unchanged.
 sed -e 's/#.*//' -e '/^[[:space:]]*$/d' deploy/ci/real-corpus-tests.txt |
-  jq -Rn '{"rust-suites": (reduce inputs as $line ({}; ($line | [scan("[^[:space:]]+")]) as $r | .[$r[0]].testcases[$r[1]]={"ignored":true,"filter-match":{"status":"matches"}}))}' > "$scratch/collection.json"
+  jq -Rn --arg scratch "$scratch" --argjson dirs "$dirs" '{"rust-suites": (reduce inputs as $line ({}; ($line | [scan("[^[:space:]]+")]) as $r | .[$r[0]].cwd=($scratch + "/" + $dirs[$r[0] | split("::")[0]]) | .[$r[0]].testcases[$r[1]]={"ignored":true,"filter-match":{"status":"matches"}}))}' > "$scratch/collection.json"
 cat > "$scratch/bin/cargo" <<'MOCK'
 #!/usr/bin/env bash
 set -euo pipefail

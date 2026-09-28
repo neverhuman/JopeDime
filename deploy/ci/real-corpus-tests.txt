@@ -8,7 +8,10 @@
 #
 # An input the custody copy lacks still fails there with an explicit `unavailable:` message;
 # nothing is skipped or replaced with synthetic rows under these names. A listed test that
-# loses its #[ignore], or an entry that no longer names an ignored test, fails the lane.
+# loses its #[ignore], or an entry that no longer names an ignored test, fails the lane. The
+# reverse holds in every CPU family (deploy/ci/check-test-routing.sh host): a test ignored for one
+# of those two reasons must be listed here ("unlisted"), and a listed test whose source no longer
+# carries one fails as "stale".
 # Triage: docs/internal/core-ip/findings/test-inventory.json `baseline_triage`.
 #
 # Format: <nextest binary id> <test name> # <class>: <inputs>
