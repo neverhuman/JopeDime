@@ -126,11 +126,11 @@ fn loads_zstd_cli_compressed_safetensors() {
 }
 
 // Real-weights round-trip (opt-in, slow): exercise the exact production path on the shipped
-// Chimera component weights — compress with the `zstd -19` CLI
-// (scripts/compress-starforge-weights.sh) and decompress with the pure-Rust runtime decoder,
-// asserting byte-for-byte identity. `#[ignore]` so it stays out of the fast lane; run via
-// `cargo test -p starforge -- --ignored` or `ops/ci/compression.sh --real`. Skips when `zstd`
-// is absent or the weights are LFS pointers.
+// Chimera component weights — compress with the `zstd -19` CLI and decompress with the
+// pure-Rust runtime decoder, asserting byte-for-byte identity. `#[ignore]` so it stays out of
+// the fast lane; run it with
+// `cargo test -p starforge -- --ignored roundtrips_real_starforge_weights_if_present`.
+// Skips when `zstd` is absent or the weights are LFS pointers.
 #[test]
 #[ignore = "slow: processes the real ~200MB weights with zstd -19"]
 fn roundtrips_real_starforge_weights_if_present() {

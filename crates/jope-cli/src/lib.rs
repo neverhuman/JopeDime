@@ -12,6 +12,7 @@ mod storage;
 pub use admission::{verify_inputs, Verification};
 pub use champions::{
     local_champions, local_train_step, refuse_s3, write_json, ChampionBank, TrainStepReport,
+    UnsupportedDataset,
 };
 pub use encode::{encode_dataset, EncodeReport};
 pub use generator::generate_fixtures;

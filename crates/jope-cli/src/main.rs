@@ -38,7 +38,7 @@ enum Command {
     Train(train::TrainCli),
     /// Generate and optimize executable algorithms from the verified development panel.
     Optimize(jope_bench::panel::optimize_cli::OptimizeCli),
-    /// Verify the ten synthetic fixtures against the pinned deterministic generator.
+    /// Verify all forty synthetic fixtures against the pinned deterministic generator.
     VerifyInputs {
         /// Explicitly select offline qualification; no network access is performed.
         #[arg(long)]
@@ -67,7 +67,7 @@ enum Command {
         #[arg(long)]
         json: bool,
     },
-    /// Fit a GP genome on one admitted dataset (train R², holdout R²).
+    /// Fit a GP genome on one validated regression fixture (train R², validation R²).
     Fit {
         #[arg(long)]
         input: PathBuf,
@@ -88,14 +88,14 @@ enum Command {
         #[arg(long)]
         json: bool,
     },
-    /// Score a tiny ridge-family GP candidate set on one admitted dataset.
+    /// Score a tiny ridge-family GP candidate set on a regression fixture's validation split.
     Search {
         #[arg(long)]
         input: PathBuf,
         #[arg(long)]
         json: bool,
     },
-    /// Local champion bank over admitted fixtures. --pull/--push fail closed (no live S3).
+    /// Search supported regression fixtures and report the rest as unsupported. --pull/--push fail closed (no live S3).
     Champions {
         #[arg(long)]
         local: bool,
@@ -110,7 +110,7 @@ enum Command {
         #[arg(long)]
         json: bool,
     },
-    /// One local train step: fit a 128-d centroid router on champion genomes. Live --env fails closed.
+    /// One local train step: fit a 128-d centroid baseline; accepted policy weights unchanged. Live --env fails closed.
     TrainStep {
         #[arg(long)]
         local: bool,
@@ -123,7 +123,7 @@ enum Command {
         #[arg(long)]
         json: bool,
     },
-    /// Route one dataset through a trained local centroid router, then fit the chosen genome.
+    /// Route one regression fixture through the local centroid baseline (accepted policy weights unchanged), then fit the chosen genome.
     Route {
         #[arg(long)]
         input: PathBuf,
@@ -318,7 +318,10 @@ fn main() -> ExitCode {
                         }
                     }
                     print_json(*json, &report, || {
-                        format!("Local champion bank: {} datasets.", report.dataset_count)
+                        format!(
+                            "Local champion bank: {} supported, {} unsupported ({} fixtures).",
+                            report.supported_count, report.unsupported_count, report.dataset_count
+                        )
                     })
                 }
                 Err(error) => fail(*json, "jope.champions.v1", error),
@@ -363,9 +366,10 @@ fn main() -> ExitCode {
                     }
                     print_json(*json, &report, || {
                         format!(
-                            "Local train-step fitted a centroid router on {} labels ({} classes).",
-                            report.labels.len(),
-                            report.router.classes.len()
+                            "Local train-step fitted a centroid baseline on {} supported labels ({} classes); {} fixtures excluded. Accepted policy weights unchanged.",
+                            report.supported_count,
+                            report.router.classes.len(),
+                            report.unsupported_count
                         )
                     })
                 }

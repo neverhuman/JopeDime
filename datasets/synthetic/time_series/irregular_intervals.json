@@ -1,0 +1,1176 @@
+{
+  "schema": "jope.synthetic.v1",
+  "id": "time_series.irregular_intervals",
+  "task": "time_series",
+  "scenario": "irregular_intervals",
+  "seed": 1246712083,
+  "columns": [
+    {
+      "name": "signal",
+      "kind": "integer",
+      "nullable": false,
+      "categories": []
+    },
+    {
+      "name": "exogenous",
+      "kind": "integer",
+      "nullable": false,
+      "categories": []
+    }
+  ],
+  "classes": [],
+  "rows": [
+    {
+      "id": 0,
+      "features": [
+        103,
+        103
+      ],
+      "target": 244,
+      "split": "train",
+      "group": null,
+      "timestamp": 99,
+      "series": "series-0"
+    },
+    {
+      "id": 1,
+      "features": [
+        266,
+        266
+      ],
+      "target": 537,
+      "split": "train",
+      "group": null,
+      "timestamp": 169,
+      "series": "series-0"
+    },
+    {
+      "id": 2,
+      "features": [
+        -796,
+        -796
+      ],
+      "target": -1423,
+      "split": "train",
+      "group": null,
+      "timestamp": 191,
+      "series": "series-0"
+    },
+    {
+      "id": 3,
+      "features": [
+        -590,
+        -590
+      ],
+      "target": -1079,
+      "split": "train",
+      "group": null,
+      "timestamp": 231,
+      "series": "series-0"
+    },
+    {
+      "id": 4,
+      "features": [
+        102,
+        102
+      ],
+      "target": 135,
+      "split": "train",
+      "group": null,
+      "timestamp": 288,
+      "series": "series-0"
+    },
+    {
+      "id": 5,
+      "features": [
+        744,
+        744
+      ],
+      "target": 1363,
+      "split": "train",
+      "group": null,
+      "timestamp": 354,
+      "series": "series-0"
+    },
+    {
+      "id": 6,
+      "features": [
+        115,
+        115
+      ],
+      "target": 403,
+      "split": "train",
+      "group": null,
+      "timestamp": 446,
+      "series": "series-0"
+    },
+    {
+      "id": 7,
+      "features": [
+        -412,
+        -412
+      ],
+      "target": -1015,
+      "split": "train",
+      "group": null,
+      "timestamp": 448,
+      "series": "series-0"
+    },
+    {
+      "id": 8,
+      "features": [
+        988,
+        988
+      ],
+      "target": 1896,
+      "split": "train",
+      "group": null,
+      "timestamp": 487,
+      "series": "series-0"
+    },
+    {
+      "id": 9,
+      "features": [
+        434,
+        434
+      ],
+      "target": 1020,
+      "split": "train",
+      "group": null,
+      "timestamp": 522,
+      "series": "series-0"
+    },
+    {
+      "id": 10,
+      "features": [
+        664,
+        664
+      ],
+      "target": 1383,
+      "split": "train",
+      "group": null,
+      "timestamp": 611,
+      "series": "series-0"
+    },
+    {
+      "id": 11,
+      "features": [
+        72,
+        72
+      ],
+      "target": -89,
+      "split": "train",
+      "group": null,
+      "timestamp": 656,
+      "series": "series-0"
+    },
+    {
+      "id": 12,
+      "features": [
+        -895,
+        -895
+      ],
+      "target": -1877,
+      "split": "train",
+      "group": null,
+      "timestamp": 664,
+      "series": "series-0"
+    },
+    {
+      "id": 13,
+      "features": [
+        262,
+        262
+      ],
+      "target": 664,
+      "split": "train",
+      "group": null,
+      "timestamp": 673,
+      "series": "series-0"
+    },
+    {
+      "id": 14,
+      "features": [
+        737,
+        737
+      ],
+      "target": 1308,
+      "split": "train",
+      "group": null,
+      "timestamp": 688,
+      "series": "series-0"
+    },
+    {
+      "id": 15,
+      "features": [
+        -564,
+        -564
+      ],
+      "target": -1120,
+      "split": "train",
+      "group": null,
+      "timestamp": 783,
+      "series": "series-0"
+    },
+    {
+      "id": 16,
+      "features": [
+        -242,
+        -242
+      ],
+      "target": -451,
+      "split": "train",
+      "group": null,
+      "timestamp": 829,
+      "series": "series-0"
+    },
+    {
+      "id": 17,
+      "features": [
+        -606,
+        -606
+      ],
+      "target": -1113,
+      "split": "train",
+      "group": null,
+      "timestamp": 833,
+      "series": "series-0"
+    },
+    {
+      "id": 18,
+      "features": [
+        624,
+        624
+      ],
+      "target": 1231,
+      "split": "train",
+      "group": null,
+      "timestamp": 869,
+      "series": "series-0"
+    },
+    {
+      "id": 19,
+      "features": [
+        -60,
+        -60
+      ],
+      "target": -230,
+      "split": "train",
+      "group": null,
+      "timestamp": 896,
+      "series": "series-0"
+    },
+    {
+      "id": 20,
+      "features": [
+        73,
+        73
+      ],
+      "target": 393,
+      "split": "train",
+      "group": null,
+      "timestamp": 902,
+      "series": "series-0"
+    },
+    {
+      "id": 21,
+      "features": [
+        -212,
+        -212
+      ],
+      "target": -255,
+      "split": "train",
+      "group": null,
+      "timestamp": 979,
+      "series": "series-0"
+    },
+    {
+      "id": 22,
+      "features": [
+        109,
+        109
+      ],
+      "target": 57,
+      "split": "train",
+      "group": null,
+      "timestamp": 995,
+      "series": "series-0"
+    },
+    {
+      "id": 23,
+      "features": [
+        -392,
+        -392
+      ],
+      "target": -769,
+      "split": "train",
+      "group": null,
+      "timestamp": 1076,
+      "series": "series-0"
+    },
+    {
+      "id": 24,
+      "features": [
+        -623,
+        -623
+      ],
+      "target": -1428,
+      "split": "train",
+      "group": null,
+      "timestamp": 1108,
+      "series": "series-0"
+    },
+    {
+      "id": 25,
+      "features": [
+        -967,
+        -967
+      ],
+      "target": -2005,
+      "split": "train",
+      "group": null,
+      "timestamp": 1196,
+      "series": "series-0"
+    },
+    {
+      "id": 26,
+      "features": [
+        -662,
+        -662
+      ],
+      "target": -1485,
+      "split": "train",
+      "group": null,
+      "timestamp": 1280,
+      "series": "series-0"
+    },
+    {
+      "id": 27,
+      "features": [
+        484,
+        484
+      ],
+      "target": 865,
+      "split": "train",
+      "group": null,
+      "timestamp": 1382,
+      "series": "series-0"
+    },
+    {
+      "id": 28,
+      "features": [
+        17,
+        17
+      ],
+      "target": 223,
+      "split": "train",
+      "group": null,
+      "timestamp": 1479,
+      "series": "series-0"
+    },
+    {
+      "id": 29,
+      "features": [
+        -541,
+        -541
+      ],
+      "target": -1287,
+      "split": "train",
+      "group": null,
+      "timestamp": 1527,
+      "series": "series-0"
+    },
+    {
+      "id": 30,
+      "features": [
+        601,
+        601
+      ],
+      "target": 1211,
+      "split": "train",
+      "group": null,
+      "timestamp": 1628,
+      "series": "series-0"
+    },
+    {
+      "id": 31,
+      "features": [
+        395,
+        395
+      ],
+      "target": 949,
+      "split": "train",
+      "group": null,
+      "timestamp": 1665,
+      "series": "series-0"
+    },
+    {
+      "id": 32,
+      "features": [
+        -728,
+        -728
+      ],
+      "target": -1299,
+      "split": "train",
+      "group": null,
+      "timestamp": 1738,
+      "series": "series-0"
+    },
+    {
+      "id": 33,
+      "features": [
+        23,
+        23
+      ],
+      "target": 198,
+      "split": "train",
+      "group": null,
+      "timestamp": 1794,
+      "series": "series-0"
+    },
+    {
+      "id": 34,
+      "features": [
+        -177,
+        -177
+      ],
+      "target": -467,
+      "split": "train",
+      "group": null,
+      "timestamp": 1799,
+      "series": "series-0"
+    },
+    {
+      "id": 35,
+      "features": [
+        248,
+        248
+      ],
+      "target": 711,
+      "split": "train",
+      "group": null,
+      "timestamp": 1889,
+      "series": "series-0"
+    },
+    {
+      "id": 36,
+      "features": [
+        -496,
+        -496
+      ],
+      "target": -1176,
+      "split": "train",
+      "group": null,
+      "timestamp": 2008,
+      "series": "series-0"
+    },
+    {
+      "id": 37,
+      "features": [
+        -615,
+        -615
+      ],
+      "target": -1071,
+      "split": "train",
+      "group": null,
+      "timestamp": 2110,
+      "series": "series-0"
+    },
+    {
+      "id": 38,
+      "features": [
+        862,
+        862
+      ],
+      "target": 1874,
+      "split": "train",
+      "group": null,
+      "timestamp": 2146,
+      "series": "series-0"
+    },
+    {
+      "id": 39,
+      "features": [
+        -68,
+        -68
+      ],
+      "target": -135,
+      "split": "train",
+      "group": null,
+      "timestamp": 2177,
+      "series": "series-0"
+    },
+    {
+      "id": 40,
+      "features": [
+        -131,
+        -131
+      ],
+      "target": -50,
+      "split": "train",
+      "group": null,
+      "timestamp": 2256,
+      "series": "series-0"
+    },
+    {
+      "id": 41,
+      "features": [
+        -949,
+        -949
+      ],
+      "target": -1855,
+      "split": "train",
+      "group": null,
+      "timestamp": 2362,
+      "series": "series-0"
+    },
+    {
+      "id": 42,
+      "features": [
+        -459,
+        -459
+      ],
+      "target": -890,
+      "split": "train",
+      "group": null,
+      "timestamp": 2474,
+      "series": "series-0"
+    },
+    {
+      "id": 43,
+      "features": [
+        -114,
+        -114
+      ],
+      "target": -221,
+      "split": "train",
+      "group": null,
+      "timestamp": 2547,
+      "series": "series-0"
+    },
+    {
+      "id": 44,
+      "features": [
+        -948,
+        -948
+      ],
+      "target": -1835,
+      "split": "train",
+      "group": null,
+      "timestamp": 2594,
+      "series": "series-0"
+    },
+    {
+      "id": 45,
+      "features": [
+        -119,
+        -119
+      ],
+      "target": -136,
+      "split": "train",
+      "group": null,
+      "timestamp": 2655,
+      "series": "series-0"
+    },
+    {
+      "id": 46,
+      "features": [
+        76,
+        76
+      ],
+      "target": 377,
+      "split": "train",
+      "group": null,
+      "timestamp": 2731,
+      "series": "series-0"
+    },
+    {
+      "id": 47,
+      "features": [
+        311,
+        311
+      ],
+      "target": 668,
+      "split": "train",
+      "group": null,
+      "timestamp": 2808,
+      "series": "series-0"
+    },
+    {
+      "id": 48,
+      "features": [
+        81,
+        81
+      ],
+      "target": 228,
+      "split": "train",
+      "group": null,
+      "timestamp": 2820,
+      "series": "series-0"
+    },
+    {
+      "id": 49,
+      "features": [
+        -255,
+        -255
+      ],
+      "target": -423,
+      "split": "train",
+      "group": null,
+      "timestamp": 2834,
+      "series": "series-0"
+    },
+    {
+      "id": 50,
+      "features": [
+        -82,
+        -82
+      ],
+      "target": -352,
+      "split": "train",
+      "group": null,
+      "timestamp": 2842,
+      "series": "series-0"
+    },
+    {
+      "id": 51,
+      "features": [
+        -411,
+        -411
+      ],
+      "target": -725,
+      "split": "train",
+      "group": null,
+      "timestamp": 2889,
+      "series": "series-0"
+    },
+    {
+      "id": 52,
+      "features": [
+        783,
+        783
+      ],
+      "target": 1459,
+      "split": "train",
+      "group": null,
+      "timestamp": 2973,
+      "series": "series-0"
+    },
+    {
+      "id": 53,
+      "features": [
+        -536,
+        -536
+      ],
+      "target": -1140,
+      "split": "train",
+      "group": null,
+      "timestamp": 2989,
+      "series": "series-0"
+    },
+    {
+      "id": 54,
+      "features": [
+        993,
+        993
+      ],
+      "target": 1934,
+      "split": "train",
+      "group": null,
+      "timestamp": 3067,
+      "series": "series-0"
+    },
+    {
+      "id": 55,
+      "features": [
+        718,
+        718
+      ],
+      "target": 1203,
+      "split": "train",
+      "group": null,
+      "timestamp": 3117,
+      "series": "series-0"
+    },
+    {
+      "id": 56,
+      "features": [
+        888,
+        888
+      ],
+      "target": 1939,
+      "split": "train",
+      "group": null,
+      "timestamp": 3134,
+      "series": "series-0"
+    },
+    {
+      "id": 57,
+      "features": [
+        -797,
+        -797
+      ],
+      "target": -1591,
+      "split": "train",
+      "group": null,
+      "timestamp": 3158,
+      "series": "series-0"
+    },
+    {
+      "id": 58,
+      "features": [
+        -52,
+        -52
+      ],
+      "target": -11,
+      "split": "train",
+      "group": null,
+      "timestamp": 3204,
+      "series": "series-0"
+    },
+    {
+      "id": 59,
+      "features": [
+        766,
+        766
+      ],
+      "target": 1358,
+      "split": "train",
+      "group": null,
+      "timestamp": 3287,
+      "series": "series-0"
+    },
+    {
+      "id": 60,
+      "features": [
+        -976,
+        -976
+      ],
+      "target": -1736,
+      "split": "train",
+      "group": null,
+      "timestamp": 3324,
+      "series": "series-0"
+    },
+    {
+      "id": 61,
+      "features": [
+        -579,
+        -579
+      ],
+      "target": -1061,
+      "split": "train",
+      "group": null,
+      "timestamp": 3384,
+      "series": "series-0"
+    },
+    {
+      "id": 62,
+      "features": [
+        785,
+        785
+      ],
+      "target": 1458,
+      "split": "train",
+      "group": null,
+      "timestamp": 3407,
+      "series": "series-0"
+    },
+    {
+      "id": 63,
+      "features": [
+        374,
+        374
+      ],
+      "target": 583,
+      "split": "train",
+      "group": null,
+      "timestamp": 3498,
+      "series": "series-0"
+    },
+    {
+      "id": 64,
+      "features": [
+        860,
+        860
+      ],
+      "target": 1558,
+      "split": "validation",
+      "group": null,
+      "timestamp": 3524,
+      "series": "series-0"
+    },
+    {
+      "id": 65,
+      "features": [
+        -268,
+        -268
+      ],
+      "target": -670,
+      "split": "validation",
+      "group": null,
+      "timestamp": 3528,
+      "series": "series-0"
+    },
+    {
+      "id": 66,
+      "features": [
+        724,
+        724
+      ],
+      "target": 1256,
+      "split": "validation",
+      "group": null,
+      "timestamp": 3545,
+      "series": "series-0"
+    },
+    {
+      "id": 67,
+      "features": [
+        -37,
+        -37
+      ],
+      "target": -148,
+      "split": "validation",
+      "group": null,
+      "timestamp": 3611,
+      "series": "series-0"
+    },
+    {
+      "id": 68,
+      "features": [
+        942,
+        942
+      ],
+      "target": 2062,
+      "split": "validation",
+      "group": null,
+      "timestamp": 3620,
+      "series": "series-0"
+    },
+    {
+      "id": 69,
+      "features": [
+        79,
+        79
+      ],
+      "target": 200,
+      "split": "validation",
+      "group": null,
+      "timestamp": 3623,
+      "series": "series-0"
+    },
+    {
+      "id": 70,
+      "features": [
+        577,
+        577
+      ],
+      "target": 1387,
+      "split": "validation",
+      "group": null,
+      "timestamp": 3717,
+      "series": "series-0"
+    },
+    {
+      "id": 71,
+      "features": [
+        -566,
+        -566
+      ],
+      "target": -1059,
+      "split": "validation",
+      "group": null,
+      "timestamp": 3790,
+      "series": "series-0"
+    },
+    {
+      "id": 72,
+      "features": [
+        71,
+        71
+      ],
+      "target": 298,
+      "split": "validation",
+      "group": null,
+      "timestamp": 3869,
+      "series": "series-0"
+    },
+    {
+      "id": 73,
+      "features": [
+        858,
+        858
+      ],
+      "target": 1622,
+      "split": "validation",
+      "group": null,
+      "timestamp": 3937,
+      "series": "series-0"
+    },
+    {
+      "id": 74,
+      "features": [
+        605,
+        605
+      ],
+      "target": 1042,
+      "split": "validation",
+      "group": null,
+      "timestamp": 4025,
+      "series": "series-0"
+    },
+    {
+      "id": 75,
+      "features": [
+        48,
+        48
+      ],
+      "target": 45,
+      "split": "validation",
+      "group": null,
+      "timestamp": 4087,
+      "series": "series-0"
+    },
+    {
+      "id": 76,
+      "features": [
+        -217,
+        -217
+      ],
+      "target": -485,
+      "split": "validation",
+      "group": null,
+      "timestamp": 4200,
+      "series": "series-0"
+    },
+    {
+      "id": 77,
+      "features": [
+        -371,
+        -371
+      ],
+      "target": -544,
+      "split": "validation",
+      "group": null,
+      "timestamp": 4207,
+      "series": "series-0"
+    },
+    {
+      "id": 78,
+      "features": [
+        422,
+        422
+      ],
+      "target": 805,
+      "split": "validation",
+      "group": null,
+      "timestamp": 4308,
+      "series": "series-0"
+    },
+    {
+      "id": 79,
+      "features": [
+        818,
+        818
+      ],
+      "target": 1732,
+      "split": "validation",
+      "group": null,
+      "timestamp": 4348,
+      "series": "series-0"
+    },
+    {
+      "id": 80,
+      "features": [
+        14,
+        14
+      ],
+      "target": -52,
+      "split": "test",
+      "group": null,
+      "timestamp": 4387,
+      "series": "series-0"
+    },
+    {
+      "id": 81,
+      "features": [
+        -390,
+        -390
+      ],
+      "target": -909,
+      "split": "test",
+      "group": null,
+      "timestamp": 4394,
+      "series": "series-0"
+    },
+    {
+      "id": 82,
+      "features": [
+        -223,
+        -223
+      ],
+      "target": -530,
+      "split": "test",
+      "group": null,
+      "timestamp": 4506,
+      "series": "series-0"
+    },
+    {
+      "id": 83,
+      "features": [
+        787,
+        787
+      ],
+      "target": 1347,
+      "split": "test",
+      "group": null,
+      "timestamp": 4507,
+      "series": "series-0"
+    },
+    {
+      "id": 84,
+      "features": [
+        528,
+        528
+      ],
+      "target": 1189,
+      "split": "test",
+      "group": null,
+      "timestamp": 4588,
+      "series": "series-0"
+    },
+    {
+      "id": 85,
+      "features": [
+        663,
+        663
+      ],
+      "target": 1236,
+      "split": "test",
+      "group": null,
+      "timestamp": 4699,
+      "series": "series-0"
+    },
+    {
+      "id": 86,
+      "features": [
+        -374,
+        -374
+      ],
+      "target": -748,
+      "split": "test",
+      "group": null,
+      "timestamp": 4784,
+      "series": "series-0"
+    },
+    {
+      "id": 87,
+      "features": [
+        -28,
+        -28
+      ],
+      "target": 17,
+      "split": "test",
+      "group": null,
+      "timestamp": 4845,
+      "series": "series-0"
+    },
+    {
+      "id": 88,
+      "features": [
+        -109,
+        -109
+      ],
+      "target": -122,
+      "split": "test",
+      "group": null,
+      "timestamp": 4894,
+      "series": "series-0"
+    },
+    {
+      "id": 89,
+      "features": [
+        798,
+        798
+      ],
+      "target": 1829,
+      "split": "test",
+      "group": null,
+      "timestamp": 4910,
+      "series": "series-0"
+    },
+    {
+      "id": 90,
+      "features": [
+        -240,
+        -240
+      ],
+      "target": -438,
+      "split": "test",
+      "group": null,
+      "timestamp": 4937,
+      "series": "series-0"
+    },
+    {
+      "id": 91,
+      "features": [
+        -52,
+        -52
+      ],
+      "target": -231,
+      "split": "test",
+      "group": null,
+      "timestamp": 5029,
+      "series": "series-0"
+    },
+    {
+      "id": 92,
+      "features": [
+        -68,
+        -68
+      ],
+      "target": -49,
+      "split": "test",
+      "group": null,
+      "timestamp": 5072,
+      "series": "series-0"
+    },
+    {
+      "id": 93,
+      "features": [
+        170,
+        170
+      ],
+      "target": 300,
+      "split": "test",
+      "group": null,
+      "timestamp": 5112,
+      "series": "series-0"
+    },
+    {
+      "id": 94,
+      "features": [
+        560,
+        560
+      ],
+      "target": 1287,
+      "split": "test",
+      "group": null,
+      "timestamp": 5140,
+      "series": "series-0"
+    },
+    {
+      "id": 95,
+      "features": [
+        -539,
+        -539
+      ],
+      "target": -1284,
+      "split": "test",
+      "group": null,
+      "timestamp": 5167,
+      "series": "series-0"
+    }
+  ]
+}

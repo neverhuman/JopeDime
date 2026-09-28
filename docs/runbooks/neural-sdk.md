@@ -2,11 +2,14 @@
 
 The `neural` feature of `crates/jope-engine` (package `jope-parallel`) links `tch = "=0.26.0"`
 and compiles `crates/jope-engine/native/runtime.cpp`, which includes `<c10/cuda/CUDAStream.h>`,
-`<cuda_runtime.h>` and `<nccl.h>` unconditionally. It only builds on the self-hosted `neural-cuda`
-lane. This runbook says how to put the SDK on that runner's volume and how the receipt
-`deploy/receipts/libtorch.json` is regenerated. `deploy/ci/neural-env.sh` exports the exact
-environment the receipt was produced with; the lane must source it before any cargo command that
-enables `neural`.
+`<cuda_runtime.h>` and `<nccl.h>` unconditionally. It builds only on a host provisioned as below
+(xbabe2). No CI lane has a GPU. The diagnostic `full-neural` family of `full-main-cpu`
+(`deploy/ci/full-lane.sh`) builds it on the `jope-full-cpu` runner, which mounts the SDK volume
+read-only and is given no GPU device. The weekly `regression-suite` job also builds it, but its
+`xbabe2-gpu` label is not one that `deploy/runner/common.sh` provisions. This runbook says how to
+put the SDK on that volume and how the receipt `deploy/receipts/libtorch.json` is regenerated.
+`deploy/ci/neural-env.sh` exports the exact environment the receipt was produced with; source it
+before any cargo command that enables `neural`.
 
 ## What the receipt records
 
@@ -96,9 +99,9 @@ exit codes on xbabe2, never by hand.
    `nccl{header,version}`, `host{hostname,kernel,gcc,clang,rustc}`, `commands[]` (command, env,
    exit code, log sha256), `result` (`check-passed` | `build-passed` | `failed at <step>: <first error>`),
    `produced_at` (`date -u +%FT%TZ`).
-5. Update the values in `deploy/ci/neural-env.sh` and this runbook in the same commit; the
-   `neural-cuda` job compares `libtorch/build-version` with the script's expectation and fails
-   closed on a mismatch.
+5. Update the values in `deploy/ci/neural-env.sh` and this runbook in the same commit;
+   `neural-env.sh` compares `libtorch/build-version` with its expectation and fails closed on a
+   mismatch, and a future GPU lane must source it and fail closed the same way.
 
 ## Verification status
 
@@ -108,6 +111,10 @@ result **`build-passed`**: `cargo check` (exit 0, 3 pre-existing warnings), `car
 CUDA library through `DT_RPATH` with no `LD_LIBRARY_PATH`) and `cargo test -- --list` (exit 0;
 549 tests in 40 binaries enumerate with `neural` on, of which 27 in 8 integration files are
 `#![cfg(feature = "neural")]`). No test was executed and the GPU stayed idle; no source change was
-needed — `build.rs` already accepts every override used. The `neural-cuda` lane may therefore
-be wired as *verified for build*; running the 27 gated tests on the RTX 3090 is the lane's own
-first green run, wrapped by `deploy/ci/gpu-qualification.sh`.
+needed — `build.rs` already accepts every override used.
+
+No `neural-cuda` lane exists on `main`. The lane and its `deploy/ci/gpu-qualification.sh` wrapper
+were on `land/runner-lanes-20260921` (`a2ee0f9cd`), which was dropped unmerged. The `neural`-gated
+tests have never run on a GPU in CI: the `full-neural` family runs
+`cargo nextest -p jope-parallel --features neural` on the CPU runner, without a GPU device.
+Running them on the RTX 3090 needs a new reviewed GPU lane.

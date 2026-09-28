@@ -47,31 +47,13 @@ fn columns(count: usize) -> Vec<Column> {
         .collect()
 }
 
-/// Original ten-per-family generator indices so a subset keeps the same bytes.
-fn generator_index(task: Task, scenario: &str) -> usize {
-    match (task, scenario) {
-        (Task::Binary, "linear") => 0,
-        (Task::Binary, "imbalanced") => 2,
-        (Task::Binary, "outliers") => 8,
-        (Task::Regression, "linear") => 0,
-        (Task::Regression, "sparse_signal") => 4,
-        (Task::Regression, "extrapolation") => 9,
-        (Task::TimeSeries, "trend") => 0,
-        (Task::TimeSeries, "lag_dependence") => 8,
-        (Task::Multiclass, "three_classes") => 0,
-        (Task::Multiclass, "many_classes") => 1,
-        _ => panic!("unmapped scenario {scenario}"),
-    }
-}
-
 pub(crate) fn dataset(task: Task, scenario_index: usize) -> Dataset {
     let scenario = task.scenarios()[scenario_index];
     let family_index = Task::ALL
         .iter()
         .position(|candidate| *candidate == task)
         .expect("known task");
-    let generation_index = generator_index(task, scenario);
-    let seed = 0x4a4f5045 + family_index as u64 * 100 + generation_index as u64;
+    let seed = 0x4a4f5045 + family_index as u64 * 100 + scenario_index as u64;
     let mut dataset = Dataset {
         schema: SCHEMA.into(),
         id: format!("{}.{}", task.name(), scenario),
@@ -84,9 +66,9 @@ pub(crate) fn dataset(task: Task, scenario_index: usize) -> Dataset {
     };
     let mut random = Random(seed);
     if task == Task::TimeSeries {
-        temporal::populate(&mut dataset, generation_index, &mut random);
+        temporal::populate(&mut dataset, scenario_index, &mut random);
     } else {
-        tabular::populate(&mut dataset, generation_index, &mut random);
+        tabular::populate(&mut dataset, scenario_index, &mut random);
     }
     dataset
 }

@@ -1573,12 +1573,11 @@ mod tests {
         .expect_err("bound emission must not silently ignore Portable");
         assert!(portable_error.to_string().contains("portable"));
 
-        let temp = std::env::temp_dir().join(format!(
-            "feat-math-v3-row-op-emission-{}-{index}",
-            std::process::id()
-        ));
-        let _ = std::fs::remove_dir_all(&temp);
-        std::fs::create_dir_all(&temp).unwrap();
+        let scratch = tempfile::Builder::new()
+            .prefix(&format!("feat-math-v3-row-op-emission-{index}-"))
+            .tempdir()
+            .unwrap();
+        let temp = scratch.path();
         let csv_path = temp.join("test.csv");
         let python_path = temp.join("model.py");
         let rust_path = temp.join("model.rs");
@@ -1680,7 +1679,6 @@ mod tests {
                 .contains("tail state hash mismatch"),
             "bound emission must reject corrupt fitted-tail state"
         );
-        let _ = std::fs::remove_dir_all(&temp);
     }
 
     #[test]

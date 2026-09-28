@@ -745,9 +745,11 @@ mod tests {
         historical.extend(checksum);
         assert_eq!(decode(&historical).unwrap().emitter_revision, 1);
         let original = historical.clone();
-        let root =
-            std::env::temp_dir().join(format!("kernel-codec-upgrade-{}", std::process::id()));
-        let runtime = FittedCppRuntime::new(&root).unwrap();
+        let scratch = tempfile::Builder::new()
+            .prefix("kernel-codec-upgrade-")
+            .tempdir()
+            .unwrap();
+        let runtime = FittedCppRuntime::new(scratch.path()).unwrap();
         let loaded = runtime.load(&historical).unwrap();
         assert_ne!(
             sha256_hex(&fs::read(loaded.directory.join("model.so")).unwrap()),
@@ -762,7 +764,7 @@ mod tests {
         assert_eq!(historical, original);
         drop(loaded);
         drop(runtime);
-        fs::remove_dir_all(root).unwrap();
+        scratch.close().unwrap();
     }
 
     #[test]
@@ -776,8 +778,11 @@ mod tests {
         assert_eq!(decoded.emitter_revision, 2);
         assert_eq!(decoded.model.genome_sha256, model.genome_sha256);
         let encoded = EncodedTable::from_bound_model(&model, &test).unwrap();
-        let root = std::env::temp_dir().join(format!("fitted-cpp-runtime-{}", std::process::id()));
-        let runtime = FittedCppRuntime::new(&root).unwrap();
+        let scratch = tempfile::Builder::new()
+            .prefix("fitted-cpp-runtime-")
+            .tempdir()
+            .unwrap();
+        let runtime = FittedCppRuntime::new(scratch.path()).unwrap();
         let loaded = runtime.load(&codec.bytes).unwrap();
         let actual = loaded.predict(&encoded).unwrap();
         let expected = model.predict_table(&test).unwrap();
@@ -792,18 +797,17 @@ mod tests {
                 .collect::<Vec<_>>()
         );
         drop(loaded);
-        let _ = fs::remove_dir_all(root);
     }
 
     #[test]
     fn runtime_rejects_malformed_shapes_without_entering_model_code() {
         let (model, test) = fixture();
         let codec = encode_fitted_cpp17(&model).unwrap();
-        let root = std::env::temp_dir().join(format!(
-            "fitted-cpp-runtime-malformed-{}",
-            std::process::id()
-        ));
-        let runtime = FittedCppRuntime::new(&root).unwrap();
+        let scratch = tempfile::Builder::new()
+            .prefix("fitted-cpp-runtime-malformed-")
+            .tempdir()
+            .unwrap();
+        let runtime = FittedCppRuntime::new(scratch.path()).unwrap();
         let loaded = runtime.load(&codec.bytes).unwrap();
         let mut wrong_columns = EncodedTable::from_bound_model(&model, &test).unwrap();
         wrong_columns.columns += 1;
@@ -819,17 +823,15 @@ mod tests {
         corrupt[0] ^= 1;
         assert!(runtime.load(&corrupt).is_err());
         drop(loaded);
-        let _ = fs::remove_dir_all(root);
     }
 
     #[test]
     fn runtime_c_abi_is_sanitizer_clean_and_fail_closed() {
-        let root = std::env::temp_dir().join(format!(
-            "fitted-cpp-runtime-sanitizer-{}",
-            std::process::id()
-        ));
-        let _ = fs::remove_dir_all(&root);
-        fs::create_dir_all(&root).unwrap();
+        let scratch = tempfile::Builder::new()
+            .prefix("fitted-cpp-runtime-sanitizer-")
+            .tempdir()
+            .unwrap();
+        let root = scratch.path();
         let runtime_source = root.join("runtime.cpp");
         let driver_source = root.join("driver.cpp");
         let binary = root.join("runtime-sanitizer");
@@ -884,6 +886,6 @@ int main() {
             "sanitized runtime rejected fail-closed probe: {}",
             String::from_utf8_lossy(&run.stderr)
         );
-        fs::remove_dir_all(root).unwrap();
+        scratch.close().unwrap();
     }
 }

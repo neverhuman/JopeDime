@@ -33,13 +33,58 @@ impl Task {
         }
     }
 
-    /// Ten Git fixtures total (not ten per family). Real tables stay in S3.
+    /// Ten Git fixtures per family, forty in all (owner decision D5). The position of each
+    /// scenario is its generator index, which fixes its seed and bytes; never reorder.
     pub fn scenarios(self) -> &'static [&'static str] {
         match self {
-            Self::Binary => &["linear", "imbalanced", "outliers"],
-            Self::Regression => &["linear", "sparse_signal", "extrapolation"],
-            Self::TimeSeries => &["trend", "lag_dependence"],
-            Self::Multiclass => &["three_classes", "many_classes"],
+            Self::Binary => &[
+                "linear",
+                "nonlinear",
+                "imbalanced",
+                "overlapping",
+                "categorical",
+                "missing_values",
+                "constant_features",
+                "duplicated_rows",
+                "outliers",
+                "grouped_observations",
+            ],
+            Self::Regression => &[
+                "linear",
+                "nonlinear",
+                "heteroscedastic",
+                "heavy_tailed",
+                "sparse_signal",
+                "categorical",
+                "missing_values",
+                "constant_target",
+                "collinearity",
+                "extrapolation",
+            ],
+            Self::TimeSeries => &[
+                "trend",
+                "seasonality",
+                "autoregression",
+                "exogenous_input",
+                "multiple_series",
+                "missing_observations",
+                "irregular_intervals",
+                "regime_shift",
+                "lag_dependence",
+                "chronological_distribution_shift",
+            ],
+            Self::Multiclass => &[
+                "three_classes",
+                "many_classes",
+                "imbalance",
+                "overlapping_classes",
+                "nonlinear_boundaries",
+                "categorical_input",
+                "missing_values",
+                "high_dimensional_noise",
+                "rare_class",
+                "grouped_observations",
+            ],
         }
     }
 }

@@ -132,10 +132,11 @@ fn assert_case(
 #[test]
 fn public_runtime_python_and_rust_predictions_match_bitwise() {
     require_toolchains();
-    let temp =
-        std::env::temp_dir().join(format!("feat-math-v3-public-parity-{}", std::process::id()));
-    let _ = std::fs::remove_dir_all(&temp);
-    std::fs::create_dir_all(&temp).unwrap();
+    let scratch = tempfile::Builder::new()
+        .prefix("feat-math-v3-public-parity-")
+        .tempdir()
+        .unwrap();
+    let temp = scratch.path();
     let csv_path = temp.join("test.csv");
     let csv = "amount,country\n0.05,US\n1.3,\"unknown, place\"\n,DE\n";
     std::fs::write(&csv_path, csv).unwrap();
@@ -143,7 +144,7 @@ fn public_runtime_python_and_rust_predictions_match_bitwise() {
 
     assert_case(
         0,
-        &temp,
+        temp,
         &csv_path,
         &test,
         &TaskSpec::binary(Objective::LogLoss).unwrap(),
@@ -152,13 +153,11 @@ fn public_runtime_python_and_rust_predictions_match_bitwise() {
     );
     assert_case(
         1,
-        &temp,
+        temp,
         &csv_path,
         &test,
         &TaskSpec::regression(Objective::R2).unwrap(),
         "(pipe X (target kind=zscore) (input numeric=median categorical=frequency) (standardize) (target_bin_encode bins=8 prior=10 oof=5) (maxabs_scale) (ridge))",
         &[0.0, 0.2, 0.4, 0.6, 2.0, 2.2, 2.4, 2.6],
     );
-
-    let _ = std::fs::remove_dir_all(&temp);
 }
