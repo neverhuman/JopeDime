@@ -1578,6 +1578,248 @@ no case accepted where the Python refused, used binaries built after it). The re
 touched, the family-growth tests passed on the rebuilt library, the negative-control script now
 restores with a fresh time, and the gate was run again.
 
+## Follow-up — review round six: lossy path conversion and environment values
+
+An independent verifier of round five (`check-sweep5.sh`, 192 cases on `3c31229ec`; report and
+harness kept in the scratch of that check and summarised in the pre-fix run below) found two
+classes of input that the original tools refused and the ports accepted. Neither was introduced by
+round five. Both are closed by construction here: every conversion of a path, name, argument or
+environment value to text in the P1 port code was enumerated (the table below), and each one whose
+text is printed, written, recorded or compared now refuses a value that is not UTF-8; none is ever
+converted lossily (U+FFFD for an undecodable byte) outside a message.
+
+| # | Finding | Root cause | Change | Cases |
+| ---: | --- | --- | --- | --- |
+| 1 | `cargo-artifact select` and `build` printed an executable whose resolved name is not UTF-8 (a link to a directory named with the byte `0xff`) as U+FFFD, exit 0; the Python, under a strict UTF-8 stdout (`en_US.UTF-8`), raised `UnicodeEncodeError` printing it (exit 1), and under C or `C.UTF-8` printed the raw bytes | `path.display().to_string()` of the resolved path in `main.rs` | `executable()` returns text: the resolved name, or the refusal `cargo-artifact: 'utf-8' codec can't encode character '\udcff' in position N: surrogates not allowed` (CPython's text: the position in characters, a run of undecodable bytes one range), in every locale; the `--path-map` roots are compared and joined only as text (a lossy container root matched a message path spelled with U+FFFD, a lossy host root named another directory) | cargo-artifact `negative-r6.json` (29) |
+| 2 | `build-report report` recorded `custody_resolved`, `custody_argument` and the checksum keys lossily, and printed the receipt path lossily (exit 0); the Python wrote the receipt and then failed printing its path under `en_US.UTF-8` (`report failed: 'utf-8' codec can't encode ...`, exit 1) | `to_string_lossy()` / `display()` at the receipt's fields and the final print | a resolved custody that is not UTF-8 refuses before anything is created, with the Python's message; a custody argument that is not UTF-8 refuses; a checksum key that is not UTF-8 (this executable, the tools directory, the configuration reached through such a name) fails the run with a failure receipt; a scan root refused for a link component is named as the Python's stderr printed it (`\udcff`) | build-report `negative-r6.json` (25) |
+| 3 | `build-report report` with `HOME` beginning with `~` (`~`, `~/x`, `~nobody/x`): Python 3.12's `Path.home()` raised `RuntimeError("Could not determine home directory.")` and the receipt failed; the port read a relative directory and succeeded | `units_dir` read `HOME` as any UTF-8 text | `HOME` is read only when set, UTF-8 and absolute; one beginning with `~` (whatever follows, even a byte that is not UTF-8) fails the receipt with the Python's text at the same step; unset, not UTF-8, empty or relative refuses (stricter) | build-report `negative-r6.json` units (12, a receipt replay) |
+| 4 | `parity-check` on a root whose resolved name is not UTF-8 compared entry points with the root converted lossily: a `[[bin]]` path spelled with U+FFFD in the byte's place was found under the root and the check passed where the Python's `relative_to` raised | `rel()` compared with `root.to_string_lossy()`; `relpath()` returned a lossy row name | `check` refuses such a root before reading anything (stricter: the Python ran the check); `rel()` refuses a root that is not UTF-8 and `relpath()` returns a name that is not UTF-8 for its caller to refuse | `process-r6.json` (4) |
+| 5 | `jope-ci` panicked (exit 101) on an argument that is not UTF-8, before its `--delete` check | `std::env::args()` | `args_os()`: `--delete` is refused first (exit 2, the Python's text), then any argument that is not UTF-8 (`jope-ci: argument N '<repr>' is not UTF-8; the ports read their arguments as text`, exit 2; stricter: the Python took it surrogate-escaped) | the argument cases in both fixtures |
+| 6 | the repository root found without `--repo` (`git rev-parse --show-toplevel`) was read lossily, so every guard run from a checkout whose path is not UTF-8 failed (stricter, not permissive) | `String::from_utf8_lossy` of git's output | the bytes git printed | `layout.rs` unit test |
+
+Messages that name a path now render it as the Python did — `repr` (`'/r/\udcff'`) or, where the
+Python wrote a `str` to stderr, `\udcff` (its `backslashreplace` handler) — through
+`jope_records::py::{fsdecode, os_repr, os_display, os_error_path, utf8_encode_error}`; the few
+message-only conversions that stay lossy are listed as such below.
+
+**The audit table.** Every path/name-to-text conversion and every environment read in the product
+lines of the P1 ports and the helpers they call (`jope-ci` `main`, `build_report`, `cargo_artifact`,
+`py`; `jope-records` `coverage`, `parity`, `readme`, `scope_check`, `py`, `pyjson`, `findings`,
+`task_status`, `main`, `layout`, `error`; `jope-engine` `family_growth`), by the patterns
+`display()`, `to_string_lossy`, `from_utf8_lossy`, `to_str()`, `into_string()`, `{x:?}`, U+FFFD,
+`env::var`, `var_os`, `args`/`args_os`, `current_dir`, `current_exe`, `Command::new`, `.env(`
+(`audit6.sh`, kept in the post-fix run; unit-test modules excluded), at the lines of this round's
+tree. Decisions: **refuses** (a value that is not UTF-8 refuses, and where); **bytes** (the value
+stays an `OsStr`/`PathBuf` and reaches only the OS); **message** (the text of a refusal, rendered as
+the Python printed it, never U+FFFD); **message, lossy** (a refusal's text only, left lossy);
+**Python** (the Python's own semantics); **outside P1** (a verifier this PR does not port).
+
+| file:line | conversion or read | decision |
+| --- | --- | --- |
+| `jope-ci/src/main.rs:97` | `current_exe()`, `canonicalize()` (default tools directory) | bytes; its names reach the receipt only as checksum keys, which refuse (`build_report.rs:692`) |
+| `main.rs:272`–`:280`, `:288`, `:293`, `:297` | `args_os()`, `to_str()` of each argument, `os_repr` | fixed: `--delete` refused first; an argument that is not UTF-8 refuses (exit 2, named as `repr`); `Cli::parse_from` then reads only UTF-8 arguments (was `std::env::args()`, a panic) |
+| `build_report.rs:64` | `os_error` | fixed: `py::os_error_path`, the `OSError` text with the path as `repr` (was `display()` for an error without a code) |
+| `build_report.rs:71`–`:74` | `receipt_text` | fixed: the text of a path the receipt records, or a refusal naming it as `repr` |
+| `build_report.rs:87` | `os_repr` (symlink loop) | message |
+| `build_report.rs:192` | `os_display` (root with a link component) | fixed: message as the Python's stderr printed it, `\udcff` (was `display()`, U+FFFD, which also reached `scan-N.stderr` and the receipt's `error`) |
+| `build_report.rs:236`, `:241` | `os_repr` (the command in `CalledProcessError`); `Command::new(command[0])` | message; bytes (`/usr/bin/du`, `/usr/bin/sudo`, `df` looked up on `PATH` as `subprocess` did) |
+| `build_report.rs:340` | `file_name().to_str()` | Python (compared with `debug`/`release`: a name that is not UTF-8 is neither) |
+| `build_report.rs:386`–`:389`, `:403`–`:406` | candidate, scan root | refuses (round three) |
+| `build_report.rs:504`–`:506` | resolved custody | fixed: refuses before anything is created, with the `UnicodeEncodeError` the Python's `print(receipt_path)` raised under `en_US.UTF-8` (was `custody_resolved` lossy and a lossy print) |
+| `build_report.rs:512`, `:643`–`:644` | custody argument | fixed: refuses (was `to_string_lossy`) |
+| `build_report.rs:516` | `env::var("INVOCATION_ID")` | refuses a value that is not UTF-8 (round five) |
+| `build_report.rs:581` | `receipt_path.to_str()` (print) | cannot fail: a UTF-8 custody (`:504`), an ASCII stamp and file name (was `display()`) |
+| `build_report.rs:595` | `resolved.to_str()` (measurement root) | Python (a UTF-8 spelling never equals a resolved name that is not UTF-8: refused as the Python refused it) |
+| `build_report.rs:615`–`:635`, `:674` | `var_os("HOME")`, `to_str()` | fixed: see the environment table (was `env::var`, any UTF-8 text) |
+| `build_report.rs:666`, `:692`, `:702` | `current_exe()`; checksum keys | fixed: a key that is not UTF-8 fails the run (was `to_string_lossy`) |
+| `cargo_artifact.rs:47`–`:55` | `Command::new("cargo")`, `var_os`, `.env(` | bytes / presence only (see the environment table) |
+| `cargo_artifact.rs:96`–`:98` | `os_error_at` (`read_text`, the output file) | fixed: message, pathlib's spelling or `repr` (was `to_string_lossy` for the name) |
+| `cargo_artifact.rs:259`–`:262` | `--path-map` roots | fixed: refuses a root that is not UTF-8 (was `to_string_lossy` in the comparison and the join) |
+| `cargo_artifact.rs:285`–`:290` | resolved executable | fixed: text, or the Python's `UnicodeEncodeError` (was `display()` in `main.rs`); `canonicalize()` refuses a name over `PATH_MAX` (stricter, now listed) |
+| `jope-ci/src/py.rs:50`–`:51` | `os_repr` | delegates to `jope_records::py::os_repr` |
+| `jope-records/src/coverage.rs:152`–`:154` | `Command::new`, `current_dir(root)` | bytes |
+| `coverage.rs:176`–`:181` | `root.to_str()` | refuses (no metadata path is under a root that is not UTF-8); fixed: the message names it as `repr` (was the lossy root) |
+| `parity.rs:96` | `os_display` (enum not found) | fixed: message (was `display()`) |
+| `parity.rs:207`, `:336` | `relpath` result | fixed: a relative `src_path` that is not UTF-8 refuses (was `to_string_lossy`, a row name with U+FFFD) |
+| `parity.rs:221`–`:223`, `:252` | `Command::new("cargo")`, `current_dir(root)`; `env::current_dir()` | bytes; the joined path is refused by `relpath` where it is not UTF-8 |
+| `parity.rs:355`, `:854` | `os_error_path` | fixed: message (was `to_string_lossy`) |
+| `parity.rs:443`–`:446` | `rel()`: root | fixed: refuses a root that is not UTF-8 (was compared lossily, finding a `[[bin]]` path spelled with U+FFFD under it) |
+| `parity.rs:449`–`:453` | `rel()`: path | refuses (round two); fixed: named with `os_display` (was lossy) |
+| `parity.rs:514` | `file_stem().to_str()` | cannot fail: `rel()` refused a name that is not UTF-8 (was `to_string_lossy`) |
+| `parity.rs:842`–`:845` | `check`: resolved root | fixed: refuses before anything is read (stricter) |
+| `readme.rs:1006`–`:1009`, `:1563` | report name; missing input | refuses (round five); fixed: messages with `os_display` (were lossy) |
+| `scope_check.rs:33`–`:36`, `:116`–`:118` | `Command::new`, `current_dir(root)` | bytes: nothing about the root is converted (the check matches the Python's on a root that is not UTF-8) |
+| `jope-records/src/py.rs:379` | `from_utf8_lossy` (`read_text_replace`) | Python (`read_text(errors="replace")` of file contents, as the Python read them) |
+| `py.rs:579`–`:621` | `os_repr`, `os_error_path`, `os_display`, `utf8_encode_error` (with `fsdecode`) | new: the renderers every message above uses |
+| `py.rs:757` | `current_dir()` (`abspath`) | bytes |
+| `py.rs:802`–`:805` | `ResolveError` display | fixed: message with `os_error_path`/`os_repr` (was `to_string_lossy`) |
+| `pyjson.rs:978` | U+FFFD in place of an unpaired surrogate escape | refuses: the document is refused when parsed (the placeholder is never output) |
+| `findings.rs:117` | `{name:?}` | not a path (a record key) |
+| `task_status.rs:88`, `:105` | `to_str()` of a work-order name | outside P1 (the W12-T03 verifier; this PR changed only its `int_key`): a name that is not UTF-8 is skipped where `glob("W*.tasks.md")` read it; reported, unchanged |
+| `jope-records/src/main.rs:179`, `:336` | `current_dir()`; `Cli::parse()` | bytes; clap keeps a `PathBuf` argument as bytes and refuses a text argument that is not UTF-8 (exit 2) |
+| `layout.rs:41`–`:51` | `git rev-parse --show-toplevel` | fixed: the output's bytes (was `from_utf8_lossy`, a directory that does not exist); the refusal names the directory with `os_display`; git's own stderr in it: message, lossy |
+| `error.rs:61`–`:62` | `display()` of `Error::Parse`/`Error::Io` | message, lossy (shared by every verifier; the refusal is the decision) |
+| `family_growth.rs:216`, `:782` | `{name:?}` | not a path (JSON keys) |
+| `family_growth.rs:287`, `:305`, `:321` | `display()` in `malformed` | message, lossy (the refusal is the decision) |
+| `family_growth.rs:625` | `root.to_str()` | refuses (`root is not UTF-8`, stricter since the port) |
+
+**Environment.** Every value the ports read from the environment, and why it is safe:
+
+| Value | Where | Decision |
+| --- | --- | --- |
+| `HOME` | `build_report.rs:615`–`:635` | read only when set, UTF-8 and absolute; `~...` fails as `Path.home()` raised (`Could not determine home directory.`); unset, not UTF-8, empty or relative refuses (stricter); never an empty, default or relative directory |
+| `INVOCATION_ID` | `build_report.rs:516` | an identifier, not a path: recorded as the text it is, `null` when unset (`os.environ.get`); not UTF-8 refuses before anything is created (round five, stricter) |
+| `CARGO_INCREMENTAL`, `CARGO_PROFILE_DEV_DEBUG` | `cargo_artifact.rs:48`–`:52` | presence only (`env.setdefault`); the value is never read, and Cargo inherits it as the bytes it is |
+| `CARGO_TARGET_DIR` | `cargo_artifact.rs:55` | written for Cargo from `--target-dir` (an argument, UTF-8); never read |
+| `PATH` | every `Command::new` of a bare name (`cargo`, `git`, `bash`, `df`) | the executable is looked up by the OS from `PATH` as `subprocess` looked it up; never read as text |
+| arguments | `jope-ci` `main.rs:288`; `jope-records` `main.rs:336` | `jope-ci`: bytes first, `--delete` refused, then any argument that is not UTF-8 (exit 2); `jope-records`: clap keeps a `PathBuf` argument as bytes (each use is in the table) and refuses one that is not UTF-8 where it reads text (exit 2) |
+| working directory | `py.rs:757`, `parity.rs:252`, `jope-records` `main.rs:179` | bytes (`abspath`, `git -C`); a relative name joined to it is refused where it would be printed (`relpath`, the scan root, the custody) |
+| this executable | `jope-ci` `main.rs:97`, `build_report.rs:666` | bytes; recorded only as a checksum key, which refuses a name that is not UTF-8 (`:692`) |
+| `LANG`, `LC_ALL`, `LC_CTYPE` | not read | the ports are locale-independent: where the Python's outcome depended on the locale (a strict UTF-8 stdout raised, C and `C.UTF-8` printed the raw bytes), the ports refuse in every locale |
+| `TMPDIR`, `JOPE_*` | not read by the ports | tests only |
+
+**Stricter than the Python, new or previously unlisted** (each is listed in the tests, with its
+reason):
+- an executable whose resolved name is not UTF-8, under C and `C.UTF-8` (the Python printed its raw
+  bytes): cargo-artifact `R6_STRICTER` (12 cases);
+- a resolved executable name longer than `PATH_MAX`: `realpath(3)` refuses (`[Errno 36] File name
+  too long`) where Python's `resolve()` built and printed it (`cargo_artifact.rs:285`–`:287`; round
+  five's table called this "stricter only in a race"): `select-r6-resolved-name-too-long`;
+- a TOML document `tomllib` read and the `toml` crate refuses, `[a.b.c]`, `[a]`, `b.d = 1` (`duplicate
+  key`): `toml-r6-implicit-then-dotted`;
+- an argument that is not UTF-8 to `jope-ci` (before: a panic, exit 101; now exit 2):
+  `R6_ARGV_REFUSED` (4), `R6_REPORT_ARGV` (2), `scan-r6-root-argument-not-utf8`;
+- a custody whose resolved name is not UTF-8: nothing is written (the Python wrote the receipt and
+  then failed printing its path, or printed its raw bytes under `C.UTF-8`): `R6_CUSTODY_NOTHING_WRITTEN`;
+  a custody argument or a checksum key that is not UTF-8: `R6_REPORT_STRICTER`;
+- `HOME` empty (the Python took `/`) or relative (the Python located the units from the working
+  directory): `R6_REPORT_STRICTER`, and round five's `units-r5-home-empty` (`R5_UNITS_NOW_STRICTER`);
+- a `parity-check` root whose resolved name is not UTF-8: `PROCESS_STRICTER`;
+- unchanged and already refusing: a scan root that is not UTF-8 (`scan-r6-relative-root-from-not-utf8-cwd`
+  shows it from a relative root), a family-growth root that is not UTF-8.
+
+**Outside the P1 ports, unchanged.** `task_status.rs:88` and `:105` (the W12-T03 task-status
+verifier, whose P1 change is only `int_key`) skip a work-order file name that is not UTF-8, which
+Python's `glob("W*.tasks.md")` would have read: a fail-open of the older verifier, reported, not
+changed here. `findings.rs:117` names a record key, not a path.
+
+**Reproduction first.** `p1-r6-pre-20260928T082952Z`: the binaries of `3c31229ec` (the round-five
+gate's build) and a new harness, `sweep6.sh` (bash and jq; the originals from `f46a9048f`'s git
+bytes in scratch roots), 76 cases: `select` and `build` of executables behind links to directories named `0xff`, a
+run `0xff 0xfe`, `é 0xff`, an incomplete sequence and bytes between others, under `en_US.UTF-8`,
+`C.UTF-8` and C; `--path-map` host links and arguments; the two unlisted stricter cases; reports
+under ten `HOME` spellings with the harness's configuration and with the case's own approved roots;
+custody, configuration and tools behind names that are not UTF-8; scans from a working directory
+that is not UTF-8; and the jope-records guards on a root that is a link to such a directory. 15
+were refused by the original and accepted (13) or written (2) by the port: `select`, `build` and a
+`--path-map` host link under `en_US.UTF-8` (7), the three `HOME=~...` spellings with a
+configuration the port accepts (3), four custody cases (a link to a directory named `0xff`, and a
+relative custody from such a working directory, with either configuration), and the lossy-root
+`[[bin]]` in `parity-check` (the one instance of the class outside the verifier's report). Seven more
+are calibration: a `goodcfg` case (the port is given the case's own approved roots) whose Python
+receipt failed only at its fixed approved roots, with nothing else failing, which the harness cannot
+give it (`sweep6.sh` labels them `CALIBRATION-py-fixed-roots`; `adjudicate.sh` applies the same
+rule to any run). A first run, `p1-r6-pre-20260928T080903Z`, counted 18: its rule looked only at a
+receipt whose path the Python printed as UTF-8, so three `C`/`C.UTF-8` custody cases whose Python
+printed the path's raw bytes (and failed only at the roots) were counted; the rule now reads the
+receipt the Python wrote, printed or not, and still counts a Python that failed printing it.
+Applied to the verifier's own run on `3c31229ec` (`check-sweep5` `run2`), the same rule leaves
+`r5-good-control-home` and `r5-good-home-link-loop` as calibration, as the verifier found.
+
+The negative control (`p1-r6-negctl-20260928T082538Z`): with the new tests and fixtures on the
+pre-fix sources (`HEAD`'s bytes of the nine product files), every round-six replay fails, and so
+does round five's
+units replay, which now holds the empty `HOME` to the round-six rule
+(`cargo_artifact_matches_round_six`, `scans_match_round_six`, `reports_match_round_six`,
+`units_match_round_five`, `process_cases_match_round_six`), each for the reason it was written:
+the lossy paths printed with exit 0, the panic on an argument, the `~` receipts, the lossy-root
+row. The fixed sources were restored byte for byte (SHA-256 checked) and then touched, so Cargo
+rebuilt them (round five's first gate had reused a library built from sources restored with `cp -p`).
+
+**Fixtures.** Captured in `p1-r6-capture-20260928T082121Z` by `cap6.sh` (every case as data; bash
+and jq only; the originals from `f46a9048f`'s git bytes in scratch roots, run under the locale each
+case names). A byte that is not UTF-8 is written `@Xhh@` in a name, an argument or `HOME`; a codec position is
+written relative to the length of the root it counts (`in position @ROOT+1@`), and the replays place
+it past their own root; a deep directory's printed components are placed the same way. (An earlier
+capture, `p1-r6-capture-20260928T081753Z`, recorded two tracebacks with the scratch path, which the
+`just lint-paths` rule forbids in `crates/*/tests`; it was rerun with the case directory written
+`@CASE@`, and only the rerun is committed.)
+
+| Fixture | Cases | Python exit 0 | Python refused (message or receipt) | Crash |
+| --- | ---: | ---: | ---: | ---: |
+| `jope-ci/…/cargo-artifact/negative-r6.json` | 29 | 21 | 8 (the `UnicodeEncodeError` it caught) | 0 |
+| `jope-ci/…/build-report/negative-r6.json` | 25 | 3 | 22 (12 unit and 4 custody failure receipts, 4 encode errors, a root refusal, the deletion refusal) | 0 |
+| `jope-records/…/process-r6.json` | 4 | 2 | 0 | 2 (`ValueError`) |
+| **total** | **58** | **26** | **30** | **2** |
+
+**Tests.** New test functions in existing targets, so `deploy/ci/coverage.json` and the test
+inventory are unchanged; the capability matrix's `jope-records::*` count is now 150.
+- `jope-records` `py.rs`: `names_that_are_not_utf8_render_as_python_rendered_them`; `parity.rs`:
+  `entry_points_are_never_named_by_a_lossy_conversion` (`relpath_…` adapted to its `Result`);
+  `layout.rs`: `a_checkout_whose_path_is_not_utf8_is_found_as_it_is`; `python_parity.rs`:
+  `process_cases_match_round_six` (the process replay builds a root behind a link, `root_link`).
+- `jope-ci` `build_report.rs`: `unit_files_are_located_as_path_home_located_them` extended (`~`,
+  `~/x`, `~nobody/x`, `~<0xff>`, `/`, `/~x`, empty, relative); `build_report_python_parity.rs`:
+  `scans_match_round_six`, the ignored `reports_match_round_six` (like the other receipt replays),
+  and `units_match_round_five` holding `units-r5-home-empty` to the new rule;
+  `cargo_artifact_python_parity.rs`: `cargo_artifact_matches_round_six` (the round replay now
+  rebuilds names that are not UTF-8, links, a deep directory and the locale, and returns each
+  outcome, so the test also holds every C and `C.UTF-8` refusal to the `en_US.UTF-8` message);
+  `cargo_artifact.rs` reads `executable()`'s text.
+
+**After.** `p1-r6-post-20260928T082733Z`, on the fix before it was committed (its diff is kept),
+every harness rerun unchanged except for its scratch paths (`table.tsv`, `adjudication.txt`):
+
+| Harness | Cases | Original refused, port accepted | Output or receipt differences | Stricter |
+| --- | ---: | ---: | ---: | ---: |
+| Round six (`sweep6.sh`) | 76 | 0 (1 calibration, the good-configuration control) | 10, each a refusal at an earlier step (stricter): `HOME` empty, relative or not UTF-8, and a checksum key that is not UTF-8, each with either configuration; the Python failed later, at the harness's approved roots | 28 |
+| Round five (`sweep5.sh`) | 83 | 0 | 0 | 20 |
+| Verifier `check-strict.sh` | 327 | 0 | 0 | 45 |
+| Round four (`check-r4.sh`) | 244 | 0 | 0 | 54 |
+| Verifier `check-sweep5.sh` | 192 | 0 (2 calibration: `r5-good-control-home`, `r5-good-home-link-loop`) | 3: `r5-home-relative` (stricter, the new `HOME` rule), `r5-config-link-loop2` and `r5-config-via-too-long-link` (both refuse, in other words, as in the verifier's run) | 18 |
+| Round two | 137 | 0 | 0 | 9 (unchanged) |
+| Round three | 132 | 0 | 1 (the known `br-int-report-config-4300`) | 17 (unchanged) |
+
+On the verifier's harness the two blocking classes are closed: `u5-ca-*-en-us` now refuse with the
+Python's message, `r5-home-tilde` and `r5-home-tilde-path` give the Python's receipt
+(`Could not determine home directory.`), and the `C`/`C.UTF-8` variants are stricter. The 14 live
+guards on the real tree (`guards.sh`) give byte-identical exit status, stdout, stderr and files with
+the pre-fix binaries of `3c31229ec` and the post-fix ones, except Cargo's own timing line in
+`artifact-build.err` (`0.13s` against `0.12s`).
+
+**Contract after round six.** As after round five, with these corrections: a path, name, argument
+or environment value that is not UTF-8 is never converted lossily; where its text would be printed,
+written, recorded or compared, the port refuses (where the Python's outcome depended on the locale,
+in every locale, with the message a strict UTF-8 locale gave); `HOME` is read only when set, UTF-8
+and absolute, and one beginning with `~` fails as `Path.home()` raised.
+
+**Commits.**
+- `jope-records: never convert a name that is not UTF-8 lossily; refuse it where entry points are named (P1 review 6)`
+- `jope-ci: refuse names and arguments that are not UTF-8 instead of printing them lossily; read HOME as Path.home() did (P1 review 6)`
+- `jope-ci: let the negative report hold a replayed stdout that is not UTF-8 (P1 review 6)`
+- `docs: record review round six of the P1 ports: lossy path conversion and environment values (P1 review 6)`
+  (this section, the commit map and the matrix count)
+
+**Gate.** `p1-r6-gate2-20260928T090000Z`, on the head (this file's commit): round five's gate
+(`gate.sh`, with this agent's paths) — the hosted `rust-check` and `rust-test` lanes run locally as
+`.github/workflows/ci.yml` runs them, fmt, whitespace, the workspace check, clippy with `-D warnings`
+on `jope-ci` and `jope-records`, both crates' tests (the ignored receipt replays included), the
+listed `jope-records` test count against the matrix, the family-growth tests, the fences,
+`coverage validate`, `verify-test-inventory`, the record checks, the live guards,
+`parity-matrix.sh --no-build`, `deploy/ci/check.sh`, the secret scan, round four's reviewer probes —
+and every differential harness: round six's, round five's, the verifiers' `check-strict.sh` and
+`check-sweep5.sh` (with `adjudicate.sh`), round four's, two's and three's; none may hold a case the
+original refused and the port accepted.
+
+A first run, `p1-r6-gate-20260928T084500Z`, on the head before the third commit above, passed every
+step up to the `jope-ci` tests (the hosted lanes included: `rust-check` 4 of 4, `rust-test` 1620
+passed and 28 skipped), where `cargo_artifact_matches_round_six` panicked in the negative-report
+writer, which runs only when `JOPE_NEGATIVE_REPORT` is set, as the gate sets it and the earlier
+test runs did not: it read every case's stdout as text, and round six's C and `C.UTF-8` cases hold
+the Python's raw bytes as `stdout_hex`. The replay itself was not at fault. The run was stopped
+(its later steps build from the working tree, which the fix changes; `STOPPED.txt` there), the
+writer fixed in its own commit, and the gate run again.
+
 ## Commit map — `rr2/python-p1` to the landing
 
 The work above was committed on `rr2/python-p1` and landed through `rr2/python-p1-landing`: its
@@ -1641,6 +1883,10 @@ runs made before the rebase.
 | `jope-ci: read only the committed nextest config's TOML types; print select's OSError (P1 review 5)` | none, made later | landing only | — |
 | `jope-engine: refuse family-growth custody that cannot be resolved (P1 review 5)` | none, made later | landing only | — |
 | `docs: record review round five of the P1 ports: fail-closed filesystem and value sweep (P1 review 5)` | none, made later | landing only | — |
+| `jope-records: never convert a name that is not UTF-8 lossily; refuse it where entry points are named (P1 review 6)` | none, made later | landing only | — |
+| `jope-ci: refuse names and arguments that are not UTF-8 instead of printing them lossily; read HOME as Path.home() did (P1 review 6)` | none, made later | landing only | — |
+| `jope-ci: let the negative report hold a replayed stdout that is not UTF-8 (P1 review 6)` | none, made later | landing only | — |
+| `docs: record review round six of the P1 ports: lossy path conversion and environment values (P1 review 6)` | none, made later | landing only | — |
 
 "Patch-id" compares `git patch-id --stable` of the commit as submitted and its original. Each
 pair changes the same paths with the same status. The tree proof
