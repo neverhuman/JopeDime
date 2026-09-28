@@ -35,7 +35,7 @@ Requirements: Rust 1.97.1 via `rustup` (`rust-toolchain.toml` selects it; MSRV 1
 command was run at `4235db6` on 2026-09-18/19 (128-core host, `-j 16`; a laptop will be slower):
 
 ```bash
-git clone https://github.com/veox-ai/JopeDime && cd JopeDime
+git clone https://github.com/neverhuman/JopeDime && cd JopeDime
 
 # 1. the whole workspace, CPU features only                          (1 m 57 s at 4235db6)
 cargo build --workspace --locked

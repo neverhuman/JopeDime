@@ -27,9 +27,11 @@ rebase merges only (linear history); the branch is deleted on merge.
 2. Commit subjects are `<area>: what changed` — that prefix is what
    [cliff.toml](cliff.toml) groups the release notes by. Explain the *why* in the body; cite the
    plan section, ADR or blocker number when there is one.
-3. Run `just ci-pr` before opening the PR (the exact scripts the hosted lanes call: hygiene, fmt,
-   clippy `-D warnings`, `cargo nextest -P pr`, and the Python checks over the Python that
-   remains until ADR-0006's phase P3). A PR that touches only docs runs
+3. Run `just ci-pr` before opening the PR. It is a local subset of the pull-request lanes (the
+   lanes themselves are `deploy/ci/fast-lane.sh`) plus clippy: `deploy/ci/check.sh`, the core of
+   the `hygiene` lane, `cargo fmt --check`, clippy `-D warnings` (which no CI lane runs),
+   `cargo nextest -P pr` over the product crates, and ruff and pytest over the Python that
+   remains until ADR-0006's phase P3. A PR that touches only docs runs
    `hygiene` alone in CI; still run `just docs` locally (rustdoc builds — its warnings are
    advisory until the WP8 `docs` lane makes `-D warnings` blocking — plus the markdown link check
    over README and `docs/`).
@@ -53,7 +55,8 @@ rebase merges only (linear history); the branch is deleted on merge.
   type; do not add a second serialisation of an existing record.
 - **No weights, no datasets, no evidence in git.** Fixture policy: ≤ 2 MB per file, ≤ 10 test
   datasets, ≤ 12 MB total, plain files (no LFS). Models are manifests only (`models/`), datasets are
-  the ten committed test sets plus a catalog ([docs/datasets.md](docs/datasets.md)).
+  the ten committed test sets with their collection manifest and the forty generated synthetic
+  fixtures with their catalog ([docs/datasets.md](docs/datasets.md)).
 - **No secrets.** `gitleaks` runs in hygiene; `*.env` is ignored; if you pasted a token into a
   commit, stop and follow [docs/runbooks/rotate-credentials.md](docs/runbooks/rotate-credentials.md)
   — the token is burned even if the commit never leaves your machine.
@@ -78,8 +81,10 @@ rebase merges only (linear history); the branch is deleted on merge.
   [docs/runbooks/add-an-emitter-target.md](docs/runbooks/add-an-emitter-target.md).
 - A model bundle or a learning-loop change: the models and learning documents landing with
   WP7/WP11 (`docs/models.md`, `docs/learning.md`, `docs/runbooks/ingest-winners.md`).
-- A CI lane: keep pull-request lanes hosted, credential-free and under 35 billed minutes; heavy
-  or GPU work belongs to main/nightly on the self-hosted runner (`docs/runbooks/runner.md`).
+- A CI lane: pull-request lanes run on the self-hosted `jope-ci` runners, one isolated container
+  per job with no GPU devices ([docs/runbooks/runner.md](docs/runbooks/runner.md)), and use no
+  secrets and no cloud credentials. The heavier test families run in `full-main-cpu` on every
+  push to `main`; GPU work runs in no pull-request lane.
 
 ## Tests
 

@@ -17,7 +17,7 @@ over anything stored in a file; never commit the receipt of a rotation with the 
    `gh auth login --hostname github.com --git-protocol https --web` (stored in `~/.config/gh/hosts.yml`,
    never in the repository). Verify: `gh auth status`.
 3. If an automation genuinely needs a token, mint a **fine-grained** one scoped to
-   `veox-ai/JopeDime` with the minimum permissions (`contents: read` for a mirror, `administration: write`
+   `neverhuman/JopeDime` with the minimum permissions (`contents: read` for a mirror, `administration: write`
    only for the runner's `generate-jitconfig` — that one lives root-0600 on xbabe2 and is never
    mounted into a container), expiry ≤ 90 days, and record its *name and expiry* (not the value)
    in the checklist sign-off table.
@@ -54,7 +54,10 @@ If a workflow file is renamed or a branch/tag pattern changes, the trust policie
 (`repo:veox-ai/JopeDime:ref:refs/heads/main`, `…:ref:refs/tags/v*`) must be updated in
 `deploy/aws/` (landing with WP8/WP11) and applied with the `veox-jepson` profile; every call is
 receipted. Roles never get `DeleteObject`/`DeleteObjectVersion` (bucket policy denies it to all
-but `JopeDimeMaintainer`).
+but `JopeDimeMaintainer`). Since v0.2.0 `release.yml` no longer requests `id-token: write`
+(releases come from `deploy/release/release.sh`), and the repository is now
+`neverhuman/JopeDime`, so the trust policies' repository and ref bindings above must be
+re-checked against the renamed repository.
 
 ## 5. After any rotation
 

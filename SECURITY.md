@@ -4,7 +4,7 @@
 
 Do not open a public issue for a vulnerability. Email the owner named in
 [.github/CODEOWNERS](.github/CODEOWNERS); once the repository is public, GitHub private
-vulnerability reporting (<https://github.com/veox-ai/JopeDime/security/advisories/new>) is the
+vulnerability reporting (<https://github.com/neverhuman/JopeDime/security/advisories/new>) is the
 second channel. Include the commit sha, the
 component (crate, Python package, workflow, S3 layout), a reproduction, and the impact you see.
 You will get an acknowledgement within three working days and a fix or a documented decision within
@@ -32,12 +32,13 @@ a copy of the report here is welcome), and the pre-port documents that were kept
   the history was filtered before the first push (ADR-0001) and scanned for
   `github_pat_`/`ghp_`/`AKIA`/private-key markers.
 - Workflows run with `permissions: contents: read` by default; every third-party action is pinned
-  to a commit SHA; pull-request lanes have no cloud credentials and no self-hosted runner label
-  (`id-token: write` exists only in main/nightly/release workflows).
+  to a commit SHA; pull-request lanes run on the self-hosted `jope-ci` runners with no secrets and
+  no cloud credentials (`id-token: write` exists only in `weekly.yml`).
 - Supply chain: `Cargo.lock` committed and `--locked` everywhere; `cargo deny check bans licenses
   sources` (`allow-git = []`, unknown registries denied) in every PR; Dependabot for cargo, pip and
-  actions; SBOMs and build-provenance attestations on every release
-  ([release.yml](.github/workflows/release.yml)).
+  actions; every release carries SPDX and CycloneDX SBOMs and a cosign signature over its
+  `SHA256SUMS` ([deploy/release/release.sh](deploy/release/release.sh); how to verify:
+  [docs/release/README.md](docs/release/README.md)). There is no build-provenance attestation.
 - Binaries: the workspace lint table sets `unsafe_code = "deny"`; today the vendored smartcluster
   crates inherit it (`[lints] workspace = true`) and the product crates opt in as they are
   hardened (`battle-gpu`, the raw CUDA driver FFI, stays exempt by design). Release binaries are

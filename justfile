@@ -1,4 +1,6 @@
-# JopeDime task runner. `just ci-pr` is what the hosted CI runs; `just ci-main` what xbabe2 runs on main.
+# JopeDime task runner. `just ci-pr` is a local subset of the pull-request lanes (check.sh, fmt, the PR
+# nextest tier, ruff and pytest) plus clippy, which no CI lane runs; the lanes are deploy/ci/fast-lane.sh.
+# `just ci-main` adds the whole-workspace main tier; full-main-cpu runs deploy/ci/full-main.py, not this.
 set shell := ["bash", "-euo", "pipefail", "-c"]
 
 default:
