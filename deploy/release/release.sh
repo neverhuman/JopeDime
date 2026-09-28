@@ -24,9 +24,11 @@
 #
 # Evidence goes under /home/ubuntu/jope-evidence/release-<tag>/:
 #   - <dryrun|publish>-<UTC stamp>/ is new for every run and never overwritten. It holds
-#     release.log, dist/ and the checks, and is sealed by a SHA256SUMS written as the run ends.
-#     Its src/ is the verified export that was built (reproducible with `git archive <sha>`), and
-#     its home/ is the build's HOME; the seal leaves out src/, tmp/ and tuf/.
+#     release.log, dist/, tools.json (the tools that ran), sbom/ (syft's configuration and version)
+#     and the checks, and is sealed by a SHA256SUMS written as the run ends. Its src/ is the
+#     verified export that was built (reproducible with `git archive <sha>`), and its home/ is the
+#     build's HOME; the seal leaves out src/, tmp/ (TMPDIR, the containers' temporary directory and
+#     syft's home and cache) and tuf/.
 #   - target/ is the Cargo target directory and cargo home. It is shared by the runs for one tag,
 #     so a publish run after a dry run reuses the compiled dependencies. The workspace crates are
 #     rebuilt every run, because the export's files carry the extraction time. The cargo home may
@@ -36,12 +38,17 @@
 #   - custody/ (the key-custody receipt) is never touched.
 #   - release-tmp/ (0700, directly under the evidence root) is TMPDIR from the first command of every
 #     run until its run directory exists; after that TMPDIR is the run's tmp/. Nothing is ever
-#     written under /tmp (see pin_tmpdir).
+#     written under /tmp (see pin_tmpdir), and the rule is carried across every process boundary
+#     explicitly: each container gets the run's tmp/container/ as its TMPDIR and its /tmp
+#     (builder_container), root's sign shell exports a TMPDIR inside its own /root work directory
+#     (SIGN_SCRIPT), and every env -i run names its TMPDIR.
 #
-# Tools: bash, coreutils, grep, sed, find, tar, cmp/diff, jq, git, docker, objdump, syft, cosign
-# (pinned by sha256) and gh-role.
-# There is no Python in this script. (gh-role itself is the host's credential router and lives
-# outside the repository.) docs/release/README.md explains how anyone can verify a release.
+# Tools: syft and cosign are pinned by sha256 and by the version they report (SYFT_*, COSIGN_*),
+# and syft runs only as a checked copy. The host tools (HOST_TOOLS: coreutils, grep, sed, find, tar,
+# cmp/diff, jq, git, docker, objdump, sudo and the rest) must resolve to root-owned files that the
+# operator cannot write; their versions are recorded in the run's tools.json. gh-role is the host's
+# credential router and lives outside the repository.
+# There is no Python in this script. docs/release/README.md explains how anyone can verify a release.
 #
 # Testing: deploy/release/test-release.sh sources this file; the CI hygiene lane runs it. The
 # JOPE_RELEASE_TEST* overrides are honoured only when JOPE_RELEASE_TEST=1 and the working directory
@@ -77,7 +84,33 @@ readonly COSIGN=/home/ubuntu/.local/bin/cosign
 readonly COSIGN_VERSION=v2.4.3
 readonly COSIGN_SHA256=caaad125acef1cb81d58dcdc454a1e429d09a750d1e9e2b3ed1aed8964454708
 readonly SYFT=/home/ubuntu/.local/bin/syft
+# The SBOMs signed into the release are syft's output, so syft is pinned like cosign. It is also
+# writable by ubuntu: preflight refuses it unless its sha256 is this digest and `syft version`
+# reports this version, and make_sbom copies it into the run's tmp/, checks the copy the same way
+# and runs only the copy. The digest is syft 1.40.0 (linux/amd64, commit 11e871566b35) as installed
+# on xbabe2 (checked 2026-09-28); an upgrade is a reviewed change to these two lines.
+readonly SYFT_VERSION=1.40.0
+readonly SYFT_SHA256=eb9714fb8e4b8f2a647e7bb312f1e0b9f83a7aa30418658bf46583cfa83d27d2
 readonly GH_ROLE=/home/ubuntu/.local/bin/gh-role
+# Every other command the script runs. They are the host's packages (Ubuntu's, and Docker's apt
+# repository for docker), root-owned and replaced by routine security updates, so they are not
+# pinned by digest: a pin would stop every release after each update, and only root can change them,
+# which is inside the trust boundary already (docs/release/README.md, "Key custody"). What preflight
+# does check is that each one resolves through PATH to a root-owned file, in root-owned directories,
+# that neither group nor others can write (check_host_tool), so a copy in ~/.local/bin, which comes
+# first on the operator's PATH, is refused. The run records each one's path, sha256 and package
+# version in tools.json.
+# bash is the interpreter that `#!/usr/bin/env bash` finds on PATH.
+readonly -a HOST_TOOLS=(bash cat chmod cmp cp date diff docker dpkg-query env find git grep head id
+  install jq ls mkdir objdump readlink realpath rm rmdir sed sha256sum sort stat sudo tail tar tee
+  timeout tr uname wc)
+# Docker passes a container no variable that is not named with -e, and an image's /tmp is its own,
+# so the host's TMPDIR stops at the container boundary. builder_container therefore bind-mounts the
+# run's tmp/container/ at CONTAINER_TMPDIR, sets TMPDIR to it, and mounts the same directory over the
+# container's /tmp too, for glibc's tmpfile(3) and tools that ignore TMPDIR. CONTAINER_SYSTEM_TMP is a
+# path inside the container, never on the host.
+readonly CONTAINER_TMPDIR=/release-tmp
+readonly CONTAINER_SYSTEM_TMP=/tmp
 # Test mode is confined to the invoking account's test scratch root (see "Testing" above). main()
 # resolves it with realpath right after pin_tmpdir: only builtins run before TMPDIR is pinned.
 TEST_ROOT=''
@@ -95,13 +128,20 @@ readonly -a GH=(-c 'credential.https://github.com.helper='
 # The password is read by root's shell and reaches only the environment of the pinned cosign copy.
 # It never appears in an argument list, in the calling shell's environment, or in the log.
 # The literal /etc/jope-release must stay in step with KEY_DIR. The copy goes under /root (0700,
-# on /) because /run is mounted noexec on xbabe2. It is read with the read builtin, so that nothing
-# but builtins runs before main() pins TMPDIR; the here-document is far smaller than a pipe buffer.
+# on /) because /run is mounted noexec on xbabe2. sudo resets the environment, so root's shell
+# inherits no TMPDIR: mktemp is given its directory explicitly, and before anything else runs the
+# shell exports TMPDIR as tmp/ (0700) inside that root-only work directory, which the EXIT trap
+# removes. cosign, cp, chmod and sha256sum all see it. It is read with the read builtin, so that
+# nothing but builtins runs before main() pins TMPDIR; the here-document is far smaller than a pipe
+# buffer.
 # shellcheck disable=SC2016  # expanded by root's sh, not here
 IFS= read -r -d '' SIGN_SCRIPT <<'ROOT' || true
 set -eu
 work=$(mktemp -d /root/jope-release-sign.XXXXXX)
 trap 'rm -rf -- "$work"' EXIT
+TMPDIR=$work/tmp
+export TMPDIR
+mkdir -m 0700 -- "$TMPDIR"
 cp -- "$3" "$work/cosign"
 chmod 0500 -- "$work/cosign"
 got=$(sha256sum < "$work/cosign")
@@ -121,6 +161,7 @@ remote=$REPO_URL cargo_bin=cargo key_dir=$KEY_DIR out_root=$EVIDENCE_ROOT
 repo_root='' release_root='' run_dir='' target_root='' dist='' stage=init
 metadata_json='' notes_text='' bin='' bin_container='' observed_glibc='' tee_pid=''
 tag_object='' release_url='' checks_file='' src_dir='' src_tree='' last_check_ok=''
+syft_bin=$SYFT syft_report='' cosign_report=''
 early_log=()
 
 say() { printf 'release.sh: %s\n' "$*" >&2; }
@@ -204,6 +245,12 @@ init_test_mode() {
   cargo_bin=$JOPE_RELEASE_TEST_CARGO
   out_root=$JOPE_RELEASE_TEST_OUTROOT
   key_dir=$JOPE_RELEASE_TEST_KEYDIR
+  # Optional: a syft stand-in, which preflight still checks against the real pin (see preflight).
+  if [[ -n ${JOPE_RELEASE_TEST_SYFT:-} ]]; then
+    under_test_root "$JOPE_RELEASE_TEST_SYFT" \
+      || die "JOPE_RELEASE_TEST_SYFT must be under $TEST_ROOT/: $JOPE_RELEASE_TEST_SYFT"
+    syft_bin=$JOPE_RELEASE_TEST_SYFT
+  fi
   if (( publish )); then die "test mode never publishes"; fi
 }
 
@@ -342,12 +389,13 @@ map_target_path() {
   printf '%s/%s\n' "$target_root" "${p#/target/}"
 }
 
-# Runs binary $1 without arguments, with an empty environment and $3 as the working directory. It
-# prints the output and succeeds only when the first line is exactly "jope $2", which is the line
-# the README cites for a bare `jope`.
+# Runs binary $1 without arguments, with an empty environment except PATH and TMPDIR (env -i drops
+# the exported TMPDIR, so it is passed on by name) and $3 as the working directory. It prints the
+# output and succeeds only when the first line is exactly "jope $2", which is the line the README
+# cites for a bare `jope`.
 binary_prints_version() {
   local out
-  out=$(cd "$3" && env -i PATH=/usr/bin:/bin timeout 60 "$1" </dev/null) || return 1
+  out=$(cd "$3" && env -i PATH=/usr/bin:/bin TMPDIR="${TMPDIR:?}" timeout 60 "$1" </dev/null) || return 1
   printf '%s\n' "$out"
   [[ ${out%%$'\n'*} == "jope $2" ]]
 }
@@ -385,8 +433,12 @@ write_manifest() {
   jq -n --arg schema "$MANIFEST_SCHEMA" --arg tag "$t" --arg sha "$commit" --arg ver "$ver" \
     --arg image "$BUILDER_IMAGE" --arg max "$MAX_GLIBC" --arg observed "$observed" \
     --arg models "$models" --arg datasets "$datasets" \
+    --arg syft_ver "$SYFT_VERSION" --arg syft_sha "$SYFT_SHA256" \
+    --arg cosign_ver "$COSIGN_VERSION" --arg cosign_sha "$COSIGN_SHA256" \
     --argjson pinned "$pinned" --argjson artifacts "$artifacts" '
     {schema: $schema, tag: $tag, git_sha: $sha, crate_version: $ver, builder_image: $image,
+     tools: {syft: {version: $syft_ver, sha256: $syft_sha},
+             cosign: {version: $cosign_ver, sha256: $cosign_sha}},
      max_glibc: $max, observed_max_glibc: $observed, models_pinned: $pinned,
      models_manifest_sha256: (if $models == "" then null else $models end),
      datasets_manifest_sha256: (if $datasets == "" then null else $datasets end),
@@ -411,17 +463,112 @@ readonly VERSION_JQ='
       | if length == 0 then "OK" else join("\n") end
     end'
 
+# --- tools ---------------------------------------------------------------------------------------
+
+# pinned_digest <name> <path> <sha256> <version>: refuses <path> unless it is an executable file
+# whose sha256 is the pin. It never runs <path>.
+pinned_digest() {
+  local got
+  [[ -f $2 && -x $2 ]] || die "required tool missing: $2"
+  got=$(sha256_of "$2")
+  [[ $got == "$3" ]] \
+    || die "$2 has sha256 $got, not the pinned $1 $4 ($3); re-pin it in release.sh through a reviewed change"
+}
+
+# syft_env <dir> <command...>: runs a syft command with nothing inherited from the caller. TMPDIR,
+# HOME, the XDG directories and syft's cache all lie under <dir> (0700), so neither an operator's
+# syft configuration nor an earlier run's cache can change what syft reports, and syft writes
+# nothing outside <dir> except the files its -o options name.
+syft_env() {
+  local dir=$1
+  shift
+  mkdir -p -- "$dir/home" "$dir/config" "$dir/cache" "$dir/tmp" || die "cannot create $dir"
+  chmod 0700 -- "$dir" || die "cannot make $dir private (0700)"
+  env -i PATH=/usr/bin:/bin TMPDIR="$dir/tmp" HOME="$dir/home" XDG_CONFIG_HOME="$dir/config" \
+    XDG_CACHE_HOME="$dir/cache" SYFT_CACHE_DIR="$dir/cache/syft" SYFT_CHECK_FOR_APP_UPDATE=false "$@"
+}
+
+# check_syft <path> <sha256> <version> <dir>: refuses a syft that is not the pinned build. The digest
+# is checked first, so a replaced binary is never run; then `syft version`, run in syft_env <dir>,
+# must report <version>. It prints syft's version document (JSON).
+check_syft() {
+  local out ver
+  pinned_digest syft "$1" "$2" "$3"
+  out=$(syft_env "$4" "$1" version -o json) || die "$1 version -o json failed"
+  ver=$(printf '%s\n' "$out" | jq -r '.version? // empty' 2>/dev/null) || ver=''
+  [[ $ver == "$3" ]] \
+    || die "$1 reports version '$ver', not the pinned syft $3; re-pin SYFT_VERSION and SYFT_SHA256 in release.sh through a reviewed change"
+  printf '%s\n' "$out"
+}
+
+# check_cosign <path> <sha256> <version>: the same for cosign, whose version is the gitVersion of
+# `cosign version --json`.
+check_cosign() {
+  local out ver
+  pinned_digest cosign "$1" "$2" "$3"
+  out=$("$1" version --json 2>/dev/null) || die "$1 version --json failed"
+  ver=$(printf '%s\n' "$out" | jq -r '.gitVersion? // empty' 2>/dev/null) || ver=''
+  [[ $ver == "$3" ]] \
+    || die "$1 reports version '$ver', not the pinned cosign $3; re-pin COSIGN_VERSION and COSIGN_SHA256 in release.sh through a reviewed change"
+  printf '%s\n' "$out"
+}
+
+# check_host_tool <name>: refuses a host tool that the operator could have replaced. The directory
+# where PATH finds it, the file it resolves to and that file's directory must all be root-owned and
+# closed to group and other writes. It prints the path PATH finds.
+check_host_tool() {
+  local path real p owner mode
+  path=$(type -P -- "$1") || die "required tool missing: $1"
+  real=$(realpath -e -- "$path") || die "cannot resolve $path"
+  for p in "${path%/*}" "$real" "${real%/*}"; do
+    read -r owner mode < <(stat -L -c '%u %a' -- "$p") || die "cannot stat $p"
+    if [[ $owner != 0 ]] || (( 8#$mode & 8#022 )); then
+      die "host tool $1 resolves to $path ($real), and $p is not root-owned and closed to group and other writes (uid $owner, mode $mode); use the root-owned system copy"
+    fi
+  done
+  printf '%s\n' "$path"
+}
+
+# Prints the tools of this run as JSON: the pinned syft and cosign with the version documents
+# preflight read from them, and for every host tool its path, the file it resolves to, that file's
+# sha256 and its Debian package and version.
+tools_json() {
+  local name path real pkg ver
+  local -a rows=()
+  for name in "${HOST_TOOLS[@]}"; do
+    path=$(type -P -- "$name") || die "required tool missing: $name"
+    real=$(realpath -e -- "$path") || die "cannot resolve $path"
+    pkg=$(dpkg-query -S -- "$real" 2>/dev/null) || pkg=$(dpkg-query -S -- "$path" 2>/dev/null) || pkg=''
+    pkg=${pkg%%$'\n'*}
+    pkg=${pkg%%: *}
+    pkg=${pkg%%:*}
+    ver=''
+    # shellcheck disable=SC2016  # a dpkg-query format, not a shell expansion
+    if [[ -n $pkg ]]; then ver=$(dpkg-query -W -f '${Version}' -- "$pkg" 2>/dev/null) || ver=''; fi
+    rows+=("$(jq -nc --arg name "$name" --arg path "$path" --arg real "$real" \
+      --arg sha "$(sha256_of "$real")" --arg pkg "$pkg" --arg ver "$ver" '
+      {name: $name, path: $path, resolved: $real, sha256: $sha,
+       package: (if $pkg == "" then null else $pkg end),
+       package_version: (if $ver == "" then null else $ver end)}')")
+  done
+  printf '%s\n' "${rows[@]}" | jq -s --argjson syft "$syft_report" --argjson cosign "$cosign_report" \
+    --arg syft_path "$SYFT" --arg syft_ver "$SYFT_VERSION" --arg syft_sha "$SYFT_SHA256" \
+    --arg cosign_path "$COSIGN" --arg cosign_ver "$COSIGN_VERSION" --arg cosign_sha "$COSIGN_SHA256" '
+    {schema: "jope.release-tools/v1",
+     pinned: {syft: {path: $syft_path, version: $syft_ver, sha256: $syft_sha, reported: $syft},
+              cosign: {path: $cosign_path, version: $cosign_ver, sha256: $cosign_sha, reported: $cosign}},
+     host: .}'
+}
+
 # --- guards --------------------------------------------------------------------------------------
 
 require_tools() {
   local tool
-  for tool in git jq docker objdump sha256sum timeout realpath find sudo cmp diff install tee tar; do
-    command -v "$tool" >/dev/null || die "required tool missing: $tool"
-  done
-  for tool in "$COSIGN" "$SYFT"; do [[ -x $tool ]] || die "required tool missing: $tool"; done
-  # Checked here to fail early; the sign step checks its own root-only copy again.
-  [[ $(sha256_of "$COSIGN") == "$COSIGN_SHA256" ]] \
-    || die "$COSIGN is not the pinned cosign $COSIGN_VERSION (sha256 $COSIGN_SHA256); re-pin it in release.sh through a reviewed change"
+  for tool in "${HOST_TOOLS[@]}"; do check_host_tool "$tool" >/dev/null; done
+  # Checked here, before anything is built or signed. The sign step checks root's own copy of
+  # cosign again, make_sbom its copy of syft, and cosign_verify cosign before each verification.
+  cosign_report=$(check_cosign "$COSIGN" "$COSIGN_SHA256" "$COSIGN_VERSION") || exit 1
+  syft_report=$(check_syft "$syft_bin" "$SYFT_SHA256" "$SYFT_VERSION" "$TMPDIR/syft-preflight") || exit 1
   if (( publish )); then [[ -x $GH_ROLE ]] || die "required tool missing: $GH_ROLE"; fi
 }
 
@@ -442,7 +589,14 @@ preflight() {
   [[ ${host%%.*} == "$REQUIRED_HOST" ]] || die "must run on $REQUIRED_HOST (hostname is '$host')"
   note "ok: host $host"
   note "ok: TMPDIR $TMPDIR (0700)"
-  if (( ! test_mode )); then require_tools; fi
+  if (( ! test_mode )); then
+    require_tools
+    note "ok: host tools are root-owned; cosign $COSIGN_VERSION and syft $SYFT_VERSION match their pins"
+  elif [[ -n ${JOPE_RELEASE_TEST_SYFT:-} ]]; then
+    # Test mode has no docker, sudo or pinned tools. A syft stand-in is still checked against the
+    # real pin, so the tests can show that a replaced syft stops a run here.
+    check_syft "$syft_bin" "$SYFT_SHA256" "$SYFT_VERSION" "$TMPDIR/syft-preflight" >/dev/null || exit 1
+  fi
 
   here=$(pwd -P)
   [[ $here/ != /tmp/* ]] || die "refusing to run from under /tmp: $here"
@@ -555,6 +709,8 @@ open_run_dir() {
   printf 'preflight:\n'
   printf '  %s\n' "${early_log[@]}"
   printf '%s\n' "$metadata_json" > "$run_dir/metadata.json"
+  tools_json > "$run_dir/tools.json"
+  jq -r '.host[] | "tool \(.name): \(.resolved) \(.package // "?") \(.package_version // "?")"' "$run_dir/tools.json"
 }
 
 # Verifies that directory $2 holds exactly the tree of commit $1: the same paths, the same blob ids
@@ -661,9 +817,28 @@ check_cargo_home() (
   done
 )
 
+# builder_container [docker args...] -- command...
+# Every `docker run` of a release goes through here (test-release.sh checks that). It runs the
+# pinned builder image as the operator, with the run's tmp/container/ (0700) mounted at
+# CONTAINER_TMPDIR and at the container's /tmp, and TMPDIR set to CONTAINER_TMPDIR, so that nothing
+# a tool writes as a temporary file lands in the image's /tmp: it stays in this run's directory.
+builder_container() {
+  local ctmp=$run_dir/tmp/container
+  local -a extra=()
+  while (( $# )) && [[ $1 != -- ]]; do extra+=("$1"); shift; done
+  [[ ${1-} == -- ]] || die "builder_container: missing --"
+  shift
+  [[ -n $run_dir && -d $run_dir/tmp ]] || die "builder_container: there is no run directory"
+  mkdir -p -- "$ctmp" || die "cannot create $ctmp"
+  chmod 0700 -- "$ctmp" || die "cannot make $ctmp private (0700)"
+  docker run --rm --user "$(id -u):$(id -g)" \
+    -v "$ctmp:$CONTAINER_TMPDIR" -v "$ctmp:$CONTAINER_SYSTEM_TMP" -e "TMPDIR=$CONTAINER_TMPDIR" \
+    "${extra[@]}" "$BUILDER_IMAGE" "$@"
+}
+
 # docker_run [extra docker args...] -- command...
-# The pinned builder, with the verified export read-only at /src, the shared target/ and cargo home,
-# and a HOME that belongs to this run.
+# The pinned builder (builder_container), with the verified export read-only at /src, the shared
+# target/ and cargo home, and a HOME that belongs to this run.
 docker_run() {
   local -a extra=()
   while (( $# )) && [[ $1 != -- ]]; do extra+=("$1"); shift; done
@@ -671,12 +846,12 @@ docker_run() {
   shift
   [[ -n $src_dir && -d $src_dir ]] || die "docker_run: there is no verified source export"
   check_cargo_home "$target_root/cargo-home" || exit 1
-  docker run --rm --user "$(id -u):$(id -g)" \
+  builder_container \
     -v "$src_dir:/src:ro" -v "$target_root:/target" -v "$run_dir/home:/home/release" \
     -e CARGO_TARGET_DIR=/target -e CARGO_HOME=/target/cargo-home -e HOME=/home/release \
     -e RUSTUP_TOOLCHAIN="$BUILDER_TOOLCHAIN" -e CARGO_INCREMENTAL=0 \
     -e CARGO_PROFILE_DEV_DEBUG=line-tables-only -e CARGO_TERM_COLOR=never \
-    "${extra[@]}" -w /src "$BUILDER_IMAGE" "$@"
+    "${extra[@]}" -w /src -- "$@"
 }
 
 build_jope() {
@@ -730,8 +905,8 @@ check_binary() {
   printf 'NEEDED: %s\n' "$(tr '\n' ' ' < "$cdir/needed.txt")"
   binary_prints_version "$bin" "$version" "$cdir/run" > "$cdir/version-host.txt" \
     || die "the binary does not print 'jope $version' first (see $cdir/version-host.txt)"
-  out=$(docker run --rm --network none --user "$(id -u):$(id -g)" -v "$dist:/dist:ro" -w / \
-    "$BUILDER_IMAGE" "/dist/${bin##*/}" </dev/null) || die "the binary did not run inside $BUILDER_IMAGE_NAME"
+  out=$(builder_container --network none -v "$dist:/dist:ro" -w / -- "/dist/${bin##*/}" </dev/null) \
+    || die "the binary did not run inside $BUILDER_IMAGE_NAME"
   printf '%s\n' "$out" > "$cdir/version-bookworm.txt"
   [[ ${out%%$'\n'*} == "jope $version" ]] || die "inside $BUILDER_IMAGE_NAME the binary printed '${out%%$'\n'*}'"
   printf 'runs on the host and inside %s: jope %s\n' "$BUILDER_IMAGE_NAME" "$version"
@@ -772,19 +947,38 @@ make_receipt() {
   install -m 0644 -- "$run_dir/receipt/$name" "$dist/$name"
 }
 
+# check_sboms <spdx> <cdx> <version>: refuses SBOMs that are not an SPDX document and a CycloneDX
+# document that each name syft <version> as the tool that made them.
+check_sboms() {
+  jq -e --arg tool "Tool: syft-$3" \
+    '(.spdxVersion | startswith("SPDX-")) and any(.creationInfo.creators[]?; . == $tool)' "$1" >/dev/null \
+    || die "$1 is not an SPDX document created by syft $3"
+  jq -e --arg v "$3" \
+    '.bomFormat == "CycloneDX" and any(.metadata.tools.components[]?; .name == "syft" and .version == $v)' \
+    "$2" >/dev/null || die "$2 is not a CycloneDX document made by syft $3"
+}
+
 make_sbom() {
   stage=sbom
-  step "SBOM: syft SPDX and CycloneDX over the verified export of $sha"
-  "$SYFT" version
+  local work=$run_dir/tmp/syft sbom=$run_dir/sbom
+  local spdx=$dist/jope-$tag.spdx.json cdx=$dist/jope-$tag.cdx.json
+  step "SBOM: pinned syft $SYFT_VERSION, SPDX and CycloneDX, over the verified export of $sha"
+  mkdir -p -- "$work" "$sbom"
+  # Only this copy runs, and it is checked (digest, then reported version) right before the scan,
+  # so a syft replaced after preflight never runs. on_exit removes the copy if the step fails.
+  install -m 0500 -- "$syft_bin" "$work/syft"
+  check_syft "$work/syft" "$SYFT_SHA256" "$SYFT_VERSION" "$work" > "$sbom/syft-version.json"
+  cat "$sbom/syft-version.json"
+  # With --config, syft reads this file and no other: not ~/.syft.yaml, an XDG config, or a
+  # .syft.yaml in the export.
+  printf 'check-for-app-update: false\n' > "$sbom/syft.yaml"
   # The export holds exactly the committed tree, with no .git and no ignored files, so nothing
   # needs excluding.
-  (cd "$src_dir" && SYFT_CHECK_FOR_APP_UPDATE=false "$SYFT" scan dir:. \
-    --source-name JopeDime --source-version "$tag" \
-    -o "spdx-json=$dist/jope-$tag.spdx.json" -o "cyclonedx-json=$dist/jope-$tag.cdx.json")
-  jq -e '.spdxVersion | startswith("SPDX-")' "$dist/jope-$tag.spdx.json" >/dev/null \
-    || die "syft did not write an SPDX document"
-  jq -e '.bomFormat == "CycloneDX"' "$dist/jope-$tag.cdx.json" >/dev/null \
-    || die "syft did not write a CycloneDX document"
+  (cd "$src_dir" && syft_env "$work" "$work/syft" scan dir:. --config "$sbom/syft.yaml" \
+    --source-name JopeDime --source-version "$tag" -o "spdx-json=$spdx" -o "cyclonedx-json=$cdx") \
+    || die "syft scan failed"
+  rm -f -- "$work/syft"
+  check_sboms "$spdx" "$cdx" "$SYFT_VERSION"
 }
 
 make_notes_and_manifest() {
@@ -814,11 +1008,14 @@ sign_sums() {
   [[ -O $sig && -r $sig && -s $sig && ! -L $sig ]] || die "$sig is not a readable file owned by $(id -un)"
 }
 
-# Succeeds only when cosign exits 0 and says "Verified OK".
+# Succeeds only when cosign is still the pinned build, exits 0 and says "Verified OK". Its TMPDIR
+# and TUF_ROOT are named, both inside the run directory.
 cosign_verify() {
   local out rc=0
-  out=$(TUF_ROOT="$run_dir/tuf" "$COSIGN" verify-blob --key "$1" --insecure-ignore-tlog=true \
-    --signature "$2" "$3" 2>&1) || rc=$?
+  [[ $(sha256_of "$COSIGN") == "$COSIGN_SHA256" ]] \
+    || { say "$COSIGN is no longer the pinned cosign $COSIGN_VERSION ($COSIGN_SHA256)"; return 1; }
+  out=$(TMPDIR="$run_dir/tmp" TUF_ROOT="$run_dir/tuf" "$COSIGN" verify-blob --key "$1" \
+    --insecure-ignore-tlog=true --signature "$2" "$3" 2>&1) || rc=$?
   printf '%s\n' "$out"
   (( rc == 0 )) && grep -qx 'Verified OK' <<<"$out"
 }
@@ -1032,9 +1229,14 @@ write_run_json() {
 }
 
 # Seals the run directory: SHA256SUMS over every file except itself, the verified source export
-# src/ (source-export.json records its commit and tree) and the tmp/ and tuf/ caches.
+# src/ (source-export.json records its commit and tree) and the tmp/ and tuf/ caches. Empty
+# directories under tmp/ (the containers' and syft's) are removed first; tmp/ stays only when
+# something was left in it.
 seal_run_dir() {
   local -a files
+  if [[ -d $run_dir/tmp && ! -L $run_dir/tmp ]]; then
+    find "$run_dir/tmp" -mindepth 1 -depth -type d -empty -delete 2>/dev/null || true
+  fi
   rmdir -- "$run_dir/tmp" 2>/dev/null || true
   mapfile -d '' -t files < <(cd "$run_dir" && find . \( -path ./src -o -path ./tmp -o -path ./tuf \) -prune \
     -o -type f ! -path ./SHA256SUMS -printf '%P\0' | LC_ALL=C sort -z)
@@ -1106,6 +1308,8 @@ on_exit() {
   if [[ -n $tee_pid ]]; then
     exec 1>&3 2>&4
     wait "$tee_pid" 2>/dev/null
+    # make_sbom's copy of syft, left behind only when that step failed.
+    rm -f -- "$run_dir/tmp/syft/syft"
     seal_run_dir || printf 'release.sh: could not write %s/SHA256SUMS\n' "$run_dir" >&2
     printf 'release.sh: evidence in %s (sealed by its SHA256SUMS)\n' "$run_dir" >&2
   fi
