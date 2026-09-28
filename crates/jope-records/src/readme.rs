@@ -339,9 +339,116 @@ impl Num {
     }
 }
 
-/// `format(x, ".Nf")`.
+/// `format(x, ".Nf")`: `nan` for any NaN (Python ignores its sign), `inf` and `-inf`.
 fn fixed(x: f64, precision: usize) -> String {
-    format!("{x:.precision$}")
+    if x.is_finite() {
+        format!("{x:.precision$}")
+    } else {
+        py_nonfinite(x)
+    }
+}
+
+/// `sorted(values)` for numbers, as CPython 3.12's `list.sort` orders them. Without a NaN every
+/// comparison is a total order and any stable sort agrees with it. With a NaN (every comparison
+/// with it false) the result depends on the algorithm, which is reproduced for fewer than 64
+/// values (one `count_run` then `binarysort`, all timsort does below its minimum run); a longer
+/// list holding a NaN is refused rather than ordered differently.
+fn py_sorted(values: &[Num], what: &str) -> Result<Vec<Num>> {
+    let mut out = values.to_vec();
+    let lt = |a: Num, b: Num| a.as_f64() < b.as_f64();
+    if !out.iter().any(|v| v.as_f64().is_nan()) {
+        out.sort_by(|a, b| a.as_f64().partial_cmp(&b.as_f64()).expect("no NaN"));
+        return Ok(out);
+    }
+    if out.len() >= 64 {
+        return Err(Error::Shape(format!(
+            "{what}: {} values including a NaN, which the port orders as Python did only below 64",
+            out.len()
+        )));
+    }
+    // count_run: the longest strictly descending or non-descending prefix.
+    let mut run = 1;
+    if out.len() > 1 {
+        let descending = lt(out[1], out[0]);
+        run = 2;
+        while run < out.len() && lt(out[run], out[run - 1]) == descending {
+            run += 1;
+        }
+        if descending {
+            out[..run].reverse();
+        }
+    }
+    // binarysort from the end of the run.
+    for start in run..out.len() {
+        let pivot = out[start];
+        let (mut l, mut r) = (0, start);
+        while l < r {
+            let p = l + (r - l) / 2;
+            if lt(pivot, out[p]) {
+                r = p;
+            } else {
+                l = p + 1;
+            }
+        }
+        out.copy_within(l..start, l + 1);
+        out[l] = pivot;
+    }
+    Ok(out)
+}
+
+/// `max(values)`: the first value no later value is greater than (`>` is false for a NaN).
+fn py_max(values: &[Num]) -> Num {
+    let (&first, rest) = values.split_first().expect("at least one report");
+    let mut best = first;
+    for &value in rest {
+        if value.as_f64() > best.as_f64() {
+            best = value;
+        }
+    }
+    best
+}
+
+/// CPython 3.12's `sum(values)` (start `0`) of JSON numbers: integers add exactly until the first
+/// float; from there floats add with Neumaier's compensation and integers add plainly, and the
+/// compensation is applied once at the end when finite (`builtin_sum_impl`).
+fn py_sum(values: &[Num], what: &str) -> Result<Num> {
+    let mut rest = values.iter();
+    let mut total: i64 = 0;
+    let mut sum = loop {
+        match rest.next() {
+            None => return Ok(Num::Int(total)),
+            Some(Num::Int(i)) => {
+                total = total.checked_add(*i).ok_or_else(|| {
+                    Error::Shape(format!("{what}: the integer sum leaves the 64-bit range"))
+                })?;
+            }
+            Some(Num::Float(x)) => break total as f64 + x,
+        }
+    };
+    let mut compensation = 0.0;
+    for value in rest {
+        match *value {
+            Num::Float(x) => {
+                let t = sum + x;
+                if sum.abs() >= x.abs() {
+                    compensation += (sum - t) + x;
+                } else {
+                    compensation += (x - t) + sum;
+                }
+                sum = t;
+            }
+            Num::Int(i) => sum += i as f64,
+        }
+    }
+    if compensation != 0.0 && compensation.is_finite() {
+        sum += compensation;
+    }
+    Ok(Num::Float(sum))
+}
+
+/// `total / n` (true division) for a [`py_sum`] result.
+fn py_div(total: Num, n: usize) -> f64 {
+    total.as_f64() / n as f64
 }
 
 /// `format(n, ",")` for an integer.
@@ -467,12 +574,12 @@ fn load_evidence(p: &Paths) -> Result<Evidence> {
     if get(&corrections, "schema") != &Value::from(CORRECTIONS_SCHEMA) {
         return refuse(format!("{CORRECTIONS}: schema is not {CORRECTIONS_SCHEMA}"));
     }
-    let (a, b, c) = (
+    // `a == b == c` is `a == b and b == c`: `c` is read only when `a == b`.
+    let (a, b) = (
         at(&corrections, "scores_sha256")?,
         at(&published, "scores_sha256")?,
-        at(&valid, "scores_sha256")?,
     );
-    if !(a == b && b == c) {
+    if !(a == b && b == at(&valid, "scores_sha256")?) {
         return refuse("the two ladders and the corrections do not bind the same scores.csv");
     }
     let meta = at(&valid, "corrections")?;
@@ -1035,7 +1142,9 @@ fn load_samecut(p: &Paths) -> Result<SameCut> {
 /// The `--adapter` argument that recorded this engine, rendered so a shell reads it back
 /// exactly; a token that would need quoting refuses rather than print a wrong command.
 fn adapter_flag(spec: &Value) -> Result<String> {
-    let safe = Regex::new(r"^[A-Za-z0-9_./=:+-]+$").expect("static pattern");
+    // `re.compile(r"^[A-Za-z0-9_./=:+-]+$").match`: Python's `$` also matches before a final
+    // newline, so a token ending in one newline passed there, and passes here.
+    let safe = Regex::new(r"^[A-Za-z0-9_./=:+-]+\n?\z").expect("static pattern");
     let context = format!("{SAMECUT} adapter spec");
     // `tokens = [spec["name"], *spec["command"]]`: every token checked as it is, none skipped.
     let name = sub(spec, "name", &context)?;
@@ -1105,7 +1214,7 @@ fn render_samecut(p: &Paths) -> Result<String> {
     );
     let n = reports.len();
     let mut per_dataset = vec![];
-    let mut search_seconds: Vec<f64> = vec![];
+    let mut search_seconds: Vec<Num> = vec![];
     let (mut finalist, mut best) = (0usize, 0usize);
     // `sorted(reports, key=lambda r: r["dataset_id"])` (stable). The ids are strings; ids of any
     // other type (which Python sorted only when they were mutually comparable numbers) are
@@ -1148,8 +1257,14 @@ fn render_samecut(p: &Paths) -> Result<String> {
             let id = sub(at(m, "method")?, "id", SAMECUT)?.clone();
             let better = match &top {
                 None => true,
+                // Tuple `<`: the first pair that is neither identical nor equal decides, so the ids
+                // decide between equal RMSEs, and between two NaNs (every JSON `NaN` is one object).
                 Some((_, best_rmse, best_id)) => {
-                    rmse < *best_rmse || (rmse == *best_rmse && id_less(&id, best_id)?)
+                    if rmse == *best_rmse || (rmse.is_nan() && best_rmse.is_nan()) {
+                        id_less(&id, best_id)?
+                    } else {
+                        rmse < *best_rmse
+                    }
                 }
             };
             if better {
@@ -1163,11 +1278,16 @@ fn render_samecut(p: &Paths) -> Result<String> {
             ));
         };
         let top_id = top_id.py_str();
-        let produce = float_of(
-            at(at(sm, "method")?, "produce_seconds")?,
-            &format!("{SAMECUT} report search method produce_seconds"),
-        )?;
+        let produce_value = at(at(sm, "method")?, "produce_seconds")?;
+        let produce = Num::of(produce_value).ok_or_else(|| {
+            Error::Shape(format!(
+                "{SAMECUT} report search method produce_seconds: expected a number, found {} ({})",
+                produce_value.repr(),
+                py::type_name(produce_value)
+            ))
+        })?;
         search_seconds.push(produce);
+        let produce = produce.as_f64();
         let rank = get(sm, "deep_rank");
         if !rank.is_null() {
             finalist += 1;
@@ -1192,18 +1312,17 @@ fn render_samecut(p: &Paths) -> Result<String> {
             fixed(produce, 1)
         ));
     }
-    let mean_s = search_seconds.iter().fold(0.0, |a, b| a + b) / n as f64;
-    let mut sorted_s = search_seconds.clone();
-    sorted_s.sort_by(f64::total_cmp);
+    // `sum(s) / n`, the median of `sorted(s)` (the middle value, or `sum` of the middle two over
+    // 2) and `max(s)`, with Python's arithmetic and its ordering of a NaN.
+    let what = format!("{SAMECUT} report search method produce_seconds");
+    let mean_s = py_div(py_sum(&search_seconds, &what)?, n);
+    let sorted_s = py_sorted(&search_seconds, &what)?;
     let median_s = if n % 2 == 1 {
-        sorted_s[n / 2]
+        sorted_s[n / 2].as_f64()
     } else {
-        (sorted_s[n / 2 - 1] + sorted_s[n / 2]) / 2.0
+        py_div(py_sum(&sorted_s[n / 2 - 1..n / 2 + 1], &what)?, 2)
     };
-    let max_s = search_seconds
-        .iter()
-        .copied()
-        .fold(f64::NEG_INFINITY, f64::max);
+    let max_s = py_max(&search_seconds).as_f64();
     let git_sha = first_nine(at(first, "git_sha")?, &format!("{SAMECUT} report git_sha"))?;
     let mut out = vec![
         SAMECUT_BEGIN.to_owned(),

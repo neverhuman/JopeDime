@@ -1,0 +1,2338 @@
+{
+  "source": "p1-failclosed-r2-capture-20260928T031831Z",
+  "capture": "bash cap2.sh (run p1-failclosed-r2-capture-20260928T031831Z; Python from git show f46a9048fbb2697d6d1f4463a688083ea9dfcce1:<tool>, unmodified, in a scratch root)",
+  "tools": {
+    "coverage": "deploy/ci/coverage.py",
+    "scope": "deploy/ci/rust-test-scope-check.py",
+    "parity": "deploy/ci/parity-census.py"
+  },
+  "layout": "each case is a tree under @ROOT@ (files: path or path_hex, text with @ROOT@ or hex), a `cargo` first on PATH that writes cargo.stderr (hex) to stderr and cargo.stdout (text with @ROOT@, encoded as utf-8, utf-8-sig, utf-16 little-endian with its BOM, or hex) to stdout and exits with cargo.exit (or kills itself), and for coverage a `git` that prints the git list NUL-separated; the Python ran as `python3 <tool> <python args>` from @ROOT@, the port runs `jope-records --repo @ROOT@ <rust args>`",
+  "cases": [
+    {
+      "name": "cov-discover-base",
+      "tool": "coverage",
+      "files": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "text": "name: ci\non: push\njobs:\n  build:\n    runs-on: ubuntu-latest\n"
+        },
+        {
+          "path": "src/main.rs",
+          "text": "fn main() {}\n"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[{\"id\":\"demo 0.1.0 (path+file://@ROOT@)\",\"name\":\"demo\",\"manifest_path\":\"@ROOT@/Cargo.toml\",\"features\":{\"default\":[\"x\"],\"x\":[]},\"targets\":[{\"kind\":[\"bin\"],\"name\":\"demo\",\"src_path\":\"@ROOT@/src/main.rs\",\"test\":true,\"doctest\":false}]}],\"workspace_members\":[\"demo 0.1.0 (path+file://@ROOT@)\"],\"target_directory\":\"@ROOT@/target\"}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "git": [
+        ".github/workflows/ci.yml",
+        "src/main.rs"
+      ],
+      "python": [
+        "discover"
+      ],
+      "rust": [
+        "coverage",
+        "discover"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"stage\": \"static\",\n  \"items\": {\n    \"feature:demo/default\": {\n      \"kind\": \"feature\",\n      \"dependencies\": [\n        \"x\"\n      ]\n    },\n    \"feature:demo/x\": {\n      \"kind\": \"feature\",\n      \"dependencies\": []\n    },\n    \"job:.github/workflows/ci.yml/build\": {\n      \"kind\": \"workflow-job\"\n    },\n    \"package:demo\": {\n      \"kind\": \"package\",\n      \"manifest\": \"Cargo.toml\"\n    },\n    \"target:demo/bin/demo\": {\n      \"kind\": \"target\",\n      \"source\": \"src/main.rs\",\n      \"test\": true,\n      \"doctest\": false,\n      \"required_features\": []\n    },\n    \"workflow:.github/workflows/ci.yml\": {\n      \"kind\": \"workflow\"\n    }\n  }\n}\n",
+      "stderr": ""
+    },
+    {
+      "name": "cov-validate-base",
+      "tool": "coverage",
+      "files": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "text": "name: ci\non: push\njobs:\n  build:\n    runs-on: ubuntu-latest\n"
+        },
+        {
+          "path": "src/main.rs",
+          "text": "fn main() {}\n"
+        },
+        {
+          "path": "deploy/ci/coverage.json",
+          "text": "{\"schema\":\"jope.coverage/v1\",\"lanes\":{\"l\":{\"command\":\"c\",\"environment\":\"e\",\"inputs\":[\"i\"],\"path_applicability\":\"p\",\"evidence\":\"ev\",\"requires_nonzero_tests\":true,\"stage\":\"static\",\"feature_selection\":\"explicit\",\"result_backend\":\"none\"}},\"dispositions\":{\"d\":{\"status\":\"deferred\",\"reason\":\"r\",\"dependencies\":[\"x\"],\"owner_phase\":\"p\"}},\"items\":{\"feature:demo/default\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[\"x\"]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"feature:demo/x\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"job:.github/workflows/ci.yml/build\":{\"discovery\":{\"kind\":\"workflow-job\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"package:demo\":{\"discovery\":{\"kind\":\"package\",\"manifest\":\"Cargo.toml\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"target:demo/bin/demo\":{\"discovery\":{\"kind\":\"target\",\"source\":\"src/main.rs\",\"test\":true,\"doctest\":false,\"required_features\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"workflow:.github/workflows/ci.yml\":{\"discovery\":{\"kind\":\"workflow\"},\"lanes\":[\"l\"],\"scope\":\"s\"}}}"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[{\"id\":\"demo 0.1.0 (path+file://@ROOT@)\",\"name\":\"demo\",\"manifest_path\":\"@ROOT@/Cargo.toml\",\"features\":{\"default\":[\"x\"],\"x\":[]},\"targets\":[{\"kind\":[\"bin\"],\"name\":\"demo\",\"src_path\":\"@ROOT@/src/main.rs\",\"test\":true,\"doctest\":false}]}],\"workspace_members\":[\"demo 0.1.0 (path+file://@ROOT@)\"],\"target_directory\":\"@ROOT@/target\"}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "git": [
+        ".github/workflows/ci.yml",
+        "src/main.rs"
+      ],
+      "python": [
+        "validate"
+      ],
+      "rust": [
+        "coverage",
+        "validate"
+      ],
+      "exit": 0,
+      "stdout": "{\"counts\": {\"feature\": 2, \"package\": 1, \"target\": 1, \"workflow\": 1, \"workflow-job\": 1}, \"stage\": \"static\", \"unassigned_or_invalid\": 0}\n",
+      "stderr": ""
+    },
+    {
+      "name": "cov-discover-meta-utf8-bom",
+      "tool": "coverage",
+      "files": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "text": "name: ci\non: push\njobs:\n  build:\n    runs-on: ubuntu-latest\n"
+        },
+        {
+          "path": "src/main.rs",
+          "text": "fn main() {}\n"
+        },
+        {
+          "path": "deploy/ci/coverage.json",
+          "text": "{\"schema\":\"jope.coverage/v1\",\"lanes\":{\"l\":{\"command\":\"c\",\"environment\":\"e\",\"inputs\":[\"i\"],\"path_applicability\":\"p\",\"evidence\":\"ev\",\"requires_nonzero_tests\":true,\"stage\":\"static\",\"feature_selection\":\"explicit\",\"result_backend\":\"none\"}},\"dispositions\":{\"d\":{\"status\":\"deferred\",\"reason\":\"r\",\"dependencies\":[\"x\"],\"owner_phase\":\"p\"}},\"items\":{\"feature:demo/default\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[\"x\"]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"feature:demo/x\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"job:.github/workflows/ci.yml/build\":{\"discovery\":{\"kind\":\"workflow-job\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"package:demo\":{\"discovery\":{\"kind\":\"package\",\"manifest\":\"Cargo.toml\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"target:demo/bin/demo\":{\"discovery\":{\"kind\":\"target\",\"source\":\"src/main.rs\",\"test\":true,\"doctest\":false,\"required_features\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"workflow:.github/workflows/ci.yml\":{\"discovery\":{\"kind\":\"workflow\"},\"lanes\":[\"l\"],\"scope\":\"s\"}}}"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[{\"id\":\"demo 0.1.0 (path+file://@ROOT@)\",\"name\":\"demo\",\"manifest_path\":\"@ROOT@/Cargo.toml\",\"features\":{\"default\":[\"x\"],\"x\":[]},\"targets\":[{\"kind\":[\"bin\"],\"name\":\"demo\",\"src_path\":\"@ROOT@/src/main.rs\",\"test\":true,\"doctest\":false}]}],\"workspace_members\":[\"demo 0.1.0 (path+file://@ROOT@)\"],\"target_directory\":\"@ROOT@/target\"}\n",
+        "encoding": "utf-8-sig",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "git": [
+        ".github/workflows/ci.yml",
+        "src/main.rs"
+      ],
+      "python": [
+        "discover"
+      ],
+      "rust": [
+        "coverage",
+        "discover"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "raised": "json.decoder.JSONDecodeError: Unexpected UTF-8 BOM (decode using utf-8-sig): line 1 column 1 (char 0)"
+    },
+    {
+      "name": "cov-discover-meta-utf16",
+      "tool": "coverage",
+      "files": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "text": "name: ci\non: push\njobs:\n  build:\n    runs-on: ubuntu-latest\n"
+        },
+        {
+          "path": "src/main.rs",
+          "text": "fn main() {}\n"
+        },
+        {
+          "path": "deploy/ci/coverage.json",
+          "text": "{\"schema\":\"jope.coverage/v1\",\"lanes\":{\"l\":{\"command\":\"c\",\"environment\":\"e\",\"inputs\":[\"i\"],\"path_applicability\":\"p\",\"evidence\":\"ev\",\"requires_nonzero_tests\":true,\"stage\":\"static\",\"feature_selection\":\"explicit\",\"result_backend\":\"none\"}},\"dispositions\":{\"d\":{\"status\":\"deferred\",\"reason\":\"r\",\"dependencies\":[\"x\"],\"owner_phase\":\"p\"}},\"items\":{\"feature:demo/default\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[\"x\"]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"feature:demo/x\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"job:.github/workflows/ci.yml/build\":{\"discovery\":{\"kind\":\"workflow-job\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"package:demo\":{\"discovery\":{\"kind\":\"package\",\"manifest\":\"Cargo.toml\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"target:demo/bin/demo\":{\"discovery\":{\"kind\":\"target\",\"source\":\"src/main.rs\",\"test\":true,\"doctest\":false,\"required_features\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"workflow:.github/workflows/ci.yml\":{\"discovery\":{\"kind\":\"workflow\"},\"lanes\":[\"l\"],\"scope\":\"s\"}}}"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[{\"id\":\"demo 0.1.0 (path+file://@ROOT@)\",\"name\":\"demo\",\"manifest_path\":\"@ROOT@/Cargo.toml\",\"features\":{\"default\":[\"x\"],\"x\":[]},\"targets\":[{\"kind\":[\"bin\"],\"name\":\"demo\",\"src_path\":\"@ROOT@/src/main.rs\",\"test\":true,\"doctest\":false}]}],\"workspace_members\":[\"demo 0.1.0 (path+file://@ROOT@)\"],\"target_directory\":\"@ROOT@/target\"}\n",
+        "encoding": "utf-16",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "git": [
+        ".github/workflows/ci.yml",
+        "src/main.rs"
+      ],
+      "python": [
+        "discover"
+      ],
+      "rust": [
+        "coverage",
+        "discover"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "raised": "UnicodeDecodeError: 'utf-8' codec can't decode byte 0xff in position 0: invalid start byte"
+    },
+    {
+      "name": "cov-validate-meta-utf8-bom",
+      "tool": "coverage",
+      "files": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "text": "name: ci\non: push\njobs:\n  build:\n    runs-on: ubuntu-latest\n"
+        },
+        {
+          "path": "src/main.rs",
+          "text": "fn main() {}\n"
+        },
+        {
+          "path": "deploy/ci/coverage.json",
+          "text": "{\"schema\":\"jope.coverage/v1\",\"lanes\":{\"l\":{\"command\":\"c\",\"environment\":\"e\",\"inputs\":[\"i\"],\"path_applicability\":\"p\",\"evidence\":\"ev\",\"requires_nonzero_tests\":true,\"stage\":\"static\",\"feature_selection\":\"explicit\",\"result_backend\":\"none\"}},\"dispositions\":{\"d\":{\"status\":\"deferred\",\"reason\":\"r\",\"dependencies\":[\"x\"],\"owner_phase\":\"p\"}},\"items\":{\"feature:demo/default\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[\"x\"]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"feature:demo/x\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"job:.github/workflows/ci.yml/build\":{\"discovery\":{\"kind\":\"workflow-job\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"package:demo\":{\"discovery\":{\"kind\":\"package\",\"manifest\":\"Cargo.toml\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"target:demo/bin/demo\":{\"discovery\":{\"kind\":\"target\",\"source\":\"src/main.rs\",\"test\":true,\"doctest\":false,\"required_features\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"workflow:.github/workflows/ci.yml\":{\"discovery\":{\"kind\":\"workflow\"},\"lanes\":[\"l\"],\"scope\":\"s\"}}}"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[{\"id\":\"demo 0.1.0 (path+file://@ROOT@)\",\"name\":\"demo\",\"manifest_path\":\"@ROOT@/Cargo.toml\",\"features\":{\"default\":[\"x\"],\"x\":[]},\"targets\":[{\"kind\":[\"bin\"],\"name\":\"demo\",\"src_path\":\"@ROOT@/src/main.rs\",\"test\":true,\"doctest\":false}]}],\"workspace_members\":[\"demo 0.1.0 (path+file://@ROOT@)\"],\"target_directory\":\"@ROOT@/target\"}\n",
+        "encoding": "utf-8-sig",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "git": [
+        ".github/workflows/ci.yml",
+        "src/main.rs"
+      ],
+      "python": [
+        "validate"
+      ],
+      "rust": [
+        "coverage",
+        "validate"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "raised": "json.decoder.JSONDecodeError: Unexpected UTF-8 BOM (decode using utf-8-sig): line 1 column 1 (char 0)"
+    },
+    {
+      "name": "cov-discover-meta-not-utf8",
+      "tool": "coverage",
+      "files": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "text": "name: ci\non: push\njobs:\n  build:\n    runs-on: ubuntu-latest\n"
+        },
+        {
+          "path": "src/main.rs",
+          "text": "fn main() {}\n"
+        },
+        {
+          "path": "deploy/ci/coverage.json",
+          "text": "{\"schema\":\"jope.coverage/v1\",\"lanes\":{\"l\":{\"command\":\"c\",\"environment\":\"e\",\"inputs\":[\"i\"],\"path_applicability\":\"p\",\"evidence\":\"ev\",\"requires_nonzero_tests\":true,\"stage\":\"static\",\"feature_selection\":\"explicit\",\"result_backend\":\"none\"}},\"dispositions\":{\"d\":{\"status\":\"deferred\",\"reason\":\"r\",\"dependencies\":[\"x\"],\"owner_phase\":\"p\"}},\"items\":{\"feature:demo/default\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[\"x\"]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"feature:demo/x\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"job:.github/workflows/ci.yml/build\":{\"discovery\":{\"kind\":\"workflow-job\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"package:demo\":{\"discovery\":{\"kind\":\"package\",\"manifest\":\"Cargo.toml\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"target:demo/bin/demo\":{\"discovery\":{\"kind\":\"target\",\"source\":\"src/main.rs\",\"test\":true,\"doctest\":false,\"required_features\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"workflow:.github/workflows/ci.yml\":{\"discovery\":{\"kind\":\"workflow\"},\"lanes\":[\"l\"],\"scope\":\"s\"}}}"
+        }
+      ],
+      "cargo": {
+        "stdout": "",
+        "encoding": "hex",
+        "stderr_hex": "",
+        "exit": "0",
+        "stdout_hex": "7b227061636b61676573223a5b5d2c22776f726b73706163655f6d656d62657273223a5b5d2c2278223a22ff227d0a"
+      },
+      "git": [
+        ".github/workflows/ci.yml",
+        "src/main.rs"
+      ],
+      "python": [
+        "discover"
+      ],
+      "rust": [
+        "coverage",
+        "discover"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "raised": "UnicodeDecodeError: 'utf-8' codec can't decode byte 0xff in position 43: invalid start byte"
+    },
+    {
+      "name": "cov-discover-git-not-utf8",
+      "tool": "coverage",
+      "files": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "text": "name: ci\non: push\njobs:\n  build:\n    runs-on: ubuntu-latest\n"
+        },
+        {
+          "path": "src/main.rs",
+          "text": "fn main() {}\n"
+        },
+        {
+          "path": "deploy/ci/coverage.json",
+          "text": "{\"schema\":\"jope.coverage/v1\",\"lanes\":{\"l\":{\"command\":\"c\",\"environment\":\"e\",\"inputs\":[\"i\"],\"path_applicability\":\"p\",\"evidence\":\"ev\",\"requires_nonzero_tests\":true,\"stage\":\"static\",\"feature_selection\":\"explicit\",\"result_backend\":\"none\"}},\"dispositions\":{\"d\":{\"status\":\"deferred\",\"reason\":\"r\",\"dependencies\":[\"x\"],\"owner_phase\":\"p\"}},\"items\":{\"feature:demo/default\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[\"x\"]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"feature:demo/x\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"job:.github/workflows/ci.yml/build\":{\"discovery\":{\"kind\":\"workflow-job\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"package:demo\":{\"discovery\":{\"kind\":\"package\",\"manifest\":\"Cargo.toml\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"target:demo/bin/demo\":{\"discovery\":{\"kind\":\"target\",\"source\":\"src/main.rs\",\"test\":true,\"doctest\":false,\"required_features\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"workflow:.github/workflows/ci.yml\":{\"discovery\":{\"kind\":\"workflow\"},\"lanes\":[\"l\"],\"scope\":\"s\"}}}"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[{\"id\":\"demo 0.1.0 (path+file://@ROOT@)\",\"name\":\"demo\",\"manifest_path\":\"@ROOT@/Cargo.toml\",\"features\":{\"default\":[\"x\"],\"x\":[]},\"targets\":[{\"kind\":[\"bin\"],\"name\":\"demo\",\"src_path\":\"@ROOT@/src/main.rs\",\"test\":true,\"doctest\":false}]}],\"workspace_members\":[\"demo 0.1.0 (path+file://@ROOT@)\"],\"target_directory\":\"@ROOT@/target\"}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "git_hex": "2e6769746875622f776f726b666c6f77732f63692e796d6c007372632fff2e727300",
+      "python": [
+        "discover"
+      ],
+      "rust": [
+        "coverage",
+        "discover"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "raised": "UnicodeDecodeError: 'utf-8' codec can't decode byte 0xff in position 29: invalid start byte"
+    },
+    {
+      "name": "cov-discover-wf-key-combining-mark",
+      "tool": "coverage",
+      "files": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "text": "name: ci\njobs:\n  búild:\n    runs-on: x\n"
+        },
+        {
+          "path": "src/main.rs",
+          "text": "fn main() {}\n"
+        },
+        {
+          "path": "deploy/ci/coverage.json",
+          "text": "{\"schema\":\"jope.coverage/v1\",\"lanes\":{\"l\":{\"command\":\"c\",\"environment\":\"e\",\"inputs\":[\"i\"],\"path_applicability\":\"p\",\"evidence\":\"ev\",\"requires_nonzero_tests\":true,\"stage\":\"static\",\"feature_selection\":\"explicit\",\"result_backend\":\"none\"}},\"dispositions\":{\"d\":{\"status\":\"deferred\",\"reason\":\"r\",\"dependencies\":[\"x\"],\"owner_phase\":\"p\"}},\"items\":{\"feature:demo/default\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[\"x\"]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"feature:demo/x\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"job:.github/workflows/ci.yml/build\":{\"discovery\":{\"kind\":\"workflow-job\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"package:demo\":{\"discovery\":{\"kind\":\"package\",\"manifest\":\"Cargo.toml\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"target:demo/bin/demo\":{\"discovery\":{\"kind\":\"target\",\"source\":\"src/main.rs\",\"test\":true,\"doctest\":false,\"required_features\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"workflow:.github/workflows/ci.yml\":{\"discovery\":{\"kind\":\"workflow\"},\"lanes\":[\"l\"],\"scope\":\"s\"}}}"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[{\"id\":\"demo 0.1.0 (path+file://@ROOT@)\",\"name\":\"demo\",\"manifest_path\":\"@ROOT@/Cargo.toml\",\"features\":{\"default\":[\"x\"],\"x\":[]},\"targets\":[{\"kind\":[\"bin\"],\"name\":\"demo\",\"src_path\":\"@ROOT@/src/main.rs\",\"test\":true,\"doctest\":false}]}],\"workspace_members\":[\"demo 0.1.0 (path+file://@ROOT@)\"],\"target_directory\":\"@ROOT@/target\"}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "git": [
+        ".github/workflows/ci.yml",
+        "src/main.rs"
+      ],
+      "python": [
+        "discover"
+      ],
+      "rust": [
+        "coverage",
+        "discover"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "raised": "ValueError: unsupported workflow job key: búild:"
+    },
+    {
+      "name": "cov-validate-wf-key-combining-mark",
+      "tool": "coverage",
+      "files": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "text": "name: ci\njobs:\n  búild:\n    runs-on: x\n"
+        },
+        {
+          "path": "src/main.rs",
+          "text": "fn main() {}\n"
+        },
+        {
+          "path": "deploy/ci/coverage.json",
+          "text": "{\"schema\":\"jope.coverage/v1\",\"lanes\":{\"l\":{\"command\":\"c\",\"environment\":\"e\",\"inputs\":[\"i\"],\"path_applicability\":\"p\",\"evidence\":\"ev\",\"requires_nonzero_tests\":true,\"stage\":\"static\",\"feature_selection\":\"explicit\",\"result_backend\":\"none\"}},\"dispositions\":{\"d\":{\"status\":\"deferred\",\"reason\":\"r\",\"dependencies\":[\"x\"],\"owner_phase\":\"p\"}},\"items\":{\"feature:demo/default\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[\"x\"]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"feature:demo/x\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"job:.github/workflows/ci.yml/build\":{\"discovery\":{\"kind\":\"workflow-job\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"package:demo\":{\"discovery\":{\"kind\":\"package\",\"manifest\":\"Cargo.toml\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"target:demo/bin/demo\":{\"discovery\":{\"kind\":\"target\",\"source\":\"src/main.rs\",\"test\":true,\"doctest\":false,\"required_features\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"workflow:.github/workflows/ci.yml\":{\"discovery\":{\"kind\":\"workflow\"},\"lanes\":[\"l\"],\"scope\":\"s\"}}}"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[{\"id\":\"demo 0.1.0 (path+file://@ROOT@)\",\"name\":\"demo\",\"manifest_path\":\"@ROOT@/Cargo.toml\",\"features\":{\"default\":[\"x\"],\"x\":[]},\"targets\":[{\"kind\":[\"bin\"],\"name\":\"demo\",\"src_path\":\"@ROOT@/src/main.rs\",\"test\":true,\"doctest\":false}]}],\"workspace_members\":[\"demo 0.1.0 (path+file://@ROOT@)\"],\"target_directory\":\"@ROOT@/target\"}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "git": [
+        ".github/workflows/ci.yml",
+        "src/main.rs"
+      ],
+      "python": [
+        "validate"
+      ],
+      "rust": [
+        "coverage",
+        "validate"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "raised": "ValueError: unsupported workflow job key: búild:"
+    },
+    {
+      "name": "cov-discover-wf-key-connector-punct",
+      "tool": "coverage",
+      "files": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "text": "name: ci\njobs:\n  build‿x:\n    runs-on: x\n"
+        },
+        {
+          "path": "src/main.rs",
+          "text": "fn main() {}\n"
+        },
+        {
+          "path": "deploy/ci/coverage.json",
+          "text": "{\"schema\":\"jope.coverage/v1\",\"lanes\":{\"l\":{\"command\":\"c\",\"environment\":\"e\",\"inputs\":[\"i\"],\"path_applicability\":\"p\",\"evidence\":\"ev\",\"requires_nonzero_tests\":true,\"stage\":\"static\",\"feature_selection\":\"explicit\",\"result_backend\":\"none\"}},\"dispositions\":{\"d\":{\"status\":\"deferred\",\"reason\":\"r\",\"dependencies\":[\"x\"],\"owner_phase\":\"p\"}},\"items\":{\"feature:demo/default\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[\"x\"]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"feature:demo/x\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"job:.github/workflows/ci.yml/build\":{\"discovery\":{\"kind\":\"workflow-job\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"package:demo\":{\"discovery\":{\"kind\":\"package\",\"manifest\":\"Cargo.toml\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"target:demo/bin/demo\":{\"discovery\":{\"kind\":\"target\",\"source\":\"src/main.rs\",\"test\":true,\"doctest\":false,\"required_features\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"workflow:.github/workflows/ci.yml\":{\"discovery\":{\"kind\":\"workflow\"},\"lanes\":[\"l\"],\"scope\":\"s\"}}}"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[{\"id\":\"demo 0.1.0 (path+file://@ROOT@)\",\"name\":\"demo\",\"manifest_path\":\"@ROOT@/Cargo.toml\",\"features\":{\"default\":[\"x\"],\"x\":[]},\"targets\":[{\"kind\":[\"bin\"],\"name\":\"demo\",\"src_path\":\"@ROOT@/src/main.rs\",\"test\":true,\"doctest\":false}]}],\"workspace_members\":[\"demo 0.1.0 (path+file://@ROOT@)\"],\"target_directory\":\"@ROOT@/target\"}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "git": [
+        ".github/workflows/ci.yml",
+        "src/main.rs"
+      ],
+      "python": [
+        "discover"
+      ],
+      "rust": [
+        "coverage",
+        "discover"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "raised": "ValueError: unsupported workflow job key: build‿x:"
+    },
+    {
+      "name": "cov-validate-wf-key-connector-punct",
+      "tool": "coverage",
+      "files": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "text": "name: ci\njobs:\n  build‿x:\n    runs-on: x\n"
+        },
+        {
+          "path": "src/main.rs",
+          "text": "fn main() {}\n"
+        },
+        {
+          "path": "deploy/ci/coverage.json",
+          "text": "{\"schema\":\"jope.coverage/v1\",\"lanes\":{\"l\":{\"command\":\"c\",\"environment\":\"e\",\"inputs\":[\"i\"],\"path_applicability\":\"p\",\"evidence\":\"ev\",\"requires_nonzero_tests\":true,\"stage\":\"static\",\"feature_selection\":\"explicit\",\"result_backend\":\"none\"}},\"dispositions\":{\"d\":{\"status\":\"deferred\",\"reason\":\"r\",\"dependencies\":[\"x\"],\"owner_phase\":\"p\"}},\"items\":{\"feature:demo/default\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[\"x\"]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"feature:demo/x\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"job:.github/workflows/ci.yml/build\":{\"discovery\":{\"kind\":\"workflow-job\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"package:demo\":{\"discovery\":{\"kind\":\"package\",\"manifest\":\"Cargo.toml\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"target:demo/bin/demo\":{\"discovery\":{\"kind\":\"target\",\"source\":\"src/main.rs\",\"test\":true,\"doctest\":false,\"required_features\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"workflow:.github/workflows/ci.yml\":{\"discovery\":{\"kind\":\"workflow\"},\"lanes\":[\"l\"],\"scope\":\"s\"}}}"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[{\"id\":\"demo 0.1.0 (path+file://@ROOT@)\",\"name\":\"demo\",\"manifest_path\":\"@ROOT@/Cargo.toml\",\"features\":{\"default\":[\"x\"],\"x\":[]},\"targets\":[{\"kind\":[\"bin\"],\"name\":\"demo\",\"src_path\":\"@ROOT@/src/main.rs\",\"test\":true,\"doctest\":false}]}],\"workspace_members\":[\"demo 0.1.0 (path+file://@ROOT@)\"],\"target_directory\":\"@ROOT@/target\"}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "git": [
+        ".github/workflows/ci.yml",
+        "src/main.rs"
+      ],
+      "python": [
+        "validate"
+      ],
+      "rust": [
+        "coverage",
+        "validate"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "raised": "ValueError: unsupported workflow job key: build‿x:"
+    },
+    {
+      "name": "cov-discover-wf-key-circled-letter",
+      "tool": "coverage",
+      "files": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "text": "name: ci\njobs:\n  bⒶ:\n    runs-on: x\n"
+        },
+        {
+          "path": "src/main.rs",
+          "text": "fn main() {}\n"
+        },
+        {
+          "path": "deploy/ci/coverage.json",
+          "text": "{\"schema\":\"jope.coverage/v1\",\"lanes\":{\"l\":{\"command\":\"c\",\"environment\":\"e\",\"inputs\":[\"i\"],\"path_applicability\":\"p\",\"evidence\":\"ev\",\"requires_nonzero_tests\":true,\"stage\":\"static\",\"feature_selection\":\"explicit\",\"result_backend\":\"none\"}},\"dispositions\":{\"d\":{\"status\":\"deferred\",\"reason\":\"r\",\"dependencies\":[\"x\"],\"owner_phase\":\"p\"}},\"items\":{\"feature:demo/default\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[\"x\"]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"feature:demo/x\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"job:.github/workflows/ci.yml/build\":{\"discovery\":{\"kind\":\"workflow-job\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"package:demo\":{\"discovery\":{\"kind\":\"package\",\"manifest\":\"Cargo.toml\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"target:demo/bin/demo\":{\"discovery\":{\"kind\":\"target\",\"source\":\"src/main.rs\",\"test\":true,\"doctest\":false,\"required_features\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"workflow:.github/workflows/ci.yml\":{\"discovery\":{\"kind\":\"workflow\"},\"lanes\":[\"l\"],\"scope\":\"s\"}}}"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[{\"id\":\"demo 0.1.0 (path+file://@ROOT@)\",\"name\":\"demo\",\"manifest_path\":\"@ROOT@/Cargo.toml\",\"features\":{\"default\":[\"x\"],\"x\":[]},\"targets\":[{\"kind\":[\"bin\"],\"name\":\"demo\",\"src_path\":\"@ROOT@/src/main.rs\",\"test\":true,\"doctest\":false}]}],\"workspace_members\":[\"demo 0.1.0 (path+file://@ROOT@)\"],\"target_directory\":\"@ROOT@/target\"}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "git": [
+        ".github/workflows/ci.yml",
+        "src/main.rs"
+      ],
+      "python": [
+        "discover"
+      ],
+      "rust": [
+        "coverage",
+        "discover"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "raised": "ValueError: unsupported workflow job key: bⒶ:"
+    },
+    {
+      "name": "cov-validate-wf-key-circled-letter",
+      "tool": "coverage",
+      "files": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "text": "name: ci\njobs:\n  bⒶ:\n    runs-on: x\n"
+        },
+        {
+          "path": "src/main.rs",
+          "text": "fn main() {}\n"
+        },
+        {
+          "path": "deploy/ci/coverage.json",
+          "text": "{\"schema\":\"jope.coverage/v1\",\"lanes\":{\"l\":{\"command\":\"c\",\"environment\":\"e\",\"inputs\":[\"i\"],\"path_applicability\":\"p\",\"evidence\":\"ev\",\"requires_nonzero_tests\":true,\"stage\":\"static\",\"feature_selection\":\"explicit\",\"result_backend\":\"none\"}},\"dispositions\":{\"d\":{\"status\":\"deferred\",\"reason\":\"r\",\"dependencies\":[\"x\"],\"owner_phase\":\"p\"}},\"items\":{\"feature:demo/default\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[\"x\"]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"feature:demo/x\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"job:.github/workflows/ci.yml/build\":{\"discovery\":{\"kind\":\"workflow-job\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"package:demo\":{\"discovery\":{\"kind\":\"package\",\"manifest\":\"Cargo.toml\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"target:demo/bin/demo\":{\"discovery\":{\"kind\":\"target\",\"source\":\"src/main.rs\",\"test\":true,\"doctest\":false,\"required_features\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"workflow:.github/workflows/ci.yml\":{\"discovery\":{\"kind\":\"workflow\"},\"lanes\":[\"l\"],\"scope\":\"s\"}}}"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[{\"id\":\"demo 0.1.0 (path+file://@ROOT@)\",\"name\":\"demo\",\"manifest_path\":\"@ROOT@/Cargo.toml\",\"features\":{\"default\":[\"x\"],\"x\":[]},\"targets\":[{\"kind\":[\"bin\"],\"name\":\"demo\",\"src_path\":\"@ROOT@/src/main.rs\",\"test\":true,\"doctest\":false}]}],\"workspace_members\":[\"demo 0.1.0 (path+file://@ROOT@)\"],\"target_directory\":\"@ROOT@/target\"}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "git": [
+        ".github/workflows/ci.yml",
+        "src/main.rs"
+      ],
+      "python": [
+        "validate"
+      ],
+      "rust": [
+        "coverage",
+        "validate"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "raised": "ValueError: unsupported workflow job key: bⒶ:"
+    },
+    {
+      "name": "cov-discover-wf-key-zwj",
+      "tool": "coverage",
+      "files": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "text": "name: ci\njobs:\n  a‍b:\n    runs-on: x\n"
+        },
+        {
+          "path": "src/main.rs",
+          "text": "fn main() {}\n"
+        },
+        {
+          "path": "deploy/ci/coverage.json",
+          "text": "{\"schema\":\"jope.coverage/v1\",\"lanes\":{\"l\":{\"command\":\"c\",\"environment\":\"e\",\"inputs\":[\"i\"],\"path_applicability\":\"p\",\"evidence\":\"ev\",\"requires_nonzero_tests\":true,\"stage\":\"static\",\"feature_selection\":\"explicit\",\"result_backend\":\"none\"}},\"dispositions\":{\"d\":{\"status\":\"deferred\",\"reason\":\"r\",\"dependencies\":[\"x\"],\"owner_phase\":\"p\"}},\"items\":{\"feature:demo/default\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[\"x\"]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"feature:demo/x\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"job:.github/workflows/ci.yml/build\":{\"discovery\":{\"kind\":\"workflow-job\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"package:demo\":{\"discovery\":{\"kind\":\"package\",\"manifest\":\"Cargo.toml\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"target:demo/bin/demo\":{\"discovery\":{\"kind\":\"target\",\"source\":\"src/main.rs\",\"test\":true,\"doctest\":false,\"required_features\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"workflow:.github/workflows/ci.yml\":{\"discovery\":{\"kind\":\"workflow\"},\"lanes\":[\"l\"],\"scope\":\"s\"}}}"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[{\"id\":\"demo 0.1.0 (path+file://@ROOT@)\",\"name\":\"demo\",\"manifest_path\":\"@ROOT@/Cargo.toml\",\"features\":{\"default\":[\"x\"],\"x\":[]},\"targets\":[{\"kind\":[\"bin\"],\"name\":\"demo\",\"src_path\":\"@ROOT@/src/main.rs\",\"test\":true,\"doctest\":false}]}],\"workspace_members\":[\"demo 0.1.0 (path+file://@ROOT@)\"],\"target_directory\":\"@ROOT@/target\"}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "git": [
+        ".github/workflows/ci.yml",
+        "src/main.rs"
+      ],
+      "python": [
+        "discover"
+      ],
+      "rust": [
+        "coverage",
+        "discover"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "raised": "ValueError: unsupported workflow job key: a‍b:"
+    },
+    {
+      "name": "cov-validate-wf-key-zwj",
+      "tool": "coverage",
+      "files": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "text": "name: ci\njobs:\n  a‍b:\n    runs-on: x\n"
+        },
+        {
+          "path": "src/main.rs",
+          "text": "fn main() {}\n"
+        },
+        {
+          "path": "deploy/ci/coverage.json",
+          "text": "{\"schema\":\"jope.coverage/v1\",\"lanes\":{\"l\":{\"command\":\"c\",\"environment\":\"e\",\"inputs\":[\"i\"],\"path_applicability\":\"p\",\"evidence\":\"ev\",\"requires_nonzero_tests\":true,\"stage\":\"static\",\"feature_selection\":\"explicit\",\"result_backend\":\"none\"}},\"dispositions\":{\"d\":{\"status\":\"deferred\",\"reason\":\"r\",\"dependencies\":[\"x\"],\"owner_phase\":\"p\"}},\"items\":{\"feature:demo/default\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[\"x\"]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"feature:demo/x\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"job:.github/workflows/ci.yml/build\":{\"discovery\":{\"kind\":\"workflow-job\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"package:demo\":{\"discovery\":{\"kind\":\"package\",\"manifest\":\"Cargo.toml\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"target:demo/bin/demo\":{\"discovery\":{\"kind\":\"target\",\"source\":\"src/main.rs\",\"test\":true,\"doctest\":false,\"required_features\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"workflow:.github/workflows/ci.yml\":{\"discovery\":{\"kind\":\"workflow\"},\"lanes\":[\"l\"],\"scope\":\"s\"}}}"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[{\"id\":\"demo 0.1.0 (path+file://@ROOT@)\",\"name\":\"demo\",\"manifest_path\":\"@ROOT@/Cargo.toml\",\"features\":{\"default\":[\"x\"],\"x\":[]},\"targets\":[{\"kind\":[\"bin\"],\"name\":\"demo\",\"src_path\":\"@ROOT@/src/main.rs\",\"test\":true,\"doctest\":false}]}],\"workspace_members\":[\"demo 0.1.0 (path+file://@ROOT@)\"],\"target_directory\":\"@ROOT@/target\"}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "git": [
+        ".github/workflows/ci.yml",
+        "src/main.rs"
+      ],
+      "python": [
+        "validate"
+      ],
+      "rust": [
+        "coverage",
+        "validate"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "raised": "ValueError: unsupported workflow job key: a‍b:"
+    },
+    {
+      "name": "cov-discover-wf-key-superscript-two",
+      "tool": "coverage",
+      "files": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "text": "name: ci\njobs:\n  b²:\n    runs-on: x\n"
+        },
+        {
+          "path": "src/main.rs",
+          "text": "fn main() {}\n"
+        },
+        {
+          "path": "deploy/ci/coverage.json",
+          "text": "{\"schema\":\"jope.coverage/v1\",\"lanes\":{\"l\":{\"command\":\"c\",\"environment\":\"e\",\"inputs\":[\"i\"],\"path_applicability\":\"p\",\"evidence\":\"ev\",\"requires_nonzero_tests\":true,\"stage\":\"static\",\"feature_selection\":\"explicit\",\"result_backend\":\"none\"}},\"dispositions\":{\"d\":{\"status\":\"deferred\",\"reason\":\"r\",\"dependencies\":[\"x\"],\"owner_phase\":\"p\"}},\"items\":{\"feature:demo/default\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[\"x\"]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"feature:demo/x\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"job:.github/workflows/ci.yml/build\":{\"discovery\":{\"kind\":\"workflow-job\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"package:demo\":{\"discovery\":{\"kind\":\"package\",\"manifest\":\"Cargo.toml\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"target:demo/bin/demo\":{\"discovery\":{\"kind\":\"target\",\"source\":\"src/main.rs\",\"test\":true,\"doctest\":false,\"required_features\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"workflow:.github/workflows/ci.yml\":{\"discovery\":{\"kind\":\"workflow\"},\"lanes\":[\"l\"],\"scope\":\"s\"}}}"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[{\"id\":\"demo 0.1.0 (path+file://@ROOT@)\",\"name\":\"demo\",\"manifest_path\":\"@ROOT@/Cargo.toml\",\"features\":{\"default\":[\"x\"],\"x\":[]},\"targets\":[{\"kind\":[\"bin\"],\"name\":\"demo\",\"src_path\":\"@ROOT@/src/main.rs\",\"test\":true,\"doctest\":false}]}],\"workspace_members\":[\"demo 0.1.0 (path+file://@ROOT@)\"],\"target_directory\":\"@ROOT@/target\"}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "git": [
+        ".github/workflows/ci.yml",
+        "src/main.rs"
+      ],
+      "python": [
+        "discover"
+      ],
+      "rust": [
+        "coverage",
+        "discover"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"stage\": \"static\",\n  \"items\": {\n    \"feature:demo/default\": {\n      \"kind\": \"feature\",\n      \"dependencies\": [\n        \"x\"\n      ]\n    },\n    \"feature:demo/x\": {\n      \"kind\": \"feature\",\n      \"dependencies\": []\n    },\n    \"job:.github/workflows/ci.yml/b\\u00b2\": {\n      \"kind\": \"workflow-job\"\n    },\n    \"package:demo\": {\n      \"kind\": \"package\",\n      \"manifest\": \"Cargo.toml\"\n    },\n    \"target:demo/bin/demo\": {\n      \"kind\": \"target\",\n      \"source\": \"src/main.rs\",\n      \"test\": true,\n      \"doctest\": false,\n      \"required_features\": []\n    },\n    \"workflow:.github/workflows/ci.yml\": {\n      \"kind\": \"workflow\"\n    }\n  }\n}\n",
+      "stderr": ""
+    },
+    {
+      "name": "cov-validate-wf-key-superscript-two",
+      "tool": "coverage",
+      "files": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "text": "name: ci\njobs:\n  b²:\n    runs-on: x\n"
+        },
+        {
+          "path": "src/main.rs",
+          "text": "fn main() {}\n"
+        },
+        {
+          "path": "deploy/ci/coverage.json",
+          "text": "{\"schema\":\"jope.coverage/v1\",\"lanes\":{\"l\":{\"command\":\"c\",\"environment\":\"e\",\"inputs\":[\"i\"],\"path_applicability\":\"p\",\"evidence\":\"ev\",\"requires_nonzero_tests\":true,\"stage\":\"static\",\"feature_selection\":\"explicit\",\"result_backend\":\"none\"}},\"dispositions\":{\"d\":{\"status\":\"deferred\",\"reason\":\"r\",\"dependencies\":[\"x\"],\"owner_phase\":\"p\"}},\"items\":{\"feature:demo/default\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[\"x\"]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"feature:demo/x\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"job:.github/workflows/ci.yml/build\":{\"discovery\":{\"kind\":\"workflow-job\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"package:demo\":{\"discovery\":{\"kind\":\"package\",\"manifest\":\"Cargo.toml\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"target:demo/bin/demo\":{\"discovery\":{\"kind\":\"target\",\"source\":\"src/main.rs\",\"test\":true,\"doctest\":false,\"required_features\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"workflow:.github/workflows/ci.yml\":{\"discovery\":{\"kind\":\"workflow\"},\"lanes\":[\"l\"],\"scope\":\"s\"}}}"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[{\"id\":\"demo 0.1.0 (path+file://@ROOT@)\",\"name\":\"demo\",\"manifest_path\":\"@ROOT@/Cargo.toml\",\"features\":{\"default\":[\"x\"],\"x\":[]},\"targets\":[{\"kind\":[\"bin\"],\"name\":\"demo\",\"src_path\":\"@ROOT@/src/main.rs\",\"test\":true,\"doctest\":false}]}],\"workspace_members\":[\"demo 0.1.0 (path+file://@ROOT@)\"],\"target_directory\":\"@ROOT@/target\"}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "git": [
+        ".github/workflows/ci.yml",
+        "src/main.rs"
+      ],
+      "python": [
+        "validate"
+      ],
+      "rust": [
+        "coverage",
+        "validate"
+      ],
+      "exit": 1,
+      "stdout": "unassigned addition: job:.github/workflows/ci.yml/b²\nstale assignment: job:.github/workflows/ci.yml/build\n{\"counts\": {\"feature\": 2, \"package\": 1, \"target\": 1, \"workflow\": 1, \"workflow-job\": 1}, \"stage\": \"static\", \"unassigned_or_invalid\": 2}\n",
+      "stderr": ""
+    },
+    {
+      "name": "cov-discover-wf-key-roman-numeral",
+      "tool": "coverage",
+      "files": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "text": "name: ci\njobs:\n  bⅧ:\n    runs-on: x\n"
+        },
+        {
+          "path": "src/main.rs",
+          "text": "fn main() {}\n"
+        },
+        {
+          "path": "deploy/ci/coverage.json",
+          "text": "{\"schema\":\"jope.coverage/v1\",\"lanes\":{\"l\":{\"command\":\"c\",\"environment\":\"e\",\"inputs\":[\"i\"],\"path_applicability\":\"p\",\"evidence\":\"ev\",\"requires_nonzero_tests\":true,\"stage\":\"static\",\"feature_selection\":\"explicit\",\"result_backend\":\"none\"}},\"dispositions\":{\"d\":{\"status\":\"deferred\",\"reason\":\"r\",\"dependencies\":[\"x\"],\"owner_phase\":\"p\"}},\"items\":{\"feature:demo/default\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[\"x\"]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"feature:demo/x\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"job:.github/workflows/ci.yml/build\":{\"discovery\":{\"kind\":\"workflow-job\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"package:demo\":{\"discovery\":{\"kind\":\"package\",\"manifest\":\"Cargo.toml\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"target:demo/bin/demo\":{\"discovery\":{\"kind\":\"target\",\"source\":\"src/main.rs\",\"test\":true,\"doctest\":false,\"required_features\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"workflow:.github/workflows/ci.yml\":{\"discovery\":{\"kind\":\"workflow\"},\"lanes\":[\"l\"],\"scope\":\"s\"}}}"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[{\"id\":\"demo 0.1.0 (path+file://@ROOT@)\",\"name\":\"demo\",\"manifest_path\":\"@ROOT@/Cargo.toml\",\"features\":{\"default\":[\"x\"],\"x\":[]},\"targets\":[{\"kind\":[\"bin\"],\"name\":\"demo\",\"src_path\":\"@ROOT@/src/main.rs\",\"test\":true,\"doctest\":false}]}],\"workspace_members\":[\"demo 0.1.0 (path+file://@ROOT@)\"],\"target_directory\":\"@ROOT@/target\"}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "git": [
+        ".github/workflows/ci.yml",
+        "src/main.rs"
+      ],
+      "python": [
+        "discover"
+      ],
+      "rust": [
+        "coverage",
+        "discover"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"stage\": \"static\",\n  \"items\": {\n    \"feature:demo/default\": {\n      \"kind\": \"feature\",\n      \"dependencies\": [\n        \"x\"\n      ]\n    },\n    \"feature:demo/x\": {\n      \"kind\": \"feature\",\n      \"dependencies\": []\n    },\n    \"job:.github/workflows/ci.yml/b\\u2167\": {\n      \"kind\": \"workflow-job\"\n    },\n    \"package:demo\": {\n      \"kind\": \"package\",\n      \"manifest\": \"Cargo.toml\"\n    },\n    \"target:demo/bin/demo\": {\n      \"kind\": \"target\",\n      \"source\": \"src/main.rs\",\n      \"test\": true,\n      \"doctest\": false,\n      \"required_features\": []\n    },\n    \"workflow:.github/workflows/ci.yml\": {\n      \"kind\": \"workflow\"\n    }\n  }\n}\n",
+      "stderr": ""
+    },
+    {
+      "name": "cov-validate-wf-key-roman-numeral",
+      "tool": "coverage",
+      "files": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "text": "name: ci\njobs:\n  bⅧ:\n    runs-on: x\n"
+        },
+        {
+          "path": "src/main.rs",
+          "text": "fn main() {}\n"
+        },
+        {
+          "path": "deploy/ci/coverage.json",
+          "text": "{\"schema\":\"jope.coverage/v1\",\"lanes\":{\"l\":{\"command\":\"c\",\"environment\":\"e\",\"inputs\":[\"i\"],\"path_applicability\":\"p\",\"evidence\":\"ev\",\"requires_nonzero_tests\":true,\"stage\":\"static\",\"feature_selection\":\"explicit\",\"result_backend\":\"none\"}},\"dispositions\":{\"d\":{\"status\":\"deferred\",\"reason\":\"r\",\"dependencies\":[\"x\"],\"owner_phase\":\"p\"}},\"items\":{\"feature:demo/default\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[\"x\"]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"feature:demo/x\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"job:.github/workflows/ci.yml/build\":{\"discovery\":{\"kind\":\"workflow-job\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"package:demo\":{\"discovery\":{\"kind\":\"package\",\"manifest\":\"Cargo.toml\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"target:demo/bin/demo\":{\"discovery\":{\"kind\":\"target\",\"source\":\"src/main.rs\",\"test\":true,\"doctest\":false,\"required_features\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"workflow:.github/workflows/ci.yml\":{\"discovery\":{\"kind\":\"workflow\"},\"lanes\":[\"l\"],\"scope\":\"s\"}}}"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[{\"id\":\"demo 0.1.0 (path+file://@ROOT@)\",\"name\":\"demo\",\"manifest_path\":\"@ROOT@/Cargo.toml\",\"features\":{\"default\":[\"x\"],\"x\":[]},\"targets\":[{\"kind\":[\"bin\"],\"name\":\"demo\",\"src_path\":\"@ROOT@/src/main.rs\",\"test\":true,\"doctest\":false}]}],\"workspace_members\":[\"demo 0.1.0 (path+file://@ROOT@)\"],\"target_directory\":\"@ROOT@/target\"}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "git": [
+        ".github/workflows/ci.yml",
+        "src/main.rs"
+      ],
+      "python": [
+        "validate"
+      ],
+      "rust": [
+        "coverage",
+        "validate"
+      ],
+      "exit": 1,
+      "stdout": "unassigned addition: job:.github/workflows/ci.yml/bⅧ\nstale assignment: job:.github/workflows/ci.yml/build\n{\"counts\": {\"feature\": 2, \"package\": 1, \"target\": 1, \"workflow\": 1, \"workflow-job\": 1}, \"stage\": \"static\", \"unassigned_or_invalid\": 2}\n",
+      "stderr": ""
+    },
+    {
+      "name": "cov-discover-wf-second-header-unit-sep",
+      "tool": "coverage",
+      "files": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "text": "name: ci\njobs:\n  build:\n    runs-on: x\njobs\u001f:\n"
+        },
+        {
+          "path": "src/main.rs",
+          "text": "fn main() {}\n"
+        },
+        {
+          "path": "deploy/ci/coverage.json",
+          "text": "{\"schema\":\"jope.coverage/v1\",\"lanes\":{\"l\":{\"command\":\"c\",\"environment\":\"e\",\"inputs\":[\"i\"],\"path_applicability\":\"p\",\"evidence\":\"ev\",\"requires_nonzero_tests\":true,\"stage\":\"static\",\"feature_selection\":\"explicit\",\"result_backend\":\"none\"}},\"dispositions\":{\"d\":{\"status\":\"deferred\",\"reason\":\"r\",\"dependencies\":[\"x\"],\"owner_phase\":\"p\"}},\"items\":{\"feature:demo/default\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[\"x\"]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"feature:demo/x\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"job:.github/workflows/ci.yml/build\":{\"discovery\":{\"kind\":\"workflow-job\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"package:demo\":{\"discovery\":{\"kind\":\"package\",\"manifest\":\"Cargo.toml\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"target:demo/bin/demo\":{\"discovery\":{\"kind\":\"target\",\"source\":\"src/main.rs\",\"test\":true,\"doctest\":false,\"required_features\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"workflow:.github/workflows/ci.yml\":{\"discovery\":{\"kind\":\"workflow\"},\"lanes\":[\"l\"],\"scope\":\"s\"}}}"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[{\"id\":\"demo 0.1.0 (path+file://@ROOT@)\",\"name\":\"demo\",\"manifest_path\":\"@ROOT@/Cargo.toml\",\"features\":{\"default\":[\"x\"],\"x\":[]},\"targets\":[{\"kind\":[\"bin\"],\"name\":\"demo\",\"src_path\":\"@ROOT@/src/main.rs\",\"test\":true,\"doctest\":false}]}],\"workspace_members\":[\"demo 0.1.0 (path+file://@ROOT@)\"],\"target_directory\":\"@ROOT@/target\"}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "git": [
+        ".github/workflows/ci.yml",
+        "src/main.rs"
+      ],
+      "python": [
+        "discover"
+      ],
+      "rust": [
+        "coverage",
+        "discover"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "raised": "ValueError: workflow requires one top-level block jobs mapping"
+    },
+    {
+      "name": "cov-validate-wf-second-header-unit-sep",
+      "tool": "coverage",
+      "files": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "text": "name: ci\njobs:\n  build:\n    runs-on: x\njobs\u001f:\n"
+        },
+        {
+          "path": "src/main.rs",
+          "text": "fn main() {}\n"
+        },
+        {
+          "path": "deploy/ci/coverage.json",
+          "text": "{\"schema\":\"jope.coverage/v1\",\"lanes\":{\"l\":{\"command\":\"c\",\"environment\":\"e\",\"inputs\":[\"i\"],\"path_applicability\":\"p\",\"evidence\":\"ev\",\"requires_nonzero_tests\":true,\"stage\":\"static\",\"feature_selection\":\"explicit\",\"result_backend\":\"none\"}},\"dispositions\":{\"d\":{\"status\":\"deferred\",\"reason\":\"r\",\"dependencies\":[\"x\"],\"owner_phase\":\"p\"}},\"items\":{\"feature:demo/default\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[\"x\"]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"feature:demo/x\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"job:.github/workflows/ci.yml/build\":{\"discovery\":{\"kind\":\"workflow-job\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"package:demo\":{\"discovery\":{\"kind\":\"package\",\"manifest\":\"Cargo.toml\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"target:demo/bin/demo\":{\"discovery\":{\"kind\":\"target\",\"source\":\"src/main.rs\",\"test\":true,\"doctest\":false,\"required_features\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"workflow:.github/workflows/ci.yml\":{\"discovery\":{\"kind\":\"workflow\"},\"lanes\":[\"l\"],\"scope\":\"s\"}}}"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[{\"id\":\"demo 0.1.0 (path+file://@ROOT@)\",\"name\":\"demo\",\"manifest_path\":\"@ROOT@/Cargo.toml\",\"features\":{\"default\":[\"x\"],\"x\":[]},\"targets\":[{\"kind\":[\"bin\"],\"name\":\"demo\",\"src_path\":\"@ROOT@/src/main.rs\",\"test\":true,\"doctest\":false}]}],\"workspace_members\":[\"demo 0.1.0 (path+file://@ROOT@)\"],\"target_directory\":\"@ROOT@/target\"}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "git": [
+        ".github/workflows/ci.yml",
+        "src/main.rs"
+      ],
+      "python": [
+        "validate"
+      ],
+      "rust": [
+        "coverage",
+        "validate"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "raised": "ValueError: workflow requires one top-level block jobs mapping"
+    },
+    {
+      "name": "cov-discover-wf-only-header-unit-sep",
+      "tool": "coverage",
+      "files": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "text": "name: ci\njobs\u001f:\n  build:\n    runs-on: x\n"
+        },
+        {
+          "path": "src/main.rs",
+          "text": "fn main() {}\n"
+        },
+        {
+          "path": "deploy/ci/coverage.json",
+          "text": "{\"schema\":\"jope.coverage/v1\",\"lanes\":{\"l\":{\"command\":\"c\",\"environment\":\"e\",\"inputs\":[\"i\"],\"path_applicability\":\"p\",\"evidence\":\"ev\",\"requires_nonzero_tests\":true,\"stage\":\"static\",\"feature_selection\":\"explicit\",\"result_backend\":\"none\"}},\"dispositions\":{\"d\":{\"status\":\"deferred\",\"reason\":\"r\",\"dependencies\":[\"x\"],\"owner_phase\":\"p\"}},\"items\":{\"feature:demo/default\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[\"x\"]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"feature:demo/x\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"job:.github/workflows/ci.yml/build\":{\"discovery\":{\"kind\":\"workflow-job\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"package:demo\":{\"discovery\":{\"kind\":\"package\",\"manifest\":\"Cargo.toml\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"target:demo/bin/demo\":{\"discovery\":{\"kind\":\"target\",\"source\":\"src/main.rs\",\"test\":true,\"doctest\":false,\"required_features\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"workflow:.github/workflows/ci.yml\":{\"discovery\":{\"kind\":\"workflow\"},\"lanes\":[\"l\"],\"scope\":\"s\"}}}"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[{\"id\":\"demo 0.1.0 (path+file://@ROOT@)\",\"name\":\"demo\",\"manifest_path\":\"@ROOT@/Cargo.toml\",\"features\":{\"default\":[\"x\"],\"x\":[]},\"targets\":[{\"kind\":[\"bin\"],\"name\":\"demo\",\"src_path\":\"@ROOT@/src/main.rs\",\"test\":true,\"doctest\":false}]}],\"workspace_members\":[\"demo 0.1.0 (path+file://@ROOT@)\"],\"target_directory\":\"@ROOT@/target\"}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "git": [
+        ".github/workflows/ci.yml",
+        "src/main.rs"
+      ],
+      "python": [
+        "discover"
+      ],
+      "rust": [
+        "coverage",
+        "discover"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"stage\": \"static\",\n  \"items\": {\n    \"feature:demo/default\": {\n      \"kind\": \"feature\",\n      \"dependencies\": [\n        \"x\"\n      ]\n    },\n    \"feature:demo/x\": {\n      \"kind\": \"feature\",\n      \"dependencies\": []\n    },\n    \"job:.github/workflows/ci.yml/build\": {\n      \"kind\": \"workflow-job\"\n    },\n    \"package:demo\": {\n      \"kind\": \"package\",\n      \"manifest\": \"Cargo.toml\"\n    },\n    \"target:demo/bin/demo\": {\n      \"kind\": \"target\",\n      \"source\": \"src/main.rs\",\n      \"test\": true,\n      \"doctest\": false,\n      \"required_features\": []\n    },\n    \"workflow:.github/workflows/ci.yml\": {\n      \"kind\": \"workflow\"\n    }\n  }\n}\n",
+      "stderr": ""
+    },
+    {
+      "name": "cov-validate-wf-only-header-unit-sep",
+      "tool": "coverage",
+      "files": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "text": "name: ci\njobs\u001f:\n  build:\n    runs-on: x\n"
+        },
+        {
+          "path": "src/main.rs",
+          "text": "fn main() {}\n"
+        },
+        {
+          "path": "deploy/ci/coverage.json",
+          "text": "{\"schema\":\"jope.coverage/v1\",\"lanes\":{\"l\":{\"command\":\"c\",\"environment\":\"e\",\"inputs\":[\"i\"],\"path_applicability\":\"p\",\"evidence\":\"ev\",\"requires_nonzero_tests\":true,\"stage\":\"static\",\"feature_selection\":\"explicit\",\"result_backend\":\"none\"}},\"dispositions\":{\"d\":{\"status\":\"deferred\",\"reason\":\"r\",\"dependencies\":[\"x\"],\"owner_phase\":\"p\"}},\"items\":{\"feature:demo/default\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[\"x\"]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"feature:demo/x\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"job:.github/workflows/ci.yml/build\":{\"discovery\":{\"kind\":\"workflow-job\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"package:demo\":{\"discovery\":{\"kind\":\"package\",\"manifest\":\"Cargo.toml\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"target:demo/bin/demo\":{\"discovery\":{\"kind\":\"target\",\"source\":\"src/main.rs\",\"test\":true,\"doctest\":false,\"required_features\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"workflow:.github/workflows/ci.yml\":{\"discovery\":{\"kind\":\"workflow\"},\"lanes\":[\"l\"],\"scope\":\"s\"}}}"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[{\"id\":\"demo 0.1.0 (path+file://@ROOT@)\",\"name\":\"demo\",\"manifest_path\":\"@ROOT@/Cargo.toml\",\"features\":{\"default\":[\"x\"],\"x\":[]},\"targets\":[{\"kind\":[\"bin\"],\"name\":\"demo\",\"src_path\":\"@ROOT@/src/main.rs\",\"test\":true,\"doctest\":false}]}],\"workspace_members\":[\"demo 0.1.0 (path+file://@ROOT@)\"],\"target_directory\":\"@ROOT@/target\"}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "git": [
+        ".github/workflows/ci.yml",
+        "src/main.rs"
+      ],
+      "python": [
+        "validate"
+      ],
+      "rust": [
+        "coverage",
+        "validate"
+      ],
+      "exit": 0,
+      "stdout": "{\"counts\": {\"feature\": 2, \"package\": 1, \"target\": 1, \"workflow\": 1, \"workflow-job\": 1}, \"stage\": \"static\", \"unassigned_or_invalid\": 0}\n",
+      "stderr": ""
+    },
+    {
+      "name": "cov-discover-wf-key-colon-then-unit-sep",
+      "tool": "coverage",
+      "files": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "text": "name: ci\njobs:\n  build:\u001f{runs-on: x}\n"
+        },
+        {
+          "path": "src/main.rs",
+          "text": "fn main() {}\n"
+        },
+        {
+          "path": "deploy/ci/coverage.json",
+          "text": "{\"schema\":\"jope.coverage/v1\",\"lanes\":{\"l\":{\"command\":\"c\",\"environment\":\"e\",\"inputs\":[\"i\"],\"path_applicability\":\"p\",\"evidence\":\"ev\",\"requires_nonzero_tests\":true,\"stage\":\"static\",\"feature_selection\":\"explicit\",\"result_backend\":\"none\"}},\"dispositions\":{\"d\":{\"status\":\"deferred\",\"reason\":\"r\",\"dependencies\":[\"x\"],\"owner_phase\":\"p\"}},\"items\":{\"feature:demo/default\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[\"x\"]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"feature:demo/x\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"job:.github/workflows/ci.yml/build\":{\"discovery\":{\"kind\":\"workflow-job\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"package:demo\":{\"discovery\":{\"kind\":\"package\",\"manifest\":\"Cargo.toml\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"target:demo/bin/demo\":{\"discovery\":{\"kind\":\"target\",\"source\":\"src/main.rs\",\"test\":true,\"doctest\":false,\"required_features\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"workflow:.github/workflows/ci.yml\":{\"discovery\":{\"kind\":\"workflow\"},\"lanes\":[\"l\"],\"scope\":\"s\"}}}"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[{\"id\":\"demo 0.1.0 (path+file://@ROOT@)\",\"name\":\"demo\",\"manifest_path\":\"@ROOT@/Cargo.toml\",\"features\":{\"default\":[\"x\"],\"x\":[]},\"targets\":[{\"kind\":[\"bin\"],\"name\":\"demo\",\"src_path\":\"@ROOT@/src/main.rs\",\"test\":true,\"doctest\":false}]}],\"workspace_members\":[\"demo 0.1.0 (path+file://@ROOT@)\"],\"target_directory\":\"@ROOT@/target\"}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "git": [
+        ".github/workflows/ci.yml",
+        "src/main.rs"
+      ],
+      "python": [
+        "discover"
+      ],
+      "rust": [
+        "coverage",
+        "discover"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"stage\": \"static\",\n  \"items\": {\n    \"feature:demo/default\": {\n      \"kind\": \"feature\",\n      \"dependencies\": [\n        \"x\"\n      ]\n    },\n    \"feature:demo/x\": {\n      \"kind\": \"feature\",\n      \"dependencies\": []\n    },\n    \"job:.github/workflows/ci.yml/build\": {\n      \"kind\": \"workflow-job\"\n    },\n    \"package:demo\": {\n      \"kind\": \"package\",\n      \"manifest\": \"Cargo.toml\"\n    },\n    \"target:demo/bin/demo\": {\n      \"kind\": \"target\",\n      \"source\": \"src/main.rs\",\n      \"test\": true,\n      \"doctest\": false,\n      \"required_features\": []\n    },\n    \"workflow:.github/workflows/ci.yml\": {\n      \"kind\": \"workflow\"\n    }\n  }\n}\n",
+      "stderr": ""
+    },
+    {
+      "name": "cov-validate-wf-key-colon-then-unit-sep",
+      "tool": "coverage",
+      "files": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "text": "name: ci\njobs:\n  build:\u001f{runs-on: x}\n"
+        },
+        {
+          "path": "src/main.rs",
+          "text": "fn main() {}\n"
+        },
+        {
+          "path": "deploy/ci/coverage.json",
+          "text": "{\"schema\":\"jope.coverage/v1\",\"lanes\":{\"l\":{\"command\":\"c\",\"environment\":\"e\",\"inputs\":[\"i\"],\"path_applicability\":\"p\",\"evidence\":\"ev\",\"requires_nonzero_tests\":true,\"stage\":\"static\",\"feature_selection\":\"explicit\",\"result_backend\":\"none\"}},\"dispositions\":{\"d\":{\"status\":\"deferred\",\"reason\":\"r\",\"dependencies\":[\"x\"],\"owner_phase\":\"p\"}},\"items\":{\"feature:demo/default\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[\"x\"]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"feature:demo/x\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"job:.github/workflows/ci.yml/build\":{\"discovery\":{\"kind\":\"workflow-job\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"package:demo\":{\"discovery\":{\"kind\":\"package\",\"manifest\":\"Cargo.toml\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"target:demo/bin/demo\":{\"discovery\":{\"kind\":\"target\",\"source\":\"src/main.rs\",\"test\":true,\"doctest\":false,\"required_features\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"workflow:.github/workflows/ci.yml\":{\"discovery\":{\"kind\":\"workflow\"},\"lanes\":[\"l\"],\"scope\":\"s\"}}}"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[{\"id\":\"demo 0.1.0 (path+file://@ROOT@)\",\"name\":\"demo\",\"manifest_path\":\"@ROOT@/Cargo.toml\",\"features\":{\"default\":[\"x\"],\"x\":[]},\"targets\":[{\"kind\":[\"bin\"],\"name\":\"demo\",\"src_path\":\"@ROOT@/src/main.rs\",\"test\":true,\"doctest\":false}]}],\"workspace_members\":[\"demo 0.1.0 (path+file://@ROOT@)\"],\"target_directory\":\"@ROOT@/target\"}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "git": [
+        ".github/workflows/ci.yml",
+        "src/main.rs"
+      ],
+      "python": [
+        "validate"
+      ],
+      "rust": [
+        "coverage",
+        "validate"
+      ],
+      "exit": 0,
+      "stdout": "{\"counts\": {\"feature\": 2, \"package\": 1, \"target\": 1, \"workflow\": 1, \"workflow-job\": 1}, \"stage\": \"static\", \"unassigned_or_invalid\": 0}\n",
+      "stderr": ""
+    },
+    {
+      "name": "cov-discover-meta-id-nan",
+      "tool": "coverage",
+      "files": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "text": "name: ci\non: push\njobs:\n  build:\n    runs-on: ubuntu-latest\n"
+        },
+        {
+          "path": "src/main.rs",
+          "text": "fn main() {}\n"
+        },
+        {
+          "path": "deploy/ci/coverage.json",
+          "text": "{\"schema\":\"jope.coverage/v1\",\"lanes\":{\"l\":{\"command\":\"c\",\"environment\":\"e\",\"inputs\":[\"i\"],\"path_applicability\":\"p\",\"evidence\":\"ev\",\"requires_nonzero_tests\":true,\"stage\":\"static\",\"feature_selection\":\"explicit\",\"result_backend\":\"none\"}},\"dispositions\":{\"d\":{\"status\":\"deferred\",\"reason\":\"r\",\"dependencies\":[\"x\"],\"owner_phase\":\"p\"}},\"items\":{\"feature:demo/default\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[\"x\"]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"feature:demo/x\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"job:.github/workflows/ci.yml/build\":{\"discovery\":{\"kind\":\"workflow-job\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"package:demo\":{\"discovery\":{\"kind\":\"package\",\"manifest\":\"Cargo.toml\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"target:demo/bin/demo\":{\"discovery\":{\"kind\":\"target\",\"source\":\"src/main.rs\",\"test\":true,\"doctest\":false,\"required_features\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"workflow:.github/workflows/ci.yml\":{\"discovery\":{\"kind\":\"workflow\"},\"lanes\":[\"l\"],\"scope\":\"s\"}}}"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[{\"id\":NaN,\"name\":\"demo\",\"manifest_path\":\"@ROOT@/Cargo.toml\",\"features\":{},\"targets\":[]}],\"workspace_members\":[NaN]}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "git": [
+        ".github/workflows/ci.yml",
+        "src/main.rs"
+      ],
+      "python": [
+        "discover"
+      ],
+      "rust": [
+        "coverage",
+        "discover"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"stage\": \"static\",\n  \"items\": {\n    \"job:.github/workflows/ci.yml/build\": {\n      \"kind\": \"workflow-job\"\n    },\n    \"package:demo\": {\n      \"kind\": \"package\",\n      \"manifest\": \"Cargo.toml\"\n    },\n    \"workflow:.github/workflows/ci.yml\": {\n      \"kind\": \"workflow\"\n    }\n  }\n}\n",
+      "stderr": ""
+    },
+    {
+      "name": "cov-validate-meta-id-nan",
+      "tool": "coverage",
+      "files": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "text": "name: ci\non: push\njobs:\n  build:\n    runs-on: ubuntu-latest\n"
+        },
+        {
+          "path": "src/main.rs",
+          "text": "fn main() {}\n"
+        },
+        {
+          "path": "deploy/ci/coverage.json",
+          "text": "{\"schema\":\"jope.coverage/v1\",\"lanes\":{\"l\":{\"command\":\"c\",\"environment\":\"e\",\"inputs\":[\"i\"],\"path_applicability\":\"p\",\"evidence\":\"ev\",\"requires_nonzero_tests\":true,\"stage\":\"static\",\"feature_selection\":\"explicit\",\"result_backend\":\"none\"}},\"dispositions\":{\"d\":{\"status\":\"deferred\",\"reason\":\"r\",\"dependencies\":[\"x\"],\"owner_phase\":\"p\"}},\"items\":{\"feature:demo/default\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[\"x\"]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"feature:demo/x\":{\"discovery\":{\"kind\":\"feature\",\"dependencies\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"job:.github/workflows/ci.yml/build\":{\"discovery\":{\"kind\":\"workflow-job\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"package:demo\":{\"discovery\":{\"kind\":\"package\",\"manifest\":\"Cargo.toml\"},\"lanes\":[\"l\"],\"scope\":\"s\"},\"target:demo/bin/demo\":{\"discovery\":{\"kind\":\"target\",\"source\":\"src/main.rs\",\"test\":true,\"doctest\":false,\"required_features\":[]},\"lanes\":[\"l\"],\"scope\":\"s\"},\"workflow:.github/workflows/ci.yml\":{\"discovery\":{\"kind\":\"workflow\"},\"lanes\":[\"l\"],\"scope\":\"s\"}}}"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[{\"id\":NaN,\"name\":\"demo\",\"manifest_path\":\"@ROOT@/Cargo.toml\",\"features\":{},\"targets\":[]}],\"workspace_members\":[NaN]}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "git": [
+        ".github/workflows/ci.yml",
+        "src/main.rs"
+      ],
+      "python": [
+        "validate"
+      ],
+      "rust": [
+        "coverage",
+        "validate"
+      ],
+      "exit": 1,
+      "stdout": "stale assignment: feature:demo/default\nstale assignment: feature:demo/x\nstale assignment: target:demo/bin/demo\n{\"counts\": {\"package\": 1, \"workflow\": 1, \"workflow-job\": 1}, \"stage\": \"static\", \"unassigned_or_invalid\": 3}\n",
+      "stderr": ""
+    },
+    {
+      "name": "scope-base",
+      "tool": "scope",
+      "files": [
+        {
+          "path": "deploy/ci/rust-test-scope.sh",
+          "text": "product=(a)\ndeferred=(b)\ncase \"${1:-}\" in --deferred) set -- \"${deferred[@]}\";; *) set -- \"${product[@]}\";; esac\nfor p in \"$@\"; do printf -- '-p %s ' \"$p\"; done; echo\n"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[{\"name\":\"a\"},{\"name\":\"b\"}],\"workspace_members\":[]}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "python": [],
+      "rust": [
+        "rust-scope-check"
+      ],
+      "exit": 0,
+      "stdout": "ok: 2 workspace packages = 1 product + 1 deferred (no repeats, no overlap, none unplaced)\n",
+      "stderr": ""
+    },
+    {
+      "name": "scope-script-stderr-not-utf8",
+      "tool": "scope",
+      "files": [
+        {
+          "path": "deploy/ci/rust-test-scope.sh",
+          "text": "product=(a)\ndeferred=(b)\ncase \"${1:-}\" in --deferred) set -- \"${deferred[@]}\";; *) set -- \"${product[@]}\";; esac\nfor p in \"$@\"; do printf -- '-p %s ' \"$p\"; done; echo\n"
+        },
+        {
+          "path": "deploy/ci/rust-test-scope.sh",
+          "hex": "70726f647563743d2861290a64656665727265643d2862290a636173652022247b313a2d7d2220696e202d2d64656665727265642920736574202d2d2022247b64656665727265645b405d7d223b3b202a2920736574202d2d2022247b70726f647563745b405d7d223b3b20657361630a666f72207020696e20222440223b20646f207072696e7466202d2d20272d70202573202720222470223b20646f6e653b206563686f0a7072696e746620275c3337375c6e27203e26320a"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[{\"name\":\"a\"},{\"name\":\"b\"}],\"workspace_members\":[]}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "python": [],
+      "rust": [
+        "rust-scope-check"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "raised": "UnicodeDecodeError: 'utf-8' codec can't decode byte 0xff in position 0: invalid start byte"
+    },
+    {
+      "name": "scope-cargo-stderr-not-utf8",
+      "tool": "scope",
+      "files": [
+        {
+          "path": "deploy/ci/rust-test-scope.sh",
+          "text": "product=(a)\ndeferred=(b)\ncase \"${1:-}\" in --deferred) set -- \"${deferred[@]}\";; *) set -- \"${product[@]}\";; esac\nfor p in \"$@\"; do printf -- '-p %s ' \"$p\"; done; echo\n"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[{\"name\":\"a\"},{\"name\":\"b\"}],\"workspace_members\":[]}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "7761726e696e673a20ff0a",
+        "exit": "0"
+      },
+      "python": [],
+      "rust": [
+        "rust-scope-check"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "raised": "UnicodeDecodeError: 'utf-8' codec can't decode byte 0xff in position 9: invalid start byte"
+    },
+    {
+      "name": "scope-cargo-fails-stderr-not-utf8",
+      "tool": "scope",
+      "files": [
+        {
+          "path": "deploy/ci/rust-test-scope.sh",
+          "text": "product=(a)\ndeferred=(b)\ncase \"${1:-}\" in --deferred) set -- \"${deferred[@]}\";; *) set -- \"${product[@]}\";; esac\nfor p in \"$@\"; do printf -- '-p %s ' \"$p\"; done; echo\n"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[{\"name\":\"a\"},{\"name\":\"b\"}],\"workspace_members\":[]}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "6572726f723a20ff0a",
+        "exit": "3"
+      },
+      "python": [],
+      "rust": [
+        "rust-scope-check"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "raised": "UnicodeDecodeError: 'utf-8' codec can't decode byte 0xff in position 7: invalid start byte"
+    },
+    {
+      "name": "scope-meta-utf8-bom",
+      "tool": "scope",
+      "files": [
+        {
+          "path": "deploy/ci/rust-test-scope.sh",
+          "text": "product=(a)\ndeferred=(b)\ncase \"${1:-}\" in --deferred) set -- \"${deferred[@]}\";; *) set -- \"${product[@]}\";; esac\nfor p in \"$@\"; do printf -- '-p %s ' \"$p\"; done; echo\n"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[{\"name\":\"a\"},{\"name\":\"b\"}],\"workspace_members\":[]}\n",
+        "encoding": "utf-8-sig",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "python": [],
+      "rust": [
+        "rust-scope-check"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "raised": "json.decoder.JSONDecodeError: Unexpected UTF-8 BOM (decode using utf-8-sig): line 1 column 1 (char 0)"
+    },
+    {
+      "name": "scope-meta-utf16",
+      "tool": "scope",
+      "files": [
+        {
+          "path": "deploy/ci/rust-test-scope.sh",
+          "text": "product=(a)\ndeferred=(b)\ncase \"${1:-}\" in --deferred) set -- \"${deferred[@]}\";; *) set -- \"${product[@]}\";; esac\nfor p in \"$@\"; do printf -- '-p %s ' \"$p\"; done; echo\n"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[{\"name\":\"a\"},{\"name\":\"b\"}],\"workspace_members\":[]}\n",
+        "encoding": "utf-16",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "python": [],
+      "rust": [
+        "rust-scope-check"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "raised": "UnicodeDecodeError: 'utf-8' codec can't decode byte 0xff in position 0: invalid start byte"
+    },
+    {
+      "name": "scope-emitted-repr-unassigned",
+      "tool": "scope",
+      "files": [
+        {
+          "path": "deploy/ci/rust-test-scope.sh",
+          "text": "product=(a)\ndeferred=(b)\ncase \"${1:-}\" in --deferred) printf -- '-p b\\n';; *) printf -- '-p a \\315\\270x\\n';; esac\n"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[{\"name\":\"a\"},{\"name\":\"b\"}],\"workspace_members\":[]}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "python": [],
+      "rust": [
+        "rust-scope-check"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "rust-test-scope.sh : expected `-p <name>` pairs, got: '-p a \\u0378x\\n'\n"
+    },
+    {
+      "name": "scope-emitted-repr-nbsp",
+      "tool": "scope",
+      "files": [
+        {
+          "path": "deploy/ci/rust-test-scope.sh",
+          "text": "product=(a)\ndeferred=(b)\ncase \"${1:-}\" in --deferred) printf -- '-p b\\n';; *) printf -- '-p a \\302\\240x y\\n';; esac\n"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[{\"name\":\"a\"},{\"name\":\"b\"}],\"workspace_members\":[]}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "python": [],
+      "rust": [
+        "rust-scope-check"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "rust-test-scope.sh : expected `-p <name>` pairs, got: '-p a \\xa0x y\\n'\n"
+    },
+    {
+      "name": "scope-emitted-crlf",
+      "tool": "scope",
+      "files": [
+        {
+          "path": "deploy/ci/rust-test-scope.sh",
+          "text": "product=(a)\ndeferred=(b)\ncase \"${1:-}\" in --deferred) printf -- '-p b\\n';; *) printf -- '-p a -p\\r\\n';; esac\n"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[{\"name\":\"a\"},{\"name\":\"b\"}],\"workspace_members\":[]}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "python": [],
+      "rust": [
+        "rust-scope-check"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "rust-test-scope.sh : expected `-p <name>` pairs, got: '-p a -p\\n'\n"
+    },
+    {
+      "name": "scope-script-killed",
+      "tool": "scope",
+      "files": [
+        {
+          "path": "deploy/ci/rust-test-scope.sh",
+          "text": "product=(a)\ndeferred=(b)\nkill -9 $$\n"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[{\"name\":\"a\"},{\"name\":\"b\"}],\"workspace_members\":[]}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "python": [],
+      "rust": [
+        "rust-scope-check"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "rust-test-scope.sh : exit -9\n\n"
+    },
+    {
+      "name": "scope-script-exit-3",
+      "tool": "scope",
+      "files": [
+        {
+          "path": "deploy/ci/rust-test-scope.sh",
+          "text": "product=(a)\ndeferred=(b)\necho boom >&2; exit 3\n"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[{\"name\":\"a\"},{\"name\":\"b\"}],\"workspace_members\":[]}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "python": [],
+      "rust": [
+        "rust-scope-check"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "rust-test-scope.sh : exit 3\nboom\n"
+    },
+    {
+      "name": "scope-product-bad-deferred-fails",
+      "tool": "scope",
+      "files": [
+        {
+          "path": "deploy/ci/rust-test-scope.sh",
+          "text": "product=(a)\ndeferred=(b)\ncase \"${1:-}\" in --deferred) echo gone >&2; exit 2;; *) printf -- '-p a -p\\n';; esac\n"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[{\"name\":\"a\"},{\"name\":\"b\"}],\"workspace_members\":[]}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "python": [],
+      "rust": [
+        "rust-scope-check"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "rust-test-scope.sh : expected `-p <name>` pairs, got: '-p a -p\\n'\n"
+    },
+    {
+      "name": "parity-base",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **1** | **1** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 1.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/x.py | a/b.py | none | moved |  |"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[],\"workspace_members\":[]}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 0,
+      "stdout": "capability matrix: 1 rows\nby status: moved=1\nby kind: tool-py=1\nthis tree: 0 binaries, 0 examples, 0 clap subcommands, 0 python tools, 0 systemd units\nok: every row resolved and every entry point of this tree has a row\n",
+      "stderr": ""
+    },
+    {
+      "name": "parity-help-name-unit-sep",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **1** | **1** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 1.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/x.py | a/b.py | none | moved |  |"
+        },
+        {
+          "path": "help.txt",
+          "text": "Commands:\n  foo\u001fbar\n  help  Print this message\n\nOptions:\n"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[],\"workspace_members\":[]}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md",
+        "--help-text",
+        "@ROOT@/help.txt"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md",
+        "--help-text",
+        "@ROOT@/help.txt"
+      ],
+      "exit": 1,
+      "stdout": "capability matrix: 1 rows\nby status: moved=1\nby kind: tool-py=1\nthis tree: 0 binaries, 0 examples, 0 clap subcommands, 0 python tools, 0 systemd units\n\n1 problem(s):\n  - no row for clap subcommand (from --help): jope-parallel foo\n",
+      "stderr": ""
+    },
+    {
+      "name": "parity-help-name-trailing-unit-sep",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **1** | **1** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 1.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/x.py | a/b.py | none | moved |  |"
+        },
+        {
+          "path": "help.txt",
+          "text": "Commands:\n  foo\u001f\n\nOptions:\n"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[],\"workspace_members\":[]}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md",
+        "--help-text",
+        "@ROOT@/help.txt"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md",
+        "--help-text",
+        "@ROOT@/help.txt"
+      ],
+      "exit": 1,
+      "stdout": "capability matrix: 1 rows\nby status: moved=1\nby kind: tool-py=1\nthis tree: 0 binaries, 0 examples, 0 clap subcommands, 0 python tools, 0 systemd units\n\n1 problem(s):\n  - no row for clap subcommand (from --help): jope-parallel foo\n",
+      "stderr": ""
+    },
+    {
+      "name": "parity-clap-variant-unit-sep",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **1** | **1** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 1.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/x.py | a/b.py | none | moved |  |"
+        },
+        {
+          "path": "crates/jope-engine/src/main.rs",
+          "text": "enum Cmd {\n    Foo\u001f{},\n}\n"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[],\"workspace_members\":[]}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 1,
+      "stdout": "capability matrix: 1 rows\nby status: moved=1\nby kind: tool-py=1\nthis tree: 0 binaries, 0 examples, 1 clap subcommands, 0 python tools, 0 systemd units\n\n1 problem(s):\n  - no row for clap subcommand: jope-parallel foo\n",
+      "stderr": ""
+    },
+    {
+      "name": "parity-clap-crlf",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| engine-subcommand | 1 | 1 | 0 | 0 | 0 | 0 |\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **2** | **2** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 2.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/x.py | a/b.py | none | moved |  |\n| engine-subcommand | x | a/b.py (jope-parallel foo) | none | moved |  |"
+        },
+        {
+          "path": "crates/jope-engine/src/main.rs",
+          "text": "enum Cmd {\r\n    Foo,\r\n}\r\n"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[],\"workspace_members\":[]}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 0,
+      "stdout": "capability matrix: 2 rows\nby status: moved=2\nby kind: engine-subcommand=1, tool-py=1\nthis tree: 0 binaries, 0 examples, 1 clap subcommands, 0 python tools, 0 systemd units\nok: every row resolved and every entry point of this tree has a row\n",
+      "stderr": ""
+    },
+    {
+      "name": "parity-clap-name-attr-unit-sep",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| engine-subcommand | 1 | 1 | 0 | 0 | 0 | 0 |\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **2** | **2** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 2.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/x.py | a/b.py | none | moved |  |\n| engine-subcommand | x | a/b.py (jope-parallel custom) | none | moved |  |"
+        },
+        {
+          "path": "crates/jope-engine/src/main.rs",
+          "text": "enum Cmd {\n    #[command(name\u001f= \"custom\")]\n    Foo,\n}\n"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[],\"workspace_members\":[]}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 0,
+      "stdout": "capability matrix: 2 rows\nby status: moved=2\nby kind: engine-subcommand=1, tool-py=1\nthis tree: 0 binaries, 0 examples, 1 clap subcommands, 0 python tools, 0 systemd units\nok: every row resolved and every entry point of this tree has a row\n",
+      "stderr": ""
+    },
+    {
+      "name": "parity-enum-missing-help-missing",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **1** | **1** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 1.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/x.py | a/b.py | none | moved |  |"
+        },
+        {
+          "path": "crates/jope-engine/src/main.rs",
+          "text": "fn main() {}\n"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[],\"workspace_members\":[]}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md",
+        "--help-text",
+        "@ROOT@/no-such-help.txt"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md",
+        "--help-text",
+        "@ROOT@/no-such-help.txt"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "@ROOT@/crates/jope-engine/src/main.rs: enum Cmd not found\n"
+    },
+    {
+      "name": "parity-pending-wp-huge",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **1** | **1** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 1.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/x.py | a/b.py | none | moved |  |\n| tool-py | old/y.py | pending | none | pending-WP99999999999999999999 |  |"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[],\"workspace_members\":[]}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 1,
+      "stdout": "capability matrix: 2 rows\nby status: moved=1, pending=1\nby kind: tool-py=2\nthis tree: 0 binaries, 0 examples, 0 clap subcommands, 0 python tools, 0 systemd units\n\n3 problem(s):\n  - row 2 [tool-py | old/y.py]: pending-WP99999999999999999999 is outside WP4..WP12\n  - ## Counts row `**total**` disagrees with the rows below it: committed `| **total** | **1** | **1** | **0** | **0** | **0** | **0** |`, recomputed `| **total** | **2** | **1** | **0** | **1** | **0** | **0** |`\n  - ## Counts row `tool-py` disagrees with the rows below it: committed `| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |`, recomputed `| tool-py | 2 | 1 | 0 | 1 | 0 | 0 |`\n",
+      "stderr": ""
+    },
+    {
+      "name": "parity-pending-wp-arabic-digit",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **1** | **1** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 1.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/x.py | a/b.py | none | moved |  |\n| tool-py | old/y.py | pending | none | pending-WP٥ |  |"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[],\"workspace_members\":[]}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 1,
+      "stdout": "capability matrix: 2 rows\nby status: moved=1, pending=1\nby kind: tool-py=2\nthis tree: 0 binaries, 0 examples, 0 clap subcommands, 0 python tools, 0 systemd units\n\n2 problem(s):\n  - ## Counts row `**total**` disagrees with the rows below it: committed `| **total** | **1** | **1** | **0** | **0** | **0** | **0** |`, recomputed `| **total** | **2** | **1** | **0** | **1** | **0** | **0** |`\n  - ## Counts row `tool-py` disagrees with the rows below it: committed `| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |`, recomputed `| tool-py | 2 | 1 | 0 | 1 | 0 | 0 |`\n",
+      "stderr": ""
+    },
+    {
+      "name": "parity-pending-wp-leading-zeros",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **1** | **1** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 1.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/x.py | a/b.py | none | moved |  |\n| tool-py | old/y.py | pending | none | pending-WP0013 |  |"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[],\"workspace_members\":[]}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 1,
+      "stdout": "capability matrix: 2 rows\nby status: moved=1, pending=1\nby kind: tool-py=2\nthis tree: 0 binaries, 0 examples, 0 clap subcommands, 0 python tools, 0 systemd units\n\n3 problem(s):\n  - row 2 [tool-py | old/y.py]: pending-WP13 is outside WP4..WP12\n  - ## Counts row `**total**` disagrees with the rows below it: committed `| **total** | **1** | **1** | **0** | **0** | **0** | **0** |`, recomputed `| **total** | **2** | **1** | **0** | **1** | **0** | **0** |`\n  - ## Counts row `tool-py` disagrees with the rows below it: committed `| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |`, recomputed `| tool-py | 2 | 1 | 0 | 1 | 0 | 0 |`\n",
+      "stderr": ""
+    },
+    {
+      "name": "parity-tally-arabic-equal",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **1** | **1** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: ١.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/x.py | a/b.py | none | moved |  |"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[],\"workspace_members\":[]}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 0,
+      "stdout": "capability matrix: 1 rows\nby status: moved=1\nby kind: tool-py=1\nthis tree: 0 binaries, 0 examples, 0 clap subcommands, 0 python tools, 0 systemd units\nok: every row resolved and every entry point of this tree has a row\n",
+      "stderr": ""
+    },
+    {
+      "name": "parity-tally-arabic-differs",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **1** | **1** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: ٥.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/x.py | a/b.py | none | moved |  |"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[],\"workspace_members\":[]}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 1,
+      "stdout": "capability matrix: 1 rows\nby status: moved=1\nby kind: tool-py=1\nthis tree: 0 binaries, 0 examples, 0 clap subcommands, 0 python tools, 0 systemd units\n\n1 problem(s):\n  - ## Counts says 5 `moved`/`new` rows without a covering test; the rows say 1\n",
+      "stderr": ""
+    },
+    {
+      "name": "parity-tally-huge",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **1** | **1** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 99999999999999999999999.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/x.py | a/b.py | none | moved |  |"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[],\"workspace_members\":[]}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 1,
+      "stdout": "capability matrix: 1 rows\nby status: moved=1\nby kind: tool-py=1\nthis tree: 0 binaries, 0 examples, 0 clap subcommands, 0 python tools, 0 systemd units\n\n1 problem(s):\n  - ## Counts says 99999999999999999999999 `moved`/`new` rows without a covering test; the rows say 1\n",
+      "stderr": ""
+    },
+    {
+      "name": "parity-meta-utf8-bom",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **1** | **1** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 1.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/x.py | a/b.py | none | moved |  |"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[],\"workspace_members\":[]}\n",
+        "encoding": "utf-8-sig",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "raised": "json.decoder.JSONDecodeError: Unexpected UTF-8 BOM (decode using utf-8-sig): line 1 column 1 (char 0)"
+    },
+    {
+      "name": "parity-meta-utf16",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **1** | **1** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 1.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/x.py | a/b.py | none | moved |  |"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[],\"workspace_members\":[]}\n",
+        "encoding": "utf-16",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "raised": "UnicodeDecodeError: 'utf-8' codec can't decode byte 0xff in position 0: invalid start byte"
+    },
+    {
+      "name": "parity-cargo-stderr-not-utf8",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **1** | **1** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 1.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/x.py | a/b.py | none | moved |  |"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[],\"workspace_members\":[]}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "7761726e696e673a20ff0a",
+        "exit": "0"
+      },
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "raised": "UnicodeDecodeError: 'utf-8' codec can't decode byte 0xff in position 9: invalid start byte"
+    },
+    {
+      "name": "parity-cargo-fails-stderr-not-utf8",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **1** | **1** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 1.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/x.py | a/b.py | none | moved |  |"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[],\"workspace_members\":[]}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "6572726f723a20ff0a",
+        "exit": "101"
+      },
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "raised": "UnicodeDecodeError: 'utf-8' codec can't decode byte 0xff in position 7: invalid start byte"
+    },
+    {
+      "name": "parity-cargo-fails",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **1** | **1** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 1.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/x.py | a/b.py | none | moved |  |"
+        }
+      ],
+      "cargo": {
+        "stdout": "",
+        "encoding": "utf-8",
+        "stderr_hex": "6572726f723a206e6f0a",
+        "exit": "3"
+      },
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 0,
+      "stdout": "capability matrix: 1 rows\nby status: moved=1\nby kind: tool-py=1\nthis tree: 0 binaries, 0 examples, 0 clap subcommands, 0 python tools, 0 systemd units\nok: every row resolved and every entry point of this tree has a row\n",
+      "stderr": "warning: cargo metadata unavailable (Command '['cargo', 'metadata', '--locked', '--no-deps', '--format-version', '1']' returned non-zero exit status 3.); falling back to src/bin listings\n"
+    },
+    {
+      "name": "parity-cargo-killed",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **1** | **1** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 1.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/x.py | a/b.py | none | moved |  |"
+        }
+      ],
+      "cargo": {
+        "stdout": "",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "kill"
+      },
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 0,
+      "stdout": "capability matrix: 1 rows\nby status: moved=1\nby kind: tool-py=1\nthis tree: 0 binaries, 0 examples, 0 clap subcommands, 0 python tools, 0 systemd units\nok: every row resolved and every entry point of this tree has a row\n",
+      "stderr": "warning: cargo metadata unavailable (Command '['cargo', 'metadata', '--locked', '--no-deps', '--format-version', '1']' died with <Signals.SIGKILL: 9>.); falling back to src/bin listings\n"
+    },
+    {
+      "name": "parity-tool-name-not-utf8-decoy",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| new-tool | 1 | 0 | 1 | 0 | 0 | 0 |\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **2** | **1** | **1** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 2.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/x.py | a/b.py | none | moved |  |\n| new-tool | (new) | python/src/jope/tools/�.py | none | new |  |"
+        },
+        {
+          "path_hex": "707974686f6e2f7372632f6a6f70652f746f6f6c732fff2e7079",
+          "text": ""
+        },
+        {
+          "path": "python/src/jope/tools/�.py",
+          "text": ""
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[],\"workspace_members\":[]}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 1,
+      "stdout_hex": "6361706162696c697479206d61747269783a203220726f77730a6279207374617475733a206d6f7665643d312c206e65773d310a6279206b696e643a206e65772d746f6f6c3d312c20746f6f6c2d70793d310a7468697320747265653a20302062696e61726965732c2030206578616d706c65732c203020636c617020737562636f6d6d616e64732c203220707974686f6e20746f6f6c732c20302073797374656d6420756e6974730a0a312070726f626c656d2873293a0a20202d206e6f20726f7720666f7220707974686f6e20746f6f6c3a20707974686f6e2f7372632f6a6f70652f746f6f6c732fff2e70790a",
+      "stderr": ""
+    },
+    {
+      "name": "parity-unit-name-not-utf8",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **1** | **1** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 1.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/x.py | a/b.py | none | moved |  |"
+        },
+        {
+          "path_hex": "6465706c6f792f73797374656d642fff2e73657276696365",
+          "text": ""
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[],\"workspace_members\":[]}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 1,
+      "stdout_hex": "6361706162696c697479206d61747269783a203120726f77730a6279207374617475733a206d6f7665643d310a6279206b696e643a20746f6f6c2d70793d310a7468697320747265653a20302062696e61726965732c2030206578616d706c65732c203020636c617020737562636f6d6d616e64732c203020707974686f6e20746f6f6c732c20312073797374656d6420756e6974730a0a312070726f626c656d2873293a0a20202d206e6f20726f7720666f722073797374656d6420756e69743a206465706c6f792f73797374656d642fff2e736572766963650a",
+      "stderr": ""
+    },
+    {
+      "name": "parity-tool-name-not-utf8-not-listed",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **1** | **1** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 1.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/x.py | a/b.py | none | moved |  |"
+        },
+        {
+          "path_hex": "707974686f6e2f7372632f6a6f70652f746f6f6c732fff2e747874",
+          "text": ""
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[],\"workspace_members\":[]}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 0,
+      "stdout": "capability matrix: 1 rows\nby status: moved=1\nby kind: tool-py=1\nthis tree: 0 binaries, 0 examples, 0 clap subcommands, 0 python tools, 0 systemd units\nok: every row resolved and every entry point of this tree has a row\n",
+      "stderr": ""
+    },
+    {
+      "name": "parity-jope-py-add-parser-unit-sep",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **1** | **1** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 1.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/x.py | a/b.py | none | moved |  |"
+        },
+        {
+          "path": "python/src/jope/cli.py",
+          "text": "subs = parser.add_subparsers(dest=\"c\")\ntrain = subs.add_parser(\u001f\"train\")\n"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[],\"workspace_members\":[]}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 1,
+      "stdout": "capability matrix: 1 rows\nby status: moved=1\nby kind: tool-py=1\nthis tree: 0 binaries, 0 examples, 0 clap subcommands, 0 python tools, 0 systemd units\n\n1 problem(s):\n  - no row for jope-py command: train\n",
+      "stderr": ""
+    },
+    {
+      "name": "parity-jope-py-var-superscript",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **1** | **1** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 1.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/x.py | a/b.py | none | moved |  |"
+        },
+        {
+          "path": "python/src/jope/cli.py",
+          "text": "subs = parser.add_subparsers(dest=\"c\")\nt² = subs.add_parser(\"train\")\n"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[],\"workspace_members\":[]}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 1,
+      "stdout": "capability matrix: 1 rows\nby status: moved=1\nby kind: tool-py=1\nthis tree: 0 binaries, 0 examples, 0 clap subcommands, 0 python tools, 0 systemd units\n\n1 problem(s):\n  - no row for jope-py command: train\n",
+      "stderr": ""
+    },
+    {
+      "name": "parity-jope-py-var-connector",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **1** | **1** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 1.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/x.py | a/b.py | none | moved |  |"
+        },
+        {
+          "path": "python/src/jope/cli.py",
+          "text": "subs = parser.add_subparsers(dest=\"c\")\nx⁀ = subs.add_parser(\"train\")\n"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[],\"workspace_members\":[]}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 0,
+      "stdout": "capability matrix: 1 rows\nby status: moved=1\nby kind: tool-py=1\nthis tree: 0 binaries, 0 examples, 0 clap subcommands, 0 python tools, 0 systemd units\nok: every row resolved and every entry point of this tree has a row\n",
+      "stderr": ""
+    },
+    {
+      "name": "parity-target-name-too-long",
+      "tool": "parity",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **1** | **1** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 1.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/x.py | a/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx | none | moved |  |"
+        }
+      ],
+      "cargo": {
+        "stdout": "{\"packages\":[],\"workspace_members\":[]}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "raised": "OSError: [Errno 36] File name too long: '@ROOT@/a/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'"
+    }
+  ]
+}

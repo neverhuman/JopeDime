@@ -9,8 +9,11 @@
 //! - [`dumps`] reproduces `json.dumps(..., sort_keys=..., indent=...)` with the default
 //!   `ensure_ascii=True` escaping and Python float `repr`.
 //!
-//! Deliberate limits: integers must fit in `i64`, and a lone UTF-16 surrogate escape (which
-//! Python keeps as an unpaired code point) is rejected because Rust strings cannot hold it.
+//! Deliberate limits: integers must fit in `i64` unless the caller opts in to
+//! [`Value::BigInt`] ([`parse_bytes_big`], [`parse_str_big`]), and a lone UTF-16 surrogate (an
+//! unpaired `\uXXXX` escape, or UTF-8 bytes of one, which `json.loads(bytes)` decoded with
+//! `surrogatepass`), which Python keeps as an unpaired code point, is rejected because Rust
+//! strings cannot hold it.
 
 use std::collections::HashMap;
 use std::fmt::Write as _;
@@ -21,6 +24,9 @@ pub enum Value {
     Null,
     Bool(bool),
     Int(i64),
+    /// An integer outside `i64`, as its decimal literal (JSON integers have no leading zeros, so
+    /// the literal is Python's `repr`). Only [`parse_bytes_big`] and [`parse_str_big`] produce it.
+    BigInt(String),
     Float(f64),
     Str(String),
     List(Vec<Value>),
@@ -122,24 +128,39 @@ impl<K: Into<String>> FromIterator<(K, Value)> for Dict {
     }
 }
 
-/// Python `==` on dicts: same keys and equal values, order ignored.
+/// Python `==` on dicts: same keys and equal values, order ignored (values compared as
+/// [`eq_or_identical`], as `dict.__eq__` compares them).
 impl PartialEq for Dict {
     fn eq(&self, other: &Self) -> bool {
         self.len() == other.len()
-            && self
-                .iter()
-                .all(|(key, value)| other.get(key).is_some_and(|theirs| value == theirs))
+            && self.iter().all(|(key, value)| {
+                other
+                    .get(key)
+                    .is_some_and(|theirs| eq_or_identical(value, theirs))
+            })
     }
 }
 
-/// Python `==`: `True == 1 == 1.0`, lists element-wise, dicts ignoring order.
+/// `PyObject_RichCompareBool(a, b, Py_EQ)`, the comparison behind `in`, `list.__eq__` and
+/// `dict.__eq__`: identity first, then `==`. The only values it separates from `==` are NaNs:
+/// every `NaN` literal `json.loads` reads is the one shared `json.decoder.NaN` object, so
+/// `NaN in [NaN]` and `[NaN] == [NaN]` are true in Python although `NaN == NaN` is false.
+pub fn eq_or_identical(a: &Value, b: &Value) -> bool {
+    matches!((a, b), (Value::Float(x), Value::Float(y)) if x.is_nan() && y.is_nan()) || a == b
+}
+
+/// Python `==`: `True == 1 == 1.0`, lists element-wise, dicts ignoring order. Two NaNs are
+/// unequal here, as `float.__eq__` makes them; inside a list or a dict they compare as
+/// [`eq_or_identical`].
 impl PartialEq for Value {
     fn eq(&self, other: &Self) -> bool {
         use Value::{Bool, Dict, Float, Int, List, Null, Str};
         match (self, other) {
             (Null, Null) => true,
             (Str(a), Str(b)) => a == b,
-            (List(a), List(b)) => a == b,
+            (List(a), List(b)) => {
+                a.len() == b.len() && a.iter().zip(b).all(|(x, y)| eq_or_identical(x, y))
+            }
             (Dict(a), Dict(b)) => a == b,
             (Float(a), Float(b)) => a == b,
             (Bool(_) | Int(_), Bool(_) | Int(_)) => self.integer() == other.integer(),
@@ -147,9 +168,27 @@ impl PartialEq for Value {
                 let i = self.integer().or(other.integer()).unwrap_or_default();
                 float_equals_int(*f, i)
             }
+            // A big integer is outside `i64`, so it equals no `bool` or `int` here; it equals a
+            // float exactly when the float is that integer.
+            (Value::BigInt(a), Value::BigInt(b)) => a == b,
+            (Value::BigInt(i), Float(f)) | (Float(f), Value::BigInt(i)) => {
+                integral_float_text(*f).as_deref() == Some(i.as_str())
+            }
             _ => false,
         }
     }
+}
+
+/// The exact decimal integer a finite, integral float is (`int(f)`), or `None`.
+pub fn integral_float_text(f: f64) -> Option<String> {
+    (f.is_finite() && f.fract() == 0.0).then(|| {
+        let text = format!("{f:.0}");
+        if text == "-0" {
+            "0".to_owned()
+        } else {
+            text
+        }
+    })
 }
 
 fn float_equals_int(f: f64, i: i64) -> bool {
@@ -231,6 +270,7 @@ impl Value {
             Value::Null => false,
             Value::Bool(b) => *b,
             Value::Int(i) => *i != 0,
+            Value::BigInt(_) => true,
             Value::Float(f) => *f != 0.0,
             Value::Str(s) => !s.is_empty(),
             Value::List(list) => !list.is_empty(),
@@ -245,6 +285,7 @@ impl Value {
             Value::Bool(true) => "True".to_owned(),
             Value::Bool(false) => "False".to_owned(),
             Value::Int(i) => i.to_string(),
+            Value::BigInt(i) => i.clone(),
             Value::Float(f) => float_repr(*f),
             Value::Str(s) => str_repr(s),
             Value::List(list) => {
@@ -338,18 +379,32 @@ pub fn float_repr(value: f64) -> String {
 
 /// Python `repr(str)`.
 ///
-/// Printable characters are kept; the non-printable set is Python's for ASCII and Latin-1 and
-/// the common format/separator characters beyond (Python consults the full Unicode database,
-/// so an unassigned code point may be escaped there and kept here).
+/// Printable characters are kept and every other one is escaped, with CPython 3.12's
+/// `str.isprintable` rule: a character is printable when it is the space or its general category
+/// is neither `C*` (control, format, surrogate, private use, unassigned) nor `Z*` (separators) in
+/// Unicode 15.0, the database of CPython 3.12. The categories come from the `regex` crate's
+/// Unicode 16.0 tables restricted to the code points assigned by Unicode 15.0 (`Age=V15_0`), so a
+/// character first assigned in 15.1 or 16.0 is unassigned (escaped) here as it is there.
 pub fn str_repr(s: &str) -> String {
-    let quote = if s.contains('\'') && !s.contains('"') {
-        '"'
-    } else {
-        '\''
-    };
-    let mut out = String::with_capacity(s.len() + 2);
+    let units: Vec<std::result::Result<char, u16>> = s.chars().map(Ok).collect();
+    units_repr(&units)
+}
+
+/// Python `repr` of a `str` given as characters and lone surrogates (`Err`), which Python holds
+/// in a `str` (a surrogate-escaped file name, for one) and prints as `\udcff`.
+pub fn units_repr(units: &[std::result::Result<char, u16>]) -> String {
+    let has = |q: char| units.contains(&Ok(q));
+    let quote = if has('\'') && !has('"') { '"' } else { '\'' };
+    let mut out = String::with_capacity(units.len() + 2);
     out.push(quote);
-    for c in s.chars() {
+    for unit in units {
+        let c = match *unit {
+            Ok(c) => c,
+            Err(surrogate) => {
+                let _ = write!(out, "\\u{surrogate:04x}");
+                continue;
+            }
+        };
         match c {
             '\\' => out.push_str("\\\\"),
             '\t' => out.push_str("\\t"),
@@ -375,17 +430,17 @@ pub fn str_repr(s: &str) -> String {
     out
 }
 
-fn is_printable(c: char) -> bool {
+/// CPython 3.12's `Py_UNICODE_ISPRINTABLE` (see [`str_repr`]).
+pub fn is_printable(c: char) -> bool {
+    static NOT_PRINTABLE: std::sync::LazyLock<regex::Regex> = std::sync::LazyLock::new(|| {
+        regex::Regex::new(r"^[[\p{C}\p{Z}\P{Age=V15_0}]--\x20]$").expect("static pattern")
+    });
     let cp = c as u32;
     if cp < 0x7f {
         return cp >= 0x20;
     }
-    !matches!(cp,
-        0x7f..=0xa0 | 0xad | 0x600..=0x605 | 0x61c | 0x6dd | 0x70f | 0x890..=0x891 | 0x8e2
-        | 0x1680 | 0x180e | 0x2000..=0x200f | 0x2028..=0x202f | 0x205f..=0x2064
-        | 0x2066..=0x206f | 0x3000 | 0xd800..=0xf8ff | 0xfeff | 0xfff9..=0xfffb
-        | 0x110bd | 0x110cd | 0x13430..=0x1343f | 0x1bca0..=0x1bca3 | 0x1d173..=0x1d17a
-        | 0xe0001 | 0xe0020..=0xe007f | 0xf0000..)
+    let mut buffer = [0u8; 4];
+    !NOT_PRINTABLE.is_match(c.encode_utf8(&mut buffer))
 }
 
 /// `json.dumps(value, sort_keys=sort_keys, indent=indent)` with Python's defaults otherwise.
@@ -417,6 +472,7 @@ fn write_value(
         Value::Int(i) => {
             let _ = write!(out, "{i}");
         }
+        Value::BigInt(i) => out.push_str(i),
         Value::Float(f) => out.push_str(&json_float(*f)),
         Value::Str(s) => write_string(out, s),
         Value::List(list) => {
@@ -495,7 +551,32 @@ fn write_string(out: &mut String, s: &str) {
 
 /// `json.loads(text)` for a `str` argument.
 pub fn parse_str(text: &str) -> Result<Value, String> {
-    if text.starts_with('\u{feff}') {
+    parse_text(text, false, true)
+}
+
+/// [`parse_str`], keeping integers beyond `i64` as [`Value::BigInt`].
+pub fn parse_str_big(text: &str) -> Result<Value, String> {
+    parse_text(text, true, true)
+}
+
+/// `json.loads(data)` for a `bytes` argument: the encoding is detected as `json.detect_encoding`
+/// does (UTF-8 with or without a signature, UTF-16 and UTF-32 by their BOM or zero pattern) and
+/// decoded with `surrogatepass`, so an invalid byte is refused with CPython's codec message.
+pub fn parse_bytes(data: &[u8]) -> Result<Value, String> {
+    let text = decode_detected(data)?;
+    // Python checks for a BOM only on `str` input; after decoding bytes a stray U+FEFF is an
+    // ordinary invalid character, which the parser rejects on its own.
+    parse_text(&text, false, false)
+}
+
+/// [`parse_bytes`], keeping integers beyond `i64` as [`Value::BigInt`].
+pub fn parse_bytes_big(data: &[u8]) -> Result<Value, String> {
+    let text = decode_detected(data)?;
+    parse_text(&text, true, false)
+}
+
+fn parse_text(text: &str, big_ints: bool, refuse_bom: bool) -> Result<Value, String> {
+    if refuse_bom && text.starts_with('\u{feff}') {
         return Err(
             "Unexpected UTF-8 BOM (decode using utf-8-sig): line 1 column 1 (char 0)".to_owned(),
         );
@@ -505,35 +586,87 @@ pub fn parse_str(text: &str) -> Result<Value, String> {
         bytes: text.as_bytes(),
         pos: 0,
         depth: 0,
+        big_ints,
+        surrogate: None,
     };
     parser.skip_whitespace();
     let value = parser.value()?;
     parser.skip_whitespace();
     if parser.pos != parser.bytes.len() {
         return Err(parser.error("Extra data", parser.pos));
+    }
+    if let Some(at) = parser.surrogate {
+        return Err(parser.error("Unpaired surrogate escape (not representable)", at));
     }
     Ok(value)
 }
 
-/// `json.loads(data)` for a `bytes` argument: the encoding is detected as `json.detect_encoding`
-/// does (UTF-8 with or without a signature, UTF-16 and UTF-32 by their BOM or zero pattern).
-pub fn parse_bytes(data: &[u8]) -> Result<Value, String> {
-    let text = decode_detected(data)?;
-    // Python checks for a BOM only on `str` input; after decoding bytes a stray U+FEFF is an
-    // ordinary invalid character, which the parser rejects on its own.
-    let mut parser = Parser {
-        text: &text,
-        bytes: text.as_bytes(),
-        pos: 0,
-        depth: 0,
+/// Why CPython's UTF-8 decoder stopped at the first bad byte of `bytes`, as
+/// `UnicodeDecodeError.__str__` prints it: `'utf-8' codec can't decode byte 0xff in position 0:
+/// invalid start byte`, or `bytes in position 3-4: ...` for a longer sequence. The reason is
+/// `invalid start byte`, `invalid continuation byte` or `unexpected end of data`, over the same
+/// maximal subpart that CPython (and Rust's `Utf8Error`) report.
+pub fn utf8_error(bytes: &[u8], error: &std::str::Utf8Error) -> String {
+    describe_utf8(bytes, error.valid_up_to(), error.error_len())
+}
+
+/// [`utf8_error`] for the bad sequence at `start` of `bytes` (`error_len` as `Utf8Error` gives it).
+fn describe_utf8(bytes: &[u8], start: usize, error_len: Option<usize>) -> String {
+    let (end, reason) = match error_len {
+        None => (bytes.len(), "unexpected end of data"),
+        Some(1) if matches!(bytes[start], 0x80..=0xc1 | 0xf5..=0xff) => {
+            (start + 1, "invalid start byte")
+        }
+        Some(n) => (start + n, "invalid continuation byte"),
     };
-    parser.skip_whitespace();
-    let value = parser.value()?;
-    parser.skip_whitespace();
-    if parser.pos != parser.bytes.len() {
-        return Err(parser.error("Extra data", parser.pos));
+    if end - start == 1 {
+        format!(
+            "'utf-8' codec can't decode byte 0x{:02x} in position {start}: {reason}",
+            bytes[start]
+        )
+    } else {
+        format!(
+            "'utf-8' codec can't decode bytes in position {start}-{}: {reason}",
+            end - 1
+        )
     }
-    Ok(value)
+}
+
+/// `bytes.decode("utf-8")`: the text, or CPython's `UnicodeDecodeError` message.
+pub fn decode_utf8(bytes: &[u8]) -> Result<&str, String> {
+    std::str::from_utf8(bytes).map_err(|e| utf8_error(bytes, &e))
+}
+
+/// `bytes.decode("utf-8", "surrogatepass")`, as `json.loads(bytes)` decodes: an invalid byte is
+/// refused with CPython's message; the UTF-8 bytes of a lone surrogate (`ED A0..BF 80..BF`), which
+/// Python decodes to an unpaired code point, are refused as unrepresentable, but only when no
+/// invalid byte follows (CPython reports that one first).
+fn decode_utf8_surrogatepass(bytes: &[u8]) -> Result<String, String> {
+    let mut at = 0;
+    let mut surrogate = None;
+    loop {
+        match std::str::from_utf8(&bytes[at..]) {
+            Ok(_) => break,
+            Err(e) => {
+                let bad = at + e.valid_up_to();
+                if matches!(
+                    bytes.get(bad..bad + 3),
+                    Some([0xed, 0xa0..=0xbf, 0x80..=0xbf])
+                ) {
+                    surrogate.get_or_insert(bad);
+                    at = bad + 3;
+                    continue;
+                }
+                return Err(describe_utf8(bytes, bad, e.error_len()));
+            }
+        }
+    }
+    match surrogate {
+        Some(position) => Err(format!(
+            "the UTF-8 bytes of a lone surrogate at position {position} (Python decodes them with surrogatepass) are not representable"
+        )),
+        None => Ok(String::from_utf8(bytes.to_vec()).expect("checked")),
+    }
 }
 
 fn decode_detected(b: &[u8]) -> Result<String, String> {
@@ -552,7 +685,8 @@ fn decode_detected(b: &[u8]) -> Result<String, String> {
         return decode_utf16(&b[2..], false);
     }
     if let Some(rest) = b.strip_prefix(&[0xef, 0xbb, 0xbf]) {
-        return decode_utf8(rest);
+        // `utf-8-sig` decodes what follows the signature; its positions count from there.
+        return decode_utf8_surrogatepass(rest);
     }
     if b.len() >= 4 {
         if b[0] == 0 {
@@ -577,11 +711,7 @@ fn decode_detected(b: &[u8]) -> Result<String, String> {
             return decode_utf16(b, false);
         }
     }
-    decode_utf8(b)
-}
-
-fn decode_utf8(b: &[u8]) -> Result<String, String> {
-    String::from_utf8(b.to_vec()).map_err(|e| format!("'utf-8' codec can't decode bytes: {e}"))
+    decode_utf8_surrogatepass(b)
 }
 
 fn decode_utf16(b: &[u8], big_endian: bool) -> Result<String, String> {
@@ -627,6 +757,10 @@ struct Parser<'a> {
     bytes: &'a [u8],
     pos: usize,
     depth: usize,
+    /// Keep integers beyond `i64` as [`Value::BigInt`] instead of refusing them.
+    big_ints: bool,
+    /// Where the first unpaired surrogate escape was read (refused once the document parses).
+    surrogate: Option<usize>,
 }
 
 impl Parser<'_> {
@@ -740,10 +874,11 @@ impl Parser<'_> {
                 .map(Value::Float)
                 .map_err(|_| self.error("Invalid number", start))
         } else {
-            literal
-                .parse::<i64>()
-                .map(Value::Int)
-                .map_err(|_| self.error("Integer outside the supported 64-bit range", start))
+            match literal.parse::<i64>() {
+                Ok(i) => Ok(Value::Int(i)),
+                Err(_) if self.big_ints => Ok(Value::BigInt(literal.to_owned())),
+                Err(_) => Err(self.error("Integer outside the supported 64-bit range", start)),
+            }
         }
     }
 
@@ -791,27 +926,38 @@ impl Parser<'_> {
                         b'r' => out.push('\r'),
                         b't' => out.push('\t'),
                         b'u' => {
+                            // `scanstring_unicode`: the escape needs four hex digits and one more
+                            // character after them, and its errors point at the `u`.
+                            let u_at = self.pos - 1;
+                            if self.pos + 4 >= self.bytes.len() {
+                                return Err(self.error("Invalid \\uXXXX escape", u_at));
+                            }
                             let Some(mut cp) = self.hex4(self.pos) else {
-                                return Err(self.error("Invalid \\uXXXX escape", escape_at));
+                                return Err(self.error("Invalid \\uXXXX escape", u_at));
                             };
                             self.pos += 4;
+                            // A high surrogate followed by `\u` and at least one more character
+                            // must be followed by four hex digits; a low surrogate joins it.
                             if (0xd800..=0xdbff).contains(&cp)
+                                && self.pos + 6 < self.bytes.len()
                                 && self.bytes.get(self.pos..self.pos + 2) == Some(b"\\u")
                             {
-                                if let Some(low) = self.hex4(self.pos + 2) {
-                                    if (0xdc00..=0xdfff).contains(&low) {
-                                        cp = 0x10000 + (((cp - 0xd800) << 10) | (low - 0xdc00));
-                                        self.pos += 6;
-                                    }
+                                let Some(low) = self.hex4(self.pos + 2) else {
+                                    return Err(self.error("Invalid \\uXXXX escape", self.pos + 1));
+                                };
+                                if (0xdc00..=0xdfff).contains(&low) {
+                                    cp = 0x10000 + (((cp - 0xd800) << 10) | (low - 0xdc00));
+                                    self.pos += 6;
                                 }
                             }
                             match char::from_u32(cp) {
                                 Some(c) => out.push(c),
                                 None => {
-                                    return Err(self.error(
-                                        "Unpaired surrogate escape (not representable)",
-                                        escape_at,
-                                    ))
+                                    // Python keeps the unpaired code point and reads on; so does
+                                    // this, so a later syntax error is reported as Python
+                                    // reported it. The value itself is refused at the end.
+                                    self.surrogate.get_or_insert(escape_at);
+                                    out.push('\u{fffd}');
                                 }
                             }
                         }
@@ -966,6 +1112,59 @@ mod tests {
         assert!(parse_bytes(b"\xff not json").is_err());
     }
 
+    /// `json.loads` error positions and `bytes` decoding as CPython reports them.
+    #[test]
+    fn decoder_messages_match_python() {
+        // An invalid `\uXXXX` escape points at the `u`, a bad escape at the backslash.
+        assert_eq!(
+            parse_str(r#"{"a": "\u12"}"#).unwrap_err(),
+            "Invalid \\uXXXX escape: line 1 column 9 (char 8)"
+        );
+        assert_eq!(
+            parse_str(r#"{"a": "\x41"}"#).unwrap_err(),
+            "Invalid \\escape: line 1 column 8 (char 7)"
+        );
+        // Four hex digits with nothing after them are still an invalid escape.
+        assert_eq!(
+            parse_str("\"\\u1234").unwrap_err(),
+            "Invalid \\uXXXX escape: line 1 column 3 (char 2)"
+        );
+        // A high surrogate followed by `\u` must be followed by four hex digits.
+        assert_eq!(
+            parse_str(r#"["\ud800\uzzzz", 1]"#).unwrap_err(),
+            "Invalid \\uXXXX escape: line 1 column 10 (char 9)"
+        );
+        // A lone surrogate is read on, so a later syntax error is the one reported.
+        assert_eq!(
+            parse_str(r#"["\ud800", 1,]"#).unwrap_err(),
+            "Expecting value: line 1 column 14 (char 13)"
+        );
+        assert!(parse_str(r#"["\ud800"]"#)
+            .unwrap_err()
+            .starts_with("Unpaired surrogate escape (not representable)"));
+        // Bytes: CPython's codec messages; UTF-8 bytes of a surrogate pass the decoder (and are
+        // then unrepresentable), an invalid byte after them is reported first.
+        assert_eq!(
+            parse_bytes(b"[\"\xff\"]").unwrap_err(),
+            "'utf-8' codec can't decode byte 0xff in position 2: invalid start byte"
+        );
+        assert_eq!(
+            parse_bytes(b"[\"\xed\xa0\x80\", \"\xc3\"]").unwrap_err(),
+            "'utf-8' codec can't decode byte 0xc3 in position 9: invalid continuation byte"
+        );
+        assert_eq!(
+            parse_bytes(b"[\"\xed\xa0\x80\", \"\xe2\x82").unwrap_err(),
+            "'utf-8' codec can't decode bytes in position 9-10: unexpected end of data"
+        );
+        assert!(parse_bytes(b"[\"\xed\xa0\x80\"]")
+            .unwrap_err()
+            .contains("lone surrogate at position 2"));
+        assert_eq!(
+            parse_bytes(b"\xef\xbb\xbf[\"\xff\"]").unwrap_err(),
+            "'utf-8' codec can't decode byte 0xff in position 2: invalid start byte"
+        );
+    }
+
     #[test]
     fn python_equality_and_repr() {
         assert_eq!(Value::Bool(true), Value::Int(1));
@@ -979,6 +1178,16 @@ mod tests {
         );
         let list = parse_str(r#"["x", null, 1, 2.0, true]"#).unwrap();
         assert_eq!(list.repr(), "['x', None, 1, 2.0, True]");
+        // `str.isprintable` of CPython 3.12 (Unicode 15.0): separators, format characters and
+        // unassigned code points are escaped; letters of any script are kept.
+        assert_eq!(
+            str_repr("\u{a0}\u{2028}\u{378}\u{ad}\u{200b}\u{e000}\u{2ebf0}"),
+            "'\\xa0\\u2028\\u0378\\xad\\u200b\\ue000\\U0002ebf0'"
+        );
+        assert_eq!(
+            str_repr("\u{e9}\u{4e00}\u{1F600} "),
+            "'\u{e9}\u{4e00}\u{1F600} '"
+        );
         assert_eq!(float_repr(1e16), "1e+16");
         assert_eq!(float_repr(123456789012345.0), "123456789012345.0");
     }

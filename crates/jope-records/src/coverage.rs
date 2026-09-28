@@ -19,8 +19,6 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
 use std::process::Command;
 
-use regex::Regex;
-
 use crate::py;
 use crate::pyjson::{self, Dict, Value};
 use crate::{Error, Result};
@@ -41,9 +39,10 @@ const LANE_FIELDS: [&str; 9] = [
 ];
 
 /// The job keys of a workflow's top-level block `jobs:` mapping (comments, consistent
-/// indentation and flow-style job values are supported; anything else is refused).
+/// indentation and flow-style job values are supported; anything else is refused). The patterns
+/// are the Python's, with its `\s` and `\w` classes ([`py::regex`]).
 pub fn workflow_jobs(text: &str) -> std::result::Result<Vec<String>, String> {
-    let header = Regex::new(r"(?m)^jobs\s*:(.*)$").expect("static pattern");
+    let header = py::regex(r"(?m)^jobs\s*:(.*)$");
     let headers: Vec<_> = header.captures_iter(text).collect();
     let refuse = || "workflow requires one top-level block jobs mapping".to_owned();
     if headers.len() != 1 {
@@ -54,8 +53,7 @@ pub fn workflow_jobs(text: &str) -> std::result::Result<Vec<String>, String> {
         return Err(refuse());
     }
     let key =
-        Regex::new(r#"^(?:([A-Za-z_][\w-]*)|"([A-Za-z_][\w-]*)"|'([A-Za-z_][\w-]*)')\s*:(?:\s|$)"#)
-            .expect("static pattern");
+        py::regex(r#"^(?:([A-Za-z_][\w-]*)|"([A-Za-z_][\w-]*)"|'([A-Za-z_][\w-]*)')\s*:(?:\s|$)"#);
     let end = headers[0].get(0).expect("whole match").end();
     let mut names: Vec<String> = vec![];
     let mut indentation: Option<usize> = None;
@@ -238,6 +236,16 @@ fn path_text<'a>(value: &'a Value, context: &str) -> Result<&'a str> {
         .ok_or_else(|| raised(context, py::exception::path_argument(value)))
 }
 
+/// `json.loads(subprocess.check_output([...cargo metadata...], text=True))`: the stdout decoded
+/// as text first (strict UTF-8, universal newlines), then read as a `str`, which refuses a UTF-8
+/// BOM; UTF-16 or UTF-32 output is not UTF-8 and refuses at the decode. (The Python crashed on
+/// both; `json.loads(bytes)` would have detected those encodings, but it was never given bytes.)
+pub fn metadata_from_stdout(stdout: &[u8]) -> Result<Value> {
+    let text =
+        py::text_output(stdout).map_err(|m| Error::parse(Path::new("cargo metadata stdout"), m))?;
+    pyjson::parse_str(&text).map_err(|m| Error::parse(Path::new("cargo metadata stdout"), m))
+}
+
 /// Everything the map must assign, keyed and sorted as `coverage.py discover` printed it.
 pub fn discover(root: &Path) -> Result<Dict> {
     let metadata_bytes = command_output(
@@ -245,8 +253,7 @@ pub fn discover(root: &Path) -> Result<Dict> {
         "cargo",
         &["metadata", "--locked", "--no-deps", "--format-version", "1"],
     )?;
-    let metadata = pyjson::parse_bytes(&metadata_bytes)
-        .map_err(|m| Error::parse(Path::new("cargo metadata"), m))?;
+    let metadata = metadata_from_stdout(&metadata_bytes)?;
     let files = command_output(
         root,
         "git",
@@ -258,8 +265,9 @@ pub fn discover(root: &Path) -> Result<Dict> {
             "-z",
         ],
     )?;
-    let files = String::from_utf8(files)
-        .map_err(|e| Error::parse(Path::new("git ls-files"), e.to_string()))?;
+    // `check_output(...).decode()`: strict UTF-8, no newline translation.
+    let files = pyjson::decode_utf8(&files)
+        .map_err(|m| Error::parse(Path::new("git ls-files stdout"), m))?;
     discover_from(&metadata, files.split('\0'), root, &|name: &str| {
         py::read_text(&root.join(name))
     })
