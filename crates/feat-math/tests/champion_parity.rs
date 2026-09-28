@@ -76,8 +76,11 @@ fn emitted_python_matches_interpreter_predictions() {
     let rust_preds = fit_predict(&genome, &xtr, &ytr, &xte).expect("interpreter");
 
     let emitted = transpile::emit(&genome, &transpile::EmitOptions::default()).expect("emit");
-    let dir = std::env::temp_dir().join(format!("feat_math_parity_{}", std::process::id()));
-    std::fs::create_dir_all(&dir).unwrap();
+    let scratch = tempfile::Builder::new()
+        .prefix("feat_math_parity-")
+        .tempdir()
+        .unwrap();
+    let dir = scratch.path();
     std::fs::write(dir.join("model.py"), &emitted.python).unwrap();
 
     let csv = |path: &std::path::Path, rows: &Rows, target: Option<&[f64]>| {
@@ -128,5 +131,4 @@ fn emitted_python_matches_interpreter_predictions() {
         max_delta < 1e-9,
         "emitted Python must match the Rust interpreter (max |delta| = {max_delta})"
     );
-    let _ = std::fs::remove_dir_all(&dir);
 }
