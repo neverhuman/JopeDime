@@ -1,6 +1,6 @@
 //! `repo-layout`: the repository layout guard of the hygiene lane.
 //!
-//! Six rules over the tracked tree (`git ls-files` at the checkout root). Each finding is one
+//! Seven rules over the tracked tree (`git ls-files` at the checkout root). Each finding is one
 //! line that names the rule, the path and the fix:
 //!
 //! | Rule | Finds |
@@ -10,15 +10,27 @@
 //! | `dir-package` | a workspace member whose directory name differs from its `[package] name` |
 //! | `dup-package` | two tracked `Cargo.toml` files declaring the same package name (no allowlist) |
 //! | `temp-dir` | calls of the process-wide temp directory (`std::env::temp_dir`) in test code under `crates/`, above the allowlisted count |
-//! | `bad-manifest` | a tracked `Cargo.toml` Cargo could not read: not UTF-8, not TOML, or a `[package]` table without a non-empty string `name` (no allowlist) |
+//! | `bad-manifest` | a tracked `Cargo.toml` that is not readable as TOML 1.0: not UTF-8, not TOML 1.0, or a `[package]` table without a non-empty string `name` (no allowlist) |
+//! | `bad-path` | a tracked path that is not UTF-8 (no allowlist) |
 //!
-//! Cargo manifests are read with a TOML parser, as Cargo reads them, never by line: every
-//! spelling of a package name counts (basic, literal and multi-line strings, escapes, dotted
-//! keys, inline tables, comments, CRLF), and so does every spelling of the root manifest's
-//! `[workspace] members`. A manifest the parser refuses is a `bad-manifest` finding, not a
-//! manifest the other rules skip. `bad-manifest` has no allowlist, like `dup-package`: the
-//! package-name rules cannot see into a manifest they cannot read, so an exception would reopen
-//! the gap they close, and a deliberately malformed test input can use another file name.
+//! Cargo manifests are read with a TOML 1.0 parser (the `toml` 0.8 crate), never by line: every
+//! TOML 1.0 spelling of a package name counts (basic, literal and multi-line strings, escapes,
+//! dotted keys, inline tables, comments, CRLF), and so does every spelling of the root manifest's
+//! `[workspace] members`. Cargo itself reads TOML 1.1, so a manifest that uses 1.1-only syntax
+//! (the `\xHH` and `\e` escapes, a newline or trailing comma in an inline table) is one Cargo
+//! reads and this guard reports as `bad-manifest`, saying to rewrite it in TOML 1.0. A manifest
+//! the parser refuses is a `bad-manifest` finding, not a manifest the other rules skip. The rule
+//! therefore requires every tracked manifest to be TOML 1.0. `bad-manifest` has no allowlist,
+//! like `dup-package`: the package-name rules cannot see into a manifest they cannot read, so an
+//! exception would reopen the gap they close, and a deliberately malformed test input can use
+//! another file name.
+//!
+//! Tracked paths are the bytes `git ls-files -z` prints, never decoded lossily. Every rule
+//! matches paths as text, so a path that is not UTF-8 is one no other rule can check: `bad-path`
+//! reports it, each byte that is not UTF-8 written `\xHH`, and has no allowlist because an
+//! exception would hide the path from every rule. A tracked file is skipped unread only when
+//! `git ls-files --deleted` reports it deleted in the working tree; any other tracked file the
+//! guard needs and cannot read (a dangling symlink, say) makes the command refuse.
 //!
 //! Test code, for `temp-dir`, is any file under a `tests/` directory, a file named `tests.rs` or
 //! `*_tests.rs`, and otherwise the lines of a `#[cfg(test)]` block whose next non-attribute line
@@ -32,7 +44,7 @@
 //! entry that matches nothing fails with "lower or remove this entry". New entries are a reviewed
 //! diff. [`check`] is pure over an [`Input`]; [`gather`] reads it from a checkout.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
 use std::process::Command;
 
@@ -44,13 +56,15 @@ use crate::{Error, Result};
 /// The reviewed exceptions, relative to the repository root.
 pub const ALLOWLIST: &str = "deploy/ci/repo-layout-allow.txt";
 
-/// What the rules read: the tracked paths, the workspace members, the bytes of the tracked
+/// What the rules read: the tracked paths that are UTF-8, the tracked paths that are not (each
+/// byte that is not UTF-8 written `\xHH`), the workspace members, the bytes of the tracked
 /// `Cargo.toml` files (decoded by [`package_name`], so a manifest that is not UTF-8 is reported),
 /// the text of the tracked `crates/**/*.rs` files that mention the temp directory, and the
 /// allowlist text.
 #[derive(Debug, Default, Clone)]
 pub struct Input {
     pub tracked: Vec<String>,
+    pub undecodable: Vec<String>,
     pub members: Vec<String>,
     pub manifests: BTreeMap<String, Vec<u8>>,
     pub sources: BTreeMap<String, String>,
@@ -187,8 +201,11 @@ fn is_manifest(path: &str) -> bool {
     path == "Cargo.toml" || path.ends_with("/Cargo.toml")
 }
 
-/// `text` as a TOML document, or why not on one line: the parser's message with the line and
-/// column where it stopped.
+/// The end of every "not TOML 1.0" reason: Cargo reads TOML 1.1, this guard's parser TOML 1.0.
+const TOML_1_0: &str = "this guard reads TOML 1.0, so rewrite any TOML 1.1-only syntax";
+
+/// `text` as a TOML 1.0 document, or why not on one line: the parser's message with the line and
+/// column where it stopped, then [`TOML_1_0`].
 fn parse_toml(text: &str) -> std::result::Result<toml::Table, String> {
     text.parse::<toml::Table>().map_err(|e| {
         let message = e
@@ -203,9 +220,9 @@ fn parse_toml(text: &str) -> std::result::Result<toml::Table, String> {
                 let before = text.get(..span.start).unwrap_or(text);
                 let line = before.matches('\n').count() + 1;
                 let column = before.rsplit('\n').next().unwrap_or("").chars().count() + 1;
-                format!("not TOML (line {line}, column {column}: {message})")
+                format!("not TOML 1.0 (line {line}, column {column}: {message}); {TOML_1_0}")
             }
-            None => format!("not TOML ({message})"),
+            None => format!("not TOML 1.0 ({message}); {TOML_1_0}"),
         }
     })
 }
@@ -221,11 +238,11 @@ fn a_type(value: &toml::Value) -> String {
     format!("{article} {name}")
 }
 
-/// The package a `Cargo.toml` declares, read as TOML (every spelling Cargo accepts):
+/// The package a `Cargo.toml` declares, read as TOML 1.0 (every TOML 1.0 spelling):
 /// `Ok(Some(name))` for a `[package]` table, or Cargo's legacy `[project]` alias, with a
 /// non-empty string `name`; `Ok(None)` for a manifest without one (a virtual workspace root);
-/// `Err(reason)` for bytes Cargo could not read as a manifest (not UTF-8, not TOML, or a package
-/// table without a non-empty string `name`).
+/// `Err(reason)` for bytes this guard cannot read as a manifest (not UTF-8, not TOML 1.0, or a
+/// package table without a non-empty string `name`).
 pub fn package_name(manifest: &[u8]) -> std::result::Result<Option<String>, String> {
     let text = std::str::from_utf8(manifest).map_err(|e| {
         format!(
@@ -253,8 +270,9 @@ pub fn package_name(manifest: &[u8]) -> std::result::Result<Option<String>, Stri
     }
 }
 
-/// The `[workspace] members` list of the root manifest (not `default-members`), read as TOML.
-/// A manifest that is not TOML, or whose `members` is missing or not a list of strings, refuses.
+/// The `[workspace] members` list of the root manifest (not `default-members`), read as TOML
+/// 1.0. A manifest that is not TOML 1.0, or whose `members` is missing or not a list of strings,
+/// refuses.
 pub fn workspace_members(manifest: &str) -> Result<Vec<String>> {
     let table =
         parse_toml(manifest).map_err(|reason| Error::Shape(format!("Cargo.toml: {reason}")))?;
@@ -366,7 +384,7 @@ pub fn temp_dir_counts(input: &Input) -> Vec<(String, usize)> {
         .collect()
 }
 
-/// Every finding for `input`, in a fixed order: allowlist syntax, then the rules R1..R6, then the
+/// Every finding for `input`, in a fixed order: allowlist syntax, then the rules R1..R7, then the
 /// entries nothing used.
 pub fn check(input: &Input) -> Vec<String> {
     let mut findings = vec![];
@@ -490,15 +508,25 @@ pub fn check(input: &Input) -> Vec<String> {
         }
     }
 
-    // R6 bad-manifest (no allowlist): R3 and R4 cannot see into a manifest Cargo could not read.
+    // R6 bad-manifest (no allowlist): R3 and R4 cannot see into a manifest this guard cannot read.
     for (path, reading) in &readings {
         if let Err(reason) = reading {
             findings.push(format!(
-                "bad-manifest {path}: {reason}; fix it so Cargo can read its package name, or give \
-                 a deliberately malformed test input another file name (this rule has no \
+                "bad-manifest {path}: {reason}; fix it so this guard can read its package name, or \
+                 give a deliberately malformed test input another file name (this rule has no \
                  allowlist)"
             ));
         }
+    }
+
+    // R7 bad-path (no allowlist): every other rule matches tracked paths as text, so none of them
+    // can check a path that is not UTF-8.
+    for path in &input.undecodable {
+        findings.push(format!(
+            "bad-path {path}: tracked path is not UTF-8 (\\xHH is a byte that is not), so no \
+             other rule can check it; rename it to UTF-8 with `git mv` (this rule has no \
+             allowlist)"
+        ));
     }
 
     // Shrink-only: an entry nothing used is stale.
@@ -547,26 +575,32 @@ pub fn render(input: &Input, findings: &[String]) -> (String, bool) {
     (out, false)
 }
 
-fn read_present(path: &Path) -> Result<Option<Vec<u8>>> {
-    match std::fs::read(path) {
-        Ok(bytes) => Ok(Some(bytes)),
-        // A tracked path deleted in the working tree has nothing to check.
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),
-        Err(e) => Err(Error::io(path, e)),
+/// The bytes of the tracked file `path`, or `None` when `git ls-files --deleted` reported it
+/// deleted in the working tree (`deleted`). Any other tracked file that cannot be read (a dangling
+/// symlink, say) refuses: a file is never skipped because this guard failed to open it.
+fn read_tracked(root: &Path, path: &str, deleted: &BTreeSet<Vec<u8>>) -> Result<Option<Vec<u8>>> {
+    if deleted.contains(path.as_bytes()) {
+        return Ok(None);
     }
+    let file = root.join(path);
+    std::fs::read(&file)
+        .map(Some)
+        .map_err(|e| Error::io(&file, e))
 }
 
-/// `git ls-files -z` at `root`.
-fn tracked_paths(root: &Path) -> Result<Vec<String>> {
+/// `git ls-files -z <args>` at `root`: each path as the bytes git prints, never decoded.
+fn ls_files(root: &Path, args: &[&str]) -> Result<Vec<Vec<u8>>> {
     let output = Command::new("git")
         .arg("-C")
         .arg(root)
         .args(["ls-files", "-z"])
+        .args(args)
         .output()
         .map_err(|e| Error::io(Path::new("git"), e))?;
     if !output.status.success() {
         return Err(Error::Command(format!(
-            "git ls-files at {} exited {}: {}",
+            "git ls-files -z{} at {} exited {}: {}",
+            args.iter().map(|a| format!(" {a}")).collect::<String>(),
             root.display(),
             crate::py::returncode(output.status),
             String::from_utf8_lossy(&output.stderr).trim()
@@ -576,13 +610,34 @@ fn tracked_paths(root: &Path) -> Result<Vec<String>> {
         .stdout
         .split(|b| *b == 0)
         .filter(|p| !p.is_empty())
-        .map(|p| String::from_utf8_lossy(p).into_owned())
+        .map(<[u8]>::to_vec)
         .collect())
 }
 
-/// Read the [`Input`] of the checkout at `root`. A missing root manifest or allowlist refuses.
+/// `path` for a finding: its UTF-8 runs as they are, each byte that is not UTF-8 as `\xHH`.
+fn escape_path(path: &[u8]) -> String {
+    let mut out = String::new();
+    for chunk in path.utf8_chunks() {
+        out.push_str(chunk.valid());
+        for byte in chunk.invalid() {
+            out.push_str(&format!("\\x{byte:02x}"));
+        }
+    }
+    out
+}
+
+/// Read the [`Input`] of the checkout at `root`. A missing root manifest or allowlist refuses, and
+/// so does a tracked file the rules need that git does not report deleted but cannot be read.
 pub fn gather(root: &Path) -> Result<Input> {
-    let tracked = tracked_paths(root)?;
+    let mut tracked = vec![];
+    let mut undecodable = vec![];
+    for path in ls_files(root, &[])? {
+        match String::from_utf8(path) {
+            Ok(path) => tracked.push(path),
+            Err(e) => undecodable.push(escape_path(e.as_bytes())),
+        }
+    }
+    let deleted: BTreeSet<Vec<u8>> = ls_files(root, &["--deleted"])?.into_iter().collect();
     let manifest = crate::py::read_text(&root.join("Cargo.toml"))?;
     let members = workspace_members(&manifest)?;
     let allow = crate::py::read_text(&root.join(ALLOWLIST))?;
@@ -590,11 +645,11 @@ pub fn gather(root: &Path) -> Result<Input> {
     let mut sources = BTreeMap::new();
     for path in &tracked {
         if is_manifest(path) {
-            if let Some(bytes) = read_present(&root.join(path))? {
+            if let Some(bytes) = read_tracked(root, path, &deleted)? {
                 manifests.insert(path.clone(), bytes);
             }
         } else if path.starts_with("crates/") && path.ends_with(".rs") {
-            if let Some(bytes) = read_present(&root.join(path))? {
+            if let Some(bytes) = read_tracked(root, path, &deleted)? {
                 let text = String::from_utf8_lossy(&bytes).into_owned();
                 if text.contains("temp_dir()") {
                     sources.insert(path.clone(), text);
@@ -604,6 +659,7 @@ pub fn gather(root: &Path) -> Result<Input> {
     }
     Ok(Input {
         tracked,
+        undecodable,
         members,
         manifests,
         sources,
@@ -656,6 +712,8 @@ pub fn fixture(value: &Value) -> Result<(Input, Vec<String>)> {
     };
     let input = Input {
         tracked: strings("tracked")?,
+        // A path that is not UTF-8 cannot be a JSON string; the CLI tests build one in git.
+        undecodable: vec![],
         members: strings("members")?,
         manifests: texts("manifests")?
             .into_iter()
@@ -713,8 +771,8 @@ mod tests {
             "temp-dir-over",
             "stale-allow-path",
             "stale-allow-count",
-            // Review 5344298377: every TOML spelling of a package name, and manifests Cargo
-            // could not read.
+            // Review 5344298377: every TOML spelling of a package name, and manifests this
+            // guard cannot read.
             "dup-package-literal",
             "dup-package-dotted",
             "dup-package-escaped",
@@ -816,7 +874,7 @@ mod tests {
         }
     }
 
-    /// Review 5344298377: what Cargo could not read is a reason, never a silent `None`.
+    /// Review 5344298377: what this guard cannot read is a reason, never a silent `None`.
     #[test]
     fn package_name_refuses_what_cargo_cannot_read() {
         let cases: [(&[u8], &str); 8] = [
@@ -824,10 +882,10 @@ mod tests {
                 b"[package]\nname = \"x\xff\"\n",
                 "not UTF-8 (first invalid byte at offset 19)",
             ),
-            (b"[package]\nname = 'x\n", "not TOML (line 2, column "),
+            (b"[package]\nname = 'x\n", "not TOML 1.0 (line 2, column "),
             (
                 b"[package]\nname = \"x\"\nname = \"y\"\n",
-                "not TOML (line 3, column ",
+                "not TOML 1.0 (line 3, column ",
             ),
             (b"package = 'x'\n", "`package` is a string, not a table"),
             (b"[package]\nversion = '0.1.0'\n", "[package] has no `name`"),
@@ -846,6 +904,31 @@ mod tests {
             assert!(
                 got.starts_with(reason) && !got.contains('\n'),
                 "{got:?} does not start with {reason:?} on one line"
+            );
+        }
+    }
+
+    /// Verifier finding on 7982c479f: this guard parses TOML 1.0 (the `toml` 0.8 crate) while
+    /// Cargo reads TOML 1.1, so a manifest that uses 1.1-only syntax is refused with a reason that
+    /// names TOML 1.0 and says what to rewrite, never one that claims Cargo could not read it.
+    #[test]
+    fn package_name_says_toml_1_0_for_toml_1_1_only_syntax() {
+        for manifest in [
+            // The `\e` escape.
+            "[package]\nname = 'x'\ndescription = \"\\e[1m\"\n",
+            // The `\xHH` escape (Cargo reads package `x`).
+            "[package]\nname = \"\\x78\"\n",
+            // A newline and a trailing comma in an inline table.
+            "package = {\n  name = 'x',\n}\n",
+        ] {
+            let got = package_name(manifest.as_bytes()).expect_err(manifest);
+            assert!(
+                got.starts_with("not TOML 1.0 (line ")
+                    && got.ends_with(
+                        "; this guard reads TOML 1.0, so rewrite any TOML 1.1-only syntax"
+                    )
+                    && !got.contains('\n'),
+                "{got:?} for {manifest:?}"
             );
         }
     }

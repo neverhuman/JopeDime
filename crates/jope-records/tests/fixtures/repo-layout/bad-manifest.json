@@ -17,8 +17,8 @@
   "sources": {},
   "allow": "",
   "expect": [
-    "bad-manifest crates/bar/Cargo.toml: [package] has no `name`; fix it so Cargo can read its package name, or give a deliberately malformed test input another file name (this rule has no allowlist)",
-    "bad-manifest crates/foo/Cargo.toml: not TOML (line 2, column 12: invalid literal string); fix it so Cargo can read its package name, or give a deliberately malformed test input another file name (this rule has no allowlist)",
-    "bad-manifest tools/template/Cargo.toml: [package] `name` is a table, not a string; fix it so Cargo can read its package name, or give a deliberately malformed test input another file name (this rule has no allowlist)"
+    "bad-manifest crates/bar/Cargo.toml: [package] has no `name`; fix it so this guard can read its package name, or give a deliberately malformed test input another file name (this rule has no allowlist)",
+    "bad-manifest crates/foo/Cargo.toml: not TOML 1.0 (line 2, column 12: invalid literal string); this guard reads TOML 1.0, so rewrite any TOML 1.1-only syntax; fix it so this guard can read its package name, or give a deliberately malformed test input another file name (this rule has no allowlist)",
+    "bad-manifest tools/template/Cargo.toml: [package] `name` is a table, not a string; fix it so this guard can read its package name, or give a deliberately malformed test input another file name (this rule has no allowlist)"
   ]
 }

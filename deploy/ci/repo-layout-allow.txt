@@ -9,10 +9,11 @@
 #
 # The list only shrinks: an entry for an untracked path, a count above the actual count, or an
 # entry that matches nothing fails with "lower or remove this entry". A new entry is a reviewed
-# diff with its reason. dup-package (two Cargo.toml files declaring one package name) and
-# bad-manifest (a tracked Cargo.toml that is not UTF-8, not TOML, or has a [package] without a
-# non-empty string name; manifests are read as TOML, so every spelling of a name counts) have no
-# exceptions.
+# diff with its reason. dup-package (two Cargo.toml files declaring one package name),
+# bad-manifest (a tracked Cargo.toml not readable as TOML 1.0: not UTF-8, not TOML 1.0, or a
+# [package] without a non-empty string name; manifests are read as TOML 1.0, so every TOML 1.0
+# spelling of a name counts, and TOML 1.1-only syntax that Cargo accepts must be rewritten) and
+# bad-path (a tracked path that is not UTF-8, which no other rule can check) have no exceptions.
 
 # Root Markdown. MASTER_CLEAN_UP.md stays at the root by owner decision CB-O2.
 root-md AGENTS.md -- agent contract for this repository

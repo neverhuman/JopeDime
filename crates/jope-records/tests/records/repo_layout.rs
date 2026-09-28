@@ -1,7 +1,8 @@
 //! `jope-records repo-layout` (hygiene lane): the committed tree passes, a checkout with a stray
-//! root Markdown file fails with exactly one finding line, and (review 5344298377) Cargo
-//! manifests are read as TOML through the CLI too. Added with the guard; there is no Python
-//! predecessor.
+//! root Markdown file fails with exactly one finding line, (review 5344298377) Cargo manifests
+//! are read as TOML through the CLI too, and tracked paths are read as bytes: one that is not
+//! UTF-8 is a finding, and only a file git reports deleted is skipped unread. Added with the
+//! guard; there is no Python predecessor.
 
 use std::path::Path;
 use std::process::{Command, Output};
@@ -155,8 +156,108 @@ fn a_manifest_cargo_cannot_read_fails_with_bad_manifest() {
         "dir-package crates/x: directory `x` holds package `y`; rename one to match (or add a \
          reviewed `dir-package crates/x y -- <reason>` entry to deploy/ci/repo-layout-allow.txt)\n\
          bad-manifest archived/Cargo.toml: not UTF-8 (first invalid byte at offset 19); fix it so \
-         Cargo can read its package name, or give a deliberately malformed test input another \
-         file name (this rule has no allowlist)\n\
+         this guard can read its package name, or give a deliberately malformed test input \
+         another file name (this rule has no allowlist)\n\
          repo-layout: 2 finding(s); reviewed exceptions live in deploy/ci/repo-layout-allow.txt\n"
+    );
+}
+
+/// Verifier finding on 7982c479f: a tracked copy of package `x` under a directory whose name is
+/// not UTF-8 passed with exit 0 and 0 findings. The tracked paths were decoded lossily, so the
+/// guard opened a path that does not exist and took it for one deleted in the working tree. A
+/// tracked path that is not UTF-8 is now a bad-path finding: every rule matches paths as text,
+/// so none of them could check it.
+#[cfg(unix)]
+#[test]
+fn a_tracked_path_that_is_not_utf8_fails_with_bad_path() {
+    use std::ffi::OsStr;
+    use std::os::unix::ffi::OsStrExt;
+
+    let directory = scratch();
+    let root = directory.path();
+    git(root, &["init", "-q"]);
+    write(
+        root,
+        "Cargo.toml",
+        b"[workspace]\nmembers = [\"crates/x\"]\n",
+    );
+    write(
+        root,
+        "crates/x/Cargo.toml",
+        b"[package]\nname = \"x\"\nversion = \"0.1.0\"\n",
+    );
+    let odd = root.join(OsStr::from_bytes(b"arch\xffived"));
+    std::fs::create_dir_all(&odd).expect("directory whose name is not UTF-8");
+    std::fs::write(
+        odd.join("Cargo.toml"),
+        b"[package]\nname = \"x\"\nversion = \"0.1.0\"\n",
+    )
+    .expect("duplicate manifest");
+    write(root, "deploy/ci/repo-layout-allow.txt", b"# none\n");
+    git(root, &["add", "-A"]);
+    let root_arg = root.display().to_string();
+    let output = run(&["repo-layout", "--root", &root_arg], &repo());
+    assert_eq!(
+        String::from_utf8_lossy(&output.stdout),
+        "bad-path arch\\xffived/Cargo.toml: tracked path is not UTF-8 (\\xHH is a byte that is \
+         not), so no other rule can check it; rename it to UTF-8 with `git mv` (this rule has no \
+         allowlist)\n\
+         repo-layout: 1 finding(s); reviewed exceptions live in deploy/ci/repo-layout-allow.txt\n"
+    );
+    assert_eq!(output.status.code(), Some(1));
+}
+
+/// Verifier finding on 7982c479f: a tracked manifest the guard could not open was skipped as
+/// "deleted in the working tree". Only a path that `git ls-files --deleted` reports is skipped
+/// now; a tracked `Cargo.toml` that is a dangling symlink (present to git, unreadable here)
+/// refuses instead of passing unchecked.
+#[cfg(unix)]
+#[test]
+fn a_missing_manifest_is_skipped_only_when_git_reports_it_deleted() {
+    let directory = scratch();
+    let root = directory.path();
+    git(root, &["init", "-q"]);
+    write(
+        root,
+        "Cargo.toml",
+        b"[workspace]\nmembers = [\"crates/x\"]\n",
+    );
+    write(
+        root,
+        "crates/x/Cargo.toml",
+        b"[package]\nname = \"x\"\nversion = \"0.1.0\"\n",
+    );
+    write(
+        root,
+        "archived/Cargo.toml",
+        b"[package]\nname = \"x\"\nversion = \"0.1.0\"\n",
+    );
+    write(root, "deploy/ci/repo-layout-allow.txt", b"# none\n");
+    git(root, &["add", "-A"]);
+    let root_arg = root.display().to_string();
+
+    // Deleted in the working tree, and git reports it deleted: nothing to check.
+    std::fs::remove_file(root.join("archived/Cargo.toml")).expect("delete the copy");
+    let deleted = run(&["repo-layout", "--root", &root_arg], &repo());
+    assert!(
+        deleted.status.success(),
+        "{}{}",
+        String::from_utf8_lossy(&deleted.stdout),
+        String::from_utf8_lossy(&deleted.stderr)
+    );
+
+    // Tracked and present to git, but it cannot be read: a refusal, never a skip.
+    std::fs::create_dir_all(root.join("linked")).expect("symlink directory");
+    std::os::unix::fs::symlink("missing.toml", root.join("linked/Cargo.toml")).expect("symlink");
+    git(root, &["add", "-A"]);
+    let dangling = run(&["repo-layout", "--root", &root_arg], &repo());
+    let stderr = String::from_utf8_lossy(&dangling.stderr);
+    assert_eq!(dangling.status.code(), Some(1), "{stderr}");
+    assert_eq!(String::from_utf8_lossy(&dangling.stdout), "");
+    assert!(
+        stderr.starts_with("jope-records: ")
+            && stderr.contains("linked/Cargo.toml: ")
+            && stderr.contains("(os error 2)"),
+        "{stderr}"
     );
 }
