@@ -36,10 +36,24 @@ pub fn check_int_digits(digits: usize) -> std::result::Result<(), String> {
     Ok(())
 }
 
+/// Why [`int`] refused its text.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum IntError {
+    /// Not a literal Python read, or one the port does not read: non-ASCII digits, or a value
+    /// beyond `i64` (Python converted both). Each caller words this refusal.
+    Invalid,
+    /// A well-formed literal of more than [`INT_MAX_STR_DIGITS`] digits: CPython's `ValueError`
+    /// message ([`check_int_digits`]).
+    Limit(String),
+}
+
 /// Python `int(text)` for ASCII decimal text: surrounding whitespace, an optional sign and
-/// single underscores between digits. Non-ASCII digits (which Python also accepts) are refused,
-/// and so is anything beyond `i64` (Python refused only past [`INT_MAX_STR_DIGITS`] digits).
-pub fn int(text: &str) -> Option<i64> {
+/// single underscores between digits. As in CPython 3.12, a well-formed literal of more than
+/// [`INT_MAX_STR_DIGITS`] digits refuses with its message before it is converted, whatever its
+/// value: leading zeros count, the sign, the whitespace and the underscores do not. Non-ASCII
+/// digits (which Python also accepted) and values beyond `i64` (which Python converted) are
+/// [`IntError::Invalid`].
+pub fn int(text: &str) -> std::result::Result<i64, IntError> {
     let body = strip(text);
     let (negative, digits) = match body.as_bytes().first() {
         Some(b'-') => (true, &body[1..]),
@@ -52,10 +66,14 @@ pub fn int(text: &str) -> Option<i64> {
         || digits.contains("__")
         || !digits.bytes().all(|b| b.is_ascii_digit() || b == b'_')
     {
-        return None;
+        return Err(IntError::Invalid);
     }
-    let value: i64 = digits.replace('_', "").parse().ok()?;
-    Some(if negative { -value } else { value })
+    check_int_digits(digits.bytes().filter(|&b| b != b'_').count()).map_err(IntError::Limit)?;
+    let value: i64 = digits
+        .replace('_', "")
+        .parse()
+        .map_err(|_| IntError::Invalid)?;
+    Ok(if negative { -value } else { value })
 }
 
 /// A hashable JSON scalar under Python's hash equality (`1 == 1.0 == True`).
@@ -886,10 +904,10 @@ mod tests {
 
     #[test]
     fn python_int_and_strip() {
-        assert_eq!(int("01"), Some(1));
-        assert_eq!(int(" +1_0 "), Some(10));
-        assert_eq!(int("1__0"), None);
-        assert_eq!(int(""), None);
+        assert_eq!(int("01"), Ok(1));
+        assert_eq!(int(" +1_0 "), Ok(10));
+        assert_eq!(int("1__0"), Err(IntError::Invalid));
+        assert_eq!(int(""), Err(IntError::Invalid));
         assert_eq!(strip("\u{1c} x \u{a0}"), "x");
     }
 
@@ -1061,9 +1079,53 @@ mod tests {
         );
         // The digit mapping alone has no limit (what `\d+` matches, before `int()`).
         assert_eq!(decimal_digits(&run(4301, '0', '7')), Some("7".to_owned()));
-        // The 64-bit `int` refuses long before the limit.
-        assert_eq!(int(&"1".repeat(20)), None);
-        assert_eq!(int(&"1".repeat(4301)), None);
+        // `int` of text: beyond `i64` it refuses as invalid, past the limit in CPython's words.
+        assert_eq!(int(&"1".repeat(20)), Err(IntError::Invalid));
+        assert_eq!(int(&"1".repeat(4301)), Err(IntError::Limit(limit(4301))));
+    }
+
+    /// Python 3.12's `int()` of text: the limit is checked on a well-formed literal before it is
+    /// converted, so 4301 digits refuse even when they are leading zeros of a small value; the
+    /// sign, surrounding whitespace and underscores are not digits.
+    #[test]
+    fn int_of_text_counts_digits_as_python_did() {
+        let limit = |n: usize| {
+            IntError::Limit(format!("Exceeds the limit (4300 digits) for integer string conversion: value has {n} digits; use sys.set_int_max_str_digits() to increase the limit"))
+        };
+        let zeros = |n: usize| "0".repeat(n);
+        let unders = |n: usize| "0_".repeat(n);
+        // 4300 digits convert, whatever surrounds them.
+        for text in [
+            format!("{}45", zeros(4298)),
+            format!("+{}45", zeros(4298)),
+            format!(" \t{}45\n", zeros(4298)),
+            format!("{}45", unders(4298)),
+            format!("\u{a0}+{}45\u{1f}", unders(4298)),
+        ] {
+            assert_eq!(int(&text), Ok(45), "{} characters", text.len());
+        }
+        assert_eq!(int(&format!("-{}45", zeros(4298))), Ok(-45));
+        assert_eq!(int(&zeros(4300)), Ok(0));
+        // 4301 refuse, leading zeros counted.
+        for text in [
+            format!("{}45", zeros(4299)),
+            format!("+{}45", zeros(4299)),
+            format!("-{}45", zeros(4299)),
+            format!(" {}45 ", zeros(4299)),
+            format!("{}45", unders(4299)),
+            zeros(4301),
+        ] {
+            assert_eq!(int(&text), Err(limit(4301)), "{} characters", text.len());
+        }
+        assert_eq!(int(&zeros(5000)), Err(limit(5000)));
+        // A malformed literal is refused as such, however long: CPython validated it first.
+        assert_eq!(int(&format!("{}45_", zeros(4299))), Err(IntError::Invalid));
+        assert_eq!(int(&format!("{}4x", zeros(4299))), Err(IntError::Invalid));
+        // A non-ASCII digit stays refused (Python mapped it to ASCII and read 5; stricter).
+        assert_eq!(
+            int(&format!("{}\u{665}", zeros(4299))),
+            Err(IntError::Invalid)
+        );
     }
 
     #[test]

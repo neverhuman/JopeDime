@@ -126,14 +126,16 @@ fn cell<'a>(row: &'a Dict, key: &str) -> Result<&'a str> {
         .ok_or_else(|| shape(&pyrepr_key(key)))
 }
 
-/// `int(row[key])` for a CSV cell; text that is not an integer refuses (Python's `ValueError`).
+/// `int(row[key])` for a CSV cell; text that is not an integer refuses (Python's `ValueError`),
+/// and so does one of more than 4300 digits, leading zeros counted, in CPython's words.
 fn int_cell(row: &Dict, key: &str) -> Result<i64> {
     let text = cell(row, key)?;
-    py::int(text).ok_or_else(|| {
-        Error::Shape(format!(
+    py::int(text).map_err(|e| match e {
+        py::IntError::Limit(message) => raised(format_args!("CSV column {key}"), message),
+        py::IntError::Invalid => Error::Shape(format!(
             "CSV column {key}: expected an integer, found {}",
             pyrepr_key(text)
-        ))
+        )),
     })
 }
 

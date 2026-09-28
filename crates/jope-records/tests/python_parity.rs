@@ -81,6 +81,12 @@
 //! captured the same way: Python 3.12's limit of 4300 digits on integer conversion
 //! (`process-r3-digits.json`, `readme/negative-r3.json`) and POSIX's distinct `//` root in path
 //! comparisons (`process-r3-paths.json`), each with the boundary cases the Python accepted.
+//!
+//! An addendum after a further verifier run appends nine cases to `readme/negative-r3.json`, each
+//! naming its own `source` and `capture`: `int()` of a README CSV cell (`datasets_scored`) counts
+//! leading zeros, so 4301 digits written with leading zeros, a sign, surrounding spaces or `0_`
+//! separators refused where 4300 rendered. Where the Python raised that limit's `ValueError`, the
+//! port's refusal must carry CPython's message.
 
 use jope_records::pyjson::{self, Dict, Value};
 use jope_records::{coverage, parity, py, readme, scope_check};
@@ -819,9 +825,11 @@ fn readme_benchmarks_matches_round_two() {
 
 /// Round three: an integer of more than 4300 digits (either sign) in an evidence file, which
 /// Python 3.12's `json.loads` refused to convert even in a field nothing reads; 19 digits render.
+/// Its addendum: `int()` of a CSV cell of 4300 digits renders and of 4301 refuses, leading zeros
+/// counted, whether written plain, with `+`, between spaces or with `0_` separators.
 #[test]
 fn readme_benchmarks_matches_round_three() {
-    replay_readme("readme/negative-r3.json", 3);
+    replay_readme("readme/negative-r3.json", 12);
 }
 
 fn replay_readme(rel: &str, count: usize) {
@@ -867,6 +875,18 @@ fn replay_readme(rel: &str, count: usize) {
             };
             if py::sha256_hex(written.as_bytes()) != want {
                 outcome = Err("README.md differs from what the Python left".to_owned());
+            }
+            // Python 3.12's limit on integer conversion is refused in CPython's words.
+            let limit = case
+                .get("raised")
+                .and_then(|raised| s(raised).strip_prefix("ValueError: "))
+                .filter(|message| message.starts_with("Exceeds the limit ("));
+            if let (Some(limit), Rust::Refused(message)) = (limit, &rust) {
+                if !message.contains(limit) {
+                    outcome = Err(format!(
+                        "refusal message: CPython's {limit:?}, the port {message:?}"
+                    ));
+                }
             }
         }
         if let Err(why) = outcome {

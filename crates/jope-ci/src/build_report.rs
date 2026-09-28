@@ -357,7 +357,9 @@ fn run_bounded(command: &[&OsStr], limit: Duration, interrupt: Interrupt<'_>) ->
     }
 }
 
-/// Python `int(text)` for the leading `du` field.
+/// Python `int(text)` for the leading `du` field. As in CPython 3.12, a well-formed literal of more
+/// than 4300 digits refuses in its words before it is converted: leading zeros count, the sign,
+/// the whitespace and the underscores do not.
 fn py_int(text: &str) -> Outcome<u64> {
     let body = text.trim_matches(|c: char| c.is_whitespace() || ('\u{1c}'..='\u{1f}').contains(&c));
     let digits = body.strip_prefix('+').unwrap_or(body);
@@ -367,6 +369,8 @@ fn py_int(text: &str) -> Outcome<u64> {
         && !digits.contains("__")
         && digits.bytes().all(|b| b.is_ascii_digit() || b == b'_')
     {
+        jope_records::py::check_int_digits(digits.bytes().filter(|&b| b != b'_').count())
+            .map_err(Failure::new)?;
         if let Ok(value) = digits.replace('_', "").parse() {
             return Ok(value);
         }
@@ -857,6 +861,24 @@ mod tests {
             py_int("garbage").unwrap_err().message,
             "invalid literal for int() with base 10: 'garbage'"
         );
+        // CPython's limit of 4300 digits applies to a well-formed literal before it is converted:
+        // leading zeros count, the sign, the whitespace and the underscores do not.
+        let limit = "Exceeds the limit (4300 digits) for integer string conversion: value has 4301 digits; use sys.set_int_max_str_digits() to increase the limit";
+        let zeros = |n: usize| "0".repeat(n);
+        assert_eq!(py_int(&format!("{}45\n", zeros(4298))).unwrap(), 45);
+        assert_eq!(py_int(&format!("+{}45", zeros(4298))).unwrap(), 45);
+        assert_eq!(py_int(&format!("{}45", "0_".repeat(4298))).unwrap(), 45);
+        for text in [
+            format!("{}45", zeros(4299)),
+            format!(" +{}45\n", zeros(4299)),
+            format!("{}45", "0_".repeat(4299)),
+        ] {
+            assert_eq!(py_int(&text).unwrap_err().message, limit);
+        }
+        assert!(py_int(&format!("{}45_", zeros(4299)))
+            .unwrap_err()
+            .message
+            .starts_with("invalid literal for int() with base 10: '000"));
     }
 
     #[test]
