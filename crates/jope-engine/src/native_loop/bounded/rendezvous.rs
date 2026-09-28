@@ -18,7 +18,9 @@
 use super::{
     census::RuntimeIdentity,
     contract::{BoundedRunContract, ClosureEntry},
-    digest, is_digest, sign, verify,
+    digest, is_digest, sign,
+    transport::DeadlineSocket,
+    verify,
 };
 use anyhow::{ensure, Context, Result};
 use ed25519_dalek::SigningKey;
@@ -32,7 +34,7 @@ use std::{
         net::{UnixListener, UnixStream},
     },
     path::Path,
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 pub const CHALLENGE_SCHEMA: &str = "jope.native_rendezvous_challenge.v1";
@@ -48,15 +50,49 @@ const RESULT_DOMAIN: &[u8] = b"jope.native_rank_result.signature.v1\0";
 pub const MAX_BOOTSTRAP_BYTES: usize = 256;
 
 /// A bidirectional control stream: an authenticated TLS stream
-/// ([`super::transport::TlsStream`]) or a same-host Unix socket (fixtures).
+/// ([`super::transport::TlsStream`]) or a same-host Unix socket (fixtures) behind a
+/// [`DeadlineSocket`].
 pub trait ControlStream: Read + Write + Send {
+    /// Per-operation timeouts: each single read or write may wait this long (inactivity).
     fn set_timeouts(&self, read: Option<Duration>, write: Option<Duration>) -> std::io::Result<()>;
+    /// An absolute deadline over every later blocking read and write, including each of the
+    /// several a TLS stream can make inside one call, or none. Bytes that keep arriving
+    /// inside a per-operation timeout do not extend it.
+    fn set_deadline(&self, deadline: Option<Instant>) -> std::io::Result<()>;
 }
-impl ControlStream for UnixStream {
-    fn set_timeouts(&self, read: Option<Duration>, write: Option<Duration>) -> std::io::Result<()> {
-        self.set_read_timeout(read)?;
-        self.set_write_timeout(write)
-    }
+/// Run `exchange` on `stream` with every blocking read and write ending by `deadline`, then
+/// remove the deadline.
+pub fn by_deadline<S, T>(
+    stream: &mut S,
+    deadline: Instant,
+    exchange: impl FnOnce(&mut S) -> Result<T>,
+) -> Result<T>
+where
+    S: ControlStream + ?Sized,
+{
+    stream.set_deadline(Some(deadline))?;
+    let result = exchange(stream);
+    let cleared = stream.set_deadline(None);
+    let value = result?;
+    cleared?;
+    Ok(value)
+}
+/// [`read_frame`] that ends by `deadline`, however the peer paces its bytes.
+pub fn read_frame_by<S: ControlStream + ?Sized>(
+    stream: &mut S,
+    limit: u32,
+    deadline: Instant,
+) -> Result<Vec<u8>> {
+    by_deadline(stream, deadline, |s| read_frame(s, limit))
+}
+/// [`write_frame`] that ends by `deadline`, however slowly the peer reads.
+pub fn write_frame_by<S: ControlStream + ?Sized>(
+    stream: &mut S,
+    bytes: &[u8],
+    limit: u32,
+    deadline: Instant,
+) -> Result<()> {
+    by_deadline(stream, deadline, |s| write_frame(s, bytes, limit))
 }
 /// The channel identity of a peer, established before any frame is read.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -77,15 +113,19 @@ pub enum Incoming {
 }
 /// A non-blocking source of authenticated control streams.
 pub trait Acceptor {
-    fn next_incoming(&mut self) -> Incoming;
+    /// Authenticate one pending connection, if any, finishing by `deadline` at the latest.
+    fn next_incoming(&mut self, deadline: Instant) -> Incoming;
 }
-/// The same-host fixture acceptor.
+/// The same-host fixture acceptor. It authenticates nothing, so it has no handshake to bound.
 pub struct UnixAcceptor<'a>(pub &'a UnixListener);
 impl Acceptor for UnixAcceptor<'_> {
-    fn next_incoming(&mut self) -> Incoming {
+    fn next_incoming(&mut self, _deadline: Instant) -> Incoming {
         match self.0.accept() {
             Ok((stream, _)) => match stream.set_nonblocking(false) {
-                Ok(()) => Incoming::Stream(Box::new(stream), PeerIdentity::SameHostSocket),
+                Ok(()) => Incoming::Stream(
+                    Box::new(DeadlineSocket::new(stream)),
+                    PeerIdentity::SameHostSocket,
+                ),
                 Err(e) => Incoming::Unauthenticated(e.to_string()),
             },
             Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => Incoming::Pending,
@@ -323,18 +363,23 @@ pub(crate) fn publish_immutable(root: &Path, relative: &Path, bytes: &[u8]) -> R
     Ok(())
 }
 
-/// Length-prefixed frame. The limit is enforced before the body is read or allocated.
-pub fn write_frame(w: &mut impl Write, bytes: &[u8], limit: u32) -> Result<()> {
+/// Length-prefixed frame. The limit is enforced before the body is read or allocated. Length
+/// and body go to the stream in one write, so a TLS stream queues a small frame (a heartbeat,
+/// an admission) whole, and a write cut short by a deadline does not leave its length queued
+/// without its body.
+pub fn write_frame<W: Write + ?Sized>(w: &mut W, bytes: &[u8], limit: u32) -> Result<()> {
     ensure!(
         bytes.len() as u64 <= u64::from(limit),
         "frame exceeds message limit"
     );
-    w.write_all(&(bytes.len() as u32).to_be_bytes())?;
-    w.write_all(bytes)?;
+    let mut frame = Vec::with_capacity(4 + bytes.len());
+    frame.extend_from_slice(&(bytes.len() as u32).to_be_bytes());
+    frame.extend_from_slice(bytes);
+    w.write_all(&frame)?;
     w.flush()?;
     Ok(())
 }
-pub fn read_frame(r: &mut impl Read, limit: u32) -> Result<Vec<u8>> {
+pub fn read_frame<R: Read + ?Sized>(r: &mut R, limit: u32) -> Result<Vec<u8>> {
     let mut len = [0u8; 4];
     r.read_exact(&mut len)?;
     let len = u32::from_be_bytes(len);
@@ -984,9 +1029,12 @@ pub struct Connected {
     pub stream: Box<dyn ControlStream>,
 }
 /// Accept and authenticate participants from `acceptor` until the group is admitted or
-/// refused. Each handshake is bounded by the join deadline and the frozen message limit, and
-/// each hello is bound to its peer's channel identity. Admission is returned *undelivered*:
-/// only the controller delivers it, after journaling.
+/// refused. Every handshake, challenge and hello ends by the join deadline itself (an
+/// absolute deadline over all of their reads and writes, however a peer paces its bytes) and
+/// is bounded by the frozen message limit, and each hello is bound to its peer's channel
+/// identity. Peers are served one at a time, so a slow peer delays the others, but never past
+/// the join deadline. Admission is returned *undelivered*: only the controller delivers it,
+/// after journaling.
 pub fn gather(
     acceptor: &mut dyn Acceptor,
     rendezvous: &mut Rendezvous,
@@ -1000,20 +1048,32 @@ pub fn gather(
         if let Some(admission) = rendezvous.admit(coordinator, now())? {
             return Ok((admission, connected));
         }
-        match acceptor.next_incoming() {
-            Incoming::Stream(mut stream, peer) => {
-                let remaining = rendezvous
+        // The join deadline on this host's monotonic clock.
+        let join_deadline = Instant::now()
+            + Duration::from_millis(
+                rendezvous
                     .challenge
                     .body
                     .join_deadline_unix_ms
-                    .saturating_sub(now())
-                    .max(1);
-                let remaining = Some(Duration::from_millis(remaining));
-                let _ = stream.set_timeouts(remaining, remaining);
-                if write_frame(&mut stream, &challenge, limit).is_err() {
+                    .saturating_sub(now()),
+            );
+        match acceptor.next_incoming(join_deadline) {
+            Incoming::Stream(mut stream, peer) => {
+                let remaining = join_deadline
+                    .saturating_duration_since(Instant::now())
+                    .max(Duration::from_millis(1));
+                let _ = stream.set_timeouts(Some(remaining), Some(remaining));
+                if stream.set_deadline(Some(join_deadline)).is_err()
+                    || write_frame(&mut stream, &challenge, limit).is_err()
+                {
                     continue; // the peer went away before authenticating; nothing trusted
                 }
-                let frame = match read_frame(&mut stream, limit) {
+                let frame = read_frame(&mut stream, limit);
+                // Admission delivery and heartbeats set their own deadlines.
+                if stream.set_deadline(None).is_err() {
+                    continue;
+                }
+                let frame = match frame {
                     Ok(f) => f,
                     Err(e) => {
                         let cause = if e.to_string().contains("exceeds message limit") {
@@ -1061,12 +1121,21 @@ pub fn join_unix(
     hello: impl FnOnce(&Challenge) -> HelloBody,
     now: &dyn Fn() -> u64,
 ) -> Result<AdmittedMember> {
-    join(stream, contract, plan_sha256, key, hello, now)
+    join(
+        &mut DeadlineSocket::new(&*stream),
+        contract,
+        plan_sha256,
+        key,
+        hello,
+        now,
+    )
 }
 /// Participant side: read and verify the challenge, send the signed hello built by `hello`,
-/// then verify the full-group admission. Reads are bounded by the join timeout.
+/// then verify the full-group admission. The whole exchange ends by one absolute deadline,
+/// the join timeout (cut to the original deadline) from now, however the coordinator paces
+/// its bytes.
 pub fn join(
-    mut stream: &mut dyn ControlStream,
+    stream: &mut dyn ControlStream,
     contract: &BoundedRunContract,
     plan_sha256: &str,
     key: &SigningKey,
@@ -1074,18 +1143,22 @@ pub fn join(
     now: &dyn Fn() -> u64,
 ) -> Result<AdmittedMember> {
     let limit = contract.rendezvous.max_message_bytes;
-    let remaining = contract
-        .rendezvous
-        .join_timeout_ms
-        .min(contract.original_deadline_unix_ms.saturating_sub(now()))
-        .max(1);
-    stream.set_timeouts(Some(Duration::from_millis(remaining)), None)?;
-    let frame = read_frame(&mut stream, limit)?;
-    let challenge = verify_challenge(contract, plan_sha256, &frame, now())
-        .map_err(|c| anyhow::anyhow!("challenge refused: {c:?}"))?;
-    let signed = sign_hello(key, hello(&challenge))?;
-    write_frame(&mut stream, &serde_json::to_vec(&signed)?, limit)?;
-    let frame = read_frame(&mut stream, limit)?;
-    verify_admission(contract, plan_sha256, &signed, &frame, now())
-        .map_err(|c| anyhow::anyhow!("admission refused: {c:?}"))
+    let remaining = Duration::from_millis(
+        contract
+            .rendezvous
+            .join_timeout_ms
+            .min(contract.original_deadline_unix_ms.saturating_sub(now()))
+            .max(1),
+    );
+    stream.set_timeouts(Some(remaining), None)?;
+    by_deadline(stream, Instant::now() + remaining, |stream| {
+        let frame = read_frame(stream, limit)?;
+        let challenge = verify_challenge(contract, plan_sha256, &frame, now())
+            .map_err(|c| anyhow::anyhow!("challenge refused: {c:?}"))?;
+        let signed = sign_hello(key, hello(&challenge))?;
+        write_frame(stream, &serde_json::to_vec(&signed)?, limit)?;
+        let frame = read_frame(stream, limit)?;
+        verify_admission(contract, plan_sha256, &signed, &frame, now())
+            .map_err(|c| anyhow::anyhow!("admission refused: {c:?}"))
+    })
 }

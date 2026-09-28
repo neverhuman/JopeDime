@@ -26,11 +26,15 @@ use std::{
     collections::{BTreeMap, BTreeSet},
     net::SocketAddr,
     sync::atomic::{AtomicBool, Ordering},
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 /// Frame bound for agent requests and replies (a retained result travels as hex).
 pub const AGENT_FRAME_LIMIT: u32 = 16 * 1024 * 1024;
+/// How long an idle agent waits for a request before it rechecks its stop flag and listener.
+const IDLE_POLL: Duration = Duration::from_millis(500);
+/// Bound on writing one reply, however slowly the coordinator reads it.
+const REPLY_WRITE: Duration = Duration::from_secs(30);
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(tag = "op", rename_all = "snake_case", deny_unknown_fields)]
@@ -185,18 +189,21 @@ impl<S: Supervisor> Agent<S> {
     /// look open, and the run's coordinator lock admits one coordinator at a time. A
     /// connection that breaks its delivery sequence is dropped; one that fails to authenticate
     /// never delivers a request.
+    ///
+    /// Every blocking step is bounded by an absolute deadline, so `stop` is seen within a
+    /// bounded time however a peer paces its bytes: an accept by the handshake allowance, an
+    /// idle wait by [`IDLE_POLL`], a started request by the plan's I/O timeout from its first
+    /// byte, and a reply by [`REPLY_WRITE`].
     pub fn serve(&mut self, acceptor: &TlsAcceptor, stop: &AtomicBool) -> Result<()> {
         use super::rendezvous::ControlStream;
+        let request_within = Duration::from_millis(self.contract.rendezvous.heartbeat_timeout_ms);
         let mut channel: Option<Sequenced<TlsStream>> = None;
         while !stop.load(Ordering::Acquire) {
             if let Ok(Some(stream)) = acceptor.poll_accept() {
-                // Short read deadline so an idle coordinator never pins the loop past `stop`
-                // or past a newer connection; an idle wait consumes nothing.
+                // Short idle wait so an idle coordinator never pins the loop past `stop` or
+                // past a newer connection; an idle wait consumes nothing.
                 if stream
-                    .set_timeouts(
-                        Some(Duration::from_millis(500)),
-                        Some(Duration::from_secs(30)),
-                    )
+                    .set_timeouts(Some(IDLE_POLL), Some(REPLY_WRITE))
                     .is_ok()
                 {
                     channel = Some(Sequenced::new(stream, AGENT_FRAME_LIMIT));
@@ -206,7 +213,7 @@ impl<S: Supervisor> Agent<S> {
                 std::thread::sleep(Duration::from_millis(20));
                 continue;
             };
-            let frame = match current.poll_receive() {
+            let frame = match current.poll_receive(IDLE_POLL, request_within) {
                 Ok(Some((_, frame))) => frame,
                 Ok(None) => continue,
                 Err(_) => {
@@ -220,7 +227,11 @@ impl<S: Supervisor> Agent<S> {
                     reason: format!("malformed request: {e}"),
                 },
             };
-            if current.send(&serde_json::to_vec(&reply)?).is_err() {
+            let reply = serde_json::to_vec(&reply)?;
+            if current
+                .send_by(&reply, Instant::now() + REPLY_WRITE)
+                .is_err()
+            {
                 channel = None;
             }
         }
@@ -307,6 +318,8 @@ impl RemoteSupervisor {
         let channel = self.channels.get_mut(&rank).context("agent channel")?;
         // Replies are bounded: fast operations by the plan's I/O deadline, a launch or a
         // terminate (which waits for SmartCluster to stop the job) by longer fixed bounds.
+        // The bound is absolute over the whole exchange, request and reply: an agent that
+        // trickles bytes inside a per-read timeout cannot hold the coordinator any longer.
         let reply_deadline = match request {
             AgentRequest::Terminate { .. } => Duration::from_secs(90),
             AgentRequest::Launch { .. } => Duration::from_secs(30),
@@ -318,9 +331,11 @@ impl RemoteSupervisor {
                 .get_ref()
                 .set_timeouts(Some(reply_deadline), Some(self.timeouts.io))?;
         }
+        let deadline = Instant::now() + reply_deadline;
+        let request = serde_json::to_vec(request)?;
         let exchanged = channel
-            .send(&serde_json::to_vec(request)?)
-            .and_then(|_| channel.receive());
+            .send_by(&request, deadline)
+            .and_then(|_| channel.receive_by(deadline));
         match exchanged {
             Ok((_, frame)) => match serde_json::from_slice(&frame)? {
                 AgentReply::Refused { reason } => {

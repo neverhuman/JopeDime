@@ -14,7 +14,7 @@
 use super::{
     controller::{Coordinator, StatusReport, Supervisor},
     participant::load_signing_key,
-    rendezvous::{self, write_frame, Connected, ControlFrame},
+    rendezvous::{self, write_frame_by, Connected, ControlFrame},
     transport::{self, HostCredential, Timeouts, TlsAcceptor},
 };
 use anyhow::{ensure, Context, Result};
@@ -22,7 +22,7 @@ use std::{
     net::SocketAddr,
     path::PathBuf,
     sync::atomic::{AtomicBool, Ordering},
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 #[derive(Clone, Debug)]
@@ -47,12 +47,14 @@ fn boot_id() -> Result<String> {
         .trim()
         .to_string())
 }
-fn heartbeat_all(connected: &mut [Connected], id: u64, limit: u32) {
+fn heartbeat_all(connected: &mut [Connected], id: u64, limit: u32, allowance: Duration) {
     let frame =
         serde_json::to_vec(&ControlFrame::Heartbeat { delivery_id: id }).unwrap_or_default();
     for c in connected.iter_mut() {
-        // A failed write is observed through the rank's own exit (lost control) at poll.
-        let _ = write_frame(&mut c.stream, &frame, limit);
+        // Each write ends within `allowance` (one heartbeat interval) of its start, so a rank
+        // that stops reading delays this loop, and the other ranks' heartbeats, by at most
+        // that. A failed write is observed through the rank's own exit (lost control) at poll.
+        let _ = write_frame_by(&mut *c.stream, &frame, limit, Instant::now() + allowance);
     }
 }
 
@@ -115,7 +117,7 @@ pub fn coordinate<S: Supervisor>(
             "coordinator stopped; restart it to reconcile"
         );
         next += 1;
-        heartbeat_all(&mut connected, next, limit);
+        heartbeat_all(&mut connected, next, limit, args.heartbeat);
         let status = c.poll_with_clock(now_ms)?;
         if status.outcome.is_some() {
             return Ok(status);

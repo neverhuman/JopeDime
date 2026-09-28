@@ -12,6 +12,7 @@ use jope_parallel::native_loop::bounded::{
     contract::{BoundedRunContract, PlanRefusal, WorkKind},
     controller::{self, Coordinator, Disposition, Liveness, Outcome, RankState},
     rendezvous::{self, Connected, GroupRefusal, Hello, HelloBody, RefusalCause, Rendezvous},
+    transport::DeadlineSocket,
 };
 use std::{
     fs,
@@ -561,7 +562,7 @@ fn deliver(
         let (a, b) = UnixStream::pair().unwrap();
         connected.push(Connected {
             global_rank: rank,
-            stream: Box::new(a),
+            stream: Box::new(DeadlineSocket::new(a)),
         });
         peers.push(b);
     }
@@ -1747,7 +1748,7 @@ fn admission_and_delivery_stop_when_any_participant_grant_expires() {
         let (a, b) = UnixStream::pair().unwrap();
         connected.push(Connected {
             global_rank: rank,
-            stream: Box::new(a),
+            stream: Box::new(DeadlineSocket::new(a)),
         });
         peers.push(b);
     }
@@ -2242,6 +2243,10 @@ fn blocking_admission_delivery_cannot_renew_the_execution_window() {
             _: Option<std::time::Duration>,
             _: Option<std::time::Duration>,
         ) -> std::io::Result<()> {
+            Ok(())
+        }
+        // Its writes never block; the injected clock is what this fixture advances.
+        fn set_deadline(&self, _: Option<std::time::Instant>) -> std::io::Result<()> {
             Ok(())
         }
     }

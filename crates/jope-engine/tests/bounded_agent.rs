@@ -11,7 +11,7 @@ use fixture::*;
 use jope_parallel::native_loop::bounded::{
     agent::{agent_acceptor, Agent, AgentReply, AgentRequest, RemoteSupervisor, AGENT_FRAME_LIMIT},
     contract::BoundedRunContract,
-    controller::{Liveness, RankLaunch, Supervisor},
+    controller::{Liveness, RankLaunch, Supervisor, SupervisorHandle},
     rendezvous,
     transport::{self, HostCredential, Sequenced, Timeouts},
 };
@@ -23,7 +23,7 @@ use std::{
         Arc,
     },
     thread,
-    time::Duration,
+    time::{Duration, Instant},
 };
 use tls::*;
 
@@ -38,6 +38,9 @@ struct Planned {
     certs: Vec<TestCertificate>,
 }
 fn planned() -> Planned {
+    planned_with(|_| {})
+}
+fn planned_with(adjust: impl FnOnce(&mut BoundedRunContract)) -> Planned {
     let k = keys(3);
     let certs: Vec<_> = (0..3)
         .map(|i| current(&format!("fixture-host-{i}"), 61 + i as u8))
@@ -47,6 +50,7 @@ fn planned() -> Planned {
     for (p, cert) in c.participants.iter_mut().zip(&certs) {
         p.host.certificate_sha256 = cert.sha256.clone();
     }
+    adjust(&mut c);
     resign(&mut c, &k);
     c.validate_structure().unwrap();
     let plan = c.canonical_bytes().unwrap();
@@ -319,4 +323,94 @@ fn an_agent_refuses_malformed_and_replayed_requests() {
     assert_eq!(fake.0.lock().unwrap().launches, 0);
     stop.store(true, Ordering::Release);
     t.join().unwrap();
+}
+
+/// The fixture plan with a 300 ms I/O (heartbeat) timeout.
+fn quick_io() -> (Planned, Duration) {
+    (
+        planned_with(|c| c.rendezvous.heartbeat_timeout_ms = 300),
+        Duration::from_millis(300),
+    )
+}
+
+/// A remote call's request and reply end by its reply deadline: an agent that authenticates
+/// with its planned certificate and then trickles its reply cannot hold the coordinator
+/// (and so its supervision, deadline and stop checks) any longer.
+#[test]
+fn a_trickling_agent_cannot_hold_a_remote_call_past_its_reply_deadline() {
+    let (p, io) = quick_io();
+    let acceptor = agent_acceptor(
+        &p.contract,
+        "127.0.0.1:0".parse().unwrap(),
+        &credential(&p.certs[0]),
+        "fixture-host-0",
+    )
+    .unwrap();
+    let address = acceptor.local_addr().unwrap();
+    let agent = thread::spawn(move || {
+        let start = Instant::now();
+        let mut s = loop {
+            if let Ok(Some(s)) = acceptor.poll_accept() {
+                break s;
+            }
+            assert!(start.elapsed() < Duration::from_secs(10), "no coordinator");
+            thread::sleep(Duration::from_millis(5));
+        };
+        rendezvous::read_frame(&mut s, AGENT_FRAME_LIMIT).unwrap();
+        trickle(s, &1_000u32.to_be_bytes());
+    });
+    let all = (0..3u32).map(|r| (r, address)).collect();
+    let mut remote =
+        RemoteSupervisor::new(&p.contract, &p.sha, credential(&p.certs[1]), all).unwrap();
+    let handle = SupervisorHandle {
+        supervisor: "remote:0:fake".into(),
+        identity: dispatch(&p, 0),
+    };
+    let start = Instant::now();
+    assert!(
+        remote.probe(&handle).is_err(),
+        "a trickled reply was accepted"
+    );
+    ended_at_deadline(
+        start.elapsed(),
+        io,
+        "a remote call held by a trickled reply",
+    );
+    drop(remote);
+    agent.join().expect("the agent never reached its trickle");
+}
+
+/// An agent serves one request at a time; a request frame that has started must arrive whole
+/// within the plan's I/O timeout, so a coordinator that trickles it cannot hold the agent
+/// past its stop flag.
+#[test]
+fn a_trickling_coordinator_cannot_hold_an_agent_past_its_stop() {
+    let (p, io) = quick_io();
+    let (address, stop, served) =
+        serve(&p, "fixture-host-0", &p.certs[0], FakeSupervisor::default());
+    let s = transport::connect(
+        address,
+        &credential(&p.certs[1]),
+        (&p.certs[0].sha256, "fixture-host-0"),
+        Timeouts::from_plan(&p.contract),
+    )
+    .unwrap();
+    let coordinator = thread::spawn(move || trickle(s, &1_000u32.to_be_bytes()));
+    thread::sleep(Duration::from_millis(100));
+    let start = Instant::now();
+    stop.store(true, Ordering::Release);
+    while !served.is_finished() {
+        assert!(
+            start.elapsed() < Duration::from_secs(10),
+            "the agent never stopped"
+        );
+        thread::sleep(Duration::from_millis(5));
+    }
+    let elapsed = start.elapsed();
+    served.join().unwrap();
+    assert!(
+        elapsed <= io + SLACK,
+        "the agent stopped {elapsed:?} after its stop flag; a started frame has {io:?}"
+    );
+    coordinator.join().unwrap();
 }

@@ -4,7 +4,40 @@
 #![allow(dead_code)]
 use ed25519_dalek::{Signer, SigningKey};
 use sha2::{Digest, Sha256};
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::{
+    io::Write,
+    time::{Duration, Instant, SystemTime, UNIX_EPOCH},
+};
+
+/// How long a trickling peer keeps sending. Before the bounded transport enforced absolute
+/// deadlines, a blocked read lasted this long (review 5339604155).
+pub const TRICKLE: Duration = Duration::from_millis(2_500);
+/// Scheduling slack over a deadline on a loaded CI host. A 300 ms deadline plus this is still
+/// under the 1.5 s the review observed, and far under [`TRICKLE`].
+pub const SLACK: Duration = Duration::from_millis(500);
+/// A TLS handshake record header that announces 16 KiB of body, none of which follows in time.
+pub const PARTIAL_RECORD: [u8; 5] = [22, 3, 3, 0x40, 0];
+/// Send `head`, then one byte every 75 ms (inside every per-read timeout these tests use)
+/// until [`TRICKLE`] has passed or the other side has gone away.
+pub fn trickle(mut out: impl Write, head: &[u8]) {
+    let start = Instant::now();
+    let mut next = head.to_vec();
+    while start.elapsed() < TRICKLE {
+        if out.write_all(&next).and_then(|()| out.flush()).is_err() {
+            return;
+        }
+        next = vec![0];
+        std::thread::sleep(Duration::from_millis(75));
+    }
+}
+/// The operation ended at its deadline: not before it (less 50 ms of clock rounding) and at
+/// most [`SLACK`] after it.
+pub fn ended_at_deadline(elapsed: Duration, deadline: Duration, what: &str) {
+    assert!(
+        elapsed + Duration::from_millis(50) >= deadline && elapsed <= deadline + SLACK,
+        "{what} ended after {elapsed:?}; its deadline was {deadline:?}"
+    );
+}
 
 pub struct TestCertificate {
     pub der: Vec<u8>,
