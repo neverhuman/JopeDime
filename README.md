@@ -18,7 +18,7 @@ encodings→program neural policy will ship because the product needs a router; 
 
 | Surface | Status on this SHA |
 | --- | --- |
-| `jope` CLI | No subcommand still prints `jope 0.1.0`. Fixtures, CPU `encode` (fail-closed without weights), `fit` / `search` / `emit`, `champions --local`, `train-step --local` (fits a 128-d centroid router), `route`, `pipeline run`. `champions --pull/--push` and `train-step --env dev` **fail closed**. Live S3 is **not** wired. |
+| `jope` CLI | No subcommand still prints `jope 0.2.0`. Fixtures, CPU `encode` (fail-closed without weights), `fit` / `search` / `emit`, `champions --local`, `train-step --local` (fits a 128-d centroid router), `route`, `pipeline run`. `champions --pull/--push` and `train-step --env dev` **fail closed**. Live S3 is **not** wired. |
 | `jope pipeline run` | CPU spine only: dataset -> folds -> program search -> select -> emit -> `jope.pipeline-receipt/v3` (optionally seeded from a verified parent receipt or a `jope.pipeline-seeds/v1` file; seeds are re-measured, never trusted). The search is an iterative search over feat-math pipeline programs: every candidate is fitted with `feat_math::fit` on a cut's training rows and scored on that cut's held-out rows, and selection requires measurements on every requested cut before comparing mean held-out RMSE (ties break on the canonical program). Exploration and cross-cut comparison share the [total per-cut budget](docs/pipeline.md); the receipt records phase costs, coverage, overruns and the champion's RMSE and R². It does **not** use the engine's own search, which cannot measure in a shipped binary (`eval_registry/authority.rs` blocks every capability outside `cfg(test)` and `fit_boundary.rs` fences fitting behind a service socket). The encode/propose stage is **skipped** and recorded (`--policy require` fails closed); S3 publication and router training are **not** in it. |
 | `crates/feat-math` | Typed program IR, fit, and portable emitters (Rust / Python / JS / C++17; C++20 compiles C++17). |
 | `crates/jope-encoders` | Encoder implementations (package name `starforge`). |
@@ -167,7 +167,7 @@ every member.
 ```sh
 cargo build --locked
 cargo run --locked --bin jope
-# jope 0.1.0
+# jope 0.2.0
 cargo run --locked --bin jope -- verify-inputs --offline --root datasets/synthetic
 # Verified 40 synthetic datasets, … bytes, offline.
 # Encode needs the Hyperion bundle (not in git):
