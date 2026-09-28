@@ -90,9 +90,12 @@ pub fn parse_clap_enum(path: &Path, enum_name: &str) -> Result<Vec<Variant>> {
         r"(?s)enum {} \{{\n(.*?)\n\}}\n",
         regex::escape(enum_name)
     ));
-    let body = block
-        .captures(&src)
-        .ok_or_else(|| Error::Shape(format!("{}: enum {enum_name} not found", path.display())))?[1]
+    let body = block.captures(&src).ok_or_else(|| {
+        Error::Shape(format!(
+            "{}: enum {enum_name} not found",
+            py::os_display(path.as_os_str())
+        ))
+    })?[1]
         .to_owned();
     let attr = py::regex(r"^    #\[");
     let variant = py::regex(r"^    ([A-Z][A-Za-z0-9]*)\s*(\{|,|\()");
@@ -184,7 +187,10 @@ pub fn argparse_commands(src: &str) -> Vec<String> {
 
 /// `os.path.relpath(path, root)` for absolute paths. It splits both on separators and drops the
 /// empty parts, so unlike pathlib it has no distinct `//` root: `//r/x` relative to `/r` is `x`.
-fn relpath(path: &Path, root: &Path) -> String {
+/// The components compare as the bytes they are. A result that is not UTF-8 (a relative `src_path`
+/// under a working directory named with such a byte) is returned as the bytes it is, for the
+/// caller to refuse: the Python's surrogate-escaped `str` matched no row.
+fn relpath(path: &Path, root: &Path) -> std::result::Result<String, std::ffi::OsString> {
     let path: Vec<_> = path.components().collect();
     let base: Vec<_> = root.components().collect();
     let common = path.iter().zip(&base).take_while(|(a, b)| a == b).count();
@@ -196,9 +202,9 @@ fn relpath(path: &Path, root: &Path) -> String {
         out.push(c.as_os_str());
     }
     if out.as_os_str().is_empty() {
-        ".".into()
+        Ok(".".into())
     } else {
-        out.to_string_lossy().into_owned()
+        out.into_os_string().into_string()
     }
 }
 
@@ -324,13 +330,19 @@ pub fn bins_from_metadata(
             // `os.path.relpath` runs before the names are read.
             let absolute = abspath(src)
                 .map_err(|e| raised(&format!("{at} src_path"), py::os_error_bare(&e)))?;
+            let relative = relpath(&absolute, root).map_err(|name| {
+                Error::Shape(format!(
+                    "{at} src_path: {} relative to the root is not UTF-8, so no row can name it (the Python failed the check reporting it as missing)",
+                    py::os_repr(&name)
+                ))
+            })?;
             let name = py::subscript(package, "name").map_err(|e| raised(&at, e))?;
             let target_name = py::subscript(target, "name").map_err(|e| raised(&at, e))?;
             out.push((
                 text(name, &format!("{at} package name"))?,
                 kind,
                 text(target_name, &format!("{at} name"))?,
-                relpath(&absolute, root),
+                relative,
             ));
         }
     }
@@ -340,10 +352,7 @@ pub fn bins_from_metadata(
 
 /// An `OSError` the Python raised inspecting `path`, as a refusal naming what was being read.
 fn os_refusal(what: &str, path: &Path, error: &std::io::Error) -> Error {
-    Error::Shape(format!(
-        "{what}: {}",
-        py::os_error(error, &path.to_string_lossy())
-    ))
+    Error::Shape(format!("{what}: {}", py::os_error_path(error, path)))
 }
 
 /// `path.exists()` ([`py::path_exists`]): a missing path (or a loop) is absent, and any other
@@ -426,16 +435,26 @@ fn name_ends_with(path: &Path, suffix: &str) -> bool {
 /// raw bytes printed under a `C.UTF-8` locale, a `UnicodeEncodeError` under other UTF-8 locales).
 /// This report is text, so the port refuses instead (exit status 1 either way). Two such names
 /// never collapse into one, as a lossy conversion made them.
+///
+/// A root that is not UTF-8 refuses too (review round six; `check` refuses it first). It was
+/// compared lossily (U+FFFD for the byte), so a `[[bin]]` path spelled with U+FFFD in its place was
+/// found under the root where the Python's `relative_to` raised.
 fn rel(path: &Path, root: &Path, what: &str) -> Result<String> {
+    let Some(root_text) = root.to_str() else {
+        return Err(Error::Shape(format!(
+            "{what}: the root {} is not UTF-8, so no entry point under it can be named as text",
+            py::os_repr(root.as_os_str())
+        )));
+    };
     let Some(text) = path.to_str() else {
         let relative = path.strip_prefix(root).unwrap_or(path);
         return Err(Error::Shape(format!(
             "{what} {}: the path is not UTF-8, so no row can name it (the Python failed the check reporting it as missing)",
-            relative.to_string_lossy()
+            py::os_display(relative.as_os_str())
         )));
     };
     py::PosixPath::parse(text)
-        .relative_to(&py::PosixPath::parse(&root.to_string_lossy()))
+        .relative_to(&py::PosixPath::parse(root_text))
         .map(|relative| relative.to_string())
         .map_err(|e| Error::Shape(format!("{what}: ValueError: {e}")))
 }
@@ -492,8 +511,9 @@ pub fn fallback_bins(root: &Path) -> Result<Vec<(String, String, String, String)
                     let stem = path
                         .file_stem()
                         .unwrap_or_default()
-                        .to_string_lossy()
-                        .into_owned();
+                        .to_str()
+                        .expect("rel() refused a name that is not UTF-8")
+                        .to_owned();
                     out.insert((pkg.clone(), kind.to_owned(), stem, source));
                 }
             }
@@ -815,13 +835,23 @@ pub fn target_heads(matrix_text: &str) -> BTreeSet<String> {
 /// other than a missing path), the clap enum, the `--help` text, then the rest of the tree.
 pub fn check(matrix: &Path, root: &Path, help_text: Option<&Path>) -> Result<(String, bool)> {
     let root = root.canonicalize().map_err(|e| Error::io(root, e))?;
+    // Every entry point is named relative to the resolved root and compared with the matrix's
+    // text. A root that is not UTF-8 refuses here, before anything is read (stricter: the Python
+    // named entry points relative to its surrogate-escaped root and ran the check), rather than be
+    // compared lossily.
+    if root.to_str().is_none() {
+        return Err(Error::Shape(format!(
+            "parity-check root {} is not UTF-8; its entry points cannot be named as text",
+            py::os_repr(root.as_os_str())
+        )));
+    }
     let text = py::read_text(matrix)?;
     let mut exists = BTreeMap::new();
     for head in checked_heads(&text) {
         let present = py::path_exists(&root.join(&head)).map_err(|e| {
             Error::Shape(format!(
                 "row target `{head}`: {}",
-                py::os_error(&e, &root.join(&head).to_string_lossy())
+                py::os_error_path(&e, &root.join(&head))
             ))
         })?;
         exists.insert(head, present);
@@ -1107,12 +1137,54 @@ mod tests {
         );
         assert!(rel(Path::new("//r/x.rs"), root, "bin").is_err());
         assert_eq!(
-            relpath(&abspath("//r/src/main.rs").unwrap(), root),
+            relpath(&abspath("//r/src/main.rs").unwrap(), root).unwrap(),
             "src/main.rs"
         );
         assert_eq!(
-            relpath(&abspath("/r/a/../src/main.rs").unwrap(), root),
+            relpath(&abspath("/r/a/../src/main.rs").unwrap(), root).unwrap(),
             "src/main.rs"
+        );
+    }
+
+    /// Review round six of PR #117: nothing under a root is named by a lossy conversion. A root
+    /// that is not UTF-8 refuses (a `[[bin]]` path spelled with U+FFFD in the byte's place was
+    /// found under it), and a relative `src_path` that is not UTF-8 refuses (the Python's
+    /// surrogate-escaped `str` matched no row) instead of becoming a row name with U+FFFD.
+    #[test]
+    fn entry_points_are_never_named_by_a_lossy_conversion() {
+        use std::ffi::OsStr;
+        use std::os::unix::ffi::OsStrExt;
+        let root = Path::new(OsStr::from_bytes(b"/r/\xff"));
+        let lossy = Path::new("/r/\u{fffd}/src/x.rs");
+        let refused = rel(lossy, root, "bin").unwrap_err().to_string();
+        assert_eq!(
+            refused,
+            r"bin: the root '/r/\udcff' is not UTF-8, so no entry point under it can be named as text"
+        );
+        // The same path under a UTF-8 root is named as before.
+        assert_eq!(
+            rel(lossy, Path::new("/r/\u{fffd}"), "bin").unwrap(),
+            "src/x.rs"
+        );
+        let under = Path::new(OsStr::from_bytes(b"/r/src/\xff.rs"));
+        assert_eq!(
+            relpath(under, Path::new("/r")).unwrap_err().as_os_str(),
+            OsStr::from_bytes(b"src/\xff.rs")
+        );
+        assert_eq!(
+            rel(under, Path::new("/r"), "bin").unwrap_err().to_string(),
+            r"bin src/\udcff.rs: the path is not UTF-8, so no row can name it (the Python failed the check reporting it as missing)"
+        );
+        // `check` refuses such a root before anything is read.
+        let temp = tempfile::tempdir().unwrap();
+        let real = temp.path().join(OsStr::from_bytes(b"\xff"));
+        std::fs::create_dir(&real).unwrap();
+        let refused = check(&real.join("missing-matrix.md"), &real, None)
+            .unwrap_err()
+            .to_string();
+        assert!(
+            refused.starts_with("parity-check root '") && refused.contains(r"\udcff'"),
+            "{refused}"
         );
     }
 

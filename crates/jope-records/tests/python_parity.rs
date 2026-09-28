@@ -1098,11 +1098,40 @@ fn unhex(text: &str) -> Vec<u8> {
         .collect()
 }
 
+/// A fixture string with `@Xhh@` for the byte `hh` (a name that is not UTF-8), as its bytes.
+fn unescape(text: &str) -> std::ffi::OsString {
+    use std::os::unix::ffi::OsStringExt;
+    let mut out = vec![];
+    let mut rest = text;
+    while let Some(at) = rest.find("@X") {
+        match (rest.get(at + 2..at + 4), rest.get(at + 4..at + 5)) {
+            (Some(hex), Some("@")) if hex.bytes().all(|b| b.is_ascii_hexdigit()) => {
+                out.extend_from_slice(&rest.as_bytes()[..at]);
+                out.push(u8::from_str_radix(hex, 16).unwrap());
+                rest = &rest[at + 5..];
+            }
+            _ => {
+                out.extend_from_slice(&rest.as_bytes()[..at + 2]);
+                rest = &rest[at + 2..];
+            }
+        }
+    }
+    out.extend_from_slice(rest.as_bytes());
+    std::ffi::OsString::from_vec(out)
+}
+
 /// Write a `process.json` case: its tree under `root` (`@ROOT@` in text replaced), and what the
 /// `cargo` and `git` shims print under `dir`, encoded as the capture encoded it.
 fn materialise(case: &Value, root: &Path, dir: &Path) {
     use std::os::unix::ffi::OsStrExt;
     let root_text = root.to_str().unwrap();
+    // Round six: `@LOSSY_REAL_ROOT@` is the real root behind the `root` link, spelled with U+FFFD
+    // for each byte that is not UTF-8 (as a lossy conversion spelled it).
+    let lossy = case.get("root_link").map(|link| {
+        let parent = root.parent().unwrap().to_str().unwrap();
+        let name = unescape(s(link));
+        format!("{parent}/{}", String::from_utf8_lossy(name.as_bytes()))
+    });
     for file in case.get("files").and_then(Value::as_list).unwrap() {
         let path = match file.get("path_hex") {
             Some(hex) => root.join(std::ffi::OsStr::from_bytes(&unhex(s(hex)))),
@@ -1110,9 +1139,14 @@ fn materialise(case: &Value, root: &Path, dir: &Path) {
         };
         let bytes = match file.get("hex") {
             Some(hex) => unhex(s(hex)),
-            None => s(file.get("text").unwrap())
-                .replace("@ROOT@", root_text)
-                .into_bytes(),
+            None => {
+                let text = s(file.get("text").unwrap()).replace("@ROOT@", root_text);
+                match &lossy {
+                    Some(lossy) => text.replace("@LOSSY_REAL_ROOT@", lossy),
+                    None => text,
+                }
+                .into_bytes()
+            }
         };
         fs::create_dir_all(path.parent().unwrap()).unwrap();
         fs::write(&path, bytes).unwrap();
@@ -1253,6 +1287,10 @@ const PROCESS_STRICTER: &[(&str, &str)] = &[
     (
         "parity-r5-fallback-crate-unlistable",
         "a crate directory that cannot be listed (pathlib's `**` walk skipped it)",
+    ),
+    (
+        "parity-r6-root-not-utf8",
+        "a root whose resolved name is not UTF-8 (the Python named every entry point relative to its surrogate-escaped root)",
     ),
 ];
 
@@ -1408,6 +1446,17 @@ fn process_cases_match_round_five() {
     replay_process("process-r5-sweep.json", &json("process-r5-sweep.json"), 28);
 }
 
+/// Round six (`process-r6.json`): the guards on a root that is a link to a directory whose name is
+/// not UTF-8. The parity check compared entry points with the root converted lossily (U+FFFD for
+/// the byte), so a `[[bin]]` path spelled with U+FFFD was found under the root and the check passed
+/// where the Python's `relative_to` raised; it now refuses such a root before reading anything
+/// (`PROCESS_STRICTER`: the Python ran the check). Coverage discovery refuses as the Python raised;
+/// the scope check converts nothing and matches the Python's report.
+#[test]
+fn process_cases_match_round_six() {
+    replay_process("process-r6.json", &json("process-r6.json"), 4);
+}
+
 /// Replay every case of a process fixture (the layout of `process.json`) through the binary and
 /// hold each to `judge_process`; the cases, for the caller's controls.
 fn replay_process<'a>(rel: &str, doc: &'a Value, count: usize) -> &'a Vec<Value> {
@@ -1429,10 +1478,24 @@ fn replay_process<'a>(rel: &str, doc: &'a Value, count: usize) -> &'a Vec<Value>
     let mut failures = vec![];
     for case in cases {
         let name = s(case.get("name").unwrap());
-        let root = temp.path().join(name).join("root");
-        let dir = temp.path().join(name).join("shim");
-        fs::create_dir_all(&root).unwrap();
-        let root = root.canonicalize().unwrap();
+        let base = temp.path().join(name);
+        let dir = base.join("shim");
+        fs::create_dir_all(&base).unwrap();
+        let base = base.canonicalize().unwrap();
+        // Round six: `root_link` names the real root (`@Xhh@` for a byte that is not UTF-8), which
+        // the case reaches through the link `root`; `@ROOT@` is the link.
+        let root = match case.get("root_link") {
+            Some(link) => {
+                let real = unescape(s(link));
+                fs::create_dir(base.join(&real)).unwrap();
+                std::os::unix::fs::symlink(&real, base.join("root")).unwrap();
+                base.join("root")
+            }
+            None => {
+                fs::create_dir(base.join("root")).unwrap();
+                base.join("root")
+            }
+        };
         materialise(case, &root, &dir);
         let root_text = root.to_str().unwrap();
         let args: Vec<String> = case

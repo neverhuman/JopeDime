@@ -1006,7 +1006,7 @@ fn load_samecut(p: &Paths) -> Result<SameCut> {
         if name.to_str().is_none() {
             return Err(Error::Shape(format!(
                 "{rel}: report {} is not UTF-8 (the Python read it as one of the reports)",
-                path.to_string_lossy()
+                py::os_display(path.as_os_str())
             )));
         }
         report_paths.push(path);
@@ -1560,7 +1560,7 @@ pub fn run(root: &Path, write: bool) -> Result<(String, bool)> {
         if !py::path_exists(&path).map_err(|e| Error::io(&path, e))? {
             return Err(Error::Invalid(format!(
                 "missing required input: {}",
-                path.display()
+                py::os_display(path.as_os_str())
             )));
         }
     }

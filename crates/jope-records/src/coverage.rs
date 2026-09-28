@@ -170,15 +170,15 @@ fn command_output(root: &Path, program: &str, args: &[&str]) -> Result<Vec<u8>> 
 /// path under POSIX's distinct `//` root is outside the resolved root, which is spelled `/`.
 fn relative(path: &str, root: &Path, context: &str) -> Result<String> {
     let path = py::PosixPath::parse(path);
-    let base = py::PosixPath::parse(&root.to_string_lossy());
     // A root that is not UTF-8 holds a byte no metadata string can (the port's JSON strings hold
-    // no lone surrogate), so no path is under it.
+    // no lone surrogate), so no path is under it; the refusal names it as `repr` printed the
+    // Python's surrogate-escaped root (never a lossy conversion, which a path could match).
     let relative = match root.to_str() {
-        Some(_) => path.relative_to(&base),
+        Some(root) => path.relative_to(&py::PosixPath::parse(root)),
         None => Err(format!(
             "{} is not in the subpath of {}",
             pyjson::str_repr(&path.to_string()),
-            pyjson::str_repr(&base.to_string())
+            py::os_repr(root.as_os_str())
         )),
     };
     relative

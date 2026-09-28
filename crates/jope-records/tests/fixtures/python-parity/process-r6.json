@@ -1,0 +1,149 @@
+{
+  "source": "p1-r6-capture-20260928T082121Z",
+  "capture": "bash cap6.sh p1-r6-capture-20260928T082121Z (Python from git show f46a9048fbb2697d6d1f4463a688083ea9dfcce1:<tool>, unmodified, in a scratch root)",
+  "layout": "the layout of process.json, plus root_link: @ROOT@ is a link to the real root @CASE@/<root_link> (@Xhh@ the byte hh; @CASE@ is the case directory, holding both); @LOSSY_REAL_ROOT@ in a file is that real root with U+FFFD for each byte that is not UTF-8",
+  "cases": [
+    {
+      "name": "parity-r6-root-not-utf8",
+      "tool": "parity",
+      "root_link": "@Xff@",
+      "files": [
+        {
+          "path": "a/b.py",
+          "text": ""
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| tool-py | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **1** | **1** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 1.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| tool-py | old/x | a/b.py | none | moved |  |"
+        }
+      ],
+      "dirs": [],
+      "symlinks": [],
+      "modes": [],
+      "cargo": {
+        "stdout": "{\"packages\":[],\"workspace_members\":[]}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "git": [],
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 0,
+      "stdout": "capability matrix: 1 rows\nby status: moved=1\nby kind: tool-py=1\nthis tree: 0 binaries, 0 examples, 0 clap subcommands, 0 python tools, 0 systemd units\nok: every row resolved and every entry point of this tree has a row\n",
+      "stderr": ""
+    },
+    {
+      "name": "parity-r6-bin-under-lossy-root",
+      "tool": "parity",
+      "root_link": "@Xff@",
+      "files": [
+        {
+          "path": "src/x.rs",
+          "text": ""
+        },
+        {
+          "path": "matrix.md",
+          "text": "# Capability parity matrix\n\n## Counts\n\nRecomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees\nwith them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the\nsame number, so git reports no conflict — update this table from the rows, not from the last value\nyou saw.\n\n| kind | rows | moved | new | pending | dropped | lost |\n|---|---:|---:|---:|---:|---:|---:|\n| bin | 1 | 1 | 0 | 0 | 0 | 0 |\n| **total** | **1** | **1** | **0** | **0** | **0** | **0** |\n\n`moved`/`new` rows without a covering test: 1.\n\n## Rows\n\n| kind | old path/name | new home | test | status | notes |\n|---|---|---|---|---|---|\n| bin | old/x | src/x.rs | none | moved |  |"
+        },
+        {
+          "path": "crates/c/Cargo.toml",
+          "text": "[package]\nname = \"c\"\n\n[[bin]]\nname = \"x\"\npath = \"@LOSSY_REAL_ROOT@/src/x.rs\"\n"
+        }
+      ],
+      "dirs": [],
+      "symlinks": [],
+      "modes": [],
+      "cargo": {
+        "stdout": "",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "101"
+      },
+      "git": [],
+      "python": [
+        "check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "rust": [
+        "parity-check",
+        "--root",
+        "@ROOT@",
+        "--matrix",
+        "@ROOT@/matrix.md"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "raised": "ValueError: '@CASE@/�/src/x.rs' is not in the subpath of '@CASE@/\\udcff'"
+    },
+    {
+      "name": "coverage-r6-root-not-utf8",
+      "tool": "coverage",
+      "root_link": "@Xff@",
+      "files": [],
+      "dirs": [],
+      "symlinks": [],
+      "modes": [],
+      "cargo": {
+        "stdout": "{\"packages\":[{\"id\":\"demo 0.1.0 (path+file://@ROOT@)\",\"name\":\"demo\",\"manifest_path\":\"@ROOT@/Cargo.toml\",\"features\":{\"default\":[]},\"targets\":[]}],\"workspace_members\":[\"demo 0.1.0 (path+file://@ROOT@)\"],\"target_directory\":\"@ROOT@/target\"}",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "git": [],
+      "python": [
+        "discover"
+      ],
+      "rust": [
+        "coverage",
+        "discover"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "raised": "ValueError: '@ROOT@/Cargo.toml' is not in the subpath of '@CASE@/\\udcff'"
+    },
+    {
+      "name": "scope-r6-root-not-utf8",
+      "tool": "scope",
+      "root_link": "@Xff@",
+      "files": [
+        {
+          "path": "deploy/ci/rust-test-scope.sh",
+          "text": "product=(a)\ndeferred=(b)\ncase \"${1:-}\" in --deferred) set -- \"${deferred[@]}\";; *) set -- \"${product[@]}\";; esac\nfor p in \"$@\"; do printf -- '-p %s ' \"$p\"; done; echo\n"
+        }
+      ],
+      "dirs": [],
+      "symlinks": [],
+      "modes": [],
+      "cargo": {
+        "stdout": "{\"packages\":[{\"name\":\"a\"},{\"name\":\"b\"}],\"workspace_members\":[]}\n",
+        "encoding": "utf-8",
+        "stderr_hex": "",
+        "exit": "0"
+      },
+      "git": [],
+      "python": [],
+      "rust": [
+        "rust-scope-check"
+      ],
+      "exit": 0,
+      "stdout": "ok: 2 workspace packages = 1 product + 1 deferred (no repeats, no overlap, none unplaced)\n",
+      "stderr": ""
+    }
+  ]
+}
