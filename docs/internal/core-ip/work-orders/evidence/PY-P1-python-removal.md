@@ -666,6 +666,12 @@ and the port at `a997ab825` on the same live tree and the same 12 mutated maps. 
 - **Valid input.** Output stays byte-identical. The existing parity fixtures are unchanged and
   still pass.
 
+These bullets stated the goal; the round-one fixtures did not establish all of it. The
+differential review of round two (next section) found inputs where the port was still more
+permissive, explicit lines that differed, and valid inputs whose output differed. What holds
+after round two, with every remaining difference named, is under **Contract after round two**
+there.
+
 **Findings and what changed.** The previous agent's uncommitted edits were kept and completed:
 
 1. Nothing was committed: no negative fixtures, and doc comments described fixtures that did not
@@ -747,8 +753,9 @@ are unchanged.
   function holds every case to the contract.
 - `crates/jope-ci/tests/cargo_artifact_python_parity.rs`:
   `cargo_artifact_refuses_every_input_the_python_refused` runs the real binary behind a `cargo`
-  shim. It also checks that a refused `nextest-config` leaves no partial output; the Python left
-  an empty file. Its `judge` function has its own negative control.
+  shim. It also checks what a refused `nextest-config` leaves behind; since round two that is
+  what the Python left (an empty output where its crash came after `open("x")`). Its `judge`
+  function has its own negative control.
 - `crates/jope-ci/tests/build_report_python_parity.rs`: `config_refusals_match_the_captured_python_outputs`
   compares the exit status, stdout, the receipt and `failure.txt`. Like the existing receipt
   replay, it is ignored by default because it needs `JOPE_MAINTENANCE_SCRATCH`, and the gate runs
@@ -768,8 +775,8 @@ Stricter than the Python (it exited 0 and the port refuses):
 - readme `valid-rankable-float`: `format(8718.0, ",")` printed `8,718.0`;
 - cargo-artifact `target-dir-int` and `target-dir-null`: the Python printed `5` and `None`.
 
-Both refuse, with different words:
-- cargo-artifact `ids-beyond-64-bits`: the port refuses at parse; the Python failed the package
+Both refuse, with different words (both identical since round two):
+- cargo-artifact `ids-beyond-64-bits`: the port refused at parse; the Python failed the package
   lookup (`found 0`);
 - cargo-artifact `build-non-utf8`: Rust's decoder wording, not Python's codec wording.
 
@@ -834,6 +841,123 @@ port at `a997ab825`, before the uncommitted edits. "Now" is this follow-up.
 
   This paragraph was added after that gate. It changes only this file, which
   `p1-failclosed-post-docs-*` checks.
+
+## Follow-up — differential review, round two (PR #117)
+
+A differential checker ran the original tools (git bytes of `f46a9048f`) and the ports at
+`ef8d31c0b` side by side on 140 crafted inputs. Its table is kept in
+`p1-failclosed-r2-pre-20260928T024938Z` (`results.tsv`, with the harness): 30 cases where the port
+exited 0 and the Python did not, 6 with different output on success, 14 stricter, 71 failing on
+both sides and 19 identical. It raised 15 findings.
+
+**Dispositions.** Every "Case" below is a captured fixture case replayed by a test.
+
+| # | Finding | Disposition | Change | Cases |
+| ---: | --- | --- | --- | --- |
+| 1 | `cargo metadata` stdout with a BOM or in UTF-16 accepted (coverage, scope, parity) | fixed | Cargo's stdout is decoded as `text=True` decoded it (strict UTF-8, universal newlines) and read as a `str`, which refuses a BOM (`coverage::metadata_from_stdout`, `scope_check::check`, `parity::cargo_bins`) | `cov-*-meta-utf8-bom`, `cov-discover-meta-utf16`, `cov-discover-meta-not-utf8`, `scope-meta-*`, `parity-meta-*` |
+| 2 | stderr that is not UTF-8 ignored | fixed | `py::text_streams` decodes stdout, then stderr, before the exit status is read (the script runs and both Cargo calls); the script's stdout is no longer decoded lossily | `scope-script-stderr-not-utf8`, `scope-cargo-*stderr-not-utf8`, `parity-cargo-*stderr-not-utf8` |
+| 3 | Rust `\s`/`\w` are not Python's | fixed | `py::regex` compiles each pattern with Python 3.12's classes: `\s` adds U+001C..U+001F, `\w` is `L*`, `N*` or `_`, `\d` is `Nd`, all restricted to Unicode 15.0 (`Age=V15_0`) | 18 `cov-*-wf-*`, `parity-help-name-*`, `parity-clap-variant-unit-sep`, `parity-clap-name-attr-unit-sep`, `parity-jope-py-*` |
+| 4 | `NaN in [NaN]` false | fixed | `pyjson::eq_or_identical` (identity first, as `PyObject_RichCompareBool`) for `in` and list/dict element equality; a top-level `NaN == NaN` stays false | `cov-*-meta-id-nan`, cargo-artifact `id-nan`, readme `report-rmse-nan-tie` |
+| 5 | README: `NaN` for `nan`, Rust's sort and `max` | fixed | `fixed()` prints `nan`/`inf`/`-inf`; `py_sorted` reproduces CPython 3.12's `list.sort` for fewer than 64 values holding a NaN (one `count_run`, then `binarysort`) and refuses 64 or more; `py_max` keeps the first value nothing exceeds; `py_sum` is 3.12's `sum` (exact integers, Neumaier-compensated floats, integers after a float added plainly) | readme `bench-*-nan`, `bench-mean-inf`, `report-produce-*` (7), `csv-average-rank-nan` |
+| 6 | lossy file names collapse (parity) | fixed; one listed difference | a Python tool or systemd unit whose path is not UTF-8 is refused, naming it; two names can no longer collapse into one | `parity-tool-name-not-utf8-*`, `parity-unit-name-not-utf8` |
+| 7 | `nextest-config` accepts a leading BOM | fixed | refused with `tomllib`'s `Invalid statement (at line 1, column 1)` | `toml-utf8-bom` |
+| 8 | `build-report scan` fails on names that are not UTF-8 | fixed | `walk` keeps names as bytes, `du` gets the path's bytes and its output is decoded strictly (CPython's codec message), an `OSError` names the path surrogate-escaped | `file-name-not-utf8-in-candidate`, `dir-name-not-utf8-outside-candidate`, `candidate-path-not-utf8` |
+| 9 | `pending-WP<N>` and the tally overflow or refuse Unicode digits | fixed | `py::decimal_digits`: `int()` of Unicode decimal digits, unbounded | `parity-pending-wp-*` (3), `parity-tally-*` (3) |
+| 10 | steps run in a different order | fixed | `a == b == c` short-circuits; `parity::check` reads in `cmd_check`'s order (matrix, row-target `Path.exists`, which raises on errors other than a missing path, clap enum, `--help`, the rest); `nextest-config` reads, parses, refuses a store, creates the output, then reads the target, leaving the empty file the Python left | readme `scores-sha-short-circuit`, `parity-enum-missing-help-missing`, `parity-target-name-too-long`, `store-and-*-target`, `int-target*` |
+| 11 | `repr` escapes too little | fixed | `pyjson::str_repr` uses CPython 3.12's `isprintable` (`C*` and `Z*` of Unicode 15.0 escaped); `jope_ci::py::repr` delegates to it | `package-*` (5), `scope-emitted-repr-*`, readme `snapshot-*` (3) |
+| 12 | more explicit lines differ | (1), (2), (4) fixed; (3) rejected | (1) `--path-map` names `str(PurePath(container))`; (2) `returncode` is minus the signal (`exit -9`; `target-dir` exits 247 as `sys.exit(-9)` did); (4) cargo-artifact reads integers of any size (`pyjson::parse_*_big`, `Value::BigInt`) | `path-map-*`, `scope-script-killed`, `metadata-killed`, `build-killed`, `ids-beyond-64-bits*` |
+| 13 | caught library messages differ (should-fix) | fixed except `tomllib` | `[Errno N] <strerror>: '<str(Path)>'`; CPython's UTF-8 codec messages; JSON positions after universal newlines, a `\uXXXX` error at the `u`, a bad escape after a high surrogate, a lone surrogate read on; `realpath(strict=True)` naming the first missing component | `meta-*`, `messages-*`, `source-*`, `output-exists`, `msg-*` (5), `root-missing-nested`, `root-under-a-file`, `config-not-utf8`, `config-truncated-utf8` |
+| 14 | the contract bullets overstate (should-fix) | fixed | the round-one bullets now say they were the goal; **Contract after round two** below states what holds | — |
+| 15 | a CRLF `main.rs` fails (should-fix) | fixed | `main.rs`, `cli.py` and the fallback's `Cargo.toml` are read as `read_text(errors="replace")` read them (`py::read_text_replace`, universal newlines) | `parity-clap-crlf` |
+
+Rejected, with the reason:
+- **12 (3), a configuration holding a lone surrogate** (UTF-8 bytes `ED A0 80`, or `\ud800`). The
+  Python decoded it (`surrogatepass`), wrote it into the receipt as `\ud800` and then refused the
+  roots. The port's JSON strings cannot hold an unpaired surrogate, so it refuses the
+  configuration when it reads it: a failure receipt and exit status 1 on both sides, with
+  different words. Matching the Python would need surrogate-capable strings in every JSON value
+  and key the port handles.
+- **13, `tomllib` messages.** The port reads TOML with the `toml` crate and prints its message.
+  Reproducing `tomllib`'s wording would mean porting its parser. Both refuse with exit status 1.
+
+Found here as well and fixed: `target-dir` prints the newline of an empty directory
+(`target-dir-empty`); `build` decodes Cargo's stream before looking at its exit status
+(`build-non-utf8-and-failed`); `git ls-files` output is decoded strictly (`cov-discover-git-not-utf8`);
+the README's shell-safe token check matches before a final newline, as `$` did
+(`report-adapter-token-newline`); the product scope is checked before the deferred one runs
+(`scope-product-bad-deferred-fails`); and the fallback warning prints `CalledProcessError`'s text,
+signals included (`parity-cargo-fails`, `parity-cargo-killed`).
+
+**Contract after round two.** It covers the same ports as round one.
+- **Never more permissive.** Wherever the Python exited non-zero, the port exits non-zero and
+  prints no success report. No case of the reviewer's harness, rerun unchanged on the fixed
+  ports, is more permissive, and none prints different output on success.
+- **Explicit messages.** Where the Python printed a line of its own (a report line, a
+  `SystemExit` message, a `cargo-artifact:` refusal, a failure receipt), or a library message it
+  caught and printed (`OSError`, `UnicodeDecodeError`, `JSONDecodeError`), the port prints the
+  identical line, `jope-records` after `jope-records: `. The exceptions are listed below.
+- **Crashes.** Unchanged from round one: the port refuses with an error naming the field and the
+  offending type. It does not reproduce CPython's exception text, and nothing here claims it
+  does.
+- **Valid input.** Byte-identical on every fixture, old and new, apart from the stricter cases
+  listed below.
+
+Remaining differences, each named in the tests:
+- Stricter (the Python exited 0): round one's list; a JSON nesting deeper than 512 (Python
+  allowed about 1000); a lone surrogate escape in JSON; a TOML integer beyond 64 bits (the `toml`
+  crate); a README render over 64 or more reports holding a NaN; `rankable_rows` of `true`
+  (formatted as `1` by the Python; the same class as round one's `valid-rankable-float`).
+- Both fail, with different words: `tomllib`'s messages (`toml-invalid-value`); a configuration
+  with a lone surrogate (`config-utf8-encoded-surrogate`, `config-surrogate-escape`); a parity
+  report naming a path that is not UTF-8, which the Python printed with its raw bytes under the
+  capture's `C.UTF-8` locale (whose stdout handler is `surrogateescape`) and crashed on under
+  other UTF-8 locales (`parity-tool-name-not-utf8-decoy`, `parity-unit-name-not-utf8`); argparse
+  versus clap usage text for a bad `--stale`.
+- Python 3.12 runs on Unicode 15.0; the `regex` crate has 16.0 tables. The Python classes and
+  `isprintable` are built from them restricted to `Age=V15_0`, so the two agree on every code
+  point.
+
+**Fixtures.** Captured in `p1-failclosed-r2-capture-20260928T031831Z` by `cap2.sh`, kept in that
+run: bash and jq only, the original tools from `f46a9048f`'s git bytes in scratch roots. Each
+case holds its complete input: a tree, the text or bytes a `cargo` (and `git`) shim prints, or
+the files and arguments of a cargo-artifact call. The debugging runs
+`p1-failclosed-r2-capture-dbg1` and `-dbg2` recorded identical cases.
+
+| Fixture | Cases | Python exit 0 | Explicit refusal or failing report | Crash |
+| --- | ---: | ---: | ---: | ---: |
+| `jope-records/…/process.json` | 65 | 18 | 22 | 25 |
+| `jope-records/…/readme/negative-r2.json` | 18 | 14 | 4 | 0 |
+| `jope-ci/…/cargo-artifact/negative-r2.json` | 40 | 5 | 34 | 1 |
+| `jope-ci/…/build-report/negative-r2.json` | 10 | 3 | 7 | 0 |
+| **total** | **133** | **40** | **67** | **26** |
+
+**Tests.** New test functions in existing targets, so `deploy/ci/coverage.json` and the test
+inventory are unchanged.
+- `jope-records` `python_parity.rs`: `process_cases_match_the_captured_python` runs the binary on
+  each `process.json` case, with a negative control; `readme_benchmarks_matches_round_two`
+  replays the README cases through the round-one `compare`.
+- `jope-ci` `cargo_artifact_python_parity.rs`: `cargo_artifact_matches_round_two`, which also
+  compares the output file each case left. The round-one replays now require the Python's exact
+  words for `nextest-exists`, `ids-beyond-64-bits` and `build-non-utf8`, and the output file the
+  Python left.
+- `jope-ci` `build_report_python_parity.rs`: `scans_match_round_two`, and
+  `config_bytes_match_round_two`, ignored by default like the other receipt replays (it needs
+  `JOPE_MAINTENANCE_SCRATCH`).
+- Unit tests for the new helpers in `py.rs`, `pyjson.rs`, `parity.rs` and `jope_ci::py`.
+
+**Runs.**
+- `p1-failclosed-r2-pre-20260928T024938Z`: the reviewer's table at `ef8d31c0b`.
+- `p1-failclosed-r2-capture-20260928T031831Z`: the fixtures.
+- `p1-failclosed-r2-commits-20260928T032104Z`: the two code commits. The first commit's own tree
+  was checked with the second's changes stashed: fmt, `git diff --check`, and the `jope-records`
+  and `jope-ci` tests.
+- `p1-failclosed-r2-gate-20260928T032600Z`: the full gate on the head (this file's commit): the
+  hosted `rust-check` and `rust-test` lanes run locally as `.github/workflows/ci.yml` runs them,
+  fmt, whitespace, the workspace check, clippy with `-D warnings`, both crates' tests (the
+  ignored receipt replays included), the fences, the records checks, the parity matrix,
+  `deploy/ci/check.sh`, the secret scan, and the reviewer's harness rerun unchanged except for
+  its scratch paths (`results.tsv`, `summary.txt`): no case more permissive and none different
+  on success; its stricter and both-failing rows are the ones listed above.
 
 ## Commit map — `rr2/python-p1` to the landing
 
