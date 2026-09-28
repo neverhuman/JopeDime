@@ -18,10 +18,11 @@
 //! seeding from that extra compute or from noise; [`verify`] reports both evaluation totals so
 //! nobody has to take the comparison on trust.
 //!
-//! Every refusal a round could make — parallelism, budget, a seed that is not a pipeline, a
-//! dataset that does not resolve or is not a regression task, a budget too small to re-measure
-//! the seeds — is made before the output directory is created, so a refused command can be
-//! corrected and re-run into the same `--output`.
+//! Every refusal a round could make — parallelism, budget, a cut count outside the fold
+//! partition, a seed that is not a pipeline, a dataset that does not resolve, is not a regression
+//! task or cannot be partitioned into those cuts, a budget too small to re-measure the seeds — is
+//! made before the output directory is created, so a refused command can be corrected and re-run
+//! into the same `--output`.
 //!
 //! `lineage.json` is rewritten atomically and fsynced after every completed round, so a parent
 //! process can count completed rounds while evolve runs; a round interrupted by SIGTERM writes no
@@ -363,7 +364,8 @@ pub fn evolve(options: &EvolveOptions) -> Result<Lineage> {
     if let Some(path) = &options.seeds {
         seeds::read(path).with_context(|| format!("--seeds {}", path.display()))?;
     }
-    // Round 1 exactly as it will run: parallelism, budget, its seeds, the dataset.
+    // Round 1 exactly as it will run: parallelism, budget, the cut count, its seeds, the dataset
+    // and its partition into those cuts.
     run::check(&RunOptions {
         seed_genomes: options.seeds.clone(),
         ..options.run.clone()
@@ -1222,6 +1224,56 @@ mod tests {
         // The corrected command runs into the same directory.
         let lineage = evolve(&options(template(16), 2, Some(four))).unwrap();
         assert_eq!(lineage.rounds.len(), 2);
+        verify(&out.join(LINEAGE_FILE), false).unwrap();
+    }
+
+    /// The PR #118 review's reproduction: `--rounds 2 --cuts 6` was refused by the preparation
+    /// inside round 1, after `round-001/` existed, so the corrected `--cuts 3` into the same
+    /// `--output` failed with "already holds a lineage". A cut count outside the partition (0 or
+    /// 6) and a dataset that resolves and parses but cannot be cut are now refused before
+    /// anything is written, and the corrected command runs.
+    #[test]
+    fn a_refused_cut_count_leaves_nothing_and_the_corrected_retry_runs() {
+        let temp = tempfile::tempdir().unwrap();
+        let out = temp.path().join("lineage");
+        let refused = |run: RunOptions, needle: &str| {
+            let error = format!("{:#}", evolve_into(&out, 2, false, run).unwrap_err());
+            assert!(error.contains(needle), "wanted {needle:?}: {error}");
+            assert!(
+                !out.exists(),
+                "a refusal ({needle}) left {} behind",
+                out.display()
+            );
+        };
+        for cuts in [0, crate::prepare::FOLDS + 1] {
+            refused(
+                RunOptions {
+                    cuts,
+                    ..template(16)
+                },
+                &format!("--cuts must be 1..={}, got {cuts}", crate::prepare::FOLDS),
+            );
+        }
+        refused(
+            RunOptions {
+                dataset: crate::run::tests::constant_target_dataset(temp.path()),
+                cuts: 3,
+                ..template(16)
+            },
+            "held-out target is constant",
+        );
+        let lineage = evolve_into(
+            &out,
+            2,
+            false,
+            RunOptions {
+                cuts: 3,
+                ..template(16)
+            },
+        )
+        .unwrap();
+        assert_eq!(lineage.rounds.len(), 2);
+        assert_eq!(lineage.cuts, vec![0, 1, 2]);
         verify(&out.join(LINEAGE_FILE), false).unwrap();
     }
 
