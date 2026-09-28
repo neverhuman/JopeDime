@@ -19,8 +19,11 @@
 //! integers of about 310 to 4300 digits (`serde_json` reads none a double cannot hold; beyond 4300
 //! digits Python 3.12 refused them too);
 //! non-ASCII reviewer names (Python's `str.isalnum` admitted them; the reviewer key is a path
-//! component); and paths spelled with exactly two leading slashes, which Python's `pathlib`
-//! keeps as a distinct root.
+//! component); paths spelled with exactly two leading slashes, which Python's `pathlib`
+//! keeps as a distinct root; and a policy or reviewer key whose resolved name is too long to
+//! resolve but lies inside the root (Python built the name and read the file; the custody check
+//! here cannot establish custody without resolving it, so it refuses as an escape). Custody that
+//! cannot be established at all (an `lstat` or resolution error) is never taken as custody kept.
 //!
 //! Growth publishes membership only: the assignment never applies contexts, never opens a final
 //! test and never makes anything execution eligible.
@@ -284,10 +287,34 @@ fn resolve_strict(path: &Path) -> Outcome<PathBuf> {
         .map_err(|e| malformed(format!("resolve {}: {e}", path.display())))
 }
 
-/// `path.is_symlink() or not path.resolve().is_relative_to(root)`.
-fn escapes(path: &Path, root: &Path) -> bool {
-    let is_link = std::fs::symlink_metadata(path).is_ok_and(|m| m.file_type().is_symlink());
-    is_link || path.canonicalize().is_ok_and(|p| !p.starts_with(root))
+/// `path.is_symlink() or not path.resolve().is_relative_to(root)`, failing closed: custody that
+/// cannot be established is never taken as custody kept.
+///
+/// - The path itself cannot be inspected (`lstat` fails: missing, a loop, a directory that may not
+///   be searched): malformed, as Python raised there or on the read that followed
+///   (`PermissionError`, `FileNotFoundError`, pathlib's `RuntimeError` for a loop).
+/// - A symlink escapes.
+/// - It resolves: it escapes unless the resolved path is inside `root`.
+/// - It cannot be resolved because the resolved name is too long (`ENAMETOOLONG`): it escapes.
+///   Python's non-strict `resolve()` built that name anyway and found it outside the root (a
+///   symlink out of the workspace to a deep directory); inside the root it would have been read,
+///   so refusing it is stricter there.
+/// - Any other resolution error: malformed.
+fn escapes(path: &Path, root: &Path) -> Outcome<bool> {
+    const ENAMETOOLONG: i32 = 36; // Linux
+    let custody = |e: std::io::Error| malformed(format!("custody of {}: {e}", path.display()));
+    if std::fs::symlink_metadata(path)
+        .map_err(custody)?
+        .file_type()
+        .is_symlink()
+    {
+        return Ok(true);
+    }
+    match path.canonicalize() {
+        Ok(resolved) => Ok(!resolved.starts_with(root)),
+        Err(e) if e.raw_os_error() == Some(ENAMETOOLONG) => Ok(true),
+        Err(e) => Err(custody(e)),
+    }
 }
 
 fn read(path: &Path) -> Outcome<Vec<u8>> {
@@ -477,7 +504,7 @@ fn authenticate(
         _ => return Err(refused("unauthorized provenance reviewer")),
     };
     let key_path = root.join(REVIEWER_KEYS).join(format!("{reviewer}.key"));
-    if escapes(&key_path, root) {
+    if escapes(&key_path, root)? {
         return Err(refused("reviewer key escaped local custody"));
     }
     let secret = read(&key_path)?;
@@ -599,7 +626,7 @@ pub fn assign_new_components(request: &Request<'_>) -> Outcome<Value> {
         .ok_or_else(|| malformed("root is not UTF-8"))?
         .to_owned();
     let policy_path = root.join(POLICY_PATH);
-    if escapes(&policy_path, &root) {
+    if escapes(&policy_path, &root)? {
         return Err(refused(
             "pinned provenance policy escaped workspace custody",
         ));
