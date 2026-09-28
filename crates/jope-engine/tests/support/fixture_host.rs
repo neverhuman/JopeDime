@@ -66,8 +66,9 @@ pub fn with_commands(commands: &dyn CommandRunner) -> HostSources<'_> {
 /// `jope-native-loop` binary), not on Cargo being unable to build this.
 ///
 /// A run narrowed to one test target (`--test NAME`) rebuilds the tests but not examples, so it
-/// can find the fixture absent, or built from older sources than the tests. Both fail here,
-/// loudly, before any fixture starts: absent, and stale by [`stale_source`].
+/// can find the fixture absent, or built from older sources than the tests. An absent fixture
+/// and the source changes detected by [`stale_source`] fail before any fixture starts. This
+/// diagnostic does not replace a Cargo build with the tests' own feature selection.
 pub fn executable() -> PathBuf {
     let exe = std::env::current_exe().unwrap();
     let path = exe
@@ -95,13 +96,15 @@ const REBUILD: &str = "Rebuild it with `cargo build --locked -p jope-parallel --
     jope-native-loop-fixture` (with the tests' own --features selection), or run the tests \
     without narrowing the target selection";
 
-/// Whether the fixture at `path` was built from the sources it would now be built from, by
-/// Cargo's own freshness rule: `path.d`, the dep-info Cargo writes next to the executable, lists
-/// every local source it was compiled from (the library, its path dependencies and the fixture's
-/// own files), and a source modified after the executable, or gone, makes it stale. The test
-/// executable is no reference: Cargo links the tests and the example in either order, and a
-/// change to a test file alone rebuilds that test and not the example. A dep-info that is absent
-/// or unreadable proves nothing and is reported too; a false stale report only costs a rebuild.
+/// Detects missing or newer sources using the executable's Cargo-generated `path.d` dep-info.
+/// This mtime heuristic is not Cargo's full freshness check or a semantic identity proof:
+/// feature, configuration and toolchain changes are not checked, and preserved timestamps or
+/// edits during compilation can conceal changed contents. Build with the tests' own feature
+/// selection even when this check passes.
+///
+/// The test executable's timestamp is no reference: Cargo links tests and examples in either
+/// order, and a test-only edit need not rebuild the example. An absent or unreadable dep-info
+/// is refused; a false stale report costs a rebuild.
 pub fn stale_source(path: &Path) -> std::result::Result<(), String> {
     let built = modified(path)?;
     let dep_info = path.with_extension("d");
