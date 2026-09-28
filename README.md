@@ -5,32 +5,59 @@ encoders (Hyperion and companions), and emitters that lower a program to Python,
 Rust, C++17, and JavaScript. C++20 CI compiles the C++17 artifact; it is not a
 second numeric dialect.
 
-This is the product tree for [`veox-ai/JopeDime`](https://github.com/veox-ai/JopeDime).
-It is **not** the 8×A100 node workspace and **not** a `jain-split` sibling.
-Training corpora and model weights live in S3. Git holds source, catalogs,
-forty generated synthetic fixtures and at most ten tiny test datasets.
+This is the product tree for [`neverhuman/JopeDime`](https://github.com/neverhuman/JopeDime),
+the `repository` named in `Cargo.toml`. It is **not** the 8×A100 node workspace and **not** a
+`jain-split` sibling. Training corpora and model weights live in S3. Git holds source, catalogs,
+forty generated synthetic fixtures and ten tiny test datasets.
 
 SOTArena **ASPFM** / `jope-dime` campaign wins are the feat-math program track. The
 encodings→program neural policy will ship because the product needs a router; it is
 **not** a held-out SOTA claim.
 
+What changed in 0.2.0 is in [`CHANGELOG.md`](CHANGELOG.md). The current direction and the landing
+record are in [`MASTER_PLAN.md`](MASTER_PLAN.md). How to verify a release is in
+[`docs/release/README.md`](docs/release/README.md).
+
+## At a glance
+
+| What | 0.2.0 |
+| --- | --- |
+| `jope` with no arguments | prints `jope 0.2.0` <sup>1</sup> |
+| Workspace | 26 members: 19 crates at 0.2.0 and 7 vendored SmartCluster crates at 8.0.0; 8 are `default-members` <sup>2</sup> |
+| `jope` subcommands | 17 in `jope --help` on Linux, plus the hidden `motifs` <sup>3</sup> |
+| Emit targets | 5: `python`, `rust`, `cpp17`, `cpp20` (the C++17 source compiled as C++20) and `javascript` <sup>4</sup> |
+| Rust tests | 3,796 listed in 26 packages, 62 of them ignored; a listing, not a run <sup>5</sup> |
+| Python tests | 172, found by a static scan, not collected or run <sup>5</sup> |
+| CI | 9 jobs per pull request in `ci.yml`; 11 `full-main-cpu` families on every push to `main` <sup>6</sup> |
+| Coverage map | 425 items over 23 lanes <sup>7</sup> |
+| Capability matrix | 818 rows: 353 moved, 55 new, 1 pending, 402 dropped, 7 lost <sup>8</sup> |
+| Datasets in Git | 40 synthetic fixtures (10 each of binary, multiclass, regression and time series) and 10 test datasets <sup>9</sup> |
+| Python still tracked | 216 `.py` files, 157 of them under `python/` <sup>10</sup> |
+| Architecture decision records | 6 <sup>10</sup> |
+
+1. `cargo run --locked --bin jope`
+2. `cargo metadata --locked --no-deps --format-version 1 | jq '(.workspace_members, .workspace_default_members | length), ([.packages[].version] | group_by(.) | map({(.[0]): length}) | add)'`
+3. `cargo run --locked --bin jope -- --help`; the hidden verb is the `#[command(hide = true)]` variant of `enum Command` in `crates/jope-cli/src/main.rs`
+4. the single-language arms of `fn languages` in `crates/jope-cli/src/kernel.rs`
+5. `jq '.rust.count, .rust.ignored, (.rust.packages | length), .python.count' docs/parity/test-inventory.json`
+6. the top-level `jobs:` of `.github/workflows/ci.yml`; `jq '[.lanes | keys[] | select(startswith("full-"))] | length' deploy/ci/coverage.json` (the families `deploy/ci/full-main.py` runs)
+7. `jq '.items, .lanes | length' deploy/ci/coverage.json`
+8. the **total** row of the Counts table in `docs/parity/capability-matrix.md`
+9. `jq '.datasets | length' datasets/synthetic/catalog.json`; `jq '.members | length' datasets/manifest.json`
+10. `git ls-files '*.py' | wc -l`; `git ls-files 'python/*.py' | wc -l`; `git ls-files 'docs/adr/ADR-*.md' | wc -l`
+
 ## What this SHA actually does
 
 | Surface | Status on this SHA |
 | --- | --- |
-| `jope` CLI | No subcommand still prints `jope 0.2.0`. Fixtures, CPU `encode` (fail-closed without weights), `fit` / `search` / `emit`, `champions --local`, `train-step --local` (fits a 128-d centroid router), `route`, `pipeline run`. `champions --pull/--push` and `train-step --env dev` **fail closed**. Live S3 is **not** wired. |
-| `jope pipeline run` | CPU spine only: dataset -> folds -> program search -> select -> emit -> `jope.pipeline-receipt/v3` (optionally seeded from a verified parent receipt or a `jope.pipeline-seeds/v1` file; seeds are re-measured, never trusted). The search is an iterative search over feat-math pipeline programs: every candidate is fitted with `feat_math::fit` on a cut's training rows and scored on that cut's held-out rows, and selection requires measurements on every requested cut before comparing mean held-out RMSE (ties break on the canonical program). Exploration and cross-cut comparison share the [total per-cut budget](docs/pipeline.md); the receipt records phase costs, coverage, overruns and the champion's RMSE and R². It does **not** use the engine's own search, which cannot measure in a shipped binary (`eval_registry/authority.rs` blocks every capability outside `cfg(test)` and `fit_boundary.rs` fences fitting behind a service socket). The encode/propose stage is **skipped** and recorded (`--policy require` fails closed); S3 publication and router training are **not** in it. |
-| `crates/feat-math` | Typed program IR, fit, and portable emitters (Rust / Python / JS / C++17; C++20 compiles C++17). |
-| `crates/jope-encoders` | Encoder implementations (package name `starforge`). |
-| `crates/hyperion` | Workspace member. CPU/Candle default (`hyperion-cpu`). CUDA feature exists; not the CI default. |
-| `crates/jope-policy` | Workspace member. Step-60000 proposal policy on Candle. Needs the bound checkpoint to propose. |
-| `crates/jope-engine`, `crates/jope-campaigns` | Engine and campaign crates in the workspace. |
-| Git datasets | Forty synthetic fixtures in `datasets/synthetic/` and the ten licensed test datasets (`test-10`) in `datasets/test/`. Real tables stay in S3. |
-| S3 fetch / champion training | Live S3 fail-closed. Local champion bank + 128-d centroid router train-step exist. Bound `jope-policy` checkpoint weights are **not** updated. |
-
-The executed 2026-09-18 port plan is archived as [`docs/archive/CURSOR_GITHUB_PORT_PLAN.md`](docs/archive/CURSOR_GITHUB_PORT_PLAN.md).
-Serial recovery of withdrawn PRs #5–#16 (unmerged, branches retained) is
-[`MASTER_PLAN.md`](MASTER_PLAN.md).
+| `jope` CLI | Fixtures (`verify-inputs`, `generate-fixtures`), CPU `encode` (fails closed without the Hyperion weights), `fit` / `search` / `emit`, `champions --local` (searches the supported regression fixtures and reports the rest as unsupported), `train-step --local` (fits a 128-d centroid router), `route`, `models`, `datasets`, `pipeline`, and the private ASM verbs `doctor`, `demo`, `benchmark`, `optimize` and `train` ([docs/asm.md](docs/asm.md)). `champions --pull/--push` and `train-step --env dev` or `--env prod` **fail closed**. |
+| `jope pipeline run` | CPU spine only: dataset -> folds -> program search -> select -> emit -> `jope.pipeline-receipt/v3`, optionally seeded from a `jope.pipeline-seeds/v1` file (`--seed-genomes`) or a verified parent receipt (`--incumbent`); seeds are re-measured, never trusted. Every candidate is fitted with `feat_math::fit` on a cut's training rows and scored on that cut's held-out rows, and selection requires measurements on every requested cut before comparing mean held-out RMSE. Exploration and cross-cut comparison share the [total per-cut budget](docs/pipeline.md). `--threads` and `--islands` (parallel search groups over the same cuts that pass their best program to each other at a fixed interval) set the workers, which must fit the CPUs the process may use and `--cpu-ceiling`. It does **not** use the engine's own search, which cannot measure in a shipped binary (`eval_registry/authority.rs` blocks every capability outside `cfg(test)` and `fit_boundary.rs` fences fitting behind a service socket). The encode/propose stage is **skipped** and recorded (`--policy require` fails closed); nothing in it publishes to S3 or trains the router. |
+| Targeted single-dataset search | `jope pipeline evolve` runs rounds of `run` on one dataset's fixed cuts, each seeded from the previous round's champion and runners-up, chained in a `lineage.json` that `jope pipeline lineage verify` re-derives; `--control` adds one unseeded run. `jope pipeline score --split test` scores a selected program on the sealed test split at most once per dataset and program in its registry (a local record, not access control), and lists every earlier look. High-water-mark ingest (`jope-learning hwm ingest --source pipeline`) and the append-only local champion bank (`jope-learning bank add`, `list`, `export`; an export seeds the next round) are separate steps. The rounds select on reused folds, so only the test split speaks to generalisation. |
+| W7 native loop | `jope-native-loop`, a `jope-engine` binary: host census, run plans, signed participant grants, authenticated cross-host transport with pinned certificates and an absolute deadline on every read and write, controller recovery, and SmartCluster dispatch of bounded ranks that prove their job before any work. It is qualified on source and fixtures only: a same-host fixture with hermetic host identities, and a local one-rank dry run. The three-host proof ([runbook](docs/runbooks/w7-three-host-cpu-proof.md)) has **not** run and needs its own admission; live cross-host checkpoint exchange and continuation routing are deferred. |
+| S3 | `jope datasets` and `jope models` read and write `s3://` stores through `object_store`, resolving `credential_process` profiles themselves; `jope-learning` mirrors its store and publishes W8 progress when `--store` or `JOPE_LEARNING_URL` names one. `champions --pull/--push` has no live route (issue #62). No live S3 training run has been made, and the bound `jope-policy` checkpoint weights are **not** updated. |
+| Encoders and policy | CPU Hyperion on Candle (`hyperion-cpu`) is the default; a CUDA feature exists but is not the CI default. `jope-policy` needs the bound step-60000 checkpoint to propose. |
+| Git datasets | Forty synthetic fixtures in `datasets/synthetic/`, which CI regenerates and compares (`jope generate-fixtures --check`) and verifies (`jope verify-inputs`), and the ten licensed test datasets (`test-10`) in `datasets/test/`. Real tables stay in S3. |
+| Release | A signed host release from `deploy/release/release.sh`, with no Python wheel; see [Releases](#releases). |
 
 ## Measured results
 
@@ -173,20 +200,15 @@ cargo run --locked --bin jope -- verify-inputs --offline --root datasets/synthet
 # Encode needs the Hyperion bundle (not in git):
 # HYPERION_V7_WEIGHTS=… cargo run --locked --bin jope -- encode --input datasets/synthetic/binary/linear.json
 cargo run --locked --bin jope -- fit --input datasets/synthetic/regression/linear.json --json
-cargo run --locked --bin jope -- emit --lang all --output /tmp/jope-emitted --json
+cargo run --locked --bin jope -- emit --lang all --output target/jope-emitted --json
 cargo run --locked --bin jope -- search --input datasets/synthetic/regression/linear.json --json
 cargo run --locked --bin jope -- champions --local --root datasets/synthetic --json
-cargo run --locked --bin jope -- train-step --local --root datasets/synthetic --output /tmp/jope-router --json
-cargo run --locked --bin jope -- route --input datasets/synthetic/regression/linear.json --router /tmp/jope-router --json
+cargo run --locked --bin jope -- train-step --local --root datasets/synthetic --output target/jope-router --json
+cargo run --locked --bin jope -- route --input datasets/synthetic/regression/linear.json --router target/jope-router --json
 cargo run --locked --bin jope -- pipeline run --dataset datasets/test/pmlb-229-pwlinear \
   --budget evaluations=8,seconds=120 --emit rust,python,cpp17,cpp20,js --policy skip --output target/e2e
 cargo run --locked --bin jope -- pipeline verify-receipt --receipt target/e2e/receipt.json
 ```
-
-GitHub PR CI is `.github/workflows/ci.yml`; its lanes run the scripts in `deploy/ci/`,
-and the hygiene lane is `deploy/ci/check.sh`. Locally, `just required` (an alias of
-`just ci-pr`) runs that hygiene lane and the `rustfmt` check, and `just lint-paths`
-runs only the absolute-home-path check.
 
 Prove emitters on this SHA:
 
@@ -194,11 +216,36 @@ Prove emitters on this SHA:
 JOPE_PARITY_STRICT=1 cargo test --locked -p feat-math
 ```
 
-`just required` / `just ci-pr` also run clippy, nextest, and ruff over the Python that
-remains until [ADR-0006](docs/adr/ADR-0006-rust-only-stack.md) retires it, when those tools are
-installed. New Python is not accepted except the emitted model code and its harness.
+Pull-request CI is `.github/workflows/ci.yml`: nine jobs on the self-hosted `jope-ci` runners.
+Eight each run one lane of `deploy/ci/fast-lane.sh`, and `aggregate` validates their receipts
+(`deploy/ci/aggregate.py`). The hygiene lane includes `deploy/ci/check.sh`
+(formatting, the coverage map, the prose rule, the repository layout and the README's generated
+blocks). Every push to `main` runs `main-guard` and `full-main-cpu`. Locally, `just ci-pr` (alias
+`just required`) runs `check.sh`, `cargo fmt --check`, clippy with `-D warnings`, the pull-request
+nextest tier, and ruff and pytest over the remaining Python; each tool must be installed.
+`just lint-paths` runs only the absolute-home-path check.
 
-## Intended pipeline (later PRs, one at a time)
+## Releases
+
+A release is cut on xbabe2 by [`deploy/release/release.sh`](deploy/release/release.sh) from a merge
+commit on `main`: a dry run first, then the same command with `--publish`, which creates the
+annotated tag `vX.Y.Z` and the GitHub release and reads both back. A release holds the `jope` binary
+(built in the digest-pinned `rust:1.97.1-bookworm` image, glibc 2.36 at most), a build receipt,
+SPDX and CycloneDX SBOMs, the release notes, a release manifest and `SHA256SUMS`, signed with cosign
+by a release key held on xbabe2. There is no Python wheel and no provenance attestation.
+[`release.yml`](.github/workflows/release.yml) is dispatch-only and fails closed. This tree is the
+source of v0.2.0; the release exists only once `release.sh --publish` has run.
+
+To verify one, take `signing.pub` from the tag and check its fingerprint as
+[docs/release/README.md](docs/release/README.md) describes, then check the signature and the sums:
+
+```sh
+TUF_ROOT="$D/.tuf" cosign verify-blob --key signing.pub --insecure-ignore-tlog=true \
+  --signature "SHA256SUMS-$TAG.txt.sig" "SHA256SUMS-$TAG.txt"
+sha256sum -c --strict "SHA256SUMS-$TAG.txt"
+```
+
+## Intended pipeline
 
 ```text
 dataset cut
@@ -215,29 +262,39 @@ Do not open a stack of PRs. Merge or close the current one before starting the n
 
 ## Layout (this SHA)
 
+The 26 workspace members, by directory under `crates/`; the package name follows where it differs.
+[docs/architecture.md](docs/architecture.md#crate-graph) describes each crate.
+
+| Group | Crates | Role |
+| --- | --- | --- |
+| Default build | `jope-cli` (binary `jope`), `feat-math`, `jope-pipeline`, `jope-bench`, `jope-datasets`, `jope-models`, `jope-motifs`, `jope-policy` | The workspace `default-members`, what a bare `cargo build` selects: the `jope` binary and its direct workspace dependencies except `hyperion` and `jope-learning`, which it still builds as dependencies (`Cargo.toml` says why). Programs, fit and emitters; the pipeline; the same-cut benchmark; dataset and model stores; program fragments; the proposal policy. |
+| Encoders | `jope-encoders` (`starforge`), `hyperion`, `numpy-pcg64` | Encoders, Hyperion v5/v7 on Candle, and a bit-exact numpy RNG. |
+| Engine and campaigns | `jope-engine` (`jope-parallel`), `jope-campaigns` (`jope-dime-regressor`), `battle-gpu`, `jope-arena` | The engine and its binaries, `jope-native-loop` among them; benchmark campaigns; raw-CUDA screening (feature `gpu`); SOTArena scores and Elo. |
+| Learning, records and CI | `jope-learning`, `jope-records`, `jope-ci`, `jope-paths` | The HWM ledger, champion bank and W8 progress; record verifiers and the hygiene guards; CI tooling; the ADR-0003 runtime roots. |
+| Vendored | `smartcluster/*` (7 crates) | The jain-smartcluster scheduler, at its own version 8.0.0. |
+
 | Path | Role |
 | --- | --- |
-| `crates/jope-cli` | `jope` binary: fixtures, encode, fit/search/emit, local champions, centroid router |
-| `crates/feat-math` | Programs, fit, emitters |
-| `crates/jope-encoders` | Encoders (`starforge`) |
-| `crates/hyperion` | Hyperion v5/v7 CPU/Candle encoder |
-| `crates/jope-policy` | Bound step-60000 program router (needs checkpoint) |
-| `crates/jope-engine` | Storage / training / execution contracts |
-| `crates/jope-campaigns` | Campaign and qualification tooling |
-| `datasets/synthetic` | Forty integer-only Git fixtures + `catalog.json` |
+| `datasets/synthetic` | The forty generated fixtures and `catalog.json` |
 | `datasets/test` | The ten licensed test datasets (`test-10`) |
-| `python/` | Remaining Python (training stack, some operational tools), kept only until ADR-0006's phases P2/P3; no new Python |
-| `deploy/ci` | CI lane scripts, coverage map and records (`check.sh` is the hygiene lane) |
+| `python/` | The Python that remains after [ADR-0006](docs/adr/ADR-0006-rust-only-stack.md) phase P1 (#117): the training stack (`policy`, `encoders`, `target_maker`, `data`, `dime_score`, `broad_shadow`), the research helpers that kept tests use, and the sha-pinned grammar sources; package `jope` 0.1.0, never released. Phases P2 and P3 port or retire it, with the CI helpers in `deploy/ci/*.py`. No new Python except the emitted model code and its harness. |
+| `deploy/ci`, `deploy/release` | CI lane scripts and the coverage map (`check.sh` is the hygiene lane); the release script and its tests |
 
 ## Further reading
 
-- [Private maintainer manual](docs/asm-maintainer-manual.md) — detailed PDF, section Markdown, current evidence, dataset inventories and acceptance checklist
-- [`docs/quickstart.md`](docs/quickstart.md) — the measured feat-math quickstart (timings from `4235db6`, before PRs #17–#26; not this SHA)
+- [`CHANGELOG.md`](CHANGELOG.md) — what changed in 0.2.0
+- [`MASTER_PLAN.md`](MASTER_PLAN.md) — current direction and the landing record
+- [`docs/release/README.md`](docs/release/README.md) — how a release is cut, signed and verified
+- [`docs/pipeline.md`](docs/pipeline.md) — the pipeline's budget, selection, seeding, parallelism and test-split contracts
 - [`docs/architecture.md`](docs/architecture.md) — crates, contracts and the intended pipeline
-- [`docs/emitters.md`](docs/emitters.md) — per-target coverage of the Python / Rust / C++17 / JavaScript emitters
+- [`docs/emitters.md`](docs/emitters.md) — per-target coverage of the emitters
 - [`docs/datasets.md`](docs/datasets.md) — dataset store layout, licence rule and `datasets/test`
 - [`docs/campaigns.md`](docs/campaigns.md) — benchmark campaigns
+- [`docs/runbooks/`](docs/runbooks/) — operator runbooks, the W7 three-host proof among them
+- [Private maintainer manual](docs/asm-maintainer-manual.md) — detailed PDF, section Markdown, current evidence, dataset inventories and acceptance checklist
+- [`docs/quickstart.md`](docs/quickstart.md) — the ASM build and the feat-math quickstart (timings measured at `4235db6`, not this SHA)
 - [`docs/adr/`](docs/adr/) — architecture decision records 0001–0006
+- [`docs/archive/`](docs/archive/) — retired plans and the restore manifests of removed files
 - [`CONTRIBUTING.md`](CONTRIBUTING.md), [`SECURITY.md`](SECURITY.md), [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)
 
 ## Licence
