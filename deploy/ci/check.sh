@@ -29,7 +29,7 @@ else
   fail=1
 fi
 rm -f "$rustls_err"
-step "shell syntax + shellcheck"; while IFS= read -r f; do bash -n "$f"; done < <(git ls-files '*.sh'); if command -v shellcheck >/dev/null; then git ls-files 'deploy/ci/*.sh' 'xtools/**/*.sh' | xargs -r shellcheck -S warning; fi
+step "shell syntax + shellcheck"; while IFS= read -r f; do bash -n "$f"; done < <(git ls-files '*.sh'); if command -v shellcheck >/dev/null; then git ls-files 'deploy/ci/*.sh' 'deploy/release/*.sh' 'xtools/**/*.sh' | xargs -r shellcheck -S warning; fi
 step "workflow validation"; if ! bash deploy/ci/actionlint-workflows.sh; then fail=1; fi
 step "gitleaks"; if command -v gitleaks >/dev/null; then bash deploy/ci/secret-scan.sh ; else echo "gitleaks not installed (skipped locally; CI installs it)"; fi
 step "no family leftovers"; leftovers=$(git grep -nE 'git\.neverhuman\.org|127\.0\.0\.1:8787' -- crates python deploy .github ':!docs' ':!**/docs/**' ':!crates/jope-engine/assets/grammar/*' || true); if [ -n "$leftovers" ]; then head -20 <<<"$leftovers"; echo "family remotes still referenced above"; fail=1; else echo "ok"; fi
