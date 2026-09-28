@@ -1,0 +1,14 @@
+{
+  "tracked": [
+    "crates/x/tests/t.rs"
+  ],
+  "members": [],
+  "manifests": {},
+  "sources": {
+    "crates/x/tests/t.rs": "#[test]\nfn t() {\n    let d = std::env::temp_dir().join(\"x\");\n    let _ = d;\n}\n"
+  },
+  "allow": "",
+  "expect": [
+    "temp-dir crates/x/tests/t.rs: 1 call(s) of std::env::temp_dir in test code; use tempfile::Builder::new().prefix(..).tempdir() so the directory is removed on drop (the allowlist is shrink-only)"
+  ]
+}

@@ -14,6 +14,7 @@ mod elo_history;
 mod findings;
 mod inventory;
 mod progress_view;
+mod repo_layout;
 mod task_status;
 mod test_inventory;
 

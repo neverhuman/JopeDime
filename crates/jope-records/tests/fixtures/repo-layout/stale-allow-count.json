@@ -1,0 +1,14 @@
+{
+  "tracked": [
+    "crates/x/tests/t.rs"
+  ],
+  "members": [],
+  "manifests": {},
+  "sources": {
+    "crates/x/tests/t.rs": "#[test]\nfn t() {\n    let d = std::env::temp_dir().join(\"x\");\n    let _ = d;\n}\n"
+  },
+  "allow": "temp-dir crates/x/tests/t.rs 3 -- follow-up\n",
+  "expect": [
+    "temp-dir crates/x/tests/t.rs: deploy/ci/repo-layout-allow.txt:1 permits 3 but test code has 1; lower or remove this entry"
+  ]
+}

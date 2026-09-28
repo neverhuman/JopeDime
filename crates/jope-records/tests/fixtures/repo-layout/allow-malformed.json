@@ -1,0 +1,16 @@
+{
+  "tracked": [
+    "README.md"
+  ],
+  "members": [],
+  "manifests": {},
+  "sources": {},
+  "allow": "root-md README.md\nbogus x -- why\ntemp-dir crates/x/tests/t.rs zero -- why\nroot-md README.md -- project front page\nroot-md README.md -- again\ndir-package crates/foo -- missing the package name\n",
+  "expect": [
+    "allowlist deploy/ci/repo-layout-allow.txt:1: entry has no \" -- <reason>\"; state why the exception is needed",
+    "allowlist deploy/ci/repo-layout-allow.txt:2: unknown kind \"bogus\"; use root-md, log, dir-package or temp-dir",
+    "allowlist deploy/ci/repo-layout-allow.txt:3: temp-dir count must be a positive integer; lower or remove this entry",
+    "allowlist deploy/ci/repo-layout-allow.txt:5: duplicate root-md entry for README.md (first at line 4); remove this entry",
+    "allowlist deploy/ci/repo-layout-allow.txt:6: dir-package takes a path and a value; write `dir-package <dir> <package> -- <reason>`"
+  ]
+}

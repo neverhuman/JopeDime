@@ -1,0 +1,18 @@
+{
+  "tracked": [
+    "Cargo.toml",
+    "crates/jope-engine/Cargo.toml",
+    "deploy/kernel-v1/source/Cargo.toml"
+  ],
+  "members": ["crates/jope-engine"],
+  "manifests": {
+    "Cargo.toml": "[workspace]\nmembers = [\"crates/jope-engine\"]\n",
+    "crates/jope-engine/Cargo.toml": "[package]\nname = \"jope-parallel\"\nversion = \"0.1.0\"\n",
+    "deploy/kernel-v1/source/Cargo.toml": "[package]\nname = \"jope-parallel\"\nversion = \"0.1.0\"\n\n[workspace]\n"
+  },
+  "sources": {},
+  "allow": "dir-package crates/jope-engine jope-parallel -- historical package name\n",
+  "expect": [
+    "dup-package crates/jope-engine/Cargo.toml: package `jope-parallel` is also declared by deploy/kernel-v1/source/Cargo.toml; rename one package or remove the copy (this rule has no allowlist)"
+  ]
+}

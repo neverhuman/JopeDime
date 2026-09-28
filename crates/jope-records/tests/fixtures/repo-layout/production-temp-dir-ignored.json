@@ -1,0 +1,14 @@
+{
+  "tracked": [
+    "crates/foo/src/lib.rs",
+    "crates/foo/src/queue.rs"
+  ],
+  "members": [],
+  "manifests": {},
+  "sources": {
+    "crates/foo/src/lib.rs": "pub fn scratch() -> std::path::PathBuf {\n    std::env::temp_dir()\n}\n\n#[cfg(test)]\nmod tests {\n    #[test]\n    fn t() {\n        assert!(super::scratch().is_absolute());\n    }\n}\n",
+    "crates/foo/src/queue.rs": "#[cfg(test)]\nmod tests;\n\npub fn dir() -> std::path::PathBuf {\n    std::env::var_os(\"Q\").map(Into::into).unwrap_or_else(std::env::temp_dir)\n}\n\n#[cfg(test)]\nfn helper() -> std::path::PathBuf {\n    std::env::temp_dir()\n}\n"
+  },
+  "allow": "",
+  "expect": []
+}

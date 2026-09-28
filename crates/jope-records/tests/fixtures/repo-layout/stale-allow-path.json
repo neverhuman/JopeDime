@@ -1,0 +1,13 @@
+{
+  "tracked": [
+    "README.md"
+  ],
+  "members": [],
+  "manifests": {},
+  "sources": {},
+  "allow": "log crates/gone/run.log -- removed since\nroot-md README.md -- project front page\ntemp-dir crates/gone/tests/t.rs 2 -- removed since\n",
+  "expect": [
+    "log crates/gone/run.log: deploy/ci/repo-layout-allow.txt:1 matches nothing (untracked path, or no longer a violation); lower or remove this entry",
+    "temp-dir crates/gone/tests/t.rs: deploy/ci/repo-layout-allow.txt:3 matches nothing (untracked path, or no longer a violation); lower or remove this entry"
+  ]
+}

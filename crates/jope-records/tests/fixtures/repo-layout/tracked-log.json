@@ -1,0 +1,14 @@
+{
+  "tracked": [
+    "crates/x/run.log",
+    "crates/x/assets/rank-0.log",
+    "docs/data/controller.stderr"
+  ],
+  "members": [],
+  "manifests": {},
+  "sources": {},
+  "allow": "log crates/x/assets/rank-0.log -- evidence set\nlog docs/data/controller.stderr -- sha256-pinned by a record\n",
+  "expect": [
+    "log crates/x/run.log: tracked log/stderr capture; delete it or keep it as custody outside git (or add a reviewed `log crates/x/run.log -- <reason>` entry to deploy/ci/repo-layout-allow.txt)"
+  ]
+}

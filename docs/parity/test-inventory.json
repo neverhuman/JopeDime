@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 4",
-  "count": 3783,
+  "count": 3789,
   "ignored": 62,
   "packages": {
    "battle-gpu": {
@@ -5325,12 +5325,12 @@
     }
    },
    "jope-records": {
-    "count": 154,
+    "count": 160,
     "ignored": 1,
     "binaries": {
      "jope-records": {
       "kind": "lib",
-      "count": 53,
+      "count": 57,
       "ignored": 0,
       "tests": [
        "coverage::tests::changed_target_requirements_fail",
@@ -5385,6 +5385,10 @@
        "readme::tests::number_formats_match_python",
        "readme::tests::numbers_compare_exactly",
        "readme::tests::sums_follow_cpython",
+       "repo_layout::tests::fixtures_report_exactly_their_expected_findings",
+       "repo_layout::tests::members_come_from_members_not_default_members",
+       "repo_layout::tests::package_name_reads_only_the_package_table",
+       "repo_layout::tests::test_code_is_whole_test_files_and_cfg_test_modules",
        "scope_check::tests::declared_reads_the_first_assignment"
       ]
      },
@@ -5425,7 +5429,7 @@
      },
      "jope-records::records": {
       "kind": "test",
-      "count": 79,
+      "count": 81,
       "ignored": 0,
       "tests": [
        "claim_inventory::a_stale_inventory_is_refused_and_rewritten_only_on_request",
@@ -5501,6 +5505,8 @@
        "progress_view::regeneration_is_deterministic_and_blind_to_presentation",
        "progress_view::stale_view_is_detected",
        "progress_view::task_states_cannot_close_a_finding",
+       "repo_layout::a_stray_root_markdown_file_fails_with_its_line",
+       "repo_layout::the_committed_tree_passes",
        "task_status::committed_status_is_complete_and_rendered",
        "task_status::mutations_are_rejected",
        "task_status::rendering_is_deterministic_and_stale_views_fail",
@@ -5978,7 +5984,7 @@
   }
  },
  "totals": {
-  "rust": 3783,
+  "rust": 3789,
   "python": 172
  }
 }

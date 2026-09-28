@@ -42,6 +42,7 @@ step "models/ (jope-models verify --manifests-only: schema + index + PINNED, no 
 step "no absolute home paths in code"; abs=$(git grep -nE '/home/[a-z]+/' -- crates/*/src crates/*/tests deploy/systemd .github || true); if [ -n "$abs" ]; then head -20 <<<"$abs"; echo "absolute paths above: $(wc -l <<<"$abs") hits (ADR-0003: use the jope-paths resolvers / unit-template placeholders)"; fail=1; else echo "ok"; fi
 step "no absolute home paths in python (informational until WP6 lands)"; pyabs=$(git grep -nE '/home/[a-z]+/' -- python/src || true); if [ -n "$pyabs" ]; then echo "$(wc -l <<<"$pyabs") hits in python/src (informational until WP6 lands)"; else echo "ok"; fi
 step "rust-test scope partitions the workspace (deploy/ci/rust-test-scope.sh)"; if ! cargo run -q --locked -p jope-records -- rust-scope-check; then fail=1; fi
+step "repository layout (jope-records repo-layout; exceptions in deploy/ci/repo-layout-allow.txt)"; if ! cargo run -q --locked -p jope-records -- repo-layout; then fail=1; fi
 step "README benchmark blocks match committed evidence (jope-records readme-benchmarks)"; if ! cargo run -q --locked -p jope-records -- readme-benchmarks --check; then fail=1; fi
 # A family shorter than one of its own tests can never pass: full-scratch was killed at 600 s
 # inside feat-math::golden fast_profile_portfolio_head (~580-619 s). Budgets are argv[3] of each

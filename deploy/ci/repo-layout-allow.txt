@@ -1,0 +1,79 @@
+# deploy/ci/repo-layout-allow.txt: the reviewed exceptions to `jope-records repo-layout`
+# (hygiene lane, deploy/ci/check.sh). One entry per line: <kind> <path> [<value>] -- <reason>
+#
+#   root-md <file>             a Markdown file allowed at the repository root
+#   log <file>                 a tracked .log, .err or .stderr file
+#   dir-package <dir> <name>   a workspace member whose directory differs from its package name
+#   temp-dir <file> <count>    test code in <file> may use the process-wide temp directory at
+#                              most <count> times (production callers are out of scope)
+#
+# The list only shrinks: an entry for an untracked path, a count above the actual count, or an
+# entry that matches nothing fails with "lower or remove this entry". A new entry is a reviewed
+# diff with its reason. dup-package (two Cargo.toml files declaring one package name) has no
+# exceptions.
+
+# Root Markdown. MASTER_CLEAN_UP.md stays at the root by owner decision CB-O2.
+root-md AGENTS.md -- agent contract for this repository
+root-md AGENT_CHAT.md -- live peer ledger; untracking deferred (owner, 2026-09-27)
+root-md CLAUDE.md -- Claude Code loads it; line 1 imports AGENTS.md
+root-md CODE_OF_CONDUCT.md -- GitHub community file
+root-md CONTRIBUTING.md -- GitHub community file
+root-md MASTER_CLEAN_UP.md -- cleanup record synchronized with the research repository (owner decision CB-O2: stays at the root)
+root-md MASTER_PLAN.md -- the PR queue and plan record the agent contract requires
+root-md README.md -- project front page
+root-md SECURITY.md -- GitHub community file
+
+# Tracked logs. The 16 qualification-rank logs are kept with their sibling qualification-rank-*.json
+# receipts, which crates/jope-engine/assets/sampling-reviewed{3-v2,4-v1}/foundation/parity.json list
+# (owner decision CB-O5).
+log crates/jope-engine/assets/sampling-reviewed3-v2/qualification-rank-0.log -- sampling-reviewed3-v2 qualification evidence set (CB-O5)
+log crates/jope-engine/assets/sampling-reviewed3-v2/qualification-rank-1.log -- sampling-reviewed3-v2 qualification evidence set (CB-O5)
+log crates/jope-engine/assets/sampling-reviewed3-v2/qualification-rank-2.log -- sampling-reviewed3-v2 qualification evidence set (CB-O5)
+log crates/jope-engine/assets/sampling-reviewed3-v2/qualification-rank-3.log -- sampling-reviewed3-v2 qualification evidence set (CB-O5)
+log crates/jope-engine/assets/sampling-reviewed3-v2/qualification-rank-4.log -- sampling-reviewed3-v2 qualification evidence set (CB-O5)
+log crates/jope-engine/assets/sampling-reviewed3-v2/qualification-rank-5.log -- sampling-reviewed3-v2 qualification evidence set (CB-O5)
+log crates/jope-engine/assets/sampling-reviewed3-v2/qualification-rank-6.log -- sampling-reviewed3-v2 qualification evidence set (CB-O5)
+log crates/jope-engine/assets/sampling-reviewed3-v2/qualification-rank-7.log -- sampling-reviewed3-v2 qualification evidence set (CB-O5)
+log crates/jope-engine/assets/sampling-reviewed4-v1/qualification-rank-0.log -- sampling-reviewed4-v1 qualification evidence set (CB-O5)
+log crates/jope-engine/assets/sampling-reviewed4-v1/qualification-rank-1.log -- sampling-reviewed4-v1 qualification evidence set (CB-O5)
+log crates/jope-engine/assets/sampling-reviewed4-v1/qualification-rank-2.log -- sampling-reviewed4-v1 qualification evidence set (CB-O5)
+log crates/jope-engine/assets/sampling-reviewed4-v1/qualification-rank-3.log -- sampling-reviewed4-v1 qualification evidence set (CB-O5)
+log crates/jope-engine/assets/sampling-reviewed4-v1/qualification-rank-4.log -- sampling-reviewed4-v1 qualification evidence set (CB-O5)
+log crates/jope-engine/assets/sampling-reviewed4-v1/qualification-rank-5.log -- sampling-reviewed4-v1 qualification evidence set (CB-O5)
+log crates/jope-engine/assets/sampling-reviewed4-v1/qualification-rank-6.log -- sampling-reviewed4-v1 qualification evidence set (CB-O5)
+log crates/jope-engine/assets/sampling-reviewed4-v1/qualification-rank-7.log -- sampling-reviewed4-v1 qualification evidence set (CB-O5)
+log docs/internal/core-ip/data/gpu-controller.stderr -- sha256-pinned by historical-gpu-staging-20260925.json, gpu-closeout.json and gpu-study-manifest.json; cited by core-ip sections/10.md
+
+# Member directories whose package keeps its historical name (renames are out of scope).
+dir-package crates/jope-campaigns jope-dime-regressor -- historical package name; binaries, unit files and receipts use it
+dir-package crates/jope-encoders starforge -- lib name kept so the ported sources needed no edit
+dir-package crates/jope-engine jope-parallel -- the jain-core consumer contract names the jope-parallel binary and crate
+
+# Test code that still uses the process-wide temp directory: 35 calls in 25 files, generated with
+#   cargo run -q --locked -p jope-records -- repo-layout --print-temp-dir | sed -E 's#^(temp-dir crates/jope-engine/src/eval_registry/native_scq(/policy)?\.rs [0-9]+)$#\1 -- pinned fit-authority source, never edited#; t; s#$# -- test scratch in the process temp dir; moves to tempfile in the follow-up (clean-base O6)#'
+# feat-math contributes 0 since #119. The follow-up moves the rest to tempfile (owner decision O6).
+temp-dir crates/hyperion/src/battle_gpu/queue_tests.rs 1 -- test scratch in the process temp dir; moves to tempfile in the follow-up (clean-base O6)
+temp-dir crates/hyperion/src/hyperion/hvc2.rs 1 -- test scratch in the process temp dir; moves to tempfile in the follow-up (clean-base O6)
+temp-dir crates/hyperion/src/hyperion_v7/weights.rs 1 -- test scratch in the process temp dir; moves to tempfile in the follow-up (clean-base O6)
+temp-dir crates/jope-campaigns/src/bin/jope_gpu_lane_admission.rs 1 -- test scratch in the process temp dir; moves to tempfile in the follow-up (clean-base O6)
+temp-dir crates/jope-campaigns/src/bin/jope_ledger_reconciler.rs 1 -- test scratch in the process temp dir; moves to tempfile in the follow-up (clean-base O6)
+temp-dir crates/jope-campaigns/src/bin/jope_selfplay_expansion_driver.rs 4 -- test scratch in the process temp dir; moves to tempfile in the follow-up (clean-base O6)
+temp-dir crates/jope-campaigns/src/campaign.rs 1 -- test scratch in the process temp dir; moves to tempfile in the follow-up (clean-base O6)
+temp-dir crates/jope-campaigns/src/commands/binary_cv.rs 2 -- test scratch in the process temp dir; moves to tempfile in the follow-up (clean-base O6)
+temp-dir crates/jope-campaigns/src/commands/exact_cv.rs 1 -- test scratch in the process temp dir; moves to tempfile in the follow-up (clean-base O6)
+temp-dir crates/jope-campaigns/src/commands/exact_cv_v2.rs 1 -- test scratch in the process temp dir; moves to tempfile in the follow-up (clean-base O6)
+temp-dir crates/jope-campaigns/src/followup.rs 1 -- test scratch in the process temp dir; moves to tempfile in the follow-up (clean-base O6)
+temp-dir crates/jope-campaigns/src/golden42_v3.rs 1 -- test scratch in the process temp dir; moves to tempfile in the follow-up (clean-base O6)
+temp-dir crates/jope-campaigns/src/main.rs 1 -- test scratch in the process temp dir; moves to tempfile in the follow-up (clean-base O6)
+temp-dir crates/jope-campaigns/src/test_adaptive.rs 1 -- test scratch in the process temp dir; moves to tempfile in the follow-up (clean-base O6)
+temp-dir crates/jope-campaigns/src/test_adaptive/scq_batch.rs 1 -- test scratch in the process temp dir; moves to tempfile in the follow-up (clean-base O6)
+temp-dir crates/jope-campaigns/tests/systemd_unit_paths.rs 1 -- test scratch in the process temp dir; moves to tempfile in the follow-up (clean-base O6)
+temp-dir crates/jope-encoders/src/bundle/tests.rs 3 -- test scratch in the process temp dir; moves to tempfile in the follow-up (clean-base O6)
+temp-dir crates/jope-encoders/src/data.rs 1 -- test scratch in the process temp dir; moves to tempfile in the follow-up (clean-base O6)
+temp-dir crates/jope-encoders/src/model/tests.rs 3 -- test scratch in the process temp dir; moves to tempfile in the follow-up (clean-base O6)
+temp-dir crates/jope-engine/src/eval_registry/native_scq.rs 2 -- pinned fit-authority source, never edited
+temp-dir crates/jope-engine/src/eval_registry/native_scq/policy.rs 1 -- pinned fit-authority source, never edited
+temp-dir crates/jope-engine/src/runtime_custody.rs 1 -- test scratch in the process temp dir; moves to tempfile in the follow-up (clean-base O6)
+temp-dir crates/jope-paths/src/lib.rs 1 -- test scratch in the process temp dir; moves to tempfile in the follow-up (clean-base O6)
+temp-dir crates/jope-paths/src/systemd.rs 1 -- test scratch in the process temp dir; moves to tempfile in the follow-up (clean-base O6)
+temp-dir crates/jope-policy/tests/jope_dime.rs 2 -- test scratch in the process temp dir; moves to tempfile in the follow-up (clean-base O6)
