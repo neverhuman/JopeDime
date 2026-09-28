@@ -18,6 +18,7 @@
 # Root Markdown. MASTER_CLEAN_UP.md stays at the root by owner decision CB-O2.
 root-md AGENTS.md -- agent contract for this repository
 root-md AGENT_CHAT.md -- live peer ledger; untracking deferred (owner, 2026-09-27)
+root-md CHANGELOG.md -- release notes (v0.2.0 release PR)
 root-md CLAUDE.md -- Claude Code loads it; line 1 imports AGENTS.md
 root-md CODE_OF_CONDUCT.md -- GitHub community file
 root-md CONTRIBUTING.md -- GitHub community file
