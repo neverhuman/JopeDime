@@ -8,8 +8,18 @@ use clap::{Args, Parser, Subcommand};
 use jope_ci::build_report;
 use jope_ci::cargo_artifact::{self, Build, Failure};
 
+// The argument grammar is argparse's where the two agree and stricter where they do not (review
+// round seven of PR #117): a repeated option other than `--features` (argparse kept the last value)
+// and a prefix of an option (argparse expanded it) are usage errors, and a subcommand named `help`
+// is refused as argparse refused it (`invalid choice`), at every level. No option collects repeated
+// values the Python stored once. (Plain comments: a doc comment here would become help text.)
 #[derive(Parser)]
-#[command(name = "jope-ci", version, about = "CI and host-maintenance tooling")]
+#[command(
+    name = "jope-ci",
+    version,
+    about = "CI and host-maintenance tooling",
+    disable_help_subcommand = true
+)]
 struct Cli {
     #[command(subcommand)]
     command: Top,
@@ -133,10 +143,15 @@ fn build_report_command(command: Report) -> ExitCode {
     }
 }
 
+// `--bin` or `--example`. An empty `--bin` is refused (a usage error): the Python chose the kind by
+// truth (`"bin" if args.bin else "example"`, name `args.bin or args.example`), so `--bin ""` asked
+// for an example named `None`, which `select` matched only in a message without a target name and
+// `build` crashed on (`TypeError`); the port never selects or builds a bin named "" in its place.
+// An empty `--example` is kept, as the Python kept it.
 #[derive(Args)]
 #[group(required = true, multiple = false)]
 struct Target {
-    #[arg(long)]
+    #[arg(long, value_parser = clap::builder::NonEmptyStringValueParser::new())]
     bin: Option<String>,
     #[arg(long)]
     example: Option<String>,
@@ -186,7 +201,14 @@ enum Artifact {
         metadata: PathBuf,
         #[arg(long)]
         messages: PathBuf,
-        #[arg(long, num_args = 2, value_names = ["CONTAINER_ROOT", "HOST_ROOT"])]
+        // One pair, given once: a second `--path-map` is a usage error (argparse's `nargs=2` store
+        // kept the last pair; clap's default for a list appends it, and the first pair was used).
+        #[arg(
+            long,
+            num_args = 2,
+            value_names = ["CONTAINER_ROOT", "HOST_ROOT"],
+            action = clap::ArgAction::Set
+        )]
         path_map: Option<Vec<PathBuf>>,
     },
     TargetDir {

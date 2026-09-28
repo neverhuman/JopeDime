@@ -1,0 +1,129 @@
+{
+  "source": "p1-r7-capture-20260928T095659Z",
+  "capture": "bash cap7.sh p1-r7-capture-20260928T095659Z (Python from git show f46a9048fbb2697d6d1f4463a688083ea9dfcce1:<tool>, unmodified, in a scratch root)",
+  "tool": "deploy/maintenance/jope_report.py",
+  "layout": "kind grammar: args after the program, @ROOT@ being the case's own empty directory and working directory; the Python's exit, stdout (completed_at blanked as @T@) and stderr",
+  "cases": [
+    {
+      "name": "report-r7-help",
+      "kind": "grammar",
+      "args": [
+        "help"
+      ],
+      "exit": 2,
+      "stdout": "",
+      "stderr": "usage: jope_report.py [-h] {scan,report} ...\njope_report.py: error: argument mode: invalid choice: 'help' (choose from 'scan', 'report')\n"
+    },
+    {
+      "name": "report-r7-help-scan",
+      "kind": "grammar",
+      "args": [
+        "help",
+        "scan"
+      ],
+      "exit": 2,
+      "stdout": "",
+      "stderr": "usage: jope_report.py [-h] {scan,report} ...\njope_report.py: error: argument mode: invalid choice: 'help' (choose from 'scan', 'report')\n"
+    },
+    {
+      "name": "report-r7-version",
+      "kind": "grammar",
+      "args": [
+        "--version"
+      ],
+      "exit": 2,
+      "stdout": "",
+      "stderr": "usage: jope_report.py [-h] {scan,report} ...\njope_report.py: error: the following arguments are required: mode\n"
+    },
+    {
+      "name": "report-r7-scan-version",
+      "kind": "grammar",
+      "args": [
+        "scan",
+        "@ROOT@",
+        "--version"
+      ],
+      "exit": 2,
+      "stdout": "",
+      "stderr": "usage: jope_report.py [-h] {scan,report} ...\njope_report.py: error: unrecognized arguments: --version\n"
+    },
+    {
+      "name": "report-r7-scan-stale-equals",
+      "kind": "grammar",
+      "args": [
+        "scan",
+        "@ROOT@",
+        "--stale=5"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"completed_at\": \"@T@\",\n  \"root\": \"@ROOT@\",\n  \"stale_hours\": 5,\n  \"candidates\": [],\n  \"candidate_allocated_bytes_sum\": 0,\n  \"sum_may_double_count_hardlinks\": true,\n  \"report_only\": true,\n  \"complete\": true\n}\n",
+      "stderr": ""
+    },
+    {
+      "name": "report-r7-scan-stale-twice",
+      "kind": "grammar",
+      "args": [
+        "scan",
+        "@ROOT@",
+        "--stale",
+        "0",
+        "--stale",
+        "5"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"completed_at\": \"@T@\",\n  \"root\": \"@ROOT@\",\n  \"stale_hours\": 5,\n  \"candidates\": [],\n  \"candidate_allocated_bytes_sum\": 0,\n  \"sum_may_double_count_hardlinks\": true,\n  \"report_only\": true,\n  \"complete\": true\n}\n",
+      "stderr": ""
+    },
+    {
+      "name": "report-r7-scan-stale-twice-last-bad",
+      "kind": "grammar",
+      "args": [
+        "scan",
+        "@ROOT@",
+        "--stale",
+        "5",
+        "--stale",
+        "x"
+      ],
+      "exit": 2,
+      "stdout": "",
+      "stderr": "usage: jope_report.py scan [-h] [--stale STALE] root\njope_report.py scan: error: argument --stale: --stale requires nonnegative whole hours\n"
+    },
+    {
+      "name": "report-r7-scan-stale-abbrev",
+      "kind": "grammar",
+      "args": [
+        "scan",
+        "@ROOT@",
+        "--st",
+        "5"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"completed_at\": \"@T@\",\n  \"root\": \"@ROOT@\",\n  \"stale_hours\": 5,\n  \"candidates\": [],\n  \"candidate_allocated_bytes_sum\": 0,\n  \"sum_may_double_count_hardlinks\": true,\n  \"report_only\": true,\n  \"complete\": true\n}\n",
+      "stderr": ""
+    },
+    {
+      "name": "report-r7-scan-root-empty",
+      "kind": "grammar",
+      "args": [
+        "scan",
+        ""
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"completed_at\": \"@T@\",\n  \"root\": \"@ROOT@\",\n  \"stale_hours\": null,\n  \"candidates\": [],\n  \"candidate_allocated_bytes_sum\": 0,\n  \"sum_may_double_count_hardlinks\": true,\n  \"report_only\": true,\n  \"complete\": true\n}\n",
+      "stderr": ""
+    },
+    {
+      "name": "report-r7-scan-root-twice",
+      "kind": "grammar",
+      "args": [
+        "scan",
+        "@ROOT@",
+        "@ROOT@"
+      ],
+      "exit": 2,
+      "stdout": "",
+      "stderr": "usage: jope_report.py [-h] {scan,report} ...\njope_report.py: error: unrecognized arguments: @ROOT@\n"
+    }
+  ]
+}

@@ -28,6 +28,10 @@
 //! UTF-8 (`scans_match_round_six`), and reports under `HOME` spellings pathlib refused (`~...`) or
 //! the port refuses (empty, relative, not UTF-8) and with custody, configuration or tools behind
 //! names that are not UTF-8 (the ignored `reports_match_round_six`).
+//!
+//! `negative-r7.json` holds round seven (the argument grammar): `help` where a command is expected,
+//! `--version`, a repeated or abbreviated `--stale`, an empty root and a second root
+//! (`grammar_matches_round_seven`).
 
 use serde_json::Value;
 use std::fs;
@@ -788,6 +792,122 @@ fn scans_match_round_six() {
     }
     assert!(failures.is_empty(), "{}", failures.join("\n"));
     assert_eq!(replayed, 5);
+}
+
+/// Round seven (`negative-r7.json`, the argument grammar): what the port's parser refuses (exit
+/// status 2, clap's `error: ...` containing the text given, nothing on stdout), and whether the
+/// Python accepted it (stricter). The word `help` where a command is expected printed help (exit 0)
+/// until this round, where argparse refused the choice; a repeated `--stale` (argparse kept the
+/// last), a prefix of it (argparse expanded it) and an empty root (`os.path.abspath("")`, the
+/// working directory) the Python scanned.
+const R7_USAGE_REFUSED: &[(&str, &str, bool)] = &[
+    ("report-r7-help", "unrecognized subcommand 'help'", false),
+    (
+        "report-r7-help-scan",
+        "unrecognized subcommand 'help'",
+        false,
+    ),
+    (
+        "report-r7-version",
+        "unexpected argument '--version' found",
+        false,
+    ),
+    (
+        "report-r7-scan-version",
+        "unexpected argument '--version' found",
+        false,
+    ),
+    (
+        "report-r7-scan-stale-twice",
+        "cannot be used multiple times",
+        true,
+    ),
+    (
+        "report-r7-scan-stale-twice-last-bad",
+        "cannot be used multiple times",
+        false,
+    ),
+    (
+        "report-r7-scan-stale-abbrev",
+        "unexpected argument '--st' found",
+        true,
+    ),
+    (
+        "report-r7-scan-root-empty",
+        "a value is required for '<ROOT>' but none was supplied",
+        true,
+    ),
+    (
+        "report-r7-scan-root-twice",
+        "unexpected argument '@ROOT@' found",
+        false,
+    ),
+];
+
+/// Round seven of the review of PR #117 (`negative-r7.json`): `jope-ci build-report` given the
+/// arguments `jope_report.py` was given, in an empty working directory. Every case the Python
+/// refused, the port refuses; `--stale=5` scans as the Python scanned.
+#[test]
+fn grammar_matches_round_seven() {
+    let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/fixtures/python-parity/build-report/negative-r7.json");
+    let doc: Value = serde_json::from_str(&fs::read_to_string(path).unwrap()).unwrap();
+    assert!(doc["source"].is_string() && doc["capture"].is_string());
+    let cases = doc["cases"].as_array().unwrap();
+    assert_eq!(cases.len(), 10, "every captured case is replayed");
+    for (name, _, _) in R7_USAGE_REFUSED {
+        assert!(cases.iter().any(|c| c["name"] == *name), "{name}");
+    }
+    let temp = tempfile::Builder::new()
+        .prefix("build-report-r7-")
+        .tempdir()
+        .unwrap();
+    let mut failures = vec![];
+    for case in cases {
+        let name = case["name"].as_str().unwrap();
+        let root = temp.path().join(name);
+        fs::create_dir(&root).unwrap();
+        let root = root.canonicalize().unwrap();
+        let root_text = root.to_str().unwrap();
+        let args: Vec<String> = case["args"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|a| a.as_str().unwrap().replace("@ROOT@", root_text))
+            .collect();
+        let output = Command::new(env!("CARGO_BIN_EXE_jope-ci"))
+            .arg("build-report")
+            .args(&args)
+            .current_dir(&root)
+            .output()
+            .unwrap();
+        let stdout =
+            blank_scan(&String::from_utf8_lossy(&output.stdout).replace(root_text, "@ROOT@"));
+        let stderr = String::from_utf8_lossy(&output.stderr).replace(root_text, "@ROOT@");
+        let exit = i64::from(output.status.code().unwrap());
+        let python = (
+            case["exit"].as_i64().unwrap(),
+            blank_scan(case["stdout"].as_str().unwrap()),
+            case["stderr"].as_str().unwrap().to_owned(),
+        );
+        let verdict = match R7_USAGE_REFUSED.iter().find(|(n, _, _)| *n == name) {
+            Some((_, text, python_accepted)) => {
+                exit == 2
+                    && stdout.is_empty()
+                    && stderr.starts_with("error: ")
+                    && stderr.contains(text)
+                    && (python.0 == 0) == *python_accepted
+            }
+            None => (exit, &stdout, &stderr) == (python.0, &python.1, &python.2),
+        };
+        if !verdict {
+            failures.push(format!(
+                "{name}: the Python {python:?}, the port {:?}",
+                (exit, stdout, stderr)
+            ));
+        }
+    }
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
 }
 
 /// Round six reports the port fails at an earlier step than the Python (stricter): a `HOME` that is
