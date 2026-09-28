@@ -73,7 +73,7 @@ bump version:
     sed -i -E '0,/^version = "[^"]+"/s//version = "{{version}}"/' python/pyproject.toml
     cargo update --workspace --offline
     bash deploy/ci/version-consistency.sh
-    @echo "bumped to {{version}}; commit, then tag v{{version}} to run release.yml"
+    @echo "bumped to {{version}}; commit and merge, then cut v{{version}} with deploy/release/release.sh (it creates the tag; do not push one by hand)"
 
 # documentation checks: rustdoc builds (warnings counted), relative links in README/docs (not docs/legacy) resolve, cliff.toml renders
 docs:

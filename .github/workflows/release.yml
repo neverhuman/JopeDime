@@ -1,5 +1,20 @@
 name: release
 
+# DISPATCH-ONLY. THIS IS NOT THE RELEASE PATH.
+#   - Releases are cut on xbabe2 by deploy/release/release.sh (owner decision D-D, 2026-09-27).
+#   - That script builds in the pinned rust:1.97.1-bookworm image, signs SHA256SUMS with cosign using
+#     the root-held key in /etc/jope-release, and publishes no attestation and no wheel.
+#   - docs/release/README.md explains how to verify a release.
+#   - The `push: tags` trigger was removed so that release.sh's tag push cannot start a second,
+#     unsigned release of the same tag on hosted runners.
+#   - This workflow has never run. It stays only as a reference until the self-hosted release lane
+#     lands. Do not dispatch it.
+#   - It fails closed: if it is dispatched anyway, its first step prints this notice and exits 1, so
+#     no later step runs, and the job holds only `contents: read`. The old design below asked for
+#     `contents: write`, `id-token: write` and `attestations: write`; the self-hosted lane sets what
+#     it needs when it lands.
+# The original description below records the old design; it is not the current process.
+#
 # Release engineering (plan "CI and testing" → "Release engineering"; ADR-0001 step 5 for the history
 # gate that precedes any push). Runs on hosted runners only, on `v*` tags:
 #   version consistency (tag == workspace == python) → `jope` built inside rust:1.97.1-bookworm
@@ -11,8 +26,7 @@ name: release
 # only referenced by hash in release-manifest.json; no weights or datasets are downloaded here.
 
 on:
-  push:
-    tags: ["v*"]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -29,10 +43,13 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     permissions:
-      contents: write
-      id-token: write
-      attestations: write
+      contents: read
     steps:
+      - name: Refuse (DISPATCH-ONLY; releases come from deploy/release/release.sh)
+        run: |
+          echo "::error title=release.yml is not the release path::DISPATCH-ONLY. THIS IS NOT THE RELEASE PATH. Releases are cut on xbabe2 by deploy/release/release.sh (owner decision D-D); docs/release/README.md explains how to verify one. This workflow stays only as a reference until the self-hosted release lane lands."
+          exit 1
+
       - name: Checkout (full history for the changelog)
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
