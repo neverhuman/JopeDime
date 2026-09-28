@@ -1988,9 +1988,11 @@ with both join phases in one test, which stopped at the first.)
 - Dropping a `TlsStream` sends `close_notify` under the same bound: never past the stream's
   deadline, and at most one write timeout from the drop.
 
-No allowance is extended. Every deadline is the allowance the code already named (handshake,
-join, heartbeat or reply), now measured once from the start of the exchange instead of per
-read. Certificate pinning, grants and every refusal are unchanged.
+No allowance is extended. Every deadline is an allowance the plan or the code already names:
+the handshake, join or heartbeat timeout, the heartbeat interval, or a reply bound. It is now
+measured once, from the start of the exchange, instead of per read. Where a site's old
+per-write timeout was the join time left at accept, which is not an allowance for that write,
+the new bound is shorter. Certificate pinning, grants and every refusal are unchanged.
 
 ### Every blocking read and write of the bounded transport and its callers
 
@@ -2037,17 +2039,19 @@ Consequences worth stating:
   so a rank that joined the moment the rendezvous opened, in a group whose last rank arrived at
   the very end of the join window, has only the rank's launch latency to cover that journaling
   step.
-- **The agent sees `stop` within bounded time** whatever its peers do. The worst case is one
-  handshake allowance, at most 10 s. One agent serves one peer at a time, so a stream of
-  trickling connections can still occupy it for one allowance each. That is a
-  fairness limit, and it is recorded below.
+- **The agent sees `stop` within bounded time** whatever its peers do: after its current step,
+  and no peer can stretch a step. A handshake takes at most its allowance (at most 10 s), a
+  started request at most the plan's I/O timeout, and a reply write at most 30 s. The
+  supervisor operation being served, such as a terminate, takes as long as it takes, as
+  before. One agent serves one peer at a time, so a stream of trickling connections can still
+  occupy it for one allowance each. That is a fairness limit, and it is recorded below.
 
 **Tests.** Nine of the ten new tests use only the API that existed at `3d12729a2`, so they ran
 unchanged as the pre-fix record above. The tenth needs `read_frame_by`. All use loopback TCP
-or a Unix socket, 300 ms deadlines and peers that trickle for 2.5 s, and they assert that the
-operation ends no earlier than 50 ms before its deadline and no later than 500 ms after it.
-That slack is for loaded CI hosts; 800 ms is still under the review's 1.5 s and far under the
-2.5 s every test measured before the fix.
+or a Unix socket, 300 ms deadlines and peers that trickle for 2.5 s. They assert that the
+operation ends no earlier than 50 ms before its deadline and no later than 500 ms after it;
+the agent-stop test asserts only the upper bound. That slack is for loaded CI hosts; 800 ms
+is still under the review's 1.5 s and far under the 2.5 s every test measured before the fix.
 
 - `bounded_transport` (18, was 10):
   - `a_trickling_client_cannot_hold_the_server_handshake_past_its_deadline` is the review's
@@ -2089,14 +2093,36 @@ That slack is for loaded CI hosts; 800 ms is still under the review's 1.5 s and 
   not help. `transport.rs` was then restored, byte for byte (same SHA-256), and the sources
   were touched.
 
+**Verification** (`w7-deadline-gate-20260928T141946Z`, at `c9ca8b547`, the fix commit; the
+commit that adds this paragraph changes only this record). All ran on xbabe2, CPU only:
+
+- These gates pass: `cargo fmt --check`; `git diff --check` over the fix commit and the
+  worktree; `cargo check --workspace --all-targets --locked`; `cargo clippy -p jope-parallel
+  --all-targets --locked`, with no finding in any file this change touches;
+  `jope-records coverage validate` (0 unassigned) and `jope-records verify-test-inventory`
+  (319 items); `deploy/ci/parity-matrix.sh --no-build` (817 rows); `deploy/ci/check.sh`,
+  whose gitleaks run scanned 590 commits and found no leaks; and `cargo check -p
+  jope-parallel --features neural --all-targets --locked`, which compiles the training
+  watcher's heartbeat read. Neither `cargo check` reports a warning in a changed file.
+  No test target was added, so `coverage.json` and the test inventories are unchanged.
+- The bounded and fence selection passes 194 of 194. The `bounded_*` targets pass 109: the 99
+  from before, plus 8 new in `bounded_transport` and 2 in `bounded_agent`. The fences pass 85:
+  `fit_boundary` 16, `view_contracts` 17, `gp_contracts` 8 and `gp::fit_contract_tests` 44.
+- `full-default` passes through `deploy/ci/full-lane.sh`: 3 772 passed and 65 skipped, in
+  717 s against a 1 500 s budget. That is the 3 762 of `ae04755ce` plus the ten new tests.
+  `deploy/ci/check-test-routing.sh` verifies 80 `cpu` and 8 `host` contracts. W7-D5's check
+  found `scqd` and recorded its digest, the same as at `ae04755ce`. The `bounded_*` targets
+  pass 109 of 109 and the fences 85 of 85. Under the lane's 16 test threads the ten new
+  tests took 0.38 to 0.86 s each.
+
 **Open.**
 
 - A single-threaded agent, and `gather`, still serve one connection at a time. A continuous
   supply of trickling connections from an address that can reach the port costs each one
   allowance, so it can keep legitimate traffic waiting. For `gather` that ends in a
-  fail-closed `JoinTimeout`. For the agent, the coordinator's calls fail at their reply
-  deadlines and it drains. Nothing is admitted or committed that should not be. Concurrent
-  accept, or a per-source limit, is a separate change.
+  fail-closed `JoinTimeout`. For the agent, the coordinator's calls to it can fail at their
+  reply deadlines. Nothing is admitted or committed that should not be. Concurrent accept, or
+  a per-source limit, is a separate change.
 - In `collect.rs`, `SystemCommands::run` kills an inventory program at its absolute
   `COMMAND_TIMEOUT`, then joins the threads that read its output until end of file. A
   descendant that inherited the pipe could delay that end of file. The program is a local
