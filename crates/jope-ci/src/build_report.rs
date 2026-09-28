@@ -17,7 +17,7 @@
 //! `--approved-root` and whose checksum every receipt records. `report` fails unless exactly two
 //! are given and the configuration names exactly those.
 
-use jope_records::py::PosixPath;
+use jope_records::py::{self, PosixPath};
 use jope_records::pyjson::{self, Dict, Value};
 use sha2::{Digest, Sha256};
 use std::ffi::{OsStr, OsString};
@@ -357,28 +357,21 @@ fn run_bounded(command: &[&OsStr], limit: Duration, interrupt: Interrupt<'_>) ->
     }
 }
 
-/// Python `int(text)` for the leading `du` field. As in CPython 3.12, a well-formed literal of more
-/// than 4300 digits refuses in its words before it is converted: leading zeros count, the sign,
-/// the whitespace and the underscores do not.
-fn py_int(text: &str) -> Outcome<u64> {
-    let body = text.trim_matches(|c: char| c.is_whitespace() || ('\u{1c}'..='\u{1f}').contains(&c));
-    let digits = body.strip_prefix('+').unwrap_or(body);
-    if !digits.is_empty()
-        && !digits.starts_with('_')
-        && !digits.ends_with('_')
-        && !digits.contains("__")
-        && digits.bytes().all(|b| b.is_ascii_digit() || b == b'_')
-    {
-        jope_records::py::check_int_digits(digits.bytes().filter(|&b| b != b'_').count())
-            .map_err(Failure::new)?;
-        if let Ok(value) = digits.replace('_', "").parse() {
-            return Ok(value);
-        }
+/// `int(text)` of the leading `du` field through the strict number grammar
+/// ([`jope_records::py::decimal`]): ASCII whitespace, sign and digits only, a value that fits
+/// `i64` and is not negative. More than 4300 digits (leading zeros count) refuse in CPython 3.12's
+/// words; anything else outside the grammar (which includes underscores, Unicode digits and
+/// Unicode whitespace, all of which Python read, and U+001C..U+001F, which it refused) refuses as
+/// Python's `ValueError` worded it.
+fn du_bytes(text: &str) -> Outcome<u64> {
+    match py::int(text) {
+        Ok(value) if value >= 0 => Ok(value.unsigned_abs()),
+        Err(py::IntError::Limit(message)) => Err(Failure::new(message)),
+        _ => Err(Failure::new(format!(
+            "invalid literal for int() with base 10: {}",
+            pyjson::str_repr(text)
+        ))),
     }
-    Err(Failure::new(format!(
-        "invalid literal for int() with base 10: {}",
-        pyjson::str_repr(text)
-    )))
 }
 
 /// Allocated bytes of `root` from `/usr/bin/du -s -B1` (through `sudo -n` when privileged).
@@ -399,7 +392,7 @@ pub fn allocated(root: &Path, privileged: bool, interrupt: Interrupt<'_>) -> Out
         root.as_os_str(),
     ]);
     let stdout = run_bounded(&command, MEASURE_TIMEOUT, interrupt)?;
-    py_int(stdout.split('\t').next().unwrap_or(""))
+    du_bytes(stdout.split('\t').next().unwrap_or(""))
 }
 
 /// The scan document of `root`: outermost Cargo candidates older than `hours` (all when `None`).
@@ -508,7 +501,8 @@ pub fn scan(
     Ok(Value::Dict(document))
 }
 
-/// `--stale HOURS`: nonnegative whole hours of at most eight digits.
+/// `--stale HOURS`: nonnegative whole hours of at most eight digits (`value.isascii() and
+/// value.isdecimal()`, then `int(value)`, which the strict number grammar reads).
 pub fn whole_hours(value: &str) -> Result<u64, String> {
     if value.is_empty() || !value.bytes().all(|b| b.is_ascii_digit()) {
         return Err("--stale requires nonnegative whole hours".into());
@@ -517,9 +511,10 @@ pub fn whole_hours(value: &str) -> Result<u64, String> {
     if value.len() > 8 {
         return Err("--stale age is too large".into());
     }
-    value
-        .parse()
-        .map_err(|_| "--stale requires nonnegative whole hours".into())
+    py::int(value)
+        .ok()
+        .and_then(|hours| u64::try_from(hours).ok())
+        .ok_or_else(|| "--stale requires nonnegative whole hours".into())
 }
 
 /// What `report` runs: the scan of one approved root and the measurement of one directory.
@@ -855,30 +850,48 @@ mod tests {
             whole_hours("123456789"),
             Err("--stale age is too large".into())
         );
-        assert_eq!(py_int("123").unwrap(), 123);
-        assert_eq!(py_int(" 7\n").unwrap(), 7);
+        assert_eq!(whole_hours("00000048"), Ok(48));
+        assert_eq!(du_bytes("123").unwrap(), 123);
+        assert_eq!(du_bytes(" 7\n").unwrap(), 7);
+        assert_eq!(du_bytes("+7").unwrap(), 7);
         assert_eq!(
-            py_int("garbage").unwrap_err().message,
+            du_bytes("garbage").unwrap_err().message,
             "invalid literal for int() with base 10: 'garbage'"
         );
-        // CPython's limit of 4300 digits applies to a well-formed literal before it is converted:
-        // leading zeros count, the sign, the whitespace and the underscores do not.
+        // CPython's limit of 4300 digits applies to a decimal integer before it is converted:
+        // leading zeros count, the sign and the whitespace do not.
         let limit = "Exceeds the limit (4300 digits) for integer string conversion: value has 4301 digits; use sys.set_int_max_str_digits() to increase the limit";
         let zeros = |n: usize| "0".repeat(n);
-        assert_eq!(py_int(&format!("{}45\n", zeros(4298))).unwrap(), 45);
-        assert_eq!(py_int(&format!("+{}45", zeros(4298))).unwrap(), 45);
-        assert_eq!(py_int(&format!("{}45", "0_".repeat(4298))).unwrap(), 45);
+        assert_eq!(du_bytes(&format!("{}45\n", zeros(4298))).unwrap(), 45);
+        assert_eq!(du_bytes(&format!("+{}45", zeros(4298))).unwrap(), 45);
         for text in [
             format!("{}45", zeros(4299)),
             format!(" +{}45\n", zeros(4299)),
-            format!("{}45", "0_".repeat(4299)),
         ] {
-            assert_eq!(py_int(&text).unwrap_err().message, limit);
+            assert_eq!(du_bytes(&text).unwrap_err().message, limit);
         }
-        assert!(py_int(&format!("{}45_", zeros(4299)))
-            .unwrap_err()
-            .message
-            .starts_with("invalid literal for int() with base 10: '000"));
+        // Outside the strict grammar: what Python refused (U+001C..U+001F, which `str.strip()`
+        // removes but `int()` did not) and what it read (underscores, Unicode digits and
+        // whitespace, stricter), a negative size, and a size beyond `i64`.
+        for text in [
+            "\u{1f}45",
+            "45\u{1c}",
+            "4_5",
+            &format!("{}45", "0_".repeat(4299)),
+            "\u{664}\u{665}",
+            "\u{a0}45",
+            "-1",
+            "9223372036854775808",
+        ] {
+            assert_eq!(
+                du_bytes(text).unwrap_err().message,
+                format!(
+                    "invalid literal for int() with base 10: {}",
+                    pyjson::str_repr(text)
+                ),
+                "{text:?}"
+            );
+        }
     }
 
     #[test]

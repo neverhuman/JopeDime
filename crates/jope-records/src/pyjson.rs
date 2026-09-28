@@ -873,21 +873,29 @@ impl Parser<'_> {
                 self.pos = before_exponent;
             }
         }
+        // The JSON grammar above has already chosen the literal (ASCII digits, an optional `-`); it
+        // is converted by the ports' one strict number grammar (`py::decimal`, `py::float`), of
+        // which every JSON number is a sentence.
         let literal = &self.text[start..self.pos];
         if is_float {
-            literal
-                .parse::<f64>()
+            crate::py::float(literal)
                 .map(Value::Float)
-                .map_err(|_| self.error("Invalid number", start))
+                .ok_or_else(|| self.error("Invalid number", start))
         } else {
             // The scanner converts the literal with `int()` as soon as it reads it, and Python 3.12
             // refuses more than 4300 digits there (the sign is not a digit): its `ValueError`, which
             // carries no position, even for a field nothing reads.
-            crate::py::check_int_digits(literal.len() - usize::from(literal.starts_with('-')))?;
-            match literal.parse::<i64>() {
-                Ok(i) => Ok(Value::Int(i)),
-                Err(_) if self.big_ints => Ok(Value::BigInt(literal.to_owned())),
-                Err(_) => Err(self.error("Integer outside the supported 64-bit range", start)),
+            let decimal = match crate::py::decimal(literal) {
+                Ok(decimal) => decimal,
+                Err(crate::py::IntError::Limit(message)) => return Err(message),
+                Err(crate::py::IntError::Invalid) => {
+                    return Err(self.error("Invalid number", start))
+                }
+            };
+            match decimal.to_i64() {
+                Some(i) => Ok(Value::Int(i)),
+                None if self.big_ints => Ok(Value::BigInt(literal.to_owned())),
+                None => Err(self.error("Integer outside the supported 64-bit range", start)),
             }
         }
     }
