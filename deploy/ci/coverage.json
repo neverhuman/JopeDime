@@ -5313,10 +5313,11 @@
       },
       "lanes": [
         "rust-check",
-        "full-default"
+        "full-default",
+        "full-scratch"
       ],
       "dispositions": [],
-      "scope": "Test-only W7 fixture executable, not a product binary: the production jope-native-loop command line (native_loop::cli, same parsing, dispatch, admission, SmartCluster job proof and /proc/self/exe observation) observing the checked-in fixture host (tests/fixtures/host, loopback, no inventory program) instead of the machine the tests run on, so the census and SmartCluster fixtures pass alike on a bare host and in the read-only runner container whose /etc/machine-id is empty. Cargo's default test target selection builds it (the full-default workspace nextest build), and bounded_census (census collect) and bounded_smartcluster (the trusted-service participant) execute it; the default cargo build and install do not produce it. The product binary hardwires HostSources::system(); no argument or environment variable substitutes an identity source."
+      "scope": "Test-only W7 fixture executable, not a product binary: the production jope-native-loop command line (native_loop::cli, same parsing, dispatch, admission, SmartCluster job proof and /proc/self/exe observation) observing the checked-in fixture host (tests/fixtures/host, loopback, no inventory program) instead of the machine the tests run on, so the census and SmartCluster fixtures pass alike on a bare host and in the read-only runner container whose /etc/machine-id is empty. Cargo's default test target selection builds it (the full-default workspace nextest build and the full-scratch -p jope-parallel nextest build), and bounded_census (census collect) and bounded_smartcluster (the trusted-service participant) execute it in those lanes; the default cargo build and install do not produce it. The tests refuse an absent fixture, or one older than a source its Cargo dep-info lists, with the rebuild command, so a run narrowed to one test target never runs a stale fixture. The product binary hardwires HostSources::system(); no argument or environment variable substitutes an identity source."
     },
     "target:jope-parallel/example/qualification_proposals": {
       "discovery": {
