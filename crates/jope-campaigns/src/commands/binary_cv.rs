@@ -1917,7 +1917,8 @@ pub(crate) mod tests {
 
 #[cfg(test)]
 mod cli_smoke_support {
-    //! Manual CLI smoke harness: `cargo test -- --ignored export_binary_fixture_registry`
+    //! Manual CLI smoke harness:
+    //! `cargo test -p jope-dime-regressor -- --ignored export_binary_fixture_registry`
     //! writes the two fixture datasets as a registry for the real binary.
     use super::tests::{export_registry_to, registry_root};
 

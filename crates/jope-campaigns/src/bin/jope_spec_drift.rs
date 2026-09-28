@@ -5,9 +5,9 @@
 //! or when a renderer uses a form scq silently drops (`[dependencies] hostname`)
 //! or rejects outright (`[resource] node`).
 //!
-//! The same checks run as `cargo test --lib spec_drift`; this binary exists so
-//! ops can run them against a deployed tree, and so `--verify-probes` can be run
-//! ON each node.
+//! The same checks run as `cargo test -p jope-dime-regressor --lib spec_drift`; this
+//! binary exists so ops can run them against a deployed tree, and so `--verify-probes`
+//! can be run ON each node.
 //!
 //! ```text
 //! jope_spec_drift                 # audit; exit 1 on any finding

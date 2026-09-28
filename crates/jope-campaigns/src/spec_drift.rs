@@ -1015,15 +1015,15 @@ mod tests {
     /// numbers -- which is the very failure mode this workstream exists to end.
     ///
     /// Regenerate with:
-    ///   cargo run --release --bin jope_spec_drift -- --emit-json \
+    ///   cargo run --release -p jope-dime-regressor --bin jope_spec_drift -- --emit-json \
     ///     > python/src/jope/research/jope-spec-policy.json
     #[test]
     fn checked_in_policy_json_matches_this_module() {
         let path = repo_root().join("python/src/jope/research/jope-spec-policy.json");
         let on_disk = std::fs::read_to_string(&path).unwrap_or_else(|e| {
             panic!(
-                "{} is missing ({e}). Regenerate: cargo run --release --bin \
-                 jope_spec_drift -- --emit-json > python/src/jope/research/jope-spec-policy.json",
+                "{} is missing ({e}). Regenerate: cargo run --release -p jope-dime-regressor \
+                 --bin jope_spec_drift -- --emit-json > python/src/jope/research/jope-spec-policy.json",
                 path.display()
             )
         });
@@ -1032,7 +1032,8 @@ mod tests {
             spec_policy::policy_json(),
             "python/src/jope/research/jope-spec-policy.json is STALE -- the Python lane is reading \
              different numbers from the Rust policy. Regenerate: cargo run --release \
-             --bin jope_spec_drift -- --emit-json > python/src/jope/research/jope-spec-policy.json"
+             -p jope-dime-regressor --bin jope_spec_drift -- --emit-json \
+             > python/src/jope/research/jope-spec-policy.json"
         );
     }
 
