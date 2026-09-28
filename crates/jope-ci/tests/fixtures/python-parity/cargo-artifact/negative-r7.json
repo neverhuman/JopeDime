@@ -1,0 +1,936 @@
+{
+  "source": "p1-r7-capture-20260928T095659Z",
+  "capture": "bash cap7.sh p1-r7-capture-20260928T095659Z (Python from git show f46a9048fbb2697d6d1f4463a688083ea9dfcce1:<tool>, unmodified, in a scratch root)",
+  "tool": "deploy/ci/cargo-artifact.py",
+  "layout": "the layout of negative-r2.json: argv (@METADATA@, @MESSAGES@, @SOURCE@, @OUT@ and @ROOT@ are the case root's files and the root), metadata, messages and source as text, the fake cargo exiting 0; the Python's exit, stdout and stderr (or raised: the last line of its traceback), and output_after (@ROOT@/out.toml as it left it, or null)",
+  "cases": [
+    {
+      "name": "select-r7-path-map-once",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo",
+        "--path-map",
+        "/c",
+        "@ROOT@/bin"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"/c/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "exit": 0,
+      "stdout": "@ROOT@/bin/demo\n",
+      "stderr": "",
+      "output_after": null
+    },
+    {
+      "name": "select-r7-path-map-twice-first-valid",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo",
+        "--path-map",
+        "/c1",
+        "@ROOT@/bin",
+        "--path-map",
+        "/c2",
+        "@ROOT@/bin"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"/c1/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: '/c1/demo' is not in the subpath of '/c2'\n",
+      "output_after": null
+    },
+    {
+      "name": "select-r7-path-map-twice-last-valid",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo",
+        "--path-map",
+        "/c1",
+        "@ROOT@/bin",
+        "--path-map",
+        "/c2",
+        "@ROOT@/bin"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"/c2/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "exit": 0,
+      "stdout": "@ROOT@/bin/demo\n",
+      "stderr": "",
+      "output_after": null
+    },
+    {
+      "name": "select-r7-path-map-twice-host-differs",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo",
+        "--path-map",
+        "/c",
+        "@ROOT@/bin",
+        "--path-map",
+        "/c",
+        "@ROOT@/nowhere"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"/c/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: Cargo executable is missing or not executable: @ROOT@/nowhere/demo\n",
+      "output_after": null
+    },
+    {
+      "name": "select-r7-path-map-twice-identical",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo",
+        "--path-map",
+        "/c",
+        "@ROOT@/bin",
+        "--path-map",
+        "/c",
+        "@ROOT@/bin"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"/c/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "exit": 0,
+      "stdout": "@ROOT@/bin/demo\n",
+      "stderr": "",
+      "output_after": null
+    },
+    {
+      "name": "select-r7-path-map-equals-form",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo",
+        "--path-map=/c",
+        "@ROOT@/bin"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"/c/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "exit": 2,
+      "stdout": "",
+      "stderr": "usage: cargo-artifact.py select [-h] --package PACKAGE\n                                (--bin BIN | --example EXAMPLE) --metadata\n                                METADATA --messages MESSAGES\n                                [--path-map CONTAINER_ROOT HOST_ROOT]\ncargo-artifact.py select: error: argument --path-map: expected 2 arguments\n",
+      "output_after": null
+    },
+    {
+      "name": "select-r7-path-map-one-value",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo",
+        "--path-map",
+        "/c"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"/c/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "exit": 2,
+      "stdout": "",
+      "stderr": "usage: cargo-artifact.py select [-h] --package PACKAGE\n                                (--bin BIN | --example EXAMPLE) --metadata\n                                METADATA --messages MESSAGES\n                                [--path-map CONTAINER_ROOT HOST_ROOT]\ncargo-artifact.py select: error: argument --path-map: expected 2 arguments\n",
+      "output_after": null
+    },
+    {
+      "name": "select-r7-path-map-three-values",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo",
+        "--path-map",
+        "/c",
+        "@ROOT@/bin",
+        "/x"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"/c/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "exit": 2,
+      "stdout": "",
+      "stderr": "usage: cargo-artifact.py [-h] {build,select,target-dir,nextest-config} ...\ncargo-artifact.py: error: unrecognized arguments: /x\n",
+      "output_after": null
+    },
+    {
+      "name": "select-r7-package-twice",
+      "argv": [
+        "select",
+        "--package",
+        "nope",
+        "--package",
+        "demo",
+        "--bin",
+        "demo",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "exit": 0,
+      "stdout": "@ROOT@/bin/demo\n",
+      "stderr": "",
+      "output_after": null
+    },
+    {
+      "name": "select-r7-package-twice-last-bad",
+      "argv": [
+        "select",
+        "--package",
+        "demo",
+        "--package",
+        "nope",
+        "--bin",
+        "demo",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: expected one workspace package 'nope', found 0\n",
+      "output_after": null
+    },
+    {
+      "name": "select-r7-bin-twice",
+      "argv": [
+        "select",
+        "--package",
+        "demo",
+        "--bin",
+        "nope",
+        "--bin",
+        "demo",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "exit": 0,
+      "stdout": "@ROOT@/bin/demo\n",
+      "stderr": "",
+      "output_after": null
+    },
+    {
+      "name": "select-r7-example-twice",
+      "argv": [
+        "select",
+        "--package",
+        "demo",
+        "--example",
+        "nope",
+        "--example",
+        "demo",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"example\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "exit": 0,
+      "stdout": "@ROOT@/bin/demo\n",
+      "stderr": "",
+      "output_after": null
+    },
+    {
+      "name": "select-r7-metadata-twice",
+      "argv": [
+        "select",
+        "--package",
+        "demo",
+        "--bin",
+        "demo",
+        "--metadata",
+        "@ROOT@/missing.json",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "exit": 0,
+      "stdout": "@ROOT@/bin/demo\n",
+      "stderr": "",
+      "output_after": null
+    },
+    {
+      "name": "select-r7-messages-twice",
+      "argv": [
+        "select",
+        "--package",
+        "demo",
+        "--bin",
+        "demo",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@ROOT@/missing.jsonl",
+        "--messages",
+        "@MESSAGES@"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "exit": 0,
+      "stdout": "@ROOT@/bin/demo\n",
+      "stderr": "",
+      "output_after": null
+    },
+    {
+      "name": "build-r7-profile-twice",
+      "argv": [
+        "build",
+        "--package",
+        "demo",
+        "--bin",
+        "demo",
+        "--profile",
+        "nope",
+        "--profile",
+        "dev"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"], \"target_directory\": \"@ROOT@/target\"}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "exit": 0,
+      "stdout": "@ROOT@/bin/demo\n",
+      "stderr": "",
+      "output_after": null
+    },
+    {
+      "name": "build-r7-manifest-path-twice",
+      "argv": [
+        "build",
+        "--package",
+        "demo",
+        "--bin",
+        "demo",
+        "--manifest-path",
+        "a/Cargo.toml",
+        "--manifest-path",
+        "Cargo.toml"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"], \"target_directory\": \"@ROOT@/target\"}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "exit": 0,
+      "stdout": "@ROOT@/bin/demo\n",
+      "stderr": "",
+      "output_after": null
+    },
+    {
+      "name": "build-r7-target-dir-twice",
+      "argv": [
+        "build",
+        "--package",
+        "demo",
+        "--bin",
+        "demo",
+        "--target-dir",
+        "@ROOT@/t1",
+        "--target-dir",
+        "@ROOT@/t2"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"], \"target_directory\": \"@ROOT@/target\"}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "exit": 0,
+      "stdout": "@ROOT@/bin/demo\n",
+      "stderr": "",
+      "output_after": null
+    },
+    {
+      "name": "build-r7-no-default-features-twice",
+      "argv": [
+        "build",
+        "--package",
+        "demo",
+        "--bin",
+        "demo",
+        "--no-default-features",
+        "--no-default-features"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"], \"target_directory\": \"@ROOT@/target\"}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "exit": 0,
+      "stdout": "@ROOT@/bin/demo\n",
+      "stderr": "",
+      "output_after": null
+    },
+    {
+      "name": "build-r7-features-append",
+      "argv": [
+        "build",
+        "--package",
+        "demo",
+        "--bin",
+        "demo",
+        "--features",
+        "a",
+        "--features",
+        "b"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"], \"target_directory\": \"@ROOT@/target\"}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "exit": 0,
+      "stdout": "@ROOT@/bin/demo\n",
+      "stderr": "",
+      "output_after": null
+    },
+    {
+      "name": "target-dir-r7-target-dir-twice",
+      "argv": [
+        "target-dir",
+        "--target-dir",
+        "@ROOT@/t1",
+        "--target-dir",
+        "@ROOT@/t2"
+      ],
+      "metadata": "{\"target_directory\": \"@ROOT@/target\"}",
+      "exit": 0,
+      "stdout": "@ROOT@/target\n",
+      "stderr": "",
+      "output_after": null
+    },
+    {
+      "name": "target-dir-r7-manifest-path-twice",
+      "argv": [
+        "target-dir",
+        "--manifest-path",
+        "a/Cargo.toml",
+        "--manifest-path",
+        "Cargo.toml"
+      ],
+      "metadata": "{\"target_directory\": \"@ROOT@/target\"}",
+      "exit": 0,
+      "stdout": "@ROOT@/target\n",
+      "stderr": "",
+      "output_after": null
+    },
+    {
+      "name": "nextest-config-r7-output-twice",
+      "argv": [
+        "nextest-config",
+        "--source",
+        "@SOURCE@",
+        "--output",
+        "@ROOT@/first.toml",
+        "--output",
+        "@OUT@"
+      ],
+      "metadata": "{\"target_directory\": \"@ROOT@/target\"}",
+      "source": "x = 1\n",
+      "exit": 0,
+      "stdout": "",
+      "stderr": "",
+      "output_after": "store = { dir = \"@ROOT@/target/nextest\" }\nx = 1\n"
+    },
+    {
+      "name": "nextest-config-r7-source-twice",
+      "argv": [
+        "nextest-config",
+        "--source",
+        "@ROOT@/missing.toml",
+        "--source",
+        "@SOURCE@",
+        "--output",
+        "@OUT@"
+      ],
+      "metadata": "{\"target_directory\": \"@ROOT@/target\"}",
+      "source": "x = 1\n",
+      "exit": 0,
+      "stdout": "",
+      "stderr": "",
+      "output_after": "store = { dir = \"@ROOT@/target/nextest\" }\nx = 1\n"
+    },
+    {
+      "name": "select-r7-bin-empty-bin-target",
+      "argv": [
+        "select",
+        "--package",
+        "demo",
+        "--bin",
+        "",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: expected one executable for demo/example/None, found 0\n",
+      "output_after": null
+    },
+    {
+      "name": "select-r7-bin-empty-example-null-name",
+      "argv": [
+        "select",
+        "--package",
+        "demo",
+        "--bin",
+        "",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"example\"], \"name\": null}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "exit": 0,
+      "stdout": "@ROOT@/bin/demo\n",
+      "stderr": "",
+      "output_after": null
+    },
+    {
+      "name": "select-r7-bin-empty-example-no-name",
+      "argv": [
+        "select",
+        "--package",
+        "demo",
+        "--bin",
+        "",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"example\"]}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "exit": 0,
+      "stdout": "@ROOT@/bin/demo\n",
+      "stderr": "",
+      "output_after": null
+    },
+    {
+      "name": "select-r7-bin-equals-empty",
+      "argv": [
+        "select",
+        "--package",
+        "demo",
+        "--bin=",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"example\"], \"name\": null}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "exit": 0,
+      "stdout": "@ROOT@/bin/demo\n",
+      "stderr": "",
+      "output_after": null
+    },
+    {
+      "name": "select-r7-bin-empty-and-example",
+      "argv": [
+        "select",
+        "--package",
+        "demo",
+        "--bin",
+        "",
+        "--example",
+        "demo",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"example\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "exit": 2,
+      "stdout": "",
+      "stderr": "usage: cargo-artifact.py select [-h] --package PACKAGE\n                                (--bin BIN | --example EXAMPLE) --metadata\n                                METADATA --messages MESSAGES\n                                [--path-map CONTAINER_ROOT HOST_ROOT]\ncargo-artifact.py select: error: argument --example: not allowed with argument --bin\n",
+      "output_after": null
+    },
+    {
+      "name": "select-r7-bin-twice-last-empty",
+      "argv": [
+        "select",
+        "--package",
+        "demo",
+        "--bin",
+        "demo",
+        "--bin",
+        "",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"example\"], \"name\": null}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "exit": 0,
+      "stdout": "@ROOT@/bin/demo\n",
+      "stderr": "",
+      "output_after": null
+    },
+    {
+      "name": "build-r7-bin-empty",
+      "argv": [
+        "build",
+        "--package",
+        "demo",
+        "--bin",
+        ""
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"], \"target_directory\": \"@ROOT@/target\"}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: expected str, bytes or os.PathLike object, not NoneType",
+      "output_after": null
+    },
+    {
+      "name": "select-r7-example-empty",
+      "argv": [
+        "select",
+        "--package",
+        "demo",
+        "--example",
+        "",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"example\"], \"name\": \"\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "exit": 0,
+      "stdout": "@ROOT@/bin/demo\n",
+      "stderr": "",
+      "output_after": null
+    },
+    {
+      "name": "build-r7-example-empty",
+      "argv": [
+        "build",
+        "--package",
+        "demo",
+        "--example",
+        ""
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"], \"target_directory\": \"@ROOT@/target\"}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"example\"], \"name\": \"\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "exit": 0,
+      "stdout": "@ROOT@/bin/demo\n",
+      "stderr": "",
+      "output_after": null
+    },
+    {
+      "name": "select-r7-package-empty",
+      "argv": [
+        "select",
+        "--package",
+        "",
+        "--bin",
+        "demo",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "cargo-artifact: expected one workspace package '', found 0\n",
+      "output_after": null
+    },
+    {
+      "name": "build-r7-target-dir-empty",
+      "argv": [
+        "build",
+        "--package",
+        "demo",
+        "--bin",
+        "demo",
+        "--target-dir",
+        ""
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"], \"target_directory\": \"@ROOT@/target\"}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "exit": 0,
+      "stdout": "@ROOT@/bin/demo\n",
+      "stderr": "",
+      "output_after": null
+    },
+    {
+      "name": "build-r7-profile-empty",
+      "argv": [
+        "build",
+        "--package",
+        "demo",
+        "--bin",
+        "demo",
+        "--profile",
+        ""
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"], \"target_directory\": \"@ROOT@/target\"}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "exit": 0,
+      "stdout": "@ROOT@/bin/demo\n",
+      "stderr": "",
+      "output_after": null
+    },
+    {
+      "name": "select-r7-abbrev-package",
+      "argv": [
+        "select",
+        "--pack",
+        "demo",
+        "--bin",
+        "demo",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "exit": 0,
+      "stdout": "@ROOT@/bin/demo\n",
+      "stderr": "",
+      "output_after": null
+    },
+    {
+      "name": "select-r7-abbrev-ambiguous",
+      "argv": [
+        "select",
+        "--package",
+        "demo",
+        "--bin",
+        "demo",
+        "--me",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "exit": 2,
+      "stdout": "",
+      "stderr": "usage: cargo-artifact.py select [-h] --package PACKAGE\n                                (--bin BIN | --example EXAMPLE) --metadata\n                                METADATA --messages MESSAGES\n                                [--path-map CONTAINER_ROOT HOST_ROOT]\ncargo-artifact.py select: error: ambiguous option: --me could match --metadata, --messages\n",
+      "output_after": null
+    },
+    {
+      "name": "select-r7-equals-forms",
+      "argv": [
+        "select",
+        "--package=demo",
+        "--bin=demo",
+        "--metadata=@METADATA@",
+        "--messages=@MESSAGES@"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "exit": 0,
+      "stdout": "@ROOT@/bin/demo\n",
+      "stderr": "",
+      "output_after": null
+    },
+    {
+      "name": "select-r7-bin-negative-number",
+      "argv": [
+        "select",
+        "--package",
+        "demo",
+        "--bin",
+        "-1",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"-1\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "exit": 0,
+      "stdout": "@ROOT@/bin/demo\n",
+      "stderr": "",
+      "output_after": null
+    },
+    {
+      "name": "select-r7-bin-negative-number-equals",
+      "argv": [
+        "select",
+        "--package",
+        "demo",
+        "--bin=-1",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"-1\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "exit": 0,
+      "stdout": "@ROOT@/bin/demo\n",
+      "stderr": "",
+      "output_after": null
+    },
+    {
+      "name": "select-r7-package-option-like",
+      "argv": [
+        "select",
+        "--package",
+        "-demo",
+        "--bin",
+        "demo",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "exit": 2,
+      "stdout": "",
+      "stderr": "usage: cargo-artifact.py select [-h] --package PACKAGE\n                                (--bin BIN | --example EXAMPLE) --metadata\n                                METADATA --messages MESSAGES\n                                [--path-map CONTAINER_ROOT HOST_ROOT]\ncargo-artifact.py select: error: argument --package: expected one argument\n",
+      "output_after": null
+    },
+    {
+      "name": "build-r7-flag-with-value",
+      "argv": [
+        "build",
+        "--package",
+        "demo",
+        "--bin",
+        "demo",
+        "--no-default-features=x"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"], \"target_directory\": \"@ROOT@/target\"}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "exit": 2,
+      "stdout": "",
+      "stderr": "usage: cargo-artifact.py build [-h] [--manifest-path MANIFEST_PATH]\n                               [--target-dir TARGET_DIR] --package PACKAGE\n                               (--bin BIN | --example EXAMPLE)\n                               [--profile PROFILE] [--features FEATURES]\n                               [--no-default-features]\ncargo-artifact.py build: error: argument --no-default-features: ignored explicit argument 'x'\n",
+      "output_after": null
+    },
+    {
+      "name": "select-r7-terminator-then-value",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo",
+        "--",
+        "x"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "exit": 2,
+      "stdout": "",
+      "stderr": "usage: cargo-artifact.py [-h] {build,select,target-dir,nextest-config} ...\ncargo-artifact.py: error: unrecognized arguments: -- x\n",
+      "output_after": null
+    },
+    {
+      "name": "help-r7",
+      "argv": [
+        "help"
+      ],
+      "exit": 2,
+      "stdout": "",
+      "stderr": "usage: cargo-artifact.py [-h] {build,select,target-dir,nextest-config} ...\ncargo-artifact.py: error: argument command: invalid choice: 'help' (choose from 'build', 'select', 'target-dir', 'nextest-config')\n",
+      "output_after": null
+    },
+    {
+      "name": "help-r7-select",
+      "argv": [
+        "help",
+        "select"
+      ],
+      "exit": 2,
+      "stdout": "",
+      "stderr": "usage: cargo-artifact.py [-h] {build,select,target-dir,nextest-config} ...\ncargo-artifact.py: error: argument command: invalid choice: 'help' (choose from 'build', 'select', 'target-dir', 'nextest-config')\n",
+      "output_after": null
+    },
+    {
+      "name": "version-r7",
+      "argv": [
+        "--version"
+      ],
+      "exit": 2,
+      "stdout": "",
+      "stderr": "usage: cargo-artifact.py [-h] {build,select,target-dir,nextest-config} ...\ncargo-artifact.py: error: the following arguments are required: command\n",
+      "output_after": null
+    },
+    {
+      "name": "select-r7-help-word",
+      "argv": [
+        "select",
+        "--metadata",
+        "@METADATA@",
+        "--messages",
+        "@MESSAGES@",
+        "--package",
+        "demo",
+        "--bin",
+        "demo",
+        "help"
+      ],
+      "metadata": "{\"packages\": [{\"name\": \"demo\", \"id\": \"demo 0.1.0\"}], \"workspace_members\": [\"demo 0.1.0\"]}",
+      "messages": "{\"reason\": \"compiler-artifact\", \"package_id\": \"demo 0.1.0\", \"target\": {\"kind\": [\"bin\"], \"name\": \"demo\"}, \"profile\": {\"test\": false}, \"executable\": \"@ROOT@/bin/demo\"}\n{\"reason\": \"build-finished\", \"success\": true}",
+      "exit": 2,
+      "stdout": "",
+      "stderr": "usage: cargo-artifact.py [-h] {build,select,target-dir,nextest-config} ...\ncargo-artifact.py: error: unrecognized arguments: help\n",
+      "output_after": null
+    }
+  ]
+}

@@ -53,6 +53,12 @@
 //! raised `UnicodeEncodeError`), `C.UTF-8` and C (it printed the raw bytes), arguments that are not
 //! UTF-8, a resolved name longer than `PATH_MAX` and a TOML table `tomllib` read and the `toml`
 //! crate refuses. `cargo_artifact_matches_round_six` replays it.
+//!
+//! `negative-r7.json` holds round seven (the argument grammar, argparse's against clap's): repeated
+//! options (a repeated `--path-map` among them), empty values (`--bin ""`, which argparse's truth
+//! test made an example named `None`), prefixes, `=` forms, values that look like options or
+//! negative numbers, and the word `help` where a command is expected.
+//! `cargo_artifact_matches_round_seven` replays it.
 
 use serde_json::Value;
 use std::fs;
@@ -238,7 +244,7 @@ const R2_MESSAGE_DIFFERS: &[&str] = &["toml-invalid-value"];
 
 #[test]
 fn cargo_artifact_matches_round_two() {
-    replay_round("negative-r2.json", 40, R2_MESSAGE_DIFFERS, &[], &[]);
+    replay_round("negative-r2.json", 40, R2_MESSAGE_DIFFERS, &[], &[], &[]);
 }
 
 /// Round five (`negative-r5.json`): both refuse, the Python in `tomllib`'s words and the port in
@@ -286,7 +292,14 @@ const R5_STRICTER: &[&str] = &[
 /// which the Python printed as the `OSError`; the port refused in other words and now prints it.
 #[test]
 fn cargo_artifact_matches_round_five() {
-    replay_round("negative-r5.json", 31, R5_MESSAGE_DIFFERS, R5_STRICTER, &[]);
+    replay_round(
+        "negative-r5.json",
+        31,
+        R5_MESSAGE_DIFFERS,
+        R5_STRICTER,
+        &[],
+        &[],
+    );
 }
 
 /// Round six: what the Python accepted and the port refuses, writing nothing (stricter):
@@ -335,7 +348,14 @@ const R6_ARGV_REFUSED: &[&str] = &[
 /// UTF-8 controls (a link, a name that is not ASCII) print as before.
 #[test]
 fn cargo_artifact_matches_round_six() {
-    let results = replay_round("negative-r6.json", 29, &[], R6_STRICTER, R6_ARGV_REFUSED);
+    let results = replay_round(
+        "negative-r6.json",
+        29,
+        &[],
+        R6_STRICTER,
+        R6_ARGV_REFUSED,
+        &[],
+    );
     // Under C and `C.UTF-8` the port refuses with the message the Python printed under
     // `en_US.UTF-8` for the same name.
     for (name, (exit, stdout, stderr)) in &results {
@@ -468,6 +488,7 @@ fn cargo_artifact_matches_round_three_digits() {
         &["toml-int-4301-digits"],
         &[],
         &[],
+        &[],
     );
 }
 
@@ -476,13 +497,139 @@ fn cargo_artifact_matches_round_three_digits() {
 /// directions and at the root itself, and the paths the refusals print.
 #[test]
 fn cargo_artifact_matches_round_three_paths() {
-    replay_round("negative-r3-paths.json", 15, &[], &[], &[]);
+    replay_round("negative-r3-paths.json", 15, &[], &[], &[], &[]);
+}
+
+/// Round seven: argument grammars argparse accepted (exit status 0) and the port's parser refuses
+/// (exit status 2, the text given), stricter:
+///
+/// - a repeated option other than `--features` (argparse's store kept the last value, `nargs=2`
+///   `--path-map` the last pair; clap refuses the second);
+/// - an empty `--bin`, however spelled (argparse's truth test made it an example named `None`,
+///   which these messages hold as a target whose name is `null` or missing);
+/// - a prefix of an option (argparse expanded any unambiguous one);
+/// - a value that looks like a negative number after a space (argparse took `-1` as the value;
+///   clap reads it as an option; `--bin=-1` is read by both).
+const R7_STRICTER: &[(&str, &str)] = &[
+    ("select-r7-path-map-twice-last-valid", MULTIPLE),
+    ("select-r7-path-map-twice-identical", MULTIPLE),
+    ("select-r7-package-twice", MULTIPLE),
+    ("select-r7-bin-twice", MULTIPLE),
+    ("select-r7-example-twice", MULTIPLE),
+    ("select-r7-metadata-twice", MULTIPLE),
+    ("select-r7-messages-twice", MULTIPLE),
+    ("build-r7-profile-twice", MULTIPLE),
+    ("build-r7-manifest-path-twice", MULTIPLE),
+    ("build-r7-target-dir-twice", MULTIPLE),
+    ("build-r7-no-default-features-twice", MULTIPLE),
+    ("target-dir-r7-target-dir-twice", MULTIPLE),
+    ("target-dir-r7-manifest-path-twice", MULTIPLE),
+    ("nextest-config-r7-output-twice", MULTIPLE),
+    ("nextest-config-r7-source-twice", MULTIPLE),
+    ("select-r7-bin-twice-last-empty", MULTIPLE),
+    ("select-r7-bin-empty-example-null-name", EMPTY_BIN),
+    ("select-r7-bin-empty-example-no-name", EMPTY_BIN),
+    ("select-r7-bin-equals-empty", EMPTY_BIN),
+    (
+        "select-r7-abbrev-package",
+        "unexpected argument '--pack' found",
+    ),
+    (
+        "select-r7-bin-negative-number",
+        "unexpected argument '-1' found",
+    ),
+];
+
+/// Round seven: grammars both refuse, the port with its parser (exit status 2). The port accepted
+/// the first six (exit status 0) before this round. The review's four: a repeated `--path-map` used
+/// the first pair (clap appended the second where argparse's store replaced it), so a first pair
+/// that maps the executable printed it where the Python's last pair did not (`is not in the
+/// subpath`, or a host root without it); an empty `--bin` selected and built a bin named "" where
+/// the Python asked for an example named `None` (`found 0`) or crashed building (`TypeError`). The
+/// two this round's sweep found: `help` printed help where argparse refused the choice. The port
+/// refused the rest before this round too, the empty `--bin` beside `--example` in other words (the
+/// group conflict).
+const R7_BOTH_REFUSE: &[(&str, &str)] = &[
+    ("select-r7-path-map-twice-first-valid", MULTIPLE),
+    ("select-r7-path-map-twice-host-differs", MULTIPLE),
+    ("select-r7-bin-empty-bin-target", EMPTY_BIN),
+    ("build-r7-bin-empty", EMPTY_BIN),
+    ("help-r7", "unrecognized subcommand 'help'"),
+    ("help-r7-select", "unrecognized subcommand 'help'"),
+    ("select-r7-package-twice-last-bad", MULTIPLE),
+    (
+        "select-r7-path-map-equals-form",
+        "2 values required for '--path-map",
+    ),
+    (
+        "select-r7-path-map-one-value",
+        "2 values required for '--path-map",
+    ),
+    (
+        "select-r7-path-map-three-values",
+        "unexpected argument '/x' found",
+    ),
+    ("select-r7-bin-empty-and-example", EMPTY_BIN),
+    (
+        "select-r7-abbrev-ambiguous",
+        "unexpected argument '--me' found",
+    ),
+    (
+        "select-r7-package-option-like",
+        "unexpected argument '-d' found",
+    ),
+    (
+        "build-r7-flag-with-value",
+        "unexpected value 'x' for '--no-default-features' found",
+    ),
+    (
+        "select-r7-terminator-then-value",
+        "unexpected argument 'x' found",
+    ),
+    ("version-r7", "unexpected argument '--version' found"),
+    ("select-r7-help-word", "unexpected argument 'help' found"),
+];
+
+/// clap's refusal of a second occurrence of an option.
+const MULTIPLE: &str = "cannot be used multiple times";
+/// clap's refusal of an empty `--bin`.
+const EMPTY_BIN: &str = "a value is required for '--bin <BIN>' but none was supplied";
+
+/// Round seven of the review of PR #117 (`negative-r7.json`): the argument grammar, argparse's
+/// against clap's. Every case the Python refused, the port refuses; the controls (one
+/// `--path-map`, repeated `--features`, an empty `--example`, `--package`, `--target-dir` or
+/// `--profile`, `=` forms, `--bin=-1`) print what the Python printed.
+#[test]
+fn cargo_artifact_matches_round_seven() {
+    let usage: Vec<(&str, &str)> = R7_STRICTER.iter().chain(R7_BOTH_REFUSE).copied().collect();
+    replay_round("negative-r7.json", 47, &[], &[], &[], &usage);
+    // Each list holds what its documentation says the Python did.
+    let doc: Value =
+        serde_json::from_str(&fs::read_to_string(fixture().join("negative-r7.json")).unwrap())
+            .unwrap();
+    let python_exit = |name: &str| {
+        doc["cases"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|c| c["name"] == name)
+            .map(|c| c["exit"].as_i64().unwrap())
+            .unwrap()
+    };
+    for (name, _) in R7_STRICTER {
+        assert_eq!(python_exit(name), 0, "{name}: listed as stricter");
+    }
+    for (name, _) in R7_BOTH_REFUSE {
+        assert_ne!(python_exit(name), 0, "{name}: listed as refused by both");
+    }
 }
 
 /// Replay every case of a round fixture (the layout of `negative-r2.json`); `message_differs` names
 /// the cases where both refuse in different words, `stricter` those the Python accepted and the
 /// port refuses (writing nothing), `argv_refused` those holding an argument that is not UTF-8,
-/// which the port refuses before reading anything. A case's `nosearch_mode` is the mode of
+/// which the port refuses before reading anything, and `usage_refused` those the port's argument
+/// parser refuses (exit status 2, clap's `error: ...` containing the text given, nothing on stdout,
+/// nothing written), whatever the Python did. A case's `nosearch_mode` is the mode of
 /// `@ROOT@/nosearch`, which holds an executable `demo`, during its run. Round six's cases add
 /// names that are not UTF-8 (`@Xhh@`, in arguments too), links, a deep directory and the locale
 /// the Python ran under (see [`round_six_tree`]); a codec position `@ROOT+k@` counts this root.
@@ -493,6 +640,7 @@ fn replay_round(
     message_differs: &[&str],
     stricter: &[&str],
     argv_refused: &[&str],
+    usage_refused: &[(&str, &str)],
 ) -> std::collections::BTreeMap<String, (i64, String, String)> {
     let doc: Value =
         serde_json::from_str(&fs::read_to_string(fixture().join(file)).unwrap()).unwrap();
@@ -503,7 +651,12 @@ fn replay_round(
         count,
         "{file}: every captured case is replayed"
     );
-    for name in message_differs.iter().chain(stricter).chain(argv_refused) {
+    for name in message_differs
+        .iter()
+        .chain(stricter)
+        .chain(argv_refused)
+        .chain(usage_refused.iter().map(|(name, _)| name))
+    {
         assert!(
             cases.iter().any(|c| c["name"] == *name),
             "{file}: {name} is not a case"
@@ -652,7 +805,21 @@ fn replay_round(
         let exit = i64::from(run.status.code().unwrap());
         record(case, exit, &stdout, &stderr);
         results.insert(name.to_owned(), (exit, stdout.clone(), stderr.clone()));
-        let verdict = if argv_refused.contains(&name) {
+        let usage = usage_refused.iter().find(|(n, _)| *n == name).map(|u| u.1);
+        let verdict = if let Some(text) = usage {
+            // Refused by the argument parser before anything is read or written.
+            if exit == 2
+                && stdout.is_empty()
+                && stderr.starts_with("error: ")
+                && stderr.contains(text)
+            {
+                Ok(())
+            } else {
+                Err(format!(
+                    "listed as a usage refusal ({text:?}), but the port exited {exit} {stdout:?} {stderr:?}"
+                ))
+            }
+        } else if argv_refused.contains(&name) {
             // Refused before anything is read: one usage line, nothing on stdout, no output file.
             let refused = exit == 2
                 && stdout.is_empty()
@@ -706,11 +873,12 @@ fn replay_round(
         let left = fs::read_to_string(root.join("out.toml"))
             .ok()
             .map(|t| t.replace(&root_text, "@ROOT@"));
-        let python_left = if stricter.contains(&name) || argv_refused.contains(&name) {
-            None
-        } else {
-            case["output_after"].as_str().map(str::to_owned)
-        };
+        let python_left =
+            if stricter.contains(&name) || argv_refused.contains(&name) || usage.is_some() {
+                None
+            } else {
+                case["output_after"].as_str().map(str::to_owned)
+            };
         if left != python_left {
             failures.push(format!(
                 "{name}: the output is {left:?}, the Python left {python_left:?}"
