@@ -156,19 +156,11 @@ fn float_cell(row: &Dict, key: &str) -> Result<f64> {
     })
 }
 
-/// A JSON number formatted with a float format (`f"{value:.2f}"`); any other type refuses (the
-/// Python raised `ValueError` or `TypeError` in `format`).
+/// A JSON number formatted with a float format (`f"{value:.2f}"`, which converts an `int` to the
+/// nearest double); any other type refuses (the Python raised `ValueError` or `TypeError` in
+/// `format`).
 fn float_of(value: &Value, what: &str) -> Result<f64> {
-    match value {
-        Value::Int(i) => Ok(*i as f64),
-        Value::Float(f) => Ok(*f),
-        Value::Bool(b) => Ok(f64::from(u8::from(*b))),
-        other => Err(Error::Shape(format!(
-            "{what}: expected a number, found {} ({})",
-            other.repr(),
-            py::type_name(other)
-        ))),
-    }
+    Ok(num_of(value, what)?.as_f64())
 }
 
 /// `f"{valid['rankable_rows']:,}"`: an integer. A float refuses, which is stricter than the
@@ -229,21 +221,16 @@ fn first_nine(value: &Value, context: &str) -> Result<String> {
 }
 
 /// `new < current` for two method ids that tie on RMSE, as the tuple comparison inside `min`
-/// made it: equal ids are not less; strings and numbers compare; anything else raised.
+/// made it: equal ids are not less; strings compare, and numbers compare exactly ([`py_cmp`]: an
+/// int and a float that round to the same double are still ordered); anything else raised.
 fn id_less(new: &Value, current: &Value) -> Result<bool> {
     if new == current {
         return Ok(false);
     }
-    let number = |v: &Value| match v {
-        Value::Bool(b) => Some(f64::from(u8::from(*b))),
-        Value::Int(i) => Some(*i as f64),
-        Value::Float(f) => Some(*f),
-        _ => None,
-    };
     match (new, current) {
         (Value::Str(a), Value::Str(b)) => Ok(a < b),
-        _ => match (number(new), number(current)) {
-            (Some(a), Some(b)) => Ok(a < b),
+        _ => match (Num::of(new), Num::of(current)) {
+            (Some(a), Some(b)) => Ok(py_lt(a, b)),
             _ => Err(raised(
                 format_args!("{SAMECUT} method id"),
                 format!(
@@ -290,18 +277,24 @@ fn applied_rows(meta: &Value, context: &str) -> Result<PyDict> {
     Ok(applied)
 }
 
-/// A Python number (`bool` counts as `int`), for summing the corrected rows per method.
-#[derive(Clone, Copy)]
+/// A Python number (`bool` counts as `int`), as the renderer adds, divides and compares evidence
+/// values. An `int` is exact, as Python's is: this reader's JSON integers fit `i64` (it refuses the
+/// rest, stricter), and every sum of them is held in `i128`, which fewer than 2^64 of them cannot
+/// leave (one that would is refused, never rounded or wrapped). A `float` is an IEEE double. An
+/// `int` meets a `float` only as Python lets it: converted to the nearest double, ties to even,
+/// for `+` and true division ([`Num::as_f64`]), and compared exactly, never through that
+/// conversion ([`py_cmp`]).
+#[derive(Clone, Copy, Debug)]
 enum Num {
-    Int(i64),
+    Int(i128),
     Float(f64),
 }
 
 impl Num {
     fn of(value: &Value) -> Option<Num> {
         match value {
-            Value::Bool(b) => Some(Num::Int(i64::from(*b))),
-            Value::Int(i) => Some(Num::Int(*i)),
+            Value::Bool(b) => Some(Num::Int(i128::from(*b))),
+            Value::Int(i) => Some(Num::Int(i128::from(*i))),
             Value::Float(f) => Some(Num::Float(*f)),
             _ => None,
         }
@@ -314,11 +307,30 @@ impl Num {
         }
     }
 
+    /// `float(self)`: an `int` rounded to the nearest double, ties to even (what `i128 as f64`
+    /// does, and CPython's `PyLong_AsDouble`), as Python converts one for `+` with a float, for a
+    /// float format and for `int / int` of small operands.
     fn as_f64(self) -> f64 {
         match self {
             Num::Int(i) => i as f64,
             Num::Float(f) => f,
         }
+    }
+
+    fn is_nan(self) -> bool {
+        matches!(self, Num::Float(f) if f.is_nan())
+    }
+
+    /// Python's `self + other`: two ints add exactly; an int meeting a float is converted first
+    /// and the two doubles added once (`int.__add__` returns `NotImplemented`, `float.__radd__`
+    /// converts).
+    fn plus(self, other: Num) -> std::result::Result<Num, String> {
+        Ok(match (self, other) {
+            (Num::Int(a), Num::Int(b)) => Num::Int(a.checked_add(b).ok_or_else(|| {
+                "the exact integer sum leaves the 128-bit range the port holds it in".to_owned()
+            })?),
+            (a, b) => Num::Float(a.as_f64() + b.as_f64()),
+        })
     }
 
     /// `self + value`, or the `TypeError` Python raised for a value that is not a number.
@@ -330,20 +342,115 @@ impl Num {
                 py::type_name(value)
             )
         })?;
-        Ok(match (self, other) {
-            (Num::Int(a), Num::Int(b)) => match a.checked_add(b) {
-                Some(sum) => Num::Int(sum),
-                None => Num::Float(a as f64 + b as f64),
-            },
-            (a, b) => Num::Float(a.as_f64() + b.as_f64()),
-        })
+        self.plus(other)
     }
 
-    fn value(self) -> Value {
+    /// `str(self)`: an int's decimal digits at any size, a float's `repr`.
+    fn py_str(self) -> String {
         match self {
-            Num::Int(i) => Value::Int(i),
-            Num::Float(f) => Value::Float(f),
+            Num::Int(i) => i.to_string(),
+            Num::Float(f) => Value::Float(f).repr(),
         }
+    }
+}
+
+/// A JSON number read as Python read it, or the refusal naming what was found instead (the Python
+/// raised `ValueError` or `TypeError` where it formatted, added or compared it).
+fn num_of(value: &Value, what: &str) -> Result<Num> {
+    Num::of(value).ok_or_else(|| {
+        Error::Shape(format!(
+            "{what}: expected a number, found {} ({})",
+            value.repr(),
+            py::type_name(value)
+        ))
+    })
+}
+
+/// Python's comparison of two numbers: exact, an `int` against a `float` included (CPython's
+/// `float_richcompare` never rounds the integer to a double first), `None` when either is a NaN,
+/// with which every comparison is false.
+fn py_cmp(a: Num, b: Num) -> Option<std::cmp::Ordering> {
+    match (a, b) {
+        (Num::Int(x), Num::Int(y)) => Some(x.cmp(&y)),
+        (Num::Float(x), Num::Float(y)) => x.partial_cmp(&y),
+        (Num::Int(i), Num::Float(f)) => int_float_cmp(i, f),
+        (Num::Float(f), Num::Int(i)) => int_float_cmp(i, f).map(std::cmp::Ordering::reverse),
+    }
+}
+
+/// An integer against a double, exactly: a double of magnitude 2^127 or more is beyond every
+/// `i128`; any other is split into its integral part, which `as i128` holds exactly, and its
+/// fraction, which decides between an integer and the double just past it.
+fn int_float_cmp(i: i128, f: f64) -> Option<std::cmp::Ordering> {
+    use std::cmp::Ordering;
+    const TWO_127: f64 = 170_141_183_460_469_231_731_687_303_715_884_105_728.0;
+    if f.is_nan() {
+        return None;
+    }
+    if f >= TWO_127 {
+        return Some(Ordering::Less);
+    }
+    if f < -TWO_127 {
+        return Some(Ordering::Greater);
+    }
+    let whole = f.trunc();
+    Some(i.cmp(&(whole as i128)).then_with(|| {
+        0.0_f64
+            .partial_cmp(&(f - whole))
+            .expect("a finite fraction")
+    }))
+}
+
+/// `a < b` for two numbers, as Python compares them ([`py_cmp`]).
+fn py_lt(a: Num, b: Num) -> bool {
+    py_cmp(a, b) == Some(std::cmp::Ordering::Less)
+}
+
+/// `a == b` for two numbers, as Python compares them ([`py_cmp`]).
+fn py_eq(a: Num, b: Num) -> bool {
+    py_cmp(a, b) == Some(std::cmp::Ordering::Equal)
+}
+
+/// `a / b` for two Python integers (true division, `b > 0`): the double nearest the exact
+/// quotient, ties to even, as CPython's `long_true_divide` rounds it, never the integer rounded to
+/// a double first and the quotient rounded again. The quotient is developed in binary from the
+/// exact integer division until it holds at least 55 significant bits, and the remainder that is
+/// left decides a tie.
+fn int_true_div(a: i128, b: u64) -> f64 {
+    assert!(b > 0, "a count of at least one");
+    let magnitude = a.unsigned_abs();
+    if magnitude == 0 {
+        return 0.0;
+    }
+    let b = u128::from(b);
+    let (mut quotient, mut remainder) = (magnitude / b, magnitude % b);
+    let mut scale = 0_i32;
+    while quotient >> 54 == 0 {
+        // `remainder < b <= u64::MAX`, so doubling it cannot overflow.
+        remainder <<= 1;
+        quotient <<= 1;
+        scale += 1;
+        if remainder >= b {
+            quotient |= 1;
+            remainder -= b;
+        }
+    }
+    let shift = (128 - quotient.leading_zeros()) as i32 - 53;
+    let mut kept = quotient >> shift;
+    let dropped = quotient & ((1_u128 << shift) - 1);
+    let half = 1_u128 << (shift - 1);
+    if dropped > half || (dropped == half && (remainder != 0 || kept & 1 == 1)) {
+        kept += 1;
+    }
+    // `kept <= 2^53` is exact as a double, and so is the power of two scaling it (a normal
+    // exponent: the quotient lies between 2^-64 and 2^127).
+    let exponent = shift - scale;
+    let power = f64::from_bits(u64::try_from(exponent + 1023).expect("a normal exponent") << 52);
+    let value = kept as f64 * power;
+    if a < 0 {
+        -value
+    } else {
+        value
     }
 }
 
@@ -356,16 +463,17 @@ fn fixed(x: f64, precision: usize) -> String {
     }
 }
 
-/// `sorted(values)` for numbers, as CPython 3.12's `list.sort` orders them. Without a NaN every
-/// comparison is a total order and any stable sort agrees with it. With a NaN (every comparison
-/// with it false) the result depends on the algorithm, which is reproduced for fewer than 64
-/// values (one `count_run` then `binarysort`, all timsort does below its minimum run); a longer
-/// list holding a NaN is refused rather than ordered differently.
+/// `sorted(values)` for numbers, as CPython 3.12's `list.sort` orders them, every comparison
+/// exact ([`py_cmp`]: an int and a float, or two ints, that round to the same double are still
+/// ordered). Without a NaN every comparison is a total order and any stable sort agrees with it.
+/// With a NaN (every comparison with it false) the result depends on the algorithm, which is
+/// reproduced for fewer than 64 values (one `count_run` then `binarysort`, all timsort does below
+/// its minimum run); a longer list holding a NaN is refused rather than ordered differently.
 fn py_sorted(values: &[Num], what: &str) -> Result<Vec<Num>> {
     let mut out = values.to_vec();
-    let lt = |a: Num, b: Num| a.as_f64() < b.as_f64();
-    if !out.iter().any(|v| v.as_f64().is_nan()) {
-        out.sort_by(|a, b| a.as_f64().partial_cmp(&b.as_f64()).expect("no NaN"));
+    let lt = py_lt;
+    if !out.iter().any(|v| v.is_nan()) {
+        out.sort_by(|a, b| py_cmp(*a, *b).expect("no NaN"));
         return Ok(out);
     }
     if out.len() >= 64 {
@@ -404,59 +512,85 @@ fn py_sorted(values: &[Num], what: &str) -> Result<Vec<Num>> {
     Ok(out)
 }
 
-/// `max(values)`: the first value no later value is greater than (`>` is false for a NaN).
+/// `max(values)`: the first value no later value is greater than, compared exactly ([`py_cmp`];
+/// `>` is false for a NaN).
 fn py_max(values: &[Num]) -> Num {
     let (&first, rest) = values.split_first().expect("at least one report");
     let mut best = first;
     for &value in rest {
-        if value.as_f64() > best.as_f64() {
+        if py_lt(best, value) {
             best = value;
         }
     }
     best
 }
 
-/// CPython 3.12's `sum(values)` (start `0`) of JSON numbers: integers add exactly until the first
-/// float; from there floats add with Neumaier's compensation and integers add plainly, and the
-/// compensation is applied once at the end when finite (`builtin_sum_impl`).
+/// CPython 3.12's `sum(values)` (start `0`, `builtin_sum_impl`) of JSON numbers, path for path.
+/// Integers first add in a C `long` (64 bits). An integer that would leave it hands the exact sum
+/// to generic `+` for itself and every item after it: integers stay exact, and a float is added
+/// plainly, without compensation. A float met on the `long` path is added to the integer sum
+/// instead and starts the float path: floats add with Neumaier's compensation, integers add
+/// plainly, and the compensation is applied once at the end when it is finite.
 fn py_sum(values: &[Num], what: &str) -> Result<Num> {
-    let mut rest = values.iter();
-    let mut total: i64 = 0;
-    let mut sum = loop {
+    let refused = |e: String| Error::Shape(format!("{what}: {e}"));
+    let mut rest = values.iter().copied();
+    let mut long: i64 = 0;
+    let item = loop {
         match rest.next() {
-            None => return Ok(Num::Int(total)),
-            Some(Num::Int(i)) => {
-                total = total.checked_add(*i).ok_or_else(|| {
-                    Error::Shape(format!("{what}: the integer sum leaves the 64-bit range"))
-                })?;
-            }
-            Some(Num::Float(x)) => break total as f64 + x,
+            None => return Ok(Num::Int(i128::from(long))),
+            Some(Num::Int(b)) => match i64::try_from(b).ok().and_then(|b| long.checked_add(b)) {
+                Some(sum) => long = sum,
+                None => break Num::Int(b),
+            },
+            Some(float) => break float,
         }
     };
-    let mut compensation = 0.0;
-    for value in rest {
-        match *value {
-            Num::Float(x) => {
-                let t = sum + x;
-                if sum.abs() >= x.abs() {
-                    compensation += (sum - t) + x;
-                } else {
-                    compensation += (x - t) + sum;
+    let mut result = Num::Int(i128::from(long)).plus(item).map_err(refused)?;
+    if let Num::Float(mut sum) = result {
+        let mut compensation = 0.0_f64;
+        loop {
+            match rest.next() {
+                None => {
+                    if compensation != 0.0 && compensation.is_finite() {
+                        sum += compensation;
+                    }
+                    return Ok(Num::Float(sum));
                 }
-                sum = t;
+                Some(Num::Float(x)) => {
+                    let t = sum + x;
+                    if sum.abs() >= x.abs() {
+                        compensation += (sum - t) + x;
+                    } else {
+                        compensation += (x - t) + sum;
+                    }
+                    sum = t;
+                }
+                // `f_result += (double)value` for an int that fits a C `long`, which every JSON
+                // integer this reader accepts does.
+                Some(Num::Int(i)) => match i64::try_from(i) {
+                    Ok(value) => sum += value as f64,
+                    Err(_) => {
+                        // Beyond a `long`, generic `+` from here, the compensation unapplied.
+                        result = Num::Float(sum).plus(Num::Int(i)).map_err(refused)?;
+                        break;
+                    }
+                },
             }
-            Num::Int(i) => sum += i as f64,
         }
     }
-    if compensation != 0.0 && compensation.is_finite() {
-        sum += compensation;
+    for item in rest {
+        result = result.plus(item).map_err(refused)?;
     }
-    Ok(Num::Float(sum))
+    Ok(result)
 }
 
-/// `total / n` (true division) for a [`py_sum`] result.
+/// `total / n` (true division) for a [`py_sum`] result: a float divided by `float(n)`, an int
+/// divided exactly and rounded once ([`int_true_div`]).
 fn py_div(total: Num, n: usize) -> f64 {
-    total.as_f64() / n as f64
+    match total {
+        Num::Float(f) => f / n as f64,
+        Num::Int(i) => int_true_div(i, u64::try_from(n).expect("a count fits 64 bits")),
+    }
 }
 
 /// `format(n, ",")` for an integer.
@@ -621,7 +755,8 @@ fn load_evidence(p: &Paths) -> Result<Evidence> {
     // Every correction must show up as fewer scored datasets for its method, so re-adding the
     // rows, or editing the corrections without regenerating the ladder, fails here. The ids,
     // methods and row counts are read as the Python read them: iterated, hashed and added as they
-    // are, never skipped or defaulted.
+    // are, never skipped or defaulted, and added as Python adds them ([`Num::plus`]: integers
+    // exact at any size, a float only once a float operand appears).
     let applied = applied_rows(meta, &format!("{VALID_SNAPSHOT} corrections"))?;
     let listed = items(
         sub(&corrections, "corrections", CORRECTIONS)?,
@@ -676,11 +811,14 @@ fn load_evidence(p: &Paths) -> Result<Evidence> {
                 .unwrap_or(0)
         };
         let (before, after) = (count(&scored_published), count(&scored_valid));
-        if Value::Int(before - after) != n.value() {
+        // `before - after != n`: the difference of two `i64` counts exact in `i128` (it needs 65
+        // bits at the extremes, where `i64` arithmetic wrapped), compared with the total exactly.
+        let difference = Num::Int(i128::from(before) - i128::from(after));
+        if !py_eq(difference, *n) {
             return refuse(format!(
                 "{}: {} rows corrected but scored datasets went {before} -> {after}",
                 method.py_str(),
-                n.value().py_str()
+                n.py_str()
             ));
         }
     }
@@ -1267,14 +1405,16 @@ fn render_samecut(p: &Paths) -> Result<String> {
         let sm = &methods[s_index];
         // "Best" is the ladder's own rule: the lowest pooled RMSE among the finalists that
         // scored, ties by method id: `min(scored, key=lambda m: (rmse, id))`, which keeps the
-        // first of equal keys and compares the ids only on a tie.
-        let mut top: Option<(usize, f64, Value)> = None;
+        // first of equal keys and compares the ids only on a tie. The RMSEs are compared as
+        // Python compared them, exactly ([`py_cmp`]: an int RMSE and a float one that round to the
+        // same double are not a tie).
+        let mut top: Option<(usize, Num, Value)> = None;
         for (i, m) in methods.iter().enumerate() {
             let deep_stage = get(m, "deep");
             if !(deep_stage.truthy() && sub(deep_stage, "status", SAMECUT)? == &Value::from("ok")) {
                 continue;
             }
-            let rmse = float_of(
+            let rmse = num_of(
                 sub(sub(deep_stage, "oof", SAMECUT)?, "rmse", SAMECUT)?,
                 &format!("{SAMECUT} report deep oof rmse"),
             )?;
@@ -1284,10 +1424,10 @@ fn render_samecut(p: &Paths) -> Result<String> {
                 // Tuple `<`: the first pair that is neither identical nor equal decides, so the ids
                 // decide between equal RMSEs, and between two NaNs (every JSON `NaN` is one object).
                 Some((_, best_rmse, best_id)) => {
-                    if rmse == *best_rmse || (rmse.is_nan() && best_rmse.is_nan()) {
+                    if py_eq(rmse, *best_rmse) || (rmse.is_nan() && best_rmse.is_nan()) {
                         id_less(&id, best_id)?
                     } else {
-                        rmse < *best_rmse
+                        py_lt(rmse, *best_rmse)
                     }
                 }
             };
@@ -1302,14 +1442,10 @@ fn render_samecut(p: &Paths) -> Result<String> {
             ));
         };
         let top_id = top_id.py_str();
-        let produce_value = at(at(sm, "method")?, "produce_seconds")?;
-        let produce = Num::of(produce_value).ok_or_else(|| {
-            Error::Shape(format!(
-                "{SAMECUT} report search method produce_seconds: expected a number, found {} ({})",
-                produce_value.repr(),
-                py::type_name(produce_value)
-            ))
-        })?;
+        let produce = num_of(
+            at(at(sm, "method")?, "produce_seconds")?,
+            &format!("{SAMECUT} report search method produce_seconds"),
+        )?;
         search_seconds.push(produce);
         let produce = produce.as_f64();
         let rank = get(sm, "deep_rank");
@@ -1332,7 +1468,7 @@ fn render_samecut(p: &Paths) -> Result<String> {
             s(at(r, "dataset_id")?),
             s(at(r, "rows")?),
             s(at(r, "features")?),
-            general4(rmse),
+            general4(rmse.as_f64()),
             fixed(produce, 1)
         ));
     }
@@ -1605,5 +1741,128 @@ mod tests {
         assert_eq!(general4(2.0), "2");
         assert_eq!(general4(0.5), "0.5");
         assert_eq!(general4(9999.5), "1e+04");
+    }
+
+    /// Integer true division rounds once, to the double nearest the exact quotient, ties to even
+    /// (CPython's `long_true_divide`). For operands a double holds exactly that is one IEEE
+    /// division; beyond 2^53 the integer is not rounded first.
+    #[test]
+    fn integer_true_division_rounds_once() {
+        let mut seed: u64 = 0x2545_f491_4f6c_dd1d;
+        for _ in 0..20_000 {
+            seed = seed
+                .wrapping_mul(6_364_136_223_846_793_005)
+                .wrapping_add(1_442_695_040_888_963_407);
+            let a = i128::from((seed >> 11) as i64) - (1_i128 << 52);
+            let b = (seed & 0xffff) + 1;
+            assert_eq!(int_true_div(a, b), a as f64 / b as f64, "{a} / {b}");
+        }
+        let two_53 = 1_i128 << 53;
+        // The captured same-cut mean (`seconds-int-true-division`), and its negative.
+        assert_eq!(
+            int_true_div(5_000_000_000_000_000_321, 10),
+            500_000_000_000_000_064.0
+        );
+        assert_eq!(
+            int_true_div(-5_000_000_000_000_000_321, 10),
+            -500_000_000_000_000_064.0
+        );
+        // 2^53 + 1 and 2^53 + 3 are ties, to the even neighbour; 2^53 + 1.5 is not.
+        assert_eq!(int_true_div(2 * (two_53 + 1), 2), 9_007_199_254_740_992.0);
+        assert_eq!(int_true_div(2 * (two_53 + 3), 2), 9_007_199_254_740_996.0);
+        assert_eq!(int_true_div(2 * two_53 + 3, 2), 9_007_199_254_740_994.0);
+        assert_eq!(
+            int_true_div(i128::from(i64::MAX) * 2 - 1, 2),
+            9_223_372_036_854_775_808.0
+        );
+        assert_eq!(int_true_div(0, 7), 0.0);
+        assert_eq!(
+            int_true_div(1, u64::MAX),
+            1.0 / 18_446_744_073_709_551_615.0
+        );
+    }
+
+    /// Numbers compare as Python compares them: exactly, an int against a float included.
+    #[test]
+    fn numbers_compare_exactly() {
+        use std::cmp::Ordering::{Equal, Greater, Less};
+        let two_53 = 1_i128 << 53;
+        let two_127 = 2.0_f64.powi(127);
+        for (a, b, want) in [
+            (
+                Num::Int(two_53 + 1),
+                Num::Float(9_007_199_254_740_992.0),
+                Some(Greater),
+            ),
+            (
+                Num::Int(two_53),
+                Num::Float(9_007_199_254_740_992.0),
+                Some(Equal),
+            ),
+            (
+                Num::Int(-two_53 - 1),
+                Num::Float(-9_007_199_254_740_992.0),
+                Some(Less),
+            ),
+            (Num::Int(3), Num::Float(2.5), Some(Greater)),
+            (Num::Int(2), Num::Float(2.5), Some(Less)),
+            (Num::Int(-2), Num::Float(-2.5), Some(Greater)),
+            (Num::Int(-3), Num::Float(-2.5), Some(Less)),
+            (Num::Int(0), Num::Float(-0.0), Some(Equal)),
+            (Num::Int(i128::MAX), Num::Float(two_127), Some(Less)),
+            (Num::Int(i128::MIN), Num::Float(-two_127), Some(Equal)),
+            (
+                Num::Int(i128::MIN),
+                Num::Float(f64::NEG_INFINITY),
+                Some(Greater),
+            ),
+            (Num::Int(i128::MAX), Num::Float(f64::INFINITY), Some(Less)),
+            (Num::Int(1), Num::Float(f64::NAN), None),
+            (Num::Int(two_53 + 1), Num::Int(two_53), Some(Greater)),
+            (Num::Float(0.5), Num::Float(0.25), Some(Greater)),
+        ] {
+            assert_eq!(py_cmp(a, b), want, "{a:?} {b:?}");
+            assert_eq!(
+                py_cmp(b, a),
+                want.map(std::cmp::Ordering::reverse),
+                "{b:?} {a:?}"
+            );
+        }
+    }
+
+    /// `sum()`'s three paths: the C `long` fast path, exact integers and plain float addition
+    /// after it overflows, and the compensated float path (integers added plainly).
+    #[test]
+    fn sums_follow_cpython() {
+        let max = i128::from(i64::MAX);
+        let sum = |values: &[Num]| py_sum(values, "test").unwrap();
+        let int = |n: Num| match n {
+            Num::Int(i) => i,
+            Num::Float(f) => panic!("a float {f}"),
+        };
+        let float = |n: Num| match n {
+            Num::Float(f) => f.to_bits(),
+            Num::Int(i) => panic!("an int {i}"),
+        };
+        assert_eq!(int(sum(&[Num::Int(max), Num::Int(1), Num::Int(-max)])), 1);
+        assert_eq!(
+            int(sum(&[Num::Int(max), Num::Int(max), Num::Int(2)])),
+            1 << 64
+        );
+        let (big, one) = (Num::Float(1e16), Num::Float(1.0));
+        let generic = [
+            Num::Int(max),
+            Num::Int(1),
+            Num::Int(-max),
+            big,
+            one,
+            Num::Float(-1e16),
+        ];
+        assert_eq!(float(sum(&generic)), 0.0_f64.to_bits());
+        let compensated = [Num::Int(1), big, one, Num::Float(-1e16)];
+        assert_eq!(float(sum(&compensated)), 1.0_f64.to_bits());
+        let ints_plain = [big, Num::Int(1), Num::Int(1), Num::Float(-1e16)];
+        assert_eq!(float(sum(&ints_plain)), 0.0_f64.to_bits());
+        assert_eq!(float(sum(&[Num::Float(-0.0)])), 0.0_f64.to_bits());
     }
 }
