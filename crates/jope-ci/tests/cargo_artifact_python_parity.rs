@@ -47,6 +47,12 @@
 //! which the port now refuses as types the committed configuration does not use (`R5_STRICTER`
 //! where the Python accepted them), and `select` of an executable under a directory that may not
 //! be searched, whose `OSError` the Python printed. `cargo_artifact_matches_round_five` replays it.
+//!
+//! `negative-r6.json` holds round six (lossy path conversion): `select` and `build` of an
+//! executable whose resolved name is not UTF-8, captured under `en_US.UTF-8` (the Python's print
+//! raised `UnicodeEncodeError`), `C.UTF-8` and C (it printed the raw bytes), arguments that are not
+//! UTF-8, a resolved name longer than `PATH_MAX` and a TOML table `tomllib` read and the `toml`
+//! crate refuses. `cargo_artifact_matches_round_six` replays it.
 
 use serde_json::Value;
 use std::fs;
@@ -232,7 +238,7 @@ const R2_MESSAGE_DIFFERS: &[&str] = &["toml-invalid-value"];
 
 #[test]
 fn cargo_artifact_matches_round_two() {
-    replay_round("negative-r2.json", 40, R2_MESSAGE_DIFFERS, &[]);
+    replay_round("negative-r2.json", 40, R2_MESSAGE_DIFFERS, &[], &[]);
 }
 
 /// Round five (`negative-r5.json`): both refuse, the Python in `tomllib`'s words and the port in
@@ -280,7 +286,173 @@ const R5_STRICTER: &[&str] = &[
 /// which the Python printed as the `OSError`; the port refused in other words and now prints it.
 #[test]
 fn cargo_artifact_matches_round_five() {
-    replay_round("negative-r5.json", 31, R5_MESSAGE_DIFFERS, R5_STRICTER);
+    replay_round("negative-r5.json", 31, R5_MESSAGE_DIFFERS, R5_STRICTER, &[]);
+}
+
+/// Round six: what the Python accepted and the port refuses, writing nothing (stricter):
+///
+/// - an executable whose resolved name is not UTF-8, under C and `C.UTF-8`, where the Python's
+///   `surrogateescape` stdout printed its raw bytes (the port refuses in every locale, with the
+///   `UnicodeEncodeError` the Python printed under `en_US.UTF-8`, checked below);
+/// - a resolved name longer than `PATH_MAX`, which `realpath(3)` refuses (`[Errno 36]`) and
+///   Python's `resolve()` built and printed;
+/// - a TOML document `tomllib` read and the `toml` crate refuses (a dotted key extending a table a
+///   header created implicitly: `[a.b.c]`, `[a]`, `b.d = 1`).
+const R6_STRICTER: &[&str] = &[
+    "select-r6-resolved-ff-cu",
+    "select-r6-resolved-ff-c",
+    "select-r6-resolved-run-cu",
+    "select-r6-resolved-run-c",
+    "select-r6-resolved-eacute-cu",
+    "select-r6-resolved-eacute-c",
+    "select-r6-resolved-partial-cu",
+    "select-r6-resolved-partial-c",
+    "select-r6-resolved-mid-cu",
+    "select-r6-resolved-mid-c",
+    "build-r6-resolved-ff-cu",
+    "select-r6-map-host-link-ff-cu",
+    "select-r6-resolved-name-too-long",
+    "toml-r6-implicit-then-dotted",
+];
+
+/// Round six: an argument that is not UTF-8, which the port refuses before reading anything (exit
+/// status 2, `jope-ci: argument N ... is not UTF-8`); the Python took it surrogate-escaped and
+/// printed the executable (stricter), or refused printing a resolved name that is not UTF-8 (both
+/// refuse, in other words).
+const R6_ARGV_REFUSED: &[&str] = &[
+    "select-r6-map-host-arg-ff-en",
+    "select-r6-map-host-arg-ff-cu",
+    "select-r6-metadata-arg-ff-en",
+    "select-r6-metadata-arg-ff-cu",
+];
+
+/// Round six of the review of PR #117 (`negative-r6.json`): an executable whose resolved name is
+/// not UTF-8 (reached through a link to a directory named with the byte `0xff`, a run of such
+/// bytes, one after `é`, an incomplete sequence, bytes between others), by `select`, `build` and
+/// through a `--path-map` host link. The port printed a lossy conversion (U+FFFD, a path that does
+/// not exist) and exited 0 where the Python, under `en_US.UTF-8`, raised `UnicodeEncodeError`
+/// printing it; it now refuses with that message, position for position, in every locale. The
+/// UTF-8 controls (a link, a name that is not ASCII) print as before.
+#[test]
+fn cargo_artifact_matches_round_six() {
+    let results = replay_round("negative-r6.json", 29, &[], R6_STRICTER, R6_ARGV_REFUSED);
+    // Under C and `C.UTF-8` the port refuses with the message the Python printed under
+    // `en_US.UTF-8` for the same name.
+    for (name, (exit, stdout, stderr)) in &results {
+        let Some(base) = name
+            .strip_suffix("-cu")
+            .or_else(|| name.strip_suffix("-c"))
+            .filter(|_| name.contains("-resolved-") || name.contains("-map-host-link-"))
+        else {
+            continue;
+        };
+        let (_, _, en) = &results[&format!("{base}-en")];
+        assert_eq!(
+            (*exit, stdout.as_str(), stderr),
+            (1, "", en),
+            "{name}: the port refuses as it refuses {base}-en"
+        );
+    }
+}
+
+/// A fixture string with `@Xhh@` for the byte `hh` (a name that is not UTF-8), as its bytes.
+fn unescape(text: &str) -> std::ffi::OsString {
+    use std::os::unix::ffi::OsStringExt;
+    let mut out = vec![];
+    let mut rest = text;
+    while let Some(at) = rest.find("@X") {
+        match (rest.get(at + 2..at + 4), rest.get(at + 4..at + 5)) {
+            (Some(hex), Some("@")) if hex.bytes().all(|b| b.is_ascii_hexdigit()) => {
+                out.extend_from_slice(&rest.as_bytes()[..at]);
+                out.push(u8::from_str_radix(hex, 16).unwrap());
+                rest = &rest[at + 5..];
+            }
+            _ => {
+                out.extend_from_slice(&rest.as_bytes()[..at + 2]);
+                rest = &rest[at + 2..];
+            }
+        }
+    }
+    out.extend_from_slice(rest.as_bytes());
+    std::ffi::OsString::from_vec(out)
+}
+
+/// A codec position the fixture wrote `@ROOT+k@` (k characters past the capture's root) at the
+/// same place past this root, `root_chars` characters long.
+fn place_positions(text: &str, root_chars: usize) -> String {
+    let mut out = String::new();
+    let mut rest = text;
+    while let Some(at) = rest.find("@ROOT+") {
+        let after = &rest[at + "@ROOT+".len()..];
+        let digits = after.bytes().take_while(u8::is_ascii_digit).count();
+        assert_eq!(&after[digits..=digits], "@", "{text}");
+        out.push_str(&rest[..at]);
+        out.push_str(&(root_chars + after[..digits].parse::<usize>().unwrap()).to_string());
+        rest = &after[digits + 1..];
+    }
+    out.push_str(rest);
+    out
+}
+
+/// The capture's `deepdir`: a directory whose absolute name is exactly `len` bytes under `base`
+/// (`deep`, then components of 200 `d`, one of 100 when needed, and one of `e`).
+fn deepdir(base: &str, len: usize) -> String {
+    let mut dir = format!("{base}/deep");
+    while len - dir.len() > 260 {
+        dir = format!("{dir}/{}", "d".repeat(200));
+    }
+    let mut rest = len - dir.len() - 1;
+    if rest > 200 {
+        dir = format!("{dir}/{}", "d".repeat(100));
+        rest = len - dir.len() - 1;
+    }
+    format!("{dir}/{}", "e".repeat(rest))
+}
+
+/// Round six's inputs under `root`, created once and reused by later cases: `dirs` (each holding
+/// the executable `demo`), `symlinks`, a `deep` directory reached through a link, and a copy of the
+/// metadata (`metadata_copy_to`).
+fn round_six_tree(case: &Value, root: &Path) {
+    for dir in case["dirs"].as_array().into_iter().flatten() {
+        let dir = root.join(unescape(dir.as_str().unwrap()));
+        if !dir.join("demo").exists() {
+            fs::create_dir_all(&dir).unwrap();
+            executable(&dir.join("demo"), "#!/bin/sh\nexit 0\n");
+        }
+    }
+    for link in case["symlinks"].as_array().into_iter().flatten() {
+        let path = root.join(link["path"].as_str().unwrap());
+        if fs::symlink_metadata(&path).is_err() {
+            std::os::unix::fs::symlink(unescape(link["target"].as_str().unwrap()), path).unwrap();
+        }
+    }
+    if let Some(deep) = case.get("deep") {
+        let link = root.join(deep["link"].as_str().unwrap());
+        if fs::symlink_metadata(&link).is_err() {
+            let dir = deepdir(
+                root.to_str().unwrap(),
+                deep["length"].as_u64().unwrap() as usize,
+            );
+            fs::create_dir_all(&dir).unwrap();
+            // The executable's own name is past PATH_MAX: created from inside the directory.
+            let made = Command::new("/bin/sh")
+                .args(["-c", "cd \"$1\" && cp -p \"$2\" \"$3\"", "sh"])
+                .arg(&dir)
+                .arg(root.join("bin/demo"))
+                .arg(deep["file"].as_str().unwrap())
+                .status()
+                .unwrap();
+            assert!(made.success());
+            std::os::unix::fs::symlink(&dir, &link).unwrap();
+        }
+    }
+    if let Some(to) = case.get("metadata_copy_to") {
+        fs::copy(
+            root.join("metadata.json"),
+            root.join(unescape(to.as_str().unwrap())),
+        )
+        .unwrap();
+    }
 }
 
 /// Round three, integers (`negative-r3-digits.json`): Python 3.12 refuses to convert an integer of
@@ -295,6 +467,7 @@ fn cargo_artifact_matches_round_three_digits() {
         14,
         &["toml-int-4301-digits"],
         &[],
+        &[],
     );
 }
 
@@ -303,14 +476,24 @@ fn cargo_artifact_matches_round_three_digits() {
 /// directions and at the root itself, and the paths the refusals print.
 #[test]
 fn cargo_artifact_matches_round_three_paths() {
-    replay_round("negative-r3-paths.json", 15, &[], &[]);
+    replay_round("negative-r3-paths.json", 15, &[], &[], &[]);
 }
 
 /// Replay every case of a round fixture (the layout of `negative-r2.json`); `message_differs` names
 /// the cases where both refuse in different words, `stricter` those the Python accepted and the
-/// port refuses (writing nothing). A case's `nosearch_mode` is the mode of `@ROOT@/nosearch`,
-/// which holds an executable `demo`, during its run.
-fn replay_round(file: &str, count: usize, message_differs: &[&str], stricter: &[&str]) {
+/// port refuses (writing nothing), `argv_refused` those holding an argument that is not UTF-8,
+/// which the port refuses before reading anything. A case's `nosearch_mode` is the mode of
+/// `@ROOT@/nosearch`, which holds an executable `demo`, during its run. Round six's cases add
+/// names that are not UTF-8 (`@Xhh@`, in arguments too), links, a deep directory and the locale
+/// the Python ran under (see [`round_six_tree`]); a codec position `@ROOT+k@` counts this root.
+/// Returns each case's exit status, stdout and stderr (the root written `@ROOT@`).
+fn replay_round(
+    file: &str,
+    count: usize,
+    message_differs: &[&str],
+    stricter: &[&str],
+    argv_refused: &[&str],
+) -> std::collections::BTreeMap<String, (i64, String, String)> {
     let doc: Value =
         serde_json::from_str(&fs::read_to_string(fixture().join(file)).unwrap()).unwrap();
     assert!(doc["source"].is_string() && doc["capture"].is_string());
@@ -320,7 +503,7 @@ fn replay_round(file: &str, count: usize, message_differs: &[&str], stricter: &[
         count,
         "{file}: every captured case is replayed"
     );
-    for name in message_differs.iter().chain(stricter) {
+    for name in message_differs.iter().chain(stricter).chain(argv_refused) {
         assert!(
             cases.iter().any(|c| c["name"] == *name),
             "{file}: {name} is not a case"
@@ -354,11 +537,33 @@ fn replay_round(file: &str, count: usize, message_differs: &[&str], stricter: &[
         std::env::var("PATH").unwrap_or_default()
     );
     let mut failures = vec![];
+    let mut results = std::collections::BTreeMap::new();
     for case in cases {
         let name = case["name"].as_str().unwrap();
         for file in ["metadata.json", "messages.jsonl", "source.toml", "out.toml"] {
             let _ = fs::remove_file(root.join(file));
         }
+        // Codec positions counted past the capture's root, placed past this one.
+        let mut case = case.clone();
+        if let Some(stderr) = case.get("stderr").and_then(Value::as_str) {
+            case["stderr"] = Value::from(place_positions(stderr, root_text.chars().count()));
+        }
+        // A deep directory has a fixed absolute length, so the components the Python printed
+        // under the capture's root are those `deepdir` gives under this one.
+        if let (Some(deep), Some(stdout)) = (
+            case.get("deep").cloned(),
+            case.get("stdout").and_then(Value::as_str),
+        ) {
+            let file = deep["file"].as_str().unwrap();
+            assert!(
+                stdout.starts_with("@ROOT@/deep/") && stdout.ends_with(&format!("/{file}\n")),
+                "{name}: {stdout}"
+            );
+            let here = deepdir(&root_text, deep["length"].as_u64().unwrap() as usize)
+                .replacen(&root_text, "@ROOT@", 1);
+            case["stdout"] = Value::from(format!("{here}/{file}\n"));
+        }
+        let case = &case;
         for (key, file) in [
             ("metadata", "metadata.json"),
             ("messages", "messages.jsonl"),
@@ -385,18 +590,21 @@ fn replay_round(file: &str, count: usize, message_differs: &[&str], stricter: &[
         if case["output_exists"] == true {
             fs::write(root.join("out.toml"), "").unwrap();
         }
-        let argv: Vec<String> = case["argv"]
+        round_six_tree(case, &root);
+        let argv: Vec<std::ffi::OsString> = case["argv"]
             .as_array()
             .unwrap()
             .iter()
             .map(|a| {
-                a.as_str()
-                    .unwrap()
-                    .replace("@METADATA@", root.join("metadata.json").to_str().unwrap())
-                    .replace("@MESSAGES@", root.join("messages.jsonl").to_str().unwrap())
-                    .replace("@SOURCE@", root.join("source.toml").to_str().unwrap())
-                    .replace("@OUT@", root.join("out.toml").to_str().unwrap())
-                    .replace("@ROOT@", &root_text)
+                unescape(
+                    &a.as_str()
+                        .unwrap()
+                        .replace("@METADATA@", root.join("metadata.json").to_str().unwrap())
+                        .replace("@MESSAGES@", root.join("messages.jsonl").to_str().unwrap())
+                        .replace("@SOURCE@", root.join("source.toml").to_str().unwrap())
+                        .replace("@OUT@", root.join("out.toml").to_str().unwrap())
+                        .replace("@ROOT@", &root_text),
+                )
             })
             .collect();
         let nosearch = case
@@ -408,15 +616,32 @@ fn replay_round(file: &str, count: usize, message_differs: &[&str], stricter: &[
         }
         // A user who may search anything (root) cannot reproduce a refused search.
         let searchable = nosearch.is_some() && fs::metadata(root.join("nosearch/demo")).is_ok();
-        let run = Command::new(env!("CARGO_BIN_EXE_jope-ci"))
+        let mut command = Command::new(env!("CARGO_BIN_EXE_jope-ci"));
+        command
             .arg("cargo-artifact")
             .args(&argv)
             .env("PATH", &path)
             .env("CA_ROOT", &root)
             .env_remove("CARGO_TARGET_DIR")
-            .current_dir(&root)
-            .output()
-            .unwrap();
+            .current_dir(&root);
+        // The locale the Python ran under (the port reads none).
+        match case.get("locale").and_then(Value::as_str) {
+            Some("en") => {
+                command
+                    .env_remove("LC_ALL")
+                    .env_remove("LC_CTYPE")
+                    .env_remove("LC_MESSAGES")
+                    .env("LANG", "en_US.UTF-8");
+            }
+            Some("cu") => {
+                command.env("LC_ALL", "C.UTF-8");
+            }
+            Some("c") => {
+                command.env("LC_ALL", "C");
+            }
+            _ => {}
+        }
+        let run = command.output().unwrap();
         fs::set_permissions(root.join("nosearch"), fs::Permissions::from_mode(0o755)).unwrap();
         if searchable {
             eprintln!("{name}: skipped, this user may search a directory of that mode");
@@ -426,13 +651,30 @@ fn replay_round(file: &str, count: usize, message_differs: &[&str], stricter: &[
         let (stdout, stderr) = (normalise(&run.stdout), normalise(&run.stderr));
         let exit = i64::from(run.status.code().unwrap());
         record(case, exit, &stdout, &stderr);
-        let verdict = if stricter.contains(&name) {
+        results.insert(name.to_owned(), (exit, stdout.clone(), stderr.clone()));
+        let verdict = if argv_refused.contains(&name) {
+            // Refused before anything is read: one usage line, nothing on stdout, no output file.
+            let refused = exit == 2
+                && stdout.is_empty()
+                && stderr.starts_with("jope-ci: argument ")
+                && stderr.contains(" is not UTF-8")
+                && stderr.lines().count() == 1;
+            if refused && (case["exit"] == 0 || case["exit"] == 1) {
+                Ok(())
+            } else {
+                Err(format!(
+                    "listed as an argument refusal, but the Python exited {} and the port {exit} {stderr:?}",
+                    case["exit"]
+                ))
+            }
+        } else if stricter.contains(&name) {
             // The Python accepted; the port refuses (one `cargo-artifact:` line, nothing on stdout)
-            // and leaves no output (checked below).
+            // and leaves no output (checked below). The `toml` crate's parse error of a nextest
+            // source spans lines (it quotes the line).
             let refused = exit == 1
                 && stdout.is_empty()
                 && stderr.starts_with("cargo-artifact: ")
-                && stderr.lines().count() == 1;
+                && (stderr.lines().count() == 1 || case.get("source").is_some());
             if refused && case["exit"] == 0 {
                 Ok(())
             } else {
@@ -464,7 +706,7 @@ fn replay_round(file: &str, count: usize, message_differs: &[&str], stricter: &[
         let left = fs::read_to_string(root.join("out.toml"))
             .ok()
             .map(|t| t.replace(&root_text, "@ROOT@"));
-        let python_left = if stricter.contains(&name) {
+        let python_left = if stricter.contains(&name) || argv_refused.contains(&name) {
             None
         } else {
             case["output_after"].as_str().map(str::to_owned)
@@ -476,6 +718,7 @@ fn replay_round(file: &str, count: usize, message_differs: &[&str], stricter: &[
         }
     }
     assert!(failures.is_empty(), "{file}:\n{}", failures.join("\n"));
+    results
 }
 
 /// Malformed inputs the Python accepted (exit status 0) and the port refuses: a

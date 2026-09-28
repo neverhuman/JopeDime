@@ -1,5 +1,6 @@
 //! `jope-ci`: CI and host-maintenance tooling (see the library documentation).
 
+use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
@@ -215,7 +216,8 @@ fn artifact(command: Artifact) -> Result<Option<String>, Failure> {
             no_default_features,
         } => {
             let (kind, name) = target.kind_and_name();
-            let path = cargo_artifact::build(&Build {
+            // The executable as text: one whose resolved name is not UTF-8 has refused.
+            cargo_artifact::build(&Build {
                 manifest_path: &manifest.manifest_path,
                 target_dir: manifest.target_dir.as_deref(),
                 package: &package,
@@ -224,8 +226,8 @@ fn artifact(command: Artifact) -> Result<Option<String>, Failure> {
                 profile: &profile,
                 features: &features,
                 no_default_features,
-            })?;
-            Ok(Some(path.display().to_string()))
+            })
+            .map(Some)
         }
         Artifact::Select {
             package,
@@ -238,8 +240,7 @@ fn artifact(command: Artifact) -> Result<Option<String>, Failure> {
             let map = path_map
                 .as_deref()
                 .map(|pair| (Path::new(&pair[0]), Path::new(&pair[1])));
-            let path = cargo_artifact::select(&metadata, &messages, &package, kind, name, map)?;
-            Ok(Some(path.display().to_string()))
+            cargo_artifact::select(&metadata, &messages, &package, kind, name, map).map(Some)
         }
         // `print(meta["target_directory"])`: an empty directory still prints its newline.
         Artifact::TargetDir { manifest } => cargo_artifact::target_directory(
@@ -264,13 +265,36 @@ fn artifact(command: Artifact) -> Result<Option<String>, Failure> {
     }
 }
 
+/// An argument that is not UTF-8, refused before anything is read (exit status 2, a usage error).
+/// The Python tools took one surrogate-escaped and used it as a path or a name, printing and
+/// recording it as a `str`; the ports read their arguments as text, so this is stricter. The
+/// program's own path (`argv[0]`) is not read.
+fn non_utf8_argument(args: &[OsString]) -> Option<String> {
+    let (n, arg) = args
+        .iter()
+        .enumerate()
+        .skip(1)
+        .find(|(_, a)| a.to_str().is_none())?;
+    Some(format!(
+        "jope-ci: argument {n} {} is not UTF-8; the ports read their arguments as text",
+        jope_records::py::os_repr(arg)
+    ))
+}
+
 fn main() -> ExitCode {
-    let args: Vec<String> = std::env::args().collect();
+    // `std::env::args()` panics on an argument that is not UTF-8; every argument is read as bytes
+    // first. `"--delete" in sys.argv` is refused before anything else, whatever the other
+    // arguments hold, as the Python refused it.
+    let args: Vec<OsString> = std::env::args_os().collect();
     if args.get(1).is_some_and(|a| a == "build-report") && args.iter().any(|a| a == "--delete") {
         eprintln!("{}", build_report::DELETE_REFUSAL);
         return ExitCode::from(2);
     }
-    match Cli::parse().command {
+    if let Some(refusal) = non_utf8_argument(&args) {
+        eprintln!("{refusal}");
+        return ExitCode::from(2);
+    }
+    match Cli::parse_from(args).command {
         Top::BuildReport { command } => build_report_command(command),
         Top::CargoArtifact { command } => match artifact(command) {
             Ok(None) => ExitCode::SUCCESS,

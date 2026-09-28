@@ -85,9 +85,18 @@ pub fn metadata(manifest: &str, target_dir: Option<&str>) -> Result<Value, Failu
 /// `UnicodeDecodeError` (`'utf-8' codec can't decode byte 0xff in position 0: invalid start
 /// byte`).
 pub fn read_text(path: &Path) -> Result<String, String> {
-    let name = python::PosixPath::parse(&path.to_string_lossy()).to_string();
-    let bytes = fs::read(path).map_err(|e| python::os_error(&e, &name))?;
+    let bytes = fs::read(path).map_err(|e| os_error_at(&e, path))?;
     pyjson::decode_utf8(&bytes).map(python::universal_newlines)
+}
+
+/// The `OSError` the Python printed for `path`, named as `str(Path(path))` spells it (a message
+/// only). A name that is not UTF-8, which only a library caller can pass (the command line refuses
+/// one), is named as `repr` printed it, never converted lossily.
+fn os_error_at(error: &std::io::Error, path: &Path) -> String {
+    match path.to_str() {
+        Some(text) => python::os_error(error, &python::PosixPath::parse(text).to_string()),
+        None => python::os_error_path(error, path),
+    }
 }
 
 // How the Python read `metadata` and the message stream. JSON is read with Python's `json`
@@ -141,7 +150,17 @@ fn truthy(value: Option<&Value>) -> bool {
 }
 
 /// The one executable a successful build produced for `package`/`kind`/`name`, optionally
-/// translated from a container mount (`path_map` = container root, host root), resolved.
+/// translated from a container mount (`path_map` = container root, host root), resolved, as the
+/// text the command prints.
+///
+/// The Python printed `path.resolve()`, a `str`: a resolved name that is not UTF-8 (a link to a
+/// directory named with the byte `0xff`, say) was surrogate-escaped, so under a strict UTF-8
+/// stdout (`en_US.UTF-8` and the other UTF-8 locales but C and POSIX) the print raised
+/// `UnicodeEncodeError`, which it caught and printed (`cargo-artifact: 'utf-8' codec can't encode
+/// character '\udcff' in position 57: surrogates not allowed`, exit status 1), and under C or
+/// `C.UTF-8` (a `surrogateescape` stdout) it printed the raw bytes. The port refuses such a name
+/// with that message in every locale (stricter under C and `C.UTF-8`); it never prints a lossy
+/// conversion (U+FFFD), which names a path that does not exist.
 pub fn executable(
     messages: &str,
     meta: &Value,
@@ -149,7 +168,7 @@ pub fn executable(
     kind: &str,
     name: &str,
     path_map: Option<(&Path, &Path)>,
-) -> Result<PathBuf, String> {
+) -> Result<String, String> {
     // `[p["id"] for p in meta["packages"]
     //  if p["name"] == package and p["id"] in meta["workspace_members"]]`
     let mut packages = vec![];
@@ -232,10 +251,21 @@ pub fn executable(
         // `Path(host) / path.relative_to(container)`: pathlib compares the two as spelled after
         // parsing, so a path under POSIX's distinct `//` root is not under `/`, nor the reverse
         // (`///` is `/`); the refusal names both as `str()` prints them. The container itself
-        // maps to the host itself.
-        let container = python::PosixPath::parse(&container.to_string_lossy());
+        // maps to the host itself. Both roots are compared and joined as text, so one that is not
+        // UTF-8 refuses (the command line refuses it first; see `main`), never converted lossily:
+        // a lossy container root matched a message path spelled with U+FFFD, and a lossy host
+        // root named another directory.
+        fn root<'a>(root: &'a Path, which: &str) -> Result<&'a str, String> {
+            root.to_str().ok_or_else(|| {
+                format!(
+                    "--path-map {which} {} is not UTF-8",
+                    python::os_repr(root.as_os_str())
+                )
+            })
+        }
+        let container = python::PosixPath::parse(root(container, "CONTAINER_ROOT")?);
         let relative = path.relative_to(&container)?;
-        path = python::PosixPath::parse(&host.to_string_lossy()).joinpath(&relative);
+        path = python::PosixPath::parse(root(host, "HOST_ROOT")?).joinpath(&relative);
     }
     // `path.is_file()`, `os.access(path, os.X_OK)` and `path.resolve()` of `str(path)`, which the
     // refusal prints. `is_file()` raised on an error other than a missing path (a directory that
@@ -249,8 +279,16 @@ pub fn executable(
             "Cargo executable is missing or not executable: {path}"
         ));
     }
-    file.canonicalize()
-        .map_err(|e| python::os_error(&e, &path.to_string()))
+    // `path.resolve()`: `realpath(3)` refuses a resolved name longer than `PATH_MAX` (`[Errno 36]
+    // File name too long`, the executable reached through a short link to a deep directory),
+    // which Python's `resolve()` built and printed (stricter), and any other error (a race).
+    let resolved = file
+        .canonicalize()
+        .map_err(|e| python::os_error(&e, &path.to_string()))?;
+    // `print(path.resolve())`: text, or the `UnicodeEncodeError` a strict UTF-8 stdout raised.
+    resolved.into_os_string().into_string().map_err(|name| {
+        python::utf8_encode_error(&name).expect("a name that is not UTF-8 has an undecodable byte")
+    })
 }
 
 /// The TOML value types the port reads in the nextest config: those the committed
@@ -296,7 +334,10 @@ fn committed_types_only(table: &toml::Table, at: &str) -> Result<(), String> {
 /// The steps run in the Python's order, so the first refusal is the one it printed: read the
 /// source, parse it (a leading U+FEFF, which `read_text` keeps, is `tomllib`'s `Invalid statement
 /// (at line 1, column 1)`; any other TOML error is reported in the `toml` crate's words, not
-/// `tomllib`'s), refuse a `store`, create the output (`open("x")`), and only then read `target`
+/// `tomllib`'s; the crate also refuses a few documents `tomllib` read, such as a dotted key that
+/// extends a table a header created implicitly, `[a.b.c]` then `[a]` with `b.d = 1` (`duplicate
+/// key`), which refuse before any output exists: stricter), refuse a `store`, create the output
+/// (`open("x")`), and only then read `target`
 /// as a path. A `target` that is not a string crashed the Python there (`TypeError`), after it had
 /// created the output; the port refuses at the same point and leaves the same empty file. After
 /// the `store` check, a value of a type the committed configuration does not use refuses
@@ -313,12 +354,11 @@ pub fn nextest_config(source: &Path, output: &Path, target: &Value) -> Result<()
         );
     }
     committed_types_only(&table, "")?;
-    let output_name = python::PosixPath::parse(&output.to_string_lossy()).to_string();
     let mut file = OpenOptions::new()
         .write(true)
         .create_new(true)
         .open(output)
-        .map_err(|e| python::os_error(&e, &output_name))?;
+        .map_err(|e| os_error_at(&e, output))?;
     // `str(Path(target) / "nextest")`
     let target = target.as_str().ok_or_else(|| {
         format!(
@@ -330,7 +370,7 @@ pub fn nextest_config(source: &Path, output: &Path, target: &Value) -> Result<()
     let header = format!("store = {{ dir = {} }}\n", py::json_str(&store));
     file.write_all(header.as_bytes())
         .and_then(|()| file.write_all(text.as_bytes()))
-        .map_err(|e| python::os_error(&e, &output_name))
+        .map_err(|e| os_error_at(&e, output))
 }
 
 /// `build`: compile one bin/example and return its executable (never one from a failed build).
@@ -345,7 +385,7 @@ pub struct Build<'a> {
     pub no_default_features: bool,
 }
 
-pub fn build(request: &Build<'_>) -> Result<PathBuf, Failure> {
+pub fn build(request: &Build<'_>) -> Result<String, Failure> {
     let meta = metadata(request.manifest_path, request.target_dir)?;
     let mut command = cargo_command(request.target_dir);
     command
@@ -396,7 +436,7 @@ pub fn select(
     kind: &str,
     name: &str,
     path_map: Option<(&Path, &Path)>,
-) -> Result<PathBuf, Failure> {
+) -> Result<String, Failure> {
     // `json.loads(Path(...).read_text())`: a `str` (a UTF-8 BOM refuses), positions counted after
     // universal-newline translation, unbounded integers; then the messages.
     let meta = pyjson::parse_str_big(&read_text(metadata_path)?).map_err(Failure::Refused)?;
