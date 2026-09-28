@@ -1,0 +1,299 @@
+{
+  "source": "p1-failclosed-capture-20260928T020533Z",
+  "capture": "bash capture.sh (run p1-failclosed-capture-20260928T020533Z; Python from git show f46a9048fbb2697d6d1f4463a688083ea9dfcce1:<tool>, unmodified, in a scratch root)",
+  "tool": "deploy/ci/parity-census.py check",
+  "base": "parity/negative-metadata.json",
+  "matrix": "parity/negative-matrix.md",
+  "exists": [
+    "crates/demo/examples/ex.rs",
+    "crates/demo/src/main.rs"
+  ],
+  "cases": [
+    {
+      "name": "base",
+      "jq": ".",
+      "exit": 0,
+      "stdout": "capability matrix: 2 rows\nby status: new=2\nby kind: new-bin=1, new-example=1\nthis tree: 1 binaries, 1 examples, 0 clap subcommands, 0 python tools, 0 systemd units\nok: every row resolved and every entry point of this tree has a row\n",
+      "stderr": ""
+    },
+    {
+      "name": "metadata-list",
+      "jq": "[]",
+      "ed": "1,30c\n[]\n.\n",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: list indices must be integers or slices, not str"
+    },
+    {
+      "name": "packages-missing",
+      "jq": "del(.packages)",
+      "ed": "1,30c\n{}\n.\n",
+      "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+      "exit": 1,
+      "stdout": "",
+      "raised": "KeyError: 'packages'"
+    },
+    {
+      "name": "packages-null",
+      "jq": ".packages = null",
+      "ed": "2,29c\n  \"packages\": null\n.\n",
+      "sha256": "02ff874fddd5a682294a3f792e580cfe68d7fb94fcadd27f20bc4984898902a3",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: 'NoneType' object is not iterable"
+    },
+    {
+      "name": "packages-dict",
+      "jq": ".packages = {\"a\": 1}",
+      "ed": "2,29c\n  \"packages\": {\n    \"a\": 1\n  }\n.\n",
+      "sha256": "f92accc6bca75a22a26c19a965c69a54e326d0e691ddbf110fa099048a95ff25",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: string indices must be integers, not 'str'"
+    },
+    {
+      "name": "package-string",
+      "jq": ".packages[0] = \"x\"",
+      "ed": "3,28c\n    \"x\"\n.\n",
+      "sha256": "3f10318b86d72641fed8ea553eecb05670263f731548e0d3dc615cee48972489",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: string indices must be integers, not 'str'"
+    },
+    {
+      "name": "targets-missing",
+      "jq": "del(.packages[0].targets)",
+      "ed": "4,27c\n      \"name\": \"demo\"\n.\n",
+      "sha256": "33ed6b517917886b9929d71ff610fa53720ac764c7abb2e5c6849cdf7f9954ec",
+      "exit": 1,
+      "stdout": "",
+      "raised": "KeyError: 'targets'"
+    },
+    {
+      "name": "targets-null",
+      "jq": ".packages[0].targets = null",
+      "ed": "5,27c\n      \"targets\": null\n.\n",
+      "sha256": "f4ca6548587bee2096a1fb5cacf667fabe4950811a4068f4e526001b08afc553",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: 'NoneType' object is not iterable"
+    },
+    {
+      "name": "targets-string",
+      "jq": ".packages[0].targets = \"ab\"",
+      "ed": "5,27c\n      \"targets\": \"ab\"\n.\n",
+      "sha256": "44020a15276507ae7296ad9b411241f43799f6eef20bec73dbbc886f1b66a86f",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: string indices must be integers, not 'str'"
+    },
+    {
+      "name": "kind-empty",
+      "jq": ".packages[0].targets[1].kind = []",
+      "ed": "14,16c\n          \"kind\": [],\n.\n",
+      "sha256": "2694a582ba6c130339c4436e9b7c923e790cea9375406a51345cc3263c569e0f",
+      "exit": 1,
+      "stdout": "",
+      "raised": "IndexError: list index out of range"
+    },
+    {
+      "name": "kind-missing",
+      "jq": "del(.packages[0].targets[1].kind)",
+      "ed": "14,16d\n",
+      "sha256": "50a447ed50cd71de1ff46d832e94c5228b3a468e4d4170745e3189d3b5183e05",
+      "exit": 1,
+      "stdout": "",
+      "raised": "KeyError: 'kind'"
+    },
+    {
+      "name": "kind-null",
+      "jq": ".packages[0].targets[1].kind = null",
+      "ed": "14,16c\n          \"kind\": null,\n.\n",
+      "sha256": "5fdebad8e3544512271e296ad7d879f9a0990911233abc23532f96f28c24720b",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: 'NoneType' object is not subscriptable"
+    },
+    {
+      "name": "kind-dict",
+      "jq": ".packages[0].targets[1].kind = {\"bin\": 1}",
+      "ed": "14,16c\n          \"kind\": {\n            \"bin\": 1\n          },\n.\n",
+      "sha256": "f8ceb5c9758e3589090c500065d1897fb6c8d3f9fb65db255d39b0df9bd4044a",
+      "exit": 1,
+      "stdout": "",
+      "raised": "KeyError: 0"
+    },
+    {
+      "name": "kind-string-bin",
+      "jq": ".packages[0].targets[1].kind = \"bin\"",
+      "ed": "14,16c\n          \"kind\": \"bin\",\n.\n",
+      "sha256": "b082cd4467ff624771fbcba1b3061d64d839198a9a0281793c1739a89b0912ec",
+      "exit": 0,
+      "stdout": "capability matrix: 2 rows\nby status: new=2\nby kind: new-bin=1, new-example=1\nthis tree: 0 binaries, 1 examples, 0 clap subcommands, 0 python tools, 0 systemd units\nok: every row resolved and every entry point of this tree has a row\n",
+      "stderr": ""
+    },
+    {
+      "name": "kind-string-empty",
+      "jq": ".packages[0].targets[1].kind = \"\"",
+      "ed": "14,16c\n          \"kind\": \"\",\n.\n",
+      "sha256": "ef4755204c54eec94f428cc382826c3b70ffc384a61a292ce0b93de52401048e",
+      "exit": 1,
+      "stdout": "",
+      "raised": "IndexError: string index out of range"
+    },
+    {
+      "name": "kind-first-int",
+      "jq": ".packages[0].targets[1].kind = [1, \"bin\"]",
+      "ed": "14a\n            1,\n.\n",
+      "sha256": "2368839ba8ede66f4375716c459ff65b2b4531528841f4bd921d56ade92972e5",
+      "exit": 0,
+      "stdout": "capability matrix: 2 rows\nby status: new=2\nby kind: new-bin=1, new-example=1\nthis tree: 0 binaries, 1 examples, 0 clap subcommands, 0 python tools, 0 systemd units\nok: every row resolved and every entry point of this tree has a row\n",
+      "stderr": ""
+    },
+    {
+      "name": "kind-first-list",
+      "jq": ".packages[0].targets[1].kind = [[\"bin\"]]",
+      "ed": "15c\n            [\n              \"bin\"\n            ]\n.\n",
+      "sha256": "87472e0b213c7faaee13aa47d50b7957d0744eb6da57172633dece01216eb418",
+      "exit": 0,
+      "stdout": "capability matrix: 2 rows\nby status: new=2\nby kind: new-bin=1, new-example=1\nthis tree: 0 binaries, 1 examples, 0 clap subcommands, 0 python tools, 0 systemd units\nok: every row resolved and every entry point of this tree has a row\n",
+      "stderr": ""
+    },
+    {
+      "name": "src-missing",
+      "jq": "del(.packages[0].targets[1].src_path)",
+      "ed": "17,18c\n          \"name\": \"demo\"\n.\n",
+      "sha256": "d5c39578af1dca38fcff0efc1bc61709c02adf59dd1b0af4457cce4d1afc7818",
+      "exit": 1,
+      "stdout": "",
+      "raised": "KeyError: 'src_path'"
+    },
+    {
+      "name": "src-null",
+      "jq": ".packages[0].targets[1].src_path = null",
+      "ed": "18c\n          \"src_path\": null\n.\n",
+      "sha256": "de2140aeb6d4c457ac25abdf224f710db8e607050918f1523a212f7d85d16b71",
+      "exit": 1,
+      "stdout": "",
+      "raised": "ValueError: no path specified"
+    },
+    {
+      "name": "src-empty",
+      "jq": ".packages[0].targets[1].src_path = \"\"",
+      "ed": "18c\n          \"src_path\": \"\"\n.\n",
+      "sha256": "2b841a1f76a7b0bd142e76be90cef0d2d8627a5e4a0c799aa6d918d53b5752b7",
+      "exit": 1,
+      "stdout": "",
+      "raised": "ValueError: no path specified"
+    },
+    {
+      "name": "src-zero",
+      "jq": ".packages[0].targets[1].src_path = 0",
+      "ed": "18c\n          \"src_path\": 0\n.\n",
+      "sha256": "4150e6703e9e4bcf84f72b420639c0b56bbdec036194d23d5a96d5cff592bfea",
+      "exit": 1,
+      "stdout": "",
+      "raised": "ValueError: no path specified"
+    },
+    {
+      "name": "src-false",
+      "jq": ".packages[0].targets[1].src_path = false",
+      "ed": "18c\n          \"src_path\": false\n.\n",
+      "sha256": "990ac0fce0ce588d36a046774a0cf079226459c469f7640ec2dd2653d4076fb6",
+      "exit": 1,
+      "stdout": "",
+      "raised": "ValueError: no path specified"
+    },
+    {
+      "name": "src-empty-list",
+      "jq": ".packages[0].targets[1].src_path = []",
+      "ed": "18c\n          \"src_path\": []\n.\n",
+      "sha256": "b09f95685bf4852d232fd41903eb99c134430a69a266a221a819dc3d4f86190e",
+      "exit": 1,
+      "stdout": "",
+      "raised": "ValueError: no path specified"
+    },
+    {
+      "name": "src-int",
+      "jq": ".packages[0].targets[1].src_path = 1",
+      "ed": "18c\n          \"src_path\": 1\n.\n",
+      "sha256": "832489b1439bbbaf539817a987d48b8885f2c073509a76640c7e765daf974222",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: expected str, bytes or os.PathLike object, not int"
+    },
+    {
+      "name": "src-list",
+      "jq": ".packages[0].targets[1].src_path = [\"@ROOT@/crates/demo/src/main.rs\"]",
+      "ed": "18c\n          \"src_path\": [\n            \"@ROOT@/crates/demo/src/main.rs\"\n          ]\n.\n",
+      "sha256": "3e8ac4ce8c3373ba1a359f4d8f58ea6ea17032e566d2090184a69ad3832994d9",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: expected str, bytes or os.PathLike object, not list"
+    },
+    {
+      "name": "src-dict",
+      "jq": ".packages[0].targets[1].src_path = {\"a\": 1}",
+      "ed": "18c\n          \"src_path\": {\n            \"a\": 1\n          }\n.\n",
+      "sha256": "5f42014a648d9b95fa188a9904e2a0577bbca38922e2e25314ac153dcc95074b",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: expected str, bytes or os.PathLike object, not dict"
+    },
+    {
+      "name": "lib-src-missing",
+      "jq": "del(.packages[0].targets[0].src_path)",
+      "ed": "10,11c\n          \"name\": \"demo\"\n.\n",
+      "sha256": "f6d801f17e2aad8552621b073593099800ef9049f291b4ae39a128a4d286d026",
+      "exit": 0,
+      "stdout": "capability matrix: 2 rows\nby status: new=2\nby kind: new-bin=1, new-example=1\nthis tree: 1 binaries, 1 examples, 0 clap subcommands, 0 python tools, 0 systemd units\nok: every row resolved and every entry point of this tree has a row\n",
+      "stderr": ""
+    },
+    {
+      "name": "package-name-missing",
+      "jq": "del(.packages[0].name)",
+      "ed": "4d\n",
+      "sha256": "7133255fcaf72f2807202a016e3735099b5eebecbea245332c2ab537c61b1f2e",
+      "exit": 1,
+      "stdout": "",
+      "raised": "KeyError: 'name'"
+    },
+    {
+      "name": "package-name-int",
+      "jq": ".packages[0].name = 5",
+      "ed": "4c\n      \"name\": 5,\n.\n",
+      "sha256": "0d3d9a0971a030466cdb63ecdfe51ae1404f73606372a2fd334f2a32ab0c00ae",
+      "exit": 0,
+      "stdout": "capability matrix: 2 rows\nby status: new=2\nby kind: new-bin=1, new-example=1\nthis tree: 1 binaries, 1 examples, 0 clap subcommands, 0 python tools, 0 systemd units\nok: every row resolved and every entry point of this tree has a row\n",
+      "stderr": ""
+    },
+    {
+      "name": "target-name-missing",
+      "jq": "del(.packages[0].targets[1].name)",
+      "ed": "17d\n",
+      "sha256": "89de99f6679fac68657e560ea959c69f6da9b0bfbd04432f96d89629fef9281c",
+      "exit": 1,
+      "stdout": "",
+      "raised": "KeyError: 'name'"
+    },
+    {
+      "name": "target-name-int",
+      "jq": ".packages[0].targets[1].name = 5",
+      "ed": "17c\n          \"name\": 5,\n.\n",
+      "sha256": "8ae894968716cfbcb4cb6db2ea7e0c720612f276f8d6d33c813eddd061d7a3cb",
+      "exit": 0,
+      "stdout": "capability matrix: 2 rows\nby status: new=2\nby kind: new-bin=1, new-example=1\nthis tree: 1 binaries, 1 examples, 0 clap subcommands, 0 python tools, 0 systemd units\nok: every row resolved and every entry point of this tree has a row\n",
+      "stderr": ""
+    },
+    {
+      "name": "extra-bin",
+      "jq": ".packages[0].targets += [{kind: [\"bin\"], name: \"extra\", src_path: \"@ROOT@/crates/demo/src/bin/extra.rs\"}]",
+      "ed": "25a\n        },\n        {\n          \"kind\": [\n            \"bin\"\n          ],\n          \"name\": \"extra\",\n          \"src_path\": \"@ROOT@/crates/demo/src/bin/extra.rs\"\n.\n",
+      "sha256": "1562153e672c229f14d8947085900c6b9d36cc509db1abd3b41365b41ce457bf",
+      "exit": 1,
+      "stdout": "capability matrix: 2 rows\nby status: new=2\nby kind: new-bin=1, new-example=1\nthis tree: 2 binaries, 1 examples, 0 clap subcommands, 0 python tools, 0 systemd units\n\n1 problem(s):\n  - no row for bin demo/extra: crates/demo/src/bin/extra.rs\n",
+      "stderr": ""
+    }
+  ]
+}

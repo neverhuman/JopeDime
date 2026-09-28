@@ -4,7 +4,11 @@
 //! Rust port of `deploy/ci/coverage.py` (archived at `8a55c4fef`; see
 //! `docs/archive/python-archive-manifest.json`): the same discovery keys and shapes, the same
 //! error lines in the same order and the same summary line, so `deploy/ci/check.sh` changes only
-//! the command it runs.
+//! the command it runs. Where the Python crashed on a malformed map or Cargo metadata (a
+//! traceback, no report, exit status 1) the port refuses too, with an error naming the field and
+//! the offending type (see [`py::exception`]; the text is not CPython's); it never skips,
+//! filters or defaults a malformed value, and never passes a map the Python failed. The negative
+//! cases are replayed against captured Python outputs in `tests/python_parity.rs`.
 //!
 //! Discovery reads `cargo metadata --locked --no-deps` (workspace packages, features, targets)
 //! and `git ls-files --cached --others --exclude-standard` (Python test families, workflows and
@@ -90,25 +94,44 @@ pub fn workflow_jobs(text: &str) -> std::result::Result<Vec<String>, String> {
     Ok(names)
 }
 
-/// The features a package enables by default: `default` and everything it transitively names.
-pub fn default_features(discovered: &Dict, package: &str) -> BTreeSet<String> {
-    let prefix = format!("feature:{package}/");
-    let features: BTreeMap<&str, Vec<String>> = discovered
+/// A malformed map or metadata value the Python crashed on (a traceback, no report, exit status
+/// 1): the field, then what could not be done with it and its type (see [`py::exception`]).
+fn raised(context: impl std::fmt::Display, exception: String) -> Error {
+    Error::Shape(format!("{context}: {exception}"))
+}
+
+/// A discovery field that is a list of strings (what discovery writes and Cargo reports); anything
+/// else is refused rather than filtered.
+fn strings(value: &Value, context: &str) -> Result<Vec<String>> {
+    let refuse = || {
+        Error::Shape(format!(
+            "{context}: expected a list of strings, found {}",
+            value.repr()
+        ))
+    };
+    value
+        .as_list()
+        .ok_or_else(refuse)?
         .iter()
-        .filter_map(|(key, value)| {
-            let feature = key.strip_prefix(prefix.as_str())?;
-            let dependencies = value
-                .get("dependencies")
-                .and_then(Value::as_list)
-                .map(|list| {
-                    list.iter()
-                        .filter_map(|d| d.as_str().map(str::to_owned))
-                        .collect()
-                })
-                .unwrap_or_default();
-            Some((feature, dependencies))
-        })
-        .collect();
+        .map(|item| item.as_str().map(str::to_owned).ok_or_else(refuse))
+        .collect()
+}
+
+/// The features a package enables by default: `default` and everything it transitively names.
+pub fn default_features(discovered: &Dict, package: &str) -> Result<BTreeSet<String>> {
+    let prefix = format!("feature:{package}/");
+    let mut features: BTreeMap<&str, Vec<String>> = BTreeMap::new();
+    for (key, value) in discovered.iter() {
+        if let Some(feature) = key.strip_prefix(prefix.as_str()) {
+            // `value["dependencies"]`
+            let dependencies = py::subscript(value, "dependencies")
+                .map_err(|e| raised(format_args!("discovered {key}"), e))?;
+            features.insert(
+                feature,
+                strings(dependencies, &format!("discovered {key} dependencies"))?,
+            );
+        }
+    }
     let mut active = BTreeSet::new();
     let mut pending: Vec<String> = if features.contains_key("default") {
         vec!["default".into()]
@@ -124,7 +147,7 @@ pub fn default_features(discovered: &Dict, package: &str) -> BTreeSet<String> {
             }
         }
     }
-    active
+    Ok(active)
 }
 
 fn command_output(root: &Path, program: &str, args: &[&str]) -> Result<Vec<u8>> {
@@ -144,11 +167,29 @@ fn command_output(root: &Path, program: &str, args: &[&str]) -> Result<Vec<u8>> 
     Ok(output.stdout)
 }
 
-fn relative(path: &str, root: &Path) -> Result<String> {
-    Path::new(path)
-        .strip_prefix(root)
-        .map(|p| p.to_string_lossy().into_owned())
-        .map_err(|_| Error::Shape(format!("{path} is not under {}", root.display())))
+/// `str(Path(path).relative_to(root))`: `.` for the root itself; a path outside the root refuses.
+fn relative(path: &str, root: &Path, context: &str) -> Result<String> {
+    let relative = Path::new(path).strip_prefix(root).map_err(|_| {
+        raised(
+            context,
+            format!(
+                "ValueError: {} is not in the subpath of {}",
+                pyjson::str_repr(path),
+                pyjson::str_repr(&root.to_string_lossy())
+            ),
+        )
+    })?;
+    // pathlib drops repeated separators and `.` components; so does rebuilding from components.
+    let text = relative
+        .components()
+        .collect::<std::path::PathBuf>()
+        .to_string_lossy()
+        .into_owned();
+    Ok(if text.is_empty() {
+        ".".to_owned()
+    } else {
+        text
+    })
 }
 
 fn suffix(name: &str) -> &str {
@@ -169,17 +210,32 @@ fn kind(kind: &str) -> Dict {
     [("kind", Value::from(kind))].into_iter().collect()
 }
 
-fn sorted_strings(value: Option<&Value>) -> Value {
-    let mut items: Vec<String> = value
-        .and_then(Value::as_list)
-        .map(|list| {
-            list.iter()
-                .filter_map(|v| v.as_str().map(str::to_owned))
-                .collect()
-        })
-        .unwrap_or_default();
+/// `for x in value`: the items (a list's, a dict's keys, a string's characters), or Python's
+/// `TypeError`.
+fn iterate(value: &Value, context: &str) -> Result<Vec<Value>> {
+    py::iterate(value).ok_or_else(|| raised(context, py::exception::not_iterable(value)))
+}
+
+/// `sorted(value)` for what Cargo reports as a list of strings: iterated as Python iterated it,
+/// every item a string. A non-string item (which Python sorted when the items were mutually
+/// comparable numbers) is refused rather than filtered.
+fn sorted_strings(value: &Value, context: &str) -> Result<Value> {
+    let items = iterate(value, context)?;
+    let mut items = strings(&Value::List(items), context)?;
     items.sort();
-    Value::List(items.into_iter().map(Value::from).collect())
+    Ok(Value::List(items.into_iter().map(Value::from).collect()))
+}
+
+/// `value[key]` on a metadata object; refuses where Python raised (missing key, not a dict).
+fn field<'a>(value: &'a Value, key: &str, context: &str) -> Result<&'a Value> {
+    py::subscript(value, key).map_err(|e| raised(context, e))
+}
+
+/// `Path(value)`: a string; any other type refuses (the Python crashed with a `TypeError`).
+fn path_text<'a>(value: &'a Value, context: &str) -> Result<&'a str> {
+    value
+        .as_str()
+        .ok_or_else(|| raised(context, py::exception::path_argument(value)))
 }
 
 /// Everything the map must assign, keyed and sorted as `coverage.py discover` printed it.
@@ -219,71 +275,78 @@ pub fn discover_from<'a>(
     root: &Path,
     read: &dyn Fn(&str) -> Result<String>,
 ) -> Result<Dict> {
-    let shape = |what: &str| Error::Shape(format!("cargo metadata has no {what}"));
-    let members = metadata
-        .get("workspace_members")
-        .and_then(Value::as_list)
-        .ok_or_else(|| shape("workspace_members"))?;
+    // Every field the Python indexed is required as it was (`KeyError`/`TypeError` there, a
+    // refusal here); nothing is skipped or defaulted. The lists Cargo reports as lists of strings
+    // are required to be exactly that.
+    let packages = field(metadata, "packages", "cargo metadata")?;
     let mut items: BTreeMap<String, Dict> = BTreeMap::new();
-    for package in metadata
-        .get("packages")
-        .and_then(Value::as_list)
-        .ok_or_else(|| shape("packages"))?
+    for (index, package) in iterate(packages, "cargo metadata packages")?
+        .iter()
+        .enumerate()
     {
-        if !package.get("id").is_some_and(|id| members.contains(id)) {
+        let at = format!("cargo metadata packages[{index}]");
+        // `package["id"] not in metadata["workspace_members"]`
+        let id = field(package, "id", &at)?;
+        let members = field(metadata, "workspace_members", "cargo metadata")?;
+        let member = py::contains_or_raise(members, id).map_err(|e| {
+            raised(
+                format_args!("{at} id in cargo metadata workspace_members"),
+                e,
+            )
+        })?;
+        if !member {
             continue;
         }
-        let name = package
-            .get("name")
-            .and_then(Value::as_str)
-            .ok_or_else(|| shape("name"))?;
-        let manifest = package
-            .get("manifest_path")
-            .and_then(Value::as_str)
-            .ok_or_else(|| shape("manifest_path"))?;
+        // f"package:{name}" formats any value, as the Python did.
+        let name = field(package, "name", &at)?.py_str();
+        let at = format!("cargo metadata package {name}");
+        let manifest_at = format!("{at} manifest_path");
+        let manifest = path_text(field(package, "manifest_path", &at)?, &manifest_at)?;
         let mut item = kind("package");
-        item.insert("manifest", Value::from(relative(manifest, root)?));
+        item.insert(
+            "manifest",
+            Value::from(relative(manifest, root, &manifest_at)?),
+        );
         items.insert(format!("package:{name}"), item);
-        if let Some(features) = package.get("features").and_then(Value::as_dict) {
-            for (feature, dependencies) in features.iter() {
-                let mut item = kind("feature");
-                item.insert("dependencies", sorted_strings(Some(dependencies)));
-                items.insert(format!("feature:{name}/{feature}"), item);
-            }
+        // `package["features"].items()`
+        let features = field(package, "features", &at)?;
+        let features = features.as_dict().ok_or_else(|| {
+            raised(
+                format_args!("{at} features"),
+                py::exception::no_attribute(features, "items"),
+            )
+        })?;
+        for (feature, dependencies) in features.iter() {
+            let mut item = kind("feature");
+            item.insert(
+                "dependencies",
+                sorted_strings(dependencies, &format!("{at} feature {feature}"))?,
+            );
+            items.insert(format!("feature:{name}/{feature}"), item);
         }
-        for target in package
-            .get("targets")
-            .and_then(Value::as_list)
-            .ok_or_else(|| shape("targets"))?
+        let targets = field(package, "targets", &at)?;
+        for (index, target) in iterate(targets, &format!("{at} targets"))?
+            .iter()
+            .enumerate()
         {
-            let kinds: Vec<&str> = target
-                .get("kind")
-                .and_then(Value::as_list)
-                .map(|list| list.iter().filter_map(Value::as_str).collect())
-                .unwrap_or_default();
-            let target_name = target
-                .get("name")
-                .and_then(Value::as_str)
-                .unwrap_or_default();
-            let source = target
-                .get("src_path")
-                .and_then(Value::as_str)
-                .unwrap_or_default();
+            let at = format!("{at} targets[{index}]");
+            // f"target:{name}/{'+'.join(target['kind'])}/{target['name']}"
+            let kinds = py::join("+", field(target, "kind", &at)?)
+                .map_err(|e| raised(format_args!("{at} kind"), e))?;
+            let target_name = field(target, "name", &at)?.py_str();
+            let source_at = format!("{at} src_path");
+            let source = path_text(field(target, "src_path", &at)?, &source_at)?;
             let mut item = kind("target");
-            item.insert("source", Value::from(relative(source, root)?));
-            item.insert("test", target.get("test").cloned().unwrap_or(Value::Null));
-            item.insert(
-                "doctest",
-                target.get("doctest").cloned().unwrap_or(Value::Null),
-            );
-            item.insert(
-                "required_features",
-                sorted_strings(target.get("required-features")),
-            );
-            items.insert(
-                format!("target:{name}/{}/{target_name}", kinds.join("+")),
-                item,
-            );
+            item.insert("source", Value::from(relative(source, root, &source_at)?));
+            item.insert("test", field(target, "test", &at)?.clone());
+            item.insert("doctest", field(target, "doctest", &at)?.clone());
+            // `target.get("required-features", [])`
+            let required = match target.get("required-features") {
+                None => Value::List(vec![]),
+                Some(value) => sorted_strings(value, &format!("{at} required-features"))?,
+            };
+            item.insert("required_features", required);
+            items.insert(format!("target:{name}/{kinds}/{target_name}"), item);
         }
     }
     let unique: BTreeSet<&str> = files.into_iter().filter(|f| !f.is_empty()).collect();
@@ -321,23 +384,57 @@ fn is_one_of(value: Option<&Value>, allowed: &[&str]) -> bool {
     value.is_some_and(|v| allowed.iter().any(|a| v == &Value::from(*a)))
 }
 
-fn keys(value: Option<&Value>) -> BTreeSet<String> {
-    value
-        .and_then(Value::as_dict)
-        .map(|d| d.keys().map(str::to_owned).collect())
-        .unwrap_or_default()
+/// `mapping.get(name, {})` used as a dict (`.keys()` or `.items()`): absent is empty, anything
+/// but an object raises as it did in Python.
+fn section<'a>(mapping: &'a Dict, name: &str, method: &str, empty: &'a Dict) -> Result<&'a Dict> {
+    match mapping.get(name) {
+        None => Ok(empty),
+        Some(Value::Dict(dict)) => Ok(dict),
+        Some(other) => Err(raised(
+            format_args!("coverage map {name}"),
+            py::exception::no_attribute(other, method),
+        )),
+    }
+}
+
+/// `for x in value: if x not in known` over an item's lane or disposition assignment, as the
+/// Python did it: a list's items, a dict's keys or a string's characters are each looked up, an
+/// unknown one is reported as `str(x)`, and a value Python could not iterate or hash raises.
+/// Nothing is filtered out.
+fn unknown_members(
+    assigned: &Value,
+    known: &Dict,
+    context: &str,
+    report: &mut dyn FnMut(String),
+) -> Result<()> {
+    for member in iterate(assigned, context)? {
+        let key = py::Key::of(&member)
+            .ok_or_else(|| raised(context, py::exception::unhashable(&member)))?;
+        if !key.as_str().is_some_and(|name| known.contains_key(name)) {
+            report(member.py_str());
+        }
+    }
+    Ok(())
 }
 
 /// Every error of `mapping` against `discovered`, in `coverage.py validate` order.
-pub fn validate(mapping: &Value, discovered: &Dict) -> Vec<String> {
+///
+/// Where the Python raised on a malformed map (a section, lane, disposition or item that is not an
+/// object, an assignment it could not iterate, an assignment member it could not hash) it stopped
+/// with a traceback and printed nothing; this returns that refusal as an error instead of a report.
+/// Malformed assignments are never filtered: every member of a list, every key of an object and
+/// every character of a string is looked up exactly as the Python looked it up.
+pub fn validate(mapping: &Value, discovered: &Dict) -> Result<Vec<String>> {
     let empty = Dict::new();
+    let map = mapping
+        .as_dict()
+        .ok_or_else(|| raised("coverage map", py::exception::no_attribute(mapping, "get")))?;
     let mut errors = vec![];
-    if mapping.get("schema") != Some(&Value::from(SCHEMA)) {
+    if map.get("schema") != Some(&Value::from(SCHEMA)) {
         errors.push("unsupported coverage schema".to_owned());
     }
-    let recorded_value = mapping.get("items");
-    let recorded = recorded_value.and_then(Value::as_dict).unwrap_or(&empty);
-    let recorded_keys = keys(recorded_value);
+    let recorded = section(map, "items", "keys", &empty)?;
+    let recorded_keys: BTreeSet<String> = recorded.keys().map(str::to_owned).collect();
     let discovered_keys: BTreeSet<String> = discovered.keys().map(str::to_owned).collect();
     for key in discovered_keys.difference(&recorded_keys) {
         errors.push(format!("unassigned addition: {key}"));
@@ -345,15 +442,20 @@ pub fn validate(mapping: &Value, discovered: &Dict) -> Vec<String> {
     for key in recorded_keys.difference(&discovered_keys) {
         errors.push(format!("stale assignment: {key}"));
     }
-    let lanes = mapping
-        .get("lanes")
-        .and_then(Value::as_dict)
-        .unwrap_or(&empty);
-    let dispositions = mapping
-        .get("dispositions")
-        .and_then(Value::as_dict)
-        .unwrap_or(&empty);
+    let lanes = section(map, "lanes", "items", &empty)?;
     for (name, lane) in lanes.iter() {
+        let Some(lane) = lane.as_dict() else {
+            // `field not in lane` works on a string or a list and then `lane.get` fails; on
+            // anything else `in` itself fails.
+            let exception = match lane {
+                Value::Str(_) | Value::List(_) => py::exception::no_attribute(lane, "get"),
+                other => py::exception::not_container(other),
+            };
+            return Err(raised(
+                format_args!("coverage map lanes[{}]", pyjson::str_repr(name)),
+                exception,
+            ));
+        };
         for field in LANE_FIELDS {
             if lane.get(field).is_none() {
                 errors.push(format!("lane {name} missing {field}"));
@@ -386,7 +488,14 @@ pub fn validate(mapping: &Value, discovered: &Dict) -> Vec<String> {
             errors.push(format!("lane {name} must declare result backend"));
         }
     }
+    let dispositions = section(map, "dispositions", "items", &empty)?;
     for (name, disposition) in dispositions.iter() {
+        let Some(disposition) = disposition.as_dict() else {
+            return Err(raised(
+                format_args!("coverage map dispositions[{}]", pyjson::str_repr(name)),
+                py::exception::no_attribute(disposition, "get"),
+            ));
+        };
         if !is_one_of(disposition.get("status"), &["deferred", "historical"]) {
             errors.push(format!("disposition {name} has invalid status"));
         }
@@ -402,91 +511,108 @@ pub fn validate(mapping: &Value, discovered: &Dict) -> Vec<String> {
         .map(|(name, _)| name)
         .collect();
     let no_list = Value::List(vec![]);
+    let full_cpu_default = Value::from("full-cpu-default");
     for key in recorded_keys.intersection(&discovered_keys) {
+        let at = format!("coverage map items[{}]", pyjson::str_repr(key));
         let item = recorded.get(key).expect("recorded key");
+        let item = item
+            .as_dict()
+            .ok_or_else(|| raised(&at, py::exception::no_attribute(item, "get")))?;
         let found = discovered.get(key).expect("discovered key");
         if item.get("discovery") != Some(found) {
             errors.push(format!("changed discovery: {key}; review its assignment"));
         }
+        // `item.get("lanes", [])` and `item.get("dispositions", [])`, kept as the values they are.
         let assigned = item.get("lanes").unwrap_or(&no_list);
         let deferred = item.get("dispositions").unwrap_or(&no_list);
-        let assigned_names: Vec<&str> = assigned
-            .as_list()
-            .map(|l| l.iter().filter_map(Value::as_str).collect())
-            .unwrap_or_default();
-        let deferred_names: Vec<&str> = deferred
-            .as_list()
-            .map(|l| l.iter().filter_map(Value::as_str).collect())
-            .unwrap_or_default();
+        let lanes_at = format!("{at}.lanes");
+        let dispositions_at = format!("{at}.dispositions");
         if let Some(rest) = key.strip_prefix("target:") {
             let package = rest.split('/').next().unwrap_or_default();
-            let required: BTreeSet<String> = found
-                .get("required_features")
-                .and_then(Value::as_list)
-                .map(|l| {
-                    l.iter()
-                        .filter_map(|v| v.as_str().map(str::to_owned))
-                        .collect()
-                })
-                .unwrap_or_default();
-            let active = default_features(discovered, package);
+            // `set(discovered[key]["required_features"])`
+            let required = field(found, "required_features", &format!("discovered {key}"))?;
+            let required: BTreeSet<String> =
+                strings(required, &format!("discovered {key} required_features"))?
+                    .into_iter()
+                    .collect();
+            let active = default_features(discovered, package)?;
             let missing: Vec<String> = required.difference(&active).cloned().collect();
-            if !missing.is_empty()
-                && (assigned_names
-                    .iter()
-                    .any(|lane| default_lanes.contains(lane))
-                    || deferred_names.contains(&"full-cpu-default"))
-            {
-                errors.push(format!(
-                    "non-default required features {} assigned to default execution: {key}",
-                    py::str_list_repr(&missing)
-                ));
+            if !missing.is_empty() {
+                // `default_lanes.intersection(assigned) or "full-cpu-default" in deferred`: the
+                // intersection iterates and hashes every member; `in` runs only when it is empty.
+                let mut default_execution = false;
+                for member in iterate(assigned, &lanes_at)? {
+                    let name = py::Key::of(&member)
+                        .ok_or_else(|| raised(&lanes_at, py::exception::unhashable(&member)))?;
+                    default_execution |= name.as_str().is_some_and(|n| default_lanes.contains(n));
+                }
+                if !default_execution {
+                    default_execution =
+                        py::contains(deferred, &full_cpu_default).ok_or_else(|| {
+                            raised(&dispositions_at, py::exception::not_container(deferred))
+                        })?;
+                }
+                if default_execution {
+                    errors.push(format!(
+                        "non-default required features {} assigned to default execution: {key}",
+                        py::str_list_repr(&missing)
+                    ));
+                }
             }
         }
         if !assigned.truthy() && !deferred.truthy() {
             errors.push(format!("unassigned item: {key}"));
         }
-        for lane in &assigned_names {
-            if !lanes.contains_key(lane) {
-                errors.push(format!("unknown lane {lane} for {key}"));
-            }
-        }
-        for disposition in &deferred_names {
-            if !dispositions.contains_key(disposition) {
+        unknown_members(assigned, lanes, &lanes_at, &mut |lane| {
+            errors.push(format!("unknown lane {lane} for {key}"));
+        })?;
+        unknown_members(
+            deferred,
+            dispositions,
+            &dispositions_at,
+            &mut |disposition| {
                 errors.push(format!("unknown disposition {disposition} for {key}"));
-            }
-        }
+            },
+        )?;
         if !item.get("scope").is_some_and(Value::truthy) {
             errors.push(format!("missing execution scope: {key}"));
         }
     }
-    errors
+    Ok(errors)
 }
 
-/// The per-kind counts `validate` summarises, sorted by kind.
-pub fn counts(discovered: &Dict) -> Dict {
+/// The per-kind counts `validate` summarises, sorted by kind (`i["kind"]` of every discovered
+/// item, as the Python counted them).
+pub fn counts(discovered: &Dict) -> Result<Dict> {
     let mut counts: BTreeMap<String, usize> = BTreeMap::new();
-    for item in discovered.values() {
-        if let Some(kind) = item.get("kind").and_then(Value::as_str) {
-            *counts.entry(kind.to_owned()).or_default() += 1;
-        }
+    for (key, item) in discovered.iter() {
+        let kind = field(item, "kind", &format!("discovered {key}"))?;
+        let kind = kind.as_str().ok_or_else(|| {
+            Error::Shape(format!(
+                "discovered {key} kind: expected a string, found {}",
+                kind.repr()
+            ))
+        })?;
+        *counts.entry(kind.to_owned()).or_default() += 1;
     }
-    counts
+    Ok(counts
         .into_iter()
         .map(|(k, n)| (k, Value::from(n)))
-        .collect()
+        .collect())
 }
 
-/// `coverage.py validate`: the error lines, then the JSON summary; exit 1 on any error.
+/// `coverage.py validate`: the error lines, then the JSON summary; exit 1 on any error. A map the
+/// Python could not read (it raised) is an error, not a report.
 pub fn validate_report(root: &Path, mapping_path: &Path) -> Result<(String, bool)> {
     let discovered = discover(root)?;
     let mapping = py::load_json(mapping_path)?;
-    Ok(validate_text(&mapping, &discovered))
+    validate_text(&mapping, &discovered)
 }
 
-/// The `validate` report for a map and a discovered inventory, and whether it passes.
-pub fn validate_text(mapping: &Value, discovered: &Dict) -> (String, bool) {
-    let errors = validate(mapping, discovered);
+/// The `validate` report for a map and a discovered inventory, and whether it passes; an error
+/// where the Python raised instead of reporting.
+pub fn validate_text(mapping: &Value, discovered: &Dict) -> Result<(String, bool)> {
+    let errors = validate(mapping, discovered)?;
     let mut out = String::new();
     for error in &errors {
         out.push_str(error);
@@ -494,14 +620,14 @@ pub fn validate_text(mapping: &Value, discovered: &Dict) -> (String, bool) {
     }
     let summary: Dict = [
         ("stage", Value::from("static")),
-        ("counts", Value::Dict(counts(discovered))),
+        ("counts", Value::Dict(counts(discovered)?)),
         ("unassigned_or_invalid", Value::from(errors.len())),
     ]
     .into_iter()
     .collect();
     out.push_str(&pyjson::dumps(&Value::Dict(summary), true, None));
     out.push('\n');
-    (out, errors.is_empty())
+    Ok((out, errors.is_empty()))
 }
 
 /// `coverage.py discover`: `{"stage": "static", "items": ...}` with a two-space indent.
@@ -564,7 +690,7 @@ mod tests {
     #[test]
     fn current_mapping() {
         let m = mapping();
-        assert_eq!(validate(&m, &recorded(&m)), Vec::<String>::new());
+        assert_eq!(validate(&m, &recorded(&m)).unwrap(), Vec::<String>::new());
     }
 
     #[test]
@@ -581,7 +707,9 @@ mod tests {
         ] {
             let mut discovered = recorded(&m);
             discovered.insert(format!("new:{kind}"), Value::Dict(super::kind(kind)));
-            assert!(validate(&m, &discovered).contains(&format!("unassigned addition: new:{kind}")));
+            assert!(validate(&m, &discovered)
+                .unwrap()
+                .contains(&format!("unassigned addition: new:{kind}")));
         }
     }
 
@@ -599,6 +727,7 @@ mod tests {
             Value::List(vec![Value::from("new-capability")]),
         );
         assert!(validate(&m, &discovered)
+            .unwrap()
             .iter()
             .any(|e| e.contains("changed discovery")));
     }
@@ -635,6 +764,7 @@ mod tests {
             );
             assert!(
                 validate(&m, &discovered)
+                    .unwrap()
                     .iter()
                     .any(|e| e.contains("non-default required features")),
                 "{lane:?} {disposition:?}"
@@ -643,7 +773,7 @@ mod tests {
         let expected: BTreeSet<String> = ["default", "hyperion-cpu", "batch-worker"]
             .map(String::from)
             .into();
-        assert_eq!(default_features(&discovered, "hyperion"), expected);
+        assert_eq!(default_features(&discovered, "hyperion").unwrap(), expected);
     }
 
     #[test]
@@ -669,10 +799,12 @@ mod tests {
         item.insert("lanes", Value::List(vec![]));
         item.insert("dispositions", Value::List(vec![]));
         assert!(validate(&m, &discovered)
+            .unwrap()
             .iter()
             .any(|e| e.contains("unassigned item")));
         discovered.remove(&key);
         assert!(validate(&m, &discovered)
+            .unwrap()
             .iter()
             .any(|e| e.contains("stale assignment")));
     }
@@ -695,7 +827,7 @@ mod tests {
             .as_dict_mut()
             .unwrap()
             .remove("requires_nonzero_tests");
-        assert!(validate(&m, &discovered).len() >= 2);
+        assert!(validate(&m, &discovered).unwrap().len() >= 2);
     }
 
     #[test]
@@ -704,6 +836,7 @@ mod tests {
         let discovered = recorded(&m);
         entry(section(&mut m, "lanes"), "rust-check").remove("feature_selection");
         assert!(validate(&m, &discovered)
+            .unwrap()
             .iter()
             .any(|e| e.contains("feature selection")));
     }
