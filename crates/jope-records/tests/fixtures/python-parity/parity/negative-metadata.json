@@ -1,0 +1,30 @@
+{
+  "packages": [
+    {
+      "name": "demo",
+      "targets": [
+        {
+          "kind": [
+            "lib"
+          ],
+          "name": "demo",
+          "src_path": "@ROOT@/crates/demo/src/lib.rs"
+        },
+        {
+          "kind": [
+            "bin"
+          ],
+          "name": "demo",
+          "src_path": "@ROOT@/crates/demo/src/main.rs"
+        },
+        {
+          "kind": [
+            "example"
+          ],
+          "name": "ex",
+          "src_path": "@ROOT@/crates/demo/examples/ex.rs"
+        }
+      ]
+    }
+  ]
+}

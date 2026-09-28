@@ -1,0 +1,1690 @@
+{
+  "source": "p1-failclosed-capture-20260928T020533Z",
+  "capture": "bash capture.sh (run p1-failclosed-capture-20260928T020533Z; Python from git show f46a9048fbb2697d6d1f4463a688083ea9dfcce1:<tool>, unmodified, in a scratch root)",
+  "tool": "deploy/ci/readme-benchmarks.py --write",
+  "root": "readme/root",
+  "readme": "readme/README.stale.md",
+  "cases": [
+    {
+      "name": "base",
+      "commands": ":",
+      "edits": [],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "258313a8378b9111735e4eb3834d78560c2ac6f77193afe404f383517074ca3d"
+    },
+    {
+      "name": "track-list",
+      "commands": "jqi $TR \"[]\"",
+      "edits": [
+        {
+          "path": "assets/regression/sotarena-tabular-regression-v2/tracks/tabular-regression-v2/track.json",
+          "ed": "1,38c\n[]\n.\n",
+          "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "AttributeError: 'list' object has no attribute 'get'"
+    },
+    {
+      "name": "track-split-list",
+      "commands": "jqi $TR \".split = []\"",
+      "edits": [
+        {
+          "path": "assets/regression/sotarena-tabular-regression-v2/tracks/tabular-regression-v2/track.json",
+          "ed": "32c\n    \"pairwise_tie_relative_tolerance\": 1E-12,\n.\n22,29c\n  \"split\": [],\n.\n",
+          "sha256": "2ef7a9429e4322040984cf43a0c1e524eedd7b10e02b386efcd3c080bf0a493a"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "AttributeError: 'list' object has no attribute 'get'"
+    },
+    {
+      "name": "track-policy-null",
+      "commands": "jqi $TR \".leaderboard_policy = null\"",
+      "edits": [
+        {
+          "path": "assets/regression/sotarena-tabular-regression-v2/tracks/tabular-regression-v2/track.json",
+          "ed": "30,37c\n  \"leaderboard_policy\": null\n.\n",
+          "sha256": "e078b30e52a9b442fe26cd3a42f13faa2d0bf9914220ff5147b48b56262c79bb"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "AttributeError: 'NoneType' object has no attribute 'get'"
+    },
+    {
+      "name": "track-excluded-null",
+      "commands": "jqi $TR \".split.excluded_datasets = null\"",
+      "edits": [
+        {
+          "path": "assets/regression/sotarena-tabular-regression-v2/tracks/tabular-regression-v2/track.json",
+          "ed": "32c\n    \"pairwise_tie_relative_tolerance\": 1E-12,\n.\n24,26c\n    \"excluded_datasets\": null,\n.\n",
+          "sha256": "07c7eb5e1769112700df078a451525004280289ad3c6a9d978072f56b94e076e"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: can only join an iterable"
+    },
+    {
+      "name": "track-excluded-int-member",
+      "commands": "jqi $TR \".split.excluded_datasets = [1]\"",
+      "edits": [
+        {
+          "path": "assets/regression/sotarena-tabular-regression-v2/tracks/tabular-regression-v2/track.json",
+          "ed": "32c\n    \"pairwise_tie_relative_tolerance\": 1E-12,\n.\n25c\n      1\n.\n",
+          "sha256": "a2be75f417231f6146ea7be954e8411c7f422a0d4b46bf35a0f8a39e25f8bc77"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: sequence item 0: expected str instance, int found"
+    },
+    {
+      "name": "track-excluded-string",
+      "commands": "jqi $TR \".split.excluded_datasets = \\\"ab\\\"\"",
+      "edits": [
+        {
+          "path": "assets/regression/sotarena-tabular-regression-v2/tracks/tabular-regression-v2/track.json",
+          "ed": "32c\n    \"pairwise_tie_relative_tolerance\": 1E-12,\n.\n24,26c\n    \"excluded_datasets\": \"ab\",\n.\n",
+          "sha256": "44132f53dff8e3c934cfbfa420967072bd351a9abd18153c5050381ba50beb86"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "87ad2fa5ff022d08f7fb2f16f066a746613e38443788d56b0affbf3e05b94cf5"
+    },
+    {
+      "name": "track-excluded-dict",
+      "commands": "jqi $TR \".split.excluded_datasets = {\\\"d1\\\": 1, \\\"d2\\\": 2}\"",
+      "edits": [
+        {
+          "path": "assets/regression/sotarena-tabular-regression-v2/tracks/tabular-regression-v2/track.json",
+          "ed": "32c\n    \"pairwise_tie_relative_tolerance\": 1E-12,\n.\n24,26c\n    \"excluded_datasets\": {\n      \"d1\": 1,\n      \"d2\": 2\n    },\n.\n",
+          "sha256": "9dcf6a784de44dc149cf4cc92bc8317bb83dd83dd5fb78572d6c2eb19025bfc6"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "d743b0e12a8c368faba5eab8da30ea428339b77c0aeb563a0cb332d0fc3b22bc"
+    },
+    {
+      "name": "track-metric-int",
+      "commands": "jqi $TR \".primary_metric = 1\"",
+      "edits": [
+        {
+          "path": "assets/regression/sotarena-tabular-regression-v2/tracks/tabular-regression-v2/track.json",
+          "ed": "32c\n    \"pairwise_tie_relative_tolerance\": 1E-12,\n.\n8c\n  \"primary_metric\": 1,\n.\n",
+          "sha256": "086c497f5df68a0e238f5804155c534a70e9b3a46e282dc80f85136b9aadeb22"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "AttributeError: 'int' object has no attribute 'upper'"
+    },
+    {
+      "name": "track-public-name-int",
+      "commands": "jqi $TR \".public_name = 7\"",
+      "edits": [
+        {
+          "path": "assets/regression/sotarena-tabular-regression-v2/tracks/tabular-regression-v2/track.json",
+          "ed": "32c\n    \"pairwise_tie_relative_tolerance\": 1E-12,\n.\n5c\n  \"public_name\": 7,\n.\n",
+          "sha256": "66cdb01f3264118fcbc94b1bef1ff728be33e23330c5f10f3853c8ad8764d07e"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "3ca77359654f649ff0f1c27c099af6dcb1b11f9e0ae20eb9e0d1e5a3730e17c2"
+    },
+    {
+      "name": "track-public-name-missing",
+      "commands": "jqi $TR \"del(.public_name)\"",
+      "edits": [
+        {
+          "path": "assets/regression/sotarena-tabular-regression-v2/tracks/tabular-regression-v2/track.json",
+          "ed": "32c\n    \"pairwise_tie_relative_tolerance\": 1E-12,\n.\n5d\n",
+          "sha256": "30514338b6a0cb88950aeaaa8dbd6bbc661b9d7e1290ec3a2f039acae54452d2"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "KeyError: 'public_name'"
+    },
+    {
+      "name": "track-restricted-missing",
+      "commands": "jqi $TR \"del(.split.restricted_dataset_count)\"",
+      "edits": [
+        {
+          "path": "assets/regression/sotarena-tabular-regression-v2/tracks/tabular-regression-v2/track.json",
+          "ed": "32c\n    \"pairwise_tie_relative_tolerance\": 1E-12,\n.\n27d\n",
+          "sha256": "490788de37c06b1a8c74108e0441c619c70b6921278c21b88497a627b2dd91ba"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "4045622c96e387666c5f53fab889685d062b2ed0ac32921b3149b85afae756fd"
+    },
+    {
+      "name": "track-labels-public-one",
+      "commands": "jqi $TR \".split.test_labels_public = 1\"",
+      "edits": [
+        {
+          "path": "assets/regression/sotarena-tabular-regression-v2/tracks/tabular-regression-v2/track.json",
+          "ed": "32c\n    \"pairwise_tie_relative_tolerance\": 1E-12,\n.\n28c\n    \"test_labels_public\": 1\n.\n",
+          "sha256": "91e8468469abbcdc28fc077427a7f7425a225402c78e286d3f021dbf014c124b"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "d3565fa0a691411549c28e8bb8eea99f6681c70ccb0ebee0bdd9edc2fdde4008"
+    },
+    {
+      "name": "track-together-one",
+      "commands": "jqi $TR \".leaderboard_policy.protocols_ranked_together = 1\"",
+      "edits": [
+        {
+          "path": "assets/regression/sotarena-tabular-regression-v2/tracks/tabular-regression-v2/track.json",
+          "ed": "34c\n    \"protocols_ranked_together\": 1,\n.\n32c\n    \"pairwise_tie_relative_tolerance\": 1E-12,\n.\n",
+          "sha256": "7ec0d53bf211b3ded20cd240729253fc33eb81318419129779af4ae011f795e1"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "f96ba1ef269df372a50ea7411e670c30bdfb765de6dea55aac7728a4b1154f96"
+    },
+    {
+      "name": "track-together-missing",
+      "commands": "jqi $TR \"del(.leaderboard_policy.protocols_ranked_together)\"",
+      "edits": [
+        {
+          "path": "assets/regression/sotarena-tabular-regression-v2/tracks/tabular-regression-v2/track.json",
+          "ed": "34d\n32c\n    \"pairwise_tie_relative_tolerance\": 1E-12,\n.\n",
+          "sha256": "52965bcb7b0bd6640c5c8128bdaedac0d163f14b333afc7db5f99fe17fa90feb"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "490a9489555961bfe6d2dfc054084d0ebfc5cf17ce87192465041574f4b02eb9"
+    },
+    {
+      "name": "track-elo-method-missing",
+      "commands": "jqi $TR \"del(.leaderboard_policy.elo_method)\"",
+      "edits": [
+        {
+          "path": "assets/regression/sotarena-tabular-regression-v2/tracks/tabular-regression-v2/track.json",
+          "ed": "32,33c\n    \"pairwise_tie_relative_tolerance\": 1E-12,\n.\n",
+          "sha256": "7cbe8225e29b0b8cf8523fdd8433e858fd88b6ebc2e2e15f1a60b3a905b5af1c"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "312c9c849293b76be4fa6d152927b9a64f23423a9226956fe05fe9293cd76e9b"
+    },
+    {
+      "name": "published-list",
+      "commands": "jqi $SN \"[]\"",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.json",
+          "ed": "1,5505c\n[]\n.\n",
+          "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "AttributeError: 'list' object has no attribute 'get'"
+    },
+    {
+      "name": "published-corrections-set",
+      "commands": "jqi $SN \".corrections = {}\"",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.json",
+          "ed": "7c\n  \"corrections\": {},\n.\n",
+          "sha256": "93b6b2979a2e55605200d607f86a3aab0438c027469c4cd0f6d0186743f3b63a"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "assets/regression/elo-tabular-regression-v2.json: the published ladder must apply no corrections\nThe committed benchmark evidence disagrees with itself; refusing to publish.\n"
+    },
+    {
+      "name": "published-excluded-float",
+      "commands": "jqi $SN \".excluded_rows = \\\"@LIT:0.0@\\\"\"",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.json",
+          "ed": "8c\n  \"excluded_rows\": 0.0,\n.\n",
+          "sha256": "5fbc7a400cfb7ee4078f56d7a6f06f4f8a5fb3bef918d64e42859a591d4fcf52"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "258313a8378b9111735e4eb3834d78560c2ac6f77193afe404f383517074ca3d"
+    },
+    {
+      "name": "published-excluded-false",
+      "commands": "jqi $SN \".excluded_rows = false\"",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.json",
+          "ed": "8c\n  \"excluded_rows\": false,\n.\n",
+          "sha256": "3942286586eead1ea327601691c50ee1d3fd0d0c2fdf3e79a01a3a3e8162f695"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "258313a8378b9111735e4eb3834d78560c2ac6f77193afe404f383517074ca3d"
+    },
+    {
+      "name": "published-methods-missing",
+      "commands": "jqi $SN \"del(.methods)\"",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.json",
+          "ed": "12d\n",
+          "sha256": "84ae5a0aeadb40c3a5b81c9e984948f9af791fdfda29babcab21327da6dfa720"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "KeyError: 'methods'"
+    },
+    {
+      "name": "valid-list",
+      "commands": "jqi $VS \"[]\"",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "1,5501c\n[]\n.\n",
+          "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "AttributeError: 'list' object has no attribute 'get'"
+    },
+    {
+      "name": "valid-schema",
+      "commands": "jqi $VS \".schema = \\\"x\\\"\"",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "2c\n  \"schema\": \"x\",\n.\n",
+          "sha256": "10972388be32f3555a89f1ca358e98870aec4e3b559d6397a9b1350a4fb22bc1"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json: schema 'x' is not jope.arena-elo-snapshot/v2\nThe committed benchmark evidence disagrees with itself; refusing to publish.\n"
+    },
+    {
+      "name": "valid-ladder-int",
+      "commands": "jqi $VS \".ladder = 1\"",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "5c\n  \"ladder\": 1,\n.\n",
+          "sha256": "46bee2b69208856be00fcc932bc655ca8729407a45c9715706c7f1da28beff4d"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json: ladder 1 is not 'benchmark-valid'\nThe committed benchmark evidence disagrees with itself; refusing to publish.\n"
+    },
+    {
+      "name": "valid-methods-string",
+      "commands": "jqi $VS \".methods |= tostring\"",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "26c\n  \"methods\": \"304\",\n.\n",
+          "sha256": "88a09c665e0db36d5df772c64a87ca0632b0fb26cf8403fb7f4063e3ce06108b"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json: 304 methods but the CSV has 304 rows\nThe committed benchmark evidence disagrees with itself; refusing to publish.\n"
+    },
+    {
+      "name": "valid-methods-float",
+      "commands": "jqi $VS \".methods |= \\\"@LIT:\\(.).0@\\\"\"",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "26c\n  \"methods\": 304.0,\n.\n",
+          "sha256": "768414c3d475e4623eaeaf085466a501fbb1d293f94a476b8862660a22944ac5"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "4260fb1a1e7471f6526fc1a696003426e18e28afd5d0b09a5753d091cd8ca417"
+    },
+    {
+      "name": "valid-corrections-null",
+      "commands": "jqi $VS \".corrections = null\"",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "7,21c\n  \"corrections\": null,\n.\n",
+          "sha256": "120748bfcc2f8e6cb24694406eb5728f007fb8e708f920cb2f1d1a37d5da4366"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json was not computed with the committed assets/regression/protocol-corrections-tabular-regression-v2.json\nThe committed benchmark evidence disagrees with itself; refusing to publish.\n"
+    },
+    {
+      "name": "valid-corrections-list",
+      "commands": "jqi $VS \".corrections = []\"",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "7,21c\n  \"corrections\": [],\n.\n",
+          "sha256": "e8077c570046833592274f6f979deede350de2626e33156aac04f480e2b5d1c6"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: list indices must be integers or slices, not str"
+    },
+    {
+      "name": "valid-applied-null",
+      "commands": "jqi $VS \".corrections.applied = null\"",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "10,19c\n    \"applied\": null,\n.\n",
+          "sha256": "69f96c447dc8ce2440dd890c591e077305c7c7db0e492637c35c6e753a005ad3"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: 'NoneType' object is not iterable"
+    },
+    {
+      "name": "valid-applied-member-null",
+      "commands": "jqi $VS \".corrections.applied[0] = null\"",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "11,14c\n      null,\n.\n",
+          "sha256": "a2ce4a22c2da55d946423f4c0c65dd514d0cb5cd0deefbb59fc1fef3eceff156"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: 'NoneType' object is not subscriptable"
+    },
+    {
+      "name": "valid-applied-rows-string",
+      "commands": "jqi $VS \".corrections.applied[0].rows = \\\"3\\\"\"",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "13c\n        \"rows\": \"3\"\n.\n",
+          "sha256": "da389269ea9cfa66cc11bd33bbce092eaeed9b67aaa4d4e1789ee8fb982cbca1"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: unsupported operand type(s) for +: 'int' and 'str'"
+    },
+    {
+      "name": "valid-applied-rows-float",
+      "commands": "jqi $VS \".corrections.applied[0].rows = \\\"@LIT:3.0@\\\"\"",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "13c\n        \"rows\": 3.0\n.\n",
+          "sha256": "ab10622d24e0fcc9432d89ed6a16e2a2b2a457298e76acd363f9e7d178d2e5e1"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "c01af8dca627942625002ee981bb4e7caba51c0f9a71aec561cb9f424ca10686"
+    },
+    {
+      "name": "valid-applied-rows-bool",
+      "commands": "jqi $VS \".corrections.applied[0].rows = true\"",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "13c\n        \"rows\": true\n.\n",
+          "sha256": "b85a2f96e80a362d2010b1aa4314726bc01cbed3514808f2484b50724ec81553"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "jope-dime: 43 rows corrected but scored datasets went 45 -> 0\nThe committed benchmark evidence disagrees with itself; refusing to publish.\n"
+    },
+    {
+      "name": "valid-applied-id-list",
+      "commands": "jqi $VS \".corrections.applied[0].id = [1]\"",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "12c\n        \"id\": [\n          1\n        ],\n.\n",
+          "sha256": "2fa8f3195d6fafd936e0deda175a3bf8d15325bb4a7c7d7c34673cadca63eaab"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: unhashable type: 'list'"
+    },
+    {
+      "name": "valid-excluded-mismatch",
+      "commands": "jqi $VS \".excluded_rows = 44\"",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "22c\n  \"excluded_rows\": 44,\n.\n",
+          "sha256": "e949d0627ddaf81b4b4e2e73f6ce8f21526cadad40cf3ab7173026901691330d"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "the benchmark-valid ladder excluded 44 rows but the corrections demoted 45; the README prose assumes they are the same set\nThe committed benchmark evidence disagrees with itself; refusing to publish.\n"
+    },
+    {
+      "name": "valid-excluded-float",
+      "commands": "jqi $VS \".excluded_rows = \\\"@LIT:45.0@\\\"\"",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "22c\n  \"excluded_rows\": 45.0,\n.\n",
+          "sha256": "fb584655eb1ff74fdff723327673d2e99a2370234b515fde613a45ccc47d1b4e"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "2ae364750e769078ce9aadca495f74334edc4e3d5676092b15609d050ee6bd5a"
+    },
+    {
+      "name": "valid-rankable-float",
+      "commands": "jqi $VS \".rankable_rows = \\\"@LIT:8718.0@\\\"\"",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "24c\n  \"rankable_rows\": 8718.0,\n.\n",
+          "sha256": "3a1e9ef3479cebd38434246359f1f3dbabe96eee8d4c25e1437bea3a12d9b8c2"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "2c8c5043c72627b20659d315096cee90a97dbfd00a9ff1b0a34e86aa02a4ab08"
+    },
+    {
+      "name": "valid-rankable-string",
+      "commands": "jqi $VS \".rankable_rows = \\\"8718\\\"\"",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "24c\n  \"rankable_rows\": \"8718\",\n.\n",
+          "sha256": "dd65bb0e7f385673c8aabae70307df735ac5323d0a939a06e3775683dc8ccd9e"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "ValueError: Cannot specify ',' with 's'."
+    },
+    {
+      "name": "valid-scores-sha-int",
+      "commands": "jqi $VS \".scores_sha256 = 1\"",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "6c\n  \"scores_sha256\": 1,\n.\n",
+          "sha256": "075a2737a9a0537fb4cec11b069706983a6785fd9f7a8650f08b5dc7bdea12a9"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "the two ladders and the corrections do not bind the same scores.csv\nThe committed benchmark evidence disagrees with itself; refusing to publish.\n"
+    },
+    {
+      "name": "corrections-list",
+      "commands": "jqi $CO \"[]\"; rebind_corrections",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "9c\n    \"sha256\": \"37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570\",\n.\n",
+          "sha256": "1b9a212840fb2d586cd891ff95de83c1f57e1a65f93f2dcaac1d94fa184dcaa4"
+        },
+        {
+          "path": "assets/regression/protocol-corrections-tabular-regression-v2.json",
+          "ed": "1,49c\n[]\n.\n",
+          "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "AttributeError: 'list' object has no attribute 'get'"
+    },
+    {
+      "name": "corrections-schema",
+      "commands": "jqi $CO \".schema = 1\"; rebind_corrections",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "9c\n    \"sha256\": \"75907363a2c8370342b50147aa4b47291ee6f3a49436d7c51aa9eb998366263f\",\n.\n",
+          "sha256": "008888ff8a83c314013d3366b4c947e6d71ceb8ba1dd1f2ddc0b68d042c21e31"
+        },
+        {
+          "path": "assets/regression/protocol-corrections-tabular-regression-v2.json",
+          "ed": "2c\n  \"schema\": 1,\n.\n",
+          "sha256": "75907363a2c8370342b50147aa4b47291ee6f3a49436d7c51aa9eb998366263f"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "assets/regression/protocol-corrections-tabular-regression-v2.json: schema is not jope.arena-protocol-corrections/v1\nThe committed benchmark evidence disagrees with itself; refusing to publish.\n"
+    },
+    {
+      "name": "corrections-entries-null",
+      "commands": "jqi $CO \".corrections = null\"; rebind_corrections",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "9c\n    \"sha256\": \"6bc17273eadc7d28e3e02f4ba0cdd438128aee771f4d5de6873798e7d06df668\",\n.\n",
+          "sha256": "a64699c19e3d5211e109823cc76753b99722674d5c10c335d344633e67cdc25a"
+        },
+        {
+          "path": "assets/regression/protocol-corrections-tabular-regression-v2.json",
+          "ed": "5,48c\n  \"corrections\": null\n.\n",
+          "sha256": "6bc17273eadc7d28e3e02f4ba0cdd438128aee771f4d5de6873798e7d06df668"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: 'NoneType' object is not iterable"
+    },
+    {
+      "name": "corrections-entry-null",
+      "commands": "jqi $CO \".corrections[0] = null\"; rebind_corrections",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "9c\n    \"sha256\": \"324f39b3ffe0ec7b9d6474b8f1bcb0c4b28bf98de4752f6347c93ec6076dc942\",\n.\n",
+          "sha256": "f9571935aac0c68a48d213a67a7d209cf8dd5b9dbd3e797c717a845996001474"
+        },
+        {
+          "path": "assets/regression/protocol-corrections-tabular-regression-v2.json",
+          "ed": "6,28c\n    null,\n.\n",
+          "sha256": "324f39b3ffe0ec7b9d6474b8f1bcb0c4b28bf98de4752f6347c93ec6076dc942"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: 'NoneType' object is not subscriptable"
+    },
+    {
+      "name": "corrections-evidence-int",
+      "commands": "jqi $CO \".corrections |= map(if .id == \\\"golden42-evolution-envelope-test-selected\\\" then .evidence = [5] else . end)\"; rebind_corrections",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "9c\n    \"sha256\": \"b0d3adabdbe0361d8c15ff34781772f2193e7d95f617083984afcf8ead21c17d\",\n.\n",
+          "sha256": "167a3f7b6d423d312a4e91d33a07c5ac5f4a820c4572a09b2189f80e2255d13d"
+        },
+        {
+          "path": "assets/regression/protocol-corrections-tabular-regression-v2.json",
+          "ed": "38,45c\n        5\n.\n",
+          "sha256": "b0d3adabdbe0361d8c15ff34781772f2193e7d95f617083984afcf8ead21c17d"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "AttributeError: 'int' object has no attribute 'split'"
+    },
+    {
+      "name": "corrections-evidence-empty",
+      "commands": "jqi $CO \".corrections |= map(if .id == \\\"golden46-new3-20260723-v4-test-adaptive\\\" then .evidence = [] else . end)\"; rebind_corrections",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "9c\n    \"sha256\": \"8e8fdc51c2e26f8b72f16328e09d5d8598bc2d3f8e181ed9e0916742c8ad1bd1\",\n.\n",
+          "sha256": "821235cf5b79ffa2e5a93f808eccf4ff8bc63760bd7a2e315d2e30b0a84d7dae"
+        },
+        {
+          "path": "assets/regression/protocol-corrections-tabular-regression-v2.json",
+          "ed": "19,27c\n      \"evidence\": []\n.\n",
+          "sha256": "8e8fdc51c2e26f8b72f16328e09d5d8598bc2d3f8e181ed9e0916742c8ad1bd1"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "IndexError: list index out of range"
+    },
+    {
+      "name": "corrections-evidence-string",
+      "commands": "jqi $CO \".corrections |= map(if .id == \\\"golden46-new3-20260723-v4-test-adaptive\\\" then .evidence = \\\"x y\\\" else . end)\"; rebind_corrections",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "9c\n    \"sha256\": \"5e1dd830aa2e019b7c0b627c1573af2ae0d0a2e3944c3b95d97a5ba3a3c4566d\",\n.\n",
+          "sha256": "3a8562d3dd62a83bdfca763096c79bebabc1966445a44eb51864a58de59d7566"
+        },
+        {
+          "path": "assets/regression/protocol-corrections-tabular-regression-v2.json",
+          "ed": "19,27c\n      \"evidence\": \"x y\"\n.\n",
+          "sha256": "5e1dd830aa2e019b7c0b627c1573af2ae0d0a2e3944c3b95d97a5ba3a3c4566d"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "5a66525633be6f251fb6167de728e5683df34c9d8a3e724eaac285d649a282e7"
+    },
+    {
+      "name": "corrections-method-list",
+      "commands": "jqi $CO \".corrections[0].method_id = [\\\"jope-dime\\\"]\"; rebind_corrections",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "9c\n    \"sha256\": \"188148bf8d73c1769d47416f8a88a689b158193353d1b53fd8c10200f1305e1b\",\n.\n",
+          "sha256": "cbc089c44d602a9c252695f27a1884d7605b7f5a2ce3d95762b1ec6a88f7a8ca"
+        },
+        {
+          "path": "assets/regression/protocol-corrections-tabular-regression-v2.json",
+          "ed": "8c\n      \"method_id\": [\n        \"jope-dime\"\n      ],\n.\n",
+          "sha256": "188148bf8d73c1769d47416f8a88a689b158193353d1b53fd8c10200f1305e1b"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: unhashable type: 'list'"
+    },
+    {
+      "name": "corrections-method-int",
+      "commands": "jqi $CO \".corrections[0].method_id = 5\"; rebind_corrections",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "9c\n    \"sha256\": \"caa664b1a180bc7a4c3eedcf82a2c362d6281a61f616199becf469fa3b72426e\",\n.\n",
+          "sha256": "0f1ee9b8d676d20df836cdda90210d2a796df57c0f4ce0dbbfc21b01619faaa5"
+        },
+        {
+          "path": "assets/regression/protocol-corrections-tabular-regression-v2.json",
+          "ed": "8c\n      \"method_id\": 5,\n.\n",
+          "sha256": "caa664b1a180bc7a4c3eedcf82a2c362d6281a61f616199becf469fa3b72426e"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "5: 3 rows corrected but scored datasets went 0 -> 0\nThe committed benchmark evidence disagrees with itself; refusing to publish.\n"
+    },
+    {
+      "name": "corrections-id-renamed",
+      "commands": "jqi $CO \".corrections[0].id = \\\"renamed\\\"\"; rebind_corrections",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "9c\n    \"sha256\": \"246f7cb248a76d168913ec3d9522b7d6090ceef30252dcdeab3d7a71ae902193\",\n.\n",
+          "sha256": "28ade27e3e3f6486684f411f075cbb22d586c5af3f5602002844cc655ae4b1cc"
+        },
+        {
+          "path": "assets/regression/protocol-corrections-tabular-regression-v2.json",
+          "ed": "7c\n      \"id\": \"renamed\",\n.\n",
+          "sha256": "246f7cb248a76d168913ec3d9522b7d6090ceef30252dcdeab3d7a71ae902193"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "the corrections applied to the ladder are not the committed corrections\nThe committed benchmark evidence disagrees with itself; refusing to publish.\n"
+    },
+    {
+      "name": "corrections-source-revision-missing",
+      "commands": "jqi $CO \".corrections |= map(if .id == \\\"golden46-new3-20260723-v4-test-adaptive\\\" then del(.source_revision) else . end)\"; rebind_corrections",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "9c\n    \"sha256\": \"b863b43e2aea7223b634bbce79589bea8754d1b5838afbf7b676942ee53a932f\",\n.\n",
+          "sha256": "b07ef52672e4ec6b907300a2603e3a7202df99a6439dc99b62fca81879f70694"
+        },
+        {
+          "path": "assets/regression/protocol-corrections-tabular-regression-v2.json",
+          "ed": "10d\n",
+          "sha256": "b863b43e2aea7223b634bbce79589bea8754d1b5838afbf7b676942ee53a932f"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "KeyError: 'source_revision'"
+    },
+    {
+      "name": "valid-csv-flag-false",
+      "commands": "sed -i \"2s/,True,benchmark-valid rows only/,False,benchmark-valid rows only/\" $VC; rebind_valid_csv",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "23c\n  \"leaderboard_sha256\": \"947d0faa6aa880a80a87b00732ba43e1b03c9ad1a854f1e5c2a5b154f968e6f6\",\n.\n",
+          "sha256": "8be26694827923d5aaf07081346bb769554a89f21703d483d56e9a0ac43bfe39"
+        },
+        {
+          "path": "assets/regression/leaderboard-tabular-regression-v2.benchmark-valid.csv",
+          "ed": "2c\n1,1,tabfm_ensemble_regressor,TabFM Ensemble,1934.9,21.511,7,45,45,100.0,True,0,45/45,public-development,False,benchmark-valid rows only; protocol corrections applied\n.\n",
+          "sha256": "947d0faa6aa880a80a87b00732ba43e1b03c9ad1a854f1e5c2a5b154f968e6f6"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "a benchmark-invalid method survived into the benchmark-valid ladder\nThe committed benchmark evidence disagrees with itself; refusing to publish.\n"
+    },
+    {
+      "name": "valid-csv-short-row",
+      "commands": "sed -i \"2s/,True,benchmark-valid rows only; protocol corrections applied\\$//\" $VC; rebind_valid_csv",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "23c\n  \"leaderboard_sha256\": \"5fc18c7c16d5cf2d24f8dd631f51a9c35b30813c0767e620e6837a1945690217\",\n.\n",
+          "sha256": "31610f62e5ca921f97f284bccc12d1671d7add1405a1690a5f3a01c267a96901"
+        },
+        {
+          "path": "assets/regression/leaderboard-tabular-regression-v2.benchmark-valid.csv",
+          "ed": "2c\n1,1,tabfm_ensemble_regressor,TabFM Ensemble,1934.9,21.511,7,45,45,100.0,True,0,45/45,public-development\n.\n",
+          "sha256": "5fc18c7c16d5cf2d24f8dd631f51a9c35b30813c0767e620e6837a1945690217"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "a benchmark-invalid method survived into the benchmark-valid ladder\nThe committed benchmark evidence disagrees with itself; refusing to publish.\n"
+    },
+    {
+      "name": "valid-csv-scored-text",
+      "commands": "sed -i \"2s/,7,45,45,100.0,/,7,x,45,100.0,/\" $VC; rebind_valid_csv",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "23c\n  \"leaderboard_sha256\": \"b7cc1e171ab01c5a47f8b1f338c8ca34386bbf93b15388c6ddcb00733328de01\",\n.\n",
+          "sha256": "4983ad7527514b2e7cf8f593234601826ce4eaa0aa83fb017d1bb58e00aaccfe"
+        },
+        {
+          "path": "assets/regression/leaderboard-tabular-regression-v2.benchmark-valid.csv",
+          "ed": "2c\n1,1,tabfm_ensemble_regressor,TabFM Ensemble,1934.9,21.511,7,x,45,100.0,True,0,45/45,public-development,True,benchmark-valid rows only; protocol corrections applied\n.\n",
+          "sha256": "b7cc1e171ab01c5a47f8b1f338c8ca34386bbf93b15388c6ddcb00733328de01"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "ValueError: invalid literal for int() with base 10: 'x'"
+    },
+    {
+      "name": "valid-csv-rank-text",
+      "commands": "sed -i \"2s/,21.511,/,abc,/\" $VC; rebind_valid_csv",
+      "edits": [
+        {
+          "path": "assets/regression/elo-tabular-regression-v2.benchmark-valid.json",
+          "ed": "23c\n  \"leaderboard_sha256\": \"aa35644d75d4ee41e747aba61689fec8dbbec60b9337625b3edf3b2a4bcaa841\",\n.\n",
+          "sha256": "75d10896193a95cc5884661116389a5269a22c4eef58d88b27c243c65d440542"
+        },
+        {
+          "path": "assets/regression/leaderboard-tabular-regression-v2.benchmark-valid.csv",
+          "ed": "2c\n1,1,tabfm_ensemble_regressor,TabFM Ensemble,1934.9,abc,7,45,45,100.0,True,0,45/45,public-development,True,benchmark-valid rows only; protocol corrections applied\n.\n",
+          "sha256": "aa35644d75d4ee41e747aba61689fec8dbbec60b9337625b3edf3b2a4bcaa841"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "ValueError: could not convert string to float: 'abc'"
+    },
+    {
+      "name": "bench-list",
+      "commands": "jqi $BE \"[]\"",
+      "edits": [
+        {
+          "path": "assets/regression/bench-baseline.json",
+          "ed": "1,20c\n[]\n.\n",
+          "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: list indices must be integers or slices, not str"
+    },
+    {
+      "name": "bench-min-string",
+      "commands": "jqi $BE \".min_ms = \\\"1\\\"\"",
+      "edits": [
+        {
+          "path": "assets/regression/bench-baseline.json",
+          "ed": "17c\n  \"min_ms\": \"1\",\n.\n",
+          "sha256": "7052c9679454dcaff1886683c83dddf6250262160673638b1baa79d59899bdb9"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "ValueError: Unknown format code 'f' for object of type 'str'"
+    },
+    {
+      "name": "bench-min-null",
+      "commands": "jqi $BE \".min_ms = null\"",
+      "edits": [
+        {
+          "path": "assets/regression/bench-baseline.json",
+          "ed": "17c\n  \"min_ms\": null,\n.\n",
+          "sha256": "e54482d87b02dbad0bae2425c15f9d8151f3a53bebf56ef1564ece11b6a8c7e4"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: unsupported format string passed to NoneType.__format__"
+    },
+    {
+      "name": "bench-alert-bool",
+      "commands": "jqi $BE \".alert_pct = true\"",
+      "edits": [
+        {
+          "path": "assets/regression/bench-baseline.json",
+          "ed": "19c\n  \"alert_pct\": true\n.\n",
+          "sha256": "a76cdc39d4759a43fad0ed44f016be5c03854fca343b08ad29a55b12d46d1012"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "e5908acc8c9c59db6b1bfc76d8d86de85649136af297cf1d1dd04b5dea97f642"
+    },
+    {
+      "name": "bench-gitsha-int",
+      "commands": "jqi $BE \".git_sha = 5\"",
+      "edits": [
+        {
+          "path": "assets/regression/bench-baseline.json",
+          "ed": "12c\n  \"git_sha\": 5,\n.\n",
+          "sha256": "487f62e1e460f646da794c94e581efe3ea0050dfd34c13b4a34b13e10e611431"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: 'int' object is not subscriptable"
+    },
+    {
+      "name": "bench-gitsha-list",
+      "commands": "jqi $BE \".git_sha = [\\\"a\\\", \\\"b\\\"]\"",
+      "edits": [
+        {
+          "path": "assets/regression/bench-baseline.json",
+          "ed": "12c\n  \"git_sha\": [\n    \"a\",\n    \"b\"\n  ],\n.\n",
+          "sha256": "fa54690cedb1972bed0a76a87bcd54682cafc3153f40aa7b12f24691d38c66a8"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "36fe5c10f4aed39602deeb8d61e7fe94be053e1db05d37ab43a9d7753fefac77"
+    },
+    {
+      "name": "bench-gitsha-dict",
+      "commands": "jqi $BE \".git_sha = {\\\"a\\\": 1}\"",
+      "edits": [
+        {
+          "path": "assets/regression/bench-baseline.json",
+          "ed": "12c\n  \"git_sha\": {\n    \"a\": 1\n  },\n.\n",
+          "sha256": "a5954a31c36fe8125164028d8001f7f1b04b3db23f7b93c84dd281f87bc4d5fe"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "KeyError: slice(None, 9, None)"
+    },
+    {
+      "name": "bench-runs-null",
+      "commands": "jqi $BE \".runs = null\"",
+      "edits": [
+        {
+          "path": "assets/regression/bench-baseline.json",
+          "ed": "7c\n  \"runs\": null,\n.\n",
+          "sha256": "db1f3de2d0004a5a0581bc5eac8efdf719bd7ca3266aac6a5a3b354d71e415d8"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "4eaffd02b7d840e21f2385fd75255cf644dce5cd3a5554e5e0d37157011d8f5b"
+    },
+    {
+      "name": "bench-what-missing",
+      "commands": "jqi $BE \"del(.what)\"",
+      "edits": [
+        {
+          "path": "assets/regression/bench-baseline.json",
+          "ed": "4d\n",
+          "sha256": "f19f89ce37978643ed41d2ff9551f004f72ab3cc4ae95da9c4ae5cb2beee9e47"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "KeyError: 'what'"
+    },
+    {
+      "name": "report-hidden-copy",
+      "commands": "cp $RP/047e62b52a3f4ede.bench-report.json $RP/.hidden.bench-report.json",
+      "edits": [],
+      "copies": [
+        {
+          "from": "assets/same-cut/v2/reports/047e62b52a3f4ede.bench-report.json",
+          "to": "assets/same-cut/v2/reports/.hidden.bench-report.json"
+        }
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "assets/same-cut/v2: 11 reports but the ladders scored other dataset counts\nThe committed benchmark evidence disagrees with itself; refusing to publish.\n"
+    },
+    {
+      "name": "report-invalid-json",
+      "commands": "sed -i \"1s/^{/{,/\" $RP/1cb97b1d7314d43d.bench-report.json",
+      "edits": [
+        {
+          "path": "assets/same-cut/v2/reports/1cb97b1d7314d43d.bench-report.json",
+          "ed": "1c\n{,\n.\n",
+          "sha256": "eef1a580201cc2db8c3e6849258f393a22b05449e324264f69136da137bb1086"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "json.decoder.JSONDecodeError: Expecting property name enclosed in double quotes: line 1 column 2 (char 1)"
+    },
+    {
+      "name": "report-methods-null",
+      "commands": "sed -i \"s/^  \\\"methods\\\": \\\\[/  \\\"methods\\\": null, \\\"methods_\\\": [/\" $RP/1cb97b1d7314d43d.bench-report.json",
+      "edits": [
+        {
+          "path": "assets/same-cut/v2/reports/1cb97b1d7314d43d.bench-report.json",
+          "ed": "60c\n  \"methods\": null, \"methods_\": [\n.\n",
+          "sha256": "730251789c94694f8bde684cd9ec10bace21294fd87b2ab47acd24a1dd7948e7"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: 'NoneType' object is not iterable"
+    },
+    {
+      "name": "report-methods-dict",
+      "commands": "sed -i \"s/^  \\\"methods\\\": \\\\[/  \\\"methods\\\": {\\\"a\\\": 1}, \\\"methods_\\\": [/\" $RP/1cb97b1d7314d43d.bench-report.json",
+      "edits": [
+        {
+          "path": "assets/same-cut/v2/reports/1cb97b1d7314d43d.bench-report.json",
+          "ed": "60c\n  \"methods\": {\"a\": 1}, \"methods_\": [\n.\n",
+          "sha256": "fede27b1f709d33199dfbaa4aab07cd475d5ec26be11f2ac35bd3dd69b36bcfb"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: string indices must be integers, not 'str'"
+    },
+    {
+      "name": "report-task",
+      "commands": "sed -i \"s/^  \\\"task\\\": \\\"regression\\\",/  \\\"task\\\": \\\"classification\\\",/\" $RP/1cb97b1d7314d43d.bench-report.json",
+      "edits": [
+        {
+          "path": "assets/same-cut/v2/reports/1cb97b1d7314d43d.bench-report.json",
+          "ed": "6c\n  \"task\": \"classification\",\n.\n",
+          "sha256": "10af18568cfe8fbc3a17d00c945b82ff4a6ca3efd2ad4961e9e0853bed3d4280"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "assets/same-cut/v2: 1cb97b1d7314d43d is not a regression report ranked by rmse\nThe committed benchmark evidence disagrees with itself; refusing to publish.\n"
+    },
+    {
+      "name": "report-schema",
+      "commands": "sed -i \"s/^  \\\"schema\\\": \\\"jope.bench-report\\\\/v2\\\",/  \\\"schema\\\": \\\"x\\\",/\" $RP/1cb97b1d7314d43d.bench-report.json",
+      "edits": [
+        {
+          "path": "assets/same-cut/v2/reports/1cb97b1d7314d43d.bench-report.json",
+          "ed": "2c\n  \"schema\": \"x\",\n.\n",
+          "sha256": "dc7ca4739c9b13995fd1757b58c311f5b7aab52c972fcc4b86b0ca7b111cb21d"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "assets/same-cut/v2: report schema 'x' is not jope.bench-report/v2\nThe committed benchmark evidence disagrees with itself; refusing to publish.\n"
+    },
+    {
+      "name": "report-dataset-id-int",
+      "commands": "sed -i \"s/^  \\\"dataset_id\\\": \\\"1cb97b1d7314d43d\\\",/  \\\"dataset_id\\\": 7,/\" $RP/1cb97b1d7314d43d.bench-report.json",
+      "edits": [
+        {
+          "path": "assets/same-cut/v2/reports/1cb97b1d7314d43d.bench-report.json",
+          "ed": "4c\n  \"dataset_id\": 7,\n.\n",
+          "sha256": "1fa2bad2e1636caf1ce0b129cb954e53eb045d18a67145ad9a8b316c1cde4fb5"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: '<' not supported between instances of 'int' and 'str'"
+    },
+    {
+      "name": "report-dataset-id-missing",
+      "commands": "sed -i \"s/^  \\\"dataset_id\\\": /  \\\"dataset_id_\\\": /\" $RP/1cb97b1d7314d43d.bench-report.json",
+      "edits": [
+        {
+          "path": "assets/same-cut/v2/reports/1cb97b1d7314d43d.bench-report.json",
+          "ed": "4c\n  \"dataset_id_\": \"1cb97b1d7314d43d\",\n.\n",
+          "sha256": "3326badadb36b69269a767ce494743eec0ae9835bf604bfd98dc79c50a6e1076"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "KeyError: 'dataset_id'"
+    },
+    {
+      "name": "report-rows-null",
+      "commands": "sed -i \"s/^  \\\"rows\\\": [0-9]*,/  \\\"rows\\\": null,/\" $RP/1cb97b1d7314d43d.bench-report.json",
+      "edits": [
+        {
+          "path": "assets/same-cut/v2/reports/1cb97b1d7314d43d.bench-report.json",
+          "ed": "11c\n  \"rows\": null,\n.\n",
+          "sha256": "9babbcb20e65e780c5d76a10d16c9d4c13fb0f1bb2b1374048b48ad31b08990e"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "dccf4f8758d4c376c67aaac2993c66cbd612fc9d1323d7a896cccfb0a5564308"
+    },
+    {
+      "name": "report-screen-rank-missing",
+      "commands": "sed -i \"s/\\\"screen_rank\\\":/\\\"screen_rank_\\\":/\" $RP/21fbfe8b53dbcd60.bench-report.json",
+      "edits": [
+        {
+          "path": "assets/same-cut/v2/reports/21fbfe8b53dbcd60.bench-report.json",
+          "ed": "941c\n      \"screen_rank_\": 15\n.\n919c\n      \"screen_rank_\": 14\n.\n897c\n      \"screen_rank_\": 13\n.\n875c\n      \"screen_rank_\": 12\n.\n853c\n      \"screen_rank_\": 11\n.\n831c\n      \"screen_rank_\": 10\n.\n803c\n      \"screen_rank_\": 9\n.\n781c\n      \"screen_rank_\": 8\n.\n759c\n      \"screen_rank_\": 7\n.\n737c\n      \"screen_rank_\": 6\n.\n604c\n      \"screen_rank_\": 5,\n.\n471c\n      \"screen_rank_\": 4,\n.\n338c\n      \"screen_rank_\": 3,\n.\n214c\n      \"screen_rank_\": 2,\n.\n90c\n      \"screen_rank_\": 1,\n.\n",
+          "sha256": "9931ac9b7e22c76e483acf0dd3279b7958b600a7584774be6912e6cb60f4b3e4"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "KeyError: 'screen_rank'"
+    },
+    {
+      "name": "report-deep-rank-float",
+      "commands": "sed -i -E \"s/\\\"deep_rank\\\": ([0-9]+)/\\\"deep_rank\\\": \\\\1.0/\" $RP/047e62b52a3f4ede.bench-report.json",
+      "edits": [
+        {
+          "path": "assets/same-cut/v2/reports/047e62b52a3f4ede.bench-report.json",
+          "ed": "685c\n      \"deep_rank\": 3.0\n.\n561c\n      \"deep_rank\": 2.0\n.\n437c\n      \"deep_rank\": 1.0\n.\n307c\n      \"deep_rank\": 5.0\n.\n183c\n      \"deep_rank\": 4.0\n.\n",
+          "sha256": "57c32c42db041a35651449c409fd7753fd221563b2c26075388f0cfd879d30e4"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "0aa82ed607dc1a3e1adb1cc6d45597aea04208cfb7223c4d018999efe7e83e5b"
+    },
+    {
+      "name": "report-deep-status-missing",
+      "commands": "sed -i \"s/\\\"status\\\": \\\"ok\\\"/\\\"status_\\\": \\\"ok\\\"/\" $RP/047e62b52a3f4ede.bench-report.json",
+      "edits": [
+        {
+          "path": "assets/same-cut/v2/reports/047e62b52a3f4ede.bench-report.json",
+          "ed": "930c\n        \"status_\": \"ok\",\n.\n899c\n        \"status_\": \"ok\",\n.\n877c\n        \"status_\": \"ok\",\n.\n855c\n        \"status_\": \"ok\",\n.\n833c\n        \"status_\": \"ok\",\n.\n802c\n        \"status_\": \"ok\",\n.\n780c\n        \"status_\": \"ok\",\n.\n749c\n        \"status_\": \"ok\",\n.\n718c\n        \"status_\": \"ok\",\n.\n696c\n        \"status_\": \"ok\",\n.\n656c\n              \"status_\": \"ok\",\n.\n640c\n              \"status_\": \"ok\",\n.\n624c\n              \"status_\": \"ok\",\n.\n608c\n              \"status_\": \"ok\",\n.\n592c\n              \"status_\": \"ok\",\n.\n585c\n        \"status_\": \"ok\",\n.\n572c\n        \"status_\": \"ok\",\n.\n532c\n              \"status_\": \"ok\",\n.\n516c\n              \"status_\": \"ok\",\n.\n500c\n              \"status_\": \"ok\",\n.\n484c\n              \"status_\": \"ok\",\n.\n468c\n              \"status_\": \"ok\",\n.\n461c\n        \"status_\": \"ok\",\n.\n448c\n        \"status_\": \"ok\",\n.\n408c\n              \"status_\": \"ok\",\n.\n392c\n              \"status_\": \"ok\",\n.\n376c\n              \"status_\": \"ok\",\n.\n360c\n              \"status_\": \"ok\",\n.\n344c\n              \"status_\": \"ok\",\n.\n337c\n        \"status_\": \"ok\",\n.\n324c\n        \"status_\": \"ok\",\n.\n278c\n              \"status_\": \"ok\",\n.\n262c\n              \"status_\": \"ok\",\n.\n246c\n              \"status_\": \"ok\",\n.\n230c\n              \"status_\": \"ok\",\n.\n214c\n              \"status_\": \"ok\",\n.\n207c\n        \"status_\": \"ok\",\n.\n194c\n        \"status_\": \"ok\",\n.\n154c\n              \"status_\": \"ok\",\n.\n138c\n              \"status_\": \"ok\",\n.\n122c\n              \"status_\": \"ok\",\n.\n106c\n              \"status_\": \"ok\",\n.\n90c\n              \"status_\": \"ok\",\n.\n83c\n        \"status_\": \"ok\",\n.\n70c\n        \"status_\": \"ok\",\n.\n",
+          "sha256": "1cb99832f2eea3a74740af5ddf9a555df1e2bf2cceac238b66a0fb32877edc3f"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "KeyError: 'status'"
+    },
+    {
+      "name": "report-rmse-string",
+      "commands": "sed -i -E \"s/\\\"rmse\\\": ([0-9.e-]+)/\\\"rmse\\\": \\\"\\\\1\\\"/\" $RP/047e62b52a3f4ede.bench-report.json",
+      "edits": [
+        {
+          "path": "assets/same-cut/v2/reports/047e62b52a3f4ede.bench-report.json",
+          "ed": "934c\n          \"rmse\": \"0.08933937037152825\"\n.\n903c\n          \"rmse\": \"0.07966142149460985\"\n.\n881c\n          \"rmse\": \"0.07757921722005956\"\n.\n859c\n          \"rmse\": \"0.0769727965752762\"\n.\n837c\n          \"rmse\": \"0.07444539798389134\"\n.\n806c\n          \"rmse\": \"0.07265835756760879\"\n.\n784c\n          \"rmse\": \"0.07195428036561466\"\n.\n753c\n          \"rmse\": \"0.07037041758360334\"\n.\n722c\n          \"rmse\": \"0.0698508092327663\"\n.\n700c\n          \"rmse\": \"0.0698508092327663\"\n.\n678c\n          \"rmse\": \"0.07220892326365047\"\n.\n660c\n                \"rmse\": \"0.07505030123260531\"\n.\n644c\n                \"rmse\": \"0.058085808649832774\"\n.\n628c\n                \"rmse\": \"0.061130840269152026\"\n.\n612c\n                \"rmse\": \"0.09306231807403087\"\n.\n596c\n                \"rmse\": \"0.06791435761574775\"\n.\n576c\n          \"rmse\": \"0.06791435761574775\"\n.\n554c\n          \"rmse\": \"0.07190602231257598\"\n.\n536c\n                \"rmse\": \"0.0745065894226581\"\n.\n520c\n                \"rmse\": \"0.057861815124842855\"\n.\n504c\n                \"rmse\": \"0.06151988437022138\"\n.\n488c\n                \"rmse\": \"0.09257823882623725\"\n.\n472c\n                \"rmse\": \"0.06743456499424744\"\n.\n452c\n          \"rmse\": \"0.06743456499424744\"\n.\n430c\n          \"rmse\": \"0.07120094855492498\"\n.\n412c\n                \"rmse\": \"0.07505030123260531\"\n.\n396c\n                \"rmse\": \"0.05814071505585949\"\n.\n380c\n                \"rmse\": \"0.06286533007328944\"\n.\n364c\n                \"rmse\": \"0.08826281006942045\"\n.\n348c\n                \"rmse\": \"0.06743456499424737\"\n.\n328c\n          \"rmse\": \"0.06743456499424737\"\n.\n300c\n          \"rmse\": \"0.07583178363818448\"\n.\n282c\n                \"rmse\": \"0.08073569107231118\"\n.\n266c\n                \"rmse\": \"0.059387274001875004\"\n.\n250c\n                \"rmse\": \"0.079305613671778\"\n.\n234c\n                \"rmse\": \"0.08978804998047987\"\n.\n218c\n                \"rmse\": \"0.06620316324355219\"\n.\n198c\n          \"rmse\": \"0.06620316324355219\"\n.\n176c\n          \"rmse\": \"0.0739441155058122\"\n.\n158c\n                \"rmse\": \"0.0745065894226581\"\n.\n142c\n                \"rmse\": \"0.062188962210364934\"\n.\n126c\n                \"rmse\": \"0.07216220300200946\"\n.\n110c\n                \"rmse\": \"0.0918210621416363\"\n.\n94c\n                \"rmse\": \"0.0655282898540241\"\n.\n74c\n          \"rmse\": \"0.0655282898540241\"\n.\n",
+          "sha256": "66b8a6cab7fc7f0298ebfecd90c896a2fa7995553dd54d3bb62645b3c9fe8b17"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "ValueError: Unknown format code 'g' for object of type 'str'"
+    },
+    {
+      "name": "report-produce-string",
+      "commands": "sed -i -E \"s/\\\"produce_seconds\\\": ([0-9.e-]+)/\\\"produce_seconds\\\": \\\"\\\\1\\\"/\" $RP/047e62b52a3f4ede.bench-report.json",
+      "edits": [
+        {
+          "path": "assets/same-cut/v2/reports/047e62b52a3f4ede.bench-report.json",
+          "ed": "917c\n        \"produce_seconds\": \"0.0\",\n.\n895c\n        \"produce_seconds\": \"0.0\"\n.\n873c\n        \"produce_seconds\": \"0.0\"\n.\n851c\n        \"produce_seconds\": \"0.0\"\n.\n820c\n        \"produce_seconds\": \"0.0\",\n.\n798c\n        \"produce_seconds\": \"0.0\"\n.\n767c\n        \"produce_seconds\": \"0.0\",\n.\n736c\n        \"produce_seconds\": \"0.0\",\n.\n714c\n        \"produce_seconds\": \"0.0\"\n.\n692c\n        \"produce_seconds\": \"0.0\"\n.\n683c\n        \"produce_seconds\": \"0.0\"\n.\n568c\n        \"produce_seconds\": \"0.0\"\n.\n559c\n        \"produce_seconds\": \"0.0\"\n.\n444c\n        \"produce_seconds\": \"0.0\"\n.\n435c\n        \"produce_seconds\": \"0.816933356\"\n.\n314c\n        \"produce_seconds\": \"0.413508546\",\n.\n305c\n        \"produce_seconds\": \"0.0\"\n.\n190c\n        \"produce_seconds\": \"0.0\"\n.\n181c\n        \"produce_seconds\": \"0.0\"\n.\n66c\n        \"produce_seconds\": \"0.0\"\n.\n",
+          "sha256": "b5e6f56e30b55396ef70044a1453d4b15d5a740e1799e3a251cf412e467767dd"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "ValueError: Unknown format code 'f' for object of type 'str'"
+    },
+    {
+      "name": "report-gitsha-int",
+      "commands": "sed -i \"s/^  \\\"git_sha\\\": \\\"[0-9a-f]*\\\",/  \\\"git_sha\\\": 5,/\" $RP/*.bench-report.json",
+      "edits": [
+        {
+          "path": "assets/same-cut/v2/reports/047e62b52a3f4ede.bench-report.json",
+          "ed": "948c\n  \"git_sha\": 5,\n.\n",
+          "sha256": "d0229f957e322161489a8eaa9fddde928b0d102ba9549472a3d186ca45ebf345"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/1cb97b1d7314d43d.bench-report.json",
+          "ed": "948c\n  \"git_sha\": 5,\n.\n",
+          "sha256": "4d6801b06e421785808300fe6754fb7016663cc1c62c7617f1c3e9c4bf6f7ec3"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/21fbfe8b53dbcd60.bench-report.json",
+          "ed": "948c\n  \"git_sha\": 5,\n.\n",
+          "sha256": "fdf6197825b1202f170bf8abb29c30072d1e40baf1ee8619e7da088fce0c6d20"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/30ef3eaa6d2971a9.bench-report.json",
+          "ed": "948c\n  \"git_sha\": 5,\n.\n",
+          "sha256": "6a87fb2717c408da5478bd57b94feaa2d224d1ada5f278dbc1ca7870c3cb1c54"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/43b4cc3ab0ebbd97.bench-report.json",
+          "ed": "948c\n  \"git_sha\": 5,\n.\n",
+          "sha256": "03338709d1bdaefb1aba8ffcb02f20dd6c2b46dbeab8d7553e280964c2d33895"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/693890aae9dc860b.bench-report.json",
+          "ed": "948c\n  \"git_sha\": 5,\n.\n",
+          "sha256": "857962e7b3bcd900dd2c8e8839daf954612876d7e253c1f4b019f95bbdd1fd59"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/79e600bc5fcd5da7.bench-report.json",
+          "ed": "948c\n  \"git_sha\": 5,\n.\n",
+          "sha256": "208ff3f1f914b2fc98145c864d5636af436d209c3dad36c3778ce1c972310e96"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/b5beff4a53fa12c0.bench-report.json",
+          "ed": "948c\n  \"git_sha\": 5,\n.\n",
+          "sha256": "0ed314a343577733e9635096b457a5c128edb58e0cf45ee231c2967c04b5dd2a"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/c32fa09b48fb2f27.bench-report.json",
+          "ed": "948c\n  \"git_sha\": 5,\n.\n",
+          "sha256": "5c0857d81e339cc8a6ef89cb396005a4ad89a2748a45bfeeecb8ad9b07188c53"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/c7d815714ca52bce.bench-report.json",
+          "ed": "948c\n  \"git_sha\": 5,\n.\n",
+          "sha256": "521edec0b403cf08a43d511c8ee4f289e1e4e53bbcaf96aee78f1b06595a514c"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: 'int' object is not subscriptable"
+    },
+    {
+      "name": "report-gitsha-list",
+      "commands": "sed -i \"s/^  \\\"git_sha\\\": \\\"[0-9a-f]*\\\",/  \\\"git_sha\\\": [\\\"a\\\", \\\"b\\\"],/\" $RP/*.bench-report.json",
+      "edits": [
+        {
+          "path": "assets/same-cut/v2/reports/047e62b52a3f4ede.bench-report.json",
+          "ed": "948c\n  \"git_sha\": [\"a\", \"b\"],\n.\n",
+          "sha256": "feca816106995d454b90477b057d1664afc495948bf360833bc977eccb86a31c"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/1cb97b1d7314d43d.bench-report.json",
+          "ed": "948c\n  \"git_sha\": [\"a\", \"b\"],\n.\n",
+          "sha256": "62adf4225f2a1b3faf8de04db7cdc7f3f5e0735a86511b98923d18d17718ff01"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/21fbfe8b53dbcd60.bench-report.json",
+          "ed": "948c\n  \"git_sha\": [\"a\", \"b\"],\n.\n",
+          "sha256": "94a83d7d9ebf073af0e0f06ad0bc2168253a1df66f323540ed94465014bcf3f6"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/30ef3eaa6d2971a9.bench-report.json",
+          "ed": "948c\n  \"git_sha\": [\"a\", \"b\"],\n.\n",
+          "sha256": "df831dcc6d72f15792a54b563a042d84230636b4db133c9b2a5b0700ed0bc433"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/43b4cc3ab0ebbd97.bench-report.json",
+          "ed": "948c\n  \"git_sha\": [\"a\", \"b\"],\n.\n",
+          "sha256": "bb1c3cfa65a7213172dbe0e7075909a6bf90adef3a54bcfeb599700deb4ef744"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/693890aae9dc860b.bench-report.json",
+          "ed": "948c\n  \"git_sha\": [\"a\", \"b\"],\n.\n",
+          "sha256": "283e30fb445d6ed16a167c8da573a93aeac7f64bfd8354da65f4903f7e765e66"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/79e600bc5fcd5da7.bench-report.json",
+          "ed": "948c\n  \"git_sha\": [\"a\", \"b\"],\n.\n",
+          "sha256": "1280624193b85d1c218a59f1a85dd17a99e8356472564f09a4668b2ed476cf6b"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/b5beff4a53fa12c0.bench-report.json",
+          "ed": "948c\n  \"git_sha\": [\"a\", \"b\"],\n.\n",
+          "sha256": "67ed2e12ea8028dcf8e6768aa5c410c398c58b9aaf067a35c07f8af650867f35"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/c32fa09b48fb2f27.bench-report.json",
+          "ed": "948c\n  \"git_sha\": [\"a\", \"b\"],\n.\n",
+          "sha256": "7d78a647337b4971f6247e04418446f5337ad6f55b81eec30f7a5fc68e96d43a"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/c7d815714ca52bce.bench-report.json",
+          "ed": "948c\n  \"git_sha\": [\"a\", \"b\"],\n.\n",
+          "sha256": "0b5927cc1b195cff24977e5ea127c0395ff2c62a5b8034c426399307c45194fb"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "8b3e78c8232384519799903e0557f5e81738290739d8631f2cb7c2fc8b82d34b"
+    },
+    {
+      "name": "report-host-differs",
+      "commands": "sed -i \"s/^    \\\"workers\\\": 16/    \\\"workers\\\": 15/\" $RP/1cb97b1d7314d43d.bench-report.json",
+      "edits": [
+        {
+          "path": "assets/same-cut/v2/reports/1cb97b1d7314d43d.bench-report.json",
+          "ed": "946c\n    \"workers\": 15\n.\n",
+          "sha256": "5e51a0bd566c2790f38b7579fd6dddccb571f5fa2ed7bd1994384ebbaa2d737a"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "assets/same-cut/v2: 1cb97b1d7314d43d differs from the first report in host\nThe committed benchmark evidence disagrees with itself; refusing to publish.\n"
+    },
+    {
+      "name": "report-adapter-command-null",
+      "commands": "sed -i \"s/\\\"command\\\": \\\\[/\\\"command\\\": null, \\\"command_\\\": [/\" $RP/*.bench-report.json",
+      "edits": [
+        {
+          "path": "assets/same-cut/v2/reports/047e62b52a3f4ede.bench-report.json",
+          "ed": "920c\n          \"command\": null, \"command_\": [\n.\n823c\n          \"command\": null, \"command_\": [\n.\n770c\n          \"command\": null, \"command_\": [\n.\n739c\n          \"command\": null, \"command_\": [\n.\n",
+          "sha256": "d80a68ea3632eff645a9231dd3260632bc533cc7a60c70c9b21edc5a9d6901cd"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/1cb97b1d7314d43d.bench-report.json",
+          "ed": "810c\n          \"command\": null, \"command_\": [\n.\n779c\n          \"command\": null, \"command_\": [\n.\n748c\n          \"command\": null, \"command_\": [\n.\n323c\n          \"command\": null, \"command_\": [\n.\n",
+          "sha256": "f93ddafcec8eed35d920891936caacd9283de862a775de9983625bc82ac2ddee"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/21fbfe8b53dbcd60.bench-report.json",
+          "ed": "716c\n          \"command\": null, \"command_\": [\n.\n583c\n          \"command\": null, \"command_\": [\n.\n450c\n          \"command\": null, \"command_\": [\n.\n69c\n          \"command\": null, \"command_\": [\n.\n",
+          "sha256": "e192dfeb9479453ab2a9bf937e2ee979cdd744a1fd45dd451dace19e4befc286"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/30ef3eaa6d2971a9.bench-report.json",
+          "ed": "854c\n          \"command\": null, \"command_\": [\n.\n823c\n          \"command\": null, \"command_\": [\n.\n580c\n          \"command\": null, \"command_\": [\n.\n323c\n          \"command\": null, \"command_\": [\n.\n",
+          "sha256": "8bbd34daac1b6b11a9ac2c63c30ca7b370e051ad5784b06557522e2b4ab779c7"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/43b4cc3ab0ebbd97.bench-report.json",
+          "ed": "920c\n          \"command\": null, \"command_\": [\n.\n867c\n          \"command\": null, \"command_\": [\n.\n836c\n          \"command\": null, \"command_\": [\n.\n761c\n          \"command\": null, \"command_\": [\n.\n",
+          "sha256": "265f482fbbdb0796711465c151601b72bc075d98c03c794e861006d16a8fab91"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/693890aae9dc860b.bench-report.json",
+          "ed": "788c\n          \"command\": null, \"command_\": [\n.\n735c\n          \"command\": null, \"command_\": [\n.\n704c\n          \"command\": null, \"command_\": [\n.\n571c\n          \"command\": null, \"command_\": [\n.\n",
+          "sha256": "589bc0f5517e8fc035c74c0fad95a27cdd0a58f4fc666ef81ef8527a09e337cd"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/79e600bc5fcd5da7.bench-report.json",
+          "ed": "810c\n          \"command\": null, \"command_\": [\n.\n729c\n          \"command\": null, \"command_\": [\n.\n698c\n          \"command\": null, \"command_\": [\n.\n565c\n          \"command\": null, \"command_\": [\n.\n",
+          "sha256": "941e09f1b0229b62fb8d8103995fb55f00bcf6cfb671de806aadd7d2b00eebd7"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/b5beff4a53fa12c0.bench-report.json",
+          "ed": "920c\n          \"command\": null, \"command_\": [\n.\n839c\n          \"command\": null, \"command_\": [\n.\n808c\n          \"command\": null, \"command_\": [\n.\n69c\n          \"command\": null, \"command_\": [\n.\n",
+          "sha256": "319fcb0ad439a376a127b787a4da9d899fe72c54d34ce827f1410edb192742cb"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/c32fa09b48fb2f27.bench-report.json",
+          "ed": "920c\n          \"command\": null, \"command_\": [\n.\n867c\n          \"command\": null, \"command_\": [\n.\n836c\n          \"command\": null, \"command_\": [\n.\n805c\n          \"command\": null, \"command_\": [\n.\n",
+          "sha256": "df4a6b0720783b8b56f3b3c8c4ecda02c5d1d79f612d4e7bfd348b736bb159d0"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/c7d815714ca52bce.bench-report.json",
+          "ed": "920c\n          \"command\": null, \"command_\": [\n.\n801c\n          \"command\": null, \"command_\": [\n.\n726c\n          \"command\": null, \"command_\": [\n.\n695c\n          \"command\": null, \"command_\": [\n.\n",
+          "sha256": "955ddcd69df7200ed11be6966f4d90c469c917242c6c92663f5edc0c3a22efc4"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: Value after * must be an iterable, not NoneType"
+    },
+    {
+      "name": "report-adapter-command-string",
+      "commands": "sed -i \"s/\\\"command\\\": \\\\[/\\\"command\\\": \\\"py\\\", \\\"command_\\\": [/\" $RP/*.bench-report.json",
+      "edits": [
+        {
+          "path": "assets/same-cut/v2/reports/047e62b52a3f4ede.bench-report.json",
+          "ed": "920c\n          \"command\": \"py\", \"command_\": [\n.\n823c\n          \"command\": \"py\", \"command_\": [\n.\n770c\n          \"command\": \"py\", \"command_\": [\n.\n739c\n          \"command\": \"py\", \"command_\": [\n.\n",
+          "sha256": "9bfb3937aeb44be6012bbe606088b31e651a0e2be3b7c806f0177f72bf0bc39d"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/1cb97b1d7314d43d.bench-report.json",
+          "ed": "810c\n          \"command\": \"py\", \"command_\": [\n.\n779c\n          \"command\": \"py\", \"command_\": [\n.\n748c\n          \"command\": \"py\", \"command_\": [\n.\n323c\n          \"command\": \"py\", \"command_\": [\n.\n",
+          "sha256": "006a64ab919ee70c6fb5c78999508d45d84b8a9f72e3811b653718dbf2d817a0"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/21fbfe8b53dbcd60.bench-report.json",
+          "ed": "716c\n          \"command\": \"py\", \"command_\": [\n.\n583c\n          \"command\": \"py\", \"command_\": [\n.\n450c\n          \"command\": \"py\", \"command_\": [\n.\n69c\n          \"command\": \"py\", \"command_\": [\n.\n",
+          "sha256": "8844ee17a1b09ece09a1b61d491a0e22e1617e53f15ad469369beadd374fc0dc"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/30ef3eaa6d2971a9.bench-report.json",
+          "ed": "854c\n          \"command\": \"py\", \"command_\": [\n.\n823c\n          \"command\": \"py\", \"command_\": [\n.\n580c\n          \"command\": \"py\", \"command_\": [\n.\n323c\n          \"command\": \"py\", \"command_\": [\n.\n",
+          "sha256": "eb8b3ae66f47849b701f6aa7fe05760ab8914b5d8ff8b43961ae5bcdceb77714"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/43b4cc3ab0ebbd97.bench-report.json",
+          "ed": "920c\n          \"command\": \"py\", \"command_\": [\n.\n867c\n          \"command\": \"py\", \"command_\": [\n.\n836c\n          \"command\": \"py\", \"command_\": [\n.\n761c\n          \"command\": \"py\", \"command_\": [\n.\n",
+          "sha256": "d808b852139d07299f79510b18d24a921cbcc03b8e00c460c51ed0c002e9707c"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/693890aae9dc860b.bench-report.json",
+          "ed": "788c\n          \"command\": \"py\", \"command_\": [\n.\n735c\n          \"command\": \"py\", \"command_\": [\n.\n704c\n          \"command\": \"py\", \"command_\": [\n.\n571c\n          \"command\": \"py\", \"command_\": [\n.\n",
+          "sha256": "52d2284ecca1194ca3d31725fdcaaee437cc15c1ae89a5fe52782200a824601c"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/79e600bc5fcd5da7.bench-report.json",
+          "ed": "810c\n          \"command\": \"py\", \"command_\": [\n.\n729c\n          \"command\": \"py\", \"command_\": [\n.\n698c\n          \"command\": \"py\", \"command_\": [\n.\n565c\n          \"command\": \"py\", \"command_\": [\n.\n",
+          "sha256": "242a5ffdeb0e3601fdbaee4361a1bb429613b1a2342ca0e618af6d6a62726aeb"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/b5beff4a53fa12c0.bench-report.json",
+          "ed": "920c\n          \"command\": \"py\", \"command_\": [\n.\n839c\n          \"command\": \"py\", \"command_\": [\n.\n808c\n          \"command\": \"py\", \"command_\": [\n.\n69c\n          \"command\": \"py\", \"command_\": [\n.\n",
+          "sha256": "ed82ff9920ffe3e8ff4dfb7f4b4eb9f102319938da4b6420b7a42e4f9cf08d22"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/c32fa09b48fb2f27.bench-report.json",
+          "ed": "920c\n          \"command\": \"py\", \"command_\": [\n.\n867c\n          \"command\": \"py\", \"command_\": [\n.\n836c\n          \"command\": \"py\", \"command_\": [\n.\n805c\n          \"command\": \"py\", \"command_\": [\n.\n",
+          "sha256": "f1a9cd2669d00237286d8d5f154a3ae77baae3566c9e4839634811d7ca9d39cb"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/c7d815714ca52bce.bench-report.json",
+          "ed": "920c\n          \"command\": \"py\", \"command_\": [\n.\n801c\n          \"command\": \"py\", \"command_\": [\n.\n726c\n          \"command\": \"py\", \"command_\": [\n.\n695c\n          \"command\": \"py\", \"command_\": [\n.\n",
+          "sha256": "cd6718191b71dd790832fc62e0cafbcb509dc70876969be30e6327559d69e4e0"
+        }
+      ],
+      "copies": [],
+      "exit": 0,
+      "stdout": "README.md updated\n",
+      "stderr": "",
+      "readme_sha256": "c7b460b8b6997755bf1d36f1c10bdf5f8ddac769179d1a5a660e44ae1224e1d0"
+    },
+    {
+      "name": "report-adapter-token-unsafe",
+      "commands": "sed -i \"s/\\\"python3\\\",/\\\"python 3\\\",/\" $RP/*.bench-report.json",
+      "edits": [
+        {
+          "path": "assets/same-cut/v2/reports/047e62b52a3f4ede.bench-report.json",
+          "ed": "921c\n            \"python 3\",\n.\n824c\n            \"python 3\",\n.\n771c\n            \"python 3\",\n.\n740c\n            \"python 3\",\n.\n",
+          "sha256": "bc830fc91d5e5fd9fff007bc9937e899e70b72de5dddccc980ec2c2578fab17a"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/1cb97b1d7314d43d.bench-report.json",
+          "ed": "811c\n            \"python 3\",\n.\n780c\n            \"python 3\",\n.\n749c\n            \"python 3\",\n.\n324c\n            \"python 3\",\n.\n",
+          "sha256": "3dbba33b264cb36eda2d85b9aa70ae762c9e72528a6768708a4f0d7bf9da981f"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/21fbfe8b53dbcd60.bench-report.json",
+          "ed": "717c\n            \"python 3\",\n.\n584c\n            \"python 3\",\n.\n451c\n            \"python 3\",\n.\n70c\n            \"python 3\",\n.\n",
+          "sha256": "f71f72dd61bebcbecbc6afbafc2741788d5ab1f8a7c126baf4788d45251f744f"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/30ef3eaa6d2971a9.bench-report.json",
+          "ed": "855c\n            \"python 3\",\n.\n824c\n            \"python 3\",\n.\n581c\n            \"python 3\",\n.\n324c\n            \"python 3\",\n.\n",
+          "sha256": "24aba75ed00721a024f91920e2b55913fe8324fcb8f3c74f9a8df10128eb2481"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/43b4cc3ab0ebbd97.bench-report.json",
+          "ed": "921c\n            \"python 3\",\n.\n868c\n            \"python 3\",\n.\n837c\n            \"python 3\",\n.\n762c\n            \"python 3\",\n.\n",
+          "sha256": "5236273312d9461a3f47821f76c2c8d453ff13d525b339c1fad1b74a4984210e"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/693890aae9dc860b.bench-report.json",
+          "ed": "789c\n            \"python 3\",\n.\n736c\n            \"python 3\",\n.\n705c\n            \"python 3\",\n.\n572c\n            \"python 3\",\n.\n",
+          "sha256": "cdc45ad5b81d7716e748933a07bba8281d746eeb067518a9176c960498afe2fd"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/79e600bc5fcd5da7.bench-report.json",
+          "ed": "811c\n            \"python 3\",\n.\n730c\n            \"python 3\",\n.\n699c\n            \"python 3\",\n.\n566c\n            \"python 3\",\n.\n",
+          "sha256": "78bd54b677e6ef46281dcc5b958801df9241c52b8a47ef9cd808f1213064b7e6"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/b5beff4a53fa12c0.bench-report.json",
+          "ed": "921c\n            \"python 3\",\n.\n840c\n            \"python 3\",\n.\n809c\n            \"python 3\",\n.\n70c\n            \"python 3\",\n.\n",
+          "sha256": "5aa486f53fc34288b298935bcf4c2232bed9fb629bb29c1dec97845539577bdf"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/c32fa09b48fb2f27.bench-report.json",
+          "ed": "921c\n            \"python 3\",\n.\n868c\n            \"python 3\",\n.\n837c\n            \"python 3\",\n.\n806c\n            \"python 3\",\n.\n",
+          "sha256": "0529ff4a06fb5f9af6428e0fbc339ef2839150730141b6200cbbb52b6d041953"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/c7d815714ca52bce.bench-report.json",
+          "ed": "921c\n            \"python 3\",\n.\n802c\n            \"python 3\",\n.\n727c\n            \"python 3\",\n.\n696c\n            \"python 3\",\n.\n",
+          "sha256": "a9843b62c20f8b10378090c8409d56fd5f336dd85214be8236a7547c98829ddb"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "adapter 'catboost': token 'python 3' is not shell-safe to render\nThe committed benchmark evidence disagrees with itself; refusing to publish.\n"
+    },
+    {
+      "name": "report-adapter-token-int",
+      "commands": "sed -i \"s/\\\"python3\\\",/7,/\" $RP/*.bench-report.json",
+      "edits": [
+        {
+          "path": "assets/same-cut/v2/reports/047e62b52a3f4ede.bench-report.json",
+          "ed": "921c\n            7,\n.\n824c\n            7,\n.\n771c\n            7,\n.\n740c\n            7,\n.\n",
+          "sha256": "57bb9eb6697246efe1ff3c5eab6dca10d95e1cc182045a9d0306951fab684fee"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/1cb97b1d7314d43d.bench-report.json",
+          "ed": "811c\n            7,\n.\n780c\n            7,\n.\n749c\n            7,\n.\n324c\n            7,\n.\n",
+          "sha256": "ac4eb51296e3e4383d35f566c0578896627eec8b6069d8b13afab0bafe32bde1"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/21fbfe8b53dbcd60.bench-report.json",
+          "ed": "717c\n            7,\n.\n584c\n            7,\n.\n451c\n            7,\n.\n70c\n            7,\n.\n",
+          "sha256": "f48d7fae526b0c79c95fe05e29913751bd76eee9999c231c500e764bc446483d"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/30ef3eaa6d2971a9.bench-report.json",
+          "ed": "855c\n            7,\n.\n824c\n            7,\n.\n581c\n            7,\n.\n324c\n            7,\n.\n",
+          "sha256": "735dc2b265641a893bf11bc545bce4492207ec59c73a533883e38f606dbd2131"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/43b4cc3ab0ebbd97.bench-report.json",
+          "ed": "921c\n            7,\n.\n868c\n            7,\n.\n837c\n            7,\n.\n762c\n            7,\n.\n",
+          "sha256": "72ca5fa2f925b74fe3e552a3c245af2bebbf9c9fe714aac6e503edaaac138435"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/693890aae9dc860b.bench-report.json",
+          "ed": "789c\n            7,\n.\n736c\n            7,\n.\n705c\n            7,\n.\n572c\n            7,\n.\n",
+          "sha256": "5b3e442d3c546d2590aa8954e1a9f874e89218d57139cf6c6ddd292dbbcdbae0"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/79e600bc5fcd5da7.bench-report.json",
+          "ed": "811c\n            7,\n.\n730c\n            7,\n.\n699c\n            7,\n.\n566c\n            7,\n.\n",
+          "sha256": "6a66d8a3dc41980ebe8c2179f2d1a0f429d9e996fab48437568de32dc4079a64"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/b5beff4a53fa12c0.bench-report.json",
+          "ed": "921c\n            7,\n.\n840c\n            7,\n.\n809c\n            7,\n.\n70c\n            7,\n.\n",
+          "sha256": "c1d265bf672e4c6ca6fb318461121f8aa64a46219d297b138a6dd49c050f815a"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/c32fa09b48fb2f27.bench-report.json",
+          "ed": "921c\n            7,\n.\n868c\n            7,\n.\n837c\n            7,\n.\n806c\n            7,\n.\n",
+          "sha256": "66933e376b5b5802714849ad1025f33ed7e82a933e4547490d14323cc973575f"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/c7d815714ca52bce.bench-report.json",
+          "ed": "921c\n            7,\n.\n802c\n            7,\n.\n727c\n            7,\n.\n696c\n            7,\n.\n",
+          "sha256": "75d6908718714df6753cc62388f1b2dd866a69d46b3ac574a532002a1e967f58"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: expected string or bytes-like object, got 'int'"
+    },
+    {
+      "name": "report-adapter-version-empty",
+      "commands": "sed -i \"s/\\\"version\\\": \\\"catboost 1.2.10\\\"/\\\"version\\\": \\\"\\\"/\" $RP/*.bench-report.json",
+      "edits": [
+        {
+          "path": "assets/same-cut/v2/reports/047e62b52a3f4ede.bench-report.json",
+          "ed": "743c\n          \"version\": \"\",\n.\n",
+          "sha256": "7413950768ecb064fc31f713a49eba8831419e9408e098b9d46019512b5af3d4"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/1cb97b1d7314d43d.bench-report.json",
+          "ed": "814c\n          \"version\": \"\",\n.\n",
+          "sha256": "09fd41057fe6cbb48cec5739d1699cb6851019c37d93f6bf3291e2255c712c20"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/21fbfe8b53dbcd60.bench-report.json",
+          "ed": "73c\n          \"version\": \"\",\n.\n",
+          "sha256": "1c29dc19b1273b08323b913b9d1766a9751211979116cdde1941b29356a21acf"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/30ef3eaa6d2971a9.bench-report.json",
+          "ed": "327c\n          \"version\": \"\",\n.\n",
+          "sha256": "92fd9886d88ac1ceb0aad6fc86f0b5c1a099569766cb2bd1c576d63c406835e3"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/43b4cc3ab0ebbd97.bench-report.json",
+          "ed": "871c\n          \"version\": \"\",\n.\n",
+          "sha256": "c4185c52e1f5bd56f57b50b2c51c7b6c68b9a6aa24475c8de89bb41a1ce5b756"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/693890aae9dc860b.bench-report.json",
+          "ed": "575c\n          \"version\": \"\",\n.\n",
+          "sha256": "6f7747b1e590e9be92b22f6d5ff5d6c4922aad6f7d0624d85108ed48a621ad43"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/79e600bc5fcd5da7.bench-report.json",
+          "ed": "733c\n          \"version\": \"\",\n.\n",
+          "sha256": "2a2403adfa59b14f7e69ab44ae2e81b5b9c56b17ca51eb94eec641a2f8d520a3"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/b5beff4a53fa12c0.bench-report.json",
+          "ed": "812c\n          \"version\": \"\",\n.\n",
+          "sha256": "ee8231d8b795e6cd7937b5ad83cb7255f4822ded0d75d0e39f56c4a614957a13"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/c32fa09b48fb2f27.bench-report.json",
+          "ed": "840c\n          \"version\": \"\",\n.\n",
+          "sha256": "d688d76e3e36fbc1620c1421bc1459b4077fb125758519d8b05ea83bd28af67c"
+        },
+        {
+          "path": "assets/same-cut/v2/reports/c7d815714ca52bce.bench-report.json",
+          "ed": "730c\n          \"version\": \"\",\n.\n",
+          "sha256": "5ce32d0aec6f9341bb3444d24fbfffd77747a3db7748a095a08170a64a64e6c0"
+        }
+      ],
+      "copies": [],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "assets/same-cut/v2: 047e62b52a3f4ede: adapter.catboost records no engine version\nThe committed benchmark evidence disagrees with itself; refusing to publish.\n"
+    }
+  ]
+}

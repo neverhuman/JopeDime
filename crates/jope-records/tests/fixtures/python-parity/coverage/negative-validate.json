@@ -1,0 +1,503 @@
+{
+  "source": "p1-failclosed-capture-20260928T020533Z",
+  "capture": "bash capture.sh (run p1-failclosed-capture-20260928T020533Z; Python from git show f46a9048fbb2697d6d1f4463a688083ea9dfcce1:<tool>, unmodified, in a scratch root)",
+  "tool": "deploy/ci/coverage.py validate",
+  "base": "coverage/mapping.json",
+  "cases": [
+    {
+      "name": "lane-null-member",
+      "jq": ".items[$k].lanes = [null]",
+      "ed": "926c\n        null\n.\n",
+      "sha256": "cf48cb01e726ba0efc184af5fb72a57d5b59623cb5672fb747a2fb97e0549c6c",
+      "exit": 1,
+      "stdout": "unknown lane None for benchmark:crates/feat-math/tests/bench.rs\n{\"counts\": {\"benchmark-source\": 33, \"feature\": 31, \"package\": 26, \"python-family\": 231, \"target\": 265, \"workflow\": 6, \"workflow-job\": 16}, \"stage\": \"static\", \"unassigned_or_invalid\": 1}\n",
+      "stderr": ""
+    },
+    {
+      "name": "lane-int-member",
+      "jq": ".items[$k].lanes = [123]",
+      "ed": "926c\n        123\n.\n",
+      "sha256": "eb5c29b86240f44ee1b77167ada8a8c24c4d1ec8d985600dd4d748bbad1341a2",
+      "exit": 1,
+      "stdout": "unknown lane 123 for benchmark:crates/feat-math/tests/bench.rs\n{\"counts\": {\"benchmark-source\": 33, \"feature\": 31, \"package\": 26, \"python-family\": 231, \"target\": 265, \"workflow\": 6, \"workflow-job\": 16}, \"stage\": \"static\", \"unassigned_or_invalid\": 1}\n",
+      "stderr": ""
+    },
+    {
+      "name": "lane-float-member",
+      "jq": ".items[$k].lanes = [1.5]",
+      "ed": "926c\n        1.5\n.\n",
+      "sha256": "9fa3968e11ead253500c3985446e000e3de6b05ffeffe03a699f62dc5522d41c",
+      "exit": 1,
+      "stdout": "unknown lane 1.5 for benchmark:crates/feat-math/tests/bench.rs\n{\"counts\": {\"benchmark-source\": 33, \"feature\": 31, \"package\": 26, \"python-family\": 231, \"target\": 265, \"workflow\": 6, \"workflow-job\": 16}, \"stage\": \"static\", \"unassigned_or_invalid\": 1}\n",
+      "stderr": ""
+    },
+    {
+      "name": "lane-bool-member",
+      "jq": ".items[$k].lanes = [true]",
+      "ed": "926c\n        true\n.\n",
+      "sha256": "af6fe9e778314e4e200a2f72fefab3b54c8f45f8c36c1a2c5a345e2e6b66d40c",
+      "exit": 1,
+      "stdout": "unknown lane True for benchmark:crates/feat-math/tests/bench.rs\n{\"counts\": {\"benchmark-source\": 33, \"feature\": 31, \"package\": 26, \"python-family\": 231, \"target\": 265, \"workflow\": 6, \"workflow-job\": 16}, \"stage\": \"static\", \"unassigned_or_invalid\": 1}\n",
+      "stderr": ""
+    },
+    {
+      "name": "lanes-string",
+      "jq": ".items[$k].lanes = \"rust-test\"",
+      "ed": "925,927c\n      \"lanes\": \"rust-test\",\n.\n",
+      "sha256": "f173cef2c196ecc343c338d2e41c2850fbb406b76e8f6c15ef2fbe3f9074d352",
+      "exit": 1,
+      "stdout": "unknown lane r for benchmark:crates/feat-math/tests/bench.rs\nunknown lane u for benchmark:crates/feat-math/tests/bench.rs\nunknown lane s for benchmark:crates/feat-math/tests/bench.rs\nunknown lane t for benchmark:crates/feat-math/tests/bench.rs\nunknown lane - for benchmark:crates/feat-math/tests/bench.rs\nunknown lane t for benchmark:crates/feat-math/tests/bench.rs\nunknown lane e for benchmark:crates/feat-math/tests/bench.rs\nunknown lane s for benchmark:crates/feat-math/tests/bench.rs\nunknown lane t for benchmark:crates/feat-math/tests/bench.rs\n{\"counts\": {\"benchmark-source\": 33, \"feature\": 31, \"package\": 26, \"python-family\": 231, \"target\": 265, \"workflow\": 6, \"workflow-job\": 16}, \"stage\": \"static\", \"unassigned_or_invalid\": 9}\n",
+      "stderr": ""
+    },
+    {
+      "name": "lanes-dict-unknown",
+      "jq": ".items[$k].lanes = {\"bogus\": true}",
+      "ed": "925,927c\n      \"lanes\": {\n        \"bogus\": true\n      },\n.\n",
+      "sha256": "160ec3539a20deeb16f6c6855abeda9853c19cb69fc0f335561d8fd004bd7309",
+      "exit": 1,
+      "stdout": "unknown lane bogus for benchmark:crates/feat-math/tests/bench.rs\n{\"counts\": {\"benchmark-source\": 33, \"feature\": 31, \"package\": 26, \"python-family\": 231, \"target\": 265, \"workflow\": 6, \"workflow-job\": 16}, \"stage\": \"static\", \"unassigned_or_invalid\": 1}\n",
+      "stderr": ""
+    },
+    {
+      "name": "lanes-dict-known",
+      "jq": ".items[$k].lanes = {\"rust-test\": 1}",
+      "ed": "925,927c\n      \"lanes\": {\n        \"rust-test\": 1\n      },\n.\n",
+      "sha256": "222f73ca6e1dcce10efeb1a96dbce29dab80f49e4e1d6952ed3783aada73178f",
+      "exit": 0,
+      "stdout": "{\"counts\": {\"benchmark-source\": 33, \"feature\": 31, \"package\": 26, \"python-family\": 231, \"target\": 265, \"workflow\": 6, \"workflow-job\": 16}, \"stage\": \"static\", \"unassigned_or_invalid\": 0}\n",
+      "stderr": ""
+    },
+    {
+      "name": "lanes-null",
+      "jq": ".items[$k].lanes = null",
+      "ed": "925,927c\n      \"lanes\": null,\n.\n",
+      "sha256": "b582d20947baeafbf4b809877162e6da42e2075aa78463ab3835d921e5428144",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: 'NoneType' object is not iterable"
+    },
+    {
+      "name": "lanes-int",
+      "jq": ".items[$k].lanes = 5",
+      "ed": "925,927c\n      \"lanes\": 5,\n.\n",
+      "sha256": "d8384112debfc3397ea811e7c1476427ee632f9f3d7153bc73ce86816f7ff0fd",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: 'int' object is not iterable"
+    },
+    {
+      "name": "lane-list-member",
+      "jq": ".items[$k].lanes = [[\"rust-test\"]]",
+      "ed": "926c\n        [\n          \"rust-test\"\n        ]\n.\n",
+      "sha256": "fa22c4c120f23380a50a673f92799b5afd98b764efc094fcbf02e703f3c90464",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: unhashable type: 'list'"
+    },
+    {
+      "name": "lane-dict-member",
+      "jq": ".items[$k].lanes = [{\"a\": 1}]",
+      "ed": "926c\n        {\n          \"a\": 1\n        }\n.\n",
+      "sha256": "3e9c97088836843418ead578d69213dd17265e52e64b334b57ec13b6f6c4fd1b",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: unhashable type: 'dict'"
+    },
+    {
+      "name": "lanes-absent-dispositions-empty",
+      "jq": "del(.items[$k].lanes) | .items[$k].dispositions = []",
+      "ed": "925,930c\n      \"dispositions\": [],\n.\n",
+      "sha256": "69c33d18050c8d74cf8432693a4ec21b3170d406b7d2b1f679e74e2a46f210ab",
+      "exit": 1,
+      "stdout": "unassigned item: benchmark:crates/feat-math/tests/bench.rs\n{\"counts\": {\"benchmark-source\": 33, \"feature\": 31, \"package\": 26, \"python-family\": 231, \"target\": 265, \"workflow\": 6, \"workflow-job\": 16}, \"stage\": \"static\", \"unassigned_or_invalid\": 1}\n",
+      "stderr": ""
+    },
+    {
+      "name": "disposition-null-member",
+      "jq": ".items[$k].lanes = [] | .items[$k].dispositions = [null]",
+      "ed": "929c\n        null\n.\n925,927c\n      \"lanes\": [],\n.\n",
+      "sha256": "7083dd9c5b9c3ce5d9f00c5b9dd04c84038c310cfc58db3ede77ad0164409011",
+      "exit": 1,
+      "stdout": "unknown disposition None for benchmark:crates/feat-math/tests/bench.rs\n{\"counts\": {\"benchmark-source\": 33, \"feature\": 31, \"package\": 26, \"python-family\": 231, \"target\": 265, \"workflow\": 6, \"workflow-job\": 16}, \"stage\": \"static\", \"unassigned_or_invalid\": 1}\n",
+      "stderr": ""
+    },
+    {
+      "name": "dispositions-string",
+      "jq": ".items[$k].lanes = [] | .items[$k].dispositions = \"historical\"",
+      "ed": "925,930c\n      \"lanes\": [],\n      \"dispositions\": \"historical\",\n.\n",
+      "sha256": "19742f5b28a2e6f614910b3996990331f3d87a8b34cb50934da760a4ebba67e2",
+      "exit": 1,
+      "stdout": "unknown disposition h for benchmark:crates/feat-math/tests/bench.rs\nunknown disposition i for benchmark:crates/feat-math/tests/bench.rs\nunknown disposition s for benchmark:crates/feat-math/tests/bench.rs\nunknown disposition t for benchmark:crates/feat-math/tests/bench.rs\nunknown disposition o for benchmark:crates/feat-math/tests/bench.rs\nunknown disposition r for benchmark:crates/feat-math/tests/bench.rs\nunknown disposition i for benchmark:crates/feat-math/tests/bench.rs\nunknown disposition c for benchmark:crates/feat-math/tests/bench.rs\nunknown disposition a for benchmark:crates/feat-math/tests/bench.rs\nunknown disposition l for benchmark:crates/feat-math/tests/bench.rs\n{\"counts\": {\"benchmark-source\": 33, \"feature\": 31, \"package\": 26, \"python-family\": 231, \"target\": 265, \"workflow\": 6, \"workflow-job\": 16}, \"stage\": \"static\", \"unassigned_or_invalid\": 10}\n",
+      "stderr": ""
+    },
+    {
+      "name": "dispositions-null",
+      "jq": ".items[$k].dispositions = null",
+      "ed": "928,930c\n      \"dispositions\": null,\n.\n",
+      "sha256": "495c1e818c963840bd1efad154a0cac81d626f8e969bd97af8faa43cc84e14d9",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: 'NoneType' object is not iterable"
+    },
+    {
+      "name": "disposition-list-member",
+      "jq": ".items[$k].dispositions = [[1]]",
+      "ed": "929c\n        [\n          1\n        ]\n.\n",
+      "sha256": "df5f882cd5fdf1b3fd9328b043d373cf462db0a3a1197eb09530f6800f7fe3c2",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: unhashable type: 'list'"
+    },
+    {
+      "name": "lanes-null-dispositions-valid",
+      "jq": ".items[$k].lanes = null | .items[$k].dispositions = [\"historical\"]",
+      "ed": "929c\n        \"historical\"\n.\n925,927c\n      \"lanes\": null,\n.\n",
+      "sha256": "bbcbc73a3626daa5a84216a27e876003e5445d1bf18f5e9d70fb5c57ea2ba51e",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: 'NoneType' object is not iterable"
+    },
+    {
+      "name": "items-list",
+      "jq": ".items = []",
+      "ed": "910,9020c\n  \"items\": []\n.\n",
+      "sha256": "348a03896a08d773b4b6e2befddc15a14ec7658cb3823d3accae3df962c4ade4",
+      "exit": 1,
+      "stdout": "",
+      "raised": "AttributeError: 'list' object has no attribute 'keys'"
+    },
+    {
+      "name": "items-null",
+      "jq": ".items = null",
+      "ed": "910,9020c\n  \"items\": null\n.\n",
+      "sha256": "f542ec0481e6524764a98f78199f4915276056a8063d361edfabfa816d9af4d2",
+      "exit": 1,
+      "stdout": "",
+      "raised": "AttributeError: 'NoneType' object has no attribute 'keys'"
+    },
+    {
+      "name": "items-string",
+      "jq": ".items = \"x\"",
+      "ed": "910,9020c\n  \"items\": \"x\"\n.\n",
+      "sha256": "5ef931d3b7a5d66db303cea1958b893011e37fee716bff5df0762f517ce27aef",
+      "exit": 1,
+      "stdout": "",
+      "raised": "AttributeError: 'str' object has no attribute 'keys'"
+    },
+    {
+      "name": "lanes-section-list",
+      "jq": ".lanes = []",
+      "ed": "5,823c\n  \"lanes\": [],\n.\n",
+      "sha256": "367c0155b93479cfb144cd3c44be95fda3cc8baaa4ca779874b5e2c3c0585eb7",
+      "exit": 1,
+      "stdout": "",
+      "raised": "AttributeError: 'list' object has no attribute 'items'"
+    },
+    {
+      "name": "lanes-section-null",
+      "jq": ".lanes = null",
+      "ed": "5,823c\n  \"lanes\": null,\n.\n",
+      "sha256": "9e73164d695c0746814edadf63bc329ca8a518fa38fba19b2b7c23ad92ebce38",
+      "exit": 1,
+      "stdout": "",
+      "raised": "AttributeError: 'NoneType' object has no attribute 'items'"
+    },
+    {
+      "name": "dispositions-section-list",
+      "jq": ".dispositions = []",
+      "ed": "824,909c\n  \"dispositions\": [],\n.\n",
+      "sha256": "856772711058f65649c81cd57c68aa56425e1f6f828e128b87a3b026c3f3f5c0",
+      "exit": 1,
+      "stdout": "",
+      "raised": "AttributeError: 'list' object has no attribute 'items'"
+    },
+    {
+      "name": "dispositions-section-string",
+      "jq": ".dispositions = \"x\"",
+      "ed": "824,909c\n  \"dispositions\": \"x\",\n.\n",
+      "sha256": "d92e8e0cb88ed7641b06c755cb4a0cf1151c0c7277f82c92ecf2e99fe68e97db",
+      "exit": 1,
+      "stdout": "",
+      "raised": "AttributeError: 'str' object has no attribute 'items'"
+    },
+    {
+      "name": "lane-entry-null",
+      "jq": ".lanes[\"rust-test\"] = null",
+      "ed": "122,160c\n    \"rust-test\": null,\n.\n",
+      "sha256": "f7a88f813c5edb8f9451565e8c8e63c1e6df1f74ea7ab9ed34b4f1c30043799d",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: argument of type 'NoneType' is not iterable"
+    },
+    {
+      "name": "lane-entry-string",
+      "jq": ".lanes[\"rust-test\"] = \"command inputs evidence\"",
+      "ed": "122,160c\n    \"rust-test\": \"command inputs evidence\",\n.\n",
+      "sha256": "e1a0b5ed4ec10be7b7929fcd80ed1e09eee865bb24f931dd89c6189111ac9bc5",
+      "exit": 1,
+      "stdout": "",
+      "raised": "AttributeError: 'str' object has no attribute 'get'"
+    },
+    {
+      "name": "lane-entry-list",
+      "jq": ".lanes[\"rust-test\"] = [\"command\"]",
+      "ed": "122,160c\n    \"rust-test\": [\n      \"command\"\n    ],\n.\n",
+      "sha256": "d947e9276a3ed00ae61cba56591d4032c3d0ff5f3a1fae1f24a3eff96ebfef85",
+      "exit": 1,
+      "stdout": "",
+      "raised": "AttributeError: 'list' object has no attribute 'get'"
+    },
+    {
+      "name": "lane-entry-int",
+      "jq": ".lanes[\"rust-test\"] = 5",
+      "ed": "122,160c\n    \"rust-test\": 5,\n.\n",
+      "sha256": "316c06259cdbdc68bde331137f5378edde4769ec8ed8a8ee6bc4509170dfc2ad",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: argument of type 'int' is not iterable"
+    },
+    {
+      "name": "disposition-entry-null",
+      "jq": ".dispositions[\"research\"] = null",
+      "ed": "835,844c\n    \"research\": null,\n.\n",
+      "sha256": "2803e336a016fb9e53129c05ae857b4493c84c6d70f641a2eed3083fbacb53a7",
+      "exit": 1,
+      "stdout": "",
+      "raised": "AttributeError: 'NoneType' object has no attribute 'get'"
+    },
+    {
+      "name": "disposition-entry-list",
+      "jq": ".dispositions[\"research\"] = []",
+      "ed": "835,844c\n    \"research\": [],\n.\n",
+      "sha256": "01641a68e7858efc7e98fbd0c37f4d1bf9b68efd2022a35715c0c13aecae917f",
+      "exit": 1,
+      "stdout": "",
+      "raised": "AttributeError: 'list' object has no attribute 'get'"
+    },
+    {
+      "name": "item-entry-null",
+      "jq": ".items[$k] = null",
+      "ed": "921,932c\n    \"benchmark:crates/feat-math/tests/bench.rs\": null,\n.\n",
+      "sha256": "004136ec418dc86ce0b44a016a63f536580ff56c4c411bd1a3ff6d64833bfe45",
+      "exit": 1,
+      "stdout": "",
+      "raised": "AttributeError: 'NoneType' object has no attribute 'get'"
+    },
+    {
+      "name": "item-entry-list",
+      "jq": ".items[$k] = []",
+      "ed": "921,932c\n    \"benchmark:crates/feat-math/tests/bench.rs\": [],\n.\n",
+      "sha256": "993e782499a480fd9a678dfc1848dd946b35b90ef9768348272be4fdc262ac0b",
+      "exit": 1,
+      "stdout": "",
+      "raised": "AttributeError: 'list' object has no attribute 'get'"
+    },
+    {
+      "name": "item-entry-string",
+      "jq": ".items[$k] = \"x\"",
+      "ed": "921,932c\n    \"benchmark:crates/feat-math/tests/bench.rs\": \"x\",\n.\n",
+      "sha256": "b2b2674a6c6a194efa76d3eb4284a58f898fef82c76749d565bf153d9a72955f",
+      "exit": 1,
+      "stdout": "",
+      "raised": "AttributeError: 'str' object has no attribute 'get'"
+    },
+    {
+      "name": "map-list",
+      "jq": "[]",
+      "ed": "1,9021c\n[]\n.\n",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+      "exit": 1,
+      "stdout": "",
+      "raised": "AttributeError: 'list' object has no attribute 'get'"
+    },
+    {
+      "name": "map-null",
+      "jq": "null",
+      "ed": "1,9021c\nnull\n.\n",
+      "sha256": "38e0b9de817f645c4bec37c0d4a3e58baecccb040f5718dc069a72c7385a0bed",
+      "exit": 1,
+      "stdout": "",
+      "raised": "AttributeError: 'NoneType' object has no attribute 'get'"
+    },
+    {
+      "name": "map-string",
+      "jq": "\"x\"",
+      "ed": "1,9021c\n\"x\"\n.\n",
+      "sha256": "79143be1c39888914af45faefd878a0ce934188e741e5250a72024796f7afb0f",
+      "exit": 1,
+      "stdout": "",
+      "raised": "AttributeError: 'str' object has no attribute 'get'"
+    },
+    {
+      "name": "lane-stage-list",
+      "jq": ".lanes[\"rust-test\"].stage = [\"execution\"]",
+      "ed": "153c\n      \"stage\": [\n        \"execution\"\n      ],\n.\n",
+      "sha256": "a200b4f671eea91458d91b4cfd29a2d7cddd893f1b1aa662cb33ff24889a6d25",
+      "exit": 1,
+      "stdout": "lane rust-test has invalid stage\n{\"counts\": {\"benchmark-source\": 33, \"feature\": 31, \"package\": 26, \"python-family\": 231, \"target\": 265, \"workflow\": 6, \"workflow-job\": 16}, \"stage\": \"static\", \"unassigned_or_invalid\": 1}\n",
+      "stderr": ""
+    },
+    {
+      "name": "lane-requires-int",
+      "jq": ".lanes[\"rust-test\"].requires_nonzero_tests = 1",
+      "ed": "152c\n      \"requires_nonzero_tests\": 1,\n.\n",
+      "sha256": "1c6564d1e61f7f033aab19cf35897fbae07955a0767361c2957b9d67c31c96d3",
+      "exit": 1,
+      "stdout": "lane rust-test requires_nonzero_tests must be boolean\n{\"counts\": {\"benchmark-source\": 33, \"feature\": 31, \"package\": 26, \"python-family\": 231, \"target\": 265, \"workflow\": 6, \"workflow-job\": 16}, \"stage\": \"static\", \"unassigned_or_invalid\": 1}\n",
+      "stderr": ""
+    },
+    {
+      "name": "lane-command-empty",
+      "jq": ".lanes[\"rust-test\"].command = \"\"",
+      "ed": "123,127c\n      \"command\": \"\",\n.\n",
+      "sha256": "cd37e84dac00f3b821ff1bdddb782b941052bdd684165c98643615b7e4fa134c",
+      "exit": 1,
+      "stdout": "lane rust-test has empty command/inputs/evidence\n{\"counts\": {\"benchmark-source\": 33, \"feature\": 31, \"package\": 26, \"python-family\": 231, \"target\": 265, \"workflow\": 6, \"workflow-job\": 16}, \"stage\": \"static\", \"unassigned_or_invalid\": 1}\n",
+      "stderr": ""
+    },
+    {
+      "name": "disposition-reason-zero",
+      "jq": ".dispositions[\"research\"].reason = 0",
+      "ed": "837c\n      \"reason\": 0,\n.\n",
+      "sha256": "05c3ecb8a97ae949569cdd07bf306fd65e7de7d5e597ce07072664bc48dca6ad",
+      "exit": 1,
+      "stdout": "disposition research missing reason\n{\"counts\": {\"benchmark-source\": 33, \"feature\": 31, \"package\": 26, \"python-family\": 231, \"target\": 265, \"workflow\": 6, \"workflow-job\": 16}, \"stage\": \"static\", \"unassigned_or_invalid\": 1}\n",
+      "stderr": ""
+    },
+    {
+      "name": "schema-int",
+      "jq": ".schema = 1",
+      "ed": "2c\n  \"schema\": 1,\n.\n",
+      "sha256": "d16b20c493bf04fbe1a6dc0b0a20e982b840a25ef8aaaf70b50897c7f2874668",
+      "exit": 1,
+      "stdout": "unsupported coverage schema\n{\"counts\": {\"benchmark-source\": 33, \"feature\": 31, \"package\": 26, \"python-family\": 231, \"target\": 265, \"workflow\": 6, \"workflow-job\": 16}, \"stage\": \"static\", \"unassigned_or_invalid\": 1}\n",
+      "stderr": ""
+    },
+    {
+      "name": "scope-zero",
+      "jq": ".items[$k].scope = 0",
+      "ed": "931c\n      \"scope\": 0\n.\n",
+      "sha256": "0e4bf98ca75845d31f839218fa70c85daa1d08c7596cdcab869423d5484875ab",
+      "exit": 1,
+      "stdout": "missing execution scope: benchmark:crates/feat-math/tests/bench.rs\n{\"counts\": {\"benchmark-source\": 33, \"feature\": 31, \"package\": 26, \"python-family\": 231, \"target\": 265, \"workflow\": 6, \"workflow-job\": 16}, \"stage\": \"static\", \"unassigned_or_invalid\": 1}\n",
+      "stderr": ""
+    },
+    {
+      "name": "scope-bigint",
+      "jq": ".items[$k].scope = \"@LIT:100000000000000000000000@\"",
+      "ed": "931c\n      \"scope\": 100000000000000000000000\n.\n",
+      "sha256": "5f6e288f740fccd5ea94b125454d9dbeb40f3c61b21612851908e864a4042d1c",
+      "exit": 0,
+      "stdout": "{\"counts\": {\"benchmark-source\": 33, \"feature\": 31, \"package\": 26, \"python-family\": 231, \"target\": 265, \"workflow\": 6, \"workflow-job\": 16}, \"stage\": \"static\", \"unassigned_or_invalid\": 0}\n",
+      "stderr": ""
+    },
+    {
+      "name": "discovery-test-one",
+      "jq": ".items[$t].discovery.test = 1",
+      "ed": "8085c\n        \"test\": 1,\n.\n",
+      "sha256": "15f3df24d1d5f0a93d85bc815c844192a323fa8eb1aedcfb62a5c6430d8011b6",
+      "exit": 0,
+      "stdout": "{\"counts\": {\"benchmark-source\": 33, \"feature\": 31, \"package\": 26, \"python-family\": 231, \"target\": 265, \"workflow\": 6, \"workflow-job\": 16}, \"stage\": \"static\", \"unassigned_or_invalid\": 0}\n",
+      "stderr": ""
+    },
+    {
+      "name": "discovery-test-one-float",
+      "jq": ".items[$t].discovery.test = \"@LIT:1.0@\"",
+      "ed": "8085c\n        \"test\": 1.0,\n.\n",
+      "sha256": "2432c453f5a52aa64b89965b4d2246097cebca2feed8e675a3442701ff17ba47",
+      "exit": 0,
+      "stdout": "{\"counts\": {\"benchmark-source\": 33, \"feature\": 31, \"package\": 26, \"python-family\": 231, \"target\": 265, \"workflow\": 6, \"workflow-job\": 16}, \"stage\": \"static\", \"unassigned_or_invalid\": 0}\n",
+      "stderr": ""
+    },
+    {
+      "name": "target-lanes-dict-default",
+      "jq": ".items[$t].lanes = {\"rust-check\": 1}",
+      "ed": "8091,8093c\n      \"lanes\": {\n        \"rust-check\": 1\n      },\n.\n",
+      "sha256": "38783537c05d938bcdd71633c343746931e0487c67154960564de48372a764e1",
+      "exit": 1,
+      "stdout": "non-default required features ['testing'] assigned to default execution: target:jope-policy/test/jope_dime\n{\"counts\": {\"benchmark-source\": 33, \"feature\": 31, \"package\": 26, \"python-family\": 231, \"target\": 265, \"workflow\": 6, \"workflow-job\": 16}, \"stage\": \"static\", \"unassigned_or_invalid\": 1}\n",
+      "stderr": ""
+    },
+    {
+      "name": "target-lanes-null",
+      "jq": ".items[$t].lanes = null",
+      "ed": "8091,8093c\n      \"lanes\": null,\n.\n",
+      "sha256": "9d34a6282c9268f4e345981675024bce0b2aa484232e7755bae695da2b12bf0d",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: 'NoneType' object is not iterable"
+    },
+    {
+      "name": "target-lanes-string",
+      "jq": ".items[$t].lanes = \"rust-check\"",
+      "ed": "8091,8093c\n      \"lanes\": \"rust-check\",\n.\n",
+      "sha256": "a6d04618b962f2b00c08393311e05e9a0aa1ba3eea1aeba004a31f65c31097fa",
+      "exit": 1,
+      "stdout": "unknown lane r for target:jope-policy/test/jope_dime\nunknown lane u for target:jope-policy/test/jope_dime\nunknown lane s for target:jope-policy/test/jope_dime\nunknown lane t for target:jope-policy/test/jope_dime\nunknown lane - for target:jope-policy/test/jope_dime\nunknown lane c for target:jope-policy/test/jope_dime\nunknown lane h for target:jope-policy/test/jope_dime\nunknown lane e for target:jope-policy/test/jope_dime\nunknown lane c for target:jope-policy/test/jope_dime\nunknown lane k for target:jope-policy/test/jope_dime\n{\"counts\": {\"benchmark-source\": 33, \"feature\": 31, \"package\": 26, \"python-family\": 231, \"target\": 265, \"workflow\": 6, \"workflow-job\": 16}, \"stage\": \"static\", \"unassigned_or_invalid\": 10}\n",
+      "stderr": ""
+    },
+    {
+      "name": "target-lane-list-member",
+      "jq": ".items[$t].lanes = [[\"rust-check\"]]",
+      "ed": "8092c\n        [\n          \"rust-check\"\n        ]\n.\n",
+      "sha256": "eba084ef7d6be635f55bfb1a5630ae735bf254784dfb42f3b31b6d37f5e6b8c0",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: unhashable type: 'list'"
+    },
+    {
+      "name": "target-lane-default",
+      "jq": ".items[$t].lanes = [\"rust-check\"]",
+      "ed": "8092c\n        \"rust-check\"\n.\n",
+      "sha256": "5e8b0a84f1e574a4cdec76491992e4cbf945fe3493ac0bd70a3a9ddaa70cc307",
+      "exit": 1,
+      "stdout": "non-default required features ['testing'] assigned to default execution: target:jope-policy/test/jope_dime\n{\"counts\": {\"benchmark-source\": 33, \"feature\": 31, \"package\": 26, \"python-family\": 231, \"target\": 265, \"workflow\": 6, \"workflow-job\": 16}, \"stage\": \"static\", \"unassigned_or_invalid\": 1}\n",
+      "stderr": ""
+    },
+    {
+      "name": "target-dispositions-null",
+      "jq": ".items[$t].dispositions = null",
+      "ed": "8094c\n      \"dispositions\": null,\n.\n",
+      "sha256": "056b53ffc121ff23984bf467d00c0c5df6e3b94c8a3585e6294c9eb81424c0e5",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: argument of type 'NoneType' is not iterable"
+    },
+    {
+      "name": "target-dispositions-int",
+      "jq": ".items[$t].dispositions = 7",
+      "ed": "8094c\n      \"dispositions\": 7,\n.\n",
+      "sha256": "90600e26e867ad4bac37290ea6fcc49f07c9cac13c0c4f9fd7ad894697c27a59",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: argument of type 'int' is not iterable"
+    },
+    {
+      "name": "target-dispositions-substring",
+      "jq": ".items[$t].dispositions = \"xfull-cpu-defaultx\"",
+      "ed": "8094c\n      \"dispositions\": \"xfull-cpu-defaultx\",\n.\n",
+      "sha256": "40fca40ea1620ed8f6c4dfe9a1380f5786191a23f1426fddcf0f6cd67f3f018b",
+      "exit": 1,
+      "stdout": "non-default required features ['testing'] assigned to default execution: target:jope-policy/test/jope_dime\nunknown disposition x for target:jope-policy/test/jope_dime\nunknown disposition f for target:jope-policy/test/jope_dime\nunknown disposition u for target:jope-policy/test/jope_dime\nunknown disposition l for target:jope-policy/test/jope_dime\nunknown disposition l for target:jope-policy/test/jope_dime\nunknown disposition - for target:jope-policy/test/jope_dime\nunknown disposition c for target:jope-policy/test/jope_dime\nunknown disposition p for target:jope-policy/test/jope_dime\nunknown disposition u for target:jope-policy/test/jope_dime\nunknown disposition - for target:jope-policy/test/jope_dime\nunknown disposition d for target:jope-policy/test/jope_dime\nunknown disposition e for target:jope-policy/test/jope_dime\nunknown disposition f for target:jope-policy/test/jope_dime\nunknown disposition a for target:jope-policy/test/jope_dime\nunknown disposition u for target:jope-policy/test/jope_dime\nunknown disposition l for target:jope-policy/test/jope_dime\nunknown disposition t for target:jope-policy/test/jope_dime\nunknown disposition x for target:jope-policy/test/jope_dime\n{\"counts\": {\"benchmark-source\": 33, \"feature\": 31, \"package\": 26, \"python-family\": 231, \"target\": 265, \"workflow\": 6, \"workflow-job\": 16}, \"stage\": \"static\", \"unassigned_or_invalid\": 19}\n",
+      "stderr": ""
+    },
+    {
+      "name": "target-dispositions-dict",
+      "jq": ".items[$t].dispositions = {\"research\": 1}",
+      "ed": "8094c\n      \"dispositions\": {\n        \"research\": 1\n      },\n.\n",
+      "sha256": "307aeaea897ff1e8783e7c88ad3b4affb9786751f1f814668fc4e3c1243a5814",
+      "exit": 0,
+      "stdout": "{\"counts\": {\"benchmark-source\": 33, \"feature\": 31, \"package\": 26, \"python-family\": 231, \"target\": 265, \"workflow\": 6, \"workflow-job\": 16}, \"stage\": \"static\", \"unassigned_or_invalid\": 0}\n",
+      "stderr": ""
+    },
+    {
+      "name": "target-dispositions-full-cpu",
+      "jq": ".items[$t].dispositions = [\"full-cpu-default\"]",
+      "ed": "8094c\n      \"dispositions\": [\n        \"full-cpu-default\"\n      ],\n.\n",
+      "sha256": "7fc322788eb3a0d0daabdd2484bc888d5f72b6cd0857eb55376bf67f561c1411",
+      "exit": 1,
+      "stdout": "non-default required features ['testing'] assigned to default execution: target:jope-policy/test/jope_dime\nunknown disposition full-cpu-default for target:jope-policy/test/jope_dime\n{\"counts\": {\"benchmark-source\": 33, \"feature\": 31, \"package\": 26, \"python-family\": 231, \"target\": 265, \"workflow\": 6, \"workflow-job\": 16}, \"stage\": \"static\", \"unassigned_or_invalid\": 2}\n",
+      "stderr": ""
+    }
+  ]
+}

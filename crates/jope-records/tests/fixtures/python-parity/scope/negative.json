@@ -1,0 +1,161 @@
+{
+  "source": "p1-failclosed-capture-20260928T020533Z",
+  "capture": "bash capture.sh (run p1-failclosed-capture-20260928T020533Z; Python from git show f46a9048fbb2697d6d1f4463a688083ea9dfcce1:<tool>, unmodified, in a scratch root)",
+  "tool": "deploy/ci/rust-test-scope-check.py",
+  "base": "scope/metadata.json",
+  "cases": [
+    {
+      "name": "metadata-list",
+      "jq": "[]",
+      "ed": "1,82c\n[]\n.\n",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: list indices must be integers or slices, not str"
+    },
+    {
+      "name": "packages-missing",
+      "jq": "del(.packages)",
+      "ed": "1,82c\n{}\n.\n",
+      "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+      "exit": 1,
+      "stdout": "",
+      "raised": "KeyError: 'packages'"
+    },
+    {
+      "name": "packages-null",
+      "jq": ".packages = null",
+      "ed": "2,81c\n  \"packages\": null\n.\n",
+      "sha256": "02ff874fddd5a682294a3f792e580cfe68d7fb94fcadd27f20bc4984898902a3",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: 'NoneType' object is not iterable"
+    },
+    {
+      "name": "packages-dict",
+      "jq": ".packages = {\"a\": 1}",
+      "ed": "2,81c\n  \"packages\": {\n    \"a\": 1\n  }\n.\n",
+      "sha256": "f92accc6bca75a22a26c19a965c69a54e326d0e691ddbf110fa099048a95ff25",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: string indices must be integers, not 'str'"
+    },
+    {
+      "name": "packages-string",
+      "jq": ".packages = \"ab\"",
+      "ed": "2,81c\n  \"packages\": \"ab\"\n.\n",
+      "sha256": "2cbb06d515b72b7644afc660f340226c9d728d22897ad9fe0146df6c4e004106",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: string indices must be integers, not 'str'"
+    },
+    {
+      "name": "package-null",
+      "jq": ".packages[0] = null",
+      "ed": "3,5c\n    null,\n.\n",
+      "sha256": "a0263620f4a900e4c0b72390b2ef23457ae0ac4b9bc2fd574a865608922b53c0",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: 'NoneType' object is not subscriptable"
+    },
+    {
+      "name": "package-string",
+      "jq": ".packages[0] = \"x\"",
+      "ed": "3,5c\n    \"x\",\n.\n",
+      "sha256": "54248034904c03358a93baf8316fc2d718e550fa5734e8866722507608ed6584",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: string indices must be integers, not 'str'"
+    },
+    {
+      "name": "package-list",
+      "jq": ".packages[0] = [\"name\"]",
+      "ed": "3,5c\n    [\n      \"name\"\n    ],\n.\n",
+      "sha256": "e8b202332347e81a47d6a21dbb973bf3203a19b4b8526d9aa7d9c4ca6aed6ed5",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: list indices must be integers or slices, not str"
+    },
+    {
+      "name": "name-missing",
+      "jq": "del(.packages[0].name)",
+      "ed": "3,5c\n    {},\n.\n",
+      "sha256": "ec6cf4900974b838b94047dcb8aa25533082c7182f7fd4e8258c6c38489335fe",
+      "exit": 1,
+      "stdout": "",
+      "raised": "KeyError: 'name'"
+    },
+    {
+      "name": "name-list",
+      "jq": ".packages[0].name = [\"feat-math\"]",
+      "ed": "4c\n      \"name\": [\n        \"feat-math\"\n      ]\n.\n",
+      "sha256": "328812ccc45b5f248fbcc3defa8e4e2ee3dc3c4221c813530d2387faf7474ff3",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: unhashable type: 'list'"
+    },
+    {
+      "name": "name-dict",
+      "jq": ".packages[0].name = {\"a\": 1}",
+      "ed": "4c\n      \"name\": {\n        \"a\": 1\n      }\n.\n",
+      "sha256": "b5938f125c91d3781bf8c42eabd7d513be08f96911478b04eea38bf2d46eb6d3",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: unhashable type: 'dict'"
+    },
+    {
+      "name": "name-int",
+      "jq": ".packages[0].name = 5",
+      "ed": "4c\n      \"name\": 5\n.\n",
+      "sha256": "930fb4f4193ccbf56e8c0c0587e2b2117028aae346b5f8c0e068c54074bae19e",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: sequence item 0: expected str instance, int found"
+    },
+    {
+      "name": "name-null",
+      "jq": ".packages[0].name = null",
+      "ed": "4c\n      \"name\": null\n.\n",
+      "sha256": "8e53dd05385bb44f250b8e17b4b5107363e401f570af50360b0361c5a4272549",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: sequence item 0: expected str instance, NoneType found"
+    },
+    {
+      "name": "name-bool",
+      "jq": ".packages[0].name = true",
+      "ed": "4c\n      \"name\": true\n.\n",
+      "sha256": "92e394607c2ab7710fe2cb7283960af5fe1cd5a4a80bb359accce94c7a7e6e5f",
+      "exit": 1,
+      "stdout": "",
+      "raised": "TypeError: sequence item 0: expected str instance, bool found"
+    },
+    {
+      "name": "extra-package",
+      "jq": ".packages += [{\"name\": \"ghost-crate\"}]",
+      "ed": "79a\n    },\n    {\n      \"name\": \"ghost-crate\"\n.\n",
+      "sha256": "80c545bfc073b21e64c2b2a881f80c11f4984db942580fbef33e7c62175f1cac",
+      "exit": 1,
+      "stdout": "rust-test scope does not partition the workspace:\n  - in the workspace but emitted by neither scope (they would be gated by nothing): ghost-crate\n  fix deploy/ci/rust-test-scope.sh (product = gated on pull requests, deferred = self-hosted)\n",
+      "stderr": ""
+    },
+    {
+      "name": "duplicate-package",
+      "jq": ".packages += [.packages[0]]",
+      "ed": "79a\n    },\n    {\n      \"name\": \"feat-math\"\n.\n",
+      "sha256": "2f24108c4f121c5d0844ab454468e29f80a077b13189d48d827b4e9ce77ad63c",
+      "exit": 0,
+      "stdout": "ok: 26 workspace packages = 17 product + 9 deferred (no repeats, no overlap, none unplaced)\n",
+      "stderr": ""
+    },
+    {
+      "name": "missing-package",
+      "jq": "del(.packages[0])",
+      "ed": "4,6d\n",
+      "sha256": "73b47ccf6534cac73b852fc3f4cbebeb8bee9d049551747248609f3a2a68b66f",
+      "exit": 1,
+      "stdout": "rust-test scope does not partition the workspace:\n  - emitted but not in the workspace: feat-math\n  fix deploy/ci/rust-test-scope.sh (product = gated on pull requests, deferred = self-hosted)\n",
+      "stderr": ""
+    }
+  ]
+}

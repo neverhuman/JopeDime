@@ -109,20 +109,49 @@ pub fn check(root: &Path) -> Result<(String, bool)> {
     }
     let meta = pyjson::parse_bytes(&output.stdout)
         .map_err(|m| Error::parse(Path::new("cargo metadata"), m))?;
-    let workspace: BTreeSet<String> = meta
-        .get("packages")
-        .and_then(Value::as_list)
-        .map(|packages| {
-            packages
-                .iter()
-                .filter_map(|p| p.get("name").and_then(Value::as_str).map(str::to_owned))
-                .collect()
-        })
-        .unwrap_or_default();
+    let workspace = workspace_packages(&meta)?;
     let product = emitted(root, &[])?;
     let deferred = emitted(root, &["--deferred"])?;
     let text = py::read_text(&root.join(SCRIPT))?;
     evaluate(&workspace, &product, &deferred, &text)
+}
+
+/// The workspace package names, `{p["name"] for p in meta["packages"]}`, refusing where the Python
+/// raised (a missing key, a value it could not iterate, subscript or hash) instead of skipping the
+/// package. A name that is not a string is refused too: it can never be emitted, so the Python
+/// reported it as unplaced by sorting and joining it with the string names, which raised.
+pub fn workspace_packages(meta: &Value) -> Result<BTreeSet<String>> {
+    let raised = |context: &str, exception: String| Error::Shape(format!("{context}: {exception}"));
+    let packages = py::subscript(meta, "packages").map_err(|e| raised("cargo metadata", e))?;
+    let packages = py::iterate(packages).ok_or_else(|| {
+        raised(
+            "cargo metadata packages",
+            py::exception::not_iterable(packages),
+        )
+    })?;
+    let mut names = vec![];
+    for (i, package) in packages.iter().enumerate() {
+        let at = format!("cargo metadata packages[{i}]");
+        let name = py::subscript(package, "name").map_err(|e| raised(&at, e))?;
+        if py::Key::of(name).is_none() {
+            return Err(raised(
+                &format!("{at} name"),
+                py::exception::unhashable(name),
+            ));
+        }
+        names.push((at, name));
+    }
+    names
+        .into_iter()
+        .map(|(at, name)| {
+            name.as_str().map(str::to_owned).ok_or_else(|| {
+                Error::Shape(format!(
+                    "{at} name: expected a string, found {} (the Python raised TypeError reporting it as unplaced)",
+                    name.repr()
+                ))
+            })
+        })
+        .collect()
 }
 
 /// The report for the workspace package names, the script's stdout for both scopes and the

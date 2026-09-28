@@ -94,9 +94,16 @@ fn shape(what: &str) -> Error {
     Error::Shape(format!("{what} missing"))
 }
 
-/// `value[key]` (a missing key is Python's `KeyError`).
+/// `value[key]`: a missing key (Python's `KeyError`) or a value that is not a dict (its
+/// `TypeError`) refuses, naming the key and, for a value that is not a dict, its type.
 fn at<'a>(value: &'a Value, key: &str) -> Result<&'a Value> {
-    value.get(key).ok_or_else(|| shape(&pyrepr_key(key)))
+    match value {
+        Value::Dict(dict) => dict.get(key).ok_or_else(|| shape(&pyrepr_key(key))),
+        other => Err(raised(
+            pyrepr_key(key),
+            py::exception::not_subscriptable(other),
+        )),
+    }
 }
 
 fn pyrepr_key(key: &str) -> String {
@@ -119,20 +126,216 @@ fn cell<'a>(row: &'a Dict, key: &str) -> Result<&'a str> {
         .ok_or_else(|| shape(&pyrepr_key(key)))
 }
 
+/// `int(row[key])` for a CSV cell; text that is not an integer refuses (Python's `ValueError`).
 fn int_cell(row: &Dict, key: &str) -> Result<i64> {
-    py::int(cell(row, key)?).ok_or_else(|| Error::Shape(format!("{key} is not an integer")))
+    let text = cell(row, key)?;
+    py::int(text).ok_or_else(|| {
+        Error::Shape(format!(
+            "CSV column {key}: expected an integer, found {}",
+            pyrepr_key(text)
+        ))
+    })
 }
 
+/// `float(row[key])` for a CSV cell; text that is not a number refuses (Python's `ValueError`).
 fn float_cell(row: &Dict, key: &str) -> Result<f64> {
-    py::float(cell(row, key)?).ok_or_else(|| Error::Shape(format!("{key} is not a float")))
+    let text = cell(row, key)?;
+    py::float(text).ok_or_else(|| {
+        Error::Shape(format!(
+            "CSV column {key}: expected a number, found {}",
+            pyrepr_key(text)
+        ))
+    })
 }
 
-fn float_of(value: &Value) -> Result<f64> {
+/// A JSON number formatted with a float format (`f"{value:.2f}"`); any other type refuses (the
+/// Python raised `ValueError` or `TypeError` in `format`).
+fn float_of(value: &Value, what: &str) -> Result<f64> {
     match value {
         Value::Int(i) => Ok(*i as f64),
         Value::Float(f) => Ok(*f),
         Value::Bool(b) => Ok(f64::from(u8::from(*b))),
-        other => Err(Error::Shape(format!("{} is not a number", other.repr()))),
+        other => Err(Error::Shape(format!(
+            "{what}: expected a number, found {} ({})",
+            other.repr(),
+            py::type_name(other)
+        ))),
+    }
+}
+
+/// `f"{valid['rankable_rows']:,}"`: an integer. A float refuses, which is stricter than the
+/// Python (it printed `format(8718.0, ",")`, `8,718.0`); any other type refuses as it did.
+fn rankable_rows(valid: &Value) -> Result<i64> {
+    let value = at(valid, "rankable_rows")?;
+    value.as_int().ok_or_else(|| {
+        Error::Shape(format!(
+            "{VALID_SNAPSHOT} rankable_rows: expected an integer, found {} ({})",
+            value.repr(),
+            py::type_name(value)
+        ))
+    })
+}
+
+/// Malformed evidence the Python crashed on (a traceback, exit status 1): the field, then what
+/// could not be done with it and its type (see [`py::exception`]; the text is not CPython's).
+fn raised(context: impl std::fmt::Display, exception: String) -> Error {
+    Error::Shape(format!("{context}: {exception}"))
+}
+
+/// `value[key]` (a string key); refuses where the Python raised (missing key, not a dict).
+fn sub<'a>(value: &'a Value, key: &str, context: &str) -> Result<&'a Value> {
+    py::subscript(value, key).map_err(|e| raised(context, e))
+}
+
+/// `for x in value`: the items (a list's, a dict's keys, a string's characters), or Python's
+/// `TypeError`.
+fn items(value: &Value, context: &str) -> Result<Vec<Value>> {
+    py::iterate(value).ok_or_else(|| raised(context, py::exception::not_iterable(value)))
+}
+
+/// `value.get(key)` on what the Python used as a dict (an `AttributeError` otherwise).
+fn dict_get<'a>(value: &'a Value, key: &str, context: &str) -> Result<Option<&'a Value>> {
+    match value {
+        Value::Dict(dict) => Ok(dict.get(key)),
+        other => Err(raised(context, py::exception::no_attribute(other, "get"))),
+    }
+}
+
+/// `f"{value[:9]}"`: a string's first nine characters, or a list's first nine items.
+fn first_nine(value: &Value, context: &str) -> Result<String> {
+    match value {
+        Value::Str(text) => Ok(text.chars().take(9).collect()),
+        Value::List(list) => Ok(Value::List(list.iter().take(9).cloned().collect()).repr()),
+        Value::Dict(_) => Err(Error::Shape(format!(
+            "{context}: expected a string, found {}",
+            value.repr()
+        ))),
+        other => Err(raised(
+            context,
+            format!(
+                "TypeError: '{}' object is not subscriptable",
+                py::type_name(other)
+            ),
+        )),
+    }
+}
+
+/// `new < current` for two method ids that tie on RMSE, as the tuple comparison inside `min`
+/// made it: equal ids are not less; strings and numbers compare; anything else raised.
+fn id_less(new: &Value, current: &Value) -> Result<bool> {
+    if new == current {
+        return Ok(false);
+    }
+    let number = |v: &Value| match v {
+        Value::Bool(b) => Some(f64::from(u8::from(*b))),
+        Value::Int(i) => Some(*i as f64),
+        Value::Float(f) => Some(*f),
+        _ => None,
+    };
+    match (new, current) {
+        (Value::Str(a), Value::Str(b)) => Ok(a < b),
+        _ => match (number(new), number(current)) {
+            (Some(a), Some(b)) => Ok(a < b),
+            _ => Err(raised(
+                format_args!("{SAMECUT} method id"),
+                format!(
+                    "TypeError: '<' not supported between instances of '{}' and '{}'",
+                    py::type_name(new),
+                    py::type_name(current)
+                ),
+            )),
+        },
+    }
+}
+
+/// A dict built as `{key: value for ...}`: a repeated key keeps its first position (and its first
+/// key object) and takes the last value; keys compare as Python hashes them.
+type PyDict = Vec<(py::Key, Value, Value)>;
+
+fn py_insert(dict: &mut PyDict, key: &Value, value: Value, context: &str) -> Result<()> {
+    let hashed = py::Key::of(key).ok_or_else(|| raised(context, py::exception::unhashable(key)))?;
+    match dict.iter_mut().find(|(k, _, _)| *k == hashed) {
+        Some(entry) => entry.2 = value,
+        None => dict.push((hashed, key.clone(), value)),
+    }
+    Ok(())
+}
+
+fn py_lookup<'a>(dict: &'a PyDict, key: &Value) -> Option<&'a Value> {
+    let hashed = py::Key::of(key)?;
+    dict.iter()
+        .find(|(k, _, _)| *k == hashed)
+        .map(|(_, _, v)| v)
+}
+
+/// `{a["id"]: a["rows"] for a in meta["applied"]}`.
+fn applied_rows(meta: &Value, context: &str) -> Result<PyDict> {
+    let mut applied = PyDict::new();
+    for a in items(
+        sub(meta, "applied", context)?,
+        &format!("{context} applied"),
+    )? {
+        let id = sub(&a, "id", &format!("{context} applied"))?;
+        let rows = sub(&a, "rows", &format!("{context} applied"))?.clone();
+        py_insert(&mut applied, id, rows, &format!("{context} applied id"))?;
+    }
+    Ok(applied)
+}
+
+/// A Python number (`bool` counts as `int`), for summing the corrected rows per method.
+#[derive(Clone, Copy)]
+enum Num {
+    Int(i64),
+    Float(f64),
+}
+
+impl Num {
+    fn of(value: &Value) -> Option<Num> {
+        match value {
+            Value::Bool(b) => Some(Num::Int(i64::from(*b))),
+            Value::Int(i) => Some(Num::Int(*i)),
+            Value::Float(f) => Some(Num::Float(*f)),
+            _ => None,
+        }
+    }
+
+    fn type_name(self) -> &'static str {
+        match self {
+            Num::Int(_) => "int",
+            Num::Float(_) => "float",
+        }
+    }
+
+    fn as_f64(self) -> f64 {
+        match self {
+            Num::Int(i) => i as f64,
+            Num::Float(f) => f,
+        }
+    }
+
+    /// `self + value`, or the `TypeError` Python raised for a value that is not a number.
+    fn add(self, value: &Value) -> std::result::Result<Num, String> {
+        let other = Num::of(value).ok_or_else(|| {
+            format!(
+                "TypeError: unsupported operand type(s) for +: '{}' and '{}'",
+                self.type_name(),
+                py::type_name(value)
+            )
+        })?;
+        Ok(match (self, other) {
+            (Num::Int(a), Num::Int(b)) => match a.checked_add(b) {
+                Some(sum) => Num::Int(sum),
+                None => Num::Float(a as f64 + b as f64),
+            },
+            (a, b) => Num::Float(a.as_f64() + b.as_f64()),
+        })
+    }
+
+    fn value(self) -> Value {
+        match self {
+            Num::Int(i) => Value::Int(i),
+            Num::Float(f) => Value::Float(f),
+        }
     }
 }
 
@@ -204,6 +407,8 @@ fn load_ladder(p: &Paths, snapshot: &str, csv: &str, ladder: &str) -> Result<(Va
     let snap = p.json(snapshot)?;
     let text = py::read_text(&p.at(csv))?;
     let rows = pycsv::dict_reader(&py::splitlines(&text).join("\n"), Newlines::LineFeed)?.rows;
+    // `snap.get("schema")`
+    dict_get(&snap, "schema", snapshot)?;
     if get(&snap, "schema") != &Value::from(SNAPSHOT_SCHEMA) {
         return refuse(format!(
             "{snapshot}: schema {} is not {SNAPSHOT_SCHEMA}",
@@ -257,6 +462,8 @@ fn load_evidence(p: &Paths) -> Result<Evidence> {
             "{SNAPSHOT}: the published ladder must apply no corrections"
         ));
     }
+    // `corrections.get("schema")`
+    dict_get(&corrections, "schema", CORRECTIONS)?;
     if get(&corrections, "schema") != &Value::from(CORRECTIONS_SCHEMA) {
         return refuse(format!("{CORRECTIONS}: schema is not {CORRECTIONS_SCHEMA}"));
     }
@@ -285,40 +492,53 @@ fn load_evidence(p: &Paths) -> Result<Evidence> {
         ));
     }
     for row in &valid_rows {
-        if cell(row, "benchmark_valid")? != "True" {
+        // `r["benchmark_valid"] != "True"`: a short row's missing cell is None, which differs.
+        let flag = row.get("benchmark_valid").ok_or_else(|| {
+            raised(
+                VALID_LEADERBOARD,
+                py::exception::key_error("benchmark_valid"),
+            )
+        })?;
+        if flag != &Value::from("True") {
             return refuse("a benchmark-invalid method survived into the benchmark-valid ladder");
         }
     }
     // Every correction must show up as fewer scored datasets for its method, so re-adding the
-    // rows, or editing the corrections without regenerating the ladder, fails here.
-    let mut applied: BTreeMap<String, i64> = BTreeMap::new();
-    for a in at(meta, "applied")?.as_list().into_iter().flatten() {
-        applied.insert(s(at(a, "id")?), at(a, "rows")?.as_int().unwrap_or(0));
+    // rows, or editing the corrections without regenerating the ladder, fails here. The ids,
+    // methods and row counts are read as the Python read them: iterated, hashed and added as they
+    // are, never skipped or defaulted.
+    let applied = applied_rows(meta, &format!("{VALID_SNAPSHOT} corrections"))?;
+    let listed = items(
+        sub(&corrections, "corrections", CORRECTIONS)?,
+        &format!("{CORRECTIONS} corrections"),
+    )?;
+    let context = format!("{CORRECTIONS} corrections");
+    let mut ids = std::collections::HashSet::new();
+    for c in &listed {
+        let id = sub(c, "id", &context)?;
+        ids.insert(py::Key::of(id).ok_or_else(|| raised(&context, py::exception::unhashable(id)))?);
     }
-    let listed = at(&corrections, "corrections")?
-        .as_list()
-        .cloned()
-        .unwrap_or_default();
-    let ids: std::collections::BTreeSet<String> = listed
-        .iter()
-        .map(|c| at(c, "id").map(s))
-        .collect::<Result<_>>()?;
-    if applied
-        .keys()
-        .cloned()
-        .collect::<std::collections::BTreeSet<_>>()
-        != ids
-    {
+    let applied_ids: std::collections::HashSet<py::Key> =
+        applied.iter().map(|(k, _, _)| k.clone()).collect();
+    if applied_ids != ids {
         return refuse("the corrections applied to the ladder are not the committed corrections");
     }
-    // Insertion-ordered like the Python dict.
-    let mut by_method: Vec<(String, i64)> = vec![];
+    // `corrected_by_method[m] = corrected_by_method.get(m, 0) + applied[c["id"]]`, in insertion
+    // order like the Python dict.
+    let mut by_method: Vec<(py::Key, Value, Num)> = vec![];
     for c in &listed {
-        let method = s(at(c, "method_id")?);
-        let n = applied[&s(at(c, "id")?)];
-        match by_method.iter_mut().find(|(m, _)| *m == method) {
-            Some((_, total)) => *total += n,
-            None => by_method.push((method, n)),
+        let method = sub(c, "method_id", &context)?;
+        let key = py::Key::of(method)
+            .ok_or_else(|| raised(&context, py::exception::unhashable(method)))?;
+        let rows = py_lookup(&applied, sub(c, "id", &context)?).expect("the id sets are equal");
+        let position = by_method.iter().position(|(k, _, _)| *k == key);
+        let total = position.map_or(Num::Int(0), |i| by_method[i].2);
+        let total = total
+            .add(rows)
+            .map_err(|e| raised(format_args!("{VALID_SNAPSHOT} corrections applied rows"), e))?;
+        match position {
+            Some(i) => by_method[i].2 = total,
+            None => by_method.push((key, method.clone(), total)),
         }
     }
     let scored = |rows: &[Dict]| -> Result<BTreeMap<String, i64>> {
@@ -332,12 +552,20 @@ fn load_evidence(p: &Paths) -> Result<Evidence> {
             .collect()
     };
     let (scored_published, scored_valid) = (scored(&published_rows)?, scored(&valid_rows)?);
-    for (method, n) in &by_method {
-        let before = scored_published.get(method).copied().unwrap_or(0);
-        let after = scored_valid.get(method).copied().unwrap_or(0);
-        if before - after != *n {
+    for (key, method, n) in &by_method {
+        // `scored.get(method, 0)`: the ladders are keyed by the CSV's strings.
+        let count = |scored: &BTreeMap<String, i64>| {
+            key.as_str()
+                .and_then(|m| scored.get(m))
+                .copied()
+                .unwrap_or(0)
+        };
+        let (before, after) = (count(&scored_published), count(&scored_valid));
+        if Value::Int(before - after) != n.value() {
             return refuse(format!(
-                "{method}: {n} rows corrected but scored datasets went {before} -> {after}"
+                "{}: {} rows corrected but scored datasets went {before} -> {after}",
+                method.py_str(),
+                n.value().py_str()
             ));
         }
     }
@@ -400,17 +628,20 @@ fn render_arena(p: &Paths) -> Result<String> {
     let e = load_evidence(p)?;
     let (track, corrections, published, valid) = (&e.track, &e.corrections, &e.published, &e.valid);
     let empty = Value::Dict(Dict::new());
-    let split = track.get("split").unwrap_or(&empty);
-    let policy = track.get("leaderboard_policy").unwrap_or(&empty);
-    let excluded_list: Vec<String> = split
-        .get("excluded_datasets")
-        .and_then(Value::as_list)
-        .map(|l| l.iter().map(s).collect())
-        .unwrap_or_default();
-    let excluded = if excluded_list.is_empty() {
+    let no_list = Value::List(vec![]);
+    // `track.get("split", {})`, `track.get("leaderboard_policy", {})`; each is then used as a dict.
+    let split = dict_get(track, "split", TRACK)?.unwrap_or(&empty);
+    let policy = dict_get(track, "leaderboard_policy", TRACK)?.unwrap_or(&empty);
+    let split_at = format!("{TRACK} split");
+    let policy_at = format!("{TRACK} leaderboard_policy");
+    // `", ".join(split.get("excluded_datasets", [])) or "none"`
+    let excluded = dict_get(split, "excluded_datasets", &split_at)?.unwrap_or(&no_list);
+    let excluded = py::join(", ", excluded)
+        .map_err(|e| raised(format_args!("{split_at} excluded_datasets"), e))?;
+    let excluded = if excluded.is_empty() {
         "none".to_owned()
     } else {
-        excluded_list.join(", ")
+        excluded
     };
     let excluded_rows = s(at(valid, "excluded_rows")?);
     let find = |rows: &[Dict], id: &str| -> Result<Option<Dict>> {
@@ -422,47 +653,60 @@ fn render_arena(p: &Paths) -> Result<String> {
         }
         Ok(found)
     };
-    let mut applied: BTreeMap<String, Value> = BTreeMap::new();
-    for a in at(at(valid, "corrections")?, "applied")?
-        .as_list()
-        .into_iter()
-        .flatten()
-    {
-        applied.insert(s(at(a, "id")?), at(a, "rows")?.clone());
+    let applied = applied_rows(
+        at(valid, "corrections")?,
+        &format!("{VALID_SNAPSHOT} corrections"),
+    )?;
+    // `{c["id"]: c for c in corrections["corrections"]}`
+    let context = format!("{CORRECTIONS} corrections");
+    let mut by_id = PyDict::new();
+    for c in items(sub(corrections, "corrections", CORRECTIONS)?, &context)? {
+        let id = sub(&c, "id", &context)?.clone();
+        py_insert(&mut by_id, &id, c, &context)?;
     }
-    let by_id = |id: &str| -> Result<Option<Value>> {
-        let mut found = None;
-        for c in at(corrections, "corrections")?
-            .as_list()
-            .into_iter()
-            .flatten()
-        {
-            if at(c, "id")? == &Value::from(id) {
-                found = Some(c.clone());
-            }
-        }
-        Ok(found)
-    };
     let (Some(golden46), Some(golden42)) = (
-        by_id("golden46-new3-20260723-v4-test-adaptive")?,
-        by_id("golden42-evolution-envelope-test-selected")?,
+        py_lookup(
+            &by_id,
+            &Value::from("golden46-new3-20260723-v4-test-adaptive"),
+        ),
+        py_lookup(
+            &by_id,
+            &Value::from("golden42-evolution-envelope-test-selected"),
+        ),
     ) else {
         return refuse(
             "the README prose is written for the two committed corrections; update both together",
         );
     };
+    // `c["evidence"][0].split(" ")[0]`
     let first_ref = |c: &Value| -> Result<String> {
-        let evidence = at(c, "evidence")?
-            .as_list()
-            .and_then(|l| l.first())
-            .ok_or_else(|| shape("evidence[0]"))?;
-        Ok(s(evidence).split(' ').next().unwrap_or_default().to_owned())
+        let evidence = sub(c, "evidence", &context)?;
+        let first =
+            py::first_item(evidence).map_err(|e| raised(format_args!("{context} evidence"), e))?;
+        let text = first.as_str().ok_or_else(|| {
+            raised(
+                format_args!("{context} evidence"),
+                py::exception::no_attribute(&first, "split"),
+            )
+        })?;
+        Ok(text.split(' ').next().unwrap_or_default().to_owned())
     };
     let public = if get(split, "test_labels_public").truthy() {
         "public"
     } else {
         "**not public**"
     };
+    // `track['primary_metric'].upper()`
+    let metric = at(track, "primary_metric")?;
+    let metric = metric
+        .as_str()
+        .ok_or_else(|| {
+            raised(
+                format_args!("{TRACK} primary_metric"),
+                py::exception::no_attribute(metric, "upper"),
+            )
+        })?
+        .to_uppercase();
     let mut out = vec![
         ARENA_BEGIN.to_owned(),
         format!(
@@ -473,11 +717,10 @@ fn render_arena(p: &Paths) -> Result<String> {
         ),
         String::new(),
         format!(
-            "`{}` · primary metric **{}** ({}) · Elo by `{}` · test labels are {public}; {} datasets are restricted; excluded datasets: {excluded}.",
+            "`{}` · primary metric **{metric}** ({}) · Elo by `{}` · test labels are {public}; {} datasets are restricted; excluded datasets: {excluded}.",
             s(at(track, "id")?),
-            s(at(track, "primary_metric")?).to_uppercase(),
             s(at(track, "metric_direction")?),
-            policy.get("elo_method").map_or_else(|| "unknown".to_owned(), s),
+            dict_get(policy, "elo_method", &policy_at)?.map_or_else(|| "unknown".to_owned(), s),
             split.get("restricted_dataset_count").map_or_else(|| "0".to_owned(), s),
         ),
         String::new(),
@@ -486,7 +729,7 @@ fn render_arena(p: &Paths) -> Result<String> {
         format!(
             "**{} methods** · {} rankable scores · {excluded_rows} published rows excluded as test-selected (see the next block). Bold rows are this repository's entries. *Benchmark-valid* here means that no artefact in this repository contradicts the row's published flag; it is not a claim that every comparator's protocol was verified.",
             s(at(valid, "methods")?),
-            thousands(at(valid, "rankable_rows")?.as_int().ok_or_else(|| shape("rankable_rows"))?),
+            thousands(rankable_rows(valid)?),
         ),
         String::new(),
     ];
@@ -514,10 +757,15 @@ fn render_arena(p: &Paths) -> Result<String> {
             "jope-dime still has benchmark-valid rows; the best-known block's prose assumes it has none",
         );
     }
+    // `applied[c['id']]`
     let applied_of = |c: &Value| -> Result<String> {
-        Ok(s(applied
-            .get(&s(at(c, "id")?))
-            .ok_or_else(|| shape("applied correction"))?))
+        let id = sub(c, "id", &context)?;
+        py_lookup(&applied, id).map(s).ok_or_else(|| {
+            raised(
+                format_args!("{VALID_SNAPSHOT} corrections applied"),
+                format!("KeyError: {}", id.repr()),
+            )
+        })
     };
     let track_id = s(at(track, "id")?);
     out.extend([
@@ -529,11 +777,11 @@ fn render_arena(p: &Paths) -> Result<String> {
         String::new(),
         format!(
             "- **{} Golden42 rows** are each the per-dataset minimum RMSE over the ledger's test-scored candidate evaluations (63,108 across the 42 datasets), not the score of one program frozen before the test targets were opened. The red-team lane in this tree names that quantity the *best-test ASPFM envelope*, role `oracle_reference_only`, and keeps it out of its fair ladder (`{}`, `crates/jope-campaigns/src/commands/train_only_redteam.rs:402-407`).",
-            applied_of(&golden42)?, first_ref(&golden42)?
+            applied_of(golden42)?, first_ref(golden42)?
         ),
         format!(
             "- **{} Golden46 rows** come from run `{}`, whose artefacts this repository's campaign code writes with `benchmark_valid: false, test_adaptive: true` (`{}`); the acceptance manifest relabelled the replayed winners `true`.",
-            applied_of(&golden46)?, s(at(&golden46, "source_revision")?), first_ref(&golden46)?
+            applied_of(golden46)?, s(at(golden46, "source_revision")?), first_ref(golden46)?
         ),
         String::new(),
         "Both are the best program found per dataset when candidates were scored on the test targets: reported here as best-known results, never as a held-out claim. The reproducible fixed-seed run of the same engine, `jope-dime-regressor`, is what stands on the ladder above. The same-cut benchmark replaces every row on this page with numbers this tree can reproduce.".to_owned(),
@@ -585,7 +833,7 @@ fn kind_of(m: &Value) -> Result<String> {
 
 fn engine_specs(r: &Value) -> Result<Vec<Value>> {
     let mut specs = vec![];
-    for m in at(r, "methods")?.as_list().into_iter().flatten() {
+    for m in &items(at(r, "methods")?, &format!("{SAMECUT} report methods"))? {
         if kind_of(m)? == "adapter" {
             specs.push(at(at(m, "method")?, "adapter")?.clone());
         }
@@ -631,10 +879,11 @@ fn load_samecut(p: &Paths) -> Result<SameCut> {
         .map_err(|e| Error::io(&p.at(&samecut_path("reports")), e))?
         .flatten()
         .map(|entry| entry.path())
+        // `Path.glob("*.bench-report.json")`: pathlib's `*` matches a leading dot too.
         .filter(|path| {
             path.file_name()
                 .and_then(|n| n.to_str())
-                .is_some_and(|n| n.ends_with(".bench-report.json") && !n.starts_with('.'))
+                .is_some_and(|n| n.ends_with(".bench-report.json"))
         })
         .collect();
     report_paths.sort();
@@ -656,7 +905,8 @@ fn load_samecut(p: &Paths) -> Result<SameCut> {
     }
     let first = &reports[0];
     for r in &reports {
-        let id = s(get(r, "dataset_id"));
+        // `r['dataset_id']`, read only when a refusal names it (as the Python formatted it).
+        let id = || -> Result<String> { Ok(s(sub(r, "dataset_id", rel)?)) };
         if at(r, "schema")? != &Value::from(REPORT_SCHEMA) {
             return refuse(format!(
                 "{rel}: report schema {} is not {REPORT_SCHEMA}",
@@ -669,13 +919,14 @@ fn load_samecut(p: &Paths) -> Result<SameCut> {
         {
             return refuse(format!(
                 "{rel}: {} is not a regression report ranked by rmse",
-                s(at(r, "dataset_id")?)
+                id()?
             ));
         }
         for key in ["protocol", "search", "git_sha", "host", "evaluator"] {
             if get(r, key) != get(first, key) || get(r, key).is_null() {
                 return refuse(format!(
-                    "{rel}: {id} differs from the first report in {key}"
+                    "{rel}: {} differs from the first report in {key}",
+                    id()?
                 ));
             }
         }
@@ -684,10 +935,12 @@ fn load_samecut(p: &Paths) -> Result<SameCut> {
         let first_plan = at(first, "plan")?;
         if at(plan, "seed")? != at(first_plan, "seed")? || at(plan, "k")? != at(first_plan, "k")? {
             return refuse(format!(
-                "{rel}: {id} differs from the first report in fold seed or k"
+                "{rel}: {} differs from the first report in fold seed or k",
+                id()?
             ));
         }
-        let methods = at(r, "methods")?.as_list().cloned().unwrap_or_default();
+        // `for m in r["methods"]`, iterated as the Python iterated it.
+        let methods = items(at(r, "methods")?, &format!("{rel} report methods"))?;
         let mut searched = vec![];
         for m in &methods {
             if kind_of(m)? == "search" {
@@ -696,12 +949,14 @@ fn load_samecut(p: &Paths) -> Result<SameCut> {
         }
         if searched.len() != 1 || at(at(&searched[0], "method")?, "id")? != &Value::from(SEARCHED) {
             return refuse(format!(
-                "{rel}: {id} does not carry exactly one {SEARCHED} row"
+                "{rel}: {} does not carry exactly one {SEARCHED} row",
+                id()?
             ));
         }
         if get(at(&searched[0], "method")?, "resample") != at(r, "search")? {
             return refuse(format!(
-                "{rel}: {id}: the searched row is not the resampled procedure"
+                "{rel}: {}: the searched row is not the resampled procedure",
+                id()?
             ));
         }
         let mut adapters = vec![];
@@ -713,7 +968,8 @@ fn load_samecut(p: &Paths) -> Result<SameCut> {
         adapters.sort();
         if adapters != SAMECUT_ADAPTERS {
             return refuse(format!(
-                "{rel}: {id} carries adapters {}, not {}",
+                "{rel}: {} carries adapters {}, not {}",
+                id()?,
                 py::str_list_repr(&adapters),
                 py::str_list_repr(&SAMECUT_ADAPTERS)
             ));
@@ -723,7 +979,8 @@ fn load_samecut(p: &Paths) -> Result<SameCut> {
                 && !get(at(at(m, "method")?, "adapter")?, "version").truthy()
             {
                 return refuse(format!(
-                    "{rel}: {id}: {} records no engine version",
+                    "{rel}: {}: {} records no engine version",
+                    id()?,
                     s(at(at(m, "method")?, "id")?)
                 ));
             }
@@ -756,7 +1013,7 @@ fn load_samecut(p: &Paths) -> Result<SameCut> {
         if engine_specs(r)? != specs {
             return refuse(format!(
                 "{rel}: {} recorded different engine specs or versions",
-                s(get(r, "dataset_id"))
+                s(sub(r, "dataset_id", rel)?)
             ));
         }
     }
@@ -779,21 +1036,40 @@ fn load_samecut(p: &Paths) -> Result<SameCut> {
 /// exactly; a token that would need quoting refuses rather than print a wrong command.
 fn adapter_flag(spec: &Value) -> Result<String> {
     let safe = Regex::new(r"^[A-Za-z0-9_./=:+-]+$").expect("static pattern");
-    let name = s(at(spec, "name")?);
-    let command: Vec<String> = at(spec, "command")?
-        .as_list()
-        .map(|l| l.iter().map(s).collect())
-        .unwrap_or_default();
-    for token in std::iter::once(&name).chain(command.iter()) {
-        if !safe.is_match(token) {
+    let context = format!("{SAMECUT} adapter spec");
+    // `tokens = [spec["name"], *spec["command"]]`: every token checked as it is, none skipped.
+    let name = sub(spec, "name", &context)?;
+    let command = sub(spec, "command", &context)?;
+    let unpacked = py::iterate(command).ok_or_else(|| {
+        raised(
+            &context,
+            format!(
+                "TypeError: Value after * must be an iterable, not {}",
+                py::type_name(command)
+            ),
+        )
+    })?;
+    for token in std::iter::once(name).chain(unpacked.iter()) {
+        // `SAFE_TOKEN.match(token)`
+        let text = token.as_str().ok_or_else(|| {
+            raised(
+                &context,
+                format!(
+                    "TypeError: expected string or bytes-like object, got '{}'",
+                    py::type_name(token)
+                ),
+            )
+        })?;
+        if !safe.is_match(text) {
             return refuse(format!(
                 "adapter {}: token {} is not shell-safe to render",
-                crate::pyjson::str_repr(&name),
-                crate::pyjson::str_repr(token)
+                name.repr(),
+                token.repr()
             ));
         }
     }
-    Ok(format!("--adapter \"{name}={}\"", command.join(" ")))
+    let command = py::join(" ", command).map_err(|e| raised(&context, e))?;
+    Ok(format!("--adapter \"{}={command}\"", name.py_str()))
 }
 
 fn samecut_row(r: &Dict, versions: &BTreeMap<String, String>) -> Result<String> {
@@ -831,29 +1107,49 @@ fn render_samecut(p: &Paths) -> Result<String> {
     let mut per_dataset = vec![];
     let mut search_seconds: Vec<f64> = vec![];
     let (mut finalist, mut best) = (0usize, 0usize);
-    let mut ordered: Vec<&Value> = reports.iter().collect();
-    ordered.sort_by_key(|r| s(get(r, "dataset_id")));
-    for r in ordered {
-        let methods = at(r, "methods")?.as_list().cloned().unwrap_or_default();
+    // `sorted(reports, key=lambda r: r["dataset_id"])` (stable). The ids are strings; ids of any
+    // other type (which Python sorted only when they were mutually comparable numbers) are
+    // refused rather than ordered by their text.
+    let mut ordered: Vec<(&str, &Value)> = vec![];
+    for r in reports {
+        let id = sub(r, "dataset_id", SAMECUT)?;
+        match (id.as_str(), reports.len()) {
+            (Some(id), _) => ordered.push((id, r)),
+            (None, 1) => ordered.push(("", r)),
+            (None, _) => {
+                return Err(Error::Shape(format!(
+                    "{SAMECUT}: report dataset_id {} is not a string, so the reports cannot be ordered as the Python ordered them",
+                    id.repr()
+                )))
+            }
+        }
+    }
+    ordered.sort_by(|a, b| a.0.cmp(b.0));
+    for (_, r) in ordered {
+        let methods = items(at(r, "methods")?, &format!("{SAMECUT} report methods"))?;
         let s_index = methods
             .iter()
             .position(|m| kind_of(m).is_ok_and(|k| k == "search"))
             .ok_or_else(|| shape("search method"))?;
         let sm = &methods[s_index];
         // "Best" is the ladder's own rule: the lowest pooled RMSE among the finalists that
-        // scored, ties by method id.
-        let mut top: Option<(usize, f64, String)> = None;
+        // scored, ties by method id: `min(scored, key=lambda m: (rmse, id))`, which keeps the
+        // first of equal keys and compares the ids only on a tie.
+        let mut top: Option<(usize, f64, Value)> = None;
         for (i, m) in methods.iter().enumerate() {
             let deep_stage = get(m, "deep");
-            if !(deep_stage.truthy() && at(deep_stage, "status")? == &Value::from("ok")) {
+            if !(deep_stage.truthy() && sub(deep_stage, "status", SAMECUT)? == &Value::from("ok")) {
                 continue;
             }
-            let rmse = float_of(at(at(deep_stage, "oof")?, "rmse")?)?;
-            let id = s(at(at(m, "method")?, "id")?);
+            let rmse = float_of(
+                sub(sub(deep_stage, "oof", SAMECUT)?, "rmse", SAMECUT)?,
+                &format!("{SAMECUT} report deep oof rmse"),
+            )?;
+            let id = sub(at(m, "method")?, "id", SAMECUT)?.clone();
             let better = match &top {
                 None => true,
                 Some((_, best_rmse, best_id)) => {
-                    rmse < *best_rmse || (rmse == *best_rmse && id < *best_id)
+                    rmse < *best_rmse || (rmse == *best_rmse && id_less(&id, best_id)?)
                 }
             };
             if better {
@@ -863,10 +1159,14 @@ fn render_samecut(p: &Paths) -> Result<String> {
         let Some((top_index, rmse, top_id)) = top else {
             return refuse(format!(
                 "{SAMECUT}: {} has no scored finalist",
-                s(at(r, "dataset_id")?)
+                s(sub(r, "dataset_id", SAMECUT)?)
             ));
         };
-        let produce = float_of(at(at(sm, "method")?, "produce_seconds")?)?;
+        let top_id = top_id.py_str();
+        let produce = float_of(
+            at(at(sm, "method")?, "produce_seconds")?,
+            &format!("{SAMECUT} report search method produce_seconds"),
+        )?;
         search_seconds.push(produce);
         let rank = get(sm, "deep_rank");
         if !rank.is_null() {
@@ -878,7 +1178,8 @@ fn render_samecut(p: &Paths) -> Result<String> {
         }
         let marker = if is_search { "**" } else { "" };
         let rank_text = if rank.is_null() {
-            format!("screen {}", s(get(sm, "screen_rank")))
+            // `f'screen {s['screen_rank']}'`
+            format!("screen {}", s(sub(sm, "screen_rank", SAMECUT)?))
         } else {
             s(rank)
         };
@@ -903,7 +1204,7 @@ fn render_samecut(p: &Paths) -> Result<String> {
         .iter()
         .copied()
         .fold(f64::NEG_INFINITY, f64::max);
-    let git_sha = s(at(first, "git_sha")?);
+    let git_sha = first_nine(at(first, "git_sha")?, &format!("{SAMECUT} report git_sha"))?;
     let mut out = vec![
         SAMECUT_BEGIN.to_owned(),
         "### Same-cut — every method on identical held-out rows, reproducible from this tree".to_owned(),
@@ -912,7 +1213,7 @@ fn render_samecut(p: &Paths) -> Result<String> {
             "`{}` · {n} regression datasets from `datasets/test` · primary metric **RMSE** (minimize) · fold plan k={}, seed {}, screen fold {}, top {} deepened · search budget {} programs × {} rounds, re-run on every cut · recorded at `{}` with {} workers on {} cores.",
             s(at(deep, "track_id")?), s(at(plan, "k")?), s(at(plan, "seed")?),
             s(at(protocol, "screen_fold")?), s(at(protocol, "top")?), s(at(search, "pop")?),
-            s(at(search, "gens")?), git_sha.chars().take(9).collect::<String>(),
+            s(at(search, "gens")?), git_sha,
             s(at(host, "workers")?), s(at(host, "cores")?)
         ),
         String::new(),
@@ -996,8 +1297,8 @@ fn render_samecut(p: &Paths) -> Result<String> {
 
 fn render_bench(p: &Paths) -> Result<String> {
     let b = p.json(BENCH)?;
-    let num = |key: &str| -> Result<f64> { float_of(at(&b, key)?) };
-    let git_sha = s(at(&b, "git_sha")?);
+    let num = |key: &str| -> Result<f64> { float_of(at(&b, key)?, &format!("{BENCH} {key}")) };
+    let git_sha = first_nine(at(&b, "git_sha")?, &format!("{BENCH} git_sha"))?;
     Ok([
         BENCH_BEGIN.to_owned(),
         "### Emit-path latency".to_owned(),
@@ -1032,7 +1333,7 @@ fn render_bench(p: &Paths) -> Result<String> {
             s(at(&b, "cpu")?),
             s(at(&b, "nproc")?),
             s(at(&b, "kernel")?),
-            git_sha.chars().take(9).collect::<String>(),
+            git_sha,
             s(at(&b, "rustc")?)
         ),
         BENCH_END.to_owned(),

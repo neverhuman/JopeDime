@@ -1,0 +1,539 @@
+{
+  "source": "p1-failclosed-capture-20260928T020533Z",
+  "capture": "bash capture.sh (run p1-failclosed-capture-20260928T020533Z; Python from git show f46a9048fbb2697d6d1f4463a688083ea9dfcce1:<tool>, unmodified, in a scratch root)",
+  "tool": "deploy/ci/coverage.py discover",
+  "base": "coverage/metadata.json",
+  "cases": [
+    {
+      "name": "metadata-list",
+      "jq": "[]",
+      "ed": "1,2745c\n[]\n.\n",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+      "exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raised": "TypeError: list indices must be integers or slices, not str"
+    },
+    {
+      "name": "packages-missing",
+      "jq": "del(.packages)",
+      "ed": "29,2743d\n",
+      "sha256": "62eccfcd11a0a7054012acff13f1a7a71be1e6978f16688e94d6d79d33267475",
+      "exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raised": "KeyError: 'packages'"
+    },
+    {
+      "name": "packages-null",
+      "jq": ".packages = null",
+      "ed": "30,2744c\n  \"packages\": null\n.\n",
+      "sha256": "7baa28d0102bf739d813e19b75214ef2d3990ba0bb55e0f4f1e8e7c11608a765",
+      "exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raised": "TypeError: 'NoneType' object is not iterable"
+    },
+    {
+      "name": "packages-dict",
+      "jq": ".packages = {\"a\": 1}",
+      "ed": "30,2744c\n  \"packages\": {\n    \"a\": 1\n  }\n.\n",
+      "sha256": "f99ec7b1d0053ffea9d20c3a4f9ce5d808b24caeca2ee74b8545ae2463da74aa",
+      "exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raised": "TypeError: string indices must be integers, not 'str'"
+    },
+    {
+      "name": "packages-string",
+      "jq": ".packages = \"ab\"",
+      "ed": "30,2744c\n  \"packages\": \"ab\"\n.\n",
+      "sha256": "5b412a238f36922edcb31984e89881ed52213d40047437aed39b84fb17a63147",
+      "exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raised": "TypeError: string indices must be integers, not 'str'"
+    },
+    {
+      "name": "package-null",
+      "jq": ".packages[0] = null",
+      "ed": "31,257c\n    null,\n.\n",
+      "sha256": "eaec823188034877f5bf29759933f91fcadf5b86da45e9020451b622ee1d4137",
+      "exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raised": "TypeError: 'NoneType' object is not subscriptable"
+    },
+    {
+      "name": "members-missing",
+      "jq": "del(.workspace_members)",
+      "ed": "2,29d\n",
+      "sha256": "162d3582187a5a4cf1455f855bb8d2acede6c3c51e5d4055466f7a0d86e60ef8",
+      "exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raised": "KeyError: 'workspace_members'"
+    },
+    {
+      "name": "members-null",
+      "jq": ".workspace_members = null",
+      "ed": "2,29c\n  \"workspace_members\": null,\n.\n",
+      "sha256": "fafacbbd6ad52aa3170b728da6ba2977224bda83bb91a90edc3767dab804dab4",
+      "exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raised": "TypeError: argument of type 'NoneType' is not iterable"
+    },
+    {
+      "name": "members-dict-unhashable",
+      "jq": ".workspace_members = {\"x\": 1} | .packages[0].id = [\"x\"]",
+      "ed": "32c\n      \"id\": [\n        \"x\"\n      ],\n.\n2,29c\n  \"workspace_members\": {\n    \"x\": 1\n  },\n.\n",
+      "sha256": "1736b975e5c680ea5ff7f1041e8042a0f75e55a058ad9d35a7829647e1926506",
+      "exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raised": "TypeError: unhashable type: 'list'"
+    },
+    {
+      "name": "members-dict-keys",
+      "jq": ".workspace_members |= (map({key: ., value: 1}) | from_entries)",
+      "ed": "2,29c\n  \"workspace_members\": {\n    \"path+file://@ROOT@/crates/feat-math#0.1.0\": 1,\n    \"path+file://@ROOT@/crates/hyperion#0.1.0\": 1,\n    \"path+file://@ROOT@/crates/jope-engine#jope-parallel@0.1.0\": 1,\n    \"path+file://@ROOT@/crates/smartcluster/jain-smartcluster#8.0.0\": 1,\n    \"path+file://@ROOT@/crates/smartcluster/jain-smartcluster-core#8.0.0\": 1,\n    \"path+file://@ROOT@/crates/jope-paths#0.1.0\": 1,\n    \"path+file://@ROOT@/crates/jope-policy#0.1.0\": 1,\n    \"path+file://@ROOT@/crates/jope-encoders#starforge@0.1.0\": 1,\n    \"path+file://@ROOT@/crates/battle-gpu#0.1.0\": 1,\n    \"path+file://@ROOT@/crates/jope-arena#0.1.0\": 1,\n    \"path+file://@ROOT@/crates/jope-bench#0.1.0\": 1,\n    \"path+file://@ROOT@/crates/jope-datasets#0.1.0\": 1,\n    \"path+file://@ROOT@/crates/jope-learning#0.1.0\": 1,\n    \"path+file://@ROOT@/crates/jope-pipeline#0.1.0\": 1,\n    \"path+file://@ROOT@/crates/jope-campaigns#jope-dime-regressor@0.1.0\": 1,\n    \"path+file://@ROOT@/crates/jope-ci#0.1.0\": 1,\n    \"path+file://@ROOT@/crates/jope-cli#0.1.0\": 1,\n    \"path+file://@ROOT@/crates/jope-models#0.1.0\": 1,\n    \"path+file://@ROOT@/crates/jope-motifs#0.1.0\": 1,\n    \"path+file://@ROOT@/crates/jope-records#0.1.0\": 1,\n    \"path+file://@ROOT@/crates/numpy-pcg64#0.1.0\": 1,\n    \"path+file://@ROOT@/crates/smartcluster/jain-smartcluster-fabric#8.0.0\": 1,\n    \"path+file://@ROOT@/crates/smartcluster/jain-smartcluster-daemon#8.0.0\": 1,\n    \"path+file://@ROOT@/crates/smartcluster/jain-worker#8.0.0\": 1,\n    \"path+file://@ROOT@/crates/smartcluster/jainnode#8.0.0\": 1,\n    \"path+file://@ROOT@/crates/smartcluster/scq#8.0.0\": 1\n  },\n.\n",
+      "sha256": "d760a91b1646df82cf08ddfd2cbb29b8fc9d98f418b1b262e4720f1321e733cb",
+      "exit": 0,
+      "stdout_sha256": "5dc7e34667a03334614e3cfed1df475af493d3f2fa9cd49475f2e2a51a221a77",
+      "stderr": ""
+    },
+    {
+      "name": "members-str-nonstr",
+      "jq": ".workspace_members = \"abc\" | .packages[0].id = 1",
+      "ed": "32c\n      \"id\": 1,\n.\n2,29c\n  \"workspace_members\": \"abc\",\n.\n",
+      "sha256": "7b7b009548cd297dc889ae5ede0872953f33fa60508e88f5862103b238f604fd",
+      "exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raised": "TypeError: 'in <string>' requires string as left operand, not int"
+    },
+    {
+      "name": "members-str-substring",
+      "jq": ".workspace_members |= join(\" \")",
+      "ed": "2,29c\n  \"workspace_members\": \"path+file://@ROOT@/crates/feat-math#0.1.0 path+file://@ROOT@/crates/hyperion#0.1.0 path+file://@ROOT@/crates/jope-engine#jope-parallel@0.1.0 path+file://@ROOT@/crates/smartcluster/jain-smartcluster#8.0.0 path+file://@ROOT@/crates/smartcluster/jain-smartcluster-core#8.0.0 path+file://@ROOT@/crates/jope-paths#0.1.0 path+file://@ROOT@/crates/jope-policy#0.1.0 path+file://@ROOT@/crates/jope-encoders#starforge@0.1.0 path+file://@ROOT@/crates/battle-gpu#0.1.0 path+file://@ROOT@/crates/jope-arena#0.1.0 path+file://@ROOT@/crates/jope-bench#0.1.0 path+file://@ROOT@/crates/jope-datasets#0.1.0 path+file://@ROOT@/crates/jope-learning#0.1.0 path+file://@ROOT@/crates/jope-pipeline#0.1.0 path+file://@ROOT@/crates/jope-campaigns#jope-dime-regressor@0.1.0 path+file://@ROOT@/crates/jope-ci#0.1.0 path+file://@ROOT@/crates/jope-cli#0.1.0 path+file://@ROOT@/crates/jope-models#0.1.0 path+file://@ROOT@/crates/jope-motifs#0.1.0 path+file://@ROOT@/crates/jope-records#0.1.0 path+file://@ROOT@/crates/numpy-pcg64#0.1.0 path+file://@ROOT@/crates/smartcluster/jain-smartcluster-fabric#8.0.0 path+file://@ROOT@/crates/smartcluster/jain-smartcluster-daemon#8.0.0 path+file://@ROOT@/crates/smartcluster/jain-worker#8.0.0 path+file://@ROOT@/crates/smartcluster/jainnode#8.0.0 path+file://@ROOT@/crates/smartcluster/scq#8.0.0\",\n.\n",
+      "sha256": "5f650b7cb4847747266089f3ecd7f609744cb143124767d2f2e9f975271a32ad",
+      "exit": 0,
+      "stdout_sha256": "5dc7e34667a03334614e3cfed1df475af493d3f2fa9cd49475f2e2a51a221a77",
+      "stderr": ""
+    },
+    {
+      "name": "id-missing",
+      "jq": "del(.packages[0].id)",
+      "ed": "32d\n",
+      "sha256": "1f83c32399b28d0e76b1ecb50a4c1eb2c70f49565d15bbe4ac1e16fe30699680",
+      "exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raised": "KeyError: 'id'"
+    },
+    {
+      "name": "id-int-member-float",
+      "jq": ".packages[0].id = 7 | .workspace_members += [\"@LIT:7.0@\"]",
+      "ed": "32c\n      \"id\": 7,\n.\n28c\n    \"path+file://@ROOT@/crates/smartcluster/scq#8.0.0\",\n    7.0\n.\n",
+      "sha256": "93abf3f5ee692ba9ff2d0e4cbaaec0c22fe093db1ab5f5260dacac9c8ac8e296",
+      "exit": 0,
+      "stdout_sha256": "5dc7e34667a03334614e3cfed1df475af493d3f2fa9cd49475f2e2a51a221a77",
+      "stderr": ""
+    },
+    {
+      "name": "id-int-member-bool",
+      "jq": ".packages[0].id = 1 | .workspace_members += [true]",
+      "ed": "32c\n      \"id\": 1,\n.\n28c\n    \"path+file://@ROOT@/crates/smartcluster/scq#8.0.0\",\n    true\n.\n",
+      "sha256": "d1724d8309148c27e886deb944941e1cc3a4f775c2a3e65c3d8ef61b47de15fe",
+      "exit": 0,
+      "stdout_sha256": "5dc7e34667a03334614e3cfed1df475af493d3f2fa9cd49475f2e2a51a221a77",
+      "stderr": ""
+    },
+    {
+      "name": "id-list-member-nested",
+      "jq": ".packages[0].id = [1] | .workspace_members += [[\"@LIT:1.0@\"]]",
+      "ed": "32c\n      \"id\": [\n        1\n      ],\n.\n28c\n    \"path+file://@ROOT@/crates/smartcluster/scq#8.0.0\",\n    [\n      1.0\n    ]\n.\n",
+      "sha256": "c5659d51496eb60f84d6750a72a66494f308f352873384d527aad2daadbee46a",
+      "exit": 0,
+      "stdout_sha256": "5dc7e34667a03334614e3cfed1df475af493d3f2fa9cd49475f2e2a51a221a77",
+      "stderr": ""
+    },
+    {
+      "name": "name-missing",
+      "jq": "del(.packages[0].name)",
+      "ed": "33d\n",
+      "sha256": "165020054a2f307a70c51996d8ea59bfd85843861370ed27fdf2820afe10269b",
+      "exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raised": "KeyError: 'name'"
+    },
+    {
+      "name": "name-int",
+      "jq": ".packages[0].name = 5",
+      "ed": "33c\n      \"name\": 5,\n.\n",
+      "sha256": "6a9563a1f466172825b83757826801c159278493167d2ee11412da7d2849e233",
+      "exit": 0,
+      "stdout_sha256": "02fbd0f659079b80b0acc1474b13d6dc1483e3fc4ace82c4f793d1eca4250104",
+      "stderr": ""
+    },
+    {
+      "name": "name-list",
+      "jq": ".packages[0].name = [\"a\"]",
+      "ed": "33c\n      \"name\": [\n        \"a\"\n      ],\n.\n",
+      "sha256": "a9928f9afa08ded6ca8130e87be47c7571783cc783ee4e269763294829f9d6f8",
+      "exit": 0,
+      "stdout_sha256": "c2af7cff0868de7f161ddb38245a252a07e5db1f4be4a1d899f7cb59cd8071e9",
+      "stderr": ""
+    },
+    {
+      "name": "manifest-missing",
+      "jq": "del(.packages[0].manifest_path)",
+      "ed": "34d\n",
+      "sha256": "c64f911e2ed4fcfa878c1e5cc7e715f53e7bc386f5640dd27a615aa75033ff42",
+      "exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raised": "KeyError: 'manifest_path'"
+    },
+    {
+      "name": "manifest-int",
+      "jq": ".packages[0].manifest_path = 1",
+      "ed": "34c\n      \"manifest_path\": 1,\n.\n",
+      "sha256": "b02522eee40786035b9e14e18bf9b63044cad9a1131275c4ce417ea05bb897a0",
+      "exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raised": "TypeError: argument should be a str or an os.PathLike object where __fspath__ returns a str, not 'int'"
+    },
+    {
+      "name": "manifest-null",
+      "jq": ".packages[0].manifest_path = null",
+      "ed": "34c\n      \"manifest_path\": null,\n.\n",
+      "sha256": "ddd1bd9ebbc39d644e869ea644eeb43b048746ee30106e971769ccba2ac3eb8a",
+      "exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raised": "TypeError: argument should be a str or an os.PathLike object where __fspath__ returns a str, not 'NoneType'"
+    },
+    {
+      "name": "manifest-list",
+      "jq": ".packages[0].manifest_path = [\"@ROOT@/Cargo.toml\"]",
+      "ed": "34c\n      \"manifest_path\": [\n        \"@ROOT@/Cargo.toml\"\n      ],\n.\n",
+      "sha256": "6ce2a14b7c242d51cad3a5a914b88ca703135d67d33e76e68b526a701a88b431",
+      "exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raised": "TypeError: argument should be a str or an os.PathLike object where __fspath__ returns a str, not 'list'"
+    },
+    {
+      "name": "manifest-outside",
+      "jq": ".packages[0].manifest_path = \"/elsewhere/Cargo.toml\"",
+      "ed": "34c\n      \"manifest_path\": \"/elsewhere/Cargo.toml\",\n.\n",
+      "sha256": "1b759b896bea69321747017ef94166c3890724b0dfed91cd8e88036d0d4f747e",
+      "exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raised": "ValueError: '/elsewhere/Cargo.toml' is not in the subpath of '@ROOT@'"
+    },
+    {
+      "name": "manifest-empty",
+      "jq": ".packages[0].manifest_path = \"\"",
+      "ed": "34c\n      \"manifest_path\": \"\",\n.\n",
+      "sha256": "4662f4713566c56982f755853c1e93706813cdb64f7887622028d822e0a435c1",
+      "exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raised": "ValueError: '.' is not in the subpath of '@ROOT@'"
+    },
+    {
+      "name": "manifest-root",
+      "jq": ".packages[0].manifest_path = \"@ROOT@\"",
+      "ed": "34c\n      \"manifest_path\": \"@ROOT@\",\n.\n",
+      "sha256": "ae3a334bda111a650121b73533cfb47fc9e9217795f349481bee1a1874c53513",
+      "exit": 0,
+      "stdout_sha256": "49c54f6485cf650eb0e74c777fb5e917a99a1f209140fc781ccd5901e04e21b2",
+      "stderr": ""
+    },
+    {
+      "name": "manifest-dotted",
+      "jq": ".packages[0].manifest_path = \"@ROOT@/./crates//x/Cargo.toml\"",
+      "ed": "34c\n      \"manifest_path\": \"@ROOT@/./crates//x/Cargo.toml\",\n.\n",
+      "sha256": "c72f9f3f7323ccca1cdbb2cc8a0e5980d43675da98cdd56f5d0112d052fd72bb",
+      "exit": 0,
+      "stdout_sha256": "65ba20b3356892fd36bb073221de01c2ad6bcc971709fac2838e58fd78713706",
+      "stderr": ""
+    },
+    {
+      "name": "features-missing",
+      "jq": "del(.packages[0].features)",
+      "ed": "35,38d\n",
+      "sha256": "a849e956daf22be07289c0fe3d8458fe8564412cef4dcd16debd2319288d41ce",
+      "exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raised": "KeyError: 'features'"
+    },
+    {
+      "name": "features-null",
+      "jq": ".packages[0].features = null",
+      "ed": "35,38c\n      \"features\": null,\n.\n",
+      "sha256": "7638738b16da0ec8bbc8000b359a76001635be233dd46e2e038ffc782ac3ff81",
+      "exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raised": "AttributeError: 'NoneType' object has no attribute 'items'"
+    },
+    {
+      "name": "features-list",
+      "jq": ".packages[0].features = []",
+      "ed": "35,38c\n      \"features\": [],\n.\n",
+      "sha256": "8a386d8cd0f64a9e04f8bd9e1b78d27cab5405f2f8df1a9bf14ab4e4ad390494",
+      "exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raised": "AttributeError: 'list' object has no attribute 'items'"
+    },
+    {
+      "name": "features-string",
+      "jq": ".packages[0].features = \"x\"",
+      "ed": "35,38c\n      \"features\": \"x\",\n.\n",
+      "sha256": "f39af822c85d2e8128acb9df418305d1e0264c9fc7199d4efcaa88ba013e9813",
+      "exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raised": "AttributeError: 'str' object has no attribute 'items'"
+    },
+    {
+      "name": "feature-deps-null",
+      "jq": ".packages[0].features = {\"default\": null}",
+      "ed": "36,37c\n        \"default\": null\n.\n",
+      "sha256": "dcaa57f6b00bb121471e8e718aa1e2a30336dcd9fee53dd0cdec2d48ec8632a8",
+      "exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raised": "TypeError: 'NoneType' object is not iterable"
+    },
+    {
+      "name": "feature-deps-string",
+      "jq": ".packages[0].features = {\"x\": \"ba\"}",
+      "ed": "36,37c\n        \"x\": \"ba\"\n.\n",
+      "sha256": "73544bafbf3f5e2131cd29108a6903817c36df205eb7d77f908ff1ed3dc210a3",
+      "exit": 0,
+      "stdout_sha256": "eb1387a22d3dbb9ddb5c22e46db0dbd7cc5908bcd16b8742f19b8da2b54bd8fb",
+      "stderr": ""
+    },
+    {
+      "name": "feature-deps-dict",
+      "jq": ".packages[0].features = {\"x\": {\"b\": 1, \"a\": 2}}",
+      "ed": "36,37c\n        \"x\": {\n          \"b\": 1,\n          \"a\": 2\n        }\n.\n",
+      "sha256": "4de294f958a95834ca1a026e53fa36d0315364ba82cf98a5618fb090151996db",
+      "exit": 0,
+      "stdout_sha256": "eb1387a22d3dbb9ddb5c22e46db0dbd7cc5908bcd16b8742f19b8da2b54bd8fb",
+      "stderr": ""
+    },
+    {
+      "name": "feature-deps-int",
+      "jq": ".packages[0].features = {\"x\": [2, 1]}",
+      "ed": "36,37c\n        \"x\": [\n          2,\n          1\n        ]\n.\n",
+      "sha256": "54ddeccca489948a6df0dbbf787ef4bd394a06dd53e7e400aff4ffb36b7d7012",
+      "exit": 0,
+      "stdout_sha256": "dc65019b35da2a8b591ae83c6cf8143f2078b81245f93c55c1c504f1b3d3c036",
+      "stderr": ""
+    },
+    {
+      "name": "feature-deps-mixed",
+      "jq": ".packages[0].features = {\"x\": [\"a\", 1]}",
+      "ed": "36,37c\n        \"x\": [\n          \"a\",\n          1\n        ]\n.\n",
+      "sha256": "08f3722d1b95f97ef8ee36d2b79d70d9119d3746130a267842c100dfb86ce5a2",
+      "exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raised": "TypeError: '<' not supported between instances of 'int' and 'str'"
+    },
+    {
+      "name": "targets-missing",
+      "jq": "del(.packages[0].targets)",
+      "ed": "38,256c\n      }\n.\n",
+      "sha256": "60bdb6edb679a4d7309d0886b12567b7e1a84ab5a970daccafa13719aac5d263",
+      "exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raised": "KeyError: 'targets'"
+    },
+    {
+      "name": "targets-null",
+      "jq": ".packages[0].targets = null",
+      "ed": "39,256c\n      \"targets\": null\n.\n",
+      "sha256": "6bbb59bb8bf47a58df586e576df933edca5c7f2c59a1d98133766d554c560999",
+      "exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raised": "TypeError: 'NoneType' object is not iterable"
+    },
+    {
+      "name": "targets-dict",
+      "jq": ".packages[0].targets = {\"a\": 1}",
+      "ed": "39,256c\n      \"targets\": {\n        \"a\": 1\n      }\n.\n",
+      "sha256": "dd64cbe1d82e98cd629103fa27ea1e8d915fef1ccf5ed25dd01671b6656ca4bd",
+      "exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raised": "TypeError: string indices must be integers, not 'str'"
+    },
+    {
+      "name": "targets-string",
+      "jq": ".packages[0].targets = \"ab\"",
+      "ed": "39,256c\n      \"targets\": \"ab\"\n.\n",
+      "sha256": "8831bbc926714f53526a44278f407f73e3e866efa7982cf61ce1d5101f43a87b",
+      "exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raised": "TypeError: string indices must be integers, not 'str'"
+    },
+    {
+      "name": "target-null",
+      "jq": ".packages[0].targets[0] = null",
+      "ed": "40,48c\n        null,\n.\n",
+      "sha256": "32ac267ec2f1438332cb23aad79eec040eb43c20609756ca7de9c3508b2ab469",
+      "exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raised": "TypeError: 'NoneType' object is not subscriptable"
+    },
+    {
+      "name": "kind-missing",
+      "jq": "del(.packages[0].targets[0].kind)",
+      "ed": "41,43d\n",
+      "sha256": "00d4444d9f9213ea76be4f31d630ee2f40398f93314d586f68165f0793f9689e",
+      "exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raised": "KeyError: 'kind'"
+    },
+    {
+      "name": "kind-null",
+      "jq": ".packages[0].targets[0].kind = null",
+      "ed": "41,43c\n          \"kind\": null,\n.\n",
+      "sha256": "cfe83028899c778ec028693417e0746c4b293df6a87013c96cf6d33e31a0db3e",
+      "exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raised": "TypeError: can only join an iterable"
+    },
+    {
+      "name": "kind-int-member",
+      "jq": ".packages[0].targets[0].kind = [1]",
+      "ed": "42c\n            1\n.\n",
+      "sha256": "f0340fe8a6735985c77464ccaeab860426172902d6c983412b6bb05d35a980d1",
+      "exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raised": "TypeError: sequence item 0: expected str instance, int found"
+    },
+    {
+      "name": "kind-string",
+      "jq": ".packages[0].targets[0].kind = \"bin\"",
+      "ed": "41,43c\n          \"kind\": \"bin\",\n.\n",
+      "sha256": "7c4f81783b01dcda06e6fdd2cd9d256eea2478723aa51bbcb185eb230c8b1539",
+      "exit": 0,
+      "stdout_sha256": "e369658b6d98d70e112de85264ce49cda356ea9ede5de14380f7a35360ed0ff7",
+      "stderr": ""
+    },
+    {
+      "name": "kind-dict",
+      "jq": ".packages[0].targets[0].kind = {\"bin\": 1, \"test\": 2}",
+      "ed": "41,43c\n          \"kind\": {\n            \"bin\": 1,\n            \"test\": 2\n          },\n.\n",
+      "sha256": "7abe32947b296a09f8f9288421817e79163733f6dad38acf3efb439d5ff5a214",
+      "exit": 0,
+      "stdout_sha256": "ec2e90f7452e8589223bfb0cc1efed202ca19ef06656e0535fc35e9d6f01f196",
+      "stderr": ""
+    },
+    {
+      "name": "target-name-missing",
+      "jq": "del(.packages[0].targets[0].name)",
+      "ed": "44d\n",
+      "sha256": "ade08e8542d893eea2b07cda677f19a6416131069ecc864a200e30790e4aed92",
+      "exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raised": "KeyError: 'name'"
+    },
+    {
+      "name": "target-name-int",
+      "jq": ".packages[0].targets[0].name = 5",
+      "ed": "44c\n          \"name\": 5,\n.\n",
+      "sha256": "f1fc88aae24e680e9d23a0db57d21c00903b9155dd62d5dc7dc0b4ba6370aeb9",
+      "exit": 0,
+      "stdout_sha256": "0db5414664aeb2c77f649619fd2fe431986e5b2b9ca28b2d7b4f96fffd4842a7",
+      "stderr": ""
+    },
+    {
+      "name": "src-missing",
+      "jq": "del(.packages[0].targets[0].src_path)",
+      "ed": "45d\n",
+      "sha256": "34fee30987f9217834c0978cd15fe032b4b17df9fb4d3168559245e760535bb3",
+      "exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raised": "KeyError: 'src_path'"
+    },
+    {
+      "name": "src-null",
+      "jq": ".packages[0].targets[0].src_path = null",
+      "ed": "45c\n          \"src_path\": null,\n.\n",
+      "sha256": "a9d4a1e409dac82a97ed69e615fa331d45451503c6a538ac01bbc4be3a83cc8c",
+      "exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raised": "TypeError: argument should be a str or an os.PathLike object where __fspath__ returns a str, not 'NoneType'"
+    },
+    {
+      "name": "src-int",
+      "jq": ".packages[0].targets[0].src_path = 1",
+      "ed": "45c\n          \"src_path\": 1,\n.\n",
+      "sha256": "750a6a0cc61eb181823617e2b3595d74e605708129ee643515cdef60777cf949",
+      "exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raised": "TypeError: argument should be a str or an os.PathLike object where __fspath__ returns a str, not 'int'"
+    },
+    {
+      "name": "src-outside",
+      "jq": ".packages[0].targets[0].src_path = \"/elsewhere/lib.rs\"",
+      "ed": "45c\n          \"src_path\": \"/elsewhere/lib.rs\",\n.\n",
+      "sha256": "056e5dab9c6d14ecd25c47b7600163dda4f6051c72ecb1300d66118f83e891d8",
+      "exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raised": "ValueError: '/elsewhere/lib.rs' is not in the subpath of '@ROOT@'"
+    },
+    {
+      "name": "test-missing",
+      "jq": "del(.packages[0].targets[0].test)",
+      "ed": "46d\n",
+      "sha256": "60f8da83e1299c5c6cb97bbc52c082837de023f388dcbd77128b9cb22126d251",
+      "exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raised": "KeyError: 'test'"
+    },
+    {
+      "name": "doctest-missing",
+      "jq": "del(.packages[0].targets[0].doctest)",
+      "ed": "46,47c\n          \"test\": true\n.\n",
+      "sha256": "7c57999b367c69b06cc61326f61a8aacf91f483aba978063827fc35356b45681",
+      "exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raised": "KeyError: 'doctest'"
+    },
+    {
+      "name": "test-string",
+      "jq": ".packages[0].targets[0].test = \"yes\"",
+      "ed": "46c\n          \"test\": \"yes\",\n.\n",
+      "sha256": "a68f787927e5b1059eb259e3ade29b553543dab366272824dd5ef4a3ed37941f",
+      "exit": 0,
+      "stdout_sha256": "f699023276eb42049d04c4f2514aad53824ec05a7a83f562a1414477e5f3e27a",
+      "stderr": ""
+    },
+    {
+      "name": "required-null",
+      "jq": ".packages[0].targets[0][\"required-features\"] = null",
+      "ed": "47c\n          \"doctest\": true,\n          \"required-features\": null\n.\n",
+      "sha256": "21afc660928e5e06d057dfeba61b6791a65b519b2550bc33fdb2bc0e2c927e63",
+      "exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raised": "TypeError: 'NoneType' object is not iterable"
+    },
+    {
+      "name": "required-string",
+      "jq": ".packages[0].targets[0][\"required-features\"] = \"ba\"",
+      "ed": "47c\n          \"doctest\": true,\n          \"required-features\": \"ba\"\n.\n",
+      "sha256": "d14947ae60a48a6ebb72b592e4fbeeffcc98cd7d1127e543d2c5e5cd8f01f9b5",
+      "exit": 0,
+      "stdout_sha256": "ddcecbf0e20ad763437c787c362c389c3b9e3a27ea1dcee5973b572404ecc09a",
+      "stderr": ""
+    },
+    {
+      "name": "required-int-member",
+      "jq": ".packages[0].targets[0][\"required-features\"] = [1]",
+      "ed": "47c\n          \"doctest\": true,\n          \"required-features\": [\n            1\n          ]\n.\n",
+      "sha256": "38f0eb43a77796763b5810c4ac803b844cf58acad3ff3691658e9195263efc81",
+      "exit": 0,
+      "stdout_sha256": "07914f521fccc592eff25c34e1aa5f5d4076e9d40a52db45c1eeab5d0ed56388",
+      "stderr": ""
+    },
+    {
+      "name": "required-mixed",
+      "jq": ".packages[0].targets[0][\"required-features\"] = [\"a\", 1]",
+      "ed": "47c\n          \"doctest\": true,\n          \"required-features\": [\n            \"a\",\n            1\n          ]\n.\n",
+      "sha256": "c09365a14ce24336f994dcd06acfb26c12ecc3f75e82edbc63cad92b93e17193",
+      "exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raised": "TypeError: '<' not supported between instances of 'int' and 'str'"
+    }
+  ]
+}

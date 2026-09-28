@@ -221,45 +221,101 @@ pub fn cargo_bins(root: &Path) -> Result<Vec<(String, String, String, String)>> 
         }
     };
     let root = root.canonicalize().map_err(|e| Error::io(root, e))?;
+    bins_from_metadata(&meta, &root)
+}
+
+/// `os.path.abspath`: absolute (against the working directory) and lexically normalised.
+fn abspath(text: &str) -> PathBuf {
+    let path = Path::new(text);
+    let joined = if path.is_absolute() {
+        path.to_path_buf()
+    } else {
+        std::env::current_dir().unwrap_or_default().join(path)
+    };
+    let mut out = PathBuf::from("/");
+    for component in joined.components() {
+        match component {
+            std::path::Component::ParentDir => {
+                out.pop();
+            }
+            std::path::Component::Normal(part) => out.push(part),
+            _ => {}
+        }
+    }
+    out
+}
+
+/// `(package, kind, name, src path)` for every bin/example target of a `cargo metadata` document
+/// (`root` canonical), as the Python read it: `pkg["targets"]`, `t["kind"][0]`, and for a bin or
+/// example `t["src_path"]`, `pkg["name"]` and `t["name"]`. Where the Python crashed (a missing
+/// key, an empty `kind`, a value it could not iterate or index, a falsy or non-string
+/// `src_path`) this refuses too, naming the field and the offending type (see
+/// [`py::exception`]; the text is not CPython's), instead of skipping the package or target. A
+/// package or target name that is not a string is refused as well, which is stricter than the
+/// Python: it sorted such a name with the string ones (crashing only when two names of different
+/// types met) and printed it.
+pub fn bins_from_metadata(
+    meta: &Value,
+    root: &Path,
+) -> Result<Vec<(String, String, String, String)>> {
+    let raised = |context: &str, exception: String| Error::Shape(format!("{context}: {exception}"));
+    let text = |value: &Value, context: &str| -> Result<String> {
+        value.as_str().map(str::to_owned).ok_or_else(|| {
+            Error::Shape(format!(
+                "{context}: expected a string, found {}",
+                value.repr()
+            ))
+        })
+    };
+    let packages = py::subscript(meta, "packages").map_err(|e| raised("cargo metadata", e))?;
+    let packages = py::iterate(packages).ok_or_else(|| {
+        raised(
+            "cargo metadata packages",
+            py::exception::not_iterable(packages),
+        )
+    })?;
     let mut out = vec![];
-    for package in meta
-        .get("packages")
-        .and_then(Value::as_list)
-        .into_iter()
-        .flatten()
-    {
-        let name = package
-            .get("name")
-            .and_then(Value::as_str)
-            .unwrap_or_default();
-        for target in package
-            .get("targets")
-            .and_then(Value::as_list)
-            .into_iter()
-            .flatten()
-        {
-            let kind = target
-                .get("kind")
-                .and_then(Value::as_list)
-                .and_then(|k| k.first())
-                .and_then(Value::as_str)
-                .unwrap_or_default();
-            if kind == "bin" || kind == "example" {
-                let src = target
-                    .get("src_path")
-                    .and_then(Value::as_str)
-                    .unwrap_or_default();
-                let target_name = target
-                    .get("name")
-                    .and_then(Value::as_str)
-                    .unwrap_or_default();
-                out.push((
-                    name.to_owned(),
-                    kind.to_owned(),
-                    target_name.to_owned(),
-                    relpath(Path::new(src), &root),
+    for (p, package) in packages.iter().enumerate() {
+        let at = format!("cargo metadata packages[{p}]");
+        let targets = py::subscript(package, "targets").map_err(|e| raised(&at, e))?;
+        let targets = py::iterate(targets).ok_or_else(|| {
+            raised(
+                &format!("{at} targets"),
+                py::exception::not_iterable(targets),
+            )
+        })?;
+        for (t, target) in targets.iter().enumerate() {
+            let at = format!("{at} targets[{t}]");
+            let kinds = py::subscript(target, "kind").map_err(|e| raised(&at, e))?;
+            let kind = py::first_item(kinds).map_err(|e| raised(&format!("{at} kind"), e))?;
+            let kind = match kind.as_str() {
+                Some(kind @ ("bin" | "example")) => kind.to_owned(),
+                _ => continue,
+            };
+            // `os.path.relpath(t["src_path"], root)` refuses a falsy value of any type (`None`,
+            // `""`, `0`, `[]`, ...) before it looks at the type, then anything but a string.
+            let src = py::subscript(target, "src_path").map_err(|e| raised(&at, e))?;
+            if !src.truthy() {
+                return Err(raised(
+                    &format!("{at} src_path"),
+                    format!(
+                        "ValueError: no path specified ({} {})",
+                        py::type_name(src),
+                        src.repr()
+                    ),
                 ));
             }
+            let src = src
+                .as_str()
+                .ok_or_else(|| raised(&format!("{at} src_path"), py::exception::fspath(src)))?;
+            let name = py::subscript(package, "name").map_err(|e| raised(&at, e))?;
+            let target_name = py::subscript(target, "name").map_err(|e| raised(&at, e))?;
+            out.push((
+                text(name, &format!("{at} package name"))?,
+                kind,
+                text(target_name, &format!("{at} name"))?,
+                relpath(&abspath(src), root),
+            ));
         }
     }
     out.sort();

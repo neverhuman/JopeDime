@@ -108,6 +108,161 @@ pub fn contains(container: &Value, item: &Value) -> Option<bool> {
     }
 }
 
+/// Python `item in container`, or the refusal for the pair Python could not search (see
+/// [`exception::membership`]): which of the two values was the wrong type, and what it was.
+pub fn contains_or_raise(container: &Value, item: &Value) -> std::result::Result<bool, String> {
+    contains(container, item).ok_or_else(|| exception::membership(container, item))
+}
+
+/// `type(value).__name__` for a JSON value.
+pub fn type_name(value: &Value) -> &'static str {
+    match value {
+        Value::Null => "NoneType",
+        Value::Bool(_) => "bool",
+        Value::Int(_) => "int",
+        Value::Float(_) => "float",
+        Value::Str(_) => "str",
+        Value::List(_) => "list",
+        Value::Dict(_) => "dict",
+    }
+}
+
+/// Refusals for the malformed values a retired Python tool crashed on (a traceback and exit
+/// status 1, no report). A port that meets such a value refuses instead of skipping it or carrying
+/// on with a default. The caller prefixes the field; each message names the operation that could
+/// not be applied and the offending value's type. The wording is modelled on the exception
+/// CPython raised so a reader can recognise the case, but it is not a copy of CPython's text and
+/// no test compares it with CPython's: the negative parity fixtures assert only that both sides
+/// refuse (exit status 1, nothing printed on stdout).
+pub mod exception {
+    use super::type_name;
+    use crate::pyjson::{str_repr, Value};
+
+    /// `item in container` where Python could not search `container` for `item`: a dict and an
+    /// unhashable item, a string and an item that is not a string, or a container that is neither
+    /// a list, a dict nor a string.
+    pub fn membership(container: &Value, item: &Value) -> String {
+        match container {
+            Value::Dict(_) => unhashable(item),
+            Value::Str(_) => format!(
+                "TypeError: 'in <string>' requires string as left operand, not {}",
+                type_name(item)
+            ),
+            other => not_container(other),
+        }
+    }
+
+    /// `Path(value)` on a value that is not a string.
+    pub fn path_argument(value: &Value) -> String {
+        format!(
+            "TypeError: a path must be a string, not '{}'",
+            type_name(value)
+        )
+    }
+
+    /// `os.path.*(value)` (`os.fspath`) on a value that is not a string.
+    pub fn fspath(value: &Value) -> String {
+        format!(
+            "TypeError: expected str, bytes or os.PathLike object, not {}",
+            type_name(value)
+        )
+    }
+
+    /// `for x in value`, `set(value)` or `s.intersection(value)` on a value that is not iterable.
+    pub fn not_iterable(value: &Value) -> String {
+        format!("TypeError: '{}' object is not iterable", type_name(value))
+    }
+
+    /// `item in value` on a value that is not a container.
+    pub fn not_container(value: &Value) -> String {
+        format!(
+            "TypeError: argument of type '{}' is not iterable",
+            type_name(value)
+        )
+    }
+
+    /// Hashing a list or a dict (set membership, dict lookup).
+    pub fn unhashable(value: &Value) -> String {
+        format!("TypeError: unhashable type: '{}'", type_name(value))
+    }
+
+    /// `value.<attribute>` on a type that has no such attribute.
+    pub fn no_attribute(value: &Value, attribute: &str) -> String {
+        format!(
+            "AttributeError: '{}' object has no attribute '{attribute}'",
+            type_name(value)
+        )
+    }
+
+    /// `d[key]` with the key missing.
+    pub fn key_error(key: &str) -> String {
+        format!("KeyError: {}", str_repr(key))
+    }
+
+    /// `value[key]` with a string key on a value that is not a dict.
+    pub fn not_subscriptable(value: &Value) -> String {
+        match value {
+            Value::Str(_) => "TypeError: string indices must be integers, not 'str'".to_owned(),
+            Value::List(_) => {
+                "TypeError: list indices must be integers or slices, not str".to_owned()
+            }
+            other => format!(
+                "TypeError: '{}' object is not subscriptable",
+                type_name(other)
+            ),
+        }
+    }
+}
+
+/// Python `separator.join(value)`: the items `for x in value` yields, joined, or the exception
+/// line Python raised (a non-iterable, or an item that is not a string).
+pub fn join(separator: &str, value: &Value) -> std::result::Result<String, String> {
+    let items = iterate(value).ok_or_else(|| "TypeError: can only join an iterable".to_owned())?;
+    let mut parts = Vec::with_capacity(items.len());
+    for (i, item) in items.iter().enumerate() {
+        match item.as_str() {
+            Some(text) => parts.push(text.to_owned()),
+            None => {
+                return Err(format!(
+                    "TypeError: sequence item {i}: expected str instance, {} found",
+                    type_name(item)
+                ))
+            }
+        }
+    }
+    Ok(parts.join(separator))
+}
+
+/// Python `value[0]`: the first item (a list's, or a string's first character), or the exception
+/// line Python raised.
+pub fn first_item(value: &Value) -> std::result::Result<Value, String> {
+    match value {
+        Value::List(list) => list
+            .first()
+            .cloned()
+            .ok_or_else(|| "IndexError: list index out of range".to_owned()),
+        Value::Str(text) => text
+            .chars()
+            .next()
+            .map(|c| Value::from(c.to_string()))
+            .ok_or_else(|| "IndexError: string index out of range".to_owned()),
+        Value::Dict(_) => Err("KeyError: 0".to_owned()),
+        other => Err(format!(
+            "TypeError: '{}' object is not subscriptable",
+            type_name(other)
+        )),
+    }
+}
+
+/// Python `value[key]` for a string key: the item, or the refusal where Python raised (a missing
+/// key, or a value that is not a dict).
+pub fn subscript<'a>(value: &'a Value, key: &str) -> std::result::Result<&'a Value, String> {
+    match value {
+        Value::Dict(dict) => dict.get(key).ok_or_else(|| exception::key_error(key)),
+        other => Err(exception::not_subscriptable(other)),
+    }
+}
+
 /// Python `repr` of a tuple of values.
 pub fn tuple_repr(items: &[Value]) -> String {
     let parts: Vec<String> = items.iter().map(Value::repr).collect();
@@ -536,6 +691,28 @@ mod tests {
     fn python_membership() {
         let list = pyjson::parse_str(r#"["a", 1]"#).unwrap();
         assert_eq!(contains(&list, &Value::Float(1.0)), Some(true));
+        // Python `==`, not JSON-text equality: `True == 1 == 1.0`, `[1] == [1.0]`.
+        assert_eq!(contains(&list, &Value::Bool(true)), Some(true));
+        let nested = pyjson::parse_str("[[1]]").unwrap();
+        assert_eq!(
+            contains(&nested, &pyjson::parse_str("[1.0]").unwrap()),
+            Some(true)
+        );
+        // Each refusal names the value of the wrong type.
+        let dict = pyjson::parse_str(r#"{"a": 1}"#).unwrap();
+        assert_eq!(
+            contains_or_raise(&dict, &list),
+            Err("TypeError: unhashable type: 'list'".to_owned())
+        );
+        assert_eq!(
+            contains_or_raise(&Value::from("abc"), &Value::Int(1)),
+            Err("TypeError: 'in <string>' requires string as left operand, not int".to_owned())
+        );
+        assert_eq!(
+            contains_or_raise(&Value::Null, &Value::from("a")),
+            Err("TypeError: argument of type 'NoneType' is not iterable".to_owned())
+        );
+        assert_eq!(contains_or_raise(&dict, &Value::Int(1)), Ok(false));
         assert_eq!(
             contains(&Value::from("abc"), &Value::from("bc")),
             Some(true)

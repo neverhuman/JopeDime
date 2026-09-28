@@ -1,0 +1,82 @@
+{
+  "packages": [
+    {
+      "name": "feat-math"
+    },
+    {
+      "name": "hyperion"
+    },
+    {
+      "name": "jope-parallel"
+    },
+    {
+      "name": "jain-smartcluster"
+    },
+    {
+      "name": "jain-smartcluster-core"
+    },
+    {
+      "name": "jope-paths"
+    },
+    {
+      "name": "jope-policy"
+    },
+    {
+      "name": "starforge"
+    },
+    {
+      "name": "battle-gpu"
+    },
+    {
+      "name": "jope-arena"
+    },
+    {
+      "name": "jope-bench"
+    },
+    {
+      "name": "jope-datasets"
+    },
+    {
+      "name": "jope-learning"
+    },
+    {
+      "name": "jope-pipeline"
+    },
+    {
+      "name": "jope-dime-regressor"
+    },
+    {
+      "name": "jope-ci"
+    },
+    {
+      "name": "jope-cli"
+    },
+    {
+      "name": "jope-models"
+    },
+    {
+      "name": "jope-motifs"
+    },
+    {
+      "name": "jope-records"
+    },
+    {
+      "name": "numpy-pcg64"
+    },
+    {
+      "name": "jain-smartcluster-fabric"
+    },
+    {
+      "name": "jain-smartcluster-daemon"
+    },
+    {
+      "name": "jain-worker"
+    },
+    {
+      "name": "jainnode"
+    },
+    {
+      "name": "scq"
+    }
+  ]
+}
