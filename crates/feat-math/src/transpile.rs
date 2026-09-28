@@ -574,8 +574,11 @@ mod math_policy_tests {
              model_unload(model); return 0; }\n",
         );
 
-        let dir = std::env::temp_dir().join(format!("feat-math-cpp17-{}", std::process::id()));
-        fs::create_dir_all(&dir).expect("create C++17 test directory");
+        let scratch = tempfile::Builder::new()
+            .prefix("feat-math-cpp17-")
+            .tempdir()
+            .expect("create C++17 test directory");
+        let dir = scratch.path();
         let source_path = dir.join("model.cpp");
         fs::write(&source_path, driver).expect("write generated C++17 source");
         let expected = expected
@@ -670,9 +673,11 @@ mod math_policy_tests {
 
         let genome = GenomeIr::parse("(pipe X (standardize) (ridge))").expect("fixture parses");
         let source = emit_cpp17(&genome, &EmitOptions::default()).expect("C++17 emits");
-        let dir =
-            std::env::temp_dir().join(format!("feat-math-cpp17-symbols-{}", std::process::id()));
-        fs::create_dir_all(&dir).expect("create C++17 symbol-audit directory");
+        let scratch = tempfile::Builder::new()
+            .prefix("feat-math-cpp17-symbols-")
+            .tempdir()
+            .expect("create C++17 symbol-audit directory");
+        let dir = scratch.path();
         let source_path = dir.join("model.cpp");
         let library_path = dir.join("libmodel.so");
         fs::write(&source_path, source).expect("write generated C++17 source");
@@ -773,9 +778,11 @@ mod math_policy_tests {
             vec![1.25, -1.0, 0.5],
             vec![2.5, 3.0, -1.5],
         ];
-        let dir =
-            std::env::temp_dir().join(format!("feat-math-cpp17-corpus-{}", std::process::id()));
-        fs::create_dir_all(&dir).expect("create C++17 corpus directory");
+        let scratch = tempfile::Builder::new()
+            .prefix("feat-math-cpp17-corpus-")
+            .tempdir()
+            .expect("create C++17 corpus directory");
+        let dir = scratch.path();
 
         for (case_index, dsl) in cases.iter().enumerate() {
             let genome = GenomeIr::parse(dsl).expect("corpus fixture parses");
@@ -924,11 +931,11 @@ mod math_policy_tests {
              for (double value : out) { std::uint64_t bits; std::memcpy(&bits, &value, 8); std::printf(\"%016llx\\n\", static_cast<unsigned long long>(bits)); }\n\
              model_unload(model); return 0; }\n",
         );
-        let dir = std::env::temp_dir().join(format!(
-            "feat-math-cpp17-portable-model-{}",
-            std::process::id()
-        ));
-        fs::create_dir_all(&dir).expect("create Portable C++17 directory");
+        let scratch = tempfile::Builder::new()
+            .prefix("feat-math-cpp17-portable-model-")
+            .tempdir()
+            .expect("create Portable C++17 directory");
+        let dir = scratch.path();
         let source_path = dir.join("model.cpp");
         let binary_path = dir.join("model");
         fs::write(&source_path, driver).expect("write Portable C++17 source");
@@ -1016,9 +1023,11 @@ mod math_policy_tests {
             "(pipe X (target_bin_encode bins=4 prior=5.0) (ridge))",
             "(pipe X (elasticnet alpha=0.01 l1_ratio=0.5 sweeps=30))",
         ];
-        let dir =
-            std::env::temp_dir().join(format!("feat-math-cpp17-corpus-{}", std::process::id()));
-        fs::create_dir_all(&dir).expect("create C++17 corpus directory");
+        let scratch = tempfile::Builder::new()
+            .prefix("feat-math-cpp17-corpus-")
+            .tempdir()
+            .expect("create C++17 corpus directory");
+        let dir = scratch.path();
 
         for (case_index, genome_source) in cases.iter().enumerate() {
             let genome = GenomeIr::parse(genome_source).expect("corpus genome parses");
@@ -1136,11 +1145,11 @@ mod math_policy_tests {
             columns
         )
         .unwrap();
-        let dir = std::env::temp_dir().join(format!(
-            "feat-math-javascript-fixture-{}",
-            std::process::id()
-        ));
-        fs::create_dir_all(&dir).expect("create JavaScript fixture directory");
+        let scratch = tempfile::Builder::new()
+            .prefix("feat-math-javascript-fixture-")
+            .tempdir()
+            .expect("create JavaScript fixture directory");
+        let dir = scratch.path();
         let source_path = dir.join("model.js");
         fs::write(&source_path, driver).expect("write emitted JavaScript source");
         let syntax = Command::new("node")
@@ -1209,11 +1218,11 @@ mod math_policy_tests {
             test.len()
         )
         .unwrap();
-        let dir = std::env::temp_dir().join(format!(
-            "feat-math-javascript-cpp-parity-{}",
-            std::process::id()
-        ));
-        fs::create_dir_all(&dir).expect("create JavaScript/C++ parity directory");
+        let scratch = tempfile::Builder::new()
+            .prefix("feat-math-javascript-cpp-parity-")
+            .tempdir()
+            .expect("create JavaScript/C++ parity directory");
+        let dir = scratch.path();
         let source_path = dir.join(format!("case-{case_index}.cpp"));
         let binary_path = dir.join(format!("case-{case_index}"));
         fs::write(&source_path, driver).expect("write generated C++17 parity source");
@@ -1340,11 +1349,11 @@ for(let i=0;i<expected.length;i++)expect(rng.nextU32()===expected[i],20+i);
 modelUnload(fitted.handle);
 "#,
         );
-        let dir = std::env::temp_dir().join(format!(
-            "feat-math-javascript-boundary-{}",
-            std::process::id()
-        ));
-        fs::create_dir_all(&dir).expect("create JavaScript boundary directory");
+        let scratch = tempfile::Builder::new()
+            .prefix("feat-math-javascript-boundary-")
+            .tempdir()
+            .expect("create JavaScript boundary directory");
+        let dir = scratch.path();
         let source_path = dir.join("boundary.js");
         fs::write(&source_path, source).expect("write JavaScript boundary source");
         let run = Command::new("node")

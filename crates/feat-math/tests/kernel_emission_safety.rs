@@ -17,16 +17,18 @@ fn invalid_intermediates_abort_complete_python_and_rust_expressions() {
         let genome = GenomeIr::parse(source).unwrap();
         let artifacts = emit(&genome, &EmitOptions::default()).unwrap();
         assert!(artifacts.manifest.contains("feat-math-clip-safety-v2"));
-        let dir =
-            std::env::temp_dir().join(format!("kernel-export-safety-{}-{i}", std::process::id()));
-        fs::create_dir_all(&dir).unwrap();
+        let scratch = tempfile::Builder::new()
+            .prefix(&format!("kernel-export-safety-{i}-"))
+            .tempdir()
+            .unwrap();
+        let dir = scratch.path();
         fs::write(dir.join("train.csv"), "1,2,0\n2,3,1\n3,4,2\n4,5,3\n").unwrap();
         fs::write(dir.join("test.csv"), "2,4\n-1,3\n").unwrap();
         fs::write(dir.join("model.py"), artifacts.python).unwrap();
         fs::write(dir.join("model.rs"), artifacts.rust).unwrap();
         let compiled = Command::new("rustc")
             .args(["-O", "--edition=2021", "model.rs", "-o", "predictor"])
-            .current_dir(&dir)
+            .current_dir(dir)
             .output()
             .unwrap();
         assert!(
@@ -45,7 +47,7 @@ fn invalid_intermediates_abort_complete_python_and_rust_expressions() {
             let result = Command::new(executable)
                 .args(prefix)
                 .args(["train.csv", "test.csv", "prediction.txt"])
-                .current_dir(&dir)
+                .current_dir(dir)
                 .output()
                 .unwrap();
             assert!(
@@ -63,6 +65,6 @@ fn invalid_intermediates_abort_complete_python_and_rust_expressions() {
                 expected.iter().map(|v| v.to_bits()).collect::<Vec<_>>()
             );
         }
-        fs::remove_dir_all(dir).unwrap();
+        scratch.close().unwrap();
     }
 }
