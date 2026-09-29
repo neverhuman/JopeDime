@@ -421,6 +421,12 @@
         "gp"
       ]
     },
+    "target:feat-math/test/fitted_width": {
+      "role": "regression",
+      "subsystems": [
+        "fitting"
+      ]
+    },
     "target:feat-math/test/golden": {
       "role": "regression",
       "subsystems": [
