@@ -901,19 +901,22 @@ fn legacy_to_block(op: &FittedOp, block: &FeatureBlock) -> Result<FeatureBlock> 
 }
 
 /// The strict width boundary of a legacy stage in a schema-bound pipeline
-/// (kernel2 WP-1.7): its fitted state must agree with itself and accept the
-/// block's width, or the stage is refused with an error where
-/// `apply_op_generated` would panic or read state fitted for another column.
-/// State fitted on the block always passes. Every row of a block is
-/// `roles.len()` wide (`FeatureBlock::validate`).
+/// (kernel2 WP-1.7): its fitted state must agree with itself, accept the
+/// block's width and give output rows that a `Vec` can hold, or the stage is
+/// refused with an error where `apply_op_generated` would panic or read state
+/// fitted for another column. State fitted on the block always passes. Every
+/// row of a block is `roles.len()` wide (`FeatureBlock::validate`).
 ///
 /// A block with no rows has no width to compare. Nothing is read, and the
 /// generated-width arm of `legacy_generated_to_block` takes its width from the
 /// first row, so after such a stage the block is narrower than at fit time (no
-/// column, or only the appended input). Without rows, only the fitted column
-/// indices at which finishing the stage looks the block up are checked:
-/// `select_corr`'s indices, and `impute`'s indicators when it does not append.
-/// Finishing panicked there; every other outcome stays what it was.
+/// column, or only the appended input). Without rows, the fitted state is
+/// checked, and beyond it only the fitted column indices at which finishing the
+/// stage looks the block up: `select_corr`'s indices, and `impute`'s indicators
+/// when it does not append. Finishing panicked there. No output row is
+/// allocated either, so there is no overflow to refuse. For state that
+/// `fit_op` produced, every other outcome without rows is what it was before
+/// these checks.
 fn check_legacy_width(op: &FittedOp, block: &FeatureBlock) -> Result<()> {
     use crate::kernel::width;
     let name = width::stage_name(op);
@@ -943,6 +946,11 @@ fn check_legacy_width(op: &FittedOp, block: &FeatureBlock) -> Result<()> {
         bail!(
             "legacy stage {name} needs {required} input columns, but the feature block has {got}"
         );
+    }
+    // The state and the width are admitted above, so only an output row too
+    // wide for any `Vec` is left for `output_width` to refuse.
+    if width::output_width(op, got).is_err() {
+        bail!("legacy stage {name} output width overflows at {got} input columns");
     }
     Ok(())
 }
