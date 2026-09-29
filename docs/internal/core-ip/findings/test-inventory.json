@@ -414,6 +414,13 @@
         "policy"
       ]
     },
+    "target:feat-math/test/fault_trace": {
+      "role": "regression",
+      "subsystems": [
+        "fitting",
+        "gp"
+      ]
+    },
     "target:feat-math/test/golden": {
       "role": "regression",
       "subsystems": [
