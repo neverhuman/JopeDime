@@ -1,7 +1,7 @@
 //! Length-checked fitted-C++ codec and safe dynamic execution boundary.
 
 use super::csv::RawTable;
-use super::fitted_cpp::{emit_fitted_cpp17, FittedCppArtifact};
+use super::fitted_cpp::{emit_fitted_cpp17, FittedCppArtifact, FITTED_CPP_REVISION};
 use super::input::FittedColumn;
 use super::pipeline::BoundModel;
 use super::schema::ColumnKind;
@@ -267,10 +267,13 @@ impl FittedCppRuntime {
     pub fn load(&self, codec: &[u8]) -> Result<FittedCppModel> {
         let decoded = decode(codec)?;
         // Decode historical containers, but never dlopen an artifact emitted
-        // before the whole-expression bounds/domain repair. Regenerate from
-        // the embedded fitted model without refitting or changing old bytes.
+        // before the current revision: revision 1 predates the whole-expression
+        // bounds/domain repair, and revision 2 the fitted index checks and the
+        // runtime's empty-row, padding and tied-interval semantics (revision 3).
+        // Regenerate from the embedded fitted model without refitting or
+        // changing old bytes.
         let upgraded;
-        let codec = if decoded.emitter_revision < 2 {
+        let codec = if decoded.emitter_revision < FITTED_CPP_REVISION {
             upgraded = encode_fitted_cpp17(&decoded.model)?;
             upgraded.bytes.as_slice()
         } else {
@@ -368,7 +371,7 @@ pub(super) fn encode_artifact(
     let (model_library, compiler) = compile_model_library(artifact.source.as_bytes())?;
     let metadata = CodecMetadata {
         schema: "jope-dime.fitted-model-codec.v2".to_string(),
-        emitter_revision: 2,
+        emitter_revision: FITTED_CPP_REVISION,
         artifact_schema: model.artifact_schema.clone(),
         task_sha256: model.task_sha256.clone(),
         schema_sha256: model.schema_sha256.clone(),
@@ -463,7 +466,7 @@ fn decode(bytes: &[u8]) -> Result<DecodedCodec> {
     let library_at = source_at + source_len;
     let metadata: CodecMetadata = serde_json::from_slice(&bytes[metadata_at..model_at])?;
     if metadata.schema != "jope-dime.fitted-model-codec.v2"
-        || !(1..=2).contains(&metadata.emitter_revision)
+        || !(1..=FITTED_CPP_REVISION).contains(&metadata.emitter_revision)
         || metadata.runtime_flags_sha256 != text_hash(&compile_flags().join(" "))
         || metadata.runtime_source_sha256 != text_hash(RUNTIME_SOURCE)
         || metadata.runtime_library_sha256 != sha256_hex(RUNTIME_LIBRARY)
@@ -491,8 +494,10 @@ fn decode(bytes: &[u8]) -> Result<DecodedCodec> {
         bail!("fitted codec model library hash mismatch");
     }
     // The source must correspond to the admitted model, not merely carry a
-    // self-consistent hash. Old revisions are re-emitted by load above.
-    if metadata.emitter_revision == 2
+    // self-consistent hash. Only the current revision's source can be compared
+    // with the emitter's; older revisions keep their self-consistent hash, so
+    // stored containers still decode, and `load` re-emits them.
+    if metadata.emitter_revision == FITTED_CPP_REVISION
         && emit_fitted_cpp17(&model)?.source_sha256 != metadata.source_sha256
     {
         bail!("fitted codec source does not match the current emitter");
@@ -775,7 +780,7 @@ mod tests {
         assert_eq!(codec.sha256, repeated.sha256);
         assert_eq!(codec.bytes, repeated.bytes);
         let decoded = decode(&codec.bytes).unwrap();
-        assert_eq!(decoded.emitter_revision, 2);
+        assert_eq!(decoded.emitter_revision, 3);
         assert_eq!(decoded.model.genome_sha256, model.genome_sha256);
         let encoded = EncodedTable::from_bound_model(&model, &test).unwrap();
         let scratch = tempfile::Builder::new()
@@ -895,12 +900,66 @@ int main() {
     const REVISION_TWO_SOURCE: &str =
         include_str!("../../tests/fixtures/fitted_cpp/revision2-ridge.cpp");
 
+    /// `REVISION_TWO_SOURCE` and the current source of the same model differ only in the lines
+    /// that revision 3 changed: the marker, the width error and its index check, `piece`,
+    /// `row_mean`, `row_std` and the catch of status 8. Every other line, the model's own code
+    /// included, is the same, so the fixture stays revision 2's source for this very model.
     #[test]
-    fn revision_two_source_is_what_the_emitter_writes_for_the_fixture_model() {
+    fn revision_two_source_differs_from_the_current_one_only_in_revision_three_lines() {
+        /// The lines of `left` that `right` lacks, counting repeats, in `left`'s order.
+        fn only_in<'a>(left: &'a str, right: &str) -> Vec<&'a str> {
+            let mut counts = std::collections::BTreeMap::new();
+            for line in right.lines() {
+                *counts.entry(line).or_insert(0usize) += 1;
+            }
+            left.lines()
+                .filter(|line| match counts.get_mut(line) {
+                    Some(count) if *count > 0 => {
+                        *count -= 1;
+                        false
+                    }
+                    _ => true,
+                })
+                .collect()
+        }
+        fn starts_with_each(lines: &[&str], prefixes: &[&str]) -> bool {
+            lines.len() == prefixes.len()
+                && lines
+                    .iter()
+                    .zip(prefixes)
+                    .all(|(line, prefix)| line.starts_with(prefix))
+        }
         let (model, _) = fixture();
-        assert_eq!(
-            emit_fitted_cpp17(&model).unwrap().source,
-            REVISION_TWO_SOURCE
+        let current = emit_fitted_cpp17(&model).unwrap().source;
+        let removed = only_in(REVISION_TWO_SOURCE, &current);
+        assert!(
+            starts_with_each(
+                &removed,
+                &[
+                    "// jope-dime fitted-cpp-typed-table-v1 emitter-revision=2",
+                    "[[maybe_unused]] static double piece(",
+                    "[[maybe_unused]] static double row_mean(",
+                    "[[maybe_unused]] static double row_std(",
+                    "  } catch(...) { return 6; }",
+                ]
+            ),
+            "{removed:#?}"
+        );
+        let added = only_in(&current, REVISION_TWO_SOURCE);
+        assert!(
+            starts_with_each(
+                &added,
+                &[
+                    "// jope-dime fitted-cpp-typed-table-v1 emitter-revision=3",
+                    "struct FittedWidthError {};",
+                    "[[maybe_unused]] static std::size_t fitted_index(",
+                    "[[maybe_unused]] static double piece(",
+                    "[[maybe_unused]] static double row_mean(",
+                    "[[maybe_unused]] static double row_std(",
+                    "  } catch(const FittedWidthError&) { return 8; } catch(...) { return 6; }",
+                ]
+            ),
+            "{added:#?}"
         );
     }
 }

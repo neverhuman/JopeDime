@@ -5,6 +5,17 @@
 //! typed row-major table.  Numeric cells carry their parsed `f64`; categorical
 //! cells carry the fitted vocabulary index (`-1` means unknown).  The parallel
 //! missing bitmap distinguishes an unknown category from a missing category.
+//!
+//! The emitter revision, `FITTED_CPP_REVISION`, names what the emitted code
+//! computes. Every source carries it in its first line (`emitter-revision=`),
+//! and the typed-table codec and the fitted-model container in their
+//! `emitter_revision` field. Revision 3 (kernel2 X3) checks each fitted column
+//! index a stage reads against the row it reads, and answers status 8 instead of
+//! reading out of range (see `emit_abi`); divides the mean and the standard
+//! deviation of an empty row by one, as the runtime does; pads a stage's empty
+//! output row to `[0.0]` on the legacy-predictor paths, as `ops::finish` does;
+//! and encodes a `piecewise_linear` interval no wider than 1e-15 as a step, as
+//! the runtime does. Everything else computes revision 2's bits.
 
 use super::calibration::CalibrationModel;
 use super::heads::{ExtraNode, V3Head};
@@ -225,7 +236,7 @@ pub fn emit_fitted_cpp17(model: &BoundModel) -> Result<FittedCppArtifact> {
     supports_fitted_cpp17(model)?;
     let codec = serde_json::to_string(&Codec {
         schema: "jope-dime.fitted-cpp-typed-table.v1",
-        emitter_revision: 2,
+        emitter_revision: FITTED_CPP_REVISION,
         schema_sha256: &model.schema_sha256,
         vocabulary_sha256: &model.vocabulary_sha256,
         columns: model
@@ -387,7 +398,13 @@ fn f64_matrix(values: &[Vec<f64>]) -> String {
     )
 }
 
-const PRELUDE: &str = r#"// jope-dime fitted-cpp-typed-table-v1 emitter-revision=2
+/// The emitter revision this module writes (see the module doc). Emitted code that computes
+/// anything differently needs the next revision: the fitted-model container compares a stored
+/// source of the current revision with this emitter's, and regenerates older revisions before
+/// loading them (`fitted_cpp_runtime`). The PRELUDE's first line carries the same number.
+pub(super) const FITTED_CPP_REVISION: u32 = 3;
+
+const PRELUDE: &str = r#"// jope-dime fitted-cpp-typed-table-v1 emitter-revision=3
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
@@ -401,6 +418,8 @@ using U = std::vector<std::size_t>;
 using M = std::vector<V>;
 using B = std::vector<std::uint64_t>;
 struct MathDomainError {};
+struct FittedWidthError {};
+[[maybe_unused]] static std::size_t fitted_index(std::size_t index,std::size_t size){if(index>=size)throw FittedWidthError{};return index;}
 [[maybe_unused]] static double f64_from_bits(std::uint64_t bits) noexcept { double value; std::memcpy(&value,&bits,sizeof(value)); return value; }
 [[maybe_unused]] static double clampv(double value,double lo,double hi) noexcept { if(value<lo)return lo; if(value>hi)return hi; return value; }
 [[maybe_unused]] static double finitev(double value) noexcept { return std::isfinite(value)?value:0.0; }
@@ -424,7 +443,7 @@ struct MathDomainError {};
 [[maybe_unused]] static double dot(const V& a,const V& b) noexcept { double s=0.0; for(std::size_t i=0;i<std::min(a.size(),b.size());++i)s+=a[i]*b[i]; return s; }
 [[maybe_unused]] static void finish_block(const V& input,const V& input_mask,V output,V output_mask,bool append,V& x,V& mask){ for(std::size_t i=0;i<output.size();++i)if(output_mask[i]!=0.0||!std::isfinite(output[i]))output[i]=0.0;if(append){x=input;mask=input_mask;x.insert(x.end(),output.begin(),output.end());mask.insert(mask.end(),output_mask.begin(),output_mask.end());}else{x=std::move(output);mask=std::move(output_mask);}if(x.size()>512){x.resize(512);mask.resize(512);} }
 [[maybe_unused]] static std::uint64_t bits(double value) noexcept {std::uint64_t result;std::memcpy(&result,&value,8);return result;}
-[[maybe_unused]] static double piece(double value,double lo,double hi) noexcept { if(!(hi>lo))return 0.0; return clampv((value-lo)/(hi-lo),0.0,1.0); }
+[[maybe_unused]] static double piece(double value,double lo,double hi) noexcept { const double width=hi-lo; if(std::abs(width)<=1e-15)return value>lo?1.0:0.0; return clampv((value-lo)/width,0.0,1.0); }
 [[maybe_unused]] static double yj(double value,double lambda) noexcept { if(value>=0.0){ if(std::abs(lambda)<1e-8)return std::log1p(value); return (std::pow(value+1.0,lambda)-1.0)/lambda; } double q=2.0-lambda; if(std::abs(q)<1e-8)return -std::log1p(-value); return -(std::pow(1.0-value,q)-1.0)/q; }
 struct GNode { bool leaf; double value; std::size_t feature; std::uint16_t threshold; std::size_t left; std::size_t right; };
 struct Block { V x; V mask; };
@@ -444,12 +463,12 @@ using Key = std::vector<KCell>;
 [[maybe_unused]] static double pearson_shift(const V& row){std::size_t n=row.size()-1;if(n<2)return 0.0;double ma=0.0,mb=0.0;for(std::size_t i=0;i<n;++i){ma+=row[i];mb+=row[i+1];}ma/=static_cast<double>(n);mb/=static_cast<double>(n);double sab=0.0,saa=0.0,sbb=0.0;for(std::size_t i=0;i<n;++i){double da=row[i]-ma,db=row[i+1]-mb;sab+=da*db;saa+=da*da;sbb+=db*db;}return saa<=0.0||sbb<=0.0?0.0:sab/std::sqrt(saa*sbb);}
 [[maybe_unused]] static V row_diff_stats(const V& row){if(row.size()<2)return V(8,0.0);std::size_t n=row.size()-1;double nf=static_cast<double>(n);V diffs;diffs.reserve(n);for(std::size_t i=0;i<n;++i)diffs.push_back(row[i+1]-row[i]);double mean=0.0;for(double value:diffs)mean+=value;mean/=nf;double m2=0.0,mean_abs=0.0,energy=0.0,mn=std::numeric_limits<double>::infinity(),mx=-std::numeric_limits<double>::infinity();std::size_t signs=0;for(std::size_t i=0;i<n;++i){double value=diffs[i],delta=value-mean;m2+=delta*delta;mean_abs+=std::abs(value);energy+=value*value;if(value<mn)mn=value;if(value>mx)mx=value;if(i>0&&diffs[i-1]*value<0.0)++signs;}return V{mean,std::sqrt(m2/nf),mn,mx,mean_abs/nf,static_cast<double>(signs)/nf,pearson_shift(row),energy/nf};}
 [[maybe_unused]] static double row_sum(const double* row,std::size_t n){double value=0.0;for(std::size_t i=0;i<n;++i)value+=row[i];return value;}
-[[maybe_unused]] static double row_mean(const double* row,std::size_t n){return row_sum(row,n)/static_cast<double>(n);}
+[[maybe_unused]] static double row_mean(const double* row,std::size_t n){return row_sum(row,n)/static_cast<double>(std::max(n,std::size_t{1}));}
 [[maybe_unused]] static double row_l1(const double* row,std::size_t n){double value=0.0;for(std::size_t i=0;i<n;++i)value+=std::abs(row[i]);return value;}
 [[maybe_unused]] static double row_l2(const double* row,std::size_t n){double value=0.0;for(std::size_t i=0;i<n;++i)value+=row[i]*row[i];return std::sqrt(value);}
 [[maybe_unused]] static double row_min(const double* row,std::size_t n){double value=std::numeric_limits<double>::infinity();for(std::size_t i=0;i<n;++i)if(row[i]<value)value=row[i];return value;}
 [[maybe_unused]] static double row_max(const double* row,std::size_t n){double value=-std::numeric_limits<double>::infinity();for(std::size_t i=0;i<n;++i)if(row[i]>value)value=row[i];return value;}
-[[maybe_unused]] static double row_std(const double* row,std::size_t n){double mean=row_mean(row,n),value=0.0;for(std::size_t i=0;i<n;++i){double delta=row[i]-mean;value+=delta*delta;}return std::sqrt(value/static_cast<double>(n));}
+[[maybe_unused]] static double row_std(const double* row,std::size_t n){double mean=row_mean(row,n),value=0.0;for(std::size_t i=0;i<n;++i){double delta=row[i]-mean;value+=delta*delta;}return std::sqrt(value/static_cast<double>(std::max(n,std::size_t{1})));}
 [[maybe_unused]] static double m_clamp(double value,double lo,double hi){return clampv(value,lo,hi);}
 [[maybe_unused]] static double m_div(double left,double right){return std::abs(right)<1e-12?0.0:left/right;}
 [[maybe_unused]] static double m_pow(double left,double right){return std::pow(left,right);}
@@ -694,7 +713,7 @@ fn emit_transforms_named(ops: &[V3Op], name: &str, block: bool) -> Result<String
                 body.push_str(&format!("  {{V input=x,input_mask=mask,g,gm;const M edges={};for(std::size_t j=0;j<std::min(x.size(),edges.size());++j)for(std::size_t k=1;k<edges[j].size();++k){{g.push_back(piece(x[j],edges[j][k-1],edges[j][k]));gm.push_back(mask[j]);}}finish_block(input,input_mask,std::move(g),std::move(gm),{},x,mask);}}\n", f64_matrix(edges), append));
             }
             V3Op::CorrScreen { indices, append } => body.push_str(&format!(
-                "  {{V input=x,input_mask=mask,g,gm;const U indices={};for(std::size_t j:indices){{g.push_back(x[j]);gm.push_back(mask[j]);}}finish_block(input,input_mask,std::move(g),std::move(gm),{},x,mask);}}\n",
+                "  {{V input=x,input_mask=mask,g,gm;const U indices={};for(std::size_t j:indices){{g.push_back(x[fitted_index(j,x.size())]);gm.push_back(mask[fitted_index(j,mask.size())]);}}finish_block(input,input_mask,std::move(g),std::move(gm),{},x,mask);}}\n",
                 usize_vec(indices), append
             )),
             V3Op::PlsProject {
@@ -726,7 +745,7 @@ fn emit_legacy_transforms_named(ops: &[FittedOp], name: &str, block: bool) -> Re
     let signature = if block { "Block" } else { "V" };
     let mut body = format!("static {signature} {name}(V x,V mask){{\n  (void)mask;\n");
     for op in ops {
-        emit_legacy_op(&mut body, op)?;
+        emit_legacy_op_padded(&mut body, op)?;
     }
     body.push_str(if block {
         "  return Block{std::move(x),std::move(mask)};\n}\n"
@@ -898,6 +917,17 @@ fn emit_table_transforms(model: &BoundModel, ops: &[V3Op]) -> Result<String> {
     Ok(format!("{helpers}{body}"))
 }
 
+/// A legacy stage of a legacy predictor, whose runtime is `Model::predict`: `ops::finish` pads an
+/// empty output row to `[0.0]`, so the emitted stage does too. The padded cell's mask is 0.0, since
+/// the legacy model has no missing mask, and the mask is reset with it, since it may be longer
+/// than the row. The V3 pipeline path emits `emit_legacy_op` alone: its runtime
+/// (`finish_generated_from_sets`) does not pad.
+fn emit_legacy_op_padded(body: &mut String, op: &FittedOp) -> Result<()> {
+    emit_legacy_op(body, op)?;
+    body.push_str("  if(x.empty()){x.assign(1,0.0);mask.assign(1,0.0);}\n");
+    Ok(())
+}
+
 fn emit_legacy_op(body: &mut String, op: &FittedOp) -> Result<()> {
     let append = legacy_append(op);
     let generated_mask = match op {
@@ -909,7 +939,7 @@ fn emit_legacy_op(body: &mut String, op: &FittedOp) -> Result<()> {
         | FittedOp::Step { .. }
         | FittedOp::NormRow { .. } => "V gm=mask;".to_string(),
         FittedOp::SelectCorr { indices, .. } => format!(
-            "V gm;const U mask_indices={};for(std::size_t j:mask_indices)gm.push_back(mask[j]);",
+            "V gm;const U mask_indices={};for(std::size_t j:mask_indices)gm.push_back(mask[fitted_index(j,mask.size())]);",
             usize_vec(indices)
         ),
         FittedOp::Impute { .. } => "V gm(g.size(),0.0);".to_string(),
@@ -962,15 +992,15 @@ fn emit_legacy_op(body: &mut String, op: &FittedOp) -> Result<()> {
         FittedOp::RowSpectral { .. } => "g=row_spectral(x);".to_string(),
         FittedOp::RowDiffStats { .. } => "g=row_diff_stats(x);".to_string(),
         FittedOp::Cheb { degree, .. } => format!("for(double v:x){{const double u=clampv(2.0*v-1.0,-1.0,1.0);double previous=1.0,current=u;for(std::size_t q=0;q<{};++q){{g.push_back(current);const double next=2.0*u*current-previous;previous=current;current=next;}}}}", degree),
-        FittedOp::SelectCorr { indices, .. } => format!("const U a={};for(std::size_t j:a)g.push_back(x[j]);", usize_vec(indices)),
-        FittedOp::Impute { fill, indicator_cols, .. } => format!("const V a={};const U cols={};for(std::size_t j=0;j<x.size();++j)g.push_back(x[j]==0.0?a[j]:x[j]);for(std::size_t j:cols)g.push_back(x[j]==0.0?1.0:0.0);", f64_vec(fill), usize_vec(indicator_cols)),
+        FittedOp::SelectCorr { indices, .. } => format!("const U a={};for(std::size_t j:a)g.push_back(x[fitted_index(j,x.size())]);", usize_vec(indices)),
+        FittedOp::Impute { fill, indicator_cols, .. } => format!("const V a={};const U cols={};for(std::size_t j=0;j<x.size();++j)g.push_back(x[j]==0.0?a[fitted_index(j,a.size())]:x[j]);for(std::size_t j:cols)g.push_back(x[fitted_index(j,x.size())]==0.0?1.0:0.0);", f64_vec(fill), usize_vec(indicator_cols)),
         FittedOp::PairProd { pairs, .. } | FittedOp::PolyInteract { pairs, .. } => {
             let pairs = pairs.iter().map(|(a,b)| format!("{{{a},{b}}}")).collect::<Vec<_>>().join(",");
-            format!("static const std::vector<std::pair<std::size_t,std::size_t>> pairs{{{pairs}}};for(const auto& p:pairs)g.push_back(x[p.first]*x[p.second]);")
+            format!("static const std::vector<std::pair<std::size_t,std::size_t>> pairs{{{pairs}}};for(const auto& p:pairs)g.push_back(x[fitted_index(p.first,x.size())]*x[fitted_index(p.second,x.size())]);")
         }
         FittedOp::PairRatio { pairs, eps, .. } => {
             let pairs = pairs.iter().map(|(a,b)| format!("{{{a},{b}}}")).collect::<Vec<_>>().join(",");
-            format!("const std::vector<std::pair<std::size_t,std::size_t>> pairs{{{pairs}}};const V eps={};for(std::size_t i=0;i<pairs.size();++i){{double a=x[pairs[i].first],b=x[pairs[i].second];g.push_back(a*b/(b*b+eps[i]));}}", f64_vec(eps))
+            format!("const std::vector<std::pair<std::size_t,std::size_t>> pairs{{{pairs}}};const V eps={};for(std::size_t i=0;i<pairs.size();++i){{double a=x[fitted_index(pairs[i].first,x.size())],b=x[fitted_index(pairs[i].second,x.size())];g.push_back(a*b/(b*b+eps[fitted_index(i,eps.size())]));}}", f64_vec(eps))
         }
         FittedOp::RffCos { w, b, .. } => format!("const M a={};const V b={};const double scale=std::sqrt(2.0/static_cast<double>(a.size()));for(std::size_t i=0;i<a.size();++i)g.push_back(scale*std::cos(dot(a[i],x)+b[i]));", f64_matrix(w), f64_vec(b)),
         FittedOp::RffSin { w, b, .. } => format!("const M a={};const V b={};const double scale=std::sqrt(2.0/static_cast<double>(a.size()));for(std::size_t i=0;i<a.size();++i)g.push_back(scale*std::sin(dot(a[i],x)+b[i]));", f64_matrix(w), f64_vec(b)),
@@ -981,7 +1011,7 @@ fn emit_legacy_op(body: &mut String, op: &FittedOp) -> Result<()> {
         FittedOp::Symlog { c, .. } => format!("for(double v:x){{const double q=v/{};const double a=std::abs(q),s=q>0.0?1.0:(q<0.0?-1.0:0.0);g.push_back(s*std::log(a+std::sqrt(q*q+1.0)));}}", f64_lit(*c)),
         FittedOp::Polar { .. } => "for(std::size_t j=0;j+1<x.size();j+=2){const double a=x[j],b=x[j+1];g.push_back(std::sqrt(a*a+b*b));g.push_back(std::atan2(b,a));}if(x.size()%2==1)g.push_back(x.back());".to_string(),
         FittedOp::Lag { k, .. } => format!("for(std::size_t j=0;j<x.size();++j)g.push_back(j>={0}?x[j-{0}]:0.0);", k),
-        FittedOp::Roll { k, .. } => format!("const std::size_t shift={}%x.size();for(std::size_t j=0;j<x.size();++j)g.push_back(x[(j+x.size()-shift)%x.size()]);", k),
+        FittedOp::Roll { k, .. } => format!("if(x.empty())throw FittedWidthError{{}};const std::size_t shift={}%x.size();for(std::size_t j=0;j<x.size();++j)g.push_back(x[(j+x.size()-shift)%x.size()]);", k),
         FittedOp::Spline { knots, .. } => format!("const M knots={};for(std::size_t j=0;j<std::min(x.size(),knots.size());++j){{const V& xi=knots[j];const std::size_t n=xi.size();const double v=x[j];if(xi[n-1]-xi[0]<1e-9){{g.push_back(v);continue;}}g.push_back(v);const double pl=std::max(v-xi[n-1],0.0),pk=std::max(v-xi[n-2],0.0);const double dlast=(pk*pk*pk-pl*pl*pl)/std::max(xi[n-1]-xi[n-2],1e-9);for(std::size_t q=0;q<n-2;++q){{const double pt=std::max(v-xi[q],0.0);const double d=(pt*pt*pt-pl*pl*pl)/std::max(xi[n-1]-xi[q],1e-9);g.push_back(d-dlast);}}}}", f64_matrix(knots)),
         FittedOp::MapExpr { expr, .. } => {
             let expression = expr.to_cpp17(true)?;
@@ -1452,7 +1482,7 @@ fn emit_legacy_model(name: &str, model: &crate::model::Model, out: &mut String) 
                 "static V {transform_name}(V x){{V mask(x.size(),0.0);\n"
             ));
             for op in ops {
-                emit_legacy_op(out, op)?;
+                emit_legacy_op_padded(out, op)?;
             }
             out.push_str("return x;}\n");
             out.push_str(&format!(
@@ -1552,7 +1582,7 @@ fn emit_portfolio(
         out.push_str(&format!(
             "static V {projection_name}(V x){{V mask(x.size(),0.0);\n"
         ));
-        emit_legacy_op(out, projection)?;
+        emit_legacy_op_padded(out, projection)?;
         out.push_str("return x;}\n");
     }
     let mut member_terms = Vec::new();
@@ -1766,6 +1796,23 @@ fn emit_prediction_steps(
     format!("{calibrated}{inverse}{final_task}")
 }
 
+/// The C ABI of a fitted model. `jope_fitted_predict` returns one status:
+///
+/// | Status | Meaning |
+/// |---|---|
+/// | 0 | every row is predicted |
+/// | 1 | `columns` is not the fitted column count |
+/// | 2 | `rows * columns` overflows |
+/// | 3 | a buffer length does not fit `rows` and `columns` |
+/// | 4 | a buffer is null while there are rows to predict |
+/// | 5 | a categorical cell is neither -1 nor a fitted vocabulary index |
+/// | 6 | any other C++ exception: the closed-form math's domain error, an allocation failure |
+/// | 7 | a row of a table-aware model does not follow its group's fitted history (`emit_table_abi` only) |
+/// | 8 | a stage's fitted state does not fit the row it reads (revision 3): a fitted column index, or the index of a fitted table entry, at or past the end of what it indexes, or `roll` on an empty row |
+///
+/// Status 8 comes from `FittedWidthError`, which `fitted_index` throws before any out-of-range
+/// read; it is caught ahead of status 6 in both ABIs. A host runtime (`cpp/fitted_runtime.cpp`)
+/// reports a model status `s` as `100 + s`, so a host sees 108.
 fn emit_abi(columns: usize) -> String {
     format!(
         r#"extern "C" std::size_t jope_fitted_columns() noexcept {{ return {columns}; }}
@@ -1787,12 +1834,13 @@ extern "C" int jope_fitted_predict(
       output[row]=predict_one(x,mask);
     }}
     return 0;
-  }} catch(...) {{ return 6; }}
+  }} catch(const FittedWidthError&) {{ return 8; }} catch(...) {{ return 6; }}
 }}
 "#
     )
 }
 
+/// The C ABI of a table-aware fitted model (lag, roll): the statuses of `emit_abi`, with 7.
 fn emit_table_abi(columns: usize) -> String {
     format!(
         r#"extern "C" std::size_t jope_fitted_columns() noexcept {{ return {columns}; }}
@@ -1814,9 +1862,40 @@ extern "C" int jope_fitted_predict(
     }}
     if(!transform_table(table,masks,values,missing,rows,columns))return 7;
     for(std::size_t row=0;row<rows;++row)output[row]=predict_transformed(table[row]);
-  }} catch(...) {{ return 6; }}
+  }} catch(const FittedWidthError&) {{ return 8; }} catch(...) {{ return 6; }}
   return 0;
 }}
 "#
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn the_prelude_marker_names_the_emitter_revision() {
+        let marker = format!(
+            "// jope-dime fitted-cpp-typed-table-v1 emitter-revision={FITTED_CPP_REVISION}"
+        );
+        assert_eq!(PRELUDE.lines().next(), Some(marker.as_str()));
+    }
+
+    #[test]
+    fn only_the_legacy_predictor_paths_pad_an_empty_row() {
+        let pad = "  if(x.empty()){x.assign(1,0.0);mask.assign(1,0.0);}\n";
+        let ops = [
+            FittedOp::Sigmoid { append: false },
+            FittedOp::Sigmoid { append: true },
+        ];
+        // The legacy predictor's transform pads after every stage, as `ops::finish` does.
+        let legacy = emit_legacy_transforms(&ops).unwrap();
+        assert_eq!(legacy.matches(pad).count(), ops.len(), "{legacy}");
+        let mut stage = String::new();
+        emit_legacy_op_padded(&mut stage, &ops[0]).unwrap();
+        assert!(stage.ends_with(pad), "{stage}");
+        // The V3 pipeline path emits the same stages without padding, as its runtime does not pad.
+        let v3 = emit_transforms(&ops.map(V3Op::Legacy)).unwrap();
+        assert!(!v3.contains("x.assign("), "{v3}");
+    }
 }
