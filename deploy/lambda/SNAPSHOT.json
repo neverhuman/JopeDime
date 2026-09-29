@@ -847,9 +847,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/csv/rust/Cargo.lock",
-      "tree_sha256": "8d147af698348257a7d8d9ef4fa162eb83192b6acd791a773c4a8aaeb68a7188",
+      "tree_sha256": "5393664e611d12850e9ce0df2647cb5cefa9f8b224379ed8fbd5f2a0fcf1be92",
       "custody_tarball": null,
-      "reason": "frozen source, verbatim"
+      "reason": "frozen source, verbatim",
+      "tree_change": "cargo update -p feat-math --offline: the feat-math path entry reads 0.2.0, the workspace version of this release; no other package moves"
     },
     {
       "body": "csv",
@@ -864,9 +865,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/csv/rust/Cargo.toml",
-      "tree_sha256": "444fda01cb8458ca8eae9f805752be95b4723efaa492227bd8fb936f3d0c7c59",
+      "tree_sha256": "e48786afd62b66004cbc95cc9983f47cfb235d1ba127cfbba3aa52958b984410",
       "custody_tarball": null,
-      "reason": "frozen source, verbatim"
+      "reason": "frozen source, verbatim",
+      "tree_change": "adds license = \"Apache-2.0\" to [package] (cargo-deny licence policy); nothing else changes"
     },
     {
       "body": "csv",
@@ -1528,9 +1530,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/watch/Cargo.toml",
-      "tree_sha256": "e1672b260b9f7cc3ba3392d737c0b04370964afbd48f22784caf9f6808b5d730",
+      "tree_sha256": "c491dd71fd4ddc6678f0beb07ffd32ec6e0099704dada095e1c05b5358af3976",
       "custody_tarball": null,
-      "reason": "frozen source, verbatim"
+      "reason": "frozen source, verbatim",
+      "tree_change": "adds license = \"Apache-2.0\" and publish = false to [package] (cargo-deny licence and wildcard policy); nothing else changes"
     },
     {
       "body": "watch",
@@ -2029,5 +2032,6 @@
       "reason": "Cargo build output (rebuildable), not preserved",
       "bytes": 365533855
     }
-  ]
+  ],
+  "build_changes": "Three tracked files differ from their frozen bytes, each recorded with tree_sha256 and tree_change; sha256 stays the frozen value. No .rs file, include path or other manifest line changes."
 }
