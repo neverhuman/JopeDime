@@ -1,4 +1,4 @@
-#!/usr/bin/env -S bash -p
+#!/bin/bash -p
 # deploy/release/release.sh: fast signed host release of JopeDime (owner decision D-D, 2026-09-27).
 #
 #   deploy/release/release.sh <vX.Y.Z> <merge-commit-sha>             # dry run (the default)
@@ -6,9 +6,11 @@
 #
 # Run it on xbabe2 from the root of a clean checkout or registered worktree of neverhuman/JopeDime.
 # HEAD must be <merge-commit-sha>, and that commit must equal origin/main after a fresh fetch.
-# Run it as shown: the #! line starts bash in privileged mode (bash -p), and so does
-# `bash -p deploy/release/release.sh`. A plain `bash deploy/release/release.sh` is refused (see
-# "bash itself" below).
+# Run it as shown: the #! line starts the system bash, /bin/bash, by absolute path and in
+# privileged mode (bash -p), so no PATH lookup chooses the interpreter. `bash -p
+# deploy/release/release.sh` is accepted as well when that bash is the root-owned system one
+# (preflight checks the running interpreter like a host tool). A plain `bash
+# deploy/release/release.sh` is refused (see "bash itself" below).
 #
 # A dry run does the following, and it never tags, pushes or publishes:
 #   - exports the commit with `git archive` and verifies the export against the commit's tree
@@ -49,12 +51,16 @@
 #
 # Tools: syft and cosign are pinned by sha256 and by the version they report (SYFT_*, COSIGN_*),
 # and syft runs only as a checked copy. The host tools (HOST_TOOLS: coreutils, grep, sed, find, tar,
-# cmp/diff, jq, git, docker, objdump, sudo and the rest) must resolve to root-owned files that the
-# operator cannot write; their versions are recorded in the run's tools.json. No pinned or host
+# cmp/diff, jq, git, docker, objdump, sudo and the rest) are looked up only in TRUSTED_PATH, the
+# system directories, which the first lines make PATH (read-only) before any command runs; each
+# must be a root-owned file reached only through root-owned directories and symlinks that neither
+# group nor others can write (check_host_tool, trusted_chain), and their versions are recorded in
+# the run's tools.json. No pinned or host
 # tool reads per-user configuration that could change what it reports to a check or writes into a
 # release (~/.jq, ~/.gitconfig, ~/.docker, TAR_OPTIONS, LD_* and the like; see "The tools' own
 # configuration" below). Two commands are neither pinned nor host tools, and HOST_TOOLS names them
-# with the reasons: the host's cargo and gh-role.
+# with the reasons: the host's cargo and gh-role. Like syft and cosign, both are run by absolute
+# path (HOST_CARGO, GH_ROLE), never looked up.
 # There is no Python in this script. docs/release/README.md explains how anyone can verify a release.
 #
 # Testing: deploy/release/test-release.sh sources this file; the CI hygiene lane runs it. The
@@ -85,6 +91,21 @@ if [[ ${SHELLOPTS@a} == *x* ]]; then
 fi
 set -euo pipefail
 shopt -s inherit_errexit
+
+# PATH. Every command the script runs by name is looked up in TRUSTED_PATH, the system directories
+# that the host's packages install into, and never in the operator's PATH, whose first entry on
+# xbabe2 is ~/.local/bin, which the operator can write. PATH is set here, before the first command
+# runs, and made read-only, so that nothing later, in this shell or in a caller that sources this
+# file, can put another directory in front of it (assigning PATH also empties bash's table of
+# remembered command paths). /usr/local/sbin and /usr/local/bin are left out: no host tool lives
+# there, the host's packages never install there, and on xbabe2 /usr/local/bin holds root-owned
+# symlinks into ~/.local/bin (docker-compose). The tools that the operator can write and that the
+# script still runs (cosign, syft, the host cargo and gh-role) are named by absolute path below. The
+# same value is spelled out in SIGN_SCRIPT, for root's shell; keep the two in step.
+readonly TRUSTED_PATH=/usr/sbin:/usr/bin:/sbin:/bin
+PATH=$TRUSTED_PATH
+export PATH
+readonly PATH
 
 readonly REPO_SLUG=neverhuman/JopeDime
 readonly REPO_URL=https://github.com/neverhuman/JopeDime.git
@@ -119,22 +140,36 @@ readonly SYFT=/home/ubuntu/.local/bin/syft
 readonly SYFT_VERSION=1.40.0
 readonly SYFT_SHA256=eb9714fb8e4b8f2a647e7bb312f1e0b9f83a7aa30418658bf46583cfa83d27d2
 readonly GH_ROLE=/home/ubuntu/.local/bin/gh-role
+# The host's rustup shim (a symlink to ~/.cargo/bin/cargo). It is run by this path, never looked up:
+# see HOST_TOOLS below for why it may be operator-writable.
+readonly HOST_CARGO=/home/ubuntu/.local/bin/cargo
 # HOST_TOOLS: every command that the script runs by name on the host, as the operator or as root
-# through sudo (`sudo -n test`, `cat`, `chown`, `chmod` and `sh`, and SIGN_SCRIPT's mktemp, mkdir,
-# cp, chmod, sha256sum, cat and rm), except the two named below. They are the host's packages
-# (Ubuntu's, and Docker's apt repository for docker), root-owned and replaced by routine security
-# updates, so they are not pinned by digest: a pin would stop every release after each update, and
-# only root can change them, which is inside the trust boundary already (docs/release/README.md,
-# "Key custody"). What preflight does check is that each one resolves through PATH to a root-owned
-# file, in root-owned directories, that neither group nor others can write (check_host_tool), so a
-# copy in ~/.local/bin, which comes first on the operator's PATH, is refused. That holds for the
-# commands root runs too, whether sudo looks them up in the operator's PATH or in its own
-# root-configured secure_path. The run records each one's path, sha256 and package version in
-# tools.json.
-# bash is the interpreter that the `#!/usr/bin/env -S bash -p` line finds on PATH.
+# through sudo (test, cat, chown, chmod and sh, and SIGN_SCRIPT's mktemp, mkdir, cp, chmod,
+# sha256sum, cat and rm), except the two named below. They are the host's packages (Ubuntu's, and
+# Docker's apt repository for docker), root-owned and replaced by routine security updates, so they
+# are not pinned by digest: a pin would stop every release after each update, and only root can
+# change them, which is inside the trust boundary already (docs/release/README.md, "Key custody").
+# What preflight checks instead (require_tools, check_host_tool, trusted_chain):
+#   - each name is looked up only in TRUSTED_PATH, which is PATH (read-only) from the first lines on,
+#     so a copy in ~/.local/bin, first on the operator's PATH, is never found, let alone run;
+#   - the file found there, and everything on the way to it, is walked from / down without following
+#     a link unchecked: every directory and the file itself must be root-owned and closed to group
+#     and other writes, and every symlink root-owned, with its target walked the same way. A
+#     directory that the operator owns anywhere on the way would let the operator swap what lies
+#     beneath it, root-owned or not, so it refuses the tool;
+#   - the checks run stat and readlink by absolute path (STAT, READLINK), after proving with bash
+#     builtins alone that the operator cannot write them or any directory above them (check_helpers),
+#     so a stat that the operator put first on a PATH cannot vouch for anything;
+#   - a lookup of the name must return that same file, and the commands root runs through sudo are
+#     given its absolute path (host_path), because sudo would otherwise search its own secure_path,
+#     /usr/local first; SIGN_SCRIPT sets root's PATH to TRUSTED_PATH for the same reason.
+# The run records each one's path, sha256 and package version in tools.json.
+# bash is the interpreter of the #! line, /bin/bash, run by absolute path; preflight checks the
+# running interpreter ($BASH) with trusted_chain as well, which also refuses a `bash -p release.sh`
+# whose bash is not the system one.
 # The pinned syft and cosign above are run by path. Only two commands are neither pinned nor host
 # tools, and this is why that is acceptable:
-#   - cargo (cargo_bin: the host's rustup shim, ~/.local/bin/cargo, which the operator can write)
+#   - cargo (cargo_bin: HOST_CARGO, the host's rustup shim, which the operator can write)
 #     runs only `cargo metadata --no-deps` in preflight, on the checkout, and it reads the operator's
 #     cargo and rustup configuration. It decides nothing on its own: build_jope runs cargo metadata
 #     again inside the pinned image, on the verified export, and refuses the run unless that answer
@@ -148,6 +183,12 @@ readonly GH_ROLE=/home/ubuntu/.local/bin/gh-role
 readonly -a HOST_TOOLS=(bash cat chmod chown cmp cp date diff docker dpkg-query env find git grep
   head id install jq ls mkdir mktemp objdump readlink realpath rm rmdir sed sh sha256sum sort stat
   sudo tail tar tee test timeout tr uname wc)
+# The helpers that the host-tool checks themselves run, always by absolute path (see check_helpers).
+readonly STAT=/usr/bin/stat READLINK=/usr/bin/readlink
+# host_path[<name>]: the absolute path that require_tools checked for each host tool. Commands that
+# root runs through sudo are given these paths, never a name.
+declare -gA host_path=()
+helpers_checked=0
 # Docker passes a container no variable that is not named with -e, and an image's /tmp is its own,
 # so the host's TMPDIR stops at the container boundary. builder_container therefore bind-mounts the
 # run's tmp/container/ at CONTAINER_TMPDIR, sets TMPDIR to it, and mounts the same directory over the
@@ -233,12 +274,16 @@ readonly -a GH=(-c 'credential.https://github.com.helper='
 # on /) because /run is mounted noexec on xbabe2. sudo resets the environment, so root's shell
 # inherits no TMPDIR: mktemp is given its directory explicitly, and before anything else runs the
 # shell exports TMPDIR as tmp/ (0700) inside that root-only work directory, which the EXIT trap
-# removes. cosign, cp, chmod and sha256sum all see it. It is read with the read builtin, so that
-# nothing but builtins runs before main() pins TMPDIR; the here-document is far smaller than a pipe
-# buffer.
+# removes. cosign, cp, chmod and sha256sum all see it. Its first line after set -eu makes root's
+# PATH the literal TRUSTED_PATH, so that mktemp and the rest resolve to the files require_tools
+# checked rather than through sudo's secure_path, which searches /usr/local first. It is read with
+# the read builtin, so that nothing but builtins runs before main() pins TMPDIR; the here-document is
+# far smaller than a pipe buffer.
 # shellcheck disable=SC2016  # expanded by root's sh, not here
 IFS= read -r -d '' SIGN_SCRIPT <<'ROOT' || true
 set -eu
+PATH=/usr/sbin:/usr/bin:/sbin:/bin
+export PATH
 work=$(mktemp -d /root/jope-release-sign.XXXXXX)
 trap 'rm -rf -- "$work"' EXIT
 TMPDIR=$work/tmp
@@ -259,7 +304,7 @@ ROOT
 readonly SIGN_SCRIPT
 
 tag='' sha='' version='' publish=0 mode=dryrun test_mode=0 stamp=''
-remote=$REPO_URL cargo_bin=cargo key_dir=$KEY_DIR out_root=$EVIDENCE_ROOT
+remote=$REPO_URL cargo_bin=$HOST_CARGO key_dir=$KEY_DIR out_root=$EVIDENCE_ROOT
 repo_root='' release_root='' run_dir='' target_root='' dist='' stage=init
 metadata_json='' notes_text='' bin='' bin_container='' observed_glibc='' tee_pid=''
 tag_object='' release_url='' checks_file='' src_dir='' src_tree='' last_check_ok=''
@@ -411,11 +456,20 @@ run_stamp() {
 }
 
 # Root-only key custody. In test mode a plain directory under the test root stands in, with no sudo.
+# sudo is given the path that require_tools checked (host_path), never a name to look up.
 key_exists() {
-  if (( test_mode )); then [[ -e $key_dir/$1 ]]; else sudo -n test -e "$key_dir/$1"; fi
+  if (( test_mode )); then
+    [[ -e $key_dir/$1 ]]
+  else
+    sudo -n "${host_path[test]:?require_tools has not checked test}" -e "$key_dir/$1"
+  fi
 }
 key_cat() {
-  if (( test_mode )); then cat -- "$key_dir/$1"; else sudo -n cat -- "$key_dir/$1"; fi
+  if (( test_mode )); then
+    cat -- "$key_dir/$1"
+  else
+    sudo -n "${host_path[cat]:?require_tools has not checked cat}" -- "$key_dir/$1"
+  fi
 }
 
 # --- pure helpers (unit-tested by test-release.sh) ----------------------------------------------
@@ -657,30 +711,113 @@ check_cosign() {
   printf '%s\n' "$out"
 }
 
-# check_host_tool <name>: refuses a host tool that the operator could have replaced. The directory
-# where PATH finds it, the file it resolves to and that file's directory must all be root-owned and
-# closed to group and other writes. It prints the path PATH finds.
-check_host_tool() {
-  local path real p owner mode
-  path=$(type -P -- "$1") || die "required tool missing: $1"
-  real=$(realpath -e -- "$path") || die "cannot resolve $path"
-  for p in "${path%/*}" "$real" "${real%/*}"; do
-    read -r owner mode < <(stat -L -c '%u %a' -- "$p") || die "cannot stat $p"
-    if [[ $owner != 0 ]] || (( 8#$mode & 8#022 )); then
-      die "host tool $1 resolves to $path ($real), and $p is not root-owned and closed to group and other writes (uid $owner, mode $mode); use the root-owned system copy"
+# trusted_chain <absolute path>: succeeds only when the operator cannot have replaced what <path>
+# names. It walks the path from / down, one component at a time, with lstat (STAT, never following a
+# link): every directory on the way and the final file must be owned by root and closed to group
+# and other writes, and every symlink must be owned by root and is then followed, its target walked
+# the same way, from the link's own directory or from / when it is absolute. So a directory that the
+# operator owns anywhere on the way refuses the path, even when a symlink in it leads to root-owned
+# directories (the operator could swap that symlink), and so does any directory on the way to a
+# symlink's target. At most 40 symlinks are followed, as the kernel does. The final file must be a
+# regular file. It says why it refuses and returns 1; it never exits. It runs only STAT and READLINK
+# (see check_helpers) besides builtins.
+trusted_chain() {
+  local rest=$1 at='' comp p out owner mode kind='' hops=0
+  if [[ $rest != /* ]]; then say "not an absolute path: '$1'"; return 1; fi
+  out=$("$STAT" -c '%u %a %F' -- /) || { say "cannot stat /"; return 1; }
+  if [[ ! $out =~ ^([0-9]+)\ ([0-7]+)\ (.+)$ ]] || [[ ${BASH_REMATCH[1]} != 0 ]] \
+    || (( 8#${BASH_REMATCH[2]} & 8#022 )); then
+    say "/ is not owned by root and closed to group and other writes ($out)"
+    return 1
+  fi
+  while :; do
+    while [[ $rest == /* ]]; do rest=${rest#/}; done
+    [[ -n $rest ]] || break
+    comp=${rest%%/*}
+    if [[ $rest == */* ]]; then rest=${rest#*/}; else rest=''; fi
+    case $comp in
+      .) continue ;;
+      ..) at=${at%/*}; continue ;;
+    esac
+    p=$at/$comp
+    out=$("$STAT" -c '%u %a %F' -- "$p" 2>/dev/null) || { say "$1: cannot stat $p"; return 1; }
+    [[ $out =~ ^([0-9]+)\ ([0-7]+)\ (.+)$ ]] || { say "$1: unexpected stat output for $p: $out"; return 1; }
+    owner=${BASH_REMATCH[1]} mode=${BASH_REMATCH[2]} kind=${BASH_REMATCH[3]}
+    if [[ $kind == 'symbolic link' ]]; then
+      hops=$((hops + 1))
+      (( hops <= 40 )) || { say "$1: more than 40 symlinks"; return 1; }
+      [[ $owner == 0 ]] || { say "$1: $p is a symlink owned by uid $owner, not root"; return 1; }
+      out=$("$READLINK" -- "$p") || out=''
+      [[ -n $out ]] || { say "$1: cannot read the symlink $p"; return 1; }
+      # An absolute target is walked from /, a relative one from the link's directory ($at).
+      if [[ $out == /* ]]; then at=''; fi
+      rest=$out${rest:+/$rest}
+      continue
     fi
+    if [[ $owner != 0 ]] || (( 8#$mode & 8#022 )); then
+      say "$1: $p is not owned by root and closed to group and other writes (uid $owner, mode $mode)"
+      return 1
+    fi
+    at=$p
   done
+  [[ $kind == 'regular file' || $kind == 'regular empty file' ]] \
+    || { say "$1: resolves to ${at:-/}, which is a $kind, not a regular file"; return 1; }
+}
+
+# check_helpers: STAT and READLINK are what trusted_chain trusts, so they are trusted only once the
+# operator provably cannot have replaced them. First with bash builtins alone ([[ -w ]] is access(2)
+# for this account): none of /, /usr, /usr/bin or the two files may be a symlink or writable by the
+# operator. Then trusted_chain, run by them, must accept both. Root can write every path, so the -w
+# test says nothing for it; root is inside the trust boundary, and the ownership checks still apply.
+check_helpers() {
+  local p
+  if (( EUID != 0 )); then
+    for p in / /usr /usr/bin "$STAT" "$READLINK"; do
+      [[ -e $p && ! -L $p && ! -w $p ]] \
+        || die "$p is missing, a symlink, or writable by $(id -un), so $STAT and $READLINK cannot be trusted to check the host tools"
+    done
+  fi
+  for p in "$STAT" "$READLINK"; do
+    trusted_chain "$p" || die "$p must be root-owned and closed to group and other writes, and so must every directory above it"
+  done
+  helpers_checked=1
+}
+
+# resolve_host_tool <name>: the file that a lookup of <name> in TRUSTED_PATH finds, in builtins only:
+# the first <dir>/<name> that is an executable file, as bash searches PATH.
+resolve_host_tool() {
+  local rest=$TRUSTED_PATH: dir
+  [[ -n $1 && $1 != */* ]] || return 1
+  while [[ -n $rest ]]; do
+    dir=${rest%%:*} rest=${rest#*:}
+    if [[ -n $dir && -f $dir/$1 && -x $dir/$1 ]]; then printf '%s\n' "$dir/$1"; return 0; fi
+  done
+  return 1
+}
+
+# check_host_tool <name>: refuses a host tool that the operator could have replaced, and prints its
+# absolute path. The name is looked up in TRUSTED_PATH only, whatever PATH a caller had; the file
+# found there must pass trusted_chain; and a lookup of the name in this shell must return that same
+# file, so no later lookup can run another one.
+check_host_tool() {
+  local path
+  (( helpers_checked )) || check_helpers
+  path=$(resolve_host_tool "$1") || die "required tool missing from $TRUSTED_PATH: $1"
+  [[ $PATH == "$TRUSTED_PATH" ]] || die "PATH is not $TRUSTED_PATH"
+  [[ $(type -P -- "$1") == "$path" ]] || die "a lookup of $1 would not run $path"
+  trusted_chain "$path" \
+    || die "host tool $1 resolves to $path, which is not a root-owned file reached only through root-owned directories and symlinks closed to group and other writes; use the root-owned system copy"
   printf '%s\n' "$path"
 }
 
 # Prints the tools of this run as JSON: the pinned syft and cosign with the version documents
-# preflight read from them, and for every host tool its path, the file it resolves to, that file's
-# sha256 and its Debian package and version.
+# preflight read from them, and for every host tool its path (as require_tools checked it), the file
+# it resolves to, that file's sha256 and its Debian package and version.
 tools_json() {
   local name path real pkg ver
   local -a rows=()
   for name in "${HOST_TOOLS[@]}"; do
-    path=$(type -P -- "$name") || die "required tool missing: $name"
+    path=${host_path[$name]:?require_tools has not checked $name}
     real=$(realpath -e -- "$path") || die "cannot resolve $path"
     pkg=$(dpkg-query -S -- "$real" 2>/dev/null) || pkg=$(dpkg-query -S -- "$path" 2>/dev/null) || pkg=''
     pkg=${pkg%%$'\n'*}
@@ -708,7 +845,14 @@ tools_json() {
 
 require_tools() {
   local tool
-  for tool in "${HOST_TOOLS[@]}"; do check_host_tool "$tool" >/dev/null; done
+  check_helpers
+  for tool in "${HOST_TOOLS[@]}"; do
+    host_path[$tool]=$(check_host_tool "$tool") || exit 1
+  done
+  # The interpreter: /bin/bash through the #! line, or the bash that ran `bash -p release.sh`.
+  trusted_chain "$BASH" \
+    || die "this script runs in $BASH, not the root-owned system bash; run deploy/release/release.sh itself (its #! line is /bin/bash -p)"
+  [[ -f $HOST_CARGO && -x $HOST_CARGO ]] || die "required tool missing: $HOST_CARGO"
   # Checked here, before anything is built or signed. The sign step checks root's own copy of
   # cosign again, make_sbom its copy of syft, and cosign_verify cosign before each verification.
   cosign_report=$(check_cosign "$COSIGN" "$COSIGN_SHA256" "$COSIGN_VERSION") || exit 1
@@ -771,7 +915,7 @@ preflight() {
   note "ok: TMPDIR $TMPDIR (0700)"
   if (( ! test_mode )); then
     require_tools
-    note "ok: host tools are root-owned; cosign $COSIGN_VERSION and syft $SYFT_VERSION match their pins"
+    note "ok: PATH is $TRUSTED_PATH; every host tool, bash and every directory and symlink on the way to them are root-owned and closed to group and other writes; cosign $COSIGN_VERSION and syft $SYFT_VERSION match their pins"
   elif [[ -n ${JOPE_RELEASE_TEST_SYFT:-} ]]; then
     # Test mode has no docker, sudo or pinned tools. A syft stand-in is still checked against the
     # real pin, so the tests can show that a replaced syft stops a run here.
@@ -1186,12 +1330,13 @@ sign_sums() {
   step "cosign sign-blob as root with $KEY_DIR/signing.key (tlog upload off; pinned cosign $COSIGN_VERSION)"
   # See SIGN_SCRIPT: root copies cosign into a new directory under /root, checks the copy
   # against COSIGN_SHA256 and runs only the copy, with the password in its environment alone.
-  sudo -n sh -c "$SIGN_SCRIPT" sh "$sig" "$sums" "$COSIGN" "$COSIGN_SHA256" \
+  sudo -n "${host_path[sh]:?require_tools has not checked sh}" -c "$SIGN_SCRIPT" sh "$sig" "$sums" "$COSIGN" "$COSIGN_SHA256" \
     || die "cosign sign-blob failed (or the cosign copy did not match the pinned digest)"
   # cosign running as root writes the signature 0600 root:root; hand it back so it can be verified,
   # uploaded and read by anyone.
-  sudo -n chown "$(id -u):$(id -g)" -- "$sig" || die "could not chown $sig"
-  sudo -n chmod 0644 -- "$sig" || die "could not chmod $sig"
+  sudo -n "${host_path[chown]:?require_tools has not checked chown}" "$(id -u):$(id -g)" -- "$sig" \
+    || die "could not chown $sig"
+  sudo -n "${host_path[chmod]:?require_tools has not checked chmod}" 0644 -- "$sig" || die "could not chmod $sig"
   [[ -O $sig && -r $sig && -s $sig && ! -L $sig ]] || die "$sig is not a readable file owned by $(id -un)"
 }
 
