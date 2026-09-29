@@ -4,6 +4,9 @@
   "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
   "host": "x86_64-unknown-linux-gnu",
   "libm": "glibc 2.39",
+  "cpu": "AMD Ryzen Threadripper PRO 3995WX 64-Cores",
+  "cpu_flags": "fma avx2",
+  "hostname": "xbabe2",
   "math_kernel": "platform-libm-v1",
   "fixtures": [
     "mathexpr_values.v1.json",
@@ -13,9 +16,11 @@
     "frozen_pins.v1.json",
     "evaluator_identity.v1.json",
     "generator_streams.v1.json",
-    "search_runs.v1.json"
+    "search_runs.v1.json",
+    "lineage_sources.v1.json"
   ],
   "boundary_corpus": "math_boundary/v1.json",
   "regenerate": "JOPE_COMPAT_FREEZE_REGENERATE=1 JOPE_COMPAT_FREEZE_SHA=<full commit id> cargo nextest run --locked -P pr -p feat-math --test compat_freeze",
+  "regenerate_identity": "JOPE_COMPAT_FREEZE_REGENERATE=identity JOPE_COMPAT_FREEZE_SHA=<full commit id> cargo nextest run --locked -P pr -p feat-math --test compat_freeze",
   "rebaseline_policy": "A red compat_freeze is a hard stop: revert the change that moved a frozen surface. Rebaselining needs JOPE_COMPAT_FREEZE_REGENERATE=1 JOPE_COMPAT_FREEZE_SHA=<commit> and the PR-body line `compat-freeze: REBASELINE approved by Jepson <date> reason <...>` (workplan section 4.3)."
 }
