@@ -11,6 +11,7 @@ the commit areas (crate or lane) named in each subject line.
 - feat-math, bench: a bit-exact parity test of the runtime against the emitted Rust, Python and fitted C++17 programs, and an equal-budget search ablation harness (#127)
 - feat-math: the scalar evaluator reports which of its guards fired, as append-only fault classes with severities, beside unchanged values, in the interpreter and the compiled form (#128)
 - feat-math: fits and predictions can report per-stage fault counts beside unchanged stage outputs, models and predictions, and that reporting path refuses zero-width input (#130)
+- feat-math: a static scope and width check that names the stage, the fault class and the reason before any evaluation, and search caps for expression scopes (15 nodes, depth 4); library only, nothing calls them yet (#131)
 
 ### CI, build and release
 

@@ -490,6 +490,12 @@
         "policy"
       ]
     },
+    "target:feat-math/test/scope_validation": {
+      "role": "regression",
+      "subsystems": [
+        "gp"
+      ]
+    },
     "target:feat-math/test/stage_telemetry": {
       "role": "regression",
       "subsystems": [

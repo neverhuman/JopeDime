@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 4",
-  "count": 3873,
+  "count": 3887,
   "ignored": 65,
   "packages": {
    "battle-gpu": {
@@ -29,7 +29,7 @@
     }
    },
    "feat-math": {
-    "count": 510,
+    "count": 524,
     "ignored": 6,
     "binaries": {
      "feat-math": {
@@ -664,6 +664,27 @@
       "tests": [
        "executable_snapshot_matches_the_registry",
        "restricted_vocabulary_ops_are_executable_in_the_registry"
+      ]
+     },
+     "feat-math::scope_validation": {
+      "kind": "test",
+      "count": 14,
+      "ignored": 0,
+      "tests": [
+       "a_portfolio_member_is_checked_against_the_columns_it_can_see",
+       "a_program_that_cannot_be_checked_fails_with_its_own_reason",
+       "every_message_passes_the_shipped_text_lint",
+       "every_transform_at_every_edge_width_returns_an_error_or_ok_without_panicking",
+       "five_thousand_chained_edits_under_the_search_profile_stay_in_scope_and_within_the_caps",
+       "the_cases_rest_on_the_registry_and_the_runtime",
+       "the_check_agrees_with_the_legacy_check_after_every_width_rule",
+       "the_check_agrees_with_the_legacy_check_on_random_pipelines",
+       "the_check_agrees_with_the_legacy_check_on_the_compat_corpus",
+       "the_error_names_the_stage_the_member_and_the_class",
+       "the_same_input_gives_the_same_result_and_the_same_bytes",
+       "the_search_profile_is_fifteen_nodes_and_depth_four",
+       "the_two_intended_differences_from_the_legacy_check",
+       "the_workplan_cases_have_their_exact_results"
       ]
      },
      "feat-math::stage_telemetry": {
@@ -6103,7 +6124,7 @@
   }
  },
  "totals": {
-  "rust": 3873,
+  "rust": 3887,
   "python": 172
  }
 }
