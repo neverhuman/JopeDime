@@ -869,7 +869,9 @@ fn check_lane(lane: Lane) {
         .prefix(&format!("parity-bits-{}-", lane.id()))
         .tempdir_in(scratch_root())
         .unwrap();
-    if std::env::var_os("JOPE_PARITY_KEEP_SCRATCH").is_some_and(|value| value == "1") {
+    let keep = std::env::var_os("JOPE_PARITY_KEEP_SCRATCH").is_some_and(|value| value == "1");
+    if keep {
+        // Also keeps the directory when an assertion below panics.
         scratch.disable_cleanup(true);
         eprintln!(
             "parity_bits[{}]: artifacts and inputs kept under {}",
@@ -972,7 +974,12 @@ fn check_lane(lane: Lane) {
          (fixtures/parity_allowlist.v1.json):\n{report}",
         lane.id()
     );
-    scratch.close().unwrap();
+    if keep {
+        // `close` removes the directory whatever `disable_cleanup` says; `keep` leaves it.
+        let _ = scratch.keep();
+    } else {
+        scratch.close().unwrap();
+    }
 }
 
 #[test]
