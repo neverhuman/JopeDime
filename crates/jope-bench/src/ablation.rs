@@ -1538,9 +1538,23 @@ pub struct AblationArgs {
     #[arg(long)]
     pub out: PathBuf,
     /// Keep every search's evidence under this directory (default: a temporary directory under
-    /// TMPDIR, removed afterwards). It must not already hold a search of the same run.
+    /// TMPDIR, removed afterwards; with neither this nor TMPDIR the run is refused rather than use
+    /// the system temporary directory). It must not already hold a search of the same run.
     #[arg(long)]
     pub scratch: Option<PathBuf>,
+}
+
+/// Where a run without `--scratch` makes its temporary scratch directory: `TMPDIR`, when it is
+/// set and not empty. There is no fallback to the system temporary directory; without `TMPDIR`
+/// the run is refused and asks for `--scratch`.
+fn default_scratch_root(tmpdir: Option<std::ffi::OsString>) -> Result<PathBuf> {
+    match tmpdir {
+        Some(dir) if !dir.is_empty() => Ok(PathBuf::from(dir)),
+        _ => bail!(
+            "no scratch directory: pass --scratch <dir> or set TMPDIR; the harness does not fall \
+             back to the system temporary directory"
+        ),
+    }
 }
 
 /// Run `jope-bench ablation`.
@@ -1562,10 +1576,12 @@ pub fn execute(args: &AblationArgs) -> Result<()> {
             dir.clone()
         }
         None => {
+            let root = default_scratch_root(std::env::var_os("TMPDIR"))?;
+            std::fs::create_dir_all(&root).with_context(|| format!("create {}", root.display()))?;
             temporary = tempfile::Builder::new()
                 .prefix("jope-bench-ablation-")
-                .tempdir()
-                .context("create a scratch directory")?;
+                .tempdir_in(&root)
+                .with_context(|| format!("create a scratch directory under {}", root.display()))?;
             temporary.path().to_path_buf()
         }
     };
@@ -1603,10 +1619,16 @@ mod tests {
             .join(slug)
     }
 
+    /// A scratch directory under `TMPDIR`, or under the workspace's `target/tmp` when `TMPDIR` is
+    /// not set (`CARGO_TARGET_TMPDIR` is not defined for unit tests); never under the system
+    /// temporary directory.
     fn scratch() -> tempfile::TempDir {
+        let root = default_scratch_root(std::env::var_os("TMPDIR"))
+            .unwrap_or_else(|_| Path::new(env!("CARGO_MANIFEST_DIR")).join("../../target/tmp"));
+        std::fs::create_dir_all(&root).unwrap();
         tempfile::Builder::new()
             .prefix("jope-bench-ablation-test-")
-            .tempdir()
+            .tempdir_in(root)
             .unwrap()
     }
 
@@ -1876,6 +1898,18 @@ mod tests {
         assert_eq!(Profile::parse("legacy").unwrap(), Profile::Legacy);
         let error = Profile::parse("other").unwrap_err().to_string();
         assert!(error.contains("known: legacy"), "{error}");
+        // Without --scratch the scratch root is TMPDIR, and never the system default.
+        assert_eq!(
+            default_scratch_root(Some("/data/scratch".into())).unwrap(),
+            PathBuf::from("/data/scratch")
+        );
+        for unset in [None, Some(std::ffi::OsString::new())] {
+            let error = default_scratch_root(unset).unwrap_err().to_string();
+            assert!(
+                error.contains("--scratch") && error.contains("TMPDIR"),
+                "{error}"
+            );
+        }
         let dir = scratch();
         for broken in [
             Config {
