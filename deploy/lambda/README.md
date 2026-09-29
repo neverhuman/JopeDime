@@ -4,8 +4,12 @@ This directory holds the frozen AWS Lambda work of 2026-09-28: Rust workers that
 AWS Lambda, first one fit per call and then a whole dataset corpus, and a terminal monitor for
 those runs. Beside it are the regression workers, frozen on 2026-09-29: a Lambda worker that fits
 candidate programs on three inner folds of a regression view, and an assessment tool that replays
-a stored fold model. Each piece was imported from the ignored `.agent/experiments/` staging tree
-after it was frozen.
+a stored fold model. The third batch is the second stage of the teacher campaign, also of
+2026-09-29: a host-side search engine that proposes candidate programs and a Lambda worker that
+fits each one on the inner folds and the official test split of its input. Each piece was
+imported from the ignored `.agent/experiments/` staging tree after it was frozen; the teacher
+campaign's stage came from a verified custody snapshot of its quiescent source, because no
+stopped-state handoff was posted (`SNAPSHOT.json` records the evidence).
 
 None of it is part of the `jope` binary, the root Cargo workspace or the release build. Each Rust
 body is its own Cargo workspace with its own frozen `Cargo.lock`, and the root `Cargo.toml`,
@@ -25,6 +29,10 @@ body is its own Cargo workspace with its own frozen `Cargo.lock`, and the root `
 | `regression/*.md` | The worker's execution and recovery plan and its schema notes. |
 | `regression-ops/rust/` | Package `jope-regression-assessment`, the binary `regression-assess`: it restores one stored fold model, checks its hash and its predictions against the archived ones, and measures how much its validation error grows when one feature column is shuffled, on a sample of validation rows, with no new fit. |
 | `regression-ops/*.md` | The run's status at handoff, the S3 audit and the schema addendum. |
+| `training/teacher-v2/rust/island-engine/` | Package `jope-island-engine`, the teacher campaign's host-side search engine: it keeps the candidate pools, scores the evaluations the Lambda worker returns and fingerprints their behaviour, chooses parents, moves candidates between pools and replays the run. It runs the proposal binary as a child process. |
+| `training/teacher-v2/rust/lambda-worker/` | Package `jope-test-adaptive-teacher-lambda`, the Lambda binary `bootstrap`: it checks and downloads one input, fits the requested candidate program on each inner fold and on the official test split in a child process with a timeout, replays each serialized model, and writes one gzipped record of the call to a presigned, create-only S3 URL. `zig-arm-link.sh` is its frozen aarch64 link wrapper. |
+| `training/teacher-v2/rust/proposal-engine/` | The source of the proposal binary the search engine runs: the regression worker's `main.rs` and frozen lock, byte for byte, with the manifest tracked as `Cargo.toml.v2` (its package name repeats `jope-regression-lambda`). It is not built here. |
+| `training/teacher-v2/*.md`, `training/teacher-v2/analysis/redline-pilot.json` | The campaign's operating note and its record schemas, and the result record of a RedlineDB C-ABI pilot. |
 | `watch/` | Package `jope-lambda-watch`, a Ratatui terminal monitor for the runs, with its telemetry contract and performance record. |
 | `SNAPSHOT.json` | Every file of the frozen work: its sha256, its source anchor and whether it is tracked, gzipped, renamed, in custody or excluded. |
 
@@ -52,6 +60,8 @@ JOPE_GP_MANIFEST_PATH=$PWD/deploy/lambda/csv/gp/corpus/extra-train-jobs.json \
   cargo test --locked --manifest-path deploy/lambda/csv/rust/Cargo.toml
 cargo test --locked --manifest-path deploy/lambda/regression/rust/Cargo.toml
 cargo test --locked --manifest-path deploy/lambda/regression-ops/rust/Cargo.toml
+cargo test --locked --manifest-path deploy/lambda/training/teacher-v2/rust/island-engine/Cargo.toml
+cargo test --locked --manifest-path deploy/lambda/training/teacher-v2/rust/lambda-worker/Cargo.toml
 cargo test --locked --manifest-path deploy/lambda/watch/Cargo.toml
 ```
 
@@ -62,38 +72,53 @@ job manifest that `bootstrap-gp-extra` embeds; the frozen review records `extra-
 ## What is not here
 
 - **Python.** The deploy, invoke, budget, archive and close controllers, the corpus inventory,
-  the analysis and plots, the monitor's feed adapter and launcher, the planning tools, and the
+  the analysis and plots, the monitor's feed adapter and launcher, the planning tools, the
   regression run's audit, history index, input preparation, campaign, accounting, query-table,
-  reconcile and closeout tools are Python. Under the owner's no-Python rule they are preserved
-  byte for byte in custody, and
+  reconcile and closeout tools, and the teacher campaign's coordinator, transport and budget
+  helpers, control analysis, report and protocol tests are Python. Under the owner's no-Python
+  rule they are preserved byte for byte in custody, and
   [`docs/archive/lambda-python-manifest.json`](../../docs/archive/lambda-python-manifest.json)
   lists each file with its hash and restore route. A Rust port is a follow-up.
+- **The teacher campaign's C pilot.** `analysis/redline-concurrent-pilot.c` is outside the
+  repository's Rust, bash and jq stack, and its header `redlinedb.h` is not in the source, so it
+  is kept in custody with the Python. Its result record, `analysis/redline-pilot.json`, is tracked.
 - **`.env` files.** They were never tracked. The `.env.example` templates hold identifiers only:
   an AWS profile name, the region, the account ID, function names and host paths. The regression
   worker's `.env.example` is byte-identical to its private `.env`, so it is not tracked either;
   `SNAPSHOT.json` records the existence and sha256 of both, and of the monitor feed's `watch.env`.
+  The teacher campaign's `.env.example` differs from its private `.env` and is in custody with the
+  Python it serves; its `.env` is recorded by existence, size and sha256 only.
 - **Evidence.** Receipts, logs, packages and results stay in the runs' custody on xbabe2 and in
-  their S3 archives.
+  their S3 archives. The teacher campaign's run data stays in Codex's runtime directory and S3
+  prefix.
 
 ## Notes
 
 - The shell scripts, plans and `watch/build` are a historical record. They name the xbabe2 paths,
   the AWS account and the function names of the 2026-09-28 runs. The hygiene lane only
-  syntax-checks the scripts (`bash -n`); running one deploys or invokes AWS resources.
+  syntax-checks the scripts (`bash -n`); running one deploys or invokes AWS resources. The
+  teacher campaign's `rust/lambda-worker/zig-arm-link.sh` is never run either: it execs a zig
+  toolchain under `~/scratch` on xbabe2.
 - A rebuild is not claimed to reproduce the deployed ZIP hashes: `feat-math` is a path dependency
   outside the nested workspace, so its absolute path is embedded. Identity is by source hash
   (`SNAPSHOT.json`).
 - The sources are not reformatted; the root `cargo fmt --all` does not reach nested workspaces.
-- Twelve files differ from their frozen bytes, each recorded in `SNAPSHOT.json` with
+- Sixteen files differ from their frozen bytes, each recorded in `SNAPSHOT.json` with
   `tree_change`:
-  - a `license` line in all four manifests, plus `publish = false` in the monitor's and the
-    assessment tool's;
-  - the `feat-math` entry of the three locks that take it by path, which reads the root workspace
+  - a `license` line in all six manifests, plus `publish = false` in the monitor's, the
+    assessment tool's and the teacher campaign's search engine's;
+  - the `feat-math` entry of the four locks that take it by path, which reads the root workspace
     version;
-  - four regression notes whose absolute xbabe2 paths are written home-relative (`~/`);
+  - five notes whose absolute xbabe2 paths are written home-relative (`~/`): four regression
+    notes and the teacher campaign's `README.md`;
   - the regression schema registry `regression/schemas/REGISTRY.json`, whose schema paths name
     the tracked copies under `deploy/lambda/regression/schemas/` instead of the xbabe2 staging
     directory.
+- `training/teacher-v2/rust/proposal-engine/Cargo.toml.v2` is the regression worker's frozen
+  manifest with the `feat-math` path six levels deep. Its package name repeats
+  `jope-regression-lambda`, and the repository-layout guard allows no duplicate package name, so
+  it is not named `Cargo.toml` and is not built; its lock keeps the `feat-math` 0.1.0 entry it was
+  frozen with. Rename it back and run `sync-locks` to build it.
 - `just bump X.Y.Z` keeps the `feat-math` lock entries true. A workspace's lock pins each root
   crate it takes by path at the version it was locked with, so after the root version changes
   `cargo metadata --locked` fails for that workspace until its lock is updated. The bump runs
@@ -106,13 +131,14 @@ job manifest that `bootstrap-gp-extra` embeds; the frozen review records `extra-
   no frozen record of its own bytes. `bash deploy/ci/lambda-workspaces.sh verify` runs the
   `cargo metadata --locked --offline` and `SNAPSHOT.json` checks.
 - The regression worker writes its per-call scratch under `/tmp/jope-<attempt id>`
-  (`regression/rust/src/main.rs`): `/tmp` is the only writable path in the AWS Lambda runtime.
-  It removes that directory only on success, after the archive upload. An error after the
-  directory is created returns without removing it: an input download or identity failure, a
-  candidate run error, an oversized archive, or a failed upload. Because the directory is created
-  with `create_dir`, a warm retry with the same attempt id then fails at that step until the
-  execution environment is recycled. The frozen source is kept as it ran; a fix belongs in a
-  successor worker. That is the repository's one exception to its no-`/tmp` rule, and it holds only
-  inside Lambda. The worker's tests, `deploy/ci/lambda.sh` and every other tool write nothing under
-  `/tmp`. No guard needed an exception for it: the repo-layout temp-directory rule covers test code
-  under `crates/`.
+  (`regression/rust/src/main.rs`), and the teacher campaign's Lambda worker under
+  `/tmp/jope-teacher-<attempt id>` (`training/teacher-v2/rust/lambda-worker/src/main.rs`): `/tmp`
+  is the only writable path in the AWS Lambda runtime. Each removes its directory only on
+  success, after the archive upload. An error after the directory is created returns without
+  removing it: an input download or identity failure, a candidate run error, an oversized archive,
+  or a failed upload. Because the directory is created with `create_dir`, a warm retry with the
+  same attempt id then fails at that step until the execution environment is recycled. The frozen
+  sources are kept as they ran; a fix belongs in a successor worker. These two frozen workers are
+  the repository's only exceptions to its no-`/tmp` rule, and they hold only inside Lambda. Their
+  tests, `deploy/ci/lambda.sh` and every other tool write nothing under `/tmp`. No guard needed an
+  exception for them: the repo-layout temp-directory rule covers test code under `crates/`.
