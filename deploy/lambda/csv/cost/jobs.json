@@ -1,0 +1,52 @@
+[
+  {
+    "dataset_hash": "21fbfe8b53dbcd60",
+    "name": "Parkinsons Telemonitoring",
+    "key": "blobs/sha256/d9a0b97e91ff9d04bc87fefa4671a49c40cee21dfac05be58a7fc7ce08045931",
+    "sha256": "d9a0b97e91ff9d04bc87fefa4671a49c40cee21dfac05be58a7fc7ce08045931",
+    "version": "ymyHYuYxnSHXPoK18mKgrPdHBQ4.q2Nq",
+    "rows": 1000,
+    "columns": 22,
+    "bytes": 259938
+  },
+  {
+    "dataset_hash": "c7d815714ca52bce",
+    "name": "Voting Intentions in the 1988 Chilean Plebiscite",
+    "key": "blobs/sha256/2cc33f1cf38de2da3edfe69d8ffd4623d84039c22f20755b0dffe8411c698df3",
+    "sha256": "2cc33f1cf38de2da3edfe69d8ffd4623d84039c22f20755b0dffe8411c698df3",
+    "version": "bFPLQAky8FUrlLlJ4zewv40l7UVKUxA2",
+    "rows": 1000,
+    "columns": 8,
+    "bytes": 57297
+  },
+  {
+    "dataset_hash": "047e62b52a3f4ede",
+    "name": "695_chatfield_4",
+    "key": "blobs/sha256/f6efbbe844d2a00256435487f60174353502afee158f74044419464e91e30d9d",
+    "sha256": "f6efbbe844d2a00256435487f60174353502afee158f74044419464e91e30d9d",
+    "version": "cPJxzO0ROroUKVLYCAApWFq.U28Uc2Xy",
+    "rows": 195,
+    "columns": 13,
+    "bytes": 30133
+  },
+  {
+    "dataset_hash": "1cb97b1d7314d43d",
+    "name": "229_pwLinear",
+    "key": "blobs/sha256/12cebdca583ad0d7316e1963e0c1d7c2eda9efe1b9585a00a49364b570bb52e5",
+    "sha256": "12cebdca583ad0d7316e1963e0c1d7c2eda9efe1b9585a00a49364b570bb52e5",
+    "version": "BzRzUNIrMmdsQa6WUpDLUu6hLb3MGzjW",
+    "rows": 166,
+    "columns": 11,
+    "bytes": 6251
+  },
+  {
+    "dataset_hash": "30ef3eaa6d2971a9",
+    "name": "barium",
+    "key": "blobs/sha256/53e723ca42438573f0e9e4584e1004d5c777b02b852dae9f67e60951134b63e5",
+    "sha256": "53e723ca42438573f0e9e4584e1004d5c777b02b852dae9f67e60951134b63e5",
+    "version": "FHGPvo7stNJftYiGNVa6bx5zQGhfoBRc",
+    "rows": 109,
+    "columns": 31,
+    "bytes": 18531
+  }
+]

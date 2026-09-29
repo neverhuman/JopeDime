@@ -1,0 +1,47 @@
+{
+  "binary_bytes": 891808,
+  "binary_sha256": "8c0b860a476cadb9230afc44b388f5c5b72a09a54df42b49bfed307e27ea7e01",
+  "architecture": "/home/ubuntu/JopeDime/.agent/experiments/lambda-watch/target/release/jope-lambda-watch: ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 3.2.0, BuildID[sha1]=81b6e64b7355ebd60171ff4cbd97a1af6e171579, stripped",
+  "render_benchmark": {
+    "frames": 1000,
+    "elapsed_ms": 954.625461,
+    "microseconds_per_frame": 954.6255209999999,
+    "views": 7581
+  },
+  "render_peak_rss_kib": 16384,
+  "interactive_prior_build_probe": {
+    "source": "local synthetic 7581-view load fixture; no training",
+    "duration_s": 5.143418681109324,
+    "cpu_seconds": 0.07,
+    "single_core_cpu_percent": 1.3609625103454055,
+    "peak_rss_kib": 18432,
+    "exit_code": 0,
+    "binary_bytes": 887024
+  },
+  "legacy_adapter": {
+    "cold_scan_s": 6.9542086909059435,
+    "warm_scan_ms": 75.69546811282635,
+    "peak_rss_kib": 102400,
+    "views": 3979,
+    "counts": {
+      "dispatched": 898,
+      "completed": 892,
+      "failed": 4,
+      "unknown": 6,
+      "jobs": 3973,
+      "job_failures": 6,
+      "candidates": 47676,
+      "unknown_bills": 6,
+      "archived": 892,
+      "in_flight": 0
+    },
+    "errors": []
+  },
+  "runtime_aws_requests": 0,
+  "runtime_lambda_invocations": 0,
+  "notes": [
+    "7581-row benchmark is a local display load fixture, not 7581 trained datasets.",
+    "Interactive CPU probe includes startup and predates the final popup/layout polish; final render benchmark binds the delivered source.",
+    "Legacy compatibility adapter decodes historical model bundles during initial scan; use direct snapshots for minimum overhead."
+  ]
+}

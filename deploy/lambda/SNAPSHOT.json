@@ -1,0 +1,2033 @@
+{
+  "schema": "jopedime.lambda-snapshot.v1",
+  "what": "The frozen AWS Lambda work of 2026-09-28, imported into deploy/lambda/ from the ignored .agent/experiments/ staging tree. Every file of the three frozen bodies is listed with its sha256, its source anchor and its disposition. None of it is part of the jope binary, its Cargo workspace or its release build.",
+  "imported_utc": "2026-09-29",
+  "verify": "jq -r '.files[] | select(.tree_path != null) | .tree_sha256 + \"  \" + .tree_path' deploy/lambda/SNAPSHOT.json | sha256sum -c --strict (from the repository root; the gzipped corpus is checked as tracked, and deploy/ci/lambda.sh checks the sha256 of its inflated bytes)",
+  "owner_decisions": "2026-09-29 ~00:15Z: all Lambda Rust goes into PR #124 and is built and tested by CI; the Lambda Python and other untracked orchestration is preserved byte-exact in custody with a tracked hash manifest (docs/archive/lambda-python-manifest.json), and a Rust port is a follow-up; v0.2.0 waits for the regression-Lambda v3 freeze, which is not part of this import.",
+  "bodies": {
+    "csv": {
+      "source": ".agent/experiments/lambda-csv",
+      "tree": "deploy/lambda/csv",
+      "workspace": "deploy/lambda/csv/rust (package jope-lambda-probe: bins bootstrap, bootstrap-batch, bootstrap-gp, bootstrap-gp-extra, bootstrap-gp-diagnose)",
+      "frozen": "corpus campaign closed 2026-09-28T18:40:38Z; cost/, versions/ and the top-level scripts and plans unchanged since the cost study stopped at 16:04Z",
+      "anchors": [
+        "csv-survey-manifest",
+        "csv-s3-source-bundle"
+      ]
+    },
+    "watch": {
+      "source": ".agent/experiments/lambda-watch",
+      "tree": "deploy/lambda/watch",
+      "workspace": "deploy/lambda/watch (package jope-lambda-watch)",
+      "frozen": "2026-09-28T20:53:47Z (released_frozen)",
+      "anchors": [
+        "watch-tarball"
+      ]
+    },
+    "planning": {
+      "source": ".agent/experiments/gp-evolution-100",
+      "tree": null,
+      "workspace": null,
+      "frozen": "2026-09-28T20:03:26Z (released_frozen)",
+      "note": "Python tools only: every file is in custody, none is tracked.",
+      "anchors": [
+        "planning-survey-manifest"
+      ]
+    }
+  },
+  "not_imported": [
+    {
+      "source": ".agent/experiments/regression-lambda-v3",
+      "reason": "live at import time; imported after its owner freezes it, before PR #124 merges"
+    },
+    {
+      "source": ".agent/experiments/regression-lambda-v3-ops",
+      "reason": "live at import time; imported after its owner freezes it, before PR #124 merges"
+    }
+  ],
+  "anchors": {
+    "csv-survey-manifest": {
+      "kind": "sha256 file list of the frozen tree (read-only survey, 2026-09-28T23:54Z)",
+      "files": 68,
+      "sha256": "33d3c18d0b3cca1cf246620946cf818d7466c68c8746ad2119857662ad686413",
+      "note": "made by a read-only survey, not posted by the campaign owner; every staged file equals it and the files in the S3 source bundle also equal the bundle"
+    },
+    "csv-s3-source-bundle": {
+      "kind": "S3 source bundle of the corpus campaign",
+      "sha256": "d359ff3e44f01eaaeeb664bdcd41e6924a6317f4049926fd84fd6ff95f616a0a",
+      "files": 133,
+      "lambda_csv_files": 37,
+      "restored_copy": "~/scratch/jopedime-lambda-gp-20260928/restored-files/source/.agent/experiments/lambda-csv",
+      "s3_prefix": "s3://veox-jopedime-learning-use2/experiments/lambda-gp/v1/campaigns/gp-corpus-20260928-v1/",
+      "commit_sha256": "68ad89bab3a1bf10dcf8330d6e21bb985b27d826f68c256d900ba0680dbcbab1",
+      "commit_version": "qFcvVRAdz6qjKumxv9z3Hf.7_1jijpWB",
+      "close_sha256": "a9d9bbd77da43cc2af9e4f36d46bb677001db4c52419be6b473e410e8f4953ff",
+      "close_version": "BzdbbUeVDiYFGTajIMWuwp_PvI_9SASj"
+    },
+    "watch-tarball": {
+      "kind": "frozen source archive",
+      "path": "~/scratch/jopedime-lambda-watch-20260928/lambda-watch-source.tar.gz",
+      "sha256": "d2fda4e7d582a633d4b364ceb96801112e89bbf25139b2328a57826dd9115c86",
+      "bytes": 32454,
+      "members": 17,
+      "delivery_manifest_sha256": "9ce88f6b61d6f65457ed0cf3dca19a5360681169a110d1efa88e7b463003b314",
+      "note": "every member also equals the frozen tree; the archive excludes .env and target/"
+    },
+    "planning-survey-manifest": {
+      "kind": "sha256 file list of the frozen tree (read-only survey, 2026-09-28T23:54Z)",
+      "files": 14,
+      "sha256": "f85ebf46bc2189b0f411ecba3839ec6556dc498f31fa454f38807f090cf4ec3f",
+      "close_sha256": "83a85ba85014412bd4c7fbf5bf268f2133e1376f7000fb8a3627d6ea9f9d83ea",
+      "close_object": "s3://veox-jopedime-learning-use2/experiments/gp-evolution/v1/discoveries/scan-20260928T1918Z/CLOSE.json",
+      "close_version": "d.8oUDdDEIMlJs2y7afVxVv55hoRVXSG"
+    }
+  },
+  "custody": {
+    "host": "xbabe2",
+    "directory": "~/jope-evidence/lambda-20260929/python",
+    "tarballs": {
+      "lambda-python-csv.tar": "186558ef90f66830e43412ced0792a158fc04edf08ad9e3e01631e17111ff665",
+      "lambda-python-watch.tar": "8a72817e09b9b35530049a37cb7314d3028919edea37fc723b11c43e3272845b",
+      "lambda-python-planning.tar": "77d939ae3de94960bfeaf1f789c0d4379636a9be9465e43ba3efd32e8987d776"
+    },
+    "sha256sums_sha256": "6cb7def8390edb0c31d7bf77d1b1d92692fc83402a9d6f5f6b6e23033418ab58",
+    "manifest": "docs/archive/lambda-python-manifest.json"
+  },
+  "counts": {
+    "files": 99,
+    "by_body": {
+      "csv": {
+        "custody": 25,
+        "tracked": 41,
+        "tracked-gzipped": 1,
+        "tracked-renamed": 1
+      },
+      "planning": {
+        "custody": 14
+      },
+      "watch": {
+        "custody": 6,
+        "tracked": 11
+      }
+    },
+    "by_disposition": {
+      "custody": 45,
+      "tracked": 52,
+      "tracked-gzipped": 1,
+      "tracked-renamed": 1
+    },
+    "excluded": 33
+  },
+  "files": [
+    {
+      "body": "csv",
+      "path": ".dockerignore",
+      "source": ".agent/experiments/lambda-csv/.dockerignore",
+      "sha256": "7cd8f3da3ba345d8ab552d9bf060fefa16e5ad500413f86db750c6d7e8f668fb",
+      "bytes": 38,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-csv.tar",
+      "reason": "Docker build-context filter that admits only the Python prototype's Dockerfile, handler.py and input.json; kept with it in custody"
+    },
+    {
+      "body": "csv",
+      "path": ".env.example",
+      "source": ".agent/experiments/lambda-csv/.env.example",
+      "sha256": "66486b4e2de0f777de5f787cba68cf6c390e6829599c8f8fdb1b7c76eb7a4a45",
+      "bytes": 268,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/csv/.env.example",
+      "tree_sha256": "66486b4e2de0f777de5f787cba68cf6c390e6829599c8f8fdb1b7c76eb7a4a45",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "csv",
+      "path": ".gitignore",
+      "source": ".agent/experiments/lambda-csv/.gitignore",
+      "sha256": "c4896b05e7ad58f5e64ad128a5a78d32b23e0c3ddfee9047aca105ad4a87f533",
+      "bytes": 75,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/csv/.gitignore",
+      "tree_sha256": "c4896b05e7ad58f5e64ad128a5a78d32b23e0c3ddfee9047aca105ad4a87f533",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "csv",
+      "path": "RESULTS.md",
+      "source": ".agent/experiments/lambda-csv/RESULTS.md",
+      "sha256": "affe20c41b9077b009bcf0fb0ce8a4a7ecdb1be4244d332ec4fee28e96f43754",
+      "bytes": 8238,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/csv/RESULTS.md",
+      "tree_sha256": "affe20c41b9077b009bcf0fb0ce8a4a7ecdb1be4244d332ec4fee28e96f43754",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "csv",
+      "path": "TEST-AND-SIZING-PLAN.md",
+      "source": ".agent/experiments/lambda-csv/TEST-AND-SIZING-PLAN.md",
+      "sha256": "bb245ad66f067e20fd0ab369cd1c79898f2726e4a55214a7b0e46e09ad23822e",
+      "bytes": 29066,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/csv/TEST-AND-SIZING-PLAN.md",
+      "tree_sha256": "bb245ad66f067e20fd0ab369cd1c79898f2726e4a55214a7b0e46e09ad23822e",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "csv",
+      "path": "cost/.env.example",
+      "source": ".agent/experiments/lambda-csv/cost/.env.example",
+      "sha256": "72bccac6af0cbff7ef23201e48bb7d7becbdb540e78034f584aa6fa7862b7d4c",
+      "bytes": 247,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/csv/cost/.env.example",
+      "tree_sha256": "72bccac6af0cbff7ef23201e48bb7d7becbdb540e78034f584aa6fa7862b7d4c",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "csv",
+      "path": "cost/COST-OPTIMIZATION-PROTOCOL.md",
+      "source": ".agent/experiments/lambda-csv/cost/COST-OPTIMIZATION-PROTOCOL.md",
+      "sha256": "e5de1e6132b3a2647f884940237ec2d3af3faa15b7713c22bafe5ab1ad067908",
+      "bytes": 12273,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/csv/cost/COST-OPTIMIZATION-PROTOCOL.md",
+      "tree_sha256": "e5de1e6132b3a2647f884940237ec2d3af3faa15b7713c22bafe5ab1ad067908",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "csv",
+      "path": "cost/RESULTS.md",
+      "source": ".agent/experiments/lambda-csv/cost/RESULTS.md",
+      "sha256": "22b5ce0ab452125d4fb4baa533c7a24029584f61990f424dab4a4087bbb3d1a7",
+      "bytes": 10458,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/csv/cost/RESULTS.md",
+      "tree_sha256": "22b5ce0ab452125d4fb4baa533c7a24029584f61990f424dab4a4087bbb3d1a7",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "csv",
+      "path": "cost/env.sh",
+      "source": ".agent/experiments/lambda-csv/cost/env.sh",
+      "sha256": "1eafb74de1036b376891fc085193fad477be16c9dee10d78dac50682e5d8d974",
+      "bytes": 1623,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/csv/cost/env.sh",
+      "tree_sha256": "1eafb74de1036b376891fc085193fad477be16c9dee10d78dac50682e5d8d974",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "csv",
+      "path": "cost/jobs.json",
+      "source": ".agent/experiments/lambda-csv/cost/jobs.json",
+      "sha256": "5e22549d01d5b911a194441eec3507642f073628217ef1582a3794e095219f1a",
+      "bytes": 1834,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/csv/cost/jobs.json",
+      "tree_sha256": "5e22549d01d5b911a194441eec3507642f073628217ef1582a3794e095219f1a",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "csv",
+      "path": "cost/run-first-attempt.sh",
+      "source": ".agent/experiments/lambda-csv/cost/run-first-attempt.sh",
+      "sha256": "f58d64525661621121859a4b888202e9e58bce786129a568404deac8d1808466",
+      "bytes": 9318,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/csv/cost/run-first-attempt.sh",
+      "tree_sha256": "f58d64525661621121859a4b888202e9e58bce786129a568404deac8d1808466",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "csv",
+      "path": "cost/run.sh",
+      "source": ".agent/experiments/lambda-csv/cost/run.sh",
+      "sha256": "d37f63ac0d118c46a91164a648045106052dc58133570b5c7a0c71573eff5c78",
+      "bytes": 9492,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/csv/cost/run.sh",
+      "tree_sha256": "d37f63ac0d118c46a91164a648045106052dc58133570b5c7a0c71573eff5c78",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "csv",
+      "path": "cost/zig-arm-ar.sh",
+      "source": ".agent/experiments/lambda-csv/cost/zig-arm-ar.sh",
+      "sha256": "99abac8497c80ed84381df0b5f3743765b7f082239904a29a530e3ad096976fd",
+      "bytes": 120,
+      "mode": "100755",
+      "anchors": [
+        "csv-survey-manifest"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/csv/cost/zig-arm-ar.sh",
+      "tree_sha256": "99abac8497c80ed84381df0b5f3743765b7f082239904a29a530e3ad096976fd",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "csv",
+      "path": "cost/zig-arm-cc.sh",
+      "source": ".agent/experiments/lambda-csv/cost/zig-arm-cc.sh",
+      "sha256": "ce83b0c133bf69417561b8e44ce135fa3baf5c54ce255ffed2b529bb322ce818",
+      "bytes": 440,
+      "mode": "100755",
+      "anchors": [
+        "csv-survey-manifest"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/csv/cost/zig-arm-cc.sh",
+      "tree_sha256": "ce83b0c133bf69417561b8e44ce135fa3baf5c54ce255ffed2b529bb322ce818",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "csv",
+      "path": "deploy-rust.sh",
+      "source": ".agent/experiments/lambda-csv/deploy-rust.sh",
+      "sha256": "338c0f6c26fff8ea3c2b1e43232301666efc58c55e6e96c4346010bfb9af4d19",
+      "bytes": 5249,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/csv/deploy-rust.sh",
+      "tree_sha256": "338c0f6c26fff8ea3c2b1e43232301666efc58c55e6e96c4346010bfb9af4d19",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "csv",
+      "path": "env.sh",
+      "source": ".agent/experiments/lambda-csv/env.sh",
+      "sha256": "544aedc299f48a8150f4b901d5106ef96c8c508205a8a2282ac2855f4a46f928",
+      "bytes": 1718,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/csv/env.sh",
+      "tree_sha256": "544aedc299f48a8150f4b901d5106ef96c8c508205a8a2282ac2855f4a46f928",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "csv",
+      "path": "gp/CAMPAIGN-PLAN.md",
+      "source": ".agent/experiments/lambda-csv/gp/CAMPAIGN-PLAN.md",
+      "sha256": "2806b34f38761ca3da0e18182788657760ed28f3353d1e5043552849e47572a6",
+      "bytes": 15941,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest",
+        "csv-s3-source-bundle"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/csv/gp/CAMPAIGN-PLAN.md",
+      "tree_sha256": "2806b34f38761ca3da0e18182788657760ed28f3353d1e5043552849e47572a6",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "csv",
+      "path": "gp/FLYWHEEL.md",
+      "source": ".agent/experiments/lambda-csv/gp/FLYWHEEL.md",
+      "sha256": "e8d6866b8e8af970fd4d909b135836b84f561179d5787987a95157dac0c34bd8",
+      "bytes": 16876,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest",
+        "csv-s3-source-bundle"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/csv/gp/FLYWHEEL.md",
+      "tree_sha256": "e8d6866b8e8af970fd4d909b135836b84f561179d5787987a95157dac0c34bd8",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "csv",
+      "path": "gp/LOGGING.md",
+      "source": ".agent/experiments/lambda-csv/gp/LOGGING.md",
+      "sha256": "322daacc043bd3921b46f10fa5dc88b45cd56f54e9afbc7076fb806cf2da0e15",
+      "bytes": 13463,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest",
+        "csv-s3-source-bundle"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/csv/gp/LOGGING.md",
+      "tree_sha256": "322daacc043bd3921b46f10fa5dc88b45cd56f54e9afbc7076fb806cf2da0e15",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "csv",
+      "path": "gp/REVIEW.md",
+      "source": ".agent/experiments/lambda-csv/gp/REVIEW.md",
+      "sha256": "79181effd100fd41a46380aa03e967c8efebe45fe15cc2a5e3eee7503addf6f8",
+      "bytes": 35337,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest",
+        "csv-s3-source-bundle"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/csv/gp/REVIEW.md",
+      "tree_sha256": "79181effd100fd41a46380aa03e967c8efebe45fe15cc2a5e3eee7503addf6f8",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "csv",
+      "path": "gp/STORAGE.md",
+      "source": ".agent/experiments/lambda-csv/gp/STORAGE.md",
+      "sha256": "30f315d83a7258a00e67323c7186bbcc70ce6ba59d30aa508bd734e98f07ce98",
+      "bytes": 11085,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest",
+        "csv-s3-source-bundle"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/csv/gp/STORAGE.md",
+      "tree_sha256": "30f315d83a7258a00e67323c7186bbcc70ce6ba59d30aa508bd734e98f07ce98",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "csv",
+      "path": "gp/analyze.py",
+      "source": ".agent/experiments/lambda-csv/gp/analyze.py",
+      "sha256": "c419c4171856c08ee1aa0b55fb16e00834c749602010d438319ee4e351237638",
+      "bytes": 48025,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest",
+        "csv-s3-source-bundle"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-csv.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "csv",
+      "path": "gp/budget.py",
+      "source": ".agent/experiments/lambda-csv/gp/budget.py",
+      "sha256": "da1bd8ba4bb590f1cf2338f6b8eea7916532bad622f05357dab1ddeea084f2ef",
+      "bytes": 7341,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest",
+        "csv-s3-source-bundle"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-csv.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "csv",
+      "path": "gp/burst_probe.py",
+      "source": ".agent/experiments/lambda-csv/gp/burst_probe.py",
+      "sha256": "8a27c4d7b60d4bba4335ebb0c7df15d5c738db6c4de99e2a1379ac96e582de96",
+      "bytes": 2573,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest",
+        "csv-s3-source-bundle"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-csv.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "csv",
+      "path": "gp/campaign.py",
+      "source": ".agent/experiments/lambda-csv/gp/campaign.py",
+      "sha256": "38db29b8f9d4eccf1feee1bc52a5dafa84aba9ac103c8486638106ddd622fbaa",
+      "bytes": 29842,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest",
+        "csv-s3-source-bundle"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-csv.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "csv",
+      "path": "gp/close_campaign.py",
+      "source": ".agent/experiments/lambda-csv/gp/close_campaign.py",
+      "sha256": "95520b528a62a2b162b5a4315ec099ae929f2085d6c415f430784ccd26ba2900",
+      "bytes": 6693,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest",
+        "csv-s3-source-bundle"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-csv.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "csv",
+      "path": "gp/collect_logs.py",
+      "source": ".agent/experiments/lambda-csv/gp/collect_logs.py",
+      "sha256": "97af4b9ee031478e44cb51894cd493fedf03cf3a4f01c61b07e29bd4763ebc0c",
+      "bytes": 3710,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest",
+        "csv-s3-source-bundle"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-csv.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "csv",
+      "path": "gp/control.py",
+      "source": ".agent/experiments/lambda-csv/gp/control.py",
+      "sha256": "28f51c2b89c6f7c9f2052dcc98a9ad2c5f7cf1bbaa55f21e082605ab93e3f317",
+      "bytes": 6957,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest",
+        "csv-s3-source-bundle"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-csv.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "csv",
+      "path": "gp/corpus/extra-train-jobs.json",
+      "source": ".agent/experiments/lambda-csv/gp/corpus/extra-train-jobs.json",
+      "sha256": "3a838ea7f00dfa2afd05728ae69e86f156feb275d9129ed9162768f45af89341",
+      "bytes": 467504,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest",
+        "csv-s3-source-bundle"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/csv/gp/corpus/extra-train-jobs.json",
+      "tree_sha256": "3a838ea7f00dfa2afd05728ae69e86f156feb275d9129ed9162768f45af89341",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "csv",
+      "path": "gp/corpus/train-jobs.json",
+      "source": ".agent/experiments/lambda-csv/gp/corpus/train-jobs.json",
+      "sha256": "687f22c82397af9606455473e70e825c612c469ad917378c9cfb578d3590ee97",
+      "bytes": 8166343,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest",
+        "csv-s3-source-bundle"
+      ],
+      "disposition": "tracked-gzipped",
+      "tree_path": "deploy/lambda/csv/gp/corpus/train-jobs.json.gz",
+      "tree_sha256": "1150b1989ef42f5f2090af8cdabfdf304cdbdccf50568f7c46dae226054f5522",
+      "custody_tarball": null,
+      "reason": "8,166,343 bytes is over check.sh's 5 MiB size cap. Tracked as train-jobs.json.gz (gzip -9 -n); deploy/ci/lambda.sh inflates it to this path and checks this sha256 before any build, and the inflated file is gitignored. Every include_str! stays byte-identical"
+    },
+    {
+      "body": "csv",
+      "path": "gp/cost_context.py",
+      "source": ".agent/experiments/lambda-csv/gp/cost_context.py",
+      "sha256": "05492d243acd5b6163b672f250cc1dcc09abb1e03fe8459ff981d558e17a19ad",
+      "bytes": 4365,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest",
+        "csv-s3-source-bundle"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-csv.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "csv",
+      "path": "gp/cost_probe.py",
+      "source": ".agent/experiments/lambda-csv/gp/cost_probe.py",
+      "sha256": "03db8dcd1865a8cdc6d8c05a955beef8f9da528ea5e18cacba00bc53dac2d1ab",
+      "bytes": 23753,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest",
+        "csv-s3-source-bundle"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-csv.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "csv",
+      "path": "gp/curation.py",
+      "source": ".agent/experiments/lambda-csv/gp/curation.py",
+      "sha256": "15c5460604cc2a2050db124116d21e225b2831843567db474d7f16f2994c215a",
+      "bytes": 12298,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest",
+        "csv-s3-source-bundle"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-csv.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "csv",
+      "path": "gp/deploy_smallmem.py",
+      "source": ".agent/experiments/lambda-csv/gp/deploy_smallmem.py",
+      "sha256": "ca93dbb228ce92d2c6c0558323be56c582cb22e529d9ff1bc704ac280ba4a57c",
+      "bytes": 4417,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest",
+        "csv-s3-source-bundle"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-csv.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "csv",
+      "path": "gp/final_archive.py",
+      "source": ".agent/experiments/lambda-csv/gp/final_archive.py",
+      "sha256": "01ae7c4c77fc0a019516fd9a44a7aa235739a99033a2bf012bd09cbdcb90e190",
+      "bytes": 17695,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest",
+        "csv-s3-source-bundle"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-csv.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "csv",
+      "path": "gp/inventory.py",
+      "source": ".agent/experiments/lambda-csv/gp/inventory.py",
+      "sha256": "a7d94fd76b35c14fa553db688387be3f6b8cc3152e66a3c37a02bc28ca1905e3",
+      "bytes": 8093,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest",
+        "csv-s3-source-bundle"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-csv.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "csv",
+      "path": "gp/make_report.py",
+      "source": ".agent/experiments/lambda-csv/gp/make_report.py",
+      "sha256": "a562ff8e477708fa380da26cf1c52e56b0d290c86c64da59353e92cdd820a846",
+      "bytes": 13411,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest",
+        "csv-s3-source-bundle"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-csv.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "csv",
+      "path": "gp/plot_cost_probe.py",
+      "source": ".agent/experiments/lambda-csv/gp/plot_cost_probe.py",
+      "sha256": "b31280176eabb0779fd96244b6c0f58671edef9e03fa4c707bd89fc433421214",
+      "bytes": 16800,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest",
+        "csv-s3-source-bundle"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-csv.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "csv",
+      "path": "gp/store.py",
+      "source": ".agent/experiments/lambda-csv/gp/store.py",
+      "sha256": "81cb8e7b80e880206dcbf778f794bfe394155ed2543f199ff967b8b9643cf674",
+      "bytes": 10705,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest",
+        "csv-s3-source-bundle"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-csv.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "csv",
+      "path": "gp/test_control.py",
+      "source": ".agent/experiments/lambda-csv/gp/test_control.py",
+      "sha256": "d85ba3cedf949393b68970ddd668c67bcdbfb33c690cfbee9bdc2aaee3126960",
+      "bytes": 4714,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest",
+        "csv-s3-source-bundle"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-csv.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "csv",
+      "path": "gp/test_store.py",
+      "source": ".agent/experiments/lambda-csv/gp/test_store.py",
+      "sha256": "47759d49312058d924727a90b19879988ebbd060ab9f14440e03ed28406614c1",
+      "bytes": 5324,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest",
+        "csv-s3-source-bundle"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-csv.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "csv",
+      "path": "gp/upload_inputs.py",
+      "source": ".agent/experiments/lambda-csv/gp/upload_inputs.py",
+      "sha256": "ad1eaa965c28af99bd39bc24dca16bcd4df8acb1953f7b45398cb38795c4d656",
+      "bytes": 2559,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest",
+        "csv-s3-source-bundle"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-csv.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "csv",
+      "path": "gp/writer.py",
+      "source": ".agent/experiments/lambda-csv/gp/writer.py",
+      "sha256": "d812819fd3cc9e600dbce5c6d8a69d09a338c5a985416d0a7897277f7d4ad2e2",
+      "bytes": 4420,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest",
+        "csv-s3-source-bundle"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-csv.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "csv",
+      "path": "rust/Cargo.lock",
+      "source": ".agent/experiments/lambda-csv/rust/Cargo.lock",
+      "sha256": "8d147af698348257a7d8d9ef4fa162eb83192b6acd791a773c4a8aaeb68a7188",
+      "bytes": 35780,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest",
+        "csv-s3-source-bundle"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/csv/rust/Cargo.lock",
+      "tree_sha256": "8d147af698348257a7d8d9ef4fa162eb83192b6acd791a773c4a8aaeb68a7188",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "csv",
+      "path": "rust/Cargo.toml",
+      "source": ".agent/experiments/lambda-csv/rust/Cargo.toml",
+      "sha256": "444fda01cb8458ca8eae9f805752be95b4723efaa492227bd8fb936f3d0c7c59",
+      "bytes": 872,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest",
+        "csv-s3-source-bundle"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/csv/rust/Cargo.toml",
+      "tree_sha256": "444fda01cb8458ca8eae9f805752be95b4723efaa492227bd8fb936f3d0c7c59",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "csv",
+      "path": "rust/src/batch.rs",
+      "source": ".agent/experiments/lambda-csv/rust/src/batch.rs",
+      "sha256": "d5d472dfa93f1b088eb37feb7b474f22bbca7159890eabb58bf1ef2f967c5195",
+      "bytes": 10671,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest",
+        "csv-s3-source-bundle"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/csv/rust/src/batch.rs",
+      "tree_sha256": "d5d472dfa93f1b088eb37feb7b474f22bbca7159890eabb58bf1ef2f967c5195",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "csv",
+      "path": "rust/src/gp.rs",
+      "source": ".agent/experiments/lambda-csv/rust/src/gp.rs",
+      "sha256": "7e5ee064d0eb051ac991dcf007c5dbd79b93cab06e8813e05e1e0aa0fe310328",
+      "bytes": 52507,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest",
+        "csv-s3-source-bundle"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/csv/rust/src/gp.rs",
+      "tree_sha256": "7e5ee064d0eb051ac991dcf007c5dbd79b93cab06e8813e05e1e0aa0fe310328",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "csv",
+      "path": "rust/src/gp_diagnose.rs",
+      "source": ".agent/experiments/lambda-csv/rust/src/gp_diagnose.rs",
+      "sha256": "56cbdcb204dc8585ff2c904f47bbccdbb37218bc7d79a9275573ea369fcb9cc3",
+      "bytes": 52683,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest",
+        "csv-s3-source-bundle"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/csv/rust/src/gp_diagnose.rs",
+      "tree_sha256": "56cbdcb204dc8585ff2c904f47bbccdbb37218bc7d79a9275573ea369fcb9cc3",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "csv",
+      "path": "rust/src/gp_v1.rs",
+      "source": ".agent/experiments/lambda-csv/rust/src/gp_v1.rs",
+      "sha256": "33358cc1b116898436e67ea17956a502efdb1082d52f5156a36a5e1162c62f05",
+      "bytes": 40578,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest",
+        "csv-s3-source-bundle"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/csv/rust/src/gp_v1.rs",
+      "tree_sha256": "33358cc1b116898436e67ea17956a502efdb1082d52f5156a36a5e1162c62f05",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "csv",
+      "path": "rust/src/gp_v1_pre_archive.rs",
+      "source": ".agent/experiments/lambda-csv/rust/src/gp_v1_pre_archive.rs",
+      "sha256": "42775359f369ee359b7d1b8ec0a5015151c92e2e1aec59501298346c816f9a96",
+      "bytes": 41580,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest",
+        "csv-s3-source-bundle"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/csv/rust/src/gp_v1_pre_archive.rs",
+      "tree_sha256": "42775359f369ee359b7d1b8ec0a5015151c92e2e1aec59501298346c816f9a96",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "csv",
+      "path": "rust/src/gp_v2.rs",
+      "source": ".agent/experiments/lambda-csv/rust/src/gp_v2.rs",
+      "sha256": "5c9d614afada84702796b0e5839056a17d647bf3c4b731765776d1a1cf83f09d",
+      "bytes": 55526,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest",
+        "csv-s3-source-bundle"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/csv/rust/src/gp_v2.rs",
+      "tree_sha256": "5c9d614afada84702796b0e5839056a17d647bf3c4b731765776d1a1cf83f09d",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "csv",
+      "path": "rust/src/gp_v2_pre_archive.rs",
+      "source": ".agent/experiments/lambda-csv/rust/src/gp_v2_pre_archive.rs",
+      "sha256": "3895c3d2d54524ec3ecff43e737f27e7a1f44ddad81aa27c00278f96821d05d1",
+      "bytes": 44672,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest",
+        "csv-s3-source-bundle"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/csv/rust/src/gp_v2_pre_archive.rs",
+      "tree_sha256": "3895c3d2d54524ec3ecff43e737f27e7a1f44ddad81aa27c00278f96821d05d1",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "csv",
+      "path": "rust/src/main.rs",
+      "source": ".agent/experiments/lambda-csv/rust/src/main.rs",
+      "sha256": "fdf6c7c93c4ece21cf58385d386329305f9a9d30e7a1948fe2c7c347fc3efbcc",
+      "bytes": 8248,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest",
+        "csv-s3-source-bundle"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/csv/rust/src/main.rs",
+      "tree_sha256": "fdf6c7c93c4ece21cf58385d386329305f9a9d30e7a1948fe2c7c347fc3efbcc",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "csv",
+      "path": "test-env.sh",
+      "source": ".agent/experiments/lambda-csv/test-env.sh",
+      "sha256": "09757da1b57e48a14c22c749f36efef013b632e6ce3626606dd4c4131f80773e",
+      "bytes": 1159,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/csv/test-env.sh",
+      "tree_sha256": "09757da1b57e48a14c22c749f36efef013b632e6ce3626606dd4c4131f80773e",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "csv",
+      "path": "versions/python-prototype/Dockerfile",
+      "source": ".agent/experiments/lambda-csv/versions/python-prototype/Dockerfile",
+      "sha256": "e682da9fcdf9640133a27a08c4aa3f6a864a273f915b6b84d1749012fcc41f0c",
+      "bytes": 251,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-csv.tar",
+      "reason": "container build file of the Python-only prototype; kept with it in custody"
+    },
+    {
+      "body": "csv",
+      "path": "versions/python-prototype/experiment.py",
+      "source": ".agent/experiments/lambda-csv/versions/python-prototype/experiment.py",
+      "sha256": "e065c4ef80c2a91661c92e908e2c976c10390042535b26d7d302ce6d5a8b78bb",
+      "bytes": 8767,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-csv.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "csv",
+      "path": "versions/python-prototype/handler.py",
+      "source": ".agent/experiments/lambda-csv/versions/python-prototype/handler.py",
+      "sha256": "0b7384085d3244c3bac4f05e7915210907e1e74f12404e8c0ae6fe540c8a4b29",
+      "bytes": 3416,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-csv.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "csv",
+      "path": "versions/python-prototype/verify_local.py",
+      "source": ".agent/experiments/lambda-csv/versions/python-prototype/verify_local.py",
+      "sha256": "dd7b036e35496dcc54f999fb3003e33f90949d769be6e2e70ffffbab93ad8d1f",
+      "bytes": 2215,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-csv.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "csv",
+      "path": "versions/rust-single-v2/.env.example",
+      "source": ".agent/experiments/lambda-csv/versions/rust-single-v2/.env.example",
+      "sha256": "66486b4e2de0f777de5f787cba68cf6c390e6829599c8f8fdb1b7c76eb7a4a45",
+      "bytes": 268,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/csv/versions/rust-single-v2/.env.example",
+      "tree_sha256": "66486b4e2de0f777de5f787cba68cf6c390e6829599c8f8fdb1b7c76eb7a4a45",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "csv",
+      "path": "versions/rust-single-v2/.gitignore",
+      "source": ".agent/experiments/lambda-csv/versions/rust-single-v2/.gitignore",
+      "sha256": "c4896b05e7ad58f5e64ad128a5a78d32b23e0c3ddfee9047aca105ad4a87f533",
+      "bytes": 75,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/csv/versions/rust-single-v2/.gitignore",
+      "tree_sha256": "c4896b05e7ad58f5e64ad128a5a78d32b23e0c3ddfee9047aca105ad4a87f533",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "csv",
+      "path": "versions/rust-single-v2/deploy-rust.sh",
+      "source": ".agent/experiments/lambda-csv/versions/rust-single-v2/deploy-rust.sh",
+      "sha256": "338c0f6c26fff8ea3c2b1e43232301666efc58c55e6e96c4346010bfb9af4d19",
+      "bytes": 5249,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/csv/versions/rust-single-v2/deploy-rust.sh",
+      "tree_sha256": "338c0f6c26fff8ea3c2b1e43232301666efc58c55e6e96c4346010bfb9af4d19",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "csv",
+      "path": "versions/rust-single-v2/env.sh",
+      "source": ".agent/experiments/lambda-csv/versions/rust-single-v2/env.sh",
+      "sha256": "544aedc299f48a8150f4b901d5106ef96c8c508205a8a2282ac2855f4a46f928",
+      "bytes": 1718,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/csv/versions/rust-single-v2/env.sh",
+      "tree_sha256": "544aedc299f48a8150f4b901d5106ef96c8c508205a8a2282ac2855f4a46f928",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "csv",
+      "path": "versions/rust-single-v2/rust/Cargo.lock",
+      "source": ".agent/experiments/lambda-csv/versions/rust-single-v2/rust/Cargo.lock",
+      "sha256": "c479b9c02c99946e944961e5efa577c1e1e114ddb606ee12a884243058ccfb5f",
+      "bytes": 35770,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/csv/versions/rust-single-v2/rust/Cargo.lock",
+      "tree_sha256": "c479b9c02c99946e944961e5efa577c1e1e114ddb606ee12a884243058ccfb5f",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "csv",
+      "path": "versions/rust-single-v2/rust/Cargo.toml",
+      "source": ".agent/experiments/lambda-csv/versions/rust-single-v2/rust/Cargo.toml",
+      "sha256": "d4e87ae69d9992d8def9d4e3124ee3b4fba925efb2e3050b266fe8fe87eaa441",
+      "bytes": 544,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest"
+      ],
+      "disposition": "tracked-renamed",
+      "tree_path": "deploy/lambda/csv/versions/rust-single-v2/rust/Cargo.toml.v2",
+      "tree_sha256": "d4e87ae69d9992d8def9d4e3124ee3b4fba925efb2e3050b266fe8fe87eaa441",
+      "custody_tarball": null,
+      "reason": "declares package jope-lambda-probe, which deploy/lambda/csv/rust/Cargo.toml also declares; repo-layout's dup-package rule has no allowlist. A historical edition that is not built; rename it back to Cargo.toml to build it"
+    },
+    {
+      "body": "csv",
+      "path": "versions/rust-single-v2/rust/src/main.rs",
+      "source": ".agent/experiments/lambda-csv/versions/rust-single-v2/rust/src/main.rs",
+      "sha256": "fdf6c7c93c4ece21cf58385d386329305f9a9d30e7a1948fe2c7c347fc3efbcc",
+      "bytes": 8248,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/csv/versions/rust-single-v2/rust/src/main.rs",
+      "tree_sha256": "fdf6c7c93c4ece21cf58385d386329305f9a9d30e7a1948fe2c7c347fc3efbcc",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "csv",
+      "path": "versions/rust-single-v2/test-env.sh",
+      "source": ".agent/experiments/lambda-csv/versions/rust-single-v2/test-env.sh",
+      "sha256": "09757da1b57e48a14c22c749f36efef013b632e6ce3626606dd4c4131f80773e",
+      "bytes": 1159,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/csv/versions/rust-single-v2/test-env.sh",
+      "tree_sha256": "09757da1b57e48a14c22c749f36efef013b632e6ce3626606dd4c4131f80773e",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "csv",
+      "path": "versions/rust-v1/deploy-rust.sh",
+      "source": ".agent/experiments/lambda-csv/versions/rust-v1/deploy-rust.sh",
+      "sha256": "fa11514bec3313703010bd93df2ed89eff6541bd1cfacbcb1faac64bd29f3346",
+      "bytes": 4912,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/csv/versions/rust-v1/deploy-rust.sh",
+      "tree_sha256": "fa11514bec3313703010bd93df2ed89eff6541bd1cfacbcb1faac64bd29f3346",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "csv",
+      "path": "versions/rust-v1/main.rs",
+      "source": ".agent/experiments/lambda-csv/versions/rust-v1/main.rs",
+      "sha256": "8d511fd9bfbd6eacc34361e80329652ca362b719f91ead12eea7e2363e3fe9f3",
+      "bytes": 7997,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/csv/versions/rust-v1/main.rs",
+      "tree_sha256": "8d511fd9bfbd6eacc34361e80329652ca362b719f91ead12eea7e2363e3fe9f3",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "planning",
+      "path": ".env.example",
+      "source": ".agent/experiments/gp-evolution-100/.env.example",
+      "sha256": "409cd3640c42954c1a68cc9107edd91e5e83dd8c029c5f386e5f582240750b13",
+      "bytes": 234,
+      "mode": "100644",
+      "anchors": [
+        "planning-survey-manifest"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-planning.tar",
+      "reason": "configuration template of the Python-only planning tools (identifiers only, no secret); kept with them in custody"
+    },
+    {
+      "body": "planning",
+      "path": "corpus/finalize.py",
+      "source": ".agent/experiments/gp-evolution-100/corpus/finalize.py",
+      "sha256": "2846eec76a4bdc1952318f7d01835eaea0806787fa4ad6eb57054f72a1d31329",
+      "bytes": 9347,
+      "mode": "100644",
+      "anchors": [
+        "planning-survey-manifest"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-planning.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "planning",
+      "path": "corpus/inventory.py",
+      "source": ".agent/experiments/gp-evolution-100/corpus/inventory.py",
+      "sha256": "dd12328e30c46c0968bd77dfb5242a5043eba1281a260d308bcb505df4e0b32a",
+      "bytes": 17728,
+      "mode": "100644",
+      "anchors": [
+        "planning-survey-manifest"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-planning.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "planning",
+      "path": "corpus/package.py",
+      "source": ".agent/experiments/gp-evolution-100/corpus/package.py",
+      "sha256": "18c80f0a16f2b1cf61ed1559016cd3e44fe1ac5820a0a7c16f249b83b976b5a0",
+      "bytes": 14487,
+      "mode": "100644",
+      "anchors": [
+        "planning-survey-manifest"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-planning.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "planning",
+      "path": "root/capacity.py",
+      "source": ".agent/experiments/gp-evolution-100/root/capacity.py",
+      "sha256": "f84911e7ea65dc39a2917ca6a2734adf527decdffce58886e5b64c25b86ac1df",
+      "bytes": 3751,
+      "mode": "100644",
+      "anchors": [
+        "planning-survey-manifest"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-planning.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "planning",
+      "path": "root/history_dashboard.py",
+      "source": ".agent/experiments/gp-evolution-100/root/history_dashboard.py",
+      "sha256": "9e25705eb7ff1bcc694ad6847056d46899c401bf24a9667d4d1b856d442ec435",
+      "bytes": 10115,
+      "mode": "100644",
+      "anchors": [
+        "planning-survey-manifest"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-planning.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "planning",
+      "path": "root/measure_prior.py",
+      "source": ".agent/experiments/gp-evolution-100/root/measure_prior.py",
+      "sha256": "def5d8aa45257a188214650a04d2c8aab8f6b70ce72ef9096ba90e1a200b9cf0",
+      "bytes": 3489,
+      "mode": "100644",
+      "anchors": [
+        "planning-survey-manifest"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-planning.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "planning",
+      "path": "root/publish_discovery.py",
+      "source": ".agent/experiments/gp-evolution-100/root/publish_discovery.py",
+      "sha256": "4283b9ba8d7db3cd96c8d4db0913e5f81e4d2d620d8ca99578f64ee053218395",
+      "bytes": 9458,
+      "mode": "100644",
+      "anchors": [
+        "planning-survey-manifest"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-planning.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "planning",
+      "path": "runtime/protocol_sim.py",
+      "source": ".agent/experiments/gp-evolution-100/runtime/protocol_sim.py",
+      "sha256": "3d1ee0a7085a42f17eadbe3812131033398707530c1b6520e87e6f00044bb801",
+      "bytes": 7214,
+      "mode": "100644",
+      "anchors": [
+        "planning-survey-manifest"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-planning.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "planning",
+      "path": "runtime/review_fitness_v2.py",
+      "source": ".agent/experiments/gp-evolution-100/runtime/review_fitness_v2.py",
+      "sha256": "6318a005d9b7327678055175c1cf34d727cea252808158903d11334c0fbe3212",
+      "bytes": 3732,
+      "mode": "100644",
+      "anchors": [
+        "planning-survey-manifest"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-planning.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "planning",
+      "path": "seeds/build_catalog.py",
+      "source": ".agent/experiments/gp-evolution-100/seeds/build_catalog.py",
+      "sha256": "5a36a6040cb14f9602ec75235c560ec316dccbbda3bf991c1b9a1ddc78076631",
+      "bytes": 12615,
+      "mode": "100644",
+      "anchors": [
+        "planning-survey-manifest"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-planning.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "planning",
+      "path": "seeds/extract_native_metadata.py",
+      "source": ".agent/experiments/gp-evolution-100/seeds/extract_native_metadata.py",
+      "sha256": "a87cee1cc414056e2de80e2ef97fec07bc4c39267483224bb993bfae255c0abf",
+      "bytes": 3551,
+      "mode": "100644",
+      "anchors": [
+        "planning-survey-manifest"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-planning.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "planning",
+      "path": "seeds/live_inventory.py",
+      "source": ".agent/experiments/gp-evolution-100/seeds/live_inventory.py",
+      "sha256": "17d431fce96e801b4b198524f7dee27941a223d61697c015c59966e8b0777792",
+      "bytes": 2739,
+      "mode": "100644",
+      "anchors": [
+        "planning-survey-manifest"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-planning.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "planning",
+      "path": "seeds/sample.py",
+      "source": ".agent/experiments/gp-evolution-100/seeds/sample.py",
+      "sha256": "2e6f11e57bfd8f7988059b7ab81234100cf9e009e5fd03f9ba1d5e5963226d82",
+      "bytes": 1600,
+      "mode": "100644",
+      "anchors": [
+        "planning-survey-manifest"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-planning.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "watch",
+      "path": ".env.example",
+      "source": ".agent/experiments/lambda-watch/.env.example",
+      "sha256": "584c2095b1494e0997abcb755ae2e8d63ae195e00c1238af6182e21141a346ca",
+      "bytes": 418,
+      "mode": "100644",
+      "anchors": [
+        "watch-tarball"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/watch/.env.example",
+      "tree_sha256": "584c2095b1494e0997abcb755ae2e8d63ae195e00c1238af6182e21141a346ca",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "watch",
+      "path": ".gitignore",
+      "source": ".agent/experiments/lambda-watch/.gitignore",
+      "sha256": "80fdfc26bbef1808f85063c4c907de52ec9874b08fb76d7e9b7aebe6892e1569",
+      "bytes": 32,
+      "mode": "100644",
+      "anchors": [
+        "watch-tarball"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/watch/.gitignore",
+      "tree_sha256": "80fdfc26bbef1808f85063c4c907de52ec9874b08fb76d7e9b7aebe6892e1569",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "watch",
+      "path": "Cargo.lock",
+      "source": ".agent/experiments/lambda-watch/Cargo.lock",
+      "sha256": "2f5d13942766b51157fb9a44cbf434dc843f55e3f36bcad97ea0eb1c58c0ff41",
+      "bytes": 17435,
+      "mode": "100644",
+      "anchors": [
+        "watch-tarball"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/watch/Cargo.lock",
+      "tree_sha256": "2f5d13942766b51157fb9a44cbf434dc843f55e3f36bcad97ea0eb1c58c0ff41",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "watch",
+      "path": "Cargo.toml",
+      "source": ".agent/experiments/lambda-watch/Cargo.toml",
+      "sha256": "e1672b260b9f7cc3ba3392d737c0b04370964afbd48f22784caf9f6808b5d730",
+      "bytes": 362,
+      "mode": "100644",
+      "anchors": [
+        "watch-tarball"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/watch/Cargo.toml",
+      "tree_sha256": "e1672b260b9f7cc3ba3392d737c0b04370964afbd48f22784caf9f6808b5d730",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "watch",
+      "path": "PERFORMANCE.json",
+      "source": ".agent/experiments/lambda-watch/PERFORMANCE.json",
+      "sha256": "d9022f4be6bdebb8f9f852e96569f66e79da8653b962578d9b8f7a52871dd576",
+      "bytes": 1768,
+      "mode": "100644",
+      "anchors": [
+        "watch-tarball"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/watch/PERFORMANCE.json",
+      "tree_sha256": "d9022f4be6bdebb8f9f852e96569f66e79da8653b962578d9b8f7a52871dd576",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "watch",
+      "path": "README.md",
+      "source": ".agent/experiments/lambda-watch/README.md",
+      "sha256": "c9665f53a09ecc02ec6c879e974d39aa292525e53fbbfd865df1847bb0631824",
+      "bytes": 6687,
+      "mode": "100644",
+      "anchors": [
+        "watch-tarball"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/watch/README.md",
+      "tree_sha256": "c9665f53a09ecc02ec6c879e974d39aa292525e53fbbfd865df1847bb0631824",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "watch",
+      "path": "TELEMETRY.md",
+      "source": ".agent/experiments/lambda-watch/TELEMETRY.md",
+      "sha256": "8952a0616054e75e23119f8b108879bfab18bc071abf3a20ad8bcb43ed5bb77b",
+      "bytes": 4195,
+      "mode": "100644",
+      "anchors": [
+        "watch-tarball"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/watch/TELEMETRY.md",
+      "tree_sha256": "8952a0616054e75e23119f8b108879bfab18bc071abf3a20ad8bcb43ed5bb77b",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "watch",
+      "path": "build",
+      "source": ".agent/experiments/lambda-watch/build",
+      "sha256": "21df8b6e11ee90eade0b7ac499ec39e085285fe6165439a2921f4e1e84c07755",
+      "bytes": 231,
+      "mode": "100755",
+      "anchors": [
+        "watch-tarball"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/watch/build",
+      "tree_sha256": "21df8b6e11ee90eade0b7ac499ec39e085285fe6165439a2921f4e1e84c07755",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "watch",
+      "path": "feed.py",
+      "source": ".agent/experiments/lambda-watch/feed.py",
+      "sha256": "3f6d7401e3fffe250b63f945358e7a3741db89a6eaa3c7bf995015f769557d1c",
+      "bytes": 17345,
+      "mode": "100755",
+      "anchors": [
+        "watch-tarball"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-watch.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "watch",
+      "path": "render_preview.py",
+      "source": ".agent/experiments/lambda-watch/render_preview.py",
+      "sha256": "3b4f5fc9e315723dd1cb8a173f0fee56d58ea44428faf14195d07323895ad3f6",
+      "bytes": 1244,
+      "mode": "100644",
+      "anchors": [
+        "watch-tarball"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-watch.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "watch",
+      "path": "src/main.rs",
+      "source": ".agent/experiments/lambda-watch/src/main.rs",
+      "sha256": "9b8b24a27d142202f8e28c12186b4d75234883e00c9ff321e09c0eb1226b2ff0",
+      "bytes": 11747,
+      "mode": "100644",
+      "anchors": [
+        "watch-tarball"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/watch/src/main.rs",
+      "tree_sha256": "9b8b24a27d142202f8e28c12186b4d75234883e00c9ff321e09c0eb1226b2ff0",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "watch",
+      "path": "src/model.rs",
+      "source": ".agent/experiments/lambda-watch/src/model.rs",
+      "sha256": "cca67d36c620236659266054ca6965794b7712284e3583beedeef27853b61eae",
+      "bytes": 10751,
+      "mode": "100644",
+      "anchors": [
+        "watch-tarball"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/watch/src/model.rs",
+      "tree_sha256": "cca67d36c620236659266054ca6965794b7712284e3583beedeef27853b61eae",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "watch",
+      "path": "src/ui.rs",
+      "source": ".agent/experiments/lambda-watch/src/ui.rs",
+      "sha256": "93d044b130c528959c7d7a656b46837311213cb4d65849b5ce6bc9361bceb32e",
+      "bytes": 17822,
+      "mode": "100644",
+      "anchors": [
+        "watch-tarball"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/watch/src/ui.rs",
+      "tree_sha256": "93d044b130c528959c7d7a656b46837311213cb4d65849b5ce6bc9361bceb32e",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "watch",
+      "path": "test_feed.py",
+      "source": ".agent/experiments/lambda-watch/test_feed.py",
+      "sha256": "609efd8abe625ea0a673398f190b93d7cf5835377dd51860089a275f9891f3b0",
+      "bytes": 4375,
+      "mode": "100644",
+      "anchors": [
+        "watch-tarball"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-watch.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "watch",
+      "path": "verify_launcher.py",
+      "source": ".agent/experiments/lambda-watch/verify_launcher.py",
+      "sha256": "a5bc00c6bbd511f45da9b9d532cf1456c7b65202813efea8a8a75c76cb0e539a",
+      "bytes": 2003,
+      "mode": "100644",
+      "anchors": [
+        "watch-tarball"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-watch.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "watch",
+      "path": "verify_tui.py",
+      "source": ".agent/experiments/lambda-watch/verify_tui.py",
+      "sha256": "025a3116ce428e04f7c5516cc6c760f9c76259cceb23c4e9d5a71a4f3a075846",
+      "bytes": 3853,
+      "mode": "100644",
+      "anchors": [
+        "watch-tarball"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-watch.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "watch",
+      "path": "watch",
+      "source": ".agent/experiments/lambda-watch/watch",
+      "sha256": "dfd024cc2249f14d8ce91050175a51d4eebd9a45675a449ad796cdc614731507",
+      "bytes": 2309,
+      "mode": "100755",
+      "anchors": [
+        "watch-tarball"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-watch.tar",
+      "reason": "the monitor's launcher is a Python script (#!/usr/bin/env python3); Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    }
+  ],
+  "excluded": [
+    {
+      "body": "csv",
+      "path": ".env",
+      "source": ".agent/experiments/lambda-csv/.env",
+      "kind": "file",
+      "disposition": "excluded",
+      "reason": "private environment file (mode 0600). Existence recorded only: never read, hashed or copied. Root .gitignore (*.env) and gitleaks rule jope-env-files keep such files out of the tree; its .env.example template is listed under files with its own disposition"
+    },
+    {
+      "body": "csv",
+      "path": "cost/.env",
+      "source": ".agent/experiments/lambda-csv/cost/.env",
+      "kind": "file",
+      "disposition": "excluded",
+      "reason": "private environment file (mode 0600). Existence recorded only: never read, hashed or copied. Root .gitignore (*.env) and gitleaks rule jope-env-files keep such files out of the tree; its .env.example template is listed under files with its own disposition"
+    },
+    {
+      "body": "csv",
+      "path": "cost/packages",
+      "source": ".agent/experiments/lambda-csv/cost/packages",
+      "kind": "symlink",
+      "disposition": "excluded",
+      "reason": "symbolic link to bulk run evidence outside the source tree; the evidence stays in its campaign's scratch custody",
+      "link_target": "~/scratch/jopedime-lambda-cost-20260928/aws-run-attempt2"
+    },
+    {
+      "body": "csv",
+      "path": "cost/results",
+      "source": ".agent/experiments/lambda-csv/cost/results",
+      "kind": "symlink",
+      "disposition": "excluded",
+      "reason": "symbolic link to bulk run evidence outside the source tree; the evidence stays in its campaign's scratch custody",
+      "link_target": "~/scratch/jopedime-lambda-cost-20260928"
+    },
+    {
+      "body": "csv",
+      "path": "gp/.env",
+      "source": ".agent/experiments/lambda-csv/gp/.env",
+      "kind": "file",
+      "disposition": "excluded",
+      "reason": "private environment file (mode 0600). Existence recorded only: never read, hashed or copied. Root .gitignore (*.env) and gitleaks rule jope-env-files keep such files out of the tree; its .env.example template is listed under files with its own disposition"
+    },
+    {
+      "body": "csv",
+      "path": "gp/__pycache__",
+      "source": ".agent/experiments/lambda-csv/gp/__pycache__",
+      "kind": "directory",
+      "disposition": "excluded",
+      "reason": "Python bytecode cache (rebuildable), not preserved"
+    },
+    {
+      "body": "csv",
+      "path": "gp/__pycache__/analyze.cpython-312.pyc",
+      "source": ".agent/experiments/lambda-csv/gp/__pycache__/analyze.cpython-312.pyc",
+      "kind": "file",
+      "disposition": "excluded",
+      "reason": "Python bytecode cache (rebuildable), not preserved",
+      "bytes": 102023
+    },
+    {
+      "body": "csv",
+      "path": "gp/__pycache__/budget.cpython-312.pyc",
+      "source": ".agent/experiments/lambda-csv/gp/__pycache__/budget.cpython-312.pyc",
+      "kind": "file",
+      "disposition": "excluded",
+      "reason": "Python bytecode cache (rebuildable), not preserved",
+      "bytes": 11076
+    },
+    {
+      "body": "csv",
+      "path": "gp/__pycache__/campaign.cpython-312.pyc",
+      "source": ".agent/experiments/lambda-csv/gp/__pycache__/campaign.cpython-312.pyc",
+      "kind": "file",
+      "disposition": "excluded",
+      "reason": "Python bytecode cache (rebuildable), not preserved",
+      "bytes": 49283
+    },
+    {
+      "body": "csv",
+      "path": "gp/__pycache__/close_campaign.cpython-312.pyc",
+      "source": ".agent/experiments/lambda-csv/gp/__pycache__/close_campaign.cpython-312.pyc",
+      "kind": "file",
+      "disposition": "excluded",
+      "reason": "Python bytecode cache (rebuildable), not preserved",
+      "bytes": 11591
+    },
+    {
+      "body": "csv",
+      "path": "gp/__pycache__/control.cpython-312.pyc",
+      "source": ".agent/experiments/lambda-csv/gp/__pycache__/control.cpython-312.pyc",
+      "kind": "file",
+      "disposition": "excluded",
+      "reason": "Python bytecode cache (rebuildable), not preserved",
+      "bytes": 11723
+    },
+    {
+      "body": "csv",
+      "path": "gp/__pycache__/final_archive.cpython-312.pyc",
+      "source": ".agent/experiments/lambda-csv/gp/__pycache__/final_archive.cpython-312.pyc",
+      "kind": "file",
+      "disposition": "excluded",
+      "reason": "Python bytecode cache (rebuildable), not preserved",
+      "bytes": 37095
+    },
+    {
+      "body": "csv",
+      "path": "gp/__pycache__/inventory.cpython-312.pyc",
+      "source": ".agent/experiments/lambda-csv/gp/__pycache__/inventory.cpython-312.pyc",
+      "kind": "file",
+      "disposition": "excluded",
+      "reason": "Python bytecode cache (rebuildable), not preserved",
+      "bytes": 19286
+    },
+    {
+      "body": "csv",
+      "path": "gp/__pycache__/make_report.cpython-312.pyc",
+      "source": ".agent/experiments/lambda-csv/gp/__pycache__/make_report.cpython-312.pyc",
+      "kind": "file",
+      "disposition": "excluded",
+      "reason": "Python bytecode cache (rebuildable), not preserved",
+      "bytes": 16211
+    },
+    {
+      "body": "csv",
+      "path": "gp/__pycache__/store.cpython-312.pyc",
+      "source": ".agent/experiments/lambda-csv/gp/__pycache__/store.cpython-312.pyc",
+      "kind": "file",
+      "disposition": "excluded",
+      "reason": "Python bytecode cache (rebuildable), not preserved",
+      "bytes": 22990
+    },
+    {
+      "body": "csv",
+      "path": "gp/__pycache__/test_control.cpython-312.pyc",
+      "source": ".agent/experiments/lambda-csv/gp/__pycache__/test_control.cpython-312.pyc",
+      "kind": "file",
+      "disposition": "excluded",
+      "reason": "Python bytecode cache (rebuildable), not preserved",
+      "bytes": 11302
+    },
+    {
+      "body": "csv",
+      "path": "gp/__pycache__/test_store.cpython-312.pyc",
+      "source": ".agent/experiments/lambda-csv/gp/__pycache__/test_store.cpython-312.pyc",
+      "kind": "file",
+      "disposition": "excluded",
+      "reason": "Python bytecode cache (rebuildable), not preserved",
+      "bytes": 15689
+    },
+    {
+      "body": "csv",
+      "path": "gp/__pycache__/writer.cpython-312.pyc",
+      "source": ".agent/experiments/lambda-csv/gp/__pycache__/writer.cpython-312.pyc",
+      "kind": "file",
+      "disposition": "excluded",
+      "reason": "Python bytecode cache (rebuildable), not preserved",
+      "bytes": 7673
+    },
+    {
+      "body": "csv",
+      "path": "rust/target",
+      "source": ".agent/experiments/lambda-csv/rust/target",
+      "kind": "directory",
+      "disposition": "excluded",
+      "reason": "Cargo build output (rebuildable), not preserved",
+      "bytes": 2769374307
+    },
+    {
+      "body": "planning",
+      "path": ".env",
+      "source": ".agent/experiments/gp-evolution-100/.env",
+      "kind": "file",
+      "disposition": "excluded",
+      "reason": "private environment file (mode 0600). Existence recorded only: never read, hashed or copied. Root .gitignore (*.env) and gitleaks rule jope-env-files keep such files out of the tree; its .env.example template is listed under files with its own disposition"
+    },
+    {
+      "body": "planning",
+      "path": "corpus/__pycache__",
+      "source": ".agent/experiments/gp-evolution-100/corpus/__pycache__",
+      "kind": "directory",
+      "disposition": "excluded",
+      "reason": "Python bytecode cache (rebuildable), not preserved"
+    },
+    {
+      "body": "planning",
+      "path": "corpus/__pycache__/inventory.cpython-312.pyc",
+      "source": ".agent/experiments/gp-evolution-100/corpus/__pycache__/inventory.cpython-312.pyc",
+      "kind": "file",
+      "disposition": "excluded",
+      "reason": "Python bytecode cache (rebuildable), not preserved",
+      "bytes": 40441
+    },
+    {
+      "body": "planning",
+      "path": "root/__pycache__",
+      "source": ".agent/experiments/gp-evolution-100/root/__pycache__",
+      "kind": "directory",
+      "disposition": "excluded",
+      "reason": "Python bytecode cache (rebuildable), not preserved"
+    },
+    {
+      "body": "planning",
+      "path": "root/__pycache__/capacity.cpython-312.pyc",
+      "source": ".agent/experiments/gp-evolution-100/root/__pycache__/capacity.cpython-312.pyc",
+      "kind": "file",
+      "disposition": "excluded",
+      "reason": "Python bytecode cache (rebuildable), not preserved",
+      "bytes": 5158
+    },
+    {
+      "body": "planning",
+      "path": "root/__pycache__/publish_discovery.cpython-312.pyc",
+      "source": ".agent/experiments/gp-evolution-100/root/__pycache__/publish_discovery.cpython-312.pyc",
+      "kind": "file",
+      "disposition": "excluded",
+      "reason": "Python bytecode cache (rebuildable), not preserved",
+      "bytes": 18431
+    },
+    {
+      "body": "planning",
+      "path": "seeds/__pycache__",
+      "source": ".agent/experiments/gp-evolution-100/seeds/__pycache__",
+      "kind": "directory",
+      "disposition": "excluded",
+      "reason": "Python bytecode cache (rebuildable), not preserved"
+    },
+    {
+      "body": "planning",
+      "path": "seeds/__pycache__/live_inventory.cpython-312.pyc",
+      "source": ".agent/experiments/gp-evolution-100/seeds/__pycache__/live_inventory.cpython-312.pyc",
+      "kind": "file",
+      "disposition": "excluded",
+      "reason": "Python bytecode cache (rebuildable), not preserved",
+      "bytes": 6132
+    },
+    {
+      "body": "planning",
+      "path": "seeds/__pycache__/sample.cpython-312.pyc",
+      "source": ".agent/experiments/gp-evolution-100/seeds/__pycache__/sample.cpython-312.pyc",
+      "kind": "file",
+      "disposition": "excluded",
+      "reason": "Python bytecode cache (rebuildable), not preserved",
+      "bytes": 3498
+    },
+    {
+      "body": "watch",
+      "path": ".env",
+      "source": ".agent/experiments/lambda-watch/.env",
+      "kind": "file",
+      "disposition": "excluded",
+      "reason": "private environment file (mode 0600). Existence recorded only: never read, hashed or copied. Root .gitignore (*.env) and gitleaks rule jope-env-files keep such files out of the tree; its .env.example template is listed under files with its own disposition"
+    },
+    {
+      "body": "watch",
+      "path": "__pycache__",
+      "source": ".agent/experiments/lambda-watch/__pycache__",
+      "kind": "directory",
+      "disposition": "excluded",
+      "reason": "Python bytecode cache (rebuildable), not preserved"
+    },
+    {
+      "body": "watch",
+      "path": "__pycache__/feed.cpython-312.pyc",
+      "source": ".agent/experiments/lambda-watch/__pycache__/feed.cpython-312.pyc",
+      "kind": "file",
+      "disposition": "excluded",
+      "reason": "Python bytecode cache (rebuildable), not preserved",
+      "bytes": 34973
+    },
+    {
+      "body": "watch",
+      "path": "__pycache__/test_feed.cpython-312.pyc",
+      "source": ".agent/experiments/lambda-watch/__pycache__/test_feed.cpython-312.pyc",
+      "kind": "file",
+      "disposition": "excluded",
+      "reason": "Python bytecode cache (rebuildable), not preserved",
+      "bytes": 11242
+    },
+    {
+      "body": "watch",
+      "path": "target",
+      "source": ".agent/experiments/lambda-watch/target",
+      "kind": "directory",
+      "disposition": "excluded",
+      "reason": "Cargo build output (rebuildable), not preserved",
+      "bytes": 365533855
+    }
+  ]
+}
