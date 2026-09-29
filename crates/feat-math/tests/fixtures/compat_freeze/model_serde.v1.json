@@ -1,0 +1,221 @@
+{
+  "schema": "feat-math.compat-freeze.model-serde.v1",
+  "generated_at_sha": "629e69d865a674222e00224cebf45c1ffddc8dea",
+  "note": "serde_json is \"<byte length> <sha256>\" of serde_json::to_vec(&fit(program)) on toy_data(80 rows, 5 columns, seed 42) as in tests/golden.rs: the first 64 rows train, the last 16 are predicted; predictions are the f64 bits of Model::predict on the held-out rows. stored keeps the complete bytes of three small models, which must still load and predict the recorded values (to within serde_json's float-parsing precision, which is not exact without its float_roundtrip feature).",
+  "models": [
+    {
+      "name": "champion",
+      "serde_json": "141391 8200adcd29b04cd97354b481b020399df8db34b79352a92642bdc99954e6b5ce",
+      "predictions": "bff78392df534f82 bfcab0f5e3ffbb8c 3ff759662aec2036 3ff759662aec2036 bffcbec88fb58c90 bff2269291ea298a bff2269291ea298a bff78392df534f82 bfe52f2ae1287652 3ff759662aec2036 3ff759662aec2036 bfecdccd2c2c7398 3ff3dd99b3fb1727 bfecdccd2c2c7398 bfcab0f5e3ffbb8c bffcbec88fb58c90"
+    },
+    {
+      "name": "golden_map_derive_ridge",
+      "serde_json": "1181 6829c07be63c96a0fe0dd56377634452647f9a40a7e9eda93846f5972fc41199",
+      "predictions": "c002fdad84f75bf3 bfa92d6f40fd69df 4004c48ae822841c 4005baa534449eff c0046dab73329b6b bfecacbb7017e95e bfe8e935c75cda2e c00471461e7348c9 bfe279e947117063 400e5e887d83c995 3ff2d6223877568f bfff4f197c68a7b1 3ff29011ab5f84ee bff881428bb9b65a bfc7d40fd60aa290 c010add23f05e506"
+    },
+    {
+      "name": "golden_map_pow_elasticnet",
+      "serde_json": "651 7e621e427b4e49e89546ab3e807df222a8c12e8d4b7b87a3165c3e9d1eaf3828",
+      "predictions": "bfd0715e0fb03662 3ff0f89127063833 3ffe8f8c64792acb 3fc6adbe2b85ca46 bfeafa105f85b0ae 3fbc1db63bd4debc 3fd1032091472e44 3fc20f93f7cbf27c bfbea584470f3de7 bfe36c450c50f022 3fcb9cedf8d0211a 3fda40be330109dd 3fd19f48d5ec6f7e 3fba289e185e4688 3febd6280b0d2b4f bfda0aa01697fbd2"
+    },
+    {
+      "name": "golden_step_map_expr",
+      "serde_json": "903 a4342a3fceabf3f79e470633701eeafb3fd82605c0859955d52246f9aff4c81d",
+      "predictions": "c002a95da744e75d bf9d39a0c8be111e 4003e29211eec070 4004c65c1dfce0b8 c00434f0cc3e4493 bfe8ff23e13721f0 bfe49afc9381d258 c003958da227eb26 bfe6327efc46069e 400e470e535c333c 3ff1b8affe25f925 bfffad192208ac64 3ff3b5640079ca32 bff72223d128f9fc bfca8b000eb0b51d c010e0a4a7a01a62"
+    },
+    {
+      "name": "golden_scalar_batch_map_ridge",
+      "serde_json": "844 ead792df3f23f382eec8cd53c8dd3d9581cef6cd50fb17048c61d07160397424",
+      "predictions": "bfae01acfbe4bec0 3fdbc19f5f6ec75d 3fda92c6c234913e 3fe411e3a57f8e7a c002349d8405d49a bfcedc5be8dbc3aa bff19c7cdbe47018 bff8579cfa1bef14 bfc8caad8a9cf85a 400356f33be72551 3fe7cbb5ca7e8e86 bfe2b27abb85877e 3fffd69dfcaca604 3fd5b2410fd08ffc 3fb5c040cc1a33c8 bfd6060281cd1ef7"
+    },
+    {
+      "name": "golden_scalar_batch2_derive_ridge",
+      "serde_json": "786 9e7756b1c4ea02225d2353b9b999c8db665d5b99006dd9527d99310f2abfc0cd",
+      "predictions": "c002849e94b3dfa4 bfa8f224415b60f7 4003c0016586aecc 4004ae6349ec4c88 c0047c8233a6896e bfe999bf4f199a78 bfe3f30124836583 c00387bcac886f68 bfe5f5501804bef0 400e58903c13c3ce 3ff1b7958cb2e5a9 bfff5ecc79c8f6bf 3ff3f4b59fc8ed50 bff6a667bfae1ce3 bfcc200e69033dab c010e50a4807e26e"
+    },
+    {
+      "name": "golden_symbolic_affine",
+      "serde_json": "373 17447e697c4226f0d63e536a1dd0d97944859d5cef9826093a067578687b75ab",
+      "predictions": "3fb415cb961a720e 3fc2fcbea0f7eb39 bfc6003793c050fc bfd07bda4c86ab18 bfcbf574cca9ca29 bfd79909c10b69c9 bf9affd30b4404c8 3fc9e580ec7c27a9 bfc62a659ecb692e 3fa6bcc990c3359c 3fb9869bd00020e6 bfa2029acf744474 3fb921cac0ee32d6 bfac7e40e8aaaa50 bfb5accc69ab2196 3fac39ad83ec8a7c"
+    },
+    {
+      "name": "golden_symbolic_raw",
+      "serde_json": "306 fc488cb4080111803bb639419e0874b7e47c5b1d17d483881ca8154362822766",
+      "predictions": "3fdf4517c0773721 3fdbbcd636a21c14 bfcda4a8ba326d88 3fb2df3e8a680d88 bfdc9fb09454ae80 3fd9c203a1e5a312 3fdd933ed857a824 3fe2f516748555a9 3fe41c1cef285df8 bfc451472215e08c 3fd6bfc07ed6c3ee 3fe7f0067b2d42c0 3fe063bdc4ff73d0 3fe884f3a0ef5bfd 3fe28bceaaac9438 3fe3517500236180"
+    },
+    {
+      "name": "golden_step_symbolic",
+      "serde_json": "237 fe927491ec4696583d37b5e0b976e673a48d58ed249989253b5523f462e3aa14",
+      "predictions": "bff2213c558b858a 3ff20691ae766352 bf6aaaa715223900 bf6aaaa715223900 bf6aaaa715223900 bff2213c558b858a bff2213c558b858a bf6aaaa715223900 bff2213c558b858a bf6aaaa715223900 3ff20691ae766352 bf6aaaa715223900 3ff20691ae766352 bff2213c558b858a 3ff20691ae766352 bf6aaaa715223900"
+    },
+    {
+      "name": "golden_symbolic_scalar_batch",
+      "serde_json": "409 9b4908ea6aa0d37a5b4cd7e6ad8411906956839b598bf441e84deda2c3081f38",
+      "predictions": "bfe41e41d5f9918f bf8a28de4d0f16b0 bfc02285eb56f356 bfcdcb84bec7f8dc 3fc47114d9383daa bfe2640f4d90bb5c 3fb42ed4115cb5e6 bfd0dc28069f83ce bfd602c3847f5dfa bfd16b67623e966f bfcac5da09cb3506 3fccd5cbb123a375 3fd97a9d371e8910 bfdc9314bc724730 3fd7024c59b6d9b6 3fb5f19beb843b66"
+    },
+    {
+      "name": "expressions_1",
+      "serde_json": "1262 c03a5e13962cd7e719be8c6e630581b03d7573a4142df1d602b52efe5abb6fa8",
+      "predictions": "c000add20288dfb8 bf97cb29a1419260 4003c5917f526ea8 4004965a1172f1f0 c0052dd50b017c46 bfe95b1621194bcb bfe03a285eac12f9 c003cb91b025adde bfe4eaeb91ff2908 400e65a5c08945ef 3ff47e6b3239754a c0008993f418ff07 3ff3faaf79f464ed bff3786640a9bf02 bfd93680962f3838 c0114ef2c136347c"
+    },
+    {
+      "name": "expressions_2",
+      "serde_json": "961 2042ec4972e87a0425d7e86a35b844feca11fabffa82cc42e29fcfc34e3dab75",
+      "predictions": "bfdd4efe7d158e6e bfd3829d8bd94d85 3ff32470085b5b15 3fe870d6d5c69a6e bfbe4a86ffc389e3 3ff8b50a44031693 c00172cdefe889c2 bfd8838ce788c258 3fe126afe447c13c bfd5745c8873f31e bfe57953a5044d64 bfa4ae4d043b9ec1 bfe5072ee75392a0 3fb6650e6610a3c9 3face9d2c7e1971f bfec6e83392dd3c4"
+    },
+    {
+      "name": "expressions_3",
+      "serde_json": "1277 c0697237521a500e0fef055df3ee7cf49e7675af5d443224782e5bea59cbe59f",
+      "predictions": "c001627184d27f14 bfc6a88d426b4bc1 4002e7ae2a3e4fa6 4003e8076ea8a338 c003eddb53f40d90 bfeb59b2b87816ab bfd750c2c91b5b4c c0017e1f17ca5fa4 bfec469abac8ec74 40105496ec1f2ae6 3ff1878fc8c31dec c000d1e710ac6a83 3ff738704bff8366 bff6c859ec209ac9 bfe4e508d5645890 c0107d1282791bbf"
+    },
+    {
+      "name": "expressions_4",
+      "serde_json": "789 de0e21a5ae16db04ee7ac5537981f7789d01f85872eba997eebba89916ba3eb9",
+      "predictions": "c0014710b4b21b87 bff6eab5bf139ad7 bfdbd99de92cf55b 3ffbe0771851749b bfe1f9dc0d3fbb21 bffbf2b55bb863f7 3fdbdeadd90fb861 bff75864a0ad0ca1 bf9d93cc26a7bd20 4002a872d22e4aa2 bfb7b76f154d8fe4 c0011f6e39e20dda 3ff9eb9779b9b252 bfe037030c14e384 bfffe08bfae93f24 c00bd737ddb3814a"
+    },
+    {
+      "name": "expressions_5",
+      "serde_json": "1159 b72514278458d6eb038efa5c3e9f07e2d602d54d3b69279fd32c2147491d6aaf",
+      "predictions": "c0032d20a468a88b bfb22579106b9e78 4003d1cb556b4243 4004b25f8f62d06d c003ec3abfd45794 bfe98ae13a7332c9 bfe77ea14c5d63da c004766f684433d6 bfe17d804ad56b57 400dbb780bd7225a 3ff1c440c74988cc bffe6bd0dbad3d90 3ff2ec40f3de36db bff7cfa83d384456 bfc53e5b5d8f88c2 c011ab252a30b1a5"
+    },
+    {
+      "name": "expressions_6",
+      "serde_json": "1078 d4a048dd5ad905e081b82e784f822ad318a50e00687400d6c85aaafb679836d1",
+      "predictions": "bfed5306af89e4bd 3fcf06811fc079e0 3fd5839bbbf7618c 3feefdb60f35e6b7 bfe63db52b20e970 bff24678791f63e4 3ffdb9724a2dd542 3fec48b220255ffa bfcd33dee89b0b80 400354c679d89f91 3ff0024a18a0a07c 3fc1081fd8cff9d0 3ff034ebaa0f2333 bfefa6d672304c5e bfd6241fe93a6362 c00fc25d2700d386"
+    },
+    {
+      "name": "expansion_symlog",
+      "serde_json": "441 f65857b8abad3edce9732e0d9c353c12133345192745b72242641550bb7bdb9b",
+      "predictions": "c004c069ed9057a5 3fd28b9f6496ea08 4006843d9f83f095 4006f6be062de9ad c0062a19af9d272d bfead82ffb8ca571 bfec10e5ce689cb5 c006b4e1a5dbe721 bfecea6f1f005dd7 400dc65e6c388563 3ff518f49e9c8e9a c0030163ee100982 3ff3f7da1f5f810d bffac9168e167784 3fb8b6087d8d2e36 c00f3d5c7737aff9"
+    },
+    {
+      "name": "expansion_select_corr",
+      "serde_json": "328 8c3d2106c6b2636a44b050971425f52087f47b4ee4d1ede79694cb864005b7e5",
+      "predictions": "c001c51bfd1d0bb6 bfb026615f59bd18 400431a0b02e7722 4005330787888e2f c005420f6620d03e bfe4805b48905114 bfe7306c56415e27 c003b4307d99653f bfe2ef23060451a7 400e042f209d3ac8 3ff233d726a5611f bfff71e356f67486 3ff4ce50545a064e bff45eb99c97011b bfd1c726cd4566d9 c0108df8e8297f55"
+    },
+    {
+      "name": "expansion_impute",
+      "serde_json": "807 c51a06a8b9db4e9ccec85462421066300c1e9c60633f708c8ff9454718918e1c",
+      "predictions": "c002970c3544b6da bfa8fbf27510d18c 4003b12fd5f43546 4004acbc59a4fa0e c00445904631c0ee bfe8feb53de898db bfe483726371b563 c00372dcafd016db bfe5d5450448010e 400e3d8fd556b499 3ff1a90f4b5d3b43 bfff3bf34a807c63 3ff3bf987354b851 bff6ac85df757817 bfcc8a3ce11aa12b c010f2b6f94c6333"
+    },
+    {
+      "name": "expansion_pair_ratio",
+      "serde_json": "795 c0b300ce51dbf8ed245083560b29b265ce5dd331c7041b4ee7b799529221ef1d",
+      "predictions": "c001d210d1356814 bfae5d51c58d3c14 400427a8f673bd3e 40045a5daf94f747 c00403d676dbe27f bfe0d4215c1b7d69 bfe7d947a4e373e0 c002e4d70f897951 bff20a248eb8561c 400d887193735bed 3ff203bdf938f902 bffe128298a8e79b 3ff38461b739fb22 bff5b235b4a43472 3fdb29ec7c80a518 c010a19d2b9b1bb1"
+    },
+    {
+      "name": "expansion_spline",
+      "serde_json": "1415 169530cca1494628eb07934d96cc789fdbe0d88cd1ec6e54477eaa4b24e93bf9",
+      "predictions": "c001f00630d67de9 bfcf253b0c5384f0 400322126fc333ec 400495d5d7d9261d c003bab3f9680a64 bfec9741fa4a1686 bfe0ea1ba174a056 c002c38b7beb9a68 bfed44de2391566f 400ff2dbff1fc18a 3ff2548ee59bb41e c00142fb444a1801 3ff79b846335b591 bff700f854d2918f bfe6885c25d33bbe c0108996d611a882"
+    },
+    {
+      "name": "ip_scrub_pipeline_00",
+      "serde_json": "skipped: portfolio diagnostics carry wall-clock fit_ms and a debug-build fit takes minutes",
+      "predictions": "skipped: portfolio diagnostics carry wall-clock fit_ms and a debug-build fit takes minutes"
+    },
+    {
+      "name": "ip_scrub_pipeline_01",
+      "serde_json": "11493 0476d55eae543a0ae6972795681efc352241304b26615d376132314449938e54",
+      "predictions": "c0043c2397f5fc88 bfe9625de82cdd2d 3ffb85b90b57fdfd 400c0b467a77df42 c0016d0c6fd719a6 bff75e6bdc90810b bfe7aa91810570a7 c006ffc4f4f07478 bfd460c45472928e 400e89e5e79f459a bf9827b6b8806210 c00862293b0f58c6 3ffa6674e84bafdb c005c15e2e1ef5a2 bff4f64c1837aea8 c00a8741f49a47da"
+    },
+    {
+      "name": "ip_scrub_pipeline_02",
+      "serde_json": "32274 f7f3fab84e246fb1929f333a8fea3d06a56c5eb7bd035e76bd9e20b5bd8c3a75",
+      "predictions": "c00ad5416be555c5 3fd4ddcf72c393ba 40042d3881db2989 400b1095957bd84c c0034cffe0fa5083 bffc0d3222769fda bff13b1b948b7985 bffe2ddce86ab5ea 3fe0a501fe428f90 40110bec6df1d4b0 3fe5dcbfab49d05f bfe5f1d67a8f7129 40025e5c603dff66 3fecde2b05ce3c8d bffcb3a7b0da959f c00c2752f38a50c1"
+    },
+    {
+      "name": "ip_scrub_pipeline_03",
+      "serde_json": "8849 7ec10eb5820eb69cf6a494158abdb25b5b1ec4db0b4484ed2fa1e15497e33b7e",
+      "predictions": "bfbe274de2c6bae8 bfbe274de2c6bae8 bf95216a1045d770 bfbe274de2c6bae8 bfbe274de2c6bae8 bfbe274de2c6bae8 bfbe274de2c6bae8 bf95216a1045d770 bfbe274de2c6bae8 bfbe274de2c6bae8 bfbe274de2c6bae8 bfbe274de2c6bae8 bfbe274de2c6bae8 bfbe274de2c6bae8 bfbe274de2c6bae8 bfbe274de2c6bae8"
+    },
+    {
+      "name": "ip_scrub_pipeline_04",
+      "serde_json": "14756 03b037ab5e834fbfc1f9bcf57c6cd9e089c16d24a4eeb09f0f48e75b3ecd80ff",
+      "predictions": "bfe70edb6a2ad6cf bfea2b920afd90c0 bfef1bf1ea91cccb bf9ab4efb20d6418 3f87aef717c2f580 3fbe6561bf81eff8 bfd0be14bdfa577d bfe569b6d5b4a30c bfddf3bea5e9f2ca bfe868e0de2cabff bfd81ac27f701f29 3fe6462876b00c4e 3fc841542b360734 bfe2f4399bf6e9f6 bfc5a59c12c51324 bfe2f4399bf6e9f6"
+    },
+    {
+      "name": "ip_scrub_pipeline_05",
+      "serde_json": "403 6d3bac46699d36f80607919e8d409920ac2ebc774cc155c3859990ec9890db21",
+      "predictions": "bffdf373f2b67a26 3fe955ef47a0bfc1 4000dc13f6eaa675 3ff9268b3a0ac47d bffc0e8c8ff944b7 bfe31518b3772f01 bff6596ec4fcb9d5 c003f3f04a903233 bfe02e5331a4eac7 3feeca55b2bc1bf0 3fea222ff634b341 bfe43b2635c5cb3c 3fe072462dcbdac0 bff4248d613f38b1 3fef87de5e7ef4d4 c008bf89bf37bedf"
+    },
+    {
+      "name": "ip_scrub_pipeline_06",
+      "serde_json": "1159 b5e643a68ae5707c3bf2aaa5867f1b2c130fd53f43a6cb87798183d22fef747c",
+      "predictions": "bfeba69b1a878b5a bfb70817a8551888 400296c9afb52376 3fdba43edb342b37 3fb5a6c1a078f464 bfd496ecbe10fef0 bfec168bee24b03e 3fd8ed50e0ee4ea7 bfeb8a601281fb5e 40023b066231da7f 3fe25646b26f718c 4002811dfb288816 bfea0b6e58c17620 bfecafa247e4f9e9 3fd8f2adedc0fd28 bfec505a099ec94d"
+    },
+    {
+      "name": "ip_scrub_pipeline_07",
+      "serde_json": "527 da287d69d182787b6703eb74b902235459bd200961cc4eb16c8dd5c34f7a785b",
+      "predictions": "bf86777a24bc0698 bfb6a043dde32bb1 bfb12afb6f697321 bfaf16cfb03ba3af bfb03dd4659292ae bfc176f6ff65fa22 3f9c0f751dd8b024 bfa43804efce8bcd bfc5dd6057609048 bf74d5b745e14eb0 bfbcd1bff6ab41c2 bfb5143cd9778dfe bf9ece232160a5ee bfacb89602a93017 bfc4770eca7efbde bf8fd03fb7489620"
+    },
+    {
+      "name": "ip_scrub_pipeline_08",
+      "serde_json": "945012 8dc56ea09b754a3aab1768c59e83f2d3c7298f9266f11f665ed0bb5100c419ab",
+      "predictions": "c006a6a84b1cbd2e bf796d1b4d482f90 4007052a17fc9b7c 4003b8e65f8a0e6e c003655fae2baaa8 bff00012b70e3078 bfe5e95c1f58bde3 c00391b0a2a35aed bfdfb752c3004e3c 400b9e92af94f225 3ffe24b45a784211 c0019b3a48ac666f 3ff4e3a47c106cf4 c00283cb2d43e2a7 bff3b13376bd6293 c00c34ed3de7edde"
+    },
+    {
+      "name": "ip_scrub_pipeline_09",
+      "serde_json": "8197 5abeaf6c5c17a35257e3a9fca888aa7c2b7bd773f4d6fb8f7d04941f07f2114b",
+      "predictions": "c00586a8a6cb9096 bfd9f5628a61dc90 4006ffb9b65f0013 40058324ed822a88 c001d202270b6c06 bfed8e174ed1312e bfe36757d90d0031 c00bf2b01b625323 bfea7ff5752133fa 400c8cda181a948a 3fe774ebcda816c0 bffe553b9a2abbb1 3ff3c28f558c78b8 bffebc14e24d09d4 bfd3241c7f6741cc c010de703c35419a"
+    },
+    {
+      "name": "ip_scrub_pipeline_10",
+      "serde_json": "8054 87503b49ef5061d641eb207f8efdfee9b104866a86a561c687fd03b0c3641009",
+      "predictions": "c0065f6772b32b42 bfdc5e9ef6d00e78 40076f4ab56123db 4005fa52feb02cba c0011a1122926e35 bfeee68169060adc bfe66683e7a0d374 c00a6a0a35460de4 bfee3eccc6a8a794 400c544c46ed9efa 3fe7f24cc9ecf03c bfff2e3ea48ecac0 3ff1dd6900f17ffc c00070afaf5db0be bfd0272c462a0a30 c010140ffe27102b"
+    },
+    {
+      "name": "ip_scrub_pipeline_11",
+      "serde_json": "8129 4cdf611d2f68a671671c7dd366172c8cad29a67f67abfcafbd2f31dbcfa6f60b",
+      "predictions": "c0072fb770f46388 bfe810cb6940f610 4009c199b24719ca 4007a79155379c33 c00128e8865b5d1a bff39d2d21054eb0 bfdca81a7f52a9b0 c00b805f63b9fb84 bfda6b0101d8dc70 4009f2a04b0748a6 3ff10ada4f0807e8 c000609761eef28d 3ffa703f19d31834 c000611bd656f164 bfe6c358c3487a34 c011d541433a591e"
+    },
+    {
+      "name": "ip_scrub_pipeline_12",
+      "serde_json": "8165 15ce5b57e81bf5359cbfaa6de843e523c283ab83e25eadc78b5da7749da79a34",
+      "predictions": "c007dba8419205ad bfeb76646e92c34c 400878a7cef76e66 4007651943327dd9 bffe0adb8f1d0e84 bff0dd6747fe9bd2 bfd91d4306008718 c0096afb016081d7 bfe294b9084a0e6c 40087f65000637c1 3fefe8c6a9c45200 c0025740fc6f5613 3ff7971b3337232a c00460beb9e9a637 bfe8d0842f30ce84 c0115128508f11a0"
+    },
+    {
+      "name": "ip_scrub_pipeline_13",
+      "serde_json": "7944 ff9b284eb14d93adb6d951678c329daddb72205bc1873fd86a2f252a37d8b73e",
+      "predictions": "c0038b1582256c24 3fc806bee0c3c5c4 40008401854ea0ea 3ffd99b5f164a261 bfe4b09426134587 bfd5e4e411eb64cb bfe1faf7109f01c4 bfe69b7879c49c94 bff3464fea02bf17 4002d013d40ef2c1 3ff25d038555fde0 bff6930991bae896 3ff3c83a2a9f0c4d bffebd1544b3ab72 3fc40c233015fe25 c007bd47e0db7a73"
+    },
+    {
+      "name": "ip_scrub_pipeline_14",
+      "serde_json": "1632 849ebc65de2ba4c5ba6d3aa405321122ceb567e6fbb13c948d616b0d637ffd62",
+      "predictions": "c003445e1af04e5a bfebff4fe9e16e42 4004c0b7a4a8cbd4 4007cd40236996c9 c003d67a9f598207 bfed2348e64ace6e bfe7167a575526da c0051a3df7a2a22f bfd7ae840224cc13 400c961ab3989d24 3fedbc444fa1b20e c0029b2490fae6ad 3ffe9f76e8a5e500 bffb68672e356cb0 bff2cbe03edb49df c00fe583f7ad7fd4"
+    },
+    {
+      "name": "ip_scrub_pipeline_15",
+      "serde_json": "8024 fb04d8fcfb4665bef6729b3806d3bc0fd8d95d62ed8b56b2784683a96d7a6f1f",
+      "predictions": "c00586a8a6cb914c bfd9f5628a61e0d8 4006ffb9b65eff61 40058324ed822b1b c001d202270b6c46 bfed8e174ed12e78 bfe36757d90d010c c00bf2b01b62526e bfea7ff5752133be 400c8cda181a938d 3fe774ebcda81716 bffe553b9a2aba42 3ff3c28f558c77be bffebc14e24d0a4f bfd3241c7f674728 c010de703c35416e"
+    },
+    {
+      "name": "ip_scrub_symbolic_0",
+      "serde_json": "443 ebc1c51b00499851ae93f608423616b76601bc9c9f5be9985f1ce390d2ab288e",
+      "predictions": "bfca1be31440216f bf880bcc331107f0 3fe6cef21c50e538 3ff54660acf2c7ee bffcddc4d596e059 3fc6154223c95952 bfe5f39591c8f502 3fc37b3f1de65878 3ff4295224bbb2b7 bfe45465a5e3df56 3f91746a4776e268 3fd66c4413e98e73 3fdc62c3c9cfcbb7 3f37bafaf4101e00 3fd4fd3402ff094f bfeef17db60f08c6"
+    },
+    {
+      "name": "ip_scrub_symbolic_1",
+      "serde_json": "157 5fcf32eb617578987078996b163bdfefda5da93e29a1bb7d14aef13d22e14e8a",
+      "predictions": "3fe5405314c10cc0 3ff6826100a15e34 bf89423f79ed7f80 3fda7989bd9d4414 3fde2da2fb82f322 bfd0d6e816b3170f bfd8b6c29dc52858 3fee4e2dd74ddf96 3fdaafdb2eabd79f 3fd564ff6421a1f8 3fed19e0ac20e346 3fedf95427c45ca2 3ff8c87d499d8ad0 3fe57e51e31e6528 3ff7d3055cf9b4ca 3ff25b61d8ff0a4b"
+    },
+    {
+      "name": "portable_4lang",
+      "serde_json": "135361 296d8916495c650642ad4c3b08a7f69474d40d3d3d323b12aa2d869b617f98f5",
+      "predictions": "c009f7e579234741 bff38b428d7d6518 400edcfe3e6b7fa0 4010aeda8a2dfd2b bff1abdca3be57c8 3fb918c0c3831bd6 bfe833c64b8d31b0 c009d0048b4227ec bfe6164fffcf2fbd 400302a5a09ea553 3fd72f64abf7c54a c00920e2952fded8 3fed8ae840bcce62 c0089c74080754fc bfe8a784b451f186 c00d5322b4f44bb3"
+    }
+  ],
+  "stored": [
+    {
+      "name": "golden_map_derive_ridge",
+      "json": "{\"Pipeline\":{\"target\":null,\"ops\":[{\"MapExpr\":{\"source\":\"sigmoid(x) + 0.1*col(0)\",\"expr\":{\"root\":{\"Binary\":[\"Add\",{\"Call\":[\"Sigmoid\",[{\"Var\":\"X\"}]]},{\"Binary\":[\"Mul\",{\"Const\":0.1},{\"Var\":{\"Col\":0}}]}]}},\"append\":true}},{\"DeriveExpr\":{\"source\":\"row_mean + row_std - c1/(c0 + 3)\",\"expr\":{\"root\":{\"Binary\":[\"Sub\",{\"Binary\":[\"Add\",{\"Var\":\"RowMean\"},{\"Var\":\"RowStd\"}]},{\"Binary\":[\"Div\",{\"Var\":{\"Col\":1}},{\"Binary\":[\"Add\",{\"Var\":{\"Col\":0}},{\"Const\":3.0}]}]}]}},\"append\":true}}],\"head\":{\"Ridge\":{\"means\":[-0.056612225780638986,0.0391154557646818,-0.05045261954245007,0.1525683489032334,-0.14878006834940927,0.48438679591917,0.5043482256795677,0.4869379528160132,0.5292071409369103,0.46059463735943623,1.0418037764580401],\"scales\":[1.206906483281059,1.112889776818267,1.2051759317157438,1.1374132672755286,1.1992648785445832,0.37497362168161197,0.28287156540158626,0.2796522708574301,0.266072116805173,0.29057513259345397,0.481299228062748],\"w\":[-0.09152543432197754,0.9449538514305458,-0.8303307438257977,-0.518142835445006,-0.17192409881252638,-0.048585009431487025,0.8094451166109552,-0.2621365766816537,0.4837538101693965,0.21653872951141426,0.1448021223409523,-0.12911201779091488]}}}}"
+    },
+    {
+      "name": "golden_symbolic_affine",
+      "json": "{\"Symbolic\":{\"expr\":{\"root\":{\"Binary\":[\"Add\",{\"Binary\":[\"Sub\",{\"Binary\":[\"Add\",{\"Call\":[\"Sigmoid\",[{\"Var\":{\"Col\":0}}]]},{\"Binary\":[\"Mul\",{\"Const\":0.5},{\"Var\":{\"Col\":1}}]}]},{\"Call\":[\"Log1p\",[{\"Call\":[\"Abs\",[{\"Var\":{\"Col\":2}}]]}]]}]},{\"Call\":[\"Max\",[{\"Var\":{\"Col\":3}},{\"Binary\":[\"Pow\",{\"Var\":{\"Col\":4}},{\"Const\":2.0}]}]]}]}},\"a\":0.10257025457505628,\"b\":-0.2449875862969393}}"
+    },
+    {
+      "name": "expansion_spline",
+      "json": "{\"Pipeline\":{\"target\":null,\"ops\":[{\"Spline\":{\"knots\":[[-1.4461965868128512,-0.4221241759573416,0.33832738069271634,1.3097158123616188],[-1.164434615892955,-0.337508510774326,0.4456847677802516,1.2224662138486664],[-1.355293099239304,-0.5119985522678825,0.4903266469396962,1.1641334360681284],[-1.1652101600764335,-0.005032192307316497,0.581399158962595,1.2698582726276262],[-1.3815389842226486,-0.6260066840537895,-0.030987101885112278,1.1809480038637727]],\"append\":false}}],\"head\":{\"Ridge\":{\"means\":[-0.056612225780638986,2.7143969475675527,0.7675723071440029,0.0391154557646818,2.183753231329761,0.7253695493671045,-0.05045261954245007,2.687593920222205,1.0271726767704548,0.1525683489032334,2.5163359152047917,0.4897460043650212,-0.14878006834940927,2.106334588035694,0.7111799052778809],\"scales\":[1.206906483281059,3.190229245134346,1.0712284399833216,1.112889776818267,2.538132327173643,1.0024593432347433,1.2051759317157438,3.1741134038304684,1.4150120862753672,1.1374132672755286,2.8295844854335184,0.7110400020459988,1.1992648785445832,2.755716257445986,1.0545847506552457],\"w\":[-0.09152543432197754,1.6614884532794207,0.20423309450696722,0.10539944973518398,-0.8208668954855165,-0.17939362513494053,0.031203645058955804,-0.22790904977212173,0.39821633657569017,-0.2630384344007347,0.020876600875916827,-0.2238609155892544,0.1749566731494895,-0.16792973258321098,0.03660896721071896,0.22429955321116252]}}}}"
+    }
+  ]
+}
