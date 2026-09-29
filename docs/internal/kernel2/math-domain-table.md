@@ -1,7 +1,7 @@
 # Scalar evaluator: domain table and fault classes
 
 kernel2 WP-1.1 to WP-1.3, with the evaluator half of WP-1.8; the stage level (WP-1.4 and the rest
-of WP-1.8) is in the last three sections. The code is in
+of WP-1.8) is in the last four sections. The code is in
 `crates/feat-math/src/math_expr.rs` (the guards and every raise site),
 `crates/feat-math/src/math_expr/fault.rs` (the classes, the sinks and the interpreter's traced
 entry points) and `crates/feat-math/src/math_expr/compiled.rs` (the compiled form's traced entry
@@ -172,7 +172,10 @@ recorded at the base or chosen here and pinned in `tests/fault_trace.rs`:
 `crates/feat-math/src/kernel/telemetry.rs` counts, stage by stage, what the evaluator reports cell
 by cell. `apply_op_traced`, `fit_traced` and `predict_traced` return what `apply_op`, `fit` and
 `Model::predict` return: the same rows bit for bit, a model with the same `serde_json` bytes, the
-same prediction bits. The tests are in `crates/feat-math/tests/stage_telemetry.rs`.
+same prediction bits. The one exception to the bytes is a model with a portfolio in it, an
+explicit portfolio or a compact portfolio head: its member diagnostics record wall-clock fit times
+(`fit_ms` in `portfolio.rs`), which differ between two calls of `fit` itself, so the tests compare
+such a model by its predictions. The tests are in `crates/feat-math/tests/stage_telemetry.rs`.
 
 The module is under `kernel/`, which neither the ADR-0004 identity list nor any jope-engine lineage
 hashes, so it mints no identity. The code it needs is private to `ops.rs` (the stage epilogue
@@ -218,7 +221,14 @@ flag stays false. That is the one place where the interpreter's arity check is r
   `fit` and whose members are fitted and applied inside `portfolio.rs`. The members of a compact
   portfolio head are not traced either; the transforms before the head are.
 - `input_sanitized`: the non-finite input cells that a pipeline's entry sanitize replaced with 0.0
-  before its first stage. It is 0 for symbolic and portfolio models, which run no such sanitize.
+  before its first stage. It is 0 for a symbolic program, which runs no such sanitize: its
+  expression reads the raw row, and a non-finite cell it reads raises `NONFINITE_INPUT`. It is
+  also 0 for an explicit portfolio, whatever its input holds. `fit_portfolio` and
+  `PortfolioModel::predict` replace the non-finite cells they read with 0.0 too (`portfolio.rs`
+  lines 334 and 760), but `portfolio.rs` is not traced, so this is the one path through
+  `fit_traced` and `predict_traced` on which a non-finite input cell still becomes a 0.0 that no
+  count records. `an_explicit_portfolio_is_fitted_by_fit_and_reports_no_stage` checks it: the
+  telemetry stays empty, and zeros in place of the non-finite cells give the same predictions.
 
 **What a stage in a pipeline can report.**
 
@@ -242,10 +252,18 @@ flag stays false. That is the one place where the interpreter's arity check is r
   or target is short"). A set with no rows is not zero-width: `predict_traced` returns no
   predictions for it, as `predict` does.
 - This is the one place where the traced entry points differ from the legacy ones, and the model
-  and prediction identities hold on every input they accept. The legacy `fit` accepts a zero-width
-  input for a pipeline without transforms and for a symbolic program, and a transform stage
-  refuses it itself ("empty input to stage `op`", `ops.rs` lines 326 to 328). `predict` does not
-  check.
+  and prediction identities hold on every input they accept. The legacy `predict` does not check
+  for a zero-width input.
+- The legacy `fit` takes the width from the first row, so what it does with a zero-width input
+  depends on which row is empty. When the first row is empty, a transform stage refuses the input
+  ("empty input to stage `op`", `ops.rs` lines 326 to 328, a check that reads row 0 only), and a
+  pipeline without transforms, `(pipe X (ridge))` for one, accepts it. When only a later row is
+  empty, that check passes, and a stage or head that reads every row up to the first row's width
+  indexes the empty row and panics (index out of bounds): for example `standardize` (`ops.rs`
+  line 339) and the `ridge` head (`std_fit`, `heads.rs` line 512). A symbolic program accepts
+  both, because its expression reads only the cells a row has. `ZeroWidthInput` replaces every
+  one of these outcomes, the panic included, with one error.
+  `the_traced_entry_points_refuse_a_zero_width_input` checks each case.
 - No stage produces a zero-width row: the epilogue pads an empty row with one 0.0.
 
 ## The empty row at stage level (WP-1.8)
@@ -276,4 +294,5 @@ A `map` stage on an empty row generates no cell, and its output row is the epilo
 - **`predict_traced` returns a `Result`**, so that it can refuse a zero-width input.
 - **The symbolic model** is traced in `fit_traced` and `predict_traced`; `apply_op_traced` covers
   ops only.
-- **Portfolios.** An explicit portfolio is fitted by `fit` and reports no stage; see above.
+- **Portfolios.** An explicit portfolio is fitted by `fit` and reports no stage, and the
+  non-finite input cells that its own sanitize replaces are not counted; see above.
