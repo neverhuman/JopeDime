@@ -16,19 +16,36 @@
 //! | `seeded_generator_streams_match_the_frozen_fixture` | `compat_freeze/generator_streams.v1.json` | seeded program generator streams and their vocabularies |
 //! | `fixture_provenance_is_recorded` | `compat_freeze/meta.json` | generation commit, toolchain, host and libm |
 //!
-//! Modes. By default every test only compares. With `JOPE_COMPAT_FREEZE_REGENERATE=1` and
-//! `JOPE_COMPAT_FREEZE_SHA=<full commit id>` each test rewrites its fixture instead; the commit must
-//! carry exactly the sources in the working tree (checked with `git diff --quiet`). Regenerating
-//! a behaviour surface is a rebaseline: it needs the PR-body line
-//! `compat-freeze: REBASELINE approved by Jepson <date> reason <...>`, and without it a red
-//! surface is a hard stop (revert the change, do not rebaseline). The evaluator-identity fixture
-//! is the one surface that planned work moves: a change to a file in the ADR-0004 list announces
-//! the new evaluator identity and rebaselines that fixture in the same change.
+//! Modes. By default every test only compares. `JOPE_COMPAT_FREEZE_SHA=<full commit id>` names the
+//! commit a regeneration records; it must carry exactly the sources in the working tree (checked
+//! with `git diff --quiet`). Two regeneration modes:
 //!
-//! Bits are host-specific wherever the platform libm is involved (exp, ln, ln_1p, sin, cos, tanh,
-//! atan, powf, and the data generator itself): the fixtures were generated on the CI host class
-//! (`meta.json`: x86_64-unknown-linux-gnu, glibc 2.39). The arithmetic guards, the emitted recipe
-//! bytes and the generator streams do not depend on libm.
+//! - `JOPE_COMPAT_FREEZE_REGENERATE=1` rewrites every fixture. Regenerating a behaviour surface is
+//!   a rebaseline: it needs the PR-body line
+//!   `compat-freeze: REBASELINE approved by Jepson <date> reason <...>`, and without it a red
+//!   surface is a hard stop (revert the change, do not rebaseline).
+//! - `JOPE_COMPAT_FREEZE_REGENERATE=identity` rewrites only the announced surfaces, which planned
+//!   work moves: the ADR-0004 evaluator identity. Every other test still compares, so the run
+//!   also proves that nothing else moved. A change to a file in the ADR-0004 list (or to
+//!   `Cargo.lock`, which the identity hashes) announces the new evaluator identity in the PR body
+//!   and rebaselines this way in the same change.
+//!
+//! Which bits depend on the platform libm. A surface that fails only on another host is a libm
+//! difference only if it is one of these:
+//! - MathExpr and stage values of the transcendental functions (exp, log, log1p, sin, cos, tanh,
+//!   sigmoid, asinh, atan, erf and `^`);
+//! - everything fitted: the stage predictions, the serialized models and their predictions, and
+//!   the fitted C++17 source and codec bytes. Their training rows come from `toy_data`, which
+//!   calls `sin` and `Pcg32::gaussian` (`ln` and `cos`);
+//! - the streams of `mutate_canonical_pipeline_v2` and of `mutate_canonical_pipeline_with_arm`
+//!   with the parameter-jitter arm (their log-scale jitter calls `ln` and `exp`), and of
+//!   `optimize_constants_v1` (it fits `sin` data).
+//!
+//! Free of libm: the arithmetic guards and clamps, the boundary corpus, the emitted recipe bytes
+//! (Rust, Python, manifest, C++17 and JavaScript), the pins, and the other streams (the v1
+//! wrappers, the other `with_arm` arms, `full_rust`, MathExpr `mutate_v1` and `crossover_v1`,
+//! `PipelineSlots` and `advanced_v3`). The fixtures were generated on the host recorded in
+//! `meta.json` (x86_64-unknown-linux-gnu, glibc 2.39).
 //!
 //! The workplan asks for the corpus to parse in Python too. The stack is Rust-only (ADR-0006), so
 //! the second, independent parser is `jq -e . tests/fixtures/math_boundary/v1.json`.
@@ -69,6 +86,7 @@ use std::process::Command;
 const REGENERATE_ENV: &str = "JOPE_COMPAT_FREEZE_REGENERATE";
 const SHA_ENV: &str = "JOPE_COMPAT_FREEZE_SHA";
 const REGENERATE_COMMAND: &str = "JOPE_COMPAT_FREEZE_REGENERATE=1 JOPE_COMPAT_FREEZE_SHA=<full commit id> cargo nextest run --locked -P pr -p feat-math --test compat_freeze";
+const IDENTITY_REGENERATE_COMMAND: &str = "JOPE_COMPAT_FREEZE_REGENERATE=identity JOPE_COMPAT_FREEZE_SHA=<full commit id> cargo nextest run --locked -P pr -p feat-math --test compat_freeze";
 const REBASELINE_POLICY: &str = "A red compat_freeze is a hard stop: revert the change that moved a frozen surface. \
 Rebaselining needs JOPE_COMPAT_FREEZE_REGENERATE=1 JOPE_COMPAT_FREEZE_SHA=<commit> and the PR-body line \
 `compat-freeze: REBASELINE approved by Jepson <date> reason <...>` (workplan section 4.3).";
@@ -104,8 +122,28 @@ const SOURCE_PATHSPECS: &[&str] = &[
     "rust-toolchain.toml",
 ];
 
-fn regenerating() -> bool {
-    std::env::var(REGENERATE_ENV).as_deref() == Ok("1")
+/// Which regeneration mode may rewrite a fixture.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Surface {
+    /// Behaviour surfaces and never-rebaselined pins: rewritten only by `REGENERATE=1`, an
+    /// approved rebaseline.
+    Frozen,
+    /// Identities that planned changes move and announce: rewritten by `REGENERATE=1` and by
+    /// `REGENERATE=identity`.
+    Announced,
+}
+
+fn regenerating(surface: Surface) -> bool {
+    match std::env::var(REGENERATE_ENV).as_deref() {
+        Err(_) | Ok("") | Ok("0") => false,
+        Ok("1") => true,
+        Ok("identity") => surface == Surface::Announced,
+        Ok(other) => panic!(
+            "{REGENERATE_ENV}={other:?} is not a mode: use 1 to rewrite every fixture (an approved \
+             rebaseline) or identity to rewrite only the announced identity fixtures while every \
+             other surface still compares"
+        ),
+    }
 }
 
 fn repo_root() -> PathBuf {
@@ -176,8 +214,8 @@ fn generation_sha() -> String {
     sha
 }
 
-fn header_sha() -> String {
-    if regenerating() {
+fn header_sha(surface: Surface) -> String {
+    if regenerating(surface) {
         generation_sha()
     } else {
         String::new()
@@ -194,10 +232,14 @@ fn write_atomically(path: &Path, text: &str) {
 }
 
 /// Regenerate mode writes `actual` and returns `None`; compare mode returns the committed fixture.
-fn committed_or_write<T: Serialize + DeserializeOwned>(file: &str, actual: &T) -> Option<T> {
+fn committed_or_write<T: Serialize + DeserializeOwned>(
+    surface: Surface,
+    file: &str,
+    actual: &T,
+) -> Option<T> {
     let relative = format!("compat_freeze/{file}");
     let path = fixture_path(&relative);
-    if regenerating() {
+    if regenerating(surface) {
         let text = serde_json::to_string_pretty(actual).expect("serialize fixture") + "\n";
         write_atomically(&path, &text);
         eprintln!("compat-freeze: wrote tests/fixtures/{relative}");
@@ -703,8 +745,8 @@ fn fit_skip_reason(source: &str) -> Option<&'static str> {
 fn boundary_corpus_v1_is_well_formed_and_matches_its_definition() {
     let definition = corpus_definition();
     let path = fixture_path(CORPUS_FILE);
-    if regenerating() {
-        let _ = header_sha();
+    if regenerating(Surface::Frozen) {
+        let _ = header_sha(Surface::Frozen);
         write_atomically(&path, &render_corpus(&definition));
         eprintln!("compat-freeze: wrote tests/fixtures/{CORPUS_FILE}");
         return;
@@ -1114,7 +1156,7 @@ fn expression_values_match_the_frozen_fixture() {
         .collect();
     let fixture = MathExprValues {
         schema: "feat-math.compat-freeze.mathexpr-values.v1".to_string(),
-        generated_at_sha: header_sha(),
+        generated_at_sha: header_sha(Surface::Frozen),
         encoding: format!(
             "Each path is one token per row (row paths) or per row element (map paths), in row order, separated by single spaces: 16 hex digits of the f64 bits, or {ERR} when the call returned an error. compiled_row may be \"{SAME_AS_INTERPRETER_ROW}\" and compiled_map may be \"{SAME_AS_INTERPRETER_MAP}\" when the compiled path agreed with the interpreter at generation. Rows are built from math_boundary/v1.json: [b], [b,1], [b,0,-1], [1,b,2] for each entry b, then [] and one 8-wide row."
         ),
@@ -1127,7 +1169,7 @@ fn expression_values_match_the_frozen_fixture() {
             .collect(),
         expressions: actual.iter().map(encode_expression).collect(),
     };
-    let Some(committed) = committed_or_write(FIXTURE_FILES[0], &fixture) else {
+    let Some(committed) = committed_or_write(Surface::Frozen, FIXTURE_FILES[0], &fixture) else {
         return;
     };
     assert_eq!(
@@ -1342,7 +1384,7 @@ fn stage_outputs_match_the_frozen_fixture() {
     let matrix = stage_matrix();
     let fixture = StageValues {
         schema: "feat-math.compat-freeze.stage-values.v1".to_string(),
-        generated_at_sha: header_sha(),
+        generated_at_sha: header_sha(Surface::Frozen),
         training: "Each stage is fitted as (pipe X <stage> (ridge)) on the first four columns of toy_data(40 rows, 5 columns, seed 42) as in tests/golden.rs and applied to the matrix below. apply_op_raw is apply_op on the raw matrix (no input sanitizing); predict_stage_output is the fitted stage on the sanitized matrix, as Model::predict runs it; rows are space-separated f64 bits.".to_string(),
         matrix: matrix.iter().map(|row| row_text(row)).collect(),
         cases: STAGES
@@ -1350,7 +1392,7 @@ fn stage_outputs_match_the_frozen_fixture() {
             .map(|text| stage_case(text, &train, &target, &matrix))
             .collect(),
     };
-    let Some(committed) = committed_or_write(FIXTURE_FILES[1], &fixture) else {
+    let Some(committed) = committed_or_write(Surface::Frozen, FIXTURE_FILES[1], &fixture) else {
         return;
     };
     let flatten = |values: &StageValues| -> Vec<(String, String)> {
@@ -1414,6 +1456,8 @@ struct EmittedProgram {
     fitted_cpp17_codec: String,
 }
 
+const UNSUPPORTED: &str = "unsupported: ";
+
 /// "unsupported: <kinds>", keeping each reason's element kind and dropping the `Debug` payload
 /// of internal plan structs (their text is not a shipped surface).
 fn unsupported(reasons: &[String]) -> String {
@@ -1421,7 +1465,31 @@ fn unsupported(reasons: &[String]) -> String {
         .iter()
         .map(|reason| reason[..reason.find(['(', '{']).unwrap_or(reason.len())].trim_end())
         .collect();
-    format!("unsupported: {}", kinds.join("; "))
+    format!("{UNSUPPORTED}{}", kinds.join("; "))
+}
+
+/// The element kinds of an "unsupported: a; b" value, or `None` for anything else.
+fn unsupported_kinds(value: &str) -> Option<BTreeSet<&str>> {
+    value
+        .strip_prefix(UNSUPPORTED)
+        .map(|kinds| kinds.split("; ").collect())
+}
+
+/// Whether `now` only adds support to a value recorded as unsupported: the emitter now writes
+/// bytes, or it still refuses the program but for a strict subset of the recorded element kinds.
+/// Everything else that differs (an element that loses support while the program stays
+/// unsupported, a different kind, an error, a skip) is drift.
+fn gains_support(recorded: &str, now: &str) -> bool {
+    let Some(before) = unsupported_kinds(recorded) else {
+        return false;
+    };
+    if now.starts_with("ERR") || now.starts_with("skipped") {
+        return false;
+    }
+    match unsupported_kinds(now) {
+        None => true,
+        Some(after) => after.len() < before.len() && after.is_subset(&before),
+    }
 }
 
 fn emitted_program(name: &str, source: &str, train: &Rows, target: &[f64]) -> EmittedProgram {
@@ -1503,7 +1571,7 @@ fn emitted_artifact_bytes_match_the_frozen_fixture() {
     let (train, target, _) = fitted_surface_data();
     let mut fixture = EmittedBytes {
         schema: "feat-math.compat-freeze.emitted-bytes.v1".to_string(),
-        generated_at_sha: header_sha(),
+        generated_at_sha: header_sha(Surface::Frozen),
         note: format!(
             "Values are \"<byte length> <sha256>\" of the artifact text (EmitOptions::default()), \"unsupported: <element kinds>\" where the emitter refuses the program, or the recorded error. C++20 is the same C++17 source compiled with -std=c++20. Fitted C++17 comes from fit_legacy_numeric_bound on {FITTED_DATA_NOTE}. An emitter that gains support for a program recorded as unsupported is additive and passes; recorded bytes never change."
         ),
@@ -1512,12 +1580,12 @@ fn emitted_artifact_bytes_match_the_frozen_fixture() {
             .map(|(name, source)| emitted_program(name, source, &train, &target))
             .collect(),
     };
-    let Some(committed) = committed_or_write(FIXTURE_FILES[2], &fixture) else {
+    let Some(committed) = committed_or_write(Surface::Frozen, FIXTURE_FILES[2], &fixture) else {
         return;
     };
     // Gaining support for a program recorded as unsupported adds bytes without changing any
-    // recorded ones, so it passes (and is reported); losing support, or an emitter that now
-    // errors, is drift.
+    // recorded ones, so it passes (and is reported); losing support, a different unsupported
+    // element, or an emitter that now errors, is drift (see `gains_support`).
     for program in &mut fixture.programs {
         let Some(old) = committed.programs.iter().find(|p| p.name == program.name) else {
             continue;
@@ -1536,7 +1604,7 @@ fn emitted_artifact_bytes_match_the_frozen_fixture() {
                 &old.fitted_cpp17_codec,
             ),
         ] {
-            if recorded.starts_with("unsupported") && !now.starts_with("ERR") && now != recorded {
+            if gains_support(recorded, now) {
                 eprintln!(
                     "compat-freeze: {}.{field} was recorded as {recorded:?} and is now {now:?} (additive; freeze the new bytes with an approved rebaseline)",
                     program.name
@@ -1653,14 +1721,14 @@ fn serialized_models_match_the_frozen_fixture() {
     }
     let fixture = ModelSerde {
         schema: "feat-math.compat-freeze.model-serde.v1".to_string(),
-        generated_at_sha: header_sha(),
+        generated_at_sha: header_sha(Surface::Frozen),
         note: format!(
             "serde_json is \"<byte length> <sha256>\" of serde_json::to_vec(&fit(program)) on {FITTED_DATA_NOTE}; predictions are the f64 bits of Model::predict on the held-out rows. stored keeps the complete bytes of three small models, which must still load and predict the recorded values (to within serde_json's float-parsing precision, which is not exact without its float_roundtrip feature)."
         ),
         models,
         stored,
     };
-    let Some(committed) = committed_or_write(FIXTURE_FILES[3], &fixture) else {
+    let Some(committed) = committed_or_write(Surface::Frozen, FIXTURE_FILES[3], &fixture) else {
         return;
     };
     // Stored bytes from the generating build must still load and predict the recorded values.
@@ -1978,11 +2046,11 @@ fn vocabulary_registry_and_lineage_pins_match() {
 
     let fixture = FrozenPins {
         schema: "feat-math.compat-freeze.frozen-pins.v1".to_string(),
-        generated_at_sha: header_sha(),
+        generated_at_sha: header_sha(Surface::Frozen),
         files,
         values,
     };
-    let Some(committed) = committed_or_write(FIXTURE_FILES[4], &fixture) else {
+    let Some(committed) = committed_or_write(Surface::Frozen, FIXTURE_FILES[4], &fixture) else {
         return;
     };
     let mut problems = Vec::new();
@@ -2046,10 +2114,26 @@ fn vocabulary_registry_and_lineage_pins_match() {
 
 const EVALUATOR_SOURCE: &str = "crates/jope-campaigns/src/evaluation_v2.rs";
 const KNOWN_IDENTITIES: &str = "crates/jope-campaigns/known-evaluator-identities.json";
-const IDENTITY_ADVICE: &str = "This change mints a new ADR-0004 evaluator identity. Announce it in the PR body \
-(old and new implementation_sha256), record it as docs/adr/ADR-0004-evaluator-identity-known-table.md requires \
-(crates/jope-campaigns/known-evaluator-identities.json rows are appended only with the receipt that proves an \
-identity existed), and rebaseline tests/fixtures/compat_freeze/evaluator_identity.v1.json in the same change.";
+/// How an announced surface is rebaselined: in the change that moves it, after committing it.
+fn announced_rebaseline() -> String {
+    format!(
+        "Rebaseline in the same change, after committing it, with `{IDENTITY_REGENERATE_COMMAND}` \
+         (the commit id is the one that carries the change). That rewrites only the announced \
+         identity fixtures and still compares every other surface: no other fixture may change in \
+         an identity-only rebaseline."
+    )
+}
+
+fn identity_advice() -> String {
+    format!(
+        "This change mints a new ADR-0004 evaluator identity (a Cargo.lock change does too: the \
+         identity hashes it). Announce it in the PR body (old and new implementation_sha256 and \
+         identity digest) and record it as docs/adr/ADR-0004-evaluator-identity-known-table.md \
+         requires (crates/jope-campaigns/known-evaluator-identities.json rows are appended only \
+         with the receipt that proves an identity existed). {}",
+        announced_rebaseline()
+    )
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -2235,7 +2319,7 @@ fn evaluator_identity_inputs_match_the_recorded_identity() {
 
     let fixture = EvaluatorIdentity {
         schema: "feat-math.compat-freeze.evaluator-identity.v1".to_string(),
-        generated_at_sha: header_sha(),
+        generated_at_sha: header_sha(Surface::Announced),
         note: "A replica of evaluation_v2.rs compute_implementation_sha256 (the hashed list is read from that function) and EvaluatorIdentityV1::digest. Planned changes move this fixture: rebaseline it with the change that mints the identity.".to_string(),
         domain,
         inputs,
@@ -2246,7 +2330,7 @@ fn evaluator_identity_inputs_match_the_recorded_identity() {
         known_identities_sha256: sha256_hex(&known_bytes),
         known_identity_rows: rows.len(),
     };
-    let Some(committed) = committed_or_write(FIXTURE_FILES[5], &fixture) else {
+    let Some(committed) = committed_or_write(Surface::Announced, FIXTURE_FILES[5], &fixture) else {
         return;
     };
     let mut problems = Vec::new();
@@ -2307,8 +2391,9 @@ fn evaluator_identity_inputs_match_the_recorded_identity() {
     }
     assert!(
         problems.is_empty(),
-        "compat-freeze: the ADR-0004 evaluator identity inputs changed:\n  {}\n{IDENTITY_ADVICE}",
-        problems.join("\n  ")
+        "compat-freeze: the ADR-0004 evaluator identity inputs changed:\n  {}\n{}",
+        problems.join("\n  "),
+        identity_advice()
     );
 }
 
@@ -2936,13 +3021,13 @@ fn seeded_generator_streams_match_the_frozen_fixture() {
     all.extend(advanced_v3_streams(&parents));
     let fixture = GeneratorStreams {
         schema: "feat-math.compat-freeze.generator-streams.v1".to_string(),
-        generated_at_sha: header_sha(),
+        generated_at_sha: header_sha(Surface::Frozen),
         note: "Each stream is the ordered output of one seeded generator over fixed inputs: sha256 of the items joined by newlines, the first item verbatim, and the first 16 hex digits of each item's sha256. The legacy wrappers, full_rust, MathExpr, PipelineSlots and advanced_v3 streams must stay bit-identical (plan N1).".to_string(),
         vocabularies: vocabularies(),
         streams: all.iter().map(|(record, _)| record.clone()).collect(),
         evolve_population: evolve_population(),
     };
-    let Some(committed) = committed_or_write(FIXTURE_FILES[6], &fixture) else {
+    let Some(committed) = committed_or_write(Surface::Frozen, FIXTURE_FILES[6], &fixture) else {
         return;
     };
     let mut problems = Vec::new();
@@ -2953,16 +3038,23 @@ fn seeded_generator_streams_match_the_frozen_fixture() {
             .map(|v| (v.name.clone(), v.items.join(" | ")))
             .collect()
     };
-    if vocab(&committed) != vocab(&fixture) {
-        for (name, items) in vocab(&committed) {
-            match vocab(&fixture).into_iter().find(|(n, _)| *n == name) {
-                Some((_, now)) if now == items => {}
-                Some((_, now)) => problems.push(format!(
-                    "vocabulary {name}:\n      fixture {items}\n      now     {now}"
-                )),
-                None => problems.push(format!("vocabulary {name} is gone")),
-            }
+    let (old_vocab, new_vocab) = (vocab(&committed), vocab(&fixture));
+    for (name, items) in &old_vocab {
+        match new_vocab.iter().find(|(n, _)| n == name) {
+            Some((_, now)) if now == items => {}
+            Some((_, now)) => problems.push(format!(
+                "vocabulary {name}:\n      fixture {items}\n      now     {now}"
+            )),
+            None => problems.push(format!("vocabulary {name} is gone")),
         }
+    }
+    for (name, items) in &new_vocab {
+        if !old_vocab.iter().any(|(n, _)| n == name) {
+            problems.push(format!("vocabulary {name} is new: {items}"));
+        }
+    }
+    if problems.is_empty() && old_vocab != new_vocab {
+        problems.push("the vocabulary order changed".to_string());
     }
     for old in &committed.streams {
         let Some((new, items)) = all.iter().find(|(r, _)| r.name == old.name) else {
@@ -2979,12 +3071,21 @@ fn seeded_generator_streams_match_the_frozen_fixture() {
             .zip(&new_items)
             .position(|(a, b)| a != b)
             .unwrap_or(old_items.len().min(new_items.len()));
+        let digest = |digests: &[&str]| digests.get(first).copied().unwrap_or("(none)").to_string();
         problems.push(format!(
-            "stream {} ({}): {} items in the fixture, {} now; first differing item {first}; now: {}",
+            "stream {} ({}): {} items in the fixture, {} now; first differing item {first}: \
+             fixture digest {}, now digest {}{}\n      now: {}",
             old.name,
             old.inputs,
             old.count,
             new.count,
+            digest(&old_items),
+            digest(&new_items),
+            if first == 0 {
+                format!("\n      fixture: {}", old.first)
+            } else {
+                String::new()
+            },
             items.get(first).map(String::as_str).unwrap_or("(none)")
         ));
     }
@@ -3029,7 +3130,7 @@ struct Meta {
 #[test]
 fn fixture_provenance_is_recorded() {
     let path = fixture_path("compat_freeze/meta.json");
-    if regenerating() {
+    if regenerating(Surface::Frozen) {
         let verbose = command_line("rustc", &["-vV"]);
         let host = verbose
             .lines()
