@@ -62,7 +62,7 @@ written so that NaN never fires a clamp class (`v.abs() > bound` is false for Na
 | 776 | `clip(v, b1, b2)` | at least one bound is a number | `lo.is_nan() \|\| hi.is_nan()`, where `lo = b1.min(b2)`, `hi = b1.max(b2)`: both bounds NaN | the legacy error `MathEvalError::InvalidClipBounds`; 0.0 in the compat shape and the stage | `INVALID_CLIP_BOUNDS` | Hard |
 | 794 | `exp(v)` | all reals; the clamp keeps `exp` finite in every emitted language | `v.abs() > 30.0` | the argument is `v.clamp(-30.0, 30.0)` | `EXP_ARG_CLAMPED` | Saturation |
 | 802 | `log(v)` | `v > 0` | `v <= 1e-300`: tiny positives in `(0, 1e-300]` fire too; NaN does not (`ln(NaN)` is NaN) | 0.0 | `LOG_DOMAIN` | Domain |
-| 916, 918 (from 858) | read `x` | map (element) context only | row context: `ctx.x` is `None` | the legacy error "variable x is only valid in map expressions"; 0.0 in the compat shape and the stage | `ILLEGAL_SCOPE` | Hard |
+| 918 (from 858) | read `x` | map (element) context only | row context: `ctx.x` is `None` | the legacy error "variable x is only valid in map expressions"; 0.0 in the compat shape and the stage | `ILLEGAL_SCOPE` | Hard |
 | 916 (from 858) | read `x` | a finite element | the element read is not finite | none: the value is returned as read | `NONFINITE_INPUT` | Domain |
 | 918 (from 863) | read `col(i)` | `i < row.len()` | `row.get(i)` is `None` | the legacy error "column index i out of bounds"; 0.0 in the compat shape and the stage | `COLUMN_OOB` | Hard |
 | 916 (from 863) | read `col(i)` | a finite cell | the cell read is not finite | none: the value is returned as read | `NONFINITE_INPUT` | Domain |
