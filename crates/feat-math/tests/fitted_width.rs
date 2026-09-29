@@ -15,7 +15,7 @@
 //!   never panics, and whenever it returns a value that value is `predict`'s.
 //! - The schema-bound (advanced-v3) boundary: a legacy stage, `corr_screen` or `pls_project`
 //!   whose fitted state does not fit the feature block makes `predict_table` return an error
-//!   instead of panicking.
+//!   instead of panicking, and a table with no rows keeps its result.
 
 use feat_math::dsl::{parse_dsl, Stage};
 use feat_math::heads::{fit_head, FittedHead};
@@ -1057,6 +1057,92 @@ fn schema_bound_stages_return_errors_instead_of_panicking() {
             .unwrap_or_else(|_| panic!("{source}: predict_table panicked"));
         let error = outcome.expect_err(source).to_string();
         assert_eq!(error, message, "{source}");
+    }
+}
+
+#[test]
+fn schema_bound_tables_with_no_rows_compare_no_width() {
+    // With no rows nothing is read, and a stage that generates columns takes its width from the
+    // first row, so the block after it is narrower than at fit time: no column, or only the
+    // appended input. No width is compared then, and each of these keeps its empty result.
+    let empty = RawTable::new(vec!["a".to_string(), "b".to_string()], Vec::new()).unwrap();
+    for source in [
+        "(pipe X (rank) (standardize) (ridge))",
+        "(pipe X (quantile_bins) (winsor_clip) (ridge))",
+        "(pipe X (rank append=true) (standardize) (ridge))",
+        "(pipe X (cheb degree=3) (standardize) (ridge))",
+        "(pipe X (pair_ratio topk=4) (standardize) (ridge))",
+        "(pipe X (hinge knots=3) (impute) (ridge))",
+        "(pipe X (rank append=true) (pls_project k=2) (ridge))",
+        "(pipe X (select_corr k=2) (impute add_indicator=true) (ridge))",
+    ] {
+        let model = bound(source);
+        let predicted = catch_unwind(AssertUnwindSafe(|| model.predict_table(&empty)))
+            .unwrap_or_else(|_| panic!("{source}: predict_table panicked"))
+            .unwrap_or_else(|error| panic!("{source}: {error}"));
+        assert_eq!(predicted, Vec::<f64>::new(), "{source}");
+    }
+
+    // The multiclass entry point walks the same stages.
+    let mut csv = String::from("a,b\n");
+    let mut labels = Vec::new();
+    for class in 0..3 {
+        for repeat in 0..4 {
+            let (class, repeat) = (f64::from(class), f64::from(repeat));
+            csv.push_str(&format!(
+                "{},{}\n",
+                class + 0.1 * repeat,
+                0.3 * repeat - class
+            ));
+            labels.push(class);
+        }
+    }
+    let classes = RawTable::from_csv(&csv).unwrap();
+    let task = TaskSpec::multiclass(Objective::MacroF1).unwrap();
+    for source in [
+        "(pipe X (rank) (standardize) (multiclass_ridge))",
+        "(pipe X (rank append=true) (standardize) (multiclass_ridge))",
+    ] {
+        let model = fit_table(
+            &program(source),
+            &task,
+            &numeric_schema(),
+            &classes,
+            &labels,
+        )
+        .unwrap_or_else(|error| panic!("{source}: {error}"));
+        let predicted = catch_unwind(AssertUnwindSafe(|| model.predict_multiclass_table(&empty)))
+            .unwrap_or_else(|_| panic!("{source}: predict_multiclass_table panicked"))
+            .unwrap_or_else(|error| panic!("{source}: {error}"));
+        assert!(
+            predicted.labels.is_empty() && predicted.probabilities.is_empty(),
+            "{source}"
+        );
+    }
+
+    // Finishing a stage looks the block up at a fitted column that the narrower block lacks:
+    // this panicked, and is an error now.
+    for (source, stage) in [
+        (
+            "(pipe X (rank) (select_corr k=2) (ridge))",
+            "legacy stage select_corr",
+        ),
+        (
+            "(pipe X (hinge knots=3) (impute add_indicator=true) (ridge))",
+            "legacy stage impute",
+        ),
+        ("(pipe X (hinge) (corr_screen k=32) (ridge))", "corr_screen"),
+    ] {
+        let model = bound(source);
+        let error = catch_unwind(AssertUnwindSafe(|| model.predict_table(&empty)))
+            .unwrap_or_else(|_| panic!("{source}: predict_table panicked"))
+            .expect_err(source)
+            .to_string();
+        assert!(
+            error.starts_with(&format!("{stage} reads column "))
+                && error.ends_with(", but the feature block has 0 columns"),
+            "{source}: {error}"
+        );
     }
 }
 

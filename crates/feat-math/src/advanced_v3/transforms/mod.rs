@@ -905,16 +905,40 @@ fn legacy_to_block(op: &FittedOp, block: &FeatureBlock) -> Result<FeatureBlock> 
 /// block's width, or the stage is refused with an error where
 /// `apply_op_generated` would panic or read state fitted for another column.
 /// State fitted on the block always passes. Every row of a block is
-/// `roles.len()` wide (`FeatureBlock::validate`), so the width is known without
-/// rows.
+/// `roles.len()` wide (`FeatureBlock::validate`).
+///
+/// A block with no rows has no width to compare. Nothing is read, and the
+/// generated-width arm of `legacy_generated_to_block` takes its width from the
+/// first row, so after such a stage the block is narrower than at fit time (no
+/// column, or only the appended input). Without rows, only the fitted column
+/// indices at which finishing the stage looks the block up are checked:
+/// `select_corr`'s indices, and `impute`'s indicators when it does not append.
+/// Finishing panicked there; every other outcome stays what it was.
 fn check_legacy_width(op: &FittedOp, block: &FeatureBlock) -> Result<()> {
     use crate::kernel::width;
     let name = width::stage_name(op);
     if let Err(reason) = width::check_fitted_state(op) {
         bail!("legacy stage {name} has inconsistent fitted state: {reason}");
     }
-    let required = width::required_input_width(op);
     let got = block.roles.len();
+    if block.values.is_empty() {
+        let looked_up: &[usize] = match op {
+            FittedOp::SelectCorr { indices, .. } => indices,
+            FittedOp::Impute {
+                indicator_cols,
+                append: false,
+                ..
+            } => indicator_cols,
+            _ => &[],
+        };
+        if let Some(index) = looked_up.iter().find(|&&index| index >= got) {
+            bail!(
+                "legacy stage {name} reads column {index}, but the feature block has {got} columns"
+            );
+        }
+        return Ok(());
+    }
+    let required = width::required_input_width(op);
     if !required.admits(got) {
         bail!(
             "legacy stage {name} needs {required} input columns, but the feature block has {got}"
@@ -923,7 +947,8 @@ fn check_legacy_width(op: &FittedOp, block: &FeatureBlock) -> Result<()> {
     Ok(())
 }
 
-/// `corr_screen` reads every row at its fitted column indices.
+/// `corr_screen` reads every row at its fitted column indices, and finishing
+/// the selection looks the block up at them, with rows or without.
 fn check_corr_screen_width(indices: &[usize], block: &FeatureBlock) -> Result<()> {
     let width = block.roles.len();
     if let Some(index) = indices.iter().find(|&&index| index >= width) {
@@ -933,11 +958,16 @@ fn check_corr_screen_width(indices: &[usize], block: &FeatureBlock) -> Result<()
 }
 
 /// `pls_project` reads the row and the fitted means at every index of a weight.
+/// Without rows it reads nothing, and the block may be narrower than at fit
+/// time (see `check_legacy_width`), so there is nothing to check.
 fn check_pls_project_width(
     means: &[f64],
     weights: &[Vec<f64>],
     block: &FeatureBlock,
 ) -> Result<()> {
+    if block.values.is_empty() {
+        return Ok(());
+    }
     let width = block.roles.len();
     if let Some(weight) = weights
         .iter()
