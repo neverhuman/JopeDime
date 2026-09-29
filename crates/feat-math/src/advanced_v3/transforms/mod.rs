@@ -206,6 +206,7 @@ impl V3Op {
                 finish_generated_dense(block, generated, sources, *append, "piecewise_linear")
             }
             V3Op::CorrScreen { indices, append } => {
+                check_corr_screen_width(indices, block)?;
                 let generated: Rows = block
                     .values
                     .iter()
@@ -218,6 +219,7 @@ impl V3Op {
                 weights,
                 append,
             } => {
+                check_pls_project_width(means, weights, block)?;
                 let generated: Rows = block
                     .values
                     .iter()
@@ -893,8 +895,61 @@ fn legacy_generated_to_block(
 }
 
 fn legacy_to_block(op: &FittedOp, block: &FeatureBlock) -> Result<FeatureBlock> {
+    check_legacy_width(op, block)?;
     let generated = crate::ops::apply_op_generated(op, &block.values);
     legacy_generated_to_block(op, block, generated)
+}
+
+/// The strict width boundary of a legacy stage in a schema-bound pipeline
+/// (kernel2 WP-1.7): its fitted state must agree with itself and accept the
+/// block's width, or the stage is refused with an error where
+/// `apply_op_generated` would panic or read state fitted for another column.
+/// State fitted on the block always passes. Every row of a block is
+/// `roles.len()` wide (`FeatureBlock::validate`), so the width is known without
+/// rows.
+fn check_legacy_width(op: &FittedOp, block: &FeatureBlock) -> Result<()> {
+    use crate::kernel::width;
+    let name = width::stage_name(op);
+    if let Err(reason) = width::check_fitted_state(op) {
+        bail!("legacy stage {name} has inconsistent fitted state: {reason}");
+    }
+    let required = width::required_input_width(op);
+    let got = block.roles.len();
+    if !required.admits(got) {
+        bail!(
+            "legacy stage {name} needs {required} input columns, but the feature block has {got}"
+        );
+    }
+    Ok(())
+}
+
+/// `corr_screen` reads every row at its fitted column indices.
+fn check_corr_screen_width(indices: &[usize], block: &FeatureBlock) -> Result<()> {
+    let width = block.roles.len();
+    if let Some(index) = indices.iter().find(|&&index| index >= width) {
+        bail!("corr_screen reads column {index}, but the feature block has {width} columns");
+    }
+    Ok(())
+}
+
+/// `pls_project` reads the row and the fitted means at every index of a weight.
+fn check_pls_project_width(
+    means: &[f64],
+    weights: &[Vec<f64>],
+    block: &FeatureBlock,
+) -> Result<()> {
+    let width = block.roles.len();
+    if let Some(weight) = weights
+        .iter()
+        .find(|weight| weight.len() > width.min(means.len()))
+    {
+        bail!(
+            "pls_project weight spans {} columns, but the feature block has {width} and the fitted means {}",
+            weight.len(),
+            means.len()
+        );
+    }
+    Ok(())
 }
 
 fn finish_impute(
