@@ -67,13 +67,17 @@ ci-main: ci-pr test-main
 # kept for muscle memory: the historical gate name
 required: ci-pr
 
+# The version check sources deploy/release/release.sh as release.sh requires, with bash -p (a plain
+# bash is refused). The sourced shell looks commands up only in release.sh's read-only TRUSTED_PATH,
+# which holds no cargo, so cargo metadata runs in the recipe's own shell and is piped in; and
+# release.sh's jq wrapper keeps jq's HOME in a private directory under TMPDIR, here target/bump-tmp.
 # bump the Rust workspace version (workspace, jope-engine, jope-campaigns) and Cargo.lock, then apply release.sh's version check; python/pyproject.toml is not bumped while no wheel ships
 bump version:
     sed -i -E '0,/^version = "[^"]+"/s//version = "{{version}}"/' Cargo.toml
     sed -i -E '0,/^version = "[^"]+"/s//version = "{{version}}"/' crates/jope-engine/Cargo.toml
     sed -i -E '0,/^version = "[^"]+"/s//version = "{{version}}"/' crates/jope-campaigns/Cargo.toml
     cargo update --workspace --offline
-    verdict=$(bash -c 'source deploy/release/release.sh && cargo metadata --no-deps --format-version 1 --locked | jq -r --arg want "$1" "$VERSION_JQ"' bump '{{version}}'); [[ $verdict == OK ]] || { printf '%s\n' "$verdict" >&2; exit 1; }
+    meta=$(cargo metadata --no-deps --format-version 1 --locked); tmp=$(pwd -P)/target/bump-tmp; mkdir -p -- "$tmp"; chmod 0700 -- "$tmp"; verdict=$(printf '%s\n' "$meta" | env TMPDIR="$tmp" bash -p -c 'source deploy/release/release.sh && jq -r --arg want "$1" "$VERSION_JQ"' bump '{{version}}'); [[ $verdict == OK ]] || { printf '%s\n' "$verdict" >&2; exit 1; }
     @echo "bumped the Rust workspace to {{version}}. This is a version change, not a releasable state: the README 'jope {{version}}' lines and a CHANGELOG.md [{{version}}] section must land in the same reviewed PR (docs/release/README.md, 'Cutting a release'); after the merge, deploy/release/release.sh v{{version}} re-checks everything and creates the tag (never push one by hand)"
 
 # documentation checks: rustdoc builds (warnings counted), relative links in README/docs (not docs/legacy) resolve, cliff.toml renders
