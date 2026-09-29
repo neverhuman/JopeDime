@@ -124,6 +124,9 @@ enum Command {
         #[arg(num_args = 0.., trailing_var_arg = true, allow_hyphen_values = true)]
         args: Vec<String>,
     },
+    /// Compare two search profiles at an equal evaluation budget on the same datasets, cuts and
+    /// seeds, and write one jope.bench-ablation/v1 document.
+    Ablation(jope_bench::ablation::AblationArgs),
 }
 
 fn main() -> Result<()> {
@@ -370,6 +373,7 @@ fn main() -> Result<()> {
             }
             Ok(())
         }
+        Command::Ablation(args) => jope_bench::ablation::execute(&args),
     }
 }
 

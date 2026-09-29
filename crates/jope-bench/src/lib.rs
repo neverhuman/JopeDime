@@ -27,6 +27,8 @@
 //! registries for a local `jope-arena` track ([`emit`]), so the same Elo ladder code that ranks the
 //! published benchmark ranks this one.
 
+/// Equal-budget comparison of search profiles (`jope-bench ablation`).
+pub mod ablation;
 pub mod adapter;
 pub mod cuts;
 pub mod emit;
