@@ -113,8 +113,8 @@ invoices.
 
 - A Rust Lambda worker (`regression-bootstrap`) fitted candidate programs on three inner folds of
   each eligible regression view, in rounds, from a Python controller. An offline Rust tool
-  (`regression-assess`) replays a stored fold model and measures permutation sensitivity with no
-  new fit. The run's fixed deadline was 2026-09-29T05:00Z.
+  (`regression-assess`) replays a stored fold model and measures how much its validation error grows
+  when one feature column is shuffled, with no new fit. The run's fixed deadline was 2026-09-29T05:00Z.
 - Terminal state: published. The closeout supervisor wrote `closeout-complete.json` at
   2026-09-29T05:03:06Z (sha256 `9ed8cdf377536c56867467f9f228cbd9072357a8fdb3ed15320fd14cf63a5002`).
   No run process remains, and the reserved concurrency of the four owned functions read back
