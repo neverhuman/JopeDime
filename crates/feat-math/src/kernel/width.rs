@@ -4,7 +4,7 @@
 //! input, so rows narrower or wider than a stage was fitted on can panic, or
 //! silently read state fitted for another column. `predict` stays as it is: its
 //! bits are frozen and its callers guard widths themselves. This module states
-//! the contract:
+//! the contract and checks it ahead of `predict`:
 //!
 //! - [`required_input_width`]: the input width a fitted stage accepts, read
 //!   from its fitted state.
@@ -14,6 +14,9 @@
 //!   cap and the `[0.0]` padding that `apply_op` ends with.
 //! - [`required_head_width`]: the width a head accepts, where its fitted state
 //!   reveals one.
+//! - [`check_input_width`] walks a model with those. [`Model::try_predict`]
+//!   returns a [`WidthMismatch`] where `predict` would panic or misread, and
+//!   otherwise returns `predict`'s own result.
 //!
 //! Every match over `FittedOp` or `FittedHead` here names each variant, with no
 //! wildcard arm, so a new variant does not compile until its width is decided.
@@ -25,9 +28,11 @@
 //! billions), which aborts as it would in `predict`.
 use super::{Error, Result};
 use crate::heads::FittedHead;
+use crate::model::Model;
 use crate::ops::FittedOp;
 use crate::portfolio::PortfolioModel;
 use crate::stack::StackModel;
+use crate::Rows;
 use std::fmt;
 
 /// The widest row a `Vec<f64>` can hold. A wider output row is refused rather
@@ -65,6 +70,72 @@ impl fmt::Display for WidthReq {
         }
     }
 }
+
+/// What [`check_input_width`] found wrong.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum MismatchKind {
+    /// Input row `row` is `got` columns wide, and every row must match row 0.
+    /// Reported at stage 0.
+    RaggedInput { row: usize },
+    /// The input to fitted stage `stage` does not satisfy `expected`.
+    StageInput,
+    /// The input to the head does not satisfy `expected`. `stage` is the number
+    /// of fitted stages.
+    HeadInput,
+    /// The fitted state of stage `stage` disagrees with itself (`reason`), so no
+    /// input width is safe for it.
+    InconsistentState { reason: &'static str },
+    /// The output of stage `stage` for rows `got` wide is wider than any row.
+    OutputOverflow,
+}
+
+/// Why [`Model::try_predict`] refused an input.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct WidthMismatch {
+    /// The index of the fitted stage whose input failed; the number of fitted
+    /// stages for the head.
+    pub stage: usize,
+    /// The input width that stage accepts.
+    pub expected: WidthReq,
+    /// The input width it would have received.
+    pub got: usize,
+    /// What failed.
+    pub kind: MismatchKind,
+}
+
+impl fmt::Display for WidthMismatch {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let WidthMismatch {
+            stage,
+            expected,
+            got,
+            kind,
+        } = self;
+        match kind {
+            MismatchKind::RaggedInput { row } => write!(
+                f,
+                "ragged input: row {row} has {got} columns, every row needs {expected}"
+            ),
+            MismatchKind::StageInput => {
+                write!(f, "stage {stage} needs {expected} input columns, got {got}")
+            }
+            MismatchKind::HeadInput => {
+                write!(f, "the head needs {expected} input columns, got {got}")
+            }
+            MismatchKind::InconsistentState { reason } => {
+                write!(f, "stage {stage} has inconsistent fitted state: {reason}")
+            }
+            MismatchKind::OutputOverflow => {
+                write!(
+                    f,
+                    "stage {stage} output width overflows at input width {got}"
+                )
+            }
+        }
+    }
+}
+
+impl std::error::Error for WidthMismatch {}
 
 /// The input width that `op` accepts, read from its fitted state.
 ///
@@ -286,6 +357,71 @@ pub fn required_head_width(head: &FittedHead) -> WidthReq {
     }
 }
 
+/// Checks that `model` accepts input rows `width` columns wide: walks the
+/// fitted stages in order with the width each receives, checking its state,
+/// its required input width and its output width, then checks the head.
+/// `Model::Symbolic` accepts any width: where its expression reads a column
+/// beyond the row, it evaluates to 0.0. A `Model::Portfolio` pads or truncates
+/// rows to its fitted width, which it requires as a head does; its members are
+/// not checked.
+pub fn check_input_width(model: &Model, width: usize) -> std::result::Result<(), WidthMismatch> {
+    match model {
+        Model::Pipeline { ops, head, .. } => {
+            let mut width = width;
+            for (stage, op) in ops.iter().enumerate() {
+                let expected = required_input_width(op);
+                let mismatch = move |kind| WidthMismatch {
+                    stage,
+                    expected,
+                    got: width,
+                    kind,
+                };
+                if let Err(reason) = check_fitted_state(op) {
+                    return Err(mismatch(MismatchKind::InconsistentState { reason }));
+                }
+                if !expected.admits(width) {
+                    return Err(mismatch(MismatchKind::StageInput));
+                }
+                width = finished_width(op, width)
+                    .map_err(|_| mismatch(MismatchKind::OutputOverflow))?;
+            }
+            head_admits(required_head_width(head), ops.len(), width)
+        }
+        Model::Symbolic { .. } => Ok(()),
+        Model::Portfolio(m) => head_admits(portfolio_width(m), 0, width),
+    }
+}
+
+impl Model {
+    /// [`Model::predict`] behind the fitted-width contract.
+    ///
+    /// Returns a [`WidthMismatch`], before any stage runs, when the rows of `x`
+    /// differ in width or [`check_input_width`] refuses their width. That covers
+    /// every width at which `predict` would panic, and every width at which a
+    /// stage or head holding one fitted entry per input column would silently
+    /// misread the rows. Otherwise it returns `predict(x)` itself, so its bits
+    /// are `predict`'s. With no rows there is no width to check, and it returns
+    /// `predict(x)`.
+    ///
+    /// `Exactly` requirements make this stricter than `predict`, which accepts
+    /// some narrower inputs; `predict` itself is unchanged.
+    pub fn try_predict(&self, x: &Rows) -> std::result::Result<Vec<f64>, WidthMismatch> {
+        if let Some(first) = x.first() {
+            let width = first.len();
+            if let Some((row, ragged)) = x.iter().enumerate().find(|(_, r)| r.len() != width) {
+                return Err(WidthMismatch {
+                    stage: 0,
+                    expected: WidthReq::Exactly(width),
+                    got: ragged.len(),
+                    kind: MismatchKind::RaggedInput { row },
+                });
+            }
+            check_input_width(self, width)?;
+        }
+        Ok(self.predict(x))
+    }
+}
+
 /// The stage's name in the pipeline language, for messages.
 pub(crate) fn stage_name(op: &FittedOp) -> &'static str {
     match op {
@@ -455,6 +591,23 @@ fn finished_width(op: &FittedOp, input: usize) -> Result<usize> {
     } else {
         total.min(crate::MAX_WIDTH)
     })
+}
+
+fn head_admits(
+    expected: WidthReq,
+    stage: usize,
+    width: usize,
+) -> std::result::Result<(), WidthMismatch> {
+    if expected.admits(width) {
+        Ok(())
+    } else {
+        Err(WidthMismatch {
+            stage,
+            expected,
+            got: width,
+            kind: MismatchKind::HeadInput,
+        })
+    }
 }
 
 fn stack_width(m: &StackModel) -> WidthReq {
