@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 4",
-  "count": 3872,
+  "count": 3873,
   "ignored": 65,
   "packages": {
    "battle-gpu": {
@@ -29,7 +29,7 @@
     }
    },
    "feat-math": {
-    "count": 509,
+    "count": 510,
     "ignored": 6,
     "binaries": {
      "feat-math": {
@@ -668,7 +668,7 @@
      },
      "feat-math::stage_telemetry": {
       "kind": "test",
-      "count": 18,
+      "count": 19,
       "ignored": 0,
       "tests": [
        "a_column_past_the_width_is_a_hard_row_and_the_legacy_zeros",
@@ -677,6 +677,7 @@
        "a_structurally_invalid_expression_is_a_compile_failure",
        "an_explicit_portfolio_is_fitted_by_fit_and_reports_no_stage",
        "compat_freeze_stages_equal_apply_op_on_the_raw_stage_matrix",
+       "every_corpus_expression_as_a_symbolic_program_fits_to_fits_bytes",
        "every_op_equals_apply_op_with_append_on_and_off",
        "expression_stages_equal_apply_op_on_every_corpus_expression_and_row",
        "fit_traced_serializes_to_fits_bytes_on_every_corpus_program",
@@ -6102,7 +6103,7 @@
   }
  },
  "totals": {
-  "rust": 3872,
+  "rust": 3873,
   "python": 172
  }
 }
