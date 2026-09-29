@@ -405,6 +405,15 @@
         "export"
       ]
     },
+    "target:feat-math/test/compat_freeze": {
+      "role": "regression",
+      "subsystems": [
+        "export",
+        "fitting",
+        "gp",
+        "policy"
+      ]
+    },
     "target:feat-math/test/golden": {
       "role": "regression",
       "subsystems": [
