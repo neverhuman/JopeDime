@@ -26,3 +26,6 @@ check-*.log
 # Local agent configuration, shared-root symlink and append locks stay local.
 /.claude/
 *.md.lock
+
+# deploy/ci/lambda.sh inflates train-jobs.json.gz here before building (deploy/lambda/SNAPSHOT.json).
+/deploy/lambda/csv/gp/corpus/train-jobs.json

@@ -1,0 +1,3 @@
+# The frozen sources here are imported byte for byte (SNAPSHOT.json). This manifest ends with a
+# blank line, which git diff --check reports as blank-at-eof; the bytes are kept.
+watch/Cargo.toml whitespace=-blank-at-eof

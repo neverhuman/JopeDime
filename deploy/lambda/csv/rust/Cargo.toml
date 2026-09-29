@@ -1,0 +1,45 @@
+[package]
+name = "jope-lambda-probe"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[workspace]
+
+[[bin]]
+name = "bootstrap"
+path = "src/main.rs"
+
+[[bin]]
+name = "bootstrap-batch"
+path = "src/batch.rs"
+
+[[bin]]
+name = "bootstrap-gp"
+path = "src/gp.rs"
+
+[[bin]]
+name = "bootstrap-gp-extra"
+path = "src/gp_v2.rs"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+feat-math = { path = "../../../../crates/feat-math" }
+lambda_runtime = "0.13"
+tokio = { version = "1", features = ["macros", "rt"] }
+serde_json = { version = "1", features = ["float_roundtrip"] }
+sha2 = "0.10"
+aws-sigv4 = "1"
+aws-credential-types = "1"
+ureq = { version = "3", default-features = false, features = ["rustls"] }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+strip = "symbols"
+panic = "abort"
+
+[[bin]]
+name = "bootstrap-gp-diagnose"
+path = "src/gp_diagnose.rs"

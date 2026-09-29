@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")"
+export CARGO_INCREMENTAL=0
+export CARGO_PROFILE_DEV_DEBUG=line-tables-only
+unset CARGO_TARGET_DIR
+exec /home/ubuntu/.cargo/bin/cargo build --locked --offline --release -j2
