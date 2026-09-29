@@ -6,8 +6,8 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 4",
-  "count": 3826,
-  "ignored": 62,
+  "count": 3838,
+  "ignored": 63,
   "packages": {
    "battle-gpu": {
     "count": 6,
@@ -29,7 +29,7 @@
     }
    },
    "feat-math": {
-    "count": 469,
+    "count": 475,
     "ignored": 4,
     "binaries": {
      "feat-math": {
@@ -611,6 +611,19 @@
        "step_is_strict_and_nan_compares_false",
        "the_output_filter_zeroes_non_finite_values_and_clamps_magnitude",
        "x_in_row_context_is_an_error_and_a_zero_derive_output"
+      ]
+     },
+     "feat-math::parity_bits": {
+      "kind": "test",
+      "count": 6,
+      "ignored": 0,
+      "tests": [
+       "parity_bits_allowlist_is_well_formed_and_justified",
+       "parity_bits_programs_execute_every_function_variable_and_operator",
+       "parity_bits_reads_the_shared_boundary_corpus_the_allowlist_was_recorded_on",
+       "parity_bits_runtime_matches_emitted_python",
+       "parity_bits_runtime_matches_emitted_rust",
+       "parity_bits_runtime_matches_fitted_cpp17"
       ]
      },
      "feat-math::portable_parity": {
@@ -1279,14 +1292,20 @@
     }
    },
    "jope-bench": {
-    "count": 106,
-    "ignored": 0,
+    "count": 112,
+    "ignored": 1,
     "binaries": {
      "jope-bench": {
       "kind": "lib",
-      "count": 87,
-      "ignored": 0,
+      "count": 93,
+      "ignored": 1,
       "tests": [
+       "ablation::tests::ablation_a_equals_a_replays_byte_for_byte_and_reports_no_difference",
+       "ablation::tests::ablation_gates_report_a_difference",
+       "ablation::tests::ablation_heavy_a_equals_a_on_every_d5_regression_dataset",
+       "ablation::tests::ablation_metric_definitions",
+       "ablation::tests::ablation_profiles_and_inputs_are_checked",
+       "ablation::tests::ablation_refuses_a_phase_the_seconds_bound_ended",
        "cuts::tests::cuts_partition_rows_and_ids_follow_every_input",
        "eval::tests::binary_programs_score_auc_and_regression_heads_are_refused",
        "eval::tests::multiclass_programs_score_macro_f1",
@@ -6035,7 +6054,7 @@
   }
  },
  "totals": {
-  "rust": 3826,
+  "rust": 3838,
   "python": 172
  }
 }
