@@ -2,12 +2,14 @@
 
 **2026-09-28 wrap-up train and v0.2.0.** Eight pull requests, #115 to #122, landed on main between
 2026-09-27T09:56:32Z and 2026-09-28T19:29:10Z. Clean-base part B (#123) followed at
-2026-09-28T21:39:07Z. This pull request, which carries the v0.2.0 release tooling, sits on #123's
-merge and closes the wrap-up train the owner approved at 2026-09-27T22:20Z: release first, then
-the live three-host S3 demonstration as the next milestone.
+2026-09-28T21:39:07Z, and #124, which carries the v0.2.0 release tooling, at 2026-09-29T05:12:34Z.
+This pull request, #125, imports the frozen regression workers and completes the records, and
+v0.2.0 is cut from its merge commit (owner decision O1, below). That closes the wrap-up train the
+owner approved at 2026-09-27T22:20Z, release first. Next comes regression trials v2, before the
+live three-host S3 demonstration (owner decision O2).
 
-The same rules held for all eight, and for #123 (whose one failed CI attempt was at an earlier
-head, below):
+The same rules held for all eight, for #123 (whose one failed CI attempt was at an earlier head,
+below) and for #124:
 - **Merge.** Each one merged by GitHub rebase at the exact reviewed head, and each merged tree is
   byte-identical to the reviewed head's tree. `jepsontaylor` performed every merge.
 - **Review.** Every approval and every changes-requested review came from `neverhumanbot`
@@ -31,7 +33,8 @@ Merge order, main SHA after each merge, and final main:
 `01ef9ddcb31133bea27188e29af9978c2d36b8c4` (#121) →
 `4d9a27e64d31c57b6573a84e35f22c69ebb2b1b6` (#120) →
 `a8e4ce8f1f7cdf2f518e867147c4f0b038d966c5` (#122) →
-`0737da51102ad502676c1b1c3c06549a3ad0442e` (#123) → this pull request's merge commit.
+`0737da51102ad502676c1b1c3c06549a3ad0442e` (#123) →
+`5d29d86e4dd80dd87d074f3d02d82d51923e4c73` (#124) → this pull request's merge commit.
 
 A rebase merge writes new commits, so no commit of this pull request can name that merge commit.
 It is `origin/main` immediately after the merge, and the v0.2.0 release readback under
@@ -262,8 +265,9 @@ It is `origin/main` immediately after the merge, and the v0.2.0 release readback
   - Custody: `…/claude-w0-w12/pr123-merge-20260928T213854Z/`,
     `…/claude-w0-w12/independent-review-pr123-fc39cfb59/` and
     `…/claude-w0-w12/independent-review-pr123-dd4675c09/`.
-- **This pull request: the v0.2.0 release tooling, CHANGELOG, README and this record.** Rebased
-  on #123's merge, `0737da51102ad502676c1b1c3c06549a3ad0442e`.
+- **[#124](https://github.com/neverhuman/JopeDime/pull/124): the v0.2.0 release tooling,
+  CHANGELOG, README and the first Lambda import.** Rebased on #123's merge,
+  `0737da51102ad502676c1b1c3c06549a3ad0442e`.
   - Changes:
     - the lock-only dependency bump that was PR #5's intent, on current main: `cc` 1.4.5 to
       1.5.1, `clap` 4.6.6 to 4.6.7 and `crc32fast` 1.5.1 to 1.5.2;
@@ -277,16 +281,19 @@ It is `origin/main` immediately after the merge, and the v0.2.0 release readback
     - the README's 0.2.0 status, stats, releases section and layout, and the lines that #117 to
       #123 and the release made false in `SECURITY.md`, `CONTRIBUTING.md` and `docs/`;
     - the frozen AWS Lambda work of 2026-09-28 under `deploy/lambda/` (the Lambda import below);
-    - this record.
+    - its MASTER_PLAN record.
   - Review: the first independent review (5345652450, CHANGES_REQUESTED at
     `97d5ffa8336c31468262cf3755bbe53905e39139`) found an unpinned Syft and a missing
     temporary-directory policy across the builder boundary. The commits that follow it pin Syft by
     digest and reported version, add a reported-version check to cosign, whose digest was already
     pinned, require root-owned host tools, push only the release tag, carry `TMPDIR` across
     docker, sudo and `env -i`, and isolate jq, git and the other host tools from per-user
-    configuration.
+    configuration. Two more requests for changes followed, 5347008178 at
+    `e439ae6683d27cbf14f083eb375a0032c364652a` and 5347271804 at
+    `23516d0ce4f904987a483415282c5e1576a43721`. Approval 5347539592 was submitted at 03:58:50Z,
+    after the last push (03:49:02Z at the latest), at the reviewed head.
   - Lambda import, under the owner's decisions of 2026-09-29 at about 00:15Z: all Lambda Rust
-    goes into this pull request and is built and tested by CI; the Lambda Python and other
+    goes into that pull request and is built and tested by CI; the Lambda Python and other
     untracked orchestration is preserved byte-exact in custody with a tracked hash manifest, and a
     Rust port is a follow-up; v0.2.0 waits for the regression-Lambda v3 freeze.
     - What: `deploy/lambda/csv` (package `jope-lambda-probe`: the single-fit, batch and corpus
@@ -318,26 +325,133 @@ It is `origin/main` immediately after the merge, and the v0.2.0 release readback
       `codex-training-support` lane's uncommitted `AGENT_CHAT.md`. Their exact heading lines are
       only in that lane; the canonical `AGENT_CHAT.md`, also uncommitted, has the same bodies under
       headings that differ only in the microseconds. Neither ledger is in git.
-    - Not yet imported: the regression-Lambda v3 workers (`regression-lambda-v3` and its `-ops`
-      tools), which were still running at import.
+    - Not imported by #124: the regression-Lambda v3 workers (`regression-lambda-v3` and its
+      `-ops` tools), which were still running. #125 imports them.
+  - Merge: 23 commits, main `5d29d86e4dd80dd87d074f3d02d82d51923e4c73`, at 2026-09-29T05:12:34Z,
+    by the guarded merge script (approval after the last push, both runs green at the head,
+    reviewer eligibility, then a rebase merge pinned to the head).
+  - Reviewed head: `34c17d031c21486051c3c4f78430d49f019179df`. The tree is
+    `b3ddbee3fdf3410b6068f1a782eef7eb24746b9f` on both sides.
+  - CI at the reviewed head: PR run 36518812720 and manual run 36518812212 passed all nine jobs on
+    attempt 1.
+  - After merge: main-guard 36525095424 passed. full-main-cpu 36525095499 was still running
+    when this record was written; its result belongs to the release record.
+  - Custody: `…/claude-w0-w12/pr124-merge-20260929T051219Z/`, copied with the pre-merge checks to
+    `~/jope-evidence/closeout-20260929/10-pr124/`.
+  - Its record said the regression workers would be imported before it merged. Owner decision O1
+    (below) changed that order: #124 merged at its approved head without them, and v0.2.0 is cut
+    from #125's merge commit instead.
+  - Rehearsal, not the release: a dry run of `release.sh` at
+    `5d29d86e4dd80dd87d074f3d02d82d51923e4c73` (nothing tagged or published) passed, and an
+    independent verifier passed it. Its manifest binds that commit, the binary prints
+    `jope 0.2.0`, its highest glibc symbol is 2.34, cosign verified the signature against the
+    committed key, and two tampered copies failed. The evidence is
+    `~/jope-evidence/closeout-20260929/12-rehearsal-m1/`.
+- **This pull request, #125: the frozen regression workers and the v0.2.0 completion records.**
+  On #124's merge, `5d29d86e4dd80dd87d074f3d02d82d51923e4c73`.
+  - What: `deploy/lambda/regression` (package `jope-regression-lambda`, the Lambda binary
+    `regression-bootstrap`, its five record schemas, their registry and a compatibility fixture)
+    and `deploy/lambda/regression-ops` (package `jope-regression-assessment`, the offline
+    `regression-assess`), each its own Cargo workspace at the depth of the csv workers. The root
+    `Cargo.toml`, `Cargo.lock` and `crates/` are unchanged.
+  - Source: read only from the custody copy of the proven freeze,
+    `~/jope-evidence/closeout-20260929/21-v3-frozen/tree/`. The freeze proof is
+    `~/jope-evidence/closeout-20260929/20-v3-freeze-proof/FREEZE-PROOF.json`, sha256
+    `c4a740be1544e7a92758c32fbe9c04c74f244400cf9d382b2379d223c879e63b`: no process referenced
+    the two directories in three full `/proc` scans, and two sha256 passes 620 s apart equalled
+    each other and the pre-freeze snapshot (52 files, list sha256
+    `d2fe056bf3712d3118cd1d3b7d6f24065f320ed24af587a11eb247d34a3093f1`). Codex's stopped-state
+    handoff of 2026-09-29T05:04:31Z released the sources for this import.
+  - `deploy/lambda/SNAPSHOT.json` now records 148 files (71 tracked, 1 gzipped, 1 renamed, 73 in
+    custody, and 2 legacy schemas that equal `schemas/jope.score.v1.schema.json` and
+    `schemas/jope.hwm.v1.schema.json`) and 52 excluded entries. The regression bodies' private
+    environment files are recorded by existence and sha256 only.
+  - Build changes, each recorded in `SNAPSHOT.json`: `license` in both new manifests and
+    `publish = false` in the assessment tool's (cargo-deny policy), both new locks' `feat-math`
+    entry at 0.2.0 (`lambda-workspaces.sh sync-locks`; no source change was needed), and
+    home-relative host paths in four notes.
+  - The worker's per-call scratch under `/tmp` is the one exception to the no-`/tmp` rule: it is
+    the only writable path in the AWS Lambda runtime. Its tests write nothing there.
+  - CI: `deploy/ci/lambda.sh` builds and tests four workspaces, 61 tests (40, 2, 5 and 14).
+  - Custody: the 28 Python files in two deterministic tarballs beside #124's, with
+    `SHA256SUMS-regression` sha256
+    `9e90c7406e02d6b60538b3f2d7e0ea3985c766df462542a5d543d06ab825d819`, re-extracted and
+    re-hashed 28 of 28; `docs/archive/lambda-python-manifest.json` gains a row for each.
+  - Records: `CHANGELOG.md` (0.2.0 is dated 2026-09-29 and covers #91 to #125), this record, the
+    owner's decisions of 2026-09-29, the regression run's closure facts below, and
+    `docs/internal/lambda/README.md`.
   - Merge: this pull request's merge commit, `origin/main` immediately after the merge; its SHA
     is recorded in the release readback, not here. No tag exists yet: `release.sh --publish`
     creates `v0.2.0` on that commit. The Python package stays 0.1.0 and unreleased, and no wheel
     ships.
 
-Deferred to the next milestone. These are recorded, not dropped:
-1. **The live three-host S3 training demonstration.**
+**Owner decisions, 2026-09-29 (answered at about 04:20Z).** Verbatim:
+
+| # | Decision |
+|---|---|
+| O1 | Merge #124 now at its approved green head. Import the frozen v3 workers in a small #125. Tag v0.2.0 from #125's merge commit, so the release still contains everything. |
+| O2 | After v0.2.0, regression v2 comes **before** the three-host demo. Record this in MASTER_PLAN. |
+| O3 | Trim v2 to the first live qualification (Q5). Defer P11 (teacher corpus), P12 (operations), the novelty arm and multi-fidelity. |
+| O4 | Claude may stop the three idle Codex processes in `codex-training-support`, after re-verifying custody and that they are idle, then remove the lane. |
+
+Standing decisions: Rust in, Python preserved in custody with a tracked manifest; the fast signed
+host release; no wheel.
+
+**Priority change (O2 and O3).** After v0.2.0 the next milestone is regression trials v2 (the
+regression v2 workplan under an IP-neutral name), trimmed to its first live qualification, Q5
+(five stratified views). The teacher corpus (P11), operations (P12), the novelty arm and
+multi-fidelity are deferred. The live three-host S3 demonstration comes after it. This replaces
+the order #124 recorded: release, then the three-host demonstration.
+
+**Regression trials v2 workplan.** Codex's draft package (28 files) is preserved in
+`~/jope-evidence/closeout-20260929/03-workplan/`, mirrored under
+`/mnt/jope-archive/jopedime-closeout-20260929/03-workplan/`. Its `MANIFEST.sha256` has sha256
+`1d7927263f77a9b0259ac88949521c2fbc35570911000f040fa1576dd91ba1e4`, and its
+`PLAN-MANIFEST.sha256` has sha256
+`89d789fe6da6d284c1c4b5c62987685b56819b8886fee1e4757384e53fdb8e71`. Its critique and the v2.1
+plan are recorded in regression trials v2 PR-1.
+
+**Regression-Lambda v3 run: closure.** From Codex's stopped-state handoff in `AGENT_CHAT.md`
+(2026-09-29T05:04:31Z); nothing here was re-measured.
+- Terminal state: published. The closeout supervisor wrote `closeout-complete.json` at
+  2026-09-29T05:03:06Z (sha256 `9ed8cdf377536c56867467f9f228cbd9072357a8fdb3ed15320fd14cf63a5002`).
+  No run process remains, and the reserved concurrency of the four owned functions read back zero.
+- Terminal S3 authority:
+  `s3://veox-jopedime-learning-use2/experiments/regression-evolution/v1/campaigns/regression-20260928-v3/COMMIT.json`,
+  VersionId `u6VROvAgGDHlJE220X6Nl._UutWYKA_o`, sha256
+  `69643bbf38d9b3becf14df8e52ad100f57651c22a6897ac331f817c2ae1657a3`. The manifest has sha256
+  `4a022fccc11f9c7c53bec7966b07a837bc571f63a23d667ca0ed9a0caa9205f4` (VersionId
+  `0UxtrH95iVNNfR3CIiAX2hy4pM3W2f5o`, 112,341,749 bytes), and the restore proof sha256
+  `42ded421b44e91fd8c28ff6c632ade34779775ad98b43fba5550e086759a650a` (VersionId
+  `5LF1jUSqdIcjHPevOEJ3Kr9KlQUhJ6pA`).
+- Coverage: 3,533 source views, of which 3,502 were eligible and 31 excluded; 3,476 views have a
+  committed round. Zero views reached round 100: the summary records
+  `all_views_reached100=false`, with `outer_labels_generated=false` and
+  `canonical_teacher_promotion=false`.
+- Accounting: 55,109 admitted attempts and 54,852 verified invocation archives (the query closure
+  proves 54,852 accepted and 54,852 indexed, as equal sets); 58 attempts remain unknown and
+  reserved. The observed Lambda list-price estimate is about $5.96, and the conservative
+  reservation, earlier runs included, is $63.37, under the $1,000 controlled-Lambda ceiling. S3
+  and logging costs are separate. Accounted experiment storage is 105.8 GB (105,833,397,478
+  bytes).
+- Its source is imported by #125, above.
+
+Deferred to the next milestones. These are recorded, not dropped:
+1. **Regression trials v2** (owner decisions O2 and O3): restarted as small, repo-grounded,
+   owner-gated pull requests, trimmed to the Q5 qualification. PR-1 records the plan, its review
+   and the owner decisions. Every live stage needs its own written owner admission.
+2. **The live three-host S3 training demonstration**, after regression trials v2.
    - First, P6-0 search throughput. #118's run measured about 3 of 8 cores busy; the work is
      parallel folds and steady-state generations.
    - Then the P6-1 to P6-7 host setup.
    - Then windows A to E: 80% CPU search islands on three hosts, 3-GPU training, and S3 progress
      and restore.
    - The live W7 three-host run follows its runbooks under its own admission window.
-2. **A self-hosted `release.yml`:** a release lane, the Rust admission hook (ADR-0006 U4) and the
+3. **A self-hosted `release.yml`:** a release lane, the Rust admission hook (ADR-0006 U4) and the
    `jope-ci release` commands. Until then, releases come from `deploy/release/release.sh`.
-3. **Python P2 and P3:** the remaining CI tools move to Rust, and then the torch lineage, the
+4. **Python P2 and P3:** the remaining CI tools move to Rust, and then the torch lineage, the
    `python` lane and `pyproject` are retired.
-4. **The remaining W-series gaps and open issues:**
+5. **The remaining W-series gaps and open issues:**
    - #48, the C++/JS emit binding;
    - #62, live S3 from the command line. Its last status (2026-09-27) lists the live champion
      pull/push route, the unused `s3` feature of `jope-arena`, a receipted live `jope.hwm/v1`
@@ -349,10 +463,10 @@ Deferred to the next milestone. These are recorded, not dropped:
      `generic-api-key`, 18 `jope-env-files`) and a scheduled scan of every retained ref;
    - W7 cross-host exchange and continuation;
    - the other open W1–W12 items.
-5. **Two W7 test-support items:**
+6. **Two W7 test-support items:**
    - the transient `bounded_smartcluster` failure (post2) is not root-caused;
    - the port-reservation window left open by #122 needs a production change.
-6. **Smaller items:**
+7. **Smaller items:**
    - the jankurai measurement and its caps;
    - the WP5 cli-split;
    - the 35 `std::env::temp_dir` calls in the test code of 25 files outside feat-math, held on
@@ -373,28 +487,28 @@ Deferred to the next milestone. These are recorded, not dropped:
      and parameterising the xbabe2 paths that the imported Lambda scripts name.
 
 Next allowed action:
-1. Before this pull request merges, import the regression-Lambda v3 workers
-   (`.agent/experiments/regression-lambda-v3` and `regression-lambda-v3-ops`) once Codex has
-   frozen them and posted a stopped-state handoff with its file list and hashes; v0.2.0 waits for
-   that freeze (owner decision, 2026-09-29 about 00:15Z). Import them as the csv and monitor
-   bodies were: check every file against the handoff, extend `deploy/lambda/SNAPSHOT.json` and
-   the Python custody manifest, add their workspaces to `deploy/ci/lambda.sh`, re-run the gate,
-   and review the new head.
-2. Cut v0.2.0 on xbabe2, from a clean registered worktree at this pull request's merge commit
-   (`origin/main` immediately after the merge, after a fresh fetch): run
-   `deploy/release/release.sh v0.2.0 "$(git rev-parse origin/main)"` (the dry run), inspect its
-   evidence, then run the same command with `--publish`. `release.sh` refuses unless `HEAD` and
-   a freshly fetched `origin/main` both equal that SHA. Read back the receipts under
+1. Cut v0.2.0 with `deploy/release/release.sh` on xbabe2, from a clean registered worktree at
+   this pull request's merge commit (`origin/main` immediately after the merge, after a fresh
+   fetch): run `deploy/release/release.sh v0.2.0 "$(git rev-parse origin/main)"` (the dry run),
+   inspect its evidence, then run the same command with `--publish`. `release.sh` refuses unless
+   `HEAD` and a freshly fetched `origin/main` both equal that SHA. Read back the receipts under
    `~/jope-evidence/release-v0.2.0/`: `readback.json` must show cosign `Verified OK` against the
    committed key, `sha256sum -c` passing, the manifest `git_sha` equal to
    `git rev-parse v0.2.0^{commit}`, the binary printing `jope 0.2.0`, glibc at most 2.36 and a
    failing tampered copy. Record them with the main-guard and full-main-cpu runs on that commit.
-3. Close the `bench` and `demo` lanes under custody: bundle, restore independently, then
-   `git worktree remove`. Delete the landed branches. Confirm that `gh pr list --state open` is
-   empty and that `git log --all --not --remotes` shows only custody refs.
-4. Update the records of issues #47, #48 and #62, which stay open.
-5. Then start the next milestone, with P6-0 throughput as its own reviewed PR. The live three-host
-   S3 and GPU windows need their own admission. This record does not start them.
+   The main merge freeze holds until the tag is read back.
+2. Close the `demo` and `codex-training-support` lanes under custody: bundle, restore
+   independently, then `git worktree remove` without `--force`. For `codex-training-support`,
+   stop its three idle Codex processes first, only after re-verifying custody and that they are
+   idle (owner decision O4). Then fast-forward the canonical checkout.
+3. Clean up the refs: pin the unreachable and dropped-stash commits under
+   `refs/preserve/20260929/`, bundle every ref and restore the bundle independently, then delete
+   the landed branches and rename remote branches that hold unique commits to `archive/<name>`;
+   prune only after that. Confirm that `gh pr list --state open` is empty and that
+   `git log --all --not --remotes` shows only custody refs.
+4. Regression trials v2 PR-1: record the plan, its review and the owner decisions, after Codex
+   hands off the workplan package or the owner assigns it. Each later PR, and each live stage
+   with its own written owner admission, follows one at a time. This record does not start them.
 
 **2026-09-27 W1–W12 source gap closure.** [PR #114](https://github.com/neverhuman/JopeDime/pull/114)
 landed the remaining source- and fixture-scope W1–W12 work on top of #111 and #113:

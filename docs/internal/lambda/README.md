@@ -1,11 +1,12 @@
 # AWS Lambda experiments, 2026-09-28
 
 On 2026-09-28 Codex did six pieces of AWS Lambda work, each under its own claim in the
-coordination ledger. This page collects what the frozen records say about the five that are
-frozen; their source is in [`deploy/lambda/`](../../../deploy/lambda/README.md). Every figure below comes from
-the frozen results files under `deploy/lambda/` or from Codex's closing ledger entries of that
-day, and no figure was re-measured for this page. The costs are list-price estimates from AWS
-billing logs, not invoices.
+coordination ledger. This page collects what the frozen records say about all six; their source
+is in [`deploy/lambda/`](../../../deploy/lambda/README.md). Every figure below comes from the
+frozen results files under `deploy/lambda/` or from Codex's closing ledger entries, for the
+regression workers its stopped-state handoff of 2026-09-29T05:04:31Z, and no figure was
+re-measured for this page. The costs are list-price estimates from AWS billing logs, not
+invoices.
 
 | Experiment | Claimed (UTC) | Frozen or closed (UTC) | Source now |
 | --- | --- | --- | --- |
@@ -14,7 +15,7 @@ billing logs, not invoices.
 | Corpus run `gp-corpus-20260928-v1` | 16:57 | 18:40:38, CLOSE published | `deploy/lambda/csv/gp/`, `rust/src/` |
 | Planning discovery (read-only) | 19:18 | 20:03:26, CLOSE published | Python only: custody |
 | Terminal monitor | 20:17 | 20:53:47 | `deploy/lambda/watch/` |
-| Regression workers (v3) | 21:09 | still running at import | not imported yet |
+| Regression workers (v3) | 21:09 | 2026-09-29T05:03:06Z, closeout published | `deploy/lambda/regression/`, `deploy/lambda/regression-ops/` |
 
 ## Single-fit feasibility probe
 
@@ -76,6 +77,12 @@ billing logs, not invoices.
     `BzdbbUeVDiYFGTajIMWuwp_PvI_9SASj`. Independent live reads confirmed all four functions, their
     log groups, the runtime role and the archive-writer role absent.
 - The results are experimental engineering evidence, not qualified teaching data.
+- The qualified v2 corpus binary (Codex's clarification, 2026-09-29T05:04:31Z) is
+  `bootstrap-gp-extra`, built from `deploy/lambda/csv/rust/src/gp_v2.rs`. It embeds
+  `deploy/lambda/csv/gp/corpus/extra-train-jobs.json` through `JOPE_GP_MANIFEST_PATH` (manifest
+  sha256 `3a838ea7f00dfa2afd05728ae69e86f156feb275d9129ed9162768f45af89341`). `gp.rs` is the
+  preserved v1 compatibility runtime, and `gp_diagnose.rs` is diagnostic. The regression worker
+  is a separate binary, `regression-bootstrap`, and does not use that manifest variable.
 
 ## Planning discovery
 
@@ -102,20 +109,63 @@ billing logs, not invoices.
   (17 members, each equal to the imported files and to the frozen tree); delivery manifest sha256
   `9ce88f6b61d6f65457ed0cf3dca19a5360681169a110d1efa88e7b463003b314`.
 
+## Regression workers (v3)
+
+- A Rust Lambda worker (`regression-bootstrap`) fitted candidate programs on three inner folds of
+  each eligible regression view, in rounds, from a Python controller. An offline Rust tool
+  (`regression-assess`) replays a stored fold model and measures permutation sensitivity with no
+  new fit. The run's fixed deadline was 2026-09-29T05:00Z.
+- Terminal state: published. The closeout supervisor wrote `closeout-complete.json` at
+  2026-09-29T05:03:06Z (sha256 `9ed8cdf377536c56867467f9f228cbd9072357a8fdb3ed15320fd14cf63a5002`).
+  No run process remains, and the reserved concurrency of the four owned functions read back
+  zero.
+- Terminal S3 authority:
+  `s3://veox-jopedime-learning-use2/experiments/regression-evolution/v1/campaigns/regression-20260928-v3/COMMIT.json`,
+  VersionId `u6VROvAgGDHlJE220X6Nl._UutWYKA_o`, sha256
+  `69643bbf38d9b3becf14df8e52ad100f57651c22a6897ac331f817c2ae1657a3`. The manifest has sha256
+  `4a022fccc11f9c7c53bec7966b07a837bc571f63a23d667ca0ed9a0caa9205f4` (VersionId
+  `0UxtrH95iVNNfR3CIiAX2hy4pM3W2f5o`, 112,341,749 bytes), and the restore proof sha256
+  `42ded421b44e91fd8c28ff6c632ade34779775ad98b43fba5550e086759a650a` (VersionId
+  `5LF1jUSqdIcjHPevOEJ3Kr9KlQUhJ6pA`).
+- Coverage: 3,533 source views, of which 3,502 were eligible and 31 excluded; 3,476 views have a
+  committed round. Zero views reached round 100: the summary records
+  `all_views_reached100=false`, with `outer_labels_generated=false` and
+  `canonical_teacher_promotion=false`.
+- Accounting: 55,109 admitted attempts and 54,852 verified invocation archives (the query closure
+  proves 54,852 accepted and 54,852 indexed, as equal sets); 54,908 AWS REPORT records were
+  observed; 58 attempts remain unknown and reserved. The observed Lambda list-price estimate is
+  about $5.96 ($5.96248166068485). The conservative reservation, earlier runs included, is $63.37
+  ($63.365159459), under the $1,000 controlled-Lambda ceiling. S3 and logging costs are separate
+  and not counted as zero.
+- Accounted experiment storage: 105.8 GB (105,833,397,478 bytes).
+- Import: the sources were frozen at 2026-09-29T00:54:49Z. A read-only freeze proof
+  (`FREEZE-PROOF.json`, sha256 `c4a740be1544e7a92758c32fbe9c04c74f244400cf9d382b2379d223c879e63b`)
+  found no process using them and two identical sha256 passes 620 s apart, equal to the
+  pre-freeze snapshot. #125 imported them from a custody copy of that freeze.
+- The results are experimental engineering evidence: no outer labels were generated and nothing
+  was promoted to teaching data.
+
 ## Custody and what stays out of git
 
 - **Import record:** [`deploy/lambda/SNAPSHOT.json`](../../../deploy/lambda/SNAPSHOT.json) lists
-  all 99 files of the csv, monitor and planning bodies: 52 tracked, 1 gzipped, 1 renamed and 45
-  in custody, plus 33 excluded entries (the `.env` files by existence only, build output, bytecode
-  caches and two links to bulk evidence).
-- **Python:** 45 files in three deterministic tarballs on xbabe2 under
-  `~/jope-evidence/lambda-20260929/python/`, with `SHA256SUMS` and `FILES.sha256`.
+  all 148 files of the five bodies (csv, planning, regression, regression-ops and monitor): 71
+  tracked, 1 gzipped, 1 renamed, 73 in custody and 2 legacy schemas that equal the product
+  schemas, plus 52 excluded entries (the `.env` files by existence only, or by existence and
+  sha256 for the regression bodies, build output, bytecode caches and two links to bulk
+  evidence).
+- **Python:** 73 files in five deterministic tarballs on xbabe2 under
+  `~/jope-evidence/lambda-20260929/python/`: the #124 three with `SHA256SUMS` and `FILES.sha256`,
+  and the two regression ones with `SHA256SUMS-regression` and `FILES-regression.sha256`.
   [`docs/archive/lambda-python-manifest.json`](../../archive/lambda-python-manifest.json) records
   each file, its tarball and its anchor. A Rust port is a follow-up.
 - **Evidence:** receipts, logs, packages, results and restored mirrors stay in the runs' scratch
-  custody on xbabe2 (`~/scratch/jopedime-lambda-{csv,cost,gp,watch}-20260928/` and
-  `~/scratch/jopedime-gp-evolution-100-20260928/`). Codex's local deliverables (reports,
+  custody on xbabe2 (`~/scratch/jopedime-lambda-{csv,cost,gp,watch}-20260928/`,
+  `~/scratch/jopedime-gp-evolution-100-20260928/` and
+  `~/scratch/jopedime-regression-lambda-v3-20260928/`). Codex's local deliverables (reports,
   dashboards and tables under `outputs/`) are on the owner's workstation, per its 16:04Z entry.
+  The regression freeze proof and its custody copy are in `~/jope-evidence/closeout-20260929/`
+  (`20-v3-freeze-proof/` and `21-v3-frozen/`), mirrored under
+  `/mnt/jope-archive/jopedime-closeout-20260929/`.
 - **Regression workers (v3):** the owner decided on 2026-09-29 at about 00:15Z that v0.2.0 waits
-  for their freeze. They are imported into this pull request after Codex's frozen handoff and
-  before it merges.
+  for their freeze, and at about 04:20Z (O1) that #124 merges first and #125 imports them;
+  v0.2.0 is tagged from #125's merge commit.
