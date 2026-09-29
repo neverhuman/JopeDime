@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 4",
-  "count": 3796,
+  "count": 3823,
   "ignored": 62,
   "packages": {
    "battle-gpu": {
@@ -29,7 +29,7 @@
     }
    },
    "feat-math": {
-    "count": 439,
+    "count": 466,
     "ignored": 4,
     "binaries": {
      "feat-math": {
@@ -415,6 +415,22 @@
        "emitted_python_matches_interpreter_predictions"
       ]
      },
+     "feat-math::compat_freeze": {
+      "kind": "test",
+      "count": 9,
+      "ignored": 0,
+      "tests": [
+       "boundary_corpus_v1_is_well_formed_and_matches_its_definition",
+       "emitted_artifact_bytes_match_the_frozen_fixture",
+       "evaluator_identity_inputs_match_the_recorded_identity",
+       "expression_values_match_the_frozen_fixture",
+       "fixture_provenance_is_recorded",
+       "seeded_generator_streams_match_the_frozen_fixture",
+       "serialized_models_match_the_frozen_fixture",
+       "stage_outputs_match_the_frozen_fixture",
+       "vocabulary_registry_and_lineage_pins_match"
+      ]
+     },
      "feat-math::golden": {
       "kind": "test",
       "count": 83,
@@ -567,6 +583,31 @@
        "legacy_v2_parser_errors_rng_and_folds_are_frozen",
        "legacy_v2_reference_files_match_the_takeover_snapshot",
        "regenerate_legacy_v2_freeze"
+      ]
+     },
+     "feat-math::mathexpr_current_semantics": {
+      "kind": "test",
+      "count": 18,
+      "ignored": 0,
+      "tests": [
+       "asinh_overflow_becomes_zero_through_the_output_filter",
+       "clip_with_two_nan_bounds_is_a_typed_error",
+       "division_by_zero_returns_zero",
+       "division_guard_is_strictly_below_1e_minus_12",
+       "empty_row_min_and_max_are_positive_zero",
+       "empty_row_sums_are_negative_zero",
+       "erf_of_negative_zero_is_positive_zero",
+       "exp_saturates_through_the_magnitude_clamp",
+       "literal_parsing_quirks",
+       "log1p_returns_zero_at_or_below_minus_one",
+       "log_returns_zero_at_or_below_1e_minus_300",
+       "out_of_range_column_is_an_error_and_a_zero_stage_output",
+       "round_is_half_away_from_zero_by_the_shared_branch_formula",
+       "sigmoid_clamps_its_argument_to_plus_minus_30",
+       "sqrt_of_a_negative_is_zero",
+       "step_is_strict_and_nan_compares_false",
+       "the_output_filter_zeroes_non_finite_values_and_clamps_magnitude",
+       "x_in_row_context_is_an_error_and_a_zero_derive_output"
       ]
      },
      "feat-math::portable_parity": {
@@ -5991,7 +6032,7 @@
   }
  },
  "totals": {
-  "rust": 3796,
+  "rust": 3823,
   "python": 172
  }
 }
