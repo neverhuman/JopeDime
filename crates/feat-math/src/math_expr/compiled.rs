@@ -1,3 +1,4 @@
+use super::fault::Collect;
 use super::*;
 
 #[derive(Clone, Copy, Debug)]
@@ -167,6 +168,161 @@ fn evaluate(
                 values[i] = registers[args[i] as usize];
             }
             compute_func(func, values)?
+        }
+    })
+}
+
+/// The traced forms (kernel2 WP-1.3). Each equals its interpreter twin bit for bit and fault for
+/// fault: the postorder instructions run in the interpreter's evaluation order and stop at the
+/// same first error. The legacy entry points above keep `evaluate` and are unchanged.
+impl CompiledMathExpr {
+    /// [`CompiledMathExpr::eval_row`] with the faults its evaluation raised, in the compat shape
+    /// of [`MathExpr::eval_row_traced`], whose result it equals.
+    pub fn eval_row_traced(&self, row: &[f64]) -> (f64, FaultSet) {
+        self.run_traced(None, row)
+    }
+
+    /// [`CompiledMathExpr::eval_element`] with the faults its evaluation raised, in the compat
+    /// shape of [`MathExpr::eval_element_traced`], whose result it equals.
+    pub fn eval_element_traced(&self, x: f64, row: &[f64]) -> (f64, FaultSet) {
+        self.run_traced(Some(x), row)
+    }
+
+    /// [`CompiledMathExpr::map_row`] with the faults of each cell. The values are `map_row`'s,
+    /// bit for bit, and the faults of cell `j` are those of
+    /// [`MathExpr::eval_element_traced`] on `row[j]`. A stage's faults over the row are its
+    /// cells': an empty row has no cell, so it has no fault.
+    ///
+    /// As in `map_row`, the element-independent instructions run once per row. Each keeps the
+    /// faults its own evaluation raised, and each cell re-raises those of every such instruction
+    /// its own evaluation reaches, in instruction order, stopping where that evaluation stops. A
+    /// failed instruction therefore never reports the faults of a later one, and a failure in a
+    /// later instruction never hides the faults of an earlier element-dependent one.
+    pub fn map_row_traced(&self, row: &[f64]) -> (Vec<f64>, Vec<FaultSet>) {
+        let mut registers = [0.0; MAX_NODES];
+        let mut summaries = [None; 7];
+        let mut independent = [FaultSet::EMPTY; MAX_NODES];
+        let mut failed_at = None;
+        for (i, instruction) in self.code.iter().enumerate() {
+            if !self.element_dependent[i] {
+                let mut sink = Collect::default();
+                let result = evaluate_with(
+                    *instruction,
+                    &registers,
+                    None,
+                    row,
+                    &mut summaries,
+                    &mut sink,
+                );
+                independent[i] = sink.0;
+                match result {
+                    Ok(v) => registers[i] = v,
+                    Err(_) => {
+                        failed_at = Some(i);
+                        break;
+                    }
+                }
+            }
+        }
+        let mut values = Vec::with_capacity(row.len());
+        let mut faults = Vec::with_capacity(row.len());
+        for x in row {
+            let mut sink = Collect::default();
+            let mut failed = false;
+            for (i, instruction) in self.code.iter().enumerate() {
+                if self.element_dependent[i] {
+                    let result = evaluate_with(
+                        *instruction,
+                        &registers,
+                        Some(*x),
+                        row,
+                        &mut summaries,
+                        &mut sink,
+                    );
+                    match result {
+                        Ok(v) => registers[i] = v,
+                        Err(_) => {
+                            failed = true;
+                            break;
+                        }
+                    }
+                } else {
+                    sink.raise(independent[i]);
+                    if failed_at == Some(i) {
+                        failed = true;
+                        break;
+                    }
+                }
+            }
+            // An element failure is 0.0, as in `map_row`.
+            values.push(if failed {
+                0.0
+            } else {
+                safe_with(registers[self.code.len() - 1], &mut sink)
+            });
+            faults.push(sink.0);
+        }
+        (values, faults)
+    }
+
+    fn run_traced(&self, x: Option<f64>, row: &[f64]) -> (f64, FaultSet) {
+        let mut registers = [0.0; MAX_NODES];
+        let mut summaries = [None; 7];
+        let mut sink = Collect::default();
+        for (i, instruction) in self.code.iter().enumerate() {
+            match evaluate_with(*instruction, &registers, x, row, &mut summaries, &mut sink) {
+                Ok(v) => registers[i] = v,
+                // The compat shape: an evaluation error is 0.0, with its faults.
+                Err(_) => return (0.0, sink.0),
+            }
+        }
+        (safe_with(registers[self.code.len() - 1], &mut sink), sink.0)
+    }
+}
+
+/// [`evaluate`] with a fault sink. A row summary is cached with the faults its computation
+/// raised, and every read of the cached summary raises them again, as the interpreter does by
+/// computing the summary at each read.
+fn evaluate_with<S: FaultSink>(
+    instruction: Instruction,
+    registers: &[f64; MAX_NODES],
+    x: Option<f64>,
+    row: &[f64],
+    summaries: &mut [Option<(f64, FaultSet)>; 7],
+    sink: &mut S,
+) -> Result<f64> {
+    Ok(match instruction {
+        Instruction::Constant(v) => v,
+        Instruction::Variable(var) => {
+            if let Some(i) = summary_index(var) {
+                match summaries[i] {
+                    Some((value, faults)) => {
+                        sink.raise(faults);
+                        value
+                    }
+                    None => {
+                        let mut own = Collect::default();
+                        let value = eval_var_with(var, &EvalContext { x, row }, &mut own);
+                        sink.raise(own.0);
+                        let value = value?;
+                        summaries[i] = Some((value, own.0));
+                        value
+                    }
+                }
+            } else {
+                eval_var_with(var, &EvalContext { x, row }, sink)?
+            }
+        }
+        Instruction::Neg(a) => -registers[a as usize],
+        Instruction::Binary(op, a, b) => {
+            compute_binary_with(op, registers[a as usize], registers[b as usize], sink)
+        }
+        Instruction::Call(func, args, n) => {
+            let mut values = [0.0; 3];
+            for i in 0..n as usize {
+                values[i] = registers[args[i] as usize];
+            }
+            compute_func_with(func, values, sink)?
         }
     })
 }

@@ -2,12 +2,16 @@
 //!
 //! - The fault classes: bits, names and severities are append-only (WP-1.1).
 //! - The fault tables of WP-1.2 and WP-1.8, row by row, plus a case for every class, for the
-//!   boundaries of each guard and for the order in which faults accumulate. Values are compared
-//!   with the legacy entry points, and with recorded bits where the value is free of libm.
-//! - On every (expression, row) of the compatibility corpus, and every element of every row, the
-//!   traced value equals the legacy value bit for bit (0.0 for a legacy error, as the stage
-//!   fallback computes it), and a Hard fault is raised exactly when the legacy call returns an
-//!   error, with the class of that error's kind.
+//!   boundaries of each guard and for the order in which faults accumulate, through the
+//!   interpreter and the compiled form. Values are compared with the legacy entry points, and
+//!   with recorded bits where the value is free of libm.
+//! - On every (expression, row) of the compatibility corpus, and every element of every row, every
+//!   traced form (the interpreter's row, strict row and element calls; the compiled row and
+//!   element calls; the compiled map) returns the legacy value bit for bit (0.0 for a legacy
+//!   error, as the stage fallback computes it); a Hard fault is raised exactly when the legacy
+//!   call returns an error, with the class of that error's kind; and the compiled form reports
+//!   exactly the interpreter's faults (WP-1.2, WP-1.3).
+//! - The same on 10,000 random expressions from chained edits, on every corpus row (WP-1.3).
 //!
 //! Inputs come from PR 01's compatibility corpus, `tests/fixtures/compat_freeze/
 //! mathexpr_values.v1.json`: its rows and its expressions. The values recorded there are never
@@ -24,10 +28,10 @@
 //! - `legacy_eval_row_throughput` times the legacy entry points on the corpus.
 
 use feat_math::math_expr::{
-    CompiledMathExpr, FaultClass, FaultSet, FaultSeverity, MathEvalError, MathExpr,
+    CompiledMathExpr, ExpressionScope, FaultClass, FaultSet, FaultSeverity, MathEvalError, MathExpr,
 };
 use sha2::{Digest, Sha256};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
 use std::hint::black_box;
 use std::time::Instant;
@@ -176,10 +180,11 @@ struct Case {
 }
 
 impl Case {
-    fn describe(&self) -> String {
+    /// The row, and the element in element context, for failure messages.
+    fn row_text(&self) -> String {
         match self.x {
-            None => format!("{} on {:?}", self.source, self.row),
-            Some(x) => format!("{} on {:?} at x = {x:?}", self.source, self.row),
+            None => format!("{:?}", self.row),
+            Some(x) => format!("{:?} at x = {x:?}", self.row),
         }
     }
 }
@@ -488,11 +493,55 @@ fn hard_class_of(error: &anyhow::Error) -> FaultClass {
     }
 }
 
+/// Where a check is, for failure messages. It is formatted only when a check fails.
+#[derive(Clone, Copy)]
+struct At<'a> {
+    expr: &'a str,
+    row: &'a str,
+    element: Option<usize>,
+}
+
+impl<'a> At<'a> {
+    fn new(expr: &'a str, row: &'a str) -> Self {
+        At {
+            expr,
+            row,
+            element: None,
+        }
+    }
+
+    fn element(self, j: usize) -> Self {
+        At {
+            element: Some(j),
+            ..self
+        }
+    }
+}
+
+impl fmt::Display for At<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{} on {}", self.expr, self.row)?;
+        match self.element {
+            Some(j) => write!(f, " at element {j}"),
+            None => Ok(()),
+        }
+    }
+}
+
+/// A traced result as bits, so that NaN and the sign of zero compare exactly.
+fn key((value, faults): (f64, FaultSet)) -> (u64, FaultSet) {
+    (value.to_bits(), faults)
+}
+
+fn bits(values: &[f64]) -> Vec<u64> {
+    values.iter().map(|value| value.to_bits()).collect()
+}
+
 /// A traced result against the legacy result of the same call: the legacy value bit for bit
 /// with no Hard fault, or, for a legacy error, 0.0 with exactly one Hard class, of that error's
 /// kind.
 fn check_against_legacy(
-    what: &str,
+    at: At<'_>,
     legacy: &anyhow::Result<f64>,
     (value, faults): (f64, FaultSet),
 ) {
@@ -501,16 +550,16 @@ fn check_against_legacy(
             assert_eq!(
                 value.to_bits(),
                 expected.to_bits(),
-                "{what}: traced {value:?}, legacy {expected:?}"
+                "{at}: traced {value:?}, legacy {expected:?}"
             );
             assert_ne!(
                 faults.severity(),
                 Some(FaultSeverity::Hard),
-                "{what}: a legacy value with the faults {faults}"
+                "{at}: a legacy value with the faults {faults}"
             );
         }
         Err(error) => {
-            assert_eq!(value.to_bits(), POS_ZERO, "{what}: a legacy error is 0.0");
+            assert_eq!(value.to_bits(), POS_ZERO, "{at}: a legacy error is 0.0");
             let hard: Vec<FaultClass> = faults
                 .iter()
                 .filter(|class| class.severity() == FaultSeverity::Hard)
@@ -518,7 +567,7 @@ fn check_against_legacy(
             assert_eq!(
                 hard,
                 [hard_class_of(error)],
-                "{what}: the legacy error {error:#} with the faults {faults}"
+                "{at}: the legacy error {error:#} with the faults {faults}"
             );
         }
     }
@@ -526,34 +575,118 @@ fn check_against_legacy(
 
 /// `eval_row_traced_strict`: the compat-shape value and faults, or exactly the legacy error.
 fn check_strict(
-    what: &str,
+    at: At<'_>,
     expr: &MathExpr,
     row: &[f64],
     legacy: &anyhow::Result<f64>,
     traced: (f64, FaultSet),
 ) {
     match (expr.eval_row_traced_strict(row), legacy) {
-        (Ok((value, faults)), Ok(_)) => assert_eq!(
-            (value.to_bits(), faults),
-            (traced.0.to_bits(), traced.1),
-            "{what}: strict"
-        ),
+        (Ok(strict), Ok(_)) => assert_eq!(key(strict), key(traced), "{at}: strict"),
         (Err(strict), Err(legacy)) => {
-            assert_eq!(strict.to_string(), legacy.to_string(), "{what}: strict");
+            assert_eq!(strict.to_string(), legacy.to_string(), "{at}: strict");
             assert_eq!(
                 strict.downcast_ref::<MathEvalError>(),
                 legacy.downcast_ref::<MathEvalError>(),
-                "{what}: strict error type"
+                "{at}: strict error type"
             );
         }
-        (strict, legacy) => panic!("{what}: strict {strict:?}, legacy {legacy:?}"),
+        (strict, legacy) => panic!("{at}: strict {strict:?}, legacy {legacy:?}"),
+    }
+}
+
+/// Counts for the record: evaluations, those with any fault, legacy errors by their Hard class,
+/// and evaluations per class.
+#[derive(Default)]
+struct Tally {
+    evaluations: usize,
+    faulted: usize,
+    errors: BTreeMap<&'static str, usize>,
+    classes: BTreeMap<&'static str, usize>,
+}
+
+impl Tally {
+    fn add(&mut self, legacy: &anyhow::Result<f64>, faults: FaultSet) {
+        self.evaluations += 1;
+        self.faulted += usize::from(!faults.is_empty());
+        if let Err(error) = legacy {
+            *self.errors.entry(hard_class_of(error).name()).or_default() += 1;
+        }
+        for class in faults.iter() {
+            *self.classes.entry(class.name()).or_default() += 1;
+        }
+    }
+}
+
+impl fmt::Display for Tally {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "evaluations={} faulted={} legacy_errors={:?} classes={:?}",
+            self.evaluations, self.faulted, self.errors, self.classes
+        )
+    }
+}
+
+/// The interpreter's faults in row context and in element context.
+#[derive(Default)]
+struct Tallies {
+    rows: Tally,
+    elements: Tally,
+}
+
+/// Every traced entry point on one row, against the legacy entry points and against each other:
+/// the interpreter in row context (compat shape and strict) and at each element, the compiled
+/// form in row context and at each element, and the compiled map of the row.
+fn check_every_form(
+    at: At<'_>,
+    expr: &MathExpr,
+    compiled: &CompiledMathExpr,
+    cells: &[f64],
+    tallies: &mut Tallies,
+) {
+    let legacy = expr.eval_row(cells);
+    let traced = expr.eval_row_traced(cells);
+    check_against_legacy(at, &legacy, traced);
+    check_strict(at, expr, cells, &legacy, traced);
+    assert_eq!(
+        key(compiled.eval_row_traced(cells)),
+        key(traced),
+        "{at}: compiled eval_row_traced"
+    );
+    tallies.rows.add(&legacy, traced.1);
+    let (values, faults) = compiled.map_row_traced(cells);
+    let legacy_map = compiled.map_row(cells);
+    assert_eq!(
+        bits(&values),
+        bits(&legacy_map),
+        "{at}: map_row_traced values"
+    );
+    assert_eq!(faults.len(), cells.len(), "{at}: map_row_traced cells");
+    for (j, &x) in cells.iter().enumerate() {
+        let at = at.element(j);
+        let legacy = expr.eval_element(x, cells);
+        let traced = expr.eval_element_traced(x, cells);
+        check_against_legacy(at, &legacy, traced);
+        assert_eq!(
+            key(compiled.eval_element_traced(x, cells)),
+            key(traced),
+            "{at}: compiled eval_element_traced"
+        );
+        assert_eq!(
+            key((values[j], faults[j])),
+            key(traced),
+            "{at}: map_row_traced cell"
+        );
+        tallies.elements.add(&legacy, traced.1);
     }
 }
 
 /// One case through the interpreter.
 fn check_interpreter(case: &Case) {
-    let what = case.describe();
-    let expr = MathExpr::parse(case.source).unwrap_or_else(|error| panic!("{what}: {error}"));
+    let row_text = case.row_text();
+    let at = At::new(case.source, &row_text);
+    let expr = MathExpr::parse(case.source).unwrap_or_else(|error| panic!("{at}: {error}"));
     let (legacy, traced) = match case.x {
         None => (expr.eval_row(&case.row), expr.eval_row_traced(&case.row)),
         Some(x) => (
@@ -561,26 +694,52 @@ fn check_interpreter(case: &Case) {
             expr.eval_element_traced(x, &case.row),
         ),
     };
-    check_against_legacy(&what, &legacy, traced);
+    check_against_legacy(at, &legacy, traced);
     if let Some(bits) = case.bits {
         assert_eq!(
             traced.0.to_bits(),
             bits,
-            "{what}: expected {:?}, got {:?}",
+            "{at}: expected {:?}, got {:?}",
             f64::from_bits(bits),
             traced.0
         );
     }
-    assert_eq!(traced.1, case.faults, "{what}");
+    assert_eq!(traced.1, case.faults, "{at}");
     if case.x.is_none() {
-        check_strict(&what, &expr, &case.row, &legacy, traced);
+        check_strict(at, &expr, &case.row, &legacy, traced);
     }
+}
+
+/// One case through the compiled form, then every traced form on the case's row.
+fn check_compiled(case: &Case) {
+    let row_text = case.row_text();
+    let at = At::new(case.source, &row_text);
+    let expr = MathExpr::parse(case.source).unwrap_or_else(|error| panic!("{at}: {error}"));
+    let compiled = expr
+        .compile()
+        .unwrap_or_else(|error| panic!("{at}: {error}"));
+    let traced = match case.x {
+        None => compiled.eval_row_traced(&case.row),
+        Some(x) => compiled.eval_element_traced(x, &case.row),
+    };
+    if let Some(bits) = case.bits {
+        assert_eq!(traced.0.to_bits(), bits, "{at}: compiled value");
+    }
+    assert_eq!(traced.1, case.faults, "{at}: compiled");
+    check_every_form(at, &expr, &compiled, &case.row, &mut Tallies::default());
 }
 
 #[test]
 fn the_interpreter_reports_the_fault_tables() {
     for case in all_cases() {
         check_interpreter(&case);
+    }
+}
+
+#[test]
+fn the_compiled_form_reports_the_fault_tables() {
+    for case in all_cases() {
+        check_compiled(&case);
     }
 }
 
@@ -593,22 +752,74 @@ fn a_call_with_the_wrong_arity_from_a_deserialized_ast_is_a_compile_failure() {
     .expect("the historical AST encoding");
     let legacy = expr.eval_row(&[]).expect_err("a legacy arity error");
     assert_eq!(legacy.to_string(), "Sin received 2 arguments");
-    let (value, faults) = expr.eval_row_traced(&[]);
     assert_eq!(
-        (value.to_bits(), faults),
+        key(expr.eval_row_traced(&[])),
         (POS_ZERO, FaultSet::COMPILE_FAILED)
     );
     let strict = expr
         .eval_row_traced_strict(&[])
         .expect_err("the legacy error");
     assert_eq!(strict.to_string(), legacy.to_string());
-    let (value, faults) = expr.eval_element_traced(1.0, &[1.0]);
     assert_eq!(
-        (value.to_bits(), faults),
+        key(expr.eval_element_traced(1.0, &[1.0])),
         (POS_ZERO, FaultSet::COMPILE_FAILED)
     );
     // The stage refuses the same AST at compile time, which it reports as COMPILE_FAILED.
     assert!(expr.compile().is_err());
+}
+
+#[test]
+fn map_cells_report_exactly_what_their_own_evaluation_reaches() {
+    use feat_math::math_expr::FaultSet as F;
+    // In map_row the element-independent instructions run once per row, before any element; in
+    // each of these the row pass and an element's own evaluation stop at different points.
+    let cases = [
+        // The row pass fails at col(9), but each element divides by x - x first.
+        (
+            "1/(x-x)+col(9)",
+            vec![1.0],
+            vec![union_of(&[F::DIV_NEAR_ZERO, F::COLUMN_OOB])],
+        ),
+        // Element -1 fails at the clip, before 1/col(0), which the row pass evaluates for all.
+        (
+            "clip(1,x^0.5,x^0.5)+1/col(0)",
+            vec![0.0, -1.0],
+            vec![
+                F::DIV_NEAR_ZERO,
+                union_of(&[F::POW_NONFINITE, F::INVALID_CLIP_BOUNDS]),
+            ],
+        ),
+        // The row pass fails at c2, but the element fails at the clip first: another Hard class.
+        (
+            "clip(x,c0,c0) + c2",
+            vec![f64::NAN],
+            vec![union_of(&[F::NONFINITE_INPUT, F::INVALID_CLIP_BOUNDS])],
+        ),
+        // An empty row has no cell, so no fault, whatever its row pass raised.
+        ("row_min + col(0)", vec![], vec![]),
+    ];
+    for (source, row, expected) in cases {
+        let expr = MathExpr::parse(source).expect("parses");
+        let compiled = expr.compile().expect("compiles");
+        let (values, faults) = compiled.map_row_traced(&row);
+        assert_eq!(faults, expected, "{source} on {row:?}");
+        assert_eq!(bits(&values), bits(&compiled.map_row(&row)), "{source}");
+        check_every_form(
+            At::new(source, &format!("{row:?}")),
+            &expr,
+            &compiled,
+            &row,
+            &mut Tallies::default(),
+        );
+    }
+}
+
+#[test]
+fn the_expression_forms_and_fault_sets_stay_shareable_across_threads() {
+    fn shareable<T: Send + Sync>() {}
+    shareable::<MathExpr>();
+    shareable::<CompiledMathExpr>();
+    shareable::<FaultSet>();
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -669,61 +880,21 @@ fn corpus() -> Corpus {
     Corpus { rows, expressions }
 }
 
-/// Counts for the record: evaluations, those with any fault, legacy errors by their Hard class,
-/// and evaluations per class.
-#[derive(Default)]
-struct Tally {
-    evaluations: usize,
-    faulted: usize,
-    errors: BTreeMap<&'static str, usize>,
-    classes: BTreeMap<&'static str, usize>,
-}
-
-impl Tally {
-    fn add(&mut self, legacy: &anyhow::Result<f64>, faults: FaultSet) {
-        self.evaluations += 1;
-        self.faulted += usize::from(!faults.is_empty());
-        if let Err(error) = legacy {
-            *self.errors.entry(hard_class_of(error).name()).or_default() += 1;
-        }
-        for class in faults.iter() {
-            *self.classes.entry(class.name()).or_default() += 1;
-        }
-    }
-}
-
-impl fmt::Display for Tally {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "evaluations={} faulted={} legacy_errors={:?} classes={:?}",
-            self.evaluations, self.faulted, self.errors, self.classes
-        )
-    }
-}
-
 #[test]
-fn traced_values_equal_legacy_values_on_the_compat_corpus() {
+fn every_traced_form_equals_the_legacy_values_on_the_compat_corpus() {
     let corpus = corpus();
-    let mut rows = Tally::default();
-    let mut elements = Tally::default();
+    let mut tallies = Tallies::default();
     for source in &corpus.expressions {
         let expr = MathExpr::parse(source).expect("corpus expression parses");
+        let compiled = expr.compile().expect("corpus expression compiles");
         for row in &corpus.rows {
-            let cells = row.cells.as_slice();
-            let what = format!("{source} on {}", row.label);
-            let legacy = expr.eval_row(cells);
-            let traced = expr.eval_row_traced(cells);
-            check_against_legacy(&what, &legacy, traced);
-            check_strict(&what, &expr, cells, &legacy, traced);
-            rows.add(&legacy, traced.1);
-            for (j, &x) in cells.iter().enumerate() {
-                let what = format!("{source} on {} at element {j}", row.label);
-                let legacy = expr.eval_element(x, cells);
-                let traced = expr.eval_element_traced(x, cells);
-                check_against_legacy(&what, &legacy, traced);
-                elements.add(&legacy, traced.1);
-            }
+            check_every_form(
+                At::new(source, &row.label),
+                &expr,
+                &compiled,
+                &row.cells,
+                &mut tallies,
+            );
         }
     }
     eprintln!(
@@ -731,9 +902,97 @@ fn traced_values_equal_legacy_values_on_the_compat_corpus() {
         corpus.expressions.len(),
         corpus.rows.len()
     );
-    eprintln!("PROPERTY row context: {rows}");
-    eprintln!("PROPERTY element context: {elements}");
-    assert!(rows.evaluations > 0 && elements.evaluations > 0);
+    eprintln!("PROPERTY row context: {}", tallies.rows);
+    eprintln!("PROPERTY element context: {}", tallies.elements);
+    assert!(tallies.rows.evaluations > 0 && tallies.elements.evaluations > 0);
+}
+
+// ---------------------------------------------------------------------------------------------
+// Random expressions (WP-1.3)
+// ---------------------------------------------------------------------------------------------
+
+/// A recombination donor with every row summary, a negation, `x` and column reads: the edit
+/// operator's leaves draw only row_mean among the summaries, and it never negates, so without
+/// this the summary cache and most reductions would never meet the compiled form.
+const DONOR: &str =
+    "row_sum - row_l1 + row_l2 * row_min / row_max ^ row_std + row_mean * (-x) - c0 / c2 + sqrt(c1)";
+
+/// Chained random expressions for `seeds`, each checked on every corpus row through every traced
+/// form. Each seed edits the parent with `mutate_v1`, or recombines it with `DONOR` through
+/// `crossover_v1` at every third seed, within a scope that changes every 10 seeds (element or row
+/// context) and every 100 seeds (0, 1, 2, 3 or 8 columns); a parent outside the new scope
+/// restarts from `0.1`.
+fn random_expressions_agree(seeds: std::ops::Range<u64>) {
+    let corpus = corpus();
+    let donor = MathExpr::parse(DONOR).expect("the donor parses");
+    let restart = MathExpr::parse("0.1").expect("the restart parses");
+    let mut parent = restart.clone();
+    let mut distinct = BTreeSet::new();
+    let mut changed = 0usize;
+    let mut tallies = Tallies::default();
+    for seed in seeds.clone() {
+        let scope = ExpressionScope {
+            columns: [0, 1, 2, 3, 8][(seed / 100 % 5) as usize],
+            elementwise: seed / 10 % 2 == 0,
+            max_nodes: 64,
+            max_depth: 16,
+        };
+        if scope.validate(&parent).is_err() {
+            parent = restart.clone();
+        }
+        let edit = if seed % 3 == 0 {
+            parent.crossover_v1(&donor, seed, scope)
+        } else {
+            parent.mutate_v1(seed, scope)
+        }
+        .unwrap_or_else(|error| panic!("seed {seed}: {error}"));
+        changed += usize::from(edit.changed);
+        let expr = edit.expression;
+        let compiled = expr
+            .compile()
+            .unwrap_or_else(|error| panic!("seed {seed}: {error}"));
+        let ast = format!("{:?}", expr.ast());
+        let name = format!("seed {seed}, {ast}");
+        for row in &corpus.rows {
+            check_every_form(
+                At::new(&name, &row.label),
+                &expr,
+                &compiled,
+                &row.cells,
+                &mut tallies,
+            );
+        }
+        distinct.insert(ast);
+        parent = expr;
+    }
+    eprintln!(
+        "DIFFERENTIAL seeds={seeds:?} expressions={} changed={changed} distinct={} rows={}",
+        seeds.end - seeds.start,
+        distinct.len(),
+        corpus.rows.len()
+    );
+    eprintln!("DIFFERENTIAL row context: {}", tallies.rows);
+    eprintln!("DIFFERENTIAL element context: {}", tallies.elements);
+}
+
+#[test]
+fn random_expressions_agree_across_forms_seeds_0_to_2499() {
+    random_expressions_agree(0..2_500);
+}
+
+#[test]
+fn random_expressions_agree_across_forms_seeds_2500_to_4999() {
+    random_expressions_agree(2_500..5_000);
+}
+
+#[test]
+fn random_expressions_agree_across_forms_seeds_5000_to_7499() {
+    random_expressions_agree(5_000..7_500);
+}
+
+#[test]
+fn random_expressions_agree_across_forms_seeds_7500_to_9999() {
+    random_expressions_agree(7_500..10_000);
 }
 
 // ---------------------------------------------------------------------------------------------
