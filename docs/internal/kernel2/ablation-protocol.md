@@ -45,7 +45,8 @@ cargo run --release -p jope-bench -- ablation \
 - `--jobs` runs searches concurrently. The body does not depend on it.
 - `--scratch` keeps every search's evidence (`prepared.json`, `search.json`,
   `observations.json`). Without it the evidence goes to a temporary directory under `TMPDIR` and is
-  removed. Keep evidence outside the checkout.
+  removed; with neither `--scratch` nor `TMPDIR` the harness refuses to run rather than use the
+  system temporary directory. Keep evidence outside the checkout.
 
 The default dataset set is the ten committed regression datasets of `datasets/test` (collection
 `test-10`, `datasets/manifest.json`): the real-data half of fixture set D5 in `MASTER_PLAN.md`,
@@ -136,6 +137,9 @@ With A=A every run record of B equals A's, so the verdict is `no difference` and
 `no-difference` or `not-evaluated`.
 
 ## Tests
+
+The tests put their scratch directories under `TMPDIR`, or under the workspace's `target/tmp`
+when it is not set; never under the system temporary directory.
 
 - `ablation::tests::ablation_a_equals_a_replays_byte_for_byte_and_reports_no_difference` (PR tier,
   seconds): A=A on the two narrowest D5 datasets (`rdatasets-agridat-bancroft-peanut-uniformity`
