@@ -911,24 +911,13 @@ fn frozen_legacy_pipeline_can_cross_the_bound_cpp_bridge() {
 /// reads (emitter revision 3).
 const FITTED_WIDTH_STATUS: i32 = 8;
 
-/// Compiles `source` with a driver that prints `status=N` and, when the status is 0, the bits of
-/// each prediction. Unlike `compile_typed`, a nonzero status is a result here, not a failure. The
-/// process must exit 0 and write nothing to stderr, so a sanitizer report, an abort or a signal
-/// fails the test. `_GLIBCXX_ASSERTIONS` makes an unchecked `operator[]` past a vector's end abort
-/// even inside the vector's allocation, where AddressSanitizer sees nothing. With `sanitizer` the
-/// mode defaults to `address,undefined`; `JOPE_FITTED_CPP_SANITIZER` overrides it, as for
-/// `compile_typed`.
-#[allow(clippy::too_many_arguments)]
-fn compile_status(
-    source: &str,
-    directory: &Path,
-    name: &str,
-    sanitizer: bool,
-    values: &[f64],
-    missing: &[u8],
-    rows: usize,
-    columns: usize,
-) -> (i32, Vec<u64>) {
+/// Compiles `program`, an emitted source followed by a driver, and runs it; returns its stdout.
+/// The process must exit 0 and write nothing to stderr, so a sanitizer report, an abort or a
+/// signal fails the test. `_GLIBCXX_ASSERTIONS` makes an unchecked `operator[]` past a vector's
+/// end abort even inside the vector's allocation, where AddressSanitizer sees nothing. With
+/// `sanitizer` the mode defaults to `address,undefined`; `JOPE_FITTED_CPP_SANITIZER` overrides
+/// it, as for `compile_typed`.
+fn build_and_run(program: &str, directory: &Path, name: &str, sanitizer: bool) -> String {
     let mode = std::env::var("JOPE_FITTED_CPP_SANITIZER").unwrap_or_else(|_| {
         if sanitizer {
             "address,undefined".to_string()
@@ -939,32 +928,7 @@ fn compile_status(
     let suffix = mode.replace(',', "-");
     let cpp = directory.join(format!("{name}-{suffix}.cpp"));
     let binary = directory.join(format!("{name}-{suffix}"));
-    let encoded_values = values
-        .iter()
-        .map(|value| format!("f64_from_bits(0x{:016x}ULL)", value.to_bits()))
-        .collect::<Vec<_>>()
-        .join(",");
-    let encoded_missing = missing
-        .iter()
-        .map(u8::to_string)
-        .collect::<Vec<_>>()
-        .join(",");
-    let driver = format!(
-        r#"
-#include <cstdio>
-int main(){{
-  const double values[]={{ {encoded_values} }};
-  const std::uint8_t missing[]={{ {encoded_missing} }};
-  double output[{rows}]={{}};
-  const int status=jope_fitted_predict(values,{cells},missing,{cells},{rows},{columns},output,{rows});
-  std::printf("status=%d\n",status);
-  if(status==0)for(double value:output){{std::uint64_t bits;std::memcpy(&bits,&value,8);std::printf("%016llx\n",static_cast<unsigned long long>(bits));}}
-  return 0;
-}}
-"#,
-        cells = values.len()
-    );
-    std::fs::write(&cpp, format!("{source}\n{driver}")).unwrap();
+    std::fs::write(&cpp, program).unwrap();
     let mut command = feat_math::cxx::command(None);
     command.args([
         "-O2",
@@ -994,7 +958,49 @@ int main(){{
         "{name}: the generated C++ did not exit cleanly ({}):\n{stderr}",
         run.status
     );
-    let stdout = String::from_utf8(run.stdout).unwrap();
+    String::from_utf8(run.stdout).unwrap()
+}
+
+/// Compiles `source` with a driver that prints `status=N` and, when the status is 0, the bits of
+/// each prediction, as `build_and_run` builds and runs it. Unlike `compile_typed`, a nonzero
+/// status is a result here, not a failure.
+#[allow(clippy::too_many_arguments)]
+fn compile_status(
+    source: &str,
+    directory: &Path,
+    name: &str,
+    sanitizer: bool,
+    values: &[f64],
+    missing: &[u8],
+    rows: usize,
+    columns: usize,
+) -> (i32, Vec<u64>) {
+    let encoded_values = values
+        .iter()
+        .map(|value| format!("f64_from_bits(0x{:016x}ULL)", value.to_bits()))
+        .collect::<Vec<_>>()
+        .join(",");
+    let encoded_missing = missing
+        .iter()
+        .map(u8::to_string)
+        .collect::<Vec<_>>()
+        .join(",");
+    let driver = format!(
+        r#"
+#include <cstdio>
+int main(){{
+  const double values[]={{ {encoded_values} }};
+  const std::uint8_t missing[]={{ {encoded_missing} }};
+  double output[{rows}]={{}};
+  const int status=jope_fitted_predict(values,{cells},missing,{cells},{rows},{columns},output,{rows});
+  std::printf("status=%d\n",status);
+  if(status==0)for(double value:output){{std::uint64_t bits;std::memcpy(&bits,&value,8);std::printf("%016llx\n",static_cast<unsigned long long>(bits));}}
+  return 0;
+}}
+"#,
+        cells = values.len()
+    );
+    let stdout = build_and_run(&format!("{source}\n{driver}"), directory, name, sanitizer);
     let mut lines = stdout.lines();
     let status = lines
         .next()
@@ -1387,8 +1393,6 @@ fn empty_row_reductions_match_the_runtime_evaluator() {
             .collect::<Vec<_>>();
         assert_eq!(expected, [1.0f64.to_bits()], "{expression}");
         let artifact = emit_fitted_cpp17(&model).unwrap();
-        let cpp = scratch.path().join(format!("empty-row-{index}.cpp"));
-        let binary = scratch.path().join(format!("empty-row-{index}"));
         let driver = r#"
 #include <cstdio>
 int main(){
@@ -1397,33 +1401,15 @@ int main(){
   return 0;
 }
 "#;
-        std::fs::write(&cpp, format!("{}\n{driver}", artifact.source)).unwrap();
-        let compiled = feat_math::cxx::command(None)
-            .args([
-                "-O2",
-                "-ffp-contract=off",
-                "-fno-fast-math",
-                "-Wall",
-                "-Wextra",
-                "-Werror",
-            ])
-            .arg(&cpp)
-            .arg("-o")
-            .arg(&binary)
-            .output()
-            .unwrap();
-        assert!(
-            compiled.status.success(),
-            "g++ failed:\n{}",
-            String::from_utf8_lossy(&compiled.stderr)
-        );
-        let run = Command::new(&binary).output().unwrap();
-        assert!(run.status.success(), "{expression}: {run:?}");
-        let actual = String::from_utf8(run.stdout)
-            .unwrap()
-            .lines()
-            .map(|line| u64::from_str_radix(line, 16).unwrap())
-            .collect::<Vec<_>>();
+        let actual = build_and_run(
+            &format!("{}\n{driver}", artifact.source),
+            scratch.path(),
+            &format!("empty-row-{index}"),
+            false,
+        )
+        .lines()
+        .map(|line| u64::from_str_radix(line, 16).unwrap())
+        .collect::<Vec<_>>();
         assert_eq!(actual, expected, "{expression}");
     }
     scratch.close().unwrap();
