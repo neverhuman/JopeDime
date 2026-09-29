@@ -149,10 +149,14 @@ pub enum FitnessMode {
 /// How the search treats the faults of a candidate's `map` and `derive` stages (kernel2 WP-1.5).
 ///
 /// [`FaultPolicy::Legacy`], the default, is the search as it has always run: no scope check, no
-/// fault telemetry, and a guarded fallback value is scored like any other value. The other
-/// policies change how candidates are scored and ordered, and nothing else: they draw the same
-/// random numbers, and the code emitted for a winner never reads their telemetry. Under either of
-/// them:
+/// fault telemetry, a guarded fallback value scored like any other value, and exactly the random
+/// numbers it has always drawn. The other policies change how candidates are scored, ranked and
+/// selected. Parent selection keeps its draws, but a rejection or a penalty changes the ranking,
+/// and so which parents are drawn and the programs generated from them; and when the elites'
+/// rung-2 re-check rejects every candidate still ranked, the race reseeds with new random
+/// programs, which it never does under `Legacy`. A candidate that passes the scope check and
+/// raises no fault is scored as under `Legacy`, and the code emitted for a winner never reads the
+/// policies' telemetry. Under either of them:
 ///
 /// - The program that is actually fitted (the ridge surrogate in the surrogate search and at rung
 ///   0, the lite-budget program at rungs 1 and 2) is checked with
@@ -183,8 +187,10 @@ pub enum FaultPolicy {
     /// ([`FaultTotals::penalize`]), so every score derived from the folds carries the penalty. A
     /// candidate without a fault keeps its scores bit for bit. With `tie_break`, among candidates
     /// whose scores are within [`TIE_TOLERANCE`](crate::kernel::admission::TIE_TOLERANCE) of each
-    /// other, the one with fewer faulted cells ranks first and wins parent selection. Both lambdas
-    /// must be finite and non-negative ([`FaultPolicy::validate`]).
+    /// other, the one with fewer faulted cells ranks first and wins parent selection. The cells
+    /// are a count, not a rate, over the evaluation the score comes from (in the race, its highest
+    /// scored rung), so an evaluation with more cells, such as rung 2's, counts more of them at the
+    /// same rate. Both lambdas must be finite and non-negative ([`FaultPolicy::validate`]).
     Penalize {
         lambda_domain: f64,
         lambda_saturation: f64,
