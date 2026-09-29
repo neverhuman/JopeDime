@@ -54,6 +54,7 @@ Earlier history is not itemised here; see `git log`.
 - docs(release): `docs/release/README.md` explains how to verify a release, and `docs/release/signing.pub` is the release public key; hygiene refuses any tracked private-key block (release PR)
 - ci(release): `release.yml` is dispatch-only and fails closed at its first step; releases come from `release.sh` (release PR)
 - release: version 0.2.0 for the workspace and every product crate; `jope` prints `jope 0.2.0` (release PR)
+- lambda: import the serverless workers and terminal monitor (frozen snapshot) as standalone Cargo workspaces under `deploy/lambda`, outside the `jope` build, built and tested in the hygiene lane; their Python stays in custody with a tracked hash manifest (release PR)
 
 ### Documentation
 

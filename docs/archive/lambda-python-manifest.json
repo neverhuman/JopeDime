@@ -1,0 +1,755 @@
+{
+  "schema": "jopedime.lambda-python-manifest.v1",
+  "what": "The Python of the frozen AWS Lambda work of 2026-09-28, and the three files that only serve it, preserved byte-exact in custody instead of being tracked. deploy/lambda/SNAPSHOT.json lists every file of those bodies; this manifest is the restore record for the ones in custody.",
+  "why": "Owner rule of 2026-09-26: the stack is Rust, and no Python is added to the tree. Owner decision of 2026-09-29 ~00:15Z: the Lambda Rust goes into PR #124 and is built and tested by CI; the Lambda Python and other untracked orchestration is preserved byte-exact in custody with this tracked hash manifest.",
+  "follow_up": "Port these tools to Rust (the deploy, invoke, budget, archive and close controllers, the corpus inventory and curation, the analysis and plots, the monitor feed adapter and launcher, the planning tools), then retire this custody record.",
+  "restore": "On xbabe2: tar -xf ~/jope-evidence/lambda-20260929/python/<custody_tarball> -C <new directory>; then, in that directory, sha256sum -c --strict ~/jope-evidence/lambda-20260929/python/FILES.sha256. Each member path starts with its source directory name (lambda-csv/, lambda-watch/, gp-evolution-100/).",
+  "custody": {
+    "host": "xbabe2",
+    "directory": "~/jope-evidence/lambda-20260929/python",
+    "tarballs": [
+      {
+        "name": "lambda-python-csv.tar",
+        "body": "csv",
+        "sha256": "186558ef90f66830e43412ced0792a158fc04edf08ad9e3e01631e17111ff665",
+        "bytes": 276480,
+        "files": 25
+      },
+      {
+        "name": "lambda-python-watch.tar",
+        "body": "watch",
+        "sha256": "8a72817e09b9b35530049a37cb7314d3028919edea37fc723b11c43e3272845b",
+        "bytes": 40960,
+        "files": 6
+      },
+      {
+        "name": "lambda-python-planning.tar",
+        "body": "planning",
+        "sha256": "77d939ae3de94960bfeaf1f789c0d4379636a9be9465e43ba3efd32e8987d776",
+        "bytes": 112640,
+        "files": 14
+      }
+    ],
+    "files_sha256": {
+      "name": "FILES.sha256",
+      "sha256": "9f2ab33ad12e65c3e5073a07911bc402c4851902ad7020f06c44b8e04ecd4f98",
+      "note": "sha256sum format, one line per member, relative to the extraction directory"
+    },
+    "sha256sums": {
+      "name": "SHA256SUMS",
+      "sha256": "6cb7def8390edb0c31d7bf77d1b1d92692fc83402a9d6f5f6b6e23033418ab58",
+      "note": "lists the three tarballs and FILES.sha256; it does not list itself"
+    },
+    "created_with": "tar --format=gnu --sort=name --owner=0 --group=0 --numeric-owner --mtime=\"2026-09-29 00:00:00Z\" --no-recursion -cf <tarball> -T <member list>, from staged copies that had each been checked against their anchor; deterministic (a rebuild of the csv tarball was byte-identical)",
+    "verification": "2026-09-29: sha256sum -c --strict SHA256SUMS passed; the three tarballs were extracted into a fresh directory and every member re-hashed against FILES.sha256: 45 of 45 OK, no extra or missing file."
+  },
+  "anchors": {
+    "survey_manifest": "the read-only survey file lists of 2026-09-28T23:54Z; deploy/lambda/SNAPSHOT.json .anchors gives their hashes",
+    "s3_source_bundle": "the corpus campaign S3 source bundle (133 files; its 37 lambda-csv files equal the frozen tree); COMMIT 68ad89bab3a1bf10dcf8330d6e21bb985b27d826f68c256d900ba0680dbcbab1, CLOSE a9d9bbd77da43cc2af9e4f36d46bb677001db4c52419be6b473e410e8f4953ff",
+    "tarball": "the frozen monitor source archive, 17 members, each equal to the frozen tree",
+    "s3_discovery_archive": "the planning discovery archive under s3://veox-jopedime-learning-use2/experiments/ (COMMIT feb6e38cd829227d93b12dfbf898f71ccfeb5071128d18f8493d0702b9ea9039, CLOSE 83a85ba85014412bd4c7fbf5bf268f2133e1376f7000fb8a3627d6ea9f9d83ea)"
+  },
+  "counts": {
+    "files": 45,
+    "by_body": {
+      "csv": 25,
+      "planning": 14,
+      "watch": 6
+    },
+    "by_kind": {
+      "companion": 3,
+      "python": 42
+    },
+    "bytes": 379571
+  },
+  "files": [
+    {
+      "body": "csv",
+      "path": ".dockerignore",
+      "source": ".agent/experiments/lambda-csv/.dockerignore",
+      "sha256": "7cd8f3da3ba345d8ab552d9bf060fefa16e5ad500413f86db750c6d7e8f668fb",
+      "bytes": 38,
+      "mode": "100644",
+      "kind": "companion",
+      "custody_tarball": "lambda-python-csv.tar",
+      "member": "lambda-csv/.dockerignore",
+      "anchor": {
+        "survey_manifest": "33d3c18d0b3cca1cf246620946cf818d7466c68c8746ad2119857662ad686413",
+        "s3_source_bundle": null,
+        "note": "unchanged since the cost study stopped (2026-09-28T16:04Z); not part of the corpus campaign S3 source bundle"
+      }
+    },
+    {
+      "body": "csv",
+      "path": "gp/analyze.py",
+      "source": ".agent/experiments/lambda-csv/gp/analyze.py",
+      "sha256": "c419c4171856c08ee1aa0b55fb16e00834c749602010d438319ee4e351237638",
+      "bytes": 48025,
+      "mode": "100644",
+      "kind": "python",
+      "custody_tarball": "lambda-python-csv.tar",
+      "member": "lambda-csv/gp/analyze.py",
+      "anchor": {
+        "survey_manifest": "33d3c18d0b3cca1cf246620946cf818d7466c68c8746ad2119857662ad686413",
+        "s3_source_bundle": "d359ff3e44f01eaaeeb664bdcd41e6924a6317f4049926fd84fd6ff95f616a0a"
+      }
+    },
+    {
+      "body": "csv",
+      "path": "gp/budget.py",
+      "source": ".agent/experiments/lambda-csv/gp/budget.py",
+      "sha256": "da1bd8ba4bb590f1cf2338f6b8eea7916532bad622f05357dab1ddeea084f2ef",
+      "bytes": 7341,
+      "mode": "100644",
+      "kind": "python",
+      "custody_tarball": "lambda-python-csv.tar",
+      "member": "lambda-csv/gp/budget.py",
+      "anchor": {
+        "survey_manifest": "33d3c18d0b3cca1cf246620946cf818d7466c68c8746ad2119857662ad686413",
+        "s3_source_bundle": "d359ff3e44f01eaaeeb664bdcd41e6924a6317f4049926fd84fd6ff95f616a0a"
+      }
+    },
+    {
+      "body": "csv",
+      "path": "gp/burst_probe.py",
+      "source": ".agent/experiments/lambda-csv/gp/burst_probe.py",
+      "sha256": "8a27c4d7b60d4bba4335ebb0c7df15d5c738db6c4de99e2a1379ac96e582de96",
+      "bytes": 2573,
+      "mode": "100644",
+      "kind": "python",
+      "custody_tarball": "lambda-python-csv.tar",
+      "member": "lambda-csv/gp/burst_probe.py",
+      "anchor": {
+        "survey_manifest": "33d3c18d0b3cca1cf246620946cf818d7466c68c8746ad2119857662ad686413",
+        "s3_source_bundle": "d359ff3e44f01eaaeeb664bdcd41e6924a6317f4049926fd84fd6ff95f616a0a"
+      }
+    },
+    {
+      "body": "csv",
+      "path": "gp/campaign.py",
+      "source": ".agent/experiments/lambda-csv/gp/campaign.py",
+      "sha256": "38db29b8f9d4eccf1feee1bc52a5dafa84aba9ac103c8486638106ddd622fbaa",
+      "bytes": 29842,
+      "mode": "100644",
+      "kind": "python",
+      "custody_tarball": "lambda-python-csv.tar",
+      "member": "lambda-csv/gp/campaign.py",
+      "anchor": {
+        "survey_manifest": "33d3c18d0b3cca1cf246620946cf818d7466c68c8746ad2119857662ad686413",
+        "s3_source_bundle": "d359ff3e44f01eaaeeb664bdcd41e6924a6317f4049926fd84fd6ff95f616a0a"
+      }
+    },
+    {
+      "body": "csv",
+      "path": "gp/close_campaign.py",
+      "source": ".agent/experiments/lambda-csv/gp/close_campaign.py",
+      "sha256": "95520b528a62a2b162b5a4315ec099ae929f2085d6c415f430784ccd26ba2900",
+      "bytes": 6693,
+      "mode": "100644",
+      "kind": "python",
+      "custody_tarball": "lambda-python-csv.tar",
+      "member": "lambda-csv/gp/close_campaign.py",
+      "anchor": {
+        "survey_manifest": "33d3c18d0b3cca1cf246620946cf818d7466c68c8746ad2119857662ad686413",
+        "s3_source_bundle": "d359ff3e44f01eaaeeb664bdcd41e6924a6317f4049926fd84fd6ff95f616a0a"
+      }
+    },
+    {
+      "body": "csv",
+      "path": "gp/collect_logs.py",
+      "source": ".agent/experiments/lambda-csv/gp/collect_logs.py",
+      "sha256": "97af4b9ee031478e44cb51894cd493fedf03cf3a4f01c61b07e29bd4763ebc0c",
+      "bytes": 3710,
+      "mode": "100644",
+      "kind": "python",
+      "custody_tarball": "lambda-python-csv.tar",
+      "member": "lambda-csv/gp/collect_logs.py",
+      "anchor": {
+        "survey_manifest": "33d3c18d0b3cca1cf246620946cf818d7466c68c8746ad2119857662ad686413",
+        "s3_source_bundle": "d359ff3e44f01eaaeeb664bdcd41e6924a6317f4049926fd84fd6ff95f616a0a"
+      }
+    },
+    {
+      "body": "csv",
+      "path": "gp/control.py",
+      "source": ".agent/experiments/lambda-csv/gp/control.py",
+      "sha256": "28f51c2b89c6f7c9f2052dcc98a9ad2c5f7cf1bbaa55f21e082605ab93e3f317",
+      "bytes": 6957,
+      "mode": "100644",
+      "kind": "python",
+      "custody_tarball": "lambda-python-csv.tar",
+      "member": "lambda-csv/gp/control.py",
+      "anchor": {
+        "survey_manifest": "33d3c18d0b3cca1cf246620946cf818d7466c68c8746ad2119857662ad686413",
+        "s3_source_bundle": "d359ff3e44f01eaaeeb664bdcd41e6924a6317f4049926fd84fd6ff95f616a0a"
+      }
+    },
+    {
+      "body": "csv",
+      "path": "gp/cost_context.py",
+      "source": ".agent/experiments/lambda-csv/gp/cost_context.py",
+      "sha256": "05492d243acd5b6163b672f250cc1dcc09abb1e03fe8459ff981d558e17a19ad",
+      "bytes": 4365,
+      "mode": "100644",
+      "kind": "python",
+      "custody_tarball": "lambda-python-csv.tar",
+      "member": "lambda-csv/gp/cost_context.py",
+      "anchor": {
+        "survey_manifest": "33d3c18d0b3cca1cf246620946cf818d7466c68c8746ad2119857662ad686413",
+        "s3_source_bundle": "d359ff3e44f01eaaeeb664bdcd41e6924a6317f4049926fd84fd6ff95f616a0a"
+      }
+    },
+    {
+      "body": "csv",
+      "path": "gp/cost_probe.py",
+      "source": ".agent/experiments/lambda-csv/gp/cost_probe.py",
+      "sha256": "03db8dcd1865a8cdc6d8c05a955beef8f9da528ea5e18cacba00bc53dac2d1ab",
+      "bytes": 23753,
+      "mode": "100644",
+      "kind": "python",
+      "custody_tarball": "lambda-python-csv.tar",
+      "member": "lambda-csv/gp/cost_probe.py",
+      "anchor": {
+        "survey_manifest": "33d3c18d0b3cca1cf246620946cf818d7466c68c8746ad2119857662ad686413",
+        "s3_source_bundle": "d359ff3e44f01eaaeeb664bdcd41e6924a6317f4049926fd84fd6ff95f616a0a"
+      }
+    },
+    {
+      "body": "csv",
+      "path": "gp/curation.py",
+      "source": ".agent/experiments/lambda-csv/gp/curation.py",
+      "sha256": "15c5460604cc2a2050db124116d21e225b2831843567db474d7f16f2994c215a",
+      "bytes": 12298,
+      "mode": "100644",
+      "kind": "python",
+      "custody_tarball": "lambda-python-csv.tar",
+      "member": "lambda-csv/gp/curation.py",
+      "anchor": {
+        "survey_manifest": "33d3c18d0b3cca1cf246620946cf818d7466c68c8746ad2119857662ad686413",
+        "s3_source_bundle": "d359ff3e44f01eaaeeb664bdcd41e6924a6317f4049926fd84fd6ff95f616a0a"
+      }
+    },
+    {
+      "body": "csv",
+      "path": "gp/deploy_smallmem.py",
+      "source": ".agent/experiments/lambda-csv/gp/deploy_smallmem.py",
+      "sha256": "ca93dbb228ce92d2c6c0558323be56c582cb22e529d9ff1bc704ac280ba4a57c",
+      "bytes": 4417,
+      "mode": "100644",
+      "kind": "python",
+      "custody_tarball": "lambda-python-csv.tar",
+      "member": "lambda-csv/gp/deploy_smallmem.py",
+      "anchor": {
+        "survey_manifest": "33d3c18d0b3cca1cf246620946cf818d7466c68c8746ad2119857662ad686413",
+        "s3_source_bundle": "d359ff3e44f01eaaeeb664bdcd41e6924a6317f4049926fd84fd6ff95f616a0a"
+      }
+    },
+    {
+      "body": "csv",
+      "path": "gp/final_archive.py",
+      "source": ".agent/experiments/lambda-csv/gp/final_archive.py",
+      "sha256": "01ae7c4c77fc0a019516fd9a44a7aa235739a99033a2bf012bd09cbdcb90e190",
+      "bytes": 17695,
+      "mode": "100644",
+      "kind": "python",
+      "custody_tarball": "lambda-python-csv.tar",
+      "member": "lambda-csv/gp/final_archive.py",
+      "anchor": {
+        "survey_manifest": "33d3c18d0b3cca1cf246620946cf818d7466c68c8746ad2119857662ad686413",
+        "s3_source_bundle": "d359ff3e44f01eaaeeb664bdcd41e6924a6317f4049926fd84fd6ff95f616a0a"
+      }
+    },
+    {
+      "body": "csv",
+      "path": "gp/inventory.py",
+      "source": ".agent/experiments/lambda-csv/gp/inventory.py",
+      "sha256": "a7d94fd76b35c14fa553db688387be3f6b8cc3152e66a3c37a02bc28ca1905e3",
+      "bytes": 8093,
+      "mode": "100644",
+      "kind": "python",
+      "custody_tarball": "lambda-python-csv.tar",
+      "member": "lambda-csv/gp/inventory.py",
+      "anchor": {
+        "survey_manifest": "33d3c18d0b3cca1cf246620946cf818d7466c68c8746ad2119857662ad686413",
+        "s3_source_bundle": "d359ff3e44f01eaaeeb664bdcd41e6924a6317f4049926fd84fd6ff95f616a0a"
+      }
+    },
+    {
+      "body": "csv",
+      "path": "gp/make_report.py",
+      "source": ".agent/experiments/lambda-csv/gp/make_report.py",
+      "sha256": "a562ff8e477708fa380da26cf1c52e56b0d290c86c64da59353e92cdd820a846",
+      "bytes": 13411,
+      "mode": "100644",
+      "kind": "python",
+      "custody_tarball": "lambda-python-csv.tar",
+      "member": "lambda-csv/gp/make_report.py",
+      "anchor": {
+        "survey_manifest": "33d3c18d0b3cca1cf246620946cf818d7466c68c8746ad2119857662ad686413",
+        "s3_source_bundle": "d359ff3e44f01eaaeeb664bdcd41e6924a6317f4049926fd84fd6ff95f616a0a"
+      }
+    },
+    {
+      "body": "csv",
+      "path": "gp/plot_cost_probe.py",
+      "source": ".agent/experiments/lambda-csv/gp/plot_cost_probe.py",
+      "sha256": "b31280176eabb0779fd96244b6c0f58671edef9e03fa4c707bd89fc433421214",
+      "bytes": 16800,
+      "mode": "100644",
+      "kind": "python",
+      "custody_tarball": "lambda-python-csv.tar",
+      "member": "lambda-csv/gp/plot_cost_probe.py",
+      "anchor": {
+        "survey_manifest": "33d3c18d0b3cca1cf246620946cf818d7466c68c8746ad2119857662ad686413",
+        "s3_source_bundle": "d359ff3e44f01eaaeeb664bdcd41e6924a6317f4049926fd84fd6ff95f616a0a"
+      }
+    },
+    {
+      "body": "csv",
+      "path": "gp/store.py",
+      "source": ".agent/experiments/lambda-csv/gp/store.py",
+      "sha256": "81cb8e7b80e880206dcbf778f794bfe394155ed2543f199ff967b8b9643cf674",
+      "bytes": 10705,
+      "mode": "100644",
+      "kind": "python",
+      "custody_tarball": "lambda-python-csv.tar",
+      "member": "lambda-csv/gp/store.py",
+      "anchor": {
+        "survey_manifest": "33d3c18d0b3cca1cf246620946cf818d7466c68c8746ad2119857662ad686413",
+        "s3_source_bundle": "d359ff3e44f01eaaeeb664bdcd41e6924a6317f4049926fd84fd6ff95f616a0a"
+      }
+    },
+    {
+      "body": "csv",
+      "path": "gp/test_control.py",
+      "source": ".agent/experiments/lambda-csv/gp/test_control.py",
+      "sha256": "d85ba3cedf949393b68970ddd668c67bcdbfb33c690cfbee9bdc2aaee3126960",
+      "bytes": 4714,
+      "mode": "100644",
+      "kind": "python",
+      "custody_tarball": "lambda-python-csv.tar",
+      "member": "lambda-csv/gp/test_control.py",
+      "anchor": {
+        "survey_manifest": "33d3c18d0b3cca1cf246620946cf818d7466c68c8746ad2119857662ad686413",
+        "s3_source_bundle": "d359ff3e44f01eaaeeb664bdcd41e6924a6317f4049926fd84fd6ff95f616a0a"
+      }
+    },
+    {
+      "body": "csv",
+      "path": "gp/test_store.py",
+      "source": ".agent/experiments/lambda-csv/gp/test_store.py",
+      "sha256": "47759d49312058d924727a90b19879988ebbd060ab9f14440e03ed28406614c1",
+      "bytes": 5324,
+      "mode": "100644",
+      "kind": "python",
+      "custody_tarball": "lambda-python-csv.tar",
+      "member": "lambda-csv/gp/test_store.py",
+      "anchor": {
+        "survey_manifest": "33d3c18d0b3cca1cf246620946cf818d7466c68c8746ad2119857662ad686413",
+        "s3_source_bundle": "d359ff3e44f01eaaeeb664bdcd41e6924a6317f4049926fd84fd6ff95f616a0a"
+      }
+    },
+    {
+      "body": "csv",
+      "path": "gp/upload_inputs.py",
+      "source": ".agent/experiments/lambda-csv/gp/upload_inputs.py",
+      "sha256": "ad1eaa965c28af99bd39bc24dca16bcd4df8acb1953f7b45398cb38795c4d656",
+      "bytes": 2559,
+      "mode": "100644",
+      "kind": "python",
+      "custody_tarball": "lambda-python-csv.tar",
+      "member": "lambda-csv/gp/upload_inputs.py",
+      "anchor": {
+        "survey_manifest": "33d3c18d0b3cca1cf246620946cf818d7466c68c8746ad2119857662ad686413",
+        "s3_source_bundle": "d359ff3e44f01eaaeeb664bdcd41e6924a6317f4049926fd84fd6ff95f616a0a"
+      }
+    },
+    {
+      "body": "csv",
+      "path": "gp/writer.py",
+      "source": ".agent/experiments/lambda-csv/gp/writer.py",
+      "sha256": "d812819fd3cc9e600dbce5c6d8a69d09a338c5a985416d0a7897277f7d4ad2e2",
+      "bytes": 4420,
+      "mode": "100644",
+      "kind": "python",
+      "custody_tarball": "lambda-python-csv.tar",
+      "member": "lambda-csv/gp/writer.py",
+      "anchor": {
+        "survey_manifest": "33d3c18d0b3cca1cf246620946cf818d7466c68c8746ad2119857662ad686413",
+        "s3_source_bundle": "d359ff3e44f01eaaeeb664bdcd41e6924a6317f4049926fd84fd6ff95f616a0a"
+      }
+    },
+    {
+      "body": "csv",
+      "path": "versions/python-prototype/Dockerfile",
+      "source": ".agent/experiments/lambda-csv/versions/python-prototype/Dockerfile",
+      "sha256": "e682da9fcdf9640133a27a08c4aa3f6a864a273f915b6b84d1749012fcc41f0c",
+      "bytes": 251,
+      "mode": "100644",
+      "kind": "companion",
+      "custody_tarball": "lambda-python-csv.tar",
+      "member": "lambda-csv/versions/python-prototype/Dockerfile",
+      "anchor": {
+        "survey_manifest": "33d3c18d0b3cca1cf246620946cf818d7466c68c8746ad2119857662ad686413",
+        "s3_source_bundle": null,
+        "note": "unchanged since the cost study stopped (2026-09-28T16:04Z); not part of the corpus campaign S3 source bundle"
+      }
+    },
+    {
+      "body": "csv",
+      "path": "versions/python-prototype/experiment.py",
+      "source": ".agent/experiments/lambda-csv/versions/python-prototype/experiment.py",
+      "sha256": "e065c4ef80c2a91661c92e908e2c976c10390042535b26d7d302ce6d5a8b78bb",
+      "bytes": 8767,
+      "mode": "100644",
+      "kind": "python",
+      "custody_tarball": "lambda-python-csv.tar",
+      "member": "lambda-csv/versions/python-prototype/experiment.py",
+      "anchor": {
+        "survey_manifest": "33d3c18d0b3cca1cf246620946cf818d7466c68c8746ad2119857662ad686413",
+        "s3_source_bundle": null,
+        "note": "unchanged since the cost study stopped (2026-09-28T16:04Z); not part of the corpus campaign S3 source bundle"
+      }
+    },
+    {
+      "body": "csv",
+      "path": "versions/python-prototype/handler.py",
+      "source": ".agent/experiments/lambda-csv/versions/python-prototype/handler.py",
+      "sha256": "0b7384085d3244c3bac4f05e7915210907e1e74f12404e8c0ae6fe540c8a4b29",
+      "bytes": 3416,
+      "mode": "100644",
+      "kind": "python",
+      "custody_tarball": "lambda-python-csv.tar",
+      "member": "lambda-csv/versions/python-prototype/handler.py",
+      "anchor": {
+        "survey_manifest": "33d3c18d0b3cca1cf246620946cf818d7466c68c8746ad2119857662ad686413",
+        "s3_source_bundle": null,
+        "note": "unchanged since the cost study stopped (2026-09-28T16:04Z); not part of the corpus campaign S3 source bundle"
+      }
+    },
+    {
+      "body": "csv",
+      "path": "versions/python-prototype/verify_local.py",
+      "source": ".agent/experiments/lambda-csv/versions/python-prototype/verify_local.py",
+      "sha256": "dd7b036e35496dcc54f999fb3003e33f90949d769be6e2e70ffffbab93ad8d1f",
+      "bytes": 2215,
+      "mode": "100644",
+      "kind": "python",
+      "custody_tarball": "lambda-python-csv.tar",
+      "member": "lambda-csv/versions/python-prototype/verify_local.py",
+      "anchor": {
+        "survey_manifest": "33d3c18d0b3cca1cf246620946cf818d7466c68c8746ad2119857662ad686413",
+        "s3_source_bundle": null,
+        "note": "unchanged since the cost study stopped (2026-09-28T16:04Z); not part of the corpus campaign S3 source bundle"
+      }
+    },
+    {
+      "body": "planning",
+      "path": ".env.example",
+      "source": ".agent/experiments/gp-evolution-100/.env.example",
+      "sha256": "409cd3640c42954c1a68cc9107edd91e5e83dd8c029c5f386e5f582240750b13",
+      "bytes": 234,
+      "mode": "100644",
+      "kind": "companion",
+      "custody_tarball": "lambda-python-planning.tar",
+      "member": "gp-evolution-100/.env.example",
+      "anchor": {
+        "survey_manifest": "f85ebf46bc2189b0f411ecba3839ec6556dc498f31fa454f38807f090cf4ec3f",
+        "s3_discovery_archive": "040501251ed410691037f9d7dc25fce8be78e6ba708ac99e73d0ec64d6f8ed62",
+        "note": "its owner recorded the discovery archive as holding the source closure; not re-read here (no S3 calls)"
+      }
+    },
+    {
+      "body": "planning",
+      "path": "corpus/finalize.py",
+      "source": ".agent/experiments/gp-evolution-100/corpus/finalize.py",
+      "sha256": "2846eec76a4bdc1952318f7d01835eaea0806787fa4ad6eb57054f72a1d31329",
+      "bytes": 9347,
+      "mode": "100644",
+      "kind": "python",
+      "custody_tarball": "lambda-python-planning.tar",
+      "member": "gp-evolution-100/corpus/finalize.py",
+      "anchor": {
+        "survey_manifest": "f85ebf46bc2189b0f411ecba3839ec6556dc498f31fa454f38807f090cf4ec3f",
+        "s3_discovery_archive": "040501251ed410691037f9d7dc25fce8be78e6ba708ac99e73d0ec64d6f8ed62",
+        "note": "its owner recorded the discovery archive as holding the source closure; not re-read here (no S3 calls)"
+      }
+    },
+    {
+      "body": "planning",
+      "path": "corpus/inventory.py",
+      "source": ".agent/experiments/gp-evolution-100/corpus/inventory.py",
+      "sha256": "dd12328e30c46c0968bd77dfb5242a5043eba1281a260d308bcb505df4e0b32a",
+      "bytes": 17728,
+      "mode": "100644",
+      "kind": "python",
+      "custody_tarball": "lambda-python-planning.tar",
+      "member": "gp-evolution-100/corpus/inventory.py",
+      "anchor": {
+        "survey_manifest": "f85ebf46bc2189b0f411ecba3839ec6556dc498f31fa454f38807f090cf4ec3f",
+        "s3_discovery_archive": "040501251ed410691037f9d7dc25fce8be78e6ba708ac99e73d0ec64d6f8ed62",
+        "note": "its owner recorded the discovery archive as holding the source closure; not re-read here (no S3 calls)"
+      }
+    },
+    {
+      "body": "planning",
+      "path": "corpus/package.py",
+      "source": ".agent/experiments/gp-evolution-100/corpus/package.py",
+      "sha256": "18c80f0a16f2b1cf61ed1559016cd3e44fe1ac5820a0a7c16f249b83b976b5a0",
+      "bytes": 14487,
+      "mode": "100644",
+      "kind": "python",
+      "custody_tarball": "lambda-python-planning.tar",
+      "member": "gp-evolution-100/corpus/package.py",
+      "anchor": {
+        "survey_manifest": "f85ebf46bc2189b0f411ecba3839ec6556dc498f31fa454f38807f090cf4ec3f",
+        "s3_discovery_archive": "040501251ed410691037f9d7dc25fce8be78e6ba708ac99e73d0ec64d6f8ed62",
+        "note": "its owner recorded the discovery archive as holding the source closure; not re-read here (no S3 calls)"
+      }
+    },
+    {
+      "body": "planning",
+      "path": "root/capacity.py",
+      "source": ".agent/experiments/gp-evolution-100/root/capacity.py",
+      "sha256": "f84911e7ea65dc39a2917ca6a2734adf527decdffce58886e5b64c25b86ac1df",
+      "bytes": 3751,
+      "mode": "100644",
+      "kind": "python",
+      "custody_tarball": "lambda-python-planning.tar",
+      "member": "gp-evolution-100/root/capacity.py",
+      "anchor": {
+        "survey_manifest": "f85ebf46bc2189b0f411ecba3839ec6556dc498f31fa454f38807f090cf4ec3f",
+        "s3_discovery_archive": "040501251ed410691037f9d7dc25fce8be78e6ba708ac99e73d0ec64d6f8ed62",
+        "note": "its owner recorded the discovery archive as holding the source closure; not re-read here (no S3 calls)"
+      }
+    },
+    {
+      "body": "planning",
+      "path": "root/history_dashboard.py",
+      "source": ".agent/experiments/gp-evolution-100/root/history_dashboard.py",
+      "sha256": "9e25705eb7ff1bcc694ad6847056d46899c401bf24a9667d4d1b856d442ec435",
+      "bytes": 10115,
+      "mode": "100644",
+      "kind": "python",
+      "custody_tarball": "lambda-python-planning.tar",
+      "member": "gp-evolution-100/root/history_dashboard.py",
+      "anchor": {
+        "survey_manifest": "f85ebf46bc2189b0f411ecba3839ec6556dc498f31fa454f38807f090cf4ec3f",
+        "s3_discovery_archive": "040501251ed410691037f9d7dc25fce8be78e6ba708ac99e73d0ec64d6f8ed62",
+        "note": "its owner recorded the discovery archive as holding the source closure; not re-read here (no S3 calls)"
+      }
+    },
+    {
+      "body": "planning",
+      "path": "root/measure_prior.py",
+      "source": ".agent/experiments/gp-evolution-100/root/measure_prior.py",
+      "sha256": "def5d8aa45257a188214650a04d2c8aab8f6b70ce72ef9096ba90e1a200b9cf0",
+      "bytes": 3489,
+      "mode": "100644",
+      "kind": "python",
+      "custody_tarball": "lambda-python-planning.tar",
+      "member": "gp-evolution-100/root/measure_prior.py",
+      "anchor": {
+        "survey_manifest": "f85ebf46bc2189b0f411ecba3839ec6556dc498f31fa454f38807f090cf4ec3f",
+        "s3_discovery_archive": "040501251ed410691037f9d7dc25fce8be78e6ba708ac99e73d0ec64d6f8ed62",
+        "note": "its owner recorded the discovery archive as holding the source closure; not re-read here (no S3 calls)"
+      }
+    },
+    {
+      "body": "planning",
+      "path": "root/publish_discovery.py",
+      "source": ".agent/experiments/gp-evolution-100/root/publish_discovery.py",
+      "sha256": "4283b9ba8d7db3cd96c8d4db0913e5f81e4d2d620d8ca99578f64ee053218395",
+      "bytes": 9458,
+      "mode": "100644",
+      "kind": "python",
+      "custody_tarball": "lambda-python-planning.tar",
+      "member": "gp-evolution-100/root/publish_discovery.py",
+      "anchor": {
+        "survey_manifest": "f85ebf46bc2189b0f411ecba3839ec6556dc498f31fa454f38807f090cf4ec3f",
+        "s3_discovery_archive": "040501251ed410691037f9d7dc25fce8be78e6ba708ac99e73d0ec64d6f8ed62",
+        "note": "its owner recorded the discovery archive as holding the source closure; not re-read here (no S3 calls)"
+      }
+    },
+    {
+      "body": "planning",
+      "path": "runtime/protocol_sim.py",
+      "source": ".agent/experiments/gp-evolution-100/runtime/protocol_sim.py",
+      "sha256": "3d1ee0a7085a42f17eadbe3812131033398707530c1b6520e87e6f00044bb801",
+      "bytes": 7214,
+      "mode": "100644",
+      "kind": "python",
+      "custody_tarball": "lambda-python-planning.tar",
+      "member": "gp-evolution-100/runtime/protocol_sim.py",
+      "anchor": {
+        "survey_manifest": "f85ebf46bc2189b0f411ecba3839ec6556dc498f31fa454f38807f090cf4ec3f",
+        "s3_discovery_archive": "040501251ed410691037f9d7dc25fce8be78e6ba708ac99e73d0ec64d6f8ed62",
+        "note": "its owner recorded the discovery archive as holding the source closure; not re-read here (no S3 calls)"
+      }
+    },
+    {
+      "body": "planning",
+      "path": "runtime/review_fitness_v2.py",
+      "source": ".agent/experiments/gp-evolution-100/runtime/review_fitness_v2.py",
+      "sha256": "6318a005d9b7327678055175c1cf34d727cea252808158903d11334c0fbe3212",
+      "bytes": 3732,
+      "mode": "100644",
+      "kind": "python",
+      "custody_tarball": "lambda-python-planning.tar",
+      "member": "gp-evolution-100/runtime/review_fitness_v2.py",
+      "anchor": {
+        "survey_manifest": "f85ebf46bc2189b0f411ecba3839ec6556dc498f31fa454f38807f090cf4ec3f",
+        "s3_discovery_archive": "040501251ed410691037f9d7dc25fce8be78e6ba708ac99e73d0ec64d6f8ed62",
+        "note": "its owner recorded the discovery archive as holding the source closure; not re-read here (no S3 calls)"
+      }
+    },
+    {
+      "body": "planning",
+      "path": "seeds/build_catalog.py",
+      "source": ".agent/experiments/gp-evolution-100/seeds/build_catalog.py",
+      "sha256": "5a36a6040cb14f9602ec75235c560ec316dccbbda3bf991c1b9a1ddc78076631",
+      "bytes": 12615,
+      "mode": "100644",
+      "kind": "python",
+      "custody_tarball": "lambda-python-planning.tar",
+      "member": "gp-evolution-100/seeds/build_catalog.py",
+      "anchor": {
+        "survey_manifest": "f85ebf46bc2189b0f411ecba3839ec6556dc498f31fa454f38807f090cf4ec3f",
+        "s3_discovery_archive": "040501251ed410691037f9d7dc25fce8be78e6ba708ac99e73d0ec64d6f8ed62",
+        "note": "its owner recorded the discovery archive as holding the source closure; not re-read here (no S3 calls)"
+      }
+    },
+    {
+      "body": "planning",
+      "path": "seeds/extract_native_metadata.py",
+      "source": ".agent/experiments/gp-evolution-100/seeds/extract_native_metadata.py",
+      "sha256": "a87cee1cc414056e2de80e2ef97fec07bc4c39267483224bb993bfae255c0abf",
+      "bytes": 3551,
+      "mode": "100644",
+      "kind": "python",
+      "custody_tarball": "lambda-python-planning.tar",
+      "member": "gp-evolution-100/seeds/extract_native_metadata.py",
+      "anchor": {
+        "survey_manifest": "f85ebf46bc2189b0f411ecba3839ec6556dc498f31fa454f38807f090cf4ec3f",
+        "s3_discovery_archive": "040501251ed410691037f9d7dc25fce8be78e6ba708ac99e73d0ec64d6f8ed62",
+        "note": "its owner recorded the discovery archive as holding the source closure; not re-read here (no S3 calls)"
+      }
+    },
+    {
+      "body": "planning",
+      "path": "seeds/live_inventory.py",
+      "source": ".agent/experiments/gp-evolution-100/seeds/live_inventory.py",
+      "sha256": "17d431fce96e801b4b198524f7dee27941a223d61697c015c59966e8b0777792",
+      "bytes": 2739,
+      "mode": "100644",
+      "kind": "python",
+      "custody_tarball": "lambda-python-planning.tar",
+      "member": "gp-evolution-100/seeds/live_inventory.py",
+      "anchor": {
+        "survey_manifest": "f85ebf46bc2189b0f411ecba3839ec6556dc498f31fa454f38807f090cf4ec3f",
+        "s3_discovery_archive": "040501251ed410691037f9d7dc25fce8be78e6ba708ac99e73d0ec64d6f8ed62",
+        "note": "its owner recorded the discovery archive as holding the source closure; not re-read here (no S3 calls)"
+      }
+    },
+    {
+      "body": "planning",
+      "path": "seeds/sample.py",
+      "source": ".agent/experiments/gp-evolution-100/seeds/sample.py",
+      "sha256": "2e6f11e57bfd8f7988059b7ab81234100cf9e009e5fd03f9ba1d5e5963226d82",
+      "bytes": 1600,
+      "mode": "100644",
+      "kind": "python",
+      "custody_tarball": "lambda-python-planning.tar",
+      "member": "gp-evolution-100/seeds/sample.py",
+      "anchor": {
+        "survey_manifest": "f85ebf46bc2189b0f411ecba3839ec6556dc498f31fa454f38807f090cf4ec3f",
+        "s3_discovery_archive": "040501251ed410691037f9d7dc25fce8be78e6ba708ac99e73d0ec64d6f8ed62",
+        "note": "its owner recorded the discovery archive as holding the source closure; not re-read here (no S3 calls)"
+      }
+    },
+    {
+      "body": "watch",
+      "path": "feed.py",
+      "source": ".agent/experiments/lambda-watch/feed.py",
+      "sha256": "3f6d7401e3fffe250b63f945358e7a3741db89a6eaa3c7bf995015f769557d1c",
+      "bytes": 17345,
+      "mode": "100755",
+      "kind": "python",
+      "custody_tarball": "lambda-python-watch.tar",
+      "member": "lambda-watch/feed.py",
+      "anchor": {
+        "tarball": "d2fda4e7d582a633d4b364ceb96801112e89bbf25139b2328a57826dd9115c86"
+      }
+    },
+    {
+      "body": "watch",
+      "path": "render_preview.py",
+      "source": ".agent/experiments/lambda-watch/render_preview.py",
+      "sha256": "3b4f5fc9e315723dd1cb8a173f0fee56d58ea44428faf14195d07323895ad3f6",
+      "bytes": 1244,
+      "mode": "100644",
+      "kind": "python",
+      "custody_tarball": "lambda-python-watch.tar",
+      "member": "lambda-watch/render_preview.py",
+      "anchor": {
+        "tarball": "d2fda4e7d582a633d4b364ceb96801112e89bbf25139b2328a57826dd9115c86"
+      }
+    },
+    {
+      "body": "watch",
+      "path": "test_feed.py",
+      "source": ".agent/experiments/lambda-watch/test_feed.py",
+      "sha256": "609efd8abe625ea0a673398f190b93d7cf5835377dd51860089a275f9891f3b0",
+      "bytes": 4375,
+      "mode": "100644",
+      "kind": "python",
+      "custody_tarball": "lambda-python-watch.tar",
+      "member": "lambda-watch/test_feed.py",
+      "anchor": {
+        "tarball": "d2fda4e7d582a633d4b364ceb96801112e89bbf25139b2328a57826dd9115c86"
+      }
+    },
+    {
+      "body": "watch",
+      "path": "verify_launcher.py",
+      "source": ".agent/experiments/lambda-watch/verify_launcher.py",
+      "sha256": "a5bc00c6bbd511f45da9b9d532cf1456c7b65202813efea8a8a75c76cb0e539a",
+      "bytes": 2003,
+      "mode": "100644",
+      "kind": "python",
+      "custody_tarball": "lambda-python-watch.tar",
+      "member": "lambda-watch/verify_launcher.py",
+      "anchor": {
+        "tarball": "d2fda4e7d582a633d4b364ceb96801112e89bbf25139b2328a57826dd9115c86"
+      }
+    },
+    {
+      "body": "watch",
+      "path": "verify_tui.py",
+      "source": ".agent/experiments/lambda-watch/verify_tui.py",
+      "sha256": "025a3116ce428e04f7c5516cc6c760f9c76259cceb23c4e9d5a71a4f3a075846",
+      "bytes": 3853,
+      "mode": "100644",
+      "kind": "python",
+      "custody_tarball": "lambda-python-watch.tar",
+      "member": "lambda-watch/verify_tui.py",
+      "anchor": {
+        "tarball": "d2fda4e7d582a633d4b364ceb96801112e89bbf25139b2328a57826dd9115c86"
+      }
+    },
+    {
+      "body": "watch",
+      "path": "watch",
+      "source": ".agent/experiments/lambda-watch/watch",
+      "sha256": "dfd024cc2249f14d8ce91050175a51d4eebd9a45675a449ad796cdc614731507",
+      "bytes": 2309,
+      "mode": "100755",
+      "kind": "python",
+      "custody_tarball": "lambda-python-watch.tar",
+      "member": "lambda-watch/watch",
+      "anchor": {
+        "tarball": "d2fda4e7d582a633d4b364ceb96801112e89bbf25139b2328a57826dd9115c86"
+      }
+    }
+  ]
+}
