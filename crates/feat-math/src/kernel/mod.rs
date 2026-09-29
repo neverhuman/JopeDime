@@ -7,6 +7,7 @@ pub mod pipeline;
 mod program;
 pub mod scope;
 pub mod telemetry;
+pub mod width;
 
 pub use program::Program;
 
