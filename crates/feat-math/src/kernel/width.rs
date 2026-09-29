@@ -203,9 +203,12 @@ pub fn required_input_width(op: &FittedOp) -> WidthReq {
 /// Checks that the fitted state of `op` agrees with itself: the per-column
 /// vectors have one length, the fitted column indices lie inside the fitted
 /// columns, and every table `apply_op` reads an element of is non-empty. With
-/// that, no width [`required_input_width`] admits can make `apply_op` read out
-/// of bounds or panic. State that `fit_op` produced always passes; the check is
-/// for state that arrived another way, such as a stored or edited model.
+/// that, at any width [`required_input_width`] admits, `apply_op` reads nothing
+/// out of bounds and does not panic, unless a fitted size makes an output row
+/// wider than any `Vec` can hold (a tampered `degree`, `bins` or `k`):
+/// [`output_width`] refuses that too, and applies this check and the width
+/// requirement as well. State that `fit_op` produced always passes; the check
+/// is for state that arrived another way, such as a stored or edited model.
 /// Returns a short reason on failure.
 pub fn check_fitted_state(op: &FittedOp) -> std::result::Result<(), &'static str> {
     match op {

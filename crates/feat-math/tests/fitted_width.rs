@@ -1038,6 +1038,26 @@ fn schema_bound_stages_return_errors_instead_of_panicking() {
             |weights| weights[0].as_array_mut().unwrap().extend([serde_json::json!(0.5), serde_json::json!(0.5)]),
             "pls_project weight spans 4 columns, but the feature block has 2 and the fitted means 2",
         ),
+        // Consistent state whose output row no Vec can hold: `Vec` panicked with a capacity
+        // overflow.
+        (
+            "(pipe X (cheb degree=3) (ridge))",
+            &["Legacy", "Cheb", "degree"],
+            |degree| *degree = serde_json::json!(1u64 << 61),
+            "legacy stage cheb output width overflows at 2 input columns",
+        ),
+        (
+            "(pipe X (bin_onehot bins=4) (ridge))",
+            &["Legacy", "BinOnehot", "bins"],
+            |bins| *bins = serde_json::json!(1u64 << 61),
+            "legacy stage bin_onehot output width overflows at 2 input columns",
+        ),
+        (
+            "(pipe X (fft_mag k=2) (ridge))",
+            &["Legacy", "FftMag", "k"],
+            |k| *k = serde_json::json!(1u64 << 61),
+            "legacy stage fft_mag output width overflows at 2 input columns",
+        ),
     ];
     for &(source, path, tamper, message) in cases {
         let model = bound(source);
