@@ -154,12 +154,21 @@ frozen notes and the import records say.
   `README.md`): a Rust search engine on the host (`rust/island-engine`) keeps several candidate
   pools, proposes programs through the proposal binary and scores the evaluations that come back;
   a Rust Lambda worker (`bootstrap`) fits each candidate program on seven inner folds and on the
-  official test split. The evaluator is the qualified worker binary of evaluation context
-  `a8b2aaaf59a8b893915975c0a98601717f809086b94b80949ded366fa2e6e412`. A Python coordinator, in
-  custody, carries the requests and results, records exact timestamps and enforces the $1,000
-  budget ledger carried over from the first stage.
+  official test split. The frozen notes specify the evaluator as the qualified worker binary of
+  evaluation context `a8b2aaaf59a8b893915975c0a98601717f809086b94b80949ded366fa2e6e412`. Which
+  binary the campaign actually ran is unconfirmed until Codex publishes the run's source manifest.
+  A Python coordinator, in custody, carries the requests and results, records exact timestamps and
+  enforces the $1,000 budget ledger carried over from the first stage.
 - Official test labels intentionally influence selection, so its outputs are teacher-target
   evidence and cannot be presented as an unbiased benchmark comparison.
+- The independent review of #129 found two properties of the frozen source, which is kept as it
+  ran:
+  - the engine removes a pending request before it checks which candidate pool the returned result
+    belongs to;
+  - the coordinator's cached-result path lacks the identity check that fresh results get.
+
+  A miskeyed cached result could therefore be attributed to the wrong proposal or pool. This
+  import preserves those bytes and does not qualify that path.
 - Codex claimed it at 2026-09-29T06:55:00Z, when it stopped the campaign's first stage
   (`.agent/experiments/test-adaptive-gp-v1`) and restarted with this engine. Campaign
   `airfoil-r0f0-islands-v2-20260929-v1`, under
