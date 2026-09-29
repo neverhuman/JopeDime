@@ -11,6 +11,7 @@
 //! | `stage_outputs_match_the_frozen_fixture` | `compat_freeze/stage_values.v1.json` | `map`/`derive` stage outputs and the predictions behind them |
 //! | `emitted_artifact_bytes_match_the_frozen_fixture` | `compat_freeze/emitted_bytes.v1.json` | Rust, Python and manifest bytes under the default and the `jope emit` options; C++17 recipe and JavaScript bytes, or the emitter's refusal, under the default options; fitted C++17 bytes, or the recorded skip; the ops each recipe emitter accepts |
 //! | `gained_support_fails_until_recorded_and_its_mode_changes_nothing_else` | an in-memory copy of `compat_freeze/emitted_bytes.v1.json` (the file is only read) | the rules for bytes where the fixture records a refusal |
+//! | `fitted_cpp_revision_records_only_fitted_values_and_changes_nothing_else` | an in-memory copy of `compat_freeze/emitted_bytes.v1.json` (the file is only read) | the rules for a new revision of the fitted C++17 emitter |
 //! | `serialized_models_match_the_frozen_fixture` | `compat_freeze/model_serde.v1.json` | `serde_json` bytes of fitted models, their predictions, and loading of stored bytes |
 //! | `vocabulary_registry_and_lineage_pins_match` | `compat_freeze/frozen_pins.v1.json` | grammar assets, `grammar.rs`, jope-policy pins, registry and emitter versions |
 //! | `evaluator_identity_inputs_match_the_recorded_identity` | `compat_freeze/evaluator_identity.v1.json` | the ADR-0004 evaluator identity inputs |
@@ -19,7 +20,7 @@
 //! | `seeded_search_runs_match_the_frozen_fixture` | `compat_freeze/search_runs.v1.json` | whole seeded searches: the surrogate `evolve()` and the lite race, `rank_robust` off and on |
 //! | `fixture_provenance_is_recorded` | `compat_freeze/meta.json` | generation commit, toolchain, host and libm |
 //!
-//! Modes. By default every test only compares. `JOPE_COMPAT_FREEZE_REGENERATE` selects one of three
+//! Modes. By default every test only compares. `JOPE_COMPAT_FREEZE_REGENERATE` selects one of four
 //! regeneration modes; any other value panics.
 //!
 //! - `JOPE_COMPAT_FREEZE_REGENERATE=1` rewrites every fixture. Regenerating a behaviour surface is
@@ -38,10 +39,21 @@
 //!   changes nothing else: no recorded bytes, no refusal whose element kinds changed, no header,
 //!   note or op list, and no other fixture. Every test still compares, and the mode writes nothing
 //!   unless every other emitted-bytes record matches. A second run records nothing.
+//! - `JOPE_COMPAT_FREEZE_REGENERATE=fitted-cpp-revision` records a new revision of the fitted
+//!   C++17 emitter. In `emitted_bytes.v1.json` it replaces each fitted C++17 source and codec value
+//!   that is recorded as bytes, and for which the emitter now writes other bytes, with those bytes,
+//!   and sets that file's `generated_at_sha` to the commit it records. It changes nothing else: no
+//!   refusal, error or skip (bytes for a value recorded as unsupported are still `gained-support`'s
+//!   to record), no other value, no note or op list, and no other fixture. Every test still
+//!   compares, and the mode writes nothing unless every other emitted-bytes record matches. A
+//!   second run records nothing and leaves the header alone. New fitted bytes are a rebaseline of
+//!   that surface: the pull request that records them carries the PR-body line
+//!   `compat-freeze: REBASELINE approved by Jepson <date> reason <...>`.
 //!
-//! `=1` and `=identity` need `JOPE_COMPAT_FREEZE_SHA=<full commit id>`, which names the commit the
-//! regeneration records; it must carry exactly the sources in the working tree (checked with
-//! `git diff --quiet`). `=gained-support` records no commit id: the fixture keeps its header.
+//! `=1`, `=identity` and `=fitted-cpp-revision` need `JOPE_COMPAT_FREEZE_SHA=<full commit id>`,
+//! which names the commit the regeneration records; it must carry exactly the sources in the
+//! working tree (checked with `git diff --quiet`). `=gained-support` records no commit id: the
+//! fixture keeps its header.
 //!
 //! In compare mode the emitted-bytes test passes, and reports, two additive changes: a refusal that
 //! narrows to a strict subset of its recorded element kinds (the fixture keeps the recorded
@@ -108,6 +120,8 @@ const REGENERATE_ENV: &str = "JOPE_COMPAT_FREEZE_REGENERATE";
 const SHA_ENV: &str = "JOPE_COMPAT_FREEZE_SHA";
 /// The mode that records bytes for values recorded as unsupported (see the module doc).
 const GAINED_SUPPORT_MODE: &str = "gained-support";
+/// The mode that records a new revision of the fitted C++17 emitter (see the module doc).
+const FITTED_CPP_REVISION_MODE: &str = "fitted-cpp-revision";
 const REGENERATE_COMMAND: &str = "JOPE_COMPAT_FREEZE_REGENERATE=1 JOPE_COMPAT_FREEZE_SHA=<full commit id> cargo nextest run --locked -P pr -p feat-math --test compat_freeze";
 const IDENTITY_REGENERATE_COMMAND: &str = "JOPE_COMPAT_FREEZE_REGENERATE=identity JOPE_COMPAT_FREEZE_SHA=<full commit id> cargo nextest run --locked -P pr -p feat-math --test compat_freeze";
 const GAINED_SUPPORT_COMMAND: &str = "JOPE_COMPAT_FREEZE_REGENERATE=gained-support cargo nextest run --locked -P pr -p feat-math --test compat_freeze";
@@ -159,19 +173,21 @@ enum Surface {
     Announced,
 }
 
-/// Whether this run rewrites the fixture of `surface`. `gained-support` rewrites none of them
-/// whole: only the emitted-bytes test writes in that mode (see `recording_gained_support`).
+/// Whether this run rewrites the fixture of `surface`. `gained-support` and `fitted-cpp-revision`
+/// rewrite none of them whole: only the emitted-bytes test writes in those modes (see
+/// `recording_gained_support` and `recording_fitted_cpp_revision`).
 fn regenerating(surface: Surface) -> bool {
     match std::env::var(REGENERATE_ENV).as_deref() {
-        Err(_) | Ok("") | Ok("0") | Ok(GAINED_SUPPORT_MODE) => false,
+        Err(_) | Ok("") | Ok("0") | Ok(GAINED_SUPPORT_MODE) | Ok(FITTED_CPP_REVISION_MODE) => false,
         Ok("1") => true,
         Ok("identity") => surface == Surface::Announced,
         Ok(other) => panic!(
             "{REGENERATE_ENV}={other:?} is not a mode: use 1 to rewrite every fixture (an approved \
-             rebaseline), identity to rewrite only the announced identity fixtures, or \
+             rebaseline), identity to rewrite only the announced identity fixtures, \
              {GAINED_SUPPORT_MODE} to record the bytes of emitted-bytes values recorded as \
-             unsupported that an emitter now writes; in the last two every other surface still \
-             compares"
+             unsupported that an emitter now writes, or {FITTED_CPP_REVISION_MODE} to record the \
+             fitted C++17 bytes of a new emitter revision; in the last three every other surface \
+             still compares"
         ),
     }
 }
@@ -181,6 +197,15 @@ fn recording_gained_support() -> bool {
     matches!(
         std::env::var(REGENERATE_ENV).as_deref(),
         Ok(GAINED_SUPPORT_MODE)
+    )
+}
+
+/// Whether this run records a new revision of the fitted C++17 emitter
+/// (`JOPE_COMPAT_FREEZE_REGENERATE=fitted-cpp-revision`).
+fn recording_fitted_cpp_revision() -> bool {
+    matches!(
+        std::env::var(REGENERATE_ENV).as_deref(),
+        Ok(FITTED_CPP_REVISION_MODE)
     )
 }
 
@@ -2074,6 +2099,74 @@ fn gained_support_update(
     Ok((!recorded.is_empty()).then(|| (fixture_text(&updated), recorded)))
 }
 
+/// `JOPE_COMPAT_FREEZE_REGENERATE=fitted-cpp-revision` applied to the text of the emitted-bytes
+/// fixture. Each fitted C++17 source or codec value that is recorded as bytes, and for which the
+/// emitter now writes other bytes, takes those bytes, and the header's `generated_at_sha` becomes
+/// `sha`; nothing else changes. Returns the new text and the `<program>.<field>` values it
+/// recorded, or `None` when no fitted value changed (the header then stays as it is). It refuses,
+/// writing nothing, when any other record differs from the emitters' output (among them a fitted
+/// value that becomes a refusal, an error or a skip, and a skip or error that becomes bytes), when
+/// a value recorded as unsupported now emits bytes (that is `gained-support`'s to record), or when
+/// the text is not in the form this test writes.
+fn fitted_cpp_revision_update(
+    committed_text: &str,
+    actual: &EmittedBytes,
+    sha: &str,
+) -> Result<Option<(String, Vec<String>)>, String> {
+    let mut updated: EmittedBytes = serde_json::from_str(committed_text).map_err(|error| {
+        format!("tests/fixtures/compat_freeze/{EMITTED_FILE} does not parse ({error})")
+    })?;
+    if fixture_text(&updated) != committed_text {
+        return Err(format!(
+            "compat-freeze: {FITTED_CPP_REVISION_MODE} wrote nothing: tests/fixtures/compat_freeze/{EMITTED_FILE} is not in the form this test writes, so rewriting it would change more than the values it records"
+        ));
+    }
+    let mut recorded = Vec::new();
+    for program in &mut updated.programs {
+        let Some(current) = actual.programs.iter().find(|p| p.name == program.name) else {
+            continue;
+        };
+        let name = program.name.clone();
+        for (field, value, now) in [
+            (
+                "fitted_cpp17_source",
+                &mut program.fitted_cpp17_source,
+                &current.fitted_cpp17_source,
+            ),
+            (
+                "fitted_cpp17_codec",
+                &mut program.fitted_cpp17_codec,
+                &current.fitted_cpp17_codec,
+            ),
+        ] {
+            if is_emitted(value) && is_emitted(now) && value != now {
+                value.clone_from(now);
+                recorded.push(format!("{name}.{field}"));
+            }
+        }
+    }
+    let check = check_emitted(&updated, actual);
+    if !check.gained.is_empty() {
+        return Err(format!(
+            "compat-freeze: {FITTED_CPP_REVISION_MODE} wrote nothing: {} values recorded as unsupported now emit bytes (first {} below), and only {GAINED_SUPPORT_MODE} records those\n  {}",
+            check.gained.len(),
+            check.gained.len().min(12),
+            first_lines(&check.gained)
+        ));
+    }
+    if !check.drift.is_empty() {
+        return Err(format!(
+            "compat-freeze: {FITTED_CPP_REVISION_MODE} wrote nothing: it records only fitted C++17 values recorded as bytes for which the emitter now writes other bytes, and other records differ.\n{}",
+            drift_message(EMITTED_SURFACE, &check.drift, REBASELINE_POLICY)
+        ));
+    }
+    if recorded.is_empty() {
+        return Ok(None);
+    }
+    updated.generated_at_sha = sha.to_string();
+    Ok(Some((fixture_text(&updated), recorded)))
+}
+
 #[test]
 fn emitted_artifact_bytes_match_the_frozen_fixture() {
     let gaps = ip_scrub_gaps();
@@ -2119,6 +2212,28 @@ fn emitted_artifact_bytes_match_the_frozen_fixture() {
                 write_atomically(&path, &updated);
                 eprintln!(
                     "compat-freeze: {GAINED_SUPPORT_MODE} recorded the bytes of {} values in tests/fixtures/{relative}:\n  {}",
+                    recorded.len(),
+                    recorded.join("\n  ")
+                );
+            }
+        }
+        return;
+    }
+    if recording_fitted_cpp_revision() {
+        let relative = format!("compat_freeze/{EMITTED_FILE}");
+        let path = fixture_path(&relative);
+        let text = std::fs::read_to_string(&path)
+            .unwrap_or_else(|error| panic!("tests/fixtures/{relative}: {error}"));
+        let sha = generation_sha();
+        match fitted_cpp_revision_update(&text, &fixture, &sha) {
+            Err(message) => panic!("{message}"),
+            Ok(None) => eprintln!(
+                "compat-freeze: {FITTED_CPP_REVISION_MODE}: no fitted C++17 value recorded as bytes changed; tests/fixtures/{relative} is unchanged"
+            ),
+            Ok(Some((updated, recorded))) => {
+                write_atomically(&path, &updated);
+                eprintln!(
+                    "compat-freeze: {FITTED_CPP_REVISION_MODE} recorded {} fitted C++17 values at {sha} in tests/fixtures/{relative}:\n  {}",
                     recorded.len(),
                     recorded.join("\n  ")
                 );
@@ -2269,6 +2384,163 @@ fn gained_support_fails_until_recorded_and_its_mode_changes_nothing_else() {
     let check = check_emitted(&committed, &other_kinds);
     assert!(names(&check.drift, several), "{:?}", check.drift);
     assert!(gained_support_update(&text, &other_kinds).is_err());
+}
+
+/// The rules for a new revision of the fitted C++17 emitter, proved on an in-memory copy of the
+/// committed fixture; the file itself is only read, and no git is needed (the commit id is a
+/// stand-in). A revision that changes every fitted source and codec fails compare mode. The
+/// `fitted-cpp-revision` mode records exactly those values and the header's commit, changing no
+/// other line of the file; the result compares clean, and a second run records nothing and keeps
+/// the header. The mode refuses, and writes nothing, when anything else differs: a changed Rust
+/// value, a fitted value that becomes a refusal, a skip that becomes bytes, a value recorded as
+/// unsupported that now emits bytes (that stays `gained-support`'s), or a fixture text that is not
+/// in the form this test writes.
+#[test]
+fn fitted_cpp_revision_records_only_fitted_values_and_changes_nothing_else() {
+    let relative = format!("compat_freeze/{EMITTED_FILE}");
+    let text = std::fs::read_to_string(fixture_path(&relative))
+        .unwrap_or_else(|error| panic!("tests/fixtures/{relative}: {error}"));
+    let committed: EmittedBytes = serde_json::from_str(&text).expect("the fixture parses");
+    let sha = "0123456789abcdef0123456789abcdef01234567";
+    assert_ne!(committed.generated_at_sha, sha);
+    let find = |what: &str, wanted: &dyn Fn(&EmittedProgram) -> bool| {
+        committed
+            .programs
+            .iter()
+            .position(wanted)
+            .unwrap_or_else(|| panic!("the fixture records no {what} to simulate with"))
+    };
+
+    // The emitters' output, simulated: the fixture's values, except that a new emitter revision
+    // writes other bytes for every fitted source and codec recorded as bytes.
+    let mut actual = committed.clone();
+    let mut revised = BTreeSet::new();
+    for program in &mut actual.programs {
+        for (field, value) in [
+            ("fitted_cpp17_source", &mut program.fitted_cpp17_source),
+            ("fitted_cpp17_codec", &mut program.fitted_cpp17_codec),
+        ] {
+            if is_emitted(value) {
+                *value = text_identity(&format!("// revised {field} of {}\n", program.name));
+                revised.insert(format!("{}.{field}", program.name));
+            }
+        }
+    }
+    let fitted_programs = committed
+        .programs
+        .iter()
+        .filter(|program| is_emitted(&program.fitted_cpp17_source))
+        .count();
+    assert!(fitted_programs > 0, "the fixture records fitted bytes");
+    assert_eq!(revised.len(), 2 * fitted_programs);
+
+    // Compare mode fails on each revised value, and on nothing else.
+    let check = check_emitted(&committed, &actual);
+    assert!(check.gained.is_empty(), "{:?}", check.gained);
+    assert_eq!(check.drift.len(), revised.len(), "{:?}", check.drift);
+    assert!(emitted_failure(&check).is_some());
+
+    // The mode records exactly those values and the commit: the new text is the committed text
+    // with those lines and the `generated_at_sha` line replaced.
+    let (updated_text, recorded) = fitted_cpp_revision_update(&text, &actual, sha)
+        .expect("no other record differs")
+        .expect("the fitted values changed");
+    assert_eq!(recorded.into_iter().collect::<BTreeSet<_>>(), revised);
+    let old_lines: Vec<&str> = text.split('\n').collect();
+    let new_lines: Vec<&str> = updated_text.split('\n').collect();
+    assert_eq!(old_lines.len(), new_lines.len());
+    let changed: Vec<(&str, &str)> = old_lines
+        .iter()
+        .zip(&new_lines)
+        .filter(|(old, new)| old != new)
+        .map(|(old, new)| (*old, *new))
+        .collect();
+    assert_eq!(changed.len(), revised.len() + 1, "{changed:#?}");
+    let header: Vec<_> = changed
+        .iter()
+        .filter(|(old, _)| old.trim_start().starts_with("\"generated_at_sha\": "))
+        .collect();
+    assert_eq!(header.len(), 1, "{changed:#?}");
+    assert!(header[0].1.contains(sha), "{:?}", header[0]);
+    for (old, new) in &changed {
+        let key = old.trim_start();
+        assert!(
+            key.starts_with("\"generated_at_sha\": ")
+                || key.starts_with("\"fitted_cpp17_source\": ")
+                || key.starts_with("\"fitted_cpp17_codec\": "),
+            "a line the mode must not change: {old:?} became {new:?}"
+        );
+    }
+
+    // Recorded, the fixture holds, and a second run records nothing and keeps the header.
+    let updated: EmittedBytes = serde_json::from_str(&updated_text).expect("the new text parses");
+    assert_eq!(updated.generated_at_sha, sha);
+    assert_eq!(emitted_failure(&check_emitted(&updated, &actual)), None);
+    assert_eq!(
+        fitted_cpp_revision_update(
+            &updated_text,
+            &actual,
+            "fedcba9876543210fedcba9876543210fedcba98"
+        ),
+        Ok(None)
+    );
+    // Nothing changed: nothing to record, and the header stays as it is.
+    assert_eq!(fitted_cpp_revision_update(&text, &committed, sha), Ok(None));
+
+    // Any other difference refuses the mode, naming the record.
+    let fitted = find("fitted C++17 bytes", &|program| {
+        is_emitted(&program.fitted_cpp17_source)
+    });
+    let fitted_name = &committed.programs[fitted].name;
+    let mut rust = actual.clone();
+    rust.programs[fitted].rust = text_identity("// a Rust program that changed too\n");
+    let refused = fitted_cpp_revision_update(&text, &rust, sha).expect_err("a Rust value moved");
+    assert!(
+        refused.contains(&format!("{fitted_name}.rust")),
+        "{refused}"
+    );
+
+    // A fitted value that becomes a refusal is lost support, not a revision.
+    let mut lost = actual.clone();
+    lost.programs[fitted].fitted_cpp17_source = format!("{UNSUPPORTED}head Simulated");
+    let refused = fitted_cpp_revision_update(&text, &lost, sha).expect_err("lost support");
+    assert!(
+        refused.contains(&format!("{fitted_name}.fitted_cpp17_source")),
+        "{refused}"
+    );
+
+    // A skip that becomes bytes is not a revision of recorded bytes.
+    let skipped = find("fitted C++17 skip", &|program| {
+        program.fitted_cpp17_source.starts_with("skipped")
+    });
+    let mut unskipped = actual.clone();
+    unskipped.programs[skipped].fitted_cpp17_source =
+        text_identity("// fitted bytes for a skipped program\n");
+    let refused = fitted_cpp_revision_update(&text, &unskipped, sha).expect_err("a skip moved");
+    assert!(
+        refused.contains(&format!(
+            "{}.fitted_cpp17_source",
+            committed.programs[skipped].name
+        )),
+        "{refused}"
+    );
+
+    // Bytes for a value recorded as unsupported stay gained-support's to record.
+    let refusal = find("C++17 recipe refusal", &|program| {
+        unsupported_kinds(&program.cpp17).is_some()
+    });
+    let mut gained = actual.clone();
+    gained.programs[refusal].cpp17 = text_identity("// the C++17 recipe source now written\n");
+    let refused = fitted_cpp_revision_update(&text, &gained, sha).expect_err("gained support");
+    assert!(
+        refused.contains(GAINED_SUPPORT_MODE)
+            && refused.contains(&format!("{}.cpp17", committed.programs[refusal].name)),
+        "{refused}"
+    );
+
+    // A fixture text in another form would move bytes the mode must not touch.
+    let reformatted = text.replacen("\n  ", "\n   ", 1);
+    assert!(fitted_cpp_revision_update(&reformatted, &actual, sha).is_err());
 }
 
 // ---------------------------------------------------------------------------------------------
