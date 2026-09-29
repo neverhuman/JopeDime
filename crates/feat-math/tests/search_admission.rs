@@ -51,6 +51,9 @@ fn penalize(lambda_domain: f64, lambda_saturation: f64, tie_break: bool) -> Faul
 
 /// Reads column 12 of a four-column input: its scope check fails at stage 0.
 const OUT_OF_SCOPE: &str = "(pipe X (derive expr=\"col(12)\") (ridge))";
+/// In scope as written, `rff_cos n=128` giving 128 columns; out of scope as the search fits it,
+/// with `n` capped at 64.
+const NARROWED: &str = "(pipe X (rff_cos n=128) (derive expr=\"col(100)\") (ridge))";
 /// On negative data every row takes `log`'s domain fallback, so the derived column is constant.
 const LOG_NEGATIVE: &str = "(pipe X (derive expr=\"log(col(0))\") (ridge))";
 /// Fault-free on any finite data.
@@ -544,6 +547,67 @@ fn an_out_of_scope_candidate_is_rejected_and_never_ranked() {
             log.generations()[0].hard_rejected_share,
             (1.0_f64 / 4.0).to_bits()
         );
+    }
+}
+
+/// The scope check sees the program as the search fits it, not as it was generated: the search
+/// caps `rff_cos n=128` at 64 columns, so `col(100)` is in scope for the generated program and out
+/// of scope for the fitted one. Both searches reject the candidate with the fitted program's
+/// reason, which names width 64. A check of the generated program would have passed it, and the
+/// fit would have met `col(100)` as a Hard fault instead.
+#[test]
+fn the_scope_check_sees_the_program_as_the_search_fits_it() {
+    let (x, y) = four_columns(120, 3);
+    let metric = |truth: &[f64], predicted: &[f64]| feat_math::r2(truth, predicted);
+    let key = canonical(NARROWED);
+    let reason = "stage 1: COLUMN_OOB: column index 100 out of bounds for width 64";
+    assert!(validate_scope(&GenomeIr::parse(NARROWED).unwrap(), 4).is_ok());
+    // The rung-0 program, as the search fits it: out of scope, and a traced fit of it meets the
+    // Hard fault that the check spares the search.
+    let (surrogate, _) = rung0_trace_identity(NARROWED).unwrap();
+    let fitted = GenomeIr::parse(&surrogate).unwrap();
+    assert_eq!(validate_scope(&fitted, 4).unwrap_err().to_string(), reason);
+    let (_, training) = fit_traced(&fitted, &x, &y).unwrap();
+    let mut totals = FaultTotals::default();
+    totals.add_pass(&training);
+    assert_eq!(
+        Rejection::HardFault(totals.hard_classes).to_string(),
+        "hard fault: {COLUMN_OOB}"
+    );
+
+    let rejection = vec![(key.clone(), format!("scope: {reason}"))];
+    for policy in [FaultPolicy::RejectHard, PENALIZE] {
+        // The surrogate search: generation 0 holds the champion, the program and six starters.
+        let log = Log::default();
+        let config = EvolveConfig {
+            pop: 8,
+            gens: 1,
+            folds: 3,
+            seed: 7,
+            max_transforms: 3,
+            seed_genomes: vec![NARROWED.to_string()],
+            fault_policy: policy,
+            ..EvolveConfig::default()
+        };
+        let ranked = evolve(&x, &y, &metric, &config, &log);
+        assert!(ranked.iter().all(|scored| scored.dsl != key));
+        assert_eq!(log.rejections(), rejection, "{policy:?}");
+
+        // The lite race, from an exact generation 0.
+        let log = Log::default();
+        let initial = [NARROWED, "(pipe X (standardize) (ridge))"].map(str::to_string);
+        let outcome = evolve_lite_race_with_exact_initial_population(
+            &x,
+            &y,
+            &metric,
+            &race_config(2, 1, 11, policy),
+            &log,
+            &initial,
+        )
+        .unwrap();
+        assert_eq!(scores_of(&outcome, &key), [None, None, None]);
+        assert!(outcome.ranked.iter().all(|scored| scored.dsl != key));
+        assert_eq!(log.rejections(), rejection, "{policy:?}");
     }
 }
 
