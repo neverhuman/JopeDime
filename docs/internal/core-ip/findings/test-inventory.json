@@ -457,6 +457,13 @@
         "export"
       ]
     },
+    "target:feat-math/test/mathexpr_current_semantics": {
+      "role": "regression",
+      "subsystems": [
+        "fitting",
+        "gp"
+      ]
+    },
     "target:feat-math/test/portable_parity": {
       "role": "regression",
       "subsystems": [
