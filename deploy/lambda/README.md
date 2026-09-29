@@ -84,11 +84,16 @@ job manifest that `bootstrap-gp-extra` embeds; the frozen review records `extra-
   outside the nested workspace, so its absolute path is embedded. Identity is by source hash
   (`SNAPSHOT.json`).
 - The sources are not reformatted; the root `cargo fmt --all` does not reach nested workspaces.
-- Eleven files differ from their frozen bytes, each recorded in `SNAPSHOT.json` with
-  `tree_change`: a `license` line in all four manifests, `publish = false` in the monitor's and
-  the assessment tool's, the `feat-math` entry of the three locks that take it by path, which
-  reads the root workspace version, and four regression notes whose absolute xbabe2 paths are
-  written home-relative (`~/`).
+- Twelve files differ from their frozen bytes, each recorded in `SNAPSHOT.json` with
+  `tree_change`:
+  - a `license` line in all four manifests, plus `publish = false` in the monitor's and the
+    assessment tool's;
+  - the `feat-math` entry of the three locks that take it by path, which reads the root workspace
+    version;
+  - four regression notes whose absolute xbabe2 paths are written home-relative (`~/`);
+  - the regression schema registry `regression/schemas/REGISTRY.json`, whose schema paths name
+    the tracked copies under `deploy/lambda/regression/schemas/` instead of the xbabe2 staging
+    directory.
 - `just bump X.Y.Z` keeps the `feat-math` lock entries true. A workspace's lock pins each root
   crate it takes by path at the version it was locked with, so after the root version changes
   `cargo metadata --locked` fails for that workspace until its lock is updated. The bump runs
@@ -100,9 +105,14 @@ job manifest that `bootstrap-gp-extra` embeds; the frozen review records `extra-
   file's `tree_sha256` and `tree_change`, never its frozen `sha256`, and refuses a file that has
   no frozen record of its own bytes. `bash deploy/ci/lambda-workspaces.sh verify` runs the
   `cargo metadata --locked --offline` and `SNAPSHOT.json` checks.
-- The regression worker writes its per-call scratch under `/tmp/jope-<attempt id>` and removes it
-  before it returns (`regression/rust/src/main.rs`): `/tmp` is the only writable path in the AWS
-  Lambda runtime. That is the repository's one exception to its no-`/tmp` rule, and it holds only
+- The regression worker writes its per-call scratch under `/tmp/jope-<attempt id>`
+  (`regression/rust/src/main.rs`): `/tmp` is the only writable path in the AWS Lambda runtime.
+  It removes that directory only on success, after the archive upload. An error after the
+  directory is created returns without removing it: an input download or identity failure, a
+  candidate run error, an oversized archive, or a failed upload. Because the directory is created
+  with `create_dir`, a warm retry with the same attempt id then fails at that step until the
+  execution environment is recycled. The frozen source is kept as it ran; a fix belongs in a
+  successor worker. That is the repository's one exception to its no-`/tmp` rule, and it holds only
   inside Lambda. The worker's tests, `deploy/ci/lambda.sh` and every other tool write nothing under
   `/tmp`. No guard needed an exception for it: the repo-layout temp-directory rule covers test code
   under `crates/`.

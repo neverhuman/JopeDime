@@ -33,7 +33,7 @@
       "anchors": [
         "regression-freeze-proof"
       ],
-      "note": "The worker writes its per-call scratch under /tmp/jope-<attempt_id> and removes it before it returns (rust/src/main.rs): /tmp is the only writable path in the AWS Lambda runtime. That is the repository's one /tmp exception, and it holds only inside Lambda; the tests write nothing there."
+      "note": "The worker writes its per-call scratch under /tmp/jope-<attempt_id> (rust/src/main.rs): /tmp is the only writable path in the AWS Lambda runtime. It removes that directory only on success, after the archive upload; an error after the directory is created returns without removing it, and a warm retry with the same attempt_id then fails at create_dir until the execution environment is recycled. The frozen source is kept as it ran. That is the repository's one /tmp exception, and it holds only inside Lambda; the tests write nothing there."
     },
     "regression-ops": {
       "source": ".agent/experiments/regression-lambda-v3-ops",
