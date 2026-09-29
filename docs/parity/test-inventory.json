@@ -6,8 +6,8 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 4",
-  "count": 3838,
-  "ignored": 63,
+  "count": 3854,
+  "ignored": 65,
   "packages": {
    "battle-gpu": {
     "count": 6,
@@ -29,12 +29,12 @@
     }
    },
    "feat-math": {
-    "count": 475,
-    "ignored": 4,
+    "count": 491,
+    "ignored": 6,
     "binaries": {
      "feat-math": {
       "kind": "lib",
-      "count": 295,
+      "count": 296,
       "ignored": 2,
       "tests": [
        "advanced_v3::csv::tests::empty_record_and_one_empty_field_are_distinct",
@@ -227,6 +227,7 @@
        "ksmooth::tests::ksmooth_is_deterministic_and_learns_toy",
        "ksmooth::tests::ksmooth_params_flow_through_the_genome",
        "ksmooth::tests::ksmooth_small_n_falls_back_to_mean",
+       "math_expr::fault::tests::the_legacy_sink_is_disabled_and_the_collecting_sink_accumulates",
        "math_expr::tests::evaluates_elementwise_expression",
        "math_expr::tests::evaluates_row_expression",
        "math_expr::tests::invalid_clip_bounds_are_a_structured_whole_expression_failure",
@@ -432,6 +433,28 @@
        "serialized_models_match_the_frozen_fixture",
        "stage_outputs_match_the_frozen_fixture",
        "vocabulary_registry_and_lineage_pins_match"
+      ]
+     },
+     "feat-math::fault_trace": {
+      "kind": "test",
+      "count": 15,
+      "ignored": 2,
+      "tests": [
+       "a_call_with_the_wrong_arity_from_a_deserialized_ast_is_a_compile_failure",
+       "every_traced_form_equals_the_legacy_values_on_the_compat_corpus",
+       "fault_bits_names_and_severities_are_append_only",
+       "fault_names_pass_the_shipped_text_lint",
+       "fault_sets_combine_as_sets",
+       "legacy_eval_row_throughput",
+       "legacy_value_digest",
+       "map_cells_report_exactly_what_their_own_evaluation_reaches",
+       "random_expressions_agree_across_forms_seeds_0_to_2499",
+       "random_expressions_agree_across_forms_seeds_2500_to_4999",
+       "random_expressions_agree_across_forms_seeds_5000_to_7499",
+       "random_expressions_agree_across_forms_seeds_7500_to_9999",
+       "the_compiled_form_reports_the_fault_tables",
+       "the_expression_forms_and_fault_sets_stay_shareable_across_threads",
+       "the_interpreter_reports_the_fault_tables"
       ]
      },
      "feat-math::golden": {
@@ -6054,7 +6077,7 @@
   }
  },
  "totals": {
-  "rust": 3838,
+  "rust": 3854,
   "python": 172
  }
 }
