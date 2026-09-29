@@ -21,18 +21,27 @@
   - **The freeze covers:**
     - 82 scalar expressions × 266 boundary rows, through the interpreter, the compiled form and element and map paths, with error kinds;
     - map and derive stage outputs;
-    - the emitted Rust, Python, C++17-recipe, JavaScript and fitted-C++17 bytes of 55 programs under two option sets;
-    - the serialized models and predictions;
+    - emitted bytes of 55 programs (`emitted_bytes.v1.json`):
+      - Rust, Python and the manifest: all 55, under the default options and under the options `jope emit` uses;
+      - C++17 recipe and JavaScript, under the default options only: bytes for 7 programs each, and the emitter's refusal for the other 48 each. The 25 ops each of these emitters accepts are all used by those 7 programs;
+      - fitted C++17 source and codec: 54 programs. The portfolio program is recorded as skipped;
+    - serialized models (`model_serde.v1.json`): the serde_json bytes and 16 held-out predictions of 54 fitted models, five of them stored whole and reloaded. The same portfolio program is recorded as skipped;
     - the grammar, registry, policy-vocabulary, lineage-source and ADR-0004 evaluator-identity inputs;
     - the seeded generator streams of every legacy search generator (seeds 0..64);
     - whole seeded search runs.
-  - **Rebaselining.** `JOPE_COMPAT_FREEZE_REGENERATE=identity` rewrites only the identity and lineage fixtures. The other surfaces never rebaseline without an owner decision.
-  - **Proof that it catches changes.** Moving the division guard from 1e-12 to 1e-11 fails three tests with readable diffs.
-  - **Verification:**
+  - **Rebaselining.** `JOPE_COMPAT_FREEZE_REGENERATE=identity` rewrites only the identity and lineage fixtures. `JOPE_COMPAT_FREEZE_REGENERATE=gained-support` only replaces a value recorded as a refusal with the bytes its emitter now writes, and changes no recorded bytes; compare mode fails on such bytes until it has run. The other surfaces never rebaseline without an owner decision.
+  - **Proof that it catches changes.** Moving the division guard from 1e-12 to 1e-11 fails three tests with readable diffs. Restoring the old rule that let gained bytes pass, or letting `gained-support` record changed bytes, fails the new gained-support test.
+  - **Review 5351319682** requested changes at `ec59a27d4`. These records overstated the byte freeze, and bytes for a value recorded as a refusal passed without being pinned, so they could change again in a later PR. `f8854527a` makes compare mode fail on such bytes, naming the program, the language and the `gained-support` mode, which records them and nothing else. `be8ad9565` proves the rules on an in-memory copy of the fixture. The counts above come from the fixtures, with jq.
+  - **Verification before that review:**
     - feat-math PR tier 460/460;
     - a replica of the CI rust-test lane 1750/1750;
     - `deploy/ci/check.sh`, ip-scrub, the coverage validator and `verify-test-inventory`;
     - the Lambda workspaces 61/61, with cargo-deny skipped locally for a version mismatch.
+  - **Verification after it**, at `be8ad9565` on xbabe2:
+    - compat_freeze 12/12, mathexpr_current_semantics 18/18 and ip_scrub 6/6, twice, in compare mode;
+    - `cargo fmt --all --check`, feat-math clippy with `-D warnings`, the coverage validator, `verify-test-inventory` and `git diff --check`;
+    - the feat-math part of the parity test inventory equals a live nextest listing (469 tests).
+    - The PR tier, the rust-test replica and the Lambda workspaces were not rerun.
   - Record: `docs/internal/kernel2/receipts/WP-0.1.md`.
   - The freeze fixtures come from xbabe2. The first hosted rust-test run on xbabe1 is the cross-host libm check.
 
