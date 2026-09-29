@@ -27,8 +27,9 @@
 #     release.log, dist/, tools.json (the tools that ran), sbom/ (syft's configuration and version)
 #     and the checks, and is sealed by a SHA256SUMS written as the run ends. Its src/ is the
 #     verified export that was built (reproducible with `git archive <sha>`), and its home/ is the
-#     build's HOME; the seal leaves out src/, tmp/ (TMPDIR, the containers' temporary directory and
-#     syft's home and cache) and tuf/.
+#     build's HOME; the seal leaves out src/, tmp/ (TMPDIR, 0700: the containers' temporary
+#     directory, syft's home and cache, and the empty configuration directories of jq, docker and
+#     cosign) and tuf/.
 #   - target/ is the Cargo target directory and cargo home. It is shared by the runs for one tag,
 #     so a publish run after a dry run reuses the compiled dependencies. The workspace crates are
 #     rebuilt every run, because the export's files carry the extraction time. The cargo home may
@@ -37,17 +38,20 @@
 #     (docs/release/README.md, "Key custody").
 #   - custody/ (the key-custody receipt) is never touched.
 #   - release-tmp/ (0700, directly under the evidence root) is TMPDIR from the first command of every
-#     run until its run directory exists; after that TMPDIR is the run's tmp/. Nothing is ever
-#     written under /tmp (see pin_tmpdir), and the rule is carried across every process boundary
-#     explicitly: each container gets the run's tmp/container/ as its TMPDIR and its /tmp
+#     run until its run directory exists; after that TMPDIR is the run's tmp/ (also 0700). Nothing
+#     is ever written under /tmp (see pin_tmpdir), and the rule is carried across every process
+#     boundary explicitly: each container gets the run's tmp/container/ as its TMPDIR and its /tmp
 #     (builder_container), root's sign shell exports a TMPDIR inside its own /root work directory
 #     (SIGN_SCRIPT), and every env -i run names its TMPDIR.
 #
 # Tools: syft and cosign are pinned by sha256 and by the version they report (SYFT_*, COSIGN_*),
 # and syft runs only as a checked copy. The host tools (HOST_TOOLS: coreutils, grep, sed, find, tar,
 # cmp/diff, jq, git, docker, objdump, sudo and the rest) must resolve to root-owned files that the
-# operator cannot write; their versions are recorded in the run's tools.json. gh-role is the host's
-# credential router and lives outside the repository.
+# operator cannot write; their versions are recorded in the run's tools.json. No pinned or host
+# tool reads per-user configuration that could change what it reports to a check or writes into a
+# release (~/.jq, ~/.gitconfig, ~/.docker, TAR_OPTIONS, LD_* and the like; see "The tools' own
+# configuration" below). Two commands are neither pinned nor host tools, and HOST_TOOLS names them
+# with the reasons: the host's cargo and gh-role.
 # There is no Python in this script. docs/release/README.md explains how anyone can verify a release.
 #
 # Testing: deploy/release/test-release.sh sources this file; the CI hygiene lane runs it. The
@@ -92,18 +96,35 @@ readonly SYFT=/home/ubuntu/.local/bin/syft
 readonly SYFT_VERSION=1.40.0
 readonly SYFT_SHA256=eb9714fb8e4b8f2a647e7bb312f1e0b9f83a7aa30418658bf46583cfa83d27d2
 readonly GH_ROLE=/home/ubuntu/.local/bin/gh-role
-# Every other command the script runs. They are the host's packages (Ubuntu's, and Docker's apt
-# repository for docker), root-owned and replaced by routine security updates, so they are not
-# pinned by digest: a pin would stop every release after each update, and only root can change them,
-# which is inside the trust boundary already (docs/release/README.md, "Key custody"). What preflight
-# does check is that each one resolves through PATH to a root-owned file, in root-owned directories,
-# that neither group nor others can write (check_host_tool), so a copy in ~/.local/bin, which comes
-# first on the operator's PATH, is refused. The run records each one's path, sha256 and package
-# version in tools.json.
+# HOST_TOOLS: every command that the script runs by name on the host, as the operator or as root
+# through sudo (`sudo -n test`, `cat`, `chown`, `chmod` and `sh`, and SIGN_SCRIPT's mktemp, mkdir,
+# cp, chmod, sha256sum, cat and rm), except the two named below. They are the host's packages
+# (Ubuntu's, and Docker's apt repository for docker), root-owned and replaced by routine security
+# updates, so they are not pinned by digest: a pin would stop every release after each update, and
+# only root can change them, which is inside the trust boundary already (docs/release/README.md,
+# "Key custody"). What preflight does check is that each one resolves through PATH to a root-owned
+# file, in root-owned directories, that neither group nor others can write (check_host_tool), so a
+# copy in ~/.local/bin, which comes first on the operator's PATH, is refused. That holds for the
+# commands root runs too, whether sudo looks them up in the operator's PATH or in its own
+# root-configured secure_path. The run records each one's path, sha256 and package version in
+# tools.json.
 # bash is the interpreter that `#!/usr/bin/env bash` finds on PATH.
-readonly -a HOST_TOOLS=(bash cat chmod cmp cp date diff docker dpkg-query env find git grep head id
-  install jq ls mkdir objdump readlink realpath rm rmdir sed sha256sum sort stat sudo tail tar tee
-  timeout tr uname wc)
+# The pinned syft and cosign above are run by path. Only two commands are neither pinned nor host
+# tools, and this is why that is acceptable:
+#   - cargo (cargo_bin: the host's rustup shim, ~/.local/bin/cargo, which the operator can write)
+#     runs only `cargo metadata --no-deps` in preflight, on the checkout, and it reads the operator's
+#     cargo and rustup configuration. It decides nothing on its own: build_jope runs cargo metadata
+#     again inside the pinned image, on the verified export, and refuses the run unless that answer
+#     is also right. The builder image's own cargo, rustc and ldd are pinned by the image digest.
+#   - gh-role (GH_ROLE, publish only) is the host's credential router, which the operator can write
+#     and which reads the operator's configuration. It hands git the GitHub token and runs
+#     `gh release view`, `create` and `download` as the writer role. It is trusted as the ubuntu
+#     account is (README, "Key custody"), and it cannot change what was signed: it uploads dist/,
+#     which is signed before it runs, and the readback compares what it downloads with dist/ byte for
+#     byte and checks the signature again.
+readonly -a HOST_TOOLS=(bash cat chmod chown cmp cp date diff docker dpkg-query env find git grep
+  head id install jq ls mkdir mktemp objdump readlink realpath rm rmdir sed sh sha256sum sort stat
+  sudo tail tar tee test timeout tr uname wc)
 # Docker passes a container no variable that is not named with -e, and an image's /tmp is its own,
 # so the host's TMPDIR stops at the container boundary. builder_container therefore bind-mounts the
 # run's tmp/container/ at CONTAINER_TMPDIR, sets TMPDIR to it, and mounts the same directory over the
@@ -111,6 +132,53 @@ readonly -a HOST_TOOLS=(bash cat chmod cmp cp date diff docker dpkg-query env fi
 # path inside the container, never on the host.
 readonly CONTAINER_TMPDIR=/release-tmp
 readonly CONTAINER_SYSTEM_TMP=/tmp
+
+# The tools' own configuration. No per-user file (~/.jq, ~/.gitconfig, ~/.docker and the like) and
+# no variable of the operator's may change what a pinned or host tool reports to a check or writes
+# into a release. docs/release/README.md ("Tool configuration") has the audit, tool by tool, and what
+# remains (the repository's own git config, ~/.netrc) and why it cannot. This block is all builtins
+# and runs before main(), so every command the script starts inherits it.
+#   - bash imports exported shell functions (export -f) before the script's first line, and a
+#     function stands in for the command of the same name. Those named after a command the script
+#     runs are dropped here; the script's own jq and docker wrappers are defined further down. What
+#     runs even earlier (a BASH_ENV start-up file) is the operator's own shell, like the rest of the
+#     ubuntu account, and no script can undo it after the fact.
+#   - The dynamic loader's LD_* variables (LD_PRELOAD, LD_LIBRARY_PATH, LD_AUDIT and the rest) and
+#     glibc's GCONV_PATH, LOCPATH and GLIBC_TUNABLES would load or tune code from a path of the
+#     operator's choosing inside every host tool.
+#   - git reads neither /etc/gitconfig nor ~/.gitconfig (GIT_CONFIG_NOSYSTEM, GIT_CONFIG_GLOBAL). On
+#     xbabe2, ~/.gitconfig rewrites the GitHub URLs of other repositories to the local forge; one
+#     more such line would send the fetch, the tag checks and the push somewhere else. git follows
+#     no replace refs (GIT_NO_REPLACE_OBJECTS), which would make archive, ls-tree and cat-file show
+#     another commit's tree as $sha's, and keeps no GIT_* variable but the committer's name and
+#     email. The keys set through GIT_CONFIG_COUNT outrank every configuration file: no per-user
+#     ignore or attributes file (~/.config/git/ignore hides untracked files from git status even
+#     without ~/.gitconfig), no repository hooks, no fsmonitor answering git status, no signed tag.
+#     check_git_config refuses URL rewrites and TLS settings in the repository's own configuration.
+#     The GitHub credential helper is the GH array's -c option, which outranks all of these.
+#   - tar takes options from TAR_OPTIONS (--exclude=... drops files from the export, which
+#     verify_export would then refuse), objdump its object format from GNUTARGET (GNUTARGET=binary
+#     hides every NEEDED entry), and GNU tools and bash behave differently under POSIXLY_CORRECT.
+#     grep 3.11 ignores GREP_OPTIONS; it goes anyway.
+#   - JQ_*, DOCKER_* and DPKG_* go, and git's TLS trust stays the system's (SSL_CERT_FILE,
+#     SSL_CERT_DIR, CURL_CA_BUNDLE). jq, docker and cosign get empty private configuration
+#     directories from their wrappers (jq, docker, check_cosign and cosign_verify), and syft runs in
+#     syft_env.
+unset -f -- "${HOST_TOOLS[@]}" cargo
+for _name in "${!LD_@}" "${!GIT_@}" "${!JQ_@}" "${!DOCKER_@}" "${!DPKG_@}"; do
+  case $_name in GIT_COMMITTER_NAME|GIT_COMMITTER_EMAIL) ;; *) unset -v -- "$_name" ;; esac
+done
+unset -v -- _name GCONV_PATH LOCPATH GLIBC_TUNABLES TAR_OPTIONS GNUTARGET POSIXLY_CORRECT \
+  GREP_OPTIONS SSL_CERT_FILE SSL_CERT_DIR CURL_CA_BUNDLE
+export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_NO_REPLACE_OBJECTS=1 GIT_CONFIG_COUNT=5 \
+  GIT_CONFIG_KEY_0=core.excludesFile GIT_CONFIG_VALUE_0=/dev/null \
+  GIT_CONFIG_KEY_1=core.attributesFile GIT_CONFIG_VALUE_1=/dev/null \
+  GIT_CONFIG_KEY_2=core.hooksPath GIT_CONFIG_VALUE_2=/dev/null \
+  GIT_CONFIG_KEY_3=core.fsmonitor GIT_CONFIG_VALUE_3=false \
+  GIT_CONFIG_KEY_4=tag.gpgSign GIT_CONFIG_VALUE_4=false
+# The docker client talks to the system daemon through this socket, whatever DOCKER_HOST or a docker
+# context says (see the docker wrapper). It is set after the DOCKER_* variables are gone.
+readonly DOCKER_SOCKET=unix:///var/run/docker.sock
 # Test mode is confined to the invoking account's test scratch root (see "Testing" above). main()
 # resolves it with realpath right after pin_tmpdir: only builtins run before TMPDIR is pinned.
 TEST_ROOT=''
@@ -197,6 +265,44 @@ pin_tmpdir() {
   mkdir -m 0700 -- "$TMPDIR" 2>/dev/null || [[ -d $TMPDIR ]] || die "cannot create TMPDIR $TMPDIR"
   [[ -d $TMPDIR && ! -L $TMPDIR && -O $TMPDIR ]] || die "TMPDIR $TMPDIR is not a real directory owned by $(id -un)"
   chmod 0700 -- "$TMPDIR" || die "cannot make TMPDIR $TMPDIR private (0700)"
+}
+
+# --- the tools' configuration directories ---------------------------------------------------------
+
+# private_dir <dir>: creates <dir> (0700) when it is missing, and refuses it unless it is a real,
+# empty directory owned by the operator. The wrappers below give a tool one of these as its HOME or
+# its configuration directory, so that the tool finds no configuration there. Once the directory
+# exists, only builtins run.
+private_dir() {
+  if [[ ! -e $1 && ! -L $1 ]]; then
+    mkdir -m 0700 -- "$1" 2>/dev/null || [[ -d $1 ]] || die "cannot create $1"
+  fi
+  [[ -d $1 && ! -L $1 && -O $1 ]] || die "$1 is not a real directory owned by $(id -un)"
+  if compgen -G "$1/*" >/dev/null || compgen -G "$1/.[!.]*" >/dev/null || compgen -G "$1/..?*" >/dev/null; then
+    die "$1 is not empty; a tool would read its configuration from there"
+  fi
+}
+
+# jq 1.7 reads $HOME/.jq (and $HOME/jq/main.jq) into every program it runs, and a definition there
+# changes what the program means: one that redefines startswith and any makes check_sboms accept a
+# document that is not SPDX, and the same could change write_manifest's signed output, VERSION_JQ's
+# verdict or select_executable's choice. So every jq of this script is this function, which runs jq
+# with HOME set to jq-home/, an empty private directory in the current TMPDIR. jq reads no other file
+# of its own, and its other variables (JQ_*) are unset above.
+jq() {
+  private_dir "${TMPDIR:?}/jq-home"
+  HOME=$TMPDIR/jq-home command jq "$@"
+}
+
+# The docker client reads ~/.docker/config.json (a current context, which chooses the daemon; proxy
+# variables, which it adds to every container; credential helpers and plugin hooks, which it runs)
+# and takes its daemon from DOCKER_HOST or a context. So every docker command of this script is this
+# function: DOCKER_CONFIG is docker-config/, an empty private directory in the current TMPDIR, and
+# DOCKER_HOST is the system daemon's socket; no other DOCKER_* variable is set (unset above). The
+# builder image is pinned by digest as well.
+docker() {
+  private_dir "${TMPDIR:?}/docker-config"
+  DOCKER_CONFIG=$TMPDIR/docker-config DOCKER_HOST=$DOCKER_SOCKET command docker "$@"
 }
 
 # --- argument and test-mode handling -----------------------------------------------------------
@@ -502,11 +608,15 @@ check_syft() {
 }
 
 # check_cosign <path> <sha256> <version>: the same for cosign, whose version is the gitVersion of
-# `cosign version --json`.
+# `cosign version --json`. cosign reads COSIGN_*, SIGSTORE_*, TUF_ROOT and token variables and keeps
+# its TUF cache under ~/.sigstore, so on the host it always runs with an empty environment: PATH,
+# TMPDIR, and HOME set to cosign-home/, an empty private directory (the same in cosign_verify).
 check_cosign() {
   local out ver
   pinned_digest cosign "$1" "$2" "$3"
-  out=$("$1" version --json 2>/dev/null) || die "$1 version --json failed"
+  private_dir "${TMPDIR:?}/cosign-home"
+  out=$(env -i PATH=/usr/bin:/bin HOME="$TMPDIR/cosign-home" TMPDIR="$TMPDIR" "$1" version --json 2>/dev/null) \
+    || die "$1 version --json failed"
   ver=$(printf '%s\n' "$out" | jq -r '.gitVersion? // empty' 2>/dev/null) || ver=''
   [[ $ver == "$3" ]] \
     || die "$1 reports version '$ver', not the pinned cosign $3; re-pin COSIGN_VERSION and COSIGN_SHA256 in release.sh through a reviewed change"
@@ -581,6 +691,24 @@ check_index_flags() {
     || die "index entries are marked assume-unchanged (lowercase), skip-worktree (S) or unmerged, so git status cannot vouch for them (clear them with git update-index --no-assume-unchanged / --no-skip-worktree):"$'\n'"$flagged"
 }
 
+# git reads no /etc/gitconfig or ~/.gitconfig here (see "The tools' own configuration"), so the
+# repository's own configuration is the only one left that could rewrite a URL (url.<base>.insteadOf
+# or pushInsteadOf) or change TLS verification (http.sslVerify, http.sslCAInfo, http.sslCAPath, also
+# per URL), and so send the fetch, the tag checks or the push to a server other than $remote. None of
+# them may be set. Key names can hold credentials, so they are counted, not printed.
+check_git_config() {
+  local rc=0 out
+  local -a keys
+  out=$(git config --name-only --get-regexp \
+    '^url\..*\.(push)?insteadof$|^http\.(.*\.)?(sslverify|sslcainfo|sslcapath)$') || rc=$?
+  case $rc in
+    0) mapfile -t keys <<<"$out"
+       die "the repository's git config sets ${#keys[@]} URL rewrite or TLS key(s) (url.*.insteadOf, url.*.pushInsteadOf, http.*sslVerify, http.*sslCAInfo or http.*sslCAPath), which could send the fetch, the tag checks or the push somewhere other than $remote; list them with: git config --show-origin --get-regexp '^(url|http)\\.'" ;;
+    1) ;;
+    *) die "cannot read the repository's git config (git config exited $rc)" ;;
+  esac
+}
+
 preflight() {
   stage=preflight
   local host here top dirty head origin_main remote_tags channel verdict pub_sha
@@ -608,6 +736,8 @@ preflight() {
   [[ -z $dirty ]] || die "working tree is not clean (tracked changes or untracked files):"$'\n'"$dirty"
   check_index_flags
   note "ok: clean tree at $repo_root (no assume-unchanged or skip-worktree entries)"
+  check_git_config
+  note "ok: git reads only the repository's config, which rewrites no URL and changes no TLS setting"
 
   head=$(git rev-parse --verify 'HEAD^{commit}')
   [[ $head == "$sha" ]] || die "HEAD is $head, not the given merge commit $sha"
@@ -667,7 +797,7 @@ check_publish_ready() {
   email=${ident#*<}
   email=${email%%>*}
   [[ $email == "$TAGGER_EMAIL" ]] \
-    || die "the tagger would be <$email>; the release tag must be made by the writer identity <$TAGGER_EMAIL> (set GIT_COMMITTER_NAME and GIT_COMMITTER_EMAIL, or the lane's user.name and user.email)"
+    || die "the tagger would be <$email>; the release tag must be made by the writer identity <$TAGGER_EMAIL> (set GIT_COMMITTER_NAME and GIT_COMMITTER_EMAIL, or user.name and user.email in the repository's own config; release.sh does not read ~/.gitconfig)"
   if out=$("$GH_ROLE" writer release view "$tag" -R "$REPO_SLUG" --json tagName 2>&1); then
     die "a GitHub release $tag already exists: $out"
   fi
@@ -697,7 +827,12 @@ open_run_dir() {
   stage=setup
   mkdir -p -- "$run_dir" "$target_root/cargo-home"
   dist=$run_dir/dist
-  mkdir -- "$dist" "$run_dir/tmp" "$run_dir/home"
+  mkdir -- "$dist" "$run_dir/home"
+  # TMPDIR is private (0700) like release-tmp/, whatever the umask: it holds the containers' tmp/
+  # and the tools' configuration directories.
+  mkdir -m 0700 -- "$run_dir/tmp"
+  [[ -d $run_dir/tmp && ! -L $run_dir/tmp && -O $run_dir/tmp && $(stat -c %a -- "$run_dir/tmp") == 700 ]] \
+    || die "$run_dir/tmp is not a private (0700) directory owned by $(id -un)"
   export TMPDIR=$run_dir/tmp
   checks_file=$run_dir/readback-checks.jsonl
   exec 3>&1 4>&2
@@ -1008,14 +1143,17 @@ sign_sums() {
   [[ -O $sig && -r $sig && -s $sig && ! -L $sig ]] || die "$sig is not a readable file owned by $(id -un)"
 }
 
-# Succeeds only when cosign is still the pinned build, exits 0 and says "Verified OK". Its TMPDIR
-# and TUF_ROOT are named, both inside the run directory.
+# Succeeds only when cosign is still the pinned build, exits 0 and says "Verified OK". It runs with
+# an empty environment (see check_cosign): HOME, TMPDIR and TUF_ROOT are named, all inside the run
+# directory.
 cosign_verify() {
   local out rc=0
   [[ $(sha256_of "$COSIGN") == "$COSIGN_SHA256" ]] \
     || { say "$COSIGN is no longer the pinned cosign $COSIGN_VERSION ($COSIGN_SHA256)"; return 1; }
-  out=$(TMPDIR="$run_dir/tmp" TUF_ROOT="$run_dir/tuf" "$COSIGN" verify-blob --key "$1" \
-    --insecure-ignore-tlog=true --signature "$2" "$3" 2>&1) || rc=$?
+  # A subshell, so that a refusal fails this check instead of exiting the script (see record).
+  ( private_dir "$run_dir/tmp/cosign-home" ) || return 1
+  out=$(env -i PATH=/usr/bin:/bin HOME="$run_dir/tmp/cosign-home" TMPDIR="$run_dir/tmp" TUF_ROOT="$run_dir/tuf" \
+    "$COSIGN" verify-blob --key "$1" --insecure-ignore-tlog=true --signature "$2" "$3" 2>&1) || rc=$?
   printf '%s\n' "$out"
   (( rc == 0 )) && grep -qx 'Verified OK' <<<"$out"
 }

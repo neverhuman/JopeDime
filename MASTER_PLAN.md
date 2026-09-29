@@ -277,6 +277,12 @@ It is `origin/main` immediately after the merge, and the v0.2.0 release readback
     - the README's 0.2.0 status, stats, releases section and layout, and the lines that #117 to
       #123 and the release made false in `SECURITY.md`, `CONTRIBUTING.md` and `docs/`;
     - this record.
+  - Review: the first independent review (5345652450, CHANGES_REQUESTED at
+    `97d5ffa8336c31468262cf3755bbe53905e39139`) found an unpinned Syft and a missing
+    temporary-directory policy across the builder boundary. The commits that follow it pin Syft and
+    cosign by digest and reported version, require root-owned host tools, carry `TMPDIR` across
+    docker, sudo and `env -i`, and isolate jq, git and the other host tools from per-user
+    configuration.
   - Merge: this pull request's merge commit, `origin/main` immediately after the merge; its SHA
     is recorded in the release readback, not here. No tag exists yet: `release.sh --publish`
     creates `v0.2.0` on that commit. The Python package stays 0.1.0 and unreleased, and no wheel
