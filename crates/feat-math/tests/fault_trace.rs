@@ -1,6 +1,13 @@
 //! Fault reporting of the scalar evaluator (kernel2 WP-1.1 to WP-1.3).
 //!
 //! - The fault classes: bits, names and severities are append-only (WP-1.1).
+//! - The fault tables of WP-1.2 and WP-1.8, row by row, plus a case for every class, for the
+//!   boundaries of each guard and for the order in which faults accumulate. Values are compared
+//!   with the legacy entry points, and with recorded bits where the value is free of libm.
+//! - On every (expression, row) of the compatibility corpus, and every element of every row, the
+//!   traced value equals the legacy value bit for bit (0.0 for a legacy error, as the stage
+//!   fallback computes it), and a Hard fault is raised exactly when the legacy call returns an
+//!   error, with the class of that error's kind.
 //!
 //! Inputs come from PR 01's compatibility corpus, `tests/fixtures/compat_freeze/
 //! mathexpr_values.v1.json`: its rows and its expressions. The values recorded there are never
@@ -16,8 +23,12 @@
 //!   builds return the same legacy values exactly when they print the same digest.
 //! - `legacy_eval_row_throughput` times the legacy entry points on the corpus.
 
-use feat_math::math_expr::{CompiledMathExpr, FaultClass, FaultSet, FaultSeverity, MathExpr};
+use feat_math::math_expr::{
+    CompiledMathExpr, FaultClass, FaultSet, FaultSeverity, MathEvalError, MathExpr,
+};
 use sha2::{Digest, Sha256};
+use std::collections::BTreeMap;
+use std::fmt;
 use std::hint::black_box;
 use std::time::Instant;
 
@@ -125,34 +136,495 @@ fn fault_sets_combine_as_sets() {
 
 #[test]
 fn fault_names_pass_the_shipped_text_lint() {
-    let names: Vec<&str> = FaultClass::ALL
+    let severities = [
+        FaultSeverity::Saturation,
+        FaultSeverity::Domain,
+        FaultSeverity::Hard,
+    ];
+    let names = FaultClass::ALL
         .iter()
         .map(|class| class.name())
-        .chain(
-            [
-                FaultSeverity::Saturation,
-                FaultSeverity::Domain,
-                FaultSeverity::Hard,
-            ]
-            .iter()
-            .map(|severity| severity.name()),
-        )
-        .collect();
+        .chain(severities.iter().map(|severity| severity.name()));
     for name in names {
         let hits = feat_math::transpile::lint_shipped_text(name);
         assert!(hits.is_empty(), "{name}: {hits:?}");
     }
 }
 
-/// One corpus row: its cells.
+// ---------------------------------------------------------------------------------------------
+// The fault tables (WP-1.2, WP-1.8)
+// ---------------------------------------------------------------------------------------------
+
+const POS_ZERO: u64 = 0x0000_0000_0000_0000;
+const NEG_ZERO: u64 = 0x8000_0000_0000_0000;
+const MAX_ABS: u64 = 0x426d_1a94_a200_0000; // 1e12, the output filter's clamp
+
+fn union_of(sets: &[FaultSet]) -> FaultSet {
+    sets.iter()
+        .fold(FaultSet::EMPTY, |all, set| all.union(*set))
+}
+
+/// One evaluation and what it must report.
+struct Case {
+    source: &'static str,
+    row: Vec<f64>,
+    /// `None` is row context (`eval_row`); `Some(x)` is element context (`eval_element`).
+    x: Option<f64>,
+    /// The value's bits where they are free of libm; `None` compares with the legacy value only.
+    bits: Option<u64>,
+    faults: FaultSet,
+}
+
+impl Case {
+    fn describe(&self) -> String {
+        match self.x {
+            None => format!("{} on {:?}", self.source, self.row),
+            Some(x) => format!("{} on {:?} at x = {x:?}", self.source, self.row),
+        }
+    }
+}
+
+fn row_case(source: &'static str, row: &[f64], bits: Option<u64>, faults: FaultSet) -> Case {
+    Case {
+        source,
+        row: row.to_vec(),
+        x: None,
+        bits,
+        faults,
+    }
+}
+
+fn element_case(
+    source: &'static str,
+    x: f64,
+    row: &[f64],
+    bits: Option<u64>,
+    faults: FaultSet,
+) -> Case {
+    Case {
+        source,
+        row: row.to_vec(),
+        x: Some(x),
+        bits,
+        faults,
+    }
+}
+
+/// The WP-1.2 table (workplan lines 591-609), in its order.
+fn wp_1_2_table() -> Vec<Case> {
+    use feat_math::math_expr::FaultSet as F;
+    vec![
+        row_case("1/col(0)", &[0.0], Some(POS_ZERO), F::DIV_NEAR_ZERO),
+        row_case("0/col(0)", &[1.0], Some(POS_ZERO), F::EMPTY),
+        row_case("log(col(0))", &[-1.0], Some(POS_ZERO), F::LOG_DOMAIN),
+        row_case("log(col(0))", &[1.0], Some(POS_ZERO), F::EMPTY),
+        row_case("log1p(col(0))", &[-1.0], Some(POS_ZERO), F::LOG1P_DOMAIN),
+        row_case("sqrt(col(0))", &[-1.0], Some(POS_ZERO), F::SQRT_PROJECTED),
+        // Recorded at the base: +0.0 (the workplan guessed -0.0), and not a fault.
+        row_case("sqrt(col(0))", &[-0.0], Some(POS_ZERO), F::EMPTY),
+        row_case("exp(col(0))", &[27.0], None, F::EMPTY),
+        row_case("exp(col(0))", &[28.0], Some(MAX_ABS), F::MAGNITUDE_CLAMPED),
+        row_case(
+            "exp(col(0))",
+            &[31.0],
+            Some(MAX_ABS),
+            union_of(&[F::EXP_ARG_CLAMPED, F::MAGNITUDE_CLAMPED]),
+        ),
+        row_case(
+            "asinh(col(0))",
+            &[1e155],
+            Some(POS_ZERO),
+            F::NONFINITE_SANITIZED,
+        ),
+        row_case(
+            "col(0)*col(0)",
+            &[1e200],
+            Some(POS_ZERO),
+            F::NONFINITE_SANITIZED,
+        ),
+        row_case(
+            "col(0)",
+            &[f64::NAN],
+            Some(POS_ZERO),
+            union_of(&[F::NONFINITE_INPUT, F::NONFINITE_SANITIZED]),
+        ),
+        row_case("col(3)", &[1.0], Some(POS_ZERO), F::COLUMN_OOB),
+        row_case("x", &[1.0], Some(POS_ZERO), F::ILLEGAL_SCOPE),
+        // The workplan lists only INVALID_CLIP_BOUNDS. Reading the NaN bound col(1) raises
+        // NONFINITE_INPUT first (WP-1.2 step 5), and the faults raised before a Hard error stay.
+        row_case(
+            "clip(col(0), col(1), col(1))",
+            &[1.0, f64::NAN],
+            Some(POS_ZERO),
+            union_of(&[F::NONFINITE_INPUT, F::INVALID_CLIP_BOUNDS]),
+        ),
+        row_case(
+            "row_min",
+            &[],
+            Some(POS_ZERO),
+            union_of(&[F::EMPTY_ROW_REDUCTION, F::NONFINITE_SANITIZED]),
+        ),
+    ]
+}
+
+/// The WP-1.8 table (workplan lines 774-779), then the other reductions over an empty row and
+/// over a row with a non-finite cell. An empty sum is -0.0 with this toolchain (PR 01's finding),
+/// so "0.0" in the workplan is a value, not a sign.
+fn wp_1_8_table() -> Vec<Case> {
+    use feat_math::math_expr::FaultSet as F;
+    let sanitized_input = union_of(&[F::NONFINITE_INPUT, F::NONFINITE_SANITIZED]);
+    vec![
+        row_case("row_mean", &[], Some(NEG_ZERO), F::EMPTY_ROW_REDUCTION),
+        row_case("row_sum", &[], Some(NEG_ZERO), F::EMPTY),
+        row_case("row_std", &[5.0], Some(POS_ZERO), F::EMPTY),
+        row_case(
+            "row_mean",
+            &[f64::NAN, 1.0],
+            Some(POS_ZERO),
+            sanitized_input,
+        ),
+        row_case(
+            "row_max",
+            &[f64::NEG_INFINITY],
+            Some(POS_ZERO),
+            sanitized_input,
+        ),
+        // Undefined over an empty row: mean, std, min and max. True identities: sum, l1, l2.
+        row_case("row_std", &[], Some(NEG_ZERO), F::EMPTY_ROW_REDUCTION),
+        row_case(
+            "row_max",
+            &[],
+            Some(POS_ZERO),
+            union_of(&[F::EMPTY_ROW_REDUCTION, F::NONFINITE_SANITIZED]),
+        ),
+        row_case("row_l1", &[], Some(NEG_ZERO), F::EMPTY),
+        row_case("row_l2", &[], Some(NEG_ZERO), F::EMPTY),
+        // Any non-finite cell, for every reduction; min absorbs the NaN but keeps the fault.
+        row_case(
+            "row_sum",
+            &[1.0, f64::INFINITY],
+            Some(POS_ZERO),
+            sanitized_input,
+        ),
+        row_case("row_l1", &[f64::NAN, 1.0], Some(POS_ZERO), sanitized_input),
+        row_case(
+            "row_l2",
+            &[1.0, f64::NEG_INFINITY],
+            Some(POS_ZERO),
+            sanitized_input,
+        ),
+        row_case("row_std", &[1.0, f64::NAN], Some(POS_ZERO), sanitized_input),
+        row_case(
+            "row_min",
+            &[1.0, f64::NAN],
+            Some(1f64.to_bits()),
+            F::NONFINITE_INPUT,
+        ),
+    ]
+}
+
+/// Every class the evaluator raises besides those above, the boundaries of its guard, the
+/// branches that absorb a NaN, and the order in which faults accumulate.
+fn class_cases() -> Vec<Case> {
+    use feat_math::math_expr::FaultSet as F;
+    let sanitized_input = union_of(&[F::NONFINITE_INPUT, F::NONFINITE_SANITIZED]);
+    let generated_nonfinite = union_of(&[F::POW_NONFINITE, F::NONFINITE_SANITIZED]);
+    vec![
+        // DIV_NEAR_ZERO is strictly below 1e-12, and 1/1e-12 is exactly 1e12, not clamped.
+        row_case("1/col(0)", &[1e-12], Some(MAX_ABS), F::EMPTY),
+        row_case("1/col(0)", &[-0.0], Some(POS_ZERO), F::DIV_NEAR_ZERO),
+        // LOG_DOMAIN covers tiny positives up to 1e-300; a NaN argument is not in its branch.
+        row_case("log(col(0))", &[1e-300], Some(POS_ZERO), F::LOG_DOMAIN),
+        row_case("log(col(0))", &[f64::NAN], Some(POS_ZERO), sanitized_input),
+        // SQRT_PROJECTED: max(0.0) replaces a NaN argument too.
+        row_case(
+            "sqrt(col(0))",
+            &[f64::NAN],
+            Some(POS_ZERO),
+            union_of(&[F::NONFINITE_INPUT, F::SQRT_PROJECTED]),
+        ),
+        // POW_NONFINITE: a non-finite power of a finite base and a finite (clamped) exponent.
+        row_case("col(0)^0.5", &[-1.0], Some(POS_ZERO), generated_nonfinite),
+        row_case(
+            "col(0)^col(1)",
+            &[0.0, -1.0],
+            Some(POS_ZERO),
+            generated_nonfinite,
+        ),
+        row_case(
+            "col(0)^col(1)",
+            &[1e200, 8.0],
+            Some(POS_ZERO),
+            generated_nonfinite,
+        ),
+        row_case(
+            "col(0)^col(1)",
+            &[2.0, f64::NAN],
+            Some(POS_ZERO),
+            sanitized_input,
+        ),
+        // POW_EXP_CLAMPED: outside [-8, 8] only. An infinite exponent is clamped to 8.
+        row_case(
+            "2^col(0)",
+            &[100.0],
+            Some(256f64.to_bits()),
+            F::POW_EXP_CLAMPED,
+        ),
+        row_case("2^col(0)", &[8.0], Some(256f64.to_bits()), F::EMPTY),
+        row_case(
+            "col(0)^col(1)",
+            &[1e200, f64::INFINITY],
+            Some(POS_ZERO),
+            union_of(&[
+                F::NONFINITE_INPUT,
+                F::POW_EXP_CLAMPED,
+                F::POW_NONFINITE,
+                F::NONFINITE_SANITIZED,
+            ]),
+        ),
+        // EXP_ARG_CLAMPED and SIGMOID_ARG_CLAMPED: outside [-30, 30] only.
+        row_case("exp(col(0))", &[30.0], Some(MAX_ABS), F::MAGNITUDE_CLAMPED),
+        row_case("exp(col(0))", &[-31.0], None, F::EXP_ARG_CLAMPED),
+        row_case("sigmoid(col(0))", &[31.0], None, F::SIGMOID_ARG_CLAMPED),
+        row_case("sigmoid(col(0))", &[-30.0], None, F::EMPTY),
+        // MAGNITUDE_CLAMPED: strictly above 1e12 in magnitude, either sign.
+        row_case(
+            "col(0)",
+            &[-1e13],
+            Some(MAX_ABS | NEG_ZERO),
+            F::MAGNITUDE_CLAMPED,
+        ),
+        // NONFINITE_INPUT: x as well as a column.
+        element_case(
+            "x",
+            f64::INFINITY,
+            &[f64::INFINITY],
+            Some(POS_ZERO),
+            sanitized_input,
+        ),
+        element_case("x + col(0)", 2.0, &[2.0], Some(4f64.to_bits()), F::EMPTY),
+        // A branch that absorbs a NaN input still leaves the input fault.
+        row_case(
+            "min(col(0), col(1))",
+            &[f64::NAN, 1.0],
+            Some(1f64.to_bits()),
+            F::NONFINITE_INPUT,
+        ),
+        row_case(
+            "step(col(0), 0)",
+            &[f64::NAN],
+            Some(POS_ZERO),
+            F::NONFINITE_INPUT,
+        ),
+        // A NaN generated at a guarded site is reported there, even when a parent absorbs it...
+        row_case(
+            "min(col(0)^0.5, 1)",
+            &[-1.0],
+            Some(1f64.to_bits()),
+            F::POW_NONFINITE,
+        ),
+        // ...but a product has no guard: its overflow, absorbed by min, raises nothing (see
+        // "Not reported" in docs/internal/kernel2/math-domain-table.md).
+        row_case(
+            "min(col(0)*col(0) - col(0)*col(0), 1)",
+            &[1e200],
+            Some(1f64.to_bits()),
+            F::EMPTY,
+        ),
+        // Faults accumulate in evaluation order until a Hard error ends the evaluation.
+        row_case(
+            "1/col(1) + col(5)",
+            &[1.0, 0.0],
+            Some(POS_ZERO),
+            union_of(&[F::DIV_NEAR_ZERO, F::COLUMN_OOB]),
+        ),
+        row_case(
+            "col(5) + 1/col(1)",
+            &[1.0, 0.0],
+            Some(POS_ZERO),
+            F::COLUMN_OOB,
+        ),
+        // Two NaN bounds from arithmetic, as in PR 01's clip pins; one NaN bound is no error.
+        row_case(
+            "clip(1,(-1)^0.5,(-1)^0.5)",
+            &[],
+            Some(POS_ZERO),
+            union_of(&[F::POW_NONFINITE, F::INVALID_CLIP_BOUNDS]),
+        ),
+        row_case(
+            "clip(1,(-1)^0.5,3)",
+            &[],
+            Some(3f64.to_bits()),
+            F::POW_NONFINITE,
+        ),
+        // A row summary read twice reports its faults on each read; the set is the same.
+        row_case(
+            "row_min + row_min",
+            &[],
+            Some(POS_ZERO),
+            union_of(&[F::EMPTY_ROW_REDUCTION, F::NONFINITE_SANITIZED]),
+        ),
+    ]
+}
+
+fn all_cases() -> Vec<Case> {
+    let mut cases = wp_1_2_table();
+    cases.extend(wp_1_8_table());
+    cases.extend(class_cases());
+    cases
+}
+
+/// The Hard class of a legacy evaluation error, by the kinds compat_freeze records.
+fn hard_class_of(error: &anyhow::Error) -> FaultClass {
+    let message = error.to_string();
+    if error.downcast_ref::<MathEvalError>() == Some(&MathEvalError::InvalidClipBounds) {
+        FaultClass::InvalidClipBounds
+    } else if message.starts_with("variable x is only valid") {
+        FaultClass::IllegalScope
+    } else if message.starts_with("column index") {
+        FaultClass::ColumnOob
+    } else {
+        panic!("an evaluation error of no recorded kind: {message}")
+    }
+}
+
+/// A traced result against the legacy result of the same call: the legacy value bit for bit
+/// with no Hard fault, or, for a legacy error, 0.0 with exactly one Hard class, of that error's
+/// kind.
+fn check_against_legacy(
+    what: &str,
+    legacy: &anyhow::Result<f64>,
+    (value, faults): (f64, FaultSet),
+) {
+    match legacy {
+        Ok(expected) => {
+            assert_eq!(
+                value.to_bits(),
+                expected.to_bits(),
+                "{what}: traced {value:?}, legacy {expected:?}"
+            );
+            assert_ne!(
+                faults.severity(),
+                Some(FaultSeverity::Hard),
+                "{what}: a legacy value with the faults {faults}"
+            );
+        }
+        Err(error) => {
+            assert_eq!(value.to_bits(), POS_ZERO, "{what}: a legacy error is 0.0");
+            let hard: Vec<FaultClass> = faults
+                .iter()
+                .filter(|class| class.severity() == FaultSeverity::Hard)
+                .collect();
+            assert_eq!(
+                hard,
+                [hard_class_of(error)],
+                "{what}: the legacy error {error:#} with the faults {faults}"
+            );
+        }
+    }
+}
+
+/// `eval_row_traced_strict`: the compat-shape value and faults, or exactly the legacy error.
+fn check_strict(
+    what: &str,
+    expr: &MathExpr,
+    row: &[f64],
+    legacy: &anyhow::Result<f64>,
+    traced: (f64, FaultSet),
+) {
+    match (expr.eval_row_traced_strict(row), legacy) {
+        (Ok((value, faults)), Ok(_)) => assert_eq!(
+            (value.to_bits(), faults),
+            (traced.0.to_bits(), traced.1),
+            "{what}: strict"
+        ),
+        (Err(strict), Err(legacy)) => {
+            assert_eq!(strict.to_string(), legacy.to_string(), "{what}: strict");
+            assert_eq!(
+                strict.downcast_ref::<MathEvalError>(),
+                legacy.downcast_ref::<MathEvalError>(),
+                "{what}: strict error type"
+            );
+        }
+        (strict, legacy) => panic!("{what}: strict {strict:?}, legacy {legacy:?}"),
+    }
+}
+
+/// One case through the interpreter.
+fn check_interpreter(case: &Case) {
+    let what = case.describe();
+    let expr = MathExpr::parse(case.source).unwrap_or_else(|error| panic!("{what}: {error}"));
+    let (legacy, traced) = match case.x {
+        None => (expr.eval_row(&case.row), expr.eval_row_traced(&case.row)),
+        Some(x) => (
+            expr.eval_element(x, &case.row),
+            expr.eval_element_traced(x, &case.row),
+        ),
+    };
+    check_against_legacy(&what, &legacy, traced);
+    if let Some(bits) = case.bits {
+        assert_eq!(
+            traced.0.to_bits(),
+            bits,
+            "{what}: expected {:?}, got {:?}",
+            f64::from_bits(bits),
+            traced.0
+        );
+    }
+    assert_eq!(traced.1, case.faults, "{what}");
+    if case.x.is_none() {
+        check_strict(&what, &expr, &case.row, &legacy, traced);
+    }
+}
+
+#[test]
+fn the_interpreter_reports_the_fault_tables() {
+    for case in all_cases() {
+        check_interpreter(&case);
+    }
+}
+
+#[test]
+fn a_call_with_the_wrong_arity_from_a_deserialized_ast_is_a_compile_failure() {
+    // parse and from_ast refuse this; serde decoding is a compatibility interface and does not.
+    let expr: MathExpr = serde_json::from_value(serde_json::json!({
+        "root": {"Call": ["Sin", [{"Const": 1.0}, {"Const": 2.0}]]}
+    }))
+    .expect("the historical AST encoding");
+    let legacy = expr.eval_row(&[]).expect_err("a legacy arity error");
+    assert_eq!(legacy.to_string(), "Sin received 2 arguments");
+    let (value, faults) = expr.eval_row_traced(&[]);
+    assert_eq!(
+        (value.to_bits(), faults),
+        (POS_ZERO, FaultSet::COMPILE_FAILED)
+    );
+    let strict = expr
+        .eval_row_traced_strict(&[])
+        .expect_err("the legacy error");
+    assert_eq!(strict.to_string(), legacy.to_string());
+    let (value, faults) = expr.eval_element_traced(1.0, &[1.0]);
+    assert_eq!(
+        (value.to_bits(), faults),
+        (POS_ZERO, FaultSet::COMPILE_FAILED)
+    );
+    // The stage refuses the same AST at compile time, which it reports as COMPILE_FAILED.
+    assert!(expr.compile().is_err());
+}
+
+// ---------------------------------------------------------------------------------------------
+// The compatibility corpus
+// ---------------------------------------------------------------------------------------------
+
+/// One corpus row: its label and its cells.
 struct Row {
+    label: String,
     cells: Vec<f64>,
 }
 
-/// PR 01's corpus: every row, and every expression with whether it is a map-context expression.
+/// PR 01's corpus: every row and every expression source.
 struct Corpus {
     rows: Vec<Row>,
-    expressions: Vec<(String, bool)>,
+    expressions: Vec<String>,
 }
 
 fn corpus() -> Corpus {
@@ -168,6 +640,7 @@ fn corpus() -> Corpus {
         .expect("rows")
         .iter()
         .map(|row| Row {
+            label: row["label"].as_str().expect("row label").to_string(),
             // The empty row is recorded as "": no cells, not one empty token.
             cells: row["values"]
                 .as_str()
@@ -183,21 +656,11 @@ fn corpus() -> Corpus {
                 .collect(),
         })
         .collect();
-    let expressions: Vec<(String, bool)> = file["expressions"]
+    let expressions: Vec<String> = file["expressions"]
         .as_array()
         .expect("expressions")
         .iter()
-        .map(|expression| {
-            let context = expression["context"].as_str().expect("context");
-            assert!(
-                context == "row" || context == "map",
-                "unknown context {context}"
-            );
-            (
-                expression["source"].as_str().expect("source").to_string(),
-                context == "map",
-            )
-        })
+        .map(|expression| expression["source"].as_str().expect("source").to_string())
         .collect();
     assert!(
         rows.iter().any(|row| row.cells.is_empty()) && !expressions.is_empty(),
@@ -205,6 +668,77 @@ fn corpus() -> Corpus {
     );
     Corpus { rows, expressions }
 }
+
+/// Counts for the record: evaluations, those with any fault, legacy errors by their Hard class,
+/// and evaluations per class.
+#[derive(Default)]
+struct Tally {
+    evaluations: usize,
+    faulted: usize,
+    errors: BTreeMap<&'static str, usize>,
+    classes: BTreeMap<&'static str, usize>,
+}
+
+impl Tally {
+    fn add(&mut self, legacy: &anyhow::Result<f64>, faults: FaultSet) {
+        self.evaluations += 1;
+        self.faulted += usize::from(!faults.is_empty());
+        if let Err(error) = legacy {
+            *self.errors.entry(hard_class_of(error).name()).or_default() += 1;
+        }
+        for class in faults.iter() {
+            *self.classes.entry(class.name()).or_default() += 1;
+        }
+    }
+}
+
+impl fmt::Display for Tally {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "evaluations={} faulted={} legacy_errors={:?} classes={:?}",
+            self.evaluations, self.faulted, self.errors, self.classes
+        )
+    }
+}
+
+#[test]
+fn traced_values_equal_legacy_values_on_the_compat_corpus() {
+    let corpus = corpus();
+    let mut rows = Tally::default();
+    let mut elements = Tally::default();
+    for source in &corpus.expressions {
+        let expr = MathExpr::parse(source).expect("corpus expression parses");
+        for row in &corpus.rows {
+            let cells = row.cells.as_slice();
+            let what = format!("{source} on {}", row.label);
+            let legacy = expr.eval_row(cells);
+            let traced = expr.eval_row_traced(cells);
+            check_against_legacy(&what, &legacy, traced);
+            check_strict(&what, &expr, cells, &legacy, traced);
+            rows.add(&legacy, traced.1);
+            for (j, &x) in cells.iter().enumerate() {
+                let what = format!("{source} on {} at element {j}", row.label);
+                let legacy = expr.eval_element(x, cells);
+                let traced = expr.eval_element_traced(x, cells);
+                check_against_legacy(&what, &legacy, traced);
+                elements.add(&legacy, traced.1);
+            }
+        }
+    }
+    eprintln!(
+        "PROPERTY expressions={} rows={}",
+        corpus.expressions.len(),
+        corpus.rows.len()
+    );
+    eprintln!("PROPERTY row context: {rows}");
+    eprintln!("PROPERTY element context: {elements}");
+    assert!(rows.evaluations > 0 && elements.evaluations > 0);
+}
+
+// ---------------------------------------------------------------------------------------------
+// Probes that compare two builds (ignored; run them in release)
+// ---------------------------------------------------------------------------------------------
 
 /// A legacy result as a token: the value's bits, or the error's message.
 fn token(result: anyhow::Result<f64>) -> String {
@@ -225,7 +759,7 @@ fn legacy_value_digest() {
         digest.update(b"\n");
         results += 1;
     };
-    for (source, _) in &corpus.expressions {
+    for source in &corpus.expressions {
         let expr = MathExpr::parse(source).expect("corpus expression parses");
         let compiled = expr.compile().expect("corpus expression compiles");
         for row in &corpus.rows {
@@ -290,7 +824,7 @@ fn legacy_eval_row_throughput() {
     let expressions: Vec<(MathExpr, CompiledMathExpr)> = corpus
         .expressions
         .iter()
-        .map(|(source, _)| {
+        .map(|source| {
             let expr = MathExpr::parse(source).expect("corpus expression parses");
             let compiled = expr.compile().expect("corpus expression compiles");
             (expr, compiled)
