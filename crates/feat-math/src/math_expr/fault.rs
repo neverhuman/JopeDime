@@ -42,7 +42,8 @@ impl FaultSeverity {
     /// Every class of this severity.
     pub fn classes(self) -> FaultSet {
         FaultClass::ALL
-            .into_iter()
+            .iter()
+            .copied()
             .filter(|class| class.severity() == self)
             .collect()
     }
@@ -96,8 +97,8 @@ pub enum FaultClass {
 }
 
 impl FaultClass {
-    /// Every class, in bit order.
-    pub const ALL: [FaultClass; 16] = [
+    /// Every class, in bit order. A slice, so appending a class does not change its type.
+    pub const ALL: &'static [FaultClass] = &[
         Self::DivNearZero,
         Self::LogDomain,
         Self::Log1pDomain,
@@ -256,7 +257,8 @@ impl FaultSet {
     /// The classes in the set, in bit order.
     pub fn iter(self) -> impl Iterator<Item = FaultClass> + Clone {
         FaultClass::ALL
-            .into_iter()
+            .iter()
+            .copied()
             .filter(move |class| self.contains(class.set()))
     }
 
