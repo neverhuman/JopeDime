@@ -9,6 +9,14 @@
       "builds": "v0.2.0 (629e69d865a674222e00224cebf45c1ffddc8dea) through f65026dd54ba29ef3e7e990b51b15eb42652c089; no identity input differs between them",
       "receipt": "docs/internal/kernel2/receipts/evaluator-identity-v0.2.0/receipt.json",
       "receipt_sha256": "8ae5933e700316f56383a419e6ae32da862a0915e23bd28ca23c4f8d394fa2a0"
+    },
+    {
+      "implementation_sha256": "3ec654cb6a44f26d5770bcab589273879605831570025cb42475fa1aad1e1f63",
+      "cargo_lock_sha256": "8ecdd1fc461f5700897e2e65dac13e3a05200bfcd2226e3b62d39bbe772c1fee",
+      "identity_digest": "891dae89b1b56ef4b95c83ef1a1c5e4501f1da8c9c03c8aea1eaef3bb01efd6b",
+      "builds": "kernel2 PR 03 (#128) from 0a9bc2d2c410b6a1ab83bd6d5466c64e074506c7, the last commit that changed an identity input, through d1a1d21f820d5b1867bb55cb90c42e18cd604a2d; no identity input differs between them",
+      "receipt": "docs/internal/kernel2/receipts/evaluator-identity-3ec654cb/receipt.json",
+      "receipt_sha256": "438b8600a8fba7c67057b618f942bcef3c7940cb40588c0d0623e000dbc98a6e"
     }
   ]
 }
