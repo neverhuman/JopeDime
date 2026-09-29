@@ -7,7 +7,13 @@
 //!
 //! Bit positions are append-only. A class keeps its bit, its name and its severity forever; a new
 //! class takes the next free bit.
+//!
+//! Faults accumulate in evaluation order until the evaluation ends. A Hard class ends it: the
+//! legacy entry point returns an error at that point. Every evaluation error therefore carries
+//! exactly one Hard class, together with the faults raised before it, and a Hard class is raised
+//! only together with an error.
 
+use super::*;
 use std::fmt;
 
 /// How serious a fault class is. Ordered from the mildest to the most serious.
@@ -291,5 +297,96 @@ impl fmt::Display for FaultSet {
 impl fmt::Debug for FaultSet {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "FaultSet({self})")
+    }
+}
+
+/// Where the evaluator reports the guards it takes.
+pub(crate) trait FaultSink {
+    /// `false` when raised faults are discarded. Detection work beyond a guard's own test, such
+    /// as scanning a row for non-finite cells, is skipped then, so the legacy entry points pay
+    /// nothing for it.
+    const ENABLED: bool;
+
+    fn raise(&mut self, faults: FaultSet);
+}
+
+/// The legacy entry points' sink: it discards every fault.
+pub(crate) struct NoSink;
+
+impl FaultSink for NoSink {
+    const ENABLED: bool = false;
+
+    #[inline(always)]
+    fn raise(&mut self, _faults: FaultSet) {}
+}
+
+/// A sink that keeps every fault raised into it.
+#[derive(Clone, Copy, Debug, Default)]
+pub(crate) struct Collect(pub(crate) FaultSet);
+
+impl FaultSink for Collect {
+    const ENABLED: bool = true;
+
+    #[inline]
+    fn raise(&mut self, faults: FaultSet) {
+        self.0 = self.0.union(faults);
+    }
+}
+
+impl MathExpr {
+    /// [`MathExpr::eval_row`] with the faults its evaluation raised, in the compat shape: the
+    /// value is `eval_row(row).unwrap_or(0.0)`, bit for bit, as the stage fallback computes it.
+    /// When `eval_row` returns an error, the value is 0.0 and the faults hold exactly one Hard
+    /// class, with every fault raised before it.
+    pub fn eval_row_traced(&self, row: &[f64]) -> (f64, FaultSet) {
+        compat_shape(self.eval_traced(None, row))
+    }
+
+    /// [`MathExpr::eval_element`] with the faults its evaluation raised, in the compat shape of
+    /// [`MathExpr::eval_row_traced`]: the value is `eval_element(x, row).unwrap_or(0.0)`.
+    pub fn eval_element_traced(&self, x: f64, row: &[f64]) -> (f64, FaultSet) {
+        compat_shape(self.eval_traced(Some(x), row))
+    }
+
+    /// [`MathExpr::eval_row`] with the faults its evaluation raised, for callers that refuse Hard
+    /// faults: exactly when `eval_row` returns an error, this returns that error, unchanged. The
+    /// faults of a failed evaluation are those of [`MathExpr::eval_row_traced`].
+    pub fn eval_row_traced_strict(&self, row: &[f64]) -> Result<(f64, FaultSet)> {
+        let (value, faults) = self.eval_traced(None, row);
+        Ok((value?, faults))
+    }
+
+    /// `eval_row` (`x` is `None`) or `eval_element` (`x` is the element) with a collecting sink.
+    fn eval_traced(&self, x: Option<f64>, row: &[f64]) -> (Result<f64>, FaultSet) {
+        let ctx = EvalContext { x, row };
+        let mut sink = Collect::default();
+        let value = compute_expr_with(&self.root, &ctx, &mut sink).map(|v| safe_with(v, &mut sink));
+        (value, sink.0)
+    }
+}
+
+/// The stage fallback's shape: an evaluation error is the value 0.0, and keeps its faults.
+fn compat_shape((value, faults): (Result<f64>, FaultSet)) -> (f64, FaultSet) {
+    (value.unwrap_or(0.0), faults)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn the_legacy_sink_is_disabled_and_the_collecting_sink_accumulates() {
+        const { assert!(!NoSink::ENABLED && Collect::ENABLED) };
+        let mut none = NoSink;
+        none.raise(FaultSet::ALL);
+        let mut collect = Collect::default();
+        assert_eq!(collect.0, FaultSet::EMPTY);
+        collect.raise(FaultSet::DIV_NEAR_ZERO);
+        collect.raise(FaultSet::NONFINITE_SANITIZED);
+        collect.raise(FaultSet::DIV_NEAR_ZERO);
+        assert_eq!(
+            collect.0,
+            FaultSet::DIV_NEAR_ZERO.union(FaultSet::NONFINITE_SANITIZED)
+        );
     }
 }
