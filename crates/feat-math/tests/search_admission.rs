@@ -12,8 +12,8 @@
 //! - They score on the CPU route: a GPU backend is never called, and exact reuse stays off.
 //! - What they decide does not depend on the thread count.
 //!
-//! The informational run on the test datasets, whose rates the WP-1.5 receipt records, is
-//! ignored by default.
+//! The informational run on the test datasets, whose rates and invalid-candidate counts the WP-1.5
+//! receipt records, is ignored by default.
 
 use feat_math::evolve::{
     evolve, evolve_lite_race, evolve_lite_race_with_exact_initial_population,
@@ -1229,10 +1229,52 @@ fn best_program_faults(outcome: &RaceOutcome, x: &Rows, y: &[f64]) -> String {
     format!("{expressions} expression stages, {scope}, rates {rates}")
 }
 
+/// Why rung 0 of a rejecting policy would reject a raced candidate, measured after the run the
+/// way the policy measures it while racing: its rung-0 program fails the scope check (`scope`),
+/// or a pass of its traced rung-0 evaluation raises a Hard class (`hard`), checked in the policy's
+/// order on the published rung-0 rows and folds. A fold that cannot be fitted or predicted ends
+/// the replay without a verdict, as it ends the policy's evaluation. `None` when rung 0 admits the
+/// candidate. This measures every policy's candidates alike, `Legacy`'s included, which rejects
+/// nothing and scores such a candidate like any other.
+fn rung0_rejection(outcome: &RaceOutcome, x: &Rows, y: &[f64], dsl: &str) -> Option<&'static str> {
+    let (surrogate, _) = rung0_trace_identity(dsl).ok()?;
+    let program = GenomeIr::parse(&surrogate).ok()?;
+    if validate_scope(&program, x[0].len()).is_err() {
+        return Some("scope");
+    }
+    let mut totals = FaultTotals::default();
+    for fold in 0..RACE_RUNG_FOLDS[0] {
+        let (mut xtr, mut ytr, mut xte) = (Vec::new(), Vec::new(), Vec::new());
+        for (&row, &assigned) in outcome.rung0_rows.iter().zip(&outcome.rung0_assignments) {
+            if assigned == fold {
+                xte.push(x[row].clone());
+            } else {
+                xtr.push(x[row].clone());
+                ytr.push(y[row]);
+            }
+        }
+        let (model, training) = fit_traced(&program, &xtr, &ytr).ok()?;
+        totals.add_pass(&training);
+        if totals.is_hard() {
+            return Some("hard");
+        }
+        let (_, held_out) = predict_traced(&model, &xte).ok()?;
+        totals.add_pass(&held_out);
+        if totals.is_hard() {
+            return Some("hard");
+        }
+    }
+    None
+}
+
 /// Informational only, with no quality gate (plan WP-1.5 acceptance): the rates of `Legacy`,
 /// `RejectHard` and `Penalize{0.05, 0, tie-break}` in one seeded lite race per regression dataset
-/// of `datasets/test`, seeded with expression programs, since the default vocabulary never
-/// generates an expression stage and would measure nothing. Prints one line per run.
+/// of `datasets/test` (collection `test-10`, the real-data half of fixture set D5), seeded with
+/// expression programs, since the default vocabulary never generates an expression stage and
+/// would measure nothing. Prints one line per run. The policy's own columns (its rejections, their
+/// reasons and its domain-rate counters) are `-` under `Legacy`, which checks and measures
+/// nothing; the invalid candidates, all raced ones and the offspring among them, are measured
+/// after every run alike ([`rung0_rejection`]).
 #[test]
 #[ignore = "informational: fault-policy rates on datasets/test for the WP-1.5 receipt; run with --run-ignored only"]
 fn informational_fault_policy_rates_on_the_test_datasets() {
@@ -1244,7 +1286,7 @@ fn informational_fault_policy_rates_on_the_test_datasets() {
         ("penalize-0.05-0-tie", PENALIZE),
     ];
     println!(
-        "dataset | policy | features | raced | rejected | rejected offspring | reasons | pop domain rate | elite domain rate | best cv | best program measured at rung 0 | best program | seconds"
+        "dataset | policy | features | raced | rejected | rejected offspring | reasons | invalid at rung 0: raced, offspring, kinds | pop domain rate | elite domain rate | best cv | best program measured at rung 0 | best program | seconds"
     );
     for (name, x, y) in &datasets {
         for (label, policy) in policies {
@@ -1284,17 +1326,33 @@ fn informational_fault_policy_rates_on_the_test_datasets() {
             }
             let last = log.generations().last().cloned();
             let rate = |bits: Option<u64>| bits.map_or(f64::NAN, f64::from_bits);
+            let pop_rate = rate(last.as_ref().map(|counters| counters.pop_domain_rate));
+            let elite_rate = rate(last.as_ref().map(|counters| counters.elite_domain_rate));
+            // `Legacy` checks nothing and measures no rate: its policy columns are `-`.
+            let measured = policy != FaultPolicy::Legacy;
+            let policy_cell = |value: String| if measured { value } else { "-".to_string() };
+            let (mut invalid_raced, mut invalid_offspring) = (0, 0);
+            let mut invalid_kinds = std::collections::BTreeMap::<&str, usize>::new();
+            for candidate in &outcome.candidates {
+                if let Some(kind) = rung0_rejection(&outcome, x, y, &candidate.dsl) {
+                    invalid_raced += 1;
+                    invalid_offspring +=
+                        usize::from(candidate.r0_generation.is_some_and(|gen| gen > 0));
+                    *invalid_kinds.entry(kind).or_default() += 1;
+                }
+            }
             let best = outcome.ranked.first();
             println!(
-                "{name} | {label} | {} | {} | {} | {}/{} | {:?} | {:.4} | {:.4} | {} | {} | {} | {seconds:.1}",
+                "{name} | {label} | {} | {} | {} | {} | {} | {invalid_raced}/{} {invalid_offspring}/{} {invalid_kinds:?} | {} | {} | {} | {} | {} | {seconds:.1}",
                 x[0].len(),
                 outcome.rung_evals[0],
-                rejected.len(),
-                rejected_offspring,
+                policy_cell(rejected.len().to_string()),
+                policy_cell(format!("{rejected_offspring}/{}", offspring.len())),
+                policy_cell(format!("{reasons:?}")),
+                outcome.candidates.len(),
                 offspring.len(),
-                reasons,
-                rate(last.as_ref().map(|counters| counters.pop_domain_rate)),
-                rate(last.as_ref().map(|counters| counters.elite_domain_rate)),
+                policy_cell(format!("{pop_rate:.4}")),
+                policy_cell(format!("{elite_rate:.4}")),
                 best.map_or_else(|| "-".to_string(), |scored| format!("{:.4}", scored.cv_mean)),
                 best_program_faults(&outcome, x, y),
                 best.map_or("-", |scored| scored.dsl.as_str()),
