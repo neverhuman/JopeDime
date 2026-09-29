@@ -63,8 +63,10 @@ const CLASSES: [(u32, FaultSet, &str, FaultSeverity); 16] = [
 
 #[test]
 fn fault_bits_names_and_severities_are_append_only() {
-    assert_eq!(FaultClass::ALL.len(), CLASSES.len());
-    for (class, (bit, set, name, severity)) in FaultClass::ALL.into_iter().zip(CLASSES) {
+    // A slice, not an array: an appended class must not change the constant's type.
+    let all: &'static [FaultClass] = FaultClass::ALL;
+    assert_eq!(all.len(), CLASSES.len());
+    for (class, (bit, set, name, severity)) in all.iter().copied().zip(CLASSES) {
         assert_eq!(set.bits(), 1 << bit, "{name}");
         assert_eq!(class.index(), bit as usize, "{name}");
         assert_eq!(class.set(), set, "{name}");
