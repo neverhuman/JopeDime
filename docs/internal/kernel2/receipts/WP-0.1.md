@@ -100,15 +100,36 @@ library test that passes in isolation.
 
 - `crates/feat-math/tests/fixtures/math_boundary/v1.json` (WP-0.3): 66 boundary inputs in nine
   groups, checked against their definition in `tests/compat_freeze.rs`.
-- `crates/feat-math/tests/compat_freeze.rs` (WP-0.2): 9 tests over the fixtures in
-  `tests/fixtures/compat_freeze/`, generated from the base's sources. The binary runs in about
-  8.3 s on this host (the slowest test is the generator streams). Repeated regenerations produced
-  byte-identical fixtures, and compare mode passes with one thread and with the default threads.
+- `crates/feat-math/tests/compat_freeze.rs` (WP-0.2): 11 tests over the nine fixtures in
+  `tests/fixtures/compat_freeze/`, all generated from the base's sources. Besides the workplan's
+  surfaces they pin:
+  - emitted bytes, serde bytes and predictions for 55 programs, including every op the C++17
+    recipe and JavaScript emitters accept, and the Rust, Python and manifest bytes `jope emit`
+    writes;
+  - the lite race that `jope optimize` runs, with `rank_robust` off and on, beside the surrogate
+    run;
+  - the sources jope-engine hashes into its teaching, corpus and query identities;
+  - the CPU, FMA/AVX flags and hostname of the host that generated the fixtures.
+
+  The slowest tests are the generator streams and the search runs, about 8 s each; nextest runs
+  them in parallel. Regenerating at the base reproduces every fixture byte for byte, and compare
+  mode passes with the default threads and with the rust-test lane's single-thread environment.
 - `crates/feat-math/tests/mathexpr_current_semantics.rs` (WP-0.5): 18 tests.
-- Guard-constant perturbation caught: with the division guard moved from `1e-12` to `1e-11`,
-  `division_guard_is_strictly_below_1e_minus_12`, `expression_values_match_the_frozen_fixture`
-  (96 differing values) and `evaluator_identity_inputs_match_the_recorded_identity` fail with
-  readable messages; after `git checkout` of the source the tree is clean and all 27 tests pass.
+- `crates/feat-math/tests/ip_scrub.rs` lints every program the freeze pins (plan N6).
+- Two regeneration modes. `JOPE_COMPAT_FREEZE_REGENERATE=1` rewrites every fixture, which is an
+  approved rebaseline. `JOPE_COMPAT_FREEZE_REGENERATE=identity` rewrites only the evaluator
+  identity and the lineage sources, which planned changes move, and still compares every other
+  surface.
+- Perturbations caught. Each was restored with `git checkout`, and the tree was clean afterwards.
+  - The division guard moved from `1e-12` to `1e-11`:
+    `division_guard_is_strictly_below_1e_minus_12`, `expression_values_match_the_frozen_fixture`
+    (96 differing values) and `evaluator_identity_inputs_match_the_recorded_identity` fail with
+    readable messages.
+  - A comment appended to `crates/jope-engine/src/fit_boundary.rs`:
+    `lineage_sources_match_the_recorded_sources` fails and names the file and the teaching-store
+    lineage.
+  - `golden_map_derive_ridge`'s recorded C++17 value replaced by a refusal for a different
+    element: the emitted-bytes test fails. The first version's rule passed this case.
 
 ## Findings recorded while freezing
 
@@ -128,4 +149,52 @@ library test that passes in isolation.
    2^52 + 1 to 2^52 + 2, but every result above 1e12 leaves the evaluator as 1e12.
 4. **The compiled form agrees with the interpreter** on all 82 expressions and all 266 corpus rows,
    in row context and, for the 20 map-context expressions, per element (an element error is 0.0
-   on the compiled path).
+   on the compiled path). Where both return an error, it is the same kind of error.
+5. **The eval-registry query identity hashes `crates/feat-math/src/model.rs`.**
+   `execution_query_key` hashes it together with `query.rs` and `prepare.rs`, and
+   `verify_artifacts` refuses a query receipt whose recorded source hashes differ. After any
+   `model.rs` change, every earlier query receipt fails to verify.
+6. **Every jope-engine lineage also hashes the running executable.** This covers the teaching
+   store, the corpus scan policy and the query identity. Any change linked into that binary mints
+   new lineages even when no listed source changes, and that includes every feat-math change.
+   `lineage_sources.v1.json` pins the listed sources; the plan should say that every PR linked
+   into the packer mints new teaching and corpus lineages.
+7. **The recipe emitters also accept `logistic`**, which is an alias of the ridge head.
+8. **`jope emit` bytes differ from the default-option bytes** for Rust, Python and the manifest
+   of every program. The title is embedded in all three.
+9. **`rank_robust` changes the lite race's ranked scores**, because the ranking reports the
+   penalized score. On the pinned data it does not change which programs are raced.
+
+## Review follow-ups
+
+The first review of this PR found gaps that are now closed:
+
+- C++17-recipe coverage: 12 op bodies and 6 helpers were unpinned; three recipe programs now pin
+  them, and the fixture records every op each emitter accepts.
+- The lite race: it is now pinned, with `rank_robust` off and on.
+- Programs: target stages, step, impute's zero paths, select_corr by=var, the ridge_gcv dual
+  route, an empty stage output and `x` outside a map are now in the program set.
+- The additive rule: it now accepts only a gain in support.
+- Generator sub-arms that no parent reached: they are now reached.
+- `jope emit` options: their bytes are now recorded.
+- Lineage sources: every hashed source is now pinned.
+- Error kinds: the value fixture now records them.
+- libm and host: the module doc lists which surfaces depend on libm, and `meta.json` records the
+  generating host.
+- The identity-only rebaseline mode now exists.
+- Drift messages now show more detail.
+- Every frozen program is now linted in `ip_scrub.rs`.
+- The fixture key is now neutral.
+
+Still open before merge:
+
+- **Cross-host check.** The fixtures come from xbabe2 (AMD Ryzen Threadripper PRO 3995WX,
+  fma avx2), but the PR lanes run on xbabe1 in the jope-runner container. The first rust-test
+  run at the exact head is the cross-host check. If only libm-dependent surfaces differ there,
+  regenerate those at the base inside the runner image; the module doc lists them.
+- **`just ci-pr` is not green as a whole.** Workspace clippy is red at the base in five crates,
+  none of them feat-math. The python-check step was not run here. Hosted CI is the authority.
+- **The feat-math merge announcement in `AGENT_CHAT.md`** belongs to the orchestrator. It should
+  list every path this PR changes.
+- **Not pinned:** ridge_gcv's width-screen route. It needs more than 384 rows and 384 columns,
+  which is too slow for a debug build. Its `heads.rs` unit tests cover it.
