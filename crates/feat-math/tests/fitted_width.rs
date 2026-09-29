@@ -15,7 +15,8 @@
 //!   never panics, and whenever it returns a value that value is `predict`'s.
 //! - The schema-bound (advanced-v3) boundary: a legacy stage, `corr_screen` or `pls_project`
 //!   whose fitted state does not fit the feature block makes `predict_table` return an error
-//!   instead of panicking, and a table with no rows keeps its result.
+//!   instead of panicking, and a table with no rows keeps its result. The `piecewise_linear` arm
+//!   is left unguarded, a gap the receipt records; a test pins its panic.
 
 use feat_math::dsl::{parse_dsl, Stage};
 use feat_math::heads::{fit_head, FittedHead};
@@ -1168,6 +1169,29 @@ fn schema_bound_tables_with_no_rows_compare_no_width() {
             "{source}: {error}"
         );
     }
+}
+
+#[test]
+fn schema_bound_piecewise_linear_with_extra_edge_columns_still_panics() {
+    // The one schema-bound arm left unguarded, a gap the WP-1.7 receipt records: the
+    // `piecewise_linear` arm gathers the missing mask at every fitted edge column, so edges fitted
+    // for more columns than the block has still panic. The brief of this change names only the
+    // legacy, `corr_screen` and `pls_project` sites; a change that closes the gap fails this test.
+    let table = RawTable::from_csv("a,b\n0.125,-1.5\n0.5,2.5\n2.125,6.5\n").unwrap();
+    let model = bound("(pipe X (piecewise_linear bins=8) (ridge))");
+    assert!(model.predict_table(&table).is_ok(), "the fitted model");
+    let mut json = serde_json::to_value(&model).unwrap();
+    let edges = json["predictor"]["Pipeline"]["ops"][0]["PiecewiseLinear"]["edges"]
+        .as_array_mut()
+        .expect("the fitted edges");
+    assert_eq!(edges.len(), 2, "one edge column per input column");
+    let first = edges[0].clone();
+    edges.push(first);
+    let tampered: BoundModel = serde_json::from_value(json).unwrap();
+    assert!(
+        panics(|| tampered.predict_table(&table)),
+        "the recorded gap"
+    );
 }
 
 // ---------------------------------------------------------------------------------------------
