@@ -120,7 +120,7 @@ evaluation order; the cross-cut comparison re-measurements are left out.
 
 The gates of the workplan's promotion ladder (§17.3), evaluated as data with A the reference and
 B the candidate. A clause is `pass`, `fail`, `no-difference` (A and B are equal) or
-`not-evaluated` (its metric does not exist yet). A gate fails on any failing clause, reports
+`not-evaluated` (its metric does not exist yet, or a run lacks its value). A gate fails on any failing clause, reports
 `no-difference` when every evaluated clause does, and is `not-evaluated` when no clause could be
 evaluated; `complete` is false when any clause was not evaluated.
 
@@ -129,7 +129,7 @@ evaluated; `complete` is false when any clause was not evaluated.
 | G-A quality | Per dataset, delta = mean M1 RMSE of B minus A, and sigma = the pooled seed standard deviation of A and B. Pass when no dataset has delta above 0.25 sigma, and either at least two datasets have delta at or below minus one sigma or the mean M3 of B is at most 90% of A's. `not-evaluated` with fewer than two seeds |
 | G-B parity | The parity lanes (`crates/feat-math/tests/parity_bits.rs`) must be green with the profile's new elements in the corpus. The search does not evaluate it: `no-difference` when both profiles are the same, otherwise `not-evaluated` |
 | G-C soundness | M4 increase at most 0.02 and M5 increase at most 0.01 (`not-evaluated` until fault telemetry exists); M6 increase at most 0.01 |
-| G-D cost | M7 mean stages and mean expression nodes non-increasing; M8 token cost and artifact bytes increase at most 5%. The M10 clause (increase at most 10%) is in `timing` |
+| G-D cost | M7 mean stages and mean expression nodes non-increasing; M8 token cost and artifact bytes increase at most 5%. An M8 clause is `not-evaluated` when any run of either profile has no M8 value (the emitters or the token estimator refused its best program), also when both profiles lack it; the expression-node clause is `no-difference` when no best program of either profile has an expression. The M10 clause (increase at most 10%) is in `timing` |
 | G-E use | M9 above 0: `not-evaluated` until a profile adds tokens |
 
 With A=A every run record of B equals A's, so the verdict is `no difference` and every gate is
