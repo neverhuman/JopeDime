@@ -8,6 +8,9 @@
 //! The schema-bound emitters (`emit_bound`: Python, Rust and a manifest for a fitted v3 model;
 //! `emit_fitted_cpp17`: C++17 source and codec) are covered too, on fitted regression and binary
 //! models.
+//!
+//! Every program whose artifact bytes `tests/compat_freeze.rs` freezes is in the fixture set (plan
+//! N6: new emitted-artifact fixtures are linted here).
 
 use feat_math::advanced_v3::{
     emit_bound, emit_fitted_cpp17, fit_table, ColumnSpec, DataSchema, Objective, RawTable,
@@ -43,10 +46,51 @@ const SYMBOLIC: &[&str] = &[
     "(sym raw \"sigmoid(c0) + 0.5*c1\")",
 ];
 
+/// The other programs whose artifact bytes `tests/compat_freeze.rs` freezes (its
+/// `NAMED_PROGRAMS`, verbatim; compat_freeze fails when one of them is missing here).
+const COMPAT_FREEZE_PROGRAMS: &[&str] = &[
+    "(pipe X (map expr=\"sigmoid(x) + 0.1*col(0)\" append=true) (derive expr=\"row_mean + row_std - c1/(c0 + 3)\" append=true) (ridge))",
+    "(pipe X (map expr=\"x^2 - min(x, c2) + tanh(c3)\") (elasticnet alpha=0.005 l1_ratio=0.7))",
+    "(pipe X (map expr=\"step(col(0), 0.0) + 0.5*step(row_mean, c1)\" append=true) (ridge))",
+    "(pipe X (map expr=\"exp(clip(col(0),-2,2)) + log(abs(col(1)) + 1.0) + asinh(col(2)) + atan(col(3))\") (ridge))",
+    "(pipe X (derive append=true expr=\"erf(col(0)) + sign(col(1)) * floor(col(2)) + round(col(3))\") (ridge))",
+    "(sym affine \"sigmoid(col(0)) + 0.5*col(1) - log1p(abs(col(2))) + max(c3, c4^2)\")",
+    "(sym raw \"clip(row_mean + 0.3*row_std - c0/(c1 + 5), -2, 2)\")",
+    "(sym affine \"step(c0, 0.0) + step(c1, c2) - 0.5\")",
+    "(sym affine \"erf(c0) + asinh(c1) - exp(clip(c2, -1, 1)) + sign(c3) * round(c4)\")",
+    "(pipe X (map expr=\"abs(x) + sqrt(abs(c0)) - log1p(abs(x))\" append=true) (derive expr=\"sin(c0) + cos(c1) * tanh(c2)\" append=true) (ridge))",
+    "(pipe X (map expr=\"sigmoid(x) - min(x, c1) + max(x, c2)\") (derive expr=\"clip(c0, -1, 1) + step(c1, 0.5)\" append=true) (ridge))",
+    "(pipe X (map expr=\"exp(clip(x, -3, 3)) + log(abs(x) + 1)\" append=true) (derive expr=\"asinh(c0) + atan(c1) - erf(c2)\" append=true) (ridge))",
+    "(pipe X (map expr=\"sign(x) * floor(x) + round(x)\") (derive expr=\"row_sum - row_l1 + row_l2\" append=true) (ridge))",
+    "(pipe X (map expr=\"x - row_mean + row_std\" append=true) (derive expr=\"row_min * row_max + c0 / (c1 + 3)\" append=true) (ridge))",
+    "(pipe X (map expr=\"x^2 - (-x) * 0.5 + x / (c0 + 2)\") (derive expr=\"c3^3 - c4*c4*c4 + c2^0.5\" append=true) (elasticnet alpha=0.005 l1_ratio=0.7))",
+    "(pipe X (symlog c=0.7) (ridge))",
+    "(pipe X (select_corr k=3 by=corr) (ridge))",
+    "(pipe X (impute strategy=median add_indicator=true) (standardize) (ridge))",
+    "(pipe X (pair_ratio topk=4 append=true) (ridge))",
+    "(pipe X (spline knots=4) (ridge))",
+    "(pipe X (rff_cos n=8) (rff_sin n=8) (rand_proj k=4) (landmark_dist k=4) (ridge))",
+    "(pipe X (oblique_hinge n=4) (row_stats) (pair_prod) (target_bin_encode) (sigmoid) (ridge))",
+    "(pipe X (step t=0.5 append=true) (norm_row) (row_diff_stats) (elasticnet))",
+    "(pipe X (standardize) (logistic))",
+    "(pipe X (target kind=rank_gauss) (ridge))",
+    "(pipe X (target kind=log1p) (ridge lambda_frac=0.02))",
+    "(pipe X (target kind=winsor q=0.05) (standardize) (ridge))",
+    "(pipe X (target kind=zscore) (standardize) (ridge))",
+    "(pipe X (step t=0.0) (impute strategy=mean add_indicator=true) (ridge))",
+    "(pipe X (step t=0.0 append=true) (impute strategy=const value=0.5) (ridge))",
+    "(pipe X (select_corr k=3 by=var) (ridge))",
+    "(pipe X (rff_cos n=96 seed=3) (ridge_gcv))",
+    "(pipe X (select_corr k=1) (pair_ratio topk=4) (ridge))",
+    "(pipe X (derive expr=\"x\" append=true) (ridge))",
+    "(sym raw \"x\")",
+];
+
 fn every_fixture() -> Vec<String> {
     let mut all: Vec<String> = PIPELINES
         .iter()
         .chain(SYMBOLIC.iter())
+        .chain(COMPAT_FREEZE_PROGRAMS.iter())
         .map(|s| (*s).to_owned())
         .collect();
     all.push(feat_math::CHAMPION_GENOME.to_owned());
