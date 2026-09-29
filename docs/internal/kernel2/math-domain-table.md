@@ -1,6 +1,7 @@
 # Scalar evaluator: domain table and fault classes
 
-kernel2 WP-1.1 to WP-1.3, with the evaluator half of WP-1.8. The code is in
+kernel2 WP-1.1 to WP-1.3, with the evaluator half of WP-1.8; the stage level (WP-1.4 and the rest
+of WP-1.8) is in the last three sections. The code is in
 `crates/feat-math/src/math_expr.rs` (the guards and every raise site),
 `crates/feat-math/src/math_expr/fault.rs` (the classes, the sinks and the interpreter's traced
 entry points) and `crates/feat-math/src/math_expr/compiled.rs` (the compiled form's traced entry
@@ -165,3 +166,114 @@ recorded at the base or chosen here and pinned in `tests/fault_trace.rs`:
 - `COMPILE_FAILED` is also raised by the interpreter's evaluation-time arity check, which is the
   structural check `compile()` makes, so that every evaluation error carries a Hard class. Inside a
   stage that check is never reached: the stage compiles first.
+
+## Stage telemetry (WP-1.4)
+
+`crates/feat-math/src/kernel/telemetry.rs` counts, stage by stage, what the evaluator reports cell
+by cell. `apply_op_traced`, `fit_traced` and `predict_traced` return what `apply_op`, `fit` and
+`Model::predict` return: the same rows bit for bit, a model with the same `serde_json` bytes, the
+same prediction bits. The tests are in `crates/feat-math/tests/stage_telemetry.rs`.
+
+The module is under `kernel/`, which neither the ADR-0004 identity list nor any jope-engine lineage
+hashes, so it mints no identity. The code it needs is private to `ops.rs` (the stage epilogue
+`finish` and its append flag `op_append`) or lives in the identity-bearing `model.rs` (`fit` and
+`predict`), so the module mirrors it line for line rather than editing it, and the tests hold each
+mirror to its original.
+
+**Where each value and its faults come from.** A stage takes `apply_op_generated`'s branch
+(`crates/feat-math/src/ops.rs`, the `MapExpr` and `DeriveExpr` arms, lines 1159 to 1186 at this
+change's base):
+
+| Stage | Value (unchanged) | Faults of each generated cell |
+|---|---|---|
+| `map` whose expression reads a row summary | compiled `map_row` | compiled `map_row_traced` |
+| `map`, otherwise | `eval_element(x, row).unwrap_or(0.0)` | `eval_element_traced` |
+| `derive` whose expression reads a row summary | compiled `eval_row(row).unwrap_or(0.0)` | compiled `eval_row_traced` |
+| `derive`, otherwise | `eval_row(row).unwrap_or(0.0)` | `eval_row_traced` |
+| `map` or `derive` when `compile()` fails | 0.0 for every cell of the row (`map`); one 0.0 per row (`derive`) | `COMPILE_FAILED` |
+| a symbolic program, in `fit_traced` and `predict_traced` | `eval_row(row).unwrap_or(0.0)`, then 0.0 for a non-finite value (`model.rs` lines 84 to 88 and 198 to 199) | `eval_row_traced` |
+| every other op | `apply_op_generated` itself | none |
+
+A symbolic program is a model, not an op, so `apply_op_traced` has no case for it. It is never
+compiled: `fit` and `predict` call the interpreter directly, so a wrong arity from a deserialized
+AST is the interpreter's `COMPILE_FAILED` on every row there, and the stage's `compile_failed`
+flag stays false. That is the one place where the interpreter's arity check is reached.
+
+**The counts of one stage** (`StageFaultCounts`):
+
+| Field | What it counts |
+|---|---|
+| `evaluated_cells` | Cells the expression generated: every cell of a `map` row (an empty row generates none) and one cell per `derive` row. Counted before the append merge and the width cap, so a cell the cap cuts still counts. 0 for every other op. |
+| `faulted_cells[i]` | Generated cells whose faults include the class whose bit is `i`. A cell with two classes counts once under each, so the classes can add up to more than `evaluated_cells`. There are 32 slots, one per bit of `FaultSet`, so an appended class keeps the field's type. |
+| `hard_rows` | Rows with at least one generated cell whose faults include a Hard class. Each such cell is the fallback 0.0 of a legacy error (`unwrap_or(0.0)`) or of a compile failure. A `map` row with no cells is never a hard row. |
+| `compile_failed` | `compile()` refused the stage's expression. Every generated cell is then 0.0 and carries `COMPILE_FAILED`. |
+| `constant_output` | At least one cell was generated, and every generated cell has the first one's bits. One cell is trivially constant; +0.0 and -0.0 differ. The zeros of a compile failure, or of a Hard fault on every cell, are constant. |
+| `epilogue_sanitized` | Non-finite values that the stage epilogue (`finish`, `ops.rs` lines 1295 to 1317) replaced with 0.0, for every op. The epilogue runs after the append merge and the width cap, so a merged input cell counts and a cell the cap cuts does not. The 0.0 that pads an empty row is not a replacement. The expression's own output filter is `faulted_cells[NONFINITE_SANITIZED]`, never this counter, so the two never count the same value. |
+
+**The counts of one pass** (`PipelineTelemetry`):
+
+- `stages`: one entry per fitted transform of a pipeline, in order, so entry `i` is the stage of
+  `ops[i]`; the target stage and the head have none. One entry for a symbolic program's
+  expression, with one cell per row. None for an explicit portfolio, which `fit_traced` hands to
+  `fit` and whose members are fitted and applied inside `portfolio.rs`. The members of a compact
+  portfolio head are not traced either; the transforms before the head are.
+- `input_sanitized`: the non-finite input cells that a pipeline's entry sanitize replaced with 0.0
+  before its first stage. It is 0 for symbolic and portfolio models, which run no such sanitize.
+
+**What a stage in a pipeline can report.**
+
+- The pipeline sanitizes its input on entry and every stage's output in its epilogue, so every
+  value a stage reads is finite, and `NONFINITE_INPUT` never fires in a pipeline stage. The
+  entry's replacements are `input_sanitized` instead, so a non-finite input never becomes a
+  fault-free 0.0. Only the symbolic path, which reads raw inputs, and direct calls on raw rows
+  report `NONFINITE_INPUT`.
+- An expression's output is always finite (the output filter), so an expression stage's
+  `epilogue_sanitized` counts only merged input cells, which in a pipeline are finite too. Other
+  ops can overflow: `symlog`'s asinh above about 1.34e154, or `polar`'s radius.
+- `fit` applies `apply_op_train`, which forwards every op to `apply_op`, so the training pass of
+  `fit_traced` reports what `predict_traced` reports on the training rows. The tests check it.
+
+## Zero-width input (WP-1.8)
+
+- `fit_traced` and `predict_traced` refuse a zero-width input, one with a row that has no columns,
+  with the error `ZeroWidthInput { row }`: "zero-width input: row `i` has no columns", where `i` is
+  the first such row. `ZeroWidthInput::REASON` is "zero-width input", and `ZeroWidthInput::find` is
+  the check. `fit_traced` runs `fit`'s own check first, with its message ("training data is empty
+  or target is short"). A set with no rows is not zero-width: `predict_traced` returns no
+  predictions for it, as `predict` does.
+- This is the one place where the traced entry points differ from the legacy ones, and the model
+  and prediction identities hold on every input they accept. The legacy `fit` accepts a zero-width
+  input for a pipeline without transforms and for a symbolic program, and a transform stage
+  refuses it itself ("empty input to stage `op`", `ops.rs` lines 326 to 328). `predict` does not
+  check.
+- No stage produces a zero-width row: the epilogue pads an empty row with one 0.0.
+
+## The empty row at stage level (WP-1.8)
+
+The empty-row identities of the table above, seen from a stage. A `derive` stage on an empty row
+generates one cell, whose value and faults are the evaluator's:
+
+| Expression on `[]` | Value | Faults |
+|---|---|---|
+| `row_sum`, `row_l1`, `row_l2` | -0.0 | none: these are true identities |
+| `row_mean`, `row_std` | -0.0 | `EMPTY_ROW_REDUCTION` |
+| `row_min`, `row_max` | +0.0: the fold's start, +inf or -inf, through the output filter | `EMPTY_ROW_REDUCTION`, `NONFINITE_SANITIZED` |
+
+A `map` stage on an empty row generates no cell, and its output row is the epilogue's single 0.0.
+`stage_level_empty_row_identities` in `tests/stage_telemetry.rs` checks both.
+
+## Where the stage level differs from the workplan
+
+- **The files.** WP-1.4 puts `apply_op_traced` in `ops.rs` and `fit_traced` in `model.rs`. Here
+  both are in the new `kernel/telemetry.rs`: `model.rs` is a jope-engine lineage source, `ops.rs`
+  and `lib.rs` are in the ADR-0004 list, and `finish` and `op_append` are private. No evaluator
+  identity moves, and the mirrored code is held to its original by test instead.
+- **`faulted_cells` is `[u64; 32]`**, not `[u64; N_CLASSES]`, as `FaultClass::ALL` is a slice:
+  an appended class keeps the type.
+- **Two sanitize counters.** `epilogue_sanitized` is separate from the expression's classes, as
+  WP-1.4 step 3 asks. `input_sanitized` is new: without it a non-finite pipeline input would be a
+  fault-free zero, which WP-1.8 rules out.
+- **`predict_traced` returns a `Result`**, so that it can refuse a zero-width input.
+- **The symbolic model** is traced in `fit_traced` and `predict_traced`; `apply_op_traced` covers
+  ops only.
+- **Portfolios.** An explicit portfolio is fitted by `fit` and reports no stage; see above.
