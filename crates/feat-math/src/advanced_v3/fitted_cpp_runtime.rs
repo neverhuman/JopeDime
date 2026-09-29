@@ -962,4 +962,153 @@ int main() {
             "{added:#?}"
         );
     }
+
+    /// `bytes` with its metadata section replaced by `edit` of it, and the header's lengths and
+    /// the checksum recomputed.
+    fn with_metadata(bytes: &[u8], edit: impl FnOnce(&mut serde_json::Value)) -> Vec<u8> {
+        let payload_at = HEADER_LEN + read_u64(bytes, 24).unwrap() as usize;
+        let mut metadata: serde_json::Value =
+            serde_json::from_slice(&bytes[HEADER_LEN..payload_at]).unwrap();
+        edit(&mut metadata);
+        let metadata = serde_json::to_vec(&metadata).unwrap();
+        let mut rebuilt = bytes[..HEADER_LEN].to_vec();
+        rebuilt.extend(&metadata);
+        rebuilt.extend(&bytes[payload_at..bytes.len() - CHECKSUM_LEN]);
+        let total = (rebuilt.len() + CHECKSUM_LEN) as u64;
+        rebuilt[16..24].copy_from_slice(&total.to_le_bytes());
+        rebuilt[24..32].copy_from_slice(&(metadata.len() as u64).to_le_bytes());
+        let checksum = Sha256::digest(&rebuilt);
+        rebuilt.extend(checksum);
+        rebuilt
+    }
+
+    /// The metadata section of a container.
+    fn metadata_of(bytes: &[u8]) -> serde_json::Value {
+        let payload_at = HEADER_LEN + read_u64(bytes, 24).unwrap() as usize;
+        serde_json::from_slice(&bytes[HEADER_LEN..payload_at]).unwrap()
+    }
+
+    #[test]
+    fn stored_revision_two_container_validates_and_load_regenerates_it() {
+        let (model, test) = fixture();
+        let encoded = EncodedTable::from_bound_model(&model, &test).unwrap();
+        let bits = |values: &[f64]| {
+            values
+                .iter()
+                .map(|value| value.to_bits())
+                .collect::<Vec<_>>()
+        };
+
+        // A container as revision 2 stored it: that revision's source, the library compiled from
+        // it, and metadata that records revision 2.
+        let revision_two = FittedCppArtifact {
+            source: REVISION_TWO_SOURCE.to_string(),
+            source_sha256: text_hash(REVISION_TWO_SOURCE),
+            codec: String::new(),
+            codec_sha256: String::new(),
+        };
+        let stored = with_metadata(
+            &encode_artifact(&model, &revision_two).unwrap().bytes,
+            |metadata| metadata["emitter_revision"] = serde_json::json!(2),
+        );
+        let stored_library = metadata_of(&stored)["model_library_sha256"]
+            .as_str()
+            .unwrap()
+            .to_string();
+
+        // It still decodes and validates: revision 2's source is not compared with the emitter's.
+        validate_fitted_cpp_codec(&stored).unwrap();
+        let decoded = decode(&stored).unwrap();
+        assert_eq!(decoded.emitter_revision, 2);
+        assert_eq!(
+            serde_json::to_vec(&decoded.model).unwrap(),
+            serde_json::to_vec(&model).unwrap()
+        );
+
+        // Its own library, loaded as stored (without `load`'s regeneration), gives revision 2's
+        // predictions.
+        let scratch = tempfile::Builder::new()
+            .prefix("fitted-cpp-revision-two-")
+            .tempdir()
+            .unwrap();
+        let runtime = FittedCppRuntime::new(scratch.path()).unwrap();
+        let directory = scratch.path().join("stored-revision-two");
+        fs::create_dir(&directory).unwrap();
+        let path = CString::new(directory.join("model.so").as_os_str().as_encoded_bytes()).unwrap();
+        let mut handle = std::ptr::null_mut();
+        let mut error = CppRuntimeError::default();
+        let status = unsafe {
+            (runtime.api.load)(
+                stored.as_ptr(),
+                stored.len(),
+                path.as_ptr(),
+                &mut handle,
+                &mut error,
+            )
+        };
+        assert!(
+            status == 0 && !handle.is_null(),
+            "{}",
+            cpp_error(&error, status)
+        );
+        let as_stored = FittedCppModel {
+            model: handle,
+            api: Rc::clone(&runtime.api),
+            directory,
+        };
+        assert_eq!(
+            sha256_hex(&fs::read(as_stored.directory.join("model.so")).unwrap()),
+            stored_library
+        );
+        let revision_two_predictions = as_stored.predict(&encoded).unwrap();
+        drop(as_stored);
+
+        // `load` regenerates it from the embedded model, without refitting: the library it loads
+        // is the one revision 3 compiles for the same model, not the stored one, and the
+        // predictions are revision 2's, bit for bit, and the runtime's.
+        let original = stored.clone();
+        let loaded = runtime.load(&stored).unwrap();
+        let library = sha256_hex(&fs::read(loaded.directory.join("model.so")).unwrap());
+        assert_ne!(library, stored_library);
+        let current = encode_fitted_cpp17(&model).unwrap();
+        assert_eq!(
+            library,
+            metadata_of(&current.bytes)["model_library_sha256"]
+                .as_str()
+                .unwrap()
+        );
+        assert_eq!(
+            metadata_of(&current.bytes)["emitter_revision"],
+            serde_json::json!(3)
+        );
+        let predictions = loaded.predict(&encoded).unwrap();
+        assert_eq!(bits(&predictions), bits(&revision_two_predictions));
+        assert_eq!(
+            bits(&predictions),
+            bits(&model.predict_table(&test).unwrap())
+        );
+        assert_eq!(stored, original);
+        drop(loaded);
+
+        // A revision-3 container is held to the current emitter's source, and a later revision
+        // is refused.
+        let relabelled = with_metadata(&stored, |metadata| {
+            metadata["emitter_revision"] = serde_json::json!(3)
+        });
+        let error = decode(&relabelled).unwrap_err().to_string();
+        assert!(
+            error.contains("does not match the current emitter"),
+            "{error}"
+        );
+        let later = with_metadata(&stored, |metadata| {
+            metadata["emitter_revision"] = serde_json::json!(4)
+        });
+        let error = decode(&later).unwrap_err().to_string();
+        assert!(
+            error.contains("metadata or runtime identity mismatch"),
+            "{error}"
+        );
+        drop(runtime);
+        scratch.close().unwrap();
+    }
 }
