@@ -1,5 +1,171 @@
 # JopeDime current direction
 
+**2026-09-29 kernel2 pull request 06 (#132): the fitted-width contract, with no identity change.**
+Branch `kernel2/claude-m1-width`, prepared in the lane `.agent/worktrees/kernel2` on `origin/main`
+`6e0ae2491cd4e7918c4d8b07aa211c83376c6764`, after #129 merged, and replayed onto `origin/main`
+`dd5ccf3f19c3314f5ef9bf34ccf362422650cce7` after #131 merged, before its first push. It carries the
+Rust half of the kernel2 plan's WP-1.7 as the PR 06 brief cuts it; the fitted-C++ half (runtime
+revision 3) is PR 07.
+- **Readback of #131.** kernel2 PR 05 (#131, branch `kernel2/claude-m1-scope`) merged by rebase at
+  2026-09-29T19:47:50Z at the exact reviewed head `5996071572709cc6e7616467ae8699b142d4d24f`.
+  Approval 5357426190 (neverhumanbot) was submitted at 19:33:32Z, after the head push (no later
+  than 19:22:57Z). The `pull_request` run 36618838019 and the `workflow_dispatch` run 36618836795
+  were green on attempt 1, all nine jobs of each. main = `dd5ccf3f19c3314f5ef9bf34ccf362422650cce7`,
+  and its tree equals the reviewed head's tree (`a0fd9b16…`). As for #128 to #130, gh-role warned
+  that the account that opened the pull request also merged it, where `AGENTS.md` asks for a merger
+  other than the author. Evidence: `~/jope-evidence/kernel2/pr131-merge-20260929T194531Z/`
+  (`merge.log`, `SHA256SUMS`). Before it, #130 merged at 18:31:14Z (main `9146cbcc2`); #131's
+  record carries that readback.
+- **Contents.** `crates/feat-math/src/kernel/width.rs`: `required_input_width` gives the input
+  width each fitted stage accepts, read from its fitted state (`WidthReq::{Any, Exactly,
+  AtLeast}`); `check_fitted_state` checks that the state agrees with itself; `output_width` gives
+  the width `apply_op` produces, its 512-column cap and empty-row padding included; and
+  `required_head_width` gives the width a head's state reveals. `Model::try_predict` walks a model
+  with them and returns a `WidthMismatch` (stage, expected, got, kind) before any stage runs, or
+  else `Model::predict`'s own result, so an accepted input keeps its bits; `predict` is unchanged.
+  In `advanced_v3/transforms/mod.rs`, `legacy_to_block` and the `corr_screen` and `pls_project`
+  arms of `apply_block` return an error where they would panic on fitted state that does not fit
+  the feature block, including a legacy stage whose output row no `Vec` can hold. A table with no
+  rows compares no width, because a stage that generates columns takes their number from the first
+  row: it keeps its result, and only a fitted column index at which finishing a stage looks the
+  block up, where that panicked, is refused. Every match over the fitted stages and heads names
+  each variant: a scratch variant of `FittedOp` stopped the crate compiling at the five new
+  matches, and was removed.
+- **Identity.** None moves. The changed sources (`kernel/width.rs`, new; `kernel/mod.rs`;
+  `advanced_v3/transforms/mod.rs`) are outside the ADR-0004 hash list, the lineage sources and the
+  frozen pins; no fixture changes, and `compat_freeze` passes in compare mode. After the replay,
+  `git diff --quiet dd5ccf3f1 HEAD --` over the fixtures, `crates/jope-campaigns`,
+  `crates/jope-engine`, the root Cargo files and feat-math's `Cargo.toml`, `lib.rs`, `ops.rs`,
+  `model.rs`, `math_expr.rs` and `evolve.rs` exits 0, and so does the same check over the 70
+  ADR-0004, lineage and pin paths. As compat_freeze's lineage note says, jope-engine's lineage
+  identities also hash the running executable, so a rebuilt binary has new lineage identities;
+  that is not an evaluator-identity change.
+- **Replay.** The nine source commits `f34ff4656` to `c8e36e260` were cherry-picked onto
+  `dd5ccf3f1`. The one conflict was the expected one: #130 and #131 added `pub mod telemetry;` and
+  `pub mod scope;` to `kernel/mod.rs` at the line where `f34ff4656` adds `pub mod width;`, and all
+  three lines are kept, in rustfmt's order. Right after its pick, `5b6a089ec` was reworded with
+  `git commit --amend`, because its subject claimed more than the commit does (review R1: the
+  `piecewise_linear` arm still panics): "the schema-bound table boundary returns width errors
+  instead of panicking" became "width errors instead of panics for the legacy, corr_screen and
+  pls_project stages of a schema-bound pipeline", and the body is unchanged. `git range-diff
+  6e0ae2491..dbd10526d dd5ccf3f1..HEAD` shows `f34ff4656` → `5b75f3f9f` with those context lines
+  only (`!`), `5b6a089ec` → `827fda6cf` with its subject line only (`!`), and the other seven
+  unchanged (`=`): `fd4ffe5f3` → `65d90c92e`, `135cd5b4c` → `6037be4f2`, `925ec2a32` →
+  `75f08888a`, `a9c0c4766` → `cb27d2151`, `9105c6ff5` → `bd9945d00`, `c9983d2e1` → `c4d4756cd`
+  and `c8e36e260` → `524c79701`. Every replayed commit keeps its author and author date, and every
+  one but `827fda6cf` its message. The series' three source and test files are byte-identical to
+  the reviewed `c8e36e260`, and every other difference under `crates/` is #130's and #131's, byte
+  for byte. The two old records commits, `ebf647557` and `dbd10526d`, are regenerated as this
+  commit: the coverage item and the findings role re-applied to the new main's files, each adding
+  exactly the lines `ebf647557` added; the parity inventory's feat-math section re-listed from a
+  live listing; the receipt as it was at `dbd10526d`, with the base, the commit ids, the pull
+  request number, the reworded subject and the regenerated counts changed, a "Replay" section
+  added and the kept gap F1 named under "Still open"; the CHANGELOG line after #131's; this record
+  with #131's readback; and "Next allowed action" item 2. The pre-replay head is kept locally as
+  `refs/preserve/kernel2/pr06-prerebase-20260929T202502Z`.
+- **One correction besides the replay.** The receipt said that a benchmark receipt in
+  `jope-campaigns/src/aggressive.rs` is the one other place that names
+  `advanced_v3/transforms/mod.rs`. The captured file list in a jope-records replay fixture
+  (`python-parity/coverage/files.txt`), which #131's record found, names it and `kernel/mod.rs` as
+  paths too; it includes and hashes nothing. The receipt now says so.
+- **Records.** Coverage map +1 item (`target:feat-math/test/fitted_width`: rust-check, rust-test,
+  full-default; 290 targets); findings inventory +1 role (regression, fitting; 326 items); test
+  inventory +18 Rust tests (3,887 to 3,905, 65 ignored as before; feat-math 524 to 542), with
+  feat-math re-listed and every other package unchanged; the CHANGELOG `[Unreleased]` line; the
+  receipt `docs/internal/kernel2/receipts/WP-1.7.md`.
+- **Commands, first round,** at the pre-replay `135cd5b4c`, the sources and tests of this pull
+  request apart from two documentation comments (exit code, seconds), with `JOPE_PARITY_STRICT=1`
+  for the tests: `cargo fmt --all --check` (0, 7); feat-math clippy `-D warnings` (0, 9); the
+  feat-math PR tier twice, 497 passed and 10 skipped each time (0, 72; 0, 66); `fitted_width`,
+  `compat_freeze`, `ip_scrub`, `legacy_v2_freeze`, `portable_parity` and the four `advanced_v3`
+  suites twice, 61 passed each time (0, 46; 0, 46); `fitted_width` with `--no-capture` twice, 16
+  passed, its output lines byte-identical (0, 2; 0, 2); `compat_freeze` twice in compare mode, 12
+  passed each time (0, 12; 0, 12); the fixtures and the 70 identity paths unchanged (0);
+  `deploy/ci/lambda.sh` (0, 52: 6 workspaces, 66 tests; its cargo-deny step skipped, 0.19.8
+  installed where 0.20.2 is pinned); `deploy/ci/emitters.sh` into a new directory (0, 17);
+  `jope-parallel` and `jope-dime-regressor` under `-P main` (0, 240: 1,772 passed, 25 skipped);
+  `git diff --check` (0). At the pre-replay `925ec2a32`, which changes only those comments: fmt
+  (0, 7), clippy (0, 8), the PR tier (0, 70: 497 passed), `fitted_width` (0, 2) and
+  `compat_freeze` (0, 12). The exhaustiveness check and ten perturbations of the new code, each
+  caught by one to five tests, are in the receipt. With the first records (`ebf647557`) in the
+  working tree: `coverage validate` (0: 288 targets, 0 unassigned); `verify-test-inventory` (0:
+  324 items); the jope-records PR tier (0, 14: 166 passed); `test-inventory.sh --no-rust
+  --static-python` (0); `deploy/ci/check.sh` (0, 20); `deploy/ci/ip-scrub.sh` (0: 47 files); `cargo
+  fmt --all --check` (0, 7); `git diff --check 6e0ae2491` (0).
+- **Review round** (the pre-replay `a9c0c4766`, `9105c6ff5`, `c9983d2e1` and `c8e36e260`, then the
+  records of `dbd10526d`):
+  - NR-1: a table with no rows had its empty result turned into a width error after any stage that
+    takes its generated width from the first row, for example `(rank) (standardize) (ridge)`, also
+    through `predict_multiclass_table` and, after an appending stage, `pls_project`. Without rows
+    the checks now compare no width. A probe of 23 programs built against the base, the reviewed
+    head and the fix gives the base's outcome, messages included, for every program except the 6
+    that panicked at the base, which are errors now.
+  - F2: the legacy check also refuses a fitted size whose output row no `Vec` can hold, where
+    `predict_table` panicked with a capacity overflow.
+  - The head test requires every refusal to be one the requirement makes; the unguarded
+    `piecewise_linear` arm (F1) is pinned by a test and listed under Open; the CHANGELOG line names
+    the stages that are guarded (R1). The number placeholders and the #129 readback were left for
+    the replay, which fills them in (above).
+  - Commands at the pre-replay `c8e36e260` with a clean tree (exit code, seconds): fmt (0, 7);
+    clippy (0, 11); the feat-math PR tier twice, 499 passed and 10 skipped each time (0, 73; 0,
+    62); the named targets with `advanced_v3_multiclass` and `kernel_pipeline` twice, 72 passed
+    each time (0, 46; 0, 45); `fitted_width --no-capture` twice, 18 passed, its output lines
+    byte-identical to the implementation's (0, 2; 0, 2); `compat_freeze` twice, 12 passed (0, 12;
+    0, 13); the fixtures and the 70 identity paths unchanged (0); `deploy/ci/lambda.sh` twice (0,
+    54; 0, 8: 66 tests; cargo-deny skipped as before); `deploy/ci/emitters.sh` (0, 18);
+    `jope-parallel` and `jope-dime-regressor` under `-P main` twice, 1,772 passed and 25 skipped
+    each time (0, 226; 0, 196); `git diff --check` (0). Four perturbations of the added lines are
+    each caught by one test. With the records of `dbd10526d` in the working tree: `coverage
+    validate` (0: 288 targets, 0 unassigned); `verify-test-inventory` (0: 324 items); the
+    jope-records PR tier (0, 14: 166 passed); `test-inventory.sh --no-rust --static-python` (0:
+    3,872 Rust tests kept); `deploy/ci/check.sh` (0, 20); `deploy/ci/ip-scrub.sh` (0: 47 files);
+    `cargo fmt --all --check` (0, 7); `git diff --check` (0); the coverage map and the findings
+    inventory unchanged since `ebf647557` (0).
+- **Commands after the replay** at `524c79701`, the tree of this commit apart from these records,
+  with a clean tree (exit code, seconds): the feat-math PR tier with `JOPE_PARITY_STRICT=1` twice,
+  532 passed and 10 skipped each time, in 25 binaries (0, 69 with the build; 0, 60): #131's 514
+  and this pull request's 18 `fitted_width` tests; `fitted_width`, `compat_freeze`,
+  `scope_validation`, `stage_telemetry` and the four `advanced_v3` suites in compare mode twice, 86
+  passed each time, `compat_freeze` 12 of 12 and `fitted_width` 18 of 18 (0, 46; 0, 46); the review
+  round's eleven targets with `scope_validation` and `stage_telemetry`, 105 passed and 1 skipped (0,
+  45); `fitted_width` with `--no-capture` twice, 18 passed, its `STAGES` and `CORPUS` lines
+  byte-identical to the implementation's (sorted sha256 `24a74b77…`; 0, 2; 0, 2); `compat_freeze`
+  twice more, 12 passed (0, 12; 0, 12); `parity_bits` with `JOPE_PARITY_STRICT=1`, 6 passed (rust
+  6, python 6 and cpp17-fitted 10 divergences, all allowlisted, 0 unexpected, 0 stale; 0, 4); the
+  legacy value digest `b64cf538…`, 191,716 results, as PR 03 recorded (0, 1); the
+  `jope-dime-regressor` evaluator-identity tests, 15 passed, so the identity table is unaffected
+  (0, 54 with the build); `jope-parallel` and `jope-dime-regressor` under `-P main`, the consumers
+  of `predict_table`, 1,772 passed and 25 skipped (0, 286 with the build); `deploy/ci/lambda.sh`
+  (0, 48: 6 workspaces, 66 tests, all `--locked`; its cargo-deny step skipped, 0.19.8 installed
+  where 0.20.2 is pinned); `deploy/ci/emitters.sh` (0, 17); `cargo check --workspace --all-targets`
+  (0, 39); `cargo fmt --all --check` (0, 7); feat-math clippy `-D warnings` (0, 9); the identity
+  checks above, the fixtures and the replay checks (0). With these records in the working tree:
+  `coverage validate` (0: 290 targets, 0 unassigned); `verify-test-inventory` (0: 326 items, 197
+  regression); the jope-records PR tier (0, 15: 166 passed);
+  `test-inventory.sh --no-rust --static-python`, and again with `--update` (0: no file changed);
+  the feat-math section equal to a live listing (0); the two record items equal to the new main's
+  files with this pull request's items re-applied (0); `deploy/ci/ip-scrub.sh` (0: 47 files);
+  `deploy/ci/check.sh` (0, 33); `git diff --check dd5ccf3f1` (0); and the placeholder check
+  (`git grep -nI` finds no number placeholder) (0). With these records committed, every command
+  above ran again at the head with the same results.
+- **Open.** Hosted CI. PR 07, the fitted-C++ runtime revision 3. **The kept gap F1:** the V3
+  `piecewise_linear` arm of `apply_block` still panics on inconsistent state, edges fitted for
+  more columns than the feature block has, and
+  `schema_bound_piecewise_linear_with_extra_edge_columns_still_panics` pins that panic; the fix is
+  scheduled for a follow-up (item 7 of the PR 07 brief). So WP-1.7's "no panic reachable through
+  V3" holds for the legacy, `corr_screen` and `pls_project` stages only. The infallible
+  `V3Op::apply` (reached in production only by the pls head, with state it fitted) and
+  `BoundPredictor::Legacy`, which calls `Model::predict`, keep their panics on inconsistent state;
+  heads' own tables are trusted. Nothing that ships calls `try_predict` yet. cargo-deny was skipped
+  locally (0.19.8 installed, 0.20.2 asserted). The workspace check warns only in `battle-gpu`,
+  `jope-dime-regressor` and `jope-parallel`, as before, and not in feat-math.
+- **Evidence.** `~/jope-evidence/kernel2/pr06/prepare-20260929T185801Z/` for the first round,
+  `~/jope-evidence/kernel2/pr06/review-20260929T195726Z/` for the review round and
+  `~/jope-evidence/kernel2/pr06/rebase-20260929T202502Z/` for the replay: the logs of these
+  commands, the exhaustiveness check, the perturbation diffs, the zero-row probe, the feat-math
+  listings, the conflict and its resolution, the reworded message and the re-applied record items,
+  each with `SHA256SUMS`.
+
 **2026-09-29 kernel2 pull request 05 (#131): a static scope and width check for programs, library only.**
 Branch `kernel2/claude-m1-scope`, prepared in the lane `.agent/worktrees/kernel2-next` on
 `origin/main` `6e0ae2491cd4e7918c4d8b07aa211c83376c6764`, after #129 merged, and replayed onto
@@ -570,11 +736,10 @@ Next allowed action:
    - Done before the verification: the demo lane is gone; the refs are pinned (250 pins, 691 to 941 refs), and the final all-refs bundle (sha256 `592950b4…`, 941 refs) was restored and checked in an independent bare repository (`60-refs/`, independently verified at 11:21:00Z). The remote branch renames and deletions ran from 11:39:50Z to 11:45:44Z, after the AGENT_CHAT notice of 11:23:58Z and its 15-minute objection window (`60-refs/apply-20260929T113950Z/run.log`: local 5 of 5 and remote 24 of 24 rows acted, none refused; the stash was cleared; 140 remote-tracking refs were pruned).
    - A completeness critic restored the final bundle again, independently, and found every T0 census commit reachable (`70-endstate/critic-endstate-critic-20260929T123116Z/`). Its one blocking item, a ledger end snapshot, was taken after the close-out handoff was posted in AGENT_CHAT at 12:35:15Z: `01-agent-chat/snapshots/AGENT_CHAT-20260929T123515Z-end.md`, 509,995 bytes, with the 06:47Z snapshot as its byte prefix. It is sealed and mirrored. `81-remediation-20260929T123356Z/` holds the custody copies made the same afternoon: the kernel2 plan documents and the `release-v0.2.0` run directories.
 2. The kernel2 train, one implementation PR at a time, each merged by `merge-guarded.sh` at its exact reviewed head:
-   - PR 01 to PR 03 (#126 to #128), the islands-v2 source import (#129) and PR 04 (#130) are merged; their readbacks are in the records of #127 to #130 and this pull request;
-   - PR 05 is #131, this pull request: static scope validation (branch `kernel2/claude-m1-scope`, prepared in the lane `.agent/worktrees/kernel2-next` on main after #129 and replayed onto main after #130 before its first push);
-   - after it merges, PR 06, the Rust fitted-width contract. It is prepared in the lane `.agent/worktrees/kernel2` on the branch `kernel2/claude-m1-width`, and it mints no identity;
-   - then PR 07, fitted-C++ runtime revision 3;
-   - then PR 08, the library search admission policy;
+   - PR 01 to PR 03 (#126 to #128), the islands-v2 source import (#129), PR 04 (#130) and PR 05 (#131) are merged; their readbacks are in the records of #127 to #131 and this pull request;
+   - PR 06 is #132, this pull request: the Rust fitted-width contract (branch `kernel2/claude-m1-width`, prepared in the lane `.agent/worktrees/kernel2` on main after #129 and replayed onto main after #131 before its first push);
+   - after it merges, PR 07, fitted-C++ runtime revision 3. It stacks on this pull request's width contract;
+   - PR 08, the library search admission policy, is prepared in the lane `.agent/worktrees/kernel2-next` and needs only PR 03 to PR 05. It lands in whichever order the queue allows, with one pull request open at a time;
    - then M2: PR 09, the capability manifest and search profiles; PR 10, the closure gate and the export report;
    - then the rest of the train in plan order.
 3. The islands-v2 import (owner ruling of 2026-09-29): the source import merged as #129. It imported the frozen source into `deploy/lambda/training/teacher-v2`, from the verified custody snapshot of 2026-09-29T12:44:31Z (`~/jope-evidence/islands-v2-custody/20260929T124431Z/`). Still open:

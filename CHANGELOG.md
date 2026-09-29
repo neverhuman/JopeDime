@@ -12,6 +12,7 @@ the commit areas (crate or lane) named in each subject line.
 - feat-math: the scalar evaluator reports which of its guards fired, as append-only fault classes with severities, beside unchanged values, in the interpreter and the compiled form (#128)
 - feat-math: fits and predictions can report per-stage fault counts beside unchanged stage outputs, models and predictions, and that reporting path refuses zero-width input (#130)
 - feat-math: a static scope and width check that names the stage, the fault class and the reason before any evaluation, and search caps for expression scopes (15 nodes, depth 4); library only, nothing calls them yet (#131)
+- feat-math: a fitted-width contract: the input width each fitted stage and head requires and the width each stage produces, a checked prediction entry point that refuses a mismatched width before any stage runs where the unchecked one panics or misreads, and errors instead of panics for the legacy, corr_screen and pls_project stages of a schema-bound pipeline; predictions on accepted inputs are unchanged (#132)
 
 ### CI, build and release
 

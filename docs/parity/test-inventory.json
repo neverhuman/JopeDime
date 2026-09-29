@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 4",
-  "count": 3887,
+  "count": 3905,
   "ignored": 65,
   "packages": {
    "battle-gpu": {
@@ -29,7 +29,7 @@
     }
    },
    "feat-math": {
-    "count": 524,
+    "count": 542,
     "ignored": 6,
     "binaries": {
      "feat-math": {
@@ -455,6 +455,31 @@
        "the_compiled_form_reports_the_fault_tables",
        "the_expression_forms_and_fault_sets_stay_shareable_across_threads",
        "the_interpreter_reports_the_fault_tables"
+      ]
+     },
+     "feat-math::fitted_width": {
+      "kind": "test",
+      "count": 18,
+      "ignored": 0,
+      "tests": [
+       "a_tree_head_on_wide_rows_requires_only_its_feature_count",
+       "compat_corpus_try_predict_equals_predict_bit_for_bit",
+       "every_stage_has_a_width_class_and_its_output_width_matches_apply_op",
+       "heads_require_the_width_their_fitted_state_reveals",
+       "impute_fitted_on_four_columns_refuses_five",
+       "inconsistent_fitted_state_is_refused_where_predict_panics",
+       "inputs_predict_panics_on_or_misreads_are_refused_before_any_stage",
+       "mismatch_messages_name_the_stage_and_the_widths",
+       "output_width_caps_at_max_width_and_pads_empty_rows",
+       "output_widths_that_overflow_are_refused",
+       "portfolios_require_their_fitted_width_unless_they_predict_the_mean",
+       "ragged_rows_are_refused_and_empty_inputs_pass",
+       "schema_bound_piecewise_linear_with_extra_edge_columns_still_panics",
+       "schema_bound_stages_return_errors_instead_of_panicking",
+       "schema_bound_tables_with_no_rows_compare_no_width",
+       "select_corr_fitted_on_eight_columns_refuses_six",
+       "stored_compat_models_try_predict_equals_predict",
+       "symbolic_models_accept_any_width"
       ]
      },
      "feat-math::golden": {
@@ -6124,7 +6149,7 @@
   }
  },
  "totals": {
-  "rust": 3887,
+  "rust": 3905,
   "python": 172
  }
 }
