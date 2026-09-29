@@ -10,9 +10,13 @@
 #      over check.sh's 5 MiB size cap) and checks the sha256 of the inflated bytes before any
 #      build; the inflated file is gitignored, so the tree stays clean;
 #   3. per workspace: cargo metadata --locked, cargo test --locked, and cargo-deny (bans, licenses,
-#      sources) against the root deny.toml when cargo-deny is installed. The hygiene lane asserts
-#      the image's cargo-deny before it runs this; locally a missing cargo-deny is skipped with a
-#      note.
+#      sources) against the root deny.toml. It runs only under the runner image's cargo-deny 0.20.2,
+#      which the hygiene lane asserts before it runs this, because the command line is 0.20.2's:
+#      there --config is a top-level option, like --manifest-path and --all-features, and
+#      `check --config` is a parse error, while 0.19 accepts --config only after `check`. So no one
+#      command line serves both, and a pass under another version would not show that the lane
+#      passes. Anywhere else a missing or different cargo-deny is skipped with a note; under GitHub
+#      Actions (GITHUB_ACTIONS=true) it is an error.
 #
 # Compile-time inputs of the frozen csv sources:
 #   - JOPE_SOURCE_HEAD (env! in bootstrap and bootstrap-batch): JOPE_SOURCE_SHA in CI, otherwise
@@ -80,8 +84,14 @@ export JOPE_GP_MANIFEST_PATH=$root/deploy/lambda/csv/gp/corpus/extra-train-jobs.
 
 mapfile -t manifests < <(git ls-files -- 'deploy/lambda/*Cargo.toml' | grep -E '(^|/)Cargo\.toml$' | LC_ALL=C sort)
 (( ${#manifests[@]} > 0 )) || fail "no Cargo.toml is tracked under deploy/lambda/"
+readonly DENY_VERSION='cargo-deny 0.20.2'
+deny_found=$(cargo deny --version 2>/dev/null) || deny_found=''
 deny=0
-if cargo deny --version >/dev/null 2>&1; then deny=1; fi
+if [[ $deny_found == "$DENY_VERSION" ]]; then
+  deny=1
+elif [[ ${GITHUB_ACTIONS:-} == true ]]; then
+  fail "the hygiene lane runs $DENY_VERSION, and this runner has ${deny_found:-no cargo-deny}"
+fi
 passed=0
 for manifest in "${manifests[@]}"; do
   # A manifest without its own [workspace] would be looked up from the root workspace instead.
@@ -99,9 +109,11 @@ for manifest in "${manifests[@]}"; do
   echo "ok: $n tests passed"
   step "cargo deny check bans licenses sources ($manifest)"
   if (( deny )); then
-    cargo deny --manifest-path "$manifest" --all-features check --config "$root/deny.toml" bans licenses sources
+    # Every option before `check` is top-level in 0.20.2, --config included.
+    cargo deny --manifest-path "$manifest" --all-features --locked --config "$root/deny.toml" \
+      check bans licenses sources
   else
-    echo "cargo-deny is not installed: skipped here (the hygiene lane asserts the image's cargo-deny before it runs this)"
+    echo "skipped: ${deny_found:-no cargo-deny} is installed here, not $DENY_VERSION, whose command line this is (the hygiene lane asserts $DENY_VERSION before it runs this)"
   fi
 done
 step "lambda workspaces: ${#manifests[@]} built and tested, $passed tests passed"

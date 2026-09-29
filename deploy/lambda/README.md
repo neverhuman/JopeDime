@@ -33,8 +33,11 @@ bash deploy/ci/lambda.sh
 The hygiene lane runs the same script. It checks the tracked files against `SNAPSHOT.json`,
 inflates `csv/gp/corpus/train-jobs.json` from its `.gz` (the raw file is over the repository's
 5 MiB size cap; the inflated file is gitignored) and checks its sha256, then runs
-`cargo metadata --locked`, `cargo test --locked` and `cargo deny check bans licenses sources` for
-each workspace. By hand, after that inflate step:
+`cargo metadata --locked`, `cargo test --locked` and, against the root `deny.toml`,
+`cargo deny --manifest-path <manifest> --all-features --locked --config deny.toml check bans licenses sources`
+for each workspace. That is cargo-deny 0.20.2's command line (the runner image's, which the lane
+asserts): `--config` is a top-level option there, while 0.19 takes it only after `check`. Outside
+CI, any other cargo-deny version is skipped with a note. By hand, after that inflate step:
 
 ```sh
 JOPE_SOURCE_HEAD=$(git rev-parse HEAD) \
