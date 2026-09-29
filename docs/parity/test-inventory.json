@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 4",
-  "count": 3823,
+  "count": 3824,
   "ignored": 62,
   "packages": {
    "battle-gpu": {
@@ -29,7 +29,7 @@
     }
    },
    "feat-math": {
-    "count": 466,
+    "count": 467,
     "ignored": 4,
     "binaries": {
      "feat-math": {
@@ -417,7 +417,7 @@
      },
      "feat-math::compat_freeze": {
       "kind": "test",
-      "count": 9,
+      "count": 10,
       "ignored": 0,
       "tests": [
        "boundary_corpus_v1_is_well_formed_and_matches_its_definition",
@@ -426,6 +426,7 @@
        "expression_values_match_the_frozen_fixture",
        "fixture_provenance_is_recorded",
        "seeded_generator_streams_match_the_frozen_fixture",
+       "seeded_search_runs_match_the_frozen_fixture",
        "serialized_models_match_the_frozen_fixture",
        "stage_outputs_match_the_frozen_fixture",
        "vocabulary_registry_and_lineage_pins_match"
@@ -6032,7 +6033,7 @@
   }
  },
  "totals": {
-  "rust": 3823,
+  "rust": 3824,
   "python": 172
  }
 }

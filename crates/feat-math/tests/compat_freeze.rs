@@ -14,6 +14,7 @@
 //! | `vocabulary_registry_and_lineage_pins_match` | `compat_freeze/frozen_pins.v1.json` | grammar assets, `grammar.rs`, jope-policy pins, registry and emitter versions |
 //! | `evaluator_identity_inputs_match_the_recorded_identity` | `compat_freeze/evaluator_identity.v1.json` | the ADR-0004 evaluator identity inputs |
 //! | `seeded_generator_streams_match_the_frozen_fixture` | `compat_freeze/generator_streams.v1.json` | seeded program generator streams and their vocabularies |
+//! | `seeded_search_runs_match_the_frozen_fixture` | `compat_freeze/search_runs.v1.json` | whole seeded searches: the surrogate `evolve()` and the lite race, `rank_robust` off and on |
 //! | `fixture_provenance_is_recorded` | `compat_freeze/meta.json` | generation commit, toolchain, host and libm |
 //!
 //! Modes. By default every test only compares. `JOPE_COMPAT_FREEZE_SHA=<full commit id>` names the
@@ -34,9 +35,9 @@
 //! difference only if it is one of these:
 //! - MathExpr and stage values of the transcendental functions (exp, log, log1p, sin, cos, tanh,
 //!   sigmoid, asinh, atan, erf and `^`);
-//! - everything fitted: the stage predictions, the serialized models and their predictions, and
-//!   the fitted C++17 source and codec bytes. Their training rows come from `toy_data`, which
-//!   calls `sin` and `Pcg32::gaussian` (`ln` and `cos`);
+//! - everything fitted: the stage predictions, the serialized models and their predictions, the
+//!   fitted C++17 source and codec bytes, and the search runs. Their training rows come from
+//!   `toy_data`, which calls `sin` and `Pcg32::gaussian` (`ln` and `cos`);
 //! - the streams of `mutate_canonical_pipeline_v2` and of `mutate_canonical_pipeline_with_arm`
 //!   with the parameter-jitter arm (their log-scale jitter calls `ln` and `exp`), and of
 //!   `optimize_constants_v1` (it fits `sin` data).
@@ -53,10 +54,10 @@
 use feat_math::advanced_v3::ARTIFACT_SCHEMA;
 use feat_math::dsl::{parse_dsl, Stage};
 use feat_math::evolve::{
-    crossover_canonical_pipelines, evolve, mutate_canonical_pipeline, mutate_canonical_pipeline_v2,
-    mutate_canonical_pipeline_with_arm, random_canonical_pipeline, CanonicalMutationArm,
-    EvolveConfig, GenStats, Observer, Scored, EXPANSION_STARTERS, EXPANSION_TRANSFORMS, HEAD_OPS,
-    LITE_HEAD_BUDGETS,
+    crossover_canonical_pipelines, evolve, evolve_lite_race, mutate_canonical_pipeline,
+    mutate_canonical_pipeline_v2, mutate_canonical_pipeline_with_arm, random_canonical_pipeline,
+    CanonicalMutationArm, EvolveConfig, FitnessMode, GenStats, Observer, Scored,
+    EXPANSION_STARTERS, EXPANSION_TRANSFORMS, HEAD_OPS, LITE_HEAD_BUDGETS,
 };
 use feat_math::full_rust::{self, EvolvedGenome, OperationKind, ParamDomain};
 use feat_math::kernel::pipeline::PipelineSlots;
@@ -92,7 +93,7 @@ Rebaselining needs JOPE_COMPAT_FREEZE_REGENERATE=1 JOPE_COMPAT_FREEZE_SHA=<commi
 `compat-freeze: REBASELINE approved by Jepson <date> reason <...>` (workplan section 4.3).";
 
 /// Every fixture file this binary owns, in the order `meta.json` lists them.
-const FIXTURE_FILES: [&str; 7] = [
+const FIXTURE_FILES: [&str; 8] = [
     "mathexpr_values.v1.json",
     "stage_values.v1.json",
     "emitted_bytes.v1.json",
@@ -100,6 +101,7 @@ const FIXTURE_FILES: [&str; 7] = [
     "frozen_pins.v1.json",
     "evaluator_identity.v1.json",
     "generator_streams.v1.json",
+    "search_runs.v1.json",
 ];
 
 /// Sources whose bytes the fixtures depend on. Regeneration refuses to record a commit id whose
@@ -2622,15 +2624,21 @@ const SEEDS: std::ops::Range<u64> = 0..64;
 const EVOLVE_SOURCE: &str = include_str!("../src/evolve.rs");
 
 /// Parent programs for the stage-list generators: the champion, a plain pipeline, the golden
-/// map/derive pipeline (expression strings must be carried unchanged), and an expansion starter.
+/// map/derive pipeline (expression strings must be carried unchanged), an expansion starter, and
+/// an elasticnet pipeline whose `l1_ratio` reaches the logit branch of the v2 parameter jitter.
 fn stream_parents() -> Vec<String> {
     vec![
         GenomeIr::parse(CHAMPION_GENOME).unwrap().canonical(),
         "(pipe X (standardize) (ridge))".to_string(),
         NAMED_PROGRAMS[0].1.to_string(),
         EXPANSION_STARTERS[2].to_string(),
+        "(pipe X (winsor_clip q=0.05) (standardize) (elasticnet alpha=0.001 l1_ratio=0.5))"
+            .to_string(),
     ]
 }
+
+/// The first four stream parents, which seed the advanced_v3 initial population.
+const V3_SEED_PARENTS: usize = 4;
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -2640,7 +2648,6 @@ struct GeneratorStreams {
     note: String,
     vocabularies: Vec<Vocabulary>,
     streams: Vec<StreamRecord>,
-    evolve_population: PopulationRecord,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -2659,13 +2666,6 @@ struct StreamRecord {
     sha256: String,
     first: String,
     per_item: String,
-}
-
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-struct PopulationRecord {
-    inputs: String,
-    ranked: Vec<String>,
 }
 
 fn stream(name: &str, inputs: &str, items: Vec<String>) -> (StreamRecord, Vec<String>) {
@@ -2797,7 +2797,7 @@ const ARMS: [(&str, CanonicalMutationArm); 6] = [
 ];
 
 fn evolve_streams(parents: &[String]) -> Vec<(StreamRecord, Vec<String>)> {
-    let parents_note = "parents: champion, (pipe X (standardize) (ridge)), golden_map_derive_ridge, EXPANSION_STARTERS[2]; seeds 0..64 per parent";
+    let parents_note = "parents: champion, (pipe X (standardize) (ridge)), golden_map_derive_ridge, EXPANSION_STARTERS[2], (pipe X (winsor_clip q=0.05) (standardize) (elasticnet alpha=0.001 l1_ratio=0.5)); seeds 0..64 per parent";
     let per_parent = |f: &dyn Fn(&str, u64) -> String| -> Vec<String> {
         parents
             .iter()
@@ -2817,10 +2817,10 @@ fn evolve_streams(parents: &[String]) -> Vec<(StreamRecord, Vec<String>)> {
         parents_note,
         per_parent(&|parent, seed| shown(mutate_canonical_pipeline(parent, seed, 6))),
     ));
-    let pairs = [(0usize, 1usize), (2, 3), (1, 2), (3, 0)];
+    let pairs = [(0usize, 1usize), (2, 3), (1, 2), (3, 0), (4, 2)];
     out.push(stream(
         "evolve::crossover_canonical_pipelines(left, right, seed, 6)",
-        "parent pairs (0,1) (2,3) (1,2) (3,0) of the mutation parents; seeds 0..64 per pair",
+        "parent pairs (0,1) (2,3) (1,2) (3,0) (4,2) of the mutation parents; seeds 0..64 per pair",
         pairs
             .iter()
             .flat_map(|(l, r)| SEEDS.map(move |seed| (*l, *r, seed)))
@@ -2860,8 +2860,14 @@ fn evolve_streams(parents: &[String]) -> Vec<(StreamRecord, Vec<String>)> {
 }
 
 fn full_rust_streams(parents: &[String]) -> Vec<(StreamRecord, Vec<String>)> {
-    let fr_parents = [&parents[1], &parents[2]];
-    let note = "parents: (pipe X (standardize) (ridge)), golden_map_derive_ridge; feature_count 5; seeds 0..64 per parent";
+    // The third parent carries a target stage (so the target arm drops or replaces it) and ends
+    // in ridge_gcv, whose empty parameter schema sends the parameter arm to stage replacement.
+    let fr_parents = [
+        parents[1].clone(),
+        parents[2].clone(),
+        "(pipe X (target kind=log1p) (standardize append=true) (ridge_gcv))".to_string(),
+    ];
+    let note = "parents: (pipe X (standardize) (ridge)), golden_map_derive_ridge, (pipe X (target kind=log1p) (standardize append=true) (ridge_gcv)); feature_count 5; seeds 0..64 per parent";
     let per_parent = |f: &dyn Fn(&str, u64) -> String| -> Vec<String> {
         fr_parents
             .iter()
@@ -2895,8 +2901,8 @@ fn full_rust_streams(parents: &[String]) -> Vec<(StreamRecord, Vec<String>)> {
             SEEDS
                 .map(|seed| {
                     evolved(full_rust::crossover_pipelines(
-                        fr_parents[0],
-                        fr_parents[1],
+                        &fr_parents[0],
+                        &fr_parents[1],
                         seed,
                     ))
                 })
@@ -2951,12 +2957,14 @@ fn edit_text(result: anyhow::Result<feat_math::math_expr::ExpressionEdit>) -> St
 }
 
 fn expression_streams() -> Vec<(StreamRecord, Vec<String>)> {
+    // The last parent has negations, so the edits visit, replace and unwrap unary nodes.
     let parents = [
         ("sigmoid(x) + 0.1*c0", scope(3, true)),
         ("row_mean + row_std - c1/(c0 + 3)", scope(5, false)),
         ("0.1", scope(0, true)),
+        ("-(c0) + sin(-x)", scope(3, true)),
     ];
-    let note = "parents and scopes: sigmoid(x) + 0.1*c0 {columns 3, map}, row_mean + row_std - c1/(c0 + 3) {columns 5, row}, 0.1 {columns 0, map}; limits 64 nodes, depth 16; seeds 0..64 per parent";
+    let note = "parents and scopes: sigmoid(x) + 0.1*c0 {columns 3, map}, row_mean + row_std - c1/(c0 + 3) {columns 5, row}, 0.1 {columns 0, map}, -(c0) + sin(-x) {columns 3, map}; limits 64 nodes, depth 16; seeds 0..64 per parent";
     let mut out = vec![stream(
         "MathExpr::mutate_v1(seed, scope)",
         note,
@@ -2971,10 +2979,11 @@ fn expression_streams() -> Vec<(StreamRecord, Vec<String>)> {
     let crosses = [
         (parents[0].0, parents[1].0, scope(3, true)),
         (parents[1].0, parents[0].0, scope(5, false)),
+        (parents[3].0, parents[1].0, scope(3, true)),
     ];
     out.push(stream(
         "MathExpr::crossover_v1(donor, seed, scope)",
-        "recipient sigmoid(x) + 0.1*c0 {columns 3, map} with donor row_mean + row_std - c1/(c0 + 3), and the reverse {columns 5, row}; seeds 0..64 per pair",
+        "recipient sigmoid(x) + 0.1*c0 {columns 3, map} with donor row_mean + row_std - c1/(c0 + 3), the reverse {columns 5, row}, and recipient -(c0) + sin(-x) {columns 3, map} with donor row_mean + row_std - c1/(c0 + 3); seeds 0..64 per pair",
         crosses
             .iter()
             .flat_map(|(recipient, donor, scope)| {
@@ -3056,6 +3065,7 @@ fn slots_text(result: feat_math::kernel::Result<PipelineSlots>) -> String {
 }
 
 fn pipeline_slot_streams() -> Vec<(StreamRecord, Vec<String>)> {
+    // The last parent's winsor_clip has a float parameter, so the edit reaches the float jitter.
     let parents = [
         ("(pipe X (target kind=log1p) (standardize) (ridge))", 3usize),
         (
@@ -3063,8 +3073,11 @@ fn pipeline_slot_streams() -> Vec<(StreamRecord, Vec<String>)> {
             2,
         ),
         (NAMED_PROGRAMS[0].1, 5),
+        ("(pipe X (winsor_clip q=0.05) (standardize) (ridge))", 4),
     ];
-    let note = "parents (pipe X (target kind=log1p) (standardize) (ridge)) {3 columns}, (pipe X (derive expr=\"c0\" append=true) (map expr=\"c2+1\") (ridge)) {2 columns}, golden_map_derive_ridge {5 columns}; rows 32, max_stages 12; seeds 0..64 per parent";
+    // Crossover donor of each parent above (the first three as the parent two places later).
+    let donors = [2usize, 0, 1, 0];
+    let note = "parents (pipe X (target kind=log1p) (standardize) (ridge)) {3 columns}, (pipe X (derive expr=\"c0\" append=true) (map expr=\"c2+1\") (ridge)) {2 columns}, golden_map_derive_ridge {5 columns}, (pipe X (winsor_clip q=0.05) (standardize) (ridge)) {4 columns}; rows 32, max_stages 12; seeds 0..64 per parent";
     let mutations = parents
         .iter()
         .flat_map(|(source, columns)| SEEDS.map(move |seed| (*source, *columns, seed)))
@@ -3072,9 +3085,9 @@ fn pipeline_slot_streams() -> Vec<(StreamRecord, Vec<String>)> {
         .collect();
     let crosses = parents
         .iter()
-        .enumerate()
-        .flat_map(|(i, (source, columns))| {
-            let donor = parents[(i + 2) % parents.len()].0;
+        .zip(donors)
+        .flat_map(|((source, columns), donor)| {
+            let donor = parents[donor].0;
             SEEDS.map(move |seed| (*source, donor, *columns, seed))
         })
         .map(|(source, donor, columns, seed)| {
@@ -3089,7 +3102,7 @@ fn pipeline_slot_streams() -> Vec<(StreamRecord, Vec<String>)> {
         ),
         stream(
             "PipelineSlots::crossover_v1(donor, seed, rows, columns, max_stages)",
-            "each parent above with donor = the parent two places later; seeds 0..64 per parent",
+            "each parent above with a donor parent: 0 with 2, 1 with 0, 2 with 1, 3 with 0; seeds 0..64 per parent",
             crosses,
         ),
     ]
@@ -3102,7 +3115,7 @@ fn json_line<T: Serialize>(value: &T) -> String {
 fn advanced_v3_streams(parents: &[String]) -> Vec<(StreamRecord, Vec<String>)> {
     let config = V3EvolutionConfig::default();
     let population = initial_population(&config, &[]);
-    let seeded = initial_population(&config, parents);
+    let seeded = initial_population(&config, &parents[..V3_SEED_PARENTS]);
     let scored: Vec<V3ScoredCandidate> = population
         .iter()
         .cloned()
@@ -3111,6 +3124,18 @@ fn advanced_v3_streams(parents: &[String]) -> Vec<(StreamRecord, Vec<String>)> {
             candidate,
             rmse: 0.1 + index as f64 * 1e-6,
             novelty: (index % 7) as f64,
+        })
+        .collect();
+    // Every fifth candidate shares a score, so ranking and selection fall through to their
+    // complexity and hash tie-breaks.
+    let tied: Vec<V3ScoredCandidate> = population
+        .iter()
+        .cloned()
+        .enumerate()
+        .map(|(index, candidate)| V3ScoredCandidate {
+            candidate,
+            rmse: 0.1 + (index % 5) as f64 * 1e-6,
+            novelty: (index % 3) as f64,
         })
         .collect();
     let mutations = SEEDS
@@ -3136,14 +3161,28 @@ fn advanced_v3_streams(parents: &[String]) -> Vec<(StreamRecord, Vec<String>)> {
             )
         })
         .collect();
-    let next = |generation: usize, stagnation: &[usize]| -> Vec<String> {
-        match next_generation(&config, generation, &scored, stagnation) {
-            Ok(candidates) => candidates.iter().map(json_line).collect(),
-            Err(error) => vec![format!("ERR {error}")],
-        }
-    };
+    let next =
+        |generation: usize, scores: &[V3ScoredCandidate], stagnation: &[usize]| -> Vec<String> {
+            match next_generation(&config, generation, scores, stagnation) {
+                Ok(candidates) => candidates.iter().map(json_line).collect(),
+                Err(error) => vec![format!("ERR {error}")],
+            }
+        };
     let mut archive = V3Archive::default();
     archive.update(scored.iter().cloned());
+    // The same candidates again: the better score replaces an entry, the worse one does not.
+    let mut twice = V3Archive::default();
+    twice.update(scored.iter().cloned());
+    twice.update(
+        scored
+            .iter()
+            .cloned()
+            .enumerate()
+            .map(|(index, mut again)| {
+                again.rmse += if index % 2 == 0 { -0.05 } else { 0.05 };
+                again
+            }),
+    );
     vec![
         stream(
             "advanced_v3::initial_population(default, [])",
@@ -3152,7 +3191,7 @@ fn advanced_v3_streams(parents: &[String]) -> Vec<(StreamRecord, Vec<String>)> {
         ),
         stream(
             "advanced_v3::initial_population(default, parents)",
-            "V3EvolutionConfig::default(), seeds = the mutation parents",
+            "V3EvolutionConfig::default(), seeds = the first four mutation parents",
             seeded.iter().map(json_line).collect(),
         ),
         stream(
@@ -3173,59 +3212,29 @@ fn advanced_v3_streams(parents: &[String]) -> Vec<(StreamRecord, Vec<String>)> {
         stream(
             "advanced_v3::next_generation(default, 1, scored, [0,0,0,0])",
             "scored = initial population with rmse 0.1 + i*1e-6 and novelty i mod 7",
-            next(1, &[0, 0, 0, 0]),
+            next(1, &scored, &[0, 0, 0, 0]),
         ),
         stream(
             "advanced_v3::next_generation(default, 5, scored, [8,0,9,0])",
             "the same scores; generation 5 migrates and two islands are stagnant",
-            next(5, &[8, 0, 9, 0]),
+            next(5, &scored, &[8, 0, 9, 0]),
         ),
         stream(
             "advanced_v3::V3Archive::update(scored)",
             "an empty archive updated with the scored initial population",
             archive.entries.iter().map(json_line).collect(),
         ),
+        stream(
+            "advanced_v3::next_generation(default, 2, tied, [0,0,0,0])",
+            "tied = initial population with rmse 0.1 + (i mod 5)*1e-6 and novelty i mod 3",
+            next(2, &tied, &[0, 0, 0, 0]),
+        ),
+        stream(
+            "advanced_v3::V3Archive::update(scored), then update(rescored)",
+            "an empty archive updated with the scored initial population, then with the same candidates rescored: even i 0.05 lower rmse, odd i 0.05 higher",
+            twice.entries.iter().map(json_line).collect(),
+        ),
     ]
-}
-
-struct Quiet;
-
-impl Observer for Quiet {
-    fn on_generation(&self, _: &GenStats) {}
-    fn on_improvement(&self, _: &Scored, _: &Emitted, _: &GenStats) {}
-}
-
-fn evolve_population() -> PopulationRecord {
-    let (x, y) = toy_data(96, 5, 42);
-    let metric = |truth: &[f64], predicted: &[f64]| feat_math::r2(truth, predicted);
-    let config = EvolveConfig {
-        pop: 16,
-        gens: 3,
-        folds: 3,
-        seed: 12345,
-        max_transforms: 3,
-        ..EvolveConfig::default()
-    };
-    let ranked = evolve(&x, &y, &metric, &config, &Quiet);
-    PopulationRecord {
-        inputs: "evolve() on toy_data(96 rows, 5 columns, seed 42) with EvolveConfig { pop 16, gens 3, folds 3, seed 12345, max_transforms 3, every other field default (surrogate scoring, opt-in flags off, no time budget) }; each line is the program, the cv_mean bits and the fold score bits".to_string(),
-        ranked: ranked
-            .iter()
-            .map(|scored| {
-                format!(
-                    "{} | cv_mean={} | folds={}",
-                    scored.dsl,
-                    hex_bits(scored.cv_mean),
-                    scored
-                        .fold_scores
-                        .iter()
-                        .map(|v| hex_bits(*v))
-                        .collect::<Vec<_>>()
-                        .join(" ")
-                )
-            })
-            .collect(),
-    }
 }
 
 #[test]
@@ -3242,7 +3251,6 @@ fn seeded_generator_streams_match_the_frozen_fixture() {
         note: "Each stream is the ordered output of one seeded generator over fixed inputs: sha256 of the items joined by newlines, the first item verbatim, and the first 16 hex digits of each item's sha256. The legacy wrappers, full_rust, MathExpr, PipelineSlots and advanced_v3 streams must stay bit-identical (plan N1).".to_string(),
         vocabularies: vocabularies(),
         streams: all.iter().map(|(record, _)| record.clone()).collect(),
-        evolve_population: evolve_population(),
     };
     let Some(committed) = committed_or_write(Surface::Frozen, FIXTURE_FILES[6], &fixture) else {
         return;
@@ -3311,17 +3319,213 @@ fn seeded_generator_streams_match_the_frozen_fixture() {
             problems.push(format!("stream {} is new", new.name));
         }
     }
-    if committed.evolve_population != fixture.evolve_population {
-        problems.push(format!(
-            "evolve() population:\n      fixture {:?}\n      now     {:?}",
-            committed.evolve_population.ranked, fixture.evolve_population.ranked
-        ));
-    }
     assert!(
         problems.is_empty(),
         "compat-freeze: seeded generator streams drifted:\n  {}\n{}\n{REBASELINE_POLICY}",
         problems.join("\n  "),
         toolchain_note()
+    );
+}
+
+// ---------------------------------------------------------------------------------------------
+// WP-0.2 (f, whole searches): the seeded searches end to end
+// ---------------------------------------------------------------------------------------------
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct SearchRuns {
+    schema: String,
+    generated_at_sha: String,
+    note: String,
+    runs: Vec<SearchRun>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct SearchRun {
+    name: String,
+    inputs: String,
+    /// The ranked result: program, cv_mean bits and fold score bits.
+    ranked: Vec<String>,
+    /// Lite race only: every raced program and its per-rung scores and bookkeeping.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    raced: Vec<String>,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    summary: String,
+}
+
+struct Quiet;
+
+impl Observer for Quiet {
+    fn on_generation(&self, _: &GenStats) {}
+    fn on_improvement(&self, _: &Scored, _: &Emitted, _: &GenStats) {}
+}
+
+fn bits_list(values: &[f64]) -> String {
+    values
+        .iter()
+        .map(|v| hex_bits(*v))
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
+fn ranked_line(scored: &Scored) -> String {
+    format!(
+        "{} | cv_mean={} | folds={}",
+        scored.dsl,
+        hex_bits(scored.cv_mean),
+        bits_list(&scored.fold_scores)
+    )
+}
+
+fn or_dash<T: std::fmt::Display>(value: Option<T>) -> String {
+    value.map_or_else(|| "-".to_string(), |value| value.to_string())
+}
+
+fn index_list_digest(values: &[usize]) -> String {
+    let text = values
+        .iter()
+        .map(usize::to_string)
+        .collect::<Vec<_>>()
+        .join(" ");
+    format!("{} {}", values.len(), &sha256_hex(text.as_bytes())[..16])
+}
+
+/// The surrogate `evolve()` with default flags, which `evolve()` callers get.
+fn surrogate_search_run() -> SearchRun {
+    let (x, y) = toy_data(96, 5, 42);
+    let metric = |truth: &[f64], predicted: &[f64]| feat_math::r2(truth, predicted);
+    let config = EvolveConfig {
+        pop: 16,
+        gens: 3,
+        folds: 3,
+        seed: 12345,
+        max_transforms: 3,
+        ..EvolveConfig::default()
+    };
+    let ranked = evolve(&x, &y, &metric, &config, &Quiet);
+    SearchRun {
+        name: "evolve::evolve (surrogate scoring)".to_string(),
+        inputs: "evolve() on toy_data(96 rows, 5 columns, seed 42) with EvolveConfig { pop 16, gens 3, folds 3, seed 12345, max_transforms 3, every other field default (surrogate scoring, opt-in flags off, no time budget) }; each line is the program, the cv_mean bits and the fold score bits".to_string(),
+        ranked: ranked.iter().map(ranked_line).collect(),
+        raced: Vec::new(),
+        summary: String::new(),
+    }
+}
+
+/// The lite race: `rank_robust` off is its default, on is how jope-bench `search_program` (the
+/// shipped `jope optimize` search) runs it. No time budget, so no rung cap or wall clock can cut a
+/// generation short; wall-clock timings are not recorded.
+fn lite_race_run(rank_robust: bool) -> SearchRun {
+    let (x, y) = toy_data(160, 5, 42);
+    let config = EvolveConfig {
+        pop: 16,
+        gens: 3,
+        folds: 3,
+        seed: 41,
+        max_transforms: 3,
+        time_budget_secs: 0.0,
+        fitness: FitnessMode::LiteRace,
+        rank_robust,
+        ..EvolveConfig::default()
+    };
+    let outcome = evolve_lite_race(&x, &y, &feat_math::r2, &config, &Quiet);
+    let raced = outcome
+        .candidates
+        .iter()
+        .map(|candidate| {
+            let rungs: Vec<String> = candidate
+                .rung_fold_scores
+                .iter()
+                .map(|scores| scores.as_deref().map_or_else(|| "-".to_string(), bits_list))
+                .collect();
+            let routes = candidate.r0_fold_routes.as_ref().map_or_else(
+                || "-".to_string(),
+                |routes| {
+                    routes
+                        .iter()
+                        .map(|receipt| format!("{:?}", receipt.route))
+                        .collect::<Vec<_>>()
+                        .join(",")
+                },
+            );
+            let reuse = candidate
+                .r0_exact_surrogate_dedup
+                .as_ref()
+                .map_or_else(|| "-".to_string(), |receipt| format!("{receipt:?}"));
+            format!(
+                "{} | r0={} | r1={} | r2={} | seq={} generation={} slot={} | routes={} | reuse={} | seen={} first={} last={}",
+                candidate.dsl,
+                rungs[0],
+                rungs[1],
+                rungs[2],
+                or_dash(candidate.r0_seq),
+                or_dash(candidate.r0_generation),
+                or_dash(candidate.r0_generation_slot),
+                routes,
+                reuse,
+                candidate.recurrence_count,
+                candidate.first_generation,
+                candidate.last_generation
+            )
+        })
+        .collect();
+    SearchRun {
+        name: format!("evolve::evolve_lite_race (rank_robust {rank_robust})"),
+        inputs: format!(
+            "evolve_lite_race on toy_data(160 rows, 5 columns, seed 42) with feat_math::r2 and EvolveConfig {{ pop 16, gens 3, folds 3, seed 41, max_transforms 3, time_budget_secs 0 (no caps), fitness LiteRace, rank_robust {rank_robust}, every other field default }}. ranked: program | cv_mean bits | fold score bits. raced: every raced program | fold score bits at rungs 0, 1 and 2 (- when not scored there) | rung-0 sequence, generation and slot | rung-0 fold routes | exact-reuse receipt | occurrences, first and last generation. summary: evaluations per rung, whether the target exit fired, and the rung-0 rows and fold assignment (count and sha256 prefix). Wall-clock timings are not recorded."
+        ),
+        ranked: outcome.ranked.iter().map(ranked_line).collect(),
+        raced,
+        summary: format!(
+            "rung_evals {} {} {} | target_hit {} | rung0_rows {} | rung0_assignments {}",
+            outcome.rung_evals[0],
+            outcome.rung_evals[1],
+            outcome.rung_evals[2],
+            outcome.target_hit,
+            index_list_digest(&outcome.rung0_rows),
+            index_list_digest(&outcome.rung0_assignments)
+        ),
+    }
+}
+
+#[test]
+fn seeded_search_runs_match_the_frozen_fixture() {
+    let fixture = SearchRuns {
+        schema: "feat-math.compat-freeze.search-runs.v1".to_string(),
+        generated_at_sha: header_sha(Surface::Frozen),
+        note: "Whole seeded searches, end to end: the surrogate evolve() with default flags, and the lite race with rank_robust off (its default) and on (as jope-bench search_program runs it). The race lines cover its rung scoring, promotion and ranking. Every line must stay bit-identical (plan N1).".to_string(),
+        runs: vec![
+            surrogate_search_run(),
+            lite_race_run(false),
+            lite_race_run(true),
+        ],
+    };
+    let Some(committed) = committed_or_write(Surface::Frozen, FIXTURE_FILES[7], &fixture) else {
+        return;
+    };
+    let flatten = |values: &SearchRuns| -> Vec<(String, String)> {
+        let mut records = vec![record("schema", values.schema.clone())];
+        for run in &values.runs {
+            let name = &run.name;
+            records.push(record(format!("{name}: inputs"), run.inputs.clone()));
+            for (i, line) in run.ranked.iter().enumerate() {
+                records.push(record(format!("{name}: ranked[{i}]"), line.clone()));
+            }
+            for (i, line) in run.raced.iter().enumerate() {
+                records.push(record(format!("{name}: raced[{i}]"), line.clone()));
+            }
+            if !run.summary.is_empty() {
+                records.push(record(format!("{name}: summary"), run.summary.clone()));
+            }
+        }
+        records
+    };
+    assert_records(
+        "search runs (search_runs.v1.json)",
+        &flatten(&committed),
+        &flatten(&fixture),
+        REBASELINE_POLICY,
     );
 }
 
