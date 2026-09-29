@@ -158,10 +158,13 @@ deploy/release/release.sh vX.Y.Z <merge-sha>             # dry run: build, sign,
 deploy/release/release.sh vX.Y.Z <merge-sha> --publish   # repeats every check, then tags, releases and reads back
 ```
 
+Run the script as shown. Its `#!` line starts bash in privileged mode (`bash -p`), and `bash -p deploy/release/release.sh` does the same. A plain `bash deploy/release/release.sh` is refused (see [Tool configuration](#tool-configuration)).
+
 ### Guards
 
 The script refuses to run, and exits non-zero with a message, if any of these holds:
 
+- bash was not started in privileged mode (`bash -p`, which the script's `#!` line runs), or `SHELLOPTS` is exported (see [Tool configuration](#tool-configuration));
 - the host is not xbabe2 (an exact match on the short host name, so `xbabe20` is refused);
 - it is not run from the repository root;
 - the tree has changes or untracked files;
@@ -243,13 +246,15 @@ No per-user file and no variable of the operator's may change what a pinned or h
 | cosign v2.4.3 | `COSIGN_*`, `SIGSTORE_*`, token and `TUF_ROOT` variables, and `~/.sigstore`. | On the host it runs with an empty environment (see [Tools](#tools)). Root's copy runs under `sudo`, which resets the environment. |
 | syft 1.40.0 | `~/.syft.yaml`, its XDG configuration, `SYFT_*` variables, and a `.syft.yaml` in the scanned directory. | It runs with an empty environment and reads only the configuration file the script writes (see [Tools](#tools)). |
 | `sudo` | `/etc/sudoers`, which belongs to root. | Nothing: `sudo` resets the environment. |
-| `bash` | Exported functions (`export -f`), which bash imports before the script's first line, and a `BASH_ENV` file, which it runs before that line. | A function named after a command the script runs is dropped, so the command itself runs. A `BASH_ENV` file is the operator's own shell start-up, which no script can undo once it has run; like the rest of the `ubuntu` account, it is inside the trust boundary (see [Key custody](#key-custody)). |
+| `bash` 5.2 | Before the script's first line, a bash started without `-p` imports exported functions (`export -f`), runs a `BASH_ENV` file, and applies `SHELLOPTS` and `BASHOPTS`; it also reads `CDPATH` and `GLOBIGNORE`. An imported function stands in for the command or the builtin of its name: a `git` function can hide an untracked file from `git status`, an `unset` function can keep every variable in this table, and a `command` function can hand `jq` a hostile `~/.jq`. `SHELLOPTS=noexec` runs nothing and exits 0. `BASHOPTS=nocasematch` makes `[[ ]]` accept an uppercase SHA. Even `bash -p` reads `BASH_COMPAT` (another bash version's semantics, such as a quoted `=~` operand read as a pattern), `TMOUT` (a timeout on every `read`, which ends a loop over a tool's output at the first pause in it, such as the release notes read from `git cat-file` or the export's file list read from `find`), `FUNCNEST` (a nesting limit, which stops the run wherever that depth is first reached), `GLOBSORT` (bash 5.3's glob order) and the locale. | The `#!` line starts `bash -p` (privileged mode). It imports no function, and it ignores `BASH_ENV`, `SHELLOPTS`, `BASHOPTS`, `CDPATH` and `GLOBIGNORE`. The first lines refuse any bash that is not privileged, and an exported `SHELLOPTS`, because a bash started without `-p` takes privileged mode from it. They test with keywords only, and no function can stand in for a keyword. `main` is guarded by the same test, so a function standing in for `exit` cannot carry a run past the refusal. `BASH_COMPAT`, `TMOUT`, `FUNCNEST` and `GLOBSORT` are unset and `LC_ALL=C` is set before anything is checked. `BASH_ENV` is unset too, so that no child bash runs it. |
 
 What remains, and why it cannot change a result:
 
 - `git` still reads the repository's own configuration, `.git/info/attributes` and `.git/info/exclude`. They belong to the checkout. The keys that could change a result are forced or refused as above. Attributes cannot change the export unnoticed, because the export is compared with the commit's tree blob by blob (see [What is built](#what-is-built)). An exclude rule, or a key such as `core.fileMode`, can hide a working-tree change from the clean-tree guard, but the build reads only the verified export, never the working tree.
 - `git`'s HTTP library reads `~/.netrc`, and a credential-store helper reads `~/.git-credentials`. These choose only which account authenticates, not what the fetch, `ls-remote` or the push see: TLS verifies github.com, and git compares object ids. The store helper is configured in `~/.gitconfig`, which is not read, and the GitHub helper list is reset with `git -c`. xbabe2 has no `~/.netrc`.
 - The host `cargo` and `gh-role` are the two exceptions described in [Tools](#tools).
+- A bash started without `-p` is refused by the script's first lines, and they cannot refuse what happens before they run. With `SHELLOPTS=noexec`, such a bash reads the script, runs no line of it and exits 0: nothing is checked, built, signed or published, and nothing reports a pass. A `BASH_ENV` file runs in the script's own shell before its first line and can do anything there, including turning the privileged flag on. Both are the operator's own shell set-up, and like the rest of the `ubuntu` account they are inside the trust boundary (see [Key custody](#key-custody)). Run the script as shown, and take a run's result from its `DRY RUN passed` or `PUBLISHED` line and its sealed evidence directory, not from the exit status alone.
+- Exported functions stay in the environment of the commands the script runs, because bash cannot unset a variable whose name is not an identifier. Only a bash imports them, and no host tool is a bash script: on xbabe2 every one is an ELF binary, and `sh` is dash, which imports no functions (checked 2026-09-29).
 
 ### What the run does
 
