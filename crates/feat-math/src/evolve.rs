@@ -6372,6 +6372,89 @@ mod tests {
             .any(|candidate| candidate.r0_generation == Some(1)));
     }
 
+    /// Records each generation's domain-rate counters, as bits.
+    #[derive(Default)]
+    struct RateLog {
+        generations: std::sync::Mutex<Vec<(u64, u64)>>,
+    }
+    impl Observer for RateLog {
+        fn on_generation(&self, s: &GenStats) {
+            self.generations
+                .lock()
+                .unwrap()
+                .push((s.pop_domain_rate.to_bits(), s.elite_domain_rate.to_bits()));
+        }
+        fn on_improvement(&self, _best: &Scored, _emitted: &Emitted, _s: &GenStats) {}
+    }
+
+    /// The domain-rate counters take each ranked candidate's rate from the evaluation its score
+    /// comes from, in the race its highest scored rung. On `rung_2_fault_data` the program's `log`
+    /// argument is at least 0.5 on the rows of rungs 0 and 1, where column 1 is 0, and negative on
+    /// about half of the rows that rung 2 adds, where it is 1: its rung-0 rate is 0, and both
+    /// counters are its rung-2 rate.
+    #[test]
+    fn the_domain_rate_counters_read_the_rung_of_the_ranking_score() {
+        let mut cfg = race_cfg(5);
+        cfg.pop = 1;
+        cfg.gens = 1;
+        let (x, y) = rung_2_fault_data(256, cfg.seed);
+        let metric = |yt: &[f64], yp: &[f64]| crate::metrics::r2(yt, yp);
+        let source = "(pipe X (derive expr=\"log(col(0)*col(0) + 0.5 - col(1))\") (ridge))";
+        let program = pipe(source);
+        let perm = permute_indices(x.len(), cfg.seed);
+        for policy in non_legacy_policies() {
+            // One rung's evaluation, with the rows, folds and scorer the race gives it.
+            let totals = |rung: usize| {
+                let rows = perm[..x.len().min(RACE_RUNG_ROWS[rung])].to_vec();
+                let key = ["invent_r0", "invent_r1", "invent_r2"][rung];
+                let assign = fold_assign(rows.len(), RACE_RUNG_FOLDS[rung], key);
+                match score_rung_admitted(
+                    &program,
+                    rung,
+                    &x,
+                    &y,
+                    &rows,
+                    &assign,
+                    RACE_RUNG_FOLDS[rung],
+                    &metric,
+                    Instant::now(),
+                    0.0,
+                    &quiet_obs(),
+                    policy,
+                    &fit_traced,
+                ) {
+                    Admitted::Scored(_, totals) => totals,
+                    _ => panic!("rung {rung} did not score"),
+                }
+            };
+            let (rung_0, rung_2) = (totals(0), totals(2));
+            assert_eq!(rung_0.domain_cells, 0);
+            assert!(
+                rung_2.domain_cells > 0 && rung_2.domain_rate() < 1.0,
+                "{rung_2:?}"
+            );
+
+            cfg.fault_policy = policy;
+            let log = RateLog::default();
+            let outcome = evolve_lite_race_with_exact_initial_population(
+                &x,
+                &y,
+                &metric,
+                &cfg,
+                &log,
+                &[source.to_string()],
+            )
+            .unwrap();
+            assert!(outcome.candidates[0]
+                .rung_fold_scores
+                .iter()
+                .all(Option::is_some));
+            assert_eq!(outcome.ranked.len(), 1);
+            let rate = rung_2.domain_rate().to_bits();
+            assert_eq!(log.generations.into_inner().unwrap(), vec![(rate, rate)]);
+        }
+    }
+
     /// The tie-breaking selection draws exactly the numbers the legacy selection draws. It picks
     /// a different parent only inside a near-tie, and then the one with fewer faulted cells.
     #[test]
