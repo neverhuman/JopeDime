@@ -13,6 +13,7 @@
 //! | `serialized_models_match_the_frozen_fixture` | `compat_freeze/model_serde.v1.json` | `serde_json` bytes of fitted models, their predictions, and loading of stored bytes |
 //! | `vocabulary_registry_and_lineage_pins_match` | `compat_freeze/frozen_pins.v1.json` | grammar assets, `grammar.rs`, jope-policy pins, registry and emitter versions |
 //! | `evaluator_identity_inputs_match_the_recorded_identity` | `compat_freeze/evaluator_identity.v1.json` | the ADR-0004 evaluator identity inputs |
+//! | `lineage_sources_match_the_recorded_sources` | `compat_freeze/lineage_sources.v1.json` | the sources jope-engine hashes into its teaching, corpus and query identities |
 //! | `seeded_generator_streams_match_the_frozen_fixture` | `compat_freeze/generator_streams.v1.json` | seeded program generator streams and their vocabularies |
 //! | `seeded_search_runs_match_the_frozen_fixture` | `compat_freeze/search_runs.v1.json` | whole seeded searches: the surrogate `evolve()` and the lite race, `rank_robust` off and on |
 //! | `fixture_provenance_is_recorded` | `compat_freeze/meta.json` | generation commit, toolchain, host and libm |
@@ -26,10 +27,11 @@
 //!   `compat-freeze: REBASELINE approved by Jepson <date> reason <...>`, and without it a red
 //!   surface is a hard stop (revert the change, do not rebaseline).
 //! - `JOPE_COMPAT_FREEZE_REGENERATE=identity` rewrites only the announced surfaces, which planned
-//!   work moves: the ADR-0004 evaluator identity. Every other test still compares, so the run
-//!   also proves that nothing else moved. A change to a file in the ADR-0004 list (or to
-//!   `Cargo.lock`, which the identity hashes) announces the new evaluator identity in the PR body
-//!   and rebaselines this way in the same change.
+//!   work moves: the ADR-0004 evaluator identity and the lineage sources. Every other test still
+//!   compares, so the run also proves that nothing else moved. A change to a file in the ADR-0004
+//!   list (or to `Cargo.lock`, which the identity hashes), or to a source jope-engine hashes into
+//!   a lineage, announces the new identity in the PR body and rebaselines this way in the same
+//!   change.
 //!
 //! Which bits depend on the platform libm. A surface that fails only on another host is a libm
 //! difference only if it is one of these:
@@ -45,8 +47,9 @@
 //! Free of libm: the arithmetic guards and clamps, the boundary corpus, the emitted recipe bytes
 //! (Rust, Python, manifest, C++17 and JavaScript), the pins, and the other streams (the v1
 //! wrappers, the other `with_arm` arms, `full_rust`, MathExpr `mutate_v1` and `crossover_v1`,
-//! `PipelineSlots` and `advanced_v3`). The fixtures were generated on the host recorded in
-//! `meta.json` (x86_64-unknown-linux-gnu, glibc 2.39).
+//! `PipelineSlots` and `advanced_v3`). `meta.json` records the host the fixtures were generated
+//! on: target triple, glibc version, CPU model and FMA/AVX flags (glibc picks its transcendental
+//! code by CPU feature), and hostname. Failure messages print the same for the failing run.
 //!
 //! The workplan asks for the corpus to parse in Python too. The stack is Rust-only (ADR-0006), so
 //! the second, independent parser is `jq -e . tests/fixtures/math_boundary/v1.json`.
@@ -93,7 +96,7 @@ Rebaselining needs JOPE_COMPAT_FREEZE_REGENERATE=1 JOPE_COMPAT_FREEZE_SHA=<commi
 `compat-freeze: REBASELINE approved by Jepson <date> reason <...>` (workplan section 4.3).";
 
 /// Every fixture file this binary owns, in the order `meta.json` lists them.
-const FIXTURE_FILES: [&str; 8] = [
+const FIXTURE_FILES: [&str; 9] = [
     "mathexpr_values.v1.json",
     "stage_values.v1.json",
     "emitted_bytes.v1.json",
@@ -102,6 +105,7 @@ const FIXTURE_FILES: [&str; 8] = [
     "evaluator_identity.v1.json",
     "generator_streams.v1.json",
     "search_runs.v1.json",
+    "lineage_sources.v1.json",
 ];
 
 /// Sources whose bytes the fixtures depend on. Regeneration refuses to record a commit id whose
@@ -113,7 +117,7 @@ const SOURCE_PATHSPECS: &[&str] = &[
     "crates/feat-math/cpp",
     "crates/feat-math/tests/fixtures/emitted",
     "crates/jope-engine/assets/grammar",
-    "crates/jope-engine/src/grammar.rs",
+    "crates/jope-engine/src",
     "crates/jope-policy/src",
     "crates/jope-policy/release",
     "crates/jope-campaigns/src",
@@ -264,13 +268,55 @@ fn toolchain_note() -> String {
         .and_then(|text| serde_json::from_str::<Meta>(&text).ok());
     let rustc = command_line("rustc", &["-V"]);
     let libm = command_line("getconf", &["GNU_LIBC_VERSION"]);
+    let (cpu, cpu_flags) = cpu_identity();
+    let hostname = hostname();
+    let this_run = format!("{rustc}, {libm}, CPU {cpu} ({cpu_flags}) on {hostname}");
     match meta {
         Some(meta) => format!(
-            "fixtures: {} on {} with {} at {}; this run: {rustc}, {libm}",
-            meta.rustc, meta.host, meta.libm, meta.generated_at_sha
+            "fixtures: {} on {} with {}, CPU {} ({}) on {}, at {}; this run: {this_run}. glibc picks \
+             its exp/log/pow/sin/cos code by CPU feature, so on another host only the libm-dependent \
+             surfaces listed in the compat_freeze.rs module doc may differ.",
+            meta.rustc,
+            meta.host,
+            meta.libm,
+            meta.cpu,
+            meta.cpu_flags,
+            meta.hostname,
+            meta.generated_at_sha
         ),
-        None => format!("this run: {rustc}, {libm}"),
+        None => format!("this run: {this_run}"),
     }
+}
+
+/// The CPU model and which of the FMA/AVX2/AVX-512 features it has, from /proc/cpuinfo.
+fn cpu_identity() -> (String, String) {
+    let text = std::fs::read_to_string("/proc/cpuinfo").unwrap_or_default();
+    let field = |name: &str| {
+        text.lines().find_map(|line| {
+            let (key, value) = line.split_once(':')?;
+            (key.trim() == name).then(|| value.trim().to_string())
+        })
+    };
+    let model = field("model name").unwrap_or_else(|| "unknown".to_string());
+    let flags = field("flags").unwrap_or_default();
+    let present: Vec<&str> = ["fma", "avx2", "avx512f"]
+        .into_iter()
+        .filter(|feature| flags.split_whitespace().any(|flag| flag == *feature))
+        .collect();
+    let features = if flags.is_empty() {
+        "flags unknown".to_string()
+    } else if present.is_empty() {
+        "no fma, avx2 or avx512f".to_string()
+    } else {
+        present.join(" ")
+    };
+    (model, features)
+}
+
+fn hostname() -> String {
+    std::fs::read_to_string("/proc/sys/kernel/hostname")
+        .map(|name| name.trim().to_string())
+        .unwrap_or_else(|_| "unknown".to_string())
 }
 
 fn command_line(program: &str, args: &[&str]) -> String {
@@ -2028,7 +2074,7 @@ const FROZEN_FILES: &[(&str, &str)] = &[
     ("crates/jope-engine/assets/grammar/featmath-jain-v1.json", "the product vocabulary (jope-policy PRODUCT_VOCABULARY_SHA256)"),
     ("crates/jope-engine/assets/grammar/parity.json", "the v3 automaton parity fixtures (jope-engine tests/grammar.rs)"),
     ("crates/jope-engine/assets/grammar/jain-math-executable-9fa594e2.json", "the jain registry snapshot (ADR-0002 registry_dump byte check; featmath-jain-v1 restriction.executable_ops_sha256)"),
-    ("crates/jope-engine/src/grammar.rs", "this changes the teaching/corpus lineage: teaching_store.rs and corpus.rs hash include_str!(\"grammar.rs\") into every lineage; put new automaton code in a new module"),
+    ("crates/jope-engine/src/grammar.rs", "this changes the teaching/corpus lineage: teaching_store.rs and corpus.rs hash include_str!(\"grammar.rs\") into every lineage (lineage_sources.v1.json lists every hashed source); put new automaton code in a new module"),
     ("crates/jope-policy/release/policy-step-60000.semantic-v1.json", "the accepted semantic manifest (jope-policy ACCEPTED_SEMANTIC_MANIFEST_SHA256)"),
     ("crates/feat-math/src/registry.rs", "the wire registry (registry_hash) and the line numbers registry_dump recomputes for the ADR-0002 snapshot check; the registry is not edited this release (plan OQ-1)"),
     ("crates/feat-math/assets/champions/8944cbdf.dsl", "the champion program (CHAMPION_GENOME)"),
@@ -2539,7 +2585,7 @@ fn evaluator_identity_inputs_match_the_recorded_identity() {
     let fixture = EvaluatorIdentity {
         schema: "feat-math.compat-freeze.evaluator-identity.v1".to_string(),
         generated_at_sha: header_sha(Surface::Announced),
-        note: "A replica of evaluation_v2.rs compute_implementation_sha256 (the hashed list is read from that function) and EvaluatorIdentityV1::digest. Planned changes move this fixture: rebaseline it with the change that mints the identity.".to_string(),
+        note: "A replica of evaluation_v2.rs compute_implementation_sha256 (the hashed list is read from that function) and EvaluatorIdentityV1::digest. Planned changes move this fixture: the change that mints the identity announces it and rebaselines it with JOPE_COMPAT_FREEZE_REGENERATE=identity.".to_string(),
         domain,
         inputs,
         implementation_sha256,
@@ -2613,6 +2659,156 @@ fn evaluator_identity_inputs_match_the_recorded_identity() {
         "compat-freeze: the ADR-0004 evaluator identity inputs changed:\n  {}\n{}",
         problems.join("\n  "),
         identity_advice()
+    );
+}
+
+// ---------------------------------------------------------------------------------------------
+// Lineage sources: what jope-engine hashes into its identities (rebaselined on purpose)
+// ---------------------------------------------------------------------------------------------
+
+/// Where jope-engine hashes source files into an identity: the identity, the file that hashes,
+/// the text that opens the hashed `include_str!`/`include_bytes!` list and the text after it, and
+/// what a change to a listed source does.
+const LINEAGES: &[(&str, &str, &str, &str, &str)] = &[
+    (
+        "teaching store semantic_dependencies_sha256",
+        "crates/jope-engine/src/teaching_store.rs",
+        "let semantic_sources = concat!(",
+        ");",
+        "every teaching store packed afterwards gets a new lineage",
+    ),
+    (
+        "corpus scan_policy",
+        "crates/jope-engine/src/corpus.rs",
+        "let scan_policy = hash(",
+        "file_hash(Path::new(",
+        "every corpus version written afterwards gets a new scan policy",
+    ),
+    (
+        "eval-registry query execution identity",
+        "crates/jope-engine/src/eval_registry/query.rs",
+        "fn execution_query_key(",
+        "\n}",
+        "query keys change, and verify_artifacts refuses every query receipt written before it (it compares these source hashes)",
+    ),
+];
+
+const LINEAGE_NOTE: &str = "Source files that jope-engine hashes into identities, read from the include_str!/include_bytes! lists in the named code: the teaching-store semantic_dependencies_sha256 (teaching_store.rs), the corpus scan_policy (corpus.rs) and the eval-registry query execution identity (eval_registry/query.rs execution_query_key; verify_artifacts refuses receipts whose recorded source hashes differ). Each identity also hashes the running executable (/proc/self/exe), so any change linked into that binary, every feat-math change included, mints new identities even when no listed source changes; this fixture makes the listed sources visible. A change here is announced in the PR body and rebaselined with JOPE_COMPAT_FREEZE_REGENERATE=identity in the same change.";
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct LineageSources {
+    schema: String,
+    generated_at_sha: String,
+    note: String,
+    lineages: Vec<Lineage>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Lineage {
+    name: String,
+    hashed_in: String,
+    sources: Vec<FilePin>,
+}
+
+/// The repository paths of the `include_str!`/`include_bytes!` literals between `start` and the
+/// next `end` in `file`'s text, resolved against `file`'s directory.
+fn hashed_sources(text: &str, file: &str, start: &str, end: &str) -> Vec<String> {
+    let from = text
+        .find(start)
+        .unwrap_or_else(|| panic!("{file}: `{start}` not found; update LINEAGES"));
+    let body = &text[from..];
+    let body = &body[..body
+        .find(end)
+        .unwrap_or_else(|| panic!("{file}: `{end}` not found after `{start}`"))];
+    let dir = Path::new(file)
+        .parent()
+        .expect("a file in a directory")
+        .to_string_lossy()
+        .into_owned();
+    string_literals(body)
+        .into_iter()
+        .filter(|(offset, _)| {
+            let before = body[..*offset].trim_end();
+            before.ends_with("include_str!(") || before.ends_with("include_bytes!(")
+        })
+        .map(|(_, literal)| normalize(&dir, &literal))
+        .collect()
+}
+
+#[test]
+fn lineage_sources_match_the_recorded_sources() {
+    let lineages: Vec<Lineage> = LINEAGES
+        .iter()
+        .map(|(name, file, start, end, _)| {
+            let text = String::from_utf8(read_repo_file(file)).expect("UTF-8 source");
+            let sources = hashed_sources(&text, file, start, end);
+            assert!(
+                !sources.is_empty(),
+                "{file}: no hashed sources found for {name}"
+            );
+            Lineage {
+                name: name.to_string(),
+                hashed_in: file.to_string(),
+                sources: sources
+                    .into_iter()
+                    .map(|path| FilePin {
+                        sha256: sha256_hex(&read_repo_file(&path)),
+                        path,
+                    })
+                    .collect(),
+            }
+        })
+        .collect();
+    let fixture = LineageSources {
+        schema: "feat-math.compat-freeze.lineage-sources.v1".to_string(),
+        generated_at_sha: header_sha(Surface::Announced),
+        note: LINEAGE_NOTE.to_string(),
+        lineages,
+    };
+    let Some(committed) = committed_or_write(Surface::Announced, FIXTURE_FILES[8], &fixture) else {
+        return;
+    };
+    let mut problems = Vec::new();
+    for old in &committed.lineages {
+        let consequence = LINEAGES
+            .iter()
+            .find(|lineage| lineage.0 == old.name)
+            .map_or("it is no longer listed in LINEAGES", |lineage| lineage.4);
+        let Some(new) = fixture.lineages.iter().find(|l| l.name == old.name) else {
+            problems.push(format!("{} is no longer checked", old.name));
+            continue;
+        };
+        let old_paths: Vec<&str> = old.sources.iter().map(|pin| pin.path.as_str()).collect();
+        let new_paths: Vec<&str> = new.sources.iter().map(|pin| pin.path.as_str()).collect();
+        if old_paths != new_paths {
+            problems.push(format!(
+                "{} ({}) hashes a different source list, so {consequence}:\n      fixture {old_paths:?}\n      now     {new_paths:?}",
+                old.name, new.hashed_in
+            ));
+        }
+        for pin in &old.sources {
+            if let Some(now) = new.sources.iter().find(|p| p.path == pin.path) {
+                if now.sha256 != pin.sha256 {
+                    problems.push(format!(
+                        "{} changed (fixture {}, now {}): {} hashes it, so {consequence}",
+                        pin.path, pin.sha256, now.sha256, old.name
+                    ));
+                }
+            }
+        }
+    }
+    for new in &fixture.lineages {
+        if !committed.lineages.iter().any(|l| l.name == new.name) {
+            problems.push(format!("{} is new", new.name));
+        }
+    }
+    assert!(
+        problems.is_empty(),
+        "compat-freeze: sources that jope-engine hashes into its identities changed:\n  {}\nAnnounce the new identities in the PR body. {}",
+        problems.join("\n  "),
+        announced_rebaseline()
     );
 }
 
@@ -3541,10 +3737,14 @@ struct Meta {
     rustc: String,
     host: String,
     libm: String,
+    cpu: String,
+    cpu_flags: String,
+    hostname: String,
     math_kernel: String,
     fixtures: Vec<String>,
     boundary_corpus: String,
     regenerate: String,
+    regenerate_identity: String,
     rebaseline_policy: String,
 }
 
@@ -3558,16 +3758,21 @@ fn fixture_provenance_is_recorded() {
             .find_map(|line| line.strip_prefix("host: "))
             .expect("rustc -vV reports the host")
             .to_string();
+        let (cpu, cpu_flags) = cpu_identity();
         let meta = Meta {
             schema: "feat-math.compat-freeze.meta.v1".to_string(),
             generated_at_sha: generation_sha(),
             rustc: command_line("rustc", &["-V"]),
             host,
             libm: command_line("getconf", &["GNU_LIBC_VERSION"]),
+            cpu,
+            cpu_flags,
+            hostname: hostname(),
             math_kernel: EmitOptions::default().math_kernel.policy_id().to_string(),
             fixtures: FIXTURE_FILES.iter().map(|f| f.to_string()).collect(),
             boundary_corpus: CORPUS_FILE.to_string(),
             regenerate: REGENERATE_COMMAND.to_string(),
+            regenerate_identity: IDENTITY_REGENERATE_COMMAND.to_string(),
             rebaseline_policy: REBASELINE_POLICY.to_string(),
         };
         write_atomically(

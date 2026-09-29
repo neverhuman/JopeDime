@@ -1,0 +1,109 @@
+{
+  "schema": "feat-math.compat-freeze.lineage-sources.v1",
+  "generated_at_sha": "629e69d865a674222e00224cebf45c1ffddc8dea",
+  "note": "Source files that jope-engine hashes into identities, read from the include_str!/include_bytes! lists in the named code: the teaching-store semantic_dependencies_sha256 (teaching_store.rs), the corpus scan_policy (corpus.rs) and the eval-registry query execution identity (eval_registry/query.rs execution_query_key; verify_artifacts refuses receipts whose recorded source hashes differ). Each identity also hashes the running executable (/proc/self/exe), so any change linked into that binary, every feat-math change included, mints new identities even when no listed source changes; this fixture makes the listed sources visible. A change here is announced in the PR body and rebaselined with JOPE_COMPAT_FREEZE_REGENERATE=identity in the same change.",
+  "lineages": [
+    {
+      "name": "teaching store semantic_dependencies_sha256",
+      "hashed_in": "crates/jope-engine/src/teaching_store.rs",
+      "sources": [
+        {
+          "path": "crates/jope-engine/src/corpus.rs",
+          "sha256": "aa57768283685c6d8a6b96f68306a1667e969605845a00b38f2975be315f6d73"
+        },
+        {
+          "path": "crates/jope-engine/src/grammar.rs",
+          "sha256": "6a8e6aa43efb8af6aa4806fd5d403ca34c06563436d933266a7377d815625e6a"
+        },
+        {
+          "path": "crates/jope-engine/src/teaching_store.rs",
+          "sha256": "3d03a42789e34298e2cc5e527b5018c713f1d39d3ce8a099c153c82a8c2ab646"
+        },
+        {
+          "path": "crates/jope-engine/src/task_contract.rs",
+          "sha256": "7bbbbd83aa8b1be7fc59e3cad50a646f20ce72be73ede4d27ac01fec1adcef2b"
+        },
+        {
+          "path": "crates/jope-engine/src/prepare.rs",
+          "sha256": "46ed2f9db4005724f8841bd297630ed64b6f0579e84d152129d2f393c1de2034"
+        },
+        {
+          "path": "crates/jope-engine/src/encoding.rs",
+          "sha256": "c2c98639724d9ee647e21722922576d16cd2dbb95ae5d406c39b11ffe9a55fed"
+        },
+        {
+          "path": "crates/jope-engine/src/manifest.rs",
+          "sha256": "8256ce5230ee3b8d360e9feb7e65ea3ba3d006fb5e302d3ba03a8460054707c7"
+        },
+        {
+          "path": "crates/jope-engine/src/label_admission.rs",
+          "sha256": "dcd00cb5e7e417ed336763ed74d543f9bc5fef34c913d02becb61d1e47a7c676"
+        },
+        {
+          "path": "crates/jope-engine/src/eval_registry.rs",
+          "sha256": "1cab39b4ab1bffc5eacd56182d77afd5c30565370fe117dfa8da5e3095dc5cfb"
+        },
+        {
+          "path": "crates/jope-engine/src/eval_registry/authority.rs",
+          "sha256": "683e8ca61a1ad464531b0d805ae0984fa18c7246e1d0c7c39cc928d1268d374f"
+        },
+        {
+          "path": "crates/jope-engine/src/eval_registry/service.rs",
+          "sha256": "f688316bd3e0369bc3d10ab92a2dbe16277a0e9ff330be5cfe621c6ca0f73824"
+        },
+        {
+          "path": "crates/jope-engine/src/fit_boundary.rs",
+          "sha256": "ea0a40fe4d12e977ce9fc1f83728468cf733d14a6a3631f7c6bdc22f94db23d4"
+        }
+      ]
+    },
+    {
+      "name": "corpus scan_policy",
+      "hashed_in": "crates/jope-engine/src/corpus.rs",
+      "sources": [
+        {
+          "path": "crates/jope-engine/src/corpus.rs",
+          "sha256": "aa57768283685c6d8a6b96f68306a1667e969605845a00b38f2975be315f6d73"
+        },
+        {
+          "path": "crates/jope-engine/src/grammar.rs",
+          "sha256": "6a8e6aa43efb8af6aa4806fd5d403ca34c06563436d933266a7377d815625e6a"
+        },
+        {
+          "path": "crates/jope-engine/src/task_contract.rs",
+          "sha256": "7bbbbd83aa8b1be7fc59e3cad50a646f20ce72be73ede4d27ac01fec1adcef2b"
+        },
+        {
+          "path": "crates/jope-engine/src/prepare.rs",
+          "sha256": "46ed2f9db4005724f8841bd297630ed64b6f0579e84d152129d2f393c1de2034"
+        },
+        {
+          "path": "crates/jope-engine/src/encoding.rs",
+          "sha256": "c2c98639724d9ee647e21722922576d16cd2dbb95ae5d406c39b11ffe9a55fed"
+        },
+        {
+          "path": "crates/jope-engine/src/manifest.rs",
+          "sha256": "8256ce5230ee3b8d360e9feb7e65ea3ba3d006fb5e302d3ba03a8460054707c7"
+        }
+      ]
+    },
+    {
+      "name": "eval-registry query execution identity",
+      "hashed_in": "crates/jope-engine/src/eval_registry/query.rs",
+      "sources": [
+        {
+          "path": "crates/jope-engine/src/eval_registry/query.rs",
+          "sha256": "bb7092020a81d378533c50a758e6a3114d2add306dfb54dec9c23ef9e143deb7"
+        },
+        {
+          "path": "crates/feat-math/src/model.rs",
+          "sha256": "fd7cab03674df1039fdb7b853a1b026b5f305758b05fe6bf9ce332f81cca9533"
+        },
+        {
+          "path": "crates/jope-engine/src/prepare.rs",
+          "sha256": "46ed2f9db4005724f8841bd297630ed64b6f0579e84d152129d2f393c1de2034"
+        }
+      ]
+    }
+  ]
+}
