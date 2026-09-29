@@ -281,7 +281,7 @@ The 26 workspace members, by directory under `crates/`; the package name follows
 | `datasets/test` | The ten licensed test datasets (`test-10`) |
 | `python/` | The Python that remains after [ADR-0006](docs/adr/ADR-0006-rust-only-stack.md) phase P1 (#117): the training stack (`policy`, `encoders`, `target_maker`, `data`, `dime_score`, `broad_shadow`), the research helpers that kept tests use, and the sha-pinned grammar sources; package `jope` 0.1.0, never released. Phases P2 and P3 port or retire it, with the CI helpers in `deploy/ci/*.py`. No new Python except the emitted model code and its harness. |
 | `deploy/ci`, `deploy/release` | CI lane scripts and the coverage map (`check.sh` is the hygiene lane); the release script and its tests |
-| `deploy/lambda` | Standalone AWS Lambda workers, an offline assessment tool for the regression worker's stored models and a terminal monitor, each its own Cargo workspace with its own lock; not part of the `jope` binary or its build. `SNAPSHOT.json` records every imported file's hash ([README](deploy/lambda/README.md)) |
+| `deploy/lambda` | Standalone AWS Lambda workers, an offline assessment tool for the regression worker's stored models, the host-side search engine of the teacher campaign and a terminal monitor, each its own Cargo workspace with its own lock; not part of the `jope` binary or its build. `SNAPSHOT.json` records every imported file's hash ([README](deploy/lambda/README.md)) |
 
 ## Further reading
 

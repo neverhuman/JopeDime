@@ -11,6 +11,14 @@ the commit areas (crate or lane) named in each subject line.
 - feat-math, bench: a bit-exact parity test of the runtime against the emitted Rust, Python and fitted C++17 programs, and an equal-budget search ablation harness (#127)
 - feat-math: the scalar evaluator reports which of its guards fired, as append-only fault classes with severities, beside unchanged values, in the interpreter and the compiled form (#128)
 
+### CI, build and release
+
+- lambda: import the teacher campaign's second stage (frozen snapshot): its host-side search engine and Lambda worker as two more standalone Cargo workspaces under `deploy/lambda/training/teacher-v2`, the worker's lock at the 0.2.0 `feat-math`, built and tested in the hygiene lane; its Python stays in custody with the same tracked hash manifest (#129)
+
+### Documentation
+
+- docs(records): the teacher v2 import record and the owner's ruling on its source directory (#129)
+
 ## [0.2.0] - 2026-09-29
 
 The first tagged release. Generated with git-cliff 2.14.1 and `cliff.toml` over the commits after

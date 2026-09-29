@@ -6,7 +6,9 @@ is in [`deploy/lambda/`](../../../deploy/lambda/README.md). Every figure below c
 frozen results files under `deploy/lambda/` or from Codex's closing ledger entries, for the
 regression workers its stopped-state handoff of 2026-09-29T05:04:31Z, and no figure was
 re-measured for this page. The costs are list-price estimates from AWS billing logs, not
-invoices.
+invoices. On 2026-09-29 Codex ran the second stage of the teacher campaign. Its source is imported
+too, from a custody snapshot, but it has no closing handoff, so its section says only what its
+frozen notes and the import records say.
 
 | Experiment | Claimed (UTC) | Frozen or closed (UTC) | Source now |
 | --- | --- | --- | --- |
@@ -16,6 +18,7 @@ invoices.
 | Planning discovery (read-only) | 19:18 | 20:03:26, CLOSE published | Python only: custody |
 | Terminal monitor | 20:17 | 20:53:47 | `deploy/lambda/watch/` |
 | Regression workers (v3) | 21:09 | 2026-09-29T05:03:06Z, closeout published | `deploy/lambda/regression/`, `deploy/lambda/regression-ops/` |
+| Teacher campaign, second stage | 2026-09-29T06:55 | no handoff; source unchanged since 2026-09-29T07:31:56Z (custody snapshots) | `deploy/lambda/training/teacher-v2/` |
 
 ## Single-fit feasibility probe
 
@@ -145,17 +148,50 @@ invoices.
 - The results are experimental engineering evidence: no outer labels were generated and nothing
   was promoted to teaching data.
 
+## Teacher campaign, second stage
+
+- What it is, from its frozen notes (`deploy/lambda/training/teacher-v2/SCHEMA.md` and
+  `README.md`): a Rust search engine on the host (`rust/island-engine`) keeps several candidate
+  pools, proposes programs through the proposal binary and scores the evaluations that come back;
+  a Rust Lambda worker (`bootstrap`) fits each candidate program on seven inner folds and on the
+  official test split. The evaluator is the qualified worker binary of evaluation context
+  `a8b2aaaf59a8b893915975c0a98601717f809086b94b80949ded366fa2e6e412`. A Python coordinator, in
+  custody, carries the requests and results, records exact timestamps and enforces the $1,000
+  budget ledger carried over from the first stage.
+- Official test labels intentionally influence selection, so its outputs are teacher-target
+  evidence and cannot be presented as an unbiased benchmark comparison.
+- Codex claimed it at 2026-09-29T06:55:00Z, when it stopped the campaign's first stage
+  (`.agent/experiments/test-adaptive-gp-v1`) and restarted with this engine. Campaign
+  `airfoil-r0f0-islands-v2-20260929-v1`, under
+  `s3://veox-jopedime-learning-use2/experiments/test-adaptive-teacher/v1/`.
+- Terminal state, results and costs are not recorded here. Codex has posted no stopped-state
+  handoff, and the run's results live only in its runtime directory under `~/scratch/` and on S3,
+  with no verified custody. The owner and Codex were asked about them; this is open.
+- Import (#129): from the custody snapshot of 12:44Z, re-verified locally and on its archive
+  mirror, with fallback freeze evidence: the three snapshots' fresh hashes of the live source are
+  equal, no source changed after 07:31:56Z and no build output after 07:33:36Z, and no process had
+  its cwd or exe in the directory at 12:44Z. Of its 24 source files, 13 are tracked, 1 is a renamed
+  manifest and 10 are in custody (8 Python files, the env template and a C pilot).
+- The three binaries in the snapshot's `target/` are recorded by sha256 in `SNAPSHOT.json`. A
+  release rebuild of the search engine on xbabe2 reproduced its binary byte for byte (sha256
+  `77a5c2bd2256fa21fc04a77a8109f7ebdfa17f0daa17b9a6ff63770fcb193b6c`). That the campaign ran exactly
+  these binaries is unconfirmed until Codex publishes the run's source manifest.
+- The first stage has no custody copy; `SNAPSHOT.json` lists it under `not_imported`. This is
+  open for Codex and the owner.
+
 ## Custody and what stays out of git
 
 - **Import record:** [`deploy/lambda/SNAPSHOT.json`](../../../deploy/lambda/SNAPSHOT.json) lists
-  all 148 files of the five bodies (csv, planning, regression, regression-ops and monitor): 71
-  tracked, 1 gzipped, 1 renamed, 73 in custody and 2 legacy schemas that equal the product
-  schemas, plus 52 excluded entries (the `.env` files by existence only, or by existence and
-  sha256 for the regression bodies, build output, bytecode caches and two links to bulk
-  evidence).
-- **Python:** 73 files in five deterministic tarballs on xbabe2 under
-  `~/jope-evidence/lambda-20260929/python/`: the #124 three with `SHA256SUMS` and `FILES.sha256`,
-  and the two regression ones with `SHA256SUMS-regression` and `FILES-regression.sha256`.
+  all 172 files of the six bodies (csv, planning, regression, regression-ops, teacher-v2 and
+  monitor): 84 tracked, 1 gzipped, 2 renamed, 83 in custody and 2 legacy schemas that equal the
+  product schemas, plus 66 excluded entries (the `.env` files by existence only, or by existence,
+  size and sha256 for the regression and teacher-v2 bodies, build output, bytecode caches, two
+  links to bulk evidence and two empty directories).
+- **Python:** 83 files (78 Python files, 4 companions and one C pilot) in six deterministic
+  tarballs on xbabe2 under `~/jope-evidence/lambda-20260929/python/`: the #124 three with
+  `SHA256SUMS` and `FILES.sha256`, the two regression ones with `SHA256SUMS-regression` and
+  `FILES-regression.sha256`, and the teacher-v2 one with `SHA256SUMS-teacher-v2` and
+  `FILES-teacher-v2.sha256`.
   [`docs/archive/lambda-python-manifest.json`](../../archive/lambda-python-manifest.json) records
   each file, its tarball and its anchor. A Rust port is a follow-up.
 - **Evidence:** receipts, logs, packages, results and restored mirrors stay in the runs' scratch
@@ -165,7 +201,16 @@ invoices.
   dashboards and tables under `outputs/`) are on the owner's workstation, per its 16:04Z entry.
   The regression freeze proof and its custody copy are in `~/jope-evidence/closeout-20260929/`
   (`20-v3-freeze-proof/` and `21-v3-frozen/`), mirrored under
-  `/mnt/jope-archive/jopedime-closeout-20260929/`.
+  `/mnt/jope-archive/jopedime-closeout-20260929/`. The teacher campaign's custody snapshots are
+  in `~/jope-evidence/islands-v2-custody/` (mirrored under
+  `/mnt/jope-archive/jopedime-islands-v2-custody/`), and the import's evidence steps
+  (`20-freeze` to `33-review-fixes`) in `~/jope-evidence/teacher-v2-import/`, mirrored under
+  `/mnt/jope-archive/jopedime-teacher-v2-import/`.
 - **Regression workers (v3):** the owner decided on 2026-09-29 at about 00:15Z that v0.2.0 waits
   for their freeze, and at about 04:20Z (O1) that #124 merges first and #125 imports them;
   v0.2.0 is tagged from #125's merge commit.
+- **Teacher campaign, second stage:** the owner ruled on 2026-09-29 at about 08:20Z that this
+  work is mission critical, must not be deleted and should be rolled into a proper location in
+  the repository (`deploy/lambda/SNAPSHOT.json` keeps the ruling verbatim, with the home-directory
+  prefix written `~/`). #129 imports it, and
+  its source directory is neither moved nor deleted.
