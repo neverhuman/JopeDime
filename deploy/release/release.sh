@@ -182,7 +182,8 @@ readonly CONTAINER_SYSTEM_TMP=/tmp
 #     email. The keys set through GIT_CONFIG_COUNT outrank every configuration file: no per-user
 #     ignore or attributes file (~/.config/git/ignore hides untracked files from git status even
 #     without ~/.gitconfig), no repository hooks, no fsmonitor answering git status, no signed tag.
-#     check_git_config refuses URL rewrites and TLS settings in the repository's own configuration.
+#     check_git_config refuses URL rewrites, remotes named after $remote or another URL, and TLS
+#     settings in the repository's own configuration.
 #     The GitHub credential helper is the GH array's -c option, which outranks all of these.
 #   - tar takes options from TAR_OPTIONS (--exclude=... drops files from the export, which
 #     verify_export would then refuse), objdump its object format from GNUTARGET (GNUTARGET=binary
@@ -721,21 +722,39 @@ check_index_flags() {
 }
 
 # git reads no /etc/gitconfig or ~/.gitconfig here (see "The tools' own configuration"), so the
-# repository's own configuration is the only one left that could rewrite a URL (url.<base>.insteadOf
-# or pushInsteadOf) or change TLS verification (http.sslVerify, http.sslCAInfo, http.sslCAPath, also
-# per URL), and so send the fetch, the tag checks or the push to a server other than $remote. None of
-# them may be set. Key names can hold credentials, so they are counted, not printed.
+# repository's own configuration is the only one left that could send the fetch, the tag checks or
+# the push to a server other than $remote. Three kinds of key could, and none of them may be set:
+#   - a URL rewrite: url.<base>.insteadOf or url.<base>.pushInsteadOf;
+#   - a remote named $remote itself, or after any other URL (a name that contains ://). git looks a
+#     URL given on its command line up as a remote name first, so remote.<that URL>.url would send
+#     the fetch, the tag checks and the push to another repository, its pushurl would send the push
+#     alone, and its vcs, proxy, uploadpack and receivepack keys would apply as well. Remotes with
+#     other names, such as origin, are left alone: every git command here is given $remote, never a
+#     remote name. (git ignores a remote whose name begins with /, so a test remote that is an
+#     absolute path cannot be redirected this way.)
+#   - a TLS setting, which would let another server answer for $remote: http.sslVerify,
+#     http.sslCAInfo or http.sslCAPath, also per URL.
+# Key names can hold credentials, so they are counted, not printed.
 check_git_config() {
-  local rc=0 out
-  local -a keys
+  local rc=0 out key n=0
   out=$(git config --name-only --get-regexp \
-    '^url\..*\.(push)?insteadof$|^http\.(.*\.)?(sslverify|sslcainfo|sslcapath)$') || rc=$?
+    '^url\..*\.(push)?insteadof$|^remote\.|^http\.(.*\.)?(sslverify|sslcainfo|sslcapath)$') || rc=$?
   case $rc in
-    0) mapfile -t keys <<<"$out"
-       die "the repository's git config sets ${#keys[@]} URL rewrite or TLS key(s) (url.*.insteadOf, url.*.pushInsteadOf, http.*sslVerify, http.*sslCAInfo or http.*sslCAPath), which could send the fetch, the tag checks or the push somewhere other than $remote; list them with: git config --show-origin --get-regexp '^(url|http)\\.'" ;;
-    1) ;;
+    0) ;;
+    1) return 0 ;;
     *) die "cannot read the repository's git config (git config exited $rc)" ;;
   esac
+  # A key is <section>.<name>.<variable>, with only the section and the variable lowercased, so the
+  # name is compared exactly, as git compares it.
+  while IFS= read -r key; do
+    case $key in
+      "remote.$remote".* | remote.*://*) n=$((n + 1)) ;;
+      remote.*) ;;
+      *) n=$((n + 1)) ;;
+    esac
+  done <<<"$out"
+  (( n == 0 )) \
+    || die "the repository's git config sets $n key(s) that could send the fetch, the tag checks or the push somewhere other than $remote: a URL rewrite (url.*.insteadOf, url.*.pushInsteadOf), a remote named $remote or after another URL (remote.<URL>.*), or a TLS setting (http.*sslVerify, http.*sslCAInfo, http.*sslCAPath); list them with: git config --show-origin --get-regexp '^(url|remote|http)\\.'"
 }
 
 preflight() {
@@ -766,7 +785,7 @@ preflight() {
   check_index_flags
   note "ok: clean tree at $repo_root (no assume-unchanged or skip-worktree entries)"
   check_git_config
-  note "ok: git reads only the repository's config, which rewrites no URL and changes no TLS setting"
+  note "ok: git reads only the repository's config, which rewrites no URL, names no remote after $remote or another URL, and changes no TLS setting"
 
   head=$(git rev-parse --verify 'HEAD^{commit}')
   [[ $head == "$sha" ]] || die "HEAD is $head, not the given merge commit $sha"
