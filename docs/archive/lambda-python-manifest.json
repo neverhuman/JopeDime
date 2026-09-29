@@ -1,9 +1,9 @@
 {
   "schema": "jopedime.lambda-python-manifest.v1",
-  "what": "The Python of the frozen AWS Lambda work of 2026-09-28 and of the regression workers frozen on 2026-09-29, and the three files that only serve the 2026-09-28 Python, preserved byte-exact in custody instead of being tracked. deploy/lambda/SNAPSHOT.json lists every file of those bodies; this manifest is the restore record for the ones in custody.",
-  "why": "Owner rule of 2026-09-26: the stack is Rust, and no Python is added to the tree. Owner decision of 2026-09-29 ~00:15Z: the Lambda Rust goes into PR #124 and is built and tested by CI; the Lambda Python and other untracked orchestration is preserved byte-exact in custody with this tracked hash manifest. Owner decision of 2026-09-29 ~04:20Z (O1): PR #125 imports the frozen regression workers under the same rule.",
-  "follow_up": "Port these tools to Rust (the deploy, invoke, budget, archive and close controllers, the corpus inventory and curation, the analysis and plots, the monitor feed adapter and launcher, the planning tools, and the regression run's audit, history index, input preparation, campaign, accounting, query-table, reconcile and closeout tools), then retire this custody record.",
-  "restore": "On xbabe2: tar -xf ~/jope-evidence/lambda-20260929/python/<custody_tarball> -C <new directory>; then, in that directory, sha256sum -c --strict ~/jope-evidence/lambda-20260929/python/FILES.sha256. Each member path starts with its source directory name (lambda-csv/, lambda-watch/, gp-evolution-100/). The regression tarballs have their own list: after extracting lambda-python-regression.tar and lambda-python-regression-ops.tar, run sha256sum -c --strict ~/jope-evidence/lambda-20260929/python/FILES-regression.sha256; their member paths start with regression-lambda-v3/ or regression-lambda-v3-ops/.",
+  "what": "The Python of the frozen AWS Lambda work of 2026-09-28, of the regression workers frozen on 2026-09-29 and of the teacher campaign's second stage (2026-09-29), the four files that only serve that Python, and the teacher campaign's C pilot, preserved byte-exact in custody instead of being tracked. deploy/lambda/SNAPSHOT.json lists every file of those bodies; this manifest is the restore record for the ones in custody.",
+  "why": "Owner rule of 2026-09-26: the stack is Rust, and no Python is added to the tree. Owner decision of 2026-09-29 ~00:15Z: the Lambda Rust goes into PR #124 and is built and tested by CI; the Lambda Python and other untracked orchestration is preserved byte-exact in custody with this tracked hash manifest. Owner decision of 2026-09-29 ~04:20Z (O1): PR #125 imports the frozen regression workers under the same rule. Owner ruling of 2026-09-29 (about 08:20Z): the teacher campaign's second stage is rolled into the repository; PR #129 imports it under the same rule, and keeps its C pilot in custody too, outside the Rust, bash and jq stack.",
+  "follow_up": "Port these tools to Rust (the deploy, invoke, budget, archive and close controllers, the corpus inventory and curation, the analysis and plots, the monitor feed adapter and launcher, the planning tools, and the regression run's audit, history index, input preparation, campaign, accounting, query-table, reconcile and closeout tools, and the teacher campaign's coordinator, its transport and budget helpers, its control analysis, report and protocol tests), then retire this custody record.",
+  "restore": "On xbabe2: tar -xf ~/jope-evidence/lambda-20260929/python/<custody_tarball> -C <new directory>; then, in that directory, sha256sum -c --strict ~/jope-evidence/lambda-20260929/python/FILES.sha256. Each member path starts with its source directory name (lambda-csv/, lambda-watch/, gp-evolution-100/). The regression tarballs have their own list: after extracting lambda-python-regression.tar and lambda-python-regression-ops.tar, run sha256sum -c --strict ~/jope-evidence/lambda-20260929/python/FILES-regression.sha256; their member paths start with regression-lambda-v3/ or regression-lambda-v3-ops/. The teacher-v2 tarball has its own list: after extracting lambda-python-teacher-v2.tar, run sha256sum -c --strict ~/jope-evidence/lambda-20260929/python/FILES-teacher-v2.sha256; its member paths start with test-adaptive-gp-islands-v2/.",
   "custody": {
     "host": "xbabe2",
     "directory": "~/jope-evidence/lambda-20260929/python",
@@ -42,6 +42,13 @@
         "sha256": "dbed86146df6a7ca5b9785564ec32a7c5c6625c2bc31589a4d3391f7e0f600b1",
         "bytes": 122880,
         "files": 16
+      },
+      {
+        "name": "lambda-python-teacher-v2.tar",
+        "body": "teacher-v2",
+        "sha256": "c353271ead9227bb3aaf40567faf3924ac282e1a2e26f802474b04877f39c128",
+        "bytes": 112640,
+        "files": 10
       }
     ],
     "files_sha256": {
@@ -89,6 +96,30 @@
           }
         ]
       }
+    },
+    "teacher-v2": {
+      "files_sha256": {
+        "name": "FILES-teacher-v2.sha256",
+        "sha256": "63b75246a77f78a8d65111dcdb9d4cfc4e905c2984e2cb9d23fb423f20171336",
+        "note": "sha256sum format, one line per member of the teacher-v2 tarball, relative to the extraction directory; each line equals the import's frozen list"
+      },
+      "sha256sums": {
+        "name": "SHA256SUMS-teacher-v2",
+        "sha256": "d69bc3effef557f0f0b9526db115054c6a50bc43078687b1958b177204c1d2e8",
+        "note": "lists lambda-python-teacher-v2.tar and FILES-teacher-v2.sha256; it does not list itself. The earlier SHA256SUMS, FILES.sha256, SHA256SUMS-regression and FILES-regression.sha256 are unchanged"
+      },
+      "created_with": "the same tar command as above, run in the import's frozen copy (~/jope-evidence/teacher-v2-import/21-frozen/tree/) with the members listed by FILES-teacher-v2.sha256; deterministic (the tarball was built twice, byte-identical)",
+      "verification": "2026-09-29T14:22Z: every member was checked against the frozen list before tarring; sha256sum -c --strict SHA256SUMS-teacher-v2 passed; the tarball was extracted into a fresh directory and every member re-hashed against FILES-teacher-v2.sha256: 10 of 10 OK, no extra or missing file. The three files were also copied into the archive copy of this directory (/mnt/jope-archive/jopedime-closeout-20260929/lambda-20260929-python/) and verified there. Evidence: ~/jope-evidence/teacher-v2-import/31-python-custody/.",
+      "env_files": {
+        "note": "The body's private .env: existence, size and the sha256 the custody snapshot recorded only. It was copied by the 08:21Z snapshot and removed unread from both copies at 08:23:42Z; its contents were never inspected, and it was never tarred or tracked. The .env.example template is a different file (another sha256) and is in the tarball.",
+        "files": [
+          {
+            "source": ".agent/experiments/lambda-training/test-adaptive-gp-islands-v2/transport/.env",
+            "bytes": 501,
+            "sha256": "ff3f7707eedb3a0b52e33cf464cb3fa11cb7221e0f4b909390c161b352a1319f"
+          }
+        ]
+      }
     }
   },
   "anchors": {
@@ -97,22 +128,28 @@
     "tarball": "the frozen monitor source archive, 17 members, each equal to the frozen tree",
     "s3_discovery_archive": "the planning discovery archive under s3://veox-jopedime-learning-use2/experiments/ (COMMIT feb6e38cd829227d93b12dfbf898f71ccfeb5071128d18f8493d0702b9ea9039, CLOSE 83a85ba85014412bd4c7fbf5bf268f2133e1376f7000fb8a3627d6ea9f9d83ea)",
     "freeze_proof": "the freeze proof of the two regression source directories, 2026-09-29T05:30Z (~/jope-evidence/closeout-20260929/20-v3-freeze-proof/FREEZE-PROOF.json, sha256 c4a740be1544e7a92758c32fbe9c04c74f244400cf9d382b2379d223c879e63b)",
-    "frozen_list": "its sha256 list of the frozen files (52 entries, sha256 d2fe056bf3712d3118cd1d3b7d6f24065f320ed24af587a11eb247d34a3093f1), which the custody copy ~/jope-evidence/closeout-20260929/21-v3-frozen/ equals"
+    "frozen_list": "its sha256 list of the frozen files (52 entries, sha256 d2fe056bf3712d3118cd1d3b7d6f24065f320ed24af587a11eb247d34a3093f1), which the custody copy ~/jope-evidence/closeout-20260929/21-v3-frozen/ equals",
+    "teacher_v2_custody_snapshot": "the read-only custody snapshot of the teacher campaign's second-stage source directory, 2026-09-29T12:44:31Z (~/jope-evidence/islands-v2-custody/20260929T124431Z/, tree list sha256 28826359ce252b36fea86bfa7570746e695577d81c0d0e96951cb40976ba3bad; mirrored under /mnt/jope-archive/jopedime-islands-v2-custody/)",
+    "teacher_v2_freeze_check": "the import's re-verification of that snapshot, locally and on its mirror, and its fallback freeze evidence (~/jope-evidence/teacher-v2-import/20-freeze/FREEZE-CHECK.json, sha256 f687799f116cca19fb9d395a8b6d42373c73ba399ac43d13def6ee678246634c)",
+    "teacher_v2_frozen_list": "its sha256 list of the 24 source files (sha256 4545675bde4c49d6180f2073ff4e8e91da2b77d8fbe0a4beabee7ec66f08950c), which the frozen copy ~/jope-evidence/teacher-v2-import/21-frozen/ equals",
+    "teacher_v2_source_manifest": "the campaign's own source manifest, which Codex has not published; deploy/lambda/SNAPSHOT.json .anchors[\"teacher-v2-source-manifest\"] records the values recomputed from the custody copy, unconfirmed"
   },
   "counts": {
-    "files": 73,
+    "files": 83,
     "by_body": {
       "csv": 25,
       "planning": 14,
       "regression": 12,
       "regression-ops": 16,
+      "teacher-v2": 10,
       "watch": 6
     },
     "by_kind": {
-      "companion": 3,
-      "python": 70
+      "c": 1,
+      "companion": 4,
+      "python": 78
     },
-    "bytes": 575585
+    "bytes": 678693
   },
   "files": [
     {
@@ -1137,6 +1174,156 @@
       "anchor": {
         "freeze_proof": "c4a740be1544e7a92758c32fbe9c04c74f244400cf9d382b2379d223c879e63b",
         "frozen_list": "d2fe056bf3712d3118cd1d3b7d6f24065f320ed24af587a11eb247d34a3093f1"
+      }
+    },
+    {
+      "body": "teacher-v2",
+      "path": "analysis/build_report.py",
+      "source": ".agent/experiments/lambda-training/test-adaptive-gp-islands-v2/analysis/build_report.py",
+      "sha256": "33557242ef2c098c49ae37bce3dfef6fc87f1d21c9c7a48ad57907985503afe2",
+      "bytes": 25453,
+      "mode": "100644",
+      "kind": "python",
+      "custody_tarball": "lambda-python-teacher-v2.tar",
+      "member": "test-adaptive-gp-islands-v2/analysis/build_report.py",
+      "anchor": {
+        "freeze_check": "f687799f116cca19fb9d395a8b6d42373c73ba399ac43d13def6ee678246634c",
+        "frozen_list": "4545675bde4c49d6180f2073ff4e8e91da2b77d8fbe0a4beabee7ec66f08950c"
+      }
+    },
+    {
+      "body": "teacher-v2",
+      "path": "analysis/materialize_control_semantics.py",
+      "source": ".agent/experiments/lambda-training/test-adaptive-gp-islands-v2/analysis/materialize_control_semantics.py",
+      "sha256": "d1c34aad616a072b2356e32cb4833ec5f883629ce7be43a6ed844247101c01cf",
+      "bytes": 10583,
+      "mode": "100644",
+      "kind": "python",
+      "custody_tarball": "lambda-python-teacher-v2.tar",
+      "member": "test-adaptive-gp-islands-v2/analysis/materialize_control_semantics.py",
+      "anchor": {
+        "freeze_check": "f687799f116cca19fb9d395a8b6d42373c73ba399ac43d13def6ee678246634c",
+        "frozen_list": "4545675bde4c49d6180f2073ff4e8e91da2b77d8fbe0a4beabee7ec66f08950c"
+      }
+    },
+    {
+      "body": "teacher-v2",
+      "path": "analysis/redline-concurrent-pilot.c",
+      "source": ".agent/experiments/lambda-training/test-adaptive-gp-islands-v2/analysis/redline-concurrent-pilot.c",
+      "sha256": "dd313d094254669f4638114cdfe02aeaa098fcd321e59bb5fcb5cf669f6ebe13",
+      "bytes": 2234,
+      "mode": "100644",
+      "kind": "c",
+      "custody_tarball": "lambda-python-teacher-v2.tar",
+      "member": "test-adaptive-gp-islands-v2/analysis/redline-concurrent-pilot.c",
+      "anchor": {
+        "freeze_check": "f687799f116cca19fb9d395a8b6d42373c73ba399ac43d13def6ee678246634c",
+        "frozen_list": "4545675bde4c49d6180f2073ff4e8e91da2b77d8fbe0a4beabee7ec66f08950c"
+      }
+    },
+    {
+      "body": "teacher-v2",
+      "path": "analysis/test_engine_protocol.py",
+      "source": ".agent/experiments/lambda-training/test-adaptive-gp-islands-v2/analysis/test_engine_protocol.py",
+      "sha256": "d348463876afaf3948f8627f85533176d69762bba18ef249b38e1c5ff09d9ed5",
+      "bytes": 3879,
+      "mode": "100644",
+      "kind": "python",
+      "custody_tarball": "lambda-python-teacher-v2.tar",
+      "member": "test-adaptive-gp-islands-v2/analysis/test_engine_protocol.py",
+      "anchor": {
+        "freeze_check": "f687799f116cca19fb9d395a8b6d42373c73ba399ac43d13def6ee678246634c",
+        "frozen_list": "4545675bde4c49d6180f2073ff4e8e91da2b77d8fbe0a4beabee7ec66f08950c"
+      }
+    },
+    {
+      "body": "teacher-v2",
+      "path": "analysis/test_score_parity.py",
+      "source": ".agent/experiments/lambda-training/test-adaptive-gp-islands-v2/analysis/test_score_parity.py",
+      "sha256": "33b6012e5538fcd4db500b3676def3261242527080675b9acac531d82b99f333",
+      "bytes": 4337,
+      "mode": "100644",
+      "kind": "python",
+      "custody_tarball": "lambda-python-teacher-v2.tar",
+      "member": "test-adaptive-gp-islands-v2/analysis/test_score_parity.py",
+      "anchor": {
+        "freeze_check": "f687799f116cca19fb9d395a8b6d42373c73ba399ac43d13def6ee678246634c",
+        "frozen_list": "4545675bde4c49d6180f2073ff4e8e91da2b77d8fbe0a4beabee7ec66f08950c"
+      }
+    },
+    {
+      "body": "teacher-v2",
+      "path": "transport/.env.example",
+      "source": ".agent/experiments/lambda-training/test-adaptive-gp-islands-v2/transport/.env.example",
+      "sha256": "c65c017324d195aafd0686062d4892e29d11614c0471de1ea33b3a5ee2217040",
+      "bytes": 511,
+      "mode": "100644",
+      "kind": "companion",
+      "custody_tarball": "lambda-python-teacher-v2.tar",
+      "member": "test-adaptive-gp-islands-v2/transport/.env.example",
+      "anchor": {
+        "freeze_check": "f687799f116cca19fb9d395a8b6d42373c73ba399ac43d13def6ee678246634c",
+        "frozen_list": "4545675bde4c49d6180f2073ff4e8e91da2b77d8fbe0a4beabee7ec66f08950c"
+      }
+    },
+    {
+      "body": "teacher-v2",
+      "path": "transport/common.py",
+      "source": ".agent/experiments/lambda-training/test-adaptive-gp-islands-v2/transport/common.py",
+      "sha256": "7aafbff0773009b0a844609a338c4ee4af5c5252b6e3fa21abc9e39600284caf",
+      "bytes": 8869,
+      "mode": "100644",
+      "kind": "python",
+      "custody_tarball": "lambda-python-teacher-v2.tar",
+      "member": "test-adaptive-gp-islands-v2/transport/common.py",
+      "anchor": {
+        "freeze_check": "f687799f116cca19fb9d395a8b6d42373c73ba399ac43d13def6ee678246634c",
+        "frozen_list": "4545675bde4c49d6180f2073ff4e8e91da2b77d8fbe0a4beabee7ec66f08950c"
+      }
+    },
+    {
+      "body": "teacher-v2",
+      "path": "transport/deploy.py",
+      "source": ".agent/experiments/lambda-training/test-adaptive-gp-islands-v2/transport/deploy.py",
+      "sha256": "691c46bc030dea1259d63d092dfdbbb8e780bde115036e1d86e51992188c9f0b",
+      "bytes": 3671,
+      "mode": "100644",
+      "kind": "python",
+      "custody_tarball": "lambda-python-teacher-v2.tar",
+      "member": "test-adaptive-gp-islands-v2/transport/deploy.py",
+      "anchor": {
+        "freeze_check": "f687799f116cca19fb9d395a8b6d42373c73ba399ac43d13def6ee678246634c",
+        "frozen_list": "4545675bde4c49d6180f2073ff4e8e91da2b77d8fbe0a4beabee7ec66f08950c"
+      }
+    },
+    {
+      "body": "teacher-v2",
+      "path": "transport/evolve.py",
+      "source": ".agent/experiments/lambda-training/test-adaptive-gp-islands-v2/transport/evolve.py",
+      "sha256": "d066d2d0e92a4a0ebc12cfdb0ce0401d4ab44ce9b787bc276718702039407153",
+      "bytes": 37607,
+      "mode": "100644",
+      "kind": "python",
+      "custody_tarball": "lambda-python-teacher-v2.tar",
+      "member": "test-adaptive-gp-islands-v2/transport/evolve.py",
+      "anchor": {
+        "freeze_check": "f687799f116cca19fb9d395a8b6d42373c73ba399ac43d13def6ee678246634c",
+        "frozen_list": "4545675bde4c49d6180f2073ff4e8e91da2b77d8fbe0a4beabee7ec66f08950c"
+      }
+    },
+    {
+      "body": "teacher-v2",
+      "path": "transport/prepare.py",
+      "source": ".agent/experiments/lambda-training/test-adaptive-gp-islands-v2/transport/prepare.py",
+      "sha256": "e94d13d41cb3d2d469f5811c30ff5bc50bb3f20e6134d0d07bb26f345db1b170",
+      "bytes": 5964,
+      "mode": "100644",
+      "kind": "python",
+      "custody_tarball": "lambda-python-teacher-v2.tar",
+      "member": "test-adaptive-gp-islands-v2/transport/prepare.py",
+      "anchor": {
+        "freeze_check": "f687799f116cca19fb9d395a8b6d42373c73ba399ac43d13def6ee678246634c",
+        "frozen_list": "4545675bde4c49d6180f2073ff4e8e91da2b77d8fbe0a4beabee7ec66f08950c"
       }
     },
     {
