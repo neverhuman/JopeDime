@@ -10,6 +10,7 @@
 //! | `expression_values_match_the_frozen_fixture` | `compat_freeze/mathexpr_values.v1.json` | `MathExpr` value bits and error kinds: interpreter and compiled, row and map context |
 //! | `stage_outputs_match_the_frozen_fixture` | `compat_freeze/stage_values.v1.json` | `map`/`derive` stage outputs and the predictions behind them |
 //! | `emitted_artifact_bytes_match_the_frozen_fixture` | `compat_freeze/emitted_bytes.v1.json` | Rust, Python and manifest bytes under the default and the `jope emit` options; C++17 recipe and JavaScript bytes, or the emitter's refusal, under the default options; fitted C++17 bytes, or the recorded skip; the ops each recipe emitter accepts |
+//! | `gained_support_fails_until_recorded_and_its_mode_changes_nothing_else` | an in-memory copy of `compat_freeze/emitted_bytes.v1.json` (the file is only read) | the rules for bytes where the fixture records a refusal |
 //! | `serialized_models_match_the_frozen_fixture` | `compat_freeze/model_serde.v1.json` | `serde_json` bytes of fitted models, their predictions, and loading of stored bytes |
 //! | `vocabulary_registry_and_lineage_pins_match` | `compat_freeze/frozen_pins.v1.json` | grammar assets, `grammar.rs`, jope-policy pins, registry and emitter versions |
 //! | `evaluator_identity_inputs_match_the_recorded_identity` | `compat_freeze/evaluator_identity.v1.json` | the ADR-0004 evaluator identity inputs |
@@ -2135,6 +2136,139 @@ fn emitted_artifact_bytes_match_the_frozen_fixture() {
     if let Some(failure) = emitted_failure(&check) {
         panic!("{failure}");
     }
+}
+
+/// The rules for bytes where the emitted-bytes fixture records a refusal, proved on an in-memory
+/// copy of the committed fixture; the file itself is only read. Compare mode fails, and names the
+/// program, the language and the `gained-support` mode. That mode records the bytes and changes no
+/// other byte of the file, and a second run records nothing. Bytes it recorded that change later
+/// still fail, as do changed bytes recorded before, lost support and a refusal whose element kinds
+/// change other than by narrowing; the mode records none of them. A narrowed refusal passes and
+/// keeps its record.
+#[test]
+fn gained_support_fails_until_recorded_and_its_mode_changes_nothing_else() {
+    fn first(programs: &[EmittedProgram], what: &str, wanted: impl Fn(&str) -> bool) -> usize {
+        programs
+            .iter()
+            .position(|program| wanted(&program.cpp17))
+            .unwrap_or_else(|| panic!("the fixture records no {what} to simulate with"))
+    }
+    let relative = format!("compat_freeze/{EMITTED_FILE}");
+    let text = std::fs::read_to_string(fixture_path(&relative))
+        .unwrap_or_else(|error| panic!("tests/fixtures/{relative}: {error}"));
+    let committed: EmittedBytes = serde_json::from_str(&text).expect("the fixture parses");
+    let key = |index: usize| format!("{}.cpp17", committed.programs[index].name);
+    let names =
+        |lines: &[String], index: usize| lines.iter().any(|line| line.contains(&key(index)));
+    let quoted = |value: &str| serde_json::to_string(value).expect("quote");
+
+    // The emitters' output, simulated: the fixture's values, except that the C++17 recipe emitter
+    // now writes bytes for a program the fixture records as refused.
+    let gained = first(&committed.programs, "C++17 recipe refusal", |value| {
+        unsupported_kinds(value).is_some()
+    });
+    let refusal = committed.programs[gained].cpp17.clone();
+    let bytes = text_identity("// the C++17 recipe source the emitter would now write\n");
+    let mut actual = committed.clone();
+    actual.programs[gained].cpp17.clone_from(&bytes);
+
+    // Compare mode fails, and names the program, the language and the mode.
+    let check = check_emitted(&committed, &actual);
+    assert!(check.drift.is_empty(), "{:?}", check.drift);
+    assert_eq!(check.gained.len(), 1, "{:?}", check.gained);
+    let failure = emitted_failure(&check).expect("bytes for a refused value fail compare mode");
+    for needle in [
+        key(gained).as_str(),
+        "C++17 recipe",
+        "JOPE_COMPAT_FREEZE_REGENERATE=gained-support",
+    ] {
+        assert!(
+            failure.contains(needle),
+            "the failure does not name {needle:?}:\n{failure}"
+        );
+    }
+
+    // The mode records those bytes and changes no other byte: the new text is the committed text
+    // with the one line of that value replaced.
+    let (updated_text, recorded) = gained_support_update(&text, &actual)
+        .expect("no other record differs")
+        .expect("one value gained support");
+    assert_eq!(recorded, [key(gained)]);
+    let old_lines: Vec<&str> = text.split('\n').collect();
+    let new_lines: Vec<&str> = updated_text.split('\n').collect();
+    assert_eq!(old_lines.len(), new_lines.len());
+    let changed: Vec<(&str, &str)> = old_lines
+        .iter()
+        .zip(&new_lines)
+        .filter(|(old, new)| old != new)
+        .map(|(old, new)| (*old, *new))
+        .collect();
+    assert_eq!(changed.len(), 1, "{changed:#?}");
+    let (old_line, new_line) = changed[0];
+    assert!(
+        old_line.trim_start().starts_with("\"cpp17\": "),
+        "{old_line}"
+    );
+    assert_eq!(
+        old_line.replace(&quoted(&refusal), &quoted(&bytes)),
+        new_line
+    );
+
+    // Recorded, the fixture holds, and a second run records nothing.
+    let updated: EmittedBytes = serde_json::from_str(&updated_text).expect("the new text parses");
+    assert_eq!(emitted_failure(&check_emitted(&updated, &actual)), None);
+    assert_eq!(gained_support_update(&updated_text, &actual), Ok(None));
+
+    // The review's scenario: the bytes recorded this way change in a later PR. That fails, and
+    // the mode refuses to record it.
+    let mut later = actual.clone();
+    later.programs[gained].cpp17 = text_identity("// that source, changed in a later PR\n");
+    let failure = emitted_failure(&check_emitted(&updated, &later)).expect("changed bytes fail");
+    assert!(failure.contains(&key(gained)), "{failure}");
+    let refused = gained_support_update(&updated_text, &later).expect_err("recorded bytes stay");
+    assert!(refused.contains(&key(gained)), "{refused}");
+
+    // Bytes recorded before that change in the same run as a gain: compare mode names both, and
+    // the mode writes nothing.
+    let pinned = first(&committed.programs, "C++17 recipe bytes", is_emitted);
+    let mut both = actual.clone();
+    both.programs[pinned].cpp17 = text_identity("// a recorded source, changed\n");
+    let failure = emitted_failure(&check_emitted(&committed, &both)).expect("both fail");
+    assert!(
+        failure.contains(&key(gained)) && failure.contains(&key(pinned)),
+        "{failure}"
+    );
+    let refused = gained_support_update(&text, &both).expect_err("recorded bytes never change");
+    assert!(refused.contains(&key(pinned)), "{refused}");
+
+    // Lost support fails, and the mode does not record the refusal.
+    let mut lost = committed.clone();
+    lost.programs[pinned].cpp17 = format!("{UNSUPPORTED}transform Simulated");
+    let check = check_emitted(&committed, &lost);
+    assert!(names(&check.drift, pinned), "{:?}", check.drift);
+    assert!(gained_support_update(&text, &lost).is_err());
+
+    // A refusal narrowed to a strict subset of its element kinds passes, keeps its record and is
+    // left alone by the mode; a refusal whose kinds change otherwise fails.
+    let several = first(
+        &committed.programs,
+        "C++17 recipe refusal of several element kinds",
+        |value| unsupported_kinds(value).is_some_and(|kinds| kinds.len() > 1),
+    );
+    let kept = unsupported_kinds(&committed.programs[several].cpp17)
+        .and_then(|kinds| kinds.into_iter().next().map(str::to_string))
+        .expect("an element kind");
+    let mut narrowed = committed.clone();
+    narrowed.programs[several].cpp17 = format!("{UNSUPPORTED}{kept}");
+    let check = check_emitted(&committed, &narrowed);
+    assert_eq!(emitted_failure(&check), None);
+    assert!(names(&check.additive, several), "{:?}", check.additive);
+    assert_eq!(gained_support_update(&text, &narrowed), Ok(None));
+    let mut other_kinds = committed.clone();
+    other_kinds.programs[several].cpp17 = format!("{UNSUPPORTED}{kept}; transform Simulated");
+    let check = check_emitted(&committed, &other_kinds);
+    assert!(names(&check.drift, several), "{:?}", check.drift);
+    assert!(gained_support_update(&text, &other_kinds).is_err());
 }
 
 // ---------------------------------------------------------------------------------------------
