@@ -1,0 +1,65 @@
+{
+  "schema": "jope.redlinedb-shadow-pilot/v1",
+  "tested_utc_date": "2026-09-29",
+  "hosts": {
+    "c_abi": "xbabe2/linux-x86_64-glibc-2.39",
+    "rust_native": "local/macos-arm64"
+  },
+  "redlinedb_version": "5.0.0",
+  "source_commit": "1d702cb198b4a930f5d19632b9eda33f1d6ef3bb",
+  "release_archive_sha256": "2a2909a989eafd8e306155010879aa1529a772737329b76fb2f255706b1543f9",
+  "release_archive_checksum_verified": true,
+  "c_abi_workload": {
+    "api": "RedlineDB native C ABI v5",
+    "connections": "one connection per POSIX writer thread in one process",
+    "rows_per_writer": 100,
+    "schema": "campaign admission calls table",
+    "durability": "default strict",
+    "all_insert_step_calls_reported_success": true,
+    "all_finalize_and_close_calls_reported_success": true
+  },
+  "c_abi_results": [
+    {
+      "writers": 1,
+      "rows": 100,
+      "reopen_query": "success",
+      "reopened_row_count": 100
+    },
+    {
+      "writers": 2,
+      "rows": 200,
+      "reopen_query": "kernel error: invalid checksum"
+    },
+    {
+      "writers": 8,
+      "rows": 800,
+      "reopen_query": "kernel error: invalid magic: expected 0x5244574c, got 0x44574c4c"
+    },
+    {
+      "writers": 32,
+      "rows": 3200,
+      "reopen_query": "kernel error: invalid checksum"
+    }
+  ],
+  "rust_native_workload": {
+    "api": "redlinedb Rust crate v5.0.0",
+    "ownership": "one Database owner cloned into 32 writer threads; one connection per clone",
+    "writers": 32,
+    "rows_per_writer": 100,
+    "rows": 3200,
+    "durability": "default strict",
+    "seconds": 2.299103,
+    "writes_per_second": 1391.8,
+    "reopened_row_count": 3200,
+    "integrity_check": "ok",
+    "passed": true
+  },
+  "upstream_rust_test": {
+    "test": "many_connections_write_past_the_buffer_pool_and_reopen",
+    "command": "cargo test -p redlinedb --test pressure_checkpoints many_connections_write_past_the_buffer_pool_and_reopen --release --locked",
+    "result": "passed"
+  },
+  "decision": "keep_serialized_sqlite_for_current_python_coordinator; approve_native_rust_redline_shadow_pilot",
+  "scope_caveat": "The C ABI failure is specific to opening one native database handle per thread. The supported Rust pattern using clones of one Database owner passed both the upstream pressure test and the JopeDime-shaped workload.",
+  "recommended_role": "native Rust single-host control-plane shadow; never the global novelty authority; promote only after crash, recovery, migration, and long-soak gates"
+}

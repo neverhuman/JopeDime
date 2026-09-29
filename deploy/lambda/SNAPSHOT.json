@@ -1,9 +1,9 @@
 {
   "schema": "jopedime.lambda-snapshot.v1",
-  "what": "The frozen AWS Lambda work of 2026-09-28 and the regression workers frozen on 2026-09-29, imported into deploy/lambda/ from the ignored .agent/experiments/ staging tree. Every file of the five frozen bodies is listed with its sha256, its source anchor and its disposition. None of it is part of the jope binary, its Cargo workspace or its release build.",
+  "what": "The frozen AWS Lambda work of 2026-09-28, the regression workers frozen on 2026-09-29 and the second stage of the teacher campaign (from a verified custody snapshot of 2026-09-29), imported into deploy/lambda/ from the ignored .agent/experiments/ staging tree. Every file of the six frozen bodies is listed with its sha256, its source anchor and its disposition. None of it is part of the jope binary, its Cargo workspace or its release build.",
   "imported_utc": "2026-09-29",
   "verify": "jq -r '.files[] | select(.tree_path != null) | .tree_sha256 + \"  \" + .tree_path' deploy/lambda/SNAPSHOT.json | sha256sum -c --strict (from the repository root; the gzipped corpus is checked as tracked, and deploy/ci/lambda.sh checks the sha256 of its inflated bytes)",
-  "owner_decisions": "2026-09-29 ~00:15Z: all Lambda Rust goes into PR #124 and is built and tested by CI; the Lambda Python and other untracked orchestration is preserved byte-exact in custody with a tracked hash manifest (docs/archive/lambda-python-manifest.json), and a Rust port is a follow-up; v0.2.0 waits for the regression-Lambda v3 freeze, which is not part of this import. 2026-09-29 ~04:20Z (O1): PR #124 merges at its approved head, the frozen regression workers are imported by PR #125, and v0.2.0 is tagged from #125's merge commit, so the release contains every body.",
+  "owner_decisions": "2026-09-29 ~00:15Z: all Lambda Rust goes into PR #124 and is built and tested by CI; the Lambda Python and other untracked orchestration is preserved byte-exact in custody with a tracked hash manifest (docs/archive/lambda-python-manifest.json), and a Rust port is a follow-up; v0.2.0 waits for the regression-Lambda v3 freeze, which is not part of this import. 2026-09-29 ~04:20Z (O1): PR #124 merges at its approved head, the frozen regression workers are imported by PR #125, and v0.2.0 is tagged from #125's merge commit, so the release contains every body. 2026-09-29 about 08:20Z, the owner's ruling on the teacher campaign's second stage, verbatim except that the home-directory prefix is written ~/: \"There was work done in: ~/JopeDime/.agent/experiments/lambda-training/test-adaptive-gp-islands-v2/ that is mission critical, please make sure you don't delete it, ideally it should be rolled into a proper location in the main repo.\" This import (bodies.teacher-v2) copies it from a verified custody snapshot; the source directory itself is neither moved nor deleted.",
   "bodies": {
     "csv": {
       "source": ".agent/experiments/lambda-csv",
@@ -33,7 +33,7 @@
       "anchors": [
         "regression-freeze-proof"
       ],
-      "note": "The worker writes its per-call scratch under /tmp/jope-<attempt_id> (rust/src/main.rs): /tmp is the only writable path in the AWS Lambda runtime. It removes that directory only on success, after the archive upload; an error after the directory is created returns without removing it, and a warm retry with the same attempt_id then fails at create_dir until the execution environment is recycled. The frozen source is kept as it ran. That is the repository's one /tmp exception, and it holds only inside Lambda; the tests write nothing there."
+      "note": "The worker writes its per-call scratch under /tmp/jope-<attempt_id> (rust/src/main.rs): /tmp is the only writable path in the AWS Lambda runtime. It removes that directory only on success, after the archive upload; an error after the directory is created returns without removing it, and a warm retry with the same attempt_id then fails at create_dir until the execution environment is recycled. The frozen source is kept as it ran. It and the teacher campaign's Lambda worker (bodies.teacher-v2) are the repository's two /tmp exceptions, both frozen, and both hold only inside Lambda; the tests write nothing there."
     },
     "regression-ops": {
       "source": ".agent/experiments/regression-lambda-v3-ops",
@@ -43,6 +43,19 @@
       "anchors": [
         "regression-freeze-proof"
       ]
+    },
+    "teacher-v2": {
+      "source": ".agent/experiments/lambda-training/test-adaptive-gp-islands-v2",
+      "tree": "deploy/lambda/training/teacher-v2",
+      "workspace": "deploy/lambda/training/teacher-v2/rust/island-engine (package jope-island-engine: bin jope-island-engine) and deploy/lambda/training/teacher-v2/rust/lambda-worker (package jope-test-adaptive-teacher-lambda: bin bootstrap); rust/proposal-engine is the regression worker's source, its manifest tracked as Cargo.toml.v2 and not built",
+      "frozen": "No stopped-state handoff was posted (Codex's last ledger entry is its 2026-09-29T06:55:00Z claim of this work). From the custody snapshots: sources unchanged since 2026-09-29T07:31:56Z and build output since 07:33:36Z; the campaign's coordinator and engine processes had their cwd or exe in the directory at the 08:21Z and 10:44Z snapshots, and no process had its cwd or exe there at 12:44Z; the three snapshots' fresh hashes of the live source are equal (the 08:21Z one once its .env line is dropped). After Claude's notice of 12:46:26Z, the orchestrator's decision of 2026-09-29 imports it from the 12:44Z snapshot",
+      "imported_utc": "2026-09-29",
+      "anchors": [
+        "teacher-v2-custody-snapshot",
+        "teacher-v2-freeze",
+        "teacher-v2-source-manifest"
+      ],
+      "note": "The Lambda worker writes its per-call scratch under /tmp/jope-teacher-<attempt_id> (rust/lambda-worker/src/main.rs:137, create_dir) and removes it only on success (:152), the same exception as the regression worker's: it holds only inside Lambda, and the tests write nothing there. rust/island-engine is a host process that runs the proposal binary as a child. Official test labels intentionally influence selection, so the campaign's outputs are teacher-target evidence, not an unbiased benchmark (SCHEMA.md)."
     },
     "watch": {
       "source": ".agent/experiments/lambda-watch",
@@ -54,7 +67,12 @@
       ]
     }
   },
-  "not_imported": [],
+  "not_imported": [
+    {
+      "source": ".agent/experiments/test-adaptive-gp-v1",
+      "reason": "the teacher campaign's first stage and the parent of bodies.teacher-v2 (Codex's frozen v1 input, per its 2026-09-29T06:55:00Z ledger entry); it has no custody copy and is not part of this import; how it is preserved is open for Codex and the owner"
+    }
+  ],
   "anchors": {
     "csv-survey-manifest": {
       "kind": "sha256 file list of the frozen tree (read-only survey, 2026-09-28T23:54Z)",
@@ -104,6 +122,59 @@
       "s3_prefix": "s3://veox-jopedime-learning-use2/experiments/regression-evolution/v1/campaigns/regression-20260928-v3/",
       "commit_sha256": "69643bbf38d9b3becf14df8e52ad100f57651c22a6897ac331f817c2ae1657a3",
       "commit_version": "u6VROvAgGDHlJE220X6Nl._UutWYKA_o"
+    },
+    "teacher-v2-custody-snapshot": {
+      "kind": "read-only custody snapshot of the source directory (2026-09-29T12:44:31Z), verified locally and on its archive mirror by the import's step 20 (6,299 of 6,299 OK on each); not a freeze proof by itself",
+      "path": "~/jope-evidence/islands-v2-custody/20260929T124431Z/",
+      "mirror": "/mnt/jope-archive/jopedime-islands-v2-custody/20260929T124431Z/",
+      "files": 6299,
+      "bytes": 846984567,
+      "tree_list_sha256": "28826359ce252b36fea86bfa7570746e695577d81c0d0e96951cb40976ba3bad",
+      "receipt_sha256": "63d5ce3b508fff44ba4e8cd577223776b759397656e42fd219841155b1fd70d5",
+      "sha256sums_sha256": "a8e257c33fe7f7c7bed8fe6acc3bfa34362f23e6d4d1f00abef6e3018eced926",
+      "secrets_existence_sha256": "bf04795ad27035827b031d53f288bc9a4473e78de2ebaadbaabdb6f11c4d7b10",
+      "binaries": {
+        "island_engine": {
+          "path": "target/release/jope-island-engine",
+          "sha256": "77a5c2bd2256fa21fc04a77a8109f7ebdfa17f0daa17b9a6ff63770fcb193b6c"
+        },
+        "proposal_engine": {
+          "path": "target/release/regression-bootstrap",
+          "sha256": "d8bdbe7de1fcee4664a0fe9b2c18cee9963e775de775b06d3745f9d772531c5d"
+        },
+        "lambda_worker_aarch64": {
+          "path": "target/aarch64-unknown-linux-musl/release/bootstrap",
+          "sha256": "07277e8e01af9578f927184467cbaa2339c00dbaf08b8e4de736d8e09b95cd88"
+        }
+      },
+      "binaries_note": "the three binaries in the snapshot's target/, also copied into the import's frozen copy; that the campaign ran exactly these, and that the aarch64 bootstrap is its deployed worker, is unconfirmed until Codex publishes the run's source manifest (anchor teacher-v2-source-manifest)",
+      "earlier_snapshots": [
+        "~/jope-evidence/islands-v2-custody/20260929T082139Z/",
+        "~/jope-evidence/islands-v2-custody/20260929T104434Z/"
+      ]
+    },
+    "teacher-v2-freeze": {
+      "kind": "fallback freeze evidence, since no stopped-state handoff was posted: the import's step 20 re-verified the snapshot locally and on its archive mirror; the three snapshots' fresh hashes of the live source are equal (source-after.sha256 28826359…, the 08:21Z one without its .env line) and their six listings are byte-identical (5b47ea32…); newest source mtime 07:31:56Z, newest build output 07:33:36Z; no process with cwd/exe in the directory at 12:44Z",
+      "path": "~/jope-evidence/teacher-v2-import/20-freeze/FREEZE-CHECK.json",
+      "sha256": "f687799f116cca19fb9d395a8b6d42373c73ba399ac43d13def6ee678246634c",
+      "files": 24,
+      "frozen_list_sha256": "4545675bde4c49d6180f2073ff4e8e91da2b77d8fbe0a4beabee7ec66f08950c",
+      "frozen_list": "sha256sum list of the 24 source files: every file except target/, __pycache__/ and the private .env (~/jope-evidence/teacher-v2-import/21-frozen/frozen-sha256.txt)",
+      "custody_copy": "~/jope-evidence/teacher-v2-import/21-frozen/tree/, mirrored at /mnt/jope-archive/jopedime-teacher-v2-import/21-frozen/; the only source of this import",
+      "handoff": "none: Codex's last ledger entry is its 2026-09-29T06:55:00Z claim of this work. Claude's notice of 12:46:26Z announced this import from the 12:44Z custody copy unless Codex objects or posts a newer frozen state, and the orchestrator's decision of 2026-09-29 made it from that snapshot; a newer frozen state posted before the pull request opens means a new snapshot and a regenerated import"
+    },
+    "teacher-v2-source-manifest": {
+      "kind": "the campaign's own source manifest (jope.island-source-manifest/v1, transport/evolve.py _source_manifest), which Codex has not published; recomputed from the custody copy for information only",
+      "status": "unconfirmed",
+      "evaluation_context_sha256": "a8b2aaaf59a8b893915975c0a98601717f809086b94b80949ded366fa2e6e412",
+      "s3_object": "s3://veox-jopedime-learning-use2/experiments/test-adaptive-teacher/v1/objects/island-source-manifests/sha256/<sha256 of the published body>.json; its VersionId is to come from Codex's handoff",
+      "recomputed": {
+        "assumption": "lambda_worker_sha256 is the aarch64 bootstrap of the snapshot's target/ (the run takes it from its parent deployment.json, which is not read here)",
+        "source_manifest_sha256": "6044521efc6bbbfac9a6582e01a5f8f313bf71760a9ed6f04a6335ab8d2279c6",
+        "published_body_sha256": "c867e95a7c8df006cf7f605fae2a60d34990fde25900e003da8858875d277b6e",
+        "files": 24
+      },
+      "note": "the run records source_manifest_sha256 over the four keys schema, evaluation_context_sha256, files and binaries, and publishes the body with that fifth key added; record both values and the VersionId from Codex's handoff, and they confirm this body's files and binaries only if they equal the recomputed ones"
     }
   },
   "custody": {
@@ -114,7 +185,8 @@
       "lambda-python-watch.tar": "8a72817e09b9b35530049a37cb7314d3028919edea37fc723b11c43e3272845b",
       "lambda-python-planning.tar": "77d939ae3de94960bfeaf1f789c0d4379636a9be9465e43ba3efd32e8987d776",
       "lambda-python-regression.tar": "bfebbd639cbe4a60b42195976a79903a76e5f5b392f115cbcf2c3ff771723e27",
-      "lambda-python-regression-ops.tar": "dbed86146df6a7ca5b9785564ec32a7c5c6625c2bc31589a4d3391f7e0f600b1"
+      "lambda-python-regression-ops.tar": "dbed86146df6a7ca5b9785564ec32a7c5c6625c2bc31589a4d3391f7e0f600b1",
+      "lambda-python-teacher-v2.tar": "c353271ead9227bb3aaf40567faf3924ac282e1a2e26f802474b04877f39c128"
     },
     "sha256sums_sha256": "6cb7def8390edb0c31d7bf77d1b1d92692fc83402a9d6f5f6b6e23033418ab58",
     "manifest": "docs/archive/lambda-python-manifest.json",
@@ -122,10 +194,15 @@
       "file": "SHA256SUMS-regression",
       "sha256": "9e90c7406e02d6b60538b3f2d7e0ea3985c766df462542a5d543d06ab825d819",
       "note": "lists the two regression tarballs and FILES-regression.sha256; the earlier SHA256SUMS is unchanged"
+    },
+    "teacher_v2_sha256sums": {
+      "file": "SHA256SUMS-teacher-v2",
+      "sha256": "d69bc3effef557f0f0b9526db115054c6a50bc43078687b1958b177204c1d2e8",
+      "note": "lists lambda-python-teacher-v2.tar and FILES-teacher-v2.sha256; it does not list itself. The earlier SHA256SUMS and SHA256SUMS-regression are unchanged"
     }
   },
   "counts": {
-    "files": 148,
+    "files": 172,
     "by_body": {
       "csv": {
         "custody": 25,
@@ -145,19 +222,24 @@
         "custody": 16,
         "tracked": 6
       },
+      "teacher-v2": {
+        "custody": 10,
+        "tracked": 13,
+        "tracked-renamed": 1
+      },
       "watch": {
         "custody": 6,
         "tracked": 11
       }
     },
     "by_disposition": {
-      "custody": 73,
+      "custody": 83,
       "excluded-duplicate": 2,
-      "tracked": 71,
+      "tracked": 84,
       "tracked-gzipped": 1,
-      "tracked-renamed": 1
+      "tracked-renamed": 2
     },
-    "excluded": 52
+    "excluded": 66
   },
   "files": [
     {
@@ -2308,6 +2390,419 @@
       "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
     },
     {
+      "body": "teacher-v2",
+      "path": ".gitignore",
+      "source": ".agent/experiments/lambda-training/test-adaptive-gp-islands-v2/.gitignore",
+      "sha256": "f52f55f2a092d761fb023e7fe9e783b4eff73ad129bfb235bd365d306d0c2981",
+      "bytes": 42,
+      "mode": "100644",
+      "anchors": [
+        "teacher-v2-custody-snapshot",
+        "teacher-v2-freeze"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/training/teacher-v2/.gitignore",
+      "tree_sha256": "f52f55f2a092d761fb023e7fe9e783b4eff73ad129bfb235bd365d306d0c2981",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "teacher-v2",
+      "path": "README.md",
+      "source": ".agent/experiments/lambda-training/test-adaptive-gp-islands-v2/README.md",
+      "sha256": "6ca1d06fada7835b400fd64106cd9b0cf735db61918021c992304bcc8ab365b7",
+      "bytes": 1033,
+      "mode": "100644",
+      "anchors": [
+        "teacher-v2-custody-snapshot",
+        "teacher-v2-freeze"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/training/teacher-v2/README.md",
+      "tree_sha256": "842115d99b94527eca550fbf0eee57a7c68efa0d03e480597ef9cbcda4edeb34",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim",
+      "tree_change": "writes the xbabe2 home-directory prefix of 3 absolute paths as ~/ (the same host paths, home-relative); nothing else changes"
+    },
+    {
+      "body": "teacher-v2",
+      "path": "SCHEMA.md",
+      "source": ".agent/experiments/lambda-training/test-adaptive-gp-islands-v2/SCHEMA.md",
+      "sha256": "92d46f2b9436cadce6859de43a3e3cfde0a48feec69440508abf26169ebb6e0f",
+      "bytes": 5698,
+      "mode": "100644",
+      "anchors": [
+        "teacher-v2-custody-snapshot",
+        "teacher-v2-freeze"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/training/teacher-v2/SCHEMA.md",
+      "tree_sha256": "92d46f2b9436cadce6859de43a3e3cfde0a48feec69440508abf26169ebb6e0f",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "teacher-v2",
+      "path": "analysis/build_report.py",
+      "source": ".agent/experiments/lambda-training/test-adaptive-gp-islands-v2/analysis/build_report.py",
+      "sha256": "33557242ef2c098c49ae37bce3dfef6fc87f1d21c9c7a48ad57907985503afe2",
+      "bytes": 25453,
+      "mode": "100644",
+      "anchors": [
+        "teacher-v2-custody-snapshot",
+        "teacher-v2-freeze"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-teacher-v2.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "teacher-v2",
+      "path": "analysis/materialize_control_semantics.py",
+      "source": ".agent/experiments/lambda-training/test-adaptive-gp-islands-v2/analysis/materialize_control_semantics.py",
+      "sha256": "d1c34aad616a072b2356e32cb4833ec5f883629ce7be43a6ed844247101c01cf",
+      "bytes": 10583,
+      "mode": "100644",
+      "anchors": [
+        "teacher-v2-custody-snapshot",
+        "teacher-v2-freeze"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-teacher-v2.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "teacher-v2",
+      "path": "analysis/redline-concurrent-pilot.c",
+      "source": ".agent/experiments/lambda-training/test-adaptive-gp-islands-v2/analysis/redline-concurrent-pilot.c",
+      "sha256": "dd313d094254669f4638114cdfe02aeaa098fcd321e59bb5fcb5cf669f6ebe13",
+      "bytes": 2234,
+      "mode": "100644",
+      "anchors": [
+        "teacher-v2-custody-snapshot",
+        "teacher-v2-freeze"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-teacher-v2.tar",
+      "reason": "C source of a RedlineDB C-ABI pilot (its header redlinedb.h is not in the tree, so it cannot be built here); outside the repository's Rust, bash and jq stack, so preserved byte-exact in custody with the Python (docs/archive/lambda-python-manifest.json); its result record analysis/redline-pilot.json is tracked"
+    },
+    {
+      "body": "teacher-v2",
+      "path": "analysis/redline-pilot.json",
+      "source": ".agent/experiments/lambda-training/test-adaptive-gp-islands-v2/analysis/redline-pilot.json",
+      "sha256": "58114f6ac7826eb1af64d60d47390840d5130769e68e0c21d970c9795fc73246",
+      "bytes": 2488,
+      "mode": "100644",
+      "anchors": [
+        "teacher-v2-custody-snapshot",
+        "teacher-v2-freeze"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/training/teacher-v2/analysis/redline-pilot.json",
+      "tree_sha256": "58114f6ac7826eb1af64d60d47390840d5130769e68e0c21d970c9795fc73246",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "teacher-v2",
+      "path": "analysis/test_engine_protocol.py",
+      "source": ".agent/experiments/lambda-training/test-adaptive-gp-islands-v2/analysis/test_engine_protocol.py",
+      "sha256": "d348463876afaf3948f8627f85533176d69762bba18ef249b38e1c5ff09d9ed5",
+      "bytes": 3879,
+      "mode": "100644",
+      "anchors": [
+        "teacher-v2-custody-snapshot",
+        "teacher-v2-freeze"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-teacher-v2.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "teacher-v2",
+      "path": "analysis/test_score_parity.py",
+      "source": ".agent/experiments/lambda-training/test-adaptive-gp-islands-v2/analysis/test_score_parity.py",
+      "sha256": "33b6012e5538fcd4db500b3676def3261242527080675b9acac531d82b99f333",
+      "bytes": 4337,
+      "mode": "100644",
+      "anchors": [
+        "teacher-v2-custody-snapshot",
+        "teacher-v2-freeze"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-teacher-v2.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "teacher-v2",
+      "path": "rust/island-engine/Cargo.lock",
+      "source": ".agent/experiments/lambda-training/test-adaptive-gp-islands-v2/rust/island-engine/Cargo.lock",
+      "sha256": "0d45d3e5078a1aee2daa7b1a7a2a1f887c8f3b043c77f95d721196f385a5378f",
+      "bytes": 10159,
+      "mode": "100644",
+      "anchors": [
+        "teacher-v2-custody-snapshot",
+        "teacher-v2-freeze"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/training/teacher-v2/rust/island-engine/Cargo.lock",
+      "tree_sha256": "0d45d3e5078a1aee2daa7b1a7a2a1f887c8f3b043c77f95d721196f385a5378f",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "teacher-v2",
+      "path": "rust/island-engine/Cargo.toml",
+      "source": ".agent/experiments/lambda-training/test-adaptive-gp-islands-v2/rust/island-engine/Cargo.toml",
+      "sha256": "1b7f12dad9ebaa81d379c7a2ed0a45fefb1c89dc1928294754d59cb87b98a10b",
+      "bytes": 405,
+      "mode": "100644",
+      "anchors": [
+        "teacher-v2-custody-snapshot",
+        "teacher-v2-freeze"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/training/teacher-v2/rust/island-engine/Cargo.toml",
+      "tree_sha256": "a48005e9a198b0d606a639c0446c4011aead24412d2eda76049e037320a345a7",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim",
+      "tree_change": "adds license = \"Apache-2.0\" and publish = false to [package] (cargo-deny licence policy; publish = false as in every other Lambda manifest); nothing else changes"
+    },
+    {
+      "body": "teacher-v2",
+      "path": "rust/island-engine/src/main.rs",
+      "source": ".agent/experiments/lambda-training/test-adaptive-gp-islands-v2/rust/island-engine/src/main.rs",
+      "sha256": "b0cd1711f64301ca182d45cf5e9b2345c4c84f9e6d5b5cd87ae5cf5b2e8dd887",
+      "bytes": 55520,
+      "mode": "100644",
+      "anchors": [
+        "teacher-v2-custody-snapshot",
+        "teacher-v2-freeze"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/training/teacher-v2/rust/island-engine/src/main.rs",
+      "tree_sha256": "b0cd1711f64301ca182d45cf5e9b2345c4c84f9e6d5b5cd87ae5cf5b2e8dd887",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "teacher-v2",
+      "path": "rust/lambda-worker/Cargo.lock",
+      "source": ".agent/experiments/lambda-training/test-adaptive-gp-islands-v2/rust/lambda-worker/Cargo.lock",
+      "sha256": "cb69bf895a091485c74eb8b7ed9c3a93550558111abb06e7416613b83f25aec6",
+      "bytes": 28662,
+      "mode": "100644",
+      "anchors": [
+        "teacher-v2-custody-snapshot",
+        "teacher-v2-freeze"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/training/teacher-v2/rust/lambda-worker/Cargo.lock",
+      "tree_sha256": "cb69bf895a091485c74eb8b7ed9c3a93550558111abb06e7416613b83f25aec6",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "teacher-v2",
+      "path": "rust/lambda-worker/Cargo.toml",
+      "source": ".agent/experiments/lambda-training/test-adaptive-gp-islands-v2/rust/lambda-worker/Cargo.toml",
+      "sha256": "80ca64ac74fe8f485470b3aeb2b84e3e5ae5063d0f19a0129ac19397127f4998",
+      "bytes": 631,
+      "mode": "100644",
+      "anchors": [
+        "teacher-v2-custody-snapshot",
+        "teacher-v2-freeze"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/training/teacher-v2/rust/lambda-worker/Cargo.toml",
+      "tree_sha256": "200a91efabb6042fea63989a7546fd9fa33310d4221f77a95e617995865cb77a",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim",
+      "tree_change": "adds license = \"Apache-2.0\" to [package] (cargo-deny licence policy); nothing else changes"
+    },
+    {
+      "body": "teacher-v2",
+      "path": "rust/lambda-worker/src/main.rs",
+      "source": ".agent/experiments/lambda-training/test-adaptive-gp-islands-v2/rust/lambda-worker/src/main.rs",
+      "sha256": "ce220319cd1ce069cce60fffe0f65ef223fd52e54c69a37d49d00d85b7d3c808",
+      "bytes": 12551,
+      "mode": "100644",
+      "anchors": [
+        "teacher-v2-custody-snapshot",
+        "teacher-v2-freeze"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/training/teacher-v2/rust/lambda-worker/src/main.rs",
+      "tree_sha256": "ce220319cd1ce069cce60fffe0f65ef223fd52e54c69a37d49d00d85b7d3c808",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "teacher-v2",
+      "path": "rust/lambda-worker/zig-arm-link.sh",
+      "source": ".agent/experiments/lambda-training/test-adaptive-gp-islands-v2/rust/lambda-worker/zig-arm-link.sh",
+      "sha256": "9e8b556907b300c76a0a9475542713e1d688ca22f180c852182d0eb67ce76b84",
+      "bytes": 569,
+      "mode": "100755",
+      "anchors": [
+        "teacher-v2-custody-snapshot",
+        "teacher-v2-freeze"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/training/teacher-v2/rust/lambda-worker/zig-arm-link.sh",
+      "tree_sha256": "9e8b556907b300c76a0a9475542713e1d688ca22f180c852182d0eb67ce76b84",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "teacher-v2",
+      "path": "rust/proposal-engine/Cargo.lock",
+      "source": ".agent/experiments/lambda-training/test-adaptive-gp-islands-v2/rust/proposal-engine/Cargo.lock",
+      "sha256": "49febdcbe13d0e298703f9378bdfbb768b24504680275b305beab5f5f81b8ad5",
+      "bytes": 28651,
+      "mode": "100644",
+      "anchors": [
+        "teacher-v2-custody-snapshot",
+        "teacher-v2-freeze"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/training/teacher-v2/rust/proposal-engine/Cargo.lock",
+      "tree_sha256": "49febdcbe13d0e298703f9378bdfbb768b24504680275b305beab5f5f81b8ad5",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim",
+      "note": "byte-identical to the frozen bytes of deploy/lambda/regression/rust/Cargo.lock (that record's sha256); not a workspace lock here (its manifest is renamed), so sync-locks leaves its feat-math 0.1.0 entry as frozen, like csv/versions/rust-single-v2/rust/Cargo.lock"
+    },
+    {
+      "body": "teacher-v2",
+      "path": "rust/proposal-engine/Cargo.toml",
+      "source": ".agent/experiments/lambda-training/test-adaptive-gp-islands-v2/rust/proposal-engine/Cargo.toml",
+      "sha256": "5986b2932034ee8b000e8365d014c0dd0e6ef35918077f79a02ee18523109c12",
+      "bytes": 631,
+      "mode": "100644",
+      "anchors": [
+        "teacher-v2-custody-snapshot",
+        "teacher-v2-freeze"
+      ],
+      "disposition": "tracked-renamed",
+      "tree_path": "deploy/lambda/training/teacher-v2/rust/proposal-engine/Cargo.toml.v2",
+      "tree_sha256": "5986b2932034ee8b000e8365d014c0dd0e6ef35918077f79a02ee18523109c12",
+      "custody_tarball": null,
+      "reason": "declares package jope-regression-lambda, which deploy/lambda/regression/rust/Cargo.toml also declares; repo-layout's dup-package rule has no allowlist. It is the regression worker's frozen manifest with the feat-math path six levels deep for this body. The proposal binary in the snapshot's target/ (regression-bootstrap, sha256 d8bdbe7d…, anchor teacher-v2-custody-snapshot) is this package's bin; that the campaign ran that binary is unconfirmed until Codex publishes the run's source manifest (anchor teacher-v2-source-manifest). Not built here; rename it back to Cargo.toml (and run lambda-workspaces.sh sync-locks) to build it"
+    },
+    {
+      "body": "teacher-v2",
+      "path": "rust/proposal-engine/src/main.rs",
+      "source": ".agent/experiments/lambda-training/test-adaptive-gp-islands-v2/rust/proposal-engine/src/main.rs",
+      "sha256": "ac6ec57d7eaa185ec2cd4707799bcbc2cf5df7fdaae5df64c9273fa5e4d93828",
+      "bytes": 17984,
+      "mode": "100644",
+      "anchors": [
+        "teacher-v2-custody-snapshot",
+        "teacher-v2-freeze"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/training/teacher-v2/rust/proposal-engine/src/main.rs",
+      "tree_sha256": "ac6ec57d7eaa185ec2cd4707799bcbc2cf5df7fdaae5df64c9273fa5e4d93828",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim",
+      "note": "byte-identical to deploy/lambda/regression/rust/src/main.rs (the same frozen sha256); the proposal binary in the snapshot's target/ (regression-bootstrap) is built from this source, and that the campaign ran it is unconfirmed until Codex publishes the run's source manifest"
+    },
+    {
+      "body": "teacher-v2",
+      "path": "transport/.env.example",
+      "source": ".agent/experiments/lambda-training/test-adaptive-gp-islands-v2/transport/.env.example",
+      "sha256": "c65c017324d195aafd0686062d4892e29d11614c0471de1ea33b3a5ee2217040",
+      "bytes": 511,
+      "mode": "100644",
+      "anchors": [
+        "teacher-v2-custody-snapshot",
+        "teacher-v2-freeze"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-teacher-v2.tar",
+      "reason": "environment template read only by transport/common.py, which is in custody; it holds a placeholder AWS profile name, the campaign ID and host paths only and differs from the private .env (different sha256); kept in custody with the Python it serves, as the planning body's template was"
+    },
+    {
+      "body": "teacher-v2",
+      "path": "transport/common.py",
+      "source": ".agent/experiments/lambda-training/test-adaptive-gp-islands-v2/transport/common.py",
+      "sha256": "7aafbff0773009b0a844609a338c4ee4af5c5252b6e3fa21abc9e39600284caf",
+      "bytes": 8869,
+      "mode": "100644",
+      "anchors": [
+        "teacher-v2-custody-snapshot",
+        "teacher-v2-freeze"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-teacher-v2.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "teacher-v2",
+      "path": "transport/deploy.py",
+      "source": ".agent/experiments/lambda-training/test-adaptive-gp-islands-v2/transport/deploy.py",
+      "sha256": "691c46bc030dea1259d63d092dfdbbb8e780bde115036e1d86e51992188c9f0b",
+      "bytes": 3671,
+      "mode": "100644",
+      "anchors": [
+        "teacher-v2-custody-snapshot",
+        "teacher-v2-freeze"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-teacher-v2.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "teacher-v2",
+      "path": "transport/evolve.py",
+      "source": ".agent/experiments/lambda-training/test-adaptive-gp-islands-v2/transport/evolve.py",
+      "sha256": "d066d2d0e92a4a0ebc12cfdb0ce0401d4ab44ce9b787bc276718702039407153",
+      "bytes": 37607,
+      "mode": "100644",
+      "anchors": [
+        "teacher-v2-custody-snapshot",
+        "teacher-v2-freeze"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-teacher-v2.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "teacher-v2",
+      "path": "transport/prepare.py",
+      "source": ".agent/experiments/lambda-training/test-adaptive-gp-islands-v2/transport/prepare.py",
+      "sha256": "e94d13d41cb3d2d469f5811c30ff5bc50bb3f20e6134d0d07bb26f345db1b170",
+      "bytes": 5964,
+      "mode": "100644",
+      "anchors": [
+        "teacher-v2-custody-snapshot",
+        "teacher-v2-freeze"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-teacher-v2.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
       "body": "watch",
       "path": ".env.example",
       "source": ".agent/experiments/lambda-watch/.env.example",
@@ -2997,6 +3492,129 @@
       "sha256": "248a74ba6aed293304a620cabd436fdc5a9037c3c76cfe0e7ef9d45858fdb9cb",
       "bytes": 100,
       "reason": "private environment file (mode 0600). Existence, size and the sha256 that the freeze proof recorded only: never read, copied or tracked. Root .gitignore (*.env) and gitleaks rule jope-env-files keep such files out of the tree; the bytes stay in the frozen custody copy"
+    },
+    {
+      "body": "teacher-v2",
+      "path": "analysis/__pycache__",
+      "source": ".agent/experiments/lambda-training/test-adaptive-gp-islands-v2/analysis/__pycache__",
+      "kind": "directory",
+      "disposition": "excluded",
+      "reason": "Python bytecode cache (rebuildable), not preserved"
+    },
+    {
+      "body": "teacher-v2",
+      "path": "analysis/__pycache__/build_report.cpython-312.pyc",
+      "source": ".agent/experiments/lambda-training/test-adaptive-gp-islands-v2/analysis/__pycache__/build_report.cpython-312.pyc",
+      "kind": "file",
+      "disposition": "excluded",
+      "reason": "Python bytecode cache (rebuildable), not preserved",
+      "bytes": 36784
+    },
+    {
+      "body": "teacher-v2",
+      "path": "analysis/__pycache__/materialize_control_semantics.cpython-312.pyc",
+      "source": ".agent/experiments/lambda-training/test-adaptive-gp-islands-v2/analysis/__pycache__/materialize_control_semantics.cpython-312.pyc",
+      "kind": "file",
+      "disposition": "excluded",
+      "reason": "Python bytecode cache (rebuildable), not preserved",
+      "bytes": 17914
+    },
+    {
+      "body": "teacher-v2",
+      "path": "analysis/__pycache__/test_engine_protocol.cpython-312.pyc",
+      "source": ".agent/experiments/lambda-training/test-adaptive-gp-islands-v2/analysis/__pycache__/test_engine_protocol.cpython-312.pyc",
+      "kind": "file",
+      "disposition": "excluded",
+      "reason": "Python bytecode cache (rebuildable), not preserved",
+      "bytes": 6741
+    },
+    {
+      "body": "teacher-v2",
+      "path": "analysis/__pycache__/test_score_parity.cpython-312.pyc",
+      "source": ".agent/experiments/lambda-training/test-adaptive-gp-islands-v2/analysis/__pycache__/test_score_parity.cpython-312.pyc",
+      "kind": "file",
+      "disposition": "excluded",
+      "reason": "Python bytecode cache (rebuildable), not preserved",
+      "bytes": 7035
+    },
+    {
+      "body": "teacher-v2",
+      "path": "docs",
+      "source": ".agent/experiments/lambda-training/test-adaptive-gp-islands-v2/docs",
+      "kind": "directory",
+      "disposition": "excluded",
+      "reason": "empty directory in the snapshot; git tracks no empty directory"
+    },
+    {
+      "body": "teacher-v2",
+      "path": "schemas",
+      "source": ".agent/experiments/lambda-training/test-adaptive-gp-islands-v2/schemas",
+      "kind": "directory",
+      "disposition": "excluded",
+      "reason": "empty directory in the snapshot; git tracks no empty directory"
+    },
+    {
+      "body": "teacher-v2",
+      "path": "target",
+      "source": ".agent/experiments/lambda-training/test-adaptive-gp-islands-v2/target",
+      "kind": "directory",
+      "disposition": "excluded",
+      "bytes": 846567420,
+      "reason": "Cargo and zig build output (rebuildable; 6267 files), not tracked. The three identity binaries (anchor teacher-v2-custody-snapshot) stay byte-exact in the custody snapshot and its archive mirror, and in the import's frozen copy"
+    },
+    {
+      "body": "teacher-v2",
+      "path": "transport/.env",
+      "source": ".agent/experiments/lambda-training/test-adaptive-gp-islands-v2/transport/.env",
+      "kind": "file",
+      "disposition": "excluded",
+      "sha256": "ff3f7707eedb3a0b52e33cf464cb3fa11cb7221e0f4b909390c161b352a1319f",
+      "bytes": 501,
+      "reason": "private environment file (SCHEMA.md: mode 0600, a local AWS profile name and pinned paths). Existence, size (the snapshot listing) and the sha256 the custody snapshots recorded (secrets-existence.sha256) only: copied by the 08:21Z snapshot and removed unread from both copies at 08:23:42Z; contents never inspected; never tarred or tracked; excluded from later snapshots. Root .gitignore (*.env) and gitleaks rule jope-env-files keep such files out of the tree"
+    },
+    {
+      "body": "teacher-v2",
+      "path": "transport/__pycache__",
+      "source": ".agent/experiments/lambda-training/test-adaptive-gp-islands-v2/transport/__pycache__",
+      "kind": "directory",
+      "disposition": "excluded",
+      "reason": "Python bytecode cache (rebuildable), not preserved"
+    },
+    {
+      "body": "teacher-v2",
+      "path": "transport/__pycache__/common.cpython-312.pyc",
+      "source": ".agent/experiments/lambda-training/test-adaptive-gp-islands-v2/transport/__pycache__/common.cpython-312.pyc",
+      "kind": "file",
+      "disposition": "excluded",
+      "reason": "Python bytecode cache (rebuildable), not preserved",
+      "bytes": 15126
+    },
+    {
+      "body": "teacher-v2",
+      "path": "transport/__pycache__/deploy.cpython-312.pyc",
+      "source": ".agent/experiments/lambda-training/test-adaptive-gp-islands-v2/transport/__pycache__/deploy.cpython-312.pyc",
+      "kind": "file",
+      "disposition": "excluded",
+      "reason": "Python bytecode cache (rebuildable), not preserved",
+      "bytes": 6799
+    },
+    {
+      "body": "teacher-v2",
+      "path": "transport/__pycache__/evolve.cpython-312.pyc",
+      "source": ".agent/experiments/lambda-training/test-adaptive-gp-islands-v2/transport/__pycache__/evolve.cpython-312.pyc",
+      "kind": "file",
+      "disposition": "excluded",
+      "reason": "Python bytecode cache (rebuildable), not preserved",
+      "bytes": 47120
+    },
+    {
+      "body": "teacher-v2",
+      "path": "transport/__pycache__/prepare.cpython-312.pyc",
+      "source": ".agent/experiments/lambda-training/test-adaptive-gp-islands-v2/transport/__pycache__/prepare.cpython-312.pyc",
+      "kind": "file",
+      "disposition": "excluded",
+      "reason": "Python bytecode cache (rebuildable), not preserved",
+      "bytes": 11496
     },
     {
       "body": "watch",

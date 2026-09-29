@@ -1,0 +1,174 @@
+use feat_math::{GenomeIr, Model, Rows};
+use flate2::{read::GzDecoder, write::GzEncoder, Compression};
+use lambda_runtime::{service_fn, Error, LambdaEvent};
+use serde::{Deserialize, Serialize};
+use serde_json::{json, Value};
+use sha2::{Digest, Sha256};
+use std::fs::{self, File};
+use std::io::{Read, Write};
+use std::path::{Path, PathBuf};
+use std::process::{Command, Stdio};
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
+
+const BASE: &str = "https://veox-jopedime-learning-use2.s3.us-east-2.amazonaws.com/experiments/test-adaptive-teacher/v1/";
+
+fn hash(b: &[u8]) -> String { format!("{:x}", Sha256::digest(b)) }
+fn now_us() -> u64 { SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_micros() as u64 }
+fn is_hash(s: &str) -> bool { s.len()==64 && s.bytes().all(|c| c.is_ascii_hexdigit() && !c.is_ascii_uppercase()) }
+fn memory() -> Value {
+    let lines: Vec<String> = fs::read_to_string("/proc/self/status").unwrap_or_default().lines()
+        .filter(|l| l.starts_with("VmPeak:") || l.starts_with("VmHWM:") || l.starts_with("VmRSS:") || l.starts_with("VmSwap:"))
+        .map(str::to_string).collect();
+    json!(lines)
+}
+
+struct Data { train_x: Rows, train_y: Vec<f64>, test_x: Rows, test_y: Vec<f64>, folds: Vec<u8>, k: usize }
+
+// JTT1: magic, n_train u32, n_test u32, p u32, k u8, n_train fold bytes,
+// then row-major f64 [X..., y] for training followed by official test.
+fn parse_data(raw: &[u8]) -> Result<Data, Error> {
+    if raw.len() < 17 || &raw[..4] != b"JTT1" { return Err("invalid JTT1 header".into()); }
+    let nt = u32::from_le_bytes(raw[4..8].try_into()?) as usize;
+    let nq = u32::from_le_bytes(raw[8..12].try_into()?) as usize;
+    let p = u32::from_le_bytes(raw[12..16].try_into()?) as usize;
+    let k = raw[16] as usize;
+    if nt < 50 || nq < 10 || p == 0 || p > 512 || !(3..=16).contains(&k) || (nt+nq).saturating_mul(p) > 16_000_000 {
+        return Err("JTT1 shape outside bounds".into());
+    }
+    let expected = 17usize.checked_add(nt).and_then(|x| x.checked_add((nt+nq).checked_mul((p+1)*8)?)).ok_or("shape overflow")?;
+    if raw.len() != expected { return Err("JTT1 byte count mismatch".into()); }
+    let folds = raw[17..17+nt].to_vec();
+    if folds.iter().any(|f| *f as usize >= k) { return Err("invalid inner fold".into()); }
+    for fold in 0..k {
+        if folds.iter().filter(|f| **f as usize == fold).count() < 2 { return Err("inner fold too small".into()); }
+    }
+    let mut pos=17+nt; let mut rows=Vec::with_capacity(nt+nq); let mut ys=Vec::with_capacity(nt+nq);
+    for _ in 0..nt+nq {
+        let mut row=Vec::with_capacity(p);
+        for j in 0..=p {
+            let v=f64::from_le_bytes(raw[pos..pos+8].try_into()?); pos+=8;
+            if !v.is_finite() { return Err("nonfinite JTT1 value".into()); }
+            if j<p { row.push(v); } else { ys.push(v); }
+        }
+        rows.push(row);
+    }
+    Ok(Data{train_x:rows[..nt].to_vec(),train_y:ys[..nt].to_vec(),test_x:rows[nt..].to_vec(),test_y:ys[nt..].to_vec(),folds,k})
+}
+
+fn metrics(y:&[f64],p:&[f64])->Result<Value,Error>{
+    if y.is_empty() || y.len()!=p.len() || p.iter().any(|v|!v.is_finite()) { return Err("invalid prediction".into()); }
+    let n=y.len() as f64; let mean=y.iter().sum::<f64>()/n;
+    let sse=y.iter().zip(p).map(|(a,b)|(a-b).powi(2)).sum::<f64>();
+    let tss=y.iter().map(|a|(a-mean).powi(2)).sum::<f64>();
+    let mae=y.iter().zip(p).map(|(a,b)|(a-b).abs()).sum::<f64>()/n;
+    let max_abs=y.iter().zip(p).map(|(a,b)|(a-b).abs()).fold(0.0,f64::max);
+    if !sse.is_finite() || !tss.is_finite() { return Err("metric overflow".into()); }
+    Ok(json!({"rmse":(sse/n).sqrt(),"mae":mae,"r2":if tss>0.0{Some(1.0-sse/tss)}else{None},"max_abs_error":max_abs,"sse":sse,"n":y.len()}))
+}
+
+#[derive(Clone,Debug,Deserialize,Serialize)]
+#[serde(deny_unknown_fields)]
+struct Candidate { dsl:String, program_sha256:String, birth_seq:u64, parents:Vec<String>, operator:String }
+
+fn genome(c:&Candidate)->Result<GenomeIr,Error>{
+    if c.dsl.len()>32768 || !is_hash(&c.program_sha256) || hash(c.dsl.as_bytes())!=c.program_sha256 { return Err("program identity mismatch".into()); }
+    let g=GenomeIr::parse(&c.dsl)?;
+    if g.canonical()!=c.dsl { return Err("noncanonical program".into()); }
+    if let GenomeIr::Pipeline(p)=&g { if p.stages.len()>9 { return Err("pipeline exceeds eight transforms".into()); } }
+    Ok(g)
+}
+
+fn one_fit(g:&GenomeIr,x:&Rows,y:&[f64],vx:&Rows,vy:&[f64],kind:&str,index:usize)->Result<Value,Error>{
+    let start=now_us(); let tick=Instant::now();
+    let model=feat_math::fit(g,x,y)?; let fit_end=now_us();
+    let train_pred=model.predict(x); let pred=model.predict(vx);
+    let model_bytes=serde_json::to_vec(&model)?;
+    if model_bytes.len()>32*1024*1024 { return Err("model exceeds 32MiB".into()); }
+    let restored:Model=serde_json::from_slice(&model_bytes)?; let replay=restored.predict(vx);
+    if pred.iter().map(|v|v.to_bits()).collect::<Vec<_>>() != replay.iter().map(|v|v.to_bits()).collect::<Vec<_>>() { return Err("model replay mismatch".into()); }
+    let baseline=y.iter().sum::<f64>()/y.len() as f64;
+    Ok(json!({
+        "schema":"jope.teacher-fit/v1","kind":kind,"index":index,"train_rows":x.len(),"score_rows":vx.len(),
+        "started_utc_us":start,"fit_finished_utc_us":fit_end,"finished_utc_us":now_us(),"wall_us":tick.elapsed().as_micros(),
+        "metrics":metrics(vy,&pred)?,"training_metrics":metrics(y,&train_pred)?,"baseline_metrics":metrics(vy,&vec![baseline;vy.len()])?,
+        "predictions":pred,"targets":vy,"model_sha256":hash(&model_bytes),"model_bytes":model_bytes.len(),"serialized_prediction_replay_exact":true
+    }))
+}
+
+fn evaluate(data_path:&Path,candidate_path:&Path,output:&Path)->Result<(),Error>{
+    let d=parse_data(&fs::read(data_path)?)?; let c:Candidate=serde_json::from_slice(&fs::read(candidate_path)?)?; let g=genome(&c)?;
+    let start=now_us(); let tick=Instant::now(); let mut cv=Vec::with_capacity(d.k);
+    for fold in 0..d.k {
+        let tr:Vec<usize>=d.folds.iter().enumerate().filter_map(|(i,f)|((*f as usize)!=fold).then_some(i)).collect();
+        let va:Vec<usize>=d.folds.iter().enumerate().filter_map(|(i,f)|((*f as usize)==fold).then_some(i)).collect();
+        let x=tr.iter().map(|i|d.train_x[*i].clone()).collect(); let y:Vec<f64>=tr.iter().map(|i|d.train_y[*i]).collect();
+        let vx=va.iter().map(|i|d.train_x[*i].clone()).collect(); let vy:Vec<f64>=va.iter().map(|i|d.train_y[*i]).collect();
+        cv.push(one_fit(&g,&x,&y,&vx,&vy,"inner_cv",fold)?);
+    }
+    let official_test=one_fit(&g,&d.train_x,&d.train_y,&d.test_x,&d.test_y,"official_test",0)?;
+    let out=json!({"schema":"jope.test-adaptive-evaluation/v1","program":c,"status":"completed","inner_cv":cv,"official_test":official_test,
+        "started_utc_us":start,"finished_utc_us":now_us(),"wall_us":tick.elapsed().as_micros(),"memory":memory()});
+    let mut f=File::create(output)?; serde_json::to_writer(&mut f,&out)?; f.flush()?; f.sync_all()?; Ok(())
+}
+
+fn run_child(c:&Candidate,data_path:&Path,dir:&Path,timeout_ms:u64)->Result<Value,Error>{
+    let cp=dir.join("candidate.json"); let op=dir.join("evaluation.json"); let ep=dir.join("stderr.log");
+    fs::write(&cp,serde_json::to_vec(c)?)?; let start=now_us(); let tick=Instant::now();
+    let mut child=Command::new(std::env::current_exe()?).arg("--fit").arg(data_path).arg(&cp).arg(&op)
+        .stdout(Stdio::null()).stderr(File::create(&ep)?).spawn()?;
+    let mut timed_out=false; let status=loop { if let Some(s)=child.try_wait()?{break s} if tick.elapsed().as_millis()>=timeout_ms as u128 {timed_out=true;child.kill()?;break child.wait()?} std::thread::sleep(Duration::from_millis(5)); };
+    if status.success() && op.exists() { return Ok(serde_json::from_slice(&fs::read(op)?)?); }
+    Ok(json!({"schema":"jope.test-adaptive-evaluation/v1","program":c,"status":if timed_out{"timeout"}else{"failed"},
+        "started_utc_us":start,"finished_utc_us":now_us(),"wall_us":tick.elapsed().as_micros(),"stderr":fs::read_to_string(ep).unwrap_or_default().chars().take(4096).collect::<String>(),"memory":memory()}))
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Request { schema:String, attempt_id:String, context_sha256:String, input_sha256:String, input_bytes:usize, input_url:String, output_url:String, candidate_timeout_ms:u64, candidate:Candidate }
+
+fn allowed(url:&str,kind:&str)->bool { url.starts_with(BASE) && !url.contains('#') && !url.contains("/../") && url[BASE.len()..].starts_with(kind) }
+
+async fn invoke(event:LambdaEvent<Request>)->Result<Value,Error>{
+    let r=event.payload; let start=now_us(); let tick=Instant::now();
+    if r.schema!="jope.test-adaptive-request/v1" || !is_hash(&r.context_sha256) || !is_hash(&r.input_sha256) || r.input_bytes>256*1024*1024 || !(100..=120000).contains(&r.candidate_timeout_ms) { return Err("invalid request".into()); }
+    genome(&r.candidate)?;
+    if !allowed(&r.input_url,"objects/inputs/sha256/") || !allowed(&r.output_url,"attempts/") { return Err("URL outside teacher prefix".into()); }
+    let expected=format!("{}attempts/{}.json.gz",BASE,r.attempt_id); if !r.output_url.starts_with(&expected) { return Err("output capability differs from attempt".into()); }
+    let dir=PathBuf::from(format!("/tmp/jope-teacher-{}",r.attempt_id)); fs::create_dir(&dir)?;
+    println!("{}",json!({"event":"handler_start","attempt_id":r.attempt_id,"request_id":event.context.request_id,"utc_us":start,"birth_seq":r.candidate.birth_seq}));
+    let agent:ureq::Agent=ureq::Agent::config_builder().timeout_global(Some(Duration::from_secs(30))).build().into();
+    let mut response=agent.get(&r.input_url).call()?; let compressed=response.body_mut().as_reader().take(128*1024*1024+1).read_to_vec()?;
+    let mut raw=Vec::new(); GzDecoder::new(compressed.as_slice()).take(256*1024*1024+1).read_to_end(&mut raw)?;
+    if raw.len()!=r.input_bytes || hash(&raw)!=r.input_sha256 { return Err("input identity mismatch".into()); }
+    let dp=dir.join("data.bin"); fs::write(&dp,&raw)?; drop(raw);
+    let mut record=run_child(&r.candidate,&dp,&dir,r.candidate_timeout_ms)?; record["context_sha256"]=json!(r.context_sha256);
+    let pack=json!({"schema":"jope.test-adaptive-invocation/v1","attempt_id":r.attempt_id,"aws_request_id":event.context.request_id,
+        "started_utc_us":start,"finished_utc_us":now_us(),"wall_us":tick.elapsed().as_micros(),"memory":memory(),"record":record});
+    let bytes=serde_json::to_vec(&pack)?; let mut enc=GzEncoder::new(Vec::new(),Compression::fast()); enc.write_all(&bytes)?; let body=enc.finish()?;
+    if body.len()>32*1024*1024 { return Err("archive exceeds 32MiB".into()); }
+    agent.put(&r.output_url).header("If-None-Match","*").header("Content-Type","application/gzip").send(&body)?;
+    let out=json!({"schema":"jope.test-adaptive-invocation-receipt/v1","attempt_id":r.attempt_id,"archive_sha256":hash(&body),"archive_bytes":body.len(),"status":pack["record"]["status"]});
+    println!("{}",json!({"event":"handler_end","attempt_id":r.attempt_id,"utc_us":now_us(),"wall_us":tick.elapsed().as_micros(),"status":pack["record"]["status"]}));
+    fs::remove_dir_all(dir)?; Ok(out)
+}
+
+trait ReadAll:Read { fn read_to_vec(mut self)->std::io::Result<Vec<u8>> where Self:Sized { let mut v=Vec::new();self.read_to_end(&mut v)?;Ok(v) } }
+impl<T:Read> ReadAll for T {}
+
+#[tokio::main(flavor="current_thread")]
+async fn main()->Result<(),Error>{
+    let a:Vec<String>=std::env::args().collect();
+    if a.get(1).map(String::as_str)==Some("--fit") { return evaluate(Path::new(&a[2]),Path::new(&a[3]),Path::new(&a[4])); }
+    lambda_runtime::run(service_fn(invoke)).await
+}
+
+#[cfg(test)] mod tests {
+    use super::*;
+    fn fixture()->Vec<u8>{
+        let nt=70usize;let nq=14usize;let p=2usize;let k=7usize;let mut b=b"JTT1".to_vec();b.extend((nt as u32).to_le_bytes());b.extend((nq as u32).to_le_bytes());b.extend((p as u32).to_le_bytes());b.push(k as u8);
+        for i in 0..nt{b.push((i%k)as u8)} for i in 0..nt+nq{for v in [i as f64,(i%5)as f64,2.0*i as f64+1.0]{b.extend(v.to_le_bytes())}} b
+    }
+    #[test] fn format_and_metrics(){let d=parse_data(&fixture()).unwrap();assert_eq!((d.train_x.len(),d.test_x.len(),d.k),(70,14,7));assert_eq!(metrics(&[1.,2.],&[1.,2.]).unwrap()["rmse"],0.0);}
+    #[test] fn rejects_bad_fold(){let mut b=fixture();b[17]=9;assert!(parse_data(&b).is_err());}
+    #[test] fn url_scope(){assert!(allowed(&format!("{}objects/inputs/sha256/x",BASE),"objects/inputs/sha256/"));assert!(!allowed("https://example.com/x","objects/inputs/sha256/"));}
+}
