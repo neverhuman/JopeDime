@@ -276,6 +276,7 @@ It is `origin/main` immediately after the merge, and the v0.2.0 release readback
     - `CHANGELOG.md` for 0.2.0, generated with git-cliff and curated by pull request;
     - the README's 0.2.0 status, stats, releases section and layout, and the lines that #117 to
       #123 and the release made false in `SECURITY.md`, `CONTRIBUTING.md` and `docs/`;
+    - the frozen AWS Lambda work of 2026-09-28 under `deploy/lambda/` (the Lambda import below);
     - this record.
   - Review: the first independent review (5345652450, CHANGES_REQUESTED at
     `97d5ffa8336c31468262cf3755bbe53905e39139`) found an unpinned Syft and a missing
@@ -284,6 +285,41 @@ It is `origin/main` immediately after the merge, and the v0.2.0 release readback
     pinned, require root-owned host tools, push only the release tag, carry `TMPDIR` across
     docker, sudo and `env -i`, and isolate jq, git and the other host tools from per-user
     configuration.
+  - Lambda import, under the owner's decisions of 2026-09-29 at about 00:15Z: all Lambda Rust
+    goes into this pull request and is built and tested by CI; the Lambda Python and other
+    untracked orchestration is preserved byte-exact in custody with a tracked hash manifest, and a
+    Rust port is a follow-up; v0.2.0 waits for the regression-Lambda v3 freeze.
+    - What: `deploy/lambda/csv` (package `jope-lambda-probe`: the single-fit, batch and corpus
+      workers) and `deploy/lambda/watch` (package `jope-lambda-watch`, the terminal monitor),
+      imported byte for byte from the frozen `.agent/experiments/lambda-csv` and `lambda-watch`
+      with the same layout. Each is its own Cargo workspace; the root `Cargo.toml`, `Cargo.lock`
+      and `crates/` are unchanged, so the `jope` build inputs are too.
+    - Anchors: the monitor's source tarball `d2fda4e7d582a633d4b364ceb96801112e89bbf25139b2328a57826dd9115c86`
+      (17 members); the csv survey manifest
+      `33d3c18d0b3cca1cf246620946cf818d7466c68c8746ad2119857662ad686413` (68 files; the 37 that
+      are also in the corpus run's S3 source bundle `d359ff3e…` equal the restored bundle; COMMIT
+      `68ad89ba…`, CLOSE `a9d9bbd7…`); the planning survey manifest
+      `f85ebf46bc2189b0f411ecba3839ec6556dc498f31fa454f38807f090cf4ec3f` (14 files; CLOSE
+      `83a85ba8…`). `deploy/lambda/SNAPSHOT.json` records all 99 files (52 tracked, 1 gzipped,
+      1 renamed, 45 in custody) and 33 excluded entries.
+    - Build changes, each recorded in `SNAPSHOT.json`: the nested lock's `feat-math` entry at
+      0.2.0 and `license`/`publish` lines in the two nested manifests. `train-jobs.json`
+      (8,166,343 bytes) is tracked gzipped and inflated by CI; the historical
+      `rust-single-v2` manifest is tracked as `Cargo.toml.v2` (a duplicate package name).
+    - CI: `deploy/ci/lambda.sh` in the hygiene lane checks `SNAPSHOT.json`, then runs
+      `cargo metadata --locked`, `cargo test --locked` (54 tests: 40 and 14) and `cargo deny` per
+      workspace; 42.0 s cold and 7.7 s warm on xbabe2.
+    - Custody: 45 Python and companion files in three deterministic tarballs under
+      `~/jope-evidence/lambda-20260929/python/` on xbabe2 (`SHA256SUMS`
+      `6cb7def8390edb0c31d7bf77d1b1d92692fc83402a9d6f5f6b6e23033418ab58`), re-extracted and
+      re-hashed 45 of 45; `docs/archive/lambda-python-manifest.json` lists each one.
+    - Records: `deploy/lambda/README.md`, `docs/internal/lambda/README.md`, and
+      `docs/coordination/codex-training-support-ledger-20260925.md`, two ledger entries from the
+      `codex-training-support` lane's uncommitted `AGENT_CHAT.md`. Their exact heading lines are
+      only in that lane; the canonical `AGENT_CHAT.md`, also uncommitted, has the same bodies under
+      headings that differ only in the microseconds. Neither ledger is in git.
+    - Not yet imported: the regression-Lambda v3 workers (`regression-lambda-v3` and its `-ops`
+      tools), which were still running at import.
   - Merge: this pull request's merge commit, `origin/main` immediately after the merge; its SHA
     is recorded in the release readback, not here. No tag exists yet: `release.sh --publish`
     creates `v0.2.0` on that commit. The Python package stays 0.1.0 and unreleased, and no wheel
@@ -332,10 +368,19 @@ Deferred to the next milestone. These are recorded, not dropped:
      as `repo:veox-ai/JopeDime:…`, with a `refs/tags/v*` binding for `release.yml`, which no
      longer requests `id-token: write`. Re-check the policies' repository and ref bindings
      against `neverhuman/JopeDime`; they cannot be read from here;
-   - untracking `AGENT_CHAT.md`, which waits for the owner and Codex.
+   - untracking `AGENT_CHAT.md`, which waits for the owner and Codex;
+   - the Rust port of the Lambda Python held in custody (`docs/archive/lambda-python-manifest.json`),
+     and parameterising the xbabe2 paths that the imported Lambda scripts name.
 
 Next allowed action:
-1. Cut v0.2.0 on xbabe2, from a clean registered worktree at this pull request's merge commit
+1. Before this pull request merges, import the regression-Lambda v3 workers
+   (`.agent/experiments/regression-lambda-v3` and `regression-lambda-v3-ops`) once Codex has
+   frozen them and posted a stopped-state handoff with its file list and hashes; v0.2.0 waits for
+   that freeze (owner decision, 2026-09-29 about 00:15Z). Import them as the csv and monitor
+   bodies were: check every file against the handoff, extend `deploy/lambda/SNAPSHOT.json` and
+   the Python custody manifest, add their workspaces to `deploy/ci/lambda.sh`, re-run the gate,
+   and review the new head.
+2. Cut v0.2.0 on xbabe2, from a clean registered worktree at this pull request's merge commit
    (`origin/main` immediately after the merge, after a fresh fetch): run
    `deploy/release/release.sh v0.2.0 "$(git rev-parse origin/main)"` (the dry run), inspect its
    evidence, then run the same command with `--publish`. `release.sh` refuses unless `HEAD` and
@@ -344,11 +389,11 @@ Next allowed action:
    committed key, `sha256sum -c` passing, the manifest `git_sha` equal to
    `git rev-parse v0.2.0^{commit}`, the binary printing `jope 0.2.0`, glibc at most 2.36 and a
    failing tampered copy. Record them with the main-guard and full-main-cpu runs on that commit.
-2. Close the `bench` and `demo` lanes under custody: bundle, restore independently, then
+3. Close the `bench` and `demo` lanes under custody: bundle, restore independently, then
    `git worktree remove`. Delete the landed branches. Confirm that `gh pr list --state open` is
    empty and that `git log --all --not --remotes` shows only custody refs.
-3. Update the records of issues #47, #48 and #62, which stay open.
-4. Then start the next milestone, with P6-0 throughput as its own reviewed PR. The live three-host
+4. Update the records of issues #47, #48 and #62, which stay open.
+5. Then start the next milestone, with P6-0 throughput as its own reviewed PR. The live three-host
    S3 and GPU windows need their own admission. This record does not start them.
 
 **2026-09-27 W1–W12 source gap closure.** [PR #114](https://github.com/neverhuman/JopeDime/pull/114)

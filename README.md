@@ -220,9 +220,11 @@ Pull-request CI is `.github/workflows/ci.yml`: nine jobs on the self-hosted `jop
 Eight each run one lane of `deploy/ci/fast-lane.sh`, and `aggregate` validates their receipts
 (`deploy/ci/aggregate.py`). The hygiene lane includes `deploy/ci/check.sh`
 (formatting, the coverage map, the prose rule, the repository layout and the README's generated
-blocks). Every push to `main` runs `main-guard` and `full-main-cpu`. Locally, `just ci-pr` (alias
-`just required`) runs `check.sh`, `cargo fmt --check`, clippy with `-D warnings`, the pull-request
-nextest tier, and ruff and pytest over the remaining Python; each tool must be installed.
+blocks) and builds and tests the standalone AWS Lambda workspaces under `deploy/lambda`
+(`deploy/ci/lambda.sh`). Every push to `main` runs `main-guard` and `full-main-cpu`. Locally,
+`just ci-pr` (alias `just required`) runs `check.sh`, `cargo fmt --check`, clippy with
+`-D warnings`, the pull-request nextest tier, and ruff and pytest over the remaining Python; each
+tool must be installed.
 `just lint-paths` runs only the absolute-home-path check.
 
 ## Releases
@@ -279,6 +281,7 @@ The 26 workspace members, by directory under `crates/`; the package name follows
 | `datasets/test` | The ten licensed test datasets (`test-10`) |
 | `python/` | The Python that remains after [ADR-0006](docs/adr/ADR-0006-rust-only-stack.md) phase P1 (#117): the training stack (`policy`, `encoders`, `target_maker`, `data`, `dime_score`, `broad_shadow`), the research helpers that kept tests use, and the sha-pinned grammar sources; package `jope` 0.1.0, never released. Phases P2 and P3 port or retire it, with the CI helpers in `deploy/ci/*.py`. No new Python except the emitted model code and its harness. |
 | `deploy/ci`, `deploy/release` | CI lane scripts and the coverage map (`check.sh` is the hygiene lane); the release script and its tests |
+| `deploy/lambda` | Standalone AWS Lambda workers and a terminal monitor, each its own Cargo workspace with its own lock; not part of the `jope` binary or its build. `SNAPSHOT.json` records every imported file's hash ([README](deploy/lambda/README.md)) |
 
 ## Further reading
 
