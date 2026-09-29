@@ -84,10 +84,11 @@ job manifest that `bootstrap-gp-extra` embeds; the frozen review records `extra-
   outside the nested workspace, so its absolute path is embedded. Identity is by source hash
   (`SNAPSHOT.json`).
 - The sources are not reformatted; the root `cargo fmt --all` does not reach nested workspaces.
-- Nine files differ from their frozen bytes, each recorded in `SNAPSHOT.json` with `tree_change`:
-  a `license` line in all four manifests, `publish = false` in the monitor's and the assessment
-  tool's, the `feat-math` entry of the csv workers' lock, which reads the root workspace version,
-  and four regression notes whose absolute xbabe2 paths are written home-relative (`~/`).
+- Eleven files differ from their frozen bytes, each recorded in `SNAPSHOT.json` with
+  `tree_change`: a `license` line in all four manifests, `publish = false` in the monitor's and
+  the assessment tool's, the `feat-math` entry of the three locks that take it by path, which
+  reads the root workspace version, and four regression notes whose absolute xbabe2 paths are
+  written home-relative (`~/`).
 - `just bump X.Y.Z` keeps the `feat-math` lock entries true. A workspace's lock pins each root
   crate it takes by path at the version it was locked with, so after the root version changes
   `cargo metadata --locked` fails for that workspace until its lock is updated. The bump runs
