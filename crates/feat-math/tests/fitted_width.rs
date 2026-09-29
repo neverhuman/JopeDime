@@ -553,16 +553,20 @@ fn heads_require_the_width_their_fitted_state_reveals() {
                     assert!(required.admits(width), "{source} at width {width}");
                     assert_eq!(bits(&tried), bits(&predicted), "{source} at width {width}");
                 }
-                Err(mismatch) => assert_eq!(
-                    mismatch,
-                    WidthMismatch {
-                        stage: 0,
-                        expected: required,
-                        got: width,
-                        kind: MismatchKind::HeadInput,
-                    },
-                    "{source} at width {width}"
-                ),
+                Err(mismatch) => {
+                    // A refusal is only ever one that the requirement makes.
+                    assert!(!required.admits(width), "{source} refused at width {width}");
+                    assert_eq!(
+                        mismatch,
+                        WidthMismatch {
+                            stage: 0,
+                            expected: required,
+                            got: width,
+                            kind: MismatchKind::HeadInput,
+                        },
+                        "{source} at width {width}"
+                    );
+                }
             }
         }
     }
