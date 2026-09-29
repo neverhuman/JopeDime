@@ -902,3 +902,582 @@ fn frozen_legacy_pipeline_can_cross_the_bound_cpp_bridge() {
     );
     scratch.close().unwrap();
 }
+
+// ---------------------------------------------------------------------------------------------
+// Emitter revision 3 (kernel2 X3): fitted index checks, empty rows and tied intervals
+// ---------------------------------------------------------------------------------------------
+
+/// The status `jope_fitted_predict` returns when a stage's fitted state does not fit the row it
+/// reads (emitter revision 3).
+const FITTED_WIDTH_STATUS: i32 = 8;
+
+/// Compiles `source` with a driver that prints `status=N` and, when the status is 0, the bits of
+/// each prediction. Unlike `compile_typed`, a nonzero status is a result here, not a failure. The
+/// process must exit 0 and write nothing to stderr, so a sanitizer report, an abort or a signal
+/// fails the test. `_GLIBCXX_ASSERTIONS` makes an unchecked `operator[]` past a vector's end abort
+/// even inside the vector's allocation, where AddressSanitizer sees nothing. With `sanitizer` the
+/// mode defaults to `address,undefined`; `JOPE_FITTED_CPP_SANITIZER` overrides it, as for
+/// `compile_typed`.
+#[allow(clippy::too_many_arguments)]
+fn compile_status(
+    source: &str,
+    directory: &Path,
+    name: &str,
+    sanitizer: bool,
+    values: &[f64],
+    missing: &[u8],
+    rows: usize,
+    columns: usize,
+) -> (i32, Vec<u64>) {
+    let mode = std::env::var("JOPE_FITTED_CPP_SANITIZER").unwrap_or_else(|_| {
+        if sanitizer {
+            "address,undefined".to_string()
+        } else {
+            "normal".to_string()
+        }
+    });
+    let suffix = mode.replace(',', "-");
+    let cpp = directory.join(format!("{name}-{suffix}.cpp"));
+    let binary = directory.join(format!("{name}-{suffix}"));
+    let encoded_values = values
+        .iter()
+        .map(|value| format!("f64_from_bits(0x{:016x}ULL)", value.to_bits()))
+        .collect::<Vec<_>>()
+        .join(",");
+    let encoded_missing = missing
+        .iter()
+        .map(u8::to_string)
+        .collect::<Vec<_>>()
+        .join(",");
+    let driver = format!(
+        r#"
+#include <cstdio>
+int main(){{
+  const double values[]={{ {encoded_values} }};
+  const std::uint8_t missing[]={{ {encoded_missing} }};
+  double output[{rows}]={{}};
+  const int status=jope_fitted_predict(values,{cells},missing,{cells},{rows},{columns},output,{rows});
+  std::printf("status=%d\n",status);
+  if(status==0)for(double value:output){{std::uint64_t bits;std::memcpy(&bits,&value,8);std::printf("%016llx\n",static_cast<unsigned long long>(bits));}}
+  return 0;
+}}
+"#,
+        cells = values.len()
+    );
+    std::fs::write(&cpp, format!("{source}\n{driver}")).unwrap();
+    let mut command = feat_math::cxx::command(None);
+    command.args([
+        "-O2",
+        "-ffp-contract=off",
+        "-fno-fast-math",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-D_GLIBCXX_ASSERTIONS",
+    ]);
+    if mode != "normal" {
+        command.arg("-O1").arg(format!("-fsanitize={mode}"));
+        if mode.contains("undefined") {
+            command.arg("-fno-sanitize-recover=undefined");
+        }
+    }
+    let compiled = command.arg(&cpp).arg("-o").arg(&binary).output().unwrap();
+    assert!(
+        compiled.status.success(),
+        "{name}: g++ failed:\n{}",
+        String::from_utf8_lossy(&compiled.stderr)
+    );
+    let run = Command::new(&binary).output().unwrap();
+    let stderr = String::from_utf8_lossy(&run.stderr);
+    assert!(
+        run.status.success() && stderr.is_empty(),
+        "{name}: the generated C++ did not exit cleanly ({}):\n{stderr}",
+        run.status
+    );
+    let stdout = String::from_utf8(run.stdout).unwrap();
+    let mut lines = stdout.lines();
+    let status = lines
+        .next()
+        .and_then(|line| line.strip_prefix("status="))
+        .unwrap_or_else(|| panic!("{name}: no status line in {stdout:?}"))
+        .parse()
+        .unwrap();
+    let bits = lines
+        .map(|line| u64::from_str_radix(line, 16).unwrap())
+        .collect();
+    (status, bits)
+}
+
+/// A copy of `model` whose serialized form `edit` changed: fitted state that no fit produces.
+/// The binding check does not hash the stages, so the copy loads.
+fn tampered(model: &BoundModel, edit: impl FnOnce(&mut serde_json::Value)) -> BoundModel {
+    let mut json = serde_json::to_value(model).unwrap();
+    edit(&mut json);
+    let edited: BoundModel = serde_json::from_value(json).unwrap();
+    edited.validate_binding().unwrap();
+    edited
+}
+
+/// Stage `index` of a schema-bound pipeline, in its serialized form.
+fn stage(json: &mut serde_json::Value, index: usize) -> &mut serde_json::Value {
+    let stage = &mut json["predictor"]["Pipeline"]["ops"][index];
+    assert!(stage.is_object(), "stage {index} is fitted state: {stage}");
+    stage
+}
+
+/// The training table's cells as numbers, for the legacy predictors.
+fn training_rows() -> Vec<Vec<f64>> {
+    training_table()
+        .rows
+        .iter()
+        .map(|row| {
+            row.iter()
+                .map(|value| value.parse::<f64>().unwrap())
+                .collect()
+        })
+        .collect()
+}
+
+/// `rows` as a table of the columns `c0`, `c1`, ..., which legacy predictors are bound to.
+fn legacy_table(rows: &[Vec<f64>]) -> RawTable {
+    RawTable::new(
+        (0..rows[0].len())
+            .map(|column| format!("c{column}"))
+            .collect(),
+        rows.iter()
+            .map(|row| row.iter().map(f64::to_string).collect())
+            .collect(),
+    )
+    .unwrap()
+}
+
+/// The serialized form of the first stage of a legacy pipeline fitted on the training rows.
+fn legacy_stage(source: &str, rows: &[Vec<f64>], y: &[f64]) -> serde_json::Value {
+    let model = fit_legacy_numeric_bound(&GenomeIr::parse(source).unwrap(), rows, y).unwrap();
+    let stage =
+        serde_json::to_value(&model).unwrap()["predictor"]["Legacy"]["Pipeline"]["ops"][0].clone();
+    assert!(stage.is_object(), "{source}: {stage}");
+    stage
+}
+
+#[test]
+fn fitted_state_that_does_not_fit_the_row_answers_status_8() {
+    let y = [0.1, 0.4, 0.2, 0.9, 1.1, 1.6, 1.4, 2.1, 2.4, 2.9];
+    // Column b of the first row is exactly zero, a cell that `impute` fills.
+    let test = RawTable::from_csv("a,b\n0.125,0\n0.5,2.5\n2.125,6.5\n").unwrap();
+    type Edit = fn(&mut serde_json::Value);
+    let cases: [(&str, &str, Edit); 7] = [
+        (
+            "select_corr",
+            "(pipe X (select_corr k=2) (ridge))",
+            |json| {
+                stage(json, 0)["Legacy"]["SelectCorr"]["indices"] = serde_json::json!([0, 99]);
+            },
+        ),
+        // The row is narrower than the state: a fill and an indicator for six columns.
+        (
+            "impute_narrower",
+            "(pipe X (impute add_indicator=true) (ridge))",
+            |json| {
+                let impute = &mut stage(json, 0)["Legacy"]["Impute"];
+                impute["fill"]
+                    .as_array_mut()
+                    .unwrap()
+                    .extend(std::iter::repeat_n(serde_json::json!(0.5), 4));
+                impute["indicator_cols"] = serde_json::json!([5]);
+            },
+        ),
+        // The row is wider than the state, with a zero cell past the fill: that cell reads it.
+        ("impute_wider", "(pipe X (impute) (ridge))", |json| {
+            stage(json, 0)["Legacy"]["Impute"]["fill"]
+                .as_array_mut()
+                .unwrap()
+                .truncate(1);
+        }),
+        // One guard short: revision 2 read past the guards.
+        (
+            "pair_ratio",
+            "(pipe X (pair_ratio topk=2) (ridge))",
+            |json| {
+                let eps = stage(json, 0)["Legacy"]["PairRatio"]["eps"]
+                    .as_array_mut()
+                    .unwrap();
+                assert!(!eps.is_empty(), "pair_ratio fitted a pair");
+                eps.pop();
+            },
+        ),
+        ("pair_prod", "(pipe X (pair_prod topk=2) (ridge))", |json| {
+            stage(json, 0)["Legacy"]["PairProd"]["pairs"] = serde_json::json!([[0, 99]]);
+        }),
+        (
+            "poly_interact",
+            "(pipe X (poly_interact) (ridge))",
+            |json| {
+                stage(json, 0)["Legacy"]["PolyInteract"]["pairs"] = serde_json::json!([[99, 1]]);
+            },
+        ),
+        (
+            "corr_screen",
+            "(pipe X (corr_screen k=32) (ridge))",
+            |json| {
+                stage(json, 0)["CorrScreen"]["indices"] = serde_json::json!([0, 7]);
+            },
+        ),
+    ];
+    let scratch = tempfile::Builder::new()
+        .prefix("feat-math-advanced-v3-fitted-cpp-width-status-")
+        .tempdir()
+        .unwrap();
+    let directory = scratch.path();
+    let mut checked = Vec::new();
+    let mut check = |name: &str, model: &BoundModel, test: &RawTable| {
+        let encoded = EncodedTable::from_bound_model(model, test).unwrap();
+        let artifact = emit_fitted_cpp17(model).unwrap();
+        let (status, _) = compile_status(
+            &artifact.source,
+            directory,
+            name,
+            true,
+            &encoded.values,
+            &encoded.missing,
+            encoded.rows,
+            encoded.columns,
+        );
+        assert_eq!(status, FITTED_WIDTH_STATUS, "{name}");
+        checked.push(name.to_string());
+    };
+    for (name, source, edit) in cases {
+        let model = fit_table(
+            &GenomeIr::parse(source).unwrap(),
+            &task(),
+            &numeric_schema(),
+            &training_table(),
+            &y,
+        )
+        .unwrap_or_else(|error| panic!("{name} fit: {error}"));
+        assert!(
+            model.predict_table(&test).is_ok(),
+            "{name}: the fitted model"
+        );
+        let model = tampered(&model, edit);
+        // The runtime refuses the edited state with an error, and the C++ answers status 8.
+        assert!(model.predict_table(&test).is_err(), "{name}: the runtime");
+        check(name, &model, &test);
+    }
+
+    // `roll` on an empty row, which only a hand edit builds: `select_corr` keeps no column and a
+    // legacy `roll` follows it. The runtime refuses it; revision 2 divided by zero there.
+    let roll = legacy_stage("(pipe X (roll k=1) (ridge))", &training_rows(), &y);
+    let model = fit_table(
+        &GenomeIr::parse("(pipe X (select_corr k=1) (ridge))").unwrap(),
+        &task(),
+        &numeric_schema(),
+        &training_table(),
+        &y,
+    )
+    .unwrap();
+    let model = tampered(&model, |json| {
+        stage(json, 0)["Legacy"]["SelectCorr"]["indices"] = serde_json::json!([]);
+        json["predictor"]["Pipeline"]["ops"]
+            .as_array_mut()
+            .unwrap()
+            .insert(1, serde_json::json!({ "Legacy": roll }));
+    });
+    assert!(model.predict_table(&test).is_err(), "roll: the runtime");
+    check("roll_empty_row", &model, &test);
+
+    // The table ABI, of a table-aware pipeline, answers the same status.
+    let schema = DataSchema {
+        columns: vec![
+            ColumnSpec::categorical("group"),
+            ColumnSpec::numeric("time"),
+            ColumnSpec::numeric("value"),
+        ],
+        row_semantics: RowSemantics::Ordered {
+            group_by: vec!["group".to_string()],
+            order_by: vec!["time".to_string()],
+        },
+    };
+    let train = RawTable::from_csv(
+        "group,time,value\nA,1,1\nA,2,2\nA,3,3\nA,4,4\nA,5,5\nB,1,10\nB,2,11\nB,3,12\nB,4,13\nB,5,14\n",
+    )
+    .unwrap();
+    let ordered_test =
+        RawTable::from_csv("group,time,value\nA,7,7\nA,6,6\nB,6,15\nC,1,20\n").unwrap();
+    let model = fit_table(
+        &GenomeIr::parse(
+            "(pipe X (input numeric=median categorical=native) (lag k=2 append=true) (select_corr k=2) (ridge))",
+        )
+        .unwrap(),
+        &task(),
+        &schema,
+        &train,
+        &y,
+    )
+    .unwrap();
+    assert!(
+        model.predict_table(&ordered_test).is_ok(),
+        "table: the fitted model"
+    );
+    let model = tampered(&model, |json| {
+        stage(json, 1)["Legacy"]["SelectCorr"]["indices"] = serde_json::json!([0, 99]);
+    });
+    assert!(
+        model.predict_table(&ordered_test).is_err(),
+        "table: the runtime"
+    );
+    check("table_select_corr", &model, &ordered_test);
+
+    // A legacy predictor, the path compat_freeze pins, answers the same status. Its runtime,
+    // `Model::predict`, gives no prediction there either: it panics.
+    let rows = training_rows();
+    let model = fit_legacy_numeric_bound(
+        &GenomeIr::parse("(pipe X (select_corr k=2) (ridge))").unwrap(),
+        &rows,
+        &y,
+    )
+    .unwrap();
+    let model = tampered(&model, |json| {
+        json["predictor"]["Legacy"]["Pipeline"]["ops"][0]["SelectCorr"]["indices"] =
+            serde_json::json!([0, 99]);
+    });
+    let legacy_test = legacy_table(&[vec![0.125, -1.5], vec![0.0, 2.5], vec![2.125, 6.5]]);
+    let outcome = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        model.predict_table(&legacy_test)
+    }));
+    assert!(!matches!(outcome, Ok(Ok(_))), "legacy: the runtime");
+    check("legacy_select_corr", &model, &legacy_test);
+
+    assert_eq!(checked.len(), 10, "{checked:?}");
+    scratch.close().unwrap();
+}
+
+#[test]
+fn empty_stage_outputs_match_the_runtime_bits_on_the_legacy_paths() {
+    // One column leaves `pair_ratio` no pair, so its output rows are empty (the compat program
+    // `empty_stage_output`), and `ops::finish` pads each to [0.0]. Revision 2 kept them empty.
+    let rows = training_rows();
+    let y = [0.1, 0.4, 0.2, 0.9, 1.1, 1.6, 1.4, 2.1, 2.4, 2.9];
+    let test = [vec![0.125, -1.5], vec![0.0, 2.5], vec![2.125, 6.5]];
+    let raw = legacy_table(&test);
+    let values = test.iter().flatten().copied().collect::<Vec<_>>();
+    let missing = vec![0; values.len()];
+    let bits = |values: Vec<f64>| values.into_iter().map(f64::to_bits).collect::<Vec<_>>();
+    let scratch = tempfile::Builder::new()
+        .prefix("feat-math-advanced-v3-fitted-cpp-empty-stage-")
+        .tempdir()
+        .unwrap();
+    let directory = scratch.path();
+    for source in [
+        "(pipe X (select_corr k=1) (pair_ratio topk=4) (ridge))",
+        // Revision 2 divided by zero in `roll` here.
+        "(pipe X (select_corr k=1) (pair_ratio topk=4) (roll k=1) (ridge))",
+        // Revision 2 read the head's first column past the end of the empty row here.
+        "(pipe X (select_corr k=1) (pair_ratio topk=4) (elasticnet alpha=0.01 l1_ratio=0.5 sweeps=5))",
+    ] {
+        let genome = GenomeIr::parse(source).unwrap();
+        let model = fit_legacy_numeric_bound(&genome, &rows, &y)
+            .unwrap_or_else(|error| panic!("{source} fit: {error}"));
+        let expected = bits(model.predict_table(&raw).unwrap());
+        assert_eq!(
+            bits(fit(&genome, &rows, &y).unwrap().predict(&test.to_vec())),
+            expected,
+            "{source}: the bound model is the legacy model"
+        );
+        let artifact = emit_fitted_cpp17(&model).unwrap();
+        assert_eq!(
+            compile_typed(&artifact.source, directory, false, &values, &missing, 3, 2),
+            expected,
+            "{source}"
+        );
+    }
+
+    // A portfolio member's stages, and the portfolio's projection, pad as well: member 0 sees the
+    // two raw columns and empties them as above; member 1 sees the projection, which keeps no
+    // column and so is padded to [0.0]. Revision 2 divided by zero in both members' `roll`.
+    let one_column = rows.iter().map(|row| vec![row[0]]).collect::<Vec<_>>();
+    let member = fit(
+        &GenomeIr::parse("(pipe X (select_corr k=1) (pair_ratio topk=4) (roll k=1) (ridge))")
+            .unwrap(),
+        &rows,
+        &y,
+    )
+    .unwrap();
+    let projected = fit(
+        &GenomeIr::parse("(pipe X (roll k=1) (ridge))").unwrap(),
+        &one_column,
+        &y,
+    )
+    .unwrap();
+    let mut select_none = legacy_stage("(pipe X (select_corr k=1) (ridge))", &rows, &y);
+    select_none["SelectCorr"]["indices"] = serde_json::json!([]);
+    let portfolio = tampered(
+        &bound_with_serialized_legacy_head("(pipe X (portfolio folds=5 repeats=1))", &y),
+        |json| {
+            let portfolio = &mut json["predictor"]["Pipeline"]["head"]["Legacy"]["Portfolio"];
+            assert!(portfolio.is_object(), "{portfolio}");
+            assert_eq!(
+                portfolio["mean_only"],
+                serde_json::json!(false),
+                "{portfolio}"
+            );
+            assert_eq!(portfolio["keep"], serde_json::json!([0, 1]), "{portfolio}");
+            portfolio["proj"] = select_none;
+            portfolio["members"] = serde_json::json!([
+                { "name": "empty_stage_member", "proj_view": false, "state": { "Fitted": member } },
+                { "name": "projected_member", "proj_view": true, "state": { "Fitted": projected } },
+            ]);
+            portfolio["weights"] = serde_json::json!([0.5, 0.5]);
+        },
+    );
+    let portfolio_test = RawTable::from_csv("a,b\n0.125,-1.5\n0,2.5\n2.125,6.5\n").unwrap();
+    let encoded = EncodedTable::from_bound_model(&portfolio, &portfolio_test).unwrap();
+    let artifact = emit_fitted_cpp17(&portfolio).unwrap();
+    assert_eq!(
+        compile_typed(
+            &artifact.source,
+            directory,
+            false,
+            &encoded.values,
+            &encoded.missing,
+            encoded.rows,
+            encoded.columns,
+        ),
+        bits(portfolio.predict_table(&portfolio_test).unwrap()),
+        "portfolio member and projection"
+    );
+    scratch.close().unwrap();
+}
+
+#[test]
+fn empty_row_reductions_match_the_runtime_evaluator() {
+    // No fitted model hands a stage an empty row: the legacy paths pad it, a V3 fit refuses a
+    // stage that empties the block, and the V3 runtime refuses a generated column without a
+    // source. So the emitted stage runs here on an empty row directly: a driver in the same
+    // translation unit calls `transform` with no column, and its bits are compared with
+    // `ops::apply_op` on an empty row. The mean and the standard deviation of an empty row
+    // divide by one, as the runtime's evaluator does, so each feature is 1; revision 2 divided by
+    // zero, and the guard made it 0. (`+ 1` leaves out the sign of an empty sum, which the
+    // runtime starts at -0.0 and the emitted loop at +0.0.)
+    let y = [0.1, 0.4, 0.2, 0.9, 1.1, 1.6, 1.4, 2.1, 2.4, 2.9];
+    let scratch = tempfile::Builder::new()
+        .prefix("feat-math-advanced-v3-fitted-cpp-empty-row-")
+        .tempdir()
+        .unwrap();
+    for (index, expression) in ["row_mean + 1", "row_std + 1", "row_mean + row_std + 1"]
+        .into_iter()
+        .enumerate()
+    {
+        let model = fit_table(
+            &GenomeIr::parse(&format!("(pipe X (derive expr=\"{expression}\") (ridge))")).unwrap(),
+            &task(),
+            &numeric_schema(),
+            &training_table(),
+            &y,
+        )
+        .unwrap();
+        let json = serde_json::to_value(&model).unwrap();
+        let op: feat_math::ops::FittedOp =
+            serde_json::from_value(json["predictor"]["Pipeline"]["ops"][0]["Legacy"].clone())
+                .unwrap();
+        let expected = feat_math::ops::apply_op(&op, &vec![Vec::new()])
+            .remove(0)
+            .into_iter()
+            .map(f64::to_bits)
+            .collect::<Vec<_>>();
+        assert_eq!(expected, [1.0f64.to_bits()], "{expression}");
+        let artifact = emit_fitted_cpp17(&model).unwrap();
+        let cpp = scratch.path().join(format!("empty-row-{index}.cpp"));
+        let binary = scratch.path().join(format!("empty-row-{index}"));
+        let driver = r#"
+#include <cstdio>
+int main(){
+  const V out=transform(V{},V{});
+  for(double value:out){std::uint64_t bits;std::memcpy(&bits,&value,8);std::printf("%016llx\n",static_cast<unsigned long long>(bits));}
+  return 0;
+}
+"#;
+        std::fs::write(&cpp, format!("{}\n{driver}", artifact.source)).unwrap();
+        let compiled = feat_math::cxx::command(None)
+            .args([
+                "-O2",
+                "-ffp-contract=off",
+                "-fno-fast-math",
+                "-Wall",
+                "-Wextra",
+                "-Werror",
+            ])
+            .arg(&cpp)
+            .arg("-o")
+            .arg(&binary)
+            .output()
+            .unwrap();
+        assert!(
+            compiled.status.success(),
+            "g++ failed:\n{}",
+            String::from_utf8_lossy(&compiled.stderr)
+        );
+        let run = Command::new(&binary).output().unwrap();
+        assert!(run.status.success(), "{expression}: {run:?}");
+        let actual = String::from_utf8(run.stdout)
+            .unwrap()
+            .lines()
+            .map(|line| u64::from_str_radix(line, 16).unwrap())
+            .collect::<Vec<_>>();
+        assert_eq!(actual, expected, "{expression}");
+    }
+    scratch.close().unwrap();
+}
+
+#[test]
+fn tied_piecewise_edges_match_the_runtime_bits() {
+    // A binary column gives tied quantile edges: an interval of width 0 encodes the step
+    // `value > lo`, as `piecewise_row` does. Revision 2 encoded it as 0.
+    let y = [0.1, 0.4, 0.2, 0.9, 1.1, 1.6, 1.4, 2.1, 2.4, 2.9];
+    let train =
+        RawTable::from_csv("a,b\n0,-2\n1,-1\n0,0\n1,1\n1,2\n0,3\n1,4\n0,5\n1,6\n1,7\n").unwrap();
+    let model = fit_table(
+        &GenomeIr::parse("(pipe X (input numeric=median) (piecewise_linear bins=8) (ridge))")
+            .unwrap(),
+        &task(),
+        &numeric_schema(),
+        &train,
+        &y,
+    )
+    .unwrap();
+    let json = serde_json::to_value(&model).unwrap();
+    let edges = &json["predictor"]["Pipeline"]["ops"][0]["PiecewiseLinear"]["edges"][0];
+    let tied = edges
+        .as_array()
+        .unwrap()
+        .windows(2)
+        .filter(|pair| pair[0] == pair[1])
+        .count();
+    assert!(tied > 0, "the binary column has tied edges: {edges}");
+    let test = RawTable::from_csv("a,b\n0,-1.5\n1,2.5\n0.5,6.5\n1,-3\n").unwrap();
+    let expected = model
+        .predict_table(&test)
+        .unwrap()
+        .into_iter()
+        .map(f64::to_bits)
+        .collect::<Vec<_>>();
+    let encoded = EncodedTable::from_bound_model(&model, &test).unwrap();
+    let artifact = emit_fitted_cpp17(&model).unwrap();
+    let scratch = tempfile::Builder::new()
+        .prefix("feat-math-advanced-v3-fitted-cpp-tied-edges-")
+        .tempdir()
+        .unwrap();
+    assert_eq!(
+        compile_typed(
+            &artifact.source,
+            scratch.path(),
+            false,
+            &encoded.values,
+            &encoded.missing,
+            encoded.rows,
+            encoded.columns,
+        ),
+        expected
+    );
+    scratch.close().unwrap();
+}
