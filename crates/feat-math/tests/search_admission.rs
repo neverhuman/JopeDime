@@ -314,7 +314,7 @@ fn seeded_runs(policy: FaultPolicy) -> Vec<Run> {
     runs
 }
 
-/// A generation's fault counters, floats as bits.
+/// A generation's fault counters, floats as bits, and how many candidates it ranked.
 #[derive(Clone, Debug, PartialEq)]
 struct Counters {
     gen: usize,
@@ -323,6 +323,7 @@ struct Counters {
     pop_domain_rate: u64,
     elite_domain_rate: u64,
     best_cv: u64,
+    ranked: usize,
 }
 
 /// Records what a search reports: every rejection with its reason, and each generation's
@@ -342,6 +343,7 @@ impl Observer for Log {
             pop_domain_rate: stats.pop_domain_rate.to_bits(),
             elite_domain_rate: stats.elite_domain_rate.to_bits(),
             best_cv: stats.best_cv.to_bits(),
+            ranked: stats.pop_fitness.len(),
         });
     }
     fn on_improvement(&self, _: &Scored, _: &Emitted, _: &GenStats) {}
@@ -687,6 +689,103 @@ fn penalize_ranks_the_fault_free_program_first_on_equal_loss() {
     }
     let (log_at, log1p_at) = positions(penalize(0.0, 0.0, false));
     assert!(log_at < log1p_at);
+}
+
+/// The domain-rate counters' values in runs whose ranking is known. On `equal_loss_data` every
+/// program scores 0 (the R² of a constant target), `LOG_NEGATIVE`'s domain rate is 1 at every
+/// rung, and no other program has an expression fault: the mean over the ranked candidates is one
+/// over their number, and the mean over the elites counts `LOG_NEGATIVE` only when it is an elite.
+#[test]
+fn the_domain_rate_counters_follow_the_ranking_and_the_elites() {
+    let (x, y) = equal_loss_data(160);
+    let metric = |truth: &[f64], predicted: &[f64]| feat_math::r2(truth, predicted);
+    let (log_key, log1p_key) = (canonical(LOG_NEGATIVE), canonical(LOG1P_ABS));
+    let initial = [LOG_NEGATIVE.to_string(), LOG1P_ABS.to_string()];
+    let rates = |counters: &Counters| (counters.pop_domain_rate, counters.elite_domain_rate);
+
+    // The race: two candidates and one elite, the first ranked.
+    let race = |policy: FaultPolicy, log: &Log| {
+        evolve_lite_race_with_exact_initial_population(
+            &x,
+            &y,
+            &metric,
+            &race_config(2, 1, 17, policy),
+            log,
+            &initial,
+        )
+        .unwrap()
+    };
+    let log = Log::default();
+    race(FaultPolicy::Legacy, &log);
+    log.assert_nothing_reported();
+    for (policy, first, elite_rate) in [
+        (FaultPolicy::RejectHard, &log_key, 1.0),
+        (penalize(0.0, 0.0, false), &log_key, 1.0),
+        (PENALIZE, &log1p_key, 0.0),
+        (penalize(0.0, 0.0, true), &log1p_key, 0.0),
+    ] {
+        let log = Log::default();
+        let outcome = race(policy, &log);
+        let order: Vec<&str> = outcome
+            .ranked
+            .iter()
+            .map(|scored| scored.dsl.as_str())
+            .collect();
+        assert_eq!(order.len(), 2, "{policy:?}");
+        assert_eq!(order[0], first.as_str(), "{policy:?}");
+        let generations = log.generations();
+        let last = generations.last().expect("a ranked generation");
+        assert_eq!(
+            rates(last),
+            (0.5_f64.to_bits(), f64::to_bits(elite_rate)),
+            "{policy:?}"
+        );
+        assert_eq!(
+            (last.hard_rejected, last.hard_rejected_share),
+            (0, 0.0_f64.to_bits())
+        );
+    }
+
+    // The surrogate search: sixteen candidates and two elites. Generation 0 is the champion, the
+    // two programs, the eight starters and random programs, and the ranking keeps that order among
+    // equal scores, so the elites are the champion and `LOG_NEGATIVE` unless the penalty or the
+    // tie-break moves `LOG_NEGATIVE` down.
+    let surrogate = |policy: FaultPolicy| {
+        let config = EvolveConfig {
+            pop: 16,
+            gens: 1,
+            folds: 3,
+            seed: 17,
+            seed_genomes: initial.to_vec(),
+            fault_policy: policy,
+            ..EvolveConfig::default()
+        };
+        let log = Log::default();
+        let ranked = evolve(&x, &y, &metric, &config, &log);
+        (ranked, log.generations())
+    };
+    for (policy, elite_rate) in [
+        (FaultPolicy::RejectHard, 0.5),
+        (PENALIZE, 0.0),
+        (penalize(0.0, 0.0, true), 0.0),
+    ] {
+        let (ranked, generations) = surrogate(policy);
+        let log_at = ranked
+            .iter()
+            .position(|scored| scored.dsl == log_key)
+            .expect("LOG_NEGATIVE is ranked");
+        assert_eq!(log_at < 2, elite_rate > 0.0, "{policy:?}");
+        assert_eq!(generations.len(), 1);
+        assert_eq!(generations[0].ranked, ranked.len());
+        assert_eq!(
+            rates(&generations[0]),
+            (
+                (1.0 / ranked.len() as f64).to_bits(),
+                f64::to_bits(elite_rate)
+            ),
+            "{policy:?}"
+        );
+    }
 }
 
 #[test]
