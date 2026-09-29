@@ -15,6 +15,11 @@
 //!   truncates a row to `MAX_WIDTH` only after a stage, so the first stage reads every input
 //!   column.
 //!
+//! The members of an explicit portfolio do not see the input as it is: the portfolio first drops
+//! every column that is constant in training, so a member's rows hold between one column and the
+//! input width, and its column indices count the kept columns. Each member is walked from one
+//! column, the same lower-bound rule.
+//!
 //! Nothing calls it yet; the search admission policy wires it in later, for the non-legacy
 //! policies only, so no existing search stream changes.
 
@@ -32,6 +37,11 @@ pub const MAX_INPUT_WIDTH: usize = 1 << 24;
 /// The training rows the width walk assumes: one, the fewest a fit can have. Only `nystrom`
 /// depends on it, and its width never shrinks as rows are added.
 const ROWS: usize = 1;
+
+/// The columns a member of an explicit portfolio sees, at the fewest: one. The portfolio drops
+/// every column that is constant in training before its members see the rows (`fit_portfolio`,
+/// and the same mask at prediction), and it fits them only when at least one column is left.
+const MEMBER_MIN_COLUMNS: usize = 1;
 
 /// Why a program fails [`validate_scope`], and where.
 ///
@@ -102,8 +112,10 @@ impl std::error::Error for ScopeError {}
 ///   the pipeline slots' width rules.
 /// - A closed-form program evaluates its expression per row, so the expression is checked in row
 ///   context at `input_width`.
-/// - Each member of an explicit portfolio is a pipeline over the same input and is checked as
-///   one; the error names the member.
+/// - Each member of an explicit portfolio is a pipeline and is checked as one; the error names the
+///   member. A member sees only the input columns that vary in training, between one and
+///   `input_width` of them, and its column indices count those columns, so its walk starts from
+///   one column.
 ///
 /// The first failure is returned. The result depends only on the arguments.
 pub fn validate_scope(genome: &GenomeIr, input_width: usize) -> Result<(), ScopeError> {
@@ -113,7 +125,7 @@ pub fn validate_scope(genome: &GenomeIr, input_width: usize) -> Result<(), Scope
         )));
     }
     match genome {
-        GenomeIr::Pipeline(pipe) => check_pipeline(pipe, input_width),
+        GenomeIr::Pipeline(pipe) => check_pipeline(pipe, (input_width, input_width)),
         GenomeIr::Symbolic { expr, .. } => {
             check_expression(expr, input_width, false).map_err(|(class, reason)| ScopeError {
                 class: Some(class),
@@ -122,9 +134,11 @@ pub fn validate_scope(genome: &GenomeIr, input_width: usize) -> Result<(), Scope
         }
         GenomeIr::Portfolio(portfolio) => {
             for (member, pipe) in portfolio.members.iter().enumerate() {
-                check_pipeline(pipe, input_width).map_err(|error| ScopeError {
-                    member: Some(member),
-                    ..error
+                check_pipeline(pipe, (MEMBER_MIN_COLUMNS, input_width)).map_err(|error| {
+                    ScopeError {
+                        member: Some(member),
+                        ..error
+                    }
                 })?;
             }
             Ok(())
@@ -132,8 +146,9 @@ pub fn validate_scope(genome: &GenomeIr, input_width: usize) -> Result<(), Scope
     }
 }
 
-/// One pipeline, in the order and with the reasons of `validate_legacy_widths`.
-fn check_pipeline(pipe: &DslExpr, input_width: usize) -> Result<(), ScopeError> {
+/// One pipeline whose input has between `width.0` and `width.1` columns, in the order and with
+/// the reasons of `validate_legacy_widths`.
+fn check_pipeline(pipe: &DslExpr, mut width: (usize, usize)) -> Result<(), ScopeError> {
     let slots = PipelineSlots::from_pipeline(pipe).map_err(|error| {
         ScopeError::program(match error {
             // The slots name an op they cannot classify by its bare name.
@@ -150,7 +165,6 @@ fn check_pipeline(pipe: &DslExpr, input_width: usize) -> Result<(), ScopeError> 
             "input encoding needs a table schema binding".into(),
         ));
     }
-    let mut width = (input_width, input_width);
     for (i, stage) in slots.transforms.iter().enumerate() {
         let index = offset + i;
         if matches!(stage.op.as_str(), "map" | "derive") {
