@@ -85,7 +85,7 @@ pub enum MismatchKind {
     /// The fitted state of stage `stage` disagrees with itself (`reason`), so no
     /// input width is safe for it.
     InconsistentState { reason: &'static str },
-    /// The output of stage `stage` for rows `got` wide is wider than any row.
+    /// The output of stage `stage` for rows `got` wide overflows, or is wider than any row can be.
     OutputOverflow,
 }
 
@@ -397,11 +397,11 @@ impl Model {
     ///
     /// Returns a [`WidthMismatch`], before any stage runs, when the rows of `x`
     /// differ in width or [`check_input_width`] refuses their width. That covers
-    /// every width at which `predict` would panic, and every width at which a
-    /// stage or head holding one fitted entry per input column would silently
-    /// misread the rows. Otherwise it returns `predict(x)` itself, so its bits
-    /// are `predict`'s. With no rows there is no width to check, and it returns
-    /// `predict(x)`.
+    /// every width at which a fitted stage would panic in `predict`, and every
+    /// width at which a stage or head holding one fitted entry per input column
+    /// would silently misread the rows; a head's own tables are trusted (see the
+    /// module notes). Otherwise it returns `predict(x)` itself, so its bits are
+    /// `predict`'s. With no rows there is no width to check.
     ///
     /// `Exactly` requirements make this stricter than `predict`, which accepts
     /// some narrower inputs; `predict` itself is unchanged.
