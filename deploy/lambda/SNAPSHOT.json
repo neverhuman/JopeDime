@@ -1,9 +1,9 @@
 {
   "schema": "jopedime.lambda-snapshot.v1",
-  "what": "The frozen AWS Lambda work of 2026-09-28, imported into deploy/lambda/ from the ignored .agent/experiments/ staging tree. Every file of the three frozen bodies is listed with its sha256, its source anchor and its disposition. None of it is part of the jope binary, its Cargo workspace or its release build.",
+  "what": "The frozen AWS Lambda work of 2026-09-28 and the regression workers frozen on 2026-09-29, imported into deploy/lambda/ from the ignored .agent/experiments/ staging tree. Every file of the five frozen bodies is listed with its sha256, its source anchor and its disposition. None of it is part of the jope binary, its Cargo workspace or its release build.",
   "imported_utc": "2026-09-29",
   "verify": "jq -r '.files[] | select(.tree_path != null) | .tree_sha256 + \"  \" + .tree_path' deploy/lambda/SNAPSHOT.json | sha256sum -c --strict (from the repository root; the gzipped corpus is checked as tracked, and deploy/ci/lambda.sh checks the sha256 of its inflated bytes)",
-  "owner_decisions": "2026-09-29 ~00:15Z: all Lambda Rust goes into PR #124 and is built and tested by CI; the Lambda Python and other untracked orchestration is preserved byte-exact in custody with a tracked hash manifest (docs/archive/lambda-python-manifest.json), and a Rust port is a follow-up; v0.2.0 waits for the regression-Lambda v3 freeze, which is not part of this import.",
+  "owner_decisions": "2026-09-29 ~00:15Z: all Lambda Rust goes into PR #124 and is built and tested by CI; the Lambda Python and other untracked orchestration is preserved byte-exact in custody with a tracked hash manifest (docs/archive/lambda-python-manifest.json), and a Rust port is a follow-up; v0.2.0 waits for the regression-Lambda v3 freeze, which is not part of this import. 2026-09-29 ~04:20Z (O1): PR #124 merges at its approved head, the frozen regression workers are imported by PR #125, and v0.2.0 is tagged from #125's merge commit, so the release contains every body.",
   "bodies": {
     "csv": {
       "source": ".agent/experiments/lambda-csv",
@@ -15,15 +15,6 @@
         "csv-s3-source-bundle"
       ]
     },
-    "watch": {
-      "source": ".agent/experiments/lambda-watch",
-      "tree": "deploy/lambda/watch",
-      "workspace": "deploy/lambda/watch (package jope-lambda-watch)",
-      "frozen": "2026-09-28T20:53:47Z (released_frozen)",
-      "anchors": [
-        "watch-tarball"
-      ]
-    },
     "planning": {
       "source": ".agent/experiments/gp-evolution-100",
       "tree": null,
@@ -33,18 +24,37 @@
       "anchors": [
         "planning-survey-manifest"
       ]
+    },
+    "regression": {
+      "source": ".agent/experiments/regression-lambda-v3",
+      "tree": "deploy/lambda/regression",
+      "workspace": "deploy/lambda/regression/rust (package jope-regression-lambda: bin regression-bootstrap)",
+      "frozen": "sources unchanged since 2026-09-29T00:54:49Z; campaign closeout published at 2026-09-29T05:03:06Z; freeze proven at 2026-09-29T05:30:07Z",
+      "anchors": [
+        "regression-freeze-proof"
+      ],
+      "note": "The worker writes its per-call scratch under /tmp/jope-<attempt_id> and removes it before it returns (rust/src/main.rs): /tmp is the only writable path in the AWS Lambda runtime. That is the repository's one /tmp exception, and it holds only inside Lambda; the tests write nothing there."
+    },
+    "regression-ops": {
+      "source": ".agent/experiments/regression-lambda-v3-ops",
+      "tree": "deploy/lambda/regression-ops",
+      "workspace": "deploy/lambda/regression-ops/rust (package jope-regression-assessment: bin regression-assess)",
+      "frozen": "sources unchanged since 2026-09-29T00:54:49Z; campaign closeout published at 2026-09-29T05:03:06Z; freeze proven at 2026-09-29T05:30:07Z",
+      "anchors": [
+        "regression-freeze-proof"
+      ]
+    },
+    "watch": {
+      "source": ".agent/experiments/lambda-watch",
+      "tree": "deploy/lambda/watch",
+      "workspace": "deploy/lambda/watch (package jope-lambda-watch)",
+      "frozen": "2026-09-28T20:53:47Z (released_frozen)",
+      "anchors": [
+        "watch-tarball"
+      ]
     }
   },
-  "not_imported": [
-    {
-      "source": ".agent/experiments/regression-lambda-v3",
-      "reason": "live at import time; imported after its owner freezes it, before PR #124 merges"
-    },
-    {
-      "source": ".agent/experiments/regression-lambda-v3-ops",
-      "reason": "live at import time; imported after its owner freezes it, before PR #124 merges"
-    }
-  ],
+  "not_imported": [],
   "anchors": {
     "csv-survey-manifest": {
       "kind": "sha256 file list of the frozen tree (read-only survey, 2026-09-28T23:54Z)",
@@ -80,6 +90,20 @@
       "close_sha256": "83a85ba85014412bd4c7fbf5bf268f2133e1376f7000fb8a3627d6ea9f9d83ea",
       "close_object": "s3://veox-jopedime-learning-use2/experiments/gp-evolution/v1/discoveries/scan-20260928T1918Z/CLOSE.json",
       "close_version": "d.8oUDdDEIMlJs2y7afVxVv55hoRVXSG"
+    },
+    "regression-freeze-proof": {
+      "kind": "freeze proof of the two regression source directories (read-only, 2026-09-29T05:18Z to 05:30Z): no process referenced them in three full /proc scans; two sha256 passes 620 s apart were identical to each other and to the pre-freeze snapshot",
+      "path": "~/jope-evidence/closeout-20260929/20-v3-freeze-proof/FREEZE-PROOF.json",
+      "sha256": "c4a740be1544e7a92758c32fbe9c04c74f244400cf9d382b2379d223c879e63b",
+      "files": 52,
+      "frozen_list_sha256": "d2fe056bf3712d3118cd1d3b7d6f24065f320ed24af587a11eb247d34a3093f1",
+      "frozen_list": "sha256sum list of every file except target/ and __pycache__/, the private environment files by hash only (~/jope-evidence/closeout-20260929/21-v3-frozen/frozen-sha256.txt)",
+      "custody_copy": "~/jope-evidence/closeout-20260929/21-v3-frozen/tree/, mirrored at /mnt/jope-archive/jopedime-closeout-20260929/21-v3-frozen/; the only source of this import",
+      "handoff": "Codex's stopped-state handoff, AGENT_CHAT.md 2026-09-29T05:04:31Z: terminal state published, sources frozen and released for this import",
+      "closeout_complete_sha256": "9ed8cdf377536c56867467f9f228cbd9072357a8fdb3ed15320fd14cf63a5002",
+      "s3_prefix": "s3://veox-jopedime-learning-use2/experiments/regression-evolution/v1/campaigns/regression-20260928-v3/",
+      "commit_sha256": "69643bbf38d9b3becf14df8e52ad100f57651c22a6897ac331f817c2ae1657a3",
+      "commit_version": "u6VROvAgGDHlJE220X6Nl._UutWYKA_o"
     }
   },
   "custody": {
@@ -88,13 +112,20 @@
     "tarballs": {
       "lambda-python-csv.tar": "186558ef90f66830e43412ced0792a158fc04edf08ad9e3e01631e17111ff665",
       "lambda-python-watch.tar": "8a72817e09b9b35530049a37cb7314d3028919edea37fc723b11c43e3272845b",
-      "lambda-python-planning.tar": "77d939ae3de94960bfeaf1f789c0d4379636a9be9465e43ba3efd32e8987d776"
+      "lambda-python-planning.tar": "77d939ae3de94960bfeaf1f789c0d4379636a9be9465e43ba3efd32e8987d776",
+      "lambda-python-regression.tar": "bfebbd639cbe4a60b42195976a79903a76e5f5b392f115cbcf2c3ff771723e27",
+      "lambda-python-regression-ops.tar": "dbed86146df6a7ca5b9785564ec32a7c5c6625c2bc31589a4d3391f7e0f600b1"
     },
     "sha256sums_sha256": "6cb7def8390edb0c31d7bf77d1b1d92692fc83402a9d6f5f6b6e23033418ab58",
-    "manifest": "docs/archive/lambda-python-manifest.json"
+    "manifest": "docs/archive/lambda-python-manifest.json",
+    "regression_sha256sums": {
+      "file": "SHA256SUMS-regression",
+      "sha256": "9e90c7406e02d6b60538b3f2d7e0ea3985c766df462542a5d543d06ab825d819",
+      "note": "lists the two regression tarballs and FILES-regression.sha256; the earlier SHA256SUMS is unchanged"
+    }
   },
   "counts": {
-    "files": 99,
+    "files": 148,
     "by_body": {
       "csv": {
         "custody": 25,
@@ -105,18 +136,28 @@
       "planning": {
         "custody": 14
       },
+      "regression": {
+        "custody": 12,
+        "excluded-duplicate": 2,
+        "tracked": 13
+      },
+      "regression-ops": {
+        "custody": 16,
+        "tracked": 6
+      },
       "watch": {
         "custody": 6,
         "tracked": 11
       }
     },
     "by_disposition": {
-      "custody": 45,
-      "tracked": 52,
+      "custody": 73,
+      "excluded-duplicate": 2,
+      "tracked": 71,
       "tracked-gzipped": 1,
       "tracked-renamed": 1
     },
-    "excluded": 33
+    "excluded": 52
   },
   "files": [
     {
@@ -1471,6 +1512,799 @@
       "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
     },
     {
+      "body": "regression",
+      "path": ".gitignore",
+      "source": ".agent/experiments/regression-lambda-v3/.gitignore",
+      "sha256": "c18927051c78a6c91ad54fdff048a7b73c93d3c6dea4445dbd5bbdd509faff4f",
+      "bytes": 31,
+      "mode": "100644",
+      "anchors": [
+        "regression-freeze-proof"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/regression/.gitignore",
+      "tree_sha256": "c18927051c78a6c91ad54fdff048a7b73c93d3c6dea4445dbd5bbdd509faff4f",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "regression",
+      "path": "SCHEMA-EVOLUTION.md",
+      "source": ".agent/experiments/regression-lambda-v3/SCHEMA-EVOLUTION.md",
+      "sha256": "970a6a941dc9ed69b29a587be194e7b9c3e187d5c92b33b9027ffc36e780afaf",
+      "bytes": 11548,
+      "mode": "100644",
+      "anchors": [
+        "regression-freeze-proof"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/regression/SCHEMA-EVOLUTION.md",
+      "tree_sha256": "970a6a941dc9ed69b29a587be194e7b9c3e187d5c92b33b9027ffc36e780afaf",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "regression",
+      "path": "WORKER-PLAN.md",
+      "source": ".agent/experiments/regression-lambda-v3/WORKER-PLAN.md",
+      "sha256": "97c7ba736d27b1a13555755739482ab4842fbc410bef2dfd7bb2121a2c51d26a",
+      "bytes": 8017,
+      "mode": "100644",
+      "anchors": [
+        "regression-freeze-proof"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/regression/WORKER-PLAN.md",
+      "tree_sha256": "124d73d518b645cf82b5b16fdaa94417bf306b389601898b21350e816b7c70fc",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim",
+      "tree_change": "writes the xbabe2 home-directory prefix of 4 absolute paths as ~/ (the same host paths, home-relative); nothing else changes"
+    },
+    {
+      "body": "regression",
+      "path": "audit_s3.py",
+      "source": ".agent/experiments/regression-lambda-v3/audit_s3.py",
+      "sha256": "2526495fda1b5b7bcfeaf845524eb97ebc941a27882f6d03d47d72c0352bd304",
+      "bytes": 4700,
+      "mode": "100644",
+      "anchors": [
+        "regression-freeze-proof"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-regression.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "regression",
+      "path": "campaign.py",
+      "source": ".agent/experiments/regression-lambda-v3/campaign.py",
+      "sha256": "0577cd58c321c9be8fb2c8ce419de785051ed0bd3654720a717a65b3525efaff",
+      "bytes": 23007,
+      "mode": "100644",
+      "anchors": [
+        "regression-freeze-proof"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-regression.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "regression",
+      "path": "common.py",
+      "source": ".agent/experiments/regression-lambda-v3/common.py",
+      "sha256": "72e953da2c36ca4c6dc8f223b5b27f5ba820862080dae1cb0a9891a70ed365ae",
+      "bytes": 11715,
+      "mode": "100644",
+      "anchors": [
+        "regression-freeze-proof"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-regression.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "regression",
+      "path": "deploy.py",
+      "source": ".agent/experiments/regression-lambda-v3/deploy.py",
+      "sha256": "230f86c518442cdd7eb2caadf1991240bbfc94b20b2a6f862148ffeff75e1176",
+      "bytes": 6002,
+      "mode": "100644",
+      "anchors": [
+        "regression-freeze-proof"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-regression.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "regression",
+      "path": "history_index.py",
+      "source": ".agent/experiments/regression-lambda-v3/history_index.py",
+      "sha256": "e889091bd2fd5afc8d0c87ad17cd25f9540b7eb1a00a3cc8aad0a21e5dc70cc2",
+      "bytes": 9993,
+      "mode": "100644",
+      "anchors": [
+        "regression-freeze-proof"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-regression.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "regression",
+      "path": "prepare.py",
+      "source": ".agent/experiments/regression-lambda-v3/prepare.py",
+      "sha256": "f3b37bcc3348f1a9c7840baa24b91bd1b98de97fce12f3d90a0c7f911e3701ef",
+      "bytes": 8874,
+      "mode": "100644",
+      "anchors": [
+        "regression-freeze-proof"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-regression.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "regression",
+      "path": "prepare_screened.py",
+      "source": ".agent/experiments/regression-lambda-v3/prepare_screened.py",
+      "sha256": "b7557f11df38bdb04114b278276c39b69ba58fd7acfa02994ecb10a5f633a124",
+      "bytes": 5057,
+      "mode": "100644",
+      "anchors": [
+        "regression-freeze-proof"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-regression.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "regression",
+      "path": "qualify_storage.py",
+      "source": ".agent/experiments/regression-lambda-v3/qualify_storage.py",
+      "sha256": "6ae8239d4703c680de0c58272a0685d02ee22029501e045c82535de6ef264161",
+      "bytes": 1408,
+      "mode": "100644",
+      "anchors": [
+        "regression-freeze-proof"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-regression.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "regression",
+      "path": "rust/Cargo.lock",
+      "source": ".agent/experiments/regression-lambda-v3/rust/Cargo.lock",
+      "sha256": "49febdcbe13d0e298703f9378bdfbb768b24504680275b305beab5f5f81b8ad5",
+      "bytes": 28651,
+      "mode": "100644",
+      "anchors": [
+        "regression-freeze-proof"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/regression/rust/Cargo.lock",
+      "tree_sha256": "49febdcbe13d0e298703f9378bdfbb768b24504680275b305beab5f5f81b8ad5",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "regression",
+      "path": "rust/Cargo.toml",
+      "source": ".agent/experiments/regression-lambda-v3/rust/Cargo.toml",
+      "sha256": "7aeb9a55c73a86d264c3c4ca1cdfa5540aed7fc2fa0bdc71af6f36c219f8e409",
+      "bytes": 625,
+      "mode": "100644",
+      "anchors": [
+        "regression-freeze-proof"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/regression/rust/Cargo.toml",
+      "tree_sha256": "f0b2d260863a87340ce52bd66281d664e36b3ac6e19b240685b84920f7f81f60",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim",
+      "tree_change": "adds license = \"Apache-2.0\" to [package] (cargo-deny licence policy); nothing else changes"
+    },
+    {
+      "body": "regression",
+      "path": "rust/src/main.rs",
+      "source": ".agent/experiments/regression-lambda-v3/rust/src/main.rs",
+      "sha256": "ac6ec57d7eaa185ec2cd4707799bcbc2cf5df7fdaae5df64c9273fa5e4d93828",
+      "bytes": 17984,
+      "mode": "100644",
+      "anchors": [
+        "regression-freeze-proof"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/regression/rust/src/main.rs",
+      "tree_sha256": "ac6ec57d7eaa185ec2cd4707799bcbc2cf5df7fdaae5df64c9273fa5e4d93828",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "regression",
+      "path": "sample_schemas.py",
+      "source": ".agent/experiments/regression-lambda-v3/sample_schemas.py",
+      "sha256": "c41b2bbeef76bf248b7c1efe06e5aaf7fed75085b51542722149e16a7d810737",
+      "bytes": 3137,
+      "mode": "100644",
+      "anchors": [
+        "regression-freeze-proof"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-regression.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "regression",
+      "path": "schema_contract.py",
+      "source": ".agent/experiments/regression-lambda-v3/schema_contract.py",
+      "sha256": "4a7c3ee37d1248547b2ecb16b19a0bdabd99011bf7d4b2dd18dd46d3a5241067",
+      "bytes": 6153,
+      "mode": "100644",
+      "anchors": [
+        "regression-freeze-proof"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-regression.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "regression",
+      "path": "schemas/REGISTRY.json",
+      "source": ".agent/experiments/regression-lambda-v3/schemas/REGISTRY.json",
+      "sha256": "55a56ef65f7f9c1a88ada42641b183a31978b12a5607284e91a21eaf087bd2b5",
+      "bytes": 1822,
+      "mode": "100644",
+      "anchors": [
+        "regression-freeze-proof"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/regression/schemas/REGISTRY.json",
+      "tree_sha256": "55a56ef65f7f9c1a88ada42641b183a31978b12a5607284e91a21eaf087bd2b5",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim",
+      "note": "kept verbatim, as a record of 2026-09-28: its path fields name the schemas in the xbabe2 staging directory"
+    },
+    {
+      "body": "regression",
+      "path": "schemas/jope.gp-context-event.v1.schema.json",
+      "source": ".agent/experiments/regression-lambda-v3/schemas/jope.gp-context-event.v1.schema.json",
+      "sha256": "512fc5582b8eed3f7e80dafc28f166a4e165964170d3afd18e25e06616759d23",
+      "bytes": 870,
+      "mode": "100644",
+      "anchors": [
+        "regression-freeze-proof"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/regression/schemas/jope.gp-context-event.v1.schema.json",
+      "tree_sha256": "512fc5582b8eed3f7e80dafc28f166a4e165964170d3afd18e25e06616759d23",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "regression",
+      "path": "schemas/jope.gp-context-head.v1.schema.json",
+      "source": ".agent/experiments/regression-lambda-v3/schemas/jope.gp-context-head.v1.schema.json",
+      "sha256": "716ca69694525af9d946b4f98fdf40b8426160864041452d30bfc05b2b326e0b",
+      "bytes": 750,
+      "mode": "100644",
+      "anchors": [
+        "regression-freeze-proof"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/regression/schemas/jope.gp-context-head.v1.schema.json",
+      "tree_sha256": "716ca69694525af9d946b4f98fdf40b8426160864041452d30bfc05b2b326e0b",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "regression",
+      "path": "schemas/jope.gp-evaluation.v1.schema.json",
+      "source": ".agent/experiments/regression-lambda-v3/schemas/jope.gp-evaluation.v1.schema.json",
+      "sha256": "db7db63bcb237057f1ac230bd56480c174b569e0f7a8b0d6f99a6bed0400bba6",
+      "bytes": 1030,
+      "mode": "100644",
+      "anchors": [
+        "regression-freeze-proof"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/regression/schemas/jope.gp-evaluation.v1.schema.json",
+      "tree_sha256": "db7db63bcb237057f1ac230bd56480c174b569e0f7a8b0d6f99a6bed0400bba6",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "regression",
+      "path": "schemas/jope.regression-fit.v1.schema.json",
+      "source": ".agent/experiments/regression-lambda-v3/schemas/jope.regression-fit.v1.schema.json",
+      "sha256": "96ca44fa8176094cab43d3c7d48743561eb877fe6cf753f5cbbe60b760c8163a",
+      "bytes": 1513,
+      "mode": "100644",
+      "anchors": [
+        "regression-freeze-proof"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/regression/schemas/jope.regression-fit.v1.schema.json",
+      "tree_sha256": "96ca44fa8176094cab43d3c7d48743561eb877fe6cf753f5cbbe60b760c8163a",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "regression",
+      "path": "schemas/jope.regression-invocation.v1.schema.json",
+      "source": ".agent/experiments/regression-lambda-v3/schemas/jope.regression-invocation.v1.schema.json",
+      "sha256": "be132a986c4f24913fbe424788c394c598a0d9e54c1b42dd9ec0193dff2ca1a3",
+      "bytes": 1687,
+      "mode": "100644",
+      "anchors": [
+        "regression-freeze-proof"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/regression/schemas/jope.regression-invocation.v1.schema.json",
+      "tree_sha256": "be132a986c4f24913fbe424788c394c598a0d9e54c1b42dd9ec0193dff2ca1a3",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "regression",
+      "path": "schemas/legacy/jope.hwm.v1.schema.json",
+      "source": ".agent/experiments/regression-lambda-v3/schemas/legacy/jope.hwm.v1.schema.json",
+      "sha256": "65a11eafdca127d5c6d14dc4a041f135a155526fb051b91df205457985267f30",
+      "bytes": 9917,
+      "mode": "100644",
+      "anchors": [
+        "regression-freeze-proof"
+      ],
+      "disposition": "excluded-duplicate",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": null,
+      "product_path": "schemas/jope.hwm.v1.schema.json",
+      "reason": "byte-identical to the product schema schemas/jope.hwm.v1.schema.json (same sha256; the frozen schemas/REGISTRY.json lists it under legacy_unchanged), so it is not tracked a second time"
+    },
+    {
+      "body": "regression",
+      "path": "schemas/legacy/jope.score.v1.schema.json",
+      "source": ".agent/experiments/regression-lambda-v3/schemas/legacy/jope.score.v1.schema.json",
+      "sha256": "4d897333f6cd85348a1f062cddde8c1a7efc99c45a36145739019bac949632b4",
+      "bytes": 4602,
+      "mode": "100644",
+      "anchors": [
+        "regression-freeze-proof"
+      ],
+      "disposition": "excluded-duplicate",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": null,
+      "product_path": "schemas/jope.score.v1.schema.json",
+      "reason": "byte-identical to the product schema schemas/jope.score.v1.schema.json (same sha256; the frozen schemas/REGISTRY.json lists it under legacy_unchanged), so it is not tracked a second time"
+    },
+    {
+      "body": "regression",
+      "path": "schemas/score-v1-compatibility-fixture.json",
+      "source": ".agent/experiments/regression-lambda-v3/schemas/score-v1-compatibility-fixture.json",
+      "sha256": "8bf7960a646356a35a40b02b12b0807904a3ae514796e85230fcb5e3bae0d94b",
+      "bytes": 730,
+      "mode": "100644",
+      "anchors": [
+        "regression-freeze-proof"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/regression/schemas/score-v1-compatibility-fixture.json",
+      "tree_sha256": "8bf7960a646356a35a40b02b12b0807904a3ae514796e85230fcb5e3bae0d94b",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "regression",
+      "path": "test_boundaries.py",
+      "source": ".agent/experiments/regression-lambda-v3/test_boundaries.py",
+      "sha256": "64ca3ad345c26d13a0958a1ee8c3b7cd9d099620b73544e5ec2d83de3e2999c0",
+      "bytes": 5377,
+      "mode": "100644",
+      "anchors": [
+        "regression-freeze-proof"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-regression.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "regression",
+      "path": "watch_feed.py",
+      "source": ".agent/experiments/regression-lambda-v3/watch_feed.py",
+      "sha256": "723c9fda15c9d1ef3abed24c2c173b039f6ab56623a92614d7f6f540c1dc8b05",
+      "bytes": 5428,
+      "mode": "100644",
+      "anchors": [
+        "regression-freeze-proof"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-regression.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "regression-ops",
+      "path": "S3-AUDIT.md",
+      "source": ".agent/experiments/regression-lambda-v3-ops/S3-AUDIT.md",
+      "sha256": "e1061318c7589c5e0c9aa1e00acbd1fd85e37515f2de37af336d0731c97016a3",
+      "bytes": 13370,
+      "mode": "100644",
+      "anchors": [
+        "regression-freeze-proof"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/regression-ops/S3-AUDIT.md",
+      "tree_sha256": "1ebfe1d56730bb952782a6c3250363c94ff13b903f814f05a2f551f21dc4934b",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim",
+      "tree_change": "writes the xbabe2 home-directory prefix of 2 absolute paths as ~/ (the same host paths, home-relative); nothing else changes"
+    },
+    {
+      "body": "regression-ops",
+      "path": "SCHEMA-ADDENDUM.md",
+      "source": ".agent/experiments/regression-lambda-v3-ops/SCHEMA-ADDENDUM.md",
+      "sha256": "c0f8040db728d9aae9a461fe037d1f7743ab68411785a1fd766250a9b82d1def",
+      "bytes": 9215,
+      "mode": "100644",
+      "anchors": [
+        "regression-freeze-proof"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/regression-ops/SCHEMA-ADDENDUM.md",
+      "tree_sha256": "07150dc755495cb2ff1b97ba83fb456778f576c5016a31eac29e0e446166412e",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim",
+      "tree_change": "writes the xbabe2 home-directory prefix of 1 absolute path as ~/ (the same host paths, home-relative); nothing else changes"
+    },
+    {
+      "body": "regression-ops",
+      "path": "STATUS.md",
+      "source": ".agent/experiments/regression-lambda-v3-ops/STATUS.md",
+      "sha256": "9932291ae222012619b2e7b9d032cfc24838681e1129a16033efe5ddd032753d",
+      "bytes": 8200,
+      "mode": "100644",
+      "anchors": [
+        "regression-freeze-proof"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/regression-ops/STATUS.md",
+      "tree_sha256": "bf3c0cb6703dd3e937d249e65bc76f28b97fbfd1633ea3d2b5b9371fcebf92ec",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim",
+      "tree_change": "writes the xbabe2 home-directory prefix of 3 absolute paths as ~/ (the same host paths, home-relative); nothing else changes"
+    },
+    {
+      "body": "regression-ops",
+      "path": "accounting-v3-frozen.py",
+      "source": ".agent/experiments/regression-lambda-v3-ops/accounting-v3-frozen.py",
+      "sha256": "f09d10a286768a4683d181a330f104b21ec7d156a53dadacee5aaa7495b1c17e",
+      "bytes": 3873,
+      "mode": "100644",
+      "anchors": [
+        "regression-freeze-proof"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-regression-ops.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "regression-ops",
+      "path": "accounting.py",
+      "source": ".agent/experiments/regression-lambda-v3-ops/accounting.py",
+      "sha256": "0bc8158f53bde6446495257e34f73932585b978809ec9ebc3c13d9c77a1f9804",
+      "bytes": 3979,
+      "mode": "100644",
+      "anchors": [
+        "regression-freeze-proof"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-regression-ops.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "regression-ops",
+      "path": "assess_leaders.py",
+      "source": ".agent/experiments/regression-lambda-v3-ops/assess_leaders.py",
+      "sha256": "2d3050c7420e278d8fb3cd8acd812c035eb632517ecd1aef6a4836957fedfdb5",
+      "bytes": 6216,
+      "mode": "100644",
+      "anchors": [
+        "regression-freeze-proof"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-regression-ops.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "regression-ops",
+      "path": "batch_control.py",
+      "source": ".agent/experiments/regression-lambda-v3-ops/batch_control.py",
+      "sha256": "c7ee8831d1898c7d9cbf86f5d1df17ab52296b322c372ddc865c7ca1ac89c361",
+      "bytes": 1863,
+      "mode": "100644",
+      "anchors": [
+        "regression-freeze-proof"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-regression-ops.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "regression-ops",
+      "path": "broad_campaign.py",
+      "source": ".agent/experiments/regression-lambda-v3-ops/broad_campaign.py",
+      "sha256": "7d7e7ca3535efba8938d1c72cca5df8f44c7083a9603c84c75f5c1189ccdb1c9",
+      "bytes": 7370,
+      "mode": "100644",
+      "anchors": [
+        "regression-freeze-proof"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-regression-ops.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "regression-ops",
+      "path": "broad_campaign_v2.py",
+      "source": ".agent/experiments/regression-lambda-v3-ops/broad_campaign_v2.py",
+      "sha256": "14f738df3614c6e894718e57a896ea0234ca4eabd39fd05b4855d62b69210c17",
+      "bytes": 8125,
+      "mode": "100644",
+      "anchors": [
+        "regression-freeze-proof"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-regression-ops.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "regression-ops",
+      "path": "broad_campaign_v3.py",
+      "source": ".agent/experiments/regression-lambda-v3-ops/broad_campaign_v3.py",
+      "sha256": "2c3c2a630f2fdcee77ddbaeb94294dae472009d096f328b7d4171d345dd05f6f",
+      "bytes": 9529,
+      "mode": "100644",
+      "anchors": [
+        "regression-freeze-proof"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-regression-ops.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "regression-ops",
+      "path": "broad_campaign_v4.py",
+      "source": ".agent/experiments/regression-lambda-v3-ops/broad_campaign_v4.py",
+      "sha256": "39afedb329d211ebffb7f810e6fb43adbb98c0abccb5f76abd70cb953411564b",
+      "bytes": 10785,
+      "mode": "100644",
+      "anchors": [
+        "regression-freeze-proof"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-regression-ops.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "regression-ops",
+      "path": "closeout.py",
+      "source": ".agent/experiments/regression-lambda-v3-ops/closeout.py",
+      "sha256": "235cdb40032952fac5e2b43f8e0a5e0ff6dd4f149be2a09820a00715ecc1fbe5",
+      "bytes": 6206,
+      "mode": "100644",
+      "anchors": [
+        "regression-freeze-proof"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-regression-ops.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "regression-ops",
+      "path": "export_review.py",
+      "source": ".agent/experiments/regression-lambda-v3-ops/export_review.py",
+      "sha256": "63718a6d3cbdd5654eae98cb7c652e3807ad1faa795f4840c1c3d5624181c2a9",
+      "bytes": 7577,
+      "mode": "100644",
+      "anchors": [
+        "regression-freeze-proof"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-regression-ops.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "regression-ops",
+      "path": "finalize.py",
+      "source": ".agent/experiments/regression-lambda-v3-ops/finalize.py",
+      "sha256": "2af92e4f24e5012bc482896c24701ee40b7d5532c4ffe97aca85d79d96d76cd4",
+      "bytes": 11269,
+      "mode": "100644",
+      "anchors": [
+        "regression-freeze-proof"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-regression-ops.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "regression-ops",
+      "path": "publish_foundation.py",
+      "source": ".agent/experiments/regression-lambda-v3-ops/publish_foundation.py",
+      "sha256": "a0dd9ee6df3b73e90e18e308c5c39810ccb21b93fbbd3ffb5fa7cfbe53d33331",
+      "bytes": 7175,
+      "mode": "100644",
+      "anchors": [
+        "regression-freeze-proof"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-regression-ops.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "regression-ops",
+      "path": "qualify_campaign.py",
+      "source": ".agent/experiments/regression-lambda-v3-ops/qualify_campaign.py",
+      "sha256": "289ca2a2957c94b150f9ac92af281595d7248f09f0bc030112c9c772c7dd8155",
+      "bytes": 3103,
+      "mode": "100644",
+      "anchors": [
+        "regression-freeze-proof"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-regression-ops.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "regression-ops",
+      "path": "query_tables.py",
+      "source": ".agent/experiments/regression-lambda-v3-ops/query_tables.py",
+      "sha256": "cd5b9427c758ae54f0a245367378704a82d2175fcf6e88969d2fd259d8dd5ef0",
+      "bytes": 8816,
+      "mode": "100644",
+      "anchors": [
+        "regression-freeze-proof"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-regression-ops.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "regression-ops",
+      "path": "reconcile.py",
+      "source": ".agent/experiments/regression-lambda-v3-ops/reconcile.py",
+      "sha256": "06de796e8cd9f8789c8d31057055beaaedee6357550ba9fd0b538a01666b3487",
+      "bytes": 5286,
+      "mode": "100644",
+      "anchors": [
+        "regression-freeze-proof"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-regression-ops.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "regression-ops",
+      "path": "rust/Cargo.lock",
+      "source": ".agent/experiments/regression-lambda-v3-ops/rust/Cargo.lock",
+      "sha256": "249d4115262b96528e8ffe63870e5fe6c210c83051fc0bcc8a9738a6e254efc4",
+      "bytes": 7906,
+      "mode": "100644",
+      "anchors": [
+        "regression-freeze-proof"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/regression-ops/rust/Cargo.lock",
+      "tree_sha256": "249d4115262b96528e8ffe63870e5fe6c210c83051fc0bcc8a9738a6e254efc4",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "regression-ops",
+      "path": "rust/Cargo.toml",
+      "source": ".agent/experiments/regression-lambda-v3-ops/rust/Cargo.toml",
+      "sha256": "57978c47a81bdbe8048e15029776518a6c5719da1eea68b3da83443ce5865c72",
+      "bytes": 388,
+      "mode": "100644",
+      "anchors": [
+        "regression-freeze-proof"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/regression-ops/rust/Cargo.toml",
+      "tree_sha256": "a7e802784b11d1c8659294b7dd420cdd3202bf3f63564ef23a50d6ee0345bdfc",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim",
+      "tree_change": "adds license = \"Apache-2.0\" and publish = false to [package] (cargo-deny licence and wildcard policy); nothing else changes"
+    },
+    {
+      "body": "regression-ops",
+      "path": "rust/src/main.rs",
+      "source": ".agent/experiments/regression-lambda-v3-ops/rust/src/main.rs",
+      "sha256": "65bd396061d01de4f0c6955ce4853483d38ed1fb2146cabde126d114a9c17960",
+      "bytes": 5741,
+      "mode": "100644",
+      "anchors": [
+        "regression-freeze-proof"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/regression-ops/rust/src/main.rs",
+      "tree_sha256": "65bd396061d01de4f0c6955ce4853483d38ed1fb2146cabde126d114a9c17960",
+      "custody_tarball": null,
+      "reason": "frozen source, verbatim"
+    },
+    {
+      "body": "regression-ops",
+      "path": "validation.py",
+      "source": ".agent/experiments/regression-lambda-v3-ops/validation.py",
+      "sha256": "e7d835bffde10e5994164c650b786dbd88138aa949a5b930ff304b031105f915",
+      "bytes": 3991,
+      "mode": "100644",
+      "anchors": [
+        "regression-freeze-proof"
+      ],
+      "disposition": "custody",
+      "tree_path": null,
+      "tree_sha256": null,
+      "custody_tarball": "lambda-python-regression-ops.tar",
+      "reason": "Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
       "body": "watch",
       "path": ".env.example",
       "source": ".agent/experiments/lambda-watch/.env.example",
@@ -1990,6 +2824,178 @@
       "bytes": 3498
     },
     {
+      "body": "regression",
+      "path": ".env",
+      "source": ".agent/experiments/regression-lambda-v3/.env",
+      "kind": "file",
+      "disposition": "excluded",
+      "sha256": "4577344fba292af649a93740be8bbc90c509ede1e14ade0267deb56733d3f063",
+      "bytes": 137,
+      "reason": "private environment file (mode 0600). Existence, size and the sha256 that the freeze proof recorded only: never read, copied or tracked. Root .gitignore (*.env) and gitleaks rule jope-env-files keep such files out of the tree; the bytes stay in the frozen custody copy"
+    },
+    {
+      "body": "regression",
+      "path": ".env.example",
+      "source": ".agent/experiments/regression-lambda-v3/.env.example",
+      "kind": "file",
+      "disposition": "excluded",
+      "sha256": "4577344fba292af649a93740be8bbc90c509ede1e14ade0267deb56733d3f063",
+      "bytes": 137,
+      "reason": "byte-identical to the private .env beside it (the same sha256), so it is handled as that file: existence, size and sha256 only, never read, copied or tracked; the bytes stay in the frozen custody copy"
+    },
+    {
+      "body": "regression",
+      "path": "__pycache__",
+      "source": ".agent/experiments/regression-lambda-v3/__pycache__",
+      "kind": "directory",
+      "disposition": "excluded",
+      "reason": "Python bytecode cache (rebuildable), not preserved"
+    },
+    {
+      "body": "regression",
+      "path": "__pycache__/audit_s3.cpython-312.pyc",
+      "source": ".agent/experiments/regression-lambda-v3/__pycache__/audit_s3.cpython-312.pyc",
+      "kind": "file",
+      "disposition": "excluded",
+      "reason": "Python bytecode cache (rebuildable), not preserved",
+      "bytes": 9463
+    },
+    {
+      "body": "regression",
+      "path": "__pycache__/campaign.cpython-312.pyc",
+      "source": ".agent/experiments/regression-lambda-v3/__pycache__/campaign.cpython-312.pyc",
+      "kind": "file",
+      "disposition": "excluded",
+      "reason": "Python bytecode cache (rebuildable), not preserved",
+      "bytes": 44886
+    },
+    {
+      "body": "regression",
+      "path": "__pycache__/common.cpython-312.pyc",
+      "source": ".agent/experiments/regression-lambda-v3/__pycache__/common.cpython-312.pyc",
+      "kind": "file",
+      "disposition": "excluded",
+      "reason": "Python bytecode cache (rebuildable), not preserved",
+      "bytes": 21910
+    },
+    {
+      "body": "regression",
+      "path": "__pycache__/deploy.cpython-312.pyc",
+      "source": ".agent/experiments/regression-lambda-v3/__pycache__/deploy.cpython-312.pyc",
+      "kind": "file",
+      "disposition": "excluded",
+      "reason": "Python bytecode cache (rebuildable), not preserved",
+      "bytes": 10326
+    },
+    {
+      "body": "regression",
+      "path": "__pycache__/prepare.cpython-312.pyc",
+      "source": ".agent/experiments/regression-lambda-v3/__pycache__/prepare.cpython-312.pyc",
+      "kind": "file",
+      "disposition": "excluded",
+      "reason": "Python bytecode cache (rebuildable), not preserved",
+      "bytes": 18090
+    },
+    {
+      "body": "regression",
+      "path": "__pycache__/schema_contract.cpython-312.pyc",
+      "source": ".agent/experiments/regression-lambda-v3/__pycache__/schema_contract.cpython-312.pyc",
+      "kind": "file",
+      "disposition": "excluded",
+      "reason": "Python bytecode cache (rebuildable), not preserved",
+      "bytes": 8697
+    },
+    {
+      "body": "regression",
+      "path": "__pycache__/test_boundaries.cpython-312.pyc",
+      "source": ".agent/experiments/regression-lambda-v3/__pycache__/test_boundaries.cpython-312.pyc",
+      "kind": "file",
+      "disposition": "excluded",
+      "reason": "Python bytecode cache (rebuildable), not preserved",
+      "bytes": 14973
+    },
+    {
+      "body": "regression",
+      "path": "__pycache__/watch_feed.cpython-312.pyc",
+      "source": ".agent/experiments/regression-lambda-v3/__pycache__/watch_feed.cpython-312.pyc",
+      "kind": "file",
+      "disposition": "excluded",
+      "reason": "Python bytecode cache (rebuildable), not preserved",
+      "bytes": 14175
+    },
+    {
+      "body": "regression-ops",
+      "path": "__pycache__",
+      "source": ".agent/experiments/regression-lambda-v3-ops/__pycache__",
+      "kind": "directory",
+      "disposition": "excluded",
+      "reason": "Python bytecode cache (rebuildable), not preserved"
+    },
+    {
+      "body": "regression-ops",
+      "path": "__pycache__/accounting.cpython-312.pyc",
+      "source": ".agent/experiments/regression-lambda-v3-ops/__pycache__/accounting.cpython-312.pyc",
+      "kind": "file",
+      "disposition": "excluded",
+      "reason": "Python bytecode cache (rebuildable), not preserved",
+      "bytes": 8040
+    },
+    {
+      "body": "regression-ops",
+      "path": "__pycache__/broad_campaign.cpython-312.pyc",
+      "source": ".agent/experiments/regression-lambda-v3-ops/__pycache__/broad_campaign.cpython-312.pyc",
+      "kind": "file",
+      "disposition": "excluded",
+      "reason": "Python bytecode cache (rebuildable), not preserved",
+      "bytes": 14574
+    },
+    {
+      "body": "regression-ops",
+      "path": "__pycache__/broad_campaign_v2.cpython-312.pyc",
+      "source": ".agent/experiments/regression-lambda-v3-ops/__pycache__/broad_campaign_v2.cpython-312.pyc",
+      "kind": "file",
+      "disposition": "excluded",
+      "reason": "Python bytecode cache (rebuildable), not preserved",
+      "bytes": 15887
+    },
+    {
+      "body": "regression-ops",
+      "path": "__pycache__/closeout.cpython-312.pyc",
+      "source": ".agent/experiments/regression-lambda-v3-ops/__pycache__/closeout.cpython-312.pyc",
+      "kind": "file",
+      "disposition": "excluded",
+      "reason": "Python bytecode cache (rebuildable), not preserved",
+      "bytes": 12391
+    },
+    {
+      "body": "regression-ops",
+      "path": "__pycache__/query_tables.cpython-312.pyc",
+      "source": ".agent/experiments/regression-lambda-v3-ops/__pycache__/query_tables.cpython-312.pyc",
+      "kind": "file",
+      "disposition": "excluded",
+      "reason": "Python bytecode cache (rebuildable), not preserved",
+      "bytes": 16670
+    },
+    {
+      "body": "regression-ops",
+      "path": "__pycache__/validation.cpython-312.pyc",
+      "source": ".agent/experiments/regression-lambda-v3-ops/__pycache__/validation.cpython-312.pyc",
+      "kind": "file",
+      "disposition": "excluded",
+      "reason": "Python bytecode cache (rebuildable), not preserved",
+      "bytes": 7088
+    },
+    {
+      "body": "regression-ops",
+      "path": "watch.env",
+      "source": ".agent/experiments/regression-lambda-v3-ops/watch.env",
+      "kind": "file",
+      "disposition": "excluded",
+      "sha256": "248a74ba6aed293304a620cabd436fdc5a9037c3c76cfe0e7ef9d45858fdb9cb",
+      "bytes": 100,
+      "reason": "private environment file (mode 0600). Existence, size and the sha256 that the freeze proof recorded only: never read, copied or tracked. Root .gitignore (*.env) and gitleaks rule jope-env-files keep such files out of the tree; the bytes stay in the frozen custody copy"
+    },
+    {
       "body": "watch",
       "path": ".env",
       "source": ".agent/experiments/lambda-watch/.env",
@@ -2033,5 +3039,5 @@
       "bytes": 365533855
     }
   ],
-  "build_changes": "Three tracked files differ from their frozen bytes, each recorded with tree_sha256 and tree_change; sha256 stays the frozen value. No .rs file, include path or other manifest line changes."
+  "build_changes": "Each tracked file whose bytes differ from its frozen bytes records tree_sha256 and a tree_change that says why, and sha256 stays the frozen value: jq -r '.files[] | select(has(\"tree_change\")) | .tree_path' deploy/lambda/SNAPSHOT.json lists them. No .rs file, include path or other manifest line changes."
 }
