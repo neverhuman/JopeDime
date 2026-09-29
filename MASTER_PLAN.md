@@ -1,5 +1,53 @@
 # JopeDime current direction
 
+**2026-09-29 v0.2.0 is published; the kernel2 train begins with #126.**
+
+- **v0.2.0.** The owner authorized publication at about 08:15Z.
+  - `deploy/release/release.sh v0.2.0 629e69d865a674222e00224cebf45c1ffddc8dea --publish` exited 0 at 08:24:30Z.
+  - The annotated tag `ed5ddd5190bea066f82ad4394cb3a25051af86c8` peels to M2 `629e69d86`.
+  - The script's own readback passed 10/10. An independent readback passed 22/22: all eight downloaded assets byte-identical, `sha256sum -c`, cosign "Verified OK" against `docs/release/signing.pub`, a tampered copy rejected, the binary printing `jope 0.2.0`, glibc at most 2.34, and no GPU `NEEDED` entry.
+  - Evidence: `~/jope-evidence/release-v0.2.0/publish-20260929T081827Z/` and `~/jope-evidence/closeout-20260929/40-release/READBACK-VERIFY.json`, sha256 `d44c0b4e…`, mirrored.
+  - The main merge freeze was lifted at 08:37Z.
+- **Owner decisions of 2026-09-29.** The owner approved the kernel2 plan: the major release of the algorithm kernel, targeting 1.0.0. The plan and its PR train are recorded in `~/xbabe2_kicker/docs/JOPEDIME_GP_MATH_SYNTAX_WORKPLAN_v2.md` (sha256 `d3040dd1…`), which amends the math-syntax workplan. The decisions:
+  - The programmable learner core ships in the next major.
+  - C++17 gets a fitted predictor early and a train-and-predict recipe for every baseline element by 1.0.
+  - Only the fitted-C++ undefined behaviour is fixed. The round, asinh and erf values are kept.
+  - The agent promotes low-risk rungs; the owner signs off exp/log, pow, new primitives and stages, quarantine admissions and the 1.0 default flip.
+  - The registry is not edited this release.
+  - kernel2 runs ahead of regression trials v2.
+
+  Separately, the owner ruled that the islands-v2 experiment directory is mission critical: it must never be deleted and should be imported into a proper tracked location. A read-only custody snapshot exists, and the import waits for Codex's frozen handoff.
+- **#126 (this pull request): the compatibility freeze** (kernel2 PR 01, workplan WP-0.1, WP-0.2, WP-0.3 and WP-0.5). It contains tests, fixtures and records only; no product source changes.
+  - **The freeze covers:**
+    - 82 scalar expressions × 266 boundary rows, through the interpreter, the compiled form and element and map paths, with error kinds;
+    - map and derive stage outputs;
+    - the emitted Rust, Python, C++17-recipe, JavaScript and fitted-C++17 bytes of 55 programs under two option sets;
+    - the serialized models and predictions;
+    - the grammar, registry, policy-vocabulary, lineage-source and ADR-0004 evaluator-identity inputs;
+    - the seeded generator streams of every legacy search generator (seeds 0..64);
+    - whole seeded search runs.
+  - **Rebaselining.** `JOPE_COMPAT_FREEZE_REGENERATE=identity` rewrites only the identity and lineage fixtures. The other surfaces never rebaseline without an owner decision.
+  - **Proof that it catches changes.** Moving the division guard from 1e-12 to 1e-11 fails three tests with readable diffs.
+  - **Verification:**
+    - feat-math PR tier 460/460;
+    - a replica of the CI rust-test lane 1750/1750;
+    - `deploy/ci/check.sh`, ip-scrub, the coverage validator and `verify-test-inventory`;
+    - the Lambda workspaces 61/61, with cargo-deny skipped locally for a version mismatch.
+  - Record: `docs/internal/kernel2/receipts/WP-0.1.md`.
+  - The freeze fixtures come from xbabe2. The first hosted rust-test run on xbabe1 is the cross-host libm check.
+
+Next allowed action:
+1. Finish the close-out.
+   - Remove the demo lane: custody was independently verified, and ownership of three deploy-owned build subtrees was returned to ubuntu.
+   - Pin the refs and produce the verified final all-refs bundle.
+   - Rename or delete remote branches only after an AGENT_CHAT notice with a 15-minute objection window.
+2. The kernel2 train, one implementation PR at a time, each merged by `merge-guarded.sh` at its exact reviewed head:
+   - PR 02: the equal-budget search ablation harness and a bit-exact emitted-code parity test;
+   - PR 03: fault tracking in the scalar evaluator;
+   - then the rest of the train in plan order.
+3. Import islands-v2 from a custody copy of Codex's frozen handoff, as its own reviewed PR.
+4. Regression trials v2 after the kernel2 train, unless the owner reorders.
+
 **2026-09-28 wrap-up train and v0.2.0.** Eight pull requests, #115 to #122, landed on main between
 2026-09-27T09:56:32Z and 2026-09-28T19:29:10Z. Clean-base part B (#123) followed at
 2026-09-28T21:39:07Z, and #124, which carries the v0.2.0 release tooling, at 2026-09-29T05:12:34Z.
