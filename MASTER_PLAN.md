@@ -1,5 +1,73 @@
 # JopeDime current direction
 
+**2026-09-29 kernel2 pull request 02 (#127): a search ablation harness and a bit-exact parity test.**
+Branch `kernel2/claude-m0-harness`, prepared in the lane `.agent/worktrees/kernel2-next` on
+`629e69d865a674222e00224cebf45c1ffddc8dea` and replayed onto `origin/main`
+`ab48e389c9951f87e158b5f52930f4d2c9b6d2f4` after #126 merged. It carries the approved kernel2
+plan's WP-0.4 and X0: tests, a harness and records only. No existing code path changes:
+jope-bench's `main()` gains one match arm for the appended `Ablation` command and `lib.rs` one
+module declaration, and no Cargo manifest, lock file or ADR-0004 evaluator-identity input changes.
+- **Readback of #126.** kernel2 PR 01 (#126, branch `kernel2/claude-m0-freeze`) merged by rebase
+  at 2026-09-29T11:55:17Z at the exact reviewed head `1dc59fbd4e6d1b45c57dc17aa3782f9f724f2917`.
+  Approval 5351955355 (neverhumanbot) was submitted at 11:42:28Z, after the head push. The
+  `pull_request` run 36562783349 and the `workflow_dispatch` run 36562783666 were green on
+  attempt 1. main = `ab48e389c9951f87e158b5f52930f4d2c9b6d2f4`, and its tree equals the reviewed
+  head's tree. Evidence: `~/jope-evidence/kernel2/pr126-merge-20260929T115500Z/` (`merge.log`,
+  `SHA256SUMS`).
+- **Harness.** `jope-bench ablation` (`crates/jope-bench/src/ablation.rs`; protocol in
+  `docs/internal/kernel2/ablation-protocol.md`) runs two profiles of the shipping search on the
+  same datasets, cuts, seeds and evaluation budget and writes one `jope.bench-ablation/v1`
+  document: metrics M1 to M11, a per-profile aggregate, gates G-A to G-E and a verdict, with wall
+  time outside the digested body. The only profile is `legacy`. A=A over four D5 datasets and
+  eight seeds at 16 evaluations reported `no difference` with body sha256 `f0bf07de…`, the digest
+  recorded before the replay. An M8 clause is not evaluated unless every run of both profiles has
+  a value. Scratch goes under `--scratch` or `TMPDIR`; with neither, the harness refuses to run.
+- **Parity.** `crates/feat-math/tests/parity_bits.rs` compares every prediction of 19 programs
+  (4,788 per lane) bit for bit between the runtime and the emitted Rust, Python and fitted C++17
+  programs; two divide by an input column, and the test checks that the division guard is
+  reached. The 22 divergences present at the base are listed with reasons in
+  `crates/feat-math/tests/fixtures/parity_allowlist.v1.json`, all fix item X6: the sign of a zero
+  row sum (6), fitted C++ minimum and maximum on mixed-sign zeros (4), and non-finite inputs to
+  closed-form programs (12; the input contract, X4, settles which side X6 changes). An edited
+  entry fails the lane as unexpected plus stale; a missing `rustc`, `python3` or C++ compiler
+  skips its lane loudly, and fails it under `JOPE_PARITY_STRICT=1`. The fitted C++ lane treats a
+  compiler other than g++ 13.3, the one its entries were recorded with, the same way. The test
+  reads the shared boundary corpus `tests/fixtures/math_boundary/v1.json` and pins its sha256, so
+  a corpus change fails it as well as `compat_freeze`.
+- **Replay.** After #126 merged, the nine commits `71502f3f4` to `cf654f56d` were cherry-picked
+  onto `ab48e389c` without a conflict; `git range-diff` shows each one unchanged. `6d14d91c9`
+  switches `parity_bits` from its checked copy of the boundary corpus to the shared file, with the
+  same bytes (sha256 `ed1dfe9c…`). The two old records commits, `2d48ac975` and `12b24f3fe`, are
+  regenerated as this commit. The pre-replay head is kept locally as
+  `refs/preserve/kernel2/pr02-prerebase-20260929T115536Z`.
+- **Records.** Coverage map +1 item (`target:feat-math/test/parity_bits`: rust-check, rust-test,
+  full-default); findings inventory +1 role (regression, export); test inventory +12 Rust tests
+  (3,826 to 3,838, ignored 62 to 63), feat-math and jope-bench re-listed with
+  `cargo nextest list --locked -P main -p feat-math -p jope-bench` and every other package
+  unchanged; the CHANGELOG `[Unreleased]` line.
+- **Commands** at `6d14d91c9`, with this commit's record files in the working tree (exit code,
+  seconds): `JOPE_PARITY_STRICT=1` `parity_bits` twice, 6 passed each time (0, 4; 0, 3; rust 6,
+  python 6 and cpp17-fitted 10 divergences, all listed, 0 unexpected, 0 stale); the A=A test
+  twice (0, 13; 0, 13); `compat_freeze`, `mathexpr_current_semantics`, `ip_scrub`,
+  `legacy_v2_freeze` and `portable_parity` 40 passed (0, 11); `JOPE_PARITY_STRICT=1`
+  `nextest -P pr -p feat-math -p jope-bench` 578 passed (0, 61); `nextest -P pr -p jope-bench
+  --features asm` 177 passed (0, 27); `cargo fmt --all --check` (0, 6);
+  `cargo clippy -p feat-math --all-targets --locked -- -D warnings` (0, 9); `coverage validate` (0, 1:
+  286 targets, 0 unassigned); `verify-test-inventory` (0, 0); `deploy/ci/check.sh` (0, 20);
+  `deploy/ci/ip-scrub.sh` (0, 1: 47 files); `deploy/ci/lambda.sh` (0, 9: 4 workspaces, 61 tests;
+  its cargo-deny step skipped, 0.19.8 installed where 0.20.2 is pinned);
+  `git diff --check origin/main...HEAD` (0, 0); the A=A run (0, 152), body sha256 `f0bf07de…`.
+- **Open.** Clippy `-D warnings` on jope-bench fails at the base, in files this change does not
+  touch: linted with its dependencies it stops at jope-pipeline's `dead_code` (`refit_request`,
+  `search_plan.rs:200`); with `--no-deps` it fails on six `needless_borrow` in
+  `panel/inference.rs` (lines 334, 347, 348, 389, 420 and 465); `--features asm` adds four more in
+  `panel/` (`demo_asm.rs:38`, `experimental_proposal.rs:355`, `fitted_export_run.rs:431`,
+  `optimize.rs:1081`). No CI lane runs clippy, but `just ci-pr` does. Clearing them edits existing
+  code, so it needs a separate lint pull request or an owner waiver. This change adds no finding,
+  and feat-math is clean.
+- **Evidence.** `~/jope-evidence/kernel2/pr02/`: the review fixes under `fixer/`, the replay and
+  these commands under `rebase-20260929T115536Z/`.
+
 **2026-09-29 v0.2.0 is published; the kernel2 train begins with #126.**
 
 - **v0.2.0.** The owner authorized publication at about 08:15Z.
@@ -46,13 +114,17 @@
   - The freeze fixtures come from xbabe2. The first hosted rust-test run on xbabe1 is the cross-host libm check.
 
 Next allowed action:
-1. Finish the close-out.
-   - Remove the demo lane: custody was independently verified, and ownership of three deploy-owned build subtrees was returned to ubuntu.
-   - Pin the refs and produce the verified final all-refs bundle.
-   - Rename or delete remote branches only after an AGENT_CHAT notice with a 15-minute objection window.
+1. The close-out is complete. Its independent end-state verification (`~/jope-evidence/closeout-20260929/70-endstate/VERIFY.json`, 12:09:24Z) passed checks 1 to 5, 7 to 9 and 12. Its three blocking findings were bookkeeping gaps, not losses, and were remediated at 12:26Z (`~/jope-evidence/closeout-20260929/80-remediation-20260929T122626Z/`, sealed and mirrored):
+   - Check 6: the eight local `rr2/*` branches of the merged PRs #117 to #122, #124 and #125 (161 commits; their tips are also on GitHub as `refs/pull/<n>/head` and in the final bundle) moved create-only to `refs/preserve/20260929/heads/rr2/`. The recount is 11, exactly this pull request's commits, unpushed at the time.
+   - Check 10, ruled not blocking by the orchestrator: the 2,644 `/tmp` entries newer than 04:00Z belong to other projects on the host (RedlineDB tests, a pytest project, `dope`, the Codex CLI runtime, screen), and none traces to a close-out command. Nothing was deleted; the owner may rule otherwise.
+   - Check 11: the two seals broken by a `run.log` line appended after sealing (`34-pr125-r1-fix`, `60-refs/apply-20260929T113950Z`) were resealed, and each old seal is kept as `SHA256SUMS.superseded-appended-runlog`. `40-release` is now sealed. The missing mirrors (`10-pr124`, `34-pr125-r1-fix`, `40-release`, `60-refs` and every step's `VERIFY.json`) were copied to the archive and verified there. `~/jope-evidence/INDEX.md` now lists every step.
+   - Done before the verification: the demo lane is gone; the refs are pinned (250 pins, 691 to 941 refs), and the final all-refs bundle (sha256 `592950b4…`, 941 refs) was restored and checked in an independent bare repository (`60-refs/`, independently verified at 11:21:00Z). The remote branch renames and deletions ran from 11:39:50Z to 11:45:44Z, after the AGENT_CHAT notice of 11:23:58Z and its 15-minute objection window (`60-refs/apply-20260929T113950Z/run.log`: local 5 of 5 and remote 24 of 24 rows acted, none refused; the stash was cleared; 140 remote-tracking refs were pruned).
+   - A completeness critic restored the final bundle again, independently, and found every T0 census commit reachable (`70-endstate/critic-endstate-critic-20260929T123116Z/`). Its one blocking item, a ledger end snapshot, was taken after the close-out handoff was posted in AGENT_CHAT at 12:35:15Z: `01-agent-chat/snapshots/AGENT_CHAT-20260929T123515Z-end.md`, 509,995 bytes, with the 06:47Z snapshot as its byte prefix. It is sealed and mirrored. `81-remediation-20260929T123356Z/` holds the custody copies made the same afternoon: the kernel2 plan documents and the `release-v0.2.0` run directories.
 2. The kernel2 train, one implementation PR at a time, each merged by `merge-guarded.sh` at its exact reviewed head:
-   - PR 02: the equal-budget search ablation harness and a bit-exact emitted-code parity test;
-   - PR 03: fault tracking in the scalar evaluator;
+   - PR 01 is #126: merged, readback above;
+   - PR 02 is #127, this pull request;
+   - after it merges, PR 03: fault tracking in the scalar evaluator (branch `kernel2/claude-m1-faults`, prepared in the lane `.agent/worktrees/kernel2`);
+   - then PR 04: stage-level fault telemetry;
    - then the rest of the train in plan order.
 3. Import islands-v2 from a custody copy of Codex's frozen handoff, as its own reviewed PR.
 4. Regression trials v2 after the kernel2 train, unless the owner reorders.

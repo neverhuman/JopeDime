@@ -464,6 +464,12 @@
         "gp"
       ]
     },
+    "target:feat-math/test/parity_bits": {
+      "role": "regression",
+      "subsystems": [
+        "export"
+      ]
+    },
     "target:feat-math/test/portable_parity": {
       "role": "regression",
       "subsystems": [

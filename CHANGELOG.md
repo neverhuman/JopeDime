@@ -8,6 +8,7 @@ the commit areas (crate or lane) named in each subject line.
 ### feat-math and emitters
 
 - feat-math: a compatibility freeze of the shipped numerics, emitted bytes, serialized models, pinned files and generator streams, the boundary input corpus, and the current scalar semantics pinned before the kernel2 work (#126)
+- feat-math, bench: a bit-exact parity test of the runtime against the emitted Rust, Python and fitted C++17 programs, and an equal-budget search ablation harness (#127)
 
 ## [0.2.0] - 2026-09-29
 
