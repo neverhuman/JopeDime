@@ -5,7 +5,9 @@
 # Cargo.lock. None is a member of the root workspace, and none is part of the jope binary or its
 # release build (deploy/lambda/README.md). The hygiene lane runs this script
 # (deploy/ci/fast-lane.sh hygiene). It:
-#   1. checks the tracked files under deploy/lambda/ against deploy/lambda/SNAPSHOT.json;
+#   1. checks the tracked files under deploy/lambda/ against deploy/lambda/SNAPSHOT.json with
+#      deploy/ci/lambda-workspaces.sh, which also lists the workspaces for step 3 (`just bump` runs
+#      the same checks after it brings the workspaces' locks to a new root version);
 #   2. inflates deploy/lambda/csv/gp/corpus/train-jobs.json from its tracked .gz (the raw file is
 #      over check.sh's 5 MiB size cap) and checks the sha256 of the inflated bytes before any
 #      build; the inflated file is gitignored, so the tree stays clean;
@@ -45,15 +47,7 @@ esac
 
 step "tracked files match deploy/lambda/SNAPSHOT.json"
 snapshot=deploy/lambda/SNAPSHOT.json
-listed=$(jq -r '.files[] | select(.tree_path != null) | .tree_path' "$snapshot" | LC_ALL=C sort)
-tracked=$(git ls-files -- deploy/lambda | grep -vxE 'deploy/lambda/(SNAPSHOT\.json|README\.md|\.gitattributes)' | LC_ALL=C sort)
-if [[ $listed != "$tracked" ]]; then
-  diff <(printf '%s\n' "$listed") <(printf '%s\n' "$tracked") || true
-  fail "the tracked files under deploy/lambda/ differ from SNAPSHOT.json's tree paths (< SNAPSHOT.json, > git)"
-fi
-jq -r '.files[] | select(.tree_path != null) | .tree_sha256 + "  " + .tree_path' "$snapshot" \
-  | sha256sum -c --strict --quiet || fail "a tracked file under deploy/lambda/ differs from its SNAPSHOT.json sha256"
-echo "ok: $(wc -l <<<"$listed") tracked files match SNAPSHOT.json"
+bash deploy/ci/lambda-workspaces.sh snapshot-check
 
 step "inflate the csv corpus manifest"
 corpus=deploy/lambda/csv/gp/corpus/train-jobs.json
@@ -82,8 +76,10 @@ export JOPE_SOURCE_HEAD=$head
 export JOPE_GP_MANIFEST_PATH=$root/deploy/lambda/csv/gp/corpus/extra-train-jobs.json
 [[ -f $JOPE_GP_MANIFEST_PATH ]] || fail "missing $JOPE_GP_MANIFEST_PATH"
 
-mapfile -t manifests < <(git ls-files -- 'deploy/lambda/*Cargo.toml' | grep -E '(^|/)Cargo\.toml$' | LC_ALL=C sort)
-(( ${#manifests[@]} > 0 )) || fail "no Cargo.toml is tracked under deploy/lambda/"
+# Every tracked deploy/lambda/**/Cargo.toml, each with its own [workspace] (the helper refuses one
+# without it, which would be looked up from the root workspace instead).
+listing=$(bash deploy/ci/lambda-workspaces.sh list)
+mapfile -t manifests <<<"$listing"
 readonly DENY_VERSION='cargo-deny 0.20.2'
 deny_found=$(cargo deny --version 2>/dev/null) || deny_found=''
 deny=0
@@ -94,8 +90,6 @@ elif [[ ${GITHUB_ACTIONS:-} == true ]]; then
 fi
 passed=0
 for manifest in "${manifests[@]}"; do
-  # A manifest without its own [workspace] would be looked up from the root workspace instead.
-  grep -qx '\[workspace\]' "$manifest" || fail "$manifest declares no [workspace] of its own"
   step "cargo metadata --locked ($manifest)"
   cargo metadata --locked --format-version 1 --manifest-path "$manifest" > /dev/null
   echo ok
