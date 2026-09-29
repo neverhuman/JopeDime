@@ -190,7 +190,7 @@ sync_locks() {
     echo "== cargo update ${args[*]} --offline --manifest-path $m"
     if ! cargo update "${args[@]}" --offline --manifest-path "$m" </dev/null; then
       restore_lock "$saved" "$lock"
-      fail "cargo update ${args[*]} --offline failed for $m (above); the lock is unchanged. With a cold cargo cache, fetch first: cargo fetch --locked --manifest-path $m"
+      fail "cargo update ${args[*]} --offline failed for $m (cargo's error above); the lock is unchanged. If cargo reports a missing package, the cargo cache is cold: cargo fetch --locked --manifest-path $m, then rerun; otherwise fix what cargo reports (for example a version requirement on the path dependency)"
     fi
     # shellcheck disable=SC2086  # a package name is one word
     if ! diff <(lock_view "$saved" $names) <(lock_view "$lock" $names); then
