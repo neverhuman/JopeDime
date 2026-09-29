@@ -31,7 +31,9 @@
 //! listed entry of its language that no longer reproduces.
 //!
 //! With `JOPE_PARITY_STRICT=1` a missing `rustc`, `python3` or C++ compiler (`CXX`, default
-//! `g++`) fails its lane. Without it the lane prints a `parity_bits SKIP` line and returns.
+//! `g++`) fails its lane. Without it the lane prints a `parity_bits SKIP` line and returns. The
+//! `cpp17-fitted` lane treats a compiler other than g++ 13.3, the one its allowlist entries were
+//! recorded with, the same way ([`FITTED_CXX_VERSION`]).
 //!
 //! Batching is over inputs: each lane runs each program once over its whole input set. Programs
 //! are compiled one per process, concurrently, because every artifact is a standalone program
@@ -264,6 +266,11 @@ const BOUNDARY_V1_SHA256: &str = "ed1dfe9c31edc68402f1c7c69a51ec25814475c69b3c8c
 const ALLOWLIST: &str = include_str!("fixtures/parity_allowlist.v1.json");
 const ALLOWLIST_SCHEMA: &str = "feat-math.parity-allowlist.v1";
 const ALLOWLIST_STATUS: &str = "pre-existing-at-base";
+/// The `cpp17-fitted` entries were recorded with g++ 13.3, and which signed zero `std::fmin` and
+/// `std::fmax` return on a tie depends on the compiler's operand order. The lane therefore
+/// requires the compiler version to contain this, the rule the product's fitted C++ path applies
+/// (`advanced_v3::fitted_cpp_runtime`: "fitted model compilation requires g++ 13.3").
+const FITTED_CXX_VERSION: &str = "13.3";
 
 /// Reads `rows columns` and then one hexadecimal bit pattern per value from the file named on
 /// its command line, and prints one bit pattern per prediction.
@@ -522,7 +529,9 @@ fn strict() -> bool {
     std::env::var_os("JOPE_PARITY_STRICT").is_some_and(|value| value == "1")
 }
 
-/// The lane's tool version, or `None` after a loud skip (a failure under `JOPE_PARITY_STRICT=1`).
+/// The lane's tool version, or `None` after a loud skip (a failure under `JOPE_PARITY_STRICT=1`)
+/// when the tool is missing or, for `cpp17-fitted`, is not the compiler the allowlist was recorded
+/// with ([`FITTED_CXX_VERSION`]).
 fn toolchain(lane: Lane) -> Option<String> {
     let version = match lane {
         Lane::Cpp17Fitted => feat_math::cxx::version(),
@@ -540,6 +549,25 @@ fn toolchain(lane: Lane) -> Option<String> {
         }
     };
     match version {
+        Ok(version) if lane == Lane::Cpp17Fitted && !version.contains(FITTED_CXX_VERSION) => {
+            assert!(
+                !strict(),
+                "parity_bits: the {} allowlist entries were recorded with g++ {FITTED_CXX_VERSION}, \
+                 and {:?} reports {version:?}; the comparison would report compiler differences \
+                 as divergences, so JOPE_PARITY_STRICT=1 needs g++ {FITTED_CXX_VERSION} (CXX)",
+                lane.id(),
+                lane.tool()
+            );
+            eprintln!(
+                "parity_bits SKIP: {} lane, {:?} reports {version:?}, not the g++ \
+                 {FITTED_CXX_VERSION} its allowlist entries were recorded with ({} programs not \
+                 compared)",
+                lane.id(),
+                lane.tool(),
+                PROGRAMS.len()
+            );
+            None
+        }
         Ok(version) => Some(version),
         Err(error) if error.kind() == ErrorKind::NotFound => {
             assert!(
