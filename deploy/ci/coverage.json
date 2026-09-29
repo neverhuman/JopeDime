@@ -89,7 +89,8 @@
         "cargo run -q --locked -p jope-records -- elo-history --require-all",
         "bash deploy/ci/test-test-routing.sh",
         "bash deploy/ci/test-real-corpus-lane.sh",
-        "bash deploy/release/test-release.sh"
+        "bash deploy/release/test-release.sh",
+        "bash deploy/ci/lambda.sh"
       ]
     },
     "rust-check": {

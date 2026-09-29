@@ -77,6 +77,8 @@ if [ -n "$missing" ]; then
 fi
 echo "deny graph: $(wc -l <<< "$graph") crates, optional-feature deps present"
 cargo deny --all-features check bans licenses sources
+    # Lambda workspaces (deploy/lambda: standalone Cargo workspaces, not part of the jope build)
+bash deploy/ci/lambda.sh
     ;;
   rust-check)
     # Toolchain (from rust-toolchain.toml)
