@@ -334,8 +334,8 @@ It is `origin/main` immediately after the merge, and the v0.2.0 release readback
     `b3ddbee3fdf3410b6068f1a782eef7eb24746b9f` on both sides.
   - CI at the reviewed head: PR run 36518812720 and manual run 36518812212 passed all nine jobs on
     attempt 1.
-  - After merge: main-guard 36525095424 passed. full-main-cpu 36525095499 was still running
-    when this record was written; its result belongs to the release record.
+  - After merge: main-guard 36525095424 and full-main-cpu 36525095499 both passed on attempt 1
+    (full-main-cpu completed 2026-09-29T05:55:02Z).
   - Custody: `…/claude-w0-w12/pr124-merge-20260929T051219Z/`, copied with the pre-merge checks to
     `~/jope-evidence/closeout-20260929/10-pr124/`.
   - Its record said the regression workers would be imported before it merged. Owner decision O1
