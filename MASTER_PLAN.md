@@ -1,5 +1,119 @@
 # JopeDime current direction
 
+**2026-09-29 the teacher campaign's second stage is imported (#129).**
+Branch `lambda/teacher-v2-import`, prepared in the lane `.agent/worktrees/kernel2-next` on
+`origin/main` `f65026dd54ba29ef3e7e990b51b15eb42652c089` while kernel2 PR 03 (#128) held the next
+slot, and replayed onto `origin/main` `3a32d780814d5536489e9378335fb81e2808f9b2` after #128 merged,
+before its first push. It is not a kernel2 pull request: like #124 and #125, it imports frozen
+Lambda work, and it changes no product source, root Cargo file or CI script.
+- **Readback of #128.** kernel2 PR 03 (#128, branch `kernel2/claude-m1-faults`) merged by rebase
+  at 2026-09-29T15:43:17Z at the exact reviewed head `79a88767f21dccf7505987f9b0ac7366d71f2c0b`.
+  Approval 5354941699 (neverhumanbot) was submitted at 15:41:02Z, after the head push. The
+  `pull_request` run 36589436324 and the `workflow_dispatch` run 36589437281 were green on
+  attempt 1. main = `3a32d780814d5536489e9378335fb81e2808f9b2`, and its tree equals the reviewed
+  head's tree (`8964c7b0…`). Evidence: `~/jope-evidence/kernel2/pr128-merge-20260929T154259Z/`
+  (`merge.log`, `SHA256SUMS`).
+- **Owner ruling (2026-09-29, about 08:20Z), paraphrased.** The work in
+  `.agent/experiments/lambda-training/test-adaptive-gp-islands-v2/` is mission critical: it must
+  not be deleted, and it should be rolled into a proper location in the main repository.
+  `deploy/lambda/SNAPSHOT.json` (`owner_decisions`) keeps the ruling verbatim, except that the
+  home-directory prefix is written `~/`. This pull request
+  copies the work from custody; the source directory is neither moved nor deleted.
+- **Source and freeze evidence.** Codex posted no stopped-state handoff: its last ledger entry is
+  its 06:55:00Z claim of this work. After Claude's notice of 12:46:26Z, the orchestrator decided
+  to import from the verified custody snapshot `~/jope-evidence/islands-v2-custody/20260929T124431Z/`
+  (6,299 files, 846,984,567 bytes, tree list sha256 `28826359…`). Step 20 re-verified it
+  locally and on its archive mirror: 6,299 of 6,299 files on each. The fallback freeze evidence:
+  - the three snapshots' fresh hashes of the live source are equal, the 08:21Z one once its
+    `.env` line is dropped, and their six listings are byte-identical;
+  - no source changed after 07:31:56Z, and no build output after 07:33:36Z;
+  - no process had its cwd or exe in the directory at 12:44Z;
+  - a fourth snapshot, taken at 14:44Z after the import, recorded the same hash of the live
+    source, the same listings and an empty process list.
+
+  Nothing under `.agent/experiments` (which holds the live directory) or `~/scratch` was read,
+  listed or hashed, and nothing touched AWS; the only access to those two roots was a test,
+  while probing bwrap (which cannot run on xbabe2), that they exist. Nothing scanned `/proc` for
+  the campaign's processes. Apart from the import's own processes and kernel settings, only
+  `pgrep` read it, to check for a running `test-release.sh`, since such runs share a scratch
+  directory; `pgrep` reads every process's command line. `33-review-fixes` lists these reads.
+  Steps 21, 30 and 31 ran under a filtered `strace`, with 0 violations.
+- **What lands.** `deploy/lambda/training/teacher-v2/`, at the source's own depth, so that the
+  worker's `feat-math` path resolves unchanged: 13 tracked files and 1 renamed manifest.
+  `SNAPSHOT.json` records all 24 source files and 14 excluded entries.
+  - Two new standalone workspaces: the host-side search engine (`rust/island-engine`, 2 tests)
+    and the Lambda worker (`rust/lambda-worker`, bin `bootstrap`, 3 tests).
+  - `rust/proposal-engine` is the regression worker's source. Its manifest is tracked as
+    `Cargo.toml.v2` and is not built.
+  - Four files differ from their frozen bytes, each with a `tree_change`: `license` in both
+    manifests and `publish = false` in the engine's, the worker lock's `feat-math` line at 0.2.0,
+    and home-relative paths in the campaign README. That makes sixteen across `deploy/lambda`.
+  - No CI script, root Cargo file, `deny.toml`, `feat-math` source or allowlist changes;
+    `lambda-workspaces.sh` finds the new workspaces by itself.
+  - The worker keeps the regression worker's Lambda-only `/tmp` scratch exception
+    (`/tmp/jope-teacher-<attempt id>`). The two frozen workers are the only exceptions, and their
+    tests write nothing there.
+- **Custody.** The 10 untracked sources (8 Python files, the env template and a C pilot) are in
+  `lambda-python-teacher-v2.tar` (sha256 `c353271e…`), with `FILES-teacher-v2.sha256` and
+  `SHA256SUMS-teacher-v2` (`d69bc3ef…`), in `~/jope-evidence/lambda-20260929/python/` and its
+  archive copy. `docs/archive/lambda-python-manifest.json` now lists 83 files in six tarballs. The
+  private `.env` is recorded by existence, size and sha256 only.
+- **Replay.** The four import commits `a03c19268` to `be43b6cc2` were cherry-picked onto
+  `3a32d780` without a conflict, and `git range-diff` shows each one unchanged. #128 changed none
+  of their paths. It did change `feat-math`'s source, which four of the six Lambda workspaces
+  (csv, regression-ops, regression and the teacher-v2 worker) build by path: they still build with
+  `--locked` and pass, and `compat_freeze` stays green (below). The two old records commits,
+  `f40beb09e` and `40ce78d83`, are regenerated as this commit: `README.md` and
+  `docs/internal/lambda/README.md` as they were at `40ce78d83` (#128 changed neither), the
+  CHANGELOG lines after #128's, this record with #128's readback, and "Next allowed action". The
+  coverage map and both test inventories stay as they are, because no root-workspace crate or
+  test changes: `test-inventory.sh --no-rust --static-python --update` leaves
+  `docs/parity/test-inventory.json` byte-identical, and the validators pass (below). The replay
+  read nothing under either off-limits root; its only process reads were `pgrep` checks for
+  concurrent test and build commands. The pre-replay head is kept locally as
+  `refs/preserve/lambda/teacher-v2-import-prerebase-20260929T154400Z`.
+- **Commands** at `b075d1292`, the tree of this commit apart from these records (exit code,
+  seconds): `lambda-workspaces.sh snapshot-check` (0, 0: 87 tracked files) and `verify` (0, 1: 6
+  workspaces); `deploy/ci/lambda.sh` with the lane's own target directory (0, 37: 6 workspaces
+  built and tested, 66 tests: csv 40, regression-ops 2, regression 5, search engine 2, worker 3,
+  monitor 14; its cargo-deny step skipped, 0.19.8 installed where 0.20.2 is pinned), and again
+  (0, 8); `deploy/ci/test-bump.sh` (0, 28: 38 passed); the import gate's V1 byte-equality check
+  (0, 1: `bad=0`; the 24 rows equal the frozen list and the snapshot, the four recorded changes
+  are exact, and only `zig-arm-link.sh` is 100755); `compat_freeze` in compare mode (0, 19: 12
+  passed); `coverage validate` (0, 1: 287 targets, 0 unassigned);
+  `test-inventory.sh --no-rust --static-python --update` (0, 0: no file changed);
+  `verify-test-inventory` (0, 1: 323 items); `deploy/ci/check.sh` (0, 20);
+  `deploy/ci/ip-scrub.sh` (0, 2: 47 files); `deploy/release/test-release.sh` (0, 10: 195 of
+  195); `cargo fmt --all --check` (0, 7); `git diff --check 3a32d780 HEAD` (0, 0). They run again
+  at this pull request's head, with the logs in
+  `~/jope-evidence/kernel2/import/rebase-20260929T154400Z/`.
+- **Earlier, at the pre-replay head `40ce78d83`**, on inputs the replay does not change (the
+  Lambda manifests and locks, `feat-math`'s manifest, `deny.toml` and the toolchain):
+  cargo-deny 0.20.2 in `jope-runner:current` passed bans, licenses and sources for all six
+  workspaces, and a release rebuild of the search engine reproduced its binary byte for byte
+  (`77a5c2bd…`). Logs: `~/jope-evidence/teacher-v2-import/32-gates/` and `33-review-fixes/`.
+- **Open.**
+  - Codex's stopped-state handoff has not been received.
+  - The run's results have no verified custody: they live only in Codex's runtime directory
+    under `~/scratch/` and on S3. The owner and Codex were asked about them.
+  - The campaign's first stage, `.agent/experiments/test-adaptive-gp-v1`, has no custody copy;
+    `SNAPSHOT.json` lists it under `not_imported`.
+  - Clippy `-D warnings`, which no CI lane runs, passes for the search engine and fails for the
+    worker on one lint in its frozen source: `possible_missing_else` at
+    `rust/lambda-worker/src/main.rs:119:89`. The source is imported verbatim and is not edited.
+    The frozen workspaces already on main show the same class of finding: the regression worker
+    4 lints and the monitor 3.
+  - Codex has not published the run's source manifest. Until it does, the values recomputed from
+    custody (`6044521e…`, published body `c867e95a…`) and the three binaries' provenance are
+    unconfirmed.
+  - The NTFS archive mirror of the 08:21Z snapshot may still hold the deleted `.env` bytes on the
+    device. The owner decides whether that needs action.
+- **Evidence.** `~/jope-evidence/teacher-v2-import/` (`20-freeze`, `21-frozen`, `30-import`,
+  `31-python-custody`, `32-gates` and `33-review-fixes`), sealed and mirrored under
+  `/mnt/jope-archive/jopedime-teacher-v2-import/`. `~/jope-evidence/INDEX.md` lists them and the
+  four custody snapshots. The replay and its commands:
+  `~/jope-evidence/kernel2/import/rebase-20260929T154400Z/`, with `SHA256SUMS`.
+
 **2026-09-29 kernel2 pull request 03 (#128): fault reporting in the scalar evaluator, values unchanged.**
 Branch `kernel2/claude-m1-faults`, prepared in the lane `.agent/worktrees/kernel2` on
 `ab48e389c9951f87e158b5f52930f4d2c9b6d2f4` and replayed onto `origin/main`
@@ -203,14 +317,16 @@ Next allowed action:
    - Done before the verification: the demo lane is gone; the refs are pinned (250 pins, 691 to 941 refs), and the final all-refs bundle (sha256 `592950b4…`, 941 refs) was restored and checked in an independent bare repository (`60-refs/`, independently verified at 11:21:00Z). The remote branch renames and deletions ran from 11:39:50Z to 11:45:44Z, after the AGENT_CHAT notice of 11:23:58Z and its 15-minute objection window (`60-refs/apply-20260929T113950Z/run.log`: local 5 of 5 and remote 24 of 24 rows acted, none refused; the stash was cleared; 140 remote-tracking refs were pruned).
    - A completeness critic restored the final bundle again, independently, and found every T0 census commit reachable (`70-endstate/critic-endstate-critic-20260929T123116Z/`). Its one blocking item, a ledger end snapshot, was taken after the close-out handoff was posted in AGENT_CHAT at 12:35:15Z: `01-agent-chat/snapshots/AGENT_CHAT-20260929T123515Z-end.md`, 509,995 bytes, with the 06:47Z snapshot as its byte prefix. It is sealed and mirrored. `81-remediation-20260929T123356Z/` holds the custody copies made the same afternoon: the kernel2 plan documents and the `release-v0.2.0` run directories.
 2. The kernel2 train, one implementation PR at a time, each merged by `merge-guarded.sh` at its exact reviewed head:
-   - PR 01 is #126 and PR 02 is #127, both merged; their readbacks are in the records of #127 and of this pull request;
-   - PR 03 is #128, this pull request: fault tracking in the scalar evaluator (branch `kernel2/claude-m1-faults`, prepared in the lane `.agent/worktrees/kernel2`);
-   - after it merges, the islands-v2 source import (item 3) lands as its own PR;
-   - then PR 04, stage-level fault telemetry;
+   - PR 01 is #126, PR 02 is #127 and PR 03 is #128, all merged; their readbacks are in the records of #127, #128 and this pull request;
+   - the islands-v2 source import (item 3) is #129, this pull request;
+   - after it merges, PR 04: stage-level fault telemetry. It is prepared in the lane `.agent/worktrees/kernel2` on top of #128's reviewed head and will be replayed onto main;
    - then the rest of the train in plan order. M1 is re-cut: PR 05 static scope validation, PR 06 the Rust fitted-width contract, PR 07 fitted-C++ runtime revision 3, and PR 08 the library search admission policy.
-3. The islands-v2 import (owner ruling of 2026-09-29): the frozen source, from the verified custody snapshot of 2026-09-29T12:44:31Z (`~/jope-evidence/islands-v2-custody/20260929T124431Z/`), is imported into `deploy/lambda/training/teacher-v2`, prepared in the lane `.agent/worktrees/kernel2-next` on the branch `lambda/teacher-v2-import`.
-   - Codex's stopped-state handoff was requested at 08:37:45Z and 12:46:26Z and is still open. If it arrives before the PR opens, that state is imported instead.
-   - The run's results and the parent study have no verified custody yet; Codex was asked at 14:02:12Z.
+3. The islands-v2 import (owner ruling of 2026-09-29): this pull request imports the frozen source into `deploy/lambda/training/teacher-v2`, from the verified custody snapshot of 2026-09-29T12:44:31Z (`~/jope-evidence/islands-v2-custody/20260929T124431Z/`). Still open after it merges:
+   - Codex's stopped-state handoff;
+   - custody of the run's results (its run directory under `~/scratch/`, and S3);
+   - custody of the parent study `test-adaptive-gp-v1`.
+
+   Codex was asked about all three at 14:02:12Z.
 4. Regression trials v2 after the kernel2 train, unless the owner reorders.
 
 **2026-09-28 wrap-up train and v0.2.0.** Eight pull requests, #115 to #122, landed on main between
