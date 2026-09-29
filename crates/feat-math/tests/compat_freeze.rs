@@ -9,7 +9,7 @@
 //! | `boundary_corpus_v1_is_well_formed_and_matches_its_definition` | `math_boundary/v1.json` | the scalar boundary inputs (WP-0.3) |
 //! | `expression_values_match_the_frozen_fixture` | `compat_freeze/mathexpr_values.v1.json` | `MathExpr` value bits: interpreter and compiled, row and map context |
 //! | `stage_outputs_match_the_frozen_fixture` | `compat_freeze/stage_values.v1.json` | `map`/`derive` stage outputs and the predictions behind them |
-//! | `emitted_artifact_bytes_match_the_frozen_fixture` | `compat_freeze/emitted_bytes.v1.json` | Rust, Python, manifest, C++17, JavaScript and fitted C++17 bytes |
+//! | `emitted_artifact_bytes_match_the_frozen_fixture` | `compat_freeze/emitted_bytes.v1.json` | Rust, Python and manifest bytes (default and `jope emit` options), C++17, JavaScript and fitted C++17 bytes, and the ops each recipe emitter accepts |
 //! | `serialized_models_match_the_frozen_fixture` | `compat_freeze/model_serde.v1.json` | `serde_json` bytes of fitted models, their predictions, and loading of stored bytes |
 //! | `vocabulary_registry_and_lineage_pins_match` | `compat_freeze/frozen_pins.v1.json` | grammar assets, `grammar.rs`, jope-policy pins, registry and emitter versions |
 //! | `evaluator_identity_inputs_match_the_recorded_identity` | `compat_freeze/evaluator_identity.v1.json` | the ADR-0004 evaluator identity inputs |
@@ -58,7 +58,7 @@ use feat_math::evolve::{
     EvolveConfig, GenStats, Observer, Scored, EXPANSION_STARTERS, EXPANSION_TRANSFORMS, HEAD_OPS,
     LITE_HEAD_BUDGETS,
 };
-use feat_math::full_rust::{self, EvolvedGenome};
+use feat_math::full_rust::{self, EvolvedGenome, OperationKind, ParamDomain};
 use feat_math::kernel::pipeline::PipelineSlots;
 use feat_math::math_expr::{ExpressionScope, MathExpr};
 use feat_math::ops::{apply_op, fit_op};
@@ -672,6 +672,30 @@ const NAMED_PROGRAMS: &[(&str, &str)] = &[
     ("expansion_impute", "(pipe X (impute strategy=median add_indicator=true) (standardize) (ridge))"),
     ("expansion_pair_ratio", "(pipe X (pair_ratio topk=4 append=true) (ridge))"),
     ("expansion_spline", "(pipe X (spline knots=4) (ridge))"),
+    // With the ip_scrub pipelines these three emit a C++17 recipe and JavaScript for every op
+    // those emitters support, so every op body and shared helper they write is pinned.
+    ("recipe_random_features", "(pipe X (rff_cos n=8) (rff_sin n=8) (rand_proj k=4) (landmark_dist k=4) (ridge))"),
+    ("recipe_row_features", "(pipe X (oblique_hinge n=4) (row_stats) (pair_prod) (target_bin_encode) (sigmoid) (ridge))"),
+    ("recipe_indicator_features", "(pipe X (step t=0.5 append=true) (norm_row) (row_diff_stats) (elasticnet))"),
+    // `logistic` is an alias of the ridge head, and the recipe emitters accept it.
+    ("recipe_logistic_alias", "(pipe X (standardize) (logistic))"),
+    // The target stage in each kind (tests/golden.rs programs).
+    ("target_rank_gauss", "(pipe X (target kind=rank_gauss) (ridge))"),
+    ("target_log1p", "(pipe X (target kind=log1p) (ridge lambda_frac=0.02))"),
+    ("target_winsor", "(pipe X (target kind=winsor q=0.05) (standardize) (ridge))"),
+    ("target_zscore", "(pipe X (target kind=zscore) (standardize) (ridge))"),
+    // Data paths the toy rows never reach on their own: step makes exact zeros, which impute
+    // treats as missing (fill, indicator columns, the mean and const strategies).
+    ("step_impute_mean", "(pipe X (step t=0.0) (impute strategy=mean add_indicator=true) (ridge))"),
+    ("step_impute_const", "(pipe X (step t=0.0 append=true) (impute strategy=const value=0.5) (ridge))"),
+    ("select_corr_by_var", "(pipe X (select_corr k=3 by=var) (ridge))"),
+    // 96 features on 64 training rows: ridge_gcv takes its dual (n < p) route.
+    ("ridge_gcv_dual_route", "(pipe X (rff_cos n=96 seed=3) (ridge_gcv))"),
+    // One column leaves pair_ratio no pair, so its rows are empty and padded to [0.0].
+    ("empty_stage_output", "(pipe X (select_corr k=1) (pair_ratio topk=4) (ridge))"),
+    // `x` outside a map: the emitters write its constant 0.0 body.
+    ("derive_x_body", "(pipe X (derive expr=\"x\" append=true) (ridge))"),
+    ("symbolic_x", "(sym raw \"x\")"),
 ];
 
 /// `tests/ip_scrub.rs` PIPELINES and SYMBOLIC, verbatim.
@@ -1438,6 +1462,8 @@ struct EmittedBytes {
     schema: String,
     generated_at_sha: String,
     note: String,
+    cpp17_recipe_ops: Vec<String>,
+    javascript_ops: Vec<String>,
     programs: Vec<EmittedProgram>,
 }
 
@@ -1450,6 +1476,9 @@ struct EmittedProgram {
     python: String,
     manifest: String,
     manifest_emitter_version: String,
+    rust_jope_emit: String,
+    python_jope_emit: String,
+    manifest_jope_emit: String,
     cpp17: String,
     javascript: String,
     fitted_cpp17_source: String,
@@ -1492,9 +1521,137 @@ fn gains_support(recorded: &str, now: &str) -> bool {
     }
 }
 
+/// Whether a recorded value is emitted bytes ("<length> <sha256>") rather than a refusal, an
+/// error or a skip.
+fn is_emitted(value: &str) -> bool {
+    !(value.starts_with(UNSUPPORTED) || value.starts_with("ERR") || value.starts_with("skipped"))
+}
+
+/// The stage ops of a pipeline program (its target, transforms and head); none for a formula.
+fn program_ops(source: &str) -> BTreeSet<String> {
+    match GenomeIr::parse(source) {
+        Ok(GenomeIr::Pipeline(pipe)) => pipe.stages.iter().map(|stage| stage.op.clone()).collect(),
+        _ => BTreeSet::new(),
+    }
+}
+
+/// The ops the C++17 recipe and JavaScript emitters accept, probed one op at a time: every op of
+/// `full_rust::operation_schemas()` and every head of `evolve::HEAD_OPS`, each in the smallest
+/// program that carries it (a transform or target before `(ridge)`, a head alone).
+fn recipe_supported_ops() -> (Vec<String>, Vec<String>) {
+    let mut probes: BTreeMap<String, String> = BTreeMap::new();
+    for schema in full_rust::operation_schemas() {
+        let op = schema.op;
+        let expression = schema
+            .params
+            .iter()
+            .any(|param| matches!(param.domain, ParamDomain::Expression));
+        let probe = match schema.kind {
+            OperationKind::Head => format!("(pipe X ({op}))"),
+            OperationKind::Target => format!("(pipe X ({op} kind=log1p) (ridge))"),
+            OperationKind::Transform if expression => {
+                format!("(pipe X ({op} expr=\"c0\") (ridge))")
+            }
+            OperationKind::Transform => format!("(pipe X ({op}) (ridge))"),
+        };
+        probes.insert(op.to_string(), probe);
+    }
+    for head in HEAD_OPS {
+        probes
+            .entry(head.to_string())
+            .or_insert_with(|| format!("(pipe X ({head}))"));
+    }
+    let (mut cpp17, mut javascript) = (Vec::new(), Vec::new());
+    for (op, probe) in &probes {
+        let Ok(genome) = GenomeIr::parse(probe) else {
+            continue;
+        };
+        if supports_cpp17(&genome).is_ok() {
+            cpp17.push(op.clone());
+        }
+        if supports_javascript(&genome).is_ok() {
+            javascript.push(op.clone());
+        }
+    }
+    (cpp17, javascript)
+}
+
+/// Reads one emitter's recorded value from a program record.
+type RecordedValue = fn(&EmittedProgram) -> &str;
+
+fn cpp17_bytes(program: &EmittedProgram) -> &str {
+    &program.cpp17
+}
+
+fn javascript_bytes(program: &EmittedProgram) -> &str {
+    &program.javascript
+}
+
+/// Every op an emitter accepted must be used by a program whose bytes from that emitter are
+/// recorded, so each op body and shared helper the emitter writes is pinned.
+fn recipe_coverage_gaps(values: &EmittedBytes) -> Vec<String> {
+    let recipes: [(&str, &Vec<String>, RecordedValue); 2] = [
+        ("C++17 recipe", &values.cpp17_recipe_ops, cpp17_bytes),
+        ("JavaScript", &values.javascript_ops, javascript_bytes),
+    ];
+    let mut gaps = Vec::new();
+    for (language, supported, bytes) in recipes {
+        let pinned: BTreeSet<String> = values
+            .programs
+            .iter()
+            .filter(|program| is_emitted(bytes(program)))
+            .flat_map(|program| program_ops(&program.canonical))
+            .collect();
+        for op in supported {
+            if !pinned.contains(op) {
+                gaps.push(format!(
+                    "{op}: the {language} emitter accepts it, but no program in the set records {language} bytes that use it; add one to NAMED_PROGRAMS"
+                ));
+            }
+        }
+    }
+    gaps
+}
+
+/// The options `jope emit` writes Rust, Python and the manifest with
+/// (`crates/jope-cli/src/kernel.rs` `emit_genome`; its C++ and JavaScript do not embed the title).
+fn jope_emit_options() -> EmitOptions {
+    EmitOptions {
+        title: Some("jope emit".to_string()),
+        ..EmitOptions::default()
+    }
+}
+
+/// `tests/ip_scrub.rs` lints every artifact the emitters write for the frozen programs (plan N6).
+const IP_SCRUB_SOURCE: &str = include_str!("ip_scrub.rs");
+
+/// Frozen programs that `tests/ip_scrub.rs` does not list verbatim.
+fn ip_scrub_gaps() -> Vec<String> {
+    NAMED_PROGRAMS
+        .iter()
+        .map(|(_, source)| *source)
+        .chain(IP_SCRUB_PIPELINES.iter().copied())
+        .chain(IP_SCRUB_SYMBOLIC.iter().copied())
+        .filter(|source| !IP_SCRUB_SOURCE.contains(&format!("{source:?}")))
+        .map(str::to_string)
+        .collect()
+}
+
 fn emitted_program(name: &str, source: &str, train: &Rows, target: &[f64]) -> EmittedProgram {
     let genome = parse_program(name, source);
     let options = EmitOptions::default();
+    let (rust_jope_emit, python_jope_emit, manifest_jope_emit) =
+        match emit(&genome, &jope_emit_options()) {
+            Ok(artifact) => (
+                text_identity(&artifact.rust),
+                text_identity(&artifact.python),
+                text_identity(&artifact.manifest),
+            ),
+            Err(error) => {
+                let error = format!("ERR {error:#}");
+                (error.clone(), error.clone(), error)
+            }
+        };
     let (rust, python, manifest, manifest_emitter_version) = match emit(&genome, &options) {
         Ok(artifact) => {
             let manifest: serde_json::Value =
@@ -1559,6 +1716,9 @@ fn emitted_program(name: &str, source: &str, train: &Rows, target: &[f64]) -> Em
         python,
         manifest,
         manifest_emitter_version,
+        rust_jope_emit,
+        python_jope_emit,
+        manifest_jope_emit,
         cpp17,
         javascript,
         fitted_cpp17_source,
@@ -1568,21 +1728,70 @@ fn emitted_program(name: &str, source: &str, train: &Rows, target: &[f64]) -> Em
 
 #[test]
 fn emitted_artifact_bytes_match_the_frozen_fixture() {
+    let gaps = ip_scrub_gaps();
+    assert!(
+        gaps.is_empty(),
+        "compat-freeze: these frozen programs are not linted by tests/ip_scrub.rs (plan N6); add them to its COMPAT_FREEZE_PROGRAMS verbatim:\n  {}",
+        gaps.join("\n  ")
+    );
     let (train, target, _) = fitted_surface_data();
+    let (cpp17_recipe_ops, javascript_ops) = recipe_supported_ops();
     let mut fixture = EmittedBytes {
         schema: "feat-math.compat-freeze.emitted-bytes.v1".to_string(),
         generated_at_sha: header_sha(Surface::Frozen),
         note: format!(
-            "Values are \"<byte length> <sha256>\" of the artifact text (EmitOptions::default()), \"unsupported: <element kinds>\" where the emitter refuses the program, or the recorded error. C++20 is the same C++17 source compiled with -std=c++20. Fitted C++17 comes from fit_legacy_numeric_bound on {FITTED_DATA_NOTE}. An emitter that gains support for a program recorded as unsupported is additive and passes; recorded bytes never change."
+            "Values are \"<byte length> <sha256>\" of the artifact text (EmitOptions::default()), \"unsupported: <element kinds>\" where the emitter refuses the program, or the recorded error. The *_jope_emit values use the options `jope emit` writes Rust, Python and the manifest with (title \"jope emit\"). C++20 is the same C++17 source compiled with -std=c++20. Fitted C++17 comes from fit_legacy_numeric_bound on {FITTED_DATA_NOTE}. cpp17_recipe_ops and javascript_ops are the ops each emitter accepted at generation, probed one op at a time; every one is used by a program whose bytes from that emitter are recorded here. An emitter that gains support is additive and passes (bytes for a program recorded as unsupported, fewer unsupported element kinds, or a newly accepted op); recorded bytes never change."
         ),
+        cpp17_recipe_ops,
+        javascript_ops,
         programs: program_set()
             .iter()
             .map(|(name, source)| emitted_program(name, source, &train, &target))
             .collect(),
     };
+    if regenerating(Surface::Frozen) {
+        let gaps = recipe_coverage_gaps(&fixture);
+        assert!(
+            gaps.is_empty(),
+            "compat-freeze: the program set leaves recipe ops unpinned:\n  {}",
+            gaps.join("\n  ")
+        );
+    }
     let Some(committed) = committed_or_write(Surface::Frozen, FIXTURE_FILES[2], &fixture) else {
         return;
     };
+    // The recorded op lists: each op stays pinned and supported; a newly accepted op is additive.
+    let mut problems = recipe_coverage_gaps(&committed);
+    for (language, recorded, now) in [
+        (
+            "C++17 recipe",
+            &committed.cpp17_recipe_ops,
+            &fixture.cpp17_recipe_ops,
+        ),
+        (
+            "JavaScript",
+            &committed.javascript_ops,
+            &fixture.javascript_ops,
+        ),
+    ] {
+        for op in recorded {
+            if !now.contains(op) {
+                problems.push(format!("{op} lost {language} support"));
+            }
+        }
+        for op in now {
+            if !recorded.contains(op) {
+                eprintln!(
+                    "compat-freeze: the {language} emitter now accepts {op} (additive; pin it with an approved rebaseline and a program that uses it)"
+                );
+            }
+        }
+    }
+    assert!(
+        problems.is_empty(),
+        "compat-freeze: emitter op support drifted:\n  {}\n{REBASELINE_POLICY}",
+        problems.join("\n  ")
+    );
     // Gaining support for a program recorded as unsupported adds bytes without changing any
     // recorded ones, so it passes (and is reported); losing support, a different unsupported
     // element, or an emitter that now errors, is drift (see `gains_support`).
@@ -1626,6 +1835,12 @@ fn emitted_artifact_bytes_match_the_frozen_fixture() {
                     format!("{n}.manifest_emitter_version"),
                     p.manifest_emitter_version.clone(),
                 ),
+                record(format!("{n}.rust_jope_emit"), p.rust_jope_emit.clone()),
+                record(format!("{n}.python_jope_emit"), p.python_jope_emit.clone()),
+                record(
+                    format!("{n}.manifest_jope_emit"),
+                    p.manifest_jope_emit.clone(),
+                ),
                 record(format!("{n}.cpp17"), p.cpp17.clone()),
                 record(format!("{n}.javascript"), p.javascript.clone()),
                 record(
@@ -1653,10 +1868,12 @@ fn emitted_artifact_bytes_match_the_frozen_fixture() {
 // ---------------------------------------------------------------------------------------------
 
 /// Small models whose complete serialized bytes are stored, to prove stored bytes still load.
-const STORED_MODELS: [&str; 3] = [
+const STORED_MODELS: [&str; 5] = [
     "golden_map_derive_ridge",
     "golden_symbolic_affine",
     "expansion_spline",
+    "target_zscore",
+    "step_impute_mean",
 ];
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -1723,7 +1940,7 @@ fn serialized_models_match_the_frozen_fixture() {
         schema: "feat-math.compat-freeze.model-serde.v1".to_string(),
         generated_at_sha: header_sha(Surface::Frozen),
         note: format!(
-            "serde_json is \"<byte length> <sha256>\" of serde_json::to_vec(&fit(program)) on {FITTED_DATA_NOTE}; predictions are the f64 bits of Model::predict on the held-out rows. stored keeps the complete bytes of three small models, which must still load and predict the recorded values (to within serde_json's float-parsing precision, which is not exact without its float_roundtrip feature)."
+            "serde_json is \"<byte length> <sha256>\" of serde_json::to_vec(&fit(program)) on {FITTED_DATA_NOTE}; predictions are the f64 bits of Model::predict on the held-out rows. stored keeps the complete bytes of five small models, which must still load and predict the recorded values (to within serde_json's float-parsing precision, which is not exact without its float_roundtrip feature)."
         ),
         models,
         stored,
