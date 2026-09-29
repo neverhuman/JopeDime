@@ -1,0 +1,41 @@
+{
+  "schema": "JopeDimeEvaluationManifest.v2",
+  "dataset": "fixture",
+  "train_sha256": "6fa03c67c3890f73a59f0f3b78cb2cac88dc411e280586d2ccd17efed9adfc09",
+  "stable_row_ids": [
+    "row-00",
+    "row-01",
+    "row-02",
+    "row-03",
+    "row-04",
+    "row-05",
+    "row-06",
+    "row-07",
+    "row-08",
+    "row-09",
+    "row-10",
+    "row-11"
+  ],
+  "canonical_genome": "(pipe X (ridge))",
+  "candidate_sha256": "beeee67c8c273bb5fc87168752e6cc2df381904f498d42f49b30b8df10037e02",
+  "fold": {
+    "fold_id": 0,
+    "train_rows": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "validation_rows": [
+      8,
+      9,
+      10,
+      11
+    ]
+  },
+  "objective_policy": "legacy-robust-r2-v1"
+}
