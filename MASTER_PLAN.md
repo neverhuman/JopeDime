@@ -1,6 +1,6 @@
 # JopeDime current direction
 
-**2026-09-29 kernel2 pull request 03 (#NNN): fault reporting in the scalar evaluator, values unchanged.**
+**2026-09-29 kernel2 pull request 03 (#128): fault reporting in the scalar evaluator, values unchanged.**
 Branch `kernel2/claude-m1-faults`, prepared in the lane `.agent/worktrees/kernel2` on
 `ab48e389c9951f87e158b5f52930f4d2c9b6d2f4` and replayed onto `origin/main`
 `f65026dd54ba29ef3e7e990b51b15eb42652c089` after #127 merged, before its first push. It carries
@@ -11,9 +11,11 @@ evaluator also reports which of its guards fired, and every value stays bit-iden
   Approval 5352906262 (neverhumanbot) was submitted at 12:57:34Z, after the head push. The
   `pull_request` run 36570144285 and the `workflow_dispatch` run 36570145957 were green on
   attempt 1. main = `f65026dd54ba29ef3e7e990b51b15eb42652c089`, and its tree equals the reviewed
-  head's tree (`cefd065e…`). A first merge attempt at 13:03:52Z exited 1 and left the pull request
-  open and main unchanged. Evidence: `~/jope-evidence/kernel2/pr127-merge-20260929T130853Z/`
-  (`merge.log`, `SHA256SUMS`); the first attempt is in `pr127-merge-20260929T130352Z/`.
+  head's tree (`cefd065e…`). The first merge attempt, at 13:07Z, got a GitHub 502 (its retries
+  were refused with "Merge already in progress") and did not merge: the pull request stayed open
+  and main unchanged. The guarded retry at 13:09Z merged. Evidence:
+  `~/jope-evidence/kernel2/pr127-merge-20260929T130853Z/` (`merge.log`, `SHA256SUMS`); the failed
+  attempt is in `pr127-merge-20260929T130352Z/`.
 - **Contents.** `FaultSet`, `FaultClass` and `FaultSeverity` in
   `crates/feat-math/src/math_expr/fault.rs`: 16 append-only classes, bits 0 to 15 of a `u32`, each
   Hard, Domain or Saturation. Traced entry points: `MathExpr::eval_row_traced`,
@@ -32,9 +34,9 @@ evaluator also reports which of its guards fired, and every value stays bit-iden
 - **Replay.** The nine commits `07384a8d0` to `256711ce2` were replayed onto `f65026dd5`. Five are
   unchanged cherry-picks. The known-table row's `builds` field now ends at `f65026dd5`, the
   identity fixture was regenerated at `600333e80` (only `generated_at_sha` and the known-table
-  digest differ), the parity inventory was re-listed on top of #127's, and this records commit was
-  rewritten. #127 changes no input of `compat_freeze`. The pre-replay head is kept locally as
-  `refs/preserve/kernel2/pr03-prerebase-20260929T134256Z`.
+  digest differ), the parity inventory was re-listed on top of #127's, and the first records
+  commit was rewritten. #127 changes no input of `compat_freeze`. The pre-replay head is kept
+  locally as `refs/preserve/kernel2/pr03-prerebase-20260929T134256Z`.
 - **Review follow-ups.** `d208f4fcf` makes `FaultClass::ALL` a slice, so an appended class keeps
   its type. `a7a541678` corrects the domain table's `ILLEGAL_SCOPE` line. `319683f64` adds the NaN
   and the infinity that `^` and `/` absorb without a class to the table's "Not reported" list and
@@ -44,7 +46,9 @@ evaluator also reports which of its guards fired, and every value stays bit-iden
 - **Records.** Coverage map +1 item (`target:feat-math/test/fault_trace`: rust-check, rust-test,
   full-default); findings inventory +1 role (regression); test inventory +16 Rust tests (3,838 to
   3,854, ignored 63 to 65), feat-math re-listed and every other package unchanged; the CHANGELOG
-  `[Unreleased]` line; the receipt `docs/internal/kernel2/receipts/WP-1.1-1.3.md`.
+  `[Unreleased]` line; the receipt `docs/internal/kernel2/receipts/WP-1.1-1.3.md`. A second
+  records commit, made before the first push, writes the pull request number, gives the time and
+  cause of #127's failed first merge attempt, and rewrites "Next allowed action" items 2 and 3.
 - **Commands** at `319683f64`, the tree of this commit apart from these records (exit code,
   seconds): with `JOPE_PARITY_STRICT=1`, the feat-math PR tier twice, 481 passed each time (0, 60;
   0, 60); `parity_bits` twice, 6 passed each time (rust 6, python 6 and cpp17-fitted 10
@@ -66,14 +70,14 @@ evaluator also reports which of its guards fired, and every value stays bit-iden
   tree, fmt, `coverage validate`, `verify-test-inventory`, `test-inventory.sh`, ip-scrub,
   `check.sh` and `git diff --check` ran again (0 each), and `compat_freeze` and `fault_trace`
   passed again.
-- **Open.** Hosted CI; the PR number (`#NNN`) in these records and the CHANGELOG; the ADR-0004
-  amendment for `compiled.rs` and `fault.rs`, which needs Codex; an executed test that the new
-  known-table row is accepted, which needs a `jope-campaigns` change. Clippy `-D warnings` on
-  `jope-dime-regressor` fails at the base, in 16 `crates/jope-campaigns/src` files this change
-  does not touch (30 library and 38 test-build errors, the same at this head); this change adds
-  no finding, and feat-math is clean. No CI lane runs clippy, but `just ci-pr` does. The jainnode
-  test above is a race under load, like the one jope-parallel test that
-  `deploy/ci/known-broken-tests.txt` lists as cause C; it is not listed there.
+- **Open.** Hosted CI; the ADR-0004 amendment for `compiled.rs` and `fault.rs`, which needs
+  Codex; an executed test that the new known-table row is accepted, which needs a
+  `jope-campaigns` change. Clippy `-D warnings` on `jope-dime-regressor` fails at the base, in 16
+  `crates/jope-campaigns/src` files this change does not touch (30 library and 38 test-build
+  errors, the same at this head); this change adds no finding, and feat-math is clean. No CI lane
+  runs clippy, but `just ci-pr` does. The jainnode test above is a race under load, like the one
+  jope-parallel test that `deploy/ci/known-broken-tests.txt` lists as cause C; it is not listed
+  there.
 - **Evidence.** `~/jope-evidence/kernel2/pr03/replay-20260929T134256Z/`: the replay, the review
   follow-ups and these commands (logs, the throughput data, the ADR-0004 reproductions), with
   `SHA256SUMS`.
@@ -199,12 +203,14 @@ Next allowed action:
    - Done before the verification: the demo lane is gone; the refs are pinned (250 pins, 691 to 941 refs), and the final all-refs bundle (sha256 `592950b4…`, 941 refs) was restored and checked in an independent bare repository (`60-refs/`, independently verified at 11:21:00Z). The remote branch renames and deletions ran from 11:39:50Z to 11:45:44Z, after the AGENT_CHAT notice of 11:23:58Z and its 15-minute objection window (`60-refs/apply-20260929T113950Z/run.log`: local 5 of 5 and remote 24 of 24 rows acted, none refused; the stash was cleared; 140 remote-tracking refs were pruned).
    - A completeness critic restored the final bundle again, independently, and found every T0 census commit reachable (`70-endstate/critic-endstate-critic-20260929T123116Z/`). Its one blocking item, a ledger end snapshot, was taken after the close-out handoff was posted in AGENT_CHAT at 12:35:15Z: `01-agent-chat/snapshots/AGENT_CHAT-20260929T123515Z-end.md`, 509,995 bytes, with the 06:47Z snapshot as its byte prefix. It is sealed and mirrored. `81-remediation-20260929T123356Z/` holds the custody copies made the same afternoon: the kernel2 plan documents and the `release-v0.2.0` run directories.
 2. The kernel2 train, one implementation PR at a time, each merged by `merge-guarded.sh` at its exact reviewed head:
-   - PR 01 is #126: merged, readback in #127's record;
-   - PR 02 is #127: merged, readback above;
-   - PR 03 is #NNN, this pull request: fault tracking in the scalar evaluator (branch `kernel2/claude-m1-faults`, prepared in the lane `.agent/worktrees/kernel2`);
-   - after it merges, PR 04: stage-level fault telemetry;
-   - then the rest of the train in plan order.
-3. Import islands-v2 from a custody copy of Codex's frozen handoff, as its own reviewed PR.
+   - PR 01 is #126 and PR 02 is #127, both merged; their readbacks are in the records of #127 and of this pull request;
+   - PR 03 is #128, this pull request: fault tracking in the scalar evaluator (branch `kernel2/claude-m1-faults`, prepared in the lane `.agent/worktrees/kernel2`);
+   - after it merges, the islands-v2 source import (item 3) lands as its own PR;
+   - then PR 04, stage-level fault telemetry;
+   - then the rest of the train in plan order. M1 is re-cut: PR 05 static scope validation, PR 06 the Rust fitted-width contract, PR 07 fitted-C++ runtime revision 3, and PR 08 the library search admission policy.
+3. The islands-v2 import (owner ruling of 2026-09-29): the frozen source, from the verified custody snapshot of 2026-09-29T12:44:31Z (`~/jope-evidence/islands-v2-custody/20260929T124431Z/`), is imported into `deploy/lambda/training/teacher-v2`, prepared in the lane `.agent/worktrees/kernel2-next` on the branch `lambda/teacher-v2-import`.
+   - Codex's stopped-state handoff was requested at 08:37:45Z and 12:46:26Z and is still open. If it arrives before the PR opens, that state is imported instead.
+   - The run's results and the parent study have no verified custody yet; Codex was asked at 14:02:12Z.
 4. Regression trials v2 after the kernel2 train, unless the owner reorders.
 
 **2026-09-28 wrap-up train and v0.2.0.** Eight pull requests, #115 to #122, landed on main between
