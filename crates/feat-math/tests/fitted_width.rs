@@ -15,8 +15,9 @@
 //!   never panics, and whenever it returns a value that value is `predict`'s.
 //! - The schema-bound (advanced-v3) boundary: a legacy stage, `corr_screen` or `pls_project`
 //!   whose fitted state does not fit the feature block makes `predict_table` return an error
-//!   instead of panicking, and a table with no rows keeps its result. The `piecewise_linear` arm
-//!   is left unguarded, a gap the receipt records; a test pins its panic.
+//!   instead of panicking, and a table with no rows keeps its result. The `piecewise_linear` arm,
+//!   which the WP-1.7 receipt recorded as a gap, has been guarded the same way since kernel2 PR 07
+//!   (X3), and its test asserts the error.
 
 use feat_math::dsl::{parse_dsl, Stage};
 use feat_math::heads::{fit_head, FittedHead};
@@ -1172,11 +1173,12 @@ fn schema_bound_tables_with_no_rows_compare_no_width() {
 }
 
 #[test]
-fn schema_bound_piecewise_linear_with_extra_edge_columns_still_panics() {
-    // The one schema-bound arm left unguarded, a gap the WP-1.7 receipt records: the
-    // `piecewise_linear` arm gathers the missing mask at every fitted edge column, so edges fitted
-    // for more columns than the block has still panic. The brief of this change names only the
-    // legacy, `corr_screen` and `pls_project` sites; a change that closes the gap fails this test.
+fn schema_bound_piecewise_linear_with_extra_edge_columns_returns_an_error() {
+    // The `piecewise_linear` arm gathers the missing mask at every fitted edge column with an
+    // interval, so edges fitted for more columns than the block has panicked there: the gap the
+    // WP-1.7 receipt recorded, which this test pinned until kernel2 PR 07 (X3) closed it. The arm
+    // refuses them with an error now. A table with no rows keeps its result: nothing is read or
+    // gathered, and finishing still refuses the generated column whose source is not in the block.
     let table = RawTable::from_csv("a,b\n0.125,-1.5\n0.5,2.5\n2.125,6.5\n").unwrap();
     let model = bound("(pipe X (piecewise_linear bins=8) (ridge))");
     assert!(model.predict_table(&table).is_ok(), "the fitted model");
@@ -1188,10 +1190,20 @@ fn schema_bound_piecewise_linear_with_extra_edge_columns_still_panics() {
     let first = edges[0].clone();
     edges.push(first);
     let tampered: BoundModel = serde_json::from_value(json).unwrap();
-    assert!(
-        panics(|| tampered.predict_table(&table)),
-        "the recorded gap"
+    let error = catch_unwind(AssertUnwindSafe(|| tampered.predict_table(&table)))
+        .unwrap_or_else(|_| panic!("predict_table panicked"))
+        .expect_err("edges for a third column")
+        .to_string();
+    assert_eq!(
+        error,
+        "piecewise_linear reads column 2, but the feature block has 2 columns"
     );
+    let empty = RawTable::new(vec!["a".to_string(), "b".to_string()], Vec::new()).unwrap();
+    let error = catch_unwind(AssertUnwindSafe(|| tampered.predict_table(&empty)))
+        .unwrap_or_else(|_| panic!("predict_table panicked without rows"))
+        .expect_err("a generated column whose source is not in the block")
+        .to_string();
+    assert_eq!(error, "generated feature source 2 is out of bounds");
 }
 
 // ---------------------------------------------------------------------------------------------

@@ -191,6 +191,7 @@ impl V3Op {
                 finish_one_to_one(block, generated, *append, "power_transform")
             }
             V3Op::PiecewiseLinear { edges, append } => {
+                check_piecewise_linear_width(edges, block)?;
                 let generated: Rows = block
                     .values
                     .iter()
@@ -986,6 +987,27 @@ fn check_pls_project_width(
             weight.len(),
             means.len()
         );
+    }
+    Ok(())
+}
+
+/// `piecewise_linear` finishes by gathering the block's missing mask at the column of every fitted
+/// edge list that has an interval (two edges or more), so each such column must be in the block;
+/// `piecewise_row` itself zips the row with the edge lists and reads nothing past either (kernel2
+/// X3, closing the gap WP-1.7 recorded). Without rows nothing is read or gathered, and the block
+/// may be narrower than at fit time (see `check_legacy_width`), so there is nothing to check.
+fn check_piecewise_linear_width(edges: &[Vec<f64>], block: &FeatureBlock) -> Result<()> {
+    if block.values.is_empty() {
+        return Ok(());
+    }
+    let width = block.roles.len();
+    if let Some((column, _)) = edges
+        .iter()
+        .enumerate()
+        .skip(width)
+        .find(|(_, column_edges)| column_edges.len() > 1)
+    {
+        bail!("piecewise_linear reads column {column}, but the feature block has {width} columns");
     }
     Ok(())
 }
