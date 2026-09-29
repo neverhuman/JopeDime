@@ -10,9 +10,10 @@
 //!   interpreter's traced calls.
 //! - `fit_traced` returns a model whose `serde_json` bytes are `fit`'s, or `fit`'s error, and
 //!   `predict_traced` returns `Model::predict`'s bits, for every program of PR 01's corpus (the
-//!   portfolio program is skipped, as compat_freeze skips it) and for the five stored models. The
-//!   telemetry of the training pass equals `predict_traced`'s on the training rows, and two runs
-//!   give identical telemetry.
+//!   portfolio program is skipped, as compat_freeze skips it), for every corpus expression as a
+//!   raw and an affine symbolic program, and for the five stored models. The telemetry of the
+//!   training pass equals `predict_traced`'s on the training rows, and two runs give identical
+//!   telemetry.
 //! - The workplan's cases: `log(col(0))` on negative and on positive data, `col(9)` at width 4,
 //!   `step(col(0), 100)`; and the epilogue count, a compile failure, the symbolic path, an
 //!   explicit portfolio, the empty-row identities and the zero-width refusal.
@@ -566,6 +567,63 @@ fn expression_stages_equal_apply_op_on_every_corpus_expression_and_row() {
         rows.len()
     );
     assert!(faulted_stages > 0 && hard_stages > 0);
+}
+
+#[test]
+fn every_corpus_expression_as_a_symbolic_program_fits_to_fits_bytes() {
+    // fit_traced copies fit's linear scaling of a symbolic program. The corpus programs take its
+    // slope branch only a few times, so every corpus expression is also fitted here, raw and
+    // affine, on eight-column rows.
+    let (x, y) = toy_data(80, 8, 42);
+    let (train, target, test) = (x[..64].to_vec(), y[..64].to_vec(), x[64..].to_vec());
+    let (corpus_rows, expressions) = corpus();
+    let raw: Rows = corpus_rows
+        .into_iter()
+        .filter(|row| !row.is_empty())
+        .collect();
+    let mut slopes = 0;
+    for source in &expressions {
+        let expr = MathExpr::parse(source).expect("a corpus expression parses");
+        // A symbolic program evaluates its expression per row, as a derive stage does.
+        let derive = FittedOp::DeriveExpr {
+            source: source.clone(),
+            expr: expr.clone(),
+            append: false,
+        };
+        for affine in [false, true] {
+            let at = format!(
+                "(sym {} \"{source}\")",
+                if affine { "affine" } else { "raw" }
+            );
+            let program = GenomeIr::Symbolic {
+                source: source.clone(),
+                expr: expr.clone(),
+                affine,
+            };
+            let model = fit(&program, &train, &target).expect("fits");
+            let (traced, telemetry) = fit_traced(&program, &train, &target).expect("fits");
+            assert_eq!(serialized(&traced), serialized(&model), "{at}");
+            assert_eq!(telemetry.stages.len(), 1, "{at}");
+            assert_eq!(
+                fields(&telemetry.stages[0]),
+                recount(&derive, &train),
+                "{at}"
+            );
+            if let Model::Symbolic { a, .. } = &model {
+                slopes += usize::from(affine && *a != 0.0);
+            }
+            for rows in [&test, &raw] {
+                let (predictions, pass) = predict_traced(&model, rows).expect("no zero-width row");
+                assert_eq!(bits(&predictions), bits(&model.predict(rows)), "{at}");
+                assert_eq!(fields(&pass.stages[0]), recount(&derive, rows), "{at}");
+            }
+        }
+    }
+    eprintln!(
+        "SYMBOLIC expressions={} affine fits with a slope={slopes}",
+        expressions.len()
+    );
+    assert!(slopes >= 40, "the slope branch is taken {slopes} times");
 }
 
 /// compat_freeze's 5x4 stage matrix: ordinary values, signed zeros and guard neighbours,
