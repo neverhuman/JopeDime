@@ -2,8 +2,10 @@ use anyhow::{bail, Context, Result};
 mod compiled;
 mod evolution;
 mod exact;
+mod fault;
 pub use compiled::CompiledMathExpr;
 pub use evolution::{ExpressionEdit, ExpressionScope};
+pub use fault::{FaultClass, FaultSet, FaultSeverity};
 
 const MAX_NODES: usize = 64;
 const MAX_DEPTH: usize = 16;
