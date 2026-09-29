@@ -71,7 +71,7 @@ required: ci-pr
 # recipe on a throwaway copy of the tree and checks every workspace afterwards.
 # bump the Rust workspace version (workspace, jope-engine, jope-campaigns), Cargo.lock and the Lambda workspace locks that pin a root crate, then check them all as the release and the hygiene lane do; python/pyproject.toml is not bumped while no wheel ships
 bump version:
-    bash deploy/release/bump.sh '{{version}}'
+    bash deploy/release/bump.sh {{quote(version)}}
 
 # documentation checks: rustdoc builds (warnings counted), relative links in README/docs (not docs/legacy) resolve, cliff.toml renders
 docs:

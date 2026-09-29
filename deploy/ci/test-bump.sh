@@ -7,7 +7,7 @@
 # It exports <commit> (default HEAD) with git archive into a throwaway directory, makes that a git
 # repository of its own (the Lambda checks read git ls-files) and runs everything there; the
 # checkout is never written. BUMP_TEST_DIR moves the directory (default
-# $HOME/.cache/jope-test-tmp/bump-selftest; never under /tmp). The checks are this script's own and
+# $HOME/.cache/jope-test-tmp/bump-selftest; it must stay under $HOME/.cache/jope-test-tmp/). The checks are this script's own and
 # do not depend on the commit under test: release.sh's version check (VERSION_JQ, from the export),
 # and, from this script's tree, deploy/ci/lambda-workspaces.sh verify (cargo metadata --locked
 # --offline for every nested Lambda workspace, then the SNAPSHOT.json check). The cases:
@@ -33,9 +33,13 @@ here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
 root=$(cd "$here/../.." && pwd -P)
 helper=$here/lambda-workspaces.sh
 commit=$(git -C "$root" rev-parse --verify "${1:-HEAD}^{commit}")
-work=$(realpath -m -- "${BUMP_TEST_DIR:-${HOME:?HOME must be set}/.cache/jope-test-tmp/bump-selftest}")
+# Confined like test-release.sh's RELEASE_TEST_DIR: the directory is reset below, so it must be a
+# subdirectory of $HOME/.cache/jope-test-tmp (never $HOME itself, never /tmp).
+test_parent=$(realpath -m -- "${HOME:?HOME must be set}/.cache/jope-test-tmp")
+work=$(realpath -m -- "${BUMP_TEST_DIR:-$test_parent/bump-selftest}")
 case $work/ in
-  /tmp/*) printf 'test-bump.sh: refusing a test directory under /tmp: %s\n' "$work" >&2; exit 2 ;;
+  "$test_parent"/?*) ;;
+  *) printf 'test-bump.sh: test dir must be under %s/: %s\n' "$test_parent" "$work" >&2; exit 2 ;;
 esac
 tree=$work/tree stubs=$work/stubs
 # Only this script's own fixtures are reset; nothing else under $work is touched.
