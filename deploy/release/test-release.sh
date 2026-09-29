@@ -24,12 +24,13 @@
 #     tampered-copy negative, and the readback (with cosign, GitHub and origin stood in by
 #     functions);
 #   - with hostile per-user configuration, which must not change what a check decides or what a
-#     release holds: a ~/.jq, a ~/.gitconfig URL rewrite, a ~/.config/git/ignore, a URL rewrite or
-#     TLS setting in the repository's config, a replace ref, exported shell functions named after a
-#     command or a builtin (git, unset, command, exit), bash's own variables (SHELLOPTS, BASHOPTS,
-#     BASH_COMPAT, TMOUT, FUNCNEST, BASH_ENV), a bash started without -p, the loader's, tar's,
-#     objdump's, git's and docker's variables, and cosign's environment. The hostile HOMEs are
-#     directories under the test dir; the real ~ is never written.
+#     release holds: a ~/.jq, a ~/.gitconfig URL rewrite, a ~/.config/git/ignore, a URL rewrite, a
+#     remote named after the given URL (url or pushurl) or a TLS setting in the repository's config,
+#     a replace ref, exported shell functions named after a command or a builtin (git, unset,
+#     command, exit), bash's own variables (SHELLOPTS, BASHOPTS, BASH_COMPAT, TMOUT, FUNCNEST,
+#     BASH_ENV), a bash started without -p, the loader's, tar's, objdump's, git's and docker's
+#     variables, and cosign's environment. The hostile HOMEs are directories under the test dir; the
+#     real ~ is never written.
 #
 # release.sh refuses a bash that was not started in privileged mode, so every run and every sourcing
 # below uses bash -p, as its #! line does (and one case runs it through that line).
@@ -1090,8 +1091,8 @@ expect "jq: its private HOME must stay empty (a .jq planted there is refused, jq
   'jq-home is not empty' \
   unit 'export TMPDIR=$1; mkdir -p "$TMPDIR/jq-home"; printf "def x: 1;\n" > "$TMPDIR/jq-home/.jq"; jq -n 1' "$tc/planted-tmp"
 
-# git: no /etc/gitconfig, ~/.gitconfig, per-user ignore file, replace refs, repository URL rewrites
-# or TLS settings.
+# git: no /etc/gitconfig, ~/.gitconfig, per-user ignore file, replace refs, repository URL rewrites,
+# remotes named after a URL, or TLS settings.
 git clone -q --bare "$origin" "$tc/evil-origin.git"
 git -C "$repo" push -q -f "$origin" "$c2:refs/heads/main"
 fake_home "$tc/home-gitconfig"
@@ -1099,14 +1100,52 @@ printf '[url "%s"]\n\tinsteadOf = %s\n' "$tc/evil-origin.git" "$origin" > "$tc/h
 expect "git: a URL rewrite in ~/.gitconfig cannot answer the fresh fetch from another origin" refuse \
   "origin/main is $c2 after a fresh fetch, not $c1" \
   run_home "$tc/home-gitconfig" "${R[@]}" v0.2.0 "$c1"
+refused_git_key='the repository.s git config sets 1 key\(s\) that could send the fetch, the tag checks or the push somewhere other than'
 git -C "$repo" config "url.$tc/evil-origin.git.insteadOf" "$origin"
 expect "git: a URL rewrite in the repository's own config is refused" refuse \
-  'the repository.s git config sets 1 URL rewrite or TLS key' run "$fresh" "${R[@]}" v0.2.0 "$c1"
+  "$refused_git_key" run "$fresh" "${R[@]}" v0.2.0 "$c1"
 git -C "$repo" config --remove-section "url.$tc/evil-origin.git"
+# A remote named after the URL that git is given: git looks the URL up as a remote name first, so
+# that remote's url sends the fetch, the tag checks and the push to another repository, and its
+# pushurl the push alone.
+# git never takes an absolute path such as $origin as a remote name, so these cases give release.sh
+# the same origin as a file:// URL. origin's main is c2 here and evil-origin's is c1, so a release.sh
+# that followed such a remote would pass every guard.
+furl=file://$origin
+git -C "$repo" config remote.origin.url "$tc/evil-origin.git"
+git -C "$repo" config remote.origin.pushurl "$tc/evil-origin.git"
+expect "git: a remote with another name (origin) passes the config check and redirects nothing" refuse \
+  "origin/main is $c2 after a fresh fetch, not $c1" \
+  run "$fresh" "JOPE_RELEASE_TEST_REMOTE=$furl" "${R[@]}" v0.2.0 "$c1"
+git -C "$repo" config --remove-section remote.origin
+git -C "$repo" config "remote.$furl.url" "$tc/evil-origin.git"
+expect "git: remote.<URL>.url in this git answers ls-remote of that URL from another repository" ok \
+  "^$c1"$'\t'"refs/heads/main\$" git ls-remote "$furl" refs/heads/main
+expect "git: a remote named after the URL release.sh is given (remote.<URL>.url) is refused" refuse \
+  "$refused_git_key" run "$fresh" "JOPE_RELEASE_TEST_REMOTE=$furl" "${R[@]}" v0.2.0 "$c1"
+git -C "$repo" config --remove-section "remote.$furl"
+git -C "$repo" config "remote.$furl.pushurl" "$tc/evil-origin.git"
+expect "git: a pushurl alone, which would take only the push elsewhere, is refused" refuse \
+  "$refused_git_key" run "$fresh" "JOPE_RELEASE_TEST_REMOTE=$furl" "${R[@]}" v0.2.0 "$c1"
+git -C "$repo" config --remove-section "remote.$furl"
+git -C "$repo" config remote.https://github.com/neverhuman/JopeDime.git.url "$tc/evil-origin.git"
+expect "git: a remote named after any other URL (here the GitHub one) is refused" refuse \
+  "$refused_git_key" run "$fresh" "JOPE_RELEASE_TEST_REMOTE=$furl" "${R[@]}" v0.2.0 "$c1"
+git -C "$repo" config --remove-section remote.https://github.com/neverhuman/JopeDime.git
+# A test remote given as a relative name is looked up as a remote name too, without any ://.
+git -C "$repo" config remote.release-origin.url "$tc/evil-origin.git"
+expect "git: a remote named exactly as the given remote, without ://, is refused" refuse \
+  "$refused_git_key" run "$fresh" JOPE_RELEASE_TEST_REMOTE=release-origin "${R[@]}" v0.2.0 "$c1"
+git -C "$repo" config --remove-section remote.release-origin
+expect "git: with the remote sections removed, the file:// URL reaches origin itself again" refuse \
+  "origin/main is $c2 after a fresh fetch, not $c1" \
+  run "$fresh" "JOPE_RELEASE_TEST_REMOTE=$furl" "${R[@]}" v0.2.0 "$c1"
 git -C "$repo" push -q -f "$origin" "$c1:refs/heads/main"
+expect "git: a file:// URL as the remote passes every guard when nothing redirects it" ok 'all guards passed' \
+  run "$fresh" "JOPE_RELEASE_TEST_REMOTE=$furl" "${R[@]}" v0.2.0 "$c1"
 git -C "$repo" config http.sslVerify false
 expect "git: a TLS setting in the repository's own config is refused" refuse \
-  'the repository.s git config sets 1 URL rewrite or TLS key' run "$fresh" "${R[@]}" v0.2.0 "$c1"
+  "$refused_git_key" run "$fresh" "${R[@]}" v0.2.0 "$c1"
 git -C "$repo" config --unset http.sslVerify
 fake_home "$tc/home-ignore"
 mkdir -p "$tc/home-ignore/.config/git" && printf 'hidden-by-home.txt\n' > "$tc/home-ignore/.config/git/ignore"
