@@ -10,6 +10,7 @@ the commit areas (crate or lane) named in each subject line.
 - feat-math: a compatibility freeze of the shipped numerics, emitted bytes, serialized models, pinned files and generator streams, the boundary input corpus, and the current scalar semantics pinned before the kernel2 work (#126)
 - feat-math, bench: a bit-exact parity test of the runtime against the emitted Rust, Python and fitted C++17 programs, and an equal-budget search ablation harness (#127)
 - feat-math: the scalar evaluator reports which of its guards fired, as append-only fault classes with severities, beside unchanged values, in the interpreter and the compiled form (#128)
+- feat-math: fits and predictions can report per-stage fault counts beside unchanged stage outputs, models and predictions, and that reporting path refuses zero-width input (#130)
 
 ### CI, build and release
 

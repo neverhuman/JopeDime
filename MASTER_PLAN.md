@@ -1,5 +1,130 @@
 # JopeDime current direction
 
+**2026-09-29 kernel2 pull request 04 (#130): per-stage fault counts beside unchanged fits and predictions.**
+Branch `kernel2/claude-m1-telemetry`, prepared in the lane `.agent/worktrees/kernel2` on
+`79a88767f21dccf7505987f9b0ac7366d71f2c0b`, the reviewed head of #128, and replayed onto
+`origin/main` `6e0ae2491cd4e7918c4d8b07aa211c83376c6764` after #129 merged, before its first push.
+It carries the kernel2 plan's WP-1.4 and the rest of WP-1.8: every `map` and `derive` stage, and
+every fit and prediction, can report its fault counts, and every stage output, model and
+prediction stays bit-identical.
+- **Readback of #129.** The islands-v2 source import (#129, branch `lambda/teacher-v2-import`)
+  merged by rebase at 2026-09-29T16:49:20Z at its exact round-2 reviewed head
+  `b754c1391babc41beaba7718b20552f762dc8a85`. Round 1 (review 5355567473, changes requested at
+  16:34:25Z) had asked for the evaluator statement to be qualified, and round 2 did that. Approval
+  5355667067 (neverhumanbot) was submitted at 16:43:30Z, after the head push (no later than
+  16:37:03Z). The `pull_request` run 36599024961 and the `workflow_dispatch` run 36599023262 were
+  green on attempt 1. main = `6e0ae2491cd4e7918c4d8b07aa211c83376c6764`, and its tree equals the
+  reviewed head's tree (`5108f2d4…`). As for #128, gh-role warned that the account that opened the
+  pull request also merged it, where `AGENTS.md` asks for a merger other than the author.
+  Evidence: `~/jope-evidence/kernel2/pr129-merge-20260929T164902Z/` (`merge.log`, `SHA256SUMS`).
+  Before it, #128 (PR 03) merged at 15:43:17Z (main `3a32d780`); #129's record carries that
+  readback.
+- **Contents.** A new module, `crates/feat-math/src/kernel/telemetry.rs`, registered by one line in
+  `kernel/mod.rs`. `apply_op_traced`, `fit_traced` and `predict_traced` return `apply_op`'s rows,
+  `fit`'s model (the same `serde_json` bytes, apart from the wall-clock fit times a portfolio
+  records) and `Model::predict`'s bits, with `StageFaultCounts`
+  per stage (cells evaluated, cells per fault class, rows with a Hard cell, compile failure,
+  constant output, epilogue replacements) and `PipelineTelemetry` per pass, which also counts the
+  non-finite inputs a pipeline's entry sanitize replaced. Both traced entry points refuse a
+  zero-width input with `ZeroWidthInput`, so `predict_traced` returns a `Result`. The stage
+  epilogue and the append flag are private to `ops.rs`, and `fit` and `predict` live in `model.rs`,
+  so that code is mirrored, and 19 tests hold every mirror to its original. The domain table gains
+  the stage level.
+- **Identity.** None moves. `kernel/` is outside the ADR-0004 hash list and every jope-engine
+  lineage; `ops.rs`, `lib.rs`, `model.rs`, `math_expr.rs`, the Cargo files and every compat_freeze
+  fixture are byte-identical to the base, and compat_freeze passes 12 of 12 in compare mode. No
+  known-table row and no rebaseline.
+- **Replay.** The nine commits `00065af25` to `b9d52cf5e` were cherry-picked onto `6e0ae2491`
+  without a conflict, and `git range-diff 79a88767f..13b5b6c2a 6e0ae2491..HEAD` shows each one
+  unchanged, as `304f7c702` to `cad9b120c`. #129 changed none of their paths, no crate of the root
+  workspace and no root Cargo file. It added two frozen Lambda workspaces, and the teacher-v2
+  worker builds `feat-math` by path, so `deploy/ci/lambda.sh` now builds and tests six workspaces
+  with `--locked` (below). The two old records commits, `af2c7bfb9` and `13b5b6c2a`, are
+  regenerated as this commit: the receipt as it was at `13b5b6c2a`, with the base, the commit ids
+  and the pull request number changed and a "Replay" section added; the CHANGELOG line after
+  #129's; this record with #129's readback; and "Next allowed action". The coverage map and both
+  test inventories need no change: this pull request's two items, re-applied to the new main's
+  files, give the replayed files byte for byte, and the parity inventory's feat-math section
+  equals a live listing. The pre-replay head is kept locally as
+  `refs/preserve/kernel2/pr04-prerebase-20260929T171848Z`.
+- **Found before review.** Perturbation 5 of the receipt: the corpus's four affine symbolic
+  programs did not hold the mirrored scaling to `fit` (`cov * (1.0 / var)` for `cov / var` left
+  every test green), so `1cd0f4e50` adds a test that fits every corpus expression as a symbolic
+  program. Six other perturbations each fail at least one test.
+- **Review follow-ups.** One review of the pre-replay `af2c7bfb9` (F1 to F5, NR-1, R1 to R3) is
+  answered by `3935d86e7`, `c38f65ad0`, `cad9b120c` and these records. No value, count or identity
+  moves, and the test count and both inventories stay as they were. F1 (should-fix): an explicit
+  portfolio does sanitize its input, inside the untraced `portfolio.rs`, so its `input_sanitized`
+  is 0 whatever the input holds. The documentation said it ran no sanitize, and the portfolio test
+  now runs on non-finite rows and pins the behaviour. F2: the legacy `fit` refuses only an empty
+  first row, and `standardize` and the `ridge` head panic on a later one. F3, NR-1, R1: "the last
+  four sections". F4: a portfolio's bytes carry wall-clock fit times. F5: the receipt names the
+  test that checks `STAGES`. R2: the pull request number, #130, is written wherever the
+  placeholder stood, and the check before the first push finds no placeholder. R3: a plain
+  `git status` ran in the canonical checkout during implementation; no harm was found, and the
+  process rule is tightened: no git command at all runs in the canonical checkout. Perturbation 8, a
+  portfolio that counts its non-finite input, passed every test before the follow-ups and fails the
+  portfolio test after them. Commands at the pre-replay `b9d52cf5e` with a clean tree (exit code,
+  seconds): the feat-math PR tier twice, 500 passed each time (0, 73 with the build; 0, 61); the
+  eight named targets twice, 78 passed each time (0, 13; 0, 12); `stage_telemetry` uncaptured (0,
+  6: 19 passed, with the zero-width test's two expected panics printed); fmt (0, 7); feat-math
+  clippy `-D warnings` (0, 1); feat-math rustdoc (0: 7 warnings as before, none in the new module);
+  `cargo check --workspace --all-targets` (0, 37); `coverage validate` (0: 288 targets),
+  `verify-test-inventory` (0: 324 items), `test-inventory.sh` (0) and the feat-math section equal
+  to a live listing (0); ip-scrub (0: 47 files); `check.sh` (0, 20); `git diff --check 79a88767f
+  HEAD` and the identity-input check (0).
+- **Records.** Coverage map +1 item (`target:feat-math/test/stage_telemetry`: rust-check,
+  rust-test, full-default; 288 targets); findings inventory +1 role (regression; 324 items); test
+  inventory +19 Rust tests (3,854 to 3,873, 65 ignored as before; feat-math 491 to 510), with
+  feat-math re-listed and every other package unchanged; the CHANGELOG `[Unreleased]` line; the
+  receipt `docs/internal/kernel2/receipts/WP-1.4.md`.
+- **Commands** at `cad9b120c`, the tree of this commit apart from these records, with a clean tree
+  (exit code, seconds): the feat-math PR tier with `JOPE_PARITY_STRICT=1` twice, 500 passed and 10
+  skipped each time (0, 70 with the build; 0, 61); `compat_freeze`, `stage_telemetry`,
+  `fault_trace`, `mathexpr_current_semantics`, `ip_scrub`, `legacy_v2_freeze` and
+  `portable_parity` in compare mode twice, 72 passed each time, `compat_freeze` 12 of 12 and
+  `stage_telemetry` 19 of 19 (0, 12; 0, 12); `parity_bits` with `JOPE_PARITY_STRICT=1` twice, 6
+  passed each time (rust 6, python 6 and cpp17-fitted 10 divergences, all allowlisted, 0
+  unexpected, 0 stale; 0, 4; 0, 3); `stage_telemetry` uncaptured (0, 6: 19 passed; the `CORPUS`,
+  `BOUNDARY` and `SYMBOLIC` counts as before); the legacy value digest `b64cf538…`, 191,716
+  results, as PR 03 recorded (0, 1); the `jope-dime-regressor` evaluator-identity tests, 15
+  passed, so the identity table is unaffected (0, 56 with the build); `deploy/ci/lambda.sh` (0,
+  51: 6 workspaces, 66 tests, all `--locked`; its cargo-deny step skipped, 0.19.8 installed where
+  0.20.2 is pinned); `git diff --quiet 6e0ae2491 HEAD --` over the fixtures,
+  `crates/jope-campaigns`, `crates/jope-engine`, the root Cargo files and feat-math's
+  `Cargo.toml`, `lib.rs`, `ops.rs`, `model.rs` and `math_expr.rs` (0). Also
+  `cargo fmt --all --check` (0, 7); feat-math clippy `-D warnings` (0, 9);
+  `cargo check --workspace --all-targets` (0, 43); `coverage validate` (0: 288 targets, 0
+  unassigned); `verify-test-inventory` (0: 324 items);
+  `test-inventory.sh --no-rust --static-python`, and again with `--update` (0: no file changed);
+  the feat-math section equal to a live listing (0); `deploy/ci/ip-scrub.sh` (0: 47 files);
+  `deploy/ci/check.sh` (0, 20); `deploy/ci/emitters.sh` (0, 16); `git diff --check 6e0ae2491 HEAD`
+  (0); the subject scrub and the author and trailer checks (0). With these records
+  in the working tree, fmt, `coverage validate`, `verify-test-inventory`, `test-inventory.sh`,
+  ip-scrub, `check.sh`, `git diff --check` and the placeholder check (`git grep -nI` finds no
+  number placeholder) ran again (0 each), and with these records committed, every command above
+  ran again at the head with the same results. Before the replay, at `afa696b9c`,
+  `just test-main` passed 3,808 of 3,808 (0, 687; 65 skipped; `jope-dime-regressor` 997,
+  `jope-parallel` 775 and feat-math 504 passed). It was not rerun: the library code it tested is
+  this head's, since the later commits change a feat-math test file, documentation comments and
+  documents only, and #129 changes no crate of the root workspace.
+- **Commands** before review, at `afa696b9c`, the tree of `af2c7bfb9` apart from the records: as
+  recorded in the receipt's "Commands and results", including seven perturbations of the new
+  module, each run against the tests and reverted.
+- **Open.** Hosted CI. PR 08 needs a per-severity cell count for WP-1.5's `domain_rate`, because
+  a cell can carry two Domain classes, and has to choose between the stage cache and `fit_traced`;
+  it can also count an explicit portfolio's own input sanitize (review F1). The ADR-0004 amendment
+  should list `kernel/telemetry.rs` once PR 08 scores with it, which needs Codex. cargo-deny was
+  skipped locally (0.19.8 installed, 0.20.2 asserted). Clippy `-D warnings` on
+  `jope-dime-regressor` failed at #128's base in files this series does not touch (#128's record)
+  and was not rerun; the series changes no file of that package, and feat-math is clean.
+- **Evidence.** `~/jope-evidence/kernel2/pr04/prepare-20260929T162357Z/`: the logs of every
+  command before review, the perturbation diffs and logs, the nextest listings, the scripts and
+  the commit messages, with `SHA256SUMS`. The review follow-ups:
+  `~/jope-evidence/kernel2/pr04/fixer-20260929T165709Z/`, laid out the same way. The replay and
+  the commands at `cad9b120c` and at the head: `~/jope-evidence/kernel2/pr04/rebase-20260929T171848Z/`,
+  with `SHA256SUMS`.
+
 **2026-09-29 the teacher campaign's second stage is imported (#129).**
 Branch `lambda/teacher-v2-import`, prepared in the lane `.agent/worktrees/kernel2-next` on
 `origin/main` `f65026dd54ba29ef3e7e990b51b15eb42652c089` while kernel2 PR 03 (#128) held the next
@@ -317,11 +442,14 @@ Next allowed action:
    - Done before the verification: the demo lane is gone; the refs are pinned (250 pins, 691 to 941 refs), and the final all-refs bundle (sha256 `592950b4…`, 941 refs) was restored and checked in an independent bare repository (`60-refs/`, independently verified at 11:21:00Z). The remote branch renames and deletions ran from 11:39:50Z to 11:45:44Z, after the AGENT_CHAT notice of 11:23:58Z and its 15-minute objection window (`60-refs/apply-20260929T113950Z/run.log`: local 5 of 5 and remote 24 of 24 rows acted, none refused; the stash was cleared; 140 remote-tracking refs were pruned).
    - A completeness critic restored the final bundle again, independently, and found every T0 census commit reachable (`70-endstate/critic-endstate-critic-20260929T123116Z/`). Its one blocking item, a ledger end snapshot, was taken after the close-out handoff was posted in AGENT_CHAT at 12:35:15Z: `01-agent-chat/snapshots/AGENT_CHAT-20260929T123515Z-end.md`, 509,995 bytes, with the 06:47Z snapshot as its byte prefix. It is sealed and mirrored. `81-remediation-20260929T123356Z/` holds the custody copies made the same afternoon: the kernel2 plan documents and the `release-v0.2.0` run directories.
 2. The kernel2 train, one implementation PR at a time, each merged by `merge-guarded.sh` at its exact reviewed head:
-   - PR 01 is #126, PR 02 is #127 and PR 03 is #128, all merged; their readbacks are in the records of #127, #128 and this pull request;
-   - the islands-v2 source import (item 3) is #129, this pull request;
-   - after it merges, PR 04: stage-level fault telemetry. It is prepared in the lane `.agent/worktrees/kernel2` on top of #128's reviewed head and will be replayed onto main;
-   - then the rest of the train in plan order. M1 is re-cut: PR 05 static scope validation, PR 06 the Rust fitted-width contract, PR 07 fitted-C++ runtime revision 3, and PR 08 the library search admission policy.
-3. The islands-v2 import (owner ruling of 2026-09-29): this pull request imports the frozen source into `deploy/lambda/training/teacher-v2`, from the verified custody snapshot of 2026-09-29T12:44:31Z (`~/jope-evidence/islands-v2-custody/20260929T124431Z/`). Still open after it merges:
+   - PR 01 is #126, PR 02 is #127 and PR 03 is #128, all merged, and so is the islands-v2 source import #129; their readbacks are in the records of #127, #128, #129 and this pull request;
+   - PR 04 is #130, this pull request: stage-level fault telemetry (branch `kernel2/claude-m1-telemetry`, prepared in the lane `.agent/worktrees/kernel2` on #128's reviewed head and replayed onto main before its first push);
+   - after it merges, PR 05, static scope validation. It is prepared in the lane `.agent/worktrees/kernel2-next` on the branch `kernel2/claude-m1-scope`, and it is library-only, so it mints no identity;
+   - then PR 06, the Rust fitted-width contract;
+   - then PR 07, fitted-C++ runtime revision 3;
+   - then PR 08, the library search admission policy;
+   - then M2 (the manifest and search profiles) and the rest of the train in plan order.
+3. The islands-v2 import (owner ruling of 2026-09-29): the source import merged as #129. It imported the frozen source into `deploy/lambda/training/teacher-v2`, from the verified custody snapshot of 2026-09-29T12:44:31Z (`~/jope-evidence/islands-v2-custody/20260929T124431Z/`). Still open:
    - Codex's stopped-state handoff;
    - custody of the run's results (its run directory under `~/scratch/`, and S3);
    - custody of the parent study `test-adaptive-gp-v1`.
