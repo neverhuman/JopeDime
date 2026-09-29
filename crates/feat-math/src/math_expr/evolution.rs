@@ -17,6 +17,19 @@ pub struct ExpressionEdit {
 }
 
 impl ExpressionScope {
+    /// The search profile's scope: at most 15 nodes and depth 4, counted as
+    /// [`ExpressionScope::validate`] counts them (every node, the root at depth 1). It is a new
+    /// constructor only; every existing scope keeps its caps, including the kernel pipeline
+    /// operators' 64 nodes and depth 16.
+    pub const fn search_profile(columns: usize, elementwise: bool) -> Self {
+        Self {
+            columns,
+            elementwise,
+            max_nodes: 15,
+            max_depth: 4,
+        }
+    }
+
     pub fn validate(&self, expression: &MathExpr) -> Result<()> {
         if self.max_nodes == 0
             || self.max_nodes > MAX_NODES
