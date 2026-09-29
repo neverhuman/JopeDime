@@ -22,7 +22,12 @@
 #     an empty environment as sudo leaves it), the build, binary check and receipt stages (with
 #     docker and objdump stood in by functions that record every container's arguments), the
 #     tampered-copy negative, and the readback (with cosign, GitHub and origin stood in by
-#     functions).
+#     functions);
+#   - with hostile per-user configuration, which must not change what a check decides or what a
+#     release holds: a ~/.jq, a ~/.gitconfig URL rewrite, a ~/.config/git/ignore, a URL rewrite or
+#     TLS setting in the repository's config, a replace ref, an exported shell function, the
+#     loader's, tar's, objdump's, git's and docker's variables, and cosign's environment. The
+#     hostile HOMEs are directories under the test dir; the real ~ is never written.
 #
 # Usage: deploy/release/test-release.sh   (exit 0 only when every case passes)
 #
@@ -1022,6 +1027,164 @@ expect "static: every docker run in release.sh is in builder_container" ok '^sit
 expect "static: every env -i in release.sh names TMPDIR" ok '^env_i=[2-9];without_tmpdir=0$' \
   unit 'lines=$(grep -vE "^[[:space:]]*#" "$1" | grep -E "(^|[^[:alnum:]_-])env -i( |\$)")
         printf "env_i=%s;without_tmpdir=%s\n" "$(grep -c . <<<"$lines")" "$(grep -vc "TMPDIR=" <<<"$lines" || true)"' "$release"
+
+echo "# the run's temporary directory (sourced open_run_dir; tools_json stood in)"
+expect "the run's tmp/ is private (0700) under umask 022, and becomes TMPDIR" ok '^rc=0;tmp_mode=700;tmpdir=run$' \
+  unit 'umask 022; tag=v0.2.0 sha=$2 mode=dryrun run_dir=$1/run target_root=$1/target metadata_json="{}"
+        tools_json() { printf "{\"host\": []}\n"; }
+        mkdir -p "$1"; rc=0
+        ( open_run_dir; printf "%s\n" "$TMPDIR" > "$1/tmpdir.txt" ) > "$1/open.out" 2>&1 &
+        wait "$!" || rc=$?
+        if [[ $(cat "$1/tmpdir.txt" 2>/dev/null) == "$run_dir/tmp" ]]; then t=run; else t=other; fi
+        printf "rc=%s;tmp_mode=%s;tmpdir=%s\n" "$rc" "$(stat -c %a "$run_dir/tmp")" "$t"' "$scratch/open-run-dir" "$c1"
+
+echo "# the tools' own configuration (hostile HOMEs, repository config and variables, all under the test dir)"
+tc=$scratch/toolconf
+mkdir -p "$tc"
+# fake_home <dir>: a HOME whose test root resolves to the real one (release.sh takes the realpath of
+# $HOME/.cache/jope-test-tmp), so that release.sh runs in test mode with that HOME's files in reach.
+fake_home() { mkdir -p -- "$1/.cache"; ln -sfn -- "$test_parent" "$1/.cache/jope-test-tmp"; }
+# The cases below that run release.sh use a stamp whose run directory does not exist, so that a
+# release.sh that let the hostile configuration through would pass every guard.
+fresh=JOPE_RELEASE_TEST_STAMP=20260928T000005Z
+# run_home <home> <command...>: the base environment with HOME=<home> and without this script's own
+# git isolation, so that git would read <home>'s configuration if release.sh let it.
+run_home() {
+  local h=$1
+  shift
+  env -u GIT_CONFIG_GLOBAL -u GIT_CONFIG_NOSYSTEM -u XDG_CONFIG_HOME "${base[@]}" "$fresh" "HOME=$h" "$@"
+}
+fake_home "$tc/home-clean"
+expect "control: with a fake HOME that holds no configuration, every guard passes" ok 'all guards passed' \
+  run_home "$tc/home-clean" "${R[@]}" v0.2.0 "$c1"
+
+# jq: every jq of release.sh runs with an empty private HOME, so a ~/.jq defines nothing.
+mkdir -p "$tc/home-jq-sbom" "$tc/home-jq-manifest" "$tc/planted-tmp"
+printf 'def startswith($s): true;\ndef any(g; c): true;\n' > "$tc/home-jq-sbom/.jq"
+printf 'def from_entries: {};\ndef startswith($s): false;\n' > "$tc/home-jq-manifest/.jq"
+jq -n '{spdxVersion: "NOT-SPDX", creationInfo: {creators: ["Tool: other"]}}' > "$tc/bad.spdx.json"
+expect "jq: a ~/.jq that redefines startswith and any cannot make check_sboms accept a non-SPDX document" refuse \
+  'bad\.spdx\.json is not an SPDX document created by syft 1\.40\.0' \
+  unit 'HOME=$1; check_sboms "$2" "$3" "$SYFT_VERSION" && echo ACCEPTED' \
+  "$tc/home-jq-sbom" "$tc/bad.spdx.json" "$pt/good.cdx.json"
+md3=$scratch/dist-manifest-jq
+mkdir -p "$md3" && printf 'binary' > "$md3/jope-v0.2.0-x86_64-unknown-linux-gnu" && printf 'notes' > "$md3/RELEASE-NOTES-v0.2.0.md"
+expect "jq: a ~/.jq that redefines from_entries and startswith cannot change the release manifest" ok '^ok$' \
+  unit 'cd "$3" && ( HOME=$4; write_manifest "$1" v0.2.0 "$2" 0.2.0 2.34 )
+        jq -e ".artifacts | keys == [\"RELEASE-NOTES-v0.2.0.md\", \"jope-v0.2.0-x86_64-unknown-linux-gnu\"]" \
+          "$1/release-manifest-v0.2.0.json" >/dev/null || { echo "artifacts: $(jq -c .artifacts "$1/release-manifest-v0.2.0.json")"; exit 1; }
+        jq -e ".models_pinned == [\"bundle-a\", \"bundle-b\"]" "$1/release-manifest-v0.2.0.json" >/dev/null \
+          || { echo "models_pinned: $(jq -c .models_pinned "$1/release-manifest-v0.2.0.json")"; exit 1; }
+        echo ok' "$md3" "$c1" "$repo" "$tc/home-jq-manifest"
+fake_home "$tc/home-jq-version"
+printf 'def map(f): [.[] | f | .version = "0.2.0"];\ndef startswith($s): true;\n' > "$tc/home-jq-version/.jq"
+expect "jq: through release.sh, a ~/.jq cannot turn a jope-cli 0.1.0 workspace into a pass for v0.2.0" refuse \
+  'MISMATCH jope-cli 0\.1\.0 != tag version 0\.2\.0' \
+  run_home "$tc/home-jq-version" "FAKE_CARGO_METADATA=$work/meta-cli-010.json" "${R[@]}" v0.2.0 "$c1"
+expect "jq: its private HOME must stay empty (a .jq planted there is refused, jq never runs)" refuse \
+  'jq-home is not empty' \
+  unit 'export TMPDIR=$1; mkdir -p "$TMPDIR/jq-home"; printf "def x: 1;\n" > "$TMPDIR/jq-home/.jq"; jq -n 1' "$tc/planted-tmp"
+
+# git: no /etc/gitconfig, ~/.gitconfig, per-user ignore file, replace refs, repository URL rewrites
+# or TLS settings.
+git clone -q --bare "$origin" "$tc/evil-origin.git"
+git -C "$repo" push -q -f "$origin" "$c2:refs/heads/main"
+fake_home "$tc/home-gitconfig"
+printf '[url "%s"]\n\tinsteadOf = %s\n' "$tc/evil-origin.git" "$origin" > "$tc/home-gitconfig/.gitconfig"
+expect "git: a URL rewrite in ~/.gitconfig cannot answer the fresh fetch from another origin" refuse \
+  "origin/main is $c2 after a fresh fetch, not $c1" \
+  run_home "$tc/home-gitconfig" "${R[@]}" v0.2.0 "$c1"
+git -C "$repo" config "url.$tc/evil-origin.git.insteadOf" "$origin"
+expect "git: a URL rewrite in the repository's own config is refused" refuse \
+  'the repository.s git config sets 1 URL rewrite or TLS key' run "$fresh" "${R[@]}" v0.2.0 "$c1"
+git -C "$repo" config --remove-section "url.$tc/evil-origin.git"
+git -C "$repo" push -q -f "$origin" "$c1:refs/heads/main"
+git -C "$repo" config http.sslVerify false
+expect "git: a TLS setting in the repository's own config is refused" refuse \
+  'the repository.s git config sets 1 URL rewrite or TLS key' run "$fresh" "${R[@]}" v0.2.0 "$c1"
+git -C "$repo" config --unset http.sslVerify
+fake_home "$tc/home-ignore"
+mkdir -p "$tc/home-ignore/.config/git" && printf 'hidden-by-home.txt\n' > "$tc/home-ignore/.config/git/ignore"
+printf 'x\n' > "$repo/hidden-by-home.txt"
+expect "git: ~/.config/git/ignore cannot hide an untracked file from the clean-tree check" refuse \
+  '^\?\? hidden-by-home\.txt$' run_home "$tc/home-ignore" "${R[@]}" v0.2.0 "$c1"
+rm -f -- "$repo/hidden-by-home.txt"
+c_rp=$(git -C "$repo" commit-tree "$c1^{tree}" -p "$c1" -m 'a release commit that a replace ref shadows')
+rp_blob=$(printf 'replaced\n' | git -C "$repo" hash-object -w --stdin)
+rp_tree=$(printf '100644 blob %s\treplaced.txt\n' "$rp_blob" | git -C "$repo" mktree)
+git -C "$repo" replace "$c_rp" "$(git -C "$repo" commit-tree "$rp_tree" -m 'the replacement')"
+expect "git: a replace ref cannot swap the tree that is exported and verified as the commit's" ok \
+  '^tree=commit;cargo_toml=present;replaced_txt=absent;verified=true$' \
+  unit 'run_dir=$1 sha=$2; mkdir -p "$run_dir/tmp"; export_source >/dev/null 2>&1
+        real=$(git --no-replace-objects rev-parse "$sha^{tree}")
+        if [[ $(jq -r .tree "$run_dir/source-export.json") == "$real" ]]; then t=commit; else t=replacement; fi
+        if [[ -f $run_dir/src/Cargo.toml ]]; then c=present; else c=absent; fi
+        if [[ -e $run_dir/src/replaced.txt ]]; then r=present; else r=absent; fi
+        printf "tree=%s;cargo_toml=%s;replaced_txt=%s;verified=%s\n" "$t" "$c" "$r" "$(jq -r .verified "$run_dir/source-export.json")"' \
+  "$scratch/export-replace" "$c_rp"
+git -C "$repo" replace -d "$c_rp" >/dev/null
+
+# An exported function would stand in for git: here it hides a dirty tree from git status.
+shadow_git() (
+  # shellcheck disable=SC2317  # it runs only in the bash that imports it
+  git() { if [[ $1 == status ]]; then return 0; fi; command git "$@"; }
+  export -f git
+  run "$fresh" "${R[@]}" v0.2.0 "$c1"
+)
+printf 'x\n' > "$repo/hidden-by-function.txt"
+expect "an exported shell function named git cannot stand in for git" refuse '^\?\? hidden-by-function\.txt$' shadow_git
+rm -f -- "$repo/hidden-by-function.txt"
+
+# Variables: sourcing release.sh (as a run starts) drops those that change a tool's behaviour.
+env_case() (
+  # shellcheck disable=SC2317  # it runs only in the bash that imports it
+  sha256sum() { echo 0000; }
+  export -f sha256sum
+  export LD_LIBRARY_PATH=$tc/no-libs TAR_OPTIONS=--exclude=Cargo.toml GNUTARGET=binary \
+    GIT_DIR=$tc/no-git-dir GIT_CONFIG_PARAMETERS="'core.hookspath'='$tc/hooks'" \
+    GIT_COMMITTER_NAME='Release Test' DOCKER_BUILDKIT=0 JQ_COLORS=1
+  unit 'printf "fn=%s;ld=%s;tar=%s;gnutarget=%s;git_dir=%s;git_params=%s;committer=%s;docker=%s;jq=%s;" \
+          "$(type -t sha256sum)" "${LD_LIBRARY_PATH-unset}" "${TAR_OPTIONS-unset}" "${GNUTARGET-unset}" "${GIT_DIR-unset}" \
+          "${GIT_CONFIG_PARAMETERS-unset}" "${GIT_COMMITTER_NAME-unset}" "${DOCKER_BUILDKIT-unset}" "${JQ_COLORS-unset}"
+        printf "global=%s;nosystem=%s;noreplace=%s;excludes=%s;attributes=%s;hooks=%s;fsmonitor=%s;gpgsign=%s\n" \
+          "${GIT_CONFIG_GLOBAL-unset}" "${GIT_CONFIG_NOSYSTEM-unset}" "${GIT_NO_REPLACE_OBJECTS-unset}" \
+          "$(git config core.excludesFile)" "$(git config core.attributesFile)" "$(git config core.hooksPath)" \
+          "$(git config core.fsmonitor)" "$(git config tag.gpgSign)"'
+)
+expect "variables: the loader's, tar's, objdump's, git's, docker's and jq's go, exported functions go, the committer stays" ok \
+  '^fn=file;ld=unset;tar=unset;gnutarget=unset;git_dir=unset;git_params=unset;committer=Release Test;docker=unset;jq=unset;global=/dev/null;nosystem=1;noreplace=1;excludes=/dev/null;attributes=/dev/null;hooks=/dev/null;fsmonitor=false;gpgsign=false$' \
+  env_case
+
+# docker: an empty private DOCKER_CONFIG and the system socket, whatever ~/.docker and DOCKER_* say.
+mkdir -p "$tc/docker-bin" "$tc/home-docker/.docker"
+cat > "$tc/docker-bin/docker" <<'EOF'
+#!/bin/sh
+n=$(find "${DOCKER_CONFIG:-/nonexistent}" -mindepth 1 2>/dev/null | wc -l)
+printf 'config=%s;entries=%s;host=%s;context=%s;platform=%s;args=%s\n' "${DOCKER_CONFIG-unset}" "$n" \
+  "${DOCKER_HOST-unset}" "${DOCKER_CONTEXT-unset}" "${DOCKER_DEFAULT_PLATFORM-unset}" "$*"
+EOF
+chmod 0755 "$tc/docker-bin/docker"
+printf '{"currentContext": "elsewhere", "proxies": {"default": {"httpProxy": "http://proxy.invalid:3128"}}}\n' \
+  > "$tc/home-docker/.docker/config.json"
+docker_case() (
+  export HOME=$tc/home-docker DOCKER_CONTEXT=elsewhere DOCKER_HOST=tcp://docker.invalid:2375 \
+    DOCKER_CONFIG=$tc/home-docker/.docker DOCKER_DEFAULT_PLATFORM=linux/arm64
+  unit 'PATH=$1:$PATH; out=$(docker version)
+        want="config=$TMPDIR/docker-config;entries=0;host=unix:///var/run/docker.sock;context=unset;platform=unset;args=version"
+        if [[ $out == "$want" ]]; then echo ok; else printf "%s\n" "$out"; exit 1; fi' "$tc/docker-bin"
+)
+expect "docker: every docker command gets an empty private DOCKER_CONFIG and the system socket" ok '^ok$' docker_case
+
+# cosign: an empty environment on the host, with an empty private HOME.
+stand_in "$pt/cosign-v2.4.3/cosign" cosign v2.4.3
+expect "cosign: runs with nothing inherited (no COSIGN_*/SIGSTORE_* or other variable), HOME empty and private" ok \
+  '^version=v2\.4\.3;leak=no;home=private;tmpdir=ok$' \
+  unit 'export LEAK_CANARY=1 COSIGN_EXPERIMENTAL=1 SIGSTORE_ROOT_FILE=/nonexistent
+        out=$(check_cosign "$1" "$(sha256_of "$1")" v2.4.3); e=$1.env
+        if grep -qE "^(LEAK_CANARY|COSIGN_|SIGSTORE_)" "$e"; then l=yes; else l=no; fi
+        printf "version=%s;leak=%s;home=%s;tmpdir=%s\n" "$(jq -r .gitVersion <<<"$out")" "$l" \
+          "$(grep -qx "HOME=$TMPDIR/cosign-home" "$e" && [[ $(stat -c %a "$TMPDIR/cosign-home") == 700 ]] && echo private || echo bad)" \
+          "$(grep -qx "TMPDIR=$TMPDIR" "$e" && echo ok || echo bad)"' "$pt/cosign-v2.4.3/cosign"
 
 echo
 total=$((pass + ${#failures[@]}))

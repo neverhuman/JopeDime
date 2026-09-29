@@ -177,7 +177,8 @@ The script refuses to run, and exits non-zero with a message, if any of these ho
 - the evidence directory already holds a run;
 - `~/.local/bin/cosign` or `~/.local/bin/syft` does not have its pinned sha256, or does not report its pinned version (see [Tools](#tools));
 - a host tool that the script runs resolves, through the operator's `PATH`, to a file or directory that is not root-owned or that group or others can write, such as a copy in `~/.local/bin` (see [Tools](#tools));
-- with `--publish`: the tagger is not the writer identity, or a GitHub release of that name already exists.
+- the repository's own git config rewrites a URL (`url.*.insteadOf`, `url.*.pushInsteadOf`) or changes TLS verification (`http.*sslVerify`, `http.*sslCAInfo`, `http.*sslCAPath`), or a tool's private configuration directory is not empty (see [Tool configuration](#tool-configuration));
+- with `--publish`: the tagger is not the writer identity, or a GitHub release of that name already exists. The tagger comes from `GIT_COMMITTER_NAME` and `GIT_COMMITTER_EMAIL`, or from `user.name` and `user.email` in the repository's own config; `~/.gitconfig` is not read.
 
 All of these are checked before anything is exported, built or signed.
 
@@ -198,7 +199,7 @@ So no file in the checkout that `git status` does not show can reach a release: 
 
 ### Tools
 
-Every tool whose output goes into a release, or decides whether a release passes its checks, is either pinned or checked as a host tool.
+Every command that shapes a release or its checks is pinned, checked as a host tool, or run inside the pinned builder image, with two named exceptions: the host `cargo` and `gh-role`. No pinned or host tool reads per-user configuration that could change what it reports to a check or writes into a release (see [Tool configuration](#tool-configuration)).
 
 - **Pinned: syft and cosign.** Both live in `~/.local/bin`, which `ubuntu` can write. `release.sh` pins each one by sha256 and by the version it reports:
 
@@ -212,15 +213,43 @@ Every tool whose output goes into a release, or decides whether a release passes
   - syft runs with an empty environment. Its `TMPDIR`, `HOME`, XDG directories and cache all lie under `tmp/syft/`, and it reads only the configuration file that the script writes (`sbom/syft.yaml`), not `~/.syft.yaml` or a `.syft.yaml` in the export. Neither the operator's configuration nor an earlier run's cache can change the SBOMs.
   - Both SBOMs must name syft 1.40.0 as the tool that made them.
   - cosign's digest is checked again before each verification on the host. Root checks its own copy before it signs (see [Key custody](#key-custody)).
+  - On the host, cosign runs with an empty environment, like syft: `PATH`, `TMPDIR`, a `HOME` that is an empty private directory, and for verification a `TUF_ROOT` in the run directory.
   - The release manifest records both versions and digests. Upgrading either tool is a reviewed change to `SYFT_VERSION` and `SYFT_SHA256`, or `COSIGN_VERSION` and `COSIGN_SHA256`, in `release.sh`.
-- **Host tools: every other command the script runs.** These are `git`, `jq`, `objdump`, `tar`, `find`, `grep`, `sed`, `diff`, `sudo`, `docker`, and `sha256sum` and the rest of coreutils (`HOST_TOOLS` in `release.sh`). They come from the host's packages: Ubuntu's, and Docker's apt repository for `docker`. They are not pinned by digest:
+- **Host tools: every other command the script runs by name on the host, as the operator or as root through `sudo`.** These are `git`, `jq`, `objdump`, `tar`, `find`, `grep`, `sed`, `diff`, `sudo`, `docker`, `sh`, `dpkg-query`, and `sha256sum`, `mktemp` and the rest of coreutils (`HOST_TOOLS` in `release.sh`). They come from the host's packages: Ubuntu's, and Docker's apt repository for `docker`. They are not pinned by digest:
   - security updates replace them routinely, so a digest pin would stop every release after each update;
   - only root can replace them, and root is already inside the trust boundary (see [Key custody](#key-custody)).
 
-  Instead, preflight refuses a host tool unless the operator's `PATH` resolves it to a root-owned file, in root-owned directories, that neither group nor others can write. A copy in `~/.local/bin`, which comes first on the operator's `PATH`, is refused. Each run records every host tool's path, resolved file, sha256, package and package version in `tools.json`.
+  Instead, preflight refuses a host tool unless the operator's `PATH` resolves it to a root-owned file, in root-owned directories, that neither group nor others can write. A copy in `~/.local/bin`, which comes first on the operator's `PATH`, is refused. The list includes the commands root runs: `sudo -n test`, `cat`, `chown`, `chmod` and `sh`, and the sign script's `mktemp`, `mkdir`, `cp`, `chmod`, `sha256sum`, `cat` and `rm`. So whether `sudo` looks them up in the operator's `PATH` or in its own root-configured `secure_path`, each resolves to a root-owned file. Each run records every host tool's path, resolved file, sha256, package and package version in `tools.json`.
 - **The builder.** `cargo`, `rustc`, `ldd` and `jope-build-receipt` run inside the `rust:1.97.1-bookworm` image, which is pinned by digest.
-- **The host `cargo`** runs only `cargo metadata` in preflight. The builder reads the export's metadata again, and that is the check that counts.
-- **`gh-role`** (publish only) is the host's credential router. It is trusted as part of the `ubuntu` account.
+- **The two exceptions.** Both are run from `~/.local/bin`, which `ubuntu` can write, and both read the operator's own configuration:
+  - **The host `cargo`** (the rustup shim) runs only `cargo metadata --no-deps` in preflight, on the checkout. It decides nothing on its own: the builder runs `cargo metadata` again inside the pinned image, on the verified export, and the run stops unless that answer is also right.
+  - **`gh-role`** (publish only) is the host's credential router. It hands `git` the GitHub token and runs `gh release view`, `create` and `download` as the writer role. It is trusted as part of the `ubuntu` account, and it cannot change what was signed: it uploads `dist/`, which is signed before it runs, and the readback compares the downloaded assets with `dist/` byte for byte and verifies the signature again.
+
+#### Tool configuration
+
+No per-user file and no variable of the operator's may change what a pinned or host tool reports to a check or writes into a release. `release.sh` removes or replaces each one that could before `main` runs, so every command it starts inherits that. It never writes the operator's own files. The audit, on xbabe2:
+
+| Tool | Configuration it would read | What `release.sh` does |
+| --- | --- | --- |
+| `jq` 1.7 | `~/.jq` (and `~/jq/main.jq`), loaded into every program. A definition there changes what a program means: a `~/.jq` that redefines `startswith` and `any` made the SBOM check accept a file that is not SPDX, and one could as well change the signed manifest or the version check. `JQ_*` variables. | Every `jq` runs with `HOME` set to `jq-home/`, an empty private directory in the current `TMPDIR`; anything found there stops the run. `JQ_*` is unset. |
+| `git` 2.43 | `/etc/gitconfig` and `~/.gitconfig`. On xbabe2 `~/.gitconfig` rewrites the GitHub URLs of other repositories to the local forge, so one more line would send the fetch, the tag checks and the push somewhere else. `~/.config/git/ignore` and `~/.config/git/attributes`, read even without `~/.gitconfig`. Replace refs, which make `git archive`, `ls-tree` and `cat-file` show another commit's tree under the released SHA. `GIT_*` variables. The repository's own config. | `GIT_CONFIG_NOSYSTEM=1`, `GIT_CONFIG_GLOBAL=/dev/null` and `GIT_NO_REPLACE_OBJECTS=1`. Through `GIT_CONFIG_COUNT`, which outranks every configuration file: `core.excludesFile` and `core.attributesFile` are `/dev/null`, `core.hooksPath` is `/dev/null` (no repository hook runs), `core.fsmonitor` is `false` and `tag.gpgSign` is `false`. Every other `GIT_*` variable is unset, except `GIT_COMMITTER_NAME` and `GIT_COMMITTER_EMAIL`. Preflight refuses URL rewrites and TLS settings in the repository's config (see [Guards](#guards)). The GitHub credential helper is passed with `git -c`, which outranks all of this, so the fetch and the push still authenticate as the writer role. |
+| `tar` 1.35 | `TAR_OPTIONS`: `--exclude=...` there drops files from the export. | Unset. |
+| `objdump` 2.42 | `GNUTARGET`: `GNUTARGET=binary` hides every `NEEDED` entry. | Unset. |
+| `grep` 3.11 | Nothing: `GREP_OPTIONS` has been ignored since grep 3.6, and colours apply only with `--color`. | `GREP_OPTIONS` is unset anyway. |
+| `sed` 4.9, `find` and coreutils (`sha256sum`, `sort`, `head`, `tail`, `stat`, `cp`, `install`, `ls` and the rest) | No configuration file. `POSIXLY_CORRECT` changes how GNU tools, and `bash`, behave. | `POSIXLY_CORRECT` is unset. `LC_ALL=C` and `TMPDIR` are set, and `date` always runs with `-u`. |
+| Every dynamically linked host tool | `LD_PRELOAD`, `LD_LIBRARY_PATH`, `LD_AUDIT` and the other `LD_*` variables, `GCONV_PATH`, `LOCPATH` and `GLIBC_TUNABLES`, which load or tune code from a path of the operator's choosing. | Unset. So are `SSL_CERT_FILE`, `SSL_CERT_DIR` and `CURL_CA_BUNDLE`: `git`'s TLS trust stays the system's. |
+| `dpkg-query` | `DPKG_ADMINDIR` and `DPKG_ROOT`. They could only change the package versions recorded in `tools.json`. | `DPKG_*` is unset. |
+| `docker` CLI 29 | `~/.docker/config.json`: a current context chooses the daemon, `proxies` are added to every container's environment, and credential helpers and plugin hooks run. `DOCKER_HOST`, `DOCKER_CONTEXT`, `DOCKER_DEFAULT_PLATFORM` and the other `DOCKER_*` variables. | Every `docker` runs with `DOCKER_CONFIG` set to `docker-config/`, an empty private directory in the run's `TMPDIR`, and `DOCKER_HOST=unix:///var/run/docker.sock`. Every other `DOCKER_*` variable is unset. The daemon's own configuration belongs to root, and the image is pinned by digest. |
+| cosign v2.4.3 | `COSIGN_*`, `SIGSTORE_*`, token and `TUF_ROOT` variables, and `~/.sigstore`. | On the host it runs with an empty environment (see [Tools](#tools)). Root's copy runs under `sudo`, which resets the environment. |
+| syft 1.40.0 | `~/.syft.yaml`, its XDG configuration, `SYFT_*` variables, and a `.syft.yaml` in the scanned directory. | It runs with an empty environment and reads only the configuration file the script writes (see [Tools](#tools)). |
+| `sudo` | `/etc/sudoers`, which belongs to root. | Nothing: `sudo` resets the environment. |
+| `bash` | Exported functions (`export -f`), which bash imports before the script's first line, and a `BASH_ENV` file, which it runs before that line. | A function named after a command the script runs is dropped, so the command itself runs. A `BASH_ENV` file is the operator's own shell start-up, which no script can undo once it has run; like the rest of the `ubuntu` account, it is inside the trust boundary (see [Key custody](#key-custody)). |
+
+What remains, and why it cannot change a result:
+
+- `git` still reads the repository's own configuration, `.git/info/attributes` and `.git/info/exclude`. They belong to the checkout. The keys that could change a result are forced or refused as above. Attributes cannot change the export unnoticed, because the export is compared with the commit's tree blob by blob (see [What is built](#what-is-built)). An exclude rule, or a key such as `core.fileMode`, can hide a working-tree change from the clean-tree guard, but the build reads only the verified export, never the working tree.
+- `git`'s HTTP library reads `~/.netrc`, and a credential-store helper reads `~/.git-credentials`. These choose only which account authenticates, not what the fetch, `ls-remote` or the push see: TLS verifies github.com, and git compares object ids. The store helper is configured in `~/.gitconfig`, which is not read, and the GitHub helper list is reset with `git -c`. xbabe2 has no `~/.netrc`.
+- The host `cargo` and `gh-role` are the two exceptions described in [Tools](#tools).
 
 ### What the run does
 
@@ -262,7 +291,7 @@ Each run writes to `~/jope-evidence/release-vX.Y.Z/<dryrun|publish>-<UTC stamp>/
 The directory is sealed by a closing `SHA256SUMS`. The seal leaves out:
 
 - `src/`, the verified export. It can be reproduced with `git archive <sha>`.
-- the `tmp/` and `tuf/` caches. `tmp/` is the run's `TMPDIR`. It also holds the containers' temporary directory, `tmp/container/`, and syft's home and cache, `tmp/syft/`. Empty directories in it are removed when the run ends.
+- the `tmp/` and `tuf/` caches. `tmp/` is the run's `TMPDIR`, created `0700`. It also holds the containers' temporary directory, `tmp/container/`, syft's home and cache, `tmp/syft/`, and the empty configuration directories of jq, docker and cosign (see [Tool configuration](#tool-configuration)). Empty directories in it are removed when the run ends.
 
 The Cargo target directory is shared per tag at `~/jope-evidence/release-vX.Y.Z/target/`. That directory is a cache, not evidence. To force a cold build, move it aside; do not delete evidence to do so.
 
@@ -272,11 +301,11 @@ Nothing is written under `/tmp`, on the host or in a container. The script names
 
 | Boundary | How `TMPDIR` crosses it |
 | --- | --- |
-| The script and the host commands it runs (git, tar, jq, cosign, gh-role and the rest) | Before anything else runs, the script exports `TMPDIR` as `~/jope-evidence/release-tmp/` (created `0700`), and as the run's `tmp/` once the run directory exists. cosign is also given it by name. |
+| The script and the host commands it runs (git, tar, jq, gh-role and the rest) | Before anything else runs, the script exports `TMPDIR` as `~/jope-evidence/release-tmp/` (created `0700`), and as the run's `tmp/` (also `0700`) once the run directory exists. |
 | Every `docker run` (the build, `cargo metadata`, the receipt, and the binary run inside bookworm) | Docker passes a container no variable that is not named with `-e`, and the image's `/tmp` is its own. Every container is started by one function, which bind-mounts the run's `tmp/container/` (`0700`) at `/release-tmp`, sets `TMPDIR=/release-tmp`, and mounts the same directory over the container's `/tmp`. The last mount covers glibc's `tmpfile(3)` and any tool that ignores `TMPDIR`. |
 | Root's signing shell (`sudo -n sh -c`) | `sudo` resets the environment. Root's shell creates its work directory from an explicit `/root/jope-release-sign.XXXXXX` template, then exports `TMPDIR` as the `0700` `tmp/` inside it before it runs anything else. cosign and every other command there see that `TMPDIR`, and the directory is removed when the shell exits. |
 | `sudo -n test`, `cat`, `chown` and `chmod` | These read or change one named file and create no temporary files. |
-| The empty-environment runs (`env -i`): the binary's version check and syft | Each names `TMPDIR`: the run's `tmp/` for the binary, and `tmp/syft/tmp/` for syft (see [Tools](#tools)). |
+| The empty-environment runs (`env -i`): the binary's version check, syft and cosign on the host | Each names `TMPDIR`: the current `TMPDIR` for the binary and cosign, and `tmp/syft/tmp/` for syft (see [Tools](#tools)). |
 
 `docker pull` and the image store belong to the Docker daemon, a system service outside the run. The image is pinned by digest.
 
