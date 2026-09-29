@@ -11,6 +11,9 @@
 use crate::credit::TokenLedger;
 use crate::dsl::{DslExpr, ParamValue, Stage};
 use crate::heads::RidgeModel;
+use crate::kernel::admission::{outranks, prefer_fewer_faults, FaultTotals, Rejection};
+use crate::kernel::scope::validate_scope;
+use crate::kernel::telemetry::{fit_traced, predict_traced, PipelineTelemetry};
 use crate::ops::{apply_op, apply_op_train, fit_op, FittedOp};
 use crate::rng::Pcg32;
 use crate::target_transform::{fit_target, is_target_op, FittedTarget};
@@ -141,6 +144,89 @@ pub enum FitnessMode {
     /// only as a rung-0 junk filter; promoted candidates fit their OWN head at lite budget on
     /// nested row subsets (see `evolve_lite_race`).
     LiteRace,
+}
+
+/// How the search treats the faults of a candidate's `map` and `derive` stages (kernel2 WP-1.5).
+///
+/// [`FaultPolicy::Legacy`], the default, is the search as it has always run: no scope check, no
+/// fault telemetry, and a guarded fallback value is scored like any other value. The other
+/// policies change how candidates are scored and ordered, and nothing else: they draw the same
+/// random numbers, and the code emitted for a winner never reads their telemetry. Under either of
+/// them:
+///
+/// - The program that is actually fitted (the ridge surrogate in the surrogate search and at rung
+///   0, the lite-budget program at rungs 1 and 2) is checked with
+///   [`validate_scope`](crate::kernel::scope::validate_scope) at the input width before anything
+///   is fitted. A failure rejects the candidate.
+/// - Each fold is fitted with [`fit_traced`](crate::kernel::telemetry::fit_traced) and predicted
+///   with [`predict_traced`](crate::kernel::telemetry::predict_traced), which return `fit`'s model
+///   and `predict`'s predictions with the stage fault counts beside them. A Hard fault in any
+///   stage of either pass of any fold rejects the candidate.
+/// - A rejected candidate's score is `None`. In the lite race a rejection at any rung also removes
+///   the candidate from the ranking, so it is never an elite or a parent. Rejections are counted in
+///   [`GenStats::hard_rejected`] and reported with their reason through [`Observer::on_reject`].
+/// - The lite race scores every rung on the CPU. A GPU rung-0 backend is never called, because
+///   the prepared GPU path does not fit through the traced entry points, and exact rung-0 reuse
+///   stays off, because a reused score carries no fault counts of its own; its receipt names the
+///   reason.
+///
+/// The totals, rates, penalty and tie-break are defined in [`crate::kernel::admission`].
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub enum FaultPolicy {
+    /// Today's search, unchanged.
+    #[default]
+    Legacy,
+    /// Reject every candidate whose scope check fails or that raises a Hard fault.
+    RejectHard,
+    /// `RejectHard`, and every fold score of a candidate with a Domain or Saturation fault becomes
+    /// `s - lambda_domain * domain_rate - lambda_saturation * saturation_rate`
+    /// ([`FaultTotals::penalize`]), so every score derived from the folds carries the penalty. A
+    /// candidate without a fault keeps its scores bit for bit. With `tie_break`, among candidates
+    /// whose scores are within [`TIE_TOLERANCE`](crate::kernel::admission::TIE_TOLERANCE) of each
+    /// other, the one with fewer faulted cells ranks first and wins parent selection. Both lambdas
+    /// must be finite and non-negative ([`FaultPolicy::validate`]).
+    Penalize {
+        lambda_domain: f64,
+        lambda_saturation: f64,
+        tie_break: bool,
+    },
+}
+
+impl FaultPolicy {
+    /// The reason the policy cannot be run, if it cannot: a `Penalize` lambda that is negative,
+    /// infinite or NaN. The search panics with this reason when it is given such a policy, except
+    /// [`evolve_lite_race_with_exact_initial_population`], which returns it.
+    pub fn validate(&self) -> Result<(), String> {
+        if let Self::Penalize {
+            lambda_domain,
+            lambda_saturation,
+            ..
+        } = *self
+        {
+            for (name, lambda) in [
+                ("lambda_domain", lambda_domain),
+                ("lambda_saturation", lambda_saturation),
+            ] {
+                if !(lambda.is_finite() && lambda >= 0.0) {
+                    return Err(format!(
+                        "fault policy: {name} must be finite and non-negative, got {lambda}"
+                    ));
+                }
+            }
+        }
+        Ok(())
+    }
+
+    /// Whether near-tied candidates are ordered by their faulted cells.
+    fn breaks_ties(self) -> bool {
+        matches!(
+            self,
+            Self::Penalize {
+                tie_break: true,
+                ..
+            }
+        )
+    }
 }
 
 #[cfg(test)]
@@ -1047,6 +1133,9 @@ pub struct EvolveConfig {
     /// add EXPANSION_STARTERS to generation zero. Off by default: the legacy
     /// vocabulary array's length is the modulus of every recorded stream.
     pub expansion_vocab: bool,
+    /// How the search treats the faults of `map` and `derive` stages. `Legacy` by default, which
+    /// runs the search unchanged; see [`FaultPolicy`].
+    pub fault_policy: FaultPolicy,
 }
 
 impl Default for EvolveConfig {
@@ -1064,6 +1153,7 @@ impl Default for EvolveConfig {
             rank_robust: false,
             hard_ten_priors: false,
             expansion_vocab: false,
+            fault_policy: FaultPolicy::Legacy,
         }
     }
 }
@@ -1089,6 +1179,17 @@ pub struct GenStats {
     pub best_cv: f64,
     /// Current population fitness (sorted desc, non-finite filtered), for live visuals.
     pub pop_fitness: Vec<f64>,
+    /// The share of this generation's distinct candidates that the fault policy has rejected
+    /// ([`FaultPolicy`]). 0.0 under `Legacy`, which rejects nothing.
+    pub hard_rejected_share: f64,
+    /// Distinct candidates the fault policy has rejected since the run started. 0 under `Legacy`.
+    pub hard_rejected: u64,
+    /// The mean domain rate of the ranked candidates, each taken from the evaluation its score
+    /// comes from. 0.0 under `Legacy`, which measures no rate.
+    pub pop_domain_rate: f64,
+    /// The same mean over the elites, the best ranked candidates that pass unchanged into the next
+    /// generation. 0.0 under `Legacy`.
+    pub elite_domain_rate: f64,
 }
 
 /// Streaming observer: per-generation stats, per-improvement code drops, cancellation.
@@ -1104,6 +1205,12 @@ pub trait Observer: Sync {
     fn is_cancelled(&self) -> bool {
         false
     }
+    /// Fired for each evaluation a non-legacy [`FaultPolicy`] rejects, with the candidate's
+    /// canonical text and the reason, in the order the candidates were evaluated. A rejected
+    /// candidate is not evaluated again in later generations or at later rungs; only the
+    /// surrogate search evaluates a program twice, when it appears twice in one generation, as it
+    /// always has. Never fired under `Legacy`. Default no-op.
+    fn on_reject(&self, _dsl: &str, _reason: &Rejection) {}
 }
 
 const EVAL_CODE_SAMPLE_MS: u128 = 83;
@@ -1761,6 +1868,267 @@ fn score_genome(
 }
 
 // ---------------------------------------------------------------------------
+// Fault policy (kernel2 WP-1.5): the scorers and bookkeeping of the non-legacy policies. Under
+// `FaultPolicy::Legacy` none of this runs.
+// ---------------------------------------------------------------------------
+
+/// One evaluation under a non-legacy [`FaultPolicy`].
+enum Admitted {
+    /// Scored: the policy's fold scores, and the fault totals of every pass.
+    Scored(Vec<f64>, FaultTotals),
+    /// Not scored, for a reason the legacy scorers share: an empty fold, a fit or prediction
+    /// error, a score that is not finite (a penalized one included), or the budget or a
+    /// cancellation stopping the evaluation.
+    Failed,
+    /// Rejected by the policy.
+    Rejected(Rejection),
+}
+
+/// The fit a non-legacy policy runs: [`fit_traced`], except in tests.
+type TracedFit<'fit> = dyn Fn(&GenomeIr, &Rows, &[f64]) -> anyhow::Result<(model::Model, PipelineTelemetry)>
+    + Sync
+    + 'fit;
+
+/// The scope check of a non-legacy policy: the program as it is fitted, at the input width. A set
+/// without rows is left to the folds, which fail on it as the legacy scorers do.
+fn scope_rejection(genome: &GenomeIr, x: &Rows) -> Option<Rejection> {
+    let width = x.first()?.len();
+    validate_scope(genome, width).err().map(Rejection::Scope)
+}
+
+/// One fold under a non-legacy policy: fit and predict with the traced entry points and add both
+/// passes to `faults`. `stop` runs between the fit and the prediction, where [`score_rung`] checks
+/// its budget. `Err` ends the evaluation: a Hard fault rejects it, anything else fails it.
+fn traced_fold(
+    genome: &GenomeIr,
+    (xtr, ytr): (&Rows, &[f64]),
+    (xte, yte): (&Rows, &[f64]),
+    metric: &(dyn Fn(&[f64], &[f64]) -> f64 + Sync),
+    fit: &TracedFit<'_>,
+    stop: &dyn Fn() -> bool,
+    faults: &mut FaultTotals,
+) -> Result<f64, Admitted> {
+    let hard = |faults: &FaultTotals| Admitted::Rejected(Rejection::HardFault(faults.hard_classes));
+    let (fitted, training) = fit(genome, xtr, ytr).map_err(|_| Admitted::Failed)?;
+    faults.add_pass(&training);
+    if faults.is_hard() {
+        return Err(hard(faults));
+    }
+    if stop() {
+        return Err(Admitted::Failed);
+    }
+    let (predictions, held_out) = predict_traced(&fitted, xte).map_err(|_| Admitted::Failed)?;
+    faults.add_pass(&held_out);
+    if faults.is_hard() {
+        return Err(hard(faults));
+    }
+    let score = metric(yte, &predictions);
+    if score.is_finite() {
+        Ok(score)
+    } else {
+        Err(Admitted::Failed)
+    }
+}
+
+/// The end of an evaluation whose every fold was scored without a Hard fault: the fold scores as
+/// `policy` keeps them.
+fn admit(policy: FaultPolicy, fold_scores: Vec<f64>, faults: FaultTotals) -> Admitted {
+    let scores = match policy {
+        FaultPolicy::Penalize {
+            lambda_domain,
+            lambda_saturation,
+            ..
+        } => {
+            let penalized = fold_scores
+                .iter()
+                .map(|&score| faults.penalize(score, lambda_domain, lambda_saturation))
+                .collect::<Option<Vec<f64>>>();
+            match penalized {
+                Some(scores) => scores,
+                None => return Admitted::Failed,
+            }
+        }
+        FaultPolicy::Legacy | FaultPolicy::RejectHard => fold_scores,
+    };
+    Admitted::Scored(scores, faults)
+}
+
+/// [`score_genome`] under a non-legacy [`FaultPolicy`]: the same program, folds and metric, with
+/// the scope check before anything is fitted and every fold run by [`traced_fold`].
+#[allow(clippy::too_many_arguments)]
+fn score_genome_admitted(
+    g: &DslExpr,
+    x: &Rows,
+    y: &[f64],
+    assign: &[usize],
+    k: usize,
+    metric: &(dyn Fn(&[f64], &[f64]) -> f64 + Sync),
+    policy: FaultPolicy,
+    fit: &TracedFit<'_>,
+) -> Admitted {
+    let genome = GenomeIr::Pipeline(search_surrogate(g));
+    if let Some(rejection) = scope_rejection(&genome, x) {
+        return Admitted::Rejected(rejection);
+    }
+    let mut faults = FaultTotals::default();
+    let mut fold_scores = Vec::with_capacity(k);
+    for fold in 0..k {
+        let (mut xtr, mut ytr, mut xte, mut yte) = (Vec::new(), Vec::new(), Vec::new(), Vec::new());
+        for i in 0..y.len() {
+            if assign[i] == fold {
+                xte.push(x[i].clone());
+                yte.push(y[i]);
+            } else {
+                xtr.push(x[i].clone());
+                ytr.push(y[i]);
+            }
+        }
+        if xte.is_empty() || xtr.is_empty() {
+            return Admitted::Failed;
+        }
+        match traced_fold(
+            &genome,
+            (&xtr, &ytr),
+            (&xte, &yte),
+            metric,
+            fit,
+            &|| false,
+            &mut faults,
+        ) {
+            Ok(score) => fold_scores.push(score),
+            Err(end) => return end,
+        }
+    }
+    admit(policy, fold_scores, faults)
+}
+
+/// What a non-legacy [`FaultPolicy`] knows about the candidates of one run: the fault totals of
+/// every scored evaluation, per canonical program and rung (the surrogate search uses rung 0), and
+/// the programs it rejected. It is only looked up by program, never iterated, so the order of its
+/// hash maps cannot reach a result.
+struct Admission {
+    policy: FaultPolicy,
+    faults: HashMap<String, [Option<FaultTotals>; 3]>,
+    rejected: std::collections::HashSet<String>,
+}
+
+/// The fault counters of one generation's [`GenStats`]; all zero under `Legacy`.
+#[derive(Default)]
+struct FaultCounters {
+    hard_rejected_share: f64,
+    hard_rejected: u64,
+    pop_domain_rate: f64,
+    elite_domain_rate: f64,
+}
+
+impl Admission {
+    /// The admission state of a run under `policy`, or `None` under `Legacy`, which runs the
+    /// search unchanged. Panics when the policy cannot be run ([`FaultPolicy::validate`]).
+    fn start(policy: FaultPolicy) -> Option<Self> {
+        if matches!(policy, FaultPolicy::Legacy) {
+            return None;
+        }
+        if let Err(reason) = policy.validate() {
+            panic!("{reason}");
+        }
+        Some(Self {
+            policy,
+            faults: HashMap::new(),
+            rejected: std::collections::HashSet::new(),
+        })
+    }
+
+    /// Records one evaluation of `key` at `rung` and returns the scores the search keeps: the
+    /// policy's scores, or `None` when the evaluation failed or was rejected. A rejection is
+    /// reported to `obs`.
+    fn record(
+        &mut self,
+        key: &str,
+        rung: usize,
+        admitted: Admitted,
+        obs: &dyn Observer,
+    ) -> Option<Vec<f64>> {
+        match admitted {
+            Admitted::Scored(scores, totals) => {
+                self.faults.entry(key.to_string()).or_default()[rung] = Some(totals);
+                Some(scores)
+            }
+            Admitted::Failed => None,
+            Admitted::Rejected(reason) => {
+                obs.on_reject(key, &reason);
+                self.rejected.insert(key.to_string());
+                None
+            }
+        }
+    }
+
+    /// The fault totals of `key`'s scored evaluation at `rung`; zero when there is none.
+    fn totals(&self, key: &str, rung: usize) -> FaultTotals {
+        self.faults
+            .get(key)
+            .and_then(|rungs| rungs[rung])
+            .unwrap_or_default()
+    }
+
+    /// The faulted cells of each ranked candidate, in order, when the policy breaks ties.
+    /// `rung_of` names the rung each candidate's score comes from.
+    fn tie_break_cells(
+        &self,
+        ranked: &[Scored],
+        rung_of: impl Fn(&str) -> usize,
+    ) -> Option<Vec<u64>> {
+        self.policy.breaks_ties().then(|| {
+            ranked
+                .iter()
+                .map(|s| self.totals(&s.dsl, rung_of(&s.dsl)).faulted_cells())
+                .collect()
+        })
+    }
+
+    /// One generation's counters: `population` is the generation's candidates, `ranked` their
+    /// ranking and `elites` how many ranked candidates pass into the next generation. `rung_of`
+    /// names the rung each ranked candidate's score comes from.
+    fn counters(
+        &self,
+        population: &[DslExpr],
+        ranked: &[Scored],
+        elites: usize,
+        rung_of: impl Fn(&str) -> usize,
+    ) -> FaultCounters {
+        let mut seen = std::collections::HashSet::new();
+        let (mut distinct, mut rejected) = (0_u64, 0_u64);
+        for genome in population {
+            let key = genome.to_string();
+            let was_rejected = self.rejected.contains(&key);
+            if seen.insert(key) {
+                distinct += 1;
+                rejected += u64::from(was_rejected);
+            }
+        }
+        let mean_domain_rate = |candidates: &[Scored]| {
+            if candidates.is_empty() {
+                return 0.0;
+            }
+            candidates
+                .iter()
+                .map(|s| self.totals(&s.dsl, rung_of(&s.dsl)).domain_rate())
+                .sum::<f64>()
+                / candidates.len() as f64
+        };
+        FaultCounters {
+            hard_rejected_share: if distinct == 0 {
+                0.0
+            } else {
+                rejected as f64 / distinct as f64
+            },
+            hard_rejected: self.rejected.len() as u64,
+            pop_domain_rate: mean_domain_rate(ranked),
+            elite_domain_rate: mean_domain_rate(&ranked[..elites.min(ranked.len())]),
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
 // The loop
 // ---------------------------------------------------------------------------
 
@@ -1789,6 +2157,8 @@ fn evolve_surrogate(
     cfg: &EvolveConfig,
     obs: &dyn Observer,
 ) -> Vec<Scored> {
+    // `None` under `FaultPolicy::Legacy`: every step below then runs the legacy code.
+    let mut admission = Admission::start(cfg.fault_policy);
     let t0 = Instant::now();
     let mut rng = Pcg32::new(cfg.seed, 0x5EED);
     let assign = fold_assign(y.len(), cfg.folds.max(2), "invent");
@@ -1866,13 +2236,41 @@ fn evolve_surrogate(
             })
             .filter(|(key, _)| !memo.contains_key(key))
             .collect();
-        let fresh: Vec<(String, DslExpr, Option<Vec<f64>>)> = unseen
-            .into_par_iter()
-            .map(|(key, g)| {
-                let scores = score_genome(&g, x, y, &assign, k, metric);
-                (key, g, scores)
-            })
-            .collect();
+        let fresh: Vec<(String, DslExpr, Option<Vec<f64>>)> = match admission.as_mut() {
+            None => unseen
+                .into_par_iter()
+                .map(|(key, g)| {
+                    let scores = score_genome(&g, x, y, &assign, k, metric);
+                    (key, g, scores)
+                })
+                .collect(),
+            Some(admission) => {
+                let policy = admission.policy;
+                let admitted: Vec<(String, DslExpr, Admitted)> = unseen
+                    .into_par_iter()
+                    .map(|(key, g)| {
+                        let admitted = score_genome_admitted(
+                            &g,
+                            x,
+                            y,
+                            &assign,
+                            k,
+                            metric,
+                            policy,
+                            &fit_traced,
+                        );
+                        (key, g, admitted)
+                    })
+                    .collect();
+                admitted
+                    .into_iter()
+                    .map(|(key, g, admitted)| {
+                        let scores = admission.record(&key, 0, admitted, obs);
+                        (key, g, scores)
+                    })
+                    .collect()
+            }
+        };
         for (key, g, scores) in &fresh {
             evals += 1;
             // Per-generation token accounting uses the STATIC estimator (X6, no
@@ -1936,6 +2334,15 @@ fn evolve_surrogate(
             });
             v
         };
+        if let Some(admission) = &admission {
+            if admission.policy.breaks_ties() {
+                prefer_fewer_faults(
+                    &mut ranked,
+                    |s| s.cv_mean,
+                    |s| admission.totals(&s.dsl, 0).faulted_cells(),
+                );
+            }
+        }
         if ranked.is_empty() {
             // population collapsed to invalid genomes — reseed randoms and continue
             population = (0..cfg.pop)
@@ -1972,6 +2379,11 @@ fn evolve_surrogate(
         }
 
         let elapsed = t0.elapsed().as_secs_f64().max(1e-9);
+        let counters = admission
+            .as_ref()
+            .map_or_else(FaultCounters::default, |admission| {
+                admission.counters(&population, &ranked, (cfg.pop / 8).clamp(1, 8), |_| 0)
+            });
         let mut stats = GenStats {
             gen,
             gens: cfg.gens,
@@ -1981,6 +2393,10 @@ fn evolve_surrogate(
             tokens_per_sec: ledger.rate(),
             best_cv: ranked[0].cv_mean,
             pop_fitness: ranked.iter().map(|s| s.cv_mean).collect(),
+            hard_rejected_share: counters.hard_rejected_share,
+            hard_rejected: counters.hard_rejected,
+            pop_domain_rate: counters.pop_domain_rate,
+            elite_domain_rate: counters.elite_domain_rate,
         };
 
         // New best? Emit its FULL dual-language source and stream it.
@@ -2018,10 +2434,13 @@ fn evolve_surrogate(
             })
             .collect();
         let parents = ranked.len().min(cfg.pop / 2).max(1);
+        let tie_cells = admission
+            .as_ref()
+            .and_then(|admission| admission.tie_break_cells(&ranked, |_| 0));
         while next.len() < cfg.pop {
-            let pa = tournament(&mut rng, &ranked, parents);
+            let pa = select_parent(&mut rng, &ranked, parents, tie_cells.as_deref());
             let child = if rng.next_f64() < 0.25 && ranked.len() >= 2 {
-                let pb = tournament(&mut rng, &ranked, parents);
+                let pb = select_parent(&mut rng, &ranked, parents, tie_cells.as_deref());
                 let (ga, gb) = (parse_pipe(&ranked[pa].dsl), parse_pipe(&ranked[pb].dsl));
                 match (ga, gb) {
                     (Some(a), Some(b)) => crossover(&mut rng, &a, &b, cfg.max_transforms),
@@ -2620,6 +3039,73 @@ fn score_rung(
         fold_scores.push(s);
     }
     Some(fold_scores)
+}
+
+/// [`score_rung`] under a non-legacy [`FaultPolicy`]: the same program, rows, folds, metric and
+/// budget checks, with the scope check before anything is fitted and every fold run by
+/// [`traced_fold`].
+#[allow(clippy::too_many_arguments)]
+fn score_rung_admitted(
+    g: &DslExpr,
+    rung: usize,
+    x: &Rows,
+    y: &[f64],
+    rows: &[usize],
+    assign: &[usize],
+    k: usize,
+    metric: &(dyn Fn(&[f64], &[f64]) -> f64 + Sync),
+    budget_started: Instant,
+    overall_budget: f64,
+    obs: &dyn Observer,
+    policy: FaultPolicy,
+    fit: &TracedFit<'_>,
+) -> Admitted {
+    let prepared = if rung == 0 {
+        search_surrogate(g)
+    } else {
+        lite_budget(g)
+    };
+    let genome = GenomeIr::Pipeline(prepared);
+    if let Some(rejection) = scope_rejection(&genome, x) {
+        return Admitted::Rejected(rejection);
+    }
+    let stop = || {
+        elapsed_budget_exhausted(budget_started.elapsed().as_secs_f64(), overall_budget)
+            || obs.is_cancelled()
+    };
+    let mut faults = FaultTotals::default();
+    let mut fold_scores = Vec::with_capacity(k);
+    for fold in 0..k {
+        if stop() {
+            return Admitted::Failed;
+        }
+        let (mut xtr, mut ytr, mut xte, mut yte) = (Vec::new(), Vec::new(), Vec::new(), Vec::new());
+        for (pos, &r) in rows.iter().enumerate() {
+            if assign[pos] == fold {
+                xte.push(x[r].clone());
+                yte.push(y[r]);
+            } else {
+                xtr.push(x[r].clone());
+                ytr.push(y[r]);
+            }
+        }
+        if xte.is_empty() || xtr.is_empty() {
+            return Admitted::Failed;
+        }
+        match traced_fold(
+            &genome,
+            (&xtr, &ytr),
+            (&xte, &yte),
+            metric,
+            fit,
+            &stop,
+            &mut faults,
+        ) {
+            Ok(score) => fold_scores.push(score),
+            Err(end) => return end,
+        }
+    }
+    admit(policy, fold_scores, faults)
 }
 
 fn elapsed_budget_exhausted(elapsed_secs: f64, budget_secs: f64) -> bool {
@@ -3322,6 +3808,139 @@ fn eval_rung(
     }
 }
 
+/// Why exact rung-0 reuse is off under a non-legacy [`FaultPolicy`], as its receipt records it.
+const FAULT_POLICY_REUSE_BLOCKER: &str =
+    "exact rung-0 reuse is off under a non-legacy fault policy: a reused score has no fault counts";
+
+/// [`eval_rung`] under a non-legacy [`FaultPolicy`]: the same chunks, budget gates and
+/// bookkeeping, with every candidate scored on the CPU by [`score_rung_admitted`], as `eval_rung`
+/// scores them when no GPU backend and no exact reuse are configured. The GPU rung-0 wave is
+/// never run, because its prepared path fits without the traced entry points, and exact rung-0
+/// reuse is never used, because a reused score carries no fault counts of its own.
+fn eval_rung_admitted(
+    ctx: &RungCtx<'_, '_>,
+    st: &mut RaceState,
+    admission: &mut Admission,
+    rung: usize,
+    generation: usize,
+    todo: &[(String, DslExpr)],
+    obs: &dyn Observer,
+) {
+    let k = RACE_RUNG_FOLDS[rung];
+    let rows = &ctx.rows[rung];
+    let assign = &ctx.assigns[rung];
+    let policy = admission.policy;
+    for (chunk_index, chunk) in todo.chunks(RACE_CHUNK).enumerate() {
+        // The chunk gates of `eval_rung`, unchanged.
+        let bootstrap_chunk = rung == 0 && st.rung_evals[0] == 0 && chunk_index == 0;
+        if !bootstrap_chunk && st.spent[rung] > ctx.caps[rung] {
+            break;
+        }
+        if !bootstrap_chunk
+            && elapsed_budget_exhausted(ctx.t0.elapsed().as_secs_f64(), ctx.overall_budget)
+        {
+            break;
+        }
+        if obs.is_cancelled() {
+            break;
+        }
+        let c0 = Instant::now();
+        let chunk_budget = if bootstrap_chunk {
+            0.0
+        } else {
+            ctx.overall_budget
+        };
+        let cpu_started = Instant::now();
+        let admitted: Vec<Admitted> = chunk
+            .par_iter()
+            .map(|(_, genome)| {
+                score_rung_admitted(
+                    genome,
+                    rung,
+                    ctx.x,
+                    ctx.y,
+                    rows,
+                    assign,
+                    k,
+                    ctx.metric,
+                    ctx.t0,
+                    chunk_budget,
+                    obs,
+                    policy,
+                    &fit_traced,
+                )
+            })
+            .collect();
+        if rung == 0 {
+            st.gpu_screen_timings.add(GpuScreenPhaseTimings {
+                cpu_score_seconds: cpu_started.elapsed().as_secs_f64(),
+                cpu_folds: (chunk.len() * k) as u64,
+                ..GpuScreenPhaseTimings::default()
+            });
+        }
+        st.spent[rung] += c0.elapsed().as_secs_f64();
+        for (fresh_index, ((key, genome), admitted)) in chunk.iter().zip(admitted).enumerate() {
+            let scores = admission.record(key, rung, admitted, obs);
+            // The bookkeeping of `eval_rung`, unchanged.
+            let r0_seq = (rung == 0).then_some(st.rung_evals[0]);
+            st.evals += 1;
+            st.rung_evals[rung] += 1;
+            if rung == 0 {
+                let est = crate::tokens::try_estimate_tokens(
+                    &GenomeIr::Pipeline(genome.clone()),
+                    &EmitOptions::default(),
+                )
+                .map(|e| (e.py + e.rs) as f64)
+                .unwrap_or(0.0);
+                st.ledger.add(est);
+            }
+            if let Some(fs) = &scores {
+                if !fs.is_empty() {
+                    let cv = fs.iter().sum::<f64>() / fs.len() as f64;
+                    if cv.is_finite() {
+                        let now = Instant::now();
+                        if now.duration_since(st.last_eval_tick).as_millis() >= EVAL_SCORE_SAMPLE_MS
+                        {
+                            st.last_eval_tick = now;
+                            obs.on_eval(key, cv, None);
+                        }
+                    }
+                }
+            }
+            let entry = st.memo.entry(key.clone()).or_default();
+            if rung == 0 {
+                entry.r0_seq = r0_seq;
+                entry.r0_generation = Some(generation);
+                entry.r0_generation_slot = Some(chunk_index * RACE_CHUNK + fresh_index);
+                entry.r0_fold_routes =
+                    Some(vec![
+                        Rung0FoldRouteReceipt::cpu(Rung0FoldRoute::CpuExact);
+                        k
+                    ]);
+                entry.r0_exact_surrogate_dedup = None;
+            }
+            entry.rungs[rung] = Some(scores);
+        }
+    }
+}
+
+/// [`eval_rung`], or [`eval_rung_admitted`] when a non-legacy policy runs (`admission` is
+/// `Some`).
+fn eval_rung_policy(
+    ctx: &RungCtx<'_, '_>,
+    st: &mut RaceState,
+    admission: &mut Option<Admission>,
+    rung: usize,
+    generation: usize,
+    todo: &[(String, DslExpr)],
+    obs: &dyn Observer,
+) {
+    match admission {
+        None => eval_rung(ctx, st, rung, generation, todo, obs),
+        Some(admission) => eval_rung_admitted(ctx, st, admission, rung, generation, todo, obs),
+    }
+}
+
 /// One CPU-prepared rung-0 fold. Keeping the f64 matrices until the routing
 /// decision lets ineligible shapes use the exact CPU ridge implementation and
 /// lets a failed GPU wave retry without reconstructing the transforms.
@@ -3831,6 +4450,52 @@ fn rank_race(
     v
 }
 
+/// The rung a raced program's ranking score comes from: its highest rung with a valid score.
+fn best_rung(memo: &HashMap<String, RaceEntry>, key: &str) -> usize {
+    memo.get(key)
+        .and_then(RaceEntry::best)
+        .map_or(0, |(rung, _, _)| rung)
+}
+
+/// [`rank_race`] under a non-legacy [`FaultPolicy`]: the programs the policy rejected at any rung
+/// are left out, and a tie-breaking `Penalize` puts the fewer faulted cells first among near-tied
+/// scores, each program's cells taken at the rung its score comes from. Otherwise the order is
+/// `rank_race`'s: among near-ties with equal counts, its rung-mean fallbacks still decide.
+fn rank_race_admitted(
+    population: &[DslExpr],
+    memo: &HashMap<String, RaceEntry>,
+    rank_robust: bool,
+    admission: &Admission,
+) -> Vec<RankRec> {
+    let mut recs = rank_race(population, memo, rank_robust);
+    recs.retain(|rec| !admission.rejected.contains(&rec.scored.dsl));
+    if admission.policy.breaks_ties() {
+        prefer_fewer_faults(
+            &mut recs,
+            |rec| rec.scored.cv_mean,
+            |rec| {
+                admission
+                    .totals(&rec.scored.dsl, best_rung(memo, &rec.scored.dsl))
+                    .faulted_cells()
+            },
+        );
+    }
+    recs
+}
+
+/// [`rank_race`], or [`rank_race_admitted`] when a non-legacy policy runs.
+fn rank_race_policy(
+    population: &[DslExpr],
+    memo: &HashMap<String, RaceEntry>,
+    rank_robust: bool,
+    admission: &Option<Admission>,
+) -> Vec<RankRec> {
+    match admission {
+        None => rank_race(population, memo, rank_robust),
+        Some(admission) => rank_race_admitted(population, memo, rank_robust, admission),
+    }
+}
+
 /// Fitness v2: 3-rung successive-halving race of the true objective.
 ///
 /// The v1 surrogate is head-blind (measured: 98.7% of runs end with all finalists proxy-tied), so
@@ -3867,6 +4532,7 @@ pub fn evolve_lite_race_with_exact_initial_population(
     obs: &dyn Observer,
     initial_population: &[String],
 ) -> Result<RaceOutcome, String> {
+    cfg.fault_policy.validate()?;
     if cfg.pop == 0 {
         return Err("exact initial population requires cfg.pop greater than zero".to_string());
     }
@@ -3984,6 +4650,8 @@ fn evolve_lite_race_impl<'backend>(
     exact_surrogate_dedup: Option<Rung0ExactSurrogateDedupPolicy>,
     exact_initial_population: Option<Vec<DslExpr>>,
 ) -> RaceOutcome {
+    // `None` under `FaultPolicy::Legacy`: every step below then runs the legacy code.
+    let mut admission = Admission::start(cfg.fault_policy);
     let t0 = Instant::now();
     let mut rng = Pcg32::new(cfg.seed, 0x5EED);
     let n = x.len().min(y.len());
@@ -4104,6 +4772,11 @@ fn evolve_lite_race_impl<'backend>(
             ..Rung0ExactSurrogateDedupReceipt::default()
         },
     };
+    if admission.is_some() && st.rung0_exact_surrogate_dedup.active {
+        st.rung0_exact_surrogate_dedup.active = false;
+        st.rung0_exact_surrogate_dedup.activation_blocker =
+            Some(FAULT_POLICY_REUSE_BLOCKER.to_string());
+    }
     let mut best: Option<Scored> = None;
     let mut ranked: Vec<Scored> = Vec::new();
     let mut last_eval_code = Instant::now();
@@ -4153,18 +4826,18 @@ fn evolve_lite_race_impl<'backend>(
                 })
                 .collect()
         };
-        eval_rung(&ctx, &mut st, 0, gen, &new_candidates, obs);
+        eval_rung_policy(&ctx, &mut st, &mut admission, 0, gen, &new_candidates, obs);
 
         // Rung 1: top half of this generation's new candidates by rung-0 score.
         let promoted1 = promote(&st, &new_candidates, 0, 1, cfg.rank_robust);
-        eval_rung(&ctx, &mut st, 1, gen, &promoted1, obs);
+        eval_rung_policy(&ctx, &mut st, &mut admission, 1, gen, &promoted1, obs);
 
         // Rung 2: top half of the rung-1 survivors (~25% of new).
         let promoted2 = promote(&st, &promoted1, 1, 2, cfg.rank_robust);
-        eval_rung(&ctx, &mut st, 2, gen, &promoted2, obs);
+        eval_rung_policy(&ctx, &mut st, &mut admission, 2, gen, &promoted2, obs);
 
         // Rank by highest-available-rung mean (lower rungs break ties).
-        let mut recs = rank_race(&population, &st.memo, cfg.rank_robust);
+        let mut recs = rank_race_policy(&population, &st.memo, cfg.rank_robust, &admission);
         if recs.is_empty() {
             // population collapsed to invalid genomes — reseed randoms and continue
             population = (0..cfg.pop)
@@ -4192,11 +4865,19 @@ fn evolve_lite_race_impl<'backend>(
                 break;
             }
             let before = st.rung_evals[2];
-            eval_rung(&ctx, &mut st, 2, gen, &elite_todo, obs);
+            eval_rung_policy(&ctx, &mut st, &mut admission, 2, gen, &elite_todo, obs);
             if st.rung_evals[2] == before {
                 break; // budget exhausted — elites keep their lower-rung scores
             }
-            recs = rank_race(&population, &st.memo, cfg.rank_robust);
+            recs = rank_race_policy(&population, &st.memo, cfg.rank_robust, &admission);
+        }
+        if recs.is_empty() {
+            // Only a non-legacy fault policy empties the ranking here, by rejecting every ranked
+            // candidate at its rung-2 re-check. Reseed randoms and continue, as above.
+            population = (0..cfg.pop)
+                .map(|_| rand_genome_from(&mut rng, cfg.max_transforms, &gen_vocab))
+                .collect();
+            continue;
         }
         ranked = recs.iter().map(|r| r.scored.clone()).collect();
 
@@ -4221,6 +4902,11 @@ fn evolve_lite_race_impl<'backend>(
         }
 
         let elapsed = t0.elapsed().as_secs_f64().max(1e-9);
+        let counters = admission
+            .as_ref()
+            .map_or_else(FaultCounters::default, |admission| {
+                admission.counters(&population, &ranked, elite, |key| best_rung(&st.memo, key))
+            });
         let mut stats = GenStats {
             gen,
             gens: cfg.gens,
@@ -4230,6 +4916,10 @@ fn evolve_lite_race_impl<'backend>(
             tokens_per_sec: st.ledger.rate(),
             best_cv: ranked[0].cv_mean,
             pop_fitness: ranked.iter().map(|s| s.cv_mean).collect(),
+            hard_rejected_share: counters.hard_rejected_share,
+            hard_rejected: counters.hard_rejected,
+            pop_domain_rate: counters.pop_domain_rate,
+            elite_domain_rate: counters.elite_domain_rate,
         };
 
         // New best? Emit its FULL dual-language source and stream it.
@@ -4276,10 +4966,13 @@ fn evolve_lite_race_impl<'backend>(
             })
             .collect();
         let parents = ranked.len().min(cfg.pop / 2).max(1);
+        let tie_cells = admission.as_ref().and_then(|admission| {
+            admission.tie_break_cells(&ranked, |key| best_rung(&st.memo, key))
+        });
         while next.len() < cfg.pop {
-            let pa = tournament(&mut rng, &ranked, parents);
+            let pa = select_parent(&mut rng, &ranked, parents, tie_cells.as_deref());
             let child = if rng.next_f64() < 0.25 && ranked.len() >= 2 {
-                let pb = tournament(&mut rng, &ranked, parents);
+                let pb = select_parent(&mut rng, &ranked, parents, tie_cells.as_deref());
                 let (ga, gb) = (parse_pipe(&ranked[pa].dsl), parse_pipe(&ranked[pb].dsl));
                 match (ga, gb) {
                     (Some(a), Some(b)) => crossover(&mut rng, &a, &b, cfg.max_transforms),
@@ -4353,6 +5046,46 @@ fn tournament(rng: &mut Pcg32, ranked: &[Scored], parents: usize) -> usize {
         }
     }
     bi
+}
+
+/// [`tournament`] under a tie-breaking `Penalize`: the same three draws, but a contender within
+/// [`TIE_TOLERANCE`](crate::kernel::admission::TIE_TOLERANCE) of the current winner and with a
+/// different count of faulted cells wins exactly when its count is lower ([`outranks`]).
+/// `faulted_cells[i]` belongs to `ranked[i]`.
+fn tournament_admitted(
+    rng: &mut Pcg32,
+    ranked: &[Scored],
+    parents: usize,
+    faulted_cells: &[u64],
+) -> usize {
+    let cap = parents.min(ranked.len()).max(1);
+    let mut bi = (rng.next_u32() as usize) % cap;
+    for _ in 0..2 {
+        let c = (rng.next_u32() as usize) % cap;
+        if outranks(
+            ranked[c].cv_mean,
+            faulted_cells[c],
+            ranked[bi].cv_mean,
+            faulted_cells[bi],
+        ) {
+            bi = c;
+        }
+    }
+    bi
+}
+
+/// [`tournament`], or [`tournament_admitted`] when a tie-breaking policy gives the faulted cells
+/// of `ranked`.
+fn select_parent(
+    rng: &mut Pcg32,
+    ranked: &[Scored],
+    parents: usize,
+    faulted_cells: Option<&[u64]>,
+) -> usize {
+    match faulted_cells {
+        None => tournament(rng, ranked, parents),
+        Some(faulted_cells) => tournament_admitted(rng, ranked, parents, faulted_cells),
+    }
 }
 
 #[cfg(test)]
@@ -4505,6 +5238,7 @@ mod tests {
             rank_robust: false,
             hard_ten_priors: false,
             expansion_vocab: false,
+            fault_policy: FaultPolicy::Legacy,
         };
         let obs = CountObs {
             gens: AtomicUsize::new(0),
@@ -4550,6 +5284,7 @@ mod tests {
             rank_robust: false,
             hard_ten_priors: false,
             expansion_vocab: false,
+            fault_policy: FaultPolicy::Legacy,
         };
         let obs = CountObs {
             gens: AtomicUsize::new(0),
@@ -4607,6 +5342,7 @@ mod tests {
             rank_robust: false,
             hard_ten_priors: false,
             expansion_vocab: false,
+            fault_policy: FaultPolicy::Legacy,
         };
         let obs = CodeObs {
             code_evals: AtomicUsize::new(0),
@@ -4686,6 +5422,7 @@ mod tests {
             rank_robust: false,
             hard_ten_priors: false,
             expansion_vocab: false,
+            fault_policy: FaultPolicy::Legacy,
         }
     }
 
@@ -5348,5 +6085,288 @@ mod tests {
                 _ => {}
             }
         }
+    }
+
+    // ------------------------------ fault policy ------------------------------
+
+    fn pipe(source: &str) -> DslExpr {
+        parse_pipe(source).unwrap_or_else(|| panic!("not a pipeline: {source}"))
+    }
+
+    fn non_legacy_policies() -> [FaultPolicy; 2] {
+        [
+            FaultPolicy::RejectHard,
+            FaultPolicy::Penalize {
+                lambda_domain: 0.05,
+                lambda_saturation: 0.01,
+                tie_break: true,
+            },
+        ]
+    }
+
+    /// A fit that fails the test when it is called.
+    fn fit_never(
+        _: &GenomeIr,
+        _: &Rows,
+        _: &[f64],
+    ) -> anyhow::Result<(model::Model, PipelineTelemetry)> {
+        panic!("a program the scope check rejected was fitted")
+    }
+
+    /// Records every rejection a fault policy reports.
+    #[derive(Default)]
+    struct RejectLog {
+        rejections: std::sync::Mutex<Vec<(String, String)>>,
+    }
+    impl Observer for RejectLog {
+        fn on_generation(&self, _s: &GenStats) {}
+        fn on_improvement(&self, _best: &Scored, _emitted: &Emitted, _s: &GenStats) {}
+        fn on_reject(&self, dsl: &str, reason: &Rejection) {
+            self.rejections
+                .lock()
+                .unwrap()
+                .push((dsl.to_string(), reason.to_string()));
+        }
+    }
+
+    /// The scope check comes before anything is fitted: the fit handed to the scorers fails the
+    /// test when it is called. A program in scope is fitted once per fold through that same
+    /// parameter, so the check stands on the path of every fit.
+    #[test]
+    fn scope_rejection_comes_before_any_fit() {
+        let (x, y) = race_fixture(7, 96);
+        let metric = |yt: &[f64], yp: &[f64]| crate::metrics::r2(yt, yp);
+        let out_of_scope = pipe("(pipe X (derive expr=\"col(12)\") (ridge))");
+        let assign = fold_assign(y.len(), 3, "invent");
+        let rows: Vec<usize> = (0..y.len()).collect();
+        let rung_assign = fold_assign(rows.len(), 2, "invent_r0");
+        let scope_error = |admitted: Admitted| match admitted {
+            Admitted::Rejected(Rejection::Scope(error)) => error,
+            _ => panic!("expected a scope rejection"),
+        };
+        for policy in non_legacy_policies() {
+            let error = scope_error(score_genome_admitted(
+                &out_of_scope,
+                &x,
+                &y,
+                &assign,
+                3,
+                &metric,
+                policy,
+                &fit_never,
+            ));
+            assert_eq!(
+                error.to_string(),
+                "stage 0: COLUMN_OOB: column index 12 out of bounds for width 4"
+            );
+            for rung in 0..3 {
+                let error = scope_error(score_rung_admitted(
+                    &out_of_scope,
+                    rung,
+                    &x,
+                    &y,
+                    &rows,
+                    &rung_assign,
+                    2,
+                    &metric,
+                    Instant::now(),
+                    0.0,
+                    &quiet_obs(),
+                    policy,
+                    &fit_never,
+                ));
+                assert_eq!(error.class, Some(crate::math_expr::FaultClass::ColumnOob));
+            }
+        }
+        // Legacy fits the same program and scores the fallback zeros of `col(12)`.
+        assert!(score_genome(&out_of_scope, &x, &y, &assign, 3, &metric).is_some());
+
+        let fits = AtomicUsize::new(0);
+        let counting = |program: &GenomeIr, x: &Rows, y: &[f64]| {
+            fits.fetch_add(1, Ordering::Relaxed);
+            fit_traced(program, x, y)
+        };
+        let in_scope = pipe("(pipe X (derive expr=\"col(3)\") (ridge))");
+        for policy in non_legacy_policies() {
+            fits.store(0, Ordering::Relaxed);
+            assert!(matches!(
+                score_genome_admitted(&in_scope, &x, &y, &assign, 3, &metric, policy, &counting),
+                Admitted::Scored(..)
+            ));
+            assert_eq!(fits.load(Ordering::Relaxed), 3);
+            fits.store(0, Ordering::Relaxed);
+            assert!(matches!(
+                score_rung_admitted(
+                    &in_scope,
+                    1,
+                    &x,
+                    &y,
+                    &rows,
+                    &rung_assign,
+                    2,
+                    &metric,
+                    Instant::now(),
+                    0.0,
+                    &quiet_obs(),
+                    policy,
+                    &counting,
+                ),
+                Admitted::Scored(..)
+            ));
+            assert_eq!(fits.load(Ordering::Relaxed), 2);
+        }
+    }
+
+    /// Data on which a `nan_bounds_at_rung_2` program meets a Hard fault at rung 2 only. Rungs 0
+    /// and 1 race on the first `RACE_RUNG_ROWS[0]` rows of the race's seeded permutation, where
+    /// column 1 is 0; it is 1 on the rows that rung 2 adds.
+    fn rung_2_fault_data(n: usize, seed: u64) -> (Rows, Vec<f64>) {
+        let mut rng = Pcg32::new(3, 7);
+        let mut x: Rows = (0..n)
+            .map(|_| (0..4).map(|_| rng.gaussian()).collect::<Vec<f64>>())
+            .collect();
+        for (position, &row) in permute_indices(n, seed).iter().enumerate() {
+            x[row][1] = if position < RACE_RUNG_ROWS[0] {
+                0.0
+            } else {
+                1.0
+            };
+        }
+        let y = x.iter().map(|r| 2.0 * r[0] - r[2] + 0.5 * r[3]).collect();
+        (x, y)
+    }
+
+    /// Clips `column` between bounds that are 0 where column 1 is 0, and NaN (inf * 0) where it
+    /// is 1: a Hard fault, `INVALID_CLIP_BOUNDS`, on those rows only.
+    fn nan_bounds_at_rung_2(column: usize) -> String {
+        format!(
+            "(pipe X (derive expr=\"clip(col({column}), col(1)*1e300*1e300*0, \
+             col(1)*1e300*1e300*0)\") (ridge))"
+        )
+    }
+
+    /// A Hard fault that only a later rung meets removes the program from the ranking, although
+    /// its earlier rungs scored it. Legacy ranks the same program by its rung-2 score, fallback
+    /// zeros included.
+    #[test]
+    fn a_hard_fault_at_a_later_rung_removes_the_program_from_the_ranking() {
+        let mut cfg = race_cfg(5);
+        cfg.pop = 1;
+        cfg.gens = 1;
+        let (x, y) = rung_2_fault_data(256, cfg.seed);
+        let metric = |yt: &[f64], yp: &[f64]| crate::metrics::r2(yt, yp);
+        let program = nan_bounds_at_rung_2(0);
+        let initial = [program.clone()];
+        let legacy = evolve_lite_race_with_exact_initial_population(
+            &x,
+            &y,
+            &metric,
+            &cfg,
+            &quiet_obs(),
+            &initial,
+        )
+        .unwrap();
+        cfg.fault_policy = FaultPolicy::RejectHard;
+        let log = RejectLog::default();
+        let admitted =
+            evolve_lite_race_with_exact_initial_population(&x, &y, &metric, &cfg, &log, &initial)
+                .unwrap();
+
+        let key = GenomeIr::parse(&program).unwrap().canonical();
+        assert_eq!(
+            legacy
+                .ranked
+                .iter()
+                .map(|s| s.dsl.as_str())
+                .collect::<Vec<_>>(),
+            vec![key.as_str()]
+        );
+        assert!(legacy.candidates[0]
+            .rung_fold_scores
+            .iter()
+            .all(Option::is_some));
+        assert!(admitted.ranked.is_empty());
+        let [r0, r1, r2] = &admitted.candidates[0].rung_fold_scores;
+        assert_eq!(r0, &legacy.candidates[0].rung_fold_scores[0]);
+        assert_eq!(r1, &legacy.candidates[0].rung_fold_scores[1]);
+        assert!(r2.is_none());
+        assert_eq!(
+            log.rejections.into_inner().unwrap(),
+            vec![(key, "hard fault: {INVALID_CLIP_BOUNDS}".to_string())]
+        );
+    }
+
+    /// When the elites' rung-2 re-check rejects every candidate still ranked, the generation ends
+    /// in the reseed that an empty ranking has always taken, and the next generation ranks the
+    /// reseeded candidates. Of two such programs, one is promoted to rung 2 and rejected there,
+    /// and the other is rejected when the re-check reaches it as the only ranked candidate.
+    #[test]
+    fn a_ranking_emptied_by_rung_2_rejections_reseeds() {
+        let mut cfg = race_cfg(5);
+        cfg.pop = 2;
+        cfg.gens = 2;
+        cfg.fault_policy = FaultPolicy::RejectHard;
+        let (x, y) = rung_2_fault_data(256, cfg.seed);
+        let metric = |yt: &[f64], yp: &[f64]| crate::metrics::r2(yt, yp);
+        let initial = [nan_bounds_at_rung_2(0), nan_bounds_at_rung_2(2)];
+        let log = RejectLog::default();
+        let outcome =
+            evolve_lite_race_with_exact_initial_population(&x, &y, &metric, &cfg, &log, &initial)
+                .unwrap();
+        let rejections = log.rejections.into_inner().unwrap();
+        assert_eq!(rejections.len(), 2);
+        for source in &initial {
+            let key = GenomeIr::parse(source).unwrap().canonical();
+            assert!(rejections.contains(&(key.clone(), "hard fault: {INVALID_CLIP_BOUNDS}".into())));
+            let candidate = outcome.candidates.iter().find(|c| c.dsl == key).unwrap();
+            assert!(candidate.rung_fold_scores[0].is_some());
+            assert!(candidate.rung_fold_scores[2].is_none());
+            assert!(outcome.ranked.iter().all(|scored| scored.dsl != key));
+        }
+        assert!(
+            !outcome.ranked.is_empty(),
+            "the reseeded generation is ranked"
+        );
+        assert!(outcome
+            .candidates
+            .iter()
+            .any(|candidate| candidate.r0_generation == Some(1)));
+    }
+
+    /// The tie-breaking selection draws exactly the numbers the legacy selection draws. It picks
+    /// a different parent only inside a near-tie, and then the one with fewer faulted cells.
+    #[test]
+    fn tie_breaking_selection_draws_the_legacy_numbers() {
+        let ranked: Vec<Scored> = [0.9, 0.5, 0.5, 0.5 - 5e-13, 0.1]
+            .iter()
+            .enumerate()
+            .map(|(i, &cv)| Scored {
+                dsl: format!("candidate {i}"),
+                cv_mean: cv,
+                fold_scores: vec![cv],
+            })
+            .collect();
+        let equal = vec![0_u64; ranked.len()];
+        let cells = vec![0_u64, 4, 1, 0, 0];
+        let mut differed = 0;
+        for seed in 0..300 {
+            let (mut a, mut b) = (Pcg32::new(seed, 1), Pcg32::new(seed, 1));
+            assert_eq!(
+                tournament(&mut a, &ranked, 5),
+                tournament_admitted(&mut b, &ranked, 5, &equal)
+            );
+            assert_eq!(a.next_u32(), b.next_u32(), "the draws must not change");
+
+            let (mut a, mut b) = (Pcg32::new(seed, 1), Pcg32::new(seed, 1));
+            let legacy = tournament(&mut a, &ranked, 5);
+            let admitted = tournament_admitted(&mut b, &ranked, 5, &cells);
+            assert_eq!(a.next_u32(), b.next_u32(), "the draws must not change");
+            if legacy != admitted {
+                differed += 1;
+                assert!((1..=3).contains(&legacy) && (1..=3).contains(&admitted));
+                assert!(cells[admitted] < cells[legacy]);
+            }
+        }
+        assert!(differed > 0, "the near-tie never decided a selection");
     }
 }
