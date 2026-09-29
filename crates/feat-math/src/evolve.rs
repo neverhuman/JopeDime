@@ -6136,8 +6136,9 @@ mod tests {
     }
 
     /// The scope check comes before anything is fitted: the fit handed to the scorers fails the
-    /// test when it is called. A program in scope is fitted once per fold through that same
-    /// parameter, so the check stands on the path of every fit.
+    /// test when it is called. It checks the program as the search fits it, which the search's
+    /// caps can narrow. A program in scope is fitted once per fold through that same parameter,
+    /// so the check stands on the path of every fit.
     #[test]
     fn scope_rejection_comes_before_any_fit() {
         let (x, y) = race_fixture(7, 96);
@@ -6186,6 +6187,38 @@ mod tests {
         }
         // Legacy fits the same program and scores the fallback zeros of `col(12)`.
         assert!(score_genome(&out_of_scope, &x, &y, &assign, 3, &metric).is_some());
+
+        // The check sees the program as it is fitted, not as it was generated. The search caps
+        // `rff_cos n=128` at 64 columns before fitting, so `col(100)`, in scope for the generated
+        // program, is out of scope for the fitted one at every rung, and the fit that panics is
+        // not called. A check of the generated program would pass it and fit it.
+        let narrowed = pipe("(pipe X (rff_cos n=128) (derive expr=\"col(100)\") (ridge))");
+        assert!(validate_scope(&GenomeIr::Pipeline(narrowed.clone()), 4).is_ok());
+        let narrowed_reason = "stage 1: COLUMN_OOB: column index 100 out of bounds for width 64";
+        for policy in non_legacy_policies() {
+            let error = scope_error(score_genome_admitted(
+                &narrowed, &x, &y, &assign, 3, &metric, policy, &fit_never,
+            ));
+            assert_eq!(error.to_string(), narrowed_reason);
+            for rung in 0..3 {
+                let error = scope_error(score_rung_admitted(
+                    &narrowed,
+                    rung,
+                    &x,
+                    &y,
+                    &rows,
+                    &rung_assign,
+                    2,
+                    &metric,
+                    Instant::now(),
+                    0.0,
+                    &quiet_obs(),
+                    policy,
+                    &fit_never,
+                ));
+                assert_eq!(error.to_string(), narrowed_reason);
+            }
+        }
 
         let fits = AtomicUsize::new(0);
         let counting = |program: &GenomeIr, x: &Rows, y: &[f64]| {
