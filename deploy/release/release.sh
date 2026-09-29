@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env -S bash -p
 # deploy/release/release.sh: fast signed host release of JopeDime (owner decision D-D, 2026-09-27).
 #
 #   deploy/release/release.sh <vX.Y.Z> <merge-commit-sha>             # dry run (the default)
@@ -6,6 +6,9 @@
 #
 # Run it on xbabe2 from the root of a clean checkout or registered worktree of neverhuman/JopeDime.
 # HEAD must be <merge-commit-sha>, and that commit must equal origin/main after a fresh fetch.
+# Run it as shown: the #! line starts bash in privileged mode (bash -p), and so does
+# `bash -p deploy/release/release.sh`. A plain `bash deploy/release/release.sh` is refused (see
+# "bash itself" below).
 #
 # A dry run does the following, and it never tags, pushes or publishes:
 #   - exports the commit with `git archive` and verifies the export against the commit's tree
@@ -60,6 +63,26 @@
 # on xbabe2; the CI runner container's root filesystem is read-only outside its $HOME). Test mode
 # stops after the guards, and it refuses --publish. Any JOPE_RELEASE_TEST* variable seen outside
 # that context stops a real run.
+
+# bash itself. A bash started without -p has, before this line, imported the exported functions of
+# the environment (any of which stands in for the command or the builtin of its name: git, unset,
+# command, exit), run a BASH_ENV file, and applied SHELLOPTS and BASHOPTS (noexec runs nothing and
+# exits 0; nocasematch makes [[ ]] accept an uppercase SHA). bash -p does none of that, and it ignores
+# CDPATH and GLOBIGNORE as well. So release.sh refuses any other bash. It also refuses an exported
+# SHELLOPTS: bash -p ignores it, but a bash started without -p takes 'privileged' from it, and nothing
+# else would tell the two apart. Only keywords and parameter expansions decide this, because an
+# imported function can stand in for any builtin, printf and exit included, but not for [[ ]]; the
+# last lines guard main() with the same test, so a stood-in exit cannot carry the run past this one.
+# What this cannot refuse (SHELLOPTS=noexec with a plain bash, which runs no line; a BASH_ENV file,
+# which runs before this line) is docs/release/README.md's "What remains".
+if [[ ! -o privileged ]]; then
+  printf 'release.sh: REFUSED: %s\n' "bash was not started in privileged mode; run deploy/release/release.sh itself (its #! line runs bash -p) or bash -p deploy/release/release.sh, never a plain bash, which has already imported exported functions and applied BASH_ENV, SHELLOPTS and BASHOPTS" >&2
+  exit 1
+fi
+if [[ ${SHELLOPTS@a} == *x* ]]; then
+  printf 'release.sh: REFUSED: %s\n' "SHELLOPTS is exported, and a bash started without -p would take privileged mode from it; run release.sh without it (env -u SHELLOPTS deploy/release/release.sh ...)" >&2
+  exit 1
+fi
 set -euo pipefail
 shopt -s inherit_errexit
 
@@ -108,7 +131,7 @@ readonly GH_ROLE=/home/ubuntu/.local/bin/gh-role
 # commands root runs too, whether sudo looks them up in the operator's PATH or in its own
 # root-configured secure_path. The run records each one's path, sha256 and package version in
 # tools.json.
-# bash is the interpreter that `#!/usr/bin/env bash` finds on PATH.
+# bash is the interpreter that the `#!/usr/bin/env -S bash -p` line finds on PATH.
 # The pinned syft and cosign above are run by path. Only two commands are neither pinned nor host
 # tools, and this is why that is acceptable:
 #   - cargo (cargo_bin: the host's rustup shim, ~/.local/bin/cargo, which the operator can write)
@@ -136,13 +159,18 @@ readonly CONTAINER_SYSTEM_TMP=/tmp
 # The tools' own configuration. No per-user file (~/.jq, ~/.gitconfig, ~/.docker and the like) and
 # no variable of the operator's may change what a pinned or host tool reports to a check or writes
 # into a release. docs/release/README.md ("Tool configuration") has the audit, tool by tool, and what
-# remains (the repository's own git config, ~/.netrc) and why it cannot. This block is all builtins
-# and runs before main(), so every command the script starts inherits it.
-#   - bash imports exported shell functions (export -f) before the script's first line, and a
-#     function stands in for the command of the same name. Those named after a command the script
-#     runs are dropped here; the script's own jq and docker wrappers are defined further down. What
-#     runs even earlier (a BASH_ENV start-up file) is the operator's own shell, like the rest of the
-#     ubuntu account, and no script can undo it after the fact.
+# remains (the repository's own git config, ~/.netrc, a bash started without -p) and why it cannot.
+# This block is all builtins and runs before main(), so every command the script starts inherits it.
+#   - bash runs in privileged mode (see "bash itself" above), so it imported no function and applied
+#     no BASH_ENV, SHELLOPTS or BASHOPTS. bash -p still reads a few variables that change what the
+#     script does, and they go: BASH_COMPAT (another bash version's semantics, such as a quoted =~
+#     operand read as a pattern), TMOUT (a timeout on every read, which ends a loop over a tool's
+#     output at the first pause in it: extract_notes over git cat-file, verify_export over find),
+#     FUNCNEST (a nesting limit, which stops the run wherever that depth is first reached) and
+#     GLOBSORT (bash 5.3's glob order). BASH_ENV goes too, so that no child bash runs it. LC_ALL=C
+#     is set here, before parse_args matches anything. Exported functions stay in the environment of
+#     the commands the script runs, where only a bash would import them, and no host tool is a bash
+#     script (README, "What remains").
 #   - The dynamic loader's LD_* variables (LD_PRELOAD, LD_LIBRARY_PATH, LD_AUDIT and the rest) and
 #     glibc's GCONV_PATH, LOCPATH and GLIBC_TUNABLES would load or tune code from a path of the
 #     operator's choosing inside every host tool.
@@ -164,12 +192,13 @@ readonly CONTAINER_SYSTEM_TMP=/tmp
 #     SSL_CERT_DIR, CURL_CA_BUNDLE). jq, docker and cosign get empty private configuration
 #     directories from their wrappers (jq, docker, check_cosign and cosign_verify), and syft runs in
 #     syft_env.
-unset -f -- "${HOST_TOOLS[@]}" cargo
+unset -v -- BASH_COMPAT TMOUT FUNCNEST GLOBSORT BASH_ENV
 for _name in "${!LD_@}" "${!GIT_@}" "${!JQ_@}" "${!DOCKER_@}" "${!DPKG_@}"; do
   case $_name in GIT_COMMITTER_NAME|GIT_COMMITTER_EMAIL) ;; *) unset -v -- "$_name" ;; esac
 done
 unset -v -- _name GCONV_PATH LOCPATH GLIBC_TUNABLES TAR_OPTIONS GNUTARGET POSIXLY_CORRECT \
   GREP_OPTIONS SSL_CERT_FILE SSL_CERT_DIR CURL_CA_BUNDLE
+export LC_ALL=C
 export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_NO_REPLACE_OBJECTS=1 GIT_CONFIG_COUNT=5 \
   GIT_CONFIG_KEY_0=core.excludesFile GIT_CONFIG_VALUE_0=/dev/null \
   GIT_CONFIG_KEY_1=core.attributesFile GIT_CONFIG_VALUE_1=/dev/null \
@@ -1460,7 +1489,6 @@ main() {
   readonly TEST_ROOT
   parse_args "$@"
   trap on_exit EXIT
-  export LC_ALL=C
   umask 022
   init_test_mode
   preflight
@@ -1492,6 +1520,8 @@ main() {
   fi
 }
 
+# The same test as the first lines, in keywords only (see "bash itself"): should an imported function
+# have stood in for exit there, main() still does not run, and the script ends with status 1.
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
-  main "$@"
+  [[ -o privileged && ${SHELLOPTS@a} != *x* ]] && main "$@"
 fi

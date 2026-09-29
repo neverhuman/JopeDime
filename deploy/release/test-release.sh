@@ -25,9 +25,14 @@
 #     functions);
 #   - with hostile per-user configuration, which must not change what a check decides or what a
 #     release holds: a ~/.jq, a ~/.gitconfig URL rewrite, a ~/.config/git/ignore, a URL rewrite or
-#     TLS setting in the repository's config, a replace ref, an exported shell function, the
-#     loader's, tar's, objdump's, git's and docker's variables, and cosign's environment. The
-#     hostile HOMEs are directories under the test dir; the real ~ is never written.
+#     TLS setting in the repository's config, a replace ref, exported shell functions named after a
+#     command or a builtin (git, unset, command, exit), bash's own variables (SHELLOPTS, BASHOPTS,
+#     BASH_COMPAT, TMOUT, FUNCNEST, BASH_ENV), a bash started without -p, the loader's, tar's,
+#     objdump's, git's and docker's variables, and cosign's environment. The hostile HOMEs are
+#     directories under the test dir; the real ~ is never written.
+#
+# release.sh refuses a bash that was not started in privileged mode, so every run and every sourcing
+# below uses bash -p, as its #! line does (and one case runs it through that line).
 #
 # Usage: deploy/release/test-release.sh   (exit 0 only when every case passes)
 #
@@ -172,7 +177,7 @@ in_dir() { local d=$1; shift; (cd "$d" && "$@"); }
 unit() {
   local body=$1
   shift
-  bash -c "set -euo pipefail; source \"\$1\"; shift; $body" release-unit "$release" "$@"
+  bash -p -c "set -euo pipefail; source \"\$1\"; shift; $body" release-unit "$release" "$@"
 }
 
 pass=0
@@ -198,7 +203,7 @@ expect() {
   fi
 }
 
-R=(bash "$release")
+R=(bash -p "$release")
 
 echo "# release.sh guards (test mode; synthetic repo $repo)"
 expect "baseline: every guard passes (ignored target/ is not dirt)" ok 'test mode: all guards passed' \
@@ -653,7 +658,7 @@ probe_run() {
   local rc=0 log=$probe/log mode
   : > "$log"
   env -u TMPDIR "${base[@]}" "FAKE_CARGO_METADATA=$work/meta-big.json" JOPE_RELEASE_TEST_STAMP=20260928T000002Z \
-    "PROBE_LOG=$log" "PROBE_REAL_PATH=$PATH" "PATH=$probe/bin:$PATH" "$BASH" "$release" v0.2.0 "$c1" \
+    "PROBE_LOG=$log" "PROBE_REAL_PATH=$PATH" "PATH=$probe/bin:$PATH" "$BASH" -p "$release" v0.2.0 "$c1" \
     </dev/null >"$probe/out" 2>&1 || rc=$?
   mode=$(stat -c %a -- "$pinned" 2>/dev/null || echo missing)
   awk -F '\t' -v want="$pinned" -v rc="$rc" -v mode="$mode" '
@@ -1124,7 +1129,10 @@ expect "git: a replace ref cannot swap the tree that is exported and verified as
   "$scratch/export-replace" "$c_rp"
 git -C "$repo" replace -d "$c_rp" >/dev/null
 
-# An exported function would stand in for git: here it hides a dirty tree from git status.
+# bash itself: release.sh runs only in privileged mode (bash -p), which imports no exported function
+# and ignores BASH_ENV, SHELLOPTS and BASHOPTS. An imported function would stand in for the command
+# or the builtin of its name: git hides a dirty tree from git status, unset keeps every variable that
+# the isolation block drops, and command hands jq a hostile ~/.jq.
 shadow_git() (
   # shellcheck disable=SC2317  # it runs only in the bash that imports it
   git() { if [[ $1 == status ]]; then return 0; fi; command git "$@"; }
@@ -1133,7 +1141,57 @@ shadow_git() (
 )
 printf 'x\n' > "$repo/hidden-by-function.txt"
 expect "an exported shell function named git cannot stand in for git" refuse '^\?\? hidden-by-function\.txt$' shadow_git
+expect "exported unset and git functions (a builtin and a command) cannot hide an untracked file" refuse \
+  '^\?\? hidden-by-function\.txt$' \
+  run "$fresh" 'BASH_FUNC_unset%%=() { :; }' \
+    'BASH_FUNC_git%%=() { if [[ $1 == status ]]; then return 0; fi; command git "$@"; }' "${R[@]}" v0.2.0 "$c1"
+expect "the #! line runs bash -p: exported unset and git functions cannot hide an untracked file there either" refuse \
+  '^\?\? hidden-by-function\.txt$' \
+  run "$fresh" 'BASH_FUNC_unset%%=() { :; }' \
+    'BASH_FUNC_git%%=() { if [[ $1 == status ]]; then return 0; fi; command git "$@"; }' "$release" v0.2.0 "$c1"
 rm -f -- "$repo/hidden-by-function.txt"
+jq_via_command="BASH_FUNC_command%%=() { HOME=$tc/home-jq-version builtin command \"\$@\"; }"
+expect "an exported command function cannot hand jq a hostile ~/.jq (a jope-cli 0.1.0 workspace stays a mismatch)" refuse \
+  'MISMATCH jope-cli 0\.1\.0 != tag version 0\.2\.0' \
+  run "$fresh" "FAKE_CARGO_METADATA=$work/meta-cli-010.json" "$jq_via_command" "${R[@]}" v0.2.0 "$c1"
+expect "the #! line runs bash -p: an exported command function cannot hand jq a hostile ~/.jq there either" refuse \
+  'MISMATCH jope-cli 0\.1\.0 != tag version 0\.2\.0' \
+  run "$fresh" "FAKE_CARGO_METADATA=$work/meta-cli-010.json" "$jq_via_command" "$release" v0.2.0 "$c1"
+expect "the #! line runs bash -p: executed directly, every guard passes" ok 'all guards passed' \
+  run "$fresh" "$release" v0.2.0 "$c1"
+expect "a bash started without -p is refused" refuse '^release\.sh: REFUSED: bash was not started in privileged mode' \
+  run "$fresh" bash "$release" v0.2.0 "$c1"
+# Without -p, printf and exit may be imported functions too: exit then returns, and only the keyword
+# test that guards main() stops the run, with status 1 and no guard passed.
+expect "without -p, exported exit and unset functions cannot carry a run past the refusal" refuse \
+  '^release\.sh: REFUSED: bash was not started in privileged mode' \
+  run "$fresh" 'BASH_FUNC_exit%%=() { :; }' 'BASH_FUNC_unset%%=() { :; }' bash "$release" v0.2.0 "$c1"
+expect "an exported SHELLOPTS is refused (a plain bash takes privileged mode from it)" refuse \
+  '^release\.sh: REFUSED: SHELLOPTS is exported' \
+  run "$fresh" SHELLOPTS=privileged 'BASH_FUNC_exit%%=() { :; }' bash "$release" v0.2.0 "$c1"
+expect "SHELLOPTS=noexec through the #! line does not make a run exit 0 unchecked" refuse \
+  '^release\.sh: REFUSED: SHELLOPTS is exported' \
+  run "$fresh" SHELLOPTS=noexec "$release" v0.2.0 nothex --publish
+expect "BASHOPTS=nocasematch cannot make [[ ]] accept an uppercase SHA" refuse 'full 40-character lowercase' \
+  run "$fresh" BASHOPTS=nocasematch "${R[@]}" v0.2.0 "${c1^^}"
+expect "BASHOPTS=nocasematch through the #! line cannot either" refuse 'full 40-character lowercase' \
+  run "$fresh" BASHOPTS=nocasematch "$release" v0.2.0 "${c1^^}"
+# bash -p still reads these; sourcing release.sh (as a run starts) unsets them before anything runs.
+# TMOUT=0.1 would end extract_notes's loop at the pause in its input, FUNCNEST=1 would stop the
+# f -> g call, and BASH_COMPAT=31 would make a quoted =~ operand a pattern.
+bash_vars_case() {
+  env BASH_COMPAT=31 TMOUT=0.1 FUNCNEST=1 GLOBSORT=-name "BASH_ENV=$tc/no-bash-env" LANG=C.UTF-8 \
+    bash -p -c 'set -euo pipefail; source "$1"
+      f() { g; }; g() { :; }; f
+      if [[ abc =~ "a.c" ]]; then re=pattern; else re=literal; fi
+      notes=$({ printf "## [0.2.0] - x\n\n- first\n"; sleep 0.5; printf -- "- second\n## [0.1.0]\n"; } | extract_notes 0.2.0)
+      printf "compat=%s;tmout=%s;funcnest=%s;globsort=%s;bash_env=%s;lc_all=%s;quoted_regex=%s;notes=%s\n" \
+        "${BASH_COMPAT-unset}" "${TMOUT-unset}" "${FUNCNEST-unset}" "${GLOBSORT-unset}" "${BASH_ENV-unset}" \
+        "${LC_ALL-unset}" "$re" "$(printf "%s" "$notes" | tr "\n" "|")"' release-unit "$release"
+}
+expect "bash's own variables: BASH_COMPAT, TMOUT, FUNCNEST, GLOBSORT and BASH_ENV go, LC_ALL is C" ok \
+  '^compat=unset;tmout=unset;funcnest=unset;globsort=unset;bash_env=unset;lc_all=C;quoted_regex=literal;notes=## \[0\.2\.0\] - x\|\|- first\|- second$' \
+  bash_vars_case
 
 # Variables: sourcing release.sh (as a run starts) drops those that change a tool's behaviour.
 env_case() (
