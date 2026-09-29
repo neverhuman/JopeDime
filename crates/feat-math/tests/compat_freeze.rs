@@ -1,24 +1,65 @@
-//! Compatibility freeze of the shipped math surfaces (workplan WP-0.2), starting with the shared
-//! scalar boundary corpus (WP-0.3) that the freeze and the emitted-artifact harnesses consume.
+//! Compatibility freeze of the shipped math surfaces (workplan WP-0.2) and the shared scalar
+//! boundary corpus (WP-0.3).
 //!
-//! `boundary_corpus_v1_is_well_formed_and_matches_its_definition` checks
-//! `tests/fixtures/math_boundary/v1.json` against its definition below: the file parses with
-//! serde_json, every `value_repr` parses back to exactly its `bits` (NaN payloads live only in
-//! `bits`), names and values are unique, every workplan group is present, and every value the
-//! workplan lists is there. Neighbours are computed by exact bit arithmetic, never by decimal
-//! guessing.
+//! One test per surface, so a failure names the surface, and every mismatch prints the first
+//! differing records with their old and new values.
 //!
-//! Modes. By default the test only compares. With `JOPE_COMPAT_FREEZE_REGENERATE=1` and
-//! `JOPE_COMPAT_FREEZE_SHA=<full commit id>` it rewrites the file instead; the commit must carry
-//! exactly the sources in the working tree (checked with `git diff --quiet`). A changed corpus is
-//! a new version (`v2.json`), never an edit of v1.
+//! | test | fixture under `tests/fixtures/` | frozen surface |
+//! |---|---|---|
+//! | `boundary_corpus_v1_is_well_formed_and_matches_its_definition` | `math_boundary/v1.json` | the scalar boundary inputs (WP-0.3) |
+//! | `expression_values_match_the_frozen_fixture` | `compat_freeze/mathexpr_values.v1.json` | `MathExpr` value bits: interpreter and compiled, row and map context |
+//! | `stage_outputs_match_the_frozen_fixture` | `compat_freeze/stage_values.v1.json` | `map`/`derive` stage outputs and the predictions behind them |
+//! | `emitted_artifact_bytes_match_the_frozen_fixture` | `compat_freeze/emitted_bytes.v1.json` | Rust, Python, manifest, C++17, JavaScript and fitted C++17 bytes |
+//! | `serialized_models_match_the_frozen_fixture` | `compat_freeze/model_serde.v1.json` | `serde_json` bytes of fitted models, their predictions, and loading of stored bytes |
+//! | `vocabulary_registry_and_lineage_pins_match` | `compat_freeze/frozen_pins.v1.json` | grammar assets, `grammar.rs`, jope-policy pins, registry and emitter versions |
+//! | `evaluator_identity_inputs_match_the_recorded_identity` | `compat_freeze/evaluator_identity.v1.json` | the ADR-0004 evaluator identity inputs |
+//! | `seeded_generator_streams_match_the_frozen_fixture` | `compat_freeze/generator_streams.v1.json` | seeded program generator streams and their vocabularies |
+//! | `fixture_provenance_is_recorded` | `compat_freeze/meta.json` | generation commit, toolchain, host and libm |
+//!
+//! Modes. By default every test only compares. With `JOPE_COMPAT_FREEZE_REGENERATE=1` and
+//! `JOPE_COMPAT_FREEZE_SHA=<full commit id>` each test rewrites its fixture instead; the commit must
+//! carry exactly the sources in the working tree (checked with `git diff --quiet`). Regenerating
+//! a behaviour surface is a rebaseline: it needs the PR-body line
+//! `compat-freeze: REBASELINE approved by Jepson <date> reason <...>`, and without it a red
+//! surface is a hard stop (revert the change, do not rebaseline). The evaluator-identity fixture
+//! is the one surface that planned work moves: a change to a file in the ADR-0004 list announces
+//! the new evaluator identity and rebaselines that fixture in the same change.
+//!
+//! Bits are host-specific wherever the platform libm is involved (exp, ln, ln_1p, sin, cos, tanh,
+//! atan, powf, and the data generator itself): the fixtures were generated on the CI host class
+//! (`meta.json`: x86_64-unknown-linux-gnu, glibc 2.39). The arithmetic guards, the emitted recipe
+//! bytes and the generator streams do not depend on libm.
 //!
 //! The workplan asks for the corpus to parse in Python too. The stack is Rust-only (ADR-0006), so
 //! the second, independent parser is `jq -e . tests/fixtures/math_boundary/v1.json`.
 
+use feat_math::advanced_v3::ARTIFACT_SCHEMA;
+use feat_math::dsl::{parse_dsl, Stage};
+use feat_math::evolve::{
+    crossover_canonical_pipelines, evolve, mutate_canonical_pipeline, mutate_canonical_pipeline_v2,
+    mutate_canonical_pipeline_with_arm, random_canonical_pipeline, CanonicalMutationArm,
+    EvolveConfig, GenStats, Observer, Scored, EXPANSION_STARTERS, EXPANSION_TRANSFORMS, HEAD_OPS,
+    LITE_HEAD_BUDGETS,
+};
+use feat_math::full_rust::{self, EvolvedGenome};
+use feat_math::kernel::pipeline::PipelineSlots;
+use feat_math::math_expr::{ExpressionScope, MathExpr};
+use feat_math::ops::{apply_op, fit_op};
+use feat_math::registry::{operator_registry, registry_hash, REGISTRY_ENGINE, REGISTRY_VERSION};
+use feat_math::transpile::{
+    emit, emit_cpp17, emit_javascript, supports_cpp17, supports_javascript, EmitOptions, Emitted,
+    EMITTER_VERSION,
+};
+use feat_math::{
+    crossover_candidates, deterministic_seed_enumeration, emit_fitted_cpp17, fit,
+    fit_legacy_numeric_bound, initial_population, mutate_candidate, next_generation, sanitize,
+    GenomeIr, Model, Pcg32, V3Archive, V3EvolutionConfig, V3ScoredCandidate, CHAMPION_GENOME,
+};
+use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
-use std::path::{Path, PathBuf};
+use std::path::{Component, Path, PathBuf};
 use std::process::Command;
 
 // ---------------------------------------------------------------------------------------------
@@ -28,6 +69,20 @@ use std::process::Command;
 const REGENERATE_ENV: &str = "JOPE_COMPAT_FREEZE_REGENERATE";
 const SHA_ENV: &str = "JOPE_COMPAT_FREEZE_SHA";
 const REGENERATE_COMMAND: &str = "JOPE_COMPAT_FREEZE_REGENERATE=1 JOPE_COMPAT_FREEZE_SHA=<full commit id> cargo nextest run --locked -P pr -p feat-math --test compat_freeze";
+const REBASELINE_POLICY: &str = "A red compat_freeze is a hard stop: revert the change that moved a frozen surface. \
+Rebaselining needs JOPE_COMPAT_FREEZE_REGENERATE=1 JOPE_COMPAT_FREEZE_SHA=<commit> and the PR-body line \
+`compat-freeze: REBASELINE approved by Jepson <date> reason <...>` (workplan section 4.3).";
+
+/// Every fixture file this binary owns, in the order `meta.json` lists them.
+const FIXTURE_FILES: [&str; 7] = [
+    "mathexpr_values.v1.json",
+    "stage_values.v1.json",
+    "emitted_bytes.v1.json",
+    "model_serde.v1.json",
+    "frozen_pins.v1.json",
+    "evaluator_identity.v1.json",
+    "generator_streams.v1.json",
+];
 
 /// Sources whose bytes the fixtures depend on. Regeneration refuses to record a commit id whose
 /// copies of these differ from the working tree's.
@@ -61,6 +116,32 @@ fn fixture_path(relative: &str) -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("tests/fixtures")
         .join(relative)
+}
+
+fn read_repo_file(relative: &str) -> Vec<u8> {
+    std::fs::read(repo_root().join(relative)).unwrap_or_else(|error| panic!("{relative}: {error}"))
+}
+
+fn sha256_hex(bytes: &[u8]) -> String {
+    Sha256::digest(bytes)
+        .iter()
+        .map(|byte| format!("{byte:02x}"))
+        .collect()
+}
+
+fn hex_bits(value: f64) -> String {
+    format!("{:016x}", value.to_bits())
+}
+
+fn decode_token(token: &str) -> String {
+    match u64::from_str_radix(token, 16) {
+        Ok(bits) if token.len() == 16 => format!("{:?}", f64::from_bits(bits)),
+        _ => token.to_string(),
+    }
+}
+
+fn text_identity(text: &str) -> String {
+    format!("{} {}", text.len(), sha256_hex(text.as_bytes()))
 }
 
 fn is_hex(text: &str, len: usize) -> bool {
@@ -112,8 +193,118 @@ fn write_atomically(path: &Path, text: &str) {
     std::fs::rename(&partial, path).expect("install fixture");
 }
 
+/// Regenerate mode writes `actual` and returns `None`; compare mode returns the committed fixture.
+fn committed_or_write<T: Serialize + DeserializeOwned>(file: &str, actual: &T) -> Option<T> {
+    let relative = format!("compat_freeze/{file}");
+    let path = fixture_path(&relative);
+    if regenerating() {
+        let text = serde_json::to_string_pretty(actual).expect("serialize fixture") + "\n";
+        write_atomically(&path, &text);
+        eprintln!("compat-freeze: wrote tests/fixtures/{relative}");
+        return None;
+    }
+    let text = std::fs::read_to_string(&path).unwrap_or_else(|error| {
+        panic!(
+            "tests/fixtures/{relative} is missing ({error}); generate it with {REGENERATE_COMMAND}"
+        )
+    });
+    Some(serde_json::from_str(&text).unwrap_or_else(|error| {
+        panic!("tests/fixtures/{relative} does not parse as this surface's fixture ({error})")
+    }))
+}
+
+/// What this build runs on, for failure messages about host-specific bits.
+fn toolchain_note() -> String {
+    let meta = std::fs::read_to_string(fixture_path("compat_freeze/meta.json"))
+        .ok()
+        .and_then(|text| serde_json::from_str::<Meta>(&text).ok());
+    let rustc = command_line("rustc", &["-V"]);
+    let libm = command_line("getconf", &["GNU_LIBC_VERSION"]);
+    match meta {
+        Some(meta) => format!(
+            "fixtures: {} on {} with {} at {}; this run: {rustc}, {libm}",
+            meta.rustc, meta.host, meta.libm, meta.generated_at_sha
+        ),
+        None => format!("this run: {rustc}, {libm}"),
+    }
+}
+
+fn command_line(program: &str, args: &[&str]) -> String {
+    Command::new(program)
+        .args(args)
+        .output()
+        .ok()
+        .filter(|output| output.status.success())
+        .map(|output| String::from_utf8_lossy(&output.stdout).trim().to_string())
+        .unwrap_or_else(|| format!("{program} unavailable"))
+}
+
+/// Compare ordered `(key, value)` records and fail with the first differences.
+fn assert_records(
+    surface: &str,
+    fixture: &[(String, String)],
+    actual: &[(String, String)],
+    advice: &str,
+) {
+    let old: BTreeMap<&str, &str> = fixture
+        .iter()
+        .map(|(k, v)| (k.as_str(), v.as_str()))
+        .collect();
+    let new: BTreeMap<&str, &str> = actual
+        .iter()
+        .map(|(k, v)| (k.as_str(), v.as_str()))
+        .collect();
+    assert_eq!(
+        old.len(),
+        fixture.len(),
+        "{surface}: duplicate fixture keys"
+    );
+    assert_eq!(new.len(), actual.len(), "{surface}: duplicate actual keys");
+    let mut problems = Vec::new();
+    for (key, value) in fixture {
+        match new.get(key.as_str()) {
+            None => problems.push(format!("removed {key}: fixture {value}")),
+            Some(now) if *now != value => problems.push(format!(
+                "{key}:\n      fixture {value}\n      now     {now}"
+            )),
+            _ => {}
+        }
+    }
+    for (key, value) in actual {
+        if !old.contains_key(key.as_str()) {
+            problems.push(format!("added {key}: {value}"));
+        }
+    }
+    if problems.is_empty()
+        && fixture
+            .iter()
+            .map(|record| &record.0)
+            .ne(actual.iter().map(|record| &record.0))
+    {
+        problems.push("the record order changed".to_string());
+    }
+    if !problems.is_empty() {
+        panic!(
+            "compat-freeze: {surface} drifted ({} differing records; first {} below)\n  {}\n{}\n{advice}",
+            problems.len(),
+            problems.len().min(12),
+            problems
+                .iter()
+                .take(12)
+                .cloned()
+                .collect::<Vec<_>>()
+                .join("\n  "),
+            toolchain_note()
+        );
+    }
+}
+
+fn record(key: impl Into<String>, value: impl Into<String>) -> (String, String) {
+    (key.into(), value.into())
+}
+
 // ---------------------------------------------------------------------------------------------
-// The boundary corpus (WP-0.3)
+// Shared data: the boundary corpus (WP-0.3), the toy data and the program set
 // ---------------------------------------------------------------------------------------------
 
 const CORPUS_FILE: &str = "math_boundary/v1.json";
@@ -389,6 +580,125 @@ fn render_corpus(entries: &[CorpusEntry]) -> String {
     out
 }
 
+/// Deterministic regression data, copied from `tests/golden.rs` (that file is hash-pinned by
+/// `legacy_v2_freeze.rs`, so it is copied rather than included).
+fn toy_data(n: usize, cols: usize, seed: u64) -> (Vec<Vec<f64>>, Vec<f64>) {
+    let mut rng = Pcg32::new(seed, 17);
+    let mut x = Vec::new();
+    let mut y = Vec::new();
+    for _ in 0..n {
+        let row: Vec<f64> = (0..cols).map(|_| rng.next_f64() * 4.0 - 2.0).collect();
+        let target = 1.7 * row[0] - 0.9 * row[1]
+            + 0.5 * (3.0 * row[2]).sin()
+            + 0.3 * row[3] * row[4]
+            + 0.1 * rng.gaussian();
+        x.push(row);
+        y.push(target);
+    }
+    (x, y)
+}
+
+type Rows = Vec<Vec<f64>>;
+
+/// Training rows (the first 64) and held-out rows (the last 16) for the fitted surfaces.
+fn fitted_surface_data() -> (Rows, Vec<f64>, Rows) {
+    let (x, y) = toy_data(80, 5, 42);
+    (x[..64].to_vec(), y[..64].to_vec(), x[64..].to_vec())
+}
+
+const FITTED_DATA_NOTE: &str = "toy_data(80 rows, 5 columns, seed 42) as in tests/golden.rs: the first 64 rows train, the last 16 are predicted";
+
+/// Programs with expressions and every expansion op, beside the champion and the ip_scrub set.
+const NAMED_PROGRAMS: &[(&str, &str)] = &[
+    ("golden_map_derive_ridge", "(pipe X (map expr=\"sigmoid(x) + 0.1*col(0)\" append=true) (derive expr=\"row_mean + row_std - c1/(c0 + 3)\" append=true) (ridge))"),
+    ("golden_map_pow_elasticnet", "(pipe X (map expr=\"x^2 - min(x, c2) + tanh(c3)\") (elasticnet alpha=0.005 l1_ratio=0.7))"),
+    ("golden_step_map_expr", "(pipe X (map expr=\"step(col(0), 0.0) + 0.5*step(row_mean, c1)\" append=true) (ridge))"),
+    ("golden_scalar_batch_map_ridge", "(pipe X (map expr=\"exp(clip(col(0),-2,2)) + log(abs(col(1)) + 1.0) + asinh(col(2)) + atan(col(3))\") (ridge))"),
+    ("golden_scalar_batch2_derive_ridge", "(pipe X (derive append=true expr=\"erf(col(0)) + sign(col(1)) * floor(col(2)) + round(col(3))\") (ridge))"),
+    ("golden_symbolic_affine", "(sym affine \"sigmoid(col(0)) + 0.5*col(1) - log1p(abs(col(2))) + max(c3, c4^2)\")"),
+    ("golden_symbolic_raw", "(sym raw \"clip(row_mean + 0.3*row_std - c0/(c1 + 5), -2, 2)\")"),
+    ("golden_step_symbolic", "(sym affine \"step(c0, 0.0) + step(c1, c2) - 0.5\")"),
+    ("golden_symbolic_scalar_batch", "(sym affine \"erf(c0) + asinh(c1) - exp(clip(c2, -1, 1)) + sign(c3) * round(c4)\")"),
+    ("expressions_1", "(pipe X (map expr=\"abs(x) + sqrt(abs(c0)) - log1p(abs(x))\" append=true) (derive expr=\"sin(c0) + cos(c1) * tanh(c2)\" append=true) (ridge))"),
+    ("expressions_2", "(pipe X (map expr=\"sigmoid(x) - min(x, c1) + max(x, c2)\") (derive expr=\"clip(c0, -1, 1) + step(c1, 0.5)\" append=true) (ridge))"),
+    ("expressions_3", "(pipe X (map expr=\"exp(clip(x, -3, 3)) + log(abs(x) + 1)\" append=true) (derive expr=\"asinh(c0) + atan(c1) - erf(c2)\" append=true) (ridge))"),
+    ("expressions_4", "(pipe X (map expr=\"sign(x) * floor(x) + round(x)\") (derive expr=\"row_sum - row_l1 + row_l2\" append=true) (ridge))"),
+    ("expressions_5", "(pipe X (map expr=\"x - row_mean + row_std\" append=true) (derive expr=\"row_min * row_max + c0 / (c1 + 3)\" append=true) (ridge))"),
+    ("expressions_6", "(pipe X (map expr=\"x^2 - (-x) * 0.5 + x / (c0 + 2)\") (derive expr=\"c3^3 - c4*c4*c4 + c2^0.5\" append=true) (elasticnet alpha=0.005 l1_ratio=0.7))"),
+    ("expansion_symlog", "(pipe X (symlog c=0.7) (ridge))"),
+    ("expansion_select_corr", "(pipe X (select_corr k=3 by=corr) (ridge))"),
+    ("expansion_impute", "(pipe X (impute strategy=median add_indicator=true) (standardize) (ridge))"),
+    ("expansion_pair_ratio", "(pipe X (pair_ratio topk=4 append=true) (ridge))"),
+    ("expansion_spline", "(pipe X (spline knots=4) (ridge))"),
+];
+
+/// `tests/ip_scrub.rs` PIPELINES and SYMBOLIC, verbatim.
+const IP_SCRUB_PIPELINES: &[&str] = &[
+    "(pipe X (portfolio preset=core))",
+    "(pipe X (standardize) (rank) (blom) (quantile_bins) (bin_onehot bins=3) (ridge))",
+    "(pipe X (hinge) (winsor_clip) (cheb) (poly_interact append=true) (elasticnet))",
+    "(pipe X (rff_cos n=8) (rff_sin n=8) (rand_proj k=4) (landmark_dist k=4) (histgbm rounds=5))",
+    "(pipe X (oblique_hinge n=4) (row_stats) (pair_prod) (target_bin_encode) (ensemble rounds=5))",
+    "(pipe X (sigmoid) (norm_row) (polar) (lag k=1) (roll k=2) (fft_mag k=2) (ridge))",
+    "(pipe X (row_spectral) (row_diff_stats) (svd_project k=2 iters=5) (nystrom k=4) (ridge))",
+    "(pipe X (map expr=\"clip(x, -1, 1)\") (derive expr=\"row_l1 + row_l2 + row_min + row_max\") (ridge))",
+    "(pipe X (histgbm2 leaves=15 lr=0.08 bags=2))",
+    "(pipe X (standardize) (krr m=200))",
+    "(pipe X (gpr m=200 steps=10))",
+    "(pipe X (gpr kernel=rq+linear m=200 steps=10))",
+    "(pipe X (gpr kernel=rbf*periodic m=200 steps=10))",
+    "(pipe X (ksmooth k=16 gamma=2.0))",
+    "(pipe X (standardize) (cheb degree=3 append=true) (ridge_gcv))",
+    "(pipe X (stack))",
+];
+const IP_SCRUB_SYMBOLIC: &[&str] = &[
+    "(sym affine \"tanh(c0) * sqrt(abs(c1)) + min(c2, 1) / max(c3, 1) + sin(c4) + cos(c0)\")",
+    "(sym raw \"sigmoid(c0) + 0.5*c1\")",
+];
+
+/// The program set G of WP-0.2 step 4, named and in a fixed order.
+fn program_set() -> Vec<(String, String)> {
+    let mut set = vec![("champion".to_string(), CHAMPION_GENOME.trim().to_string())];
+    set.extend(
+        NAMED_PROGRAMS
+            .iter()
+            .map(|(name, source)| (name.to_string(), source.to_string())),
+    );
+    set.extend(
+        IP_SCRUB_PIPELINES
+            .iter()
+            .enumerate()
+            .map(|(i, source)| (format!("ip_scrub_pipeline_{i:02}"), source.to_string())),
+    );
+    set.extend(
+        IP_SCRUB_SYMBOLIC
+            .iter()
+            .enumerate()
+            .map(|(i, source)| (format!("ip_scrub_symbolic_{i}"), source.to_string())),
+    );
+    let portable = std::fs::read_to_string(fixture_path("emitted/portable-4lang.dsl"))
+        .expect("tests/fixtures/emitted/portable-4lang.dsl");
+    set.push(("portable_4lang".to_string(), portable.trim().to_string()));
+    set
+}
+
+fn parse_program(name: &str, source: &str) -> GenomeIr {
+    GenomeIr::parse(source)
+        .unwrap_or_else(|error| panic!("{name}: {source} no longer parses: {error}"))
+}
+
+/// Portfolio fits carry wall-clock `fit_ms` diagnostics (portfolio.rs) and take minutes in a
+/// debug build, so their fitted surfaces are recorded as skipped; their emission is frozen.
+fn fit_skip_reason(source: &str) -> Option<&'static str> {
+    source.contains("(portfolio").then_some(
+        "skipped: portfolio diagnostics carry wall-clock fit_ms and a debug-build fit takes minutes",
+    )
+}
+
+// ---------------------------------------------------------------------------------------------
+// WP-0.3: boundary corpus
+// ---------------------------------------------------------------------------------------------
+
 #[test]
 fn boundary_corpus_v1_is_well_formed_and_matches_its_definition() {
     let definition = corpus_definition();
@@ -488,4 +798,2287 @@ fn boundary_corpus_v1_is_well_formed_and_matches_its_definition() {
         render_corpus(&definition),
         "the committed corpus is not in canonical form; regenerate it with {REGENERATE_COMMAND}"
     );
+}
+
+// ---------------------------------------------------------------------------------------------
+// WP-0.2 (a): MathExpr values on the corpus rows
+// ---------------------------------------------------------------------------------------------
+
+const ERR: &str = "ERR";
+const SAME_AS_INTERPRETER_ROW: &str = "=interpreter_row";
+const SAME_AS_INTERPRETER_MAP: &str = "=interpreter_map with ERR as 0000000000000000";
+const WIDE_ROW: [f64; 8] = [0.1, -2.0, 3.0, 0.5, -1.5, 2.5, 1e-12, 6.0];
+
+/// Row-context expressions: every function alone on c0 (with its arity), every variable, every
+/// binary operator and negation, the workplan combinations, and the golden and ip_scrub `derive`
+/// and closed-form expressions.
+const ROW_EXPRESSIONS: &[&str] = &[
+    "abs(col(0))",
+    "sqrt(col(0))",
+    "log1p(col(0))",
+    "sin(col(0))",
+    "cos(col(0))",
+    "tanh(col(0))",
+    "sigmoid(col(0))",
+    "min(col(0), col(1))",
+    "max(col(0), col(1))",
+    "clip(col(0), col(1), col(2))",
+    "step(col(0), 0)",
+    "step(col(0), col(1))",
+    "exp(col(0))",
+    "log(col(0))",
+    "asinh(col(0))",
+    "atan(col(0))",
+    "erf(col(0))",
+    "sign(col(0))",
+    "floor(col(0))",
+    "round(col(0))",
+    "col(0)",
+    "c1",
+    "row_mean",
+    "row_sum",
+    "row_l1",
+    "row_l2",
+    "row_min",
+    "row_max",
+    "row_std",
+    "col(7)",
+    "col(0) + col(1)",
+    "col(0) - col(1)",
+    "col(0) * col(1)",
+    "col(0)/col(1)",
+    "col(0)^col(1)",
+    "col(0)^0.5",
+    "col(0)^-9",
+    "col(0)^9",
+    "2^col(0)",
+    "-col(0)",
+    "(col(0)*col(0))*col(0)",
+    "asinh(col(0)*col(0))",
+    "exp(col(0))-exp(col(1))",
+    "1/col(0)",
+    "col(1)/col(0)",
+    "log(col(0)) + log1p(col(0)) + sqrt(col(0))",
+    "clip(1, col(0) - col(0), col(0) - col(0))",
+    "clip(1,(-1)^0.5,(-1)^0.5)",
+    "min(clip(1,(-1)^0.5,(-1)^0.5),7)+1",
+    "clip(1,(-1)^0.5,3)",
+    "-2^2",
+    "2^100",
+    "0.5",
+    "row_mean + row_std - c1/(c0 + 3)",
+    "row_l1 + row_l2 + row_min + row_max",
+    "erf(col(0)) + sign(col(1)) * floor(col(2)) + round(col(3))",
+    "sigmoid(col(0)) + 0.5*col(1) - log1p(abs(col(2))) + max(c3, c4^2)",
+    "clip(row_mean + 0.3*row_std - c0/(c1 + 5), -2, 2)",
+    "tanh(c0) * sqrt(abs(c1)) + min(c2, 1) / max(c3, 1) + sin(c4) + cos(c0)",
+    "sigmoid(c0) + 0.5*c1",
+    "step(c0, 0.0) + step(c1, c2) - 0.5",
+    "erf(c0) + asinh(c1) - exp(clip(c2, -1, 1)) + sign(c3) * round(c4)",
+];
+
+/// Map-context expressions (`x` is each element): the golden and ip_scrub `map` expressions and
+/// elementwise forms of every function.
+const MAP_EXPRESSIONS: &[&str] = &[
+    "x",
+    "-x",
+    "x/col(0)",
+    "sigmoid(x) + 0.1*col(0)",
+    "x^2 - min(x, c2) + tanh(c3)",
+    "step(col(0), 0.0) + 0.5*step(row_mean, c1)",
+    "exp(clip(col(0),-2,2)) + log(abs(col(1)) + 1.0) + asinh(col(2)) + atan(col(3))",
+    "clip(x, -1, 1)",
+    "x - row_mean + row_std",
+    "x-row_mean+row_std-row_sum",
+    "clip(x,c0,c1)",
+    "sign(x)+floor(x)+round(x)",
+    "erf(x)+asinh(x)+atan(x)+exp(x)+log(x)",
+    "abs(x) + sqrt(x) + log1p(x)",
+    "sin(x) * cos(x) - tanh(x)",
+    "min(x, row_min) + max(x, row_max)",
+    "x / row_l2",
+    "c7 + x",
+    "x^x",
+    "step(x, row_mean)",
+];
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct MathExprValues {
+    schema: String,
+    generated_at_sha: String,
+    encoding: String,
+    rows: Vec<RowRecord>,
+    expressions: Vec<ExpressionRecord>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RowRecord {
+    label: String,
+    values: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ExpressionRecord {
+    source: String,
+    context: String,
+    interpreter_row: String,
+    compiled_row: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    interpreter_map: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    compiled_map: Option<String>,
+}
+
+/// Full token lists of one expression (markers expanded).
+struct ExpressionValues {
+    source: String,
+    context: &'static str,
+    paths: Vec<(&'static str, Vec<String>)>,
+}
+
+fn corpus_rows() -> Vec<(String, Vec<f64>)> {
+    let mut rows = Vec::new();
+    for entry in corpus_definition() {
+        let b = entry.value();
+        rows.push((format!("{}:[b]", entry.name), vec![b]));
+        rows.push((format!("{}:[b,1]", entry.name), vec![b, 1.0]));
+        rows.push((format!("{}:[b,0,-1]", entry.name), vec![b, 0.0, -1.0]));
+        rows.push((format!("{}:[1,b,2]", entry.name), vec![1.0, b, 2.0]));
+    }
+    rows.push(("empty:[]".to_string(), Vec::new()));
+    rows.push(("wide8".to_string(), WIDE_ROW.to_vec()));
+    rows
+}
+
+fn row_text(row: &[f64]) -> String {
+    row.iter()
+        .map(|value| hex_bits(*value))
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
+fn token(result: anyhow::Result<f64>) -> String {
+    match result {
+        Ok(value) => hex_bits(value),
+        Err(_) => ERR.to_string(),
+    }
+}
+
+fn expression_values(
+    source: &str,
+    context: &'static str,
+    rows: &[(String, Vec<f64>)],
+) -> ExpressionValues {
+    let expr = MathExpr::parse(source)
+        .unwrap_or_else(|error| panic!("expression {source:?} no longer parses: {error}"));
+    let compiled = expr.compile();
+    let interpreter_row = rows
+        .iter()
+        .map(|(_, row)| token(expr.eval_row(row)))
+        .collect();
+    let compiled_row = rows
+        .iter()
+        .map(|(_, row)| match &compiled {
+            Ok(compiled) => token(compiled.eval_row(row)),
+            Err(_) => ERR.to_string(),
+        })
+        .collect();
+    let mut paths = vec![
+        ("interpreter_row", interpreter_row),
+        ("compiled_row", compiled_row),
+    ];
+    if context == "map" {
+        let interpreter_map = rows
+            .iter()
+            .flat_map(|(_, row)| {
+                row.iter()
+                    .map(|x| token(expr.eval_element(*x, row)))
+                    .collect::<Vec<_>>()
+            })
+            .collect();
+        let compiled_map = rows
+            .iter()
+            .flat_map(|(_, row)| match &compiled {
+                Ok(compiled) => compiled.map_row(row).into_iter().map(hex_bits).collect(),
+                Err(_) => vec![ERR.to_string(); row.len()],
+            })
+            .collect();
+        paths.push(("interpreter_map", interpreter_map));
+        paths.push(("compiled_map", compiled_map));
+    }
+    ExpressionValues {
+        source: source.to_string(),
+        context,
+        paths,
+    }
+}
+
+fn err_as_zero(tokens: &[String]) -> Vec<String> {
+    tokens
+        .iter()
+        .map(|t| if t == ERR { hex_bits(0.0) } else { t.clone() })
+        .collect()
+}
+
+fn path_tokens<'a>(values: &'a ExpressionValues, name: &str) -> &'a [String] {
+    &values
+        .paths
+        .iter()
+        .find(|(n, _)| *n == name)
+        .expect("recorded path")
+        .1
+}
+
+fn encode_expression(values: &ExpressionValues) -> ExpressionRecord {
+    let interpreter_row = path_tokens(values, "interpreter_row");
+    let compiled_row = path_tokens(values, "compiled_row");
+    let (interpreter_map, compiled_map) = if values.context == "map" {
+        let interpreter_map = path_tokens(values, "interpreter_map");
+        let compiled_map = path_tokens(values, "compiled_map");
+        let compiled_map = if compiled_map == err_as_zero(interpreter_map).as_slice() {
+            SAME_AS_INTERPRETER_MAP.to_string()
+        } else {
+            compiled_map.join(" ")
+        };
+        (Some(interpreter_map.join(" ")), Some(compiled_map))
+    } else {
+        (None, None)
+    };
+    ExpressionRecord {
+        source: values.source.clone(),
+        context: values.context.to_string(),
+        interpreter_row: interpreter_row.join(" "),
+        compiled_row: if compiled_row == interpreter_row {
+            SAME_AS_INTERPRETER_ROW.to_string()
+        } else {
+            compiled_row.join(" ")
+        },
+        interpreter_map,
+        compiled_map,
+    }
+}
+
+fn split_tokens(text: &str) -> Vec<String> {
+    text.split(' ').map(str::to_string).collect()
+}
+
+/// Expand a fixture record's equivalence markers into full token lists.
+fn decode_expression(record: &ExpressionRecord) -> Vec<(&'static str, Vec<String>)> {
+    let interpreter_row = split_tokens(&record.interpreter_row);
+    let compiled_row = if record.compiled_row == SAME_AS_INTERPRETER_ROW {
+        interpreter_row.clone()
+    } else {
+        split_tokens(&record.compiled_row)
+    };
+    let mut paths = vec![
+        ("interpreter_row", interpreter_row),
+        ("compiled_row", compiled_row),
+    ];
+    if let (Some(interpreter_map), Some(compiled_map)) =
+        (&record.interpreter_map, &record.compiled_map)
+    {
+        let interpreter_map = split_tokens(interpreter_map);
+        let compiled_map = if compiled_map == SAME_AS_INTERPRETER_MAP {
+            err_as_zero(&interpreter_map)
+        } else {
+            split_tokens(compiled_map)
+        };
+        paths.push(("interpreter_map", interpreter_map));
+        paths.push(("compiled_map", compiled_map));
+    }
+    paths
+}
+
+fn expression_catalogue() -> Vec<(&'static str, &'static str)> {
+    ROW_EXPRESSIONS
+        .iter()
+        .map(|source| (*source, "row"))
+        .chain(MAP_EXPRESSIONS.iter().map(|source| (*source, "map")))
+        .collect()
+}
+
+#[test]
+fn expression_values_match_the_frozen_fixture() {
+    let rows = corpus_rows();
+    let catalogue = expression_catalogue();
+    assert!(
+        catalogue.len() >= 60,
+        "WP-0.2 needs at least 60 expressions"
+    );
+    let actual: Vec<ExpressionValues> = catalogue
+        .iter()
+        .map(|&(source, context)| expression_values(source, context, &rows))
+        .collect();
+    let fixture = MathExprValues {
+        schema: "feat-math.compat-freeze.mathexpr-values.v1".to_string(),
+        generated_at_sha: header_sha(),
+        encoding: format!(
+            "Each path is one token per row (row paths) or per row element (map paths), in row order, separated by single spaces: 16 hex digits of the f64 bits, or {ERR} when the call returned an error. compiled_row may be \"{SAME_AS_INTERPRETER_ROW}\" and compiled_map may be \"{SAME_AS_INTERPRETER_MAP}\" when the compiled path agreed with the interpreter at generation. Rows are built from math_boundary/v1.json: [b], [b,1], [b,0,-1], [1,b,2] for each entry b, then [] and one 8-wide row."
+        ),
+        rows: rows
+            .iter()
+            .map(|(label, row)| RowRecord {
+                label: label.clone(),
+                values: row_text(row),
+            })
+            .collect(),
+        expressions: actual.iter().map(encode_expression).collect(),
+    };
+    let Some(committed) = committed_or_write(FIXTURE_FILES[0], &fixture) else {
+        return;
+    };
+    assert_eq!(
+        committed.schema, fixture.schema,
+        "mathexpr_values fixture schema"
+    );
+    if committed.rows != fixture.rows {
+        let first = committed
+            .rows
+            .iter()
+            .zip(&fixture.rows)
+            .position(|(a, b)| a != b)
+            .unwrap_or(committed.rows.len().min(fixture.rows.len()));
+        panic!(
+            "compat-freeze: the corpus rows changed (fixture {} rows, now {}; first difference at row {first}: fixture {:?}, now {:?}). The corpus is versioned: add math_boundary/v2.json instead of editing v1.",
+            committed.rows.len(),
+            fixture.rows.len(),
+            committed.rows.get(first),
+            fixture.rows.get(first)
+        );
+    }
+    let committed_sources: Vec<(&str, &str)> = committed
+        .expressions
+        .iter()
+        .map(|e| (e.source.as_str(), e.context.as_str()))
+        .collect();
+    assert_eq!(
+        committed_sources, catalogue,
+        "the expression catalogue changed; the fixture and this file must list the same expressions"
+    );
+    let row_lengths: Vec<usize> = rows.iter().map(|(_, row)| row.len()).collect();
+    let locate = |flat: usize| -> (usize, usize) {
+        let mut remaining = flat;
+        for (i, len) in row_lengths.iter().enumerate() {
+            if remaining < *len {
+                return (i, remaining);
+            }
+            remaining -= len;
+        }
+        (row_lengths.len(), remaining)
+    };
+    let mut problems = Vec::new();
+    let mut differing = 0usize;
+    for (record, values) in committed.expressions.iter().zip(&actual) {
+        let expected_paths = decode_expression(record);
+        let expected_names: Vec<&str> = expected_paths.iter().map(|(n, _)| *n).collect();
+        let actual_names: Vec<&str> = values.paths.iter().map(|(n, _)| *n).collect();
+        assert_eq!(
+            expected_names, actual_names,
+            "{}: recorded paths differ",
+            values.source
+        );
+        for ((path, old), (_, new)) in expected_paths.iter().zip(&values.paths) {
+            if old.len() != new.len() {
+                problems.push(format!(
+                    "{:?} [{path}]: fixture has {} values, now {}",
+                    values.source,
+                    old.len(),
+                    new.len()
+                ));
+                differing += 1;
+                continue;
+            }
+            for (i, (a, b)) in old.iter().zip(new).enumerate() {
+                if a == b {
+                    continue;
+                }
+                differing += 1;
+                if problems.len() < 12 {
+                    let (row_index, element) = if path.ends_with("_row") {
+                        (i, None)
+                    } else {
+                        let (r, e) = locate(i);
+                        (r, Some(e))
+                    };
+                    let (label, row) = &rows[row_index];
+                    problems.push(format!(
+                        "{:?} [{path}] row {row_index} {label} = [{}]{}: fixture {a} ({}) -> now {b} ({})",
+                        values.source,
+                        row.iter()
+                            .map(|v| format!("{v:?}"))
+                            .collect::<Vec<_>>()
+                            .join(", "),
+                        element
+                            .map(|e| format!(" element {e}"))
+                            .unwrap_or_default(),
+                        decode_token(a),
+                        decode_token(b)
+                    ));
+                }
+            }
+        }
+    }
+    if differing > 0 {
+        panic!(
+            "compat-freeze: MathExpr values drifted: {differing} differing values (first {} below)\n  {}\n{}\n{REBASELINE_POLICY}",
+            problems.len(),
+            problems.join("\n  "),
+            toolchain_note()
+        );
+    }
+}
+
+// ---------------------------------------------------------------------------------------------
+// WP-0.2 (a, stage level): map/derive stage outputs through apply_op and fit/predict
+// ---------------------------------------------------------------------------------------------
+
+/// The 5x4 stage matrix: ordinary values, signed zeros and guard neighbours, non-finite values,
+/// magnitudes beyond the clamp, and rounding cases.
+fn stage_matrix() -> Rows {
+    vec![
+        vec![1.0, -2.0, 0.5, 3.0],
+        vec![0.0, -0.0, 1e-12, -1e-12],
+        vec![f64::NAN, f64::INFINITY, f64::NEG_INFINITY, 2.0],
+        vec![1e155, -parse_f64("1.3407807929942596e154"), 27.0, -30.0],
+        vec![toward_zero(0.5), 2.5, -1.0, 4_503_599_627_370_497.0],
+    ]
+}
+
+const STAGES: &[&str] = &[
+    "(map expr=\"sigmoid(x) + 0.1*col(0)\" append=true)",
+    "(map expr=\"x^2 - min(x, c2) + tanh(c3)\")",
+    "(map expr=\"step(col(0), 0.0) + 0.5*step(row_mean, c1)\" append=true)",
+    "(map expr=\"exp(clip(col(0),-2,2)) + log(abs(col(1)) + 1.0) + asinh(col(2)) + atan(col(3))\")",
+    "(map expr=\"clip(x, -1, 1)\")",
+    "(map expr=\"x - row_mean + row_std\" append=true)",
+    "(map expr=\"c7 + x\")",
+    "(map expr=\"clip(1,(-1)^0.5,(-1)^0.5)\")",
+    "(map expr=\"x/c0\")",
+    "(derive expr=\"row_mean + row_std - c1/(c0 + 3)\" append=true)",
+    "(derive expr=\"row_l1 + row_l2 + row_min + row_max\")",
+    "(derive expr=\"erf(col(0)) + sign(col(1)) * floor(col(2)) + round(col(3))\" append=true)",
+    "(derive expr=\"1/c0 + log(c1) + sqrt(c2) + log1p(c3)\" append=true)",
+    "(derive expr=\"asinh(c0*c0) + exp(c3)\")",
+    "(derive expr=\"c7\")",
+    "(derive expr=\"x\")",
+];
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct StageValues {
+    schema: String,
+    generated_at_sha: String,
+    training: String,
+    matrix: Vec<String>,
+    cases: Vec<StageCase>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct StageCase {
+    stage: String,
+    apply_op_raw: Vec<String>,
+    predict_stage_output: Vec<String>,
+    predictions: String,
+}
+
+fn parse_stage(text: &str) -> Stage {
+    parse_dsl(&format!("(pipe X {text})"))
+        .unwrap_or_else(|error| panic!("{text}: {error}"))
+        .stages
+        .remove(0)
+}
+
+fn stage_case(text: &str, train: &Rows, target: &[f64], matrix: &Rows) -> StageCase {
+    let stage = parse_stage(text);
+    let apply_op_raw = match fit_op(&stage, matrix, target) {
+        Ok(op) => apply_op(&op, matrix)
+            .iter()
+            .map(|row| row_text(row))
+            .collect(),
+        Err(error) => vec![format!("ERR {error}")],
+    };
+    let genome = parse_program(text, &format!("(pipe X {text} (ridge))"));
+    let (predict_stage_output, predictions) = match fit(&genome, train, target) {
+        Ok(model) => {
+            let Model::Pipeline { ops, head, target } = &model else {
+                panic!("{text}: a pipeline program fits a pipeline model")
+            };
+            assert!(target.is_none());
+            let mut current = matrix.clone();
+            sanitize(&mut current);
+            for op in ops {
+                current = apply_op(op, &current);
+            }
+            let predictions = model.predict(matrix);
+            let replayed = head.predict(&current);
+            assert_eq!(
+                predictions.iter().map(|v| v.to_bits()).collect::<Vec<_>>(),
+                replayed.iter().map(|v| v.to_bits()).collect::<Vec<_>>(),
+                "{text}: the per-stage replay must reproduce Model::predict"
+            );
+            (
+                current.iter().map(|row| row_text(row)).collect(),
+                row_text(&predictions),
+            )
+        }
+        Err(error) => (vec![format!("ERR {error}")], format!("ERR {error}")),
+    };
+    StageCase {
+        stage: text.to_string(),
+        apply_op_raw,
+        predict_stage_output,
+        predictions,
+    }
+}
+
+#[test]
+fn stage_outputs_match_the_frozen_fixture() {
+    let (train, target) = toy_data(40, 5, 42);
+    let train: Rows = train.iter().map(|row| row[..4].to_vec()).collect();
+    let matrix = stage_matrix();
+    let fixture = StageValues {
+        schema: "feat-math.compat-freeze.stage-values.v1".to_string(),
+        generated_at_sha: header_sha(),
+        training: "Each stage is fitted as (pipe X <stage> (ridge)) on the first four columns of toy_data(40 rows, 5 columns, seed 42) as in tests/golden.rs and applied to the matrix below. apply_op_raw is apply_op on the raw matrix (no input sanitizing); predict_stage_output is the fitted stage on the sanitized matrix, as Model::predict runs it; rows are space-separated f64 bits.".to_string(),
+        matrix: matrix.iter().map(|row| row_text(row)).collect(),
+        cases: STAGES
+            .iter()
+            .map(|text| stage_case(text, &train, &target, &matrix))
+            .collect(),
+    };
+    let Some(committed) = committed_or_write(FIXTURE_FILES[1], &fixture) else {
+        return;
+    };
+    let flatten = |values: &StageValues| -> Vec<(String, String)> {
+        let mut records = vec![record("schema", values.schema.clone())];
+        for (i, row) in values.matrix.iter().enumerate() {
+            records.push(record(format!("matrix[{i}]"), row.clone()));
+        }
+        for case in &values.cases {
+            for (i, row) in case.apply_op_raw.iter().enumerate() {
+                records.push(record(
+                    format!("{} apply_op_raw[{i}]", case.stage),
+                    row.clone(),
+                ));
+            }
+            for (i, row) in case.predict_stage_output.iter().enumerate() {
+                records.push(record(
+                    format!("{} predict_stage_output[{i}]", case.stage),
+                    row.clone(),
+                ));
+            }
+            records.push(record(
+                format!("{} predictions", case.stage),
+                case.predictions.clone(),
+            ));
+        }
+        records
+    };
+    assert_records(
+        "stage outputs (stage_values.v1.json)",
+        &flatten(&committed),
+        &flatten(&fixture),
+        REBASELINE_POLICY,
+    );
+}
+
+// ---------------------------------------------------------------------------------------------
+// WP-0.2 (c): emitted artifact bytes
+// ---------------------------------------------------------------------------------------------
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct EmittedBytes {
+    schema: String,
+    generated_at_sha: String,
+    note: String,
+    programs: Vec<EmittedProgram>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct EmittedProgram {
+    name: String,
+    canonical: String,
+    rust: String,
+    python: String,
+    manifest: String,
+    manifest_emitter_version: String,
+    cpp17: String,
+    javascript: String,
+    fitted_cpp17_source: String,
+    fitted_cpp17_codec: String,
+}
+
+/// "unsupported: <kinds>", keeping each reason's element kind and dropping the `Debug` payload
+/// of internal plan structs (their text is not a shipped surface).
+fn unsupported(reasons: &[String]) -> String {
+    let kinds: Vec<&str> = reasons
+        .iter()
+        .map(|reason| reason[..reason.find(['(', '{']).unwrap_or(reason.len())].trim_end())
+        .collect();
+    format!("unsupported: {}", kinds.join("; "))
+}
+
+fn emitted_program(name: &str, source: &str, train: &Rows, target: &[f64]) -> EmittedProgram {
+    let genome = parse_program(name, source);
+    let options = EmitOptions::default();
+    let (rust, python, manifest, manifest_emitter_version) = match emit(&genome, &options) {
+        Ok(artifact) => {
+            let manifest: serde_json::Value =
+                serde_json::from_str(&artifact.manifest).expect("manifest JSON");
+            (
+                text_identity(&artifact.rust),
+                text_identity(&artifact.python),
+                text_identity(&artifact.manifest),
+                manifest["emitter_version"]
+                    .as_str()
+                    .expect("emitter_version")
+                    .to_string(),
+            )
+        }
+        Err(error) => {
+            let error = format!("ERR {error:#}");
+            (error.clone(), error.clone(), error.clone(), error)
+        }
+    };
+    let cpp17 = match supports_cpp17(&genome) {
+        Ok(()) => emit_cpp17(&genome, &options)
+            .map(|source| text_identity(&source))
+            .unwrap_or_else(|error| format!("ERR {error:#}")),
+        Err(missing) => unsupported(&missing),
+    };
+    let javascript = match supports_javascript(&genome) {
+        Ok(()) => emit_javascript(&genome, &options)
+            .map(|source| text_identity(&source))
+            .unwrap_or_else(|error| format!("ERR {error:#}")),
+        Err(missing) => unsupported(&missing),
+    };
+    let (fitted_cpp17_source, fitted_cpp17_codec) = match fit_skip_reason(source) {
+        Some(reason) => (reason.to_string(), reason.to_string()),
+        None => match fit_legacy_numeric_bound(&genome, train, target) {
+            Ok(model) => match emit_fitted_cpp17(&model) {
+                Ok(artifact) => {
+                    assert_eq!(
+                        artifact.source_sha256,
+                        sha256_hex(artifact.source.as_bytes())
+                    );
+                    assert_eq!(artifact.codec_sha256, sha256_hex(artifact.codec.as_bytes()));
+                    (
+                        text_identity(&artifact.source),
+                        text_identity(&artifact.codec),
+                    )
+                }
+                Err(error) => {
+                    let error = unsupported(&[format!("{error:#}")]);
+                    (error.clone(), error)
+                }
+            },
+            Err(error) => {
+                let error = format!("ERR fit: {error:#}");
+                (error.clone(), error)
+            }
+        },
+    };
+    EmittedProgram {
+        name: name.to_string(),
+        canonical: genome.canonical(),
+        rust,
+        python,
+        manifest,
+        manifest_emitter_version,
+        cpp17,
+        javascript,
+        fitted_cpp17_source,
+        fitted_cpp17_codec,
+    }
+}
+
+#[test]
+fn emitted_artifact_bytes_match_the_frozen_fixture() {
+    let (train, target, _) = fitted_surface_data();
+    let mut fixture = EmittedBytes {
+        schema: "feat-math.compat-freeze.emitted-bytes.v1".to_string(),
+        generated_at_sha: header_sha(),
+        note: format!(
+            "Values are \"<byte length> <sha256>\" of the artifact text (EmitOptions::default()), \"unsupported: <element kinds>\" where the emitter refuses the program, or the recorded error. C++20 is the same C++17 source compiled with -std=c++20. Fitted C++17 comes from fit_legacy_numeric_bound on {FITTED_DATA_NOTE}. An emitter that gains support for a program recorded as unsupported is additive and passes; recorded bytes never change."
+        ),
+        programs: program_set()
+            .iter()
+            .map(|(name, source)| emitted_program(name, source, &train, &target))
+            .collect(),
+    };
+    let Some(committed) = committed_or_write(FIXTURE_FILES[2], &fixture) else {
+        return;
+    };
+    // Gaining support for a program recorded as unsupported adds bytes without changing any
+    // recorded ones, so it passes (and is reported); losing support, or an emitter that now
+    // errors, is drift.
+    for program in &mut fixture.programs {
+        let Some(old) = committed.programs.iter().find(|p| p.name == program.name) else {
+            continue;
+        };
+        for (field, now, recorded) in [
+            ("cpp17", &mut program.cpp17, &old.cpp17),
+            ("javascript", &mut program.javascript, &old.javascript),
+            (
+                "fitted_cpp17_source",
+                &mut program.fitted_cpp17_source,
+                &old.fitted_cpp17_source,
+            ),
+            (
+                "fitted_cpp17_codec",
+                &mut program.fitted_cpp17_codec,
+                &old.fitted_cpp17_codec,
+            ),
+        ] {
+            if recorded.starts_with("unsupported") && !now.starts_with("ERR") && now != recorded {
+                eprintln!(
+                    "compat-freeze: {}.{field} was recorded as {recorded:?} and is now {now:?} (additive; freeze the new bytes with an approved rebaseline)",
+                    program.name
+                );
+                now.clone_from(recorded);
+            }
+        }
+    }
+    let flatten = |values: &EmittedBytes| -> Vec<(String, String)> {
+        let mut records = vec![record("schema", values.schema.clone())];
+        for p in &values.programs {
+            let n = &p.name;
+            records.extend([
+                record(format!("{n}.canonical"), p.canonical.clone()),
+                record(format!("{n}.rust"), p.rust.clone()),
+                record(format!("{n}.python"), p.python.clone()),
+                record(format!("{n}.manifest"), p.manifest.clone()),
+                record(
+                    format!("{n}.manifest_emitter_version"),
+                    p.manifest_emitter_version.clone(),
+                ),
+                record(format!("{n}.cpp17"), p.cpp17.clone()),
+                record(format!("{n}.javascript"), p.javascript.clone()),
+                record(
+                    format!("{n}.fitted_cpp17_source"),
+                    p.fitted_cpp17_source.clone(),
+                ),
+                record(
+                    format!("{n}.fitted_cpp17_codec"),
+                    p.fitted_cpp17_codec.clone(),
+                ),
+            ]);
+        }
+        records
+    };
+    assert_records(
+        "emitted artifact bytes (emitted_bytes.v1.json)",
+        &flatten(&committed),
+        &flatten(&fixture),
+        REBASELINE_POLICY,
+    );
+}
+
+// ---------------------------------------------------------------------------------------------
+// WP-0.2 (d): serialized models
+// ---------------------------------------------------------------------------------------------
+
+/// Small models whose complete serialized bytes are stored, to prove stored bytes still load.
+const STORED_MODELS: [&str; 3] = [
+    "golden_map_derive_ridge",
+    "golden_symbolic_affine",
+    "expansion_spline",
+];
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ModelSerde {
+    schema: String,
+    generated_at_sha: String,
+    note: String,
+    models: Vec<ModelRecord>,
+    stored: Vec<StoredModel>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ModelRecord {
+    name: String,
+    serde_json: String,
+    predictions: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct StoredModel {
+    name: String,
+    json: String,
+}
+
+#[test]
+fn serialized_models_match_the_frozen_fixture() {
+    let (train, target, test) = fitted_surface_data();
+    let mut models = Vec::new();
+    let mut stored = Vec::new();
+    for (name, source) in program_set() {
+        let genome = parse_program(&name, &source);
+        let (serde_json_identity, predictions) = match fit_skip_reason(&source) {
+            Some(reason) => (reason.to_string(), reason.to_string()),
+            None => match fit(&genome, &train, &target) {
+                Ok(model) => {
+                    let bytes = serde_json::to_vec(&model).expect("serialize model");
+                    if STORED_MODELS.contains(&name.as_str()) {
+                        stored.push(StoredModel {
+                            name: name.clone(),
+                            json: String::from_utf8(bytes.clone()).expect("UTF-8 JSON"),
+                        });
+                    }
+                    (
+                        format!("{} {}", bytes.len(), sha256_hex(&bytes)),
+                        row_text(&model.predict(&test)),
+                    )
+                }
+                Err(error) => {
+                    let error = format!("ERR {error:#}");
+                    (error.clone(), error)
+                }
+            },
+        };
+        models.push(ModelRecord {
+            name,
+            serde_json: serde_json_identity,
+            predictions,
+        });
+    }
+    let fixture = ModelSerde {
+        schema: "feat-math.compat-freeze.model-serde.v1".to_string(),
+        generated_at_sha: header_sha(),
+        note: format!(
+            "serde_json is \"<byte length> <sha256>\" of serde_json::to_vec(&fit(program)) on {FITTED_DATA_NOTE}; predictions are the f64 bits of Model::predict on the held-out rows. stored keeps the complete bytes of three small models, which must still load and predict the recorded values (to within serde_json's float-parsing precision, which is not exact without its float_roundtrip feature)."
+        ),
+        models,
+        stored,
+    };
+    let Some(committed) = committed_or_write(FIXTURE_FILES[3], &fixture) else {
+        return;
+    };
+    // Stored bytes from the generating build must still load and predict the recorded values.
+    // Only to within parsing precision: serde_json parses floats exactly only with its
+    // `float_roundtrip` feature, which feat-math does not enable (other workspace crates do, and
+    // Cargo unifies it in multi-package builds), so a `-p feat-math` build reloads weights that
+    // can differ in the last bits and predictions a few ulps away. A schema or semantic change
+    // moves predictions far more than the bound.
+    for stored in &committed.stored {
+        let model: Model = serde_json::from_str(&stored.json).unwrap_or_else(|error| {
+            panic!(
+                "compat-freeze: stored model {} no longer deserializes ({error}); serialized models are a frozen surface.\n{REBASELINE_POLICY}",
+                stored.name
+            )
+        });
+        let recorded = committed
+            .models
+            .iter()
+            .find(|m| m.name == stored.name)
+            .expect("a stored model has a record");
+        let reloaded = model.predict(&test);
+        let expected: Vec<f64> = recorded
+            .predictions
+            .split(' ')
+            .map(|token| f64::from_bits(u64::from_str_radix(token, 16).expect("hex bits")))
+            .collect();
+        assert_eq!(
+            reloaded.len(),
+            expected.len(),
+            "{}: prediction count",
+            stored.name
+        );
+        for (i, (now, then)) in reloaded.iter().zip(&expected).enumerate() {
+            assert!(
+                (now - then).abs() <= 1e-9 * now.abs().max(then.abs()).max(1.0),
+                "compat-freeze: stored model {} loads but row {i} predicts {now:?}, recorded {then:?}.\n{REBASELINE_POLICY}",
+                stored.name
+            );
+        }
+    }
+    let flatten = |values: &ModelSerde| -> Vec<(String, String)> {
+        let mut records = vec![record("schema", values.schema.clone())];
+        for m in &values.models {
+            records.push(record(
+                format!("{}.serde_json", m.name),
+                m.serde_json.clone(),
+            ));
+            records.push(record(
+                format!("{}.predictions", m.name),
+                m.predictions.clone(),
+            ));
+        }
+        for s in &values.stored {
+            records.push(record(
+                format!("{}.stored_json", s.name),
+                text_identity(&s.json),
+            ));
+        }
+        records
+    };
+    assert_records(
+        "serialized models (model_serde.v1.json)",
+        &flatten(&committed),
+        &flatten(&fixture),
+        REBASELINE_POLICY,
+    );
+}
+
+// ---------------------------------------------------------------------------------------------
+// WP-0.2 (e): vocabulary, registry, lineage and emitter-version pins (never rebaselined)
+// ---------------------------------------------------------------------------------------------
+
+const EMITTED_PIN_WHY: &str = "an emitters-lane pin (deploy/ci/emitters.sh, jope-motifs validate.rs); changing it changes shipped artifact bytes";
+
+/// Files whose bytes are frozen, with what a change to each one breaks.
+const FROZEN_FILES: &[(&str, &str)] = &[
+    ("crates/jope-engine/assets/grammar/featmath.json", "the v3 action vocabulary the step-60000 policy checkpoint is bound to (jope-policy CHECKPOINT_VOCABULARY_SHA256, parity.json vocab_sha256); a new vocabulary is a new file, never an edit"),
+    ("crates/jope-engine/assets/grammar/featmath-jain-v1.json", "the product vocabulary (jope-policy PRODUCT_VOCABULARY_SHA256)"),
+    ("crates/jope-engine/assets/grammar/parity.json", "the v3 automaton parity fixtures (jope-engine tests/grammar.rs)"),
+    ("crates/jope-engine/assets/grammar/jain-math-executable-9fa594e2.json", "the jain registry snapshot (ADR-0002 registry_dump byte check; featmath-jain-v1 restriction.executable_ops_sha256)"),
+    ("crates/jope-engine/src/grammar.rs", "this changes the teaching/corpus lineage: teaching_store.rs and corpus.rs hash include_str!(\"grammar.rs\") into every lineage; put new automaton code in a new module"),
+    ("crates/jope-policy/release/policy-step-60000.semantic-v1.json", "the accepted semantic manifest (jope-policy ACCEPTED_SEMANTIC_MANIFEST_SHA256)"),
+    ("crates/feat-math/src/registry.rs", "the wire registry (registry_hash) and the line numbers registry_dump recomputes for the ADR-0002 snapshot check; the registry is not edited this release (plan OQ-1)"),
+    ("crates/feat-math/assets/champions/8944cbdf.dsl", "the champion program (CHAMPION_GENOME)"),
+    ("crates/feat-math/cpp/fitted_runtime.cpp", "the fitted C++ runtime bound into fitted containers (runtime_source_sha256)"),
+    ("crates/feat-math/tests/fixtures/emitted/8944cbdf.predictions.sha256", EMITTED_PIN_WHY),
+    ("crates/feat-math/tests/fixtures/emitted/8944cbdf.py.sha256", EMITTED_PIN_WHY),
+    ("crates/feat-math/tests/fixtures/emitted/8944cbdf.rs.sha256", EMITTED_PIN_WHY),
+    ("crates/feat-math/tests/fixtures/emitted/8944cbdf.targets.sha256", EMITTED_PIN_WHY),
+    ("crates/feat-math/tests/fixtures/emitted/portable-4lang.cpp.sha256", EMITTED_PIN_WHY),
+    ("crates/feat-math/tests/fixtures/emitted/portable-4lang.dsl", EMITTED_PIN_WHY),
+    ("crates/feat-math/tests/fixtures/emitted/portable-4lang.js.sha256", EMITTED_PIN_WHY),
+    ("crates/feat-math/tests/fixtures/emitted/portable-4lang.predictions.sha256", EMITTED_PIN_WHY),
+    ("crates/feat-math/tests/fixtures/emitted/portable-4lang.py.sha256", EMITTED_PIN_WHY),
+    ("crates/feat-math/tests/fixtures/emitted/portable-4lang.rs.sha256", EMITTED_PIN_WHY),
+    ("crates/feat-math/tests/fixtures/emitted/portable-4lang.targets.sha256", EMITTED_PIN_WHY),
+];
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct FrozenPins {
+    schema: String,
+    generated_at_sha: String,
+    files: Vec<FilePin>,
+    values: Vec<ValuePin>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct FilePin {
+    path: String,
+    sha256: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ValuePin {
+    name: String,
+    value: String,
+}
+
+/// The string literal assigned to `pub const <name>: &str =` in Rust source text.
+fn const_literal(source: &str, name: &str) -> String {
+    let marker = format!("pub const {name}: &str =");
+    let start = source
+        .find(&marker)
+        .unwrap_or_else(|| panic!("{marker} not found"))
+        + marker.len();
+    let rest = source[start..].trim_start();
+    let rest = rest
+        .strip_prefix('"')
+        .unwrap_or_else(|| panic!("{name} is not a string literal"));
+    rest[..rest.find('"').expect("closing quote")].to_string()
+}
+
+fn json_file(relative: &str) -> serde_json::Value {
+    serde_json::from_slice(&read_repo_file(relative)).unwrap_or_else(|e| panic!("{relative}: {e}"))
+}
+
+fn json_text(value: &serde_json::Value) -> String {
+    match value {
+        serde_json::Value::String(text) => text.clone(),
+        other => other.to_string(),
+    }
+}
+
+#[test]
+fn vocabulary_registry_and_lineage_pins_match() {
+    let files: Vec<FilePin> = FROZEN_FILES
+        .iter()
+        .map(|(path, _)| FilePin {
+            path: path.to_string(),
+            sha256: sha256_hex(&read_repo_file(path)),
+        })
+        .collect();
+    let file_sha = |path: &str| -> String {
+        files
+            .iter()
+            .find(|pin| pin.path == path)
+            .expect("pinned file")
+            .sha256
+            .clone()
+    };
+    let policy_lib = String::from_utf8(read_repo_file("crates/jope-policy/src/lib.rs")).unwrap();
+    let policy_semantic =
+        String::from_utf8(read_repo_file("crates/jope-policy/src/semantic.rs")).unwrap();
+    let featmath = json_file("crates/jope-engine/assets/grammar/featmath.json");
+    let jain = json_file("crates/jope-engine/assets/grammar/featmath-jain-v1.json");
+    let parity = json_file("crates/jope-engine/assets/grammar/parity.json");
+    let snapshot =
+        json_file("crates/jope-engine/assets/grammar/jain-math-executable-9fa594e2.json");
+    let manifest = json_file("crates/jope-policy/release/policy-step-60000.semantic-v1.json");
+    let checkpoint = const_literal(&policy_lib, "CHECKPOINT_VOCABULARY_SHA256");
+    let product = const_literal(&policy_lib, "PRODUCT_VOCABULARY_SHA256");
+    let config = const_literal(&policy_lib, "ACCEPTED_CONFIG_SHA256");
+    let semantic = const_literal(&policy_semantic, "ACCEPTED_SEMANTIC_MANIFEST_SHA256");
+    let restriction = &jain["restriction"];
+    let values: Vec<ValuePin> = [
+        ("registry_hash", registry_hash().to_string()),
+        ("registry_engine", REGISTRY_ENGINE.to_string()),
+        ("registry_version", REGISTRY_VERSION.to_string()),
+        (
+            "registry_operator_count",
+            operator_registry().len().to_string(),
+        ),
+        ("transpile::EMITTER_VERSION", EMITTER_VERSION.to_string()),
+        ("advanced_v3::ARTIFACT_SCHEMA", ARTIFACT_SCHEMA.to_string()),
+        (
+            "jope_policy::CHECKPOINT_VOCABULARY_SHA256",
+            checkpoint.clone(),
+        ),
+        ("jope_policy::PRODUCT_VOCABULARY_SHA256", product.clone()),
+        ("jope_policy::ACCEPTED_CONFIG_SHA256", config.clone()),
+        (
+            "jope_policy::ACCEPTED_SEMANTIC_MANIFEST_SHA256",
+            semantic.clone(),
+        ),
+        ("featmath.json version", json_text(&featmath["version"])),
+        (
+            "featmath.json token count",
+            featmath["tokens"]
+                .as_array()
+                .expect("tokens")
+                .len()
+                .to_string(),
+        ),
+        (
+            "parity.json vocab_sha256",
+            json_text(&parity["vocab_sha256"]),
+        ),
+        (
+            "parity.json fixture count",
+            parity["fixtures"]
+                .as_array()
+                .expect("fixtures")
+                .len()
+                .to_string(),
+        ),
+        (
+            "featmath-jain-v1.json restriction.base_vocabulary_sha256",
+            json_text(&restriction["base_vocabulary_sha256"]),
+        ),
+        (
+            "featmath-jain-v1.json restriction.executable_ops_sha256",
+            json_text(&restriction["executable_ops_sha256"]),
+        ),
+        (
+            "featmath-jain-v1.json restriction.jain_math_registry_hash",
+            json_text(&restriction["jain_math_registry_hash"]),
+        ),
+        (
+            "jain snapshot provenance.registry_hash",
+            json_text(&snapshot["provenance"]["registry_hash"]),
+        ),
+        (
+            "semantic manifest vocabulary.checkpoint_sha256",
+            json_text(&manifest["vocabulary"]["checkpoint_sha256"]),
+        ),
+        (
+            "semantic manifest vocabulary.product_restriction.sha256",
+            json_text(&manifest["vocabulary"]["product_restriction"]["sha256"]),
+        ),
+        (
+            "semantic manifest vocabulary.tokens",
+            json_text(&manifest["vocabulary"]["tokens"]),
+        ),
+        (
+            "semantic manifest policy.config_sha256",
+            json_text(&manifest["policy"]["config_sha256"]),
+        ),
+    ]
+    .into_iter()
+    .map(|(name, value)| ValuePin {
+        name: name.to_string(),
+        value,
+    })
+    .collect();
+
+    // The pin chain must be internally consistent in every build, fixture or not.
+    let featmath_sha = file_sha("crates/jope-engine/assets/grammar/featmath.json");
+    let jain_sha = file_sha("crates/jope-engine/assets/grammar/featmath-jain-v1.json");
+    let value = |name: &str| -> String {
+        values
+            .iter()
+            .find(|pin| pin.name == name)
+            .expect("value pin")
+            .value
+            .clone()
+    };
+    for (name, expected) in [
+        ("jope_policy::CHECKPOINT_VOCABULARY_SHA256", &featmath_sha),
+        ("parity.json vocab_sha256", &featmath_sha),
+        (
+            "featmath-jain-v1.json restriction.base_vocabulary_sha256",
+            &featmath_sha,
+        ),
+        (
+            "semantic manifest vocabulary.checkpoint_sha256",
+            &featmath_sha,
+        ),
+        ("jope_policy::PRODUCT_VOCABULARY_SHA256", &jain_sha),
+        (
+            "semantic manifest vocabulary.product_restriction.sha256",
+            &jain_sha,
+        ),
+    ] {
+        assert_eq!(&value(name), expected, "pin chain: {name}");
+    }
+    assert_eq!(
+        value("featmath-jain-v1.json restriction.executable_ops_sha256"),
+        file_sha("crates/jope-engine/assets/grammar/jain-math-executable-9fa594e2.json"),
+        "pin chain: executable_ops_sha256"
+    );
+    for name in [
+        "featmath-jain-v1.json restriction.jain_math_registry_hash",
+        "jain snapshot provenance.registry_hash",
+    ] {
+        assert_eq!(value(name), registry_hash(), "pin chain: {name}");
+    }
+    assert_eq!(
+        value("jope_policy::ACCEPTED_SEMANTIC_MANIFEST_SHA256"),
+        file_sha("crates/jope-policy/release/policy-step-60000.semantic-v1.json"),
+        "pin chain: the semantic manifest"
+    );
+    assert_eq!(
+        value("semantic manifest policy.config_sha256"),
+        config,
+        "pin chain: config"
+    );
+    assert_eq!(
+        value("semantic manifest vocabulary.tokens"),
+        value("featmath.json token count"),
+        "pin chain: token count"
+    );
+
+    let fixture = FrozenPins {
+        schema: "feat-math.compat-freeze.frozen-pins.v1".to_string(),
+        generated_at_sha: header_sha(),
+        files,
+        values,
+    };
+    let Some(committed) = committed_or_write(FIXTURE_FILES[4], &fixture) else {
+        return;
+    };
+    let mut problems = Vec::new();
+    for pin in &committed.files {
+        let why = FROZEN_FILES
+            .iter()
+            .find(|(path, _)| *path == pin.path)
+            .map(|(_, why)| *why)
+            .unwrap_or("no longer listed in FROZEN_FILES");
+        match fixture.files.iter().find(|now| now.path == pin.path) {
+            Some(now) if now.sha256 == pin.sha256 => {}
+            Some(now) => problems.push(format!(
+                "{} changed (fixture {}, now {}): {why}",
+                pin.path, pin.sha256, now.sha256
+            )),
+            None => problems.push(format!("{} is no longer pinned: {why}", pin.path)),
+        }
+    }
+    for now in &fixture.files {
+        if !committed.files.iter().any(|pin| pin.path == now.path) {
+            problems.push(format!(
+                "{} is pinned here but not in the fixture",
+                now.path
+            ));
+        }
+    }
+    let old: Vec<(String, String)> = committed
+        .values
+        .iter()
+        .map(|pin| (pin.name.clone(), pin.value.clone()))
+        .collect();
+    let new: Vec<(String, String)> = fixture
+        .values
+        .iter()
+        .map(|pin| (pin.name.clone(), pin.value.clone()))
+        .collect();
+    if old != new {
+        for (name, value) in &old {
+            match new.iter().find(|(n, _)| n == name) {
+                Some((_, now)) if now == value => {}
+                Some((_, now)) => problems.push(format!("{name}: fixture {value}, now {now}")),
+                None => problems.push(format!("{name} is no longer recorded")),
+            }
+        }
+        for (name, value) in &new {
+            if !old.iter().any(|(n, _)| n == name) {
+                problems.push(format!("{name} = {value} is new"));
+            }
+        }
+    }
+    assert!(
+        problems.is_empty(),
+        "compat-freeze: frozen pins moved. These bytes and values are never rebaselined (plan N1); revert the change.\n  {}",
+        problems.join("\n  ")
+    );
+}
+
+// ---------------------------------------------------------------------------------------------
+// WP-0.2 (e): ADR-0004 evaluator identity inputs (rebaselined on purpose by identity changes)
+// ---------------------------------------------------------------------------------------------
+
+const EVALUATOR_SOURCE: &str = "crates/jope-campaigns/src/evaluation_v2.rs";
+const KNOWN_IDENTITIES: &str = "crates/jope-campaigns/known-evaluator-identities.json";
+const IDENTITY_ADVICE: &str = "This change mints a new ADR-0004 evaluator identity. Announce it in the PR body \
+(old and new implementation_sha256), record it as docs/adr/ADR-0004-evaluator-identity-known-table.md requires \
+(crates/jope-campaigns/known-evaluator-identities.json rows are appended only with the receipt that proves an \
+identity existed), and rebaseline tests/fixtures/compat_freeze/evaluator_identity.v1.json in the same change.";
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct EvaluatorIdentity {
+    schema: String,
+    generated_at_sha: String,
+    note: String,
+    domain: String,
+    inputs: Vec<IdentityInput>,
+    implementation_sha256: String,
+    dsl_abi_sha256: String,
+    cargo_lock_sha256: String,
+    identity_digest: String,
+    known_identities_sha256: String,
+    known_identity_rows: usize,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct IdentityInput {
+    label: String,
+    path: String,
+    sha256: String,
+}
+
+/// `evaluation_v2.rs` `SemanticHasher`: every label and value is framed by its u64 LE length.
+struct SemanticHasher(Sha256);
+
+impl SemanticHasher {
+    fn new(domain: &str) -> Self {
+        let mut hasher = Self(Sha256::new());
+        hasher.bytes("domain", domain.as_bytes());
+        hasher
+    }
+
+    fn bytes(&mut self, label: &str, value: &[u8]) {
+        self.0.update((label.len() as u64).to_le_bytes());
+        self.0.update(label.as_bytes());
+        self.0.update((value.len() as u64).to_le_bytes());
+        self.0.update(value);
+    }
+
+    fn finish(self) -> String {
+        self.0
+            .finalize()
+            .iter()
+            .map(|byte| format!("{byte:02x}"))
+            .collect()
+    }
+}
+
+/// String literals in `text`, with the offset of each opening quote.
+fn string_literals(text: &str) -> Vec<(usize, String)> {
+    let mut out = Vec::new();
+    let mut chars = text.char_indices();
+    while let Some((start, ch)) = chars.next() {
+        if ch != '"' {
+            continue;
+        }
+        let mut literal = String::new();
+        while let Some((_, c)) = chars.next() {
+            match c {
+                '\\' => {
+                    if let Some((_, escaped)) = chars.next() {
+                        literal.push(escaped);
+                    }
+                }
+                '"' => break,
+                other => literal.push(other),
+            }
+        }
+        out.push((start, literal));
+    }
+    out
+}
+
+/// Lexically normalize `base/relative` into a repository-relative path.
+fn normalize(base: &str, relative: &str) -> String {
+    let mut out = PathBuf::new();
+    for component in Path::new(base).join(relative).components() {
+        match component {
+            Component::ParentDir => {
+                assert!(out.pop(), "{relative} leaves the repository");
+            }
+            Component::CurDir => {}
+            other => out.push(other.as_os_str()),
+        }
+    }
+    out.to_string_lossy().replace('\\', "/")
+}
+
+/// The hashed `(label, include_bytes! path)` list, read from `compute_implementation_sha256`.
+fn evaluator_inputs(source: &str) -> (String, Vec<(String, String)>) {
+    let start = source
+        .find("fn compute_implementation_sha256()")
+        .expect("compute_implementation_sha256 is defined");
+    let body = &source[start..];
+    let body = &body[..body.find("hash.finish()").expect("hash.finish()")];
+    let mut domain = None;
+    let mut pending = None;
+    let mut inputs = Vec::new();
+    for (offset, literal) in string_literals(body) {
+        let before = body[..offset].trim_end();
+        if before.ends_with("include_bytes!(") {
+            let label = pending
+                .take()
+                .unwrap_or_else(|| panic!("no label before include_bytes!(\"{literal}\")"));
+            inputs.push((label, normalize("crates/jope-campaigns/src", &literal)));
+        } else if before.ends_with("SemanticHasher::new(") {
+            domain = Some(literal);
+        } else {
+            pending = Some(literal);
+        }
+    }
+    (domain.expect("hasher domain"), inputs)
+}
+
+#[test]
+fn evaluator_identity_inputs_match_the_recorded_identity() {
+    let source = String::from_utf8(read_repo_file(EVALUATOR_SOURCE)).unwrap();
+    let (domain, listed) = evaluator_inputs(&source);
+    assert_eq!(domain, "jope-dime/evaluator-implementation/v1");
+    let mut hasher = SemanticHasher::new(&domain);
+    let mut inputs = Vec::new();
+    for (label, path) in &listed {
+        let bytes = read_repo_file(path);
+        hasher.bytes(label, &bytes);
+        inputs.push(IdentityInput {
+            label: label.clone(),
+            path: path.clone(),
+            sha256: sha256_hex(&bytes),
+        });
+    }
+    let implementation_sha256 = hasher.finish();
+    let mut dsl = SemanticHasher::new("jope-dime/dsl-abi/v1");
+    dsl.bytes(
+        "value",
+        b"vendored-feat-math.GenomeIr+fit+Model::predict.v1",
+    );
+    let dsl_abi_sha256 = dsl.finish();
+    let cargo_lock_sha256 = sha256_hex(&read_repo_file("Cargo.lock"));
+    for literal in [
+        "\"JopeDimeEvaluatorIdentity.v1\"",
+        "\"prime-jain.native-feat-math-f64.evaluation-v2.v1\"",
+        "\"jope-dime/evaluator-identity/v1\"",
+        "\"jope-dime/dsl-abi/v1\"",
+        "b\"vendored-feat-math.GenomeIr+fit+Model::predict.v1\"",
+    ] {
+        assert!(
+            source.contains(literal),
+            "{EVALUATOR_SOURCE} no longer contains {literal}; update this replica of the identity"
+        );
+    }
+    let mut identity = SemanticHasher::new("jope-dime/evaluator-identity/v1");
+    for (label, value) in [
+        ("schema", "JopeDimeEvaluatorIdentity.v1"),
+        (
+            "evaluator_abi",
+            "prime-jain.native-feat-math-f64.evaluation-v2.v1",
+        ),
+        ("implementation_sha256", implementation_sha256.as_str()),
+        ("dsl_abi_sha256", dsl_abi_sha256.as_str()),
+        ("cargo_lock_sha256", cargo_lock_sha256.as_str()),
+    ] {
+        identity.bytes(label, value.as_bytes());
+    }
+    let identity_digest = identity.finish();
+
+    // The runtime table parser silently drops malformed rows; refuse them here instead.
+    let known_bytes = read_repo_file(KNOWN_IDENTITIES);
+    let known: serde_json::Value = serde_json::from_slice(&known_bytes).expect("known identities");
+    assert_eq!(known["schema"], "JopeDimeKnownEvaluatorIdentities.v1");
+    let rows = known["identities"].as_array().expect("identities array");
+    for (i, row) in rows.iter().enumerate() {
+        for field in ["implementation_sha256", "cargo_lock_sha256"] {
+            let value = row[field].as_str().unwrap_or_default();
+            assert!(
+                is_hex(value, 64),
+                "{KNOWN_IDENTITIES} row {i}: {field} must be 64 lowercase hex digits (the runtime parser would silently drop this row)"
+            );
+        }
+    }
+
+    let fixture = EvaluatorIdentity {
+        schema: "feat-math.compat-freeze.evaluator-identity.v1".to_string(),
+        generated_at_sha: header_sha(),
+        note: "A replica of evaluation_v2.rs compute_implementation_sha256 (the hashed list is read from that function) and EvaluatorIdentityV1::digest. Planned changes move this fixture: rebaseline it with the change that mints the identity.".to_string(),
+        domain,
+        inputs,
+        implementation_sha256,
+        dsl_abi_sha256,
+        cargo_lock_sha256,
+        identity_digest,
+        known_identities_sha256: sha256_hex(&known_bytes),
+        known_identity_rows: rows.len(),
+    };
+    let Some(committed) = committed_or_write(FIXTURE_FILES[5], &fixture) else {
+        return;
+    };
+    let mut problems = Vec::new();
+    let old_labels: Vec<&str> = committed.inputs.iter().map(|i| i.label.as_str()).collect();
+    let new_labels: Vec<&str> = fixture.inputs.iter().map(|i| i.label.as_str()).collect();
+    if old_labels != new_labels {
+        problems.push(format!(
+            "the hashed input list changed:\n      fixture {old_labels:?}\n      now     {new_labels:?}"
+        ));
+    }
+    for input in &committed.inputs {
+        if let Some(now) = fixture.inputs.iter().find(|i| i.label == input.label) {
+            if now.path != input.path || now.sha256 != input.sha256 {
+                problems.push(format!(
+                    "{} ({}) changed: fixture {}, now {} ({})",
+                    input.label, input.path, input.sha256, now.sha256, now.path
+                ));
+            }
+        }
+    }
+    for (name, old, new) in [
+        (
+            "implementation_sha256",
+            &committed.implementation_sha256,
+            &fixture.implementation_sha256,
+        ),
+        (
+            "dsl_abi_sha256",
+            &committed.dsl_abi_sha256,
+            &fixture.dsl_abi_sha256,
+        ),
+        (
+            "cargo_lock_sha256",
+            &committed.cargo_lock_sha256,
+            &fixture.cargo_lock_sha256,
+        ),
+        (
+            "identity_digest",
+            &committed.identity_digest,
+            &fixture.identity_digest,
+        ),
+        (
+            "known identity table sha256",
+            &committed.known_identities_sha256,
+            &fixture.known_identities_sha256,
+        ),
+        ("domain", &committed.domain, &fixture.domain),
+    ] {
+        if old != new {
+            problems.push(format!("{name}: fixture {old}, now {new}"));
+        }
+    }
+    if committed.known_identity_rows != fixture.known_identity_rows {
+        problems.push(format!(
+            "known identity rows: fixture {}, now {}",
+            committed.known_identity_rows, fixture.known_identity_rows
+        ));
+    }
+    assert!(
+        problems.is_empty(),
+        "compat-freeze: the ADR-0004 evaluator identity inputs changed:\n  {}\n{IDENTITY_ADVICE}",
+        problems.join("\n  ")
+    );
+}
+
+// ---------------------------------------------------------------------------------------------
+// WP-0.2 (f): seeded generator streams and their vocabularies
+// ---------------------------------------------------------------------------------------------
+
+const SEEDS: std::ops::Range<u64> = 0..64;
+const EVOLVE_SOURCE: &str = include_str!("../src/evolve.rs");
+
+/// Parent programs for the stage-list generators: the champion, a plain pipeline, the golden
+/// map/derive pipeline (expression strings must be carried unchanged), and an expansion starter.
+fn stream_parents() -> Vec<String> {
+    vec![
+        GenomeIr::parse(CHAMPION_GENOME).unwrap().canonical(),
+        "(pipe X (standardize) (ridge))".to_string(),
+        NAMED_PROGRAMS[0].1.to_string(),
+        EXPANSION_STARTERS[2].to_string(),
+    ]
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct GeneratorStreams {
+    schema: String,
+    generated_at_sha: String,
+    note: String,
+    vocabularies: Vec<Vocabulary>,
+    streams: Vec<StreamRecord>,
+    evolve_population: PopulationRecord,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Vocabulary {
+    name: String,
+    items: Vec<String>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct StreamRecord {
+    name: String,
+    inputs: String,
+    count: usize,
+    sha256: String,
+    first: String,
+    per_item: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct PopulationRecord {
+    inputs: String,
+    ranked: Vec<String>,
+}
+
+fn stream(name: &str, inputs: &str, items: Vec<String>) -> (StreamRecord, Vec<String>) {
+    let record = StreamRecord {
+        name: name.to_string(),
+        inputs: inputs.to_string(),
+        count: items.len(),
+        sha256: sha256_hex(items.join("\n").as_bytes()),
+        first: items.first().cloned().unwrap_or_default(),
+        per_item: items
+            .iter()
+            .map(|item| sha256_hex(item.as_bytes())[..16].to_string())
+            .collect::<Vec<_>>()
+            .join(" "),
+    };
+    (record, items)
+}
+
+fn shown<E: std::fmt::Display>(result: Result<String, E>) -> String {
+    result.unwrap_or_else(|error| format!("ERR {error}"))
+}
+
+fn evolved(result: Result<EvolvedGenome, String>) -> String {
+    match result {
+        Ok(g) => format!(
+            "{} | {} | {} | {}",
+            g.canonical, g.semantic_sha256, g.complexity, g.rust_source_len
+        ),
+        Err(error) => format!("ERR {error}"),
+    }
+}
+
+/// A private `[&str; N]` array of `evolve.rs`, read from the source text.
+fn source_array(header: &str) -> Vec<String> {
+    let start = EVOLVE_SOURCE.find(header).unwrap_or_else(|| {
+        panic!("`{header}` not found in src/evolve.rs: the legacy arrays must not change (their lengths are the modulus of every recorded stream)")
+    }) + header.len();
+    let end = start + EVOLVE_SOURCE[start..].find("];").expect("array end");
+    string_literals(&EVOLVE_SOURCE[start..end])
+        .into_iter()
+        .map(|(_, literal)| literal)
+        .collect()
+}
+
+fn vocabularies() -> Vec<Vocabulary> {
+    let list = |items: &[&str]| items.iter().map(|s| s.to_string()).collect::<Vec<_>>();
+    vec![
+        Vocabulary {
+            name: "evolve::TRANSFORMS (private)".to_string(),
+            items: source_array("const TRANSFORMS: [&str; 18] = ["),
+        },
+        Vocabulary {
+            name: "evolve::HEADS (private)".to_string(),
+            items: source_array("const HEADS: [&str; 9] = ["),
+        },
+        Vocabulary {
+            name: "evolve::STARTERS (private)".to_string(),
+            items: source_array("const STARTERS: [&str; 8] = ["),
+        },
+        Vocabulary {
+            name: "evolve::HARD_TEN_STARTERS (private)".to_string(),
+            items: source_array("const HARD_TEN_STARTERS: [&str; 8] = ["),
+        },
+        Vocabulary {
+            name: "evolve::EXPANSION_TRANSFORMS".to_string(),
+            items: list(&EXPANSION_TRANSFORMS),
+        },
+        Vocabulary {
+            name: "evolve::HEAD_OPS".to_string(),
+            items: list(&HEAD_OPS),
+        },
+        Vocabulary {
+            name: "evolve::EXPANSION_STARTERS".to_string(),
+            items: list(&EXPANSION_STARTERS),
+        },
+        Vocabulary {
+            name: "evolve::LITE_HEAD_BUDGETS".to_string(),
+            items: LITE_HEAD_BUDGETS
+                .iter()
+                .map(|(head, budget)| format!("{head} {budget:?}"))
+                .collect(),
+        },
+        Vocabulary {
+            name: "full_rust::TRANSFORMS".to_string(),
+            items: list(&full_rust::TRANSFORMS),
+        },
+        Vocabulary {
+            name: "full_rust::EXPANSION_TRANSFORMS".to_string(),
+            items: list(&full_rust::EXPANSION_TRANSFORMS),
+        },
+        Vocabulary {
+            name: "full_rust::HEADS".to_string(),
+            items: list(&full_rust::HEADS),
+        },
+        Vocabulary {
+            name: "full_rust::TARGET_KINDS".to_string(),
+            items: list(&full_rust::TARGET_KINDS),
+        },
+        Vocabulary {
+            name: "full_rust::VALID_TARGET_KINDS".to_string(),
+            items: list(&full_rust::VALID_TARGET_KINDS),
+        },
+        Vocabulary {
+            name: "full_rust limits (MAX_TRANSFORMS, MAX_EXPRESSION_DEPTH, MAX_EXPRESSION_NODES)"
+                .to_string(),
+            items: vec![
+                full_rust::MAX_TRANSFORMS.to_string(),
+                full_rust::MAX_EXPRESSION_DEPTH.to_string(),
+                full_rust::MAX_EXPRESSION_NODES.to_string(),
+            ],
+        },
+        Vocabulary {
+            name: "full_rust::operation_schemas()".to_string(),
+            items: full_rust::operation_schemas()
+                .iter()
+                .map(|schema| format!("{schema:?}"))
+                .collect(),
+        },
+    ]
+}
+
+const ARMS: [(&str, CanonicalMutationArm); 6] = [
+    ("parameter_jitter", CanonicalMutationArm::ParameterJitter),
+    ("insert", CanonicalMutationArm::Insert),
+    ("delete", CanonicalMutationArm::Delete),
+    ("adjacent_swap", CanonicalMutationArm::AdjacentSwap),
+    ("head_replacement", CanonicalMutationArm::HeadReplacement),
+    ("simplify", CanonicalMutationArm::Simplify),
+];
+
+fn evolve_streams(parents: &[String]) -> Vec<(StreamRecord, Vec<String>)> {
+    let parents_note = "parents: champion, (pipe X (standardize) (ridge)), golden_map_derive_ridge, EXPANSION_STARTERS[2]; seeds 0..64 per parent";
+    let per_parent = |f: &dyn Fn(&str, u64) -> String| -> Vec<String> {
+        parents
+            .iter()
+            .flat_map(|parent| SEEDS.map(move |seed| (parent.as_str(), seed)))
+            .map(|(parent, seed)| f(parent, seed))
+            .collect()
+    };
+    let mut out = vec![stream(
+        "evolve::random_canonical_pipeline(seed, 6)",
+        "seeds 0..64",
+        SEEDS
+            .map(|seed| random_canonical_pipeline(seed, 6))
+            .collect(),
+    )];
+    out.push(stream(
+        "evolve::mutate_canonical_pipeline(parent, seed, 6)",
+        parents_note,
+        per_parent(&|parent, seed| shown(mutate_canonical_pipeline(parent, seed, 6))),
+    ));
+    let pairs = [(0usize, 1usize), (2, 3), (1, 2), (3, 0)];
+    out.push(stream(
+        "evolve::crossover_canonical_pipelines(left, right, seed, 6)",
+        "parent pairs (0,1) (2,3) (1,2) (3,0) of the mutation parents; seeds 0..64 per pair",
+        pairs
+            .iter()
+            .flat_map(|(l, r)| SEEDS.map(move |seed| (*l, *r, seed)))
+            .map(|(l, r, seed)| {
+                shown(crossover_canonical_pipelines(
+                    &parents[l],
+                    &parents[r],
+                    seed,
+                    6,
+                ))
+            })
+            .collect(),
+    ));
+    for expansion in [false, true] {
+        out.push(stream(
+            &format!("evolve::mutate_canonical_pipeline_v2(parent, seed, 6, {expansion})"),
+            parents_note,
+            per_parent(&|parent, seed| {
+                shown(mutate_canonical_pipeline_v2(parent, seed, 6, expansion))
+            }),
+        ));
+        for (arm_name, arm) in ARMS {
+            out.push(stream(
+                &format!(
+                    "evolve::mutate_canonical_pipeline_with_arm(parent, seed, 6, {expansion}, {arm_name})"
+                ),
+                parents_note,
+                per_parent(&|parent, seed| {
+                    shown(mutate_canonical_pipeline_with_arm(
+                        parent, seed, 6, expansion, arm,
+                    ))
+                }),
+            ));
+        }
+    }
+    out
+}
+
+fn full_rust_streams(parents: &[String]) -> Vec<(StreamRecord, Vec<String>)> {
+    let fr_parents = [&parents[1], &parents[2]];
+    let note = "parents: (pipe X (standardize) (ridge)), golden_map_derive_ridge; feature_count 5; seeds 0..64 per parent";
+    let per_parent = |f: &dyn Fn(&str, u64) -> String| -> Vec<String> {
+        fr_parents
+            .iter()
+            .flat_map(|parent| SEEDS.map(move |seed| (parent.as_str(), seed)))
+            .map(|(parent, seed)| f(parent, seed))
+            .collect()
+    };
+    vec![
+        stream(
+            "full_rust::random_pipeline(seed, 5)",
+            "seeds 0..64",
+            SEEDS
+                .map(|seed| evolved(full_rust::random_pipeline(seed, 5)))
+                .collect(),
+        ),
+        stream(
+            "full_rust::mutate_pipeline(parent, seed, 5)",
+            note,
+            per_parent(&|parent, seed| evolved(full_rust::mutate_pipeline(parent, seed, 5))),
+        ),
+        stream(
+            "full_rust::mutate_pipeline_expanded(parent, seed, 5)",
+            note,
+            per_parent(&|parent, seed| {
+                evolved(full_rust::mutate_pipeline_expanded(parent, seed, 5))
+            }),
+        ),
+        stream(
+            "full_rust::crossover_pipelines(left, right, seed)",
+            "left (pipe X (standardize) (ridge)), right golden_map_derive_ridge; seeds 0..64",
+            SEEDS
+                .map(|seed| {
+                    evolved(full_rust::crossover_pipelines(
+                        fr_parents[0],
+                        fr_parents[1],
+                        seed,
+                    ))
+                })
+                .collect(),
+        ),
+        stream(
+            "full_rust::random_expression(&mut Pcg32::new(seed, 0), 5)",
+            "seeds 0..64",
+            SEEDS
+                .map(|seed| full_rust::random_expression(&mut Pcg32::new(seed, 0), 5))
+                .collect(),
+        ),
+        stream(
+            "full_rust::random_expression_expanded(&mut Pcg32::new(seed, 0), 5, false)",
+            "seeds 0..64",
+            SEEDS
+                .map(|seed| {
+                    full_rust::random_expression_expanded(&mut Pcg32::new(seed, 0), 5, false)
+                })
+                .collect(),
+        ),
+        stream(
+            "full_rust::random_expression_expanded(&mut Pcg32::new(seed, 0), 5, true)",
+            "seeds 0..64",
+            SEEDS
+                .map(|seed| {
+                    full_rust::random_expression_expanded(&mut Pcg32::new(seed, 0), 5, true)
+                })
+                .collect(),
+        ),
+    ]
+}
+
+fn scope(columns: usize, elementwise: bool) -> ExpressionScope {
+    ExpressionScope {
+        columns,
+        elementwise,
+        max_nodes: 64,
+        max_depth: 16,
+    }
+}
+
+fn edit_text(result: anyhow::Result<feat_math::math_expr::ExpressionEdit>) -> String {
+    match result {
+        Ok(edit) => format!(
+            "{} | changed={}",
+            shown(edit.expression.to_source()),
+            edit.changed
+        ),
+        Err(error) => format!("ERR {error}"),
+    }
+}
+
+fn expression_streams() -> Vec<(StreamRecord, Vec<String>)> {
+    let parents = [
+        ("sigmoid(x) + 0.1*c0", scope(3, true)),
+        ("row_mean + row_std - c1/(c0 + 3)", scope(5, false)),
+        ("0.1", scope(0, true)),
+    ];
+    let note = "parents and scopes: sigmoid(x) + 0.1*c0 {columns 3, map}, row_mean + row_std - c1/(c0 + 3) {columns 5, row}, 0.1 {columns 0, map}; limits 64 nodes, depth 16; seeds 0..64 per parent";
+    let mut out = vec![stream(
+        "MathExpr::mutate_v1(seed, scope)",
+        note,
+        parents
+            .iter()
+            .flat_map(|(source, scope)| SEEDS.map(move |seed| (*source, *scope, seed)))
+            .map(|(source, scope, seed)| {
+                edit_text(MathExpr::parse(source).unwrap().mutate_v1(seed, scope))
+            })
+            .collect(),
+    )];
+    let crosses = [
+        (parents[0].0, parents[1].0, scope(3, true)),
+        (parents[1].0, parents[0].0, scope(5, false)),
+    ];
+    out.push(stream(
+        "MathExpr::crossover_v1(donor, seed, scope)",
+        "recipient sigmoid(x) + 0.1*c0 {columns 3, map} with donor row_mean + row_std - c1/(c0 + 3), and the reverse {columns 5, row}; seeds 0..64 per pair",
+        crosses
+            .iter()
+            .flat_map(|(recipient, donor, scope)| {
+                SEEDS.map(move |seed| (*recipient, *donor, *scope, seed))
+            })
+            .map(|(recipient, donor, scope, seed)| {
+                edit_text(MathExpr::parse(recipient).unwrap().crossover_v1(
+                    &MathExpr::parse(donor).unwrap(),
+                    seed,
+                    scope,
+                ))
+            })
+            .collect(),
+    ));
+    // A chain: each child is the next parent, with a crossover every third seed.
+    let donor = MathExpr::parse("sin(c3)+c0*0.5").unwrap();
+    let mut parent = MathExpr::parse("0.1").unwrap();
+    let mut chain = Vec::new();
+    for seed in SEEDS {
+        let edit = if seed % 3 == 0 {
+            parent.crossover_v1(&donor, seed, scope(4, true))
+        } else {
+            parent.mutate_v1(seed, scope(4, true))
+        }
+        .expect("a valid parent stays editable");
+        chain.push(format!(
+            "{} | changed={}",
+            shown(edit.expression.to_source()),
+            edit.changed
+        ));
+        parent = edit.expression;
+    }
+    out.push(stream(
+        "MathExpr edit chain (mutate_v1, crossover_v1 every third seed)",
+        "start 0.1, donor sin(c3)+c0*0.5, scope {columns 4, map}; seeds 0..64 in order",
+        chain,
+    ));
+    let linear_rows: Vec<Vec<f64>> = (-4..=4).map(|i| vec![f64::from(i)]).collect();
+    let linear_targets: Vec<f64> = linear_rows.iter().map(|r| 2.5 * r[0] - 0.75).collect();
+    let wave_rows: Vec<Vec<f64>> = (-6..=6).map(|i| vec![f64::from(i) * 0.5]).collect();
+    let wave_targets: Vec<f64> = wave_rows
+        .iter()
+        .map(|r| 3.0 * (1.7 * r[0]).sin() + 0.5)
+        .collect();
+    let fitted = |source: &str, rows: &[Vec<f64>], targets: &[f64], budget: usize| -> String {
+        match MathExpr::parse(source)
+            .unwrap()
+            .optimize_constants_v1(rows, targets, budget)
+        {
+            Ok((expression, count)) => {
+                format!("{} | evaluations={count}", shown(expression.to_source()))
+            }
+            Err(error) => format!("ERR {error}"),
+        }
+    };
+    out.push(stream(
+        "MathExpr::optimize_constants_v1(rows, targets, budget)",
+        "0.1*c0+0.1 on x=-4..4, y=2.5x-0.75 with budgets 1, 10, 400; 1.3*sin(0.5*c0)+0.2 on x=-3..3 step 0.5, y=3 sin(1.7x)+0.5 with budget 300; and an empty training set",
+        vec![
+            fitted("0.1*c0+0.1", &linear_rows, &linear_targets, 1),
+            fitted("0.1*c0+0.1", &linear_rows, &linear_targets, 10),
+            fitted("0.1*c0+0.1", &linear_rows, &linear_targets, 400),
+            fitted("1.3*sin(0.5*c0)+0.2", &wave_rows, &wave_targets, 300),
+            fitted("0.1*c0+0.1", &[], &[], 10),
+        ],
+    ));
+    out
+}
+
+fn slots(source: &str) -> PipelineSlots {
+    PipelineSlots::from_pipeline(&parse_dsl(source).unwrap()).unwrap()
+}
+
+fn slots_text(result: feat_math::kernel::Result<PipelineSlots>) -> String {
+    match result.and_then(|child| child.to_pipeline()) {
+        Ok(pipe) => pipe.to_string(),
+        Err(error) => format!("ERR {error}"),
+    }
+}
+
+fn pipeline_slot_streams() -> Vec<(StreamRecord, Vec<String>)> {
+    let parents = [
+        ("(pipe X (target kind=log1p) (standardize) (ridge))", 3usize),
+        (
+            "(pipe X (derive expr=\"c0\" append=true) (map expr=\"c2+1\") (ridge))",
+            2,
+        ),
+        (NAMED_PROGRAMS[0].1, 5),
+    ];
+    let note = "parents (pipe X (target kind=log1p) (standardize) (ridge)) {3 columns}, (pipe X (derive expr=\"c0\" append=true) (map expr=\"c2+1\") (ridge)) {2 columns}, golden_map_derive_ridge {5 columns}; rows 32, max_stages 12; seeds 0..64 per parent";
+    let mutations = parents
+        .iter()
+        .flat_map(|(source, columns)| SEEDS.map(move |seed| (*source, *columns, seed)))
+        .map(|(source, columns, seed)| slots_text(slots(source).mutate_v1(seed, 32, columns, 12)))
+        .collect();
+    let crosses = parents
+        .iter()
+        .enumerate()
+        .flat_map(|(i, (source, columns))| {
+            let donor = parents[(i + 2) % parents.len()].0;
+            SEEDS.map(move |seed| (*source, donor, *columns, seed))
+        })
+        .map(|(source, donor, columns, seed)| {
+            slots_text(slots(source).crossover_v1(&slots(donor), seed, 32, columns, 12))
+        })
+        .collect();
+    vec![
+        stream(
+            "PipelineSlots::mutate_v1(seed, rows, columns, max_stages)",
+            note,
+            mutations,
+        ),
+        stream(
+            "PipelineSlots::crossover_v1(donor, seed, rows, columns, max_stages)",
+            "each parent above with donor = the parent two places later; seeds 0..64 per parent",
+            crosses,
+        ),
+    ]
+}
+
+fn json_line<T: Serialize>(value: &T) -> String {
+    serde_json::to_string(value).expect("serialize")
+}
+
+fn advanced_v3_streams(parents: &[String]) -> Vec<(StreamRecord, Vec<String>)> {
+    let config = V3EvolutionConfig::default();
+    let population = initial_population(&config, &[]);
+    let seeded = initial_population(&config, parents);
+    let scored: Vec<V3ScoredCandidate> = population
+        .iter()
+        .cloned()
+        .enumerate()
+        .map(|(index, candidate)| V3ScoredCandidate {
+            candidate,
+            rmse: 0.1 + index as f64 * 1e-6,
+            novelty: (index % 7) as f64,
+        })
+        .collect();
+    let mutations = SEEDS
+        .map(|seed| {
+            let index = seed as usize * 7 % population.len();
+            let parent = &population[index];
+            shown(
+                mutate_candidate(parent, seed, 1 + index / 20, parent.island as usize)
+                    .map(|c| json_line(&c))
+                    .map_err(|e| e.to_string()),
+            )
+        })
+        .collect();
+    let crosses = SEEDS
+        .map(|seed| {
+            let index = seed as usize * 7 % population.len();
+            let left = &population[index];
+            let right = &population[(index * 37 + 11) % population.len()];
+            shown(
+                crossover_candidates(left, right, seed, 1 + index / 20, left.island as usize)
+                    .map(|c| json_line(&c))
+                    .map_err(|e| e.to_string()),
+            )
+        })
+        .collect();
+    let next = |generation: usize, stagnation: &[usize]| -> Vec<String> {
+        match next_generation(&config, generation, &scored, stagnation) {
+            Ok(candidates) => candidates.iter().map(json_line).collect(),
+            Err(error) => vec![format!("ERR {error}")],
+        }
+    };
+    let mut archive = V3Archive::default();
+    archive.update(scored.iter().cloned());
+    vec![
+        stream(
+            "advanced_v3::initial_population(default, [])",
+            "V3EvolutionConfig::default(), no seeds",
+            population.iter().map(json_line).collect(),
+        ),
+        stream(
+            "advanced_v3::initial_population(default, parents)",
+            "V3EvolutionConfig::default(), seeds = the mutation parents",
+            seeded.iter().map(json_line).collect(),
+        ),
+        stream(
+            "advanced_v3::deterministic_seed_enumeration(default, [])",
+            "V3EvolutionConfig::default(), no seeds",
+            deterministic_seed_enumeration(&config, &[]),
+        ),
+        stream(
+            "advanced_v3::mutate_candidate(parent, seed, generation, island)",
+            "parent = initial population[seed*7 mod 80], generation 1 + index/20; seeds 0..64",
+            mutations,
+        ),
+        stream(
+            "advanced_v3::crossover_candidates(left, right, seed, generation, island)",
+            "left = initial population[seed*7 mod 80], right = [(index*37+11) mod 80]; seeds 0..64",
+            crosses,
+        ),
+        stream(
+            "advanced_v3::next_generation(default, 1, scored, [0,0,0,0])",
+            "scored = initial population with rmse 0.1 + i*1e-6 and novelty i mod 7",
+            next(1, &[0, 0, 0, 0]),
+        ),
+        stream(
+            "advanced_v3::next_generation(default, 5, scored, [8,0,9,0])",
+            "the same scores; generation 5 migrates and two islands are stagnant",
+            next(5, &[8, 0, 9, 0]),
+        ),
+        stream(
+            "advanced_v3::V3Archive::update(scored)",
+            "an empty archive updated with the scored initial population",
+            archive.entries.iter().map(json_line).collect(),
+        ),
+    ]
+}
+
+struct Quiet;
+
+impl Observer for Quiet {
+    fn on_generation(&self, _: &GenStats) {}
+    fn on_improvement(&self, _: &Scored, _: &Emitted, _: &GenStats) {}
+}
+
+fn evolve_population() -> PopulationRecord {
+    let (x, y) = toy_data(96, 5, 42);
+    let metric = |truth: &[f64], predicted: &[f64]| feat_math::r2(truth, predicted);
+    let config = EvolveConfig {
+        pop: 16,
+        gens: 3,
+        folds: 3,
+        seed: 12345,
+        max_transforms: 3,
+        ..EvolveConfig::default()
+    };
+    let ranked = evolve(&x, &y, &metric, &config, &Quiet);
+    PopulationRecord {
+        inputs: "evolve() on toy_data(96 rows, 5 columns, seed 42) with EvolveConfig { pop 16, gens 3, folds 3, seed 12345, max_transforms 3, every other field default (surrogate scoring, opt-in flags off, no time budget) }; each line is the program, the cv_mean bits and the fold score bits".to_string(),
+        ranked: ranked
+            .iter()
+            .map(|scored| {
+                format!(
+                    "{} | cv_mean={} | folds={}",
+                    scored.dsl,
+                    hex_bits(scored.cv_mean),
+                    scored
+                        .fold_scores
+                        .iter()
+                        .map(|v| hex_bits(*v))
+                        .collect::<Vec<_>>()
+                        .join(" ")
+                )
+            })
+            .collect(),
+    }
+}
+
+#[test]
+fn seeded_generator_streams_match_the_frozen_fixture() {
+    let parents = stream_parents();
+    let mut all = evolve_streams(&parents);
+    all.extend(full_rust_streams(&parents));
+    all.extend(expression_streams());
+    all.extend(pipeline_slot_streams());
+    all.extend(advanced_v3_streams(&parents));
+    let fixture = GeneratorStreams {
+        schema: "feat-math.compat-freeze.generator-streams.v1".to_string(),
+        generated_at_sha: header_sha(),
+        note: "Each stream is the ordered output of one seeded generator over fixed inputs: sha256 of the items joined by newlines, the first item verbatim, and the first 16 hex digits of each item's sha256. The legacy wrappers, full_rust, MathExpr, PipelineSlots and advanced_v3 streams must stay bit-identical (plan N1).".to_string(),
+        vocabularies: vocabularies(),
+        streams: all.iter().map(|(record, _)| record.clone()).collect(),
+        evolve_population: evolve_population(),
+    };
+    let Some(committed) = committed_or_write(FIXTURE_FILES[6], &fixture) else {
+        return;
+    };
+    let mut problems = Vec::new();
+    let vocab = |values: &GeneratorStreams| -> Vec<(String, String)> {
+        values
+            .vocabularies
+            .iter()
+            .map(|v| (v.name.clone(), v.items.join(" | ")))
+            .collect()
+    };
+    if vocab(&committed) != vocab(&fixture) {
+        for (name, items) in vocab(&committed) {
+            match vocab(&fixture).into_iter().find(|(n, _)| *n == name) {
+                Some((_, now)) if now == items => {}
+                Some((_, now)) => problems.push(format!(
+                    "vocabulary {name}:\n      fixture {items}\n      now     {now}"
+                )),
+                None => problems.push(format!("vocabulary {name} is gone")),
+            }
+        }
+    }
+    for old in &committed.streams {
+        let Some((new, items)) = all.iter().find(|(r, _)| r.name == old.name) else {
+            problems.push(format!("stream {} is gone", old.name));
+            continue;
+        };
+        if old == new {
+            continue;
+        }
+        let old_items: Vec<&str> = old.per_item.split(' ').collect();
+        let new_items: Vec<&str> = new.per_item.split(' ').collect();
+        let first = old_items
+            .iter()
+            .zip(&new_items)
+            .position(|(a, b)| a != b)
+            .unwrap_or(old_items.len().min(new_items.len()));
+        problems.push(format!(
+            "stream {} ({}): {} items in the fixture, {} now; first differing item {first}; now: {}",
+            old.name,
+            old.inputs,
+            old.count,
+            new.count,
+            items.get(first).map(String::as_str).unwrap_or("(none)")
+        ));
+    }
+    for (new, _) in &all {
+        if !committed.streams.iter().any(|old| old.name == new.name) {
+            problems.push(format!("stream {} is new", new.name));
+        }
+    }
+    if committed.evolve_population != fixture.evolve_population {
+        problems.push(format!(
+            "evolve() population:\n      fixture {:?}\n      now     {:?}",
+            committed.evolve_population.ranked, fixture.evolve_population.ranked
+        ));
+    }
+    assert!(
+        problems.is_empty(),
+        "compat-freeze: seeded generator streams drifted:\n  {}\n{}\n{REBASELINE_POLICY}",
+        problems.join("\n  "),
+        toolchain_note()
+    );
+}
+
+// ---------------------------------------------------------------------------------------------
+// Provenance
+// ---------------------------------------------------------------------------------------------
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Meta {
+    schema: String,
+    generated_at_sha: String,
+    rustc: String,
+    host: String,
+    libm: String,
+    math_kernel: String,
+    fixtures: Vec<String>,
+    boundary_corpus: String,
+    regenerate: String,
+    rebaseline_policy: String,
+}
+
+#[test]
+fn fixture_provenance_is_recorded() {
+    let path = fixture_path("compat_freeze/meta.json");
+    if regenerating() {
+        let verbose = command_line("rustc", &["-vV"]);
+        let host = verbose
+            .lines()
+            .find_map(|line| line.strip_prefix("host: "))
+            .expect("rustc -vV reports the host")
+            .to_string();
+        let meta = Meta {
+            schema: "feat-math.compat-freeze.meta.v1".to_string(),
+            generated_at_sha: generation_sha(),
+            rustc: command_line("rustc", &["-V"]),
+            host,
+            libm: command_line("getconf", &["GNU_LIBC_VERSION"]),
+            math_kernel: EmitOptions::default().math_kernel.policy_id().to_string(),
+            fixtures: FIXTURE_FILES.iter().map(|f| f.to_string()).collect(),
+            boundary_corpus: CORPUS_FILE.to_string(),
+            regenerate: REGENERATE_COMMAND.to_string(),
+            rebaseline_policy: REBASELINE_POLICY.to_string(),
+        };
+        write_atomically(
+            &path,
+            &(serde_json::to_string_pretty(&meta).unwrap() + "\n"),
+        );
+        eprintln!("compat-freeze: wrote tests/fixtures/compat_freeze/meta.json");
+        return;
+    }
+    let meta: Meta = serde_json::from_str(
+        &std::fs::read_to_string(&path).expect("tests/fixtures/compat_freeze/meta.json"),
+    )
+    .expect("meta.json parses");
+    assert_eq!(meta.schema, "feat-math.compat-freeze.meta.v1");
+    assert!(
+        is_hex(&meta.generated_at_sha, 40),
+        "meta.json generated_at_sha"
+    );
+    assert_eq!(meta.fixtures, FIXTURE_FILES);
+    assert_eq!(meta.boundary_corpus, CORPUS_FILE);
+    assert_eq!(meta.math_kernel, "platform-libm-v1");
+    for file in FIXTURE_FILES {
+        let text = std::fs::read_to_string(fixture_path(&format!("compat_freeze/{file}")))
+            .unwrap_or_else(|error| panic!("{file}: {error}"));
+        let value: serde_json::Value = serde_json::from_str(&text).expect("fixture JSON");
+        assert!(
+            is_hex(value["generated_at_sha"].as_str().unwrap_or_default(), 40),
+            "{file}: generated_at_sha must name a full commit id"
+        );
+        assert!(
+            text.len() < 1 << 20,
+            "{file} is {} bytes; keep each fixture under 1 MiB",
+            text.len()
+        );
+    }
 }

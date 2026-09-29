@@ -1,0 +1,176 @@
+{
+  "schema": "feat-math.compat-freeze.frozen-pins.v1",
+  "generated_at_sha": "629e69d865a674222e00224cebf45c1ffddc8dea",
+  "files": [
+    {
+      "path": "crates/jope-engine/assets/grammar/featmath.json",
+      "sha256": "8d55fee4366acd2c175cf55bfd769cebc904770f5227a6fd50a613723dc85787"
+    },
+    {
+      "path": "crates/jope-engine/assets/grammar/featmath-jain-v1.json",
+      "sha256": "570b2e5e8d859a73b888f5d0bee27f59da0e2376536babce24c241604f818e81"
+    },
+    {
+      "path": "crates/jope-engine/assets/grammar/parity.json",
+      "sha256": "9dc5efc698204ab3354ccb34659fee8ccdbf1d34a7a62da27882f0d9930c1c1a"
+    },
+    {
+      "path": "crates/jope-engine/assets/grammar/jain-math-executable-9fa594e2.json",
+      "sha256": "21c194e2d2c162e29d3893877bc2a2944ce33815db09f21626b5a99371d398aa"
+    },
+    {
+      "path": "crates/jope-engine/src/grammar.rs",
+      "sha256": "6a8e6aa43efb8af6aa4806fd5d403ca34c06563436d933266a7377d815625e6a"
+    },
+    {
+      "path": "crates/jope-policy/release/policy-step-60000.semantic-v1.json",
+      "sha256": "60f61cd8b58a1eaa72220a03e91af9be074793b60cd1a05df9c6cac1ac225935"
+    },
+    {
+      "path": "crates/feat-math/src/registry.rs",
+      "sha256": "337700af92862c8ef79f81ed04283870d3953333577896c37ac1fa883ffaf38c"
+    },
+    {
+      "path": "crates/feat-math/assets/champions/8944cbdf.dsl",
+      "sha256": "0bc6e75d8f12173ac6e2acf432233e48457cf773e1bedef56f536384513c158d"
+    },
+    {
+      "path": "crates/feat-math/cpp/fitted_runtime.cpp",
+      "sha256": "efc1c702784aefb129450b53909846731a6cfa8911c80dec59f28007430f81d1"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/emitted/8944cbdf.predictions.sha256",
+      "sha256": "1fb60f16effb08bf9cda2bd1d49b4cd10650046191d84699859e80920ec08f6a"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/emitted/8944cbdf.py.sha256",
+      "sha256": "252ec83581b8a4f2437805627d6d9daa71c533cec4c4cea3776fd9a8c3d2523e"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/emitted/8944cbdf.rs.sha256",
+      "sha256": "2b002d9ff4bda876e8f1545b594e67d2f467ae25f1fd7c690504ebd5b5b89271"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/emitted/8944cbdf.targets.sha256",
+      "sha256": "acf411d2e0f6c1182a757e0275a5ab16d04947f396405fa8284faf3f3ce2c789"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/emitted/portable-4lang.cpp.sha256",
+      "sha256": "02d63aaf80c760abc27b29b047037729be393a77fdabd3863d54e9b77027a340"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/emitted/portable-4lang.dsl",
+      "sha256": "a5f39db67853901feb94e9963013d7ea31231c54096029c5b803e9c7effce1f1"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/emitted/portable-4lang.js.sha256",
+      "sha256": "fe08ba16f04cb504f50d4eb44c9f32976ef3ec2385ced16e35ec572f0a444d3f"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/emitted/portable-4lang.predictions.sha256",
+      "sha256": "8e5ee39611c3e23446c0b3dfaac722085588a8e3ba875f7594e9fd9b8bddb307"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/emitted/portable-4lang.py.sha256",
+      "sha256": "21c1b8391df4566c3aaf2795315388cdb5f29ea500bf1f9a49010045854cc085"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/emitted/portable-4lang.rs.sha256",
+      "sha256": "8f772f009d0cbab5ea6c25e1eaaaece97ca2a3a92eeaacbcd4c59e8d7d9397cd"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/emitted/portable-4lang.targets.sha256",
+      "sha256": "8f09f7c42830b03c83c2a00eacbd21419cae00d802970648940f8fc7c10afbf6"
+    }
+  ],
+  "values": [
+    {
+      "name": "registry_hash",
+      "value": "8173b07f37fde39bdc8bbf2dfe2e496aa5ccaeb4e0274843c235ec1fc6972c62"
+    },
+    {
+      "name": "registry_engine",
+      "value": "featmath"
+    },
+    {
+      "name": "registry_version",
+      "value": "jain-prime-featmath-registry-v1"
+    },
+    {
+      "name": "registry_operator_count",
+      "value": "53"
+    },
+    {
+      "name": "transpile::EMITTER_VERSION",
+      "value": "2.2.0"
+    },
+    {
+      "name": "advanced_v3::ARTIFACT_SCHEMA",
+      "value": "battle-artifact-v2"
+    },
+    {
+      "name": "jope_policy::CHECKPOINT_VOCABULARY_SHA256",
+      "value": "8d55fee4366acd2c175cf55bfd769cebc904770f5227a6fd50a613723dc85787"
+    },
+    {
+      "name": "jope_policy::PRODUCT_VOCABULARY_SHA256",
+      "value": "570b2e5e8d859a73b888f5d0bee27f59da0e2376536babce24c241604f818e81"
+    },
+    {
+      "name": "jope_policy::ACCEPTED_CONFIG_SHA256",
+      "value": "2508fc8b8268ea000141c9b119ba3da4e777c506c366168912a88d03482939bf"
+    },
+    {
+      "name": "jope_policy::ACCEPTED_SEMANTIC_MANIFEST_SHA256",
+      "value": "60f61cd8b58a1eaa72220a03e91af9be074793b60cd1a05df9c6cac1ac225935"
+    },
+    {
+      "name": "featmath.json version",
+      "value": "featmath:featmath.v3"
+    },
+    {
+      "name": "featmath.json token count",
+      "value": "401"
+    },
+    {
+      "name": "parity.json vocab_sha256",
+      "value": "8d55fee4366acd2c175cf55bfd769cebc904770f5227a6fd50a613723dc85787"
+    },
+    {
+      "name": "parity.json fixture count",
+      "value": "128"
+    },
+    {
+      "name": "featmath-jain-v1.json restriction.base_vocabulary_sha256",
+      "value": "8d55fee4366acd2c175cf55bfd769cebc904770f5227a6fd50a613723dc85787"
+    },
+    {
+      "name": "featmath-jain-v1.json restriction.executable_ops_sha256",
+      "value": "21c194e2d2c162e29d3893877bc2a2944ce33815db09f21626b5a99371d398aa"
+    },
+    {
+      "name": "featmath-jain-v1.json restriction.jain_math_registry_hash",
+      "value": "8173b07f37fde39bdc8bbf2dfe2e496aa5ccaeb4e0274843c235ec1fc6972c62"
+    },
+    {
+      "name": "jain snapshot provenance.registry_hash",
+      "value": "8173b07f37fde39bdc8bbf2dfe2e496aa5ccaeb4e0274843c235ec1fc6972c62"
+    },
+    {
+      "name": "semantic manifest vocabulary.checkpoint_sha256",
+      "value": "8d55fee4366acd2c175cf55bfd769cebc904770f5227a6fd50a613723dc85787"
+    },
+    {
+      "name": "semantic manifest vocabulary.product_restriction.sha256",
+      "value": "570b2e5e8d859a73b888f5d0bee27f59da0e2376536babce24c241604f818e81"
+    },
+    {
+      "name": "semantic manifest vocabulary.tokens",
+      "value": "401"
+    },
+    {
+      "name": "semantic manifest policy.config_sha256",
+      "value": "2508fc8b8268ea000141c9b119ba3da4e777c506c366168912a88d03482939bf"
+    }
+  ]
+}
