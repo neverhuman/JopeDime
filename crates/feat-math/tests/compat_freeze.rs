@@ -7,7 +7,7 @@
 //! | test | fixture under `tests/fixtures/` | frozen surface |
 //! |---|---|---|
 //! | `boundary_corpus_v1_is_well_formed_and_matches_its_definition` | `math_boundary/v1.json` | the scalar boundary inputs (WP-0.3) |
-//! | `expression_values_match_the_frozen_fixture` | `compat_freeze/mathexpr_values.v1.json` | `MathExpr` value bits: interpreter and compiled, row and map context |
+//! | `expression_values_match_the_frozen_fixture` | `compat_freeze/mathexpr_values.v1.json` | `MathExpr` value bits and error kinds: interpreter and compiled, row and map context |
 //! | `stage_outputs_match_the_frozen_fixture` | `compat_freeze/stage_values.v1.json` | `map`/`derive` stage outputs and the predictions behind them |
 //! | `emitted_artifact_bytes_match_the_frozen_fixture` | `compat_freeze/emitted_bytes.v1.json` | Rust, Python and manifest bytes (default and `jope emit` options), C++17, JavaScript and fitted C++17 bytes, and the ops each recipe emitter accepts |
 //! | `serialized_models_match_the_frozen_fixture` | `compat_freeze/model_serde.v1.json` | `serde_json` bytes of fitted models, their predictions, and loading of stored bytes |
@@ -64,7 +64,7 @@ use feat_math::evolve::{
 };
 use feat_math::full_rust::{self, EvolvedGenome, OperationKind, ParamDomain};
 use feat_math::kernel::pipeline::PipelineSlots;
-use feat_math::math_expr::{ExpressionScope, MathExpr};
+use feat_math::math_expr::{ExpressionScope, MathEvalError, MathExpr};
 use feat_math::ops::{apply_op, fit_op};
 use feat_math::registry::{operator_registry, registry_hash, REGISTRY_ENGINE, REGISTRY_VERSION};
 use feat_math::transpile::{
@@ -920,7 +920,7 @@ fn boundary_corpus_v1_is_well_formed_and_matches_its_definition() {
 
 const ERR: &str = "ERR";
 const SAME_AS_INTERPRETER_ROW: &str = "=interpreter_row";
-const SAME_AS_INTERPRETER_MAP: &str = "=interpreter_map with ERR as 0000000000000000";
+const SAME_AS_INTERPRETER_MAP: &str = "=interpreter_map with every ERR token as 0000000000000000";
 const WIDE_ROW: [f64; 8] = [0.1, -2.0, 3.0, 0.5, -1.5, 2.5, 1e-12, 6.0];
 
 /// Row-context expressions: every function alone on c0 (with its arity), every variable, every
@@ -1074,10 +1074,30 @@ fn row_text(row: &[f64]) -> String {
         .join(" ")
 }
 
+/// `ERR:<kind>`, a stable tag this file gives each evaluation error: the typed error by its
+/// variant, and the two scope errors by what their message names.
+fn error_token(error: &anyhow::Error) -> String {
+    if let Some(typed) = error.downcast_ref::<MathEvalError>() {
+        return format!("{ERR}:{typed:?}");
+    }
+    let message = error.to_string();
+    let kind = if message.starts_with("variable x is only valid") {
+        "x-scope"
+    } else if message.starts_with("column index") {
+        "column"
+    } else {
+        "other"
+    };
+    format!("{ERR}:{kind}")
+}
+
+/// The token of an expression whose compiled form failed to build.
+const COMPILE_ERR: &str = "ERR:compile";
+
 fn token(result: anyhow::Result<f64>) -> String {
     match result {
         Ok(value) => hex_bits(value),
-        Err(_) => ERR.to_string(),
+        Err(error) => error_token(&error),
     }
 }
 
@@ -1097,7 +1117,7 @@ fn expression_values(
         .iter()
         .map(|(_, row)| match &compiled {
             Ok(compiled) => token(compiled.eval_row(row)),
-            Err(_) => ERR.to_string(),
+            Err(_) => COMPILE_ERR.to_string(),
         })
         .collect();
     let mut paths = vec![
@@ -1117,7 +1137,7 @@ fn expression_values(
             .iter()
             .flat_map(|(_, row)| match &compiled {
                 Ok(compiled) => compiled.map_row(row).into_iter().map(hex_bits).collect(),
-                Err(_) => vec![ERR.to_string(); row.len()],
+                Err(_) => vec![COMPILE_ERR.to_string(); row.len()],
             })
             .collect();
         paths.push(("interpreter_map", interpreter_map));
@@ -1133,7 +1153,13 @@ fn expression_values(
 fn err_as_zero(tokens: &[String]) -> Vec<String> {
     tokens
         .iter()
-        .map(|t| if t == ERR { hex_bits(0.0) } else { t.clone() })
+        .map(|t| {
+            if t.starts_with(ERR) {
+                hex_bits(0.0)
+            } else {
+                t.clone()
+            }
+        })
         .collect()
 }
 
@@ -1230,7 +1256,7 @@ fn expression_values_match_the_frozen_fixture() {
         schema: "feat-math.compat-freeze.mathexpr-values.v1".to_string(),
         generated_at_sha: header_sha(Surface::Frozen),
         encoding: format!(
-            "Each path is one token per row (row paths) or per row element (map paths), in row order, separated by single spaces: 16 hex digits of the f64 bits, or {ERR} when the call returned an error. compiled_row may be \"{SAME_AS_INTERPRETER_ROW}\" and compiled_map may be \"{SAME_AS_INTERPRETER_MAP}\" when the compiled path agreed with the interpreter at generation. Rows are built from math_boundary/v1.json: [b], [b,1], [b,0,-1], [1,b,2] for each entry b, then [] and one 8-wide row."
+            "Each path is one token per row (row paths) or per row element (map paths), in row order, separated by single spaces: 16 hex digits of the f64 bits, or {ERR}:<kind> when the call returned an error (InvalidClipBounds: the typed clip error; x-scope: x outside a map; column: a column index past the row; other: any other error; compile: the compiled form did not build). compiled_row may be \"{SAME_AS_INTERPRETER_ROW}\" and compiled_map may be \"{SAME_AS_INTERPRETER_MAP}\" when the compiled path agreed with the interpreter at generation. Rows are built from math_boundary/v1.json: [b], [b,1], [b,0,-1], [1,b,2] for each entry b, then [] and one 8-wide row."
         ),
         rows: rows
             .iter()
