@@ -25,8 +25,8 @@
 #     functions);
 #   - with hostile per-user configuration, which must not change what a check decides or what a
 #     release holds: a ~/.jq, a ~/.gitconfig URL rewrite, a ~/.config/git/ignore, a URL rewrite, a
-#     remote named after the given URL (url or pushurl) or a TLS setting in the repository's config,
-#     a replace ref, exported shell functions named after a command or a builtin (git, unset,
+#     remote named after the given URL (url or pushurl), a TLS setting or push.followTags in the
+#     repository's config, a replace ref, exported shell functions named after a command or a builtin (git, unset,
 #     command, exit), bash's own variables (SHELLOPTS, BASHOPTS, BASH_COMPAT, TMOUT, FUNCNEST,
 #     BASH_ENV), a bash started without -p, the loader's, tar's, objdump's, git's and docker's
 #     variables, and cosign's environment. The hostile HOMEs are directories under the test dir; the
@@ -1167,6 +1167,27 @@ expect "git: a replace ref cannot swap the tree that is exported and verified as
         printf "tree=%s;cargo_toml=%s;replaced_txt=%s;verified=%s\n" "$t" "$c" "$r" "$(jq -r .verified "$run_dir/source-export.json")"' \
   "$scratch/export-replace" "$c_rp"
 git -C "$repo" replace -d "$c_rp" >/dev/null
+# The tag push sends the release tag and nothing else. With push.followTags in the repository's
+# config, git would also push every local annotated tag in the commit's history that origin lacks.
+# A clone of $repo and new bare origins keep $repo and $origin as they were. The tags are made here,
+# because a sourced release.sh reads no ~/.gitconfig and so has no identity to make them with.
+ft=$scratch/follow-tags
+git clone -q "$repo" "$ft/repo"
+git -C "$ft/repo" tag -a v0.1.9 "$c0" -m 'an older local annotated tag that origin lacks'
+git -C "$ft/repo" tag -a v0.2.0 "$c1" -m 'JopeDime v0.2.0'
+git -C "$ft/repo" config push.followTags true
+for o in forced flag-only control; do git init -q --bare "$ft/origin-$o.git"; done
+expect "git: the tag push sends only the release tag, even with push.followTags set in the repository's config" ok \
+  '^forced=refs/tags/v0\.2\.0;flag_only=refs/tags/v0\.2\.0;control=refs/tags/v0\.1\.9 refs/tags/v0\.2\.0$' \
+  unit 'cd "$1/repo"; tag=v0.2.0
+        tags() { git -C "$1/origin-$2.git" for-each-ref --format="%(refname)" refs/tags | tr "\n" " " | sed "s/ \$//"; }
+        remote=$1/origin-forced.git; push_release_tag
+        # Without the forced configuration, --no-follow-tags alone still holds.
+        ( export GIT_CONFIG_COUNT=0; remote=$1/origin-flag-only.git; push_release_tag )
+        # The control: the same push without --no-follow-tags or the forced configuration.
+        ( export GIT_CONFIG_COUNT=0; git push -q "$1/origin-control.git" "refs/tags/$tag:refs/tags/$tag" )
+        printf "forced=%s;flag_only=%s;control=%s\n" "$(tags "$1" forced)" "$(tags "$1" flag-only)" "$(tags "$1" control)"' \
+  "$ft"
 
 # bash itself: release.sh runs only in privileged mode (bash -p), which imports no exported function
 # and ignores BASH_ENV, SHELLOPTS and BASHOPTS. An imported function would stand in for the command
@@ -1243,13 +1264,13 @@ env_case() (
   unit 'printf "fn=%s;ld=%s;tar=%s;gnutarget=%s;git_dir=%s;git_params=%s;committer=%s;docker=%s;jq=%s;" \
           "$(type -t sha256sum)" "${LD_LIBRARY_PATH-unset}" "${TAR_OPTIONS-unset}" "${GNUTARGET-unset}" "${GIT_DIR-unset}" \
           "${GIT_CONFIG_PARAMETERS-unset}" "${GIT_COMMITTER_NAME-unset}" "${DOCKER_BUILDKIT-unset}" "${JQ_COLORS-unset}"
-        printf "global=%s;nosystem=%s;noreplace=%s;excludes=%s;attributes=%s;hooks=%s;fsmonitor=%s;gpgsign=%s\n" \
+        printf "global=%s;nosystem=%s;noreplace=%s;excludes=%s;attributes=%s;hooks=%s;fsmonitor=%s;gpgsign=%s;followtags=%s\n" \
           "${GIT_CONFIG_GLOBAL-unset}" "${GIT_CONFIG_NOSYSTEM-unset}" "${GIT_NO_REPLACE_OBJECTS-unset}" \
           "$(git config core.excludesFile)" "$(git config core.attributesFile)" "$(git config core.hooksPath)" \
-          "$(git config core.fsmonitor)" "$(git config tag.gpgSign)"'
+          "$(git config core.fsmonitor)" "$(git config tag.gpgSign)" "$(git config push.followTags)"'
 )
 expect "variables: the loader's, tar's, objdump's, git's, docker's and jq's go, exported functions go, the committer stays" ok \
-  '^fn=file;ld=unset;tar=unset;gnutarget=unset;git_dir=unset;git_params=unset;committer=Release Test;docker=unset;jq=unset;global=/dev/null;nosystem=1;noreplace=1;excludes=/dev/null;attributes=/dev/null;hooks=/dev/null;fsmonitor=false;gpgsign=false$' \
+  '^fn=file;ld=unset;tar=unset;gnutarget=unset;git_dir=unset;git_params=unset;committer=Release Test;docker=unset;jq=unset;global=/dev/null;nosystem=1;noreplace=1;excludes=/dev/null;attributes=/dev/null;hooks=/dev/null;fsmonitor=false;gpgsign=false;followtags=false$' \
   env_case
 
 # docker: an empty private DOCKER_CONFIG and the system socket, whatever ~/.docker and DOCKER_* say.
