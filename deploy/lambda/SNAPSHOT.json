@@ -1782,10 +1782,11 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/regression/schemas/REGISTRY.json",
-      "tree_sha256": "55a56ef65f7f9c1a88ada42641b183a31978b12a5607284e91a21eaf087bd2b5",
+      "tree_sha256": "978213ac7f5f541c9ef13a4e110789532a353d467fb245a619750ae94f815e9c",
       "custody_tarball": null,
       "reason": "frozen source, verbatim",
-      "note": "kept verbatim, as a record of 2026-09-28: its path fields name the schemas in the xbabe2 staging directory"
+      "note": "kept verbatim, as a record of 2026-09-28: its path fields name the schemas in the xbabe2 staging directory",
+      "tree_change": "paths point at the tracked schema copies (repository-relative) instead of the xbabe2 staging directory"
     },
     {
       "body": "regression",
