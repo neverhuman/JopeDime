@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 4",
-  "count": 3854,
+  "count": 3872,
   "ignored": 65,
   "packages": {
    "battle-gpu": {
@@ -29,7 +29,7 @@
     }
    },
    "feat-math": {
-    "count": 491,
+    "count": 509,
     "ignored": 6,
     "binaries": {
      "feat-math": {
@@ -664,6 +664,31 @@
       "tests": [
        "executable_snapshot_matches_the_registry",
        "restricted_vocabulary_ops_are_executable_in_the_registry"
+      ]
+     },
+     "feat-math::stage_telemetry": {
+      "kind": "test",
+      "count": 18,
+      "ignored": 0,
+      "tests": [
+       "a_column_past_the_width_is_a_hard_row_and_the_legacy_zeros",
+       "a_stage_that_emits_a_non_finite_value_counts_the_epilogue",
+       "a_step_above_the_data_is_a_constant_output",
+       "a_structurally_invalid_expression_is_a_compile_failure",
+       "an_explicit_portfolio_is_fitted_by_fit_and_reports_no_stage",
+       "compat_freeze_stages_equal_apply_op_on_the_raw_stage_matrix",
+       "every_op_equals_apply_op_with_append_on_and_off",
+       "expression_stages_equal_apply_op_on_every_corpus_expression_and_row",
+       "fit_traced_serializes_to_fits_bytes_on_every_corpus_program",
+       "log_of_a_negative_column_counts_log_domain_and_of_a_positive_one_nothing",
+       "predict_traced_equals_predict_on_the_stored_models",
+       "stage_level_empty_row_identities",
+       "the_program_corpus_is_compat_freezes",
+       "the_symbolic_path_reads_raw_inputs_and_a_pipeline_sanitizes_them",
+       "the_telemetry_types_stay_shareable_across_threads",
+       "the_traced_entry_points_refuse_a_zero_width_input",
+       "the_width_cap_comes_before_the_epilogue_count",
+       "two_runs_give_identical_telemetry"
       ]
      },
      "feat-math::tokens": {
@@ -6077,7 +6102,7 @@
   }
  },
  "totals": {
-  "rust": 3854,
+  "rust": 3872,
   "python": 172
  }
 }
