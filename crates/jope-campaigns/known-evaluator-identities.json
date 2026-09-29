@@ -1,5 +1,14 @@
 {
   "schema": "JopeDimeKnownEvaluatorIdentities.v1",
   "note": "ADR-0004. Append-only. Each row is an identity a shipped jope-dime build recorded in JopeDimeEvaluatorIdentity.v1 receipts; receipts carrying one of these identities validate under this build. Rows are added only with the receipt path that proves the identity existed.",
-  "identities": []
+  "identities": [
+    {
+      "implementation_sha256": "9bee59f35055d574a73c6b32b6ee9945c01b531c968bb07075d1cc771f0294e9",
+      "cargo_lock_sha256": "8ecdd1fc461f5700897e2e65dac13e3a05200bfcd2226e3b62d39bbe772c1fee",
+      "identity_digest": "430a0119915927af71d5ef535955cf03e1186199d0e94c7f76370dcc46c3075b",
+      "builds": "v0.2.0 (629e69d865a674222e00224cebf45c1ffddc8dea) through f65026dd54ba29ef3e7e990b51b15eb42652c089; no identity input differs between them",
+      "receipt": "docs/internal/kernel2/receipts/evaluator-identity-v0.2.0/receipt.json",
+      "receipt_sha256": "8ae5933e700316f56383a419e6ae32da862a0915e23bd28ca23c4f8d394fa2a0"
+    }
+  ]
 }
