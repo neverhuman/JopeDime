@@ -490,6 +490,13 @@
         "policy"
       ]
     },
+    "target:feat-math/test/stage_telemetry": {
+      "role": "regression",
+      "subsystems": [
+        "fitting",
+        "gp"
+      ]
+    },
     "target:feat-math/test/tokens": {
       "role": "regression",
       "subsystems": [
