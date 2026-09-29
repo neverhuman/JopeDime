@@ -14,15 +14,18 @@
 #     env -i names TMPDIR, and root's sign script exports its own TMPDIR before it runs anything;
 #   - run in its test mode, which stops after the guards and cannot publish (once with TMPDIR unset
 #     and every command it names wrapped, to show that each one runs with the pinned TMPDIR and none
-#     reads its input from /tmp, and once with a syft stand-in, which preflight refuses);
+#     reads its input from /tmp, and once with a syft stand-in, which preflight refuses); the probe
+#     runs a copy whose only change is TRUSTED_PATH, since release.sh ignores the PATH it is given;
 #   - sourced, so that its helpers can be called directly: sums, notes, glibc, NEEDED, artifact
 #     selection, manifest, the git archive source export and its verification, the shared cargo
 #     home check, the syft and cosign pins (with stand-ins, never the real tools), the host-tool
-#     check, the root sign script (run by sh with its root paths moved under the test dir, also with
-#     an empty environment as sudo leaves it), the build, binary check and receipt stages (with
-#     docker and objdump stood in by functions that record every container's arguments), the
-#     tampered-copy negative, and the readback (with cosign, GitHub and origin stood in by
-#     functions);
+#     checks (the read-only TRUSTED_PATH, the walk of every directory and symlink on the way to a
+#     tool, and fixtures for a stat that the operator put first on PATH and for an operator-owned
+#     directory holding bin -> /usr/bin), the root sign script (run by sh with its root paths moved
+#     under the test dir, also with an empty environment as sudo leaves it), the build, binary
+#     check and receipt stages (with docker and objdump stood in by functions that record every
+#     container's arguments), the tampered-copy negative, and the readback (with cosign, GitHub and
+#     origin stood in by functions);
 #   - with hostile per-user configuration, which must not change what a check decides or what a
 #     release holds: a ~/.jq, a ~/.gitconfig URL rewrite, a ~/.config/git/ignore, a URL rewrite, a
 #     remote named after the given URL (url or pushurl), a TLS setting or push.followTags in the
@@ -636,10 +639,17 @@ expect "static: /tmp is never a working path; main() pins TMPDIR first; only bui
 # The dynamic probe: every word of release.sh that names a command on PATH runs through a wrapper
 # that logs the command, its TMPDIR and what its standard input is (/proc/self/fd/0), then runs the
 # real command. release.sh runs in test mode with TMPDIR unset and a cargo metadata document larger
-# than a pipe buffer.
+# than a pipe buffer. release.sh looks commands up only in its read-only TRUSTED_PATH, whatever PATH
+# it is given, so the probe runs a copy of it whose one difference is that line, with the wrappers'
+# directory first; the wrappers run the real commands from the original TRUSTED_PATH.
 jq '.packages[0].description = ("x" * 200000)' "$work/meta-ok.json" > "$work/meta-big.json"
 probe=$work/probe
 mkdir -p "$probe/bin"
+trusted_path=$(sed -n 's/^readonly TRUSTED_PATH=\([^[:space:]]*\)$/\1/p' "$release")
+sed "s|^readonly TRUSTED_PATH=.*\$|readonly TRUSTED_PATH=$probe/bin:$trusted_path|" "$release" > "$probe/release.sh"
+expect "probe: the copy differs from release.sh only in TRUSTED_PATH, which puts the wrappers first" ok \
+  "^changed=2;trusted=/usr/sbin:/usr/bin:/sbin:/bin\$" \
+  bash -c 'printf "changed=%s;trusted=%s\n" "$(diff -- "$1" "$2" | grep -c "^[<>]")" "$3"' probe-diff "$release" "$probe/release.sh" "$trusted_path"
 cat > "$probe/wrap" <<'EOF'
 #!/bin/sh
 name=${0##*/}
@@ -659,7 +669,7 @@ probe_run() {
   local rc=0 log=$probe/log mode
   : > "$log"
   env -u TMPDIR "${base[@]}" "FAKE_CARGO_METADATA=$work/meta-big.json" JOPE_RELEASE_TEST_STAMP=20260928T000002Z \
-    "PROBE_LOG=$log" "PROBE_REAL_PATH=$PATH" "PATH=$probe/bin:$PATH" "$BASH" -p "$release" v0.2.0 "$c1" \
+    "PROBE_LOG=$log" "PROBE_REAL_PATH=$trusted_path" "$BASH" -p "$probe/release.sh" v0.2.0 "$c1" \
     </dev/null >"$probe/out" 2>&1 || rc=$?
   mode=$(stat -c %a -- "$pinned" 2>/dev/null || echo missing)
   awk -F '\t' -v want="$pinned" -v rc="$rc" -v mode="$mode" '
@@ -765,23 +775,29 @@ expect "sign: with the environment reset (as sudo does), cosign gets a 0700 TMPD
         case $t in "$1"/run/jope-release-sign.*/tmp) w=work-dir ;; *) w="other:$t" ;; esac
         printf "rc=%s;tmpdir=%s;mode=%s;leftover=%s\n" "$rc" "$w" "$(cat "$1/log3.tmpmode")" \
           "$(find "$1/run" -mindepth 1 | wc -l)"' "$sd" "$fake_sha"
-# The same rule, read from the source: every sudo runs test, cat, chown, chmod or the sign script,
-# and the sign script names no /tmp, gives mktemp an absolute /root template and exports TMPDIR
-# inside its work directory before it runs anything else.
-expect "static: sudo runs only test, cat, chown, chmod and the sign script, which sets its own TMPDIR first" ok '^ok$' \
-  unit 'sudos=$(grep -vE "^[[:space:]]*#" "$1" | grep -oE "(^|[;&|(]|then |else )[[:space:]]*sudo -n [a-z]+" \
-          | sed -E "s/.*sudo -n //" | LC_ALL=C sort -u | paste -sd, -)
+# The same rule, read from the source: every sudo runs the checked absolute path (host_path) of test,
+# cat, chown, chmod or sh, never a name that sudo would look up in its own secure_path; sh runs only
+# the sign script; and the sign script names no /tmp, sets root's PATH to TRUSTED_PATH first, gives
+# mktemp an absolute /root template and exports TMPDIR inside its work directory before it runs
+# anything else.
+expect "static: sudo runs only the checked paths of test, cat, chown, chmod and sh (the sign script, which sets PATH and TMPDIR first)" ok '^ok$' \
+  unit 'code=$(grep -vE "^[[:space:]]*#" "$1")
+        n_sudo=$(grep -oE "(^|[;&|(]|then |else )[[:space:]]*sudo -n " <<<"$code" | wc -l)
+        sudos=$(grep -oE "(^|[;&|(]|then |else )[[:space:]]*sudo -n \"\\\$\{host_path\[[a-z]+\]:\?[^}]*\}\"" <<<"$code" \
+          | sed -E "s/.*host_path\[([a-z]+)\].*/\1/" | LC_ALL=C sort | paste -sd, -)
         [[ $sudos == cat,chmod,chown,sh,test ]] || { echo "sudo runs: $sudos"; exit 1; }
-        [[ $(grep -cE "sudo -n sh " "$1") == 1 && $(grep -c "sudo -n sh -c \"\$SIGN_SCRIPT\" sh" "$1") == 1 ]] \
-          || { echo "sudo -n sh runs something other than SIGN_SCRIPT"; exit 1; }
+        (( n_sudo == 5 )) || { echo "$n_sudo sudo commands, not 5: a sudo that names a command would search secure_path"; exit 1; }
+        [[ $(grep -c "sudo -n \"\${host_path\[sh\]:?[^}]*}\" -c \"\$SIGN_SCRIPT\" sh" <<<"$code") == 1 ]] \
+          || { echo "sudo runs sh with something other than SIGN_SCRIPT"; exit 1; }
         s=$SIGN_SCRIPT
         ! grep -nE "(^|[^[:alnum:]_.}/-])/tmp([^[:alnum:]_.-]|\$)" <<<"$s" || { echo "the sign script names /tmp"; exit 1; }
         mapfile -t l <<<"$s"
-        [[ ${l[0]} == "set -eu" && ${l[1]} =~ ^work=\$\(mktemp\ -d\ /root/[A-Za-z0-9._-]*XXXXXX\)$ ]] \
-          || { echo "the sign script does not start with set -eu and mktemp -d /root/...: ${l[0]} / ${l[1]}"; exit 1; }
+        [[ ${l[0]} == "set -eu" && ${l[1]} == "PATH=$TRUSTED_PATH" && ${l[2]} == "export PATH" \
+          && ${l[3]} =~ ^work=\$\(mktemp\ -d\ /root/[A-Za-z0-9._-]*XXXXXX\)$ ]] \
+          || { echo "the sign script does not start with set -eu, PATH=$TRUSTED_PATH and mktemp -d /root/...: ${l[*]:0:4}"; exit 1; }
         set_at=-1 export_at=-1 first=-1
         for i in "${!l[@]}"; do
-          (( i > 1 )) || continue
+          (( i > 3 )) || continue
           case ${l[i]} in
             "trap "*) ;;
             "TMPDIR=\$work/"*) (( set_at >= 0 )) || set_at=$i ;;
@@ -789,7 +805,7 @@ expect "static: sudo runs only test, cat, chown, chmod and the sign script, whic
             *) (( first >= 0 )) || first=$i ;;
           esac
         done
-        (( set_at > 1 && export_at > set_at && first > export_at )) \
+        (( set_at > 3 && export_at > set_at && first > export_at )) \
           || { echo "TMPDIR is not set and exported before the first command (set=$set_at export=$export_at first=$first)"; exit 1; }
         [[ $s == *"\"\$work/cosign\" sign-blob"* ]] || { echo "cosign does not run from the work directory"; exit 1; }
         echo ok' "$release"
@@ -940,16 +956,62 @@ expect "cosign pin: the pinned digest but another reported version is refused" r
   "reports version 'v2\\.4\\.4', not the pinned cosign v2\\.4\\.3" \
   unit 'check_cosign "$1" "$(sha256_of "$1")" "$COSIGN_VERSION"' "$pt/cosign-v2.4.4/cosign"
 
-echo "# host tools (sourced check_host_tool)"
-# A jq that the operator could replace, first on PATH. Its directory is group-writable, so it is
-# refused by mode whoever runs the tests (the CI container may run them as root).
-mkdir -p "$scratch/user-bin" && chmod 0775 "$scratch/user-bin"
-printf '#!/bin/sh\nexec /usr/bin/jq "$@"\n' > "$scratch/user-bin/jq" && chmod 0755 "$scratch/user-bin/jq"
-expect "host tools: a jq the operator can replace, first on PATH, is refused" refuse \
-  'host tool jq resolves to .*/user-bin/jq .* is not root-owned and closed to group and other writes' \
-  unit 'PATH=$1:$PATH check_host_tool jq' "$scratch/user-bin"
-expect "host tools: a root-owned system tool is accepted" ok '^/(usr/)?bin/cat$' \
-  unit 'PATH=/usr/bin:/bin check_host_tool cat'
+echo "# host tools (sourced check_host_tool and trusted_chain; both bypasses of review 5347008178)"
+# with_path <dir> <command...>: runs the command with <dir> first on PATH, as the operator's PATH puts
+# ~/.local/bin first. A sourced release.sh must look past it.
+with_path() { local d=$1; shift; ( PATH=$d:$PATH; "$@" ); }
+# The operator's fixture directories are group-writable (0775) as well as owned by whoever runs the
+# tests, so they are refused by mode even when that is root.
+ht=$scratch/host-tools
+mkdir -p "$ht/user-bin" "$ht/shadow" "$ht/ancestor/replacement"
+chmod 0775 "$ht/user-bin" "$ht/shadow" "$ht/ancestor"
+printf '#!/bin/sh\nexec /usr/bin/jq "$@"\n' > "$ht/user-bin/jq" && chmod 0755 "$ht/user-bin/jq"
+# Bypass 1: a stat that the operator put first on PATH and that vouches for anything. Whatever it is
+# asked, it prints "0 755" (root-owned, 0755), and it leaves a marker when it runs. Its directory
+# also holds an operator-owned cat.
+printf '#!/bin/sh\n: > "$0.ran"\nprintf "0 755\\n"\n' > "$ht/shadow/stat"
+printf '#!/bin/sh\necho SHADOW_CAT\n' > "$ht/shadow/cat"
+chmod 0755 "$ht/shadow/stat" "$ht/shadow/cat"
+# Bypass 2: an operator-owned directory holding bin -> /usr/bin. stat -L sees only the root-owned
+# directories beyond the link, and the operator can later swap the link for one to replacement/.
+ln -s /usr/bin "$ht/ancestor/bin"
+printf '#!/bin/sh\necho REPLACEMENT_EXECUTED\n' > "$ht/ancestor/replacement/cat"
+chmod 0755 "$ht/ancestor/replacement/cat"
+printf 'real-cat\n' > "$ht/marker"
+expect "host tools, positive control: sourced with an operator directory first on PATH, PATH becomes TRUSTED_PATH, and system tools, also reached through root-owned links (/bin -> usr/bin, sh -> dash), pass" ok \
+  '^path=trusted;cat=/(usr/)?bin/cat;sh=/(usr/)?bin/sh;bin_sh=ok$' \
+  with_path "$ht/user-bin" unit 'if [[ $PATH == "${TRUSTED_PATH-}" ]]; then p=trusted; else p=$PATH; fi
+        c=$(check_host_tool cat); s=$(check_host_tool sh)
+        b=no; if trusted_chain /bin/sh; then b=ok; fi
+        printf "path=%s;cat=%s;sh=%s;bin_sh=%s\n" "$p" "$c" "$s" "$b"'
+expect "host tools: a root-owned system tool is accepted" ok '^/(usr/)?bin/cat$' unit 'check_host_tool cat'
+expect "host tools: a jq the operator can replace, first on the caller's PATH, is neither the one checked nor the one run" ok \
+  '^checked=/(usr/)?bin/jq;runs=/(usr/)?bin/jq$' \
+  with_path "$ht/user-bin" unit 'printf "checked=%s;runs=%s\n" "$(check_host_tool jq)" "$(type -P jq)"'
+expect "host tools: a sourced release.sh keeps PATH read-only, so no later assignment can put a directory in front" refuse \
+  'PATH: readonly variable' unit 'PATH=$1:$PATH; echo "PATH changed"' "$ht/user-bin"
+rm -f -- "$ht/shadow/stat.ran"
+expect "review bypass 1: a stat first on PATH that vouches for everything is never run, and stat and cat resolve to the system's" ok \
+  '^stat=/(usr/)?bin/stat;cat=/(usr/)?bin/cat;shadow_ran=no$' \
+  with_path "$ht/shadow" unit 'st=$(check_host_tool stat); c=$(check_host_tool cat)
+        if [[ -e $1/stat.ran ]]; then r=yes; else r=no; fi
+        printf "stat=%s;cat=%s;shadow_ran=%s\n" "$st" "$c" "$r"' "$ht/shadow"
+# REFUSED_AT: runs trusted_chain on "$2" and says whether it refused at a directory on the fixture's
+# own path "$1" (the first one the operator owns, from / down), not somewhere past a link.
+REFUSED_AT='rc=0; out=$(trusted_chain "$2" 2>&1) || rc=$?
+  d=$(sed -nE "s/.*: (\/[^ ]*) is not owned by root and closed to group and other writes \(uid [0-9]+, mode [0-7]+\)$/\1/p" <<<"$out")
+  if [[ -n $d && $1/ == "$d"/* ]]; then w=fixture-path; else w="other: $out"; fi
+  printf "rc=%s;refused_at=%s\n" "$rc" "$w"; exit "$rc"'
+expect "review bypass 1: trusted_chain refuses the operator's stat at an operator-owned directory on its path" refuse \
+  '^rc=1;refused_at=fixture-path$' unit "$REFUSED_AT" "$ht/shadow" "$ht/shadow/stat"
+expect "review bypass 2: with <operator dir>/bin -> /usr/bin first on PATH, cat resolves to the system's, and swapping the link afterwards changes nothing that runs" ok \
+  '^checked=/(usr/)?bin/cat;ran=real-cat$' \
+  with_path "$ht/ancestor/bin" unit 'c=$(check_host_tool cat)
+        ln -s "$1/replacement" "$1/next" && mv -T "$1/next" "$1/bin"
+        printf "checked=%s;ran=%s\n" "$c" "$(cat "$2")"' "$ht/ancestor" "$ht/marker"
+rm -f -- "$ht/ancestor/bin" && ln -s /usr/bin "$ht/ancestor/bin"
+expect "review bypass 2: trusted_chain refuses <operator dir>/bin/cat at an operator-owned directory on its path, although bin -> /usr/bin leads only to root-owned directories" refuse \
+  '^rc=1;refused_at=fixture-path$' unit "$REFUSED_AT" "$ht/ancestor" "$ht/ancestor/bin/cat"
 md2=$scratch/dist-manifest-tools
 mkdir -p "$md2" && printf 'binary' > "$md2/jope-v0.2.0-x86_64-unknown-linux-gnu"
 expect "the release manifest records the pinned syft and cosign" ok '^ok$' \
@@ -1287,7 +1349,9 @@ printf '{"currentContext": "elsewhere", "proxies": {"default": {"httpProxy": "ht
 docker_case() (
   export HOME=$tc/home-docker DOCKER_CONTEXT=elsewhere DOCKER_HOST=tcp://docker.invalid:2375 \
     DOCKER_CONFIG=$tc/home-docker/.docker DOCKER_DEFAULT_PLATFORM=linux/arm64
-  unit 'PATH=$1:$PATH; out=$(docker version)
+  # PATH is read-only once release.sh is sourced, so the stand-in goes into bash's command table,
+  # which `command docker` in the wrapper consults.
+  unit 'hash -p "$1/docker" docker; out=$(docker version)
         want="config=$TMPDIR/docker-config;entries=0;host=unix:///var/run/docker.sock;context=unset;platform=unset;args=version"
         if [[ $out == "$want" ]]; then echo ok; else printf "%s\n" "$out"; exit 1; fi' "$tc/docker-bin"
 )
