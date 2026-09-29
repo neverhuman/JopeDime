@@ -994,12 +994,21 @@ fn the_symbolic_path_reads_raw_inputs_and_a_pipeline_sanitizes_them() {
 
 #[test]
 fn an_explicit_portfolio_is_fitted_by_fit_and_reports_no_stage() {
-    let (train, target, test) = fitted_surface_data();
+    let (mut train, target, mut test) = fitted_surface_data();
+    // portfolio.rs replaces non-finite cells with 0.0 itself, in code that is not traced, so the
+    // telemetry stays empty (input_sanitized 0) whatever the input holds.
+    train[5][1] = f64::NAN;
+    train[17][3] = f64::INFINITY;
+    test[2][0] = f64::NEG_INFINITY;
     let program = parse_program(
         "(portfolio (member (pipe X (ridge))) (member (pipe X (standardize) (ridge))) \
          (blend kind=nnls folds=5 repeats=1 guard=clip))",
     );
     let model = fit(&program, &train, &target).expect("fits");
+    let Model::Portfolio(portfolio) = &model else {
+        panic!("an explicit portfolio model")
+    };
+    assert!(!portfolio.mean_only, "the predictions depend on the rows");
     let (traced, telemetry) = fit_traced(&program, &train, &target).expect("fits");
     assert_eq!(telemetry, PipelineTelemetry::default());
     // Serialized portfolios carry wall-clock fit times, so only the predictions are compared.
@@ -1009,6 +1018,23 @@ fn an_explicit_portfolio_is_fitted_by_fit_and_reports_no_stage() {
         assert_eq!(bits(&predictions), expected);
         assert_eq!(pass, PipelineTelemetry::default());
     }
+    // The replacement is 0.0: zeros in place of the non-finite cells fit and predict the same
+    // bits, and another value in place of one of them does not.
+    let zeroed = |rows: &Rows| {
+        let mut rows = rows.clone();
+        sanitize(&mut rows);
+        rows
+    };
+    let clean = fit(&program, &zeroed(&train), &target).expect("fits");
+    assert_eq!(bits(&clean.predict(&zeroed(&test))), expected);
+    assert_eq!(bits(&model.predict(&zeroed(&test))), expected);
+    let mut moved_test = zeroed(&test);
+    moved_test[2][0] = 1.0;
+    assert_ne!(bits(&model.predict(&moved_test)), expected);
+    let mut moved_train = zeroed(&train);
+    moved_train[5][1] = 1.0;
+    let other = fit(&program, &moved_train, &target).expect("fits");
+    assert_ne!(bits(&other.predict(&zeroed(&test))), expected);
 }
 
 #[test]
@@ -1101,10 +1127,10 @@ fn the_traced_entry_points_refuse_a_zero_width_input() {
             "training data is empty or target is short"
         );
     }
-    // The legacy fit, for contrast: a program without transforms accepts zero-width rows, and a
-    // transform refuses them itself (the domain table records the difference).
+    // The legacy fit, for contrast; the domain table records each case. It takes the width from
+    // the first row. When that row is empty, a program without transforms accepts the input, and
+    // a transform refuses it itself, with a check that reads row 0 only.
     assert!(fit(&parse_program("(pipe X (ridge))"), &empty_rows, &y).is_ok());
-    assert!(fit(&parse_program("(sym raw \"row_sum\")"), &empty_rows, &y).is_ok());
     let legacy = fit(
         &parse_program("(pipe X (standardize) (ridge))"),
         &empty_rows,
@@ -1112,6 +1138,28 @@ fn the_traced_entry_points_refuse_a_zero_width_input() {
     )
     .expect_err("refused by the stage");
     assert_eq!(legacy.to_string(), "empty input to stage standardize");
+    // When only a later row is empty, that check passes, and a transform or a head that reads
+    // every row up to the first row's width indexes the empty row and panics. (Under --no-capture
+    // the default panic hook prints these two expected panics.)
+    for source in ["(pipe X (standardize) (ridge))", "(pipe X (ridge))"] {
+        let program = parse_program(source);
+        let payload =
+            std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| fit(&program, &ragged, &y)))
+                .expect_err("the legacy fit panics");
+        let message = payload
+            .downcast_ref::<String>()
+            .map(String::as_str)
+            .or_else(|| payload.downcast_ref::<&str>().copied())
+            .unwrap_or_default();
+        assert!(
+            message.contains("index out of bounds"),
+            "{source}: {message}"
+        );
+    }
+    // A symbolic program accepts both: its expression reads only the cells a row has.
+    for x in [&empty_rows, &ragged] {
+        assert!(fit(&parse_program("(sym raw \"row_sum\")"), x, &y).is_ok());
+    }
 
     let (train, target, _) = fitted_surface_data();
     for source in ["(pipe X (standardize) (ridge))", "(sym raw \"c0 + c1\")"] {
