@@ -20,8 +20,8 @@
 //! input width, and its column indices count the kept columns. Each member is walked from one
 //! column, the same lower-bound rule.
 //!
-//! Nothing calls it yet; the search admission policy wires it in later, for the non-legacy
-//! policies only, so no existing search stream changes.
+//! The search's non-legacy fault policies (`crate::evolve::FaultPolicy`) call it on every
+//! candidate before fitting it. The legacy search does not, so no existing search stream changes.
 
 use super::pipeline::{next_width, PipelineSlots};
 use super::Error;
