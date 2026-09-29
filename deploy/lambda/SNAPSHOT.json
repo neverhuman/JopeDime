@@ -2608,9 +2608,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/training/teacher-v2/rust/lambda-worker/Cargo.lock",
-      "tree_sha256": "cb69bf895a091485c74eb8b7ed9c3a93550558111abb06e7416613b83f25aec6",
+      "tree_sha256": "9fbed8c0aa2f884280db54b8048d61895bcf9ba3efb050ce52298134114d0aa7",
       "custody_tarball": null,
-      "reason": "frozen source, verbatim"
+      "reason": "frozen source, verbatim",
+      "tree_change": "cargo update -p feat-math --offline: the feat-math path entry reads 0.2.0, the workspace version of this release; no other package moves"
     },
     {
       "body": "teacher-v2",
