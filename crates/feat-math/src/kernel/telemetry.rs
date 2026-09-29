@@ -3,9 +3,10 @@
 //!
 //! [`apply_op_traced`], [`fit_traced`] and [`predict_traced`] return what
 //! [`crate::ops::apply_op`], [`crate::model::fit`] and [`Model::predict`] return: the same rows bit
-//! for bit, a model with the same serialized bytes, the same prediction bits. Beside them they
-//! count, per stage, the faults each `map` or `derive` expression raised (the classes of
-//! [`FaultClass`]) and the non-finite values each stage's epilogue replaced with 0.0.
+//! for bit, a model with the same serialized bytes (apart from the wall-clock fit times that a
+//! portfolio records), the same prediction bits. Beside them they count, per stage, the faults
+//! each `map` or `derive` expression raised (the classes of [`FaultClass`]) and the non-finite
+//! values each stage's epilogue replaced with 0.0.
 //!
 //! Nothing here changes a value. The expression stages run the traced evaluators, which return
 //! the legacy values bit for bit, through the same branches and fallbacks as
@@ -80,7 +81,10 @@ impl StageFaultCounts {
 #[derive(Clone, Debug, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct PipelineTelemetry {
     /// Non-finite input cells that a pipeline's entry sanitize replaced with 0.0 before its first
-    /// stage. Symbolic and explicit portfolio models run no such sanitize, so for them it is 0.
+    /// stage. It is 0 for a symbolic program, which runs no such sanitize: its expression reads
+    /// the raw row. It is also 0 for an explicit portfolio, whatever its input holds:
+    /// `portfolio.rs` replaces the non-finite cells it reads with 0.0 too, but that code is not
+    /// traced.
     pub input_sanitized: u64,
     /// A pipeline has one entry per fitted transform, in order: entry `i` is the stage of
     /// `ops[i]` in [`Model::Pipeline`]. The target stage and the head have none. A symbolic
@@ -139,13 +143,16 @@ pub fn apply_op_traced(op: &FittedOp, x: &Rows) -> (Rows, StageFaultCounts) {
     (rows, counts)
 }
 
-/// [`crate::model::fit`] with the training pass's telemetry. On every input it accepts, the model
-/// serializes to the bytes `fit` produces, and an error is `fit`'s error.
+/// [`crate::model::fit`] with the training pass's telemetry. Apart from the zero-width refusal
+/// below, an error is `fit`'s error and a model serializes to the bytes `fit` produces, with one
+/// exception: a model with a portfolio in it, explicit or a compact head, records wall-clock fit
+/// times (`fit_ms`) in its member diagnostics, which differ between two calls of `fit` itself.
 ///
 /// It refuses what `fit` refuses, first with `fit`'s own check, and also a zero-width input
-/// ([`ZeroWidthInput`]), which `fit` accepts for a program without transforms. A pipeline's
-/// transforms are fitted and applied in `fit`'s order; an explicit portfolio is fitted by `fit`
-/// itself and reports no stage.
+/// ([`ZeroWidthInput`]). `fit` accepts, refuses or panics on a zero-width input depending on the
+/// program and on which row is empty (the domain table lists the cases). A pipeline's transforms
+/// are fitted and applied in `fit`'s order; an explicit portfolio is fitted by `fit` itself and
+/// reports no stage.
 pub fn fit_traced(program: &GenomeIr, x: &Rows, y: &[f64]) -> Result<(Model, PipelineTelemetry)> {
     if x.is_empty() || y.len() < x.len() {
         bail!("training data is empty or target is short");
