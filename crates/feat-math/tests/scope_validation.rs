@@ -13,7 +13,8 @@
 //! - A portfolio member is checked against the columns it can see, one at the fewest, since the
 //!   portfolio drops the columns that are constant in training; pinned against such a fit.
 //! - 5,000 chained `MathExpr::mutate_v1` edits under the search profile.
-//! - Determinism, and the shipped-text lint on every message.
+//! - Determinism, with the digest of every displayed result pinned, and the shipped-text lint on
+//!   every message.
 //!
 //! The `AGREEMENT`, `PROPERTY` and `DETERMINISM` lines on stderr are the receipt's numbers:
 //! `cargo nextest run --locked -P pr -p feat-math --test scope_validation --no-capture`.
@@ -1328,6 +1329,16 @@ fn the_same_input_gives_the_same_result_and_the_same_bytes() {
         .map(|byte| format!("{byte:02x}"))
         .collect();
     eprintln!("DETERMINISM cases={} sha256={hex}", cases.len());
+    // Every displayed result, reason bytes included, is pinned across runs and hosts: a change to
+    // any of them fails here, and is made on purpose, with this digest and the WP-1.6 receipt.
+    assert_eq!(
+        (cases.len(), hex.as_str()),
+        (
+            780,
+            "4579e907329496ced7ac5bfe8cabb519096eaa08b40a6eaba116c65a7317c63f"
+        ),
+        "the displayed results changed"
+    );
 }
 
 #[test]
