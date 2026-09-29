@@ -75,4 +75,15 @@ job manifest that `bootstrap-gp-extra` embeds; the frozen review records `extra-
 - The sources are not reformatted; the root `cargo fmt --all` does not reach nested workspaces.
 - Three files differ from their frozen bytes, each recorded in `SNAPSHOT.json` with `tree_change`:
   a `license` line in both manifests, `publish = false` in the monitor's, and the `feat-math`
-  entry of the workers' lock at this release's 0.2.0.
+  entry of the workers' lock, which reads the root workspace version.
+- `just bump X.Y.Z` keeps that last one true. A workspace's lock pins each root crate it takes by
+  path at the version it was locked with, so after the root version changes `cargo metadata
+  --locked` fails for that workspace until its lock is updated. The bump runs
+  `bash deploy/ci/lambda-workspaces.sh sync-locks`: `cargo update -p <crate> --offline` for each
+  such lock, a refusal unless only those version lines changed, and the lock's new sha256 in
+  `SNAPSHOT.json`. It then runs the same checks as the hygiene lane, and fails unless they pass.
+- After any other deliberate change to a tracked file here, record its new bytes with
+  `bash deploy/ci/lambda-workspaces.sh snapshot-refresh <path> '<why>'`. It writes only that
+  file's `tree_sha256` and `tree_change`, never its frozen `sha256`, and refuses a file that has
+  no frozen record of its own bytes. `bash deploy/ci/lambda-workspaces.sh verify` runs the
+  `cargo metadata --locked --offline` and `SNAPSHOT.json` checks.

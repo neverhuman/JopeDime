@@ -79,6 +79,9 @@ echo "deny graph: $(wc -l <<< "$graph") crates, optional-feature deps present"
 cargo deny --all-features check bans licenses sources
     # Lambda workspaces (deploy/lambda: standalone Cargo workspaces, not part of the jope build)
 bash deploy/ci/lambda.sh
+    # `just bump` keeps every workspace consistent (after lambda.sh, whose cargo runs fill the cache
+    # that the bump's --offline cargo needs)
+bash deploy/ci/test-bump.sh
     ;;
   rust-check)
     # Toolchain (from rust-toolchain.toml)
