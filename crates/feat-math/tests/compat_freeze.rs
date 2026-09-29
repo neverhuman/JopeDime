@@ -9,7 +9,7 @@
 //! | `boundary_corpus_v1_is_well_formed_and_matches_its_definition` | `math_boundary/v1.json` | the scalar boundary inputs (WP-0.3) |
 //! | `expression_values_match_the_frozen_fixture` | `compat_freeze/mathexpr_values.v1.json` | `MathExpr` value bits and error kinds: interpreter and compiled, row and map context |
 //! | `stage_outputs_match_the_frozen_fixture` | `compat_freeze/stage_values.v1.json` | `map`/`derive` stage outputs and the predictions behind them |
-//! | `emitted_artifact_bytes_match_the_frozen_fixture` | `compat_freeze/emitted_bytes.v1.json` | Rust, Python and manifest bytes (default and `jope emit` options), C++17, JavaScript and fitted C++17 bytes, and the ops each recipe emitter accepts |
+//! | `emitted_artifact_bytes_match_the_frozen_fixture` | `compat_freeze/emitted_bytes.v1.json` | Rust, Python and manifest bytes under the default and the `jope emit` options; C++17 recipe and JavaScript bytes, or the emitter's refusal, under the default options; fitted C++17 bytes, or the recorded skip; the ops each recipe emitter accepts |
 //! | `serialized_models_match_the_frozen_fixture` | `compat_freeze/model_serde.v1.json` | `serde_json` bytes of fitted models, their predictions, and loading of stored bytes |
 //! | `vocabulary_registry_and_lineage_pins_match` | `compat_freeze/frozen_pins.v1.json` | grammar assets, `grammar.rs`, jope-policy pins, registry and emitter versions |
 //! | `evaluator_identity_inputs_match_the_recorded_identity` | `compat_freeze/evaluator_identity.v1.json` | the ADR-0004 evaluator identity inputs |
@@ -18,9 +18,8 @@
 //! | `seeded_search_runs_match_the_frozen_fixture` | `compat_freeze/search_runs.v1.json` | whole seeded searches: the surrogate `evolve()` and the lite race, `rank_robust` off and on |
 //! | `fixture_provenance_is_recorded` | `compat_freeze/meta.json` | generation commit, toolchain, host and libm |
 //!
-//! Modes. By default every test only compares. `JOPE_COMPAT_FREEZE_SHA=<full commit id>` names the
-//! commit a regeneration records; it must carry exactly the sources in the working tree (checked
-//! with `git diff --quiet`). Two regeneration modes:
+//! Modes. By default every test only compares. `JOPE_COMPAT_FREEZE_REGENERATE` selects one of three
+//! regeneration modes; any other value panics.
 //!
 //! - `JOPE_COMPAT_FREEZE_REGENERATE=1` rewrites every fixture. Regenerating a behaviour surface is
 //!   a rebaseline: it needs the PR-body line
@@ -32,6 +31,23 @@
 //!   list (or to `Cargo.lock`, which the identity hashes), or to a source jope-engine hashes into
 //!   a lineage, announces the new identity in the PR body and rebaselines this way in the same
 //!   change.
+//! - `JOPE_COMPAT_FREEZE_REGENERATE=gained-support` records bytes that an emitter newly writes. In
+//!   `emitted_bytes.v1.json` it replaces each C++17 recipe, JavaScript or fitted C++17 value that
+//!   is recorded as unsupported, and for which the emitter now writes bytes, with those bytes. It
+//!   changes nothing else: no recorded bytes, no refusal whose element kinds changed, no header,
+//!   note or op list, and no other fixture. Every test still compares, and the mode writes nothing
+//!   unless every other emitted-bytes record matches. A second run records nothing.
+//!
+//! `=1` and `=identity` need `JOPE_COMPAT_FREEZE_SHA=<full commit id>`, which names the commit the
+//! regeneration records; it must carry exactly the sources in the working tree (checked with
+//! `git diff --quiet`). `=gained-support` records no commit id: the fixture keeps its header.
+//!
+//! In compare mode the emitted-bytes test passes, and reports, two additive changes: a refusal that
+//! narrows to a strict subset of its recorded element kinds (the fixture keeps the recorded
+//! refusal), and an op that a recipe emitter newly accepts. Every other difference fails, among
+//! them lost support, a refusal whose element kinds change otherwise, and bytes for a value
+//! recorded as unsupported. The last names the program, the language and the `gained-support`
+//! mode, so that bytes an emitter gains are pinned from the change that adds the support.
 //!
 //! Which bits depend on the platform libm. A surface that fails only on another host is a libm
 //! difference only if it is one of these:
@@ -89,8 +105,11 @@ use std::process::Command;
 
 const REGENERATE_ENV: &str = "JOPE_COMPAT_FREEZE_REGENERATE";
 const SHA_ENV: &str = "JOPE_COMPAT_FREEZE_SHA";
+/// The mode that records bytes for values recorded as unsupported (see the module doc).
+const GAINED_SUPPORT_MODE: &str = "gained-support";
 const REGENERATE_COMMAND: &str = "JOPE_COMPAT_FREEZE_REGENERATE=1 JOPE_COMPAT_FREEZE_SHA=<full commit id> cargo nextest run --locked -P pr -p feat-math --test compat_freeze";
 const IDENTITY_REGENERATE_COMMAND: &str = "JOPE_COMPAT_FREEZE_REGENERATE=identity JOPE_COMPAT_FREEZE_SHA=<full commit id> cargo nextest run --locked -P pr -p feat-math --test compat_freeze";
+const GAINED_SUPPORT_COMMAND: &str = "JOPE_COMPAT_FREEZE_REGENERATE=gained-support cargo nextest run --locked -P pr -p feat-math --test compat_freeze";
 const REBASELINE_POLICY: &str = "A red compat_freeze is a hard stop: revert the change that moved a frozen surface. \
 Rebaselining needs JOPE_COMPAT_FREEZE_REGENERATE=1 JOPE_COMPAT_FREEZE_SHA=<commit> and the PR-body line \
 `compat-freeze: REBASELINE approved by Jepson <date> reason <...>` (workplan section 4.3).";
@@ -139,17 +158,29 @@ enum Surface {
     Announced,
 }
 
+/// Whether this run rewrites the fixture of `surface`. `gained-support` rewrites none of them
+/// whole: only the emitted-bytes test writes in that mode (see `recording_gained_support`).
 fn regenerating(surface: Surface) -> bool {
     match std::env::var(REGENERATE_ENV).as_deref() {
-        Err(_) | Ok("") | Ok("0") => false,
+        Err(_) | Ok("") | Ok("0") | Ok(GAINED_SUPPORT_MODE) => false,
         Ok("1") => true,
         Ok("identity") => surface == Surface::Announced,
         Ok(other) => panic!(
             "{REGENERATE_ENV}={other:?} is not a mode: use 1 to rewrite every fixture (an approved \
-             rebaseline) or identity to rewrite only the announced identity fixtures while every \
-             other surface still compares"
+             rebaseline), identity to rewrite only the announced identity fixtures, or \
+             {GAINED_SUPPORT_MODE} to record the bytes of emitted-bytes values recorded as \
+             unsupported that an emitter now writes; in the last two every other surface still \
+             compares"
         ),
     }
+}
+
+/// Whether this run records gained emitter support (`JOPE_COMPAT_FREEZE_REGENERATE=gained-support`).
+fn recording_gained_support() -> bool {
+    matches!(
+        std::env::var(REGENERATE_ENV).as_deref(),
+        Ok(GAINED_SUPPORT_MODE)
+    )
 }
 
 fn repo_root() -> PathBuf {
@@ -237,6 +268,11 @@ fn write_atomically(path: &Path, text: &str) {
     std::fs::rename(&partial, path).expect("install fixture");
 }
 
+/// The text of a fixture file, as every mode writes it.
+fn fixture_text<T: Serialize>(value: &T) -> String {
+    serde_json::to_string_pretty(value).expect("serialize fixture") + "\n"
+}
+
 /// Regenerate mode writes `actual` and returns `None`; compare mode returns the committed fixture.
 fn committed_or_write<T: Serialize + DeserializeOwned>(
     surface: Surface,
@@ -246,7 +282,7 @@ fn committed_or_write<T: Serialize + DeserializeOwned>(
     let relative = format!("compat_freeze/{file}");
     let path = fixture_path(&relative);
     if regenerating(surface) {
-        let text = serde_json::to_string_pretty(actual).expect("serialize fixture") + "\n";
+        let text = fixture_text(actual);
         write_atomically(&path, &text);
         eprintln!("compat-freeze: wrote tests/fixtures/{relative}");
         return None;
@@ -336,6 +372,40 @@ fn assert_records(
     actual: &[(String, String)],
     advice: &str,
 ) {
+    let problems = record_problems(surface, fixture, actual);
+    if !problems.is_empty() {
+        panic!("{}", drift_message(surface, &problems, advice));
+    }
+}
+
+/// The first twelve items of a failure list, one per indented line.
+fn first_lines(items: &[String]) -> String {
+    items
+        .iter()
+        .take(12)
+        .cloned()
+        .collect::<Vec<_>>()
+        .join("\n  ")
+}
+
+/// The failure message for records of `surface` that differ from the fixture.
+fn drift_message(surface: &str, problems: &[String], advice: &str) -> String {
+    format!(
+        "compat-freeze: {surface} drifted ({} differing records; first {} below)\n  {}\n{}\n{advice}",
+        problems.len(),
+        problems.len().min(12),
+        first_lines(problems),
+        toolchain_note()
+    )
+}
+
+/// The differences between ordered `(key, value)` records: removed, changed and added keys, then a
+/// changed order.
+fn record_problems(
+    surface: &str,
+    fixture: &[(String, String)],
+    actual: &[(String, String)],
+) -> Vec<String> {
     let old: BTreeMap<&str, &str> = fixture
         .iter()
         .map(|(k, v)| (k.as_str(), v.as_str()))
@@ -373,20 +443,7 @@ fn assert_records(
     {
         problems.push("the record order changed".to_string());
     }
-    if !problems.is_empty() {
-        panic!(
-            "compat-freeze: {surface} drifted ({} differing records; first {} below)\n  {}\n{}\n{advice}",
-            problems.len(),
-            problems.len().min(12),
-            problems
-                .iter()
-                .take(12)
-                .cloned()
-                .collect::<Vec<_>>()
-                .join("\n  "),
-            toolchain_note()
-        );
-    }
+    problems
 }
 
 fn record(key: impl Into<String>, value: impl Into<String>) -> (String, String) {
@@ -1530,7 +1587,10 @@ fn stage_outputs_match_the_frozen_fixture() {
 // WP-0.2 (c): emitted artifact bytes
 // ---------------------------------------------------------------------------------------------
 
-#[derive(Debug, Serialize, Deserialize)]
+const EMITTED_FILE: &str = FIXTURE_FILES[2];
+const EMITTED_SURFACE: &str = "emitted artifact bytes (emitted_bytes.v1.json)";
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct EmittedBytes {
     schema: String,
@@ -1559,6 +1619,35 @@ struct EmittedProgram {
     fitted_cpp17_codec: String,
 }
 
+/// The values an emitter can record as unsupported: each field, and the language a message names.
+const REFUSABLE: [(&str, &str); 4] = [
+    ("cpp17", "C++17 recipe"),
+    ("javascript", "JavaScript"),
+    ("fitted_cpp17_source", "fitted C++17 source"),
+    ("fitted_cpp17_codec", "fitted C++17 codec"),
+];
+
+impl EmittedProgram {
+    /// The values of the `REFUSABLE` fields, in that order.
+    fn refusable(&self) -> [&String; 4] {
+        [
+            &self.cpp17,
+            &self.javascript,
+            &self.fitted_cpp17_source,
+            &self.fitted_cpp17_codec,
+        ]
+    }
+
+    fn refusable_mut(&mut self) -> [&mut String; 4] {
+        [
+            &mut self.cpp17,
+            &mut self.javascript,
+            &mut self.fitted_cpp17_source,
+            &mut self.fitted_cpp17_codec,
+        ]
+    }
+}
+
 const UNSUPPORTED: &str = "unsupported: ";
 
 /// "unsupported: <kinds>", keeping each reason's element kind and dropping the `Debug` payload
@@ -1578,25 +1667,27 @@ fn unsupported_kinds(value: &str) -> Option<BTreeSet<&str>> {
         .map(|kinds| kinds.split("; ").collect())
 }
 
-/// Whether `now` only adds support to a value recorded as unsupported: the emitter now writes
-/// bytes, or it still refuses the program but for a strict subset of the recorded element kinds.
-/// Everything else that differs (an element that loses support while the program stays
-/// unsupported, a different kind, an error, a skip) is drift.
-fn gains_support(recorded: &str, now: &str) -> bool {
-    let Some(before) = unsupported_kinds(recorded) else {
-        return false;
-    };
-    if now.starts_with("ERR") || now.starts_with("skipped") {
-        return false;
-    }
-    match unsupported_kinds(now) {
-        None => true,
-        Some(after) => after.len() < before.len() && after.is_subset(&before),
+/// Whether the emitter still refuses a program recorded as unsupported, but for a strict subset of
+/// the recorded element kinds. That is additive and passes; the fixture keeps the recorded refusal,
+/// because no mode rewrites a refusal whose element kinds changed. Any other change of kinds (an
+/// element that loses support while the program stays unsupported, a different kind) is drift.
+fn narrows_refusal(recorded: &str, now: &str) -> bool {
+    match (unsupported_kinds(recorded), unsupported_kinds(now)) {
+        (Some(before), Some(after)) => after.len() < before.len() && after.is_subset(&before),
+        _ => false,
     }
 }
 
-/// Whether a recorded value is emitted bytes ("<length> <sha256>") rather than a refusal, an
-/// error or a skip.
+/// Whether the emitter now writes bytes for a value recorded as unsupported. Compare mode fails on
+/// it, so the new bytes are pinned from the change that adds the support, and only
+/// `JOPE_COMPAT_FREEZE_REGENERATE=gained-support` records them. (Where the emitter now errors or
+/// the value is skipped, the change is drift.)
+fn gains_bytes(recorded: &str, now: &str) -> bool {
+    unsupported_kinds(recorded).is_some() && is_emitted(now)
+}
+
+/// Whether a value is emitted bytes ("<length> <sha256>") rather than a refusal, an error or a
+/// skip.
 fn is_emitted(value: &str) -> bool {
     !(value.starts_with(UNSUPPORTED) || value.starts_with("ERR") || value.starts_with("skipped"))
 }
@@ -1800,6 +1891,188 @@ fn emitted_program(name: &str, source: &str, train: &Rows, target: &[f64]) -> Em
     }
 }
 
+/// The emitted-bytes records compare mode checks, in fixture order.
+fn flatten_emitted(values: &EmittedBytes) -> Vec<(String, String)> {
+    let mut records = vec![record("schema", values.schema.clone())];
+    for p in &values.programs {
+        let n = &p.name;
+        records.extend([
+            record(format!("{n}.canonical"), p.canonical.clone()),
+            record(format!("{n}.rust"), p.rust.clone()),
+            record(format!("{n}.python"), p.python.clone()),
+            record(format!("{n}.manifest"), p.manifest.clone()),
+            record(
+                format!("{n}.manifest_emitter_version"),
+                p.manifest_emitter_version.clone(),
+            ),
+            record(format!("{n}.rust_jope_emit"), p.rust_jope_emit.clone()),
+            record(format!("{n}.python_jope_emit"), p.python_jope_emit.clone()),
+            record(
+                format!("{n}.manifest_jope_emit"),
+                p.manifest_jope_emit.clone(),
+            ),
+            record(format!("{n}.cpp17"), p.cpp17.clone()),
+            record(format!("{n}.javascript"), p.javascript.clone()),
+            record(
+                format!("{n}.fitted_cpp17_source"),
+                p.fitted_cpp17_source.clone(),
+            ),
+            record(
+                format!("{n}.fitted_cpp17_codec"),
+                p.fitted_cpp17_codec.clone(),
+            ),
+        ]);
+    }
+    records
+}
+
+/// How the emitters' output compares with the emitted-bytes fixture (see the module doc).
+#[derive(Debug, Default)]
+struct EmittedCheck {
+    /// Values recorded as unsupported for which an emitter now writes bytes. Compare mode fails on
+    /// them, and only `JOPE_COMPAT_FREEZE_REGENERATE=gained-support` records them.
+    gained: Vec<String>,
+    /// Additive changes, which pass and are reported: narrowed refusals and newly accepted ops.
+    additive: Vec<String>,
+    /// Every other difference. Each one fails, and only an approved rebaseline records it.
+    drift: Vec<String>,
+}
+
+/// Compares the emitters' output with the committed fixture: every recorded op stays pinned and
+/// supported, and every program record holds, apart from the additive changes and gained bytes.
+fn check_emitted(committed: &EmittedBytes, actual: &EmittedBytes) -> EmittedCheck {
+    let mut check = EmittedCheck {
+        drift: recipe_coverage_gaps(committed),
+        ..EmittedCheck::default()
+    };
+    for (language, recorded, now) in [
+        (
+            "C++17 recipe",
+            &committed.cpp17_recipe_ops,
+            &actual.cpp17_recipe_ops,
+        ),
+        (
+            "JavaScript",
+            &committed.javascript_ops,
+            &actual.javascript_ops,
+        ),
+    ] {
+        for op in recorded {
+            if !now.contains(op) {
+                check.drift.push(format!("{op} lost {language} support"));
+            }
+        }
+        for op in now {
+            if !recorded.contains(op) {
+                check.additive.push(format!(
+                    "the {language} emitter now accepts {op} (additive; pin it with an approved rebaseline and a program that uses it)"
+                ));
+            }
+        }
+    }
+    // An additive or gained value is listed above and compared below as its recorded value, so
+    // the records report only the rest.
+    let mut expected = actual.clone();
+    for program in &mut expected.programs {
+        let Some(old) = committed.programs.iter().find(|p| p.name == program.name) else {
+            continue;
+        };
+        let name = program.name.clone();
+        for (&(field, language), (now, recorded)) in REFUSABLE
+            .iter()
+            .zip(program.refusable_mut().into_iter().zip(old.refusable()))
+        {
+            if narrows_refusal(recorded, now) {
+                check.additive.push(format!(
+                    "{name}.{field} was recorded as {recorded:?} and is now {now:?} (additive: the {language} emitter refuses fewer element kinds; the fixture keeps the recorded refusal)"
+                ));
+                now.clone_from(recorded);
+            } else if gains_bytes(recorded, now) {
+                check.gained.push(format!(
+                    "{name}.{field} ({language}): recorded as {recorded:?}, now emits {now}"
+                ));
+                now.clone_from(recorded);
+            }
+        }
+    }
+    check.drift.extend(record_problems(
+        EMITTED_SURFACE,
+        &flatten_emitted(committed),
+        &flatten_emitted(&expected),
+    ));
+    check
+}
+
+/// Compare mode's failure message for the emitted bytes, or `None` when the fixture holds.
+fn emitted_failure(check: &EmittedCheck) -> Option<String> {
+    let mut sections = Vec::new();
+    if !check.gained.is_empty() {
+        sections.push(format!(
+            "compat-freeze: {} values that {EMITTED_FILE} records as unsupported now emit bytes, and nothing pins those bytes yet (first {} below)\n  {}\nRecord them with `{GAINED_SUPPORT_COMMAND}` in the change that adds the support. That mode replaces only these values, and writes only when every other record matches.",
+            check.gained.len(),
+            check.gained.len().min(12),
+            first_lines(&check.gained)
+        ));
+    }
+    if !check.drift.is_empty() {
+        sections.push(drift_message(
+            EMITTED_SURFACE,
+            &check.drift,
+            REBASELINE_POLICY,
+        ));
+    }
+    (!sections.is_empty()).then(|| sections.join("\n"))
+}
+
+/// `JOPE_COMPAT_FREEZE_REGENERATE=gained-support` applied to the text of the emitted-bytes fixture.
+/// Each value recorded as unsupported, for which an emitter now writes bytes, takes those bytes, and
+/// nothing else changes. Returns the new text and the `<program>.<field>` values it recorded, or
+/// `None` when no value gained support. It refuses, writing nothing, when any other record differs
+/// from the emitters' output, or when the text is not in the form this test writes (rewriting it
+/// would then move bytes that the mode must not touch).
+fn gained_support_update(
+    committed_text: &str,
+    actual: &EmittedBytes,
+) -> Result<Option<(String, Vec<String>)>, String> {
+    let mut updated: EmittedBytes = serde_json::from_str(committed_text).map_err(|error| {
+        format!("tests/fixtures/compat_freeze/{EMITTED_FILE} does not parse ({error})")
+    })?;
+    if fixture_text(&updated) != committed_text {
+        return Err(format!(
+            "compat-freeze: {GAINED_SUPPORT_MODE} wrote nothing: tests/fixtures/compat_freeze/{EMITTED_FILE} is not in the form this test writes, so rewriting it would change more than the values it records"
+        ));
+    }
+    let mut recorded = Vec::new();
+    for program in &mut updated.programs {
+        let Some(current) = actual.programs.iter().find(|p| p.name == program.name) else {
+            continue;
+        };
+        let name = program.name.clone();
+        for (&(field, _), (value, now)) in REFUSABLE
+            .iter()
+            .zip(program.refusable_mut().into_iter().zip(current.refusable()))
+        {
+            if gains_bytes(value, now) {
+                value.clone_from(now);
+                recorded.push(format!("{name}.{field}"));
+            }
+        }
+    }
+    let check = check_emitted(&updated, actual);
+    assert!(
+        check.gained.is_empty(),
+        "every gained value is recorded: {:?}",
+        check.gained
+    );
+    if !check.drift.is_empty() {
+        return Err(format!(
+            "compat-freeze: {GAINED_SUPPORT_MODE} wrote nothing: it records only values recorded as unsupported for which an emitter now writes bytes, and other records differ.\n{}",
+            drift_message(EMITTED_SURFACE, &check.drift, REBASELINE_POLICY)
+        ));
+    }
+    Ok((!recorded.is_empty()).then(|| (fixture_text(&updated), recorded)))
+}
+
 #[test]
 fn emitted_artifact_bytes_match_the_frozen_fixture() {
     let gaps = ip_scrub_gaps();
@@ -1810,11 +2083,11 @@ fn emitted_artifact_bytes_match_the_frozen_fixture() {
     );
     let (train, target, _) = fitted_surface_data();
     let (cpp17_recipe_ops, javascript_ops) = recipe_supported_ops();
-    let mut fixture = EmittedBytes {
+    let fixture = EmittedBytes {
         schema: "feat-math.compat-freeze.emitted-bytes.v1".to_string(),
         generated_at_sha: header_sha(Surface::Frozen),
         note: format!(
-            "Values are \"<byte length> <sha256>\" of the artifact text (EmitOptions::default()), \"unsupported: <element kinds>\" where the emitter refuses the program, or the recorded error. The *_jope_emit values use the options `jope emit` writes Rust, Python and the manifest with (title \"jope emit\"). C++20 is the same C++17 source compiled with -std=c++20. Fitted C++17 comes from fit_legacy_numeric_bound on {FITTED_DATA_NOTE}. cpp17_recipe_ops and javascript_ops are the ops each emitter accepted at generation, probed one op at a time; every one is used by a program whose bytes from that emitter are recorded here. An emitter that gains support is additive and passes (bytes for a program recorded as unsupported, fewer unsupported element kinds, or a newly accepted op); recorded bytes never change."
+            "Values are \"<byte length> <sha256>\" of the artifact text (EmitOptions::default()), \"unsupported: <element kinds>\" where the emitter refuses the program, or the recorded error or skip. The *_jope_emit values use the options `jope emit` writes Rust, Python and the manifest with (title \"jope emit\"); C++17 recipe and JavaScript are recorded under the default options only. C++20 is the same C++17 source compiled with -std=c++20. Fitted C++17 comes from fit_legacy_numeric_bound on {FITTED_DATA_NOTE}. cpp17_recipe_ops and javascript_ops are the ops each emitter accepted at generation, probed one op at a time; every one is used by a program whose bytes from that emitter are recorded here. Recorded bytes never change. Two changes are additive and pass: fewer unsupported element kinds (the recorded refusal stays) and a newly accepted op. Bytes for a value recorded as unsupported fail until JOPE_COMPAT_FREEZE_REGENERATE=gained-support records them."
         ),
         cpp17_recipe_ops,
         javascript_ops,
@@ -1831,110 +2104,37 @@ fn emitted_artifact_bytes_match_the_frozen_fixture() {
             gaps.join("\n  ")
         );
     }
-    let Some(committed) = committed_or_write(Surface::Frozen, FIXTURE_FILES[2], &fixture) else {
+    if recording_gained_support() {
+        let relative = format!("compat_freeze/{EMITTED_FILE}");
+        let path = fixture_path(&relative);
+        let text = std::fs::read_to_string(&path)
+            .unwrap_or_else(|error| panic!("tests/fixtures/{relative}: {error}"));
+        match gained_support_update(&text, &fixture) {
+            Err(message) => panic!("{message}"),
+            Ok(None) => eprintln!(
+                "compat-freeze: {GAINED_SUPPORT_MODE}: no value recorded as unsupported emits bytes now; tests/fixtures/{relative} is unchanged"
+            ),
+            Ok(Some((updated, recorded))) => {
+                write_atomically(&path, &updated);
+                eprintln!(
+                    "compat-freeze: {GAINED_SUPPORT_MODE} recorded the bytes of {} values in tests/fixtures/{relative}:\n  {}",
+                    recorded.len(),
+                    recorded.join("\n  ")
+                );
+            }
+        }
+        return;
+    }
+    let Some(committed) = committed_or_write(Surface::Frozen, EMITTED_FILE, &fixture) else {
         return;
     };
-    // The recorded op lists: each op stays pinned and supported; a newly accepted op is additive.
-    let mut problems = recipe_coverage_gaps(&committed);
-    for (language, recorded, now) in [
-        (
-            "C++17 recipe",
-            &committed.cpp17_recipe_ops,
-            &fixture.cpp17_recipe_ops,
-        ),
-        (
-            "JavaScript",
-            &committed.javascript_ops,
-            &fixture.javascript_ops,
-        ),
-    ] {
-        for op in recorded {
-            if !now.contains(op) {
-                problems.push(format!("{op} lost {language} support"));
-            }
-        }
-        for op in now {
-            if !recorded.contains(op) {
-                eprintln!(
-                    "compat-freeze: the {language} emitter now accepts {op} (additive; pin it with an approved rebaseline and a program that uses it)"
-                );
-            }
-        }
+    let check = check_emitted(&committed, &fixture);
+    for note in &check.additive {
+        eprintln!("compat-freeze: {note}");
     }
-    assert!(
-        problems.is_empty(),
-        "compat-freeze: emitter op support drifted:\n  {}\n{REBASELINE_POLICY}",
-        problems.join("\n  ")
-    );
-    // Gaining support for a program recorded as unsupported adds bytes without changing any
-    // recorded ones, so it passes (and is reported); losing support, a different unsupported
-    // element, or an emitter that now errors, is drift (see `gains_support`).
-    for program in &mut fixture.programs {
-        let Some(old) = committed.programs.iter().find(|p| p.name == program.name) else {
-            continue;
-        };
-        for (field, now, recorded) in [
-            ("cpp17", &mut program.cpp17, &old.cpp17),
-            ("javascript", &mut program.javascript, &old.javascript),
-            (
-                "fitted_cpp17_source",
-                &mut program.fitted_cpp17_source,
-                &old.fitted_cpp17_source,
-            ),
-            (
-                "fitted_cpp17_codec",
-                &mut program.fitted_cpp17_codec,
-                &old.fitted_cpp17_codec,
-            ),
-        ] {
-            if gains_support(recorded, now) {
-                eprintln!(
-                    "compat-freeze: {}.{field} was recorded as {recorded:?} and is now {now:?} (additive; freeze the new bytes with an approved rebaseline)",
-                    program.name
-                );
-                now.clone_from(recorded);
-            }
-        }
+    if let Some(failure) = emitted_failure(&check) {
+        panic!("{failure}");
     }
-    let flatten = |values: &EmittedBytes| -> Vec<(String, String)> {
-        let mut records = vec![record("schema", values.schema.clone())];
-        for p in &values.programs {
-            let n = &p.name;
-            records.extend([
-                record(format!("{n}.canonical"), p.canonical.clone()),
-                record(format!("{n}.rust"), p.rust.clone()),
-                record(format!("{n}.python"), p.python.clone()),
-                record(format!("{n}.manifest"), p.manifest.clone()),
-                record(
-                    format!("{n}.manifest_emitter_version"),
-                    p.manifest_emitter_version.clone(),
-                ),
-                record(format!("{n}.rust_jope_emit"), p.rust_jope_emit.clone()),
-                record(format!("{n}.python_jope_emit"), p.python_jope_emit.clone()),
-                record(
-                    format!("{n}.manifest_jope_emit"),
-                    p.manifest_jope_emit.clone(),
-                ),
-                record(format!("{n}.cpp17"), p.cpp17.clone()),
-                record(format!("{n}.javascript"), p.javascript.clone()),
-                record(
-                    format!("{n}.fitted_cpp17_source"),
-                    p.fitted_cpp17_source.clone(),
-                ),
-                record(
-                    format!("{n}.fitted_cpp17_codec"),
-                    p.fitted_cpp17_codec.clone(),
-                ),
-            ]);
-        }
-        records
-    };
-    assert_records(
-        "emitted artifact bytes (emitted_bytes.v1.json)",
-        &flatten(&committed),
-        &flatten(&fixture),
-        REBASELINE_POLICY,
-    );
 }
 
 // ---------------------------------------------------------------------------------------------
