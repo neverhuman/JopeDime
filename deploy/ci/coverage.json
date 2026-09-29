@@ -187,7 +187,8 @@
       "path_applicability": "ci.yml changes.emitters",
       "evidence": [
         "emitted sources and prediction comparisons",
-        "strict parity test counts"
+        "strict parity test counts",
+        "fitted C++ test counts under AddressSanitizer and UndefinedBehaviorSanitizer, and at -std=c++20"
       ],
       "requires_nonzero_tests": true,
       "stage": "execution",
@@ -196,7 +197,9 @@
       "checks": [
         "bash deploy/ci/emitters.sh",
         "cargo test -p feat-math --locked --lib -- cxx::",
-        "cargo test -p feat-math --locked --test portable_parity"
+        "cargo test -p feat-math --locked --test portable_parity",
+        "JOPE_FITTED_CPP_SANITIZER=address,undefined cargo test -p feat-math --locked --test advanced_v3_fitted_cpp",
+        "JOPE_CPP_STD=20 cargo test -p feat-math --locked --test advanced_v3_fitted_cpp"
       ]
     },
     "inputs": {

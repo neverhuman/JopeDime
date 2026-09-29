@@ -113,6 +113,14 @@ EMITTERS_OUT="$EVIDENCE/emitters" bash deploy/ci/emitters.sh
 cargo test -p feat-math --locked --lib -- cxx::
     # Strict portable parity — portable_all_helper_backends_match_bits
 cargo test -p feat-math --locked --test portable_parity
+    # Fitted C++ compile scratch outside /tmp, as lambda.sh keeps it: the codec compile and the tests' tempdirs follow TMPDIR
+case ${TMPDIR:-/tmp} in
+  /tmp | /tmp/*) export TMPDIR=${CARGO_TARGET_DIR:-$PWD/target}/fitted-cpp-tmp; mkdir -p -- "$TMPDIR" ;;
+esac
+    # Fitted C++17 under AddressSanitizer and UndefinedBehaviorSanitizer (kernel2 X3): every advanced_v3_fitted_cpp test
+JOPE_FITTED_CPP_SANITIZER=address,undefined cargo test -p feat-math --locked --test advanced_v3_fitted_cpp
+    # Fitted C++ at -std=c++20 with g++ (fitted model compilation requires g++ 13.3, so clang++ is out of scope)
+JOPE_CPP_STD=20 cargo test -p feat-math --locked --test advanced_v3_fitted_cpp
     ;;
   inputs)
     # Toolchain (from rust-toolchain.toml)
