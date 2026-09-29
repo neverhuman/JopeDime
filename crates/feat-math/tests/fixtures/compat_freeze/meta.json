@@ -12,7 +12,8 @@
     "model_serde.v1.json",
     "frozen_pins.v1.json",
     "evaluator_identity.v1.json",
-    "generator_streams.v1.json"
+    "generator_streams.v1.json",
+    "search_runs.v1.json"
   ],
   "boundary_corpus": "math_boundary/v1.json",
   "regenerate": "JOPE_COMPAT_FREEZE_REGENERATE=1 JOPE_COMPAT_FREEZE_SHA=<full commit id> cargo nextest run --locked -P pr -p feat-math --test compat_freeze",
