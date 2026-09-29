@@ -28,7 +28,8 @@ evidence, not hosted CI, and the wall times are for this host only.
 | `5279f1d45` | `docs/parity/test-inventory.json`: the feat-math section. |
 | `a7a541678` | The domain table's `ILLEGAL_SCOPE` row cites its one raise line, 918 (review follow-up). |
 | `319683f64` | The NaN and the infinity that `^` and `/` absorb without a class: the domain table's "Not reported" list, and three cases that pin it (review follow-up). |
-| last | These records, `CHANGELOG.md` and `MASTER_PLAN.md`, and one wording fix in the domain table. |
+| `5f0c3ea9f` | These records, `CHANGELOG.md` and `MASTER_PLAN.md`, and one wording fix in the domain table. |
+| last | The pull request number, #128, in `CHANGELOG.md` and `MASTER_PLAN.md`; in `MASTER_PLAN.md`, the time and cause of #127's failed first merge attempt and "Next allowed action" items 2 and 3; this receipt's commit list and "Still open". |
 
 Every commit has Jepson Taylor `<130782313+jepsontaylor@users.noreply.github.com>` as author and
 committer.
@@ -59,7 +60,7 @@ below stays reachable.
     from `18a7fcd71`'s fixture; `659f2c62c` → `5279f1d45`, the feat-math section re-listed on top
     of #127's inventory (feat-math 475 to 491 tests with 4 to 6 ignored, Rust 3,838 to 3,854 with
     63 to 65 ignored);
-  - `256711ce2` is replaced by the last commit, these records, rewritten on top of #127's.
+  - `256711ce2` is replaced by `5f0c3ea9f`, these records, rewritten on top of #127's.
 - The review follow-ups are three new commits: `d208f4fcf`, `a7a541678` and `319683f64`. The
   others are in these records: the throughput reading, the consumer test tiers, the lint state of
   `jope-dime-regressor`, and how the known-table row is proved.
@@ -163,9 +164,9 @@ at `319683f64`, twice, with the divergences #127 recorded: rust 6, python 6 and 
 all allowlisted, 0 unexpected and 0 stale. The runtime's predictions against the emitted Rust,
 Python and fitted C++17 programs are therefore unchanged by the new evaluator code.
 
-**Perturbations caught.** Each was applied to the committed source at the pre-replay head and the
-fault_trace tests were run; then the file was restored with `git checkout`, and the tree was clean
-afterwards.
+**Perturbations caught.** Each was applied at the pre-replay commit `c649e6c3a`, whose
+`math_expr.rs` and `compiled.rs` are this head's, and the fault_trace tests were run. The file was
+then restored with `git checkout`, and no tracked file was left modified.
 
 | Perturbation | Failing tests |
 |---|---|
@@ -212,7 +213,7 @@ do not overlap. At `319683f64` it is +1.29% (the ranges overlap this time), agai
 pre-replay head binary in the same rounds: the size of the effect moves with the build's code
 layout, but not its sign. The legacy compiled source is byte-unchanged, so the slowdown
 comes from how its callees, now one-line wrappers over the sink-generic functions, are compiled
-and laid out. It sits at the edge of the ±2% expectation. Among the shipped paths only a map stage
+and laid out. It misses the ±2% expectation in two of the six measurements (+2.32% and +2.21%) and is within it in the other four. Among the shipped paths only a map stage
 whose expression reads a row summary takes it (`crates/feat-math/src/ops.rs`, the
 `FittedOp::MapExpr` arm). A derive stage with a row summary and constant fitting
 (`math_expr/evolution.rs`, `optimize_constants_v1`) take compiled `eval_row`; every other map and
@@ -334,12 +335,12 @@ step ran twice, both exit codes and wall times are given.
 | ADR-0004 receipt, base | `verify-evaluation-v2` with the build of `f65026dd5` on the committed manifest and CSV | 0 | byte-identical to the committed `receipt.json` | 56.1 s with the build |
 | ADR-0004 receipt, head | the same with the build of `319683f64` | 0 | sha256 `438b8600…`; only the 7 identity-derived digests differ from the base receipt | 53.2 s with the build |
 
-This commit changes documentation only: `git diff --stat 319683f64 HEAD` lists `CHANGELOG.md`,
-`MASTER_PLAN.md`, the domain table and this receipt. With these records in the working tree, the
-checks that read them ran again and exit 0: `cargo fmt --all -- --check`, `coverage validate`
-(287 targets), `verify-test-inventory` (323 items), `test-inventory.sh --no-rust --static-python`,
-`ip-scrub.sh` (47 files), `check.sh` and `git diff --check f65026dd5`; `compat_freeze` (12) and
-`fault_trace` (13) pass again.
+The two records commits change documentation only: `git diff --stat 319683f64 HEAD` lists
+`CHANGELOG.md`, `MASTER_PLAN.md`, the domain table and this receipt. With these records in the
+working tree, the checks that read them ran again and exit 0: `cargo fmt --all -- --check`,
+`coverage validate` (287 targets), `verify-test-inventory` (323 items), `test-inventory.sh
+--no-rust --static-python`, `ip-scrub.sh` (47 files), `check.sh` and `git diff --check
+f65026dd5`; `compat_freeze` (12) and `fault_trace` (13) pass again.
 
 The brief's identity-test command, `-P pr -p jope-campaigns --test …`, cannot select these tests:
 the package is `jope-dime-regressor`; the `pr` profile's default filter excludes that package;
@@ -351,8 +352,6 @@ library or of a test target. The command above is the one that runs them.
 - **Hosted CI.** Every lane runs for this change: `crates/feat-math/**`,
   `known-evaluator-identities.json` and `deploy/ci/coverage.json` select all nine jobs. The first
   hosted run is also the cross-host check of the libm-dependent values.
-- **The PR number** is written as `#NNN` in `CHANGELOG.md` and `MASTER_PLAN.md`; it exists only
-  once the pull request is opened, and replacing it changes only those two files.
 - **The ADR-0004 amendment** (plan WP-8.3): `math_expr/compiled.rs` and `math_expr/fault.rs`
   change evaluation behaviour or its reporting but are outside the hash list. The amendment needs
   Codex's agreement.
