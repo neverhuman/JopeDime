@@ -502,6 +502,13 @@
         "gp"
       ]
     },
+    "target:feat-math/test/search_admission": {
+      "role": "regression",
+      "subsystems": [
+        "fitting",
+        "gp"
+      ]
+    },
     "target:feat-math/test/stage_telemetry": {
       "role": "regression",
       "subsystems": [
