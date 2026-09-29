@@ -278,7 +278,11 @@ impl PipelineSlots {
     }
 }
 
-fn next_width(stage: &Stage, rows: usize, (lo, hi): (usize, usize)) -> Result<(usize, usize)> {
+pub(crate) fn next_width(
+    stage: &Stage,
+    rows: usize,
+    (lo, hi): (usize, usize),
+) -> Result<(usize, usize)> {
     let mul = |a: usize, b: usize| {
         a.checked_mul(b)
             .ok_or_else(|| Error::Resource("width multiplication".into()))

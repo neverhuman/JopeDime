@@ -5,6 +5,7 @@
 pub mod codec;
 pub mod pipeline;
 mod program;
+pub mod scope;
 pub mod telemetry;
 
 pub use program::Program;
