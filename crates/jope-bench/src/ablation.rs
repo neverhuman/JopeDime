@@ -1190,6 +1190,9 @@ fn ratio_clause(metric: &'static str, rule: &'static str, a: f64, b: f64, limit:
     }
 }
 
+/// A clause over a value both profiles may lack for the same reason, such as the M7 expression
+/// size when no best program of either profile has a `map` or `derive` stage: equal absence is no
+/// difference.
 fn optional_ratio_clause(
     metric: &'static str,
     rule: &'static str,
@@ -1214,6 +1217,32 @@ fn optional_ratio_clause(
             a,
             b,
             note: Some("only one profile has a value"),
+        },
+    }
+}
+
+/// A clause over a value every run should supply, such as M8: an aggregate is `None` when some
+/// run lacks it, so the clause is evaluated only when both profiles have a value. A value missing
+/// from both profiles was never compared, so it is not evaluated, never no difference.
+fn every_run_ratio_clause(
+    metric: &'static str,
+    rule: &'static str,
+    a: Option<f64>,
+    b: Option<f64>,
+    limit: f64,
+) -> Clause {
+    match (a, b) {
+        (Some(a), Some(b)) => ratio_clause(metric, rule, a, b, limit),
+        _ => Clause {
+            metric,
+            rule,
+            status: NOT_EVALUATED,
+            a,
+            b,
+            note: Some(
+                "a run's best program has no value: the emitters or the token estimator refused \
+                 it (see that run's M8 unsupported)",
+            ),
         },
     }
 }
@@ -1407,14 +1436,14 @@ fn gates(profile_a: Profile, profile_b: Profile, a: &SlotAggregate, b: &SlotAggr
                     ob.m7_expression_nodes,
                     1.0,
                 ),
-                optional_ratio_clause(
+                every_run_ratio_clause(
                     "M8",
                     "token cost increase at most 5%",
                     oa.m8_tokens,
                     ob.m8_tokens,
                     1.05,
                 ),
-                optional_ratio_clause(
+                every_run_ratio_clause(
                     "M8",
                     "artifact bytes increase at most 5%",
                     oa.m8_bytes,
@@ -1772,6 +1801,30 @@ mod tests {
         assert_eq!(g.g_c.status, SAME);
         assert!(!g.g_c.complete);
         assert_eq!(g.g_e.status, NOT_EVALUATED);
+        // G-D: an M8 value some run lacks was never compared, so its clauses are not evaluated,
+        // even when both profiles lack it; M7 expression size missing from both is no difference.
+        let clauses = |g: &Gates, metric: &str| -> Vec<&'static str> {
+            g.g_d
+                .clauses
+                .iter()
+                .filter(|c| c.metric == metric)
+                .map(|c| c.status)
+                .collect()
+        };
+        let mut refused = a.clone();
+        refused.overall.m8_tokens = None;
+        refused.overall.m8_bytes = None;
+        let neither = gates(Profile::Legacy, Profile::Legacy, &refused, &refused.clone());
+        assert_eq!(clauses(&neither, "M8"), [NOT_EVALUATED; 2]);
+        assert_eq!(clauses(&neither, "M7"), [SAME; 2]);
+        assert_eq!(neither.g_d.status, SAME);
+        assert!(!neither.g_d.complete);
+        let one = gates(Profile::Legacy, Profile::Legacy, &a, &refused);
+        assert_eq!(clauses(&one, "M8"), [NOT_EVALUATED; 2]);
+        assert!(!one.g_d.complete);
+        let both = gates(Profile::Legacy, Profile::Legacy, &a, &a.clone());
+        assert_eq!(clauses(&both, "M8"), [SAME; 2]);
+        assert!(both.g_d.complete);
     }
 
     #[test]
