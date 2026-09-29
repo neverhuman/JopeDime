@@ -73,7 +73,7 @@ written so that NaN never fires a clamp class (`v.abs() > bound` is false for Na
 | 931 (from 892) | `row_max` | a non-empty row | the row is empty | the fold's start, -inf, which the output filter maps to 0.0 | `EMPTY_ROW_REDUCTION` | Domain |
 | 950 | the output filter | a finite result | `!value.is_finite()`, whether generated or read from the input | 0.0 | `NONFINITE_SANITIZED` | Domain |
 | 946 | the output filter | `\|value\| <= 1e12` | `value.abs() > MAX_ABS` for a finite value (exactly ±1e12 does not fire) | `value.clamp(-1e12, 1e12)` | `MAGNITUDE_CLAMPED` | Saturation |
-| 696 | a function call | the function's arity | `validate_arity` fails: only a deserialized AST can reach this, because `parse` and `from_ast` check arity | the legacy error "`F` received `n` arguments"; 0.0 in the compat shape. `compile()` refuses the same AST, which the stage reports as `COMPILE_FAILED` | `COMPILE_FAILED` | Hard |
+| 696 | a function call | the function's arity | `validate_arity` fails: only a deserialized AST can reach this, because `parse` and `from_ast` check arity | the legacy error "`F` received `n` arguments"; 0.0 in the compat shape. `compile()` refuses the same AST, and the stage reports that as `COMPILE_FAILED` from WP-1.4 on | `COMPILE_FAILED` | Hard |
 
 The empty sum, `row_l1` and `row_l2` of an empty row are true identities (-0.0 with this
 toolchain) and raise nothing. `row_std` of a single element is +0.0 and raises nothing.
