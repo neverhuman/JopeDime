@@ -181,7 +181,10 @@ readonly CONTAINER_SYSTEM_TMP=/tmp
 #     another commit's tree as $sha's, and keeps no GIT_* variable but the committer's name and
 #     email. The keys set through GIT_CONFIG_COUNT outrank every configuration file: no per-user
 #     ignore or attributes file (~/.config/git/ignore hides untracked files from git status even
-#     without ~/.gitconfig), no repository hooks, no fsmonitor answering git status, no signed tag.
+#     without ~/.gitconfig), no repository hooks, no fsmonitor answering git status, no signed tag,
+#     and no push.followTags, which would push every other local annotated tag on the released
+#     commit's history that origin lacks along with the release tag (push_release_tag also passes
+#     --no-follow-tags).
 #     check_git_config refuses URL rewrites, remotes named after $remote or another URL, and TLS
 #     settings in the repository's own configuration.
 #     The GitHub credential helper is the GH array's -c option, which outranks all of these.
@@ -200,12 +203,13 @@ done
 unset -v -- _name GCONV_PATH LOCPATH GLIBC_TUNABLES TAR_OPTIONS GNUTARGET POSIXLY_CORRECT \
   GREP_OPTIONS SSL_CERT_FILE SSL_CERT_DIR CURL_CA_BUNDLE
 export LC_ALL=C
-export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_NO_REPLACE_OBJECTS=1 GIT_CONFIG_COUNT=5 \
+export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_NO_REPLACE_OBJECTS=1 GIT_CONFIG_COUNT=6 \
   GIT_CONFIG_KEY_0=core.excludesFile GIT_CONFIG_VALUE_0=/dev/null \
   GIT_CONFIG_KEY_1=core.attributesFile GIT_CONFIG_VALUE_1=/dev/null \
   GIT_CONFIG_KEY_2=core.hooksPath GIT_CONFIG_VALUE_2=/dev/null \
   GIT_CONFIG_KEY_3=core.fsmonitor GIT_CONFIG_VALUE_3=false \
-  GIT_CONFIG_KEY_4=tag.gpgSign GIT_CONFIG_VALUE_4=false
+  GIT_CONFIG_KEY_4=tag.gpgSign GIT_CONFIG_VALUE_4=false \
+  GIT_CONFIG_KEY_5=push.followTags GIT_CONFIG_VALUE_5=false
 # The docker client talks to the system daemon through this socket, whatever DOCKER_HOST or a docker
 # context says (see the docker wrapper). It is set after the DOCKER_* variables are gone.
 readonly DOCKER_SOCKET=unix:///var/run/docker.sock
@@ -1280,6 +1284,10 @@ release_view() {
 }
 release_download() { "$GH_ROLE" writer release download "$tag" -R "$REPO_SLUG" -D "$1"; }
 remote_tag_lines() { git "${GH[@]}" ls-remote "$remote" "refs/tags/$tag" "refs/tags/$tag^{}"; }
+# Pushes refs/tags/$tag and nothing else. With push.followTags, git would also push every local
+# annotated tag that points into $sha's history and that origin lacks. --no-follow-tags overrides
+# any such setting, and push.followTags is forced to false through GIT_CONFIG_COUNT as well.
+push_release_tag() { git "${GH[@]}" push --no-follow-tags "$remote" "refs/tags/$tag:refs/tags/$tag"; }
 
 # Succeeds when origin shows exactly refs/tags/$tag at $tag_object and its peel at $sha. It prints
 # what origin showed.
@@ -1318,7 +1326,7 @@ publish_release() {
 
   step "publish: push refs/tags/$tag"
   stage='tag-push'
-  git "${GH[@]}" push "$remote" "refs/tags/$tag:refs/tags/$tag"
+  push_release_tag
   stage='tag-pushed'
   remote_tag_matches || die "after the push, origin does not show $tag as $tag_object -> $sha"
 
