@@ -438,6 +438,24 @@ fn class_cases() -> Vec<Case> {
             Some(1f64.to_bits()),
             F::EMPTY,
         ),
+        // The same NaN absorbed by ^ with a zero exponent: pow(NaN, 0) is 1.0, which is finite,
+        // so neither ^ test fires.
+        row_case(
+            "(col(0)*col(0) - col(0)*col(0))^0",
+            &[1e200],
+            Some(1f64.to_bits()),
+            F::EMPTY,
+        ),
+        // pow(1, NaN) is 1.0 too; a NaN read from the input keeps its input fault.
+        row_case(
+            "1^col(0)",
+            &[f64::NAN],
+            Some(1f64.to_bits()),
+            F::NONFINITE_INPUT,
+        ),
+        // The overflowed product as a divisor: 1/inf is +0.0, and the divisor guard tests only
+        // |b| < 1e-12.
+        row_case("1/(col(0)*col(0))", &[1e200], Some(POS_ZERO), F::EMPTY),
         // Faults accumulate in evaluation order until a Hard error ends the evaluation.
         row_case(
             "1/col(1) + col(5)",
