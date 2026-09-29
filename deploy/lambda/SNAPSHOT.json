@@ -1700,9 +1700,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/regression/rust/Cargo.lock",
-      "tree_sha256": "49febdcbe13d0e298703f9378bdfbb768b24504680275b305beab5f5f81b8ad5",
+      "tree_sha256": "e99f6eea0191a4f65cdb07eca227ae16f3f229c7c9b0d6095434e7c16865e21a",
       "custody_tarball": null,
-      "reason": "frozen source, verbatim"
+      "reason": "frozen source, verbatim",
+      "tree_change": "cargo update -p feat-math --offline: the feat-math path entry reads 0.2.0, the workspace version of this release; no other package moves"
     },
     {
       "body": "regression",
@@ -2251,9 +2252,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/regression-ops/rust/Cargo.lock",
-      "tree_sha256": "249d4115262b96528e8ffe63870e5fe6c210c83051fc0bcc8a9738a6e254efc4",
+      "tree_sha256": "4666a6dc199e5793bce3279d7abe453d00b496a2717e9f9f6f09e10ed45cf689",
       "custody_tarball": null,
-      "reason": "frozen source, verbatim"
+      "reason": "frozen source, verbatim",
+      "tree_change": "cargo update -p feat-math --offline: the feat-math path entry reads 0.2.0, the workspace version of this release; no other package moves"
     },
     {
       "body": "regression-ops",
