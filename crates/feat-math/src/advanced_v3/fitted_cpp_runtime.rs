@@ -888,4 +888,19 @@ int main() {
         );
         scratch.close().unwrap();
     }
+
+    /// The source that emitter revision 2 wrote for `fixture()`'s model, written by
+    /// `emit_fitted_cpp17` at `8676953c1`, the base of kernel2 PR 07. It is kept so that a stored
+    /// revision-2 container can still be built, and loaded, once the emitter moves on.
+    const REVISION_TWO_SOURCE: &str =
+        include_str!("../../tests/fixtures/fitted_cpp/revision2-ridge.cpp");
+
+    #[test]
+    fn revision_two_source_is_what_the_emitter_writes_for_the_fixture_model() {
+        let (model, _) = fixture();
+        assert_eq!(
+            emit_fitted_cpp17(&model).unwrap().source,
+            REVISION_TWO_SOURCE
+        );
+    }
 }
