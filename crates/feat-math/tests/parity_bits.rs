@@ -12,9 +12,9 @@
 //!   driver this test writes. The driver reads the input bits from a file at run time, so no
 //!   prediction can be folded at compile time, and prints each prediction's bits.
 //!
-//! The programs execute every `MathExpr` function, row variable and operator (checked by
-//! `parity_bits_programs_execute_every_function_variable_and_operator`), in closed-form programs
-//! and in `map`/`derive` stages. The prediction rows are ordinary values plus the scalar boundary
+//! The programs execute every `MathExpr` function, row variable and operator and reach the
+//! division guard (checked by `parity_bits_programs_execute_every_function_variable_and_operator`),
+//! in closed-form programs and in `map`/`derive` stages. The prediction rows are ordinary values plus the scalar boundary
 //! corpus in four row shapes (the value in every column, or in one column with ordinary values in
 //! the others) and rows that mix the two signed zeros. An empty-width stage is not reachable:
 //! every stage output is padded to at least one column (`ops.rs`, `finish`) and both emitted CSV
@@ -100,6 +100,14 @@ const PROGRAMS: &[Program] = &[
         source: "(sym raw \"exp(c0) / (c1 * c1 + 1) - log(c2)\")",
         inputs: Inputs::Finite,
     },
+    // c1 / c0 reaches the division guard: the division_guard rows put 1e-12 and its neighbours in
+    // column 0, where a quotient (±60 after the prediction clamp) and the guard's 0 (1.5 with the
+    // fill) differ, so a lane that guards with <= instead of < diverges.
+    Program {
+        name: "sym_div_guard",
+        source: "(sym raw \"c1 / c0 + c2\")",
+        inputs: Inputs::Finite,
+    },
     Program {
         name: "sym_asinh_atan_erf",
         source: "(sym raw \"asinh(c0) + atan(c1) * erf(c2)\")",
@@ -166,6 +174,12 @@ const PROGRAMS: &[Program] = &[
     Program {
         name: "pipe_derive_exp_log_pow",
         source: "(pipe X (derive expr=\"exp(c0) - log(abs(c1)) + log1p(abs(c2)) + abs(c0) ^ c1\" append=true) (ridge))",
+        inputs: Inputs::All,
+    },
+    // The division guard inside a stage, where no prediction clamp hides the quotient.
+    Program {
+        name: "pipe_derive_div_guard",
+        source: "(pipe X (derive expr=\"c1 / c0\" append=true) (ridge))",
         inputs: Inputs::All,
     },
     Program {
@@ -1206,6 +1220,36 @@ fn parity_bits_programs_execute_every_function_variable_and_operator() {
         .all(|row| row.values.iter().all(|v| v.is_finite())));
     assert!(all.iter().any(|row| row.values.iter().any(|v| v.is_nan())));
     assert!(all.len() > finite.len());
+    // The division_guard rows reach the guard of `/`: with the value in column 0, 1e-12 divides,
+    // and the next value toward zero is guarded to 0 exactly like a zero denominator.
+    let program = PROGRAMS
+        .iter()
+        .find(|program| program.name == "sym_div_guard")
+        .unwrap();
+    let (train_x, train_y) = training_data();
+    let genome = GenomeIr::parse(program.source).unwrap();
+    let model = fit(&genome, &train_x, &train_y).unwrap();
+    let rows = input_rows(program.inputs);
+    let predict = |id: &str| {
+        let row = rows
+            .iter()
+            .find(|row| row.id == id)
+            .unwrap_or_else(|| panic!("no input row {id}"));
+        model.predict(&vec![row.values.clone()])[0].to_bits()
+    };
+    for sign in ["pos", "neg"] {
+        let zero = predict(&format!("c0:{sign}_zero"));
+        assert_eq!(
+            predict(&format!("c0:div_guard_{sign}_toward_zero")),
+            zero,
+            "{sign}: one step toward zero from 1e-12 takes the guard"
+        );
+        assert_ne!(
+            predict(&format!("c0:div_guard_{sign}")),
+            zero,
+            "{sign}: 1e-12 divides"
+        );
+    }
 }
 
 #[test]
