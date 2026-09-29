@@ -100,12 +100,16 @@ library test that passes in isolation.
 
 - `crates/feat-math/tests/fixtures/math_boundary/v1.json` (WP-0.3): 66 boundary inputs in nine
   groups, checked against their definition in `tests/compat_freeze.rs`.
-- `crates/feat-math/tests/compat_freeze.rs` (WP-0.2): 11 tests over the nine fixtures in
-  `tests/fixtures/compat_freeze/`, all generated from the base's sources. Besides the workplan's
+- `crates/feat-math/tests/compat_freeze.rs` (WP-0.2): 12 tests over the nine fixtures in
+  `tests/fixtures/compat_freeze/`, all generated from the base's sources. One of them proves the
+  gained-support rules on an in-memory copy of the emitted-bytes fixture. Besides the workplan's
   surfaces they pin:
-  - emitted bytes, serde bytes and predictions for 55 programs, including every op the C++17
-    recipe and JavaScript emitters accept, and the Rust, Python and manifest bytes `jope emit`
-    writes;
+  - emitted bytes of 55 programs. Rust, Python and manifest bytes are recorded for all 55, under
+    the default options and under the options `jope emit` uses. C++17 recipe and JavaScript bytes
+    are recorded, under the default options only, for 7 programs each, which use every op those
+    emitters accept; the other 48 each are recorded as the emitter's refusal. Fitted C++17 source
+    and codec bytes are recorded for 54 programs, and the portfolio program as skipped;
+  - the serde bytes and held-out predictions of 54 fitted models, with the same portfolio skip;
   - the lite race that `jope optimize` runs, with `rank_robust` off and on, beside the surrogate
     run;
   - the sources jope-engine hashes into its teaching, corpus and query identities;
@@ -116,10 +120,12 @@ library test that passes in isolation.
   mode passes with the default threads and with the rust-test lane's single-thread environment.
 - `crates/feat-math/tests/mathexpr_current_semantics.rs` (WP-0.5): 18 tests.
 - `crates/feat-math/tests/ip_scrub.rs` lints every program the freeze pins (plan N6).
-- Two regeneration modes. `JOPE_COMPAT_FREEZE_REGENERATE=1` rewrites every fixture, which is an
+- Three regeneration modes. `JOPE_COMPAT_FREEZE_REGENERATE=1` rewrites every fixture, which is an
   approved rebaseline. `JOPE_COMPAT_FREEZE_REGENERATE=identity` rewrites only the evaluator
   identity and the lineage sources, which planned changes move, and still compares every other
-  surface.
+  surface. `JOPE_COMPAT_FREEZE_REGENERATE=gained-support` replaces only emitted-bytes values
+  recorded as unsupported, for which an emitter now writes bytes, with those bytes; it writes
+  only when every other record still compares.
 - Perturbations caught. Each was restored with `git checkout`, and the tree was clean afterwards.
   - The division guard moved from `1e-12` to `1e-11`:
     `division_guard_is_strictly_below_1e_minus_12`, `expression_values_match_the_frozen_fixture`
@@ -130,6 +136,10 @@ library test that passes in isolation.
     lineage.
   - `golden_map_derive_ridge`'s recorded C++17 value replaced by a refusal for a different
     element: the emitted-bytes test fails. The first version's rule passed this case.
+  - Bytes for a value recorded as unsupported reported as additive again, the rule before the
+    second review: `gained_support_fails_until_recorded_and_its_mode_changes_nothing_else` fails.
+    It also fails when the `gained-support` mode records every changed value, recorded bytes
+    included.
 
 ## Findings recorded while freezing
 
@@ -185,6 +195,16 @@ The first review of this PR found gaps that are now closed:
 - Drift messages now show more detail.
 - Every frozen program is now linted in `ip_scrub.rs`.
 - The fixture key is now neutral.
+
+The second review (5351319682, at `ec59a27d48430a11422a21f193a4ee64a0c2572b`) found two more:
+
+- The records overstated the byte freeze. The counts above now come from the fixtures, with jq.
+- Bytes for a value recorded as unsupported passed as additive without being pinned, so they
+  could change again in a later PR. Compare mode now fails on them, naming the program, the
+  language and the `gained-support` mode, which records them and changes nothing else.
+  `gained_support_fails_until_recorded_and_its_mode_changes_nothing_else` proves the rules on an
+  in-memory copy of the fixture. The fixture's note now states the rule; only `.note` changed,
+  and it equals the text the test writes (compared, not regenerated).
 
 Still open before merge:
 
