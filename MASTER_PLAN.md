@@ -1,5 +1,133 @@
 # JopeDime current direction
 
+**2026-09-29 kernel2 pull request 05 (#131): a static scope and width check for programs, library only.**
+Branch `kernel2/claude-m1-scope`, prepared in the lane `.agent/worktrees/kernel2-next` on
+`origin/main` `6e0ae2491cd4e7918c4d8b07aa211c83376c6764`, after #129 merged, and replayed onto
+`origin/main` `9146cbcc26b609fb8f59788088f6c87cc60bade2` after #130 merged, before its first push.
+It carries the kernel2 plan's WP-1.6 as the PR 05 brief cuts it: the check and the search
+profile's expression caps, with nothing calling either yet.
+- **Readback of #130.** kernel2 PR 04 (#130, branch `kernel2/claude-m1-telemetry`) merged by rebase
+  at 2026-09-29T18:31:14Z at the exact reviewed head `2204096ea9721d5104d108f9561e4c47d43de812`.
+  Approval 5356592621 (neverhumanbot) was submitted at 18:14:04Z, after the head push (no later
+  than 18:05:16Z). The `pull_request` run 36609540695 and the `workflow_dispatch` run 36609543324
+  were green on attempt 1, all nine jobs of each. main = `9146cbcc26b609fb8f59788088f6c87cc60bade2`,
+  and its tree equals the reviewed head's tree (`fcfce3f3…`). As for #128 and #129, gh-role warned
+  that the account that opened the pull request also merged it, where `AGENTS.md` asks for a merger
+  other than the author. Evidence: `~/jope-evidence/kernel2/pr130-merge-20260929T182855Z/`
+  (`merge.log`, `SHA256SUMS`). Before it, #129 merged at 16:49:20Z (main `6e0ae2491`); #130's
+  record carries that readback.
+- **Contents.** `crates/feat-math/src/kernel/scope.rs`: `validate_scope(program, input_width)`
+  walks a program's stages with the pipeline slots' width rules (`kernel::pipeline::next_width`,
+  now `pub(crate)`, its body unchanged) and checks every `map` and `derive` expression against the
+  lower bound of the width that reaches its stage. `ScopeError` names the stage, the portfolio
+  member, the class (`ILLEGAL_SCOPE` or `COLUMN_OOB`) and the exact reason; a program that cannot
+  be checked fails with its own reason and no class. `ExpressionScope::search_profile(columns,
+  elementwise)` caps expressions at 15 nodes and depth 4. The check differs from
+  `validate_legacy_widths` on purpose in two ways: it has no row count, so it takes `nystrom`'s
+  width for one training row, and it accepts inputs wider than 512 columns (up to 2^24), because
+  the runtime truncates a row only after a stage. An explicit portfolio's members are walked from
+  one column, because the portfolio drops the columns that are constant in training before its
+  members see the rows.
+- **Identity.** None moves. The four changed sources are outside the ADR-0004 hash list, the
+  lineage sources and the frozen pins; no fixture changes, and `compat_freeze` passes in compare
+  mode. After the replay, `git diff --quiet 9146cbcc2 HEAD --` over the fixtures,
+  `crates/jope-campaigns`, `crates/jope-engine`, the root Cargo files and feat-math's `Cargo.toml`,
+  `lib.rs`, `ops.rs`, `model.rs`, `math_expr.rs` and `evolve.rs` exits 0, and so does the same
+  check over the 70 ADR-0004, lineage and pin paths. In `kernel/pipeline.rs` only the signature of
+  `next_width` changes (`pub(crate)`, which rustfmt wraps: five lines for one).
+- **Replay.** The five source commits `38fd1caae` to `f7e5bcb5d` were cherry-picked onto
+  `9146cbcc2`. The one conflict was the expected one: #130 added `pub mod telemetry;` to
+  `kernel/mod.rs` at the line where `38fd1caae` adds `pub mod scope;`, and both lines are kept, in
+  rustfmt's order. `git range-diff 6e0ae2491..153e688e6 9146cbcc2..HEAD` shows `38fd1caae` →
+  `9bf5d0d86` with that context line only (`!`), and the other four unchanged (`=`): `3965228b3` →
+  `89a7ca8ed`, `e1aba6d0b` → `ba623e0fe`, `c47f9906a` → `cd86c9152` and `f7e5bcb5d` →
+  `67b5a5f7b`. Every replayed commit keeps its message, author and author date. The series' four
+  source and test files are byte-identical to the reviewed `f7e5bcb5d`, and every other difference
+  under `crates/` is #130's. The two old records commits, `e4bedb78c` and `153e688e6`, are
+  regenerated as this commit: the coverage item and the findings role re-applied to the new main's
+  files, each adding exactly the lines `e4bedb78c` added; the parity inventory's feat-math section
+  re-listed from a live listing; the receipt as it was at `153e688e6`, with the base, the commit
+  ids and the pull request number changed and a "Replay" section added; the CHANGELOG line after
+  #130's; this record with #130's readback; and "Next allowed action". The pre-replay head is kept
+  locally as `refs/preserve/kernel2/pr05-prerebase-20260929T183131Z`.
+- **One correction besides the replay.** The receipt said that nothing in `crates/`, `deploy/ci` or
+  `tools/` names the changed sources. A captured file list in a jope-records replay fixture
+  (`python-parity/coverage/files.txt`) names three of them as paths; it includes and hashes
+  nothing. The receipt now says so.
+- **Records.** Coverage map +1 item (`target:feat-math/test/scope_validation`: rust-check,
+  rust-test, full-default; 289 targets); findings inventory +1 role (regression; 325 items); test
+  inventory +14 Rust tests (3,873 to 3,887, 65 ignored as before; feat-math 510 to 524), with
+  feat-math re-listed and every other package unchanged; the CHANGELOG `[Unreleased]` line; the
+  receipt `docs/internal/kernel2/receipts/WP-1.6.md`.
+- **Commands, first round,** at the pre-replay `e1aba6d0b`, the sources the reviews read (exit
+  code, seconds): with `JOPE_PARITY_STRICT=1`, the feat-math PR tier twice, 494 passed and 10
+  skipped each time (0, 70; 0, 60); `compat_freeze` twice in compare mode, 12 passed each time (0,
+  11; 0, 12); `compat_freeze`, `mathexpr_current_semantics`, `fault_trace`, `ip_scrub`,
+  `legacy_v2_freeze`, `portable_parity`, `kernel_pipeline`, `kernel_expression` and
+  `scope_validation` twice, 73 passed each time (0, 19; 0, 20); `scope_validation` with
+  `--no-capture` twice, 13 passed, its output lines byte-identical (0, 6; 0, 6); four
+  perturbations of `scope.rs`, each caught (1 to 6 failing tests) and restored;
+  `deploy/ci/lambda.sh` (0, 48: 6 workspaces, 66 tests; its cargo-deny step skipped, 0.19.8
+  installed where 0.20.2 is pinned). With the first records in the working tree: `cargo fmt --all
+  --check` (0, 7); feat-math clippy `-D warnings` (0, 9); `coverage validate` (0: 288 targets, 0
+  unassigned); `verify-test-inventory` (0: 324 items); the jope-records PR tier (0, 15: 166
+  passed); `test-inventory.sh --no-rust --static-python` (0); `deploy/ci/check.sh` (0, 20);
+  `deploy/ci/ip-scrub.sh` (0: 47 files); `git diff --check 6e0ae2491` (0); and `git diff --quiet`
+  from the base over the ADR-0004 inputs, the lineage sources and the frozen pins (0).
+- **Review fixes.** Three independent reviews of the pre-replay `e4bedb78c` (correctness, no
+  regression, rules) found one should-fix and three nits; all are fixed, none rejected. An explicit
+  portfolio's members see only the columns that vary in training, but the first round checked
+  them at the full input width, so a member reading `c3` passed at width 4 and read out of range at
+  runtime once a column was constant. `cd86c9152` walks members from one column; a new test pins
+  it, including a fit with a constant column, and one perturbation shows that it fails on the old
+  behaviour. `67b5a5f7b` makes the determinism test assert its digest, which the fix leaves
+  unchanged. This record no longer names the findings role's subsystem. Commands at the
+  pre-replay `f7e5bcb5d` (exit code, seconds): the feat-math PR tier twice, 495 passed and 10
+  skipped each time (0, 70; 0, 60); `compat_freeze` twice in compare mode, 12 passed each time (0,
+  12; 0, 12); the nine named targets twice, 74 passed each time (0, 19; 0, 19);
+  `scope_validation` with `--no-capture` twice, 14 passed, its output lines byte-identical (0, 6;
+  0, 6); `deploy/ci/lambda.sh` (0, 40: 6 workspaces, 66 tests; cargo-deny skipped as before). With
+  the records of `153e688e6` in the working tree: `cargo fmt --all --check` (0, 7); feat-math
+  clippy `-D warnings` (0); `coverage validate` (0: 288 targets, 0 unassigned);
+  `verify-test-inventory` (0: 324 items); the jope-records PR tier (0, 14: 166 passed);
+  `test-inventory.sh --no-rust --static-python` (0: the Rust half at 3,868); `deploy/ci/check.sh`
+  (0, 20); `deploy/ci/ip-scrub.sh` (0: 47 files); `git diff --check 6e0ae2491` (0); and the
+  identity `git diff --quiet` over the same 70 paths (0).
+- **Commands after the replay** at `67b5a5f7b`, the tree of this commit apart from these records,
+  with a clean tree (exit code, seconds): the feat-math PR tier with `JOPE_PARITY_STRICT=1` twice,
+  514 passed and 10 skipped each time (0, 70 with the build; 0, 62); `compat_freeze`,
+  `scope_validation`, `stage_telemetry`, `fault_trace`, `kernel_pipeline` and `kernel_expression`
+  in compare mode twice, 65 passed each time, `compat_freeze` 12 of 12 and `scope_validation` 14
+  of 14 (0, 20; 0, 20); the nine named targets of the earlier rounds with `stage_telemetry`, 93
+  passed (0, 20); `scope_validation` with `--no-capture` twice, 14 passed, its six output lines
+  byte-identical to the review fixes' (sorted sha256 `cfded17e…`; 0, 7; 0, 6), so the asserted
+  determinism digest `4579e907…` holds; `parity_bits` with `JOPE_PARITY_STRICT=1` twice, 6 passed
+  (rust 6, python 6 and cpp17-fitted 10 divergences, all allowlisted, 0 unexpected, 0 stale; 0, 4;
+  0, 4); the legacy value digest `b64cf538…`, 191,716 results, as PR 03 recorded (0, 1); the
+  `jope-dime-regressor` evaluator-identity tests, 15 passed, so the identity table is unaffected
+  (0, 56 with the build); `deploy/ci/lambda.sh` (0, 43: 6 workspaces, 66 tests, all `--locked`;
+  its cargo-deny step skipped, 0.19.8 installed where 0.20.2 is pinned); `deploy/ci/emitters.sh`
+  (0, 17); `cargo check --workspace --all-targets` (0, 38); `cargo fmt --all --check` (0, 7);
+  feat-math clippy `-D warnings` (0, 9); the identity checks above (0). With these records in the
+  working tree: `coverage validate` (0: 289 targets, 0 unassigned); `verify-test-inventory` (0: 325
+  items); the jope-records PR tier (0, 14: 166 passed);
+  `test-inventory.sh --no-rust --static-python`, and again with `--update` (0: no file changed);
+  the feat-math section equal to a live listing (0); the two record items equal to the new main's
+  files with this pull request's items re-applied (0); `deploy/ci/ip-scrub.sh` (0: 47 files);
+  `deploy/ci/check.sh` (0, 20); `git diff --check 9146cbcc2` (0); and the placeholder check
+  (`git grep -nI` finds no number placeholder) (0). With these records committed, every command
+  above ran again at the head with the same results.
+- **Open.** Hosted CI. The wiring belongs to the admission policy (plan PR 08; the brief says
+  PR 07). The expression parser's recursion, shared with the runtime and the legacy check, is not
+  changed. cargo-deny was skipped locally (0.19.8 installed, 0.20.2 asserted). The workspace check
+  warns only in `battle-gpu`, `jope-dime-regressor` and `jope-parallel`, as before, and not in
+  feat-math.
+- **Evidence.** `~/jope-evidence/kernel2/pr05/prepare-20260929T173902Z/` for the first round,
+  `~/jope-evidence/kernel2/pr05/fix-20260929T181730Z/` for the review fixes and
+  `~/jope-evidence/kernel2/pr05/rebase-20260929T183131Z/` for the replay: the logs of these
+  commands, the feat-math listings, the perturbation diffs, the conflict and its resolution and
+  the re-applied record items, each with `SHA256SUMS`.
+
 **2026-09-29 kernel2 pull request 04 (#130): per-stage fault counts beside unchanged fits and predictions.**
 Branch `kernel2/claude-m1-telemetry`, prepared in the lane `.agent/worktrees/kernel2` on
 `79a88767f21dccf7505987f9b0ac7366d71f2c0b`, the reviewed head of #128, and replayed onto
@@ -442,13 +570,13 @@ Next allowed action:
    - Done before the verification: the demo lane is gone; the refs are pinned (250 pins, 691 to 941 refs), and the final all-refs bundle (sha256 `592950b4…`, 941 refs) was restored and checked in an independent bare repository (`60-refs/`, independently verified at 11:21:00Z). The remote branch renames and deletions ran from 11:39:50Z to 11:45:44Z, after the AGENT_CHAT notice of 11:23:58Z and its 15-minute objection window (`60-refs/apply-20260929T113950Z/run.log`: local 5 of 5 and remote 24 of 24 rows acted, none refused; the stash was cleared; 140 remote-tracking refs were pruned).
    - A completeness critic restored the final bundle again, independently, and found every T0 census commit reachable (`70-endstate/critic-endstate-critic-20260929T123116Z/`). Its one blocking item, a ledger end snapshot, was taken after the close-out handoff was posted in AGENT_CHAT at 12:35:15Z: `01-agent-chat/snapshots/AGENT_CHAT-20260929T123515Z-end.md`, 509,995 bytes, with the 06:47Z snapshot as its byte prefix. It is sealed and mirrored. `81-remediation-20260929T123356Z/` holds the custody copies made the same afternoon: the kernel2 plan documents and the `release-v0.2.0` run directories.
 2. The kernel2 train, one implementation PR at a time, each merged by `merge-guarded.sh` at its exact reviewed head:
-   - PR 01 is #126, PR 02 is #127 and PR 03 is #128, all merged, and so is the islands-v2 source import #129; their readbacks are in the records of #127, #128, #129 and this pull request;
-   - PR 04 is #130, this pull request: stage-level fault telemetry (branch `kernel2/claude-m1-telemetry`, prepared in the lane `.agent/worktrees/kernel2` on #128's reviewed head and replayed onto main before its first push);
-   - after it merges, PR 05, static scope validation. It is prepared in the lane `.agent/worktrees/kernel2-next` on the branch `kernel2/claude-m1-scope`, and it is library-only, so it mints no identity;
-   - then PR 06, the Rust fitted-width contract;
+   - PR 01 to PR 03 (#126 to #128), the islands-v2 source import (#129) and PR 04 (#130) are merged; their readbacks are in the records of #127 to #130 and this pull request;
+   - PR 05 is #131, this pull request: static scope validation (branch `kernel2/claude-m1-scope`, prepared in the lane `.agent/worktrees/kernel2-next` on main after #129 and replayed onto main after #130 before its first push);
+   - after it merges, PR 06, the Rust fitted-width contract. It is prepared in the lane `.agent/worktrees/kernel2` on the branch `kernel2/claude-m1-width`, and it mints no identity;
    - then PR 07, fitted-C++ runtime revision 3;
    - then PR 08, the library search admission policy;
-   - then M2 (the manifest and search profiles) and the rest of the train in plan order.
+   - then M2: PR 09, the capability manifest and search profiles; PR 10, the closure gate and the export report;
+   - then the rest of the train in plan order.
 3. The islands-v2 import (owner ruling of 2026-09-29): the source import merged as #129. It imported the frozen source into `deploy/lambda/training/teacher-v2`, from the verified custody snapshot of 2026-09-29T12:44:31Z (`~/jope-evidence/islands-v2-custody/20260929T124431Z/`). Still open:
    - Codex's stopped-state handoff;
    - custody of the run's results (its run directory under `~/scratch/`, and S3);
