@@ -6,8 +6,8 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 4",
-  "count": 3905,
-  "ignored": 65,
+  "count": 3935,
+  "ignored": 66,
   "packages": {
    "battle-gpu": {
     "count": 6,
@@ -29,12 +29,12 @@
     }
    },
    "feat-math": {
-    "count": 542,
-    "ignored": 6,
+    "count": 572,
+    "ignored": 7,
     "binaries": {
      "feat-math": {
       "kind": "lib",
-      "count": 296,
+      "count": 309,
       "ignored": 2,
       "tests": [
        "advanced_v3::csv::tests::empty_record_and_one_empty_field_are_distinct",
@@ -153,6 +153,8 @@
        "evolve::robust_rank_tests::robust_matches_the_gate_formula",
        "evolve::robust_rank_tests::unscored_rungs_stay_none_under_both_keys",
        "evolve::robust_rank_tests::zero_variance_is_unpenalized_and_cap_applies",
+       "evolve::tests::a_hard_fault_at_a_later_rung_removes_the_program_from_the_ranking",
+       "evolve::tests::a_ranking_emptied_by_rung_2_rejections_reseeds",
        "evolve::tests::code_stream_is_leader_only",
        "evolve::tests::difficult_ten_priors_are_opt_in_generation_zero_candidates",
        "evolve::tests::evolve_improves_on_synthetic_regression",
@@ -170,6 +172,9 @@
        "evolve::tests::race_is_deterministic_for_a_fixed_seed",
        "evolve::tests::race_promotes_through_rungs_and_ranks_by_highest_rung",
        "evolve::tests::race_respects_tiny_time_budget",
+       "evolve::tests::scope_rejection_comes_before_any_fit",
+       "evolve::tests::the_domain_rate_counters_read_the_rung_of_the_ranking_score",
+       "evolve::tests::tie_breaking_selection_draws_the_legacy_numbers",
        "evolve::tests::v1_operators_are_byte_untouched",
        "evolve::tests::v1_regression_bit_identical_champion",
        "evolve::tests::v2_log_jitter_respects_clamps_and_is_logscale",
@@ -219,6 +224,14 @@
        "heads::tests::ridge_gcv_screen_path_end_to_end",
        "heads::tests::ridge_gcv_screen_ranks_by_abs_corr",
        "heads::tests::ridge_gcv_wide_perf",
+       "kernel::admission::tests::a_constant_stage_pass_is_domain_faulted_from_two_cells",
+       "kernel::admission::tests::class_incidences_are_capped_at_the_stage_cells",
+       "kernel::admission::tests::hard_classes_are_collected_and_named",
+       "kernel::admission::tests::pairwise_ties_are_decided_by_faulted_cells",
+       "kernel::admission::tests::rates_pool_every_expression_stage_of_every_pass",
+       "kernel::admission::tests::stages_without_expression_cells_add_nothing",
+       "kernel::admission::tests::the_penalty_is_the_documented_formula",
+       "kernel::admission::tests::ties_prefer_fewer_faulted_cells_within_anchored_runs",
        "kernel::codec::tests::writer_rejects_growth_before_exceeding_budget",
        "krr::tests::krr_beats_plain_ridge_on_nonlinearity",
        "krr::tests::krr_is_deterministic_and_learns_toy",
@@ -710,6 +723,30 @@
        "the_search_profile_is_fifteen_nodes_and_depth_four",
        "the_two_intended_differences_from_the_legacy_check",
        "the_workplan_cases_have_their_exact_results"
+      ]
+     },
+     "feat-math::search_admission": {
+      "kind": "test",
+      "count": 17,
+      "ignored": 1,
+      "tests": [
+       "an_out_of_scope_candidate_is_rejected_and_never_ranked",
+       "exact_reuse_stays_off_under_a_non_legacy_policy",
+       "fault_free_programs_score_as_under_legacy",
+       "informational_fault_policy_rates_on_the_test_datasets",
+       "legacy_reproduces_the_frozen_search_runs",
+       "non_legacy_policies_never_call_a_gpu_backend",
+       "other_penalty_settings_reproduce_the_frozen_search_runs",
+       "outcomes_do_not_depend_on_the_thread_count",
+       "penalize_ranks_the_fault_free_program_first_on_equal_loss",
+       "penalize_reproduces_the_frozen_search_runs",
+       "penalty_weights_must_be_finite_and_non_negative",
+       "reject_hard_reproduces_the_frozen_search_runs",
+       "the_domain_rate_counters_follow_the_ranking_and_the_elites",
+       "the_penalty_is_the_documented_formula_on_the_published_rates",
+       "the_race_refuses_an_invalid_penalty",
+       "the_scope_check_sees_the_program_as_the_search_fits_it",
+       "the_surrogate_search_refuses_an_invalid_penalty"
       ]
      },
      "feat-math::stage_telemetry": {
@@ -6149,7 +6186,7 @@
   }
  },
  "totals": {
-  "rust": 3905,
+  "rust": 3935,
   "python": 172
  }
 }
