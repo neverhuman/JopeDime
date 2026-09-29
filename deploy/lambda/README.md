@@ -2,8 +2,10 @@
 
 This directory holds the frozen AWS Lambda work of 2026-09-28: Rust workers that ran model fits on
 AWS Lambda, first one fit per call and then a whole dataset corpus, and a terminal monitor for
-those runs. It was imported unchanged from the ignored `.agent/experiments/` staging tree after
-each piece was frozen.
+those runs. Beside it are the regression workers, frozen on 2026-09-29: a Lambda worker that fits
+candidate programs on three inner folds of a regression view, and an assessment tool that replays
+a stored fold model. Each piece was imported from the ignored `.agent/experiments/` staging tree
+after it was frozen.
 
 None of it is part of the `jope` binary, the root Cargo workspace or the release build. Each Rust
 body is its own Cargo workspace with its own frozen `Cargo.lock`, and the root `Cargo.toml`,
@@ -18,6 +20,11 @@ body is its own Cargo workspace with its own frozen `Cargo.lock`, and the root `
 | `csv/gp/` | The corpus run's plan, review, storage and logging notes, and its two frozen job manifests: `corpus/train-jobs.json.gz` and `corpus/extra-train-jobs.json`. |
 | `csv/versions/` | Earlier editions: the first Rust attempt (`rust-v1`) and the single-fit edition (`rust-single-v2`, whose manifest is tracked as `Cargo.toml.v2`). |
 | `csv/*.md`, `csv/*.sh` | The feasibility results, the test and sizing plan, the deploy script, the env loader and its test. |
+| `regression/rust/` | Package `jope-regression-lambda`, the Lambda binary `regression-bootstrap`: it checks and downloads each job's input, fits every requested candidate program on the three inner folds in a child process with a timeout, replays each serialized model, and writes one gzipped record of the call to a presigned, create-only S3 URL. Its local modes (`--propose`, `--canonical-program`, `--canonical-programs`) served the controller. |
+| `regression/schemas/` | The five record schemas the worker and its controller introduced, their registry (`REGISTRY.json`) and a compatibility fixture for the existing score record. The two existing schemas the registry lists as unchanged are the repository's own `schemas/jope.score.v1.schema.json` and `schemas/jope.hwm.v1.schema.json`, so they are not copied here. |
+| `regression/*.md` | The worker's execution and recovery plan and its schema notes. |
+| `regression-ops/rust/` | Package `jope-regression-assessment`, the binary `regression-assess`: it restores one stored fold model, checks its hash and its predictions against the archived ones, and measures permutation sensitivity on a sample of validation rows, with no new fit. |
+| `regression-ops/*.md` | The run's status at handoff, the S3 audit and the schema addendum. |
 | `watch/` | Package `jope-lambda-watch`, a Ratatui terminal monitor for the runs, with its telemetry contract and performance record. |
 | `SNAPSHOT.json` | Every file of the frozen work: its sha256, its source anchor and whether it is tracked, gzipped, renamed, in custody or excluded. |
 
@@ -43,6 +50,8 @@ CI, any other cargo-deny version is skipped with a note. By hand, after that inf
 JOPE_SOURCE_HEAD=$(git rev-parse HEAD) \
 JOPE_GP_MANIFEST_PATH=$PWD/deploy/lambda/csv/gp/corpus/extra-train-jobs.json \
   cargo test --locked --manifest-path deploy/lambda/csv/rust/Cargo.toml
+cargo test --locked --manifest-path deploy/lambda/regression/rust/Cargo.toml
+cargo test --locked --manifest-path deploy/lambda/regression-ops/rust/Cargo.toml
 cargo test --locked --manifest-path deploy/lambda/watch/Cargo.toml
 ```
 
@@ -53,16 +62,18 @@ job manifest that `bootstrap-gp-extra` embeds; the frozen review records `extra-
 ## What is not here
 
 - **Python.** The deploy, invoke, budget, archive and close controllers, the corpus inventory,
-  the analysis and plots, the monitor's feed adapter and launcher, and the planning tools are
-  Python. Under the owner's no-Python rule they are preserved byte for byte in custody, and
+  the analysis and plots, the monitor's feed adapter and launcher, the planning tools, and the
+  regression run's audit, history index, input preparation, campaign, accounting, query-table,
+  reconcile and closeout tools are Python. Under the owner's no-Python rule they are preserved
+  byte for byte in custody, and
   [`docs/archive/lambda-python-manifest.json`](../../docs/archive/lambda-python-manifest.json)
   lists each file with its hash and restore route. A Rust port is a follow-up.
 - **`.env` files.** They were never tracked. The `.env.example` templates hold identifiers only:
-  an AWS profile name, the region, the account ID, function names and host paths.
+  an AWS profile name, the region, the account ID, function names and host paths. The regression
+  worker's `.env.example` is byte-identical to its private `.env`, so it is not tracked either;
+  `SNAPSHOT.json` records the existence and sha256 of both, and of the monitor feed's `watch.env`.
 - **Evidence.** Receipts, logs, packages and results stay in the runs' custody on xbabe2 and in
   their S3 archives.
-- **The regression workers.** They were still running when this was imported; they follow once
-  their owner freezes them.
 
 ## Notes
 
@@ -73,12 +84,13 @@ job manifest that `bootstrap-gp-extra` embeds; the frozen review records `extra-
   outside the nested workspace, so its absolute path is embedded. Identity is by source hash
   (`SNAPSHOT.json`).
 - The sources are not reformatted; the root `cargo fmt --all` does not reach nested workspaces.
-- Three files differ from their frozen bytes, each recorded in `SNAPSHOT.json` with `tree_change`:
-  a `license` line in both manifests, `publish = false` in the monitor's, and the `feat-math`
-  entry of the workers' lock, which reads the root workspace version.
-- `just bump X.Y.Z` keeps that last one true. A workspace's lock pins each root crate it takes by
-  path at the version it was locked with, so after the root version changes `cargo metadata
-  --locked` fails for that workspace until its lock is updated. The bump runs
+- Nine files differ from their frozen bytes, each recorded in `SNAPSHOT.json` with `tree_change`:
+  a `license` line in all four manifests, `publish = false` in the monitor's and the assessment
+  tool's, the `feat-math` entry of the csv workers' lock, which reads the root workspace version,
+  and four regression notes whose absolute xbabe2 paths are written home-relative (`~/`).
+- `just bump X.Y.Z` keeps the `feat-math` lock entries true. A workspace's lock pins each root
+  crate it takes by path at the version it was locked with, so after the root version changes
+  `cargo metadata --locked` fails for that workspace until its lock is updated. The bump runs
   `bash deploy/ci/lambda-workspaces.sh sync-locks`: `cargo update -p <crate> --offline` for each
   such lock, a refusal unless only those version lines changed, and the lock's new sha256 in
   `SNAPSHOT.json`. It then runs the same checks as the hygiene lane, and fails unless they pass.
@@ -87,3 +99,9 @@ job manifest that `bootstrap-gp-extra` embeds; the frozen review records `extra-
   file's `tree_sha256` and `tree_change`, never its frozen `sha256`, and refuses a file that has
   no frozen record of its own bytes. `bash deploy/ci/lambda-workspaces.sh verify` runs the
   `cargo metadata --locked --offline` and `SNAPSHOT.json` checks.
+- The regression worker writes its per-call scratch under `/tmp/jope-<attempt id>` and removes it
+  before it returns (`regression/rust/src/main.rs`): `/tmp` is the only writable path in the AWS
+  Lambda runtime. That is the repository's one exception to its no-`/tmp` rule, and it holds only
+  inside Lambda. The worker's tests, `deploy/ci/lambda.sh` and every other tool write nothing under
+  `/tmp`. No guard needed an exception for it: the repo-layout temp-directory rule covers test code
+  under `crates/`.
