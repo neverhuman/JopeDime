@@ -1,6 +1,6 @@
 {
   "schema": "feat-math.compat-freeze.emitted-bytes.v1",
-  "generated_at_sha": "5da70d5760fd26219d4cf9a9ebe9e97f8b1cce95",
+  "generated_at_sha": "eeca7fbb35a5813ccebfcfcf04decb221a64cc49",
   "note": "Values are \"<byte length> <sha256>\" of the artifact text (EmitOptions::default()), \"unsupported: <element kinds>\" where the emitter refuses the program, or the recorded error or skip. The *_jope_emit values use the options `jope emit` writes Rust, Python and the manifest with (title \"jope emit\"); C++17 recipe and JavaScript are recorded under the default options only. C++20 is the same C++17 source compiled with -std=c++20. Fitted C++17 comes from fit_legacy_numeric_bound on toy_data(80 rows, 5 columns, seed 42) as in tests/golden.rs: the first 64 rows train, the last 16 are predicted. cpp17_recipe_ops and javascript_ops are the ops each emitter accepted at generation, probed one op at a time; every one is used by a program whose bytes from that emitter are recorded here. Recorded bytes never change. Two changes are additive and pass: fewer unsupported element kinds (the recorded refusal stays) and a newly accepted op. Bytes for a value recorded as unsupported fail until JOPE_COMPAT_FREEZE_REGENERATE=gained-support records them.",
   "cpp17_recipe_ops": [
     "bin_onehot",
@@ -369,7 +369,7 @@
       "manifest_jope_emit": "490 c2b05e8473587ef61714d9734089f7b7b76f5593f22daee467f013b6a830faeb",
       "cpp17": "unsupported: transform Spline",
       "javascript": "unsupported: transform spline",
-      "fitted_cpp17_source": "18681 7bedec0c8c6ffd5ec3954baf4cba63876dd3b98fa2ef6e53883f5a17ab1bae54",
+      "fitted_cpp17_source": "18713 f93ed8aac3bf91ff8c45e45dd974ce14b7c0b6f1d3d344cc89abdd93b1c8563d",
       "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
@@ -384,7 +384,7 @@
       "manifest_jope_emit": "584 4bffde49d64e844c5067bcf99afc4562a9ad9f5b47aeab09938f2238bc2d5187",
       "cpp17": "21174 193e4903d7bd15260a51c6a56232597c3c76cc2ff42d0fd0ef3902f455900807",
       "javascript": "19913 821c77ec4396f94e72f5bf6848308ad81003811536c8b488b5e556dc4dd9a658",
-      "fitted_cpp17_source": "23672 fabed089ea569198ef3ea0de8814fed5de94772006fc9fc84e485d9f96735d4f",
+      "fitted_cpp17_source": "23718 85b5bfe60685758e0acc8ad3fd94637b96faba226b9b40cbdcc19d41af7baf78",
       "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
@@ -399,7 +399,7 @@
       "manifest_jope_emit": "604 54e61cc40614ae42b828066d9bae09f51187a8cec75fc11e62eb2e03369df4a2",
       "cpp17": "24736 8226b660ad51f05987e21680ca9ac6e44d7c7eb3229deedf1c5a06616aac3011",
       "javascript": "19914 38cb82421334126cc42c9ba89ae70bc28d68ac11702bb65941ff5abcdc05e927",
-      "fitted_cpp17_source": "36851 badd452d05bb1c409e9c2242187e16cf540f21a0ec12751f1cd3edffb6d6b240",
+      "fitted_cpp17_source": "36917 ddead2e69bd75bc55334e2cde65af656ed6c4d165f1324d1669244d33eec4044",
       "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
@@ -549,7 +549,7 @@
       "manifest_jope_emit": "508 4f9e1db7cb67c7b6f572a894abe7f144093b121c876504b0344757ec848974b6",
       "cpp17": "unsupported: head RidgeGcv",
       "javascript": "unsupported: head ridge_gcv",
-      "fitted_cpp17_source": "48491 ab53d2671d6b302853d5c77be837057d15269c2a317bc193a393e8acd1b489e4",
+      "fitted_cpp17_source": "48514 a291266106ca26375e1a0456bc553a2510a1d74fa9b6fa16c6a936631e036a26",
       "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
@@ -654,7 +654,7 @@
       "manifest_jope_emit": "606 313ec7aae4d8506fc2118238b89c370330e047235a2adfea07addc73ef988078",
       "cpp17": "unsupported: head Gbm",
       "javascript": "unsupported: head gbm",
-      "fitted_cpp17_source": "32937 1171b56521307f5d5bafddc3b58f627ef0db7ee6b85ad82d2b2cdab375ed877c",
+      "fitted_cpp17_source": "32983 d3c2108c49da3f583d278a2e6b629256e7f89730ca8f439d5e1ad93954f2f9dc",
       "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
@@ -669,7 +669,7 @@
       "manifest_jope_emit": "608 feada141c10d4871be56cf3a0dbfa355bc2680ed05ff3ae46df6e390a37d402b",
       "cpp17": "unsupported: head Blend",
       "javascript": "unsupported: head blend",
-      "fitted_cpp17_source": "44653 c90e4bfb53577c887e099ae07d8925b1a9cb55924c626dc8ab0cc8cb8024be68",
+      "fitted_cpp17_source": "44719 d133db36150ac9551741cba4b8a293f15966e669b5d8fd12bb22893f87aa840f",
       "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
