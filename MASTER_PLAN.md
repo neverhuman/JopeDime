@@ -1,5 +1,57 @@
 # JopeDime current direction
 
+**2026-09-30 kernel2 pull request 07 (#134): fitted C++17 runtime revision 3.**
+Branch `kernel2/claude-m1-fitted-cpp`, prepared in `.agent/worktrees/kernel2` on #132's reviewed
+head `8676953c1e119c3f9fb15644499c782cf17e986b` and replayed onto the new main
+`e1383b378e8e611835c6c9e0da7c8022a1b1e46e` after #133 merged. It implements plan X3
+under Jepson's 2026-09-29 OQ-8 decision and closes #132's kept schema-bound
+`piecewise_linear` width gap.
+- **Readback of #133.** PR #133 merged by rebase at 2026-09-30T02:21:00Z from reviewed full head
+  `deb111eda8bde854ef9c4fbb116932596c2aa21b`; independent Codex reviewer `neverhumanbot`
+  approved that exact commit in native review `5360717366`. The pull-request run `36657316367`
+  and manual run `36657338347` passed eight lanes plus aggregate on attempt 1 at the head.
+  Remote main `e1383b378e8e611835c6c9e0da7c8022a1b1e46e` has the reviewed tree
+  `462d6e06c14daed64ce5e1cbd3a22befcb305ab3`; `main-guard` run `36659434649`
+  passed there. The writer account also performed the merge; `gh-role` warned that it opened
+  the PR. Evidence: `~/jope-evidence/kernel2/pr133-merge-20260930T022100Z/`.
+- **Contents.** The fitted C++17 emitter checks every fitted index at its read, including
+  `select_corr`, `impute`, pair stages, `corr_screen` and `roll` on an empty row. Both ABIs return
+  documented status 8 for a fitted-width error. Empty-row means and standard deviations divide
+  by one, legacy predictor paths pad empty stage rows, and tied `piecewise_linear` intervals use
+  the runtime's step rule; valid-width predictions retain their bits. The emitter, codec and
+  model container use revision 3. Revision-2 containers still validate and regenerate their
+  library on load without refitting. The Rust schema-bound `piecewise_linear` arm now returns a
+  width error where inconsistent fitted edges previously panicked. The emitters CI lane adds
+  AddressSanitizer/UndefinedBehaviorSanitizer and g++ C++20 runs.
+- **Fixture and identity.** Owner-approved `fitted-cpp-revision` mode changed only the 54 fitted
+  C++ source and 54 codec values of `emitted_bytes.v1.json`, plus its `generated_at_sha`. The
+  latter names replayed emitter commit `5da70d5760fd26219d4cf9a9ebe9e97f8b1cce95`. A
+  second regeneration was byte-idempotent; compare mode passed 13 of 13 at replay head
+  `f3b4a7c4e49df4005efc764a678cd789c4f6e411`. Every fixture value is byte-identical
+  to the prepared candidate; its header alone changed during replay. No ADR-0004 evaluator
+  identity input, lineage source, frozen pin or `cpp/fitted_runtime.cpp` changes in this PR.
+- **Replay and records.** All nine implementation commits replayed without conflict. The
+  original head `6c75265bacc8f64cfa6c5532d9ce55904defbdfb` and first replay head
+  `829fee0422c4fb49703da708e84463124685fd2e` remain on local preservation refs. The
+  fourth commit was regenerated at the replayed emitter commit because the mode refuses a SHA
+  older than later source changes. `git range-diff` maps the other eight patches unchanged.
+  Test inventory was regenerated from the new main: 3,945 Rust tests (66 ignored), up from
+  3,936, with one renamed width test and ten additions; feat-math has 582 tests (7 ignored).
+  Python remains 172 static-scan entries. Coverage validates with 291 targets and no invalid
+  assignment; findings inventory remains 327 items, 198 classified regression. This receipt is
+  `docs/internal/kernel2/receipts/X3.md` and the replay evidence is
+  `~/jope-evidence/kernel2/pr07/replay-20260930T0223Z/`.
+- **Verification and open work.** The pre-replay implementation gate passed strict feat-math
+  Clippy, two feat-math PR tiers (541 passed, 10 skipped each), compatibility compare twice,
+  parity, sanitizer and C++20 tests, the emitters lane, workspace check, consumers, identity,
+  Rust and feat-math main tiers, Lambda and IP scrub. Its logs are under
+  `~/.cache/claude-session-scratch/agents/kernel2-pr07/implementer/logs/`. The replayed tree's
+  narrow fixture run passed twice and compare mode passed; coverage and test-inventory validators
+  passed. The final local gate, exact-head hosted CI and independent native review remain the
+  landing conditions. The public fitted C++ marker, derived from this emitter, still names base
+  revision 2; g++ 13.3 remains required for container regeneration, and existing binaries cannot
+  load revision-3 containers. These are recorded in X3; they are not serving qualification.
+
 **2026-09-29 kernel2 pull request 08 (#133): opt-in fault policies for the library search.**
 Branch `kernel2/claude-m1-admission`, prepared in the lane `.agent/worktrees/kernel2-next` on
 `origin/main` `dd5ccf3f19c3314f5ef9bf34ccf362422650cce7`, after #131 merged, and replayed onto
@@ -868,8 +920,8 @@ Next allowed action:
    - A completeness critic restored the final bundle again, independently, and found every T0 census commit reachable (`70-endstate/critic-endstate-critic-20260929T123116Z/`). Its one blocking item, a ledger end snapshot, was taken after the close-out handoff was posted in AGENT_CHAT at 12:35:15Z: `01-agent-chat/snapshots/AGENT_CHAT-20260929T123515Z-end.md`, 509,995 bytes, with the 06:47Z snapshot as its byte prefix. It is sealed and mirrored. `81-remediation-20260929T123356Z/` holds the custody copies made the same afternoon: the kernel2 plan documents and the `release-v0.2.0` run directories.
 2. The kernel2 train, one implementation PR at a time, each merged by `merge-guarded.sh` at its exact reviewed head:
    - PR 01 to PR 06 (#126 to #128 and #130 to #132) and the islands-v2 source import (#129) are merged; their readbacks are in the records of #127 to #132 and this pull request;
-   - PR 08 is #133, this pull request: the library search's fault policies (branch `kernel2/claude-m1-admission`, prepared in the lane `.agent/worktrees/kernel2-next` on main after #131 and replayed onto main after #132 before its first push). It mints an evaluator identity;
-   - then PR 07, fitted-C++ runtime revision 3, which is being prepared in the lane `.agent/worktrees/kernel2` on the branch `kernel2/claude-m1-fitted-cpp`. It stacks on #132's width contract and is brought onto main after this pull request before its first push;
+   - PR 08 (#133) is merged at main `e1383b378e8e611835c6c9e0da7c8022a1b1e46e`; its evaluator identity is recorded above;
+   - PR 07 (#134), fitted-C++ runtime revision 3, is the next landing in the existing `kernel2/claude-m1-fitted-cpp` branch, replayed onto that main. Complete its local gate, exact-head CI and independent review before merge;
    - then M2: PR 09, the capability manifest and search profiles; PR 10, the closure gate and the export report;
    - then the rest of the train in plan order.
 3. The islands-v2 import (owner ruling of 2026-09-29): the source import merged as #129. It imported the frozen source into `deploy/lambda/training/teacher-v2`, from the verified custody snapshot of 2026-09-29T12:44:31Z (`~/jope-evidence/islands-v2-custody/20260929T124431Z/`). Still open:
