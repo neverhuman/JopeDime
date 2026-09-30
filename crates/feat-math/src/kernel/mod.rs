@@ -5,6 +5,7 @@
 pub mod admission;
 pub mod capabilities;
 pub mod codec;
+pub mod export;
 pub mod pipeline;
 pub mod profile;
 mod program;
