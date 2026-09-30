@@ -5,7 +5,7 @@ series was prepared on `dd5ccf3f19c3314f5ef9bf34ccf362422650cce7`, `origin/main`
 (#131), and replayed onto this base before its first push ("History"). PR 01 to PR 06 are #126 to
 #128 and #130 to #132, and #129 is the islands-v2 source import. PR 07 (fitted-C++ revision 3) is
 prepared elsewhere and is not on this base; nothing here depends on it or on #132. This pull
-request is #NNN: branch `kernel2/claude-m1-admission`, in the lane `.agent/worktrees/kernel2-next`.
+request is #133: branch `kernel2/claude-m1-admission`, in the lane `.agent/worktrees/kernel2-next`.
 Measured on 2026-09-29 on xbabe2: x86_64-unknown-linux-gnu, glibc 2.39, AMD Ryzen Threadripper PRO
 3995WX, rustc 1.97.1 (8bab26f4f 2026-07-14), cargo-nextest 0.9.133, jq 1.7, g++ 13.3.0, clang++
 18.1.3, node v26.1.0, Python 3.12.3 (for the emitted Python program only). Environment:
