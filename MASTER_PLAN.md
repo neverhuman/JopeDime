@@ -935,7 +935,7 @@ Next allowed action:
 
    PR 09's local proof on 2026-09-30 is recorded in
    `docs/internal/kernel2/receipts/WP-2.1-2.2-E1.md`: the feat-math PR tier
-   passed 594/594 selected tests (11 skipped), the four profile revisions
+   passed 595/595 selected tests (11 skipped), the four profile revisions
    have pinned canonical SHA-256 identities, all six frozen Lambda workspaces
    passed 66 tests, the generated report is byte-stable, and the repository
    gate passes with its new example in the capability matrix. The first
