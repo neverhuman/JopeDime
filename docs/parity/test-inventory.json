@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json",
-  "count": 3969,
+  "count": 3990,
   "ignored": 66,
   "packages": {
    "battle-gpu": {
@@ -29,7 +29,7 @@
     }
    },
    "feat-math": {
-    "count": 606,
+    "count": 627,
     "ignored": 7,
     "binaries": {
      "feat-math": {
@@ -488,6 +488,18 @@
        "vocabulary_registry_and_lineage_pins_match"
       ]
      },
+     "feat-math::export_report": {
+      "kind": "test",
+      "count": 5,
+      "ignored": 0,
+      "tests": [
+       "fitted_route_agrees_with_real_models",
+       "fixture_programs_agree_with_report",
+       "nested_portfolio_is_declared_for_fitted_route",
+       "planning_problems_reduce_to_element_kinds",
+       "recorded_op_lists_fit_manifest_and_live_probes"
+      ]
+     },
      "feat-math::fault_trace": {
       "kind": "test",
       "count": 15,
@@ -638,6 +650,28 @@
        "user_supplied_names_do_not_trip_the_bound_and_fitted_lints"
       ]
      },
+     "feat-math::kernel2_closure": {
+      "kind": "test",
+      "count": 15,
+      "ignored": 0,
+      "tests": [
+       "every_profile_element_is_closed",
+       "negative_literal_constant_spelling_is_rejected_by_d",
+       "negative_lossy_stage_domain_and_programs_are_rejected_by_d",
+       "negative_manifest_constant_bin_is_rejected_by_a",
+       "negative_manifest_fitted_route_cross_checks_the_real_call",
+       "negative_manifest_negation_policy_is_rejected_by_a",
+       "negative_manifest_python_route_is_rejected_by_e",
+       "negative_missing_division_fault_is_rejected_by_c",
+       "negative_quarantined_stage_is_rejected_by_a",
+       "negative_removed_sqrt_row_is_rejected_by_a",
+       "negative_runtime_only_function_is_rejected_by_a",
+       "negative_unavailable_head_is_rejected_by_e",
+       "negative_unlisted_birth_bin_is_rejected_by_a",
+       "negative_unwitnessed_fault_is_rejected_by_c",
+       "negative_wide_column_policy_is_rejected_by_a"
+      ]
+     },
      "feat-math::kernel_codec": {
       "kind": "test",
       "count": 4,
@@ -737,10 +771,11 @@
      },
      "feat-math::registry_vocabulary": {
       "kind": "test",
-      "count": 2,
+      "count": 3,
       "ignored": 0,
       "tests": [
        "executable_snapshot_matches_the_registry",
+       "grammar_ops_follow_the_authority_rule",
        "restricted_vocabulary_ops_are_executable_in_the_registry"
       ]
      },
@@ -6227,7 +6262,7 @@
   }
  },
  "totals": {
-  "rust": 3969,
+  "rust": 3990,
   "python": 172
  }
 }
