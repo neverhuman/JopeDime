@@ -82,7 +82,11 @@ already mints the planned identity.
 ## Closure gate
 
 The new `kernel2_closure` test runs in every feat-math PR tier from this PR
-on. It passes the `&Manifest` into every phase. Clause (c) compares interpreter
+on. It checks every shipped kernel2 profile, then selects the highest defined
+revision for each kernel2 profile id. Today's shipped set is empty; the gate
+does not assume it remains empty. The r1 count pins require a deliberate update
+when a newer revision is defined. It passes the `&Manifest` into every phase.
+Clause (c) compares interpreter
 and compiled row/element values bit for bit and fault sets exactly, plus
 compiled map cells against interpreter element evaluations. Boundary inputs
 are the 66 recorded binary64 values; rows of width 0–9 include finite values
