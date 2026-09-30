@@ -5,8 +5,8 @@
   "python": 172
  },
  "rust": {
-  "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 4",
-  "count": 3936,
+  "command": "cargo nextest list --workspace --locked -P main --message-format json",
+  "count": 3945,
   "ignored": 66,
   "packages": {
    "battle-gpu": {
@@ -29,12 +29,12 @@
     }
    },
    "feat-math": {
-    "count": 573,
+    "count": 582,
     "ignored": 7,
     "binaries": {
      "feat-math": {
       "kind": "lib",
-      "count": 309,
+      "count": 313,
       "ignored": 2,
       "tests": [
        "advanced_v3::csv::tests::empty_record_and_one_empty_field_are_distinct",
@@ -51,11 +51,15 @@
        "advanced_v3::feature_block::tests::invalid_sparse_indexes_and_origins_are_rejected",
        "advanced_v3::feature_block::tests::one_to_one_transform_preserves_metadata_without_truncation",
        "advanced_v3::feature_block::tests::raw_derived_width_is_not_capped_at_512",
+       "advanced_v3::fitted_cpp::tests::only_the_legacy_predictor_paths_pad_an_empty_row",
+       "advanced_v3::fitted_cpp::tests::the_prelude_marker_names_the_emitter_revision",
        "advanced_v3::fitted_cpp_runtime::tests::codec_rejects_every_truncation_and_corruption",
        "advanced_v3::fitted_cpp_runtime::tests::historical_unsafe_expression_library_is_regenerated_before_loading",
+       "advanced_v3::fitted_cpp_runtime::tests::revision_two_source_differs_from_the_current_one_only_in_revision_three_lines",
        "advanced_v3::fitted_cpp_runtime::tests::runtime_c_abi_is_sanitizer_clean_and_fail_closed",
        "advanced_v3::fitted_cpp_runtime::tests::runtime_rejects_malformed_shapes_without_entering_model_code",
        "advanced_v3::fitted_cpp_runtime::tests::safe_runtime_matches_bound_predictions",
+       "advanced_v3::fitted_cpp_runtime::tests::stored_revision_two_container_validates_and_load_regenerates_it",
        "advanced_v3::fitted_portable::tests::branch_heads_preserve_missing_routes_in_python_and_rust",
        "advanced_v3::fitted_portable::tests::fitted_portable_refuses_unimplemented_effective_state",
        "advanced_v3::fitted_portable::tests::fitted_portable_template_bytes_are_pinned_for_version_three",
@@ -364,13 +368,16 @@
      },
      "feat-math::advanced_v3_fitted_cpp": {
       "kind": "test",
-      "count": 13,
+      "count": 17,
       "ignored": 0,
       "tests": [
        "admitted_serialized_legacy_head_corpus_matches_bits",
        "audit_expression_failures_match_rust_under_sanitizers",
        "complete_legacy_transform_registry_matches_bits",
+       "empty_row_reductions_match_the_runtime_evaluator",
+       "empty_stage_outputs_match_the_runtime_bits_on_the_legacy_paths",
        "fitted_numeric_pipeline_is_deterministic_strict_and_bit_exact",
+       "fitted_state_that_does_not_fit_the_row_answers_status_8",
        "frozen_legacy_pipeline_can_cross_the_bound_cpp_bridge",
        "iid_categorical_codec_modes_match_bits",
        "iid_live_binary_head_and_calibration_corpus_matches_bits",
@@ -379,7 +386,8 @@
        "nontrivial_fitted_legacy_head_states_match_bits",
        "ordered_historical_categorical_state_matches_bits",
        "ordered_numeric_row_semantics_matches_bits",
-       "table_aware_lag_and_roll_match_bits_with_fitted_tails"
+       "table_aware_lag_and_roll_match_bits_with_fitted_tails",
+       "tied_piecewise_edges_match_the_runtime_bits"
       ]
      },
      "feat-math::advanced_v3_multiclass": {
@@ -431,13 +439,14 @@
      },
      "feat-math::compat_freeze": {
       "kind": "test",
-      "count": 12,
+      "count": 13,
       "ignored": 0,
       "tests": [
        "boundary_corpus_v1_is_well_formed_and_matches_its_definition",
        "emitted_artifact_bytes_match_the_frozen_fixture",
        "evaluator_identity_inputs_match_the_recorded_identity",
        "expression_values_match_the_frozen_fixture",
+       "fitted_cpp_revision_records_only_fitted_values_and_changes_nothing_else",
        "fixture_provenance_is_recorded",
        "gained_support_fails_until_recorded_and_its_mode_changes_nothing_else",
        "lineage_sources_match_the_recorded_sources",
@@ -487,7 +496,7 @@
        "output_widths_that_overflow_are_refused",
        "portfolios_require_their_fitted_width_unless_they_predict_the_mean",
        "ragged_rows_are_refused_and_empty_inputs_pass",
-       "schema_bound_piecewise_linear_with_extra_edge_columns_still_panics",
+       "schema_bound_piecewise_linear_with_extra_edge_columns_returns_an_error",
        "schema_bound_stages_return_errors_instead_of_panicking",
        "schema_bound_tables_with_no_rows_compare_no_width",
        "select_corr_fitted_on_eight_columns_refuses_six",
@@ -6187,7 +6196,7 @@
   }
  },
  "totals": {
-  "rust": 3936,
+  "rust": 3945,
   "python": 172
  }
 }
