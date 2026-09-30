@@ -1987,6 +1987,21 @@
         "gp",
         "policy"
       ]
+    },
+    "target:feat-math/test/export_report": {
+      "role": "regression",
+      "subsystems": [
+        "export",
+        "gp"
+      ]
+    },
+    "target:feat-math/test/kernel2_closure": {
+      "role": "regression",
+      "subsystems": [
+        "export",
+        "gp",
+        "policy"
+      ]
     }
   },
   "baseline_triage": [

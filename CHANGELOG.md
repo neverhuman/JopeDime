@@ -16,6 +16,7 @@ the commit areas (crate or lane) named in each subject line.
 - feat-math: opt-in fault policies for the library search: a scope check before any fit, Hard faults rejected, and domain and saturation faulted cells counted once per severity for penalties and an optional tie-break; the default policy keeps every search unchanged (#133)
 - feat-math, ci: fitted C++17 revision 3 checks fitted column reads, returns status 8 for invalid fitted widths, matches the runtime on empty rows and tied intervals, and reloads revision-2 containers through regeneration; the emitters lane exercises sanitizers and C++20 (#134)
 - feat-math: a declared capability manifest and four revisioned search profiles, checked against frozen grammars, generator draws, emitter routes and profile hashes (kernel2 PR 09)
+- feat-math: the capability manifest settles grammar drift under one authority rule, reports each program's export support by route, and gates the first closure checks for kernel2 profiles (kernel2 PR 10)
 
 ### CI, build and release
 

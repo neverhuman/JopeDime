@@ -930,7 +930,7 @@ Next allowed action:
    - PR 01 to PR 06 (#126 to #128 and #130 to #132) and the islands-v2 source import (#129) are merged; their readbacks are in the records of #127 to #132 and this pull request;
    - PR 08 (#133) is merged at main `e1383b378e8e611835c6c9e0da7c8022a1b1e46e`; its evaluator identity is recorded above;
    - PR 07 (#134), fitted-C++ runtime revision 3, merged at main `0616a93ef13838625d54f43a315e675738932a74` after its local gate, exact-head CI and independent review;
-   - M2: PR 09 declares the capability manifest and four revisioned search profiles, with no evaluator identity or fixture change. Its baseline is #134's main. PR 10 follows with the closure gate and export report;
+   - M2: PR 09 (#135) declared the capability manifest and four revisioned search profiles, with no evaluator identity or fixture change, and merged at main `ad0488a073c50320fcd1e6aed842dd7f650656b3`. PR 10 adds the explicit grammar authority rule, a library export report and the first closure gate phase. From PR 10 onward `kernel2_closure` is part of the feat-math PR tier;
    - then the rest of the train in plan order.
 
    PR 09's local proof on 2026-09-30 is recorded in
