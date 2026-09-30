@@ -778,3 +778,63 @@ fn synthesis_width_overflow_is_explicit_not_a_mask_dimension_failure() {
         assert!(!error.contains("row/mask"));
     }
 }
+
+#[test]
+fn v3_admission_matches_manifest() {
+    use crate::kernel::capabilities::{Manifest, OpKind, V3Admission, WidthEffect};
+    use grammar::{ProductionAdmission, RowRequirement, StageClass};
+    let manifest = Manifest::current();
+    let mut found = std::collections::BTreeSet::new();
+    let mut descriptors = 0;
+    for descriptor in grammar::v3_operation_registry() {
+        descriptors += 1;
+        for &name in std::iter::once(&descriptor.name).chain(descriptor.aliases.iter()) {
+            let row = manifest
+                .op(name)
+                .unwrap_or_else(|| panic!("missing {name}"));
+            found.insert(name);
+            let admission = match descriptor.admission {
+                ProductionAdmission::Baseline => V3Admission::Baseline,
+                ProductionAdmission::RequiresReceipt => V3Admission::RequiresReceipt,
+                ProductionAdmission::Disabled => V3Admission::Disabled,
+            };
+            assert_eq!(row.v3_admission, admission, "{name}");
+            let kind = match descriptor.stage_class {
+                StageClass::Target => OpKind::Target,
+                StageClass::Input => OpKind::Input,
+                StageClass::Transform => OpKind::Transform,
+                StageClass::Head => OpKind::Head,
+            };
+            assert_eq!(row.kind, kind, "{name}");
+            assert_eq!(row.requires_labels, descriptor.target_aware, "{name}");
+            assert_eq!(
+                row.requires_row_order,
+                descriptor.row_requirement == RowRequirement::Ordered,
+                "{name}"
+            );
+            if crate::registry::operator(name).is_none() {
+                let expected = match descriptor.width_effect {
+                    grammar::WidthEffect::None => WidthEffect::None,
+                    grammar::WidthEffect::Input => WidthEffect::Input,
+                    grammar::WidthEffect::OneToOne => WidthEffect::OneToOne,
+                    grammar::WidthEffect::GeneratedPerFeature => WidthEffect::GeneratedPerFeature,
+                    grammar::WidthEffect::ExpansionPerFeature { parameter } => {
+                        WidthEffect::ExpansionPerFeature { parameter }
+                    }
+                    grammar::WidthEffect::Select { parameter } => WidthEffect::Select { parameter },
+                    grammar::WidthEffect::Projection { parameter } => {
+                        WidthEffect::Projection { parameter }
+                    }
+                    grammar::WidthEffect::Impute => WidthEffect::Impute,
+                };
+                assert_eq!(row.width_effect, expected, "{name}");
+            }
+        }
+    }
+    assert_eq!(descriptors, 26);
+    for row in &manifest.ops {
+        if !found.contains(row.name) {
+            assert_eq!(row.v3_admission, V3Admission::Absent, "{}", row.name);
+        }
+    }
+}
