@@ -738,17 +738,43 @@ fn every_profile_element_is_closed() {
     let manifest = Manifest::current();
     let shipped = profile::shipped_kernel2_profiles();
     println!("{} shipped kernel2 profiles", shipped.len());
-    assert!(shipped.is_empty());
-    assert!(closure(&manifest, &shipped).violations.is_empty());
-    let defined = [
-        profile::profile("kernel2-baseline", 1).unwrap(),
-        profile::profile("kernel2-experimental", 1).unwrap(),
-    ];
+    let shipped_report = closure(&manifest, &shipped);
+    assert!(
+        shipped_report.violations.is_empty(),
+        "{:#?}",
+        shipped_report.violations
+    );
+    let mut latest = BTreeMap::<&str, SearchProfile>::new();
+    for candidate in profile::profiles()
+        .into_iter()
+        .filter(|item| item.id.starts_with("kernel2-"))
+    {
+        if latest
+            .get(candidate.id)
+            .is_none_or(|prior| candidate.revision > prior.revision)
+        {
+            latest.insert(candidate.id, candidate);
+        }
+    }
+    for required in ["kernel2-baseline", "kernel2-experimental"] {
+        assert!(latest.contains_key(required), "missing {required} profile");
+    }
+    let defined: Vec<_> = latest.into_values().collect();
     let report = closure(&manifest, &defined);
-    for (id, counts) in &report.per_profile {
+    for profile in &defined {
+        let counts = report.per_profile.get(profile.id).unwrap();
         println!(
-            "{id}: (a) {} (c) {} (d) {} declared (e) {}",
-            counts.a, counts.c, counts.d, counts.e
+            "{} r{}: (a) {} (c) {} (d) {} declared (e) {}",
+            profile.id, profile.revision, counts.a, counts.c, counts.d, counts.e
+        );
+        assert!(
+            matches!(
+                (profile.id, profile.revision),
+                ("kernel2-baseline" | "kernel2-experimental", 1)
+            ),
+            "add closure count pins for {} r{}",
+            profile.id,
+            profile.revision
         );
         assert_eq!(counts.a, 51);
         assert_eq!(counts.c, 956_412);
