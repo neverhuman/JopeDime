@@ -1,7 +1,7 @@
 //! `jope-datasets ingest`: enumerate a source tree, hash every candidate, de-duplicate, write the
 //! reports and (unless `--dry-run`) upload blobs and manifests through the object store.
 
-use crate::catalog::{CatalogRow, Ingest, IngestSource, Task};
+use crate::catalog::{CatalogRow, Ingest, IngestSource, Origin, Task};
 use crate::hash::{digest_file, FileDigest};
 use crate::meta::{aliases_for, build_row, task_from_meta, Hashed};
 use crate::paths::{now_compact, now_rfc3339, relpath};
@@ -40,6 +40,8 @@ pub struct Options {
     pub out: PathBuf,
     pub dry_run: bool,
     pub resume: bool,
+    /// Exclude only rows whose metadata establishes synthetic origin.
+    pub real_only: bool,
     pub jobs: usize,
     pub limit: Option<usize>,
     /// Store URL for uploads (ignored on `--dry-run`).
@@ -175,10 +177,8 @@ fn candidate_or_reject(
     }
 }
 
-/// `remote_super/quant`: class directories `regression`, `binary`, `multiclass`, `multi_label`,
-/// `timeseries`, `synthetic/binary`. Root-level `<hash>` / `synth_<hash>` directories that also
-/// exist under `regression/` and `binary/<id>` directories that also exist under
-/// `synthetic/binary/` are duplicates by path rule and are not hashed.
+/// `remote_super/quant`: hash every candidate, including duplicate-looking paths. A name or
+/// parent directory cannot establish origin or equality; byte hashes decide those questions.
 pub fn enumerate_quant(root: &Path) -> Result<Enumeration> {
     let mut en = Enumeration::default();
     let classes: [(&str, Task, u8); 6] = [
@@ -196,20 +196,11 @@ pub fn enumerate_quant(root: &Path) -> Result<Enumeration> {
         }
         quarantine(&dir, &format!("{class}/"), &mut en)?;
         for name in sorted_names(&dir)? {
-            let Some(hash) = crate::dataset_dir_hash(&name) else {
+            let Some(_) = crate::dataset_dir_hash(&name) else {
                 continue;
             };
             let sub = dir.join(&name);
             if !is_dir(&sub) {
-                continue;
-            }
-            if class == "binary" && is_dir(&root.join("synthetic/binary").join(&name)) {
-                en.duplicates.push(Duplicate {
-                    path: format!("{class}/{name}"),
-                    rule: "binary-synthetic-duplicate".into(),
-                    canonical: Some(format!("synthetic/binary/{name}")),
-                    dataset_hash: Some(hash.to_string()),
-                });
                 continue;
             }
             candidate_or_reject(
@@ -224,20 +215,11 @@ pub fn enumerate_quant(root: &Path) -> Result<Enumeration> {
     }
     quarantine(root, "", &mut en)?;
     for name in sorted_names(root)? {
-        let Some(hash) = crate::dataset_dir_hash(&name) else {
+        let Some(_) = crate::dataset_dir_hash(&name) else {
             continue;
         };
         let sub = root.join(&name);
         if !is_dir(&sub) {
-            continue;
-        }
-        if is_dir(&root.join("regression").join(&name)) {
-            en.duplicates.push(Duplicate {
-                path: name.clone(),
-                rule: "root-level-duplicate".into(),
-                canonical: Some(format!("regression/{name}")),
-                dataset_hash: Some(hash.to_string()),
-            });
             continue;
         }
         candidate_or_reject(sub, name.clone(), name.clone(), None, 9, &mut en);
@@ -484,9 +466,22 @@ pub fn dedupe(
                 dataset_hash: Some(row.dataset_hash.clone()),
             });
             if same {
-                rows[idx]
-                    .aliases
-                    .extend(aliases_for(&c.relpath, &h, source.ingest_source()));
+                if canon.origin == Origin::Synthetic && row.origin == Origin::Real {
+                    let mut real = row;
+                    real.aliases.extend(rows[idx].aliases.clone());
+                    if let Some(old) = &rows[idx].ingest {
+                        real.aliases
+                            .extend(aliases_for(&old.relpath, &h, source.ingest_source()));
+                    }
+                    rows[idx] = real;
+                } else {
+                    rows[idx]
+                        .aliases
+                        .extend(aliases_for(&c.relpath, &h, source.ingest_source()));
+                }
+            } else if canon.origin == Origin::Synthetic && row.origin == Origin::Real {
+                // A synthetic-looking earlier path cannot hide a conflicting real payload.
+                rows[idx] = row;
             }
             continue;
         }
@@ -539,41 +534,33 @@ async fn upload(
             .append(true)
             .open(ledger_path)?,
     );
-    let mut done: HashSet<String> = resume.clone();
-    let mut jobs: Vec<(String, u64, PathBuf)> = Vec::new();
+    let mut done: HashSet<String> = HashSet::new();
+    let mut jobs: Vec<(String, u64, PathBuf, bool)> = Vec::new();
     for row in rows {
         let Some(ing) = &row.ingest else { continue };
-        let _ = ing;
         for (name, f) in row.files.entries() {
             if done.insert(f.sha256.clone()) {
                 let dir = en
                     .candidates
                     .iter()
-                    .find(|c| c.name == row.id)
+                    .find(|c| c.relpath == ing.relpath)
                     .map(|c| c.dir.clone())
-                    .ok_or_else(|| anyhow!("no candidate for {}", row.id))?;
-                jobs.push((f.sha256.clone(), f.bytes, dir.join(name)));
-            } else if resume.contains(&f.sha256) {
-                summary.skipped_by_ledger += 1;
+                    .ok_or_else(|| anyhow!("no candidate for {}", ing.relpath))?;
+                jobs.push((
+                    f.sha256.clone(),
+                    f.bytes,
+                    dir.join(name),
+                    resume.contains(&f.sha256),
+                ));
             }
         }
     }
-    let results: Vec<Result<PutOutcome>> =
-        stream::iter(jobs.into_iter().map(|(sha, bytes, path)| {
+    let results: Vec<Result<(PutOutcome, bool)>> =
+        stream::iter(jobs.into_iter().map(|(sha, bytes, path, was_ledger)| {
             let ledger = &ledger;
             async move {
-                let data = tokio::fs::read(&path)
-                    .await
-                    .with_context(|| format!("read {}", path.display()))?;
                 let key = format!("blobs/sha256/{sha}");
-                let outcome = store.put_if_absent(&key, data).await?;
-                let size = store
-                    .size(&key)
-                    .await?
-                    .ok_or_else(|| anyhow!("{key}: missing after put"))?;
-                if size != bytes {
-                    return Err(anyhow!("{key}: size {size} != local {bytes}"));
-                }
+                let outcome = store.put_file_verified(&key, &path, &sha, bytes).await?;
                 let line = LedgerLine {
                     sha256: sha,
                     bytes,
@@ -586,40 +573,107 @@ async fn upload(
                     .lock()
                     .unwrap_or_else(std::sync::PoisonError::into_inner);
                 writeln!(l, "{}", serde_json::to_string(&line)?)?;
-                Ok(outcome)
+                l.sync_data()?;
+                Ok((outcome, was_ledger))
             }
         }))
-        .buffer_unordered(32)
+        .buffer_unordered(8)
         .collect()
         .await;
     for r in results {
         match r? {
-            PutOutcome::Created => summary.uploaded += 1,
-            PutOutcome::Exists => summary.already_present += 1,
+            (PutOutcome::Created, _) => summary.uploaded += 1,
+            (PutOutcome::Exists, true) => summary.skipped_by_ledger += 1,
+            (PutOutcome::Exists, false) => summary.already_present += 1,
+        }
+    }
+    let observed = store.get_observed("catalog/LATEST").await?;
+    let current = match &observed {
+        Some(pointer) => {
+            let value = std::str::from_utf8(&pointer.bytes)?.trim();
+            value
+                .strip_prefix('v')
+                .ok_or_else(|| anyhow!("invalid catalog/LATEST"))?
+                .parse::<u64>()
+                .context("invalid catalog/LATEST version")?
+        }
+        None => 0,
+    };
+    let mut merged: BTreeMap<String, CatalogRow> = BTreeMap::new();
+    if current > 0 {
+        let key = format!("catalog/v{current}/catalog.jsonl");
+        let prior = store
+            .get_string(&key)
+            .await?
+            .ok_or_else(|| anyhow!("{key}: missing"))?;
+        for (line_no, line) in prior.lines().enumerate() {
+            let row: CatalogRow = serde_json::from_str(line)
+                .with_context(|| format!("{key} line {}", line_no + 1))?;
+            if merged.insert(row.dataset_hash.clone(), row).is_some() {
+                return Err(anyhow!("{key}: duplicate dataset hash"));
+            }
         }
     }
     for row in rows {
-        store
-            .put(
-                &format!("datasets/{}/manifest.json", row.dataset_hash),
-                serde_json::to_vec_pretty(row)?,
-            )
-            .await?;
+        if let Some(old) = merged.get(&row.dataset_hash) {
+            if !same_payload(old, row) {
+                return Err(anyhow!(
+                    "{}: dataset hash has different payload",
+                    row.dataset_hash
+                ));
+            }
+        } else {
+            let key = format!("datasets/{}/manifest.json", row.dataset_hash);
+            if store
+                .put_if_absent(&key, serde_json::to_vec_pretty(row)?)
+                .await?
+                == PutOutcome::Exists
+            {
+                let old: CatalogRow = serde_json::from_slice(
+                    &store
+                        .get_bytes(&key)
+                        .await?
+                        .ok_or_else(|| anyhow!("{key}: missing"))?,
+                )?;
+                if !same_payload(&old, row) {
+                    return Err(anyhow!("{key}: existing manifest has different payload"));
+                }
+            }
+            merged.insert(row.dataset_hash.clone(), row.clone());
+        }
     }
-    let next = match store.get_string("catalog/LATEST").await? {
-        Some(v) => v.trim().trim_start_matches('v').parse::<u64>().unwrap_or(0) + 1,
-        None => 1,
-    };
+    // Older catalog objects may predate trustworthy checksums. Every referenced blob must pass
+    // a streamed body hash before the full superset is published.
+    let mut verified = HashSet::new();
+    for row in merged.values() {
+        for (_, file) in row.files.entries() {
+            if verified.insert(&file.sha256) {
+                let key = format!("blobs/sha256/{}", file.sha256);
+                if !store.verify_sha256(&key, &file.sha256, file.bytes).await? {
+                    return Err(anyhow!("{key}: missing"));
+                }
+            }
+        }
+    }
     let mut jsonl = Vec::new();
-    for row in rows {
+    for row in merged.values() {
         jsonl.extend(serde_json::to_vec(row)?);
         jsonl.push(b'\n');
     }
+    let mut next = current + 1;
+    loop {
+        let key = format!("catalog/v{next}/catalog.jsonl");
+        if store.put_if_absent(&key, jsonl.clone()).await? == PutOutcome::Created {
+            break;
+        }
+        next += 1;
+    }
     store
-        .put(&format!("catalog/v{next}/catalog.jsonl"), jsonl)
-        .await?;
-    store
-        .put("catalog/LATEST", format!("v{next}\n").into_bytes())
+        .put_conditional(
+            "catalog/LATEST",
+            format!("v{next}\n").into_bytes(),
+            observed.as_ref(),
+        )
         .await?;
     for name in [
         "duplicates.json",
@@ -632,6 +686,10 @@ async fn upload(
         }
     }
     Ok(())
+}
+
+fn same_payload(left: &CatalogRow, right: &CatalogRow) -> bool {
+    left.files == right.files && left.canonical_sha256 == right.canonical_sha256
 }
 
 /// Run an ingest end to end and return the summary (also written to `<out>/summary.json`).
@@ -657,7 +715,16 @@ pub fn run(opts: &Options) -> Result<Summary> {
         duplicates: Vec::new(),
         rejects: Vec::new(),
     };
-    let deduped = dedupe(opts.source, en, hashed);
+    let mut deduped = dedupe(opts.source, en, hashed);
+    if opts.real_only {
+        deduped.rows.retain(|row| row.origin == Origin::Real);
+        deduped.blobs = deduped
+            .rows
+            .iter()
+            .flat_map(|row| row.files.entries())
+            .map(|(_, file)| (file.sha256.clone(), file.bytes))
+            .collect();
+    }
     let mut summary = Summary {
         source: format!("{:?}", opts.source).to_lowercase(),
         root: opts.root.display().to_string(),
@@ -697,6 +764,21 @@ pub fn run(opts: &Options) -> Result<Summary> {
     jsonl.flush()?;
     write_json(&opts.out.join("duplicates.json"), &deduped.duplicates)?;
     write_json(&opts.out.join("rejects.json"), &deduped.rejects)?;
+    if opts.real_only
+        && deduped.duplicates.iter().any(|item| {
+            item.rule == "dataset-hash-conflict"
+                && deduped
+                    .rows
+                    .iter()
+                    .any(|row| item.dataset_hash.as_ref() == Some(&row.dataset_hash))
+        })
+    {
+        write_json(&opts.out.join("summary.json"), &summary)?;
+        return Err(anyhow!(
+            "dataset-hash conflicts require custody review; see {}",
+            opts.out.join("duplicates.json").display()
+        ));
+    }
     let ledger_path = opts.out.join("ledger.jsonl");
     let resume = if opts.resume {
         read_ledger(&ledger_path)

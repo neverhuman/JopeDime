@@ -1,0 +1,9 @@
+[Unit]
+Description=Daily 05:00 UTC guarded Cargo janitor
+
+[Timer]
+OnCalendar=*-*-* 05:00:00 UTC
+Persistent=true
+
+[Install]
+WantedBy=timers.target

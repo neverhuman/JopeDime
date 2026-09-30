@@ -27,6 +27,22 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Top {
+    /// Inspect an allowlist, keep a dry-run receipt, and optionally remove proven old test bins.
+    Janitor {
+        #[arg(long)]
+        config: PathBuf,
+        #[arg(long)]
+        custody: PathBuf,
+        #[arg(long)]
+        apply: bool,
+    },
+    /// Stream a file and directory custody census to a complete-only JSONL output.
+    CustodyInventory {
+        #[arg(long)]
+        root: PathBuf,
+        #[arg(long)]
+        out: PathBuf,
+    },
     /// Resolve Cargo executables/reports without assuming the target-directory layout.
     ///
     /// build writes diagnostics to stderr and exactly one executable path to stdout. select
@@ -317,6 +333,30 @@ fn main() -> ExitCode {
         return ExitCode::from(2);
     }
     match Cli::parse_from(args).command {
+        Top::Janitor {
+            config,
+            custody,
+            apply,
+        } => match jope_ci::janitor::run(&config, &custody, apply) {
+            Ok(summary) => {
+                println!("{summary}");
+                ExitCode::SUCCESS
+            }
+            Err(error) => {
+                eprintln!("janitor: {error}");
+                ExitCode::from(1)
+            }
+        },
+        Top::CustodyInventory { root, out } => match jope_ci::custody_inventory::run(&root, &out) {
+            Ok(summary) => {
+                println!("{summary}");
+                ExitCode::SUCCESS
+            }
+            Err(error) => {
+                eprintln!("custody-inventory: {error}");
+                ExitCode::from(1)
+            }
+        },
         Top::BuildReport { command } => build_report_command(command),
         Top::CargoArtifact { command } => match artifact(command) {
             Ok(None) => ExitCode::SUCCESS,

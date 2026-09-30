@@ -11,6 +11,7 @@ use object_store::{
 use sha2::{Digest, Sha256};
 use std::io::{Read, Write};
 use std::path::Path;
+use tokio::io::AsyncReadExt;
 use url::Url;
 
 pub struct Store {
@@ -285,6 +286,107 @@ impl Store {
             Err(object_store::Error::NotFound { .. }) => Ok(None),
             Err(e) => Err(anyhow!("head {rel}: {e}")),
         }
+    }
+
+    pub async fn version(&self, rel: &str) -> Result<Option<String>> {
+        match self.inner.head(&self.key(rel)).await {
+            Ok(meta) => Ok(meta.version),
+            Err(object_store::Error::NotFound { .. }) => Ok(None),
+            Err(error) => Err(anyhow!("head {rel}: {error}")),
+        }
+    }
+
+    /// Read the complete stored body. A HEAD size or multipart ETag is not a content proof.
+    pub async fn verify_sha256(&self, rel: &str, expected: &str, bytes: u64) -> Result<bool> {
+        let result = match self.inner.get(&self.key(rel)).await {
+            Ok(result) => result,
+            Err(object_store::Error::NotFound { .. }) => return Ok(false),
+            Err(error) => return Err(anyhow!("get {rel}: {error}")),
+        };
+        let mut hash = Sha256::new();
+        let mut count = 0u64;
+        let mut stream = result.into_stream();
+        while let Some(chunk) = stream.next().await {
+            let chunk = chunk.with_context(|| format!("read {rel}"))?;
+            count += chunk.len() as u64;
+            hash.update(&chunk);
+        }
+        ensure!(
+            count == bytes && hex::encode(hash.finalize()) == expected,
+            "{rel}: stored body differs from sha256 {expected} and {bytes} bytes"
+        );
+        Ok(true)
+    }
+
+    /// Upload a file in bounded parts, then read it back and hash the stored body. Existing
+    /// content-addressed keys are never overwritten. The expected digest binds this call to the
+    /// source bytes hashed during enumeration, so a changing source aborts before completion.
+    pub async fn put_file_verified(
+        &self,
+        rel: &str,
+        source: &Path,
+        expected: &str,
+        bytes: u64,
+    ) -> Result<PutOutcome> {
+        if self.verify_sha256(rel, expected, bytes).await? {
+            let path = source.to_path_buf();
+            let local = tokio::task::spawn_blocking(move || digest_file_hex(&path)).await??;
+            ensure!(
+                local == expected,
+                "{}: source changed since enumeration",
+                source.display()
+            );
+            return Ok(PutOutcome::Exists);
+        }
+        if bytes == 0 {
+            ensure!(
+                tokio::fs::metadata(source).await?.len() == 0
+                    && expected == hex::encode(Sha256::digest([])),
+                "{}: source changed since enumeration",
+                source.display()
+            );
+            let outcome = self.put_if_absent(rel, Vec::new()).await?;
+            ensure!(
+                self.verify_sha256(rel, expected, 0).await?,
+                "{rel}: missing after upload"
+            );
+            return Ok(outcome);
+        }
+        let mut file = tokio::fs::File::open(source)
+            .await
+            .with_context(|| format!("open {}", source.display()))?;
+        let mut upload = self.inner.put_multipart(&self.key(rel)).await?;
+        let mut hash = Sha256::new();
+        let mut count = 0u64;
+        let result: Result<()> = async {
+            let mut buffer = vec![0u8; 8 * 1024 * 1024];
+            loop {
+                let n = file.read(&mut buffer).await?;
+                if n == 0 {
+                    break;
+                }
+                count += n as u64;
+                hash.update(&buffer[..n]);
+                upload.put_part(buffer[..n].to_vec().into()).await?;
+            }
+            ensure!(
+                count == bytes && hex::encode(hash.finalize()) == expected,
+                "{}: source changed since enumeration",
+                source.display()
+            );
+            upload.complete().await?;
+            Ok(())
+        }
+        .await;
+        if let Err(error) = result {
+            let _ = upload.abort().await;
+            return Err(error);
+        }
+        ensure!(
+            self.verify_sha256(rel, expected, bytes).await?,
+            "{rel}: missing after upload"
+        );
+        Ok(PutOutcome::Created)
     }
 
     /// Create-only put (`If-None-Match: *`): an existing key is never rewritten.

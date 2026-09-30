@@ -3313,6 +3313,18 @@
       "dispositions": [],
       "scope": "Replays the outputs deploy/ci/cargo-artifact.py printed before it was archived at 8a55c4fef (differential run py-p1-u2-diff-20260927T023243Z) against the jope-ci binary on the same committed inputs: a captured cargo message stream and its reduced workspace metadata (select, container path maps, unfinished, failed, ambiguous, wrong-package and example streams) and the nextest store relocation. The only allowed differences, asserted as such: argument-parser wording and the OS wording for an existing output file. Also run by the hygiene lane."
     },
+    "target:jope-ci/test/custody_inventory": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-ci/tests/custody_inventory.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": ["rust-check", "rust-test", "full-default"],
+      "dispositions": ["maintenance"],
+      "scope": "Lossless source-tree census keeps real payloads under synthetic paths and records incomplete directories and symlinks."
+    },
     "target:jope-cli/bin/jope": {
       "discovery": {
         "kind": "target",
@@ -3419,6 +3431,18 @@
       ],
       "dispositions": [],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:jope-datasets/test/custody_upload": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-datasets/tests/custody_upload.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": ["rust-check", "rust-test", "inputs", "full-default"],
+      "dispositions": [],
+      "scope": "Quant custody upload verifies exact source and stored bytes, resumes interrupted rows, and preserves the prior catalog."
     },
     "target:jope-datasets/test/ingest_dry_run": {
       "discovery": {
@@ -3555,6 +3579,18 @@
       ],
       "dispositions": [],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:jope-datasets/test/virtual_split": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-datasets/tests/virtual_split.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": ["rust-check", "rust-test", "inputs", "full-default"],
+      "dispositions": [],
+      "scope": "Source-bound row-index folds and score-track verification, including groups, duplicates, chronology, immutable publish, and prediction readback."
     },
     "target:jope-dime-regressor/bin/aspfm_recovery_evolve": {
       "discovery": {

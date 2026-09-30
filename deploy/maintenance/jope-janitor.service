@@ -1,0 +1,11 @@
+[Unit]
+Description=Allowlisted Cargo test executable janitor with custody receipts
+Documentation=file:/home/ubuntu/JopeDime/deploy/maintenance/README.md
+
+[Service]
+Type=oneshot
+Nice=15
+IOSchedulingClass=idle
+UMask=0077
+TimeoutStartSec=2h
+ExecStart=%h/lane-tools/jope-ci janitor --config %h/lane-tools/jope-janitor.json --custody /mnt/jope-archive/xbabe2-recovery-20260930/janitor --apply

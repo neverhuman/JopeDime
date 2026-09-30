@@ -1,0 +1,9 @@
+[Unit]
+Description=Record xbabe2 disk pressure and cleanup failures
+
+[Service]
+Type=oneshot
+Nice=15
+IOSchedulingClass=idle
+UMask=0077
+ExecStart=%h/lane-tools/jope-disk-watch.sh %h/lane-tools/jope-disk-watch-roots.json /mnt/jope-archive/xbabe2-recovery-20260930/disk-watch

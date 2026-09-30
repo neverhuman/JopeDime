@@ -72,17 +72,58 @@ returned HTTP 404 on 2026-09-23; this inventory does not rule out copies elsewhe
 2. **Reject unless `meta.sha256[:16] == dir hash`** (reason `dir_name_pattern`, `meta_sha256_missing`,
    `meta_sha256_mismatch`, …, all written to `rejects.json`).
 3. De-duplicate by file sha256 (one blob) and by `dataset_hash` (one catalog row; every other
-   location becomes an `aliases[]` entry and a `duplicates.json` line). The 27,519 root-level
-   `quant/{<16hex>,synth_*}` copies and the 23,292 `quant/binary` copies of `quant/synthetic/binary`
-   are skipped by path rule; `_dupes_quarantine/` is never ingested; `_dedup_report.json` families
-   become aliases.
+   location becomes an `aliases[]` entry and a `duplicates.json` line). The root-level
+   `quant/{<16hex>,synth_*}` copies are considered by content hash and metadata, since a
+   synthetic path can contain a real dataset. Confirmed synthetic rows are excluded only with
+   `--real-only`; unknown origin remains in the private catalog. Non-dataset research files are
+   handled by the custody inventory below.
 4. Merge provenance from `meta.json` (`source_platform/source_dataset_id/source_url/source_license`),
    the mirror index (its sha must equal the computed sha) and, for real datasets, the `hyper`
    manifests as a cross-reference.
-5. Upload: `HeadObject` first; `PUT` with `ChecksumAlgorithm=SHA256`, `x-amz-meta-sha256` and
-   `If-None-Match: *` (an existing key is never rewritten); post-upload `HeadObject` compares
-   metadata and checksum; append `ingest/ledger.jsonl`. `--resume` skips ledger-verified hashes;
-   32 concurrent uploads; safe to kill and rerun.
+5. Upload: stream source files in bounded multipart parts, hash source bytes during transfer,
+   and stream the entire stored object back to verify SHA-256. Existing keys are read and hashed,
+   not trusted by size alone. `--resume` rechecks ledger entries before skipping them. Publishing
+   merges earlier catalog rows and verifies their referenced blobs before a conditional `LATEST`
+   update. A failed or changed source does not advance the pointer.
+
+### Complete quant custody
+
+`jope-ci custody-inventory --root /home/ubuntu/remote_super --out CUSTODY/remote-super.jsonl`
+records every reachable file, directory and symlink with exact path bytes, type, size, metadata,
+SHA-256 for files, classification and proposed USB shard. Incomplete dataset directories receive
+explicit records. Read errors or files that change while scanned leave a partial inventory and
+fail the census. Unknown origin is treated as unresolved research data.
+
+`jope-datasets custody-upload --inventory CUSTODY/remote-super.jsonl --root
+/home/ubuntu/remote_super --out CUSTODY/quant-catalog.jsonl` uploads every real or unresolved
+quant file, including models, scores and files in incomplete datasets, into the private canonical
+datasets bucket. Only metadata-confirmed synthetic train/test payloads are omitted. Each catalog
+row binds the exact source path to its SHA-256, byte count, object key and S3 version. A durable
+partial ledger resumes after interruption by rehashing both source and stored object. The tool
+publishes an immutable inventory and a full catalog superset, then conditionally advances its own
+`custody/quant/catalog/LATEST`. This path catalog supplements the dataset catalog and does not
+make unknown-license data public. No source may be removed on the strength of an incomplete census
+or an unverified upload.
+
+### Virtual evaluation splits
+
+`jope-datasets split-publish` takes a source JSON binding the train/test blob SHA-256s,
+schema SHA-256 and row counts, plus the corresponding headerless CSVs and one JSON annotation
+per row. Annotations supply task labels, known groups and chronological times; the publisher
+derives exact duplicate identities from parsed CSV rows. It verifies the local files and both
+canonical S3 blobs before publishing immutable row-index bundles. The virtual table is original
+train rows followed by original test rows. Each fold stores sorted test indices; training rows
+are their complement. No per-fold CSV copies are created.
+
+The historical original train/test boundary is one `original` track. New five-repeat folds are
+the `historical_test_exposed_exploratory` track, with up to five folds depending on class,
+group, duplicate and time constraints. An impossible case is published as an explicit exception.
+Classification and multilabel folds balance labels while keeping known groups and duplicate
+rows together. Time-series folds use chronological forward chaining. Scores carry source,
+split, track, algorithm/version, metric, seed and prediction hashes; the reader rejects a score
+for a different bundle or track. `split-scores-verify` also streams each named prediction object,
+checks its SHA-256 and requires the recorded S3 version to match. Callers must preserve historical
+scores in the original track.
 
 The PR #11 dry run over the real tree reproduced the plan's numbers exactly: 132,537 candidates →
 105,482 rows, 316,446 distinct blobs (138.98 GB), 27,519 + 23,292 duplicates, 27,429 rejects.

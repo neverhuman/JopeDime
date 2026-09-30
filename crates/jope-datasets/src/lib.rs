@@ -9,6 +9,7 @@ pub mod cache;
 pub mod catalog;
 pub mod cli;
 pub mod credentials;
+pub mod custody;
 pub mod hash;
 pub mod ingest;
 pub mod meta;
@@ -18,6 +19,7 @@ pub mod repo;
 pub mod schema;
 pub mod staging_disposition;
 pub mod store;
+pub mod virtual_split;
 
 /// Version stamped into `ingest.tool_version`.
 pub const TOOL_VERSION: &str = concat!("jope-datasets/", env!("CARGO_PKG_VERSION"));

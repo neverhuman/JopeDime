@@ -12,4 +12,6 @@
 
 pub mod build_report;
 pub mod cargo_artifact;
+pub mod custody_inventory;
+pub mod janitor;
 pub mod py;

@@ -17,12 +17,13 @@ fn dry_run_reports_rows_aliases_duplicates_and_rejects() {
         out: out.clone(),
         dry_run: true,
         resume: false,
+        real_only: false,
         jobs: 4,
         limit: None,
         store_url: None,
     };
     let s = ingest::run(&opts).unwrap();
-    assert_eq!(s.candidates, 5, "{s:?}");
+    assert_eq!(s.candidates, 7, "{s:?}");
     assert_eq!(s.rows, 3);
     assert_eq!(
         s.rows_by_task,
@@ -32,10 +33,8 @@ fn dry_run_reports_rows_aliases_duplicates_and_rejects() {
     assert_eq!(
         s.duplicates_by_rule,
         BTreeMap::from([
-            ("binary-synthetic-duplicate".to_string(), 1),
-            ("dataset-hash-duplicate".to_string(), 1),
+            ("dataset-hash-duplicate".to_string(), 3),
             ("quarantine".to_string(), 1),
-            ("root-level-duplicate".to_string(), 1),
         ])
     );
     assert_eq!(
@@ -64,14 +63,9 @@ fn dry_run_reports_rows_aliases_duplicates_and_rejects() {
         format!("regression/{A}")
     );
     let alias_paths: Vec<&str> = a.aliases.iter().map(|x| x.path.as_str()).collect();
-    assert_eq!(
-        alias_paths,
-        vec![
-            format!("timeseries/{A}/train.csv"),
-            format!("timeseries/{A}/test.csv"),
-            format!("timeseries/{A}/meta.json")
-        ]
-    );
+    assert_eq!(alias_paths.len(), 6);
+    assert!(alias_paths.contains(&format!("timeseries/{A}/train.csv").as_str()));
+    assert!(alias_paths.contains(&format!("{A}/train.csv").as_str()));
     assert_eq!(a.aliases[0].sha256, a.files.train.sha256);
     let b = rows.iter().find(|r| r.dataset_hash == B).unwrap();
     assert_eq!(b.id, format!("synth_{B}"));
@@ -79,28 +73,22 @@ fn dry_run_reports_rows_aliases_duplicates_and_rejects() {
     assert_eq!(b.generator.as_ref().unwrap().version, "2.0.0");
     let d = rows.iter().find(|r| r.dataset_hash == D).unwrap();
     assert_eq!(d.task, Task::Binary);
-    assert_eq!(
-        d.ingest.as_ref().unwrap().relpath,
-        format!("synthetic/binary/{D}")
-    );
+    assert_eq!(d.ingest.as_ref().unwrap().relpath, format!("binary/{D}"));
 
     let dups: Vec<Duplicate> =
         serde_json::from_slice(&std::fs::read(out.join("duplicates.json")).unwrap()).unwrap();
-    let root_dup = dups
-        .iter()
-        .find(|d| d.rule == "root-level-duplicate")
-        .unwrap();
+    let root_dup = dups.iter().find(|d| d.path == A).unwrap();
     assert_eq!(
         (root_dup.path.as_str(), root_dup.canonical.as_deref()),
         (A, Some(format!("regression/{A}").as_str()))
     );
     let bin_dup = dups
         .iter()
-        .find(|d| d.rule == "binary-synthetic-duplicate")
+        .find(|d| d.path == format!("synthetic/binary/{D}"))
         .unwrap();
     assert_eq!(
         bin_dup.canonical.as_deref(),
-        Some(format!("synthetic/binary/{D}").as_str())
+        Some(format!("binary/{D}").as_str())
     );
     let q = dups.iter().find(|d| d.rule == "quarantine").unwrap();
     assert_eq!(q.path, format!("regression/_dupes_quarantine/{E}"));
@@ -165,6 +153,7 @@ fn mirror_source_checks_index_hashes() {
         out,
         dry_run: true,
         resume: false,
+        real_only: false,
         jobs: 2,
         limit: None,
         store_url: None,

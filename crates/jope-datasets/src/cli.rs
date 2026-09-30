@@ -32,6 +32,51 @@ pub enum Which {
 
 #[derive(Subcommand)]
 pub enum Cmd {
+    /// Reject scores with a different source, split, track or prediction artifact.
+    SplitScoresVerify {
+        #[arg(long)]
+        source: PathBuf,
+        #[arg(long)]
+        bundle: PathBuf,
+        #[arg(long)]
+        scores: PathBuf,
+        #[arg(long)]
+        track: String,
+        #[arg(long)]
+        store: Option<String>,
+    },
+    /// Publish original and exploratory row-index bundles bound to verified source blobs.
+    SplitPublish {
+        #[arg(long)]
+        source: PathBuf,
+        #[arg(long)]
+        task: String,
+        #[arg(long)]
+        train: PathBuf,
+        #[arg(long)]
+        test: PathBuf,
+        #[arg(long)]
+        schema: PathBuf,
+        #[arg(long)]
+        annotations: PathBuf,
+        #[arg(long, default_value_t = 0)]
+        seed: u64,
+        #[arg(long)]
+        out: PathBuf,
+        #[arg(long)]
+        store: Option<String>,
+    },
+    /// Verify and preserve all real or unresolved quant files from a complete custody census.
+    CustodyUpload {
+        #[arg(long)]
+        inventory: PathBuf,
+        #[arg(long)]
+        root: PathBuf,
+        #[arg(long)]
+        out: PathBuf,
+        #[arg(long)]
+        store: Option<String>,
+    },
     /// Enumerate, hash and de-duplicate a source tree; upload unless --dry-run.
     Ingest {
         #[arg(long, value_enum)]
@@ -47,6 +92,9 @@ pub enum Cmd {
         /// Skip blobs the report directory's ledger already verified.
         #[arg(long)]
         resume: bool,
+        /// Publish real and unresolved-origin rows; exclude confirmed synthetic rows.
+        #[arg(long)]
+        real_only: bool,
         #[arg(long, default_value_t = 16)]
         jobs: usize,
         /// Hash at most this many candidates (smoke tests).
@@ -462,12 +510,93 @@ pub fn exec(cli: Cli) -> ExitCode {
 
 pub fn run(cli: Cli) -> Result<ExitCode> {
     match cli.cmd {
+        Cmd::SplitScoresVerify {
+            source,
+            bundle,
+            scores,
+            track,
+            store,
+        } => {
+            let source: crate::virtual_split::Source =
+                serde_json::from_slice(&std::fs::read(source)?)?;
+            let bundle: crate::virtual_split::Bundle =
+                serde_json::from_slice(&std::fs::read(bundle)?)?;
+            let track = match track.as_str() {
+                "original" => crate::virtual_split::Track::Original,
+                "historical_test_exposed_exploratory" => {
+                    crate::virtual_split::Track::HistoricalTestExposedExploratory
+                }
+                _ => anyhow::bail!("unknown evaluation track {track}"),
+            };
+            let store = Store::open(&store.unwrap_or_else(crate::store::datasets_url))?;
+            let rt = tokio::runtime::Builder::new_multi_thread()
+                .enable_all()
+                .build()?;
+            let verified = rt.block_on(crate::virtual_split::read_scores_verified(
+                &std::fs::read(scores)?,
+                &source,
+                &bundle,
+                track,
+                &store,
+            ))?;
+            println!("verified score records: {}", verified.len());
+            Ok(ExitCode::SUCCESS)
+        }
+        Cmd::SplitPublish {
+            source,
+            task,
+            train,
+            test,
+            schema,
+            annotations,
+            seed,
+            out,
+            store,
+        } => {
+            let source: crate::virtual_split::Source =
+                serde_json::from_slice(&std::fs::read(source)?)?;
+            let task = Task::parse(&task).ok_or_else(|| anyhow::anyhow!("unknown task {task}"))?;
+            let store = Store::open(&store.unwrap_or_else(crate::store::datasets_url))?;
+            let rt = tokio::runtime::Builder::new_multi_thread()
+                .enable_all()
+                .build()?;
+            rt.block_on(crate::virtual_split::publish_from_files(
+                source,
+                task,
+                crate::virtual_split::SplitFiles {
+                    train: &train,
+                    test: &test,
+                    schema: &schema,
+                    annotations: &annotations,
+                    out: &out,
+                },
+                seed,
+                &store,
+            ))?;
+            println!("published split receipt: {}", out.display());
+            Ok(ExitCode::SUCCESS)
+        }
+        Cmd::CustodyUpload {
+            inventory,
+            root,
+            out,
+            store,
+        } => {
+            let store = Store::open(&store.unwrap_or_else(crate::store::datasets_url))?;
+            let rt = tokio::runtime::Builder::new_multi_thread()
+                .enable_all()
+                .build()?;
+            let entries = rt.block_on(crate::custody::upload(&inventory, &root, &out, &store))?;
+            println!("verified quant custody entries: {entries}");
+            Ok(ExitCode::SUCCESS)
+        }
         Cmd::Ingest {
             source,
             root,
             dry_run,
             out,
             resume,
+            real_only,
             jobs,
             limit,
         } => {
@@ -479,6 +608,7 @@ pub fn run(cli: Cli) -> Result<ExitCode> {
                 out,
                 dry_run,
                 resume,
+                real_only,
                 jobs,
                 limit,
                 store_url: None,

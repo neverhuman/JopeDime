@@ -95,3 +95,34 @@ mean it happened. Keep PR #49 open until its actual successful report is recorde
 Until the installed copy is replaced, `~/lane-tools` still runs the Python `jope_report.py`;
 this repository no longer carries it (restore with `git checkout 8a55c4fef --
 deploy/maintenance/jope_report.py` if that installed copy must be re-verified).
+
+## xbabe2 disk recovery additions
+
+`jope-disk-watch.sh CONFIG CUSTODY` writes hourly receipts to the USB archive. It measures
+root free space and allowlisted directory sizes, compares growth with the prior receipt, and
+reports failed cleanup units. Its user timer runs at minute 15. Alerts are emitted below 1 TB
+free, above 100 GB/day growth, or on failed measurements or cleanup. Individual `du` scans can
+race active temporary files; the receipt records that failure rather than inventing a size.
+
+`jope-usb-shard.sh ROOT RELATIVE DESTINATION KEY_FILE` streams one POSIX tar shard through zstd
+and AES-256 GPG directly to USB. It records the encrypted SHA-256 and reads the entire shard
+back through decryption and tar enumeration before writing a success receipt. Restore samples,
+S3 evidence coverage, writer quiescence and consumer migration are separate gates before source
+removal. The key file stays outside the repository and its restore secret is escrowed in AWS
+Secrets Manager. Do not put the key or raw restore output in a receipt.
+
+`jope-s3-archive-proof.sh ARCHIVE BUCKET PREFIX RECEIPT_DIR` accepts a shard only after its
+USB full-readback receipt and SHA-256 file pass. It writes a content-addressed object to the
+versioned archive bucket, streams the complete S3 body back for SHA-256, reads the object version
+and writes a proof receipt. A successful shard receipt does not by itself prove that the source
+tree was stable or that consumers have migrated.
+
+`jope-ci janitor --config CONFIG --custody CUSTODY --apply` is the daily 05:00 UTC guarded
+test-executable janitor. Its exact `target/` allowlist and `delete_enabled` flag are local host
+configuration. It selects only ELF test binaries linked to Cargo fingerprint JSON, keeps the
+newest binary for each target/profile/features identity, and requires age, no active Cargo build,
+no process use and an unchanged hash before deletion. It writes a dry-run receipt before applying
+any deletion and measures actual `df` recovery afterward. Libraries, fixtures and `target/`
+receipts are never in its deletion surface. The existing 04:00 report-only sweep remains a
+separate inventory. Worktree removal is deliberately outside this janitor: the full Git, ignored
+evidence, bundle, remote PR and restore checks still precede `git worktree remove`.

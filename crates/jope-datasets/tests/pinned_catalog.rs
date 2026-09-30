@@ -42,6 +42,7 @@ fn published() -> Published {
         out: tmp.path().join("out"),
         dry_run: false,
         resume: false,
+        real_only: false,
         jobs: 2,
         limit: None,
         store_url: Some(url.clone()),

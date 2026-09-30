@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json",
-  "count": 3990,
+  "count": 4003,
   "ignored": 66,
   "packages": {
    "battle-gpu": {
@@ -1667,7 +1667,7 @@
     }
    },
    "jope-ci": {
-    "count": 46,
+    "count": 47,
     "ignored": 8,
     "binaries": {
      "jope-ci": {
@@ -1755,6 +1755,14 @@
        "cargo_artifact_matches_round_two",
        "cargo_artifact_matches_the_captured_python_outputs",
        "cargo_artifact_refuses_every_input_the_python_refused"
+      ]
+     },
+     "jope-ci::custody_inventory": {
+      "kind": "test",
+      "count": 1,
+      "ignored": 0,
+      "tests": [
+       "inventory_keeps_incomplete_real_data_under_synthetic_path"
       ]
      }
     }
@@ -1855,12 +1863,12 @@
     }
    },
    "jope-datasets": {
-    "count": 73,
+    "count": 85,
     "ignored": 0,
     "binaries": {
      "jope-datasets": {
       "kind": "lib",
-      "count": 30,
+      "count": 31,
       "ignored": 0,
       "tests": [
        "blobs::concurrency_tests::concurrent_ensure_of_one_blob_is_serialised",
@@ -1892,7 +1900,8 @@
        "store::tests::local_pointer_versions_reject_stale_updates_and_creates",
        "store::tests::memory_pointer_versions_reject_stale_updates_and_creates",
        "store::tests::s3_pointer_writes_send_server_enforced_preconditions",
-       "tests::dir_hash_pattern"
+       "tests::dir_hash_pattern",
+       "virtual_split::csv_tests::quoted_fields_are_canonical_and_multiline_rows_are_refused"
       ]
      },
      "jope-datasets::bin/jope-datasets": {
@@ -1900,6 +1909,17 @@
       "count": 0,
       "ignored": 0,
       "tests": []
+     },
+     "jope-datasets::custody_upload": {
+      "kind": "test",
+      "count": 4,
+      "ignored": 0,
+      "tests": [
+       "changed_source_is_not_published",
+       "custody_upload_preserves_real_synthetic_path_and_catalog_superset",
+       "interrupted_custody_upload_resumes_verified_rows",
+       "partial_census_cannot_publish"
+      ]
      },
      "jope-datasets::ingest_dry_run": {
       "kind": "test",
@@ -1961,15 +1981,17 @@
      },
      "jope-datasets::roundtrip": {
       "kind": "test",
-      "count": 6,
+      "count": 8,
       "ignored": 0,
       "tests": [
        "cli_offline_fetch_prints_registry",
        "failing_helper_cannot_disclose_stderr",
+       "ingest_preserves_prior_catalog_and_refuses_same_size_corruption",
        "ingest_upload_fetch_verify_roundtrip",
        "link_seeds_cache_from_registry_layout_and_repo_layout",
        "native_providers_remain_available",
-       "ranged_resume_completes_a_partial"
+       "ranged_resume_completes_a_partial",
+       "real_only_uses_metadata_and_exact_source_path"
       ]
      },
      "jope-datasets::schema_agreement": {
@@ -1998,6 +2020,18 @@
        "the_embedded_pair_is_the_committed_release_and_refuses_only_staging_products",
        "the_producer_attests_exactly_its_fitting_only_closure",
        "the_replay_verifier_rejects_the_historical_input_closure"
+      ]
+     },
+     "jope-datasets::virtual_split": {
+      "kind": "test",
+      "count": 5,
+      "ignored": 0,
+      "tests": [
+       "chronological_cuts_use_time_even_when_virtual_rows_are_unsorted",
+       "grouped_repeats_partition_original_train_and_test_rows",
+       "original_scores_cannot_enter_exploratory_track",
+       "publisher_binds_real_csv_rows_and_source_blobs",
+       "sparse_class_reduces_folds_and_unworkable_group_gets_exception"
       ]
      }
     }

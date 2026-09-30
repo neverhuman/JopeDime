@@ -745,6 +745,10 @@
       "role": "infrastructure",
       "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
     },
+    "target:jope-ci/test/custody_inventory": {
+      "role": "infrastructure",
+      "reason": "Host custody inventory supports recovery without exercising a regression subsystem"
+    },
     "target:jope-cli/bin/jope": {
       "role": "regression",
       "subsystems": [
@@ -781,6 +785,13 @@
       ]
     },
     "target:jope-datasets/lib/jope_datasets": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "storage"
+      ]
+    },
+    "target:jope-datasets/test/custody_upload": {
       "role": "regression",
       "subsystems": [
         "preparation",
@@ -838,6 +849,14 @@
       "role": "regression",
       "subsystems": [
         "preparation",
+        "evidence"
+      ]
+    },
+    "target:jope-datasets/test/virtual_split": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "evaluation",
         "evidence"
       ]
     },

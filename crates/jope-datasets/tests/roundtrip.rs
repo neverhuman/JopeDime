@@ -24,11 +24,124 @@ fn ingest_into(root: &Path, out: &Path, store_url: &str, resume: bool) -> ingest
         out: out.to_path_buf(),
         dry_run: false,
         resume,
+        real_only: false,
         jobs: 4,
         limit: None,
         store_url: Some(store_url.to_string()),
     };
     ingest::run(&opts).unwrap()
+}
+
+#[test]
+fn ingest_preserves_prior_catalog_and_refuses_same_size_corruption() {
+    let temp = tempfile::tempdir().unwrap();
+    let store_dir = temp.path().join("store");
+    std::fs::create_dir_all(&store_dir).unwrap();
+    let url = format!("file://{}", store_dir.display());
+    let first = temp.path().join("first");
+    write_dataset(
+        &first.join("regression").join(A),
+        &csv(3, 2, 1),
+        &csv(2, 2, 2),
+        real_meta(A, 1),
+    );
+    ingest_into(&first, &temp.path().join("report-first"), &url, false);
+    let second = temp.path().join("second");
+    write_dataset(
+        &second.join("regression").join(E),
+        &csv(4, 2, 3),
+        &csv(2, 2, 4),
+        real_meta(E, 2),
+    );
+    ingest_into(&second, &temp.path().join("report-second"), &url, false);
+    let store = Store::open(&url).unwrap();
+    let catalog = rt()
+        .block_on(store.get_string("catalog/v2/catalog.jsonl"))
+        .unwrap()
+        .unwrap();
+    assert_eq!(
+        catalog.lines().count(),
+        2,
+        "a new ingest cannot erase old rows"
+    );
+    assert!(catalog.contains(A));
+    assert!(catalog.contains(E));
+    let row: jope_datasets::catalog::CatalogRow =
+        serde_json::from_str(catalog.lines().find(|line| line.contains(E)).unwrap()).unwrap();
+    let blob = store_dir.join("blobs/sha256").join(&row.files.train.sha256);
+    let mut corrupt = std::fs::read(&blob).unwrap();
+    corrupt[0] ^= 1;
+    std::fs::write(&blob, corrupt).unwrap();
+    let failed = ingest::run(&Options {
+        source: Source::Quant,
+        root: second,
+        out: temp.path().join("report-third"),
+        dry_run: false,
+        resume: false,
+        real_only: false,
+        jobs: 1,
+        limit: None,
+        store_url: Some(url.clone()),
+    });
+    assert!(
+        failed.is_err(),
+        "an equal-size corrupt object must not be accepted"
+    );
+    assert_eq!(
+        rt().block_on(store.get_string("catalog/LATEST"))
+            .unwrap()
+            .unwrap()
+            .trim(),
+        "v2"
+    );
+}
+
+#[test]
+fn real_only_uses_metadata_and_exact_source_path() {
+    let temp = tempfile::tempdir().unwrap();
+    let root = temp.path().join("quant");
+    let valid = root.join("timeseries").join(A);
+    write_dataset(&valid, &csv(3, 2, 1), &csv(2, 2, 2), real_meta(A, 1));
+    // The earlier enumeration path for A is invalid. The accepted row must upload from timeseries.
+    let invalid = root.join("regression").join(A);
+    write_dataset(&invalid, "wrong,bytes\n", "wrong,bytes\n", real_meta(E, 1));
+    let mut real = real_meta(E, 2);
+    real["task_type"] = serde_json::json!("binary");
+    write_dataset(
+        &root.join("synthetic/binary").join(E),
+        &csv(4, 2, 3),
+        &csv(2, 2, 4),
+        real,
+    );
+    write_dataset(
+        &root.join("regression").join(format!("synth_{B}")),
+        &csv(3, 2, 5),
+        &csv(2, 2, 6),
+        serde_json::json!({
+            "sha256": canonical(B), "origin":"synthetic", "task_type":"regression"
+        }),
+    );
+    let store_dir = temp.path().join("store");
+    std::fs::create_dir_all(&store_dir).unwrap();
+    let url = format!("file://{}", store_dir.display());
+    let out = temp.path().join("report");
+    let summary = ingest::run(&Options {
+        source: Source::Quant,
+        root,
+        out: out.clone(),
+        dry_run: false,
+        resume: false,
+        real_only: true,
+        jobs: 1,
+        limit: None,
+        store_url: Some(url),
+    })
+    .unwrap();
+    assert_eq!(summary.rows, 2);
+    let catalog = std::fs::read_to_string(out.join("catalog.jsonl")).unwrap();
+    assert!(catalog.contains(A));
+    assert!(catalog.contains(E));
+    assert!(!catalog.contains(B));
 }
 
 #[test]
