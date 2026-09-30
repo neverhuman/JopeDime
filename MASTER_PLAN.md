@@ -1,6 +1,6 @@
 # JopeDime current direction
 
-**2026-09-29 kernel2 pull request 08 (#NNN): opt-in fault policies for the library search.**
+**2026-09-29 kernel2 pull request 08 (#133): opt-in fault policies for the library search.**
 Branch `kernel2/claude-m1-admission`, prepared in the lane `.agent/worktrees/kernel2-next` on
 `origin/main` `dd5ccf3f19c3314f5ef9bf34ccf362422650cce7`, after #131 merged, and replayed onto
 `origin/main` `d1a1d21f820d5b1867bb55cb90c42e18cd604a2d` after #132 merged, before its first push.
@@ -864,7 +864,7 @@ Next allowed action:
    - A completeness critic restored the final bundle again, independently, and found every T0 census commit reachable (`70-endstate/critic-endstate-critic-20260929T123116Z/`). Its one blocking item, a ledger end snapshot, was taken after the close-out handoff was posted in AGENT_CHAT at 12:35:15Z: `01-agent-chat/snapshots/AGENT_CHAT-20260929T123515Z-end.md`, 509,995 bytes, with the 06:47Z snapshot as its byte prefix. It is sealed and mirrored. `81-remediation-20260929T123356Z/` holds the custody copies made the same afternoon: the kernel2 plan documents and the `release-v0.2.0` run directories.
 2. The kernel2 train, one implementation PR at a time, each merged by `merge-guarded.sh` at its exact reviewed head:
    - PR 01 to PR 06 (#126 to #128 and #130 to #132) and the islands-v2 source import (#129) are merged; their readbacks are in the records of #127 to #132 and this pull request;
-   - PR 08 is #NNN, this pull request: the library search's fault policies (branch `kernel2/claude-m1-admission`, prepared in the lane `.agent/worktrees/kernel2-next` on main after #131 and replayed onto main after #132 before its first push). It mints an evaluator identity;
+   - PR 08 is #133, this pull request: the library search's fault policies (branch `kernel2/claude-m1-admission`, prepared in the lane `.agent/worktrees/kernel2-next` on main after #131 and replayed onto main after #132 before its first push). It mints an evaluator identity;
    - then PR 07, fitted-C++ runtime revision 3, which is being prepared in the lane `.agent/worktrees/kernel2` on the branch `kernel2/claude-m1-fitted-cpp`. It stacks on #132's width contract and is brought onto main after this pull request before its first push;
    - then M2: PR 09, the capability manifest and search profiles; PR 10, the closure gate and the export report;
    - then the rest of the train in plan order.
