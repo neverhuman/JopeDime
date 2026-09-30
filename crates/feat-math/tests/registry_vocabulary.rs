@@ -4,6 +4,7 @@
 //! executable set — so a registry change cannot land without regenerating the snapshot.
 use feat_math::registry::{operator, operator_registry};
 use serde_json::Value;
+use sha2::{Digest, Sha256};
 use std::collections::BTreeSet;
 use std::path::PathBuf;
 
@@ -81,5 +82,67 @@ fn executable_snapshot_matches_the_registry() {
         snapshot["provenance"]["registry_hash"],
         feat_math::registry::registry_hash(),
         "registry hash drifted"
+    );
+}
+
+#[test]
+fn grammar_ops_follow_the_authority_rule() {
+    use feat_math::kernel::capabilities::{
+        authority, grammar_violations, Authority, JAIN_V1_GRAMMAR_SHA256, V3_GRAMMAR_SHA256,
+    };
+    let mut files = std::fs::read_dir(grammar_dir())
+        .unwrap()
+        .map(|entry| entry.unwrap().path())
+        .filter(|path| {
+            path.file_name()
+                .and_then(|name| name.to_str())
+                .is_some_and(|name| name.starts_with("featmath") && name.ends_with(".json"))
+        })
+        .collect::<Vec<_>>();
+    files.sort();
+    for frozen in ["featmath.json", "featmath-jain-v1.json"] {
+        assert!(
+            files
+                .iter()
+                .any(|path| path.file_name().is_some_and(|name| name == frozen)),
+            "missing frozen grammar {frozen}"
+        );
+    }
+    for path in &files {
+        let bytes = std::fs::read(path).unwrap();
+        let hash = format!("{:x}", Sha256::digest(&bytes));
+        let grammar: Value = serde_json::from_slice(&bytes).unwrap();
+        match path.file_name().and_then(|name| name.to_str()) {
+            Some("featmath.json") => assert_eq!(hash, V3_GRAMMAR_SHA256),
+            Some("featmath-jain-v1.json") => assert_eq!(hash, JAIN_V1_GRAMMAR_SHA256),
+            _ => assert_eq!(authority(&hash), Authority::Manifest),
+        }
+        assert!(
+            grammar_violations(&hash, &grammar).is_empty(),
+            "{}: {:?}",
+            path.display(),
+            grammar_violations(&hash, &grammar)
+        );
+    }
+    assert_eq!(authority(V3_GRAMMAR_SHA256), Authority::Registry);
+    assert_eq!(authority(JAIN_V1_GRAMMAR_SHA256), Authority::Registry);
+    let synthetic_hash = "0".repeat(64);
+    assert_eq!(authority(&synthetic_hash), Authority::Manifest);
+    for (name, passes) in [("map", true), ("count_sketch", false), ("norm_row", false)] {
+        let grammar = serde_json::json!({"ops":{"999":{"name":name,"generate":true}}});
+        let violations = grammar_violations(&synthetic_hash, &grammar);
+        assert_eq!(violations.is_empty(), passes, "{name}: {violations:?}");
+        if !passes {
+            assert!(violations.iter().any(|v| v.element == name));
+        }
+    }
+    let mut frozen_clone = read_json("featmath.json");
+    frozen_clone["ops"]["999"] = serde_json::json!({
+        "name":"lag", "role":"transform", "generate":true, "engine":"featmath"
+    });
+    let violations = grammar_violations(V3_GRAMMAR_SHA256, &frozen_clone);
+    assert!(
+        violations.iter().any(|v| v.element == "lag"),
+        "{violations:?}"
     );
 }

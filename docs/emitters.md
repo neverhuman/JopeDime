@@ -1,6 +1,6 @@
 # Emitters: Python, Rust, C++17, C++20, JavaScript
 
-> **Status on `main` (2026-09-23):** `jope emit` (all five targets, `--lang cpp20` included), `jope pipeline run --emit …`, `jope models` and `jope datasets` are on `main`. There is no `jope learn`, `jope hwm` or `jope scores`; the learning store is the separate `jope-learning` binary. The machine check of the exclusion table planned below has not landed. See the README's "What this SHA actually does".
+> **Status on `main` (2026-09-30):** `jope emit` (all five targets, `--lang cpp20` included), `jope pipeline run --emit …`, `jope models` and `jope datasets` are on `main`. There is no `jope learn`, `jope hwm` or `jope scores`; the learning store is the separate `jope-learning` binary. The generated capability matrix is machine-checked by the manifest and closure tests; the hand table below summarizes it. See the README's "What this SHA actually does".
 
 `crates/feat-math` lowers a fitted program to standalone source in each target. The interpreter
 (`model::fit/predict`, f64) is the reference; every emitted program must reproduce its predictions
@@ -28,6 +28,8 @@ writes, taken from the same function (`jope_pipeline::emit::cpp_source`).
 
 ## Per-target exclusion table
 
+See [the generated capability matrix](internal/kernel2/capabilities.generated.md) for the checked rows and route support.
+
 The C++17 and JavaScript emitters are independently certified and narrower than the Python/Rust
 pair. What they do not cover today (`emit_cpp::op_cpp`/`head_supported`,
 `emit_js::op_supported`/`head_supported`):
@@ -44,9 +46,8 @@ Consequence you will see in CI: the champion `8944cbdf` (`… (histgbm depth=5 l
 emits to Python and Rust only — `deploy/ci/emitters.sh` records `targets.txt = py rs` and pins that
 too — while `portable-4lang` (the same transform stack over `ridge`) emits to all four sources and
 runs as seven programs. The vocabulary test `crates/feat-math/tests/registry_vocabulary.rs` asserts
-every op in `featmath-jain-v1.json` is executable in the registry; the plan's follow-up (a test
-that every *generatable* op has an emit rule in every target **or** a row in this table) lands
-with the `jope-contracts` schemas so the table above becomes machine-checked.
+every op in `featmath-jain-v1.json` is executable in the registry. The generated matrix and its
+manifest and closure tests provide the checked per-route rows; the hand table above summarizes them.
 
 Adding a target or an op to a target: [runbooks/add-an-emitter-target.md](runbooks/add-an-emitter-target.md).
 

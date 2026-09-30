@@ -2,6 +2,16 @@
 
 This declaration is checked against the frozen grammars and available routes.
 
+## Authority
+
+The two frozen token samplers use registry authority; every later grammar uses the manifest. Each grammar's file hash selects the rule.
+
+| Consumer | Authority |
+| --- | --- |
+| External product generators | Registry |
+| Frozen token samplers | Each file's flags, checked under registry authority |
+| Kernel profiles and later grammars | Manifest |
+
 ## Expression elements
 
 | Kind | Element | Class | Rust recipe | Python recipe | C++17 recipe | C++17 fitted | JavaScript |
@@ -44,11 +54,11 @@ This declaration is checked against the frozen grammars and available routes.
 
 ## Policies
 
-| Policy | Class | Note |
-| --- | --- | --- |
-| columns | baseline | indices under 8; wider indices wait for Phase 4 |
-| constants | baseline | birth bins; finite values remain continuous afterward |
-| negation | baseline | a negative constant only |
+| Policy | Class | Rust recipe | Python recipe | C++17 recipe | C++17 fitted | JavaScript | Note |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| columns | baseline | supported | supported | planned | supported | unsupported | indices under 8; wider indices wait for Phase 4 |
+| constants | baseline | supported | supported | planned | supported | unsupported | birth bins; finite values remain continuous afterward |
+| negation | baseline | supported | supported | planned | supported | unsupported | a negative constant only |
 
 ## Operations
 
