@@ -1980,6 +1980,13 @@
       "subsystems": [
         "encoders"
       ]
+    },
+    "target:feat-math/test/capability_manifest": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "policy"
+      ]
     }
   },
   "baseline_triage": [

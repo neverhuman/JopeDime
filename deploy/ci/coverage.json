@@ -7421,6 +7421,40 @@
         "gpu"
       ],
       "scope": "Explicit optional timing-study feature, not selected by CPU CI. Local build/boundary proof is separate from operational GPU qualification."
+    },
+    "target:feat-math/test/capability_manifest": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/feat-math/tests/capability_manifest.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:feat-math/example/capability_dump": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/feat-math/examples/capability_dump.rs",
+        "test": false,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "emitters"
+      ],
+      "dispositions": [
+        "runtime-tools"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately. Binary/example runtime behavior is not claimed by build or its unit-test harness."
     }
   }
 }

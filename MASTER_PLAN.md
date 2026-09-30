@@ -929,9 +929,20 @@ Next allowed action:
 2. The kernel2 train, one implementation PR at a time, each merged by `merge-guarded.sh` at its exact reviewed head:
    - PR 01 to PR 06 (#126 to #128 and #130 to #132) and the islands-v2 source import (#129) are merged; their readbacks are in the records of #127 to #132 and this pull request;
    - PR 08 (#133) is merged at main `e1383b378e8e611835c6c9e0da7c8022a1b1e46e`; its evaluator identity is recorded above;
-   - PR 07 (#134), fitted-C++ runtime revision 3, is the next landing in the existing `kernel2/claude-m1-fitted-cpp` branch, replayed onto that main. Complete its local gate, exact-head CI and independent review before merge;
-   - then M2: PR 09, the capability manifest and search profiles; PR 10, the closure gate and the export report;
+   - PR 07 (#134), fitted-C++ runtime revision 3, merged at main `0616a93ef13838625d54f43a315e675738932a74` after its local gate, exact-head CI and independent review;
+   - M2: PR 09 declares the capability manifest and four revisioned search profiles, with no evaluator identity or fixture change. Its baseline is #134's main. PR 10 follows with the closure gate and export report;
    - then the rest of the train in plan order.
+
+   PR 09's local proof on 2026-09-30 is recorded in
+   `docs/internal/kernel2/receipts/WP-2.1-2.2-E1.md`: the feat-math PR tier
+   passed 594/594 selected tests (11 skipped), the four profile revisions
+   have pinned canonical SHA-256 identities, all six frozen Lambda workspaces
+   passed 66 tests, the generated report is byte-stable, and the repository
+   gate passes with its new example in the capability matrix. The first
+   repository gate found the missing example row; the second passed. Local
+   cargo-deny was skipped by `lambda.sh` for a host version mismatch, and
+   hosted hygiene remains the required check. This PR changes no shipping
+   search path, evaluator identity input or frozen fixture.
 3. The islands-v2 import (owner ruling of 2026-09-29): the source import merged as #129. It imported the frozen source into `deploy/lambda/training/teacher-v2`, from the verified custody snapshot of 2026-09-29T12:44:31Z (`~/jope-evidence/islands-v2-custody/20260929T124431Z/`). Still open:
    - Codex's stopped-state handoff;
    - custody of the run's results (its run directory under `~/scratch/`, and S3);

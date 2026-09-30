@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json",
-  "count": 3946,
+  "count": 3968,
   "ignored": 66,
   "packages": {
    "battle-gpu": {
@@ -29,12 +29,12 @@
     }
    },
    "feat-math": {
-    "count": 583,
+    "count": 605,
     "ignored": 7,
     "binaries": {
      "feat-math": {
       "kind": "lib",
-      "count": 313,
+      "count": 319,
       "ignored": 2,
       "tests": [
        "advanced_v3::csv::tests::empty_record_and_one_empty_field_are_distinct",
@@ -114,6 +114,7 @@
        "advanced_v3::tests::quoted_csv_parser_handles_commas_quotes_and_newlines",
        "advanced_v3::tests::schema_mismatch_and_iid_row_ops_are_rejected",
        "advanced_v3::tests::synthesis_width_overflow_is_explicit_not_a_mask_dimension_failure",
+       "advanced_v3::tests::v3_admission_matches_manifest",
        "advanced_v3::tests::wide_raw_input_is_not_truncated",
        "advanced_v3::transforms::tests::append_preserves_original_metadata_and_generated_missing_mask",
        "advanced_v3::transforms::tests::fitted_row_tails_reject_corrupt_serialized_key_state",
@@ -236,7 +237,12 @@
        "kernel::admission::tests::stages_without_expression_cells_add_nothing",
        "kernel::admission::tests::the_penalty_is_the_documented_formula",
        "kernel::admission::tests::ties_prefer_fewer_faulted_cells_within_anchored_runs",
+       "kernel::capabilities::tests::every_fitted_op_has_a_declared_row",
+       "kernel::capabilities::tests::expression_tables_cover_every_lookup",
+       "kernel::capabilities::tests::planned_ops_have_probes",
+       "kernel::capabilities::tests::rendered_text_is_lint_clean_and_document_is_fresh",
        "kernel::codec::tests::writer_rejects_growth_before_exceeding_budget",
+       "kernel::profile::tests::revision_one_profiles_are_finite_and_distinct",
        "krr::tests::krr_beats_plain_ridge_on_nonlinearity",
        "krr::tests::krr_is_deterministic_and_learns_toy",
        "krr::tests::krr_small_n_falls_back_to_mean",
@@ -427,6 +433,29 @@
       "ignored": 1,
       "tests": [
        "emitter_speed"
+      ]
+     },
+     "feat-math::capability_manifest": {
+      "kind": "test",
+      "count": 16,
+      "ignored": 0,
+      "tests": [
+       "aliases_share_semantic_key_and_remain_outside_draw_tables",
+       "emitter_support_matches_manifest",
+       "every_expression_element_has_a_codec_id",
+       "every_grammar_expr_token_resolves_to_searchable_element",
+       "every_grammar_op_resolves_to_registry_or_declared_exception",
+       "every_known_name_has_a_row_and_profiles_have_the_declared_budget",
+       "evolve_vocab_matches_manifest_and_profiles",
+       "kernel_profiles_equal_the_manifest_tier_in_both_directions",
+       "legacy_birth_and_expansion_domains_match_draws",
+       "legacy_edit_arm_names_match_the_declared_draw_table",
+       "legacy_expression_edit_and_growers_match_declared_elements",
+       "legacy_redraw_domains_match_empty_parameter_edits",
+       "legacy_slot_and_v3_edits_match_declared_stage_names",
+       "legacy_wrapper_body_hashes_are_pinned",
+       "no_runtime_only_or_quarantined_element_in_any_grammar",
+       "quarantined_never_generatable"
       ]
      },
      "feat-math::champion_parity": {
@@ -6197,7 +6226,7 @@
   }
  },
  "totals": {
-  "rust": 3946,
+  "rust": 3968,
   "python": 172
  }
 }
