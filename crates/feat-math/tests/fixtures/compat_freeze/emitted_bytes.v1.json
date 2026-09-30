@@ -1,6 +1,6 @@
 {
   "schema": "feat-math.compat-freeze.emitted-bytes.v1",
-  "generated_at_sha": "629e69d865a674222e00224cebf45c1ffddc8dea",
+  "generated_at_sha": "5da70d5760fd26219d4cf9a9ebe9e97f8b1cce95",
   "note": "Values are \"<byte length> <sha256>\" of the artifact text (EmitOptions::default()), \"unsupported: <element kinds>\" where the emitter refuses the program, or the recorded error or skip. The *_jope_emit values use the options `jope emit` writes Rust, Python and the manifest with (title \"jope emit\"); C++17 recipe and JavaScript are recorded under the default options only. C++20 is the same C++17 source compiled with -std=c++20. Fitted C++17 comes from fit_legacy_numeric_bound on toy_data(80 rows, 5 columns, seed 42) as in tests/golden.rs: the first 64 rows train, the last 16 are predicted. cpp17_recipe_ops and javascript_ops are the ops each emitter accepted at generation, probed one op at a time; every one is used by a program whose bytes from that emitter are recorded here. Recorded bytes never change. Two changes are additive and pass: fewer unsupported element kinds (the recorded refusal stays) and a newly accepted op. Bytes for a value recorded as unsupported fail until JOPE_COMPAT_FREEZE_REGENERATE=gained-support records them.",
   "cpp17_recipe_ops": [
     "bin_onehot",
@@ -69,8 +69,8 @@
       "manifest_jope_emit": "798 1bb4842607826856c49751fdafdec0e14fc0b76f344fef3a0355b8f8e3e986c7",
       "cpp17": "unsupported: head Gbm",
       "javascript": "unsupported: head gbm",
-      "fitted_cpp17_source": "407178 6096f8f4f2a6d792df1c1d2056fe40306985c75d6530f93a39335cf44cc39bb5",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "407856 cbc4825e36998342ef952162d4363c68c7ccfc501651d1f00f8773b9a0d25fff",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "golden_map_derive_ridge",
@@ -84,8 +84,8 @@
       "manifest_jope_emit": "684 5517207f1dd6da4f42a48739df0f4cceabe2cb5cd07614672b2cf75b93162f7c",
       "cpp17": "unsupported: transform MapExpr; transform DeriveExpr",
       "javascript": "unsupported: transform map_expr; transform derive_expr",
-      "fitted_cpp17_source": "17333 3a0eddda85321d373e9d25c616d3e12ce46f11f2ffc076c37ef5ba0402a525a6",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "17753 5decbe2717ee2638b76bad381924015b98a477daef5c58b63e0fb35fcb8884e8",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "golden_map_pow_elasticnet",
@@ -99,8 +99,8 @@
       "manifest_jope_emit": "602 48df17ce9efff7a18ab87c0693a142fd89eec9b3e55442f3046a9f62b710a9c0",
       "cpp17": "unsupported: transform MapExpr",
       "javascript": "unsupported: transform map_expr",
-      "fitted_cpp17_source": "16181 4f5ec580ca8f8d8cc6ed8d35c95617d0577028e51191dc835ae69edb53ebea84",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "16548 62709e83a042ac114608c624321c7d3f52128b8d78d6d3f87c1626a1030b6d12",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "golden_step_map_expr",
@@ -114,8 +114,8 @@
       "manifest_jope_emit": "596 29f35b9705af2b478ddc1f3bf7f5b5a130bff2474f87d6764bf5940ad946bbfd",
       "cpp17": "unsupported: transform MapExpr",
       "javascript": "unsupported: transform map_expr",
-      "fitted_cpp17_source": "16882 d2ceca24da58e07ef011afc49a62bfcc0c539da71ba650b0f1b7527194421f07",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "17249 fb3b8e4d3a8d05c61ea4c63438939f0281aae2b083454b454cbd03beee3c7c9f",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "golden_scalar_batch_map_ridge",
@@ -129,8 +129,8 @@
       "manifest_jope_emit": "663 fefa4f3b7792dc77ddd7595ae9412c220f33e671ce9704ae1445d00d6ace8a3b",
       "cpp17": "unsupported: transform MapExpr",
       "javascript": "unsupported: transform map_expr",
-      "fitted_cpp17_source": "16385 8491ef40c98d8747fdb8d2d0f0119fb67bb25b0c32e557bea56aca38cb57ef3c",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "16752 fb40b6877480225fc47db4b50b530af1a7fcd20ddce3bfc13c0e89bf3cd9c9f2",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "golden_scalar_batch2_derive_ridge",
@@ -144,8 +144,8 @@
       "manifest_jope_emit": "634 51771f1a575c248002f9ad63fceb79fdc8fb552710da58c26b83e846f8c70958",
       "cpp17": "unsupported: transform DeriveExpr",
       "javascript": "unsupported: transform derive_expr",
-      "fitted_cpp17_source": "16318 d164c6eaccb41cbb7f48f07728e363dd0ad5421a00ab645696fb1e771c3ef4be",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "16685 713837a03d3f73dab82ea530733fb6deb8ef1d662a6e07a911ef6af63f5fe91a",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "golden_symbolic_affine",
@@ -159,8 +159,8 @@
       "manifest_jope_emit": "588 0f92245fd6f648f71c87741330e9ffa86a18bdee260c36abeea860f88a12fcc9",
       "cpp17": "unsupported: symbolic formula programs",
       "javascript": "unsupported: symbolic formula programs",
-      "fitted_cpp17_source": "15421 573d951bc205ab87b2d768dc51f3a6b02ec2e96f4a27704866e525a5b0b356c4",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "15735 681edbd774abf335bbcaa3dfeb9e6f6f55d9e4fb7115c9da20278e380d0131da",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "golden_symbolic_raw",
@@ -174,8 +174,8 @@
       "manifest_jope_emit": "569 02f6d1e2e9154d1b49bda32c3cae6e617f4620c07a58628059e393538ca2255b",
       "cpp17": "unsupported: symbolic formula programs",
       "javascript": "unsupported: symbolic formula programs",
-      "fitted_cpp17_source": "15469 24e27b036520b913dd631937c327366f2f46abb65fd4e79c0f3074d38154a27e",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "15783 310cdb2472d91aea484edd0b2b76cb28182674fcb9a2dceb3daef76905b2a66e",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "golden_step_symbolic",
@@ -189,8 +189,8 @@
       "manifest_jope_emit": "526 52c126e28eb2491dcd247c0d3dba643a992756a99907f5a8ebd6f388c84724da",
       "cpp17": "unsupported: symbolic formula programs",
       "javascript": "unsupported: symbolic formula programs",
-      "fitted_cpp17_source": "15365 5d09f3a604552f92d09a51ece36ed23743645397b7f622893cc27c26b5de37d6",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "15679 2b0a656663f06d8eb9c81c1f40236abb0ca7fed33f0b5c8cd863dfa2e27faf1d",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "golden_symbolic_scalar_batch",
@@ -204,8 +204,8 @@
       "manifest_jope_emit": "607 f35f3453e2786a9c082e423fc399913828651f1fc392897933c24e6d72350638",
       "cpp17": "unsupported: symbolic formula programs",
       "javascript": "unsupported: symbolic formula programs",
-      "fitted_cpp17_source": "15406 efa3427fa7f140f7d11b3c918a15e87b61f2a97d23c86e2160c008b83fd8a463",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "15720 2b1e3fd7f7998914b714893edc9a2965eb3157a7a7858593c1efcbba75bbe081",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "expressions_1",
@@ -219,8 +219,8 @@
       "manifest_jope_emit": "706 144c5b6fed9f31f661d7293cbcfaf0d309c9f749bd5ebd42a5ce8483f15bdcb2",
       "cpp17": "unsupported: transform MapExpr; transform DeriveExpr",
       "javascript": "unsupported: transform map_expr; transform derive_expr",
-      "fitted_cpp17_source": "17274 59e09c80e6ef360a0431147116ea9b1451412ba8ead19eddfabc39434451908e",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "17694 c8dafffa025c21e6cc360ae5672ce748185d267b73ac614272e7ad813cbae80f",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "expressions_2",
@@ -234,8 +234,8 @@
       "manifest_jope_emit": "703 14e711d4c49a0043f557de4abe9bea0dba84a9e276435e8fd98e3e41f1c9b39c",
       "cpp17": "unsupported: transform MapExpr; transform DeriveExpr",
       "javascript": "unsupported: transform map_expr; transform derive_expr",
-      "fitted_cpp17_source": "16820 14cfc3e5cc6ce5cf1d5f612766d218eca0356bcc24781b67e57302fefcc15a63",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "17240 5b8c8d3d2076a6aa46eab0d0011031624c34349fe9652b813860639a28213030",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "expressions_3",
@@ -249,8 +249,8 @@
       "manifest_jope_emit": "727 11807ad984df98545a0e6bf7602395cf5980323060618893633a78ee6bf61b04",
       "cpp17": "unsupported: transform MapExpr; transform DeriveExpr",
       "javascript": "unsupported: transform map_expr; transform derive_expr",
-      "fitted_cpp17_source": "17352 c36376ba7c294744aeaf9a90ba9a2da3d7e31803d3820ab3a401f51683839a35",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "17772 cec0b73c89bf798fef3ec59b0980b7a191c8ac11519c26cba93426c181b15d18",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "expressions_4",
@@ -264,8 +264,8 @@
       "manifest_jope_emit": "658 84975d6c6356092b6b6785df9079e1fbbb6e80df9080dace5a43a9e748a890c2",
       "cpp17": "unsupported: transform MapExpr; transform DeriveExpr",
       "javascript": "unsupported: transform map_expr; transform derive_expr",
-      "fitted_cpp17_source": "16683 aa8b70c9832a0687b6c3788f27f773b1f23d17a6c7efa2491b265560b386556a",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "17103 0180934087b1fea7c389ca6f951f9399e60bc8d7f060184f62c87d615deadb6d",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "expressions_5",
@@ -279,8 +279,8 @@
       "manifest_jope_emit": "684 bf149ae36e59776e27500ab2263fd9f7642bd2a7fe8cecd6bdd81bc7a9007ad2",
       "cpp17": "unsupported: transform MapExpr; transform DeriveExpr",
       "javascript": "unsupported: transform map_expr; transform derive_expr",
-      "fitted_cpp17_source": "17304 730c809d291774397480e89ae41511a208f484a8d339d8f1f4b1b387f3ea4eea",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "17724 f315d23420a7c7e7f4451234d7c53cea6bded991ffe6dbe8b89388061dfaaae1",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "expressions_6",
@@ -294,8 +294,8 @@
       "manifest_jope_emit": "720 ca9867f8e0ba555c0dcb6641d8d00c6dcf26e10ed6c20cd7f1ef253cf87b41ff",
       "cpp17": "unsupported: transform MapExpr; transform DeriveExpr",
       "javascript": "unsupported: transform map_expr; transform derive_expr",
-      "fitted_cpp17_source": "16837 8a3d2f66b45c54752a3b47f0a64a65e69e02ac23e93fa29acdbe8455a0822f74",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "17257 1a4d73be98fab039e792c91d02e0a2a1f761452c6d75ca6d73d7e630bd49b36d",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "expansion_symlog",
@@ -309,8 +309,8 @@
       "manifest_jope_emit": "486 6468834ef339a7c5b0c0dfb2a5c56a2cb84b71bb87b19e3547dd62be95f420bd",
       "cpp17": "unsupported: transform Symlog",
       "javascript": "unsupported: transform symlog",
-      "fitted_cpp17_source": "16119 1b22505576099c6c1d8ff90058a2f1e7ed5ed82f8639965f6e65805732e57775",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "16486 fcfa48196f1ef02aab2c91c6d6443331eb8a5fef6b5cab4ab3962e19e8c6de45",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "expansion_select_corr",
@@ -324,8 +324,8 @@
       "manifest_jope_emit": "508 28d71ec293d4223ec2c6b1c0da162fb16ae1936eae84db2e8dfd7de6111e1581",
       "cpp17": "unsupported: transform SelectCorr",
       "javascript": "unsupported: transform select_corr",
-      "fitted_cpp17_source": "15850 5491dcdba8b0ba6fcf9a05538ed8f397fe0602c9bbccde700e873c65545b2b5d",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "16266 7c8cd51dbe00bd16f4f293ea058b7b7964a0539e32d0398cb356baa6ad2704fe",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "expansion_impute",
@@ -339,8 +339,8 @@
       "manifest_jope_emit": "572 50907eeb8947e7b6fd93c5ab75c1213ad3583a84c6af71ab3a71a360843d158f",
       "cpp17": "unsupported: transform Impute",
       "javascript": "unsupported: transform impute",
-      "fitted_cpp17_source": "16915 6468c8e94ec2276cf4986af5cafaea18a9a4e98a639feedc9a08674ee192a375",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "17381 53be9935dcb9d10c662d87440106b8812573d6584c5b14350a2b59279e86a77c",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "expansion_pair_ratio",
@@ -354,8 +354,8 @@
       "manifest_jope_emit": "520 86a28314ff5533b0acacd4d2e7f8f66ec1de66eb18fef7908b41abd4dc6bd9e1",
       "cpp17": "unsupported: transform PairRatio",
       "javascript": "unsupported: transform pair_ratio",
-      "fitted_cpp17_source": "16756 0e8de9ba268f8c8121880f1e0e17273d1bff8f180d07db6d8adc5b815e31e01d",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "17194 44d358fe43cbcbfb39a5bed53975188fa366ab1d65332d2e0dcacbd4febfc798",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "expansion_spline",
@@ -369,8 +369,8 @@
       "manifest_jope_emit": "490 c2b05e8473587ef61714d9734089f7b7b76f5593f22daee467f013b6a830faeb",
       "cpp17": "unsupported: transform Spline",
       "javascript": "unsupported: transform spline",
-      "fitted_cpp17_source": "18314 aca9e8689487d13887591088c9d36e024dfe084aac3411742dc88b2e3f28ed4f",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "18681 7bedec0c8c6ffd5ec3954baf4cba63876dd3b98fa2ef6e53883f5a17ab1bae54",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "recipe_random_features",
@@ -384,8 +384,8 @@
       "manifest_jope_emit": "584 4bffde49d64e844c5067bcf99afc4562a9ad9f5b47aeab09938f2238bc2d5187",
       "cpp17": "21174 193e4903d7bd15260a51c6a56232597c3c76cc2ff42d0fd0ef3902f455900807",
       "javascript": "19913 821c77ec4396f94e72f5bf6848308ad81003811536c8b488b5e556dc4dd9a658",
-      "fitted_cpp17_source": "23146 846e79b61d1de814b1de1f7633f0ecd1ae5b0201435700b62536cbef0d683a8e",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "23672 fabed089ea569198ef3ea0de8814fed5de94772006fc9fc84e485d9f96735d4f",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "recipe_row_features",
@@ -399,8 +399,8 @@
       "manifest_jope_emit": "604 54e61cc40614ae42b828066d9bae09f51187a8cec75fc11e62eb2e03369df4a2",
       "cpp17": "24736 8226b660ad51f05987e21680ca9ac6e44d7c7eb3229deedf1c5a06616aac3011",
       "javascript": "19914 38cb82421334126cc42c9ba89ae70bc28d68ac11702bb65941ff5abcdc05e927",
-      "fitted_cpp17_source": "36226 48930ab24c2feef2e17acbd8453ed83c4c41314e4035de463e943f611030576b",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "36851 badd452d05bb1c409e9c2242187e16cf540f21a0ec12751f1cd3edffb6d6b240",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "recipe_indicator_features",
@@ -414,8 +414,8 @@
       "manifest_jope_emit": "572 cf40365854c2c51a922893a5ce501a170da223a9a860e1005a30187cab22215a",
       "cpp17": "14946 45615c132a252587ddc06146053da965eb7b249078e19b7eaa7b4d3b0b1f1b0a",
       "javascript": "19830 c878b8e5054c47b807428036b7260c7f980b4215efc5d55751e96970649aa44e",
-      "fitted_cpp17_source": "16605 3ad963dc9d319e6588e0f733a6f5afe9d73ed2b94f56f7d09fc7d151624e06fd",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "17078 753375c4e662fd485d6b450e6a34cbfeae1068b7c603ed085f0641cc0be781aa",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "recipe_logistic_alias",
@@ -429,8 +429,8 @@
       "manifest_jope_emit": "490 83ff803be7c244d8845282c012d8e3dc1e3664dac6464585782d05131779ae04",
       "cpp17": "12291 39b7e5fee4c38c9be1e7be022fc579650cc6beb148b1543be7d3dff45a058532",
       "javascript": "19741 513524f1c0879bc1ae947accc750741388ef3e5a1130886add474e822f22f1dc",
-      "fitted_cpp17_source": "16455 17749e9df67287831ce5c2e6d1f02db946b40b982fa2184691872b0c64423d49",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "16822 10db236d0c1a4973b33b079777467fe1fee67836dfc591153bc4a0e2f550cdd3",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "target_rank_gauss",
@@ -444,8 +444,8 @@
       "manifest_jope_emit": "506 53193ef104e563e7b2c508c4b98f5523e07039dd74f780ab8fdfa888d0164c84",
       "cpp17": "unsupported: target transforms",
       "javascript": "unsupported: target transforms",
-      "fitted_cpp17_source": "20613 8244b76a649d206abc4ecf5581ed3c5b1adccc7bdb9b5244770f0c135b25c6a3",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "20927 e8175bcd0f32d40d7ec729ccc1613ad7b545e2f33c2c1d7d221f4c9afc2c7067",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "target_log1p",
@@ -459,8 +459,8 @@
       "manifest_jope_emit": "530 192111c973a072c3c4f2fa1ff7a37a2d6cc2a27e3fc5ad244d6f9d055ba43434",
       "cpp17": "unsupported: target transforms",
       "javascript": "unsupported: target transforms",
-      "fitted_cpp17_source": "15892 9a8bbec3758dd9a0b405808fd74bb84e9317c54cb4305ca7bdba30109db27981",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "16206 f91177f928d323402f0400b8c3f8e0efc445fd4b2f18d59e143518947759880c",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "target_winsor",
@@ -474,8 +474,8 @@
       "manifest_jope_emit": "540 dcf99faf23807a8b035188e3968d73716cf3d4b284c907c872efad5b609858bb",
       "cpp17": "unsupported: target transforms",
       "javascript": "unsupported: target transforms",
-      "fitted_cpp17_source": "16489 21247e0bcbdf1e9c4f1618365249fc5910278ab3b18c64984c546a2e99252080",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "16856 26beb687aeb4f9029d9f5382210ddd6f2afdc0d5a3650141ac3a143000856e52",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "target_zscore",
@@ -489,8 +489,8 @@
       "manifest_jope_emit": "526 312b704c663ffc8f38f267e4d1606a564142d0ff42dff854e1c9b8972dda99e4",
       "cpp17": "unsupported: target transforms",
       "javascript": "unsupported: target transforms",
-      "fitted_cpp17_source": "16628 196bc3d937b52cd1608f9b4ce3a4a9529d9ebfca3fd813f3131f4b1fe22a08fe",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "16995 81a5be3198d420f5026fe08646f3ddcae170573fab24bd284eea8006606904a2",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "step_impute_mean",
@@ -504,8 +504,8 @@
       "manifest_jope_emit": "566 98159cf3cf1b2ef33b77a186fc64d87f6ab3ebc10fde337e5969116fa235b0a8",
       "cpp17": "unsupported: transform Impute",
       "javascript": "unsupported: transform impute",
-      "fitted_cpp17_source": "17036 d621cceec972cc35aa254bcae9fde3cba9b8e5f188eb73ba2054073ebd852094",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "17502 f0bc1fdda6e3e19c6bb3a68f3f01d2c70bbeb66f085e48647da87ff963156bc0",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "step_impute_const",
@@ -519,8 +519,8 @@
       "manifest_jope_emit": "574 42d5b4bc763fed4b60c126b10c37bf6b70dff6ce1aa04ef97264593ad0bbbb4d",
       "cpp17": "unsupported: transform Impute",
       "javascript": "unsupported: transform impute",
-      "fitted_cpp17_source": "17211 cbb891bcd4702a09e80cd545520a4f981fff5a27ab31003ea0884af77d55bd79",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "17677 9b25840191809f041a370f4fce7de0e6a9e16b4238bd6e9e6f501601299b6ece",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "select_corr_by_var",
@@ -534,8 +534,8 @@
       "manifest_jope_emit": "506 60204cb2c84e8f33d34eb3ddfed03a6d0f09d9fe85840a8712b7f998061190fc",
       "cpp17": "unsupported: transform SelectCorr",
       "javascript": "unsupported: transform select_corr",
-      "fitted_cpp17_source": "15850 a68eb817ae689af29e13d25c6d13ce5829bdef56ce2a11f08d13bfb968c7dc98",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "16266 3f49926472a04833d8347717759bfb56b9a6adaf81973cbdd28b98b5c9cc7bf4",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "ridge_gcv_dual_route",
@@ -549,8 +549,8 @@
       "manifest_jope_emit": "508 4f9e1db7cb67c7b6f572a894abe7f144093b121c876504b0344757ec848974b6",
       "cpp17": "unsupported: head RidgeGcv",
       "javascript": "unsupported: head ridge_gcv",
-      "fitted_cpp17_source": "48124 ffb97bc576b21cb014871dd476f71f34374688b277706e526ebeb3c70593dcee",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "48491 ab53d2671d6b302853d5c77be837057d15269c2a317bc193a393e8acd1b489e4",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "empty_stage_output",
@@ -564,8 +564,8 @@
       "manifest_jope_emit": "532 fb818d847a57d9b68d5cd3a3530756571259f1b6a3362147e099284d79213989",
       "cpp17": "unsupported: transform SelectCorr; transform PairRatio",
       "javascript": "unsupported: transform select_corr; transform pair_ratio",
-      "fitted_cpp17_source": "15940 e4744fdc395afe8401ed143ec6a8c1e46626e0a9fbac1a87b08dd21f307e4521",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "16480 12817b31190f539ca54ae38139182d0fd098b0af1af6304bcc7a8d751e81ea45",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "derive_x_body",
@@ -579,8 +579,8 @@
       "manifest_jope_emit": "512 1153148fe257ebc1f372a9872596feeb41bf8e0c86ba8022cda8ea287754810f",
       "cpp17": "unsupported: transform DeriveExpr",
       "javascript": "unsupported: transform derive_expr",
-      "fitted_cpp17_source": "16170 5b340f2936f0c542a7a77a070a044872dfdcebda89167843040037188bf8b523",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "16537 83e880de71bde5c3e50290ebb00eead449876285ef5afb49bd0a8e71f80f9a95",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "symbolic_x",
@@ -594,8 +594,8 @@
       "manifest_jope_emit": "454 77c9543346e1ef772eea7313f5f5453b9e4d9836df90c0b6160eaaa81499b05d",
       "cpp17": "unsupported: symbolic formula programs",
       "javascript": "unsupported: symbolic formula programs",
-      "fitted_cpp17_source": "15160 eb123b1e8e8c7537abd32e2984e17d50e738a30caca4a363db1a132aec4bbee7",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "15474 ba319e36806923a1b283edb5a238c72be98097e720657b3d10bee3ff2108650b",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "ip_scrub_pipeline_00",
@@ -624,8 +624,8 @@
       "manifest_jope_emit": "584 30f6d8f2d094b9af017a08b9b2006c6a5d5727d4431240abd0c092b2c76ccc54",
       "cpp17": "21334 d28188bd2cbabeabea4fddd6c3c46c45ff55ca3d9182ca3e7d827522006dd106",
       "javascript": "19878 93243a919ddc6c302ffe6c3d0a923dcff25183844fe79dcda6acf9bc9c2ef60d",
-      "fitted_cpp17_source": "44106 6d44a4fbea71c29f03310a2b2f147ab9177e26f4bcc362fd3f7c2d6d406547dc",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "44685 65f01d159b0f34191aa30a31d0a9db8caddf3b55aa6467eae8f5ecde4637fc00",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "ip_scrub_pipeline_02",
@@ -639,8 +639,8 @@
       "manifest_jope_emit": "580 ce2adc3f08cbbc29086602024c90c12d7b910f014ddcd10d3609c980be494ee9",
       "cpp17": "16931 1ffcfa03b7d662224f5b1e1f3355e53bcafb3f07474caa5dc75aacfa168084e3",
       "javascript": "19878 eaf8cfe7807984d4fcf9cd2b3ef7262febedeec7dcfa1895817764cf6ebf9cb2",
-      "fitted_cpp17_source": "78913 6bfc527085b888c89bbc63404f32dadca6e08e8b24a0ae883ab919477f2a0c79",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "79485 a380d3145e541583a14e374b1334db121b7adeb2c1c4043b159dbdfaa4604632",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "ip_scrub_pipeline_03",
@@ -654,8 +654,8 @@
       "manifest_jope_emit": "606 313ec7aae4d8506fc2118238b89c370330e047235a2adfea07addc73ef988078",
       "cpp17": "unsupported: head Gbm",
       "javascript": "unsupported: head gbm",
-      "fitted_cpp17_source": "32411 68c82f6d0669c83ced24ec04d1b9b40740438fa7ae5faeaeabcd94bd3ccc42ee",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "32937 1171b56521307f5d5bafddc3b58f627ef0db7ee6b85ad82d2b2cdab375ed877c",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "ip_scrub_pipeline_04",
@@ -669,8 +669,8 @@
       "manifest_jope_emit": "608 feada141c10d4871be56cf3a0dbfa355bc2680ed05ff3ae46df6e390a37d402b",
       "cpp17": "unsupported: head Blend",
       "javascript": "unsupported: head blend",
-      "fitted_cpp17_source": "44081 551824a6aaf398e95dd0f1c0039e4006a03ef63d640750d7ed292c81fc0d8c0e",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "44653 c90e4bfb53577c887e099ae07d8925b1a9cb55924c626dc8ab0cc8cb8024be68",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "ip_scrub_pipeline_05",
@@ -684,8 +684,8 @@
       "manifest_jope_emit": "584 767abc66b54ce65067beb05d64dce8a4b1d71981603308ec9642f85f37e01687",
       "cpp17": "unsupported: transform Polar; transform Lag; transform Roll; transform FftMag",
       "javascript": "unsupported: transform polar; transform lag; transform roll; transform fft_mag",
-      "fitted_cpp17_source": "16755 02335e08a9866da26627c25b96af75ce5230da012ce1c7c28c3751a7ad1dbfd0",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "17425 3a2f810047e91cd7a2e504d1c346b56cde96865230d2c1a6d99ee5b01c54c564",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "ip_scrub_pipeline_06",
@@ -699,8 +699,8 @@
       "manifest_jope_emit": "600 7f5ffca418cd2d88cbad8347049127432235fc6515a7f5d64c73b96082c55b1b",
       "cpp17": "unsupported: transform RowSpectral; transform SvdProject; transform Nystrom",
       "javascript": "unsupported: transform row_spectral; transform svd_project; transform nystrom",
-      "fitted_cpp17_source": "17812 4b5ccb8da3eaf4da056f0509e2ab949cfc75412954d7221d650d4a6c332ecd37",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "18338 25f63c12baeea7720bf0a1187848c85a280b677caf1172e87fb05ba042ecb4b3",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "ip_scrub_pipeline_07",
@@ -714,8 +714,8 @@
       "manifest_jope_emit": "643 f88afdf17b76b07fa8c21f6e18d3020182b54ec98c68266f3aa15cc26617087b",
       "cpp17": "unsupported: transform MapExpr; transform DeriveExpr",
       "javascript": "unsupported: transform map_expr; transform derive_expr",
-      "fitted_cpp17_source": "16200 1fb9059a11d4a49c1fda3f5ecc101ea1e0db578a8355f4459667f7ecd815f29c",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "16620 b768a0d4ee06571014ffc0d099eac5571a125313a3d0129675ab6075cb658191",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "ip_scrub_pipeline_08",
@@ -729,8 +729,8 @@
       "manifest_jope_emit": "512 b56ec359414fe87ad0ffde245abd6f617d1cf064fc561c7e8d0397b9a60fb198",
       "cpp17": "unsupported: head HistGbm2",
       "javascript": "unsupported: head histgbm2",
-      "fitted_cpp17_source": "788542 7153cdbef5cd1d9fdeabbb564b9071a9f4c4cfdbf6857e9c77337e77d4f5089e",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "788856 1e8a7336152f71396b00d70217d766a63afbe506d47bb27d1fe6ab0a2fb4d37f",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "ip_scrub_pipeline_09",
@@ -744,8 +744,8 @@
       "manifest_jope_emit": "492 0da8143dfd91f4735ad89ac0a3687c6b0456c71533b6774ce831d4fca1ffdae7",
       "cpp17": "unsupported: head Krr",
       "javascript": "unsupported: head krr",
-      "fitted_cpp17_source": "30854 126ea1e82adc1336ca1ff4cd32a3928f22997de70e0fe66dcf2e7cddc3e4accf",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "31221 d081b8326b8524687bb194fdae2cbd3044a54187f6b235a0bf1b65954d3be49b",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "ip_scrub_pipeline_10",
@@ -759,8 +759,8 @@
       "manifest_jope_emit": "482 b9a9fc978f13f456585e276c4e2168ae1113c8d847de61166aeecfd625b8c1a1",
       "cpp17": "unsupported: head Gpr",
       "javascript": "unsupported: head gpr",
-      "fitted_cpp17_source": "30433 c4de3daff2793a57a500245e8e22b69e05e7428d2a180bb1970cb17fb09b980d",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "30747 7bcae01cd986e7fc899368533dc043fb6d7ed4c498ae9c139d0c5cb827f620eb",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "ip_scrub_pipeline_11",
@@ -774,8 +774,8 @@
       "manifest_jope_emit": "516 e92c077f3af201e710bbb6f3a33729872fcc4a9037aea0c20326d0af2a09d83e",
       "cpp17": "unsupported: head GprKernel",
       "javascript": "unsupported: head gpr_kernel",
-      "fitted_cpp17_source": "30910 063c079305ade42ddaf5f3497314beca0b8157e5b736f21b82cd46b24f6da63d",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "31224 9981cd0d4c8c335eb812894c8ee928c08f3a60ce243db1e939676a84640747a1",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "ip_scrub_pipeline_12",
@@ -789,8 +789,8 @@
       "manifest_jope_emit": "522 d279deed55c3ad74d1046ff25345ac252c580f25444a0a18261f8a7c83ec3747",
       "cpp17": "unsupported: head GprKernel",
       "javascript": "unsupported: head gpr_kernel",
-      "fitted_cpp17_source": "30954 32d4b0c37624bd8c5df9634691a3cc44497fd44016c31c7a0732437a92777899",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "31268 d4825bd0ed5615e09330e06642f133d7b66b323ab7d03258cf1c1b6e8cbc8413",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "ip_scrub_pipeline_13",
@@ -804,8 +804,8 @@
       "manifest_jope_emit": "490 b713f8a0590f3d70607094c802d3b4beef1d1f665bb27679d9303eabe933b234",
       "cpp17": "unsupported: head Ksmooth",
       "javascript": "unsupported: head ksmooth",
-      "fitted_cpp17_source": "30578 b4c3f4d7339c37b1c4199b9a1deb55b89b1f8bdb8bfb4fa3730db0a478ff925c",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "30892 eda9757ad7a1776b8d0b5192db810ee762b744a590fc9f718d240c187c1b6789",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "ip_scrub_pipeline_14",
@@ -819,8 +819,8 @@
       "manifest_jope_emit": "548 b0b57dbdf92d58db51325915e02fe48dc264ebc169a1055e0446e0018a543020",
       "cpp17": "unsupported: head RidgeGcv",
       "javascript": "unsupported: head ridge_gcv",
-      "fitted_cpp17_source": "18531 bf4afb46f9b08c6f903877350faf44242fe9582d4f79933197f6cce4ff725b63",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "18951 fa2fd15b12c71449f83b1f9f3674e04227da4f7a2027b8c181964112bda0fcc2",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "ip_scrub_pipeline_15",
@@ -834,8 +834,8 @@
       "manifest_jope_emit": "456 fa69ca256c9932c170640a7d6b9fcc7aeec3307654fbd0651f4699f3d0e5b917",
       "cpp17": "unsupported: head Stack",
       "javascript": "unsupported: head stack",
-      "fitted_cpp17_source": "30315 9d925919058e1e9526420c3ffb2b61a2a58ebf37e639416691bd6dd9b68a1fd7",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "30629 3a655191ddf900907d305bd7f998974db073a3e55f4195264d17e8ddc6280560",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "ip_scrub_symbolic_0",
@@ -849,8 +849,8 @@
       "manifest_jope_emit": "598 d84750af1e64029505dd3845d4babf8e56627bc04faa5b3a428e181a75b48e3c",
       "cpp17": "unsupported: symbolic formula programs",
       "javascript": "unsupported: symbolic formula programs",
-      "fitted_cpp17_source": "15431 c0f0bbe262f907489399f8132f047bcd5d464e8aadf757f81e773f13a3f79f05",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "15745 ab69c4bf22a9d2d21dc90a1c80432ff3feb139cb97524de6bce728c51d07372a",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "ip_scrub_symbolic_1",
@@ -864,8 +864,8 @@
       "manifest_jope_emit": "492 8cf03160c2ccefdc2dac986819857e1d5823b28a3af2af35381ba35c511e07b6",
       "cpp17": "unsupported: symbolic formula programs",
       "javascript": "unsupported: symbolic formula programs",
-      "fitted_cpp17_source": "15304 984a636d1304da377be99deeb43fa62e62fc042649ebcca75d5e7febcd98439b",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "15618 027fe8088c3911044e8a4ab43034d546e86672f6ce435389c88c1c3684905ff7",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     },
     {
       "name": "portable_4lang",
@@ -879,8 +879,8 @@
       "manifest_jope_emit": "710 321ba196ebd85d8bf1708e1d7b2d84bec50948fdd9a1f28edb1536f3dc7279c5",
       "cpp17": "19273 332be023bb692d0c1a5402f4a3d704cd552f1f01f80c6d2ea11f97b4ff495cab",
       "javascript": "19895 c73c5cb5086ef4ba965a75f763a66ffe362a64198fd77d7886a228a2bf439786",
-      "fitted_cpp17_source": "368271 42059b30b7562f1ddd5c1abb0f6e1fca831268b38cb591e03482ba773d024612",
-      "fitted_cpp17_codec": "435 37a262eeb255d7affa28ce5ab689e0a830e9f6c14d7a1da93fd3b4cb3dcd9788"
+      "fitted_cpp17_source": "368896 1855412e68f71f86fa53a04e7b04722aceb6142c055ec69e8961a99bc461612e",
+      "fitted_cpp17_codec": "435 d489b68864056bcc38be8d67a8f77f2fe94261255834a11e4ea94272df083395"
     }
   ]
 }
