@@ -27,7 +27,7 @@ policies. Nothing that ships sets another policy.
   check the fitted program with `validate_scope` before any fit, trace both passes of every fold,
   reject Hard faults, and under `Penalize` subtract the weighted domain and saturation rates from
   every fold score, with an optional tie-break toward fewer faulted cells; the race scores them on
-  the CPU (a GPU backend is not called) with exact reuse off. `tests/search_admission.rs` (new): 16
+  the CPU (a GPU backend is not called) with exact reuse off. `tests/search_admission.rs` (new): 17
   tests and one ignored informational run. The jope-bench flag is left for PR 14 (receipt,
   decision 15); the workplan's optional `fit_boundary.rs` field is dropped (decision 16).
 - **Identity.** Minted: `evolve.rs` is an ADR-0004 input, and #132 changed none. implementation
@@ -54,6 +54,12 @@ policies. Nothing that ships sets another policy.
   its merge (below). R2, earlier heads cited as kept by the reflog: the receipt cites their patches
   in the evidence. Four perturbations of the code F1 and F5 name are each caught, exactly by the
   tests written for them (exit 100 each).
+- **Post-opening correction.** Independent review of PR #133 at `dfd72b7` found that summing
+  fault classes can count one cell twice within a severity. A concrete two-row regression first
+  failed with 2 Domain cells where 1 was expected; `StageFaultCounts` now records exact Domain and
+  Saturation cell counts, and admission reads them. The per-class counts remain intact. The
+  current ADR-0004 hash inputs omit telemetry and admission, so the fixture identity does not
+  change; extending that hash list remains a separate amendment.
 - **Replay.** `git reset --hard 1e1d3817d` set aside the identity-fixture and records commits,
   which the series regenerates at its end, and `git rebase --onto d1a1d21f8 dd5ccf3f1` picked the
   other four without a conflict (#132's `pub mod width;` and `pub mod admission;` are at different
@@ -68,8 +74,8 @@ policies. Nothing that ships sets another policy.
   (`00-pre-replay/patches/`), and each series rebuilds its head's tree exactly.
 - **Records.** Coverage map +1 item (`target:feat-math/test/search_admission`: rust-check,
   rust-test, full-default; 291 targets); findings inventory +1 role (regression; 327 items); test
-  inventory +30 Rust tests (3,905 to 3,935, ignored 65 to 66; feat-math 542 to 572, of them the
-  library 296 to 309 and the new `search_admission` 17, 1 ignored), with feat-math re-listed and
+  inventory +31 Rust tests (3,905 to 3,936, ignored 65 to 66; feat-math 542 to 573, of them the
+  library 296 to 309 and the new `search_admission` 18, 1 ignored), with feat-math re-listed and
   every other package unchanged; the coverage item and the findings role are the reviewed head's,
   re-applied to the new main's files; the CHANGELOG `[Unreleased]` line after #132's; the receipt
   `docs/internal/kernel2/receipts/WP-1.5.md`.
@@ -113,9 +119,7 @@ policies. Nothing that ships sets another policy.
   has one more once committed). With these records committed, the records commands, the identity
   checks, `compat_freeze`, the identity table's tests and the head's ADR-0004 receipt ran again at
   the head with the same results.
-- **Open.** Hosted CI. Exact per-severity cell counts need an appended `StageFaultCounts` field in
-  `kernel/telemetry.rs`; the rates here count class incidences capped per stage pass (exact when no
-  cell carries two classes of one severity). The tie-break compares counts, not rates (receipt
+- **Open.** Hosted CI at the corrected head. The tie-break compares counts, not rates (receipt
   decision 9). The ADR-0004 amendment should list `kernel/admission.rs` beside
   `kernel/telemetry.rs`, `kernel/scope.rs`, `math_expr/fault.rs` and `math_expr/compiled.rs`, with
   Codex. The jope-bench `--fault-policy` flag (PR 14). A traced prepared rung-0 GPU path. The

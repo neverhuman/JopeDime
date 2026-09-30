@@ -154,18 +154,12 @@ The reviews read the reviewed head `97b6a1730`. Their findings, and what was don
    pass is what is scored, so a fault there is scored too; tracing only the training pass would
    score a held-out Hard fault as a valid 0.0. The totals pool both passes of every fold.
 5. **Rates and the per-severity count.** The brief defines the rates as faulted cells over
-   evaluated cells. `StageFaultCounts` counts a cell once under each of its classes, and the exact
-   per-severity count that #130's record asks PR 08 for would need a new field in
-   `kernel/telemetry.rs`, which the brief does not open. A stage pass's faulted cells of a
-   severity are therefore its class incidences of that severity, capped at its cells: exact when
-   no cell carries two classes of one severity, an upper bound otherwise, and never above the
-   pass's cells. In a pipeline the input is sanitized and every stage's output is finite, so the
-   pair the WP-1.4 receipt cites (`col(0)` on a NaN raises `NONFINITE_INPUT` and
-   `NONFINITE_SANITIZED`) cannot occur; two classes of one severity in one cell need two guarded
-   operations in one expression, for example `log(c0) / c1` with `c0 <= 0` and `c1` near zero, or
-   `exp(31)`'s two Saturation classes. Only `map` and `derive` cells count: the input sanitize and
-   the stage epilogues are left out, so a program without an expression stage has no cells, rates
-   of 0 and the legacy scores.
+   evaluated cells. `StageFaultCounts` now records `domain_cells` and `saturation_cells` once per
+   generated cell with a class of that severity. Its original per-class counts remain available.
+   A cell raising two Domain classes, such as `log(c0) / c1` with `c0 <= 0` and `c1` near zero,
+   contributes one Domain cell. A cell raising two Saturation classes also contributes one
+   Saturation cell. Only `map` and `derive` cells count: the input sanitize and stage epilogues are
+   left out, so a program without an expression stage has no cells, rates of 0 and legacy scores.
 6. **A constant stage.** A stage pass whose output is constant counts every one of its cells as
    Domain-faulted, as the brief says, but only from two cells: one cell is trivially constant, and
    a one-row held-out fold would otherwise penalize a fault-free program.
@@ -262,7 +256,7 @@ The reviews read the reviewed head `97b6a1730`. Their findings, and what was don
 |---|---|
 | `stages_without_expression_cells_add_nothing` | a stage that generated no cell (every op but `map` and `derive`) and the input sanitize add nothing; without a fault, `penalize` returns the score's bits for scores `0.0`, `-0.0`, `0.75`, `-3.25` and `1e-300` and lambdas `(0.05, 0)`, `(NaN, inf)` and `(-1, -0)` |
 | `rates_pool_every_expression_stage_of_every_pass` | two passes, three stages: 14 cells, 3 Domain, 1 Saturation; the rates are `3/14` and `1/14` exactly |
-| `class_incidences_are_capped_at_the_stage_cells` | two Domain and two Saturation classes on each of 2 cells count 2 and 2, a Domain rate of exactly 1; below the cap, one cell with two classes counts 2 |
+| `each_severity_counts_a_cell_once_across_its_classes` | two Domain and two Saturation classes on each of 2 cells count 2 and 2, a Domain rate of exactly 1; below the cap, one cell with two Domain classes counts 1 |
 | `a_constant_stage_pass_is_domain_faulted_from_two_cells` | constant passes of 5 and 3 cells count all 8 cells, whatever their classes; a constant single cell counts 0 |
 | `hard_classes_are_collected_and_named` | a Domain fault alone is not Hard; `COLUMN_OOB` and `INVALID_CLIP_BOUNDS` are collected with their rows and displayed as `hard fault: {INVALID_CLIP_BOUNDS, COLUMN_OOB}` |
 | `the_penalty_is_the_documented_formula` | `0.8 - 0.05 * (3/12) - 0.02 * (1/12)` bit for bit; a zero lambda leaves the score; only the Saturation term applies without a Domain fault; an infinite or NaN lambda on a faulted score gives `None` |
@@ -279,10 +273,11 @@ The reviews read the reviewed head `97b6a1730`. Their findings, and what was don
 | `the_domain_rate_counters_read_the_rung_of_the_ranking_score` | on the same data, `log(col(0)*col(0) + 0.5 - col(1))` reaches `log`'s domain guard only on rows that rung 2 adds: its rung-0 evaluation has no faulted cell and its rung-2 rate is between 0 and 1 (0.2890625 here: 74 of the 256 rows). Raced alone under both non-legacy policies it is ranked by its rung-2 score, and both counters equal the rate of the rung-2 evaluation the race makes, bit for bit (review F1) |
 | `tie_breaking_selection_draws_the_legacy_numbers` | over 300 seeds, the tie-breaking parent selection leaves the generator in the legacy state and picks the legacy parent when counts are equal; with counts it differs only inside the near-tied group, toward fewer faulted cells, and it does differ |
 
-**Integration tests, `tests/search_admission.rs` (16 run, 1 ignored).**
+**Integration tests, `tests/search_admission.rs` (17 run, 1 ignored after the review correction).**
 
 | Test | What it proves |
 |---|---|
+| `one_cell_with_two_classes_of_a_severity_is_penalized_once` | `log(col(0))/col(1)` on `[0,0]` and `[2,1]` raises two Domain classes in one of two cells; `exp(col(0))` on `[31]` and `[0]` raises two Saturation classes in one of two cells. Each exact rate is 1/2 and its weight is applied once |
 | `legacy_reproduces_the_frozen_search_runs` | `Legacy`, set explicitly, reproduces the three frozen searches of `search_runs.v1.json` line for line (ranked, raced and summary lines, in `compat_freeze`'s formats) and reports no rejection and no rate |
 | `reject_hard_reproduces_the_frozen_search_runs`, `penalize_reproduces_the_frozen_search_runs`, `other_penalty_settings_reproduce_the_frozen_search_runs` | the same for `RejectHard`, `Penalize{0.05, 0, tie-break}`, `Penalize{0, 0, tie-break}` and `Penalize{0.05, 0.01}` without tie-break. None of those searches has an expression stage, so this is the zero-fault identity end to end: the traced fits, the CPU route, the tie post-pass and the tie-breaking parent draws change no score, rank, route, slot or random draw |
 | `an_out_of_scope_candidate_is_rejected_and_never_ranked` | the `col(12)` program at width 4, seeded into the surrogate search (3 generations) and into the race's exact generation 0: rejected once, with its reason, counted (`hard_rejected` 1, share 1/8 and 1/4 in generation 0), never ranked, its race record `[None, None, None]`; Legacy ranks it |
@@ -563,10 +558,12 @@ and the Cargo files; the commits' subjects, identities and trailers; the paths a
   and `deploy/ci/coverage.json` select all nine jobs. The first hosted run is also the cross-host
   check of the searches this pull request compares, which are always two runs of one build, apart
   from the frozen fixture that compat_freeze already compares.
-- **Cells per severity.** The rates count class incidences capped per stage pass (decision 5). An
-  exact count of the cells that carry a class of each severity needs a new, appended field of
-  `StageFaultCounts` in `kernel/telemetry.rs`, as #130's record says; the PR 08 brief did not open
-  that file. The two agree whenever no cell carries two classes of one severity.
+- **Post-review correction.** An independent review found that class incidences can count one
+  cell twice within a severity. The failing regression was recorded before the fix (2 observed,
+  1 expected); the appended telemetry fields now count each severity once per cell, and admission
+  uses those fields. This changed no ADR-0004 hash input. The current hash list omits admission and
+  telemetry, so the evaluator identity is unchanged; the identity coverage gap remains for its
+  planned ADR amendment.
 - **The tie-break's count** (decision 9, review F3). A rate of faulted cells over evaluated cells,
   falling back to the count when the rates are equal, or the count of rung 0, which every raced
   candidate has, would compare evaluations of different sizes evenly. Either changes which

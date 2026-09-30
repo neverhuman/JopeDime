@@ -15,12 +15,9 @@
 //! - **Cells.** Only the cells a `map` or `derive` expression generated count. The input sanitize
 //!   and the stage epilogues are left out, so a program without an expression stage has no cells,
 //!   no faults and rates of 0.
-//! - **Faulted cells.** In one stage pass, the Domain-faulted cells are the pass's Domain class
-//!   incidences (its `faulted_cells` summed over the Domain classes) capped at its cells, or all of
-//!   its cells when its output is constant: at least two cells, all with the bits of the first. The
-//!   Saturation-faulted cells are its Saturation class incidences, capped the same way.
-//!   `StageFaultCounts` counts a cell once under each of its classes, so these counts are exact
-//!   when no cell carries two classes of one severity, and an upper bound otherwise.
+//! - **Faulted cells.** In one stage pass, a cell counts once for each severity it carries,
+//!   regardless of how many classes of that severity it raises. A constant output of at least
+//!   two cells counts all its cells as Domain-faulted.
 //! - **Rates.** A severity's faulted cells over the evaluated cells, and 0 when no cell was
 //!   evaluated.
 //! - **Hard.** A Hard class in any pass rejects the candidate.
@@ -77,9 +74,9 @@ impl FaultTotals {
         let domain = if constant {
             cells
         } else {
-            incidences(stage, FaultSeverity::Domain).min(cells)
+            stage.domain_cells.min(cells)
         };
-        let saturation = incidences(stage, FaultSeverity::Saturation).min(cells);
+        let saturation = stage.saturation_cells.min(cells);
         self.evaluated_cells = self.evaluated_cells.saturating_add(cells);
         self.domain_cells = self.domain_cells.saturating_add(domain);
         self.saturation_cells = self.saturation_cells.saturating_add(saturation);
@@ -125,16 +122,6 @@ impl FaultTotals {
         }
         penalized.is_finite().then_some(penalized)
     }
-}
-
-/// A stage pass's class incidences of one severity: its `faulted_cells` summed over the classes
-/// of that severity.
-fn incidences(stage: &StageFaultCounts, severity: FaultSeverity) -> u64 {
-    severity
-        .classes()
-        .iter()
-        .map(|class| stage.faulted(class))
-        .fold(0, u64::saturating_add)
 }
 
 fn rate(cells: u64, evaluated: u64) -> f64 {
@@ -208,7 +195,8 @@ mod tests {
     use super::*;
     use crate::math_expr::FaultClass;
 
-    /// One stage pass with `cells` generated cells, the given class counts and constant flag.
+    /// One stage pass with `cells` generated cells. Classes of the same severity overlap on the
+    /// same cells in these constructed counts.
     fn stage(cells: u64, faults: &[(FaultClass, u64)], constant: bool) -> StageFaultCounts {
         let mut counts = StageFaultCounts {
             evaluated_cells: cells,
@@ -217,8 +205,12 @@ mod tests {
         };
         for &(class, count) in faults {
             counts.faulted_cells[class.index()] = count;
-            if class.severity() == FaultSeverity::Hard {
-                counts.hard_rows = counts.hard_rows.max(count);
+            match class.severity() {
+                FaultSeverity::Hard => counts.hard_rows = counts.hard_rows.max(count),
+                FaultSeverity::Domain => counts.domain_cells = counts.domain_cells.max(count),
+                FaultSeverity::Saturation => {
+                    counts.saturation_cells = counts.saturation_cells.max(count)
+                }
             }
         }
         counts
@@ -286,9 +278,9 @@ mod tests {
     }
 
     #[test]
-    fn class_incidences_are_capped_at_the_stage_cells() {
+    fn each_severity_counts_a_cell_once_across_its_classes() {
         // `col(0)` on a NaN cell raises two Domain classes, and `exp(31)` two Saturation classes:
-        // each such cell counts once under each class, so the incidences reach twice the cells.
+        // each such cell counts once under each class, but once for its severity.
         let mut totals = FaultTotals::default();
         totals.add_stage(&stage(
             2,
@@ -303,14 +295,14 @@ mod tests {
         assert_eq!(totals.domain_cells, 2);
         assert_eq!(totals.saturation_cells, 2);
         assert_eq!(totals.domain_rate().to_bits(), 1.0_f64.to_bits());
-        // Below the cap the incidences add up: one cell with each of two classes counts twice.
+        // Below the stage's cell count, two Domain classes on one cell still count once.
         let mut totals = FaultTotals::default();
         totals.add_stage(&stage(
             4,
             &[(FaultClass::LogDomain, 1), (FaultClass::DivNearZero, 1)],
             false,
         ));
-        assert_eq!(totals.domain_cells, 2);
+        assert_eq!(totals.domain_cells, 1);
     }
 
     #[test]

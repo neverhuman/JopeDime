@@ -13,7 +13,7 @@ the commit areas (crate or lane) named in each subject line.
 - feat-math: fits and predictions can report per-stage fault counts beside unchanged stage outputs, models and predictions, and that reporting path refuses zero-width input (#130)
 - feat-math: a static scope and width check that names the stage, the fault class and the reason before any evaluation, and search caps for expression scopes (15 nodes, depth 4); library only, nothing calls them yet (#131)
 - feat-math: a fitted-width contract: the input width each fitted stage and head requires and the width each stage produces, a checked prediction entry point that refuses a mismatched width before any stage runs where the unchecked one panics or misreads, and errors instead of panics for the legacy, corr_screen and pls_project stages of a schema-bound pipeline; predictions on accepted inputs are unchanged (#132)
-- feat-math: opt-in fault policies for the library search: a scope check before any fit, Hard faults rejected, and domain and saturation faults penalized, with an optional tie-break toward fewer faults; the default policy keeps every search unchanged (#133)
+- feat-math: opt-in fault policies for the library search: a scope check before any fit, Hard faults rejected, and domain and saturation faulted cells counted once per severity for penalties and an optional tie-break; the default policy keeps every search unchanged (#133)
 
 ### CI, build and release
 
