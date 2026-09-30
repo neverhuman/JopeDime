@@ -117,6 +117,12 @@ versioned archive bucket, streams the complete S3 body back for SHA-256, reads t
 and writes a proof receipt. A successful shard receipt does not by itself prove that the source
 tree was stable or that consumers have migrated.
 
+`jope-archive-verify.py INVENTORY PREFIX ARCHIVE KEY_FILE RECEIPT` streams the encrypted
+tar back and compares every member with an independent completed portion inventory: paths,
+types, file SHA-256s, symlink and hardlink targets, ownership, modes and nanosecond mtimes.
+It rejects missing or extra members and writes a receipt only after a full match. Run a
+separate representative extraction and fresh source/consumer check before removing a portion.
+
 `jope-ci janitor --config CONFIG --custody CUSTODY --apply` is the daily 05:00 UTC guarded
 test-executable janitor. Its exact `target/` allowlist and `delete_enabled` flag are local host
 configuration. It selects only ELF test binaries linked to Cargo fingerprint JSON, keeps the
