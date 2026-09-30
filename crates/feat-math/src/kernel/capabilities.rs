@@ -1271,6 +1271,67 @@ mod tests {
     }
 
     #[test]
+    fn every_cheap_fitted_head_value_maps_to_its_row() {
+        use crate::dsl::{ParamValue, Stage};
+        let x: crate::Rows = (0..12)
+            .map(|i| vec![i as f64 / 10.0, (i * i) as f64 / 100.0])
+            .collect();
+        let y: Vec<f64> = (0..12)
+            .map(|i| if i % 3 == 0 { 0.0 } else { i as f64 / 8.0 })
+            .collect();
+        let cases = [
+            ("ridge", "Ridge", "ridge"),
+            ("ridge_gcv", "RidgeGcv", "ridge_gcv"),
+            ("elasticnet", "ElasticNet", "elasticnet"),
+            ("histgbm", "Gbm", "histgbm"),
+            ("ensemble", "Ensemble", "ensemble"),
+            ("histgbm2", "HistGbm2", "histgbm2"),
+            ("krr", "Krr", "krr"),
+            ("gpr", "Gpr", "gpr"),
+            ("gpr", "GprKernel", "gpr"),
+            ("ksmooth", "Ksmooth", "ksmooth"),
+            ("hurdle2", "Hurdle2", "hurdle2"),
+            ("stack", "Stack", "stack"),
+        ];
+        assert_eq!(cases.len(), FITTED_HEAD_ROWS.len() - 1);
+        for (op, expected_variant, expected_row) in cases {
+            let mut stage = Stage::new(op);
+            if matches!(op, "histgbm" | "histgbm2") {
+                stage.params.insert("rounds".into(), ParamValue::Int(1));
+            }
+            if op == "gpr" {
+                stage.params.insert("steps".into(), ParamValue::Int(1));
+            }
+            if expected_variant == "GprKernel" {
+                stage
+                    .params
+                    .insert("kernel".into(), ParamValue::Str("linear".into()));
+            }
+            let head = crate::heads::fit_head(&stage, &x, &y).unwrap();
+            let variant = match &head {
+                FittedHead::Ridge(_) => "Ridge",
+                FittedHead::RidgeGcv(_) => "RidgeGcv",
+                FittedHead::ElasticNet(_) => "ElasticNet",
+                FittedHead::Gbm(_) => "Gbm",
+                FittedHead::Ensemble { .. } => "Ensemble",
+                FittedHead::HistGbm2(_) => "HistGbm2",
+                FittedHead::Krr(_) => "Krr",
+                FittedHead::Gpr(_) => "Gpr",
+                FittedHead::GprKernel(_) => "GprKernel",
+                FittedHead::Ksmooth(_) => "Ksmooth",
+                FittedHead::Hurdle2(_) => "Hurdle2",
+                FittedHead::Stack(_) => "Stack",
+                FittedHead::Portfolio(_) => "Portfolio",
+            };
+            assert_eq!(variant, expected_variant, "{op}");
+            assert_eq!(fitted_head_capability(&head).name, expected_row, "{op}");
+        }
+        // The compact portfolio fit is expensive in debug builds. Its exhaustive
+        // match and table entry are checked by expression_tables_cover_every_lookup.
+        assert_eq!(FITTED_HEAD_ROWS[12], ("Portfolio", "portfolio"));
+    }
+
+    #[test]
     fn rendered_text_is_lint_clean_and_document_is_fresh() {
         let outputs = [
             manifest_json(),

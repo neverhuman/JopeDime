@@ -542,7 +542,13 @@ fn emitter_support_matches_manifest() {
         );
         for reasons in [rust.err(), cpp.err(), js.err()].into_iter().flatten() {
             for reason in reasons {
-                assert!(reason_row(&reason, &manifest).is_some(), "{name}: {reason}");
+                let mapped = reason_row(&reason, &manifest);
+                assert!(
+                    mapped == Some(row.name) || mapped == Some(row.canonical),
+                    "{name}: {reason} mapped to {mapped:?}, expected {} or {}",
+                    row.name,
+                    row.canonical
+                );
             }
         }
         if row.emitters.cpp17_recipe.accepts() {
@@ -576,21 +582,33 @@ fn emitter_support_matches_manifest() {
     ] {
         let program = GenomeIr::parse(source).unwrap();
         let row = manifest.form(name).unwrap();
+        let rust = transpile::supports(&program);
+        let cpp = transpile::supports_cpp17(&program);
+        let js = transpile::supports_javascript(&program);
         assert_eq!(
-            transpile::supports(&program).is_ok(),
+            rust.is_ok(),
             row.emitters.rust_recipe.accepts(),
             "form Rust {name}"
         );
         assert_eq!(
-            transpile::supports_cpp17(&program).is_ok(),
+            cpp.is_ok(),
             row.emitters.cpp17_recipe.accepts(),
             "form C++ {name}"
         );
         assert_eq!(
-            transpile::supports_javascript(&program).is_ok(),
+            js.is_ok(),
             row.emitters.javascript.accepts(),
             "form JavaScript {name}"
         );
+        for reasons in [rust.err(), cpp.err(), js.err()].into_iter().flatten() {
+            for reason in reasons {
+                assert_eq!(
+                    reason_row(&reason, &manifest),
+                    Some(name),
+                    "{name}: {reason}"
+                );
+            }
+        }
     }
 }
 
