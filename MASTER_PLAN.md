@@ -22,21 +22,28 @@ under Jepson's 2026-09-29 OQ-8 decision and closes #132's kept schema-bound
   model container use revision 3. Revision-2 containers still validate and regenerate their
   library on load without refitting. The Rust schema-bound `piecewise_linear` arm now returns a
   width error where inconsistent fitted edges previously panicked. The emitters CI lane adds
-  AddressSanitizer/UndefinedBehaviorSanitizer and g++ C++20 runs.
+  AddressSanitizer/UndefinedBehaviorSanitizer and g++ C++20 runs. Independent review of replayed
+  candidate `c14992def27b2ec9d7305cd0d111d36729ffc04a` found further unchecked fitted reads
+  in RffCos, RffSin, ObliqueHinge, TargetBinEncode, Spline and ordered Roll tails. Reproducing
+  emitted C++ tests failed with SIGABRT before the narrow correction
+  `eeca7fbb35a5813ccebfcfcf04decb221a64cc49` and passed afterward with status 8. Lag and
+  Roll now reject stored tails of mismatched width.
 - **Fixture and identity.** Owner-approved `fitted-cpp-revision` mode changed only the 54 fitted
   C++ source and 54 codec values of `emitted_bytes.v1.json`, plus its `generated_at_sha`. The
   latter names replayed emitter commit `5da70d5760fd26219d4cf9a9ebe9e97f8b1cce95`. A
   second regeneration was byte-idempotent; compare mode passed 13 of 13 at replay head
   `f3b4a7c4e49df4005efc764a678cd789c4f6e411`. Every fixture value is byte-identical
-  to the prepared candidate; its header alone changed during replay. No ADR-0004 evaluator
+  to the prepared candidate at that replay point; its header alone changed during replay. The
+  later review correction regenerated six fitted source values and no codec values, idempotently,
+  with header `eeca7fbb35a5813ccebfcfcf04decb221a64cc49`. No ADR-0004 evaluator
   identity input, lineage source, frozen pin or `cpp/fitted_runtime.cpp` changes in this PR.
 - **Replay and records.** All nine implementation commits replayed without conflict. The
   original head `6c75265bacc8f64cfa6c5532d9ce55904defbdfb` and first replay head
   `829fee0422c4fb49703da708e84463124685fd2e` remain on local preservation refs. The
   fourth commit was regenerated at the replayed emitter commit because the mode refuses a SHA
   older than later source changes. `git range-diff` maps the other eight patches unchanged.
-  Test inventory was regenerated from the new main: 3,945 Rust tests (66 ignored), up from
-  3,936, with one renamed width test and ten additions; feat-math has 582 tests (7 ignored).
+  Test inventory was regenerated from the corrected tree: 3,946 Rust tests (66 ignored), up from
+  3,936, with one renamed width test and eleven additions; feat-math has 583 tests (7 ignored).
   Python remains 172 static-scan entries. Coverage validates with 291 targets and no invalid
   assignment; findings inventory remains 327 items, 198 classified regression. This receipt is
   `docs/internal/kernel2/receipts/X3.md` and the replay evidence is
@@ -45,9 +52,10 @@ under Jepson's 2026-09-29 OQ-8 decision and closes #132's kept schema-bound
   Clippy, two feat-math PR tiers (541 passed, 10 skipped each), compatibility compare twice,
   parity, sanitizer and C++20 tests, the emitters lane, workspace check, consumers, identity,
   Rust and feat-math main tiers, Lambda and IP scrub. Its logs are under
-  `~/.cache/claude-session-scratch/agents/kernel2-pr07/implementer/logs/`. The replayed tree's
-  narrow fixture run passed twice and compare mode passed; coverage and test-inventory validators
-  passed. The final local gate, exact-head hosted CI and independent native review remain the
+  `~/.cache/claude-session-scratch/agents/kernel2-pr07/implementer/logs/`. The review-corrected
+  tree's narrow fixture run passed twice and both focused regressions passed; its inventory was
+  regenerated and coverage validators passed. The complete corrected-head local
+  gate, exact-head hosted CI and independent native review remain the
   landing conditions. The public fitted C++ marker, derived from this emitter, still names base
   revision 2; g++ 13.3 remains required for container regeneration, and existing binaries cannot
   load revision-3 containers. These are recorded in X3; they are not serving qualification.

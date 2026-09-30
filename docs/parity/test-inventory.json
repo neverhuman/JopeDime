@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json",
-  "count": 3945,
+  "count": 3946,
   "ignored": 66,
   "packages": {
    "battle-gpu": {
@@ -29,7 +29,7 @@
     }
    },
    "feat-math": {
-    "count": 582,
+    "count": 583,
     "ignored": 7,
     "binaries": {
      "feat-math": {
@@ -368,7 +368,7 @@
      },
      "feat-math::advanced_v3_fitted_cpp": {
       "kind": "test",
-      "count": 17,
+      "count": 18,
       "ignored": 0,
       "tests": [
        "admitted_serialized_legacy_head_corpus_matches_bits",
@@ -387,6 +387,7 @@
        "ordered_historical_categorical_state_matches_bits",
        "ordered_numeric_row_semantics_matches_bits",
        "table_aware_lag_and_roll_match_bits_with_fitted_tails",
+       "table_row_operations_refuse_mismatched_fitted_tail_width",
        "tied_piecewise_edges_match_the_runtime_bits"
       ]
      },
@@ -6196,7 +6197,7 @@
   }
  },
  "totals": {
-  "rust": 3945,
+  "rust": 3946,
   "python": 172
  }
 }
