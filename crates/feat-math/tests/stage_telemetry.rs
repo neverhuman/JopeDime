@@ -250,6 +250,8 @@ fn the_program_corpus_is_compat_freezes() {
 struct Fields {
     evaluated_cells: u64,
     faulted_cells: [u64; FAULT_SLOTS],
+    domain_cells: u64,
+    saturation_cells: u64,
     hard_rows: u64,
     compile_failed: bool,
     constant_output: bool,
@@ -260,6 +262,8 @@ fn fields(counts: &StageFaultCounts) -> Fields {
     Fields {
         evaluated_cells: counts.evaluated_cells,
         faulted_cells: counts.faulted_cells,
+        domain_cells: counts.domain_cells,
+        saturation_cells: counts.saturation_cells,
         hard_rows: counts.hard_rows,
         compile_failed: counts.compile_failed,
         constant_output: counts.constant_output,
@@ -298,6 +302,9 @@ fn recount(op: &FittedOp, x: &Rows) -> Fields {
             for class in faults.iter() {
                 expected.faulted_cells[class.index()] += 1;
             }
+            expected.domain_cells += u64::from(faults.intersects(FaultSeverity::Domain.classes()));
+            expected.saturation_cells +=
+                u64::from(faults.intersects(FaultSeverity::Saturation.classes()));
             row_is_hard |= faults.intersects(hard);
             match first {
                 None => first = Some(value.to_bits()),

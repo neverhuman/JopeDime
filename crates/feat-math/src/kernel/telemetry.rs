@@ -51,6 +51,13 @@ pub struct StageFaultCounts {
     /// Per class, at the class's [`FaultClass::index`]: the generated cells whose faults include
     /// that class. A cell with two classes counts once under each.
     pub faulted_cells: [u64; FAULT_SLOTS],
+    /// Generated cells with at least one Domain class, counted once per cell even when multiple
+    /// Domain classes occur together.
+    #[serde(default)]
+    pub domain_cells: u64,
+    /// Generated cells with at least one Saturation class, counted once per cell.
+    #[serde(default)]
+    pub saturation_cells: u64,
     /// Rows with at least one generated cell whose faults include a Hard class. Each such cell is
     /// the fallback 0.0 of an evaluation error (the legacy `unwrap_or(0.0)`) or of a compile
     /// failure.
@@ -356,6 +363,12 @@ impl Tally {
         while bits != 0 {
             self.counts.faulted_cells[bits.trailing_zeros() as usize] += 1;
             bits &= bits - 1;
+        }
+        if faults.intersects(FaultSeverity::Domain.classes()) {
+            self.counts.domain_cells += 1;
+        }
+        if faults.intersects(FaultSeverity::Saturation.classes()) {
+            self.counts.saturation_cells += 1;
         }
         match self.first {
             None => self.first = Some(value.to_bits()),

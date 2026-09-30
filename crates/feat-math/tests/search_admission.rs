@@ -25,7 +25,9 @@ use feat_math::evolve::{
 };
 use feat_math::kernel::admission::{FaultTotals, Rejection};
 use feat_math::kernel::scope::validate_scope;
-use feat_math::kernel::telemetry::{fit_traced, predict_traced};
+use feat_math::kernel::telemetry::{apply_op_traced, fit_traced, predict_traced};
+use feat_math::math_expr::{FaultClass, MathExpr};
+use feat_math::ops::FittedOp;
 use feat_math::transpile::Emitted;
 use feat_math::{GenomeIr, Pcg32};
 use sha2::{Digest, Sha256};
@@ -40,6 +42,42 @@ const PENALIZE: FaultPolicy = FaultPolicy::Penalize {
     lambda_saturation: 0.0,
     tie_break: true,
 };
+
+#[test]
+fn one_cell_with_two_classes_of_a_severity_is_penalized_once() {
+    let source = "log(col(0))/col(1)";
+    let op = FittedOp::DeriveExpr {
+        source: source.to_string(),
+        expr: MathExpr::parse(source).unwrap(),
+        append: false,
+    };
+    let (_, stage) = apply_op_traced(&op, &vec![vec![0.0, 0.0], vec![2.0, 1.0]]);
+    assert_eq!(stage.evaluated_cells, 2);
+    assert_eq!(stage.faulted(FaultClass::LogDomain), 1);
+    assert_eq!(stage.faulted(FaultClass::DivNearZero), 1);
+    assert!(!stage.constant_output);
+    let mut totals = FaultTotals::default();
+    totals.add_stage(&stage);
+    assert_eq!(totals.domain_cells, 1);
+    assert_eq!(totals.domain_rate().to_bits(), 0.5_f64.to_bits());
+    assert_eq!(totals.penalize(1.0, 0.05, 0.0), Some(0.975));
+
+    let source = "exp(col(0))";
+    let op = FittedOp::DeriveExpr {
+        source: source.to_string(),
+        expr: MathExpr::parse(source).unwrap(),
+        append: false,
+    };
+    let (_, stage) = apply_op_traced(&op, &vec![vec![31.0], vec![0.0]]);
+    assert_eq!(stage.faulted(FaultClass::ExpArgClamped), 1);
+    assert_eq!(stage.faulted(FaultClass::MagnitudeClamped), 1);
+    assert!(!stage.constant_output);
+    let mut totals = FaultTotals::default();
+    totals.add_stage(&stage);
+    assert_eq!(totals.saturation_cells, 1);
+    assert_eq!(totals.saturation_rate().to_bits(), 0.5_f64.to_bits());
+    assert_eq!(totals.penalize(1.0, 0.0, 0.02), Some(0.99));
+}
 
 fn penalize(lambda_domain: f64, lambda_saturation: f64, tie_break: bool) -> FaultPolicy {
     FaultPolicy::Penalize {

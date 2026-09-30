@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 4",
-  "count": 3935,
+  "count": 3936,
   "ignored": 66,
   "packages": {
    "battle-gpu": {
@@ -29,7 +29,7 @@
     }
    },
    "feat-math": {
-    "count": 572,
+    "count": 573,
     "ignored": 7,
     "binaries": {
      "feat-math": {
@@ -225,7 +225,7 @@
        "heads::tests::ridge_gcv_screen_ranks_by_abs_corr",
        "heads::tests::ridge_gcv_wide_perf",
        "kernel::admission::tests::a_constant_stage_pass_is_domain_faulted_from_two_cells",
-       "kernel::admission::tests::class_incidences_are_capped_at_the_stage_cells",
+       "kernel::admission::tests::each_severity_counts_a_cell_once_across_its_classes",
        "kernel::admission::tests::hard_classes_are_collected_and_named",
        "kernel::admission::tests::pairwise_ties_are_decided_by_faulted_cells",
        "kernel::admission::tests::rates_pool_every_expression_stage_of_every_pass",
@@ -727,7 +727,7 @@
      },
      "feat-math::search_admission": {
       "kind": "test",
-      "count": 17,
+      "count": 18,
       "ignored": 1,
       "tests": [
        "an_out_of_scope_candidate_is_rejected_and_never_ranked",
@@ -736,6 +736,7 @@
        "informational_fault_policy_rates_on_the_test_datasets",
        "legacy_reproduces_the_frozen_search_runs",
        "non_legacy_policies_never_call_a_gpu_backend",
+       "one_cell_with_two_classes_of_a_severity_is_penalized_once",
        "other_penalty_settings_reproduce_the_frozen_search_runs",
        "outcomes_do_not_depend_on_the_thread_count",
        "penalize_ranks_the_fault_free_program_first_on_equal_loss",
@@ -6186,7 +6187,7 @@
   }
  },
  "totals": {
-  "rust": 3935,
+  "rust": 3936,
   "python": 172
  }
 }
