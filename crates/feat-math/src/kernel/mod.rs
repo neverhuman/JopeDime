@@ -3,8 +3,10 @@
 //! Decoding and pipeline slot checks do not establish algorithm execution or
 //! backend admission. The bounded algorithm executor is a separate release gate.
 pub mod admission;
+pub mod capabilities;
 pub mod codec;
 pub mod pipeline;
+pub mod profile;
 mod program;
 pub mod scope;
 pub mod telemetry;
