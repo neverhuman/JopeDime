@@ -1072,7 +1072,7 @@ fn fitted_state_that_does_not_fit_the_row_answers_status_8() {
     // Column b of the first row is exactly zero, a cell that `impute` fills.
     let test = RawTable::from_csv("a,b\n0.125,0\n0.5,2.5\n2.125,6.5\n").unwrap();
     type Edit = fn(&mut serde_json::Value);
-    let cases: [(&str, &str, Edit); 7] = [
+    let cases: [(&str, &str, Edit); 12] = [
         (
             "select_corr",
             "(pipe X (select_corr k=2) (ridge))",
@@ -1127,6 +1127,50 @@ fn fitted_state_that_does_not_fit_the_row_answers_status_8() {
             "(pipe X (corr_screen k=32) (ridge))",
             |json| {
                 stage(json, 0)["CorrScreen"]["indices"] = serde_json::json!([0, 7]);
+            },
+        ),
+        (
+            "rff_cos_phase",
+            "(pipe X (rff_cos n=5 seed=11) (ridge))",
+            |json| {
+                stage(json, 0)["Legacy"]["RffCos"]["b"]
+                    .as_array_mut()
+                    .unwrap()
+                    .pop();
+            },
+        ),
+        (
+            "rff_sin_phase",
+            "(pipe X (rff_sin n=5 seed=11) (ridge))",
+            |json| {
+                stage(json, 0)["Legacy"]["RffSin"]["b"]
+                    .as_array_mut()
+                    .unwrap()
+                    .pop();
+            },
+        ),
+        (
+            "oblique_threshold",
+            "(pipe X (oblique_hinge n=5 seed=11) (ridge))",
+            |json| {
+                stage(json, 0)["Legacy"]["ObliqueHinge"]["t"]
+                    .as_array_mut()
+                    .unwrap()
+                    .pop();
+            },
+        ),
+        (
+            "empty_bin_encoding",
+            "(pipe X (target_bin_encode bins=5) (ridge))",
+            |json| {
+                stage(json, 0)["Legacy"]["TargetBinEncode"]["enc"][0] = serde_json::json!([]);
+            },
+        ),
+        (
+            "empty_spline_knots",
+            "(pipe X (spline knots=4) (ridge))",
+            |json| {
+                stage(json, 0)["Legacy"]["Spline"]["knots"][0] = serde_json::json!([]);
             },
         ),
     ];
@@ -1254,7 +1298,76 @@ fn fitted_state_that_does_not_fit_the_row_answers_status_8() {
     assert!(!matches!(outcome, Ok(Ok(_))), "legacy: the runtime");
     check("legacy_select_corr", &model, &legacy_test);
 
-    assert_eq!(checked.len(), 10, "{checked:?}");
+    assert_eq!(checked.len(), 15, "{checked:?}");
+    scratch.close().unwrap();
+}
+
+#[test]
+fn table_row_operations_refuse_mismatched_fitted_tail_width() {
+    let schema = DataSchema {
+        columns: vec![
+            ColumnSpec::categorical("group"),
+            ColumnSpec::numeric("time"),
+            ColumnSpec::numeric("value"),
+        ],
+        row_semantics: RowSemantics::Ordered {
+            group_by: vec!["group".to_string()],
+            order_by: vec!["time".to_string()],
+        },
+    };
+    let train = RawTable::from_csv(
+        "group,time,value\nA,1,1\nA,2,2\nA,3,3\nA,4,4\nA,5,5\nB,1,10\nB,2,11\nB,3,12\nB,4,13\nB,5,14\n",
+    )
+    .unwrap();
+    let test = RawTable::from_csv("group,time,value\nA,7,7\nA,6,6\nB,6,15\nC,1,20\n").unwrap();
+    let y = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0];
+    let scratch = tempfile::Builder::new()
+        .prefix("feat-math-advanced-v3-fitted-cpp-tail-width-")
+        .tempdir()
+        .unwrap();
+    for (name, source) in [
+        (
+            "roll_tail_width",
+            "(pipe X (input numeric=median categorical=native) (pair_prod topk=2 append=true) (roll k=3 append=true) (ridge))",
+        ),
+        (
+            "lag_tail_width",
+            "(pipe X (input numeric=median categorical=native) (pair_prod topk=2 append=true) (lag k=2 append=true) (ridge))",
+        ),
+    ] {
+        let model = fit_table(
+            &GenomeIr::parse(source).unwrap(),
+            &task(),
+            &schema,
+            &train,
+            &y,
+        )
+        .unwrap_or_else(|error| panic!("{name} fit: {error}"));
+        assert!(model.predict_table(&test).is_ok(), "{name}: fitted model");
+        let model = tampered(&model, |json| {
+            let pairs = stage(json, 0)["Legacy"]["PairProd"]["pairs"]
+                .as_array_mut()
+                .unwrap();
+            assert!(!pairs.is_empty(), "{name}: fitted pair");
+            let extra = pairs[0].clone();
+            pairs.push(extra);
+        });
+        assert!(model.predict_table(&test).is_err(), "{name}: Rust width check");
+        let encoded = EncodedTable::from_bound_model(&model, &test).unwrap();
+        let artifact = emit_fitted_cpp17(&model).unwrap();
+        let (status, bits) = compile_status(
+            &artifact.source,
+            scratch.path(),
+            name,
+            true,
+            &encoded.values,
+            &encoded.missing,
+            encoded.rows,
+            encoded.columns,
+        );
+        assert_eq!(status, FITTED_WIDTH_STATUS, "{name}");
+        assert!(bits.is_empty(), "{name}");
+    }
     scratch.close().unwrap();
 }
 
