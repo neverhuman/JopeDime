@@ -14,6 +14,7 @@ use std::os::unix::ffi::OsStringExt;
 use std::path::{Component, Path, PathBuf};
 
 const PREFIX: &str = "custody/quant";
+const BLOB_PREFIX: &str = "blobs/sha256";
 
 #[derive(Debug, Deserialize)]
 struct InventoryRow {
@@ -99,7 +100,7 @@ fn quant_file(root: &Path, row: &InventoryRow) -> Result<Option<(PathBuf, Catalo
             sha256: sha.to_owned(),
             bytes,
             classification: class.to_owned(),
-            s3_key: format!("{PREFIX}/blobs/sha256/{sha}"),
+            s3_key: format!("{BLOB_PREFIX}/{sha}"),
             s3_version: None,
         },
     )))
@@ -115,7 +116,7 @@ fn read_catalog(bytes: &[u8]) -> Result<BTreeMap<(String, String), CatalogEntry>
         let entry: CatalogEntry = serde_json::from_slice(line)
             .with_context(|| format!("custody catalog line {}", index + 1))?;
         ensure!(
-            entry.s3_key == format!("{PREFIX}/blobs/sha256/{}", entry.sha256),
+            entry.s3_key == format!("{BLOB_PREFIX}/{}", entry.sha256),
             "custody catalog line {} has mismatched key",
             index + 1
         );

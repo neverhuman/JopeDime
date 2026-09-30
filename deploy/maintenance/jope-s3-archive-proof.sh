@@ -12,7 +12,8 @@ test -f "$archive.sha256"
 jq -e --arg archive "$archive" '.archive == $archive and .full_readback == true and .source_deleted == false' \
   "$archive.receipt.json" >/dev/null
 (cd "$(dirname "$archive")" && sha256sum -c "$(basename "$archive").sha256") >/dev/null
-sha=$(sha256sum "$archive" | cut -d' ' -f1)
+read -r sha _ < "$archive.sha256"
+[[ "$sha" =~ ^[0-9a-f]{64}$ ]]
 bytes=$(stat -c %s "$archive")
 key="$prefix/sha256/$sha.tar.zst.gpg"
 mkdir -p -- "$receipt_dir"

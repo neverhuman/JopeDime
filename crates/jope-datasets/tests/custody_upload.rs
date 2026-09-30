@@ -42,6 +42,8 @@ fn custody_upload_preserves_real_synthetic_path_and_catalog_superset() {
         b"1,2\n",
         "real",
     );
+    rt.block_on(store.put(&format!("blobs/sha256/{real_sha}"), b"1,2\n".to_vec()))
+        .unwrap();
     add_file(
         &root,
         &mut first,
@@ -82,6 +84,10 @@ fn custody_upload_preserves_real_synthetic_path_and_catalog_superset() {
         .unwrap();
     assert_eq!(first_catalog.lines().count(), 2);
     assert!(first_catalog.contains(&real_sha));
+    assert!(rt
+        .block_on(store.size(&format!("custody/quant/blobs/sha256/{real_sha}")))
+        .unwrap()
+        .is_none());
 
     let mut second = String::new();
     add_file(
@@ -104,7 +110,7 @@ fn custody_upload_preserves_real_synthetic_path_and_catalog_superset() {
         3
     );
 
-    let old_blob = store_dir.join("custody/quant/blobs/sha256").join(real_sha);
+    let old_blob = store_dir.join("blobs/sha256").join(real_sha);
     let mut corrupt = std::fs::read(&old_blob).unwrap();
     corrupt[0] ^= 1;
     std::fs::write(old_blob, corrupt).unwrap();

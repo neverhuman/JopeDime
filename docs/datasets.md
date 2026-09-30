@@ -97,7 +97,9 @@ fail the census. Unknown origin is treated as unresolved research data.
 `jope-datasets custody-upload --inventory CUSTODY/remote-super.jsonl --root
 /home/ubuntu/remote_super --out CUSTODY/quant-catalog.jsonl` uploads every real or unresolved
 quant file, including models, scores and files in incomplete datasets, into the private canonical
-datasets bucket. Only metadata-confirmed synthetic train/test payloads are omitted. Each catalog
+datasets bucket. Existing `blobs/sha256/` content is fully hashed and reused, so cataloged
+train/test files are not stored a second time. Only metadata-confirmed synthetic train/test
+payloads are omitted. Each catalog
 row binds the exact source path to its SHA-256, byte count, object key and S3 version. A durable
 partial ledger resumes after interruption by rehashing both source and stored object. The tool
 publishes an immutable inventory and a full catalog superset, then conditionally advances its own
