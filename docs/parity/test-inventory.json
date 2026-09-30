@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json",
-  "count": 3968,
+  "count": 3969,
   "ignored": 66,
   "packages": {
    "battle-gpu": {
@@ -29,12 +29,12 @@
     }
    },
    "feat-math": {
-    "count": 605,
+    "count": 606,
     "ignored": 7,
     "binaries": {
      "feat-math": {
       "kind": "lib",
-      "count": 319,
+      "count": 320,
       "ignored": 2,
       "tests": [
        "advanced_v3::csv::tests::empty_record_and_one_empty_field_are_distinct",
@@ -237,6 +237,7 @@
        "kernel::admission::tests::stages_without_expression_cells_add_nothing",
        "kernel::admission::tests::the_penalty_is_the_documented_formula",
        "kernel::admission::tests::ties_prefer_fewer_faulted_cells_within_anchored_runs",
+       "kernel::capabilities::tests::every_cheap_fitted_head_value_maps_to_its_row",
        "kernel::capabilities::tests::every_fitted_op_has_a_declared_row",
        "kernel::capabilities::tests::expression_tables_cover_every_lookup",
        "kernel::capabilities::tests::planned_ops_have_probes",
@@ -6226,7 +6227,7 @@
   }
  },
  "totals": {
-  "rust": 3968,
+  "rust": 3969,
   "python": 172
  }
 }

@@ -67,14 +67,20 @@ checks cover those tables.
 ## Emitter refusal labels
 
 The probe strips a reason at its first `(` or `{`, then maps a reduced label
-to the declared row. `Gbm`/`gbm` selects `histgbm` and alias `gbm`;
-`Blend`/`blend` selects `ensemble` and alias `ensemble_ridge_gbm`;
-`MapExpr`/`map_expr` selects `map`; `DeriveExpr`/`derive_expr` selects `derive`;
-`GprKernel`/`gpr_kernel` selects `gpr`; `HistGbm2` selects `histgbm2`.
-`target transforms` selects `target`, `symbolic formula programs` selects the
-`symbolic` form, and the planning refusal `portfolio` selects the
-`nested_portfolio` form. Other prefixed labels use the snake case of their
+to the declared row. Other prefixed labels use the snake case of their
 planned variant; bare planning names select the same-named op row.
+
+| Reduced label | Manifest row |
+| --- | --- |
+| `transform MapExpr` / `transform map_expr` | op `map` |
+| `transform DeriveExpr` / `transform derive_expr` | op `derive` |
+| `head Gbm` / `head gbm` | ops `histgbm` and alias `gbm` |
+| `head Blend` / `head blend` | ops `ensemble` and alias `ensemble_ridge_gbm` |
+| `head GprKernel` / `head gpr_kernel` | op `gpr` |
+| `head HistGbm2` | op `histgbm2` |
+| `target transforms` | op `target` |
+| `symbolic formula programs` | form `symbolic` |
+| planning `portfolio` | form `nested_portfolio` |
 
 ## Verification
 
@@ -89,10 +95,10 @@ lookups have 36 op variants and 13 head variants. The two frozen grammar
 `ops` maps have 53 and 43 entries. Each kernel2 r1 profile has 51 unique
 elements, including the three policy elements.
 
-On 2026-09-30, `cargo nextest run --locked -P pr -p feat-math` ran 594/594
+On 2026-09-30, `cargo nextest run --locked -P pr -p feat-math` ran 595/595
 selected tests with zero failures; 11 were skipped by the profile or marked
-ignored. Its 22 new tests were all selected and passed: 16 integration checks
-in `capability_manifest`, four `kernel::capabilities` unit checks, one
+ignored. Its 23 new tests were all selected and passed: 16 integration checks
+in `capability_manifest`, five `kernel::capabilities` unit checks, one
 `kernel::profile` unit check, and one `advanced_v3` unit check. Thus each
 named check 1–9 and 11, completeness, profile identity, lint, codec and
 freshness ran at least once. The V3 descriptor check covered 26 descriptors
@@ -100,8 +106,26 @@ and their aliases. The live emitter probes included the 25 fixture names and
 two alias probes; fixture support was used as a floor, not as an equality.
 The generator tests used 20,000 births and 50,000 expansion and redraw draws
 per listed legacy family, plus seeded expression and typed-edit checks. The
-parity inventory grew from 3,946 to 3,968 Rust tests, with no removed test;
+parity inventory grew from 3,946 to 3,969 Rust tests, with no removed test;
 its 172 Python entries were kept verbatim.
+
+| Brief check | Tests selected and passed | Count |
+| --- | --- | ---: |
+| 1, expression grammar | `every_grammar_expr_token_resolves_to_searchable_element` | 1/1 |
+| 2, runtime-only grammar | `no_runtime_only_or_quarantined_element_in_any_grammar` | 1/1 |
+| 3, op grammar and drift | `every_grammar_op_resolves_to_registry_or_declared_exception` | 1/1 |
+| 4, fitted lifecycle | `every_fitted_op_has_a_declared_row`, `every_cheap_fitted_head_value_maps_to_its_row` | 2/2 |
+| 5, V3 admission | `v3_admission_matches_manifest` | 1/1 |
+| 6a, planned kinds | `planned_ops_have_probes` | 1/1 |
+| 6b, emitter routes | `emitter_support_matches_manifest` | 1/1 |
+| 7, aliases | `aliases_share_semantic_key_and_remain_outside_draw_tables` | 1/1 |
+| 8, quarantined names | `quarantined_never_generatable` | 1/1 |
+| 9, stage vocabulary | `evolve_vocab_matches_manifest_and_profiles` | 1/1 |
+| 11, legacy draws | `legacy_birth_and_expansion_domains_match_draws`, `legacy_redraw_domains_match_empty_parameter_edits`, `legacy_expression_edit_and_growers_match_declared_elements`, `legacy_slot_and_v3_edits_match_declared_stage_names`, `legacy_wrapper_body_hashes_are_pinned`, `legacy_edit_arm_names_match_the_declared_draw_table` | 6/6 |
+| Completeness | `every_known_name_has_a_row_and_profiles_have_the_declared_budget`, `expression_tables_cover_every_lookup` | 2/2 |
+| Profile identity | `kernel_profiles_equal_the_manifest_tier_in_both_directions`, `revision_one_profiles_are_finite_and_distinct` | 2/2 |
+| Codec | `every_expression_element_has_a_codec_id` | 1/1 |
+| Lint and doc freshness | `rendered_text_is_lint_clean_and_document_is_fresh` | 1/1 |
 
 The three dump modes are deterministic on two runs each. The SHA-256 of the
 exact printed bytes is `b67fbff41f03d28b435c350245a554aafcd3ecf75c5826949f72589b2fbc0f19`
