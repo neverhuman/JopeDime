@@ -1,3 +1,5 @@
+use super::schema::{DataSchema, RowSemantics};
+use crate::kernel::ordered_axis::{Axis, OrderedInputIdentity, StageAxis, TaskMode};
 use crate::metrics::{accuracy_at, auc, average_precision, brier, f1_at, logloss, mae, r2, rmse};
 use anyhow::{bail, Result};
 use serde::{Deserialize, Serialize};
@@ -39,6 +41,34 @@ pub struct TaskSpec {
 }
 
 impl TaskSpec {
+    pub(crate) fn ordered_axis_mode(&self, schema: &DataSchema) -> TaskMode {
+        if self.kind == TaskKind::Timeseries {
+            TaskMode::Forecasting
+        } else if matches!(schema.row_semantics, RowSemantics::Iid) {
+            TaskMode::IID
+        } else {
+            TaskMode::Ordered
+        }
+    }
+
+    /// Admit a stage through the new versioned axis contract. Existing v3 and
+    /// legacy serialized task/schema objects are unchanged.
+    pub fn admit_ordered_stage(
+        &self,
+        schema: &DataSchema,
+        stage: StageAxis,
+    ) -> Result<Option<OrderedInputIdentity>> {
+        self.validate()?;
+        schema.validate()?;
+        let input = if stage.axis == Axis::SampleTime {
+            Some(schema.ordered_input_identity_v1()?)
+        } else {
+            None
+        };
+        stage.admit(self.ordered_axis_mode(schema), input.as_ref())?;
+        Ok(input)
+    }
+
     pub fn regression(objective: Objective) -> Result<Self> {
         let task = Self {
             kind: TaskKind::Regression,
