@@ -118,6 +118,26 @@ fn fitted_cpp_cli_exports_frozen_source_and_executable_runner() {
             .status()
             .unwrap()
             .success());
+        assert_eq!(fs::read_to_string(&predictions).unwrap(), actual);
+
+        let blank = out.join("blank.csv");
+        fs::write(&blank, "a,b\n1,2\n\n3,4\n").unwrap();
+        assert!(!Command::new(out.join("model"))
+            .args([blank.as_os_str(), predictions.as_os_str()])
+            .status()
+            .unwrap()
+            .success());
+        assert_eq!(fs::read_to_string(&predictions).unwrap(), actual);
+
+        let alias = out.join("same-path.csv");
+        fs::copy(&test, &alias).unwrap();
+        let before = fs::read(&alias).unwrap();
+        assert!(!Command::new(out.join("model"))
+            .args([alias.as_os_str(), alias.as_os_str()])
+            .status()
+            .unwrap()
+            .success());
+        assert_eq!(fs::read(&alias).unwrap(), before);
     }
 }
 
