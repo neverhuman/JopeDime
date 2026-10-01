@@ -39,8 +39,38 @@ examples also execute emitted Rust/Python against the evaluator; explicit nested
 retains its exact paired and C++17 refusal. `map`/`derive` and target forms occur among the 19
 executed direct-wire programs, with C++17 refusal where declared.
 
+## Opt-in C++17 expression training recipes
+
+`feat_math::kernel::recipe_v2::emit_cpp17` and `jope emit --lang cpp17-recipe-v2`
+emit profile `feat-math.cpp17-expression-recipe.v2`. The generated numeric C ABI fits its own
+training state for symbolic raw/affine programs and `map`/`derive` stages with Ridge/ElasticNet.
+It reuses the existing planner, scalar lowering, helper dependency closure and C++ assembler.
+Its profile identifies added backend admission; its scalar arithmetic remains the historical
+policy. The default `emit_cpp17`, CLI `cpp17` and `all` retain their old bytes and refusals.
+Symbolic IR must have matching readable source and tree; nonfinite literals and mismatched
+source/tree pairs are refused before the historical planner can reparse them.
+
+[`mathexpr_boundary_parity.rs`](../../crates/feat-math/tests/mathexpr_boundary_parity.rs) executes
+nine scalar expression witnesses in four contexts (raw, affine, map, derive), covering Func
+0–18, all variable forms, binary 0–4 and negation. Each executable tree passes canonical and
+typed codec round-trips before fitting. Runtime input arrives after compilation, and predictions
+must match evaluator bits with g++ C++17 O2, contraction disabled and fast math disabled.
+Additional witnesses exercise whole-expression invalid-clip fallback through `min`/`sign`, missing
+columns, protected division, append and multiple expression stages, and ElasticNet. Three recipes
+run the O3, clang, C++20 and ASan/UBSan matrix. The direct ABI and generated Model methods refuse
+zero-width/ragged tables; the ABI also refuses wrong prediction width/length and nonfinite targets.
+The CLI test binds written `model.cpp` bytes to this public API and proves explicit opt-in.
+
+The numeric ABI requires rectangular rows with positive training width, finite targets, and the
+same prediction width. Nonfinite features are sanitized to zero, as in the default training recipe;
+raw symbolic evaluator calls instead evaluate their raw features. The scalar bit witnesses use
+finite features. Expression context/column/domain failures retain the historical zero fallback;
+this profile does not introduce a fault stream or a new numerical policy. It inherits the scalar
+helpers' existing X6 limitations; the unchanged 22-entry allowlist belongs to the existing parity
+corpus, and is neither enlarged nor a waiver for these new execution witnesses.
+
 Remaining work includes the 22 existing X6 parity differences, broader nonfinite and property-based
-execution across emitted routes, parameter variants beyond the frozen witnesses, and standalone
-C++17 training support for currently refused symbolic, `map`, `derive`, target and portfolio forms.
-The tests do not claim those absent routes or make an admission check count as execution. Frozen
-evaluator-identity inputs and historical fixtures are unchanged.
+execution across emitted routes, parameter variants beyond the witnesses, and training recipe
+support for target and portfolio forms. Ordered input/state metadata and `jope pipeline run`
+integration remain separate B03 work. This numeric recipe has no ordered-state hook and is not a
+full B03/1.0 qualification. Frozen evaluator-identity inputs and historical fixtures are unchanged.

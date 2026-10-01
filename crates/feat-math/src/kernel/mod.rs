@@ -10,6 +10,7 @@ pub mod ordered_axis;
 pub mod pipeline;
 pub mod profile;
 mod program;
+pub mod recipe_v2;
 pub mod scope;
 pub mod telemetry;
 pub mod width;

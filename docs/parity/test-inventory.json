@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json",
-  "count": 4022,
+  "count": 4028,
   "ignored": 66,
   "packages": {
    "battle-gpu": {
@@ -29,7 +29,7 @@
     }
    },
    "feat-math": {
-    "count": 655,
+    "count": 660,
     "ignored": 7,
     "binaries": {
      "feat-math": {
@@ -764,6 +764,18 @@
        "legacy_v2_parser_errors_rng_and_folds_are_frozen",
        "legacy_v2_reference_files_match_the_takeover_snapshot",
        "regenerate_legacy_v2_freeze"
+      ]
+     },
+     "feat-math::mathexpr_boundary_parity": {
+      "kind": "test",
+      "count": 5,
+      "ignored": 0,
+      "tests": [
+       "expression_recipes_are_opt_in_and_preserve_default_refusals",
+       "expression_training_recipes_execute_all_historical_scalar_forms",
+       "expression_training_recipes_pass_compiler_and_sanitizer_matrix",
+       "expression_training_recipes_preserve_fault_fallback_and_stage_order",
+       "expression_training_recipes_refuse_other_heads_targets_and_portable_math"
       ]
      },
      "feat-math::mathexpr_current_semantics": {
@@ -1830,7 +1842,7 @@
     }
    },
    "jope-cli": {
-    "count": 64,
+    "count": 65,
     "ignored": 0,
     "binaries": {
      "jope-cli": {
@@ -1889,9 +1901,10 @@
      },
      "jope-cli::fitted_cpp_cli": {
       "kind": "test",
-      "count": 2,
+      "count": 3,
       "ignored": 0,
       "tests": [
+       "expression_recipe_cli_requires_opt_in_and_writes_public_api_bytes",
        "fitted_cpp_cli_exports_frozen_source_and_executable_runner",
        "fitted_cpp_cli_requires_numeric_training_csv_and_keeps_recipe_default"
       ]
@@ -6343,7 +6356,7 @@
   }
  },
  "totals": {
-  "rust": 4022,
+  "rust": 4028,
   "python": 172
  }
 }

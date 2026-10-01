@@ -13,6 +13,57 @@ fn jope(args: &[&str]) -> std::process::Output {
 }
 
 #[test]
+fn expression_recipe_cli_requires_opt_in_and_writes_public_api_bytes() {
+    let scratch = tempfile::tempdir().unwrap();
+    for source in [
+        "(sym affine \"c0+c1\")",
+        "(pipe X (map expr=\"x+c0\") (ridge))",
+        "(pipe X (derive expr=\"c0+c1\") (ridge))",
+    ] {
+        let out = jope(&[
+            "emit",
+            "--json",
+            "--lang",
+            "cpp17-recipe-v2",
+            "--genome",
+            source,
+            "--output",
+            scratch.path().to_str().unwrap(),
+        ]);
+        assert!(
+            out.status.success(),
+            "{}",
+            String::from_utf8_lossy(&out.stderr)
+        );
+        let report: Value = serde_json::from_slice(&out.stdout).unwrap();
+        assert_eq!(report["artifacts"][0]["lang"], "cpp17-recipe-v2");
+        let expected = feat_math::kernel::recipe_v2::emit_cpp17(
+            &GenomeIr::parse(source).unwrap(),
+            &feat_math::transpile::EmitOptions::default(),
+        )
+        .unwrap();
+        assert_eq!(
+            fs::read_to_string(scratch.path().join("model.cpp")).unwrap(),
+            expected.source
+        );
+        assert!(!jope(&["emit", "--lang", "cpp17", "--genome", source])
+            .status
+            .success());
+    }
+    assert!(!jope(&[
+        "emit",
+        "--lang",
+        "cpp17-recipe-v2",
+        "--genome",
+        "(sym raw \"c0\")",
+        "--train",
+        "unused.csv"
+    ])
+    .status
+    .success());
+}
+
+#[test]
 fn fitted_cpp_cli_exports_frozen_source_and_executable_runner() {
     let scratch = tempfile::tempdir().unwrap();
     let train = scratch.path().join("train.csv");

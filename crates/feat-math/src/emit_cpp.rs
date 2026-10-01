@@ -18,6 +18,20 @@ use crate::transpile::{EmitOptions, MathKernel};
 /// Emit a standalone C++ program for `plan`, or list the elements this rung does
 /// not yet support (mirrors `supports()` semantics for the Rust/Python paths).
 pub fn emit_cpp(plan: &Plan, opts: &EmitOptions) -> Result<String, Vec<String>> {
+    emit_cpp_inner(plan, opts, false)
+}
+
+impl EmitOptions {
+    pub(crate) fn cpp_expression_recipe(&self, plan: &Plan) -> Result<String, Vec<String>> {
+        emit_cpp_inner(plan, self, true)
+    }
+}
+
+fn emit_cpp_inner(
+    plan: &Plan,
+    opts: &EmitOptions,
+    expressions: bool,
+) -> Result<String, Vec<String>> {
     let (stages, head) = match plan {
         Plan::Pipeline {
             target: None,
@@ -27,12 +41,31 @@ pub fn emit_cpp(plan: &Plan, opts: &EmitOptions) -> Result<String, Vec<String>> 
         Plan::Pipeline {
             target: Some(_), ..
         } => return Err(vec!["target transforms".to_string()]),
+        Plan::Symbolic { expr, affine, .. } if expressions => {
+            let model = symbolic_cpp(expr, *affine)?;
+            return Ok([
+                PREAMBLE,
+                crate::FittedCppArtifact::expression_helpers(),
+                H_SANITIZE,
+                EXPRESSION_SHAPE,
+                &model,
+                IO_BLOCK,
+            ]
+            .join("\n\n")
+                + "\n");
+        }
         Plan::Symbolic { .. } => return Err(vec!["symbolic formula programs".to_string()]),
     };
 
     let mut unsupported: Vec<String> = Vec::new();
     for stage in stages {
-        if op_cpp(&stage.op).is_none() {
+        if op_cpp(&stage.op).is_none()
+            && !(expressions
+                && matches!(
+                    stage.op,
+                    PlannedOp::MapExpr { .. } | PlannedOp::DeriveExpr { .. }
+                ))
+        {
             unsupported.push(format!("transform {}", op_label(&stage.op)));
         }
     }
@@ -45,19 +78,39 @@ pub fn emit_cpp(plan: &Plan, opts: &EmitOptions) -> Result<String, Vec<String>> 
 
     let mut sections: Vec<String> = Vec::new();
     sections.push(PREAMBLE.to_string());
+    if expressions {
+        sections.push(crate::FittedCppArtifact::expression_helpers().to_string());
+        sections.push(EXPRESSION_SHAPE.to_string());
+    }
     if opts.math_kernel == MathKernel::Portable {
         sections.push(PORTABLE_WARNING_BEGIN.to_string());
         sections.push(PORTABLE_MATH.to_string());
         sections.push(PORTABLE_WARNING_END.to_string());
     }
     for helper in helper_set(plan) {
+        if expressions && matches!(helper, Helper::MathSigmoid) {
+            // The shared expression helper block supplies this same scalar.
+            continue;
+        }
         let body = helper_cpp(helper);
         if !body.is_empty() {
             sections.push(body.to_string());
         }
     }
     let mut seen: Vec<&'static str> = Vec::new();
-    for stage in stages {
+    for (index, stage) in stages.iter().enumerate() {
+        if expressions {
+            match &stage.op {
+                PlannedOp::MapExpr { expr, .. } | PlannedOp::DeriveExpr { expr, .. } => {
+                    sections.push(expression_stage_cpp(
+                        index + 1,
+                        expr,
+                        matches!(stage.op, PlannedOp::MapExpr { .. }),
+                    )?);
+                }
+                _ => {}
+            }
+        }
         if let Some((name, src)) = op_cpp(&stage.op) {
             if !seen.contains(&name) {
                 seen.push(name);
@@ -66,7 +119,7 @@ pub fn emit_cpp(plan: &Plan, opts: &EmitOptions) -> Result<String, Vec<String>> 
         }
     }
     sections.push(head_src_cpp(head).to_string());
-    sections.push(model_cpp(stages, head));
+    sections.push(model_cpp(stages, head, expressions));
     sections.push(IO_BLOCK.to_string());
     let mut source = sections.join("\n\n") + "\n";
     if opts.math_kernel == MathKernel::Portable {
@@ -340,7 +393,7 @@ fn op_calls_cpp(op: &PlannedOp) -> (Option<String>, String) {
 }
 
 /// Assemble the `Model` struct with its `fit`/`predict` methods from the plan.
-fn model_cpp(stages: &[PlannedStage], head: &PlannedHead) -> String {
+fn model_cpp(stages: &[PlannedStage], head: &PlannedHead, expressions: bool) -> String {
     let (head_fit, head_predict, head_ty) = head_calls_cpp(head);
 
     let mut fields: Vec<String> = Vec::new();
@@ -351,7 +404,12 @@ fn model_cpp(stages: &[PlannedStage], head: &PlannedHead) -> String {
     for (i, stage) in stages.iter().enumerate() {
         let n = i + 1;
         let append = if stage.append { "true" } else { "false" };
-        let (fit_call, apply_template) = op_calls_cpp(&stage.op);
+        let (fit_call, apply_template) = match &stage.op {
+            PlannedOp::MapExpr { .. } | PlannedOp::DeriveExpr { .. } if expressions => {
+                (None, format!("expression_stage{n}(x, {{append}})"))
+            }
+            _ => op_calls_cpp(&stage.op),
+        };
         let apply = apply_template
             .replace("{state}", &format!("stage{n}"))
             .replace("{append}", append);
@@ -369,6 +427,9 @@ fn model_cpp(stages: &[PlannedStage], head: &PlannedHead) -> String {
     let mut out = String::new();
     out.push_str("// Feature stages applied in order, then the ridge regression head.\n");
     out.push_str("struct Model {\n");
+    if expressions {
+        out.push_str("    std::size_t input_width=0;\n");
+    }
     for field in &fields {
         out.push_str(field);
         out.push('\n');
@@ -390,6 +451,9 @@ fn model_cpp(stages: &[PlannedStage], head: &PlannedHead) -> String {
         "        throw std::invalid_argument(\"training data is empty or target is short\");\n",
     );
     out.push_str("    }\n");
+    if expressions {
+        out.push_str("    const std::size_t input_width = expression_width(x_in);\n");
+    }
     out.push_str("    std::vector<std::vector<double>> x = sanitize(x_in);\n");
     for line in &fit_body {
         out.push_str(line);
@@ -397,6 +461,9 @@ fn model_cpp(stages: &[PlannedStage], head: &PlannedHead) -> String {
     }
     out.push_str(&format!("    {head_ty} head = {head_fit};\n"));
     out.push_str("    Model m;\n");
+    if expressions {
+        out.push_str("    m.input_width = input_width;\n");
+    }
     for line in &assigns {
         out.push_str(line);
         out.push('\n');
@@ -408,6 +475,9 @@ fn model_cpp(stages: &[PlannedStage], head: &PlannedHead) -> String {
     out.push_str(
         "std::vector<double> Model::predict(const std::vector<std::vector<double>>& x_in) const {\n",
     );
+    if expressions {
+        out.push_str("    if (!x_in.empty() && expression_width(x_in) != input_width) throw std::invalid_argument(\"prediction width\");\n");
+    }
     out.push_str("    std::vector<std::vector<double>> x = sanitize(x_in);\n");
     for line in &predict_body {
         out.push_str(line);
@@ -417,6 +487,77 @@ fn model_cpp(stages: &[PlannedStage], head: &PlannedHead) -> String {
     out.push('}');
     out
 }
+
+fn expression_stage_cpp(
+    n: usize,
+    expr: &crate::mathexpr::MathAst,
+    map: bool,
+) -> Result<String, Vec<String>> {
+    let expression = crate::math_expr::MathExpr::from_ast(expr.clone())
+        .and_then(|expr| expr.to_cpp17(map))
+        .map_err(|e| vec![e.to_string()])?;
+    let values = if map {
+        format!("for(double x:values) {{ (void)x; output.push_back(math_safe({expression})); }}")
+    } else {
+        format!("output.push_back(math_safe({expression}));")
+    };
+    Ok(format!(
+        r#"static std::vector<std::vector<double>> expression_stage{n}(const std::vector<std::vector<double>>& input, bool append) {{
+    std::vector<std::vector<double>> out;
+    out.reserve(input.size());
+    for(const auto& values:input) {{
+        const double* row=values.data(); const std::size_t row_len=values.size();
+        (void)row; (void)row_len;
+        std::vector<double> output;
+        {values}
+        out.push_back(std::move(output));
+    }}
+    return finish_stage(input, out, append);
+}}"#
+    ))
+}
+
+fn symbolic_cpp(expr: &crate::mathexpr::MathAst, affine: bool) -> Result<String, Vec<String>> {
+    let expression = crate::math_expr::MathExpr::from_ast(expr.clone())
+        .and_then(|expr| expr.to_cpp17(false))
+        .map_err(|e| vec![e.to_string()])?;
+    let fit = if affine {
+        "double fm=0.0,ym=0.0; for(std::size_t i=0;i<x.size();++i){fm+=expression_value(x[i]);ym+=y[i];} fm/=static_cast<double>(x.size());ym/=static_cast<double>(x.size());double cov=0.0,var=0.0;for(std::size_t i=0;i<x.size();++i){double d=expression_value(x[i])-fm;cov+=d*(y[i]-ym);var+=d*d;}if(var>1e-24){m.a=cov/var;m.b=ym-m.a*fm;}else{m.a=0.0;m.b=ym;}"
+    } else {
+        "(void)y;"
+    };
+    Ok(format!(
+        r#"static double expression_value(const std::vector<double>& values) {{
+    const double* row=values.data(); const std::size_t row_len=values.size();
+    (void)row; (void)row_len;
+    return math_safe({expression});
+}}
+struct Model {{
+    double a=1.0,b=0.0;
+    std::size_t input_width=0;
+    static Model fit(const std::vector<std::vector<double>>& input,const std::vector<double>& y) {{
+        Model m; m.input_width=expression_width(input);
+        if(y.size()<input.size()) throw std::invalid_argument("short target");
+        const auto x=sanitize(input);
+        {fit}
+        return m;
+    }}
+    std::vector<double> predict(const std::vector<std::vector<double>>& input) const {{
+        if(!input.empty() && expression_width(input)!=input_width) throw std::invalid_argument("prediction width");
+        std::vector<double> out;
+        for(const auto& row:sanitize(input)) {{double value=a*expression_value(row)+b;out.push_back(std::isfinite(value)?clamp_range(value,-60.0,60.0):0.0);}}
+        return out;
+    }}
+}};"#
+    ))
+}
+
+const EXPRESSION_SHAPE: &str = r#"static std::size_t expression_width(const std::vector<std::vector<double>>& rows) {
+    if(rows.empty() || rows.front().empty()) throw std::invalid_argument("empty numeric table");
+    const std::size_t width=rows.front().size();
+    for(const auto& row:rows) if(row.size()!=width) throw std::invalid_argument("ragged numeric table");
+    return width;
+}"#;
 
 const PREAMBLE: &str = r#"// Standalone regression model — self-contained, depends only on the C++
 // standard library, and accepts all data through its C ABI.

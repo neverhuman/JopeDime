@@ -80,7 +80,7 @@ enum Command {
     Emit {
         #[arg(long, default_value = DEFAULT_GENOME)]
         genome: String,
-        /// rust, python, cpp17, cpp20, javascript (or js), cpp17-fitted, or all (the four recipe sources)
+        /// rust, python, cpp17, cpp17-recipe-v2, cpp20, javascript (or js), cpp17-fitted, or all (the four default recipes)
         #[arg(long)]
         lang: String,
         /// Numeric CSV with a final `target` column; required for cpp17-fitted.
