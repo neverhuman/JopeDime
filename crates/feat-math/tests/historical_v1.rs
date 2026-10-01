@@ -366,6 +366,20 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
     assert_eq!(source["schema"], "feat-math.historical-source-inventory.v1");
     assert_eq!(source["base_sha"], BASE);
     let rows = source["sources"].as_array().unwrap();
+    let transition = old_fixture("transitions/b02_identity_rebaseline.v1.json");
+    assert_eq!(
+        transition["schema"],
+        "feat-math.compat-freeze.identity-rebaseline.v1"
+    );
+    let replacements = transition["fixtures"].as_array().unwrap();
+    assert_eq!(replacements.len(), 2);
+    let changed_fixtures = [
+        "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+        "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+    ];
+    for (entry, path) in replacements.iter().zip(changed_fixtures) {
+        assert_eq!(entry["path"], path);
+    }
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);
     let mut old_fixtures = 0;
@@ -390,11 +404,13 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
             if path.starts_with("crates/feat-math/tests/fixtures/compat_freeze/") {
                 old_fixtures += 1;
                 let repo = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
-                assert_eq!(
-                    sha256(&std::fs::read(repo.join(path)).unwrap()),
-                    hash,
-                    "{path}"
-                );
+                let current = sha256(&std::fs::read(repo.join(path)).unwrap());
+                if let Some(replacement) = replacements.iter().find(|entry| entry["path"] == path) {
+                    assert_eq!(replacement["before"], hash, "{path}");
+                    assert_eq!(replacement["after"], current, "{path}");
+                } else {
+                    assert_eq!(current, hash, "{path}");
+                }
             }
         }
     }

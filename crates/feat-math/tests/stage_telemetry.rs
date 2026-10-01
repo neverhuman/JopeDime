@@ -27,6 +27,7 @@ use feat_math::kernel::telemetry::{
     apply_op_traced, fit_traced, predict_traced, PipelineTelemetry, StageFaultCounts,
     ZeroWidthInput, FAULT_SLOTS,
 };
+use feat_math::kernel::width::{MismatchKind, WidthMismatch, WidthReq};
 use feat_math::math_expr::{FaultClass, FaultSet, FaultSeverity, MathExpr};
 use feat_math::ops::{apply_op, apply_op_train, fit_op, FittedOp};
 use feat_math::{fit, sanitize, GenomeIr, Model, Pcg32, CHAMPION_GENOME, MAX_WIDTH};
@@ -1146,38 +1147,22 @@ fn the_traced_entry_points_refuse_a_zero_width_input() {
             "training data is empty or target is short"
         );
     }
-    // The legacy fit, for contrast; the domain table records each case. It takes the width from
-    // the first row. When that row is empty, a program without transforms accepts the input, and
-    // a transform refuses it itself, with a check that reads row 0 only.
-    assert!(fit(&parse_program("(pipe X (ridge))"), &empty_rows, &y).is_ok());
-    let legacy = fit(
-        &parse_program("(pipe X (standardize) (ridge))"),
-        &empty_rows,
-        &y,
-    )
-    .expect_err("refused by the stage");
-    assert_eq!(legacy.to_string(), "empty input to stage standardize");
-    // When only a later row is empty, that check passes, and a transform or a head that reads
-    // every row up to the first row's width indexes the empty row and panics. (Under --no-capture
-    // the default panic hook prints these two expected panics.)
-    for source in ["(pipe X (standardize) (ridge))", "(pipe X (ridge))"] {
+    // Public fit now rejects every zero-width row before a transform or head can index it.
+    for source in programs {
         let program = parse_program(source);
-        let payload =
-            std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| fit(&program, &ragged, &y)))
-                .expect_err("the legacy fit panics");
-        let message = payload
-            .downcast_ref::<String>()
-            .map(String::as_str)
-            .or_else(|| payload.downcast_ref::<&str>().copied())
-            .unwrap_or_default();
-        assert!(
-            message.contains("index out of bounds"),
-            "{source}: {message}"
-        );
-    }
-    // A symbolic program accepts both: its expression reads only the cells a row has.
-    for x in [&empty_rows, &ragged] {
-        assert!(fit(&parse_program("(sym raw \"row_sum\")"), x, &y).is_ok());
+        for (x, row) in [(&empty_rows, 0), (&ragged, 1)] {
+            let error = fit(&program, x, &y).expect_err("zero-width rows are refused");
+            assert_eq!(
+                error.downcast_ref::<WidthMismatch>(),
+                Some(&WidthMismatch {
+                    stage: 0,
+                    expected: WidthReq::AtLeast(1),
+                    got: 0,
+                    kind: MismatchKind::StageInput,
+                }),
+                "{source}, row {row}"
+            );
+        }
     }
 
     let (train, target, _) = fitted_surface_data();
