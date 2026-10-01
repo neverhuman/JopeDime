@@ -18,7 +18,7 @@ const HISTORICAL: &str = include_str!(
 const EMITTED: &str = include_str!("fixtures/compat_freeze/emitted_bytes.v1.json");
 const MODELS: &str = include_str!("fixtures/compat_freeze/model_serde.v1.json");
 
-fn rows_by_name<'a>(rows: &'a [Value]) -> BTreeMap<&'a str, &'a Value> {
+fn rows_by_name(rows: &[Value]) -> BTreeMap<&str, &Value> {
     rows.iter()
         .map(|row| (row["name"].as_str().unwrap(), row))
         .collect()
