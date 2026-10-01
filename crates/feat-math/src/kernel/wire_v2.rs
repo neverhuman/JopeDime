@@ -1,3 +1,4 @@
+// jankurai:allow repo-rot.path.fake-versioned-source reason=active-B04-wire-v2-reservations owner=kernel2 expires=2027-04-01
 //! Version-2 identity reservations and reader-first envelopes.
 //!
 //! These records name future operators. A decoded v2 record cannot be turned
