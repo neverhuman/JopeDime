@@ -486,6 +486,12 @@
         "gp"
       ]
     },
+    "target:feat-math/test/ordered_axis_contract": {
+      "role": "regression",
+      "subsystems": [
+        "fitting"
+      ]
+    },
     "target:feat-math/test/parity_bits": {
       "role": "regression",
       "subsystems": [

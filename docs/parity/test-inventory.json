@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json",
-  "count": 3993,
+  "count": 4001,
   "ignored": 66,
   "packages": {
    "battle-gpu": {
@@ -29,7 +29,7 @@
     }
    },
    "feat-math": {
-    "count": 630,
+    "count": 638,
     "ignored": 7,
     "binaries": {
      "feat-math": {
@@ -756,6 +756,21 @@
        "step_is_strict_and_nan_compares_false",
        "the_output_filter_zeroes_non_finite_values_and_clamps_magnitude",
        "x_in_row_context_is_an_error_and_a_zero_derive_output"
+      ]
+     },
+     "feat-math::ordered_axis_contract": {
+      "kind": "test",
+      "count": 8,
+      "ignored": 0,
+      "tests": [
+       "fold_certificate_seals_fit_and_carries_only_prior_group_state",
+       "input_identity_requires_one_group_and_one_numeric_timestamp",
+       "legacy_lag_roll_are_within_row_and_keep_frozen_bits",
+       "malformed_order_and_fold_boundaries_are_rejected",
+       "metadata_is_versioned_and_unknown_versions_fail_closed",
+       "numeric_group_keys_canonicalize_zero_and_equal_spellings",
+       "offline_stage_is_refused_for_forecasting",
+       "sample_time_is_refused_for_iid_and_without_ordered_identity"
       ]
      },
      "feat-math::parity_bits": {
@@ -6272,7 +6287,7 @@
   }
  },
  "totals": {
-  "rust": 3993,
+  "rust": 4001,
   "python": 172
  }
 }
