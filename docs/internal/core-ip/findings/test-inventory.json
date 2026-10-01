@@ -774,6 +774,13 @@
         "orchestration"
       ]
     },
+    "target:jope-cli/test/fitted_cpp_cli": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "export"
+      ]
+    },
     "target:jope-cli/test/offline_cli": {
       "role": "regression",
       "subsystems": [
