@@ -421,6 +421,13 @@
         "export"
       ]
     },
+    "target:feat-math/test/conversion_wire_matrix": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "export"
+      ]
+    },
     "target:feat-math/test/fault_trace": {
       "role": "regression",
       "subsystems": [

@@ -1,0 +1,484 @@
+//! Registry-derived conversion witnesses. The historical corpus stays read-only.
+
+use feat_math::kernel::capabilities::Manifest;
+use feat_math::kernel::Program;
+use feat_math::registry::{generatable_operators, operator_registry};
+use feat_math::transpile::{emit, emit_cpp17, supports, supports_cpp17, EmitOptions};
+use feat_math::{fit_predict, GenomeIr, Pcg32};
+use serde_json::Value;
+use std::collections::{BTreeMap, BTreeSet};
+use std::fmt::Write;
+use std::fs;
+use std::path::Path;
+use std::process::Command;
+
+const HISTORICAL: &str = include_str!(
+    "fixtures/compat_freeze/historical_v1/objects/sha256/b5e66d14bdde73e4ff7d69ad65d6e7a8b0772ebc7c532f6a60bb775f4c2ef5c3.json"
+);
+const EMITTED: &str = include_str!("fixtures/compat_freeze/emitted_bytes.v1.json");
+const MODELS: &str = include_str!("fixtures/compat_freeze/model_serde.v1.json");
+
+fn rows_by_name<'a>(rows: &'a [Value]) -> BTreeMap<&'a str, &'a Value> {
+    rows.iter()
+        .map(|row| (row["name"].as_str().unwrap(), row))
+        .collect()
+}
+
+fn witness_sources() -> BTreeMap<String, String> {
+    let historical: Value = serde_json::from_str(HISTORICAL).unwrap();
+    let emitted: Value = serde_json::from_str(EMITTED).unwrap();
+    let programs = rows_by_name(emitted["programs"].as_array().unwrap());
+    historical["registry"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|row| row["evidence"]["kind"] == "fitted_existing")
+        .map(|row| {
+            let name = row["evidence"]["name"].as_str().unwrap();
+            (
+                name.to_owned(),
+                programs[name]["canonical"].as_str().unwrap().to_owned(),
+            )
+        })
+        .collect()
+}
+
+#[test]
+fn all_frozen_wire_ids_have_current_conversion_witnesses_or_explicit_refusals() {
+    let historical: Value = serde_json::from_str(HISTORICAL).unwrap();
+    let emitted: Value = serde_json::from_str(EMITTED).unwrap();
+    let models: Value = serde_json::from_str(MODELS).unwrap();
+    let frozen = historical["registry"].as_array().unwrap();
+    let programs = rows_by_name(emitted["programs"].as_array().unwrap());
+    let model_rows = rows_by_name(models["models"].as_array().unwrap());
+    let manifest = Manifest::current();
+    let registry = operator_registry();
+    let generatable: BTreeSet<_> = generatable_operators(false).map(|op| op.name).collect();
+    let mut witness_names = BTreeSet::new();
+    let mut kinds = BTreeMap::<&str, usize>::new();
+
+    assert_eq!(registry.len(), 53, "frozen wire IDs 0–52");
+    assert_eq!(frozen.len(), registry.len());
+    for (id, (op, old)) in registry.iter().zip(frozen).enumerate() {
+        assert_eq!(usize::from(op.id.0), id, "wire order");
+        assert_eq!(old["id"], id, "wire {id} frozen ID");
+        assert_eq!(old["name"], op.name, "wire {id} spelling");
+        assert_eq!(old["semantic_key"], op.semantic_key, "wire {id} semantics");
+        for (field, actual) in [
+            ("parseable", op.lifecycle.parseable),
+            ("executable", op.lifecycle.executable),
+            ("generatable", op.lifecycle.generatable),
+            ("quarantined", op.lifecycle.quarantined),
+        ] {
+            assert_eq!(old[field], actual, "wire {id} lifecycle {field}");
+        }
+        assert_eq!(generatable.contains(op.name), op.lifecycle.generatable);
+        let cap = manifest
+            .op(op.name)
+            .unwrap_or_else(|| panic!("wire {id} missing manifest"));
+        assert_eq!(cap.wire_id, Some(op.id.0));
+        let kind = old["evidence"]["kind"].as_str().unwrap();
+        if op.lifecycle.generatable {
+            assert_eq!(kind, "fitted_existing", "wire {id}: search-visible witness");
+        }
+        *kinds.entry(kind).or_default() += 1;
+        match kind {
+            "fitted_existing" => {
+                let name = old["evidence"]["name"].as_str().unwrap();
+                let source = programs[name]["canonical"].as_str().unwrap();
+                assert!(
+                    source.contains(&format!("({} ", op.name))
+                        || source.contains(&format!("({})", op.name)),
+                    "wire {id}: witness must actually contain {}",
+                    op.name
+                );
+                assert!(
+                    model_rows.contains_key(name),
+                    "wire {id}: missing fitted witness"
+                );
+                let parsed = GenomeIr::parse(source).unwrap();
+                let canonical = parsed.canonical();
+                let reparsed = GenomeIr::parse(&canonical).unwrap();
+                assert_eq!(
+                    reparsed.canonical(),
+                    canonical,
+                    "wire {id}: canonical fixed point"
+                );
+                assert_eq!(
+                    Program::import_legacy(&parsed).to_bytes().unwrap(),
+                    Program::import_legacy(&reparsed).to_bytes().unwrap(),
+                    "wire {id}: executable codec round trip"
+                );
+                assert!(
+                    supports(&reparsed).is_ok(),
+                    "wire {id}: paired recipe refused"
+                );
+                let artifact = emit(&reparsed, &EmitOptions::default()).unwrap();
+                let sidecar: Value = serde_json::from_str(&artifact.manifest).unwrap();
+                assert_eq!(sidecar["program"], canonical);
+                witness_names.insert(name);
+            }
+            "alias_case" => {
+                assert!(op.lifecycle.executable && !op.lifecycle.generatable);
+                assert_ne!(op.name, op.semantic_key, "wire {id}: alias key");
+            }
+            "quarantined_refusal" => {
+                assert!(op.lifecycle.quarantined && !op.lifecycle.executable);
+            }
+            other => panic!("wire {id}: unclassified witness {other}"),
+        }
+    }
+    assert_eq!(kinds["fitted_existing"], 42);
+    assert_eq!(kinds["alias_case"], 4);
+    assert_eq!(kinds["quarantined_refusal"], 7);
+    assert_eq!(witness_names.len(), 19, "deduplicated executable programs");
+    assert_eq!(generatable.len(), 35, "search-visible frozen wire subset");
+}
+
+fn toy_data() -> (Vec<Vec<f64>>, Vec<f64>) {
+    let mut rng = Pcg32::new(42, 17);
+    let mut x = Vec::new();
+    let mut y = Vec::new();
+    for _ in 0..80 {
+        let row: Vec<f64> = (0..5).map(|_| rng.next_f64() * 4.0 - 2.0).collect();
+        let target = 1.7 * row[0] - 0.9 * row[1]
+            + 0.5 * (3.0 * row[2]).sin()
+            + 0.3 * row[3] * row[4]
+            + 0.1 * rng.gaussian();
+        x.push(row);
+        y.push(target);
+    }
+    (x, y)
+}
+
+fn write_recipe_csvs(dir: &Path, x: &[Vec<f64>], y: &[f64]) {
+    let mut train = String::new();
+    for (row, target) in x[..64].iter().zip(&y[..64]) {
+        for value in row {
+            train.push_str(&format!("{value:?},"));
+        }
+        train.push_str(&format!("{target:?}\n"));
+    }
+    fs::write(dir.join("train.csv"), train).unwrap();
+    let mut test = String::new();
+    for row in &x[64..] {
+        test.push_str(
+            &row.iter()
+                .map(|value| format!("{value:?}"))
+                .collect::<Vec<_>>()
+                .join(","),
+        );
+        test.push('\n');
+    }
+    fs::write(dir.join("test.csv"), test).unwrap();
+}
+
+fn require_success(what: &str, command: &mut Command) {
+    let output = command
+        .output()
+        .unwrap_or_else(|error| panic!("{what}: {error}"));
+    assert!(
+        output.status.success(),
+        "{what}: exit {}\nstdout:\n{}\nstderr:\n{}",
+        output.status,
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+}
+
+fn recipe_bits(path: &Path) -> Vec<u64> {
+    fs::read_to_string(path)
+        .unwrap()
+        .lines()
+        .map(|line| line.trim().parse::<f64>().unwrap().to_bits())
+        .collect()
+}
+
+fn run_emitted_pair(
+    name: &str,
+    genome: &GenomeIr,
+    dir: &Path,
+    x: &[Vec<f64>],
+    y: &[f64],
+) -> (Vec<u64>, Vec<u64>) {
+    fs::create_dir_all(dir).unwrap();
+    write_recipe_csvs(dir, x, y);
+    let artifact = emit(genome, &EmitOptions::default()).unwrap();
+    let python = dir.join("model.py");
+    let python_out = dir.join("python.txt");
+    fs::write(&python, artifact.python).unwrap();
+    require_success(
+        &format!("{name}: emitted Python"),
+        Command::new("python3")
+            .arg(&python)
+            .arg(dir.join("train.csv"))
+            .arg(dir.join("test.csv"))
+            .arg(&python_out)
+            .env("LC_ALL", "C")
+            .env("PYTHONDONTWRITEBYTECODE", "1"),
+    );
+    let rust = dir.join("model.rs");
+    let binary = dir.join("model_bin");
+    let rust_out = dir.join("rust.txt");
+    fs::write(&rust, artifact.rust).unwrap();
+    require_success(
+        &format!("{name}: rustc -O"),
+        Command::new("rustc")
+            .arg("-O")
+            .arg("-o")
+            .arg(&binary)
+            .arg(&rust),
+    );
+    require_success(
+        &format!("{name}: emitted Rust"),
+        Command::new(&binary)
+            .arg(dir.join("train.csv"))
+            .arg(dir.join("test.csv"))
+            .arg(&rust_out),
+    );
+    (recipe_bits(&python_out), recipe_bits(&rust_out))
+}
+
+#[test]
+fn every_direct_wire_witness_evaluates_to_its_frozen_model_bits() {
+    let models: Value = serde_json::from_str(MODELS).unwrap();
+    let frozen = rows_by_name(models["models"].as_array().unwrap());
+    let (x, y) = toy_data();
+    for (name, source) in witness_sources() {
+        let genome = GenomeIr::parse(&source).unwrap();
+        let expected: Vec<u64> = frozen[name.as_str()]["predictions"]
+            .as_str()
+            .unwrap()
+            .split_whitespace()
+            .map(|word| u64::from_str_radix(word, 16).unwrap())
+            .collect();
+        let actual: Vec<u64> = fit_predict(&genome, &x[..64].to_vec(), &y[..64], &x[64..].to_vec())
+            .unwrap_or_else(|error| panic!("{name}: evaluator: {error:#}"))
+            .into_iter()
+            .map(f64::to_bits)
+            .collect();
+        assert_eq!(actual, expected, "{name}: frozen evaluator bits");
+    }
+}
+
+#[test]
+fn every_direct_wire_witness_runs_emitted_rust_and_python_on_the_frozen_input() {
+    let models: Value = serde_json::from_str(MODELS).unwrap();
+    let frozen = rows_by_name(models["models"].as_array().unwrap());
+    let (x, y) = toy_data();
+    let scratch_root = std::env::var_os("TMPDIR")
+        .map(std::path::PathBuf::from)
+        .unwrap_or_else(|| std::path::PathBuf::from(env!("CARGO_TARGET_TMPDIR")));
+    fs::create_dir_all(&scratch_root).unwrap();
+    let scratch = tempfile::Builder::new()
+        .prefix("conversion-wire-matrix-")
+        .tempdir_in(scratch_root)
+        .unwrap();
+    for (name, source) in witness_sources() {
+        let dir = scratch.path().join(&name);
+        let genome = GenomeIr::parse(&source).unwrap();
+        let expected: Vec<u64> = frozen[name.as_str()]["predictions"]
+            .as_str()
+            .unwrap()
+            .split_whitespace()
+            .map(|word| u64::from_str_radix(word, 16).unwrap())
+            .collect();
+        assert_eq!(expected.len(), 16, "{name}: frozen row count");
+        let (python, rust) = run_emitted_pair(&name, &genome, &dir, &x, &y);
+        assert_eq!(python, expected, "{name}: Python bits");
+        assert_eq!(rust, expected, "{name}: Rust bits");
+    }
+}
+
+#[test]
+fn standalone_cpp17_recipe_executes_every_admitted_direct_wire_witness() {
+    let models: Value = serde_json::from_str(MODELS).unwrap();
+    let frozen = rows_by_name(models["models"].as_array().unwrap());
+    let emitted: Value = serde_json::from_str(EMITTED).unwrap();
+    let frozen_emissions = rows_by_name(emitted["programs"].as_array().unwrap());
+    let (x, y) = toy_data();
+    let scratch_root = std::env::var_os("TMPDIR")
+        .map(std::path::PathBuf::from)
+        .unwrap_or_else(|| std::path::PathBuf::from(env!("CARGO_TARGET_TMPDIR")));
+    fs::create_dir_all(&scratch_root).unwrap();
+    let scratch = tempfile::Builder::new()
+        .prefix("conversion-wire-cpp17-")
+        .tempdir_in(scratch_root)
+        .unwrap();
+    let mut admitted = 0;
+    let mut refused = 0;
+    for (name, source) in witness_sources() {
+        let genome = GenomeIr::parse(&source).unwrap();
+        let support = supports_cpp17(&genome);
+        let emission = emit_cpp17(&genome, &EmitOptions::default());
+        assert_eq!(support.is_ok(), emission.is_ok(), "{name}: C++17 admission");
+        let frozen_route = frozen_emissions[name.as_str()]["cpp17"].as_str().unwrap();
+        assert_eq!(
+            support.is_err(),
+            frozen_route.starts_with("unsupported:"),
+            "{name}: frozen C++17 route"
+        );
+        let Ok(mut driver) = emission else {
+            let reasons = support
+                .unwrap_err()
+                .into_iter()
+                .map(|reason| {
+                    reason
+                        .split(['(', '{'])
+                        .next()
+                        .unwrap()
+                        .trim_end()
+                        .to_owned()
+                })
+                .collect::<Vec<_>>()
+                .join("; ");
+            assert_eq!(
+                reasons,
+                frozen_route.strip_prefix("unsupported: ").unwrap(),
+                "{name}: frozen C++17 refusal reasons"
+            );
+            refused += 1;
+            continue;
+        };
+        admitted += 1;
+        driver.push_str("\n#include <cstdio>\nint main() {\n const double train[] = {");
+        for row in &x[..64] {
+            for value in row {
+                write!(driver, "{value:?},").unwrap();
+            }
+        }
+        driver.push_str("};\n const double targets[] = {");
+        for value in &y[..64] {
+            write!(driver, "{value:?},").unwrap();
+        }
+        driver.push_str("};\n const double test[] = {");
+        for row in &x[64..] {
+            for value in row {
+                write!(driver, "{value:?},").unwrap();
+            }
+        }
+        driver.push_str(
+            "};\n double out[16] = {}; model_handle* model = nullptr;\n\
+             if (model_fit_numeric(train, 320, 64, 5, targets, 64, &model) != 0) return 10;\n\
+             if (model_predict_numeric_batch(model, test, 80, 16, 5, nullptr, 0, out, 16) != 0) return 11;\n\
+             for (double value : out) { std::uint64_t bits; std::memcpy(&bits, &value, 8); std::printf(\"%016llx\\n\", static_cast<unsigned long long>(bits)); }\n\
+             model_unload(model); return 0; }\n",
+        );
+        let path = scratch.path().join(format!("{name}.cpp"));
+        let binary = scratch.path().join(format!("{name}.bin"));
+        fs::write(&path, driver).unwrap();
+        require_success(
+            &format!("{name}: g++17 O2"),
+            Command::new("g++")
+                .args(["-std=c++17", "-O2", "-ffp-contract=off", "-fno-fast-math"])
+                .arg(&path)
+                .arg("-o")
+                .arg(&binary),
+        );
+        let output = Command::new(&binary).output().unwrap();
+        assert!(
+            output.status.success(),
+            "{name}: C++17 recipe exit {}",
+            output.status
+        );
+        let actual: Vec<u64> = String::from_utf8(output.stdout)
+            .unwrap()
+            .lines()
+            .map(|word| u64::from_str_radix(word, 16).unwrap())
+            .collect();
+        let expected: Vec<u64> = frozen[name.as_str()]["predictions"]
+            .as_str()
+            .unwrap()
+            .split_whitespace()
+            .map(|word| u64::from_str_radix(word, 16).unwrap())
+            .collect();
+        assert_eq!(actual, expected, "{name}: standalone C++17 recipe bits");
+    }
+    assert_eq!(admitted, 6, "standalone C++17 route inventory");
+    assert_eq!(refused, 13, "each other direct wire witness classified");
+}
+
+#[test]
+fn symbolic_and_portfolio_forms_execute_or_keep_their_structured_refusal() {
+    let cases = [
+        ("symbolic_raw", "(sym raw \"sin(c0)+row_mean\")", true),
+        ("symbolic_affine", "(sym affine \"c0+0.5\")", true),
+        ("compact_portfolio", "(pipe X (portfolio preset=core))", true),
+        (
+            "nested_portfolio",
+            "(portfolio (member (pipe X (ridge))) (member (pipe X (robust_scale) (ridge))) (blend))",
+            false,
+        ),
+    ];
+    let (x, y) = toy_data();
+    let scratch_root = std::env::var_os("TMPDIR")
+        .map(std::path::PathBuf::from)
+        .unwrap_or_else(|| std::path::PathBuf::from(env!("CARGO_TARGET_TMPDIR")));
+    fs::create_dir_all(&scratch_root).unwrap();
+    let scratch = tempfile::Builder::new()
+        .prefix("conversion-genome-forms-")
+        .tempdir_in(scratch_root)
+        .unwrap();
+    for (name, source, admitted) in cases {
+        let genome = GenomeIr::parse(source).unwrap();
+        let canonical = genome.canonical();
+        let parsed = GenomeIr::parse(&canonical).unwrap();
+        assert_eq!(
+            parsed.canonical(),
+            canonical,
+            "{name}: canonical fixed point"
+        );
+        let program = Program::import_legacy(&genome);
+        let bytes = program.to_bytes().unwrap();
+        assert_eq!(
+            Program::import_legacy(&parsed).to_bytes().unwrap(),
+            bytes,
+            "{name}: executable tree"
+        );
+        assert_eq!(
+            Program::parse_lossless_text(&program.to_lossless_text().unwrap())
+                .unwrap()
+                .to_bytes()
+                .unwrap(),
+            bytes,
+            "{name}: typed envelope"
+        );
+        let paired = supports(&parsed);
+        assert_eq!(paired.is_ok(), admitted, "{name}: paired route admission");
+        let cpp = supports_cpp17(&parsed);
+        assert!(cpp.is_err(), "{name}: standalone C++17 must refuse");
+        assert_eq!(
+            emit_cpp17(&parsed, &EmitOptions::default()).is_ok(),
+            cpp.is_ok(),
+            "{name}: C++17 public route"
+        );
+        match name {
+            "symbolic_raw" | "symbolic_affine" => {
+                assert_eq!(cpp.unwrap_err(), vec!["symbolic formula programs"]);
+            }
+            "nested_portfolio" => {
+                let refusal = "portfolio: explicit nested member emission is not supported yet; use the compact head form (pipe X ... (portfolio preset=core ...))";
+                assert_eq!(paired.unwrap_err(), vec![refusal]);
+                assert_eq!(cpp.unwrap_err(), vec![refusal]);
+                assert_eq!(
+                    emit(&parsed, &EmitOptions::default())
+                        .unwrap_err()
+                        .to_string(),
+                    format!("unsupported program elements: {refusal}")
+                );
+                continue;
+            }
+            "compact_portfolio" => assert!(!cpp.unwrap_err().is_empty()),
+            _ => unreachable!(),
+        }
+        let expected: Vec<u64> =
+            fit_predict(&parsed, &x[..64].to_vec(), &y[..64], &x[64..].to_vec())
+                .unwrap_or_else(|error| panic!("{name}: evaluator: {error:#}"))
+                .into_iter()
+                .map(f64::to_bits)
+                .collect();
+        let (python, rust) = run_emitted_pair(name, &parsed, &scratch.path().join(name), &x, &y);
+        assert_eq!(python, expected, "{name}: Python recipe bits");
+        assert_eq!(rust, expected, "{name}: Rust recipe bits");
+    }
+}
