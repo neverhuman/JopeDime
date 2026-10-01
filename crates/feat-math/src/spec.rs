@@ -4,11 +4,8 @@
 //! battle-runtime `ops.rs` / `heads.rs` so the emitted literals equal what the
 //! runtime would compute from the same stage.
 
-use crate::advanced_v3::{DataSchema, TaskSpec};
 use crate::dsl::{ParamValue, Stage};
 use crate::gpr::{KernelPrim, KernelSpec};
-use crate::kernel::ordered_axis::StageAxis;
-use crate::kernel::{Error as KernelError, Result as KernelResult};
 use crate::mathexpr::{ExprFeatures, MathAst, MathFunc, MathVar};
 use crate::GenomeIr;
 use std::collections::BTreeSet;
@@ -179,30 +176,6 @@ pub enum PlannedOp {
     Spline {
         knots: usize,
     },
-}
-
-pub(crate) fn planned_stage_axis(op: &PlannedOp) -> Option<StageAxis> {
-    match op {
-        PlannedOp::Lag { .. } => crate::kernel::capabilities::legacy_recipe_axis("lag"),
-        PlannedOp::Roll { .. } => crate::kernel::capabilities::legacy_recipe_axis("roll"),
-        _ => None,
-    }
-}
-
-pub(crate) fn admit_plan_axis(
-    plan: &Plan,
-    task: &TaskSpec,
-    schema: &DataSchema,
-) -> KernelResult<()> {
-    if let Plan::Pipeline { stages, .. } = plan {
-        for stage in stages {
-            if let Some(axis) = planned_stage_axis(&stage.op) {
-                task.admit_ordered_stage(schema, axis)
-                    .map_err(|error| KernelError::Unsupported(error.to_string()))?;
-            }
-        }
-    }
-    Ok(())
 }
 
 #[derive(Clone, Debug)]

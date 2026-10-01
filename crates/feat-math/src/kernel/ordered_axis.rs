@@ -245,7 +245,24 @@ pub fn admit_legacy_genome(
 ) -> Result<()> {
     let plan =
         crate::spec::build_plan(genome).map_err(|problems| Error::Syntax(problems.join("; ")))?;
-    crate::spec::admit_plan_axis(&plan, task, schema)
+    if let crate::spec::Plan::Pipeline { stages, .. } = &plan {
+        for stage in stages {
+            let axis = match &stage.op {
+                crate::spec::PlannedOp::Lag { .. } => {
+                    crate::kernel::capabilities::legacy_recipe_axis("lag")
+                }
+                crate::spec::PlannedOp::Roll { .. } => {
+                    crate::kernel::capabilities::legacy_recipe_axis("roll")
+                }
+                _ => None,
+            };
+            if let Some(axis) = axis {
+                task.admit_ordered_stage(schema, axis)
+                    .map_err(|error| Error::Unsupported(error.to_string()))?;
+            }
+        }
+    }
+    Ok(())
 }
 
 impl CausalCursor {
