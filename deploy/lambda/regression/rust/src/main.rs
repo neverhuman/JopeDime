@@ -76,9 +76,9 @@ fn child(data_path:&Path,candidate_path:&Path,output:&Path)->Result<(),Error>{
         let x:Rows=train.iter().map(|i|d.x[*i].clone()).collect();let y:Vec<f64>=train.iter().map(|i|d.y[*i]).collect();
         let vx:Rows=valid.iter().map(|i|d.x[*i].clone()).collect();let vy:Vec<f64>=valid.iter().map(|i|d.y[*i]).collect();
         let fit_start=now();let model=feat_math::fit(&g,&x,&y)?;let fit_end=now();
-        let pred=model.predict(&vx);let metric=metrics(&vy,&pred)?;let train_metric=metrics(&y,&model.predict(&x))?;
+        let pred=model.predict(&vx)?;let metric=metrics(&vy,&pred)?;let train_metric=metrics(&y,&model.predict(&x)?)?;
         let model_bytes=serde_json::to_vec(&model)?;if model_bytes.len()>32*1024*1024{return Err("model exceeds32MiB archive admission".into())}
-        let restored:Model=serde_json::from_slice(&model_bytes)?;let replay=restored.predict(&vx);
+        let restored:Model=serde_json::from_slice(&model_bytes)?;let replay=restored.predict(&vx)?;
         if pred.iter().map(|v|v.to_bits()).collect::<Vec<_>>()!=replay.iter().map(|v|v.to_bits()).collect::<Vec<_>>(){return Err("model replay differs".into())}
         let baseline=y.iter().sum::<f64>()/y.len() as f64;let baseline_metrics=metrics(&vy,&vec![baseline;vy.len()])?;
         let row=json!({"schema":"jope.regression-fit/v1","program_sha256":c.program_sha256,"fold":fold,"train_row_positions":train,"validation_row_positions":valid,"started_utc_us":started,"fit_started_utc_us":fit_start,"fit_ended_utc_us":fit_end,"ended_utc_us":now(),"elapsed_ns_text":tick.elapsed().as_nanos().to_string(),"memory":memory(),"metrics":metric,"train_metrics":train_metric,"baseline_metrics":baseline_metrics,"baseline":"mean_of_fold_training_targets","predictions":pred,"validation_targets":vy,"model":serde_json::from_slice::<Value>(&model_bytes)?,"model_sha256":hash(&model_bytes),"model_codec":"feat_math::Model/serde_json-float-roundtrip","serialized_prediction_replay_exact":true});
