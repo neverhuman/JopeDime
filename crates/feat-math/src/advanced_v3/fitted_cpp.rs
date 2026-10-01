@@ -404,8 +404,9 @@ fn f64_matrix(values: &[Vec<f64>]) -> String {
 /// loading them (`fitted_cpp_runtime`). The PRELUDE's first line carries the same number.
 pub(super) const FITTED_CPP_REVISION: u32 = 3;
 
-const PRELUDE: &str = r#"// jope-dime fitted-cpp-typed-table-v1 emitter-revision=3
-#include <algorithm>
+macro_rules! expression_common {
+    () => {
+        r#"#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
@@ -424,7 +425,45 @@ struct FittedWidthError {};
 [[maybe_unused]] static double clampv(double value,double lo,double hi) noexcept { if(value<lo)return lo; if(value>hi)return hi; return value; }
 [[maybe_unused]] static double finitev(double value) noexcept { return std::isfinite(value)?value:0.0; }
 [[maybe_unused]] static double sigmoid(double value) noexcept { if(value>=0.0)return 1.0/(1.0+std::exp(-std::min(value,40.0))); double z=std::exp(std::max(value,-40.0)); return z/(1.0+z); }
-// Match Rust slice::partition_point's fixed-iteration binary-search path.
+"#
+    };
+}
+
+macro_rules! expression_math {
+    () => {
+        r#"[[maybe_unused]] static double row_sum(const double* row,std::size_t n){double value=0.0;for(std::size_t i=0;i<n;++i)value+=row[i];return value;}
+[[maybe_unused]] static double row_mean(const double* row,std::size_t n){return row_sum(row,n)/static_cast<double>(std::max(n,std::size_t{1}));}
+[[maybe_unused]] static double row_l1(const double* row,std::size_t n){double value=0.0;for(std::size_t i=0;i<n;++i)value+=std::abs(row[i]);return value;}
+[[maybe_unused]] static double row_l2(const double* row,std::size_t n){double value=0.0;for(std::size_t i=0;i<n;++i)value+=row[i]*row[i];return std::sqrt(value);}
+[[maybe_unused]] static double row_min(const double* row,std::size_t n){double value=std::numeric_limits<double>::infinity();for(std::size_t i=0;i<n;++i)if(row[i]<value)value=row[i];return value;}
+[[maybe_unused]] static double row_max(const double* row,std::size_t n){double value=-std::numeric_limits<double>::infinity();for(std::size_t i=0;i<n;++i)if(row[i]>value)value=row[i];return value;}
+[[maybe_unused]] static double row_std(const double* row,std::size_t n){double mean=row_mean(row,n),value=0.0;for(std::size_t i=0;i<n;++i){double delta=row[i]-mean;value+=delta*delta;}return std::sqrt(value/static_cast<double>(std::max(n,std::size_t{1})));}
+[[maybe_unused]] static double m_clamp(double value,double lo,double hi){return clampv(value,lo,hi);}
+[[maybe_unused]] static double m_div(double left,double right){return std::abs(right)<1e-12?0.0:left/right;}
+[[maybe_unused]] static double m_pow(double left,double right){return std::pow(left,right);}
+[[maybe_unused]] static double m_sqrt(double value){return std::sqrt(std::fmax(value,0.0));}
+[[maybe_unused]] static double m_log1p(double value){return value<=-1.0?0.0:std::log1p(value);}
+[[maybe_unused]] static double m_sin(double value){return std::sin(value);}
+[[maybe_unused]] static double m_cos(double value){return std::cos(value);}
+[[maybe_unused]] static double m_tanh(double value){return std::tanh(value);}
+[[maybe_unused]] static double m_sigmoid(double value){return 1.0/(1.0+std::exp(-clampv(value,-30.0,30.0)));}
+[[maybe_unused]] static double m_clip(double value,double a,double b){double lo=std::fmin(a,b),hi=std::fmax(a,b);if(std::isnan(lo)||std::isnan(hi))throw MathDomainError{};return clampv(value,lo,hi);}
+[[maybe_unused]] static double m_exp(double value){return std::exp(clampv(value,-30.0,30.0));}
+[[maybe_unused]] static double m_log(double value){return value<=1e-300?0.0:std::log(value);}
+[[maybe_unused]] static double m_asinh(double value){double a=std::abs(value),s=value>0.0?1.0:(value<0.0?-1.0:0.0);return s*std::log(a+std::sqrt(value*value+1.0));}
+[[maybe_unused]] static double m_atan(double value){return std::atan(value);}
+[[maybe_unused]] static double m_erf(double value){double a=std::abs(value),s=value>0.0?1.0:(value<0.0?-1.0:0.0),t=1.0/(1.0+0.3275911*a);double poly=t*(0.254829592+t*(-0.284496736+t*(1.421413741+t*(-1.453152027+t*1.061405429))));return s*(1.0-poly*std::exp(-(a*a)));}
+[[maybe_unused]] static double m_sign(double value){return value>0.0?1.0:(value<0.0?-1.0:0.0);}
+[[maybe_unused]] static double m_round(double value){return value>=0.0?std::floor(value+0.5):std::ceil(value-0.5);}
+[[maybe_unused]] static double math_safe(double value){return std::isfinite(value)?clampv(value,-1e12,1e12):0.0;}
+"#
+    };
+}
+
+const PRELUDE: &str = concat!(
+    "// jope-dime fitted-cpp-typed-table-v1 emitter-revision=3\n",
+    expression_common!(),
+    r#"// Match Rust slice::partition_point's fixed-iteration binary-search path.
 // Fitted interpolated quantiles can cross by one ULP; preserving the search
 // path is required to execute those immutable legacy states bit-for-bit.
 [[maybe_unused]] static std::size_t lower(const V& values,double value) noexcept { if(values.empty())return 0;std::size_t size=values.size(),base=0;while(size>1){const std::size_t half=size/2,mid=base+half;if(values[mid]<value)base=mid;size-=half;}return base+static_cast<std::size_t>(values[base]<value); }
@@ -462,32 +501,16 @@ using Key = std::vector<KCell>;
 [[maybe_unused]] static V row_spectral(const V& row){std::size_t count=row.size()/2;if(count==0)return V(5,0.0);V mags=dft_mags(row,count);double total=0.0;for(double value:mags)total+=value;double denominator=std::max(total,1e-12),entropy=0.0,m1=0.0,m2=0.0;std::size_t peak=0;for(std::size_t i=0;i<mags.size();++i){double probability=mags[i]/denominator;if(probability>1e-12)entropy-=probability*std::log(probability);double frequency=static_cast<double>(i+1);m1+=frequency*probability;m2+=frequency*frequency*probability;if(mags[i]>mags[peak])peak=i;}return V{entropy,m1,m2,static_cast<double>(peak+1),mags[peak]};}
 [[maybe_unused]] static double pearson_shift(const V& row){std::size_t n=row.size()-1;if(n<2)return 0.0;double ma=0.0,mb=0.0;for(std::size_t i=0;i<n;++i){ma+=row[i];mb+=row[i+1];}ma/=static_cast<double>(n);mb/=static_cast<double>(n);double sab=0.0,saa=0.0,sbb=0.0;for(std::size_t i=0;i<n;++i){double da=row[i]-ma,db=row[i+1]-mb;sab+=da*db;saa+=da*da;sbb+=db*db;}return saa<=0.0||sbb<=0.0?0.0:sab/std::sqrt(saa*sbb);}
 [[maybe_unused]] static V row_diff_stats(const V& row){if(row.size()<2)return V(8,0.0);std::size_t n=row.size()-1;double nf=static_cast<double>(n);V diffs;diffs.reserve(n);for(std::size_t i=0;i<n;++i)diffs.push_back(row[i+1]-row[i]);double mean=0.0;for(double value:diffs)mean+=value;mean/=nf;double m2=0.0,mean_abs=0.0,energy=0.0,mn=std::numeric_limits<double>::infinity(),mx=-std::numeric_limits<double>::infinity();std::size_t signs=0;for(std::size_t i=0;i<n;++i){double value=diffs[i],delta=value-mean;m2+=delta*delta;mean_abs+=std::abs(value);energy+=value*value;if(value<mn)mn=value;if(value>mx)mx=value;if(i>0&&diffs[i-1]*value<0.0)++signs;}return V{mean,std::sqrt(m2/nf),mn,mx,mean_abs/nf,static_cast<double>(signs)/nf,pearson_shift(row),energy/nf};}
-[[maybe_unused]] static double row_sum(const double* row,std::size_t n){double value=0.0;for(std::size_t i=0;i<n;++i)value+=row[i];return value;}
-[[maybe_unused]] static double row_mean(const double* row,std::size_t n){return row_sum(row,n)/static_cast<double>(std::max(n,std::size_t{1}));}
-[[maybe_unused]] static double row_l1(const double* row,std::size_t n){double value=0.0;for(std::size_t i=0;i<n;++i)value+=std::abs(row[i]);return value;}
-[[maybe_unused]] static double row_l2(const double* row,std::size_t n){double value=0.0;for(std::size_t i=0;i<n;++i)value+=row[i]*row[i];return std::sqrt(value);}
-[[maybe_unused]] static double row_min(const double* row,std::size_t n){double value=std::numeric_limits<double>::infinity();for(std::size_t i=0;i<n;++i)if(row[i]<value)value=row[i];return value;}
-[[maybe_unused]] static double row_max(const double* row,std::size_t n){double value=-std::numeric_limits<double>::infinity();for(std::size_t i=0;i<n;++i)if(row[i]>value)value=row[i];return value;}
-[[maybe_unused]] static double row_std(const double* row,std::size_t n){double mean=row_mean(row,n),value=0.0;for(std::size_t i=0;i<n;++i){double delta=row[i]-mean;value+=delta*delta;}return std::sqrt(value/static_cast<double>(std::max(n,std::size_t{1})));}
-[[maybe_unused]] static double m_clamp(double value,double lo,double hi){return clampv(value,lo,hi);}
-[[maybe_unused]] static double m_div(double left,double right){return std::abs(right)<1e-12?0.0:left/right;}
-[[maybe_unused]] static double m_pow(double left,double right){return std::pow(left,right);}
-[[maybe_unused]] static double m_sqrt(double value){return std::sqrt(std::fmax(value,0.0));}
-[[maybe_unused]] static double m_log1p(double value){return value<=-1.0?0.0:std::log1p(value);}
-[[maybe_unused]] static double m_sin(double value){return std::sin(value);}
-[[maybe_unused]] static double m_cos(double value){return std::cos(value);}
-[[maybe_unused]] static double m_tanh(double value){return std::tanh(value);}
-[[maybe_unused]] static double m_sigmoid(double value){return 1.0/(1.0+std::exp(-clampv(value,-30.0,30.0)));}
-[[maybe_unused]] static double m_clip(double value,double a,double b){double lo=std::fmin(a,b),hi=std::fmax(a,b);if(std::isnan(lo)||std::isnan(hi))throw MathDomainError{};return clampv(value,lo,hi);}
-[[maybe_unused]] static double m_exp(double value){return std::exp(clampv(value,-30.0,30.0));}
-[[maybe_unused]] static double m_log(double value){return value<=1e-300?0.0:std::log(value);}
-[[maybe_unused]] static double m_asinh(double value){double a=std::abs(value),s=value>0.0?1.0:(value<0.0?-1.0:0.0);return s*std::log(a+std::sqrt(value*value+1.0));}
-[[maybe_unused]] static double m_atan(double value){return std::atan(value);}
-[[maybe_unused]] static double m_erf(double value){double a=std::abs(value),s=value>0.0?1.0:(value<0.0?-1.0:0.0),t=1.0/(1.0+0.3275911*a);double poly=t*(0.254829592+t*(-0.284496736+t*(1.421413741+t*(-1.453152027+t*1.061405429))));return s*(1.0-poly*std::exp(-(a*a)));}
-[[maybe_unused]] static double m_sign(double value){return value>0.0?1.0:(value<0.0?-1.0:0.0);}
-[[maybe_unused]] static double m_round(double value){return value>=0.0?std::floor(value+0.5):std::ceil(value-0.5);}
-[[maybe_unused]] static double math_safe(double value){return std::isfinite(value)?clampv(value,-1e12,1e12):0.0;}
-"#;
+"#,
+    expression_math!(),
+);
+
+impl FittedCppArtifact {
+    /// Share the frozen scalar lowering helpers with the opt-in training recipe.
+    pub(crate) fn expression_helpers() -> &'static str {
+        concat!(expression_common!(), expression_math!())
+    }
+}
 
 fn emit_input(model: &BoundModel, missing_aware: bool) -> Result<String> {
     let mut body = String::from(

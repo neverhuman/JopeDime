@@ -2053,6 +2053,13 @@
         "gp",
         "policy"
       ]
+    },
+    "target:feat-math/test/mathexpr_boundary_parity": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "export"
+      ]
     }
   },
   "baseline_triage": [
