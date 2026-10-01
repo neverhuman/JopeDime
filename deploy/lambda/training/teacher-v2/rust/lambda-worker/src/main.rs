@@ -81,10 +81,10 @@ fn genome(c:&Candidate)->Result<GenomeIr,Error>{
 fn one_fit(g:&GenomeIr,x:&Rows,y:&[f64],vx:&Rows,vy:&[f64],kind:&str,index:usize)->Result<Value,Error>{
     let start=now_us(); let tick=Instant::now();
     let model=feat_math::fit(g,x,y)?; let fit_end=now_us();
-    let train_pred=model.predict(x); let pred=model.predict(vx);
+    let train_pred=model.predict(x)?; let pred=model.predict(vx)?;
     let model_bytes=serde_json::to_vec(&model)?;
     if model_bytes.len()>32*1024*1024 { return Err("model exceeds 32MiB".into()); }
-    let restored:Model=serde_json::from_slice(&model_bytes)?; let replay=restored.predict(vx);
+    let restored:Model=serde_json::from_slice(&model_bytes)?; let replay=restored.predict(vx)?;
     if pred.iter().map(|v|v.to_bits()).collect::<Vec<_>>() != replay.iter().map(|v|v.to_bits()).collect::<Vec<_>>() { return Err("model replay mismatch".into()); }
     let baseline=y.iter().sum::<f64>()/y.len() as f64;
     Ok(json!({

@@ -1816,9 +1816,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/regression/rust/src/main.rs",
-      "tree_sha256": "ac6ec57d7eaa185ec2cd4707799bcbc2cf5df7fdaae5df64c9273fa5e4d93828",
+      "tree_sha256": "f072c2cf126b22c427dcab26c03e259fc4606f218f0ec61307508691508ae9ab",
       "custody_tarball": null,
-      "reason": "frozen source, verbatim"
+      "reason": "frozen source, verbatim",
+      "tree_change": "B02 option (a): propagate typed Model::predict zero-width refusal; valid nonempty predictions unchanged"
     },
     {
       "body": "regression",
@@ -2369,9 +2370,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/regression-ops/rust/src/main.rs",
-      "tree_sha256": "65bd396061d01de4f0c6955ce4853483d38ed1fb2146cabde126d114a9c17960",
+      "tree_sha256": "4fe9c6410dadc28a44a8c24f44b3a47d0fd37b248499c1f81e1715e2f0b524af",
       "custody_tarball": null,
-      "reason": "frozen source, verbatim"
+      "reason": "frozen source, verbatim",
+      "tree_change": "B02 option (a): propagate typed Model::predict zero-width refusal; valid nonempty predictions unchanged"
     },
     {
       "body": "regression-ops",
@@ -2644,9 +2646,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/training/teacher-v2/rust/lambda-worker/src/main.rs",
-      "tree_sha256": "ce220319cd1ce069cce60fffe0f65ef223fd52e54c69a37d49d00d85b7d3c808",
+      "tree_sha256": "93c8cce81c78a64538b8a2221ec470ab034cb50fed456dc289bcd4e6e905deaf",
       "custody_tarball": null,
-      "reason": "frozen source, verbatim"
+      "reason": "frozen source, verbatim",
+      "tree_change": "B02 option (a): propagate typed Model::predict zero-width refusal; valid nonempty predictions unchanged"
     },
     {
       "body": "teacher-v2",
