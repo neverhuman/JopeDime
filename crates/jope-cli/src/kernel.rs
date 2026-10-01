@@ -5,7 +5,7 @@ use crate::schema::{Dataset, Kind, Split, Task, MAX_FILE_BYTES};
 use crate::storage::Directory;
 use anyhow::{bail, Context, Result};
 use feat_math::transpile::{emit, emit_cpp17, emit_javascript, EmitOptions};
-use feat_math::{r2, GenomeIr, Model};
+use feat_math::{emit_fitted_cpp17, fit_legacy_numeric_bound, r2, GenomeIr, Model, RawTable};
 use serde::Serialize;
 use sha2::{Digest, Sha256};
 use std::{fs, path::Path};
@@ -82,7 +82,64 @@ pub(crate) fn fit_validated_dataset(data: &Dataset, genome: &str) -> Result<FitR
 }
 
 pub fn emit_genome(genome: &str, lang: &str, output: Option<&Path>) -> Result<EmitReport> {
+    emit_genome_with_train(genome, lang, None, output)
+}
+
+/// The fitted C++ route accepts a bounded numeric CSV whose final column is `target`.
+/// Its model.cpp bytes are exactly the existing fitted emitter's output; the
+/// optional standalone runner is a separate translation unit.
+pub fn emit_genome_with_train(
+    genome: &str,
+    lang: &str,
+    train: Option<&Path>,
+    output: Option<&Path>,
+) -> Result<EmitReport> {
     let parsed = GenomeIr::parse(genome).context("parse genome")?;
+    if lang == "cpp17-fitted" {
+        let train = train.context("cpp17-fitted requires --train <numeric.csv>")?;
+        let (x, y) = read_numeric_training_csv(train)?;
+        let model = fit_legacy_numeric_bound(&parsed, &x, &y).context("fit C++17 model")?;
+        let fitted = emit_fitted_cpp17(&model).context("emit fitted C++17")?;
+        let mut artifacts = Vec::new();
+        for (name, file, source) in [
+            ("cpp17-fitted", "model.cpp", fitted.source.as_str()),
+            (
+                "cpp17-fitted-codec",
+                "model.codec.json",
+                fitted.codec.as_str(),
+            ),
+            (
+                "cpp17-fitted-standalone",
+                "standalone.cpp",
+                FITTED_STANDALONE,
+            ),
+        ] {
+            let path = if let Some(root) = output {
+                fs::create_dir_all(root).with_context(|| format!("create {}", root.display()))?;
+                let path = root.join(file);
+                fs::write(&path, source).with_context(|| format!("write {}", path.display()))?;
+                Some(path.display().to_string())
+            } else {
+                None
+            };
+            artifacts.push(Artifact {
+                lang: name.into(),
+                bytes: source.len(),
+                sha256: digest(source),
+                path,
+            });
+        }
+        return Ok(EmitReport {
+            schema: "jope.emit.v1",
+            ok: true,
+            genome: parsed.canonical(),
+            artifacts,
+        });
+    }
+    anyhow::ensure!(
+        train.is_none(),
+        "--train is only valid with --lang cpp17-fitted"
+    );
     let opts = EmitOptions {
         title: Some("jope emit".into()),
         ..EmitOptions::default()
@@ -129,6 +186,98 @@ pub fn emit_genome(genome: &str, lang: &str, output: Option<&Path>) -> Result<Em
         artifacts,
     })
 }
+
+fn read_numeric_training_csv(path: &Path) -> Result<(feat_math::Rows, Vec<f64>)> {
+    let parent = path
+        .parent()
+        .filter(|p| !p.as_os_str().is_empty())
+        .unwrap_or_else(|| Path::new("."));
+    let filename = path
+        .file_name()
+        .and_then(|name| name.to_str())
+        .context("training CSV needs a UTF-8 filename")?;
+    let bytes = Directory::open(parent)
+        .and_then(|directory| directory.read(filename, MAX_FILE_BYTES))
+        .with_context(|| format!("read training CSV {}", path.display()))?;
+    let csv = std::str::from_utf8(&bytes).context("training CSV is not UTF-8")?;
+    let table = RawTable::from_csv(csv).context("parse training CSV")?;
+    anyhow::ensure!(
+        table.headers.len() >= 2 && table.headers.last().is_some_and(|name| name == "target"),
+        "training CSV needs feature columns followed by target"
+    );
+    anyhow::ensure!(!table.rows.is_empty(), "training CSV has no rows");
+    let width = table.headers.len() - 1;
+    let mut x = Vec::with_capacity(table.rows.len());
+    let mut y = Vec::with_capacity(table.rows.len());
+    for (index, row) in table.rows.iter().enumerate() {
+        let numbers = row
+            .iter()
+            .map(|cell| cell.parse::<f64>())
+            .collect::<std::result::Result<Vec<_>, _>>()
+            .with_context(|| format!("non-numeric cell on training row {}", index + 1))?;
+        anyhow::ensure!(
+            numbers.iter().all(|value| value.is_finite()),
+            "non-finite value on training row {}",
+            index + 1
+        );
+        x.push(numbers[..width].to_vec());
+        y.push(numbers[width]);
+    }
+    Ok((x, y))
+}
+
+const FITTED_STANDALONE: &str = r#"// Build: g++ -std=c++17 -O2 -ffp-contract=off -fno-fast-math -DJOPE_STANDALONE standalone.cpp -o model
+// Run: ./model test_features.csv predictions.csv (numeric CSV with a header, no missing cells).
+#ifdef JOPE_STANDALONE
+#include "model.cpp"
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <sstream>
+#include <string>
+
+int main(int argc, char** argv) {
+  if (argc != 3) return 2;
+  std::ifstream input(argv[1]);
+  std::ofstream output(argv[2]);
+  if (!input || !output) return 3;
+  std::string line;
+  if (!std::getline(input, line)) return 4;
+  if (!line.empty() && line.back() == '\r') line.pop_back();
+  const std::size_t columns = jope_fitted_columns();
+  std::size_t header_columns = 1;
+  for (char c : line) if (c == ',') ++header_columns;
+  if (header_columns != columns) return 5;
+  V values;
+  while (std::getline(input, line)) {
+    if (!line.empty() && line.back() == '\r') line.pop_back();
+    if (line.empty()) continue;
+    if (line.back() == ',') return 7;
+    std::stringstream record(line);
+    std::string cell;
+    std::size_t count = 0;
+    while (std::getline(record, cell, ',')) {
+      std::size_t used = 0;
+      double value;
+      try { value = std::stod(cell, &used); } catch (...) { return 6; }
+      if (used != cell.size() || !std::isfinite(value)) return 6;
+      values.push_back(value);
+      ++count;
+    }
+    if (count != columns) return 7;
+  }
+  const std::size_t rows = values.size() / columns;
+  std::vector<std::uint8_t> missing(values.size(), 0);
+  V predictions(rows);
+  if (jope_fitted_predict(values.data(), values.size(), missing.data(),
+                          missing.size(), rows, columns, predictions.data(),
+                          predictions.size()) != 0) return 8;
+  output << "prediction\n" << std::setprecision(17);
+  for (double value : predictions) output << value << '\n';
+  return output ? 0 : 9;
+}
+#endif
+"#;
 
 pub fn search_dataset(path: &Path) -> Result<SearchReport> {
     let data = read_dataset(path)?;

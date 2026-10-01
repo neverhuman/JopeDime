@@ -3383,6 +3383,23 @@
       "dispositions": [],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "target:jope-cli/test/fitted_cpp_cli": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-cli/tests/fitted_cpp_cli.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "inputs",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "The opt-in fitted C++17 CLI route compiles and runs a standalone g++ C++17 driver for symbolic, map and derive programs, compares exact prediction bits and frozen emitter source bytes, and rejects malformed input while the default recipe route remains unchanged."
+    },
     "target:jope-cli/test/offline_cli": {
       "discovery": {
         "kind": "target",
