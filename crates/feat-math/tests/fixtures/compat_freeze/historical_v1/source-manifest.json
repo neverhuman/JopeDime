@@ -55,7 +55,7 @@
       "bytes": 7788,
       "format": "release asset",
       "model_count": 0,
-      "read_path": "/home/ubuntu/jope-evidence/kernel2/bt/B00/inventory/release/RELEASE-NOTES-v0.2.0.md",
+      "read_path": "custody:B00/inventory/release/RELEASE-NOTES-v0.2.0.md",
       "ref": "v0.2.0",
       "sha256": "cfb6b22203fef59e67fe67a2a246c429cd718ec30e147551cb039cfafa7ced84",
       "uri": "https://github.com/neverhuman/JopeDime/releases/download/v0.2.0/RELEASE-NOTES-v0.2.0.md"
@@ -64,7 +64,7 @@
       "bytes": 560,
       "format": "release asset",
       "model_count": 0,
-      "read_path": "/home/ubuntu/jope-evidence/kernel2/bt/B00/inventory/release/SHA256SUMS-v0.2.0.txt",
+      "read_path": "custody:B00/inventory/release/SHA256SUMS-v0.2.0.txt",
       "ref": "v0.2.0",
       "sha256": "4b8f5082ca65a1dbed73f66054240d4e141d6afeded1545937705b5cdfa387b4",
       "uri": "https://github.com/neverhuman/JopeDime/releases/download/v0.2.0/SHA256SUMS-v0.2.0.txt"
@@ -73,7 +73,7 @@
       "bytes": 96,
       "format": "release asset",
       "model_count": 0,
-      "read_path": "/home/ubuntu/jope-evidence/kernel2/bt/B00/inventory/release/SHA256SUMS-v0.2.0.txt.sig",
+      "read_path": "custody:B00/inventory/release/SHA256SUMS-v0.2.0.txt.sig",
       "ref": "v0.2.0",
       "sha256": "71780420d6aa947cbf89397711b833cfba6f64016e4b52007a68c86754b81f34",
       "uri": "https://github.com/neverhuman/JopeDime/releases/download/v0.2.0/SHA256SUMS-v0.2.0.txt.sig"
@@ -82,7 +82,7 @@
       "bytes": 28228960,
       "format": "release asset",
       "model_count": 0,
-      "read_path": "/home/ubuntu/jope-evidence/kernel2/bt/B00/inventory/release/jope-v0.2.0-x86_64-unknown-linux-gnu",
+      "read_path": "custody:B00/inventory/release/jope-v0.2.0-x86_64-unknown-linux-gnu",
       "ref": "v0.2.0",
       "sha256": "03688c0aa2935b6530958ef47d57b56751ac0511dd30c9130d4bc827a1781e85",
       "uri": "https://github.com/neverhuman/JopeDime/releases/download/v0.2.0/jope-v0.2.0-x86_64-unknown-linux-gnu"
@@ -91,7 +91,7 @@
       "bytes": 1624,
       "format": "release asset",
       "model_count": 0,
-      "read_path": "/home/ubuntu/jope-evidence/kernel2/bt/B00/inventory/release/jope-v0.2.0.build-receipt.json",
+      "read_path": "custody:B00/inventory/release/jope-v0.2.0.build-receipt.json",
       "ref": "v0.2.0",
       "sha256": "ed65bde37a372cfb22d28cf19cc3379fc7af0843a5f9fa6f67ce8beecc761ee8",
       "uri": "https://github.com/neverhuman/JopeDime/releases/download/v0.2.0/jope-v0.2.0.build-receipt.json"
@@ -100,7 +100,7 @@
       "bytes": 1604802,
       "format": "release asset",
       "model_count": 0,
-      "read_path": "/home/ubuntu/jope-evidence/kernel2/bt/B00/inventory/release/jope-v0.2.0.cdx.json",
+      "read_path": "custody:B00/inventory/release/jope-v0.2.0.cdx.json",
       "ref": "v0.2.0",
       "sha256": "a54e7d088ad215ec6cdd28b7e65f782d285a46d3b049528f90143c1889817af4",
       "uri": "https://github.com/neverhuman/JopeDime/releases/download/v0.2.0/jope-v0.2.0.cdx.json"
@@ -109,7 +109,7 @@
       "bytes": 2794204,
       "format": "release asset",
       "model_count": 0,
-      "read_path": "/home/ubuntu/jope-evidence/kernel2/bt/B00/inventory/release/jope-v0.2.0.spdx.json",
+      "read_path": "custody:B00/inventory/release/jope-v0.2.0.spdx.json",
       "ref": "v0.2.0",
       "sha256": "76aedff0a9fcf61d6abf548901b0b752d967630969049a398e6ec8812b0a20ca",
       "uri": "https://github.com/neverhuman/JopeDime/releases/download/v0.2.0/jope-v0.2.0.spdx.json"
@@ -118,7 +118,7 @@
       "bytes": 1403,
       "format": "release asset",
       "model_count": 0,
-      "read_path": "/home/ubuntu/jope-evidence/kernel2/bt/B00/inventory/release/release-manifest-v0.2.0.json",
+      "read_path": "custody:B00/inventory/release/release-manifest-v0.2.0.json",
       "ref": "v0.2.0",
       "sha256": "0276485c3dd1eaea2a846e29ada08843b15edba043c8e69b37257fca0af0396b",
       "uri": "https://github.com/neverhuman/JopeDime/releases/download/v0.2.0/release-manifest-v0.2.0.json"
@@ -282,7 +282,7 @@
       "file_count": 2,
       "format": "jope.model-bundle/v2",
       "model_count": 1,
-      "read_path": "/home/ubuntu/jope-evidence/kernel2/bt/B00/inventory/s3/hyperion-v7.json",
+      "read_path": "custody:B00/inventory/s3/hyperion-v7.json",
       "sha256": "fdaf938fc7f7957c06959f12c130b2bd81cdaef5e5bb2198ba75cf35da1c5233",
       "uri": "s3://veox-jopedime-models-use2/bundles/hyperion-v7/manifest.json"
     },
@@ -292,7 +292,7 @@
       "file_count": 17,
       "format": "jope.model-bundle/v2",
       "model_count": 11,
-      "read_path": "/home/ubuntu/jope-evidence/kernel2/bt/B00/inventory/s3/jope-prime-gen31-v2.json",
+      "read_path": "custody:B00/inventory/s3/jope-prime-gen31-v2.json",
       "sha256": "c8d8d13a2f4cb2eeb21eea364c33e14429c84d344e6b50eb38a472173b97b6f2",
       "uri": "s3://veox-jopedime-models-use2/bundles/jope-prime-gen31-v2/manifest.json"
     },
@@ -302,7 +302,7 @@
       "file_count": 2,
       "format": "jope.model-bundle/v2",
       "model_count": 2,
-      "read_path": "/home/ubuntu/jope-evidence/kernel2/bt/B00/inventory/s3/policy-step-60000.json",
+      "read_path": "custody:B00/inventory/s3/policy-step-60000.json",
       "sha256": "d8e259b26ef8d580ddb99ae5826c9501bcdc0c32045945eef9010926fd796e9e",
       "uri": "s3://veox-jopedime-models-use2/bundles/policy-step-60000/manifest.json"
     },
