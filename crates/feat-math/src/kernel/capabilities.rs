@@ -3,6 +3,7 @@
 
 use crate::heads::FittedHead;
 use crate::kernel::ordered_axis::StageAxis;
+use crate::kernel::wire_v2;
 use crate::math_expr::{BinOp, FaultSet, Func, UnOp, Var};
 use crate::ops::FittedOp;
 use crate::registry::{self, OperatorRole, ShapeRule};
@@ -356,6 +357,7 @@ pub struct Manifest {
     pub ops: Vec<OpCap>,
     pub forms: Vec<FormCap>,
     pub legacy_generators: Vec<GeneratorCap>,
+    pub v2_reservations: Vec<wire_v2::ReservationRow>,
 }
 
 impl Manifest {
@@ -450,6 +452,7 @@ impl Manifest {
             ops,
             forms,
             legacy_generators: legacy_generators(),
+            v2_reservations: wire_v2::manifest_rows(),
         }
     }
 
@@ -1216,6 +1219,17 @@ pub fn render_markdown() -> String {
             support_label(row.emitters.cpp17_recipe),
             support_label(row.emitters.cpp17_fitted),
             support_label(row.emitters.javascript)
+        ));
+    }
+    out.push_str("\n## Version 2 reservations\n\nThese IDs have no generator or executable route. Unnamed slots are held for later assignment.\n\n| Domain | ID | Assigned name | Lifecycle | Generatable |\n| --- | ---: | --- | --- | --- |\n");
+    for row in &manifest.v2_reservations {
+        out.push_str(&format!(
+            "| {:?} | {} | {} | {} | {} |\n",
+            row.domain,
+            row.id,
+            row.name.unwrap_or("—"),
+            row.lifecycle,
+            row.generatable
         ));
     }
     out
