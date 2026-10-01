@@ -52,6 +52,7 @@
 
 use feat_math::cxx::CxxStd;
 use feat_math::dsl::ParamValue;
+use feat_math::kernel::Program as KernelProgram;
 use feat_math::math_expr::{BinOp, Expr, Func, MathExpr, UnOp, Var};
 use feat_math::transpile::{emit, supports, EmitOptions};
 use feat_math::{emit_fitted_cpp17, fit, fit_legacy_numeric_bound, GenomeIr, Pcg32};
@@ -585,6 +586,21 @@ fn input_key(inputs: Inputs) -> &'static str {
     }
 }
 
+fn assert_manifest_round_trip(manifest: &str, genome: &GenomeIr, what: &str) {
+    let value: serde_json::Value = serde_json::from_str(manifest).unwrap();
+    let source = value["program"]
+        .as_str()
+        .unwrap_or_else(|| panic!("{what}: missing manifest program"));
+    let parsed = GenomeIr::parse(source)
+        .unwrap_or_else(|error| panic!("{what}: manifest program: {error:#}"));
+    assert_eq!(parsed.canonical(), source, "{what}: manifest fixed point");
+    assert_eq!(
+        KernelProgram::import_legacy(&parsed).to_bytes().unwrap(),
+        KernelProgram::import_legacy(genome).to_bytes().unwrap(),
+        "{what}: manifest changed the executable tree"
+    );
+}
+
 /// One program's predictions in `lane`, as bit patterns in input-row order.
 fn lane_predictions(
     lane: Lane,
@@ -600,6 +616,7 @@ fn lane_predictions(
     let bits = match lane {
         Lane::Rust => {
             let artifact = emit(genome, &EmitOptions::default()).unwrap();
+            assert_manifest_round_trip(&artifact.manifest, genome, &what);
             let source = dir.join("model.rs");
             let binary = dir.join("model_bin");
             let predictions = dir.join("predictions.txt");
@@ -624,6 +641,7 @@ fn lane_predictions(
         }
         Lane::Python => {
             let artifact = emit(genome, &EmitOptions::default()).unwrap();
+            assert_manifest_round_trip(&artifact.manifest, genome, &what);
             let source = dir.join("model.py");
             let predictions = dir.join("predictions.txt");
             fs::write(&source, &artifact.python).unwrap();
@@ -872,8 +890,7 @@ fn check_lane(lane: Lane) {
     };
 
     let per_program = parallel_map(PROGRAMS, |program| {
-        let genome = GenomeIr::parse(program.source)
-            .unwrap_or_else(|error| panic!("{}: {error:#}", program.name));
+        let genome = round_tripped_genome(program);
         let rows = input_rows(program.inputs);
         let features: Vec<Vec<f64>> = rows.iter().map(|row| row.values.clone()).collect();
         let reference: Vec<u64> = fit(&genome, &shared.train_x, &shared.train_y)
@@ -948,6 +965,58 @@ fn check_lane(lane: Lane) {
         let _ = scratch.keep();
     } else {
         scratch.close().unwrap();
+    }
+}
+
+/// Reparse canonical text and the typed envelope before any lane fits or emits a program.
+fn round_tripped_genome(program: &Program) -> GenomeIr {
+    let original = GenomeIr::parse(program.source)
+        .unwrap_or_else(|error| panic!("{}: {error:#}", program.name));
+    for expression in expressions(program) {
+        let source = expression.to_source().unwrap();
+        let reparsed = MathExpr::parse(&source).unwrap();
+        assert_eq!(
+            reparsed, expression,
+            "{}: scalar tree changed",
+            program.name
+        );
+        assert_eq!(reparsed.to_source().unwrap(), source);
+    }
+    let canonical = original.canonical();
+    let reparsed = GenomeIr::parse(&canonical)
+        .unwrap_or_else(|error| panic!("{}: canonical parse: {error:#}", program.name));
+    assert_eq!(
+        reparsed.canonical(),
+        canonical,
+        "{}: fixed point",
+        program.name
+    );
+    let bytes = KernelProgram::import_legacy(&original).to_bytes().unwrap();
+    assert_eq!(
+        KernelProgram::import_legacy(&reparsed).to_bytes().unwrap(),
+        bytes,
+        "{}: canonical text changed the executable tree",
+        program.name
+    );
+    let envelope = KernelProgram::import_legacy(&reparsed)
+        .to_lossless_text()
+        .unwrap();
+    assert_eq!(
+        KernelProgram::parse_lossless_text(&envelope)
+            .unwrap()
+            .to_bytes()
+            .unwrap(),
+        bytes,
+        "{}: typed envelope changed the executable tree",
+        program.name
+    );
+    reparsed
+}
+
+#[test]
+fn parity_bits_programs_round_trip_before_emission() {
+    for program in PROGRAMS {
+        round_tripped_genome(program);
     }
 }
 
