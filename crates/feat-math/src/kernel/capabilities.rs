@@ -2,6 +2,7 @@
 //! Source names and probe construction stay in code; rendered data uses neutral element names.
 
 use crate::heads::FittedHead;
+use crate::kernel::ordered_axis::StageAxis;
 use crate::math_expr::{BinOp, FaultSet, Func, UnOp, Var};
 use crate::ops::FittedOp;
 use crate::registry::{self, OperatorRole, ShapeRule};
@@ -463,6 +464,12 @@ impl Manifest {
 pub fn op_capability(name: &str) -> Option<&'static OpCap> {
     static MANIFEST: OnceLock<Manifest> = OnceLock::new();
     MANIFEST.get_or_init(Manifest::current).op(name)
+}
+
+/// The legacy recipe spelling of lag/roll operates on feature positions in
+/// one row. Advanced-v3's separate ordered-row transforms are not this route.
+pub fn legacy_recipe_axis(name: &str) -> Option<StageAxis> {
+    matches!(name, "lag" | "roll").then_some(StageAxis::legacy_within_row())
 }
 
 pub fn form_capability(program: &GenomeIr) -> &'static FormCap {
