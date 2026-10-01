@@ -5,7 +5,8 @@
 #   * the champion 8944cbdf (histgbm head): the Python/Rust bit-identical pair (the C++17/ES2020
 #     emitters do not cover gradient-boosted heads — the exclusion is recorded in targets.txt);
 #   * portable-4lang (the champion's transform stack over a ridge head): all four targets, with the
-#     C++ compiled by g++ and clang++ under -std=c++17 and -std=c++20.
+#     C++ compiled by g++ and clang++ under -std=c++17 and -std=c++20, plus the historical
+#     g++ C++17 -O2 recipe.
 # Every emitted program runs on the committed datasets/test/pmlb-229-pwlinear split; per genome the
 # predictions must be bit-identical across programs and equal to the committed expectation, and the
 # emitted sources byte-identical (crates/feat-math/tests/fixtures/emitted/<genome>.*.sha256).
@@ -18,7 +19,11 @@ DATASET=datasets/test/pmlb-229-pwlinear
 EXPECT=crates/feat-math/tests/fixtures/emitted
 OUT=${EMITTERS_OUT:-target/emitters/$(date -u +%Y%m%dT%H%M%S.%NZ)-$$}
 CXX_FLAGS=(-O3 -ffp-contract=off -fno-fast-math)
-if [ -n "${JOPE_CXX_MARCH:-}" ]; then CXX_FLAGS+=("-march=${JOPE_CXX_MARCH}"); fi
+CXX_O2_FLAGS=(-O2 -ffp-contract=off -fno-fast-math)
+if [ -n "${JOPE_CXX_MARCH:-}" ]; then
+  CXX_FLAGS+=("-march=${JOPE_CXX_MARCH}")
+  CXX_O2_FLAGS+=("-march=${JOPE_CXX_MARCH}")
+fi
 fail=0
 
 for tool in rustc g++ clang++ node python3 sha256sum; do
@@ -26,6 +31,19 @@ for tool in rustc g++ clang++ node python3 sha256sum; do
 done
 [ ! -e "$OUT" ] || { echo "refusing to overwrite prior evidence: $OUT" >&2; exit 1; }
 mkdir -p "$OUT"
+# The historical fixture executes and checks every v1 tag and its emitted source bytes. Keep a
+# counted result here as well as in rust-test, so the emitter lane cannot pass with zero cases.
+cargo test -p feat-math --locked --test historical_v1 > "$OUT/historical-v1.log" 2>&1
+cat "$OUT/historical-v1.log"
+python3 - "$OUT/historical-v1.log" <<'PY'
+import re
+import sys
+
+text = open(sys.argv[1], encoding="utf-8").read()
+match = re.search(r"test result: ok\. (\d+) passed; (\d+) failed; (\d+) ignored; (\d+) measured; (\d+) filtered out", text)
+if not match or int(match[1]) < 3 or any(int(value) for value in match.groups()[1:]):
+    raise SystemExit("historical_v1 golden did not execute all required cases")
+PY
 EMIT=$(cargo run -q --locked -p jope-ci -- cargo-artifact build --package feat-math --example emit)
 
 # The emitted programs take (train.csv, test_features.csv, predictions): derive the features-only
@@ -61,7 +79,11 @@ matrix() { # <genome-name> <dsl> [--all]
     for cxx in g++ clang++; do for std in 17 20; do
       "$cxx" "-std=c++$std" "${CXX_FLAGS[@]}" -o "$dir/model-$cxx-$std" "$dir/program.cpp"
       run "$cxx-$std" "$dir/model-$cxx-$std"
-    done; done;;
+    done; done
+    # Preserve the existing -O3 matrix and also exercise the historical C++17 recipe.
+    g++ -std=c++17 "${CXX_O2_FLAGS[@]}" \
+      -o "$dir/model-g++-17-o2" "$dir/program.cpp"
+    run g++-17-o2 "$dir/model-g++-17-o2";;
   esac
   case " $targets " in *" js "*)
     cat "$dir/model.js" deploy/ci/emitters/driver.js > "$dir/program.js"
