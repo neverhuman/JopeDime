@@ -119,8 +119,8 @@ mod qualification {
                 "target transforms require a separate qualified adapter"
             );
             let op = fit_op(stage, &x, &y)?;
-            x = apply_op_train(&op, &x);
-            valid = apply_op(&op, &valid);
+            x = apply_op_train(&op, &x)?;
+            valid = apply_op(&op, &valid)?;
         }
         let kernel = match head.params.get("kernel") {
             Some(ParamValue::Str(s)) => s.as_str(),
@@ -156,7 +156,7 @@ mod qualification {
         let model = fit_head(&case.head, &case.x, &case.y)?;
         let fit_seconds = begin.elapsed().as_secs_f64();
         let t = Instant::now();
-        let prediction = model.predict(&case.valid);
+        let prediction = model.predict(&case.valid)?;
         let prediction_seconds = t.elapsed().as_secs_f64();
         let theta = match &model {
             FittedHead::GprKernel(m) => Some(m.theta.clone()),
