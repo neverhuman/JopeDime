@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json",
-  "count": 4001,
+  "count": 4003,
   "ignored": 66,
   "packages": {
    "battle-gpu": {
@@ -1785,7 +1785,7 @@
     }
    },
    "jope-cli": {
-    "count": 61,
+    "count": 63,
     "ignored": 0,
     "binaries": {
      "jope-cli": {
@@ -1839,6 +1839,15 @@
        "train::tests::recovery_requires_inactive_unit_and_absent_owned_subgroup",
        "train::tests::supervisor_uuid_and_subgroup_are_exact",
        "train::tests::virtualenv_invocation_retains_link_but_pins_physical_binary"
+      ]
+     },
+     "jope-cli::fitted_cpp_cli": {
+      "kind": "test",
+      "count": 2,
+      "ignored": 0,
+      "tests": [
+       "fitted_cpp_cli_exports_frozen_source_and_executable_runner",
+       "fitted_cpp_cli_requires_numeric_training_csv_and_keeps_recipe_default"
       ]
      },
      "jope-cli::offline_cli": {
@@ -6287,7 +6296,7 @@
   }
  },
  "totals": {
-  "rust": 4001,
+  "rust": 4003,
   "python": 172
  }
 }

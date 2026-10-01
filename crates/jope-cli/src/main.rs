@@ -5,9 +5,9 @@
 use anyhow::{ensure, Result};
 use clap::{Parser, Subcommand};
 use jope_cli::{
-    emit_genome, encode_dataset, fit_dataset, generate_fixtures, load_router, local_champions,
-    local_train_step, refuse_s3, resolve_root, route_dataset, search_dataset, verify_inputs,
-    write_json, Verification, DEFAULT_GENOME,
+    emit_genome_with_train, encode_dataset, fit_dataset, generate_fixtures, load_router,
+    local_champions, local_train_step, refuse_s3, resolve_root, route_dataset, search_dataset,
+    verify_inputs, write_json, Verification, DEFAULT_GENOME,
 };
 use std::{path::PathBuf, process::ExitCode};
 
@@ -76,13 +76,16 @@ enum Command {
         #[arg(long)]
         json: bool,
     },
-    /// Emit working Python / Rust / C++17 / C++20 / JavaScript from a program.
+    /// Emit working Python / Rust / C++17 / C++20 / JavaScript, or fitted C++17 from numeric training CSV.
     Emit {
         #[arg(long, default_value = DEFAULT_GENOME)]
         genome: String,
-        /// rust, python, cpp17, cpp20, javascript (or js), or all (the four sources, no cpp20)
+        /// rust, python, cpp17, cpp20, javascript (or js), cpp17-fitted, or all (the four recipe sources)
         #[arg(long)]
         lang: String,
+        /// Numeric CSV with a final `target` column; required for cpp17-fitted.
+        #[arg(long)]
+        train: Option<PathBuf>,
         #[arg(long)]
         output: Option<PathBuf>,
         #[arg(long)]
@@ -263,10 +266,11 @@ fn main() -> ExitCode {
         Command::Emit {
             genome,
             lang,
+            train,
             output,
             json,
         } => {
-            return match emit_genome(genome, lang, output.as_deref()) {
+            return match emit_genome_with_train(genome, lang, train.as_deref(), output.as_deref()) {
                 Ok(report) => print_json(*json, &report, || {
                     format!(
                         "Emitted {} artifact(s) from {}.",
