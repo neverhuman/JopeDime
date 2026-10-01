@@ -41,7 +41,7 @@ executed direct-wire programs, with C++17 refusal where declared.
 
 ## Opt-in C++17 expression training recipes
 
-`feat_math::kernel::recipe_v2::emit_cpp17` and `jope emit --lang cpp17-recipe-v2`
+`feat_math::kernel::expression_recipe::emit_cpp17` and `jope emit --lang cpp17-recipe-v2`
 emit profile `feat-math.cpp17-expression-recipe.v2`. The generated numeric C ABI fits its own
 training state for symbolic raw/affine programs and `map`/`derive` stages with Ridge/ElasticNet.
 It reuses the existing planner, scalar lowering, helper dependency closure and C++ assembler.

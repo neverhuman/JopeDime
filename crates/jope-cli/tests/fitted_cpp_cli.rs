@@ -37,7 +37,7 @@ fn expression_recipe_cli_requires_opt_in_and_writes_public_api_bytes() {
         );
         let report: Value = serde_json::from_slice(&out.stdout).unwrap();
         assert_eq!(report["artifacts"][0]["lang"], "cpp17-recipe-v2");
-        let expected = feat_math::kernel::recipe_v2::emit_cpp17(
+        let expected = feat_math::kernel::expression_recipe::emit_cpp17(
             &GenomeIr::parse(source).unwrap(),
             &feat_math::transpile::EmitOptions::default(),
         )

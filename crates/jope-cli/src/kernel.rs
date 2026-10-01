@@ -157,7 +157,7 @@ pub fn emit_genome_with_train(
             }
             "cpp17" => emit_cpp17(&parsed, &opts).context("emit C++17")?,
             "cpp17-recipe-v2" => {
-                feat_math::kernel::recipe_v2::emit_cpp17(&parsed, &opts)
+                feat_math::kernel::expression_recipe::emit_cpp17(&parsed, &opts)
                     .context("emit C++17 expression recipe")?
                     .source
             }
