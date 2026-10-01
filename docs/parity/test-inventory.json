@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json",
-  "count": 4003,
+  "count": 4007,
   "ignored": 66,
   "packages": {
    "battle-gpu": {
@@ -29,7 +29,7 @@
     }
    },
    "feat-math": {
-    "count": 638,
+    "count": 642,
     "ignored": 7,
     "binaries": {
      "feat-math": {
@@ -684,13 +684,17 @@
      },
      "feat-math::kernel_codec": {
       "kind": "test",
-      "count": 4,
+      "count": 8,
       "ignored": 0,
       "tests": [
        "every_parameter_type_and_ieee_payload_is_preserved",
        "legacy_import_is_lossless_even_when_historical_text_is_not",
        "malformed_counts_and_duplicate_parameters_are_rejected",
-       "oversized_parameter_encoding_fails_with_a_resource_error"
+       "oversized_parameter_encoding_fails_with_a_resource_error",
+       "version_two_binary_and_text_entry_points_reject_unknown_versions_and_ids",
+       "version_two_model_ingress_is_tagged_and_never_executes_reserved_ids",
+       "version_two_reader_preserves_v1_bytes_and_old_reader_refusal",
+       "version_two_reservations_are_contiguous_unique_and_not_generated"
       ]
      },
      "feat-math::kernel_emission_safety": {
@@ -6296,7 +6300,7 @@
   }
  },
  "totals": {
-  "rust": 4003,
+  "rust": 4007,
   "python": 172
  }
 }

@@ -148,3 +148,51 @@ The two frozen token samplers use registry authority; every later grammar uses t
 | pipeline | baseline | supported | supported | supported | supported | subset only |
 | symbolic | not generated | supported | supported | planned | supported | unsupported |
 | nested_portfolio | not generated | deferred | deferred | deferred | supported | unsupported |
+
+## Version 2 reservations
+
+These IDs have no generator or executable route. Unnamed slots are held for later assignment.
+
+| Domain | ID | Assigned name | Lifecycle | Generatable |
+| --- | ---: | --- | --- | --- |
+| Wire | 53 | symlog | reserved | false |
+| Wire | 54 | select_corr | reserved | false |
+| Wire | 55 | impute | reserved | false |
+| Wire | 56 | pair_ratio | reserved | false |
+| Wire | 57 | spline | reserved | false |
+| Wire | 58 | savgol | reserved | false |
+| Wire | 59 | finite_diff | reserved | false |
+| Wire | 60 | cumint | reserved | false |
+| Wire | 61 | goertzel_bank | reserved | false |
+| Wire | 62 | acf_bank | reserved | false |
+| Wire | 63 | hampel | reserved | false |
+| Wire | 64 | realized_path_stats | reserved | false |
+| Wire | 65 | — | reserved | false |
+| Wire | 66 | — | reserved | false |
+| Wire | 67 | — | reserved | false |
+| Wire | 68 | — | reserved | false |
+| Wire | 69 | — | reserved | false |
+| Wire | 70 | — | reserved | false |
+| Wire | 71 | — | reserved | false |
+| Wire | 72 | — | reserved | false |
+| Wire | 73 | — | reserved | false |
+| Wire | 74 | — | reserved | false |
+| Wire | 75 | timescale_nabla | reserved | false |
+| Function | 19 | probit | reserved | false |
+| Function | 20 | logit | reserved | false |
+| Function | 21 | expm1 | reserved | false |
+| Function | 22 | log1mexp | reserved | false |
+| Function | 23 | — | reserved | false |
+| Function | 24 | — | reserved | false |
+| Function | 25 | — | reserved | false |
+| Function | 26 | — | reserved | false |
+| Function | 27 | — | reserved | false |
+| Function | 28 | — | reserved | false |
+| Function | 29 | — | reserved | false |
+| Function | 30 | — | reserved | false |
+| Function | 31 | — | reserved | false |
+| Function | 32 | — | reserved | false |
+| Function | 33 | — | reserved | false |
+| Function | 34 | — | reserved | false |
+| Variable | 8 | row_median | reserved | false |
+| Variable | 9 | row_iqr | reserved | false |

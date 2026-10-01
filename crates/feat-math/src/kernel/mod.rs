@@ -13,6 +13,7 @@ mod program;
 pub mod scope;
 pub mod telemetry;
 pub mod width;
+pub mod wire_v2;
 
 pub use program::Program;
 
