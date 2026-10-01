@@ -360,17 +360,21 @@ impl Store {
         let mut count = 0u64;
         let result: Result<()> = async {
             let mut buffer = vec![0u8; 8 * 1024 * 1024];
-            loop {
-                let n = file.read(&mut buffer).await?;
-                if n == 0 {
-                    break;
-                }
+            while count < bytes {
+                let n = (bytes - count).min(buffer.len() as u64) as usize;
+                file.read_exact(&mut buffer[..n]).await?;
                 count += n as u64;
                 hash.update(&buffer[..n]);
                 upload.put_part(buffer[..n].to_vec().into()).await?;
             }
+            let mut trailing = [0u8; 1];
             ensure!(
-                count == bytes && hex::encode(hash.finalize()) == expected,
+                file.read(&mut trailing).await? == 0,
+                "{}: source grew since enumeration",
+                source.display()
+            );
+            ensure!(
+                hex::encode(hash.finalize()) == expected,
                 "{}: source changed since enumeration",
                 source.display()
             );
