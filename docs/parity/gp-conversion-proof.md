@@ -8,6 +8,7 @@ not claim universal parity or admission for every genome form.
 | Paired Rust and Python recipes | [`parity_bits.rs`](../../crates/feat-math/tests/parity_bits.rs) compiles or runs each emitted source and compares prediction bits with the Rust evaluator. The emitted sidecar program is parsed back and checked against the executable tree. | The paired recipe planner must admit the program. |
 | Fitted C++17 inference | The same test fits and emits C++17, compiles with `g++ -std=c++17 -O2 -ffp-contract=off -fno-fast-math`, runs a bit-input driver, and compares with the evaluator. | This is a fitted inference artifact, not the standalone C++17 training recipe. |
 | Standalone C++17 training recipe | [`conversion_wire_matrix.rs`](../../crates/feat-math/tests/conversion_wire_matrix.rs) compiles and runs every admitted direct-wire witness with `g++ -std=c++17 -O2 -ffp-contract=off -fno-fast-math` and compares prediction bits with the frozen evaluator. | Six of the 19 direct-wire programs are admitted; the other 13 keep their frozen refusal summaries. This is a training recipe, separate from fitted C++17 inference. |
+| Standalone C++17 numeric ABI boundary | [`conversion_boundary.rs`](../../crates/feat-math/tests/conversion_boundary.rs) compiles a generated standardize/ridge recipe with the same strict flags. Three bounded seeds exercise NaN payload, positive/negative infinity, negative zero and subnormal feature values through the direct numeric ABI; all 24 prediction bits match the Rust evaluator. The driver also requires structured return-code refusal for nonfinite targets and malformed prediction width/length. | This proves one admitted training recipe through its direct C ABI. The B03 CSV command rejects nonfinite input and has a separate contract. |
 | Registry and genome-form matrix | The same test ties current registry IDs 0–52 and all 35 search-generatable descriptors to immutable fitted, alias or quarantine records. It executes paired recipes for all 19 distinct direct-wire programs and for symbolic raw, symbolic affine and compact portfolio examples. | The seven quarantined IDs and four aliases are classified by the historical golden; explicit nested portfolio emission retains a pinned refusal. Classification alone is not execution of every parameter variant. |
 
 The 19-program scalar corpus in `parity_bits.rs` reaches every current named `MathExpr` function
@@ -38,7 +39,7 @@ examples also execute emitted Rust/Python against the evaluator; explicit nested
 retains its exact paired and C++17 refusal. `map`/`derive` and target forms occur among the 19
 executed direct-wire programs, with C++17 refusal where declared.
 
-Remaining work includes the 22 existing X6 parity differences, nonfinite and property-based
+Remaining work includes the 22 existing X6 parity differences, broader nonfinite and property-based
 execution across emitted routes, parameter variants beyond the frozen witnesses, and standalone
 C++17 training support for currently refused symbolic, `map`, `derive`, target and portfolio forms.
 The tests do not claim those absent routes or make an admission check count as execution. Frozen

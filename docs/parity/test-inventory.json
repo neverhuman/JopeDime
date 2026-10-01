@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json",
-  "count": 4015,
+  "count": 4016,
   "ignored": 66,
   "packages": {
    "battle-gpu": {
@@ -29,7 +29,7 @@
     }
    },
    "feat-math": {
-    "count": 650,
+    "count": 651,
     "ignored": 7,
     "binaries": {
      "feat-math": {
@@ -486,6 +486,14 @@
        "serialized_models_match_the_frozen_fixture",
        "stage_outputs_match_the_frozen_fixture",
        "vocabulary_registry_and_lineage_pins_match"
+      ]
+     },
+     "feat-math::conversion_boundary": {
+      "kind": "test",
+      "count": 1,
+      "ignored": 0,
+      "tests": [
+       "cpp17_training_numeric_abi_matches_seeded_nonfinite_features_and_refuses_targets"
       ]
      },
      "feat-math::conversion_roundtrip": {
