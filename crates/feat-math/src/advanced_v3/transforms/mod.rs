@@ -1874,7 +1874,7 @@ mod tests {
         };
         // Legacy public behavior remains capped; v3 retains all original columns.
         assert_eq!(
-            crate::ops::apply_op(&op, &block.values)[0].len(),
+            crate::ops::apply_op(&op, &block.values).unwrap()[0].len(),
             crate::MAX_WIDTH
         );
         let output = legacy_to_block(&op, &block).unwrap();

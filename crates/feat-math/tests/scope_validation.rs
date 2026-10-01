@@ -302,11 +302,11 @@ fn the_cases_rest_on_the_registry_and_the_runtime() {
     assert_eq!(row_stats.shape, feat_math::registry::ShapeRule::Fixed(10));
     let (x, y) = data(6, 3);
     let op = fit_op(&stage("(row_stats)"), &x, &y).expect("row_stats fits");
-    assert!(apply_op(&op, &x).iter().all(|row| row.len() == 10));
+    assert!(apply_op(&op, &x).unwrap().iter().all(|row| row.len() == 10));
     // `select_corr k=2` keeps two of eight columns.
     let (x, y) = data(12, 8);
     let op = fit_op(&stage("(select_corr k=2)"), &x, &y).expect("select_corr fits");
-    assert!(apply_op(&op, &x).iter().all(|row| row.len() == 2));
+    assert!(apply_op(&op, &x).unwrap().iter().all(|row| row.len() == 2));
     // The runtime meets an out-of-range column or a misplaced `x` only when it evaluates; the
     // stage then substitutes zero, and the trace carries the class the static check reports.
     let column = MathExpr::parse("col(7)").expect("col(7) parses");
@@ -966,7 +966,10 @@ fn the_two_intended_differences_from_the_legacy_check() {
         let (x, y) = data(rows, 8);
         let op = fit_op(&stage("(nystrom k=4)"), &x, &y).expect("nystrom fits");
         assert!(
-            apply_op(&op, &x).iter().all(|row| row.len() == width),
+            apply_op(&op, &x)
+                .unwrap()
+                .iter()
+                .all(|row| row.len() == width),
             "{rows} rows"
         );
     }
@@ -1002,11 +1005,14 @@ fn the_two_intended_differences_from_the_legacy_check() {
     let (x, y) = data(8, 600);
     let derived = fit_op(&stage(r#"(derive expr="c599")"#), &x, &y).expect("derive fits");
     assert_eq!(
-        apply_op(&derived, &x),
+        apply_op(&derived, &x).unwrap(),
         x.iter().map(|row| vec![row[599]]).collect::<Vec<_>>()
     );
     let scaled = fit_op(&stage("(standardize)"), &x, &y).expect("standardize fits");
-    assert!(apply_op(&scaled, &x).iter().all(|row| row.len() == 512));
+    assert!(apply_op(&scaled, &x)
+        .unwrap()
+        .iter()
+        .all(|row| row.len() == 512));
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -1140,7 +1146,7 @@ fn a_portfolio_member_is_checked_against_the_columns_it_can_see() {
     let fit = |source: &str, (x, y): &(Vec<Vec<f64>>, Vec<f64>)| {
         let model = feat_math::fit(&program(source), x, y)
             .unwrap_or_else(|error| panic!("{source}: {error}"));
-        let predictions = model.predict(x);
+        let predictions = model.predict(x).unwrap();
         (model, predictions)
     };
     let constant_first = portfolio_data(true);

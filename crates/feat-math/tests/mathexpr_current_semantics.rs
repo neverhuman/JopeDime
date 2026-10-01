@@ -110,6 +110,7 @@ fn stage_output(stage: &str, rows: &[Vec<f64>]) -> Vec<Vec<u64>> {
     let rows = rows.to_vec();
     let op = fit_op(&stage, &rows, &vec![0.0; rows.len()]).expect("fit");
     apply_op(&op, &rows)
+        .unwrap()
         .iter()
         .map(|row| row.iter().map(|v| v.to_bits()).collect())
         .collect()

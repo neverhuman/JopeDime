@@ -64,7 +64,15 @@ pub fn emit_python(plan: &Plan, opts: &EmitOptions) -> String {
                     out.push(&src);
                 }
             }
-            out.push(&model_class_pipeline(target.as_ref(), stages, head));
+            out.push(&model_class_pipeline(
+                target.as_ref(),
+                stages,
+                head,
+                opts.guard_zero_width_roll
+                    && stages
+                        .iter()
+                        .any(|stage| matches!(stage.op, PlannedOp::Roll { .. })),
+            ));
         }
         Plan::Symbolic {
             source,
@@ -4040,6 +4048,7 @@ fn model_class_pipeline(
     target: Option<&PlannedTarget>,
     stages: &[PlannedStage],
     head: &PlannedHead,
+    guard_zero_width_roll: bool,
 ) -> String {
     let mut lines: Vec<String> = Vec::new();
     lines.push("class Model:".to_string());
@@ -4062,6 +4071,13 @@ fn model_class_pipeline(
     lines.push(
         "            raise SystemExit(\"training data is empty or target is short\")".to_string(),
     );
+    if guard_zero_width_roll {
+        lines.push("        if any(len(row) == 0 for row in x_rows):".to_string());
+        lines.push(
+            "            raise ValueError(\"stage 0 needs at least 1 input columns, got 0\")"
+                .to_string(),
+        );
+    }
     lines.push("        x = _sanitize(x_rows)".to_string());
     if let Some(target) = target {
         // The transform is fitted on the raw train target FIRST; every stage
@@ -4091,6 +4107,13 @@ fn model_class_pipeline(
     lines.push("    def predict(self, x_rows: list) -> list:".to_string());
     lines
         .push("        \"\"\"Apply the fitted stages, then the regression head.\"\"\"".to_string());
+    if guard_zero_width_roll {
+        lines.push("        if any(len(row) == 0 for row in x_rows):".to_string());
+        lines.push(
+            "            raise ValueError(\"stage 0 needs at least 1 input columns, got 0\")"
+                .to_string(),
+        );
+    }
     lines.push("        x = _sanitize(x_rows)".to_string());
     for (i, stage) in stages.iter().enumerate() {
         let n = i + 1;

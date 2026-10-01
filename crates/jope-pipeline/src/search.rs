@@ -543,8 +543,8 @@ fn evaluate(
     // take the run down with it.
     let fitted = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         let model = feat_math::fit(&parsed, &cut.train_x, &cut.train_y)?;
-        let train = model.predict(&cut.train_x);
-        let hold = model.predict(&cut.hold_x);
+        let train = model.predict(&cut.train_x)?;
+        let hold = model.predict(&cut.hold_x)?;
         anyhow::Ok((train, hold))
     }));
     let seconds = started.elapsed().as_secs_f64();

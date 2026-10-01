@@ -125,7 +125,7 @@ fn fit(task: Task, genome: &GenomeIr, x: &Rows, y: &[f64]) -> Result<Predictor> 
     match task.v3_spec() {
         None => {
             let model = feat_math::fit(genome, x, y)?;
-            Ok(Box::new(move |rows: &Rows| Ok(model.predict(rows))))
+            Ok(Box::new(move |rows: &Rows| Ok(model.predict(rows)?)))
         }
         Some(spec) => {
             let features = x.first().map(Vec::len).unwrap_or(0);

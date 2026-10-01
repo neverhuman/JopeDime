@@ -157,7 +157,7 @@ fn member_fit_predict(imp: &MemberImpl, xtr: &Rows, ytr: &[f64], xva: &Rows) -> 
         MemberImpl::Pipe(dsl) => {
             let genome = GenomeIr::Pipeline(dsl.clone());
             match model::fit(&genome, xtr, ytr) {
-                Ok(m) => Some(m.predict(xva)),
+                Ok(m) => m.predict(xva).ok(),
                 Err(_) => None,
             }
         }
@@ -442,7 +442,7 @@ pub fn fit_portfolio(
         None
     };
     let x_proj: Rows = match &proj {
-        Some(op) => apply_op(op, &x_raw),
+        Some(op) => apply_op(op, &x_raw)?,
         None => Vec::new(),
     };
 
@@ -661,7 +661,7 @@ pub fn fit_portfolio(
                 let genome = GenomeIr::Pipeline(dsl.clone());
                 match model::fit(&genome, xv, &ys) {
                     Ok(fm) => {
-                        let ptr = fm.predict(xv);
+                        let ptr = fm.predict(xv)?;
                         let mut sse = 0.0;
                         for i in 0..n {
                             let d = ptr[i] - ys[i];
@@ -744,10 +744,14 @@ pub fn fit_portfolio(
 }
 
 impl PortfolioModel {
-    pub fn predict(&self, x: &Rows) -> Vec<f64> {
+    pub fn predict(
+        &self,
+        x: &Rows,
+    ) -> std::result::Result<Vec<f64>, crate::kernel::width::WidthMismatch> {
+        crate::kernel::width::reject_zero_width_rows(x)?;
         let nt = x.len();
         if self.mean_only {
-            return vec![self.y_mean; nt];
+            return Ok(vec![self.y_mean; nt]);
         }
         let mut xs: Rows = x
             .iter()
@@ -763,7 +767,7 @@ impl PortfolioModel {
             .map(|row| self.keep.iter().map(|&j| row[j]).collect())
             .collect();
         let x_proj: Rows = match &self.proj {
-            Some(op) => apply_op(op, &x_raw),
+            Some(op) => apply_op(op, &x_raw)?,
             None => Vec::new(),
         };
         let ybar = self.y_mean;
@@ -780,7 +784,7 @@ impl PortfolioModel {
                     } else {
                         &x_raw
                     };
-                    fm.predict(xv)
+                    fm.predict(xv)?
                 }
                 FittedMemberState::GroupMean(gm) => {
                     let xv = if member.proj_view && self.proj.is_some() {
@@ -820,7 +824,7 @@ impl PortfolioModel {
             }
             *z = v;
         }
-        acc
+        Ok(acc)
     }
 }
 
@@ -863,8 +867,8 @@ mod tests {
         let m1 = fit_portfolio(&roster, &x, &y, 5, true).unwrap();
         let m2 = fit_portfolio(&roster, &x, &y, 5, true).unwrap();
         assert_eq!(m1.weights, m2.weights, "weights must be bit-identical");
-        let p1 = m1.predict(&x);
-        let p2 = m2.predict(&x);
+        let p1 = m1.predict(&x).unwrap();
+        let p2 = m2.predict(&x).unwrap();
         assert_eq!(p1, p2, "predictions must be bit-identical");
         assert!(p1.iter().all(|v| v.is_finite()));
         // Diagnostics carry the schema fields.
@@ -933,7 +937,7 @@ mod tests {
             crate::dsl::parse_dsl("(pipe X (target_bin_encode bins=8) (ridge))").unwrap(),
         );
         let fm = model::fit(&g, &x, &y).unwrap();
-        let ptr = fm.predict(&x);
+        let ptr = fm.predict(&x).unwrap();
         let mut sse = 0.0;
         for i in 0..y.len() {
             let d2 = ptr[i] - y[i];
@@ -960,7 +964,7 @@ mod tests {
             "poisoned member kept weight {poison_w} and state {:?}",
             model.members[1].state
         );
-        let preds = model.predict(&x);
+        let preds = model.predict(&x).unwrap();
         assert!(preds.iter().all(|v| v.is_finite()));
         assert!(preds
             .iter()
@@ -991,7 +995,7 @@ mod tests {
         let m = fit_portfolio(&core_roster(), &x, &y, 5, true).unwrap();
         let fit_s = t0.elapsed().as_secs_f64();
         let t1 = std::time::Instant::now();
-        let preds = m.predict(&x);
+        let preds = m.predict(&x).unwrap();
         let pred_s = t1.elapsed().as_secs_f64();
         println!(
             "portfolio timing 700x18: fit {fit_s:.1}s predict {pred_s:.2}s r2={:.4} members={}",
@@ -1061,7 +1065,7 @@ mod tests {
         assert_eq!(w[0], 1.0);
         assert!(w[1..].iter().all(|v| *v == 0.0));
         // The deployed one-hot model reproduces the member's predictions.
-        let preds = m.predict(&x);
+        let preds = m.predict(&x).unwrap();
         assert!(r2(&y, &preds) > 0.999, "r2={}", r2(&y, &preds));
     }
 
@@ -1103,7 +1107,7 @@ mod tests {
         // n=3: train-mean model.
         let m = fit_portfolio(&core_roster(), &x_all[..3].to_vec(), &y_all[..3], 5, true).unwrap();
         assert!(m.mean_only);
-        let p = m.predict(&x_all[..5].to_vec());
+        let p = m.predict(&x_all[..5].to_vec()).unwrap();
         let mean3 = (y_all[0] + y_all[1] + y_all[2]) / 3.0;
         assert!(p.iter().all(|v| (*v - mean3).abs() < 1e-12));
         // n=8 and n=19: single built-in ridge_gcv member.
@@ -1114,7 +1118,7 @@ mod tests {
             assert_eq!(m.members.len(), 1, "n={n}");
             assert_eq!(m.diagnostics.member_diagnostics[0].name, "ridge_gcv_raw");
             assert!(m.diagnostics.blend.folds <= 2, "n={n} tiny-n folds");
-            let p = m.predict(&x_all[..n].to_vec());
+            let p = m.predict(&x_all[..n].to_vec()).unwrap();
             assert!(p.iter().all(|v| v.is_finite()));
         }
         // n=25: gated core roster (well over the single-member fallback),
@@ -1155,10 +1159,10 @@ mod tests {
         roster[0].view = View::Proj;
         let m = fit_portfolio(&roster, &x, &y, 5, true).unwrap();
         assert!(m.proj.is_some(), "projection view must be built for p>300");
-        let p = m.predict(&x);
+        let p = m.predict(&x).unwrap();
         assert!(p.iter().all(|v| v.is_finite()));
         let m2 = fit_portfolio(&roster, &x, &y, 5, true).unwrap();
-        assert_eq!(p, m2.predict(&x));
+        assert_eq!(p, m2.predict(&x).unwrap());
     }
 
     #[test]
@@ -1184,10 +1188,10 @@ mod tests {
         ];
         let m = fit_portfolio(&roster, &x, &y, 5, true).unwrap();
         assert_eq!(m.members.len(), 2);
-        let preds = m.predict(&x);
+        let preds = m.predict(&x).unwrap();
         assert!(r2(&y, &preds) > 0.9, "r2={}", r2(&y, &preds));
         // Unknown key falls back near the global mean (clipped range).
-        let far = m.predict(&vec![vec![99.0, 42.0]]);
+        let far = m.predict(&vec![vec![99.0, 42.0]]).unwrap();
         assert!(far[0].is_finite());
     }
 

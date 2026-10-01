@@ -478,7 +478,7 @@ fn evaluate_candidate(
             let (train_x, train_y) = slice_rows(data, &training);
             let (validation_x, validation_y) = slice_rows(data, validation);
             let model = fit(&parsed, &train_x, &train_y)?;
-            let predictions = model.predict(&validation_x);
+            let predictions = model.predict(&validation_x)?;
             let fold_error = squared_error(&validation_y, &predictions)?;
             fold_scores.push((fold_error / validation.len() as f64).sqrt() / sd);
             for (row, prediction) in validation.iter().zip(predictions) {
@@ -681,7 +681,7 @@ fn score_legacy_population(
                             let (train_x, train_y) = slice_rows(data, &training);
                             let (validation_x, validation_y) = slice_rows(data, validation);
                             let model = fit(&parsed, &train_x, &train_y)?;
-                            let predictions = model.predict(&validation_x);
+                            let predictions = model.predict(&validation_x)?;
                             scores.push(legacy_metrics(&validation_y, &predictions)?.1);
                         }
                         Ok(scores)
@@ -2921,7 +2921,7 @@ fn uncached_evaluation(
             let (train_x, train_y) = slice_rows(data, &training);
             let (validation_x, validation_y) = slice_rows(data, validation);
             let model = fit(&parsed, &train_x, &train_y)?;
-            let predictions = model.predict(&validation_x);
+            let predictions = model.predict(&validation_x)?;
             fold_scores.push(
                 (squared_error(&validation_y, &predictions)? / validation.len() as f64).sqrt() / sd,
             );

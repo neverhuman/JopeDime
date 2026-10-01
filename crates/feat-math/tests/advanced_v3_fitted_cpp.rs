@@ -45,6 +45,7 @@ fn audit_expression_failures_match_rust_under_sanitizers() {
         let expected: Vec<_> = fit(&genome, &train, &y)
             .unwrap()
             .predict(&vec![vec![0.125, -1.5], vec![0.0, 2.5], vec![2.125, 6.5]])
+            .unwrap()
             .into_iter()
             .map(f64::to_bits)
             .collect();
@@ -886,6 +887,7 @@ fn frozen_legacy_pipeline_can_cross_the_bound_cpp_bridge() {
     let expected = fit(&genome, &train, &y)
         .unwrap()
         .predict(&test_rows)
+        .unwrap()
         .into_iter()
         .map(f64::to_bits)
         .collect::<Vec<_>>();
@@ -1399,7 +1401,7 @@ fn empty_stage_outputs_match_the_runtime_bits_on_the_legacy_paths() {
             .unwrap_or_else(|error| panic!("{source} fit: {error}"));
         let expected = bits(model.predict_table(&raw).unwrap());
         assert_eq!(
-            bits(fit(&genome, &rows, &y).unwrap().predict(&test.to_vec())),
+            bits(fit(&genome, &rows, &y).unwrap().predict(&test.to_vec()).unwrap()),
             expected,
             "{source}: the bound model is the legacy model"
         );
@@ -1500,6 +1502,7 @@ fn empty_row_reductions_match_the_runtime_evaluator() {
             serde_json::from_value(json["predictor"]["Pipeline"]["ops"][0]["Legacy"].clone())
                 .unwrap();
         let expected = feat_math::ops::apply_op(&op, &vec![Vec::new()])
+            .unwrap()
             .remove(0)
             .into_iter()
             .map(f64::to_bits)

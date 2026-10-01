@@ -81,6 +81,10 @@ pub fn emit_rust(plan: &Plan, opts: &EmitOptions) -> String {
                 stages,
                 head,
                 opts.fast_runtime,
+                opts.guard_zero_width_roll
+                    && stages
+                        .iter()
+                        .any(|stage| matches!(stage.op, PlannedOp::Roll { .. })),
             ));
         }
         Plan::Symbolic {
@@ -5449,6 +5453,7 @@ fn model_pipeline(
     stages: &[PlannedStage],
     head: &PlannedHead,
     fast: bool,
+    guard_zero_width_roll: bool,
 ) -> String {
     let (head_fit, head_predict, head_ty) = head_calls(head);
     let mut lines: Vec<String> = Vec::new();
@@ -5485,6 +5490,14 @@ fn model_pipeline(
     lines.push("            eprintln!(\"training data is empty or target is short\");".to_string());
     lines.push("            std::process::exit(2);".to_string());
     lines.push("        }".to_string());
+    if guard_zero_width_roll {
+        lines.push("        if x.iter().any(Vec::is_empty) {".to_string());
+        lines.push(
+            "            eprintln!(\"stage 0 needs at least 1 input columns, got 0\");".to_string(),
+        );
+        lines.push("            std::process::exit(2);".to_string());
+        lines.push("        }".to_string());
+    }
     lines.push("        let x = sanitize(x);".to_string());
     let mut field_names: Vec<String> = Vec::new();
     if let Some(target) = target {
@@ -5526,6 +5539,14 @@ fn model_pipeline(
     } else {
         lines.push("    fn predict(&self, x: &[Vec<f64>]) -> Vec<f64> {".to_string());
     }
+    if guard_zero_width_roll {
+        lines.push("        if x.iter().any(Vec::is_empty) {".to_string());
+        lines.push(
+            "            eprintln!(\"stage 0 needs at least 1 input columns, got 0\");".to_string(),
+        );
+        lines.push("            std::process::exit(2);".to_string());
+        lines.push("        }".to_string());
+    }
     lines.push("        let x = sanitize(x);".to_string());
     for (i, stage) in stages.iter().enumerate() {
         let n = i + 1;
@@ -5555,6 +5576,21 @@ fn model_pipeline(
         }
     }
     lines.push("    }".to_string());
+    if guard_zero_width_roll {
+        lines.push(String::new());
+        lines.push(
+            "    fn try_predict(&self, x: &[Vec<f64>]) -> Result<Vec<f64>, &'static str> {"
+                .to_string(),
+        );
+        lines.push("        if x.iter().any(Vec::is_empty) {".to_string());
+        lines.push(
+            "            return Err(\"stage 0 needs at least 1 input columns, got 0\");"
+                .to_string(),
+        );
+        lines.push("        }".to_string());
+        lines.push("        Ok(self.predict(x))".to_string());
+        lines.push("    }".to_string());
+    }
     if fast {
         lines.push(String::new());
         lines.extend(rs_fast_predict_wrapper());

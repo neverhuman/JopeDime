@@ -896,6 +896,7 @@ fn check_lane(lane: Lane) {
         let reference: Vec<u64> = fit(&genome, &shared.train_x, &shared.train_y)
             .unwrap_or_else(|error| panic!("{}: runtime fit: {error:#}", program.name))
             .predict(&features)
+            .unwrap()
             .into_iter()
             .map(f64::to_bits)
             .collect();
@@ -1231,7 +1232,7 @@ fn parity_bits_programs_execute_every_function_variable_and_operator() {
             .iter()
             .find(|row| row.id == id)
             .unwrap_or_else(|| panic!("no input row {id}"));
-        model.predict(&vec![row.values.clone()])[0].to_bits()
+        model.predict(&vec![row.values.clone()]).unwrap()[0].to_bits()
     };
     for sign in ["pos", "neg"] {
         let zero = predict(&format!("c0:{sign}_zero"));

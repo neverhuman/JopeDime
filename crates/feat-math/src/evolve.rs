@@ -1863,7 +1863,7 @@ fn score_genome(
             return None;
         }
         let m = model::fit(&genome, &xtr, &ytr).ok()?;
-        let pred = m.predict(&xte);
+        let pred = m.predict(&xte).ok()?;
         let s = metric(&yte, &pred);
         if !s.is_finite() {
             return None;
@@ -2926,7 +2926,10 @@ pub fn enrich_rung0_trace_candidate(
         }
         let fitted = model::fit(&surrogate_genome, &train_x, &train_y)
             .map_err(|error| format!("rung-0 fold {fold_id} canonical CPU fit: {error}"))?;
-        let score = crate::metrics::r2(&valid_y, &fitted.predict(&valid_x));
+        let predicted = fitted
+            .predict(&valid_x)
+            .map_err(|error| format!("rung-0 fold {fold_id} canonical CPU predict: {error}"))?;
+        let score = crate::metrics::r2(&valid_y, &predicted);
         if !score.is_finite() {
             return Err(format!(
                 "rung-0 fold {fold_id} canonical CPU replay produced no finite score"
@@ -3037,7 +3040,7 @@ fn score_rung(
         {
             return None;
         }
-        let pred = m.predict(&xte);
+        let pred = m.predict(&xte).ok()?;
         let s = metric(&yte, &pred);
         if !s.is_finite() {
             return None;
@@ -4085,12 +4088,12 @@ fn prep_rung0_candidate(
             let op = fit_op(stage, &cur, &ytr_eff).ok()?;
             // TRAIN pass: must use the train variant so leave-one-out-style
             // ops see their training encoding here, exactly as model::fit does.
-            cur = apply_op_train(&op, &cur);
+            cur = apply_op_train(&op, &cur).ok()?;
             fitted.push(op);
         }
         let mut te = xte;
         for op in &fitted {
-            te = apply_op(op, &te);
+            te = apply_op(op, &te).ok()?;
         }
 
         let n = cur.len();

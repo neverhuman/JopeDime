@@ -770,6 +770,7 @@ fn fitted_predictor_roundtrip_matches_native_gp_and_restores_target_units() {
     let expected = p
         .model
         .predict(&tx)
+        .unwrap()
         .iter()
         .map(|v| v * p.preprocessing.target_scale + p.preprocessing.target_mean)
         .collect::<Vec<_>>();
@@ -1785,7 +1786,7 @@ fn variation_children_record_parents_and_cannot_alter_parent_fitted_state() {
             &crate::label_admission::artifact_bytes(&root, &completion["model"]).unwrap(),
         )
         .unwrap();
-        let predictions = model.predict(&x);
+        let predictions = model.predict(&x).unwrap();
         assert_eq!(
             hash(&serde_json::to_vec(&predictions).unwrap()),
             row["metrics"]["semantic_sha256"],
@@ -2030,7 +2031,7 @@ fn reused_fits_are_rescored_on_their_own_rows_and_never_inherit_scores() {
             &crate::label_admission::artifact_bytes(&root, &completion["model"]).unwrap(),
         )
         .unwrap();
-        let predictions = model.predict(&x);
+        let predictions = model.predict(&x).unwrap();
         assert_eq!(
             hash(&serde_json::to_vec(&predictions).unwrap()),
             now["semantic_sha256"],
@@ -3505,7 +3506,7 @@ fn outer_scores_need_a_grant_read_only_the_granted_labels_and_release_once() {
         .iter()
         .map(|(x, _)| fitted.preprocessing.features(&[x.to_string()]).unwrap())
         .collect();
-    let predicted = fitted.model.predict(&x);
+    let predicted = fitted.model.predict(&x).unwrap();
     let squared = rows
         .iter()
         .zip(&predicted)

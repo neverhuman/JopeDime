@@ -183,8 +183,12 @@ pub fn fit_head(stage: &Stage, x: &Rows, y: &[f64]) -> Result<FittedHead> {
 }
 
 impl FittedHead {
-    pub fn predict(&self, x: &Rows) -> Vec<f64> {
-        match self {
+    pub fn predict(
+        &self,
+        x: &Rows,
+    ) -> std::result::Result<Vec<f64>, crate::kernel::width::WidthMismatch> {
+        crate::kernel::width::reject_zero_width_rows(x)?;
+        Ok(match self {
             FittedHead::Ridge(m) => m.predict(x),
             FittedHead::RidgeGcv(m) => m.predict(x),
             FittedHead::ElasticNet(m) => m.predict(x),
@@ -204,8 +208,8 @@ impl FittedHead {
             FittedHead::Ksmooth(m) => m.predict(x),
             FittedHead::Hurdle2(m) => m.predict(x),
             FittedHead::Stack(m) => m.predict(x),
-            FittedHead::Portfolio(m) => m.predict(x),
-        }
+            FittedHead::Portfolio(m) => m.predict(x)?,
+        })
     }
 }
 

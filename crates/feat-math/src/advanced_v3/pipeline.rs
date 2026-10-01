@@ -88,7 +88,7 @@ impl BoundModel {
         self.validate_binding()?;
         let mut block = self.input.transform(table)?;
         let mut predictions = match &self.predictor {
-            BoundPredictor::Legacy(model) => model.predict(&block.values),
+            BoundPredictor::Legacy(model) => model.predict(&block.values)?,
             BoundPredictor::Pipeline {
                 target,
                 ops,
@@ -102,7 +102,7 @@ impl BoundModel {
                 for op in ops {
                     block = op.apply_block(&block, table)?;
                 }
-                let predictions = calibration.apply(head.predict(&block.values));
+                let predictions = calibration.apply(head.predict(&block.values)?);
                 match target {
                     Some(target) => predictions
                         .iter()
@@ -627,7 +627,7 @@ fn oof_head_predictions(
         let y_fit: Vec<f64> = fit_rows.iter().map(|&r| y[r]).collect();
         let x_valid: Rows = valid_rows.iter().map(|&r| x[r].clone()).collect();
         let model = fit_v3_head(stage, &x_fit, &y_fit, task)?;
-        for (&row, value) in valid_rows.iter().zip(model.predict(&x_valid)) {
+        for (&row, value) in valid_rows.iter().zip(model.predict(&x_valid)?) {
             predictions[row] = value;
         }
     }

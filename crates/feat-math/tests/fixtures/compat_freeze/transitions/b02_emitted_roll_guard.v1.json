@@ -1,0 +1,26 @@
+{
+  "schema": "feat-math.emitted-roll-width-transition.v1",
+  "program": "(pipe X (roll k=2) (ridge))",
+  "before": {
+    "schema": "battle-artifact-v1",
+    "program": "(pipe X (roll k=2) (ridge))",
+    "program_sha256": "a771a1baf38951a6fc8745105d093b6155bc6b792ae1afd1bad0eafee9602233",
+    "dsl": "(pipe X (roll k=2) (ridge))",
+    "genome_sha256": "a771a1baf38951a6fc8745105d093b6155bc6b792ae1afd1bad0eafee9602233",
+    "flavor": "pipeline",
+    "emitter_version": "2.2.0",
+    "py_sha256": "9b67e1454117d4d9c5a575c76a5e68cf3c2186f345a19fe7f149cfedfe7ec317",
+    "rs_sha256": "1d488d58f1569ce21b5588c370854697db2da2d570a7e73efbc2555ac943a2c9"
+  },
+  "after": {
+    "schema": "battle-artifact-v1",
+    "program": "(pipe X (roll k=2) (ridge))",
+    "program_sha256": "a771a1baf38951a6fc8745105d093b6155bc6b792ae1afd1bad0eafee9602233",
+    "dsl": "(pipe X (roll k=2) (ridge))",
+    "genome_sha256": "a771a1baf38951a6fc8745105d093b6155bc6b792ae1afd1bad0eafee9602233",
+    "flavor": "pipeline",
+    "emitter_version": "feat-math-roll-width-guard-v1",
+    "py_sha256": "16522bc2e64746ad7c03505787661f7c5306f531677e01fa4532d86fb53f68d4",
+    "rs_sha256": "f8338d95dd61467ab18e722029989234144d49c0f3c53a3ae2a353f1aba02114"
+  }
+}

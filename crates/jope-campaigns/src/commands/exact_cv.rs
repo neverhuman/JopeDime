@@ -205,7 +205,7 @@ pub(crate) fn fit_predict_timed(
     let model = fit(&genome, &train.x, &train.y)?;
     let fit_seconds = fit_started.elapsed().as_secs_f64();
     let predict_started = Instant::now();
-    let predictions = model.predict(&test.x);
+    let predictions = model.predict(&test.x)?;
     let predict_seconds = predict_started.elapsed().as_secs_f64();
     if predictions.len() != test.y.len() || predictions.iter().any(|v| !v.is_finite()) {
         bail!("frozen genome produced invalid predictions");
@@ -1126,7 +1126,7 @@ fn run_phase2(args: &JainRegressorArgs) -> Result<()> {
     let model = fit(&genome, &train.x, &train.y).context("fit frozen genome on all train rows")?;
     let fit_seconds = fit_started.elapsed().as_secs_f64();
     let predict_started = Instant::now();
-    let predictions = model.predict(&test.x);
+    let predictions = model.predict(&test.x)?;
     let predict_seconds = predict_started.elapsed().as_secs_f64();
     if predictions.len() != TEST_ROWS || predictions.iter().any(|value| !value.is_finite()) {
         bail!("frozen genome did not produce exactly {TEST_ROWS} finite predictions");
@@ -1937,7 +1937,7 @@ fn exact_cv_on_slices(
         .with_context(|| format!("fit fold {fold}"))?;
         fit_seconds.push(fit_started.elapsed().as_secs_f64());
         let predict_started = Instant::now();
-        let predictions = model.predict(&slices.valid_x);
+        let predictions = model.predict(&slices.valid_x)?;
         predict_seconds.push(predict_started.elapsed().as_secs_f64());
         if predictions.len() != slices.valid_y.len() || predictions.iter().any(|v| !v.is_finite()) {
             bail!("fold {fold} produced non-finite or wrong-length predictions");
@@ -3502,7 +3502,7 @@ mod tests {
             }
             assert!(!valid_x.is_empty() && train_x.len() >= 8);
             let model = fit(genome, &train_x, &train_y).unwrap();
-            let predictions = model.predict(&valid_x);
+            let predictions = model.predict(&valid_x).unwrap();
             let score = independent_metrics(&valid_y, &predictions).unwrap().1;
             fold_r2.push(score);
             for (index, prediction) in valid_indices.into_iter().zip(predictions) {

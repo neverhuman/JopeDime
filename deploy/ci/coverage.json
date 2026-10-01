@@ -2469,6 +2469,22 @@
       "dispositions": [],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "target:feat-math/test/roll_zero_width": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/feat-math/tests/roll_zero_width.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "Roll width refusal on public Rust entry points, versioned Rust/Python recipes, and C++17 recipe refusal; the frozen default artifact bytes stay pinned."
+    },
     "target:feat-math/test/golden": {
       "discovery": {
         "kind": "target",

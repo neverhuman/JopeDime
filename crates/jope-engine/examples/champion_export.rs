@@ -192,7 +192,7 @@ fn main() -> Result<()> {
         .map(|r| r[..r.len() - 1].to_vec())
         .collect();
     let y_val: Vec<f64> = validation.iter().map(|r| r[r.len() - 1]).collect();
-    let native = model.model.predict(&x_val);
+    let native = model.model.predict(&x_val)?;
     let semantic_sha = hash(&serde_json::to_vec(&native)?);
     let observed = champion.observation["metrics"]["rmse"]
         .as_f64()

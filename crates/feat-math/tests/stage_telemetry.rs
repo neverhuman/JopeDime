@@ -328,12 +328,12 @@ fn recount(op: &FittedOp, x: &Rows) -> Fields {
 /// recount for an expression stage or against "epilogue only" for any other op. Returns the
 /// counts.
 fn check_op(at: &str, op: &FittedOp, x: &Rows) -> StageFaultCounts {
-    let legacy = apply_op(op, x);
+    let legacy = apply_op(op, x).unwrap();
     let (traced, counts) = apply_op_traced(op, x);
     assert_eq!(row_bits(&traced), row_bits(&legacy), "{at}: apply_op");
     assert_eq!(
         row_bits(&traced),
-        row_bits(&apply_op_train(op, x)),
+        row_bits(&apply_op_train(op, x).unwrap()),
         "{at}: apply_op_train"
     );
     match op {
@@ -361,7 +361,7 @@ fn replay_ops(at: &str, model: &Model, rows: &Rows) -> Vec<StageFaultCounts> {
     let mut counts = Vec::with_capacity(ops.len());
     for (i, op) in ops.iter().enumerate() {
         counts.push(check_op(&format!("{at} op {i}"), op, &current));
-        current = apply_op(op, &current);
+        current = apply_op(op, &current).unwrap();
     }
     counts
 }
@@ -402,7 +402,7 @@ fn fit_traced_serializes_to_fits_bytes_on_every_corpus_program() {
                 assert_eq!(telemetry.stages.len(), stage_count(&model), "{name}");
                 assert_eq!(telemetry.input_sanitized, 0, "{name}: finite training rows");
                 for (rows, which) in [(&test, "held-out"), (&train, "training")] {
-                    let expected = bits(&model.predict(rows));
+                    let expected = bits(&model.predict(rows).unwrap());
                     for (fitted_by, m) in [("fit", &model), ("fit_traced", &traced)] {
                         let (predictions, _) = predict_traced(m, rows).expect("finite rows");
                         assert_eq!(
@@ -484,7 +484,11 @@ fn predict_traced_equals_predict_on_the_stored_models() {
         let model: Model =
             serde_json::from_str(entry["json"].as_str().expect("json")).expect("a stored model");
         let (predictions, telemetry) = predict_traced(&model, &test).expect("finite rows");
-        assert_eq!(bits(&predictions), bits(&model.predict(&test)), "{name}");
+        assert_eq!(
+            bits(&predictions),
+            bits(&model.predict(&test).unwrap()),
+            "{name}"
+        );
         assert_eq!(telemetry.stages.len(), stage_count(&model), "{name}");
         replay_ops(name, &model, &test);
     }
@@ -621,7 +625,11 @@ fn every_corpus_expression_as_a_symbolic_program_fits_to_fits_bytes() {
             }
             for rows in [&test, &raw] {
                 let (predictions, pass) = predict_traced(&model, rows).expect("no zero-width row");
-                assert_eq!(bits(&predictions), bits(&model.predict(rows)), "{at}");
+                assert_eq!(
+                    bits(&predictions),
+                    bits(&model.predict(rows).unwrap()),
+                    "{at}"
+                );
                 assert_eq!(fields(&pass.stages[0]), recount(&derive, rows), "{at}");
             }
         }
@@ -695,7 +703,11 @@ fn compat_freeze_stages_equal_apply_op_on_the_raw_stage_matrix() {
         assert_eq!(serialized(&traced), serialized(&model), "{text}");
         assert_eq!(telemetry.stages.len(), 1);
         let (predictions, pass) = predict_traced(&model, &matrix).expect("no zero-width row");
-        assert_eq!(bits(&predictions), bits(&model.predict(&matrix)), "{text}");
+        assert_eq!(
+            bits(&predictions),
+            bits(&model.predict(&matrix).unwrap()),
+            "{text}"
+        );
         // NaN, inf and -inf: the entry sanitize replaces them before the stage.
         assert_eq!(pass.input_sanitized, 3, "{text}");
         assert_eq!(pass.stages, replay_ops(text, &model, &matrix), "{text}");
@@ -862,7 +874,7 @@ fn a_column_past_the_width_is_a_hard_row_and_the_legacy_zeros() {
         panic!("a pipeline")
     };
     let (rows, _) = apply_op_traced(&ops[0], &x);
-    assert_eq!(row_bits(&rows), row_bits(&apply_op(&ops[0], &x)));
+    assert_eq!(row_bits(&rows), row_bits(&apply_op(&ops[0], &x).unwrap()));
     assert!(rows.iter().flatten().all(|value| value.to_bits() == 0));
     assert_eq!(rows.len(), 40);
     assert!(rows.iter().all(|row| row.len() == 4));
@@ -926,7 +938,7 @@ fn a_structurally_invalid_expression_is_a_compile_failure() {
             append,
         };
         let (out, counts) = apply_op_traced(&map, &rows);
-        assert_eq!(row_bits(&out), row_bits(&apply_op(&map, &rows)));
+        assert_eq!(row_bits(&out), row_bits(&apply_op(&map, &rows).unwrap()));
         assert!(counts.compile_failed && counts.constant_output);
         assert_eq!(counts.evaluated_cells, 4);
         only_class(&counts, FaultClass::CompileFailed, 4);
@@ -940,7 +952,7 @@ fn a_structurally_invalid_expression_is_a_compile_failure() {
             append,
         };
         let (out, counts) = apply_op_traced(&derive, &rows);
-        assert_eq!(row_bits(&out), row_bits(&apply_op(&derive, &rows)));
+        assert_eq!(row_bits(&out), row_bits(&apply_op(&derive, &rows).unwrap()));
         assert!(counts.compile_failed && counts.constant_output);
         assert_eq!(counts.evaluated_cells, 3);
         only_class(&counts, FaultClass::CompileFailed, 3);
@@ -962,7 +974,7 @@ fn a_structurally_invalid_expression_is_a_compile_failure() {
     assert_eq!(stage.hard_rows, 8);
     only_class(stage, FaultClass::CompileFailed, 8);
     let (predictions, pass) = predict_traced(&model, &x).expect("no zero-width row");
-    assert_eq!(bits(&predictions), bits(&model.predict(&x)));
+    assert_eq!(bits(&predictions), bits(&model.predict(&x).unwrap()));
     assert_eq!(pass, telemetry);
 }
 
@@ -978,7 +990,7 @@ fn the_symbolic_path_reads_raw_inputs_and_a_pipeline_sanitizes_them() {
     assert_eq!(stage.hard_rows, 0);
     assert_eq!(stage.epilogue_sanitized, 0);
     let (predictions, pass) = predict_traced(&model, &x).expect("no zero-width row");
-    assert_eq!(bits(&predictions), bits(&model.predict(&x)));
+    assert_eq!(bits(&predictions), bits(&model.predict(&x).unwrap()));
     assert_eq!(pass.input_sanitized, 0);
     assert_eq!(pass.stages[0], stage);
 
@@ -1019,7 +1031,7 @@ fn an_explicit_portfolio_is_fitted_by_fit_and_reports_no_stage() {
     let (traced, telemetry) = fit_traced(&program, &train, &target).expect("fits");
     assert_eq!(telemetry, PipelineTelemetry::default());
     // Serialized portfolios carry wall-clock fit times, so only the predictions are compared.
-    let expected = bits(&model.predict(&test));
+    let expected = bits(&model.predict(&test).unwrap());
     for m in [&model, &traced] {
         let (predictions, pass) = predict_traced(m, &test).expect("no zero-width row");
         assert_eq!(bits(&predictions), expected);
@@ -1033,15 +1045,15 @@ fn an_explicit_portfolio_is_fitted_by_fit_and_reports_no_stage() {
         rows
     };
     let clean = fit(&program, &zeroed(&train), &target).expect("fits");
-    assert_eq!(bits(&clean.predict(&zeroed(&test))), expected);
-    assert_eq!(bits(&model.predict(&zeroed(&test))), expected);
+    assert_eq!(bits(&clean.predict(&zeroed(&test)).unwrap()), expected);
+    assert_eq!(bits(&model.predict(&zeroed(&test)).unwrap()), expected);
     let mut moved_test = zeroed(&test);
     moved_test[2][0] = 1.0;
-    assert_ne!(bits(&model.predict(&moved_test)), expected);
+    assert_ne!(bits(&model.predict(&moved_test).unwrap()), expected);
     let mut moved_train = zeroed(&train);
     moved_train[5][1] = 1.0;
     let other = fit(&program, &moved_train, &target).expect("fits");
-    assert_ne!(bits(&other.predict(&zeroed(&test))), expected);
+    assert_ne!(bits(&other.predict(&zeroed(&test)).unwrap()), expected);
 }
 
 #[test]
@@ -1178,7 +1190,7 @@ fn the_traced_entry_points_refuse_a_zero_width_input() {
         );
         // A set with no rows is not zero-width.
         let (predictions, pass) = predict_traced(&model, &Vec::new()).expect("accepted");
-        assert!(predictions.is_empty() && model.predict(&Vec::new()).is_empty());
+        assert!(predictions.is_empty() && model.predict(&Vec::new()).unwrap().is_empty());
         assert_eq!(pass.stages.len(), 1);
         assert_eq!(pass.stages[0].evaluated_cells, 0);
         assert!(!pass.stages[0].constant_output);

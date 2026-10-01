@@ -674,7 +674,7 @@ impl ClassificationPortfolioModel {
             let x_valid: Rows = valid_rows.iter().map(|&r| x[r].clone()).collect();
             for (member, stage) in stages.iter().enumerate() {
                 let fitted = fit_v3_head(stage, &x_fit, &y_fit, TaskKind::Binary)?;
-                for (&row, value) in valid_rows.iter().zip(fitted.predict(&x_valid)) {
+                for (&row, value) in valid_rows.iter().zip(fitted.predict(&x_valid)?) {
                     columns[member][row] = value;
                 }
             }
@@ -707,13 +707,13 @@ impl ClassificationPortfolioModel {
         Ok(Self { members, weights })
     }
 
-    fn predict(&self, x: &Rows) -> Vec<f64> {
+    fn predict(&self, x: &Rows) -> Result<Vec<f64>> {
         let columns: Vec<Vec<f64>> = self
             .members
             .iter()
             .map(|member| member.predict(x))
-            .collect();
-        (0..x.len())
+            .collect::<Result<Vec<_>>>()?;
+        Ok((0..x.len())
             .map(|row| {
                 self.weights
                     .iter()
@@ -722,7 +722,7 @@ impl ClassificationPortfolioModel {
                     .sum::<f64>()
                     .clamp(0.0, 1.0)
             })
-            .collect()
+            .collect())
     }
 }
 
@@ -1202,15 +1202,15 @@ pub(super) enum V3Head {
 }
 
 impl V3Head {
-    pub(super) fn predict(&self, x: &Rows) -> Vec<f64> {
-        match self {
-            V3Head::Legacy(head) => head.predict(x),
+    pub(super) fn predict(&self, x: &Rows) -> Result<Vec<f64>> {
+        Ok(match self {
+            V3Head::Legacy(head) => head.predict(x)?,
             V3Head::LogitRidge(head) => head.predict(x),
             V3Head::TabBoost(head) => head.predict(x),
             V3Head::ExtraTrees(head) => head.predict(x),
             V3Head::GamBoost(head) => head.predict(x),
             V3Head::Pls(head) => head.predict(x),
-            V3Head::ClassificationPortfolio(head) => head.predict(x),
+            V3Head::ClassificationPortfolio(head) => head.predict(x)?,
             V3Head::MulticlassRidge(head) => head
                 .labels(x)
                 .into_iter()
@@ -1225,7 +1225,7 @@ impl V3Head {
             V3Head::MulticlassNearestCentroid(head) => {
                 probability_labels(&head.classes, head.probabilities(x))
             }
-        }
+        })
     }
 
     pub(super) fn multiclass_probabilities(&self, x: &Rows) -> Option<(Vec<i64>, Vec<Vec<f64>>)> {

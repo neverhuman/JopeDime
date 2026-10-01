@@ -549,7 +549,7 @@ fn compute_landmarks(
                     .and_then(|stage| {
                         fit_v3_head(&stage, &fit_block.values, &fit_targets, task.kind)
                     })
-                    .map(|head| head.predict(&valid_block.values))
+                    .and_then(|head| head.predict(&valid_block.values))
                     .unwrap_or_else(|_| vec![fallback; valid_rows.len()]),
             };
             for (&row, prediction) in valid_rows.iter().zip(fold_predictions) {

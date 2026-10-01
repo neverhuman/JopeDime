@@ -594,7 +594,7 @@ pub fn predict(model: &Path, features: &Path, output: &Path) -> Result<()> {
         .iter()
         .map(|r| p.preprocessing.features(r))
         .collect::<Result<Vec<_>>>()?;
-    let predictions = p.model.predict(&x);
+    let predictions = p.model.predict(&x)?;
     ensure!(
         predictions.len() == x.len() && predictions.iter().all(|p| p.is_finite()),
         "invalid fitted predictions"
@@ -1331,7 +1331,7 @@ fn evaluate_tables(
         feature_view,
         output,
     )?;
-    let pred = fitted.model.predict(&vx);
+    let pred = fitted.model.predict(&vx)?;
     let mut m = if task == "regression" {
         let mut row = metrics(&vy, &pred)?;
         row["units"] = json!("cut_normalized_target");

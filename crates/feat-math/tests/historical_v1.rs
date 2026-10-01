@@ -116,8 +116,8 @@ fn alias_records() -> Vec<Value> {
             let canonical = GenomeIr::parse(canonical_source).unwrap();
             let left = fit(&alias, &rows, &target).unwrap_or_else(|error| panic!("{name}: {error}"));
             let right = fit(&canonical, &rows, &target).unwrap();
-            let alias_bits: Vec<_> = left.predict(&rows).into_iter().map(bits).collect();
-            let canonical_bits: Vec<_> = right.predict(&rows).into_iter().map(bits).collect();
+            let alias_bits: Vec<_> = left.predict(&rows).unwrap().into_iter().map(bits).collect();
+            let canonical_bits: Vec<_> = right.predict(&rows).unwrap().into_iter().map(bits).collect();
             assert_eq!(alias_bits, canonical_bits, "wire alias {id} must preserve its semantic key");
             json!({"id": id, "name": name, "semantic_key": canonical_name,
                 "source": source, "program_hex": program_bytes(&alias), "prediction_bits": alias_bits})
@@ -301,11 +301,9 @@ fn negative_cases() -> Value {
     let future_variant = Program::from_bytes(&bytes).unwrap_err().to_string();
     let roll = Stage::new("roll");
     let fitted = fit_op(&roll, &vec![vec![1.0, 2.0]], &[1.0]).unwrap();
-    let empty = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        apply_op(&fitted, &vec![vec![]])
-    }));
+    let empty = apply_op(&fitted, &vec![vec![]]).unwrap_err();
     json!({"future_envelope": future_envelope, "future_variant": future_variant,
-        "roll_zero_width": if empty.is_err() { "panic" } else { "returned" }})
+        "roll_zero_width": format!("refused: {empty}")})
 }
 
 fn snapshot() -> Value {
@@ -330,8 +328,30 @@ fn historical_v1_golden_matches() {
         golden_sha,
         "historical_v1 golden content address"
     );
-    let expected: Value = serde_json::from_slice(&bytes).unwrap();
-    assert_eq!(actual, expected, "historical_v1 byte and bit drift");
+    let mut expected: Value = serde_json::from_slice(&bytes).unwrap();
+    let ledger: Value = serde_json::from_slice(
+        &std::fs::read(
+            root()
+                .parent()
+                .unwrap()
+                .join("transitions/b02_roll_zero_width.json"),
+        )
+        .unwrap(),
+    )
+    .unwrap();
+    assert_eq!(ledger["schema"], "feat-math.historical-v1-transition.v1");
+    assert_eq!(ledger["path"], "negative_cases.roll_zero_width");
+    assert_eq!(ledger["before"], "panic");
+    assert_eq!(
+        expected["negative_cases"]["roll_zero_width"],
+        ledger["before"]
+    );
+    assert_eq!(actual["negative_cases"]["roll_zero_width"], ledger["after"]);
+    expected["negative_cases"]["roll_zero_width"] = ledger["after"].clone();
+    assert_eq!(
+        actual, expected,
+        "historical_v1 byte and bit drift outside B02's one-case ledger"
+    );
 }
 
 #[test]

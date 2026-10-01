@@ -2841,7 +2841,7 @@ impl StudyEvalContext {
         )?;
         let fit_seconds = fit_started.elapsed().as_secs_f64();
         let predict_started = Instant::now();
-        let predictions = model.predict(&slices.validation_x);
+        let predictions = model.predict(&slices.validation_x)?;
         let predict_seconds = predict_started.elapsed().as_secs_f64();
         let (rmse, r2, mae) = metrics(&slices.validation_y, &predictions)?;
         Ok((rmse, r2, mae, fit_seconds, predict_seconds))
@@ -4470,7 +4470,7 @@ fn score_frozen_champion(
     let model = fit(&genome, &train.x, &train.y)?;
     let fit_seconds = started.elapsed().as_secs_f64();
     let started = Instant::now();
-    let predictions = model.predict(&test.x);
+    let predictions = model.predict(&test.x)?;
     let predict_seconds = started.elapsed().as_secs_f64();
     let (rmse, r2, mae) = metrics(&test.y, &predictions)?;
     Ok(GenerationTestScore {
@@ -5870,7 +5870,8 @@ mod tests {
             slice_data(&data, &splits.splits[0].validation_indices).unwrap();
         let predictions = fit(&genome, &train_x, &train_y)
             .unwrap()
-            .predict(&validation_x);
+            .predict(&validation_x)
+            .unwrap();
         let plain = metrics(&validation_y, &predictions).unwrap();
         assert_eq!((cached_first.0, cached_first.1, cached_first.2), plain);
         assert_eq!((cached_second.0, cached_second.1, cached_second.2), plain);
@@ -5897,7 +5898,8 @@ mod tests {
                         slice_data(&data, &split.validation_indices).unwrap();
                     let predictions = fit(&genome, &train_x, &train_y)
                         .unwrap()
-                        .predict(&validation_x);
+                        .predict(&validation_x)
+                        .unwrap();
                     metrics(&validation_y, &predictions).unwrap().1
                 })
                 .collect::<Vec<_>>();
