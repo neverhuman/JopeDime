@@ -416,7 +416,7 @@ fn matrix(data: &Dataset, split: Split) -> Result<(feat_math::Rows, Vec<f64>)> {
 }
 
 fn score(model: &Model, x: &feat_math::Rows, y: &[f64]) -> Result<f64> {
-    let predictions = model.predict(x);
+    let predictions = model.predict(x)?;
     anyhow::ensure!(
         predictions.len() == y.len() && predictions.iter().all(|value| value.is_finite()),
         "evaluation produced missing or non-finite predictions"

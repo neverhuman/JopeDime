@@ -264,7 +264,7 @@ fn score_observed(options: &ScoreOptions, observe: &dyn Fn(Stage)) -> Result<(Te
     let predictions = crate::parallel::on_evaluation_stack(|| {
         std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
             let model = feat_math::fit(&parsed, &train_x, &train_y)?;
-            anyhow::Ok(model.predict(&test_x))
+            anyhow::Ok(model.predict(&test_x)?)
         }))
         .map_err(|_| anyhow::anyhow!("the fit panicked"))
     })???;

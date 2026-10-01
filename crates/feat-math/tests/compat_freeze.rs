@@ -1519,6 +1519,7 @@ fn stage_case(text: &str, train: &Rows, target: &[f64], matrix: &Rows) -> StageC
     let stage = parse_stage(text);
     let apply_op_raw = match fit_op(&stage, matrix, target) {
         Ok(op) => apply_op(&op, matrix)
+            .unwrap()
             .iter()
             .map(|row| row_text(row))
             .collect(),
@@ -1534,10 +1535,10 @@ fn stage_case(text: &str, train: &Rows, target: &[f64], matrix: &Rows) -> StageC
             let mut current = matrix.clone();
             sanitize(&mut current);
             for op in ops {
-                current = apply_op(op, &current);
+                current = apply_op(op, &current).unwrap();
             }
-            let predictions = model.predict(matrix);
-            let replayed = head.predict(&current);
+            let predictions = model.predict(matrix).unwrap();
+            let replayed = head.predict(&current).unwrap();
             assert_eq!(
                 predictions.iter().map(|v| v.to_bits()).collect::<Vec<_>>(),
                 replayed.iter().map(|v| v.to_bits()).collect::<Vec<_>>(),
@@ -2601,7 +2602,7 @@ fn serialized_models_match_the_frozen_fixture() {
                     }
                     (
                         format!("{} {}", bytes.len(), sha256_hex(&bytes)),
-                        row_text(&model.predict(&test)),
+                        row_text(&model.predict(&test).unwrap()),
                     )
                 }
                 Err(error) => {
@@ -2646,7 +2647,7 @@ fn serialized_models_match_the_frozen_fixture() {
             .iter()
             .find(|m| m.name == stored.name)
             .expect("a stored model has a record");
-        let reloaded = model.predict(&test);
+        let reloaded = model.predict(&test).unwrap();
         let expected: Vec<f64> = recorded
             .predictions
             .split(' ')

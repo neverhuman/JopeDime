@@ -1236,7 +1236,7 @@ fn execute_prepared(
     let predictions = match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         model.predict(&validation_x)
     })) {
-        Ok(predictions) => predictions,
+        Ok(predictions) => predictions.context("predict explicit V2 fold")?,
         Err(_) => bail!("explicit V2 fold prediction panicked"),
     };
     let predict_nanos = elapsed_nanos(predict_started);
@@ -1658,6 +1658,16 @@ mod tests {
             ids.push(format!("row-{row:02}"));
         }
         (rows, targets, ids)
+    }
+
+    #[test]
+    fn zero_width_roll_view_is_refused_before_fold_execution() {
+        let (_, targets, ids) = fixture_data();
+        let empty_rows = vec![Vec::new(); targets.len()];
+        let error = TrainOnlyRegressionView::new(&empty_rows, &targets, &ids, 0).unwrap_err();
+        assert!(error.to_string().contains("non-empty-width"));
+        let error = TrainOnlyRegressionView::new(&empty_rows, &targets, &ids, 3).unwrap_err();
+        assert!(error.to_string().contains("rectangular"));
     }
 
     fn evaluator() -> EvaluatorIdentityV1 {

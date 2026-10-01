@@ -611,8 +611,8 @@ fn predict_variant(
     let mut predictions = vec![0.0; test.y.len()];
     for (candidate, weight) in variant.candidates.iter().zip(&variant.weights) {
         let parsed = GenomeIr::parse(&candidate.canonical_genome)?;
-        let first = fit(&parsed, &train.x, &train.y)?.predict(&test.x);
-        let replay = fit(&parsed, &train.x, &train.y)?.predict(&test.x);
+        let first = fit(&parsed, &train.x, &train.y)?.predict(&test.x)?;
+        let replay = fit(&parsed, &train.x, &train.y)?.predict(&test.x)?;
         if first != replay {
             bail!("full-data refit parity failure");
         }

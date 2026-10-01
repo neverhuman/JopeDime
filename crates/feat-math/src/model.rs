@@ -5,6 +5,7 @@ use crate::dsl::Stage;
 use crate::folds::fold_of;
 use crate::genome::GenomeIr;
 use crate::heads::{fit_head, is_head_op, FittedHead, RidgeModel};
+use crate::kernel::width::{reject_zero_width_rows, WidthMismatch};
 use crate::math_expr::MathExpr;
 use crate::metrics::r2;
 use crate::ops::{apply_op, apply_op_train, fit_op, FittedOp};
@@ -36,6 +37,7 @@ pub fn fit(genome: &GenomeIr, x: &Rows, y: &[f64]) -> Result<Model> {
     if x.is_empty() || y.len() < x.len() {
         bail!("training data is empty or target is short");
     }
+    reject_zero_width_rows(x)?;
     match genome {
         GenomeIr::Pipeline(dsl) => {
             let (target_stage, rest) = split_target(&dsl.stages)?;
@@ -59,7 +61,7 @@ pub fn fit(genome: &GenomeIr, x: &Rows, y: &[f64]) -> Result<Model> {
             let mut ops = Vec::with_capacity(transform_stages.len());
             for stage in transform_stages {
                 let op = fit_op(stage, &cur, y_eff)?;
-                cur = apply_op_train(&op, &cur);
+                cur = apply_op_train(&op, &cur)?;
                 ops.push(op);
             }
             let head = Box::new(fit_head(&head_stage, &cur, y_eff)?);
@@ -132,6 +134,7 @@ pub fn fit_with_stage_cache(
     if x.is_empty() || y.len() < x.len() {
         bail!("training data is empty or target is short");
     }
+    reject_zero_width_rows(x)?;
     let GenomeIr::Pipeline(dsl) = genome else {
         return fit(genome, x, y);
     };
@@ -164,7 +167,7 @@ pub fn fit_with_stage_cache(
             continue;
         }
         let op = fit_op(stage, &cur, y_eff)?;
-        let block = std::sync::Arc::new(apply_op_train(&op, &cur));
+        let block = std::sync::Arc::new(apply_op_train(&op, &cur)?);
         cache.insert(key, op.clone(), std::sync::Arc::clone(&block));
         ops.push(op);
         cur = block;
@@ -174,15 +177,19 @@ pub fn fit_with_stage_cache(
 }
 
 impl Model {
-    pub fn predict(&self, x: &Rows) -> Vec<f64> {
-        match self {
+    pub fn predict(&self, x: &Rows) -> std::result::Result<Vec<f64>, WidthMismatch> {
+        reject_zero_width_rows(x)?;
+        Ok(match self {
             Model::Pipeline { target, ops, head } => {
                 let mut cur = x.clone();
                 sanitize(&mut cur);
-                for op in ops {
-                    cur = apply_op(op, &cur);
+                for (stage, op) in ops.iter().enumerate() {
+                    cur = apply_op(op, &cur).map_err(|mut error| {
+                        error.stage = stage;
+                        error
+                    })?;
                 }
-                let preds = head.predict(&cur);
+                let preds = head.predict(&cur)?;
                 match target {
                     None => preds,
                     // Exact inverse back to the original target scale, then
@@ -191,7 +198,7 @@ impl Model {
                     Some(t) => preds.iter().map(|p| t.final_clamp(t.inverse(*p))).collect(),
                 }
             }
-            Model::Portfolio(m) => m.predict(x),
+            Model::Portfolio(m) => m.predict(x)?,
             Model::Symbolic { expr, a, b } => x
                 .iter()
                 .map(|row| {
@@ -205,7 +212,7 @@ impl Model {
                     }
                 })
                 .collect(),
-        }
+        })
     }
 
     /// Portfolio diagnostics (member OOF RMSEs, NNLS weights, blend stats)
@@ -253,7 +260,7 @@ pub fn fit_predict(
     x_test: &Rows,
 ) -> Result<Vec<f64>> {
     let model = fit(genome, x_train, y_train)?;
-    Ok(model.predict(x_test))
+    Ok(model.predict(x_test)?)
 }
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
@@ -647,8 +654,11 @@ mod tests {
                             serde_json::to_string(&cached).unwrap(),
                             "{pass} model mismatch for {src} fold {fold}"
                         );
-                        for (left, right) in
-                            plain.predict(&x_test).iter().zip(cached.predict(&x_test))
+                        for (left, right) in plain
+                            .predict(&x_test)
+                            .unwrap()
+                            .iter()
+                            .zip(cached.predict(&x_test).unwrap())
                         {
                             assert_eq!(
                                 left.to_bits(),
@@ -703,6 +713,7 @@ mod tests {
                 fit(&genome, &x_train, &y_train)
                     .unwrap()
                     .predict(&x_test)
+                    .unwrap()
                     .iter()
                     .map(|value| value.to_bits())
                     .collect()
@@ -717,6 +728,7 @@ mod tests {
                             fit_with_stage_cache(&genome, &x_train, &y_train, &cache, &ctx)
                                 .unwrap()
                                 .predict(&x_test)
+                                .unwrap()
                                 .iter()
                                 .map(|value| value.to_bits())
                                 .collect();

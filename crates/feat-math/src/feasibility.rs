@@ -598,7 +598,7 @@ mod tests {
                 let generated_rows = apply_op_generated(&op, &x);
                 let generated = generated_rows[0].len() as u64;
                 drop(generated_rows);
-                let output_rows = apply_op(&op, &x);
+                let output_rows = apply_op(&op, &x).unwrap();
                 let output = output_rows[0].len() as u64;
                 let peak = (probe::peak() - base) as u64;
                 drop(output_rows);
@@ -723,7 +723,7 @@ mod tests {
             );
             let (x, y) = data(rows, cols, 5);
             let model = crate::fit(&genome, &x, &y).unwrap();
-            assert_eq!(model.predict(&x).len(), rows);
+            assert_eq!(model.predict(&x).unwrap().len(), rows);
         }
         // MAX_WIDTH is the documented edge: fifty thousand rows stay feasible.
         let wide = classify(

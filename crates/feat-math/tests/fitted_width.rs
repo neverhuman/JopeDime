@@ -1,5 +1,5 @@
 //! The fitted-width contract (kernel2 WP-1.7): `kernel::width` and `Model::try_predict`, checked
-//! against the unchecked `Model::predict`.
+//! against `Model::predict`, which now refuses zero-width rows.
 //!
 //! - Every `FittedOp` variant, with and without `append`: its width class, and `output_width`
 //!   against the rows `apply_op` returns, the 512-column cap and the `[0.0]` padding included.
@@ -238,7 +238,7 @@ fn every_stage_has_a_width_class_and_its_output_width_matches_apply_op() {
                     continue;
                 }
                 let rows = data(3, width, 100 + index as u64);
-                let produced = apply_op(&op, &rows);
+                let produced = apply_op(&op, &rows).unwrap();
                 let width_out = output_width(&op, width)
                     .unwrap_or_else(|e| panic!("{source} at width {width}: {e}"));
                 assert!(
@@ -291,7 +291,7 @@ fn output_width_caps_at_max_width_and_pads_empty_rows() {
             Ok(expected),
             "{source} at {applied}"
         );
-        let produced = apply_op(&op, &data(3, applied, 3));
+        let produced = apply_op(&op, &data(3, applied, 3)).unwrap();
         assert!(
             produced.iter().all(|row| row.len() == expected),
             "{source} at {applied}"
@@ -305,7 +305,7 @@ fn output_width_caps_at_max_width_and_pads_empty_rows() {
     }
     let op = fit_op(&stage("(spline knots=5)"), &x, &target(&x)).unwrap();
     assert_eq!(output_width(&op, 3), Ok(1 + 4 + 4));
-    assert!(apply_op(&op, &x).iter().all(|row| row.len() == 9));
+    assert!(apply_op(&op, &x).unwrap().iter().all(|row| row.len() == 9));
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -329,7 +329,7 @@ fn select_corr_fitted_on_eight_columns_refuses_six() {
     let valid = data(16, 8, 4);
     assert_eq!(
         bits(&model.try_predict(&valid).unwrap()),
-        bits(&model.predict(&valid))
+        bits(&model.predict(&valid).unwrap())
     );
 
     let narrow = data(16, 6, 5);
@@ -342,13 +342,16 @@ fn select_corr_fitted_on_eight_columns_refuses_six() {
             kind: MismatchKind::StageInput,
         })
     );
-    assert!(panics(|| model.predict(&narrow)), "predict still panics");
+    assert!(
+        panics(|| model.predict(&narrow).unwrap()),
+        "predict still panics"
+    );
 
     // Wider rows are read at the same indices, which the contract admits.
     let wide = data(16, 9, 6);
     assert_eq!(
         bits(&model.try_predict(&wide).unwrap()),
-        bits(&model.predict(&wide))
+        bits(&model.predict(&wide).unwrap())
     );
 }
 
@@ -362,7 +365,7 @@ fn impute_fitted_on_four_columns_refuses_five() {
     let valid = data(16, 4, 8);
     assert_eq!(
         bits(&model.try_predict(&valid).unwrap()),
-        bits(&model.predict(&valid))
+        bits(&model.predict(&valid).unwrap())
     );
     let refusal = Err(WidthMismatch {
         stage: 0,
@@ -374,7 +377,10 @@ fn impute_fitted_on_four_columns_refuses_five() {
     let wide = data(16, 5, 9);
     assert!(wide.iter().any(|row| row[4] == 0.0));
     assert_eq!(model.try_predict(&wide), refusal);
-    assert!(panics(|| model.predict(&wide)), "predict still panics");
+    assert!(
+        panics(|| model.predict(&wide).unwrap()),
+        "predict still panics"
+    );
     // Without one, predict passes column 4 through unfitted and does not panic.
     let unfilled: Rows = wide
         .iter()
@@ -384,7 +390,7 @@ fn impute_fitted_on_four_columns_refuses_five() {
         .iter()
         .all(|row| row.iter().all(|value| *value != 0.0)));
     assert_eq!(model.try_predict(&unfilled), refusal);
-    assert!(!panics(|| model.predict(&unfilled)));
+    assert!(!panics(|| model.predict(&unfilled).unwrap()));
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -447,7 +453,7 @@ fn inputs_predict_panics_on_or_misreads_are_refused_before_any_stage() {
         let valid = data(16, fitted, seed + 1);
         assert_eq!(
             bits(&model.try_predict(&valid).unwrap()),
-            bits(&model.predict(&valid)),
+            bits(&model.predict(&valid).unwrap()),
             "{source}: the fitted width"
         );
         let refused = match (side, required) {
@@ -467,13 +473,13 @@ fn inputs_predict_panics_on_or_misreads_are_refused_before_any_stage() {
             "{source} at width {refused}"
         );
         assert_eq!(
-            panics(|| model.predict(&bad)),
+            panics(|| model.predict(&bad).unwrap()),
             predict_panics,
             "{source}: predict at width {refused}"
         );
     }
 
-    // `roll` divides by the width: an empty row is refused where predict divides by zero.
+    // Roll's empty row is a typed refusal on both public prediction paths.
     let model = fit_program("(pipe X (roll k=2) (ridge))", &data(24, 3, 1));
     let empty_rows = vec![Vec::new(); 4];
     assert_eq!(
@@ -485,7 +491,16 @@ fn inputs_predict_panics_on_or_misreads_are_refused_before_any_stage() {
             kind: MismatchKind::StageInput,
         })
     );
-    assert!(panics(|| model.predict(&empty_rows)));
+    assert_eq!(
+        model.predict(&empty_rows),
+        Err(WidthMismatch {
+            stage: 0,
+            expected: WidthReq::AtLeast(1),
+            got: 0,
+            kind: MismatchKind::StageInput,
+        })
+    );
+    assert!(!panics(|| model.predict(&empty_rows)));
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -548,7 +563,7 @@ fn heads_require_the_width_their_fitted_state_reveals() {
         for width in [2, 3, 4] {
             let x = data(6, width, seed + 1);
             // Heads read columns defensively: predict never panics on width.
-            let predicted = catch_unwind(AssertUnwindSafe(|| model.predict(&x)))
+            let predicted = catch_unwind(AssertUnwindSafe(|| model.predict(&x).unwrap()))
                 .unwrap_or_else(|_| panic!("{source}: predict at width {width} panicked"));
             match model.try_predict(&x) {
                 Ok(tried) => {
@@ -588,7 +603,7 @@ fn a_tree_head_on_wide_rows_requires_only_its_feature_count() {
     let wide = data(8, 300, 13);
     assert_eq!(
         bits(&model.try_predict(&wide).unwrap()),
-        bits(&model.predict(&wide))
+        bits(&model.predict(&wide).unwrap())
     );
     assert_eq!(
         model.try_predict(&data(8, 255, 14)),
@@ -615,9 +630,22 @@ fn portfolios_require_their_fitted_width_unless_they_predict_the_mean() {
     let explicit = Model::Portfolio(mean_only.clone());
     for width in [0, 3, 7] {
         let x = data(4, width, 1);
+        if width == 0 {
+            assert_eq!(
+                explicit.predict(&x),
+                Err(WidthMismatch {
+                    stage: 0,
+                    expected: WidthReq::AtLeast(1),
+                    got: 0,
+                    kind: MismatchKind::StageInput,
+                })
+            );
+            assert_eq!(explicit.try_predict(&x), explicit.predict(&x));
+            continue;
+        }
         assert_eq!(
             bits(&explicit.try_predict(&x).unwrap()),
-            bits(&explicit.predict(&x))
+            bits(&explicit.predict(&x).unwrap())
         );
     }
 
@@ -632,7 +660,7 @@ fn portfolios_require_their_fitted_width_unless_they_predict_the_mean() {
         let x = data(4, 3, 2);
         assert_eq!(
             bits(&model.try_predict(&x).unwrap()),
-            bits(&model.predict(&x))
+            bits(&model.predict(&x).unwrap())
         );
         let wide = data(4, 5, 3);
         assert_eq!(
@@ -645,7 +673,7 @@ fn portfolios_require_their_fitted_width_unless_they_predict_the_mean() {
             })
         );
         // The portfolio pads or truncates rows itself, so predict does not panic.
-        assert!(!panics(|| model.predict(&wide)));
+        assert!(!panics(|| model.predict(&wide).unwrap()));
     }
 }
 
@@ -659,9 +687,14 @@ fn symbolic_models_accept_any_width() {
     for width in [0, 1, 3, 9] {
         let x = data(5, width, 4);
         assert_eq!(check_input_width(&model, width), Ok(()));
+        if width == 0 {
+            assert_eq!(model.try_predict(&x), model.predict(&x));
+            assert!(model.predict(&x).is_err());
+            continue;
+        }
         assert_eq!(
             bits(&model.try_predict(&x).unwrap()),
-            bits(&model.predict(&x))
+            bits(&model.predict(&x).unwrap())
         );
     }
 }
@@ -683,7 +716,10 @@ fn ragged_rows_are_refused_and_empty_inputs_pass() {
             })
         );
         let empty: Rows = Vec::new();
-        assert_eq!(model.try_predict(&empty), Ok(model.predict(&empty)));
+        assert_eq!(
+            model.try_predict(&empty),
+            Ok(model.predict(&empty).unwrap())
+        );
         assert_eq!(model.try_predict(&empty), Ok(Vec::new()));
     }
 }
@@ -752,7 +788,7 @@ fn inconsistent_fitted_state_is_refused_where_predict_panics() {
             "case {index} ({source})"
         );
         assert_eq!(
-            panics(|| model.predict(&rows)),
+            panics(|| model.predict(&rows).unwrap()),
             predict_panics,
             "case {index} ({source}): predict"
         );
@@ -873,7 +909,7 @@ fn replay_widths(name: &str, model: &Model, x: &Rows) -> Vec<usize> {
             "{name}: stage {index} at width {width}"
         );
         let expected = output_width(op, width).unwrap_or_else(|e| panic!("{name}: {e}"));
-        current = apply_op(op, &current);
+        current = apply_op(op, &current).unwrap();
         assert!(
             current.iter().all(|row| row.len() == expected),
             "{name}: stage {index} output_width {expected}"
@@ -910,7 +946,7 @@ fn compat_corpus_try_predict_equals_predict_bit_for_bit() {
             .unwrap_or_else(|error| panic!("{name}: {error}"));
         fitted += 1;
 
-        let predicted = model.predict(&held_out);
+        let predicted = model.predict(&held_out).unwrap();
         let tried = model
             .try_predict(&held_out)
             .unwrap_or_else(|mismatch| panic!("{name}: {mismatch}"));
@@ -941,7 +977,7 @@ fn compat_corpus_try_predict_equals_predict_bit_for_bit() {
                 .unwrap_or_else(|_| panic!("{name}: try_predict panicked at width {width}"));
             match outcome {
                 Ok(values) => {
-                    assert_eq!(bits(&values), bits(&model.predict(&x)), "{name}");
+                    assert_eq!(bits(&values), bits(&model.predict(&x).unwrap()), "{name}");
                     accepted_elsewhere += 1;
                 }
                 Err(_) => refused_elsewhere += 1,
@@ -970,7 +1006,7 @@ fn stored_compat_models_try_predict_equals_predict() {
             .unwrap_or_else(|e| panic!("{name}: {e}"));
         assert_eq!(
             bits(&model.try_predict(&held_out).unwrap()),
-            bits(&model.predict(&held_out)),
+            bits(&model.predict(&held_out).unwrap()),
             "{name}"
         );
         replay_widths(name, &model, &held_out);

@@ -2,9 +2,8 @@
 //!
 //! `Model::predict` indexes fitted per-column state by the column index of its
 //! input, so rows narrower or wider than a stage was fitted on can panic, or
-//! silently read state fitted for another column. `predict` stays as it is: its
-//! bits are frozen and its callers guard widths themselves. This module states
-//! the contract and checks it ahead of `predict`:
+//! silently read state fitted for another column. `predict` now refuses
+//! zero-width rows; this module checks the full fitted-width contract ahead of it:
 //!
 //! - [`required_input_width`]: the input width a fitted stage accepts, read
 //!   from its fitted state.
@@ -136,6 +135,20 @@ impl fmt::Display for WidthMismatch {
 }
 
 impl std::error::Error for WidthMismatch {}
+
+/// Refuse a row with no feature columns before a fitted operation can use its width.
+pub(crate) fn reject_zero_width_rows(x: &Rows) -> std::result::Result<(), WidthMismatch> {
+    if x.iter().any(Vec::is_empty) {
+        Err(WidthMismatch {
+            stage: 0,
+            expected: WidthReq::AtLeast(1),
+            got: 0,
+            kind: MismatchKind::StageInput,
+        })
+    } else {
+        Ok(())
+    }
+}
 
 /// The input width that `op` accepts, read from its fitted state.
 ///
@@ -407,7 +420,7 @@ impl Model {
     /// `predict`'s. With no rows there is no width to check.
     ///
     /// `Exactly` requirements make this stricter than `predict`, which accepts
-    /// some narrower inputs; `predict` itself is unchanged.
+    /// some narrower nonempty inputs. Both paths refuse zero-width rows.
     pub fn try_predict(&self, x: &Rows) -> std::result::Result<Vec<f64>, WidthMismatch> {
         if let Some(first) = x.first() {
             let width = first.len();
@@ -421,7 +434,7 @@ impl Model {
             }
             check_input_width(self, width)?;
         }
-        Ok(self.predict(x))
+        self.predict(x)
     }
 }
 

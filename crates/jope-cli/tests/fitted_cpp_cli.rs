@@ -106,7 +106,7 @@ fn fitted_cpp_cli_exports_frozen_source_and_executable_runner() {
             .skip(1)
             .map(|value| value.parse().unwrap())
             .collect();
-        let expected = fit(&genome, &x, &y).unwrap().predict(&test_x);
+        let expected = fit(&genome, &x, &y).unwrap().predict(&test_x).unwrap();
         assert_eq!(values.len(), expected.len());
         for (actual, expected) in values.iter().zip(expected) {
             assert_eq!(actual.to_bits(), expected.to_bits(), "{case}");

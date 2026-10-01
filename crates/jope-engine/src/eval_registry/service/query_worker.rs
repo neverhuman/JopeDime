@@ -55,7 +55,7 @@ pub fn execute_query_worker() -> Result<()> {
     if let Some(ms) = input.sleep_ms {
         std::thread::sleep(Duration::from_millis(ms));
     }
-    let predictions = model.predict(&input.rows);
+    let predictions = model.predict(&input.rows)?;
     remaining_request(input.deadline_monotonic_ns)?;
     ensure!(
         current_runtime_digest(&input.contract)? == input.runtime,

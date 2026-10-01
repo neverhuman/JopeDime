@@ -1,0 +1,8 @@
+{
+  "schema": "feat-math.historical-v1-transition.v1",
+  "path": "negative_cases.roll_zero_width",
+  "before": "panic",
+  "after": "refused: stage 0 needs at least 1 input columns, got 0",
+  "decision": "B02 option (a) — take charge and make the edits",
+  "reason": "The raw Roll transform now returns a typed width refusal for an empty row."
+}

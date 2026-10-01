@@ -108,7 +108,7 @@ fn score(completion: &[u8], model: &[u8], inputs: &QueryInputs) -> Result<QueryA
         &runtime,
         |model, rows, _| {
             Ok(Prediction {
-                values: load_retained_model(model)?.predict(&rows.to_vec()),
+                values: load_retained_model(model)?.predict(&rows.to_vec())?,
                 process: ProcessIdentity::current()?,
                 exit_code: Some(0),
             })

@@ -12,12 +12,12 @@
 //! the legacy values bit for bit, through the same branches and fallbacks as
 //! `apply_op_generated`'s `MapExpr` and `DeriveExpr` arms. Every other op runs
 //! `apply_op_generated` itself. The stage epilogue (`finish`) and its append flag are private to
-//! `ops.rs`, and `model.rs` is an identity-bearing file, so this module mirrors that code line for
-//! line rather than editing it; `crates/feat-math/tests/stage_telemetry.rs` holds each mirror to
+//! `ops.rs`, so this module mirrors that code line for line;
+//! `crates/feat-math/tests/stage_telemetry.rs` holds each mirror to
 //! its original. The definitions of every count are in `docs/internal/kernel2/math-domain-table.md`.
 //!
-//! One behaviour is deliberately stricter than the legacy entry points: [`fit_traced`] and
-//! [`predict_traced`] refuse a zero-width input, a row with no columns ([`ZeroWidthInput`]).
+//! [`fit_traced`] and [`predict_traced`] refuse a zero-width input, a row with no
+//! columns ([`ZeroWidthInput`]), as the public model entry points now do.
 
 use crate::genome::GenomeIr;
 use crate::heads::fit_head;
@@ -270,7 +270,7 @@ pub fn fit_traced(program: &GenomeIr, x: &Rows, y: &[f64]) -> Result<(Model, Pip
 /// [`Model::predict`] with the inference pass's telemetry. On every input it accepts, the
 /// predictions have `predict`'s bits.
 ///
-/// It refuses a zero-width input ([`ZeroWidthInput`]), which `predict` does not check. A set with
+/// It refuses a zero-width input ([`ZeroWidthInput`]), as `predict` does. A set with
 /// no rows is accepted, as `predict` accepts it.
 pub fn predict_traced(model: &Model, x: &Rows) -> Result<(Vec<f64>, PipelineTelemetry)> {
     if let Some(refusal) = ZeroWidthInput::find(x) {
@@ -287,7 +287,7 @@ pub fn predict_traced(model: &Model, x: &Rows) -> Result<(Vec<f64>, PipelineTele
                 cur = next;
                 stages.push(counts);
             }
-            let preds = head.predict(&cur);
+            let preds = head.predict(&cur)?;
             let preds = match target {
                 None => preds,
                 Some(t) => preds.iter().map(|p| t.final_clamp(t.inverse(*p))).collect(),
@@ -300,7 +300,7 @@ pub fn predict_traced(model: &Model, x: &Rows) -> Result<(Vec<f64>, PipelineTele
                 },
             )
         }
-        Model::Portfolio(m) => (m.predict(x), PipelineTelemetry::default()),
+        Model::Portfolio(m) => (m.predict(x)?, PipelineTelemetry::default()),
         Model::Symbolic { expr, a, b } => {
             let mut tally = Tally::new();
             let mut sanitized = 0;

@@ -101,6 +101,10 @@ pub struct EmitOptions {
     /// keeps V1's frozen bytes. `Portable` is a distinct opt-in identity and
     /// fails closed until the emitted-language routing gate is complete.
     pub math_kernel: MathKernel,
+    /// Versioned opt-in recipe profile. Programs containing Roll refuse an
+    /// empty feature row before fitting or predicting. The legacy default
+    /// keeps its source bytes for already pinned artifacts.
+    pub guard_zero_width_roll: bool,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -235,8 +239,12 @@ pub fn emit(genome: &GenomeIr, opts: &EmitOptions) -> Result<Emitted> {
         genome_sha256: sha256_hex(&canonical),
         dsl: canonical,
         flavor,
-        emitter_version: if crate::spec::helper_set(&plan).contains(&crate::spec::Helper::MathClip)
+        emitter_version: if opts.guard_zero_width_roll
+            && matches!(&plan, crate::spec::Plan::Pipeline { stages, .. }
+                if stages.iter().any(|stage| matches!(stage.op, crate::spec::PlannedOp::Roll { .. })))
         {
+            "feat-math-roll-width-guard-v1"
+        } else if crate::spec::helper_set(&plan).contains(&crate::spec::Helper::MathClip) {
             "feat-math-clip-safety-v2"
         } else {
             EMITTER_VERSION
@@ -540,7 +548,8 @@ mod math_policy_tests {
         let test = vec![vec![-0.5, 0.0], vec![1.25, -1.0], vec![2.5, 3.0]];
         let expected = crate::model::fit(&genome, &train, &targets)
             .expect("Rust fit")
-            .predict(&test);
+            .predict(&test)
+            .unwrap();
 
         let mut driver = source;
         driver.push_str("\n#include <cstdio>\nint main() {\n");
@@ -789,7 +798,8 @@ mod math_policy_tests {
             let source = emit_cpp17(&genome, &EmitOptions::default()).expect("C++17 emits");
             let expected = crate::model::fit(&genome, &train, &targets)
                 .expect("Rust fit")
-                .predict(&test);
+                .predict(&test)
+                .unwrap();
             let mut driver = source;
             driver.push_str("\n#include <cstdio>\nint main() {\n");
             driver.push_str("  const double train[] = {");
@@ -894,7 +904,8 @@ mod math_policy_tests {
         let ridge = GenomeIr::parse("(pipe X (ridge))").expect("ridge parses");
         let expected = crate::model::fit(&ridge, &portable_train, &targets)
             .expect("portable-reference Rust fit")
-            .predict(&portable_test);
+            .predict(&portable_test)
+            .unwrap();
         let sigmoid = GenomeIr::parse("(pipe X (sigmoid) (ridge))").expect("sigmoid parses");
         let mut driver = emit_cpp17(
             &sigmoid,
@@ -1036,7 +1047,8 @@ mod math_policy_tests {
             });
             let expected = crate::model::fit(&genome, &train, &targets)
                 .expect("Rust corpus fit")
-                .predict(&test);
+                .predict(&test)
+                .unwrap();
             let mut driver =
                 emit_cpp17(&genome, &EmitOptions::default()).expect("C++17 corpus emits");
             driver.push_str("\n#include <cstdio>\nint main() {\n  const double train[] = {");
@@ -1294,6 +1306,7 @@ mod math_policy_tests {
         let expected = crate::model::fit(&genome, &train, &targets)
             .expect("Rust fit")
             .predict(&test)
+            .unwrap()
             .iter()
             .map(|value| format!("{:016x}", value.to_bits()))
             .collect::<Vec<_>>()

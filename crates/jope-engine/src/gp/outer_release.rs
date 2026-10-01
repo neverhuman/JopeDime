@@ -468,7 +468,7 @@ impl Authority {
             .collect::<Result<Vec<_>>>()?;
         let predictions = p
             .model
-            .predict(&x)
+            .predict(&x)?
             .iter()
             .map(|v| v * p.preprocessing.target_scale + p.preprocessing.target_mean)
             .collect::<Vec<_>>();

@@ -69,14 +69,16 @@ fn legacy_lag_roll_are_within_row_and_keep_frozen_bits() {
             append: false,
         },
         &rows,
-    );
+    )
+    .unwrap();
     let roll = apply_op(
         &FittedOp::Roll {
             k: 1,
             append: false,
         },
         &rows,
-    );
+    )
+    .unwrap();
     assert_eq!(
         lag[0].iter().map(|v| v.to_bits()).collect::<Vec<_>>(),
         [0.0f64.to_bits(), 1.0f64.to_bits(), (-0.0f64).to_bits()]

@@ -14,6 +14,7 @@
 //!   documented draw order (weights row-major first, then offsets).
 
 use crate::dsl::Stage;
+use crate::kernel::width::{reject_zero_width_rows, WidthMismatch};
 use crate::math_expr::MathExpr;
 use crate::rng::Pcg32;
 use crate::Rows;
@@ -886,12 +887,15 @@ fn normalize(v: &mut [f64]) {
 /// differ from their inference output (e.g. leave-one-out target encoders)
 /// get dedicated arms here; every other op forwards to `apply_op`, so the
 /// training pass stays bit-identical for the existing vocabulary.
-pub fn apply_op_train(op: &FittedOp, x: &Rows) -> Rows {
+pub fn apply_op_train(op: &FittedOp, x: &Rows) -> std::result::Result<Rows, WidthMismatch> {
     apply_op(op, x)
 }
 
-pub fn apply_op(op: &FittedOp, x: &Rows) -> Rows {
-    finish(op, x, apply_op_generated(op, x))
+pub fn apply_op(op: &FittedOp, x: &Rows) -> std::result::Result<Rows, WidthMismatch> {
+    if matches!(op, FittedOp::Roll { .. }) {
+        reject_zero_width_rows(x)?;
+    }
+    Ok(finish(op, x, apply_op_generated(op, x)))
 }
 
 /// The existing transform kernel before the legacy append/width/sanitize epilogue.
@@ -1131,8 +1135,12 @@ pub(crate) fn apply_op_generated(op: &FittedOp, x: &Rows) -> Rows {
             .iter()
             .map(|r| {
                 let d = r.len();
-                let s = *k % d;
-                (0..d).map(|j| r[(j + d - s) % d]).collect()
+                if d == 0 {
+                    Vec::new()
+                } else {
+                    let s = *k % d;
+                    (0..d).map(|j| r[(j + d - s) % d]).collect()
+                }
             })
             .collect(),
         FittedOp::FftMag { k, .. } => x.iter().map(|r| dft_mags(r, *k)).collect(),
@@ -1531,32 +1539,32 @@ mod tests {
             }
             other => panic!("wrong variant: {other:?}"),
         }
-        let out = apply_op(&op, &x);
+        let out = apply_op(&op, &x).unwrap();
         assert_eq!(out[0], vec![2.0, 1.0, 1.0]); // filled + indicator hot
         assert_eq!(out[1], vec![1.0, 3.0, 0.0]);
         assert_eq!(out[3], vec![9.0, 7.0, 0.0]);
 
         // Mean of [1, 2, 9] is 4.0.
         let op = fit_op(&stage("(impute strategy=mean)"), &x, &y).unwrap();
-        let out = apply_op(&op, &x);
+        let out = apply_op(&op, &x).unwrap();
         assert_eq!(out[0], vec![4.0, 1.0]); // no indicator without the flag
         assert_eq!(out[0].len(), 2);
 
         // Const fill uses the value literal.
         let op = fit_op(&stage("(impute strategy=const value=7.5)"), &x, &y).unwrap();
-        let out = apply_op(&op, &x);
+        let out = apply_op(&op, &x).unwrap();
         assert_eq!(out[0][0], 7.5);
 
         // An all-zero column keeps 0.0 (nothing observed to summarize).
         let xz: Rows = vec![vec![0.0, 1.0], vec![0.0, 2.0], vec![0.0, 3.0]];
         let op = fit_op(&stage("(impute strategy=mean)"), &xz, &y[..3]).unwrap();
-        let out = apply_op(&op, &xz);
+        let out = apply_op(&op, &xz).unwrap();
         assert_eq!(out[0][0], 0.0);
 
         // Determinism: double fit is bit-identical.
         let s = stage("(impute strategy=median add_indicator=true)");
-        let a = apply_op(&fit_op(&s, &x, &y).unwrap(), &x);
-        let b = apply_op(&fit_op(&s, &x, &y).unwrap(), &x);
+        let a = apply_op(&fit_op(&s, &x, &y).unwrap(), &x).unwrap();
+        let b = apply_op(&fit_op(&s, &x, &y).unwrap(), &x).unwrap();
         assert_eq!(a, b);
     }
 
@@ -1601,7 +1609,7 @@ mod tests {
             }
             assert!(comps[i][best] > 0.0);
         }
-        let out = apply_op(&op1, &x);
+        let out = apply_op(&op1, &x).unwrap();
         assert_eq!(out[0].len(), 4);
     }
 
@@ -1629,7 +1637,7 @@ mod tests {
                 assert_ne!(l1[i], l1[j], "landmarks {i},{j} not distinct");
             }
         }
-        let out = apply_op(&op1, &x);
+        let out = apply_op(&op1, &x).unwrap();
         assert_eq!(out[0].len(), 8);
         for v in out.iter().flatten() {
             assert!(v.is_finite() && *v > 0.0 && *v <= 1.0);
@@ -1645,7 +1653,7 @@ mod tests {
             FittedOp::MapExpr { source, .. } => assert_eq!(source, "sigmoid(col(0))"),
             other => panic!("wrong variant: {other:?}"),
         }
-        let out = apply_op(&op, &x);
+        let out = apply_op(&op, &x).unwrap();
         assert_eq!(out[0].len(), 3);
         for (i, r) in x.iter().enumerate() {
             let want = 1.0 / (1.0 + (-r[0].clamp(-30.0, 30.0)).exp());
@@ -1655,7 +1663,7 @@ mod tests {
         }
         let d = stage("(derive expr=\"row_mean + col(1)\")");
         let opd = fit_op(&d, &x, &y).unwrap();
-        let outd = apply_op(&opd, &x);
+        let outd = apply_op(&opd, &x).unwrap();
         assert_eq!(outd[0].len(), 1);
         for (i, r) in x.iter().enumerate() {
             let want = r.iter().sum::<f64>() / r.len() as f64 + r[1];
@@ -1714,7 +1722,7 @@ mod tests {
         for (name, reference) in cases {
             let m = stage(&format!("(map expr=\"{name}(col(0))\")"));
             let op = fit_op(&m, &x, &y).unwrap();
-            let out = apply_op(&op, &x);
+            let out = apply_op(&op, &x).unwrap();
             for (i, r) in x.iter().enumerate() {
                 let want = reference(r[0]);
                 assert_eq!(out[i][0], want, "{name}({}) mismatch", r[0]);
@@ -1725,7 +1733,7 @@ mod tests {
         let probe = |src: &str, v: f64| -> f64 {
             let rows = vec![vec![v]];
             let op = fit_op(&stage(src), &rows, &[0.0]).unwrap();
-            apply_op(&op, &rows)[0][0]
+            apply_op(&op, &rows).unwrap()[0][0]
         };
         assert!((probe("(map expr=\"erf(col(0))\")", 1.0) - 0.8427007929497149).abs() < 3e-7);
         assert!((probe("(map expr=\"erf(col(0))\")", -2.0) + 0.9953222650189527).abs() < 3e-7);
@@ -1744,16 +1752,16 @@ mod tests {
     fn fft_mag_and_row_spectral_are_finite() {
         let (x, y) = toy(30, 9);
         let op = fit_op(&stage("(fft_mag k=4)"), &x, &y).unwrap();
-        let out = apply_op(&op, &x);
+        let out = apply_op(&op, &x).unwrap();
         assert_eq!(out[0].len(), 4);
         for v in out.iter().flatten() {
             assert!(v.is_finite());
         }
         // Default k=8 clamps to d/2 = 4 for 9 columns.
         let op = fit_op(&stage("(fft_mag)"), &x, &y).unwrap();
-        assert_eq!(apply_op(&op, &x)[0].len(), 4);
+        assert_eq!(apply_op(&op, &x).unwrap()[0].len(), 4);
         let op = fit_op(&stage("(row_spectral)"), &x, &y).unwrap();
-        let out = apply_op(&op, &x);
+        let out = apply_op(&op, &x).unwrap();
         assert_eq!(out[0].len(), 5);
         for r in &out {
             for v in r {
@@ -1772,40 +1780,41 @@ mod tests {
     #[test]
     fn polar_lag_roll_shapes_and_values() {
         let (x, y) = tiny();
-        let out = apply_op(&fit_op(&stage("(polar)"), &x, &y).unwrap(), &x);
+        let out = apply_op(&fit_op(&stage("(polar)"), &x, &y).unwrap(), &x).unwrap();
         assert_eq!(out[0].len(), 3);
         assert!((out[0][0] - 5.0).abs() < 1e-12);
         assert!((out[0][1] - 4.0f64.atan2(3.0)).abs() < 1e-15);
         assert_eq!(out[0][2], 0.5);
-        let out = apply_op(&fit_op(&stage("(lag k=1)"), &x, &y).unwrap(), &x);
+        let out = apply_op(&fit_op(&stage("(lag k=1)"), &x, &y).unwrap(), &x).unwrap();
         assert_eq!(out[0], vec![0.0, 3.0, 4.0]);
-        let out = apply_op(&fit_op(&stage("(lag k=5)"), &x, &y).unwrap(), &x);
+        let out = apply_op(&fit_op(&stage("(lag k=5)"), &x, &y).unwrap(), &x).unwrap();
         assert_eq!(out[1], vec![0.0, 0.0, 0.0]);
-        let out = apply_op(&fit_op(&stage("(roll k=1)"), &x, &y).unwrap(), &x);
+        let out = apply_op(&fit_op(&stage("(roll k=1)"), &x, &y).unwrap(), &x).unwrap();
         assert_eq!(out[0], vec![0.5, 3.0, 4.0]);
         // k = 4 ≡ 1 (mod 3).
-        let out = apply_op(&fit_op(&stage("(roll k=4)"), &x, &y).unwrap(), &x);
+        let out = apply_op(&fit_op(&stage("(roll k=4)"), &x, &y).unwrap(), &x).unwrap();
         assert_eq!(out[0], vec![0.5, 3.0, 4.0]);
         // append=true keeps the input on the left.
         let out = apply_op(
             &fit_op(&stage("(lag k=1 append=true)"), &x, &y).unwrap(),
             &x,
-        );
+        )
+        .unwrap();
         assert_eq!(out[0], vec![3.0, 4.0, 0.5, 0.0, 3.0, 4.0]);
     }
 
     #[test]
     fn sigmoid_norm_row_and_diff_stats_values() {
         let (x, y) = tiny();
-        let out = apply_op(&fit_op(&stage("(sigmoid)"), &x, &y).unwrap(), &x);
+        let out = apply_op(&fit_op(&stage("(sigmoid)"), &x, &y).unwrap(), &x).unwrap();
         assert!((out[1][1] - 0.5).abs() < 1e-15, "sigmoid(0) != 0.5");
         assert!(out.iter().flatten().all(|v| *v > 0.0 && *v < 1.0));
-        let out = apply_op(&fit_op(&stage("(norm_row)"), &x, &y).unwrap(), &x);
+        let out = apply_op(&fit_op(&stage("(norm_row)"), &x, &y).unwrap(), &x).unwrap();
         let n0 = out[0].iter().map(|v| v * v).sum::<f64>().sqrt();
         assert!((n0 - 1.0).abs() < 1e-12);
         // Row [3,4,0.5]: diffs [1,-3.5] → mean -1.25, sign ratio 1/2, lag-1
         // autocorr of the original row = -1 (n=2 Pearson), energy 6.625.
-        let out = apply_op(&fit_op(&stage("(row_diff_stats)"), &x, &y).unwrap(), &x);
+        let out = apply_op(&fit_op(&stage("(row_diff_stats)"), &x, &y).unwrap(), &x).unwrap();
         assert_eq!(out[0].len(), 8);
         assert!((out[0][0] + 1.25).abs() < 1e-12);
         assert!((out[0][5] - 0.5).abs() < 1e-12);
@@ -1939,7 +1948,7 @@ mod tests {
             for src in STAGES {
                 let op = fit_op(&stage(src), &x, &y)
                     .unwrap_or_else(|e| panic!("trial {trial}: fit {src} failed: {e}"));
-                let out = apply_op(&op, &x);
+                let out = apply_op(&op, &x).unwrap();
                 assert_eq!(out.len(), rows, "trial {trial}: {src} row count");
                 for (i, row) in out.iter().enumerate() {
                     assert!(!row.is_empty(), "trial {trial}: {src} empty row {i}");

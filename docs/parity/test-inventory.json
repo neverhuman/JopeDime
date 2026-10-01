@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json",
-  "count": 4016,
+  "count": 4022,
   "ignored": 66,
   "packages": {
    "battle-gpu": {
@@ -29,7 +29,7 @@
     }
    },
    "feat-math": {
-    "count": 651,
+    "count": 655,
     "ignored": 7,
     "binaries": {
      "feat-math": {
@@ -836,6 +836,17 @@
        "executable_snapshot_matches_the_registry",
        "grammar_ops_follow_the_authority_rule",
        "restricted_vocabulary_ops_are_executable_in_the_registry"
+      ]
+     },
+     "feat-math::roll_zero_width": {
+      "kind": "test",
+      "count": 4,
+      "ignored": 0,
+      "tests": [
+       "direct_roll_refuses_zero_width_and_preserves_valid_rotation",
+       "public_prediction_and_fit_predict_return_the_width_error",
+       "training_refuses_zero_width_before_running_roll",
+       "versioned_emitted_recipes_refuse_zero_width_without_changing_legacy_bytes"
       ]
      },
      "feat-math::scope_validation": {
@@ -1819,12 +1830,12 @@
     }
    },
    "jope-cli": {
-    "count": 63,
+    "count": 64,
     "ignored": 0,
     "binaries": {
      "jope-cli": {
       "kind": "lib",
-      "count": 22,
+      "count": 23,
       "ignored": 0,
       "tests": [
        "champions::tests::champions_and_training_keep_the_admitted_snapshot_after_paths_change",
@@ -1848,7 +1859,8 @@
        "tests::symlink_files_directories_and_roots_are_rejected",
        "tests::time_reversal_duplicate_times_and_future_partitions_fail",
        "tests::traversal_and_nonportable_paths_are_rejected",
-       "tests::unknown_fields_and_unsupported_target_shapes_are_rejected"
+       "tests::unknown_fields_and_unsupported_target_shapes_are_rejected",
+       "tests::zero_width_rows_are_refused_at_cli_admission"
       ]
      },
      "jope-cli::bin/jope": {
@@ -2071,7 +2083,7 @@
     }
    },
    "jope-dime-regressor": {
-    "count": 1008,
+    "count": 1009,
     "ignored": 11,
     "binaries": {
      "jope-dime-regressor": {
@@ -2331,7 +2343,7 @@
      },
      "jope-dime-regressor::bin/jope-dime-regressor": {
       "kind": "bin",
-      "count": 216,
+      "count": 217,
       "ignored": 9,
       "tests": [
        "commands::binary_cv::cli_smoke_support::export_binary_fixture_registry",
@@ -2402,6 +2414,7 @@
        "evaluation_v2::tests::regression_objective_matches_v1_authority_bits",
        "evaluation_v2::tests::training_feature_change_rebinds_evaluation_and_fit",
        "evaluation_v2::tests::validation_label_rescore_reuses_predictions_but_rebinds_tape",
+       "evaluation_v2::tests::zero_width_roll_view_is_refused_before_fold_execution",
        "followup::tests::archive_payload_supports_exact_rollback",
        "followup::tests::atomic_replacement_recovers_after_an_interruption",
        "followup::tests::cohort_derivation_rejects_any_outcome_drift",
@@ -6330,7 +6343,7 @@
   }
  },
  "totals": {
-  "rust": 4015,
+  "rust": 4022,
   "python": 172
  }
 }
