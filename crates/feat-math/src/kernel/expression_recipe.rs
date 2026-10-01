@@ -25,8 +25,10 @@ pub fn emit_cpp17(genome: &GenomeIr, opts: &EmitOptions) -> Result<Cpp17Recipe> 
         let tree = expr
             .to_source()
             .map_err(|e| Error::Unsupported(e.to_string()))?;
-        let text = crate::math_expr::MathExpr::parse(source)
-            .and_then(|expr| expr.to_source())
+        let parsed =
+            crate::math_expr::MathExpr::parse(source).map_err(|e| Error::Syntax(e.to_string()))?;
+        let text = parsed
+            .to_source()
             .map_err(|e| Error::Syntax(e.to_string()))?;
         if tree != text {
             return Err(Error::Syntax("symbolic source and tree disagree".into()));

@@ -1,5 +1,5 @@
 //! Opt-in training recipes fit their own state; fitted inference is a separate route.
-use feat_math::kernel::recipe_v2::{emit_cpp17, PROFILE};
+use feat_math::kernel::expression_recipe::{emit_cpp17, PROFILE};
 use feat_math::transpile::EmitOptions;
 use feat_math::{fit_predict, GenomeIr};
 use std::{
