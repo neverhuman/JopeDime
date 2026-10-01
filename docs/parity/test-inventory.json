@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json",
-  "count": 4007,
+  "count": 4010,
   "ignored": 66,
   "packages": {
    "battle-gpu": {
@@ -29,7 +29,7 @@
     }
    },
    "feat-math": {
-    "count": 642,
+    "count": 645,
     "ignored": 7,
     "binaries": {
      "feat-math": {
@@ -488,6 +488,15 @@
        "vocabulary_registry_and_lineage_pins_match"
       ]
      },
+     "feat-math::conversion_roundtrip": {
+      "kind": "test",
+      "count": 2,
+      "ignored": 0,
+      "tests": [
+       "every_current_genome_form_keeps_its_tree_and_cpp17_recipe_refusals_after_render",
+       "scalar_nonfinite_and_signed_zero_literals_keep_exact_bits_in_the_typed_envelope"
+      ]
+     },
      "feat-math::export_report": {
       "kind": "test",
       "count": 5,
@@ -779,11 +788,12 @@
      },
      "feat-math::parity_bits": {
       "kind": "test",
-      "count": 6,
+      "count": 7,
       "ignored": 0,
       "tests": [
        "parity_bits_allowlist_is_well_formed_and_justified",
        "parity_bits_programs_execute_every_function_variable_and_operator",
+       "parity_bits_programs_round_trip_before_emission",
        "parity_bits_reads_the_shared_boundary_corpus_the_allowlist_was_recorded_on",
        "parity_bits_runtime_matches_emitted_python",
        "parity_bits_runtime_matches_emitted_rust",
@@ -6300,7 +6310,7 @@
   }
  },
  "totals": {
-  "rust": 4007,
+  "rust": 4010,
   "python": 172
  }
 }
