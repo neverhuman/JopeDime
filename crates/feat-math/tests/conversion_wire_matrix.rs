@@ -1,6 +1,7 @@
 //! Registry-derived conversion witnesses. The historical corpus stays read-only.
 
 use feat_math::kernel::capabilities::Manifest;
+use feat_math::kernel::expression_recipe::{emit_cpp17 as emit_expression_cpp17, PROFILE};
 use feat_math::kernel::Program;
 use feat_math::registry::{generatable_operators, operator_registry};
 use feat_math::transpile::{emit, emit_cpp17, supports, supports_cpp17, EmitOptions};
@@ -136,7 +137,11 @@ fn all_frozen_wire_ids_have_current_conversion_witnesses_or_explicit_refusals() 
 }
 
 fn toy_data() -> (Vec<Vec<f64>>, Vec<f64>) {
-    let mut rng = Pcg32::new(42, 17);
+    toy_data_seed(42)
+}
+
+fn toy_data_seed(seed: u64) -> (Vec<Vec<f64>>, Vec<f64>) {
+    let mut rng = Pcg32::new(seed, 17);
     let mut x = Vec::new();
     let mut y = Vec::new();
     for _ in 0..80 {
@@ -239,6 +244,89 @@ fn run_emitted_pair(
     (recipe_bits(&python_out), recipe_bits(&rust_out))
 }
 
+fn run_cpp_recipe(
+    name: &str,
+    mut source: String,
+    dir: &Path,
+    x: &[Vec<f64>],
+    y: &[f64],
+) -> Vec<u64> {
+    assert_eq!(x.len(), 80);
+    assert_eq!(y.len(), 80);
+    assert!(x.iter().all(|row| row.len() == 5));
+    fs::create_dir_all(dir).unwrap();
+    source.push_str("\n#include <cstdio>\nint main() {\n");
+    // Decode exact input bits, including signed zero and nonfinite feature payloads.
+    // The input reaches the model's numeric ABI rather than the finite-only CSV CLI.
+    for (label, values) in [
+        (
+            "train",
+            x[..64].iter().flatten().copied().collect::<Vec<_>>(),
+        ),
+        ("targets", y[..64].to_vec()),
+        (
+            "test",
+            x[64..].iter().flatten().copied().collect::<Vec<_>>(),
+        ),
+    ] {
+        write!(source, "const std::uint64_t {label}_bits[] = {{").unwrap();
+        for value in &values {
+            write!(source, "0x{:016x}ULL,", value.to_bits()).unwrap();
+        }
+        writeln!(
+            source,
+            "}}; double {label}[{}]; for (std::size_t i=0; i<{}; ++i) std::memcpy(&{label}[i], &{label}_bits[i], 8);",
+            values.len(), values.len()
+        )
+        .unwrap();
+    }
+    source.push_str(
+        "double out[16] = {}; model_handle* model = nullptr;\n\
+         if (model_fit_numeric(train, 320, 64, 5, targets, 64, &model) != 0) return 10;\n\
+         if (model_predict_numeric_batch(model, test, 80, 16, 5, nullptr, 0, out, 16) != 0) return 11;\n\
+         for (double value : out) { std::uint64_t bits; std::memcpy(&bits, &value, 8); std::printf(\"%016llx\\n\", static_cast<unsigned long long>(bits)); }\n\
+         model_unload(model); return 0; }\n",
+    );
+    let path = dir.join("model.cpp");
+    let binary = dir.join("model.bin");
+    fs::write(&path, source).unwrap();
+    require_success(
+        &format!("{name}: g++17 O2"),
+        Command::new("g++")
+            .args(["-std=c++17", "-O2", "-ffp-contract=off", "-fno-fast-math"])
+            .arg(&path)
+            .arg("-o")
+            .arg(&binary),
+    );
+    let output = Command::new(&binary).output().unwrap();
+    assert!(
+        output.status.success(),
+        "{name}: C++17 recipe exit {}: {}",
+        output.status,
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let bits: Vec<u64> = String::from_utf8(output.stdout)
+        .unwrap()
+        .lines()
+        .map(|word| u64::from_str_radix(word, 16).unwrap())
+        .collect();
+    assert_eq!(bits.len(), 16, "{name}: C++17 output row count");
+    bits
+}
+
+fn round_trip(source: &str) -> GenomeIr {
+    let original = GenomeIr::parse(source).unwrap();
+    let canonical = original.canonical();
+    let genome = GenomeIr::parse(&canonical).unwrap();
+    assert_eq!(canonical, genome.canonical());
+    let bytes = Program::import_legacy(&genome).to_bytes().unwrap();
+    assert_eq!(
+        bytes,
+        Program::from_bytes(&bytes).unwrap().to_bytes().unwrap()
+    );
+    genome
+}
+
 #[test]
 fn every_direct_wire_witness_evaluates_to_its_frozen_model_bits() {
     let models: Value = serde_json::from_str(MODELS).unwrap();
@@ -318,7 +406,7 @@ fn standalone_cpp17_recipe_executes_every_admitted_direct_wire_witness() {
             frozen_route.starts_with("unsupported:"),
             "{name}: frozen C++17 route"
         );
-        let Ok(mut driver) = emission else {
+        let Ok(driver) = emission else {
             let reasons = support
                 .unwrap_err()
                 .into_iter()
@@ -341,51 +429,7 @@ fn standalone_cpp17_recipe_executes_every_admitted_direct_wire_witness() {
             continue;
         };
         admitted += 1;
-        driver.push_str("\n#include <cstdio>\nint main() {\n const double train[] = {");
-        for row in &x[..64] {
-            for value in row {
-                write!(driver, "{value:?},").unwrap();
-            }
-        }
-        driver.push_str("};\n const double targets[] = {");
-        for value in &y[..64] {
-            write!(driver, "{value:?},").unwrap();
-        }
-        driver.push_str("};\n const double test[] = {");
-        for row in &x[64..] {
-            for value in row {
-                write!(driver, "{value:?},").unwrap();
-            }
-        }
-        driver.push_str(
-            "};\n double out[16] = {}; model_handle* model = nullptr;\n\
-             if (model_fit_numeric(train, 320, 64, 5, targets, 64, &model) != 0) return 10;\n\
-             if (model_predict_numeric_batch(model, test, 80, 16, 5, nullptr, 0, out, 16) != 0) return 11;\n\
-             for (double value : out) { std::uint64_t bits; std::memcpy(&bits, &value, 8); std::printf(\"%016llx\\n\", static_cast<unsigned long long>(bits)); }\n\
-             model_unload(model); return 0; }\n",
-        );
-        let path = scratch.path().join(format!("{name}.cpp"));
-        let binary = scratch.path().join(format!("{name}.bin"));
-        fs::write(&path, driver).unwrap();
-        require_success(
-            &format!("{name}: g++17 O2"),
-            Command::new("g++")
-                .args(["-std=c++17", "-O2", "-ffp-contract=off", "-fno-fast-math"])
-                .arg(&path)
-                .arg("-o")
-                .arg(&binary),
-        );
-        let output = Command::new(&binary).output().unwrap();
-        assert!(
-            output.status.success(),
-            "{name}: C++17 recipe exit {}",
-            output.status
-        );
-        let actual: Vec<u64> = String::from_utf8(output.stdout)
-            .unwrap()
-            .lines()
-            .map(|word| u64::from_str_radix(word, 16).unwrap())
-            .collect();
+        let actual = run_cpp_recipe(&name, driver, &scratch.path().join(&name), &x, &y);
         let expected: Vec<u64> = frozen[name.as_str()]["predictions"]
             .as_str()
             .unwrap()
@@ -396,6 +440,113 @@ fn standalone_cpp17_recipe_executes_every_admitted_direct_wire_witness() {
     }
     assert_eq!(admitted, 6, "standalone C++17 route inventory");
     assert_eq!(refused, 13, "each other direct wire witness classified");
+}
+
+#[test]
+fn expression_cpp17_recipe_executes_admitted_wire_witnesses_and_retains_refusals() {
+    let models: Value = serde_json::from_str(MODELS).unwrap();
+    let frozen = rows_by_name(models["models"].as_array().unwrap());
+    let emitted: Value = serde_json::from_str(EMITTED).unwrap();
+    let frozen_emissions = rows_by_name(emitted["programs"].as_array().unwrap());
+    let (x, y) = toy_data();
+    let scratch = tempfile::tempdir().unwrap();
+    let mut admitted = 0;
+    let mut refused = 0;
+    for (name, source) in witness_sources() {
+        let genome = round_trip(&source);
+        let legacy = frozen_emissions[name.as_str()]["cpp17"].as_str().unwrap();
+        match emit_expression_cpp17(&genome, &EmitOptions::default()) {
+            Ok(recipe) => {
+                admitted += 1;
+                assert_eq!(recipe.profile, PROFILE);
+                assert!(recipe.source.starts_with(&format!("// {PROFILE}\n")));
+                let actual =
+                    run_cpp_recipe(&name, recipe.source, &scratch.path().join(&name), &x, &y);
+                let expected: Vec<u64> = frozen[name.as_str()]["predictions"]
+                    .as_str()
+                    .unwrap()
+                    .split_whitespace()
+                    .map(|word| u64::from_str_radix(word, 16).unwrap())
+                    .collect();
+                assert_eq!(actual, expected, "{name}: expression recipe frozen bits");
+                if legacy.starts_with("unsupported:") {
+                    assert!(matches!(
+                        name.as_str(),
+                        "golden_map_derive_ridge" | "golden_map_pow_elasticnet"
+                    ));
+                    assert!(emit_cpp17(&genome, &EmitOptions::default()).is_err());
+                }
+            }
+            Err(feat_math::kernel::Error::Unsupported(reason)) => {
+                refused += 1;
+                // As with supports_cpp17 above, compare element kinds; debug payloads
+                // add parameter context but do not change the refused route.
+                let labels = reason
+                    .split(", ")
+                    .filter(|part| {
+                        part.starts_with("head ")
+                            || part.starts_with("transform ")
+                            || *part == "target transforms"
+                    })
+                    .map(|part| part.split(['(', '{']).next().unwrap().trim_end())
+                    .collect::<Vec<_>>()
+                    .join("; ");
+                assert_eq!(
+                    labels,
+                    legacy.strip_prefix("unsupported: ").unwrap(),
+                    "{name}: structured expression recipe refusal: {reason}"
+                );
+            }
+            Err(error) => panic!("{name}: unexpected expression recipe error: {error}"),
+        }
+    }
+    assert_eq!(admitted, 8, "six legacy plus two expression wire witnesses");
+    assert_eq!(refused, 11, "unsupported heads/stages/targets stay refused");
+}
+
+#[test]
+fn seeded_composed_expression_recipes_match_rust_python_and_evaluator_bits() {
+    let programs = [
+        "(pipe X (map expr=\"round(x)\" append=true) (derive expr=\"c0+c5\" append=true) (ridge))",
+        "(pipe X (derive expr=\"c1/c0\" append=true) (map expr=\"clip(x,-2,2)\") (ridge))",
+        "(pipe X (map expr=\"abs(x)\" append=true) (derive expr=\"row_sum-row_mean+c5\" append=true) (elasticnet alpha=0.01 l1_ratio=0.5 sweeps=30))",
+    ];
+    let scratch = tempfile::tempdir().unwrap();
+    for seed in [41, 43, 47] {
+        let (mut x, y) = toy_data_seed(seed);
+        // Targets remain finite and unchanged; the pipeline sanitizes features before fit.
+        for (index, value) in [f64::NAN, f64::INFINITY, f64::NEG_INFINITY]
+            .into_iter()
+            .enumerate()
+        {
+            x[index][index] = value;
+            x[66 + index][index] = value;
+        }
+        x[64][0] = -0.0;
+        x[65][1] = f64::from_bits(1);
+        x[69] = vec![0.0, -0.0, 0.0, -0.0, 0.0];
+        x[70][0] = f64::from_bits(1e-12_f64.to_bits() - 1);
+        x[71][0] = f64::from_bits(1e-12_f64.to_bits() + 1);
+        assert!(y.iter().all(|value| value.is_finite()));
+        for (index, source) in programs.into_iter().enumerate() {
+            let name = format!("seed-{seed}-program-{index}");
+            let genome = round_trip(source);
+            let expected: Vec<u64> =
+                fit_predict(&genome, &x[..64].to_vec(), &y[..64], &x[64..].to_vec())
+                    .unwrap()
+                    .into_iter()
+                    .map(f64::to_bits)
+                    .collect();
+            let dir = scratch.path().join(&name);
+            let (python, rust) = run_emitted_pair(&name, &genome, &dir, &x, &y);
+            assert_eq!(python, expected, "{name}: Python bits");
+            assert_eq!(rust, expected, "{name}: Rust bits");
+            let recipe = emit_expression_cpp17(&genome, &EmitOptions::default()).unwrap();
+            assert_eq!(recipe.profile, PROFILE);
+            let cpp = run_cpp_recipe(&name, recipe.source, &dir, &x, &y);
+            assert_eq!(cpp, expected, "{name}: C++17 expression recipe bits");
+        }
+    }
 }
 
 #[test]
