@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json",
-  "count": 4028,
+  "count": 4030,
   "ignored": 66,
   "packages": {
    "battle-gpu": {
@@ -29,7 +29,7 @@
     }
    },
    "feat-math": {
-    "count": 660,
+    "count": 662,
     "ignored": 7,
     "binaries": {
      "feat-math": {
@@ -507,12 +507,14 @@
      },
      "feat-math::conversion_wire_matrix": {
       "kind": "test",
-      "count": 5,
+      "count": 7,
       "ignored": 0,
       "tests": [
        "all_frozen_wire_ids_have_current_conversion_witnesses_or_explicit_refusals",
        "every_direct_wire_witness_evaluates_to_its_frozen_model_bits",
        "every_direct_wire_witness_runs_emitted_rust_and_python_on_the_frozen_input",
+       "expression_cpp17_recipe_executes_admitted_wire_witnesses_and_retains_refusals",
+       "seeded_composed_expression_recipes_match_rust_python_and_evaluator_bits",
        "standalone_cpp17_recipe_executes_every_admitted_direct_wire_witness",
        "symbolic_and_portfolio_forms_execute_or_keep_their_structured_refusal"
       ]
@@ -6356,7 +6358,7 @@
   }
  },
  "totals": {
-  "rust": 4028,
+  "rust": 4030,
   "python": 172
  }
 }

@@ -61,6 +61,25 @@ run the O3, clang, C++20 and ASan/UBSan matrix. The direct ABI and generated Mod
 zero-width/ragged tables; the ABI also refuses wrong prediction width/length and nonfinite targets.
 The CLI test binds written `model.cpp` bytes to this public API and proves explicit opt-in.
 
+`conversion_wire_matrix.rs` additionally runs this opt-in profile against the same 19
+registry-derived direct-wire witnesses used by the default recipe matrix. Eight are admitted:
+the six default witnesses plus `golden_map_derive_ridge` and `golden_map_pow_elasticnet`.
+All 16 prediction bits in each admitted witness match the frozen evaluator model. The other
+11 retain their structured refusal categories; parameter payloads remain diagnostic context.
+The default route still executes six and refuses 13.
+Every new execution passes canonical and typed-envelope round-trips first.
+
+Three bounded seeds (41, 43, 47), each with 64 training rows and 16 prediction rows, exercise
+three composed `map`/`derive` pipelines with Ridge or ElasticNet. Generated Rust and Python
+training recipes and the opt-in C++17 training recipe each execute all nine samples and match
+all 144 evaluator prediction bits. The samples include append and stage ordering, negative
+zero, a subnormal, values adjacent to the protected division threshold, and NaN/infinite
+features in both train and prediction rows; targets stay finite. C++ receives exact input
+bits through the numeric ABI and compiles with g++ C++17 O2, contraction disabled and fast
+math disabled. The CSV routes preserve nonfinite feature spellings; their pipeline sanitization
+is part of the compared execution. No tolerance or allowlist entry is added. This bounded
+corpus establishes these witnesses rather than parity for every expression or parameter value.
+
 The numeric ABI requires rectangular rows with positive training width, finite targets, and the
 same prediction width. Nonfinite features are sanitized to zero, as in the default training recipe;
 raw symbolic evaluator calls instead evaluate their raw features. The scalar bit witnesses use
