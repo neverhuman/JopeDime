@@ -414,6 +414,13 @@
         "policy"
       ]
     },
+    "target:feat-math/test/conversion_boundary": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "export"
+      ]
+    },
     "target:feat-math/test/conversion_roundtrip": {
       "role": "regression",
       "subsystems": [
