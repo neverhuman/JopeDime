@@ -1,13 +1,13 @@
 {
   "schema": "feat-math.compat-freeze.evaluator-identity.v1",
-  "generated_at_sha": "18d177808256e6f1f20187eb9e4900e5727466c7",
+  "generated_at_sha": "8fd37c01622d7056038c540a337ca01c6bec69dd",
   "note": "A replica of evaluation_v2.rs compute_implementation_sha256 (the hashed list is read from that function) and EvaluatorIdentityV1::digest. Planned changes move this fixture: the change that mints the identity announces it and rebaselines it with JOPE_COMPAT_FREEZE_REGENERATE=identity.",
   "domain": "jope-dime/evaluator-implementation/v1",
   "inputs": [
     {
       "label": "src/evaluation_v2.rs",
       "path": "crates/jope-campaigns/src/evaluation_v2.rs",
-      "sha256": "29a878b2e5b440bd3bd786744e3a9e4b5c777de5a3a9d439e223bb47983648d1"
+      "sha256": "865ad21acae020fd6b9966a98315420f16b814af6b0b9860ada76988f5c65965"
     },
     {
       "label": "src/commands/exact_cv_v2.rs",
@@ -22,7 +22,7 @@
     {
       "label": "src/commands/exact_cv.rs",
       "path": "crates/jope-campaigns/src/commands/exact_cv.rs",
-      "sha256": "adaecf17f55777913c61c51b9d3c79fc318dbba6cb3238b5c176b806a7b29e4c"
+      "sha256": "8662b33e58d5ac956fd0a858927bdf024f199938c17a4d4c816bdf6907b4a4c7"
     },
     {
       "label": "Cargo.toml",
@@ -62,17 +62,17 @@
     {
       "label": "vendor/feat-math/src/emit_py.rs",
       "path": "crates/feat-math/src/emit_py.rs",
-      "sha256": "138a8c2a279da1b9df7b3c155606ac7e18c145982400ca7ace40f120cf386ca6"
+      "sha256": "46abe4fb0407821bbe298755100f50c019c18582f107f0054e4881bf10f3b570"
     },
     {
       "label": "vendor/feat-math/src/emit_rs.rs",
       "path": "crates/feat-math/src/emit_rs.rs",
-      "sha256": "92d1277a90886073ba5b3aa19aa9fb461f97ad3290c2c4a91a1ccaeec7c1d405"
+      "sha256": "17f6afb8d6b0c88bfcf3617aa28439e6a04edf54e3002706f369729f3816d62c"
     },
     {
       "label": "vendor/feat-math/src/evolve.rs",
       "path": "crates/feat-math/src/evolve.rs",
-      "sha256": "292b0731f279a74f8e7c4bdd91ba7217e4a763a9b110efeff147042d4fc39e02"
+      "sha256": "db3c449fc2e2c03334d6aaffd2806f250cf2b758bed4b6a13dbdff5b170997be"
     },
     {
       "label": "vendor/feat-math/src/explain.rs",
@@ -102,7 +102,7 @@
     {
       "label": "vendor/feat-math/src/heads.rs",
       "path": "crates/feat-math/src/heads.rs",
-      "sha256": "724a885313da9c2e222b27becd0e426be8ef28680faae344abfd2ad71279ee13"
+      "sha256": "1ded3642508e48b1f8b35e4579e44e492492f0eb4fa8de7ba643e52e9ca4c720"
     },
     {
       "label": "vendor/feat-math/src/krr.rs",
@@ -142,17 +142,17 @@
     {
       "label": "vendor/feat-math/src/model.rs",
       "path": "crates/feat-math/src/model.rs",
-      "sha256": "fd7cab03674df1039fdb7b853a1b026b5f305758b05fe6bf9ce332f81cca9533"
+      "sha256": "28354e4b746dbd4700a31665a49748a8aa56041fe483bd2739d9aebd814f84cd"
     },
     {
       "label": "vendor/feat-math/src/ops.rs",
       "path": "crates/feat-math/src/ops.rs",
-      "sha256": "9a5dcb94972bae12948c116fd28a10ece42d37cc1cf85d62673249c495e092ed"
+      "sha256": "a0d09f84c28892b67946d17a50ae8e96de2f556bac28e5fdc29476040305e3a2"
     },
     {
       "label": "vendor/feat-math/src/portfolio.rs",
       "path": "crates/feat-math/src/portfolio.rs",
-      "sha256": "3b7e7fbeece147a313466c77c685115b090d8ae1bb96005922817571efa679cb"
+      "sha256": "338ad94d54f8ade984d9d27733d2c5ec1cc0dca498b77f7a8430d49f620685fb"
     },
     {
       "label": "vendor/feat-math/src/rng.rs",
@@ -192,13 +192,13 @@
     {
       "label": "vendor/feat-math/src/transpile.rs",
       "path": "crates/feat-math/src/transpile.rs",
-      "sha256": "b5e7ce0dda941723383a5fd47144aa80c602c95769273f46219977ccd861be54"
+      "sha256": "858275ebb9f7b511073aa627145f8985f738e31b27240a0f5cbf21f4294e4c2e"
     }
   ],
-  "implementation_sha256": "640eda2ac2d3b30ffb0d091938b8158e42de38b86e947bb405ab81da1f265a84",
+  "implementation_sha256": "bc1fb1fea050f94d1c9ac0d8c64b3a8ba18a8d3bfeec4ccf3e6bf89d412981b4",
   "dsl_abi_sha256": "c8b4babfa7dc5b65bf614ffc4c9cdb3a8ed08f42ce1b7087481bbdcce92a8389",
   "cargo_lock_sha256": "8ecdd1fc461f5700897e2e65dac13e3a05200bfcd2226e3b62d39bbe772c1fee",
-  "identity_digest": "a29697ebd410a6914862e8a4e7c229273d68c13b773e1d42188961a252f7db3b",
+  "identity_digest": "bb42ec8679563b0a384d00a5a962a3995d9529243ba57de7f19280b299279c0f",
   "known_identities_sha256": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b",
   "known_identity_rows": 2
 }
