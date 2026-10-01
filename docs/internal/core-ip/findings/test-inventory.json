@@ -532,6 +532,14 @@
         "policy"
       ]
     },
+    "target:feat-math/test/roll_zero_width": {
+      "role": "regression",
+      "subsystems": [
+        "fitting",
+        "gp",
+        "export"
+      ]
+    },
     "target:feat-math/test/scope_validation": {
       "role": "regression",
       "subsystems": [

@@ -1,0 +1,18 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "B02 option (a) — take charge and make the edits",
+  "plan_reference": "JOPEDIME_BREAKTHROUGH_IMPLEMENTATION_PLAN.md §4 Phase A B02",
+  "pr_reference": "[kernel2] B02 — guard zero-width Roll input; mints evaluator identity",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "649167014ae5ebf2416505e830732d0a6a9bccb84cead22cec9cd44a8b027d0e",
+      "after": "711bb338d8e00fa507e788248d543644681553e9cd41480ba953e981a1ae4c02"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "2e883fc6e47bb3c654e16608b7a913c964e30ff7b5d5ab25451c1badefbdff0c",
+      "after": "c8c2a8812afc60184553c1daf59d084b7f9d82bef10ebb47933f3c3fa396dcd5"
+    }
+  ]
+}

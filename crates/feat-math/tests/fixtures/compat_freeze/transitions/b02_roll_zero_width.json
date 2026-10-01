@@ -4,5 +4,7 @@
   "before": "panic",
   "after": "refused: stage 0 needs at least 1 input columns, got 0",
   "decision": "B02 option (a) — take charge and make the edits",
+  "plan_reference": "JOPEDIME_BREAKTHROUGH_IMPLEMENTATION_PLAN.md §4 Phase A B02",
+  "pr_reference": "[kernel2] B02 — guard zero-width Roll input; mints evaluator identity",
   "reason": "The raw Roll transform now returns a typed width refusal for an empty row."
 }
