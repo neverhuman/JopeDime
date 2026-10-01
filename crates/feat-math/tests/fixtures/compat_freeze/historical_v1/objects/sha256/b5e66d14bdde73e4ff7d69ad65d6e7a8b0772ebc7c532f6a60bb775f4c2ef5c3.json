@@ -1,0 +1,2820 @@
+{
+  "aliases": [
+    {
+      "id": 3,
+      "name": "norm_features",
+      "prediction_bits": [
+        "c00aaaaa560d9402",
+        "c0072c6728f73cf0",
+        "c003c67e60fb3124",
+        "c00078effe19709a",
+        "bffa877800a3f6a8",
+        "bffc49b1fd34ae26",
+        "bff640b3960ef0ac",
+        "bff06869f91dc9b9",
+        "bfe581aa4cc272a0",
+        "bfd527d47764fdb3",
+        "bfdffedc35c39e58",
+        "bfc75204ca90d624",
+        "3fbfa8110981b841",
+        "3fdaba37c136ed14",
+        "3fe663cc0b9d88fa",
+        "3fde22708cc0aeae",
+        "3fe7551548900faa",
+        "3fef3788b6569ae9",
+        "3ff35c4947d9fc8c",
+        "3ff6ec196a54151c",
+        "3ff24f4794ae8ba1",
+        "3ff57dae22bf7722",
+        "3ff87b5fe69bcc16",
+        "3ffb485ce0438a86"
+      ],
+      "program_hex": "464d4b5052470001000002000000000000000d000000000000006e6f726d5f66656174757265730000000000000000050000000000000072696467650000000000000000",
+      "semantic_key": "standardize",
+      "source": "(pipe X (norm_features) (ridge))"
+    },
+    {
+      "id": 11,
+      "name": "winsor_moments",
+      "prediction_bits": [
+        "c0096a8fb8cf7150",
+        "c0077d17f9f7f074",
+        "c004313a191b7880",
+        "c000bc8ffd7c56b0",
+        "bffac2e2fa76129d",
+        "bffd0c27eb9e0939",
+        "bff6bc195892c022",
+        "bff09f21fc431fe0",
+        "bfe56a83ad5e50ec",
+        "bfd3f9e39f5b6789",
+        "bfe08e63d5523964",
+        "bfc88118252fa1c2",
+        "3fc1375f0ae9a20c",
+        "3fdc455fd51b7de2",
+        "3fe79159a4e9c3b3",
+        "3fde01fef7e14b5e",
+        "3fe7a34c5b5e0718",
+        "3fefdf6acd5416cf",
+        "3ff3daad68e96a6c",
+        "3ff7928e346d209b",
+        "3ff24aed0e464568",
+        "3ff59c9f6c52a9e8",
+        "3ff8368ae7626907",
+        "3ff9f906a65efdf0"
+      ],
+      "program_hex": "464d4b5052470001000002000000000000000e0000000000000077696e736f725f6d6f6d656e74730000000000000000050000000000000072696467650000000000000000",
+      "semantic_key": "winsor_clip",
+      "source": "(pipe X (winsor_moments) (ridge))"
+    },
+    {
+      "id": 39,
+      "name": "gbm",
+      "prediction_bits": [
+        "bfd159834f105ebd",
+        "bfd159834f105ebd",
+        "bfd159834f105ebd",
+        "bfd159834f105ebd",
+        "bfd159834f105ebd",
+        "bfd159834f105ebd",
+        "bfd159834f105ebd",
+        "bfd159834f105ebd",
+        "bfd159834f105ebd",
+        "bfd159834f105ebd",
+        "bfd159834f105ebd",
+        "bfd159834f105ebd",
+        "bfd159834f105ebd",
+        "bfd159834f105ebd",
+        "bfd159834f105ebd",
+        "bfd159834f105ebd",
+        "bfd159834f105ebd",
+        "bfd159834f105ebd",
+        "bfd159834f105ebd",
+        "bfd159834f105ebd",
+        "bfd159834f105ebd",
+        "bfd159834f105ebd",
+        "bfd159834f105ebd",
+        "bfd159834f105ebd"
+      ],
+      "program_hex": "464d4b505247000100000100000000000000030000000000000067626d01000000000000000600000000000000726f756e6473000500000000000000",
+      "semantic_key": "histgbm",
+      "source": "(pipe X (gbm rounds=5) )"
+    },
+    {
+      "id": 41,
+      "name": "ensemble_ridge_gbm",
+      "prediction_bits": [
+        "bfd159834f105ebd",
+        "bfd159834f105ebd",
+        "bfd159834f105ebd",
+        "bfd159834f105ebd",
+        "bfd159834f105ebd",
+        "bfd159834f105ebd",
+        "bfd159834f105ebd",
+        "bfd159834f105ebd",
+        "bfd159834f105ebd",
+        "bfd159834f105ebd",
+        "bfd159834f105ebd",
+        "bfd159834f105ebd",
+        "bfd159834f105ebd",
+        "bfd159834f105ebd",
+        "bfd159834f105ebd",
+        "bfd159834f105ebd",
+        "bfd159834f105ebd",
+        "bfd159834f105ebd",
+        "bfd159834f105ebd",
+        "bfd159834f105ebd",
+        "bfd159834f105ebd",
+        "bfd159834f105ebd",
+        "bfd159834f105ebd",
+        "bfd159834f105ebd"
+      ],
+      "program_hex": "464d4b5052470001000001000000000000001200000000000000656e73656d626c655f72696467655f67626d01000000000000000600000000000000726f756e6473000500000000000000",
+      "semantic_key": "ensemble",
+      "source": "(pipe X (ensemble_ridge_gbm rounds=5) )"
+    }
+  ],
+  "base_sha": "e709ed90e0890a619b91fdc2fe395439b20ffb65",
+  "emitted": [
+    {
+      "bytes": 11640,
+      "language": "rust",
+      "sha256": "953402dd0d5c053d3d7ce5215280af8b43749d209bac2b0e373d0a051efc64e2",
+      "source": "//! Regression model: standard scaling, then ridge regression.\n//!\n//! This program trains a regression model on train.csv, in which every row holds the feature\n//! columns followed by the target as the last column, and then writes one prediction per line for\n//! the rows of test_features.csv. All arithmetic is IEEE-754 double precision in a fixed\n//! evaluation order, so repeated runs give identical bits.\n//!\n//! The feature pipeline has 1 stage, applied in order; each stage is marked \"replaced\" when it\n//! overwrites the columns it receives or \"appended\" when it keeps them and adds its outputs\n//! alongside, and after every stage non-finite cells become 0.0 and each row is capped at 512\n//! columns. Stage 1 (standard_scaler, replaced) centers each column by its training mean and\n//! divides by the standard deviation (1/n convention, floored at 1e-9), clamping the score to\n//! [-20, 20].\n//!\n//! The head (ridge_regression) is ridge regression (Hoerl & Kennard, 1970) on standardized\n//! columns with penalty max(0.02*n, 1e-3); the symmetric positive-definite normal equations are\n//! solved by a Cholesky factorization and predictions are clipped to [-60, 60]. Seeded stages\n//! draw weights from a permuted congruential generator (PCG XSH-RR 64/32; O'Neill, 2014) keyed by\n//! the stage seed and the input/output widths, so training is fully deterministic. Missing or\n//! malformed CSV cells parse as 0.0 and short rows are padded with zeros to the training width.\n//!\n//! Build: rustc -O model.rs\n//! Usage: ./model train.csv test_features.csv predictions.csv\n\n#![forbid(unsafe_code)]\n#![allow(dead_code)]\n\n/// Replace non-finite values with 0.0 in every row.\nfn sanitize(x: &[Vec<f64>]) -> Vec<Vec<f64>> {\n    x.iter()\n        .map(|row| row.iter().map(|v| if v.is_finite() { *v } else { 0.0 }).collect())\n        .collect()\n}\n\n/// Stage epilogue: optionally keep the inputs, cap width at 512, zero non-finite cells.\nfn finish_stage(x: &[Vec<f64>], mut out: Vec<Vec<f64>>, append: bool) -> Vec<Vec<f64>> {\n    if append {\n        for (i, row) in out.iter_mut().enumerate() {\n            let mut merged = x[i].clone();\n            merged.append(row);\n            *row = merged;\n        }\n    }\n    for row in out.iter_mut() {\n        if row.len() > 512 {\n            row.truncate(512);\n        }\n        for v in row.iter_mut() {\n            if !v.is_finite() {\n                *v = 0.0;\n            }\n        }\n        if row.is_empty() {\n            row.push(0.0);\n        }\n    }\n    out\n}\n\n/// Per-column mean and standard deviation (1/n convention), floored at 1e-9.\nfn std_fit(x: &[Vec<f64>]) -> (Vec<f64>, Vec<f64>) {\n    let n = x.len().max(1) as f64;\n    let p = x[0].len();\n    let mut means = vec![0.0; p];\n    let mut scales = vec![1.0; p];\n    for j in 0..p {\n        let mut s = 0.0;\n        for row in x {\n            s += row[j];\n        }\n        means[j] = s / n;\n        let mut v = 0.0;\n        for row in x {\n            let d = row[j] - means[j];\n            v += d * d;\n        }\n        scales[j] = (v / n).sqrt().max(1e-9);\n    }\n    (means, scales)\n}\n\n/// Solve the symmetric positive-definite system A w = b.\n///\n/// A (flattened row-major, overwritten) is factored in place as L L^T, then a\n/// forward and a backward triangular solve produce w. A tiny 1e-6 pivot stands\n/// in whenever a diagonal entry falls under 1e-12.\nfn cholesky_solve(a: &mut [f64], b: &[f64], p: usize) -> Vec<f64> {\n    for i in 0..p {\n        for j in 0..(i + 1) {\n            let mut s = a[i * p + j];\n            for k in 0..j {\n                s -= a[i * p + k] * a[j * p + k];\n            }\n            if i == j {\n                a[i * p + j] = if s > 1e-12 { s.sqrt() } else { 1e-6 };\n            } else {\n                a[i * p + j] = s / a[j * p + j];\n            }\n        }\n    }\n    let mut z = vec![0.0; p];\n    for i in 0..p {\n        let mut s = b[i];\n        for k in 0..i {\n            s -= a[i * p + k] * z[k];\n        }\n        z[i] = s / a[i * p + i];\n    }\n    let mut w = vec![0.0; p];\n    for i in (0..p).rev() {\n        let mut s = z[i];\n        for k in (i + 1)..p {\n            s -= a[k * p + i] * w[k];\n        }\n        w[i] = s / a[i * p + i];\n    }\n    w\n}\n\nstruct StandardScaler {\n    means: Vec<f64>,\n    scales: Vec<f64>,\n}\n\n/// This transform centers each column by its training mean and divides by the standard\n/// deviation (1/n convention, floored at 1e-9), clamping the score to [-20, 20].\nfn standard_scaler_fit(x: &[Vec<f64>]) -> StandardScaler {\n    let (means, scales) = std_fit(x);\n    StandardScaler { means, scales }\n}\n\nfn standard_scaler_apply(state: &StandardScaler, x: &[Vec<f64>], append: bool) -> Vec<Vec<f64>> {\n    let out: Vec<Vec<f64>> = x\n        .iter()\n        .map(|row| {\n            row.iter()\n                .enumerate()\n                .map(|(j, v)| ((v - state.means[j]) / state.scales[j]).clamp(-20.0, 20.0))\n                .collect()\n        })\n        .collect();\n    finish_stage(x, out, append)\n}\n\nstruct RidgeRegression {\n    means: Vec<f64>,\n    scales: Vec<f64>,\n    w: Vec<f64>,\n}\n\n/// This head is ridge regression (Hoerl & Kennard, 1970) on standardized columns with penalty\n/// max(0.02*n, 1e-3); the symmetric positive-definite normal equations are solved by a Cholesky\n/// factorization and predictions are clipped to [-60, 60].\nfn ridge_regression_fit(x: &[Vec<f64>], y: &[f64], lambda_frac: f64) -> RidgeRegression {\n    let n = x.len().min(y.len());\n    let p = x[0].len();\n    let (means, scales) = std_fit(x);\n    let lam = (lambda_frac * n as f64).max(1e-3);\n    let mut y_mean = 0.0;\n    for i in 0..n {\n        y_mean += y[i];\n    }\n    y_mean /= n.max(1) as f64;\n    let mut ata = vec![0.0; p * p];\n    let mut atb = vec![0.0; p];\n    let mut xs_row = vec![0.0; p];\n    for r in 0..n {\n        let row = &x[r];\n        for j in 0..p {\n            xs_row[j] = ((row[j] - means[j]) / scales[j]).clamp(-20.0, 20.0);\n        }\n        let yr = y[r] - y_mean;\n        for i in 0..p {\n            let xi = xs_row[i];\n            atb[i] += xi * yr;\n            for j in i..p {\n                ata[i * p + j] += xi * xs_row[j];\n            }\n        }\n    }\n    for i in 0..p {\n        ata[i * p + i] += lam;\n        for j in 0..i {\n            ata[i * p + j] = ata[j * p + i];\n        }\n    }\n    let coeffs = cholesky_solve(&mut ata, &atb, p);\n    let mut w = Vec::with_capacity(p + 1);\n    w.push(y_mean);\n    w.extend(coeffs);\n    RidgeRegression { means, scales, w }\n}\n\nfn ridge_regression_predict(state: &RidgeRegression, x: &[Vec<f64>]) -> Vec<f64> {\n    let p = state.means.len();\n    let mut predictions = Vec::new();\n    for row in x {\n        let mut z = state.w[0];\n        for j in 0..p.min(row.len()) {\n            let xs = ((row[j] - state.means[j]) / state.scales[j]).clamp(-20.0, 20.0);\n            z += state.w[j + 1] * xs;\n        }\n        predictions.push(z.clamp(-60.0, 60.0));\n    }\n    predictions\n}\n\n/// Feature stages applied in order, then the ridge_regression head.\nstruct Model {\n    stage1: StandardScaler,\n    head: RidgeRegression,\n}\n\nimpl Model {\n    /// Fit every stage in order on the training rows.\n    fn fit(x: &[Vec<f64>], y: &[f64]) -> Model {\n        if x.is_empty() || y.len() < x.len() {\n            eprintln!(\"training data is empty or target is short\");\n            std::process::exit(2);\n        }\n        let x = sanitize(x);\n        let stage1 = standard_scaler_fit(&x);\n        let x = standard_scaler_apply(&stage1, &x, false);\n        let head = ridge_regression_fit(&x, y, 0.02);\n        Model { stage1, head }\n    }\n\n    /// Apply the fitted stages, then the regression head.\n    fn predict(&self, x: &[Vec<f64>]) -> Vec<f64> {\n        let x = sanitize(x);\n        let x = standard_scaler_apply(&self.stage1, &x, false);\n        ridge_regression_predict(&self.head, &x)\n    }\n\n    /// Coefficient of determination R^2 of predict against y.\n    fn score(&self, x: &[Vec<f64>], y: &[f64]) -> f64 {\n        let predictions = self.predict(x);\n        let n = y.len().min(predictions.len());\n        if n == 0 {\n            return 0.0;\n        }\n        let mut mean = 0.0;\n        for i in 0..n {\n            mean += y[i];\n        }\n        mean /= n as f64;\n        let mut ss_res = 0.0;\n        let mut ss_tot = 0.0;\n        for i in 0..n {\n            let d = y[i] - predictions[i];\n            ss_res += d * d;\n            let t = y[i] - mean;\n            ss_tot += t * t;\n        }\n        if ss_tot <= 0.0 {\n            return 0.0;\n        }\n        1.0 - ss_res / ss_tot\n    }\n}\n\n/// Parse one CSV cell; blank, malformed, or non-finite cells become 0.0.\nfn parse_cell(cell: &str) -> f64 {\n    let text = cell.trim();\n    if text.is_empty() || text.contains('_') {\n        return 0.0;\n    }\n    match text.parse::<f64>() {\n        Ok(value) => {\n            if value.is_finite() {\n                value\n            } else {\n                0.0\n            }\n        }\n        Err(_) => 0.0,\n    }\n}\n\nfn looks_numeric(cell: &str) -> bool {\n    let text = cell.trim();\n    text.is_empty() || (!text.contains('_') && text.parse::<f64>().is_ok())\n}\n\n/// Read CSV rows of floats, skipping blank lines and one header line if present.\nfn read_csv(path: &str) -> Vec<Vec<f64>> {\n    let text = match std::fs::read_to_string(path) {\n        Ok(text) => text,\n        Err(err) => {\n            eprintln!(\"cannot read {}: {}\", path, err);\n            std::process::exit(2);\n        }\n    };\n    let mut records: Vec<Vec<&str>> = Vec::new();\n    for line in text.lines() {\n        let cells: Vec<&str> = line.split(',').collect();\n        if cells.iter().all(|cell| cell.trim().is_empty()) {\n            continue;\n        }\n        records.push(cells);\n    }\n    if !records.is_empty() && !records[0].iter().all(|cell| looks_numeric(cell)) {\n        records.remove(0);\n    }\n    records\n        .iter()\n        .map(|cells| cells.iter().map(|cell| parse_cell(cell)).collect())\n        .collect()\n}\n\n/// Pad short rows with 0.0 (and trim long ones) to the training feature width.\nfn pad(mut row: Vec<f64>, width: usize) -> Vec<f64> {\n    while row.len() < width {\n        row.push(0.0);\n    }\n    row.truncate(width);\n    row\n}\n\n/// One shortest round-trip decimal per line (matches Python's repr()).\nfn write_predictions(path: &str, predictions: &[f64]) {\n    let mut out = String::new();\n    for value in predictions {\n        out.push_str(&format!(\"{:?}\\n\", value));\n    }\n    if let Err(err) = std::fs::write(path, out) {\n        eprintln!(\"cannot write {}: {}\", path, err);\n        std::process::exit(2);\n    }\n}\n\nfn main() {\n    let args: Vec<String> = std::env::args().collect();\n    if args.len() != 4 {\n        eprintln!(\"usage: model train.csv test_features.csv predictions.csv\");\n        std::process::exit(2);\n    }\n    let train_rows = read_csv(&args[1]);\n    if train_rows.is_empty() {\n        eprintln!(\"training data is empty\");\n        std::process::exit(2);\n    }\n    let y_train: Vec<f64> = train_rows.iter().map(|row| row[row.len() - 1]).collect();\n    let features: Vec<Vec<f64>> = train_rows.iter().map(|row| row[..row.len() - 1].to_vec()).collect();\n    let mut width = 0usize;\n    for row in &features {\n        if row.len() > width {\n            width = row.len();\n        }\n    }\n    let mut x_train: Vec<Vec<f64>> = Vec::new();\n    for row in features {\n        x_train.push(pad(row, width));\n    }\n    let mut x_test: Vec<Vec<f64>> = Vec::new();\n    for row in read_csv(&args[2]) {\n        x_test.push(pad(row, width));\n    }\n    let model = Model::fit(&x_train, &y_train);\n    let predictions = model.predict(&x_test);\n    write_predictions(&args[3], &predictions);\n}\n"
+    },
+    {
+      "bytes": 9310,
+      "language": "python",
+      "sha256": "c7530a781b98ea118c0862bca20572e5cdc8915b7d6ddd516bdf5e47e410d5bc",
+      "source": "\"\"\"Regression model: standard scaling, then ridge regression.\n\nThis program trains a regression model on train.csv, in which every row holds the feature\ncolumns followed by the target as the last column, and then writes one prediction per line for\nthe rows of test_features.csv. All arithmetic is IEEE-754 double precision in a fixed evaluation\norder, so repeated runs give identical bits.\n\nThe feature pipeline has 1 stage, applied in order; each stage is marked \"replaced\" when it\noverwrites the columns it receives or \"appended\" when it keeps them and adds its outputs\nalongside, and after every stage non-finite cells become 0.0 and each row is capped at 512\ncolumns. Stage 1 (standard_scaler, replaced) centers each column by its training mean and\ndivides by the standard deviation (1/n convention, floored at 1e-9), clamping the score to [-20,\n20].\n\nThe head (ridge_regression) is ridge regression (Hoerl & Kennard, 1970) on standardized columns\nwith penalty max(0.02*n, 1e-3); the symmetric positive-definite normal equations are solved by a\nCholesky factorization and predictions are clipped to [-60, 60]. Seeded stages draw weights from\na permuted congruential generator (PCG XSH-RR 64/32; O'Neill, 2014) keyed by the stage seed and\nthe input/output widths, so training is fully deterministic. Missing or malformed CSV cells\nparse as 0.0 and short rows are padded with zeros to the training width.\n\nUsage: python3 model.py train.csv test_features.csv predictions.csv\n\"\"\"\n\n\nimport csv\nimport math\nimport sys\n\n\ndef _clamp(value, lo, hi):\n    \"\"\"Clamp value to [lo, hi]; NaN passes through (same branch order as the mirror).\"\"\"\n    if value < lo:\n        return lo\n    if value > hi:\n        return hi\n    return value\n\n\ndef _sanitize(x):\n    \"\"\"Replace non-finite values with 0.0 in every row.\"\"\"\n    return [[v if math.isfinite(v) else 0.0 for v in row] for row in x]\n\n\ndef _finish_stage(x, out, append):\n    \"\"\"Stage epilogue: optionally keep the inputs, cap width at 512, zero non-finite cells.\"\"\"\n    if append:\n        out = [x[i] + out[i] for i in range(len(out))]\n    result = []\n    for row in out:\n        if len(row) > 512:\n            row = row[:512]\n        row = [v if math.isfinite(v) else 0.0 for v in row]\n        if not row:\n            row = [0.0]\n        result.append(row)\n    return result\n\n\ndef _std_fit(x):\n    \"\"\"Per-column mean and standard deviation (1/n convention), floored at 1e-9.\"\"\"\n    n = max(len(x), 1)\n    p = len(x[0])\n    means = [0.0] * p\n    scales = [1.0] * p\n    for j in range(p):\n        s = 0.0\n        for row in x:\n            s += row[j]\n        means[j] = s / n\n        v = 0.0\n        for row in x:\n            d = row[j] - means[j]\n            v += d * d\n        scales[j] = max(math.sqrt(v / n), 1e-9)\n    return means, scales\n\n\ndef _cholesky_solve(a, b, p):\n    \"\"\"Solve the symmetric positive-definite system A w = b.\n\n    A (flattened row-major, overwritten) is factored in place as L L^T, then a\n    forward and a backward triangular solve produce w. A tiny 1e-6 pivot stands\n    in whenever a diagonal entry falls under 1e-12.\"\"\"\n    for i in range(p):\n        for j in range(i + 1):\n            s = a[i * p + j]\n            for k in range(j):\n                s -= a[i * p + k] * a[j * p + k]\n            if i == j:\n                a[i * p + j] = math.sqrt(s) if s > 1e-12 else 1e-6\n            else:\n                a[i * p + j] = s / a[j * p + j]\n    z = [0.0] * p\n    for i in range(p):\n        s = b[i]\n        for k in range(i):\n            s -= a[i * p + k] * z[k]\n        z[i] = s / a[i * p + i]\n    w = [0.0] * p\n    for i in range(p - 1, -1, -1):\n        s = z[i]\n        for k in range(i + 1, p):\n            s -= a[k * p + i] * w[k]\n        w[i] = s / a[i * p + i]\n    return w\n\n\ndef standard_scaler_fit(x):\n    \"\"\"This transform centers each column by its training mean and divides by the standard\n    deviation (1/n convention, floored at 1e-9), clamping the score to [-20, 20].\n    \"\"\"\n    return _std_fit(x)\n\n\ndef standard_scaler_apply(state, x, append):\n    means, scales = state\n    out = [[_clamp((v - means[j]) / scales[j], -20.0, 20.0) for j, v in enumerate(row)] for row in x]\n    return _finish_stage(x, out, append)\n\n\ndef ridge_regression_fit(x, y, lambda_frac):\n    \"\"\"This head is ridge regression (Hoerl & Kennard, 1970) on standardized columns with penalty\n    max(0.02*n, 1e-3); the symmetric positive-definite normal equations are solved by a Cholesky\n    factorization and predictions are clipped to [-60, 60].\n    \"\"\"\n    n = min(len(x), len(y))\n    p = len(x[0])\n    means, scales = _std_fit(x)\n    lam = max(lambda_frac * n, 1e-3)\n    y_mean = 0.0\n    for i in range(n):\n        y_mean += y[i]\n    y_mean /= max(n, 1)\n    ata = [0.0] * (p * p)\n    atb = [0.0] * p\n    xs_row = [0.0] * p\n    for r in range(n):\n        row = x[r]\n        for j in range(p):\n            xs_row[j] = _clamp((row[j] - means[j]) / scales[j], -20.0, 20.0)\n        yr = y[r] - y_mean\n        for i in range(p):\n            xi = xs_row[i]\n            atb[i] += xi * yr\n            for j in range(i, p):\n                ata[i * p + j] += xi * xs_row[j]\n    for i in range(p):\n        ata[i * p + i] += lam\n        for j in range(i):\n            ata[i * p + j] = ata[j * p + i]\n    w = [y_mean] + _cholesky_solve(ata, atb, p)\n    return (means, scales, w)\n\n\ndef ridge_regression_predict(state, x):\n    means, scales, w = state\n    p = len(means)\n    predictions = []\n    for row in x:\n        z = w[0]\n        for j in range(min(p, len(row))):\n            xs = _clamp((row[j] - means[j]) / scales[j], -20.0, 20.0)\n            z += w[j + 1] * xs\n        predictions.append(_clamp(z, -60.0, 60.0))\n    return predictions\n\n\nclass Model:\n    \"\"\"Feature stages applied in order, then the ridge_regression head.\"\"\"\n\n    def fit(self, x_rows: list, y: list) -> \"Model\":\n        \"\"\"Fit every stage in order on the training rows.\"\"\"\n        if not x_rows or len(y) < len(x_rows):\n            raise SystemExit(\"training data is empty or target is short\")\n        x = _sanitize(x_rows)\n        self.stage1 = standard_scaler_fit(x)\n        x = standard_scaler_apply(self.stage1, x, False)\n        self.head = ridge_regression_fit(x, y, 0.02)\n        return self\n\n    def predict(self, x_rows: list) -> list:\n        \"\"\"Apply the fitted stages, then the regression head.\"\"\"\n        x = _sanitize(x_rows)\n        x = standard_scaler_apply(self.stage1, x, False)\n        return ridge_regression_predict(self.head, x)\n\n    def score(self, x_rows: list, y: list) -> float:\n        \"\"\"Coefficient of determination R^2 of predict(x_rows) against y.\"\"\"\n        predictions = self.predict(x_rows)\n        n = min(len(y), len(predictions))\n        if n == 0:\n            return 0.0\n        mean = 0.0\n        for i in range(n):\n            mean += y[i]\n        mean /= n\n        ss_res = 0.0\n        ss_tot = 0.0\n        for i in range(n):\n            d = y[i] - predictions[i]\n            ss_res += d * d\n            t = y[i] - mean\n            ss_tot += t * t\n        if ss_tot <= 0.0:\n            return 0.0\n        return 1.0 - ss_res / ss_tot\n\n\ndef _parse_cell(cell):\n    \"\"\"Parse one CSV cell; blank, malformed, or non-finite cells become 0.0.\"\"\"\n    text = cell.strip()\n    if not text or \"_\" in text:\n        return 0.0\n    try:\n        value = float(text)\n    except ValueError:\n        return 0.0\n    return value if math.isfinite(value) else 0.0\n\n\ndef _looks_numeric(cell):\n    text = cell.strip()\n    if not text:\n        return True\n    if \"_\" in text:\n        return False\n    try:\n        float(text)\n    except ValueError:\n        return False\n    return True\n\n\ndef _read_csv(path):\n    \"\"\"Read CSV rows of floats, skipping blank lines and one header line if present.\"\"\"\n    records = []\n    with open(path, newline=\"\") as handle:\n        for record in csv.reader(handle):\n            if not record or all(not cell.strip() for cell in record):\n                continue\n            records.append(record)\n    if records and not all(_looks_numeric(cell) for cell in records[0]):\n        records = records[1:]\n    return [[_parse_cell(cell) for cell in record] for record in records]\n\n\ndef _pad(row, width):\n    \"\"\"Pad short rows with 0.0 (and trim long ones) to the training feature width.\"\"\"\n    if len(row) < width:\n        return row + [0.0] * (width - len(row))\n    return row[:width]\n\n\ndef _write_predictions(path, predictions):\n    \"\"\"One repr() per line: the shortest decimal that parses back to the same float.\"\"\"\n    with open(path, \"w\") as handle:\n        for value in predictions:\n            handle.write(repr(value) + \"\\n\")\n\n\ndef main(argv):\n    if len(argv) != 3:\n        raise SystemExit(\"usage: python3 model.py train.csv test_features.csv predictions.csv\")\n    train_rows = _read_csv(argv[0])\n    if not train_rows:\n        raise SystemExit(\"training data is empty\")\n    y_train = [row[-1] for row in train_rows]\n    features = [row[:-1] for row in train_rows]\n    width = 0\n    for row in features:\n        if len(row) > width:\n            width = len(row)\n    x_train = [_pad(row, width) for row in features]\n    x_test = [_pad(row, width) for row in _read_csv(argv[1])]\n    model = Model()\n    model.fit(x_train, y_train)\n    _write_predictions(argv[2], model.predict(x_test))\n\n\nif __name__ == \"__main__\":\n    main(sys.argv[1:])\n"
+    },
+    {
+      "bytes": 484,
+      "language": "manifest",
+      "sha256": "27f1cc38f6fb9e7e4eddef6788c533dbd7d10c51a55574e99d4fc076c961cc1d",
+      "source": "{\"schema\":\"battle-artifact-v1\",\"program\":\"(pipe X (standardize) (ridge))\",\"program_sha256\":\"1a51299084d82085145b0aa9e2021a775de65d4a818a62afabe899ca3b48cf5f\",\"dsl\":\"(pipe X (standardize) (ridge))\",\"genome_sha256\":\"1a51299084d82085145b0aa9e2021a775de65d4a818a62afabe899ca3b48cf5f\",\"flavor\":\"pipeline\",\"emitter_version\":\"2.2.0\",\"py_sha256\":\"c7530a781b98ea118c0862bca20572e5cdc8915b7d6ddd516bdf5e47e410d5bc\",\"rs_sha256\":\"953402dd0d5c053d3d7ce5215280af8b43749d209bac2b0e373d0a051efc64e2\"}"
+    },
+    {
+      "bytes": 12291,
+      "language": "cpp17",
+      "sha256": "39b7e5fee4c38c9be1e7be022fc579650cc6beb148b1543be7d3dff45a058532",
+      "source": "// Standalone regression model — self-contained, depends only on the C++\n// standard library, and accepts all data through its C ABI.\n//   Build: g++ -O2 -std=c++17 -ffp-contract=off -fno-fast-math -c model.cpp\n//\n// All arithmetic uses IEEE-754 double precision in a fixed evaluation order, so\n// repeated runs on the same input produce identical results. Build without\n// fused-multiply-add contraction (-ffp-contract=off) to keep each multiply and\n// add separately rounded.\n#include <algorithm>\n#include <cmath>\n#include <cstddef>\n#include <cstdint>\n#include <cstring>\n#include <limits>\n#include <stdexcept>\n#include <utility>\n#include <vector>\n\n// Clamp to [lo, hi] with a fixed branch order; a NaN input passes through.\nstatic double clamp_range(double x, double lo, double hi) {\n    if (x < lo) x = lo;\n    if (x > hi) x = hi;\n    return x;\n}\n\n// Larger of two values, ignoring NaN.\nstatic double max_num(double a, double b) {\n    if (std::isnan(a)) return b;\n    if (std::isnan(b)) return a;\n    if (a < b) return b;\n    return a;\n}\n\n// IEEE-754 total order, so sorts and score-ranking are deterministic (matches the\n// reference tie/sign handling). Unused by pipelines with no ordering stage.\n[[maybe_unused]] static bool total_less(double a, double b) {\n    std::uint64_t ua;\n    std::uint64_t ub;\n    std::memcpy(&ua, &a, sizeof(double));\n    std::memcpy(&ub, &b, sizeof(double));\n    std::int64_t la = static_cast<std::int64_t>(ua);\n    std::int64_t lb = static_cast<std::int64_t>(ub);\n    la ^= static_cast<std::int64_t>(static_cast<std::uint64_t>(la >> 63) >> 1);\n    lb ^= static_cast<std::int64_t>(static_cast<std::uint64_t>(lb >> 63) >> 1);\n    return la < lb;\n}\n\n// Replace non-finite values with 0.0 in every row.\nstatic std::vector<std::vector<double>> sanitize(const std::vector<std::vector<double>>& x) {\n    std::vector<std::vector<double>> out;\n    out.reserve(x.size());\n    for (const auto& row : x) {\n        std::vector<double> r;\n        r.reserve(row.size());\n        for (double v : row) r.push_back(std::isfinite(v) ? v : 0.0);\n        out.push_back(std::move(r));\n    }\n    return out;\n}\n\n// Stage epilogue: optionally keep the inputs, cap width at 512, zero non-finite cells.\nstatic std::vector<std::vector<double>> finish_stage(const std::vector<std::vector<double>>& x, std::vector<std::vector<double>> out, bool append) {\n    if (append) {\n        for (std::size_t i = 0; i < out.size(); ++i) {\n            std::vector<double> merged = x[i];\n            merged.insert(merged.end(), out[i].begin(), out[i].end());\n            out[i] = std::move(merged);\n        }\n    }\n    for (auto& row : out) {\n        if (row.size() > 512) row.resize(512);\n        for (double& v : row) {\n            if (!std::isfinite(v)) v = 0.0;\n        }\n        if (row.empty()) row.push_back(0.0);\n    }\n    return out;\n}\n\n// Per-column mean and standard deviation (1/n convention), floored at 1e-9.\nstatic void std_fit(const std::vector<std::vector<double>>& x, std::vector<double>& means, std::vector<double>& scales) {\n    double n = static_cast<double>(std::max<std::size_t>(x.size(), 1));\n    std::size_t p = x[0].size();\n    means.assign(p, 0.0);\n    scales.assign(p, 1.0);\n    for (std::size_t j = 0; j < p; ++j) {\n        double s = 0.0;\n        for (const auto& row : x) s += row[j];\n        means[j] = s / n;\n        double v = 0.0;\n        for (const auto& row : x) {\n            double d = row[j] - means[j];\n            v += d * d;\n        }\n        scales[j] = max_num(std::sqrt(v / n), 1e-9);\n    }\n}\n\n// Solve the symmetric positive-definite system A w = b (A row-major, overwritten\n// in place as L L^T, then forward and backward triangular solves).\nstatic std::vector<double> cholesky_solve(std::vector<double>& a, const std::vector<double>& b, std::size_t p) {\n    for (std::size_t i = 0; i < p; ++i) {\n        for (std::size_t j = 0; j < i + 1; ++j) {\n            double s = a[i * p + j];\n            for (std::size_t k = 0; k < j; ++k) s -= a[i * p + k] * a[j * p + k];\n            if (i == j) {\n                a[i * p + j] = (s > 1e-12) ? std::sqrt(s) : 1e-6;\n            } else {\n                a[i * p + j] = s / a[j * p + j];\n            }\n        }\n    }\n    std::vector<double> z(p, 0.0);\n    for (std::size_t i = 0; i < p; ++i) {\n        double s = b[i];\n        for (std::size_t k = 0; k < i; ++k) s -= a[i * p + k] * z[k];\n        z[i] = s / a[i * p + i];\n    }\n    std::vector<double> w(p, 0.0);\n    for (std::size_t ii = 0; ii < p; ++ii) {\n        std::size_t i = p - 1 - ii;\n        double s = z[i];\n        for (std::size_t k = i + 1; k < p; ++k) s -= a[k * p + i] * w[k];\n        w[i] = s / a[i * p + i];\n    }\n    return w;\n}\n\nstruct StandardScaler {\n    std::vector<double> means;\n    std::vector<double> scales;\n};\n\n// Centers each column by its training mean and divides by its standard deviation.\nstatic StandardScaler standard_scaler_fit(const std::vector<std::vector<double>>& x) {\n    StandardScaler state;\n    std_fit(x, state.means, state.scales);\n    return state;\n}\n\nstatic std::vector<std::vector<double>> standard_scaler_apply(const StandardScaler& state, const std::vector<std::vector<double>>& x, bool append) {\n    std::vector<std::vector<double>> out;\n    out.reserve(x.size());\n    for (const auto& row : x) {\n        std::vector<double> r;\n        r.reserve(row.size());\n        for (std::size_t j = 0; j < row.size(); ++j) {\n            r.push_back(clamp_range((row[j] - state.means[j]) / state.scales[j], -20.0, 20.0));\n        }\n        out.push_back(std::move(r));\n    }\n    return finish_stage(x, std::move(out), append);\n}\n\nstruct RidgeRegression {\n    std::vector<double> means;\n    std::vector<double> scales;\n    std::vector<double> w;\n};\n\n// Ridge regression on standardized features via the Cholesky normal equations.\nstatic RidgeRegression ridge_regression_fit(const std::vector<std::vector<double>>& x, const std::vector<double>& y, double lambda_frac) {\n    std::size_t n = std::min(x.size(), y.size());\n    std::size_t p = x[0].size();\n    std::vector<double> means;\n    std::vector<double> scales;\n    std_fit(x, means, scales);\n    double lam = max_num(lambda_frac * static_cast<double>(n), 1e-3);\n    double y_mean = 0.0;\n    for (std::size_t i = 0; i < n; ++i) y_mean += y[i];\n    y_mean /= static_cast<double>(std::max<std::size_t>(n, 1));\n    std::vector<double> ata(p * p, 0.0);\n    std::vector<double> atb(p, 0.0);\n    std::vector<double> xs_row(p, 0.0);\n    for (std::size_t r = 0; r < n; ++r) {\n        const auto& row = x[r];\n        for (std::size_t j = 0; j < p; ++j) {\n            xs_row[j] = clamp_range((row[j] - means[j]) / scales[j], -20.0, 20.0);\n        }\n        double yr = y[r] - y_mean;\n        for (std::size_t i = 0; i < p; ++i) {\n            double xi = xs_row[i];\n            atb[i] += xi * yr;\n            for (std::size_t j = i; j < p; ++j) {\n                ata[i * p + j] += xi * xs_row[j];\n            }\n        }\n    }\n    for (std::size_t i = 0; i < p; ++i) {\n        ata[i * p + i] += lam;\n        for (std::size_t j = 0; j < i; ++j) {\n            ata[i * p + j] = ata[j * p + i];\n        }\n    }\n    std::vector<double> coeffs = cholesky_solve(ata, atb, p);\n    std::vector<double> w;\n    w.reserve(p + 1);\n    w.push_back(y_mean);\n    for (double c : coeffs) w.push_back(c);\n    RidgeRegression state;\n    state.means = std::move(means);\n    state.scales = std::move(scales);\n    state.w = std::move(w);\n    return state;\n}\n\nstatic std::vector<double> ridge_regression_predict(const RidgeRegression& state, const std::vector<std::vector<double>>& x) {\n    std::size_t p = state.means.size();\n    std::vector<double> predictions;\n    predictions.reserve(x.size());\n    for (const auto& row : x) {\n        double z = state.w[0];\n        std::size_t lim = std::min(p, row.size());\n        for (std::size_t j = 0; j < lim; ++j) {\n            double xs = clamp_range((row[j] - state.means[j]) / state.scales[j], -20.0, 20.0);\n            z += state.w[j + 1] * xs;\n        }\n        predictions.push_back(clamp_range(z, -60.0, 60.0));\n    }\n    return predictions;\n}\n\n// Feature stages applied in order, then the ridge regression head.\nstruct Model {\n    StandardScaler stage1;\n    RidgeRegression head;\n\n    static Model fit(const std::vector<std::vector<double>>& x_in, const std::vector<double>& y);\n    std::vector<double> predict(const std::vector<std::vector<double>>& x_in) const;\n};\n\nModel Model::fit(const std::vector<std::vector<double>>& x_in, const std::vector<double>& y) {\n    if (x_in.empty() || y.size() < x_in.size()) {\n        throw std::invalid_argument(\"training data is empty or target is short\");\n    }\n    std::vector<std::vector<double>> x = sanitize(x_in);\n    auto stage1 = standard_scaler_fit(x);\n    x = standard_scaler_apply(stage1, x, false);\n    RidgeRegression head = ridge_regression_fit(x, y, 0.02);\n    Model m;\n    m.stage1 = std::move(stage1);\n    m.head = std::move(head);\n    return m;\n}\n\nstd::vector<double> Model::predict(const std::vector<std::vector<double>>& x_in) const {\n    std::vector<std::vector<double>> x = sanitize(x_in);\n    x = standard_scaler_apply(stage1, x, false);\n    return ridge_regression_predict(head, x);\n}\n\n// ---- caller-owned C ABI ----------------------------------------------------\n\nextern \"C\" {\n\nstruct model_handle {\n    Model model;\n    std::size_t width;\n\n    model_handle(Model&& fitted, std::size_t fitted_width)\n        : model(std::move(fitted)), width(fitted_width) {}\n};\n\nstd::uint32_t model_abi_version(void) noexcept {\n    return 1U;\n}\n\nstd::size_t model_workspace_bytes(const model_handle*, std::size_t) noexcept {\n    return 0U;\n}\n\nint model_fit_numeric(\n    const double* values,\n    std::size_t values_len,\n    std::size_t rows,\n    std::size_t columns,\n    const double* targets,\n    std::size_t target_len,\n    model_handle** out\n) noexcept {\n    if (out == nullptr) return 1;\n    *out = nullptr;\n    if (values == nullptr || targets == nullptr || rows == 0U || columns == 0U) return 1;\n    if (target_len != rows) return 1;\n    if (rows > std::numeric_limits<std::size_t>::max() / columns) return 1;\n    if (values_len < rows * columns) return 1;\n    try {\n        std::vector<std::vector<double>> x;\n        x.reserve(rows);\n        std::vector<double> y;\n        y.reserve(rows);\n        for (std::size_t row = 0; row < rows; ++row) {\n            std::vector<double> cells;\n            cells.reserve(columns);\n            for (std::size_t column = 0; column < columns; ++column) {\n                cells.push_back(values[row * columns + column]);\n            }\n            if (!std::isfinite(targets[row])) return 1;\n            x.push_back(std::move(cells));\n            y.push_back(targets[row]);\n        }\n        Model fitted = Model::fit(x, y);\n        *out = new model_handle(std::move(fitted), columns);\n        return 0;\n    } catch (...) {\n        return 2;\n    }\n}\n\nint model_predict_numeric_batch(\n    const model_handle* handle,\n    const double* values,\n    std::size_t values_len,\n    std::size_t rows,\n    std::size_t columns,\n    void* workspace,\n    std::size_t workspace_bytes,\n    double* out,\n    std::size_t out_len\n) noexcept {\n    (void)workspace;\n    (void)workspace_bytes;\n    if (handle == nullptr || columns == 0U || columns != handle->width) return 1;\n    if (rows == 0U) return values_len == 0U ? 0 : 1;\n    if (rows > std::numeric_limits<std::size_t>::max() / columns) return 1;\n    if (values == nullptr || values_len < rows * columns || out == nullptr || out_len < rows) return 1;\n    try {\n        std::vector<std::vector<double>> x;\n        x.reserve(rows);\n        for (std::size_t row = 0; row < rows; ++row) {\n            std::vector<double> cells;\n            cells.reserve(columns);\n            for (std::size_t column = 0; column < columns; ++column) {\n                cells.push_back(values[row * columns + column]);\n            }\n            x.push_back(std::move(cells));\n        }\n        std::vector<double> predictions = handle->model.predict(x);\n        if (predictions.size() != rows) return 2;\n        for (std::size_t row = 0; row < rows; ++row) out[row] = predictions[row];\n        return 0;\n    } catch (...) {\n        return 2;\n    }\n}\n\nvoid model_unload(model_handle* handle) noexcept {\n    delete handle;\n}\n\n}  // extern \"C\"\n\n"
+    },
+    {
+      "bytes": 19741,
+      "language": "javascript",
+      "sha256": "513524f1c0879bc1ae947accc750741388ef3e5a1130886add474e822f22f1dc",
+      "source": "// Standalone regression model. All input and output crosses typed numeric boundaries.\n'use strict';\n\nfunction mExp(x){return Math.exp(x);}\nfunction mLog(x){return Math.log(x);}\nfunction mSin(x){return Math.sin(x);}\nfunction mCos(x){return Math.cos(x);}\n\nfunction clampRange(x,lo,hi){if(x<lo)x=lo;if(x>hi)x=hi;return x;}\nfunction maxNum(a,b){if(Number.isNaN(a))return b;if(Number.isNaN(b))return a;return a<b?b:a;}\nfunction totalCompare(a,b){\n  if(a<b)return -1;if(a>b)return 1;\n  if(Object.is(a,-0)&&Object.is(b,0))return -1;\n  if(Object.is(a,0)&&Object.is(b,-0))return 1;\n  return 0;\n}\nfunction sanitize(x){return x.map(row=>Array.from(row,v=>Number.isFinite(v)?v:0.0));}\nfunction finishStage(x,out,append){\n  for(let r=0;r<out.length;r++){\n    let row=append?x[r].concat(out[r]):out[r];\n    if(row.length>512)row.length=512;\n    for(let j=0;j<row.length;j++)if(!Number.isFinite(row[j]))row[j]=0.0;\n    if(row.length===0)row.push(0.0);\n    out[r]=row;\n  }\n  return out;\n}\nfunction stdFit(x){\n  const n=Math.max(x.length,1),p=x[0].length,means=new Array(p).fill(0.0),scales=new Array(p).fill(1.0);\n  for(let j=0;j<p;j++){\n    let s=0.0;for(const row of x)s+=row[j];means[j]=s/n;\n    let v=0.0;for(const row of x){const d=row[j]-means[j];v+=d*d;}\n    scales[j]=maxNum(Math.sqrt(v/n),1e-9);\n  }\n  return {means,scales};\n}\nfunction choleskySolve(a,b,p){\n  for(let i=0;i<p;i++)for(let j=0;j<=i;j++){\n    let s=a[i*p+j];for(let k=0;k<j;k++)s-=a[i*p+k]*a[j*p+k];\n    a[i*p+j]=i===j?(s>1e-12?Math.sqrt(s):1e-6):s/a[j*p+j];\n  }\n  const z=new Array(p).fill(0.0);\n  for(let i=0;i<p;i++){let s=b[i];for(let k=0;k<i;k++)s-=a[i*p+k]*z[k];z[i]=s/a[i*p+i];}\n  const w=new Array(p).fill(0.0);\n  for(let ii=0;ii<p;ii++){const i=p-1-ii;let s=z[i];for(let k=i+1;k<p;k++)s-=a[k*p+i]*w[k];w[i]=s/a[i*p+i];}\n  return w;\n}\nfunction sortedColumn(x,j){const out=x.map(row=>row[j]);out.sort(totalCompare);return out;}\nfunction quantile(s,q){if(s.length===0)return 0.0;const pos=q*(s.length-1),lo=Math.trunc(pos),hi=Math.min(lo+1,s.length-1),f=pos-lo;return s[lo]*(1.0-f)+s[hi]*f;}\nfunction lowerBound(s,v){let lo=0,hi=s.length;while(lo<hi){const mid=Math.trunc((lo+hi)/2);if(s[mid]<v)lo=mid+1;else hi=mid;}return lo;}\nfunction upperBound(s,v){let lo=0,hi=s.length;while(lo<hi){const mid=Math.trunc((lo+hi)/2);if(s[mid]<=v)lo=mid+1;else hi=mid;}return lo;}\nfunction midRank(s,v){return (lowerBound(s,v)+upperBound(s,v))/(2.0*s.length);}\nfunction probit(p){\n  const a=[-3.969683028665376e1,2.209460984245205e2,-2.759285104469687e2,1.383577518672690e2,-3.066479806614716e1,2.506628277459239],\n    b=[-5.447609879822406e1,1.615858368580409e2,-1.556989798598866e2,6.680131188771972e1,-1.328068155288572e1],\n    c=[-7.784894002430293e-3,-3.223964580411365e-1,-2.400758277161838,-2.549732539343734,4.374664141464968,2.938163982698783],\n    d=[7.784695709041462e-3,3.224671290700398e-1,2.445134137142996,3.754408661907416];\n  p=clampRange(p,1e-12,1.0-1e-12);\n  if(p<0.02425){const q=Math.sqrt(-2.0*mLog(p));return (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1.0);}\n  if(p<=1.0-0.02425){const q=p-0.5,r=q*q;return (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q/(((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1.0);}\n  const q=Math.sqrt(-2.0*mLog(1.0-p));return -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1.0);\n}\nfunction mSigmoid(v){return 1.0/(1.0+mExp(-clampRange(v,-30.0,30.0)));}\nfunction dot(a,b){let s=0.0;for(let i=0;i<Math.min(a.length,b.length);i++)s+=a[i]*b[i];return s;}\nfunction pearson(a,b){\n  const n=Math.min(a.length,b.length);if(n<2)return 0.0;\n  let ma=0.0,mb=0.0;for(let i=0;i<n;i++){ma+=a[i];mb+=b[i];}ma/=n;mb/=n;\n  let sab=0.0,saa=0.0,sbb=0.0;for(let i=0;i<n;i++){const da=a[i]-ma,db=b[i]-mb;sab+=da*db;saa+=da*da;sbb+=db*db;}\n  return saa<=0.0||sbb<=0.0?0.0:sab/Math.sqrt(saa*sbb);\n}\nfunction quantileEdges(x,bins){const out=[];for(let j=0;j<x[0].length;j++){const s=sortedColumn(x,j),e=[];for(let b=1;b<bins;b++)e.push(quantile(s,b/bins));out.push(e);}return out;}\n\nconst PCG_MASK64=0xffffffffffffffffn;\nfunction rotr32(x,r){return ((x>>>r)|(x<<((32-r)&31)))>>>0;}\nclass Pcg32{\n  constructor(seed,stream){this.state=0n;this.inc=((stream<<1n)|1n)&PCG_MASK64;this.nextU32();this.state=(this.state+seed)&PCG_MASK64;this.nextU32();}\n  nextU32(){const old=this.state;this.state=(old*6364136223846793005n+this.inc)&PCG_MASK64;const x=Number((((old>>18n)^old)>>27n)&0xffffffffn)>>>0,r=Number((old>>59n)&31n);return rotr32(x,r);}\n  nextF64(){const bits=(BigInt(this.nextU32())<<32n)|BigInt(this.nextU32());return Number(bits>>11n)*(1.0/9007199254740992.0);}\n  rangeF64(a,b){return a+(b-a)*this.nextF64();}\n  gaussian(){const u1=maxNum(this.nextF64(),1e-12),u2=this.nextF64();return Math.sqrt(-2.0*mLog(u1))*mCos(2.0*3.141592653589793*u2);}\n}\nfunction stageRng(seed,inCols,nOut){return new Pcg32(seed,(BigInt(inCols)<<32n)^BigInt(nOut));}\n\nfunction standardizeFit(x){return stdFit(x);}\nfunction standardizeApply(s,x,a){return finishStage(x,x.map(row=>row.map((v,j)=>clampRange((v-s.means[j])/s.scales[j],-20.0,20.0))),a);}\nfunction robustScaleFit(x){const medians=[],scales=[];for(let j=0;j<x[0].length;j++){const s=sortedColumn(x,j);medians.push(quantile(s,0.5));scales.push(maxNum(quantile(s,0.75)-quantile(s,0.25),1e-9));}return {medians,scales};}\nfunction robustScaleApply(s,x,a){return finishStage(x,x.map(row=>row.map((v,j)=>(v-s.medians[j])/s.scales[j])),a);}\nfunction rankFit(x){const sorted=[];for(let j=0;j<x[0].length;j++)sorted.push(sortedColumn(x,j));return {sorted};}\nfunction rankApply(s,x,a){return finishStage(x,x.map(row=>row.map((v,j)=>midRank(s.sorted[j],v))),a);}\nfunction blomApply(s,x,a){return finishStage(x,x.map(row=>row.map((v,j)=>{const n=s.sorted[j].length,mid=midRank(s.sorted[j],v)*n;return probit((mid+0.125)/(n+0.25));})),a);}\nfunction winsorFit(x,q){const lo=[],hi=[];for(let j=0;j<x[0].length;j++){const s=sortedColumn(x,j),low=quantile(s,q);lo.push(low);hi.push(maxNum(quantile(s,1.0-q),low));}return {lo,hi};}\nfunction winsorApply(s,x,a){return finishStage(x,x.map(row=>row.map((v,j)=>clampRange(v,s.lo[j],s.hi[j]))),a);}\nfunction sigmoidApply(x,a){return finishStage(x,x.map(row=>row.map(mSigmoid)),a);}\nfunction stepApply(x,t,a){return finishStage(x,x.map(row=>row.map(v=>v>t?1.0:0.0)),a);}\nfunction normRowApply(x,a){return finishStage(x,x.map(row=>{let s=0.0;for(const v of row)s+=v*v;const inv=1.0/maxNum(Math.sqrt(s),1e-9);return row.map(v=>v*inv);}),a);}\nfunction chebApply(x,degree,a){return finishStage(x,x.map(row=>{const out=[];for(const v of row){const u=clampRange(2.0*v-1.0,-1.0,1.0);let prev=1.0,cur=u;for(let d=0;d<degree;d++){out.push(cur);const next=2.0*u*cur-prev;prev=cur;cur=next;}}return out;}),a);}\nfunction rffFit(x,n,gamma,seed){const rng=stageRng(seed,x[0].length,n),scale=Math.sqrt(2.0*gamma),w=[],b=[];for(let i=0;i<n;i++){const row=[];for(let j=0;j<x[0].length;j++)row.push(rng.gaussian()*scale);w.push(row);}for(let i=0;i<n;i++)b.push(rng.rangeF64(0.0,2.0*3.141592653589793));return {w,b};}\nfunction rffApply(s,x,a,trig){const scale=Math.sqrt(2.0/s.w.length);return finishStage(x,x.map(row=>s.w.map((w,i)=>scale*trig(dot(w,row)+s.b[i]))),a);}\n\nfunction hingeFit(x,knots){const fitted=[];for(let j=0;j<x[0].length;j++){const s=sortedColumn(x,j),col=[];for(let i=1;i<=knots;i++)col.push(quantile(s,i/(knots+1)));fitted.push(col);}return {knots:fitted};}\nfunction hingeApply(s,x,a){return finishStage(x,x.map(row=>{const out=[];for(let j=0;j<row.length;j++)for(const t of s.knots[j])out.push(maxNum(row[j]-t,0.0));return out;}),a);}\nfunction polyFit(x){const pairs=[],cols=x[0].length;for(let i=0;i<cols;i++)pairs.push([i,i]);let full=false;for(let i=0;i<cols&&!full;i++)for(let j=i+1;j<cols;j++){if(pairs.length>=512){full=true;break;}pairs.push([i,j]);}return {pairs};}\nfunction pairsApply(s,x,a){return finishStage(x,x.map(row=>s.pairs.map(pair=>row[pair[0]]*row[pair[1]])),a);}\nfunction quantileBinsApply(s,x,bins,a){return finishStage(x,x.map(row=>row.map((v,j)=>lowerBound(s.edges[j],v)/(bins-1.0))),a);}\nfunction onehotApply(s,x,bins,a){return finishStage(x,x.map(row=>{const out=new Array(row.length*bins).fill(0.0);for(let j=0;j<row.length;j++)out[j*bins+Math.min(lowerBound(s.edges[j],row[j]),bins-1)]=1.0;return out;}),a);}\nfunction pairProdFit(x,y,topk){\n  const scored=[],cols=x[0].length,k=Math.min(topk,cols);\n  for(let j=0;j<cols;j++)scored.push([j,Math.abs(pearson(x.map(row=>row[j]),y))]);\n  scored.sort((a,b)=>{if(totalCompare(b[1],a[1])<0)return -1;if(totalCompare(a[1],b[1])<0)return 1;return a[0]-b[0];});\n  const selected=scored.slice(0,k).map(v=>v[0]).sort((a,b)=>a-b),pairs=[];\n  for(let i=0;i<selected.length;i++)for(let j=i+1;j<selected.length;j++)pairs.push([selected[i],selected[j]]);\n  return {pairs};\n}\nfunction randProjFit(x,k,seed){const rng=stageRng(seed,x[0].length,k),w=[];for(let i=0;i<k;i++){const row=[];for(let j=0;j<x[0].length;j++)row.push(rng.gaussian());w.push(row);}return {w};}\nfunction randProjApply(s,x,a){const inv=1.0/Math.sqrt(s.w.length);return finishStage(x,x.map(row=>s.w.map(w=>dot(w,row)*inv)),a);}\nfunction rowStatsApply(x,a){return finishStage(x,x.map(row=>{\n  const n=row.length;let mean=0.0;for(const v of row)mean+=v;mean/=n;\n  let m2=0.0,m3=0.0,m4=0.0,energy=0.0,mn=Infinity,mx=-Infinity;\n  for(const v of row){const d=v-mean;m2+=d*d;m3+=d*d*d;m4+=d*d*d*d;energy+=v*v;if(v<mn)mn=v;if(v>mx)mx=v;}\n  m2/=n;m3/=n;m4/=n;energy/=n;const sd=Math.sqrt(m2),skew=m2>1e-24?m3/(m2*sd):0.0,kurt=m2>1e-24?m4/(m2*m2)-3.0:0.0,s=Array.from(row);s.sort(totalCompare);\n  return [mean,sd,mn,mx,quantile(s,0.5),quantile(s,0.25),quantile(s,0.75),skew,kurt,energy];\n}),a);}\nfunction rowDiffApply(x,a){return finishStage(x,x.map(row=>{\n  const d=row.length;if(d<2)return new Array(8).fill(0.0);const nd=d-1,diffs=[];for(let j=0;j<nd;j++)diffs.push(row[j+1]-row[j]);\n  let mean=0.0;for(const v of diffs)mean+=v;mean/=nd;let m2=0.0,meanAbs=0.0,energy=0.0,mn=Infinity,mx=-Infinity,signs=0;\n  for(let j=0;j<nd;j++){const v=diffs[j],dd=v-mean;m2+=dd*dd;meanAbs+=Math.abs(v);energy+=v*v;if(v<mn)mn=v;if(v>mx)mx=v;if(j>0&&diffs[j-1]*v<0.0)signs++;}\n  return [mean,Math.sqrt(m2/nd),mn,mx,meanAbs/nd,signs/nd,pearson(row.slice(0,nd),row.slice(1)),energy/nd];\n}),a);}\nfunction obliqueFit(x,n,seed){\n  const rng=stageRng(seed,x[0].length,n),inv=1.0/Math.sqrt(x[0].length),w=[],t=[];\n  for(let i=0;i<n;i++){const row=[];for(let j=0;j<x[0].length;j++)row.push(rng.gaussian()*inv);w.push(row);}\n  for(const wi of w){const p=x.map(row=>dot(wi,row));p.sort(totalCompare);t.push(quantile(p,0.5));}return {w,t};\n}\nfunction obliqueApply(s,x,a){return finishStage(x,x.map(row=>s.w.map((w,i)=>maxNum(dot(w,row)-s.t[i],0.0))),a);}\nfunction landmarkFit(x,k,seed){const rng=stageRng(seed,x[0].length,k),landmarks=[];for(let i=0;i<k;i++){const row=[];for(let j=0;j<x[0].length;j++)row.push(rng.rangeF64(0.0,1.0));landmarks.push(row);}return {landmarks};}\nfunction landmarkApply(s,x,gamma,a){return finishStage(x,x.map(row=>s.landmarks.map(mark=>{let d2=0.0;for(let j=0;j<Math.min(mark.length,row.length);j++){const d=row[j]-mark[j];d2+=d*d;}return mExp(-gamma*d2);})),a);}\nfunction targetBinFit(x,y,bins,prior){\n  const edges=quantileEdges(x,bins),enc=[];let yMean=0.0;for(const v of y)yMean+=v;yMean/=Math.max(y.length,1);\n  for(let j=0;j<x[0].length;j++){const sums=new Array(bins).fill(0.0),counts=new Array(bins).fill(0.0);for(let r=0;r<x.length;r++){const b=Math.min(lowerBound(edges[j],x[r][j]),bins-1);sums[b]+=y[r];counts[b]+=1.0;}const col=[];for(let b=0;b<bins;b++)col.push((sums[b]+prior*yMean)/maxNum(counts[b]+prior,1e-9));enc.push(col);}\n  return {edges,enc};\n}\nfunction targetBinApply(s,x,a){return finishStage(x,x.map(row=>row.map((v,j)=>{const bins=s.enc[j].length;return s.enc[j][Math.min(lowerBound(s.edges[j],v),bins-1)];})),a);}\n\nfunction softThreshold(v,t){if(v>t)return v-t;if(v< -t)return v+t;return 0.0;}\nfunction elasticFit(x,y,alpha,l1Ratio,sweeps){\n  const n=Math.min(x.length,y.length),p=x[0].length,{means,scales}=stdFit(x),xs=[];\n  for(let r=0;r<n;r++){const row=[];for(let j=0;j<p;j++)row.push(clampRange((x[r][j]-means[j])/scales[j],-20.0,20.0));xs.push(row);}\n  let yMean=0.0;for(let i=0;i<n;i++)yMean+=y[i];yMean/=Math.max(n,1);\n  const l1=alpha*l1Ratio,l2=alpha*(1.0-l1Ratio),colSq=new Array(p).fill(0.0),w=new Array(p).fill(0.0),resid=new Array(n);\n  for(const row of xs)for(let j=0;j<p;j++)colSq[j]+=row[j]*row[j];for(let r=0;r<n;r++)resid[r]=y[r]-yMean;\n  for(let sweep=0;sweep<Math.max(sweeps,1);sweep++){let maxDelta=0.0;for(let j=0;j<p;j++){\n    if(colSq[j]<=1e-12)continue;let rho=0.0;for(let r=0;r<n;r++)rho+=xs[r][j]*resid[r];rho=rho/n+w[j]*colSq[j]/n;\n    const next=softThreshold(rho,l1)/(colSq[j]/n+l2),delta=next-w[j];if(delta!==0.0){for(let r=0;r<n;r++)resid[r]-=delta*xs[r][j];w[j]=next;const ad=Math.abs(delta);if(ad>maxDelta)maxDelta=ad;}\n  }if(maxDelta<1e-9)break;}\n  return {means,scales,w0:yMean,w};\n}\nfunction elasticPredict(s,x){return x.map(row=>{let z=s.w0;for(let j=0;j<Math.min(s.means.length,row.length);j++)z+=s.w[j]*clampRange((row[j]-s.means[j])/s.scales[j],-20.0,20.0);return clampRange(z,-60.0,60.0);});}\nfunction ridgeFit(x,y,lambdaFrac){\n  const n=Math.min(x.length,y.length),p=x[0].length,{means,scales}=stdFit(x),lam=maxNum(lambdaFrac*n,1e-3),ata=new Array(p*p).fill(0.0),atb=new Array(p).fill(0.0),xs=new Array(p).fill(0.0);\n  let yMean=0.0;for(let i=0;i<n;i++)yMean+=y[i];yMean/=Math.max(n,1);\n  for(let r=0;r<n;r++){for(let j=0;j<p;j++)xs[j]=clampRange((x[r][j]-means[j])/scales[j],-20.0,20.0);const yr=y[r]-yMean;for(let i=0;i<p;i++){const xi=xs[i];atb[i]+=xi*yr;for(let j=i;j<p;j++)ata[i*p+j]+=xi*xs[j];}}\n  for(let i=0;i<p;i++){ata[i*p+i]+=lam;for(let j=0;j<i;j++)ata[i*p+j]=ata[j*p+i];}\n  return {means,scales,w:[yMean].concat(choleskySolve(ata,atb,p))};\n}\nfunction ridgePredict(s,x){return x.map(row=>{let z=s.w[0];for(let j=0;j<Math.min(s.means.length,row.length);j++)z+=s.w[j+1]*clampRange((row[j]-s.means[j])/s.scales[j],-20.0,20.0);return clampRange(z,-60.0,60.0);});}\n\nfunction fitStage(spec,x,y){\n  let state;\n  switch(spec.kind){\n    case \"standardize\":state=standardizeFit(x);break;\n    case \"robust_scale\":state=robustScaleFit(x);break;\n    case \"rank\":case \"blom\":state=rankFit(x);break;\n    case \"quantile_bins\":case \"bin_onehot\":state={edges:quantileEdges(x,spec.bins)};break;\n    case \"hinge\":state=hingeFit(x,spec.knots);break;\n    case \"winsor_clip\":state=winsorFit(x,spec.q);break;\n    case \"poly_interact\":state=polyFit(x);break;\n    case \"rff_cos\":case \"rff_sin\":state=rffFit(x,spec.n,spec.gamma,spec.seed);break;\n    case \"rand_proj\":state=randProjFit(x,spec.k,spec.seed);break;\n    case \"landmark_dist\":state=landmarkFit(x,spec.k,spec.seed);break;\n    case \"oblique_hinge\":state=obliqueFit(x,spec.n,spec.seed);break;\n    case \"pair_prod\":state=pairProdFit(x,y,spec.topk);break;\n    case \"target_bin_encode\":state=targetBinFit(x,y,spec.bins,spec.prior);break;\n    case \"cheb\":case \"row_stats\":case \"sigmoid\":case \"step\":case \"norm_row\":case \"row_diff_stats\":state=null;break;\n    default:throw new RangeError(\"unsupported fitted stage\");\n  }\n  return [state,applyStage(spec,state,x)];\n}\nfunction applyStage(spec,state,x){\n  switch(spec.kind){\n    case \"standardize\":return standardizeApply(state,x,spec.append);\n    case \"robust_scale\":return robustScaleApply(state,x,spec.append);\n    case \"rank\":return rankApply(state,x,spec.append);\n    case \"blom\":return blomApply(state,x,spec.append);\n    case \"quantile_bins\":return quantileBinsApply(state,x,spec.bins,spec.append);\n    case \"bin_onehot\":return onehotApply(state,x,spec.bins,spec.append);\n    case \"hinge\":return hingeApply(state,x,spec.append);\n    case \"winsor_clip\":return winsorApply(state,x,spec.append);\n    case \"cheb\":return chebApply(x,spec.degree,spec.append);\n    case \"poly_interact\":return pairsApply(state,x,spec.append);\n    case \"rff_cos\":return rffApply(state,x,spec.append,mCos);\n    case \"rff_sin\":return rffApply(state,x,spec.append,mSin);\n    case \"rand_proj\":return randProjApply(state,x,spec.append);\n    case \"landmark_dist\":return landmarkApply(state,x,spec.gamma,spec.append);\n    case \"oblique_hinge\":return obliqueApply(state,x,spec.append);\n    case \"row_stats\":return rowStatsApply(x,spec.append);\n    case \"pair_prod\":return pairsApply(state,x,spec.append);\n    case \"target_bin_encode\":return targetBinApply(state,x,spec.append);\n    case \"sigmoid\":return sigmoidApply(x,spec.append);\n    case \"step\":return stepApply(x,spec.t,spec.append);\n    case \"norm_row\":return normRowApply(x,spec.append);\n    case \"row_diff_stats\":return rowDiffApply(x,spec.append);\n    default:throw new RangeError(\"unsupported applied stage\");\n  }\n}\nfunction fitHead(spec,x,y){if(spec.kind===\"ridge\")return ridgeFit(x,y,spec.lambdaFrac);if(spec.kind===\"elasticnet\")return elasticFit(x,y,spec.alpha,spec.l1Ratio,spec.sweeps);throw new RangeError(\"unsupported fitted head\");}\nfunction predictHead(spec,state,x){if(spec.kind===\"ridge\")return ridgePredict(state,x);if(spec.kind===\"elasticnet\")return elasticPredict(state,x);throw new RangeError(\"unsupported applied head\");}\n\nconst MODEL_STAGES=Object.freeze([{kind:\"standardize\",append:false}]);\nconst MODEL_HEAD=Object.freeze({kind:\"ridge\",lambdaFrac:0.02});\n\nclass Model {\n  constructor(states,head){ this.states=states; this.head=head; }\n  static fit(xIn,y){\n    if(xIn.length===0||y.length!==xIn.length) throw new RangeError(\"invalid training shape\");\n    let x=sanitize(xIn),states=[];\n    for(const spec of MODEL_STAGES){ const fitted=fitStage(spec,x,y); states.push(fitted[0]); x=fitted[1]; }\n    return new Model(states,fitHead(MODEL_HEAD,x,y));\n  }\n  predict(xIn){\n    let x=sanitize(xIn);\n    for(let i=0;i<MODEL_STAGES.length;i++) x=applyStage(MODEL_STAGES[i],this.states[i],x);\n    return predictHead(MODEL_HEAD,this.head,x);\n  }\n}\n\nfunction shapeIsSafe(n){return Number.isSafeInteger(n)&&n>=0;}\nfunction exactFlatShape(values,valuesLen,rows,columns){\n  return values instanceof Float64Array&&shapeIsSafe(valuesLen)&&shapeIsSafe(rows)&&shapeIsSafe(columns)&&columns>0&&\n    rows<=Number.MAX_SAFE_INTEGER/columns&&valuesLen===rows*columns&&values.length===valuesLen;\n}\nfunction flatRows(values,rows,columns){const x=[];for(let r=0;r<rows;r++){const row=[];for(let c=0;c<columns;c++)row.push(values[r*columns+c]);x.push(row);}return x;}\nfunction modelAbiVersion(){return 1;}\nfunction modelWorkspaceBytes(_handle,_rows){return 0;}\nfunction modelFitNumeric(values,valuesLen,rows,columns,targets,targetLen){\n  if(!exactFlatShape(values,valuesLen,rows,columns)||rows===0||!(targets instanceof Float64Array)||!shapeIsSafe(targetLen)||targetLen!==rows||targets.length!==targetLen)return {status:1,handle:null};\n  for(let i=0;i<targetLen;i++)if(!Number.isFinite(targets[i]))return {status:1,handle:null};\n  try{return {status:0,handle:{model:Model.fit(flatRows(values,rows,columns),Array.from(targets)),width:columns}};}catch(_error){return {status:2,handle:null};}\n}\nfunction modelPredictNumericBatch(handle,values,valuesLen,rows,columns,_workspace,workspaceBytes,out,outLen){\n  if(handle===null||typeof handle!==\"object\"||!shapeIsSafe(columns)||columns===0||columns!==handle.width||!shapeIsSafe(workspaceBytes))return 1;\n  if(!(out instanceof Float64Array)||!shapeIsSafe(outLen)||outLen!==rows||out.length!==outLen)return 1;\n  if(rows===0)return values instanceof Float64Array&&valuesLen===0&&values.length===0?0:1;\n  if(!exactFlatShape(values,valuesLen,rows,columns))return 1;\n  try{const predicted=handle.model.predict(flatRows(values,rows,columns));if(predicted.length!==rows)return 2;for(let r=0;r<rows;r++)out[r]=predicted[r];return 0;}catch(_error){return 2;}\n}\nfunction modelUnload(handle){if(handle!==null&&typeof handle===\"object\"){handle.model=null;handle.width=0;}}\n\n"
+    },
+    {
+      "bytes": 16445,
+      "language": "fitted_cpp17_source",
+      "sha256": "9e4c24dc421c00eceb2f78f65e2c7bad2fabe8b6a2a387ad211e1d5a1172f6cc",
+      "source": "// jope-dime fitted-cpp-typed-table-v1 emitter-revision=3\n#include <algorithm>\n#include <cmath>\n#include <cstddef>\n#include <cstdint>\n#include <cstring>\n#include <limits>\n#include <utility>\n#include <vector>\nusing V = std::vector<double>;\nusing U = std::vector<std::size_t>;\nusing M = std::vector<V>;\nusing B = std::vector<std::uint64_t>;\nstruct MathDomainError {};\nstruct FittedWidthError {};\n[[maybe_unused]] static std::size_t fitted_index(std::size_t index,std::size_t size){if(index>=size)throw FittedWidthError{};return index;}\n[[maybe_unused]] static double f64_from_bits(std::uint64_t bits) noexcept { double value; std::memcpy(&value,&bits,sizeof(value)); return value; }\n[[maybe_unused]] static double clampv(double value,double lo,double hi) noexcept { if(value<lo)return lo; if(value>hi)return hi; return value; }\n[[maybe_unused]] static double finitev(double value) noexcept { return std::isfinite(value)?value:0.0; }\n[[maybe_unused]] static double sigmoid(double value) noexcept { if(value>=0.0)return 1.0/(1.0+std::exp(-std::min(value,40.0))); double z=std::exp(std::max(value,-40.0)); return z/(1.0+z); }\n// Match Rust slice::partition_point's fixed-iteration binary-search path.\n// Fitted interpolated quantiles can cross by one ULP; preserving the search\n// path is required to execute those immutable legacy states bit-for-bit.\n[[maybe_unused]] static std::size_t lower(const V& values,double value) noexcept { if(values.empty())return 0;std::size_t size=values.size(),base=0;while(size>1){const std::size_t half=size/2,mid=base+half;if(values[mid]<value)base=mid;size-=half;}return base+static_cast<std::size_t>(values[base]<value); }\n[[maybe_unused]] static std::size_t upper(const V& values,double value) noexcept { if(values.empty())return 0;std::size_t size=values.size(),base=0;while(size>1){const std::size_t half=size/2,mid=base+half;if(values[mid]<=value)base=mid;size-=half;}return base+static_cast<std::size_t>(values[base]<=value); }\n[[maybe_unused]] static double mid_rank(const V& values,double value) noexcept { return static_cast<double>(lower(values,value)+upper(values,value))/(2.0*static_cast<double>(values.size())); }\n[[maybe_unused]] static double probit(double p) noexcept {\n  const V a={-3.969683028665376e+01,2.209460984245205e+02,-2.759285104469687e+02,1.38357751867269e+02,-3.066479806614716e+01,2.506628277459239e+00};\n  const V b={-5.447609879822406e+01,1.615858368580409e+02,-1.556989798598866e+02,6.680131188771972e+01,-1.328068155288572e+01};\n  const V c={-7.784894002430293e-03,-3.223964580411365e-01,-2.400758277161838e+00,-2.549732539343734e+00,4.374664141464968e+00,2.938163982698783e+00};\n  const V e={7.784695709041462e-03,3.224671290700398e-01,2.445134137142996e+00,3.754408661907416e+00};\n  p=clampv(p,1e-12,1.0-1e-12); const double p_low=0.02425;\n  if(p<p_low){const double q=std::sqrt(-2.0*std::log(p));return (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((e[0]*q+e[1])*q+e[2])*q+e[3])*q+1.0);}\n  if(p<=1.0-p_low){const double q=p-0.5,r=q*q;return (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q/(((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1.0);}\n  const double q=std::sqrt(-2.0*std::log(1.0-p));return -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((e[0]*q+e[1])*q+e[2])*q+e[3])*q+1.0);\n}\n[[maybe_unused]] static double dot(const V& a,const V& b) noexcept { double s=0.0; for(std::size_t i=0;i<std::min(a.size(),b.size());++i)s+=a[i]*b[i]; return s; }\n[[maybe_unused]] static void finish_block(const V& input,const V& input_mask,V output,V output_mask,bool append,V& x,V& mask){ for(std::size_t i=0;i<output.size();++i)if(output_mask[i]!=0.0||!std::isfinite(output[i]))output[i]=0.0;if(append){x=input;mask=input_mask;x.insert(x.end(),output.begin(),output.end());mask.insert(mask.end(),output_mask.begin(),output_mask.end());}else{x=std::move(output);mask=std::move(output_mask);}if(x.size()>512){x.resize(512);mask.resize(512);} }\n[[maybe_unused]] static std::uint64_t bits(double value) noexcept {std::uint64_t result;std::memcpy(&result,&value,8);return result;}\n[[maybe_unused]] static double piece(double value,double lo,double hi) noexcept { const double width=hi-lo; if(std::abs(width)<=1e-15)return value>lo?1.0:0.0; return clampv((value-lo)/width,0.0,1.0); }\n[[maybe_unused]] static double yj(double value,double lambda) noexcept { if(value>=0.0){ if(std::abs(lambda)<1e-8)return std::log1p(value); return (std::pow(value+1.0,lambda)-1.0)/lambda; } double q=2.0-lambda; if(std::abs(q)<1e-8)return -std::log1p(-value); return -(std::pow(1.0-value,q)-1.0)/q; }\nstruct GNode { bool leaf; double value; std::size_t feature; std::uint16_t threshold; std::size_t left; std::size_t right; };\nstruct Block { V x; V mask; };\nstruct KCell { bool present; double value; };\nusing Key = std::vector<KCell>;\n[[maybe_unused]] static bool operator==(const KCell& a,const KCell& b) noexcept {return a.present==b.present&&(!a.present||a.value==b.value);}\n[[maybe_unused]] static bool operator<(const KCell& a,const KCell& b) noexcept {if(a.present!=b.present)return !a.present;if(!a.present)return false;if(a.value<b.value)return true;if(a.value>b.value)return false;return false;}\n[[maybe_unused]] static bool key_less(const Key& a,const Key& b) noexcept {return std::lexicographical_compare(a.begin(),a.end(),b.begin(),b.end());}\n[[maybe_unused]] static bool key_equal(const Key& a,const Key& b) noexcept {return a==b;}\n[[maybe_unused]] static Key raw_key(const double* raw,const std::uint8_t* missing,const U& columns){Key key;key.reserve(columns.size());for(std::size_t column:columns)key.push_back(KCell{missing[column]==0,raw[column]});return key;}\n[[maybe_unused]] static double route_gbm(const std::vector<GNode>& tree,const M& edges,const V& x) noexcept { std::size_t at=0; for(;;){const GNode& n=tree[at];if(n.leaf)return n.value;double value=n.feature<x.size()?x[n.feature]:0.0;std::size_t bin=lower(edges[n.feature],value);at=bin<=n.threshold?n.left:n.right;} }\n[[maybe_unused]] static double rank_inverse(double value,const V& scores,const V& values) noexcept { if(scores.empty()||values.empty())return 0.0;if(!(value>scores[0]))return values[0];if(value>=scores.back())return values.back();std::size_t hi=lower(scores,value),lo=hi-1;double width=scores[hi]-scores[lo];return width>0.0?values[lo]+(value-scores[lo])/width*(values[hi]-values[lo]):values[lo]; }\n[[maybe_unused]] static double quantile_linear(const V& sorted,double q) noexcept { if(sorted.empty())return 0.0;double position=q*static_cast<double>(sorted.size()-1);std::size_t lo=static_cast<std::size_t>(position),hi=std::min(lo+1,sorted.size()-1);double fraction=position-static_cast<double>(lo);return sorted[lo]*(1.0-fraction)+sorted[hi]*fraction; }\n[[maybe_unused]] static V dft_mags(const V& row,std::size_t k){V out;out.reserve(k);double width=static_cast<double>(row.size());for(std::size_t f=1;f<=k;++f){double re=0.0,im=0.0;for(std::size_t j=0;j<row.size();++j){double angle=(2.0*3.14159265358979323846264338327950288)*static_cast<double>(f)*static_cast<double>(j)/width;re+=row[j]*std::cos(angle);im+=row[j]*std::sin(angle);}out.push_back(std::sqrt(re*re+im*im)/width);}return out;}\n[[maybe_unused]] static V row_stats(const V& row){double n=static_cast<double>(row.size()),mean=0.0;for(double value:row)mean+=value;mean/=n;double m2=0.0,m3=0.0,m4=0.0,energy=0.0,mn=std::numeric_limits<double>::infinity(),mx=-std::numeric_limits<double>::infinity();for(double value:row){double delta=value-mean;m2+=delta*delta;m3+=delta*delta*delta;m4+=delta*delta*delta*delta;energy+=value*value;if(value<mn)mn=value;if(value>mx)mx=value;}m2/=n;m3/=n;m4/=n;energy/=n;double stddev=std::sqrt(m2),skew=m2>1e-24?m3/(m2*stddev):0.0,kurt=m2>1e-24?m4/(m2*m2)-3.0:0.0;V sorted=row;std::sort(sorted.begin(),sorted.end());return V{mean,stddev,mn,mx,quantile_linear(sorted,0.5),quantile_linear(sorted,0.25),quantile_linear(sorted,0.75),skew,kurt,energy};}\n[[maybe_unused]] static V row_spectral(const V& row){std::size_t count=row.size()/2;if(count==0)return V(5,0.0);V mags=dft_mags(row,count);double total=0.0;for(double value:mags)total+=value;double denominator=std::max(total,1e-12),entropy=0.0,m1=0.0,m2=0.0;std::size_t peak=0;for(std::size_t i=0;i<mags.size();++i){double probability=mags[i]/denominator;if(probability>1e-12)entropy-=probability*std::log(probability);double frequency=static_cast<double>(i+1);m1+=frequency*probability;m2+=frequency*frequency*probability;if(mags[i]>mags[peak])peak=i;}return V{entropy,m1,m2,static_cast<double>(peak+1),mags[peak]};}\n[[maybe_unused]] static double pearson_shift(const V& row){std::size_t n=row.size()-1;if(n<2)return 0.0;double ma=0.0,mb=0.0;for(std::size_t i=0;i<n;++i){ma+=row[i];mb+=row[i+1];}ma/=static_cast<double>(n);mb/=static_cast<double>(n);double sab=0.0,saa=0.0,sbb=0.0;for(std::size_t i=0;i<n;++i){double da=row[i]-ma,db=row[i+1]-mb;sab+=da*db;saa+=da*da;sbb+=db*db;}return saa<=0.0||sbb<=0.0?0.0:sab/std::sqrt(saa*sbb);}\n[[maybe_unused]] static V row_diff_stats(const V& row){if(row.size()<2)return V(8,0.0);std::size_t n=row.size()-1;double nf=static_cast<double>(n);V diffs;diffs.reserve(n);for(std::size_t i=0;i<n;++i)diffs.push_back(row[i+1]-row[i]);double mean=0.0;for(double value:diffs)mean+=value;mean/=nf;double m2=0.0,mean_abs=0.0,energy=0.0,mn=std::numeric_limits<double>::infinity(),mx=-std::numeric_limits<double>::infinity();std::size_t signs=0;for(std::size_t i=0;i<n;++i){double value=diffs[i],delta=value-mean;m2+=delta*delta;mean_abs+=std::abs(value);energy+=value*value;if(value<mn)mn=value;if(value>mx)mx=value;if(i>0&&diffs[i-1]*value<0.0)++signs;}return V{mean,std::sqrt(m2/nf),mn,mx,mean_abs/nf,static_cast<double>(signs)/nf,pearson_shift(row),energy/nf};}\n[[maybe_unused]] static double row_sum(const double* row,std::size_t n){double value=0.0;for(std::size_t i=0;i<n;++i)value+=row[i];return value;}\n[[maybe_unused]] static double row_mean(const double* row,std::size_t n){return row_sum(row,n)/static_cast<double>(std::max(n,std::size_t{1}));}\n[[maybe_unused]] static double row_l1(const double* row,std::size_t n){double value=0.0;for(std::size_t i=0;i<n;++i)value+=std::abs(row[i]);return value;}\n[[maybe_unused]] static double row_l2(const double* row,std::size_t n){double value=0.0;for(std::size_t i=0;i<n;++i)value+=row[i]*row[i];return std::sqrt(value);}\n[[maybe_unused]] static double row_min(const double* row,std::size_t n){double value=std::numeric_limits<double>::infinity();for(std::size_t i=0;i<n;++i)if(row[i]<value)value=row[i];return value;}\n[[maybe_unused]] static double row_max(const double* row,std::size_t n){double value=-std::numeric_limits<double>::infinity();for(std::size_t i=0;i<n;++i)if(row[i]>value)value=row[i];return value;}\n[[maybe_unused]] static double row_std(const double* row,std::size_t n){double mean=row_mean(row,n),value=0.0;for(std::size_t i=0;i<n;++i){double delta=row[i]-mean;value+=delta*delta;}return std::sqrt(value/static_cast<double>(std::max(n,std::size_t{1})));}\n[[maybe_unused]] static double m_clamp(double value,double lo,double hi){return clampv(value,lo,hi);}\n[[maybe_unused]] static double m_div(double left,double right){return std::abs(right)<1e-12?0.0:left/right;}\n[[maybe_unused]] static double m_pow(double left,double right){return std::pow(left,right);}\n[[maybe_unused]] static double m_sqrt(double value){return std::sqrt(std::fmax(value,0.0));}\n[[maybe_unused]] static double m_log1p(double value){return value<=-1.0?0.0:std::log1p(value);}\n[[maybe_unused]] static double m_sin(double value){return std::sin(value);}\n[[maybe_unused]] static double m_cos(double value){return std::cos(value);}\n[[maybe_unused]] static double m_tanh(double value){return std::tanh(value);}\n[[maybe_unused]] static double m_sigmoid(double value){return 1.0/(1.0+std::exp(-clampv(value,-30.0,30.0)));}\n[[maybe_unused]] static double m_clip(double value,double a,double b){double lo=std::fmin(a,b),hi=std::fmax(a,b);if(std::isnan(lo)||std::isnan(hi))throw MathDomainError{};return clampv(value,lo,hi);}\n[[maybe_unused]] static double m_exp(double value){return std::exp(clampv(value,-30.0,30.0));}\n[[maybe_unused]] static double m_log(double value){return value<=1e-300?0.0:std::log(value);}\n[[maybe_unused]] static double m_asinh(double value){double a=std::abs(value),s=value>0.0?1.0:(value<0.0?-1.0:0.0);return s*std::log(a+std::sqrt(value*value+1.0));}\n[[maybe_unused]] static double m_atan(double value){return std::atan(value);}\n[[maybe_unused]] static double m_erf(double value){double a=std::abs(value),s=value>0.0?1.0:(value<0.0?-1.0:0.0),t=1.0/(1.0+0.3275911*a);double poly=t*(0.254829592+t*(-0.284496736+t*(1.421413741+t*(-1.453152027+t*1.061405429))));return s*(1.0-poly*std::exp(-(a*a)));}\n[[maybe_unused]] static double m_sign(double value){return value>0.0?1.0:(value<0.0?-1.0:0.0);}\n[[maybe_unused]] static double m_round(double value){return value>=0.0?std::floor(value+0.5):std::ceil(value-0.5);}\n[[maybe_unused]] static double math_safe(double value){return std::isfinite(value)?clampv(value,-1e12,1e12):0.0;}\n\nstatic double head_0(const V& x){const V means=V{f64_from_bits(0x3c65555555555555ULL),f64_from_bits(0xbca0000000000000ULL),f64_from_bits(0xbc70000000000000ULL),f64_from_bits(0xbcb0aaaaaaaaaaabULL)};const V scales=V{f64_from_bits(0x3ff0000000000000ULL),f64_from_bits(0x3fefffffffffffffULL),f64_from_bits(0x3feffffffffffffeULL),f64_from_bits(0x3fefffffffffffffULL)};const V weights=V{f64_from_bits(0xbfd159834f105ebdULL),f64_from_bits(0x3fe77ab3edbdb5b9ULL),f64_from_bits(0xbfd07a3cdee4310aULL),f64_from_bits(0x3fc1a74a9f4997e2ULL),f64_from_bits(0x3fe77ab3edbdb65cULL)};double value=weights[0];for(std::size_t j=0;j<means.size();++j){const std::size_t source=j;if(source<x.size())value+=weights[j+1]*clampv((x[source]-means[j])/scales[j],f64_from_bits(0xc034000000000000ULL),f64_from_bits(0x4034000000000000ULL));}return clampv(value,-60.0,60.0);}\n\nstatic bool encode_row(const double* raw,const std::uint8_t* missing,V& x,V& mask){\n  x.clear(); mask.clear();\n  const bool absent_0=missing[0]!=0||!std::isfinite(raw[0]); const double value_0=absent_0?f64_from_bits(0x0000000000000000ULL):raw[0]; x.push_back(value_0); mask.push_back(absent_0?1.0:0.0);\n  const bool absent_1=missing[1]!=0||!std::isfinite(raw[1]); const double value_1=absent_1?f64_from_bits(0x0000000000000000ULL):raw[1]; x.push_back(value_1); mask.push_back(absent_1?1.0:0.0);\n  const bool absent_2=missing[2]!=0||!std::isfinite(raw[2]); const double value_2=absent_2?f64_from_bits(0x0000000000000000ULL):raw[2]; x.push_back(value_2); mask.push_back(absent_2?1.0:0.0);\n  const bool absent_3=missing[3]!=0||!std::isfinite(raw[3]); const double value_3=absent_3?f64_from_bits(0x0000000000000000ULL):raw[3]; x.push_back(value_3); mask.push_back(absent_3?1.0:0.0);\n  return true;\n}\n\nstatic V transform(V x,V mask){\n  (void)mask;\n  {V input=x,input_mask=mask,g;const V a=V{f64_from_bits(0x3fb249249249248fULL),f64_from_bits(0x3ff3ba5713280defULL),f64_from_bits(0xbfb5555555555555ULL),f64_from_bits(0x3ff0924924924925ULL)};const V b=V{f64_from_bits(0x3fefa4ef9feb73e1ULL),f64_from_bits(0x3fec4788958f4cdfULL),f64_from_bits(0x3ff61c5f7b533202ULL),f64_from_bits(0x3fdfa4ef9feb73e1ULL)};for(std::size_t j=0;j<std::min(x.size(),std::min(a.size(),b.size()));++j)g.push_back(clampv((x[j]-a[j])/b[j],-20.0,20.0));V gm=mask;finish_block(input,input_mask,std::move(g),std::move(gm),false,x,mask);}\n  if(x.empty()){x.assign(1,0.0);mask.assign(1,0.0);}\n  return x;\n}\n\nstatic double predict_one(V x,V mask){x=transform(std::move(x),std::move(mask));double value=head_0(x);\n  value=finitev(value);\n  return value;\n}\n\nextern \"C\" std::size_t jope_fitted_columns() noexcept { return 4; }\nextern \"C\" int jope_fitted_predict(\n    const double* values,std::size_t values_len,\n    const std::uint8_t* missing,std::size_t missing_len,\n    std::size_t rows,std::size_t columns,\n    double* output,std::size_t output_len) noexcept {\n  if(columns!=4)return 1;\n  if(rows>std::numeric_limits<std::size_t>::max()/columns)return 2;\n  const std::size_t cells=rows*columns;\n  if(values_len!=cells||missing_len!=cells||output_len<rows)return 3;\n  if(rows!=0&&(!values||!missing||!output))return 4;\n  try {\n    V x,mask;\n    for(std::size_t row=0;row<rows;++row){\n      const std::size_t offset=row*columns;\n      if(!encode_row(values+offset,missing+offset,x,mask))return 5;\n      output[row]=predict_one(x,mask);\n    }\n    return 0;\n  } catch(const FittedWidthError&) { return 8; } catch(...) { return 6; }\n}\n"
+    },
+    {
+      "bytes": 416,
+      "language": "fitted_cpp17_codec",
+      "sha256": "fb21ceab1595f68439deac7121f2daec453cf858379ab6ae29d724c310c9fdf0",
+      "source": "{\"schema\":\"jope-dime.fitted-cpp-typed-table.v1\",\"emitter_revision\":3,\"schema_sha256\":\"584328bddb96ed2c9746b8a41fb721519f6f9a99bb87627a14adab4f8ebab903\",\"vocabulary_sha256\":\"e731ed539cf4ca5e72b90a0aac9f78d7d4707733550b19b172520c75173a7273\",\"columns\":[{\"kind\":\"numeric\"},{\"kind\":\"numeric\"},{\"kind\":\"numeric\"},{\"kind\":\"numeric\"}],\"categorical_unknown\":-1,\"missing_bitmap\":\"one byte per raw cell; nonzero means missing\"}"
+    }
+  ],
+  "exact_tags": {
+    "functions": [
+      {
+        "name": "Abs",
+        "outcomes": [
+          {
+            "edge": "positive_zero",
+            "input_bits": "0000000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "negative_zero",
+            "input_bits": "8000000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "nan_payload",
+            "input_bits": "7ff8000000000001",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "positive_infinity",
+            "input_bits": "7ff0000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "negative_infinity",
+            "input_bits": "fff0000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "positive_subnormal",
+            "input_bits": "0000000000000001",
+            "outcome": "0000000000000001"
+          },
+          {
+            "edge": "negative_subnormal",
+            "input_bits": "8000000000000001",
+            "outcome": "0000000000000001"
+          },
+          {
+            "edge": "small",
+            "input_bits": "01a56e1fc2f8f359",
+            "outcome": "01a56e1fc2f8f359"
+          },
+          {
+            "edge": "large",
+            "input_bits": "6974e718d7d7625a",
+            "outcome": "426d1a94a2000000"
+          },
+          {
+            "edge": "near_max",
+            "input_bits": "7fe1ccf385ebc8a0",
+            "outcome": "426d1a94a2000000"
+          },
+          {
+            "edge": "negative_one",
+            "input_bits": "bff0000000000000",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "half",
+            "input_bits": "3fe0000000000000",
+            "outcome": "3fe0000000000000"
+          }
+        ],
+        "program_hex": "464d4b50524700010001001100000000000000686973746f726963616c5f66756e635f30050001000000000000000200",
+        "tag": 0
+      },
+      {
+        "name": "Sqrt",
+        "outcomes": [
+          {
+            "edge": "positive_zero",
+            "input_bits": "0000000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "negative_zero",
+            "input_bits": "8000000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "nan_payload",
+            "input_bits": "7ff8000000000001",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "positive_infinity",
+            "input_bits": "7ff0000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "negative_infinity",
+            "input_bits": "fff0000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "positive_subnormal",
+            "input_bits": "0000000000000001",
+            "outcome": "1e60000000000000"
+          },
+          {
+            "edge": "negative_subnormal",
+            "input_bits": "8000000000000001",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "small",
+            "input_bits": "01a56e1fc2f8f359",
+            "outcome": "20ca2fe76a3f9475"
+          },
+          {
+            "edge": "large",
+            "input_bits": "6974e718d7d7625a",
+            "outcome": "426d1a94a2000000"
+          },
+          {
+            "edge": "near_max",
+            "input_bits": "7fe1ccf385ebc8a0",
+            "outcome": "426d1a94a2000000"
+          },
+          {
+            "edge": "negative_one",
+            "input_bits": "bff0000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "half",
+            "input_bits": "3fe0000000000000",
+            "outcome": "3fe6a09e667f3bcd"
+          }
+        ],
+        "program_hex": "464d4b50524700010001001100000000000000686973746f726963616c5f66756e635f31050101000000000000000200",
+        "tag": 1
+      },
+      {
+        "name": "Log1p",
+        "outcomes": [
+          {
+            "edge": "positive_zero",
+            "input_bits": "0000000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "negative_zero",
+            "input_bits": "8000000000000000",
+            "outcome": "8000000000000000"
+          },
+          {
+            "edge": "nan_payload",
+            "input_bits": "7ff8000000000001",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "positive_infinity",
+            "input_bits": "7ff0000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "negative_infinity",
+            "input_bits": "fff0000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "positive_subnormal",
+            "input_bits": "0000000000000001",
+            "outcome": "0000000000000001"
+          },
+          {
+            "edge": "negative_subnormal",
+            "input_bits": "8000000000000001",
+            "outcome": "8000000000000001"
+          },
+          {
+            "edge": "small",
+            "input_bits": "01a56e1fc2f8f359",
+            "outcome": "01a56e1fc2f8f359"
+          },
+          {
+            "edge": "large",
+            "input_bits": "6974e718d7d7625a",
+            "outcome": "407cc845b54b54f2"
+          },
+          {
+            "edge": "near_max",
+            "input_bits": "7fe1ccf385ebc8a0",
+            "outcome": "40862991d5d62a5e"
+          },
+          {
+            "edge": "negative_one",
+            "input_bits": "bff0000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "half",
+            "input_bits": "3fe0000000000000",
+            "outcome": "3fd9f323ecbf984c"
+          }
+        ],
+        "program_hex": "464d4b50524700010001001100000000000000686973746f726963616c5f66756e635f32050201000000000000000200",
+        "tag": 2
+      },
+      {
+        "name": "Sin",
+        "outcomes": [
+          {
+            "edge": "positive_zero",
+            "input_bits": "0000000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "negative_zero",
+            "input_bits": "8000000000000000",
+            "outcome": "8000000000000000"
+          },
+          {
+            "edge": "nan_payload",
+            "input_bits": "7ff8000000000001",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "positive_infinity",
+            "input_bits": "7ff0000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "negative_infinity",
+            "input_bits": "fff0000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "positive_subnormal",
+            "input_bits": "0000000000000001",
+            "outcome": "0000000000000001"
+          },
+          {
+            "edge": "negative_subnormal",
+            "input_bits": "8000000000000001",
+            "outcome": "8000000000000001"
+          },
+          {
+            "edge": "small",
+            "input_bits": "01a56e1fc2f8f359",
+            "outcome": "01a56e1fc2f8f359"
+          },
+          {
+            "edge": "large",
+            "input_bits": "6974e718d7d7625a",
+            "outcome": "bfe49b644938c64c"
+          },
+          {
+            "edge": "near_max",
+            "input_bits": "7fe1ccf385ebc8a0",
+            "outcome": "3fdd0472b6b4d936"
+          },
+          {
+            "edge": "negative_one",
+            "input_bits": "bff0000000000000",
+            "outcome": "bfeaed548f090cee"
+          },
+          {
+            "edge": "half",
+            "input_bits": "3fe0000000000000",
+            "outcome": "3fdeaee8744b05f0"
+          }
+        ],
+        "program_hex": "464d4b50524700010001001100000000000000686973746f726963616c5f66756e635f33050301000000000000000200",
+        "tag": 3
+      },
+      {
+        "name": "Cos",
+        "outcomes": [
+          {
+            "edge": "positive_zero",
+            "input_bits": "0000000000000000",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "negative_zero",
+            "input_bits": "8000000000000000",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "nan_payload",
+            "input_bits": "7ff8000000000001",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "positive_infinity",
+            "input_bits": "7ff0000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "negative_infinity",
+            "input_bits": "fff0000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "positive_subnormal",
+            "input_bits": "0000000000000001",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "negative_subnormal",
+            "input_bits": "8000000000000001",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "small",
+            "input_bits": "01a56e1fc2f8f359",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "large",
+            "input_bits": "6974e718d7d7625a",
+            "outcome": "3fe87b4df51f679e"
+          },
+          {
+            "edge": "near_max",
+            "input_bits": "7fe1ccf385ebc8a0",
+            "outcome": "bfec859a523ff229"
+          },
+          {
+            "edge": "negative_one",
+            "input_bits": "bff0000000000000",
+            "outcome": "3fe14a280fb5068c"
+          },
+          {
+            "edge": "half",
+            "input_bits": "3fe0000000000000",
+            "outcome": "3fec1528065b7d50"
+          }
+        ],
+        "program_hex": "464d4b50524700010001001100000000000000686973746f726963616c5f66756e635f34050401000000000000000200",
+        "tag": 4
+      },
+      {
+        "name": "Tanh",
+        "outcomes": [
+          {
+            "edge": "positive_zero",
+            "input_bits": "0000000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "negative_zero",
+            "input_bits": "8000000000000000",
+            "outcome": "8000000000000000"
+          },
+          {
+            "edge": "nan_payload",
+            "input_bits": "7ff8000000000001",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "positive_infinity",
+            "input_bits": "7ff0000000000000",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "negative_infinity",
+            "input_bits": "fff0000000000000",
+            "outcome": "bff0000000000000"
+          },
+          {
+            "edge": "positive_subnormal",
+            "input_bits": "0000000000000001",
+            "outcome": "0000000000000001"
+          },
+          {
+            "edge": "negative_subnormal",
+            "input_bits": "8000000000000001",
+            "outcome": "8000000000000001"
+          },
+          {
+            "edge": "small",
+            "input_bits": "01a56e1fc2f8f359",
+            "outcome": "01a56e1fc2f8f359"
+          },
+          {
+            "edge": "large",
+            "input_bits": "6974e718d7d7625a",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "near_max",
+            "input_bits": "7fe1ccf385ebc8a0",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "negative_one",
+            "input_bits": "bff0000000000000",
+            "outcome": "bfe85efab514f394"
+          },
+          {
+            "edge": "half",
+            "input_bits": "3fe0000000000000",
+            "outcome": "3fdd9353d7568af3"
+          }
+        ],
+        "program_hex": "464d4b50524700010001001100000000000000686973746f726963616c5f66756e635f35050501000000000000000200",
+        "tag": 5
+      },
+      {
+        "name": "Sigmoid",
+        "outcomes": [
+          {
+            "edge": "positive_zero",
+            "input_bits": "0000000000000000",
+            "outcome": "3fe0000000000000"
+          },
+          {
+            "edge": "negative_zero",
+            "input_bits": "8000000000000000",
+            "outcome": "3fe0000000000000"
+          },
+          {
+            "edge": "nan_payload",
+            "input_bits": "7ff8000000000001",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "positive_infinity",
+            "input_bits": "7ff0000000000000",
+            "outcome": "3feffffffffffcb6"
+          },
+          {
+            "edge": "negative_infinity",
+            "input_bits": "fff0000000000000",
+            "outcome": "3d3a56e0c2ac7cbf"
+          },
+          {
+            "edge": "positive_subnormal",
+            "input_bits": "0000000000000001",
+            "outcome": "3fe0000000000000"
+          },
+          {
+            "edge": "negative_subnormal",
+            "input_bits": "8000000000000001",
+            "outcome": "3fe0000000000000"
+          },
+          {
+            "edge": "small",
+            "input_bits": "01a56e1fc2f8f359",
+            "outcome": "3fe0000000000000"
+          },
+          {
+            "edge": "large",
+            "input_bits": "6974e718d7d7625a",
+            "outcome": "3feffffffffffcb6"
+          },
+          {
+            "edge": "near_max",
+            "input_bits": "7fe1ccf385ebc8a0",
+            "outcome": "3feffffffffffcb6"
+          },
+          {
+            "edge": "negative_one",
+            "input_bits": "bff0000000000000",
+            "outcome": "3fd136561454ba86"
+          },
+          {
+            "edge": "half",
+            "input_bits": "3fe0000000000000",
+            "outcome": "3fe3eb2fd4d34391"
+          }
+        ],
+        "program_hex": "464d4b50524700010001001100000000000000686973746f726963616c5f66756e635f36050601000000000000000200",
+        "tag": 6
+      },
+      {
+        "name": "Min",
+        "outcomes": [
+          {
+            "edge": "positive_zero",
+            "input_bits": "0000000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "negative_zero",
+            "input_bits": "8000000000000000",
+            "outcome": "8000000000000000"
+          },
+          {
+            "edge": "nan_payload",
+            "input_bits": "7ff8000000000001",
+            "outcome": "3fe0000000000000"
+          },
+          {
+            "edge": "positive_infinity",
+            "input_bits": "7ff0000000000000",
+            "outcome": "3fe0000000000000"
+          },
+          {
+            "edge": "negative_infinity",
+            "input_bits": "fff0000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "positive_subnormal",
+            "input_bits": "0000000000000001",
+            "outcome": "0000000000000001"
+          },
+          {
+            "edge": "negative_subnormal",
+            "input_bits": "8000000000000001",
+            "outcome": "8000000000000001"
+          },
+          {
+            "edge": "small",
+            "input_bits": "01a56e1fc2f8f359",
+            "outcome": "01a56e1fc2f8f359"
+          },
+          {
+            "edge": "large",
+            "input_bits": "6974e718d7d7625a",
+            "outcome": "3fe0000000000000"
+          },
+          {
+            "edge": "near_max",
+            "input_bits": "7fe1ccf385ebc8a0",
+            "outcome": "3fe0000000000000"
+          },
+          {
+            "edge": "negative_one",
+            "input_bits": "bff0000000000000",
+            "outcome": "bff0000000000000"
+          },
+          {
+            "edge": "half",
+            "input_bits": "3fe0000000000000",
+            "outcome": "3fe0000000000000"
+          }
+        ],
+        "program_hex": "464d4b50524700010001001100000000000000686973746f726963616c5f66756e635f3705070200000000000000020000000000000000e03f",
+        "tag": 7
+      },
+      {
+        "name": "Max",
+        "outcomes": [
+          {
+            "edge": "positive_zero",
+            "input_bits": "0000000000000000",
+            "outcome": "3fe0000000000000"
+          },
+          {
+            "edge": "negative_zero",
+            "input_bits": "8000000000000000",
+            "outcome": "3fe0000000000000"
+          },
+          {
+            "edge": "nan_payload",
+            "input_bits": "7ff8000000000001",
+            "outcome": "3fe0000000000000"
+          },
+          {
+            "edge": "positive_infinity",
+            "input_bits": "7ff0000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "negative_infinity",
+            "input_bits": "fff0000000000000",
+            "outcome": "3fe0000000000000"
+          },
+          {
+            "edge": "positive_subnormal",
+            "input_bits": "0000000000000001",
+            "outcome": "3fe0000000000000"
+          },
+          {
+            "edge": "negative_subnormal",
+            "input_bits": "8000000000000001",
+            "outcome": "3fe0000000000000"
+          },
+          {
+            "edge": "small",
+            "input_bits": "01a56e1fc2f8f359",
+            "outcome": "3fe0000000000000"
+          },
+          {
+            "edge": "large",
+            "input_bits": "6974e718d7d7625a",
+            "outcome": "426d1a94a2000000"
+          },
+          {
+            "edge": "near_max",
+            "input_bits": "7fe1ccf385ebc8a0",
+            "outcome": "426d1a94a2000000"
+          },
+          {
+            "edge": "negative_one",
+            "input_bits": "bff0000000000000",
+            "outcome": "3fe0000000000000"
+          },
+          {
+            "edge": "half",
+            "input_bits": "3fe0000000000000",
+            "outcome": "3fe0000000000000"
+          }
+        ],
+        "program_hex": "464d4b50524700010001001100000000000000686973746f726963616c5f66756e635f3805080200000000000000020000000000000000e03f",
+        "tag": 8
+      },
+      {
+        "name": "Clip",
+        "outcomes": [
+          {
+            "edge": "positive_zero",
+            "input_bits": "0000000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "negative_zero",
+            "input_bits": "8000000000000000",
+            "outcome": "8000000000000000"
+          },
+          {
+            "edge": "nan_payload",
+            "input_bits": "7ff8000000000001",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "positive_infinity",
+            "input_bits": "7ff0000000000000",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "negative_infinity",
+            "input_bits": "fff0000000000000",
+            "outcome": "bff0000000000000"
+          },
+          {
+            "edge": "positive_subnormal",
+            "input_bits": "0000000000000001",
+            "outcome": "0000000000000001"
+          },
+          {
+            "edge": "negative_subnormal",
+            "input_bits": "8000000000000001",
+            "outcome": "8000000000000001"
+          },
+          {
+            "edge": "small",
+            "input_bits": "01a56e1fc2f8f359",
+            "outcome": "01a56e1fc2f8f359"
+          },
+          {
+            "edge": "large",
+            "input_bits": "6974e718d7d7625a",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "near_max",
+            "input_bits": "7fe1ccf385ebc8a0",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "negative_one",
+            "input_bits": "bff0000000000000",
+            "outcome": "bff0000000000000"
+          },
+          {
+            "edge": "half",
+            "input_bits": "3fe0000000000000",
+            "outcome": "3fe0000000000000"
+          }
+        ],
+        "program_hex": "464d4b50524700010001001100000000000000686973746f726963616c5f66756e635f3905090300000000000000020000000000000000f0bf00000000000000f03f",
+        "tag": 9
+      },
+      {
+        "name": "Step",
+        "outcomes": [
+          {
+            "edge": "positive_zero",
+            "input_bits": "0000000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "negative_zero",
+            "input_bits": "8000000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "nan_payload",
+            "input_bits": "7ff8000000000001",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "positive_infinity",
+            "input_bits": "7ff0000000000000",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "negative_infinity",
+            "input_bits": "fff0000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "positive_subnormal",
+            "input_bits": "0000000000000001",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "negative_subnormal",
+            "input_bits": "8000000000000001",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "small",
+            "input_bits": "01a56e1fc2f8f359",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "large",
+            "input_bits": "6974e718d7d7625a",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "near_max",
+            "input_bits": "7fe1ccf385ebc8a0",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "negative_one",
+            "input_bits": "bff0000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "half",
+            "input_bits": "3fe0000000000000",
+            "outcome": "0000000000000000"
+          }
+        ],
+        "program_hex": "464d4b50524700010001001200000000000000686973746f726963616c5f66756e635f3130050a0200000000000000020000000000000000e03f",
+        "tag": 10
+      },
+      {
+        "name": "Exp",
+        "outcomes": [
+          {
+            "edge": "positive_zero",
+            "input_bits": "0000000000000000",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "negative_zero",
+            "input_bits": "8000000000000000",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "nan_payload",
+            "input_bits": "7ff8000000000001",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "positive_infinity",
+            "input_bits": "7ff0000000000000",
+            "outcome": "426d1a94a2000000"
+          },
+          {
+            "edge": "negative_infinity",
+            "input_bits": "fff0000000000000",
+            "outcome": "3d3a56e0c2ac7f75"
+          },
+          {
+            "edge": "positive_subnormal",
+            "input_bits": "0000000000000001",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "negative_subnormal",
+            "input_bits": "8000000000000001",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "small",
+            "input_bits": "01a56e1fc2f8f359",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "large",
+            "input_bits": "6974e718d7d7625a",
+            "outcome": "426d1a94a2000000"
+          },
+          {
+            "edge": "near_max",
+            "input_bits": "7fe1ccf385ebc8a0",
+            "outcome": "426d1a94a2000000"
+          },
+          {
+            "edge": "negative_one",
+            "input_bits": "bff0000000000000",
+            "outcome": "3fd78b56362cef38"
+          },
+          {
+            "edge": "half",
+            "input_bits": "3fe0000000000000",
+            "outcome": "3ffa61298e1e069c"
+          }
+        ],
+        "program_hex": "464d4b50524700010001001200000000000000686973746f726963616c5f66756e635f3131050b01000000000000000200",
+        "tag": 11
+      },
+      {
+        "name": "Log",
+        "outcomes": [
+          {
+            "edge": "positive_zero",
+            "input_bits": "0000000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "negative_zero",
+            "input_bits": "8000000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "nan_payload",
+            "input_bits": "7ff8000000000001",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "positive_infinity",
+            "input_bits": "7ff0000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "negative_infinity",
+            "input_bits": "fff0000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "positive_subnormal",
+            "input_bits": "0000000000000001",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "negative_subnormal",
+            "input_bits": "8000000000000001",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "small",
+            "input_bits": "01a56e1fc2f8f359",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "large",
+            "input_bits": "6974e718d7d7625a",
+            "outcome": "407cc845b54b54f2"
+          },
+          {
+            "edge": "near_max",
+            "input_bits": "7fe1ccf385ebc8a0",
+            "outcome": "40862991d5d62a5e"
+          },
+          {
+            "edge": "negative_one",
+            "input_bits": "bff0000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "half",
+            "input_bits": "3fe0000000000000",
+            "outcome": "bfe62e42fefa39ef"
+          }
+        ],
+        "program_hex": "464d4b50524700010001001200000000000000686973746f726963616c5f66756e635f3132050c01000000000000000200",
+        "tag": 12
+      },
+      {
+        "name": "Asinh",
+        "outcomes": [
+          {
+            "edge": "positive_zero",
+            "input_bits": "0000000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "negative_zero",
+            "input_bits": "8000000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "nan_payload",
+            "input_bits": "7ff8000000000001",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "positive_infinity",
+            "input_bits": "7ff0000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "negative_infinity",
+            "input_bits": "fff0000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "positive_subnormal",
+            "input_bits": "0000000000000001",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "negative_subnormal",
+            "input_bits": "8000000000000001",
+            "outcome": "8000000000000000"
+          },
+          {
+            "edge": "small",
+            "input_bits": "01a56e1fc2f8f359",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "large",
+            "input_bits": "6974e718d7d7625a",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "near_max",
+            "input_bits": "7fe1ccf385ebc8a0",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "negative_one",
+            "input_bits": "bff0000000000000",
+            "outcome": "bfec34366179d426"
+          },
+          {
+            "edge": "half",
+            "input_bits": "3fe0000000000000",
+            "outcome": "3fdecc2caec5160a"
+          }
+        ],
+        "program_hex": "464d4b50524700010001001200000000000000686973746f726963616c5f66756e635f3133050d01000000000000000200",
+        "tag": 13
+      },
+      {
+        "name": "Atan",
+        "outcomes": [
+          {
+            "edge": "positive_zero",
+            "input_bits": "0000000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "negative_zero",
+            "input_bits": "8000000000000000",
+            "outcome": "8000000000000000"
+          },
+          {
+            "edge": "nan_payload",
+            "input_bits": "7ff8000000000001",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "positive_infinity",
+            "input_bits": "7ff0000000000000",
+            "outcome": "3ff921fb54442d18"
+          },
+          {
+            "edge": "negative_infinity",
+            "input_bits": "fff0000000000000",
+            "outcome": "bff921fb54442d18"
+          },
+          {
+            "edge": "positive_subnormal",
+            "input_bits": "0000000000000001",
+            "outcome": "0000000000000001"
+          },
+          {
+            "edge": "negative_subnormal",
+            "input_bits": "8000000000000001",
+            "outcome": "8000000000000001"
+          },
+          {
+            "edge": "small",
+            "input_bits": "01a56e1fc2f8f359",
+            "outcome": "01a56e1fc2f8f359"
+          },
+          {
+            "edge": "large",
+            "input_bits": "6974e718d7d7625a",
+            "outcome": "3ff921fb54442d18"
+          },
+          {
+            "edge": "near_max",
+            "input_bits": "7fe1ccf385ebc8a0",
+            "outcome": "3ff921fb54442d18"
+          },
+          {
+            "edge": "negative_one",
+            "input_bits": "bff0000000000000",
+            "outcome": "bfe921fb54442d18"
+          },
+          {
+            "edge": "half",
+            "input_bits": "3fe0000000000000",
+            "outcome": "3fddac670561bb4f"
+          }
+        ],
+        "program_hex": "464d4b50524700010001001200000000000000686973746f726963616c5f66756e635f3134050e01000000000000000200",
+        "tag": 14
+      },
+      {
+        "name": "Erf",
+        "outcomes": [
+          {
+            "edge": "positive_zero",
+            "input_bits": "0000000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "negative_zero",
+            "input_bits": "8000000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "nan_payload",
+            "input_bits": "7ff8000000000001",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "positive_infinity",
+            "input_bits": "7ff0000000000000",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "negative_infinity",
+            "input_bits": "fff0000000000000",
+            "outcome": "bff0000000000000"
+          },
+          {
+            "edge": "positive_subnormal",
+            "input_bits": "0000000000000001",
+            "outcome": "3e112e0be0000000"
+          },
+          {
+            "edge": "negative_subnormal",
+            "input_bits": "8000000000000001",
+            "outcome": "be112e0be0000000"
+          },
+          {
+            "edge": "small",
+            "input_bits": "01a56e1fc2f8f359",
+            "outcome": "3e112e0be0000000"
+          },
+          {
+            "edge": "large",
+            "input_bits": "6974e718d7d7625a",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "near_max",
+            "input_bits": "7fe1ccf385ebc8a0",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "negative_one",
+            "input_bits": "bff0000000000000",
+            "outcome": "bfeaf7676fd90a94"
+          },
+          {
+            "edge": "half",
+            "input_bits": "3fe0000000000000",
+            "outcome": "3fe0a7efa6731559"
+          }
+        ],
+        "program_hex": "464d4b50524700010001001200000000000000686973746f726963616c5f66756e635f3135050f01000000000000000200",
+        "tag": 15
+      },
+      {
+        "name": "Sign",
+        "outcomes": [
+          {
+            "edge": "positive_zero",
+            "input_bits": "0000000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "negative_zero",
+            "input_bits": "8000000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "nan_payload",
+            "input_bits": "7ff8000000000001",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "positive_infinity",
+            "input_bits": "7ff0000000000000",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "negative_infinity",
+            "input_bits": "fff0000000000000",
+            "outcome": "bff0000000000000"
+          },
+          {
+            "edge": "positive_subnormal",
+            "input_bits": "0000000000000001",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "negative_subnormal",
+            "input_bits": "8000000000000001",
+            "outcome": "bff0000000000000"
+          },
+          {
+            "edge": "small",
+            "input_bits": "01a56e1fc2f8f359",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "large",
+            "input_bits": "6974e718d7d7625a",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "near_max",
+            "input_bits": "7fe1ccf385ebc8a0",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "negative_one",
+            "input_bits": "bff0000000000000",
+            "outcome": "bff0000000000000"
+          },
+          {
+            "edge": "half",
+            "input_bits": "3fe0000000000000",
+            "outcome": "3ff0000000000000"
+          }
+        ],
+        "program_hex": "464d4b50524700010001001200000000000000686973746f726963616c5f66756e635f3136051001000000000000000200",
+        "tag": 16
+      },
+      {
+        "name": "Floor",
+        "outcomes": [
+          {
+            "edge": "positive_zero",
+            "input_bits": "0000000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "negative_zero",
+            "input_bits": "8000000000000000",
+            "outcome": "8000000000000000"
+          },
+          {
+            "edge": "nan_payload",
+            "input_bits": "7ff8000000000001",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "positive_infinity",
+            "input_bits": "7ff0000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "negative_infinity",
+            "input_bits": "fff0000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "positive_subnormal",
+            "input_bits": "0000000000000001",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "negative_subnormal",
+            "input_bits": "8000000000000001",
+            "outcome": "bff0000000000000"
+          },
+          {
+            "edge": "small",
+            "input_bits": "01a56e1fc2f8f359",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "large",
+            "input_bits": "6974e718d7d7625a",
+            "outcome": "426d1a94a2000000"
+          },
+          {
+            "edge": "near_max",
+            "input_bits": "7fe1ccf385ebc8a0",
+            "outcome": "426d1a94a2000000"
+          },
+          {
+            "edge": "negative_one",
+            "input_bits": "bff0000000000000",
+            "outcome": "bff0000000000000"
+          },
+          {
+            "edge": "half",
+            "input_bits": "3fe0000000000000",
+            "outcome": "0000000000000000"
+          }
+        ],
+        "program_hex": "464d4b50524700010001001200000000000000686973746f726963616c5f66756e635f3137051101000000000000000200",
+        "tag": 17
+      },
+      {
+        "name": "Round",
+        "outcomes": [
+          {
+            "edge": "positive_zero",
+            "input_bits": "0000000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "negative_zero",
+            "input_bits": "8000000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "nan_payload",
+            "input_bits": "7ff8000000000001",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "positive_infinity",
+            "input_bits": "7ff0000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "negative_infinity",
+            "input_bits": "fff0000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "positive_subnormal",
+            "input_bits": "0000000000000001",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "negative_subnormal",
+            "input_bits": "8000000000000001",
+            "outcome": "8000000000000000"
+          },
+          {
+            "edge": "small",
+            "input_bits": "01a56e1fc2f8f359",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "large",
+            "input_bits": "6974e718d7d7625a",
+            "outcome": "426d1a94a2000000"
+          },
+          {
+            "edge": "near_max",
+            "input_bits": "7fe1ccf385ebc8a0",
+            "outcome": "426d1a94a2000000"
+          },
+          {
+            "edge": "negative_one",
+            "input_bits": "bff0000000000000",
+            "outcome": "bff0000000000000"
+          },
+          {
+            "edge": "half",
+            "input_bits": "3fe0000000000000",
+            "outcome": "3ff0000000000000"
+          }
+        ],
+        "program_hex": "464d4b50524700010001001200000000000000686973746f726963616c5f66756e635f3138051201000000000000000200",
+        "tag": 18
+      }
+    ],
+    "variables": [
+      {
+        "empty_row": "3fe0000000000000",
+        "name": "X",
+        "outcomes": [
+          {
+            "edge": "positive_zero",
+            "input_bits": "0000000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "negative_zero",
+            "input_bits": "8000000000000000",
+            "outcome": "8000000000000000"
+          },
+          {
+            "edge": "nan_payload",
+            "input_bits": "7ff8000000000001",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "positive_infinity",
+            "input_bits": "7ff0000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "negative_infinity",
+            "input_bits": "fff0000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "positive_subnormal",
+            "input_bits": "0000000000000001",
+            "outcome": "0000000000000001"
+          },
+          {
+            "edge": "negative_subnormal",
+            "input_bits": "8000000000000001",
+            "outcome": "8000000000000001"
+          },
+          {
+            "edge": "small",
+            "input_bits": "01a56e1fc2f8f359",
+            "outcome": "01a56e1fc2f8f359"
+          },
+          {
+            "edge": "large",
+            "input_bits": "6974e718d7d7625a",
+            "outcome": "426d1a94a2000000"
+          },
+          {
+            "edge": "near_max",
+            "input_bits": "7fe1ccf385ebc8a0",
+            "outcome": "426d1a94a2000000"
+          },
+          {
+            "edge": "negative_one",
+            "input_bits": "bff0000000000000",
+            "outcome": "bff0000000000000"
+          },
+          {
+            "edge": "half",
+            "input_bits": "3fe0000000000000",
+            "outcome": "3fe0000000000000"
+          }
+        ],
+        "program_hex": "464d4b50524700010001001000000000000000686973746f726963616c5f7661725f300200",
+        "tag": 0
+      },
+      {
+        "empty_row": "8000000000000000",
+        "name": "RowMean",
+        "outcomes": [
+          {
+            "edge": "positive_zero",
+            "input_bits": "0000000000000000",
+            "outcome": "3fd5555555555555"
+          },
+          {
+            "edge": "negative_zero",
+            "input_bits": "8000000000000000",
+            "outcome": "3fd5555555555555"
+          },
+          {
+            "edge": "nan_payload",
+            "input_bits": "7ff8000000000001",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "positive_infinity",
+            "input_bits": "7ff0000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "negative_infinity",
+            "input_bits": "fff0000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "positive_subnormal",
+            "input_bits": "0000000000000001",
+            "outcome": "3fd5555555555555"
+          },
+          {
+            "edge": "negative_subnormal",
+            "input_bits": "8000000000000001",
+            "outcome": "3fd5555555555555"
+          },
+          {
+            "edge": "small",
+            "input_bits": "01a56e1fc2f8f359",
+            "outcome": "3fd5555555555555"
+          },
+          {
+            "edge": "large",
+            "input_bits": "6974e718d7d7625a",
+            "outcome": "426d1a94a2000000"
+          },
+          {
+            "edge": "near_max",
+            "input_bits": "7fe1ccf385ebc8a0",
+            "outcome": "426d1a94a2000000"
+          },
+          {
+            "edge": "negative_one",
+            "input_bits": "bff0000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "half",
+            "input_bits": "3fe0000000000000",
+            "outcome": "3fe0000000000000"
+          }
+        ],
+        "program_hex": "464d4b50524700010001001000000000000000686973746f726963616c5f7661725f310201",
+        "tag": 1
+      },
+      {
+        "empty_row": "8000000000000000",
+        "name": "RowSum",
+        "outcomes": [
+          {
+            "edge": "positive_zero",
+            "input_bits": "0000000000000000",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "negative_zero",
+            "input_bits": "8000000000000000",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "nan_payload",
+            "input_bits": "7ff8000000000001",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "positive_infinity",
+            "input_bits": "7ff0000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "negative_infinity",
+            "input_bits": "fff0000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "positive_subnormal",
+            "input_bits": "0000000000000001",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "negative_subnormal",
+            "input_bits": "8000000000000001",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "small",
+            "input_bits": "01a56e1fc2f8f359",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "large",
+            "input_bits": "6974e718d7d7625a",
+            "outcome": "426d1a94a2000000"
+          },
+          {
+            "edge": "near_max",
+            "input_bits": "7fe1ccf385ebc8a0",
+            "outcome": "426d1a94a2000000"
+          },
+          {
+            "edge": "negative_one",
+            "input_bits": "bff0000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "half",
+            "input_bits": "3fe0000000000000",
+            "outcome": "3ff8000000000000"
+          }
+        ],
+        "program_hex": "464d4b50524700010001001000000000000000686973746f726963616c5f7661725f320202",
+        "tag": 2
+      },
+      {
+        "empty_row": "8000000000000000",
+        "name": "RowL1",
+        "outcomes": [
+          {
+            "edge": "positive_zero",
+            "input_bits": "0000000000000000",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "negative_zero",
+            "input_bits": "8000000000000000",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "nan_payload",
+            "input_bits": "7ff8000000000001",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "positive_infinity",
+            "input_bits": "7ff0000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "negative_infinity",
+            "input_bits": "fff0000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "positive_subnormal",
+            "input_bits": "0000000000000001",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "negative_subnormal",
+            "input_bits": "8000000000000001",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "small",
+            "input_bits": "01a56e1fc2f8f359",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "large",
+            "input_bits": "6974e718d7d7625a",
+            "outcome": "426d1a94a2000000"
+          },
+          {
+            "edge": "near_max",
+            "input_bits": "7fe1ccf385ebc8a0",
+            "outcome": "426d1a94a2000000"
+          },
+          {
+            "edge": "negative_one",
+            "input_bits": "bff0000000000000",
+            "outcome": "4000000000000000"
+          },
+          {
+            "edge": "half",
+            "input_bits": "3fe0000000000000",
+            "outcome": "3ff8000000000000"
+          }
+        ],
+        "program_hex": "464d4b50524700010001001000000000000000686973746f726963616c5f7661725f330203",
+        "tag": 3
+      },
+      {
+        "empty_row": "8000000000000000",
+        "name": "RowL2",
+        "outcomes": [
+          {
+            "edge": "positive_zero",
+            "input_bits": "0000000000000000",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "negative_zero",
+            "input_bits": "8000000000000000",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "nan_payload",
+            "input_bits": "7ff8000000000001",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "positive_infinity",
+            "input_bits": "7ff0000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "negative_infinity",
+            "input_bits": "fff0000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "positive_subnormal",
+            "input_bits": "0000000000000001",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "negative_subnormal",
+            "input_bits": "8000000000000001",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "small",
+            "input_bits": "01a56e1fc2f8f359",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "large",
+            "input_bits": "6974e718d7d7625a",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "near_max",
+            "input_bits": "7fe1ccf385ebc8a0",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "negative_one",
+            "input_bits": "bff0000000000000",
+            "outcome": "3ff6a09e667f3bcd"
+          },
+          {
+            "edge": "half",
+            "input_bits": "3fe0000000000000",
+            "outcome": "3ff1e3779b97f4a8"
+          }
+        ],
+        "program_hex": "464d4b50524700010001001000000000000000686973746f726963616c5f7661725f340204",
+        "tag": 4
+      },
+      {
+        "empty_row": "0000000000000000",
+        "name": "RowMin",
+        "outcomes": [
+          {
+            "edge": "positive_zero",
+            "input_bits": "0000000000000000",
+            "outcome": "8000000000000000"
+          },
+          {
+            "edge": "negative_zero",
+            "input_bits": "8000000000000000",
+            "outcome": "8000000000000000"
+          },
+          {
+            "edge": "nan_payload",
+            "input_bits": "7ff8000000000001",
+            "outcome": "8000000000000000"
+          },
+          {
+            "edge": "positive_infinity",
+            "input_bits": "7ff0000000000000",
+            "outcome": "8000000000000000"
+          },
+          {
+            "edge": "negative_infinity",
+            "input_bits": "fff0000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "positive_subnormal",
+            "input_bits": "0000000000000001",
+            "outcome": "8000000000000000"
+          },
+          {
+            "edge": "negative_subnormal",
+            "input_bits": "8000000000000001",
+            "outcome": "8000000000000001"
+          },
+          {
+            "edge": "small",
+            "input_bits": "01a56e1fc2f8f359",
+            "outcome": "8000000000000000"
+          },
+          {
+            "edge": "large",
+            "input_bits": "6974e718d7d7625a",
+            "outcome": "8000000000000000"
+          },
+          {
+            "edge": "near_max",
+            "input_bits": "7fe1ccf385ebc8a0",
+            "outcome": "8000000000000000"
+          },
+          {
+            "edge": "negative_one",
+            "input_bits": "bff0000000000000",
+            "outcome": "bff0000000000000"
+          },
+          {
+            "edge": "half",
+            "input_bits": "3fe0000000000000",
+            "outcome": "8000000000000000"
+          }
+        ],
+        "program_hex": "464d4b50524700010001001000000000000000686973746f726963616c5f7661725f350205",
+        "tag": 5
+      },
+      {
+        "empty_row": "0000000000000000",
+        "name": "RowMax",
+        "outcomes": [
+          {
+            "edge": "positive_zero",
+            "input_bits": "0000000000000000",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "negative_zero",
+            "input_bits": "8000000000000000",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "nan_payload",
+            "input_bits": "7ff8000000000001",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "positive_infinity",
+            "input_bits": "7ff0000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "negative_infinity",
+            "input_bits": "fff0000000000000",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "positive_subnormal",
+            "input_bits": "0000000000000001",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "negative_subnormal",
+            "input_bits": "8000000000000001",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "small",
+            "input_bits": "01a56e1fc2f8f359",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "large",
+            "input_bits": "6974e718d7d7625a",
+            "outcome": "426d1a94a2000000"
+          },
+          {
+            "edge": "near_max",
+            "input_bits": "7fe1ccf385ebc8a0",
+            "outcome": "426d1a94a2000000"
+          },
+          {
+            "edge": "negative_one",
+            "input_bits": "bff0000000000000",
+            "outcome": "3ff0000000000000"
+          },
+          {
+            "edge": "half",
+            "input_bits": "3fe0000000000000",
+            "outcome": "3ff0000000000000"
+          }
+        ],
+        "program_hex": "464d4b50524700010001001000000000000000686973746f726963616c5f7661725f360206",
+        "tag": 6
+      },
+      {
+        "empty_row": "8000000000000000",
+        "name": "RowStd",
+        "outcomes": [
+          {
+            "edge": "positive_zero",
+            "input_bits": "0000000000000000",
+            "outcome": "3fde2b7dddfefa66"
+          },
+          {
+            "edge": "negative_zero",
+            "input_bits": "8000000000000000",
+            "outcome": "3fde2b7dddfefa66"
+          },
+          {
+            "edge": "nan_payload",
+            "input_bits": "7ff8000000000001",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "positive_infinity",
+            "input_bits": "7ff0000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "negative_infinity",
+            "input_bits": "fff0000000000000",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "positive_subnormal",
+            "input_bits": "0000000000000001",
+            "outcome": "3fde2b7dddfefa66"
+          },
+          {
+            "edge": "negative_subnormal",
+            "input_bits": "8000000000000001",
+            "outcome": "3fde2b7dddfefa66"
+          },
+          {
+            "edge": "small",
+            "input_bits": "01a56e1fc2f8f359",
+            "outcome": "3fde2b7dddfefa66"
+          },
+          {
+            "edge": "large",
+            "input_bits": "6974e718d7d7625a",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "near_max",
+            "input_bits": "7fe1ccf385ebc8a0",
+            "outcome": "0000000000000000"
+          },
+          {
+            "edge": "negative_one",
+            "input_bits": "bff0000000000000",
+            "outcome": "3fea20bd700c2c3e"
+          },
+          {
+            "edge": "half",
+            "input_bits": "3fe0000000000000",
+            "outcome": "3fda20bd700c2c3e"
+          }
+        ],
+        "program_hex": "464d4b50524700010001001000000000000000686973746f726963616c5f7661725f370207",
+        "tag": 7
+      }
+    ]
+  },
+  "negative_cases": {
+    "future_envelope": "Syntax(\"program codec version\")",
+    "future_variant": "Unsupported(\"program version\")",
+    "roll_zero_width": "panic"
+  },
+  "registry": [
+    {
+      "evidence": {
+        "kind": "fitted_existing",
+        "name": "target_rank_gauss",
+        "prediction_bits": "c0048c67fc6d91fd bfcbb4817c2b9b9e 4004e9304e74246d 400574ee3b138869 c004f6d24f35f31f bfe7d3f51a40c42f bfe72d6f2da99623 c005007e803ae222 bfe7aa804da4f9ab 400e62472798da03 3ff3a2d9dfd1449f c0034e2e54aafb79 3ff6087860a1a4ef bff7dd5972790a79 bfd97f72e2003230 c00f15dc23ec22da",
+        "program_hex": "464d4b5052470001000002000000000000000600000000000000746172676574010000000000000004000000000000006b696e64030a0000000000000072616e6b5f6761757373050000000000000072696467650000000000000000"
+      },
+      "executable": true,
+      "generatable": false,
+      "id": 0,
+      "name": "target",
+      "parseable": true,
+      "quarantined": false,
+      "semantic_key": "target"
+    },
+    {
+      "evidence": {
+        "error": "Unsupported(\"bag\")",
+        "kind": "quarantined_refusal",
+        "parse": "58"
+      },
+      "executable": false,
+      "generatable": false,
+      "id": 1,
+      "name": "bag",
+      "parseable": true,
+      "quarantined": true,
+      "semantic_key": "bag"
+    },
+    {
+      "evidence": {
+        "kind": "fitted_existing",
+        "name": "expansion_impute",
+        "prediction_bits": "c002970c3544b6da bfa8fbf27510d18c 4003b12fd5f43546 4004acbc59a4fa0e c00445904631c0ee bfe8feb53de898db bfe483726371b563 c00372dcafd016db bfe5d5450448010e 400e3d8fd556b499 3ff1a90f4b5d3b43 bfff3bf34a807c63 3ff3bf987354b851 bff6ac85df757817 bfcc8a3ce11aa12b c010f2b6f94c6333",
+        "program_hex": "464d4b5052470001000003000000000000000600000000000000696d7075746502000000000000000d000000000000006164645f696e64696361746f720201080000000000000073747261746567790306000000000000006d656469616e0b000000000000007374616e64617264697a650000000000000000050000000000000072696467650000000000000000"
+      },
+      "executable": true,
+      "generatable": true,
+      "id": 2,
+      "name": "standardize",
+      "parseable": true,
+      "quarantined": false,
+      "semantic_key": "standardize"
+    },
+    {
+      "evidence": {
+        "kind": "alias_case"
+      },
+      "executable": true,
+      "generatable": false,
+      "id": 3,
+      "name": "norm_features",
+      "parseable": true,
+      "quarantined": false,
+      "semantic_key": "standardize"
+    },
+    {
+      "evidence": {
+        "kind": "fitted_existing",
+        "name": "champion",
+        "prediction_bits": "bff78392df534f82 bfcab0f5e3ffbb8c 3ff759662aec2036 3ff759662aec2036 bffcbec88fb58c90 bff2269291ea298a bff2269291ea298a bff78392df534f82 bfe52f2ae1287652 3ff759662aec2036 3ff759662aec2036 bfecdccd2c2c7398 3ff3dd99b3fb1727 bfecdccd2c2c7398 bfcab0f5e3ffbb8c bffcbec88fb58c90",
+        "program_hex": "464d4b5052470001000007000000000000000b0000000000000077696e736f725f636c697002000000000000000600000000000000617070656e640201010000000000000071019a9999999999b93f04000000000000006368656202000000000000000600000000000000617070656e64020106000000000000006465677265650006000000000000000c00000000000000726f627573745f7363616c6500000000000000000c00000000000000726f627573745f7363616c6500000000000000000d00000000000000706f6c795f696e74657261637401000000000000000600000000000000617070656e6402010d000000000000007175616e74696c655f62696e730100000000000000040000000000000062696e7300100000000000000007000000000000006869737467626d03000000000000000500000000000000646570746800050000000000000002000000000000006c7201333333333333c33f0600000000000000726f756e6473009600000000000000"
+      },
+      "executable": true,
+      "generatable": true,
+      "id": 4,
+      "name": "robust_scale",
+      "parseable": true,
+      "quarantined": false,
+      "semantic_key": "robust_scale"
+    },
+    {
+      "evidence": {
+        "kind": "fitted_existing",
+        "name": "ip_scrub_pipeline_01",
+        "prediction_bits": "c0043c2397f5fc88 bfe9625de82cdd2d 3ffb85b90b57fdfd 400c0b467a77df42 c0016d0c6fd719a6 bff75e6bdc90810b bfe7aa91810570a7 c006ffc4f4f07478 bfd460c45472928e 400e89e5e79f459a bf9827b6b8806210 c00862293b0f58c6 3ffa6674e84bafdb c005c15e2e1ef5a2 bff4f64c1837aea8 c00a8741f49a47da",
+        "program_hex": "464d4b5052470001000006000000000000000b000000000000007374616e64617264697a650000000000000000040000000000000072616e6b00000000000000000400000000000000626c6f6d00000000000000000d000000000000007175616e74696c655f62696e7300000000000000000a0000000000000062696e5f6f6e65686f740100000000000000040000000000000062696e73000300000000000000050000000000000072696467650000000000000000"
+      },
+      "executable": true,
+      "generatable": true,
+      "id": 5,
+      "name": "rank",
+      "parseable": true,
+      "quarantined": false,
+      "semantic_key": "rank"
+    },
+    {
+      "evidence": {
+        "kind": "fitted_existing",
+        "name": "ip_scrub_pipeline_01",
+        "prediction_bits": "c0043c2397f5fc88 bfe9625de82cdd2d 3ffb85b90b57fdfd 400c0b467a77df42 c0016d0c6fd719a6 bff75e6bdc90810b bfe7aa91810570a7 c006ffc4f4f07478 bfd460c45472928e 400e89e5e79f459a bf9827b6b8806210 c00862293b0f58c6 3ffa6674e84bafdb c005c15e2e1ef5a2 bff4f64c1837aea8 c00a8741f49a47da",
+        "program_hex": "464d4b5052470001000006000000000000000b000000000000007374616e64617264697a650000000000000000040000000000000072616e6b00000000000000000400000000000000626c6f6d00000000000000000d000000000000007175616e74696c655f62696e7300000000000000000a0000000000000062696e5f6f6e65686f740100000000000000040000000000000062696e73000300000000000000050000000000000072696467650000000000000000"
+      },
+      "executable": true,
+      "generatable": true,
+      "id": 6,
+      "name": "blom",
+      "parseable": true,
+      "quarantined": false,
+      "semantic_key": "blom"
+    },
+    {
+      "evidence": {
+        "kind": "fitted_existing",
+        "name": "champion",
+        "prediction_bits": "bff78392df534f82 bfcab0f5e3ffbb8c 3ff759662aec2036 3ff759662aec2036 bffcbec88fb58c90 bff2269291ea298a bff2269291ea298a bff78392df534f82 bfe52f2ae1287652 3ff759662aec2036 3ff759662aec2036 bfecdccd2c2c7398 3ff3dd99b3fb1727 bfecdccd2c2c7398 bfcab0f5e3ffbb8c bffcbec88fb58c90",
+        "program_hex": "464d4b5052470001000007000000000000000b0000000000000077696e736f725f636c697002000000000000000600000000000000617070656e640201010000000000000071019a9999999999b93f04000000000000006368656202000000000000000600000000000000617070656e64020106000000000000006465677265650006000000000000000c00000000000000726f627573745f7363616c6500000000000000000c00000000000000726f627573745f7363616c6500000000000000000d00000000000000706f6c795f696e74657261637401000000000000000600000000000000617070656e6402010d000000000000007175616e74696c655f62696e730100000000000000040000000000000062696e7300100000000000000007000000000000006869737467626d03000000000000000500000000000000646570746800050000000000000002000000000000006c7201333333333333c33f0600000000000000726f756e6473009600000000000000"
+      },
+      "executable": true,
+      "generatable": true,
+      "id": 7,
+      "name": "quantile_bins",
+      "parseable": true,
+      "quarantined": false,
+      "semantic_key": "quantile_bins"
+    },
+    {
+      "evidence": {
+        "kind": "fitted_existing",
+        "name": "ip_scrub_pipeline_01",
+        "prediction_bits": "c0043c2397f5fc88 bfe9625de82cdd2d 3ffb85b90b57fdfd 400c0b467a77df42 c0016d0c6fd719a6 bff75e6bdc90810b bfe7aa91810570a7 c006ffc4f4f07478 bfd460c45472928e 400e89e5e79f459a bf9827b6b8806210 c00862293b0f58c6 3ffa6674e84bafdb c005c15e2e1ef5a2 bff4f64c1837aea8 c00a8741f49a47da",
+        "program_hex": "464d4b5052470001000006000000000000000b000000000000007374616e64617264697a650000000000000000040000000000000072616e6b00000000000000000400000000000000626c6f6d00000000000000000d000000000000007175616e74696c655f62696e7300000000000000000a0000000000000062696e5f6f6e65686f740100000000000000040000000000000062696e73000300000000000000050000000000000072696467650000000000000000"
+      },
+      "executable": true,
+      "generatable": true,
+      "id": 8,
+      "name": "bin_onehot",
+      "parseable": true,
+      "quarantined": false,
+      "semantic_key": "bin_onehot"
+    },
+    {
+      "evidence": {
+        "kind": "fitted_existing",
+        "name": "ip_scrub_pipeline_02",
+        "prediction_bits": "c00ad5416be555c5 3fd4ddcf72c393ba 40042d3881db2989 400b1095957bd84c c0034cffe0fa5083 bffc0d3222769fda bff13b1b948b7985 bffe2ddce86ab5ea 3fe0a501fe428f90 40110bec6df1d4b0 3fe5dcbfab49d05f bfe5f1d67a8f7129 40025e5c603dff66 3fecde2b05ce3c8d bffcb3a7b0da959f c00c2752f38a50c1",
+        "program_hex": "464d4b505247000100000500000000000000050000000000000068696e676500000000000000000b0000000000000077696e736f725f636c6970000000000000000004000000000000006368656200000000000000000d00000000000000706f6c795f696e74657261637401000000000000000600000000000000617070656e6402010a00000000000000656c61737469636e65740000000000000000"
+      },
+      "executable": true,
+      "generatable": true,
+      "id": 9,
+      "name": "hinge",
+      "parseable": true,
+      "quarantined": false,
+      "semantic_key": "hinge"
+    },
+    {
+      "evidence": {
+        "kind": "fitted_existing",
+        "name": "champion",
+        "prediction_bits": "bff78392df534f82 bfcab0f5e3ffbb8c 3ff759662aec2036 3ff759662aec2036 bffcbec88fb58c90 bff2269291ea298a bff2269291ea298a bff78392df534f82 bfe52f2ae1287652 3ff759662aec2036 3ff759662aec2036 bfecdccd2c2c7398 3ff3dd99b3fb1727 bfecdccd2c2c7398 bfcab0f5e3ffbb8c bffcbec88fb58c90",
+        "program_hex": "464d4b5052470001000007000000000000000b0000000000000077696e736f725f636c697002000000000000000600000000000000617070656e640201010000000000000071019a9999999999b93f04000000000000006368656202000000000000000600000000000000617070656e64020106000000000000006465677265650006000000000000000c00000000000000726f627573745f7363616c6500000000000000000c00000000000000726f627573745f7363616c6500000000000000000d00000000000000706f6c795f696e74657261637401000000000000000600000000000000617070656e6402010d000000000000007175616e74696c655f62696e730100000000000000040000000000000062696e7300100000000000000007000000000000006869737467626d03000000000000000500000000000000646570746800050000000000000002000000000000006c7201333333333333c33f0600000000000000726f756e6473009600000000000000"
+      },
+      "executable": true,
+      "generatable": true,
+      "id": 10,
+      "name": "winsor_clip",
+      "parseable": true,
+      "quarantined": false,
+      "semantic_key": "winsor_clip"
+    },
+    {
+      "evidence": {
+        "kind": "alias_case"
+      },
+      "executable": true,
+      "generatable": false,
+      "id": 11,
+      "name": "winsor_moments",
+      "parseable": true,
+      "quarantined": false,
+      "semantic_key": "winsor_clip"
+    },
+    {
+      "evidence": {
+        "kind": "fitted_existing",
+        "name": "champion",
+        "prediction_bits": "bff78392df534f82 bfcab0f5e3ffbb8c 3ff759662aec2036 3ff759662aec2036 bffcbec88fb58c90 bff2269291ea298a bff2269291ea298a bff78392df534f82 bfe52f2ae1287652 3ff759662aec2036 3ff759662aec2036 bfecdccd2c2c7398 3ff3dd99b3fb1727 bfecdccd2c2c7398 bfcab0f5e3ffbb8c bffcbec88fb58c90",
+        "program_hex": "464d4b5052470001000007000000000000000b0000000000000077696e736f725f636c697002000000000000000600000000000000617070656e640201010000000000000071019a9999999999b93f04000000000000006368656202000000000000000600000000000000617070656e64020106000000000000006465677265650006000000000000000c00000000000000726f627573745f7363616c6500000000000000000c00000000000000726f627573745f7363616c6500000000000000000d00000000000000706f6c795f696e74657261637401000000000000000600000000000000617070656e6402010d000000000000007175616e74696c655f62696e730100000000000000040000000000000062696e7300100000000000000007000000000000006869737467626d03000000000000000500000000000000646570746800050000000000000002000000000000006c7201333333333333c33f0600000000000000726f756e6473009600000000000000"
+      },
+      "executable": true,
+      "generatable": true,
+      "id": 12,
+      "name": "cheb",
+      "parseable": true,
+      "quarantined": false,
+      "semantic_key": "cheb"
+    },
+    {
+      "evidence": {
+        "kind": "fitted_existing",
+        "name": "champion",
+        "prediction_bits": "bff78392df534f82 bfcab0f5e3ffbb8c 3ff759662aec2036 3ff759662aec2036 bffcbec88fb58c90 bff2269291ea298a bff2269291ea298a bff78392df534f82 bfe52f2ae1287652 3ff759662aec2036 3ff759662aec2036 bfecdccd2c2c7398 3ff3dd99b3fb1727 bfecdccd2c2c7398 bfcab0f5e3ffbb8c bffcbec88fb58c90",
+        "program_hex": "464d4b5052470001000007000000000000000b0000000000000077696e736f725f636c697002000000000000000600000000000000617070656e640201010000000000000071019a9999999999b93f04000000000000006368656202000000000000000600000000000000617070656e64020106000000000000006465677265650006000000000000000c00000000000000726f627573745f7363616c6500000000000000000c00000000000000726f627573745f7363616c6500000000000000000d00000000000000706f6c795f696e74657261637401000000000000000600000000000000617070656e6402010d000000000000007175616e74696c655f62696e730100000000000000040000000000000062696e7300100000000000000007000000000000006869737467626d03000000000000000500000000000000646570746800050000000000000002000000000000006c7201333333333333c33f0600000000000000726f756e6473009600000000000000"
+      },
+      "executable": true,
+      "generatable": true,
+      "id": 13,
+      "name": "poly_interact",
+      "parseable": true,
+      "quarantined": false,
+      "semantic_key": "poly_interact"
+    },
+    {
+      "evidence": {
+        "kind": "fitted_existing",
+        "name": "recipe_random_features",
+        "prediction_bits": "bfe2e9f94b331476 3f9ebd07b9837dc8 3fd4dae54e27c43c bfd5763539161830 bfe32b4e46f04642 3fc14b5989b842de bfe2a5113d6dc76a 3fd35c24ced15e19 bfe30063841482ae bfe41295de75943c bfe2155e6dd11f33 bfb153095c6adbc2 3fcdf67e0fd73ada bfd2ea760c13961e bfc7d2b160e5ae3c bf9608f0358cb320",
+        "program_hex": "464d4b50524700010000050000000000000007000000000000007266665f636f73010000000000000001000000000000006e00080000000000000007000000000000007266665f73696e010000000000000001000000000000006e000800000000000000090000000000000072616e645f70726f6a010000000000000001000000000000006b0004000000000000000d000000000000006c616e646d61726b5f64697374010000000000000001000000000000006b000400000000000000050000000000000072696467650000000000000000"
+      },
+      "executable": true,
+      "generatable": true,
+      "id": 14,
+      "name": "rff_cos",
+      "parseable": true,
+      "quarantined": false,
+      "semantic_key": "rff_cos"
+    },
+    {
+      "evidence": {
+        "kind": "fitted_existing",
+        "name": "recipe_random_features",
+        "prediction_bits": "bfe2e9f94b331476 3f9ebd07b9837dc8 3fd4dae54e27c43c bfd5763539161830 bfe32b4e46f04642 3fc14b5989b842de bfe2a5113d6dc76a 3fd35c24ced15e19 bfe30063841482ae bfe41295de75943c bfe2155e6dd11f33 bfb153095c6adbc2 3fcdf67e0fd73ada bfd2ea760c13961e bfc7d2b160e5ae3c bf9608f0358cb320",
+        "program_hex": "464d4b50524700010000050000000000000007000000000000007266665f636f73010000000000000001000000000000006e00080000000000000007000000000000007266665f73696e010000000000000001000000000000006e000800000000000000090000000000000072616e645f70726f6a010000000000000001000000000000006b0004000000000000000d000000000000006c616e646d61726b5f64697374010000000000000001000000000000006b000400000000000000050000000000000072696467650000000000000000"
+      },
+      "executable": true,
+      "generatable": true,
+      "id": 15,
+      "name": "rff_sin",
+      "parseable": true,
+      "quarantined": false,
+      "semantic_key": "rff_sin"
+    },
+    {
+      "evidence": {
+        "kind": "fitted_existing",
+        "name": "recipe_random_features",
+        "prediction_bits": "bfe2e9f94b331476 3f9ebd07b9837dc8 3fd4dae54e27c43c bfd5763539161830 bfe32b4e46f04642 3fc14b5989b842de bfe2a5113d6dc76a 3fd35c24ced15e19 bfe30063841482ae bfe41295de75943c bfe2155e6dd11f33 bfb153095c6adbc2 3fcdf67e0fd73ada bfd2ea760c13961e bfc7d2b160e5ae3c bf9608f0358cb320",
+        "program_hex": "464d4b50524700010000050000000000000007000000000000007266665f636f73010000000000000001000000000000006e00080000000000000007000000000000007266665f73696e010000000000000001000000000000006e000800000000000000090000000000000072616e645f70726f6a010000000000000001000000000000006b0004000000000000000d000000000000006c616e646d61726b5f64697374010000000000000001000000000000006b000400000000000000050000000000000072696467650000000000000000"
+      },
+      "executable": true,
+      "generatable": true,
+      "id": 16,
+      "name": "rand_proj",
+      "parseable": true,
+      "quarantined": false,
+      "semantic_key": "rand_proj"
+    },
+    {
+      "evidence": {
+        "kind": "fitted_existing",
+        "name": "recipe_random_features",
+        "prediction_bits": "bfe2e9f94b331476 3f9ebd07b9837dc8 3fd4dae54e27c43c bfd5763539161830 bfe32b4e46f04642 3fc14b5989b842de bfe2a5113d6dc76a 3fd35c24ced15e19 bfe30063841482ae bfe41295de75943c bfe2155e6dd11f33 bfb153095c6adbc2 3fcdf67e0fd73ada bfd2ea760c13961e bfc7d2b160e5ae3c bf9608f0358cb320",
+        "program_hex": "464d4b50524700010000050000000000000007000000000000007266665f636f73010000000000000001000000000000006e00080000000000000007000000000000007266665f73696e010000000000000001000000000000006e000800000000000000090000000000000072616e645f70726f6a010000000000000001000000000000006b0004000000000000000d000000000000006c616e646d61726b5f64697374010000000000000001000000000000006b000400000000000000050000000000000072696467650000000000000000"
+      },
+      "executable": true,
+      "generatable": true,
+      "id": 17,
+      "name": "landmark_dist",
+      "parseable": true,
+      "quarantined": false,
+      "semantic_key": "landmark_dist"
+    },
+    {
+      "evidence": {
+        "kind": "fitted_existing",
+        "name": "recipe_row_features",
+        "prediction_bits": "bff0c99fda9623f5 bff65075e21f212d bffdebeb11a5f346 3fcf53ad0e09e328 bfc498a38c0a681d 3fdf822a33059b79 bfc8fd25e5692ed2 bff0e8370585a2f7 bfe3b173c7da3404 bff329dbe69175ec bfe03eda801bcf03 3ff1e073499ce08a 3fd730d12213fe76 bfe9366e2cbfc51e bfb14f1d4d61c000 bfe9366e2cbfc51e",
+        "program_hex": "464d4b5052470001000006000000000000000d000000000000006f626c697175655f68696e6765010000000000000001000000000000006e0004000000000000000900000000000000726f775f737461747300000000000000000900000000000000706169725f70726f64000000000000000011000000000000007461726765745f62696e5f656e636f6465000000000000000007000000000000007369676d6f69640000000000000000050000000000000072696467650000000000000000"
+      },
+      "executable": true,
+      "generatable": true,
+      "id": 18,
+      "name": "oblique_hinge",
+      "parseable": true,
+      "quarantined": false,
+      "semantic_key": "oblique_hinge"
+    },
+    {
+      "evidence": {
+        "kind": "fitted_existing",
+        "name": "recipe_row_features",
+        "prediction_bits": "bff0c99fda9623f5 bff65075e21f212d bffdebeb11a5f346 3fcf53ad0e09e328 bfc498a38c0a681d 3fdf822a33059b79 bfc8fd25e5692ed2 bff0e8370585a2f7 bfe3b173c7da3404 bff329dbe69175ec bfe03eda801bcf03 3ff1e073499ce08a 3fd730d12213fe76 bfe9366e2cbfc51e bfb14f1d4d61c000 bfe9366e2cbfc51e",
+        "program_hex": "464d4b5052470001000006000000000000000d000000000000006f626c697175655f68696e6765010000000000000001000000000000006e0004000000000000000900000000000000726f775f737461747300000000000000000900000000000000706169725f70726f64000000000000000011000000000000007461726765745f62696e5f656e636f6465000000000000000007000000000000007369676d6f69640000000000000000050000000000000072696467650000000000000000"
+      },
+      "executable": true,
+      "generatable": true,
+      "id": 19,
+      "name": "row_stats",
+      "parseable": true,
+      "quarantined": false,
+      "semantic_key": "row_stats"
+    },
+    {
+      "evidence": {
+        "kind": "fitted_existing",
+        "name": "recipe_row_features",
+        "prediction_bits": "bff0c99fda9623f5 bff65075e21f212d bffdebeb11a5f346 3fcf53ad0e09e328 bfc498a38c0a681d 3fdf822a33059b79 bfc8fd25e5692ed2 bff0e8370585a2f7 bfe3b173c7da3404 bff329dbe69175ec bfe03eda801bcf03 3ff1e073499ce08a 3fd730d12213fe76 bfe9366e2cbfc51e bfb14f1d4d61c000 bfe9366e2cbfc51e",
+        "program_hex": "464d4b5052470001000006000000000000000d000000000000006f626c697175655f68696e6765010000000000000001000000000000006e0004000000000000000900000000000000726f775f737461747300000000000000000900000000000000706169725f70726f64000000000000000011000000000000007461726765745f62696e5f656e636f6465000000000000000007000000000000007369676d6f69640000000000000000050000000000000072696467650000000000000000"
+      },
+      "executable": true,
+      "generatable": true,
+      "id": 20,
+      "name": "pair_prod",
+      "parseable": true,
+      "quarantined": false,
+      "semantic_key": "pair_prod"
+    },
+    {
+      "evidence": {
+        "kind": "fitted_existing",
+        "name": "recipe_row_features",
+        "prediction_bits": "bff0c99fda9623f5 bff65075e21f212d bffdebeb11a5f346 3fcf53ad0e09e328 bfc498a38c0a681d 3fdf822a33059b79 bfc8fd25e5692ed2 bff0e8370585a2f7 bfe3b173c7da3404 bff329dbe69175ec bfe03eda801bcf03 3ff1e073499ce08a 3fd730d12213fe76 bfe9366e2cbfc51e bfb14f1d4d61c000 bfe9366e2cbfc51e",
+        "program_hex": "464d4b5052470001000006000000000000000d000000000000006f626c697175655f68696e6765010000000000000001000000000000006e0004000000000000000900000000000000726f775f737461747300000000000000000900000000000000706169725f70726f64000000000000000011000000000000007461726765745f62696e5f656e636f6465000000000000000007000000000000007369676d6f69640000000000000000050000000000000072696467650000000000000000"
+      },
+      "executable": true,
+      "generatable": true,
+      "id": 21,
+      "name": "target_bin_encode",
+      "parseable": true,
+      "quarantined": false,
+      "semantic_key": "target_bin_encode"
+    },
+    {
+      "evidence": {
+        "kind": "fitted_existing",
+        "name": "recipe_row_features",
+        "prediction_bits": "bff0c99fda9623f5 bff65075e21f212d bffdebeb11a5f346 3fcf53ad0e09e328 bfc498a38c0a681d 3fdf822a33059b79 bfc8fd25e5692ed2 bff0e8370585a2f7 bfe3b173c7da3404 bff329dbe69175ec bfe03eda801bcf03 3ff1e073499ce08a 3fd730d12213fe76 bfe9366e2cbfc51e bfb14f1d4d61c000 bfe9366e2cbfc51e",
+        "program_hex": "464d4b5052470001000006000000000000000d000000000000006f626c697175655f68696e6765010000000000000001000000000000006e0004000000000000000900000000000000726f775f737461747300000000000000000900000000000000706169725f70726f64000000000000000011000000000000007461726765745f62696e5f656e636f6465000000000000000007000000000000007369676d6f69640000000000000000050000000000000072696467650000000000000000"
+      },
+      "executable": true,
+      "generatable": true,
+      "id": 22,
+      "name": "sigmoid",
+      "parseable": true,
+      "quarantined": false,
+      "semantic_key": "sigmoid"
+    },
+    {
+      "evidence": {
+        "kind": "fitted_existing",
+        "name": "recipe_indicator_features",
+        "prediction_bits": "bff33a887d3efafc 3ffa0f0770bbf480 4003d031973913d6 40063ef4dd662f04 bff8f83001b41756 bff47895111e534a c00129eb6072f70c bff2b55957b08d58 bfe586b4786464ae 40072a8efef45591 3ff934b48039f372 c0023e19960a0f46 4001bc9f3a3bc777 bfe83161df460a24 3ff41a860c137e66 bff759ab555007b2",
+        "program_hex": "464d4b50524700010000040000000000000004000000000000007374657002000000000000000600000000000000617070656e64020101000000000000007401000000000000e03f08000000000000006e6f726d5f726f7700000000000000000e00000000000000726f775f646966665f737461747300000000000000000a00000000000000656c61737469636e65740000000000000000"
+      },
+      "executable": true,
+      "generatable": true,
+      "id": 23,
+      "name": "step",
+      "parseable": true,
+      "quarantined": false,
+      "semantic_key": "step"
+    },
+    {
+      "evidence": {
+        "kind": "fitted_existing",
+        "name": "recipe_indicator_features",
+        "prediction_bits": "bff33a887d3efafc 3ffa0f0770bbf480 4003d031973913d6 40063ef4dd662f04 bff8f83001b41756 bff47895111e534a c00129eb6072f70c bff2b55957b08d58 bfe586b4786464ae 40072a8efef45591 3ff934b48039f372 c0023e19960a0f46 4001bc9f3a3bc777 bfe83161df460a24 3ff41a860c137e66 bff759ab555007b2",
+        "program_hex": "464d4b50524700010000040000000000000004000000000000007374657002000000000000000600000000000000617070656e64020101000000000000007401000000000000e03f08000000000000006e6f726d5f726f7700000000000000000e00000000000000726f775f646966665f737461747300000000000000000a00000000000000656c61737469636e65740000000000000000"
+      },
+      "executable": true,
+      "generatable": false,
+      "id": 24,
+      "name": "norm_row",
+      "parseable": true,
+      "quarantined": false,
+      "semantic_key": "norm_row"
+    },
+    {
+      "evidence": {
+        "kind": "fitted_existing",
+        "name": "ip_scrub_pipeline_05",
+        "prediction_bits": "bffdf373f2b67a26 3fe955ef47a0bfc1 4000dc13f6eaa675 3ff9268b3a0ac47d bffc0e8c8ff944b7 bfe31518b3772f01 bff6596ec4fcb9d5 c003f3f04a903233 bfe02e5331a4eac7 3feeca55b2bc1bf0 3fea222ff634b341 bfe43b2635c5cb3c 3fe072462dcbdac0 bff4248d613f38b1 3fef87de5e7ef4d4 c008bf89bf37bedf",
+        "program_hex": "464d4b50524700010000070000000000000007000000000000007369676d6f6964000000000000000008000000000000006e6f726d5f726f7700000000000000000500000000000000706f6c6172000000000000000003000000000000006c6167010000000000000001000000000000006b0001000000000000000400000000000000726f6c6c010000000000000001000000000000006b00020000000000000007000000000000006666745f6d6167010000000000000001000000000000006b000200000000000000050000000000000072696467650000000000000000"
+      },
+      "executable": true,
+      "generatable": true,
+      "id": 25,
+      "name": "polar",
+      "parseable": true,
+      "quarantined": false,
+      "semantic_key": "polar"
+    },
+    {
+      "evidence": {
+        "kind": "fitted_existing",
+        "name": "ip_scrub_pipeline_05",
+        "prediction_bits": "bffdf373f2b67a26 3fe955ef47a0bfc1 4000dc13f6eaa675 3ff9268b3a0ac47d bffc0e8c8ff944b7 bfe31518b3772f01 bff6596ec4fcb9d5 c003f3f04a903233 bfe02e5331a4eac7 3feeca55b2bc1bf0 3fea222ff634b341 bfe43b2635c5cb3c 3fe072462dcbdac0 bff4248d613f38b1 3fef87de5e7ef4d4 c008bf89bf37bedf",
+        "program_hex": "464d4b50524700010000070000000000000007000000000000007369676d6f6964000000000000000008000000000000006e6f726d5f726f7700000000000000000500000000000000706f6c6172000000000000000003000000000000006c6167010000000000000001000000000000006b0001000000000000000400000000000000726f6c6c010000000000000001000000000000006b00020000000000000007000000000000006666745f6d6167010000000000000001000000000000006b000200000000000000050000000000000072696467650000000000000000"
+      },
+      "executable": true,
+      "generatable": false,
+      "id": 26,
+      "name": "lag",
+      "parseable": true,
+      "quarantined": false,
+      "semantic_key": "lag"
+    },
+    {
+      "evidence": {
+        "kind": "fitted_existing",
+        "name": "ip_scrub_pipeline_05",
+        "prediction_bits": "bffdf373f2b67a26 3fe955ef47a0bfc1 4000dc13f6eaa675 3ff9268b3a0ac47d bffc0e8c8ff944b7 bfe31518b3772f01 bff6596ec4fcb9d5 c003f3f04a903233 bfe02e5331a4eac7 3feeca55b2bc1bf0 3fea222ff634b341 bfe43b2635c5cb3c 3fe072462dcbdac0 bff4248d613f38b1 3fef87de5e7ef4d4 c008bf89bf37bedf",
+        "program_hex": "464d4b50524700010000070000000000000007000000000000007369676d6f6964000000000000000008000000000000006e6f726d5f726f7700000000000000000500000000000000706f6c6172000000000000000003000000000000006c6167010000000000000001000000000000006b0001000000000000000400000000000000726f6c6c010000000000000001000000000000006b00020000000000000007000000000000006666745f6d6167010000000000000001000000000000006b000200000000000000050000000000000072696467650000000000000000"
+      },
+      "executable": true,
+      "generatable": false,
+      "id": 27,
+      "name": "roll",
+      "parseable": true,
+      "quarantined": false,
+      "semantic_key": "roll"
+    },
+    {
+      "evidence": {
+        "kind": "fitted_existing",
+        "name": "ip_scrub_pipeline_05",
+        "prediction_bits": "bffdf373f2b67a26 3fe955ef47a0bfc1 4000dc13f6eaa675 3ff9268b3a0ac47d bffc0e8c8ff944b7 bfe31518b3772f01 bff6596ec4fcb9d5 c003f3f04a903233 bfe02e5331a4eac7 3feeca55b2bc1bf0 3fea222ff634b341 bfe43b2635c5cb3c 3fe072462dcbdac0 bff4248d613f38b1 3fef87de5e7ef4d4 c008bf89bf37bedf",
+        "program_hex": "464d4b50524700010000070000000000000007000000000000007369676d6f6964000000000000000008000000000000006e6f726d5f726f7700000000000000000500000000000000706f6c6172000000000000000003000000000000006c6167010000000000000001000000000000006b0001000000000000000400000000000000726f6c6c010000000000000001000000000000006b00020000000000000007000000000000006666745f6d6167010000000000000001000000000000006b000200000000000000050000000000000072696467650000000000000000"
+      },
+      "executable": true,
+      "generatable": true,
+      "id": 28,
+      "name": "fft_mag",
+      "parseable": true,
+      "quarantined": false,
+      "semantic_key": "fft_mag"
+    },
+    {
+      "evidence": {
+        "kind": "fitted_existing",
+        "name": "ip_scrub_pipeline_06",
+        "prediction_bits": "bfeba69b1a878b5a bfb70817a8551888 400296c9afb52376 3fdba43edb342b37 3fb5a6c1a078f464 bfd496ecbe10fef0 bfec168bee24b03e 3fd8ed50e0ee4ea7 bfeb8a601281fb5e 40023b066231da7f 3fe25646b26f718c 4002811dfb288816 bfea0b6e58c17620 bfecafa247e4f9e9 3fd8f2adedc0fd28 bfec505a099ec94d",
+        "program_hex": "464d4b5052470001000005000000000000000c00000000000000726f775f737065637472616c00000000000000000e00000000000000726f775f646966665f737461747300000000000000000b000000000000007376645f70726f6a65637402000000000000000500000000000000697465727300050000000000000001000000000000006b00020000000000000007000000000000006e797374726f6d010000000000000001000000000000006b000400000000000000050000000000000072696467650000000000000000"
+      },
+      "executable": true,
+      "generatable": true,
+      "id": 29,
+      "name": "row_spectral",
+      "parseable": true,
+      "quarantined": false,
+      "semantic_key": "row_spectral"
+    },
+    {
+      "evidence": {
+        "kind": "fitted_existing",
+        "name": "recipe_indicator_features",
+        "prediction_bits": "bff33a887d3efafc 3ffa0f0770bbf480 4003d031973913d6 40063ef4dd662f04 bff8f83001b41756 bff47895111e534a c00129eb6072f70c bff2b55957b08d58 bfe586b4786464ae 40072a8efef45591 3ff934b48039f372 c0023e19960a0f46 4001bc9f3a3bc777 bfe83161df460a24 3ff41a860c137e66 bff759ab555007b2",
+        "program_hex": "464d4b50524700010000040000000000000004000000000000007374657002000000000000000600000000000000617070656e64020101000000000000007401000000000000e03f08000000000000006e6f726d5f726f7700000000000000000e00000000000000726f775f646966665f737461747300000000000000000a00000000000000656c61737469636e65740000000000000000"
+      },
+      "executable": true,
+      "generatable": true,
+      "id": 30,
+      "name": "row_diff_stats",
+      "parseable": true,
+      "quarantined": false,
+      "semantic_key": "row_diff_stats"
+    },
+    {
+      "evidence": {
+        "kind": "fitted_existing",
+        "name": "ip_scrub_pipeline_06",
+        "prediction_bits": "bfeba69b1a878b5a bfb70817a8551888 400296c9afb52376 3fdba43edb342b37 3fb5a6c1a078f464 bfd496ecbe10fef0 bfec168bee24b03e 3fd8ed50e0ee4ea7 bfeb8a601281fb5e 40023b066231da7f 3fe25646b26f718c 4002811dfb288816 bfea0b6e58c17620 bfecafa247e4f9e9 3fd8f2adedc0fd28 bfec505a099ec94d",
+        "program_hex": "464d4b5052470001000005000000000000000c00000000000000726f775f737065637472616c00000000000000000e00000000000000726f775f646966665f737461747300000000000000000b000000000000007376645f70726f6a65637402000000000000000500000000000000697465727300050000000000000001000000000000006b00020000000000000007000000000000006e797374726f6d010000000000000001000000000000006b000400000000000000050000000000000072696467650000000000000000"
+      },
+      "executable": true,
+      "generatable": true,
+      "id": 31,
+      "name": "svd_project",
+      "parseable": true,
+      "quarantined": false,
+      "semantic_key": "svd_project"
+    },
+    {
+      "evidence": {
+        "kind": "fitted_existing",
+        "name": "ip_scrub_pipeline_06",
+        "prediction_bits": "bfeba69b1a878b5a bfb70817a8551888 400296c9afb52376 3fdba43edb342b37 3fb5a6c1a078f464 bfd496ecbe10fef0 bfec168bee24b03e 3fd8ed50e0ee4ea7 bfeb8a601281fb5e 40023b066231da7f 3fe25646b26f718c 4002811dfb288816 bfea0b6e58c17620 bfecafa247e4f9e9 3fd8f2adedc0fd28 bfec505a099ec94d",
+        "program_hex": "464d4b5052470001000005000000000000000c00000000000000726f775f737065637472616c00000000000000000e00000000000000726f775f646966665f737461747300000000000000000b000000000000007376645f70726f6a65637402000000000000000500000000000000697465727300050000000000000001000000000000006b00020000000000000007000000000000006e797374726f6d010000000000000001000000000000006b000400000000000000050000000000000072696467650000000000000000"
+      },
+      "executable": true,
+      "generatable": true,
+      "id": 32,
+      "name": "nystrom",
+      "parseable": true,
+      "quarantined": false,
+      "semantic_key": "nystrom"
+    },
+    {
+      "evidence": {
+        "kind": "fitted_existing",
+        "name": "golden_map_derive_ridge",
+        "prediction_bits": "c002fdad84f75bf3 bfa92d6f40fd69df 4004c48ae822841c 4005baa534449eff c0046dab73329b6b bfecacbb7017e95e bfe8e935c75cda2e c00471461e7348c9 bfe279e947117063 400e5e887d83c995 3ff2d6223877568f bfff4f197c68a7b1 3ff29011ab5f84ee bff881428bb9b65a bfc7d40fd60aa290 c010add23f05e506",
+        "program_hex": "464d4b50524700010000030000000000000003000000000000006d617002000000000000000600000000000000617070656e6402010400000000000000657870720317000000000000007369676d6f6964287829202b20302e312a636f6c283029060000000000000064657269766502000000000000000600000000000000617070656e640201040000000000000065787072032000000000000000726f775f6d65616e202b20726f775f737464202d2063312f286330202b203329050000000000000072696467650000000000000000"
+      },
+      "executable": true,
+      "generatable": false,
+      "id": 33,
+      "name": "map",
+      "parseable": true,
+      "quarantined": false,
+      "semantic_key": "map"
+    },
+    {
+      "evidence": {
+        "kind": "fitted_existing",
+        "name": "golden_map_derive_ridge",
+        "prediction_bits": "c002fdad84f75bf3 bfa92d6f40fd69df 4004c48ae822841c 4005baa534449eff c0046dab73329b6b bfecacbb7017e95e bfe8e935c75cda2e c00471461e7348c9 bfe279e947117063 400e5e887d83c995 3ff2d6223877568f bfff4f197c68a7b1 3ff29011ab5f84ee bff881428bb9b65a bfc7d40fd60aa290 c010add23f05e506",
+        "program_hex": "464d4b50524700010000030000000000000003000000000000006d617002000000000000000600000000000000617070656e6402010400000000000000657870720317000000000000007369676d6f6964287829202b20302e312a636f6c283029060000000000000064657269766502000000000000000600000000000000617070656e640201040000000000000065787072032000000000000000726f775f6d65616e202b20726f775f737464202d2063312f286330202b203329050000000000000072696467650000000000000000"
+      },
+      "executable": true,
+      "generatable": false,
+      "id": 34,
+      "name": "derive",
+      "parseable": true,
+      "quarantined": false,
+      "semantic_key": "derive"
+    },
+    {
+      "evidence": {
+        "kind": "fitted_existing",
+        "name": "golden_map_derive_ridge",
+        "prediction_bits": "c002fdad84f75bf3 bfa92d6f40fd69df 4004c48ae822841c 4005baa534449eff c0046dab73329b6b bfecacbb7017e95e bfe8e935c75cda2e c00471461e7348c9 bfe279e947117063 400e5e887d83c995 3ff2d6223877568f bfff4f197c68a7b1 3ff29011ab5f84ee bff881428bb9b65a bfc7d40fd60aa290 c010add23f05e506",
+        "program_hex": "464d4b50524700010000030000000000000003000000000000006d617002000000000000000600000000000000617070656e6402010400000000000000657870720317000000000000007369676d6f6964287829202b20302e312a636f6c283029060000000000000064657269766502000000000000000600000000000000617070656e640201040000000000000065787072032000000000000000726f775f6d65616e202b20726f775f737464202d2063312f286330202b203329050000000000000072696467650000000000000000"
+      },
+      "executable": true,
+      "generatable": true,
+      "id": 35,
+      "name": "ridge",
+      "parseable": true,
+      "quarantined": false,
+      "semantic_key": "ridge"
+    },
+    {
+      "evidence": {
+        "kind": "fitted_existing",
+        "name": "recipe_logistic_alias",
+        "prediction_bits": "c002970c3544b6da bfa8fbf27510d18c 4003b12fd5f43546 4004acbc59a4fa0e c00445904631c0ee bfe8feb53de898db bfe483726371b563 c00372dcafd016db bfe5d5450448010e 400e3d8fd556b499 3ff1a90f4b5d3b43 bfff3bf34a807c63 3ff3bf987354b851 bff6ac85df757817 bfcc8a3ce11aa12b c010f2b6f94c6333",
+        "program_hex": "464d4b5052470001000002000000000000000b000000000000007374616e64617264697a65000000000000000008000000000000006c6f6769737469630000000000000000"
+      },
+      "executable": true,
+      "generatable": false,
+      "id": 36,
+      "name": "logistic",
+      "parseable": true,
+      "quarantined": false,
+      "semantic_key": "ridge"
+    },
+    {
+      "evidence": {
+        "kind": "fitted_existing",
+        "name": "golden_map_pow_elasticnet",
+        "prediction_bits": "bfd0715e0fb03662 3ff0f89127063833 3ffe8f8c64792acb 3fc6adbe2b85ca46 bfeafa105f85b0ae 3fbc1db63bd4debc 3fd1032091472e44 3fc20f93f7cbf27c bfbea584470f3de7 bfe36c450c50f022 3fcb9cedf8d0211a 3fda40be330109dd 3fd19f48d5ec6f7e 3fba289e185e4688 3febd6280b0d2b4f bfda0aa01697fbd2",
+        "program_hex": "464d4b50524700010000020000000000000003000000000000006d61700100000000000000040000000000000065787072031b00000000000000785e32202d206d696e28782c20633229202b2074616e68286333290a00000000000000656c61737469636e657402000000000000000500000000000000616c706861017b14ae47e17a743f08000000000000006c315f726174696f01666666666666e63f"
+      },
+      "executable": true,
+      "generatable": true,
+      "id": 37,
+      "name": "elasticnet",
+      "parseable": true,
+      "quarantined": false,
+      "semantic_key": "elasticnet"
+    },
+    {
+      "evidence": {
+        "kind": "fitted_existing",
+        "name": "champion",
+        "prediction_bits": "bff78392df534f82 bfcab0f5e3ffbb8c 3ff759662aec2036 3ff759662aec2036 bffcbec88fb58c90 bff2269291ea298a bff2269291ea298a bff78392df534f82 bfe52f2ae1287652 3ff759662aec2036 3ff759662aec2036 bfecdccd2c2c7398 3ff3dd99b3fb1727 bfecdccd2c2c7398 bfcab0f5e3ffbb8c bffcbec88fb58c90",
+        "program_hex": "464d4b5052470001000007000000000000000b0000000000000077696e736f725f636c697002000000000000000600000000000000617070656e640201010000000000000071019a9999999999b93f04000000000000006368656202000000000000000600000000000000617070656e64020106000000000000006465677265650006000000000000000c00000000000000726f627573745f7363616c6500000000000000000c00000000000000726f627573745f7363616c6500000000000000000d00000000000000706f6c795f696e74657261637401000000000000000600000000000000617070656e6402010d000000000000007175616e74696c655f62696e730100000000000000040000000000000062696e7300100000000000000007000000000000006869737467626d03000000000000000500000000000000646570746800050000000000000002000000000000006c7201333333333333c33f0600000000000000726f756e6473009600000000000000"
+      },
+      "executable": true,
+      "generatable": true,
+      "id": 38,
+      "name": "histgbm",
+      "parseable": true,
+      "quarantined": false,
+      "semantic_key": "histgbm"
+    },
+    {
+      "evidence": {
+        "kind": "alias_case"
+      },
+      "executable": true,
+      "generatable": false,
+      "id": 39,
+      "name": "gbm",
+      "parseable": true,
+      "quarantined": false,
+      "semantic_key": "histgbm"
+    },
+    {
+      "evidence": {
+        "kind": "fitted_existing",
+        "name": "ip_scrub_pipeline_04",
+        "prediction_bits": "bfe70edb6a2ad6cf bfea2b920afd90c0 bfef1bf1ea91cccb bf9ab4efb20d6418 3f87aef717c2f580 3fbe6561bf81eff8 bfd0be14bdfa577d bfe569b6d5b4a30c bfddf3bea5e9f2ca bfe868e0de2cabff bfd81ac27f701f29 3fe6462876b00c4e 3fc841542b360734 bfe2f4399bf6e9f6 bfc5a59c12c51324 bfe2f4399bf6e9f6",
+        "program_hex": "464d4b5052470001000005000000000000000d000000000000006f626c697175655f68696e6765010000000000000001000000000000006e0004000000000000000900000000000000726f775f737461747300000000000000000900000000000000706169725f70726f64000000000000000011000000000000007461726765745f62696e5f656e636f646500000000000000000800000000000000656e73656d626c6501000000000000000600000000000000726f756e6473000500000000000000"
+      },
+      "executable": true,
+      "generatable": true,
+      "id": 40,
+      "name": "ensemble",
+      "parseable": true,
+      "quarantined": false,
+      "semantic_key": "ensemble"
+    },
+    {
+      "evidence": {
+        "kind": "alias_case"
+      },
+      "executable": true,
+      "generatable": false,
+      "id": 41,
+      "name": "ensemble_ridge_gbm",
+      "parseable": true,
+      "quarantined": false,
+      "semantic_key": "ensemble"
+    },
+    {
+      "evidence": {
+        "kind": "fitted_existing",
+        "name": "ip_scrub_pipeline_08",
+        "prediction_bits": "c006a6a84b1cbd2e bf796d1b4d482f90 4007052a17fc9b7c 4003b8e65f8a0e6e c003655fae2baaa8 bff00012b70e3078 bfe5e95c1f58bde3 c00391b0a2a35aed bfdfb752c3004e3c 400b9e92af94f225 3ffe24b45a784211 c0019b3a48ac666f 3ff4e3a47c106cf4 c00283cb2d43e2a7 bff3b13376bd6293 c00c34ed3de7edde",
+        "program_hex": "464d4b50524700010000010000000000000008000000000000006869737467626d32030000000000000004000000000000006261677300020000000000000006000000000000006c6561766573000f0000000000000002000000000000006c72017b14ae47e17ab43f"
+      },
+      "executable": true,
+      "generatable": true,
+      "id": 42,
+      "name": "histgbm2",
+      "parseable": true,
+      "quarantined": false,
+      "semantic_key": "histgbm2"
+    },
+    {
+      "evidence": {
+        "kind": "fitted_existing",
+        "name": "ip_scrub_pipeline_09",
+        "prediction_bits": "c00586a8a6cb9096 bfd9f5628a61dc90 4006ffb9b65f0013 40058324ed822a88 c001d202270b6c06 bfed8e174ed1312e bfe36757d90d0031 c00bf2b01b625323 bfea7ff5752133fa 400c8cda181a948a 3fe774ebcda816c0 bffe553b9a2abbb1 3ff3c28f558c78b8 bffebc14e24d09d4 bfd3241c7f6741cc c010de703c35419a",
+        "program_hex": "464d4b5052470001000002000000000000000b000000000000007374616e64617264697a65000000000000000003000000000000006b7272010000000000000001000000000000006d00c800000000000000"
+      },
+      "executable": true,
+      "generatable": true,
+      "id": 43,
+      "name": "krr",
+      "parseable": true,
+      "quarantined": false,
+      "semantic_key": "krr"
+    },
+    {
+      "evidence": {
+        "kind": "fitted_existing",
+        "name": "ip_scrub_pipeline_10",
+        "prediction_bits": "c0065f6772b32b42 bfdc5e9ef6d00e78 40076f4ab56123db 4005fa52feb02cba c0011a1122926e35 bfeee68169060adc bfe66683e7a0d374 c00a6a0a35460de4 bfee3eccc6a8a794 400c544c46ed9efa 3fe7f24cc9ecf03c bfff2e3ea48ecac0 3ff1dd6900f17ffc c00070afaf5db0be bfd0272c462a0a30 c010140ffe27102b",
+        "program_hex": "464d4b5052470001000001000000000000000300000000000000677072020000000000000001000000000000006d00c80000000000000005000000000000007374657073000a00000000000000"
+      },
+      "executable": true,
+      "generatable": true,
+      "id": 44,
+      "name": "gpr",
+      "parseable": true,
+      "quarantined": false,
+      "semantic_key": "gpr"
+    },
+    {
+      "evidence": {
+        "kind": "fitted_existing",
+        "name": "ip_scrub_pipeline_13",
+        "prediction_bits": "c0038b1582256c24 3fc806bee0c3c5c4 40008401854ea0ea 3ffd99b5f164a261 bfe4b09426134587 bfd5e4e411eb64cb bfe1faf7109f01c4 bfe69b7879c49c94 bff3464fea02bf17 4002d013d40ef2c1 3ff25d038555fde0 bff6930991bae896 3ff3c83a2a9f0c4d bffebd1544b3ab72 3fc40c233015fe25 c007bd47e0db7a73",
+        "program_hex": "464d4b50524700010000010000000000000007000000000000006b736d6f6f74680200000000000000050000000000000067616d6d6101000000000000004001000000000000006b001000000000000000"
+      },
+      "executable": true,
+      "generatable": true,
+      "id": 45,
+      "name": "ksmooth",
+      "parseable": true,
+      "quarantined": false,
+      "semantic_key": "ksmooth"
+    },
+    {
+      "evidence": {
+        "kind": "fitted_existing",
+        "name": "ip_scrub_pipeline_15",
+        "prediction_bits": "c00586a8a6cb914c bfd9f5628a61e0d8 4006ffb9b65eff61 40058324ed822b1b c001d202270b6c46 bfed8e174ed12e78 bfe36757d90d010c c00bf2b01b62526e bfea7ff5752133be 400c8cda181a938d 3fe774ebcda81716 bffe553b9a2aba42 3ff3c28f558c77be bffebc14e24d0a4f bfd3241c7f674728 c010de703c35416e",
+        "program_hex": "464d4b5052470001000001000000000000000500000000000000737461636b0000000000000000"
+      },
+      "executable": true,
+      "generatable": true,
+      "id": 46,
+      "name": "stack",
+      "parseable": true,
+      "quarantined": false,
+      "semantic_key": "stack"
+    },
+    {
+      "evidence": {
+        "error": "Unsupported(\"rff_orthogonal\")",
+        "kind": "quarantined_refusal",
+        "parse": "69"
+      },
+      "executable": false,
+      "generatable": false,
+      "id": 47,
+      "name": "rff_orthogonal",
+      "parseable": true,
+      "quarantined": true,
+      "semantic_key": "rff_orthogonal"
+    },
+    {
+      "evidence": {
+        "error": "Unsupported(\"rff_halton\")",
+        "kind": "quarantined_refusal",
+        "parse": "65"
+      },
+      "executable": false,
+      "generatable": false,
+      "id": 48,
+      "name": "rff_halton",
+      "parseable": true,
+      "quarantined": true,
+      "semantic_key": "rff_halton"
+    },
+    {
+      "evidence": {
+        "error": "Unsupported(\"nystrom_leverage\")",
+        "kind": "quarantined_refusal",
+        "parse": "71"
+      },
+      "executable": false,
+      "generatable": false,
+      "id": 49,
+      "name": "nystrom_leverage",
+      "parseable": true,
+      "quarantined": true,
+      "semantic_key": "nystrom_leverage"
+    },
+    {
+      "evidence": {
+        "error": "Unsupported(\"fastfood_rbf\")",
+        "kind": "quarantined_refusal",
+        "parse": "67"
+      },
+      "executable": false,
+      "generatable": false,
+      "id": 50,
+      "name": "fastfood_rbf",
+      "parseable": true,
+      "quarantined": true,
+      "semantic_key": "fastfood_rbf"
+    },
+    {
+      "evidence": {
+        "error": "Unsupported(\"count_sketch\")",
+        "kind": "quarantined_refusal",
+        "parse": "67"
+      },
+      "executable": false,
+      "generatable": false,
+      "id": 51,
+      "name": "count_sketch",
+      "parseable": true,
+      "quarantined": true,
+      "semantic_key": "count_sketch"
+    },
+    {
+      "evidence": {
+        "error": "Unsupported(\"tensor_sketch\")",
+        "kind": "quarantined_refusal",
+        "parse": "68"
+      },
+      "executable": false,
+      "generatable": false,
+      "id": 52,
+      "name": "tensor_sketch",
+      "parseable": true,
+      "quarantined": true,
+      "semantic_key": "tensor_sketch"
+    }
+  ],
+  "schema": "feat-math.historical-v1-golden.v1",
+  "stored_models": [
+    {
+      "bytes": 1181,
+      "json": "{\"Pipeline\":{\"target\":null,\"ops\":[{\"MapExpr\":{\"source\":\"sigmoid(x) + 0.1*col(0)\",\"expr\":{\"root\":{\"Binary\":[\"Add\",{\"Call\":[\"Sigmoid\",[{\"Var\":\"X\"}]]},{\"Binary\":[\"Mul\",{\"Const\":0.1},{\"Var\":{\"Col\":0}}]}]}},\"append\":true}},{\"DeriveExpr\":{\"source\":\"row_mean + row_std - c1/(c0 + 3)\",\"expr\":{\"root\":{\"Binary\":[\"Sub\",{\"Binary\":[\"Add\",{\"Var\":\"RowMean\"},{\"Var\":\"RowStd\"}]},{\"Binary\":[\"Div\",{\"Var\":{\"Col\":1}},{\"Binary\":[\"Add\",{\"Var\":{\"Col\":0}},{\"Const\":3.0}]}]}]}},\"append\":true}}],\"head\":{\"Ridge\":{\"means\":[-0.056612225780638986,0.0391154557646818,-0.05045261954245007,0.1525683489032334,-0.14878006834940927,0.48438679591917,0.5043482256795677,0.4869379528160132,0.5292071409369103,0.46059463735943623,1.0418037764580401],\"scales\":[1.206906483281059,1.112889776818267,1.2051759317157438,1.1374132672755286,1.1992648785445832,0.37497362168161197,0.28287156540158626,0.2796522708574301,0.266072116805173,0.29057513259345397,0.481299228062748],\"w\":[-0.09152543432197754,0.9449538514305458,-0.8303307438257977,-0.518142835445006,-0.17192409881252638,-0.048585009431487025,0.8094451166109552,-0.2621365766816537,0.4837538101693965,0.21653872951141426,0.1448021223409523,-0.12911201779091488]}}}}",
+      "name": "golden_map_derive_ridge",
+      "sha256": "6829c07be63c96a0fe0dd56377634452647f9a40a7e9eda93846f5972fc41199"
+    },
+    {
+      "bytes": 373,
+      "json": "{\"Symbolic\":{\"expr\":{\"root\":{\"Binary\":[\"Add\",{\"Binary\":[\"Sub\",{\"Binary\":[\"Add\",{\"Call\":[\"Sigmoid\",[{\"Var\":{\"Col\":0}}]]},{\"Binary\":[\"Mul\",{\"Const\":0.5},{\"Var\":{\"Col\":1}}]}]},{\"Call\":[\"Log1p\",[{\"Call\":[\"Abs\",[{\"Var\":{\"Col\":2}}]]}]]}]},{\"Call\":[\"Max\",[{\"Var\":{\"Col\":3}},{\"Binary\":[\"Pow\",{\"Var\":{\"Col\":4}},{\"Const\":2.0}]}]]}]}},\"a\":0.10257025457505628,\"b\":-0.2449875862969393}}",
+      "name": "golden_symbolic_affine",
+      "sha256": "17447e697c4226f0d63e536a1dd0d97944859d5cef9826093a067578687b75ab"
+    },
+    {
+      "bytes": 1415,
+      "json": "{\"Pipeline\":{\"target\":null,\"ops\":[{\"Spline\":{\"knots\":[[-1.4461965868128512,-0.4221241759573416,0.33832738069271634,1.3097158123616188],[-1.164434615892955,-0.337508510774326,0.4456847677802516,1.2224662138486664],[-1.355293099239304,-0.5119985522678825,0.4903266469396962,1.1641334360681284],[-1.1652101600764335,-0.005032192307316497,0.581399158962595,1.2698582726276262],[-1.3815389842226486,-0.6260066840537895,-0.030987101885112278,1.1809480038637727]],\"append\":false}}],\"head\":{\"Ridge\":{\"means\":[-0.056612225780638986,2.7143969475675527,0.7675723071440029,0.0391154557646818,2.183753231329761,0.7253695493671045,-0.05045261954245007,2.687593920222205,1.0271726767704548,0.1525683489032334,2.5163359152047917,0.4897460043650212,-0.14878006834940927,2.106334588035694,0.7111799052778809],\"scales\":[1.206906483281059,3.190229245134346,1.0712284399833216,1.112889776818267,2.538132327173643,1.0024593432347433,1.2051759317157438,3.1741134038304684,1.4150120862753672,1.1374132672755286,2.8295844854335184,0.7110400020459988,1.1992648785445832,2.755716257445986,1.0545847506552457],\"w\":[-0.09152543432197754,1.6614884532794207,0.20423309450696722,0.10539944973518398,-0.8208668954855165,-0.17939362513494053,0.031203645058955804,-0.22790904977212173,0.39821633657569017,-0.2630384344007347,0.020876600875916827,-0.2238609155892544,0.1749566731494895,-0.16792973258321098,0.03660896721071896,0.22429955321116252]}}}}",
+      "name": "expansion_spline",
+      "sha256": "169530cca1494628eb07934d96cc789fdbe0d88cd1ec6e54477eaa4b24e93bf9"
+    },
+    {
+      "bytes": 744,
+      "json": "{\"Pipeline\":{\"target\":{\"ZScore\":{\"mu\":-0.09152543432197754,\"sigma\":2.1595091205192625,\"clamp_lo\":-60.0,\"clamp_hi\":60.0}},\"ops\":[{\"Standardize\":{\"means\":[-0.056612225780638986,0.0391154557646818,-0.05045261954245007,0.1525683489032334,-0.14878006834940927],\"scales\":[1.206906483281059,1.112889776818267,1.2051759317157438,1.1374132672755286,1.1992648785445832],\"append\":false}}],\"head\":{\"Ridge\":{\"means\":[-2.6020852139652106e-17,-2.5153490401663703e-17,5.551115123125783e-17,-4.163336342344337e-17,-7.28583859910259e-17],\"scales\":[1.0000000000000002,0.9999999999999998,1.0000000000000002,1.0,0.9999999999999998],\"w\":[-3.122502256758253e-17,0.895646339088425,-0.4425859949946907,-0.04516083503783045,-0.00483877578520092,0.020578091259150867]}}}}",
+      "name": "target_zscore",
+      "sha256": "b58179f5c4e8da9e395dc64d2d31ab327f0789c392190846d5e9403e663a5fc3"
+    },
+    {
+      "bytes": 510,
+      "json": "{\"Pipeline\":{\"target\":null,\"ops\":[{\"Step\":{\"t\":0.0,\"append\":false}},{\"Impute\":{\"fill\":[1.0,1.0,1.0,1.0,1.0],\"indicator_cols\":[0,1,2,3,4],\"append\":false}}],\"head\":{\"Ridge\":{\"means\":[1.0,1.0,1.0,1.0,1.0,0.546875,0.4375,0.5,0.40625,0.609375],\"scales\":[1e-9,1e-9,1e-9,1e-9,1e-9,0.4977978850648122,0.49607837082461076,0.5,0.4911323014219285,0.48789046862487484],\"w\":[-0.09152543432197754,0.0,0.0,0.0,0.0,0.0,-1.6522334861473644,0.8341194790170213,-0.02598654736030952,-0.0008995591655952007,0.18529245615005352]}}}}",
+      "name": "step_impute_mean",
+      "sha256": "cda1b2813f1b23721603cfeda7ee3f206d1cc79df97bed0fed9bb6270c9be8fd"
+    }
+  ]
+}

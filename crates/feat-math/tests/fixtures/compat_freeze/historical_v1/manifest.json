@@ -1,0 +1,36 @@
+{
+  "base_sha": "e709ed90e0890a619b91fdc2fe395439b20ffb65",
+  "coverage_gaps": [
+    {
+      "family": "shipped feat-math fitted Model/BoundModel",
+      "reason": "No shipped feat-math fitted model or compatible container was found in v0.2.0 release assets, tagged models/ tree, or the three S3 bundles. Existing compat_freeze fitted models and revision-2 C++ source are synthetic test specimens.",
+      "status": "held"
+    },
+    {
+      "family": "S3 safetensors neural bundles",
+      "reason": "All 21 blob keys have matching S3 server SHA-256 checksums, but their bodies are not in this small corpus and the feat-math fitted loader does not accept safetensors.",
+      "status": "held for feat-math compatibility"
+    }
+  ],
+  "execution_contract": "cargo nextest run --locked -P pr -p feat-math --test historical_v1 --test compat_freeze; no regeneration path exists for historical_v1",
+  "golden_sha256": "b5e66d14bdde73e4ff7d69ad65d6e7a8b0772ebc7c532f6a60bb775f4c2ef5c3",
+  "old_cpp_revision_two": "Synthetic revision-2 source and container are exercised by advanced_v3::fitted_cpp_runtime::tests::stored_revision_two_container_validates_and_load_regenerates_it; no shipped container found.",
+  "release_asset_sha256": {
+    "RELEASE-NOTES-v0.2.0.md": "cfb6b22203fef59e67fe67a2a246c429cd718ec30e147551cb039cfafa7ced84",
+    "SHA256SUMS-v0.2.0.txt": "4b8f5082ca65a1dbed73f66054240d4e141d6afeded1545937705b5cdfa387b4",
+    "SHA256SUMS-v0.2.0.txt.sig": "71780420d6aa947cbf89397711b833cfba6f64016e4b52007a68c86754b81f34",
+    "jope-v0.2.0-x86_64-unknown-linux-gnu": "03688c0aa2935b6530958ef47d57b56751ac0511dd30c9130d4bc827a1781e85",
+    "jope-v0.2.0.build-receipt.json": "ed65bde37a372cfb22d28cf19cc3379fc7af0843a5f9fa6f67ce8beecc761ee8",
+    "jope-v0.2.0.cdx.json": "a54e7d088ad215ec6cdd28b7e65f782d285a46d3b049528f90143c1889817af4",
+    "jope-v0.2.0.spdx.json": "76aedff0a9fcf61d6abf548901b0b752d967630969049a398e6ec8812b0a20ca",
+    "release-manifest-v0.2.0.json": "0276485c3dd1eaea2a846e29ada08843b15edba043c8e69b37257fca0af0396b"
+  },
+  "s3_bundle_manifest_sha256": {
+    "s3://veox-jopedime-models-use2/bundles/hyperion-v7/manifest.json": "fdaf938fc7f7957c06959f12c130b2bd81cdaef5e5bb2198ba75cf35da1c5233",
+    "s3://veox-jopedime-models-use2/bundles/jope-prime-gen31-v2/manifest.json": "c8d8d13a2f4cb2eeb21eea364c33e14429c84d344e6b50eb38a472173b97b6f2",
+    "s3://veox-jopedime-models-use2/bundles/policy-step-60000/manifest.json": "d8e259b26ef8d580ddb99ae5826c9501bcdc0c32045945eef9010926fd796e9e"
+  },
+  "schema": "feat-math.historical-v1-index.v1",
+  "source_count": 49,
+  "source_manifest_sha256": "688e3f71acf0076836de6989d7f39c3d303b3442698cb8add9dc3e50ef12441a"
+}

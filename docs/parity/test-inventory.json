@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json",
-  "count": 3990,
+  "count": 3993,
   "ignored": 66,
   "packages": {
    "battle-gpu": {
@@ -29,7 +29,7 @@
     }
    },
    "feat-math": {
-    "count": 627,
+    "count": 630,
     "ignored": 7,
     "binaries": {
      "feat-math": {
@@ -635,6 +635,16 @@
        "portfolio_emission_rules",
        "supports_rejects_unknown_ops",
        "target_stage_emission_rules"
+      ]
+     },
+     "feat-math::historical_v1": {
+      "kind": "test",
+      "count": 3,
+      "ignored": 0,
+      "tests": [
+       "historical_source_manifest_and_old_fixtures_are_pinned",
+       "historical_v1_golden_matches",
+       "unknown_exact_tags_refuse_before_evaluation"
       ]
      },
      "feat-math::ip_scrub": {
@@ -6262,7 +6272,7 @@
   }
  },
  "totals": {
-  "rust": 3990,
+  "rust": 3993,
   "python": 172
  }
 }

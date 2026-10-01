@@ -433,6 +433,15 @@
         "fitting"
       ]
     },
+    "target:feat-math/test/historical_v1": {
+      "role": "regression",
+      "subsystems": [
+        "export",
+        "fitting",
+        "gp",
+        "policy"
+      ]
+    },
     "target:feat-math/test/ip_scrub": {
       "role": "regression",
       "subsystems": [

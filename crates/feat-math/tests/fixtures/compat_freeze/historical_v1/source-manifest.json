@@ -1,0 +1,526 @@
+{
+  "base_sha": "e709ed90e0890a619b91fdc2fe395439b20ffb65",
+  "coverage_gaps": [
+    {
+      "family": "shipped feat-math fitted Model/BoundModel",
+      "reason": "No shipped feat-math fitted model or compatible container was found in v0.2.0 release assets, tagged models/ tree, or the three S3 bundles. Existing compat_freeze fitted models and revision-2 C++ source are synthetic test specimens.",
+      "status": "held"
+    },
+    {
+      "family": "S3 safetensors neural bundles",
+      "reason": "All 21 blob keys have matching S3 server SHA-256 checksums, but their bodies are not in this small corpus and the feat-math fitted loader does not accept safetensors.",
+      "status": "held for feat-math compatibility"
+    }
+  ],
+  "host": {
+    "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)",
+    "clangxx": "Ubuntu clang version 18.1.3 (1ubuntu1)",
+    "glibc": "ldd (Ubuntu GLIBC 2.39-0ubuntu8.9) 2.39",
+    "gxx": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+    "python": "Python 3.12.3",
+    "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+    "triple": "x86_64-unknown-linux-gnu"
+  },
+  "observed_at_utc": "2026-09-30T23:23:06.691157+00:00",
+  "schema": "feat-math.historical-source-inventory.v1",
+  "shipped_bundles": [
+    {
+      "family": "hyperion-v7",
+      "feat_math_fitted_loader": "unsupported; neural safetensors family",
+      "files": 2,
+      "schema": "jope.model-bundle/v2",
+      "weight_bytes": 246456988,
+      "weight_files": 1
+    },
+    {
+      "family": "jope-prime-gen31-v2",
+      "feat_math_fitted_loader": "unsupported; neural safetensors family",
+      "files": 17,
+      "schema": "jope.model-bundle/v2",
+      "weight_bytes": 1095014852,
+      "weight_files": 11
+    },
+    {
+      "family": "policy-step-60000",
+      "feat_math_fitted_loader": "unsupported; neural safetensors family",
+      "files": 2,
+      "schema": "jope.model-bundle/v2",
+      "weight_bytes": 119612896,
+      "weight_files": 2
+    }
+  ],
+  "source_count": 49,
+  "sources": [
+    {
+      "bytes": 7788,
+      "format": "release asset",
+      "model_count": 0,
+      "read_path": "/home/ubuntu/jope-evidence/kernel2/bt/B00/inventory/release/RELEASE-NOTES-v0.2.0.md",
+      "ref": "v0.2.0",
+      "sha256": "cfb6b22203fef59e67fe67a2a246c429cd718ec30e147551cb039cfafa7ced84",
+      "uri": "https://github.com/neverhuman/JopeDime/releases/download/v0.2.0/RELEASE-NOTES-v0.2.0.md"
+    },
+    {
+      "bytes": 560,
+      "format": "release asset",
+      "model_count": 0,
+      "read_path": "/home/ubuntu/jope-evidence/kernel2/bt/B00/inventory/release/SHA256SUMS-v0.2.0.txt",
+      "ref": "v0.2.0",
+      "sha256": "4b8f5082ca65a1dbed73f66054240d4e141d6afeded1545937705b5cdfa387b4",
+      "uri": "https://github.com/neverhuman/JopeDime/releases/download/v0.2.0/SHA256SUMS-v0.2.0.txt"
+    },
+    {
+      "bytes": 96,
+      "format": "release asset",
+      "model_count": 0,
+      "read_path": "/home/ubuntu/jope-evidence/kernel2/bt/B00/inventory/release/SHA256SUMS-v0.2.0.txt.sig",
+      "ref": "v0.2.0",
+      "sha256": "71780420d6aa947cbf89397711b833cfba6f64016e4b52007a68c86754b81f34",
+      "uri": "https://github.com/neverhuman/JopeDime/releases/download/v0.2.0/SHA256SUMS-v0.2.0.txt.sig"
+    },
+    {
+      "bytes": 28228960,
+      "format": "release asset",
+      "model_count": 0,
+      "read_path": "/home/ubuntu/jope-evidence/kernel2/bt/B00/inventory/release/jope-v0.2.0-x86_64-unknown-linux-gnu",
+      "ref": "v0.2.0",
+      "sha256": "03688c0aa2935b6530958ef47d57b56751ac0511dd30c9130d4bc827a1781e85",
+      "uri": "https://github.com/neverhuman/JopeDime/releases/download/v0.2.0/jope-v0.2.0-x86_64-unknown-linux-gnu"
+    },
+    {
+      "bytes": 1624,
+      "format": "release asset",
+      "model_count": 0,
+      "read_path": "/home/ubuntu/jope-evidence/kernel2/bt/B00/inventory/release/jope-v0.2.0.build-receipt.json",
+      "ref": "v0.2.0",
+      "sha256": "ed65bde37a372cfb22d28cf19cc3379fc7af0843a5f9fa6f67ce8beecc761ee8",
+      "uri": "https://github.com/neverhuman/JopeDime/releases/download/v0.2.0/jope-v0.2.0.build-receipt.json"
+    },
+    {
+      "bytes": 1604802,
+      "format": "release asset",
+      "model_count": 0,
+      "read_path": "/home/ubuntu/jope-evidence/kernel2/bt/B00/inventory/release/jope-v0.2.0.cdx.json",
+      "ref": "v0.2.0",
+      "sha256": "a54e7d088ad215ec6cdd28b7e65f782d285a46d3b049528f90143c1889817af4",
+      "uri": "https://github.com/neverhuman/JopeDime/releases/download/v0.2.0/jope-v0.2.0.cdx.json"
+    },
+    {
+      "bytes": 2794204,
+      "format": "release asset",
+      "model_count": 0,
+      "read_path": "/home/ubuntu/jope-evidence/kernel2/bt/B00/inventory/release/jope-v0.2.0.spdx.json",
+      "ref": "v0.2.0",
+      "sha256": "76aedff0a9fcf61d6abf548901b0b752d967630969049a398e6ec8812b0a20ca",
+      "uri": "https://github.com/neverhuman/JopeDime/releases/download/v0.2.0/jope-v0.2.0.spdx.json"
+    },
+    {
+      "bytes": 1403,
+      "format": "release asset",
+      "model_count": 0,
+      "read_path": "/home/ubuntu/jope-evidence/kernel2/bt/B00/inventory/release/release-manifest-v0.2.0.json",
+      "ref": "v0.2.0",
+      "sha256": "0276485c3dd1eaea2a846e29ada08843b15edba043c8e69b37257fca0af0396b",
+      "uri": "https://github.com/neverhuman/JopeDime/releases/download/v0.2.0/release-manifest-v0.2.0.json"
+    },
+    {
+      "bytes": 150,
+      "format": "text",
+      "model_count": 0,
+      "read_path": "git show v0.2.0:models/PINNED",
+      "ref": "629e69d865a674222e00224cebf45c1ffddc8dea",
+      "sha256": "47b71587c7a62ae9d95005492b2a9e4a19c9c81af8158103f39d2d494a0cebd2",
+      "uri": "git+https://github.com/neverhuman/JopeDime@629e69d865a674222e00224cebf45c1ffddc8dea:models/PINNED"
+    },
+    {
+      "bytes": 1492,
+      "format": "jope.model-index/v1",
+      "model_count": 0,
+      "read_path": "git show v0.2.0:models/manifest.json",
+      "ref": "629e69d865a674222e00224cebf45c1ffddc8dea",
+      "sha256": "70cf632d3634de92174823a9bcc0d615d7f98315183c6a4185e8b6745724bb26",
+      "uri": "git+https://github.com/neverhuman/JopeDime@629e69d865a674222e00224cebf45c1ffddc8dea:models/manifest.json"
+    },
+    {
+      "bytes": 2662,
+      "format": "jope.model-bundle/v2",
+      "model_count": 0,
+      "read_path": "git show v0.2.0:models/bundles/hyperion-v7.json",
+      "ref": "629e69d865a674222e00224cebf45c1ffddc8dea",
+      "sha256": "fdaf938fc7f7957c06959f12c130b2bd81cdaef5e5bb2198ba75cf35da1c5233",
+      "uri": "git+https://github.com/neverhuman/JopeDime@629e69d865a674222e00224cebf45c1ffddc8dea:models/bundles/hyperion-v7.json"
+    },
+    {
+      "bytes": 25515,
+      "format": "jope.model-bundle/v2",
+      "model_count": 0,
+      "read_path": "git show v0.2.0:models/bundles/jope-prime-gen31-v2.json",
+      "ref": "629e69d865a674222e00224cebf45c1ffddc8dea",
+      "sha256": "c8d8d13a2f4cb2eeb21eea364c33e14429c84d344e6b50eb38a472173b97b6f2",
+      "uri": "git+https://github.com/neverhuman/JopeDime@629e69d865a674222e00224cebf45c1ffddc8dea:models/bundles/jope-prime-gen31-v2.json"
+    },
+    {
+      "bytes": 3868,
+      "format": "jope.model-bundle/v2",
+      "model_count": 0,
+      "read_path": "git show v0.2.0:models/bundles/policy-step-60000.json",
+      "ref": "629e69d865a674222e00224cebf45c1ffddc8dea",
+      "sha256": "d8e259b26ef8d580ddb99ae5826c9501bcdc0c32045945eef9010926fd796e9e",
+      "uri": "git+https://github.com/neverhuman/JopeDime@629e69d865a674222e00224cebf45c1ffddc8dea:models/bundles/policy-step-60000.json"
+    },
+    {
+      "bytes": 18434,
+      "format": "jope.s3-catalog/v1",
+      "model_count": 0,
+      "read_path": "git show v0.2.0:catalogs/s3.json",
+      "ref": "629e69d865a674222e00224cebf45c1ffddc8dea",
+      "sha256": "b5d0b6d5888f4c30709d4a6bc25d476908d634e9679ffb50eaf3f644b0c541ee",
+      "uri": "git+https://github.com/neverhuman/JopeDime@629e69d865a674222e00224cebf45c1ffddc8dea:catalogs/s3.json"
+    },
+    {
+      "bytes": 61712,
+      "format": "feat-math.compat-freeze.emitted-bytes.v1",
+      "model_count": 0,
+      "provenance": "synthetic test fixture; not shipped",
+      "ref": "e709ed90e0890a619b91fdc2fe395439b20ffb65",
+      "sha256": "6d7c48c21f9d331f3a1e3e73d7230bae507bfa2e10d18a271b1a1ad91515e0c1",
+      "uri": "git+https://github.com/neverhuman/JopeDime@e709ed90e0890a619b91fdc2fe395439b20ffb65:crates/feat-math/tests/fixtures/compat_freeze/emitted_bytes.v1.json"
+    },
+    {
+      "bytes": 8315,
+      "format": "feat-math.compat-freeze.evaluator-identity.v1",
+      "model_count": 0,
+      "provenance": "synthetic test fixture; not shipped",
+      "ref": "e709ed90e0890a619b91fdc2fe395439b20ffb65",
+      "sha256": "649167014ae5ebf2416505e830732d0a6a9bccb84cead22cec9cd44a8b027d0e",
+      "uri": "git+https://github.com/neverhuman/JopeDime@e709ed90e0890a619b91fdc2fe395439b20ffb65:crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json"
+    },
+    {
+      "bytes": 6326,
+      "format": "feat-math.compat-freeze.frozen-pins.v1",
+      "model_count": 0,
+      "provenance": "synthetic test fixture; not shipped",
+      "ref": "e709ed90e0890a619b91fdc2fe395439b20ffb65",
+      "sha256": "1b565534581afeea66411d90929e9f554c55b6e440ebea086742e89845a47443",
+      "uri": "git+https://github.com/neverhuman/JopeDime@e709ed90e0890a619b91fdc2fe395439b20ffb65:crates/feat-math/tests/fixtures/compat_freeze/frozen_pins.v1.json"
+    },
+    {
+      "bytes": 174094,
+      "format": "feat-math.compat-freeze.generator-streams.v1",
+      "model_count": 0,
+      "provenance": "synthetic test fixture; not shipped",
+      "ref": "e709ed90e0890a619b91fdc2fe395439b20ffb65",
+      "sha256": "9ce8cb7034ed4ec9bf39e2057a3a673cd3bc4039d3b9bb4c104c81561be541a0",
+      "uri": "git+https://github.com/neverhuman/JopeDime@e709ed90e0890a619b91fdc2fe395439b20ffb65:crates/feat-math/tests/fixtures/compat_freeze/generator_streams.v1.json"
+    },
+    {
+      "bytes": 4871,
+      "format": "feat-math.compat-freeze.lineage-sources.v1",
+      "model_count": 0,
+      "provenance": "synthetic test fixture; not shipped",
+      "ref": "e709ed90e0890a619b91fdc2fe395439b20ffb65",
+      "sha256": "2e883fc6e47bb3c654e16608b7a913c964e30ff7b5d5ab25451c1badefbdff0c",
+      "uri": "git+https://github.com/neverhuman/JopeDime@e709ed90e0890a619b91fdc2fe395439b20ffb65:crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json"
+    },
+    {
+      "bytes": 568660,
+      "format": "feat-math.compat-freeze.mathexpr-values.v1",
+      "model_count": 0,
+      "provenance": "synthetic test fixture; not shipped",
+      "ref": "e709ed90e0890a619b91fdc2fe395439b20ffb65",
+      "sha256": "55ff4833926454a35d8e224f6309a277a80d43f90bf028ea148b7b603c274ba5",
+      "uri": "git+https://github.com/neverhuman/JopeDime@e709ed90e0890a619b91fdc2fe395439b20ffb65:crates/feat-math/tests/fixtures/compat_freeze/mathexpr_values.v1.json"
+    },
+    {
+      "bytes": 1340,
+      "format": "feat-math.compat-freeze.meta.v1",
+      "model_count": 0,
+      "provenance": "synthetic test fixture; not shipped",
+      "ref": "e709ed90e0890a619b91fdc2fe395439b20ffb65",
+      "sha256": "45834e08a447bb41b5112119388890bce26580768dca538035506343d3fc492b",
+      "uri": "git+https://github.com/neverhuman/JopeDime@e709ed90e0890a619b91fdc2fe395439b20ffb65:crates/feat-math/tests/fixtures/compat_freeze/meta.json"
+    },
+    {
+      "bytes": 29340,
+      "format": "feat-math.compat-freeze.model-serde.v1",
+      "model_count": 55,
+      "provenance": "synthetic test fixture; not shipped",
+      "ref": "e709ed90e0890a619b91fdc2fe395439b20ffb65",
+      "sha256": "cff2fc1bbf3ee43219ce19a79d2a7df7a47adfc04cd613c5618223b5be95629e",
+      "uri": "git+https://github.com/neverhuman/JopeDime@e709ed90e0890a619b91fdc2fe395439b20ffb65:crates/feat-math/tests/fixtures/compat_freeze/model_serde.v1.json"
+    },
+    {
+      "bytes": 26120,
+      "format": "feat-math.compat-freeze.search-runs.v1",
+      "model_count": 0,
+      "provenance": "synthetic test fixture; not shipped",
+      "ref": "e709ed90e0890a619b91fdc2fe395439b20ffb65",
+      "sha256": "093efc32714073d5dd8c4b9c1c9b37b59ae38c2385455acbea95c1bbde0c3da3",
+      "uri": "git+https://github.com/neverhuman/JopeDime@e709ed90e0890a619b91fdc2fe395439b20ffb65:crates/feat-math/tests/fixtures/compat_freeze/search_runs.v1.json"
+    },
+    {
+      "bytes": 18219,
+      "format": "feat-math.compat-freeze.stage-values.v1",
+      "model_count": 0,
+      "provenance": "synthetic test fixture; not shipped",
+      "ref": "e709ed90e0890a619b91fdc2fe395439b20ffb65",
+      "sha256": "0e17ebc4f93e5b02f21517cbe06a0ab5c0d59b6be600e350a650e5fc6bd4641c",
+      "uri": "git+https://github.com/neverhuman/JopeDime@e709ed90e0890a619b91fdc2fe395439b20ffb65:crates/feat-math/tests/fixtures/compat_freeze/stage_values.v1.json"
+    },
+    {
+      "bytes": 15244,
+      "format": "fitted C++17 source emitter revision 2",
+      "model_count": 1,
+      "provenance": "synthetic fixture; not shipped",
+      "ref": "e709ed90e0890a619b91fdc2fe395439b20ffb65",
+      "sha256": "9a040e0c75e9d333e1bb3e3e8ae59563c5f4bf4cfefecd509d5a89a3db2787ad",
+      "uri": "git+https://github.com/neverhuman/JopeDime@e709ed90e0890a619b91fdc2fe395439b20ffb65:crates/feat-math/tests/fixtures/fitted_cpp/revision2-ridge.cpp"
+    },
+    {
+      "bytes": 2662,
+      "family": "hyperion-v7",
+      "file_count": 2,
+      "format": "jope.model-bundle/v2",
+      "model_count": 1,
+      "read_path": "/home/ubuntu/jope-evidence/kernel2/bt/B00/inventory/s3/hyperion-v7.json",
+      "sha256": "fdaf938fc7f7957c06959f12c130b2bd81cdaef5e5bb2198ba75cf35da1c5233",
+      "uri": "s3://veox-jopedime-models-use2/bundles/hyperion-v7/manifest.json"
+    },
+    {
+      "bytes": 25515,
+      "family": "jope-prime-gen31-v2",
+      "file_count": 17,
+      "format": "jope.model-bundle/v2",
+      "model_count": 11,
+      "read_path": "/home/ubuntu/jope-evidence/kernel2/bt/B00/inventory/s3/jope-prime-gen31-v2.json",
+      "sha256": "c8d8d13a2f4cb2eeb21eea364c33e14429c84d344e6b50eb38a472173b97b6f2",
+      "uri": "s3://veox-jopedime-models-use2/bundles/jope-prime-gen31-v2/manifest.json"
+    },
+    {
+      "bytes": 3868,
+      "family": "policy-step-60000",
+      "file_count": 2,
+      "format": "jope.model-bundle/v2",
+      "model_count": 2,
+      "read_path": "/home/ubuntu/jope-evidence/kernel2/bt/B00/inventory/s3/policy-step-60000.json",
+      "sha256": "d8e259b26ef8d580ddb99ae5826c9501bcdc0c32045945eef9010926fd796e9e",
+      "uri": "s3://veox-jopedime-models-use2/bundles/policy-step-60000/manifest.json"
+    },
+    {
+      "bytes": 246456988,
+      "checksum_verified_from_s3_head": true,
+      "format": "content-addressed blob",
+      "model_count": 0,
+      "read_path": "AWS_PROFILE=veox-jepson-prod aws s3api get-object --bucket veox-jopedime-models-use2 --key blobs/sha256/05c17eddc1f83cd557d12763e39240b1ef5aea7de38ca663de24eb373a86e006 <custody-path>",
+      "sha256": "05c17eddc1f83cd557d12763e39240b1ef5aea7de38ca663de24eb373a86e006",
+      "uri": "s3://veox-jopedime-models-use2/blobs/sha256/05c17eddc1f83cd557d12763e39240b1ef5aea7de38ca663de24eb373a86e006",
+      "version_id": "hqk6q9rZ84E9OiBbI8NDXs_CkeFlIDSW"
+    },
+    {
+      "bytes": 212697108,
+      "checksum_verified_from_s3_head": true,
+      "format": "content-addressed blob",
+      "model_count": 0,
+      "read_path": "AWS_PROFILE=veox-jepson-prod aws s3api get-object --bucket veox-jopedime-models-use2 --key blobs/sha256/1a48f7fc920c235c412ebf8dff176e0016e18b02554d8bd339380ea501eb4d7b <custody-path>",
+      "sha256": "1a48f7fc920c235c412ebf8dff176e0016e18b02554d8bd339380ea501eb4d7b",
+      "uri": "s3://veox-jopedime-models-use2/blobs/sha256/1a48f7fc920c235c412ebf8dff176e0016e18b02554d8bd339380ea501eb4d7b",
+      "version_id": ".DYTsUQJ2pUAT6aGGe41zN6Z16qUEmvI"
+    },
+    {
+      "bytes": 103304800,
+      "checksum_verified_from_s3_head": true,
+      "format": "content-addressed blob",
+      "model_count": 0,
+      "read_path": "AWS_PROFILE=veox-jepson-prod aws s3api get-object --bucket veox-jopedime-models-use2 --key blobs/sha256/1a6d8b008d1b69c4725bb6e5bf094a68c1246073e6f71fa15e1b5e32ae19a488 <custody-path>",
+      "sha256": "1a6d8b008d1b69c4725bb6e5bf094a68c1246073e6f71fa15e1b5e32ae19a488",
+      "uri": "s3://veox-jopedime-models-use2/blobs/sha256/1a6d8b008d1b69c4725bb6e5bf094a68c1246073e6f71fa15e1b5e32ae19a488",
+      "version_id": "EZ1U.6E77GSuVF8Q5VIaskg1f3_2PwCQ"
+    },
+    {
+      "bytes": 8413808,
+      "checksum_verified_from_s3_head": true,
+      "format": "content-addressed blob",
+      "model_count": 0,
+      "read_path": "AWS_PROFILE=veox-jepson-prod aws s3api get-object --bucket veox-jopedime-models-use2 --key blobs/sha256/1b779c6ff7a1a812e3001342d663353d3c7ff54eb93392a600f01813f4c66e22 <custody-path>",
+      "sha256": "1b779c6ff7a1a812e3001342d663353d3c7ff54eb93392a600f01813f4c66e22",
+      "uri": "s3://veox-jopedime-models-use2/blobs/sha256/1b779c6ff7a1a812e3001342d663353d3c7ff54eb93392a600f01813f4c66e22",
+      "version_id": "Lez5lBYO4WVZR2ex.gn4so1rLAo.Z4cw"
+    },
+    {
+      "bytes": 108846812,
+      "checksum_verified_from_s3_head": true,
+      "format": "content-addressed blob",
+      "model_count": 0,
+      "read_path": "AWS_PROFILE=veox-jepson-prod aws s3api get-object --bucket veox-jopedime-models-use2 --key blobs/sha256/2c4c5531c5f1d834653fb1fef8b2b51cfd9d90044ff15cc98b67cd1b5aaae871 <custody-path>",
+      "sha256": "2c4c5531c5f1d834653fb1fef8b2b51cfd9d90044ff15cc98b67cd1b5aaae871",
+      "uri": "s3://veox-jopedime-models-use2/blobs/sha256/2c4c5531c5f1d834653fb1fef8b2b51cfd9d90044ff15cc98b67cd1b5aaae871",
+      "version_id": "bClXJHGEJqyPqka5pYr_VfZMEOk1.4ab"
+    },
+    {
+      "bytes": 40915,
+      "checksum_verified_from_s3_head": true,
+      "format": "content-addressed blob",
+      "model_count": 0,
+      "read_path": "AWS_PROFILE=veox-jepson-prod aws s3api get-object --bucket veox-jopedime-models-use2 --key blobs/sha256/3849615a7c8f9e750d543eb07e02eceb167e648775fe1dd5c041f8cdecfe7043 <custody-path>",
+      "sha256": "3849615a7c8f9e750d543eb07e02eceb167e648775fe1dd5c041f8cdecfe7043",
+      "uri": "s3://veox-jopedime-models-use2/blobs/sha256/3849615a7c8f9e750d543eb07e02eceb167e648775fe1dd5c041f8cdecfe7043",
+      "version_id": "q46RFzbRy2Jk7PKe27PCoS7bk0G5.KwJ"
+    },
+    {
+      "bytes": 111199088,
+      "checksum_verified_from_s3_head": true,
+      "format": "content-addressed blob",
+      "model_count": 0,
+      "read_path": "AWS_PROFILE=veox-jepson-prod aws s3api get-object --bucket veox-jopedime-models-use2 --key blobs/sha256/4b4b5a40f03c9226b4b15856fd35b90127c8b6a4d1435b815484cdd050744f1e <custody-path>",
+      "sha256": "4b4b5a40f03c9226b4b15856fd35b90127c8b6a4d1435b815484cdd050744f1e",
+      "uri": "s3://veox-jopedime-models-use2/blobs/sha256/4b4b5a40f03c9226b4b15856fd35b90127c8b6a4d1435b815484cdd050744f1e",
+      "version_id": "jZLq5ft_DhsSOl1o2fXwrmfWKiMw4BcO"
+    },
+    {
+      "bytes": 114222860,
+      "checksum_verified_from_s3_head": true,
+      "format": "content-addressed blob",
+      "model_count": 0,
+      "read_path": "AWS_PROFILE=veox-jepson-prod aws s3api get-object --bucket veox-jopedime-models-use2 --key blobs/sha256/544a4573398e2548dc9ac379d53bdb6a5ae58fc5646619ed029227db60528848 <custody-path>",
+      "sha256": "544a4573398e2548dc9ac379d53bdb6a5ae58fc5646619ed029227db60528848",
+      "uri": "s3://veox-jopedime-models-use2/blobs/sha256/544a4573398e2548dc9ac379d53bdb6a5ae58fc5646619ed029227db60528848",
+      "version_id": "Ygs6DdXwWofrtAvA0yVMVpQU12cRwtig"
+    },
+    {
+      "bytes": 527322,
+      "checksum_verified_from_s3_head": true,
+      "format": "content-addressed blob",
+      "model_count": 0,
+      "read_path": "AWS_PROFILE=veox-jepson-prod aws s3api get-object --bucket veox-jopedime-models-use2 --key blobs/sha256/54eb38247279f8d310d60fba298ee5c22a5be856eda07edb64c0c0a84fa2db33 <custody-path>",
+      "sha256": "54eb38247279f8d310d60fba298ee5c22a5be856eda07edb64c0c0a84fa2db33",
+      "uri": "s3://veox-jopedime-models-use2/blobs/sha256/54eb38247279f8d310d60fba298ee5c22a5be856eda07edb64c0c0a84fa2db33",
+      "version_id": "tyvpbzR9JYyAfFkJ08S3lkegvObeuX1D"
+    },
+    {
+      "bytes": 4604636,
+      "checksum_verified_from_s3_head": true,
+      "format": "content-addressed blob",
+      "model_count": 0,
+      "read_path": "AWS_PROFILE=veox-jepson-prod aws s3api get-object --bucket veox-jopedime-models-use2 --key blobs/sha256/57cdb53ae732a705e6aee7381a6a11e7e82cf357bcd67c46ccfa47b789c7d5d2 <custody-path>",
+      "sha256": "57cdb53ae732a705e6aee7381a6a11e7e82cf357bcd67c46ccfa47b789c7d5d2",
+      "uri": "s3://veox-jopedime-models-use2/blobs/sha256/57cdb53ae732a705e6aee7381a6a11e7e82cf357bcd67c46ccfa47b789c7d5d2",
+      "version_id": "jgrdoJ7NcGRLbcTNZ7icH3cpYLj2j4.J"
+    },
+    {
+      "bytes": 22649,
+      "checksum_verified_from_s3_head": true,
+      "format": "content-addressed blob",
+      "model_count": 0,
+      "read_path": "AWS_PROFILE=veox-jepson-prod aws s3api get-object --bucket veox-jopedime-models-use2 --key blobs/sha256/5e7884ec1c0e0b955a2381d5b69c54beddad9ec66a1980c94ad279d974486d05 <custody-path>",
+      "sha256": "5e7884ec1c0e0b955a2381d5b69c54beddad9ec66a1980c94ad279d974486d05",
+      "uri": "s3://veox-jopedime-models-use2/blobs/sha256/5e7884ec1c0e0b955a2381d5b69c54beddad9ec66a1980c94ad279d974486d05",
+      "version_id": "oGiqcuOLR8olONnluGYZWlyuZJsWWoan"
+    },
+    {
+      "bytes": 110256808,
+      "checksum_verified_from_s3_head": true,
+      "format": "content-addressed blob",
+      "model_count": 0,
+      "read_path": "AWS_PROFILE=veox-jepson-prod aws s3api get-object --bucket veox-jopedime-models-use2 --key blobs/sha256/6006f3818f675e6b734a74321987800cef130be19b53267c039453ea9b57a4d3 <custody-path>",
+      "sha256": "6006f3818f675e6b734a74321987800cef130be19b53267c039453ea9b57a4d3",
+      "uri": "s3://veox-jopedime-models-use2/blobs/sha256/6006f3818f675e6b734a74321987800cef130be19b53267c039453ea9b57a4d3",
+      "version_id": "I9t5lAZ79HzjnUfjeRXBTtuzZc87r_Qi"
+    },
+    {
+      "bytes": 76229,
+      "checksum_verified_from_s3_head": true,
+      "format": "content-addressed blob",
+      "model_count": 0,
+      "read_path": "AWS_PROFILE=veox-jepson-prod aws s3api get-object --bucket veox-jopedime-models-use2 --key blobs/sha256/62c7ab26dfcf0f6c0047fe6c9eec192b0440a7080bac92d772c08eed9279c8cb <custody-path>",
+      "sha256": "62c7ab26dfcf0f6c0047fe6c9eec192b0440a7080bac92d772c08eed9279c8cb",
+      "uri": "s3://veox-jopedime-models-use2/blobs/sha256/62c7ab26dfcf0f6c0047fe6c9eec192b0440a7080bac92d772c08eed9279c8cb",
+      "version_id": "uwPRAKHE6TEqErYCJIrjFr9Hc6Pvbxqo"
+    },
+    {
+      "bytes": 6650692,
+      "checksum_verified_from_s3_head": true,
+      "format": "content-addressed blob",
+      "model_count": 0,
+      "read_path": "AWS_PROFILE=veox-jepson-prod aws s3api get-object --bucket veox-jopedime-models-use2 --key blobs/sha256/88b9e8345e44d3ea609a8286215618a762f14e607fcdada6d27447b1f74668be <custody-path>",
+      "sha256": "88b9e8345e44d3ea609a8286215618a762f14e607fcdada6d27447b1f74668be",
+      "uri": "s3://veox-jopedime-models-use2/blobs/sha256/88b9e8345e44d3ea609a8286215618a762f14e607fcdada6d27447b1f74668be",
+      "version_id": "6_zLiTSpAypF_ed34kqL2d0992lurWxO"
+    },
+    {
+      "bytes": 114222828,
+      "checksum_verified_from_s3_head": true,
+      "format": "content-addressed blob",
+      "model_count": 0,
+      "read_path": "AWS_PROFILE=veox-jepson-prod aws s3api get-object --bucket veox-jopedime-models-use2 --key blobs/sha256/90c5952b4e201c265b4444a3694f3d1fc07df3864157ed6361b6c31723413d30 <custody-path>",
+      "sha256": "90c5952b4e201c265b4444a3694f3d1fc07df3864157ed6361b6c31723413d30",
+      "uri": "s3://veox-jopedime-models-use2/blobs/sha256/90c5952b4e201c265b4444a3694f3d1fc07df3864157ed6361b6c31723413d30",
+      "version_id": "o6P_GZaK3L3tdRU4UiSgRZCO2GqcP8zF"
+    },
+    {
+      "bytes": 78615176,
+      "checksum_verified_from_s3_head": true,
+      "format": "content-addressed blob",
+      "model_count": 0,
+      "read_path": "AWS_PROFILE=veox-jepson-prod aws s3api get-object --bucket veox-jopedime-models-use2 --key blobs/sha256/be96adc6549a478c6a1759e40ce8c403fa529694b54a74a7d93a6dd56d35a40f <custody-path>",
+      "sha256": "be96adc6549a478c6a1759e40ce8c403fa529694b54a74a7d93a6dd56d35a40f",
+      "uri": "s3://veox-jopedime-models-use2/blobs/sha256/be96adc6549a478c6a1759e40ce8c403fa529694b54a74a7d93a6dd56d35a40f",
+      "version_id": "XTTiITZb5MZVhsBmUVv1mEMyPQxfWjYe"
+    },
+    {
+      "bytes": 290,
+      "checksum_verified_from_s3_head": true,
+      "format": "content-addressed blob",
+      "model_count": 0,
+      "read_path": "AWS_PROFILE=veox-jepson-prod aws s3api get-object --bucket veox-jopedime-models-use2 --key blobs/sha256/d9bb9b8d4818982dc334ff8ac3c044f0741c641d9a6635af31e606e590f5629d <custody-path>",
+      "sha256": "d9bb9b8d4818982dc334ff8ac3c044f0741c641d9a6635af31e606e590f5629d",
+      "uri": "s3://veox-jopedime-models-use2/blobs/sha256/d9bb9b8d4818982dc334ff8ac3c044f0741c641d9a6635af31e606e590f5629d",
+      "version_id": "M8CkIPKmZ4mFU0Z2D0iBIo10VRsf2CIh"
+    },
+    {
+      "bytes": 8409600,
+      "checksum_verified_from_s3_head": true,
+      "format": "content-addressed blob",
+      "model_count": 0,
+      "read_path": "AWS_PROFILE=veox-jepson-prod aws s3api get-object --bucket veox-jopedime-models-use2 --key blobs/sha256/dccf526132dc1713f36cae4a0c88058fd73a19df7b349edeb73aef3158788c39 <custody-path>",
+      "sha256": "dccf526132dc1713f36cae4a0c88058fd73a19df7b349edeb73aef3158788c39",
+      "uri": "s3://veox-jopedime-models-use2/blobs/sha256/dccf526132dc1713f36cae4a0c88058fd73a19df7b349edeb73aef3158788c39",
+      "version_id": "MKcv2G6rb4iI8IM5oXZZPGLKOARMyJ8D"
+    },
+    {
+      "bytes": 264,
+      "checksum_verified_from_s3_head": true,
+      "format": "content-addressed blob",
+      "model_count": 0,
+      "read_path": "AWS_PROFILE=veox-jepson-prod aws s3api get-object --bucket veox-jopedime-models-use2 --key blobs/sha256/ebb745f6a0aa6398b1c3d3c9e26585e0536326b65e2083401391203fa37d21ef <custody-path>",
+      "sha256": "ebb745f6a0aa6398b1c3d3c9e26585e0536326b65e2083401391203fa37d21ef",
+      "uri": "s3://veox-jopedime-models-use2/blobs/sha256/ebb745f6a0aa6398b1c3d3c9e26585e0536326b65e2083401391203fa37d21ef",
+      "version_id": "1r7KdftZTjVDNptA8YybsLIVBtHusjRC"
+    },
+    {
+      "bytes": 233183532,
+      "checksum_verified_from_s3_head": true,
+      "format": "content-addressed blob",
+      "model_count": 0,
+      "read_path": "AWS_PROFILE=veox-jepson-prod aws s3api get-object --bucket veox-jopedime-models-use2 --key blobs/sha256/f663ae49cc0f1504f07800a69dd6c31ca22fc473f26bbc0684eac25129a04128 <custody-path>",
+      "sha256": "f663ae49cc0f1504f07800a69dd6c31ca22fc473f26bbc0684eac25129a04128",
+      "uri": "s3://veox-jopedime-models-use2/blobs/sha256/f663ae49cc0f1504f07800a69dd6c31ca22fc473f26bbc0684eac25129a04128",
+      "version_id": "wU5wqKRNL1IRgtBuS.9JnqnN9eVpHZHm"
+    },
+    {
+      "bytes": 169165,
+      "checksum_verified_from_s3_head": true,
+      "format": "content-addressed blob",
+      "model_count": 0,
+      "read_path": "AWS_PROFILE=veox-jepson-prod aws s3api get-object --bucket veox-jopedime-models-use2 --key blobs/sha256/fdc79784c3cf217925bfae3d9fd748ded0afa086466230f4a469e17b39eff069 <custody-path>",
+      "sha256": "fdc79784c3cf217925bfae3d9fd748ded0afa086466230f4a469e17b39eff069",
+      "uri": "s3://veox-jopedime-models-use2/blobs/sha256/fdc79784c3cf217925bfae3d9fd748ded0afa086466230f4a469e17b39eff069",
+      "version_id": "GnxiMMnq3VacFfBo1Dh0ZL8Aq6847mi3"
+    }
+  ],
+  "tag_refs": [
+    {
+      "commit": "629e69d865a674222e00224cebf45c1ffddc8dea",
+      "tag": "v0.2.0"
+    }
+  ]
+}
