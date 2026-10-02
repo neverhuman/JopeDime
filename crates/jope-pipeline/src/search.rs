@@ -490,7 +490,7 @@ fn migrate(
 /// SplitMix64 finalisation over the mixed coordinate: distinct `(rng_seed, cut,
 /// generation, slot, salt)` give uncorrelated streams, and the same coordinate
 /// always gives the same one.
-fn stream(rng_seed: u64, cut: usize, generation: usize, slot: usize, salt: u64) -> u64 {
+pub(crate) fn stream(rng_seed: u64, cut: usize, generation: usize, slot: usize, salt: u64) -> u64 {
     let mut z = rng_seed
         .wrapping_mul(0x9E37_79B9_7F4A_7C15)
         .wrapping_add((cut as u64).wrapping_mul(0xBF58_476D_1CE4_E5B9))
