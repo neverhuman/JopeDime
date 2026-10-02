@@ -98,6 +98,37 @@ pub struct ExprPool {
     pub max_depth: usize,
 }
 
+/// Version-two expression edits; draw an arm before choosing its site.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ExpressionArm {
+    Point,
+    Subtree,
+    Hoist,
+    Shrink,
+    ConstantJitter,
+    Wrap,
+    InsertBinary,
+}
+
+impl ExpressionArm {
+    pub const ALL: [Self; 7] = [
+        Self::Point,
+        Self::Subtree,
+        Self::Hoist,
+        Self::Shrink,
+        Self::ConstantJitter,
+        Self::Wrap,
+        Self::InsertBinary,
+    ];
+}
+
+#[derive(Clone, Copy, Debug, Serialize)]
+pub struct ExpressionArmWeight {
+    pub arm: ExpressionArm,
+    pub weight: u32,
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Arm {
@@ -173,6 +204,8 @@ pub struct SearchProfile {
     pub expr_stages: Option<ExprStages>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub expr: Option<ExprPool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub expression_edits: Option<Vec<ExpressionArmWeight>>,
     pub edits: EditSpec,
     pub splice: SpliceSpec,
 }
@@ -600,6 +633,7 @@ fn legacy(v2: bool) -> SearchProfile {
         },
         expr_stages: None,
         expr: None,
+        expression_edits: None,
         edits: edits(v2, false),
         splice: splice(),
     }
@@ -621,8 +655,22 @@ fn kernel2(id: &'static str) -> SearchProfile {
             birth_constants: BINS.to_vec(), continuous_after_birth: true,
             negation: Negation::ConstantsOnly, max_nodes: 15, max_depth: 4,
         }),
+        expression_edits: None,
         edits: edits(true, true), splice: splice(),
     }
+}
+
+fn expression_operators(id: &'static str) -> SearchProfile {
+    let mut result = kernel2(id);
+    result.revision = 2;
+    result.description = "Revision 2 adds seven equally weighted expression edit arms. The v2 expression APIs consume these weights and the declared pool; the shipping pipeline remains a separate integration gate.";
+    result.expression_edits = Some(
+        ExpressionArm::ALL
+            .into_iter()
+            .map(|arm| ExpressionArmWeight { arm, weight: 1 })
+            .collect(),
+    );
+    result
 }
 
 pub fn profiles() -> Vec<SearchProfile> {
@@ -631,6 +679,8 @@ pub fn profiles() -> Vec<SearchProfile> {
         legacy(true),
         kernel2("kernel2-baseline"),
         kernel2("kernel2-experimental"),
+        expression_operators("kernel2-baseline"),
+        expression_operators("kernel2-experimental"),
     ]
 }
 
@@ -668,7 +718,7 @@ mod tests {
 
     #[test]
     fn revision_one_profiles_are_finite_and_distinct() {
-        let profiles = profiles();
+        let profiles: Vec<_> = profiles().into_iter().filter(|p| p.revision == 1).collect();
         assert_eq!(profiles.len(), 4);
         const PINNED: [(&str, u32, &str); 4] = [
             (

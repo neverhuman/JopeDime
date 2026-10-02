@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json",
-  "count": 4042,
+  "count": 4062,
   "ignored": 66,
   "packages": {
    "battle-gpu": {
@@ -29,7 +29,7 @@
     }
    },
    "feat-math": {
-    "count": 674,
+    "count": 694,
     "ignored": 7,
     "binaries": {
      "feat-math": {
@@ -711,6 +711,33 @@
        "negative_unlisted_birth_bin_is_rejected_by_a",
        "negative_unwitnessed_fault_is_rejected_by_c",
        "negative_wide_column_policy_is_rejected_by_a"
+      ]
+     },
+     "feat-math::kernel2_expression_search": {
+      "kind": "test",
+      "count": 20,
+      "ignored": 0,
+      "tests": [
+       "a_thousand_chained_edits_remain_bounded_and_do_not_grow_monotonically",
+       "callbacks_consume_only_supplied_training_rows_and_the_actual_budget",
+       "constant_jitter_arm_one_hundred_thousand_children",
+       "domain_and_hard_faults_never_reach_a_callback_as_valid_zero",
+       "elementwise_callback_checks_each_cell_and_refuses_empty_maps",
+       "every_version_two_operator_replays_from_its_seed",
+       "expression_operator_revision_keeps_every_revision_one_identity",
+       "faulting_trials_are_counted_rejected_and_never_returned_as_the_best",
+       "hoist_arm_one_hundred_thousand_children",
+       "insert_binary_arm_one_hundred_thousand_children",
+       "linear_scaled_refinement_recovers_frequency_intercept_and_scale",
+       "malformed_profiles_and_empty_training_inputs_refuse_cleanly",
+       "one_hundred_thousand_crossovers_are_size_fair_and_use_recipient_scope",
+       "one_hundred_thousand_grown_children_have_variable_leaves_and_reparse_in_scope",
+       "one_node_scope_can_grow_x_but_never_read_it_outside_map",
+       "point_arm_one_hundred_thousand_children",
+       "sampled_arm_frequencies_follow_the_consumed_profile_weights",
+       "shrink_arm_one_hundred_thousand_children",
+       "subtree_arm_one_hundred_thousand_children",
+       "wrap_arm_one_hundred_thousand_children"
       ]
      },
      "feat-math::kernel2_search": {
@@ -6384,7 +6411,7 @@
   }
  },
  "totals": {
-  "rust": 4042,
+  "rust": 4062,
   "python": 172
  }
 }
