@@ -15,6 +15,9 @@ use std::path::{Path, PathBuf};
 
 const BASE: &str = "e709ed90e0890a619b91fdc2fe395439b20ffb65";
 
+#[path = "support/identity_transitions.rs"]
+mod identity_transitions;
+
 fn root() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/compat_freeze/historical_v1")
 }
@@ -380,6 +383,10 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
     for (entry, path) in replacements.iter().zip(changed_fixtures) {
         assert_eq!(entry["path"], path);
     }
+    let successor = old_fixture("transitions/e3_identity_rebaseline.v1.json");
+    assert_eq!(successor["fixtures"].as_array().unwrap().len(), 1);
+    assert_eq!(successor["fixtures"][0]["path"], changed_fixtures[0]);
+    let identity_chain = [transition, successor];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);
     let mut old_fixtures = 0;
@@ -405,12 +412,8 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 old_fixtures += 1;
                 let repo = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
                 let current = sha256(&std::fs::read(repo.join(path)).unwrap());
-                if let Some(replacement) = replacements.iter().find(|entry| entry["path"] == path) {
-                    assert_eq!(replacement["before"], hash, "{path}");
-                    assert_eq!(replacement["after"], current, "{path}");
-                } else {
-                    assert_eq!(current, hash, "{path}");
-                }
+                identity_transitions::verify_fixture(path, hash, &current, &identity_chain)
+                    .unwrap_or_else(|error| panic!("{path}: {error}"));
             }
         }
     }

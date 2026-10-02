@@ -5,8 +5,64 @@ use feat_math::kernel::profile::{
 use feat_math::kernel::search::{admit_child, crossover_programs, mutate_program, random_program};
 use feat_math::GenomeIr;
 
+#[path = "support/identity_transitions.rs"]
+mod identity_transitions;
+
 fn config() -> SearchProfile {
     profile("kernel2-baseline", 3).expect("E3 needs a separately versioned wrapper profile")
+}
+
+#[test]
+fn identity_successor_chain_refuses_unledgered_drift_and_behavior_rebaselines() {
+    let base =
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/compat_freeze");
+    let load = |file: &str| {
+        serde_json::from_slice::<serde_json::Value>(&std::fs::read(base.join(file)).unwrap())
+            .unwrap()
+    };
+    let first = load("transitions/b02_identity_rebaseline.v1.json");
+    let second = load("transitions/e3_identity_rebaseline.v1.json");
+    let path = second["fixtures"][0]["path"].as_str().unwrap();
+    let initial = first["fixtures"][0]["before"].as_str().unwrap();
+    let current = second["fixtures"][0]["after"].as_str().unwrap();
+    let chain = [first.clone(), second.clone()];
+    identity_transitions::verify_fixture(path, initial, current, &chain).unwrap();
+    assert!(identity_transitions::verify_fixture(path, initial, &"0".repeat(64), &chain).is_err());
+    let mut broken = second.clone();
+    broken["fixtures"][0]["before"] = "0".repeat(64).into();
+    assert!(
+        identity_transitions::verify_fixture(path, initial, current, &[first.clone(), broken])
+            .is_err()
+    );
+    let mut behavior = second.clone();
+    behavior["fixtures"][0]["path"] =
+        "crates/feat-math/tests/fixtures/compat_freeze/emitted_bytes.v1.json".into();
+    assert!(identity_transitions::verify_fixture(
+        path,
+        initial,
+        current,
+        &[first.clone(), behavior]
+    )
+    .is_err());
+    let mut duplicate = second.clone();
+    duplicate["fixtures"]
+        .as_array_mut()
+        .unwrap()
+        .push(second["fixtures"][0].clone());
+    assert!(identity_transitions::verify_fixture(
+        path,
+        initial,
+        current,
+        &[first.clone(), duplicate]
+    )
+    .is_err());
+    assert!(identity_transitions::verify_fixture(
+        path,
+        initial,
+        current,
+        std::slice::from_ref(&first)
+    )
+    .is_err());
 }
 
 const PARENT: &str = "(pipe X (standardize append=false) (map expr=\"sin(x)+(0.5*c0)\") (derive expr=\"row_mean+(0.5*c0)\" append=true) (ridge lambda=1.0))";
