@@ -108,7 +108,7 @@ impl Kernel2Evaluator {
                 .faults
                 .penalize(hold_score, lambda_domain, lambda_saturation),
             FaultPolicy::RejectHard => Some(hold_score),
-            FaultPolicy::Legacy => unreachable!("constructor refuses legacy policy"),
+            FaultPolicy::Legacy => unreachable!("fault policy validation invariant violated"),
         };
         ensure!(selection_score.is_some(), "nonfinite penalized score");
         record.observation.train_r2 = Some(train_score);
