@@ -454,7 +454,9 @@ fn run_child(
             Duration::from_secs(30),
         )
         .unwrap();
-    fs::write(&handshake, encoded(&start).unwrap()).unwrap();
+    let pending = handshake.with_extension("pending");
+    fs::write(&pending, encoded(&start).unwrap()).unwrap();
+    fs::rename(&pending, &handshake).unwrap();
     let wait_limit = Instant::now() + Duration::from_secs(30);
     while !handshake.with_extension("consumed").exists() {
         assert!(
