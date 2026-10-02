@@ -752,7 +752,7 @@ fn every_profile_element_is_closed() {
         .filter(|item| item.id.starts_with("kernel2-"))
         .collect();
     for required in ["kernel2-baseline", "kernel2-experimental"] {
-        for revision in [1, 2] {
+        for revision in [1, 2, 3] {
             assert!(
                 defined
                     .iter()
@@ -774,7 +774,7 @@ fn every_profile_element_is_closed() {
         assert!(
             matches!(
                 (profile.id, profile.revision),
-                ("kernel2-baseline" | "kernel2-experimental", 1 | 2)
+                ("kernel2-baseline" | "kernel2-experimental", 1..=3)
             ),
             "add closure count pins for {} r{}",
             profile.id,
@@ -787,7 +787,7 @@ fn every_profile_element_is_closed() {
     }
     println!("manifest-wide (c): {}", report.manifest_c);
     assert_eq!(report.manifest_c, 971_397);
-    println!("(b) pending PR 12: the profile's operators create, change and remove each element, 0 invalid children in 100k");
+    println!("(b) element-by-element EEC witness pending: E3 wrapper arms are qualified separately in kernel2_pipeline_search");
     println!("(e) by execution pending PR 16");
     let gaps: Vec<_> = manifest
         .ops

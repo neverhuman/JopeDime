@@ -10,6 +10,9 @@ use crate::dsl::{DslExpr, ParamValue};
 use crate::math_expr::{Expr, ExpressionScope, MathExpr, UnOp, Var};
 use crate::GenomeIr;
 
+mod wrappers;
+pub use wrappers::{crossover_programs, mutate_program, random_program, Offspring};
+
 /// Admit a child only when printing and parsing preserve its exact typed codec,
 /// every read is in scope, and its elements and budgets belong to the profile.
 /// Birth parameter domains are draw distributions, not post-edit numeric limits.

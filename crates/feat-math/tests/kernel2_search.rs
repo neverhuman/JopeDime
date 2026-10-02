@@ -187,7 +187,9 @@ fn every_declared_expression_element_has_an_admitted_witness() {
     for value in &pool.birth_constants {
         admit_child(&pipe(&format!("x+({value})"), "map"), &profile, 8).unwrap();
     }
-    assert!(feat_math::kernel::profile::shipped_kernel2_profiles().is_empty());
+    let available = feat_math::kernel::profile::shipped_kernel2_profiles();
+    assert_eq!(available.len(), 2);
+    assert!(available.iter().all(|p| p.revision == 3));
 }
 
 #[test]
