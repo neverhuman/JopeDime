@@ -2088,6 +2088,12 @@
       "subsystems": [
         "gp"
       ]
+    },
+    "target:feat-math/test/kernel2_refinement_control": {
+      "role": "regression",
+      "subsystems": [
+        "gp"
+      ]
     }
   },
   "baseline_triage": [

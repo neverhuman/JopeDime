@@ -7681,6 +7681,22 @@
       ],
       "dispositions": [],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:feat-math/test/kernel2_refinement_control": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/feat-math/tests/kernel2_refinement_control.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "E6 per-trial refinement admission: stop before initial or subsequent trials, exact actual/refused accounting, and bit-identical legacy coordinate results/callback order for row and elementwise objectives. Shipping loop, CLI and v4 receipts remain separate E6 gates."
     }
   }
 }
