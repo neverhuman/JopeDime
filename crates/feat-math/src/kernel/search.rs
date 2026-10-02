@@ -3,6 +3,7 @@
 //! seam alone does not qualify shipping generation or emitter closure.
 
 use super::capabilities::{self, Kernel2Use, Tier, BINOPS, FUNCTIONS, VARIABLES};
+use super::pipeline::{stage_class, StageClass};
 use super::profile::{ExprPool, Limit, Negation, SearchProfile};
 use super::{scope, Error, Program, Result};
 use crate::dsl::{DslExpr, ParamValue};
@@ -41,7 +42,9 @@ fn check_pipeline(pipe: &DslExpr, profile: &SearchProfile, tier: Tier) -> Result
     let Some((head, stages)) = pipe.stages.split_last() else {
         return Err(Error::Unsupported("terminal profile head required".into()));
     };
-    if !profile.heads.contains(&head.op.as_str()) {
+    if stage_class(&head.op) != Some(StageClass::Learner)
+        || !profile.heads.contains(&head.op.as_str())
+    {
         return Err(Error::Unsupported("terminal profile head required".into()));
     }
     check_operator(&head.op, tier)?;
@@ -56,11 +59,13 @@ fn check_pipeline(pipe: &DslExpr, profile: &SearchProfile, tier: Tier) -> Result
     let mut expression_stages = 0;
     for stage in stages {
         check_operator(&stage.op, tier)?;
-        let carrier = profile
-            .expr_stages
-            .as_ref()
-            .filter(|e| e.carriers.contains(&stage.op.as_str()));
-        if let Some(carrier) = carrier {
+        // Runtime carrier roles are independent of a caller's profile lists.
+        if matches!(stage.op.as_str(), "map" | "derive") {
+            let carrier = profile
+                .expr_stages
+                .as_ref()
+                .filter(|e| e.carriers.contains(&stage.op.as_str()))
+                .ok_or_else(|| Error::Unsupported("profile expression carrier required".into()))?;
             expression_stages += 1;
             if expression_stages > carrier.max_expr_stages {
                 return Err(Error::Bounds(

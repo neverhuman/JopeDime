@@ -132,6 +132,41 @@ fn expression_membership_variable_leaf_and_tree_caps_are_required() {
 }
 
 #[test]
+fn caller_profile_lists_cannot_reclassify_carriers_or_terminal_heads() {
+    for carrier in ["map", "derive"] {
+        for declaration in 0..3 {
+            let mut modified = baseline();
+            modified.stages.push(carrier);
+            match declaration {
+                0 => modified.expr_stages = None,
+                1 => modified.expr_stages.as_mut().unwrap().carriers.clear(),
+                _ => modified.expr_stages.as_mut().unwrap().carriers = vec!["standardize"],
+            }
+            for expression in [
+                "exp(col(0))",
+                "0.5+0.25",
+                "-col(0)",
+                "col(8)+1",
+                "sin(sin(sin(sin(col(0)))))",
+            ] {
+                assert!(
+                    admit_child(&pipe(expression, carrier), &modified, 20).is_err(),
+                    "caller reclassified {carrier}, declaration {declaration}, {expression}"
+                );
+            }
+        }
+        let mut modified = baseline();
+        modified.heads.push(carrier);
+        assert!(admit_child(
+            &format!("(pipe X ({carrier} expr=\"exp(col(0))\"))"),
+            &modified,
+            20
+        )
+        .is_err());
+    }
+}
+
+#[test]
 fn every_declared_expression_element_has_an_admitted_witness() {
     let profile = baseline();
     let pool = profile.expr.as_ref().unwrap();
