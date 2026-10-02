@@ -215,17 +215,17 @@ impl<'a> Search<'a> {
     }
 
     fn finish(&self, parent: &DslExpr, candidate: DslExpr, arm: PipelineArm) -> Offspring {
-        let old = GenomeIr::Pipeline(parent.clone()).canonical();
+        let parent_text = GenomeIr::Pipeline(parent.clone()).canonical();
         let text = GenomeIr::Pipeline(candidate).canonical();
         // Keep the selected arm on structural rejection. Retrying with another
         // arm would change the declared proposal distribution.
         let program = if admit_child(&text, self.profile, self.width).is_ok() {
             text
         } else {
-            old.clone()
+            parent_text.clone()
         };
         Offspring {
-            changed: program != old,
+            changed: program != parent_text,
             program,
             arm,
         }

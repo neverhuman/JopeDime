@@ -1,0 +1,13 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "OWNER DIRECTIVE (c): the Track E3 card requires three pub(crate) helper visibility prefixes and an announced identity-only transition",
+  "plan_reference": "JOPEDIME_GP_MATH_SYNTAX_WORKPLAN_v2.md Track E3 / PR 12",
+  "pr_reference": "[kernel2] Add profile-aware pipeline wrappers; mint evaluator identity",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "711bb338d8e00fa507e788248d543644681553e9cd41480ba953e981a1ae4c02",
+      "after": "a1d998089e3b262549a3dadae9b3355bda742328badffb85b38b3fbec989a96b"
+    }
+  ]
+}

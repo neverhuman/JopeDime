@@ -185,7 +185,9 @@ pub struct PipelineArmWeight {
 #[derive(Clone, Debug, Serialize)]
 pub struct PipelineOperators {
     /// Combined with the six stage weights in edits.drawn, before selecting a site.
+    #[serde(rename = "expression_edits")]
     pub expression_mutations: Vec<PipelineArmWeight>,
+    #[serde(rename = "splices")]
     pub crossovers: Vec<PipelineArmWeight>,
     pub birth_expression_numerator: u32,
     pub birth_expression_denominator: u32,
@@ -753,7 +755,7 @@ pub fn shipped_kernel2_profiles() -> Vec<SearchProfile> {
 fn pipeline_operators(id: &'static str) -> SearchProfile {
     let mut result = expression_operators(id);
     result.revision = 3;
-    result.description = "Revision 3 consumes stage and expression operators through profile-aware pipeline wrappers. Expression crossover uses the second parent's carriers. Runtime search and CLI selection remain the Track E6 gate.";
+    result.description = "Revision 3 consumes stage and expression operators through profile-aware pipeline wrappers. Expression splices use the second parent's carriers. Runtime search and CLI selection remain the Track E6 gate.";
     result.pipeline_operators = Some(PipelineOperators {
         expression_mutations: [
             PipelineArm::ExprGrow,
