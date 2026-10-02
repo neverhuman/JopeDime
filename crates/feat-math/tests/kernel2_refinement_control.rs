@@ -319,3 +319,51 @@ fn invalid_configuration_is_refused_before_consulting_the_guard() {
     }
     assert_eq!(starts.get(), 0);
 }
+
+fn check_invalid_elementwise_linear_objective(allow: bool) {
+    let p = profile("kernel2-baseline", 3).unwrap();
+    let scope = ExpressionScope::search_profile(1, true);
+    let expression = MathExpr::parse("x+0.5").unwrap();
+    let rows = [vec![1.0, 2.0]];
+    let targets = [1.5];
+    let old_error = expression
+        .optimize_constants_v2(
+            &p,
+            scope,
+            &rows,
+            &targets,
+            ConstantObjective::LinearScaled,
+            8,
+        )
+        .unwrap_err();
+    let starts = Cell::new(0);
+    let mut guard = || {
+        starts.set(starts.get() + 1);
+        allow
+    };
+    let error = expression
+        .optimize_constants_v2_guarded(
+            &p,
+            scope,
+            &rows,
+            &targets,
+            ConstantObjective::LinearScaled,
+            GuardedRefinementBudget {
+                max_evaluations: 8,
+                may_start: &mut guard,
+            },
+        )
+        .unwrap_err();
+    assert_eq!(format!("{error:#}"), format!("{old_error:#}"));
+    assert_eq!(starts.get(), 0);
+}
+
+#[test]
+fn invalid_pairing_precedes_false_guard() {
+    check_invalid_elementwise_linear_objective(false);
+}
+
+#[test]
+fn invalid_pairing_precedes_true_guard() {
+    check_invalid_elementwise_linear_objective(true);
+}

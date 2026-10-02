@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json",
-  "count": 4113,
+  "count": 4115,
   "ignored": 66,
   "packages": {
    "battle-gpu": {
@@ -29,7 +29,7 @@
     }
    },
    "feat-math": {
-    "count": 724,
+    "count": 726,
     "ignored": 7,
     "binaries": {
      "feat-math": {
@@ -772,7 +772,7 @@
      },
      "feat-math::kernel2_refinement_control": {
       "kind": "test",
-      "count": 7,
+      "count": 9,
       "ignored": 0,
       "tests": [
        "a_failed_initial_trial_is_reported_and_charged_once",
@@ -781,6 +781,8 @@
        "callbacks_keep_row_and_elementwise_results_and_trial_order",
        "fault_refusals_spend_trials_and_never_reach_the_callback",
        "invalid_configuration_is_refused_before_consulting_the_guard",
+       "invalid_pairing_precedes_false_guard",
+       "invalid_pairing_precedes_true_guard",
        "stopping_between_trials_retains_the_same_best_and_actual_count"
       ]
      },
@@ -6476,7 +6478,7 @@
   }
  },
  "totals": {
-  "rust": 4113,
+  "rust": 4115,
   "python": 172
  }
 }

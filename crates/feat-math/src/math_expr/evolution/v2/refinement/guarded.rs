@@ -21,6 +21,9 @@ impl MathExpr {
         validate_training(rows, targets, budget.max_evaluations)?;
         let search = Search::new(profile, scope)?;
         let expression = search.finish(self.root.clone())?;
+        if scope.elementwise && matches!(&objective, ConstantObjective::LinearScaled) {
+            bail!("LinearScaled needs a row expression; use an elementwise callback");
+        }
         let mut training = Training {
             rows,
             targets,
