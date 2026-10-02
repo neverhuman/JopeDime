@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json",
-  "count": 4136,
+  "count": 4147,
   "ignored": 66,
   "packages": {
    "battle-gpu": {
@@ -5448,12 +5448,12 @@
     }
    },
    "jope-pipeline": {
-    "count": 241,
+    "count": 252,
     "ignored": 2,
     "binaries": {
      "jope-pipeline": {
       "kind": "lib",
-      "count": 226,
+      "count": 237,
       "ignored": 2,
       "tests": [
        "classification_bridge::tests::experimental_context_has_bitwise_label_renaming_invariance_for_both_tasks",
@@ -5543,6 +5543,17 @@
        "kernel2::review_tests::incremental_fit_keeps_reference_model_bytes_and_training_trace_counts",
        "kernel2::review_tests::malformed_refinement_rows_are_refused_before_any_prefix_or_trial",
        "kernel2::review_tests::ragged_training_and_holdout_are_typed_refusals_and_spend_one_measurement",
+       "kernel2::search::tests::cancellation_refuses_search_and_guarded_generation_work",
+       "kernel2::search::tests::coordinator_draws_all_expression_arms_from_the_shipped_pool",
+       "kernel2::search::tests::cut_search_consumes_profile_wrappers_and_records_every_attempt",
+       "kernel2::search::tests::elite_pool_uses_fault_aware_score_order_and_unique_genomes",
+       "kernel2::search::tests::evaluation_bound_replays_observation_and_profile_bytes",
+       "kernel2::search::tests::expired_deadline_keeps_required_seed_measurements_and_starts_no_trials",
+       "kernel2::search::tests::generation_refinement_keeps_poisoned_holdout_outside_training_objectives",
+       "kernel2::search::tests::hard_refusals_spend_slots_and_never_become_parents",
+       "kernel2::search::tests::refinement_objectives_and_child_measurements_share_the_total_allowance",
+       "kernel2::search::tests::resolves_only_shipped_profiles_and_refuses_unsupported_limits",
+       "kernel2::search::tests::seed_scope_duplicates_and_insufficient_allowance_fail_before_measurement",
        "kernel2::tests::constant_expression_is_domain_evidence_even_without_arithmetic_fault",
        "kernel2::tests::held_out_domain_faults_are_pooled_without_counting_training_twice",
        "kernel2::tests::held_out_hard_column_fault_is_inadmissible_without_scores",
@@ -6499,7 +6510,7 @@
   }
  },
  "totals": {
-  "rust": 4136,
+  "rust": 4147,
   "python": 172
  }
 }

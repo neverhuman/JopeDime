@@ -140,3 +140,6 @@ mod tests;
 mod refinement_guarded_tests;
 
 pub use refinement::{GuardedGeneration, GuardedTrainingRefinement};
+
+/// Bounded profile-driven generation coordinator; CLI/v4 integration is separate.
+pub mod search;
