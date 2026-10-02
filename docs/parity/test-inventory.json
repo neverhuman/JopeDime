@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json",
-  "count": 4115,
+  "count": 4127,
   "ignored": 66,
   "packages": {
    "battle-gpu": {
@@ -5447,12 +5447,12 @@
     }
    },
    "jope-pipeline": {
-    "count": 221,
+    "count": 233,
     "ignored": 2,
     "binaries": {
      "jope-pipeline": {
       "kind": "lib",
-      "count": 206,
+      "count": 218,
       "ignored": 2,
       "tests": [
        "classification_bridge::tests::experimental_context_has_bitwise_label_renaming_invariance_for_both_tasks",
@@ -5509,6 +5509,18 @@
        "islands::tests::island_zero_is_the_run_stream_and_others_differ",
        "islands::tests::next_seeds_is_independent_of_input_order",
        "islands::tests::next_seeds_ranks_deduplicates_and_caps",
+       "kernel2::refinement_guarded_tests::admission_is_rechecked_after_prefix_before_initial_trial",
+       "kernel2::refinement_guarded_tests::always_admitted_generation_preserves_old_children_and_budget",
+       "kernel2::refinement_guarded_tests::always_admitted_training_preserves_old_program_and_accounting",
+       "kernel2::refinement_guarded_tests::caller_cancellation_and_expired_deadline_start_no_refinement",
+       "kernel2::refinement_guarded_tests::faulting_initial_trial_is_charged_but_stopped_trial_is_not",
+       "kernel2::refinement_guarded_tests::held_out_poison_cannot_affect_admitted_training",
+       "kernel2::refinement_guarded_tests::malformed_training_is_refused_before_control_or_charge",
+       "kernel2::refinement_guarded_tests::no_literals_or_no_allowance_needs_no_admission",
+       "kernel2::refinement_guarded_tests::refusal_before_prefix_spends_no_trial_or_failure",
+       "kernel2::refinement_guarded_tests::stop_before_child_measurement_keeps_refinement_and_stops_parents",
+       "kernel2::refinement_guarded_tests::stop_between_trials_keeps_measured_best_and_stops_later_stages",
+       "kernel2::refinement_guarded_tests::wrong_cut_is_refused_before_control_or_charge",
        "kernel2::refinement_tests::generation_refinement_replays_exact_bytes_and_budget_counts",
        "kernel2::refinement_tests::generation_refines_only_top_k_constant_bearing_scored_programs",
        "kernel2::refinement_tests::generation_reserves_remeasurement_and_never_overruns_a_shared_budget",
@@ -6478,7 +6490,7 @@
   }
  },
  "totals": {
-  "rust": 4115,
+  "rust": 4127,
   "python": 172
  }
 }
