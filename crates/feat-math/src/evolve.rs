@@ -1369,7 +1369,7 @@ fn rand_params(rng: &mut Pcg32, op: &str) -> BTreeMap<String, ParamValue> {
     p
 }
 
-fn rand_stage_from(rng: &mut Pcg32, vocab: &[&str]) -> Stage {
+pub(crate) fn rand_stage_from(rng: &mut Pcg32, vocab: &[&str]) -> Stage {
     let op = pick(rng, vocab);
     Stage {
         op: op.to_string(),
@@ -1381,7 +1381,7 @@ fn rand_stage(rng: &mut Pcg32) -> Stage {
     rand_stage_from(rng, &TRANSFORMS)
 }
 
-fn rand_head(rng: &mut Pcg32) -> Stage {
+pub(crate) fn rand_head(rng: &mut Pcg32) -> Stage {
     let op = pick(rng, &HEADS);
     Stage {
         op: op.to_string(),
@@ -1451,7 +1451,7 @@ fn jitter_params(rng: &mut Pcg32, stage: &mut Stage) {
 /// as v1, so the two are clean drop-in twins; the frozen `jitter_params`
 /// stays byte-identical for every recorded v1 stream. Schema clamps re-apply
 /// at plan/fit time exactly as they do for v1 jitter.
-fn jitter_params_v2(rng: &mut Pcg32, stage: &mut Stage) {
+pub(crate) fn jitter_params_v2(rng: &mut Pcg32, stage: &mut Stage) {
     let keys: Vec<String> = stage.params.keys().cloned().collect();
     if keys.is_empty() {
         // maybe flip append on (mirrors v1)

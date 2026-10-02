@@ -43,8 +43,8 @@ struct Search<'a> {
 impl<'a> Search<'a> {
     fn new(profile: &'a SearchProfile, mut scope: ExpressionScope) -> Result<Self> {
         let tier = match (profile.id, profile.revision) {
-            ("kernel2-baseline", 2) => Tier::Baseline,
-            ("kernel2-experimental", 2) => Tier::Experimental,
+            ("kernel2-baseline", 2 | 3) => Tier::Baseline,
+            ("kernel2-experimental", 2 | 3) => Tier::Experimental,
             _ => bail!("version-two kernel2 expression profile required"),
         };
         let pool = profile.expr.as_ref().context("expression pool required")?;

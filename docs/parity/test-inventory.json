@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json",
-  "count": 4063,
+  "count": 4084,
   "ignored": 66,
   "packages": {
    "battle-gpu": {
@@ -29,7 +29,7 @@
     }
    },
    "feat-math": {
-    "count": 695,
+    "count": 716,
     "ignored": 7,
     "binaries": {
      "feat-math": {
@@ -739,6 +739,34 @@
        "shrink_arm_one_hundred_thousand_children",
        "subtree_arm_one_hundred_thousand_children",
        "wrap_arm_one_hundred_thousand_children"
+      ]
+     },
+     "feat-math::kernel2_pipeline_search": {
+      "kind": "test",
+      "count": 21,
+      "ignored": 0,
+      "tests": [
+       "adjacent_swap_one_hundred_thousand_children",
+       "declared_stage_head_domains_and_birth_expression_share_are_consumed",
+       "delete_one_hundred_thousand_children",
+       "expression_cross_one_hundred_thousand_children",
+       "expression_crossover_uses_the_other_parent_and_the_recipient_scope",
+       "expression_drop_one_hundred_thousand_children",
+       "expression_edit_one_hundred_thousand_children",
+       "expression_grow_one_hundred_thousand_children",
+       "grow_and_edit_compute_scope_after_width_changing_prefixes",
+       "head_replacement_one_hundred_thousand_children",
+       "identical_seeds_replay_generation_mutation_and_two_parent_crossover",
+       "insert_one_hundred_thousand_children",
+       "invalid_parents_widths_and_profile_distributions_return_typed_refusals",
+       "missing_expression_sites_preserve_the_selected_arm_and_report_no_change",
+       "one_hundred_thousand_random_programs_are_admitted_and_create_expression_stages",
+       "parameter_jitter_one_hundred_thousand_children",
+       "profile_weights_are_sampled_before_structural_admission",
+       "revision_three_is_available_without_replacing_the_old_profile_identities",
+       "simplify_one_hundred_thousand_children",
+       "stage_cross_one_hundred_thousand_children",
+       "the_transform_cap_never_turns_a_full_parent_into_an_invalid_child"
       ]
      },
      "feat-math::kernel2_search": {
@@ -6412,7 +6440,7 @@
   }
  },
  "totals": {
-  "rust": 4063,
+  "rust": 4084,
   "python": 172
  }
 }

@@ -146,6 +146,51 @@ pub struct ArmWeight {
     pub weight: u32,
 }
 
+/// Revision-three pipeline operators. ExprCross always takes a second parent.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum PipelineArm {
+    ParameterJitter,
+    Insert,
+    Delete,
+    AdjacentSwap,
+    HeadReplacement,
+    Simplify,
+    ExprGrow,
+    ExprEdit,
+    ExprDrop,
+    StageCross,
+    ExprCross,
+}
+
+impl From<Arm> for PipelineArm {
+    fn from(arm: Arm) -> Self {
+        match arm {
+            Arm::ParameterJitter => Self::ParameterJitter,
+            Arm::Insert => Self::Insert,
+            Arm::Delete => Self::Delete,
+            Arm::AdjacentSwap => Self::AdjacentSwap,
+            Arm::HeadReplacement => Self::HeadReplacement,
+            Arm::Simplify => Self::Simplify,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Serialize)]
+pub struct PipelineArmWeight {
+    pub arm: PipelineArm,
+    pub weight: u32,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct PipelineOperators {
+    /// Combined with the six stage weights in edits.drawn, before selecting a site.
+    pub expression_mutations: Vec<PipelineArmWeight>,
+    pub crossovers: Vec<PipelineArmWeight>,
+    pub birth_expression_numerator: u32,
+    pub birth_expression_denominator: u32,
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum JitterVersion {
@@ -206,6 +251,8 @@ pub struct SearchProfile {
     pub expr: Option<ExprPool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub expression_edits: Option<Vec<ExpressionArmWeight>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub pipeline_operators: Option<PipelineOperators>,
     pub edits: EditSpec,
     pub splice: SpliceSpec,
 }
@@ -634,6 +681,7 @@ fn legacy(v2: bool) -> SearchProfile {
         expr_stages: None,
         expr: None,
         expression_edits: None,
+        pipeline_operators: None,
         edits: edits(v2, false),
         splice: splice(),
     }
@@ -656,6 +704,7 @@ fn kernel2(id: &'static str) -> SearchProfile {
             negation: Negation::ConstantsOnly, max_nodes: 15, max_depth: 4,
         }),
         expression_edits: None,
+        pipeline_operators: None,
         edits: edits(true, true), splice: splice(),
     }
 }
@@ -681,6 +730,8 @@ pub fn profiles() -> Vec<SearchProfile> {
         kernel2("kernel2-experimental"),
         expression_operators("kernel2-baseline"),
         expression_operators("kernel2-experimental"),
+        pipeline_operators("kernel2-baseline"),
+        pipeline_operators("kernel2-experimental"),
     ]
 }
 
@@ -690,9 +741,36 @@ pub fn profile(id: &str, revision: u32) -> Option<SearchProfile> {
         .find(|item| item.id == id && item.revision == revision)
 }
 
-/// Revision 1 publishes declarations only; no kernel2 profile is selected by shipping search.
+/// Profiles implemented by the shipped v3 wrapper API. The jope-pipeline runtime
+/// and CLI selection are separate Track E6 gates; legacy stays the default.
 pub fn shipped_kernel2_profiles() -> Vec<SearchProfile> {
-    Vec::new()
+    vec![
+        pipeline_operators("kernel2-baseline"),
+        pipeline_operators("kernel2-experimental"),
+    ]
+}
+
+fn pipeline_operators(id: &'static str) -> SearchProfile {
+    let mut result = expression_operators(id);
+    result.revision = 3;
+    result.description = "Revision 3 consumes stage and expression operators through profile-aware pipeline wrappers. Expression crossover uses the second parent's carriers. Runtime search and CLI selection remain the Track E6 gate.";
+    result.pipeline_operators = Some(PipelineOperators {
+        expression_mutations: [
+            PipelineArm::ExprGrow,
+            PipelineArm::ExprEdit,
+            PipelineArm::ExprDrop,
+        ]
+        .into_iter()
+        .map(|arm| PipelineArmWeight { arm, weight: 1 })
+        .collect(),
+        crossovers: [PipelineArm::StageCross, PipelineArm::ExprCross]
+            .into_iter()
+            .map(|arm| PipelineArmWeight { arm, weight: 1 })
+            .collect(),
+        birth_expression_numerator: 1,
+        birth_expression_denominator: 3,
+    });
+    result
 }
 
 pub fn render_profiles() -> String {
