@@ -143,3 +143,12 @@ pub use refinement::{GuardedGeneration, GuardedTrainingRefinement};
 
 /// Bounded profile-driven generation coordinator; CLI/v4 integration is separate.
 pub mod search;
+
+#[cfg(test)]
+mod cli_tests;
+
+pub mod cli;
+pub mod publication;
+pub mod receipt;
+pub mod records;
+pub mod run;

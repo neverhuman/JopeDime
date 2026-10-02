@@ -10,7 +10,8 @@ use feat_math::{
     math_expr::{Expr, ExpressionScope, MathExpr},
 };
 
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, serde::Deserialize, schemars::JsonSchema)]
+#[serde(deny_unknown_fields)]
 pub struct TrainingRefinement {
     pub program: String,
     pub evaluations: usize,

@@ -329,7 +329,7 @@ impl Observation {
 }
 
 /// An [`Observation`] as `observations.json` publishes it, read back for re-derivation.
-#[derive(Clone, Debug, serde::Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, serde::Deserialize, schemars::JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct ObservationRecord {
     pub genome: String,

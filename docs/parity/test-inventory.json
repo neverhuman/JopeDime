@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json",
-  "count": 4147,
+  "count": 4163,
   "ignored": 66,
   "packages": {
    "battle-gpu": {
@@ -1943,7 +1943,7 @@
     }
    },
    "jope-cli": {
-    "count": 66,
+    "count": 68,
     "ignored": 0,
     "binaries": {
      "jope-cli": {
@@ -2036,12 +2036,14 @@
      },
      "jope-cli::pipeline_cli": {
       "kind": "test",
-      "count": 6,
+      "count": 8,
       "ignored": 0,
       "tests": [
        "a_given_source_commit_is_recorded_and_git_is_never_spawned",
        "a_refused_cut_count_exits_2_leaves_nothing_and_the_corrected_retry_runs",
        "evolve_into_a_non_empty_output_exits_2_first_and_runs_once_it_is_emptied",
+       "kernel2_cli_refuses_unsupported_bounds_and_the_corrected_command_succeeds",
+       "kernel2_profile_cli_publishes_v4_verifies_evidence_and_defaults_to_fitted_cpp",
        "pipeline_cli_emits_fitted_cpp_and_records_executable_build",
        "sigterm_during_a_round_keeps_only_completed_rounds_in_the_lineage",
        "sigterm_mid_search_stops_between_evaluations_and_writes_no_receipt"
@@ -5448,12 +5450,12 @@
     }
    },
    "jope-pipeline": {
-    "count": 252,
+    "count": 266,
     "ignored": 2,
     "binaries": {
      "jope-pipeline": {
       "kind": "lib",
-      "count": 237,
+      "count": 251,
       "ignored": 2,
       "tests": [
        "classification_bridge::tests::experimental_context_has_bitwise_label_renaming_invariance_for_both_tasks",
@@ -5518,6 +5520,20 @@
        "islands::tests::island_zero_is_the_run_stream_and_others_differ",
        "islands::tests::next_seeds_is_independent_of_input_order",
        "islands::tests::next_seeds_ranks_deduplicates_and_caps",
+       "kernel2::cli_tests::cancelled_run_writes_nothing_and_the_same_uncancelled_command_succeeds",
+       "kernel2::cli_tests::changed_observation_bytes_or_selected_winner_are_refused",
+       "kernel2::cli_tests::cli_adds_fitted_cpp_only_to_kernel2_defaults_and_preserves_explicit_emit",
+       "kernel2::cli_tests::cli_keeps_legacy_defaults_and_requires_explicit_kernel2_refinement_limits",
+       "kernel2::cli_tests::explicit_experimental_profile_and_penalty_are_bound_and_rederived",
+       "kernel2::cli_tests::invalid_fault_profile_and_penalty_options_are_refused_before_output",
+       "kernel2::cli_tests::profile_runs_replay_receipt_and_all_sidecars_with_a_frozen_clock",
+       "kernel2::cli_tests::receipt_rejects_unknown_profile_digest_budget_and_fault_claims",
+       "kernel2::cli_tests::rehashed_sidecars_cannot_forge_selection_scores_or_refinement_counts",
+       "kernel2::cli_tests::seeded_refinement_trials_and_child_measurements_share_the_published_budget",
+       "kernel2::cli_tests::shipping_run_emits_and_rederives_the_profile_receipt",
+       "kernel2::cli_tests::unknown_artifact_traversal_and_symlink_evidence_are_refused",
+       "kernel2::cli_tests::unsupported_cuts_concurrency_seeds_and_existing_output_fail_before_writing",
+       "kernel2::cli_tests::v4_schema_matches_its_generated_type_and_legacy_schemas_are_unchanged",
        "kernel2::refinement_guarded_tests::admission_is_rechecked_after_prefix_before_initial_trial",
        "kernel2::refinement_guarded_tests::always_admitted_generation_preserves_old_children_and_budget",
        "kernel2::refinement_guarded_tests::always_admitted_training_preserves_old_program_and_accounting",
@@ -6510,7 +6526,7 @@
   }
  },
  "totals": {
-  "rust": 4147,
+  "rust": 4163,
   "python": 172
  }
 }

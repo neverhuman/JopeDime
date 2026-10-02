@@ -65,8 +65,9 @@ pub struct SearchArgs {
     #[arg(long, default_value_t = 1)]
     pub cuts: usize,
     /// Languages to emit: rust, python, cpp17, cpp20, js, cpp17-fitted, or all (legacy recipes).
-    #[arg(long, default_value = "rust,python,cpp17,cpp20,js")]
-    pub emit: String,
+    /// Defaults to rust,python,cpp17,cpp20,js; kernel2 also includes cpp17-fitted.
+    #[arg(long)]
+    pub emit: Option<String>,
     /// The proposal stage: auto and skip record a skip, require fails closed.
     #[arg(long, default_value = "auto")]
     pub policy: String,
@@ -87,7 +88,9 @@ impl SearchArgs {
             seed: self.seed,
             rng_seed: self.rng_seed,
             cuts: self.cuts,
-            languages: Language::parse_list(&self.emit)?,
+            languages: Language::parse_list(
+                self.emit.as_deref().unwrap_or("rust,python,cpp17,cpp20,js"),
+            )?,
             policy: Policy::parse(policy).ok_or_else(|| {
                 anyhow::anyhow!("--policy must be auto, skip or require, got {policy:?}")
             })?,
@@ -112,6 +115,8 @@ pub enum Cmd {
     Run {
         #[command(flatten)]
         search: SearchArgs,
+        #[command(flatten)]
+        profile: crate::kernel2::cli::ProfileArgs,
         /// Where the preparation, searches, emitted sources and receipt are written.
         #[arg(long)]
         output: PathBuf,
@@ -227,11 +232,17 @@ pub fn run(cli: Cli) -> Result<ExitCode> {
     match cli.cmd {
         Cmd::Run {
             search,
+            profile,
             output,
             seed_genomes,
             incumbent,
             json,
         } => {
+            if let Some(mut options) = profile.options(&search, output.clone(), true)? {
+                options.run.seed_genomes = seed_genomes;
+                options.run.incumbent = incumbent;
+                return crate::kernel2::cli::print_run(&options, json);
+            }
             let options = RunOptions {
                 seed_genomes,
                 incumbent,
@@ -416,37 +427,42 @@ pub fn run(cli: Cli) -> Result<ExitCode> {
             receipt: path,
             evidence,
             json,
-        } => match if evidence {
-            crate::evidence::verify_run(&path).map(|run| run.receipt)
-        } else {
-            receipt::read(&path)
-        } {
-            Ok(receipt) => {
-                if json {
-                    println!("{}", serde_json::to_string(&receipt)?);
-                } else {
-                    println!(
-                        "ok {} ({} stage(s), {} artifact(s), {})",
-                        path.display(),
-                        receipt.stages.len(),
-                        receipt.artifacts.len(),
-                        receipt.schema
-                    );
-                }
-                Ok(ExitCode::SUCCESS)
+        } => {
+            if crate::kernel2::run::is_v4(&path) {
+                return crate::kernel2::cli::verify(&path, evidence, json);
             }
-            Err(error) => {
-                if json {
-                    println!(
-                        "{}",
-                        serde_json::json!({"schema": receipt::RECEIPT_SCHEMA_ID, "ok": false,
+            match if evidence {
+                crate::evidence::verify_run(&path).map(|run| run.receipt)
+            } else {
+                receipt::read(&path)
+            } {
+                Ok(receipt) => {
+                    if json {
+                        println!("{}", serde_json::to_string(&receipt)?);
+                    } else {
+                        println!(
+                            "ok {} ({} stage(s), {} artifact(s), {})",
+                            path.display(),
+                            receipt.stages.len(),
+                            receipt.artifacts.len(),
+                            receipt.schema
+                        );
+                    }
+                    Ok(ExitCode::SUCCESS)
+                }
+                Err(error) => {
+                    if json {
+                        println!(
+                            "{}",
+                            serde_json::json!({"schema": receipt::RECEIPT_SCHEMA_ID, "ok": false,
                                            "error": format!("{error:#}")})
-                    );
-                } else {
-                    eprintln!("invalid receipt: {error:#}");
+                        );
+                    } else {
+                        eprintln!("invalid receipt: {error:#}");
+                    }
+                    Ok(ExitCode::FAILURE)
                 }
-                Ok(ExitCode::FAILURE)
             }
-        },
+        }
     }
 }

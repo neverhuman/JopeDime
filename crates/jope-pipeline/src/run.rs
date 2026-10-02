@@ -56,7 +56,8 @@ impl Policy {
 }
 
 /// Why the propose stage is not run here.
-const PROPOSE_SKIP_REASON: &str = "the encode/propose stage is not implemented in this work \
+pub(crate) const PROPOSE_SKIP_REASON: &str =
+    "the encode/propose stage is not implemented in this work \
      package: no policy checkpoint is bound and no seed population is proposed, so the search \
      starts from its own bootstrap population";
 
@@ -178,7 +179,7 @@ pub fn preflight(options: &RunOptions) -> Result<usize> {
 }
 
 /// A catalog row this regression-only path can fit, resolved and byte-verified, or the refusal.
-fn resolve_regression(selector: &str) -> Result<dataset::Resolved> {
+pub(crate) fn resolve_regression(selector: &str) -> Result<dataset::Resolved> {
     let resolved = dataset::resolve(selector)?;
     ensure!(
         resolved.row.task == jope_datasets::catalog::Task::Regression,
@@ -209,7 +210,7 @@ pub fn check(options: &RunOptions) -> Result<()> {
 }
 
 /// Seeds resolved from `--incumbent` and `--seed-genomes`, before anything is written.
-fn resolve_seeding(options: &RunOptions) -> Result<(Vec<String>, receipt::Seeding)> {
+pub(crate) fn resolve_seeding(options: &RunOptions) -> Result<(Vec<String>, receipt::Seeding)> {
     let mut offered: Vec<(String, &'static str)> = Vec::new();
     let mut parent_receipt_sha256 = None;
     let mut seeds_file_sha256 = None;
@@ -261,16 +262,22 @@ fn resolve_seeding(options: &RunOptions) -> Result<(Vec<String>, receipt::Seedin
     ))
 }
 
-struct Stages {
-    stages: Vec<receipt::Stage>,
+pub(crate) struct Stages {
+    pub(crate) stages: Vec<receipt::Stage>,
 }
 
 impl Stages {
-    fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Stages { stages: Vec::new() }
     }
 
-    fn record(&mut self, name: &str, status: &str, reason: Option<String>, started: Stamp) {
+    pub(crate) fn record(
+        &mut self,
+        name: &str,
+        status: &str,
+        reason: Option<String>,
+        started: Stamp,
+    ) {
         self.stages.push(receipt::Stage {
             name: name.to_owned(),
             status: status.to_owned(),
@@ -599,7 +606,7 @@ fn assemble(
 }
 
 /// `JOPE_GIT_SHA`, else `git rev-parse HEAD` in the working directory, else none.
-fn git_sha() -> Option<String> {
+pub(crate) fn git_sha() -> Option<String> {
     if let Some(sha) = std::env::var("JOPE_GIT_SHA").ok().filter(|s| !s.is_empty()) {
         return Some(sha);
     }
