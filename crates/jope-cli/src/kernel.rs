@@ -231,64 +231,7 @@ fn read_numeric_training_csv(path: &Path) -> Result<(feat_math::Rows, Vec<f64>)>
     Ok((x, y))
 }
 
-const FITTED_STANDALONE: &str = r#"// Build: g++ -std=c++17 -O2 -ffp-contract=off -fno-fast-math -DJOPE_STANDALONE standalone.cpp -o model
-// Run: ./model test_features.csv predictions.csv (numeric CSV with a header, no missing cells).
-#ifdef JOPE_STANDALONE
-#include "model.cpp"
-#include <filesystem>
-#include <fstream>
-#include <iomanip>
-#include <iostream>
-#include <sstream>
-#include <string>
-#include <system_error>
-
-int main(int argc, char** argv) {
-  if (argc != 3) return 2;
-  std::ifstream input(argv[1]);
-  if (!input) return 3;
-  std::error_code alias_error;
-  if (std::filesystem::equivalent(argv[1], argv[2], alias_error)) return 10;
-  std::string line;
-  if (!std::getline(input, line)) return 4;
-  if (!line.empty() && line.back() == '\r') line.pop_back();
-  const std::size_t columns = jope_fitted_columns();
-  std::size_t header_columns = 1;
-  for (char c : line) if (c == ',') ++header_columns;
-  if (header_columns != columns) return 5;
-  V values;
-  while (std::getline(input, line)) {
-    if (!line.empty() && line.back() == '\r') line.pop_back();
-    if (line.empty()) return 7;
-    if (line.back() == ',') return 7;
-    std::stringstream record(line);
-    std::string cell;
-    std::size_t count = 0;
-    while (std::getline(record, cell, ',')) {
-      std::size_t used = 0;
-      double value;
-      try { value = std::stod(cell, &used); } catch (...) { return 6; }
-      if (used != cell.size() || !std::isfinite(value)) return 6;
-      values.push_back(value);
-      ++count;
-    }
-    if (count != columns) return 7;
-  }
-  if (input.bad()) return 4;
-  const std::size_t rows = values.size() / columns;
-  std::vector<std::uint8_t> missing(values.size(), 0);
-  V predictions(rows);
-  if (jope_fitted_predict(values.data(), values.size(), missing.data(),
-                          missing.size(), rows, columns, predictions.data(),
-                          predictions.size()) != 0) return 8;
-  std::ofstream output(argv[2]);
-  if (!output) return 3;
-  output << "prediction\n" << std::setprecision(17);
-  for (double value : predictions) output << value << '\n';
-  return output ? 0 : 9;
-}
-#endif
-"#;
+const FITTED_STANDALONE: &str = jope_pipeline::emit::fitted::STANDALONE;
 
 pub fn search_dataset(path: &Path) -> Result<SearchReport> {
     let data = read_dataset(path)?;

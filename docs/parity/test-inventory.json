@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json",
-  "count": 4127,
+  "count": 4136,
   "ignored": 66,
   "packages": {
    "battle-gpu": {
@@ -1943,7 +1943,7 @@
     }
    },
    "jope-cli": {
-    "count": 65,
+    "count": 66,
     "ignored": 0,
     "binaries": {
      "jope-cli": {
@@ -2036,12 +2036,13 @@
      },
      "jope-cli::pipeline_cli": {
       "kind": "test",
-      "count": 5,
+      "count": 6,
       "ignored": 0,
       "tests": [
        "a_given_source_commit_is_recorded_and_git_is_never_spawned",
        "a_refused_cut_count_exits_2_leaves_nothing_and_the_corrected_retry_runs",
        "evolve_into_a_non_empty_output_exits_2_first_and_runs_once_it_is_emptied",
+       "pipeline_cli_emits_fitted_cpp_and_records_executable_build",
        "sigterm_during_a_round_keeps_only_completed_rounds_in_the_lineage",
        "sigterm_mid_search_stops_between_evaluations_and_writes_no_receipt"
       ]
@@ -5447,12 +5448,12 @@
     }
    },
    "jope-pipeline": {
-    "count": 233,
+    "count": 241,
     "ignored": 2,
     "binaries": {
      "jope-pipeline": {
       "kind": "lib",
-      "count": 218,
+      "count": 226,
       "ignored": 2,
       "tests": [
        "classification_bridge::tests::experimental_context_has_bitwise_label_renaming_invariance_for_both_tasks",
@@ -5462,6 +5463,14 @@
        "cpu_context_bridge::tests::synthetic_attestation_rejects_unknown_counters_and_unread_memory_limit",
        "cpu_context_bridge::tests::synthetic_attestation_requires_exit_zero_and_original_deadline",
        "cpu_context_bridge::tests::the_attestation_is_derivable_from_the_retained_receipts",
+       "emit::fitted_tests::fitted_exports_execute_expression_and_head_families_bit_exactly",
+       "emit::fitted_tests::fitted_target_is_opt_in_and_defaults_stay_legacy",
+       "emit::fitted_tests::fitted_target_requires_training_before_publication",
+       "emit::fitted_tests::generated_expression_child_exports_match_fitted_evaluator",
+       "emit::fitted_tests::legacy_recipe_bytes_stay_identical_when_fitted_is_requested",
+       "emit::fitted_tests::malformed_training_is_refused_before_any_artifact",
+       "emit::fitted_tests::pipeline_export_refits_selected_genome_on_training_partition_and_verifies_receipt",
+       "emit::fitted_tests::standalone_refusals_preserve_input_and_existing_predictions",
        "emit::tests::a_head_the_cpp_and_js_emitters_do_not_cover_is_recorded_not_dropped",
        "emit::tests::a_manifest_that_disagrees_with_the_file_it_names_is_refused",
        "emit::tests::language_lists_parse_into_a_fixed_order",
@@ -6490,7 +6499,7 @@
   }
  },
  "totals": {
-  "rust": 4127,
+  "rust": 4136,
   "python": 172
  }
 }
