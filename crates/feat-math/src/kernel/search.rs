@@ -109,7 +109,12 @@ fn check_operator(name: &str, tier: Tier) -> Result<()> {
     Ok(())
 }
 
-fn check_expression(expr: &MathExpr, pool: &ExprPool, elementwise: bool, tier: Tier) -> Result<()> {
+pub(crate) fn check_expression(
+    expr: &MathExpr,
+    pool: &ExprPool,
+    elementwise: bool,
+    tier: Tier,
+) -> Result<()> {
     if pool.max_nodes == 0 || pool.max_nodes > 15 || pool.max_depth == 0 || pool.max_depth > 4 {
         return Err(Error::Bounds(
             "profile exceeds expression search caps".into(),
