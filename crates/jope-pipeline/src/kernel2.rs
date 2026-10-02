@@ -1,0 +1,118 @@
+//! Track E4/E5 library measurement and training-only constant refinement.
+//! Shipping offspring, CLI selection and receipt v4 belong to E6. Legacy search
+//! continues through its existing evaluator and publishes unchanged observations.
+
+use anyhow::{ensure, Result};
+use feat_math::{
+    evolve::FaultPolicy,
+    kernel::{admission::FaultTotals, profile::SearchProfile},
+    GenomeIr, Rows,
+};
+use serde::Serialize;
+
+use crate::{clock::Clock, prepare::Cut, search::Observation, sha256_hex};
+
+mod measurement;
+mod refinement;
+pub use refinement::{RefinedChild, TrainingRefinement};
+
+/// A structural or traced Hard refusal, with no candidate score.
+pub const INADMISSIBLE: &str = "inadmissible";
+/// A child produced by training-only constant refinement.
+pub const REFINE: &str = "refine";
+
+/// Kernel2 evidence adds fields without extending legacy observation JSON.
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub struct Kernel2Observation {
+    #[serde(flatten)]
+    pub observation: Observation,
+    pub domain_fault_rate: f64,
+    pub saturation_fault_rate: f64,
+    pub constant_output: bool,
+    pub faulted_cells: u64,
+    /// Held-out R2 after the configured WP1.5 penalty. Absent on refusal/failure.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub selection_score: Option<f64>,
+    /// Full counts for library ranking; E6 owns the versioned receipt mapping.
+    #[serde(skip)]
+    pub faults: FaultTotals,
+}
+
+impl Kernel2Observation {
+    fn refresh_faults(&mut self) {
+        self.domain_fault_rate = self.faults.domain_rate();
+        self.saturation_fault_rate = self.faults.saturation_rate();
+        self.constant_output = self.faults.constant_passes > 0;
+        self.faulted_cells = self.faults.faulted_cells();
+    }
+}
+
+/// One shared per-cut allowance for measurements and all optimizer trials.
+/// Rejected attempts spend budget too; an exhausted allowance starts no work.
+#[derive(Clone, Debug)]
+pub struct EvaluationBudget {
+    limit: usize,
+    used: usize,
+}
+
+impl EvaluationBudget {
+    pub fn new(limit: usize) -> Self {
+        Self { limit, used: 0 }
+    }
+    pub fn used(&self) -> usize {
+        self.used
+    }
+    pub fn remaining(&self) -> usize {
+        self.limit - self.used
+    }
+    fn charge(&mut self, count: usize) -> bool {
+        if count > self.remaining() {
+            return false;
+        }
+        self.used += count;
+        true
+    }
+}
+
+/// Opt-in measurement for the shipped revision-three wrapper profiles.
+#[derive(Clone, Debug)]
+pub struct Kernel2Evaluator {
+    profile: SearchProfile,
+    fault_policy: FaultPolicy,
+}
+
+impl Kernel2Evaluator {
+    pub fn new(profile: SearchProfile) -> Result<Self> {
+        ensure!(
+            matches!(profile.id, "kernel2-baseline" | "kernel2-experimental")
+                && profile.revision == 3,
+            "kernel2 revision-three search profile required"
+        );
+        Ok(Self {
+            profile,
+            // Settled OQ4: no automatic Penalize default flip before R1.
+            fault_policy: FaultPolicy::RejectHard,
+        })
+    }
+
+    pub fn with_fault_policy(mut self, policy: FaultPolicy) -> Result<Self> {
+        policy.validate().map_err(anyhow::Error::msg)?;
+        ensure!(
+            policy != FaultPolicy::Legacy,
+            "kernel2 requires a Hard-refusing policy"
+        );
+        self.fault_policy = policy;
+        Ok(self)
+    }
+    pub fn profile(&self) -> &SearchProfile {
+        &self.profile
+    }
+    pub fn fault_policy(&self) -> FaultPolicy {
+        self.fault_policy
+    }
+}
+
+#[cfg(test)]
+mod refinement_tests;
+#[cfg(test)]
+mod tests;

@@ -1868,8 +1868,11 @@
       "role": "regression",
       "subsystems": [
         "encoders",
+        "fitting",
+        "gp",
         "policy"
-      ]
+      ],
+      "scope": "Track E4/E5 library tests additionally cover traced kernel2 measurement, Hard refusal, Domain/constant evidence, WP1.5 penalty/anchored ties, training-only whole-pipeline constant refinement, shared evaluation-budget accounting, poisoned held-out isolation and deterministic replay. Shipping search/CLI/receipt integration is the separate E6 gate."
     },
     "target:jope-pipeline/test/dependency_fence": {
       "role": "regression",
