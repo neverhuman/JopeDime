@@ -2073,6 +2073,12 @@
       "subsystems": [
         "gp"
       ]
+    },
+    "target:feat-math/test/kernel2_expression_search": {
+      "role": "regression",
+      "subsystems": [
+        "gp"
+      ]
     }
   },
   "baseline_triage": [
