@@ -3,6 +3,25 @@
 This inventory maps the current GP tree conversion checks to their actual output routes. It does
 not claim universal parity or admission for every genome form.
 
+## Versioned reservation envelopes
+
+[`versioned_conversion.rs`](../../crates/feat-math/tests/versioned_conversion.rs) enumerates
+all 19 named v2 reservations (13 wire, four function, two variable), their combined envelope,
+and an empty envelope. Binary → lossless text → binary and tagged model JSON round-trips
+preserve their bytes. Legacy readers reject these envelopes, legacy execution accessors return
+`UnsupportedVersion`, and all five export-report routes retain the reservation-only refusal.
+These records contain no executable AST; they do not activate operators or establish new
+Rust, Python or C++17 recipe admission.
+
+The same four-test target checks all 22 unnamed slots, old and out-of-range IDs in each
+namespace, and encoded IDs above `u16::MAX` through binary, text and tagged model ingress.
+Bounded malformed and future-envelope cases cover every strict prefix of a 35-byte record,
+counts, ordering, duplicates, trailing bytes, version/variant/reader/feature/domain tags,
+hex text and codec/body mismatch. Tagged model checks cover identity metadata, missing,
+unknown and wrongly typed fields, invalid payloads and every strict JSON prefix, with a
+legacy model serialization control. Refusals distinguish `Malformed` from
+`UnsupportedVersion`; reservation constructors are also checked at their public boundary.
+
 | Route | Executed proof | Boundary |
 | --- | --- | --- |
 | Paired Rust and Python recipes | [`parity_bits.rs`](../../crates/feat-math/tests/parity_bits.rs) compiles or runs each emitted source and compares prediction bits with the Rust evaluator. The emitted sidecar program is parsed back and checked against the executable tree. | The paired recipe planner must admit the program. |

@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json",
-  "count": 4030,
+  "count": 4034,
   "ignored": 66,
   "packages": {
    "battle-gpu": {
@@ -29,7 +29,7 @@
     }
    },
    "feat-math": {
-    "count": 662,
+    "count": 666,
     "ignored": 7,
     "binaries": {
      "feat-math": {
@@ -944,6 +944,17 @@
        "estimator_exact_on_golden_fixtures",
        "estimator_exact_with_custom_options",
        "estimator_is_fast_and_reports_cost"
+      ]
+     },
+     "feat-math::versioned_conversion": {
+      "kind": "test",
+      "count": 4,
+      "ignored": 0,
+      "tests": [
+       "all_named_v2_reservations_round_trip_without_execution_or_export",
+       "bounded_v2_envelope_corruption_is_typed_and_never_falls_back",
+       "tagged_model_metadata_and_legacy_control_keep_their_version_boundary",
+       "unassigned_and_out_of_range_v2_ids_are_refused_at_every_ingress"
       ]
      }
     }
@@ -6358,7 +6369,7 @@
   }
  },
  "totals": {
-  "rust": 4030,
+  "rust": 4034,
   "python": 172
  }
 }
