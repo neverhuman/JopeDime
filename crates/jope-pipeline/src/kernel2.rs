@@ -135,3 +135,8 @@ mod refinement_tests;
 mod review_tests;
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod refinement_guarded_tests;
+
+pub use refinement::{GuardedGeneration, GuardedTrainingRefinement};

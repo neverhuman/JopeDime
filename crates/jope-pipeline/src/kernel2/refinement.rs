@@ -285,3 +285,6 @@ fn has_constant(root: &Expr) -> bool {
     }
     false
 }
+
+mod guarded;
+pub use guarded::{GuardedGeneration, GuardedTrainingRefinement};
