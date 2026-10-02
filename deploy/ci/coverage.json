@@ -6529,7 +6529,7 @@
         "full-doctests"
       ],
       "dispositions": [],
-      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately. Track E4/E5 library tests additionally cover traced kernel2 measurement, Hard refusal, Domain/constant evidence, WP1.5 penalty/anchored ties, training-only whole-pipeline constant refinement, shared evaluation-budget accounting, poisoned held-out isolation and deterministic replay. Shipping search/CLI/receipt integration is the separate E6 gate."
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately. Track E4/E5 library tests additionally cover traced kernel2 measurement, Hard refusal, Domain/constant evidence, WP1.5 penalty/anchored ties, training-only whole-pipeline constant refinement, shared evaluation-budget accounting, poisoned held-out isolation and deterministic replay. Shipping search/CLI/receipt integration is the separate E6 gate. Review regressions additionally cover rectangular training/holdout admission, both fitted-width mismatch directions, retained completed-stage fault counts on downstream failure, preflight refinement refusal and unchanged reference model/prediction bits."
     },
     "target:jope-pipeline/test/schema_agreement": {
       "discovery": {

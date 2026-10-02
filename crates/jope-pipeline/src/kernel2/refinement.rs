@@ -47,7 +47,7 @@ impl Kernel2Evaluator {
                 && targets.iter().all(|v| v.is_finite()),
             "refinement needs finite aligned training data"
         );
-        let width = rows.iter().map(Vec::len).min().unwrap_or(0);
+        let width = rectangular_width(rows)?;
         let GenomeIr::Pipeline(mut pipe) = admit_child(text, &self.profile, width)? else {
             anyhow::bail!("pipeline refinement required");
         };
@@ -111,7 +111,10 @@ impl Kernel2Evaluator {
         targets: &[f64],
         limit: usize,
     ) -> Result<(usize, usize)> {
-        let prefix = training_prefix(pipe, index, rows, targets)?;
+        let prefix = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            training_prefix(pipe, index, rows, targets)
+        }))
+        .map_err(|_| anyhow::anyhow!("training prefix panicked"))??;
         let pool = self
             .profile
             .expr

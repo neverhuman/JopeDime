@@ -12,6 +12,7 @@ use serde::Serialize;
 
 use crate::{clock::Clock, prepare::Cut, search::Observation, sha256_hex};
 
+mod fitting;
 mod measurement;
 mod refinement;
 pub use refinement::{RefinedChild, TrainingRefinement};
@@ -112,7 +113,25 @@ impl Kernel2Evaluator {
     }
 }
 
+/// Refuse malformed rows before fitting a stage or executing a fitted prefix.
+fn rectangular_width(rows: &Rows) -> Result<usize> {
+    use feat_math::kernel::width::{MismatchKind, WidthMismatch, WidthReq};
+    let width = rows.first().map_or(0, Vec::len);
+    if let Some((row, values)) = rows.iter().enumerate().find(|(_, r)| r.len() != width) {
+        return Err(WidthMismatch {
+            stage: 0,
+            expected: WidthReq::Exactly(width),
+            got: values.len(),
+            kind: MismatchKind::RaggedInput { row },
+        }
+        .into());
+    }
+    Ok(width)
+}
+
 #[cfg(test)]
 mod refinement_tests;
+#[cfg(test)]
+mod review_tests;
 #[cfg(test)]
 mod tests;
