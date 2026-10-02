@@ -12,6 +12,7 @@ pub mod pipeline;
 pub mod profile;
 mod program;
 pub mod scope;
+pub mod search;
 pub mod telemetry;
 pub mod width;
 pub mod wire_v2;

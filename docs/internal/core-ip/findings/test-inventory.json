@@ -2067,6 +2067,12 @@
         "gp",
         "export"
       ]
+    },
+    "target:feat-math/test/kernel2_search": {
+      "role": "regression",
+      "subsystems": [
+        "gp"
+      ]
     }
   },
   "baseline_triage": [
