@@ -7696,7 +7696,7 @@
         "full-default"
       ],
       "dispositions": [],
-      "scope": "E6 per-trial refinement admission: stop before initial or subsequent trials, exact actual/refused accounting, and bit-identical legacy coordinate results/callback order for row and elementwise objectives. Shipping loop, CLI and v4 receipts remain separate E6 gates."
+      "scope": "E6 per-trial refinement admission: stop before initial or subsequent trials, exact actual/refused accounting, bit-identical legacy coordinate results/callback order for row and elementwise objectives, and invalid LinearScaled/elementwise configuration refusal before any guard invocation. Shipping loop, CLI and v4 receipts remain separate E6 gates."
     }
   }
 }
