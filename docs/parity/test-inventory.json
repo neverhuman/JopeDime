@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json",
-  "count": 4041,
+  "count": 4042,
   "ignored": 66,
   "packages": {
    "battle-gpu": {
@@ -29,7 +29,7 @@
     }
    },
    "feat-math": {
-    "count": 673,
+    "count": 674,
     "ignored": 7,
     "binaries": {
      "feat-math": {
@@ -715,9 +715,10 @@
      },
      "feat-math::kernel2_search": {
       "kind": "test",
-      "count": 7,
+      "count": 8,
       "ignored": 0,
       "tests": [
+       "caller_profile_lists_cannot_reclassify_carriers_or_terminal_heads",
        "every_declared_expression_element_has_an_admitted_witness",
        "expression_membership_variable_leaf_and_tree_caps_are_required",
        "lossy_legacy_printer_cases_are_refused_before_profile_checks",
@@ -6383,7 +6384,7 @@
   }
  },
  "totals": {
-  "rust": 4041,
+  "rust": 4042,
   "python": 172
  }
 }
