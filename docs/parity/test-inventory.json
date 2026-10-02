@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json",
-  "count": 4101,
+  "count": 4106,
   "ignored": 66,
   "packages": {
    "battle-gpu": {
@@ -5431,12 +5431,12 @@
     }
    },
    "jope-pipeline": {
-    "count": 216,
+    "count": 221,
     "ignored": 2,
     "binaries": {
      "jope-pipeline": {
       "kind": "lib",
-      "count": 201,
+      "count": 206,
       "ignored": 2,
       "tests": [
        "classification_bridge::tests::experimental_context_has_bitwise_label_renaming_invariance_for_both_tasks",
@@ -5501,6 +5501,11 @@
        "kernel2::refinement_tests::refinement_improves_a_real_pipeline_and_charges_every_trial",
        "kernel2::refinement_tests::refinement_rejects_faulting_trials_and_charges_faulting_initial_value",
        "kernel2::refinement_tests::refinement_uses_map_scope_and_transformed_training_rows",
+       "kernel2::review_tests::downstream_fit_failure_retains_completed_domain_faults_exactly_once",
+       "kernel2::review_tests::fitted_width_refuses_both_narrower_and_wider_holdout_before_scoring",
+       "kernel2::review_tests::incremental_fit_keeps_reference_model_bytes_and_training_trace_counts",
+       "kernel2::review_tests::malformed_refinement_rows_are_refused_before_any_prefix_or_trial",
+       "kernel2::review_tests::ragged_training_and_holdout_are_typed_refusals_and_spend_one_measurement",
        "kernel2::tests::constant_expression_is_domain_evidence_even_without_arithmetic_fault",
        "kernel2::tests::held_out_domain_faults_are_pooled_without_counting_training_twice",
        "kernel2::tests::held_out_hard_column_fault_is_inadmissible_without_scores",
@@ -6457,7 +6462,7 @@
   }
  },
  "totals": {
-  "rust": 4101,
+  "rust": 4106,
   "python": 172
  }
 }

@@ -4,8 +4,8 @@ use feat_math::{
     kernel::{
         admission::prefer_fewer_faults,
         search::admit_child,
-        telemetry::{fit_traced, predict_traced, ZeroWidthInput},
-        width::WidthMismatch,
+        telemetry::{predict_traced, ZeroWidthInput},
+        width::{check_input_width, WidthMismatch},
     },
     metrics::{r2, rmse},
 };
@@ -66,7 +66,8 @@ impl Kernel2Evaluator {
         record.observation.status = PARSE_FAILED;
         GenomeIr::parse(text)?;
         record.observation.status = INADMISSIBLE;
-        let width = cut.train_x.iter().map(Vec::len).min().unwrap_or(0);
+        let width = rectangular_width(&cut.train_x)?;
+        rectangular_width(&cut.hold_x)?;
         let genome = admit_child(text, &self.profile, width)?;
         if let Some(error) =
             ZeroWidthInput::find(&cut.train_x).or_else(|| ZeroWidthInput::find(&cut.hold_x))
@@ -78,10 +79,13 @@ impl Kernel2Evaluator {
             cut.train_x.len() == cut.train_y.len(),
             "unaligned training rows and targets"
         );
-        let (model, training) = fit_traced(&genome, &cut.train_x, &cut.train_y)?;
-        record.faults.add_pass(&training);
+        let model = super::fitting::fit_observed(&genome, &cut.train_x, &cut.train_y, record)?;
         reject_hard(record)?;
+        check_input_width(&model, width)?;
         let train = model.predict(&cut.train_x)?;
+        if let Some(row) = cut.hold_x.first() {
+            check_input_width(&model, row.len())?;
+        }
         let (hold, held_out) = predict_traced(&model, &cut.hold_x)?;
         record.faults.add_pass(&held_out);
         reject_hard(record)?;
@@ -152,7 +156,7 @@ impl Kernel2Evaluator {
     }
 }
 
-fn reject_hard(record: &mut Kernel2Observation) -> Result<()> {
+pub(super) fn reject_hard(record: &mut Kernel2Observation) -> Result<()> {
     if record.faults.is_hard() {
         record.observation.status = INADMISSIBLE;
         anyhow::bail!("hard fault: {}", record.faults.hard_classes);
