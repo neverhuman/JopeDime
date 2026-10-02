@@ -6,17 +6,15 @@ struct Training<'a, 'b> {
     targets: &'a [f64],
     objective: ConstantObjective<'b>,
     rejected: FaultSet,
+    elementwise: bool,
 }
 
 impl Training<'_, '_> {
     fn score(&mut self, expression: &MathExpr) -> Result<(f64, Option<[f64; 2]>)> {
         let compiled = expression.compile()?;
-        let elementwise = paths(expression.ast())
-            .iter()
-            .any(|path| matches!(at(expression.ast(), path), Expr::Var(Var::X)));
         let mut values = Vec::with_capacity(self.rows.len());
         for row in self.rows {
-            if elementwise {
+            if self.elementwise {
                 if row.is_empty() {
                     bail!("elementwise training row is empty");
                 }
@@ -34,7 +32,7 @@ impl Training<'_, '_> {
         }
         match &mut self.objective {
             ConstantObjective::LinearScaled => {
-                if elementwise {
+                if self.elementwise {
                     bail!("LinearScaled needs a row expression; use an elementwise callback");
                 }
                 linear_scaled(&values, self.targets)
@@ -107,6 +105,7 @@ impl MathExpr {
             targets,
             objective,
             rejected,
+            elementwise: scope.elementwise,
         };
         let (score, linear_scale) = training.score(&expression)?;
         let mut best = ConstantRefinement {

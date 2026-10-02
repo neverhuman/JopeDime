@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json",
-  "count": 4062,
+  "count": 4063,
   "ignored": 66,
   "packages": {
    "battle-gpu": {
@@ -29,7 +29,7 @@
     }
    },
    "feat-math": {
-    "count": 694,
+    "count": 695,
     "ignored": 7,
     "binaries": {
      "feat-math": {
@@ -715,7 +715,7 @@
      },
      "feat-math::kernel2_expression_search": {
       "kind": "test",
-      "count": 20,
+      "count": 21,
       "ignored": 0,
       "tests": [
        "a_thousand_chained_edits_remain_bounded_and_do_not_grow_monotonically",
@@ -723,6 +723,7 @@
        "constant_jitter_arm_one_hundred_thousand_children",
        "domain_and_hard_faults_never_reach_a_callback_as_valid_zero",
        "elementwise_callback_checks_each_cell_and_refuses_empty_maps",
+       "elementwise_scope_without_x_refuses_empty_rows_before_callback",
        "every_version_two_operator_replays_from_its_seed",
        "expression_operator_revision_keeps_every_revision_one_identity",
        "faulting_trials_are_counted_rejected_and_never_returned_as_the_best",
@@ -6411,7 +6412,7 @@
   }
  },
  "totals": {
-  "rust": 4062,
+  "rust": 4063,
   "python": 172
  }
 }
