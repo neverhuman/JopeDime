@@ -379,3 +379,117 @@ fn pipeline_cli_emits_fitted_cpp_and_records_executable_build() {
         String::from_utf8_lossy(&verified.stderr)
     );
 }
+
+#[test]
+fn kernel2_profile_cli_publishes_v4_verifies_evidence_and_defaults_to_fitted_cpp() {
+    let temp = tempfile::tempdir().unwrap();
+    let directory = temp.path().join("run");
+    let mut argv = run_args(&directory, "evaluations=1,seconds=60");
+    argv.truncate(argv.len() - 2); // No explicit --emit: exercise the profile's default.
+    let result = jope()
+        .args(argv)
+        .args([
+            "--search-profile",
+            "kernel2-baseline",
+            "--refine-top-k",
+            "0",
+            "--refine-trials",
+            "0",
+            "--source-commit",
+            &"a".repeat(40),
+            "--json",
+        ])
+        .output()
+        .unwrap();
+    assert!(
+        result.status.success(),
+        "{}",
+        String::from_utf8_lossy(&result.stderr)
+    );
+    let receipt: Value = serde_json::from_slice(&result.stdout).unwrap();
+    assert_eq!(receipt["schema"], "jope.pipeline-receipt/v4");
+    assert_eq!(receipt["search"]["profile_id"], "kernel2-baseline");
+    assert_eq!(receipt["search"]["fault_policy"]["kind"], "reject_hard");
+    assert_eq!(receipt["search"]["completed_evaluations"], 1);
+    assert!(directory.join("emit/cpp17-fitted/standalone.cpp").is_file());
+    let result = jope()
+        .args(["pipeline", "verify-receipt", "--receipt"])
+        .arg(directory.join("receipt.json"))
+        .args(["--evidence", "--json"])
+        .output()
+        .unwrap();
+    assert!(
+        result.status.success(),
+        "{}",
+        String::from_utf8_lossy(&result.stderr)
+    );
+    assert_eq!(
+        serde_json::from_slice::<Value>(&result.stdout).unwrap(),
+        receipt
+    );
+    std::fs::write(directory.join("search/cut-0/observations.json"), b"[]").unwrap();
+    let result = jope()
+        .args(["pipeline", "verify-receipt", "--receipt"])
+        .arg(directory.join("receipt.json"))
+        .args(["--evidence", "--json"])
+        .output()
+        .unwrap();
+    assert_eq!(result.status.code(), Some(1));
+    assert_eq!(
+        serde_json::from_slice::<Value>(&result.stdout).unwrap()["ok"],
+        false
+    );
+}
+
+#[test]
+fn kernel2_cli_refuses_unsupported_bounds_and_the_corrected_command_succeeds() {
+    let temp = tempfile::tempdir().unwrap();
+    let directory = temp.path().join("run");
+    for bad in [
+        ["--cuts", "2"],
+        ["--threads", "2"],
+        ["--islands", "2"],
+        ["--incumbent", "missing"],
+    ] {
+        let result = jope()
+            .args(run_args(&directory, "evaluations=4,seconds=60"))
+            .args([
+                "--search-profile",
+                "kernel2-baseline",
+                "--refine-top-k",
+                "1",
+                "--refine-trials",
+                "4",
+            ])
+            .args(bad)
+            .output()
+            .unwrap();
+        assert_eq!(
+            result.status.code(),
+            Some(2),
+            "{}",
+            String::from_utf8_lossy(&result.stderr)
+        );
+        assert!(!directory.exists());
+    }
+    let result = jope()
+        .args(run_args(&directory, "evaluations=4,seconds=60"))
+        .args([
+            "--search-profile",
+            "kernel2-baseline",
+            "--refine-top-k",
+            "1",
+            "--refine-trials",
+            "4",
+        ])
+        .output()
+        .unwrap();
+    assert!(
+        result.status.success(),
+        "{}",
+        String::from_utf8_lossy(&result.stderr)
+    );
+    let receipt: Value =
+        serde_json::from_slice(&std::fs::read(directory.join("receipt.json")).unwrap()).unwrap();
+    assert_eq!(receipt["schema"], "jope.pipeline-receipt/v4");
+}

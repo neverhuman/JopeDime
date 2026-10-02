@@ -18,7 +18,7 @@ mod offspring;
 mod tests;
 
 /// Explicit training-refinement allowance; it shares the cut's total budget.
-#[derive(Clone, Copy, Debug, Serialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, serde::Deserialize, schemars::JsonSchema)]
 pub struct Refinement {
     pub top_k: usize,
     pub trials_per_program: usize,
@@ -97,8 +97,8 @@ pub struct CutSearch {
 }
 
 /// Validated policy parameters needed to replay kernel2 ranking.
-#[derive(Clone, Debug, Serialize)]
-#[serde(tag = "kind", rename_all = "snake_case")]
+#[derive(Clone, Debug, PartialEq, Serialize, serde::Deserialize, schemars::JsonSchema)]
+#[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 pub enum PolicyRecord {
     RejectHard,
     Penalize {
