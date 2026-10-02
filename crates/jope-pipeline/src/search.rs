@@ -504,7 +504,7 @@ fn stream(rng_seed: u64, cut: usize, generation: usize, slot: usize, salt: u64) 
 
 /// Fit one candidate on the cut's training rows and score it on the held-out
 /// rows. Never returns `Err`: a failure is an [`Observation`], not an abort.
-fn evaluate(
+pub(crate) fn evaluate(
     genome: &str,
     cut: &Cut,
     generation: usize,

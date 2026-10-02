@@ -44,6 +44,7 @@ pub mod experiment_v2;
 pub mod experimental_producer;
 pub mod front_door;
 pub mod islands;
+pub mod kernel2;
 pub mod lineage;
 #[cfg(feature = "neural-search")]
 pub mod neural_search;

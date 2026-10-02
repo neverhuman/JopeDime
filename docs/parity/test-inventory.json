@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json",
-  "count": 4085,
+  "count": 4101,
   "ignored": 66,
   "packages": {
    "battle-gpu": {
@@ -5431,12 +5431,12 @@
     }
    },
    "jope-pipeline": {
-    "count": 200,
+    "count": 216,
     "ignored": 2,
     "binaries": {
      "jope-pipeline": {
       "kind": "lib",
-      "count": 185,
+      "count": 201,
       "ignored": 2,
       "tests": [
        "classification_bridge::tests::experimental_context_has_bitwise_label_renaming_invariance_for_both_tasks",
@@ -5493,6 +5493,22 @@
        "islands::tests::island_zero_is_the_run_stream_and_others_differ",
        "islands::tests::next_seeds_is_independent_of_input_order",
        "islands::tests::next_seeds_ranks_deduplicates_and_caps",
+       "kernel2::refinement_tests::generation_refinement_replays_exact_bytes_and_budget_counts",
+       "kernel2::refinement_tests::generation_refines_only_top_k_constant_bearing_scored_programs",
+       "kernel2::refinement_tests::generation_reserves_remeasurement_and_never_overruns_a_shared_budget",
+       "kernel2::refinement_tests::no_constants_or_no_budget_do_not_start_an_objective",
+       "kernel2::refinement_tests::poisoned_holdout_cannot_change_refined_program_or_trial_counts",
+       "kernel2::refinement_tests::refinement_improves_a_real_pipeline_and_charges_every_trial",
+       "kernel2::refinement_tests::refinement_rejects_faulting_trials_and_charges_faulting_initial_value",
+       "kernel2::refinement_tests::refinement_uses_map_scope_and_transformed_training_rows",
+       "kernel2::tests::constant_expression_is_domain_evidence_even_without_arithmetic_fault",
+       "kernel2::tests::held_out_domain_faults_are_pooled_without_counting_training_twice",
+       "kernel2::tests::held_out_hard_column_fault_is_inadmissible_without_scores",
+       "kernel2::tests::invalid_kernel2_configuration_never_falls_back_to_legacy",
+       "kernel2::tests::legacy_observation_json_has_no_kernel2_fields",
+       "kernel2::tests::profile_scope_zero_width_and_parse_refusals_spend_measurement_budget",
+       "kernel2::tests::quiet_measurement_keeps_legacy_metric_bits_and_default_policy",
+       "kernel2::tests::ranking_uses_anchored_fault_ties_and_excludes_failures",
        "lineage::tests::a_non_empty_output_is_refused_before_writing_and_the_emptied_one_runs",
        "lineage::tests::a_refused_cut_count_leaves_nothing_and_the_corrected_retry_runs",
        "lineage::tests::a_refused_lineage_writes_nothing_and_the_corrected_retry_runs",
@@ -6441,7 +6457,7 @@
   }
  },
  "totals": {
-  "rust": 4085,
+  "rust": 4101,
   "python": 172
  }
 }
