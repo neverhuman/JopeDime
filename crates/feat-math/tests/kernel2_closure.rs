@@ -34,7 +34,7 @@ struct ClosureViolation {
 
 #[derive(Clone, Debug, Default)]
 struct ClosureReport {
-    per_profile: BTreeMap<String, Counts>,
+    per_profile: BTreeMap<(String, u32), Counts>,
     violations: Vec<ClosureViolation>,
     manifest_c: usize,
 }
@@ -727,7 +727,9 @@ fn closure(manifest: &Manifest, profiles: &[SearchProfile]) -> ClosureReport {
             d: clause_d(manifest, profile, &mut report),
             e: clause_e(manifest, profile, &mut report),
         };
-        report.per_profile.insert(profile.id.to_owned(), counts);
+        report
+            .per_profile
+            .insert((profile.id.to_owned(), profile.revision), counts);
     }
     report.manifest_c = manifest_c(manifest, &mut report);
     report
@@ -744,25 +746,27 @@ fn every_profile_element_is_closed() {
         "{:#?}",
         shipped_report.violations
     );
-    let mut latest = BTreeMap::<&str, SearchProfile>::new();
-    for candidate in profile::profiles()
+    // Retain every revision-one case when an additive profile revision lands.
+    let defined: Vec<_> = profile::profiles()
         .into_iter()
         .filter(|item| item.id.starts_with("kernel2-"))
-    {
-        if latest
-            .get(candidate.id)
-            .is_none_or(|prior| candidate.revision > prior.revision)
-        {
-            latest.insert(candidate.id, candidate);
+        .collect();
+    for required in ["kernel2-baseline", "kernel2-experimental"] {
+        for revision in [1, 2] {
+            assert!(
+                defined
+                    .iter()
+                    .any(|p| p.id == required && p.revision == revision),
+                "missing {required} revision {revision}"
+            );
         }
     }
-    for required in ["kernel2-baseline", "kernel2-experimental"] {
-        assert!(latest.contains_key(required), "missing {required} profile");
-    }
-    let defined: Vec<_> = latest.into_values().collect();
     let report = closure(&manifest, &defined);
     for profile in &defined {
-        let counts = report.per_profile.get(profile.id).unwrap();
+        let counts = report
+            .per_profile
+            .get(&(profile.id.to_owned(), profile.revision))
+            .unwrap();
         println!(
             "{} r{}: (a) {} (c) {} (d) {} declared (e) {}",
             profile.id, profile.revision, counts.a, counts.c, counts.d, counts.e
@@ -770,7 +774,7 @@ fn every_profile_element_is_closed() {
         assert!(
             matches!(
                 (profile.id, profile.revision),
-                ("kernel2-baseline" | "kernel2-experimental", 1)
+                ("kernel2-baseline" | "kernel2-experimental", 1 | 2)
             ),
             "add closure count pins for {} r{}",
             profile.id,
