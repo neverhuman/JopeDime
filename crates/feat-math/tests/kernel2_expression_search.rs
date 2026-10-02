@@ -456,3 +456,52 @@ fn elementwise_callback_checks_each_cell_and_refuses_empty_maps() {
         "faulting/empty map must not invoke the objective"
     );
 }
+
+#[test]
+fn elementwise_scope_without_x_refuses_empty_rows_before_callback() {
+    let p = config();
+    let expr = MathExpr::parse("row_l2+0.5").unwrap();
+    let calls = Cell::new(0);
+    let mut objective = |candidate: &MathExpr, rows: &[Vec<f64>], _: &[f64]| {
+        calls.set(calls.get() + 1);
+        assert!(!rows.iter().any(Vec::is_empty));
+        assert_eq!(candidate.compile()?.map_row(&rows[0]), vec![5.5, 5.5]);
+        Ok(0.0)
+    };
+    let fit = expr
+        .optimize_constants_v2(
+            &p,
+            scope(2, true),
+            &[vec![3.0, 4.0]],
+            &[5.5],
+            ConstantObjective::Callback(&mut objective),
+            1,
+        )
+        .unwrap();
+    assert_eq!(fit.score, 0.0);
+    assert_eq!(calls.get(), 1);
+    for rows in [vec![vec![]], vec![vec![3.0, 4.0], vec![]]] {
+        let targets = vec![5.5; rows.len()];
+        assert!(expr
+            .optimize_constants_v2(
+                &p,
+                scope(2, true),
+                &rows,
+                &targets,
+                ConstantObjective::Callback(&mut objective),
+                1,
+            )
+            .is_err());
+        assert_eq!(calls.get(), 1, "empty maps must not invoke the objective");
+    }
+    assert!(expr
+        .optimize_constants_v2(
+            &p,
+            scope(2, true),
+            &[vec![3.0, 4.0]],
+            &[5.5],
+            ConstantObjective::LinearScaled,
+            1,
+        )
+        .is_err());
+}
