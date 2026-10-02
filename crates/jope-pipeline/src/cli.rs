@@ -64,7 +64,7 @@ pub struct SearchArgs {
     /// How many of the fold partition's cuts to prepare and search (1..=5).
     #[arg(long, default_value_t = 1)]
     pub cuts: usize,
-    /// Languages to emit: rust, python, cpp17, cpp20, js, or all.
+    /// Languages to emit: rust, python, cpp17, cpp20, js, cpp17-fitted, or all (legacy recipes).
     #[arg(long, default_value = "rust,python,cpp17,cpp20,js")]
     pub emit: String,
     /// The proposal stage: auto and skip record a skip, require fails closed.

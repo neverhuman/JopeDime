@@ -25,6 +25,8 @@ use std::path::{Path, PathBuf};
 
 use crate::sha256_hex as hash;
 
+pub mod fitted;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Language {
     Python,
@@ -32,6 +34,7 @@ pub enum Language {
     Cpp17,
     Cpp20,
     JavaScript,
+    Cpp17Fitted,
 }
 
 impl Language {
@@ -50,6 +53,7 @@ impl Language {
             Language::Cpp17 => "cpp17",
             Language::Cpp20 => "cpp20",
             Language::JavaScript => "javascript",
+            Language::Cpp17Fitted => "cpp17-fitted",
         }
     }
 
@@ -60,11 +64,12 @@ impl Language {
             "cpp17" | "c++17" => Some(Language::Cpp17),
             "cpp20" | "c++20" => Some(Language::Cpp20),
             "javascript" | "js" => Some(Language::JavaScript),
+            "cpp17-fitted" => Some(Language::Cpp17Fitted),
             _ => None,
         }
     }
 
-    /// `rust,python,cpp17,cpp20,js`, or `all`. Duplicates collapse; the order is
+    /// Legacy recipes, `cpp17-fitted`, or `all` (the legacy recipes). Duplicates collapse; the order is
     /// fixed so the emitted set does not depend on how the flag was written.
     pub fn parse_list(value: &str) -> Result<Vec<Language>> {
         let mut chosen = std::collections::BTreeSet::new();
@@ -75,7 +80,7 @@ impl Language {
             }
             let language = Language::parse(part).with_context(|| {
                 format!(
-                    "unknown emit target {part:?}; expected rust, python, cpp17, cpp20, js or all"
+                    "unknown emit target {part:?}; expected rust, python, cpp17, cpp20, js, cpp17-fitted or all"
                 )
             })?;
             chosen.insert(language);
@@ -85,6 +90,7 @@ impl Language {
         }
         Ok(Language::ALL
             .into_iter()
+            .chain([Language::Cpp17Fitted])
             .filter(|l| chosen.contains(l))
             .collect())
     }
@@ -117,6 +123,10 @@ pub struct Emitted {
 
 /// Emit `genome` into `directory`, one file per covered language.
 pub fn emit(genome: &str, languages: &[Language], directory: &Path) -> Result<Emitted> {
+    ensure!(
+        !languages.contains(&Language::Cpp17Fitted),
+        "cpp17-fitted requires training rows; use emit_with_training"
+    );
     let parsed =
         GenomeIr::parse(genome.trim()).with_context(|| format!("parse genome {genome}"))?;
     let options = EmitOptions::default();
@@ -227,6 +237,22 @@ pub fn emit(genome: &str, languages: &[Language], directory: &Path) -> Result<Em
         artifacts,
         exclusions,
     })
+}
+
+/// Emit recipes and optionally a fitted C++17 predictor. Each training row is
+/// finite numeric features followed by its target. Without `cpp17-fitted`, this
+/// delegates to the unchanged recipe route and does not inspect `rows`.
+pub fn emit_with_training(
+    genome: &str,
+    languages: &[Language],
+    directory: &Path,
+    rows: &[Vec<f64>],
+) -> Result<Emitted> {
+    if languages.contains(&Language::Cpp17Fitted) {
+        fitted::emit(genome, languages, directory, rows)
+    } else {
+        emit(genome, languages, directory)
+    }
 }
 
 /// The one C++ source for a parsed program: [`emit`] writes it to `model.cpp` for both `cpp17`
@@ -498,3 +524,6 @@ mod tests {
         );
     }
 }
+
+#[cfg(test)]
+mod fitted_tests;

@@ -378,7 +378,10 @@ pub fn run(options: &RunOptions) -> Result<Receipt> {
     check_cancelled(options)?;
     let started = clock.start();
     let emit_dir = root.join("emit");
-    let emitted = emit::emit(&selection.genome, &options.languages, &emit_dir)?;
+    // Fitted export refits only on the verified training partition after selection.
+    // Legacy recipe requests delegate directly without inspecting these rows.
+    let emitted =
+        emit::emit_with_training(&selection.genome, &options.languages, &emit_dir, &rows)?;
     // Both fields below are read back out of emit/manifest.json, which transpile builds from the
     // IR it actually lowered -- so these compare the artifacts on disk against the selection.
     // The previous pair derived both sides from emit()'s own argument, which made them hold even

@@ -3495,7 +3495,7 @@
         "full-default"
       ],
       "dispositions": [],
-      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately. X1 additionally executes jope pipeline run --emit cpp17-fitted, compiles the recorded standalone build and re-derives its receipt."
     },
     "target:jope-datasets/bin/jope-datasets": {
       "discovery": {
@@ -6529,7 +6529,7 @@
         "full-doctests"
       ],
       "dispositions": [],
-      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately. Track E4/E5 library tests additionally cover traced kernel2 measurement, Hard refusal, Domain/constant evidence, WP1.5 penalty/anchored ties, training-only whole-pipeline constant refinement, shared evaluation-budget accounting, poisoned held-out isolation and deterministic replay. Shipping search/CLI/receipt integration is the separate E6 gate. Review regressions additionally cover rectangular training/holdout admission, both fitted-width mismatch directions, retained completed-stage fault counts on downstream failure, preflight refinement refusal and unchanged reference model/prediction bits. E6 refinement admission tests cover caller cancellation/deadline checks before prefixes, every trial and child remeasurement; stopped-versus-faulted accounting; shared trial/child allowance; exact always-admitted compatibility; and training-only refinement under held-out poison. The shipping coordinator, CLI and v4 receipt remain separate gates."
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately. Track E4/E5 library tests additionally cover traced kernel2 measurement, Hard refusal, Domain/constant evidence, WP1.5 penalty/anchored ties, training-only whole-pipeline constant refinement, shared evaluation-budget accounting, poisoned held-out isolation and deterministic replay. Shipping search/CLI/receipt integration is the separate E6 gate. Review regressions additionally cover rectangular training/holdout admission, both fitted-width mismatch directions, retained completed-stage fault counts on downstream failure, preflight refinement refusal and unchanged reference model/prediction bits. E6 refinement admission tests cover caller cancellation/deadline checks before prefixes, every trial and child remeasurement; stopped-versus-faulted accounting; shared trial/child allowance; exact always-admitted compatibility; and training-only refinement under held-out poison. The shipping coordinator, CLI and v4 receipt remain separate gates. X1 fitted pipeline export tests additionally prove opt-in training-partition refit, unchanged legacy/default artifact bytes, standalone strict C++17 inference bit parity for expressions and fitted heads, a generated expression-growth child, numeric CSV refusal, artifact coexistence and receipt hash verification. Shipping kernel2 search/v4 receipts/EEC remain separate gates."
     },
     "target:jope-pipeline/test/schema_agreement": {
       "discovery": {
