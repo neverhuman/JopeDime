@@ -79,7 +79,13 @@ def numerical_reduce_v2(kind,row):
     value=numerical_neumaier_v2(row,kind=='l1',1.0)
     if kind=='mean':
         count=float(len(row))
-        value=value/count if math.isfinite(value) else numerical_neumaier_v2(row,False,count)
+        if math.isfinite(value):
+            value=value/count
+        else:
+            half=numerical_neumaier_v2(row,False,count*2.0)
+            if abs(half)>1e12/2.0:
+                return (math.copysign(1e12,half),1<<9)
+            value=half*2.0
     return numerical_finish_v2(value)
 "#;
 
@@ -145,7 +151,12 @@ static std::pair<double,std::uint32_t> numerical_reduce_v2(const std::string& ki
     double value=numerical_neumaier_v2(row,kind=="l1",1.0);
     if(kind=="mean") {
         const double count=static_cast<double>(row.size());
-        value=std::isfinite(value)?value/count:numerical_neumaier_v2(row,false,count);
+        if(std::isfinite(value)) value/=count;
+        else {
+            const double half=numerical_neumaier_v2(row,false,count*2.0);
+            if(std::abs(half)>1e12/2.0) return {std::copysign(1e12,half),1u<<9};
+            value=half*2.0;
+        }
     }
     return numerical_finish_v2(value);
 }

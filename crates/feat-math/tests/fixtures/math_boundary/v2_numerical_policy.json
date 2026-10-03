@@ -8846,6 +8846,232 @@
           "fault_bits": 0
         }
       }
+    },
+    {
+      "input_bits": [
+        "7fefffffffffffff",
+        "7fefffffffffffff",
+        "7fefffffffffffff"
+      ],
+      "expected": {
+        "sum": {
+          "oracle_bits": "0000000000000000",
+          "fault_bits": 256
+        },
+        "l1": {
+          "oracle_bits": "0000000000000000",
+          "fault_bits": 256
+        },
+        "mean": {
+          "oracle_bits": "426d1a94a2000000",
+          "fault_bits": 512
+        },
+        "l2": {
+          "oracle_bits": "426d1a94a2000000",
+          "fault_bits": 512
+        }
+      }
+    },
+    {
+      "input_bits": [
+        "ffefffffffffffff",
+        "ffefffffffffffff",
+        "ffefffffffffffff"
+      ],
+      "expected": {
+        "sum": {
+          "oracle_bits": "0000000000000000",
+          "fault_bits": 256
+        },
+        "l1": {
+          "oracle_bits": "0000000000000000",
+          "fault_bits": 256
+        },
+        "mean": {
+          "oracle_bits": "c26d1a94a2000000",
+          "fault_bits": 512
+        },
+        "l2": {
+          "oracle_bits": "426d1a94a2000000",
+          "fault_bits": 512
+        }
+      }
+    },
+    {
+      "input_bits": [
+        "7fefffffffffffff",
+        "7fefffffffffffff",
+        "7fefffffffffffff",
+        "7fefffffffffffff",
+        "7fefffffffffffff",
+        "7fefffffffffffff"
+      ],
+      "expected": {
+        "sum": {
+          "oracle_bits": "0000000000000000",
+          "fault_bits": 256
+        },
+        "l1": {
+          "oracle_bits": "0000000000000000",
+          "fault_bits": 256
+        },
+        "mean": {
+          "oracle_bits": "426d1a94a2000000",
+          "fault_bits": 512
+        },
+        "l2": {
+          "oracle_bits": "426d1a94a2000000",
+          "fault_bits": 512
+        }
+      }
+    },
+    {
+      "input_bits": [
+        "ffefffffffffffff",
+        "ffefffffffffffff",
+        "ffefffffffffffff",
+        "ffefffffffffffff",
+        "ffefffffffffffff",
+        "ffefffffffffffff"
+      ],
+      "expected": {
+        "sum": {
+          "oracle_bits": "0000000000000000",
+          "fault_bits": 256
+        },
+        "l1": {
+          "oracle_bits": "0000000000000000",
+          "fault_bits": 256
+        },
+        "mean": {
+          "oracle_bits": "c26d1a94a2000000",
+          "fault_bits": 512
+        },
+        "l2": {
+          "oracle_bits": "426d1a94a2000000",
+          "fault_bits": 512
+        }
+      }
+    },
+    {
+      "input_bits": [
+        "7fefffffffffffff",
+        "7fefffffffffffff",
+        "7fefffffffffffff",
+        "7fefffffffffffff",
+        "7fefffffffffffff",
+        "7fefffffffffffff",
+        "7fefffffffffffff"
+      ],
+      "expected": {
+        "sum": {
+          "oracle_bits": "0000000000000000",
+          "fault_bits": 256
+        },
+        "l1": {
+          "oracle_bits": "0000000000000000",
+          "fault_bits": 256
+        },
+        "mean": {
+          "oracle_bits": "426d1a94a2000000",
+          "fault_bits": 512
+        },
+        "l2": {
+          "oracle_bits": "426d1a94a2000000",
+          "fault_bits": 512
+        }
+      }
+    },
+    {
+      "input_bits": [
+        "ffefffffffffffff",
+        "ffefffffffffffff",
+        "ffefffffffffffff",
+        "ffefffffffffffff",
+        "ffefffffffffffff",
+        "ffefffffffffffff",
+        "ffefffffffffffff"
+      ],
+      "expected": {
+        "sum": {
+          "oracle_bits": "0000000000000000",
+          "fault_bits": 256
+        },
+        "l1": {
+          "oracle_bits": "0000000000000000",
+          "fault_bits": 256
+        },
+        "mean": {
+          "oracle_bits": "c26d1a94a2000000",
+          "fault_bits": 512
+        },
+        "l2": {
+          "oracle_bits": "426d1a94a2000000",
+          "fault_bits": 512
+        }
+      }
+    },
+    {
+      "input_bits": [
+        "7fefffffffffffff",
+        "7fefffffffffffff",
+        "7fefffffffffffff",
+        "7fefffffffffffff",
+        "7fefffffffffffff",
+        "7fefffffffffffff",
+        "7fefffffffffffff",
+        "7fefffffffffffff",
+        "7fefffffffffffff"
+      ],
+      "expected": {
+        "sum": {
+          "oracle_bits": "0000000000000000",
+          "fault_bits": 256
+        },
+        "l1": {
+          "oracle_bits": "0000000000000000",
+          "fault_bits": 256
+        },
+        "mean": {
+          "oracle_bits": "426d1a94a2000000",
+          "fault_bits": 512
+        },
+        "l2": {
+          "oracle_bits": "426d1a94a2000000",
+          "fault_bits": 512
+        }
+      }
+    },
+    {
+      "input_bits": [
+        "ffefffffffffffff",
+        "ffefffffffffffff",
+        "ffefffffffffffff",
+        "ffefffffffffffff",
+        "ffefffffffffffff",
+        "ffefffffffffffff",
+        "ffefffffffffffff",
+        "ffefffffffffffff",
+        "ffefffffffffffff"
+      ],
+      "expected": {
+        "sum": {
+          "oracle_bits": "0000000000000000",
+          "fault_bits": 256
+        },
+        "l1": {
+          "oracle_bits": "0000000000000000",
+          "fault_bits": 256
+        },
+        "mean": {
+          "oracle_bits": "c26d1a94a2000000",
+          "fault_bits": 512
+        },
+        "l2": {
+          "oracle_bits": "426d1a94a2000000",
+          "fault_bits": 512
+        }
+      }
     }
   ]
 }

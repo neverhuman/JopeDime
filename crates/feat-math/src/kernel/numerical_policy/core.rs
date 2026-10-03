@@ -101,8 +101,13 @@ pub fn numerical_reduce_v2(kind: &str, row: &[f64]) -> Result<(f64, u32), &'stat
         value = if value.is_finite() {
             value / count
         } else {
-            // A finite mean can exist even when the unscaled sum overflows.
-            numerical_neumaier_v2(row, false, count)
+            // Half scaling leaves headroom even when rounded divided inputs
+            // would overflow at a non-power-of-two row width.
+            let half = numerical_neumaier_v2(row, false, count * 2.0);
+            if half.abs() > NUMERICAL_MAX_V2 / 2.0 {
+                return Ok((NUMERICAL_MAX_V2.copysign(half), NUMERICAL_CLAMP_V2));
+            }
+            half * 2.0
         };
     }
     Ok(numerical_finish_v2(value))
