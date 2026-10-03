@@ -10,7 +10,7 @@ use super::{
     search::{PolicyRecord, Refinement},
     Kernel2Evaluator,
 };
-use crate::{receipt as legacy, search};
+use crate::{receipt as receipt_v3, search};
 
 pub const SCHEMA_ID: &str = "jope.pipeline-receipt/v4";
 pub const SCHEMA_JSON: &str =
@@ -42,7 +42,7 @@ pub struct Search {
     pub active_seconds: f64,
     pub deadline_overrun: bool,
     pub arm_counts: BTreeMap<String, usize>,
-    pub seeding: legacy::Seeding,
+    pub seeding: receipt_v3::Seeding,
     pub selection: String,
     pub best: Measurement,
     pub observations_sha256: String,
@@ -59,12 +59,12 @@ pub struct Receipt {
     pub git_sha: Option<String>,
     pub created_at: String,
     pub policy: String,
-    pub dataset: legacy::Dataset,
-    pub prepared: legacy::Prepared,
-    pub stages: Vec<legacy::Stage>,
+    pub dataset: receipt_v3::Dataset,
+    pub prepared: receipt_v3::Prepared,
+    pub stages: Vec<receipt_v3::Stage>,
     pub search: Search,
-    pub artifacts: Vec<legacy::Artifact>,
-    pub emit_exclusions: Vec<legacy::Exclusion>,
+    pub artifacts: Vec<receipt_v3::Artifact>,
+    pub emit_exclusions: Vec<receipt_v3::Exclusion>,
     pub search_sha256: String,
     pub emit_manifest_sha256: String,
 }
@@ -81,7 +81,7 @@ pub fn derived_schema() -> serde_json::Value {
             .into();
     schema["properties"]["schema"]["const"] = SCHEMA_ID.into();
     schema["properties"]["policy"]["enum"] = serde_json::json!(["auto", "skip"]);
-    let old = legacy::derived_schema();
+    let shared_schema = receipt_v3::derived_schema();
     for name in [
         "Dataset",
         "DatasetFile",
@@ -92,7 +92,7 @@ pub fn derived_schema() -> serde_json::Value {
         "Seeding",
         "Seed",
     ] {
-        if let Some(shared) = old["$defs"].get(name) {
+        if let Some(shared) = shared_schema["$defs"].get(name) {
             schema["$defs"][name] = shared.clone();
         } else {
             schema["$defs"][name]["additionalProperties"] = false.into();
@@ -210,7 +210,7 @@ pub fn validate_value(value: &serde_json::Value) -> Result<Receipt> {
         let stages: Vec<_> = receipt.stages.iter().filter(|s| s.name == name).collect();
         ensure!(
             stages.len() == 1
-                && legacy::STATUSES.contains(&stages[0].status.as_str())
+                && receipt_v3::STATUSES.contains(&stages[0].status.as_str())
                 && stages[0].seconds.is_finite()
                 && stages[0].seconds >= 0.0
                 && (stages[0].status == "passed"

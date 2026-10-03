@@ -5,13 +5,13 @@ use clap::Args;
 use feat_math::evolve::FaultPolicy;
 use std::{path::PathBuf, process::ExitCode};
 
-use super::{receipt, run, search::Refinement};
+use super::{messages, receipt, run, search::Refinement};
 use crate::{cli::SearchArgs, emit::Language};
 
 #[derive(Args, Clone, Debug)]
 pub struct ProfileArgs {
     /// Search profile: legacy (default), kernel2-baseline, or kernel2-experimental.
-    #[arg(long, default_value = "legacy")]
+    #[arg(long, default_value = messages::DEFAULT_SEARCH_PROFILE)]
     pub search_profile: String,
     /// Fault handling: legacy, reject-hard, or penalize. Kernel2 defaults to reject-hard.
     #[arg(long)]
@@ -43,13 +43,15 @@ impl ProfileArgs {
         let penalty = self.lambda_domain.is_some()
             || self.lambda_saturation.is_some()
             || self.fault_tie_break.is_some();
-        if self.search_profile == "legacy" {
+        if self.search_profile == messages::DEFAULT_SEARCH_PROFILE {
             ensure!(
-                self.fault_policy.as_deref().is_none_or(|p| p == "legacy")
+                self.fault_policy
+                    .as_deref()
+                    .is_none_or(|p| p == messages::DEFAULT_SEARCH_PROFILE)
                     && !penalty
                     && self.refine_top_k.is_none()
                     && self.refine_trials.is_none(),
-                "legacy search refuses kernel2 fault/refinement options"
+                messages::PROFILE_OPTIONS_REFUSAL
             );
             return Ok(None);
         }
