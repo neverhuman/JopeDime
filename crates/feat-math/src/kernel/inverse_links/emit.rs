@@ -3,7 +3,7 @@ use super::{A, B, C, D};
 use crate::math_expr::FaultSet;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Language {
+pub enum InverseLinkLanguage {
     Rust,
     Python,
     Cpp17,
@@ -12,11 +12,11 @@ pub enum Language {
 /// Standalone helper source, not a training recipe or a fitted model artifact.
 /// Every helper returns both value and fault bits. Unknown function IDs refuse.
 /// Same-host PlatformLibm parity is tested with contraction disabled in C++.
-pub fn emit_helpers(language: Language) -> String {
+pub fn emit_helpers(language: InverseLinkLanguage) -> String {
     let template = match language {
-        Language::Rust => RUST,
-        Language::Python => PYTHON,
-        Language::Cpp17 => CPP,
+        InverseLinkLanguage::Rust => RUST,
+        InverseLinkLanguage::Python => PYTHON,
+        InverseLinkLanguage::Cpp17 => CPP,
     };
     let mut source = template.to_owned();
     for (marker, values) in [("@A@", A), ("@B@", B), ("@C@", C), ("@D@", D)] {

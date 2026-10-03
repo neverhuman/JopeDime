@@ -5,7 +5,7 @@ use super::wire_v2::{VersionError, VersionResult};
 use crate::math_expr::FaultSet;
 
 mod emit;
-pub use emit::{emit_helpers, Language};
+pub use emit::{emit_helpers, InverseLinkLanguage};
 
 pub const KERNEL_ID: &str = "feat-math.inverse-links.acklam.v2";
 pub const MIN_P: f64 = f64::from_bits(0x3ca0_0000_0000_0000); // 2^-53

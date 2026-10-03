@@ -52,6 +52,10 @@ and exact positive zero, rather than using a tolerance at binade boundaries.
 Probit uses the approved raw rational approximation throughout, with no erfc.
 The unchanged historical/compatibility golden suite passes16/16; feat-math
 Clippy passes. Full after-gates, lane audit and exact-head CI/review are pending.
+The initial frozen candidate failed hygiene on an undeclared test target and
+audit on a generic Language enum collision. The corrected source adds only
+the required static target mapping and uses InverseLinkLanguage; failed
+evidence is retained outside the checkout, with no gate weakening.
 
 ## Per-op definition of done and remaining B05 gates
 

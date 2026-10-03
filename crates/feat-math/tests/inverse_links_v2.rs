@@ -1,6 +1,8 @@
 //! Numerical prerequisite for B05. These are helper execution proofs, not
 //! admission of the two functions into shipped expression search.
-use feat_math::kernel::inverse_links::{emit_helpers, InverseLink, Language, MAX_P, MIN_P};
+use feat_math::kernel::inverse_links::{
+    emit_helpers, InverseLink, InverseLinkLanguage, MAX_P, MIN_P,
+};
 use feat_math::math_expr::{FaultClass, FaultSet, FaultSeverity, MathExpr};
 use serde::Deserialize;
 use std::fs;
@@ -223,7 +225,7 @@ fn emitted_helper_value_and_fault_bits_match_in_all_three_languages() {
             expected.push_str(&format!("{:016x} {:08x}\n", value.to_bits(), faults.bits()));
         }
     }
-    let rust = emit_helpers(Language::Rust)
+    let rust = emit_helpers(InverseLinkLanguage::Rust)
         + r#"
 fn main() {
     let path = std::env::args().nth(1).unwrap();
@@ -237,7 +239,7 @@ fn main() {
     assert!(inverse_link_v2(21,0.5).is_err());
 }
 "#;
-    let python = emit_helpers(Language::Python)
+    let python = emit_helpers(InverseLinkLanguage::Python)
         + r#"
 import struct, sys
 for line in open(sys.argv[1]):
@@ -252,7 +254,7 @@ except ValueError:
 else:
     raise AssertionError('unknown function accepted')
 "#;
-    let cpp = emit_helpers(Language::Cpp17)
+    let cpp = emit_helpers(InverseLinkLanguage::Cpp17)
         + r#"
 #include <fstream>
 #include <iomanip>

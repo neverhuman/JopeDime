@@ -7714,6 +7714,22 @@
         "runtime-tools"
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately. Binary/example runtime behavior is not claimed by build or its unit-test harness. This owning generator produces only the additive v4 schema; schema/type freshness is exercised by the existing pipeline library target."
+    },
+    "target:feat-math/test/inverse_links_v2": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/feat-math/tests/inverse_links_v2.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     }
   }
 }
