@@ -16,9 +16,13 @@ use std::sync::OnceLock;
 
 const BOUNDARY: &str = include_str!("fixtures/math_boundary/v1.json");
 
+#[path = "support/eec_generation.rs"]
+mod eec_generation;
+
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 struct Counts {
     a: usize,
+    b: usize,
     c: usize,
     d: usize,
     e: usize,
@@ -718,11 +722,31 @@ fn clause_e(manifest: &Manifest, profile: &SearchProfile, report: &mut ClosureRe
     checked
 }
 
+fn clause_b(profile: &SearchProfile, report: &mut ClosureReport) -> usize {
+    if profile.pipeline_operators.is_none() {
+        return 0;
+    }
+    let Some(evidence) = eec_generation::shipped(profile) else {
+        report.fail(
+            profile,
+            "profile",
+            "(b)",
+            "no exact shipped-profile witness",
+        );
+        return 0;
+    };
+    for violation in evidence.violations(profile) {
+        report.fail(profile, "profile", "(b)", violation);
+    }
+    evidence.count()
+}
+
 fn closure(manifest: &Manifest, profiles: &[SearchProfile]) -> ClosureReport {
     let mut report = ClosureReport::default();
     for profile in profiles {
         let counts = Counts {
             a: clause_a(manifest, profile, &mut report),
+            b: clause_b(profile, &mut report),
             c: clause_c(manifest, profile, &mut report),
             d: clause_d(manifest, profile, &mut report),
             e: clause_e(manifest, profile, &mut report),
@@ -768,8 +792,8 @@ fn every_profile_element_is_closed() {
             .get(&(profile.id.to_owned(), profile.revision))
             .unwrap();
         println!(
-            "{} r{}: (a) {} (c) {} (d) {} declared (e) {}",
-            profile.id, profile.revision, counts.a, counts.c, counts.d, counts.e
+            "{} r{}: (a) {} (b) {} (c) {} (d) {} declared (e) {}",
+            profile.id, profile.revision, counts.a, counts.b, counts.c, counts.d, counts.e
         );
         assert!(
             matches!(
@@ -781,13 +805,17 @@ fn every_profile_element_is_closed() {
             profile.revision
         );
         assert_eq!(counts.a, 51);
+        assert_eq!(counts.b, if profile.revision == 3 { 51 } else { 0 });
         assert_eq!(counts.c, 956_412);
         assert_eq!(counts.d, 233);
         assert_eq!(counts.e, 153);
     }
     println!("manifest-wide (c): {}", report.manifest_c);
     assert_eq!(report.manifest_c, 971_397);
-    println!("(b) element-by-element EEC witness pending: E3 wrapper arms are qualified separately in kernel2_pipeline_search");
+    for profile in &shipped {
+        eec_generation::shipped(profile).unwrap().print(profile);
+    }
+    println!("(b) each shipped-profile element has replayed creation/edit/removal witnesses; 200k births +100k mutations +100k crossovers per profile, zero invalid children");
     println!("(e) by execution pending PR 16");
     let gaps: Vec<_> = manifest
         .ops
