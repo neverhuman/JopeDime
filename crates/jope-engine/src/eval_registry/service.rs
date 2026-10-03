@@ -1948,7 +1948,7 @@ fn send_fd(stream: &UnixStream, fd: i32, timeout: Duration) -> Result<()> {
     let deadline = Instant::now() + timeout;
     loop {
         wait_fd(stream.as_raw_fd(), libc::POLLOUT, deadline)?;
-        let mut byte = *b"F";
+        let mut byte = [b'F'];
         let mut iov = libc::iovec {
             iov_base: byte.as_mut_ptr().cast(),
             iov_len: 1,
@@ -2022,7 +2022,7 @@ fn receive_fd(stream: &UnixStream, timeout: Duration) -> Result<OwnedFd> {
                 if (*c).cmsg_level == libc::SOL_SOCKET && (*c).cmsg_type == libc::SCM_RIGHTS {
                     let base = libc::CMSG_LEN(0) as usize;
                     let bytes = (*c).cmsg_len.saturating_sub(base);
-                    valid &= bytes.is_multiple_of(std::mem::size_of::<i32>());
+                    valid &= bytes % std::mem::size_of::<i32>() == 0;
                     for i in 0..bytes / std::mem::size_of::<i32>() {
                         received.push(OwnedFd::from_raw_fd(std::ptr::read_unaligned(
                             libc::CMSG_DATA(c).cast::<i32>().add(i),

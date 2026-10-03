@@ -140,10 +140,12 @@ impl Artifact {
 /// crate's own unit-test build; it grants and changes nothing.
 #[inline]
 pub(crate) fn after_verification(_path: &Path) {
-    #[cfg(all(test, feature = "neural-search"))]
+    #[cfg(test)]
+    #[cfg(feature = "neural-search")]
     verification_hook::fire(_path);
 }
-#[cfg(all(test, feature = "neural-search"))]
+#[cfg(test)]
+#[cfg(feature = "neural-search")]
 pub(crate) mod verification_hook {
     use std::{cell::RefCell, path::Path};
     type Hook = Box<dyn FnMut(&Path)>;

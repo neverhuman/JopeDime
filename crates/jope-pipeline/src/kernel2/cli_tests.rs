@@ -396,8 +396,78 @@ fn rehashed_recipe_artifacts_must_match_the_selected_emission_manifest() {
             "renamed {language} artifact"
         );
     }
+    let mut reclassified = original.clone();
+    reclassified.artifacts[0].language = "cpp17".into();
+    reclassified.artifacts[0].path = "model.cpp".into();
+    let substituted = b"unrelated emitted source\n";
+    std::fs::write(output.join("emit/model.cpp"), substituted).unwrap();
+    reclassified.artifacts[0].sha256 = crate::sha256_hex(substituted);
+    reclassified.artifacts[0].bytes = substituted.len() as u64;
+    std::fs::write(&path, serde_json::to_vec(&reclassified).unwrap()).unwrap();
+    assert!(
+        publication::verify_run(&path).is_err(),
+        "reclassified recipe"
+    );
+    let mut omitted = original.clone();
+    omitted.artifacts.remove(0);
+    std::fs::write(&path, serde_json::to_vec(&omitted).unwrap()).unwrap();
+    assert!(publication::verify_run(&path).is_err(), "omitted recipe");
     std::fs::write(&path, serde_json::to_vec(&original).unwrap()).unwrap();
     publication::verify_run(&path).unwrap();
+    let all_output = temp.path().join("all");
+    let mut all_run = options(&all_output, 4).run;
+    all_run.budget.evaluations = 1;
+    all_run.languages = vec![
+        Language::Rust,
+        Language::Python,
+        Language::Cpp17,
+        Language::Cpp20,
+        Language::Cpp17Fitted,
+    ];
+    let all_options = run::Options::new(
+        all_run,
+        "kernel2-baseline",
+        FaultPolicy::RejectHard,
+        Refinement {
+            top_k: 0,
+            trials_per_program: 0,
+        },
+    )
+    .unwrap();
+    let all = run::run(&all_options).unwrap();
+    let all_path = all_output.join("receipt.json");
+    publication::verify_run(&all_path).unwrap();
+    for language in [
+        "cpp17",
+        "cpp20",
+        "cpp17-fitted",
+        "cpp17-fitted-codec",
+        "cpp17-fitted-standalone",
+    ] {
+        assert!(
+            all.artifacts
+                .iter()
+                .any(|artifact| artifact.language == language),
+            "{language}"
+        );
+    }
+    for language in [
+        "cpp17-fitted",
+        "cpp17-fitted-codec",
+        "cpp17-fitted-standalone",
+    ] {
+        let mut incomplete = all.clone();
+        incomplete
+            .artifacts
+            .retain(|artifact| artifact.language != language);
+        std::fs::write(&all_path, serde_json::to_vec(&incomplete).unwrap()).unwrap();
+        assert!(
+            publication::verify_run(&all_path).is_err(),
+            "missing {language}"
+        );
+    }
+    std::fs::write(&all_path, serde_json::to_vec(&all).unwrap()).unwrap();
+    publication::verify_run(&all_path).unwrap();
 }
 
 #[test]

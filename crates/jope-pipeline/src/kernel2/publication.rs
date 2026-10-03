@@ -107,7 +107,7 @@ pub fn publish(
     Ok((record, digest))
 }
 
-fn read_file(root: &Path, relative: &Path, digest: &str) -> Result<Vec<u8>> {
+fn read_evidence(root: &Path, relative: &Path) -> Result<Vec<u8>> {
     let mut path = root.to_path_buf();
     ensure!(!relative.as_os_str().is_empty(), "empty evidence path");
     for component in relative.components() {
@@ -120,11 +120,15 @@ fn read_file(root: &Path, relative: &Path, digest: &str) -> Result<Vec<u8>> {
             "symlink evidence path"
         );
     }
-    let bytes = std::fs::read(&path).with_context(|| format!("read {}", path.display()))?;
+    std::fs::read(&path).with_context(|| format!("read {}", path.display()))
+}
+
+fn read_file(root: &Path, relative: &Path, digest: &str) -> Result<Vec<u8>> {
+    let bytes = read_evidence(root, relative)?;
     ensure!(
         sha256_hex(&bytes) == digest,
         "{}: evidence digest mismatch",
-        path.display()
+        root.join(relative).display()
     );
     Ok(bytes)
 }
@@ -218,33 +222,32 @@ pub fn verify_run(path: &Path) -> Result<Receipt> {
     );
     let mut languages = BTreeSet::new();
     for a in &r.artifacts {
-        ensure!(
-            (crate::emit::Language::parse(&a.language).is_some()
-                || ["cpp17-fitted-codec", "cpp17-fitted-standalone"]
-                    .contains(&a.language.as_str()))
-                && languages.insert(&a.language),
-            "unknown or duplicate emitted language"
-        );
-        check_artifact_manifest(&manifest, a)?;
+        let language = check_artifact_manifest(&manifest, a)?;
+        ensure!(languages.insert(language), "duplicate emitted language");
         let bytes = read_file(root, &Path::new("emit").join(&a.path), &a.sha256)?;
         ensure!(bytes.len() as u64 == a.bytes, "artifact length mismatch");
     }
+    check_artifact_targets(root, &languages)?;
     Ok(r)
 }
 
 fn check_artifact_manifest(
     manifest: &serde_json::Value,
     artifact: &crate::receipt::Artifact,
-) -> Result<()> {
+) -> Result<&'static str> {
     use crate::emit::Language;
-    let expected_path = match Language::parse(&artifact.language) {
-        Some(Language::Rust) => "model.rs",
-        Some(Language::Python) => "model.py",
-        Some(Language::JavaScript) => "model.js",
-        Some(Language::Cpp17 | Language::Cpp20) => "model.cpp",
-        Some(Language::Cpp17Fitted) => "cpp17-fitted/model.cpp",
-        None if artifact.language == "cpp17-fitted-codec" => "cpp17-fitted/model.codec.json",
-        None if artifact.language == "cpp17-fitted-standalone" => "cpp17-fitted/standalone.cpp",
+    let (expected_path, language) = match Language::parse(&artifact.language) {
+        Some(Language::Rust) => ("model.rs", "rust"),
+        Some(Language::Python) => ("model.py", "python"),
+        Some(Language::JavaScript) => ("model.js", "javascript"),
+        Some(language @ (Language::Cpp17 | Language::Cpp20)) => ("model.cpp", language.as_str()),
+        Some(Language::Cpp17Fitted) => ("cpp17-fitted/model.cpp", "cpp17-fitted"),
+        None if artifact.language == "cpp17-fitted-codec" => {
+            ("cpp17-fitted/model.codec.json", "cpp17-fitted-codec")
+        }
+        None if artifact.language == "cpp17-fitted-standalone" => {
+            ("cpp17-fitted/standalone.cpp", "cpp17-fitted-standalone")
+        }
         None => anyhow::bail!("unknown emitted language"),
     };
     ensure!(
@@ -260,6 +263,42 @@ fn check_artifact_manifest(
         ensure!(
             manifest[field].as_str() == Some(artifact.sha256.as_str()),
             "emitted artifact digest disagrees with selected manifest"
+        );
+    }
+    Ok(language)
+}
+
+fn check_artifact_targets(root: &Path, languages: &BTreeSet<&str>) -> Result<()> {
+    let retained = String::from_utf8(read_evidence(root, Path::new("emit/targets.txt"))?)?;
+    let mut targets = BTreeSet::new();
+    for target in retained.split_whitespace() {
+        ensure!(
+            ["py", "rs", "cpp", "js", "cpp17-fitted"].contains(&target) && targets.insert(target),
+            "unknown or duplicate emitted target"
+        );
+    }
+    let actual: BTreeSet<_> = languages
+        .iter()
+        .map(|language| match *language {
+            "python" => "py",
+            "rust" => "rs",
+            "cpp17" | "cpp20" => "cpp",
+            "javascript" => "js",
+            _ => "cpp17-fitted",
+        })
+        .collect();
+    ensure!(
+        targets == actual,
+        "artifact languages disagree with emitted targets"
+    );
+    for language in [
+        "cpp17-fitted",
+        "cpp17-fitted-codec",
+        "cpp17-fitted-standalone",
+    ] {
+        ensure!(
+            languages.contains(language) == targets.contains("cpp17-fitted"),
+            "incomplete fitted artifact set"
         );
     }
     Ok(())
