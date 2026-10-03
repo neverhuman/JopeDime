@@ -2101,6 +2101,13 @@
         "gp",
         "export"
       ]
+    },
+    "target:feat-math/test/inverse_links_ingress_v2": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "export"
+      ]
     }
   },
   "baseline_triage": [
