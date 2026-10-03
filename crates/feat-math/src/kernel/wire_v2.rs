@@ -7,7 +7,7 @@
 
 use super::codec::{Reader, Writer, MAX_BYTES};
 use super::export::{self, ExportReport, FittedBasis, Route};
-use super::expression_v2::ScalarExpressionProgram;
+use super::scalar_program::ScalarExpressionProgram;
 use super::Program;
 use crate::{GenomeIr, Model};
 use serde::{Deserialize, Serialize};

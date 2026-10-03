@@ -1,5 +1,5 @@
 //! Bounded scalar ingress for B05. Decoding does not admit execution, models,
-//! export or shipping generation. The historical MathExpr and codec stay v1.
+//! export or shipping generation. MathExpr and its exact codec remain v1.
 use super::codec::{Reader, Writer};
 use super::inverse_links::InverseLink;
 use super::wire_v2::{VersionError, VersionResult, MAGIC_V2, READER_VERSION};
@@ -8,8 +8,8 @@ use crate::math_expr::{BinOp, Expr, Func, MathExpr, UnOp, Var};
 const SCALAR_VARIANT: u8 = 1;
 const INVERSE_LINK_FEATURE: u64 = 2;
 
-// Explicit IDs reproduce the frozen legacy prefix, independently of enum order.
-const LEGACY_FUNCTION_IDS: &[(u16, Func)] = &[
+// Explicit IDs reproduce the frozen v1 prefix, independently of enum order.
+const V1_FUNCTION_IDS: &[(u16, Func)] = &[
     (0, Func::Abs),
     (1, Func::Sqrt),
     (2, Func::Log1p),
@@ -50,7 +50,7 @@ const BINARY_IDS: &[(u8, BinOp)] = &[
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ScalarFunction {
-    Legacy(Func),
+    V1(Func),
     InverseLink(InverseLink),
 }
 
@@ -61,16 +61,16 @@ impl ScalarFunction {
                 "scalar function codec version {version}"
             )));
         }
-        if let Some((_, func)) = LEGACY_FUNCTION_IDS.iter().find(|(tag, _)| *tag == id) {
-            return Ok(Self::Legacy(*func));
+        if let Some((_, func)) = V1_FUNCTION_IDS.iter().find(|(tag, _)| *tag == id) {
+            return Ok(Self::V1(*func));
         }
         InverseLink::from_versioned_id(version, id).map(Self::InverseLink)
     }
 
     pub fn id(self) -> u16 {
         match self {
-            Self::Legacy(func) => {
-                LEGACY_FUNCTION_IDS
+            Self::V1(func) => {
+                V1_FUNCTION_IDS
                     .iter()
                     .find(|(_, value)| *value == func)
                     .unwrap()
@@ -82,8 +82,8 @@ impl ScalarFunction {
 
     fn check_arity(self, count: usize) -> VersionResult<()> {
         let expected = match self {
-            Self::Legacy(Func::Min | Func::Max | Func::Step) => 2,
-            Self::Legacy(Func::Clip) => 3,
+            Self::V1(Func::Min | Func::Max | Func::Step) => 2,
+            Self::V1(Func::Clip) => 3,
             _ => 1,
         };
         if count != expected {
@@ -122,8 +122,8 @@ impl ScalarExpressionProgram {
         &self.root
     }
 
-    /// Import typed legacy nodes without reparsing their lossy source printer.
-    pub fn from_legacy(expression: &MathExpr) -> VersionResult<Self> {
+    /// Import typed v1 nodes without reparsing their lossy source printer.
+    pub fn from_v1(expression: &MathExpr) -> VersionResult<Self> {
         Ok(Self {
             root: import_node(expression.ast(), 1, &mut NodeBudget(64))?,
         })
@@ -301,7 +301,7 @@ fn import_node(node: &Expr, depth: usize, budget: &mut NodeBudget) -> VersionRes
             Box::new(import_node(right, depth + 1, budget)?),
         ),
         Expr::Call(func, arguments) => {
-            let func = ScalarFunction::Legacy(*func);
+            let func = ScalarFunction::V1(*func);
             func.check_arity(arguments.len())?;
             ScalarNode::Call(
                 func,

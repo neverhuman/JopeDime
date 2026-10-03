@@ -1,8 +1,8 @@
 //! B05 reader qualification; execution and shipping generation remain held.
 use feat_math::kernel::{
     export::Route,
-    expression_v2::{ScalarExpressionProgram, ScalarFunction, ScalarNode},
     inverse_links::InverseLink,
+    scalar_program::{ScalarExpressionProgram, ScalarFunction, ScalarNode},
     wire_v2::{
         self, Domain, ReservationRef, ReservedModel, ReservedProgram, VersionError, VersionedModel,
         VersionedProgram,
@@ -51,7 +51,7 @@ fn nested_inverse_links_round_trip_through_typed_binary_and_lossless_text() {
         Box::new(call(
             InverseLink::Logit,
             ScalarNode::Call(
-                ScalarFunction::Legacy(Func::Sigmoid),
+                ScalarFunction::V1(Func::Sigmoid),
                 vec![ScalarNode::Var(Var::X)],
             ),
         )),
@@ -92,7 +92,7 @@ fn same_legacy_payload(root: Expr) {
     };
     let old = Program::import_legacy(&genome).to_bytes().unwrap();
     // Empty source: v1 magic/variant/genome/affine/source-length occupy 19 bytes.
-    let new = ScalarExpressionProgram::from_legacy(&expr)
+    let new = ScalarExpressionProgram::from_v1(&expr)
         .unwrap()
         .to_bytes()
         .unwrap();
@@ -182,7 +182,7 @@ fn legacy_scalar_tags_arities_and_ieee_payloads_match_the_original_codec() {
             let root = Expr::Call(func, vec![Expr::Const(0.25); n]);
             let old = MathExpr::from_ast(root.clone());
             let new = ScalarExpressionProgram::new(ScalarNode::Call(
-                ScalarFunction::Legacy(func),
+                ScalarFunction::V1(func),
                 vec![ScalarNode::Const(0.25); n],
             ));
             assert_eq!(old.is_ok(), new.is_ok(), "{func:?} arity{n}");
@@ -193,7 +193,7 @@ fn legacy_scalar_tags_arities_and_ieee_payloads_match_the_original_codec() {
                 let unchecked: MathExpr =
                     serde_json::from_value(serde_json::json!({"root": root})).unwrap();
                 assert!(matches!(
-                    ScalarExpressionProgram::from_legacy(&unchecked),
+                    ScalarExpressionProgram::from_v1(&unchecked),
                     Err(VersionError::Malformed(_))
                 ));
             }
@@ -330,7 +330,7 @@ fn existing_node_depth_and_byte_budgets_bound_new_ingress() {
     }
     let unchecked: MathExpr = serde_json::from_value(serde_json::json!({"root": legacy})).unwrap();
     assert!(matches!(
-        ScalarExpressionProgram::from_legacy(&unchecked),
+        ScalarExpressionProgram::from_v1(&unchecked),
         Err(VersionError::Malformed(_))
     ));
     let mut root = ScalarNode::Var(Var::X);
