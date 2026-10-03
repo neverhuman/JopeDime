@@ -50,7 +50,7 @@ cargo test --locked -p jope-pipeline --lib kernel2::cli_tests
 cargo test --locked -p jope-cli --test pipeline_cli kernel2_
 ```
 
-Fourteen nonignored library cases cover CLI defaults/options, real profile runs,
+Fifteen nonignored library cases cover CLI defaults/options, real profile runs,
 explicit penalties, seed/refinement accounting, receipt/evidence tampering,
 safe artifact paths, unsupported shapes, cancellation, deterministic replay and
 v4 schema freshness. Two umbrella CLI cases prove real child-process dispatch,
@@ -58,6 +58,9 @@ default fitted-C++ emission, evidence verification and refusal exit codes.
 Implicit and explicit legacy CLI options produce identical receipt bytes with a
 frozen clock. Existing schema v1–3, evaluator identity inputs, frozen fixtures
 and emitter output remain byte-unchanged; no fixture regeneration is used.
+The independent-review regression refuses rehashed Rust/Python source bytes
+that disagree with the selected emission manifest, and renamed artifact paths
+that evade the language's emitted filename. The unmodified emission still verifies.
 
 Remaining gates: multiple-cut comparison, concurrent/island coordination,
 incumbent/evolve integration, E7 policy interplay, EEC clause(b) and E8 equal-budget
