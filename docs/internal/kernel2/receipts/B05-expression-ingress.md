@@ -57,3 +57,13 @@ Merge requires local after-gates/audit, exact-head automatic plus full manual CI
 a fresh independent neverhumanbot native approval and final readback. No READY
 objection window per owner directive. Hands-off137/147/148/B02/cleanup_claude/
 MASTER_CLEAN_UP/xbabe0/foreign containers and paused pools remain untouched.
+
+## Audit naming correction
+
+Initial d108fc8f2 passed all standing suites but added one hard audit filename
+classification and one soft use-of-legacy classification for live v1 code.
+Owner10:36Z/10:42Z authorizes purpose-based scalar_program / V1 naming. The
+reader now lives in kernel/scalar_program.rs, with V1(Func) and from_v1 names
+for its active v1 adapters. This changes no envelope, ID, arity, budget or byte
+contract. No suppression, audit rule or allowlist change. Original results
+remain immutable; full corrected-head qualification in correction-01 is required.
