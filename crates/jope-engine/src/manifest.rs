@@ -56,7 +56,7 @@ pub fn read_hashed(path: &Path, what: &str) -> Result<(Vec<u8>, String)> {
 pub fn read_bound(path: &Path, expected: &serde_json::Value, refusal: &str) -> Result<Vec<u8>> {
     let bytes = fs::read(path).with_context(|| format!("read {}", path.display()))?;
     ensure!(
-        expected.as_str() == Some(hash(&bytes).as_str()),
+        *expected == serde_json::Value::from(hash(&bytes)),
         "{refusal}"
     );
     after_verification(path);

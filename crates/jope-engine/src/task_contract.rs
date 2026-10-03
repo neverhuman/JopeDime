@@ -91,7 +91,7 @@ pub fn training_partition(world: usize, micro: usize, global: usize) -> Result<V
             && global > 0
             && micro
                 .checked_mul(world)
-                .is_some_and(|batch| global.is_multiple_of(batch)),
+                .is_some_and(|batch| global % batch == 0),
         "invalid training partition"
     );
     Ok(
@@ -176,11 +176,11 @@ pub fn assign_partition(
 pub fn training_partition_v2(world: usize, micro: usize, global: usize) -> Result<Value> {
     let rows = PARTITION_COMPARISON_ROWS;
     ensure!(
-        global > 0 && global.is_multiple_of(rows),
+        global > 0 && global % rows == 0,
         "global batch must be whole comparisons of {rows}"
     );
     ensure!(
-        micro > 0 && micro.is_multiple_of(rows),
+        micro > 0 && micro % rows == 0,
         "microbatch must be whole comparisons of {rows}"
     );
     let shards = assign_partition(global / rows, world, micro / rows)?;

@@ -117,7 +117,7 @@ impl State {
                 .func_arity
                 .iter()
                 .filter(|(_, arity)| {
-                    depth < table.max_depth
+                    depth + 1 <= table.max_depth
                         && nodes + 1 + (pending - 1 + **arity) <= table.max_nodes
                 })
                 .map(|(&id, _)| id),
@@ -656,8 +656,11 @@ fn parse_expr_tokens(text: &str, table: &Expr) -> Result<Vec<usize>> {
                 }
                 _ => anyhow::bail!("invalid expression prefix"),
             };
-            while let Some(Token::Symbol(op @ ('+' | '-' | '*' | '/'))) = self.tokens.get(self.at) {
-                let op = *op;
+            loop {
+                let op = match self.tokens.get(self.at) {
+                    Some(Token::Symbol(op @ ('+' | '-' | '*' | '/'))) => *op,
+                    _ => break,
+                };
                 let prec = if matches!(op, '+' | '-') { 1 } else { 2 };
                 if prec < min {
                     break;
