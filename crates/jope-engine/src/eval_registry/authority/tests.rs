@@ -943,7 +943,7 @@ fn historical_global_lookup_index_preserves_absent_present_and_null_guard_semant
 #[test]
 fn history_lookup_maintenance_is_explicit_idempotent_and_preserves_original_journal() {
     let fixture = Fixture::new(false);
-    let mut authority = fixture.open();
+    let authority = fixture.open();
     authority
         .db
         .execute_batch("DROP INDEX exclusions_global_match")
@@ -1485,7 +1485,7 @@ fn replay_preserves_same_key_database_only_unknown_evidence() {
         )
         .unwrap();
     drop(authority);
-    let before = Connection::open(&fixture.root.join("registry.sqlite")).unwrap();
+    let before = Connection::open(fixture.root.join("registry.sqlite")).unwrap();
     let row = Authority::state_row(&before, "entries", &fit.key).unwrap();
     drop(before);
     let report = Authority::recovery_inspect(&fixture.root, &fixture.witness).unwrap();
@@ -1494,7 +1494,7 @@ fn replay_preserves_same_key_database_only_unknown_evidence() {
         .unwrap()
         .contains("conflicts"));
     assert!(Authority::recovery_replay(&fixture.root, &fixture.witness).is_err());
-    let after = Connection::open(&fixture.root.join("registry.sqlite")).unwrap();
+    let after = Connection::open(fixture.root.join("registry.sqlite")).unwrap();
     assert_eq!(
         Authority::state_row(&after, "entries", &fit.key).unwrap(),
         row

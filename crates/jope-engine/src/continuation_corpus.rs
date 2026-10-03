@@ -547,10 +547,8 @@ fn training_refusal(target: &ContinuationTarget) -> Option<String> {
     }
 }
 /// Deterministic split by context key; eligible contexts keep all of their admitted targets.
-fn eligible_contexts<T>(
-    groups: BTreeMap<String, Vec<T>>,
-    minimum: usize,
-) -> (BTreeMap<String, Vec<T>>, Vec<(String, Vec<T>)>) {
+type ContextPartition<T> = (BTreeMap<String, Vec<T>>, Vec<(String, Vec<T>)>);
+fn eligible_contexts<T>(groups: BTreeMap<String, Vec<T>>, minimum: usize) -> ContextPartition<T> {
     let mut eligible = BTreeMap::new();
     let mut undersized = Vec::new();
     for (key, group) in groups {

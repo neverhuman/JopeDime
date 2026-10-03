@@ -590,7 +590,7 @@ mod tests {
     #[test]
     fn cohort_schema_is_v2_and_excludes_sealed() {
         assert_eq!(COHORT_SCHEMA, "JopeMicroCohort.v2");
-        assert!(EXCLUDE_SEALED_FAMILIES);
+        const { assert!(EXCLUDE_SEALED_FAMILIES) };
     }
 
     #[test]

@@ -370,6 +370,7 @@ struct EventIdentity {
     seq: u64,
     deadline: u64,
 }
+#[cfg(test)]
 fn event_identity(policy: &WitnessPolicy, event: &[u8]) -> Result<EventIdentity> {
     event_identity_effective(policy, policy, event)
 }
@@ -459,7 +460,7 @@ fn event_identity_effective(
                         && row["id"] == id
                         && value.payload["participant_id"] == id
                         && row["reservation_id"] == original.reservation_id()
-                        && row["slot"] == slot.to_string()
+                        && row["slot"] == slot
                         && stored == original,
                     "funding participant postimage differs from original"
                 );

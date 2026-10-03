@@ -394,7 +394,7 @@ impl BoundedRunContract {
         );
         match t.execution_partition.as_str() {
             crate::task_contract::PARTITION_V1_SCHEMA => need!(
-                [1, 2, 4, 8].contains(&world) && t.global_batch as usize % (world * t.microbatch as usize) == 0,
+                [1, 2, 4, 8].contains(&world) && (t.global_batch as usize).is_multiple_of(world * t.microbatch as usize),
                 Invalid,
                 "partition v1 cannot divide the global batch over {world} ranks; select partition v2"
             ),

@@ -284,8 +284,8 @@ pub fn cap_indices(
     } else {
         let nt = ((ROW_LIMIT as u128 * n_train as u128) / total as u128) as usize;
         (
-            nt.max(1).min(ROW_LIMIT - 1),
-            ROW_LIMIT - nt.max(1).min(ROW_LIMIT - 1),
+            nt.clamp(1, ROW_LIMIT - 1),
+            ROW_LIMIT - nt.clamp(1, ROW_LIMIT - 1),
         )
     };
     if task == "timeseries" {
@@ -719,7 +719,8 @@ fn reconstruct_recorded(
     fn key(row: &[f64]) -> i64 {
         (row[0] * 10000.0).floor() as i64
     }
-    let mut candidates: BTreeMap<i64, Vec<(usize, Vec<String>, Vec<f64>)>> = BTreeMap::new();
+    type CandidateRow = (usize, Vec<String>, Vec<f64>);
+    let mut candidates: BTreeMap<i64, Vec<CandidateRow>> = BTreeMap::new();
     for (i, record) in reader.records().enumerate() {
         let record = record?;
         let mut raw = Vec::new();

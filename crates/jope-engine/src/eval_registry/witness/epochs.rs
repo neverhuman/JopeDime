@@ -684,7 +684,8 @@ mod tests {
                 body,
             },
         };
-        let effective = verify_epoch_chain_checked(&base, &[p.clone()], Some(&pk)).unwrap();
+        let effective =
+            verify_epoch_chain_checked(&base, std::slice::from_ref(&p), Some(&pk)).unwrap();
         assert_eq!(
             effective.authority_epoch,
             p.epoch_transition.body.next_policy.authority_epoch

@@ -2230,7 +2230,7 @@ fn live_left_behind(census: &Path) -> Vec<i32> {
             .rsplit_once(')')
             .and_then(|(_, rest)| rest.split_whitespace().next());
         let helper = fs::read(format!("/proc/{pid}/cmdline"))
-            .is_ok_and(|cmdline| cmdline.starts_with(b"sleep\0300\0"));
+            .is_ok_and(|cmdline| cmdline.starts_with(b"sleep\x00300\0"));
         if helper && state != Some("Z") {
             live.push(pid);
         }

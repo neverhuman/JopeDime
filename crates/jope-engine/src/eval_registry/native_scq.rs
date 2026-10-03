@@ -300,10 +300,10 @@ fn monotonic_ns() -> Result<u64> {
         unsafe { libc::clock_gettime(libc::CLOCK_MONOTONIC, &mut t) } == 0,
         "monotonic clock unavailable"
     );
-    Ok((t.tv_sec as u64)
+    (t.tv_sec as u64)
         .checked_mul(1_000_000_000)
         .and_then(|v| v.checked_add(t.tv_nsec as u64))
-        .context("clock overflow")?)
+        .context("clock overflow")
 }
 pub(crate) fn verify_request(
     policy: Arc<InstalledPolicy>,

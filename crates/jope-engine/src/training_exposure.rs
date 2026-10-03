@@ -47,7 +47,7 @@ impl Counts {
         balanced: bool,
     ) -> Result<()> {
         ensure!(
-            ids.len() % 8 == 0 && serial % 8 == 0,
+            ids.len().is_multiple_of(8) && serial.is_multiple_of(8),
             "exposure requires complete comparison groups"
         );
         let groups = ids.len() / 8;
@@ -55,7 +55,9 @@ impl Counts {
             .checked_add(groups)
             .context("training exposure serial overflow")?;
         let fresh_groups = if balanced {
-            (0..groups).filter(|n| (serial / 8 + n) % 2 == 0).count()
+            (0..groups)
+                .filter(|n| (serial / 8 + n).is_multiple_of(2))
+                .count()
         } else {
             0
         };

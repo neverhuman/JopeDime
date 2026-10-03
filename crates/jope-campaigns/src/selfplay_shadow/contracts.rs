@@ -830,7 +830,7 @@ mod tests {
                 serde_json::Value::String(task.as_str().to_owned())
             );
             assert_eq!(task.as_str().parse::<Task>().unwrap(), task);
-            assert_eq!(Task::from(crate::task::TaskKind::from(task)), task);
+            assert_eq!(crate::task::TaskKind::from(task), task);
         }
         assert_eq!(Task::Multiclass.corpus_dir_name(), "multi_label");
         assert_eq!(Task::Timeseries.corpus_dir_name(), "timeseries_reduced_v2");

@@ -129,7 +129,7 @@ fn select(rows: &[(Context, Counts)], sequence: u64, now: u64) -> Result<Option<
             dataset.1.push(i);
         }
     }
-    for (_, (_, datasets)) in families.iter_mut() {
+    for (_, datasets) in families.values_mut() {
         datasets.retain(|_, (_, indices)| !indices.is_empty());
     }
     let Some((_, (_, datasets))) = families
@@ -152,7 +152,7 @@ fn select(rows: &[(Context, Counts)], sequence: u64, now: u64) -> Result<Option<
             .collect::<Vec<_>>(),
     )?;
     // A deterministic sweep every tenth reservation prevents stochastic starvation.
-    if sequence % 10 == 0 {
+    if sequence.is_multiple_of(10) {
         return Ok(candidates
             .into_iter()
             .min_by_key(|i| (rows[*i].1.selection_exposure, rows[*i].0.clone())));
@@ -515,7 +515,7 @@ impl Ledger {
             [],
             |r| r.get(0),
         )?;
-        for _ in 0..requested {
+        while selected.len() < requested {
             let Some(i) = select(&rows, sequence, now)? else {
                 break;
             };

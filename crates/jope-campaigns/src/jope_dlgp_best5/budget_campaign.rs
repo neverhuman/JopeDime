@@ -1385,10 +1385,8 @@ pub fn validate_search_artifact_json(value: &serde_json::Value) -> Result<(), St
                 validate_search_artifact_json(nested)?;
             }
         }
-        serde_json::Value::String(value) => {
-            if value.to_ascii_lowercase().contains("test.csv") {
-                return Err("search artifact contains a test path".into());
-            }
+        serde_json::Value::String(value) if value.to_ascii_lowercase().contains("test.csv") => {
+            return Err("search artifact contains a test path".into());
         }
         _ => {}
     }

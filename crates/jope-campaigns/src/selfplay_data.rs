@@ -474,10 +474,10 @@ pub struct MicroDataset {
 /// Measured 2026-07-28 on waves 161-170: 459 of 1,280 cohort slots (35.9%) and
 /// 28,718 of 75,336 observations (38.1%) went to datasets that ALREADY carried
 /// >= 128 observations before the window, while 2,290 activated regression
-/// datasets and 169 binary datasets had never been touched at all. Every cohort
-/// slot costs exactly the same cluster time (11 manifests == 11 SCQ jobs per
-/// dataset per wave, verified: 128 * 11 == 1,408 manifests in every wave), so a
-/// slot spent on a converged dataset is a slot NOT spent on an unseen one.
+/// > datasets and 169 binary datasets had never been touched at all. Every cohort
+/// > slot costs exactly the same cluster time (11 manifests == 11 SCQ jobs per
+/// > dataset per wave, verified: 128 * 11 == 1,408 manifests in every wave), so a
+/// > slot spent on a converged dataset is a slot NOT spent on an unseen one.
 ///
 /// Every rule here DEGRADES rather than fails. `select_micro_cohort` is on the
 /// only path that produces strict waves; if it returns an error the supply
@@ -633,7 +633,7 @@ fn paroled(wave_id: &str, task: &str, dataset_hash: &str, period: u32) -> bool {
     }
     let digest = deterministic_tie(wave_id, task, "parole", dataset_hash);
     let draw = u32::from_be_bytes([digest[0], digest[1], digest[2], digest[3]]);
-    draw % period == 0
+    draw.is_multiple_of(period)
 }
 
 /// Band a dataset by observation count so that breadth wins outright but ties

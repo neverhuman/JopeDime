@@ -2814,7 +2814,7 @@ mod tests {
     fn npy_parser_reads_f32_and_shape() {
         let mut bytes = b"\x93NUMPY\x01\x00".to_vec();
         let mut header = b"{'descr': '<f4', 'fortran_order': False, 'shape': (2,), }".to_vec();
-        while (bytes.len() + 2 + header.len() + 1) % 64 != 0 {
+        while !(bytes.len() + 2 + header.len() + 1).is_multiple_of(64) {
             header.push(b' ');
         }
         header.push(b'\n');
@@ -2885,7 +2885,7 @@ mod tests {
         let mut header =
             format!("{{'descr': '<f4', 'fortran_order': False, 'shape': ({shape}), }}")
                 .into_bytes();
-        while (output.len() + 2 + header.len() + 1) % 64 != 0 {
+        while !(output.len() + 2 + header.len() + 1).is_multiple_of(64) {
             header.push(b' ');
         }
         header.push(b'\n');

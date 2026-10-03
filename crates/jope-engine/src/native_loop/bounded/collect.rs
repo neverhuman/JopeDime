@@ -386,7 +386,7 @@ pub fn file_closure_digest(paths: &[PathBuf]) -> Result<String> {
 pub(crate) fn base64_decode(text: &str) -> Result<Vec<u8>> {
     let clean: Vec<u8> = text.bytes().filter(|b| !b.is_ascii_whitespace()).collect();
     ensure!(
-        !clean.is_empty() && clean.len() % 4 == 0,
+        !clean.is_empty() && clean.len().is_multiple_of(4),
         "base64 length is not a positive multiple of 4"
     );
     let value = |c: u8| -> Result<u32> {
@@ -451,7 +451,8 @@ pub fn certificate_der(bytes: &[u8]) -> Result<Vec<u8>> {
     Ok(der)
 }
 /// One DER TLV: `((tag, contents), remainder)`, definite lengths only.
-pub(crate) fn der_element(b: &[u8]) -> Result<((u8, &[u8]), &[u8])> {
+type DerElement<'a> = ((u8, &'a [u8]), &'a [u8]);
+pub(crate) fn der_element(b: &[u8]) -> Result<DerElement<'_>> {
     ensure!(b.len() >= 2, "truncated DER element");
     let tag = b[0];
     let (len, header) = match b[1] {
@@ -549,15 +550,13 @@ fn probe_text(out: &CommandOutput, what: &str) -> Result<String> {
     String::from_utf8(out.stdout.clone()).with_context(|| format!("nvidia-smi {what} output"))
 }
 /// GPUs, the common driver version and device-owning processes, host-wide.
-fn gpu_inventory(
-    runner: &dyn CommandRunner,
-    visible: Option<&OsString>,
-) -> Result<(
+type GpuInventory = (
     GpuProbe,
     Vec<GpuObservation>,
     Option<String>,
     Vec<Ownership>,
-)> {
+);
+fn gpu_inventory(runner: &dyn CommandRunner, visible: Option<&OsString>) -> Result<GpuInventory> {
     match visible {
         Some(v) if v.is_empty() => {
             return Ok((

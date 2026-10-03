@@ -1544,7 +1544,8 @@ impl TaskPromotionEvaluationIntentV3 {
                 && self.context_step == PROMOTION_CONTEXT_STEP
                 && (PROMOTION_MIN_CONTEXTS..=PROMOTION_MAX_CONTEXTS)
                     .contains(&self.maximum_contexts)
-                && (self.maximum_contexts - PROMOTION_MIN_CONTEXTS) % PROMOTION_CONTEXT_STEP == 0
+                && (self.maximum_contexts - PROMOTION_MIN_CONTEXTS)
+                    .is_multiple_of(PROMOTION_CONTEXT_STEP)
                 && self.context_schedule.len() == self.maximum_contexts
                 && self
                     .context_schedule
@@ -1592,8 +1593,8 @@ impl SealedPanelConsumptionV1 {
         ensure!(self.run_index < 3, "promotion run index must be 0..3");
         ensure!(
             (PROMOTION_MIN_CONTEXTS..=PROMOTION_MAX_CONTEXTS).contains(&self.context_sha256.len())
-                && (self.context_sha256.len() - PROMOTION_MIN_CONTEXTS) % PROMOTION_CONTEXT_STEP
-                    == 0
+                && (self.context_sha256.len() - PROMOTION_MIN_CONTEXTS)
+                    .is_multiple_of(PROMOTION_CONTEXT_STEP)
                 && self.context_sha256.iter().collect::<BTreeSet<_>>().len()
                     == self.context_sha256.len(),
             "promotion consumption must contain 128..512 unique contexts in steps of 64"
@@ -1702,7 +1703,8 @@ impl TaskPromotionObservationSetV3 {
         );
         ensure!(
             (PROMOTION_MIN_CONTEXTS..=PROMOTION_MAX_CONTEXTS).contains(&self.observations.len())
-                && (self.observations.len() - PROMOTION_MIN_CONTEXTS) % PROMOTION_CONTEXT_STEP == 0,
+                && (self.observations.len() - PROMOTION_MIN_CONTEXTS)
+                    .is_multiple_of(PROMOTION_CONTEXT_STEP),
             "promotion observation set is outside the sequential prefix schedule"
         );
         let mut contexts = BTreeSet::new();
@@ -1766,7 +1768,8 @@ impl TaskPromotionEvaluationV3 {
         ensure!(self.run_index < 3, "promotion run index must be 0..3");
         ensure!(
             (PROMOTION_MIN_CONTEXTS..=PROMOTION_MAX_CONTEXTS).contains(&self.metrics.contexts)
-                && (self.metrics.contexts - PROMOTION_MIN_CONTEXTS) % PROMOTION_CONTEXT_STEP == 0,
+                && (self.metrics.contexts - PROMOTION_MIN_CONTEXTS)
+                    .is_multiple_of(PROMOTION_CONTEXT_STEP),
             "promotion evaluation context count is outside the sequential panel schedule"
         );
         ensure!(
@@ -1919,7 +1922,7 @@ pub fn evaluate_task_promotion_v3(
     ensure!(run_index < 3, "promotion run index must be 0..3");
     ensure!(
         (PROMOTION_MIN_CONTEXTS..=PROMOTION_MAX_CONTEXTS).contains(&observations.len())
-            && (observations.len() - PROMOTION_MIN_CONTEXTS) % PROMOTION_CONTEXT_STEP == 0,
+            && (observations.len() - PROMOTION_MIN_CONTEXTS).is_multiple_of(PROMOTION_CONTEXT_STEP),
         "promotion run must evaluate 128..512 contexts in steps of 64"
     );
     let contexts = observations
@@ -2873,7 +2876,9 @@ mod tests {
             consumed_at_ms: 1,
         };
         validate_panel_consumption(&pool, &receipt, &[]).unwrap();
-        assert!(validate_panel_consumption(&pool, &receipt, &[receipt.clone()]).is_err());
+        assert!(
+            validate_panel_consumption(&pool, &receipt, std::slice::from_ref(&receipt)).is_err()
+        );
     }
 
     #[test]

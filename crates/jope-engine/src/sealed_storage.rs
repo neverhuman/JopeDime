@@ -74,8 +74,9 @@ pub fn connect_bounded(path: &Path, window: std::time::Duration) -> std::io::Res
     }
 }
 
+#[cfg(feature = "neural")]
 pub(crate) fn send_fd(stream: &UnixStream, fd: i32) -> Result<()> {
-    let mut marker = [b'L'];
+    let mut marker = *b"L";
     let mut iov = libc::iovec {
         iov_base: marker.as_mut_ptr().cast(),
         iov_len: 1,

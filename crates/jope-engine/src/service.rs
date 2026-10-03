@@ -202,7 +202,6 @@ pub fn run_with_wait(
     let mut coverage = coverage::Ledger::open(root)?;
     let mut failed_rows = Vec::<serde_json::Value>::new();
     let mut previous_total = None;
-    let mut withheld = false;
     let mut rate = 0.0;
     let mut last_sample = Instant::now();
     let lock = root.join("runs/gp-service.lock");
@@ -227,7 +226,7 @@ pub fn run_with_wait(
         restore_completed(root, &mut jobs.jobs, &mut coverage, true)?;
     let mut restored_completed = completed;
     let mut restored_evaluations = evaluations;
-    loop {
+    let withheld = loop {
         if STOP.load(std::sync::atomic::Ordering::Relaxed) {
             let interrupted = slots.iter().flatten().count();
             for (index, _, _) in slots.iter().flatten() {
@@ -555,11 +554,10 @@ pub fn run_with_wait(
         let state = serde_json::json!({"schema":"parallel.gp_service.v1","timestamp":now(),"phase":if active==0&&dispatch_blocked {"unavailable"} else if active==0&&next==jobs.jobs.len(){if wait_for_work {"waiting"} else {"completed"}}else{"running"},"wait_for_work":wait_for_work,"termination_reason":if active==0&&next==jobs.jobs.len(){Some("queue exhausted")}else{None},"qualification":jobs.qualification,"executable":executable,"executable_sha256":executable_sha256,"manifest_sha256":manifest_sha256,"vocabulary_sha256":vocabulary_sha256,"workers":workers,"threads_each":threads,"active":active,"queued":jobs.jobs.len()-next,"completed_views":completed,"restored_completed_views":restored_completed,"restored_completed_evaluations":restored_evaluations,"failed_views":failed,"failed_rows":failed_rows,"retry_pending":0,"coverage":coverage.status()?,"coverage_error":coverage_error,"automatic_retry":false,"completed_evaluations":evaluations,"running_evaluations":running_evaluations,"evaluations_per_second":rate,"active_rows":active_rows,"elapsed_seconds":started.elapsed().as_secs(),"admission":gate,"cpu_budget":workers*threads,"worker_memory_limit_gib":8,"candidate_timeout_seconds":30,"view_budget":"1000 evaluations / 600 seconds","qualification_reserved_slots":reserved_slots,"qualification_reservation_error":reservation_error,"slot_leases":true});
         heartbeat.publish(state)?;
         if active == 0 && (next == jobs.jobs.len() || dispatch_blocked) && !wait_for_work {
-            withheld = dispatch_blocked;
-            break;
+            break dispatch_blocked;
         }
         std::thread::sleep(Duration::from_secs(1));
-    }
+    };
     heartbeat.finish()?;
     ensure!(
         !withheld,
