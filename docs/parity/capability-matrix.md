@@ -25,7 +25,7 @@ you saw.
 | justfile-recipe | 6 | 5 | 0 | 0 | 1 | 0 |
 | learning-subcommand | 19 | 0 | 19 | 0 | 0 | 0 |
 | new-bin | 15 | 0 | 15 | 0 | 0 | 0 |
-| new-example | 3 | 0 | 3 | 0 | 0 | 0 |
+| new-example | 4 | 0 | 4 | 0 | 0 | 0 |
 | ops-sh | 1 | 0 | 0 | 0 | 1 | 0 |
 | pipeline-subcommand | 3 | 0 | 3 | 0 | 0 | 0 |
 | root-binary | 56 | 56 | 0 | 0 | 0 | 0 |
@@ -42,7 +42,7 @@ you saw.
 | vendored-bin | 6 | 6 | 0 | 0 | 0 | 0 |
 | vendored-example | 6 | 6 | 0 | 0 | 0 | 0 |
 | wire | 5 | 0 | 0 | 0 | 5 | 0 |
-| **total** | **819** | **353** | **56** | **1** | **402** | **7** |
+| **total** | **820** | **353** | **57** | **1** | **402** | **7** |
 
 `moved`/`new` rows without a covering test: 298.
 
@@ -869,3 +869,5 @@ you saw.
 | learning-subcommand | (new) jope-learning bank list | crates/jope-learning/src/main.rs (jope-learning bank list) | jope-learning::pipeline_bank the_bank_is_append_only_and_content_addressed | new | Phase 5: read-only; every banked entry re-checked against its content address, optionally one dataset's; an edited bank batch fails the chain and nothing is listed |
 | learning-subcommand | (new) jope-learning bank export | crates/jope-learning/src/main.rs (jope-learning bank export) | jope-learning::pipeline_bank an_export_seeds_the_next_run; jope-learning::pipeline_bank an_export_never_ranks_across_comparison_identities | new | Phase 5: writes the best distinct banked genomes of a dataset under one HWM comparison identity as `jope.pipeline-seeds/v1` (never over an existing file); a dataset banked under several identities needs `--identity`, since scores from different cuts, protocols or source commits are never ranked together; `jope pipeline run --seed-genomes` and `jope pipeline evolve --seeds` consume it |
 | pipeline-subcommand | (new) jope pipeline score | crates/jope-pipeline/src/cli.rs (jope pipeline score) | jope-pipeline test_score::tests::the_test_split_is_scored_once_per_dataset_and_genome; jope-pipeline test_score::tests::a_score_names_the_earlier_looks_at_its_datasets_test_split | new | Phase 5: re-derives a receipt, refits its selected genome on every train.csv row and scores it once on the sha-verified test.csv; writes a separate `jope.pipeline-test-score/v1` to `<registry>/<dataset_hash>/<program_sha256>.json` (created exclusively, so a repeat for the same dataset and genome in that registry is refused before any fit); records `earlier_looks`, the other genomes already scored on that test split in the registry, and warns when there are any; nothing in the tools reads it back into selection |
+
+| new-example | (new) kernel2 pipeline v4 receipt schema | crates/jope-pipeline/examples/receipt_v4_schema.rs (receipt_v4_schema) | jope-pipeline::jope_pipeline kernel2::cli_tests::v4_schema_matches_its_generated_type_and_legacy_schemas_are_unchanged | new | Owning generator for the additive opt-in kernel2 v4 schema; legacy v1-v3 schemas and defaults unchanged. |
