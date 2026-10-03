@@ -779,7 +779,7 @@ pub fn import(root: &Path, sources: &[PathBuf]) -> Result<Value> {
         }
     }
     let mut changes = 0;
-    for (_, (_, row, path)) in &best {
+    for (_, row, path) in best.values() {
         // Historical import preserves its evidence without manufacturing a new
         // live producer event or entering the live winner publication sequence.
         changes += record_inner(root, row, path, false)? as usize;

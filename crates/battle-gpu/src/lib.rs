@@ -184,9 +184,9 @@ pub fn probe() -> Option<GpuInfo> {
 
 fn cpu_reference_score(problem: &GpuRidgeScoreProblem) -> f64 {
     let mut rows: Vec<Vec<f64>> = vec![vec![0.0; problem.p]; problem.train_n];
-    for column in 0..problem.p {
-        for row in 0..problem.train_n {
-            rows[row][column] = problem.train_x_cols[column * problem.train_n + row] as f64;
+    for (row, values) in rows.iter_mut().enumerate() {
+        for (column, value) in values.iter_mut().enumerate() {
+            *value = problem.train_x_cols[column * problem.train_n + row] as f64;
         }
     }
     let target = problem
@@ -492,7 +492,7 @@ fn run_wave(
     launch(gpu.f_col_stats, wave.len() as c_uint, 128, &mut a1)?;
     let mut a2 = ptr_args![px, py, pxo, pyo, pso, pgo, ptn, pp, pm, psc, pym, pl, pg, pb, problems];
     launch(gpu.f_gram_atb, wave.len() as c_uint, 256, &mut a2)?;
-    let chol_grid = ((wave.len() + 127) / 128) as c_uint;
+    let chol_grid = wave.len().div_ceil(128) as c_uint;
     let mut a3 = ptr_args![pgo, pso, pwo, pp, pym, pg, pb, pz, pw, problems];
     launch(gpu.f_chol_solve, chol_grid, 128, &mut a3)?;
     api.check(

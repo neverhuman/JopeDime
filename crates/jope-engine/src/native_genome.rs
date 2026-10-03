@@ -663,9 +663,8 @@ pub(crate) fn training_admission(completed_children: usize) -> &'static str {
     }
 }
 // Called only after original receipt validation; keeps parent and descendant identities distinct.
-fn summarize_outcomes(
-    all: &[(Artifact, usize, Value)],
-) -> Result<(Option<(f64, Artifact, usize)>, f64, usize)> {
+type OutcomeSummary = (Option<(f64, Artifact, usize)>, f64, usize);
+fn summarize_outcomes(all: &[(Artifact, usize, Value)]) -> Result<OutcomeSummary> {
     let mut best: Option<(f64, Artifact, usize)> = None;
     let mut runtime = 0.;
     let mut failures = 0;

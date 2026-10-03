@@ -281,11 +281,11 @@ fn tournament<'a>(
         .unwrap()
 }
 
-fn parent_pool<'a>(
+fn parent_pool(
     arm: CampaignArmV1,
-    ranked: &'a [RankedCandidateV1],
+    ranked: &[RankedCandidateV1],
     offspring: usize,
-) -> Vec<&'a RankedCandidateV1> {
+) -> Vec<&RankedCandidateV1> {
     let top: Vec<_> = ranked.iter().take(40).collect();
     if arm != CampaignArmV1::QualityDiversityGp {
         return top;

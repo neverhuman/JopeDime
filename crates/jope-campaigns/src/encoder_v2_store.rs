@@ -476,6 +476,7 @@ impl CacheKeyLock {
             .read(true)
             .write(true)
             .create(true)
+            .truncate(false)
             .open(&path)
             .with_context(|| format!("open cache-key lock: {key}"))?;
         loop {

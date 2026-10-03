@@ -24,12 +24,15 @@ pub(crate) fn check_deadline() -> anyhow::Result<()> {
     Ok(())
 }
 
+#[cfg(any(feature = "neural", test))]
 pub(crate) struct DeadlineGuard(u64);
+#[cfg(any(feature = "neural", test))]
 impl DeadlineGuard {
     pub(crate) fn new(deadline: u64) -> Self {
         Self(ACTIVE_DEADLINE.swap(deadline, Ordering::Relaxed))
     }
 }
+#[cfg(any(feature = "neural", test))]
 impl Drop for DeadlineGuard {
     fn drop(&mut self) {
         ACTIVE_DEADLINE.store(self.0, Ordering::Relaxed);
@@ -44,17 +47,14 @@ use std::{
     path::Path,
 };
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "snake_case")]
 pub enum CutStrategy {
+    #[default]
     Rotation,
     FixedAnchors,
 }
-impl Default for CutStrategy {
-    fn default() -> Self {
-        Self::Rotation
-    }
-}
+#[cfg(any(feature = "neural", test))]
 impl CutStrategy {
     fn start(&self, starts: &[usize], sequence: usize) -> usize {
         match self {

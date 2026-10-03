@@ -3234,7 +3234,7 @@ pub fn build_status(root: &Path) -> Result<Value> {
         "internal_learning": optional_json(&root.join("training/learning.json"))?,
         "milestone": optional_json(&root.join("training/milestone.json"))?,
     });
-    let tasks = task_status(&root, watermark, useful_depth > 0, &promotion)?;
+    let tasks = task_status(root, watermark, useful_depth > 0, &promotion)?;
     let four_task_telemetry = four_task_telemetry(root)?;
     let recovery = optional_json(&root.join("ops/recovery-report.v2.json"))?;
     let recovery_valid =
@@ -3941,11 +3941,10 @@ mod tests {
         dataset: &str,
         genome: &str,
         score: f64,
-        source: &str,
-        origin: &str,
-        protocol: &str,
+        provenance: (&str, &str, &str),
         created_at_ms: i64,
     ) -> Result<String> {
+        let (source, origin, protocol) = provenance;
         let semantic = sha256_bytes(genome.as_bytes());
         connection.execute(
             "INSERT INTO observations(
@@ -3994,9 +3993,11 @@ mod tests {
             "dataset-1",
             "(pipe X (ridge))",
             0.5,
-            "cross_dataset_repeated_robust_gp_winner",
-            "gp_origin",
-            &protocol,
+            (
+                "cross_dataset_repeated_robust_gp_winner",
+                "gp_origin",
+                &protocol,
+            ),
             1,
         )?;
         insert_evidence(
@@ -4005,9 +4006,11 @@ mod tests {
             "dataset-2",
             "(pipe X (ridge))",
             0.8,
-            "cross_dataset_repeated_robust_gp_winner",
-            "gp_origin",
-            &protocol,
+            (
+                "cross_dataset_repeated_robust_gp_winner",
+                "gp_origin",
+                &protocol,
+            ),
             2,
         )?;
         insert_evidence(
@@ -4016,9 +4019,7 @@ mod tests {
             "dataset-1",
             "(pipe X (ridge_gcv))",
             0.6,
-            "dataset_local_elite",
-            "gp_origin",
-            &protocol,
+            ("dataset_local_elite", "gp_origin", &protocol),
             3,
         )?;
         insert_evidence(
@@ -4027,9 +4028,7 @@ mod tests {
             "dataset-1",
             "(pipe X (elasticnet))",
             0.7,
-            "current_checkpoint_dl_proposal",
-            "dl_origin",
-            &protocol,
+            ("current_checkpoint_dl_proposal", "dl_origin", &protocol),
             4,
         )?;
         insert_evidence(
@@ -4038,9 +4037,11 @@ mod tests {
             "dataset-1",
             "(pipe X (gbm))",
             0.9,
-            "deterministic_rust_mutation_crossover",
-            "dl_descendant",
-            &protocol,
+            (
+                "deterministic_rust_mutation_crossover",
+                "dl_descendant",
+                &protocol,
+            ),
             5,
         )?;
         drop(corpus);
@@ -4306,7 +4307,7 @@ mod tests {
             scanned = pass["curve"][0]["observations"]["rows_scanned"]
                 .as_u64()
                 .unwrap();
-            if pass["observation_scan"]["caught_up"] == Value::from(true) {
+            if pass["observation_scan"]["caught_up"] == true {
                 break;
             }
         }

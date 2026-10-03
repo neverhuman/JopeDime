@@ -400,7 +400,7 @@ fn framed_socket_roundtrip_commits_original_event_before_authority_releases_star
         )
         .unwrap();
     let ack = thread.join().unwrap();
-    assert_eq!(ack.body.authority_sequence > 0, true);
+    assert!(ack.body.authority_sequence > 0);
     assert_eq!(start.fit_key, fit.key());
     let journal = fs::read_to_string(f.authority.join("dispatch.jsonl")).unwrap();
     assert_eq!(
@@ -720,8 +720,12 @@ fn public_snapshot_requires_exact_original_authority_ack_membership() {
     let f = Fixture::new();
     let request = f.request();
     let ack = f.store().record_authorization(&request).unwrap();
-    let result =
-        WitnessStore::verify_public_history_with_acks(&f.root, &f.policy, &[ack.clone()]).unwrap();
+    let result = WitnessStore::verify_public_history_with_acks(
+        &f.root,
+        &f.policy,
+        std::slice::from_ref(&ack),
+    )
+    .unwrap();
     assert_eq!(result["required_ack_count"], 1);
     let mut absent = ack.clone();
     absent.body.authority_sequence += 1;

@@ -258,6 +258,9 @@ pub fn append_event(archive: &Path, record: Value) -> Result<()> {
 /// on another node is streamed into memory first (these files are kilobytes).
 pub trait SourceReader {
     fn len(&self) -> Result<u64>;
+    fn is_empty(&self) -> Result<bool> {
+        Ok(self.len()? == 0)
+    }
     fn read_range(&self, offset: u64, len: usize) -> Result<Vec<u8>>;
 }
 
@@ -1170,10 +1173,11 @@ fn walk_metrics(dir: &Path, depth: usize, out: &mut Vec<PathBuf>) {
         let path = entry.path();
         match entry.file_type() {
             Ok(kind) if kind.is_dir() => walk_metrics(&path, depth + 1, out),
-            Ok(kind) if kind.is_file() => {
-                if path.file_name().and_then(|n| n.to_str()) == Some(METRICS_FILE) {
-                    out.push(path);
-                }
+            Ok(kind)
+                if kind.is_file()
+                    && path.file_name().and_then(|n| n.to_str()) == Some(METRICS_FILE) =>
+            {
+                out.push(path);
             }
             _ => {}
         }
@@ -2109,7 +2113,7 @@ mod tests {
     fn remote_paths_that_could_reach_a_shell_are_refused() {
         let source = RemoteSource {
             node: "xbabe1".into(),
-            runs_root: jope_paths::to_string(&crate::paths::scq_runs_root()).into(),
+            runs_root: jope_paths::to_string(&crate::paths::scq_runs_root()),
             relative: "run/../../etc/shadow".into(),
             len: 10,
             deadline_secs: 5,

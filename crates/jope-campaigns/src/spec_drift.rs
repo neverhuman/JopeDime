@@ -658,12 +658,11 @@ fn scan_file(repo_root: &Path, rel: &str) -> std::io::Result<Vec<RenderSite>> {
                 }
             }
         }
-        let dep_form = if central_policy
+        let dep_form = if (central_policy
             && window2.contains("render_placement_block()")
-            && family.is_some_and(|family| !spec_policy::policy(family).smoke.is_empty())
+            && family.is_some_and(|family| !spec_policy::policy(family).smoke.is_empty()))
+            || window2.contains("[[dependencies.smoke]]")
         {
-            DepForm::Smoke
-        } else if window2.contains("[[dependencies.smoke]]") {
             DepForm::Smoke
         } else if window2.contains("smoke = [") {
             DepForm::SmokeInline
@@ -817,7 +816,7 @@ pub fn audit(sites: &[RenderSite]) -> Vec<Finding> {
     for family in Family::all() {
         let p = spec_policy::policy(family);
         if let (Some(peak), Some(margin)) = (p.measured_peak_mb, p.margin()) {
-            if margin < spec_policy::MIN_MARGIN || margin > spec_policy::MAX_MARGIN {
+            if !(spec_policy::MIN_MARGIN..=spec_policy::MAX_MARGIN).contains(&margin) {
                 findings.push(Finding::MarginOutOfBounds {
                     family,
                     ram_mb: p.ram_mb,

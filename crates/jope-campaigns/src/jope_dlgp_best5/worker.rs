@@ -1497,7 +1497,11 @@ pub fn run_search_one(
         if arm == Best5ArmV1::CrossFittedResidualDlgp && generation >= 4 {
             let base = FrozenPredictorV1::single(frozen_residual_base.clone().unwrap());
             for _ in 0..6 {
-                context.evaluate_search_split(&training.table, split, &[base.clone()])?;
+                context.evaluate_search_split(
+                    &training.table,
+                    split,
+                    std::slice::from_ref(&base),
+                )?;
             }
         }
     }
@@ -1524,7 +1528,9 @@ pub fn run_search_one(
         .zip(&last_ranked)
         .map(|(predictor, member)| best5_ancestry(member, predictor))
         .collect::<Vec<_>>();
-    let mut archive_evidence = vec![Vec::with_capacity(SEARCH_SPLITS); 20];
+    let mut archive_evidence = (0..20)
+        .map(|_| Vec::with_capacity(SEARCH_SPLITS))
+        .collect::<Vec<_>>();
     for split in &split_plan.splits {
         let evaluated =
             context.evaluate_search_split(&training.table, split, &archive_predictors)?;
@@ -1650,20 +1656,21 @@ pub fn run_search_one(
             weights: fit.weights,
         };
         let replaced_semantic = lane_predictors[0].semantic_sha256()?;
-        let mut portfolio_folds = Vec::with_capacity(7);
-        for fold in 0..7 {
-            let components = lane_predictors
-                .iter()
-                .map(|predictor| Ok(by_finalist[&predictor.semantic_sha256()?][fold].clone()))
-                .collect::<Result<Vec<_>, String>>()?;
-            let replaced_receipt = components[0].receipt.clone();
-            portfolio_folds.push(context.replace_with_derived_predictor(
-                &training.table,
-                portfolio.clone(),
-                &components,
-                &replaced_receipt,
-            )?);
-        }
+        let portfolio_folds = (0..7)
+            .map(|fold| {
+                let components = lane_predictors
+                    .iter()
+                    .map(|predictor| Ok(by_finalist[&predictor.semantic_sha256()?][fold].clone()))
+                    .collect::<Result<Vec<_>, String>>()?;
+                let replaced_receipt = components[0].receipt.clone();
+                context.replace_with_derived_predictor(
+                    &training.table,
+                    portfolio.clone(),
+                    &components,
+                    &replaced_receipt,
+                )
+            })
+            .collect::<Result<Vec<_>, String>>()?;
         by_finalist.remove(&replaced_semantic);
         by_finalist.insert(portfolio.semantic_sha256()?, portfolio_folds);
         finalist_predictors[0] = portfolio;

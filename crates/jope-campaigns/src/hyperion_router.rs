@@ -495,7 +495,7 @@ pub fn build_grouped_outer_plan_v2(
             .then(a.cmp(b))
     });
     let mut fold_groups = vec![Vec::<String>::new(); OUTER_FOLDS];
-    let mut fold_rows = vec![0usize; OUTER_FOLDS];
+    let mut fold_rows = [0usize; OUTER_FOLDS];
     for (index, group) in ordered.into_iter().enumerate() {
         let fold = if index < OUTER_FOLDS * MINIMUM_HOLD_GROUPS {
             index % OUTER_FOLDS

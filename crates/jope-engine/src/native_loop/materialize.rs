@@ -146,7 +146,7 @@ impl Loop {
                     Delivery::Resident {
                         job_id: self.config.resident_job,
                     },
-                    settings.resident_resources.clone(),
+                    settings.resident_resources,
                     Some(checkpoint.sha256),
                     Some(corpus.sha256),
                 )
@@ -219,7 +219,7 @@ impl Loop {
                     Delivery::Resident {
                         job_id: self.config.resident_job,
                     },
-                    settings.resident_resources.clone(),
+                    settings.resident_resources,
                     Some(checkpoint.sha256),
                     Some(corpus.sha256),
                 )
@@ -266,7 +266,7 @@ impl Loop {
                     inputs,
                     TaskKind::Packing,
                     Delivery::NativeJob,
-                    settings.packing_resources.clone(),
+                    settings.packing_resources,
                     None,
                     None,
                 )
