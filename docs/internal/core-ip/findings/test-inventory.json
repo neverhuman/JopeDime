@@ -2094,6 +2094,13 @@
       "subsystems": [
         "gp"
       ]
+    },
+    "target:feat-math/test/inverse_links_v2": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "export"
+      ]
     }
   },
   "baseline_triage": [
