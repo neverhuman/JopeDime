@@ -38,11 +38,17 @@ pub fn numerical_asinh_v2(input: f64) -> (f64, u32) {
     numerical_finish_v2(value.copysign(input))
 }
 
-fn numerical_neumaier_v2(row: &[f64], absolute: bool, divisor: f64) -> f64 {
+fn numerical_neumaier_v2(row: &[f64], absolute: bool, divisor: f64, scaling_loss: bool) -> f64 {
     let mut sum = 0.0_f64;
     let mut correction = 0.0_f64;
     for &input in row {
-        let value = if absolute { input.abs() } else { input } / divisor;
+        let original = if absolute { input.abs() } else { input };
+        let divided = original / divisor;
+        let value = if scaling_loss {
+            original - divided * divisor
+        } else {
+            divided
+        };
         let next = sum + value;
         correction += if sum.abs() >= value.abs() {
             (sum - next) + value
@@ -95,19 +101,26 @@ pub fn numerical_reduce_v2(kind: &str, row: &[f64]) -> Result<(f64, u32), &'stat
         }
         return Ok(numerical_finish_v2(scale * root));
     }
-    let mut value = numerical_neumaier_v2(row, kind == "l1", 1.0);
+    let mut value = numerical_neumaier_v2(row, kind == "l1", 1.0, false);
     if kind == "mean" {
         let count = row.len() as f64;
         value = if value.is_finite() {
             value / count
         } else {
-            // Half scaling leaves headroom even when rounded divided inputs
-            // would overflow at a non-power-of-two row width.
-            let half = numerical_neumaier_v2(row, false, count * 2.0);
-            if half.abs() > NUMERICAL_MAX_V2 / 2.0 {
-                return Ok((NUMERICAL_MAX_V2.copysign(half), NUMERICAL_CLAMP_V2));
+            // Power-of-two scaling preserves normal input bits and leaves
+            // headroom. Retain the rounding loss of tiny scaled inputs too.
+            let mut scale = 2.0;
+            while scale < count * 2.0 {
+                scale *= 2.0;
             }
-            half * 2.0
+            let scaled = numerical_neumaier_v2(row, false, scale, false);
+            // An unrepresentable numerator divided by any usize row count
+            // still exceeds the output bound; clamp before restoring scale.
+            if scaled.abs() > f64::MAX / scale {
+                return Ok((NUMERICAL_MAX_V2.copysign(scaled), NUMERICAL_CLAMP_V2));
+            }
+            let loss = numerical_neumaier_v2(row, false, scale, true);
+            (scaled * scale + loss) / count
         };
     }
     Ok(numerical_finish_v2(value))

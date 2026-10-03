@@ -9073,5 +9073,101 @@
         }
       }
     }
+  ],
+  "mean_cancellation": [
+    {
+      "input_bits": [
+        "7fefffffffffffff",
+        "7fefffffffffffff",
+        "ffeffffffffffffe",
+        "ffeffffffffffffe",
+        "fcb0000000000000"
+      ],
+      "oracle_bits": "0000000000000000",
+      "fault_bits": 0
+    },
+    {
+      "input_bits": [
+        "7fefffffffffffff",
+        "7fefffffffffffff",
+        "ffeffffffffffffe",
+        "ffeffffffffffffe",
+        "fcb0000000000000",
+        "3ff0000000000000"
+      ],
+      "oracle_bits": "3fc5555555555555",
+      "fault_bits": 0
+    },
+    {
+      "input_bits": [
+        "7fefffffffffffff",
+        "7fefffffffffffff",
+        "ffeffffffffffffe",
+        "ffeffffffffffffe",
+        "fcb0000000000000",
+        "0010000000000000"
+      ],
+      "oracle_bits": "0002aaaaaaaaaaab",
+      "fault_bits": 0
+    },
+    {
+      "input_bits": [
+        "7fefffffffffffff",
+        "7fefffffffffffff",
+        "ffeffffffffffffe",
+        "ffeffffffffffffe",
+        "fcb0000000000000",
+        "0000000000000007"
+      ],
+      "oracle_bits": "0000000000000001",
+      "fault_bits": 0
+    },
+    {
+      "input_bits": [
+        "ffefffffffffffff",
+        "ffefffffffffffff",
+        "7feffffffffffffe",
+        "7feffffffffffffe",
+        "7cb0000000000000"
+      ],
+      "oracle_bits": "0000000000000000",
+      "fault_bits": 0
+    },
+    {
+      "input_bits": [
+        "ffefffffffffffff",
+        "ffefffffffffffff",
+        "7feffffffffffffe",
+        "7feffffffffffffe",
+        "7cb0000000000000",
+        "bff0000000000000"
+      ],
+      "oracle_bits": "bfc5555555555555",
+      "fault_bits": 0
+    },
+    {
+      "input_bits": [
+        "ffefffffffffffff",
+        "ffefffffffffffff",
+        "7feffffffffffffe",
+        "7feffffffffffffe",
+        "7cb0000000000000",
+        "8010000000000000"
+      ],
+      "oracle_bits": "8002aaaaaaaaaaab",
+      "fault_bits": 0
+    },
+    {
+      "input_bits": [
+        "ffefffffffffffff",
+        "ffefffffffffffff",
+        "7feffffffffffffe",
+        "7feffffffffffffe",
+        "7cb0000000000000",
+        "8000000000000007"
+      ],
+      "oracle_bits": "8000000000000001",
+      "fault_bits": 0
+    }
   ]
 }
