@@ -20,7 +20,8 @@ no evaluator-identity input or existing frozen fixture is edited/regenerated.
 - Asinh uses tiny-input identity, log1p/central, middle and huge logarithmic
   branches; signed zero is preserved.
 - Sum/l1/mean use ordered Neumaier compensation. Mean retries after dividing
-  each input by the row count when its unscaled sum is nonfinite.
+  each input by twice the row count when its unscaled sum is nonfinite,
+  checking saturation before restoring the half scale.
 - L2 uses scaled sum of squares, checking the 1e12 saturation bound before
   multiplication so even a norm above f64::MAX is saturated safely.
 - Nonfinite inputs produce +0 with NONFINITE_INPUT. Empty sum/l1/l2 are
@@ -35,20 +36,27 @@ References stay in documentation outside emitted text.
 
 ## Focused proof and acceptance
 
-`cargo test -p feat-math --locked --test numerical_policy_v2` executes nine
+`cargo test -p feat-math --locked --test numerical_policy_v2` executes ten
 nonignored tests. Tests-first missing-module failure is retained, followed by
 five initial passes. The expanded run retained its two IP-scrub failures:
 a reference URL was included in emitted Rust. Moving the reference into
 non-emitted module documentation corrected both without changing the gate.
-The corrected focused run passed 9/9.
+The initial corrected focused run passed 9/9. Independent native review
+5401784989 then found finite extreme means at non-power-of-two widths
+returning zero/NONFINITE_SANITIZED. A new regression preserves that failure;
+the half-scaled retry fixes it without changing the finite unscaled path.
 
-The additive v2 corpus pins 1,380 asinh inputs and 64 row inputs with an
+The additive v2 corpus pins 1,380 asinh inputs and 72 row inputs with an
 independent mpmath 1.3.0 / 180-decimal-digit oracle (generator and corpus
 hashes in custody). Normal oracle results are within two ULP; exact zero
 and one-min-subnormal absolute bounds are checked separately. Guarded
 nonfinite/unrepresentable inputs and saturation have explicit expected faults.
 
-Rust runtime and helper twins execute 1,636 value/fault observations in
+The original 64 row cases are preserved. Eight independent-oracle rows add
+positive and negative f64::MAX at widths 3, 6, 7 and 9; the runtime regression
+covers both signs at every width from 2 through 32.
+
+Rust runtime and helper twins execute 1,668 value/fault observations in
 each of nine drivers: rustc -O, Python 3.12.3, g++ and clang++ C++17 O2/O3
 and C++20 O3, plus g++ C++17 ASan/UBSan. C++ always disables contraction
 and fast math. Empty rows and unknown helper reduction names are exercised.

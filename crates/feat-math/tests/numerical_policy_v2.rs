@@ -42,6 +42,26 @@ fn neumaier_preserves_the_cancellation_term_in_input_order() {
 }
 
 #[test]
+fn finite_extreme_means_clamp_at_non_power_of_two_widths() {
+    for count in 2..=32 {
+        for sign in [1.0_f64, -1.0] {
+            let row = vec![sign * f64::MAX; count];
+            let (value, faults) = reduce_v2(Reduction::Mean, &row);
+            assert_eq!(
+                value.to_bits(),
+                (sign * 1.0e12).to_bits(),
+                "width {count}, sign {sign}"
+            );
+            assert_eq!(
+                faults,
+                FaultSet::MAGNITUDE_CLAMPED,
+                "width {count}, sign {sign}"
+            );
+        }
+    }
+}
+
+#[test]
 fn scaled_l2_saturates_huge_finite_norms_and_retains_tiny_norms() {
     assert_eq!(
         reduce_v2(Reduction::L2, &[3.0e200, 4.0e200]),
@@ -176,7 +196,7 @@ fn asinh_matches_the_independent_high_precision_boundary_corpus() {
 #[test]
 fn stable_reductions_match_the_independent_boundary_oracle() {
     let cases = corpus().rows;
-    assert_eq!(cases.len(), 64);
+    assert_eq!(cases.len(), 72);
     for case in cases {
         let row: Vec<_> = case.input_bits.iter().map(|s| value(s)).collect();
         for (reduction, name) in reductions() {
