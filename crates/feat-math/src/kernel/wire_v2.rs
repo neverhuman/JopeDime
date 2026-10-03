@@ -7,14 +7,15 @@
 
 use super::codec::{Reader, Writer, MAX_BYTES};
 use super::export::{self, ExportReport, FittedBasis, Route};
+use super::expression_v2::ScalarExpressionProgram;
 use super::Program;
 use crate::{GenomeIr, Model};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 const MAGIC_PREFIX: &[u8] = b"FMKPRG\0";
-const MAGIC_V2: &[u8] = b"FMKPRG\0\x02";
-const READER_VERSION: u8 = 2;
+pub(super) const MAGIC_V2: &[u8] = b"FMKPRG\0\x02";
+pub(super) const READER_VERSION: u8 = 2;
 const RESERVATION_FEATURE: u64 = 1;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
@@ -280,6 +281,7 @@ impl ReservedProgram {
 pub enum VersionedProgram {
     LegacyV1(Program),
     ReservedV2(ReservedProgram),
+    ScalarV2(ScalarExpressionProgram),
 }
 
 impl VersionedProgram {
@@ -289,7 +291,14 @@ impl VersionedProgram {
         }
         match bytes[MAGIC_PREFIX.len()] {
             1 => Ok(Self::LegacyV1(Program::from_bytes(bytes)?)),
-            2 => Ok(Self::ReservedV2(ReservedProgram::from_bytes(bytes)?)),
+            2 => match bytes.get(MAGIC_V2.len()) {
+                Some(0) => Ok(Self::ReservedV2(ReservedProgram::from_bytes(bytes)?)),
+                Some(1) => Ok(Self::ScalarV2(ScalarExpressionProgram::from_bytes(bytes)?)),
+                Some(_) => Err(VersionError::UnsupportedVersion(
+                    "program v2 variant".into(),
+                )),
+                None => Err(VersionError::Malformed("truncated program variant".into())),
+            },
             version => Err(VersionError::UnsupportedVersion(format!(
                 "program envelope {version}"
             ))),
@@ -300,6 +309,7 @@ impl VersionedProgram {
         match self {
             Self::LegacyV1(program) => Ok(program.to_bytes()?),
             Self::ReservedV2(program) => program.to_bytes(),
+            Self::ScalarV2(program) => program.to_bytes(),
         }
     }
 
@@ -309,13 +319,16 @@ impl VersionedProgram {
             Self::ReservedV2(_) => Err(VersionError::UnsupportedVersion(
                 "version 2 reservations are not executable".into(),
             )),
+            Self::ScalarV2(_) => Err(VersionError::UnsupportedVersion(
+                "version 2 scalar execution is not admitted".into(),
+            )),
         }
     }
 
     pub fn to_lossless_text(&self) -> VersionResult<String> {
         match self {
             Self::LegacyV1(program) => Ok(program.to_lossless_text()?),
-            Self::ReservedV2(_) => Ok(format!(
+            Self::ReservedV2(_) | Self::ScalarV2(_) => Ok(format!(
                 "(program codec=2 hex=\"{}\")",
                 self.to_bytes()?
                     .iter()
@@ -333,7 +346,9 @@ impl VersionedProgram {
             .strip_prefix("(program codec=2 hex=\"")
             .and_then(|value| value.strip_suffix("\")"))
         else {
-            return if text.starts_with("(program codec=") {
+            return if text.starts_with("(program codec=2 ") || text == "(program codec=2)" {
+                Err(VersionError::Malformed("program text envelope".into()))
+            } else if text.starts_with("(program codec=") {
                 Err(VersionError::UnsupportedVersion(
                     "program text codec".into(),
                 ))
@@ -356,7 +371,7 @@ impl VersionedProgram {
             })
             .collect::<VersionResult<Vec<_>>>()?;
         match Self::from_bytes(&bytes)? {
-            value @ Self::ReservedV2(_) => Ok(value),
+            value @ (Self::ReservedV2(_) | Self::ScalarV2(_)) => Ok(value),
             Self::LegacyV1(_) => Err(VersionError::UnsupportedVersion(
                 "program text codec/body mismatch".into(),
             )),
@@ -370,6 +385,18 @@ pub fn export_report(program: &VersionedProgram) -> ExportReport {
         VersionedProgram::LegacyV1(Program::LegacyV1(genome)) => export::export_report(genome),
         VersionedProgram::ReservedV2(_) => {
             let refusal = Route::Unsupported(vec!["version 2 reservation-only".into()]);
+            ExportReport {
+                rust_recipe: refusal.clone(),
+                python_recipe: refusal.clone(),
+                cpp17_recipe: refusal.clone(),
+                cpp17_fitted: refusal.clone(),
+                cpp17_fitted_basis: FittedBasis::Declared,
+                javascript: refusal,
+            }
+        }
+        VersionedProgram::ScalarV2(_) => {
+            let refusal =
+                Route::Unsupported(vec!["version 2 scalar export is not admitted".into()]);
             ExportReport {
                 rust_recipe: refusal.clone(),
                 python_recipe: refusal.clone(),
