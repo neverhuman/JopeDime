@@ -27,8 +27,10 @@ For each first observation, the test prints the exact profile digest, operator
 arm, seed, width and before/donor/after programs, and replays the public wrapper
 to obtain the identical child. No narrowed pool or forced weights manufacture
 coverage. Missing observations, truncated trial denominators, unexercised arms
-and invalid children fail the gate. Two negative controls refuse missing/no-op
-histories and scalar witnesses inferred from structural input or unrelated edits.
+and invalid children fail the gate. One nonignored case per shipped profile keeps
+the complete trials within the existing PR timeout. Two short negative controls
+refuse missing/no-op histories and scalar witnesses inferred from structural
+input or unrelated edits; they do not duplicate the full trial loops.
 
 Acceptance:
 
@@ -37,7 +39,7 @@ cargo test --locked -p feat-math --test kernel2_closure -- --nocapture
 cargo clippy --locked -p feat-math --all-targets -- -D warnings
 ```
 
-This is a test and inventory change. It does not change production operators,
+This is a test and witness change. It does not change production operators,
 profiles, admission, codecs, manifests, models, evaluator identity or emitted
 source. Existing clauses (a), (c), (d), declared (e), old revision counts and
 strict golden/compatibility gates remain. It does not qualify execution closure,

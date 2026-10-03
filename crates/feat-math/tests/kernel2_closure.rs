@@ -22,7 +22,6 @@ mod eec_generation;
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 struct Counts {
     a: usize,
-    b: usize,
     c: usize,
     d: usize,
     e: usize,
@@ -746,7 +745,6 @@ fn closure(manifest: &Manifest, profiles: &[SearchProfile]) -> ClosureReport {
     for profile in profiles {
         let counts = Counts {
             a: clause_a(manifest, profile, &mut report),
-            b: clause_b(profile, &mut report),
             c: clause_c(manifest, profile, &mut report),
             d: clause_d(manifest, profile, &mut report),
             e: clause_e(manifest, profile, &mut report),
@@ -792,8 +790,8 @@ fn every_profile_element_is_closed() {
             .get(&(profile.id.to_owned(), profile.revision))
             .unwrap();
         println!(
-            "{} r{}: (a) {} (b) {} (c) {} (d) {} declared (e) {}",
-            profile.id, profile.revision, counts.a, counts.b, counts.c, counts.d, counts.e
+            "{} r{}: (a) {} (c) {} (d) {} declared (e) {}",
+            profile.id, profile.revision, counts.a, counts.c, counts.d, counts.e
         );
         assert!(
             matches!(
@@ -805,17 +803,13 @@ fn every_profile_element_is_closed() {
             profile.revision
         );
         assert_eq!(counts.a, 51);
-        assert_eq!(counts.b, if profile.revision == 3 { 51 } else { 0 });
         assert_eq!(counts.c, 956_412);
         assert_eq!(counts.d, 233);
         assert_eq!(counts.e, 153);
     }
     println!("manifest-wide (c): {}", report.manifest_c);
     assert_eq!(report.manifest_c, 971_397);
-    for profile in &shipped {
-        eec_generation::shipped(profile).unwrap().print(profile);
-    }
-    println!("(b) each shipped-profile element has replayed creation/edit/removal witnesses; 200k births +100k mutations +100k crossovers per profile, zero invalid children");
+    println!("(b) checked by the two shipped-profile generation closure cases in this target");
     println!("(e) by execution pending PR 16");
     let gaps: Vec<_> = manifest
         .ops
@@ -828,6 +822,27 @@ fn every_profile_element_is_closed() {
     assert!(!gaps.is_empty());
     println!("JavaScript: subset only");
     assert!(report.violations.is_empty(), "{:#?}", report.violations);
+}
+
+fn generation_closure(profile: &SearchProfile) {
+    let mut report = ClosureReport::default();
+    assert_eq!(clause_b(profile, &mut report), profile.elements().len());
+    assert!(report.violations.is_empty(), "{:#?}", report.violations);
+    eec_generation::shipped(profile).unwrap().print(profile);
+    println!(
+        "(b) {}: 200k births +100k mutations +100k crossovers, zero invalid children",
+        profile.id
+    );
+}
+
+#[test]
+fn shipped_baseline_elements_have_generation_closure() {
+    generation_closure(&profile::shipped_kernel2_profiles().remove(0));
+}
+
+#[test]
+fn shipped_experimental_elements_have_generation_closure() {
+    generation_closure(&profile::shipped_kernel2_profiles().remove(1));
 }
 
 fn baseline() -> SearchProfile {

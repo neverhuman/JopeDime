@@ -386,30 +386,31 @@ fn exercise(profile: &SearchProfile) -> Evidence {
 }
 
 pub fn shipped(profile: &SearchProfile) -> Option<&'static Evidence> {
-    static EVIDENCE: OnceLock<Vec<Evidence>> = OnceLock::new();
-    EVIDENCE
-        .get_or_init(|| shipped_kernel2_profiles().iter().map(exercise).collect())
+    static EVIDENCE: [OnceLock<Evidence>; 2] = [OnceLock::new(), OnceLock::new()];
+    shipped_kernel2_profiles()
         .iter()
-        .find(|row| row.profile_sha256 == profile.sha256())
+        .enumerate()
+        .find(|(_, shipped)| shipped.sha256() == profile.sha256())
+        .map(|(index, shipped)| EVIDENCE[index].get_or_init(|| exercise(shipped)))
 }
 
 #[test]
 fn missing_transitions_and_noop_histories_do_not_close_clause_b() {
     let profile = shipped_kernel2_profiles().remove(0);
-    let evidence = shipped(&profile).unwrap();
-    assert!(evidence.violations(&profile).is_empty());
+    // Counts without actual first witnesses cannot qualify any transition.
+    let mut incomplete = Evidence::new(&profile);
+    for row in incomplete.transitions.values_mut() {
+        row.created = 1;
+        row.edited = 1;
+        row.removed = 1;
+    }
+    let failures = incomplete.violations(&profile);
     for action in ["created", "edited", "removed"] {
-        let mut incomplete = evidence.clone();
-        for row in incomplete.transitions.values_mut() {
-            match action {
-                "created" => row.birth = None,
-                "edited" => row.edit = None,
-                "removed" => row.removal = None,
-                _ => unreachable!(),
-            }
-        }
         assert_eq!(
-            incomplete.violations(&profile).len(),
+            failures
+                .iter()
+                .filter(|reason| reason.ends_with(&format!("{action} not witnessed")))
+                .count(),
             profile.elements().len()
         );
     }
