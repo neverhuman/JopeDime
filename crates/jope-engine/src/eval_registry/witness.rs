@@ -460,7 +460,7 @@ fn event_identity_effective(
                         && row["id"] == id
                         && value.payload["participant_id"] == id
                         && row["reservation_id"] == original.reservation_id()
-                        && row["slot"] == slot
+                        && row["slot"].as_str() == Some(slot.to_string().as_str())
                         && stored == original,
                     "funding participant postimage differs from original"
                 );
