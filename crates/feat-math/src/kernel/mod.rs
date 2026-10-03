@@ -8,6 +8,7 @@ pub mod codec;
 pub mod export;
 pub mod expression_recipe;
 pub mod expression_search;
+pub mod inverse_links;
 pub mod ordered_axis;
 pub mod pipeline;
 pub mod profile;

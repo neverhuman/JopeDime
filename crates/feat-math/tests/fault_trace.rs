@@ -42,7 +42,7 @@ use std::time::Instant;
 
 /// The append-only table: bit, class, stable name and severity.
 #[rustfmt::skip]
-const CLASSES: [(u32, FaultSet, &str, FaultSeverity); 16] = [
+const CLASSES: [(u32, FaultSet, &str, FaultSeverity); 17] = [
     (0, FaultSet::DIV_NEAR_ZERO, "DIV_NEAR_ZERO", FaultSeverity::Domain),
     (1, FaultSet::LOG_DOMAIN, "LOG_DOMAIN", FaultSeverity::Domain),
     (2, FaultSet::LOG1P_DOMAIN, "LOG1P_DOMAIN", FaultSeverity::Domain),
@@ -59,6 +59,7 @@ const CLASSES: [(u32, FaultSet, &str, FaultSeverity); 16] = [
     (13, FaultSet::NONFINITE_INPUT, "NONFINITE_INPUT", FaultSeverity::Domain),
     (14, FaultSet::EMPTY_ROW_REDUCTION, "EMPTY_ROW_REDUCTION", FaultSeverity::Domain),
     (15, FaultSet::COMPILE_FAILED, "COMPILE_FAILED", FaultSeverity::Hard),
+    (16, FaultSet::PROBABILITY_CLAMPED, "PROBABILITY_CLAMPED", FaultSeverity::Saturation),
 ];
 
 #[test]
@@ -79,11 +80,11 @@ fn fault_bits_names_and_severities_are_append_only() {
         assert_eq!(set.to_string(), format!("{{{name}}}"));
         assert_eq!(set.severity(), Some(severity), "{name}");
     }
-    assert_eq!(FaultSet::ALL.bits(), 0xffff);
+    assert_eq!(FaultSet::ALL.bits(), 0x1ffff);
     // Each class has exactly one severity: the three masks partition the classes.
     assert_eq!(FaultSeverity::Hard.classes().bits(), 0x9c00);
     assert_eq!(FaultSeverity::Domain.classes().bits(), 0x611f);
-    assert_eq!(FaultSeverity::Saturation.classes().bits(), 0x02e0);
+    assert_eq!(FaultSeverity::Saturation.classes().bits(), 0x102e0);
     assert_eq!(FaultSeverity::Saturation.name(), "saturation");
     assert_eq!(FaultSeverity::Domain.name(), "domain");
     assert_eq!(FaultSeverity::Hard.name(), "hard");
