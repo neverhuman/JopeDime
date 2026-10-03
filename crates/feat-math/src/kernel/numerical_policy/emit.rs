@@ -39,11 +39,13 @@ def numerical_asinh_v2(value):
         square=a*a
         result=math.log1p(a+square/(1.0+math.sqrt(1.0+square)))
     return numerical_finish_v2(math.copysign(result,value))
-def numerical_neumaier_v2(row,absolute,divisor):
+def numerical_neumaier_v2(row,absolute,divisor,scaling_loss):
     total=0.0
     correction=0.0
     for cell in row:
-        value=(abs(cell) if absolute else cell)/divisor
+        original=abs(cell) if absolute else cell
+        divided=original/divisor
+        value=original-divided*divisor if scaling_loss else divided
         next_value=total+value
         if abs(total)>=abs(value):
             correction+=(total-next_value)+value
@@ -76,22 +78,27 @@ def numerical_reduce_v2(kind,row):
         if scale>1e12/root:
             return (1e12,1<<9)
         return numerical_finish_v2(scale*root)
-    value=numerical_neumaier_v2(row,kind=='l1',1.0)
+    value=numerical_neumaier_v2(row,kind=='l1',1.0,False)
     if kind=='mean':
         count=float(len(row))
         if math.isfinite(value):
             value=value/count
         else:
-            half=numerical_neumaier_v2(row,False,count*2.0)
-            if abs(half)>1e12/2.0:
-                return (math.copysign(1e12,half),1<<9)
-            value=half*2.0
+            scale=2.0
+            while scale<count*2.0:
+                scale*=2.0
+            scaled=numerical_neumaier_v2(row,False,scale,False)
+            if abs(scaled)>float.fromhex('0x1.fffffffffffffp+1023')/scale:
+                return (math.copysign(1e12,scaled),1<<9)
+            loss=numerical_neumaier_v2(row,False,scale,True)
+            value=(scaled*scale+loss)/count
     return numerical_finish_v2(value)
 "#;
 
 const CPP: &str = r#"
 #include <cmath>
 #include <cstdint>
+#include <limits>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -115,10 +122,12 @@ static std::pair<double,std::uint32_t> numerical_asinh_v2(double value) {
     }
     return numerical_finish_v2(std::copysign(result,value));
 }
-static double numerical_neumaier_v2(const std::vector<double>& row,bool absolute,double divisor) {
+static double numerical_neumaier_v2(const std::vector<double>& row,bool absolute,double divisor,bool scaling_loss) {
     double total=0.0,correction=0.0;
     for(const double cell:row) {
-        const double value=(absolute?std::abs(cell):cell)/divisor;
+        const double original=absolute?std::abs(cell):cell;
+        const double divided=original/divisor;
+        const double value=scaling_loss?original-divided*divisor:divided;
         const double next=total+value;
         correction+=std::abs(total)>=std::abs(value)?(total-next)+value:(value-next)+total;
         total=next;
@@ -148,14 +157,18 @@ static std::pair<double,std::uint32_t> numerical_reduce_v2(const std::string& ki
         if(scale>1e12/root) return {1e12,1u<<9};
         return numerical_finish_v2(scale*root);
     }
-    double value=numerical_neumaier_v2(row,kind=="l1",1.0);
+    double value=numerical_neumaier_v2(row,kind=="l1",1.0,false);
     if(kind=="mean") {
         const double count=static_cast<double>(row.size());
         if(std::isfinite(value)) value/=count;
         else {
-            const double half=numerical_neumaier_v2(row,false,count*2.0);
-            if(std::abs(half)>1e12/2.0) return {std::copysign(1e12,half),1u<<9};
-            value=half*2.0;
+            double scale=2.0;
+            while(scale<count*2.0) scale*=2.0;
+            const double scaled=numerical_neumaier_v2(row,false,scale,false);
+            if(std::abs(scaled)>std::numeric_limits<double>::max()/scale)
+                return {std::copysign(1e12,scaled),1u<<9};
+            const double loss=numerical_neumaier_v2(row,false,scale,true);
+            value=(scaled*scale+loss)/count;
         }
     }
     return numerical_finish_v2(value);

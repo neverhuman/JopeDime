@@ -62,6 +62,41 @@ fn finite_extreme_means_clamp_at_non_power_of_two_widths() {
 }
 
 #[test]
+fn overflowing_mean_preserves_exact_cancellation_and_small_residuals() {
+    let maximum = f64::MAX;
+    let previous = f64::from_bits(maximum.to_bits() - 1);
+    let gap = maximum - previous;
+    for sign in [1.0_f64, -1.0] {
+        for residual in [0.0, 1.0, f64::MIN_POSITIVE, f64::from_bits(7)] {
+            // The first five binary-rational values sum to exactly zero.
+            let mut row = vec![maximum, maximum, -previous, -previous, -2.0 * gap];
+            if residual != 0.0 {
+                row.push(residual);
+            }
+            for value in &mut row {
+                *value *= sign;
+            }
+            let expected = if residual == 0.0 {
+                0.0
+            } else {
+                (sign * residual) / row.len() as f64
+            };
+            let (value, faults) = reduce_v2(Reduction::Mean, &row);
+            assert_eq!(
+                value.to_bits(),
+                expected.to_bits(),
+                "sign {sign}, residual {residual:e}"
+            );
+            assert_eq!(
+                faults,
+                FaultSet::EMPTY,
+                "sign {sign}, residual {residual:e}"
+            );
+        }
+    }
+}
+
+#[test]
 fn scaled_l2_saturates_huge_finite_norms_and_retains_tiny_norms() {
     assert_eq!(
         reduce_v2(Reduction::L2, &[3.0e200, 4.0e200]),
@@ -119,6 +154,7 @@ fn empty_reductions_keep_their_defined_identity_or_fault() {
 struct Corpus {
     asinh: Vec<ScalarCase>,
     rows: Vec<RowCase>,
+    mean_cancellation: Vec<MeanCase>,
 }
 
 #[derive(Deserialize)]
@@ -138,6 +174,13 @@ struct Expected {
 struct RowCase {
     input_bits: Vec<String>,
     expected: BTreeMap<String, Expected>,
+}
+
+#[derive(Deserialize)]
+struct MeanCase {
+    input_bits: Vec<String>,
+    oracle_bits: String,
+    fault_bits: u32,
 }
 
 fn corpus() -> Corpus {
@@ -195,9 +238,9 @@ fn asinh_matches_the_independent_high_precision_boundary_corpus() {
 
 #[test]
 fn stable_reductions_match_the_independent_boundary_oracle() {
-    let cases = corpus().rows;
-    assert_eq!(cases.len(), 72);
-    for case in cases {
+    let corpus = corpus();
+    assert_eq!(corpus.rows.len(), 72);
+    for case in corpus.rows {
         let row: Vec<_> = case.input_bits.iter().map(|s| value(s)).collect();
         for (reduction, name) in reductions() {
             let (actual, faults) = reduce_v2(reduction, &row);
@@ -209,6 +252,17 @@ fn stable_reductions_match_the_independent_boundary_oracle() {
             );
             assert_eq!(faults.bits(), expected.fault_bits, "{name} {row:?}");
         }
+    }
+    assert_eq!(corpus.mean_cancellation.len(), 8);
+    for case in corpus.mean_cancellation {
+        let row: Vec<_> = case.input_bits.iter().map(|s| value(s)).collect();
+        let (actual, faults) = reduce_v2(Reduction::Mean, &row);
+        assert_eq!(
+            actual.to_bits(),
+            value(&case.oracle_bits).to_bits(),
+            "mean {row:?}"
+        );
+        assert_eq!(faults.bits(), case.fault_bits, "mean {row:?}");
     }
 }
 
@@ -282,6 +336,13 @@ fn emitted_helper_value_and_fault_bits_match_in_the_three_language_matrix() {
             expected.push_str(&format!("{:016x} {:08x}\n", v.to_bits(), f.bits()));
         }
     }
+    for case in corpus.mean_cancellation {
+        let row: Vec<_> = case.input_bits.iter().map(|s| value(s)).collect();
+        inputs.push_str(&format!("mean {}\n", case.input_bits.join(" ")));
+        let (v, f) = reduce_v2(Reduction::Mean, &row);
+        expected.push_str(&format!("{:016x} {:08x}\n", v.to_bits(), f.bits()));
+    }
+    assert_eq!(inputs.lines().count(), 1676);
     fs::write(root.join("bits.txt"), inputs).unwrap();
     let rust = emit_helpers(NumericalLanguage::Rust)
         + r#"
