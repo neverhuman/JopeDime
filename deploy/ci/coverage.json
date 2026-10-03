@@ -7777,7 +7777,7 @@
         "full-default"
       ],
       "dispositions": [],
-      "scope": "B07 opt-in numerical helper prerequisite: fdlibm-style asinh, ordered compensated reductions/scaled L2, high-precision boundary oracles, exact value/fault parity in Rust/Python/C++17 and C++20/sanitizer matrix, and old v1 behavior. Full program/model/recipe/profile/generation/EEC admission remains held."
+      "scope": "B07 opt-in numerical helper prerequisite: fdlibm-style asinh, retained-partial reductions and exact-square scaled L2, independent boundary/whole-family oracles, exact value/fault parity in Rust/Python/C++17 and C++20/sanitizer matrix, and old v1 behavior. Full program/model/recipe/profile/generation/EEC admission remains held."
     }
   }
 }
