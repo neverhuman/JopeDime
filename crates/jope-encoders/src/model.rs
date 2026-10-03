@@ -277,7 +277,7 @@ impl StarforgeModel {
             || ctx_y.is_empty()
             || ctx_x.len() != ctx_y.len() * n_features
             || qx.is_empty()
-            || qx.len() % n_features != 0
+            || !qx.len().is_multiple_of(n_features)
             || ctx_x.iter().chain(ctx_y).chain(qx).any(|v| !v.is_finite())
         {
             bail!("invalid frozen foundation input");

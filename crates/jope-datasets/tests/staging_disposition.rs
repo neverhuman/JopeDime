@@ -147,7 +147,7 @@ fn the_committed_protocol_is_a_new_identity_derived_from_the_disposition() {
     assert_eq!(p.forbidden_projection_sources, [HISTORICAL_SOURCE]);
     assert_eq!(
         p.forbidden_windows,
-        [d.study.window_experiment_sha256.clone()]
+        std::slice::from_ref(&d.study.window_experiment_sha256)
     );
     // Manifest + ten projected inputs + fifteen inner-fold inputs.
     assert_eq!(p.forbidden_closure_sha256.len(), 26);

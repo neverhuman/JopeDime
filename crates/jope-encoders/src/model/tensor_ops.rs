@@ -224,7 +224,7 @@ mod stable_feature_tests {
             .collect::<Vec<_>>();
         let (mean, std) = stable_feature_moments(&context, context.len(), 1);
         let expected_std = (2.0f64 * 0.125f64.powi(2) / 3.0).sqrt() as f32;
-        assert_eq!(mean, vec![1_000_000.125]);
+        assert_eq!(mean, vec![1_000_000.0 + 0.125]);
         assert_eq!(std, vec![expected_std]);
         let stable = preprocess_group_stable(&context, &[], context.len(), 0, 1);
         let original = preprocess_group(&context, &[], context.len(), 0, 1);
@@ -248,7 +248,7 @@ mod stable_feature_tests {
             stable_feature_moments(&context, 600, 2),
             stable_feature_moments(&reversed, 600, 2)
         );
-        let query = [1_000_000.125f32, 2.0];
+        let query = [1_000_000.0f32 + 0.125, 2.0];
         let first = preprocess_group_stable(&context, &query, 600, 1, 2);
         let second = preprocess_group_stable(&reversed, &query, 600, 1, 2);
         assert_eq!(&first[600 * 12..], &second[600 * 12..]);

@@ -197,6 +197,7 @@ impl SelectionPlan {
             })
             .collect()
     }
+    #[cfg(any(feature = "neural-search", test))]
     pub(crate) fn refit_request(
         &self,
         canonical_recipe_sha256: &str,
