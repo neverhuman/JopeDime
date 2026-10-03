@@ -10,7 +10,7 @@ use super::{
     search::{self, Refinement},
 };
 use crate::{
-    dataset, emit, prepare, receipt as legacy,
+    dataset, emit, prepare, receipt as receipt_v3,
     run::{self, RunOptions, Stages},
 };
 
@@ -155,7 +155,7 @@ pub fn run(options: &Options) -> Result<Receipt> {
         created_at: r.clock.now_rfc3339(),
         policy: r.policy.as_str().into(),
         dataset: dataset_record(r, &resolved),
-        prepared: legacy::Prepared {
+        prepared: receipt_v3::Prepared {
             sha256: preparation.sha256,
             seed: r.seed,
             rows: preparation.rows as u64,
@@ -169,7 +169,7 @@ pub fn run(options: &Options) -> Result<Receipt> {
         artifacts: emitted
             .artifacts
             .into_iter()
-            .map(|a| legacy::Artifact {
+            .map(|a| receipt_v3::Artifact {
                 language: a.language.into(),
                 path: a.path,
                 sha256: a.sha256,
@@ -180,7 +180,7 @@ pub fn run(options: &Options) -> Result<Receipt> {
         emit_exclusions: emitted
             .exclusions
             .into_iter()
-            .map(|e| legacy::Exclusion {
+            .map(|e| receipt_v3::Exclusion {
                 language: e.language.into(),
                 reason: e.reason,
             })
@@ -199,9 +199,9 @@ pub fn run(options: &Options) -> Result<Receipt> {
     Ok(receipt)
 }
 
-fn dataset_record(r: &RunOptions, resolved: &dataset::Resolved) -> legacy::Dataset {
+fn dataset_record(r: &RunOptions, resolved: &dataset::Resolved) -> receipt_v3::Dataset {
     let row = &resolved.row;
-    legacy::Dataset {
+    receipt_v3::Dataset {
         id: row.id.clone(),
         dataset_hash: row.dataset_hash.clone(),
         path: r.dataset.clone(),
@@ -212,7 +212,7 @@ fn dataset_record(r: &RunOptions, resolved: &dataset::Resolved) -> legacy::Datas
         files: resolved
             .files
             .iter()
-            .map(|file| legacy::DatasetFile {
+            .map(|file| receipt_v3::DatasetFile {
                 name: file.name.clone(),
                 sha256: file.sha256.clone(),
                 bytes: file.bytes,
@@ -223,7 +223,7 @@ fn dataset_record(r: &RunOptions, resolved: &dataset::Resolved) -> legacy::Datas
 
 use anyhow::Context;
 
-/// v4 is explicit at this entry point; legacy consumers do not reinterpret it.
+/// v4 is explicit at this entry point; receipt_v3 consumers do not reinterpret it.
 pub(crate) fn is_v4(path: &Path) -> bool {
     std::fs::read(path)
         .ok()
