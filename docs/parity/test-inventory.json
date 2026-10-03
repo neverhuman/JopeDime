@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json",
-  "count": 4163,
+  "count": 4164,
   "ignored": 66,
   "packages": {
    "battle-gpu": {
@@ -5450,12 +5450,12 @@
     }
    },
    "jope-pipeline": {
-    "count": 266,
+    "count": 267,
     "ignored": 2,
     "binaries": {
      "jope-pipeline": {
       "kind": "lib",
-      "count": 251,
+      "count": 252,
       "ignored": 2,
       "tests": [
        "classification_bridge::tests::experimental_context_has_bitwise_label_renaming_invariance_for_both_tasks",
@@ -5528,6 +5528,7 @@
        "kernel2::cli_tests::invalid_fault_profile_and_penalty_options_are_refused_before_output",
        "kernel2::cli_tests::profile_runs_replay_receipt_and_all_sidecars_with_a_frozen_clock",
        "kernel2::cli_tests::receipt_rejects_unknown_profile_digest_budget_and_fault_claims",
+       "kernel2::cli_tests::rehashed_recipe_artifacts_must_match_the_selected_emission_manifest",
        "kernel2::cli_tests::rehashed_sidecars_cannot_forge_selection_scores_or_refinement_counts",
        "kernel2::cli_tests::seeded_refinement_trials_and_child_measurements_share_the_published_budget",
        "kernel2::cli_tests::shipping_run_emits_and_rederives_the_profile_receipt",
@@ -6526,7 +6527,7 @@
   }
  },
  "totals": {
-  "rust": 4163,
+  "rust": 4164,
   "python": 172
  }
 }

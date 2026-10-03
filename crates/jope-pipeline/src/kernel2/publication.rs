@@ -225,10 +225,44 @@ pub fn verify_run(path: &Path) -> Result<Receipt> {
                 && languages.insert(&a.language),
             "unknown or duplicate emitted language"
         );
+        check_artifact_manifest(&manifest, a)?;
         let bytes = read_file(root, &Path::new("emit").join(&a.path), &a.sha256)?;
         ensure!(bytes.len() as u64 == a.bytes, "artifact length mismatch");
     }
     Ok(r)
+}
+
+fn check_artifact_manifest(
+    manifest: &serde_json::Value,
+    artifact: &crate::receipt::Artifact,
+) -> Result<()> {
+    use crate::emit::Language;
+    let expected_path = match Language::parse(&artifact.language) {
+        Some(Language::Rust) => "model.rs",
+        Some(Language::Python) => "model.py",
+        Some(Language::JavaScript) => "model.js",
+        Some(Language::Cpp17 | Language::Cpp20) => "model.cpp",
+        Some(Language::Cpp17Fitted) => "cpp17-fitted/model.cpp",
+        None if artifact.language == "cpp17-fitted-codec" => "cpp17-fitted/model.codec.json",
+        None if artifact.language == "cpp17-fitted-standalone" => "cpp17-fitted/standalone.cpp",
+        None => anyhow::bail!("unknown emitted language"),
+    };
+    ensure!(
+        artifact.path == expected_path,
+        "emitted artifact path disagrees"
+    );
+    let digest_field = match expected_path {
+        "model.rs" => Some("rs_sha256"),
+        "model.py" => Some("py_sha256"),
+        _ => None,
+    };
+    if let Some(field) = digest_field {
+        ensure!(
+            manifest[field].as_str() == Some(artifact.sha256.as_str()),
+            "emitted artifact digest disagrees with selected manifest"
+        );
+    }
+    Ok(())
 }
 
 fn check_refinements(

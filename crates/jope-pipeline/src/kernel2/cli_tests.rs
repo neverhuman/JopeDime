@@ -358,6 +358,49 @@ fn rehashed_sidecars_cannot_forge_selection_scores_or_refinement_counts() {
 }
 
 #[test]
+fn rehashed_recipe_artifacts_must_match_the_selected_emission_manifest() {
+    let temp = tempfile::tempdir().unwrap();
+    let output = temp.path().join("run");
+    let mut opt = options(&output, 4);
+    opt.run.languages = vec![Language::Rust, Language::Python];
+    let original = run::run(&opt).unwrap();
+    let path = output.join("receipt.json");
+    publication::verify_run(&path).unwrap();
+    for index in 0..original.artifacts.len() {
+        let mut edited = original.clone();
+        let artifact = &mut edited.artifacts[index];
+        let source = output.join("emit").join(&artifact.path);
+        let bytes = std::fs::read(&source).unwrap();
+        let substituted = b"unrelated emitted source\n";
+        std::fs::write(&source, substituted).unwrap();
+        artifact.sha256 = crate::sha256_hex(substituted);
+        artifact.bytes = substituted.len() as u64;
+        let language = artifact.language.clone();
+        std::fs::write(&path, serde_json::to_vec(&edited).unwrap()).unwrap();
+        assert!(
+            publication::verify_run(&path).is_err(),
+            "rehashed {} artifact disagrees with the selected manifest",
+            language
+        );
+        std::fs::write(&source, &bytes).unwrap();
+        let mut renamed = original.clone();
+        renamed.artifacts[index].path = format!("renamed-{}", original.artifacts[index].path);
+        std::fs::write(
+            output.join("emit").join(&renamed.artifacts[index].path),
+            bytes,
+        )
+        .unwrap();
+        std::fs::write(&path, serde_json::to_vec(&renamed).unwrap()).unwrap();
+        assert!(
+            publication::verify_run(&path).is_err(),
+            "renamed {language} artifact"
+        );
+    }
+    std::fs::write(&path, serde_json::to_vec(&original).unwrap()).unwrap();
+    publication::verify_run(&path).unwrap();
+}
+
+#[test]
 fn unknown_artifact_traversal_and_symlink_evidence_are_refused() {
     let temp = tempfile::tempdir().unwrap();
     let output = temp.path().join("run");
