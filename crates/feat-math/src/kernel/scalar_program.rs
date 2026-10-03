@@ -1,5 +1,6 @@
-//! Bounded scalar ingress for B05. Decoding does not admit execution, models,
-//! export or shipping generation. MathExpr and its exact codec remain v1.
+//! Bounded scalar ingress for versioned functions. Decoding does not admit
+//! execution, models, export or shipping generation. MathExpr and its exact
+//! codec remain v1.
 use super::codec::{Reader, Writer};
 use super::inverse_links::InverseLink;
 use super::wire_v2::{VersionError, VersionResult, MAGIC_V2, READER_VERSION};
@@ -7,6 +8,7 @@ use crate::math_expr::{BinOp, Expr, Func, MathExpr, UnOp, Var};
 
 const SCALAR_VARIANT: u8 = 1;
 const INVERSE_LINK_FEATURE: u64 = 2;
+const STABLE_EXPONENTIAL_FEATURE: u64 = 4;
 
 // Explicit IDs reproduce the frozen v1 prefix, independently of enum order.
 const V1_FUNCTION_IDS: &[(u16, Func)] = &[
@@ -52,6 +54,8 @@ const BINARY_IDS: &[(u8, BinOp)] = &[
 pub enum ScalarFunction {
     V1(Func),
     InverseLink(InverseLink),
+    Expm1,
+    Log1mexp,
 }
 
 impl ScalarFunction {
@@ -64,7 +68,11 @@ impl ScalarFunction {
         if let Some((_, func)) = V1_FUNCTION_IDS.iter().find(|(tag, _)| *tag == id) {
             return Ok(Self::V1(*func));
         }
-        InverseLink::from_versioned_id(version, id).map(Self::InverseLink)
+        match id {
+            21 => Ok(Self::Expm1),
+            22 => Ok(Self::Log1mexp),
+            _ => InverseLink::from_versioned_id(version, id).map(Self::InverseLink),
+        }
     }
 
     pub fn id(self) -> u16 {
@@ -77,6 +85,15 @@ impl ScalarFunction {
                     .0
             }
             Self::InverseLink(link) => link.id(),
+            Self::Expm1 => 21,
+            Self::Log1mexp => 22,
+        }
+    }
+
+    fn additional_features(self) -> u64 {
+        match self {
+            Self::Expm1 | Self::Log1mexp => STABLE_EXPONENTIAL_FEATURE,
+            _ => 0,
         }
     }
 
@@ -114,7 +131,7 @@ impl ScalarExpressionProgram {
     pub fn new(root: ScalarNode) -> VersionResult<Self> {
         // Use the same bounded structural checks as serialization; no evaluator
         // runs during construction, even for nonfinite literal payloads.
-        encode_node(&root, &mut Writer::default(), 1, &mut NodeBudget(64))?;
+        encode_node(&root, &mut Writer::default(), 1, &mut NodeBudget::default())?;
         Ok(Self { root })
     }
 
@@ -125,17 +142,20 @@ impl ScalarExpressionProgram {
     /// Import typed v1 nodes without reparsing their lossy source printer.
     pub fn from_v1(expression: &MathExpr) -> VersionResult<Self> {
         Ok(Self {
-            root: import_node(expression.ast(), 1, &mut NodeBudget(64))?,
+            root: import_node(expression.ast(), 1, &mut NodeBudget::default())?,
         })
     }
 
     pub fn to_bytes(&self) -> VersionResult<Vec<u8>> {
+        let mut body = Writer::default();
+        let mut budget = NodeBudget::default();
+        encode_node(&self.root, &mut body, 1, &mut budget)?;
         let mut writer = Writer::default();
         writer.raw(MAGIC_V2)?;
         writer.byte(SCALAR_VARIANT)?;
         writer.byte(READER_VERSION)?;
-        writer.word(INVERSE_LINK_FEATURE)?;
-        encode_node(&self.root, &mut writer, 1, &mut NodeBudget(64))?;
+        writer.word(budget.required_features)?;
+        writer.raw(&body.finish())?;
         Ok(writer.finish())
     }
 
@@ -160,27 +180,48 @@ impl ScalarExpressionProgram {
                 "minimum reader version".into(),
             ));
         }
-        if reader.word()? != INVERSE_LINK_FEATURE {
+        let features = reader.word()?;
+        if features != INVERSE_LINK_FEATURE
+            && features != (INVERSE_LINK_FEATURE | STABLE_EXPONENTIAL_FEATURE)
+        {
             return Err(VersionError::UnsupportedVersion(
                 "program v2 variant requires inverse-link feature set".into(),
             ));
         }
-        let root = decode_node(&mut reader, 1, &mut NodeBudget(64))?;
+        let mut budget = NodeBudget::default();
+        let root = decode_node(&mut reader, 1, &mut budget)?;
         reader.finish()?;
+        if features != budget.required_features {
+            return Err(VersionError::Malformed(
+                "scalar required features do not match body".into(),
+            ));
+        }
         Ok(Self { root })
     }
 }
 
-struct NodeBudget(usize);
+struct NodeBudget {
+    remaining: usize,
+    required_features: u64,
+}
+
+impl Default for NodeBudget {
+    fn default() -> Self {
+        Self {
+            remaining: 64,
+            required_features: INVERSE_LINK_FEATURE,
+        }
+    }
+}
 
 impl NodeBudget {
     fn visit(&mut self, depth: usize) -> VersionResult<()> {
-        if depth > 16 || self.0 == 0 {
+        if depth > 16 || self.remaining == 0 {
             return Err(VersionError::Malformed(
                 "scalar AST node/depth limit".into(),
             ));
         }
-        self.0 -= 1;
+        self.remaining -= 1;
         Ok(())
     }
 }
@@ -223,6 +264,7 @@ fn encode_node(
         }
         ScalarNode::Call(func, arguments) => {
             func.check_arity(arguments.len())?;
+            budget.required_features |= func.additional_features();
             writer.byte(5)?;
             writer.byte(func.id() as u8)?;
             writer.word(arguments.len() as u64)?;
@@ -274,6 +316,7 @@ fn decode_node(
                 ScalarFunction::from_versioned_id(READER_VERSION, u16::from(reader.byte()?))?;
             let count = reader.length()?;
             func.check_arity(count)?;
+            budget.required_features |= func.additional_features();
             let arguments = (0..count)
                 .map(|_| decode_node(reader, depth + 1, budget))
                 .collect::<VersionResult<Vec<_>>>()?;

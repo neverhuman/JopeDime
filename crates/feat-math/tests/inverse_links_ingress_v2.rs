@@ -227,7 +227,7 @@ fn inverse_link_ids_and_arities_require_the_v2_expression_domain() {
         }
         assert!(MathExpr::parse(&format!("{name}(c0)")).is_err());
     }
-    for id in 21..=255 {
+    for id in 23..=255 {
         assert!(matches!(
             ScalarFunction::from_versioned_id(2, id),
             Err(VersionError::UnsupportedVersion(_))
@@ -276,7 +276,7 @@ fn corrupt_headers_lengths_and_trailing_bytes_are_typed_without_fallback() {
 #[test]
 fn nonadmitted_scalar_variable_operator_and_node_tags_are_refused() {
     let bytes = sample().to_bytes().unwrap();
-    for id in 21..=255 {
+    for id in 23..=255 {
         let mut bad = bytes.clone();
         bad[19] = id;
         rejected(&bad, true);

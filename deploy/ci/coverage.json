@@ -7746,6 +7746,22 @@
       ],
       "dispositions": [],
       "scope": "B05 parse-only bounded v2 scalar ingress: nested Func19/20 binary/lossless-text round-trip, raw IEEE bits and legacy codec prefix parity, exact header/arity/tag/resource refusal, and no legacy execution/model/export/generation admission. Full inverse-link recipes and shipping qualification remain held."
+    },
+    "target:feat-math/test/stable_exponential_ingress_v2": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/feat-math/tests/stable_exponential_ingress_v2.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "B06 parse-only bounded v2 scalar ingress: Func21/22 IDs and unary arity, exact binary/lossless-text IEEE round-trip, canonical feature-mask derivation and mismatch refusal, unchanged Func0-20 bytes, resource and unknown-ID/version refusal, and no legacy execution/model/export/search admission. Numerical and full recipe qualification remain held."
     }
   }
 }
