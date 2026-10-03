@@ -38,17 +38,11 @@ pub fn numerical_asinh_v2(input: f64) -> (f64, u32) {
     numerical_finish_v2(value.copysign(input))
 }
 
-fn numerical_neumaier_v2(row: &[f64], absolute: bool, divisor: f64, scaling_loss: bool) -> f64 {
+fn numerical_neumaier_v2(row: &[f64], absolute: bool) -> f64 {
     let mut sum = 0.0_f64;
     let mut correction = 0.0_f64;
     for &input in row {
-        let original = if absolute { input.abs() } else { input };
-        let divided = original / divisor;
-        let value = if scaling_loss {
-            original - divided * divisor
-        } else {
-            divided
-        };
+        let value = if absolute { input.abs() } else { input };
         let next = sum + value;
         correction += if sum.abs() >= value.abs() {
             (sum - next) + value
@@ -58,6 +52,76 @@ fn numerical_neumaier_v2(row: &[f64], absolute: bool, divisor: f64, scaling_loss
         sum = next;
     }
     sum + correction
+}
+
+// Ordered error-free FastTwoSum expansion. Every low part is retained instead
+// of accumulating all rounding errors into one lossy correction term.
+fn numerical_add_partial_v2(partials: &mut Vec<f64>, mut value: f64) {
+    let mut kept = 0;
+    for index in 0..partials.len() {
+        let mut part = partials[index];
+        if value.abs() < part.abs() {
+            std::mem::swap(&mut value, &mut part);
+        }
+        let high = value + part;
+        let low = part - (high - value);
+        if low != 0.0 {
+            partials[kept] = low;
+            kept += 1;
+        }
+        value = high;
+    }
+    partials.truncate(kept);
+    if value != 0.0 {
+        partials.push(value);
+    }
+}
+
+fn numerical_mean_v2(row: &[f64]) -> (f64, u32) {
+    let count = row.len() as f64;
+    let mut scale = 2.0;
+    while scale < count * 2.0 {
+        scale *= 2.0;
+    }
+    let mut scaled = Vec::new();
+    for &value in row {
+        numerical_add_partial_v2(&mut scaled, value / scale);
+    }
+    let head = scaled.last().copied().unwrap_or(0.0);
+    // The factor-two margin makes this guard independent of final rounding.
+    // Far-out means clamp before any potentially overflowing restoration.
+    if head.abs() > 2.0 * NUMERICAL_MAX_V2 * count / scale {
+        return (NUMERICAL_MAX_V2.copysign(head), NUMERICAL_CLAMP_V2);
+    }
+    let mut restored = Vec::new();
+    for part in scaled {
+        numerical_add_partial_v2(&mut restored, part * scale);
+    }
+    for &value in row {
+        numerical_add_partial_v2(&mut restored, value - (value / scale) * scale);
+    }
+    let head = restored.last().copied().unwrap_or(0.0);
+    if head == 0.0 {
+        return (0.0, 0);
+    }
+    // Compare the exact expansion against +/-1e12*n, including boundary tails.
+    // 13-bit integer chunks times 1e12 fit the 53-bit significand exactly.
+    let sign = head.signum();
+    let mut distance: Vec<_> = restored.iter().map(|part| part * sign).collect();
+    let mut remaining = row.len();
+    let mut place = 1.0;
+    while remaining != 0 {
+        let chunk = (remaining & 0x1fff) as f64;
+        numerical_add_partial_v2(&mut distance, -(chunk * NUMERICAL_MAX_V2) * place);
+        remaining >>= 13;
+        place *= 8192.0;
+    }
+    if distance.last().copied().unwrap_or(0.0) > 0.0 {
+        return (NUMERICAL_MAX_V2.copysign(head), NUMERICAL_CLAMP_V2);
+    }
+    // The leading expansion component is a faithful numerator approximation;
+    // one final division supplies the bounded mean. Rounding cannot add a fault.
+    ((head / count).clamp(-NUMERICAL_MAX_V2, NUMERICAL_MAX_V2), 0)
 }
 
 pub fn numerical_reduce_v2(kind: &str, row: &[f64]) -> Result<(f64, u32), &'static str> {
@@ -76,6 +140,9 @@ pub fn numerical_reduce_v2(kind: &str, row: &[f64]) -> Result<(f64, u32), &'stat
                 0
             },
         ));
+    }
+    if kind == "mean" {
+        return Ok(numerical_mean_v2(row));
     }
     if kind == "l2" {
         let mut scale = 0.0_f64;
@@ -101,27 +168,8 @@ pub fn numerical_reduce_v2(kind: &str, row: &[f64]) -> Result<(f64, u32), &'stat
         }
         return Ok(numerical_finish_v2(scale * root));
     }
-    let mut value = numerical_neumaier_v2(row, kind == "l1", 1.0, false);
-    if kind == "mean" {
-        let count = row.len() as f64;
-        value = if value.is_finite() {
-            value / count
-        } else {
-            // Power-of-two scaling preserves normal input bits and leaves
-            // headroom. Retain the rounding loss of tiny scaled inputs too.
-            let mut scale = 2.0;
-            while scale < count * 2.0 {
-                scale *= 2.0;
-            }
-            let scaled = numerical_neumaier_v2(row, false, scale, false);
-            // An unrepresentable numerator divided by any usize row count
-            // still exceeds the output bound; clamp before restoring scale.
-            if scaled.abs() > f64::MAX / scale {
-                return Ok((NUMERICAL_MAX_V2.copysign(scaled), NUMERICAL_CLAMP_V2));
-            }
-            let loss = numerical_neumaier_v2(row, false, scale, true);
-            (scaled * scale + loss) / count
-        };
-    }
-    Ok(numerical_finish_v2(value))
+    Ok(numerical_finish_v2(numerical_neumaier_v2(
+        row,
+        kind == "l1",
+    )))
 }

@@ -96,6 +96,119 @@ fn overflowing_mean_preserves_exact_cancellation_and_small_residuals() {
     }
 }
 
+struct MeanProbe {
+    row: Vec<f64>,
+    expected: f64,
+    faults: FaultSet,
+}
+
+fn mean_properties() -> Vec<MeanProbe> {
+    let mut probes = Vec::new();
+    let mut seed = 0xb0703_u64;
+    for width in 1..=128 {
+        for sign in [1.0_f64, -1.0] {
+            let mut families = vec![
+                (
+                    vec![sign * f64::MAX; width],
+                    sign * 1e12,
+                    FaultSet::MAGNITUDE_CLAMPED,
+                ),
+                (
+                    vec![sign * f64::MIN_POSITIVE; width],
+                    sign * f64::MIN_POSITIVE,
+                    FaultSet::EMPTY,
+                ),
+                (
+                    vec![sign * f64::from_bits(7); width],
+                    sign * f64::from_bits(7),
+                    FaultSet::EMPTY,
+                ),
+                (vec![sign * 1e12; width], sign * 1e12, FaultSet::EMPTY),
+                (
+                    vec![sign * f64::from_bits(1e12_f64.to_bits() + 1); width],
+                    sign * 1e12,
+                    FaultSet::MAGNITUDE_CLAMPED,
+                ),
+            ];
+            let mut paired = vec![0.0; width];
+            for pair in paired.chunks_exact_mut(2) {
+                pair[0] = sign * f64::MAX;
+                pair[1] = -sign * f64::MAX;
+            }
+            families.push((paired, 0.0, FaultSet::EMPTY));
+            if width >= 3 {
+                let mut mixed = vec![sign; width];
+                mixed[0] = sign * f64::MAX;
+                mixed[1] = -sign * f64::MAX;
+                families.push((
+                    mixed,
+                    sign * (width - 2) as f64 / width as f64,
+                    FaultSet::EMPTY,
+                ));
+            }
+            if width >= 8 {
+                for big in [f64::MAX, f64::from_bits(0x7e70_0000_0000_0000)] {
+                    for residual in [0.0, 1.0, f64::MIN_POSITIVE, f64::from_bits(7)] {
+                        if width == 8 && residual != 0.0 {
+                            continue;
+                        }
+                        let a = f64::from_bits(0x5f30_0000_0000_0000);
+                        let b = f64::from_bits(0x71f0_0000_0000_0000);
+                        let mut row = vec![big, big, a, b, -b, -a, -big, -big];
+                        row.resize(width, 0.0);
+                        if residual != 0.0 {
+                            row[8] = residual;
+                        }
+                        for x in &mut row {
+                            *x *= sign;
+                        }
+                        let expected = if residual == 0.0 {
+                            0.0
+                        } else {
+                            sign * residual / width as f64
+                        };
+                        families.push((row, expected, FaultSet::EMPTY));
+                    }
+                }
+            }
+            for (row, expected, faults) in families {
+                probes.push(MeanProbe {
+                    row: row.clone(),
+                    expected,
+                    faults,
+                });
+                for _ in 0..2 {
+                    let mut permuted = row.clone();
+                    for index in (1..width).rev() {
+                        seed = seed.wrapping_mul(6364136223846793005).wrapping_add(1);
+                        permuted.swap(index, (seed as usize) % (index + 1));
+                    }
+                    probes.push(MeanProbe {
+                        row: permuted,
+                        expected,
+                        faults,
+                    });
+                }
+            }
+        }
+    }
+    assert_eq!(probes.len(), 11136);
+    probes
+}
+
+#[test]
+fn mean_is_overflow_safe_across_adversarial_families_at_every_width() {
+    for probe in mean_properties() {
+        let (actual, faults) = reduce_v2(Reduction::Mean, &probe.row);
+        check_oracle(
+            actual,
+            probe.expected,
+            &format!("mean property {:?}", probe.row),
+        );
+        assert_eq!(faults, probe.faults, "mean property {:?}", probe.row);
+    }
+}
+
 #[test]
 fn scaled_l2_saturates_huge_finite_norms_and_retains_tiny_norms() {
     assert_eq!(
@@ -253,7 +366,7 @@ fn stable_reductions_match_the_independent_boundary_oracle() {
             assert_eq!(faults.bits(), expected.fault_bits, "{name} {row:?}");
         }
     }
-    assert_eq!(corpus.mean_cancellation.len(), 8);
+    assert_eq!(corpus.mean_cancellation.len(), 94);
     for case in corpus.mean_cancellation {
         let row: Vec<_> = case.input_bits.iter().map(|s| value(s)).collect();
         let (actual, faults) = reduce_v2(Reduction::Mean, &row);
@@ -342,7 +455,20 @@ fn emitted_helper_value_and_fault_bits_match_in_the_three_language_matrix() {
         let (v, f) = reduce_v2(Reduction::Mean, &row);
         expected.push_str(&format!("{:016x} {:08x}\n", v.to_bits(), f.bits()));
     }
-    assert_eq!(inputs.lines().count(), 1676);
+    for probe in mean_properties() {
+        inputs.push_str(&format!(
+            "mean {}\n",
+            probe
+                .row
+                .iter()
+                .map(|v| format!("{:016x}", v.to_bits()))
+                .collect::<Vec<_>>()
+                .join(" ")
+        ));
+        let (v, f) = reduce_v2(Reduction::Mean, &probe.row);
+        expected.push_str(&format!("{:016x} {:08x}\n", v.to_bits(), f.bits()));
+    }
+    assert_eq!(inputs.lines().count(), 12898);
     fs::write(root.join("bits.txt"), inputs).unwrap();
     let rust = emit_helpers(NumericalLanguage::Rust)
         + r#"
