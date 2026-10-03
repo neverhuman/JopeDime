@@ -94,6 +94,8 @@ pub enum FaultClass {
     /// or the interpreter met a function with the wrong number of arguments, which only a
     /// deserialized AST can hold.
     CompileFailed = 15,
+    /// A finite v2 inverse-link probability outside [2^-53, 1-2^-53].
+    ProbabilityClamped = 16,
 }
 
 impl FaultClass {
@@ -115,6 +117,7 @@ impl FaultClass {
         Self::NonfiniteInput,
         Self::EmptyRowReduction,
         Self::CompileFailed,
+        Self::ProbabilityClamped,
     ];
 
     /// The class's bit position.
@@ -137,6 +140,7 @@ impl FaultClass {
             Self::PowExpClamped
             | Self::ExpArgClamped
             | Self::SigmoidArgClamped
+            | Self::ProbabilityClamped
             | Self::MagnitudeClamped => FaultSeverity::Saturation,
             Self::DivNearZero
             | Self::LogDomain
@@ -168,6 +172,7 @@ impl FaultClass {
             Self::NonfiniteInput => "NONFINITE_INPUT",
             Self::EmptyRowReduction => "EMPTY_ROW_REDUCTION",
             Self::CompileFailed => "COMPILE_FAILED",
+            Self::ProbabilityClamped => "PROBABILITY_CLAMPED",
         }
     }
 }
@@ -214,6 +219,7 @@ impl FaultSet {
     pub const NONFINITE_INPUT: FaultSet = FaultClass::NonfiniteInput.set();
     pub const EMPTY_ROW_REDUCTION: FaultSet = FaultClass::EmptyRowReduction.set();
     pub const COMPILE_FAILED: FaultSet = FaultClass::CompileFailed.set();
+    pub const PROBABILITY_CLAMPED: FaultSet = FaultClass::ProbabilityClamped.set();
 
     /// The set's bits: bit `i` is the class whose [`FaultClass::index`] is `i`.
     pub const fn bits(self) -> u32 {
