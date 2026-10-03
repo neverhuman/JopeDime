@@ -17,6 +17,7 @@ pub fn emit_helpers(language: NumericalLanguage) -> String {
 
 const PYTHON: &str = r#"
 import math
+import struct
 def numerical_finish_v2(value):
     if not math.isfinite(value):
         return (0.0,1<<8)
@@ -65,28 +66,35 @@ def numerical_add_partial_v2(partials,value):
     del partials[kept:]
     if value!=0.0:
         partials.append(value)
-def numerical_mean_v2(row):
+def numerical_expansion_v2(row,absolute,mean):
     count=float(len(row))
+    divisor=count if mean else 1.0
     scale=2.0
     while scale<count*2.0:
         scale*=2.0
     scaled=[]
-    for value in row:
+    for cell in row:
+        value=abs(cell) if absolute else cell
         numerical_add_partial_v2(scaled,value/scale)
+    ordered=[]
+    for part in scaled:
+        numerical_add_partial_v2(ordered,part)
+    scaled=ordered
     head=scaled[-1] if scaled else 0.0
-    if abs(head)>2.0*1e12*count/scale:
+    if abs(head)>2.0*1e12*divisor/scale:
         return (math.copysign(1e12,head),1<<9)
     restored=[]
     for part in scaled:
         numerical_add_partial_v2(restored,part*scale)
-    for value in row:
+    for cell in row:
+        value=abs(cell) if absolute else cell
         numerical_add_partial_v2(restored,value-(value/scale)*scale)
     head=restored[-1] if restored else 0.0
     if head==0.0:
         return (0.0,0)
     sign=math.copysign(1.0,head)
     distance=[part*sign for part in restored]
-    remaining=len(row)
+    remaining=len(row) if mean else 1
     place=1.0
     while remaining!=0:
         chunk=float(remaining&0x1fff)
@@ -95,7 +103,67 @@ def numerical_mean_v2(row):
         place*=8192.0
     if (distance[-1] if distance else 0.0)>0.0:
         return (math.copysign(1e12,head),1<<9)
-    return (max(-1e12,min(1e12,head/count)),0)
+    return (max(-1e12,min(1e12,head/divisor)),0)
+def numerical_mean_v2(row):
+    return numerical_expansion_v2(row,False,True)
+def numerical_add_word_v2(bins,word,offset):
+    mask=(1<<26)-1
+    while word:
+        carry=(word&mask)<<(offset%26)
+        index=offset//26
+        while carry:
+            total=bins[index]+carry
+            bins[index]=total&mask
+            carry=total>>26
+            index+=1
+        word>>=26
+        offset+=26
+def numerical_add_square_v2(bins,value):
+    bits=struct.unpack('>Q',struct.pack('>d',value))[0]&0x7fffffffffffffff
+    exponent=(bits>>52)&0x7ff
+    mantissa=(bits&((1<<52)-1))|((1<<52) if exponent else 0)
+    low=mantissa&((1<<26)-1)
+    high=mantissa>>26
+    offset=2*exponent-2 if exponent else 0
+    numerical_add_word_v2(bins,low*low,offset)
+    numerical_add_word_v2(bins,2*low*high,offset+26)
+    numerical_add_word_v2(bins,high*high,offset+52)
+def numerical_square_bit_v2(bins,bit):
+    return (bins[bit//26]>>(bit%26))&1
+def numerical_square_sticky_v2(bins,cutoff):
+    for index,word in enumerate(bins):
+        start=index*26
+        if start<cutoff and word&((1<<min(cutoff-start,26))-1):
+            return True
+    return False
+def numerical_square_root_v2(bins):
+    index=next((i for i in range(85,-1,-1) if bins[i]),None)
+    if index is None:
+        return 0.0
+    top_bit=index*26+bins[index].bit_length()-1
+    leading=0
+    for position in range(53):
+        leading<<=1
+        if position<=top_bit:
+            leading|=numerical_square_bit_v2(bins,top_bit-position)
+    if top_bit>52:
+        discarded=top_bit-52
+        if numerical_square_bit_v2(bins,discarded-1) and (leading&1 or numerical_square_sticky_v2(bins,discarded-1)):
+            leading+=1
+    normalized=float(leading)*(2.220446049250313e-16 if top_bit%2==0 else 4.440892098500626e-16)
+    scale=math.ldexp(1.0,top_bit//2-1074)
+    return math.sqrt(normalized)*scale
+def numerical_l2_v2(row):
+    threshold=[0]*86
+    numerical_add_square_v2(threshold,1e12)
+    squares=[0]*86
+    for value in row:
+        if abs(value)>1e12:
+            return (1e12,1<<9)
+        numerical_add_square_v2(squares,value)
+        if squares[::-1]>threshold[::-1]:
+            return (1e12,1<<9)
+    return (min(1e12,numerical_square_root_v2(squares)),0)
 def numerical_reduce_v2(kind,row):
     if kind not in ('sum','l1','mean','l2'):
         raise ValueError('unsupported numerical reduction')
@@ -106,24 +174,10 @@ def numerical_reduce_v2(kind,row):
     if kind=='mean':
         return numerical_mean_v2(row)
     if kind=='l2':
-        scale=0.0
-        squares=1.0
-        for cell in row:
-            a=abs(cell)
-            if a==0.0:
-                continue
-            if scale<a:
-                ratio=scale/a
-                squares=1.0+squares*ratio*ratio
-                scale=a
-            else:
-                ratio=a/scale
-                squares+=ratio*ratio
-        root=math.sqrt(squares)
-        if scale>1e12/root:
-            return (1e12,1<<9)
-        return numerical_finish_v2(scale*root)
-    return numerical_finish_v2(numerical_neumaier_v2(row,kind=='l1'))
+        return numerical_l2_v2(row)
+    if not math.isfinite(numerical_neumaier_v2(row,kind=='l1')):
+        return (0.0,1<<8)
+    return numerical_expansion_v2(row,kind=='l1',False)
 "#;
 
 const CPP: &str = r#"
@@ -134,6 +188,8 @@ const CPP: &str = r#"
 #include <string>
 #include <utility>
 #include <vector>
+#include <array>
+#include <cstring>
 static std::pair<double,std::uint32_t> numerical_finish_v2(double value) {
     if(!std::isfinite(value)) return {0.0,1u<<8};
     if(value>1e12) return {1e12,1u<<9};
@@ -176,23 +232,30 @@ static void numerical_add_partial_v2(std::vector<double>& partials,double value)
     partials.resize(kept);
     if(value!=0.0) partials.push_back(value);
 }
-static std::pair<double,std::uint32_t> numerical_mean_v2(const std::vector<double>& row) {
+static std::pair<double,std::uint32_t> numerical_expansion_v2(const std::vector<double>& row,bool absolute,bool mean) {
     const double count=static_cast<double>(row.size());
+    const double divisor=mean?count:1.0;
     double scale=2.0;
     while(scale<count*2.0) scale*=2.0;
     std::vector<double> scaled;
-    for(const double value:row) numerical_add_partial_v2(scaled,value/scale);
+    for(const double cell:row) numerical_add_partial_v2(scaled,(absolute?std::abs(cell):cell)/scale);
+    std::vector<double> ordered;
+    for(const double part:scaled) numerical_add_partial_v2(ordered,part);
+    scaled.swap(ordered);
     double head=scaled.empty()?0.0:scaled.back();
-    if(std::abs(head)>2.0*1e12*count/scale) return {std::copysign(1e12,head),1u<<9};
+    if(std::abs(head)>2.0*1e12*divisor/scale) return {std::copysign(1e12,head),1u<<9};
     std::vector<double> restored;
     for(const double part:scaled) numerical_add_partial_v2(restored,part*scale);
-    for(const double value:row) numerical_add_partial_v2(restored,value-(value/scale)*scale);
+    for(const double cell:row) {
+        const double value=absolute?std::abs(cell):cell;
+        numerical_add_partial_v2(restored,value-(value/scale)*scale);
+    }
     head=restored.empty()?0.0:restored.back();
     if(head==0.0) return {0.0,0};
     const double sign=std::copysign(1.0,head);
     std::vector<double> distance;
     for(const double part:restored) distance.push_back(part*sign);
-    std::size_t remaining=row.size();
+    std::size_t remaining=mean?row.size():1;
     double place=1.0;
     while(remaining!=0) {
         const double chunk=static_cast<double>(remaining&0x1fff);
@@ -201,7 +264,71 @@ static std::pair<double,std::uint32_t> numerical_mean_v2(const std::vector<doubl
         place*=8192.0;
     }
     if((distance.empty()?0.0:distance.back())>0.0) return {std::copysign(1e12,head),1u<<9};
-    return {std::clamp(head/count,-1e12,1e12),0};
+    return {std::clamp(head/divisor,-1e12,1e12),0};
+}
+static std::pair<double,std::uint32_t> numerical_mean_v2(const std::vector<double>& row) {
+    return numerical_expansion_v2(row,false,true);
+}
+using NumericalSquaresV2=std::array<std::uint64_t,86>;
+static void numerical_add_word_v2(NumericalSquaresV2& bins,std::uint64_t word,std::size_t offset) {
+    const std::uint64_t mask=(1ull<<26)-1;
+    while(word) {
+        std::uint64_t carry=(word&mask)<<(offset%26);
+        std::size_t index=offset/26;
+        while(carry) {
+            const std::uint64_t total=bins[index]+carry;
+            bins[index]=total&mask;carry=total>>26;++index;
+        }
+        word>>=26;offset+=26;
+    }
+}
+static void numerical_add_square_v2(NumericalSquaresV2& bins,double value) {
+    std::uint64_t bits;std::memcpy(&bits,&value,sizeof(bits));bits&=0x7fffffffffffffffull;
+    const std::size_t exponent=(bits>>52)&0x7ff;
+    const std::uint64_t mantissa=(bits&((1ull<<52)-1))|(exponent?1ull<<52:0);
+    const std::uint64_t low=mantissa&((1ull<<26)-1),high=mantissa>>26;
+    const std::size_t offset=exponent?2*exponent-2:0;
+    numerical_add_word_v2(bins,low*low,offset);
+    numerical_add_word_v2(bins,2*low*high,offset+26);
+    numerical_add_word_v2(bins,high*high,offset+52);
+}
+static std::uint64_t numerical_square_bit_v2(const NumericalSquaresV2& bins,std::size_t bit) {
+    return (bins[bit/26]>>(bit%26))&1;
+}
+static bool numerical_square_sticky_v2(const NumericalSquaresV2& bins,std::size_t cutoff) {
+    for(std::size_t index=0;index<bins.size();++index) {
+        const std::size_t start=index*26;
+        if(start<cutoff && (bins[index]&((1ull<<std::min(cutoff-start,std::size_t(26)))-1))) return true;
+    }
+    return false;
+}
+static double numerical_square_root_v2(const NumericalSquaresV2& bins) {
+    int index=85;while(index>=0 && bins[index]==0) --index;
+    if(index<0) return 0.0;
+    std::uint64_t word=bins[index];std::size_t top_bit=index*26;
+    while(word>>1) {word>>=1;++top_bit;}
+    std::uint64_t leading=0;
+    for(std::size_t position=0;position<53;++position) {
+        leading<<=1;
+        if(position<=top_bit) leading|=numerical_square_bit_v2(bins,top_bit-position);
+    }
+    if(top_bit>52) {
+        const std::size_t discarded=top_bit-52;
+        if(numerical_square_bit_v2(bins,discarded-1) && ((leading&1) || numerical_square_sticky_v2(bins,discarded-1))) ++leading;
+    }
+    const double normalized=static_cast<double>(leading)*(top_bit%2==0?2.220446049250313e-16:4.440892098500626e-16);
+    const double scale=std::ldexp(1.0,static_cast<int>(top_bit/2)-1074);
+    return std::sqrt(normalized)*scale;
+}
+static std::pair<double,std::uint32_t> numerical_l2_v2(const std::vector<double>& row) {
+    NumericalSquaresV2 threshold{},squares{};
+    numerical_add_square_v2(threshold,1e12);
+    for(const double value:row) {
+        if(std::abs(value)>1e12) return {1e12,1u<<9};
+        numerical_add_square_v2(squares,value);
+        if(std::lexicographical_compare(threshold.rbegin(),threshold.rend(),squares.rbegin(),squares.rend())) return {1e12,1u<<9};
+    }
+    return {std::min(1e12,numerical_square_root_v2(squares)),0};
 }
 static std::pair<double,std::uint32_t> numerical_reduce_v2(const std::string& kind,const std::vector<double>& row) {
     if(kind!="sum" && kind!="l1" && kind!="mean" && kind!="l2")
@@ -210,23 +337,9 @@ static std::pair<double,std::uint32_t> numerical_reduce_v2(const std::string& ki
     if(row.empty()) return {0.0,kind=="mean"?1u<<14:0u};
     if(kind=="mean") return numerical_mean_v2(row);
     if(kind=="l2") {
-        double scale=0.0,squares=1.0;
-        for(const double cell:row) {
-            const double a=std::abs(cell);
-            if(a==0.0) continue;
-            if(scale<a) {
-                const double ratio=scale/a;
-                squares=1.0+squares*ratio*ratio;
-                scale=a;
-            } else {
-                const double ratio=a/scale;
-                squares+=ratio*ratio;
-            }
-        }
-        const double root=std::sqrt(squares);
-        if(scale>1e12/root) return {1e12,1u<<9};
-        return numerical_finish_v2(scale*root);
+        return numerical_l2_v2(row);
     }
-    return numerical_finish_v2(numerical_neumaier_v2(row,kind=="l1"));
+    if(!std::isfinite(numerical_neumaier_v2(row,kind=="l1"))) return {0.0,1u<<8};
+    return numerical_expansion_v2(row,kind=="l1",false);
 }
 "#;

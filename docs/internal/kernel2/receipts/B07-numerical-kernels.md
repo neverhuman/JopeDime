@@ -19,15 +19,24 @@ no evaluator-identity input or existing frozen fixture is edited/regenerated.
 
 - Asinh uses tiny-input identity, log1p/central, middle and huge logarithmic
   branches; signed zero is preserved.
-- Sum/l1 retain ordered Neumaier compensation. Mean always scales by a power
+- Sum/l1/mean retain error-free partials. Sum/l1 preserve the authorized ordered
+  Neumaier unrepresentable-prefix sanitizer, then use the same bounded expansion
+  as mean. The threshold is the exact sum/l1 bound or bound times count.
+  Mean always scales by a power
   of two at least twice the row count and accumulates an error-free FastTwoSum
   expansion, retaining every nonzero low component. It restores those components
-  and the original inputs' scaling losses into a second expansion. A conservative
+  and the original inputs' scaling losses into a second expansion. An explicit
+  magnitude-order normalization precedes the initial leading-component guard:
+  cancellation can leave the first expansion weakly overlapping. A conservative
   early guard avoids overflowing restoration; an exact expansion comparison
   against the integer threshold `1e12 * row.len()` determines the saturation
   fault. The leading component is divided once to produce the bounded mean.
-- L2 uses scaled sum of squares, checking the 1e12 saturation bound before
-  multiplication so even a norm above f64::MAX is saturated safely.
+- L2 accumulates exact positive dyadic squares into 86 base-2^26 digits in
+  units of 2^-2148. A three-term 26/27-bit significand split needs only u64
+  arithmetic, including the square of the minimum subnormal. Inputs above the
+  output limit clamp before multiplication. Exact integer comparison with
+  (1e12)^2 precedes output rounding; the result is normalized by a power of two
+  before one square root and rescaling. Tiny positive tails retain their fault.
 - Nonfinite inputs produce +0 with NONFINITE_INPUT. Empty sum/l1/l2 are
   +0 identities; empty mean raises EMPTY_ROW_REDUCTION. Finite outputs above
   ±1e12 raise MAGNITUDE_CLAMPED; an unrepresentable compensated sum/l1 uses
@@ -35,7 +44,9 @@ no evaluator-identity input or existing frozen fixture is edited/regenerated.
   by the emitted twins.
 
 The mathematical asinh branches follow the [Netlib fdlibm reference](https://netlib.org/fdlibm/s_asinh.c);
-scaled L2 follows the [LAPACK scaled sum-of-squares method](https://www.netlib.org/lapack/explore-html/d8/d76/group__lassq_gae8f40b0a34771b4f2d9c863de3af7be5.html).
+L2 uses an exact dyadic accumulator followed by power-of-two normalization.
+The kernel identity is introduced by this PR; no previously shipped v2 kernel
+identity or v1 artifact changes.
 References stay in documentation outside emitted text.
 
 ## Mean error bound and overflow argument
@@ -63,7 +74,10 @@ The final threshold comparison uses 13-bit integer chunks: each `chunk*1e12`
 is exactly representable, and power-of-two place values preserve that exactness.
 This avoids a rounded threshold or rounded mean inventing a magnitude fault.
 
-The nonoverlapping expansion's omitted tail satisfies
+The bound below applies to the explicitly normalized scaled and restored
+expansions, not the potentially weakly overlapping first pass. That distinction
+was exposed by the fourth independent review and its failing initial-tail
+invariant remains in immutable custody. The nonoverlapping expansion's omitted tail satisfies
 `|S-h| <= u/(1-u) * |h|`. For an exactly represented count, before output
 projection the absolute mean error is bounded by
 `|S-h|/n + u*|h/n| + eta/2`. Including a potentially rounded integer-to-float
@@ -77,9 +91,32 @@ two ULP, exact zeros must match bits, subnormals must be within one `eta`, and
 faults must match exactly. The independent reviewer must verify the expansion,
 scaling/underflow, threshold and bound argument across the entire helper family.
 
+## Exact-square L2 bound and integer safety
+
+Each finite input at or under 1e12 has a 53-bit significand. Splitting it into
+26-bit low and 27-bit high pieces gives exact square terms `low^2`, `2*low*high`
+and `high^2`, each under 2^54. Adding them at their exact bit offsets uses
+26-bit digit carries with intermediates under 2^52. The accumulator unit is
+2^-2148, so no positive square is discarded through floating underflow.
+Every accepted prefix is at most 1e24; before the next exact comparison it is
+at most 2e24. Its top bit is at most 2228 relative to that unit, and 86*26=2236
+bits leave room for all carries. Positive terms permit immediate saturation
+without depending on later row order. Faults compare exact integers, including
+[1e12, minimum-subnormal] and [6e11,8e11, minimum-subnormal].
+
+The top 53 bits plus round/sticky bits round the normalized exact square sum
+once to binary64, ties-to-even, in [1,4]. On the certified host with correctly
+rounded square root, its square root and exact power-of-two rescaling have at
+most the square-sum rounding error halved plus one sqrt rounding error: a
+conservative normal relative bound `gamma2 = 2*u/(1-2*u)`. Gradual-underflow
+rescaling adds at most eta/2 absolute error. The unchanged two-ULP normal,
+one-eta subnormal and exact fault corpus gates still apply; no universally
+correctly rounded norm or cross-host libm claim is made. Final projection to
+1e12 cannot create a fault after the exact comparison proved the input inside.
+
 ## Focused proof and acceptance
 
-`cargo test -p feat-math --locked --test numerical_policy_v2` executes twelve
+`cargo test -p feat-math --locked --test numerical_policy_v2` executes fifteen
 nonignored tests. Tests-first missing-module failure is retained, followed by
 five initial passes. The expanded run retained its two IP-scrub failures:
 a reference URL was included in emitted Rust. Moving the reference into
@@ -123,7 +160,7 @@ finite-prefix cancellation, normal/subnormal residuals, and exact/adjacent
 clamp boundaries. Analytic case expectations are checked again by an independent
 Fraction audit of the actual generated matrix inputs, including exact faults.
 
-Rust runtime and helper twins execute 12,898 value/fault observations in
+Rust runtime and helper twins execute 63,610 value/fault observations in
 each of nine drivers: rustc -O, Python 3.12.3, g++ and clang++ C++17 O2/O3
 and C++20 O3, plus g++ C++17 ASan/UBSan. C++ always disables contraction
 and fast math. Empty rows and unknown helper reduction names are exercised.
@@ -131,6 +168,19 @@ The same Rust source body serves runtime and generated Rust; independent
 oracle tests supplement that common-source parity. These are helper drivers,
 not full training recipes. No new dependency, tolerance/allowlist, lint
 suppression or gate weakening is introduced.
+The fourth independent native review 5402865547 passed all previous mean
+repros and 19,713 broader mean observations but found nested finite sum loss,
+L2 error above two ULP, and missed exact clamp faults in sum/l1/L2. Three new
+nonignored regressions reproduce those failures at the reviewed head, then
+cover nested sum signs/orders/residuals, repeated small squares at every width
+1..128 and count seams through 16,385, and exact/inside clamp tails including
+minimum subnormals. Another 4,226 row families in three orders contribute
+50,712 new four-reduction driver observations. All original asinh/row/mean
+corpus objects and old metadata remain unchanged. The complete independent
+69,416-case oracle is replayed separately in ten drivers; writer replay is not
+a GitHub approval. Full proof and the earlier failed scrub check are retained
+under correction-04; no tolerance or fault exception is added.
+
 The next independent review must sweep all available v2 reductions
 (sum/l1/mean/l2), asinh, fault thresholds, overflow/cancellation and underflow.
 A variance API is absent from this helper prerequisite; full program/reduction

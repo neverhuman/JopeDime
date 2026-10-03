@@ -36,7 +36,7 @@ pub fn asinh_v2(input: f64) -> (f64, FaultSet) {
     (value, FaultSet::from_bits(bits).unwrap())
 }
 
-/// Ordered Neumaier sum/l1, retained-partial mean, or scaled L2. Nonfinite
+/// Retained-partial sum/l1/mean or exact-square scaled L2. Nonfinite
 /// cells refuse the entire reduction with NONFINITE_INPUT. Empty sum/l1/l2
 /// are identities; empty mean raises EMPTY_ROW_REDUCTION. Outputs are bounded
 /// at ±1e12 with MAGNITUDE_CLAMPED. An unrepresentable compensated sum uses

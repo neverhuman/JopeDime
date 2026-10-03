@@ -210,6 +210,92 @@ fn mean_is_overflow_safe_across_adversarial_families_at_every_width() {
 }
 
 #[test]
+fn sum_retains_nested_finite_cancellation_across_widths_and_orders() {
+    for width in 6..=128 {
+        for exponent in [120_u64, 500, 1000] {
+            let big = f64::from_bits((exponent + 1023) << 52);
+            let small = f64::from_bits((exponent / 2 + 1023) << 52);
+            for residual in [0.0, 1.0, f64::MIN_POSITIVE, f64::from_bits(7)] {
+                if width == 6 && residual != 0.0 {
+                    continue;
+                }
+                for sign in [1.0, -1.0] {
+                    let mut row = vec![big, 1.0, small, -small, -1.0, -big];
+                    row.resize(width, 0.0);
+                    if width > 6 {
+                        row[6] = residual;
+                    }
+                    for value in &mut row {
+                        *value *= sign;
+                    }
+                    for _ in 0..3 {
+                        let (actual, faults) = reduce_v2(Reduction::Sum, &row);
+                        let expected = if residual == 0.0 {
+                            0.0
+                        } else {
+                            sign * residual
+                        };
+                        check_oracle(actual, expected, &format!("nested sum {row:?}"));
+                        assert_eq!(faults, FaultSet::EMPTY);
+                        row.rotate_left(1);
+                        row.reverse();
+                    }
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn l2_retains_small_squares_across_widths_and_orders() {
+    for width in (1..=128).chain([8191, 8192, 8193, 16383, 16384, 16385]) {
+        let expected = f64::from_bits(1.0_f64.to_bits() + (width as u64 - 1 + 3) / 8);
+        for sign in [1.0, -1.0] {
+            let mut row = vec![sign * 2.0_f64.powi(-27); width];
+            row[0] = sign;
+            for _ in 0..3 {
+                let (actual, faults) = reduce_v2(Reduction::L2, &row);
+                check_oracle(actual, expected, &format!("small square width {width}"));
+                assert_eq!(faults, FaultSet::EMPTY);
+                row.rotate_left(1);
+                row.reverse();
+            }
+        }
+    }
+}
+
+#[test]
+fn reduction_clamp_faults_preserve_exact_boundary_tails() {
+    for tail in [2.0_f64.powi(-15), 1.0, f64::MIN_POSITIVE, f64::from_bits(1)] {
+        for sign in [1.0, -1.0] {
+            for width in 2..=128 {
+                let mut row = vec![sign * 1e12, sign * tail];
+                row.resize(width, 0.0);
+                for reduction in [Reduction::Sum, Reduction::L1, Reduction::L2] {
+                    let expected = if reduction == Reduction::Sum {
+                        sign * 1e12
+                    } else {
+                        1e12
+                    };
+                    assert_eq!(
+                        reduce_v2(reduction, &row),
+                        (expected, FaultSet::MAGNITUDE_CLAMPED)
+                    );
+                }
+                row[1] = -sign * tail;
+                assert_eq!(reduce_v2(Reduction::Sum, &row).1, FaultSet::EMPTY);
+            }
+        }
+        assert_eq!(
+            reduce_v2(Reduction::L2, &[6e11, 8e11, tail]),
+            (1e12, FaultSet::MAGNITUDE_CLAMPED)
+        );
+        let inside = f64::from_bits(1e12_f64.to_bits() - 1);
+        assert_eq!(reduce_v2(Reduction::L2, &[inside, tail]).1, FaultSet::EMPTY);
+    }
+}
+
+#[test]
 fn scaled_l2_saturates_huge_finite_norms_and_retains_tiny_norms() {
     assert_eq!(
         reduce_v2(Reduction::L2, &[3.0e200, 4.0e200]),
@@ -429,6 +515,50 @@ fn compile_cpp(
     run(Command::new(binary).arg(root.join("bits.txt")))
 }
 
+fn reduction_boundary_rows() -> Vec<Vec<f64>> {
+    let mut rows = Vec::new();
+    for width in 6..=128 {
+        for exponent in [120_u64, 500, 1000] {
+            let big = f64::from_bits((exponent + 1023) << 52);
+            let small = f64::from_bits((exponent / 2 + 1023) << 52);
+            for residual in [0.0, 1.0, f64::MIN_POSITIVE, f64::from_bits(7)] {
+                if width == 6 && residual != 0.0 {
+                    continue;
+                }
+                for sign in [1.0, -1.0] {
+                    let mut row = vec![big, 1.0, small, -small, -1.0, -big];
+                    row.resize(width, 0.0);
+                    if width > 6 {
+                        row[6] = residual;
+                    }
+                    row.iter_mut().for_each(|value| *value *= sign);
+                    rows.push(row);
+                }
+            }
+        }
+    }
+    for width in (1..=128).chain([8191, 8192, 8193, 16383, 16384, 16385]) {
+        for sign in [1.0, -1.0] {
+            let mut row = vec![sign * 2.0_f64.powi(-27); width];
+            row[0] = sign;
+            rows.push(row);
+        }
+    }
+    for tail in [2.0_f64.powi(-15), 1.0, f64::MIN_POSITIVE, f64::from_bits(1)] {
+        for sign in [1.0, -1.0] {
+            for width in 2..=128 {
+                let mut row = vec![sign * 1e12, sign * tail];
+                row.resize(width, 0.0);
+                rows.push(row);
+            }
+        }
+        rows.push(vec![6e11, 8e11, tail]);
+        rows.push(vec![f64::from_bits(1e12_f64.to_bits() - 1), tail]);
+    }
+    assert_eq!(rows.len(), 4226);
+    rows
+}
+
 #[test]
 fn emitted_helper_value_and_fault_bits_match_in_the_three_language_matrix() {
     let root = Path::new(env!("CARGO_TARGET_TMPDIR")).join("numerical_policy_v2");
@@ -469,6 +599,24 @@ fn emitted_helper_value_and_fault_bits_match_in_the_three_language_matrix() {
         expected.push_str(&format!("{:016x} {:08x}\n", v.to_bits(), f.bits()));
     }
     assert_eq!(inputs.lines().count(), 12898);
+    for mut row in reduction_boundary_rows() {
+        for _ in 0..3 {
+            for (reduction, name) in reductions() {
+                inputs.push_str(&format!(
+                    "{name} {}\n",
+                    row.iter()
+                        .map(|v| format!("{:016x}", v.to_bits()))
+                        .collect::<Vec<_>>()
+                        .join(" ")
+                ));
+                let (v, f) = reduce_v2(reduction, &row);
+                expected.push_str(&format!("{:016x} {:08x}\n", v.to_bits(), f.bits()));
+            }
+            row.rotate_left(1);
+            row.reverse();
+        }
+    }
+    assert_eq!(inputs.lines().count(), 63610);
     fs::write(root.join("bits.txt"), inputs).unwrap();
     let rust = emit_helpers(NumericalLanguage::Rust)
         + r#"
