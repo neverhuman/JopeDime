@@ -526,7 +526,7 @@ mod tests {
         assert!(first.earlier_looks.is_empty(), "{:?}", first.earlier_looks);
         assert_eq!(
             second.earlier_looks,
-            [first.program_sha256.clone()],
+            std::slice::from_ref(&first.program_sha256),
             "the second score hides the look it waited for"
         );
         assert_eq!(read(&first_path).unwrap(), first);
@@ -559,7 +559,7 @@ mod tests {
         assert_eq!(read(&path).unwrap(), first);
         assert_eq!(
             earlier_looks(path.parent().unwrap()).unwrap(),
-            [first.program_sha256.clone()]
+            std::slice::from_ref(&first.program_sha256)
         );
     }
 
