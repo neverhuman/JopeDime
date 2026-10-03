@@ -56,6 +56,10 @@ The initial frozen candidate failed hygiene on an undeclared test target and
 audit on a generic Language enum collision. The corrected source adds only
 the required static target mapping and uses InverseLinkLanguage; failed
 evidence is retained outside the checkout, with no gate weakening.
+The next qualification exposed four jope-records failures because the new
+coverage target also needs a maintained regression classification. The
+correction adds only its gp/export classification; all existing rows and
+baseline triage stay unchanged. Full suites must qualify the corrected head.
 
 ## Per-op definition of done and remaining B05 gates
 
