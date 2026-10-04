@@ -2,7 +2,7 @@
 
 Qualified local continuation now included in PR #178 on
 `kernel2/bt09-linear-scaling`, rebased onto remote main
-`87b81928deeed097099ed1e0d4d718d0bc26ceaf` after #176.
+`6df43201750b50ffcee908333e2f90dee8672829` after #176.
 Original dependency `e5266782121dc0cf131aa9e7ff4ee6a496e7d4a5` and local
 follow-up `fbba3ec6247167465edd924d2aa7c0e748ccab6e` remain preserved with
 their dated local proof. The owner lifted the publication hold after the Team
@@ -44,17 +44,19 @@ JOPE_CPP_STD=20 cargo test -p feat-math --locked --test linear_scaling_recipes
 
 Five new nonignored tests cover admission, native extraction compatibility,
 the 1,705-fit adjacent-feature oracle, representable subnormal loss and
-fourteen independent train-and-predict corpora. Every generated model is restored
+nineteen independent train-and-predict corpora. Every generated model is restored
 before predicting. Comparisons include two coefficient words, MSE, complete
-winner bytes and 39 prediction words per backend; total 243 scalar word
-comparisons and 42 complete-envelope comparisons. Finite extremes, constant
+winner bytes and 59 prediction words per backend; total 348 scalar word
+comparisons and 57 complete-envelope comparisons. Finite extremes, constant
 fallback and tiny nonconstant features are included. Every backend also rejects
 invalid/nonfinite tables and labels, unrepresentable training loss, all state
 prefix truncations, corrupt headers/body, trailing bytes and NaN coefficients.
 Compile generated Rust with `rustc --edition=2021 -O`; C++ uses
 `-O2 -ffp-contract=off -fno-fast-math`, with sanitizer/C++20 variants above.
-The new Rust library explicitly types the inherited scalar binding, so Step
-trees compile without changing the frozen legacy emitter or its source bytes.
+The new Rust library types both the scalar binding and Step branch literals.
+Five nested Step shapes (abs, min, powers as base/exponent, and sqrt of a
+negated Step) compile and execute in all three languages. The frozen legacy
+emitter and its source bytes remain unchanged.
 
 Exact-source baseline reuse: completed #178 local gates at the dependency SHA,
 39 immutable evidence files and 100 protected inputs reverified. PR2108/29 and
@@ -77,4 +79,9 @@ fresh independent approval are recorded separately in
 `/home/ubuntu/jope-evidence/kernel2/bt/B09_LINEAR_SCALING/rebase-after-176-01`.
 The inherited raw CSV entry point remains distinct from `scaled_train`.
 
-Correction-01 rebases on the reviewed CI-retention merge #179; the prior numerical baseline remains independently preserved. Current-main shared baseline and full correction after-gates are pending under the owner heavy lock. No pending outcome is claimed passed.
+Correction-01 rebases on reviewed fixture prerequisite #181. Shared full
+baseline DONE at this base qualifies all standing commands and the accepted
+unchanged Clippy floor; the prior failed-main proof is preserved. Final
+correction after-gates and fresh hosted CI/review remain pending. Lane D
+advisory R3 nested-Step repro is preserved and covered in both export routes.
+Lane A completes #178 then #177 and hands off idle; B10/B11 belong to Lane D.
