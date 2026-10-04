@@ -7842,6 +7842,22 @@
       ],
       "dispositions": [],
       "scope": "B07 versioned Func21/22 interpreter/compiler execution prerequisite: approved guarded exponential dispatch across the immutable3048-case boundary corpus and both policies, nested guard/raw-intermediate semantics, typed prefix faults, IEEE/lossless policy identity, unchanged arity/depth/node limits, mixed inverse/exponential replay, and closed legacy/model/export/profile/generation routes. Full program recipes/fit/EEC/utility and complete B07 remain held."
+    },
+    "target:feat-math/test/finite_difference_v2": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/feat-math/tests/finite_difference_v2.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "Version-2 causal integer difference kernel and bounded group history; standalone Rust/Python/C++17 helper bit/fault parity. Full ordered recipe/model/fitted/profile/generation/EEC/utility admission remains held."
     }
   }
 }

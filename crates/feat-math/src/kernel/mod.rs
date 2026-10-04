@@ -8,6 +8,7 @@ pub mod codec;
 pub mod export;
 pub mod expression_recipe;
 pub mod expression_search;
+pub mod finite_difference;
 pub mod inverse_links;
 pub mod numerical_policy;
 pub mod ordered_axis;
