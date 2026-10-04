@@ -2122,6 +2122,13 @@
         "gp",
         "export"
       ]
+    },
+    "target:feat-math/test/numerical_policy_ingress": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "export"
+      ]
     }
   },
   "baseline_triage": [

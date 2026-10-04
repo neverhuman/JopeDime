@@ -3,12 +3,14 @@
 //! codec remain v1.
 use super::codec::{Reader, Writer};
 use super::inverse_links::InverseLink;
+use super::numerical_policy::NumericalPolicy;
 use super::wire_v2::{VersionError, VersionResult, MAGIC_V2, READER_VERSION};
 use crate::math_expr::{BinOp, Expr, Func, MathExpr, UnOp, Var};
 
 const SCALAR_VARIANT: u8 = 1;
 const INVERSE_LINK_FEATURE: u64 = 2;
 const STABLE_EXPONENTIAL_FEATURE: u64 = 4;
+const NUMERICAL_POLICY_FEATURE: u64 = 8;
 
 // Explicit IDs reproduce the frozen v1 prefix, independently of enum order.
 const V1_FUNCTION_IDS: &[(u16, Func)] = &[
@@ -125,6 +127,7 @@ pub enum ScalarNode {
 #[derive(Clone, Debug, PartialEq)]
 pub struct ScalarExpressionProgram {
     root: ScalarNode,
+    numerical_policy: NumericalPolicy,
 }
 
 impl ScalarExpressionProgram {
@@ -132,17 +135,33 @@ impl ScalarExpressionProgram {
         // Use the same bounded structural checks as serialization; no evaluator
         // runs during construction, even for nonfinite literal payloads.
         encode_node(&root, &mut Writer::default(), 1, &mut NodeBudget::default())?;
-        Ok(Self { root })
+        Ok(Self {
+            root,
+            numerical_policy: NumericalPolicy::LegacyV1,
+        })
     }
 
     pub fn ast(&self) -> &ScalarNode {
         &self.root
     }
 
+    pub fn numerical_policy(&self) -> NumericalPolicy {
+        self.numerical_policy
+    }
+
+    /// Select a contract explicitly, without admitting an evaluator or model.
+    /// Selecting v1 restores the original scalar envelope, with no selector.
+    #[must_use]
+    pub fn with_numerical_policy(mut self, policy: NumericalPolicy) -> Self {
+        self.numerical_policy = policy;
+        self
+    }
+
     /// Import typed v1 nodes without reparsing their lossy source printer.
     pub fn from_v1(expression: &MathExpr) -> VersionResult<Self> {
         Ok(Self {
             root: import_node(expression.ast(), 1, &mut NodeBudget::default())?,
+            numerical_policy: NumericalPolicy::LegacyV1,
         })
     }
 
@@ -154,7 +173,18 @@ impl ScalarExpressionProgram {
         writer.raw(MAGIC_V2)?;
         writer.byte(SCALAR_VARIANT)?;
         writer.byte(READER_VERSION)?;
-        writer.word(budget.required_features)?;
+        let explicit_policy = self.numerical_policy == NumericalPolicy::StableV2;
+        writer.word(
+            budget.required_features
+                | if explicit_policy {
+                    NUMERICAL_POLICY_FEATURE
+                } else {
+                    0
+                },
+        )?;
+        if explicit_policy {
+            writer.byte(2)?;
+        }
         writer.raw(&body.finish())?;
         Ok(writer.finish())
     }
@@ -181,22 +211,37 @@ impl ScalarExpressionProgram {
             ));
         }
         let features = reader.word()?;
-        if features != INVERSE_LINK_FEATURE
-            && features != (INVERSE_LINK_FEATURE | STABLE_EXPONENTIAL_FEATURE)
-        {
+        let supported =
+            INVERSE_LINK_FEATURE | STABLE_EXPONENTIAL_FEATURE | NUMERICAL_POLICY_FEATURE;
+        if features & INVERSE_LINK_FEATURE == 0 || features & !supported != 0 {
             return Err(VersionError::UnsupportedVersion(
                 "program v2 variant requires inverse-link feature set".into(),
             ));
         }
+        let numerical_policy = if features & NUMERICAL_POLICY_FEATURE != 0 {
+            let policy = reader.byte()?;
+            if policy != 2 {
+                return Err(VersionError::UnsupportedVersion(format!(
+                    "numerical policy {policy}"
+                )));
+            }
+            NumericalPolicy::StableV2
+        } else {
+            NumericalPolicy::LegacyV1
+        };
         let mut budget = NodeBudget::default();
         let root = decode_node(&mut reader, 1, &mut budget)?;
         reader.finish()?;
-        if features != budget.required_features {
+        let declared_body_features = features & !NUMERICAL_POLICY_FEATURE;
+        if declared_body_features != budget.required_features {
             return Err(VersionError::Malformed(
                 "scalar required features do not match body".into(),
             ));
         }
-        Ok(Self { root })
+        Ok(Self {
+            root,
+            numerical_policy,
+        })
     }
 }
 
