@@ -3,17 +3,17 @@
   "decision": "OWNER kickoff B12 authorizes the specified shared-file integration; announced identity-only transition, with no v1 behavior/source-byte golden regeneration",
   "plan_reference": "JOPEDIME_BREAKTHROUGH_IMPLEMENTATION_PLAN.md \u00a74 B12 and standing OWNER DIRECTIVE(c)",
   "pr_reference": "[kernel2] Add feature-position polynomial FIR; mint evaluator identity",
-  "source_commit": "659986214635369554da8e548a93b95dabef08b8",
+  "source_commit": "5169614085639dbb97fd554a96423ab3ae9ee6b3",
   "fixtures": [
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
       "before": "a1d998089e3b262549a3dadae9b3355bda742328badffb85b38b3fbec989a96b",
-      "after": "61408114fc1eafcdf641832fa938a119c0db5188f83e747b1bdc362a20f3f257"
+      "after": "ce564b593fbf81479389b23f7fb7e40935d74228738a82ee79c6d760bc5d0ab3"
     },
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
       "before": "c8c2a8812afc60184553c1daf59d084b7f9d82bef10ebb47933f3c3fa396dcd5",
-      "after": "cb763b21e72988e85b58ae717f396c160b35fafa2dbd7a2c03d8dcd8fee61e9e"
+      "after": "de7a820724fa36c147576569f4e176c185676ffc45cbe0b36ececf5b1a73b7b4"
     }
   ]
 }
