@@ -1,0 +1,19 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "OWNER kickoff B12 authorizes the specified shared-file integration; announced identity-only transition, with no v1 behavior/source-byte golden regeneration",
+  "plan_reference": "JOPEDIME_BREAKTHROUGH_IMPLEMENTATION_PLAN.md \u00a74 B12 and standing OWNER DIRECTIVE(c)",
+  "pr_reference": "[kernel2] Add feature-position polynomial FIR; mint evaluator identity",
+  "source_commit": "baed7e98354ddaa264b8d9365462a09cf55ff35e",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "a1d998089e3b262549a3dadae9b3355bda742328badffb85b38b3fbec989a96b",
+      "after": "8b7af6cabf6161b6f5842c877fa6c07608dd5f8f7ff88dbe1e2de730d7dbfaef"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "c8c2a8812afc60184553c1daf59d084b7f9d82bef10ebb47933f3c3fa396dcd5",
+      "after": "9e52aa30ef0c08e679b29bbb5d661e5f970125df1b02316c87cb8db5925749d5"
+    }
+  ]
+}

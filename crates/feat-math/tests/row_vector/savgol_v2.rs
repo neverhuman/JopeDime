@@ -244,7 +244,7 @@ fn six_signal_datasets_five_seeds_equal_budget_derivative_ablation() {
     // worker, promotion, or broad search-lift claim. Both kernels evaluate the
     // same 64 rows per task/seed; the old reference is the two-neighbor stencil.
     let fixture: serde_json::Value = serde_json::from_str(include_str!(
-        "fixtures/math_boundary/v2/savgol_utility.json"
+        "../fixtures/math_boundary/v2/savgol_utility.json"
     ))
     .unwrap();
     let width = fixture["width"].as_u64().unwrap() as usize;
@@ -326,7 +326,7 @@ fn three_language_boundary_values_and_faults_are_bit_equal() {
     let root = Path::new(env!("CARGO_TARGET_TMPDIR")).join("savgol-boundary-v2");
     fs::create_dir_all(&root).unwrap();
     let fixture: serde_json::Value =
-        serde_json::from_str(include_str!("fixtures/math_boundary/v2/savgol.json")).unwrap();
+        serde_json::from_str(include_str!("../fixtures/math_boundary/v2/savgol.json")).unwrap();
     let mut rs = format!("{}\nfn main(){{\n", emit::RUST_HELPER);
     let mut py = format!("import math\n{}\n", emit::PYTHON_HELPER);
     let mut cc=format!("#include <algorithm>\n#include <cmath>\n#include <cstring>\n#include <cstdint>\n#include <stdexcept>\n#include <vector>\n#include <utility>\n#include <iostream>\n#include <iomanip>\n{}\nint main(){{\n",emit::CPP_HELPER);
@@ -347,6 +347,20 @@ fn three_language_boundary_values_and_faults_are_bit_equal() {
         .fit(row.len())
         .unwrap();
         let out = state.apply(&row).unwrap();
+        let pinned = case["expected_bits"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|b| u64::from_str_radix(b.as_str().unwrap(), 16).unwrap())
+            .collect::<Vec<_>>();
+        let pinned_faults = case["expected_faults"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|b| b.as_u64().unwrap() as u32)
+            .collect::<Vec<_>>();
+        assert_eq!(bits(&out.values), pinned);
+        assert_eq!(out.faults, pinned_faults);
         for (v, f) in out.values.iter().zip(out.faults) {
             expected.push_str(&format!("{:016x} {f:08x}\n", v.to_bits()));
             count += 1;
@@ -546,6 +560,11 @@ fn gp_create_change_remove_roundtrip_and_compiled_recipe_closure() {
                 .collect::<Vec<_>>();
             assert_eq!(actual, expected, "{name} recipe {index}");
         }
+        fs::copy(
+            root.join("model.cpp"),
+            root.join(format!("{index}-recipe.cpp")),
+        )
+        .unwrap();
         let mut fitted = model.emit_fitted_cpp17().unwrap();
         fitted.push_str("#include <iostream>\n#include <iomanip>\nint main(){std::vector<std::vector<double>> x=");
         fitted.push_str(&format!(
@@ -570,5 +589,57 @@ fn gp_create_change_remove_roundtrip_and_compiled_recipe_closure() {
             .map(|s| u64::from_str_radix(s, 16).unwrap())
             .collect::<Vec<_>>();
         assert_eq!(actual, expected, "fitted {index}");
+        fs::copy(
+            root.join("fitted.cpp"),
+            root.join(format!("{index}-fitted.cpp")),
+        )
+        .unwrap();
+        if std::env::var_os("JOPE_ROW_CPP_QUALIFY").is_some() {
+            for (name, compiler, standard, extra) in [
+                ("clang17", "clang++", "-std=c++17", vec![]),
+                ("cpp20", "g++", "-std=c++20", vec![]),
+                (
+                    "sanitizer",
+                    "g++",
+                    "-std=c++17",
+                    vec![
+                        "-O1",
+                        "-fsanitize=address,undefined",
+                        "-fno-omit-frame-pointer",
+                        "-no-pie",
+                    ],
+                ),
+            ] {
+                let recipe_name = format!("{index}-{name}-recipe");
+                cpp(&root, "model.cpp", &recipe_name, compiler, standard, &extra);
+                let output = root.join(format!("{recipe_name}.csv"));
+                run(Command::new(root.join(&recipe_name))
+                    .arg(root.join("train.csv"))
+                    .arg(root.join("test.csv"))
+                    .arg(&output));
+                let actual = fs::read_to_string(output)
+                    .unwrap()
+                    .lines()
+                    .map(|s| s.parse::<f64>().unwrap().to_bits())
+                    .collect::<Vec<_>>();
+                assert_eq!(actual, expected, "{name} recipe {index}");
+                let fitted_name = format!("{index}-{name}-fitted");
+                cpp(
+                    &root,
+                    "fitted.cpp",
+                    &fitted_name,
+                    compiler,
+                    standard,
+                    &extra,
+                );
+                let actual =
+                    String::from_utf8(run(&mut Command::new(root.join(&fitted_name))).stdout)
+                        .unwrap()
+                        .lines()
+                        .map(|s| u64::from_str_radix(s, 16).unwrap())
+                        .collect::<Vec<_>>();
+                assert_eq!(actual, expected, "{name} fitted {index}");
+            }
+        }
     }
 }

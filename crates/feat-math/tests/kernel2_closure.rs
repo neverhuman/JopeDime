@@ -1038,3 +1038,7 @@ fn negative_manifest_constant_bin_is_rejected_by_a() {
         .retain(|bin| bin.to_bits() != 0.5f64.to_bits());
     assert_negative(&manifest, &baseline(), "constants", "(a)");
 }
+
+// B12: per-op coverage under the registered closure target.
+#[path = "row_vector/savgol_v2.rs"]
+mod savgol_v2;
