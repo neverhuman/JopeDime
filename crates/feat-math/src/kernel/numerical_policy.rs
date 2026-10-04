@@ -10,6 +10,31 @@ pub use emit::{emit_helpers, NumericalLanguage};
 pub const POLICY_ID: &str = "v2";
 pub const KERNEL_ID: &str = "feat-math.fdlibm-neumaier-lassq.v2";
 
+/// A program's explicit numerical contract. An absent selector remains v1.
+/// Recording the contract does not admit program execution or generation.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum NumericalPolicy {
+    #[default]
+    LegacyV1,
+    StableV2,
+}
+
+impl NumericalPolicy {
+    pub const fn name(self) -> &'static str {
+        match self {
+            Self::LegacyV1 => "v1",
+            Self::StableV2 => POLICY_ID,
+        }
+    }
+
+    pub const fn kernel_identity(self) -> Option<&'static str> {
+        match self {
+            Self::LegacyV1 => None,
+            Self::StableV2 => Some(KERNEL_ID),
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Reduction {
     Sum,

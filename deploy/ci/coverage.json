@@ -7778,6 +7778,22 @@
       ],
       "dispositions": [],
       "scope": "B07 opt-in numerical helper prerequisite: fdlibm-style asinh, retained-partial reductions and exact-square scaled L2, independent boundary/whole-family oracles, exact value/fault parity in Rust/Python/C++17 and C++20/sanitizer matrix, and old v1 behavior. Full program/model/recipe/profile/generation/EEC admission remains held."
+    },
+    "target:feat-math/test/numerical_policy_ingress": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/feat-math/tests/numerical_policy_ingress.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "B07 parse-only opt-in numerical policy ingress: explicit feature/selector declaration, unchanged absent-policy bytes and scalar tags, exact IEEE binary/lossless-text fixed points, policy/body mismatch and stripping refusal, unsupported versions/IDs, unchanged resource bounds, and no legacy execution/model/export admission. Full runtime/recipes/profile/generation/EEC qualification remains held."
     }
   }
 }
