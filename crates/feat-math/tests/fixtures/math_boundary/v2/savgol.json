@@ -573,5 +573,5 @@
       ]
     }
   ],
-  "expected_provenance": "B12 first numerical source baed7e98354ddaa264b8d9365462a09cf55ff35e; independent polynomial/analytic stencil tests supplement these exact pins"
+  "expected_provenance": "B12 frozen numerical source 659986214635369554da8e548a93b95dabef08b8; independent polynomial/analytic stencil tests supplement these exact pins"
 }
