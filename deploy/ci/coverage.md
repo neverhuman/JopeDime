@@ -41,7 +41,7 @@ JUnit omission of skipped tests does not establish zero skips. A killed runner l
 incomplete `started` receipt. Missing executables/evidence produce `unavailable`, never success.
 Every fast lane invokes `fast-lane.sh` through this wrapper. Its existing command failures
 remain failures. Evidence stays in `target/ci-evidence/RUN_ID/ATTEMPT/LANE` under the workspace,
-including emitter programs and pipeline receipts, and is uploaded with 30-day artifact retention.
+including emitter programs and pipeline receipts, and is uploaded with 7-day artifact retention.
 Cargo's persistent lane target is separate. No successful-run cleanup deletes that evidence;
 checkout cleanup follows its upload. Local proofs remain under durable external custody.
 
