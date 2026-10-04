@@ -2,6 +2,7 @@ use feat_math::kernel::finite_difference::{
     DifferenceConfig, DifferenceModel, DifferenceProgram, DifferenceState, OrderedRow,
 };
 use feat_math::kernel::ordered_axis::{FoldBoundary, GroupKey, OrderedInputIdentity, TaskMode};
+use feat_math::kernel::wire_v2::{VersionError, VersionedModel, VersionedProgram};
 use feat_math::{kernel::Program, GenomeIr};
 
 fn input() -> OrderedInputIdentity {
@@ -122,16 +123,99 @@ fn versioned_ordered_program_codec_and_text_are_lossless_and_v1_refuses() {
     let p = program();
     let bytes = p.to_bytes().unwrap();
     assert!(Program::from_bytes(&bytes).is_err());
-    let routed = DifferenceProgram::from_bytes(&bytes).unwrap();
+    let routed = VersionedProgram::from_bytes(&bytes).unwrap();
+    assert!(matches!(routed, VersionedProgram::DifferenceV2(_)));
     assert_eq!(bytes, routed.to_bytes().unwrap());
+    assert!(routed.legacy_genome().is_err());
+    let text = routed.to_lossless_text().unwrap();
+    let reparsed = VersionedProgram::parse_lossless_text(&text).unwrap();
+    assert_eq!(bytes, reparsed.to_bytes().unwrap());
+    assert_eq!(text, reparsed.to_lossless_text().unwrap());
+    assert!(Program::parse_lossless_text(&text).is_err());
     for n in 0..bytes.len() {
-        assert!(DifferenceProgram::from_bytes(&bytes[..n]).is_err());
+        assert!(VersionedProgram::from_bytes(&bytes[..n]).is_err());
     }
     for i in [7, 8, 9, 10] {
         let mut bad = bytes.clone();
         bad[i] = 255;
-        assert!(DifferenceProgram::from_bytes(&bad).is_err());
+        assert!(VersionedProgram::from_bytes(&bad).is_err());
     }
+}
+
+#[test]
+fn generic_ordered_fit_and_model_ingress_preserve_native_replay_and_refuse_fallback() {
+    let program = program();
+    let routed = VersionedProgram::from_bytes(&program.to_bytes().unwrap()).unwrap();
+    let routes = feat_math::kernel::wire_v2::export_report(&routed);
+    for route in [
+        routes.rust_recipe,
+        routes.python_recipe,
+        routes.cpp17_recipe,
+        routes.cpp17_fitted,
+        routes.javascript,
+    ] {
+        assert!(matches!(
+            route,
+            feat_math::kernel::export::Route::Unsupported(_)
+        ));
+    }
+    let rows = (0..8)
+        .map(|i| {
+            let time = f64::from(i / 2);
+            row(if i % 2 == 0 { "a" } else { "b" }, time, time * time)
+        })
+        .collect::<Vec<_>>();
+    let labels = [0.0, 1.0, 2.0, 3.0, 4.0, 5.0];
+    let fold = FoldBoundary::new("router-cut", 6, 8).unwrap();
+    let mut native = program
+        .fit_training(&rows[..6], &labels, TaskMode::Forecasting, fold.clone())
+        .unwrap();
+    let initial = native.to_json().unwrap();
+    let mut model = routed
+        .fit_ordered(&rows[..6], &labels, TaskMode::Forecasting, fold.clone())
+        .unwrap();
+    let VersionedModel::DifferenceV2(fitted) = &model else {
+        panic!("ordered fit lost its versioned model route")
+    };
+    assert_eq!(fitted.to_json().unwrap(), initial);
+    let mut restored = VersionedModel::from_json(&initial).unwrap();
+    assert!(restored.legacy_model().is_err());
+    let expected = native.predict(&rows[6..]).unwrap();
+    for values in [
+        model.predict_ordered(&rows[6..]).unwrap(),
+        restored.predict_ordered(&rows[6..]).unwrap(),
+    ] {
+        assert_eq!(
+            values.iter().map(|v| v.to_bits()).collect::<Vec<_>>(),
+            expected.iter().map(|v| v.to_bits()).collect::<Vec<_>>()
+        );
+    }
+    for model in [model, restored] {
+        let VersionedModel::DifferenceV2(model) = model else {
+            panic!("ordered prediction lost its versioned model route")
+        };
+        assert_eq!(model.to_json().unwrap(), native.to_json().unwrap());
+        model.finish().unwrap();
+    }
+    let legacy = VersionedProgram::LegacyV1(Program::LegacyV1(program.downstream().clone()));
+    assert!(matches!(
+        legacy.fit_ordered(&rows[..6], &labels, TaskMode::Forecasting, fold.clone()),
+        Err(VersionError::UnsupportedVersion(_))
+    ));
+    assert!(routed
+        .fit_ordered(&rows[..6], &labels, TaskMode::IID, fold)
+        .is_err());
+    let mut changed: serde_json::Value = serde_json::from_str(&initial).unwrap();
+    changed["format_version"] = 3.into();
+    assert!(matches!(
+        VersionedModel::from_json(&changed.to_string()),
+        Err(VersionError::UnsupportedVersion(_))
+    ));
+    changed.as_object_mut().unwrap().remove("format_version");
+    assert!(matches!(
+        VersionedModel::from_json(&changed.to_string()),
+        Err(VersionError::UnsupportedVersion(_))
+    ));
 }
 
 #[test]

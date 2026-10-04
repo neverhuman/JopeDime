@@ -7,6 +7,13 @@ variant 4 and required feature bit 64. The new program preserves width 1–512,
 order 1–4 and fixed finite positive step. Legacy programs, models and emitters
 retain their existing paths.
 
+`VersionedProgram` reads and prints the new lossless envelope and provides the
+explicit `fit_ordered` route. That route returns `VersionedModel`, whose tagged
+model reader and `predict_ordered` path retain native model/state replay. Calls
+to the old genome/model accessors refuse the ordered shape, as do legacy and
+reservation programs asked to use the ordered fitter. Export routes remain
+explicitly unsupported until the following recipe PR.
+
 The initial fitted closure is an untransformed numeric Ridge pipeline with finite
 nonnegative regularization. Other opaque legacy downstream programs preserve
 their codec round trip and return `Unsupported` when asked to fit. Restored models
@@ -30,7 +37,7 @@ schema; fitted floating-point values use integer words to preserve exact replay.
 The embedded legacy downstream program retains its historical numerical policy.
 
 Acceptance: `cargo test --locked -p feat-math --test finite_difference_v2
---test ordered_axis_contract`. The `routing::` module adds eleven cases to the
+--test ordered_axis_contract`. The `routing::` module adds twelve cases to the
 existing mapped B08 target. Tests preserve
 refusal reproduction and cover snapshots, malformed/truncated codecs, IID and
 identity rejection, transactional batches, independent downstream fitting,
