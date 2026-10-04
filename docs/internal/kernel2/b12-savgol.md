@@ -29,7 +29,7 @@ predictor. This is geometry-only setup at plan time: no observations or labels
 enter coefficient fitting. Restore verifies canonical geometry and bits.
 Fitted-head restore also rejects weights that could overflow the bounded-score
 prediction dot product. Unknown row-stage wire IDs refuse with
-`UnsupportedVersion` at both program ingress routes.
+`UnsupportedVersion` at program and fitted-model ingress routes.
 Polynomial FIR derivative coefficients and evaluation position follow the
 usual least-squares definition ([SciPy coefficient reference](https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.savgol_coeffs.html));
 the clipped, degree-reducing boundary rule here is an explicit v2 contract.
