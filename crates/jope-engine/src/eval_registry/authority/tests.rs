@@ -427,6 +427,14 @@ fn run_child(
     fixture: &Fixture,
     mode: &str,
 ) -> (Authority, VerifiedFit, StartToken, ObservedCompletion) {
+    run_child_with_preparation_delay(fixture, mode, Duration::ZERO)
+}
+
+fn run_child_with_preparation_delay(
+    fixture: &Fixture,
+    mode: &str,
+    preparation_delay: Duration,
+) -> (Authority, VerifiedFit, StartToken, ObservedCompletion) {
     let (mut a, f, c) = fixture.claim();
     let handshake = fixture._temp.path().join("start.json");
     let mut child = SyntheticChild(
@@ -441,11 +449,30 @@ fn run_child(
             .env("JOPE_SYNTHETIC_WITNESS", &fixture.witness)
             .env("JOPE_SYNTHETIC_HANDSHAKE", &handshake)
             .env("JOPE_SYNTHETIC_MODE", mode)
+            .env(
+                "JOPE_SYNTHETIC_PREPARATION_DELAY_MS",
+                preparation_delay.as_millis().to_string(),
+            )
             .stdout(Stdio::null())
             .stderr(Stdio::inherit())
             .spawn()
             .unwrap(),
     );
+    // Cold runtime preparation is fixture setup, before the original start token.
+    // Keep its bounded wait separate from the unchanged execution deadline.
+    let ready = handshake.with_extension("ready");
+    let preparation_limit = Instant::now() + Duration::from_secs(90);
+    while !ready.exists() {
+        assert!(
+            child.0.try_wait().unwrap().is_none(),
+            "synthetic executor exited during preparation"
+        );
+        assert!(
+            Instant::now() < preparation_limit,
+            "synthetic executor preparation timed out"
+        );
+        std::thread::sleep(Duration::from_millis(1));
+    }
     let start = a
         .authorize_with_deadline(
             &f,
@@ -480,14 +507,25 @@ fn synthetic_executor() {
     let root = PathBuf::from(std::env::var("JOPE_SYNTHETIC_AUTHORITY").unwrap());
     let witness = PathBuf::from(std::env::var("JOPE_SYNTHETIC_WITNESS").unwrap());
     let handshake = PathBuf::from(std::env::var("JOPE_SYNTHETIC_HANDSHAKE").unwrap());
+    let preparation_delay = std::env::var("JOPE_SYNTHETIC_PREPARATION_DELAY_MS")
+        .unwrap()
+        .parse()
+        .unwrap();
+    std::thread::sleep(Duration::from_millis(preparation_delay));
+    if std::env::var("JOPE_SYNTHETIC_MODE").unwrap() == "prepare_failed" {
+        std::process::exit(9);
+    }
+    let mut a = Authority::open(&root, &witness).unwrap();
+    let f = fit();
+    let pending = handshake.with_extension("ready.pending");
+    fs::write(&pending, monotonic_ns().unwrap().to_string()).unwrap();
+    fs::rename(&pending, handshake.with_extension("ready")).unwrap();
     let limit = Instant::now() + Duration::from_secs(10);
     while !handshake.exists() {
         assert!(Instant::now() < limit);
         std::thread::sleep(Duration::from_millis(1));
     }
     let start: StartToken = serde_json::from_slice(&fs::read(&handshake).unwrap()).unwrap();
-    let mut a = Authority::open(&root, &witness).unwrap();
-    let f = fit();
     let custody = a.consume_start(&f, &start).unwrap();
     custody.verify().unwrap();
     fs::write(
@@ -557,6 +595,61 @@ fn failed_exit_signal_and_timeout_cannot_be_cleared_by_result_files() {
         }
         assert_eq!(state(a.claim(&f, &request()).unwrap()), "terminal_failure");
     }
+}
+
+#[test]
+fn preparation_delay_does_not_spend_execution_deadline() {
+    let fixture = Fixture::new(true);
+    let (mut a, f, start, observed) =
+        run_child_with_preparation_delay(&fixture, "failed", Duration::from_secs(31));
+    let prepared: u64 = fs::read_to_string(fixture._temp.path().join("start.ready"))
+        .unwrap()
+        .parse()
+        .unwrap();
+    assert!(start.authorized_monotonic_ns >= prepared);
+    assert_eq!(
+        start.deadline_monotonic_ns - start.authorized_monotonic_ns,
+        30_000_000_000
+    );
+    let sha = a
+        .complete_observed(
+            &f,
+            observed,
+            ExecutionOutcome::Success,
+            b"valid-looking result",
+            Some(b"model"),
+            Some(b"predictions"),
+            Some(b"{\"rmse\":0}"),
+        )
+        .unwrap();
+    let receipt = a.completion(&sha).unwrap();
+    assert_ne!(receipt.outcome, ExecutionOutcome::Success);
+    assert!(receipt.metrics_sha256.is_none());
+    assert_eq!(state(a.claim(&f, &request()).unwrap()), "terminal_failure");
+}
+
+#[test]
+fn preparation_failure_does_not_authorize_the_child() {
+    let fixture = Fixture::new(true);
+    let Err(failed) = std::panic::catch_unwind(|| {
+        run_child_with_preparation_delay(&fixture, "prepare_failed", Duration::ZERO)
+    }) else {
+        panic!("preparation failure was accepted");
+    };
+    let message = failed
+        .downcast_ref::<String>()
+        .map(String::as_str)
+        .or_else(|| failed.downcast_ref::<&str>().copied());
+    assert_eq!(
+        message,
+        Some("synthetic executor exited during preparation")
+    );
+    assert!(!fixture._temp.path().join("start.json").exists());
+    assert!(!fixture._temp.path().join("start.ready").exists());
+    assert_eq!(
+        state(fixture.open().claim(&fit(), &request()).unwrap()),
+        "claimed"
+    );
 }
 
 #[test]
