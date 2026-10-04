@@ -2,7 +2,7 @@
 
 Qualified local continuation now included in PR #178 on
 `kernel2/bt09-linear-scaling`, rebased onto remote main
-`2e75f00cc8abe2323fa6e3c5e2d0965c35b68bc3` after #176.
+`87b81928deeed097099ed1e0d4d718d0bc26ceaf` after #176.
 Original dependency `e5266782121dc0cf131aa9e7ff4ee6a496e7d4a5` and local
 follow-up `fbba3ec6247167465edd924d2aa7c0e748ccab6e` remain preserved with
 their dated local proof. The owner lifted the publication hold after the Team
@@ -15,9 +15,11 @@ labels. Rows must be finite, rectangular and the declared width, training must
 be nonempty, and target length must match exactly. No outer fold/callback/RNG
 is accepted. This preserves the explicit opt-in profile and legacy defaults.
 
-The ordered compensated means, normalized covariance/variance, exact constant
-fallback, finite representability checks and training MSE rescore preserve the
-preceding scalar fit arithmetic. Native fitting and generated Rust share one
+The exact constant fallback, finite representability checks and training MSE
+rescore retain the explicit calibration contract. Correction-01 translates
+before power-of-two normalization, compensates centered products and rescales
+coefficients/loss without premature overflow or per-row underflow. It fixes the
+unmerged centering and false-zero-loss defects. Native fitting and generated Rust share one
 source body; Python/C++ twins freeze the same operation order. This is not a
 correctly rounded least-squares guarantee for arbitrary extreme data.
 
@@ -40,16 +42,19 @@ JOPE_FITTED_CPP_SANITIZER=address,undefined cargo test -p feat-math --locked --t
 JOPE_CPP_STD=20 cargo test -p feat-math --locked --test linear_scaling_recipes
 ```
 
-Three new nonignored tests cover admission, native extraction compatibility and
-eleven independent train-and-predict corpora. Every generated model is restored
+Five new nonignored tests cover admission, native extraction compatibility,
+the 1,705-fit adjacent-feature oracle, representable subnormal loss and
+fourteen independent train-and-predict corpora. Every generated model is restored
 before predicting. Comparisons include two coefficient words, MSE, complete
-winner bytes and 33 prediction words per backend; total 198 scalar word
-comparisons and 33 complete-envelope comparisons. Finite extremes, constant
+winner bytes and 39 prediction words per backend; total 243 scalar word
+comparisons and 42 complete-envelope comparisons. Finite extremes, constant
 fallback and tiny nonconstant features are included. Every backend also rejects
 invalid/nonfinite tables and labels, unrepresentable training loss, all state
 prefix truncations, corrupt headers/body, trailing bytes and NaN coefficients.
 Compile generated Rust with `rustc --edition=2021 -O`; C++ uses
 `-O2 -ffp-contract=off -fno-fast-math`, with sanitizer/C++20 variants above.
+The new Rust library explicitly types the inherited scalar binding, so Step
+trees compile without changing the frozen legacy emitter or its source bytes.
 
 Exact-source baseline reuse: completed #178 local gates at the dependency SHA,
 39 immutable evidence files and 100 protected inputs reverified. PR2108/29 and
@@ -64,10 +69,12 @@ the new entry point. Standalone calibrated CSV wrappers, shipping selection and
 CLI integration, full profile generation/EEC, equal-budget six-dataset utility
 and Baseline/serving promotion remain held. No VarPro or later-card work.
 
-Combined requalification uses the fresh-main baseline PR2108/29, main4190/66
-and all twelve new tests from winner plus recipes: expected PR2120/29 and
-main4202/66. All normal after gates, dedicated recipe ASan/UBSan and C++20,
+Combined requalification compares the preceding baseline PR2108/29, main4190/66
+and all fourteen new tests from winner plus recipes: expected PR2122/29 and
+main4204/66. All normal after gates, dedicated recipe ASan/UBSan and C++20,
 protected-input/skip/Clippy/audit comparisons and exact-head hosted CI plus
 fresh independent approval are recorded separately in
 `/home/ubuntu/jope-evidence/kernel2/bt/B09_LINEAR_SCALING/rebase-after-176-01`.
 The inherited raw CSV entry point remains distinct from `scaled_train`.
+
+Correction-01 rebases on the reviewed CI-retention merge #179; the prior numerical baseline remains independently preserved. Current-main shared baseline and full correction after-gates are pending under the owner heavy lock. No pending outcome is claimed passed.
