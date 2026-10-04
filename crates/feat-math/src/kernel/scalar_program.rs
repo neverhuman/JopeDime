@@ -1,6 +1,6 @@
-//! Bounded scalar ingress for versioned functions. Decoding does not admit
-//! execution, models, export or shipping generation. MathExpr and its exact
-//! codec remain v1.
+//! Bounded scalar ingress for versioned functions. Decoding performs no
+//! evaluation; standalone execution is explicit. Models, export and shipping
+//! generation remain held. MathExpr and its exact codec remain v1.
 use super::codec::{Reader, Writer};
 use super::inverse_links::InverseLink;
 use super::numerical_policy::NumericalPolicy;
@@ -149,7 +149,7 @@ impl ScalarExpressionProgram {
         self.numerical_policy
     }
 
-    /// Select a contract explicitly, without admitting an evaluator or model.
+    /// Select a contract explicitly, without running an evaluator or admitting a model.
     /// Selecting v1 restores the original scalar envelope, with no selector.
     #[must_use]
     pub fn with_numerical_policy(mut self, policy: NumericalPolicy) -> Self {
