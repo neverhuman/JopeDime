@@ -419,12 +419,16 @@ fn lost_ack_keeps_original_authorization_unavailable_and_deadline_is_charged() {
     let root = f.root.clone();
     let policy = f.policy.clone();
     let ack_key = f.ack_key.clone();
+    let (authorization_returned, wait_for_authorization) = std::sync::mpsc::channel();
     let thread = std::thread::spawn(move || {
         let (mut stream, _) = listener.accept().unwrap();
         let request: SignedRequest = read_frame(&mut stream).unwrap();
         let mut store = WitnessStore::open(&root, &policy, &ack_key).unwrap();
         store.record_authorization(&request).unwrap();
-        std::thread::sleep(Duration::from_millis(600));
+        // Withhold the ACK until the bounded caller has actually returned.
+        wait_for_authorization
+            .recv_timeout(Duration::from_secs(40))
+            .unwrap();
         request
     });
     let mut authority = Authority::open(&f.authority, &f.watermark).unwrap();
@@ -441,14 +445,19 @@ fn lost_ack_keeps_original_authorization_unavailable_and_deadline_is_charged() {
         ClaimOutcome::Claimed(c) => c,
         _ => panic!("synthetic claim denied"),
     };
-    assert!(authority
-        .authorize_with_deadline(
-            &fit,
-            &claim,
-            &ProcessIdentity::current().unwrap(),
-            Duration::from_millis(250)
-        )
-        .is_err());
+    // Journal preparation is charged to admission too. A 250ms input could
+    // expire before the request was written under load, missing the lost-ACK case.
+    let budget = Duration::from_secs(30);
+    let began = std::time::Instant::now();
+    let result = authority.authorize_with_deadline(
+        &fit,
+        &claim,
+        &ProcessIdentity::current().unwrap(),
+        budget,
+    );
+    authorization_returned.send(()).unwrap();
+    assert!(result.is_err());
+    assert!(began.elapsed() >= budget);
     let original = thread.join().unwrap();
     assert!(f.store().get_ack(&original).unwrap().is_some());
     assert!(Authority::open(&f.authority, &f.watermark).is_err());
