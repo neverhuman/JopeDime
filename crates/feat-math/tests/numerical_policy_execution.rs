@@ -349,7 +349,7 @@ fn inverse_link_execution_uses_the_existing_versioned_kernel_contract() {
 }
 
 #[test]
-fn unsupported_exponentials_refuse_the_whole_tree_before_reading_any_input() {
+fn qualified_exponentials_preserve_left_to_right_scope_and_bounds_refusals() {
     for function in [ScalarFunction::Expm1, ScalarFunction::Log1mexp] {
         for policy in [NumericalPolicy::LegacyV1, NumericalPolicy::StableV2] {
             let node = ScalarNode::Binary(
@@ -360,13 +360,13 @@ fn unsupported_exponentials_refuse_the_whole_tree_before_reading_any_input() {
             let program = program(node, policy);
             let decoded =
                 ScalarExpressionProgram::from_bytes(&program.to_bytes().unwrap()).unwrap();
-            assert!(matches!(decoded.compile(), Err(Error::Unsupported(_))));
+            decoded.compile().unwrap();
             for actual in [
                 decoded.evaluate_row(&[]),
                 decoded.evaluate_element(f64::NAN, &[]),
             ] {
-                assert!(matches!(actual.value, Err(Error::Unsupported(_))));
-                assert_eq!(actual.faults, FaultSet::EMPTY);
+                assert!(matches!(actual.value, Err(Error::Bounds(_))));
+                assert_eq!(actual.faults, FaultSet::COLUMN_OOB);
             }
         }
     }

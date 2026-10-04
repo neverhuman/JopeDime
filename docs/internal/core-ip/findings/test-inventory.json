@@ -2143,6 +2143,13 @@
         "gp",
         "export"
       ]
+    },
+    "target:feat-math/test/stable_exponential_execution_v2": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "export"
+      ]
     }
   },
   "baseline_triage": [

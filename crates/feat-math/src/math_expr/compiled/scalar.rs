@@ -9,6 +9,7 @@ use super::super::{
 use crate::kernel::numerical_policy::{asinh_v2, reduce_v2, NumericalPolicy, Reduction};
 use crate::kernel::scalar_execution::{CompiledScalarProgram, Instruction, ScalarEvaluation};
 use crate::kernel::scalar_program::{ScalarExpressionProgram, ScalarFunction, ScalarNode};
+use crate::kernel::stable_exponential::StableExponential;
 use crate::kernel::{Error, Result};
 
 impl ScalarExpressionProgram {
@@ -23,10 +24,9 @@ impl ScalarExpressionProgram {
         self.evaluate_context(&EvalContext { x: Some(x), row })
     }
 
-    /// Compile the admitted AST in left-to-right postorder. Func21/22 still
-    /// require numerical/recipe qualification and refuse before any input read.
+    /// Compile the admitted AST in left-to-right postorder. Construction and
+    /// decoding already enforce the closed function, arity and resource budgets.
     pub fn compile(&self) -> Result<CompiledScalarProgram> {
-        executable(self.ast())?;
         let mut code = Vec::new();
         lower(self.ast(), &mut code)?;
         Ok(CompiledScalarProgram {
@@ -37,8 +37,7 @@ impl ScalarExpressionProgram {
 
     fn evaluate_context(&self, context: &EvalContext<'_>) -> ScalarEvaluation {
         let mut sink = Collect::default();
-        let value = executable(self.ast())
-            .and_then(|()| interpret(self.ast(), context, self.numerical_policy(), &mut sink));
+        let value = interpret(self.ast(), context, self.numerical_policy(), &mut sink);
         finish(value, &mut sink)
     }
 }
@@ -77,24 +76,6 @@ fn finish(value: Result<f64>, sink: &mut Collect) -> ScalarEvaluation {
     ScalarEvaluation {
         value: value.map(|v| safe_with(v, sink)),
         faults: sink.0,
-    }
-}
-
-fn executable(node: &ScalarNode) -> Result<()> {
-    match node {
-        ScalarNode::Call(function @ (ScalarFunction::Expm1 | ScalarFunction::Log1mexp), _) => {
-            Err(Error::Unsupported(format!(
-                "scalar function {} has no qualified execution kernel",
-                function.id()
-            )))
-        }
-        ScalarNode::Call(_, children) => children.iter().try_for_each(executable),
-        ScalarNode::Unary(_, child) => executable(child),
-        ScalarNode::Binary(_, left, right) => {
-            executable(left)?;
-            executable(right)
-        }
-        ScalarNode::Const(_) | ScalarNode::Var(_) => Ok(()),
     }
 }
 
@@ -165,12 +146,8 @@ fn function(
             return compute_func_with(func, values, sink)
                 .map_err(|error| Error::Domain(error.to_string()));
         }
-        ScalarFunction::Expm1 | ScalarFunction::Log1mexp => {
-            return Err(Error::Unsupported(format!(
-                "scalar function {} has no qualified execution kernel",
-                function.id()
-            )));
-        }
+        ScalarFunction::Expm1 => StableExponential::Expm1.evaluate(values[0]),
+        ScalarFunction::Log1mexp => StableExponential::Log1mexp.evaluate(values[0]),
     };
     sink.raise(guarded.1);
     Ok(guarded.0)
