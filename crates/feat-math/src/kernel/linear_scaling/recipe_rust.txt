@@ -1,0 +1,49 @@
+// Explicit calibrated training library, version 2.
+const SCALING_TEMPLATE: &[u8] = &[@BYTES@];
+fn scaling_rows(rows: &[Vec<f64>]) -> Result<(), &'static str> {
+    if rows.iter().any(|r| r.len() != @WIDTH@) { return Err("linear-scaling row width"); }
+    if rows.iter().flatten().any(|v| !v.is_finite()) { return Err("linear-scaling input"); }
+    Ok(())
+}
+#[derive(Clone, Debug)]
+pub struct ScaledModel { coefficients: [f64; 2] }
+impl ScaledModel {
+    pub fn coefficients(&self) -> [f64; 2] { self.coefficients }
+    pub fn predict(&self, rows: &[Vec<f64>]) -> Result<Vec<f64>, &'static str> {
+        scaling_rows(rows)?;
+        rows.iter().map(|r| {
+            let v = self.coefficients[0] * expression_value(r) + self.coefficients[1];
+            if v.is_finite() { Ok(v) } else { Err("linear-scaled prediction") }
+        }).collect()
+    }
+    pub fn to_bytes(&self) -> Vec<u8> {
+        let mut bytes = SCALING_TEMPLATE.to_vec();
+        for (i, c) in self.coefficients.iter().enumerate() {
+            bytes[26 + i*8 .. 34 + i*8].copy_from_slice(&c.to_bits().to_le_bytes());
+        }
+        bytes
+    }
+    /// This library loads only its own pinned expression/width; use the host
+    /// versioned reader when loading an arbitrary winner.
+    pub fn from_bytes(bytes: &[u8]) -> Result<Self, &'static str> {
+        if bytes.len() != SCALING_TEMPLATE.len() || bytes[..26] != SCALING_TEMPLATE[..26] || bytes[42..] != SCALING_TEMPLATE[42..] {
+            return Err("linear-scaling container");
+        }
+        let mut coefficients = [0.0; 2];
+        for (i, c) in coefficients.iter_mut().enumerate() {
+            let mut word = [0_u8; 8];
+            word.copy_from_slice(&bytes[26+i*8 .. 34+i*8]);
+            *c = f64::from_bits(u64::from_le_bytes(word));
+            if !c.is_finite() { return Err("linear-scaling coefficients"); }
+        }
+        Ok(Self { coefficients })
+    }
+}
+pub fn scaled_train(rows: &[Vec<f64>], targets: &[f64]) -> Result<(ScaledModel, f64), &'static str> {
+    if rows.is_empty() || rows.len() != targets.len() { return Err("linear-scaling needs aligned nonempty training data"); }
+    if targets.iter().any(|v| !v.is_finite()) { return Err("linear-scaling target"); }
+    scaling_rows(rows)?;
+    let values: Vec<_> = rows.iter().map(|r| expression_value(r)).collect();
+    let (coefficients, mse) = calibration::calibrate(&values, targets)?;
+    Ok((ScaledModel { coefficients }, mse))
+}

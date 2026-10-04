@@ -1,0 +1,102 @@
+// Explicit calibrated training library, version 2.
+#include <array>
+static const std::vector<std::uint8_t> SCALING_TEMPLATE = {@BYTES@};
+static void scaling_rows(const std::vector<std::vector<double>>& rows) {
+    for (const auto& row : rows) {
+        if (row.size() != @WIDTH@) throw std::invalid_argument("linear-scaling row width");
+        for (double v : row) if (!std::isfinite(v)) throw std::invalid_argument("linear-scaling input");
+    }
+}
+static double scaling_sum(const std::vector<double>& values) {
+    double total = 0.0, residual = 0.0;
+    for (double v : values) {
+        const double next = total + v;
+        residual += std::fabs(total) >= std::fabs(v) ? (total - next) + v : (v - next) + total;
+        total = next;
+    }
+    return total + residual;
+}
+static double scaling_mean(const std::vector<double>& values) {
+    if (std::all_of(values.begin(), values.end(), [&](double v) { return v == values.front(); })) return values.front();
+    const double total = scaling_sum(values);
+    if (std::isfinite(total)) return total / static_cast<double>(values.size());
+    double scale = 0.0;
+    for (double v : values) scale = std::max(scale, std::fabs(v));
+    if (scale == 0.0) return 0.0;
+    std::vector<double> normalized;
+    for (double v : values) normalized.push_back(v / scale);
+    return (scaling_sum(normalized) / static_cast<double>(values.size())) * scale;
+}
+class ScaledModel {
+    std::array<double,2> coefficients_;
+public:
+    explicit ScaledModel(std::array<double,2> coefficients) : coefficients_(coefficients) {
+        for (double v : coefficients_) if (!std::isfinite(v)) throw std::invalid_argument("linear-scaling coefficients");
+    }
+    std::array<double,2> coefficients() const { return coefficients_; }
+    std::vector<double> predict(const std::vector<std::vector<double>>& rows) const {
+        scaling_rows(rows);
+        std::vector<double> out;
+        for (const auto& row : rows) {
+            const double v = coefficients_[0] * expression_value(row) + coefficients_[1];
+            if (!std::isfinite(v)) throw std::invalid_argument("linear-scaled prediction");
+            out.push_back(v);
+        }
+        return out;
+    }
+    std::vector<std::uint8_t> to_bytes() const {
+        auto bytes = SCALING_TEMPLATE;
+        for (std::size_t i=0; i<2; ++i) {
+            std::uint64_t word; std::memcpy(&word, &coefficients_[i], 8);
+            for (unsigned j=0; j<8; ++j) bytes[26+i*8+j] = static_cast<std::uint8_t>(word >> (j*8));
+        }
+        return bytes;
+    }
+    static ScaledModel from_bytes(const std::vector<std::uint8_t>& bytes) {
+        if (bytes.size()!=SCALING_TEMPLATE.size()) throw std::invalid_argument("linear-scaling container");
+        for (std::size_t i=0; i<bytes.size(); ++i) if ((i<26 || i>=42) && bytes[i]!=SCALING_TEMPLATE[i]) throw std::invalid_argument("linear-scaling container");
+        std::array<double,2> coefficients;
+        for (std::size_t i=0; i<2; ++i) {
+            std::uint64_t word=0;
+            for (unsigned j=0; j<8; ++j) word |= static_cast<std::uint64_t>(bytes[26+i*8+j]) << (j*8);
+            std::memcpy(&coefficients[i], &word, 8);
+        }
+        return ScaledModel(coefficients);
+    }
+};
+static std::pair<ScaledModel,double> scaled_train(const std::vector<std::vector<double>>& rows, const std::vector<double>& targets) {
+    if (rows.empty() || rows.size()!=targets.size()) throw std::invalid_argument("linear-scaling needs aligned nonempty training data");
+    for (double v : targets) if (!std::isfinite(v)) throw std::invalid_argument("linear-scaling target");
+    scaling_rows(rows);
+    std::vector<double> values;
+    for (const auto& row : rows) values.push_back(expression_value(row));
+    const double fm=scaling_mean(values), ym=scaling_mean(targets);
+    double a=0.0, b=ym;
+    if (!std::all_of(values.begin(), values.end(), [&](double v) { return v==values.front(); })) {
+        double fs=0.0, ys=0.0;
+        for (double v : values) fs=std::max(fs,std::fabs(v));
+        for (double v : targets) ys=std::max(ys,std::fabs(v));
+        if (ys==0.0) b=0.0;
+        else {
+            std::vector<double> df, dy, square, product;
+            for (double v : values) df.push_back(v/fs-fm/fs);
+            for (double v : targets) dy.push_back(v/ys-ym/ys);
+            for (std::size_t i=0; i<values.size(); ++i) { square.push_back(df[i]*df[i]); product.push_back(df[i]*dy[i]); }
+            const double variance=scaling_sum(square), covariance=scaling_sum(product);
+            if (variance<=0.0 || !std::isfinite(variance)) throw std::invalid_argument("linear-scaling variance not representable");
+            a=((covariance/variance)*ys)/fs;
+            b=ym-a*fm;
+        }
+    }
+    ScaledModel model({a,b});
+    std::vector<double> terms;
+    for (std::size_t i=0; i<values.size(); ++i) {
+        const double prediction=a*values[i]+b;
+        if (!std::isfinite(prediction)) throw std::invalid_argument("linear-scaled prediction");
+        const double difference=prediction-targets[i];
+        terms.push_back(difference*difference/static_cast<double>(values.size()));
+    }
+    const double mse=scaling_sum(terms);
+    if (!std::isfinite(mse) || mse<0.0) throw std::invalid_argument("linear-scaling training loss");
+    return {model,mse};
+}

@@ -9,9 +9,12 @@ use super::{Error, Program, Result};
 use crate::math_expr::MathExpr;
 use crate::{GenomeIr, MAX_WIDTH};
 
+mod calibration;
 mod emit;
 mod fit;
+mod recipe;
 pub use emit::ScaledArtifacts;
+pub use recipe::{emit_training_recipe, TrainingRecipeArtifacts};
 
 pub const PROFILE: &str = "feat-math.scalar-linear-scaling.v2";
 const VARIANT: u8 = 2;
