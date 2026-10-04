@@ -4,7 +4,7 @@ use super::{FittedStage, Model};
 use crate::kernel::Result;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Language {
+pub enum RowRecipeLanguage {
     Rust,
     Python,
     Cpp17,
@@ -12,7 +12,8 @@ pub enum Language {
 
 pub const RUST_HELPER: &str = r#"
 fn row_vector_v2_input(x: &[Vec<f64>], width: usize, append: bool) -> Vec<Vec<f64>> {
-    assert!(!append); assert!(x.iter().all(|r|r.len()==width),"row-vector input width"); x.to_vec()
+    assert!(!append); assert!(x.iter().all(|r|r.len()==width),"row-vector input width");
+    x.iter().map(|row|row.iter().map(|&v|if !v.is_finite(){0.0}else{v.clamp(-1e12,1e12)}).collect()).collect()
 }
 fn row_vector_v2_values(x: &[Vec<f64>], starts: &[usize], weights: &[Vec<u64>], boundary: &[u32]) -> (Vec<Vec<f64>>, Vec<Vec<u32>>) {
     let mut rows=Vec::with_capacity(x.len()); let mut faults=Vec::with_capacity(x.len());
@@ -43,7 +44,7 @@ import struct
 
 def row_vector_v2_input(x, width, append):
     if append or any(len(row)!=width for row in x): raise ValueError("row-vector input width")
-    return [list(row) for row in x]
+    return [[max(-1e12,min(1e12,v)) if math.isfinite(v) else 0.0 for v in row] for row in x]
 
 def row_vector_v2_values(x, starts, weights, boundary):
     rows, faults = [], []
@@ -73,7 +74,8 @@ def row_vector_v2_apply(x, starts, weights, boundary, append):
 
 pub const CPP_HELPER: &str = r#"
 static std::vector<std::vector<double>> row_vector_v2_input(const std::vector<std::vector<double>>& x,std::size_t width,bool append){
-    if(append)throw std::invalid_argument("v2 row stage append");for(const auto& row:x)if(row.size()!=width)throw std::invalid_argument("row-vector input width");return x;
+    if(append)throw std::invalid_argument("v2 row stage append");for(const auto& row:x)if(row.size()!=width)throw std::invalid_argument("row-vector input width");
+    auto out=x;for(auto& row:out)for(auto& v:row)v=std::isfinite(v)?std::max(-1e12,std::min(1e12,v)):0.0;return out;
 }
 static double row_vector_v2_bits(std::uint64_t bits){double value;std::memcpy(&value,&bits,8);return value;}
 static std::pair<std::vector<std::vector<double>>,std::vector<std::vector<std::uint32_t>>> row_vector_v2_values(const std::vector<std::vector<double>>& x,const std::vector<std::size_t>& starts,const std::vector<std::vector<std::uint64_t>>& weights,const std::vector<std::uint32_t>& boundary){
@@ -101,22 +103,22 @@ static std::vector<std::vector<double>> row_vector_v2_apply(const std::vector<st
 }
 "#;
 
-pub fn helper(language: Language) -> &'static str {
+pub fn helper(language: RowRecipeLanguage) -> &'static str {
     match language {
-        Language::Rust => RUST_HELPER,
-        Language::Python => PYTHON_HELPER,
-        Language::Cpp17 => CPP_HELPER,
+        RowRecipeLanguage::Rust => RUST_HELPER,
+        RowRecipeLanguage::Python => PYTHON_HELPER,
+        RowRecipeLanguage::Cpp17 => CPP_HELPER,
     }
 }
 
-pub fn arguments(stage: &FittedStage, language: Language) -> String {
+pub fn arguments(stage: &FittedStage, language: RowRecipeLanguage) -> String {
     let FittedStage::Savgol(state) = stage;
     let list = |items: Vec<String>, nested: bool| -> String {
         let items = items.join(",");
         match language {
-            Language::Rust if nested => format!("vec![{items}]"),
-            Language::Rust | Language::Python => format!("[{items}]"),
-            Language::Cpp17 => format!("{{{items}}}"),
+            RowRecipeLanguage::Rust if nested => format!("vec![{items}]"),
+            RowRecipeLanguage::Rust | RowRecipeLanguage::Python => format!("[{items}]"),
+            RowRecipeLanguage::Cpp17 => format!("{{{items}}}"),
         }
     };
     let starts = list(
@@ -136,7 +138,7 @@ pub fn arguments(stage: &FittedStage, language: Language) -> String {
                     s.bits
                         .iter()
                         .map(|b| {
-                            if language == Language::Cpp17 {
+                            if language == RowRecipeLanguage::Cpp17 {
                                 format!("{b}ULL")
                             } else {
                                 b.to_string()
@@ -163,12 +165,16 @@ pub fn arguments(stage: &FittedStage, language: Language) -> String {
             .collect(),
         false,
     );
-    let borrow = if language == Language::Rust { "&" } else { "" };
+    let borrow = if language == RowRecipeLanguage::Rust {
+        "&"
+    } else {
+        ""
+    };
     format!("{borrow}{starts},{borrow}{weights},{borrow}{boundary}")
 }
 
-pub fn apply_call(stage: &FittedStage, language: Language) -> String {
-    let x = if language == Language::Rust {
+pub fn apply_call(stage: &FittedStage, language: RowRecipeLanguage) -> String {
+    let x = if language == RowRecipeLanguage::Rust {
         "&x"
     } else {
         "x"
@@ -190,7 +196,7 @@ pub fn fitted_cpp17(model: &Model) -> Result<String> {
     for stage in model.fitted_stages() {
         source.push_str(&format!(
             "x={};\n",
-            apply_call(stage, Language::Cpp17).replace("{append}", "false")
+            apply_call(stage, RowRecipeLanguage::Cpp17).replace("{append}", "false")
         ));
     }
     let floats = |v: &[f64]| {

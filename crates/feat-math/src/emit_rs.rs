@@ -1164,7 +1164,9 @@ fn op_src(op: &PlannedOp) -> String {
     let body: &str = match op {
         // B12: helper bodies remain feature-specific.
         PlannedOp::RowVectorV2 { .. } | PlannedOp::RowVectorInputV2 { .. } => {
-            crate::kernel::row_vector::emit::helper(crate::kernel::row_vector::emit::Language::Rust)
+            crate::kernel::row_vector::emit::helper(
+                crate::kernel::row_vector::emit::RowRecipeLanguage::Rust,
+            )
         }
         PlannedOp::Standardize => {
             r#"struct StandardScaler {
@@ -5193,7 +5195,7 @@ fn op_calls(op: &PlannedOp, n: usize) -> (Option<String>, String) {
             None,
             crate::kernel::row_vector::emit::apply_call(
                 state,
-                crate::kernel::row_vector::emit::Language::Rust,
+                crate::kernel::row_vector::emit::RowRecipeLanguage::Rust,
             ),
         ),
         PlannedOp::Standardize => (

@@ -1,7 +1,7 @@
 use feat_math::kernel::ordered_axis::Axis;
 use feat_math::kernel::row_vector::{
-    emit::{self, Language},
-    Edit, ExperimentalProfile, FittedStage, Model, Program, Stage,
+    emit::{self, RowRecipeLanguage},
+    Edit, ExperimentalProfile, FittedStage, Model, Program, RowStage,
 };
 use feat_math::kernel::savgol::{Config, BOUNDARY_DEGREE};
 use feat_math::kernel::wire_v2::{VersionedModel, VersionedProgram};
@@ -14,7 +14,7 @@ fn config(w: u8, p: u8, r: u8) -> Config {
     Config::new(2, 58, Axis::FeatureWithinRow, w, p, r, "shrink").unwrap()
 }
 fn program(width: usize, c: Config) -> Program {
-    Program::new(2, width, vec![Stage::Savgol(c)], 0.02).unwrap()
+    Program::new(2, width, vec![RowStage::Savgol(c)], 0.02).unwrap()
 }
 fn bits(values: &[f64]) -> Vec<u64> {
     values.iter().map(|v| v.to_bits()).collect()
@@ -44,7 +44,7 @@ fn bounded_config_rejects_versions_axes_parameters_and_legacy_ingress() {
     }
     assert!(Program::new(1, 5, vec![], 0.02).is_err());
     assert!(Program::new(2, 0, vec![], 0.02).is_err());
-    assert!(Program::new(2, 5, vec![Stage::Savgol(config(5, 2, 0)); 9], 0.02).is_err());
+    assert!(Program::new(2, 5, vec![RowStage::Savgol(config(5, 2, 0)); 9], 0.02).is_err());
 }
 
 #[test]
@@ -235,7 +235,7 @@ fn experimental_prior_is_bounded_and_removal_keeps_parsing_available() {
         Program::from_bytes(&created.to_bytes().unwrap()).unwrap(),
         created
     );
-    assert!(created.emit_recipe(Language::Cpp17).is_ok());
+    assert!(created.emit_recipe(RowRecipeLanguage::Cpp17).is_ok());
 }
 
 #[test]
@@ -382,9 +382,9 @@ fn three_language_boundary_values_and_faults_are_bit_equal() {
             .map(|b| format!("row_vector_v2_bits({b}ULL)"))
             .collect::<Vec<_>>()
             .join(",");
-        rs.push_str(&format!("{{let(v,f)=row_vector_v2_values(&[vec![{rsrow}]],{});for (a,b) in v[0].iter().zip(&f[0]){{println!(\"{{:016x}} {{:08x}}\",a.to_bits(),b);}}}}\n",emit::arguments(&stage,Language::Rust)));
-        py.push_str(&format!("v,f=row_vector_v2_values([[{pyrow}]],{})\nfor a,b in zip(v[0],f[0]): print('%016x %08x' % (struct.unpack('<Q',struct.pack('<d',a))[0],b))\n",emit::arguments(&stage,Language::Python)));
-        cc.push_str(&format!("{{auto out=row_vector_v2_values({{{{{ccrow}}}}},{});for(std::size_t i=0;i<out.first[0].size();++i){{std::uint64_t b;double a=out.first[0][i];std::memcpy(&b,&a,8);std::cout<<std::hex<<std::setfill('0')<<std::setw(16)<<b<<' '<<std::setw(8)<<out.second[0][i]<<'\\n';}}}}\n",emit::arguments(&stage,Language::Cpp17)));
+        rs.push_str(&format!("{{let(v,f)=row_vector_v2_values(&[vec![{rsrow}]],{});for (a,b) in v[0].iter().zip(&f[0]){{println!(\"{{:016x}} {{:08x}}\",a.to_bits(),b);}}}}\n",emit::arguments(&stage,RowRecipeLanguage::Rust)));
+        py.push_str(&format!("v,f=row_vector_v2_values([[{pyrow}]],{})\nfor a,b in zip(v[0],f[0]): print('%016x %08x' % (struct.unpack('<Q',struct.pack('<d',a))[0],b))\n",emit::arguments(&stage,RowRecipeLanguage::Python)));
+        cc.push_str(&format!("{{auto out=row_vector_v2_values({{{{{ccrow}}}}},{});for(std::size_t i=0;i<out.first[0].size();++i){{std::uint64_t b;double a=out.first[0][i];std::memcpy(&b,&a,8);std::cout<<std::hex<<std::setfill('0')<<std::setw(16)<<b<<' '<<std::setw(8)<<out.second[0][i]<<'\\n';}}}}\n",emit::arguments(&stage,RowRecipeLanguage::Cpp17)));
     }
     assert!(count >= 150);
     rs.push_str("}\n");
@@ -463,7 +463,11 @@ fn gp_create_change_remove_roundtrip_and_compiled_recipe_closure() {
         grow
     );
     let mut costs = Vec::new();
-    for language in [Language::Rust, Language::Python, Language::Cpp17] {
+    for language in [
+        RowRecipeLanguage::Rust,
+        RowRecipeLanguage::Python,
+        RowRecipeLanguage::Cpp17,
+    ] {
         let (_, base) = empty.emit_recipe_counted(language).unwrap();
         let (_, added) = grow.emit_recipe_counted(language).unwrap();
         costs.push(serde_json::json!({"language":format!("{language:?}"),"base":base,"with_filter":added,"bytes_delta":added.bytes as i64-base.bytes as i64,"code_tokens_delta":added.code_tokens as i64-base.code_tokens as i64}));
@@ -475,7 +479,12 @@ fn gp_create_change_remove_roundtrip_and_compiled_recipe_closure() {
         serde_json::to_string_pretty(&costs).unwrap(),
     )
     .unwrap();
-    let (x, y) = training(7);
+    let (mut x, y) = training(7);
+    // GP Drop must retain the v2 input clamp at fit and prediction, even
+    // when no filter remains. These rows reproduce reviewer R1.
+    for (i, row) in x.iter_mut().enumerate() {
+        row[0] = ((i % 7) as f64 - 3.0) * 1e12;
+    }
     let train = x
         .iter()
         .zip(&y)
@@ -508,9 +517,9 @@ fn gp_create_change_remove_roundtrip_and_compiled_recipe_closure() {
         let model = p.fit(&x, &y).unwrap();
         let expected = bits(&model.predict(&x).unwrap().0);
         for (language, name) in [
-            (Language::Rust, "model.rs"),
-            (Language::Python, "model.py"),
-            (Language::Cpp17, "model.cpp"),
+            (RowRecipeLanguage::Rust, "model.rs"),
+            (RowRecipeLanguage::Python, "model.py"),
+            (RowRecipeLanguage::Cpp17, "model.cpp"),
         ] {
             fs::write(root.join(name), p.emit_recipe(language).unwrap()).unwrap();
         }

@@ -312,7 +312,7 @@ fn op_calls_cpp(op: &PlannedOp) -> (Option<String>, String) {
             None,
             crate::kernel::row_vector::emit::apply_call(
                 state,
-                crate::kernel::row_vector::emit::Language::Cpp17,
+                crate::kernel::row_vector::emit::RowRecipeLanguage::Cpp17,
             ),
         ),
         PlannedOp::Standardize => (

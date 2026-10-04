@@ -966,7 +966,7 @@ fn op_src(op: &PlannedOp) -> String {
         // B12: helper bodies remain feature-specific.
         PlannedOp::RowVectorV2 { .. } | PlannedOp::RowVectorInputV2 { .. } => {
             crate::kernel::row_vector::emit::helper(
-                crate::kernel::row_vector::emit::Language::Python,
+                crate::kernel::row_vector::emit::RowRecipeLanguage::Python,
             )
         }
         PlannedOp::Standardize => {
@@ -3801,7 +3801,7 @@ fn op_calls(op: &PlannedOp, n: usize) -> (Option<String>, String) {
             None,
             crate::kernel::row_vector::emit::apply_call(
                 state,
-                crate::kernel::row_vector::emit::Language::Python,
+                crate::kernel::row_vector::emit::RowRecipeLanguage::Python,
             ),
         ),
         PlannedOp::Standardize => (
