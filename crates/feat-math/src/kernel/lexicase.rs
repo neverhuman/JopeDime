@@ -79,6 +79,20 @@ pub struct LexicaseConfig {
     pub sampling: CaseSampling,
 }
 
+impl LexicaseConfig {
+    /// Refuses a down-sampling rate outside `1..=1000` per mille, which every call also refuses.
+    pub fn validate(&self) -> Result<()> {
+        match self.sampling {
+            CaseSampling::DownSampled { per_mille } if per_mille == 0 || per_mille > 1000 => {
+                Err(Error::Domain(
+                    "lexicase down-sampling must keep 1..=1000 per mille of the cases".into(),
+                ))
+            }
+            _ => Ok(()),
+        }
+    }
+}
+
 /// Absolute training-case errors, row-major by candidate: entry `(i, j)` is candidate `i`'s error
 /// on case `j`. Built only from residuals, so every entry is `+inf` or finite and non-negative.
 #[derive(Clone, Debug, PartialEq)]
@@ -219,52 +233,108 @@ impl Draws for Pcg32 {
     }
 }
 
+/// One call drawn an event at a time: the case sample and tolerances are fixed when it starts,
+/// and each [`Selector::draw_parent`] runs one more event. Drawing `parents` events consumes
+/// exactly the draws of [`select`] with the same arguments, in the same order.
+#[derive(Debug)]
+pub struct Selector<'errors> {
+    errors: &'errors CaseErrors,
+    config: LexicaseConfig,
+    cases: Vec<u32>,
+    epsilons: Vec<f64>,
+    scratch: Scratch,
+    events: Vec<EventTrace>,
+}
+
+impl<'errors> Selector<'errors> {
+    /// Starts a call: a down-sampled configuration draws its case subset here.
+    pub fn new(
+        errors: &'errors CaseErrors,
+        config: LexicaseConfig,
+        rng: &mut Pcg32,
+    ) -> Result<Self> {
+        Self::start(errors, config, rng)
+    }
+
+    fn start<D: Draws>(
+        errors: &'errors CaseErrors,
+        config: LexicaseConfig,
+        draws: &mut D,
+    ) -> Result<Self> {
+        let cases = sample_cases(errors.cases, config, draws)?;
+        let epsilons = epsilons(errors, &cases, config.epsilon);
+        Ok(Self {
+            errors,
+            config,
+            cases,
+            epsilons,
+            scratch: Scratch::default(),
+            events: Vec::new(),
+        })
+    }
+
+    /// Runs one selection event and returns the selected candidate.
+    pub fn draw_parent(&mut self, rng: &mut Pcg32) -> usize {
+        self.draw_with(rng)
+    }
+
+    fn draw_with<D: Draws>(&mut self, draws: &mut D) -> usize {
+        let event = select_one(
+            self.errors,
+            &self.cases,
+            &self.epsilons,
+            self.config.epsilon,
+            &mut self.scratch,
+            draws,
+        );
+        let selected = event.selected as usize;
+        self.events.push(event);
+        selected
+    }
+
+    /// The parents selected so far, in order.
+    pub fn parents(&self) -> Vec<usize> {
+        self.events
+            .iter()
+            .map(|event| event.selected as usize)
+            .collect()
+    }
+
+    /// The call's trace so far.
+    pub fn finish(self) -> Selection {
+        Selection {
+            parents: self.parents(),
+            trace: LexicaseTrace {
+                profile: PROFILE.into(),
+                config: self.config,
+                cases: self.cases,
+                epsilons: self.epsilons,
+                events: self.events,
+            },
+        }
+    }
+}
+
 fn select_with<D: Draws>(
     errors: &CaseErrors,
     config: LexicaseConfig,
     parents: usize,
     draws: &mut D,
 ) -> Result<Selection> {
-    let cases = sample_cases(errors.cases, config.sampling, draws)?;
-    let tolerances = epsilons(errors, &cases, config.epsilon);
-    let mut scratch = Scratch::default();
-    let mut selected = Vec::with_capacity(parents);
-    let mut events = Vec::with_capacity(parents);
+    let mut selector = Selector::start(errors, config, draws)?;
     for _ in 0..parents {
-        let event = select_one(
-            errors,
-            &cases,
-            &tolerances,
-            config.epsilon,
-            &mut scratch,
-            draws,
-        );
-        selected.push(event.selected as usize);
-        events.push(event);
+        selector.draw_with(draws);
     }
-    Ok(Selection {
-        parents: selected,
-        trace: LexicaseTrace {
-            profile: PROFILE.into(),
-            config,
-            cases,
-            epsilons: tolerances,
-            events,
-        },
-    })
+    Ok(selector.finish())
 }
 
-fn sample_cases<D: Draws>(cases: usize, sampling: CaseSampling, draws: &mut D) -> Result<Vec<u32>> {
+fn sample_cases<D: Draws>(cases: usize, config: LexicaseConfig, draws: &mut D) -> Result<Vec<u32>> {
+    config.validate()?;
     // `cases <= MAX_CASES`, so every index fits in u32 and `cases * 1000` cannot overflow.
     let mut all: Vec<u32> = (0..cases as u32).collect();
-    match sampling {
+    match config.sampling {
         CaseSampling::All => Ok(all),
         CaseSampling::DownSampled { per_mille } => {
-            if per_mille == 0 || per_mille > 1000 {
-                return Err(Error::Domain(
-                    "lexicase down-sampling must keep 1..=1000 per mille of the cases".into(),
-                ));
-            }
             let take = (cases * usize::from(per_mille)).div_ceil(1000).max(1);
             for slot in 0..take {
                 let pick = slot + draws.draw(cases - slot);
@@ -278,7 +348,7 @@ fn sample_cases<D: Draws>(cases: usize, sampling: CaseSampling, draws: &mut D) -
 }
 
 /// Buffers reused by every event of a call.
-#[derive(Default)]
+#[derive(Debug, Default)]
 struct Scratch {
     pool: Vec<u32>,
     order: Vec<usize>,
@@ -918,6 +988,30 @@ mod tests {
             serde_json::from_str::<LexicaseTrace>(&json).unwrap(),
             first.trace
         );
+    }
+
+    #[test]
+    fn a_selector_drawn_one_event_at_a_time_replays_select() {
+        let errors = specialists();
+        for config in [
+            MAD,
+            PLAIN,
+            MVT,
+            LexicaseConfig {
+                epsilon: EpsilonRule::MedianAbsoluteDeviation,
+                sampling: CaseSampling::DownSampled { per_mille: 700 },
+            },
+        ] {
+            let mut whole = Pcg32::new(0xB10, 7);
+            let selection = select(&errors, config, 9, &mut whole).unwrap();
+            let mut stepped = Pcg32::new(0xB10, 7);
+            let mut selector = Selector::new(&errors, config, &mut stepped).unwrap();
+            let drawn: Vec<usize> = (0..9).map(|_| selector.draw_parent(&mut stepped)).collect();
+            assert_eq!(drawn, selector.parents());
+            assert_eq!(selector.finish(), selection);
+            // Both consumed exactly the same draws.
+            assert_eq!(whole.next_u32(), stepped.next_u32());
+        }
     }
 
     #[test]
