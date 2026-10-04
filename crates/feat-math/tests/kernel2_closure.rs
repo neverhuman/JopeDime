@@ -1042,3 +1042,7 @@ fn negative_manifest_constant_bin_is_rejected_by_a() {
 // B12: per-op coverage under the registered closure target.
 #[path = "row_vector/savgol_v2.rs"]
 mod savgol_v2;
+
+// B13: goertzel_bank coverage under the same target.
+#[path = "row_vector/goertzel_v2.rs"]
+mod goertzel_v2;

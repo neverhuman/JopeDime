@@ -245,6 +245,13 @@ fn helper_cpp(helper: Helper) -> &'static str {
 /// name deduplicates repeated ops (the definition is emitted once).
 fn op_cpp(op: &PlannedOp) -> Option<(&'static str, &'static str)> {
     match op {
+        // B13: the goertzel_bank helper, only for a bank-bearing program.
+        PlannedOp::RowVectorV2 {
+            state: crate::kernel::row_vector::FittedStage::Goertzel(_),
+        } => Some((
+            "row_vector_goertzel_v2",
+            crate::kernel::row_vector::emit::CPP_GOERTZEL_HELPER,
+        )),
         // B12: explicit v2 row-vector recipe.
         PlannedOp::RowVectorV2 { .. } | PlannedOp::RowVectorInputV2 { .. } => {
             Some(("row_vector_v2", crate::kernel::row_vector::emit::CPP_HELPER))

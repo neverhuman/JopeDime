@@ -830,6 +830,10 @@ fn plan_head_stage(stage: &Stage, problems: &mut Vec<String>) -> Option<PlannedH
 /// Stable per-kind key: also the base of the emitted function names.
 pub fn op_fn_name(op: &PlannedOp) -> &'static str {
     match op {
+        // B13: a goertzel_bank stage keys its own helper; B12 keys stay unchanged.
+        PlannedOp::RowVectorV2 {
+            state: crate::kernel::row_vector::FittedStage::Goertzel(_),
+        } => "row_vector_goertzel_v2",
         // B12: version-two FeatureWithinRow stage.
         PlannedOp::RowVectorV2 { .. } | PlannedOp::RowVectorInputV2 { .. } => "row_vector_v2",
         PlannedOp::Standardize => "standard_scaler",
@@ -919,6 +923,10 @@ pub fn op_struct_name(op: &PlannedOp) -> Option<&'static str> {
 /// One-sentence math description with a literature anchor, used in docs.
 pub fn op_doc(op: &PlannedOp) -> String {
     match op {
+        // B13: version-two sparse Fourier power bank.
+        PlannedOp::RowVectorV2 {
+            state: crate::kernel::row_vector::FittedStage::Goertzel(_),
+        } => "computes, for each frozen frequency, the squared magnitude of the row's discrete Fourier sum with a second-order recurrence (Goertzel, 1958) and a sum-of-squares finalization.".into(),
         // B12: version-two FeatureWithinRow stage.
         PlannedOp::RowVectorV2 { .. } | PlannedOp::RowVectorInputV2 { .. } => "applies a width-bound feature-position FIR with frozen coefficient bits; clipped boundary windows reduce polynomial degree.".into(),
         PlannedOp::Standardize => "centers each column by its training mean and divides by the \
@@ -1118,6 +1126,10 @@ pub fn op_doc(op: &PlannedOp) -> String {
 /// Short phrase for titles.
 pub fn op_short(op: &PlannedOp) -> &'static str {
     match op {
+        // B13: version-two sparse Fourier power bank.
+        PlannedOp::RowVectorV2 {
+            state: crate::kernel::row_vector::FittedStage::Goertzel(_),
+        } => "Fourier power bank",
         // B12: version-two FeatureWithinRow stage.
         PlannedOp::RowVectorV2 { .. } | PlannedOp::RowVectorInputV2 { .. } => {
             "feature-position filter"
