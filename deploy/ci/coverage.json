@@ -5575,7 +5575,7 @@
         "full-doctests"
       ],
       "dispositions": [],
-      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately. Authority synthetic-startup regressions separate cold preparation readiness from the unchanged execution authorization deadline, reject preparation failure before authorization, and retain failed-exit/signal/timeout result-file refusal."
     },
     "target:jope-parallel/test/ablation_ranking": {
       "discovery": {
