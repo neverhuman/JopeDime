@@ -386,7 +386,10 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
     let successor = old_fixture("transitions/e3_identity_rebaseline.v1.json");
     assert_eq!(successor["fixtures"].as_array().unwrap().len(), 1);
     assert_eq!(successor["fixtures"][0]["path"], changed_fixtures[0]);
-    let identity_chain = [transition, successor];
+    // B12: hash-bound source identity successor; behavioral pins stay strict.
+    let b12 = old_fixture("transitions/b12_identity_rebaseline.v1.json");
+    assert_eq!(b12["fixtures"].as_array().unwrap().len(), 2);
+    let identity_chain = [transition, successor, b12];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);
     let mut old_fixtures = 0;

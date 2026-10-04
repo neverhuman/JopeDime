@@ -5,7 +5,8 @@ The opt-in `feat-math.feature-row.experimental.v2` profile uses program subtype
 envelope. Legacy program/model readers reject these envelopes. The frozen
 registry, exact scalar codec, default grammar, and existing artifact bytes are
 unchanged. Source additions to the shared planner/emitters mint an announced
-evaluator source identity; only that identity fixture receives a successor.
+evaluator source identity; only the two announced identity metadata fixtures receive a hash-bound successor
+(the lineage fixture changes its generation commit only).
 
 `savgol` accepts `Axis::FeatureWithinRow`, an odd window 3..129, polynomial
 degree `p <= min(6,w-1)`, derivative `r <= p`, and `boundary="shrink"`.
@@ -45,13 +46,14 @@ profile prevents generation while decoding existing programs remains available.
 Generation is bounded to the row program; it never modifies the scalar AST or
 the default legacy search. Canonical text and binary round trips are lossless.
 
-The focused acceptance test is `cargo test -p feat-math --locked --test
-savgol_v2`. It checks polynomial derivatives (including a nonzero sixth
+The focused acceptance test is `cargo nextest run -P pr -p feat-math --locked --test
+kernel2_closure -E 'test(savgol_v2::)'`. It checks polynomial derivatives (including a nonzero sixth
 derivative), an independent analytic five-tap stencil, short/empty/max-width
 rows, faults, envelope rejection, exact coefficient/head serialization, and
 train-only fit. It compiles and executes the boundary corpus and GP-generated
 insert/edit/remove programs in Rust, Python, C++17 recipes, and fitted C++17.
-`JOPE_ROW_CPP_QUALIFY=1` adds clang++, C++20, and ASan/UBSan boundary execution.
+`JOPE_ROW_CPP_QUALIFY=1` adds clang++, C++20, and ASan/UBSan execution for
+boundary helpers, GP recipes, and fitted predictors.
 The owning fixtures live in `tests/fixtures/math_boundary/v2/savgol*.json`.
 
 The fixture utility lane uses six pinned polynomial signal tasks × five seeds,
