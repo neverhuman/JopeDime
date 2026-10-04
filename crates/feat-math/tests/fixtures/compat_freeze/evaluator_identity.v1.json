@@ -1,6 +1,6 @@
 {
   "schema": "feat-math.compat-freeze.evaluator-identity.v1",
-  "generated_at_sha": "5169614085639dbb97fd554a96423ab3ae9ee6b3",
+  "generated_at_sha": "bab73392fa273391e847e9f84054c888857541c5",
   "note": "A replica of evaluation_v2.rs compute_implementation_sha256 (the hashed list is read from that function) and EvaluatorIdentityV1::digest. Planned changes move this fixture: the change that mints the identity announces it and rebaselines it with JOPE_COMPAT_FREEZE_REGENERATE=identity.",
   "domain": "jope-dime/evaluator-implementation/v1",
   "inputs": [
@@ -62,12 +62,12 @@
     {
       "label": "vendor/feat-math/src/emit_py.rs",
       "path": "crates/feat-math/src/emit_py.rs",
-      "sha256": "356d4a51bad3e468d313877d43b75a00b070ea6370ab91baeb65b80911374e15"
+      "sha256": "65704154bdb6506a4cc67efa90dfadbdcaa633def14565ff739fa095dc875738"
     },
     {
       "label": "vendor/feat-math/src/emit_rs.rs",
       "path": "crates/feat-math/src/emit_rs.rs",
-      "sha256": "4dd090f670c4f85ffb649e7f69b1a09c6a1e4319237fc3cddcb97b2662c35744"
+      "sha256": "b6ac958ba1e4e9fdb953820ccba7af65c7addead5d6d61c2fbdff4d02d33fbc1"
     },
     {
       "label": "vendor/feat-math/src/evolve.rs",
@@ -167,7 +167,7 @@
     {
       "label": "vendor/feat-math/src/spec.rs",
       "path": "crates/feat-math/src/spec.rs",
-      "sha256": "3c8b1ea1fe35bfaf890e2e8d478a0aa229aab9d4a1c3b13c06cb265e8e0f9d14"
+      "sha256": "d37386f715ad8b0906405db5e1ce396ed91830de8ae978d4265dd5dfdbd0c8e8"
     },
     {
       "label": "vendor/feat-math/src/stack.rs",
@@ -195,10 +195,10 @@
       "sha256": "858275ebb9f7b511073aa627145f8985f738e31b27240a0f5cbf21f4294e4c2e"
     }
   ],
-  "implementation_sha256": "50726ce0178558262919e945effe55097889bb1e36363116b9e675bab6f733b4",
+  "implementation_sha256": "9f3872225274431ff8777e754b8fa0bc0cd1c9157c6831d211aabee264dc0f34",
   "dsl_abi_sha256": "c8b4babfa7dc5b65bf614ffc4c9cdb3a8ed08f42ce1b7087481bbdcce92a8389",
   "cargo_lock_sha256": "8ecdd1fc461f5700897e2e65dac13e3a05200bfcd2226e3b62d39bbe772c1fee",
-  "identity_digest": "bf72144cf3a9d036b825b782c481e9dc1163f99b5cdd405c3e73887745ba4767",
+  "identity_digest": "f5d81b9239675caf1c64efb29ca5ac0228591869b399640d782af997827d50c1",
   "known_identities_sha256": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b",
   "known_identity_rows": 2
 }
