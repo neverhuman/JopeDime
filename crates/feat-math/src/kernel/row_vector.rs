@@ -165,9 +165,25 @@ impl Program {
                 "row-vector envelope/feature set".into(),
             ));
         }
-        let value: Self = serde_json::from_str(&reader.text()?)
+        let parameters: serde_json::Value = serde_json::from_str(&reader.text()?)
             .map_err(|e| VersionError::Malformed(e.to_string()))?;
         reader.finish()?;
+        if let Some(stages) = parameters
+            .get("stages")
+            .and_then(serde_json::Value::as_array)
+        {
+            for stage in stages {
+                if let Some(wire) = stage.get("wire").and_then(serde_json::Value::as_str) {
+                    if wire != "58" {
+                        return Err(VersionError::UnsupportedVersion(format!(
+                            "row-vector wire {wire} is unavailable"
+                        )));
+                    }
+                }
+            }
+        }
+        let value: Self = serde_json::from_value(parameters)
+            .map_err(|e| VersionError::Malformed(e.to_string()))?;
         let lambda = value.lambda();
         Ok(Self::new(2, value.input_width, value.stages, lambda)?)
     }
@@ -399,6 +415,10 @@ impl Model {
             .stages
             .last()
             .map_or(self.program.input_width, FittedStage::output_width);
+        // Ridge scores are bounded to ±20. Include the intercept and retain
+        // a factor-of-two margin so even a forged finite state cannot overflow
+        // the fixed-order prediction dot product before the final clamp.
+        let weight_limit = f64::MAX / (1.0 + 20.0 * width as f64) / 2.0;
         if self.ridge.means.len() != width
             || self.ridge.scales.len() != width
             || self.ridge.w.len() != width + 1
@@ -410,6 +430,7 @@ impl Model {
                 .chain(&self.ridge.w)
                 .any(|x| !x.is_finite())
             || self.ridge.scales.iter().any(|x| *x <= 0.0)
+            || self.ridge.w.iter().any(|w| w.abs() > weight_limit)
         {
             return Err(Error::Domain("invalid row-vector ridge state".into()));
         }
