@@ -13,7 +13,19 @@
 //!   candidate population, fixed for the call (`0` when the case has no finite error);
 //! - each selection event filters the remaining pool case by case, keeping every candidate whose
 //!   error is at most the pool's current best error plus `epsilon_j`, and stops when one candidate
-//!   remains or the cases run out; a remaining tie is broken by a uniform draw.
+//!   remains or the cases run out; a remaining tie is broken by a uniform draw. When a finite best
+//!   error plus `epsilon_j` overflows, the threshold is `f64::MAX`, so an infinite error still
+//!   fails; an all-infinite pool keeps everyone.
+//!
+//! [`EpsilonRule::MinimumVarianceThreshold`] replaces the tolerance by the dynamic minimum variance
+//! threshold of Aldeia, de França and La Cava (GECCO 2024), frozen here as: over the current
+//! pool's finite errors, sorted ascending, every split between two consecutive distinct values is
+//! scored `var(left)/|left| + var(right)/|right|` with population variances; the first strict
+//! minimum wins and members whose error is at most the split's left boundary survive. A pool whose
+//! finite errors are all equal keeps them all; infinite errors never survive beside a finite one.
+//! Each side's variance is its sum of squared deviations, accumulated by Welford's update upward
+//! for the left side and downward for the right, divided by its size; an objective that overflows
+//! is `+inf`, so when every objective overflows the first split wins.
 //!
 //! Draw order, frozen by [`PROFILE`] and pinned by a trace test: a down-sampled call first draws
 //! its case subset by a partial Fisher-Yates over `0..cases`, one draw per sampled case, and keeps
@@ -44,6 +56,9 @@ pub enum EpsilonRule {
     MedianAbsoluteDeviation,
     /// No tolerance: plain lexicase, which keeps only exact error ties.
     Zero,
+    /// The dynamic minimum variance threshold over the current pool (see the module
+    /// documentation). Precomputed tolerances are unused and recorded as `0`.
+    MinimumVarianceThreshold,
 }
 
 /// Which training cases a call uses.
@@ -162,12 +177,13 @@ pub fn select(
     select_with(errors, config, parents, rng)
 }
 
-/// `epsilon_j` for each listed case, in the listed order.
+/// `epsilon_j` for each listed case, in the listed order; always `0` under
+/// [`EpsilonRule::MinimumVarianceThreshold`], whose threshold is set per filter.
 pub fn epsilons(errors: &CaseErrors, cases: &[u32], rule: EpsilonRule) -> Vec<f64> {
     cases
         .iter()
         .map(|&case| match rule {
-            EpsilonRule::Zero => 0.0,
+            EpsilonRule::Zero | EpsilonRule::MinimumVarianceThreshold => 0.0,
             EpsilonRule::MedianAbsoluteDeviation => {
                 let mut finite: Vec<f64> = (0..errors.candidates)
                     .map(|candidate| errors.error(candidate, case as usize))
@@ -211,12 +227,18 @@ fn select_with<D: Draws>(
 ) -> Result<Selection> {
     let cases = sample_cases(errors.cases, config.sampling, draws)?;
     let tolerances = epsilons(errors, &cases, config.epsilon);
-    let mut pool = Vec::with_capacity(errors.candidates);
-    let mut order = Vec::with_capacity(cases.len());
+    let mut scratch = Scratch::default();
     let mut selected = Vec::with_capacity(parents);
     let mut events = Vec::with_capacity(parents);
     for _ in 0..parents {
-        let event = select_one(errors, &cases, &tolerances, &mut pool, &mut order, draws);
+        let event = select_one(
+            errors,
+            &cases,
+            &tolerances,
+            config.epsilon,
+            &mut scratch,
+            draws,
+        );
         selected.push(event.selected as usize);
         events.push(event);
     }
@@ -255,16 +277,31 @@ fn sample_cases<D: Draws>(cases: usize, sampling: CaseSampling, draws: &mut D) -
     }
 }
 
-/// One event. `pool` and `order` are scratch buffers reset here, so every event starts from the
+/// Buffers reused by every event of a call.
+#[derive(Default)]
+struct Scratch {
+    pool: Vec<u32>,
+    order: Vec<usize>,
+    sorted: Vec<f64>,
+    suffix: Vec<f64>,
+}
+
+/// One event. The scratch pool and case order are reset here, so every event starts from the
 /// whole population and the ascending case list.
 fn select_one<D: Draws>(
     errors: &CaseErrors,
     cases: &[u32],
     epsilons: &[f64],
-    pool: &mut Vec<u32>,
-    order: &mut Vec<usize>,
+    rule: EpsilonRule,
+    scratch: &mut Scratch,
     draws: &mut D,
 ) -> EventTrace {
+    let Scratch {
+        pool,
+        order,
+        sorted,
+        suffix,
+    } = scratch;
     pool.clear();
     // `candidates <= MAX_CANDIDATES`, so every index fits in u32.
     pool.extend(0..errors.candidates as u32);
@@ -278,13 +315,28 @@ fn select_one<D: Draws>(
         order.swap(slot, pick);
         let position = order[slot];
         let case = cases[position] as usize;
-        let best = pool
-            .iter()
-            .map(|&candidate| errors.error(candidate as usize, case))
-            .fold(f64::INFINITY, f64::min);
-        // Adding a non-negative tolerance never rounds below `best`, so the best candidate always
-        // survives and the pool never empties; an infinite best keeps every infinite error.
-        let threshold = best + epsilons[position];
+        // Every threshold is at least the pool's best error, so the best candidate always survives
+        // and the pool never empties.
+        let threshold = match rule {
+            EpsilonRule::MinimumVarianceThreshold => {
+                minimum_variance_threshold(errors, pool, case, sorted, suffix)
+            }
+            EpsilonRule::MedianAbsoluteDeviation | EpsilonRule::Zero => {
+                let best = pool
+                    .iter()
+                    .map(|&candidate| errors.error(candidate as usize, case))
+                    .fold(f64::INFINITY, f64::min);
+                // Adding a non-negative tolerance never rounds below `best`. A finite best whose
+                // sum overflows is held at `f64::MAX`, so an infinite error still fails; an
+                // infinite best keeps every infinite error.
+                let threshold = best + epsilons[position];
+                if best.is_finite() {
+                    threshold.min(f64::MAX)
+                } else {
+                    threshold
+                }
+            }
+        };
         pool.retain(|&candidate| errors.error(candidate as usize, case) <= threshold);
         examined.push(cases[position]);
         pool_sizes.push(pool.len() as u32);
@@ -302,6 +354,59 @@ fn select_one<D: Draws>(
         selected,
         tie_draw,
     }
+}
+
+/// The minimum variance threshold of `case` over `pool` (see the module documentation): the left
+/// boundary of the first best split of the pool's ascending finite errors, the smallest finite
+/// error when there is no split, and `+inf` when there is no finite error. `sorted` and `suffix`
+/// are scratch buffers.
+fn minimum_variance_threshold(
+    errors: &CaseErrors,
+    pool: &[u32],
+    case: usize,
+    sorted: &mut Vec<f64>,
+    suffix: &mut Vec<f64>,
+) -> f64 {
+    sorted.clear();
+    sorted.extend(
+        pool.iter()
+            .map(|&candidate| errors.error(candidate as usize, case))
+            .filter(|error| error.is_finite()),
+    );
+    if sorted.is_empty() {
+        return f64::INFINITY;
+    }
+    sorted.sort_unstable_by(f64::total_cmp);
+    let n = sorted.len();
+    // `suffix[k]` is the sum of squared deviations of `sorted[k..]`, accumulated downward.
+    suffix.clear();
+    suffix.resize(n, 0.0);
+    let (mut mean, mut squares) = (0.0, 0.0);
+    for k in (1..n).rev() {
+        let delta = sorted[k] - mean;
+        mean += delta / (n - k) as f64;
+        squares += delta * (sorted[k] - mean);
+        suffix[k] = squares;
+    }
+    // The left side's sum accumulates upward; a split exists only between distinct values.
+    let (mut mean, mut squares) = (0.0, 0.0);
+    let (mut best, mut threshold) = (f64::INFINITY, sorted[0]);
+    for k in 1..n {
+        let value = sorted[k - 1];
+        let delta = value - mean;
+        mean += delta / k as f64;
+        squares += delta * (value - mean);
+        if sorted[k] == value {
+            continue;
+        }
+        let (left, right) = (k as f64, (n - k) as f64);
+        let objective = squares / (left * left) + suffix[k] / (right * right);
+        if objective < best {
+            best = objective;
+            threshold = value;
+        }
+    }
+    threshold
 }
 
 /// The median absolute deviation of finite, non-negative values, or `0` for no value. Sorts and
@@ -384,6 +489,17 @@ mod tests {
         epsilon: EpsilonRule::Zero,
         sampling: CaseSampling::All,
     };
+    const MVT: LexicaseConfig = LexicaseConfig {
+        epsilon: EpsilonRule::MinimumVarianceThreshold,
+        sampling: CaseSampling::All,
+    };
+
+    /// The minimum variance threshold of one case over a whole population with these residuals.
+    fn mvt(residuals: &[f64]) -> f64 {
+        let errors = CaseErrors::from_residuals(residuals.len(), 1, residuals).unwrap();
+        let pool: Vec<u32> = (0..residuals.len() as u32).collect();
+        minimum_variance_threshold(&errors, &pool, 0, &mut Vec::new(), &mut Vec::new())
+    }
 
     #[test]
     fn median_absolute_deviation_matches_hand_values() {
@@ -649,6 +765,160 @@ mod tests {
         r#"{"cases":[1],"pool_sizes":[1],"selected":1,"tie_draw":false},"#,
         r#"{"cases":[2,5],"pool_sizes":[2,1],"selected":1,"tie_draw":false}]}"#,
     );
+
+    #[test]
+    fn an_overflowing_tolerance_still_rejects_infinite_errors() {
+        // Case 0 keeps candidates 0 and 1. Case 1's finite errors {0 x3, 1.7e308 x3} have median
+        // and MAD 0.85e308, so the pool's best 1.7e308 plus the tolerance overflows; the threshold
+        // is held at f64::MAX and candidate 1's infinite error fails.
+        #[rustfmt::skip]
+        let residuals = [
+            0.0, 1.7e308,
+            0.0, f64::NAN,
+            9.0, 0.0,
+            9.0, 0.0,
+            9.0, 0.0,
+            9.0, -1.7e308,
+            9.0, 1.7e308,
+        ];
+        let errors = CaseErrors::from_residuals(7, 2, &residuals).unwrap();
+        let mut draws = Script::new(&[0, 0]);
+        let selection = select_with(&errors, MAD, 1, &mut draws).unwrap();
+        assert_eq!(selection.trace.epsilons, [0.0, 1.7e308 / 2.0]);
+        assert_eq!(selection.trace.events[0].pool_sizes, [2, 1]);
+        assert_eq!((selection.parents, draws.used()), (vec![0], 2));
+        // An all-infinite pool keeps everyone under every rule and ends in a tie draw.
+        let errors = CaseErrors::from_residuals(2, 1, &[f64::NAN, f64::INFINITY]).unwrap();
+        for config in [MAD, PLAIN, MVT] {
+            let mut draws = Script::new(&[0, 1]);
+            let selection = select_with(&errors, config, 1, &mut draws).unwrap();
+            assert_eq!((selection.parents, draws.used()), (vec![1], 2));
+        }
+    }
+
+    #[test]
+    fn minimum_variance_threshold_matches_hand_cases() {
+        // [0, 1, 1, 10]: the split after 0 scores 0 + var{1, 1, 10}/3 = 18/3 = 6 and the split
+        // after 1 scores var{0, 1, 1}/3 + 0 = 2/27, so {0, 1, 1} survive.
+        assert_eq!(mvt(&[10.0, 1.0, 0.0, -1.0]), 1.0);
+        assert_eq!(mvt(&[3.0, 1.0, 3.0, 1.0]), 1.0);
+        assert_eq!(mvt(&[5.1, 0.1, 5.0, 0.2]), 0.2);
+        // [0, 5, 10]: both splits score 25/8 exactly; the first wins.
+        assert_eq!(mvt(&[10.0, 0.0, 5.0]), 0.0);
+        // Equal finite errors all survive; an infinite error never survives beside a finite one;
+        // a pool without a finite error keeps everyone.
+        assert_eq!(mvt(&[2.0, -2.0, 2.0]), 2.0);
+        assert_eq!(mvt(&[f64::NAN, 3.0, -3.0]), 3.0);
+        assert_eq!(mvt(&[4.0]), 4.0);
+        assert_eq!(mvt(&[f64::INFINITY, f64::NAN]), f64::INFINITY);
+        // Both objectives of [0, 1e300, f64::MAX] overflow, so the first split wins.
+        assert_eq!(mvt(&[f64::MAX, 1e300, 0.0]), 0.0);
+    }
+
+    #[test]
+    fn minimum_variance_threshold_picks_an_exact_minimizer_on_small_integers() {
+        // Exact objectives as fractions: with left sums (a, b) of values and squares over k
+        // members and right sums (c, d) over m, a split scores (k*b - a^2)/k^3 + (m*d - c^2)/m^3.
+        // Distinct exact objectives here differ far beyond rounding, so the computed choice must
+        // be an exact minimizer, and the only one when the minimum is unique.
+        let exact = |side: &[i64]| {
+            let count = side.len() as i128;
+            let sum: i128 = side.iter().map(|&value| i128::from(value)).sum();
+            let squares: i128 = side.iter().map(|&value| i128::from(value * value)).sum();
+            (count * squares - sum * sum, count * count * count)
+        };
+        let mut rng = Pcg32::new(0xB10, 0x6d7674);
+        let mut ties = 0;
+        for _ in 0..2000 {
+            let n = 2 + rng.next_u32() as usize % 11;
+            let values: Vec<i64> = (0..n).map(|_| i64::from(rng.next_u32() % 21)).collect();
+            let mut sorted = values.clone();
+            sorted.sort_unstable();
+            let splits: Vec<(i64, i128, i128)> = (1..n)
+                .filter(|&k| sorted[k] != sorted[k - 1])
+                .map(|k| {
+                    let (left, right) = sorted.split_at(k);
+                    let ((ln, ld), (rn, rd)) = (exact(left), exact(right));
+                    (sorted[k - 1], ln * rd + rn * ld, ld * rd)
+                })
+                .collect();
+            let residuals: Vec<f64> = values.iter().map(|&value| value as f64).collect();
+            let threshold = mvt(&residuals);
+            let Some(&(_, num, den)) = splits.iter().min_by(|x, y| (x.1 * y.2).cmp(&(y.1 * x.2)))
+            else {
+                assert_eq!(threshold, sorted[0] as f64);
+                continue;
+            };
+            let minimizers: Vec<f64> = splits
+                .iter()
+                .filter(|split| split.1 * den == num * split.2)
+                .map(|split| split.0 as f64)
+                .collect();
+            assert!(minimizers.contains(&threshold), "{values:?} -> {threshold}");
+            if minimizers.len() > 1 {
+                ties += 1;
+            }
+        }
+        assert!(ties > 0, "the sample should include exact ties");
+    }
+
+    #[test]
+    fn minimum_variance_threshold_agrees_with_a_two_pass_brute_force() {
+        let variance = |side: &[f64]| {
+            let mean = side.iter().sum::<f64>() / side.len() as f64;
+            side.iter().map(|value| (value - mean).powi(2)).sum::<f64>() / side.len() as f64
+        };
+        let mut rng = Pcg32::new(0xB10, 0x6d767432);
+        let mut checked = 0;
+        for round in 0..500 {
+            let n = 2 + rng.next_u32() as usize % 40;
+            let scale = [1e-6, 1.0, 1e6, 1e150][round % 4];
+            let residuals: Vec<f64> = (0..n)
+                .map(|_| f64::from(rng.next_u32()) / f64::from(u32::MAX) * scale)
+                .collect();
+            let mut sorted = residuals.clone();
+            sorted.sort_unstable_by(f64::total_cmp);
+            let mut scored: Vec<(f64, f64)> = (1..n)
+                .filter(|&k| sorted[k] != sorted[k - 1])
+                .map(|k| {
+                    let (left, right) = sorted.split_at(k);
+                    let objective = variance(left) / k as f64 + variance(right) / (n - k) as f64;
+                    (objective, sorted[k - 1])
+                })
+                .collect();
+            scored.sort_by(|x, y| x.0.total_cmp(&y.0));
+            // Only a minimum clear of the runner-up by more than rounding is a fair comparison.
+            if scored.len() > 1 && scored[1].0 - scored[0].0 <= 1e-9 * scored[0].0 {
+                continue;
+            }
+            assert_eq!(mvt(&residuals), scored[0].1, "{residuals:?}");
+            checked += 1;
+        }
+        assert!(checked >= 450, "only {checked} rounds were compared");
+    }
+
+    #[test]
+    fn minimum_variance_events_filter_each_case_over_the_current_pool() {
+        let errors = specialists();
+        // Case 0, {0, 1, 5, 9}: the split after 5 scores var{0, 1, 5}/3 = 14/9 and beats 2.125 and
+        // 32/9, so {A, B, C} survive. Case 1 over them, {5, 1, 0}, keeps {B, C} (1/8 after 1);
+        // case 2 over those, {1, 5}, keeps B.
+        let mut draws = Script::new(&[0, 0, 0]);
+        let selection = select_with(&errors, MVT, 1, &mut draws).unwrap();
+        assert_eq!((selection.parents.clone(), draws.used()), (vec![1], 3));
+        assert_eq!(selection.trace.epsilons, [0.0; 3]);
+        assert_eq!(selection.trace.events[0].pool_sizes, [3, 2, 1]);
+        // Seeded calls replay exactly and record the rule by name.
+        let run = || select(&errors, MVT, 32, &mut Pcg32::new(0xB10, 0x6c657869)).unwrap();
+        let first = run();
+        assert_eq!(first, run());
+        let json = serde_json::to_string(&first.trace).unwrap();
+        assert!(json.contains(r#""epsilon":"MinimumVarianceThreshold""#));
+        assert_eq!(
+            serde_json::from_str::<LexicaseTrace>(&json).unwrap(),
+            first.trace
+        );
+    }
 
     #[test]
     fn distinct_parent_fraction_counts_distinct_choices() {
