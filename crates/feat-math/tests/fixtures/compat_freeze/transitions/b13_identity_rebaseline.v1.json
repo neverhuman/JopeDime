@@ -1,0 +1,19 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "OWNER_DIRECTIVES v1.3 assigns B13 to Lane D and authorizes the card's shared-file integration; announced identity-only transition, with no v1 behavior/source-byte golden regeneration",
+  "plan_reference": "JOPEDIME_BREAKTHROUGH_IMPLEMENTATION_PLAN.md §4 B13 and standing OWNER DIRECTIVE(c)",
+  "pr_reference": "[kernel2] Add sparse Goertzel bank; mint evaluator identity",
+  "source_commit": "bab73392fa273391e847e9f84054c888857541c5",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "ce564b593fbf81479389b23f7fb7e40935d74228738a82ee79c6d760bc5d0ab3",
+      "after": "15ee100e676baf19bfc40ed4cf7871c6645bc51b1b5f6eebe729828c76605d32"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "de7a820724fa36c147576569f4e176c185676ffc45cbe0b36ececf5b1a73b7b4",
+      "after": "4a38518ace2eeb5c1af177feca65818f6df57d022e06d13b5a834eeebadcba25"
+    }
+  ]
+}

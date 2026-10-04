@@ -389,7 +389,10 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
     // B12: hash-bound source identity successor; behavioral pins stay strict.
     let b12 = old_fixture("transitions/b12_identity_rebaseline.v1.json");
     assert_eq!(b12["fixtures"].as_array().unwrap().len(), 2);
-    let identity_chain = [transition, successor, b12];
+    // B13: the same for the wire-61 bank's planner and emitter arms.
+    let b13 = old_fixture("transitions/b13_identity_rebaseline.v1.json");
+    assert_eq!(b13["fixtures"].as_array().unwrap().len(), 2);
+    let identity_chain = [transition, successor, b12, b13];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);
     let mut old_fixtures = 0;
