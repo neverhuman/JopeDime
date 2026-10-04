@@ -5,7 +5,7 @@ use std::process::{Child, Command, Stdio};
 use std::time::{Duration, Instant};
 
 use anyhow::{bail, ensure, Context, Result};
-use jain_smartcluster::{Client, ClientConfig, EventStream};
+use jain_smartcluster::{Client, ClientConfig, DispatchError, EventStream};
 use jain_smartcluster_core::{
     AttachRequest, CancelMode, CancelRequest, CpuRequest, DaemonMode, Environment, EventOffset,
     EventRecord, IdempotencyKey, IoMode, JobEvent, JobId, JobRecord, JobSpec, JobState,
@@ -400,11 +400,26 @@ fn find_executable(candidates: &[&str]) -> Option<PathBuf> {
 async fn wait_for_state(client: &Client, job_id: JobId, expected: JobState) -> Result<JobRecord> {
     let started = Instant::now();
     loop {
-        let job = client
-            .get(job_id)
+        let remaining = STATE_TIMEOUT.saturating_sub(started.elapsed());
+        if remaining.is_zero() {
+            bail!("job {job_id} did not reach {expected:?} within {STATE_TIMEOUT:?}");
+        }
+        let response = timeout(remaining, client.get(job_id))
             .await
-            .with_context(|| format!("get job {job_id} while waiting for {expected:?}"))?
-            .with_context(|| format!("job {job_id} disappeared"))?;
+            .with_context(|| {
+                format!("job {job_id} state deadline while waiting for {expected:?}")
+            })?;
+        let job = match response {
+            // GET is idempotent. Keep polling inside the existing state budget
+            // when the fixture's shorter request deadline expires under load.
+            Err(DispatchError::Timeout { .. }) => {
+                sleep(RETRY_DELAY.min(remaining)).await;
+                continue;
+            }
+            response => response
+                .with_context(|| format!("get job {job_id} while waiting for {expected:?}"))?
+                .with_context(|| format!("job {job_id} disappeared"))?,
+        };
         if job.state == expected {
             return Ok(job);
         }
