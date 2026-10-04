@@ -334,9 +334,9 @@ impl VersionedProgram {
         fold: FoldBoundary,
     ) -> VersionResult<VersionedModel> {
         match self {
-            Self::DifferenceV2(program) => Ok(VersionedModel::DifferenceV2(
+            Self::DifferenceV2(program) => Ok(VersionedModel::DifferenceV2(Box::new(
                 program.fit_training(rows, labels, task, fold)?,
-            )),
+            ))),
             _ => Err(VersionError::UnsupportedVersion(
                 "program has no ordered fit route".into(),
             )),
@@ -577,7 +577,7 @@ pub enum VersionedModel {
     LegacyV1(Model),
     ReservedV2(ReservedModel),
     RowVectorV2(super::row_vector::Model),
-    DifferenceV2(DifferenceModel),
+    DifferenceV2(Box<DifferenceModel>),
 }
 
 impl VersionedModel {
@@ -603,7 +603,9 @@ impl VersionedModel {
         }
         if value.get("schema").and_then(Value::as_str) == Some("feat-math.causal-difference-model")
         {
-            return DifferenceModel::from_json(json).map(Self::DifferenceV2);
+            return DifferenceModel::from_json(json)
+                .map(Box::new)
+                .map(Self::DifferenceV2);
         }
         let wire: ModelWireV2 = serde_json::from_value(value)
             .map_err(|error| VersionError::Malformed(error.to_string()))?;
