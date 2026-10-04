@@ -168,20 +168,7 @@ impl Program {
         let parameters: serde_json::Value = serde_json::from_str(&reader.text()?)
             .map_err(|e| VersionError::Malformed(e.to_string()))?;
         reader.finish()?;
-        if let Some(stages) = parameters
-            .get("stages")
-            .and_then(serde_json::Value::as_array)
-        {
-            for stage in stages {
-                if let Some(wire) = stage.get("wire").and_then(serde_json::Value::as_str) {
-                    if wire != "58" {
-                        return Err(VersionError::UnsupportedVersion(format!(
-                            "row-vector wire {wire} is unavailable"
-                        )));
-                    }
-                }
-            }
-        }
+        check_stage_wires(&parameters)?;
         let value: Self = serde_json::from_value(parameters)
             .map_err(|e| VersionError::Malformed(e.to_string()))?;
         let lambda = value.lambda();
@@ -477,8 +464,11 @@ impl Model {
         if text.len() > MAX_BYTES {
             return Err(VersionError::Malformed("row-vector model size".into()));
         }
-        let wire: ModelWire =
+        let parameters: serde_json::Value =
             serde_json::from_str(text).map_err(|e| VersionError::Malformed(e.to_string()))?;
+        check_stage_wires(&parameters)?;
+        let wire: ModelWire = serde_json::from_value(parameters)
+            .map_err(|e| VersionError::Malformed(e.to_string()))?;
         if wire.schema != "feat-math.feature-row-model"
             || wire.format_version != 2
             || wire.min_reader_version != 2
@@ -513,6 +503,24 @@ impl Model {
     pub fn identity(&self) -> VersionResult<String> {
         Ok(format!("{:x}", Sha256::digest(self.to_json()?.as_bytes())))
     }
+}
+
+fn check_stage_wires(parameters: &serde_json::Value) -> VersionResult<()> {
+    if let Some(stages) = parameters
+        .get("stages")
+        .and_then(serde_json::Value::as_array)
+    {
+        for stage in stages {
+            if let Some(wire) = stage.get("wire").and_then(serde_json::Value::as_str) {
+                if wire != "58" {
+                    return Err(VersionError::UnsupportedVersion(format!(
+                        "row-vector wire {wire} is unavailable"
+                    )));
+                }
+            }
+        }
+    }
+    Ok(())
 }
 
 fn validate_rows(rows: &Rows, width: usize) -> Result<()> {

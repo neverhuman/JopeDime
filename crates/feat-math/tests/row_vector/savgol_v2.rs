@@ -217,6 +217,25 @@ fn unknown_row_stage_wire_is_an_unsupported_version_at_both_ingresses() {
         VersionedProgram::from_bytes(&bytes),
         Err(feat_math::kernel::wire_v2::VersionError::UnsupportedVersion(_))
     ));
+    let p = program(2, config(3, 1, 0));
+    let (x, y) = training(2);
+    let text = p.fit(&x, &y).unwrap().to_json().unwrap();
+    for unknown_program in [false, true] {
+        let mut wire: serde_json::Value = serde_json::from_str(&text).unwrap();
+        wire["stages"][0]["wire"] = serde_json::json!("99");
+        if unknown_program {
+            wire["program"] = serde_json::json!(bytes);
+        }
+        let future_model = wire.to_string();
+        assert!(matches!(
+            Model::from_json(&future_model),
+            Err(feat_math::kernel::wire_v2::VersionError::UnsupportedVersion(_))
+        ));
+        assert!(matches!(
+            VersionedModel::from_json(&future_model),
+            Err(feat_math::kernel::wire_v2::VersionError::UnsupportedVersion(_))
+        ));
+    }
 }
 
 fn training(width: usize) -> (Vec<Vec<f64>>, Vec<f64>) {
