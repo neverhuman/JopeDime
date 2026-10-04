@@ -293,6 +293,11 @@ impl CausalCursor {
     }
 
     pub fn push(&mut self, group: GroupKey, timestamp: f64) -> Result<RowAdmission> {
+        // Public enum construction must preserve the cursor codec's admission.
+        let group = match group {
+            GroupKey::NumericBits(bits) => GroupKey::numeric(f64::from_bits(bits))?,
+            GroupKey::Categorical(value) => GroupKey::categorical(value)?,
+        };
         if self.next_ordinal >= self.fold.total_rows {
             return Err(Error::Bounds("row exceeds declared fold input".into()));
         }

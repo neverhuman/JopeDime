@@ -12,6 +12,7 @@ use std::collections::{BTreeMap, VecDeque};
 
 mod emit;
 mod model;
+mod model_validation;
 mod program;
 mod state_codec;
 pub use emit::{emit_helpers, DifferenceLanguage};

@@ -441,3 +441,7 @@ int main(int argc,char** argv){if(argc!=2)return 2;std::ifstream input(argv[1]);
         expected.as_bytes()
     );
 }
+
+// B08 ordered-state program/model/fit continuation.
+#[path = "finite_difference/routing.rs"]
+mod routing;
