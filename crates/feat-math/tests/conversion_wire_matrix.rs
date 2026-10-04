@@ -550,6 +550,58 @@ fn seeded_composed_expression_recipes_match_rust_python_and_evaluator_bits() {
 }
 
 #[test]
+fn seeded_stage_parameter_recipes_match_three_languages_and_evaluator_bits() {
+    let programs = [
+        "(pipe X (quantile_bins bins=2) (ridge alpha=0.1))",
+        "(pipe X (quantile_bins bins=16 append=true) (elasticnet alpha=0.02 l1_ratio=0.25 sweeps=17))",
+        "(pipe X (cheb degree=1) (ridge alpha=0.03))",
+        "(pipe X (cheb degree=6 append=true) (ridge alpha=2))",
+        "(pipe X (step t=-0.5) (ridge alpha=0.2))",
+        "(pipe X (step t=0.75 append=true) (elasticnet alpha=0.03 l1_ratio=0.75 sweeps=23))",
+        "(pipe X (pair_prod topk=2) (ridge alpha=0.04))",
+        "(pipe X (pair_prod topk=4 append=true) (quantile_bins bins=3) (elasticnet alpha=0.03 l1_ratio=0.5 sweeps=19))",
+    ];
+    let scratch = tempfile::tempdir().unwrap();
+    let mut cases = 0;
+    for seed in [53, 59] {
+        let (mut x, y) = toy_data_seed(seed);
+        // Fixed boundary features supplement each seed. Targets remain finite;
+        // held-out rows never enter either the runtime fit or emitted recipe fit.
+        x[0][0] = -0.0;
+        x[1][1] = f64::from_bits(1);
+        x[64][0] = -0.0;
+        x[65][1] = f64::from_bits(1);
+        x[66][2] = -0.5;
+        x[67][2] = 0.75;
+        for (index, source) in programs.into_iter().enumerate() {
+            let name = format!("parameters-seed-{seed}-program-{index}");
+            let genome = round_trip(source);
+            assert!(supports(&genome).is_ok(), "{name}: paired admission");
+            assert!(
+                supports_cpp17(&genome).is_ok(),
+                "{name}: default C++17 admission"
+            );
+            let expected: Vec<u64> =
+                fit_predict(&genome, &x[..64].to_vec(), &y[..64], &x[64..].to_vec())
+                    .unwrap()
+                    .into_iter()
+                    .map(f64::to_bits)
+                    .collect();
+            assert_eq!(expected.len(), 16, "{name}: evaluator output count");
+            let dir = scratch.path().join(&name);
+            let (python, rust) = run_emitted_pair(&name, &genome, &dir, &x, &y);
+            assert_eq!(python, expected, "{name}: Python parameter recipe bits");
+            assert_eq!(rust, expected, "{name}: Rust parameter recipe bits");
+            let source = emit_cpp17(&genome, &EmitOptions::default()).unwrap();
+            let cpp = run_cpp_recipe(&name, source, &dir, &x, &y);
+            assert_eq!(cpp, expected, "{name}: C++17 parameter recipe bits");
+            cases += 1;
+        }
+    }
+    assert_eq!(cases, 16, "eight parameterized programs across two seeds");
+}
+
+#[test]
 fn symbolic_and_portfolio_forms_execute_or_keep_their_structured_refusal() {
     let cases = [
         ("symbolic_raw", "(sym raw \"sin(c0)+row_mean\")", true),
