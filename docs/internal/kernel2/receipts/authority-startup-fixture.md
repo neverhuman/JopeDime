@@ -26,8 +26,9 @@ All 40 focused default authority cases pass; no old tests or assertions are repl
 Acceptance: `cargo nextest run --locked -P pr -p jope-parallel --lib -E 'test(eval_registry::authority::tests::)'`.
 Fresh baseline: PR 2099/29, main 4179/66, Python 231/2, golden 16/16, fitted ASan/UBSan
 18/18 and C++20 18/18, strict original O3 plus extra g++17 O2 pass. Required after counts:
-PR 2101/29 and main 4181/66 (+2); identical old selections/skips/exclusions and zero-new
-workspace/owned lint ratchets. Actual just required 101 is the previously accepted unchanged
+Product PR 2099/29 (+0: jope-parallel is a declared deferred package), main 4181/66 (+2),
+and explicit PR-profile authority family 38→40 (+2); all old selections/skips/exclusions
+remain unchanged, with zero-new workspace/owned lint ratchets. Actual just required 101 is the previously accepted unchanged
 held floor, NOTPASS; full standing suites run separately. All frozen/identity/emitter bytes
 remain untouched. The existing coverage item description records the added fixture coverage.
 
