@@ -1,6 +1,8 @@
 use super::fault::Collect;
 use super::*;
 
+mod scalar;
+
 #[derive(Clone, Copy, Debug)]
 enum Instruction {
     Constant(f64),
