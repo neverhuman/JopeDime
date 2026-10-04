@@ -1,9 +1,12 @@
 # Explicit scalar calibration training libraries
 
-Local continuation of parked PR #178 on `kernel2/bt09-scaling-recipes-local`.
-Its unmerged source `e5266782121dc0cf131aa9e7ff4ee6a496e7d4a5` is this
-slice's dependency, rather than a shipped-main qualification. Artifact quota
-holds publication: no new PR, push, CI dispatch or artifact deletion.
+Qualified local continuation now included in PR #178 on
+`kernel2/bt09-linear-scaling`, rebased onto remote main
+`2e75f00cc8abe2323fa6e3c5e2d0965c35b68bc3` after #176.
+Original dependency `e5266782121dc0cf131aa9e7ff4ee6a496e7d4a5` and local
+follow-up `fbba3ec6247167465edd924d2aa7c0e748ccab6e` remain preserved with
+their dated local proof. The owner lifted the publication hold after the Team
+upgrade; no artifacts or repository data are deleted.
 
 `emit_training_recipe(expression, input_width)` adds Rust, Python and C++17
 library sources. Call `scaled_train(training_rows, training_targets)` after
@@ -52,11 +55,19 @@ Exact-source baseline reuse: completed #178 local gates at the dependency SHA,
 39 immutable evidence files and 100 protected inputs reverified. PR2108/29 and
 main4190/66, Python231/2, golden16/16, fitted18/18 in both matrices, zero-new
 Clippy/audit. Actual `just required` is 101 NOTPASS at the owner-accepted
-unchanged held-design floor. New after counts expected PR2111/29, main4193/66;
-live logs and eventual results are outside the checkout in
+unchanged held-design floor. Original local after counts qualified PR2111/29, main4193/66;
+immutable logs and results are outside the checkout in
 `/home/ubuntu/jope-evidence/kernel2/bt/B09_SCALING_RECIPES_LOCAL`.
 
 This is a training **library** recipe slice. The inherited raw CSV main is not
 the new entry point. Standalone calibrated CSV wrappers, shipping selection and
 CLI integration, full profile generation/EEC, equal-budget six-dataset utility
 and Baseline/serving promotion remain held. No VarPro or later-card work.
+
+Combined requalification uses the fresh-main baseline PR2108/29, main4190/66
+and all twelve new tests from winner plus recipes: expected PR2120/29 and
+main4202/66. All normal after gates, dedicated recipe ASan/UBSan and C++20,
+protected-input/skip/Clippy/audit comparisons and exact-head hosted CI plus
+fresh independent approval are recorded separately in
+`/home/ubuntu/jope-evidence/kernel2/bt/B09_LINEAR_SCALING/rebase-after-176-01`.
+The inherited raw CSV entry point remains distinct from `scaled_train`.

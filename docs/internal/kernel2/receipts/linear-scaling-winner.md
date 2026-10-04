@@ -1,7 +1,8 @@
 # Opt-in scalar calibration and persisted winner
 
 Status: first scalar library slice; full B09 search/serving admission remains held.
-Base: `b036848460f3a2887fcdc6120db97152a3c01490`.
+Current combined base: `2e75f00cc8abe2323fa6e3c5e2d0965c35b68bc3` (#176 merged).
+Initial standalone proof base: `b036848460f3a2887fcdc6120db97152a3c01490`.
 Profile: `feat-math.scalar-linear-scaling.v2`.
 
 `LinearScaledWinner::fit_training` computes slope/intercept from the explicitly
@@ -55,9 +56,23 @@ after verification of 38 immutable evidence hashes and 100 protected inputs.
 Full after-gates and hosted lifecycle outcomes must be read from that receipt.
 
 Remaining B09 gates: shipping profile/selection/persistence integration, full
-three-language training recipes and EEC/serving envelope qualification, and
+shipping training-recipe integration and EEC/serving envelope qualification, and
 at least six fixed datasets × five seeds under equal-budget G-A..G-E utility
 gates before Baseline promotion. No VarPro or dataset campaign is included.
 Legacy scoring, defaults, RNG streams, models, emitters, historical fixtures
-and evaluator identity inputs remain byte-identical. Parked #176/#177 are
-unchanged; the owner authorized this independent B09 slice on 2026-10-04.
+and evaluator identity inputs remain byte-identical. PR #176 is merged in the current base; #177 remains parked and unchanged.
+The owner authorized inclusion of the qualified local training-library follow-up
+in PR #178, after a fresh-main baseline, on 2026-10-04.
+
+## Combined PR #178 qualification
+
+The full fresh baseline at the current remote-main base passed PR2108/29 and
+main4190/66, Python231/2, golden16/16 and fitted18/18 in both matrices. The
+combined winner plus explicit training-library changes add twelve nonignored
+tests; expected after counts are PR2120/29 and main4202/66. Named old
+selected/skipped/excluded sets, all 100 protected inputs and Clippy ratchets
+are rechecked. Actual `just required` remains exit101 NOTPASS on the accepted
+unchanged held-design floor. New-head results, dedicated recipe sanitizer
+and C++20 runs, lane audit, hosted CI and fresh independent approval are
+recorded in `/home/ubuntu/jope-evidence/kernel2/bt/B09_LINEAR_SCALING/rebase-after-176-01`.
+These outcomes must be read back; this source receipt does not assert pending gates passed.
