@@ -33,6 +33,8 @@ pub use feature_block::{
     FeatureBlock, FeatureLineage, FeatureOrigin, FeatureRole, FeatureWidths,
     MAX_GENERATED_DENSE_WIDTH,
 };
+// B12: distinct fitted v2 row-vector route.
+pub use fitted_cpp::emit_row_vector_cpp17;
 pub use fitted_cpp::{emit_fitted_cpp17, supports_fitted_cpp17, FittedCppArtifact};
 pub use fitted_cpp_runtime::{
     encode_fitted_cpp17, validate_fitted_cpp_codec, EncodedTable, FittedCppError, FittedCppModel,

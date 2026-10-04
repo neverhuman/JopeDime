@@ -24,6 +24,10 @@ pub mod telemetry;
 pub mod width;
 pub mod wire_v2;
 
+// B12: explicit FeatureWithinRow programs; legacy admission is unchanged.
+pub mod row_vector;
+pub mod savgol;
+
 pub use program::Program;
 
 #[derive(Clone, Debug, PartialEq, Eq)]

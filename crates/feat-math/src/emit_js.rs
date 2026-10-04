@@ -86,6 +86,7 @@ fn op_supported(op: &PlannedOp) -> bool {
 
 fn op_label(op: &PlannedOp) -> &'static str {
     match op {
+        PlannedOp::RowVectorV2 { .. } | PlannedOp::RowVectorInputV2 { .. } => "feature_row_v2",
         PlannedOp::Standardize => "standardize",
         PlannedOp::RobustScale => "robust_scale",
         PlannedOp::Rank => "rank",

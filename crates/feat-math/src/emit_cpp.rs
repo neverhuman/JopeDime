@@ -245,6 +245,10 @@ fn helper_cpp(helper: Helper) -> &'static str {
 /// name deduplicates repeated ops (the definition is emitted once).
 fn op_cpp(op: &PlannedOp) -> Option<(&'static str, &'static str)> {
     match op {
+        // B12: explicit v2 row-vector recipe.
+        PlannedOp::RowVectorV2 { .. } | PlannedOp::RowVectorInputV2 { .. } => {
+            Some(("row_vector_v2", crate::kernel::row_vector::emit::CPP_HELPER))
+        }
         PlannedOp::Standardize => Some(("standard_scaler", OP_STANDARDIZE)),
         PlannedOp::RobustScale => Some(("robust_scaler", OP_ROBUST_SCALE)),
         PlannedOp::Rank => Some(("mid_rank_transform", OP_RANK)),
@@ -300,6 +304,17 @@ fn op_struct_cpp(op: &PlannedOp) -> Option<&'static str> {
 /// ops. The apply template uses `{state}`/`{append}` placeholders.
 fn op_calls_cpp(op: &PlannedOp) -> (Option<String>, String) {
     match op {
+        // B12: explicit v2 row-vector recipe.
+        PlannedOp::RowVectorInputV2 { width } => {
+            (None, format!("row_vector_v2_input(x, {width}, {{append}})"))
+        }
+        PlannedOp::RowVectorV2 { state } => (
+            None,
+            crate::kernel::row_vector::emit::apply_call(
+                state,
+                crate::kernel::row_vector::emit::Language::Cpp17,
+            ),
+        ),
         PlannedOp::Standardize => (
             Some("standard_scaler_fit(x)".into()),
             "standard_scaler_apply({state}, x, {append})".into(),
@@ -453,6 +468,13 @@ fn model_cpp(stages: &[PlannedStage], head: &PlannedHead, expressions: bool) -> 
     out.push_str("    }\n");
     if expressions {
         out.push_str("    const std::size_t input_width = expression_width(x_in);\n");
+    }
+    // B12: preserve the explicit v2 fit contract across native recipes.
+    if stages
+        .iter()
+        .any(|s| matches!(s.op, PlannedOp::RowVectorInputV2 { .. }))
+    {
+        out.push_str("    if(x_in.empty() || y.size()!=x_in.size())throw std::invalid_argument(\"row-vector training shape\");for(double v:y)if(!std::isfinite(v)||std::abs(v)>1e12)throw std::invalid_argument(\"row-vector training labels\");\n");
     }
     out.push_str("    std::vector<std::vector<double>> x = sanitize(x_in);\n");
     for line in &fit_body {

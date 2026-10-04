@@ -282,6 +282,8 @@ pub enum VersionedProgram {
     LegacyV1(Program),
     ReservedV2(ReservedProgram),
     ScalarV2(ScalarExpressionProgram),
+    // B12: FeatureWithinRow execution is a separate v2 subtype.
+    RowVectorV2(super::row_vector::Program),
 }
 
 impl VersionedProgram {
@@ -294,6 +296,9 @@ impl VersionedProgram {
             2 => match bytes.get(MAGIC_V2.len()) {
                 Some(0) => Ok(Self::ReservedV2(ReservedProgram::from_bytes(bytes)?)),
                 Some(1) => Ok(Self::ScalarV2(ScalarExpressionProgram::from_bytes(bytes)?)),
+                Some(3) => Ok(Self::RowVectorV2(super::row_vector::Program::from_bytes(
+                    bytes,
+                )?)),
                 Some(_) => Err(VersionError::UnsupportedVersion(
                     "program v2 variant".into(),
                 )),
@@ -310,6 +315,7 @@ impl VersionedProgram {
             Self::LegacyV1(program) => Ok(program.to_bytes()?),
             Self::ReservedV2(program) => program.to_bytes(),
             Self::ScalarV2(program) => program.to_bytes(),
+            Self::RowVectorV2(program) => program.to_bytes(),
         }
     }
 
@@ -318,6 +324,9 @@ impl VersionedProgram {
             Self::LegacyV1(Program::LegacyV1(genome)) => Ok(genome),
             Self::ReservedV2(_) => Err(VersionError::UnsupportedVersion(
                 "version 2 reservations are not executable".into(),
+            )),
+            Self::RowVectorV2(_) => Err(VersionError::UnsupportedVersion(
+                "v2 row-vector program is not a legacy genome".into(),
             )),
             Self::ScalarV2(_) => Err(VersionError::UnsupportedVersion(
                 "version 2 scalar execution is not admitted".into(),
@@ -328,7 +337,7 @@ impl VersionedProgram {
     pub fn to_lossless_text(&self) -> VersionResult<String> {
         match self {
             Self::LegacyV1(program) => Ok(program.to_lossless_text()?),
-            Self::ReservedV2(_) | Self::ScalarV2(_) => Ok(format!(
+            Self::ReservedV2(_) | Self::ScalarV2(_) | Self::RowVectorV2(_) => Ok(format!(
                 "(program codec=2 hex=\"{}\")",
                 self.to_bytes()?
                     .iter()
@@ -371,7 +380,7 @@ impl VersionedProgram {
             })
             .collect::<VersionResult<Vec<_>>>()?;
         match Self::from_bytes(&bytes)? {
-            value @ (Self::ReservedV2(_) | Self::ScalarV2(_)) => Ok(value),
+            value @ (Self::ReservedV2(_) | Self::ScalarV2(_) | Self::RowVectorV2(_)) => Ok(value),
             Self::LegacyV1(_) => Err(VersionError::UnsupportedVersion(
                 "program text codec/body mismatch".into(),
             )),
@@ -392,6 +401,22 @@ pub fn export_report(program: &VersionedProgram) -> ExportReport {
                 cpp17_fitted: refusal.clone(),
                 cpp17_fitted_basis: FittedBasis::Declared,
                 javascript: refusal,
+            }
+        }
+        VersionedProgram::RowVectorV2(program) => {
+            let support = match program.plan() {
+                Ok(_) => Route::Ok,
+                Err(e) => Route::Unsupported(vec![e.to_string()]),
+            };
+            ExportReport {
+                rust_recipe: support.clone(),
+                python_recipe: support.clone(),
+                cpp17_recipe: support.clone(),
+                cpp17_fitted: support,
+                cpp17_fitted_basis: FittedBasis::Declared,
+                javascript: Route::Unsupported(vec![
+                    "v2 row-vector JavaScript route unavailable".into()
+                ]),
             }
         }
         VersionedProgram::ScalarV2(_) => {
@@ -506,6 +531,7 @@ fn validate_model_wire(wire: &ModelWireV2) -> VersionResult<()> {
 pub enum VersionedModel {
     LegacyV1(Model),
     ReservedV2(ReservedModel),
+    RowVectorV2(super::row_vector::Model),
 }
 
 impl VersionedModel {
@@ -517,6 +543,10 @@ impl VersionedModel {
         }
         let value: Value = serde_json::from_str(json)
             .map_err(|error| VersionError::Malformed(error.to_string()))?;
+        // B12: tagged model ingress, with no legacy deserialization fallback.
+        if value.get("schema").and_then(Value::as_str) == Some("feat-math.feature-row-model") {
+            return super::row_vector::Model::from_json(json).map(Self::RowVectorV2);
+        }
         if value.get("schema").is_none() && value.get("format_version").is_none() {
             return serde_json::from_value(value)
                 .map(Self::LegacyV1)
@@ -534,6 +564,9 @@ impl VersionedModel {
     pub fn legacy_model(&self) -> VersionResult<&Model> {
         match self {
             Self::LegacyV1(model) => Ok(model),
+            Self::RowVectorV2(_) => Err(VersionError::UnsupportedVersion(
+                "v2 row-vector model is not a legacy model".into(),
+            )),
             Self::ReservedV2(_) => Err(VersionError::UnsupportedVersion(
                 "version 2 models are not executable".into(),
             )),
