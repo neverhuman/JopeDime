@@ -30,7 +30,14 @@ pub(super) fn validate_compat_ridge(value: &Value, width: usize) -> VersionResul
             "difference compatibility input layout".into(),
         ));
     }
-    let pipeline = &value["predictor"]["Legacy"]["Pipeline"];
+    // BoundModel deserialization checks the enclosing enum tag. Inspect its
+    // sole model body without maintaining a second copy of that tag table.
+    let body = value["predictor"]
+        .as_object()
+        .filter(|variants| variants.len() == 1)
+        .and_then(|variants| variants.values().next())
+        .ok_or_else(|| VersionError::Malformed("difference fitted model body".into()))?;
+    let pipeline = &body["Pipeline"];
     let ridge = &pipeline["head"]["Ridge"];
     let means = ridge["means"].as_array();
     let scales = ridge["scales"].as_array();

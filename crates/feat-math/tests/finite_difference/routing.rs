@@ -351,6 +351,12 @@ fn malformed_fitted_ridge_words_and_dimensions_are_refused_before_prediction() {
     let json = model.to_json().unwrap();
     let wire: serde_json::Value = serde_json::from_str(&json).unwrap();
     let ridge = &wire["predictor"]["predictor"]["Legacy"]["Pipeline"]["head"]["Ridge"];
+    let unknown = json.replace("\"Legacy\":", "\"Unknown\":");
+    assert_ne!(unknown, json);
+    assert!(DifferenceModel::from_json(&unknown)
+        .unwrap_err()
+        .to_string()
+        .contains("unknown variant"));
     for (field, value) in [
         ("w", serde_json::json!([])),
         ("means", serde_json::json!([])),
