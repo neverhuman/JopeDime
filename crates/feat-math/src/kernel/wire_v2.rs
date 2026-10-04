@@ -7,6 +7,7 @@
 
 use super::codec::{Reader, Writer, MAX_BYTES};
 use super::export::{self, ExportReport, FittedBasis, Route};
+use super::linear_scaling::LinearScaledWinner;
 use super::scalar_program::{ScalarCarrier, ScalarExpressionProgram, ScalarModel};
 // B08 ordered-state routing.
 use super::finite_difference::{
@@ -292,6 +293,7 @@ pub enum VersionedProgram {
     LegacyV1(Program),
     ReservedV2(ReservedProgram),
     ScalarV2(ScalarExpressionProgram),
+    LinearScaledV2(LinearScaledWinner),
     // B12: FeatureWithinRow execution is a separate v2 subtype.
     RowVectorV2(super::row_vector::Program),
     DifferenceV2(DifferenceProgram),
@@ -352,6 +354,7 @@ impl VersionedProgram {
             2 => match bytes.get(MAGIC_V2.len()) {
                 Some(0) => Ok(Self::ReservedV2(ReservedProgram::from_bytes(bytes)?)),
                 Some(1) => Ok(Self::ScalarV2(ScalarExpressionProgram::from_bytes(bytes)?)),
+                Some(2) => Ok(Self::LinearScaledV2(LinearScaledWinner::from_bytes(bytes)?)),
                 Some(3) => Ok(Self::RowVectorV2(super::row_vector::Program::from_bytes(
                     bytes,
                 )?)),
@@ -375,6 +378,7 @@ impl VersionedProgram {
             Self::LegacyV1(program) => Ok(program.to_bytes()?),
             Self::ReservedV2(program) => program.to_bytes(),
             Self::ScalarV2(program) => program.to_bytes(),
+            Self::LinearScaledV2(program) => program.to_bytes(),
             Self::RowVectorV2(program) => program.to_bytes(),
             Self::DifferenceV2(program) => program.to_bytes(),
             Self::IntegrationV2(program) => program.to_bytes(),
@@ -420,6 +424,9 @@ impl VersionedProgram {
             Self::ScalarV2(_) => Err(VersionError::UnsupportedVersion(
                 "version 2 scalar execution is not admitted".into(),
             )),
+            Self::LinearScaledV2(_) => Err(VersionError::UnsupportedVersion(
+                "linear-scaled winner requires its explicit execution profile".into(),
+            )),
         }
     }
 
@@ -430,7 +437,8 @@ impl VersionedProgram {
             | Self::ScalarV2(_)
             | Self::RowVectorV2(_)
             | Self::DifferenceV2(_)
-            | Self::IntegrationV2(_) => Ok(format!(
+            | Self::IntegrationV2(_)
+            | Self::LinearScaledV2(_) => Ok(format!(
                 "(program codec=2 hex=\"{}\")",
                 self.to_bytes()?
                     .iter()
@@ -477,7 +485,8 @@ impl VersionedProgram {
             | Self::ScalarV2(_)
             | Self::RowVectorV2(_)
             | Self::DifferenceV2(_)
-            | Self::IntegrationV2(_)) => Ok(value),
+            | Self::IntegrationV2(_)
+            | Self::LinearScaledV2(_)) => Ok(value),
             Self::LegacyV1(_) => Err(VersionError::UnsupportedVersion(
                 "program text codec/body mismatch".into(),
             )),
@@ -551,6 +560,19 @@ pub fn export_report(program: &VersionedProgram) -> ExportReport {
         VersionedProgram::ScalarV2(_) => {
             let refusal = Route::Unsupported(vec![
                 "scalar export requires carrier, width and lambda; use scalar_export_report".into(),
+            ]);
+            ExportReport {
+                rust_recipe: refusal.clone(),
+                python_recipe: refusal.clone(),
+                cpp17_recipe: refusal.clone(),
+                cpp17_fitted: refusal.clone(),
+                cpp17_fitted_basis: FittedBasis::Declared,
+                javascript: refusal,
+            }
+        }
+        VersionedProgram::LinearScaledV2(_) => {
+            let refusal = Route::Unsupported(vec![
+                "explicit linear-scaling library export required".into(),
             ]);
             ExportReport {
                 rust_recipe: refusal.clone(),

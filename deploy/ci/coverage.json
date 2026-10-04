@@ -7874,6 +7874,22 @@
       ],
       "dispositions": [],
       "scope": "B14 opt-in causal cumulative integration: wire60, explicit initial state, guarded positive time gaps, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, rational boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
+    },
+    "target:feat-math/test/linear_scaling_v2": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/feat-math/tests/linear_scaling_v2.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "B09 opt-in scalar training-fold calibration, exact constant-feature fallback, typed finite/shape refusal, versioned stored slope/intercept and typed raw tree, deterministic width/poison replay, and Rust/Python/C++17 explicit fitted-library winner bit parity. No VarPro, legacy scoring/default changes, shipping selection/CLI integration, full train-and-predict recipe or Baseline utility promotion."
     }
   }
 }
