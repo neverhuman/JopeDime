@@ -552,13 +552,13 @@ fn seeded_composed_expression_recipes_match_rust_python_and_evaluator_bits() {
 #[test]
 fn seeded_stage_parameter_recipes_match_three_languages_and_evaluator_bits() {
     let programs = [
-        "(pipe X (quantile_bins bins=2) (ridge alpha=0.1))",
+        "(pipe X (quantile_bins bins=2) (ridge lambda_frac=0.1))",
         "(pipe X (quantile_bins bins=16 append=true) (elasticnet alpha=0.02 l1_ratio=0.25 sweeps=17))",
-        "(pipe X (cheb degree=1) (ridge alpha=0.03))",
-        "(pipe X (cheb degree=6 append=true) (ridge alpha=2))",
-        "(pipe X (step t=-0.5) (ridge alpha=0.2))",
+        "(pipe X (cheb degree=1) (ridge lambda_frac=0.03))",
+        "(pipe X (cheb degree=6 append=true) (ridge lambda_frac=2))",
+        "(pipe X (step t=-0.5) (ridge lambda_frac=0.2))",
         "(pipe X (step t=0.75 append=true) (elasticnet alpha=0.03 l1_ratio=0.75 sweeps=23))",
-        "(pipe X (pair_prod topk=2) (ridge alpha=0.04))",
+        "(pipe X (pair_prod topk=2) (ridge lambda_frac=0.04))",
         "(pipe X (pair_prod topk=4 append=true) (quantile_bins bins=3) (elasticnet alpha=0.03 l1_ratio=0.5 sweeps=19))",
     ];
     let scratch = tempfile::tempdir().unwrap();

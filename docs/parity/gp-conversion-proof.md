@@ -58,12 +58,12 @@ examples also execute emitted Rust/Python against the evaluator; explicit nested
 retains its exact paired and C++17 refusal. `map`/`derive` and target forms occur among the 19
 executed direct-wire programs, with C++17 refusal where declared.
 
-## Opt-in C++17 expression training recipes
+## Parameterized default training recipes
 
 `seeded_stage_parameter_recipes_match_three_languages_and_evaluator_bits` in
 `conversion_wire_matrix.rs` extends the default recipe proof with eight parameterized
 pipelines across two bounded seeds. It varies quantile bin counts, Chebyshev degree,
-step thresholds, pair-product column budgets, append/composition behavior, Ridge alpha,
+step thresholds, pair-product column budgets, append/composition behavior, Ridge penalty fraction,
 and ElasticNet alpha, mixing ratio and sweep count. Each tree passes canonical and
 typed-codec round-trips before fitting on 64 training rows and predicting 16 held-out rows.
 The 16 samples match all 256 evaluator prediction bits in each generated Rust, Python
@@ -71,6 +71,8 @@ and default C++17 recipe. Inputs include signed zero, a subnormal and exact step
 values. C++ uses g++ C++17 O2 with contraction and fast math disabled. This bounded
 parameter corpus adds no operator admission, runtime change, tolerance or allowlist entry;
 it does not establish every parameter combination or the remaining ordered-state routes.
+
+## Opt-in C++17 expression training recipes
 
 `feat_math::kernel::expression_recipe::emit_cpp17` and `jope emit --lang cpp17-recipe-v2`
 emit profile `feat-math.cpp17-expression-recipe.v2`. The generated numeric C ABI fits its own
