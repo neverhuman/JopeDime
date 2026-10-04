@@ -18,6 +18,7 @@ pub mod scalar_execution;
 pub mod scalar_program;
 pub mod scope;
 pub mod search;
+pub mod stable_exponential;
 pub mod telemetry;
 pub mod width;
 pub mod wire_v2;
