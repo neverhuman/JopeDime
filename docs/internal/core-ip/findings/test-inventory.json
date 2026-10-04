@@ -2173,6 +2173,13 @@
         "gp",
         "export"
       ]
+    },
+    "target:feat-math/test/linear_scaling_recipes": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "export"
+      ]
     }
   },
   "baseline_triage": [

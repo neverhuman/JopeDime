@@ -7890,6 +7890,22 @@
       ],
       "dispositions": [],
       "scope": "B09 opt-in scalar training-fold calibration, exact constant-feature fallback, typed finite/shape refusal, versioned stored slope/intercept and typed raw tree, deterministic width/poison replay, and Rust/Python/C++17 explicit fitted-library winner bit parity. No VarPro, legacy scoring/default changes, shipping selection/CLI integration, full train-and-predict recipe or Baseline utility promotion."
+    },
+    "target:feat-math/test/linear_scaling_recipes": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/feat-math/tests/linear_scaling_recipes.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "B09 local stacked training-library recipe continuation: explicit train-fold fitting, exact persisted variant2 coefficient and expression words, ordered native/Rust/Python/C++17 fit/MSE/inference bit parity across11 corpora, strict input and malformed-state refusal, hard-error clip recipe admission refusal. No standalone CSV wrapper, arbitrary winner loader, shipping search/CLI integration, VarPro or Baseline utility promotion; parked predecessor #178 required before landing."
     }
   }
 }

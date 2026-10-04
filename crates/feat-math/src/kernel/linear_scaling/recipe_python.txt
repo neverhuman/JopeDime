@@ -1,0 +1,86 @@
+# Explicit calibrated training library, version 2.
+import struct as _scaling_struct
+_SCALING_TEMPLATE = bytes([@BYTES@])
+
+def _scaling_rows(rows):
+    if any(len(row) != @WIDTH@ for row in rows):
+        raise ValueError('linear-scaling row width')
+    if any(not math.isfinite(v) for row in rows for v in row):
+        raise ValueError('linear-scaling input')
+
+def _scaling_sum(values):
+    total, residual = 0.0, 0.0
+    for value in values:
+        nxt = total + value
+        residual += ((total - nxt) + value) if abs(total) >= abs(value) else ((value - nxt) + total)
+        total = nxt
+    return total + residual
+
+def _scaling_mean(values):
+    if all(v == values[0] for v in values):
+        return values[0]
+    total = _scaling_sum(values)
+    if math.isfinite(total):
+        return total / len(values)
+    scale = max(abs(v) for v in values)
+    return 0.0 if scale == 0.0 else (_scaling_sum(v / scale for v in values) / len(values)) * scale
+
+class ScaledModel:
+    __slots__ = ('_coefficients',)
+    def __init__(self, coefficients):
+        if len(coefficients) != 2 or any(not math.isfinite(v) for v in coefficients):
+            raise ValueError('linear-scaling coefficients')
+        self._coefficients = tuple(coefficients)
+    def coefficients(self):
+        return self._coefficients
+    def predict(self, rows):
+        _scaling_rows(rows)
+        a, b = self._coefficients
+        out = [a * expression_value(row) + b for row in rows]
+        if any(not math.isfinite(v) for v in out):
+            raise ValueError('linear-scaled prediction')
+        return out
+    def to_bytes(self):
+        out = bytearray(_SCALING_TEMPLATE)
+        out[26:42] = _scaling_struct.pack('<dd', *self._coefficients)
+        return bytes(out)
+    @classmethod
+    def from_bytes(cls, data):
+        if len(data) != len(_SCALING_TEMPLATE) or data[:26] != _SCALING_TEMPLATE[:26] or data[42:] != _SCALING_TEMPLATE[42:]:
+            raise ValueError('linear-scaling container')
+        return cls(_scaling_struct.unpack('<dd', data[26:42]))
+
+def scaled_train(rows, targets):
+    if not rows or len(rows) != len(targets):
+        raise ValueError('linear-scaling needs aligned nonempty training data')
+    if any(not math.isfinite(v) for v in targets):
+        raise ValueError('linear-scaling target')
+    _scaling_rows(rows)
+    values = [expression_value(row) for row in rows]
+    fm, ym = _scaling_mean(values), _scaling_mean(targets)
+    a, b = 0.0, ym
+    if not all(v == values[0] for v in values):
+        fs, ys = max(abs(v) for v in values), max(abs(v) for v in targets)
+        if ys == 0.0:
+            b = 0.0
+        else:
+            df = [v / fs - fm / fs for v in values]
+            dy = [v / ys - ym / ys for v in targets]
+            variance = _scaling_sum(d * d for d in df)
+            covariance = _scaling_sum(f * y for f, y in zip(df, dy))
+            if variance <= 0.0 or not math.isfinite(variance):
+                raise ValueError('linear-scaling variance not representable')
+            a = ((covariance / variance) * ys) / fs
+            b = ym - a * fm
+    model = ScaledModel((a, b))
+    terms = []
+    for f, y in zip(values, targets):
+        prediction = a * f + b
+        if not math.isfinite(prediction):
+            raise ValueError('linear-scaled prediction')
+        difference = prediction - y
+        terms.append(difference * difference / len(values))
+    mse = _scaling_sum(terms)
+    if not math.isfinite(mse) or mse < 0.0:
+        raise ValueError('linear-scaling training loss')
+    return model, mse
