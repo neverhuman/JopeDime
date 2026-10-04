@@ -273,6 +273,7 @@ fn stored_winners_export_three_language_bits_without_refitting_labels() {
         "c0+0.5",
         "c0*c0",
         "sin(c0)",
+        "step(c0,c1)",
         "row_sum",
         "2.0",
         "clip(c0,c1*c1,100.0)",

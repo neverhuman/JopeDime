@@ -33,6 +33,65 @@ fn calibration_extraction_preserves_existing_winner_words() {
     assert_eq!(fit.training_mse.to_bits(), 0.0_f64.to_bits());
 }
 
+#[test]
+fn translated_feature_families_preserve_exact_affine_coefficients() {
+    let expression = MathExpr::parse("c0").unwrap();
+    for anchor in [
+        -1e12_f64, -1e6, -100.0, -3.0, -1.0, 1.0, 3.0, 10.0, 100.0, 1e6, 1e12,
+    ] {
+        let magnitude = anchor.abs();
+        let ulp = f64::from_bits(magnitude.to_bits() + 1) - magnitude;
+        let slope = 1.0 / ulp;
+        let intercept = -slope * anchor;
+        let direction = if anchor > 0.0 { -1.0 } else { 1.0 };
+        for width in [1, 2, 7, 32, 512] {
+            for length in 2..=32 {
+                let rows = (0..length)
+                    .map(|i| {
+                        let mut row = vec![0.0; width];
+                        row[0] = anchor + direction * f64::from(i) * ulp;
+                        row
+                    })
+                    .collect::<Vec<_>>();
+                let labels = (0..length)
+                    .map(|i| direction * f64::from(i))
+                    .collect::<Vec<_>>();
+                let fit = LinearScaledWinner::fit_training(&expression, &rows, &labels).unwrap();
+                assert_eq!(
+                    fit.winner.coefficients(),
+                    [slope, intercept],
+                    "anchor={anchor}, width={width}, length={length}"
+                );
+                assert_eq!(fit.training_mse, 0.0);
+                let mut outside = vec![0.0; width];
+                outside[0] = anchor + direction * 32.0 * ulp;
+                assert_eq!(fit.winner.predict(&[outside]).unwrap(), [direction * 32.0]);
+            }
+        }
+    }
+}
+
+#[test]
+fn representable_subnormal_training_loss_is_not_a_perfect_fit() {
+    let expression = MathExpr::parse("2.0").unwrap();
+    for length in [2, 100, 8192] {
+        let labels = (0..length)
+            .map(|i| if i & 1 == 0 { -1e-161 } else { 1e-161 })
+            .collect::<Vec<_>>();
+        let fit = LinearScaledWinner::fit_training(&expression, &vec![vec![1.0]; length], &labels)
+            .unwrap();
+        assert_eq!(fit.winner.coefficients(), [0.0, 0.0]);
+        // Independent exact-rational rounding of the input words: 20 minimum subnormals.
+        assert_eq!(fit.training_mse.to_bits(), 0x14, "length={length}");
+    }
+    assert!(LinearScaledWinner::fit_training(
+        &expression,
+        &[vec![1.0], vec![1.0]],
+        &[-1e-300, 1e-300]
+    )
+    .is_err());
+}
+
 fn run(command: &mut Command) -> String {
     let output = command.output().unwrap();
     assert!(
@@ -114,7 +173,7 @@ fn main() {{
     for v in restored.predict(&test).unwrap() {{ println!("{{:016x}}",v.to_bits()); }}
     assert_eq!(bytes,restored.to_bytes());
     assert!(restored.predict(&[]).unwrap().is_empty());
-    for (rows,y) in [(vec![],vec![]),(vec![vec![]],vec![1.0]),(train.clone(),vec![]),(train.clone(),vec![f64::NAN;train.len()]),(vec![vec![f64::INFINITY;{width}]],vec![1.0]),(vec![vec![1.0;{width}];2],vec![-f64::MAX,f64::MAX])] {{ assert!(recipe::scaled_train(&rows,&y).is_err()); }}
+    for (rows,y) in [(vec![],vec![]),(vec![vec![]],vec![1.0]),(train.clone(),vec![]),(train.clone(),vec![f64::NAN;train.len()]),(vec![vec![f64::INFINITY;{width}]],vec![1.0]),(vec![vec![1.0;{width}];2],vec![-f64::MAX,f64::MAX]),(vec![vec![1.0;{width}];2],vec![-1e-300,1e-300])] {{ assert!(recipe::scaled_train(&rows,&y).is_err()); }}
     for bad in [vec![vec![]],vec![vec![f64::NAN;{width}]]] {{ assert!(restored.predict(&bad).is_err()); }}
     for length in 0..bytes.len() {{ assert!(recipe::ScaledModel::from_bytes(&bytes[..length]).is_err()); }}
     let mut bad=bytes.clone(); bad.push(0); assert!(recipe::ScaledModel::from_bytes(&bad).is_err());
@@ -145,7 +204,7 @@ restored=ScaledModel.from_bytes(data)
 assert data==restored.to_bytes()
 for v in restored.predict(test): print(pack('>d',v).hex())
 assert data==restored.to_bytes() and restored.predict([])==[]
-for rows,y in [([],[]),([[]],[1.0]),(train,[]),(train,[float('nan')]*len(train)),([[float('inf')]*{width}],[1.0]),([[1.0]*{width}]*2,[-float.fromhex('0x1.fffffffffffffp1023'),float.fromhex('0x1.fffffffffffffp1023')])]:
+for rows,y in [([],[]),([[]],[1.0]),(train,[]),(train,[float('nan')]*len(train)),([[float('inf')]*{width}],[1.0]),([[1.0]*{width}]*2,[-float.fromhex('0x1.fffffffffffffp1023'),float.fromhex('0x1.fffffffffffffp1023')]),([[1.0]*{width}]*2,[-1e-300,1e-300])]:
     try: scaled_train(rows,y)
     except ValueError: pass
     else: raise AssertionError('invalid training admitted')
@@ -186,6 +245,7 @@ int main() {{
     refuses([&]{{scaled_train(train,std::vector<double>(train.size(),std::numeric_limits<double>::quiet_NaN()));}});
     refuses([&]{{scaled_train({{std::vector<double>({width},std::numeric_limits<double>::infinity())}},{{1.0}});}});
     refuses([&]{{scaled_train(std::vector<std::vector<double>>(2,std::vector<double>({width},1.0)),{{-std::numeric_limits<double>::max(),std::numeric_limits<double>::max()}});}});
+    refuses([&]{{scaled_train(std::vector<std::vector<double>>(2,std::vector<double>({width},1.0)),{{-1e-300,1e-300}});}});
     refuses([&]{{restored.predict({{{{}}}});}}); refuses([&]{{restored.predict({{std::vector<double>({width},std::numeric_limits<double>::quiet_NaN())}});}});
     for(std::size_t i=0;i<bytes.size();++i)refuses([&]{{ScaledModel::from_bytes(std::vector<std::uint8_t>(bytes.begin(),bytes.begin()+i));}});
     auto bad=bytes;bad.push_back(0);refuses([&]{{ScaledModel::from_bytes(bad);}});
@@ -235,6 +295,7 @@ fn independently_trained_recipes_match_winner_envelopes_loss_and_prediction_bits
         "row_sum",
         "2.0",
         "min(c0,c1)",
+        "step(c0,c1)",
     ] {
         let expr = MathExpr::parse(source).unwrap();
         let labels = train
@@ -265,6 +326,22 @@ fn independently_trained_recipes_match_winner_envelopes_loss_and_prediction_bits
         "2.0",
         vec![vec![1.0]; 3],
         vec![f64::MAX; 3],
+        vec![vec![2.0]],
+    ));
+    let anchor = 1e12_f64;
+    let ulp = f64::from_bits(anchor.to_bits() + 1) - anchor;
+    cases.push((
+        "c0",
+        vec![vec![anchor - 2.0 * ulp], vec![anchor - ulp], vec![anchor]],
+        vec![-2.0, -1.0, 0.0],
+        vec![vec![anchor - 4.0 * ulp]],
+    ));
+    cases.push((
+        "2.0",
+        vec![vec![1.0]; 100],
+        (0..100)
+            .map(|i| if i & 1 == 0 { -1e-161 } else { 1e-161 })
+            .collect(),
         vec![vec![2.0]],
     ));
     for (i, (source, train, labels, test)) in cases.into_iter().enumerate() {

@@ -35,6 +35,7 @@ pub fn emit_training_recipe(
     let super::Program::LegacyV1(genome) = template.raw_program()?;
     let opts = EmitOptions::default();
     let raw = emit(&genome, &opts).map_err(|e| Error::Unsupported(e.to_string()))?;
+    let raw_rust = super::emit::rust_scalar_library(&raw.rust)?;
     let cpp = super::super::expression_recipe::emit_cpp17(&genome, &opts)?;
     let bytes = template
         .to_bytes()
@@ -51,7 +52,7 @@ pub fn emit_training_recipe(
     };
     let rust = format!(
         "{}\nmod calibration {{\n{}\n}}\n{}",
-        raw.rust,
+        raw_rust,
         include_str!("calibration.rs"),
         render(include_str!("recipe_rust.txt"))
     );

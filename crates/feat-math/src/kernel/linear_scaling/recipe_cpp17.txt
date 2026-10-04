@@ -27,6 +27,27 @@ static double scaling_mean(const std::vector<double>& values) {
     for (double v : values) normalized.push_back(v / scale);
     return (scaling_sum(normalized) / static_cast<double>(values.size())) * scale;
 }
+static double scaling_rescale(double value, int exponent) {
+    while (exponent > 512) { value *= std::ldexp(1.0,512); exponent -= 512; }
+    while (exponent < -512) { value *= std::ldexp(1.0,-512); exponent += 512; }
+    return value * std::ldexp(1.0,exponent);
+}
+struct ScalingCentered { double anchor; int exponent; double mean; std::vector<double> differences; };
+static ScalingCentered scaling_centered(const std::vector<double>& values) {
+    double anchor=values.front(), magnitude=0.0;
+    std::vector<double> offsets;
+    for (double v:values) offsets.push_back(v-anchor);
+    if (std::any_of(offsets.begin(),offsets.end(),[](double v){return !std::isfinite(v);})) { anchor=0.0; offsets=values; }
+    for (double v:offsets) magnitude=std::max(magnitude,std::fabs(v));
+    int exponent=0;
+    if (magnitude!=0.0) { std::frexp(magnitude,&exponent); --exponent; }
+    const double scale=std::ldexp(1.0,exponent);
+    std::vector<double> normalized;
+    for (double v:offsets) normalized.push_back(v/scale);
+    const double mean=scaling_sum(normalized)/static_cast<double>(values.size());
+    for (double& v:normalized) v-=mean;
+    return {anchor,exponent,mean,normalized};
+}
 class ScaledModel {
     std::array<double,2> coefficients_;
 public:
@@ -70,23 +91,16 @@ static std::pair<ScaledModel,double> scaled_train(const std::vector<std::vector<
     scaling_rows(rows);
     std::vector<double> values;
     for (const auto& row : rows) values.push_back(expression_value(row));
-    const double fm=scaling_mean(values), ym=scaling_mean(targets);
-    double a=0.0, b=ym;
-    if (!std::all_of(values.begin(), values.end(), [&](double v) { return v==values.front(); })) {
-        double fs=0.0, ys=0.0;
-        for (double v : values) fs=std::max(fs,std::fabs(v));
-        for (double v : targets) ys=std::max(ys,std::fabs(v));
-        if (ys==0.0) b=0.0;
-        else {
-            std::vector<double> df, dy, square, product;
-            for (double v : values) df.push_back(v/fs-fm/fs);
-            for (double v : targets) dy.push_back(v/ys-ym/ys);
-            for (std::size_t i=0; i<values.size(); ++i) { square.push_back(df[i]*df[i]); product.push_back(df[i]*dy[i]); }
-            const double variance=scaling_sum(square), covariance=scaling_sum(product);
-            if (variance<=0.0 || !std::isfinite(variance)) throw std::invalid_argument("linear-scaling variance not representable");
-            a=((covariance/variance)*ys)/fs;
-            b=ym-a*fm;
-        }
+    double a=0.0, b=scaling_mean(targets);
+    if (!std::all_of(values.begin(), values.end(), [&](double v) { return v==values.front(); }) && !std::all_of(targets.begin(),targets.end(),[&](double v){return v==targets.front();})) {
+        const auto f=scaling_centered(values), y=scaling_centered(targets);
+        std::vector<double> square,product;
+        for (std::size_t i=0;i<values.size();++i) { square.push_back(f.differences[i]*f.differences[i]); product.push_back(f.differences[i]*y.differences[i]); }
+        const double variance=scaling_sum(square), covariance=scaling_sum(product);
+        if (variance<=0.0 || !std::isfinite(variance)) throw std::invalid_argument("linear-scaling variance not representable");
+        a=scaling_rescale(covariance/variance,y.exponent-f.exponent);
+        if (a==0.0 && covariance!=0.0) throw std::invalid_argument("linear-scaling coefficients");
+        b=(y.anchor-a*f.anchor)+(scaling_rescale(y.mean,y.exponent)-a*scaling_rescale(f.mean,f.exponent));
     }
     ScaledModel model({a,b});
     std::vector<double> terms;
@@ -94,9 +108,17 @@ static std::pair<ScaledModel,double> scaled_train(const std::vector<std::vector<
         const double prediction=a*values[i]+b;
         if (!std::isfinite(prediction)) throw std::invalid_argument("linear-scaled prediction");
         const double difference=prediction-targets[i];
-        terms.push_back(difference*difference/static_cast<double>(values.size()));
+        if (!std::isfinite(difference)) throw std::invalid_argument("linear-scaling training loss");
+        terms.push_back(difference);
     }
-    const double mse=scaling_sum(terms);
-    if (!std::isfinite(mse) || mse<0.0) throw std::invalid_argument("linear-scaling training loss");
+    double magnitude=0.0;
+    for (double v:terms) magnitude=std::max(magnitude,std::fabs(v));
+    if (magnitude==0.0) return {model,0.0};
+    int exponent; std::frexp(magnitude,&exponent); --exponent;
+    const double scale=std::ldexp(1.0,exponent);
+    for (double& v:terms) { v/=scale; v*=v; }
+    const double normalized=scaling_sum(terms)/static_cast<double>(values.size());
+    const double mse=scaling_rescale(normalized,2*exponent);
+    if (!std::isfinite(mse) || mse<0.0 || (normalized>0.0 && mse==0.0)) throw std::invalid_argument("linear-scaling training loss");
     return {model,mse};
 }

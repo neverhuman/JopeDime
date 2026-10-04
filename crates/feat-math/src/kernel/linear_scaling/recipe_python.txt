@@ -25,6 +25,27 @@ def _scaling_mean(values):
     scale = max(abs(v) for v in values)
     return 0.0 if scale == 0.0 else (_scaling_sum(v / scale for v in values) / len(values)) * scale
 
+def _scaling_rescale(value, exponent):
+    while exponent > 512:
+        value *= math.ldexp(1.0, 512)
+        exponent -= 512
+    while exponent < -512:
+        value *= math.ldexp(1.0, -512)
+        exponent += 512
+    return value * math.ldexp(1.0, exponent)
+
+def _scaling_centered(values):
+    anchor = values[0]
+    offsets = [v - anchor for v in values]
+    if any(not math.isfinite(v) for v in offsets):
+        anchor, offsets = 0.0, list(values)
+    magnitude = max(abs(v) for v in offsets)
+    exponent = math.frexp(magnitude)[1] - 1 if magnitude else 0
+    scale = math.ldexp(1.0, exponent)
+    normalized = [v / scale for v in offsets]
+    mean = _scaling_sum(normalized) / len(values)
+    return anchor, exponent, mean, [v - mean for v in normalized]
+
 class ScaledModel:
     __slots__ = ('_coefficients',)
     def __init__(self, coefficients):
@@ -57,21 +78,18 @@ def scaled_train(rows, targets):
         raise ValueError('linear-scaling target')
     _scaling_rows(rows)
     values = [expression_value(row) for row in rows]
-    fm, ym = _scaling_mean(values), _scaling_mean(targets)
-    a, b = 0.0, ym
-    if not all(v == values[0] for v in values):
-        fs, ys = max(abs(v) for v in values), max(abs(v) for v in targets)
-        if ys == 0.0:
-            b = 0.0
-        else:
-            df = [v / fs - fm / fs for v in values]
-            dy = [v / ys - ym / ys for v in targets]
-            variance = _scaling_sum(d * d for d in df)
-            covariance = _scaling_sum(f * y for f, y in zip(df, dy))
-            if variance <= 0.0 or not math.isfinite(variance):
-                raise ValueError('linear-scaling variance not representable')
-            a = ((covariance / variance) * ys) / fs
-            b = ym - a * fm
+    a, b = 0.0, _scaling_mean(targets)
+    if not all(v == values[0] for v in values) and not all(v == targets[0] for v in targets):
+        fa, fe, fm, df = _scaling_centered(values)
+        ya, ye, ym, dy = _scaling_centered(targets)
+        variance = _scaling_sum(d * d for d in df)
+        covariance = _scaling_sum(f * y for f, y in zip(df, dy))
+        if variance <= 0.0 or not math.isfinite(variance):
+            raise ValueError('linear-scaling variance not representable')
+        a = _scaling_rescale(covariance / variance, ye - fe)
+        if a == 0.0 and covariance != 0.0:
+            raise ValueError('linear-scaling coefficients')
+        b = (ya - a * fa) + (_scaling_rescale(ym, ye) - a * _scaling_rescale(fm, fe))
     model = ScaledModel((a, b))
     terms = []
     for f, y in zip(values, targets):
@@ -79,8 +97,16 @@ def scaled_train(rows, targets):
         if not math.isfinite(prediction):
             raise ValueError('linear-scaled prediction')
         difference = prediction - y
-        terms.append(difference * difference / len(values))
-    mse = _scaling_sum(terms)
-    if not math.isfinite(mse) or mse < 0.0:
+        if not math.isfinite(difference):
+            raise ValueError('linear-scaling training loss')
+        terms.append(difference)
+    magnitude = max(abs(v) for v in terms)
+    if magnitude == 0.0:
+        return model, 0.0
+    exponent = math.frexp(magnitude)[1] - 1
+    scale = math.ldexp(1.0, exponent)
+    normalized = _scaling_sum((d / scale) * (d / scale) for d in terms) / len(values)
+    mse = _scaling_rescale(normalized, 2 * exponent)
+    if not math.isfinite(mse) or mse < 0.0 or (normalized > 0.0 and mse == 0.0):
         raise ValueError('linear-scaling training loss')
     return model, mse
