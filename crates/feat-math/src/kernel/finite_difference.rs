@@ -1,6 +1,7 @@
 //! Opt-in causal integer backward differences, version 2 / wire 59.
-//! Standalone kernels and bounded group history do not admit complete recipes,
-//! models, fitted predictors or generation. The legacy registry stays frozen.
+//! Guarded kernels, bounded group history and explicit ordered program/model
+//! continuation. Recipe export and generation require separate admission.
+//! The legacy registry stays frozen.
 use super::ordered_axis::{
     Axis, CausalCursor, Causality, FitScope, FoldBoundary, GroupKey, OrderedInputIdentity,
     RowAdmission, StageAxis, TaskMode,
@@ -10,7 +11,12 @@ use crate::math_expr::FaultSet;
 use std::collections::{BTreeMap, VecDeque};
 
 mod emit;
+mod model;
+mod program;
+mod state_codec;
 pub use emit::{emit_helpers, DifferenceLanguage};
+pub use model::{DifferenceModel, DifferencePrediction};
+pub use program::{DifferenceProgram, OrderedRow};
 
 pub const KERNEL_ID: &str = "feat-math.causal-integer-difference.v2";
 /// Stage-local bit 17: insufficient history. This is NOT a scalar FaultSet
@@ -34,6 +40,12 @@ pub struct DifferenceOutput {
 }
 
 impl DifferenceConfig {
+    pub fn order(self) -> u8 {
+        self.order
+    }
+    pub fn step(self) -> f64 {
+        self.step
+    }
     pub fn new(version: u8, wire: u16, order: u8, step: f64) -> Result<Self> {
         if version != 2 || wire != 59 {
             return Err(Error::Unsupported(
@@ -145,6 +157,7 @@ pub struct DifferenceObservation {
 /// One declared cut, with at most m previous rows per admitted group. A new
 /// instance resets all groups; train-to-held-out carry never resets the cut.
 /// No labels, learned parameters or caller-supplied admission records enter it.
+#[derive(Clone)]
 pub struct DifferenceState {
     config: DifferenceConfig,
     width: usize,

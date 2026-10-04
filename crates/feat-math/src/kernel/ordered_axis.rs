@@ -9,6 +9,8 @@ use super::{Error, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
+pub(crate) mod codec;
+
 pub const ORDERED_AXIS_VERSION: u16 = 1;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -218,7 +220,7 @@ pub struct RowAdmission {
     pub prior_train_in_group: usize,
 }
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 struct GroupProgress {
     last_timestamp: Option<f64>,
     prior_rows: usize,
@@ -229,8 +231,10 @@ struct GroupProgress {
 /// state with that row; held-out observations may then carry forward causally,
 /// but only `may_fit` rows may update fitted parameters. A new group begins
 /// with empty state and no state crosses from a different cut.
+#[derive(Clone)]
 pub struct CausalCursor {
     stage: StageAxis,
+    input: OrderedInputIdentity,
     fold: FoldBoundary,
     next_ordinal: usize,
     groups: BTreeMap<GroupKey, GroupProgress>,
@@ -281,6 +285,7 @@ impl CausalCursor {
         }
         Ok(Self {
             stage,
+            input: input.clone(),
             fold,
             next_ordinal: 0,
             groups: BTreeMap::new(),
