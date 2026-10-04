@@ -229,7 +229,7 @@ class PublicationStatusTests(unittest.TestCase):
         self.assertNotIn('timeout-minutes:', action)
         for number in range(1, 4):
             self.assertIn('${{ inputs.name }}-pub-'+str(number), action)
-        self.assertEqual(3, action.count('retention-days: 30'))
+        self.assertEqual(3, action.count('retention-days: 7'))
         self.assertEqual(3, action.count('if-no-files-found: error'))
         self.assertIn('bash deploy/ci/publication-status.sh "$FIRST" "$SECOND" "$THIRD"', action)
 

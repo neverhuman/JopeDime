@@ -20,7 +20,7 @@ runs:
         path: ${{ inputs.path }}
         if-no-files-found: error
         include-hidden-files: true
-        retention-days: 30
+        retention-days: 7
     - name: Publication attempt 2
       id: second
       if: ${{ !cancelled() && steps.first.outcome == 'failure' }}
@@ -31,7 +31,7 @@ runs:
         path: ${{ inputs.path }}
         if-no-files-found: error
         include-hidden-files: true
-        retention-days: 30
+        retention-days: 7
     - name: Publication attempt 3
       id: third
       if: ${{ !cancelled() && steps.first.outcome == 'failure' && steps.second.outcome == 'failure' }}
@@ -42,7 +42,7 @@ runs:
         path: ${{ inputs.path }}
         if-no-files-found: error
         include-hidden-files: true
-        retention-days: 30
+        retention-days: 7
     - name: Require successful publication
       if: always()
       shell: bash
