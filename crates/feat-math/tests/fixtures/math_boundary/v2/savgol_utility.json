@@ -1,0 +1,40 @@
+{
+  "schema": "feat-math.savgol-utility-fixtures.v2",
+  "scope": "synthetic FeatureWithinRow derivative utility; not campaign promotion",
+  "width": 17,
+  "rows_per_seed": 64,
+  "seeds": [
+    11,
+    29,
+    47,
+    71,
+    101
+  ],
+  "tasks": [
+    {
+      "id": "polynomial-degree-1",
+      "degree": 1
+    },
+    {
+      "id": "polynomial-degree-2",
+      "degree": 2
+    },
+    {
+      "id": "polynomial-degree-3",
+      "degree": 3
+    },
+    {
+      "id": "polynomial-degree-4",
+      "degree": 4
+    },
+    {
+      "id": "polynomial-degree-5",
+      "degree": 5
+    },
+    {
+      "id": "polynomial-degree-6",
+      "degree": 6
+    }
+  ],
+  "reference": "centered two-neighbor first derivative; same row/evaluation count"
+}

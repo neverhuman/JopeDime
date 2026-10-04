@@ -176,6 +176,13 @@ pub enum PlannedOp {
     Spline {
         knots: usize,
     },
+    // B12: constructed only by the explicit v2 row-vector planner.
+    RowVectorV2 {
+        state: crate::kernel::row_vector::FittedStage,
+    },
+    RowVectorInputV2 {
+        width: usize,
+    },
 }
 
 #[derive(Clone, Debug)]
@@ -823,6 +830,8 @@ fn plan_head_stage(stage: &Stage, problems: &mut Vec<String>) -> Option<PlannedH
 /// Stable per-kind key: also the base of the emitted function names.
 pub fn op_fn_name(op: &PlannedOp) -> &'static str {
     match op {
+        // B12: version-two FeatureWithinRow stage.
+        PlannedOp::RowVectorV2 { .. } | PlannedOp::RowVectorInputV2 { .. } => "row_vector_v2",
         PlannedOp::Standardize => "standard_scaler",
         PlannedOp::RobustScale => "robust_scaler",
         PlannedOp::Rank => "mid_rank_transform",
@@ -865,6 +874,8 @@ pub fn op_fn_name(op: &PlannedOp) -> &'static str {
 /// Rust fitted-state struct name (None for stateless transforms).
 pub fn op_struct_name(op: &PlannedOp) -> Option<&'static str> {
     match op {
+        // B12: version-two FeatureWithinRow stage.
+        PlannedOp::RowVectorV2 { .. } | PlannedOp::RowVectorInputV2 { .. } => None,
         PlannedOp::Standardize => Some("StandardScaler"),
         PlannedOp::RobustScale => Some("RobustScaler"),
         PlannedOp::Rank => Some("MidRankTransform"),
@@ -908,6 +919,8 @@ pub fn op_struct_name(op: &PlannedOp) -> Option<&'static str> {
 /// One-sentence math description with a literature anchor, used in docs.
 pub fn op_doc(op: &PlannedOp) -> String {
     match op {
+        // B12: version-two FeatureWithinRow stage.
+        PlannedOp::RowVectorV2 { .. } | PlannedOp::RowVectorInputV2 { .. } => "applies a width-bound feature-position FIR with frozen coefficient bits; clipped boundary windows reduce polynomial degree.".into(),
         PlannedOp::Standardize => "centers each column by its training mean and divides by the \
             standard deviation (1/n convention, floored at 1e-9), clamping the score to [-20, 20]."
             .to_string(),
@@ -1105,6 +1118,10 @@ pub fn op_doc(op: &PlannedOp) -> String {
 /// Short phrase for titles.
 pub fn op_short(op: &PlannedOp) -> &'static str {
     match op {
+        // B12: version-two FeatureWithinRow stage.
+        PlannedOp::RowVectorV2 { .. } | PlannedOp::RowVectorInputV2 { .. } => {
+            "feature-position filter"
+        }
         PlannedOp::Standardize => "standard scaling",
         PlannedOp::RobustScale => "robust scaling",
         PlannedOp::Rank => "mid-rank transform",
@@ -1549,6 +1566,8 @@ fn add_helper(set: &mut BTreeSet<Helper>, h: Helper) {
 
 fn op_helpers(op: &PlannedOp) -> &'static [Helper] {
     match op {
+        // B12: version-two FeatureWithinRow stage.
+        PlannedOp::RowVectorV2 { .. } | PlannedOp::RowVectorInputV2 { .. } => &[],
         PlannedOp::Standardize => &[Helper::StdFit, Helper::Clamp],
         PlannedOp::RobustScale => &[Helper::SortedColumn, Helper::Quantile],
         PlannedOp::Rank => &[Helper::SortedColumn, Helper::MidRank],

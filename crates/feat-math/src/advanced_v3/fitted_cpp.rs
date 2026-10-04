@@ -1892,6 +1892,14 @@ extern "C" int jope_fitted_predict(
     )
 }
 
+/// B12: export the explicit v2 FeatureWithinRow model through its fitted route.
+/// Historical BoundModel artifacts retain their frozen emission bytes.
+pub fn emit_row_vector_cpp17(
+    model: &crate::kernel::row_vector::Model,
+) -> crate::kernel::Result<String> {
+    crate::kernel::row_vector::emit::fitted_cpp17(model)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

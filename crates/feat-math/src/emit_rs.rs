@@ -1162,6 +1162,10 @@ fn doc_comment(text: &str) -> String {
 fn op_src(op: &PlannedOp) -> String {
     let doc = doc_comment(&format!("This transform {}", crate::spec::op_doc(op)));
     let body: &str = match op {
+        // B12: helper bodies remain feature-specific.
+        PlannedOp::RowVectorV2 { .. } | PlannedOp::RowVectorInputV2 { .. } => {
+            crate::kernel::row_vector::emit::helper(crate::kernel::row_vector::emit::Language::Rust)
+        }
         PlannedOp::Standardize => {
             r#"struct StandardScaler {
     means: Vec<f64>,
@@ -5181,6 +5185,17 @@ fn rs_kernel_terms(spec: &crate::gpr::KernelSpec) -> String {
 /// `n` is the 1-based stage index (used by the per-stage formula functions).
 fn op_calls(op: &PlannedOp, n: usize) -> (Option<String>, String) {
     match op {
+        PlannedOp::RowVectorInputV2 { width } => (
+            None,
+            format!("row_vector_v2_input(&x, {width}, {{append}})"),
+        ),
+        PlannedOp::RowVectorV2 { state } => (
+            None,
+            crate::kernel::row_vector::emit::apply_call(
+                state,
+                crate::kernel::row_vector::emit::Language::Rust,
+            ),
+        ),
         PlannedOp::Standardize => (
             Some("standard_scaler_fit(&x)".into()),
             "standard_scaler_apply({state}, &x, {append})".into(),
@@ -5486,6 +5501,14 @@ fn model_pipeline(
     lines.push("impl Model {".to_string());
     lines.push("    /// Fit every stage in order on the training rows.".to_string());
     lines.push("    fn fit(x: &[Vec<f64>], y: &[f64]) -> Model {".to_string());
+    // B12: preserve the explicit v2 fit contract across native recipes.
+    if stages
+        .iter()
+        .any(|s| matches!(s.op, PlannedOp::RowVectorInputV2 { .. }))
+    {
+        lines.push("        assert!(y.len() == x.len() && y.iter().all(|v| v.is_finite() && v.abs() <= 1e12), \"row-vector training labels\");".to_string());
+    }
+
     lines.push("        if x.is_empty() || y.len() < x.len() {".to_string());
     lines.push("            eprintln!(\"training data is empty or target is short\");".to_string());
     lines.push("            std::process::exit(2);".to_string());

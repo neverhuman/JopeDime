@@ -16,6 +16,7 @@ use std::sync::OnceLock;
 #[serde(rename_all = "snake_case")]
 pub enum Grammar {
     V3,
+    RowVectorV2,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
@@ -1268,6 +1269,15 @@ fn support_label(value: Support) -> &'static str {
     }
 }
 
+/// B12: admission belongs exclusively to the v2 FeatureWithinRow profile.
+/// Baseline/legacy grammar admission and their manifest hashes remain frozen.
+pub fn row_vector_v2_capability(wire: u16) -> Option<ElementCap> {
+    if wire != 58 {
+        return None;
+    }
+    Some(ElementCap { class: Class::Searchable { since: Grammar::RowVectorV2, tier: Tier::Experimental }, fault_classes: READ.union(FaultSet::MAGNITUDE_CLAMPED).union(FaultSet::NONFINITE_SANITIZED), emitters: EmitterSupport { rust_recipe: YES, python_recipe: YES, cpp17_recipe: YES, cpp17_fitted: YES, javascript: NO_JS }, portable_twin: true, notes: "wire58, FeatureWithinRow only, prior<=0.25, deterministic preserve width, shrink boundary, stage-local BOUNDARY_DEGREE bit18; Baseline requires equal-budget promotion" })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1540,6 +1550,8 @@ mod tests {
         use crate::full_rust::{self, OperationKind, ParamDomain};
         use crate::spec::{self, Plan, PlannedHead, PlannedOp};
         let op_name = |op: &PlannedOp| match op {
+            // B12: these plans are absent from the frozen legacy inventory.
+            PlannedOp::RowVectorV2 { .. } | PlannedOp::RowVectorInputV2 { .. } => "feature_row_v2",
             PlannedOp::Standardize => "standardize",
             PlannedOp::RobustScale => "robust_scale",
             PlannedOp::Rank => "rank",

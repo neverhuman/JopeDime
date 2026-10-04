@@ -1480,6 +1480,14 @@ fn row_diff_stats(r: &[f64]) -> Vec<f64> {
     ]
 }
 
+// B12: the v2 executor never changes legacy FittedOp or fit_op admission.
+pub(crate) fn apply_row_vector_v2(
+    stage: &crate::kernel::row_vector::FittedStage,
+    row: &[f64],
+) -> crate::kernel::Result<crate::kernel::savgol::Output> {
+    stage.apply(row)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -963,6 +963,12 @@ fn op_src(op: &PlannedOp) -> String {
     }
     docstring.push_str("    \"\"\"");
     let body: &str = match op {
+        // B12: helper bodies remain feature-specific.
+        PlannedOp::RowVectorV2 { .. } | PlannedOp::RowVectorInputV2 { .. } => {
+            crate::kernel::row_vector::emit::helper(
+                crate::kernel::row_vector::emit::Language::Python,
+            )
+        }
         PlannedOp::Standardize => {
             r#"def standard_scaler_fit(x):
 {DOC}
@@ -3788,6 +3794,16 @@ fn py_kernel_terms(spec: &crate::gpr::KernelSpec) -> String {
 /// per-stage formula functions).
 fn op_calls(op: &PlannedOp, n: usize) -> (Option<String>, String) {
     match op {
+        PlannedOp::RowVectorInputV2 { width } => {
+            (None, format!("row_vector_v2_input(x, {width}, {{append}})"))
+        }
+        PlannedOp::RowVectorV2 { state } => (
+            None,
+            crate::kernel::row_vector::emit::apply_call(
+                state,
+                crate::kernel::row_vector::emit::Language::Python,
+            ),
+        ),
         PlannedOp::Standardize => (
             Some("standard_scaler_fit(x)".into()),
             "standard_scaler_apply({state}, x, {append})".into(),
@@ -4067,6 +4083,14 @@ fn model_class_pipeline(
     lines.push(String::new());
     lines.push("    def fit(self, x_rows: list, y: list) -> \"Model\":".to_string());
     lines.push("        \"\"\"Fit every stage in order on the training rows.\"\"\"".to_string());
+    // B12: preserve the explicit v2 fit contract across native recipes.
+    if stages
+        .iter()
+        .any(|s| matches!(s.op, PlannedOp::RowVectorInputV2 { .. }))
+    {
+        lines.push("        if len(y) != len(x_rows) or any(not math.isfinite(v) or abs(v)>1e12 for v in y): raise ValueError(\"row-vector training labels\")".to_string());
+    }
+
     lines.push("        if not x_rows or len(y) < len(x_rows):".to_string());
     lines.push(
         "            raise SystemExit(\"training data is empty or target is short\")".to_string(),
