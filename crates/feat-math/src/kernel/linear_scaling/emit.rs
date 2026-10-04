@@ -50,8 +50,9 @@ impl LinearScaledWinner {
     }
 }
 
-// Type only the scalar binding in these new version-2 library artifacts. The
-// frozen legacy emitter remains untouched, including its original Step bytes.
+// Type the scalar binding and Step literals in these new version-2 libraries.
+// Method receivers need a concrete type even when the result binding is typed.
+// The frozen legacy emitter remains untouched, including its original bytes.
 pub(super) fn rust_scalar_library(source: &str) -> Result<String> {
     let marker = "fn expression_value(row: &[f64]) -> f64 {";
     let (before, body) = source
@@ -60,5 +61,6 @@ pub(super) fn rust_scalar_library(source: &str) -> Result<String> {
     Ok(format!(
         "{before}{marker}{}",
         body.replacen("    let value = ", "    let value: f64 = ", 1)
+            .replace("{ 1.0 } else { 0.0 }", "{ 1.0_f64 } else { 0.0_f64 }")
     ))
 }

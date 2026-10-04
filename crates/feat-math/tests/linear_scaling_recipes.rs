@@ -296,6 +296,11 @@ fn independently_trained_recipes_match_winner_envelopes_loss_and_prediction_bits
         "2.0",
         "min(c0,c1)",
         "step(c0,c1)",
+        "abs(step(c0,c1))",
+        "min(step(c0,c1),c1)",
+        "step(c0,c1)^2",
+        "c0^step(c0,c1)",
+        "sqrt(-step(c0,c1))",
     ] {
         let expr = MathExpr::parse(source).unwrap();
         let labels = train

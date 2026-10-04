@@ -1,7 +1,7 @@
 # Opt-in scalar calibration and persisted winner
 
 Status: first scalar library slice; full B09 search/serving admission remains held.
-Current combined base: `87b81928deeed097099ed1e0d4d718d0bc26ceaf` (#179 CI retention; #176 included).
+Current combined base: `6df43201750b50ffcee908333e2f90dee8672829` (#181 fixture repair; #179 retention and #176 included).
 Initial standalone proof base: `b036848460f3a2887fcdc6120db97152a3c01490`.
 Profile: `feat-math.scalar-linear-scaling.v2`.
 
@@ -51,9 +51,10 @@ signed coefficient bits, deterministic widths 1..16, poisoned outer folds,
 and stored-winner Rust/Python/C++17 output-bit parity. Seven formula families
 and an extreme-finite winner execute 53 predictions per backend (159 exact
 comparisons in the initial proof); generated functions also refuse malformed/nonfinite inputs.
-Correction-01 includes Step: eight formula families plus the extreme winner
-execute 60 predictions per backend (180 comparisons). Only the new v2 Rust
-library binds its scalar result explicitly as f64; legacy emitted bytes stay frozen.
+Correction-01 includes Step and five nested method-receiver shapes: thirteen
+formula families plus the extreme winner execute 95 predictions per backend
+(285 comparisons). Only the new v2 Rust library types its scalar binding and
+Step literals as f64; legacy emitted bytes stay frozen.
 C++17 uses `-O2 -ffp-contract=off -fno-fast-math`; Rust uses `rustc -O`.
 
 Durable command logs, baseline/after inventories, frozen-input checks and audit:
@@ -73,7 +74,7 @@ in PR #178, after a fresh-main baseline, on 2026-10-04.
 
 ## Combined PR #178 qualification
 
-The preceding full baseline at `2e75f00cc8abe2323fa6e3c5e2d0965c35b68bc3` passed PR2108/29 and
+The shared repaired-main baseline at `6df43201750b50ffcee908333e2f90dee8672829` passed PR2108/29 and
 main4190/66, Python231/2, golden16/16 and fitted18/18 in both matrices. The
 combined winner plus explicit training-library changes and correction-01 add
 fourteen nonignored tests; expected after counts are PR2122/29 and main4204/66. Named old
@@ -95,4 +96,9 @@ reduces accumulation error, but covariance cancellation and rounded products
 still preclude a uniform relative-error guarantee for arbitrary ill-conditioned
 least squares. The separately rounded inference epilogue is unchanged.
 
-Correction-01 rebases on the reviewed CI-retention merge #179; the prior numerical baseline remains independently preserved. Current-main shared baseline and full correction after-gates are pending under the owner heavy lock. No pending outcome is claimed passed.
+Correction-01 rebases on reviewed fixture prerequisite #181. Shared full
+baseline DONE at this base qualifies all standing commands and the accepted
+unchanged Clippy floor; the prior failed-main proof is preserved. Final
+correction after-gates and fresh hosted CI/review remain pending. Lane D
+advisory R3 nested-Step repro is preserved and covered in both export routes.
+Lane A completes #178 then #177 and hands off idle; B10/B11 belong to Lane D.
