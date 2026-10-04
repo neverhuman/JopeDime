@@ -1,5 +1,5 @@
 //! The initial ordered fit closure is numeric identity input plus plain Ridge.
-//! Opaque legacy programs remain lossless; unproved fitted shapes stay refused.
+//! Opaque v1 programs remain lossless; unproved fitted shapes stay refused.
 use super::*;
 use crate::kernel::wire_v2::{VersionError, VersionResult};
 use crate::spec::{Plan, PlannedHead};
