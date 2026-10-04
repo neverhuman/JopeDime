@@ -88,6 +88,16 @@ bash deploy/ci/test-bump.sh
 rustup show active-toolchain
     # cargo check --workspace --all-targets --locked
 cargo check --workspace --all-targets --locked
+    # cargo check -p jope-parallel --all-targets --features neural --locked
+# Default features skip the optional `neural` targets (e.g. examples/gpr_cuda_bench.rs); an API
+# change broke that example on main once (#146, fixed by #150), so required CI compiles them too.
+# Subshell: the SDK environment must not leak into the remaining rust-check commands.
+(
+  export JOPE_NEURAL_ENV_RECEIPT="$EVIDENCE/neural-discovery.json"
+  # shellcheck disable=SC1091
+  source deploy/ci/neural-env.sh || { echo 'neural SDK environment unavailable; see neural-discovery.json' >&2; exit 1; }
+  cargo check -p jope-parallel --all-targets --features neural --locked
+)
     # Rendered systemd units resolve under the rendered roots
 cargo test -p jope-dime-regressor --locked --test systemd_unit_paths
     # Workspace MSRV (decision 8: at most 1.97.1)

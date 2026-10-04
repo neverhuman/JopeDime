@@ -123,6 +123,7 @@
       "result_backend": "rust",
       "checks": [
         "cargo check --workspace --all-targets --locked",
+        "cargo check -p jope-parallel --all-targets --features neural --locked",
         "cargo test -p jope-dime-regressor --locked --test systemd_unit_paths"
       ]
     },
