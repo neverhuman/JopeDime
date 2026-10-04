@@ -181,6 +181,44 @@ fn coefficient_model_and_program_state_roundtrip_without_losing_bits() {
     assert_eq!(before, p.fit(&x, &y).unwrap().to_json().unwrap());
 }
 
+#[test]
+fn model_ingress_rejects_finite_weights_that_can_overflow_prediction() {
+    let p = Program::new(2, 2, vec![], 0.02).unwrap();
+    let model = p
+        .fit(&vec![vec![0.0, 0.0], vec![1.0, -1.0]], &[0.0, 1.0])
+        .unwrap();
+    let text = model.to_json().unwrap();
+    assert!(Model::from_json(&text).is_ok());
+    let mut wire: serde_json::Value = serde_json::from_str(&text).unwrap();
+    wire["ridge_bits"] = serde_json::json!([
+        [0, 0],
+        [1.0f64.to_bits(), 1.0f64.to_bits()],
+        [0, f64::MAX.to_bits(), f64::MAX.to_bits()]
+    ]);
+    let forged = wire.to_string();
+    assert!(Model::from_json(&forged).is_err());
+    assert!(VersionedModel::from_json(&forged).is_err());
+}
+
+#[test]
+fn unknown_row_stage_wire_is_an_unsupported_version_at_both_ingresses() {
+    let mut bytes = program(2, config(3, 1, 0)).to_bytes().unwrap();
+    let at = bytes
+        .windows(11)
+        .position(|w| w == b"\"wire\":\"58\"")
+        .unwrap();
+    bytes[at + 8] = b'9';
+    bytes[at + 9] = b'9';
+    assert!(matches!(
+        Program::from_bytes(&bytes),
+        Err(feat_math::kernel::wire_v2::VersionError::UnsupportedVersion(_))
+    ));
+    assert!(matches!(
+        VersionedProgram::from_bytes(&bytes),
+        Err(feat_math::kernel::wire_v2::VersionError::UnsupportedVersion(_))
+    ));
+}
+
 fn training(width: usize) -> (Vec<Vec<f64>>, Vec<f64>) {
     let x = (0..24)
         .map(|i| {
