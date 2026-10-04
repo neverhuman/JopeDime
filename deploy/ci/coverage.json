@@ -7809,7 +7809,7 @@
         "full-default"
       ],
       "dispositions": [],
-      "scope": "B07 explicit standalone scalar interpreter/compiler prerequisite: missing-policy legacy bit/fault parity, selected certified asinh and four reductions, nested faults and final-only legacy sanitization, extreme/cancellation/subnormal widths1-128, certified inverse-link dispatch, preflight refusal of unqualified Func21/22, bounded code/width errors, immutable codec identity, and closed legacy/export/generation routes. Full models/fit/recipes/profile/EEC/utility admission remains held."
+      "scope": "B07 explicit standalone scalar interpreter/compiler prerequisite: missing-policy legacy bit/fault parity, selected certified asinh and four reductions, nested faults and final-only legacy sanitization, extreme/cancellation/subnormal widths1-128, certified inverse-link dispatch, qualified Func21/22 left-to-right scope/bounds refusal, bounded code/width errors, immutable codec identity, and closed legacy/export/generation routes. Full models/fit/recipes/profile/EEC/utility admission remains held."
     },
     "target:feat-math/test/stable_exponential_v2": {
       "discovery": {
@@ -7826,6 +7826,22 @@
       ],
       "dispositions": [],
       "scope": "B07 remaining Func21/22 numerical prerequisite: versioned guarded portable exponential helpers, exact nonfinite/signed-zero/domain/argument and output projection faults, -ln2 branch/subnormal and signed underflow tails, independent450/900-digit3048-case reference, monotonic grids, exact Rust/Python/C++17+20 O2/O3 and sanitizer helper parity. No scalar AST execution, model/fit/fullrecipe/profile/generation/EEC/utility admission."
+    },
+    "target:feat-math/test/stable_exponential_execution_v2": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/feat-math/tests/stable_exponential_execution_v2.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "B07 versioned Func21/22 interpreter/compiler execution prerequisite: approved guarded exponential dispatch across the immutable3048-case boundary corpus and both policies, nested guard/raw-intermediate semantics, typed prefix faults, IEEE/lossless policy identity, unchanged arity/depth/node limits, mixed inverse/exponential replay, and closed legacy/model/export/profile/generation routes. Full program recipes/fit/EEC/utility and complete B07 remain held."
     }
   }
 }
