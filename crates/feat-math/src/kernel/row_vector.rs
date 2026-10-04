@@ -20,7 +20,7 @@ const MAX_STAGES: usize = 8;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "wire", content = "parameters", deny_unknown_fields)]
-pub enum Stage {
+pub enum RowStage {
     #[serde(rename = "58")]
     Savgol(savgol::Config),
 }
@@ -28,7 +28,7 @@ pub enum Stage {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 pub struct Program {
     input_width: usize,
-    stages: Vec<Stage>,
+    stages: Vec<RowStage>,
     lambda_bits: u64,
 }
 
@@ -40,7 +40,7 @@ impl<'de> Deserialize<'de> for Program {
         #[serde(deny_unknown_fields)]
         struct Parameters {
             input_width: usize,
-            stages: Vec<Stage>,
+            stages: Vec<RowStage>,
             lambda_bits: u64,
         }
         let raw = Parameters::deserialize(deserializer)?;
@@ -61,7 +61,7 @@ pub enum FittedStage {
     Savgol(savgol::Fitted),
 }
 
-impl Stage {
+impl RowStage {
     fn fit(&self, width: usize) -> Result<FittedStage> {
         match self {
             Self::Savgol(config) => Ok(FittedStage::Savgol(config.fit(width)?)),
@@ -91,7 +91,12 @@ impl FittedStage {
 }
 
 impl Program {
-    pub fn new(version: u8, input_width: usize, stages: Vec<Stage>, lambda: f64) -> Result<Self> {
+    pub fn new(
+        version: u8,
+        input_width: usize,
+        stages: Vec<RowStage>,
+        lambda: f64,
+    ) -> Result<Self> {
         if version != 2 {
             return Err(Error::Unsupported("row-vector program requires v2".into()));
         }
@@ -114,7 +119,7 @@ impl Program {
         Ok(program)
     }
 
-    pub fn stages(&self) -> &[Stage] {
+    pub fn stages(&self) -> &[RowStage] {
         &self.stages
     }
     pub fn input_width(&self) -> usize {
@@ -199,13 +204,13 @@ impl Program {
 
     /// The geometry-only FIR setup is frozen before either training or export;
     /// recipe constants contain no observations, labels or fitted head state.
-    pub fn emit_recipe(&self, language: emit::Language) -> Result<String> {
+    pub fn emit_recipe(&self, language: emit::RowRecipeLanguage) -> Result<String> {
         let plan = self.plan()?;
         let opts = EmitOptions::default();
         let source = match language {
-            emit::Language::Rust => crate::emit_rs::emit_rust(&plan, &opts),
-            emit::Language::Python => crate::emit_py::emit_python(&plan, &opts),
-            emit::Language::Cpp17 => opts
+            emit::RowRecipeLanguage::Rust => crate::emit_rs::emit_rust(&plan, &opts),
+            emit::RowRecipeLanguage::Python => crate::emit_py::emit_python(&plan, &opts),
+            emit::RowRecipeLanguage::Cpp17 => opts
                 .cpp_expression_recipe(&plan)
                 .map_err(|e| Error::Unsupported(e.join(", ")))?,
         };
@@ -217,13 +222,13 @@ impl Program {
 
     pub fn emit_recipe_counted(
         &self,
-        language: emit::Language,
+        language: emit::RowRecipeLanguage,
     ) -> Result<(String, crate::transpile::TokenCount)> {
         let source = self.emit_recipe(language)?;
         let kind = match language {
-            emit::Language::Rust => crate::tokens::Lang::Rust,
-            emit::Language::Python => crate::tokens::Lang::Python,
-            emit::Language::Cpp17 => crate::tokens::Lang::Cpp,
+            emit::RowRecipeLanguage::Rust => crate::tokens::Lang::Rust,
+            emit::RowRecipeLanguage::Python => crate::tokens::Lang::Python,
+            emit::RowRecipeLanguage::Cpp17 => crate::tokens::Lang::Cpp,
         };
         let count = crate::tokens::count_tokens(&source, kind);
         Ok((source, count))
@@ -258,7 +263,7 @@ impl Program {
                 let window = [3, 5, 7, 9, 17][rng.next_u32() as usize % 5];
                 let degree = (rng.next_u32() % 3) as u8;
                 let derivative = (rng.next_u32() % (u32::from(degree) + 1)) as u8;
-                let stage = Stage::Savgol(savgol::Config::new(
+                let stage = RowStage::Savgol(savgol::Config::new(
                     2,
                     58,
                     super::ordered_axis::Axis::FeatureWithinRow,
@@ -272,14 +277,14 @@ impl Program {
             }
             Edit::Change if profile.savgol && !stages.is_empty() => {
                 let at = rng.next_u32() as usize % stages.len();
-                let Stage::Savgol(config) = &stages[at];
+                let RowStage::Savgol(config) = &stages[at];
                 let derivative = (config.derivative() + 1) % (config.degree() + 1);
                 let window = if config.window() == 129 {
                     (config.degree() + 1).max(3) | 1
                 } else {
                     config.window() + 2
                 };
-                stages[at] = Stage::Savgol(savgol::Config::new(
+                stages[at] = RowStage::Savgol(savgol::Config::new(
                     2,
                     58,
                     super::ordered_axis::Axis::FeatureWithinRow,

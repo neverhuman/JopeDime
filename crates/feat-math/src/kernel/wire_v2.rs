@@ -326,7 +326,7 @@ impl VersionedProgram {
                 "version 2 reservations are not executable".into(),
             )),
             Self::RowVectorV2(_) => Err(VersionError::UnsupportedVersion(
-                "v2 row-vector program is not a legacy genome".into(),
+                "v2 row-vector program cannot decode as a v1 genome".into(),
             )),
             Self::ScalarV2(_) => Err(VersionError::UnsupportedVersion(
                 "version 2 scalar execution is not admitted".into(),
@@ -543,7 +543,7 @@ impl VersionedModel {
         }
         let value: Value = serde_json::from_str(json)
             .map_err(|error| VersionError::Malformed(error.to_string()))?;
-        // B12: tagged model ingress, with no legacy deserialization fallback.
+        // B12: tagged model ingress, with no v1 deserialization fallback.
         if value.get("schema").and_then(Value::as_str) == Some("feat-math.feature-row-model") {
             return super::row_vector::Model::from_json(json).map(Self::RowVectorV2);
         }
@@ -565,7 +565,7 @@ impl VersionedModel {
         match self {
             Self::LegacyV1(model) => Ok(model),
             Self::RowVectorV2(_) => Err(VersionError::UnsupportedVersion(
-                "v2 row-vector model is not a legacy model".into(),
+                "v2 row-vector model cannot decode as a v1 model".into(),
             )),
             Self::ReservedV2(_) => Err(VersionError::UnsupportedVersion(
                 "version 2 models are not executable".into(),
