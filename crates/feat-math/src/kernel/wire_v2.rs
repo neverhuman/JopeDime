@@ -8,6 +8,9 @@
 use super::codec::{Reader, Writer, MAX_BYTES};
 use super::export::{self, ExportReport, FittedBasis, Route};
 use super::scalar_program::ScalarExpressionProgram;
+// B08 ordered-state routing.
+use super::finite_difference::{DifferenceModel, DifferenceProgram, OrderedRow};
+use super::ordered_axis::{FoldBoundary, TaskMode};
 use super::Program;
 use crate::{GenomeIr, Model};
 use serde::{Deserialize, Serialize};
@@ -284,6 +287,7 @@ pub enum VersionedProgram {
     ScalarV2(ScalarExpressionProgram),
     // B12: FeatureWithinRow execution is a separate v2 subtype.
     RowVectorV2(super::row_vector::Program),
+    DifferenceV2(DifferenceProgram),
 }
 
 impl VersionedProgram {
@@ -299,6 +303,7 @@ impl VersionedProgram {
                 Some(3) => Ok(Self::RowVectorV2(super::row_vector::Program::from_bytes(
                     bytes,
                 )?)),
+                Some(4) => Ok(Self::DifferenceV2(DifferenceProgram::from_bytes(bytes)?)),
                 Some(_) => Err(VersionError::UnsupportedVersion(
                     "program v2 variant".into(),
                 )),
@@ -316,6 +321,25 @@ impl VersionedProgram {
             Self::ReservedV2(program) => program.to_bytes(),
             Self::ScalarV2(program) => program.to_bytes(),
             Self::RowVectorV2(program) => program.to_bytes(),
+            Self::DifferenceV2(program) => program.to_bytes(),
+        }
+    }
+
+    /// Explicit ordered-input route; legacy and reservation bodies cannot fall through.
+    pub fn fit_ordered(
+        &self,
+        rows: &[OrderedRow],
+        labels: &[f64],
+        task: TaskMode,
+        fold: FoldBoundary,
+    ) -> VersionResult<VersionedModel> {
+        match self {
+            Self::DifferenceV2(program) => Ok(VersionedModel::DifferenceV2(
+                program.fit_training(rows, labels, task, fold)?,
+            )),
+            _ => Err(VersionError::UnsupportedVersion(
+                "program has no ordered fit route".into(),
+            )),
         }
     }
 
@@ -328,6 +352,9 @@ impl VersionedProgram {
             Self::RowVectorV2(_) => Err(VersionError::UnsupportedVersion(
                 "v2 row-vector program cannot decode as a v1 genome".into(),
             )),
+            Self::DifferenceV2(_) => Err(VersionError::UnsupportedVersion(
+                "ordered input required for difference execution".into(),
+            )),
             Self::ScalarV2(_) => Err(VersionError::UnsupportedVersion(
                 "version 2 scalar execution is not admitted".into(),
             )),
@@ -337,7 +364,10 @@ impl VersionedProgram {
     pub fn to_lossless_text(&self) -> VersionResult<String> {
         match self {
             Self::LegacyV1(program) => Ok(program.to_lossless_text()?),
-            Self::ReservedV2(_) | Self::ScalarV2(_) | Self::RowVectorV2(_) => Ok(format!(
+            Self::ReservedV2(_)
+            | Self::ScalarV2(_)
+            | Self::RowVectorV2(_)
+            | Self::DifferenceV2(_) => Ok(format!(
                 "(program codec=2 hex=\"{}\")",
                 self.to_bytes()?
                     .iter()
@@ -380,7 +410,10 @@ impl VersionedProgram {
             })
             .collect::<VersionResult<Vec<_>>>()?;
         match Self::from_bytes(&bytes)? {
-            value @ (Self::ReservedV2(_) | Self::ScalarV2(_) | Self::RowVectorV2(_)) => Ok(value),
+            value @ (Self::ReservedV2(_)
+            | Self::ScalarV2(_)
+            | Self::RowVectorV2(_)
+            | Self::DifferenceV2(_)) => Ok(value),
             Self::LegacyV1(_) => Err(VersionError::UnsupportedVersion(
                 "program text codec/body mismatch".into(),
             )),
@@ -417,6 +450,18 @@ pub fn export_report(program: &VersionedProgram) -> ExportReport {
                 javascript: Route::Unsupported(vec![
                     "v2 row-vector JavaScript route unavailable".into()
                 ]),
+            }
+        }
+        VersionedProgram::DifferenceV2(_) => {
+            let refusal =
+                Route::Unsupported(vec!["difference ordered export pending recipe proof".into()]);
+            ExportReport {
+                rust_recipe: refusal.clone(),
+                python_recipe: refusal.clone(),
+                cpp17_recipe: refusal.clone(),
+                cpp17_fitted: refusal.clone(),
+                cpp17_fitted_basis: FittedBasis::Declared,
+                javascript: refusal,
             }
         }
         VersionedProgram::ScalarV2(_) => {
@@ -532,6 +577,7 @@ pub enum VersionedModel {
     LegacyV1(Model),
     ReservedV2(ReservedModel),
     RowVectorV2(super::row_vector::Model),
+    DifferenceV2(DifferenceModel),
 }
 
 impl VersionedModel {
@@ -555,10 +601,23 @@ impl VersionedModel {
         if value.get("format_version").and_then(Value::as_u64) != Some(2) {
             return Err(VersionError::UnsupportedVersion("model envelope".into()));
         }
+        if value.get("schema").and_then(Value::as_str) == Some("feat-math.causal-difference-model")
+        {
+            return DifferenceModel::from_json(json).map(Self::DifferenceV2);
+        }
         let wire: ModelWireV2 = serde_json::from_value(value)
             .map_err(|error| VersionError::Malformed(error.to_string()))?;
         validate_model_wire(&wire)?;
         Ok(Self::ReservedV2(ReservedModel { wire }))
+    }
+
+    pub fn predict_ordered(&mut self, rows: &[OrderedRow]) -> VersionResult<Vec<f64>> {
+        match self {
+            Self::DifferenceV2(model) => Ok(model.predict(rows)?),
+            _ => Err(VersionError::UnsupportedVersion(
+                "model has no ordered prediction route".into(),
+            )),
+        }
     }
 
     pub fn legacy_model(&self) -> VersionResult<&Model> {
@@ -566,6 +625,9 @@ impl VersionedModel {
             Self::LegacyV1(model) => Ok(model),
             Self::RowVectorV2(_) => Err(VersionError::UnsupportedVersion(
                 "v2 row-vector model cannot decode as a v1 model".into(),
+            )),
+            Self::DifferenceV2(_) => Err(VersionError::UnsupportedVersion(
+                "ordered input required for difference prediction".into(),
             )),
             Self::ReservedV2(_) => Err(VersionError::UnsupportedVersion(
                 "version 2 models are not executable".into(),
