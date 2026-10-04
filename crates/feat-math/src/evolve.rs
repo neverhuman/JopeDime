@@ -12,6 +12,7 @@ use crate::credit::TokenLedger;
 use crate::dsl::{DslExpr, ParamValue, Stage};
 use crate::heads::RidgeModel;
 use crate::kernel::admission::{outranks, prefer_fewer_faults, FaultTotals, Rejection};
+use crate::kernel::lexicase::{CaseErrors, LexicaseConfig, Selection, Selector};
 use crate::kernel::scope::validate_scope;
 use crate::kernel::telemetry::{fit_traced, predict_traced, PipelineTelemetry};
 use crate::ops::{apply_op, apply_op_train, fit_op, FittedOp};
@@ -235,6 +236,69 @@ impl FaultPolicy {
     }
 }
 
+// B10 lexicase: begin
+/// How the next generation's parents are drawn (B10).
+///
+/// [`ParentSelection::Tournament3`], the default, is the selection the search has always run, and
+/// nothing below is computed or drawn under it. [`ParentSelection::EpsilonLexicase`] is opt-in and
+/// needs [`FaultPolicy::Legacy`] ([`ParentSelection::validate`]):
+///
+/// - A candidate's cases are its signed out-of-fold residuals `y[r] - prediction` on fixed
+///   training rows: in the surrogate search the first [`LEXICASE_CASE_ROWS`] rows of the seeded
+///   permutation the race also uses, ascending; in the race the rung-0 rows, taken at the rung the
+///   candidate is ranked by. Each row is predicted only by models fitted on the other folds, so a
+///   row's own label never reaches its prediction, and nothing outside the rows the search was
+///   given enters. The fold scores are computed exactly as without lexicase.
+/// - Every distinct ranked candidate of the generation is in the pool, and each parent draw is one
+///   [`Selector`] event over it. The selection draws come from their own stream per generation,
+///   `Pcg32::new(seed, LEXICASE_STREAM + generation)`; the search stream draws only variation.
+///   [`Observer::on_selection`] receives each generation's trace.
+/// - The race scores every rung on the CPU: the GPU rung-0 backend is never called and exact
+///   rung-0 reuse stays off, because neither returns per-row predictions; the reuse receipt names
+///   the reason.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum ParentSelection {
+    /// Tournament of three over the best half of the ranking, as the search has always drawn.
+    #[default]
+    Tournament3,
+    /// Epsilon-lexicase over out-of-fold residual cases ([`crate::kernel::lexicase`]).
+    EpsilonLexicase(LexicaseConfig),
+}
+
+/// The stream base of the per-generation lexicase selection streams.
+pub const LEXICASE_STREAM: u64 = 0x4C45_5843_4153_4531;
+/// The most training rows whose residuals are a surrogate-search candidate's lexicase cases.
+pub const LEXICASE_CASE_ROWS: usize = 256;
+
+impl ParentSelection {
+    /// The reason the selection cannot run under `policy`, if it cannot: lexicase needs
+    /// [`FaultPolicy::Legacy`] and a valid [`LexicaseConfig`]. The search panics with this reason,
+    /// except [`evolve_lite_race_with_exact_initial_population`], which returns it.
+    pub fn validate(&self, policy: FaultPolicy) -> Result<(), String> {
+        match self {
+            Self::Tournament3 => Ok(()),
+            Self::EpsilonLexicase(_) if !matches!(policy, FaultPolicy::Legacy) => {
+                Err("parent selection: epsilon-lexicase needs the default fault policy".to_string())
+            }
+            Self::EpsilonLexicase(config) => config
+                .validate()
+                .map_err(|error| format!("parent selection: {error}")),
+        }
+    }
+
+    fn lexicase(self) -> Option<LexicaseConfig> {
+        match self {
+            Self::Tournament3 => None,
+            Self::EpsilonLexicase(config) => Some(config),
+        }
+    }
+}
+
+/// Why exact rung-0 reuse is off under lexicase selection, as its receipt records it.
+const LEXICASE_REUSE_BLOCKER: &str =
+    "exact rung-0 reuse is off under lexicase selection: a reused score has no per-row residuals";
+// B10 lexicase: end
+
 #[cfg(test)]
 mod gpu_screen_tests {
     use super::*;
@@ -373,6 +437,7 @@ mod gpu_screen_tests {
             gpu_screen: gpu,
             gpu_screen_policy: policy,
             rung0_exact_surrogate_scope_sha256: dedup_scope,
+            capture_cases: false,
         };
         let mut state = RaceState {
             memo: HashMap::new(),
@@ -1142,6 +1207,9 @@ pub struct EvolveConfig {
     /// How the search treats the faults of `map` and `derive` stages. `Legacy` by default, which
     /// runs the search unchanged; see [`FaultPolicy`].
     pub fault_policy: FaultPolicy,
+    /// How the next generation's parents are drawn. `Tournament3` by default, which draws exactly
+    /// as the search always has; see [`ParentSelection`].
+    pub selection: ParentSelection,
 }
 
 impl Default for EvolveConfig {
@@ -1160,6 +1228,7 @@ impl Default for EvolveConfig {
             hard_ten_priors: false,
             expansion_vocab: false,
             fault_policy: FaultPolicy::Legacy,
+            selection: ParentSelection::Tournament3,
         }
     }
 }
@@ -1217,6 +1286,20 @@ pub trait Observer: Sync {
     /// surrogate search evaluates a program twice, when it appears twice in one generation, as it
     /// always has. Never fired under `Legacy`. Default no-op.
     fn on_reject(&self, _dsl: &str, _reason: &Rejection) {}
+    /// Fired once per generation whose parents [`ParentSelection::EpsilonLexicase`] draws, after
+    /// its last parent. Never fired under `Tournament3`. Default no-op.
+    fn on_selection(&self, _receipt: &SelectionReceipt) {}
+}
+
+/// One generation's lexicase parent selection, as [`Observer::on_selection`] reports it.
+#[derive(Clone, Debug, PartialEq)]
+pub struct SelectionReceipt {
+    pub generation: usize,
+    /// The distinct ranked candidates in the pool; parents index this ranking.
+    pub pool: usize,
+    /// The selection and its trace, or why the generation fell back to tournament-3: the pool's
+    /// cases could not form one matrix.
+    pub selection: Result<Selection, String>,
 }
 
 const EVAL_CODE_SAMPLE_MS: u128 = 83;
@@ -1873,6 +1956,107 @@ fn score_genome(
     Some(fold_scores)
 }
 
+// B10 lexicase: begin
+/// [`score_genome`], also returning every row's out-of-fold prediction, by row (`NaN` for a row
+/// that is in no fold). The program, folds, fits, predictions and metric calls are
+/// `score_genome`'s, in the same order, so the fold scores are the same bits.
+fn score_genome_predictions(
+    g: &DslExpr,
+    x: &Rows,
+    y: &[f64],
+    assign: &[usize],
+    k: usize,
+    metric: &(dyn Fn(&[f64], &[f64]) -> f64 + Sync),
+) -> ScoredCases {
+    let genome = GenomeIr::Pipeline(search_surrogate(g));
+    let mut fold_scores = Vec::with_capacity(k);
+    let mut predictions = vec![f64::NAN; y.len()];
+    for fold in 0..k {
+        let (mut xtr, mut ytr, mut xte, mut yte) = (Vec::new(), Vec::new(), Vec::new(), Vec::new());
+        let mut held_out = Vec::new();
+        for i in 0..y.len() {
+            if assign[i] == fold {
+                xte.push(x[i].clone());
+                yte.push(y[i]);
+                held_out.push(i);
+            } else {
+                xtr.push(x[i].clone());
+                ytr.push(y[i]);
+            }
+        }
+        if xte.is_empty() || xtr.is_empty() {
+            return None;
+        }
+        let m = model::fit(&genome, &xtr, &ytr).ok()?;
+        let pred = m.predict(&xte).ok()?;
+        let s = metric(&yte, &pred);
+        if !s.is_finite() {
+            return None;
+        }
+        fold_scores.push(s);
+        for (&row, &value) in held_out.iter().zip(&pred) {
+            predictions[row] = value;
+        }
+    }
+    Some((fold_scores, predictions))
+}
+
+/// Fold scores with a per-row vector beside them (out-of-fold predictions or residual cases), or
+/// `None` where the legacy scorer gives `None`.
+type ScoredCases = Option<(Vec<f64>, Vec<f64>)>;
+
+/// [`score_genome`], also returning the signed out-of-fold residual `y[r] - prediction` of each
+/// row of `case_rows`, in that order.
+fn score_genome_cases(
+    g: &DslExpr,
+    x: &Rows,
+    y: &[f64],
+    assign: &[usize],
+    k: usize,
+    metric: &(dyn Fn(&[f64], &[f64]) -> f64 + Sync),
+    case_rows: &[usize],
+) -> ScoredCases {
+    let (fold_scores, predictions) = score_genome_predictions(g, x, y, assign, k, metric)?;
+    let residuals = case_rows
+        .iter()
+        .map(|&row| y[row] - predictions[row])
+        .collect();
+    Some((fold_scores, residuals))
+}
+
+/// The surrogate search's legacy scoring of `unseen` under lexicase selection:
+/// [`score_genome_cases`] in parallel, keeping each scored candidate's cases in `cases`.
+#[allow(clippy::too_many_arguments)]
+fn score_unseen_with_cases(
+    unseen: Vec<(String, DslExpr)>,
+    x: &Rows,
+    y: &[f64],
+    assign: &[usize],
+    k: usize,
+    metric: &(dyn Fn(&[f64], &[f64]) -> f64 + Sync),
+    case_rows: &[usize],
+    cases: &mut HashMap<String, Vec<f64>>,
+) -> Vec<(String, DslExpr, Option<Vec<f64>>)> {
+    let scored: Vec<(String, DslExpr, ScoredCases)> = unseen
+        .into_par_iter()
+        .map(|(key, g)| {
+            let scored = score_genome_cases(&g, x, y, assign, k, metric, case_rows);
+            (key, g, scored)
+        })
+        .collect();
+    scored
+        .into_iter()
+        .map(|(key, g, scored)| {
+            let scores = scored.map(|(scores, residuals)| {
+                cases.insert(key.clone(), residuals);
+                scores
+            });
+            (key, g, scores)
+        })
+        .collect()
+}
+// B10 lexicase: end
+
 // ---------------------------------------------------------------------------
 // Fault policy (kernel2 WP-1.5): the scorers and bookkeeping of the non-legacy policies. Under
 // `FaultPolicy::Legacy` none of this runs.
@@ -2170,6 +2354,17 @@ fn evolve_surrogate(
     let assign = fold_assign(y.len(), cfg.folds.max(2), "invent");
     let k = cfg.folds.max(2);
     let gen_vocab = generation_vocab(cfg);
+    // B10 lexicase: begin
+    if let Err(reason) = cfg.selection.validate(cfg.fault_policy) {
+        panic!("{reason}");
+    }
+    let lexicase = cfg.selection.lexicase();
+    let case_rows = match lexicase {
+        Some(_) => lexicase_case_rows(y.len(), cfg.seed),
+        None => Vec::new(),
+    };
+    let mut cases: HashMap<String, Vec<f64>> = HashMap::new();
+    // B10 lexicase: end
 
     // Seeds: champion + external seeds + starters + random fill.
     let target_pop = cfg.pop.max(1);
@@ -2243,6 +2438,10 @@ fn evolve_surrogate(
             .filter(|(key, _)| !memo.contains_key(key))
             .collect();
         let fresh: Vec<(String, DslExpr, Option<Vec<f64>>)> = match admission.as_mut() {
+            // B10 lexicase: the same scores, keeping each candidate's residual cases.
+            None if lexicase.is_some() => {
+                score_unseen_with_cases(unseen, x, y, &assign, k, metric, &case_rows, &mut cases)
+            }
             None => unseen
                 .into_par_iter()
                 .map(|(key, g)| {
@@ -2443,10 +2642,15 @@ fn evolve_surrogate(
         let tie_cells = admission
             .as_ref()
             .and_then(|admission| admission.tie_break_cells(&ranked, |_| 0));
+        // B10 lexicase: begin
+        let matrix =
+            lexicase.map(|_| lexicase_matrix(&ranked, |dsl| cases.get(dsl).map(Vec::as_slice)));
+        let mut draws = start_lexicase(lexicase, matrix.as_ref(), cfg.seed, gen);
+        // B10 lexicase: end
         while next.len() < cfg.pop {
-            let pa = select_parent(&mut rng, &ranked, parents, tie_cells.as_deref());
+            let pa = pick_parent(&mut rng, &ranked, parents, tie_cells.as_deref(), &mut draws);
             let child = if rng.next_f64() < 0.25 && ranked.len() >= 2 {
-                let pb = select_parent(&mut rng, &ranked, parents, tie_cells.as_deref());
+                let pb = pick_parent(&mut rng, &ranked, parents, tie_cells.as_deref(), &mut draws);
                 let (ga, gb) = (parse_pipe(&ranked[pa].dsl), parse_pipe(&ranked[pb].dsl));
                 match (ga, gb) {
                     (Some(a), Some(b)) => crossover(&mut rng, &a, &b, cfg.max_transforms),
@@ -2460,6 +2664,7 @@ fn evolve_surrogate(
             };
             next.push(child);
         }
+        report_selection(obs, gen, ranked.len(), draws);
         population = next;
     }
 
@@ -2718,6 +2923,9 @@ struct RaceEntry {
     r0_generation_slot: Option<usize>,
     r0_fold_routes: Option<Vec<Rung0FoldRouteReceipt>>,
     r0_exact_surrogate_dedup: Option<Rung0ExactSurrogateCandidateReceipt>,
+    /// B10 lexicase: the signed out-of-fold residuals at each scored rung, on the rung-0 rows in
+    /// their position order. Only lexicase selection fills them.
+    cases: [Option<Vec<f64>>; 3],
 }
 
 impl RaceEntry {
@@ -3050,6 +3258,80 @@ fn score_rung(
     Some(fold_scores)
 }
 
+// B10 lexicase: begin
+/// [`score_rung`], also returning the signed out-of-fold residual `y[rows[p]] - prediction` of
+/// each of the first `cases` positions. The program, folds, budget checks, fits, predictions and
+/// metric calls are `score_rung`'s, in the same order, so the fold scores are the same bits.
+#[allow(clippy::too_many_arguments)]
+fn score_rung_cases(
+    g: &DslExpr,
+    rung: usize,
+    x: &Rows,
+    y: &[f64],
+    rows: &[usize],
+    assign: &[usize],
+    k: usize,
+    metric: &(dyn Fn(&[f64], &[f64]) -> f64 + Sync),
+    budget_started: Instant,
+    overall_budget: f64,
+    obs: &dyn Observer,
+    cases: usize,
+) -> ScoredCases {
+    let prepared = if rung == 0 {
+        search_surrogate(g)
+    } else {
+        lite_budget(g)
+    };
+    let genome = GenomeIr::Pipeline(prepared);
+    let mut fold_scores = Vec::with_capacity(k);
+    let mut predictions = vec![f64::NAN; rows.len()];
+    for fold in 0..k {
+        if elapsed_budget_exhausted(budget_started.elapsed().as_secs_f64(), overall_budget)
+            || obs.is_cancelled()
+        {
+            return None;
+        }
+        let (mut xtr, mut ytr, mut xte, mut yte) = (Vec::new(), Vec::new(), Vec::new(), Vec::new());
+        let mut held_out = Vec::new();
+        for (pos, &r) in rows.iter().enumerate() {
+            if assign[pos] == fold {
+                xte.push(x[r].clone());
+                yte.push(y[r]);
+                held_out.push(pos);
+            } else {
+                xtr.push(x[r].clone());
+                ytr.push(y[r]);
+            }
+        }
+        if xte.is_empty() || xtr.is_empty() {
+            return None;
+        }
+        let m = model::fit(&genome, &xtr, &ytr).ok()?;
+        if elapsed_budget_exhausted(budget_started.elapsed().as_secs_f64(), overall_budget)
+            || obs.is_cancelled()
+        {
+            return None;
+        }
+        let pred = m.predict(&xte).ok()?;
+        let s = metric(&yte, &pred);
+        if !s.is_finite() {
+            return None;
+        }
+        fold_scores.push(s);
+        for (&pos, &value) in held_out.iter().zip(&pred) {
+            predictions[pos] = value;
+        }
+    }
+    let residuals = rows
+        .iter()
+        .zip(&predictions)
+        .take(cases)
+        .map(|(&r, &prediction)| y[r] - prediction)
+        .collect();
+    Some((fold_scores, residuals))
+}
+// B10 lexicase: end
+
 /// [`score_rung`] under a non-legacy [`FaultPolicy`]: the same program, rows, folds, metric and
 /// budget checks, with the scope check before anything is fitted and every fold run by
 /// [`traced_fold`].
@@ -3137,6 +3419,8 @@ struct RungCtx<'data, 'backend> {
     gpu_screen_policy: Option<GpuRidgeScorePolicy>,
     /// Content identity of every fold-relevant rung-0 input. None keeps reuse off.
     rung0_exact_surrogate_scope_sha256: Option<[u8; 32]>,
+    /// B10 lexicase: score every rung on the CPU and keep each candidate's residual cases.
+    capture_cases: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -3933,6 +4217,119 @@ fn eval_rung_admitted(
     }
 }
 
+// B10 lexicase: begin
+/// [`eval_rung`] under lexicase selection: the same chunks, budget gates and bookkeeping, with
+/// every candidate scored on the CPU by [`score_rung_cases`], as `eval_rung` scores them when no
+/// GPU backend and no exact reuse are configured, and its residual cases kept at the rung. The
+/// GPU rung-0 wave and exact rung-0 reuse are never used, because neither returns per-row
+/// predictions.
+fn eval_rung_cases(
+    ctx: &RungCtx<'_, '_>,
+    st: &mut RaceState,
+    rung: usize,
+    generation: usize,
+    todo: &[(String, DslExpr)],
+    obs: &dyn Observer,
+) {
+    let k = RACE_RUNG_FOLDS[rung];
+    let rows = &ctx.rows[rung];
+    let assign = &ctx.assigns[rung];
+    let cases = ctx.rows[0].len();
+    for (chunk_index, chunk) in todo.chunks(RACE_CHUNK).enumerate() {
+        // The chunk gates of `eval_rung`, unchanged.
+        let bootstrap_chunk = rung == 0 && st.rung_evals[0] == 0 && chunk_index == 0;
+        if !bootstrap_chunk && st.spent[rung] > ctx.caps[rung] {
+            break;
+        }
+        if !bootstrap_chunk
+            && elapsed_budget_exhausted(ctx.t0.elapsed().as_secs_f64(), ctx.overall_budget)
+        {
+            break;
+        }
+        if obs.is_cancelled() {
+            break;
+        }
+        let c0 = Instant::now();
+        let chunk_budget = if bootstrap_chunk {
+            0.0
+        } else {
+            ctx.overall_budget
+        };
+        let cpu_started = Instant::now();
+        let scored: Vec<ScoredCases> = chunk
+            .par_iter()
+            .map(|(_, genome)| {
+                score_rung_cases(
+                    genome,
+                    rung,
+                    ctx.x,
+                    ctx.y,
+                    rows,
+                    assign,
+                    k,
+                    ctx.metric,
+                    ctx.t0,
+                    chunk_budget,
+                    obs,
+                    cases,
+                )
+            })
+            .collect();
+        if rung == 0 {
+            st.gpu_screen_timings.add(GpuScreenPhaseTimings {
+                cpu_score_seconds: cpu_started.elapsed().as_secs_f64(),
+                cpu_folds: (chunk.len() * k) as u64,
+                ..GpuScreenPhaseTimings::default()
+            });
+        }
+        st.spent[rung] += c0.elapsed().as_secs_f64();
+        for (fresh_index, ((key, genome), scored)) in chunk.iter().zip(scored).enumerate() {
+            let (scores, residuals) = scored.unzip();
+            // The bookkeeping of `eval_rung`, unchanged.
+            let r0_seq = (rung == 0).then_some(st.rung_evals[0]);
+            st.evals += 1;
+            st.rung_evals[rung] += 1;
+            if rung == 0 {
+                let est = crate::tokens::try_estimate_tokens(
+                    &GenomeIr::Pipeline(genome.clone()),
+                    &EmitOptions::default(),
+                )
+                .map(|e| (e.py + e.rs) as f64)
+                .unwrap_or(0.0);
+                st.ledger.add(est);
+            }
+            if let Some(fs) = &scores {
+                if !fs.is_empty() {
+                    let cv = fs.iter().sum::<f64>() / fs.len() as f64;
+                    if cv.is_finite() {
+                        let now = Instant::now();
+                        if now.duration_since(st.last_eval_tick).as_millis() >= EVAL_SCORE_SAMPLE_MS
+                        {
+                            st.last_eval_tick = now;
+                            obs.on_eval(key, cv, None);
+                        }
+                    }
+                }
+            }
+            let entry = st.memo.entry(key.clone()).or_default();
+            if rung == 0 {
+                entry.r0_seq = r0_seq;
+                entry.r0_generation = Some(generation);
+                entry.r0_generation_slot = Some(chunk_index * RACE_CHUNK + fresh_index);
+                entry.r0_fold_routes =
+                    Some(vec![
+                        Rung0FoldRouteReceipt::cpu(Rung0FoldRoute::CpuExact);
+                        k
+                    ]);
+                entry.r0_exact_surrogate_dedup = None;
+            }
+            entry.rungs[rung] = Some(scores);
+            entry.cases[rung] = residuals;
+        }
+    }
+}
+// B10 lexicase: end
+
 /// [`eval_rung`], or [`eval_rung_admitted`] when a non-legacy policy runs (`admission` is
 /// `Some`).
 fn eval_rung_policy(
@@ -3945,6 +4342,8 @@ fn eval_rung_policy(
     obs: &dyn Observer,
 ) {
     match admission {
+        // B10 lexicase: the legacy scores on the CPU, keeping each candidate's residual cases.
+        None if ctx.capture_cases => eval_rung_cases(ctx, st, rung, generation, todo, obs),
         None => eval_rung(ctx, st, rung, generation, todo, obs),
         Some(admission) => eval_rung_admitted(ctx, st, admission, rung, generation, todo, obs),
     }
@@ -4542,6 +4941,8 @@ pub fn evolve_lite_race_with_exact_initial_population(
     initial_population: &[String],
 ) -> Result<RaceOutcome, String> {
     cfg.fault_policy.validate()?;
+    // B10 lexicase: the selection's refusal is returned here, as the fault policy's is.
+    cfg.selection.validate(cfg.fault_policy)?;
     if cfg.pop == 0 {
         return Err("exact initial population requires cfg.pop greater than zero".to_string());
     }
@@ -4661,6 +5062,12 @@ fn evolve_lite_race_impl<'backend>(
 ) -> RaceOutcome {
     // `None` under `FaultPolicy::Legacy`: every step below then runs the legacy code.
     let mut admission = Admission::start(cfg.fault_policy);
+    // B10 lexicase: begin
+    if let Err(reason) = cfg.selection.validate(cfg.fault_policy) {
+        panic!("{reason}");
+    }
+    let lexicase = cfg.selection.lexicase();
+    // B10 lexicase: end
     let t0 = Instant::now();
     let mut rng = Pcg32::new(cfg.seed, 0x5EED);
     let n = x.len().min(y.len());
@@ -4713,6 +5120,7 @@ fn evolve_lite_race_impl<'backend>(
         gpu_screen,
         gpu_screen_policy,
         rung0_exact_surrogate_scope_sha256,
+        capture_cases: lexicase.is_some(),
     };
 
     let gen_vocab = generation_vocab(cfg);
@@ -4786,6 +5194,13 @@ fn evolve_lite_race_impl<'backend>(
         st.rung0_exact_surrogate_dedup.activation_blocker =
             Some(FAULT_POLICY_REUSE_BLOCKER.to_string());
     }
+    // B10 lexicase: begin
+    if ctx.capture_cases && st.rung0_exact_surrogate_dedup.active {
+        st.rung0_exact_surrogate_dedup.active = false;
+        st.rung0_exact_surrogate_dedup.activation_blocker =
+            Some(LEXICASE_REUSE_BLOCKER.to_string());
+    }
+    // B10 lexicase: end
     let mut best: Option<Scored> = None;
     let mut ranked: Vec<Scored> = Vec::new();
     let mut last_eval_code = Instant::now();
@@ -4978,10 +5393,19 @@ fn evolve_lite_race_impl<'backend>(
         let tie_cells = admission.as_ref().and_then(|admission| {
             admission.tie_break_cells(&ranked, |key| best_rung(&st.memo, key))
         });
+        // B10 lexicase: begin
+        let matrix = lexicase.map(|_| {
+            lexicase_matrix(&ranked, |dsl| {
+                let entry = st.memo.get(dsl)?;
+                entry.cases[best_rung(&st.memo, dsl)].as_deref()
+            })
+        });
+        let mut draws = start_lexicase(lexicase, matrix.as_ref(), cfg.seed, gen);
+        // B10 lexicase: end
         while next.len() < cfg.pop {
-            let pa = select_parent(&mut rng, &ranked, parents, tie_cells.as_deref());
+            let pa = pick_parent(&mut rng, &ranked, parents, tie_cells.as_deref(), &mut draws);
             let child = if rng.next_f64() < 0.25 && ranked.len() >= 2 {
-                let pb = select_parent(&mut rng, &ranked, parents, tie_cells.as_deref());
+                let pb = pick_parent(&mut rng, &ranked, parents, tie_cells.as_deref(), &mut draws);
                 let (ga, gb) = (parse_pipe(&ranked[pa].dsl), parse_pipe(&ranked[pb].dsl));
                 match (ga, gb) {
                     (Some(a), Some(b)) => crossover(&mut rng, &a, &b, cfg.max_transforms),
@@ -4995,6 +5419,7 @@ fn evolve_lite_race_impl<'backend>(
             };
             next.push(child);
         }
+        report_selection(obs, gen, ranked.len(), draws);
         population = next;
     }
 
@@ -5096,6 +5521,85 @@ fn select_parent(
         Some(faulted_cells) => tournament_admitted(rng, ranked, parents, faulted_cells),
     }
 }
+
+// B10 lexicase: begin
+/// The surrogate search's lexicase case rows: the first [`LEXICASE_CASE_ROWS`] rows of
+/// `permute_indices(n, seed)`, ascending. It draws nothing from the search stream.
+fn lexicase_case_rows(n: usize, seed: u64) -> Vec<usize> {
+    let mut rows = permute_indices(n, seed);
+    rows.truncate(LEXICASE_CASE_ROWS);
+    rows.sort_unstable();
+    rows
+}
+
+/// The case matrix of `ranked`, in ranking order, from each candidate's residual cases.
+fn lexicase_matrix<'cases>(
+    ranked: &[Scored],
+    cases_of: impl Fn(&str) -> Option<&'cases [f64]>,
+) -> Result<CaseErrors, String> {
+    let mut residuals = Vec::new();
+    let mut width = None;
+    for scored in ranked {
+        let cases =
+            cases_of(&scored.dsl).ok_or_else(|| format!("no residual cases for {}", scored.dsl))?;
+        if *width.get_or_insert(cases.len()) != cases.len() {
+            return Err("the ranked candidates have different case counts".to_string());
+        }
+        residuals.extend_from_slice(cases);
+    }
+    CaseErrors::from_residuals(ranked.len(), width.unwrap_or(0), &residuals)
+        .map_err(|error| format!("lexicase case matrix: {error}"))
+}
+
+/// One generation's parent draws: `None` under tournament-3; under lexicase the selector and the
+/// generation's stream, or why the generation falls back to tournament-3.
+type LexicaseDraws<'matrix> = Option<Result<(Selector<'matrix>, Pcg32), String>>;
+
+fn start_lexicase<'matrix>(
+    config: Option<LexicaseConfig>,
+    matrix: Option<&'matrix Result<CaseErrors, String>>,
+    seed: u64,
+    generation: usize,
+) -> LexicaseDraws<'matrix> {
+    let config = config?;
+    let matrix = match matrix? {
+        Ok(matrix) => matrix,
+        Err(reason) => return Some(Err(reason.clone())),
+    };
+    let mut stream = Pcg32::new(seed, LEXICASE_STREAM.wrapping_add(generation as u64));
+    Some(
+        Selector::new(matrix, config, &mut stream)
+            .map(|selector| (selector, stream))
+            .map_err(|error| format!("lexicase selection: {error}")),
+    )
+}
+
+/// One lexicase event on the generation's stream; otherwise, under tournament-3 or a generation
+/// that fell back, [`select_parent`] with the identical arguments and stream.
+fn pick_parent(
+    rng: &mut Pcg32,
+    ranked: &[Scored],
+    parents: usize,
+    faulted_cells: Option<&[u64]>,
+    lexicase: &mut LexicaseDraws<'_>,
+) -> usize {
+    match lexicase {
+        Some(Ok((selector, stream))) => selector.draw_parent(stream),
+        _ => select_parent(rng, ranked, parents, faulted_cells),
+    }
+}
+
+/// Reports a lexicase generation's selection; nothing under tournament-3.
+fn report_selection(obs: &dyn Observer, generation: usize, pool: usize, lexicase: LexicaseDraws) {
+    if let Some(outcome) = lexicase {
+        obs.on_selection(&SelectionReceipt {
+            generation,
+            pool,
+            selection: outcome.map(|(selector, _)| selector.finish()),
+        });
+    }
+}
+// B10 lexicase: end
 
 #[cfg(test)]
 mod robust_rank_tests {
@@ -5248,6 +5752,7 @@ mod tests {
             hard_ten_priors: false,
             expansion_vocab: false,
             fault_policy: FaultPolicy::Legacy,
+            selection: ParentSelection::Tournament3,
         };
         let obs = CountObs {
             gens: AtomicUsize::new(0),
@@ -5294,6 +5799,7 @@ mod tests {
             hard_ten_priors: false,
             expansion_vocab: false,
             fault_policy: FaultPolicy::Legacy,
+            selection: ParentSelection::Tournament3,
         };
         let obs = CountObs {
             gens: AtomicUsize::new(0),
@@ -5352,6 +5858,7 @@ mod tests {
             hard_ten_priors: false,
             expansion_vocab: false,
             fault_policy: FaultPolicy::Legacy,
+            selection: ParentSelection::Tournament3,
         };
         let obs = CodeObs {
             code_evals: AtomicUsize::new(0),
@@ -5432,6 +5939,7 @@ mod tests {
             hard_ten_priors: false,
             expansion_vocab: false,
             fault_policy: FaultPolicy::Legacy,
+            selection: ParentSelection::Tournament3,
         }
     }
 
@@ -6495,3 +7003,517 @@ mod tests {
         assert!(differed > 0, "the near-tie never decided a selection");
     }
 }
+
+// B10 lexicase: begin
+#[cfg(test)]
+mod lexicase_selection_tests {
+    use super::*;
+    use crate::kernel::lexicase::{CaseSampling, EpsilonRule};
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    use std::sync::Mutex;
+
+    const MAD: ParentSelection = ParentSelection::EpsilonLexicase(LexicaseConfig {
+        epsilon: EpsilonRule::MedianAbsoluteDeviation,
+        sampling: CaseSampling::All,
+    });
+
+    #[derive(Default)]
+    struct Receipts {
+        selections: Mutex<Vec<SelectionReceipt>>,
+        first_generation: Mutex<Option<Vec<u64>>>,
+    }
+
+    impl Observer for Receipts {
+        fn on_generation(&self, stats: &GenStats) {
+            let mut first = self.first_generation.lock().unwrap();
+            if first.is_none() {
+                *first = Some(stats.pop_fitness.iter().map(|v| v.to_bits()).collect());
+            }
+        }
+        fn on_improvement(&self, _best: &Scored, _emitted: &Emitted, _stats: &GenStats) {}
+        fn on_selection(&self, receipt: &SelectionReceipt) {
+            self.selections.lock().unwrap().push(receipt.clone());
+        }
+    }
+
+    /// Two regimes: rows with `x2 > 0` follow `3 x0`, the others `-2 x1`, plus noise.
+    fn regimes(seed: u64, n: usize) -> (Rows, Vec<f64>) {
+        let mut rng = Pcg32::new(seed, 9);
+        let x: Rows = (0..n)
+            .map(|_| (0..3).map(|_| rng.gaussian()).collect())
+            .collect();
+        let y = x
+            .iter()
+            .map(|r| {
+                let signal = if r[2] > 0.0 { 3.0 * r[0] } else { -2.0 * r[1] };
+                signal + 0.1 * rng.gaussian()
+            })
+            .collect();
+        (x, y)
+    }
+
+    fn config(fitness: FitnessMode, selection: ParentSelection) -> EvolveConfig {
+        EvolveConfig {
+            pop: 12,
+            gens: 3,
+            folds: 3,
+            seed: 0xB10,
+            max_transforms: 3,
+            fitness,
+            selection,
+            ..EvolveConfig::default()
+        }
+    }
+
+    fn r2(truth: &[f64], predicted: &[f64]) -> f64 {
+        crate::metrics::r2(truth, predicted)
+    }
+
+    fn bits(values: &[f64]) -> Vec<u64> {
+        values.iter().map(|v| v.to_bits()).collect()
+    }
+
+    fn dump(ranked: &[Scored]) -> Vec<(String, u64, Vec<u64>)> {
+        ranked
+            .iter()
+            .map(|s| (s.dsl.clone(), s.cv_mean.to_bits(), bits(&s.fold_scores)))
+            .collect()
+    }
+
+    fn ranked(scores: &[f64]) -> Vec<Scored> {
+        scores
+            .iter()
+            .enumerate()
+            .map(|(i, &cv)| Scored {
+                dsl: format!("c{i}"),
+                cv_mean: cv,
+                fold_scores: vec![cv],
+            })
+            .collect()
+    }
+
+    #[test]
+    fn tournament_three_is_the_default_and_reports_nothing() {
+        assert_eq!(
+            EvolveConfig::default().selection,
+            ParentSelection::Tournament3
+        );
+        assert_eq!(ParentSelection::default(), ParentSelection::Tournament3);
+        let (x, y) = regimes(1, 120);
+        for fitness in [FitnessMode::Surrogate, FitnessMode::LiteRace] {
+            let obs = Receipts::default();
+            let ranked = evolve(
+                &x,
+                &y,
+                &r2,
+                &config(fitness, ParentSelection::Tournament3),
+                &obs,
+            );
+            assert!(!ranked.is_empty());
+            assert!(obs.selections.lock().unwrap().is_empty());
+        }
+    }
+
+    #[test]
+    fn without_lexicase_pick_parent_draws_the_legacy_numbers() {
+        let ranked = ranked(&[0.9, 0.5, 0.5, 0.2, 0.1]);
+        let cells = vec![0_u64, 4, 1, 0, 0];
+        for seed in 0..300 {
+            for faulted in [None, Some(cells.as_slice())] {
+                for mut draws in [None, Some(Err("fallback".to_string()))] {
+                    let (mut a, mut b) = (Pcg32::new(seed, 1), Pcg32::new(seed, 1));
+                    assert_eq!(
+                        pick_parent(&mut a, &ranked, 3, faulted, &mut draws),
+                        select_parent(&mut b, &ranked, 3, faulted)
+                    );
+                    assert_eq!(a.next_u32(), b.next_u32(), "the draws must not change");
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn lexicase_draws_come_from_their_own_stream() {
+        let ranked = ranked(&[0.9, 0.5, 0.2]);
+        let matrix = lexicase_matrix(&ranked, |dsl| match dsl {
+            "c0" => Some(&[0.0, 4.0, 4.0][..]),
+            "c1" => Some(&[4.0, 0.0, 4.0][..]),
+            _ => Some(&[4.0, 4.0, 0.0][..]),
+        });
+        let mut draws = start_lexicase(Some(LexicaseConfig::default()), Some(&matrix), 5, 2);
+        let mut search = Pcg32::new(5, 1);
+        let mut picked: Vec<usize> = (0..60)
+            .map(|_| pick_parent(&mut search, &ranked, 1, None, &mut draws))
+            .collect();
+        assert_eq!(search.next_u32(), Pcg32::new(5, 1).next_u32());
+        // Each specialist wins its own case, so all three are drawn, not only the best mean.
+        picked.sort_unstable();
+        picked.dedup();
+        assert_eq!(picked, [0, 1, 2]);
+        let obs = Receipts::default();
+        report_selection(&obs, 2, ranked.len(), draws);
+        let receipt = obs.selections.into_inner().unwrap().remove(0);
+        assert_eq!((receipt.generation, receipt.pool), (2, 3));
+        let selection = receipt.selection.unwrap();
+        assert_eq!(selection.parents.len(), 60);
+        // The generation's stream is `LEXICASE_STREAM + generation` under the run seed.
+        let mut replay = Pcg32::new(5, LEXICASE_STREAM.wrapping_add(2));
+        let errors = matrix.as_ref().unwrap();
+        let again =
+            crate::kernel::lexicase::select(errors, LexicaseConfig::default(), 60, &mut replay)
+                .unwrap();
+        assert_eq!(selection, again);
+    }
+
+    #[test]
+    fn case_scores_keep_the_legacy_fold_bits_and_never_see_their_own_labels() {
+        let (x, y) = regimes(2, 90);
+        let assign = fold_assign(y.len(), 3, "invent");
+        let genome =
+            parse_pipe("(pipe X (standardize) (cheb degree=3 append=true) (ridge))").unwrap();
+        let legacy = score_genome(&genome, &x, &y, &assign, 3, &r2).unwrap();
+        let (scores, predictions) =
+            score_genome_predictions(&genome, &x, &y, &assign, 3, &r2).unwrap();
+        assert_eq!(bits(&legacy), bits(&scores));
+        let rows = lexicase_case_rows(y.len(), 0xB10);
+        assert_eq!(rows.len(), 90);
+        assert!(rows.windows(2).all(|pair| pair[0] < pair[1]));
+        let (case_scores, residuals) =
+            score_genome_cases(&genome, &x, &y, &assign, 3, &r2, &rows).unwrap();
+        assert_eq!(bits(&legacy), bits(&case_scores));
+        for (&row, residual) in rows.iter().zip(&residuals) {
+            assert_eq!(residual.to_bits(), (y[row] - predictions[row]).to_bits());
+        }
+        // A fold's held-out predictions come only from models fitted on the other folds.
+        for fold in 0..3 {
+            let poisoned: Vec<f64> = y
+                .iter()
+                .zip(&assign)
+                .map(|(&v, &f)| if f == fold { v + 1e3 } else { v })
+                .collect();
+            let (_, after) =
+                score_genome_predictions(&genome, &x, &poisoned, &assign, 3, &r2).unwrap();
+            for row in (0..y.len()).filter(|&row| assign[row] == fold) {
+                assert_eq!(
+                    after[row].to_bits(),
+                    predictions[row].to_bits(),
+                    "row {row}"
+                );
+            }
+        }
+        // The case rows are a sorted prefix of the race's permutation, capped.
+        assert_eq!(lexicase_case_rows(1000, 3).len(), LEXICASE_CASE_ROWS);
+        let mut prefix = permute_indices(1000, 3)[..LEXICASE_CASE_ROWS].to_vec();
+        prefix.sort_unstable();
+        assert_eq!(lexicase_case_rows(1000, 3), prefix);
+    }
+
+    #[test]
+    fn race_case_scores_keep_the_legacy_fold_bits() {
+        let (x, y) = regimes(3, 300);
+        let perm = permute_indices(y.len(), 7);
+        let genome = parse_pipe("(pipe X (robust_scale) (histgbm depth=3 rounds=20))").unwrap();
+        let obs = Receipts::default();
+        for rung in 0..3 {
+            let rows = &perm[..y.len().min(RACE_RUNG_ROWS[rung])];
+            let k = RACE_RUNG_FOLDS[rung];
+            let assign = fold_assign(rows.len(), k, "invent_r");
+            let started = Instant::now();
+            let legacy = score_rung(
+                &genome, rung, &x, &y, rows, &assign, k, &r2, started, 0.0, &obs,
+            )
+            .unwrap();
+            let (scores, residuals) = score_rung_cases(
+                &genome, rung, &x, &y, rows, &assign, k, &r2, started, 0.0, &obs, 128,
+            )
+            .unwrap();
+            assert_eq!(bits(&legacy), bits(&scores), "rung {rung}");
+            assert_eq!(residuals.len(), 128);
+            assert!(residuals.iter().all(|r| r.is_finite()));
+        }
+    }
+
+    #[test]
+    fn lexicase_surrogate_search_replays_and_reports_each_generation() {
+        let (x, y) = regimes(4, 160);
+        let run = |selection| {
+            let obs = Receipts::default();
+            let ranked = evolve(
+                &x,
+                &y,
+                &r2,
+                &config(FitnessMode::Surrogate, selection),
+                &obs,
+            );
+            (ranked, obs)
+        };
+        let (a, obs_a) = run(MAD);
+        let (b, obs_b) = run(MAD);
+        let (_, tournament) = run(ParentSelection::Tournament3);
+        assert_eq!(dump(&a), dump(&b));
+        // Generation 0 is scored before any parent is drawn: its ranking is tournament-3's.
+        assert_eq!(
+            *obs_a.first_generation.lock().unwrap(),
+            *tournament.first_generation.lock().unwrap()
+        );
+        let receipts = obs_a.selections.into_inner().unwrap();
+        assert_eq!(receipts, obs_b.selections.into_inner().unwrap());
+        assert_eq!(receipts.len(), 3);
+        for (generation, receipt) in receipts.iter().enumerate() {
+            assert_eq!(receipt.generation, generation);
+            let selection = receipt.selection.as_ref().unwrap();
+            // One event per mutated child, two per crossover child: 11 children of 12.
+            assert!((11..=22).contains(&selection.parents.len()));
+            assert_eq!(selection.trace.events.len(), selection.parents.len());
+            assert!(selection.parents.iter().all(|&p| p < receipt.pool));
+            assert_eq!(selection.trace.cases.len(), 160);
+        }
+    }
+
+    #[test]
+    fn lexicase_race_scores_on_the_cpu_and_keeps_reuse_off() {
+        let (x, y) = regimes(5, 300);
+        let called = AtomicUsize::new(0);
+        let backend: &GpuRidgeScoreBatchFn = &|_| {
+            called.fetch_add(1, Ordering::Relaxed);
+            Err("unavailable".to_string())
+        };
+        let dedup = Rung0ExactSurrogateDedupPolicy::from_authority_receipt(
+            RUNG0_EXACT_SURROGATE_DEDUP_AUTHORITY_SHA256,
+            &"a".repeat(64),
+        )
+        .unwrap();
+        let race = |obs: &Receipts| {
+            evolve_lite_race_with_gpu_policy_and_exact_surrogate_dedup(
+                &x,
+                &y,
+                &r2,
+                &config(FitnessMode::LiteRace, MAD),
+                obs,
+                Some(backend),
+                GpuRidgeScorePolicy::new(1, 1),
+                Some(dedup),
+            )
+        };
+        let obs = Receipts::default();
+        let outcome = race(&obs);
+        assert_eq!(called.load(Ordering::Relaxed), 0, "the GPU backend ran");
+        assert!(!outcome.rung0_exact_surrogate_dedup.active);
+        assert_eq!(
+            outcome
+                .rung0_exact_surrogate_dedup
+                .activation_blocker
+                .as_deref(),
+            Some(LEXICASE_REUSE_BLOCKER)
+        );
+        assert!(outcome
+            .candidates
+            .iter()
+            .filter_map(|c| c.r0_fold_routes.as_ref())
+            .flatten()
+            .all(|route| *route == Rung0FoldRouteReceipt::cpu(Rung0FoldRoute::CpuExact)));
+        let receipts = obs.selections.into_inner().unwrap();
+        assert!(!receipts.is_empty());
+        for receipt in &receipts {
+            let selection = receipt.selection.as_ref().unwrap();
+            assert_eq!(selection.trace.cases.len(), RACE_RUNG_ROWS[0]);
+            assert!(selection.parents.iter().all(|&p| p < receipt.pool));
+        }
+        let again = race(&Receipts::default());
+        assert_eq!(outcome.candidates, again.candidates);
+        assert_eq!(dump(&outcome.ranked), dump(&again.ranked));
+        assert_eq!(outcome.rung_evals, again.rung_evals);
+    }
+
+    #[test]
+    fn lexicase_needs_the_legacy_fault_policy_and_a_valid_rate() {
+        let strict = FaultPolicy::RejectHard;
+        assert!(MAD
+            .validate(strict)
+            .unwrap_err()
+            .contains("default fault policy"));
+        assert!(ParentSelection::Tournament3.validate(strict).is_ok());
+        assert!(MAD.validate(FaultPolicy::Legacy).is_ok());
+        let rate = ParentSelection::EpsilonLexicase(LexicaseConfig {
+            epsilon: EpsilonRule::Zero,
+            sampling: CaseSampling::DownSampled { per_mille: 1001 },
+        });
+        assert!(rate.validate(FaultPolicy::Legacy).is_err());
+        let (x, y) = regimes(6, 60);
+        let mut cfg = config(FitnessMode::LiteRace, MAD);
+        cfg.fault_policy = strict;
+        let refused = evolve_lite_race_with_exact_initial_population(
+            &x,
+            &y,
+            &r2,
+            &cfg,
+            &Receipts::default(),
+            &[],
+        );
+        assert!(refused.unwrap_err().contains("default fault policy"));
+    }
+
+    #[test]
+    #[should_panic(expected = "epsilon-lexicase needs the default fault policy")]
+    fn the_surrogate_search_refuses_lexicase_under_a_strict_fault_policy() {
+        let (x, y) = regimes(7, 60);
+        let mut cfg = config(FitnessMode::Surrogate, MAD);
+        cfg.fault_policy = FaultPolicy::RejectHard;
+        evolve(&x, &y, &r2, &cfg, &Receipts::default());
+    }
+
+    #[test]
+    fn a_pool_without_one_case_matrix_falls_back_to_tournament_three() {
+        let ranked = ranked(&[0.9, 0.5, 0.5, 0.2, 0.1]);
+        let missing = lexicase_matrix(&ranked, |dsl| (dsl != "c2").then_some(&[1.0, 2.0][..]));
+        assert!(missing.unwrap_err().contains("no residual cases"));
+        let uneven = lexicase_matrix(&ranked, |dsl| {
+            Some(if dsl == "c2" {
+                &[1.0][..]
+            } else {
+                &[1.0, 2.0][..]
+            })
+        });
+        assert!(uneven.unwrap_err().contains("different case counts"));
+        let matrix = Err("no cases".to_string());
+        let mut draws = start_lexicase(Some(LexicaseConfig::default()), Some(&matrix), 1, 0);
+        assert!(start_lexicase(None, Some(&matrix), 1, 0).is_none());
+        for seed in 0..50 {
+            let (mut a, mut b) = (Pcg32::new(seed, 1), Pcg32::new(seed, 1));
+            assert_eq!(
+                pick_parent(&mut a, &ranked, 3, None, &mut draws),
+                select_parent(&mut b, &ranked, 3, None)
+            );
+            assert_eq!(a.next_u32(), b.next_u32());
+        }
+        let obs = Receipts::default();
+        report_selection(&obs, 4, ranked.len(), draws);
+        let receipts = obs.selections.into_inner().unwrap();
+        assert_eq!(receipts.len(), 1);
+        assert_eq!(receipts[0].selection, Err("no cases".to_string()));
+    }
+
+    /// One synthetic regression task: rows of five gaussian features, labelled by `label`.
+    fn task(name: &str, seed: u64, n: usize) -> (Rows, Vec<f64>) {
+        let mut rng = Pcg32::new(seed, 0x0B10);
+        let x: Rows = (0..n)
+            .map(|_| (0..5).map(|_| rng.gaussian()).collect())
+            .collect();
+        let y = x
+            .iter()
+            .map(|r| {
+                let noise = rng.gaussian();
+                match name {
+                    "regimes" => (if r[2] > 0.0 { 3.0 * r[0] } else { -2.0 * r[1] }) + 0.1 * noise,
+                    "linear" => 3.0 * r[0] - 2.0 * r[1] + 0.2 * noise,
+                    "interaction" => r[0] * r[1] + 0.5 * r[2] + 0.1 * noise,
+                    "periodic" => (2.0 * r[0]).sin() + 0.5 * r[1] + 0.1 * noise,
+                    "outliers" => {
+                        let shift = if noise > 1.8 { 8.0 } else { 0.0 };
+                        r[0] + 0.5 * r[1] + shift + 0.1 * noise
+                    }
+                    _ => r[0] + r[1].abs() * 0.5 * noise,
+                }
+            })
+            .collect();
+        (x, y)
+    }
+
+    /// Six tasks x five seeds at an equal generation budget: the same population size, generation
+    /// count, folds, data and search seed for both arms. Each winner's surrogate is refit on the
+    /// task's training rows and scored on held-out rows the search never saw. About six minutes
+    /// in a debug build, so it is evidence, not a PR-tier test: `cargo test -p feat-math --release
+    /// --lib six_tasks_five_seeds -- --ignored --nocapture`. Floating-point results do not depend
+    /// on the build profile.
+    #[test]
+    #[ignore]
+    fn six_tasks_five_seeds_equal_budget_selection_ablation() {
+        const TASKS: [&str; 6] = [
+            "regimes",
+            "linear",
+            "interaction",
+            "periodic",
+            "outliers",
+            "heteroscedastic",
+        ];
+        const SEEDS: [u64; 5] = [11, 29, 47, 71, 101];
+        let heldout = |dsl: &str, x: &Rows, y: &[f64], xt: &Rows, yt: &[f64]| {
+            let genome = GenomeIr::Pipeline(search_surrogate(&parse_pipe(dsl).unwrap()));
+            let model = model::fit(&genome, x, y).unwrap();
+            r2(yt, &model.predict(xt).unwrap())
+        };
+        let median = |values: &mut Vec<f64>| {
+            values.sort_by(f64::total_cmp);
+            let n = values.len();
+            (values[(n - 1) / 2] + values[n / 2]) / 2.0
+        };
+        let (mut base, mut lexi, mut diversity) = (Vec::new(), Vec::new(), Vec::new());
+        let (mut base_distinct, mut lexi_distinct) = (0usize, 0usize);
+        let mut paired = [0usize; 3]; // lexicase better, equal, worse
+        let mut rows = Vec::new();
+        for name in TASKS {
+            for seed in SEEDS {
+                let (x, y) = task(name, seed, 280);
+                let (train, test) = (x[..160].to_vec(), x[160..].to_vec());
+                let (ytrain, ytest) = (y[..160].to_vec(), y[160..].to_vec());
+                let score = |selection| {
+                    let cfg = EvolveConfig {
+                        pop: 16,
+                        gens: 5,
+                        seed,
+                        ..config(FitnessMode::Surrogate, selection)
+                    };
+                    let obs = Receipts::default();
+                    let ranked = evolve(&train, &ytrain, &r2, &cfg, &obs);
+                    let fraction = obs
+                        .selections
+                        .into_inner()
+                        .unwrap()
+                        .iter()
+                        .filter_map(|r| r.selection.as_ref().ok())
+                        .map(|s| crate::kernel::lexicase::distinct_parent_fraction(&s.parents))
+                        .sum::<f64>();
+                    let held = heldout(&ranked[0].dsl, &train, &ytrain, &test, &ytest);
+                    (held, ranked.len(), fraction / cfg.gens as f64)
+                };
+                let (tournament, tournament_distinct, _) = score(ParentSelection::Tournament3);
+                let (lexicase, lexicase_distinct, fraction) = score(MAD);
+                assert!(tournament.is_finite() && lexicase.is_finite());
+                base.push(tournament);
+                lexi.push(lexicase);
+                diversity.push(fraction);
+                base_distinct += tournament_distinct;
+                lexi_distinct += lexicase_distinct;
+                paired[match lexicase.total_cmp(&tournament) {
+                    std::cmp::Ordering::Greater => 0,
+                    std::cmp::Ordering::Equal => 1,
+                    std::cmp::Ordering::Less => 2,
+                }] += 1;
+                rows.push(format!(
+                    "{{\"task\":\"{name}\",\"seed\":{seed},\"tournament_r2\":{tournament},\
+                     \"lexicase_r2\":{lexicase},\"tournament_ranked\":{tournament_distinct},\
+                     \"lexicase_ranked\":{lexicase_distinct},\
+                     \"lexicase_distinct_parent_fraction\":{fraction}}}"
+                ));
+            }
+        }
+        let (base_median, lexi_median) = (median(&mut base), median(&mut lexi));
+        println!("B10_ABLATION [{}]", rows.join(","));
+        println!(
+            "B10_ABLATION_SUMMARY {{\"runs\":{},\"tournament_median_r2\":{base_median},\
+             \"lexicase_median_r2\":{lexi_median},\"mean_distinct_parent_fraction\":{},\
+             \"tournament_mean_final_distinct\":{},\"lexicase_mean_final_distinct\":{},\
+             \"paired_lexicase_better_equal_worse\":{paired:?}}}",
+            rows.len(),
+            diversity.iter().sum::<f64>() / diversity.len() as f64,
+            base_distinct as f64 / rows.len() as f64,
+            lexi_distinct as f64 / rows.len() as f64,
+        );
+        assert_eq!(rows.len(), 30);
+        // The card's acceptance at this equal budget: median held-out R² no worse, and a more
+        // diverse surviving population (distinct ranked genomes at the end of the search).
+        assert!(lexi_median >= base_median, "{lexi_median} < {base_median}");
+        assert!(lexi_distinct > base_distinct);
+    }
+}
+// B10 lexicase: end
