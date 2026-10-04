@@ -2166,6 +2166,13 @@
         "fitting",
         "export"
       ]
+    },
+    "target:feat-math/test/linear_scaling_v2": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "export"
+      ]
     }
   },
   "baseline_triage": [
