@@ -963,6 +963,12 @@ fn op_src(op: &PlannedOp) -> String {
     }
     docstring.push_str("    \"\"\"");
     let body: &str = match op {
+        // B13: the goertzel_bank helper, only for a bank-bearing program.
+        PlannedOp::RowVectorV2 {
+            state: crate::kernel::row_vector::FittedStage::Goertzel(_),
+        } => crate::kernel::row_vector::emit::goertzel_helper(
+            crate::kernel::row_vector::emit::RowRecipeLanguage::Python,
+        ),
         // B12: helper bodies remain feature-specific.
         PlannedOp::RowVectorV2 { .. } | PlannedOp::RowVectorInputV2 { .. } => {
             crate::kernel::row_vector::emit::helper(

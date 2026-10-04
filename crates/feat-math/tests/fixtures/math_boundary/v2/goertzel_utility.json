@@ -1,0 +1,14 @@
+{
+  "schema": "feat-math.math-boundary.v2.goertzel-utility",
+  "note": "B13 synthetic fixture utility lane, not a campaign result. Each task draws rows of width 64 with a target tone at the listed normalized frequency (amplitude 0.5..2, random phase), nuisance tones at the listed frequencies (amplitude 0..1.5, random phase) and uniform noise of +-0.1, all from Pcg32(seed, 0x676f65727a656c). The label is the target amplitude squared. Both arms fit the same ridge head (lambda_frac 0.02) on the same 96 training rows and are scored on the same 64 held-out rows: the reference reads the existing integer-bin DFT magnitude stage (fft_mag, all 32 bins), the candidate a one-bin goertzel_bank at the target frequency. Real-campaign W17 G-A..G-E and Baseline promotion remain held.",
+  "width": 64,
+  "seeds": [11, 29, 47, 71, 101],
+  "tasks": [
+    {"id": "half-bin-low", "frequency": 0.1015625, "nuisance": [0.25, 0.390625], "reference_bins": 32},
+    {"id": "quarter-bin-mid", "frequency": 0.19140625, "nuisance": [0.0625, 0.4375], "reference_bins": 32},
+    {"id": "half-bin-high", "frequency": 0.4140625, "nuisance": [0.125, 0.3125], "reference_bins": 32},
+    {"id": "near-dc", "frequency": 0.0234375, "nuisance": [0.2, 0.35], "reference_bins": 32},
+    {"id": "three-nuisance", "frequency": 0.2734375, "nuisance": [0.1, 0.33, 0.45], "reference_bins": 32},
+    {"id": "integer-bin", "frequency": 0.15625, "nuisance": [0.3, 0.4], "reference_bins": 32}
+  ]
+}

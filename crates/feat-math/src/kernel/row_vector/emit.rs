@@ -111,8 +111,152 @@ pub fn helper(language: RowRecipeLanguage) -> &'static str {
     }
 }
 
+// B13: goertzel_bank helpers, emitted only for programs that hold a bank. They
+// follow kernel/goertzel.rs operation for operation: protect every input, then
+// per bin c=2*cosine, the frozen recurrence, the component finalization and the
+// output projection.
+pub const RUST_GOERTZEL_HELPER: &str = r#"
+fn row_vector_goertzel_v2_values(x: &[Vec<f64>], width: usize, cosines: &[u64], sines: &[u64]) -> (Vec<Vec<f64>>, Vec<Vec<u32>>) {
+    let mut rows=Vec::with_capacity(x.len()); let mut faults=Vec::with_capacity(x.len());
+    for row in x {
+        assert_eq!(row.len(),width,"row-vector fitted width");
+        let mut inputs=Vec::with_capacity(width); let mut input_fault=0u32;
+        for &raw in row {
+            let v=if !raw.is_finite() {input_fault|=8192;0.0} else if raw.abs()>1e12 {input_fault|=512;raw.clamp(-1e12,1e12)} else {raw};
+            inputs.push(v);
+        }
+        let mut values=Vec::with_capacity(cosines.len()); let mut bits=Vec::with_capacity(cosines.len());
+        for j in 0..cosines.len() {
+            let cosine=f64::from_bits(cosines[j]); let sine=f64::from_bits(sines[j]); let c=2.0*cosine;
+            let (mut q1,mut q2)=(0.0f64,0.0f64);
+            for &v in &inputs { let term=c*q1; let sum=v+term; let q0=sum-q2; q2=q1; q1=q0; }
+            let real=q1-cosine*q2; let imaginary=sine*q2;
+            let mut power=real*real+imaginary*imaginary; let mut fault=input_fault;
+            if !power.is_finite() {fault|=256;power=0.0;} else if power.abs()>1e12 {fault|=512;power=power.clamp(-1e12,1e12);}
+            values.push(power);bits.push(fault);
+        }
+        rows.push(values);faults.push(bits);
+    }
+    (rows,faults)
+}
+fn row_vector_goertzel_v2_apply(x: &[Vec<f64>], width: usize, cosines: &[u64], sines: &[u64], append: bool) -> Vec<Vec<f64>> {
+    assert!(!append,"v2 row stages replace features");row_vector_goertzel_v2_values(x,width,cosines,sines).0
+}
+"#;
+
+pub const PYTHON_GOERTZEL_HELPER: &str = r#"
+import struct
+
+def row_vector_goertzel_v2_values(x, width, cosines, sines):
+    rows, faults = [], []
+    for row in x:
+        if len(row) != width: raise ValueError("row-vector fitted width")
+        inputs, input_fault = [], 0
+        for raw in row:
+            if not math.isfinite(raw): input_fault |= 8192; v = 0.0
+            elif abs(raw)>1e12: input_fault |= 512; v = max(-1e12,min(1e12,raw))
+            else: v = raw
+            inputs.append(v)
+        values, bits = [], []
+        for j in range(len(cosines)):
+            cosine = struct.unpack('<d', struct.pack('<Q',cosines[j]))[0]
+            sine = struct.unpack('<d', struct.pack('<Q',sines[j]))[0]
+            c = 2.0*cosine
+            q1, q2 = 0.0, 0.0
+            for v in inputs:
+                term = c*q1
+                total = v+term
+                q0 = total-q2
+                q2 = q1
+                q1 = q0
+            real = q1-cosine*q2
+            imaginary = sine*q2
+            power = real*real+imaginary*imaginary
+            fault = input_fault
+            if not math.isfinite(power): fault |= 256; power = 0.0
+            elif abs(power)>1e12: fault |= 512; power = max(-1e12,min(1e12,power))
+            values.append(power); bits.append(fault)
+        rows.append(values); faults.append(bits)
+    return rows, faults
+
+def row_vector_goertzel_v2_apply(x, width, cosines, sines, append):
+    if append: raise ValueError("v2 row stages replace features")
+    return row_vector_goertzel_v2_values(x,width,cosines,sines)[0]
+"#;
+
+pub const CPP_GOERTZEL_HELPER: &str = r#"
+static double row_vector_goertzel_v2_bits(std::uint64_t bits){double value;std::memcpy(&value,&bits,8);return value;}
+static std::pair<std::vector<std::vector<double>>,std::vector<std::vector<std::uint32_t>>> row_vector_goertzel_v2_values(const std::vector<std::vector<double>>& x,std::size_t width,const std::vector<std::uint64_t>& cosines,const std::vector<std::uint64_t>& sines){
+    std::vector<std::vector<double>> rows;std::vector<std::vector<std::uint32_t>> faults;
+    for(const auto& row:x){
+        if(row.size()!=width)throw std::invalid_argument("row-vector fitted width");
+        std::vector<double> inputs;std::uint32_t input_fault=0;
+        for(const double raw:row){
+            double v;
+            if(!std::isfinite(raw)){input_fault|=8192;v=0.0;}
+            else if(std::abs(raw)>1e12){input_fault|=512;v=std::max(-1e12,std::min(1e12,raw));}else{v=raw;}
+            inputs.push_back(v);
+        }
+        std::vector<double> values;std::vector<std::uint32_t> bits;
+        for(std::size_t j=0;j<cosines.size();++j){
+            const double cosine=row_vector_goertzel_v2_bits(cosines[j]);const double sine=row_vector_goertzel_v2_bits(sines[j]);const double c=2.0*cosine;
+            double q1=0.0,q2=0.0;
+            for(const double v:inputs){const double term=c*q1;const double sum=v+term;const double q0=sum-q2;q2=q1;q1=q0;}
+            const double real=q1-cosine*q2;const double imaginary=sine*q2;
+            double power=real*real+imaginary*imaginary;std::uint32_t fault=input_fault;
+            if(!std::isfinite(power)){fault|=256;power=0.0;}else if(std::abs(power)>1e12){fault|=512;power=std::max(-1e12,std::min(1e12,power));}
+            values.push_back(power);bits.push_back(fault);
+        }
+        rows.push_back(values);faults.push_back(bits);
+    }
+    return {rows,faults};
+}
+static std::vector<std::vector<double>> row_vector_goertzel_v2_apply(const std::vector<std::vector<double>>& x,std::size_t width,const std::vector<std::uint64_t>& cosines,const std::vector<std::uint64_t>& sines,bool append){
+    if(append)throw std::invalid_argument("v2 row stages replace features");return row_vector_goertzel_v2_values(x,width,cosines,sines).first;
+}
+"#;
+
+pub fn goertzel_helper(language: RowRecipeLanguage) -> &'static str {
+    match language {
+        RowRecipeLanguage::Rust => RUST_GOERTZEL_HELPER,
+        RowRecipeLanguage::Python => PYTHON_GOERTZEL_HELPER,
+        RowRecipeLanguage::Cpp17 => CPP_GOERTZEL_HELPER,
+    }
+}
+
+/// A bank's width and frozen cosine/sine bit lists.
+fn goertzel_arguments(
+    state: &crate::kernel::goertzel::Fitted,
+    language: RowRecipeLanguage,
+) -> String {
+    let words = |bits: Vec<u64>| -> String {
+        let items = bits
+            .iter()
+            .map(|b| {
+                if language == RowRecipeLanguage::Cpp17 {
+                    format!("{b}ULL")
+                } else {
+                    b.to_string()
+                }
+            })
+            .collect::<Vec<_>>()
+            .join(",");
+        match language {
+            RowRecipeLanguage::Rust => format!("&[{items}]"),
+            RowRecipeLanguage::Python => format!("[{items}]"),
+            RowRecipeLanguage::Cpp17 => format!("{{{items}}}"),
+        }
+    };
+    let cosines = words(state.bins().iter().map(|b| b.cosine_bits).collect());
+    let sines = words(state.bins().iter().map(|b| b.sine_bits).collect());
+    format!("{},{cosines},{sines}", state.width())
+}
+
 pub fn arguments(stage: &FittedStage, language: RowRecipeLanguage) -> String {
-    let FittedStage::Savgol(state) = stage;
+    let state = match stage {
+        FittedStage::Savgol(state) => state,
+        FittedStage::Goertzel(state) => return goertzel_arguments(state, language),
+    };
     let list = |items: Vec<String>, nested: bool| -> String {
         let items = items.join(",");
         match language {
@@ -179,16 +323,24 @@ pub fn apply_call(stage: &FittedStage, language: RowRecipeLanguage) -> String {
     } else {
         "x"
     };
-    format!(
-        "row_vector_v2_apply({x},{},{{append}})",
-        arguments(stage, language)
-    )
+    let function = match stage {
+        FittedStage::Savgol(_) => "row_vector_v2_apply",
+        FittedStage::Goertzel(_) => "row_vector_goertzel_v2_apply",
+    };
+    format!("{function}({x},{},{{append}})", arguments(stage, language))
 }
 
 pub fn fitted_cpp17(model: &Model) -> Result<String> {
     model.validate()?;
     let mut source = String::from("// feat-math.feature-row.fitted.v2\n#include <algorithm>\n#include <cmath>\n#include <cstring>\n#include <cstdint>\n#include <stdexcept>\n#include <utility>\n#include <vector>\n");
     source.push_str(CPP_HELPER);
+    if model
+        .fitted_stages()
+        .iter()
+        .any(|stage| matches!(stage, FittedStage::Goertzel(_)))
+    {
+        source.push_str(CPP_GOERTZEL_HELPER);
+    }
     source.push_str(
         "static std::vector<double> row_vector_predict(std::vector<std::vector<double>> x){\n",
     );

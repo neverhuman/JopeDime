@@ -28,6 +28,9 @@ pub mod wire_v2;
 pub mod row_vector;
 pub mod savgol;
 
+// B13: sparse Goertzel bank kernel (v2 wire 61).
+pub mod goertzel;
+
 pub use program::Program;
 
 #[derive(Clone, Debug, PartialEq, Eq)]

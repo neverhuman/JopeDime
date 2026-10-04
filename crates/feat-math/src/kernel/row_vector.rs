@@ -2,6 +2,7 @@
 //! are unchanged. This bounded Experimental profile admits at most eight
 //! row stages followed by the existing ridge learner, with train-only fit.
 use super::codec::{Reader, Writer, MAX_BYTES};
+use super::goertzel;
 use super::savgol;
 use super::wire_v2::{VersionError, VersionResult, MAGIC_V2};
 use super::{Error, Result};
@@ -17,12 +18,21 @@ pub const PROFILE: &str = "feat-math.feature-row.experimental.v2";
 pub const REQUIRED_FEATURES: u64 = 32;
 const PROFILE_CONTRACT: &str = "feat-math.feature-row.experimental.v2;axis=FeatureWithinRow;max_stages=8;prior_max=0.25;head=ridge-v1";
 const MAX_STAGES: usize = 8;
+// B13: a program that holds a goertzel_bank stage also declares this bit and
+// the bank's grammar/emitter identities; savgol-only artifacts are unchanged.
+pub const GOERTZEL_FEATURE: u64 = 128;
+const GOERTZEL_PROFILE_CONTRACT: &str = "feat-math.feature-row.experimental.v2;axis=FeatureWithinRow;max_stages=8;prior_max=0.25;head=ridge-v1;wire61=goertzel_bank;bins=1..32;width<=512";
+const EMITTER_IDENTITY: &str = "feat-math.feature-row.recipes.v2+wire58";
+const GOERTZEL_EMITTER_IDENTITY: &str = "feat-math.feature-row.recipes.v2+wire58+wire61";
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "wire", content = "parameters", deny_unknown_fields)]
 pub enum RowStage {
     #[serde(rename = "58")]
     Savgol(savgol::Config),
+    // B13: sparse Goertzel bank; its output width is the bank length.
+    #[serde(rename = "61")]
+    Goertzel(goertzel::Config),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
@@ -59,12 +69,15 @@ impl<'de> Deserialize<'de> for Program {
 pub enum FittedStage {
     #[serde(rename = "58")]
     Savgol(savgol::Fitted),
+    #[serde(rename = "61")]
+    Goertzel(goertzel::Fitted),
 }
 
 impl RowStage {
     fn fit(&self, width: usize) -> Result<FittedStage> {
         match self {
             Self::Savgol(config) => Ok(FittedStage::Savgol(config.fit(width)?)),
+            Self::Goertzel(config) => Ok(FittedStage::Goertzel(config.fit(width)?)),
         }
     }
 }
@@ -73,19 +86,25 @@ impl FittedStage {
     pub(crate) fn validate(&self) -> Result<()> {
         match self {
             Self::Savgol(state) => state.validate(),
+            Self::Goertzel(state) => state.validate(),
         }
     }
     pub fn input_width(&self) -> usize {
         match self {
             Self::Savgol(state) => state.width(),
+            Self::Goertzel(state) => state.width(),
         }
     }
     pub fn output_width(&self) -> usize {
-        self.input_width()
+        match self {
+            Self::Savgol(_) => self.input_width(),
+            Self::Goertzel(state) => state.output_width(),
+        }
     }
     pub(crate) fn apply(&self, row: &[f64]) -> Result<savgol::Output> {
         match self {
             Self::Savgol(state) => state.apply_validated(row),
+            Self::Goertzel(state) => state.apply_validated(row),
         }
     }
 }
@@ -129,6 +148,21 @@ impl Program {
         f64::from_bits(self.lambda_bits)
     }
 
+    /// B12's feature 32, plus [`GOERTZEL_FEATURE`] when a goertzel_bank stage is present.
+    pub fn required_features(&self) -> u64 {
+        if self.has_goertzel() {
+            REQUIRED_FEATURES | GOERTZEL_FEATURE
+        } else {
+            REQUIRED_FEATURES
+        }
+    }
+
+    fn has_goertzel(&self) -> bool {
+        self.stages
+            .iter()
+            .any(|stage| matches!(stage, RowStage::Goertzel(_)))
+    }
+
     pub(crate) fn fitted_stages(&self) -> Result<Vec<FittedStage>> {
         let mut width = self.input_width;
         self.stages
@@ -147,7 +181,7 @@ impl Program {
         writer.raw(MAGIC_V2)?;
         writer.byte(3)?;
         writer.byte(2)?;
-        writer.word(REQUIRED_FEATURES)?;
+        writer.word(self.required_features())?;
         writer.text(
             &serde_json::to_string(self).map_err(|e| VersionError::Malformed(e.to_string()))?,
         )?;
@@ -156,10 +190,11 @@ impl Program {
 
     pub fn from_bytes(bytes: &[u8]) -> VersionResult<Self> {
         let mut reader = Reader::new(bytes)?;
-        if reader.take(MAGIC_V2.len())? != MAGIC_V2
-            || reader.byte()? != 3
-            || reader.byte()? != 2
-            || reader.word()? != REQUIRED_FEATURES
+        let envelope =
+            reader.take(MAGIC_V2.len())? == MAGIC_V2 && reader.byte()? == 3 && reader.byte()? == 2;
+        let features = if envelope { reader.word()? } else { 0 };
+        if !envelope
+            || (features != REQUIRED_FEATURES && features != REQUIRED_FEATURES | GOERTZEL_FEATURE)
         {
             return Err(VersionError::UnsupportedVersion(
                 "row-vector envelope/feature set".into(),
@@ -172,7 +207,14 @@ impl Program {
         let value: Self = serde_json::from_value(parameters)
             .map_err(|e| VersionError::Malformed(e.to_string()))?;
         let lambda = value.lambda();
-        Ok(Self::new(2, value.input_width, value.stages, lambda)?)
+        let program = Self::new(2, value.input_width, value.stages, lambda)?;
+        // B13: the declared feature set must be exactly what the stages require.
+        if program.required_features() != features {
+            return Err(VersionError::UnsupportedVersion(
+                "row-vector feature set differs from its stages".into(),
+            ));
+        }
+        Ok(program)
     }
 
     pub fn canonical(&self) -> VersionResult<String> {
@@ -278,9 +320,14 @@ impl Program {
                 let at = rng.next_u32() as usize % (stages.len() + 1);
                 stages.insert(at, stage);
             }
-            Edit::Change if profile.savgol && !stages.is_empty() => {
-                let at = rng.next_u32() as usize % stages.len();
-                let RowStage::Savgol(config) = &stages[at];
+            Edit::Change if profile.savgol && !savgol_stages(&stages).is_empty() => {
+                // B13: only savgol stages are eligible; a savgol-only program
+                // draws the same stage as before.
+                let eligible = savgol_stages(&stages);
+                let at = eligible[rng.next_u32() as usize % eligible.len()];
+                let RowStage::Savgol(config) = &stages[at] else {
+                    return Err(Error::Unsupported("row-vector savgol edit".into()));
+                };
                 let derivative = (config.derivative() + 1) % (config.degree() + 1);
                 let window = if config.window() == 129 {
                     (config.degree() + 1).max(3) | 1
@@ -297,8 +344,9 @@ impl Program {
                     "shrink",
                 )?);
             }
-            Edit::Drop if !stages.is_empty() => {
-                let at = rng.next_u32() as usize % stages.len();
+            Edit::Drop if !savgol_stages(&stages).is_empty() => {
+                let eligible = savgol_stages(&stages);
+                let at = eligible[rng.next_u32() as usize % eligible.len()];
                 stages.remove(at);
             }
             _ => {
@@ -318,7 +366,7 @@ impl Program {
         if !profile.savgol || rng.next_f64() >= profile.prior {
             return Ok(self.clone());
         }
-        let arm = if self.stages.is_empty() {
+        let arm = if savgol_stages(&self.stages).is_empty() {
             Edit::Grow
         } else {
             match rng.next_u32() % 3 {
@@ -328,6 +376,82 @@ impl Program {
             }
         };
         self.edit(rng.next_u32() as u64, arm, profile)
+    }
+
+    /// B13: seeded GP insert/edit/remove of goertzel_bank stages under their own
+    /// removable switch. Grow draws one to four frequencies from the exact grid
+    /// k/128 (k = 0..=64); Change inserts, removes or replaces one bin and always
+    /// alters the bank; Drop stays available when generation is disabled.
+    pub fn edit_goertzel(&self, seed: u64, arm: Edit, profile: &GoertzelProfile) -> Result<Self> {
+        profile.validate()?;
+        let mut stages = self.stages.clone();
+        let mut rng = Pcg32::new(seed, 0x726f77676f727a32);
+        let banks = goertzel_stages(&stages);
+        match arm {
+            Edit::Grow if profile.goertzel && stages.len() < MAX_STAGES => {
+                let bins = 1 + rng.next_u32() as usize % 4;
+                let frequencies = (0..bins)
+                    .map(|_| grid_frequency(rng.next_u32()))
+                    .collect::<Vec<_>>();
+                let at = rng.next_u32() as usize % (stages.len() + 1);
+                stages.insert(at, RowStage::Goertzel(goertzel_config(&frequencies)?));
+            }
+            Edit::Change if profile.goertzel && !banks.is_empty() => {
+                let at = banks[rng.next_u32() as usize % banks.len()];
+                let RowStage::Goertzel(config) = &stages[at] else {
+                    return Err(Error::Unsupported("row-vector goertzel edit".into()));
+                };
+                let mut frequencies = config.frequencies();
+                let slot = rng.next_u32() as usize % frequencies.len();
+                match rng.next_u32() % 3 {
+                    0 if frequencies.len() < goertzel::MAX_BINS => {
+                        frequencies.insert(slot, grid_frequency(rng.next_u32()));
+                    }
+                    1 if frequencies.len() > 1 => {
+                        frequencies.remove(slot);
+                    }
+                    _ => {
+                        let draw = rng.next_u32();
+                        let next = grid_frequency(draw);
+                        frequencies[slot] = if next == frequencies[slot] {
+                            grid_frequency(draw.wrapping_add(1))
+                        } else {
+                            next
+                        };
+                    }
+                }
+                stages[at] = RowStage::Goertzel(goertzel_config(&frequencies)?);
+            }
+            Edit::Drop if !banks.is_empty() => {
+                let at = banks[rng.next_u32() as usize % banks.len()];
+                stages.remove(at);
+            }
+            _ => {
+                return Err(Error::Unsupported(
+                    "goertzel_bank GP arm/profile unavailable".into(),
+                ))
+            }
+        }
+        Self::new(2, self.input_width, stages, self.lambda())
+    }
+
+    /// B13: the bank's own prior gate, on a stream separate from B12's.
+    pub fn mutate_goertzel(&self, seed: u64, profile: &GoertzelProfile) -> Result<Self> {
+        profile.validate()?;
+        let mut rng = Pcg32::new(seed, 0x726f77676f707231);
+        if !profile.goertzel || rng.next_f64() >= profile.prior {
+            return Ok(self.clone());
+        }
+        let arm = if goertzel_stages(&self.stages).is_empty() {
+            Edit::Grow
+        } else {
+            match rng.next_u32() % 3 {
+                0 if self.stages.len() < MAX_STAGES => Edit::Grow,
+                1 => Edit::Change,
+                _ => Edit::Drop,
+            }
+        };
+        self.edit_goertzel(u64::from(rng.next_u32()), arm, profile)
     }
 }
 
@@ -348,6 +472,23 @@ impl ExperimentalProfile {
         if !self.prior.is_finite() || self.prior <= 0.0 || self.prior > 0.25 {
             return Err(Error::Domain(
                 "row-vector Experimental prior must be in (0,0.25]".into(),
+            ));
+        }
+        Ok(())
+    }
+}
+
+/// B13: the goertzel_bank search switch, separate from B12's savgol profile.
+#[derive(Clone, Debug)]
+pub struct GoertzelProfile {
+    pub goertzel: bool,
+    pub prior: f64,
+}
+impl GoertzelProfile {
+    pub fn validate(&self) -> Result<()> {
+        if !self.prior.is_finite() || self.prior <= 0.0 || self.prior > 0.25 {
+            return Err(Error::Domain(
+                "goertzel_bank Experimental prior must be in (0,0.25]".into(),
             ));
         }
         Ok(())
@@ -434,15 +575,16 @@ impl Model {
     pub fn to_json(&self) -> VersionResult<String> {
         self.validate()?;
         let bits = |v: &[f64]| v.iter().map(|x| x.to_bits()).collect();
+        let bank = self.program.has_goertzel();
         let wire = ModelWire {
             schema: "feat-math.feature-row-model".into(),
             format_version: 2,
             min_reader_version: 2,
-            required_features: REQUIRED_FEATURES,
+            required_features: self.program.required_features(),
             numerical_policy: "row-protected-v2".into(),
             profile: PROFILE.into(),
-            grammar_sha256: format!("{:x}", Sha256::digest(PROFILE_CONTRACT.as_bytes())),
-            emitter_feature_identity: "feat-math.feature-row.recipes.v2+wire58".into(),
+            grammar_sha256: grammar_sha256(bank),
+            emitter_feature_identity: emitter_identity(bank).into(),
             output_schema: vec!["prediction:f64".into()],
             program: self.program.to_bytes()?,
             stages: self.stages.clone(),
@@ -469,14 +611,15 @@ impl Model {
         check_stage_wires(&parameters)?;
         let wire: ModelWire = serde_json::from_value(parameters)
             .map_err(|e| VersionError::Malformed(e.to_string()))?;
+        let bank = wire.required_features == REQUIRED_FEATURES | GOERTZEL_FEATURE;
         if wire.schema != "feat-math.feature-row-model"
             || wire.format_version != 2
             || wire.min_reader_version != 2
-            || wire.required_features != REQUIRED_FEATURES
+            || (wire.required_features != REQUIRED_FEATURES && !bank)
             || wire.numerical_policy != "row-protected-v2"
             || wire.profile != PROFILE
-            || wire.grammar_sha256 != format!("{:x}", Sha256::digest(PROFILE_CONTRACT.as_bytes()))
-            || wire.emitter_feature_identity != "feat-math.feature-row.recipes.v2+wire58"
+            || wire.grammar_sha256 != grammar_sha256(bank)
+            || wire.emitter_feature_identity != emitter_identity(bank)
             || wire.output_schema != ["prediction:f64"]
         {
             return Err(VersionError::UnsupportedVersion(
@@ -494,6 +637,12 @@ impl Model {
             },
         };
         model.validate()?;
+        // B13: the envelope's feature set must be the one its program requires.
+        if model.program.required_features() != wire.required_features {
+            return Err(VersionError::UnsupportedVersion(
+                "row-vector model feature set differs from its program".into(),
+            ));
+        }
         Ok(model)
     }
 
@@ -512,7 +661,7 @@ fn check_stage_wires(parameters: &serde_json::Value) -> VersionResult<()> {
     {
         for stage in stages {
             if let Some(wire) = stage.get("wire").and_then(serde_json::Value::as_str) {
-                if wire != "58" {
+                if wire != "58" && wire != "61" {
                     return Err(VersionError::UnsupportedVersion(format!(
                         "row-vector wire {wire} is unavailable"
                     )));
@@ -521,6 +670,49 @@ fn check_stage_wires(parameters: &serde_json::Value) -> VersionResult<()> {
         }
     }
     Ok(())
+}
+
+fn grammar_sha256(bank: bool) -> String {
+    let contract = if bank {
+        GOERTZEL_PROFILE_CONTRACT
+    } else {
+        PROFILE_CONTRACT
+    };
+    format!("{:x}", Sha256::digest(contract.as_bytes()))
+}
+
+fn emitter_identity(bank: bool) -> &'static str {
+    if bank {
+        GOERTZEL_EMITTER_IDENTITY
+    } else {
+        EMITTER_IDENTITY
+    }
+}
+
+fn savgol_stages(stages: &[RowStage]) -> Vec<usize> {
+    (0..stages.len())
+        .filter(|&i| matches!(stages[i], RowStage::Savgol(_)))
+        .collect()
+}
+
+fn goertzel_stages(stages: &[RowStage]) -> Vec<usize> {
+    (0..stages.len())
+        .filter(|&i| matches!(stages[i], RowStage::Goertzel(_)))
+        .collect()
+}
+
+/// The exact grid k/128 for k = 0..=64 (dividing by a power of two is exact).
+fn grid_frequency(draw: u32) -> f64 {
+    f64::from(draw % 65) / 128.0
+}
+
+fn goertzel_config(frequencies: &[f64]) -> Result<goertzel::Config> {
+    goertzel::Config::new(
+        2,
+        61,
+        super::ordered_axis::Axis::FeatureWithinRow,
+        frequencies,
+    )
 }
 
 fn validate_rows(rows: &Rows, width: usize) -> Result<()> {

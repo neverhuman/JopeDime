@@ -1272,6 +1272,10 @@ fn support_label(value: Support) -> &'static str {
 /// B12: admission belongs exclusively to the v2 FeatureWithinRow profile.
 /// Baseline/legacy grammar admission and their manifest hashes remain frozen.
 pub fn row_vector_v2_capability(wire: u16) -> Option<ElementCap> {
+    // B13: wire 61 shares the profile, emitters and fault classes; Experimental only.
+    if wire == 61 {
+        return Some(ElementCap { class: Class::Searchable { since: Grammar::RowVectorV2, tier: Tier::Experimental }, fault_classes: READ.union(FaultSet::MAGNITUDE_CLAMPED).union(FaultSet::NONFINITE_SANITIZED), emitters: EmitterSupport { rust_recipe: YES, python_recipe: YES, cpp17_recipe: YES, cpp17_fitted: YES, javascript: NO_JS }, portable_twin: true, notes: "wire61 goertzel_bank, FeatureWithinRow only, prior<=0.25, 1..=32 frozen frequencies in [0,0.5], output width = bank length, input width<=512; Baseline requires equal-budget promotion" });
+    }
     if wire != 58 {
         return None;
     }
