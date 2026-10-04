@@ -2,10 +2,17 @@
 
 B08 remainder slice 1 adds lossless group-local cursor/history snapshots,
 an explicit version-2 ordered program, and train-only fitting followed by causal
-prediction through the existing numeric downstream model. Wire 59 uses program
+prediction through the existing numeric Ridge downstream model. Wire 59 uses program
 variant 4 and required feature bit 64. The new program preserves width 1–512,
 order 1–4 and fixed finite positive step. Legacy programs, models and emitters
 retain their existing paths.
+
+The initial fitted closure is an untransformed numeric Ridge pipeline with finite
+nonnegative regularization. Other opaque legacy downstream programs preserve
+their codec round trip and return `Unsupported` when asked to fit. Restored models
+require the exact compatibility input layout, finite Ridge coefficients, matching
+widths and positive finite scales. A fit that overflows its fitted coefficients
+returns an error before exposing a model.
 
 The fitter accepts exactly the training prefix and its finite labels. A declared
 cut bounds future prediction; no held-out rows or labels enter fitting. Prediction
@@ -22,8 +29,9 @@ program identity, numerical policy v2, profile/emitter feature identity and outp
 schema; fitted floating-point values use integer words to preserve exact replay.
 The embedded legacy downstream program retains its historical numerical policy.
 
-Acceptance: `cargo test --locked -p feat-math --test finite_difference_routing
---test finite_difference_v2 --test ordered_axis_contract`. Tests preserve
+Acceptance: `cargo test --locked -p feat-math --test finite_difference_v2
+--test ordered_axis_contract`. The `routing::` module adds eleven cases to the
+existing mapped B08 target. Tests preserve
 refusal reproduction and cover snapshots, malformed/truncated codecs, IID and
 identity rejection, transactional batches, independent downstream fitting,
 future poison, boundary faults and all four orders on one ordered boundary file.

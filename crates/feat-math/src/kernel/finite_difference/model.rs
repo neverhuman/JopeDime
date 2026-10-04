@@ -1,4 +1,5 @@
 //! Train-only downstream fit and transactional causal prediction.
+use super::model_validation::{validate_compat_ridge, validate_fit_closure};
 use super::program::{PROFILE_ID, REQUIRED_FEATURE};
 use super::*;
 use crate::advanced_v3::{BoundModel, RawTable};
@@ -51,6 +52,7 @@ impl DifferenceProgram {
                 "difference fit needs exactly the train prefix and finite labels".into(),
             ));
         }
+        validate_fit_closure(self.downstream())?;
         let mut state =
             DifferenceState::new(self.config, self.width, task, &self.input, fold.clone())?;
         let mut transformed = Vec::with_capacity(rows.len());
@@ -64,13 +66,16 @@ impl DifferenceProgram {
         }
         let predictor = crate::fit_legacy_numeric_bound(&self.downstream, &transformed, labels)
             .map_err(|e| Error::Domain(e.to_string()))?;
-        Ok(DifferenceModel {
+        let model = DifferenceModel {
             program: self.clone(),
             task,
             fold,
             state,
             predictor,
-        })
+        };
+        // A successful fit must produce finite, losslessly replayable state.
+        model.to_json().map_err(|e| Error::Domain(e.to_string()))?;
+        Ok(model)
     }
 }
 
@@ -126,6 +131,10 @@ impl DifferenceModel {
     }
 
     pub fn to_json(&self) -> VersionResult<String> {
+        validate_fit_closure(self.program.downstream())?;
+        let predictor = serde_json::to_value(&self.predictor)
+            .map_err(|e| VersionError::Malformed(e.to_string()))?;
+        validate_compat_ridge(&predictor, self.program.width)?;
         let wire = ModelWire {
             schema: "feat-math.causal-difference-model".into(),
             format_version: 2,
@@ -143,10 +152,7 @@ impl DifferenceModel {
             },
             fold: self.fold.clone(),
             state: self.state.to_bytes()?,
-            predictor: pack_floats(
-                serde_json::to_value(&self.predictor)
-                    .map_err(|e| VersionError::Malformed(e.to_string()))?,
-            ),
+            predictor: pack_floats(predictor),
         };
         let json =
             serde_json::to_string(&wire).map_err(|e| VersionError::Malformed(e.to_string()))?;
@@ -183,6 +189,7 @@ impl DifferenceModel {
             }
         };
         let program = DifferenceProgram::from_bytes(&wire.program)?;
+        validate_fit_closure(program.downstream())?;
         if wire.grammar_sha256 != program.identity()? || wire.output_schema != ["prediction"] {
             return Err(VersionError::Malformed("difference model identity".into()));
         }
@@ -197,7 +204,9 @@ impl DifferenceModel {
                 "difference model state binding".into(),
             ));
         }
-        let predictor: BoundModel = serde_json::from_value(unpack_floats(wire.predictor)?)
+        let predictor_value = unpack_floats(wire.predictor)?;
+        validate_compat_ridge(&predictor_value, program.width)?;
+        let predictor: BoundModel = serde_json::from_value(predictor_value)
             .map_err(|e| VersionError::Malformed(e.to_string()))?;
         predictor
             .validate_binding()
