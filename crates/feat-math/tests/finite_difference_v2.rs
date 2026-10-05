@@ -449,3 +449,15 @@ mod routing;
 // B08 ordered recipes and fitted C++ continuation.
 #[path = "finite_difference/recipes.rs"]
 mod recipes;
+
+// B08 bounded Experimental generation, EEC and equal-budget evidence.
+#[path = "finite_difference/eec.rs"]
+mod eec;
+#[path = "finite_difference/profile.rs"]
+mod profile;
+#[path = "finite_difference/shortest.rs"]
+mod shortest;
+#[path = "finite_difference/utility.rs"]
+mod utility;
+#[path = "finite_difference/utility_exports.rs"]
+mod utility_exports;
