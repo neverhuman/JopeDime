@@ -127,6 +127,8 @@ fn main() {{
  for bytes in {incompatible} {{assert!(model.replace_state(&bytes).is_err());assert_eq!(initial,model.state_bytes().unwrap());}}
  let mut backwards=vec![rows[4].clone(),rows[0].clone()];backwards[1].timestamp=-f64::MAX;assert!(model.predict(&backwards).is_err());assert_eq!(initial,model.state_bytes().unwrap());
  backwards[1].timestamp=f64::NAN;assert!(model.predict(&backwards).is_err());assert_eq!(initial,model.state_bytes().unwrap());
+ let mut overflow=rows[4..6].to_vec();for row in &mut overflow {{row.group=OrderedGroup::Text("overflow-gap".into());}}overflow[0].timestamp=-f64::MAX;overflow[1].timestamp=f64::MAX;
+ let error=model.predict(&overflow).unwrap_err();assert_eq!(error.kind,"domain");assert_eq!(error.faults,262144);assert_eq!(initial,model.state_bytes().unwrap());
  model.predict(&rows[4..5]).unwrap();assert_ne!(initial,model.state_bytes().unwrap());
  model.replace_state(&initial).unwrap();assert_eq!(initial,model.state_bytes().unwrap());
  println!("initial:{{}}",output_hex(&initial));let (values,faults)=model.predict(&rows[4..]).unwrap();
@@ -192,6 +194,12 @@ backwards=[rows[4],OrderedRow(rows[0].group,-word(0x7fefffffffffffff),rows[0].va
 refused(lambda:model.predict(backwards));assert model.state_bytes()==initial
 backwards[1]=OrderedRow(rows[0].group,float('nan'),rows[0].values)
 refused(lambda:model.predict(backwards));assert model.state_bytes()==initial
+overflow=[OrderedRow((1,'overflow-gap'),-word(0x7fefffffffffffff),rows[4].values),OrderedRow((1,'overflow-gap'),word(0x7fefffffffffffff),rows[5].values)]
+try: model.predict(overflow)
+except OrderedError as error:
+ assert isinstance(error,TimeGradientRejection) and error.faults==262144 and str(error)=='domain'
+else: raise AssertionError('finite timestamp subtraction overflow must refuse')
+assert model.state_bytes()==initial
 model.predict(rows[4:5]);assert model.state_bytes()!=initial
 model.replace_state(initial);assert model.state_bytes()==initial
 print('initial:'+initial.hex())
@@ -284,6 +292,7 @@ int main() {{
  std::vector<OrderedRow> backwards={{rows[4],rows[0]}};backwards[1].timestamp=-std::numeric_limits<double>::max();refused=false;try{{model.predict(backwards);}}catch(const OrderedError&){{refused=true;}}if(!refused||model.state_bytes()!=initial)return 12;
  backwards[1].timestamp=std::numeric_limits<double>::quiet_NaN();refused=false;try{{model.predict(backwards);}}catch(const OrderedError&){{refused=true;}}if(!refused||model.state_bytes()!=initial)return 13;
  std::vector<OrderedRow> tied={{rows[4],rows[4]}};refused=false;try{{model.predict(tied);}}catch(const OrderedError& error){{refused=true;if(error.faults!=262144u||std::string(error.what())!="domain")return 18;}}if(!refused||model.state_bytes()!=initial)return 19;
+ std::vector<OrderedRow> overflow={{rows[4],rows[5]}};for(auto& row:overflow)row.group=OrderedGroup::categorical("overflow-gap");overflow[0].timestamp=-std::numeric_limits<double>::max();overflow[1].timestamp=std::numeric_limits<double>::max();refused=false;try{{model.predict(overflow);}}catch(const OrderedError& error){{refused=true;if(error.faults!=262144u||std::string(error.what())!="domain")return 30;}}if(!refused||model.state_bytes()!=initial)return 31;
  model.predict({{rows[4]}});if(model.state_bytes()==initial)return 14;model.replace_state(initial);if(model.state_bytes()!=initial)return 15;const auto continuation=std::vector<OrderedRow>(rows.begin()+4,rows.end());const auto result=model.predict(continuation);if(other.state_bytes()!=initial)return 6;
  const auto replay=other.predict(continuation);if(result.first.size()!=replay.first.size()||result.second!=replay.second)return 7;for(std::size_t i=0;i<result.first.size();i++)if(ordered_bits(result.first[i])!=ordered_bits(replay.first[i]))return 10;
  std::cout<<"initial:"<<output_hex(initial)<<'\n'<<"values:";for(std::size_t i=0;i<result.first.size();i++){{if(i)std::cout<<',';std::cout<<std::hex<<std::setfill('0')<<std::setw(16)<<ordered_bits(result.first[i]);}}
