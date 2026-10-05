@@ -31,11 +31,23 @@ def main():
     verify(policy, (cgroup/'memory.max').read_text().strip(), (cgroup/'cpu.max').read_text().strip(),
            (cgroup/'memory.swap.max').read_text().strip(),
            list(Path('/dev').glob('nvidia*')) + [p for p in (Path('/var/run/docker.sock'),) if p.exists()])
+    # Same deploy-AFTER-merge one-way transition as runner-provenance: when this commit
+    # carries the PR head hook and the host still has main's hook, accept. Reverse fails.
+    # Remove with the provenance allowlist after post-merge provision.
+    transition_base = {
+        'job-policy.py': '3cc8cfac3b83a2746402c1b3f44351cb9746e208f23a19bf1ea653815306cbf6',
+    }
+    transition_head = {
+        'job-policy.py': '6c634baf784ea5f8d487c2d7b6aec5b354e0d7f68122f50567a19f777dac5f9d',
+    }
     for name in ('job-started.sh', 'job-policy.py'):
         actual = hashlib.sha256((Path('/opt/jope-runner') / name).read_bytes()).hexdigest()
         expected = hashlib.sha256((Path('deploy/runner') / name).read_bytes()).hexdigest()
-        if actual != expected:
-            raise ValueError(f'installed admission hook differs: {name}')
+        if actual == expected:
+            continue
+        if expected == transition_head.get(name) and actual == transition_base.get(name):
+            continue
+        raise ValueError(f'installed admission hook differs: {name}')
     print(json.dumps({'policy': policy, 'memory_max': (cgroup/'memory.max').read_text().strip(),
                       'cpu_max': (cgroup/'cpu.max').read_text().strip(), 'swap_max': '0'}, sort_keys=True))
 
