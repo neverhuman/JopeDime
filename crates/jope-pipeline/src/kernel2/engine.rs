@@ -12,8 +12,12 @@ use super::search::Refinement;
 /// The damped least-squares constant refinement's stable method id.
 pub const DAMPED_LS: &str = "feat-math.constant-refinement.damped-ls.v1";
 
-/// The fewest objective trials per program the damped least-squares refinement accepts: the two
-/// whole-pipeline passes it reserves and one surrogate pass.
+/// The fewest objective trials per program the damped least-squares selection accepts. It is a
+/// floor for the selection, not the method's minimum: a `derive` stage is fitted only when its
+/// remaining allowance holds the two whole-pipeline passes, the surrogate's initial value, one
+/// Jacobian, one trial and the re-score (literal sites plus five under the default `sites` charge,
+/// six under `one`). Under that, and for every `map` stage, the coordinate search runs and the
+/// trace names why, so with fewer than six trials no stage is fitted by the method.
 pub const DAMPED_LS_MIN_TRIALS: usize = 3;
 
 /// How a stage's literals are refined.
@@ -23,7 +27,8 @@ pub enum RefineMethod {
     #[default]
     Coordinate,
     /// Damped least squares on the stage's training-prefix rows, kept only when the whole
-    /// pipeline's training loss falls. `map` stages use the coordinate search.
+    /// pipeline's training loss strictly falls. `map` stages, and stages whose remaining allowance
+    /// is under the method's minimum, use the coordinate search.
     Lm(LmOptions),
 }
 
@@ -45,13 +50,17 @@ impl EngineSelection {
         Ok(())
     }
 
-    /// Refuse a selection the refinement allowance cannot run.
+    /// Refuse a selection under its floor: no refinement parent, or fewer than
+    /// [`DAMPED_LS_MIN_TRIALS`] trials per program. An accepted allowance can still be under a
+    /// stage's minimum; that stage then uses the coordinate search.
     pub fn validate(&self, refinement: Refinement) -> Result<()> {
         self.check_options()?;
         if matches!(self.refine, RefineMethod::Lm(_)) {
             ensure!(
                 refinement.top_k > 0 && refinement.trials_per_program >= DAMPED_LS_MIN_TRIALS,
-                "lm refinement needs --refine-top-k of at least 1 and --refine-trials of at least 3"
+                "lm refinement requires --refine-top-k of at least 1 and --refine-trials of at \
+                 least 3; a derive stage with fewer trials left than its surrogate minimum \
+                 (literal sites plus five under the default charge) uses the coordinate search"
             );
         }
         Ok(())

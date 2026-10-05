@@ -328,9 +328,6 @@ fn check_refinements(
                 && s.refinement.top_k > 0,
             "invalid refinement allowance"
         );
-        // laneD:B17-lm-refinement begin
-        check_trace(s, refinement)?;
-        // laneD:B17-lm-refinement end
         trials = trials
             .checked_add(refinement.evaluations)
             .context("trial count overflow")?;
@@ -345,6 +342,9 @@ fn check_refinements(
             })
             .collect();
         ensure!(!parents.is_empty(), "refinement parent was not measured");
+        // laneD:B17-lm-refinement begin
+        check_trace(s, refinement, &parents[0].observation.genome)?;
+        // laneD:B17-lm-refinement end
         ensure!(
             refinement.changed
                 == parents
@@ -400,9 +400,10 @@ fn check_refinements(
 
 // laneD:B17-lm-refinement begin
 /// A refinement carries a trace exactly when the damped least-squares method was selected and it
-/// spent a trial, and the trace's stages, each checked against its own counts, account for every
-/// charged trial and refusal.
-fn check_trace(s: &Search, refinement: &TrainingRefinement) -> Result<()> {
+/// spent a trial. The trace's stages, each checked against its own counts and bound to the
+/// `parent` program's stages and the refinement allowance, account for every charged trial and
+/// refusal.
+fn check_trace(s: &Search, refinement: &TrainingRefinement, parent: &str) -> Result<()> {
     let selected = s
         .engine_selection
         .as_ref()
@@ -413,7 +414,8 @@ fn check_trace(s: &Search, refinement: &TrainingRefinement) -> Result<()> {
         "refinement trace presence disagrees with the selected method"
     );
     if let (Some(trace), Some(selected)) = (&refinement.trace, selected) {
-        let (evaluations, rejected) = trace.charged(&selected.jacobian)?;
+        let (evaluations, rejected) =
+            trace.check(parent, &selected.jacobian, s.refinement.trials_per_program)?;
         ensure!(
             evaluations == refinement.evaluations && rejected == refinement.rejected_trials,
             "refinement trace does not account for its trials"

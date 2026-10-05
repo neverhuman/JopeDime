@@ -25,7 +25,9 @@ pub struct ProfileArgs {
     pub refine_trials: Option<usize>,
     /// Constant refinement for kernel2: coordinate (default) or lm, a damped least-squares fit of
     /// a derive stage's constants on its training rows, kept only when the whole pipeline's
-    /// training loss falls. lm needs --refine-top-k 1 or more and --refine-trials 3 or more.
+    /// training loss strictly falls. lm accepts --refine-top-k 1 or more and --refine-trials 3 or
+    /// more, but fits a derive stage only when the trials left for it reach its literal sites plus
+    /// five; a map stage, or a derive stage with fewer trials left, uses the coordinate search.
     #[arg(long)]
     pub refine_method: Option<String>,
     /// Explicit nonnegative Domain penalty; required with penalize.
