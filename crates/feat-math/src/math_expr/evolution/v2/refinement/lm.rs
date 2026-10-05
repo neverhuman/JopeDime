@@ -31,7 +31,7 @@
 use super::*;
 use crate::kernel::expression_search::{
     GuardedConstantRefinement, GuardedLmRefinement, GuardedRefinementBudget, LmIteration,
-    LmJacobianCharge, LmOptions, LmStatus, LmTrace,
+    LmJacobianCharge, LmOptions, LmStatus, LmTrace, LM_MAX_SITES,
 };
 
 mod dual;
@@ -1043,7 +1043,18 @@ impl MathExpr {
         let sites = literal_paths(&start.root).len();
         Ok(result.guarded(start, sites, options.jacobian_cost))
     }
+
+    /// The literal sites `optimize_constants_lm_guarded` fits in this expression, as its trace's
+    /// `sites` reports them: one per maximal literal. Its admission keeps that count, since
+    /// normalizing a literal and printing it again leaves one literal, so a caller can size a budget
+    /// before it asks for the fit. A row expression is supported with 1 to [`LM_MAX_SITES`] sites.
+    pub fn literal_sites(&self) -> usize {
+        literal_paths(&self.root).len()
+    }
 }
+
+// The fit's parameters are the literal sites and the affine pair of the linear-scaled residuals.
+const _: () = assert!(LM_MAX_SITES + 2 == MAX_PARAMS);
 
 impl Status {
     fn public(self) -> LmStatus {
@@ -2801,6 +2812,41 @@ mod public_tests {
             y.expression.to_source().unwrap()
         );
         assert_eq!(x.score.to_bits(), y.score.to_bits());
+    }
+
+    /// `literal_sites` counts, before any fit, the sites the fit reports after its admission
+    /// (negative and nested literals included), and the shape is unsupported exactly outside
+    /// `1..=LM_MAX_SITES`.
+    #[test]
+    fn literal_sites_are_the_sites_the_fit_reports() {
+        let (rows, targets) = sine_data();
+        for (source, expected) in [
+            ("sin(1.5*c0)", 1usize),
+            ("sin(1.5*c0)+(0.25*c0)", 2),
+            ("(-1.5*c0)+2.0", 2),
+            ("(c0*-0.5)-(0.5-1.5)", 3),
+            ("-(-1.5)*c0", 1),
+            ("sin(c0)", 0),
+        ] {
+            let expression = MathExpr::parse(source).unwrap();
+            assert_eq!(expression.literal_sites(), expected, "{source}");
+            let mut always = || true;
+            let fit = public(
+                source,
+                &rows,
+                &targets,
+                LmOptions::default(),
+                30,
+                &mut always,
+            );
+            assert_eq!(
+                fit.trace.status == LmStatus::Unsupported,
+                !(1..=LM_MAX_SITES).contains(&expected),
+                "{source}"
+            );
+            assert_eq!(fit.trace.sites, expected, "{source}");
+            assert_eq!(fit.start.literal_sites(), expected, "{source}");
+        }
     }
 }
 // laneD:B17-lm-refinement end

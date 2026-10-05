@@ -1,33 +1,58 @@
 //! Opt-in damped least-squares refinement of a stage's literals (`--refine-method lm`).
 //!
-//! A `derive` stage's expression is fitted by damped least squares on the stage's training-prefix
-//! rows, with the coordinate search's linear-scaled residuals. That fit is a surrogate: the dual
-//! Jacobian exists for the expression, not for the whole pipeline. When the surrogate changes the
-//! expression, the coordinate search's own whole-pipeline training callback scores the start and
-//! then the winner, and the winner replaces the start only on a strict decrease. `map` stages,
-//! stages whose remaining allowance cannot hold one surrogate pass beside the two pipeline passes,
-//! and shapes the surrogate does not support use the coordinate search unchanged, and the trace
-//! names the reason.
+//! A `derive` stage is refined in three steps. The start's whole-pipeline pass comes first: it is
+//! the coordinate search's own first evaluation of the stage (training prefix, admission, guard
+//! question, objective, charge and failure), so a start that fails the pipeline objective ends the
+//! stage exactly as in the coordinate route. Then the surrogate: the stage's expression fitted by
+//! damped least squares on the stage's training-prefix rows, with the coordinate search's
+//! linear-scaled residuals. The dual Jacobian exists for the expression, not for the whole
+//! pipeline. When the surrogate changes the expression, the winner's whole-pipeline pass follows,
+//! and the winner replaces the start only on a strictly lower training loss.
 //!
-//! Budget: each surrogate pass is an objective trial (the initial value, each trial, each Jacobian
-//! at one evaluation per literal site, and the re-score), and so is each pipeline pass. A stage
-//! reserves two evaluations of its allowance for the pipeline passes. As in the coordinate route,
-//! a stage refused before any pass is charged one refused evaluation.
+//! `map` stages, stages whose shape the surrogate does not support, and stages whose remaining
+//! allowance is under the surrogate minimum use the coordinate search unchanged, and the trace
+//! names the reason. The minimum ([`stage_minimum`]) is the fewest evaluations with which the
+//! surrogate can change a stage: the two pipeline passes, then the surrogate's initial value, one
+//! Jacobian, one trial and the winner's re-score. Under it the surrogate could only spend passes.
+//!
+//! Budget: each pipeline pass is an objective trial, and so is each surrogate pass (the initial
+//! value, each trial, each Jacobian at one evaluation per literal site under the default charge,
+//! and the re-score). A stage spends at most its allowance: the start's pass, the surrogate within
+//! the allowance less the two pipeline passes, and the winner's pass.
 // laneD:B17-lm-refinement begin
 use super::*;
 use feat_math::kernel::expression_search::{
-    GuardedConstantRefinement, GuardedRefinementBudget, LmOptions, LmStatus, LmTrace,
+    GuardedConstantRefinement, GuardedRefinementBudget, LmJacobianCharge, LmOptions, LmStatus,
+    LmTrace, LM_MAX_SITES,
 };
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-/// Evaluations of a stage's allowance reserved for the start's and the winner's pipeline passes.
+/// Evaluations of a stage's allowance kept for the start's and the winner's pipeline passes.
 pub(super) const PIPELINE_PASSES: usize = 2;
-const _: () = assert!(DAMPED_LS_MIN_TRIALS == PIPELINE_PASSES + 1);
+
+/// The surrogate passes a change needs besides one Jacobian: its initial value, one trial and the
+/// winner's re-score (`optimize_constants_lm_guarded` keeps one evaluation for the re-score).
+const SURROGATE_PASSES: usize = 3;
+
+/// The fewest evaluations of a stage's allowance with which the surrogate can change the stage:
+/// the two pipeline passes, and the surrogate's initial value, one Jacobian at `jacobian_cost`,
+/// one trial and the re-score. A stage with a smaller allowance uses the coordinate search.
+pub(crate) const fn stage_minimum(jacobian_cost: usize) -> usize {
+    PIPELINE_PASSES + SURROGATE_PASSES + jacobian_cost
+}
+
+/// What one Jacobian of an expression with `sites` literal sites is charged.
+fn jacobian_cost(charge: LmJacobianCharge, sites: usize) -> usize {
+    match charge {
+        LmJacobianCharge::Sites => sites,
+        LmJacobianCharge::One => 1,
+    }
+}
 
 /// Why a stage used the coordinate search.
 pub(crate) const ELEMENTWISE: &str = "elementwise stage";
-pub(crate) const SMALL_ALLOWANCE: &str = "allowance under three passes";
+pub(crate) const SMALL_ALLOWANCE: &str = "allowance under the surrogate minimum";
 pub(crate) const UNSUPPORTED: &str = "unsupported expression shape";
 pub(crate) const FALLBACK_REASONS: [&str; 3] = [ELEMENTWISE, SMALL_ALLOWANCE, UNSUPPORTED];
 
@@ -58,14 +83,18 @@ pub enum StageTrace {
         evaluations: usize,
         rejected_trials: usize,
     },
-    /// The stage was refused before any pass: one refused evaluation, as the coordinate route
-    /// charges.
+    /// The start's whole-pipeline pass, or the training prefix before it, was refused: one refused
+    /// evaluation, as the coordinate route charges, and the refinement failed.
     Failed { stage: usize },
-    /// Damped least squares on the training-prefix surrogate, then the whole-pipeline check of a
-    /// changed winner.
+    /// The guard refused the start's whole-pipeline pass: nothing was spent, and the refinement
+    /// stopped.
+    Stopped { stage: usize },
+    /// The start's whole-pipeline pass, damped least squares on the training-prefix surrogate,
+    /// then the whole-pipeline pass of a changed winner.
     Surrogate {
         stage: usize,
         surrogate: SurrogateTrace,
+        /// The pipeline passes; a surrogate stage always records them.
         #[serde(default, skip_serializing_if = "Option::is_none")]
         pipeline: Option<PipelineCheck>,
     },
@@ -107,14 +136,16 @@ pub struct IterationBits {
     pub solved: bool,
 }
 
-/// The whole-pipeline training check of a changed surrogate winner: the start's pass, then the
-/// winner's.
+/// The whole-pipeline training passes of a surrogate stage: the start's, which runs before the
+/// surrogate, and a changed winner's, which runs after it.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct PipelineCheck {
+    /// 1, or 2 when the winner's pass ran.
     pub evaluations: usize,
+    /// 1 when the winner's pass was refused.
     pub rejected_trials: usize,
-    /// The start's training loss as f64 bits; absent when its pass did not run or was refused.
+    /// The start's training loss as f64 bits; a surrogate stage's start passed.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub start: Option<u64>,
     /// The winner's training loss as f64 bits; absent when its pass did not run or was refused.
@@ -190,6 +221,24 @@ impl SurrogateTrace {
                 "a refused start has passes after it"
             );
         }
+        // The start's Jacobian comes before any iteration, and every accepted step is followed by
+        // one, except a last step whose Jacobian the budget, the guard or an exact fit stopped; so
+        // an accepted step with an iteration after it had its Jacobian. The re-score runs only
+        // after an accepted step.
+        let followed = self
+            .iterations
+            .iter()
+            .rev()
+            .skip(1)
+            .filter(|i| i.accepted)
+            .count();
+        ensure!(
+            self.accepted <= self.jacobians
+                && self.jacobians <= self.accepted + 1
+                && (self.iterations.is_empty() || self.jacobians > followed)
+                && (self.rescore == 0 || self.accepted > 0),
+            "surrogate Jacobians or re-score disagree with its accepted steps"
+        );
         ensure!(
             Some(self.iterations.len()) == self.trials.checked_add(self.solve_failures),
             "surrogate iterations disagree with trials and failed solves"
@@ -226,20 +275,21 @@ impl SurrogateTrace {
 
 impl PipelineCheck {
     fn charged(&self) -> Result<(usize, usize)> {
+        let finite = |bits: Option<u64>| bits.is_none_or(|b| f64::from_bits(b).is_finite());
         ensure!(
-            self.evaluations <= PIPELINE_PASSES
-                && (self.start.is_none() || self.evaluations >= 1)
-                && (self.evaluations < 2 || self.start.is_some())
-                && (self.winner.is_none() || self.evaluations == 2),
-            "pipeline check passes disagree"
+            self.start.is_some()
+                && finite(self.start)
+                && finite(self.winner)
+                && (1..=PIPELINE_PASSES).contains(&self.evaluations)
+                && (self.winner.is_none() || self.evaluations == PIPELINE_PASSES),
+            "pipeline passes disagree"
         );
-        let refused = usize::from(self.evaluations >= 1 && self.start.is_none())
-            + usize::from(self.evaluations == 2 && self.winner.is_none());
+        let refused = usize::from(self.evaluations == PIPELINE_PASSES && self.winner.is_none());
         let accepted = matches!((self.start, self.winner),
             (Some(start), Some(winner)) if f64::from_bits(winner) < f64::from_bits(start));
         ensure!(
             self.rejected_trials == refused && self.accepted == accepted,
-            "pipeline check decision does not re-derive"
+            "pipeline decision does not re-derive"
         );
         Ok((self.evaluations, self.rejected_trials))
     }
@@ -261,19 +311,21 @@ impl StageTrace {
                 Ok((*stage, *evaluations, *rejected_trials))
             }
             Self::Failed { stage } => Ok((*stage, 1, 1)),
+            Self::Stopped { stage } => Ok((*stage, 0, 0)),
             Self::Surrogate {
                 stage,
                 surrogate,
                 pipeline,
             } => {
+                let pipeline = pipeline
+                    .as_ref()
+                    .context("surrogate stage without its pipeline passes")?;
                 ensure!(
-                    pipeline.is_some() == surrogate.changed,
-                    "pipeline check recorded without a changed winner, or missing"
+                    pipeline.evaluations < PIPELINE_PASSES || surrogate.changed,
+                    "a winner's pipeline pass without a changed surrogate"
                 );
                 let (evaluations, rejected) = surrogate.charged(jacobian)?;
-                let (more, refused) = pipeline
-                    .as_ref()
-                    .map_or(Ok((0, 0)), PipelineCheck::charged)?;
+                let (more, refused) = pipeline.charged()?;
                 Ok((
                     *stage,
                     evaluations
@@ -311,6 +363,92 @@ impl RefinementTrace {
         }
         Ok((evaluations, rejected))
     }
+
+    /// [`Self::charged`], with every stage record bound to the `parent` program it refined under at
+    /// most `trials_per_program` trials. The records are the parent's constant-bearing expression
+    /// stages in order, as the route visits them. A `map` stage, and only a `map` stage, is an
+    /// elementwise fallback. A `derive` stage is a fallback for an unsupported shape only outside
+    /// the surrogate's site range, and one for a small allowance only within it and with fewer
+    /// evaluations than its minimum. A surrogate stage, or a failed or stopped start, is a
+    /// supported `derive` stage whose allowance could hold the minimum, and a surrogate stage
+    /// reports the stage's literal sites and spent at most that allowance less the pipeline passes.
+    /// A record that ends the refinement (a failed or stopped start, a stopped surrogate, or a
+    /// changed winner whose pass did not run) is the last.
+    pub(crate) fn check(
+        &self,
+        parent: &str,
+        jacobian: &str,
+        trials_per_program: usize,
+    ) -> Result<(usize, usize)> {
+        let charged = self.charged(jacobian)?;
+        let charge = match jacobian {
+            "sites" => LmJacobianCharge::Sites,
+            "one" => LmJacobianCharge::One,
+            _ => anyhow::bail!("unknown refinement jacobian charge"),
+        };
+        let GenomeIr::Pipeline(pipe) = GenomeIr::parse(parent)? else {
+            anyhow::bail!("refinement parent is not a pipeline");
+        };
+        let mut refined = Vec::new();
+        for index in 0..pipe.stages.len() {
+            if let Some(expression) = stage_expression(&pipe, index)? {
+                if has_constant(expression.ast()) {
+                    refined.push((index, expression.literal_sites()));
+                }
+            }
+        }
+        ensure!(
+            self.stages.len() <= refined.len(),
+            "refinement trace has more stages than the parent refines"
+        );
+        let mut spent = 0usize;
+        for (position, (record, &(index, sites))) in self.stages.iter().zip(&refined).enumerate() {
+            let (stage, evaluations, _) = record.charged(jacobian)?;
+            ensure!(
+                stage == index,
+                "refinement trace stage is not the parent's next expression stage"
+            );
+            let op = pipe.stages[index].op.as_str();
+            let last = position + 1 == self.stages.len();
+            let supported = (1..=LM_MAX_SITES).contains(&sites);
+            let minimum = stage_minimum(jacobian_cost(charge, sites));
+            // The largest allowance the stage can have had.
+            let room = trials_per_program
+                .checked_sub(spent)
+                .context("refinement trace overspends its allowance")?;
+            let fitted = op == "derive" && supported && room >= minimum;
+            let valid = match record {
+                StageTrace::Coordinate { reason, .. } => match reason.as_str() {
+                    ELEMENTWISE => op == "map",
+                    UNSUPPORTED => op == "derive" && !supported,
+                    SMALL_ALLOWANCE => op == "derive" && supported && evaluations < minimum,
+                    _ => false,
+                },
+                StageTrace::Failed { .. } | StageTrace::Stopped { .. } => fitted && last,
+                StageTrace::Surrogate {
+                    surrogate,
+                    pipeline,
+                    ..
+                } => {
+                    let passes = pipeline.as_ref().map_or(0, |p| p.evaluations);
+                    let ends = surrogate.status == LmStatus::Stopped.as_str()
+                        || (surrogate.changed && passes < PIPELINE_PASSES);
+                    fitted
+                        && surrogate.sites == sites
+                        && evaluations - passes + PIPELINE_PASSES <= room
+                        && (last || !ends)
+                }
+            };
+            ensure!(
+                valid,
+                "refinement trace stage {index} does not fit the parent program"
+            );
+            spent = spent
+                .checked_add(evaluations)
+                .context("trace count overflow")?;
+        }
+        Ok(charged)
+    }
 }
 
 /// One expression stage's refinement request.
@@ -328,13 +466,6 @@ struct StageOutcome {
     failure: Option<String>,
     stopped: bool,
     trace: StageTrace,
-}
-
-/// The pipeline check's record and what it means for the stage.
-struct Checked {
-    record: PipelineCheck,
-    stopped: bool,
-    failure: Option<String>,
 }
 
 impl Kernel2Evaluator {
@@ -396,7 +527,7 @@ impl Kernel2Evaluator {
                 training,
                 allowance: remaining,
             };
-            let outcome = self.refine_stage_lm(options, &mut pipe, stage, may_start);
+            let outcome = self.refine_stage_lm(options, &mut pipe, stage, may_start)?;
             assert!(
                 budget.charge(outcome.evaluations),
                 "optimizer exceeded its supplied allowance"
@@ -424,24 +555,45 @@ impl Kernel2Evaluator {
         pipe: &mut DslExpr,
         stage: Stage<'_>,
         may_start: &mut dyn FnMut() -> bool,
-    ) -> StageOutcome {
+    ) -> Result<StageOutcome> {
         if pipe.stages[stage.index].op == "map" {
-            return self.coordinate_stage(pipe, stage, ELEMENTWISE, may_start);
+            return Ok(self.coordinate_stage(pipe, stage, ELEMENTWISE, may_start));
         }
-        if stage.allowance <= PIPELINE_PASSES {
-            return self.coordinate_stage(pipe, stage, SMALL_ALLOWANCE, may_start);
+        let sites = stage.expression.literal_sites();
+        if !(1..=LM_MAX_SITES).contains(&sites) {
+            return Ok(self.coordinate_stage(pipe, stage, UNSUPPORTED, may_start));
         }
-        match self.surrogate_stage(options, pipe, stage, may_start) {
-            Ok(Some(outcome)) => outcome,
-            Ok(None) => self.coordinate_stage(pipe, stage, UNSUPPORTED, may_start),
-            Err(error) => StageOutcome {
-                evaluations: 1,
-                rejected_trials: 1,
-                failure: Some(format!("{error:#}")),
-                stopped: false,
-                trace: StageTrace::Failed { stage: stage.index },
+        if stage.allowance < stage_minimum(jacobian_cost(options.jacobian, sites)) {
+            return Ok(self.coordinate_stage(pipe, stage, SMALL_ALLOWANCE, may_start));
+        }
+        self.surrogate_stage(options, pipe, stage, may_start)
+    }
+
+    /// The coordinate route's own stage refinement with `max_evaluations`, and its charge: an error
+    /// before a result is a refused initial objective.
+    fn coordinate_trial(
+        &self,
+        pipe: &mut DslExpr,
+        stage: Stage<'_>,
+        max_evaluations: usize,
+        may_start: &mut dyn FnMut() -> bool,
+    ) -> GuardedConstantRefinement {
+        self.refine_stage_guarded(
+            pipe,
+            stage.index,
+            stage.expression,
+            stage.training.rows,
+            stage.training.targets,
+            GuardedRefinementBudget {
+                max_evaluations,
+                may_start,
             },
-        }
+        )
+        .unwrap_or_else(|error| GuardedConstantRefinement {
+            refinement: None,
+            stopped: false,
+            failure: Some(format!("{error:#}")),
+        })
     }
 
     /// The coordinate route's own stage refinement and charge, unchanged.
@@ -452,23 +604,7 @@ impl Kernel2Evaluator {
         reason: &str,
         may_start: &mut dyn FnMut() -> bool,
     ) -> StageOutcome {
-        let trial = self
-            .refine_stage_guarded(
-                pipe,
-                stage.index,
-                stage.expression,
-                stage.training.rows,
-                stage.training.targets,
-                GuardedRefinementBudget {
-                    max_evaluations: stage.allowance,
-                    may_start,
-                },
-            )
-            .unwrap_or_else(|error| GuardedConstantRefinement {
-                refinement: None,
-                stopped: false,
-                failure: Some(format!("{error:#}")),
-            });
+        let trial = self.coordinate_trial(pipe, stage, stage.allowance, may_start);
         let (evaluations, rejected_trials) = (trial.evaluations(), trial.rejected_trials());
         StageOutcome {
             evaluations,
@@ -484,16 +620,35 @@ impl Kernel2Evaluator {
         }
     }
 
-    /// `Ok(None)` when the surrogate does not support the shape; it then spent nothing.
+    /// The start's pipeline pass, the surrogate, and a changed winner's pipeline pass. An error is
+    /// an internal fault: the start's pass already prepared the same prefix and admitted the same
+    /// start under the same profile and scope, so the surrogate cannot refuse its configuration.
     fn surrogate_stage(
         &self,
         options: LmOptions,
         pipe: &mut DslExpr,
         stage: Stage<'_>,
         may_start: &mut dyn FnMut() -> bool,
-    ) -> Result<Option<StageOutcome>> {
-        let Training { rows, targets } = stage.training;
+    ) -> Result<StageOutcome> {
         let index = stage.index;
+        // The coordinate route's first evaluation, which writes the admitted start back.
+        let start = self.coordinate_trial(pipe, stage, 1, may_start);
+        let Some(started) = &start.refinement else {
+            let trace = if start.failure.is_some() {
+                StageTrace::Failed { stage: index }
+            } else {
+                StageTrace::Stopped { stage: index }
+            };
+            return Ok(StageOutcome {
+                evaluations: start.evaluations(),
+                rejected_trials: start.rejected_trials(),
+                failure: start.failure,
+                stopped: start.stopped,
+                trace,
+            });
+        };
+        let start_loss = started.score;
+        let Training { rows, targets } = stage.training;
         let prefix = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
             training_prefix(pipe, index, rows, targets)
         }))
@@ -520,123 +675,80 @@ impl Kernel2Evaluator {
                 may_start,
             },
         )?;
-        if fitted.trace.status == LmStatus::Unsupported {
-            return Ok(None);
-        }
-        let outcome = fitted.outcome;
-        let mut result = StageOutcome {
-            evaluations: outcome.evaluations(),
-            rejected_trials: outcome.rejected_trials(),
-            failure: outcome.failure.clone(),
-            stopped: outcome.stopped,
-            trace: StageTrace::Failed { stage: index },
+        ensure!(
+            fitted.trace.status != LmStatus::Unsupported,
+            "the surrogate refused a supported shape"
+        );
+        let outcome = &fitted.outcome;
+        let mut pipeline = PipelineCheck {
+            evaluations: 1,
+            rejected_trials: 0,
+            start: Some(start_loss.to_bits()),
+            winner: None,
+            accepted: false,
         };
-        let mut pipeline = None;
-        if let Some(refined) = &outcome.refinement {
-            // As the coordinate route writes its best measured expression back, this writes the
-            // admitted start, or the winner the pipeline check accepted.
-            let mut keep = Some(&refined.expression);
-            if fitted.trace.changed {
-                let checked = self.pipeline_check(
-                    pipe,
-                    index,
-                    &fitted.start,
-                    &refined.expression,
-                    stage.training,
-                    may_start,
-                );
-                result.evaluations += checked.record.evaluations;
-                result.rejected_trials += checked.record.rejected_trials;
-                result.stopped |= checked.stopped;
-                keep = if checked.failure.is_some() {
-                    None
-                } else if checked.record.accepted {
-                    Some(&refined.expression)
-                } else {
-                    Some(&fitted.start)
-                };
-                result.failure = checked.failure;
-                pipeline = Some(checked.record);
+        // A surrogate that refuses its own start (`initial_refused`) changes nothing and is no
+        // failure: the start passed the pipeline objective, and the stage keeps it.
+        let (mut stopped, mut failure) = (outcome.stopped, None);
+        if fitted.trace.changed {
+            let winner = &outcome
+                .refinement
+                .as_ref()
+                .context("a changed surrogate without its winner")?
+                .expression;
+            if may_start() {
+                pipeline.evaluations += 1;
+                match self.pipeline_loss(pipe, index, winner, stage.training) {
+                    Ok(loss) => {
+                        pipeline.winner = Some(loss.to_bits());
+                        // Only a strictly lower loss replaces the start; a tie keeps it.
+                        pipeline.accepted = loss < start_loss;
+                    }
+                    Err(_) => pipeline.rejected_trials += 1,
+                }
+            } else {
+                stopped = true;
             }
-            if let Some(expression) = keep {
-                if let Err(error) = set_expression(pipe, index, expression) {
-                    result.failure = Some(format!("{error:#}"));
+            if pipeline.accepted {
+                if let Err(error) = set_expression(pipe, index, winner) {
+                    failure = Some(format!("{error:#}"));
                 }
             }
         }
-        result.trace = StageTrace::Surrogate {
-            stage: index,
-            surrogate: SurrogateTrace::record(&fitted.trace),
-            pipeline,
-        };
-        Ok(Some(result))
+        Ok(StageOutcome {
+            evaluations: outcome.evaluations() + pipeline.evaluations,
+            rejected_trials: outcome.rejected_trials() + pipeline.rejected_trials,
+            failure,
+            stopped,
+            trace: StageTrace::Surrogate {
+                stage: index,
+                surrogate: SurrogateTrace::record(&fitted.trace),
+                pipeline: Some(pipeline),
+            },
+        })
     }
 
-    /// The coordinate route's whole-pipeline training callback on the start, then on the winner,
-    /// each after its own guard question. A refused start is a failure, as the coordinate route's
-    /// refused initial objective is; a refused winner is a refused trial.
-    fn pipeline_check(
+    /// The coordinate route's whole-pipeline training objective with `expression` at `index`.
+    fn pipeline_loss(
         &self,
         pipe: &DslExpr,
         index: usize,
-        start: &MathExpr,
-        winner: &MathExpr,
+        expression: &MathExpr,
         training: Training<'_>,
-        may_start: &mut dyn FnMut() -> bool,
-    ) -> Checked {
+    ) -> Result<f64> {
         let Training { rows, targets } = training;
         let width = rows.first().map_or(0, Vec::len);
-        let loss = |expression: &MathExpr| -> Result<f64> {
-            let mut candidate = pipe.clone();
-            set_expression(&mut candidate, index, expression)?;
-            let genome = admit_child(
-                &GenomeIr::Pipeline(candidate).canonical(),
-                self.profile(),
-                width,
-            )?;
-            std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                training_loss(&genome, rows, targets)
-            }))
-            .map_err(|_| anyhow::anyhow!("training trial panicked"))?
-        };
-        let mut checked = Checked {
-            record: PipelineCheck {
-                evaluations: 0,
-                rejected_trials: 0,
-                start: None,
-                winner: None,
-                accepted: false,
-            },
-            stopped: false,
-            failure: None,
-        };
-        if !may_start() {
-            checked.stopped = true;
-            return checked;
-        }
-        checked.record.evaluations += 1;
-        let start_loss = match loss(start) {
-            Ok(value) => value,
-            Err(error) => {
-                checked.record.rejected_trials += 1;
-                checked.failure = Some(format!("{error:#}"));
-                return checked;
-            }
-        };
-        checked.record.start = Some(start_loss.to_bits());
-        if !may_start() {
-            checked.stopped = true;
-            return checked;
-        }
-        checked.record.evaluations += 1;
-        match loss(winner) {
-            Ok(value) => {
-                checked.record.winner = Some(value.to_bits());
-                checked.record.accepted = value < start_loss;
-            }
-            Err(_) => checked.record.rejected_trials += 1,
-        }
-        checked
+        let mut candidate = pipe.clone();
+        set_expression(&mut candidate, index, expression)?;
+        let genome = admit_child(
+            &GenomeIr::Pipeline(candidate).canonical(),
+            self.profile(),
+            width,
+        )?;
+        std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            training_loss(&genome, rows, targets)
+        }))
+        .map_err(|_| anyhow::anyhow!("training trial panicked"))?
     }
 }
 // laneD:B17-lm-refinement end

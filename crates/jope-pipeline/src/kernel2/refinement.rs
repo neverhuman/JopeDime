@@ -295,7 +295,7 @@ mod guarded;
 pub use guarded::{GuardedGeneration, GuardedTrainingRefinement};
 // laneD:B17-lm-refinement begin
 mod lm;
-pub use lm::{IterationBits, PipelineCheck, RefinementTrace, StageTrace, SurrogateTrace};
 #[cfg(test)]
-pub(crate) use lm::{ELEMENTWISE, FALLBACK_REASONS, SMALL_ALLOWANCE};
+pub(crate) use lm::{stage_minimum, ELEMENTWISE, FALLBACK_REASONS, SMALL_ALLOWANCE, UNSUPPORTED};
+pub use lm::{IterationBits, PipelineCheck, RefinementTrace, StageTrace, SurrogateTrace};
 // laneD:B17-lm-refinement end

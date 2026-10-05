@@ -696,3 +696,809 @@ fn shipped_text_of_the_method_passes_the_lint() {
         lint(&long.to_string());
     }
 }
+
+// fix-01: the surrogate minimum, the start's pipeline pass first, strict decrease, the binding of a
+// trace to its parent program, and the default route against the stack before the wiring.
+
+/// A derive stage with two literal sites (the text the pre-wiring probe measured).
+const TWO: &str = "(pipe X (derive expr=\"sin(0.5*c0)+0.3*c0\" append=false) (ridge))";
+/// Two derive stages with one literal site each; the second reads the first's appended column.
+const TWO_STAGES: &str = "(pipe X (derive append=true expr=\"sin((0.5*c0))\") (derive append=false expr=\"cos((0.7*c1))\") (ridge))";
+/// On `cos_data`. The last stage reads only the original column, so the whole pipeline's loss
+/// ignores the first stage: any surrogate winner ties the start bit for bit. Written in printed
+/// form, so a kept start is no change at all.
+const TIE: &str = "(pipe X (derive append=true expr=\"cos((0.5*c0))\") (derive append=false expr=\"sin(c0)\") (ridge))";
+/// On `cos_data`. `abs` folds the negative lobe of the frequency the surrogate recovers, so its
+/// winner fits the whole pipeline worse than the start.
+const RISE: &str =
+    "(pipe X (derive append=false expr=\"cos((0.5*c0))\") (map expr=\"abs(x)\") (ridge))";
+/// On `cos_data`. The start is positive on every row; the winner's negative lobe makes `sqrt`
+/// fault, so the winner's pipeline pass is refused.
+const WINNER_FAULT: &str =
+    "(pipe X (derive append=false expr=\"cos((0.5*c0))\") (map expr=\"sqrt(x)\") (ridge))";
+/// On `sine_data`. The start is clean on the training prefix, but `sqrt` of its negative half
+/// faults the whole pipeline: the start's own pipeline pass fails.
+const START_FAULT: &str =
+    "(pipe X (derive expr=\"sin(0.5*c0)\" append=false) (map expr=\"sqrt(x)\") (ridge))";
+
+/// The grid of `sine_data` with the target `2 cos(1.3 x) + 0.5`.
+fn cos_data() -> Cut {
+    let mut c = sine_data();
+    c.train_y = c
+        .train_x
+        .iter()
+        .map(|r| 2.0 * (1.3 * r[0]).cos() + 0.5)
+        .collect();
+    c.hold_y = c
+        .hold_x
+        .iter()
+        .map(|r| 2.0 * (1.3 * r[0]).cos() + 0.5)
+        .collect();
+    c
+}
+
+fn lm_one() -> Kernel2Evaluator {
+    evaluator()
+        .with_engine(EngineSelection {
+            refine: RefineMethod::Lm(LmOptions {
+                jacobian: LmJacobianCharge::One,
+                ..LmOptions::default()
+            }),
+        })
+        .unwrap()
+}
+
+/// The trace accounts for every charge and is bound to its parent under `trials` per program.
+fn assert_bound(refinement: &TrainingRefinement, parent: &str, jacobian: &str, trials: usize) {
+    match &refinement.trace {
+        Some(trace) => assert_eq!(
+            trace.check(parent, jacobian, trials).unwrap(),
+            (refinement.evaluations, refinement.rejected_trials),
+            "{refinement:?}"
+        ),
+        None => assert_eq!(refinement.evaluations, 0, "{refinement:?}"),
+    }
+}
+
+/// The one stage of a single-stage trace, which must be a surrogate stage with its passes.
+fn only_surrogate(refinement: &TrainingRefinement) -> (&SurrogateTrace, &PipelineCheck) {
+    match &refinement.trace.as_ref().unwrap().stages[..] {
+        [StageTrace::Surrogate {
+            surrogate,
+            pipeline: Some(pipeline),
+            ..
+        }] => (surrogate, pipeline),
+        other => panic!("one surrogate stage expected: {other:?}"),
+    }
+}
+
+/// Under its surrogate minimum (literal sites plus five, or six under the `one` charge) a derive
+/// stage is the coordinate search bit for bit, with the reason recorded, where the method used to
+/// spend surrogate passes that could change nothing. At the minimum the surrogate runs.
+#[test]
+fn a_stage_under_its_surrogate_minimum_uses_the_coordinate_search_bit_for_bit() {
+    use super::refinement::{stage_minimum, SMALL_ALLOWANCE};
+    let c = sine_data();
+    let coordinate = evaluator();
+    // The start's and the winner's pipeline passes, the surrogate's initial value, one Jacobian
+    // at its charge, one trial and the re-score.
+    assert_eq!((stage_minimum(1), stage_minimum(2)), (6, 7));
+    for (e, jacobian, program, minimum) in [
+        (lm(), "sites", SINE, 6),
+        (lm(), "sites", TWO, 7),
+        (lm_one(), "one", TWO, 6),
+    ] {
+        for trials in DAMPED_LS_MIN_TRIALS..minimum {
+            let (old, old_used, old_asked) = refine(&coordinate, program, &c, trials, 100);
+            let (new, new_used, new_asked) = refine(&e, program, &c, trials, 100);
+            let mut stripped = new.refinement.clone();
+            let trace = stripped.trace.take();
+            assert_eq!(stripped, old.refinement, "{program} {trials}");
+            assert_eq!(new.stopped, old.stopped, "{program} {trials}");
+            assert_eq!(
+                (new_used, new_asked),
+                (old_used, old_asked),
+                "{program} {trials}"
+            );
+            let expected = RefinementTrace {
+                method: DAMPED_LS.into(),
+                stages: vec![StageTrace::Coordinate {
+                    stage: 0,
+                    reason: SMALL_ALLOWANCE.into(),
+                    evaluations: old.refinement.evaluations,
+                    rejected_trials: old.refinement.rejected_trials,
+                }],
+            };
+            assert_eq!(trace, Some(expected), "{program} {trials}");
+            assert_bound(&new.refinement, program, jacobian, trials);
+        }
+        // At the minimum the surrogate runs, within the allowance.
+        let (at, used, _) = refine(&e, program, &c, minimum, 100);
+        assert_eq!(used, at.refinement.evaluations);
+        assert!(at.refinement.evaluations <= minimum);
+        assert!(
+            matches!(
+                &at.refinement.trace.as_ref().unwrap().stages[..],
+                [StageTrace::Surrogate { .. }]
+            ),
+            "{program} {at:?}"
+        );
+        assert_bound(&at.refinement, program, jacobian, minimum);
+    }
+}
+
+/// The surrogate improves the stage, but the whole pipeline's loss ties bit for bit: the start is
+/// kept, nothing changes, and the tie is not accepted.
+#[test]
+fn a_tied_pipeline_loss_keeps_the_start() {
+    let c = cos_data();
+    assert_eq!(GenomeIr::parse(TIE).unwrap().canonical(), TIE);
+    let (result, used, _) = refine(&lm(), TIE, &c, 60, 60);
+    let refinement = &result.refinement;
+    let (surrogate, pipeline) = only_surrogate(refinement);
+    // The surrogate's winner re-scored strictly better on the training prefix.
+    assert!(
+        surrogate.changed && surrogate.rescored.is_some(),
+        "{refinement:?}"
+    );
+    assert_eq!((pipeline.evaluations, pipeline.rejected_trials), (2, 0));
+    assert!(pipeline.start.is_some());
+    assert_eq!(pipeline.winner, pipeline.start, "a bit-for-bit tie");
+    assert!(!pipeline.accepted);
+    assert_eq!(refinement.program, TIE);
+    assert!(!refinement.changed && refinement.failure.is_none() && !result.stopped);
+    assert_eq!(used, refinement.evaluations);
+    assert_eq!(refinement.evaluations, surrogate_evaluations(surrogate) + 2);
+    assert_bound(refinement, TIE, "sites", 60);
+}
+
+/// The surrogate improves the stage, but the whole pipeline's loss rises: the start is kept.
+#[test]
+fn a_rising_pipeline_loss_keeps_the_start() {
+    let c = cos_data();
+    assert_eq!(GenomeIr::parse(RISE).unwrap().canonical(), RISE);
+    let (result, used, _) = refine(&lm(), RISE, &c, 60, 60);
+    let refinement = &result.refinement;
+    let (surrogate, pipeline) = only_surrogate(refinement);
+    assert!(
+        surrogate.changed && surrogate.rescored.is_some(),
+        "{refinement:?}"
+    );
+    assert_eq!((pipeline.evaluations, pipeline.rejected_trials), (2, 0));
+    let (start, winner) = (pipeline.start.unwrap(), pipeline.winner.unwrap());
+    assert!(
+        f64::from_bits(winner) > f64::from_bits(start),
+        "{pipeline:?}"
+    );
+    assert!(!pipeline.accepted);
+    assert_eq!(refinement.program, RISE);
+    assert!(!refinement.changed && refinement.failure.is_none() && !result.stopped);
+    assert_eq!(used, refinement.evaluations);
+    assert_eq!(refinement.evaluations, surrogate_evaluations(surrogate) + 2);
+    assert_bound(refinement, RISE, "sites", 60);
+}
+
+/// The surrogate improves the stage, but the winner's whole-pipeline pass faults: a refused
+/// trial, not a failure, and the start is kept.
+#[test]
+fn a_faulting_winner_pass_keeps_the_start() {
+    let c = cos_data();
+    assert_eq!(
+        GenomeIr::parse(WINNER_FAULT).unwrap().canonical(),
+        WINNER_FAULT
+    );
+    let (result, used, _) = refine(&lm(), WINNER_FAULT, &c, 60, 60);
+    let refinement = &result.refinement;
+    let (surrogate, pipeline) = only_surrogate(refinement);
+    assert!(
+        surrogate.changed && surrogate.rescored.is_some(),
+        "{refinement:?}"
+    );
+    assert_eq!((pipeline.evaluations, pipeline.rejected_trials), (2, 1));
+    assert!(pipeline.start.is_some() && pipeline.winner.is_none() && !pipeline.accepted);
+    assert_eq!(refinement.program, WINNER_FAULT);
+    assert!(!refinement.changed && refinement.failure.is_none() && !result.stopped);
+    assert_eq!(used, refinement.evaluations);
+    assert_eq!(
+        (refinement.evaluations, refinement.rejected_trials),
+        (
+            surrogate_evaluations(surrogate) + 2,
+            surrogate.rejected_trials + 1
+        )
+    );
+    assert_bound(refinement, WINNER_FAULT, "sites", 60);
+}
+
+/// The start fails the whole-pipeline objective though it is clean on the training prefix: the
+/// stage ends exactly as in the coordinate route (failure text, one refused evaluation, program,
+/// budget and guard questions) before the surrogate spends anything.
+#[test]
+fn a_faulting_start_pass_matches_the_coordinate_route() {
+    let c = sine_data();
+    let (coordinate, method) = (evaluator(), lm());
+    for trials in [6, 7, 12, 60] {
+        let (old, old_used, old_asked) = refine(&coordinate, START_FAULT, &c, trials, trials);
+        assert_eq!(
+            (old.refinement.evaluations, old.refinement.rejected_trials),
+            (1, 1)
+        );
+        assert!(old.refinement.failure.is_some());
+        let (new, new_used, new_asked) = refine(&method, START_FAULT, &c, trials, trials);
+        let mut stripped = new.refinement.clone();
+        let trace = stripped.trace.take().unwrap();
+        assert_eq!(stripped, old.refinement, "{trials}");
+        assert_eq!(new.stopped, old.stopped);
+        assert_eq!((new_used, new_asked), (old_used, old_asked), "{trials}");
+        assert_eq!(trace.stages, vec![StageTrace::Failed { stage: 0 }]);
+        assert_bound(&new.refinement, START_FAULT, "sites", trials);
+    }
+}
+
+/// A sum of `count` one-literal terms in a balanced tree.
+fn literal_sum(count: usize) -> String {
+    fn balanced(terms: &[String]) -> String {
+        match terms {
+            [one] => one.clone(),
+            _ => {
+                let (a, b) = terms.split_at(terms.len() / 2);
+                format!("({}+{})", balanced(a), balanced(b))
+            }
+        }
+    }
+    let terms: Vec<String> = (1..=count).map(|i| format!("({i}.0*c0)")).collect();
+    balanced(&terms)
+}
+
+/// Every legitimate trace passes the parent-bound check with the counts it was charged, however
+/// the stage ended; records whose own counts re-derive, but that do not fit the parent's stages
+/// or the allowance, are refused.
+#[test]
+fn the_trace_check_binds_every_stage_to_the_parent_program() {
+    use super::refinement::{ELEMENTWISE, SMALL_ALLOWANCE, UNSUPPORTED};
+    let (sine, cos, line) = (sine_data(), cos_data(), data());
+    let (sites, one) = (lm(), lm_one());
+    let mut kinds = std::collections::BTreeSet::new();
+    let mut note = |refinement: &TrainingRefinement| {
+        if let Some(trace) = &refinement.trace {
+            for stage in &trace.stages {
+                kinds.insert(match stage {
+                    StageTrace::Coordinate { reason, .. } => reason.clone(),
+                    StageTrace::Failed { .. } => "failed start".into(),
+                    StageTrace::Stopped { .. } => "stopped start".into(),
+                    StageTrace::Surrogate {
+                        surrogate,
+                        pipeline,
+                        ..
+                    } => format!(
+                        "{} {} {}",
+                        surrogate.status,
+                        surrogate.changed,
+                        pipeline.as_ref().unwrap().evaluations
+                    ),
+                });
+            }
+        }
+    };
+    let runs: [(&Kernel2Evaluator, &str, &str, &Cut, &[usize]); 13] = [
+        (&sites, "sites", SINE, &sine, &[3, 4, 6, 7, 12, 60]),
+        (&sites, "sites", MAP, &sine, &[3, 20]),
+        (&sites, "sites", MIXED, &sine, &[400]),
+        (&sites, "sites", FAULTING, &line, &[3, 20]),
+        (&sites, "sites", TWO, &sine, &[6, 7, 12, 60]),
+        (&sites, "sites", TWO, &line, &[60]),
+        (&one, "one", TWO, &sine, &[6, 12, 60]),
+        (&sites, "sites", TWO_STAGES, &sine, &[60]),
+        (&one, "one", TWO_STAGES, &sine, &[40]),
+        (&sites, "sites", TIE, &cos, &[6, 60]),
+        (&sites, "sites", RISE, &cos, &[6, 60]),
+        (&sites, "sites", WINNER_FAULT, &cos, &[6, 60]),
+        (&sites, "sites", START_FAULT, &sine, &[6, 60]),
+    ];
+    for (e, jacobian, program, c, allowances) in runs {
+        for &trials in allowances {
+            let (result, _, total) = refine(e, program, c, trials, trials);
+            assert_bound(&result.refinement, program, jacobian, trials);
+            note(&result.refinement);
+            // A refusal at every guard question: zero-evaluation stages, a stopped start, a
+            // stopped surrogate and a changed winner whose pass did not run.
+            for allowed in (0..total).filter(|_| total <= 80) {
+                let asked = Cell::new(0usize);
+                let mut budget = EvaluationBudget::new(trials);
+                let stopped = e
+                    .refine_training_guarded(
+                        program,
+                        &c.train_x,
+                        &c.train_y,
+                        trials,
+                        &mut budget,
+                        &mut || {
+                            asked.set(asked.get() + 1);
+                            asked.get() <= allowed
+                        },
+                    )
+                    .unwrap();
+                assert!(stopped.stopped, "{program} {trials} {allowed}");
+                assert_bound(&stopped.refinement, program, jacobian, trials);
+                note(&stopped.refinement);
+            }
+        }
+    }
+    for kind in [
+        ELEMENTWISE,
+        SMALL_ALLOWANCE,
+        "failed start",
+        "stopped start",
+        "gradient true 2",
+        "gradient true 1",
+        "budget_exhausted false 1",
+        "stopped false 1",
+    ] {
+        assert!(kinds.contains(kind), "{kind}: {kinds:?}");
+    }
+
+    // Surrogate outcomes the fixtures do not reach, on the one-site parent: a refused start, a
+    // refused re-score, failed solves, an exact fit at the start and after a step, a non-finite
+    // start, and a refused trial.
+    let bits = f64::to_bits;
+    let step = |accepted: bool, trial: Option<f64>| IterationBits {
+        mu: bits(1e-3),
+        objective: bits(2.0),
+        trial: trial.map(bits),
+        accepted,
+        solved: true,
+    };
+    let unsolved = IterationBits {
+        mu: bits(1e-3),
+        objective: bits(2.0),
+        trial: None,
+        accepted: false,
+        solved: false,
+    };
+    let base = SurrogateTrace {
+        status: String::new(),
+        changed: false,
+        sites: 1,
+        jacobian_cost: 1,
+        initial: 1,
+        trials: 0,
+        jacobians: 0,
+        rescore: 0,
+        rejected_trials: 0,
+        solve_failures: 0,
+        accepted: 0,
+        rescored: None,
+        nonsmooth_rows: 0,
+        saturated_rows: 0,
+        iterations: Vec::new(),
+    };
+    let start_only = PipelineCheck {
+        evaluations: 1,
+        rejected_trials: 0,
+        start: Some(bits(3.0)),
+        winner: None,
+        accepted: false,
+    };
+    let exact_after_step = SurrogateTrace {
+        status: "exact_fit".into(),
+        changed: true,
+        trials: 1,
+        jacobians: 1,
+        rescore: 1,
+        accepted: 1,
+        rescored: Some(bits(0.0)),
+        iterations: vec![step(true, Some(0.0))],
+        ..base.clone()
+    };
+    let one_stage = |surrogate: SurrogateTrace, pipeline: PipelineCheck| RefinementTrace {
+        method: DAMPED_LS.into(),
+        stages: vec![StageTrace::Surrogate {
+            stage: 0,
+            surrogate,
+            pipeline: Some(pipeline),
+        }],
+    };
+    let synthetic = [
+        (
+            "initial_refused",
+            SurrogateTrace {
+                status: "initial_refused".into(),
+                rejected_trials: 1,
+                ..base.clone()
+            },
+            start_only.clone(),
+            (2, 1),
+        ),
+        (
+            "refused re-score",
+            SurrogateTrace {
+                status: "gradient".into(),
+                trials: 1,
+                jacobians: 2,
+                rescore: 1,
+                rejected_trials: 1,
+                accepted: 1,
+                iterations: vec![step(true, Some(1.0))],
+                ..base.clone()
+            },
+            start_only.clone(),
+            (6, 1),
+        ),
+        (
+            "failed solves",
+            SurrogateTrace {
+                status: "damping_limit".into(),
+                trials: 1,
+                jacobians: 1,
+                solve_failures: 2,
+                iterations: vec![unsolved, unsolved, step(false, Some(4.0))],
+                ..base.clone()
+            },
+            start_only.clone(),
+            (4, 0),
+        ),
+        (
+            "exact fit at the start",
+            SurrogateTrace {
+                status: "exact_fit".into(),
+                ..base.clone()
+            },
+            start_only.clone(),
+            (2, 0),
+        ),
+        (
+            "exact fit after a step",
+            exact_after_step.clone(),
+            PipelineCheck {
+                evaluations: 2,
+                winner: Some(bits(1.0)),
+                accepted: true,
+                ..start_only.clone()
+            },
+            (6, 0),
+        ),
+        (
+            "non-finite start",
+            SurrogateTrace {
+                status: "non_finite_jacobian".into(),
+                ..base.clone()
+            },
+            start_only.clone(),
+            (2, 0),
+        ),
+        (
+            "refused trial",
+            SurrogateTrace {
+                status: "budget_exhausted".into(),
+                trials: 2,
+                jacobians: 1,
+                rejected_trials: 1,
+                iterations: vec![step(false, None), step(false, Some(4.0))],
+                ..base.clone()
+            },
+            start_only.clone(),
+            (5, 1),
+        ),
+    ];
+    for (label, surrogate, pipeline, charged) in synthetic {
+        let trace = one_stage(surrogate, pipeline);
+        assert_eq!(trace.charged("sites").unwrap(), charged, "{label}");
+        assert_eq!(trace.check(SINE, "sites", 60).unwrap(), charged, "{label}");
+    }
+    // A shape outside the surrogate's site range is a legitimate unsupported fallback, and only
+    // that.
+    let many = format!(
+        "(pipe X (derive expr=\"{}\" append=false) (ridge))",
+        literal_sum(15)
+    );
+    let fallback = |reason: &str| RefinementTrace {
+        method: DAMPED_LS.into(),
+        stages: vec![StageTrace::Coordinate {
+            stage: 0,
+            reason: reason.into(),
+            evaluations: 3,
+            rejected_trials: 0,
+        }],
+    };
+    assert_eq!(
+        fallback(UNSUPPORTED).check(&many, "sites", 60).unwrap(),
+        (3, 0)
+    );
+    assert!(fallback(SMALL_ALLOWANCE).check(&many, "sites", 60).is_err());
+    assert!(fallback(ELEMENTWISE).check(&many, "sites", 60).is_err());
+
+    // The review's first trigger: a surrogate stage replaced by a fallback with equal counts
+    // re-derives its counts, but no fallback reason fits this supported derive stage.
+    let (real, _, _) = refine(&lm(), SINE, &sine, 60, 60);
+    let trace = real.refinement.trace.unwrap();
+    let (evaluations, rejected) = trace.charged("sites").unwrap();
+    assert!(evaluations >= 6);
+    for reason in [ELEMENTWISE, SMALL_ALLOWANCE, UNSUPPORTED] {
+        let mut faked = trace.clone();
+        faked.stages[0] = StageTrace::Coordinate {
+            stage: 0,
+            reason: reason.into(),
+            evaluations,
+            rejected_trials: rejected,
+        };
+        assert_ne!(faked, trace);
+        assert_eq!(faked.charged("sites").unwrap(), (evaluations, rejected));
+        assert!(faked.check(SINE, "sites", 60).is_err(), "{reason}");
+    }
+    // The review's second trigger with one site: two more Jacobians and two fewer trials keep
+    // the charge, the iteration count and every refusal; the Jacobian bound refuses it.
+    let mut shifted = trace.clone();
+    let StageTrace::Surrogate { surrogate, .. } = &mut shifted.stages[0] else {
+        unreachable!("one surrogate stage")
+    };
+    assert_eq!(surrogate.sites, 1);
+    let before = surrogate_evaluations(surrogate);
+    surrogate.jacobians += 2;
+    surrogate.trials -= 2;
+    for _ in 0..2 {
+        let unaccepted = surrogate
+            .iterations
+            .iter()
+            .position(|i| i.solved && !i.accepted && i.trial.is_some())
+            .expect("two scored trials that were not accepted");
+        surrogate.iterations.remove(unaccepted);
+    }
+    assert_eq!(surrogate_evaluations(surrogate), before);
+    assert_eq!(
+        surrogate.iterations.len(),
+        surrogate.trials + surrogate.solve_failures
+    );
+    assert_ne!(shifted, trace);
+    let error = shifted.charged("sites").unwrap_err();
+    assert!(format!("{error:#}").contains("accepted steps"), "{error:#}");
+
+    // Records that re-derive their own counts but do not fit the parent or the allowance.
+    let mut next_stage = trace.clone();
+    if let StageTrace::Surrogate { stage, .. } = &mut next_stage.stages[0] {
+        *stage = 1;
+    }
+    let stages = |stages: Vec<StageTrace>| RefinementTrace {
+        method: DAMPED_LS.into(),
+        stages,
+    };
+    let small = |stage: usize, evaluations: usize| StageTrace::Coordinate {
+        stage,
+        reason: SMALL_ALLOWANCE.into(),
+        evaluations,
+        rejected_trials: 0,
+    };
+    let refused: [(&str, RefinementTrace, &str, usize); 9] = [
+        ("not the next stage", next_stage, SINE, 60),
+        ("other site count", trace.clone(), TWO, 60),
+        (
+            "map stage",
+            trace.clone(),
+            "(pipe X (map expr=\"sin((0.5*x))\") (ridge))",
+            60,
+        ),
+        (
+            "surrogate over its allowance",
+            trace.clone(),
+            SINE,
+            evaluations - 1,
+        ),
+        (
+            "failed start under the minimum",
+            stages(vec![StageTrace::Failed { stage: 0 }]),
+            SINE,
+            5,
+        ),
+        (
+            "stopped start before another stage",
+            stages(vec![StageTrace::Stopped { stage: 0 }, small(1, 1)]),
+            TWO_STAGES,
+            60,
+        ),
+        (
+            "small allowance at the minimum",
+            stages(vec![small(0, 6)]),
+            SINE,
+            60,
+        ),
+        (
+            "map stage as a small allowance",
+            stages(vec![small(1, 2)]),
+            MAP,
+            60,
+        ),
+        (
+            "unrun winner pass before another stage",
+            stages(vec![
+                StageTrace::Surrogate {
+                    stage: 0,
+                    surrogate: exact_after_step.clone(),
+                    pipeline: Some(start_only.clone()),
+                },
+                small(1, 1),
+            ]),
+            TWO_STAGES,
+            60,
+        ),
+    ];
+    for (label, trace, parent, trials) in refused {
+        trace.charged("sites").unwrap();
+        assert!(trace.check(parent, "sites", trials).is_err(), "{label}");
+    }
+    // The same kinds of record fit where they are legitimate.
+    assert_eq!(
+        stages(vec![StageTrace::Failed { stage: 0 }])
+            .check(SINE, "sites", 6)
+            .unwrap(),
+        (1, 1)
+    );
+    assert_eq!(
+        stages(vec![small(0, 1), StageTrace::Stopped { stage: 1 }])
+            .check(TWO_STAGES, "sites", 60)
+            .unwrap(),
+        (1, 0)
+    );
+    assert_eq!(
+        stages(vec![small(0, 5)]).check(SINE, "sites", 60).unwrap(),
+        (5, 0)
+    );
+    assert_eq!(
+        trace.check(SINE, "sites", evaluations).unwrap(),
+        (evaluations, rejected)
+    );
+}
+
+/// The validation refusal and the new trace records pass the shipped-text lint too.
+#[test]
+fn the_validation_text_and_new_records_pass_the_lint() {
+    let lint = |text: &str| {
+        let hits = feat_math::transpile::lint_shipped_text(text);
+        assert!(hits.is_empty(), "{text}: {hits:?}");
+    };
+    let refusal = lm_selection()
+        .validate(search::Refinement {
+            top_k: 1,
+            trials_per_program: 2,
+        })
+        .unwrap_err();
+    lint(&format!("{refusal:#}"));
+    let records = vec![
+        StageTrace::Failed { stage: 0 },
+        StageTrace::Stopped { stage: 1 },
+    ];
+    lint(&serde_json::to_string(&records).unwrap());
+    for (program, c, trials) in [(TIE, cos_data(), 60), (START_FAULT, sine_data(), 60)] {
+        let (result, _, _) = refine(&lm(), program, &c, trials, trials);
+        lint(&serde_json::to_string(&result.refinement).unwrap());
+    }
+}
+
+/// The default (coordinate) route against the stack before the method was wired: the digests and
+/// values below were measured at a8bd39855, the commit before the wiring, by these same loops
+/// (the fix-01 probe ran them in this lane on that commit's sources), so this compares the
+/// default route with the old code, not with itself.
+#[test]
+fn the_default_route_keeps_the_pre_wiring_results() {
+    let e = evaluator();
+    let train_loss = |program: &str, c: &Cut| -> Option<u64> {
+        let model = feat_math::fit(&GenomeIr::parse(program).ok()?, &c.train_x, &c.train_y).ok()?;
+        let p = model.predict(&c.train_x).ok()?;
+        let mse = p
+            .iter()
+            .zip(&c.train_y)
+            .map(|(a, b)| (a - b).powi(2))
+            .sum::<f64>()
+            / p.len() as f64;
+        Some(mse.to_bits())
+    };
+    let mut lines = String::new();
+    let mut rows = Vec::new();
+    for (name, c) in [("sine", sine_data()), ("line", data())] {
+        for program in [SINE, MAP, MIXED, FAULTING, TWO] {
+            for (trials, limit) in [(3usize, 10usize), (7, 7), (20, 20), (60, 60)] {
+                let (result, used, asked) = refine(&e, program, &c, trials, limit);
+                let loss = train_loss(&result.refinement.program, &c);
+                lines.push_str(&format!(
+                    "UNIT\t{name}\t{program}\t{trials}\t{limit}\t{}\t{used}\t{asked}\t{loss:?}\n",
+                    serde_json::to_string(&result).unwrap()
+                ));
+                rows.push(((name, program, trials), (result.refinement, loss)));
+            }
+        }
+    }
+    assert_eq!(
+        crate::sha256_hex(lines.as_bytes()),
+        "027b30765712af8811e5ffe237d837970e8e698ba97f6734cd38065f84b6aae3"
+    );
+    // Four of those rows in full: program text, evaluations, rejected trials, failure and the
+    // training loss bits of the result.
+    let row = |name: &str, program: &str, trials: usize| {
+        rows.iter()
+            .find(|((n, p, t), _)| *n == name && *p == program && *t == trials)
+            .map(|(_, r)| r.clone())
+            .unwrap()
+    };
+    for ((name, program, trials), text, counts, failure, bits) in [
+        (
+            ("sine", SINE, 60),
+            "(pipe X (derive append=false expr=\"sin((1.7000007629394531*c0))\") (ridge lambda_frac=0.000000001))",
+            (60, 0),
+            None,
+            4482624987248756777u64,
+        ),
+        (
+            ("sine", MIXED, 20),
+            "(pipe X (map expr=\"sin((1.71875*x))\") (derive append=false expr=\"sin(0.7*c0)\") (ridge))",
+            (20, 0),
+            None,
+            4571347593955826666,
+        ),
+        (
+            ("sine", FAULTING, 60),
+            "(pipe X (derive append=false expr=\"sqrt(c0-0.5)\") (ridge))",
+            (1, 1),
+            Some("faulting constant trial"),
+            4612781733306906755,
+        ),
+        (
+            ("line", TWO, 60),
+            "(pipe X (derive append=false expr=\"(sin((0.5*c0))+(14.3*c0))\") (ridge))",
+            (60, 15),
+            None,
+            4568963289968063070,
+        ),
+    ] {
+        let (refinement, loss) = row(name, program, trials);
+        assert_eq!(refinement.program, text);
+        assert_eq!(
+            (refinement.evaluations, refinement.rejected_trials),
+            counts,
+            "{text}"
+        );
+        assert_eq!(refinement.failure.as_deref(), failure, "{text}");
+        assert!(refinement.trace.is_none());
+        assert_eq!(loss, Some(bits), "{text}");
+    }
+    // The generation hook, children and their measurements included.
+    let c = sine_data();
+    let parents = vec![
+        measured(&e, SINE, &c),
+        measured(&e, MIXED, &c),
+        measured(&e, TWO, &c),
+    ];
+    for (limit, digest, used) in [
+        (
+            12,
+            "cfff0c3a86da51ced4e20eb771c70c68c07a778a9292d1ee1981c71f74159b01",
+            11,
+        ),
+        (
+            40,
+            "15ace454ac4038af8cfe954e2c719cfa12fa1fcf65e554e7317f9a26ee956700",
+            33,
+        ),
+        (
+            200,
+            "15ace454ac4038af8cfe954e2c719cfa12fa1fcf65e554e7317f9a26ee956700",
+            33,
+        ),
+    ] {
+        let mut budget = EvaluationBudget::new(limit);
+        let result = e
+            .finish_generation_guarded(
+                &parents,
+                &c,
+                4,
+                3,
+                10,
+                Clock::Frozen,
+                &mut budget,
+                &mut || true,
+            )
+            .unwrap();
+        let bytes = serde_json::to_vec(&result).unwrap();
+        assert_eq!(
+            (crate::sha256_hex(&bytes), budget.used()),
+            (digest.to_string(), used),
+            "{limit}"
+        );
+    }
+}

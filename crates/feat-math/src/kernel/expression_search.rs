@@ -96,6 +96,11 @@ impl Default for LmOptions {
     }
 }
 
+/// The most literal sites `MathExpr::optimize_constants_lm_guarded` fits: its parameters are the
+/// sites and the affine pair of the linear-scaled residuals. A row expression with more sites, or
+/// with none, is unsupported and spends nothing.
+pub const LM_MAX_SITES: usize = 14;
+
 /// Why a damped least-squares refinement ended.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum LmStatus {
