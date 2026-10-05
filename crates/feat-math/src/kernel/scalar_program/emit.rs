@@ -63,6 +63,12 @@ fn legacy_value(instruction: Instruction, language: ScalarLanguage) -> Option<St
     // fmin/fmax constant folding can choose the other signed zero. This local
     // scalar-v2 comparison preserves that observed contract and v1 source.
     if language == ScalarLanguage::Cpp17 {
+        if let Instruction::Variable(var @ (Var::RowMin | Var::RowMax)) = instruction {
+            return Some(format!(
+                "scalar_row_extrema_v2(raw, {})",
+                var == Var::RowMax
+            ));
+        }
         if let Instruction::Call(ScalarFunction::V1(function), args, _) = instruction {
             if function == Func::Clip {
                 let v = args[0];
@@ -335,6 +341,14 @@ pub(crate) fn emit_v2_helpers(
         .map(|p| p.compile())
         .collect::<crate::kernel::Result<Vec<_>>>()?;
     let mut source = String::new();
+    if language == ScalarLanguage::Cpp17
+        && compiled
+            .iter()
+            .flat_map(|p| p.code.iter())
+            .any(|i| matches!(i, Instruction::Variable(Var::RowMin | Var::RowMax)))
+    {
+        source.push_str("static double scalar_row_extrema_v2(const std::vector<double>& row,bool maximum){double value=maximum?-std::numeric_limits<double>::infinity():std::numeric_limits<double>::infinity();for(double v:row){if(!std::isnan(v)&&(maximum?v>=value:v<=value))value=v;}return value;}\n");
+    }
     if compiled
         .iter()
         .flat_map(|p| p.code.iter())
