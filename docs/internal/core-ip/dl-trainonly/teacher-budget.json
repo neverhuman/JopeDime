@@ -1,0 +1,54 @@
+{
+  "c6_route": "ii: immutable inner-view JTT1, no evaluator change",
+  "complete_coverage_attempts": 21326832,
+  "coverage_feasible_under_literal_ceiling": false,
+  "execution_admitted": false,
+  "gp_runtime_owner_for_new_gateway": null,
+  "individual_timeout_seconds": 90,
+  "literal_requested_ceiling": 21300000,
+  "mean_attempt_seconds_limit_at_80_percent": {
+    "320": 4.407743259758411,
+    "640": 8.815486519516822
+  },
+  "measured_throughput_receipt": null,
+  "original_deadline": "2026-10-10T00:00:00Z",
+  "planning_anchor": "2026-10-05T18:00:00Z",
+  "planning_window_seconds": 367200,
+  "pool_origin": "historical test-primary selection; rescoring does not remove pool selection bias",
+  "program_records": 7108944,
+  "reference_slots": 640,
+  "retry_allowance_at_complete_coverage_ceiling": 0,
+  "scenarios": [
+    {
+      "mean_attempt_seconds": 1,
+      "wall_hours_at_640_slots": 9.2564375,
+      "wall_hours_at_640_slots_80_percent": 11.570546875
+    },
+    {
+      "mean_attempt_seconds": 5,
+      "wall_hours_at_640_slots": 46.2821875,
+      "wall_hours_at_640_slots_80_percent": 57.852734375
+    },
+    {
+      "mean_attempt_seconds": 10,
+      "wall_hours_at_640_slots": 92.564375,
+      "wall_hours_at_640_slots_80_percent": 115.70546875
+    },
+    {
+      "mean_attempt_seconds": 20,
+      "wall_hours_at_640_slots": 185.12875,
+      "wall_hours_at_640_slots_80_percent": 231.4109375
+    },
+    {
+      "mean_attempt_seconds": 90,
+      "wall_hours_at_640_slots": 833.079375,
+      "wall_hours_at_640_slots_80_percent": 1041.34921875
+    }
+  ],
+  "schema": "jope.dl-teacher-throughput-draft/v1",
+  "selection": "two inner-validation fits only; separate outer diagnostic",
+  "shortfall_attempts": 26832,
+  "slots_are_allocated": false,
+  "teacher_scope_decision": "S1/S2/S3 unassigned",
+  "views_per_record": 3
+}
