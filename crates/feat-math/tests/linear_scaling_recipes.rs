@@ -114,7 +114,11 @@ fn run(command: &mut Command) -> String {
 
 #[test]
 fn training_recipes_refuse_an_unrepresentable_nonzero_slope() {
-    let scratch = tempfile::tempdir_in(std::env::var_os("TMPDIR").unwrap()).unwrap();
+    let root = std::env::var_os("TMPDIR")
+        .map(std::path::PathBuf::from)
+        .unwrap_or_else(|| std::path::PathBuf::from(env!("CARGO_TARGET_TMPDIR")));
+    std::fs::create_dir_all(&root).unwrap();
+    let scratch = tempfile::tempdir_in(root).unwrap();
     let dir = scratch.path();
     let artifact = emit_training_recipe(&MathExpr::parse("c0").unwrap(), 1).unwrap();
     let rows = vec![vec![0.0], vec![-1e12], vec![1e12], vec![1e-300]];
