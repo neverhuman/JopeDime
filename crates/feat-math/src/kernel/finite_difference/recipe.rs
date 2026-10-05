@@ -38,6 +38,8 @@ impl DifferenceFittedCpp {
         if value["schema"].as_str() != Some(FITTED_SCHEMA)
             || value["format_version"].as_u64() != Some(2)
             || value["min_reader_version"].as_u64() != Some(2)
+            || value["required_features"].as_u64() != Some(super::program::REQUIRED_FEATURE)
+            || value["profile"].as_str() != Some(FITTED_PROFILE)
         {
             return Err(Error::Unsupported("ordered fitted codec version".into()).into());
         }
